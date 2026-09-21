@@ -250,7 +250,33 @@ var ExtraItemIcons = []int32{
 	18262,
 }
 
-var SpellIconoverrides = []*proto.IconData{}
+// Forever Fury uses its seal icon for related shield and mana effects.
+var SpellIconoverrides = []*proto.IconData{
+	{Id: 1311649, Name: "Seal of Fury", Icon: "spell_holy_sealoffury"},
+	{Id: 1311656, Name: "Seal of Fury", Icon: "spell_holy_sealoffury"},
+	{Id: 20163, Name: "Seal of Fury", Icon: "spell_holy_sealoffury"},
+	{Id: 20419, Name: "Seal of Fury", Icon: "spell_holy_sealoffury"},
+	{Id: 20421, Name: "Seal of Fury", Icon: "spell_holy_sealoffury"},
+	{Id: 20422, Name: "Seal of Fury", Icon: "spell_holy_sealoffury"},
+	{Id: 20423, Name: "Seal of Fury", Icon: "spell_holy_sealoffury"},
+	{Id: 1311647, Name: "Seal of Fury", Icon: "spell_holy_sealoffury"},
+	{Id: 1311654, Name: "Seal of Fury", Icon: "spell_holy_sealoffury"},
+	{Id: 20231, Name: "Seal of Fury", Icon: "spell_holy_sealoffury"},
+	{Id: 20415, Name: "Seal of Fury", Icon: "spell_holy_sealoffury"},
+	{Id: 20416, Name: "Seal of Fury", Icon: "spell_holy_sealoffury"},
+	{Id: 20417, Name: "Seal of Fury", Icon: "spell_holy_sealoffury"},
+	{Id: 20418, Name: "Seal of Fury", Icon: "spell_holy_sealoffury"},
+	{Id: 1311650, Name: "Judgement of Fury", Icon: "spell_holy_sealoffury"},
+	{Id: 1311655, Name: "Judgement of Fury", Icon: "spell_holy_sealoffury"},
+	{Id: 20183, Name: "Judgement of Fury", Icon: "spell_holy_sealoffury"},
+	{Id: 20411, Name: "Judgement of Fury", Icon: "spell_holy_sealoffury"},
+	{Id: 20412, Name: "Judgement of Fury", Icon: "spell_holy_sealoffury"},
+	{Id: 20413, Name: "Judgement of Fury", Icon: "spell_holy_sealoffury"},
+	{Id: 20414, Name: "Judgement of Fury", Icon: "spell_holy_sealoffury"},
+	{Id: 1310927, Name: "Light's Fury", Icon: "spell_holy_sealoffury"},
+	{Id: 1314103, Name: "Improved Seal of Fury", Icon: "spell_holy_sealoffury"},
+	{Id: 1314104, Name: "Improved Seal of Fury", Icon: "spell_holy_sealoffury"},
+}
 
 // Raid buffs / debuffs
 var SharedSpellsIcons = []int32{

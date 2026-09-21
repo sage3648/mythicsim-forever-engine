@@ -542,5 +542,218 @@
 		"note": "Beta client 1.60.1.69893: rank 1 damage 90-102 -> 79-91 at its top level; cost, cooldown and the 0.429 coefficient are Classic's.",
 		"source": "forever",
 		"tooltip": "85 Mana\n30 yd range\nInstant\n15 sec cooldown\nCauses 79 to 91 Holy damage to an Undead or Demon target."
+	},
+	"1311649": {
+		"ability": "Seal of Fury",
+		"file": "sim/paladin/sof.go",
+		"source": "assumed",
+		"note": "Beta client 1.60.1.69913 SpellEffect, SpellLevels, SpellPower, SpellDuration, SpellMisc and SpellCategories. See docs/mythicsim-seal-of-fury.md.",
+		"tooltip": "Seal of Fury lasts 30 seconds. Melee attacks deal additional Holy damage and, with a shield equipped, grant an absorb for 50% of that damage. Improved Seal of Fury restores mana on full absorb consumption.",
+		"assumptions": [
+			"Uses the existing Righteousness white-hit trigger and melee crit handling; verify special-attack and secondary proc eligibility in combat logs.",
+			"New shields replace remaining absorb rather than stacking."
+		]
+	},
+	"1311656": {
+		"ability": "Seal of Fury",
+		"file": "sim/paladin/sof.go",
+		"source": "assumed",
+		"note": "Beta client 1.60.1.69913 SpellEffect, SpellLevels, SpellPower, SpellDuration, SpellMisc and SpellCategories. See docs/mythicsim-seal-of-fury.md.",
+		"tooltip": "Seal of Fury lasts 30 seconds. Melee attacks deal additional Holy damage and, with a shield equipped, grant an absorb for 50% of that damage. Improved Seal of Fury restores mana on full absorb consumption.",
+		"assumptions": [
+			"Uses the existing Righteousness white-hit trigger and melee crit handling; verify special-attack and secondary proc eligibility in combat logs.",
+			"New shields replace remaining absorb rather than stacking."
+		]
+	},
+	"20163": {
+		"ability": "Seal of Fury",
+		"file": "sim/paladin/sof.go",
+		"source": "assumed",
+		"note": "Beta client 1.60.1.69913 SpellEffect, SpellLevels, SpellPower, SpellDuration, SpellMisc and SpellCategories. See docs/mythicsim-seal-of-fury.md.",
+		"tooltip": "Seal of Fury lasts 30 seconds. Melee attacks deal additional Holy damage and, with a shield equipped, grant an absorb for 50% of that damage. Improved Seal of Fury restores mana on full absorb consumption.",
+		"assumptions": [
+			"Uses the existing Righteousness white-hit trigger and melee crit handling; verify special-attack and secondary proc eligibility in combat logs.",
+			"New shields replace remaining absorb rather than stacking."
+		]
+	},
+	"20419": {
+		"ability": "Seal of Fury",
+		"file": "sim/paladin/sof.go",
+		"source": "assumed",
+		"note": "Beta client 1.60.1.69913 SpellEffect, SpellLevels, SpellPower, SpellDuration, SpellMisc and SpellCategories. See docs/mythicsim-seal-of-fury.md.",
+		"tooltip": "Seal of Fury lasts 30 seconds. Melee attacks deal additional Holy damage and, with a shield equipped, grant an absorb for 50% of that damage. Improved Seal of Fury restores mana on full absorb consumption.",
+		"assumptions": [
+			"Uses the existing Righteousness white-hit trigger and melee crit handling; verify special-attack and secondary proc eligibility in combat logs.",
+			"New shields replace remaining absorb rather than stacking."
+		]
+	},
+	"20421": {
+		"ability": "Seal of Fury",
+		"file": "sim/paladin/sof.go",
+		"source": "assumed",
+		"note": "Beta client 1.60.1.69913 SpellEffect, SpellLevels, SpellPower, SpellDuration, SpellMisc and SpellCategories. See docs/mythicsim-seal-of-fury.md.",
+		"tooltip": "Seal of Fury lasts 30 seconds. Melee attacks deal additional Holy damage and, with a shield equipped, grant an absorb for 50% of that damage. Improved Seal of Fury restores mana on full absorb consumption.",
+		"assumptions": [
+			"Uses the existing Righteousness white-hit trigger and melee crit handling; verify special-attack and secondary proc eligibility in combat logs.",
+			"New shields replace remaining absorb rather than stacking."
+		]
+	},
+	"20422": {
+		"ability": "Seal of Fury",
+		"file": "sim/paladin/sof.go",
+		"source": "assumed",
+		"note": "Beta client 1.60.1.69913 SpellEffect, SpellLevels, SpellPower, SpellDuration, SpellMisc and SpellCategories. See docs/mythicsim-seal-of-fury.md.",
+		"tooltip": "Seal of Fury lasts 30 seconds. Melee attacks deal additional Holy damage and, with a shield equipped, grant an absorb for 50% of that damage. Improved Seal of Fury restores mana on full absorb consumption.",
+		"assumptions": [
+			"Uses the existing Righteousness white-hit trigger and melee crit handling; verify special-attack and secondary proc eligibility in combat logs.",
+			"New shields replace remaining absorb rather than stacking."
+		]
+	},
+	"20423": {
+		"ability": "Seal of Fury",
+		"file": "sim/paladin/sof.go",
+		"source": "assumed",
+		"note": "Beta client 1.60.1.69913 SpellEffect, SpellLevels, SpellPower, SpellDuration, SpellMisc and SpellCategories. See docs/mythicsim-seal-of-fury.md.",
+		"tooltip": "Seal of Fury lasts 30 seconds. Melee attacks deal additional Holy damage and, with a shield equipped, grant an absorb for 50% of that damage. Improved Seal of Fury restores mana on full absorb consumption.",
+		"assumptions": [
+			"Uses the existing Righteousness white-hit trigger and melee crit handling; verify special-attack and secondary proc eligibility in combat logs.",
+			"New shields replace remaining absorb rather than stacking."
+		]
+	},
+	"1311647": {
+		"ability": "Seal of Fury",
+		"file": "sim/paladin/sof.go",
+		"source": "assumed",
+		"note": "Beta client 1.60.1.69913 SpellEffect, SpellLevels, SpellPower, SpellDuration, SpellMisc and SpellCategories. See docs/mythicsim-seal-of-fury.md.",
+		"tooltip": "Deals 6 Holy damage plus 10% of spell power on a landed melee swing. With a shield equipped, 50% of the damage dealt grants an absorb.",
+		"assumptions": [
+			"Uses the same melee crit and weapon specialization handling as Righteousness; secondary proc eligibility requires combat-log verification."
+		]
+	},
+	"1311654": {
+		"ability": "Seal of Fury",
+		"file": "sim/paladin/sof.go",
+		"source": "assumed",
+		"note": "Beta client 1.60.1.69913 SpellEffect, SpellLevels, SpellPower, SpellDuration, SpellMisc and SpellCategories. See docs/mythicsim-seal-of-fury.md.",
+		"tooltip": "Deals 9 Holy damage plus 10% of spell power on a landed melee swing. With a shield equipped, 50% of the damage dealt grants an absorb.",
+		"assumptions": [
+			"Uses the same melee crit and weapon specialization handling as Righteousness; secondary proc eligibility requires combat-log verification."
+		]
+	},
+	"20231": {
+		"ability": "Seal of Fury",
+		"file": "sim/paladin/sof.go",
+		"source": "assumed",
+		"note": "Beta client 1.60.1.69913 SpellEffect, SpellLevels, SpellPower, SpellDuration, SpellMisc and SpellCategories. See docs/mythicsim-seal-of-fury.md.",
+		"tooltip": "Deals 14 Holy damage plus 10% of spell power on a landed melee swing. With a shield equipped, 50% of the damage dealt grants an absorb.",
+		"assumptions": [
+			"Uses the same melee crit and weapon specialization handling as Righteousness; secondary proc eligibility requires combat-log verification."
+		]
+	},
+	"20415": {
+		"ability": "Seal of Fury",
+		"file": "sim/paladin/sof.go",
+		"source": "assumed",
+		"note": "Beta client 1.60.1.69913 SpellEffect, SpellLevels, SpellPower, SpellDuration, SpellMisc and SpellCategories. See docs/mythicsim-seal-of-fury.md.",
+		"tooltip": "Deals 19 Holy damage plus 10% of spell power on a landed melee swing. With a shield equipped, 50% of the damage dealt grants an absorb.",
+		"assumptions": [
+			"Uses the same melee crit and weapon specialization handling as Righteousness; secondary proc eligibility requires combat-log verification."
+		]
+	},
+	"20416": {
+		"ability": "Seal of Fury",
+		"file": "sim/paladin/sof.go",
+		"source": "assumed",
+		"note": "Beta client 1.60.1.69913 SpellEffect, SpellLevels, SpellPower, SpellDuration, SpellMisc and SpellCategories. See docs/mythicsim-seal-of-fury.md.",
+		"tooltip": "Deals 25 Holy damage plus 10% of spell power on a landed melee swing. With a shield equipped, 50% of the damage dealt grants an absorb.",
+		"assumptions": [
+			"Uses the same melee crit and weapon specialization handling as Righteousness; secondary proc eligibility requires combat-log verification."
+		]
+	},
+	"20417": {
+		"ability": "Seal of Fury",
+		"file": "sim/paladin/sof.go",
+		"source": "assumed",
+		"note": "Beta client 1.60.1.69913 SpellEffect, SpellLevels, SpellPower, SpellDuration, SpellMisc and SpellCategories. See docs/mythicsim-seal-of-fury.md.",
+		"tooltip": "Deals 32 Holy damage plus 10% of spell power on a landed melee swing. With a shield equipped, 50% of the damage dealt grants an absorb.",
+		"assumptions": [
+			"Uses the same melee crit and weapon specialization handling as Righteousness; secondary proc eligibility requires combat-log verification."
+		]
+	},
+	"20418": {
+		"ability": "Seal of Fury",
+		"file": "sim/paladin/sof.go",
+		"source": "assumed",
+		"note": "Beta client 1.60.1.69913 SpellEffect, SpellLevels, SpellPower, SpellDuration, SpellMisc and SpellCategories. See docs/mythicsim-seal-of-fury.md.",
+		"tooltip": "Deals 35 Holy damage plus 10% of spell power on a landed melee swing. With a shield equipped, 50% of the damage dealt grants an absorb.",
+		"assumptions": [
+			"Uses the same melee crit and weapon specialization handling as Righteousness; secondary proc eligibility requires combat-log verification."
+		]
+	},
+	"1311650": {
+		"ability": "Judgement of Fury",
+		"file": "sim/paladin/sof.go",
+		"source": "forever",
+		"note": "Beta client 1.60.1.69913 SpellEffect, SpellLevels, SpellPower, SpellDuration, SpellMisc and SpellCategories. See docs/mythicsim-seal-of-fury.md.",
+		"tooltip": "Deals 22 to 24 Holy damage at the rank's learn level, scaling with level and 45% of spell power. Judgement does not consume the seal. Taunt target switching is not simulated."
+	},
+	"1311655": {
+		"ability": "Judgement of Fury",
+		"file": "sim/paladin/sof.go",
+		"source": "forever",
+		"note": "Beta client 1.60.1.69913 SpellEffect, SpellLevels, SpellPower, SpellDuration, SpellMisc and SpellCategories. See docs/mythicsim-seal-of-fury.md.",
+		"tooltip": "Deals 35 to 39 Holy damage at the rank's learn level, scaling with level and 45% of spell power. Judgement does not consume the seal. Taunt target switching is not simulated."
+	},
+	"20183": {
+		"ability": "Judgement of Fury",
+		"file": "sim/paladin/sof.go",
+		"source": "forever",
+		"note": "Beta client 1.60.1.69913 SpellEffect, SpellLevels, SpellPower, SpellDuration, SpellMisc and SpellCategories. See docs/mythicsim-seal-of-fury.md.",
+		"tooltip": "Deals 51 to 57 Holy damage at the rank's learn level, scaling with level and 45% of spell power. Judgement does not consume the seal. Taunt target switching is not simulated."
+	},
+	"20411": {
+		"ability": "Judgement of Fury",
+		"file": "sim/paladin/sof.go",
+		"source": "forever",
+		"note": "Beta client 1.60.1.69913 SpellEffect, SpellLevels, SpellPower, SpellDuration, SpellMisc and SpellCategories. See docs/mythicsim-seal-of-fury.md.",
+		"tooltip": "Deals 70 to 78 Holy damage at the rank's learn level, scaling with level and 45% of spell power. Judgement does not consume the seal. Taunt target switching is not simulated."
+	},
+	"20412": {
+		"ability": "Judgement of Fury",
+		"file": "sim/paladin/sof.go",
+		"source": "forever",
+		"note": "Beta client 1.60.1.69913 SpellEffect, SpellLevels, SpellPower, SpellDuration, SpellMisc and SpellCategories. See docs/mythicsim-seal-of-fury.md.",
+		"tooltip": "Deals 91 to 101 Holy damage at the rank's learn level, scaling with level and 45% of spell power. Judgement does not consume the seal. Taunt target switching is not simulated."
+	},
+	"20413": {
+		"ability": "Judgement of Fury",
+		"file": "sim/paladin/sof.go",
+		"source": "forever",
+		"note": "Beta client 1.60.1.69913 SpellEffect, SpellLevels, SpellPower, SpellDuration, SpellMisc and SpellCategories. See docs/mythicsim-seal-of-fury.md.",
+		"tooltip": "Deals 118 to 128 Holy damage at the rank's learn level, scaling with level and 45% of spell power. Judgement does not consume the seal. Taunt target switching is not simulated."
+	},
+	"20414": {
+		"ability": "Judgement of Fury",
+		"file": "sim/paladin/sof.go",
+		"source": "forever",
+		"note": "Beta client 1.60.1.69913 SpellEffect, SpellLevels, SpellPower, SpellDuration, SpellMisc and SpellCategories. See docs/mythicsim-seal-of-fury.md.",
+		"tooltip": "Deals 146 to 160 Holy damage at the rank's learn level, scaling with level and 45% of spell power. Judgement does not consume the seal. Taunt target switching is not simulated."
+	},
+	"1310927": {
+		"ability": "Light's Fury",
+		"file": "sim/paladin/sof.go",
+		"source": "assumed",
+		"note": "Beta client 1.60.1.69913 SpellEffect, SpellLevels, SpellPower, SpellDuration, SpellMisc and SpellCategories. See docs/mythicsim-seal-of-fury.md.",
+		"tooltip": "Absorbs damage equal to 50% of the Seal of Fury damage dealt. Requires an equipped shield to create. Lasts 10 seconds.",
+		"assumptions": [
+			"A new proc replaces remaining absorb and refreshes duration. Verify overwrite behaviour in the beta client."
+		]
+	},
+	"1314104": {
+		"ability": "Improved Seal of Fury",
+		"file": "sim/paladin/sof.go",
+		"source": "forever",
+		"note": "Beta client 1.60.1.69913 SpellEffect, SpellLevels, SpellPower, SpellDuration, SpellMisc and SpellCategories. See docs/mythicsim-seal-of-fury.md.",
+		"tooltip": "When Seal of Fury's shield is fully consumed, restore one mana per character level, plus 15% per attacker level above you, capped at 45%."
 	}
 }

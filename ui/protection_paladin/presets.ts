@@ -103,7 +103,7 @@ export const DefaultTalents = TalentPresets[ClassicPhase.Phase5][0];
 
 export const DefaultOptions = ProtectionPaladinOptions.create({
 	aura: PaladinAura.SanctityAura,
-	primarySeal: PaladinSeal.Righteousness,
+	primarySeal: PaladinSeal.Fury,
 	personalBlessing: Blessings.BlessingOfSanctuary,
 	righteousFury: true,
 });

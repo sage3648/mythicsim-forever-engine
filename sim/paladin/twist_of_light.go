@@ -8,7 +8,7 @@ import (
 // tooltip names. Swapping seals normally throws the old one away; with the talent the seal the
 // paladin cancels fires once more off the next melee attack.
 // Seal of the Crusader is not on the tooltip's list and has no on-hit proc to echo either, so
-// only Seal of Righteousness and Seal of Command bank one.
+// Seal of Fury, Seal of Righteousness and Seal of Command can bank one.
 func (paladin *Paladin) registerTwistOfLight() {
 	if !paladin.Talents.TwistOfLight {
 		return
