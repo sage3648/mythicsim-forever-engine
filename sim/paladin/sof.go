@@ -51,14 +51,14 @@ func (paladin *Paladin) registerSealOfFury() {
 		proc := paladin.RegisterSpell(core.SpellConfig{
 			ActionID:         core.ActionID{SpellID: rank.procID},
 			SpellSchool:      core.SpellSchoolHoly,
-			DefenseType:      core.DefenseTypeMagic,
+			DefenseType:      core.DefenseTypeMelee,
 			ProcMask:         core.ProcMaskEmpty,
 			Flags:            core.SpellFlagMeleeMetrics | core.SpellFlagPassiveSpell | core.SpellFlagSuppressWeaponProcs | core.SpellFlagSuppressEquipProcs,
-			DamageMultiplier: paladin.improvedSeals(),
+			DamageMultiplier: paladin.improvedSeals() * paladin.getWeaponSpecializationModifier(),
 			ThreatMultiplier: 1,
 			BonusCoefficient: 0.1,
 			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-				result := spell.CalcDamage(sim, target, rank.damage, spell.OutcomeAlwaysHit)
+				result := spell.CalcDamage(sim, target, rank.damage, spell.OutcomeMeleeSpecialCritOnly)
 				damage := result.Damage
 				spell.DealDamage(sim, result)
 				if paladin.OffHand().WeaponType == proto.WeaponType_WeaponTypeShield && damage > 0 {

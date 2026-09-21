@@ -1,6 +1,7 @@
 package protection
 
 import (
+	"math"
 	"os"
 	"strings"
 	"testing"
@@ -83,6 +84,9 @@ func TestSealOfFurySimulation(t *testing.T) {
 			if tc.seal == proto.PaladinSeal_Fury {
 				if fury <= 0 || judgement <= 0 || righteous != 0 {
 					t.Fatalf("wrong seal actions: fury=%v judgement=%v righteousness=%v", fury, judgement, righteous)
+				}
+				if tc.shield && math.Abs(shielding-0.5*fury) > 1e-6 {
+					t.Fatalf("shielding %v is not half of actual Fury damage %v", shielding, fury)
 				}
 				if (shielding > 0) != tc.shield {
 					t.Fatalf("shielding=%v shield=%v", shielding, tc.shield)

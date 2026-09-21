@@ -29,8 +29,10 @@ The resource effect uses 1314104. At level 60 against level 63 this is 87 mana p
 ## Implementation and experimental assumptions
 
 - A landed white melee hit fires the proc, following the existing Righteousness trigger pattern.
-  The proc cannot independently miss and is modelled without crits. Exact special-attack
-  eligibility and crit behaviour still need combat-log verification.
+  The proc cannot independently miss and uses the same melee crit table and weapon
+  specialization modifier as Righteousness. Both procs have identical client
+  `SpellMisc` attribute flags and `SpellCategories.DefenseType = 2`. Exact special-attack
+  and secondary proc-chain eligibility still need combat-log verification.
 - Absorb strength uses damage after mitigation and Improved Seals. A new proc replaces
   remaining absorb and refreshes the 10-second duration. Replacement does not award mana.
   Stacking/overwrite behaviour needs an in-client check.
