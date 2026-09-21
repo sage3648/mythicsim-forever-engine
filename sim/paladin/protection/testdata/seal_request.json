@@ -1,0 +1,361 @@
+{
+  "encounter": {
+    "duration": 120,
+    "durationVariation": 15,
+    "executeProportion20": 0.2,
+    "executeProportion25": 0.25,
+    "executeProportion35": 0.35,
+    "targets": [
+      {
+        "damageSpread": 0.3333,
+        "id": 213336,
+        "level": 63,
+        "minBaseDamage": 3000,
+        "name": "Level 60",
+        "parryHaste": true,
+        "stats": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          805,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          3731,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          127393,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "swingSpeed": 2
+      }
+    ]
+  },
+  "raid": {
+    "buffs": {
+      "arcaneBrilliance": true,
+      "battleShout": "TristateEffectImproved",
+      "divineSpirit": true,
+      "giftOfTheWild": "TristateEffectImproved",
+      "powerWordFortitude": "TristateEffectImproved",
+      "sanctityAura": true
+    },
+    "debuffs": {
+      "curseOfRecklessness": true,
+      "exposeArmor": "TristateEffectImproved",
+      "faerieFire": true,
+      "giftOfArthas": true,
+      "judgementOfTheCrusader": "TristateEffectImproved",
+      "judgementOfWisdom": true
+    },
+    "parties": [
+      {
+        "players": [
+          {
+            "buffs": {
+              "blessingOfWisdom": "TristateEffectImproved"
+            },
+            "class": "ClassPaladin",
+            "consumes": {
+              "agilityElixir": "ElixirOfTheMongoose",
+              "alcohol": "AlcoholRumseyRumBlackLabel",
+              "armorElixir": "ElixirOfSuperiorDefense",
+              "attackPowerBuff": "JujuMight",
+              "defaultConjured": "ConjuredDemonicRune",
+              "defaultPotion": "GreaterStoneshieldPotion",
+              "dragonBreathChili": true,
+              "fillerExplosive": "ExplosiveDenseDynamite",
+              "firePowerBuff": "ElixirOfGreaterFirepower",
+              "flask": "FlaskOfTheTitans",
+              "food": "FoodTenderWolfSteak",
+              "healthElixir": "ElixirOfFortitude",
+              "spellPowerBuff": "GreaterArcaneElixir",
+              "strengthBuff": "JujuPower",
+              "zanzaBuff": "ROIDS"
+            },
+            "distanceFromTarget": 5,
+            "equipment": {
+              "items": [
+                {
+                  "id": 12640
+                },
+                {
+                  "id": 22150
+                },
+                {
+                  "id": 16476
+                },
+                {
+                  "id": 18541
+                },
+                {
+                  "id": 16473
+                },
+                {
+                  "id": 19578
+                },
+                {
+                  "id": 16471
+                },
+                {
+                  "id": 13142
+                },
+                {
+                  "id": 22385
+                },
+                {
+                  "id": 16472
+                },
+                {
+                  "id": 19325
+                },
+                {
+                  "id": 17713
+                },
+                {
+                  "id": 19120
+                },
+                {
+                  "id": 13965
+                },
+                {
+                  "id": 12651
+                },
+                {
+                  "id": 12584
+                },
+                {
+                  "id": 18825
+                }
+              ]
+            },
+            "inFrontOfTarget": true,
+            "name": "Fixture",
+            "profession1": "Engineering",
+            "protectionPaladin": {
+              "options": {
+                "aura": "SanctityAura",
+                "personalBlessing": "BlessingOfSanctuary",
+                "primarySeal": "Righteousness",
+                "righteousFury": true
+              }
+            },
+            "race": "RaceDwarf",
+            "reactionTimeMs": 100,
+            "rotation": {
+              "prepullActions": [
+                {
+                  "action": {
+                    "castPaladinPrimarySeal": {}
+                  },
+                  "doAtValue": {
+                    "const": {
+                      "val": "-3.0s"
+                    }
+                  }
+                },
+                {
+                  "action": {
+                    "castSpell": {
+                      "spellId": {
+                        "rank": 3,
+                        "spellId": 20928
+                      }
+                    }
+                  },
+                  "doAtValue": {
+                    "const": {
+                      "val": "-1.5s"
+                    }
+                  }
+                },
+                {
+                  "action": {
+                    "castSpell": {
+                      "spellId": {
+                        "itemId": 18641
+                      }
+                    }
+                  },
+                  "doAtValue": {
+                    "const": {
+                      "val": "-1s"
+                    }
+                  }
+                }
+              ],
+              "priorityList": [
+                {
+                  "action": {
+                    "autocastOtherCooldowns": {}
+                  }
+                },
+                {
+                  "action": {
+                    "castSpell": {
+                      "spellId": {
+                        "rank": 3,
+                        "spellId": 10310
+                      }
+                    },
+                    "condition": {
+                      "cmp": {
+                        "lhs": {
+                          "currentHealthPercent": {}
+                        },
+                        "op": "OpLt",
+                        "rhs": {
+                          "const": {
+                            "val": "10%"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "action": {
+                    "castSpell": {
+                      "spellId": {
+                        "rank": 3,
+                        "spellId": 10278
+                      }
+                    },
+                    "condition": {
+                      "cmp": {
+                        "lhs": {
+                          "currentHealthPercent": {}
+                        },
+                        "op": "OpLt",
+                        "rhs": {
+                          "const": {
+                            "val": "40%"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "action": {
+                    "castSpell": {
+                      "spellId": {
+                        "spellId": 20271
+                      }
+                    },
+                    "condition": {
+                      "cmp": {
+                        "lhs": {
+                          "currentSealRemainingTime": {}
+                        },
+                        "op": "OpGt",
+                        "rhs": {
+                          "const": {
+                            "val": "0s"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "action": {
+                    "castPaladinPrimarySeal": {},
+                    "condition": {
+                      "cmp": {
+                        "lhs": {
+                          "currentSealRemainingTime": {}
+                        },
+                        "op": "OpLe",
+                        "rhs": {
+                          "const": {
+                            "val": "1.5s"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "action": {
+                    "castSpell": {
+                      "spellId": {
+                        "rank": 3,
+                        "spellId": 24239
+                      }
+                    }
+                  }
+                },
+                {
+                  "action": {
+                    "castSpell": {
+                      "spellId": {
+                        "rank": 8,
+                        "spellId": 10333
+                      }
+                    }
+                  }
+                },
+                {
+                  "action": {
+                    "castSpell": {
+                      "spellId": {
+                        "rank": 3,
+                        "spellId": 20928
+                      }
+                    }
+                  }
+                }
+              ],
+              "type": "TypeAPL"
+            },
+            "talentsString": "052003003-5530513321301501"
+          }
+        ]
+      }
+    ],
+    "tanks": [
+      {
+        "index": 0,
+        "type": "Player"
+      }
+    ]
+  },
+  "simOptions": {
+    "iterations": 10,
+    "randomSeed": "42",
+    "ruleset": "RulesetForever"
+  }
+}

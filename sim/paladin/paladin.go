@@ -27,6 +27,7 @@ const (
 	SpellCode_PaladinLayOnHands
 	SpellCode_PaladinHammerOfWrath
 	SpellCode_PaladinHolyStrike
+	SpellCode_PaladinJudgementOfFury
 )
 
 type SealJudgeCode uint8
@@ -54,12 +55,14 @@ type Paladin struct {
 	aurasSoR         []*core.Aura
 	aurasSoC         []*core.Aura
 	aurasSotC        []*core.Aura
+	aurasSoF         []*core.Aura
 
 	currentJudgement *core.Spell
 	allJudgeSpells   [][]*core.Spell
 	spellsJoR        []*core.Spell
 	spellsJoC        []*core.Spell
 	spellsJotC       []*core.Spell
+	spellsJoF        []*core.Spell
 
 	// The on-hit proc each seal aura owns, for Twist of Light to bank.
 	sealProcs    map[*core.Aura]*core.Spell
@@ -77,6 +80,7 @@ type Paladin struct {
 	// highest rank seal spell if available
 	sealOfRighteousness *core.Spell
 	sealOfCommand       *core.Spell
+	sealOfFury          *core.Spell
 }
 
 // Implemented by each Paladin spec.
@@ -106,14 +110,17 @@ func (paladin *Paladin) Initialize() {
 	paladin.registerSwiftJudgement()
 	paladin.registerTwistOfLight()
 
+	paladin.registerSealOfFury()
 	paladin.registerSealOfRighteousness()
 	paladin.registerSealOfCommand()
 	paladin.registerSealOfTheCrusader()
 
+	paladin.allJudgeSpells = append(paladin.allJudgeSpells, paladin.spellsJoF)
 	paladin.allJudgeSpells = append(paladin.allJudgeSpells, paladin.spellsJoR)
 	paladin.allJudgeSpells = append(paladin.allJudgeSpells, paladin.spellsJoC)
 	paladin.allJudgeSpells = append(paladin.allJudgeSpells, paladin.spellsJotC)
 
+	paladin.allSealAuras = append(paladin.allSealAuras, paladin.aurasSoF)
 	paladin.allSealAuras = append(paladin.allSealAuras, paladin.aurasSoR)
 	paladin.allSealAuras = append(paladin.allSealAuras, paladin.aurasSoC)
 	paladin.allSealAuras = append(paladin.allSealAuras, paladin.aurasSotC)
@@ -204,6 +211,8 @@ func (paladin *Paladin) ResetCurrentPaladinAura() {
 func (paladin *Paladin) getPrimarySealSpell(primarySeal proto.PaladinSeal) *core.Spell {
 	// Used in the Cast Primary Seal APLAction to get the max rank spell for the level.
 	switch primarySeal {
+	case proto.PaladinSeal_Fury:
+		return paladin.sealOfFury
 	case proto.PaladinSeal_Command:
 		return paladin.sealOfCommand
 	case proto.PaladinSeal_Righteousness:
