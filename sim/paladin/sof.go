@@ -20,13 +20,13 @@ func (paladin *Paladin) registerSealOfFury() {
 		sealID, procID, judgementID                     int32
 		mana, damage, judgeMin, judgeMax, judgePerLevel float64
 	}{
-		{10, 16, 1311649, 1311647, 1311650, 40, 6, 22, 24, 1.71},
-		{18, 24, 1311656, 1311654, 1311655, 60, 9, 35, 39, 2.16},
-		{25, 31, 20163, 20231, 20183, 90, 14, 51, 57, 2.52},
-		{34, 40, 20419, 20415, 20411, 120, 19, 70, 78, 2.79},
-		{42, 48, 20421, 20416, 20412, 140, 25, 91, 101, 3.42},
-		{50, 56, 20422, 20417, 20413, 170, 32, 118, 128, 3.69},
-		{58, 64, 20423, 20418, 20414, 200, 35, 146, 160, 3.69},
+		{level: 10, maxLevel: 16, sealID: 1311649, procID: 1311647, judgementID: 1311650, mana: 40, damage: 6, judgeMin: 22, judgeMax: 24, judgePerLevel: 1.71},
+		{level: 18, maxLevel: 24, sealID: 1311656, procID: 1311654, judgementID: 1311655, mana: 60, damage: 9, judgeMin: 35, judgeMax: 39, judgePerLevel: 2.16},
+		{level: 25, maxLevel: 31, sealID: 20163, procID: 20231, judgementID: 20183, mana: 90, damage: 14, judgeMin: 51, judgeMax: 57, judgePerLevel: 2.52},
+		{level: 34, maxLevel: 40, sealID: 20419, procID: 20415, judgementID: 20411, mana: 120, damage: 19, judgeMin: 70, judgeMax: 78, judgePerLevel: 2.79},
+		{level: 42, maxLevel: 48, sealID: 20421, procID: 20416, judgementID: 20412, mana: 140, damage: 25, judgeMin: 91, judgeMax: 101, judgePerLevel: 3.42},
+		{level: 50, maxLevel: 56, sealID: 20422, procID: 20417, judgementID: 20413, mana: 170, damage: 32, judgeMin: 118, judgeMax: 128, judgePerLevel: 3.69},
+		{level: 58, maxLevel: 64, sealID: 20423, procID: 20418, judgementID: 20414, mana: 200, damage: 35, judgeMin: 146, judgeMax: 160, judgePerLevel: 3.69},
 	}
 	for i, rank := range ranks {
 		if paladin.Level < rank.level {
