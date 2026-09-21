@@ -1,5 +1,7 @@
 # WoW: Forever sim
 
+This repository is the **MythicSim-maintained fork** of [ElliotWood/Forever](https://github.com/ElliotWood/Forever), built on [wowsims/classic](https://github.com/wowsims/classic) (MIT). Our downstream changes include Seal of Fury damage, absorbs and talented mana return. See the [patch and upstream convergence notes](docs/mythicsim-seal-of-fury.md) for sources, tests and experimental assumptions. We track upstream and aim to contribute fixes back, replacing local patches when equivalent upstream support is available.
+
 A fork of [wowsims/classic](https://github.com/wowsims/classic) being converted from WoW Classic Era to **World of Warcraft: Forever**, the Classic+ game announced at BlizzCon 2026.
 
 Everything the original project does still works. What this fork adds is a second set of engine rules behind a switch, a replacement talent tree for all nine classes, and the race changes. The switch is what makes the conversion reviewable: every rule can be turned off to show exactly what it was worth.
