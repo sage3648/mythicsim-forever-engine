@@ -3,23 +3,22 @@ package rogue
 import (
 	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
+// Cost and haste come from the client table; the id stays ours (see sinister_strike.go). The durations
+// stay ours: the table's 6s is the base before the per combo point step, which sits on a dummy.
 func (rogue *Rogue) registerSliceAndDice() {
-	hasteBonusByRank := map[int32]float64{
-		25: 0.20,
-		40: 0.20,
-		50: 0.30,
-		60: 0.30,
-	}[rogue.Level]
-
 	spellID := map[int32]int32{
 		25: 5171,
 		40: 5171,
 		50: 6774,
 		60: 6774,
 	}[rogue.Level]
+
+	row := spellData.SliceAndDice.BySpellID(spellID)
+	hasteBonusByRank := shared.SpellDataMin(row.Direct) / 100
 
 	actionID := core.ActionID{SpellID: spellID}
 
@@ -51,13 +50,14 @@ func (rogue *Rogue) registerSliceAndDice() {
 	})
 
 	rogue.SliceAndDice = rogue.RegisterSpell(core.SpellConfig{
-		SpellCode:    SpellCode_RogueSliceandDice,
-		ActionID:     actionID,
-		Flags:        core.SpellFlagAPL,
-		MetricSplits: 6,
+		SpellCode:      SpellCode_RogueSliceandDice,
+		ClassSpellMask: SpellMaskSliceAndDice,
+		ActionID:       actionID,
+		Flags:          core.SpellFlagAPL,
+		MetricSplits:   6,
 
 		EnergyCost: core.EnergyCostOptions{
-			Cost: 25,
+			Cost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

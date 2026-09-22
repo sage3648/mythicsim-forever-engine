@@ -7,40 +7,40 @@ import (
 )
 
 const SoulFireRanks = 2
-const SoulFireCastTime = time.Millisecond * 6000
+
+// Beta client 1.60.1 values. Everything but the damage comes from the client table (see shadowbolt.go).
+var SoulFireBaseDamage = [SoulFireRanks + 1][]float64{{0, 0}, {344, 430}, {390, 487}}
 
 func (warlock *Warlock) getSoulFireBaseConfig(rank int) core.SpellConfig {
-	spellId := [SoulFireRanks + 1]int32{0, 6353, 17924}[rank]
-	// Beta client 1.60.1 values
-	baseDamage := [SoulFireRanks + 1][]float64{{0, 0}, {344, 430}, {390, 487}}[rank]
-	manaCost := [SoulFireRanks + 1]float64{0, 305, 335}[rank]
+	row := spellData.SoulFire.ByRank(int32(rank))
+	baseDamage := SoulFireBaseDamage[rank]
 	level := [SoulFireRanks + 1]int{0, 48, 56}[rank]
-	spellCoeff := 1.0
 
 	config := core.SpellConfig{
-		SpellCode:     SpellCode_WarlockSoulFire,
-		ActionID:      core.ActionID{SpellID: spellId},
-		SpellSchool:   core.SpellSchoolFire,
-		DefenseType:   core.DefenseTypeMagic,
-		ProcMask:      core.ProcMaskSpellDamage,
-		Flags:         core.SpellFlagAPL | core.SpellFlagResetAttackSwing | WarlockFlagDestruction,
-		RequiredLevel: level,
-		Rank:          rank,
-		MissileSpeed:  24,
+		SpellCode:      SpellCode_WarlockSoulFire,
+		ClassSpellMask: SpellMaskSoulFire,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          core.SpellFlagAPL | core.SpellFlagResetAttackSwing | WarlockFlagDestruction,
+		RequiredLevel:  level,
+		Rank:           rank,
+		MissileSpeed:   row.MissileSpeed,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
 				GCD:      core.GCDDefault,
-				CastTime: SoulFireCastTime,
+				CastTime: row.CastTime,
 			},
 		},
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
-		BonusCoefficient: spellCoeff,
+		BonusCoefficient: roundCoef(row.Direct.BonusCoefficient()),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			damage := sim.Roll(baseDamage[0], baseDamage[1])
@@ -56,7 +56,7 @@ func (warlock *Warlock) getSoulFireBaseConfig(rank int) core.SpellConfig {
 
 	config.Cast.CD = core.Cooldown{
 		Timer:    warlock.NewTimer(),
-		Duration: time.Duration(float64(time.Minute) * (1 - cooldownReduction)),
+		Duration: time.Duration(float64(row.Cooldown) * (1 - cooldownReduction)),
 	}
 
 	return config

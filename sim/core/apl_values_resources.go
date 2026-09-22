@@ -298,3 +298,72 @@ func (value *APLValueEnergyThreshold) GetBool(_ *Simulation) bool {
 func (value *APLValueEnergyThreshold) String() string {
 	return "Energy Threshold"
 }
+
+type APLValueMaxEnergy struct {
+	DefaultAPLValueImpl
+	unit *Unit
+}
+
+func (rot *APLRotation) newValueMaxEnergy(_ *proto.APLValueMaxEnergy) APLValue {
+	unit := rot.unit
+	if !unit.HasEnergyBar() {
+		rot.ValidationWarning("%s does not use Energy", unit.Label)
+		return nil
+	}
+	return &APLValueMaxEnergy{unit: unit}
+}
+func (value *APLValueMaxEnergy) Type() proto.APLValueType {
+	return proto.APLValueType_ValueTypeFloat
+}
+func (value *APLValueMaxEnergy) GetFloat(_ *Simulation) float64 {
+	return value.unit.MaxEnergy()
+}
+func (value *APLValueMaxEnergy) String() string {
+	return "Max Energy"
+}
+
+type APLValueMaxRage struct {
+	DefaultAPLValueImpl
+	unit *Unit
+}
+
+func (rot *APLRotation) newValueMaxRage(_ *proto.APLValueMaxRage) APLValue {
+	unit := rot.unit
+	if !unit.HasRageBar() {
+		rot.ValidationWarning("%s does not use Rage", unit.Label)
+		return nil
+	}
+	return &APLValueMaxRage{unit: unit}
+}
+func (value *APLValueMaxRage) Type() proto.APLValueType {
+	return proto.APLValueType_ValueTypeFloat
+}
+func (value *APLValueMaxRage) GetFloat(_ *Simulation) float64 {
+	return value.unit.rageBar.maxRage
+}
+func (value *APLValueMaxRage) String() string {
+	return "Max Rage"
+}
+
+type APLValueMaxComboPoints struct {
+	DefaultAPLValueImpl
+}
+
+func (rot *APLRotation) newValueMaxComboPoints(_ *proto.APLValueMaxComboPoints) APLValue {
+	if !rot.unit.HasEnergyBar() {
+		rot.ValidationWarning("%s does not use Combo Points", rot.unit.Label)
+		return nil
+	}
+	return &APLValueMaxComboPoints{}
+}
+func (value *APLValueMaxComboPoints) Type() proto.APLValueType {
+	return proto.APLValueType_ValueTypeInt
+}
+
+// Combo points cap at 5 in Classic-era clients.
+func (value *APLValueMaxComboPoints) GetInt(_ *Simulation) int32 {
+	return 5
+}
+func (value *APLValueMaxComboPoints) String() string {
+	return "Max Combo Points"
+}

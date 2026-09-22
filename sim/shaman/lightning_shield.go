@@ -4,18 +4,17 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
 const LightningShieldRanks = 7
 
 // Forever beta client values for the orb (the proc spell): lower damage from rank 2 up, and every rank carries the
-// full 0.267. Rank 7's 370 mana was missing from the table, which left it free.
-var LightningShieldSpellId = [LightningShieldRanks + 1]int32{0, 324, 325, 905, 945, 8134, 10431, 10432}
+// full 0.267. The shield's id, cost, duration and school and the orb's damage, coefficient, school and defense type
+// come from the client table. The orb ids stay here: the table ranks them differently (its rank 1 is 26363, our
+// rank 7's orb), so each orb row is looked up by its id.
 var LightningShieldProcSpellId = [LightningShieldRanks + 1]int32{0, 26364, 26365, 26366, 26367, 26369, 26370, 26363}
-var LightningShieldBaseDamage = [LightningShieldRanks + 1]float64{0, 13, 24, 40, 64, 96, 134, 178}
-var LightningShieldSpellCoef = [LightningShieldRanks + 1]float64{0, .267, .267, .267, .267, .267, .267, .267}
-var LightningShieldManaCost = [LightningShieldRanks + 1]float64{0, 45, 80, 125, 180, 240, 305, 370}
 var LightningShieldLevel = [LightningShieldRanks + 1]int{0, 8, 16, 24, 32, 40, 48, 56}
 
 func (shaman *Shaman) registerLightningShieldSpell() {
@@ -35,11 +34,10 @@ func (shaman *Shaman) registerLightningShieldSpell() {
 func (shaman *Shaman) registerNewLightningShieldSpell(rank int) {
 	impLightningShieldBonus := 1 + []float64{0, .05, .10, .15}[shaman.Talents.ImprovedLightningShield]
 
-	spellId := LightningShieldSpellId[rank]
+	row := spellData.LightningShield.ByRank(int32(rank))
 	procSpellId := LightningShieldProcSpellId[rank]
-	baseDamage := LightningShieldBaseDamage[rank] * impLightningShieldBonus
-	spellCoeff := LightningShieldSpellCoef[rank]
-	manaCost := LightningShieldManaCost[rank]
+	procRow := spellData.LightningShieldTriggered.BySpellID(procSpellId)
+	baseDamage := procRow.Direct.(shared.SpellDataFlat).Value * impLightningShieldBonus
 	level := LightningShieldLevel[rank]
 
 	baseCharges := int32(3)
@@ -47,14 +45,14 @@ func (shaman *Shaman) registerNewLightningShieldSpell(rank int) {
 
 	shaman.LightningShieldProcs[rank] = shaman.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: procSpellId},
-		SpellSchool: core.SpellSchoolNature,
-		DefenseType: core.DefenseTypeMagic,
+		SpellSchool: procRow.SpellSchool,
+		DefenseType: procRow.DefenseType,
 		ProcMask:    core.ProcMaskEmpty,
 		Flags:       core.SpellFlagNoOnCastComplete | core.SpellFlagPassiveSpell | SpellFlagShaman | SpellFlagLightning,
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
-		BonusCoefficient: spellCoeff,
+		BonusCoefficient: roundCoef(procRow.Direct.BonusCoefficient()),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeAlwaysHit)
@@ -70,8 +68,8 @@ func (shaman *Shaman) registerNewLightningShieldSpell(rank int) {
 
 	shaman.LightningShieldAuras[rank] = shaman.RegisterAura(core.Aura{
 		Label:     fmt.Sprintf("Lightning Shield (Rank %d)", rank),
-		ActionID:  core.ActionID{SpellID: spellId},
-		Duration:  time.Minute * 10,
+		ActionID:  core.ActionID{SpellID: row.SpellID},
+		Duration:  row.Duration,
 		MaxStacks: maxCharges,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			aura.SetStacks(sim, baseCharges)
@@ -100,16 +98,17 @@ func (shaman *Shaman) registerNewLightningShieldSpell(rank int) {
 	})
 
 	shaman.LightningShield[rank] = shaman.RegisterSpell(core.SpellConfig{
-		ActionID:  core.ActionID{SpellID: spellId},
-		SpellCode: SpellCode_ShamanLightningShield,
-		ProcMask:  core.ProcMaskEmpty,
-		Flags:     core.SpellFlagAPL | SpellFlagShaman | SpellFlagLightning,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellCode:      SpellCode_ShamanLightningShield,
+		ClassSpellMask: SpellMaskLightningShield,
+		ProcMask:       core.ProcMaskEmpty,
+		Flags:          core.SpellFlagAPL | SpellFlagShaman | SpellFlagLightning,
 
 		RequiredLevel: level,
 		Rank:          rank,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost:   manaCost,
+			FlatCost:   float64(row.Cost),
 			Multiplier: 100 - shaman.shamanisticFocusReduction(),
 		},
 		Cast: core.CastConfig{

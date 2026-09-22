@@ -13,6 +13,7 @@ import {
 	APLActionChangeTarget,
 	APLActionChannelSpell,
 	APLActionCustomRotation,
+	APLActionGroupReference,
 	APLActionItemSwap,
 	APLActionItemSwap_SwapSet as ItemSwapSet,
 	APLActionMove,
@@ -26,6 +27,7 @@ import {
 	APLActionWait,
 	APLActionWaitUntil,
 	APLValue,
+	APLValueVariable,
 } from '../../proto/apl';
 import { Spec } from '../../proto/common';
 import { isHealingSpec } from '../../proto_utils/utils';
@@ -33,7 +35,7 @@ import { EventID } from '../../typed_event';
 import { randomUUID } from '../../utils';
 import { TextDropdownPicker } from '../dropdown_picker';
 import { Input, InputConfig } from '../input';
-import { ListItemPickerConfig, ListPicker } from '../list_picker';
+import { ListItemPickerConfig, ListPicker, ListPickerConfig } from '../list_picker';
 import * as AplHelpers from './apl_helpers';
 import * as AplValues from './apl_values';
 
@@ -312,6 +314,37 @@ function actionListFieldConfig(field: string): AplHelpers.APLPickerBuilderFieldC
 			}),
 	};
 }
+
+export function variableListFieldConfig(field: string): AplHelpers.APLPickerBuilderFieldConfig<any, any> {
+	return {
+		field: field,
+		newValue: () => [],
+		factory: (parent, player, config) => new APLValueVariableListPicker(parent, player, config),
+	};
+}
+
+export class APLValueVariableListPicker extends ListPicker<Player<any>, APLValueVariable> {
+	constructor(parent: HTMLElement, player: Player<any>, config: Omit<ListPickerConfig<Player<any>, APLValueVariable>, keyof APLVariableListDefaults>) {
+		super(parent, player, {
+			itemLabel: 'Variable',
+			newItem: () => APLValueVariable.create({ value: APLValue.create() }),
+			copyItem: (oldValue: APLValueVariable) => APLValueVariable.clone(oldValue),
+			newItemPicker: (parent, _listPicker, _index, itemConfig) =>
+				AplHelpers.aplInputBuilder(
+					() => APLValueVariable.create({ value: APLValue.create() }),
+					[AplHelpers.stringFieldConfig('name'), AplValues.valueFieldConfig('value', { label: '=' })],
+				)(parent, player, itemConfig),
+			allowedActions: ['create', 'delete', 'move', 'copy'],
+			actions: {
+				create: {
+					useIcon: true,
+				},
+			},
+			...config,
+		});
+	}
+}
+type APLVariableListDefaults = Pick<ListPickerConfig<Player<any>, APLValueVariable>, 'itemLabel' | 'newItem' | 'copyItem' | 'newItemPicker'>;
 
 function inputBuilder<T>(config: {
 	label: string;
@@ -612,6 +645,16 @@ const actionKindFactories: { [f in NonNullable<APLActionKind>]: ActionKindConfig
 				labelTooltip: 'Desired range from target.',
 			}),
 		],
+	}),
+	['groupReference']: inputBuilder({
+		label: 'Action Group',
+		submenu: ['Misc'],
+		shortDescription: 'Runs the first ready action from the named <b>Action Group</b>.',
+		fullDescription: `
+			<p>Action Groups are defined below the Priority List. Use <b>Variables</b> here to fill the group's <b>Variable Placeholders</b>, or to override its variables for this reference only.</p>
+		`,
+		newValue: () => APLActionGroupReference.create(),
+		fields: [AplHelpers.stringFieldConfig('groupName', { label: 'Group' }), variableListFieldConfig('variables')],
 	}),
 	['customRotation']: inputBuilder({
 		label: 'Custom Rotation',

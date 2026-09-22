@@ -276,3 +276,28 @@ func (value *APLValueSpellCurrentCost) GetFloat(_ *Simulation) float64 {
 func (value *APLValueSpellCurrentCost) String() string {
 	return fmt.Sprintf("CurrentCost(%s)", value.spell.ActionID)
 }
+
+type APLValueSpellFullCooldown struct {
+	DefaultAPLValueImpl
+	spell *Spell
+}
+
+func (rot *APLRotation) newValueSpellFullCooldown(config *proto.APLValueSpellFullCooldown) APLValue {
+	spell := rot.GetAPLSpell(config.SpellId)
+	if spell == nil {
+		return nil
+	}
+	return &APLValueSpellFullCooldown{spell: spell}
+}
+func (value *APLValueSpellFullCooldown) Type() proto.APLValueType {
+	return proto.APLValueType_ValueTypeDuration
+}
+func (value *APLValueSpellFullCooldown) GetDuration(_ *Simulation) time.Duration {
+	if value.spell.CD.Timer == nil {
+		return 0
+	}
+	return value.spell.CD.Duration
+}
+func (value *APLValueSpellFullCooldown) String() string {
+	return fmt.Sprintf("Spell Full Cooldown(%s)", value.spell.ActionID)
+}

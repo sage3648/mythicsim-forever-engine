@@ -24,10 +24,32 @@ const (
 	SpellCode_PriestMindBlast
 	SpellCode_PriestMindFlay
 	SpellCode_PriestPenance
+	SpellCode_PriestShadowWordDeath
 	SpellCode_PriestShadowWordPain
 	SpellCode_PriestSmite
 	SpellCode_PriestStarshards
 	SpellCode_PriestVampiricTouch
+)
+
+// Class spell masks for SpellMods (see core/spell_mod.go), one per SpellCode above.
+const (
+	SpellMaskNone            int64 = 0
+	SpellMaskDevouringPlague int64 = 1 << iota
+	SpellMaskFlashHeal
+	SpellMaskGreaterHeal
+	SpellMaskHeal
+	SpellMaskHolyFire
+	SpellMaskHolyNova
+	SpellMaskMindBlast
+	SpellMaskMindFlay
+	SpellMaskPenance
+	SpellMaskShadowWordDeath
+	SpellMaskShadowWordPain
+	SpellMaskSmite
+	SpellMaskStarshards
+	SpellMaskVampiricTouch
+
+	SpellMaskAll = SpellMaskVampiricTouch<<1 - SpellMaskDevouringPlague // every bit from DevouringPlague to VampiricTouch
 )
 
 type Priest struct {
@@ -52,6 +74,7 @@ type Priest struct {
 	PrayerOfMending *core.Spell
 	Renew           []*core.Spell
 	Shadowform      *core.Spell
+	ShadowWordDeath []*core.Spell
 	ShadowWordPain  []*core.Spell
 	Smite           []*core.Spell
 	Starshards      [][]*core.Spell
@@ -89,6 +112,7 @@ func (priest *Priest) AddPartyBuffs(_ *proto.PartyBuffs) {
 
 func (priest *Priest) Initialize() {
 	priest.registerMindBlast()
+	priest.registerShadowWordDeath()
 	priest.registerMindFlay()
 	priest.registerShadowWordPainSpell()
 	// Devouring Plague is an Undead racial in Classic. The Forever beta client teaches it to

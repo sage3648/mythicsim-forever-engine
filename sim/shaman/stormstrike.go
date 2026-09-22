@@ -15,8 +15,10 @@ func (shaman *Shaman) registerStormstrikeSpell() {
 	// Forever's Stormstrike raises only this shaman's damage, so it gets an aura of its own rather than the
 	// raid-wide debuff, which the Classic ruleset still uses. The beta client (17364) narrows it to the next
 	// Lightning Bolt, Chain Lightning or Earth Shock that lands within 12 sec (one charge, +20%), puts the strike
-	// on an 8 sec cooldown and charges a flat 125 mana.
+	// on an 8 sec cooldown and charges a flat 125 mana. Id, school, defense type and the Forever cost, cooldown
+	// and aura duration come from the client table.
 	forever := shaman.Env.IsForever()
+	row := spellData.Stormstrike.ByRank(1)
 	stormstrikeSpellCodes := []int32{SpellCode_ShamanLightningBolt, SpellCode_ShamanChainLightning, SpellCode_ShamanEarthShock}
 
 	stormStrikeAuras := shaman.NewEnemyAuraArray(func(target *core.Unit) *core.Aura {
@@ -26,8 +28,8 @@ func (shaman *Shaman) registerStormstrikeSpell() {
 
 		return target.RegisterAura(core.Aura{
 			Label:    "Stormstrike-" + shaman.Label,
-			ActionID: core.ActionID{SpellID: 17364},
-			Duration: time.Second * 12,
+			ActionID: core.ActionID{SpellID: row.SpellID},
+			Duration: row.Duration,
 		})
 	})
 
@@ -47,16 +49,17 @@ func (shaman *Shaman) registerStormstrikeSpell() {
 	}
 
 	shaman.Stormstrike = shaman.RegisterSpell(core.SpellConfig{
-		SpellCode:   SpellCode_ShamanStormstrike,
-		ActionID:    core.ActionID{SpellID: 17364},
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
-		ProcMask:    core.ProcMaskMeleeMHSpecial,
-		Flags:       SpellFlagShaman | core.SpellFlagAPL | core.SpellFlagMeleeMetrics,
+		SpellCode:      SpellCode_ShamanStormstrike,
+		ClassSpellMask: SpellMaskStormstrike,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskMeleeMHSpecial,
+		Flags:          SpellFlagShaman | core.SpellFlagAPL | core.SpellFlagMeleeMetrics,
 
 		ManaCost: core.ManaCostOptions{
 			BaseCost: core.TernaryFloat64(forever, 0, .21),
-			FlatCost: core.TernaryFloat64(forever, 125, 0),
+			FlatCost: core.TernaryFloat64(forever, float64(row.Cost), 0),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -64,7 +67,7 @@ func (shaman *Shaman) registerStormstrikeSpell() {
 			},
 			CD: core.Cooldown{
 				Timer:    shaman.NewTimer(),
-				Duration: core.TernaryDuration(forever, time.Second*8, time.Second*20),
+				Duration: core.TernaryDuration(forever, row.Cooldown, time.Second*20),
 			},
 		},
 

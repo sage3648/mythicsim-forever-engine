@@ -16,28 +16,30 @@ func (rogue *Rogue) registerHemorrhageSpell() {
 		return
 	}
 
-	spellID := int32(16511)
-
-	actionID := core.ActionID{SpellID: spellID}
+	// Forever beta client 1.60.1.69893: id, cost, debuff duration, school, defense type and coefficient
+	// come from the client table.
+	row := spellData.Hemorrhage.ByRank(1)
+	actionID := core.ActionID{SpellID: row.SpellID}
 
 	rogue.HemorrhageAuras = rogue.NewEnemyAuraArray(func(target *core.Unit) *core.Aura {
 		return target.GetOrRegisterAura(core.Aura{
 			Label:    "Hemorrhage-" + strconv.Itoa(int(rogue.Index)),
 			ActionID: actionID,
-			Duration: time.Second * 15,
+			Duration: row.Duration,
 		})
 	})
 
 	rogue.Hemorrhage = rogue.RegisterSpell(core.SpellConfig{
-		SpellCode:   SpellCode_RogueHemorrhage,
-		ActionID:    actionID,
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
-		ProcMask:    core.ProcMaskMeleeMHSpecial,
-		Flags:       rogue.builderFlags(),
+		SpellCode:      SpellCode_RogueHemorrhage,
+		ClassSpellMask: SpellMaskHemorrhage,
+		ActionID:       actionID,
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskMeleeMHSpecial,
+		Flags:          rogue.builderFlags(),
 
 		EnergyCost: core.EnergyCostOptions{
-			Cost:   35.0,
+			Cost:   float64(row.Cost),
 			Refund: 0.8,
 		},
 		Cast: core.CastConfig{
@@ -51,7 +53,7 @@ func (rogue *Rogue) registerHemorrhageSpell() {
 
 		DamageMultiplier: core.TernaryFloat64(rogue.HasDagger(core.MainHand), 1.45, 1),
 		ThreatMultiplier: 1,
-		BonusCoefficient: 1,
+		BonusCoefficient: row.Direct.BonusCoefficient(),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			rogue.BreakStealth(sim)

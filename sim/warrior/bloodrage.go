@@ -1,24 +1,29 @@
 package warrior
 
 import (
-	"time"
-
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
 func (warrior *Warrior) registerBloodrageCD() {
-	actionID := core.ActionID{SpellID: 2687}
+	// Forever beta client 1.60.1.69893: id, cooldown, duration, Rage (the client counts it in tenths),
+	// tick count and tick length come from the client table.
+	row := spellData.Bloodrage.ByRank(1)
+	auraRow := spellData.BloodrageTriggered.ByRank(1)
+	periodic := auraRow.Energize.(shared.SpellDataPeriodic)
+
+	actionID := core.ActionID{SpellID: row.SpellID}
 	rageMetrics := warrior.NewRageMetrics(actionID)
 
 	// Improved Bloodrage scales all of the Rage the ability makes now, not just the instant hit.
 	rageMultiplier := 1 + 0.25*float64(warrior.Talents.ImprovedBloodrage)
-	instantRage := 10.0 * rageMultiplier
-	ragePerSec := 1.0 * rageMultiplier
+	instantRage := shared.SpellDataMin(row.Energize) / 10 * rageMultiplier
+	ragePerSec := periodic.Tick / 10 * rageMultiplier
 
 	warrior.BloodrageAura = warrior.RegisterAura(core.Aura{
 		Label:    "Bloodrage",
 		ActionID: actionID,
-		Duration: time.Second * 10,
+		Duration: auraRow.Duration,
 	})
 
 	warrior.Bloodrage = warrior.RegisterSpell(AnyStance, core.SpellConfig{
@@ -26,7 +31,7 @@ func (warrior *Warrior) registerBloodrageCD() {
 		Cast: core.CastConfig{
 			CD: core.Cooldown{
 				Timer:    warrior.NewTimer(),
-				Duration: time.Minute,
+				Duration: row.Cooldown,
 			},
 		},
 
@@ -35,8 +40,8 @@ func (warrior *Warrior) registerBloodrageCD() {
 			warrior.AddRage(sim, instantRage, rageMetrics)
 
 			core.StartPeriodicAction(sim, core.PeriodicActionOptions{
-				NumTicks: 10,
-				Period:   time.Second * 1,
+				NumTicks: int(periodic.NumberOfTicks),
+				Period:   periodic.TickLength,
 				OnAction: func(sim *core.Simulation) {
 					warrior.AddRage(sim, ragePerSec, rageMetrics)
 				},

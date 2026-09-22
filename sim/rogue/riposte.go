@@ -11,12 +11,17 @@ func (rogue *Rogue) applyRiposte() {
 		return
 	}
 
+	// Forever beta client 1.60.1.69893: id, cooldown, school and defense type come from the client
+	// table. Its cost reads 0 (ours 10) and its 6s duration is the disarm's, not the 5s window after a
+	// parry, so both stay ours.
+	row := spellData.Riposte.ByRank(1)
+
 	var riposteReady *core.Aura
 
 	riposte := rogue.GetOrRegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: 14251},
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
+		ActionID:    core.ActionID{SpellID: row.SpellID},
+		SpellSchool: row.SpellSchool,
+		DefenseType: row.DefenseType,
 		ProcMask:    core.ProcMaskMeleeMHSpecial,
 		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
 
@@ -26,7 +31,7 @@ func (rogue *Rogue) applyRiposte() {
 		Cast: core.CastConfig{
 			CD: core.Cooldown{
 				Timer:    rogue.NewTimer(),
-				Duration: time.Second * 6,
+				Duration: row.Cooldown,
 			},
 		},
 		ExtraCastCondition: func(sim *core.Simulation, target *core.Unit) bool {

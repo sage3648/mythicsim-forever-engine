@@ -54,3 +54,30 @@ func (value *APLValueDotRemainingTime) GetDuration(sim *Simulation) time.Duratio
 func (value *APLValueDotRemainingTime) String() string {
 	return fmt.Sprintf("Dot Remaining Time(%s)", value.dot.Spell.ActionID)
 }
+
+type APLValueDotTimeToNextTick struct {
+	DefaultAPLValueImpl
+	dot *Dot
+}
+
+func (rot *APLRotation) newValueDotTimeToNextTick(config *proto.APLValueDotTimeToNextTick) APLValue {
+	dot := rot.GetAPLDot(rot.GetTargetUnit(config.TargetUnit), config.SpellId)
+	if dot == nil {
+		return nil
+	}
+	return &APLValueDotTimeToNextTick{dot: dot}
+}
+func (value *APLValueDotTimeToNextTick) Type() proto.APLValueType {
+	return proto.APLValueType_ValueTypeDuration
+}
+
+// 0 when the dot is not ticking (upstream returns a stale value there).
+func (value *APLValueDotTimeToNextTick) GetDuration(sim *Simulation) time.Duration {
+	if !value.dot.IsActive() {
+		return 0
+	}
+	return max(0, value.dot.TimeUntilNextTick(sim))
+}
+func (value *APLValueDotTimeToNextTick) String() string {
+	return fmt.Sprintf("Dot Time To Next Tick(%s)", value.dot.Spell.ActionID)
+}

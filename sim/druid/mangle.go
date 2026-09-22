@@ -21,12 +21,13 @@ func (druid *Druid) registerMangleCatSpell() {
 	results := make([]*core.SpellResult, min(MangleBerserkTargets, druid.Env.GetNumTargets()))
 
 	druid.MangleCat = druid.RegisterSpell(Cat, core.SpellConfig{
-		SpellCode:   SpellCode_DruidMangle,
-		ActionID:    core.ActionID{SpellID: 33876},
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
-		ProcMask:    core.ProcMaskMeleeMHSpecial,
-		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagAPL | SpellFlagBuilder,
+		SpellCode:      SpellCode_DruidMangle,
+		ClassSpellMask: SpellMaskMangle,
+		ActionID:       core.ActionID{SpellID: 33876},
+		SpellSchool:    core.SpellSchoolPhysical,
+		DefenseType:    core.DefenseTypeMelee,
+		ProcMask:       core.ProcMaskMeleeMHSpecial,
+		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagAPL | SpellFlagBuilder,
 
 		EnergyCost: core.EnergyCostOptions{
 			Cost:   45 - float64(druid.Talents.Ferocity),
@@ -70,25 +71,28 @@ func (druid *Druid) registerMangleCatSpell() {
 
 // Beta client 1.60.1.69893: Mangle is 20 Rage, a 6 sec cooldown, and 100% weapon damage plus a bonus that grows by
 // rank (407995, 1238069, 1238070, 1238073 at levels 25, 36, 48, 60). The client does not carry threat, so the 1.5x is
-// still Season of Discovery's.
+// still Season of Discovery's. The cost, cooldown and flat bonus come from the client table (see wrath.go); the id
+// stays the one the APLs name.
 func (druid *Druid) registerMangleBearSpell() {
 	if !druid.Talents.Mangle {
 		return
 	}
 
-	flatDamageBonus := map[int32]float64{25: 26, 40: 38, 50: 59, 60: 77}[druid.Level]
+	row := spellData.Mangle.ByRank(map[int32]int32{25: 1, 40: 2, 50: 3, 60: 4}[druid.Level])
+	flatDamageBonus, _ := row.Direct.Range()
 	results := make([]*core.SpellResult, min(MangleBerserkTargets, druid.Env.GetNumTargets()))
 
 	druid.MangleBear = druid.RegisterSpell(Bear, core.SpellConfig{
-		SpellCode:   SpellCode_DruidMangle,
-		ActionID:    core.ActionID{SpellID: 33878},
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
-		ProcMask:    core.ProcMaskMeleeMHSpecial,
-		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
+		SpellCode:      SpellCode_DruidMangle,
+		ClassSpellMask: SpellMaskMangle,
+		ActionID:       core.ActionID{SpellID: 33878},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskMeleeMHSpecial,
+		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
 
 		RageCost: core.RageCostOptions{
-			Cost:   20 - float64(druid.Talents.Ferocity),
+			Cost:   float64(row.Cost) - float64(druid.Talents.Ferocity),
 			Refund: 0.8,
 		},
 		Cast: core.CastConfig{
@@ -98,7 +102,7 @@ func (druid *Druid) registerMangleBearSpell() {
 			IgnoreHaste: true,
 			CD: core.Cooldown{
 				Timer:    druid.NewTimer(),
-				Duration: time.Second * 6,
+				Duration: row.Cooldown,
 			},
 		},
 

@@ -122,11 +122,13 @@ func (warlock *Warlock) applyMalediction() {
 		return
 	}
 
-	points := float64(warlock.Talents.Malediction)
-	warlock.OnSpellRegistered(func(spell *core.Spell) {
-		if isWarlockSpell(spell) && (len(spell.Dots()) > 0 || spell.AOEDot() != nil) {
-			spell.PeriodicDamageMultiplierAdditive += 0.01 * points
-		}
+	// Every warlock spell with a dot or an AoE dot.
+	warlock.AddStaticMod(core.SpellModConfig{
+		Kind: core.SpellMod_PeriodicDamageDone_Flat,
+		ClassMask: SpellMaskCorruption | SpellMaskBaneOfAgony | SpellMaskBaneOfDoom | SpellMaskDrainLife | SpellMaskDrainSoul |
+			SpellMaskImmolate | SpellMaskSiphonLife | SpellMaskWrack | SpellMaskRainOfFire,
+		SpellFlag:  SpellFlagWarlock,
+		FloatValue: 0.01 * float64(warlock.Talents.Malediction),
 	})
 }
 
@@ -161,12 +163,11 @@ func (warlock *Warlock) applyPandemic() {
 		return
 	}
 
-	affectedSpellCodes := []int32{SpellCode_WarlockCorruption, SpellCode_WarlockBaneOfAgony, SpellCode_WarlockBaneOfDoom, SpellCode_WarlockDrainSoul, SpellCode_WarlockDrainLife, SpellCode_WarlockSiphonLife, SpellCode_WarlockWrack}
-	bonus := []float64{0, 0.33, 0.67, 1.00}[warlock.Talents.Pandemic]
-	warlock.OnSpellRegistered(func(spell *core.Spell) {
-		if slices.Contains(affectedSpellCodes, spell.SpellCode) {
-			spell.CritDamageBonus += bonus
-		}
+	warlock.AddStaticMod(core.SpellModConfig{
+		Kind: core.SpellMod_CritMultiplier_Flat,
+		ClassMask: SpellMaskCorruption | SpellMaskBaneOfAgony | SpellMaskBaneOfDoom | SpellMaskDrainSoul | SpellMaskDrainLife |
+			SpellMaskSiphonLife | SpellMaskWrack,
+		FloatValue: []float64{0, 0.33, 0.67, 1.00}[warlock.Talents.Pandemic],
 	})
 }
 
@@ -175,11 +176,11 @@ func (warlock *Warlock) applyMalevolence() {
 		return
 	}
 
-	points := float64(warlock.Talents.Malevolence)
-	warlock.OnSpellRegistered(func(spell *core.Spell) {
-		if spell.SpellSchool.Matches(core.SpellSchoolShadow) && isWarlockSpell(spell) {
-			spell.BonusCritRating += points * core.SpellCritRatingPerCritChance
-		}
+	warlock.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_BonusCrit_Percent,
+		School:     core.SpellSchoolShadow,
+		SpellFlag:  SpellFlagWarlock,
+		FloatValue: float64(warlock.Talents.Malevolence),
 	})
 }
 
@@ -188,19 +189,21 @@ func (warlock *Warlock) applyNightfall() {
 		return
 	}
 
+	instantShadowBolt := warlock.AddDynamicMod(core.SpellModConfig{
+		Kind:       core.SpellMod_CastTime_Pct,
+		ClassMask:  SpellMaskShadowBolt,
+		FloatValue: -1,
+	})
+
 	shadowTranceAura := warlock.RegisterAura(core.Aura{
 		Label:    "Nightfall Shadow Trance",
 		ActionID: core.ActionID{SpellID: 17941},
 		Duration: time.Second * 10,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
-			for _, spell := range warlock.ShadowBolt {
-				spell.CastTimeMultiplier -= 1
-			}
+			instantShadowBolt.Activate()
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-			for _, spell := range warlock.ShadowBolt {
-				spell.CastTimeMultiplier += 1
-			}
+			instantShadowBolt.Deactivate()
 		},
 		OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
 			// Check if the shadowbolt was instant cast and not a normal one
@@ -238,15 +241,12 @@ func (warlock *Warlock) applyShadowMastery() {
 	// The split had also drifted. Siphon Life multiplied its base damage and was never in the
 	// exclusion list, so it took Shadow Mastery twice; Drain Soul was in the list but never
 	// multiplied anything, so it took none at all.
-	warlock.OnSpellRegistered(func(spell *core.Spell) {
-		if spell.SpellSchool.Matches(core.SpellSchoolShadow) && isWarlockSpell(spell) {
-			spell.DamageMultiplierAdditive += warlock.shadowMasteryBonus()
-		}
+	warlock.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_DamageDone_Flat,
+		School:     core.SpellSchoolShadow,
+		SpellFlag:  SpellFlagWarlock,
+		FloatValue: .01 * float64(warlock.Talents.ShadowMastery),
 	})
-}
-
-func (warlock *Warlock) shadowMasteryBonus() float64 {
-	return .01 * float64(warlock.Talents.ShadowMastery)
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -290,28 +290,15 @@ func (warlock *Warlock) applyMasterSummoner() {
 		return
 	}
 
-	castTimeReduction := time.Second * 2 * time.Duration(warlock.Talents.MasterSummoner)
-	costReduction := 20 * warlock.Talents.MasterSummoner
-
-	// Use an aura because the summon spells aren't registered by this point
-	warlock.RegisterAura(core.Aura{
-		Label:    "Master Summoner Hidden Aura",
-		Duration: core.NeverExpires,
-		OnReset: func(aura *core.Aura, sim *core.Simulation) {
-			aura.Activate(sim)
-		},
-		OnGain: func(aura *core.Aura, sim *core.Simulation) {
-			for _, spell := range warlock.SummonDemonSpells {
-				spell.DefaultCast.CastTime -= castTimeReduction
-				spell.Cost.Multiplier -= costReduction
-			}
-		},
-		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-			for _, spell := range warlock.SummonDemonSpells {
-				spell.DefaultCast.CastTime += castTimeReduction
-				spell.Cost.Multiplier += costReduction
-			}
-		},
+	warlock.AddStaticMod(core.SpellModConfig{
+		Kind:      core.SpellMod_CastTime_Flat,
+		ClassMask: SpellMaskSummonDemon,
+		TimeValue: -time.Second * 2 * time.Duration(warlock.Talents.MasterSummoner),
+	})
+	warlock.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_PowerCost_Pct_Add,
+		ClassMask:  SpellMaskSummonDemon,
+		FloatValue: -.20 * float64(warlock.Talents.MasterSummoner),
 	})
 }
 
@@ -324,34 +311,31 @@ func (warlock *Warlock) applyDecimation() {
 	// (20/40%) and the Soul Fire cooldown reduction in soul_fire.go (45/90%) all grow with the second
 	// point, while the 35% health threshold and the ten second buff are single values.
 	points := float64(warlock.Talents.Decimation)
-	damageBonus := 0.03 * points
-	castTimeReduction := 0.2 * points
 
 	// The damage half of the tooltip is about the two spells that trigger it, not about
 	// everything the warlock casts; only the Soul Fire half carries the ten second window.
-	decimationSpells := func() []*core.Spell {
-		return append(append([]*core.Spell{}, warlock.ShadowBolt...), warlock.SearingPain...)
-	}
+	damageMod := warlock.AddDynamicMod(core.SpellModConfig{
+		Kind:       core.SpellMod_DamageDone_Flat,
+		ClassMask:  SpellMaskShadowBolt | SpellMaskSearingPain,
+		FloatValue: 0.03 * points,
+	})
+	castTimeMod := warlock.AddDynamicMod(core.SpellModConfig{
+		Kind:       core.SpellMod_CastTime_Pct,
+		ClassMask:  SpellMaskSoulFire,
+		FloatValue: -0.2 * points,
+	})
 
 	warlock.DecimationAura = warlock.RegisterAura(core.Aura{
 		Label:    "Decimation",
 		ActionID: core.ActionID{SpellID: 440873},
 		Duration: time.Second * 10,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
-			for _, spell := range decimationSpells() {
-				spell.DamageMultiplierAdditive += damageBonus
-			}
-			for _, spell := range warlock.SoulFire {
-				spell.CastTimeMultiplier -= castTimeReduction
-			}
+			damageMod.Activate()
+			castTimeMod.Activate()
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-			for _, spell := range decimationSpells() {
-				spell.DamageMultiplierAdditive -= damageBonus
-			}
-			for _, spell := range warlock.SoulFire {
-				spell.CastTimeMultiplier += castTimeReduction
-			}
+			damageMod.Deactivate()
+			castTimeMod.Deactivate()
 		},
 	})
 
@@ -375,13 +359,12 @@ func (warlock *Warlock) applyDemonicBrand() {
 	// the pet's attacks; the brand itself (1293696) lasts 10 sec at every rank.
 	// TODO: the client writes the pet hit as a $<minDam> to $<maxDam> formula that the exported tables
 	// do not carry, so the 39 to 42 from the BlizzCon tooltip is kept.
-	threatReduction := []float64{0, 0.17, 0.33, 0.50}[warlock.Talents.DemonicBrand]
 	actionID := core.ActionID{SpellID: 18821}
 
-	warlock.OnSpellRegistered(func(spell *core.Spell) {
-		if spell.SpellCode == SpellCode_WarlockSearingPain {
-			spell.ThreatMultiplier *= 1 - threatReduction
-		}
+	warlock.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_ThreatMultiplier_Pct,
+		ClassMask:  SpellMaskSearingPain,
+		FloatValue: -[]float64{0, 0.17, 0.33, 0.50}[warlock.Talents.DemonicBrand],
 	})
 
 	for _, pet := range warlock.BasePets {
@@ -736,10 +719,11 @@ func (warlock *Warlock) applyDemonicSacrifice() {
 	}
 
 	warlock.GetOrRegisterSpell(core.SpellConfig{
-		SpellCode:   SpellCode_WarlockDemonicSacrifice,
-		ActionID:    core.ActionID{SpellID: 18788},
-		SpellSchool: core.SpellSchoolShadow,
-		Flags:       core.SpellFlagAPL,
+		SpellCode:      SpellCode_WarlockDemonicSacrifice,
+		ClassSpellMask: SpellMaskDemonicSacrifice,
+		ActionID:       core.ActionID{SpellID: 18788},
+		SpellSchool:    core.SpellSchoolShadow,
+		Flags:          core.SpellFlagAPL,
 
 		ExtraCastCondition: func(sim *core.Simulation, target *core.Unit) bool {
 			return warlock.ActivePet != nil
@@ -816,11 +800,10 @@ func (warlock *Warlock) applyCataclysm() {
 	}
 
 	// 3/6/10% in the beta client, not 9% at 3/3
-	reduction := []int32{0, 3, 6, 10}[warlock.Talents.Cataclysm]
-	warlock.OnSpellRegistered(func(spell *core.Spell) {
-		if spell.Flags.Matches(WarlockFlagDestruction) && spell.Cost != nil {
-			spell.Cost.Multiplier -= reduction
-		}
+	warlock.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_PowerCost_Pct_Add,
+		SpellFlag:  WarlockFlagDestruction,
+		FloatValue: -[]float64{0, .03, .06, .10}[warlock.Talents.Cataclysm],
 	})
 }
 
@@ -830,12 +813,15 @@ func (warlock *Warlock) applyBane() {
 	}
 
 	points := time.Duration(warlock.Talents.Bane)
-	warlock.OnSpellRegistered(func(spell *core.Spell) {
-		if spell.SpellCode == SpellCode_WarlockShadowBolt || spell.SpellCode == SpellCode_WarlockImmolate || spell.SpellCode == SpellCode_WarlockIncinerate {
-			spell.DefaultCast.CastTime -= time.Millisecond * 100 * points
-		} else if spell.SpellCode == SpellCode_WarlockSoulFire {
-			spell.DefaultCast.CastTime -= time.Millisecond * 400 * points
-		}
+	warlock.AddStaticMod(core.SpellModConfig{
+		Kind:      core.SpellMod_CastTime_Flat,
+		ClassMask: SpellMaskShadowBolt | SpellMaskImmolate | SpellMaskIncinerate,
+		TimeValue: -time.Millisecond * 100 * points,
+	})
+	warlock.AddStaticMod(core.SpellModConfig{
+		Kind:      core.SpellMod_CastTime_Flat,
+		ClassMask: SpellMaskSoulFire,
+		TimeValue: -time.Millisecond * 400 * points,
 	})
 }
 
@@ -844,11 +830,10 @@ func (warlock *Warlock) applyRuin() {
 		return
 	}
 
-	bonus := 0.2 * float64(warlock.Talents.Ruin)
-	warlock.OnSpellRegistered(func(spell *core.Spell) {
-		if spell.Flags.Matches(WarlockFlagDestruction) {
-			spell.CritDamageBonus += bonus
-		}
+	warlock.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_CritMultiplier_Flat,
+		SpellFlag:  WarlockFlagDestruction,
+		FloatValue: 0.2 * float64(warlock.Talents.Ruin),
 	})
 }
 
@@ -859,13 +844,15 @@ func (warlock *Warlock) applyAgonizingFlames() {
 
 	// 3/7/10% in the beta client, not 9% at 3/3
 	bonus := []float64{0, 3, 7, 10}[warlock.Talents.AgonizingFlames]
-	warlock.OnSpellRegistered(func(spell *core.Spell) {
-		if spell.Flags.Matches(WarlockFlagDestruction) {
-			spell.DamageMultiplierAdditive += bonus / 100
-		}
-		if spell.SpellCode == SpellCode_WarlockSearingPain {
-			spell.BonusCritRating += bonus * core.SpellCritRatingPerCritChance
-		}
+	warlock.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_DamageDone_Flat,
+		SpellFlag:  WarlockFlagDestruction,
+		FloatValue: bonus / 100,
+	})
+	warlock.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_BonusCrit_Percent,
+		ClassMask:  SpellMaskSearingPain,
+		FloatValue: bonus,
 	})
 }
 
@@ -876,11 +863,10 @@ func (warlock *Warlock) applyFireAndBrimstone() {
 
 	// 8/17/25, not the 8/16/24 that multiplying rank 1 gives. Rank 3's 25% is confirmed on
 	// the beta; rank 2's 17 is the tree's own reading.
-	critBonus := []float64{0, 8, 17, 25}[warlock.Talents.FireAndBrimstone]
-	warlock.OnSpellRegistered(func(spell *core.Spell) {
-		if spell.SpellCode == SpellCode_WarlockConflagrate {
-			spell.BonusCritRating += critBonus * core.SpellCritRatingPerCritChance
-		}
+	warlock.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_BonusCrit_Percent,
+		ClassMask:  SpellMaskConflagrate,
+		FloatValue: []float64{0, 8, 17, 25}[warlock.Talents.FireAndBrimstone],
 	})
 }
 

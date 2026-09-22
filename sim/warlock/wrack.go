@@ -1,8 +1,7 @@
 package warlock
 
 import (
-	"time"
-
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
@@ -12,25 +11,23 @@ func (warlock *Warlock) registerWrackSpell() {
 	}
 
 	// Beta client 1.60.1 (spell 1316697): 36 per tick with a 0.143 coefficient, 6 sec channel,
-	// 200 mana. The client stores one value, not a per-level table, so it is used as is.
-	numTicks := int32(6)
-	tickLength := time.Second
-	baseDamage := 36.0
-	spellCoeff := 0.143
-	manaCost := 200.0
+	// 200 mana, all read from the client table. The action id stays 11704, which the APLs name.
+	row := spellData.Wrack.ByRank(1)
+	periodic := row.Periodic.(shared.SpellDataPeriodic)
 
 	warlock.Wrack = warlock.RegisterSpell(core.SpellConfig{
-		SpellCode:   SpellCode_WarlockWrack,
-		ActionID:    core.ActionID{SpellID: 11704},
-		SpellSchool: core.SpellSchoolShadow,
-		DefenseType: core.DefenseTypeMagic,
-		ProcMask:    core.ProcMaskSpellDamage,
-		Flags:       core.SpellFlagAPL | core.SpellFlagChanneled | core.SpellFlagResetAttackSwing | WarlockFlagAffliction,
+		SpellCode:      SpellCode_WarlockWrack,
+		ClassSpellMask: SpellMaskWrack,
+		ActionID:       core.ActionID{SpellID: 11704},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          core.SpellFlagAPL | core.SpellFlagChanneled | core.SpellFlagResetAttackSwing | WarlockFlagAffliction,
 
 		RequiredLevel: 60,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -45,12 +42,12 @@ func (warlock *Warlock) registerWrackSpell() {
 			Aura: core.Aura{
 				Label: "Wrack-" + warlock.Label,
 			},
-			NumberOfTicks:    numTicks,
-			TickLength:       tickLength,
-			BonusCoefficient: spellCoeff,
+			NumberOfTicks:    periodic.NumberOfTicks,
+			TickLength:       periodic.TickLength,
+			BonusCoefficient: roundCoef(periodic.Coef),
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.Snapshot(target, baseDamage, isRollover)
+				dot.Snapshot(target, periodic.Tick, isRollover)
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				result := dot.CalcSnapshotDamage(sim, target, dot.OutcomeTick)

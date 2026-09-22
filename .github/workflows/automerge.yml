@@ -1,0 +1,32 @@
+name: Auto-merge green PRs
+
+# Elliot, 2026-09-22: merge everything automatically. When Run Tests goes green on a PR
+# into master, merge it. Label a PR `hold` to keep it open.
+on:
+  workflow_run:
+    workflows: [Run Tests]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+jobs:
+  merge:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      BRANCH: ${{ github.event.workflow_run.head_branch }}
+      SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - name: Merge the PR, then deploy
+        run: |
+          pr=$(gh pr list --head "$BRANCH" --base master --state open --json number,headRefOid,labels \
+            --jq ".[] | select(.headRefOid == \"$SHA\") | select([.labels[].name] | index(\"hold\") | not) | .number")
+          [ -z "$pr" ] && { echo "nothing to merge (closed, newer commit, or on hold)"; exit 0; }
+          gh pr merge "$pr" --squash --delete-branch --match-head-commit "$SHA"
+          # A GITHUB_TOKEN merge does not fire push workflows, so start the deploy by hand.
+          gh workflow run deploy.yml --ref master

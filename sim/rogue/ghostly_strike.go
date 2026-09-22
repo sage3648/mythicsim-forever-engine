@@ -13,10 +13,14 @@ func (rogue *Rogue) registerGhostlyStrikeSpell() {
 		return
 	}
 
+	// Forever beta client 1.60.1.69893: id, cooldown, buff duration, school and defense type come from
+	// the client table. Its cost reads 0 where the client charges 40, so the cost stays ours.
+	row := spellData.GhostlyStrike.ByRank(1)
+
 	ghostlyStrikeAura := rogue.RegisterAura(core.Aura{
 		Label:    "Ghostly Strike Buff",
-		ActionID: core.ActionID{SpellID: 14278},
-		Duration: time.Second * 7,
+		ActionID: core.ActionID{SpellID: row.SpellID},
+		Duration: row.Duration,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			rogue.AddStatDynamic(sim, stats.Dodge, 15*core.DodgeRatingPerDodgeChance)
 		},
@@ -26,12 +30,13 @@ func (rogue *Rogue) registerGhostlyStrikeSpell() {
 	})
 
 	rogue.GhostlyStrike = rogue.RegisterSpell(core.SpellConfig{
-		SpellCode:   SpellCode_RogueGhostlyStrike,
-		ActionID:    ghostlyStrikeAura.ActionID,
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
-		ProcMask:    core.ProcMaskMeleeMHSpecial,
-		Flags:       rogue.builderFlags(),
+		SpellCode:      SpellCode_RogueGhostlyStrike,
+		ClassSpellMask: SpellMaskGhostlyStrike,
+		ActionID:       ghostlyStrikeAura.ActionID,
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskMeleeMHSpecial,
+		Flags:          rogue.builderFlags(),
 		EnergyCost: core.EnergyCostOptions{
 			Cost:   40.0,
 			Refund: 0.8,
@@ -43,7 +48,7 @@ func (rogue *Rogue) registerGhostlyStrikeSpell() {
 			},
 			CD: core.Cooldown{
 				Timer:    rogue.NewTimer(),
-				Duration: time.Second * 20,
+				Duration: row.Cooldown,
 			},
 			IgnoreHaste: true,
 		},

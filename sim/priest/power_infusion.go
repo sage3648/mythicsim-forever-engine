@@ -13,7 +13,9 @@ func (priest *Priest) registerPowerInfusionCD() {
 		return
 	}
 
-	actionID := core.ActionID{SpellID: 10060, Tag: priest.Index}
+	// Spell ID, cost and cooldown from the client table (see shadow_word_pain.go)
+	row := spellData.PowerInfusion.ByRank(1)
+	actionID := core.ActionID{SpellID: row.SpellID, Tag: priest.Index}
 	powerInfusionAura := core.PowerInfusionAura(&priest.Unit, actionID.Tag)
 
 	piSpell := priest.RegisterSpell(core.SpellConfig{
@@ -22,12 +24,12 @@ func (priest *Priest) registerPowerInfusionCD() {
 
 		// 20% of base mana and a 3 min cooldown in the Forever beta client, as in Classic.
 		ManaCost: core.ManaCostOptions{
-			BaseCost: 0.20,
+			BaseCost: row.PowerCostPct / 100,
 		},
 		Cast: core.CastConfig{
 			CD: core.Cooldown{
 				Timer:    priest.NewTimer(),
-				Duration: core.PowerInfusionCD,
+				Duration: row.Cooldown,
 			},
 		},
 

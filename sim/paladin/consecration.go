@@ -1,11 +1,19 @@
 package paladin
 
 import (
+	"math"
 	"strconv"
-	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
+
+// The client stores .095 as a float32; the table widens it. Rounding back to the stated value keeps
+// the sim's numbers where they were (sim/mage/frostbolt.go). Every coefficient read from the table
+// goes through this.
+func roundCoef(coef float64) float64 {
+	return math.Round(coef*1e6) / 1e6
+}
 
 // Consecration is baseline in the beta client (1.60.1.69893): every paladin trains all five ranks, and
 // the Forever tree builds on top of it through Consecrated Ground and Holy Conduit.
@@ -13,47 +21,40 @@ import (
 // Each tick casts a separate damage spell (1280345-1280349) with two parts: a flat amount every enemy
 // in the area takes, and a larger amount with the spell power coefficient that only the first
 // $s3 = 4 enemies take. Classic's 48 a tick at 0.042 becomes 12 + 27 at 0.095 on the capped part.
+//
+// Cost, cooldown, school, defense type, tick, tick schedule, coefficient and the capped target count
+// come from the client table; the ids stay ours, as every rank is registered (see sim/rogue).
 func (paladin *Paladin) registerConsecration() {
-	const cappedTargets = 4
-
-	ranks := []struct {
-		level    int32
-		manaCost float64
-		damage   float64 // every enemy, per tick
-		capped   float64 // first 4 enemies, per tick, scales with spell power
-	}{
-		{level: 20, manaCost: 135, damage: 2, capped: 4},
-		{level: 30, manaCost: 235, damage: 3, capped: 7},
-		{level: 40, manaCost: 320, damage: 6, capped: 11},
-		{level: 50, manaCost: 435, damage: 8, capped: 20},
-		{level: 60, manaCost: 565, damage: 12, capped: 27},
-	}
-
 	cd := core.Cooldown{
 		Timer:    paladin.NewTimer(),
-		Duration: time.Second * 8,
+		Duration: spellData.Consecration.ByRank(1).Cooldown,
 	}
 
-	for i, rank := range ranks {
-		rank := rank
+	for i, level := range []int32{20, 30, 40, 50, 60} {
 		spellID := []int32{26573, 20116, 20922, 20923, 20924}[i]
-		if paladin.Level < rank.level {
+		if paladin.Level < level {
 			break
 		}
 
+		row := spellData.Consecration.BySpellID(spellID)
+		periodic := row.Periodic.(shared.SpellDataPeriodic)        // every enemy, per tick
+		capped := row.SecondaryPeriodic.(shared.SpellDataPeriodic) // first $s3 enemies, per tick, scales with spell power
+		cappedTargets := int(row.Effects[2].Value)
+
 		paladin.RegisterSpell(core.SpellConfig{
 			ActionID:    core.ActionID{SpellID: spellID},
-			SpellSchool: core.SpellSchoolHoly,
-			DefenseType: core.DefenseTypeMagic,
+			SpellSchool: row.SpellSchool,
+			DefenseType: row.DefenseType,
 			ProcMask:    core.ProcMaskSpellDamage,
 			Flags:       core.SpellFlagPureDot | core.SpellFlagAPL,
 
-			RequiredLevel: int(rank.level),
+			RequiredLevel: int(level),
 			Rank:          i + 1,
 
-			SpellCode: SpellCode_PaladinConsecration,
+			SpellCode:      SpellCode_PaladinConsecration,
+			ClassSpellMask: SpellMaskConsecration,
 			ManaCost: core.ManaCostOptions{
-				FlatCost:   rank.manaCost,
+				FlatCost:   float64(row.Cost),
 				Multiplier: paladin.benediction() * paladin.holyConduit() / 100,
 			},
 			Cast: core.CastConfig{
@@ -69,13 +70,13 @@ func (paladin *Paladin) registerConsecration() {
 				Aura: core.Aura{
 					Label: "Consecration" + paladin.Label + strconv.Itoa(i+1),
 				},
-				NumberOfTicks: 8,
-				TickLength:    time.Second * 1,
+				NumberOfTicks: periodic.NumberOfTicks,
+				TickLength:    periodic.TickLength,
 
-				BonusCoefficient: 0.095,
+				BonusCoefficient: roundCoef(capped.Coef),
 
 				OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-					dot.Snapshot(target, rank.damage+rank.capped, isRollover)
+					dot.Snapshot(target, periodic.Tick+capped.Tick, isRollover)
 				},
 				OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 					// Consecration can miss, showing up as either a resist in logs or a
@@ -87,7 +88,7 @@ func (paladin *Paladin) registerConsecration() {
 						} else {
 							// The flat part alone, which carries no coefficient; the spell's own
 							// BonusCoefficient stays zero so this does not pick one up.
-							dot.Spell.CalcAndDealDamage(sim, aoeTarget, rank.damage, dot.OutcomeMagicHitAndTick)
+							dot.Spell.CalcAndDealDamage(sim, aoeTarget, periodic.Tick, dot.OutcomeMagicHitAndTick)
 						}
 					}
 				},

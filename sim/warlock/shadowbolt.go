@@ -1,46 +1,59 @@
 package warlock
 
 import (
-	"time"
+	"math"
 
 	"github.com/wowsims/classic/sim/core"
 )
 
 const ShadowBoltRanks = 10
 
+// Spell ID, cost, cast time, cooldown, coefficient, school and dot ticks of the warlock's spells come
+// from the client table (spell_data_auto_gen.go, vendored from wowsims/forever). Damage ranges do not:
+// the client rolls a spread the vendored generator drops, keeping only the truncated centre (see
+// sim/mage/frostbolt.go). spell_damage_test.go checks every range kept here still contains it.
+//
+// Beta client 1.60.1: every rank's damage moved and the low ranks lost their downranking penalty.
+// Damage is each rank's value at the level it stops scaling at (capped at 60), as the Classic table was.
+var ShadowBoltBaseDamage = [ShadowBoltRanks + 1][]float64{{0}, {12, 16}, {25, 31}, {41, 48}, {57, 64}, {79, 89}, {101, 113}, {140, 156}, {188, 210}, {237, 265}, {253, 283}}
+
+// The client stores .486 as a float32; the table widens it. Rounding back to the stated value keeps
+// the sim's numbers where they were (sim/mage/frostbolt.go). Every coefficient read from the table
+// goes through this.
+func roundCoef(coef float64) float64 {
+	return math.Round(coef*1e6) / 1e6
+}
+
 func (warlock *Warlock) getShadowBoltBaseConfig(rank int) core.SpellConfig {
-	// Beta client 1.60.1: every rank's damage moved and the low ranks lost their downranking penalty.
-	// Damage is each rank's value at the level it stops scaling at (capped at 60), as the Classic table was.
-	spellCoeff := [ShadowBoltRanks + 1]float64{0, .486, .629, .8, .857, .857, .857, .857, .857, .857, .857}[rank]
-	baseDamage := [ShadowBoltRanks + 1][]float64{{0}, {12, 16}, {25, 31}, {41, 48}, {57, 64}, {79, 89}, {101, 113}, {140, 156}, {188, 210}, {237, 265}, {253, 283}}[rank]
-	spellId := [ShadowBoltRanks + 1]int32{0, 686, 695, 705, 1088, 1106, 7641, 11659, 11660, 11661, 25307}[rank]
-	manaCost := [ShadowBoltRanks + 1]float64{0, 25, 40, 70, 110, 160, 210, 265, 315, 370, 380}[rank]
+	row := spellData.ShadowBolt.ByRank(int32(rank))
+	baseDamage := ShadowBoltBaseDamage[rank]
 	level := [ShadowBoltRanks + 1]int{0, 1, 6, 12, 20, 28, 36, 44, 52, 60, 60}[rank]
-	castTime := [ShadowBoltRanks + 1]int32{0, 1700, 2200, 2800, 3000, 3000, 3000, 3000, 3000, 3000, 3000}[rank]
 
 	return core.SpellConfig{
-		SpellCode:     SpellCode_WarlockShadowBolt,
-		ActionID:      core.ActionID{SpellID: spellId},
-		SpellSchool:   core.SpellSchoolShadow,
-		DefenseType:   core.DefenseTypeMagic,
+		SpellCode:      SpellCode_WarlockShadowBolt,
+		ClassSpellMask: SpellMaskShadowBolt,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		// The table's missile speed (20) is not used: ours has always landed instantly.
 		ProcMask:      core.ProcMaskSpellDamage,
 		Flags:         core.SpellFlagAPL | core.SpellFlagResetAttackSwing | WarlockFlagDestruction,
 		RequiredLevel: level,
 		Rank:          rank,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
 				GCD:      core.GCDDefault,
-				CastTime: time.Millisecond * time.Duration(castTime),
+				CastTime: row.CastTime,
 			},
 		},
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
-		BonusCoefficient: spellCoeff,
+		BonusCoefficient: roundCoef(row.Direct.BonusCoefficient()),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			result := spell.CalcDamage(sim, target, sim.Roll(baseDamage[0], baseDamage[1]), spell.OutcomeMagicHitAndCrit)

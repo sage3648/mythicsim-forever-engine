@@ -13,6 +13,15 @@ type APLRotation struct {
 	prepullActions []*APLAction
 	priorityList   []*APLAction
 
+	// Action groups and value variables by name, plus parse-time state for expanding them.
+	groups         map[string]*proto.APLGroup
+	valueVariables map[string]*proto.APLValue
+	varScopes      []aplVarScope
+	expanding      map[string]bool
+	usedGroups     map[string]bool
+	// Set when a variable placeholder could not be filled while expanding a group.
+	missingPlaceholder bool
+
 	// Action currently controlling this rotation (only used for certain actions, such as StrictSequence).
 	controllingActions []APLActionImpl
 
@@ -75,6 +84,21 @@ func (unit *Unit) newAPLRotation(config *proto.APLRotation) *APLRotation {
 		unit:                 unit,
 		prepullWarnings:      make([][]string, len(config.PrepullActions)),
 		priorityListWarnings: make([][]string, len(config.PriorityList)),
+		groups:               make(map[string]*proto.APLGroup),
+		valueVariables:       make(map[string]*proto.APLValue),
+		expanding:            make(map[string]bool),
+		usedGroups:           make(map[string]bool),
+	}
+	// First definition wins on duplicate names.
+	for _, group := range config.Groups {
+		if _, ok := rotation.groups[group.Name]; !ok {
+			rotation.groups[group.Name] = group
+		}
+	}
+	for _, v := range config.ValueVariables {
+		if _, ok := rotation.valueVariables[v.Name]; !ok {
+			rotation.valueVariables[v.Name] = v.Value
+		}
 	}
 
 	// Parse prepull actions

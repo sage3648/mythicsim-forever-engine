@@ -3,17 +3,13 @@ package rogue
 import (
 	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
+// Cost, school, defense type, tick, tick count and tick length come from the client table; the id
+// stays ours (see sinister_strike.go).
 func (rogue *Rogue) registerGarrote() {
-	baseDamage := map[int32]float64{
-		25: 34,
-		40: 59,
-		50: 74,
-		60: 92,
-	}[rogue.Level]
-
 	spellID := map[int32]int32{
 		25: 8631,
 		40: 8633,
@@ -21,16 +17,20 @@ func (rogue *Rogue) registerGarrote() {
 		60: 11290,
 	}[rogue.Level]
 
+	row := spellData.Garrote.BySpellID(spellID)
+	periodic := row.Periodic.(shared.SpellDataPeriodic)
+
 	rogue.Garrote = rogue.GetOrRegisterSpell(core.SpellConfig{
-		SpellCode:   SpellCode_RogueGarrote,
-		ActionID:    core.ActionID{SpellID: spellID},
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
-		ProcMask:    core.ProcMaskMeleeMHSpecial,
-		Flags:       SpellFlagBuilder | core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
+		SpellCode:      SpellCode_RogueGarrote,
+		ClassSpellMask: SpellMaskGarrote,
+		ActionID:       core.ActionID{SpellID: spellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskMeleeMHSpecial,
+		Flags:          SpellFlagBuilder | core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
 
 		EnergyCost: core.EnergyCostOptions{
-			Cost:   50.0 - 10*float64(rogue.Talents.DirtyDeeds),
+			Cost:   float64(row.Cost) - 10*float64(rogue.Talents.DirtyDeeds),
 			Refund: 0.8,
 		},
 		Cast: core.CastConfig{
@@ -55,10 +55,10 @@ func (rogue *Rogue) registerGarrote() {
 			Aura: core.Aura{
 				Label: "Garrote",
 			},
-			NumberOfTicks: 6,
-			TickLength:    time.Second * 3,
+			NumberOfTicks: periodic.NumberOfTicks,
+			TickLength:    periodic.TickLength,
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				damage := baseDamage + dot.Spell.MeleeAttackPower(target)*0.03
+				damage := periodic.Tick + dot.Spell.MeleeAttackPower(target)*0.03
 				dot.Snapshot(target, damage, isRollover)
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {

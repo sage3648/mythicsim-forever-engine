@@ -16,24 +16,27 @@ func (mage *Mage) registerIceLanceSpell() {
 	// demo's 28 to 33 is the client's rank 1.
 	// TODO: the client's damage effect carries no spell power coefficient at all, like the few other
 	// spells whose coefficient moved off the effect row, so .143 is still a guess.
+	// Cost, missile speed and school come from the client table; the damage is ours (the table has
+	// the centre, 148).
+	row := spellData.IceLance.ByRank(6)
 	baseDamage := []float64{136, 161}
 	spellCoeff := .143
-	manaCost := 160.0
 
 	mage.IceLance = mage.RegisterSpell(core.SpellConfig{
-		SpellCode:    SpellCode_MageIceLance,
-		ActionID:     core.ActionID{SpellID: 30455},
-		SpellSchool:  core.SpellSchoolFrost,
-		DefenseType:  core.DefenseTypeMagic,
-		ProcMask:     core.ProcMaskSpellDamage,
-		Flags:        SpellFlagMage | core.SpellFlagBinary | core.SpellFlagAPL,
-		MissileSpeed: 38,
+		SpellCode:      SpellCode_MageIceLance,
+		ClassSpellMask: SpellMaskIceLance,
+		ActionID:       core.ActionID{SpellID: 30455},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          SpellFlagMage | core.SpellFlagBinary | core.SpellFlagAPL,
+		MissileSpeed:   row.MissileSpeed,
 
 		RequiredLevel: 60,
 		Rank:          1,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

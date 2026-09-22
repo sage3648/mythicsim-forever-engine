@@ -4,35 +4,36 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
 const CorruptionRanks = 7
 
 func (warlock *Warlock) getCorruptionConfig(rank int) core.SpellConfig {
-	// Beta client 1.60.1: 0.2 per tick at every rank, and the damage roughly halved. The damage table is
-	// the total, the client's per tick value times the tick count.
-	dotTickCoeff := [CorruptionRanks + 1]float64{0, .2, .2, .2, .2, .2, .2, .2}[rank] // per tick
-	ticks := [CorruptionRanks + 1]int32{0, 4, 5, 6, 6, 6, 6, 6}[rank]
-	baseDamage := [CorruptionRanks + 1]float64{0, 40, 65, 132, 168, 240, 342, 438}[rank] / float64(ticks)
-	spellId := [CorruptionRanks + 1]int32{0, 172, 6222, 6223, 7648, 11671, 11672, 25311}[rank]
-	manaCost := [CorruptionRanks + 1]float64{0, 35, 55, 100, 160, 225, 290, 340}[rank]
+	// Beta client 1.60.1: 0.2 per tick at every rank, and the damage roughly halved. Spell ID, cost,
+	// cast time, tick, tick count and coefficient come from the client table.
+	row := spellData.Corruption.ByRank(int32(rank))
+	periodic := row.Periodic.(shared.SpellDataPeriodic)
+	ticks := periodic.NumberOfTicks
+	baseDamage := periodic.Tick
 	level := [CorruptionRanks + 1]int{0, 4, 14, 24, 34, 44, 54, 60}[rank]
 
-	castTime := time.Millisecond * (2000 - (400 * time.Duration(warlock.Talents.ImprovedCorruption)))
+	castTime := row.CastTime - 400*time.Millisecond*time.Duration(warlock.Talents.ImprovedCorruption)
 
 	return core.SpellConfig{
-		ActionID:      core.ActionID{SpellID: spellId},
-		SpellSchool:   core.SpellSchoolShadow,
-		SpellCode:     SpellCode_WarlockCorruption,
-		ProcMask:      core.ProcMaskSpellDamage,
-		DefenseType:   core.DefenseTypeMagic,
-		Flags:         core.SpellFlagAPL | core.SpellFlagResetAttackSwing | core.SpellFlagPureDot | WarlockFlagAffliction,
-		Rank:          rank,
-		RequiredLevel: level,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		SpellCode:      SpellCode_WarlockCorruption,
+		ClassSpellMask: SpellMaskCorruption,
+		ProcMask:       core.ProcMaskSpellDamage,
+		DefenseType:    row.DefenseType,
+		Flags:          core.SpellFlagAPL | core.SpellFlagResetAttackSwing | core.SpellFlagPureDot | WarlockFlagAffliction,
+		Rank:           rank,
+		RequiredLevel:  level,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -53,8 +54,8 @@ func (warlock *Warlock) getCorruptionConfig(rank int) core.SpellConfig {
 			},
 
 			NumberOfTicks:    ticks,
-			TickLength:       time.Second * 3,
-			BonusCoefficient: dotTickCoeff,
+			TickLength:       periodic.TickLength,
+			BonusCoefficient: roundCoef(periodic.Coef),
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.Snapshot(target, baseDamage, isRollover)

@@ -329,9 +329,11 @@ func applyBuffEffects(agent Agent, playerFaction proto.Faction, raidBuffs *proto
 		MakePermanent(BlessingOfKingsAura(character))
 	}
 
-	if raidBuffs.SanctityAura {
-		MakePermanent(SanctityAuraAura(character))
-	}
+	// Sanctity Aura is ignored even when asked for: Forever does not have it. The client's
+	// Retribution tree has no row for it (our own tree, generated from the client, agrees), and
+	// wowsims/forever removed it for the same reason. Honoured, it was +10% Holy damage that no
+	// Forever paladin can provide - and once class buffs stopped being faction-locked, it was
+	// handed to every spec in the arena. The field stays so old saved settings still load.
 
 	// TODO: Classic
 	/*	if individualBuffs.BlessingOfSanctuary {

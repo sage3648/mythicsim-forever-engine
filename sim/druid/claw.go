@@ -6,19 +6,23 @@ import (
 	"github.com/wowsims/classic/sim/core"
 )
 
+// Rank 5 at every level. Its cost and flat bonus come from the client table (see wrath.go); the id stays ours, since
+// reading it through the table files the never-registered ranks 1-4 in sim/spell_sources_test.go.
 func (druid *Druid) registerClawSpell() {
-	flatDamageBonus := 115.0
+	row := spellData.Claw.ByRank(5)
+	flatDamageBonus, _ := row.Direct.Range()
 
 	druid.Claw = druid.RegisterSpell(Cat, core.SpellConfig{
-		SpellCode:   SpellCode_DruidClaw,
-		ActionID:    core.ActionID{SpellID: 9850},
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
-		ProcMask:    core.ProcMaskMeleeMHSpecial,
-		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagAPL | SpellFlagBuilder,
+		SpellCode:      SpellCode_DruidClaw,
+		ClassSpellMask: SpellMaskClaw,
+		ActionID:       core.ActionID{SpellID: 9850},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskMeleeMHSpecial,
+		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagAPL | SpellFlagBuilder,
 
 		EnergyCost: core.EnergyCostOptions{
-			Cost:   45 - 1*float64(druid.Talents.Ferocity),
+			Cost:   float64(row.Cost) - 1*float64(druid.Talents.Ferocity),
 			Refund: 0.8,
 		},
 		Cast: core.CastConfig{

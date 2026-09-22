@@ -3,66 +3,69 @@ package proto;
 
 option go_package = "./proto";
 
+// DO NOT REMOVE THE COMMENTS
+// BEGIN GENERATED
+// RogueTalents message.
 message RogueTalents {
-	// Assassination
-	int32 improved_gouge = 1;
-	int32 remorseless_attacks = 2;
-	int32 malice = 3;
-	int32 ruthlessness = 4;
-	int32 murder = 5;
-	int32 improved_slice_and_dice = 6;
-	bool relentless_strikes = 7;
-	int32 improved_expose_armor = 8;
-	int32 lethality = 9;
-	int32 vile_poisons = 10;
-	bool cold_blood = 11;
-	int32 improved_poisons = 12;
-	int32 vigor = 13;
-	bool mutilate = 14;
-	int32 improved_kidney_shot = 15;
-	int32 seal_fate = 16;
-	bool venom = 17;
-
-	// Combat
-	int32 improved_eviscerate = 18;
-	int32 improved_sinister_strike = 19;
-	int32 lightning_reflexes = 20;
-	int32 puncturing_wounds = 21;
-	int32 deflection = 22;
-	int32 precision = 23;
-	int32 endurance = 24;
-	bool riposte = 25;
-	int32 improved_sprint = 26;
-	int32 improved_kick = 27;
-	bool flawless_execution = 28;
-	int32 dual_wield_specialization = 29;
-	bool blade_flurry = 30;
-	int32 hack_and_slash = 31;
-	int32 weapon_expertise = 32;
-	int32 aggression = 33;
-	bool adrenaline_rush = 34;
-
-	// Subtlety
-	int32 camouflage = 35;
-	int32 master_of_deception = 36;
-	int32 opportunity = 37;
-	int32 setup = 38;
-	int32 elusiveness = 39;
-	int32 dirty_tricks = 40;
-	int32 improved_ambush = 41;
-	int32 initiative = 42;
-	bool ghostly_strike = 43;
-	int32 improved_distract = 44;
-	int32 heightened_senses = 45;
-	bool premeditation = 46;
-	int32 serrated_blades = 47;
-	int32 dirty_deeds = 48;
-	bool preparation = 49;
-	bool hemorrhage = 50;
-	int32 quietus = 51;
-	int32 cutthroat = 52;
-	bool thousand_cuts = 53;
+    // Assassination
+    int32 improved_gouge = 1;
+    int32 remorseless_attacks = 2;
+    int32 malice = 3;
+    int32 ruthlessness = 4;
+    int32 murder = 5;
+    int32 improved_slice_and_dice = 6;
+    bool relentless_strikes = 7;
+    int32 improved_expose_armor = 8;
+    int32 lethality = 9;
+    int32 vile_poisons = 10;
+    bool cold_blood = 11;
+    int32 improved_poisons = 12;
+    int32 vigor = 13;
+    bool mutilate = 14;
+    int32 improved_kidney_shot = 15;
+    int32 seal_fate = 16;
+    bool venom = 17;
+    // Combat
+    int32 improved_eviscerate = 18;
+    int32 improved_sinister_strike = 19;
+    int32 lightning_reflexes = 20;
+    int32 puncturing_wounds = 21;
+    int32 deflection = 22;
+    int32 precision = 23;
+    int32 endurance = 24;
+    bool riposte = 25;
+    int32 improved_sprint = 26;
+    int32 improved_kick = 27;
+    bool flawless_execution = 28;
+    int32 dual_wield_specialization = 29;
+    bool blade_flurry = 30;
+    int32 hack_and_slash = 31;
+    int32 weapon_expertise = 32;
+    int32 aggression = 33;
+    bool adrenaline_rush = 34;
+    // Subtlety
+    int32 camouflage = 35;
+    int32 master_of_deception = 36;
+    int32 opportunity = 37;
+    int32 setup = 38;
+    int32 elusiveness = 39;
+    int32 dirty_tricks = 40;
+    int32 improved_ambush = 41;
+    int32 initiative = 42;
+    bool ghostly_strike = 43;
+    int32 improved_distract = 44;
+    int32 heightened_senses = 45;
+    bool premeditation = 46;
+    int32 serrated_blades = 47;
+    int32 dirty_deeds = 48;
+    bool preparation = 49;
+    bool hemorrhage = 50;
+    int32 quietus = 51;
+    int32 cutthroat = 52;
+    bool thousand_cuts = 53;
 }
+
+// END GENERATED
 
 message RogueOptions {
 

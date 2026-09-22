@@ -31,6 +31,26 @@ const (
 	SpellCode_WarriorWhirlwind
 )
 
+// One class mask per SpellCode_Warrior*, for the SpellMod system. Names follow upstream wowsims/forever.
+const (
+	SpellMaskNone        int64 = 0
+	SpellMaskBloodthirst int64 = 1 << iota
+	SpellMaskDeepWounds
+	SpellMaskExecute
+	SpellMaskMortalStrike
+	SpellMaskOverpower
+	SpellMaskRend
+	SpellMaskRevenge
+	SpellMaskShieldSlam
+	SpellMaskSlam
+	SpellMaskBattleStance
+	SpellMaskBerserkerStance
+	SpellMaskDefensiveStance
+	SpellMaskWhirlwind
+
+	SpellMaskAll = SpellMaskWhirlwind<<1 - SpellMaskBloodthirst // every bit from Bloodthirst to Whirlwind
+)
+
 var TalentTreeSizes = [3]int{17, 18, 18}
 
 type WarriorInputs struct {

@@ -10,33 +10,34 @@ import (
 // The beta client has one rank of Multi-Shot: no flat bonus and 13.9% of base mana. Ranks 2-5
 // are gone from the spellbook.
 func (hunter *Hunter) getMultiShotConfig(timer *core.Timer) core.SpellConfig {
-	spellId := int32(2643)
-	baseDamage := 0.0
+	row := spellData.MultiShot.ByRank(1)
+	baseDamage, _ := row.Direct.Range()
 	level := 18
 
 	numHits := min(3, hunter.Env.GetNumTargets())
 	results := make([]*core.SpellResult, numHits)
 
 	return core.SpellConfig{
-		SpellCode:     SpellCode_HunterMultiShot,
-		ActionID:      core.ActionID{SpellID: spellId},
-		SpellSchool:   core.SpellSchoolPhysical,
-		DefenseType:   core.DefenseTypeRanged,
-		ProcMask:      core.ProcMaskRangedSpecial,
-		Flags:         core.SpellFlagMeleeMetrics | core.SpellFlagAPL | SpellFlagShot,
-		CastType:      proto.CastType_CastTypeRanged,
-		RequiredLevel: level,
-		MissileSpeed:  24,
+		SpellCode:      SpellCode_HunterMultiShot,
+		ClassSpellMask: SpellMaskMultiShot,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskRangedSpecial,
+		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagAPL | SpellFlagShot,
+		CastType:       proto.CastType_CastTypeRanged,
+		RequiredLevel:  level,
+		MissileSpeed:   24,
 
 		ManaCost: core.ManaCostOptions{
-			BaseCost: 0.139,
+			BaseCost: roundCoef(row.PowerCostPct / 100),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
 				GCD: core.GCDDefault,
 				// The client now shows the 0.5 sec itself, where Classic showed an instant and the sim
 				// added the shot wind-up; read as the same 0.5 sec rather than 0.5 on top of it.
-				CastTime: time.Millisecond * 500,
+				CastTime: row.CastTime,
 			},
 			ModifyCast: func(sim *core.Simulation, spell *core.Spell, cast *core.Cast) {
 				cast.CastTime = spell.CastTime()
@@ -47,7 +48,7 @@ func (hunter *Hunter) getMultiShotConfig(timer *core.Timer) core.SpellConfig {
 				Timer: timer,
 				// Forever cuts the cooldown to 6 sec, the same one Aimed Shot is now on.
 				// Read off Xaryu's Hunter, 12 September.
-				Duration: core.TernaryDuration(hunter.Env.IsForever(), time.Second*6, time.Second*10),
+				Duration: core.TernaryDuration(hunter.Env.IsForever(), row.Cooldown, time.Second*10),
 			},
 			CastTime: func(spell *core.Spell) time.Duration {
 				return time.Duration(float64(spell.DefaultCast.CastTime) / hunter.RangedSwingSpeed())
@@ -61,7 +62,7 @@ func (hunter *Hunter) getMultiShotConfig(timer *core.Timer) core.SpellConfig {
 
 		DamageMultiplier: 1 + []float64{0, .03, .07, .10}[hunter.Talents.Barrage],
 		ThreatMultiplier: 1,
-		BonusCoefficient: 1,
+		BonusCoefficient: roundCoef(row.Direct.BonusCoefficient()),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			curTarget := target

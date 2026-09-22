@@ -37,6 +37,28 @@ const (
 	SpellCode_RogueVenom
 )
 
+// Class spell masks for SpellMods (see core/spell_mod.go), one per SpellCode above.
+const (
+	SpellMaskNone   int64 = 0
+	SpellMaskAmbush int64 = 1 << iota
+	SpellMaskAdrenalineRush
+	SpellMaskBackstab
+	SpellMaskBladeFlurry
+	SpellMaskEviscerate
+	SpellMaskExposeArmor
+	SpellMaskGarrote
+	SpellMaskGhostlyStrike
+	SpellMaskHemorrhage
+	SpellMaskMutilate
+	SpellMaskRupture
+	SpellMaskSinisterStrike
+	SpellMaskSliceAndDice
+	SpellMaskVanish
+	SpellMaskVenom
+
+	SpellMaskAll = SpellMaskVenom<<1 - SpellMaskAmbush // every bit from Ambush to Venom
+)
+
 var TalentTreeSizes = [3]int{17, 17, 19}
 
 type Rogue struct {

@@ -27,12 +27,16 @@ func (rogue *Rogue) registerMutilateSpell() {
 		60: 1241584,
 	}[rogue.Level]
 
+	// Cost, school and defense type come from the client table; the id stays ours (see
+	// sinister_strike.go). The flat damage and coefficient sit on the triggered hits, which the table
+	// ranks in an order that does not follow the parent's, so they stay ours.
+	row := spellData.Mutilate.BySpellID(spellID)
 	actionID := core.ActionID{SpellID: spellID}
 
 	rogue.mutilateOH = rogue.RegisterSpell(core.SpellConfig{
 		ActionID:    actionID.WithTag(2),
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
+		SpellSchool: row.SpellSchool,
+		DefenseType: row.DefenseType,
 		ProcMask:    core.ProcMaskMeleeOHSpecial,
 		Flags:       SpellFlagBuilder | core.SpellFlagMeleeMetrics | core.SpellFlagNoOnCastComplete,
 
@@ -49,15 +53,16 @@ func (rogue *Rogue) registerMutilateSpell() {
 	})
 
 	rogue.Mutilate = rogue.RegisterSpell(core.SpellConfig{
-		SpellCode:   SpellCode_RogueMutilate,
-		ActionID:    actionID,
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
-		ProcMask:    core.ProcMaskMeleeMHSpecial,
-		Flags:       rogue.builderFlags(),
+		SpellCode:      SpellCode_RogueMutilate,
+		ClassSpellMask: SpellMaskMutilate,
+		ActionID:       actionID,
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskMeleeMHSpecial,
+		Flags:          rogue.builderFlags(),
 
 		EnergyCost: core.EnergyCostOptions{
-			Cost:   60,
+			Cost:   float64(row.Cost),
 			Refund: 0.8,
 		},
 		Cast: core.CastConfig{

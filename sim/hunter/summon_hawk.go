@@ -27,21 +27,23 @@ func (hunter *Hunter) registerSummonHawkSpell(timer *core.Timer) {
 	case hunter.Level >= 36:
 		rank = 2
 	}
-	spellId := [5]int32{0, 1293241, 1293525, 1293526, 1293527}[rank]
-	baseDamage := [5]float64{0, 32, 47, 85, 108}[rank]
-	manaCost := [5]float64{0, 80, 105, 135, 190}[rank]
+	// Spell ID, cost, cooldown, dive bomb and school from the client table (see aimed_shot.go). Its
+	// ranged defense type and 35 yd/sec missile are not used: ours rolls a melee hit that lands at once.
+	row := spellData.SummonHawk.ByRank(int32(rank))
+	baseDamage, _ := row.Direct.Range()
 
 	hunter.SummonHawk = hunter.RegisterSpell(core.SpellConfig{
-		SpellCode:   SpellCode_HunterSummonHawk,
-		ActionID:    core.ActionID{SpellID: spellId},
-		Rank:        rank,
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
-		ProcMask:    core.ProcMaskEmpty,
-		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
+		SpellCode:      SpellCode_HunterSummonHawk,
+		ClassSpellMask: SpellMaskSummonHawk,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		Rank:           rank,
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    core.DefenseTypeMelee,
+		ProcMask:       core.ProcMaskEmpty,
+		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -50,7 +52,7 @@ func (hunter *Hunter) registerSummonHawkSpell(timer *core.Timer) {
 			IgnoreHaste: true, // Hunter GCD is locked at 1.5s
 			CD: core.Cooldown{
 				Timer:    timer,
-				Duration: time.Second * 6,
+				Duration: row.Cooldown,
 			},
 		},
 

@@ -2,21 +2,17 @@ package shaman
 
 import (
 	"fmt"
-	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
 const FlameShockRanks = 6
 
-// Forever beta client values. The client stores the dot as damage per tick (7, 8, 14, 21, 34, 44) and the table
-// holds the four ticks' total; its 0.1 coefficient is per tick, which is how the dot config applies it.
-var FlameShockSpellId = [FlameShockRanks + 1]int32{0, 8050, 8052, 8053, 10447, 10448, 29228}
+// Forever beta client values. Spell ID, cost, cooldown, school, defense type, the 0.214 direct coefficient and
+// the dot (per tick damage, 4 ticks of 3 sec, 0.1 per tick) come from the client table (see shocks.go). The
+// direct hit stays here: the table reads 136 for rank 5 against our 137 (spell_damage_test.go).
 var FlameShockBaseDamage = [FlameShockRanks + 1]float64{0, 24, 38, 49, 89, 137, 166}
-var FlameShockBaseDotDamage = [FlameShockRanks + 1]float64{0, 28, 32, 56, 84, 136, 176}
-var FlameShockBaseSpellCoef = [FlameShockRanks + 1]float64{0, .214, .214, .214, .214, .214, .214}
-var FlameShockDotSpellCoef = [FlameShockRanks + 1]float64{0, .1, .1, .1, .1, .1, .1}
-var FlameShockManaCost = [FlameShockRanks + 1]float64{0, 55, 95, 160, 250, 345, 410}
 var FlameShockLevel = [FlameShockRanks + 1]int{0, 10, 18, 28, 40, 52, 60}
 
 func (shaman *Shaman) registerFlameShockSpell(shockTimer *core.Timer) {
@@ -30,25 +26,15 @@ func (shaman *Shaman) registerFlameShockSpell(shockTimer *core.Timer) {
 }
 
 func (shaman *Shaman) newFlameShockSpell(rank int, shockTimer *core.Timer) core.SpellConfig {
-	numTicks := 4
-	tickDuration := time.Second * 3
-
-	spellId := FlameShockSpellId[rank]
+	row := spellData.FlameShock.ByRank(int32(rank))
+	periodic := row.Periodic.(shared.SpellDataPeriodic)
 	baseDamage := FlameShockBaseDamage[rank]
-	baseDotDamage := FlameShockBaseDotDamage[rank] / float64(numTicks)
-	baseSpellCoeff := FlameShockBaseSpellCoef[rank]
-	dotSpellCoeff := FlameShockDotSpellCoef[rank]
-	manaCost := FlameShockManaCost[rank]
 	level := FlameShockLevel[rank]
 
-	spell := shaman.newShockSpellConfig(
-		core.ActionID{SpellID: spellId},
-		core.SpellSchoolFire,
-		manaCost,
-		shockTimer,
-	)
+	spell := shaman.newShockSpellConfig(core.ActionID{SpellID: row.SpellID}, row, shockTimer)
 
 	spell.SpellCode = SpellCode_ShamanFlameShock
+	spell.ClassSpellMask = SpellMaskFlameShock
 	spell.RequiredLevel = level
 	spell.Rank = rank
 	// Call of Flame names Flame Shock alongside the fire totems under Forever.
@@ -56,19 +42,17 @@ func (shaman *Shaman) newFlameShockSpell(rank int, shockTimer *core.Timer) core.
 
 	spell.Cast.IgnoreHaste = true
 
-	spell.BonusCoefficient = baseSpellCoeff
-
 	spell.Dot = core.DotConfig{
 		Aura: core.Aura{
 			Label: fmt.Sprintf("Flame Shock (Rank %d)", rank),
 		},
 
-		NumberOfTicks:    int32(numTicks),
-		TickLength:       tickDuration,
-		BonusCoefficient: dotSpellCoeff,
+		NumberOfTicks:    periodic.NumberOfTicks,
+		TickLength:       periodic.TickLength,
+		BonusCoefficient: roundCoef(periodic.Coef),
 
 		OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-			dot.Snapshot(target, baseDotDamage, isRollover)
+			dot.Snapshot(target, periodic.Tick, isRollover)
 		},
 
 		OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {

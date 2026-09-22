@@ -20,6 +20,9 @@ func (paladin *Paladin) registerTemplarsBulwark() {
 
 	actionID := core.ActionID{SpellID: 53601}
 
+	// Cost, cooldown and duration come from the client table (1311015); the id stays ours.
+	row := spellData.TemplarsBulwark.ByRank(1)
+
 	// The sim has no absorb model. A shield worth the paladin's whole health pool is far more
 	// than a tank takes in 8 seconds, so it is modelled as damage taken dropping to nothing.
 	const damageTaken = 0.01
@@ -27,7 +30,7 @@ func (paladin *Paladin) registerTemplarsBulwark() {
 	bulwarkAura := paladin.RegisterAura(core.Aura{
 		Label:    "Templar's Bulwark",
 		ActionID: actionID,
-		Duration: time.Second * 8,
+		Duration: row.Duration,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			paladin.PseudoStats.DamageTakenMultiplier *= damageTaken
 		},
@@ -37,14 +40,14 @@ func (paladin *Paladin) registerTemplarsBulwark() {
 	})
 
 	// Sacred Duty: 30 sec a rank, confirmed by the beta client's talent data.
-	cooldown := time.Minute*5 - time.Second*30*time.Duration(paladin.Talents.SacredDuty)
+	cooldown := row.Cooldown - time.Second*30*time.Duration(paladin.Talents.SacredDuty)
 
 	bulwark := paladin.RegisterSpell(core.SpellConfig{
 		ActionID: actionID,
 		Flags:    core.SpellFlagAPL | SpellFlag_Forbearance,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost:   110,
+			FlatCost:   float64(row.Cost),
 			Multiplier: paladin.benediction(),
 		},
 

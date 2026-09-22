@@ -30,16 +30,16 @@ func (rogue *Rogue) applyHackAndSlash() {
 	case core.ProcMaskMeleeMH:
 		// the default character pane displays critical strike chance for main hand only
 		rogue.AddStat(stats.MeleeCrit, core.CritRatingPerCritChance*points)
-		rogue.OnSpellRegistered(func(spell *core.Spell) {
-			if spell.ProcMask.Matches(core.ProcMaskMeleeOH) {
-				spell.BonusCritRating -= core.CritRatingPerCritChance * points
-			}
+		rogue.AddStaticMod(core.SpellModConfig{
+			Kind:       core.SpellMod_BonusCrit_Percent,
+			ProcMask:   core.ProcMaskMeleeOH,
+			FloatValue: -points,
 		})
 	case core.ProcMaskMeleeOH:
-		rogue.OnSpellRegistered(func(spell *core.Spell) {
-			if spell.ProcMask.Matches(core.ProcMaskMeleeOH) {
-				spell.BonusCritRating += core.CritRatingPerCritChance * points
-			}
+		rogue.AddStaticMod(core.SpellModConfig{
+			Kind:       core.SpellMod_BonusCrit_Percent,
+			ProcMask:   core.ProcMaskMeleeOH,
+			FloatValue: points,
 		})
 	}
 

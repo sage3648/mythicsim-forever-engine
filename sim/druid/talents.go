@@ -7,15 +7,6 @@ import (
 	"github.com/wowsims/classic/sim/core/stats"
 )
 
-// Spells the Arcane and Nature talents in the Balance tree modify.
-var balanceSpellCodes = []int32{
-	SpellCode_DruidWrath,
-	SpellCode_DruidStarfire,
-	SpellCode_DruidMoonfire,
-	SpellCode_DruidInsectSwarm,
-	SpellCode_DruidHurricane,
-}
-
 func (druid *Druid) ApplyTalents() {
 	// Balance
 	druid.applyGenesis()
@@ -69,12 +60,11 @@ func (druid *Druid) applyGenesis() {
 		return
 	}
 
-	multiplier := 0.01 * float64(druid.Talents.Genesis)
-
-	druid.OnSpellRegistered(func(spell *core.Spell) {
-		if len(spell.Dots()) > 0 || spell.AOEDot() != nil {
-			spell.PeriodicDamageMultiplierAdditive += multiplier
-		}
+	// Every druid spell with a dot or AoE dot. A new dot spell has to be added here.
+	druid.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_PeriodicDamageDone_Flat,
+		ClassMask:  SpellMaskMoonfire | SpellMaskInsectSwarm | SpellMaskHurricane | SpellMaskRake | SpellMaskRip | SpellMaskLacerateBleed,
+		FloatValue: 0.01 * float64(druid.Talents.Genesis),
 	})
 }
 
@@ -83,12 +73,10 @@ func (druid *Druid) applyMoonglow() {
 		return
 	}
 
-	multiplier := []int32{0, 8, 17, 25}[druid.Talents.Moonglow]
-
-	druid.OnSpellRegistered(func(spell *core.Spell) {
-		if spell.Cost != nil && spell.Cost.CostType() == core.CostTypeMana {
-			spell.Cost.Multiplier -= multiplier
-		}
+	druid.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_PowerCost_Pct_Add,
+		CostType:   core.CostTypeMana,
+		FloatValue: -[]float64{0, 0.08, 0.17, 0.25}[druid.Talents.Moonglow],
 	})
 }
 
@@ -97,21 +85,15 @@ func (druid *Druid) applyImprovedMoonfire() {
 		return
 	}
 
-	damageMultiplier := 0.05 * float64(druid.Talents.ImprovedMoonfire)
-	bonusCrit := 5 * float64(druid.Talents.ImprovedMoonfire) * core.SpellCritRatingPerCritChance
-
-	druid.RegisterAura(core.Aura{
-		Label: "Improved Moonfire",
-		OnInit: func(aura *core.Aura, sim *core.Simulation) {
-			for _, spell := range druid.Moonfire {
-				if spell == nil {
-					continue
-				}
-
-				spell.BaseDamageMultiplierAdditive += damageMultiplier
-				spell.BonusCritRating += bonusCrit
-			}
-		},
+	druid.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_BaseDamageDone_Flat,
+		ClassMask:  SpellMaskMoonfire,
+		FloatValue: 0.05 * float64(druid.Talents.ImprovedMoonfire),
+	})
+	druid.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_BonusCrit_Percent,
+		ClassMask:  SpellMaskMoonfire,
+		FloatValue: 5 * float64(druid.Talents.ImprovedMoonfire),
 	})
 }
 
@@ -169,15 +151,10 @@ func (druid *Druid) applyVengeance() {
 		return
 	}
 
-	critDamageBonus := 0.20 * float64(druid.Talents.Vengeance)
-
-	druid.RegisterAura(core.Aura{
-		Label: "Vengeance",
-		OnInit: func(aura *core.Aura, sim *core.Simulation) {
-			for _, spell := range druid.balanceSpells() {
-				spell.CritDamageBonus += critDamageBonus
-			}
-		},
+	druid.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_CritMultiplier_Flat,
+		ClassMask:  SpellMaskBalance,
+		FloatValue: 0.20 * float64(druid.Talents.Vengeance),
 	})
 }
 
@@ -190,31 +167,26 @@ func (druid *Druid) applyNaturesGrace() {
 
 	// The GCD isn't affected by haste in Classic, so it's shortened by hand to match
 	hasteMultiplier := 1.1
-	hastedSpells := []*DruidSpell{}
 	gcdReduction := core.GCDDefault - max(core.GCDMin, time.Duration(float64(core.GCDDefault)/hasteMultiplier))
+
+	// Wrath and Starfire are the druid spells with a cast time and the default GCD.
+	gcdMod := druid.AddDynamicMod(core.SpellModConfig{
+		Kind:      core.SpellMod_GlobalCooldown_Flat,
+		ClassMask: SpellMaskWrath | SpellMaskStarfire,
+		TimeValue: -gcdReduction,
+	})
 
 	druid.NaturesGraceHasteAura = druid.RegisterAura(core.Aura{
 		Label:    "Natures Grace",
 		ActionID: core.ActionID{SpellID: 16886},
 		Duration: time.Second * 3,
-		OnInit: func(aura *core.Aura, sim *core.Simulation) {
-			hastedSpells = core.FilterSlice(druid.DruidSpells, func(ds *DruidSpell) bool {
-				return ds.DefaultCast.CastTime > 0 && ds.DefaultCast.GCD == core.GCDDefault
-			})
-		},
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			druid.MultiplyCastSpeed(hasteMultiplier)
-
-			for _, spell := range hastedSpells {
-				spell.DefaultCast.GCD -= gcdReduction
-			}
+			gcdMod.Activate()
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
 			druid.MultiplyCastSpeed(1 / hasteMultiplier)
-
-			for _, spell := range hastedSpells {
-				spell.DefaultCast.GCD += gcdReduction
-			}
+			gcdMod.Deactivate()
 		},
 	})
 
@@ -247,24 +219,22 @@ func (druid *Druid) applyEclipse() {
 	castTimeReduction := time.Millisecond * []time.Duration{0, 170, 330, 500}[druid.Talents.Eclipse]
 	const chargesPerWrath = 2
 
-	starfireSpells := []*DruidSpell{}
+	castTimeMod := druid.AddDynamicMod(core.SpellModConfig{
+		Kind:      core.SpellMod_CastTime_Flat,
+		ClassMask: SpellMaskStarfire,
+		TimeValue: -castTimeReduction,
+	})
+
 	druid.EclipseAura = druid.RegisterAura(core.Aura{
 		Label:     "Eclipse",
 		ActionID:  core.ActionID{SpellID: 48518},
 		Duration:  time.Second * 15,
 		MaxStacks: 4,
-		OnInit: func(aura *core.Aura, sim *core.Simulation) {
-			starfireSpells = core.FilterSlice(druid.Starfire, func(ds *DruidSpell) bool { return ds != nil })
-		},
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
-			for _, spell := range starfireSpells {
-				spell.DefaultCast.CastTime -= castTimeReduction
-			}
+			castTimeMod.Activate()
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-			for _, spell := range starfireSpells {
-				spell.DefaultCast.CastTime += castTimeReduction
-			}
+			castTimeMod.Deactivate()
 		},
 	})
 
@@ -289,15 +259,10 @@ func (druid *Druid) applyMoonfury() {
 		return
 	}
 
-	multiplier := 0.02 * float64(druid.Talents.Moonfury)
-
-	druid.RegisterAura(core.Aura{
-		Label: "Moonfury",
-		OnInit: func(aura *core.Aura, sim *core.Simulation) {
-			for _, spell := range druid.balanceSpells() {
-				spell.BaseDamageMultiplierAdditive += multiplier
-			}
-		},
+	druid.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_BaseDamageDone_Flat,
+		ClassMask:  SpellMaskBalance,
+		FloatValue: 0.02 * float64(druid.Talents.Moonfury),
 	})
 }
 
@@ -376,12 +341,11 @@ func (druid *Druid) applyPredatoryInstincts() {
 		return
 	}
 
-	critDamageBonus := 0.1 * float64(druid.Talents.PredatoryInstincts)
-
-	druid.OnSpellRegistered(func(spell *core.Spell) {
-		if spell.DefenseType == core.DefenseTypeMelee && spell.ProcMask.Matches(core.ProcMaskMeleeSpecial) {
-			spell.CritDamageBonus += critDamageBonus
-		}
+	druid.AddStaticMod(core.SpellModConfig{
+		Kind:        core.SpellMod_CritMultiplier_Flat,
+		DefenseType: core.DefenseTypeMelee,
+		ProcMask:    core.ProcMaskMeleeSpecial,
+		FloatValue:  0.1 * float64(druid.Talents.PredatoryInstincts),
 	})
 }
 
@@ -466,12 +430,10 @@ func (druid *Druid) applySubtlety() {
 		return
 	}
 
-	threatMultiplier := 1 - 0.1*float64(druid.Talents.Subtlety)
-
-	druid.OnSpellRegistered(func(spell *core.Spell) {
-		if spell.SpellSchool.Matches(core.SpellSchoolArcane | core.SpellSchoolNature) {
-			spell.ThreatMultiplier *= threatMultiplier
-		}
+	druid.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_ThreatMultiplier_Pct,
+		School:     core.SpellSchoolArcane | core.SpellSchoolNature,
+		FloatValue: -0.1 * float64(druid.Talents.Subtlety),
 	})
 }
 

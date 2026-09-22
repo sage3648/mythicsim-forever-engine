@@ -6,16 +6,20 @@ import (
 	"github.com/wowsims/classic/sim/core"
 )
 
+// Cost, cooldown, school and defense type come from the client table. The id stays ours: only rank 1
+// is registered (see sinister_strike.go). The table's threat (-800 at rank 1) is not applied, as before.
 func (rogue *Rogue) registerFeintSpell() {
+	row := spellData.Feint.ByRank(1)
+
 	rogue.Feint = rogue.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 1966},
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
+		SpellSchool: row.SpellSchool,
+		DefenseType: row.DefenseType,
 		ProcMask:    core.ProcMaskMeleeMH,
 		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
 
 		EnergyCost: core.EnergyCostOptions{
-			Cost: 20,
+			Cost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -23,7 +27,7 @@ func (rogue *Rogue) registerFeintSpell() {
 			},
 			CD: core.Cooldown{
 				Timer:    rogue.NewTimer(),
-				Duration: time.Second * 10,
+				Duration: row.Cooldown,
 			},
 			IgnoreHaste: true,
 		},

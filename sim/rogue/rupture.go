@@ -3,6 +3,7 @@ package rogue
 import (
 	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
@@ -14,17 +15,23 @@ func (rogue *Rogue) registerRupture() {
 		60: 11275,
 	}[rogue.Level]
 
+	// Cost, school, defense type, tick length, base tick and base tick count come from the client
+	// table; the id stays ours (see sinister_strike.go). The per combo point step sits on a dummy
+	// effect that reads 0, so it stays ours.
+	row := spellData.Rupture.BySpellID(spellID)
+
 	rogue.Rupture = rogue.RegisterSpell(core.SpellConfig{
-		SpellCode:    SpellCode_RogueRupture,
-		ActionID:     core.ActionID{SpellID: spellID},
-		SpellSchool:  core.SpellSchoolPhysical,
-		DefenseType:  core.DefenseTypeMelee,
-		ProcMask:     core.ProcMaskMeleeMHSpecial,
-		Flags:        rogue.finisherFlags(),
-		MetricSplits: 6,
+		SpellCode:      SpellCode_RogueRupture,
+		ClassSpellMask: SpellMaskRupture,
+		ActionID:       core.ActionID{SpellID: spellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskMeleeMHSpecial,
+		Flags:          rogue.finisherFlags(),
+		MetricSplits:   6,
 
 		EnergyCost: core.EnergyCostOptions{
-			Cost:   25,
+			Cost:   float64(row.Cost),
 			Refund: 0,
 		},
 		Cast: core.CastConfig{
@@ -48,7 +55,7 @@ func (rogue *Rogue) registerRupture() {
 				Label: "Rupture",
 			},
 			NumberOfTicks: 0, // Set dynamically
-			TickLength:    time.Second * 2,
+			TickLength:    row.Periodic.(shared.SpellDataPeriodic).TickLength,
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				damage := rogue.RuptureDamage(target, rogue.ComboPoints())
@@ -83,12 +90,7 @@ func (rogue *Rogue) registerRupture() {
 func (rogue *Rogue) RuptureDamage(target *core.Unit, comboPoints int32) float64 {
 	// Beta client 1.60.1.69893 cut every rank's tick and its per combo point step (rank 6 60 + 8
 	// -> 35 + 4.73). The attack power share below is not in the client and stays Classic's.
-	baseTickDamage := map[int32]float64{
-		25: 5,
-		40: 11,
-		50: 16,
-		60: 35,
-	}[rogue.Level]
+	baseTickDamage := rogue.rupturePeriodic().Tick
 
 	comboTickDamage := map[int32]float64{
 		25: 1.18,
@@ -102,9 +104,13 @@ func (rogue *Rogue) RuptureDamage(target *core.Unit, comboPoints int32) float64 
 }
 
 func (rogue *Rogue) RuptureTicks(comboPoints int32) int32 {
-	return 3 + comboPoints
+	return rogue.rupturePeriodic().NumberOfTicks + comboPoints
 }
 
 func (rogue *Rogue) RuptureDuration(comboPoints int32) time.Duration {
-	return time.Duration(rogue.RuptureTicks(comboPoints)) * time.Second * 2
+	return time.Duration(rogue.RuptureTicks(comboPoints)) * rogue.rupturePeriodic().TickLength
+}
+
+func (rogue *Rogue) rupturePeriodic() shared.SpellDataPeriodic {
+	return spellData.Rupture.BySpellID(rogue.Rupture.ActionID.SpellID).Periodic.(shared.SpellDataPeriodic)
 }

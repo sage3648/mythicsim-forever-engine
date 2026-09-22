@@ -73,7 +73,7 @@ var FullRaidBuffs = &proto.RaidBuffs{
 	StrengthOfEarthTotem:  proto.TristateEffect_TristateEffectImproved,
 	Thorns:                proto.TristateEffect_TristateEffectImproved,
 	TrueshotAura:          true,
-	SanctityAura:          true,
+	// No SanctityAura: Forever does not have it, see applyBuffEffects.
 }
 
 ///////////////////////////////////////////////////////////////////////////

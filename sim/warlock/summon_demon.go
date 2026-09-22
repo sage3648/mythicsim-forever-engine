@@ -23,10 +23,11 @@ func (warlock *Warlock) registerSummonDemon() {
 
 	// Felhunter
 	warlock.SummonDemonSpells = append(warlock.SummonDemonSpells, warlock.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: 691},
-		SpellSchool: core.SpellSchoolShadow,
-		ProcMask:    core.ProcMaskEmpty,
-		Flags:       core.SpellFlagAPL,
+		ActionID:       core.ActionID{SpellID: 691},
+		SpellSchool:    core.SpellSchoolShadow,
+		ProcMask:       core.ProcMaskEmpty,
+		ClassSpellMask: SpellMaskSummonDemon,
+		Flags:          core.SpellFlagAPL,
 
 		ManaCost: manaCost,
 		Cast:     cast,
@@ -38,10 +39,11 @@ func (warlock *Warlock) registerSummonDemon() {
 
 	// Imp
 	warlock.SummonDemonSpells = append(warlock.SummonDemonSpells, warlock.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: 688},
-		SpellSchool: core.SpellSchoolShadow,
-		ProcMask:    core.ProcMaskEmpty,
-		Flags:       core.SpellFlagAPL,
+		ActionID:       core.ActionID{SpellID: 688},
+		SpellSchool:    core.SpellSchoolShadow,
+		ProcMask:       core.ProcMaskEmpty,
+		ClassSpellMask: SpellMaskSummonDemon,
+		Flags:          core.SpellFlagAPL,
 
 		ManaCost: manaCost,
 		Cast:     cast,
@@ -53,10 +55,11 @@ func (warlock *Warlock) registerSummonDemon() {
 
 	// Succubus
 	warlock.SummonDemonSpells = append(warlock.SummonDemonSpells, warlock.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: 712},
-		SpellSchool: core.SpellSchoolShadow,
-		ProcMask:    core.ProcMaskEmpty,
-		Flags:       core.SpellFlagAPL,
+		ActionID:       core.ActionID{SpellID: 712},
+		SpellSchool:    core.SpellSchoolShadow,
+		ProcMask:       core.ProcMaskEmpty,
+		ClassSpellMask: SpellMaskSummonDemon,
+		Flags:          core.SpellFlagAPL,
 
 		ManaCost: manaCost,
 		Cast:     cast,
@@ -68,10 +71,11 @@ func (warlock *Warlock) registerSummonDemon() {
 
 	// Voidwalker
 	warlock.SummonDemonSpells = append(warlock.SummonDemonSpells, warlock.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: 697},
-		SpellSchool: core.SpellSchoolShadow,
-		ProcMask:    core.ProcMaskEmpty,
-		Flags:       core.SpellFlagAPL,
+		ActionID:       core.ActionID{SpellID: 697},
+		SpellSchool:    core.SpellSchoolShadow,
+		ProcMask:       core.ProcMaskEmpty,
+		ClassSpellMask: SpellMaskSummonDemon,
+		Flags:          core.SpellFlagAPL,
 
 		ManaCost: manaCost,
 		Cast:     cast,

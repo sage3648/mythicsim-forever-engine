@@ -2,7 +2,6 @@ package shaman
 
 import (
 	"fmt"
-	"slices"
 	"time"
 
 	"github.com/wowsims/classic/sim/core"
@@ -71,10 +70,11 @@ func (shaman *Shaman) ApplyTalents() {
 	}
 
 	if shaman.Talents.TidalFocus > 0 {
-		shaman.OnSpellRegistered(func(spell *core.Spell) {
-			if spell.Flags.Matches(SpellFlagShaman) && spell.ProcMask.Matches(core.ProcMaskSpellHealing) && spell.Cost != nil {
-				spell.Cost.Multiplier -= shaman.Talents.TidalFocus
-			}
+		shaman.AddStaticMod(core.SpellModConfig{
+			Kind:       core.SpellMod_PowerCost_Pct_Add,
+			SpellFlag:  SpellFlagShaman,
+			ProcMask:   core.ProcMaskSpellHealing,
+			FloatValue: -.01 * float64(shaman.Talents.TidalFocus),
 		})
 
 		shaman.AddStat(stats.MeleeHit, core.MeleeHitRatingPerHitChance*float64(shaman.Talents.TidalFocus))
@@ -82,20 +82,19 @@ func (shaman *Shaman) ApplyTalents() {
 	}
 
 	if shaman.Talents.NaturalGrace > 0 {
-		threatMultiplier := 1 - .05*float64(shaman.Talents.NaturalGrace)
-		shaman.OnSpellRegistered(func(spell *core.Spell) {
-			if spell.Flags.Matches(SpellFlagShaman) {
-				spell.ThreatMultiplier *= threatMultiplier
-			}
+		shaman.AddStaticMod(core.SpellModConfig{
+			Kind:       core.SpellMod_ThreatMultiplier_Pct,
+			SpellFlag:  SpellFlagShaman,
+			FloatValue: -.05 * float64(shaman.Talents.NaturalGrace),
 		})
 	}
 
 	if shaman.Talents.TidalMastery > 0 {
-		critBonus := float64(shaman.Talents.TidalMastery) * core.SpellCritRatingPerCritChance
-		shaman.OnSpellRegistered(func(spell *core.Spell) {
-			if spell.Flags.Matches(SpellFlagShaman) && spell.ProcMask.Matches(core.ProcMaskSpellHealing) {
-				spell.BonusCritRating += critBonus
-			}
+		shaman.AddStaticMod(core.SpellModConfig{
+			Kind:       core.SpellMod_BonusCrit_Percent,
+			SpellFlag:  SpellFlagShaman,
+			ProcMask:   core.ProcMaskSpellHealing,
+			FloatValue: float64(shaman.Talents.TidalMastery),
 		})
 	}
 }
@@ -105,13 +104,10 @@ func (shaman *Shaman) applyConcussion() {
 		return
 	}
 
-	additiveMultiplier := 0.01 * float64(shaman.Talents.Concussion)
-	affectedSpellCodes := []int32{SpellCode_ShamanLightningBolt, SpellCode_ShamanChainLightning, SpellCode_ShamanEarthShock}
-
-	shaman.OnSpellRegistered(func(spell *core.Spell) {
-		if slices.Contains(affectedSpellCodes, spell.SpellCode) {
-			spell.DamageMultiplierAdditive += additiveMultiplier
-		}
+	shaman.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_DamageDone_Flat,
+		ClassMask:  SpellMaskLightningBolt | SpellMaskChainLightning | SpellMaskEarthShock,
+		FloatValue: 0.01 * float64(shaman.Talents.Concussion),
 	})
 }
 
@@ -154,29 +150,23 @@ func (shaman *Shaman) applyElementalFocus() {
 		return
 	}
 
-	var affectedSpells []*core.Spell
+	costMod := shaman.AddDynamicMod(core.SpellModConfig{
+		Kind:       core.SpellMod_PowerCost_Pct_Add,
+		SpellFlag:  SpellFlagShaman,
+		ProcMask:   core.ProcMaskSpellDamage,
+		FloatValue: -1,
+	})
 
 	shaman.ClearcastingAura = shaman.RegisterAura(core.Aura{
 		Label:     "Clearcasting",
 		ActionID:  core.ActionID{SpellID: 16246},
 		Duration:  time.Second * 15,
 		MaxStacks: 1,
-		OnInit: func(aura *core.Aura, sim *core.Simulation) {
-			affectedSpells = shaman.getClearcastingSpells()
-		},
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
-			core.Each(affectedSpells, func(spell *core.Spell) {
-				if spell.Cost != nil {
-					spell.Cost.Multiplier -= 100
-				}
-			})
+			costMod.Activate()
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-			core.Each(affectedSpells, func(spell *core.Spell) {
-				if spell.Cost != nil {
-					spell.Cost.Multiplier += 100
-				}
-			})
+			costMod.Deactivate()
 		},
 		OnStacksChange: func(aura *core.Aura, sim *core.Simulation, oldStacks, newStacks int32) {
 			if newStacks == 0 {
@@ -210,15 +200,6 @@ func (shaman *Shaman) isShamanDamagingSpell(spell *core.Spell) bool {
 	return spell.Flags.Matches(SpellFlagShaman) && spell.ProcMask.Matches(core.ProcMaskSpellDamage)
 }
 
-func (shaman *Shaman) getClearcastingSpells() []*core.Spell {
-	return core.FilterSlice(
-		shaman.Spellbook,
-		func(spell *core.Spell) bool {
-			return spell != nil && shaman.isShamanDamagingSpell(spell)
-		},
-	)
-}
-
 func (shaman *Shaman) applyElementalDevastation() {
 	if shaman.Talents.ElementalDevastation == 0 {
 		return
@@ -249,19 +230,16 @@ func (shaman *Shaman) applyElementalFury() {
 	// 20% per point, to 100%, is the beta client's talent curve.
 	critDamageBonus := .2 * float64(shaman.Talents.ElementalFury)
 
-	shaman.OnSpellRegistered(func(spell *core.Spell) {
-		if spell.DefenseType != core.DefenseTypeMagic {
-			return
-		}
-
-		// A totem's damage lands through a spell of its own, registered alongside the cast and
-		// carrying none of the shaman flag the talent's other spells have, so the totem flag is
-		// what keeps those in. Naming the totems by spell code instead had already missed Fire
-		// Nova Totem, and would miss the next totem added the same way.
-		isElementalSpell := spell.Flags.Matches(SpellFlagShaman|SpellFlagTotem) && spell.SpellSchool.Matches(core.SpellSchoolFire|core.SpellSchoolFrost|core.SpellSchoolNature)
-		if isElementalSpell {
-			spell.CritDamageBonus += critDamageBonus
-		}
+	// A totem's damage lands through a spell of its own, registered alongside the cast and
+	// carrying none of the shaman flag the talent's other spells have, so the totem flag is
+	// what keeps those in. Naming the totems by spell code instead had already missed Fire
+	// Nova Totem, and would miss the next totem added the same way.
+	shaman.AddStaticMod(core.SpellModConfig{
+		Kind:        core.SpellMod_CritMultiplier_Flat,
+		DefenseType: core.DefenseTypeMagic,
+		SpellFlag:   SpellFlagShaman | SpellFlagTotem,
+		School:      core.SpellSchoolFire | core.SpellSchoolFrost | core.SpellSchoolNature,
+		FloatValue:  critDamageBonus,
 	})
 }
 

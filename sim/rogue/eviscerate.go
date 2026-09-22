@@ -6,28 +6,18 @@ import (
 	"github.com/wowsims/classic/sim/core"
 )
 
+// Our damage by spell id: the low end with no combo points, the step per combo point, and the width of
+// the roll. The client table holds only the centre of the range with no combo points
+// (spell_damage_test.go checks it), and the per combo point step sits on a dummy effect that reads 0.
+var eviscerateDamage = map[int32]struct{ flat, perCombo, variance float64 }{
+	6762:  {10, 31, 20},
+	8624:  {22, 71, 44},
+	11299: {34, 110, 68},
+	11300: {48, 151, 96},
+	31016: {54, 170, 108},
+}
+
 func (rogue *Rogue) registerEviscerate() {
-	flatDamage := map[int32]float64{
-		25: 10,
-		40: 22,
-		50: 34,
-		60: core.TernaryFloat64(core.IncludeAQ, 54, 48),
-	}[rogue.Level]
-
-	comboDamageBonus := map[int32]float64{
-		25: 31,
-		40: 71,
-		50: 110,
-		60: core.TernaryFloat64(core.IncludeAQ, 170, 151),
-	}[rogue.Level]
-
-	damageVariance := map[int32]float64{
-		25: 20,
-		40: 44,
-		50: 68,
-		60: core.TernaryFloat64(core.IncludeAQ, 108, 96),
-	}[rogue.Level]
-
 	spellID := map[int32]int32{
 		25: 6762,
 		40: 8624,
@@ -35,17 +25,24 @@ func (rogue *Rogue) registerEviscerate() {
 		60: core.TernaryInt32(core.IncludeAQ, 31016, 11300),
 	}[rogue.Level]
 
+	// Cost, school, defense type and coefficient come from the client table; the id stays ours (see
+	// sinister_strike.go), and so does the damage (see eviscerateDamage).
+	row := spellData.Eviscerate.BySpellID(spellID)
+	damage := eviscerateDamage[spellID]
+	flatDamage, comboDamageBonus, damageVariance := damage.flat, damage.perCombo, damage.variance
+
 	rogue.Eviscerate = rogue.RegisterSpell(core.SpellConfig{
-		SpellCode:    SpellCode_RogueEviscerate,
-		ActionID:     core.ActionID{SpellID: spellID},
-		SpellSchool:  core.SpellSchoolPhysical,
-		DefenseType:  core.DefenseTypeMelee,
-		ProcMask:     core.ProcMaskMeleeMHSpecial,
-		Flags:        rogue.finisherFlags() | SpellFlagColdBlooded,
-		MetricSplits: 6,
+		SpellCode:      SpellCode_RogueEviscerate,
+		ClassSpellMask: SpellMaskEviscerate,
+		ActionID:       core.ActionID{SpellID: spellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskMeleeMHSpecial,
+		Flags:          rogue.finisherFlags() | SpellFlagColdBlooded,
+		MetricSplits:   6,
 
 		EnergyCost: core.EnergyCostOptions{
-			Cost:   35 - core.TernaryFloat64(rogue.Talents.FlawlessExecution, 10, 0),
+			Cost:   float64(row.Cost) - core.TernaryFloat64(rogue.Talents.FlawlessExecution, 10, 0),
 			Refund: 0,
 		},
 		Cast: core.CastConfig{
@@ -67,7 +64,7 @@ func (rogue *Rogue) registerEviscerate() {
 			[]float64{0, 0.07, 0.13, 0.20}[rogue.Talents.ImprovedEviscerate] +
 			[]float64{0, 0.02, 0.04, 0.06}[rogue.Talents.Aggression],
 		ThreatMultiplier: 1,
-		BonusCoefficient: 1,
+		BonusCoefficient: row.Direct.BonusCoefficient(),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			rogue.BreakStealth(sim)

@@ -3,6 +3,7 @@ package hunter
 import (
 	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
@@ -20,6 +21,40 @@ const (
 	LightningBreath
 	ScorpidPoison
 )
+
+// Pet ability ids by the owner's level. Damage ranges stay ours (the client table holds the
+// truncated centre, see aimed_shot.go); spell_damage_test.go checks each still contains it.
+var PetClawSpellID = map[int32]int32{
+	25: 16830,
+	40: 16832,
+	50: 3010,
+	60: 3009,
+}
+var PetClawDamage = map[int32][]float64{25: {16, 22}, 40: {26, 36}, 50: {35, 49}, 60: {43, 59}}
+
+var PetBiteSpellID = map[int32]int32{
+	25: 17257,
+	40: 17259,
+	50: 17260,
+	60: 17261,
+}
+var PetBiteDamage = map[int32][]float64{25: {31, 37}, 40: {49, 59}, 50: {66, 80}, 60: {81, 91}}
+
+var PetLightningBreathSpellID = map[int32]int32{
+	25: 25009,
+	40: 25009, // rank 4 not available in SoD Phase 2
+	50: 25011,
+	60: 25012,
+}
+var PetLightningBreathDamage = map[int32][]float64{25: {32, 36}, 40: {32, 36}, 50: {71, 81}, 60: {86, 98}}
+
+var PetScreechSpellID = map[int32]int32{
+	15: 24580,
+	40: 24580,
+	50: 24581,
+	60: 24582,
+}
+var PetScreechDamage = map[int32][]float64{25: {9, 13}, 40: {9, 13}, 50: {21, 27}, 60: {24, 42}}
 
 func (hp *HunterPet) NewPetAbility(abilityType PetAbilityType, isPrimary bool) *core.Spell {
 	switch abilityType {
@@ -45,37 +80,21 @@ func (hp *HunterPet) NewPetAbility(abilityType PetAbilityType, isPrimary bool) *
 }
 
 func (hp *HunterPet) newClaw() *core.Spell {
-	baseDamageMin := map[int32]float64{
-		25: 16,
-		40: 26,
-		50: 35,
-		60: 43,
-	}[hp.Owner.Level]
-
-	baseDamageMax := map[int32]float64{
-		25: 22,
-		40: 36,
-		50: 49,
-		60: 59,
-	}[hp.Owner.Level]
-
-	spellID := map[int32]int32{
-		25: 16830,
-		40: 16832,
-		50: 3010,
-		60: 3009,
-	}[hp.Owner.Level]
+	spellID := PetClawSpellID[hp.Owner.Level]
+	baseDamageMin, baseDamageMax := PetClawDamage[hp.Owner.Level][0], PetClawDamage[hp.Owner.Level][1]
+	row := spellData.ClawTriggered.BySpellID(spellID)
 
 	return hp.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: spellID},
-		SpellCode:   SpellCode_HunterPetClaw,
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
-		ProcMask:    core.ProcMaskMeleeMHSpecial,
-		Flags:       core.SpellFlagMeleeMetrics,
+		ActionID:       core.ActionID{SpellID: spellID},
+		SpellCode:      SpellCode_HunterPetClaw,
+		ClassSpellMask: SpellMaskPetClaw,
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskMeleeMHSpecial,
+		Flags:          core.SpellFlagMeleeMetrics,
 
 		FocusCost: core.FocusCostOptions{
-			Cost: 25,
+			Cost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -86,7 +105,7 @@ func (hp *HunterPet) newClaw() *core.Spell {
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
-		BonusCoefficient: 1,
+		BonusCoefficient: roundCoef(row.Direct.BonusCoefficient()),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := sim.Roll(baseDamageMin, baseDamageMax)
@@ -96,37 +115,21 @@ func (hp *HunterPet) newClaw() *core.Spell {
 }
 
 func (hp *HunterPet) newBite() *core.Spell {
-	baseDamageMin := map[int32]float64{
-		25: 31,
-		40: 49,
-		50: 66,
-		60: 81,
-	}[hp.Owner.Level]
-
-	baseDamageMax := map[int32]float64{
-		25: 37,
-		40: 59,
-		50: 80,
-		60: 91,
-	}[hp.Owner.Level]
-
-	spellID := map[int32]int32{
-		25: 17257,
-		40: 17259,
-		50: 17260,
-		60: 17261,
-	}[hp.Owner.Level]
+	spellID := PetBiteSpellID[hp.Owner.Level]
+	baseDamageMin, baseDamageMax := PetBiteDamage[hp.Owner.Level][0], PetBiteDamage[hp.Owner.Level][1]
+	row := spellData.BiteTriggered.BySpellID(spellID)
 
 	return hp.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: spellID},
-		SpellCode:   SpellCode_HunterPetBite,
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
-		ProcMask:    core.ProcMaskMeleeMHSpecial,
-		Flags:       core.SpellFlagMeleeMetrics,
+		ActionID:       core.ActionID{SpellID: spellID},
+		SpellCode:      SpellCode_HunterPetBite,
+		ClassSpellMask: SpellMaskPetBite,
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskMeleeMHSpecial,
+		Flags:          core.SpellFlagMeleeMetrics,
 
 		FocusCost: core.FocusCostOptions{
-			Cost: 35,
+			Cost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -134,14 +137,14 @@ func (hp *HunterPet) newBite() *core.Spell {
 			},
 			CD: core.Cooldown{
 				Timer:    hp.NewTimer(),
-				Duration: 10 * time.Second,
+				Duration: row.Cooldown,
 			},
 			IgnoreHaste: true,
 		},
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
-		BonusCoefficient: 1,
+		BonusCoefficient: roundCoef(row.Direct.BonusCoefficient()),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := sim.Roll(baseDamageMin, baseDamageMax)
@@ -152,36 +155,21 @@ func (hp *HunterPet) newBite() *core.Spell {
 
 // Beta client: every rank lower, and no more growth per level.
 func (hp *HunterPet) newLightningBreath() *core.Spell {
-	baseDamageMin := map[int32]float64{
-		25: 32,
-		40: 32,
-		50: 71,
-		60: 86,
-	}[hp.Owner.Level]
-
-	baseDamageMax := map[int32]float64{
-		25: 36,
-		40: 36,
-		50: 81,
-		60: 98,
-	}[hp.Owner.Level]
-
-	spellID := map[int32]int32{
-		25: 25009,
-		40: 25009, // rank 4 not available in SoD Phase 2
-		50: 25011,
-		60: 25012,
-	}[hp.Owner.Level]
+	spellID := PetLightningBreathSpellID[hp.Owner.Level]
+	baseDamageMin, baseDamageMax := PetLightningBreathDamage[hp.Owner.Level][0], PetLightningBreathDamage[hp.Owner.Level][1]
+	// The table's coefficient of 0 is not used; ours stays 1.
+	row := spellData.LightningBreathTriggered.BySpellID(spellID)
 
 	return hp.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: spellID},
-		SpellCode:   SpellCode_HunterPetLightningBreath,
-		SpellSchool: core.SpellSchoolNature,
-		DefenseType: core.DefenseTypeMagic,
-		ProcMask:    core.ProcMaskSpellDamage,
+		ActionID:       core.ActionID{SpellID: spellID},
+		SpellCode:      SpellCode_HunterPetLightningBreath,
+		ClassSpellMask: SpellMaskPetLightningBreath,
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamage,
 
 		FocusCost: core.FocusCostOptions{
-			Cost: 50,
+			Cost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -204,37 +192,22 @@ func (hp *HunterPet) newLightningBreath() *core.Spell {
 
 // Demoralizing Screech in the beta client: new damage, and a 10 sec cooldown Classic did not have.
 func (hp *HunterPet) newScreech() *core.Spell {
-	baseDamageMin := map[int32]float64{
-		25: 9,
-		40: 9,
-		50: 21,
-		60: 24,
-	}[hp.Owner.Level]
-
-	baseDamageMax := map[int32]float64{
-		25: 13,
-		40: 13,
-		50: 27,
-		60: 42,
-	}[hp.Owner.Level]
-
-	spellID := map[int32]int32{
-		15: 24580,
-		40: 24580,
-		50: 24581,
-		60: 24582,
-	}[hp.Owner.Level]
+	spellID := PetScreechSpellID[hp.Owner.Level]
+	baseDamageMin, baseDamageMax := PetScreechDamage[hp.Owner.Level][0], PetScreechDamage[hp.Owner.Level][1]
+	// Cost, cooldown, school and defense type sit on the rank's triggered row.
+	row := spellData.DemoralizingScreechTriggered.ByRank(spellData.DemoralizingScreech.BySpellID(spellID).Rank)
 
 	return hp.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: spellID},
-		SpellCode:   SpellCode_HunterPetScreech,
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
-		ProcMask:    core.ProcMaskMeleeSpecial,
-		Flags:       core.SpellFlagMeleeMetrics,
+		ActionID:       core.ActionID{SpellID: spellID},
+		SpellCode:      SpellCode_HunterPetScreech,
+		ClassSpellMask: SpellMaskPetScreech,
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskMeleeSpecial,
+		Flags:          core.SpellFlagMeleeMetrics,
 
 		FocusCost: core.FocusCostOptions{
-			Cost: 20,
+			Cost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -243,7 +216,7 @@ func (hp *HunterPet) newScreech() *core.Spell {
 			IgnoreHaste: true,
 			CD: core.Cooldown{
 				Timer:    hp.NewTimer(),
-				Duration: time.Second * 10,
+				Duration: row.Cooldown,
 			},
 		},
 
@@ -305,30 +278,28 @@ func (hp *HunterPet) newScreech() *core.Spell {
 // }
 
 func (hp *HunterPet) newScorpidPoison() *core.Spell {
-	// Beta client: 2/4/5 a tick, down from 3/6/8.
-	baseDamageTick := map[int32]float64{
-		25: 2,
-		40: 4,
-		50: 4,
-		60: 5,
-	}[hp.Owner.Level]
+	// Beta client: 2/4/5 a tick, down from 3/6/8. Everything but the id comes from the client table.
 	spellID := map[int32]int32{
 		25: 24583,
 		40: 24586,
 		50: 24586,
 		60: 24587,
 	}[hp.Owner.Level]
+	row := spellData.ScorpidPoisonTriggered.BySpellID(spellID)
+	periodic := row.Periodic.(shared.SpellDataPeriodic)
+	baseDamageTick := periodic.Tick
 
 	return hp.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: spellID},
-		SpellCode:   SpellCode_HunterPetScorpidPoison,
-		SpellSchool: core.SpellSchoolNature,
-		DefenseType: core.DefenseTypeMelee,
-		ProcMask:    core.ProcMaskMeleeMHSpecial,
-		Flags:       core.SpellFlagPassiveSpell | core.SpellFlagPoison,
+		ActionID:       core.ActionID{SpellID: spellID},
+		SpellCode:      SpellCode_HunterPetScorpidPoison,
+		ClassSpellMask: SpellMaskPetScorpidPoison,
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskMeleeMHSpecial,
+		Flags:          core.SpellFlagPassiveSpell | core.SpellFlagPoison,
 
 		FocusCost: core.FocusCostOptions{
-			Cost: 30,
+			Cost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -337,7 +308,7 @@ func (hp *HunterPet) newScorpidPoison() *core.Spell {
 			IgnoreHaste: true,
 			CD: core.Cooldown{
 				Timer:    hp.NewTimer(),
-				Duration: time.Second * 4,
+				Duration: row.Cooldown,
 			},
 		},
 
@@ -348,10 +319,10 @@ func (hp *HunterPet) newScorpidPoison() *core.Spell {
 			Aura: core.Aura{
 				Label:     "ScorpidPoison",
 				MaxStacks: 5,
-				Duration:  time.Second * 10,
+				Duration:  row.Duration,
 			},
-			NumberOfTicks: 5,
-			TickLength:    time.Second * 2,
+			NumberOfTicks: periodic.NumberOfTicks,
+			TickLength:    periodic.TickLength,
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, applyStack bool) {
 				if !applyStack {

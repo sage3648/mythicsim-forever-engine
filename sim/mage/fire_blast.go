@@ -8,11 +8,11 @@ import (
 
 const FireBlastRanks = 7
 
-var FireBlastSpellId = [FireBlastRanks + 1]int32{0, 2136, 2137, 2138, 8412, 8413, 10197, 10199}
+// Spell ID, cost, cooldown and coefficient come from the client table (see
+// frostbolt.go for why the damage does not).
+//
 // Beta client 1.60.1.69893.
 var FireBlastBaseDamage = [FireBlastRanks + 1][]float64{{0}, {27, 35}, {57, 69}, {97, 117}, {157, 187}, {226, 268}, {316, 372}, {417, 489}}
-var FireBlastSpellCoeff = [FireBlastRanks + 1]float64{0, .429, .429, .429, .429, .429, .429, .429}
-var FireBlastManaCost = [FireBlastRanks + 1]float64{0, 40, 75, 115, 165, 220, 280, 340}
 var FireBlastLevel = [FireBlastRanks + 1]int{0, 6, 14, 22, 30, 38, 46, 54}
 
 func (mage *Mage) registerFireBlastSpell() {
@@ -30,30 +30,29 @@ func (mage *Mage) registerFireBlastSpell() {
 
 func (mage *Mage) newFireBlastSpellConfig(rank int, cdTimer *core.Timer) core.SpellConfig {
 
-	spellId := FireBlastSpellId[rank]
+	row := spellData.FireBlast.ByRank(int32(rank))
 	baseDamageLow := FireBlastBaseDamage[rank][0]
 	baseDamageHigh := FireBlastBaseDamage[rank][1]
-	spellCoeff := FireBlastSpellCoeff[rank]
-	manaCost := FireBlastManaCost[rank]
 	level := FireBlastLevel[rank]
 
 	// Wake of Fire takes 1 and 2 sec off in the beta client.
-	cooldown := time.Second*8 - []time.Duration{0, time.Second, time.Second * 2}[mage.Talents.WakeOfFire]
+	cooldown := row.Cooldown - []time.Duration{0, time.Second, time.Second * 2}[mage.Talents.WakeOfFire]
 	flags := SpellFlagMage | core.SpellFlagAPL
 
 	return core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: spellId},
-		SpellCode:   SpellCode_MageFireBlast,
-		SpellSchool: core.SpellSchoolFire,
-		DefenseType: core.DefenseTypeMagic,
-		ProcMask:    core.ProcMaskSpellDamage,
-		Flags:       flags,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellCode:      SpellCode_MageFireBlast,
+		ClassSpellMask: SpellMaskFireBlast,
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          flags,
 
 		Rank:          rank,
 		RequiredLevel: level,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -67,7 +66,7 @@ func (mage *Mage) newFireBlastSpellConfig(rank int, cdTimer *core.Timer) core.Sp
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
-		BonusCoefficient: spellCoeff,
+		BonusCoefficient: roundCoef(row.Direct.BonusCoefficient()),
 
 		ExpectedInitialDamage: func(sim *core.Simulation, target *core.Unit, spell *core.Spell, _ bool) *core.SpellResult {
 			baseDamageCalc := (baseDamageLow + baseDamageHigh) / 2

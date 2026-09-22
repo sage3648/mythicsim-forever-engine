@@ -2,39 +2,42 @@ package warlock
 
 import (
 	"strconv"
-	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
 const RainOfFireRanks = 4
 
 func (warlock *Warlock) getRainOfFireBaseConfig(rank int) core.SpellConfig {
-	spellId := [RainOfFireRanks + 1]int32{0, 5740, 6219, 11677, 11678}[rank]
 	// Beta client 1.60.1: each tick is now its own damage spell (1282380, 1282383, 1282384, 1282385)
 	// carrying the per tick damage and a 0.083 coefficient. The 0.03 on the channel's dummy effect is
 	// not the damage coefficient.
-	spellCoeff := [RainOfFireRanks + 1]float64{0, 0.083, 0.083, 0.083, 0.083}[rank]
+	//
+	// Spell ID, cost, ticks and the coefficient come from the client table. The tick does not: the
+	// table reads 41/93/151/221 where ours is 40/91/149/220, and until that is settled ours stands.
+	row := spellData.RainOfFire.ByRank(int32(rank))
+	periodic := row.Periodic.(shared.SpellDataPeriodic)
 	baseDamage := [RainOfFireRanks + 1]float64{0, 40, 91, 149, 220}[rank]
-	manaCost := [RainOfFireRanks + 1]float64{0, 295, 605, 885, 1185}[rank]
 	level := [RainOfFireRanks + 1]int{0, 20, 34, 46, 58}[rank]
 
 	flags := core.SpellFlagAPL | core.SpellFlagResetAttackSwing | WarlockFlagDestruction | core.SpellFlagChanneled
 
 	config := core.SpellConfig{
-		ActionID:      core.ActionID{SpellID: spellId},
-		SpellSchool:   core.SpellSchoolFire,
-		DefenseType:   core.DefenseTypeMagic,
-		ProcMask:      core.ProcMaskSpellDamage,
-		Flags:         flags,
-		RequiredLevel: level,
-		Rank:          rank,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamage,
+		ClassSpellMask: SpellMaskRainOfFire,
+		Flags:          flags,
+		RequiredLevel:  level,
+		Rank:           rank,
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -46,9 +49,9 @@ func (warlock *Warlock) getRainOfFireBaseConfig(rank int) core.SpellConfig {
 			Aura: core.Aura{
 				Label: "RainOfFire-" + warlock.Label + strconv.Itoa(rank),
 			},
-			NumberOfTicks:    4,
-			TickLength:       time.Second * 2,
-			BonusCoefficient: spellCoeff,
+			NumberOfTicks:    periodic.NumberOfTicks,
+			TickLength:       periodic.TickLength,
+			BonusCoefficient: roundCoef(periodic.Coef),
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.Snapshot(target, baseDamage, isRollover)

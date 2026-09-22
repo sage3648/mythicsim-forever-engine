@@ -3,23 +3,22 @@ package rogue
 import (
 	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
+// Cost, school, defense type, flat damage and coefficient come from the client table; the id stays
+// ours (see sinister_strike.go).
 func (rogue *Rogue) registerBackstabSpell() {
-	flatDamageBonus := map[int32]float64{
-		25: 32,
-		40: 60,
-		50: 90,
-		60: core.TernaryFloat64(core.IncludeAQ, 150, 140),
-	}[rogue.Level]
-
 	spellID := map[int32]int32{
 		25: 2590,
 		40: 8721,
 		50: 11279,
 		60: core.TernaryInt32(core.IncludeAQ, 25300, 11281),
 	}[rogue.Level]
+
+	row := spellData.Backstab.BySpellID(spellID)
+	flatDamageBonus := shared.SpellDataMin(row.Direct)
 
 	damageMultiplier := 1.5 *
 		[]float64{1, 1.05, 1.1}[rogue.Talents.Opportunity] *
@@ -30,15 +29,16 @@ func (rogue *Rogue) registerBackstabSpell() {
 	cpMetrics := rogue.NewComboPointMetrics(core.ActionID{SpellID: 13866})
 
 	rogue.Backstab = rogue.RegisterSpell(core.SpellConfig{
-		SpellCode:   SpellCode_RogueBackstab,
-		ActionID:    core.ActionID{SpellID: spellID},
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
-		ProcMask:    core.ProcMaskMeleeMHSpecial,
-		Flags:       rogue.builderFlags(),
+		SpellCode:      SpellCode_RogueBackstab,
+		ClassSpellMask: SpellMaskBackstab,
+		ActionID:       core.ActionID{SpellID: spellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskMeleeMHSpecial,
+		Flags:          rogue.builderFlags(),
 
 		EnergyCost: core.EnergyCostOptions{
-			Cost:   60,
+			Cost:   float64(row.Cost),
 			Refund: 0.8,
 		},
 		Cast: core.CastConfig{
@@ -60,7 +60,7 @@ func (rogue *Rogue) registerBackstabSpell() {
 
 		DamageMultiplier: damageMultiplier,
 		ThreatMultiplier: 1,
-		BonusCoefficient: 1,
+		BonusCoefficient: row.Direct.BonusCoefficient(),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			rogue.BreakStealth(sim)

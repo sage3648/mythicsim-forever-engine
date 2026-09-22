@@ -3,69 +3,40 @@ package druid
 import (
 	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
-type RakeRankInfo struct {
-	id            int32
-	level         int32
-	initialDamage float64
-	dotTickDamage float64
-}
-
-// Beta client 1.60.1.69893: a little more damage at every rank (rank 4 58 plus 32 a tick -> 61 plus 34 a tick).
-var rakeSpells = []RakeRankInfo{
-	{
-		id:            1822,
-		level:         24,
-		initialDamage: 23.0,
-		dotTickDamage: 16.0,
-	},
-	{
-		id:            1823,
-		level:         34,
-		initialDamage: 31.0,
-		dotTickDamage: 21.0,
-	},
-	{
-
-		id:            1824,
-		level:         44,
-		initialDamage: 45.0,
-		dotTickDamage: 26.0,
-	},
-	{
-
-		id:            9904,
-		level:         54,
-		initialDamage: 61.0,
-		dotTickDamage: 34.0,
-	},
-}
+// Beta client 1.60.1.69893: a little more damage at every rank (rank 4 58 plus 32 a tick -> 61 plus 34 a tick). The id,
+// cost, hit, tick and tick schedule come from the client table (see wrath.go).
+var RakeLevel = []int32{0, 24, 34, 44, 54}
 
 func (druid *Druid) registerRakeSpell() {
 	// Add highest available rake rank for level.
-	for rank := len(rakeSpells) - 1; rank >= 0; rank-- {
-		if druid.Level >= rakeSpells[rank].level {
-			config := druid.newRakeSpellConfig(rakeSpells[rank])
+	for rank := len(RakeLevel) - 1; rank >= 1; rank-- {
+		if druid.Level >= RakeLevel[rank] {
+			config := druid.newRakeSpellConfig(rank)
 			druid.Rake = druid.RegisterSpell(Cat, config)
 			return
 		}
 	}
 }
 
-func (druid *Druid) newRakeSpellConfig(rakeRank RakeRankInfo) core.SpellConfig {
-	baseDamageInitial := rakeRank.initialDamage
-	baseDamageTick := rakeRank.dotTickDamage
-	energyCost := 40 - float64(druid.Talents.Ferocity)
+func (druid *Druid) newRakeSpellConfig(rank int) core.SpellConfig {
+	row := spellData.Rake.ByRank(int32(rank))
+	periodic := row.Periodic.(shared.SpellDataPeriodic)
+	baseDamageInitial, _ := row.Direct.Range()
+	baseDamageTick := periodic.Tick
+	energyCost := float64(row.Cost) - float64(druid.Talents.Ferocity)
 
 	return core.SpellConfig{
-		SpellCode:   SpellCode_DruidRake,
-		ActionID:    core.ActionID{SpellID: rakeRank.id},
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
-		ProcMask:    core.ProcMaskMeleeMHSpecial,
-		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagIgnoreResists | core.SpellFlagBinary | core.SpellFlagAPL | SpellFlagBuilder,
+		SpellCode:      SpellCode_DruidRake,
+		ClassSpellMask: SpellMaskRake,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskMeleeMHSpecial,
+		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagIgnoreResists | core.SpellFlagBinary | core.SpellFlagAPL | SpellFlagBuilder,
 
 		EnergyCost: core.EnergyCostOptions{
 			Cost:   energyCost,
@@ -86,8 +57,8 @@ func (druid *Druid) newRakeSpellConfig(rakeRank RakeRankInfo) core.SpellConfig {
 			Aura: core.Aura{
 				Label: "Rake",
 			},
-			NumberOfTicks: 3,
-			TickLength:    time.Second * 3,
+			NumberOfTicks: periodic.NumberOfTicks,
+			TickLength:    periodic.TickLength,
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				damage := baseDamageTick
 				dot.Snapshot(target, damage, isRollover)

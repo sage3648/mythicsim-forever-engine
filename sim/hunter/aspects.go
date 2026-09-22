@@ -2,7 +2,6 @@ package hunter
 
 import (
 	"strconv"
-	"time"
 
 	"github.com/wowsims/classic/sim/core"
 	"github.com/wowsims/classic/sim/core/stats"
@@ -17,12 +16,12 @@ import (
 // Utility function to create the Deadly Aspects haste aura
 func (hunter *Hunter) createDeadlyAspectsAura(auraLabel string, actionID core.ActionID) *core.Aura {
 	// Every rank of Deadly Aspects triggers the same Quick Shots (6150): 30% for 12 sec. The
-	// points buy only the proc chance.
+	// points buy only the proc chance. The duration comes from the client table.
 	bonusMultiplier := 1.3
 	return hunter.GetOrRegisterAura(core.Aura{
 		Label:    auraLabel,
 		ActionID: actionID,
-		Duration: time.Second * 12,
+		Duration: spellData.AspectOfTheHawkTriggered.ByRank(1).Duration,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			aura.Unit.MultiplyRangedSpeed(sim, bonusMultiplier)
 		},
@@ -34,14 +33,14 @@ func (hunter *Hunter) createDeadlyAspectsAura(auraLabel string, actionID core.Ac
 
 // Function to get the maximum attack power for Aspect of the Hawk based on rank
 func (hunter *Hunter) getMaxAspectOfTheHawkAttackPower(rank int) float64 {
-	// Rank 6 is 55 in the beta client, down from 110, while ranks 5 and 7 are unchanged.
-	attackPower := [8]float64{0, 20, 35, 50, 70, 90, 55, 120}
-
+	// Rank 6 is 55 in the beta client, down from 110, while ranks 5 and 7 are unchanged. Read from
+	// the client table.
 	if rank < 1 || rank > 7 {
 		return 0.0
 	}
 
-	return attackPower[rank]
+	attackPower, _ := spellData.AspectOfTheHawk.ByRank(int32(rank)).Direct.Range()
+	return attackPower
 }
 
 func (hunter *Hunter) getMaxHawkRank() int {
@@ -61,10 +60,10 @@ func (hunter *Hunter) getAspectOfTheHawkSpellConfig(rank int) core.SpellConfig {
 	// Deadly Aspects: 2/4/6/8/10% (client curve).
 	deadlyAspectsProcChance := 0.02 * float64(hunter.Talents.DeadlyAspects)
 
-	spellIds := [8]int32{0, 13165, 14318, 14319, 14320, 14321, 14322, 25296}
+	// The id comes from the client table. Its mana cost (20-120) is not used: ours has never had one.
 	levels := [8]int{0, 10, 18, 28, 38, 48, 58, 60}
 
-	spellId := spellIds[rank]
+	row := spellData.AspectOfTheHawk.ByRank(int32(rank))
 	level := levels[rank]
 
 	if hunter.Talents.DeadlyAspects > 0 {
@@ -76,7 +75,7 @@ func (hunter *Hunter) getAspectOfTheHawkSpellConfig(rank int) core.SpellConfig {
 	// Use utility function to get the attack power based on rank
 	rap := hunter.getMaxAspectOfTheHawkAttackPower(rank)
 
-	actionID := core.ActionID{SpellID: spellId}
+	actionID := core.ActionID{SpellID: row.SpellID}
 	aspectOfTheHawkAura := hunter.GetOrRegisterAura(core.Aura{
 		Label:    "Aspect of the Hawk" + strconv.Itoa(rank),
 		ActionID: actionID,

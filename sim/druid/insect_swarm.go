@@ -2,19 +2,15 @@ package druid
 
 import (
 	"fmt"
-	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
 const InsectSwarmRanks = 5
 
-var InsectSwarmSpellId = [InsectSwarmRanks + 1]int32{0, 5570, 24974, 24975, 24976, 24977}
-
-// Beta client 1.60.1.69893: total over 12 sec, the client's tick times 6 (rank 5 54 -> 31 a tick). The .158 per tick
-// coefficient and the costs are Classic's.
-var InsectSwarmBaseDamage = [InsectSwarmRanks + 1]float64{0, 48, 90, 120, 150, 186}
-var InsectSwarmManaCost = [InsectSwarmRanks + 1]float64{0, 45, 85, 100, 140, 160}
+// Beta client 1.60.1.69893: 6 ticks of 2 sec (rank 5 54 -> 31 a tick). The .158 per tick coefficient and the costs
+// are Classic's. All of it comes from the client table (see wrath.go).
 var InsectSwarmLevel = [InsectSwarmRanks + 1]int{0, 20, 30, 40, 50, 60}
 
 func (druid *Druid) registerInsectSwarmSpell() {
@@ -29,24 +25,20 @@ func (druid *Druid) registerInsectSwarmSpell() {
 	for rank := 1; rank <= InsectSwarmRanks; rank++ {
 		level := InsectSwarmLevel[rank]
 		if int32(level) <= druid.Level {
-			numTicks := int32(6)
-			tickLength := time.Second * 2
-
-			spellID := InsectSwarmSpellId[rank]
-			baseDamage := InsectSwarmBaseDamage[rank] / float64(numTicks)
-			manaCost := InsectSwarmManaCost[rank]
-			spellCoef := .158
+			row := spellData.InsectSwarm.ByRank(int32(rank))
+			periodic := row.Periodic.(shared.SpellDataPeriodic)
 
 			druid.InsectSwarm[rank] = druid.RegisterSpell(Humanoid|Moonkin, core.SpellConfig{
-				SpellCode:   SpellCode_DruidInsectSwarm,
-				ActionID:    core.ActionID{SpellID: spellID},
-				SpellSchool: core.SpellSchoolNature,
-				DefenseType: core.DefenseTypeMagic,
-				ProcMask:    core.ProcMaskSpellDamage,
-				Flags:       core.SpellFlagAPL | core.SpellFlagBinary,
+				SpellCode:      SpellCode_DruidInsectSwarm,
+				ClassSpellMask: SpellMaskInsectSwarm,
+				ActionID:       core.ActionID{SpellID: row.SpellID},
+				SpellSchool:    row.SpellSchool,
+				DefenseType:    row.DefenseType,
+				ProcMask:       core.ProcMaskSpellDamage,
+				Flags:          core.SpellFlagAPL | core.SpellFlagBinary,
 
 				ManaCost: core.ManaCostOptions{
-					FlatCost: manaCost,
+					FlatCost: float64(row.Cost),
 				},
 				Cast: core.CastConfig{
 					DefaultCast: core.Cast{
@@ -71,12 +63,12 @@ func (druid *Druid) registerInsectSwarmSpell() {
 						},
 					},
 
-					NumberOfTicks:    numTicks,
-					TickLength:       tickLength,
-					BonusCoefficient: spellCoef,
+					NumberOfTicks:    periodic.NumberOfTicks,
+					TickLength:       periodic.TickLength,
+					BonusCoefficient: roundCoef(periodic.Coef),
 
 					OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-						dot.Snapshot(target, baseDamage, isRollover)
+						dot.Snapshot(target, periodic.Tick, isRollover)
 					},
 					OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 						dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeTick)

@@ -18,6 +18,7 @@
 import argparse
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -25,6 +26,12 @@ import urllib.request
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ARENA_OUT = os.path.join(REPO, 'arena-out')
+# The run happens in its own worktree, never in the checkout people edit. A four hour search
+# used to read sim code and the item database out of the working tree while other work was
+# regenerating that same database underneath it; every package compiled after the edit saw
+# the new data and every one before it the old. arena-out stays in the main checkout - it is
+# untracked, so git never touches it, and subset runs need the other specs' files to merge.
+WORK = REPO + '-arena'
 WEBHOOK_FILE = os.path.expanduser('~/.openclaw-alfred/secrets/forever_webhook.url')
 # Discord's edge refuses a default python or powershell user agent with a bare 403 that reads
 # exactly like a missing permission. It is not one.
@@ -70,11 +77,34 @@ def elapsed(seconds):
     return f'{hours}h {minutes:02d}m' if hours else f'{minutes}m {seconds:02d}s'
 
 
+def run_git(*args, check=True):
+    return subprocess.run(['git', *args], cwd=WORK, check=check)
+
+
+def prepare_worktree():
+    """A detached worktree at the tip of origin/master, created on first use."""
+    subprocess.run(['git', 'fetch', '-q', 'origin'], cwd=REPO, check=True)
+    if not os.path.isdir(WORK):
+        subprocess.run(['git', 'worktree', 'add', '--detach', WORK, 'origin/master'], cwd=REPO, check=True)
+    else:
+        run_git('checkout', '-q', '--detach', 'origin/master')
+        run_git('reset', '-q', '--hard', 'origin/master')
+    # The generated protos are gitignored, so a worktree has none and every package fails setup -
+    # which is exactly how the first run from here ended, 30 seconds in. There is no protoc on this
+    # machine to generate them, so they come from the main checkout, which is built from the same
+    # .proto files at the same commit.
+    # ponytail: copies rather than generates; stale if someone edits a .proto without rebuilding.
+    generated = os.path.join('sim', 'core', 'proto')
+    for name in os.listdir(os.path.join(REPO, generated)):
+        if name.endswith('.pb.go'):
+            shutil.copy2(os.path.join(REPO, generated, name), os.path.join(WORK, generated, name))
+
+
 def packages(specs):
     # Not check=True: sim/web imports a generated binary_dist that is not committed, so `go list`
     # exits 1 while still printing every other package. Failing on that exit code would make this
     # unrunnable for a reason that has nothing to do with the arena.
-    listed = subprocess.run(['go', 'list', './sim/...'], cwd=REPO, capture_output=True, text=True)
+    listed = subprocess.run(['go', 'list', './sim/...'], cwd=WORK, capture_output=True, text=True)
     found = [p for p in listed.stdout.split() if '/sim/web' not in p]
     if not found:
         sys.exit(f'go list found no packages: {listed.stderr.strip()}')
@@ -95,7 +125,7 @@ def written_since(start):
 def leaderboard():
     """The top few rows of whatever the run just produced, for the closing message."""
     try:
-        rows = json.load(open(os.path.join(REPO, 'ui/arena/results.json')))['builds']
+        rows = json.load(open(os.path.join(WORK, 'ui/arena/results.json')))['builds']
     except Exception:
         return ''
     best = {}
@@ -123,6 +153,7 @@ def main():
         print(f'detached as pid {child.pid}')
         return
 
+    prepare_worktree()
     specs = [s for s in args.specs.split(',') if s]
     pkgs = packages(specs)
     # Most of ./sim/... is not a spec - core, common, the shared test helpers - so the package
@@ -144,7 +175,7 @@ def main():
     # back without an exhaustive result there was nothing to read to find out why.
     log = open(os.path.join(ARENA_OUT, 'run.log'), 'w')
     run = subprocess.Popen(['go', 'test', '--tags=with_db', '-timeout', '0', '-p', '1', '-v', '-run', 'TestArena'] + pkgs,
-                           cwd=REPO, env=environment, stdout=log, stderr=subprocess.STDOUT)
+                           cwd=WORK, env=environment, stdout=log, stderr=subprocess.STDOUT)
 
     done = 0
     while run.poll() is None:
@@ -156,21 +187,24 @@ def main():
         discord(url, f'**{what} failed** after {elapsed(time.time() - start)} - exit {run.returncode}', message)
         sys.exit(run.returncode)
 
-    merge = subprocess.run(['go', 'run', './tools/arena', 'arena-out', 'ui/arena/results.json'], cwd=REPO)
+    merge = subprocess.run(['go', 'run', './tools/arena', ARENA_OUT, 'ui/arena/results.json'], cwd=WORK)
     if merge.returncode != 0:
         discord(url, f'**{what}** ran but the merge failed after {elapsed(time.time() - start)}', message)
         sys.exit(merge.returncode)
 
     pushed = ''
     if args.push:
-        subprocess.run(['git', 'add', 'ui/arena/results.json'], cwd=REPO, check=True)
-        if subprocess.run(['git', 'diff', '--cached', '--quiet'], cwd=REPO).returncode != 0:
-            subprocess.run(['git', 'commit', '-m', 'chore(arena): rebuild the leaderboard'], cwd=REPO, check=True)
+        run_git('add', 'ui/arena/results.json')
+        if run_git('diff', '--cached', '--quiet', check=False).returncode != 0:
+            run_git('commit', '-q', '-m', 'chore(arena): rebuild the leaderboard')
             # Never check=True on the push. A rejected push killed a four hour search between
             # its last progress update and its report, so the only evidence it had finished at
-            # all was a commit sitting unpushed in the working tree.
-            ok = subprocess.run(['git', 'push'], cwd=REPO).returncode == 0
-            pushed = ' - pushed' if ok else ' - **committed but the push was rejected**, run git push'
+            # all was a commit sitting unpushed in the working tree. Rejection usually just means
+            # master moved during the run, so rebase once and try again before giving up.
+            ok = run_git('push', '-q', 'origin', 'HEAD:master', check=False).returncode == 0
+            if not ok and run_git('pull', '-q', '--rebase', 'origin', 'master', check=False).returncode == 0:
+                ok = run_git('push', '-q', 'origin', 'HEAD:master', check=False).returncode == 0
+            pushed = ' - pushed' if ok else f' - **committed but the push was rejected**, push from {WORK}'
         else:
             pushed = ' - leaderboard unchanged'
 

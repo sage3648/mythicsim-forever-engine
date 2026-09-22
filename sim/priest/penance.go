@@ -16,22 +16,27 @@ func (priest *Priest) registerPenanceSpell() {
 	// Rank 4 (1316995), the level 60 rank in the Forever beta client 1.60.1.69893: 355 mana, a 12 sec
 	// cooldown and 131 Holy damage a bolt (1316993) at .285. Ranks 1-3 learn at 30, 40 and 50. The
 	// client's rank 3 bolt (180) is larger than rank 4's; the numbers are taken as they are.
-	baseDamage := 131.0
-	spellCoeff := 0.285
+	// Cost, cooldown, bolt damage and coefficient come from the client table (see shadow_word_pain.go).
+	// The id stays spelled out: ranks 1-3 are never registered, and spell_sources_test.go would file
+	// them as ours. The row names no defense type; ours stays magic.
+	row := spellData.Penance.ByRank(4)
+	baseDamage, _ := row.Direct.Range()
+	spellCoeff := roundCoef(row.Direct.BonusCoefficient())
 
 	priest.Penance = priest.RegisterSpell(core.SpellConfig{
-		SpellCode:   SpellCode_PriestPenance,
-		ActionID:    core.ActionID{SpellID: 1316995},
-		SpellSchool: core.SpellSchoolHoly,
-		DefenseType: core.DefenseTypeMagic,
-		ProcMask:    core.ProcMaskSpellDamage,
-		Flags:       SpellFlagPriest | core.SpellFlagAPL | core.SpellFlagChanneled,
+		SpellCode:      SpellCode_PriestPenance,
+		ClassSpellMask: SpellMaskPenance,
+		ActionID:       core.ActionID{SpellID: 1316995},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    core.DefenseTypeMagic,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          SpellFlagPriest | core.SpellFlagAPL | core.SpellFlagChanneled,
 
 		RequiredLevel: 60,
 		Rank:          1,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: 355,
+			FlatCost: float64(row.Cost),
 		},
 
 		Cast: core.CastConfig{
@@ -40,7 +45,7 @@ func (priest *Priest) registerPenanceSpell() {
 			},
 			CD: core.Cooldown{
 				Timer:    priest.NewTimer(),
-				Duration: time.Second * 12,
+				Duration: row.Cooldown,
 			},
 		},
 

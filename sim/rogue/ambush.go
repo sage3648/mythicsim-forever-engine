@@ -3,17 +3,13 @@ package rogue
 import (
 	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
+// Cost, school, defense type, flat damage and coefficient come from the client table; the id stays
+// ours (see sinister_strike.go).
 func (rogue *Rogue) registerAmbushSpell() {
-	flatDamageBonus := map[int32]float64{
-		25: 28,
-		40: 50,
-		50: 92,
-		60: 116,
-	}[rogue.Level]
-
 	spellID := map[int32]int32{
 		25: 8676,
 		40: 8725,
@@ -21,18 +17,22 @@ func (rogue *Rogue) registerAmbushSpell() {
 		60: 11269,
 	}[rogue.Level]
 
+	row := spellData.Ambush.BySpellID(spellID)
+	flatDamageBonus := shared.SpellDataMin(row.Direct)
+
 	damageMultiplier := 2.5 * []float64{1, 1.05, 1.1}[rogue.Talents.Opportunity]
 
 	rogue.Ambush = rogue.RegisterSpell(core.SpellConfig{
-		SpellCode:   SpellCode_RogueAmbush,
-		ActionID:    core.ActionID{SpellID: spellID},
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
-		ProcMask:    core.ProcMaskMeleeMHSpecial,
-		Flags:       rogue.builderFlags(),
+		SpellCode:      SpellCode_RogueAmbush,
+		ClassSpellMask: SpellMaskAmbush,
+		ActionID:       core.ActionID{SpellID: spellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskMeleeMHSpecial,
+		Flags:          rogue.builderFlags(),
 
 		EnergyCost: core.EnergyCostOptions{
-			Cost:   60,
+			Cost:   float64(row.Cost),
 			Refund: 0.8,
 		},
 		Cast: core.CastConfig{
@@ -52,7 +52,7 @@ func (rogue *Rogue) registerAmbushSpell() {
 		BonusCritRating:  15 * core.CritRatingPerCritChance * float64(rogue.Talents.ImprovedAmbush),
 		DamageMultiplier: damageMultiplier,
 		ThreatMultiplier: 1,
-		BonusCoefficient: 1,
+		BonusCoefficient: row.Direct.BonusCoefficient(),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			rogue.BreakStealth(sim)

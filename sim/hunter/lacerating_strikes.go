@@ -1,25 +1,29 @@
 package hunter
 
 import (
-	"time"
-
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
-// The bleed lasts 21 sec and carries 40% of the Mongoose Bite that applied it. The tooltip gives
-// no tick interval, so it ticks every 3 sec like every other bleed.
+// The bleed lasts 21 sec and carries 40% of the Mongoose Bite that applied it. The tick count and
+// length, school and defense type come from the bleed's row of the client table (1310536, 7 ticks 3 sec
+// apart); its id does not, the bleed is reported under Mongoose Bite's.
 func (hunter *Hunter) registerLaceratingStrikesSpell() {
 	if !hunter.Talents.LaceratingStrikes {
 		return
 	}
 
+	row := spellData.LaceratingStrikesTriggered.ByRank(1)
+	periodic := row.Periodic.(shared.SpellDataPeriodic)
+
 	hunter.LaceratingStrikes = hunter.RegisterSpell(core.SpellConfig{
-		SpellCode:   SpellCode_HunterLaceratingStrikes,
-		ActionID:    hunter.MongooseBite.WithTag(1),
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
-		ProcMask:    core.ProcMaskEmpty,
-		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagNoOnCastComplete | core.SpellFlagPureDot,
+		SpellCode:      SpellCode_HunterLaceratingStrikes,
+		ClassSpellMask: SpellMaskLaceratingStrikes,
+		ActionID:       hunter.MongooseBite.WithTag(1),
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskEmpty,
+		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagNoOnCastComplete | core.SpellFlagPureDot,
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
@@ -28,8 +32,8 @@ func (hunter *Hunter) registerLaceratingStrikesSpell() {
 			Aura: core.Aura{
 				Label: "Lacerating Strikes" + hunter.Label,
 			},
-			NumberOfTicks: 7,
-			TickLength:    time.Second * 3,
+			NumberOfTicks: periodic.NumberOfTicks,
+			TickLength:    periodic.TickLength,
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeTick)

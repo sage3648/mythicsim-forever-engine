@@ -28,10 +28,14 @@ func (druid *Druid) registerTigersFurySpell() {
 	// 6 sec", against Classic's "+40 damage to your melee attacks".
 	foreverMultiplier := 1.15
 
+	// The client table (see wrath.go) holds Forever's one rank: its duration and cooldown are read from there. The ids
+	// by level stay ours.
+	row := spellData.TigersFury.ByRank(1)
+
 	druid.TigersFuryAura = druid.RegisterAura(core.Aura{
 		Label:    "Tiger's Fury Aura",
 		ActionID: actionID,
-		Duration: 6 * time.Second,
+		Duration: row.Duration,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			if druid.Env.IsForever() {
 				druid.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexPhysical] *= foreverMultiplier
@@ -59,7 +63,7 @@ func (druid *Druid) registerTigersFurySpell() {
 	// 30 sec cooldown, no cost, and "Increases Physical damage done by 15% for 6 sec".
 	forever := druid.Env.IsForever()
 	energyCost := core.TernaryFloat64(forever, 0, 30)
-	cooldown := core.TernaryDuration(forever, 30*time.Second, time.Second)
+	cooldown := core.TernaryDuration(forever, row.Cooldown, time.Second)
 
 	spell := druid.RegisterSpell(Cat, core.SpellConfig{
 		ActionID: actionID,

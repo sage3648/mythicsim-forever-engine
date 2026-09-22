@@ -1,14 +1,16 @@
 package warrior
 
 import (
-	"time"
-
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
 func (warrior *Warrior) registerThunderClapSpell() {
+	// Forever beta client 1.60.1.69893: cost, cooldown, school, defense type and damage come from the
+	// client table; the id stays ours (see registerHeroicStrikeSpell).
 	spellID := int32(11581)
-	baseDamage := 103.0
+	row := spellData.ThunderClap.BySpellID(spellID)
+	baseDamage := shared.SpellDataMin(row.Direct)
 	has5pcConq := warrior.HasSetBonus(ItemSetConquerorsBattleGear, 5)
 	// Forever doubles the slow to 20% and moves the cooldown from 4 to 6 sec.
 	attackSpeedReduction := core.TernaryInt32(has5pcConq, 25, 20)
@@ -23,13 +25,13 @@ func (warrior *Warrior) registerThunderClapSpell() {
 
 	warrior.ThunderClap = warrior.RegisterSpell(stanceMask, core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: spellID},
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMagic,
+		SpellSchool: row.SpellSchool,
+		DefenseType: row.DefenseType,
 		ProcMask:    core.ProcMaskSpellDamage,
 		Flags:       core.SpellFlagAPL | SpellFlagOffensive,
 
 		RageCost: core.RageCostOptions{
-			Cost: 20 - []float64{0, 2, 4, 6}[warrior.Talents.ImprovedThunderClap],
+			Cost: float64(row.Cost) - []float64{0, 2, 4, 6}[warrior.Talents.ImprovedThunderClap],
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -38,7 +40,7 @@ func (warrior *Warrior) registerThunderClapSpell() {
 			IgnoreHaste: true,
 			CD: core.Cooldown{
 				Timer:    warrior.NewTimer(),
-				Duration: time.Second * 6,
+				Duration: row.Cooldown,
 			},
 		},
 

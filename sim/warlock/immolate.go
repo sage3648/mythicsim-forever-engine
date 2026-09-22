@@ -4,41 +4,43 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
 const ImmolateRanks = 8
-const ImmolateCastTime = time.Millisecond * 2000
+
+// Beta client 1.60.1 values; ranks 1 and 2 lost their downranking penalty. Spell ID, cost, cast time,
+// both coefficients and the dot (tick, 5 x 3 sec) come from the client table. The direct damage does
+// not: the table truncates it, one below ours at ranks 1, 4 and 6.
+var ImmolateBaseDamage = [ImmolateRanks + 1]float64{0, 11, 21, 38, 64, 80, 116, 146, 158}
 
 func (warlock *Warlock) getImmolateConfig(rank int) core.SpellConfig {
-	// Beta client 1.60.1 values; ranks 1 and 2 lost their downranking penalty. The dot table is the
-	// total over five ticks, the client's per tick value times five.
-	directCoeff := [ImmolateRanks + 1]float64{0, .2, .2, .2, .2, .2, .2, .2, .2}[rank]
-	dotCoeff := [ImmolateRanks + 1]float64{0, .13, .13, .13, .13, .13, .13, .13, .13}[rank]
-	baseDamage := [ImmolateRanks + 1]float64{0, 11, 21, 38, 64, 80, 116, 146, 158}[rank]
-	dotDamage := [ImmolateRanks + 1]float64{0, 15, 30, 60, 95, 125, 190, 260, 275}[rank] / 5
-	spellId := [ImmolateRanks + 1]int32{0, 348, 707, 1094, 2941, 11665, 11667, 11668, 25309}[rank]
-	manaCost := [ImmolateRanks + 1]float64{0, 25, 45, 90, 155, 220, 295, 370, 380}[rank]
+	row := spellData.Immolate.ByRank(int32(rank))
+	periodic := row.Periodic.(shared.SpellDataPeriodic)
+	baseDamage := ImmolateBaseDamage[rank]
+	dotDamage := periodic.Tick
 	level := [ImmolateRanks + 1]int{0, 1, 10, 20, 30, 40, 50, 60, 60}[rank]
 
 	return core.SpellConfig{
-		SpellCode:   SpellCode_WarlockImmolate,
-		ActionID:    core.ActionID{SpellID: spellId},
-		SpellSchool: core.SpellSchoolFire,
-		DefenseType: core.DefenseTypeMagic,
-		ProcMask:    core.ProcMaskSpellDamage,
-		Flags:       core.SpellFlagAPL | core.SpellFlagResetAttackSwing | core.SpellFlagBinary | WarlockFlagDestruction,
+		SpellCode:      SpellCode_WarlockImmolate,
+		ClassSpellMask: SpellMaskImmolate,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          core.SpellFlagAPL | core.SpellFlagResetAttackSwing | core.SpellFlagBinary | WarlockFlagDestruction,
 
 		Rank:          rank,
 		RequiredLevel: level,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
 				GCD:      core.GCDDefault,
-				CastTime: ImmolateCastTime,
+				CastTime: row.CastTime,
 			},
 			ModifyCast: func(sim *core.Simulation, spell *core.Spell, cast *core.Cast) {
 				cast.CastTime = spell.CastTime()
@@ -51,16 +53,16 @@ func (warlock *Warlock) getImmolateConfig(rank int) core.SpellConfig {
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
-		BonusCoefficient: directCoeff,
+		BonusCoefficient: roundCoef(row.Direct.BonusCoefficient()),
 
 		Dot: core.DotConfig{
 			Aura: core.Aura{
 				Label: "Immolate-" + warlock.Label + strconv.Itoa(rank),
 			},
 
-			NumberOfTicks:    5,
-			TickLength:       time.Second * 3,
-			BonusCoefficient: dotCoeff,
+			NumberOfTicks:    periodic.NumberOfTicks,
+			TickLength:       periodic.TickLength,
+			BonusCoefficient: roundCoef(periodic.Coef),
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.Snapshot(target, dotDamage, isRollover)

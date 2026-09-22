@@ -2,37 +2,36 @@ package warlock
 
 import (
 	"strconv"
-	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
 const SiphonLifeRanks = 4
 
 func (warlock *Warlock) getSiphonLifeBaseConfig(rank int) core.SpellConfig {
-	spellId := [SiphonLifeRanks + 1]int32{0, 18265, 18879, 18880, 18881}[rank]
-	// Beta client 1.60.1 values
-	baseDamage := [SiphonLifeRanks + 1]float64{0, 11, 19, 29, 41}[rank]
-	manaCost := [SiphonLifeRanks + 1]float64{0, 150, 205, 285, 365}[rank]
+	// Beta client 1.60.1: spell ID, cost, school, tick, tick count and coefficient from the client table
+	row := spellData.SiphonLife.ByRank(int32(rank))
+	periodic := row.Periodic.(shared.SpellDataPeriodic)
+	baseDamage := periodic.Tick
 	level := [SiphonLifeRanks + 1]int{0, 0, 38, 48, 58}[rank]
 
-	spellCoeff := 0.05
-	actionID := core.ActionID{SpellID: spellId}
+	actionID := core.ActionID{SpellID: row.SpellID}
 	healthMetrics := warlock.NewHealthMetrics(actionID)
 
-
 	return core.SpellConfig{
-		SpellCode:     SpellCode_WarlockSiphonLife,
-		ActionID:      actionID,
-		SpellSchool:   core.SpellSchoolShadow,
-		DefenseType:   core.DefenseTypeMagic,
-		ProcMask:      core.ProcMaskSpellDamage,
-		Flags:         core.SpellFlagAPL | core.SpellFlagResetAttackSwing | core.SpellFlagBinary | WarlockFlagAffliction,
-		RequiredLevel: level,
-		Rank:          rank,
+		SpellCode:      SpellCode_WarlockSiphonLife,
+		ClassSpellMask: SpellMaskSiphonLife,
+		ActionID:       actionID,
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          core.SpellFlagAPL | core.SpellFlagResetAttackSwing | core.SpellFlagBinary | WarlockFlagAffliction,
+		RequiredLevel:  level,
+		Rank:           rank,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -50,10 +49,10 @@ func (warlock *Warlock) getSiphonLifeBaseConfig(rank int) core.SpellConfig {
 			Aura: core.Aura{
 				Label: "SiphonLife-" + warlock.Label + strconv.Itoa(rank),
 			},
-			NumberOfTicks:       10,
-			TickLength:          3 * time.Second,
+			NumberOfTicks:       periodic.NumberOfTicks,
+			TickLength:          periodic.TickLength,
 			AffectedByCastSpeed: false,
-			BonusCoefficient:    spellCoeff,
+			BonusCoefficient:    roundCoef(periodic.Coef),
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.Snapshot(target, baseDamage, isRollover)

@@ -18,10 +18,11 @@ func (rogue *Rogue) registerVanishSpell() {
 	})
 
 	rogue.Vanish = rogue.RegisterSpell(core.SpellConfig{
-		SpellCode:   SpellCode_RogueVanish,
-		ActionID:    core.ActionID{SpellID: 1856},
-		SpellSchool: core.SpellSchoolPhysical,
-		Flags:       core.SpellFlagAPL,
+		SpellCode:      SpellCode_RogueVanish,
+		ClassSpellMask: SpellMaskVanish,
+		ActionID:       core.ActionID{SpellID: 1856},
+		SpellSchool:    core.SpellSchoolPhysical,
+		Flags:          core.SpellFlagAPL,
 
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

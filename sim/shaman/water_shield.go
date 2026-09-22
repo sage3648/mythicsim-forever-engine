@@ -59,10 +59,11 @@ func (shaman *Shaman) registerWaterShieldSpell() {
 	})
 
 	shaman.WaterShield = shaman.RegisterSpell(core.SpellConfig{
-		SpellCode: SpellCode_ShamanWaterShield,
-		ActionID:  actionID,
-		ProcMask:  core.ProcMaskEmpty,
-		Flags:     core.SpellFlagAPL | SpellFlagShaman,
+		SpellCode:      SpellCode_ShamanWaterShield,
+		ClassSpellMask: SpellMaskWaterShield,
+		ActionID:       actionID,
+		ProcMask:       core.ProcMaskEmpty,
+		Flags:          core.SpellFlagAPL | SpellFlagShaman,
 
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

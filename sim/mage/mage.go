@@ -29,6 +29,26 @@ const (
 	SpellCode_MageScorch
 )
 
+// Class spell masks for SpellMods (see core/spell_mod.go), one per SpellCode above.
+const (
+	SpellMaskNone        int64 = 0
+	SpellMaskArcaneBlast int64 = 1 << iota
+	SpellMaskArcaneExplosion
+	SpellMaskArcaneMissiles
+	SpellMaskArcaneMissilesTick
+	SpellMaskBlastWave
+	SpellMaskFireball
+	SpellMaskFireBlast
+	SpellMaskFlamestrike
+	SpellMaskFrostbolt
+	SpellMaskIceLance
+	SpellMaskIgnite
+	SpellMaskPyroblast
+	SpellMaskScorch
+
+	SpellMaskAll = SpellMaskScorch<<1 - SpellMaskArcaneBlast // every bit from ArcaneBlast to Scorch
+)
+
 var TalentTreeSizes = [3]int{18, 17, 19}
 
 func RegisterMage() {

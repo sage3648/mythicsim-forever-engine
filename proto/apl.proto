@@ -22,6 +22,8 @@ message APLRotation {
 
 	repeated APLPrepullAction prepull_actions = 1;
 	repeated APLListItem priority_list = 2;
+	repeated APLGroup groups = 5; // Action groups that can be referenced
+	repeated APLValueVariable value_variables = 6; // Named reusable variables
 }
 
 message SimpleRotation {
@@ -41,7 +43,13 @@ message APLListItem {
     APLAction action = 3; // The action to be performed.
 }
 
-// NextIndex: 24
+message APLGroup {
+	string name = 1; // Name of the group (e.g., "careful_aim")
+	repeated APLListItem actions = 2; // Actions in this group
+	repeated APLValueVariable variables = 3; // Variables that can be used in this group
+}
+
+// NextIndex: 24 (28 is taken, same number as upstream)
 message APLAction {
     APLValue condition = 1; // If set, action will only execute if value is true or != 0.
 
@@ -79,10 +87,13 @@ message APLAction {
 
         // Internal use only, not exposed in UI.
         APLActionCustomRotation custom_rotation = 20;
+
+        // Group reference
+        APLActionGroupReference group_reference = 28;
     }
 }
 
-// NextIndex: 78
+// NextIndex: 78 (numbers >= 78 below are upstream's, kept for compatibility)
 message APLValue {
     oneof value {
         // Operators
@@ -115,6 +126,9 @@ message APLValue {
         APLValueCurrentComboPoints current_combo_points = 16;
         APLValueTimeToEnergyTick time_to_energy_tick = 66;
         APLValueEnergyThreshold energy_threshold = 72;
+        APLValueMaxComboPoints max_combo_points = 93;
+        APLValueMaxEnergy max_energy = 87;
+        APLValueMaxRage max_rage = 102;
         
         // Stats
         APLValueCurrentAttackPower current_attack_power = 77;
@@ -139,16 +153,19 @@ message APLValue {
         APLValueSpellIsChanneling spell_is_channeling = 56;
         APLValueSpellChanneledTicks spell_channeled_ticks = 57;
         APLValueSpellCurrentCost spell_current_cost = 62;
+        APLValueSpellFullCooldown spell_full_cooldown = 116;
 
         // Aura values
         APLValueAuraIsKnown aura_is_known = 67;
         APLValueAuraIsActive aura_is_active = 22;
+        APLValueAuraIsInactive aura_is_inactive = 107;
         APLValueAuraIsActiveWithReactionTime aura_is_active_with_reaction_time = 50;
         APLValueAuraRemainingTime aura_remaining_time = 23;
         APLValueAuraNumStacks aura_num_stacks = 24;
         APLValueAuraInternalCooldown aura_internal_cooldown = 39;
         APLValueAuraICDIsReadyWithReactionTime aura_icd_is_ready_with_reaction_time = 51;
         APLValueAuraShouldRefresh aura_should_refresh = 43;
+        APLValueAuraDuration aura_duration = 123;
 
         // Rune values TODO: remove once APLs for classes are updated
         APLValueRuneIsEquipped rune_is_equipped = 74;
@@ -156,6 +173,7 @@ message APLValue {
         // Dot values
         APLValueDotIsActive dot_is_active = 6;
         APLValueDotRemainingTime dot_remaining_time = 13;
+        APLValueDotTimeToNextTick dot_time_to_next_tick = 117;
 
         // Sequence values
         APLValueSequenceIsComplete sequence_is_complete = 44;
@@ -179,6 +197,13 @@ message APLValue {
         APLValueWarlockPetIsActive warlock_pet_is_active = 71;
         // Paladin
         APLValueCurrentSealRemainingTime current_seal_remaining_time = 65;
+
+        // Variable reference
+        APLValueVariableRef variable_ref = 111;
+        // Variable placeholder, replaced by the value passed in when its group is referenced
+        APLValueVariablePlaceholder variable_placeholder = 112;
+        // Action Group
+        APLValueActionGroupUsed action_group_used = 124;
     }
 }
 
@@ -395,6 +420,10 @@ message APLValueEnergyThreshold {
     int32 threshold = 1;
 }
 
+message APLValueMaxComboPoints {}
+message APLValueMaxEnergy {}
+message APLValueMaxRage {}
+
 message APLValueCurrentAttackPower {}
 
 message APLValueGCDIsReady {}
@@ -462,12 +491,20 @@ message APLValueSpellChanneledTicks {
 message APLValueSpellCurrentCost {
     ActionID spell_id = 1;
 }
+message APLValueSpellFullCooldown {
+    ActionID spell_id = 1;
+}
 
 message APLValueAuraIsKnown {
     UnitReference source_unit = 2;
     ActionID aura_id = 1;
 }
 message APLValueAuraIsActive {
+    UnitReference source_unit = 2;
+    ActionID aura_id = 1;
+}
+// Upstream also has bool include_reaction_time = 3; not ported (needs Aura.TimeInactive).
+message APLValueAuraIsInactive {
     UnitReference source_unit = 2;
     ActionID aura_id = 1;
 }
@@ -497,6 +534,11 @@ message APLValueAuraShouldRefresh {
     APLValue max_overlap = 3;
 }
 
+message APLValueAuraDuration {
+    UnitReference source_unit = 2;
+    ActionID aura_id = 1;
+}
+
 // TODO: remove once APLs for classes are updated
 message APLValueRuneIsEquipped {
     ActionID rune_id = 1;
@@ -507,6 +549,10 @@ message APLValueDotIsActive {
     ActionID spell_id = 1;
 }
 message APLValueDotRemainingTime {
+    UnitReference target_unit = 2;
+    ActionID spell_id = 1;
+}
+message APLValueDotTimeToNextTick {
     UnitReference target_unit = 2;
     ActionID spell_id = 1;
 }
@@ -538,4 +584,26 @@ message APLValueWarlockCurrentPetManaPercent {
 message APLValueWarlockPetIsActive {
 }
 message APLValueCurrentSealRemainingTime {
+}
+
+message APLActionGroupReference {
+	string group_name = 1; // Name of the group to reference
+	repeated APLValueVariable variables = 2; // Variables to set for this group reference
+}
+
+message APLValueVariable {
+	string name = 1;
+	APLValue value = 2;
+}
+
+message APLValueVariableRef {
+	string name = 1;
+}
+
+message APLValueVariablePlaceholder {
+	string name = 1; // Name of the variable placeholder to expose
+}
+
+message APLValueActionGroupUsed {
+	string name = 1; // Name of the action group to check
 }

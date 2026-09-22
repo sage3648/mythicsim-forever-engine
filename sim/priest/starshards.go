@@ -2,8 +2,8 @@ package priest
 
 import (
 	"fmt"
-	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 	"github.com/wowsims/classic/sim/core/proto"
 )
@@ -11,11 +11,11 @@ import (
 const StarshardsRanks = 7
 const StarshardsTicks = 6
 
-var StarshardsSpellId = [StarshardsRanks + 1]int32{0, 10797, 19296, 19299, 19302, 19303, 19304, 19305}
 var StarshardsTickSpellId = [StarshardsRanks + 1]int32{0, 19350, 19351, 19352, 19353, 19354, 19355, 19356}
-// Forever beta client 1.60.1.69893, about double Classic's, at .167 a tick for every rank.
-var StarshardsBaseDamage = [StarshardsRanks + 1]float64{0, 162, 300, 528, 762, 1068, 1440, 1800}
-var StarshardsManaCost = [StarshardsRanks + 1]float64{0, 50, 85, 140, 190, 245, 300, 350}
+
+// Forever beta client 1.60.1.69893, about double Classic's, at .167 a tick for every rank. Spell ID,
+// cost, school, tick, tick count and coefficient come from the client table. Its 30 sec cooldown is not
+// used: ours has never had one.
 var StarshardsLevel = [StarshardsRanks + 1]int{0, 10, 18, 26, 34, 42, 50, 58}
 
 func (priest *Priest) registerStarshardsSpell() {
@@ -40,35 +40,32 @@ func (priest *Priest) registerStarshardsSpell() {
 }
 
 func (priest *Priest) newStarshardsSpellConfig(rank int, tickIdx int32) core.SpellConfig {
+	row := spellData.Starshards.ByRank(int32(rank))
+	periodic := row.Periodic.(shared.SpellDataPeriodic)
 	ticks := tickIdx
 	flags := SpellFlagPriest | core.SpellFlagChanneled | core.SpellFlagBinary
 	if tickIdx == 0 {
-		ticks = 6
+		ticks = periodic.NumberOfTicks
 		flags |= core.SpellFlagAPL
 	}
 
-	spellId := StarshardsSpellId[rank]
-	baseDamage := StarshardsBaseDamage[rank] / StarshardsTicks
-	manaCost := StarshardsManaCost[rank]
+	baseDamage := periodic.Tick
 	level := StarshardsLevel[rank]
 
-	spellCoeff := 0.167
-
-	tickLength := time.Second
-
 	return core.SpellConfig{
-		SpellCode:   SpellCode_PriestStarshards,
-		ActionID:    core.ActionID{SpellID: spellId}.WithTag(tickIdx),
-		SpellSchool: core.SpellSchoolArcane,
-		DefenseType: core.DefenseTypeMagic,
-		ProcMask:    core.ProcMaskSpellDamage,
-		Flags:       flags,
+		SpellCode:      SpellCode_PriestStarshards,
+		ClassSpellMask: SpellMaskStarshards,
+		ActionID:       core.ActionID{SpellID: row.SpellID}.WithTag(tickIdx),
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          flags,
 
 		RequiredLevel: level,
 		Rank:          rank,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 
 		Cast: core.CastConfig{
@@ -85,9 +82,9 @@ func (priest *Priest) newStarshardsSpellConfig(rank int, tickIdx int32) core.Spe
 				Label: fmt.Sprintf("Starshards-%d-%d", rank, tickIdx),
 			},
 			NumberOfTicks:       ticks,
-			TickLength:          tickLength,
+			TickLength:          periodic.TickLength,
 			AffectedByCastSpeed: false,
-			BonusCoefficient:    spellCoeff,
+			BonusCoefficient:    roundCoef(periodic.Coef),
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.Snapshot(target, baseDamage, isRollover)
 			},

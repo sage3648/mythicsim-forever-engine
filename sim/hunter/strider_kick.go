@@ -1,8 +1,6 @@
 package hunter
 
 import (
-	"time"
-
 	"github.com/wowsims/classic/sim/core"
 )
 
@@ -13,15 +11,18 @@ func (hunter *Hunter) registerStriderKickSpell() {
 		return
 	}
 
+	// Everything comes from the client table (see aimed_shot.go).
+	row := spellData.StriderKick.ByRank(1)
+
 	hunter.StriderKick = hunter.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: 1317257},
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
+		ActionID:    core.ActionID{SpellID: row.SpellID},
+		SpellSchool: row.SpellSchool,
+		DefenseType: row.DefenseType,
 		ProcMask:    core.ProcMaskMeleeMHSpecial,
 		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
 
 		ManaCost: core.ManaCostOptions{
-			BaseCost: 0.0581,
+			BaseCost: roundCoef(row.PowerCostPct / 100),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -30,7 +31,7 @@ func (hunter *Hunter) registerStriderKickSpell() {
 			IgnoreHaste: true,
 			CD: core.Cooldown{
 				Timer:    hunter.NewTimer(),
-				Duration: time.Second * 8,
+				Duration: row.Cooldown,
 			},
 		},
 		ExtraCastCondition: func(sim *core.Simulation, target *core.Unit) bool {
@@ -40,7 +41,7 @@ func (hunter *Hunter) registerStriderKickSpell() {
 		BonusCritRating:  float64(hunter.Talents.SavageStrikes) * 2 * core.CritRatingPerCritChance,
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
-		BonusCoefficient: 1,
+		BonusCoefficient: roundCoef(row.Direct.BonusCoefficient()),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			damage := hunter.AutoAttacks.MH().CalculateNormalizedWeaponDamage(sim, spell.MeleeAttackPower(target))

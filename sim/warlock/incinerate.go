@@ -1,10 +1,12 @@
 package warlock
 
 import (
-	"time"
-
 	"github.com/wowsims/classic/sim/core"
 )
+
+// Beta client 1.60.1. Everything but the damage and the missile speed comes from the client table
+// (see shadowbolt.go).
+var IncinerateBaseDamage = [][]float64{{0}, {100, 114}, {146, 168}, {201, 233}}
 
 func (warlock *Warlock) registerIncinerateSpell() {
 	if !warlock.Talents.Incinerate {
@@ -18,37 +20,39 @@ func (warlock *Warlock) registerIncinerateSpell() {
 		return
 	}
 
-	spellID := map[int32]int32{40: 412758, 50: 1293812, 60: 1293813}[warlock.Level]
 	rank := map[int32]int{40: 1, 50: 2, 60: 3}[warlock.Level]
-	baseDamage := map[int32][]float64{40: {100, 114}, 50: {146, 168}, 60: {201, 233}}[warlock.Level]
-	manaCost := map[int32]float64{40: 205, 50: 265, 60: 325}[warlock.Level]
-	spellCoeff := 0.714
-	castTime := time.Millisecond * 2500
+	if rank == 0 {
+		return
+	}
+	row := spellData.Incinerate.ByRank(int32(rank))
+	baseDamage := IncinerateBaseDamage[rank]
 
 	warlock.Incinerate = warlock.RegisterSpell(core.SpellConfig{
-		SpellCode:     SpellCode_WarlockIncinerate,
-		ActionID:      core.ActionID{SpellID: spellID},
-		SpellSchool:   core.SpellSchoolFire,
-		DefenseType:   core.DefenseTypeMagic,
-		ProcMask:      core.ProcMaskSpellDamage,
-		Flags:         core.SpellFlagAPL | core.SpellFlagResetAttackSwing | WarlockFlagDestruction,
-		RequiredLevel: int(warlock.Level),
-		Rank:          rank,
-		MissileSpeed:  24,
+		SpellCode:      SpellCode_WarlockIncinerate,
+		ClassSpellMask: SpellMaskIncinerate,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          core.SpellFlagAPL | core.SpellFlagResetAttackSwing | WarlockFlagDestruction,
+		RequiredLevel:  int(warlock.Level),
+		Rank:           rank,
+		// The table reads 20; ours has been 24.
+		MissileSpeed: 24,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
 				GCD:      core.GCDDefault,
-				CastTime: castTime,
+				CastTime: row.CastTime,
 			},
 		},
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
-		BonusCoefficient: spellCoeff,
+		BonusCoefficient: roundCoef(row.Direct.BonusCoefficient()),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			damage := sim.Roll(baseDamage[0], baseDamage[1])

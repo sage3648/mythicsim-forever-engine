@@ -47,15 +47,18 @@ func (warrior *Warrior) registerSweepingStrikesCD() {
 		},
 	})
 
-	actionID := core.ActionID{SpellID: 12292}
+	// Forever beta client 1.60.1.69893: id, cost, cooldown, school and charges come from the client
+	// table. Its duration reads 20s where ours is 10s, so the duration stays ours.
+	row := spellData.SweepingStrikes.ByRank(1)
+	actionID := core.ActionID{SpellID: row.SpellID}
 
 	ssAura := warrior.RegisterAura(core.Aura{
 		Label:     "Sweeping Strikes",
 		ActionID:  actionID,
 		Duration:  time.Second * 10,
-		MaxStacks: 5,
+		MaxStacks: row.ProcCharges,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
-			aura.SetStacks(sim, 5)
+			aura.SetStacks(sim, row.ProcCharges)
 		},
 		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 			if aura.GetStacks() == 0 || result.Damage <= 0 || !spell.ProcMask.Matches(core.ProcMaskMelee) {
@@ -83,16 +86,16 @@ func (warrior *Warrior) registerSweepingStrikesCD() {
 
 	SweepingStrikes := warrior.RegisterSpell(BattleStance, core.SpellConfig{
 		ActionID:    actionID,
-		SpellSchool: core.SpellSchoolPhysical,
+		SpellSchool: row.SpellSchool,
 		Flags:       core.SpellFlagHelpful,
 
 		RageCost: core.RageCostOptions{
-			Cost: 30,
+			Cost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			CD: core.Cooldown{
 				Timer:    warrior.NewTimer(),
-				Duration: time.Second * 30,
+				Duration: row.Cooldown,
 			},
 		},
 

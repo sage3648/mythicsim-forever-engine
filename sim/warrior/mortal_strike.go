@@ -1,8 +1,7 @@
 package warrior
 
 import (
-	"time"
-
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
@@ -12,19 +11,23 @@ func (warrior *Warrior) registerMortalStrikeSpell(cdTimer *core.Timer) {
 	}
 
 	// Rank 4 (21553) in the beta client, as in Classic. The talent tooltip's 85 is rank 1's (12294).
-	bonusDamage := 160.0
+	// Cost, cooldown, school, defense type, flat damage and coefficient come from the client table; the
+	// id stays ours (see registerHeroicStrikeSpell).
 	spellID := int32(21553)
+	row := spellData.MortalStrike.BySpellID(spellID)
+	bonusDamage := shared.SpellDataMin(row.Direct)
 
 	warrior.MortalStrike = warrior.RegisterSpell(AnyStance, core.SpellConfig{
-		SpellCode:   SpellCode_WarriorMortalStrike,
-		ActionID:    core.ActionID{SpellID: spellID},
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
-		ProcMask:    core.ProcMaskMeleeMHSpecial,
-		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagAPL | SpellFlagOffensive,
+		SpellCode:      SpellCode_WarriorMortalStrike,
+		ClassSpellMask: SpellMaskMortalStrike,
+		ActionID:       core.ActionID{SpellID: spellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskMeleeMHSpecial,
+		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagAPL | SpellFlagOffensive,
 
 		RageCost: core.RageCostOptions{
-			Cost:   30,
+			Cost:   float64(row.Cost),
 			Refund: 0.8,
 		},
 		Cast: core.CastConfig{
@@ -34,7 +37,7 @@ func (warrior *Warrior) registerMortalStrikeSpell(cdTimer *core.Timer) {
 			IgnoreHaste: true,
 			CD: core.Cooldown{
 				Timer:    cdTimer,
-				Duration: time.Second * 6,
+				Duration: row.Cooldown,
 			},
 		},
 
@@ -42,7 +45,7 @@ func (warrior *Warrior) registerMortalStrikeSpell(cdTimer *core.Timer) {
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
-		BonusCoefficient: 1,
+		BonusCoefficient: row.Direct.BonusCoefficient(),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := bonusDamage + spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower(target))
