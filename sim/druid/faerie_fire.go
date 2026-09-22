@@ -8,9 +8,12 @@ import (
 
 func (druid *Druid) registerFaerieFireSpell() {
 	spellCode := SpellCode_DruidFaerieFire
+	classMask := SpellMaskFaerieFire
+	// Rank 4's cost comes from the client table (see wrath.go). Its id stays ours: reading it through the table files
+	// the never-registered ranks 1-3 in sim/spell_sources_test.go. The table's Magic defense type is not used either.
 	actionID := core.ActionID{SpellID: 9907}
 	manaCostOptions := core.ManaCostOptions{
-		FlatCost: 115,
+		FlatCost: float64(spellData.FaerieFire.ByRank(4).Cost),
 	}
 	gcd := core.GCDDefault
 	ignoreHaste := false
@@ -28,6 +31,7 @@ func (druid *Druid) registerFaerieFireSpell() {
 	// around it.
 	if druid.InForm(Cat | Bear) {
 		spellCode = SpellCode_DruidFaerieFireFeral
+		classMask = SpellMaskFaerieFireFeral
 		actionID = core.ActionID{SpellID: 17392}
 		manaCostOptions = core.ManaCostOptions{}
 		gcd = time.Second
@@ -44,11 +48,12 @@ func (druid *Druid) registerFaerieFireSpell() {
 	flags |= core.SpellFlagAPL | core.SpellFlagResetAttackSwing
 
 	druid.FaerieFire = druid.RegisterSpell(formMask, core.SpellConfig{
-		SpellCode:   spellCode,
-		ActionID:    actionID,
-		SpellSchool: core.SpellSchoolNature,
-		ProcMask:    core.ProcMaskSpellDamage,
-		Flags:       flags,
+		SpellCode:      spellCode,
+		ClassSpellMask: classMask,
+		ActionID:       actionID,
+		SpellSchool:    core.SpellSchoolNature,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          flags,
 
 		ManaCost: manaCostOptions,
 		Cast: core.CastConfig{

@@ -4,42 +4,48 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 	"github.com/wowsims/classic/sim/core/stats"
 )
 
+var ExplosiveTrapBaseDamage = [4][]float64{{0}, {104, 135}, {145, 193}, {208, 265}}
+
 func (hunter *Hunter) getExplosiveTrapConfig(rank int, timer *core.Timer) core.SpellConfig {
 	// Classic and Forever ids; the 4095xx ids were Season of Discovery's and are not in the beta client.
 	// Damage, cost and levels are unchanged in the beta client, only the shared cooldown moved.
-	spellId := [4]int32{0, 13813, 14316, 14317}[rank]
-	dotDamage := [4]float64{0, 15, 24, 33}[rank]
-	minDamage := [4]float64{0, 104, 145, 208}[rank]
-	maxDamage := [4]float64{0, 135, 193, 265}[rank]
-	manaCost := [4]float64{0, 275, 395, 520}[rank]
+	// Spell ID, cost and cooldown come from the trap's row of the client table, school, defense type
+	// and the burn from its effect's (see aimed_shot.go); the blast's range stays ours.
+	row := spellData.ExplosiveTrap.ByRank(int32(rank))
+	effect := spellData.ExplosiveTrapEffect.ByRank(int32(rank))
+	periodic := effect.Periodic.(shared.SpellDataPeriodic)
+	minDamage := ExplosiveTrapBaseDamage[rank][0]
+	maxDamage := ExplosiveTrapBaseDamage[rank][1]
 	level := [4]int{0, 34, 44, 54}[rank]
 
 	numHits := hunter.Env.GetNumTargets()
 
 	return core.SpellConfig{
-		SpellCode:     SpellCode_HunterExplosiveTrap,
-		ActionID:      core.ActionID{SpellID: spellId},
-		SpellSchool:   core.SpellSchoolFire,
-		DefenseType:   core.DefenseTypeMagic,
-		ProcMask:      core.ProcMaskSpellDamage,
-		Flags:         core.SpellFlagAPL | SpellFlagTrap,
-		Rank:          rank,
-		RequiredLevel: level,
-		MissileSpeed:  24,
+		SpellCode:      SpellCode_HunterExplosiveTrap,
+		ClassSpellMask: SpellMaskExplosiveTrap,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    effect.SpellSchool,
+		DefenseType:    effect.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          core.SpellFlagAPL | SpellFlagTrap,
+		Rank:           rank,
+		RequiredLevel:  level,
+		MissileSpeed:   24,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			CD: core.Cooldown{
 				Timer: timer,
 				// Forever doubles the shared trap cooldown to 30 sec. Seen on every trap tooltip
 				// from the demo streams (Savix, Xaryu and Soda, 12-13 September).
-				Duration: core.TernaryDuration(hunter.Env.IsForever(), time.Second*30, time.Second*15),
+				Duration: core.TernaryDuration(hunter.Env.IsForever(), row.Cooldown, time.Second*15),
 			},
 			DefaultCast: core.Cast{
 				GCD: core.GCDDefault,
@@ -56,11 +62,11 @@ func (hunter *Hunter) getExplosiveTrapConfig(rank int, timer *core.Timer) core.S
 				Label: "ExplosiveTrap" + hunter.Label + strconv.Itoa(rank),
 				Tag:   "ExplosiveTrap",
 			},
-			NumberOfTicks: 10,
-			TickLength:    time.Second * 2,
+			NumberOfTicks: periodic.NumberOfTicks,
+			TickLength:    periodic.TickLength,
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.Snapshot(target, dotDamage, isRollover)
+				dot.Snapshot(target, periodic.Tick, isRollover)
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				for _, aoeTarget := range sim.Encounter.TargetUnits {

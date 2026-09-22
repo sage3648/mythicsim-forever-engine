@@ -6,7 +6,8 @@ import (
 
 const DemoralizingRoarRanks = 5
 
-var DemoralizingRoarSpellId = [DemoralizingRoarRanks + 1]int32{0, 99, 1735, 9490, 9747, 9898}
+// The id, cost and school come from the client table (see wrath.go). Its Magic defense type is not used, and the flat
+// threat stays ours (the client does not carry it).
 var DemoralizingRoarLevel = [DemoralizingRoarRanks + 1]int{0, 10, 20, 30, 40, 50}
 
 func (druid *Druid) registerDemoralizingRoarSpell() {
@@ -24,9 +25,11 @@ func (druid *Druid) registerDemoralizingRoarSpell() {
 		return core.DemoralizingRoarAura(target)
 	})
 
+	row := spellData.DemoralizingRoar.ByRank(int32(rank))
+
 	druid.DemoralizingRoar = druid.RegisterSpell(Bear, core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: DemoralizingRoarSpellId[rank]},
-		SpellSchool: core.SpellSchoolPhysical,
+		ActionID:    core.ActionID{SpellID: row.SpellID},
+		SpellSchool: row.SpellSchool,
 		ProcMask:    core.ProcMaskEmpty,
 		Flags:       core.SpellFlagAPL,
 
@@ -34,7 +37,7 @@ func (druid *Druid) registerDemoralizingRoarSpell() {
 		RequiredLevel: DemoralizingRoarLevel[rank],
 
 		RageCost: core.RageCostOptions{
-			Cost: 10,
+			Cost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

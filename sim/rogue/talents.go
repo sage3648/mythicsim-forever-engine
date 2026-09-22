@@ -99,23 +99,21 @@ func (rogue *Rogue) registerColdBloodCD() {
 
 	actionID := core.ActionID{SpellID: 14177}
 
+	critMod := rogue.AddDynamicMod(core.SpellModConfig{
+		Kind:       core.SpellMod_BonusCrit_Percent,
+		SpellFlag:  SpellFlagColdBlooded,
+		FloatValue: 100,
+	})
+
 	coldBloodAura := rogue.RegisterAura(core.Aura{
 		Label:    "Cold Blood",
 		ActionID: actionID,
 		Duration: core.NeverExpires,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
-			for _, spell := range rogue.Spellbook {
-				if spell.Flags.Matches(SpellFlagColdBlooded) {
-					spell.BonusCritRating += 100 * core.CritRatingPerCritChance
-				}
-			}
+			critMod.Activate()
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-			for _, spell := range rogue.Spellbook {
-				if spell.Flags.Matches(SpellFlagColdBlooded) {
-					spell.BonusCritRating -= 100 * core.CritRatingPerCritChance
-				}
-			}
+			critMod.Deactivate()
 		},
 		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 			if spell.Flags.Matches(SpellFlagColdBlooded) {
@@ -268,20 +266,23 @@ func (rogue *Rogue) applyThousandCuts() {
 		return
 	}
 
-	var affectedSpells []*core.Spell
+	costMod := rogue.AddDynamicMod(core.SpellModConfig{
+		Kind:      core.SpellMod_PowerCost_Flat,
+		ClassMask: SpellMaskBackstab | SpellMaskHemorrhage,
+	})
+
 	rogue.ThousandCutsAura = rogue.RegisterAura(core.Aura{
 		Label:     "Thousand Cuts",
 		Duration:  time.Second * 10,
 		MaxStacks: 5,
-		OnInit: func(aura *core.Aura, sim *core.Simulation) {
-			affectedSpells = core.FilterSlice([]*core.Spell{rogue.Backstab, rogue.Hemorrhage}, func(spell *core.Spell) bool {
-				return spell != nil
-			})
+		OnGain: func(aura *core.Aura, sim *core.Simulation) {
+			costMod.Activate()
+		},
+		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
+			costMod.Deactivate()
 		},
 		OnStacksChange: func(aura *core.Aura, sim *core.Simulation, oldStacks int32, newStacks int32) {
-			for _, spell := range affectedSpells {
-				spell.Cost.FlatModifier -= 3 * (newStacks - oldStacks)
-			}
+			costMod.UpdateIntValue(-3 * newStacks)
 		},
 		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 			if spell.SpellCode == SpellCode_RogueBackstab || spell.SpellCode == SpellCode_RogueHemorrhage {
@@ -339,10 +340,13 @@ func (rogue *Rogue) registerBladeFlurryCD() {
 		},
 	})
 
+	// Forever beta client 1.60.1.69893: id, cost, cooldown and duration come from the client table.
+	bfRow := spellData.BladeFlurry.ByRank(1)
+
 	rogue.BladeFlurryAura = rogue.RegisterAura(core.Aura{
 		Label:    "Blade Flurry",
-		ActionID: core.ActionID{SpellID: 13877},
-		Duration: time.Second * 15,
+		ActionID: core.ActionID{SpellID: bfRow.SpellID},
+		Duration: bfRow.Duration,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			rogue.MultiplyMeleeSpeed(sim, 1.2)
 		},
@@ -366,14 +370,15 @@ func (rogue *Rogue) registerBladeFlurryCD() {
 		},
 	})
 
-	cooldownDur := time.Minute * 2
+	cooldownDur := bfRow.Cooldown
 	rogue.BladeFlurry = rogue.RegisterSpell(core.SpellConfig{
-		SpellCode: SpellCode_RogueBladeFlurry,
-		ActionID:  core.ActionID{SpellID: 13877},
-		Flags:     core.SpellFlagAPL,
+		SpellCode:      SpellCode_RogueBladeFlurry,
+		ClassSpellMask: SpellMaskBladeFlurry,
+		ActionID:       core.ActionID{SpellID: bfRow.SpellID},
+		Flags:          core.SpellFlagAPL,
 
 		EnergyCost: core.EnergyCostOptions{
-			Cost: 25,
+			Cost: float64(bfRow.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -416,10 +421,13 @@ func (rogue *Rogue) registerAdrenalineRushCD() {
 		return
 	}
 
+	// Forever beta client 1.60.1.69893: duration and cooldown come from the client table.
+	arRow := spellData.AdrenalineRush.BySpellID(AdrenalineRushActionID.SpellID)
+
 	rogue.AdrenalineRushAura = rogue.RegisterAura(core.Aura{
 		Label:    "Adrenaline Rush",
 		ActionID: AdrenalineRushActionID,
-		Duration: time.Second * 15,
+		Duration: arRow.Duration,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			rogue.ApplyEnergyTickMultiplier(1.0)
 		},
@@ -429,8 +437,9 @@ func (rogue *Rogue) registerAdrenalineRushCD() {
 	})
 
 	rogue.AdrenalineRush = rogue.RegisterSpell(core.SpellConfig{
-		SpellCode: SpellCode_RogueAdrenalineRush,
-		ActionID:  AdrenalineRushActionID,
+		SpellCode:      SpellCode_RogueAdrenalineRush,
+		ClassSpellMask: SpellMaskAdrenalineRush,
+		ActionID:       AdrenalineRushActionID,
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
 				GCD: time.Second,
@@ -438,7 +447,7 @@ func (rogue *Rogue) registerAdrenalineRushCD() {
 			IgnoreHaste: true,
 			CD: core.Cooldown{
 				Timer:    rogue.NewTimer(),
-				Duration: time.Minute * 5,
+				Duration: arRow.Cooldown,
 			},
 		},
 

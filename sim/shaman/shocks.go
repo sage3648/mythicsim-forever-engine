@@ -3,22 +3,25 @@ package shaman
 import (
 	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
-// Shared logic for all shocks.
-func (shaman *Shaman) newShockSpellConfig(actionId core.ActionID, spellSchool core.SpellSchool, baseCost float64, shockTimer *core.Timer) core.SpellConfig {
-	cdDuration := time.Second*6 - time.Millisecond*200*time.Duration(shaman.Talents.Reverberation)
+// Shared logic for all shocks. Cost, the 6 sec cooldown, school, defense type and the direct hit's coefficient
+// come from the client table row; the caller builds the action id from it, where spell_sources_test.go can
+// read it.
+func (shaman *Shaman) newShockSpellConfig(actionID core.ActionID, row shared.SpellData, shockTimer *core.Timer) core.SpellConfig {
+	cdDuration := row.Cooldown - time.Millisecond*200*time.Duration(shaman.Talents.Reverberation)
 
 	return core.SpellConfig{
-		ActionID:    actionId,
-		SpellSchool: spellSchool,
-		DefenseType: core.DefenseTypeMagic,
+		ActionID:    actionID,
+		SpellSchool: row.SpellSchool,
+		DefenseType: row.DefenseType,
 		ProcMask:    core.ProcMaskSpellDamage,
 		Flags:       SpellFlagShaman | core.SpellFlagAPL,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost:   baseCost,
+			FlatCost:   float64(row.Cost),
 			Multiplier: 100 - 2*shaman.Talents.Convection - shaman.shamanisticFocusReduction(),
 		},
 		Cast: core.CastConfig{
@@ -37,6 +40,7 @@ func (shaman *Shaman) newShockSpellConfig(actionId core.ActionID, spellSchool co
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
+		BonusCoefficient: roundCoef(row.Direct.BonusCoefficient()),
 	}
 }
 

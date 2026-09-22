@@ -3,65 +3,68 @@ package proto;
 
 option go_package = "./proto";
 
+// DO NOT REMOVE THE COMMENTS
+// BEGIN GENERATED
+// PaladinTalents message.
 message PaladinTalents {
-	// Holy
-	int32 improved_holy_strike = 1;
-	int32 divine_strength = 2;
-	int32 divine_intellect = 3;
-	int32 healing_light = 4;
-	int32 spiritual_focus = 5;
-	int32 improved_seals = 6;
-	int32 unyielding_faith = 7;
-	bool voice_of_truth = 8;
-	int32 reverence = 9;
-	int32 purifying_power = 10;
-	int32 infusion_of_light = 11;
-	int32 illumination = 12;
-	bool divine_favor = 13;
-	int32 divine_precision = 14;
-	bool holy_shock = 15;
-	int32 consecrated_ground = 16;
-	int32 holy_power = 17;
-	bool lights_vigil = 18;
-
-	// Protection
-	int32 toughness = 19;
-	int32 redoubt = 20;
-	int32 precision = 21;
-	int32 guardians_favor = 22;
-	int32 anticipation = 23;
-	bool improved_seal_of_fury = 24;
-	int32 improved_righteous_fury = 25;
-	int32 shield_specialization = 26;
-	int32 sacred_duty = 27;
-	bool swift_judgement = 28;
-	int32 one_handed_weapon_specialization = 29;
-	int32 improved_hammer_of_justice = 30;
-	bool templars_bulwark = 31;
-	int32 reckoning = 32;
-	int32 iron_creed = 33;
-	bool holy_shield = 34;
-
-	// Retribution
-	int32 deflection = 35;
-	int32 benediction = 36;
-	int32 improved_judgement = 37;
-	int32 holy_conduit = 38;
-	int32 conviction = 39;
-	int32 vindication = 40;
-	int32 sanctified_judgement = 41;
-	bool seal_of_command = 42;
-	int32 pursuit_of_justice = 43;
-	int32 eye_for_an_eye = 44;
-	bool sacred_arbiter = 45;
-	int32 crusade = 46;
-	int32 two_handed_weapon_specialization = 47;
-	int32 vengeance = 48;
-	bool repentance = 49;
-	int32 champion_of_the_light = 50;
-	int32 instrument_of_law = 51;
-	bool twist_of_light = 52;
+    // Holy
+    int32 improved_holy_strike = 1;
+    int32 divine_strength = 2;
+    int32 divine_intellect = 3;
+    int32 healing_light = 4;
+    int32 spiritual_focus = 5;
+    int32 improved_seals = 6;
+    int32 unyielding_faith = 7;
+    bool voice_of_truth = 8;
+    int32 reverence = 9;
+    int32 purifying_power = 10;
+    int32 infusion_of_light = 11;
+    int32 illumination = 12;
+    bool divine_favor = 13;
+    int32 divine_precision = 14;
+    bool holy_shock = 15;
+    int32 consecrated_ground = 16;
+    int32 holy_power = 17;
+    bool lights_vigil = 18;
+    // Protection
+    int32 toughness = 19;
+    int32 redoubt = 20;
+    int32 precision = 21;
+    int32 guardians_favor = 22;
+    int32 anticipation = 23;
+    bool improved_seal_of_fury = 24;
+    int32 improved_righteous_fury = 25;
+    int32 shield_specialization = 26;
+    int32 sacred_duty = 27;
+    bool swift_judgement = 28;
+    int32 one_handed_weapon_specialization = 29;
+    int32 improved_hammer_of_justice = 30;
+    bool templars_bulwark = 31;
+    int32 reckoning = 32;
+    int32 iron_creed = 33;
+    bool holy_shield = 34;
+    // Retribution
+    int32 deflection = 35;
+    int32 benediction = 36;
+    int32 improved_judgement = 37;
+    int32 holy_conduit = 38;
+    int32 conviction = 39;
+    int32 vindication = 40;
+    int32 sanctified_judgement = 41;
+    bool seal_of_command = 42;
+    int32 pursuit_of_justice = 43;
+    int32 eye_for_an_eye = 44;
+    bool sacred_arbiter = 45;
+    int32 crusade = 46;
+    int32 two_handed_weapon_specialization = 47;
+    int32 vengeance = 48;
+    bool repentance = 49;
+    int32 champion_of_the_light = 50;
+    int32 instrument_of_law = 51;
+    bool twist_of_light = 52;
 }
+
+// END GENERATED
 
 enum Blessings {
 	BlessingUnknown = 0;

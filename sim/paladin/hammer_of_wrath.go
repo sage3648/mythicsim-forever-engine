@@ -8,49 +8,53 @@ import (
 	"github.com/wowsims/classic/sim/core"
 )
 
-func (paladin *Paladin) registerHammerOfWrath() {
-	// Beta client 1.60.1.69893, with each rank's growth to its max level folded in: rank 3 504-566
-	// (Classic's client reads 504-556) -> 473-523. Cost, cast, cooldown and the 0.429 are unchanged.
-	ranks := []struct {
-		level     int32
-		minDamage float64
-		maxDamage float64
-		manaCost  float64
-	}{
-		{level: 44, manaCost: 295, minDamage: 285, maxDamage: 315},
-		{level: 52, manaCost: 360, minDamage: 382, maxDamage: 421},
-		{level: 60, manaCost: 425, minDamage: 473, maxDamage: 523},
-	}
+// Beta client 1.60.1.69893, with each rank's growth to its max level folded in: rank 3 504-566
+// (Classic's client reads 504-556) -> 473-523. The damage stays ours: the client table holds the
+// centre of the range, truncated (spell_damage_test.go checks it).
+var hammerOfWrathRanks = []struct {
+	level     int32
+	minDamage float64
+	maxDamage float64
+}{
+	{level: 44, minDamage: 285, maxDamage: 315},
+	{level: 52, minDamage: 382, maxDamage: 421},
+	{level: 60, minDamage: 473, maxDamage: 523},
+}
 
+// Cost, cast time, cooldown, school, defense type and coefficient come from the client table; the
+// ids stay ours, as every rank is registered (see sim/rogue). The client's missile speed (35) is not
+// applied, as before.
+func (paladin *Paladin) registerHammerOfWrath() {
 	cd := core.Cooldown{
 		Timer:    paladin.NewTimer(),
-		Duration: time.Second * 6,
+		Duration: spellData.HammerOfWrath.ByRank(1).Cooldown,
 	}
 
 	// Instrument of Law: 0.5 sec a rank, confirmed by the beta client's talent data.
-	castTime := time.Second - time.Millisecond*500*time.Duration(paladin.Talents.InstrumentOfLaw)
+	castTime := spellData.HammerOfWrath.ByRank(1).CastTime - time.Millisecond*500*time.Duration(paladin.Talents.InstrumentOfLaw)
 
-	for i, rank := range ranks {
-		rank := rank
+	for i, rank := range hammerOfWrathRanks {
 		spellID := []int32{24275, 24274, 24239}[i]
 		if paladin.Level < rank.level {
 			break
 		}
+		row := spellData.HammerOfWrath.BySpellID(spellID)
 
 		paladin.GetOrRegisterSpell(core.SpellConfig{
 			ActionID:    core.ActionID{SpellID: spellID},
-			SpellSchool: core.SpellSchoolHoly,
-			DefenseType: core.DefenseTypeRanged,
+			SpellSchool: row.SpellSchool,
+			DefenseType: row.DefenseType,
 			ProcMask:    core.ProcMaskRangedSpecial, // TODO to be tested
 			Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
 			CastType:    proto.CastType_CastTypeRanged,
 
-			Rank:          i + 1,
-			RequiredLevel: int(rank.level),
-			SpellCode:     SpellCode_PaladinHammerOfWrath,
+			Rank:           i + 1,
+			RequiredLevel:  int(rank.level),
+			SpellCode:      SpellCode_PaladinHammerOfWrath,
+			ClassSpellMask: SpellMaskHammerOfWrath,
 
 			ManaCost: core.ManaCostOptions{
-				FlatCost:   rank.manaCost,
+				FlatCost:   float64(row.Cost),
 				Multiplier: paladin.holyConduit(),
 			},
 			Cast: core.CastConfig{
@@ -64,7 +68,7 @@ func (paladin *Paladin) registerHammerOfWrath() {
 
 			DamageMultiplier: 1,
 			ThreatMultiplier: 1,
-			BonusCoefficient: 0.429,
+			BonusCoefficient: roundCoef(row.Direct.BonusCoefficient()),
 
 			ExtraCastCondition: func(sim *core.Simulation, target *core.Unit) bool {
 				return sim.IsExecutePhase20()

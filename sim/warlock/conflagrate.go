@@ -1,23 +1,21 @@
 package warlock
 
 import (
-	"time"
-
 	"github.com/wowsims/classic/sim/core"
 )
 
 const ConflagrateRanks = 6
 
-func (warlock *Warlock) getConflagrateConfig(rank int) core.SpellConfig {
-	// Beta client 1.60.1: Forever adds two ranks below Classic's four (1293817 at 25, 1293818 at 32),
-	// which makes Classic's 17962 rank 3, and every rank does about half Classic's damage.
-	spellId := [ConflagrateRanks + 1]int32{0, 1293817, 1293818, 17962, 18930, 18931, 18932}[rank]
-	baseDamageMin := [ConflagrateRanks + 1]float64{0, 88, 113, 134, 179, 220, 251}[rank]
-	baseDamageMax := [ConflagrateRanks + 1]float64{0, 111, 142, 170, 222, 273, 313}[rank]
-	manaCost := [ConflagrateRanks + 1]float64{0, 100, 130, 165, 200, 230, 255}[rank]
-	level := [ConflagrateRanks + 1]int{0, 25, 32, 40, 48, 54, 60}[rank]
+// Beta client 1.60.1: Forever adds two ranks below Classic's four (1293817 at 25, 1293818 at 32),
+// which makes Classic's 17962 rank 3, and every rank does about half Classic's damage. Everything but
+// the damage comes from the client table (see shadowbolt.go).
+var ConflagrateBaseDamage = [ConflagrateRanks + 1][]float64{{0}, {88, 111}, {113, 142}, {134, 170}, {179, 222}, {220, 273}, {251, 313}}
 
-	spCoeff := 0.429
+func (warlock *Warlock) getConflagrateConfig(rank int) core.SpellConfig {
+	row := spellData.Conflagrate.ByRank(int32(rank))
+	baseDamageMin := ConflagrateBaseDamage[rank][0]
+	baseDamageMax := ConflagrateBaseDamage[rank][1]
+	level := [ConflagrateRanks + 1]int{0, 25, 32, 40, 48, 54, 60}[rank]
 
 	// 20% per point, so at 5/5 Conflagrate stops consuming Immolate altogether. The demo
 	// only showed rank 1 and the tree repeated its 20% at every rank, which is why this was
@@ -25,17 +23,18 @@ func (warlock *Warlock) getConflagrateConfig(rank int) core.SpellConfig {
 	keepImmolateChance := 0.2 * float64(warlock.Talents.ShadowAndFlame)
 
 	return core.SpellConfig{
-		SpellCode:     SpellCode_WarlockConflagrate,
-		ActionID:      core.ActionID{SpellID: spellId},
-		SpellSchool:   core.SpellSchoolFire,
-		DefenseType:   core.DefenseTypeMagic,
-		ProcMask:      core.ProcMaskSpellDamage,
-		Flags:         core.SpellFlagAPL | WarlockFlagDestruction,
-		Rank:          rank,
-		RequiredLevel: level,
+		SpellCode:      SpellCode_WarlockConflagrate,
+		ClassSpellMask: SpellMaskConflagrate,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          core.SpellFlagAPL | WarlockFlagDestruction,
+		Rank:           rank,
+		RequiredLevel:  level,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -43,7 +42,7 @@ func (warlock *Warlock) getConflagrateConfig(rank int) core.SpellConfig {
 			},
 			CD: core.Cooldown{
 				Timer:    warlock.NewTimer(),
-				Duration: time.Second * 10,
+				Duration: row.Cooldown,
 			},
 		},
 		ExtraCastCondition: func(sim *core.Simulation, target *core.Unit) bool {
@@ -52,7 +51,7 @@ func (warlock *Warlock) getConflagrateConfig(rank int) core.SpellConfig {
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
-		BonusCoefficient: spCoeff,
+		BonusCoefficient: roundCoef(row.Direct.BonusCoefficient()),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := sim.Roll(baseDamageMin, baseDamageMax)

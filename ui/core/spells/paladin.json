@@ -543,6 +543,13 @@
 		"source": "forever",
 		"tooltip": "85 Mana\n30 yd range\nInstant\n15 sec cooldown\nCauses 79 to 91 Holy damage to an Undead or Demon target."
 	},
+	"407632": {
+		"ability": "Hammer of the Righteous",
+		"file": "sim/paladin/hammer_of_the_righteous.go",
+		"note": "New in Forever, trained on the Protection line at 40. Beta client 1.60.1.69893: Holy damage 3x main hand DPS, 6 sec cooldown, 6% base mana, melee table, no spell power coefficient. Shares client cooldown category 2404 with Holy Strike. Measured: taking it before Holy Strike costs protection 6.5% DPS, so the default rotation does not.",
+		"source": "forever",
+		"tooltip": "6% of base mana\nInstant\n6 sec cooldown\nHammer the current target and up to 3 additional nearby targets, causing Holy damage to each equal to 3 times the damage per second of your main hand weapon."
+	},
 	"1311649": {
 		"ability": "Seal of Fury",
 		"file": "sim/paladin/sof.go",

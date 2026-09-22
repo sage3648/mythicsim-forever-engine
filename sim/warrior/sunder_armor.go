@@ -8,21 +8,24 @@ func (warrior *Warrior) registerSunderArmorSpell() {
 	warrior.SunderArmorAuras = warrior.NewEnemyAuraArray(core.SunderArmorAura)
 
 	spellID := int32(11597)
+	// Cost, school and threat come from the client table; the id stays ours (see
+	// registerHeroicStrikeSpell). The table's Melee defense type is not applied, as before.
+	row := spellData.SunderArmor.BySpellID(spellID)
 
 	// Forever gives Sunder Armor an explicit threat effect, 1013 at rank 5, where Classic's
 	// 2.25 x 2 x level (261) was server side.
-	threat := 1013.0
+	threat := row.FlatThreatBonus
 
 	var canApplySunder bool
 
 	warrior.SunderArmor = warrior.RegisterSpell(AnyStance, core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: spellID},
-		SpellSchool: core.SpellSchoolPhysical,
+		SpellSchool: row.SpellSchool,
 		ProcMask:    core.ProcMaskMeleeMHSpecial,
 		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagAPL | SpellFlagOffensive,
 
 		RageCost: core.RageCostOptions{
-			Cost:   15 - float64(warrior.Talents.ImprovedSunderArmor),
+			Cost:   float64(row.Cost) - float64(warrior.Talents.ImprovedSunderArmor),
 			Refund: 0.8,
 		},
 		Cast: core.CastConfig{

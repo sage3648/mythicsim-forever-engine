@@ -249,6 +249,36 @@ func registeredSpellIDs(t *testing.T) (map[int][]string, []string) {
 			})
 		}
 
+		// The client tables vendored from wowsims/forever: `spellData.Frostbolt` holds only
+		// Frostbolt's ranks, so its ids are filed under that path rather than under the row type,
+		// which every family in the package shares.
+		if lit := boundComposite(globals["spellData"]); lit != nil {
+			for _, elt := range lit.Elts {
+				kv, ok := elt.(*ast.KeyValueExpr)
+				key, isIdent := kv.Key.(*ast.Ident)
+				if !ok || !isIdent {
+					continue
+				}
+				family := map[string][]int{}
+				ast.Inspect(kv.Value, func(node ast.Node) bool {
+					if field, ok := node.(*ast.KeyValueExpr); ok {
+						// A periodic value names the spell its tick is read from (Blizzard's
+						// 1279976), which is not a rank the family registers.
+						if name, ok := field.Key.(*ast.Ident); ok && (name.Name == "Periodic" || name.Name == "SecondaryPeriodic") {
+							return false
+						}
+						if name, ok := field.Key.(*ast.Ident); ok && name.Name == "SpellID" {
+							if id, ok := intLiteral(field.Value); ok {
+								family["SpellID"] = append(family["SpellID"], id)
+							}
+						}
+					}
+					return true
+				})
+				fields["spellData."+key.Name] = family
+			}
+		}
+
 		for path, file := range files {
 			rel := strings.TrimPrefix(filepath.ToSlash(path), "../")
 
@@ -397,6 +427,9 @@ func resolveSpellID(expr ast.Expr, locals, globals map[string]ast.Expr, fields m
 			// back to the names in the expression itself: the field's own qualifier, then
 			// the table the root was ranged over.
 			candidates := []string{root.Name}
+			if family := generatedFamily(locals[root.Name]); family != "" {
+				candidates = append([]string{family}, candidates...)
+			}
 			if len(chain) > 1 {
 				candidates = append([]string{chain[len(chain)-2]}, candidates...)
 			}
@@ -426,6 +459,26 @@ func resolveSpellID(expr ast.Expr, locals, globals map[string]ast.Expr, fields m
 		}
 	}
 	return nil
+}
+
+// "spellData.Frostbolt" for `spellData.Frostbolt.ByRank(rank)` and the like, "" otherwise.
+func generatedFamily(expr ast.Expr) string {
+	for expr != nil {
+		switch node := expr.(type) {
+		case *ast.CallExpr:
+			expr = node.Fun
+		case *ast.IndexExpr:
+			expr = node.X
+		case *ast.SelectorExpr:
+			if root, ok := node.X.(*ast.Ident); ok && root.Name == "spellData" {
+				return "spellData." + node.Sel.Name
+			}
+			expr = node.X
+		default:
+			return ""
+		}
+	}
+	return ""
 }
 
 // Int literals inside any composite the expression carries, restricted to the int typed

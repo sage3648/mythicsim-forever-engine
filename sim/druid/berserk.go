@@ -14,25 +14,21 @@ func (druid *Druid) registerBerserkCD() {
 	actionID := core.ActionID{SpellID: 50334}
 
 	// The beta client's Berserk (417141) has a 3 min cooldown and lasts 15 sec.
-	builders := []*DruidSpell{}
+	critMod := druid.AddDynamicMod(core.SpellModConfig{
+		Kind:       core.SpellMod_BonusCrit_Percent,
+		SpellFlag:  SpellFlagBuilder,
+		FloatValue: 100,
+	})
+
 	druid.BerserkAura = druid.RegisterAura(core.Aura{
 		Label:    "Berserk",
 		ActionID: actionID,
 		Duration: time.Second * 15,
-		OnInit: func(aura *core.Aura, sim *core.Simulation) {
-			builders = core.FilterSlice(druid.DruidSpells, func(ds *DruidSpell) bool {
-				return ds.Flags.Matches(SpellFlagBuilder)
-			})
-		},
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
-			for _, spell := range builders {
-				spell.BonusCritRating += 100 * core.CritRatingPerCritChance
-			}
+			critMod.Activate()
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-			for _, spell := range builders {
-				spell.BonusCritRating -= 100 * core.CritRatingPerCritChance
-			}
+			critMod.Deactivate()
 		},
 	})
 

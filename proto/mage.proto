@@ -3,67 +3,70 @@ package proto;
 
 option go_package = "./proto";
 
+// DO NOT REMOVE THE COMMENTS
+// BEGIN GENERATED
+// MageTalents message.
 message MageTalents {
-	// Arcane
-	int32 wand_specialization = 1;
-	int32 arcane_focus = 2;
-	int32 improved_channeling = 3;
-	int32 arcane_subtlety = 4;
-	int32 magic_absorption = 5;
-	int32 arcane_concentration = 6;
-	int32 arcane_resilience = 7;
-	int32 arcane_geometry = 8;
-	int32 arcane_impact = 9;
-	bool arcane_blast = 10;
-	int32 arcane_shielding = 11;
-	int32 improved_counterspell = 12;
-	int32 arcane_meditation = 13;
-	bool missile_barrage = 14;
-	bool presence_of_mind = 15;
-	int32 arcane_mind = 16;
-	int32 arcane_instability = 17;
-	bool arcane_power = 18;
-
-	// Fire
-	int32 wake_of_fire = 19;
-	int32 incineration = 20;
-	int32 improved_fireball = 21;
-	int32 ignite = 22;
-	int32 flame_throwing = 23;
-	int32 impact = 24;
-	int32 burning_soul = 25;
-	int32 improved_flamestrike = 26;
-	bool pyroblast = 27;
-	int32 improved_scorch = 28;
-	int32 improved_fire_ward = 29;
-	bool hot_streak = 30;
-	int32 master_of_elements = 31;
-	int32 critical_mass = 32;
-	bool blast_wave = 33;
-	int32 fire_power = 34;
-	bool combustion = 35;
-
-	// Frost
-	int32 frost_warding = 36;
-	int32 improved_frostbolt = 37;
-	int32 elemental_precision = 38;
-	int32 ice_shards = 39;
-	int32 permafrost = 40;
-	int32 improved_frost_nova = 41;
-	int32 frostbite = 42;
-	int32 piercing_ice = 43;
-	int32 frost_channeling = 44;
-	bool ice_lance = 45;
-	int32 improved_blizzard = 46;
-	int32 arctic_reach = 47;
-	bool ice_block = 48;
-	int32 shatter = 49;
-	int32 improved_cone_of_cold = 50;
-	bool cold_snap = 51;
-	int32 fingers_of_frost = 52;
-	int32 winters_chill = 53;
-	bool ice_barrier = 54;
+    // Arcane
+    int32 wand_specialization = 1;
+    int32 arcane_focus = 2;
+    int32 improved_channeling = 3;
+    int32 arcane_subtlety = 4;
+    int32 magic_absorption = 5;
+    int32 arcane_concentration = 6;
+    int32 arcane_resilience = 7;
+    int32 arcane_geometry = 8;
+    int32 arcane_impact = 9;
+    bool arcane_blast = 10;
+    int32 arcane_shielding = 11;
+    int32 improved_counterspell = 12;
+    int32 arcane_meditation = 13;
+    bool missile_barrage = 14;
+    bool presence_of_mind = 15;
+    int32 arcane_mind = 16;
+    int32 arcane_instability = 17;
+    bool arcane_power = 18;
+    // Fire
+    int32 wake_of_fire = 19;
+    int32 incineration = 20;
+    int32 improved_fireball = 21;
+    int32 ignite = 22;
+    int32 flame_throwing = 23;
+    int32 impact = 24;
+    int32 burning_soul = 25;
+    int32 improved_flamestrike = 26;
+    bool pyroblast = 27;
+    int32 improved_scorch = 28;
+    int32 improved_fire_ward = 29;
+    bool hot_streak = 30;
+    int32 master_of_elements = 31;
+    int32 critical_mass = 32;
+    bool blast_wave = 33;
+    int32 fire_power = 34;
+    bool combustion = 35;
+    // Frost
+    int32 frost_warding = 36;
+    int32 improved_frostbolt = 37;
+    int32 elemental_precision = 38;
+    int32 ice_shards = 39;
+    int32 permafrost = 40;
+    int32 improved_frost_nova = 41;
+    int32 frostbite = 42;
+    int32 piercing_ice = 43;
+    int32 frost_channeling = 44;
+    bool ice_lance = 45;
+    int32 improved_blizzard = 46;
+    int32 arctic_reach = 47;
+    bool ice_block = 48;
+    int32 shatter = 49;
+    int32 improved_cone_of_cold = 50;
+    bool cold_snap = 51;
+    int32 fingers_of_frost = 52;
+    int32 winters_chill = 53;
+    bool ice_barrier = 54;
 }
+
+// END GENERATED
 
 message Mage {
 	message Rotation {

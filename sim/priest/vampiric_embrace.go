@@ -1,8 +1,6 @@
 package priest
 
 import (
-	"time"
-
 	"github.com/wowsims/classic/sim/core"
 )
 
@@ -11,10 +9,13 @@ func (priest *Priest) registerVampiricEmbraceSpell() {
 		return
 	}
 
-	actionID := core.ActionID{SpellID: 15286}
-	manaCost := 40.0
-	duration := time.Second * 30 // 1 min in Classic
-	cooldown := time.Minute      // 10 sec in Classic
+	// Spell ID, cost, duration (1 min in Classic), cooldown (10 sec in Classic) and school come from the
+	// client table (see shadow_word_pain.go).
+	row := spellData.VampiricEmbrace.ByRank(1)
+	actionID := core.ActionID{SpellID: row.SpellID}
+	manaCost := float64(row.Cost)
+	duration := row.Duration
+	cooldown := row.Cooldown
 
 	partyPlayers := priest.Env.Raid.GetPlayerParty(&priest.Unit).Players
 	healthMetrics := priest.NewHealthMetrics(actionID)
@@ -39,8 +40,8 @@ func (priest *Priest) registerVampiricEmbraceSpell() {
 
 	priest.VampiricEmbrace = priest.RegisterSpell(core.SpellConfig{
 		ActionID:    actionID,
-		SpellSchool: core.SpellSchoolShadow,
-		DefenseType: core.DefenseTypeMagic,
+		SpellSchool: row.SpellSchool,
+		DefenseType: row.DefenseType,
 		ProcMask:    core.ProcMaskEmpty,
 		Flags:       SpellFlagPriest | core.SpellFlagAPL,
 

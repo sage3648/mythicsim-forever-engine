@@ -16,17 +16,19 @@ type SpellConfig struct {
 	// See definition of Spell (below) for comments on these.
 	ActionID
 	// Used to identify spells with multiple ranks that need to be referenced
-	SpellCode     int32
-	SpellSchool   SpellSchool
-	DefenseType   DefenseType
-	ProcMask      ProcMask
-	Flags         SpellFlag
-	CastType      proto.CastType
-	MissileSpeed  float64
-	BaseCost      float64
-	MetricSplits  int
-	Rank          int
-	RequiredLevel int
+	SpellCode int32
+	// Class-specific bit mask used by SpellMods to pick this spell, see spell_mod.go.
+	ClassSpellMask int64
+	SpellSchool    SpellSchool
+	DefenseType    DefenseType
+	ProcMask       ProcMask
+	Flags          SpellFlag
+	CastType       proto.CastType
+	MissileSpeed   float64
+	BaseCost       float64
+	MetricSplits   int
+	Rank           int
+	RequiredLevel  int
 
 	ManaCost   ManaCostOptions
 	EnergyCost EnergyCostOptions
@@ -78,6 +80,9 @@ type Spell struct {
 
 	// Used to identify spells with multiple ranks that need to be referenced
 	SpellCode int32
+
+	// Class-specific bit mask used by SpellMods to pick this spell, see spell_mod.go.
+	ClassSpellMask int64
 
 	// The unit who will perform this spell.
 	Unit *Unit
@@ -183,6 +188,11 @@ func (unit *Unit) OnSpellRegistered(handler SpellRegisteredHandler) {
 	unit.spellRegistrationHandlers = append(unit.spellRegistrationHandlers, handler)
 }
 
+// Returns true if the given mask matches the spell mask
+func (spell *Spell) Matches(mask int64) bool {
+	return spell.ClassSpellMask&mask > 0
+}
+
 // Registers a new spell to the unit. Returns the newly created spell.
 func (unit *Unit) RegisterSpell(config SpellConfig) *Spell {
 	if len(unit.Spellbook) > 200 {
@@ -234,14 +244,15 @@ func (unit *Unit) RegisterSpell(config SpellConfig) *Spell {
 	}
 
 	spell := &Spell{
-		ActionID:     config.ActionID,
-		SpellCode:    config.SpellCode,
-		DefenseType:  config.DefenseType,
-		Unit:         unit,
-		ProcMask:     config.ProcMask,
-		Flags:        config.Flags,
-		CastType:     config.CastType,
-		MissileSpeed: config.MissileSpeed,
+		ActionID:       config.ActionID,
+		SpellCode:      config.SpellCode,
+		ClassSpellMask: config.ClassSpellMask,
+		DefenseType:    config.DefenseType,
+		Unit:           unit,
+		ProcMask:       config.ProcMask,
+		Flags:          config.Flags,
+		CastType:       config.CastType,
+		MissileSpeed:   config.MissileSpeed,
 
 		SpellSchool:       config.SpellSchool,
 		SchoolIndex:       config.SpellSchool.GetSchoolIndex(),

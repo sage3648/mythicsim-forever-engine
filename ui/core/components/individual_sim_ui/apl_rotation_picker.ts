@@ -1,7 +1,7 @@
 import tippy, { Instance as TippyInstance } from 'tippy.js';
 
 import { Player } from '../../player';
-import { APLAction, APLListItem, APLPrepullAction, APLValue } from '../../proto/apl';
+import { APLAction, APLGroup, APLListItem, APLPrepullAction, APLValue, APLValueVariable } from '../../proto/apl';
 import { ActionId } from '../../proto_utils/action_id';
 import { SimUI } from '../../sim_ui';
 import { EventID, TypedEvent } from '../../typed_event';
@@ -10,7 +10,8 @@ import { Component } from '../component';
 import { Input, InputConfig } from '../input';
 import { AdaptiveStringPicker } from '../inputs/string_picker';
 import { ListItemPickerConfig, ListPicker } from '../list_picker';
-import { APLActionPicker } from './apl_actions';
+import { APLActionPicker, APLValueVariableListPicker, variableListFieldConfig } from './apl_actions';
+import * as AplHelpers from './apl_helpers';
 import { APLValueImplStruct } from './apl_values';
 
 export class APLRotationPicker extends Component {
@@ -67,6 +68,48 @@ export class APLRotationPicker extends Component {
 				index: number,
 				config: ListItemPickerConfig<Player<any>, APLListItem>,
 			) => new APLListItemPicker(parent, modPlayer, config, index),
+			inlineMenuBar: true,
+		});
+
+		new APLValueVariableListPicker(this.rootElem, modPlayer, {
+			extraCssClasses: ['apl-list-item-picker', 'apl-value-variable-picker'],
+			title: 'Variables',
+			titleTooltip: 'Named values that can be used anywhere in the rotation with the <b>Variable</b> value.',
+			changedEvent: (player: Player<any>) => player.rotationChangeEmitter,
+			getValue: (player: Player<any>) => player.aplRotation.valueVariables,
+			setValue: (eventID: EventID, player: Player<any>, newValue: Array<APLValueVariable>) => {
+				player.aplRotation.valueVariables = newValue;
+				player.rotationChangeEmitter.emit(eventID);
+			},
+			inlineMenuBar: true,
+			actions: { create: { useIcon: false } },
+		});
+
+		new ListPicker<Player<any>, APLGroup>(this.rootElem, modPlayer, {
+			extraCssClasses: ['apl-list-item-picker', 'apl-group-picker'],
+			title: 'Action Groups',
+			titleTooltip:
+				'Named lists of actions, run from the Priority List with the <b>Action Group</b> action. Group variables are defaults; each reference can fill <b>Variable Placeholders</b> and override variables.',
+			itemLabel: 'Action Group',
+			changedEvent: (player: Player<any>) => player.rotationChangeEmitter,
+			getValue: (player: Player<any>) => player.aplRotation.groups,
+			setValue: (eventID: EventID, player: Player<any>, newValue: Array<APLGroup>) => {
+				player.aplRotation.groups = newValue;
+				player.rotationChangeEmitter.emit(eventID);
+			},
+			newItem: () => APLGroup.create(),
+			copyItem: (oldItem: APLGroup) => APLGroup.clone(oldItem),
+			newItemPicker: (
+				parent: HTMLElement,
+				listPicker: ListPicker<Player<any>, APLGroup>,
+				index: number,
+				config: ListItemPickerConfig<Player<any>, APLGroup>,
+			) =>
+				AplHelpers.aplInputBuilder(APLGroup.create, [
+					AplHelpers.stringFieldConfig('name', { label: 'Name' }),
+					{ ...variableListFieldConfig('variables'), label: 'Variables', labelTooltip: 'Defaults for this group; a reference can override them.' },
+					{ ...groupActionsFieldConfig('actions'), label: 'Actions' },
+				])(parent, modPlayer, config),
 			inlineMenuBar: true,
 		});
 
@@ -175,6 +218,31 @@ class APLPrepullActionPicker extends Input<Player<any>, APLPrepullAction> {
 	}
 }
 
+function groupActionsFieldConfig(field: string): AplHelpers.APLPickerBuilderFieldConfig<any, any> {
+	return {
+		field: field,
+		newValue: () => [],
+		factory: (parent, player, config) =>
+			new ListPicker<Player<any>, APLListItem>(parent, player, {
+				...config,
+				itemLabel: 'Action',
+				newItem: () => APLListItem.create({ action: {} }),
+				copyItem: (oldItem: APLListItem) => APLListItem.clone(oldItem),
+				newItemPicker: (
+					parent: HTMLElement,
+					listPicker: ListPicker<Player<any>, APLListItem>,
+					index: number,
+					config: ListItemPickerConfig<Player<any>, APLListItem>,
+				) => new APLListItemPicker(parent, player, config),
+				actions: {
+					create: {
+						useIcon: true,
+					},
+				},
+			}),
+	};
+}
+
 class APLListItemPicker extends Input<Player<any>, APLListItem> {
 	private readonly player: Player<any>;
 
@@ -190,13 +258,16 @@ class APLListItemPicker extends Input<Player<any>, APLListItem> {
 		);
 	}
 
-	constructor(parent: HTMLElement, player: Player<any>, config: ListItemPickerConfig<Player<any>, APLListItem>, index: number) {
+	// index is the Priority List position, for showing warnings. Group actions have none: their warnings show on the referencing item.
+	constructor(parent: HTMLElement, player: Player<any>, config: ListItemPickerConfig<Player<any>, APLListItem>, index?: number) {
 		config.enableWhen = () => !this.getItem().hide;
 		super(parent, 'apl-list-item-picker-root', player, config);
 		this.player = player;
 
 		const itemHeaderElem = ListPicker.getItemHeaderElem(this);
-		makeListItemWarnings(itemHeaderElem, player, player => player.getCurrentStats().rotationStats?.priorityList[index]?.warnings || []);
+		if (index !== undefined) {
+			makeListItemWarnings(itemHeaderElem, player, player => player.getCurrentStats().rotationStats?.priorityList[index]?.warnings || []);
+		}
 
 		this.hidePicker = new HidePicker(itemHeaderElem, player, {
 			changedEvent: () => this.player.rotationChangeEmitter,

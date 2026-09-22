@@ -6,8 +6,8 @@ import (
 
 const MaulRanks = 7
 
-var MaulSpellId = [MaulRanks + 1]int32{0, 6807, 6808, 6809, 8972, 9745, 9880, 9881}
-var MaulBaseDamage = [MaulRanks + 1]float64{0, 18, 27, 37, 49, 71, 101, 128}
+// The id, cost and flat bonus come from the client table (see wrath.go). The client does not carry threat, so the
+// 1.75x stays ours.
 var MaulLevel = [MaulRanks + 1]int{0, 10, 18, 26, 34, 42, 50, 58}
 
 // Maul replaces the next melee swing, so it is queued through a separate APL spell
@@ -21,10 +21,10 @@ func (druid *Druid) registerMaulSpell() {
 	}[druid.Level]
 
 	level := MaulLevel[rank]
-	spellID := MaulSpellId[rank]
-	baseDamage := MaulBaseDamage[rank]
+	row := spellData.Maul.ByRank(int32(rank))
+	baseDamage, _ := row.Direct.Range()
 
-	rageCost := 15 - float64(druid.Talents.Ferocity)
+	rageCost := float64(row.Cost) - float64(druid.Talents.Ferocity)
 
 	switch druid.Ranged().ID {
 	case IdolOfBrutality:
@@ -32,12 +32,13 @@ func (druid *Druid) registerMaulSpell() {
 	}
 
 	druid.Maul = druid.RegisterSpell(Bear, core.SpellConfig{
-		SpellCode:   SpellCode_DruidMaul,
-		ActionID:    core.ActionID{SpellID: spellID},
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
-		ProcMask:    core.ProcMaskMeleeMHSpecial | core.ProcMaskMeleeMHAuto,
-		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagNoOnCastComplete,
+		SpellCode:      SpellCode_DruidMaul,
+		ClassSpellMask: SpellMaskMaul,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskMeleeMHSpecial | core.ProcMaskMeleeMHAuto,
+		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagNoOnCastComplete,
 
 		Rank:          rank,
 		RequiredLevel: level,

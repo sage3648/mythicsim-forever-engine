@@ -1,24 +1,30 @@
 package warrior
 
 import (
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
+// Forever beta client 1.60.1.69893: cost, school, defense type, flat damage and coefficient come from
+// the client table. The id stays ours: one rank is registered, and reading it from the table would
+// make spell_sources_test.go file the other ranks as registered. The same holds for every ranked
+// warrior ability. The threat is not in the table, so it stays ours.
 func (warrior *Warrior) registerHeroicStrikeSpell(realismICD *core.Cooldown) {
-	flatDamageBonus := core.TernaryFloat64(core.IncludeAQ, 157, 138)
 	spellID := core.TernaryInt32(core.IncludeAQ, 25286, 11567)
+	row := spellData.HeroicStrike.BySpellID(spellID)
+	flatDamageBonus := shared.SpellDataMin(row.Direct)
 	// No known equation
 	threat := core.TernaryFloat64(core.IncludeAQ, 173, 145)
 
 	warrior.HeroicStrike = warrior.RegisterSpell(AnyStance, core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: spellID},
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
+		SpellSchool: row.SpellSchool,
+		DefenseType: row.DefenseType,
 		ProcMask:    core.ProcMaskMeleeMHSpecial | core.ProcMaskMeleeMHAuto,
 		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagNoOnCastComplete | SpellFlagOffensive,
 
 		RageCost: core.RageCostOptions{
-			Cost:   15 - float64(warrior.Talents.ImprovedHeroicStrike),
+			Cost:   float64(row.Cost) - float64(warrior.Talents.ImprovedHeroicStrike),
 			Refund: 0.8,
 		},
 
@@ -27,7 +33,7 @@ func (warrior *Warrior) registerHeroicStrikeSpell(realismICD *core.Cooldown) {
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
 		FlatThreatBonus:  threat,
-		BonusCoefficient: 1,
+		BonusCoefficient: row.Direct.BonusCoefficient(),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := flatDamageBonus + spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower(target))
@@ -46,21 +52,24 @@ func (warrior *Warrior) registerHeroicStrikeSpell(realismICD *core.Cooldown) {
 	warrior.HeroicStrikeQueue = warrior.makeQueueSpellsAndAura(warrior.HeroicStrike, realismICD)
 }
 
+// Cost, school, defense type, flat damage and coefficient come from the client table; the id and
+// threat stay ours (see registerHeroicStrikeSpell).
 func (warrior *Warrior) registerCleaveSpell(realismICD *core.Cooldown) {
-	flatDamageBonus := 50.0
 	spellID := int32(20569)
+	row := spellData.Cleave.BySpellID(spellID)
+	flatDamageBonus := shared.SpellDataMin(row.Direct)
 	threat := 100.0
 
 	// Improved Cleave discounts Rage in Forever instead of adding damage, and Raging Blows
 	// takes another 2 off the top.
-	rageCost := 20 - float64(warrior.Talents.ImprovedCleave) - core.TernaryFloat64(warrior.Talents.RagingBlows, 2, 0)
+	rageCost := float64(row.Cost) - float64(warrior.Talents.ImprovedCleave) - core.TernaryFloat64(warrior.Talents.RagingBlows, 2, 0)
 
 	results := make([]*core.SpellResult, min(int32(2), warrior.Env.GetNumTargets()))
 
 	warrior.Cleave = warrior.RegisterSpell(AnyStance, core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: spellID},
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
+		SpellSchool: row.SpellSchool,
+		DefenseType: row.DefenseType,
 		ProcMask:    core.ProcMaskMeleeMHSpecial | core.ProcMaskMeleeMHAuto,
 		Flags:       core.SpellFlagMeleeMetrics | SpellFlagOffensive,
 
@@ -73,7 +82,7 @@ func (warrior *Warrior) registerCleaveSpell(realismICD *core.Cooldown) {
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
 		FlatThreatBonus:  threat,
-		BonusCoefficient: 1,
+		BonusCoefficient: row.Direct.BonusCoefficient(),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			for idx := range results {

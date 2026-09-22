@@ -83,6 +83,28 @@ const (
 	SpellCode_ShamanWaterShield
 )
 
+// Class spell masks for SpellMods (see core/spell_mod.go), one per SpellCode above.
+const (
+	SpellMaskNone      int64 = 0
+	SpellMaskChainHeal int64 = 1 << iota
+	SpellMaskChainLightning
+	SpellMaskEarthShock
+	SpellMaskFireNova
+	SpellMaskFlameShock
+	SpellMaskFrostShock
+	SpellMaskHealingWave
+	SpellMaskLavaBurst
+	SpellMaskLesserHealingWave
+	SpellMaskLightningBolt
+	SpellMaskLightningShield
+	SpellMaskMagmaTotem
+	SpellMaskSearingTotem
+	SpellMaskStormstrike
+	SpellMaskWaterShield
+
+	SpellMaskAll = SpellMaskWaterShield<<1 - SpellMaskChainHeal // every bit from ChainHeal to WaterShield
+)
+
 // Shaman represents a shaman character.
 type Shaman struct {
 	core.Character

@@ -2,22 +2,22 @@ package mage
 
 import (
 	"fmt"
-	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
 const FlamestrikeRanks = 6
 
-var FlamestrikeSpellId = [FlamestrikeRanks + 1]int32{0, 2120, 2121, 8422, 8423, 10215, 10216}
 var FlamestrikeBaseDamage = [FlamestrikeRanks + 1][]float64{{0}, {55, 71}, {96, 123}, {159, 197}, {220, 272}, {294, 362}, {381, 466}}
+
+// Spell ID, cost, cast time, coefficient and the whole burn (tick, ticks,
+// coefficient) come from the client table (see
+// frostbolt.go for why the damage does not).
+//
 // Beta client 1.60.1.69893. The burn is now an area trigger casting a damage spell every 2 sec
 // (1279983 ... 1279990), 4 times; the dot damage is 4 times that spell's base and the dot
 // coefficient is that spell's, per tick, up from Classic's .02.
-var FlamestrikeDotDamage = [FlamestrikeRanks + 1]float64{0, 44, 84, 132, 188, 256, 332}
-var FlamestrikeSpellCoeff = [FlamestrikeRanks + 1]float64{0, .157, .157, .157, .157, .157, .157}
-var FlamestrikeDotCoeff = [FlamestrikeRanks + 1]float64{0, .032, .032, .032, .032, .032, .032}
-var FlamestrikeManaCost = [FlamestrikeRanks + 1]float64{0, 195, 330, 490, 650, 815, 990}
 var FlamestrikeLevel = [FlamestrikeRanks + 1]int{0, 16, 24, 32, 40, 48, 56}
 
 func (mage *Mage) registerFlamestrikeSpell() {
@@ -33,38 +33,31 @@ func (mage *Mage) registerFlamestrikeSpell() {
 }
 
 func (mage *Mage) newFlamestrikeSpellConfig(rank int) core.SpellConfig {
-	numTicks := int32(4)
-	tickLength := time.Second * 2
-
-	spellId := FlamestrikeSpellId[rank]
+	row := spellData.Flamestrike.ByRank(int32(rank))
+	periodic := row.Periodic.(shared.SpellDataPeriodic)
 	baseDamageLow := FlamestrikeBaseDamage[rank][0]
 	baseDamageHigh := FlamestrikeBaseDamage[rank][1]
-	baseDotDamage := FlamestrikeDotDamage[rank] / float64(numTicks)
-	spellCoeff := FlamestrikeSpellCoeff[rank]
-	dotCoeff := FlamestrikeDotCoeff[rank]
-	manaCost := FlamestrikeManaCost[rank]
 	level := FlamestrikeLevel[rank]
 
-	castTime := time.Second * 3
-
 	return core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: spellId},
-		SpellSchool: core.SpellSchoolFire,
-		DefenseType: core.DefenseTypeMagic,
-		ProcMask:    core.ProcMaskSpellDamage,
-		Flags:       SpellFlagMage | core.SpellFlagAPL,
-		SpellCode:   SpellCode_MageFlamestrike,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          SpellFlagMage | core.SpellFlagAPL,
+		SpellCode:      SpellCode_MageFlamestrike,
+		ClassSpellMask: SpellMaskFlamestrike,
 
 		RequiredLevel: level,
 		Rank:          rank,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
 				GCD:      core.GCDDefault,
-				CastTime: castTime,
+				CastTime: row.CastTime,
 			},
 		},
 
@@ -72,18 +65,18 @@ func (mage *Mage) newFlamestrikeSpellConfig(rank int) core.SpellConfig {
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
-		BonusCoefficient: spellCoeff,
+		BonusCoefficient: roundCoef(row.Direct.BonusCoefficient()),
 
 		Dot: core.DotConfig{
 			IsAOE: true,
 			Aura: core.Aura{
 				Label: fmt.Sprintf("Flamestrike (Rank %d)", rank),
 			},
-			NumberOfTicks:    numTicks,
-			TickLength:       tickLength,
-			BonusCoefficient: dotCoeff,
+			NumberOfTicks:    periodic.NumberOfTicks,
+			TickLength:       periodic.TickLength,
+			BonusCoefficient: roundCoef(periodic.Coef),
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.Snapshot(target, baseDotDamage, isRollover)
+				dot.Snapshot(target, periodic.Tick, isRollover)
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				for _, aoeTarget := range sim.Encounter.TargetUnits {

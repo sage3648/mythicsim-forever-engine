@@ -14,17 +14,32 @@ import (
 // with a 12 sec cooldown and the 0.429 coefficient the sim had guessed. The client multiplies the
 // flat amount by the percentage the same way it does Backstab's, so rank 8 is 40% of (weapon + 81 to
 // 105): about 32 to 42 on top of the weapon share, close to the 36 to 46 the BlizzCon tooltip showed.
-// Damage is each rank's at its max level.
+// Damage is each rank's at its max level; it stays ours, as the client table holds the centre of the
+// flat roll, truncated (spell_damage_test.go checks it). Cost, cooldown, school, defense type, weapon
+// percentage and coefficient come from the table; the ids stay ours, as every rank is registered.
 // TODO: beta will confirm - Holy damage on the melee hit table, so it rolls partial resists the
 // way every other Holy ability here does. Whether a melee-table Holy strike actually partial
 // resists is unknown; if it does not, it wants SpellFlagIgnoreResists.
-const holyStrikeCooldown = time.Second * 12
+var holyStrikeRanks = []struct {
+	level     int32
+	minDamage float64
+	maxDamage float64
+}{
+	{level: 6, minDamage: 11, maxDamage: 14},
+	{level: 12, minDamage: 15, maxDamage: 20},
+	{level: 20, minDamage: 17, maxDamage: 23},
+	{level: 28, minDamage: 22, maxDamage: 29},
+	{level: 36, minDamage: 32, maxDamage: 40},
+	{level: 44, minDamage: 53, maxDamage: 68},
+	{level: 52, minDamage: 73, maxDamage: 91},
+	{level: 60, minDamage: 81, maxDamage: 105},
+}
 
 func (paladin *Paladin) registerHolyStrike() {
 	// Rank 2 takes off 2 sec, so the linear reading was right. Confirmed on the beta.
 	cd := core.Cooldown{
-		Timer:    paladin.NewTimer(),
-		Duration: holyStrikeCooldown - time.Second*time.Duration(paladin.Talents.ImprovedHolyStrike),
+		Timer:    paladin.strikeTimer(),
+		Duration: spellData.HolyStrike.ByRank(1).Cooldown - time.Second*time.Duration(paladin.Talents.ImprovedHolyStrike),
 	}
 
 	// Sacred Arbiter also refreshes the paladin's Judgement effects. Judgement of the Crusader
@@ -40,43 +55,28 @@ func (paladin *Paladin) registerHolyStrike() {
 
 	ironCreedAura := paladin.registerIronCreedAura()
 
-	ranks := []struct {
-		level     int32
-		manaCost  float64
-		weapon    float64
-		minDamage float64
-		maxDamage float64
-	}{
-		{level: 6, manaCost: 5, weapon: 0.25, minDamage: 11, maxDamage: 14},
-		{level: 12, manaCost: 9, weapon: 0.25, minDamage: 15, maxDamage: 20},
-		{level: 20, manaCost: 12, weapon: 0.30, minDamage: 17, maxDamage: 23},
-		{level: 28, manaCost: 14, weapon: 0.30, minDamage: 22, maxDamage: 29},
-		{level: 36, manaCost: 16, weapon: 0.35, minDamage: 32, maxDamage: 40},
-		{level: 44, manaCost: 17, weapon: 0.35, minDamage: 53, maxDamage: 68},
-		{level: 52, manaCost: 19, weapon: 0.40, minDamage: 73, maxDamage: 91},
-		{level: 60, manaCost: 20, weapon: 0.40, minDamage: 81, maxDamage: 105},
-	}
-
-	for i, rank := range ranks {
-		rank := rank
+	for i, rank := range holyStrikeRanks {
 		spellID := []int32{679, 678, 1866, 680, 2495, 5569, 10332, 10333}[i]
 		if paladin.Level < rank.level {
 			break
 		}
+		row := spellData.HolyStrike.BySpellID(spellID)
+		weapon := row.Effects[1].Value / 100
 
 		paladin.RegisterSpell(core.SpellConfig{
-			ActionID:    core.ActionID{SpellID: spellID},
-			SpellCode:   SpellCode_PaladinHolyStrike,
-			SpellSchool: core.SpellSchoolHoly,
-			DefenseType: core.DefenseTypeMelee,
-			ProcMask:    core.ProcMaskMeleeMHSpecial,
-			Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
+			ActionID:       core.ActionID{SpellID: spellID},
+			SpellCode:      SpellCode_PaladinHolyStrike,
+			ClassSpellMask: SpellMaskHolyStrike,
+			SpellSchool:    row.SpellSchool,
+			DefenseType:    row.DefenseType,
+			ProcMask:       core.ProcMaskMeleeMHSpecial,
+			Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
 
 			RequiredLevel: int(rank.level),
 			Rank:          i + 1,
 
 			ManaCost: core.ManaCostOptions{
-				FlatCost:   rank.manaCost,
+				FlatCost:   float64(row.Cost),
 				Multiplier: paladin.benediction(),
 			},
 			Cast: core.CastConfig{
@@ -90,7 +90,7 @@ func (paladin *Paladin) registerHolyStrike() {
 			DamageMultiplier: damageMultiplier,
 			ThreatMultiplier: threatMultiplier,
 			// Holy damage, so spell power feeds it on top of the weapon share and the flat roll.
-			BonusCoefficient: 0.429,
+			BonusCoefficient: roundCoef(row.Direct.BonusCoefficient()),
 
 			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 				if ironCreedAura != nil {
@@ -99,7 +99,7 @@ func (paladin *Paladin) registerHolyStrike() {
 
 				// A share of weapon damage, so it takes the normalized swing the way every other
 				// percentage-of-weapon strike in the sim does.
-				baseDamage := rank.weapon * (spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower(target)) +
+				baseDamage := weapon * (spell.Unit.MHNormalizedWeaponDamage(sim, spell.MeleeAttackPower(target)) +
 					sim.Roll(rank.minDamage, rank.maxDamage))
 				spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 			},

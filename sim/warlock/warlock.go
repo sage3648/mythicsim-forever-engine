@@ -39,6 +39,33 @@ const (
 	SpellCode_WarlockSoulFire
 )
 
+// Class spell masks for SpellMods (see core/spell_mod.go), one per SpellCode above, plus Rain of
+// Fire and the demon summons, which have no SpellCode.
+const (
+	SpellMaskNone        int64 = 0
+	SpellMaskBaneOfAgony int64 = 1 << iota
+	SpellMaskBaneOfDoom
+	SpellMaskConflagrate
+	SpellMaskCorruption
+	SpellMaskDeathCoil
+	SpellMaskDemonicSacrifice
+	SpellMaskWrack
+	SpellMaskDrainLife
+	SpellMaskDrainSoul
+	SpellMaskImmolate
+	SpellMaskIncinerate
+	SpellMaskLifeTap
+	SpellMaskSearingPain
+	SpellMaskShadowBolt
+	SpellMaskShadowburn
+	SpellMaskSiphonLife
+	SpellMaskSoulFire
+	SpellMaskRainOfFire
+	SpellMaskSummonDemon
+
+	SpellMaskAll = SpellMaskSummonDemon<<1 - SpellMaskBaneOfAgony // every bit from BaneOfAgony to SummonDemon
+)
+
 type Warlock struct {
 	core.Character
 	Talents *proto.WarlockTalents

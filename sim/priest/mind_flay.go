@@ -2,21 +2,19 @@ package priest
 
 import (
 	"fmt"
-	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
 const MindFlayRanks = 6
 const MindFlayTicks = 3
 
-var MindFlaySpellId = [MindFlayRanks + 1]int32{0, 15407, 17311, 17312, 17313, 17314, 18807}
 var MindFlayTickSpellId = [MindFlayRanks + 1]int32{0, 16568, 7378, 17316, 17317, 17318, 18808}
 
-// Forever beta client 1.60.1.69893, the total over the three ticks. The demo's 119 at rank 1 is not the
-// client's 21 a tick; every rank is a little below Classic's.
-var MindFlayBaseDamage = [MindFlayRanks + 1]float64{0, 63, 102, 153, 225, 294, 390}
-var MindFlayManaCost = [MindFlayRanks + 1]float64{0, 45, 70, 100, 135, 165, 205}
+// Forever beta client 1.60.1.69893: the demo's 119 at rank 1 is not the client's 21 a tick; every rank
+// is a little below Classic's, at .167 a tick (Classic's .15 carried a penalty for the slow). Spell ID,
+// cost, tick, tick count and coefficient come from the client table.
 var MindFlayLevel = [MindFlayRanks + 1]int{0, 20, 28, 36, 44, 52, 60}
 
 func (priest *Priest) registerMindFlay() {
@@ -41,35 +39,32 @@ func (priest *Priest) registerMindFlay() {
 }
 
 func (priest *Priest) newMindFlaySpellConfig(rank int, tickIdx int32) core.SpellConfig {
+	row := spellData.MindFlay.ByRank(int32(rank))
+	periodic := row.Periodic.(shared.SpellDataPeriodic)
 	ticks := tickIdx
 	flags := SpellFlagPriest | core.SpellFlagChanneled | core.SpellFlagBinary
 	if tickIdx == 0 {
-		ticks = 3
+		ticks = periodic.NumberOfTicks
 		flags |= core.SpellFlagAPL
 	}
 
-	spellId := MindFlaySpellId[rank]
-	baseDamage := MindFlayBaseDamage[rank] / float64(MindFlayTicks)
-	manaCost := MindFlayManaCost[rank]
+	baseDamage := periodic.Tick
 	level := MindFlayLevel[rank]
 
-	spellCoeff := 0.167 // per tick, the Forever beta client's (Classic's .15 carried a penalty for the slow)
-
-	tickLength := time.Second
-
 	return core.SpellConfig{
-		SpellCode:   SpellCode_PriestMindFlay,
-		ActionID:    core.ActionID{SpellID: spellId}.WithTag(tickIdx),
-		SpellSchool: core.SpellSchoolShadow,
-		DefenseType: core.DefenseTypeMagic,
-		ProcMask:    core.ProcMaskSpellDamage,
-		Flags:       flags,
+		SpellCode:      SpellCode_PriestMindFlay,
+		ClassSpellMask: SpellMaskMindFlay,
+		ActionID:       core.ActionID{SpellID: row.SpellID}.WithTag(tickIdx),
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          flags,
 
 		RequiredLevel: level,
 		Rank:          rank,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 
 		Cast: core.CastConfig{
@@ -87,9 +82,9 @@ func (priest *Priest) newMindFlaySpellConfig(rank int, tickIdx int32) core.Spell
 				Label: fmt.Sprintf("MindFlay-%d-%d", rank, tickIdx),
 			},
 			NumberOfTicks:       ticks,
-			TickLength:          tickLength,
+			TickLength:          periodic.TickLength,
 			AffectedByCastSpeed: false,
-			BonusCoefficient:    spellCoeff,
+			BonusCoefficient:    roundCoef(periodic.Coef),
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.Snapshot(target, baseDamage, isRollover)
 			},

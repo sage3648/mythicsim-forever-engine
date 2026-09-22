@@ -8,12 +8,9 @@ import (
 
 const SmiteRanks = 8
 
-var SmiteSpellId = [SmiteRanks + 1]int32{0, 585, 591, 598, 984, 1004, 6060, 10933, 10934}
 // Forever beta client 1.60.1.69893: ranks 3 and up hit for less, and there is no downranking penalty.
+// Everything but the damage comes from the client table (see shadow_word_pain.go).
 var SmiteBaseDamage = [SmiteRanks + 1][]float64{{0}, {15, 20}, {28, 34}, {47, 53}, {60, 68}, {81, 91}, {93, 106}, {124, 139}, {166, 187}}
-var SmiteSpellCoef = [SmiteRanks + 1]float64{0, 0.429, 0.571, 0.714, 0.714, 0.714, 0.714, 0.714, 0.714}
-var SmiteCastTime = [SmiteRanks + 1]int{0, 1500, 2000, 2500, 2500, 2500, 2500, 2500, 2500}
-var SmiteManaCost = [SmiteRanks + 1]float64{0, 20, 30, 60, 95, 140, 185, 230, 280}
 var SmiteLevel = [SmiteRanks + 1]int{0, 1, 6, 14, 22, 30, 38, 46, 54}
 
 func (priest *Priest) registerSmiteSpell() {
@@ -29,36 +26,34 @@ func (priest *Priest) registerSmiteSpell() {
 }
 
 func (priest *Priest) getSmiteBaseConfig(rank int) core.SpellConfig {
-	spellId := SmiteSpellId[rank]
+	row := spellData.Smite.ByRank(int32(rank))
 	baseDamageLow := SmiteBaseDamage[rank][0]
 	baseDamageHigh := SmiteBaseDamage[rank][1]
-	spellCoeff := SmiteSpellCoef[rank]
-	castTime := SmiteCastTime[rank]
-	manaCost := SmiteManaCost[rank]
 	level := SmiteLevel[rank]
 
 	return core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: spellId},
-		SpellCode:   SpellCode_PriestSmite,
-		SpellSchool: core.SpellSchoolHoly,
-		DefenseType: core.DefenseTypeMagic,
-		ProcMask:    core.ProcMaskSpellDamage,
-		Flags:       SpellFlagPriest | core.SpellFlagAPL,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellCode:      SpellCode_PriestSmite,
+		ClassSpellMask: SpellMaskSmite,
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          SpellFlagPriest | core.SpellFlagAPL,
 
 		RequiredLevel: level,
 		Rank:          rank,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
 				GCD:      core.GCDDefault,
-				CastTime: time.Millisecond*time.Duration(castTime) - time.Millisecond*100*time.Duration(priest.Talents.DivineFury),
+				CastTime: row.CastTime - time.Millisecond*100*time.Duration(priest.Talents.DivineFury),
 			},
 		},
 
-		BonusCoefficient: spellCoeff,
+		BonusCoefficient: roundCoef(row.Direct.BonusCoefficient()),
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,

@@ -4,16 +4,15 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
 const HolyFireRanks = 8
 
-var HolyFireSpellId = [HolyFireRanks + 1]int32{0, 14914, 15262, 15263, 15264, 15265, 15266, 15267, 15261}
 // Forever beta client 1.60.1.69893. The client's rank 5 dot (13 a tick) is larger than rank 6's (10 a tick); taken as it is.
+// Everything but the direct damage comes from the client table (see shadow_word_pain.go).
 var HolyFireBaseDamage = [HolyFireRanks + 1][]float64{{0}, {56, 71}, {64, 79}, {80, 98}, {90, 112}, {103, 127}, {133, 166}, {163, 206}, {184, 232}}
-var HolyFireDotDamage = [HolyFireRanks + 1]float64{0, 20, 25, 30, 35, 65, 50, 65, 75}
-var HolyFireManaCost = [HolyFireRanks + 1]float64{0, 85, 95, 125, 145, 170, 200, 230, 255}
 var HolyFireLevel = [HolyFireRanks + 1]int{0, 20, 24, 30, 36, 42, 48, 54, 60}
 
 func (priest *Priest) registerHolyFire() {
@@ -29,42 +28,36 @@ func (priest *Priest) registerHolyFire() {
 }
 
 func (priest *Priest) getHolyFireConfig(rank int) core.SpellConfig {
-	ticks := int32(5)
-
-	spellId := HolyFireSpellId[rank]
+	row := spellData.HolyFire.ByRank(int32(rank))
+	periodic := row.Periodic.(shared.SpellDataPeriodic)
 	baseDamageLow := HolyFireBaseDamage[rank][0]
 	baseDamageHigh := HolyFireBaseDamage[rank][1]
-	dotDamage := HolyFireDotDamage[rank] / float64(ticks)
-	manaCost := HolyFireManaCost[rank]
 	level := HolyFireLevel[rank]
 
-	directCoeff := 0.75
-	dotCoeff := 0.05
-	castTime := time.Millisecond * 3500
-
 	return core.SpellConfig{
-		SpellCode:   SpellCode_PriestHolyFire,
-		ActionID:    core.ActionID{SpellID: spellId},
-		SpellSchool: core.SpellSchoolHoly,
-		DefenseType: core.DefenseTypeMagic,
-		ProcMask:    core.ProcMaskSpellDamage,
-		Flags:       SpellFlagPriest | core.SpellFlagAPL,
+		SpellCode:      SpellCode_PriestHolyFire,
+		ClassSpellMask: SpellMaskHolyFire,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          SpellFlagPriest | core.SpellFlagAPL,
 
 		RequiredLevel: level,
 		Rank:          rank,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
 				GCD:      core.GCDDefault,
-				CastTime: castTime - time.Millisecond*100*time.Duration(priest.Talents.DivineFury),
+				CastTime: row.CastTime - time.Millisecond*100*time.Duration(priest.Talents.DivineFury),
 			},
 		},
 
-		BonusCoefficient: directCoeff,
+		BonusCoefficient: roundCoef(row.Direct.BonusCoefficient()),
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
@@ -74,12 +67,12 @@ func (priest *Priest) getHolyFireConfig(rank int) core.SpellConfig {
 				Label: fmt.Sprintf("Holy Fire (Rank %d)", rank),
 			},
 
-			NumberOfTicks:    ticks,
-			TickLength:       time.Second * 2,
-			BonusCoefficient: dotCoeff,
+			NumberOfTicks:    periodic.NumberOfTicks,
+			TickLength:       periodic.TickLength,
+			BonusCoefficient: roundCoef(periodic.Coef),
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.Snapshot(target, dotDamage, isRollover)
+				dot.Snapshot(target, periodic.Tick, isRollover)
 			},
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {

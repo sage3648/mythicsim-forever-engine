@@ -2,59 +2,50 @@ package paladin
 
 import (
 	"strconv"
-	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 	"github.com/wowsims/classic/sim/core/stats"
 )
 
-var HolyShieldValues = []struct {
-	level    int32
-	manaCost float64
-	damage   float64
-}{
-	// Beta client 1.60.1.69893: 110 / 153 / 221 (Classic 65 / 95 / 130), trained at 40 / 50 / 60 as in
-	// Classic. The proc ids are Classic's learn-spell dummies, kept only to give the damage its own
-	// metrics line; in the client the block damage comes from the aura itself.
-	{level: 40, manaCost: 150, damage: 110},
-	{level: 50, manaCost: 195, damage: 153},
-	{level: 60, manaCost: 240, damage: 221},
-}
-
+// Beta client 1.60.1.69893: 110 / 153 / 221 damage (Classic 65 / 95 / 130) at 0.08 (Classic 0.05), 4
+// charges and 20% block (Classic 30%), trained at 40 / 50 / 60 as in Classic. Cost, cooldown,
+// duration, charges, block, damage and coefficient come from the client table; the ids stay ours, as
+// every rank is registered. The proc ids are Classic's learn-spell dummies, kept only to give the
+// damage its own metrics line; in the client the block damage comes from the aura itself.
 func (paladin *Paladin) registerHolyShield() {
 	if !paladin.Talents.HolyShield {
 		return
 	}
 
-	// 4 charges and 20% block (Classic 30%), from the beta client.
-	numCharges := int32(4)
-	blockBonus := 20.0 * core.BlockRatingPerBlockChance
-
-	for i, values := range HolyShieldValues {
+	for i, level := range []int32{40, 50, 60} {
 		rank := i + 1
-		level := values.level
 		spellID := []int32{20925, 20927, 20928}[i]
 		procID := []int32{20955, 20956, 20957}[i]
-		manaCost := values.manaCost
-		damage := values.damage
 
 		if paladin.Level < level {
 			break
 		}
 
+		row := spellData.HolyShield.BySpellID(spellID)
+		numCharges := row.ProcCharges
+		blockBonus := row.Effects[0].Value * core.BlockRatingPerBlockChance
+		damage := shared.SpellDataMin(row.Direct)
+
 		paladin.holyShieldProc[i] = paladin.RegisterSpell(core.SpellConfig{
-			ActionID:    core.ActionID{SpellID: procID},
-			SpellCode:   SpellCode_PaladinHolyShieldProc,
-			SpellSchool: core.SpellSchoolHoly,
-			DefenseType: core.DefenseTypeMagic,
-			ProcMask:    core.ProcMaskSpellDamage,
+			ActionID:       core.ActionID{SpellID: procID},
+			SpellCode:      SpellCode_PaladinHolyShieldProc,
+			ClassSpellMask: SpellMaskHolyShieldProc,
+			SpellSchool:    row.SpellSchool,
+			DefenseType:    row.DefenseType,
+			ProcMask:       core.ProcMaskSpellDamage,
 
 			RequiredLevel: int(level),
 			Rank:          rank,
 
 			DamageMultiplier: 1,
 			ThreatMultiplier: 1.2,
-			BonusCoefficient: 0.08, // Classic 0.05
+			BonusCoefficient: roundCoef(row.Direct.BonusCoefficient()),
 
 			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 				// Spell damage from Holy Shield can crit, but does not miss.
@@ -65,7 +56,7 @@ func (paladin *Paladin) registerHolyShield() {
 		paladin.holyShieldAura[i] = paladin.RegisterAura(core.Aura{
 			Label:     "Holy Shield" + paladin.Label + strconv.Itoa(rank),
 			ActionID:  core.ActionID{SpellID: spellID},
-			Duration:  time.Second * 10,
+			Duration:  row.Duration,
 			MaxStacks: numCharges,
 			OnGain: func(aura *core.Aura, sim *core.Simulation) {
 				aura.SetStacks(sim, numCharges)
@@ -83,13 +74,14 @@ func (paladin *Paladin) registerHolyShield() {
 		})
 
 		paladin.RegisterSpell(core.SpellConfig{
-			ActionID:      core.ActionID{SpellID: spellID},
-			SpellCode:     SpellCode_PaladinHolyShield,
-			Flags:         core.SpellFlagAPL,
-			RequiredLevel: int(level),
-			Rank:          rank,
+			ActionID:       core.ActionID{SpellID: spellID},
+			SpellCode:      SpellCode_PaladinHolyShield,
+			ClassSpellMask: SpellMaskHolyShield,
+			Flags:          core.SpellFlagAPL,
+			RequiredLevel:  int(level),
+			Rank:           rank,
 			ManaCost: core.ManaCostOptions{
-				FlatCost:   manaCost,
+				FlatCost:   float64(row.Cost),
 				Multiplier: paladin.benediction(),
 			},
 			Cast: core.CastConfig{
@@ -98,7 +90,7 @@ func (paladin *Paladin) registerHolyShield() {
 				},
 				CD: core.Cooldown{
 					Timer:    paladin.NewTimer(),
-					Duration: time.Second * 10,
+					Duration: row.Cooldown,
 				},
 			},
 			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {

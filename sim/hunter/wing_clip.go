@@ -5,23 +5,25 @@ import (
 )
 
 func (hunter *Hunter) getWingClipConfig(rank int) core.SpellConfig {
-	spellId := [4]int32{0, 2974, 14267, 14268}[rank]
-	baseDamage := [4]float64{0, 5, 25, 50}[rank]
-	manaCost := [4]float64{0, 40, 60, 80}[rank]
+	// Spell ID, cost, flat damage, school and defense type from the client table (see aimed_shot.go).
+	// Its coefficient of 1 is not used: ours has never added weapon damage or attack power.
+	row := spellData.WingClip.ByRank(int32(rank))
+	baseDamage, _ := row.Direct.Range()
 	level := [4]int{0, 12, 38, 60}[rank]
 
 	return core.SpellConfig{
-		SpellCode:     SpellCode_HunterWingClip,
-		ActionID:      core.ActionID{SpellID: spellId},
-		SpellSchool:   core.SpellSchoolPhysical,
-		DefenseType:   core.DefenseTypeMelee,
-		ProcMask:      core.ProcMaskMeleeMHSpecial,
-		Flags:         core.SpellFlagMeleeMetrics | core.SpellFlagAPL | core.SpellFlagBinary,
-		Rank:          rank,
-		RequiredLevel: level,
+		SpellCode:      SpellCode_HunterWingClip,
+		ClassSpellMask: SpellMaskWingClip,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskMeleeMHSpecial,
+		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagAPL | core.SpellFlagBinary,
+		Rank:           rank,
+		RequiredLevel:  level,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 
 		Cast: core.CastConfig{

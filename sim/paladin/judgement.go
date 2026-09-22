@@ -13,14 +13,17 @@ func (paladin *Paladin) registerJudgement() {
 	// that are handled in the implementations of the seal auras.
 	// It is still a cast the paladin makes, and Sanctified Judgement and Swift Judgement both
 	// listen for it through OnCastComplete, so it must not carry SpellFlagNoOnCastComplete.
+	// Id, cost, cooldown and school come from the client table.
+	row := spellData.Judgement.ByRank(1)
 	paladin.judgement = paladin.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: 20271},
-		SpellSchool: core.SpellSchoolHoly,
-		ProcMask:    core.ProcMaskEmpty,
-		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagAPL | core.SpellFlagPassiveSpell | core.SpellFlagCastTimeNoGCD,
+		ClassSpellMask: SpellMaskJudgement,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		ProcMask:       core.ProcMaskEmpty,
+		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagAPL | core.SpellFlagPassiveSpell | core.SpellFlagCastTimeNoGCD,
 
 		ManaCost: core.ManaCostOptions{
-			BaseCost:   0.06,
+			BaseCost:   row.PowerCostPct / 100,
 			Multiplier: paladin.benediction(),
 		},
 
@@ -28,7 +31,7 @@ func (paladin *Paladin) registerJudgement() {
 			IgnoreHaste: true,
 			CD: core.Cooldown{
 				Timer:    paladin.NewTimer(),
-				Duration: time.Second * (10 - time.Duration(paladin.Talents.ImprovedJudgement)),
+				Duration: row.Cooldown - time.Second*time.Duration(paladin.Talents.ImprovedJudgement),
 			},
 		},
 		ExtraCastCondition: func(_ *core.Simulation, _ *core.Unit) bool {

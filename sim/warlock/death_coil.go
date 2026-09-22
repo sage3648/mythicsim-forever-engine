@@ -1,21 +1,20 @@
 package warlock
 
 import (
-	"time"
-
 	"github.com/wowsims/classic/sim/core"
 )
 
 const DeathCoilRanks = 3
 
 func (warlock *Warlock) getDeathCoilBaseConfig(rank int) core.SpellConfig {
-	spellId := [DeathCoilRanks + 1]int32{0, 6789, 17925, 17926}[rank]
-	// Beta client 1.60.1 values: slightly less damage, slightly more mana
+	// Beta client 1.60.1 values: slightly less damage, slightly more mana. Spell ID, cost, cooldown,
+	// school and missile speed come from the client table; its damage row is empty (the value sits on
+	// a dummy effect), so the damage and coefficient stay ours.
+	row := spellData.DeathCoil.ByRank(int32(rank))
+	spellId := row.SpellID
 	baseDamage := [DeathCoilRanks + 1]float64{0, 285, 375, 460}[rank]
-	manaCost := [DeathCoilRanks + 1]float64{0, 435, 525, 600}[rank]
 	level := [DeathCoilRanks + 1]int{0, 42, 50, 58}[rank]
 	spellCoeff := 0.214
-
 
 	healingSpell := warlock.GetOrRegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: spellId}.WithTag(1),
@@ -28,18 +27,19 @@ func (warlock *Warlock) getDeathCoilBaseConfig(rank int) core.SpellConfig {
 	})
 
 	return core.SpellConfig{
-		SpellCode:     SpellCode_WarlockDeathCoil,
-		ActionID:      core.ActionID{SpellID: spellId},
-		SpellSchool:   core.SpellSchoolShadow,
-		DefenseType:   core.DefenseTypeMagic,
-		ProcMask:      core.ProcMaskSpellDamage,
-		Flags:         core.SpellFlagAPL | core.SpellFlagResetAttackSwing | core.SpellFlagBinary | WarlockFlagAffliction,
-		RequiredLevel: level,
-		Rank:          rank,
-		MissileSpeed:  24,
+		SpellCode:      SpellCode_WarlockDeathCoil,
+		ClassSpellMask: SpellMaskDeathCoil,
+		ActionID:       core.ActionID{SpellID: spellId},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          core.SpellFlagAPL | core.SpellFlagResetAttackSwing | core.SpellFlagBinary | WarlockFlagAffliction,
+		RequiredLevel:  level,
+		Rank:           rank,
+		MissileSpeed:   row.MissileSpeed,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -47,7 +47,7 @@ func (warlock *Warlock) getDeathCoilBaseConfig(rank int) core.SpellConfig {
 			},
 			CD: core.Cooldown{
 				Timer:    warlock.NewTimer(),
-				Duration: time.Minute * 2,
+				Duration: row.Cooldown,
 			},
 		},
 

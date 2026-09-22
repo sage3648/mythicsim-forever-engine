@@ -6,11 +6,9 @@ import (
 
 const EarthShockRanks = 7
 
-// Forever beta client values, scaled to level 60 like Lightning Bolt's. Every rank carries the full 0.386.
-var EarthShockSpellId = [EarthShockRanks + 1]int32{0, 8042, 8044, 8045, 8046, 10412, 10413, 10414}
+// Forever beta client values. Every rank carries the full 0.386. Everything but the damage (scaled to level 60
+// like Lightning Bolt's) comes from the client table (see shocks.go).
 var EarthShockBaseDamage = [EarthShockRanks + 1][]float64{{0}, {19, 22}, {35, 38}, {51, 56}, {83, 90}, {134, 143}, {206, 220}, {293, 309}}
-var EarthShockSpellCoef = [EarthShockRanks + 1]float64{0, .386, .386, .386, .386, .386, .386, .386}
-var EarthShockManaCost = [EarthShockRanks + 1]float64{0, 30, 50, 85, 145, 240, 345, 450}
 var EarthShockLevel = [EarthShockRanks + 1]int{0, 4, 8, 14, 24, 36, 48, 60}
 
 func (shaman *Shaman) registerEarthShockSpell(shockTimer *core.Timer) {
@@ -26,28 +24,21 @@ func (shaman *Shaman) registerEarthShockSpell(shockTimer *core.Timer) {
 }
 
 func (shaman *Shaman) newEarthShockSpellConfig(rank int, shockTimer *core.Timer) core.SpellConfig {
-	spellId := EarthShockSpellId[rank]
 	baseDamageLow := EarthShockBaseDamage[rank][0]
 	baseDamageHigh := EarthShockBaseDamage[rank][1]
-	spellCoeff := EarthShockSpellCoef[rank]
-	manaCost := EarthShockManaCost[rank]
 	level := EarthShockLevel[rank]
 
-	spell := shaman.newShockSpellConfig(
-		core.ActionID{SpellID: spellId},
-		core.SpellSchoolNature,
-		manaCost,
-		shockTimer,
-	)
+	row := spellData.EarthShock.ByRank(int32(rank))
+	spell := shaman.newShockSpellConfig(core.ActionID{SpellID: row.SpellID}, row, shockTimer)
 
 	spell.Flags |= core.SpellFlagBinary
 
 	spell.SpellCode = SpellCode_ShamanEarthShock
+	spell.ClassSpellMask = SpellMaskEarthShock
 	spell.RequiredLevel = level
 	spell.Rank = rank
 
 	spell.ThreatMultiplier = 2
-	spell.BonusCoefficient = spellCoeff
 
 	spell.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 		baseDamage := sim.Roll(baseDamageLow, baseDamageHigh)

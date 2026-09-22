@@ -10,12 +10,15 @@ import (
 func (warrior *Warrior) RegisterShieldWallCD() {
 	// Forever trades strength for uptime: 60% for 12 sec against Classic's 75% for 10.
 	// Confirmed by the beta client.
+	// Forever beta client 1.60.1.69893: id, and Forever's duration and base cooldown, come from the
+	// client table.
+	row := spellData.ShieldWall.ByRank(1)
 	forever := warrior.Env.IsForever()
-	duration := core.TernaryDuration(forever, time.Second*12, time.Second*10)
+	duration := core.TernaryDuration(forever, row.Duration, time.Second*10)
 	//This is the inverse of the tooltip since it is a damage TAKEN coefficient
 	damageTaken := core.TernaryFloat64(forever, 0.40, 0.25)
 
-	actionID := core.ActionID{SpellID: 871}
+	actionID := core.ActionID{SpellID: row.SpellID}
 	swAura := warrior.RegisterAura(core.Aura{
 		Label:    "Shield Wall",
 		ActionID: actionID,
@@ -30,7 +33,7 @@ func (warrior *Warrior) RegisterShieldWallCD() {
 
 	// Improved Shield Wall reduces the cooldown instead of extending the duration in Forever,
 	// 5.5 min per point (the beta client's curve reads 5.5 / 11 min), off a 15 min base.
-	baseCooldown := core.TernaryDuration(forever, time.Minute*15, time.Minute*30)
+	baseCooldown := core.TernaryDuration(forever, row.Cooldown, time.Minute*30)
 	cooldownDur := baseCooldown - time.Second*330*time.Duration(warrior.Talents.ImprovedShieldWall)
 
 	swSpell := warrior.RegisterSpell(DefensiveStance, core.SpellConfig{

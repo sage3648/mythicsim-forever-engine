@@ -1,35 +1,33 @@
 package warlock
 
 import (
-	"time"
-
 	"github.com/wowsims/classic/sim/core"
 )
 
 const ShadowburnRanks = 6
 
+// Beta client 1.60.1 values for every rank. The BlizzCon tooltip's 102 to 111 for rank 1 is not
+// what the client carries. Everything but the damage comes from the client table (see shadowbolt.go).
+var ShadowburnBaseDamage = [ShadowburnRanks + 1][]float64{{0}, {65, 74}, {81, 91}, {119, 133}, {147, 164}, {201, 224}, {259, 288}}
+
 func (warlock *Warlock) registerShadowBurnBaseConfig(rank int) core.SpellConfig {
-	// Beta client 1.60.1 values for every rank. The BlizzCon tooltip's 102 to 111 for rank 1 is not
-	// what the client carries.
-	spellId := [ShadowburnRanks + 1]int32{0, 17877, 18867, 18868, 18869, 18870, 18871}[rank]
-	baseDamage := [ShadowburnRanks + 1][]float64{{0}, {65, 74}, {81, 91}, {119, 133}, {147, 164}, {201, 224}, {259, 288}}[rank]
-	manaCost := [ShadowburnRanks + 1]float64{0, 105, 130, 190, 245, 305, 365}[rank]
+	row := spellData.Shadowburn.ByRank(int32(rank))
+	baseDamage := ShadowburnBaseDamage[rank]
 	level := [ShadowburnRanks + 1]int{0, 15, 24, 32, 40, 48, 56}[rank]
 
-	spellCoeff := 0.429
-
 	return core.SpellConfig{
-		ActionID:      core.ActionID{SpellID: spellId},
-		SpellCode:     SpellCode_WarlockShadowburn,
-		SpellSchool:   core.SpellSchoolShadow,
-		DefenseType:   core.DefenseTypeMagic,
-		ProcMask:      core.ProcMaskSpellDamage,
-		Flags:         core.SpellFlagAPL | core.SpellFlagResetAttackSwing | core.SpellFlagBinary | WarlockFlagDestruction,
-		RequiredLevel: level,
-		Rank:          rank,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellCode:      SpellCode_WarlockShadowburn,
+		ClassSpellMask: SpellMaskShadowburn,
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          core.SpellFlagAPL | core.SpellFlagResetAttackSwing | core.SpellFlagBinary | WarlockFlagDestruction,
+		RequiredLevel:  level,
+		Rank:           rank,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -37,13 +35,13 @@ func (warlock *Warlock) registerShadowBurnBaseConfig(rank int) core.SpellConfig 
 			},
 			CD: core.Cooldown{
 				Timer:    warlock.NewTimer(),
-				Duration: time.Second * time.Duration(15),
+				Duration: row.Cooldown,
 			},
 		},
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
-		BonusCoefficient: spellCoeff,
+		BonusCoefficient: roundCoef(row.Direct.BonusCoefficient()),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := sim.Roll(baseDamage[0], baseDamage[1])

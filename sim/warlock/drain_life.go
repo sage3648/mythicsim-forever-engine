@@ -2,25 +2,21 @@ package warlock
 
 import (
 	"strconv"
-	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
 const DrainLifeRanks = 6
 
 func (warlock *Warlock) getDrainLifeBaseConfig(rank int) core.SpellConfig {
-	numTicks := int32(5)
-	tickLength := time.Second
-
-	spellId := [DrainLifeRanks + 1]int32{0, 689, 699, 709, 7651, 11699, 11700}[rank]
-	// Beta client 1.60.1 values
-	spellCoeff := [DrainLifeRanks + 1]float64{0, .1, .1, .1, .1, .1, .1}[rank]
-	baseDamage := [DrainLifeRanks + 1]float64{0, 10, 14, 22, 28, 39, 51}[rank]
-	manaCost := [DrainLifeRanks + 1]float64{0, 55, 85, 135, 185, 240, 300}[rank]
+	// Beta client 1.60.1: spell ID, cost, school, tick, tick count and coefficient from the client table
+	row := spellData.DrainLife.ByRank(int32(rank))
+	periodic := row.Periodic.(shared.SpellDataPeriodic)
+	baseDamage := periodic.Tick
 	level := [DrainLifeRanks + 1]int{0, 14, 22, 30, 38, 46, 54}[rank]
 
-	actionID := core.ActionID{SpellID: spellId}
+	actionID := core.ActionID{SpellID: row.SpellID}
 
 	healingSpell := warlock.GetOrRegisterSpell(core.SpellConfig{
 		ActionID:    actionID.WithTag(1),
@@ -33,18 +29,19 @@ func (warlock *Warlock) getDrainLifeBaseConfig(rank int) core.SpellConfig {
 	})
 
 	spellConfig := core.SpellConfig{
-		ActionID:    actionID,
-		SpellSchool: core.SpellSchoolShadow,
-		SpellCode:   SpellCode_WarlockDrainLife,
-		DefenseType: core.DefenseTypeMagic,
-		ProcMask:    core.ProcMaskSpellDamage,
-		Flags:       core.SpellFlagAPL | core.SpellFlagResetAttackSwing | WarlockFlagAffliction | core.SpellFlagChanneled,
+		ActionID:       actionID,
+		SpellSchool:    row.SpellSchool,
+		SpellCode:      SpellCode_WarlockDrainLife,
+		ClassSpellMask: SpellMaskDrainLife,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          core.SpellFlagAPL | core.SpellFlagResetAttackSwing | WarlockFlagAffliction | core.SpellFlagChanneled,
 
 		RequiredLevel: level,
 		Rank:          rank,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -60,9 +57,9 @@ func (warlock *Warlock) getDrainLifeBaseConfig(rank int) core.SpellConfig {
 			Aura: core.Aura{
 				Label: "DrainLife-" + warlock.Label + strconv.Itoa(rank),
 			},
-			NumberOfTicks:    numTicks,
-			TickLength:       tickLength,
-			BonusCoefficient: spellCoeff,
+			NumberOfTicks:    periodic.NumberOfTicks,
+			TickLength:       periodic.TickLength,
+			BonusCoefficient: roundCoef(periodic.Coef),
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.Snapshot(target, baseDamage, isRollover)

@@ -6,7 +6,6 @@ import (
 
 const FlametongueWeaponRanks = 6
 
-var FlametongueWeaponSpellId = [FlametongueWeaponRanks + 1]int32{0, 8024, 8027, 8030, 16339, 16341, 16342}
 var FlametongueWeaponEnchantId = [FlametongueWeaponRanks + 1]int32{0, 5, 4, 3, 523, 1665, 1666}
 var FlametongueWeaponMaxDamage = [FlametongueWeaponRanks + 1]float64{0, 18, 26, 42, 57, 85, 112}
 
@@ -19,16 +18,17 @@ var FlametongueWeaponRankByLevel = map[int32]int32{
 
 func (shaman *Shaman) newFlametongueImbueSpell(weapon *core.Item) *core.Spell {
 	rank := FlametongueWeaponRankByLevel[shaman.Level]
-	spellID := FlametongueWeaponSpellId[rank]
+	// Id, school and defense type from the client table; its triggered rows carry no damage, so that stays ours.
+	row := spellData.FlametongueWeapon.ByRank(rank)
 	maxDamage := FlametongueWeaponMaxDamage[rank]
 
 	baseDamage := maxDamage / 4
 	spellCoeff := .1
 
 	return shaman.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: spellID},
-		SpellSchool: core.SpellSchoolFire,
-		DefenseType: core.DefenseTypeMagic,
+		ActionID:    core.ActionID{SpellID: row.SpellID},
+		SpellSchool: row.SpellSchool,
+		DefenseType: row.DefenseType,
 		ProcMask:    core.ProcMaskSpellDamageProc,
 		Flags:       core.SpellFlagNoOnCastComplete | core.SpellFlagPassiveSpell,
 

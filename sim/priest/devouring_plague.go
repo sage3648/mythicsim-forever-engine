@@ -2,17 +2,13 @@ package priest
 
 import (
 	"fmt"
-	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
 const DevouringPlagueRanks = 6
 
-var DevouringPlagueSpellId = [DevouringPlagueRanks + 1]int32{0, 2944, 19276, 19277, 19278, 19279, 19280}
-// Forever beta client 1.60.1.69893.
-var DevouringPlagueBaseDamage = [DevouringPlagueRanks + 1]float64{0, 128, 232, 344, 488, 656, 848}
-var DevouringPlagueManaCost = [DevouringPlagueRanks + 1]float64{0, 215, 350, 495, 645, 810, 985}
 var DevouringPlagueLevel = [DevouringPlagueRanks + 1]int{0, 20, 28, 36, 44, 52, 60}
 
 func (priest *Priest) registerDevouringPlagueSpell() {
@@ -30,30 +26,27 @@ func (priest *Priest) registerDevouringPlagueSpell() {
 }
 
 func (priest *Priest) getDevouringPlagueConfig(rank int, cdTimer *core.Timer) core.SpellConfig {
-
-	var ticks int32 = 8
-
-	spellId := DevouringPlagueSpellId[rank]
-	baseDotDamage := (DevouringPlagueBaseDamage[rank] / float64(ticks))
-	manaCost := DevouringPlagueManaCost[rank]
+	// Forever beta client 1.60.1.69893. Spell ID, cost, cooldown (3 min in Classic), tick, tick count and
+	// coefficient come from the client table.
+	row := spellData.DevouringPlague.ByRank(int32(rank))
+	periodic := row.Periodic.(shared.SpellDataPeriodic)
 	level := DevouringPlagueLevel[rank]
 
-	spellCoeff := 0.1 // per tick
-
 	return core.SpellConfig{
-		SpellCode:   SpellCode_PriestDevouringPlague,
-		ActionID:    core.ActionID{SpellID: spellId},
-		SpellSchool: core.SpellSchoolShadow,
-		DefenseType: core.DefenseTypeMagic,
-		ProcMask:    core.ProcMaskSpellDamage,
-		Flags:       SpellFlagPriest | core.SpellFlagAPL | core.SpellFlagDisease | core.SpellFlagPureDot,
+		SpellCode:      SpellCode_PriestDevouringPlague,
+		ClassSpellMask: SpellMaskDevouringPlague,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          SpellFlagPriest | core.SpellFlagAPL | core.SpellFlagDisease | core.SpellFlagPureDot,
 
 		Rank:          rank,
 		RequiredLevel: level,
 
 		// Devouring Contagion, 25/50% in the beta client.
 		ManaCost: core.ManaCostOptions{
-			FlatCost:   manaCost,
+			FlatCost:   float64(row.Cost),
 			Multiplier: 100 - 25*priest.Talents.DevouringContagion,
 		},
 		Cast: core.CastConfig{
@@ -62,7 +55,7 @@ func (priest *Priest) getDevouringPlagueConfig(rank int, cdTimer *core.Timer) co
 			},
 			CD: core.Cooldown{
 				Timer:    cdTimer,
-				Duration: time.Minute, // 3 min in Classic
+				Duration: row.Cooldown,
 			},
 		},
 
@@ -74,12 +67,12 @@ func (priest *Priest) getDevouringPlagueConfig(rank int, cdTimer *core.Timer) co
 				Label: fmt.Sprintf("Devouring Plague (Rank %d)", rank),
 			},
 
-			NumberOfTicks:    ticks,
-			TickLength:       time.Second * 3,
-			BonusCoefficient: spellCoeff,
+			NumberOfTicks:    periodic.NumberOfTicks,
+			TickLength:       periodic.TickLength,
+			BonusCoefficient: roundCoef(periodic.Coef),
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.Snapshot(target, baseDotDamage, isRollover)
+				dot.Snapshot(target, periodic.Tick, isRollover)
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeTick)

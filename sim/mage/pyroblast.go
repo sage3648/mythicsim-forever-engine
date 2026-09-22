@@ -2,19 +2,20 @@ package mage
 
 import (
 	"fmt"
-	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
 const PyroblastRanks = 8
 
-var PyroblastSpellId = [PyroblastRanks + 1]int32{0, 11366, 12505, 12522, 12523, 12524, 12525, 12526, 18809}
+// Spell ID, cost, cast time, missile speed and the whole dot (tick, ticks,
+// coefficient) come from the client table (see
+// frostbolt.go for why the damage does not).
+//
 // Beta client 1.60.1.69893. Both halves are lower than Classic at every rank. The 76 periodic damage
 // the demo showed, once read as rank 1, is the client's rank 3.
 var PyroblastBaseDamage = [PyroblastRanks + 1][]float64{{0}, {101, 131}, {126, 163}, {179, 228}, {230, 289}, {291, 364}, {368, 456}, {448, 555}, {520, 646}}
-var PyroblastDotDamage = [PyroblastRanks + 1]float64{0, 44, 56, 76, 100, 124, 152, 184, 212}
-var PyroblastManaCost = [PyroblastRanks + 1]float64{0, 125, 150, 195, 240, 285, 335, 385, 440}
 var PyroblastLevel = [PyroblastRanks + 1]int{0, 20, 24, 30, 36, 42, 48, 54, 60}
 
 func (mage *Mage) registerPyroblastSpell() {
@@ -35,58 +36,51 @@ func (mage *Mage) registerPyroblastSpell() {
 
 func (mage *Mage) newPyroblastSpellConfig(rank int) core.SpellConfig {
 
-	numTicks := int32(4)
-	tickLength := time.Second * 3
-
-	spellId := PyroblastSpellId[rank]
+	row := spellData.Pyroblast.ByRank(int32(rank))
+	periodic := row.Periodic.(shared.SpellDataPeriodic)
 	baseDamageLow := PyroblastBaseDamage[rank][0]
 	baseDamageHigh := PyroblastBaseDamage[rank][1]
-	baseDotDamage := PyroblastDotDamage[rank] / float64(numTicks)
-	manaCost := PyroblastManaCost[rank]
 	level := PyroblastLevel[rank]
 
-	spellCoeff := 1.0
-	dotCoeff := .15
-	castTime := time.Second * 6
-
-	actionID := core.ActionID{SpellID: spellId}
+	actionID := core.ActionID{SpellID: row.SpellID}
 
 	spellConfig := core.SpellConfig{
-		ActionID:     actionID,
-		SpellCode:    SpellCode_MagePyroblast,
-		SpellSchool:  core.SpellSchoolFire,
-		DefenseType:  core.DefenseTypeMagic,
-		ProcMask:     core.ProcMaskSpellDamage,
-		Flags:        SpellFlagMage | core.SpellFlagAPL,
-		MissileSpeed: 24,
+		ActionID:       actionID,
+		SpellCode:      SpellCode_MagePyroblast,
+		ClassSpellMask: SpellMaskPyroblast,
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          SpellFlagMage | core.SpellFlagAPL,
+		MissileSpeed:   row.MissileSpeed,
 
 		RequiredLevel: level,
 		Rank:          rank,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
 				GCD:      core.GCDDefault,
-				CastTime: castTime,
+				CastTime: row.CastTime,
 			},
 		},
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
-		BonusCoefficient: spellCoeff,
+		BonusCoefficient: roundCoef(row.Direct.BonusCoefficient()),
 
 		Dot: core.DotConfig{
 			Aura: core.Aura{
 				Label:    fmt.Sprintf("Pyroblast (Rank %d)", rank),
 				ActionID: actionID.WithTag(1),
 			},
-			NumberOfTicks:    numTicks,
-			TickLength:       tickLength,
-			BonusCoefficient: dotCoeff,
+			NumberOfTicks:    periodic.NumberOfTicks,
+			TickLength:       periodic.TickLength,
+			BonusCoefficient: roundCoef(periodic.Coef),
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.Snapshot(target, baseDotDamage, isRollover)
+				dot.Snapshot(target, periodic.Tick, isRollover)
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeTick)

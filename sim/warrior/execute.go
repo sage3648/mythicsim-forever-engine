@@ -6,23 +6,27 @@ import (
 
 func (warrior *Warrior) registerExecuteSpell() {
 
+	// Cost, school and defense type come from the client table; the id stays ours (see
+	// registerHeroicStrikeSpell). The damage sits on a dummy effect, so it stays ours.
 	flatDamage := 600.0
 	convertedRageDamage := 15.0
 	spellID := int32(20662)
+	row := spellData.Execute.BySpellID(spellID)
 
 	var rageMetrics *core.ResourceMetrics
 	warrior.Execute = warrior.RegisterSpell(BattleStance|BerserkerStance, core.SpellConfig{
-		SpellCode:   SpellCode_WarriorExecute,
-		ActionID:    core.ActionID{SpellID: spellID},
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
-		ProcMask:    core.ProcMaskMeleeMHSpecial,
-		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagAPL | core.SpellFlagPassiveSpell | SpellFlagOffensive,
+		SpellCode:      SpellCode_WarriorExecute,
+		ClassSpellMask: SpellMaskExecute,
+		ActionID:       core.ActionID{SpellID: spellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskMeleeMHSpecial,
+		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagAPL | core.SpellFlagPassiveSpell | SpellFlagOffensive,
 
 		RageCost: core.RageCostOptions{
 			// Rank 2 takes 5 off, not the 6 that doubling rank 1 gives. Both the tree and
 			// wowforevertalents read it this way; no beta tooltip past rank 1 has been seen.
-			Cost:   15 - []float64{0, 3, 5}[warrior.Talents.ImprovedExecute],
+			Cost:   float64(row.Cost) - []float64{0, 3, 5}[warrior.Talents.ImprovedExecute],
 			Refund: 0.8,
 		},
 		Cast: core.CastConfig{

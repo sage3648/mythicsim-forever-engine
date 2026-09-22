@@ -9,13 +9,13 @@ import (
 
 const ArcaneMissilesRanks = 8
 
-var ArcaneMissilesSpellId = [ArcaneMissilesRanks + 1]int32{0, 5143, 5144, 5145, 8416, 8417, 10211, 10212, 25345}
 // Beta client 1.60.1.69893, read off the missile each rank triggers (7268 ... 25346): less damage per
 // missile, but every rank scales at .286 per missile against Classic's .24.
+//
+// Spell ID, cost, missile count (the channel's duration), and the missile's coefficient, speed and
+// school come from the client table. The per-missile damage does not: the table truncates the
+// level-scaled value, reading one below ours on every rank but 3 and 8.
 var ArcaneMissilesBaseTickDamage = [ArcaneMissilesRanks + 1]float64{0, 26, 33, 46, 69, 98, 134, 175, 209}
-var ArcaneMissilesSpellCoeff = [ArcaneMissilesRanks + 1]float64{0, .286, .286, .286, .286, .286, .286, .286, .286}
-var ArcaneMissilesCastTime = [ArcaneMissilesRanks + 1]int32{0, 3, 4, 5, 5, 5, 5, 5, 5}
-var ArcaneMissilesManaCost = [ArcaneMissilesRanks + 1]float64{0, 85, 140, 235, 320, 410, 500, 595, 655}
 var ArcaneMissilesLevel = [ArcaneMissilesRanks + 1]int{0, 8, 16, 24, 32, 40, 48, 56, 56}
 
 func (mage *Mage) registerArcaneMissilesSpell() {
@@ -33,14 +33,12 @@ func (mage *Mage) registerArcaneMissilesSpell() {
 }
 
 func (mage *Mage) getArcaneMissilesSpellConfig(rank int) core.SpellConfig {
-	spellId := ArcaneMissilesSpellId[rank]
+	row := spellData.ArcaneMissiles.ByRank(int32(rank))
 	baseTickDamage := ArcaneMissilesBaseTickDamage[rank]
-	castTime := ArcaneMissilesCastTime[rank]
-	manaCost := ArcaneMissilesManaCost[rank]
 	level := ArcaneMissilesLevel[rank]
 
-	numTicks := castTime
 	tickLength := time.Second
+	numTicks := int32(row.Duration / tickLength)
 	// Missile Barrage keeps the missile count and fires them every 0.5 sec instead, which is the
 	// same thing as halving the channel.
 	barrageTickLength := time.Millisecond * 500
@@ -49,9 +47,11 @@ func (mage *Mage) getArcaneMissilesSpellConfig(rank int) core.SpellConfig {
 	mage.ArcaneMissilesTickSpell[rank] = tickSpell
 
 	return core.SpellConfig{
-		SpellCode:   SpellCode_MageArcaneMissiles,
-		ActionID:    core.ActionID{SpellID: spellId},
-		SpellSchool: core.SpellSchoolArcane,
+		SpellCode:      SpellCode_MageArcaneMissiles,
+		ClassSpellMask: SpellMaskArcaneMissiles,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		// The channel's row reads no defense type; its missiles are magic.
 		DefenseType: core.DefenseTypeMagic,
 		ProcMask:    core.ProcMaskSpellDamage,
 		Flags:       SpellFlagMage | core.SpellFlagAPL | core.SpellFlagChanneled | core.SpellFlagNoMetrics,
@@ -60,7 +60,7 @@ func (mage *Mage) getArcaneMissilesSpellConfig(rank int) core.SpellConfig {
 		Rank:          rank,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -106,24 +106,26 @@ func (mage *Mage) getArcaneMissilesSpellConfig(rank int) core.SpellConfig {
 }
 
 func (mage *Mage) getArcaneMissilesTickSpell(rank int) *core.Spell {
-	spellId := ArcaneMissilesSpellId[rank]
+	channel := spellData.ArcaneMissiles.ByRank(int32(rank))
+	row := spellData.ArcaneMissilesTriggered.ByRank(int32(rank))
 	baseTickDamage := ArcaneMissilesBaseTickDamage[rank]
-	spellCoeff := ArcaneMissilesSpellCoeff[rank]
 
 	return mage.RegisterSpell(core.SpellConfig{
-		SpellCode:    SpellCode_MageArcaneMissilesTick,
-		ActionID:     core.ActionID{SpellID: spellId}.WithTag(1),
-		SpellSchool:  core.SpellSchoolArcane,
-		DefenseType:  core.DefenseTypeMagic,
+		SpellCode:      SpellCode_MageArcaneMissilesTick,
+		ClassSpellMask: SpellMaskArcaneMissilesTick,
+		// Filed under the channel's id, not the missile's own (7268 ...), as the metrics always were.
+		ActionID:     core.ActionID{SpellID: channel.SpellID}.WithTag(1),
+		SpellSchool:  row.SpellSchool,
+		DefenseType:  row.DefenseType,
 		ProcMask:     core.ProcMaskSpellDamage,
 		Flags:        SpellFlagMage,
-		MissileSpeed: 20,
+		MissileSpeed: row.MissileSpeed,
 
 		Rank: 1,
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
-		BonusCoefficient: spellCoeff,
+		BonusCoefficient: roundCoef(row.Direct.BonusCoefficient()),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			result := spell.CalcDamage(sim, target, baseTickDamage, spell.OutcomeMagicHitAndCrit)

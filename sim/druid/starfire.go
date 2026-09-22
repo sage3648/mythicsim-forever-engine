@@ -8,12 +8,9 @@ import (
 
 const StarfireRanks = 7
 
-var StarfireSpellId = [StarfireRanks + 1]int32{0, 2912, 8949, 8950, 8951, 9875, 9876, 25298}
-
 // Beta client 1.60.1.69893: about 30% less damage at every rank from 2 up (rank 7 496-584 -> 350-412). Costs and the
-// 3.5 sec cast are Classic's.
+// 3.5 sec cast are Classic's. Everything but the damage comes from the client table (see wrath.go).
 var StarfireBaseDamage = [StarfireRanks + 1][]float64{{0}, {79, 96}, {108, 130}, {140, 167}, {191, 226}, {257, 302}, {313, 370}, {350, 412}}
-var StarfireManaCost = [StarfireRanks + 1]float64{0, 95, 135, 180, 230, 275, 315, 340}
 var StarfireLevel = [StarfireRanks + 1]int{0, 20, 26, 34, 42, 50, 58, 60}
 
 func (druid *Druid) registerStarfireSpell() {
@@ -30,38 +27,36 @@ func (druid *Druid) registerStarfireSpell() {
 }
 
 func (druid *Druid) newStarfireSpellConfig(rank int) core.SpellConfig {
-	spellId := StarfireSpellId[rank]
+	row := spellData.Starfire.ByRank(int32(rank))
 	baseDamageLow := StarfireBaseDamage[rank][0]
 	baseDamageHigh := StarfireBaseDamage[rank][1]
-	manaCost := StarfireManaCost[rank]
 	level := StarfireLevel[rank]
 
-	castTime := 3500
-
 	return core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: spellId},
-		SpellCode:   SpellCode_DruidStarfire,
-		SpellSchool: core.SpellSchoolArcane,
-		DefenseType: core.DefenseTypeMagic,
-		ProcMask:    core.ProcMaskSpellDamage,
-		Flags:       core.SpellFlagAPL | core.SpellFlagResetAttackSwing,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellCode:      SpellCode_DruidStarfire,
+		ClassSpellMask: SpellMaskStarfire,
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          core.SpellFlagAPL | core.SpellFlagResetAttackSwing,
 
 		RequiredLevel: level,
 		Rank:          rank,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
 				GCD:      core.GCDDefault,
-				CastTime: time.Millisecond*time.Duration(castTime) - time.Millisecond*100*time.Duration(druid.Talents.ImprovedStarfire),
+				CastTime: row.CastTime - time.Millisecond*100*time.Duration(druid.Talents.ImprovedStarfire),
 			},
 		},
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
-		BonusCoefficient: 1,
+		BonusCoefficient: roundCoef(row.Direct.BonusCoefficient()),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := sim.Roll(baseDamageLow, baseDamageHigh)

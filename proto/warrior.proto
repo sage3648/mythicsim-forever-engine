@@ -3,66 +3,69 @@ package proto;
 
 option go_package = "./proto";
 
+// DO NOT REMOVE THE COMMENTS
+// BEGIN GENERATED
+// WarriorTalents message.
 message WarriorTalents {
-	// Arms
-	int32 improved_heroic_strike = 1;
-	int32 deflection = 2;
-	int32 improved_rend = 3;
-	int32 improved_charge = 4;
-	int32 improved_tactical_mastery = 5;
-	int32 improved_overpower = 6;
-	bool anger_management = 7;
-	int32 deep_wounds = 8;
-	bool spearing_strike = 9;
-	int32 two_handed_weapon_specialization = 10;
-	int32 impale = 11;
-	int32 bloodthrill = 12;
-	bool sweeping_strikes = 13;
-	int32 weaponmaster = 14;
-	int32 improved_slam = 15;
-	int32 improved_hamstring = 16;
-	bool mortal_strike = 17;
-
-	// Fury
-	int32 booming_voice = 18;
-	int32 cruelty = 19;
-	int32 iron_will = 20;
-	int32 unbridled_wrath = 21;
-	int32 improved_cleave = 22;
-	bool piercing_howl = 23;
-	int32 blood_craze = 24;
-	int32 boundless_rage = 25;
-	int32 dual_wield_specialization = 26;
-	bool raging_blows = 27;
-	int32 enrage = 28;
-	int32 improved_execute = 29;
-	int32 precision = 30;
-	bool death_wish = 31;
-	int32 improved_intercept = 32;
-	int32 improved_berserker_rage = 33;
-	int32 flurry = 34;
-	bool bloodthirst = 35;
-
-	// Protection
-	int32 shield_specialization = 36;
-	int32 anticipation = 37;
-	int32 improved_bloodrage = 38;
-	int32 toughness = 39;
-	int32 improved_thunder_clap = 40;
-	bool last_stand = 41;
-	int32 master_of_defense = 42;
-	int32 improved_revenge = 43;
-	int32 defiance = 44;
-	int32 improved_sunder_armor = 45;
-	int32 improved_disarm = 46;
-	bool vanguard = 47;
-	int32 improved_shield_wall = 48;
-	bool concussion_blow = 49;
-	int32 improved_shield_bash = 50;
-	int32 bastion = 51;
-	int32 focused_rage = 52;
-	bool shield_slam = 53;
+    // Arms
+    int32 improved_heroic_strike = 1;
+    int32 deflection = 2;
+    int32 improved_rend = 3;
+    int32 improved_charge = 4;
+    int32 improved_tactical_mastery = 5;
+    int32 improved_overpower = 6;
+    bool anger_management = 7;
+    int32 deep_wounds = 8;
+    bool spearing_strike = 9;
+    int32 two_handed_weapon_specialization = 10;
+    int32 impale = 11;
+    int32 bloodthrill = 12;
+    bool sweeping_strikes = 13;
+    int32 weaponmaster = 14;
+    int32 improved_slam = 15;
+    int32 improved_hamstring = 16;
+    bool mortal_strike = 17;
+    // Fury
+    int32 booming_voice = 18;
+    int32 cruelty = 19;
+    int32 iron_will = 20;
+    int32 unbridled_wrath = 21;
+    int32 improved_cleave = 22;
+    bool piercing_howl = 23;
+    int32 blood_craze = 24;
+    int32 boundless_rage = 25;
+    int32 dual_wield_specialization = 26;
+    bool raging_blows = 27;
+    int32 enrage = 28;
+    int32 improved_execute = 29;
+    int32 precision = 30;
+    bool death_wish = 31;
+    int32 improved_intercept = 32;
+    int32 improved_berserker_rage = 33;
+    int32 flurry = 34;
+    bool bloodthirst = 35;
+    // Protection
+    int32 shield_specialization = 36;
+    int32 anticipation = 37;
+    int32 improved_bloodrage = 38;
+    int32 toughness = 39;
+    int32 improved_thunder_clap = 40;
+    bool last_stand = 41;
+    int32 master_of_defense = 42;
+    int32 improved_revenge = 43;
+    int32 defiance = 44;
+    int32 improved_sunder_armor = 45;
+    int32 improved_disarm = 46;
+    bool vanguard = 47;
+    int32 improved_shield_wall = 48;
+    bool concussion_blow = 49;
+    int32 improved_shield_bash = 50;
+    int32 bastion = 51;
+    int32 focused_rage = 52;
+    bool shield_slam = 53;
 }
+
+// END GENERATED
 
 enum WarriorShout {
 	WarriorShoutNone = 0;

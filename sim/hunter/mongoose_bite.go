@@ -7,23 +7,23 @@ import (
 )
 
 func (hunter *Hunter) getMongooseBiteConfig(rank int) core.SpellConfig {
-	spellId := [5]int32{0, 1495, 14269, 14270, 14271}[rank]
-	baseDamage := [5]float64{0, 15, 22, 37, 57}[rank]
-	manaCost := [5]float64{0, 30, 40, 50, 65}[rank]
+	row := spellData.MongooseBite.ByRank(int32(rank))
+	baseDamage, _ := row.Direct.Range()
 	level := [5]int{0, 16, 30, 44, 58}[rank]
 
 	spellConfig := core.SpellConfig{
-		SpellCode:     SpellCode_HunterMongooseBite,
-		ActionID:      core.ActionID{SpellID: spellId},
-		SpellSchool:   core.SpellSchoolPhysical,
-		DefenseType:   core.DefenseTypeMelee,
-		ProcMask:      core.ProcMaskMeleeSpecial,
-		Flags:         core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
-		Rank:          rank,
-		RequiredLevel: level,
+		SpellCode:      SpellCode_HunterMongooseBite,
+		ClassSpellMask: SpellMaskMongooseBite,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskMeleeSpecial,
+		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
+		Rank:           rank,
+		RequiredLevel:  level,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 
 		Cast: core.CastConfig{
@@ -32,7 +32,7 @@ func (hunter *Hunter) getMongooseBiteConfig(rank int) core.SpellConfig {
 			},
 			CD: core.Cooldown{
 				Timer:    hunter.NewTimer(),
-				Duration: time.Second * 5,
+				Duration: row.Cooldown,
 			},
 		},
 
@@ -44,7 +44,7 @@ func (hunter *Hunter) getMongooseBiteConfig(rank int) core.SpellConfig {
 		CritDamageBonus:  hunter.mortalShots(),
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
-		BonusCoefficient: 1,
+		BonusCoefficient: roundCoef(row.Direct.BonusCoefficient()),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			hunter.DefensiveState.Deactivate(sim)

@@ -1,23 +1,26 @@
 package warrior
 
 import (
-	"time"
-
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
 func (warrior *Warrior) registerPummelSpell() {
-	damage := 50.0
+	// Cost, cooldown, school, defense type, flat damage and coefficient come from the client table; the
+	// id stays ours (see registerHeroicStrikeSpell).
+	spellID := int32(6554)
+	row := spellData.Pummel.BySpellID(spellID)
+	damage := shared.SpellDataMin(row.Direct)
 
 	warrior.RegisterSpell(BerserkerStance, core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: 6554},
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
+		ActionID:    core.ActionID{SpellID: spellID},
+		SpellSchool: row.SpellSchool,
+		DefenseType: row.DefenseType,
 		ProcMask:    core.ProcMaskMeleeMHSpecial,
 		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagAPL | core.SpellFlagBinary | SpellFlagOffensive,
 
 		RageCost: core.RageCostOptions{
-			Cost:   10,
+			Cost:   float64(row.Cost),
 			Refund: 0.8,
 		},
 		Cast: core.CastConfig{
@@ -27,7 +30,7 @@ func (warrior *Warrior) registerPummelSpell() {
 			IgnoreHaste: true,
 			CD: core.Cooldown{
 				Timer:    warrior.NewTimer(),
-				Duration: time.Second * 10,
+				Duration: row.Cooldown,
 			},
 		},
 
@@ -35,7 +38,7 @@ func (warrior *Warrior) registerPummelSpell() {
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
-		BonusCoefficient: 1,
+		BonusCoefficient: row.Direct.BonusCoefficient(),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			result := spell.CalcAndDealDamage(sim, target, damage, spell.OutcomeMeleeWeaponSpecialHitAndCrit)

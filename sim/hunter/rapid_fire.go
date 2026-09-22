@@ -11,15 +11,18 @@ func (hunter *Hunter) registerRapidFire() {
 		return
 	}
 
-	actionID := core.ActionID{SpellID: 3045}
+	// Spell ID, cost, cooldown and duration from the client table (see aimed_shot.go). The 40% stays
+	// ours rather than read a damage field as a haste multiplier.
+	row := spellData.RapidFire.ByRank(1)
+	actionID := core.ActionID{SpellID: row.SpellID}
 	// Rapid Killing takes 1 min off a rank (client curve 60000/120000 ms). The buff a kill grants
 	// (415407: 20% on the next Shot within 20 sec) is not modelled, nothing dies in a boss fight.
-	cooldown := time.Minute*5 - time.Minute*time.Duration(hunter.Talents.RapidKilling)
+	cooldown := row.Cooldown - time.Minute*time.Duration(hunter.Talents.RapidKilling)
 
 	hunter.RapidFireAura = hunter.RegisterAura(core.Aura{
 		Label:    "Rapid Fire",
 		ActionID: actionID,
-		Duration: time.Second * 15,
+		Duration: row.Duration,
 
 		// Forever: ranged and melee attack speed, where Classic's was ranged only.
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
@@ -34,7 +37,7 @@ func (hunter *Hunter) registerRapidFire() {
 		ActionID: actionID,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: 100,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			CD: core.Cooldown{

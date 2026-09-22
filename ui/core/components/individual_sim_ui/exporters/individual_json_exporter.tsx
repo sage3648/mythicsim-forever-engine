@@ -32,7 +32,7 @@ export class IndividualJsonExporter<SpecType extends Spec> extends IndividualExp
 				return path.length > 3;
 			}
 
-			if (path[0] == 'player' && path[1] == 'rotation' && ['prepullActions', 'priorityList'].includes(path[2])) {
+			if (path[0] == 'player' && path[1] == 'rotation' && ['prepullActions', 'priorityList', 'groups', 'valueVariables'].includes(path[2])) {
 				return path.length > 3;
 			}
 

@@ -2,38 +2,34 @@ package warlock
 
 import (
 	"strconv"
-	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
 const DrainSoulRanks = 4
 
 func (warlock *Warlock) getDrainSoulBaseConfig(rank int) core.SpellConfig {
-	baseNumTicks := int32(5)
-	numTicks := baseNumTicks
-	tickLength := time.Second * 3
-
-	spellId := [DrainSoulRanks + 1]int32{0, 1120, 8288, 8289, 11675}[rank]
-	// Beta client 1.60.1 values; the damage table is the client's per tick value times five
-	spellCoeff := [DrainSoulRanks + 1]float64{0, 0.1, 0.1, 0.1, 0.1}[rank]
-	baseDamage := [DrainSoulRanks + 1]float64{0, 85, 170, 270, 420}[rank] / float64(baseNumTicks)
-	manaCost := [DrainSoulRanks + 1]float64{0, 55, 125, 210, 290}[rank]
+	// Beta client 1.60.1: spell ID, cost, school, tick, tick count and coefficient from the client table
+	row := spellData.DrainSoul.ByRank(int32(rank))
+	periodic := row.Periodic.(shared.SpellDataPeriodic)
+	baseDamage := periodic.Tick
 	level := [DrainSoulRanks + 1]int{0, 10, 24, 38, 52}[rank]
 
 	return core.SpellConfig{
-		SpellCode:   SpellCode_WarlockDrainSoul,
-		ActionID:    core.ActionID{SpellID: spellId},
-		SpellSchool: core.SpellSchoolShadow,
-		DefenseType: core.DefenseTypeMagic,
-		ProcMask:    core.ProcMaskSpellDamage,
-		Flags:       core.SpellFlagAPL | core.SpellFlagChanneled | core.SpellFlagResetAttackSwing | WarlockFlagAffliction,
+		SpellCode:      SpellCode_WarlockDrainSoul,
+		ClassSpellMask: SpellMaskDrainSoul,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          core.SpellFlagAPL | core.SpellFlagChanneled | core.SpellFlagResetAttackSwing | WarlockFlagAffliction,
 
 		RequiredLevel: level,
 		Rank:          rank,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -48,9 +44,9 @@ func (warlock *Warlock) getDrainSoulBaseConfig(rank int) core.SpellConfig {
 			Aura: core.Aura{
 				Label: "DrainSoul-" + warlock.Label + strconv.Itoa(rank),
 			},
-			NumberOfTicks:    numTicks,
-			TickLength:       tickLength,
-			BonusCoefficient: spellCoeff,
+			NumberOfTicks:    periodic.NumberOfTicks,
+			TickLength:       periodic.TickLength,
+			BonusCoefficient: roundCoef(periodic.Coef),
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.Snapshot(target, baseDamage, isRollover)

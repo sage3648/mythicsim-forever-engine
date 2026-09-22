@@ -9,28 +9,29 @@ import (
 func (druid *Druid) registerShredSpell() {
 	// Beta client 1.60.1.69893: 155% weapon damage, down from Classic's 225%, with the same flat bonus per rank.
 	damageMultiplier := 1.55
-	flatDamageBonus := map[int32]float64{
-		25: 24,
-		40: 44,
-		50: 64,
-		60: 80,
+
+	// The cost and flat bonus come from the client table (see wrath.go). The ids stay ours: reading them through the
+	// table files the never-registered rank 2 in sim/spell_sources_test.go.
+	spellID := map[int32]int32{
+		25: 5221,
+		40: 8992,
+		50: 9829,
+		60: 9830,
 	}[druid.Level]
+	row := spellData.Shred.BySpellID(spellID)
+	flatDamageBonus, _ := row.Direct.Range()
 
 	druid.Shred = druid.RegisterSpell(Cat, core.SpellConfig{
-		SpellCode: SpellCode_DruidShred,
-		ActionID: core.ActionID{SpellID: map[int32]int32{
-			25: 5221,
-			40: 8992,
-			50: 9829,
-			60: 9830,
-		}[druid.Level]},
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
-		ProcMask:    core.ProcMaskMeleeMHSpecial,
-		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagAPL | SpellFlagBuilder,
+		SpellCode:      SpellCode_DruidShred,
+		ClassSpellMask: SpellMaskShred,
+		ActionID:       core.ActionID{SpellID: spellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskMeleeMHSpecial,
+		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagAPL | SpellFlagBuilder,
 
 		EnergyCost: core.EnergyCostOptions{
-			Cost:   60 - 6*float64(druid.Talents.ShreddingAttacks),
+			Cost:   float64(row.Cost) - 6*float64(druid.Talents.ShreddingAttacks),
 			Refund: 0.8,
 		},
 		Cast: core.CastConfig{

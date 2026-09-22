@@ -54,6 +54,38 @@ const (
 	SpellCode_HunterPetScorpidPoison
 )
 
+// One class mask per SpellCode_Hunter*, for the SpellMod system.
+const (
+	SpellMaskNone      int64 = 0
+	SpellMaskAimedShot int64 = 1 << iota
+	SpellMaskArcaneShot
+	SpellMaskMultiShot
+	SpellMaskSniperShot
+	SpellMaskSummonHawk
+
+	SpellMaskRaptorStrike
+	SpellMaskRaptorStrikeHit
+
+	SpellMaskSerpentSting
+
+	SpellMaskExplosiveTrap
+	SpellMaskFreezingTrap
+	SpellMaskImmolationTrap
+
+	SpellMaskLaceratingStrikes
+	SpellMaskMongooseBite
+	SpellMaskWingClip
+	SpellMaskVolley
+
+	SpellMaskPetClaw
+	SpellMaskPetBite
+	SpellMaskPetLightningBreath
+	SpellMaskPetScreech
+	SpellMaskPetScorpidPoison
+
+	SpellMaskAll = SpellMaskPetScorpidPoison<<1 - SpellMaskAimedShot // every bit from AimedShot to PetScorpidPoison
+)
+
 func RegisterHunter() {
 	core.RegisterAgentFactory(
 		proto.Player_Hunter{},

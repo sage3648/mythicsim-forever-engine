@@ -4,36 +4,35 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
 const BaneOfAgonyRanks = 6
 
 func (warlock *Warlock) getBaneOfAgonyBaseConfig(rank int) core.SpellConfig {
-	numTicks := int32(12)
-	tickLength := time.Second * 2
-
-	spellId := [BaneOfAgonyRanks + 1]int32{0, 980, 1014, 6217, 11711, 11712, 11713}[rank]
-	// Beta client 1.60.1: 0.133 per tick at every rank, and the average tick roughly halved
-	spellCoeff := [BaneOfAgonyRanks + 1]float64{0, .133, .133, .133, .133, .133, .133}[rank]
-	baseDamage := [BaneOfAgonyRanks + 1]float64{0, 6, 10, 14, 21, 33, 46}[rank] * (1 + .05*float64(warlock.Talents.ImprovedBaneOfAgony))
-	manaCost := [BaneOfAgonyRanks + 1]float64{0, 25, 50, 90, 130, 170, 215}[rank]
+	// Beta client 1.60.1: 0.133 per tick at every rank, and the average tick roughly halved. Spell ID,
+	// cost, school, tick, tick count and coefficient come from the client table.
+	row := spellData.BaneOfAgony.ByRank(int32(rank))
+	periodic := row.Periodic.(shared.SpellDataPeriodic)
+	baseDamage := periodic.Tick * (1 + .05*float64(warlock.Talents.ImprovedBaneOfAgony))
 	level := [BaneOfAgonyRanks + 1]int{0, 8, 18, 28, 38, 48, 58}[rank]
 
 	snapshotBaseDmgNoBonus := 0.0
 
 	return core.SpellConfig{
-		SpellCode:     SpellCode_WarlockBaneOfAgony,
-		ActionID:      core.ActionID{SpellID: spellId},
-		SpellSchool:   core.SpellSchoolShadow,
-		DefenseType:   core.DefenseTypeMagic,
-		Flags:         core.SpellFlagAPL | core.SpellFlagResetAttackSwing | core.SpellFlagPureDot | WarlockFlagAffliction,
-		ProcMask:      core.ProcMaskSpellDamage,
-		RequiredLevel: level,
-		Rank:          rank,
+		SpellCode:      SpellCode_WarlockBaneOfAgony,
+		ClassSpellMask: SpellMaskBaneOfAgony,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		Flags:          core.SpellFlagAPL | core.SpellFlagResetAttackSwing | core.SpellFlagPureDot | WarlockFlagAffliction,
+		ProcMask:       core.ProcMaskSpellDamage,
+		RequiredLevel:  level,
+		Rank:           rank,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -51,9 +50,9 @@ func (warlock *Warlock) getBaneOfAgonyBaseConfig(rank int) core.SpellConfig {
 			Aura: core.Aura{
 				Label: "BaneofAgony-" + warlock.Label + strconv.Itoa(rank),
 			},
-			NumberOfTicks:    numTicks,
-			TickLength:       tickLength,
-			BonusCoefficient: spellCoeff,
+			NumberOfTicks:    periodic.NumberOfTicks,
+			TickLength:       periodic.TickLength,
+			BonusCoefficient: roundCoef(periodic.Coef),
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				baseDmg := baseDamage
@@ -110,36 +109,27 @@ func (warlock *Warlock) registerCurseOfRecklessnessSpell() {
 
 	warlock.CurseOfRecklessnessAuras = warlock.NewEnemyAuraArray(core.CurseOfRecklessnessAura)
 
-	spellID := map[int32]int32{
-		25: 704,
-		40: 7658,
-		50: 7659,
-		60: 11717,
-	}[playerLevel]
-
 	rank := map[int32]int{
 		25: 1,
 		40: 2,
 		50: 3,
 		60: 4,
 	}[playerLevel]
-
-	manaCost := map[int32]float64{
-		25: 35.0,
-		40: 60.0,
-		50: 90.0,
-		60: 115.0,
-	}[playerLevel]
+	if rank == 0 {
+		return
+	}
+	// Spell ID, cost and school from the client table
+	row := spellData.CurseOfRecklessness.ByRank(int32(rank))
 
 	warlock.CurseOfRecklessness = warlock.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: spellID},
-		SpellSchool: core.SpellSchoolShadow,
+		ActionID:    core.ActionID{SpellID: row.SpellID},
+		SpellSchool: row.SpellSchool,
 		ProcMask:    core.ProcMaskEmpty,
 		Flags:       core.SpellFlagAPL | WarlockFlagAffliction,
 		Rank:        rank,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -178,23 +168,18 @@ func (warlock *Warlock) registerCurseOfElementsSpell() {
 	// Classic's Fire and Frost). Its ranks are new ids learned at 30, 40 and 50, the last at Classic's
 	// top rank values of 75 resistance and 10%. The raid debuffs in core only split that into Fire and
 	// Frost plus Shadow and Arcane, so the curse applies both; Nature and Holy are not covered.
-	spellID := map[int32]int32{
-		40: 1311677,
-		50: 1311680,
-		60: 1311680,
-	}[playerLevel]
-
 	rank := map[int32]int{
 		40: 3,
 		50: 4,
 		60: 4,
 	}[playerLevel]
-
-	manaCost := map[int32]float64{
-		40: 150.0,
-		50: 200.0,
-		60: 200.0,
-	}[playerLevel]
+	if rank == 0 {
+		return
+	}
+	// Cost, school and duration from the client table. The id stays spelled out: the table's ranks 1
+	// and 2 (440892, 1311676) are never registered, and spell_sources_test.go would file them as ours.
+	row := spellData.CurseOfTheElements.ByRank(int32(rank))
+	spellID := map[int]int32{3: 1311677, 4: 1311680}[rank]
 
 	elementsAuras := warlock.NewEnemyAuraArray(core.CurseOfElementsAura)
 	shadowAuras := warlock.NewEnemyAuraArray(core.CurseOfShadowAura)
@@ -203,7 +188,7 @@ func (warlock *Warlock) registerCurseOfElementsSpell() {
 		return unit.RegisterAura(core.Aura{
 			Label:    "Curse of the Elements-" + warlock.Label,
 			ActionID: core.ActionID{SpellID: spellID},
-			Duration: time.Minute * 5,
+			Duration: row.Duration,
 			OnGain: func(aura *core.Aura, sim *core.Simulation) {
 				for _, debuff := range debuffs {
 					debuff.Activate(sim)
@@ -222,13 +207,13 @@ func (warlock *Warlock) registerCurseOfElementsSpell() {
 
 	warlock.CurseOfElements = warlock.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: spellID},
-		SpellSchool: core.SpellSchoolShadow,
+		SpellSchool: row.SpellSchool,
 		ProcMask:    core.ProcMaskEmpty,
 		Flags:       core.SpellFlagAPL | WarlockFlagAffliction,
 		Rank:        rank,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -261,12 +246,13 @@ func (warlock *Warlock) registerAmplifyCurseSpell() {
 		return
 	}
 
-	actionID := core.ActionID{SpellID: 18288}
+	row := spellData.AmplifyCurse.ByRank(1)
+	actionID := core.ActionID{SpellID: row.SpellID}
 
 	warlock.AmplifyCurseAura = warlock.GetOrRegisterAura(core.Aura{
 		Label:    "Amplify Curse",
 		ActionID: actionID,
-		Duration: time.Second * 30,
+		Duration: row.Duration,
 	})
 
 	warlock.AmplifyCurse = warlock.GetOrRegisterSpell(core.SpellConfig{
@@ -277,7 +263,7 @@ func (warlock *Warlock) registerAmplifyCurseSpell() {
 		Cast: core.CastConfig{
 			CD: core.Cooldown{
 				Timer:    warlock.NewTimer(),
-				Duration: 3 * time.Minute,
+				Duration: row.Cooldown,
 			},
 		},
 
@@ -292,18 +278,24 @@ func (warlock *Warlock) registerBaneOfDoomSpell() {
 		return
 	}
 
+	// Spell ID, cost, cooldown, school and the dot (1742 once after 60 sec, 4.0 coefficient) from the
+	// client table
+	row := spellData.BaneOfDoom.ByRank(1)
+	periodic := row.Periodic.(shared.SpellDataPeriodic)
+
 	warlock.BaneOfDoom = warlock.RegisterSpell(core.SpellConfig{
-		SpellCode:   SpellCode_WarlockBaneOfDoom,
-		ActionID:    core.ActionID{SpellID: 603},
-		SpellSchool: core.SpellSchoolShadow,
-		DefenseType: core.DefenseTypeMagic,
-		ProcMask:    core.ProcMaskSpellDamage,
-		Flags:       core.SpellFlagAPL | WarlockFlagAffliction,
+		SpellCode:      SpellCode_WarlockBaneOfDoom,
+		ClassSpellMask: SpellMaskBaneOfDoom,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          core.SpellFlagAPL | WarlockFlagAffliction,
 
 		RequiredLevel: 60,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: 300,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -311,7 +303,7 @@ func (warlock *Warlock) registerBaneOfDoomSpell() {
 			},
 			CD: core.Cooldown{
 				Timer:    warlock.NewTimer(),
-				Duration: time.Second * 60,
+				Duration: row.Cooldown,
 			},
 		},
 
@@ -325,13 +317,13 @@ func (warlock *Warlock) registerBaneOfDoomSpell() {
 			Aura: core.Aura{
 				Label: "BaneofDoom",
 			},
-			NumberOfTicks: 1,
-			TickLength:    time.Minute,
+			NumberOfTicks: periodic.NumberOfTicks,
+			TickLength:    periodic.TickLength,
 			// Beta client 1.60.1: 1742 damage with a 4.0 spell power coefficient. Classic's 3200 carried
 			// no coefficient of its own, and the spell level 1 this file used to set never reached the dot.
-			BonusCoefficient: 4,
+			BonusCoefficient: roundCoef(periodic.Coef),
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.Snapshot(target, 1742, isRollover)
+				dot.Snapshot(target, periodic.Tick, isRollover)
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeTick)
@@ -377,7 +369,7 @@ func (warlock *Warlock) registerBaneOfHavocSpell() {
 
 		// 5% of base mana in the beta client (1225228), not a flat 300
 		ManaCost: core.ManaCostOptions{
-			BaseCost: 0.05,
+			BaseCost: spellData.BaneOfHavoc.ByRank(1).PowerCostPct / 100,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

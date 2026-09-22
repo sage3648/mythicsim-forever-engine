@@ -4,18 +4,16 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
 const SearingTotemRanks = 6
 
-// Forever beta client: the attack's damage is unchanged but its coefficient falls to 0.017 at every rank.
-var SearingTotemSpellId = [SearingTotemRanks + 1]int32{0, 3599, 6363, 6364, 6365, 10437, 10438}
-var SearingTotemAttackSpellId = [SearingTotemRanks + 1]int32{0, 3606, 6350, 6351, 6352, 10435, 10436}
+// Forever beta client: the attack's damage is unchanged but its coefficient falls to 0.017 at every rank. The
+// totem's id, cost, duration and school and the attack's id, coefficient, school and defense type come from the
+// client table; the attack's damage range stays here (the table holds its centre).
 var SearingTotemBaseDamage = [SearingTotemRanks + 1][]float64{{0}, {9, 11}, {13, 17}, {19, 25}, {26, 34}, {33, 45}, {40, 54}}
-var SearingTotemSpellCoef = [SearingTotemRanks + 1]float64{0, .017, .017, .017, .017, .017, .017}
-var SearingTotemManaCost = [SearingTotemRanks + 1]float64{0, 25, 45, 75, 110, 145, 170}
-var SearingTotemDuration = [SearingTotemRanks + 1]int{0, 30, 35, 40, 45, 50, 55}
 var SearingTotemLevel = [SearingTotemRanks + 1]int{0, 10, 20, 30, 40, 50, 60}
 
 func (shaman *Shaman) registerSearingTotemSpell() {
@@ -36,26 +34,27 @@ func (shaman *Shaman) registerSearingTotemSpell() {
 }
 
 func (shaman *Shaman) newSearingTotemSpellConfig(rank int) core.SpellConfig {
-	totemSpellId := SearingTotemSpellId[rank]
+	row := spellData.SearingTotem.ByRank(int32(rank))
+	attackRow := spellData.SearingTotemTriggered.ByRank(int32(rank))
 	baseDamageLow := SearingTotemBaseDamage[rank][0]
 	baseDamageHigh := SearingTotemBaseDamage[rank][1]
-	spellCoeff := SearingTotemSpellCoef[rank]
-	manaCost := SearingTotemManaCost[rank]
-	duration := time.Second * time.Duration(SearingTotemDuration[rank])
+	duration := row.Duration
 	level := SearingTotemLevel[rank]
 
+	// The table's 2.2 sec attack cast and speed 19 missile are not used (see the tick comment below).
 	attackInterval := time.Millisecond * 2500
 
 	attackSpell := shaman.RegisterSpell(core.SpellConfig{
-		SpellCode:   SpellCode_ShamanSearingTotem,
-		ActionID:    core.ActionID{SpellID: SearingTotemAttackSpellId[rank]},
-		SpellSchool: core.SpellSchoolFire,
-		DefenseType: core.DefenseTypeMagic,
-		ProcMask:    core.ProcMaskEmpty,
-		Flags:       SpellFlagTotem,
+		SpellCode:      SpellCode_ShamanSearingTotem,
+		ClassSpellMask: SpellMaskSearingTotem,
+		ActionID:       core.ActionID{SpellID: attackRow.SpellID},
+		SpellSchool:    attackRow.SpellSchool,
+		DefenseType:    attackRow.DefenseType,
+		ProcMask:       core.ProcMaskEmpty,
+		Flags:          SpellFlagTotem,
 
 		DamageMultiplier: shaman.callOfFlameMultiplier(),
-		BonusCoefficient: spellCoeff,
+		BonusCoefficient: roundCoef(attackRow.Direct.BonusCoefficient()),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := sim.Roll(baseDamageLow, baseDamageHigh)
@@ -64,9 +63,11 @@ func (shaman *Shaman) newSearingTotemSpellConfig(rank int) core.SpellConfig {
 	})
 
 	spell := core.SpellConfig{
-		SpellCode:   SpellCode_ShamanSearingTotem,
-		ActionID:    core.ActionID{SpellID: totemSpellId},
-		SpellSchool: core.SpellSchoolFire,
+		SpellCode:      SpellCode_ShamanSearingTotem,
+		ClassSpellMask: SpellMaskSearingTotem,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		// The table's totem row names no defense type; ours has always been Magic.
 		DefenseType: core.DefenseTypeMagic,
 		ProcMask:    core.ProcMaskEmpty,
 		Flags:       SpellFlagTotem | core.SpellFlagAPL,
@@ -75,7 +76,7 @@ func (shaman *Shaman) newSearingTotemSpellConfig(rank int) core.SpellConfig {
 		Rank:          rank,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost:   manaCost,
+			FlatCost:   float64(row.Cost),
 			Multiplier: shaman.totemManaMultiplier(),
 		},
 
@@ -118,12 +119,10 @@ func (shaman *Shaman) newSearingTotemSpellConfig(rank int) core.SpellConfig {
 
 const MagmaTotemRanks = 4
 
-// Forever beta client values for the pulse.
-var MagmaTotemSpellId = [MagmaTotemRanks + 1]int32{0, 8190, 10585, 10586, 10587}
+// Forever beta client values for the pulse. The totem's id, cost, duration, school and defense type and the
+// pulse's damage, coefficient, school and defense type come from the client table. The pulse ids stay here: the
+// table ranks 8 of them (8188 and 10582-10584 unused), so each pulse row is looked up by its id.
 var MagmaTotemAoeSpellId = [MagmaTotemRanks + 1]int32{0, 8187, 10579, 10580, 10581}
-var MagmaTotemBaseDamage = [MagmaTotemRanks + 1]float64{0, 20, 35, 52, 73}
-var MagmaTotemSpellCoeff = [MagmaTotemRanks + 1]float64{0, .033, .033, .033, .033}
-var MagmaTotemManaCost = [MagmaTotemRanks + 1]float64{0, 230, 360, 500, 650}
 var MagmaTotemLevel = [MagmaTotemRanks + 1]int{0, 26, 36, 46, 56}
 
 func (shaman *Shaman) registerMagmaTotemSpell() {
@@ -144,25 +143,25 @@ func (shaman *Shaman) registerMagmaTotemSpell() {
 }
 
 func (shaman *Shaman) newMagmaTotemSpellConfig(rank int) core.SpellConfig {
-	spellId := MagmaTotemSpellId[rank]
-	baseDamage := MagmaTotemBaseDamage[rank]
-	spellCoeff := MagmaTotemSpellCoeff[rank]
-	manaCost := MagmaTotemManaCost[rank]
+	row := spellData.MagmaTotem.ByRank(int32(rank))
+	aoeRow := spellData.MagmaTotemTriggered.BySpellID(MagmaTotemAoeSpellId[rank])
+	baseDamage := aoeRow.Direct.(shared.SpellDataFlat).Value
 	level := MagmaTotemLevel[rank]
 
-	duration := time.Second * 20
+	duration := row.Duration
 	attackInterval := time.Second * 2
 
 	aoeSpell := shaman.RegisterSpell(core.SpellConfig{
-		SpellCode:   SpellCode_ShamanMagmaTotem,
-		ActionID:    core.ActionID{SpellID: MagmaTotemAoeSpellId[rank]},
-		SpellSchool: core.SpellSchoolFire,
-		DefenseType: core.DefenseTypeMagic,
-		ProcMask:    core.ProcMaskEmpty,
-		Flags:       SpellFlagTotem,
+		SpellCode:      SpellCode_ShamanMagmaTotem,
+		ClassSpellMask: SpellMaskMagmaTotem,
+		ActionID:       core.ActionID{SpellID: MagmaTotemAoeSpellId[rank]},
+		SpellSchool:    aoeRow.SpellSchool,
+		DefenseType:    aoeRow.DefenseType,
+		ProcMask:       core.ProcMaskEmpty,
+		Flags:          SpellFlagTotem,
 
 		DamageMultiplier: shaman.callOfFlameMultiplier(),
-		BonusCoefficient: spellCoeff,
+		BonusCoefficient: roundCoef(aoeRow.Direct.BonusCoefficient()),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			for _, aoeTarget := range sim.Encounter.TargetUnits {
@@ -172,18 +171,19 @@ func (shaman *Shaman) newMagmaTotemSpellConfig(rank int) core.SpellConfig {
 	})
 
 	spell := core.SpellConfig{
-		SpellCode:   SpellCode_ShamanMagmaTotem,
-		ActionID:    core.ActionID{SpellID: spellId},
-		SpellSchool: core.SpellSchoolFire,
-		DefenseType: core.DefenseTypeMagic,
-		ProcMask:    core.ProcMaskEmpty,
-		Flags:       SpellFlagTotem | core.SpellFlagAPL,
+		SpellCode:      SpellCode_ShamanMagmaTotem,
+		ClassSpellMask: SpellMaskMagmaTotem,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskEmpty,
+		Flags:          SpellFlagTotem | core.SpellFlagAPL,
 
 		RequiredLevel: level,
 		Rank:          rank,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost:   manaCost,
+			FlatCost:   float64(row.Cost),
 			Multiplier: shaman.totemManaMultiplier(),
 		},
 
@@ -223,13 +223,13 @@ func (shaman *Shaman) newMagmaTotemSpellConfig(rank int) core.SpellConfig {
 // Forever has no Fire Nova Totem: its spell ids are gone from the beta client, and the Fire Nova the spellbook
 // teaches in its place is the caster-centred nova, a 10 sec cooldown that bursts on every nearby enemy at once.
 // Mana costs and levels are the totem's; damage and the 0.214 coefficient are the beta client's, scaled to level
-// 60 like Lightning Bolt's.
+// 60 like Lightning Bolt's. Spell ID, cost, cooldown, school and defense type come from the client table. Damage
+// and coefficient stay here: the table's FireNovaTriggered rows (8349...) are Classic's Fire Nova Totem blast,
+// 57-436 at 0.1/0.143, not the nova these ids cast.
 const FireNovaRanks = 5
 
-var FireNovaSpellId = [FireNovaRanks + 1]int32{0, 408341, 408342, 408343, 408344, 408345}
 var FireNovaBaseDamage = [FireNovaRanks + 1][]float64{{0, 0}, {51, 60}, {103, 117}, {182, 206}, {280, 316}, {397, 443}}
 var FireNovaSpellCoeff = [FireNovaRanks + 1]float64{0, .214, .214, .214, .214, .214}
-var FireNovaManaCost = [FireNovaRanks + 1]float64{0, 95, 170, 280, 395, 520}
 var FireNovaLevel = [FireNovaRanks + 1]int{0, 12, 22, 32, 42, 52}
 
 func (shaman *Shaman) registerFireNovaSpell() {
@@ -246,27 +246,27 @@ func (shaman *Shaman) registerFireNovaSpell() {
 }
 
 func (shaman *Shaman) newFireNovaSpellConfig(rank int, cdTimer *core.Timer) core.SpellConfig {
-	spellId := FireNovaSpellId[rank]
+	row := spellData.FireNova.ByRank(int32(rank))
 	baseDamageLow := FireNovaBaseDamage[rank][0]
 	baseDamageHigh := FireNovaBaseDamage[rank][1]
 	spellCoeff := FireNovaSpellCoeff[rank]
-	cooldown := time.Second*10 - shaman.improvedFireNovaCooldownReduction()
-	manaCost := FireNovaManaCost[rank]
+	cooldown := row.Cooldown - shaman.improvedFireNovaCooldownReduction()
 	level := FireNovaLevel[rank]
 
 	return core.SpellConfig{
-		SpellCode:   SpellCode_ShamanFireNova,
-		ActionID:    core.ActionID{SpellID: spellId},
-		SpellSchool: core.SpellSchoolFire,
-		DefenseType: core.DefenseTypeMagic,
-		ProcMask:    core.ProcMaskSpellDamage,
-		Flags:       SpellFlagShaman | core.SpellFlagAPL,
+		SpellCode:      SpellCode_ShamanFireNova,
+		ClassSpellMask: SpellMaskFireNova,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          SpellFlagShaman | core.SpellFlagAPL,
 
 		RequiredLevel: level,
 		Rank:          rank,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 
 		Cast: core.CastConfig{

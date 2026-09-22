@@ -6,8 +6,8 @@ import (
 
 const SwipeRanks = 5
 
-var SwipeSpellId = [SwipeRanks + 1]int32{0, 779, 780, 769, 9754, 9908}
-var SwipeBaseDamage = [SwipeRanks + 1]float64{0, 18, 25, 36, 60, 83}
+// The id, cost and damage come from the client table (see wrath.go). The client does not carry threat, so the
+// multiplier below stays ours.
 var SwipeLevel = [SwipeRanks + 1]int{0, 16, 24, 34, 44, 54}
 
 // See https://www.wowhead.com/classic/spell=436895/s03-tuning-and-overrides-passive-druid
@@ -23,10 +23,10 @@ func (druid *Druid) registerSwipeBearSpell() {
 	}[druid.Level]
 
 	level := SwipeLevel[rank]
-	spellID := SwipeSpellId[rank]
-	baseDamage := SwipeBaseDamage[rank]
+	row := spellData.Swipe.ByRank(int32(rank))
+	baseDamage, _ := row.Direct.Range()
 
-	rageCost := 20 - float64(druid.Talents.Ferocity)
+	rageCost := float64(row.Cost) - float64(druid.Talents.Ferocity)
 	numHits := min(3, druid.Env.GetNumTargets())
 	results := make([]*core.SpellResult, numHits)
 
@@ -36,12 +36,13 @@ func (druid *Druid) registerSwipeBearSpell() {
 	}
 
 	druid.SwipeBear = druid.RegisterSpell(Bear, core.SpellConfig{
-		SpellCode:   SpellCode_DruidSwipe,
-		ActionID:    core.ActionID{SpellID: spellID},
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
-		ProcMask:    core.ProcMaskMeleeMHSpecial,
-		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
+		SpellCode:      SpellCode_DruidSwipe,
+		ClassSpellMask: SpellMaskSwipe,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskMeleeMHSpecial,
+		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
 
 		Rank:          rank,
 		RequiredLevel: level,

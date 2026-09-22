@@ -1,8 +1,6 @@
 package paladin
 
 import (
-	"time"
-
 	"github.com/wowsims/classic/sim/core"
 )
 
@@ -16,15 +14,21 @@ func (paladin *Paladin) registerSwiftJudgement() {
 
 	actionID := core.ActionID{SpellID: 53671}
 
+	freeMod := paladin.AddDynamicMod(core.SpellModConfig{
+		Kind:       core.SpellMod_PowerCost_Pct_Add,
+		ClassMask:  SpellMaskJudgement,
+		FloatValue: -1,
+	})
+
 	freeJudgementAura := paladin.RegisterAura(core.Aura{
 		Label:    "Swift Judgement",
 		ActionID: actionID,
 		Duration: core.NeverExpires,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
-			paladin.judgement.Cost.Multiplier -= 100
+			freeMod.Activate()
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-			paladin.judgement.Cost.Multiplier += 100
+			freeMod.Deactivate()
 		},
 		OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
 			if spell == paladin.judgement {
@@ -37,10 +41,11 @@ func (paladin *Paladin) registerSwiftJudgement() {
 		ActionID: actionID,
 		Flags:    core.SpellFlagNoOnCastComplete | core.SpellFlagAPL,
 
+		// The cooldown comes from the client table (1310994); the id stays ours.
 		Cast: core.CastConfig{
 			CD: core.Cooldown{
 				Timer:    paladin.NewTimer(),
-				Duration: time.Minute * 1,
+				Duration: spellData.SwiftJudgement.ByRank(1).Cooldown,
 			},
 		},
 

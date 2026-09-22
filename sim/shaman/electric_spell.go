@@ -1,8 +1,7 @@
 package shaman
 
 import (
-	"time"
-
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
@@ -17,24 +16,27 @@ const (
 	ThunderfallTotem         = 45255
 )
 
-// Shared precomputation logic for LB and CL.
-func (shaman *Shaman) newElectricSpellConfig(actionID core.ActionID, baseCost float64, baseCastTime time.Duration) core.SpellConfig {
+// Shared precomputation logic for LB and CL. Cost, cast time, missile speed, school, defense type and
+// coefficient come from the client table row; the caller builds the action id from it, where
+// spell_sources_test.go can read it.
+func (shaman *Shaman) newElectricSpellConfig(actionID core.ActionID, row shared.SpellData) core.SpellConfig {
 	spell := core.SpellConfig{
 		ActionID:     actionID,
-		SpellSchool:  core.SpellSchoolNature,
-		DefenseType:  core.DefenseTypeMagic,
+		SpellSchool:  row.SpellSchool,
+		DefenseType:  row.DefenseType,
 		ProcMask:     core.ProcMaskSpellDamage,
 		Flags:        SpellFlagShaman | SpellFlagLightning | core.SpellFlagAPL,
 		MetricSplits: 6,
+		MissileSpeed: row.MissileSpeed,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost:   baseCost,
+			FlatCost:   float64(row.Cost),
 			Multiplier: 100 - 2*shaman.Talents.Convection,
 		},
 
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
-				CastTime: baseCastTime - shaman.elementalAlacrityReduction(),
+				CastTime: row.CastTime - shaman.elementalAlacrityReduction(),
 				GCD:      core.GCDDefault,
 			},
 			ModifyCast: func(sim *core.Simulation, spell *core.Spell, cast *core.Cast) {
@@ -47,6 +49,7 @@ func (shaman *Shaman) newElectricSpellConfig(actionID core.ActionID, baseCost fl
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
+		BonusCoefficient: roundCoef(row.Direct.BonusCoefficient()),
 	}
 
 	return spell

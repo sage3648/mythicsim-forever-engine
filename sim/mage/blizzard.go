@@ -4,17 +4,20 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
 const BlizzardRanks = 6
 
-var BlizzardSpellId = [BlizzardRanks + 1]int32{0, 10, 6141, 8427, 10185, 10186, 10187}
 // Beta client 1.60.1.69893. Forever's Blizzard is an area trigger that casts a damage spell every
 // second (1279976 ... 1279949), 8 times; these are 8 times that spell's base. The coefficient below
 // is the damage spell's, per tick; the parent spell's dummy effect carries 0.03, which is not used.
+//
+// Spell ID, cost, ticks and the coefficient come from the client table. The damage does not: the
+// table's tick reads 43/63/88/115 for ranks 2-5 where ours is 42/62/87/114 (rank 1 and 6 agree), and
+// until that is settled ours stands.
 var BlizzardBaseDamage = [BlizzardRanks + 1]float64{0, 192, 336, 496, 696, 912, 1168}
-var BlizzardManaCost = [BlizzardRanks + 1]float64{0, 320, 520, 720, 935, 1160, 1400}
 var BlizzardLevel = [BlizzardRanks + 1]int{0, 20, 28, 36, 44, 52, 60}
 
 func (mage *Mage) registerBlizzardSpell() {
@@ -30,15 +33,10 @@ func (mage *Mage) registerBlizzardSpell() {
 }
 
 func (mage *Mage) newBlizzardSpellConfig(rank int) core.SpellConfig {
-	numTicks := int32(8)
-	tickLength := time.Second * 1
-
-	spellId := BlizzardSpellId[rank]
-	baseDamage := BlizzardBaseDamage[rank] / float64(numTicks)
-	manaCost := BlizzardManaCost[rank]
+	row := spellData.Blizzard.ByRank(int32(rank))
+	periodic := row.Periodic.(shared.SpellDataPeriodic)
+	baseDamage := BlizzardBaseDamage[rank] / float64(periodic.NumberOfTicks)
 	level := BlizzardLevel[rank]
-
-	spellCoeff := .042
 
 	var improvedBlizzardProcApplication *core.Spell
 	if mage.Talents.ImprovedBlizzard > 0 {
@@ -61,9 +59,9 @@ func (mage *Mage) newBlizzardSpellConfig(rank int) core.SpellConfig {
 	}
 
 	return core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: spellId},
-		SpellSchool: core.SpellSchoolFrost,
-		DefenseType: core.DefenseTypeMagic,
+		ActionID:    core.ActionID{SpellID: row.SpellID},
+		SpellSchool: row.SpellSchool,
+		DefenseType: row.DefenseType,
 		ProcMask:    core.ProcMaskSpellDamage,
 		Flags:       SpellFlagMage | core.SpellFlagChanneled | core.SpellFlagAPL,
 
@@ -71,7 +69,7 @@ func (mage *Mage) newBlizzardSpellConfig(rank int) core.SpellConfig {
 		Rank:          rank,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -84,9 +82,9 @@ func (mage *Mage) newBlizzardSpellConfig(rank int) core.SpellConfig {
 			Aura: core.Aura{
 				Label: fmt.Sprintf("Blizzard (Rank %d)", rank),
 			},
-			NumberOfTicks:    numTicks,
-			TickLength:       tickLength,
-			BonusCoefficient: spellCoeff,
+			NumberOfTicks:    periodic.NumberOfTicks,
+			TickLength:       periodic.TickLength,
+			BonusCoefficient: roundCoef(periodic.Coef),
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
 				dot.Snapshot(target, baseDamage, isRollover)
 			},

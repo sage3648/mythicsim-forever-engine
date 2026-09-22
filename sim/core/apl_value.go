@@ -117,6 +117,12 @@ func (rot *APLRotation) newAPLValue(config *proto.APLValue) APLValue {
 		return rot.newValueTimeToEnergyTick(config.GetTimeToEnergyTick())
 	case *proto.APLValue_EnergyThreshold:
 		return rot.newValueEnergyThreshold(config.GetEnergyThreshold())
+	case *proto.APLValue_MaxComboPoints:
+		return rot.newValueMaxComboPoints(config.GetMaxComboPoints())
+	case *proto.APLValue_MaxEnergy:
+		return rot.newValueMaxEnergy(config.GetMaxEnergy())
+	case *proto.APLValue_MaxRage:
+		return rot.newValueMaxRage(config.GetMaxRage())
 
 	// Stats
 	case *proto.APLValue_CurrentAttackPower:
@@ -157,12 +163,16 @@ func (rot *APLRotation) newAPLValue(config *proto.APLValue) APLValue {
 		return rot.newValueSpellChanneledTicks(config.GetSpellChanneledTicks())
 	case *proto.APLValue_SpellCurrentCost:
 		return rot.newValueSpellCurrentCost(config.GetSpellCurrentCost())
+	case *proto.APLValue_SpellFullCooldown:
+		return rot.newValueSpellFullCooldown(config.GetSpellFullCooldown())
 
 	// Auras
 	case *proto.APLValue_AuraIsKnown:
 		return rot.newValueAuraIsKnown(config.GetAuraIsKnown())
 	case *proto.APLValue_AuraIsActive:
 		return rot.newValueAuraIsActive(config.GetAuraIsActive())
+	case *proto.APLValue_AuraIsInactive:
+		return rot.newValueAuraIsInactive(config.GetAuraIsInactive())
 	case *proto.APLValue_AuraIsActiveWithReactionTime:
 		return rot.newValueAuraIsActiveWithReactionTime(config.GetAuraIsActiveWithReactionTime())
 	case *proto.APLValue_AuraRemainingTime:
@@ -175,12 +185,16 @@ func (rot *APLRotation) newAPLValue(config *proto.APLValue) APLValue {
 		return rot.newValueAuraICDIsReadyWithReactionTime(config.GetAuraIcdIsReadyWithReactionTime())
 	case *proto.APLValue_AuraShouldRefresh:
 		return rot.newValueAuraShouldRefresh(config.GetAuraShouldRefresh())
+	case *proto.APLValue_AuraDuration:
+		return rot.newValueAuraDuration(config.GetAuraDuration())
 
 	// Dots
 	case *proto.APLValue_DotIsActive:
 		return rot.newValueDotIsActive(config.GetDotIsActive())
 	case *proto.APLValue_DotRemainingTime:
 		return rot.newValueDotRemainingTime(config.GetDotRemainingTime())
+	case *proto.APLValue_DotTimeToNextTick:
+		return rot.newValueDotTimeToNextTick(config.GetDotTimeToNextTick())
 
 	// Sequences
 	case *proto.APLValue_SequenceIsComplete:
@@ -193,6 +207,14 @@ func (rot *APLRotation) newAPLValue(config *proto.APLValue) APLValue {
 	// Properties
 	case *proto.APLValue_ChannelClipDelay:
 		return rot.newValueChannelClipDelay(config.GetChannelClipDelay())
+
+	// Variables and groups
+	case *proto.APLValue_VariableRef:
+		return rot.newValueVariableRef(config.GetVariableRef())
+	case *proto.APLValue_VariablePlaceholder:
+		return rot.newValueVariablePlaceholder(config.GetVariablePlaceholder())
+	case *proto.APLValue_ActionGroupUsed:
+		return rot.newValueActionGroupUsed(config.GetActionGroupUsed())
 
 	default:
 		return nil

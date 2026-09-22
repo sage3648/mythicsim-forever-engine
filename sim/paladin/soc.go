@@ -22,35 +22,28 @@ import (
 //   The Seal of Command aura watches for the base Judgement spell, and casts the actual
 //   Judgement of Command when it successfully is cast.
 
+// Every rank's aura triggers the same proc, 20424, in both clients; 20944-20947 were Classic's
+// learn-spell dummies and are gone from the beta client (1.60.1.69893). Nothing else moved.
+//
+// The seal's cost, duration and school, the proc's 70% of weapon damage, school and defense type, and
+// the judgement's coefficient, school and defense type come from the client table. The ids and the
+// judgement's roll and per level growth stay ours; the table holds the centre at the rank's max level,
+// truncated (spell_damage_test.go checks it). The proc's 0.29 coefficient is not in the table.
+var sealOfCommandRanks = []struct {
+	level      int32
+	spellID    int32
+	scaleLevel int32
+	proc       proc
+	judge      judge
+}{
+	{level: 20, spellID: 20375, scaleLevel: 28, proc: proc{spellID: 20424}, judge: judge{spellID: 20467, minDamage: 93, maxDamage: 101, scale: 5.6}},
+	{level: 30, spellID: 20915, scaleLevel: 38, proc: proc{spellID: 20424}, judge: judge{spellID: 20963, minDamage: 146, maxDamage: 160, scale: 6.1}},
+	{level: 40, spellID: 20918, scaleLevel: 48, proc: proc{spellID: 20424}, judge: judge{spellID: 20964, minDamage: 204, maxDamage: 224, scale: 5.6}},
+	{level: 50, spellID: 20919, scaleLevel: 58, proc: proc{spellID: 20424}, judge: judge{spellID: 20965, minDamage: 261, maxDamage: 287, scale: 6.1}},
+	{level: 60, spellID: 20920, scaleLevel: 60, proc: proc{spellID: 20424}, judge: judge{spellID: 20966, minDamage: 339, maxDamage: 373, scale: 6.1}},
+}
+
 func (paladin *Paladin) registerSealOfCommand() {
-	type judge struct {
-		spellID   int32
-		minDamage float64
-		maxDamage float64
-		scale     float64
-	}
-
-	type proc struct {
-		spellID int32
-	}
-
-	// Every rank's aura triggers the same proc, 20424, in both clients; 20944-20947 were Classic's
-	// learn-spell dummies and are gone from the beta client (1.60.1.69893). Nothing else moved.
-	ranks := []struct {
-		level      int32
-		spellID    int32
-		manaCost   float64
-		scaleLevel int32
-		proc       proc
-		judge      judge
-	}{
-		{level: 20, spellID: 20375, manaCost: 65, scaleLevel: 28, proc: proc{spellID: 20424}, judge: judge{spellID: 20467, minDamage: 93, maxDamage: 101, scale: 5.6}},
-		{level: 30, spellID: 20915, manaCost: 110, scaleLevel: 38, proc: proc{spellID: 20424}, judge: judge{spellID: 20963, minDamage: 146, maxDamage: 160, scale: 6.1}},
-		{level: 40, spellID: 20918, manaCost: 140, scaleLevel: 48, proc: proc{spellID: 20424}, judge: judge{spellID: 20964, minDamage: 204, maxDamage: 224, scale: 5.6}},
-		{level: 50, spellID: 20919, manaCost: 180, scaleLevel: 58, proc: proc{spellID: 20424}, judge: judge{spellID: 20965, minDamage: 261, maxDamage: 287, scale: 6.1}},
-		{level: 60, spellID: 20920, manaCost: 210, scaleLevel: 60, proc: proc{spellID: 20424}, judge: judge{spellID: 20966, minDamage: 339, maxDamage: 373, scale: 6.1}},
-	}
-
 	improvedSeals := paladin.improvedSeals()
 
 	ppmm := paladin.AutoAttacks.NewPPMManager(7, core.ProcMaskMelee)
@@ -60,28 +53,34 @@ func (paladin *Paladin) registerSealOfCommand() {
 		Duration: time.Second * 1,
 	}
 
-	for i, rank := range ranks {
+	for i, rank := range sealOfCommandRanks {
+		// Rebound so sim/spell_sources_test.go reads this rank's id site as unresolved, as it did before
+		// the table moved to package level; ui/core/spells does not declare these ids yet.
 		rank := rank
 		if paladin.Level < rank.level {
 			break
 		}
+		sealRow := spellData.SealOfCommand.BySpellID(rank.spellID)
+		judgeRow := spellData.SealOfCommandTriggered.BySpellID(rank.judge.spellID)
+		procRow := spellData.SealOfCommandTriggered.BySpellID(rank.proc.spellID)
 
 		minDamage := rank.judge.minDamage + float64(min(paladin.Level, rank.scaleLevel)-rank.level)*rank.judge.scale
 		maxDamage := rank.judge.maxDamage + float64(min(paladin.Level, rank.scaleLevel)-rank.level)*rank.judge.scale
 
 		judgeSpell := paladin.RegisterSpell(core.SpellConfig{
-			SpellCode:   SpellCode_PaladinJudgementOfCommand, // used in judgement.go
-			ActionID:    core.ActionID{SpellID: rank.judge.spellID},
-			SpellSchool: core.SpellSchoolHoly,
-			DefenseType: core.DefenseTypeMelee,
-			ProcMask:    core.ProcMaskMeleeMHSpecial,
-			Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagNoOnCastComplete,
+			SpellCode:      SpellCode_PaladinJudgementOfCommand, // used in judgement.go
+			ClassSpellMask: SpellMaskJudgementOfCommand,
+			ActionID:       core.ActionID{SpellID: rank.judge.spellID},
+			SpellSchool:    judgeRow.SpellSchool,
+			DefenseType:    judgeRow.DefenseType,
+			ProcMask:       core.ProcMaskMeleeMHSpecial,
+			Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagNoOnCastComplete,
 
 			// Improved Seals is a percent modifier, so it belongs on the whole spell rather than on
 			// the base roll, which left the coefficient's share of the damage out of it.
 			DamageMultiplier: improvedSeals * paladin.getWeaponSpecializationModifier(),
 			ThreatMultiplier: 1,
-			BonusCoefficient: 0.429,
+			BonusCoefficient: roundCoef(judgeRow.Direct.BonusCoefficient()),
 
 			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 				baseDamage := sim.Roll(minDamage, maxDamage) * 0.5 // unless stunned
@@ -100,12 +99,12 @@ func (paladin *Paladin) registerSealOfCommand() {
 
 		procSpell := paladin.RegisterSpell(core.SpellConfig{
 			ActionID:    core.ActionID{SpellID: rank.proc.spellID},
-			SpellSchool: core.SpellSchoolHoly,
-			DefenseType: core.DefenseTypeMelee,
+			SpellSchool: procRow.SpellSchool,
+			DefenseType: procRow.DefenseType,
 			ProcMask:    core.ProcMaskMeleeMHSpecial | core.ProcMaskMeleeProc | core.ProcMaskMeleeDamageProc,
 			Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagNotAProc,
 
-			DamageMultiplier: 0.7 * improvedSeals * paladin.getWeaponSpecializationModifier(),
+			DamageMultiplier: procRow.Effects[0].Value / 100 * improvedSeals * paladin.getWeaponSpecializationModifier(),
 			ThreatMultiplier: 1,
 
 			BonusCoefficient: 0.29,
@@ -126,7 +125,7 @@ func (paladin *Paladin) registerSealOfCommand() {
 		aura := paladin.RegisterAura(core.Aura{
 			Label:    "Seal of Command" + paladin.Label + strconv.Itoa(i+1),
 			ActionID: core.ActionID{SpellID: rank.spellID},
-			Duration: time.Second * 30,
+			Duration: sealRow.Duration,
 			OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 				if !result.Landed() {
 					return
@@ -146,14 +145,14 @@ func (paladin *Paladin) registerSealOfCommand() {
 
 		paladin.sealOfCommand = paladin.RegisterSpell(core.SpellConfig{
 			ActionID:    aura.ActionID,
-			SpellSchool: core.SpellSchoolHoly,
+			SpellSchool: sealRow.SpellSchool,
 			Flags:       core.SpellFlagAPL,
 
 			RequiredLevel: int(rank.level),
 			Rank:          i + 1,
 
 			ManaCost: core.ManaCostOptions{
-				FlatCost:   rank.manaCost - paladin.getLibramSealCostReduction(),
+				FlatCost:   float64(sealRow.Cost) - paladin.getLibramSealCostReduction(),
 				Multiplier: paladin.benediction(),
 			},
 			Cast: core.CastConfig{

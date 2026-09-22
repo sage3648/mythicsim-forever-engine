@@ -1,21 +1,17 @@
 package shaman
 
 import (
-	"time"
-
 	"github.com/wowsims/classic/sim/core"
 )
 
 // The talent teaches rank 1 and the spellbook adds ranks 2 and 3 at 50 and 60. Everything here is the beta
-// client's: a 2.5 sec cast, a 10 sec cooldown, flat mana costs, the full 0.714 coefficient and 20% more damage
-// on a target carrying the shaman's Flame Shock. Damage is scaled to level 60 like Lightning Bolt's.
+// client's: a 2.5 sec cast, a 10 sec cooldown, flat mana costs, the full 0.714 coefficient, a speed 20 missile
+// and 20% more damage on a target carrying the shaman's Flame Shock. All but the Flame Shock bonus and the
+// damage (scaled to level 60 like Lightning Bolt's) come from the client table.
 const LavaBurstRanks = 3
 const LavaBurstFlameShockBonus = .2
 
-var LavaBurstSpellId = [LavaBurstRanks + 1]int32{0, 408490, 1238299, 1238300}
 var LavaBurstBaseDamage = [LavaBurstRanks + 1][]float64{{0}, {105, 135}, {165, 211}, {192, 248}}
-var LavaBurstSpellCoef = [LavaBurstRanks + 1]float64{0, .714, .714, .714}
-var LavaBurstManaCost = [LavaBurstRanks + 1]float64{0, 165, 230, 265}
 var LavaBurstLevel = [LavaBurstRanks + 1]int{0, 40, 50, 60}
 
 func (shaman *Shaman) registerLavaBurstSpell() {
@@ -35,40 +31,37 @@ func (shaman *Shaman) registerLavaBurstSpell() {
 }
 
 func (shaman *Shaman) newLavaBurstSpellConfig(rank int, cdTimer *core.Timer) core.SpellConfig {
-	spellId := LavaBurstSpellId[rank]
+	row := spellData.LavaBurst.ByRank(int32(rank))
 	baseDamageLow := LavaBurstBaseDamage[rank][0]
 	baseDamageHigh := LavaBurstBaseDamage[rank][1]
-	spellCoeff := LavaBurstSpellCoef[rank]
-	manaCost := LavaBurstManaCost[rank]
 	level := LavaBurstLevel[rank]
 
-	castTime := time.Millisecond * 2500
-
 	return core.SpellConfig{
-		SpellCode:   SpellCode_ShamanLavaBurst,
-		ActionID:    core.ActionID{SpellID: spellId},
-		SpellSchool: core.SpellSchoolFire,
-		DefenseType: core.DefenseTypeMagic,
-		ProcMask:    core.ProcMaskSpellDamage,
-		Flags:       SpellFlagShaman | core.SpellFlagAPL,
+		SpellCode:      SpellCode_ShamanLavaBurst,
+		ClassSpellMask: SpellMaskLavaBurst,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          SpellFlagShaman | core.SpellFlagAPL,
 
 		RequiredLevel: level,
 		Rank:          rank,
 
-		MissileSpeed: 20,
+		MissileSpeed: row.MissileSpeed,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost:   manaCost,
+			FlatCost:   float64(row.Cost),
 			Multiplier: 100 - 2*shaman.Talents.Convection,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
-				CastTime: castTime - shaman.elementalAlacrityReduction(),
+				CastTime: row.CastTime - shaman.elementalAlacrityReduction(),
 				GCD:      core.GCDDefault,
 			},
 			CD: core.Cooldown{
 				Timer:    cdTimer,
-				Duration: time.Second * 10,
+				Duration: row.Cooldown,
 			},
 			ModifyCast: func(sim *core.Simulation, spell *core.Spell, cast *core.Cast) {
 				castTime := shaman.ApplyCastSpeedForSpell(cast.CastTime, spell)
@@ -78,7 +71,7 @@ func (shaman *Shaman) newLavaBurstSpellConfig(rank int, cdTimer *core.Timer) cor
 
 		DamageMultiplier: shaman.callOfFlameMultiplier(),
 		ThreatMultiplier: 1,
-		BonusCoefficient: spellCoeff,
+		BonusCoefficient: roundCoef(row.Direct.BonusCoefficient()),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			if shaman.hasActiveFlameShock(target) {

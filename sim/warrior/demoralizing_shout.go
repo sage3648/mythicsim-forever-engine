@@ -7,6 +7,9 @@ import (
 func (warrior *Warrior) registerDemoralizingShoutSpell() {
 	rank := int32(5)
 	actionId := core.DemoralizingShoutSpellId[rank]
+	// Cost and school come from the client table; the id stays ours (see registerHeroicStrikeSpell). The
+	// table's Magic defense type is not applied, as before.
+	row := spellData.DemoralizingShout.BySpellID(actionId)
 
 	warrior.DemoralizingShoutAuras = warrior.NewEnemyAuraArray(func(target *core.Unit) *core.Aura {
 		// Improved Demoralizing Shout is gone from the Forever tree and is baseline at full strength:
@@ -17,12 +20,12 @@ func (warrior *Warrior) registerDemoralizingShoutSpell() {
 
 	warrior.DemoralizingShout = warrior.RegisterSpell(AnyStance, core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: actionId},
-		SpellSchool: core.SpellSchoolPhysical,
+		SpellSchool: row.SpellSchool,
 		ProcMask:    core.ProcMaskEmpty,
 		Flags:       core.SpellFlagAPL | SpellFlagOffensive,
 
 		RageCost: core.RageCostOptions{
-			Cost: 10,
+			Cost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

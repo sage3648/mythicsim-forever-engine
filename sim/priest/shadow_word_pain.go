@@ -2,18 +2,27 @@ package priest
 
 import (
 	"fmt"
-	"time"
+	"math"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
+// Spell ID, cost, cast time, cooldown, coefficient, school and dot ticks of the priest's spells come
+// from the client table (spell_data_auto_gen.go, vendored from wowsims/forever). Damage ranges do not:
+// the client rolls a spread the vendored generator drops, keeping only the truncated centre (see
+// sim/mage/frostbolt.go). spell_damage_test.go checks every range kept here still contains it.
+//
+// Forever beta client 1.60.1.69893: less damage from rank 2 up, and .2 a tick at every rank.
 const ShadowWordPainRanks = 8
 
-var ShadowWordPainSpellId = [ShadowWordPainRanks + 1]int32{0, 589, 594, 970, 992, 2767, 10892, 10893, 10894}
-// Forever beta client 1.60.1.69893: less damage from rank 2 up, and .2 a tick at every rank.
-var ShadowWordPainBaseDamage = [ShadowWordPainRanks + 1]float64{0, 30, 60, 108, 180, 288, 426, 582, 762}
-var ShadowWordPainSpellCoef = [ShadowWordPainRanks + 1]float64{0, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2} // per tick
-var ShadowWordPainManaCost = [ShadowWordPainRanks + 1]float64{0, 25, 50, 95, 155, 230, 305, 385, 470}
+// The client stores .429 as a float32; the table widens it. Rounding back to the stated value keeps
+// the sim's numbers where they were (sim/mage/frostbolt.go). Every coefficient read from the table
+// goes through this.
+func roundCoef(coef float64) float64 {
+	return math.Round(coef*1e6) / 1e6
+}
+
 var ShadowWordPainLevel = [ShadowWordPainRanks + 1]int{0, 4, 10, 18, 26, 34, 42, 50, 58}
 
 //To Do: Check rollover code from runes
@@ -31,27 +40,24 @@ func (priest *Priest) registerShadowWordPainSpell() {
 }
 
 func (priest *Priest) getShadowWordPainConfig(rank int) core.SpellConfig {
-	ticks := int32(6)
-
-	spellId := ShadowWordPainSpellId[rank]
-	baseDotDamage := ShadowWordPainBaseDamage[rank] / float64(ticks)
-	spellCoeff := ShadowWordPainSpellCoef[rank]
-	manaCost := ShadowWordPainManaCost[rank]
+	row := spellData.ShadowWordPain.ByRank(int32(rank))
+	periodic := row.Periodic.(shared.SpellDataPeriodic)
 	level := ShadowWordPainLevel[rank]
 
 	return core.SpellConfig{
-		SpellCode:   SpellCode_PriestShadowWordPain,
-		ActionID:    core.ActionID{SpellID: spellId},
-		SpellSchool: core.SpellSchoolShadow,
-		DefenseType: core.DefenseTypeMagic,
-		ProcMask:    core.ProcMaskSpellDamage,
-		Flags:       SpellFlagPriest | core.SpellFlagAPL | core.SpellFlagPureDot,
+		SpellCode:      SpellCode_PriestShadowWordPain,
+		ClassSpellMask: SpellMaskShadowWordPain,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          SpellFlagPriest | core.SpellFlagAPL | core.SpellFlagPureDot,
 
 		RequiredLevel: level,
 		Rank:          rank,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -67,12 +73,12 @@ func (priest *Priest) getShadowWordPainConfig(rank int) core.SpellConfig {
 				Label: fmt.Sprintf("Shadow Word: Pain (Rank %d)", rank),
 			},
 
-			NumberOfTicks:    ticks + (priest.Talents.ImprovedShadowWordPain),
-			TickLength:       time.Second * 3,
-			BonusCoefficient: spellCoeff,
+			NumberOfTicks:    periodic.NumberOfTicks + (priest.Talents.ImprovedShadowWordPain),
+			TickLength:       periodic.TickLength,
+			BonusCoefficient: roundCoef(periodic.Coef),
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.Snapshot(target, baseDotDamage, isRollover)
+				dot.Snapshot(target, periodic.Tick, isRollover)
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeTick)

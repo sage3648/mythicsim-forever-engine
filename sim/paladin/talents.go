@@ -89,11 +89,14 @@ func (paladin *Paladin) applyRedoubt() {
 	// 10% ProcChance the spell carries, the way a spell's own number is always the top rank's.
 	blockBonus := 6.0 * float64(paladin.Talents.Redoubt) * core.BlockRatingPerBlockChance
 
+	// Duration and charges come from the client table (20128); the id stays ours.
+	redoubtRow := spellData.RedoubtTriggered.ByRank(1)
+
 	paladin.redoubtAura = paladin.RegisterAura(core.Aura{
 		Label:     "Redoubt",
 		ActionID:  core.ActionID{SpellID: 20134},
-		Duration:  time.Second * 10,
-		MaxStacks: 5,
+		Duration:  redoubtRow.Duration,
+		MaxStacks: redoubtRow.ProcCharges,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			paladin.AddStatDynamic(sim, stats.Block, blockBonus)
 		},
@@ -116,7 +119,7 @@ func (paladin *Paladin) applyRedoubt() {
 		ProcChance: 0.02 * float64(paladin.Talents.Redoubt),
 		Handler: func(sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 			paladin.redoubtAura.Activate(sim)
-			paladin.redoubtAura.SetStacks(sim, 5)
+			paladin.redoubtAura.SetStacks(sim, redoubtRow.ProcCharges)
 		},
 	})
 }
@@ -233,7 +236,7 @@ func (paladin *Paladin) applyVengeance() {
 	procAura := paladin.RegisterAura(core.Aura{
 		Label:     "Vengeance Proc",
 		ActionID:  core.ActionID{SpellID: 20059},
-		Duration:  time.Second * 30,
+		Duration:  spellData.VengeanceTriggered.ByRank(1).Duration, // the client table (20050); the id stays ours
 		MaxStacks: 5,
 		OnStacksChange: func(aura *core.Aura, sim *core.Simulation, oldStacks int32, newStacks int32) {
 			multiplier := (1 + perStack*float64(newStacks)) / (1 + perStack*float64(oldStacks))
@@ -270,7 +273,7 @@ func (paladin *Paladin) applyVindication() {
 	vindicationAura := paladin.RegisterAura(core.Aura{
 		Label:    "Vindication Proc",
 		ActionID: core.ActionID{SpellID: 26021},
-		Duration: time.Second * 30,
+		Duration: spellData.VindicationTriggered.ByRank(1).Duration, // the client table (440667); the id stays ours
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			paladin.EnableDynamicStatDep(sim, attackPowerMultiplier)
 		},

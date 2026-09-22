@@ -20,32 +20,34 @@ func (hunter *Hunter) registerSniperShotSpell() {
 	} else if hunter.Level >= 48 {
 		rank = 2
 	}
-	spellId := [4]int32{0, 1310687, 1310785, 1310786}[rank]
-	flatDamageBonus := [4]float64{0, 160, 225, 295}[rank]
+	// Everything but the missile speed comes from the client table (see aimed_shot.go).
+	row := spellData.SniperShot.ByRank(int32(rank))
+	flatDamageBonus, _ := row.Direct.Range()
 
 	hunter.SniperShot = hunter.RegisterSpell(core.SpellConfig{
-		SpellCode:    SpellCode_HunterSniperShot,
-		ActionID:     core.ActionID{SpellID: spellId},
-		Rank:         rank,
-		SpellSchool:  core.SpellSchoolPhysical,
-		DefenseType:  core.DefenseTypeRanged,
-		ProcMask:     core.ProcMaskRangedSpecial,
-		Flags:        core.SpellFlagMeleeMetrics | core.SpellFlagAPL | SpellFlagShot,
-		CastType:     proto.CastType_CastTypeRanged,
-		MissileSpeed: 24,
+		SpellCode:      SpellCode_HunterSniperShot,
+		ClassSpellMask: SpellMaskSniperShot,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		Rank:           rank,
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskRangedSpecial,
+		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagAPL | SpellFlagShot,
+		CastType:       proto.CastType_CastTypeRanged,
+		MissileSpeed:   24,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: 365,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
 				GCD: core.GCDDefault,
 				// The client's 4 sec plus the sim's 0.5 sec shot wind-up, as for Aimed Shot.
-				CastTime: time.Millisecond * 4500,
+				CastTime: row.CastTime + time.Millisecond*500,
 			},
 			CD: core.Cooldown{
 				Timer:    hunter.NewTimer(),
-				Duration: time.Second * 15,
+				Duration: row.Cooldown,
 			},
 			ModifyCast: func(sim *core.Simulation, spell *core.Spell, cast *core.Cast) {
 				cast.CastTime = spell.CastTime()
@@ -64,7 +66,7 @@ func (hunter *Hunter) registerSniperShotSpell() {
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
-		BonusCoefficient: 1,
+		BonusCoefficient: roundCoef(row.Direct.BonusCoefficient()),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := hunter.AutoAttacks.Ranged().CalculateNormalizedWeaponDamage(sim, spell.RangedAttackPower(target, false)) +

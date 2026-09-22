@@ -96,16 +96,16 @@ func (warrior *Warrior) applyWeaponmaster() {
 		warrior.AddStat(stats.MeleeCrit, 1*core.CritRatingPerCritChance*float64(points))
 	case core.ProcMaskMeleeMH:
 		warrior.AddStat(stats.MeleeCrit, 1*core.CritRatingPerCritChance*float64(points))
-		warrior.OnSpellRegistered(func(spell *core.Spell) {
-			if spell.ProcMask.Matches(core.ProcMaskMeleeOH) {
-				spell.BonusCritRating -= 1 * core.CritRatingPerCritChance * float64(points)
-			}
+		warrior.AddStaticMod(core.SpellModConfig{
+			Kind:       core.SpellMod_BonusCrit_Percent,
+			ProcMask:   core.ProcMaskMeleeOH,
+			FloatValue: -1 * float64(points),
 		})
 	case core.ProcMaskMeleeOH:
-		warrior.OnSpellRegistered(func(spell *core.Spell) {
-			if spell.ProcMask.Matches(core.ProcMaskMeleeOH) {
-				spell.BonusCritRating += 1 * core.CritRatingPerCritChance * float64(points)
-			}
+		warrior.AddStaticMod(core.SpellModConfig{
+			Kind:       core.SpellMod_BonusCrit_Percent,
+			ProcMask:   core.ProcMaskMeleeOH,
+			FloatValue: 1 * float64(points),
 		})
 	}
 }
@@ -210,19 +210,20 @@ func (warrior *Warrior) applyDualWieldSpecialization() {
 	}
 
 	multiplier := 1 + 0.05*float64(points)
-	bonusHit := 2 * core.MeleeHitRatingPerHitChance * float64(points)
 
 	warrior.AddOffHandDealtRageMultiplier(1 + 0.2*float64(points))
 
+	// The damage part stays a handler: it only hits off-hand spells with a BonusCoefficient,
+	// which no mod filter can express.
 	warrior.OnSpellRegistered(func(spell *core.Spell) {
-		if !spell.ProcMask.Matches(core.ProcMaskMeleeOH) {
-			return
-		}
-
-		if spell.BonusCoefficient > 0 {
+		if spell.ProcMask.Matches(core.ProcMaskMeleeOH) && spell.BonusCoefficient > 0 {
 			spell.DamageMultiplier *= multiplier
 		}
-		spell.BonusHitRating += bonusHit
+	})
+	warrior.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_BonusHit_Percent,
+		ProcMask:   core.ProcMaskMeleeOH,
+		FloatValue: 2 * float64(points),
 	})
 }
 
@@ -409,11 +410,10 @@ func (warrior *Warrior) applyFocusedRage() {
 		return
 	}
 
-	discount := warrior.Talents.FocusedRage
-	warrior.OnSpellRegistered(func(spell *core.Spell) {
-		if spell.Flags.Matches(SpellFlagOffensive) && spell.Cost != nil {
-			spell.Cost.FlatModifier -= discount
-		}
+	warrior.AddStaticMod(core.SpellModConfig{
+		Kind:      core.SpellMod_PowerCost_Flat,
+		SpellFlag: SpellFlagOffensive,
+		IntValue:  -warrior.Talents.FocusedRage,
 	})
 }
 
@@ -422,12 +422,14 @@ func (warrior *Warrior) registerDeathWishCD() {
 		return
 	}
 
-	actionID := core.ActionID{SpellID: 12328}
+	// Forever beta client 1.60.1.69893: id, cost, cooldown and duration come from the client table.
+	row := spellData.DeathWish.ByRank(1)
+	actionID := core.ActionID{SpellID: row.SpellID}
 
 	deathWishAura := warrior.RegisterAura(core.Aura{
 		Label:    "Death Wish",
 		ActionID: actionID,
-		Duration: time.Second * 30,
+		Duration: row.Duration,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			warrior.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexPhysical] *= 1.2
 			warrior.PseudoStats.DamageTakenMultiplier *= 1.05
@@ -443,7 +445,7 @@ func (warrior *Warrior) registerDeathWishCD() {
 		ActionID: actionID,
 		Flags:    core.SpellFlagHelpful,
 		RageCost: core.RageCostOptions{
-			Cost: 10,
+			Cost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			IgnoreHaste: true,
@@ -452,7 +454,7 @@ func (warrior *Warrior) registerDeathWishCD() {
 			},
 			CD: core.Cooldown{
 				Timer:    warrior.NewTimer(),
-				Duration: time.Minute * 3,
+				Duration: row.Cooldown,
 			},
 		},
 
@@ -472,14 +474,17 @@ func (warrior *Warrior) registerLastStandCD() {
 		return
 	}
 
-	actionID := core.ActionID{SpellID: 12975}
+	// Forever beta client 1.60.1.69893: id, cooldown (10 min in Classic) and duration come from the
+	// client table.
+	row := spellData.LastStand.ByRank(1)
+	actionID := core.ActionID{SpellID: row.SpellID}
 	healthMetrics := warrior.NewHealthMetrics(actionID)
 
 	var bonusHealth float64
 	lastStandAura := warrior.RegisterAura(core.Aura{
 		Label:    "Last Stand",
 		ActionID: actionID,
-		Duration: time.Second * 20,
+		Duration: spellData.LastStandTriggered.ByRank(1).Duration,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			bonusHealth = warrior.MaxHealth() * 0.3
 			warrior.AddStatsDynamic(sim, stats.Stats{stats.Health: bonusHealth})
@@ -496,7 +501,7 @@ func (warrior *Warrior) registerLastStandCD() {
 		Cast: core.CastConfig{
 			CD: core.Cooldown{
 				Timer:    warrior.NewTimer(),
-				Duration: time.Minute * 3, // 10 min in Classic
+				Duration: row.Cooldown,
 			},
 		},
 

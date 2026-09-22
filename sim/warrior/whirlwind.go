@@ -1,8 +1,6 @@
 package warrior
 
 import (
-	"time"
-
 	"github.com/wowsims/classic/sim/core"
 )
 
@@ -16,16 +14,21 @@ func (warrior *Warrior) registerWhirlwindSpell() {
 		whirlwindOh = warrior.registerWhirlwindOffHandSpell()
 	}
 
+	// Forever beta client 1.60.1.69893: id, cost, cooldown, school, defense type and coefficient come
+	// from the client table.
+	row := spellData.Whirlwind.ByRank(1)
+
 	warrior.Whirlwind = warrior.RegisterSpell(BerserkerStance, core.SpellConfig{
-		SpellCode:   SpellCode_WarriorWhirlwind,
-		ActionID:    core.ActionID{SpellID: 1680},
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
-		ProcMask:    core.ProcMaskMeleeMHSpecial,
-		Flags:       core.SpellFlagAPL | SpellFlagOffensive,
+		SpellCode:      SpellCode_WarriorWhirlwind,
+		ClassSpellMask: SpellMaskWhirlwind,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskMeleeMHSpecial,
+		Flags:          core.SpellFlagAPL | SpellFlagOffensive,
 
 		RageCost: core.RageCostOptions{
-			Cost: 25,
+			Cost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -34,14 +37,14 @@ func (warrior *Warrior) registerWhirlwindSpell() {
 			IgnoreHaste: true,
 			CD: core.Cooldown{
 				Timer:    warrior.NewTimer(),
-				Duration: time.Second * 10,
+				Duration: row.Cooldown,
 			},
 		},
 		CritDamageBonus: warrior.impale(),
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1.25,
-		BonusCoefficient: 1,
+		BonusCoefficient: row.Direct.BonusCoefficient(),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			mhTarget := target

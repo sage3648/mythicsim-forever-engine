@@ -1,44 +1,43 @@
 package shaman
 
 import (
-	"time"
-
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 )
 
 const FrostbrandWeaponRanks = 5
 
-// Forever beta client values for Frostbrand Attack, scaled to level 60 like Lightning Bolt's.
-var FrostbrandWeaponSpellId = [FrostbrandWeaponRanks + 1]int32{0, 8033, 8038, 10456, 16355, 16356}
+// Forever beta client values for Frostbrand Attack: the imbue's id and the attack's damage, 0.1 coefficient,
+// school, defense type and 8 sec slow come from the client table. Only rank 5 is registered.
 var FrostbrandWeaponEnchantId = [FrostbrandWeaponRanks + 1]int32{0, 2, 12, 524, 1667, 1668}
-var FrostbrandWeaponBaseDamage = [FrostbrandWeaponRanks + 1]float64{0, 45, 72, 117, 159, 169}
 var FrostbrandWeaponLevel = [FrostbrandWeaponRanks + 1]int32{0, 20, 28, 38, 48, 58}
 
 func (shaman *Shaman) FrostbrandDebuffAura(target *core.Unit) *core.Aura {
 	rank := int32(5)
-	spellId := FrostbrandWeaponSpellId[rank]
+	row := spellData.FrostbrandWeapon.ByRank(rank)
 
 	return target.GetOrRegisterAura(core.Aura{
 		Label:    "Frostbrand Attack-" + shaman.Label,
-		ActionID: core.ActionID{SpellID: spellId},
-		Duration: time.Second * 8,
+		ActionID: core.ActionID{SpellID: row.SpellID},
+		Duration: spellData.FrostbrandWeaponTriggered.ByRank(rank).Duration,
 	})
 }
 
 func (shaman *Shaman) newFrostbrandImbueSpell() *core.Spell {
 	rank := int32(5)
-	spellId := FrostbrandWeaponSpellId[rank]
-	baseDamage := FrostbrandWeaponBaseDamage[rank]
+	row := spellData.FrostbrandWeapon.ByRank(rank)
+	attackRow := spellData.FrostbrandWeaponTriggered.ByRank(rank)
+	baseDamage := attackRow.Direct.(shared.SpellDataFlat).Value
 
 	return shaman.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: spellId},
-		SpellSchool: core.SpellSchoolFrost,
-		DefenseType: core.DefenseTypeMagic,
+		ActionID:    core.ActionID{SpellID: row.SpellID},
+		SpellSchool: attackRow.SpellSchool,
+		DefenseType: attackRow.DefenseType,
 		ProcMask:    core.ProcMaskSpellDamageProc,
 
 		DamageMultiplier: []float64{1, 1.05, 1.1, 1.15}[shaman.Talents.ElementalWeapons],
 		ThreatMultiplier: 1,
-		BonusCoefficient: 0.1,
+		BonusCoefficient: roundCoef(attackRow.Direct.BonusCoefficient()),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)

@@ -1,8 +1,6 @@
 package warrior
 
 import (
-	"time"
-
 	"github.com/wowsims/classic/sim/core"
 )
 
@@ -11,14 +9,16 @@ func (warrior *Warrior) registerBerserkerRageSpell() {
 		return
 	}
 
-	actionID := core.ActionID{SpellID: 18499}
+	// Forever beta client 1.60.1.69893: id, cooldown and duration come from the client table.
+	row := spellData.BerserkerRage.ByRank(1)
+	actionID := core.ActionID{SpellID: row.SpellID}
 	rageMetrics := warrior.NewRageMetrics(actionID)
 	instantRage := 5 * float64(warrior.Talents.ImprovedBerserkerRage)
 
 	warrior.BerserkerRageAura = warrior.RegisterAura(core.Aura{
 		Label:    "Berserker Rage",
 		ActionID: actionID,
-		Duration: time.Second * 10,
+		Duration: row.Duration,
 
 		OnSpellHitTaken: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 			if !result.Landed() || result.Damage <= 0 {
@@ -49,7 +49,7 @@ func (warrior *Warrior) registerBerserkerRageSpell() {
 			IgnoreHaste: true,
 			CD: core.Cooldown{
 				Timer:    warrior.NewTimer(),
-				Duration: time.Second * 30,
+				Duration: row.Cooldown,
 			},
 		},
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {

@@ -1,16 +1,18 @@
 package druid
 
 import (
-	"time"
-
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 	"github.com/wowsims/classic/sim/core/stats"
 )
 
 // Generates 20 Rage over 10 sec, but reduces base armor by 27% while it lasts. Forever adds 10 Rage up front
-// (beta client 1.60.1.69893, effect 1 of 5229).
+// (beta client 1.60.1.69893, effect 1 of 5229). The id, duration, cooldown and rage tick schedule come from the client
+// table (see wrath.go); its 20 a tick is in tenths of Rage, so the 2 stays ours.
 func (druid *Druid) registerEnrageSpell() {
-	actionID := core.ActionID{SpellID: 5229}
+	row := spellData.Enrage.ByRank(1)
+	energize := row.Energize.(shared.SpellDataPeriodic)
+	actionID := core.ActionID{SpellID: row.SpellID}
 	rageMetrics := druid.NewRageMetrics(actionID)
 
 	armorMultiplier := 1 - 0.27
@@ -18,7 +20,7 @@ func (druid *Druid) registerEnrageSpell() {
 	druid.EnrageAura = druid.RegisterAura(core.Aura{
 		Label:    "Enrage",
 		ActionID: actionID,
-		Duration: time.Second * 10,
+		Duration: row.Duration,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			druid.ApplyDynamicEquipScaling(sim, stats.Armor, armorMultiplier)
 		},
@@ -34,7 +36,7 @@ func (druid *Druid) registerEnrageSpell() {
 		Cast: core.CastConfig{
 			CD: core.Cooldown{
 				Timer:    druid.NewTimer(),
-				Duration: time.Minute,
+				Duration: row.Cooldown,
 			},
 			IgnoreHaste: true,
 		},
@@ -45,8 +47,8 @@ func (druid *Druid) registerEnrageSpell() {
 			}
 
 			core.StartPeriodicAction(sim, core.PeriodicActionOptions{
-				NumTicks: 10,
-				Period:   time.Second,
+				NumTicks: int(energize.NumberOfTicks),
+				Period:   energize.TickLength,
 				OnAction: func(sim *core.Simulation) {
 					if druid.EnrageAura.IsActive() {
 						druid.AddRage(sim, 2, rageMetrics)

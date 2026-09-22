@@ -57,6 +57,7 @@ jobs:
           head -c 60000 "docs/data-changes/$day.md" > /tmp/body.md   # PR bodies cap at 65536 chars
 
       - name: Open or update the Wowhead data pull request
+        id: wpr
         if: steps.cmp.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v7
         with:
@@ -69,6 +70,13 @@ jobs:
           title: "Wowhead Forever data changed (${{ steps.cmp.outputs.day }})"
           body-path: /tmp/body.md
           labels: data-change
+
+      # Snapshot + report only (never db.bin or sim rules), so merge straight away.
+      - name: Merge the Wowhead data pull request
+        if: steps.wpr.outputs.pull-request-number
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr merge ${{ steps.wpr.outputs.pull-request-number }} --squash --delete-branch --repo ${{ github.repository }}
 
   client:
     runs-on: ubuntu-latest
@@ -102,6 +110,7 @@ jobs:
           head -c 60000 "$out" > /tmp/client_body.md
 
       - name: Open or update the client data pull request
+        id: cpr
         if: steps.build.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v7
         with:
@@ -114,3 +123,10 @@ jobs:
           title: "Forever client build ${{ steps.build.outputs.latest }}"
           body-path: /tmp/client_body.md
           labels: data-change
+
+      # Snapshot + report only (never db.bin or sim rules), so merge straight away.
+      - name: Merge the client data pull request
+        if: steps.cpr.outputs.pull-request-number
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr merge ${{ steps.cpr.outputs.pull-request-number }} --squash --delete-branch --repo ${{ github.repository }}

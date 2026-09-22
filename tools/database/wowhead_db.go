@@ -150,6 +150,9 @@ type WowheadStats struct {
 	DodgeRating    int32 `json:"dodgertng"`
 	BlockRating    int32 `json:"blockrtng"`
 	ParryRating    int32 `json:"parryrtng"`
+	HasteRating    int32 `json:"hastertng"`
+	// Rating per 1% less chance to be dodged or parried.
+	ExpertiseRating int32 `json:"exprtng"`
 
 	// Present in the Classic dump but never mapped before, and Forever uses the rating form.
 	SpellCrit int32 `json:"splcritstrkpct"`
@@ -170,6 +173,12 @@ const (
 	dodgeRatingPerPercent = 12.0
 	blockRatingPerPercent = 5.0
 	parryRatingPerPercent = 15.0
+	// Haste and expertise have no item carrying both a Classic percentage and the Forever
+	// rating, so they cannot be measured the way the others were. Taken instead from the
+	// official wowsims/forever repo's client-generated constants (CombatRatings), which also
+	// give exactly the five factors above - an independent check on those as well.
+	hasteRatingPerPercent     = 10.0
+	expertiseRatingPerPercent = 10.0 // 2.5 per quarter-percent
 )
 
 func statsOf(ws WowheadStats) Stats {
@@ -192,6 +201,9 @@ func statsOf(ws WowheadStats) Stats {
 		proto.Stat_StatMeleeHit:          float64(ws.MeleeHit) + float64(ws.HitRating)/hitRatingPerPercent,
 		proto.Stat_StatSpellHit:          float64(ws.SpellHit) + float64(ws.HitRating)/hitRatingPerPercent,
 		proto.Stat_StatParry:             float64(ws.Parry) + float64(ws.ParryRating)/parryRatingPerPercent,
+		proto.Stat_StatMeleeHaste:        float64(ws.HasteRating) / hasteRatingPerPercent,
+		proto.Stat_StatSpellHaste:        float64(ws.HasteRating) / hasteRatingPerPercent,
+		proto.Stat_StatExpertise:         float64(ws.ExpertiseRating) / expertiseRatingPerPercent,
 		proto.Stat_StatMP5:               float64(ws.MP5),
 		proto.Stat_StatAttackPower:       float64(ws.AttackPower + ws.AttackPowerAlt),
 		proto.Stat_StatRangedAttackPower: float64(ws.RangedAttackPower),
@@ -449,6 +461,9 @@ var foreverExpressible = []proto.Stat{
 	proto.Stat_StatBlock,
 	proto.Stat_StatDodge,
 	proto.Stat_StatParry,
+	proto.Stat_StatMeleeHaste,
+	proto.Stat_StatSpellHaste,
+	proto.Stat_StatExpertise,
 	proto.Stat_StatArcaneResistance,
 	proto.Stat_StatFireResistance,
 	proto.Stat_StatFrostResistance,

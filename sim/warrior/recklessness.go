@@ -1,8 +1,6 @@
 package warrior
 
 import (
-	"time"
-
 	"github.com/wowsims/classic/sim/core"
 	"github.com/wowsims/classic/sim/core/stats"
 )
@@ -12,12 +10,14 @@ func (warrior *Warrior) RegisterRecklessnessCD() {
 		return
 	}
 
-	actionID := core.ActionID{SpellID: 1719}
+	// Forever beta client 1.60.1.69893: id, cooldown and duration come from the client table.
+	row := spellData.Recklessness.ByRank(1)
+	actionID := core.ActionID{SpellID: row.SpellID}
 
 	reckAura := warrior.RegisterAura(core.Aura{
 		Label:    "Recklessness",
 		ActionID: actionID,
-		Duration: time.Second * 15,
+		Duration: row.Duration,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			warrior.PseudoStats.DamageTakenMultiplier *= 1.2
 			warrior.AddStatDynamic(sim, stats.MeleeCrit, 100*core.CritRatingPerCritChance)
@@ -38,7 +38,7 @@ func (warrior *Warrior) RegisterRecklessnessCD() {
 			},
 			CD: core.Cooldown{
 				Timer:    warrior.NewTimer(),
-				Duration: time.Minute * 30,
+				Duration: row.Cooldown,
 			},
 		},
 

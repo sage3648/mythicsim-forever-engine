@@ -4,6 +4,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/wowsims/classic/sim/common/shared"
 	"github.com/wowsims/classic/sim/core"
 	"github.com/wowsims/classic/sim/core/stats"
 )
@@ -11,31 +12,34 @@ import (
 func (hunter *Hunter) getImmolationTrapConfig(rank int, timer *core.Timer) core.SpellConfig {
 	// Classic and Forever ids; the 4095xx ids were Season of Discovery's and are not in the beta client.
 	// Damage, cost and levels are unchanged in the beta client, only the shared cooldown moved.
-	spellId := [6]int32{0, 13795, 14302, 14303, 14304, 14305}[rank]
-	dotDamage := [6]float64{0, 105, 215, 340, 510, 690}[rank]
-	manaCost := [6]float64{0, 50, 90, 135, 190, 245}[rank]
+	// Spell ID, cost and cooldown come from the trap's row of the client table, school, defense type
+	// and the burn from its effect's (see aimed_shot.go).
+	row := spellData.ImmolationTrap.ByRank(int32(rank))
+	effect := spellData.ImmolationTrapEffect.ByRank(int32(rank))
+	periodic := effect.Periodic.(shared.SpellDataPeriodic)
 	level := [6]int{0, 16, 26, 36, 46, 56}[rank]
 
 	return core.SpellConfig{
-		SpellCode:     SpellCode_HunterImmolationTrap,
-		ActionID:      core.ActionID{SpellID: spellId},
-		SpellSchool:   core.SpellSchoolFire,
-		DefenseType:   core.DefenseTypeMagic,
-		ProcMask:      core.ProcMaskSpellDamage,
-		Flags:         core.SpellFlagAPL | core.SpellFlagPassiveSpell | SpellFlagTrap,
-		Rank:          rank,
-		RequiredLevel: level,
-		MissileSpeed:  24,
+		SpellCode:      SpellCode_HunterImmolationTrap,
+		ClassSpellMask: SpellMaskImmolationTrap,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    effect.SpellSchool,
+		DefenseType:    effect.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          core.SpellFlagAPL | core.SpellFlagPassiveSpell | SpellFlagTrap,
+		Rank:           rank,
+		RequiredLevel:  level,
+		MissileSpeed:   24,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			CD: core.Cooldown{
 				Timer: timer,
 				// Forever doubles the shared trap cooldown to 30 sec. Seen on every trap tooltip
 				// from the demo streams (Savix, Xaryu and Soda, 12-13 September).
-				Duration: core.TernaryDuration(hunter.Env.IsForever(), time.Second*30, time.Second*15),
+				Duration: core.TernaryDuration(hunter.Env.IsForever(), row.Cooldown, time.Second*15),
 			},
 			DefaultCast: core.Cast{
 				GCD: core.GCDDefault,
@@ -52,12 +56,11 @@ func (hunter *Hunter) getImmolationTrapConfig(rank int, timer *core.Timer) core.
 				Tag:   "ImmolationTrap",
 			},
 			// 5 ticks 3 sec apart in both clients (13797, 14298-14301); the sim had Season of Discovery's 1.5 sec.
-			NumberOfTicks: 5,
-			TickLength:    time.Second * 3,
+			NumberOfTicks: periodic.NumberOfTicks,
+			TickLength:    periodic.TickLength,
 
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				tickDamage := dotDamage / float64(dot.NumberOfTicks)
-				dot.Snapshot(target, tickDamage, isRollover)
+				dot.Snapshot(target, periodic.Tick, isRollover)
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeTick)

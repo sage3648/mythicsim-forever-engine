@@ -8,27 +8,27 @@ import (
 )
 
 func (hunter *Hunter) getArcaneShotConfig(rank int, timer *core.Timer) core.SpellConfig {
-	spellId := [9]int32{0, 3044, 14281, 14282, 14283, 14284, 14285, 14286, 14287}[rank]
-	baseDamage := [9]float64{0, 20, 26, 39, 65, 94, 134, 170, 217}[rank]
+	row := spellData.ArcaneShot.ByRank(int32(rank))
+	baseDamage, _ := row.Direct.Range()
 	// The beta client carries no spell power coefficient on Arcane Shot at all; Classic's stand.
 	spellCoeff := [9]float64{0, .204, .3, .429, .429, .429, .429, .429, .429}[rank]
-	manaCost := [9]float64{0, 25, 35, 50, 80, 105, 135, 160, 190}[rank]
 	level := [9]int{0, 6, 12, 20, 28, 36, 44, 52, 60}[rank]
 
 	return core.SpellConfig{
-		SpellCode:     SpellCode_HunterArcaneShot,
-		ActionID:      core.ActionID{SpellID: spellId},
-		SpellSchool:   core.SpellSchoolArcane,
-		DefenseType:   core.DefenseTypeRanged,
-		ProcMask:      core.ProcMaskRangedSpecial,
-		Flags:         core.SpellFlagMeleeMetrics | core.SpellFlagAPL | SpellFlagShot,
-		CastType:      proto.CastType_CastTypeRanged,
-		Rank:          rank,
-		RequiredLevel: level,
-		MissileSpeed:  24,
+		SpellCode:      SpellCode_HunterArcaneShot,
+		ClassSpellMask: SpellMaskArcaneShot,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskRangedSpecial,
+		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagAPL | SpellFlagShot,
+		CastType:       proto.CastType_CastTypeRanged,
+		Rank:           rank,
+		RequiredLevel:  level,
+		MissileSpeed:   24,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -37,7 +37,7 @@ func (hunter *Hunter) getArcaneShotConfig(rank int, timer *core.Timer) core.Spel
 			IgnoreHaste: true,
 			CD: core.Cooldown{
 				Timer:    timer,
-				Duration: time.Second*6 - time.Millisecond*300*time.Duration(hunter.Talents.ImprovedArcaneShot),
+				Duration: row.Cooldown - time.Millisecond*300*time.Duration(hunter.Talents.ImprovedArcaneShot),
 			},
 		},
 		ExtraCastCondition: func(sim *core.Simulation, target *core.Unit) bool {

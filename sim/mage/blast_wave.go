@@ -1,17 +1,16 @@
 package mage
 
 import (
-	"time"
-
 	"github.com/wowsims/classic/sim/core"
 )
 
 const BlastWaveRanks = 5
 
-var BlastWaveSpellId = [BlastWaveRanks + 1]int32{0, 11113, 13018, 13019, 13020, 13021}
+// Spell ID, cost, cooldown and coefficient come from the client table (see
+// frostbolt.go for why the damage does not).
+//
 // Beta client 1.60.1.69893.
 var BlastWaveBaseDamage = [BlastWaveRanks + 1][]float64{{0}, {154, 184}, {200, 239}, {276, 327}, {365, 432}, {453, 533}}
-var BlastWaveManaCost = [BlastWaveRanks + 1]float64{0, 215, 270, 355, 450, 545}
 var BlastWaveLevel = [BlastWaveRanks + 1]int{0, 30, 36, 44, 52, 60}
 
 func (mage *Mage) registerBlastWaveSpell() {
@@ -32,28 +31,25 @@ func (mage *Mage) registerBlastWaveSpell() {
 }
 
 func (mage *Mage) newBlastWaveSpellConfig(rank int, cooldownTimer *core.Timer) core.SpellConfig {
-	spellId := BlastWaveSpellId[rank]
+	row := spellData.BlastWave.ByRank(int32(rank))
 	baseDamageLow := BlastWaveBaseDamage[rank][0]
 	baseDamageHigh := BlastWaveBaseDamage[rank][1]
-	manaCost := BlastWaveManaCost[rank]
 	level := BlastWaveLevel[rank]
 
-	spellCoeff := .129
-	cooldown := time.Second * 45
-
 	return core.SpellConfig{
-		SpellCode:   SpellCode_MageBlastWave,
-		ActionID:    core.ActionID{SpellID: spellId},
-		SpellSchool: core.SpellSchoolFire,
-		DefenseType: core.DefenseTypeMagic,
-		ProcMask:    core.ProcMaskSpellDamage,
-		Flags:       SpellFlagMage | core.SpellFlagBinary | core.SpellFlagAPL,
+		SpellCode:      SpellCode_MageBlastWave,
+		ClassSpellMask: SpellMaskBlastWave,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          SpellFlagMage | core.SpellFlagBinary | core.SpellFlagAPL,
 
 		RequiredLevel: level,
 		Rank:          rank,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -61,13 +57,13 @@ func (mage *Mage) newBlastWaveSpellConfig(rank int, cooldownTimer *core.Timer) c
 			},
 			CD: core.Cooldown{
 				Timer:    cooldownTimer,
-				Duration: cooldown,
+				Duration: row.Cooldown,
 			},
 		},
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
-		BonusCoefficient: spellCoeff,
+		BonusCoefficient: roundCoef(row.Direct.BonusCoefficient()),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			for _, aoeTarget := range sim.Encounter.TargetUnits {

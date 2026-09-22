@@ -34,6 +34,32 @@ const (
 	SpellCode_DruidWrath
 )
 
+// One class mask per SpellCode_Druid*, for the SpellMod system. LacerateBleed has no SpellCode.
+const (
+	SpellMaskNone int64 = 0
+	SpellMaskClaw int64 = 1 << iota
+	SpellMaskFaerieFire
+	SpellMaskFaerieFireFeral
+	SpellMaskFerociousBite
+	SpellMaskHurricane
+	SpellMaskInsectSwarm
+	SpellMaskLacerate
+	SpellMaskMangle
+	SpellMaskMaul
+	SpellMaskMoonfire
+	SpellMaskRake
+	SpellMaskRip
+	SpellMaskShred
+	SpellMaskStarfire
+	SpellMaskSwipe
+	SpellMaskWrath
+	SpellMaskLacerateBleed
+
+	SpellMaskAll = SpellMaskLacerateBleed<<1 - SpellMaskClaw // every bit from Claw to LacerateBleed
+
+	SpellMaskBalance = SpellMaskWrath | SpellMaskStarfire | SpellMaskMoonfire | SpellMaskInsectSwarm | SpellMaskHurricane
+)
+
 type Druid struct {
 	core.Character
 	SelfBuffs

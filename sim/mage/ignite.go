@@ -59,12 +59,13 @@ func (mage *Mage) applyIgnite() {
 	// Dots can crit under the Forever ruleset, but Ignite's damage already carries the crit
 	// multiplier of the strike that lit it, so it opts out of that too.
 	mage.igniteTick = mage.RegisterSpell(core.SpellConfig{
-		SpellCode:   SpellCode_MageIgnite,
-		ActionID:    core.ActionID{SpellID: 12654},
-		SpellSchool: core.SpellSchoolFire,
-		DefenseType: core.DefenseTypeMagic,
-		ProcMask:    core.ProcMaskSpellProc,
-		Flags:       core.SpellFlagNoOnCastComplete | core.SpellFlagPassiveSpell | core.SpellFlagNoPeriodicCrit | core.SpellFlagIgnoreModifiers | SpellFlagMage,
+		SpellCode:      SpellCode_MageIgnite,
+		ClassSpellMask: SpellMaskIgnite,
+		ActionID:       core.ActionID{SpellID: 12654},
+		SpellSchool:    core.SpellSchoolFire,
+		DefenseType:    core.DefenseTypeMagic,
+		ProcMask:       core.ProcMaskSpellProc,
+		Flags:          core.SpellFlagNoOnCastComplete | core.SpellFlagPassiveSpell | core.SpellFlagNoPeriodicCrit | core.SpellFlagIgnoreModifiers | SpellFlagMage,
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,

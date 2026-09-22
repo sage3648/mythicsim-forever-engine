@@ -1,17 +1,15 @@
 package hunter
 
 import (
-	"time"
-
 	"github.com/wowsims/classic/sim/core"
 )
 
 const RaptorStrikeRanks = 8
 
-var RaptorStrikeSpellId = [RaptorStrikeRanks + 1]int32{0, 2973, 14260, 14261, 14262, 14263, 14264, 14265, 14266}
 var RaptorStrikeSpellIdMeleeSpecialist = [RaptorStrikeRanks + 1]int32{0, 415335, 415336, 415337, 415338, 415340, 415341, 415342, 415343}
-var RaptorStrikeBaseDamage = [RaptorStrikeRanks + 1]float64{0, 5, 11, 21, 30, 35, 40, 55, 70}
-var RaptorStrikeManaCost = [RaptorStrikeRanks + 1]float64{0, 10, 25, 35, 45, 55, 70, 85, 100}
+
+// Spell ID, cost, cooldown, flat damage, coefficient, school and defense type come from the client
+// table (see aimed_shot.go).
 var RaptorStrikeLevel = [RaptorStrikeRanks + 1]int{0, 1, 8, 16, 24, 32, 40, 48, 56}
 
 // Returns true if the regular melee swing should be used, false otherwise.
@@ -23,30 +21,30 @@ func (hunter *Hunter) TryRaptorStrike(sim *core.Simulation, mhSwingSpell *core.S
 }
 
 func (hunter *Hunter) getRaptorStrikeConfig(rank int) core.SpellConfig {
-	spellID := RaptorStrikeSpellId[rank]
-	manaCost := RaptorStrikeManaCost[rank]
+	row := spellData.RaptorStrike.ByRank(int32(rank))
 	level := RaptorStrikeLevel[rank]
 
 	hunter.RaptorStrikeHit = hunter.newRaptorStrikeHitSpell(rank)
 
 	spellConfig := core.SpellConfig{
-		SpellCode:     SpellCode_HunterRaptorStrike,
-		ActionID:      core.ActionID{SpellID: spellID},
-		SpellSchool:   core.SpellSchoolPhysical,
-		DefenseType:   core.DefenseTypeMelee,
-		ProcMask:      core.ProcMaskMeleeMHSpecial | core.ProcMaskMeleeMHAuto,
-		Flags:         core.SpellFlagMeleeMetrics | SpellFlagStrike,
-		Rank:          rank,
-		RequiredLevel: level,
+		SpellCode:      SpellCode_HunterRaptorStrike,
+		ClassSpellMask: SpellMaskRaptorStrike,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskMeleeMHSpecial | core.ProcMaskMeleeMHAuto,
+		Flags:          core.SpellFlagMeleeMetrics | SpellFlagStrike,
+		Rank:           rank,
+		RequiredLevel:  level,
 
 		ManaCost: core.ManaCostOptions{
-			FlatCost: manaCost,
+			FlatCost: float64(row.Cost),
 		},
 
 		Cast: core.CastConfig{
 			CD: core.Cooldown{
 				Timer:    hunter.NewTimer(),
-				Duration: time.Second * 6,
+				Duration: row.Cooldown,
 			},
 		},
 		ExtraCastCondition: func(sim *core.Simulation, target *core.Unit) bool {
@@ -66,21 +64,22 @@ func (hunter *Hunter) getRaptorStrikeConfig(rank int) core.SpellConfig {
 }
 
 func (hunter *Hunter) newRaptorStrikeHitSpell(rank int) *core.Spell {
-	spellID := RaptorStrikeSpellId[rank]
-	baseDamage := RaptorStrikeBaseDamage[rank]
+	row := spellData.RaptorStrike.ByRank(int32(rank))
+	baseDamage, _ := row.Direct.Range()
 
 	return hunter.RegisterSpell(core.SpellConfig{
-		SpellCode:   SpellCode_HunterRaptorStrikeHit,
-		ActionID:    core.ActionID{SpellID: spellID}.WithTag(1),
-		SpellSchool: core.SpellSchoolPhysical,
-		DefenseType: core.DefenseTypeMelee,
-		ProcMask:    core.ProcMaskMeleeMHSpecial,
-		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagNoOnCastComplete,
+		SpellCode:      SpellCode_HunterRaptorStrikeHit,
+		ClassSpellMask: SpellMaskRaptorStrikeHit,
+		ActionID:       core.ActionID{SpellID: row.SpellID}.WithTag(1),
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskMeleeMHSpecial,
+		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagNoOnCastComplete,
 
 		BonusCritRating:  float64(hunter.Talents.SavageStrikes) * 2 * core.CritRatingPerCritChance,
 		CritDamageBonus:  hunter.mortalShots(),
 		DamageMultiplier: 1,
-		BonusCoefficient: 1,
+		BonusCoefficient: roundCoef(row.Direct.BonusCoefficient()),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			damage := baseDamage + hunter.MHWeaponDamage(sim, spell.MeleeAttackPower(target))
@@ -110,9 +109,10 @@ func (hunter *Hunter) makeQueueSpellsAndAura() *core.Spell {
 	})
 
 	queueSpell := hunter.RegisterSpell(core.SpellConfig{
-		SpellCode: SpellCode_HunterRaptorStrike,
-		ActionID:  hunter.RaptorStrike.WithTag(3),
-		Flags:     core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
+		SpellCode:      SpellCode_HunterRaptorStrike,
+		ClassSpellMask: SpellMaskRaptorStrike,
+		ActionID:       hunter.RaptorStrike.WithTag(3),
+		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
 
 		ExtraCastCondition: func(sim *core.Simulation, target *core.Unit) bool {
 			return hunter.curQueueAura != queueAura &&

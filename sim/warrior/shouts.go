@@ -17,7 +17,8 @@ func (warrior *Warrior) newShoutSpellConfig(actionID core.ActionID, rank int32, 
 		Flags:    core.SpellFlagNoOnCastComplete | core.SpellFlagAPL | core.SpellFlagHelpful,
 
 		RageCost: core.RageCostOptions{
-			Cost: 10,
+			// Forever beta client 1.60.1.69893: the cost comes from the client table.
+			Cost: float64(spellData.BattleShout.BySpellID(actionID.SpellID).Cost),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

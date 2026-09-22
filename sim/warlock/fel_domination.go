@@ -14,21 +14,28 @@ func (warlock *Warlock) registerFelDominationCD() {
 
 	actionID := core.ActionID{SpellID: 18708}
 
+	castTimeMod := warlock.AddDynamicMod(core.SpellModConfig{
+		Kind:      core.SpellMod_CastTime_Flat,
+		ClassMask: SpellMaskSummonDemon,
+		TimeValue: -time.Millisecond * 5500,
+	})
+	costMod := warlock.AddDynamicMod(core.SpellModConfig{
+		Kind:       core.SpellMod_PowerCost_Pct_Add,
+		ClassMask:  SpellMaskSummonDemon,
+		FloatValue: -0.5,
+	})
+
 	aura := warlock.RegisterAura(core.Aura{
 		ActionID: actionID,
 		Label:    "Fel Domination",
 		Duration: time.Second * 15,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
-			for _, spell := range warlock.SummonDemonSpells {
-				spell.DefaultCast.CastTime -= time.Millisecond * 5500
-				spell.Cost.Multiplier -= 50
-			}
+			castTimeMod.Activate()
+			costMod.Activate()
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-			for _, spell := range warlock.SummonDemonSpells {
-				spell.DefaultCast.CastTime += time.Millisecond * 5500
-				spell.Cost.Multiplier += 50
-			}
+			castTimeMod.Deactivate()
+			costMod.Deactivate()
 		},
 		OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
 			if slices.Contains(warlock.SummonDemonSpells, spell) {

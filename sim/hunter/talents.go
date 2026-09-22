@@ -243,10 +243,10 @@ func (hunter *Hunter) applySurvivalTactics() {
 		return
 	}
 
-	hunter.OnSpellRegistered(func(spell *core.Spell) {
-		if spell.Flags.Matches(SpellFlagTrap) {
-			spell.BonusHitRating += 5 * float64(hunter.Talents.SurvivalTactics)
-		}
+	hunter.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_BonusHit_Percent,
+		SpellFlag:  SpellFlagTrap,
+		FloatValue: 5 * float64(hunter.Talents.SurvivalTactics),
 	})
 }
 
@@ -255,10 +255,10 @@ func (hunter *Hunter) applyCleverTraps() {
 		return
 	}
 
-	hunter.OnSpellRegistered(func(spell *core.Spell) {
-		if spell.Flags.Matches(SpellFlagTrap) {
-			spell.DamageMultiplier *= 1 + 0.15*float64(hunter.Talents.CleverTraps)
-		}
+	hunter.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_DamageDone_Pct,
+		SpellFlag:  SpellFlagTrap,
+		FloatValue: 0.15 * float64(hunter.Talents.CleverTraps),
 	})
 }
 
@@ -281,14 +281,18 @@ func (hunter *Hunter) applyEfficiency() {
 		return
 	}
 
-	hunter.OnSpellRegistered(func(spell *core.Spell) {
-		// applies to Shots, Stings and melee abilities
-		if spell.Cost == nil {
-			return
-		}
-		if spell.Flags.Matches(SpellFlagSting|SpellFlagShot) || spell.ProcMask.Matches(core.ProcMaskMeleeSpecial) {
-			spell.Cost.Multiplier -= 3 * hunter.Talents.Efficiency
-		}
+	// Applies to Shots, Stings and melee abilities. No hunter spell is both a shot/sting and a
+	// melee special, so the two mods never stack on one spell.
+	costPct := -0.03 * float64(hunter.Talents.Efficiency)
+	hunter.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_PowerCost_Pct_Add,
+		SpellFlag:  SpellFlagSting | SpellFlagShot,
+		FloatValue: costPct,
+	})
+	hunter.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_PowerCost_Pct_Add,
+		ProcMask:   core.ProcMaskMeleeSpecial,
+		FloatValue: costPct,
 	})
 }
 
@@ -299,16 +303,19 @@ func (hunter *Hunter) applyResourcefulness() {
 
 	// Client curves: 30/60% cost and a 50/100% proc chance. The buff (1242688) is 50% for 30 sec
 	// at both ranks.
-	costReduction := 30 * hunter.Talents.Resourcefulness
+	// Traps are spell damage, never melee specials, so the two mods never stack on one spell.
+	costPct := -0.3 * float64(hunter.Talents.Resourcefulness)
 	procChance := 0.5 * float64(hunter.Talents.Resourcefulness)
 
-	hunter.OnSpellRegistered(func(spell *core.Spell) {
-		if spell.Cost == nil {
-			return
-		}
-		if spell.Flags.Matches(SpellFlagTrap) || spell.ProcMask.Matches(core.ProcMaskMeleeSpecial) {
-			spell.Cost.Multiplier -= costReduction
-		}
+	hunter.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_PowerCost_Pct_Add,
+		SpellFlag:  SpellFlagTrap,
+		FloatValue: costPct,
+	})
+	hunter.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_PowerCost_Pct_Add,
+		ProcMask:   core.ProcMaskMeleeSpecial,
+		FloatValue: costPct,
 	})
 
 	procAura := hunter.RegisterAura(core.Aura{
@@ -335,10 +342,14 @@ func (hunter *Hunter) applyPredatorsEdge() {
 	critDamageBonus := 0.06 * float64(hunter.Talents.PredatorsEdge)
 	ohMultiplier := 1 + 0.1*float64(hunter.Talents.PredatorsEdge)
 
+	hunter.AddStaticMod(core.SpellModConfig{
+		Kind:        core.SpellMod_CritMultiplier_Flat,
+		DefenseType: core.DefenseTypeMelee,
+		FloatValue:  critDamageBonus,
+	})
+
+	// The off-hand half stays a handler: it keys on BonusCoefficient > 0, which no mod filter has.
 	hunter.OnSpellRegistered(func(spell *core.Spell) {
-		if spell.DefenseType == core.DefenseTypeMelee {
-			spell.CritDamageBonus += critDamageBonus
-		}
 		if spell.ProcMask.Matches(core.ProcMaskMeleeOH) && spell.BonusCoefficient > 0 {
 			spell.DamageMultiplier *= ohMultiplier
 		}

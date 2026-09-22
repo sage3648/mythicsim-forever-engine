@@ -13,9 +13,11 @@ func (druid *Druid) registerInnervateCD() {
 	}
 	innervateTargetChar := druid.Env.Raid.GetPlayerFromUnit(innervateTarget).GetCharacter()
 
-	actionID := core.ActionID{SpellID: 29166, Tag: druid.Index}
+	// The id, cost and cooldown come from the client table (see wrath.go).
+	row := spellData.Innervate.ByRank(1)
+	actionID := core.ActionID{SpellID: row.SpellID, Tag: druid.Index}
 
-	innervateCD := core.InnervateCD
+	innervateCD := row.Cooldown
 
 	innervateAura := core.InnervateAura(innervateTargetChar, actionID.Tag)
 	var innervateManaThreshold float64
@@ -39,7 +41,7 @@ func (druid *Druid) registerInnervateCD() {
 		ActionID: actionID,
 
 		ManaCost: core.ManaCostOptions{
-			BaseCost: 0.05,
+			BaseCost: row.PowerCostPct / 100,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
