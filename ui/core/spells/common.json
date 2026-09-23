@@ -195,6 +195,13 @@
 		"source": "classic",
 		"note": "Checked against the beta client (spell 16601) and unchanged from Classic Era. Forever renumbered the haste aura from 138 to 319 and changed no value."
 	},
+	"16782": {
+		"ability": "Lightning Bolt (Electrostatic Charge)",
+		"file": "sim/common/item_effects.go",
+		"source": "forever",
+		"tooltip": "Blasts a target for 50 Nature damage.",
+		"note": "Beta client: Grand Marshal's Aegis 18825 and High Warlord's Shield Wall 18826 carry Electrostatic Charge 13959, a 5% chance (SpellAuraOptions) off melee and ranged hits taken (ProcTypeMask 680) to trigger 16782, 50 Nature damage."
+	},
 	"16898": {
 		"ability": "Blaze (Blazing Rapier)",
 		"file": "sim/common/item_effects.go",

@@ -69,12 +69,3 @@ var epicPvpBonuses = map[int32]core.ApplyEffect{
 	},
 }
 
-var ItemSetWarlordsThreads = core.NewItemSet(core.ItemSet{
-	Name:    "Warlord's Threads",
-	Bonuses: epicPvpBonuses,
-})
-
-var ItemSetFieldMarshalsThreads = core.NewItemSet(core.ItemSet{
-	Name:    "Field Marshal's Threads",
-	Bonuses: epicPvpBonuses,
-})

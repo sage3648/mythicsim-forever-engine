@@ -51,10 +51,8 @@ func (paladin *Paladin) registerTemplarsBulwark() {
 			Multiplier: paladin.benediction(),
 		},
 
+		// Off the global cooldown: the client row (1311015) has no start recovery time.
 		Cast: core.CastConfig{
-			DefaultCast: core.Cast{
-				GCD: core.GCDDefault,
-			},
 			IgnoreHaste: true,
 			CD: core.Cooldown{
 				Timer:    paladin.NewTimer(),

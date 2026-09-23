@@ -234,6 +234,8 @@ func (hunter *Hunter) registerIntimidationCD() {
 	})
 }
 
+// Mortal Shots' class mask (client 19485) is Auto Shot, Aimed, Arcane and Multi-Shot, Serpent Sting and
+// Volley. Not Sniper Shot, and no melee strike: Raptor Strike, Mongoose Bite and Wing Clip don't get it.
 func (hunter *Hunter) mortalShots() float64 {
 	return 0.06 * float64(hunter.Talents.MortalShots)
 }

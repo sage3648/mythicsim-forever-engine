@@ -149,3 +149,24 @@ func TestLadderUnnamedEffectOnMultiEffectTalentPanics(t *testing.T) {
 	}()
 	talentLadder().ValueAt(3)
 }
+
+// Client values the helper has to reproduce: Blizzard's top tick per bracket (1279978 at 40, 1279979
+// at 50, 1279949 at 60), a rank past its cap, and Feint's negative threat (1966 at 25, 8637 at 50).
+func TestLevelScaled(t *testing.T) {
+	for _, c := range []struct {
+		base, perLevel              float64
+		spellLevel, maxLevel, level int32
+		want                        float64
+	}{
+		{62, 0.2, 36, 41, 40, 62},
+		{87, 0.3, 44, 49, 50, 88},
+		{146, 0.4, 60, 65, 60, 146},
+		{42, 0.2, 28, 33, 60, 43},
+		{-750, -5, 16, 26, 25, -795},
+		{-1950, -5, 40, 50, 50, -2000},
+	} {
+		if got := LevelScaled(c.base, c.perLevel, c.spellLevel, c.maxLevel, c.level); got != c.want {
+			t.Errorf("LevelScaled(%v, %v, %d, %d, %d) = %v, want %v", c.base, c.perLevel, c.spellLevel, c.maxLevel, c.level, got, c.want)
+		}
+	}
+}

@@ -1,6 +1,7 @@
 name: Watch Forever game data
 
-# Two upstreams, polled 4x a day. Each opens (or updates) ONE pull request when it moves. Neither regenerates
+# Two upstreams, polled 4x a day. Each opens (or updates) ONE pull request per branch (master and forever-next;
+# schedules only run from the default branch, so this copy serves both) when it moves. Neither regenerates
 # db.bin or touches sim rules: deciding what a data change means for the sim is review work. Merging to master
 # publishes Pages via deploy.yml.
 #
@@ -25,11 +26,17 @@ concurrency:
 jobs:
   wowhead:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        base: [master, forever-next]
     env:
       SOURCE_URL: https://nether.wowhead.com/forever/data/gear-planner?dv=100
       SNAPSHOT: assets/db_inputs/wowhead_forever_gearplanner.txt
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.base }}
 
       - name: Fetch Wowhead's Forever data
         run: |
@@ -61,13 +68,14 @@ jobs:
         if: steps.cmp.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v7
         with:
-          branch: data/wowhead-forever
+          branch: data/${{ matrix.base }}/wowhead-forever
+          base: ${{ matrix.base }}
           delete-branch: true
           add-paths: |
             ${{ env.SNAPSHOT }}
             docs/data-changes/*.md
           commit-message: "data: Wowhead Forever data changed (${{ steps.cmp.outputs.day }})"
-          title: "Wowhead Forever data changed (${{ steps.cmp.outputs.day }})"
+          title: "Wowhead Forever data changed (${{ steps.cmp.outputs.day }}, ${{ matrix.base }})"
           body-path: /tmp/body.md
           labels: data-change
 
@@ -80,10 +88,16 @@ jobs:
 
   client:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        base: [master, forever-next]
     env:
       BUILD_FILE: assets/db_inputs/forever_client_build.txt
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.base }}
 
       - name: Newest Forever client build on wago.tools
         id: build
@@ -114,13 +128,14 @@ jobs:
         if: steps.build.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v7
         with:
-          branch: data/forever-client
+          branch: data/${{ matrix.base }}/forever-client
+          base: ${{ matrix.base }}
           delete-branch: true
           add-paths: |
             ${{ env.BUILD_FILE }}
             docs/data-changes/*-client-*.md
           commit-message: "data: Forever client build ${{ steps.build.outputs.latest }}"
-          title: "Forever client build ${{ steps.build.outputs.latest }}"
+          title: "Forever client build ${{ steps.build.outputs.latest }} (${{ matrix.base }})"
           body-path: /tmp/client_body.md
           labels: data-change
 

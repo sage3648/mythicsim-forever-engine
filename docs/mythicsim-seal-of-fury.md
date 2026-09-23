@@ -29,8 +29,9 @@ The resource effect uses 1314104. At level 60 against level 63 this is 87 mana p
 ## Implementation and experimental assumptions
 
 - A landed white melee hit fires the proc, following the existing Righteousness trigger pattern.
-  The proc cannot independently miss and uses the same melee crit table and weapon
-  specialization modifier as Righteousness. Both procs have identical client
+  The proc cannot independently miss and uses the same melee
+  crit handling as Righteousness. Physical weapon specialization does not increase Holy damage.
+  Both procs have identical client
   `SpellMisc` attribute flags and `SpellCategories.DefenseType = 2`. Exact special-attack
   and secondary proc-chain eligibility still need combat-log verification.
 - Absorb strength uses damage after mitigation and Improved Seals. A new proc replaces
@@ -58,3 +59,21 @@ pass against the replacement engine. Never force-sync over the fork's commits.
 Validation: `go test -tags=with_db ./sim/paladin/...`. Focused tests cover partial/break/expiry/
 replacement/reset, talent and attacker-level mana, real Fury/Judgement damage, no shield,
 no incoming attacks, and Righteousness isolation.
+
+## Upstream refresh, 2026-09-23
+
+Integrated ElliotWood/Forever `fd35fbc046b4beb2850fdbc32f13fad62489391e` while retaining
+the published MythicSim history and this downstream patch. Upstream still has no Fury implementation.
+
+- Adapted Fury to the new Twist of Light callback registry; its banked proc still fires once.
+- Matched the upstream judgement correction: Fury judgement ranks have client DefenseType 2
+  and No Active Defense (SpellMisc Attributes_0 2424832), identical to Righteousness. They
+  roll melee hit/crit without dodge, parry or block. Source: cached client 1.60.1.69913
+  SpellCategories and SpellMisc rows.
+- Removed physical weapon specialization from Fury's Holy proc, matching the upstream seal fix.
+- Kept MythicSim release entries and all Fury spell metadata alongside upstream corrections.
+- Restricted upstream's automatic branch promotion and auto-merge jobs to ElliotWood/Forever.
+  They target that repository's staging/deployment flow, not the maintained MythicSim fork.
+
+Upstream's 1.60.1.69977 data report records no changes to the simulated client tables
+relative to 1.60.1.69913. Shield replacement and proc eligibility remain experimental as above.

@@ -93,11 +93,11 @@ func (unit *Unit) EnableRageBar(options RageBarOptions) {
 				if result.Outcome.Matches(OutcomeDodge | OutcomeParry) {
 					return
 				}
-				weapon := unit.AutoAttacks.MH()
 				if spell.ProcMask == ProcMaskMeleeOHAuto {
-					weapon = unit.AutoAttacks.OH()
+					generatedRage = ForeverWhiteHitRage(unit.AutoAttacks.OH()) * ForeverOffHandRageFactor
+				} else {
+					generatedRage = ForeverWhiteHitRage(unit.AutoAttacks.MH())
 				}
-				generatedRage = ForeverWhiteHitRage(weapon)
 			} else {
 				damage := result.Damage
 				if result.Outcome.Matches(OutcomeDodge | OutcomeParry) {
@@ -128,8 +128,17 @@ func (unit *Unit) EnableRageBar(options RageBarOptions) {
 			if unit.GetCurrentPowerBar() != RageBar {
 				return
 			}
-			rageConversionDamageTaken := GetRageConversion(spell.Unit.Level)
-			generatedRage := result.Damage * 2.5 / rageConversionDamageTaken
+			var generatedRage float64
+			if sim.IsForever() {
+				if !result.Landed() || result.ResistanceMultiplier == 0 {
+					return
+				}
+				// See ForeverDamageTakenRage: the factor still needs an in-game test (f9f9f21883).
+				generatedRage = ForeverDamageTakenRage(result.RawDamage(), unit.MaxHealth())
+			} else {
+				// Kalgan: c is the conversion at the rage user's own level (230.6 at 60), not the attacker's.
+				generatedRage = result.Damage * 2.5 / GetRageConversion(unit.Level)
+			}
 			generatedRage *= unit.rageBar.damageTakenMultiplier
 			generatedRage += unit.rageBar.flatDamageTakenBonusRage
 			unit.AddRage(sim, generatedRage, rageFromDamageTakenMetrics)

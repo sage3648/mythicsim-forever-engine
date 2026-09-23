@@ -14,8 +14,7 @@ const StarshardsTicks = 6
 var StarshardsTickSpellId = [StarshardsRanks + 1]int32{0, 19350, 19351, 19352, 19353, 19354, 19355, 19356}
 
 // Forever beta client 1.60.1.69893, about double Classic's, at .167 a tick for every rank. Spell ID,
-// cost, school, tick, tick count and coefficient come from the client table. Its 30 sec cooldown is not
-// used: ours has never had one.
+// cost, school, tick, tick count, coefficient and the 30 sec cooldown come from the client table.
 var StarshardsLevel = [StarshardsRanks + 1]int{0, 10, 18, 26, 34, 42, 50, 58}
 
 func (priest *Priest) registerStarshardsSpell() {
@@ -24,13 +23,14 @@ func (priest *Priest) registerStarshardsSpell() {
 	}
 
 	priest.Starshards = make([][]*core.Spell, StarshardsRanks+1)
+	cdTimer := priest.NewTimer()
 
 	for rank := 1; rank <= StarshardsRanks; rank++ {
 		priest.Starshards[rank] = make([]*core.Spell, StarshardsTicks+1)
 
 		var tick int32
 		for tick = 0; tick < StarshardsTicks; tick++ {
-			config := priest.newStarshardsSpellConfig(rank, tick)
+			config := priest.newStarshardsSpellConfig(rank, tick, cdTimer)
 
 			if config.RequiredLevel <= int(priest.Level) {
 				priest.Starshards[rank][tick] = priest.RegisterSpell(config)
@@ -39,7 +39,7 @@ func (priest *Priest) registerStarshardsSpell() {
 	}
 }
 
-func (priest *Priest) newStarshardsSpellConfig(rank int, tickIdx int32) core.SpellConfig {
+func (priest *Priest) newStarshardsSpellConfig(rank int, tickIdx int32, cdTimer *core.Timer) core.SpellConfig {
 	row := spellData.Starshards.ByRank(int32(rank))
 	periodic := row.Periodic.(shared.SpellDataPeriodic)
 	ticks := tickIdx
@@ -71,6 +71,10 @@ func (priest *Priest) newStarshardsSpellConfig(rank int, tickIdx int32) core.Spe
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
 				GCD: core.GCDDefault,
+			},
+			CD: core.Cooldown{
+				Timer:    cdTimer,
+				Duration: row.Cooldown,
 			},
 		},
 

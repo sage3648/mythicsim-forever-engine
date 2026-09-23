@@ -26,7 +26,7 @@ func (hunter *Hunter) getSerpentStingConfig(rank int) core.SpellConfig {
 		CastType:       proto.CastType_CastTypeRanged,
 		Rank:           rank,
 		RequiredLevel:  level,
-		MissileSpeed:   24,
+		MissileSpeed:   row.MissileSpeed,
 
 		ManaCost: core.ManaCostOptions{
 			FlatCost: float64(row.Cost),
@@ -45,6 +45,8 @@ func (hunter *Hunter) getSerpentStingConfig(rank int) core.SpellConfig {
 		// there and is not quite the linear 6/12/18 that was assumed for the ranks nobody saw.
 		// The Viper Sting cooldown and the Scorpid Sting duration are not modelled, so nothing
 		// here checks the rest of what the tree reads.
+		// Mortal Shots' class mask (client 19485) holds Serpent Sting, so its ticks' crits get it too.
+		CritDamageBonus:  hunter.mortalShots(),
 		DamageMultiplier: 1 + []float64{0, 0.06, 0.13, 0.20}[hunter.Talents.ImprovedStings],
 		ThreatMultiplier: 1,
 

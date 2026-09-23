@@ -18,6 +18,9 @@ func (warrior *Warrior) applyDeepWounds() {
 		3: 12867,
 	}[warrior.Talents.DeepWounds]
 
+	// Which hand's crit put the bleed up, per target: the tick reads that weapon.
+	offHand := map[int32]bool{}
+
 	warrior.DeepWounds = warrior.RegisterSpell(AnyStance, core.SpellConfig{
 		SpellCode:      SpellCode_WarriorDeepWounds,
 		ClassSpellMask: SpellMaskDeepWounds,
@@ -25,7 +28,7 @@ func (warrior *Warrior) applyDeepWounds() {
 		SpellSchool:    core.SpellSchoolPhysical,
 		DefenseType:    core.DefenseTypeMelee,
 		ProcMask:       core.ProcMaskEmpty,
-		Flags:          core.SpellFlagNoOnCastComplete | core.SpellFlagPassiveSpell,
+		Flags:          core.SpellFlagNoOnCastComplete | core.SpellFlagPassiveSpell | core.SpellFlagNoPeriodicCrit, // client 12162/412609: no Periodic Can Crit
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
@@ -38,8 +41,11 @@ func (warrior *Warrior) applyDeepWounds() {
 			NumberOfTicks: 4,
 			TickLength:    time.Second * 3,
 
+			// Periodic damage does not snapshot in Forever (wowsims/forever 36cfc58328): each tick reads
+			// the weapon, attack power and modifiers of the moment it lands.
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				attackTable := warrior.AttackTables[target.UnitIndex][proto.CastType_CastTypeMainHand]
+				dot.SnapshotBaseDamage = warrior.deepWoundsTick(target, offHand[target.UnitIndex])
 				dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(attackTable, true) // Double dips on attackers mods
 				dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeTick)
 			},
@@ -64,30 +70,26 @@ func (warrior *Warrior) applyDeepWounds() {
 			}
 
 			if result.Outcome.Matches(core.OutcomeCrit) {
-				warrior.procDeepWounds(sim, result.Target, spell.IsOH())
+				offHand[result.Target.UnitIndex] = spell.IsOH()
+				warrior.DeepWounds.Cast(sim, result.Target)
 			}
 		},
 	}))
 }
 
-func (warrior *Warrior) procDeepWounds(sim *core.Simulation, target *core.Unit, isOh bool) {
-	dot := warrior.DeepWounds.Dot(target)
+func (warrior *Warrior) deepWoundsTick(target *core.Unit, isOh bool) float64 {
+	ap := warrior.DeepWounds.MeleeAttackPower(target)
 
 	var awd float64
 	if isOh {
 		attackTableOh := warrior.AttackTables[target.UnitIndex][proto.CastType_CastTypeOffHand]
 		adm := warrior.AutoAttacks.OHAuto().AttackerDamageMultiplier(attackTableOh, true)
-		awd = warrior.AutoAttacks.OH().CalculateAverageWeaponDamage(dot.Spell.MeleeAttackPower(target)) * 0.5 * adm
+		awd = warrior.AutoAttacks.OH().CalculateAverageWeaponDamage(ap) * 0.5 * adm
 	} else { // MH
 		attackTableMh := warrior.AttackTables[target.UnitIndex][proto.CastType_CastTypeMainHand]
 		adm := warrior.AutoAttacks.MHAuto().AttackerDamageMultiplier(attackTableMh, true)
-		awd = warrior.AutoAttacks.MH().CalculateAverageWeaponDamage(dot.Spell.MeleeAttackPower(target)) * adm
+		awd = warrior.AutoAttacks.MH().CalculateAverageWeaponDamage(ap) * adm
 	}
 
-	newDamage := awd * 0.2 * float64(warrior.Talents.DeepWounds) // 60% of average attackers damage
-
-	dot.SnapshotBaseDamage = newDamage / 4.0 // spread over 4 ticks of the dot
-	dot.SnapshotAttackerMultiplier = 1
-
-	warrior.DeepWounds.Cast(sim, target)
+	return awd * 0.2 * float64(warrior.Talents.DeepWounds) / 4.0 // 60% of average attackers damage, spread over 4 ticks
 }

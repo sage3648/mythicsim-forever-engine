@@ -23,7 +23,7 @@ func (hunter *Hunter) registerLaceratingStrikesSpell() {
 		SpellSchool:    row.SpellSchool,
 		DefenseType:    row.DefenseType,
 		ProcMask:       core.ProcMaskEmpty,
-		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagNoOnCastComplete | core.SpellFlagPureDot,
+		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagNoOnCastComplete | core.SpellFlagPureDot | core.SpellFlagNoPeriodicCrit, // client 1310536: no Periodic Can Crit
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,

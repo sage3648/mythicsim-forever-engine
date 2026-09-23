@@ -20,8 +20,20 @@ func (warrior *Warrior) registerBerserkerRageSpell() {
 		ActionID: actionID,
 		Duration: row.Duration,
 
+		// Forever: rage from damage taken is doubled while it is up (wowsims/forever f9f9f21883; the
+		// client states no amount, they flag it for an in-game test).
+		OnGain: func(aura *core.Aura, sim *core.Simulation) {
+			if sim.IsForever() {
+				warrior.AddDamageTakenRageMultiplier(2)
+			}
+		},
+		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
+			if sim.IsForever() {
+				warrior.AddDamageTakenRageMultiplier(0.5)
+			}
+		},
 		OnSpellHitTaken: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if !result.Landed() || result.Damage <= 0 {
+			if sim.IsForever() || !result.Landed() || result.Damage <= 0 {
 				return
 			}
 

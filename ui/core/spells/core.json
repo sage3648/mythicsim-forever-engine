@@ -463,17 +463,15 @@
 		"source": "assumed",
 		"tooltip": "Instant\n3 min cooldown\nIncreases your attack power and spell power by 10% for 15 sec."
 	},
-	"460540": {
+	"1260198": {
 		"ability": "Touch of the Grave",
 		"assumptions": [
-			"\"Up to 5% of your maximum Health\" is read as a roll between half and full, the way every other ranged damage value in the sim is; the tooltip gives only the ceiling.",
 			"The drain is taken to be Shadow damage that can be partially resisted, and cannot crit."
 		],
 		"file": "sim/core/racials.go",
-		"foreverId": 460540,
-		"note": "A Forever-only undead racial that replaces Classic's Shadow Resistance; 460540 is Forever's own id and the Classic database cannot name or draw it. The tooltip is quoted from the racials guide; how the drain rolls is not published, so the roll and the resist behaviour are assumptions the beta pass has to settle.",
+		"note": "Beta client 1.60.1.69893: the passive is 1260189 for warriors, paladins and rogues (5% chance) and 1260201 for priests, mages and warlocks (10%), both with a 1 s proc cooldown; the drain, 1260198, is a health leech of 5% of the caster's maximum health. 460540 was a placeholder id.",
 		"source": "assumed",
-		"tooltip": "Passive\nYour spells and attacks have a 5% chance to drain Health from the target, up to 5% of your maximum Health."
+		"tooltip": "Passive\nYour spells and attacks have a 5% chance (10% for priests, mages and warlocks) to drain Health from the target, up to 5% of your maximum Health."
 	},
 	"460550": {
 		"ability": "Eureka!",

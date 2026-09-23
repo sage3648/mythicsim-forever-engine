@@ -24,7 +24,62 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # A preview of forever-next under /<repo>/next/, built into the same Pages artifact (one site, one
+  # deployment). It never holds up the live site: if it fails, this deploy just has no preview.
+  build-next:
+    if: github.repository == 'ElliotWood/Forever'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    timeout-minutes: 40
+    steps:
+      - name: Checkout forever-next
+        uses: actions/checkout@v5
+        with:
+          ref: forever-next
+
+      - name: Install Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
+        with:
+          version: 3.x
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Protoc Go plugin
+        run: go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+
+      - name: Install Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Install binaryen
+        run: sudo apt-get update && sudo apt-get install -y binaryen
+
+      - name: Build forever-next
+        env:
+          SITE_BASE: /${{ github.event.repository.name }}/next/
+        run: |
+          make dist/forever/.dirstamp
+          tools/site_base.sh
+
+      - name: Keep the build
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-site
+          path: dist/forever
+          retention-days: 1
+
   build-and-deploy:
+    needs: build-next
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages
@@ -89,6 +144,13 @@ jobs:
 
       - name: Add the root redirect
         run: cp deploy/root_index.html dist/index.html
+
+      - name: Add the forever-next preview
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: next-site
+          path: dist/next
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

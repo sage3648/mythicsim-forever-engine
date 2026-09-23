@@ -102,6 +102,7 @@ type WowheadRandomSuffix struct {
 }
 
 type WowheadStats struct {
+	ItemSet           int32 `json:"itemset"`
 	Armor             int32 `json:"armor"`
 	ArmorBonus        int32 `json:"armorbonus"`
 	Strength          int32 `json:"str"`
@@ -241,7 +242,8 @@ type WowheadItem struct {
 	RequiresLevel int32 `json:"requiredLevel"`
 	// uint32, not uint16: Classic's masks fit in sixteen bits but Forever's do not - it has races
 	// Classic never had, and 2097229 on item 4982 is what made the Forever dump fail to parse.
-	RaceMask  uint32 `json:"raceMask"`
+	// Signed: the 2026-09-22 dump writes -1 (every race) for item 4982.
+	RaceMask  int64  `json:"raceMask"`
 	ClassMask uint16 `json:"classMask"`
 
 	Stats               WowheadStats `json:"stats"`
@@ -436,6 +438,11 @@ func (wi WowheadItem) OverlayStats(existing []float64) []float64 {
 
 // The stats the gear-planner dumps carry a key for. Anything absent here comes from the item
 // tooltips instead and is left alone.
+//
+// School spell power is not on the list: the Forever dump prints it for suffixes and enchants
+// but for no item at all, while the client still gives items those stats (ItemSparse stat types
+// 87 and 88 on Robe of Winter Night, 88 on Felcloth Shoulders, beta 1.60.1.69893). Overlaying
+// the dump's silence zeroed them.
 var foreverExpressible = []proto.Stat{
 	proto.Stat_StatArmor,
 	proto.Stat_StatStrength,
@@ -444,12 +451,6 @@ var foreverExpressible = []proto.Stat{
 	proto.Stat_StatIntellect,
 	proto.Stat_StatSpirit,
 	proto.Stat_StatSpellPower,
-	proto.Stat_StatArcanePower,
-	proto.Stat_StatFirePower,
-	proto.Stat_StatFrostPower,
-	proto.Stat_StatHolyPower,
-	proto.Stat_StatNaturePower,
-	proto.Stat_StatShadowPower,
 	proto.Stat_StatMeleeCrit,
 	proto.Stat_StatSpellCrit,
 	proto.Stat_StatMeleeHit,

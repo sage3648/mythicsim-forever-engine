@@ -110,7 +110,7 @@ export const DefaultDebuffs = Debuffs.create({
 
 export const OtherDefaults = {
 	channelClipDelay: 100,
-	distanceFromTarget: 30,
+	distanceFromTarget: 20, // Mind Flay is 20 yd in the client
 	profession1: Profession.Alchemy,
 	profession2: Profession.Enchanting,
 };

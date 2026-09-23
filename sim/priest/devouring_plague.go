@@ -39,7 +39,7 @@ func (priest *Priest) getDevouringPlagueConfig(rank int, cdTimer *core.Timer) co
 		SpellSchool:    row.SpellSchool,
 		DefenseType:    row.DefenseType,
 		ProcMask:       core.ProcMaskSpellDamage,
-		Flags:          SpellFlagPriest | core.SpellFlagAPL | core.SpellFlagDisease | core.SpellFlagPureDot,
+		Flags:          SpellFlagPriest | core.SpellFlagAPL | core.SpellFlagDisease | core.SpellFlagPureDot | core.SpellFlagNoPeriodicCrit, // client 2944-19280: no Periodic Can Crit
 
 		Rank:          rank,
 		RequiredLevel: level,

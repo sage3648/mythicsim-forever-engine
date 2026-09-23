@@ -1,0 +1,125 @@
+name: Merge upstream
+
+# Merges wowsims/forever master into TARGET with a plain `git merge` (the shared history is the point),
+# runs Run Tests on the result, and moves TARGET only when that is green. A conflict, a refused push or a
+# red run leaves TARGET alone and opens an upstream-sync issue: resolve it by hand (client > theirs > ours),
+# PR it, and merge that PR with `gh pr merge --merge`, never squash.
+# It also keeps `official` an exact copy of wowsims/forever master, which sync_official used to do.
+#
+# Scheduled workflows run from the default branch, so this copy lives on master and targets forever-next.
+# forever-next carries a twin that targets master, for after the switch.
+#
+# Known gap: the GITHUB_TOKEN may not push commits that change .github/workflows, so an upstream workflow
+# edit always ends in an issue.
+on:
+    schedule:
+        - cron: '41 */6 * * *'
+    workflow_dispatch:
+
+permissions:
+    contents: write
+    issues: write
+    actions: write
+
+concurrency:
+    group: upstream-merge
+    cancel-in-progress: false
+
+env:
+    TARGET: forever-next
+    UPSTREAM: https://github.com/wowsims/forever.git
+
+jobs:
+    merge:
+        if: github.repository == 'ElliotWood/Forever'
+        runs-on: ubuntu-latest
+        outputs:
+            branch: ${{ steps.merge.outputs.branch }}
+        env:
+            GH_TOKEN: ${{ github.token }}
+        steps:
+            - uses: actions/checkout@v5
+              with:
+                  ref: ${{ env.TARGET }}
+                  fetch-depth: 0
+
+            - name: Mirror official
+              run: |
+                  git fetch --no-tags "$UPSTREAM" master
+                  git push --force origin FETCH_HEAD:refs/heads/official || echo "::warning::could not update official"
+
+            - name: Merge wowsims/forever master
+              id: merge
+              run: |
+                  upstream=$(git rev-parse FETCH_HEAD)
+                  short=${upstream:0:9}
+                  if git merge-base --is-ancestor "$upstream" HEAD; then
+                    echo "$TARGET already has wowsims/forever $short"; exit 0
+                  fi
+                  report() {
+                    title="upstream-sync: wowsims/forever $short into $TARGET: $1"
+                    gh label create upstream-sync --color d93f0b --description "wowsims/forever sync needs a human" 2> /dev/null || true
+                    if [ -z "$(gh issue list --label upstream-sync --state open --search "in:title \"$title\"" --json number --jq '.[0].number')" ]; then
+                      gh issue create --title "$title" --label upstream-sync \
+                        --body "$2 Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+                    fi
+                  }
+                  git config user.name "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                  if ! git merge --no-ff -m "Merge wowsims/forever master ($short) into $TARGET" "$upstream"; then
+                    files=$(git diff --name-only --diff-filter=U | tr '\n' ' ')
+                    git merge --abort
+                    report "conflicts" "Conflicts in: $files. Merge by hand: \`git fetch $UPSTREAM master && git merge FETCH_HEAD\` on $TARGET."
+                    exit 1
+                  fi
+                  branch="upstream-merge/$short"
+                  if ! git push --force origin "HEAD:refs/heads/$branch"; then
+                    report "push refused" "Most likely upstream changed a workflow file, which the GITHUB_TOKEN may not push. Merge by hand."
+                    exit 1
+                  fi
+                  echo "branch=$branch" >> "$GITHUB_OUTPUT"
+
+    tests:
+        needs: merge
+        if: needs.merge.outputs.branch
+        uses: ElliotWood/Forever/.github/workflows/run_tests.yml@forever-next
+        with:
+            ref: ${{ needs.merge.outputs.branch }}
+
+    promote:
+        needs: [merge, tests]
+        runs-on: ubuntu-latest
+        env:
+            GH_TOKEN: ${{ github.token }}
+            BRANCH: ${{ needs.merge.outputs.branch }}
+        steps:
+            - uses: actions/checkout@v5
+              with:
+                  ref: ${{ needs.merge.outputs.branch }}
+                  fetch-depth: 0
+
+            # Fast-forward only: if TARGET moved while the tests ran, this is refused and the next run merges again.
+            - name: Move ${{ env.TARGET }} to the tested merge
+              run: |
+                  git push origin "HEAD:refs/heads/$TARGET"
+                  git push origin --delete "$BRANCH"
+                  # A GITHUB_TOKEN push does not fire push workflows, so start the deploy (and its preview) by hand.
+                  gh workflow run deploy.yml --ref master
+
+    red:
+        needs: [merge, tests]
+        if: failure() && needs.merge.outputs.branch
+        runs-on: ubuntu-latest
+        env:
+            GH_TOKEN: ${{ github.token }}
+            GH_REPO: ${{ github.repository }}
+            BRANCH: ${{ needs.merge.outputs.branch }}
+        steps:
+            - name: Open an issue
+              run: |
+                  title="upstream-sync: $BRANCH is red, $TARGET not moved"
+                  gh label create upstream-sync --color d93f0b --description "wowsims/forever sync needs a human" 2> /dev/null || true
+                  if [ -z "$(gh issue list --label upstream-sync --state open --search "in:title \"$title\"" --json number --jq '.[0].number')" ]; then
+                    gh issue create --title "$title" --label upstream-sync \
+                      --body "The merge is on branch $BRANCH. Fix it there (goldens: re-bless only when the move is explained), PR it into $TARGET and merge with --merge. Run: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+                  fi

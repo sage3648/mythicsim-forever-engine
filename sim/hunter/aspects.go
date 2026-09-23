@@ -60,7 +60,7 @@ func (hunter *Hunter) getAspectOfTheHawkSpellConfig(rank int) core.SpellConfig {
 	// Deadly Aspects: 2/4/6/8/10% (client curve).
 	deadlyAspectsProcChance := 0.02 * float64(hunter.Talents.DeadlyAspects)
 
-	// The id comes from the client table. Its mana cost (20-120) is not used: ours has never had one.
+	// The id and mana cost (20-120) come from the client table.
 	levels := [8]int{0, 10, 18, 28, 38, 48, 58, 60}
 
 	row := spellData.AspectOfTheHawk.ByRank(int32(rank))
@@ -105,6 +105,9 @@ func (hunter *Hunter) getAspectOfTheHawkSpellConfig(rank int) core.SpellConfig {
 		Rank:          rank,
 		RequiredLevel: level,
 
+		ManaCost: core.ManaCostOptions{
+			FlatCost: float64(row.Cost),
+		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
 				GCD: core.GCDDefault,

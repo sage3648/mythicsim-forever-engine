@@ -90,6 +90,7 @@ func TestArena(t *testing.T) {
 		SpecOptions:        PlayerOptionsBasic,
 		Role:        arenalib.Caster,
 		Buffs:              core.ForeverBuffs,
-		DistanceFromTarget: 30,
+		// Mind Flay is 20 yd in the client (SpellRange 3).
+		DistanceFromTarget: 20,
 	})
 }

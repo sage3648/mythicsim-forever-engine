@@ -10,8 +10,8 @@ import (
 
 // Spell ID, cost, cast time, cooldown, flat damage, coefficient, school, defense type and dot ticks of
 // the hunter's spells come from the client table (spell_data_auto_gen.go, vendored from
-// wowsims/forever) wherever it agrees with what the sim had. Missile speeds do not: every shot keeps
-// the sim's 24 yd/sec. Damage ranges do not either: the table keeps only the truncated centre (see
+// wowsims/forever) wherever it agrees with what the sim had, and so do the shots' missile speeds (traps
+// keep the sim's 24 yd/sec). Damage ranges do not either: the table keeps only the truncated centre (see
 // sim/mage/frostbolt.go); spell_damage_test.go checks every range kept here still contains it.
 
 // The client stores .139 as a float32; the table widens it. Rounding back to the stated value keeps
@@ -37,7 +37,7 @@ func (hunter *Hunter) getAimedShotConfig(rank int, timer *core.Timer) core.Spell
 		CastType:       proto.CastType_CastTypeRanged,
 		Rank:           rank,
 		RequiredLevel:  level,
-		MissileSpeed:   24,
+		MissileSpeed:   row.MissileSpeed,
 
 		ManaCost: core.ManaCostOptions{
 			FlatCost: float64(row.Cost),
@@ -45,8 +45,8 @@ func (hunter *Hunter) getAimedShotConfig(rank int, timer *core.Timer) core.Spell
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
 				GCD: core.GCDDefault,
-				// The client casts 2 sec, down from Classic's 3; the sim keeps its 0.5 sec shot wind-up on top.
-				CastTime: row.CastTime + time.Millisecond*500,
+				// The client casts 2 sec, down from Classic's 3. No extra wind-up: the client has none, as for Multi-Shot.
+				CastTime: row.CastTime,
 			},
 			CD: core.Cooldown{
 				Timer:    timer,

@@ -1,8 +1,6 @@
 package hunter
 
 import (
-	"time"
-
 	"github.com/wowsims/classic/sim/common/guardians"
 	"github.com/wowsims/classic/sim/core"
 	"github.com/wowsims/classic/sim/core/proto"
@@ -163,6 +161,10 @@ func (hunter *Hunter) GetHunter() *Hunter {
 }
 
 func (hunter *Hunter) AddRaidBuffs(raidBuffs *proto.RaidBuffs) {
+	// Talent 1361 (client) teaches Trueshot Aura 19506, a party aura the hunter keeps on itself.
+	if hunter.Talents.TrueshotAura {
+		raidBuffs.TrueshotAura = true
+	}
 }
 
 func (hunter *Hunter) AddPartyBuffs(_ *proto.PartyBuffs) {
@@ -297,22 +299,9 @@ func NewHunter(character *core.Character, options *proto.Player) *Hunter {
 		AutoSwingMelee:  true,
 	})
 
-	hunter.AutoAttacks.RangedConfig().Flags |= core.SpellFlagCastTimeNoGCD
-	hunter.AutoAttacks.RangedConfig().Cast = core.CastConfig{
-		DefaultCast: core.Cast{
-			CastTime: time.Millisecond * 500,
-		},
-		ModifyCast: func(_ *core.Simulation, spell *core.Spell, cast *core.Cast) {
-			cast.CastTime = spell.CastTime()
-		},
-		IgnoreHaste: true, // Hunter GCD is locked at 1.5s
-		CastTime: func(spell *core.Spell) time.Duration {
-			return time.Duration(float64(spell.DefaultCast.CastTime) / hunter.RangedSwingSpeed())
-		},
-	}
-	hunter.AutoAttacks.RangedConfig().ExtraCastCondition = func(sim *core.Simulation, target *core.Unit) bool {
-		return !hunter.IsCasting(sim)
-	}
+	// Auto Shot has no 0.5 s wind-up cast; movement blocks it (core swing), and a hard cast still holds it
+	// through core CanCast. Upstream says casts never hold it; unconfirmed here, needs a beta log.
+	// wowsims/forever e4fd251171, "current Ranged Swing timer mechanics".
 	hunter.AutoAttacks.RangedConfig().CritDamageBonus = hunter.mortalShots()
 	hunter.AutoAttacks.RangedConfig().BonusCoefficient = 1
 	hunter.AutoAttacks.RangedConfig().ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {

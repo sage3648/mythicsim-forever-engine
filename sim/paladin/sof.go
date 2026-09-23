@@ -37,7 +37,7 @@ func (paladin *Paladin) registerSealOfFury() {
 			ActionID:         core.ActionID{SpellID: rank.judgementID},
 			SpellCode:        SpellCode_PaladinJudgementOfFury,
 			SpellSchool:      core.SpellSchoolHoly,
-			DefenseType:      core.DefenseTypeMagic,
+			DefenseType:      core.DefenseTypeMelee,
 			ProcMask:         core.ProcMaskSpellDamage,
 			Flags:            core.SpellFlagMeleeMetrics | core.SpellFlagSuppressWeaponProcs | core.SpellFlagSuppressEquipProcs | core.SpellFlagBinary,
 			DamageMultiplier: paladin.improvedSeals(),
@@ -45,7 +45,7 @@ func (paladin *Paladin) registerSealOfFury() {
 			BonusCoefficient: 0.45,
 			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 				// The encounter already assigns the tank. The engine does not model taunt swaps.
-				spell.CalcAndDealDamage(sim, target, sim.Roll(rank.judgeMin+scaling, rank.judgeMax+scaling), spell.OutcomeMagicHitAndCrit)
+				spell.CalcAndDealDamage(sim, target, sim.Roll(rank.judgeMin+scaling, rank.judgeMax+scaling), spell.OutcomeMeleeSpecialNoBlockDodgeParry)
 			},
 		})
 		proc := paladin.RegisterSpell(core.SpellConfig{
@@ -54,7 +54,7 @@ func (paladin *Paladin) registerSealOfFury() {
 			DefenseType:      core.DefenseTypeMelee,
 			ProcMask:         core.ProcMaskEmpty,
 			Flags:            core.SpellFlagMeleeMetrics | core.SpellFlagPassiveSpell | core.SpellFlagSuppressWeaponProcs | core.SpellFlagSuppressEquipProcs,
-			DamageMultiplier: paladin.improvedSeals() * paladin.getWeaponSpecializationModifier(),
+			DamageMultiplier: paladin.improvedSeals(),
 			ThreatMultiplier: 1,
 			BonusCoefficient: 0.1,
 			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
@@ -76,7 +76,7 @@ func (paladin *Paladin) registerSealOfFury() {
 				}
 			},
 		})
-		paladin.registerSealProc(aura, proc)
+		paladin.registerSealProc(aura, func(sim *core.Simulation, target *core.Unit) { proc.Cast(sim, target) })
 		paladin.aurasSoF = append(paladin.aurasSoF, aura)
 		paladin.spellsJoF = append(paladin.spellsJoF, judgement)
 		paladin.sealOfFury = paladin.RegisterSpell(core.SpellConfig{

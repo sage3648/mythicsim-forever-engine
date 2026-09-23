@@ -2,6 +2,7 @@ package shared
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/wowsims/classic/sim/core"
@@ -454,4 +455,12 @@ func withAPCoef(value SpellDataValue, coef float64, spellID, rank int32) SpellDa
 		return v
 	}
 	panic(fmt.Sprintf("spell %d rank %d has an unknown value shape %T", spellID, rank, value))
+}
+
+// A client effect's value for a caster of the given level: base + perLevel for every level past the
+// spell's, capped at its max level, floored the way the Forever server floors it (Immolate r1 lands
+// for 10 at level 5 from 8 + 0.7/level). The generated tables hold this at level 60 only, which is
+// wrong for a rank cast below its cap. The epsilon keeps 0.2*5 from flooring to 0.99...
+func LevelScaled(base, perLevel float64, spellLevel, maxLevel, level int32) float64 {
+	return math.Floor(base + perLevel*float64(min(level, maxLevel)-spellLevel) + 1e-9)
 }

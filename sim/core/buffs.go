@@ -610,13 +610,25 @@ func StoneskinTotemAura(unit *Unit, points int32) *Aura {
 	})
 }
 
+// Retribution Aura scales with the casting paladin's Holy spell power in Forever although its client
+// row carries no coefficient (EffectBonusCoefficient 0). The value is the vanilla runtime rule, 1.5 s
+// cast floor over 3.5, the AoE divisor and the 0.95 aura penalty, measured in game by wowsims/forever
+// (48dbee2620, 66658e0de7): 80 spell power on rank 1 (base 7) hits for 17-18, predicted 17.86.
+const RetributionAuraSpellPowerCoefficient = 1.5 / 3.5 / 3 * 0.95
+
 func RetributionAura(character *Character, points int32) *Aura {
-	baseDamage := 20.0
+	// Forever's rank 5 (10301) shield is 30, not Classic's 20 (client SpellEffect).
+	baseDamage := 30.0
 
 	actionID := ActionID{SpellID: 10301}
 
+	// Improved Retribution Aura modifies the effect's base points only, not the spell power part.
 	damage := float64(baseDamage) * (1 + 0.25*float64(points))
 
+	// A paladin running the raid buff is taken to be running their own aura, so it reads their Holy
+	// spell power. Another paladin's aura can't see its caster's stats and stays flat, as upstream's
+	// external variant does without its spell power input.
+	// ponytail: no input for the providing paladin's spell power; add one if non-paladin sims need it.
 	procSpell := character.RegisterSpell(SpellConfig{
 		ActionID:    actionID,
 		SpellSchool: SpellSchoolHoly,
@@ -625,6 +637,7 @@ func RetributionAura(character *Character, points int32) *Aura {
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
+		BonusCoefficient: TernaryFloat64(character.Class == proto.Class_ClassPaladin, RetributionAuraSpellPowerCoefficient, 0),
 
 		ApplyEffects: func(sim *Simulation, target *Unit, spell *Spell) {
 			spell.CalcAndDealDamage(sim, target, damage, spell.OutcomeMagicHit)

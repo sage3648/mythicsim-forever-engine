@@ -69,16 +69,6 @@
 		"source": "forever",
 		"tooltip": "10 Rage\nInstant\nThe druid roars, decreasing nearby enemies' melee attack power by 88. Lasts 30 sec."
 	},
-	"17392": {
-		"ability": "Faerie Fire (Feral)",
-		"assumptions": [
-			"The beta client 1.60.1.69893 has no Faerie Fire (Feral): 16857 and 17390-17392 are gone from the spellbook and 17392 from the spell tables. The sim keeps it with Classic's numbers because the cat and bear rotations are built around it."
-		],
-		"file": "sim/druid/faerie_fire.go",
-		"note": "Also registered as a debuff in sim/core/debuffs.go, which is where the 505 armor lives.",
-		"source": "assumed",
-		"tooltip": "Melee Range\nInstant\n6 sec cooldown\nDecreases the armor of the target by 505 for 40 sec and stops it stealthing or turning invisible. Usable in Cat Form and Bear Form, and costs no mana."
-	},
 	"17401": {
 		"ability": "Hurricane",
 		"file": "sim/druid/hurricane.go",
@@ -668,7 +658,7 @@
 	"9907": {
 		"ability": "Faerie Fire",
 		"file": "sim/druid/faerie_fire.go",
-		"note": "115 mana, 505 armor for 40 sec, all Classic's; the feral version on 17392 is the half Forever touched, by dropping its talent.",
+		"note": "115 mana, 505 armor for 40 sec, all Classic's. Forever dropped Faerie Fire (Feral) (16857, 17390-17392 are gone from the client) and lets this one be cast in Cat, Bear and Moonkin form (SpellShapeshift mask 0x40000091), so the cat and the bear cast it at its mana cost.",
 		"source": "classic"
 	},
 	"9908": {

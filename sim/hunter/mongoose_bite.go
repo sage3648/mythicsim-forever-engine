@@ -41,7 +41,6 @@ func (hunter *Hunter) getMongooseBiteConfig(rank int) core.SpellConfig {
 		},
 
 		BonusCritRating:  float64(hunter.Talents.SavageStrikes) * 2 * core.CritRatingPerCritChance,
-		CritDamageBonus:  hunter.mortalShots(),
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
 		BonusCoefficient: roundCoef(row.Direct.BonusCoefficient()),

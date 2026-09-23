@@ -26,15 +26,16 @@ func (paladin *Paladin) registerTwistOfLight() {
 			echo := paladin.sealEcho
 			paladin.sealEcho = nil
 			aura.Deactivate(sim)
-			echo.Cast(sim, result.Target)
+			echo(sim, result.Target)
 		},
 	})
 }
 
-// Called by each seal that carries an on-hit proc as it registers.
-func (paladin *Paladin) registerSealProc(seal *core.Aura, proc *core.Spell) {
+// Called by each seal that carries an on-hit proc as it registers, with what its Echo does to the
+// target of the next melee attack.
+func (paladin *Paladin) registerSealProc(seal *core.Aura, proc func(*core.Simulation, *core.Unit)) {
 	if paladin.sealProcs == nil {
-		paladin.sealProcs = make(map[*core.Aura]*core.Spell)
+		paladin.sealProcs = make(map[*core.Aura]func(*core.Simulation, *core.Unit))
 	}
 	paladin.sealProcs[seal] = proc
 }

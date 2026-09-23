@@ -190,6 +190,15 @@ func main() {
 	ApplyGlobalFilters(db)
 	AttachFactionInformation(db, wagoItems)
 	AttachItemSetIDs(db, wagoItems)
+	// Forever gave its PvP sets new items and left the old ones out of any set: the Forever client's
+	// ItemSparse has ItemSet 0 on Champion's Leather Shoulders (23258) and its planner lists no
+	// itemset, while the Classic dumps above still put them in Champion's Guard.
+	for _, foreverItem := range foreverDB.Items {
+		if item, ok := db.Items[foreverItem.ID]; ok && foreverItem.Stats.ItemSet == 0 {
+			item.SetId = 0
+			item.SetName = ""
+		}
+	}
 
 	leftovers := db.Clone()
 	ApplyNonSimmableFilters(leftovers)

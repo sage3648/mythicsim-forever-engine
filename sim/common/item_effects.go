@@ -109,6 +109,8 @@ const (
 	MarkOfTheChosen            = 17774
 	BladeOfEternalDarkness     = 17780
 	ForceReactiveDisk          = 18168
+	GrandMarshalsAegis         = 18825
+	HighWarlordsShieldWall     = 18826
 	EskhandarsLeftClaw         = 18202
 	EskhandarsRightClaw        = 18203
 	FiendishMachete            = 18310
@@ -2856,6 +2858,41 @@ func init() {
 	core.NewItemEffect(DrillborerDisk, func(agent core.Agent) {
 		thornsArcaneDamageEffect(agent, DrillborerDisk, "Drillborer Disk", 3)
 	})
+
+	// Client 18825 / 18826 (Electrostatic Charge 13959): "When struck in combat has a 5% chance of
+	// inflicting 50 Nature damage to the attacker" (16782), off melee and ranged hits taken
+	// (ProcTypeMask 680).
+	for _, itemID := range []int32{GrandMarshalsAegis, HighWarlordsShieldWall} {
+		core.NewItemEffect(itemID, func(agent core.Agent) {
+			character := agent.GetCharacter()
+
+			procSpell := character.GetOrRegisterSpell(core.SpellConfig{
+				ActionID:    core.ActionID{SpellID: 16782},
+				SpellSchool: core.SpellSchoolNature,
+				DefenseType: core.DefenseTypeMagic,
+				ProcMask:    core.ProcMaskEmpty,
+				Flags:       core.SpellFlagNoOnCastComplete | core.SpellFlagPassiveSpell,
+
+				DamageMultiplier: 1,
+				ThreatMultiplier: 1,
+
+				ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+					spell.CalcAndDealDamage(sim, target, 50, spell.OutcomeMagicHitAndCrit)
+				},
+			})
+
+			core.MakeProcTriggerAura(&character.Unit, core.ProcTrigger{
+				Name:       "Electrostatic Charge",
+				Callback:   core.CallbackOnSpellHitTaken,
+				Outcome:    core.OutcomeLanded,
+				ProcMask:   core.ProcMaskMeleeOrRanged,
+				ProcChance: 0.05,
+				Handler: func(sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
+					procSpell.Cast(sim, spell.Unit)
+				},
+			})
+		})
+	}
 
 	// https://www.wowhead.com/classic/item=18168/force-reactive-disk
 	// Equip: When the shield blocks it releases an electrical charge that damages all nearby enemies. (1s cooldown)

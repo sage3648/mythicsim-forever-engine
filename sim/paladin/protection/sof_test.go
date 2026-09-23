@@ -100,3 +100,74 @@ func TestSealOfFurySimulation(t *testing.T) {
 		})
 	}
 }
+
+// A banked Fury proc must survive the upstream change from spell pointers to callbacks.
+func TestFuryTwistOfLightEcho(t *testing.T) {
+	raw, err := os.ReadFile("testdata/seal_request.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, talented := range []bool{false, true} {
+		req := &proto.RaidSimRequest{}
+		if err := protojson.Unmarshal(raw, req); err != nil {
+			t.Fatal(err)
+		}
+		p := req.Raid.Parties[0].Players[0]
+		p.TalentsString = "--00000000000000000"
+		if talented {
+			p.TalentsString += "1"
+		}
+		req.Raid.Tanks = nil
+		req.Encounter.Duration = 20
+		req.Encounter.DurationVariation = 0
+		p.Rotation = &proto.APLRotation{}
+		// Change seals before combat, so any Fury damage must come from the banked echo.
+		if err := protojson.Unmarshal([]byte(`{"type":"TypeAPL","prepullActions":[
+   {"action":{"castSpell":{"spellId":{"spellId":20423}}},"doAtValue":{"const":{"val":"-3s"}}},
+   {"action":{"castSpell":{"spellId":{"spellId":20293}}},"doAtValue":{"const":{"val":"-1.5s"}}}
+  ]}`), p.Rotation); err != nil {
+			t.Fatal(err)
+		}
+		result := core.RunRaidSim(req)
+		if result.Error != nil {
+			t.Fatal(result.Error)
+		}
+		var hits int32
+		for _, action := range result.RaidMetrics.Parties[0].Players[0].Actions {
+			if action.Id.GetSpellId() == 20418 {
+				for _, target := range action.Targets {
+					hits += target.Hits + target.Crits
+				}
+			}
+		}
+		want := int32(0)
+		if talented {
+			want = req.SimOptions.Iterations
+		}
+		if hits != want {
+			t.Fatalf("Twist talented=%v: Fury hits=%d, want %d", talented, hits, want)
+		}
+	}
+}
+
+func TestFuryMatchesClientSealCombatRules(t *testing.T) {
+	raw, err := os.ReadFile("testdata/seal_request.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := &proto.RaidSimRequest{}
+	if err := protojson.Unmarshal(raw, req); err != nil {
+		t.Fatal(err)
+	}
+	env, _, _ := core.NewEnvironment(req.Raid, req.Encounter, proto.Ruleset_RulesetForever, false)
+	character := env.Raid.Parties[0].Players[0].GetCharacter()
+	judgement := character.GetSpell(core.ActionID{SpellID: 20414})
+	if judgement == nil || judgement.DefenseType != core.DefenseTypeMelee {
+		t.Fatal("Judgement of Fury must use the client melee defense type")
+	}
+	fury := character.GetSpell(core.ActionID{SpellID: 20418})
+	righteousness := character.GetSpell(core.ActionID{SpellID: 25713})
+	if fury == nil || righteousness == nil || fury.DamageMultiplier != righteousness.DamageMultiplier {
+		t.Fatal("Fury and Righteousness Holy procs must receive the same damage modifiers")
+	}
+}

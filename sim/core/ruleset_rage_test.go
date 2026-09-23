@@ -6,11 +6,7 @@ import (
 )
 
 // The table from issue #252, checked against the rule rather than against itself. The
-// tolerance is half a tenth because the logs record rage in tenths and so round, plus the
-// 1.5% the
-// one-hand rows sit under 3.5 x speed - which is the part of the report that does not
-// reconcile exactly and is worth failing loudly if it ever gets quietly "fixed" by a
-// second decimal place.
+// tolerance is half a tenth because the logs record rage in tenths and so round.
 func TestForeverWhiteHitRage(t *testing.T) {
 	for _, c := range []struct {
 		name      string
@@ -19,8 +15,8 @@ func TestForeverWhiteHitRage(t *testing.T) {
 		measured  float64
 		tolerance float64
 	}{
-		{"2.1s one-hand", 2.1, false, 7.25, 0.15},
-		{"2.5s one-hand", 2.5, false, 8.65, 0.15},
+		{"2.1s one-hand", 2.1, false, 7.25, 0.06},
+		{"2.5s one-hand", 2.5, false, 8.65, 0.06},
 		{"3.2s two-hand", 3.2, true, 14.4, 0.06},
 		{"3.3s two-hand", 3.3, true, 14.9, 0.06},
 		{"3.5s two-hand", 3.5, true, 15.7, 0.06},
@@ -46,6 +42,16 @@ func TestForeverWhiteHitRage(t *testing.T) {
 
 	if ForeverWhiteHitRage(nil) != 0 || ForeverWhiteHitRage(&Weapon{}) != 0 {
 		t.Error("a weapon that does not swing should not pay rage")
+	}
+}
+
+func TestForeverDamageTakenRage(t *testing.T) {
+	// 1000 pre-armor damage into 5000 health: 1000 x 10 / 5000 = 2.
+	if got := ForeverDamageTakenRage(1000, 5000); math.Abs(got-2) > 1e-9 {
+		t.Errorf("got %.3f rage, want 2", got)
+	}
+	if ForeverDamageTakenRage(1000, 0) != 0 {
+		t.Error("no health should not divide by zero")
 	}
 }
 
