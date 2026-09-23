@@ -156,10 +156,14 @@ type WowheadStats struct {
 	ExpertiseRating int32 `json:"exprtng"`
 
 	// Present in the Classic dump but never mapped before, and Forever uses the rating form.
-	SpellCrit int32 `json:"splcritstrkpct"`
-	MeleeHit  int32 `json:"mlehitpct"`
-	SpellHit  int32 `json:"splhitpct"`
-	Parry     int32 `json:"parrypct"`
+	SpellCrit int32   `json:"splcritstrkpct"`
+	MeleeHit  int32   `json:"mlehitpct"`
+	SpellHit  int32   `json:"splhitpct"`
+	Parry     int32   `json:"parrypct"`
+	DamageMin float64 `json:"dmgmin1"`
+	DamageMax float64 `json:"dmgmax1"`
+	Speed     float64 `json:"speed"`
+	MaxCount  int32   `json:"maxcount"`
 }
 
 // The gear planner writes an item's stat block and a random suffix's with the same keys, so
@@ -231,10 +235,13 @@ func (wrs WowheadRandomSuffix) ToProto() *proto.ItemRandomSuffix {
 }
 
 type WowheadItem struct {
-	ID      int32  `json:"id"`
-	Name    string `json:"name"`
-	Icon    string `json:"icon"`
-	Version int32  `json:"versionNum"`
+	ID            int32  `json:"id"`
+	Name          string `json:"name"`
+	Icon          string `json:"icon"`
+	Version       int32  `json:"versionNum"`
+	Class         int32  `json:"class"`
+	Subclass      int32  `json:"subclass"`
+	InventoryType int32  `json:"inventoryType"`
 
 	Quality       int32 `json:"quality"`
 	Ilvl          int32 `json:"itemLevel"`

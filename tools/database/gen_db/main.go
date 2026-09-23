@@ -169,9 +169,15 @@ func main() {
 	// the whole stat block rather than merging field by field, which is what lets this remove a
 	// stat Forever took off an item - no value-by-value merge could express that. The overrides
 	// still win, because those are deliberate and this is a scrape.
+	foreverOnlyItems := make(map[int32]bool)
 	for _, foreverItem := range foreverDB.Items {
 		if existing, ok := db.Items[foreverItem.ID]; ok {
 			existing.Stats = foreverItem.OverlayStats(existing.Stats)
+		} else if item, ok := foreverItem.ToStandaloneProto(); ok {
+			// The Classic tooltip scrape stops below Forever's custom item IDs.
+			// Insert complete planner records rather than dropping those slots.
+			db.MergeItem(item)
+			foreverOnlyItems[item.Id] = true
 		}
 	}
 
@@ -190,6 +196,11 @@ func main() {
 	ApplyGlobalFilters(db)
 	AttachFactionInformation(db, wagoItems)
 	AttachItemSetIDs(db, wagoItems)
+	for id := range foreverOnlyItems {
+		if item, ok := db.Items[id]; ok {
+			item.SetId = foreverDB.Items[strconv.Itoa(int(id))].Stats.ItemSet
+		}
+	}
 	// Forever gave its PvP sets new items and left the old ones out of any set: the Forever client's
 	// ItemSparse has ItemSet 0 on Champion's Leather Shoulders (23258) and its planner lists no
 	// itemset, while the Classic dumps above still put them in Champion's Guard.
@@ -338,21 +349,22 @@ func simmableItemFilter(_ int32, item *proto.UIItem) bool {
 	}
 
 	if item.Quality < proto.ItemQuality_ItemQualityUncommon {
-		return false
+		// A leveling character can equip ordinary white or grey gear. Keep
+		// these valid low-level slots so an imported export stays intact.
+		return item.Ilvl > 0 && item.Ilvl <= 60 && item.Type != proto.ItemType_ItemTypeUnknown
 	} else if item.Quality == proto.ItemQuality_ItemQualityArtifact {
 		return false
 	} else if item.Quality > proto.ItemQuality_ItemQualityHeirloom {
 		return false
 	} else if item.Quality < proto.ItemQuality_ItemQualityEpic {
-		if item.Ilvl < 10 {
-			return false
-		}
-		if item.Ilvl < 10 && item.SetName == "" {
+		// Forever has real starter gear below item level 10. The planner
+		// provides complete stats for those items, so keep them simmable.
+		if item.Ilvl < 1 {
 			return false
 		}
 	} else {
 		// Epic and legendary items might come from classic, so use a lower ilvl threshold.
-		if item.Quality != proto.ItemQuality_ItemQualityHeirloom && item.Ilvl < 10 {
+		if item.Quality != proto.ItemQuality_ItemQualityHeirloom && item.Ilvl < 1 {
 			return false
 		}
 	}
