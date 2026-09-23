@@ -41,6 +41,12 @@ var sealOfCommandRanks = []struct {
 }
 
 func (paladin *Paladin) registerSealOfCommand() {
+	// Seal of Command is the Retribution talent in the Forever tree, as in Classic. Registering it
+	// for every paladin let builds without the point cast and twist it for free.
+	if !paladin.Talents.SealOfCommand {
+		return
+	}
+
 	improvedSeals := paladin.improvedSeals()
 
 	ppmm := paladin.AutoAttacks.NewPPMManager(7, core.ProcMaskMelee)
