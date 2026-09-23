@@ -76,7 +76,7 @@ func (druid *Druid) newFerociousBiteSpellConfig(rankNum int) core.SpellConfig {
 
 		EnergyCost: core.EnergyCostOptions{
 			Cost:   float64(row.Cost),
-			Refund: 0,
+			Refund: 0.8,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

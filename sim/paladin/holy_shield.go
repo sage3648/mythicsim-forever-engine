@@ -39,6 +39,7 @@ func (paladin *Paladin) registerHolyShield() {
 			SpellSchool:    row.SpellSchool,
 			DefenseType:    row.DefenseType,
 			ProcMask:       core.ProcMaskSpellDamage,
+			Flags:          core.SpellFlagBinary,
 
 			RequiredLevel: int(level),
 			Rank:          rank,
@@ -48,8 +49,9 @@ func (paladin *Paladin) registerHolyShield() {
 			BonusCoefficient: roundCoef(row.Direct.BonusCoefficient()),
 
 			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-				// Spell damage from Holy Shield can crit, but does not miss.
-				spell.CalcAndDealDamage(sim, target, damage, spell.OutcomeMagicCrit)
+				// A damage shield (aura 43): no crit and no partial resist. It rolls a spell hit, as
+				// upstream's (wowsims/forever #48) and forever-next's do.
+				spell.CalcAndDealDamage(sim, target, damage, spell.OutcomeMagicHit)
 			},
 		})
 
@@ -92,6 +94,10 @@ func (paladin *Paladin) registerHolyShield() {
 					Timer:    paladin.NewTimer(),
 					Duration: row.Cooldown,
 				},
+			},
+			// Client 20925/20927/20928 (SpellEquippedItems): item class 4, subclass mask 64, a shield.
+			ExtraCastCondition: func(sim *core.Simulation, target *core.Unit) bool {
+				return paladin.PseudoStats.CanBlock
 			},
 			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 				paladin.holyShieldAura[i].Activate(sim)

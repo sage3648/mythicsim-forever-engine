@@ -181,8 +181,18 @@ func init() {
 		w.BaseDamageMax += 4
 	})
 
+	// 2H Weapon - Greater Impact, Superior Impact and Forever's own Impact (8205). Forever moved
+	// Minor and Lesser Impact onto the Striking ids (805, 1897), which already carry their damage.
+	for effectID, bonus := range map[int32]float64{963: 7, 1896: 9, 8205: 6} {
+		core.AddWeaponEffect(effectID, func(agent core.Agent, _ proto.ItemSlot) {
+			w := agent.GetCharacter().AutoAttacks.MH()
+			w.BaseDamageMin += bonus
+			w.BaseDamageMax += bonus
+		})
+	}
+
 	// Weapon - Lesser Beastslayer
-	core.AddWeaponEffect(853, func(agent core.Agent, slot proto.ItemSlot) {
+	core.AddWeaponEffect(853,func(agent core.Agent, slot proto.ItemSlot) {
 		character := agent.GetCharacter()
 
 		if character.CurrentTarget.MobType == proto.MobType_MobTypeBeast {

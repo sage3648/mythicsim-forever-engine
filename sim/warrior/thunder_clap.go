@@ -12,8 +12,9 @@ func (warrior *Warrior) registerThunderClapSpell() {
 	row := spellData.ThunderClap.BySpellID(spellID)
 	baseDamage := shared.SpellDataMin(row.Direct)
 	has5pcConq := warrior.HasSetBonus(ItemSetConquerorsBattleGear, 5)
-	// Forever doubles the slow to 20% and moves the cooldown from 4 to 6 sec.
-	attackSpeedReduction := core.TernaryInt32(has5pcConq, 25, 20)
+	// Forever doubles the slow to 20% and moves the cooldown from 4 to 6 sec. Conqueror's 5 piece
+	// (26110) raises all of Thunder Clap's effects by 50%: 30%.
+	attackSpeedReduction := core.TernaryInt32(has5pcConq, 30, 20)
 	// Forever lets Thunder Clap be used in Defensive Stance as well.
 	stanceMask := BattleStance | DefensiveStance
 

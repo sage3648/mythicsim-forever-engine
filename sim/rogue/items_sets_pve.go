@@ -71,7 +71,13 @@ var ItemSetBloodfangArmor = core.NewItemSet(core.ItemSet{
 		},
 		// Improves the threat reduction of Feint by 25%.
 		5: func(agent core.Agent) {
-			// Feint threat reduction not currently implemented in feint.go
+			c := agent.(RogueAgent).GetRogue()
+			c.RegisterAura(core.Aura{
+				Label: "Improved Feint",
+				OnInit: func(aura *core.Aura, sim *core.Simulation) {
+					c.Feint.FlatThreatBonus *= 1.25
+				},
+			})
 		},
 		// Gives the Rogue a chance to inflict 283 to 317 damage on the target and heal the Rogue for 50 health every 1 sec. for 6 sec. on a melee hit.
 		8: func(agent core.Agent) {

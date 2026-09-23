@@ -165,6 +165,7 @@ func TestArena(t *testing.T) {
 		SpecOptions:        PlayerOptionsAdaptive,
 		Role:        arenalib.Caster,
 		Buffs:              core.ForeverBuffs,
-		DistanceFromTarget: 30,
+		// Flame Shock is 20 yd in the client (SpellRange 3).
+		DistanceFromTarget: 20,
 	})
 }

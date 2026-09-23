@@ -256,7 +256,7 @@
 	"1966": {
 		"ability": "Feint",
 		"file": "sim/rogue/feint.go",
-		"note": "Beta client 1.60.1.69893 keeps 20 Energy and the 10 sec cooldown but raises rank 1's threat reduction from 150 (plus 1 a level) to 750 (plus 5 a level). The sim has never modelled Feint's threat reduction, so the change does nothing here.",
+		"note": "Beta client 1.60.1.69893 keeps 20 Energy and the 10 sec cooldown but raises rank 1's threat reduction from 150 (plus 1 a level) to 750 (plus 5 a level, up to level 26): 795 at level 25. Refunds 80% of its Energy on a miss.",
 		"source": "forever",
 		"tooltip": "20 Energy\nMelee Range\nInstant\n10 sec cooldown\nPerforms a feint, causing no damage but lowering your threat by a small amount, making the enemy less likely to attack you."
 	},
@@ -289,6 +289,13 @@
 		"file": "sim/rogue/items.go",
 		"note": "The on-use of Renataki's Charm of Trickery (item 19954), 60 Energy on a 3 min cooldown, unchanged from Classic.",
 		"source": "classic"
+	},
+	"25302": {
+		"ability": "Feint",
+		"file": "sim/rogue/feint.go",
+		"note": "Rank 5, the level 60 Feint. Beta client 1.60.1.69893: threat reduction 4000, 20 Energy, 10 sec cooldown, 80% refund on a miss. Bloodfang Armor's 5 piece raises the reduction by 25%.",
+		"source": "forever",
+		"tooltip": "20 Energy\nMelee Range\nInstant\n10 sec cooldown\nPerforms a feint, causing no damage but lowering your threat by a small amount, making the enemy less likely to attack you."
 	},
 	"2590": {
 		"ability": "Backstab",
@@ -374,6 +381,13 @@
 		"file": "sim/rogue/garrote.go",
 		"note": "Beta client 1.60.1.69893 matches Classic Era: 6 ticks over 18 sec for the same damage, 50 Energy.",
 		"source": "classic"
+	},
+	"8637": {
+		"ability": "Feint",
+		"file": "sim/rogue/feint.go",
+		"note": "Rank 3, the level 40 and 50 Feint. Beta client 1.60.1.69893: threat reduction 1950 plus 5 a level up to 50 (2000 at 50), 20 Energy, 10 sec cooldown, 80% refund on a miss.",
+		"source": "forever",
+		"tooltip": "20 Energy\nMelee Range\nInstant\n10 sec cooldown\nPerforms a feint, causing no damage but lowering your threat by a small amount, making the enemy less likely to attack you."
 	},
 	"8640": {
 		"ability": "Rupture",

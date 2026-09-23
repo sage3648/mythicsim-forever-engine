@@ -4,7 +4,7 @@ import (
 	"github.com/wowsims/classic/sim/core"
 )
 
-// Beta client 1.60.1. Everything but the damage and the missile speed comes from the client table
+// Beta client 1.60.1. Everything but the damage comes from the client table
 // (see shadowbolt.go).
 var IncinerateBaseDamage = [][]float64{{0}, {100, 114}, {146, 168}, {201, 233}}
 
@@ -37,8 +37,7 @@ func (warlock *Warlock) registerIncinerateSpell() {
 		Flags:          core.SpellFlagAPL | core.SpellFlagResetAttackSwing | WarlockFlagDestruction,
 		RequiredLevel:  int(warlock.Level),
 		Rank:           rank,
-		// The table reads 20; ours has been 24.
-		MissileSpeed: 24,
+		MissileSpeed:   row.MissileSpeed,
 
 		ManaCost: core.ManaCostOptions{
 			FlatCost: float64(row.Cost),

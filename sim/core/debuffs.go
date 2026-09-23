@@ -169,8 +169,8 @@ func applyDebuffEffects(target *Unit, targetIdx int, debuffs *proto.Debuffs, rai
 
 	// Atk spd reduction
 	if debuffs.ThunderClap != proto.TristateEffect_TristateEffectMissing {
-		// +5% from Warrior's Conqueror's Battlegear 5pc
-		MakePermanent(ThunderClapAura(target, 8205, GetTristateValueInt32(debuffs.ThunderClap, 10, 15)))
+		// Forever: a flat 20% slow at every rank; +5% from Warrior's Conqueror's Battlegear 5pc
+		MakePermanent(ThunderClapAura(target, 8205, GetTristateValueInt32(debuffs.ThunderClap, 20, 25)))
 	}
 	if debuffs.Thunderfury {
 		MakePermanent(ThunderfuryASAura(target))
@@ -734,10 +734,6 @@ func FaerieFireAura(target *Unit) *Aura {
 	return faerieFireAuraInternal(target, "Faerie Fire", 9907)
 }
 
-func FaerieFireFeralAura(target *Unit) *Aura {
-	return faerieFireAuraInternal(target, "Faerie Fire (Feral)", 17392)
-}
-
 func faerieFireAuraInternal(target *Unit, label string, spellID int32) *Aura {
 	arPen := float64(505)
 
@@ -921,14 +917,15 @@ func ThunderfuryASAura(target *Unit) *Aura {
 	return aura
 }
 
+// The priority is the slow, so SetPriority from an aura's OnGain rescales it too (wowsims/forever 808aaa2ef0).
 func AtkSpeedReductionEffect(aura *Aura, speedMultiplier float64) *ExclusiveEffect {
 	return aura.NewExclusiveEffect("AtkSpdReduction", false, ExclusiveEffect{
 		Priority: speedMultiplier,
 		OnGain: func(ee *ExclusiveEffect, sim *Simulation) {
-			ee.Aura.Unit.MultiplyAttackSpeed(sim, 1/speedMultiplier)
+			ee.Aura.Unit.MultiplyAttackSpeed(sim, 1/ee.Priority)
 		},
 		OnExpire: func(ee *ExclusiveEffect, sim *Simulation) {
-			ee.Aura.Unit.MultiplyAttackSpeed(sim, speedMultiplier)
+			ee.Aura.Unit.MultiplyAttackSpeed(sim, ee.Priority)
 		},
 	})
 }

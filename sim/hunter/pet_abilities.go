@@ -38,7 +38,7 @@ var PetBiteSpellID = map[int32]int32{
 	50: 17260,
 	60: 17261,
 }
-var PetBiteDamage = map[int32][]float64{25: {31, 37}, 40: {49, 59}, 50: {66, 80}, 60: {81, 91}}
+var PetBiteDamage = map[int32][]float64{25: {31, 37}, 40: {49, 59}, 50: {66, 80}, 60: {81, 99}}
 
 var PetLightningBreathSpellID = map[int32]int32{
 	25: 25009,

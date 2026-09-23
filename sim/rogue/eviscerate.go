@@ -43,7 +43,7 @@ func (rogue *Rogue) registerEviscerate() {
 
 		EnergyCost: core.EnergyCostOptions{
 			Cost:   float64(row.Cost) - core.TernaryFloat64(rogue.Talents.FlawlessExecution, 10, 0),
-			Refund: 0,
+			Refund: 0.8,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

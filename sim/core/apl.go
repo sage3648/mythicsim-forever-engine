@@ -24,6 +24,7 @@ type APLRotation struct {
 
 	// Action currently controlling this rotation (only used for certain actions, such as StrictSequence).
 	controllingActions []APLActionImpl
+	pausedUntil        time.Duration
 
 	// Value that should evaluate to 'true' if the current channel is to be interrupted.
 	// Will be nil when there is no active channel.
@@ -189,6 +190,7 @@ func (rot *APLRotation) allPrepullActions() []*APLAction {
 func (rot *APLRotation) reset(sim *Simulation) {
 	rot.controllingActions = nil
 	rot.inLoop = false
+	rot.pausedUntil = 0
 	rot.interruptChannelIf = nil
 	rot.allowChannelRecastOnInterrupt = false
 	for _, action := range rot.allAPLActions() {
@@ -216,6 +218,13 @@ func (apl *APLRotation) DoNextAction(sim *Simulation) {
 		return
 	}
 
+	// The 50ms idle wait below parks the GCD timer. An evaluation triggered before it ends (rage,
+	// energy or an aura) would otherwise only see off-GCD actions, so a lower-priority Heroic Strike
+	// queue jumps ahead of a ready Bloodthirst. Lift the park; a real GCD is left alone.
+	if apl.pausedUntil > sim.CurrentTime && apl.unit.GCD.ReadyAt() == apl.pausedUntil {
+		apl.unit.GCD.Set(sim.CurrentTime)
+	}
+
 	i := 0
 	apl.inLoop = true
 
@@ -235,6 +244,7 @@ func (apl *APLRotation) DoNextAction(sim *Simulation) {
 	gcdReady := apl.unit.GCD.IsReady(sim)
 	if gcdReady {
 		apl.unit.WaitUntil(sim, sim.CurrentTime+time.Millisecond*50)
+		apl.pausedUntil = sim.CurrentTime + time.Millisecond*50
 	}
 }
 

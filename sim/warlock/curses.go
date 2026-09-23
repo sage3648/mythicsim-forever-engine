@@ -15,7 +15,7 @@ func (warlock *Warlock) getBaneOfAgonyBaseConfig(rank int) core.SpellConfig {
 	// cost, school, tick, tick count and coefficient come from the client table.
 	row := spellData.BaneOfAgony.ByRank(int32(rank))
 	periodic := row.Periodic.(shared.SpellDataPeriodic)
-	baseDamage := periodic.Tick * (1 + .05*float64(warlock.Talents.ImprovedBaneOfAgony))
+	baseDamage := periodic.Tick
 	level := [BaneOfAgonyRanks + 1]int{0, 8, 18, 28, 38, 48, 58}[rank]
 
 	snapshotBaseDmgNoBonus := 0.0

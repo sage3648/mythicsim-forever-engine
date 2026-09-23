@@ -150,6 +150,9 @@ func (shaman *Shaman) applyElementalFocus() {
 		return
 	}
 
+	var triggeringSpell *core.Spell
+	var triggerTime time.Duration
+
 	costMod := shaman.AddDynamicMod(core.SpellModConfig{
 		Kind:       core.SpellMod_PowerCost_Pct_Add,
 		SpellFlag:  SpellFlagShaman,
@@ -174,8 +177,9 @@ func (shaman *Shaman) applyElementalFocus() {
 			}
 		},
 		OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
-			// OnCastComplete is called after OnSpellHitDealt / etc, so don't deactivate if it was just activated.
-			if aura.RemainingDuration(sim) == aura.Duration {
+			// The cast that procced it doesn't spend it. Any other damage spell does, even an instant
+			// cast in the same moment (a Flame Shock straight after the proc).
+			if spell == triggeringSpell && sim.CurrentTime == triggerTime {
 				return
 			}
 
@@ -189,6 +193,8 @@ func (shaman *Shaman) applyElementalFocus() {
 		Label: "Elemental Focus Trigger",
 		OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
 			if shaman.isShamanDamagingSpell(spell) && sim.Proc(0.10, "Elemental Focus") {
+				triggeringSpell = spell
+				triggerTime = sim.CurrentTime
 				shaman.ClearcastingAura.Activate(sim)
 				shaman.ClearcastingAura.SetStacks(sim, shaman.ClearcastingAura.MaxStacks)
 			}

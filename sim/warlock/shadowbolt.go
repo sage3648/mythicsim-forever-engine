@@ -35,11 +35,11 @@ func (warlock *Warlock) getShadowBoltBaseConfig(rank int) core.SpellConfig {
 		ActionID:       core.ActionID{SpellID: row.SpellID},
 		SpellSchool:    row.SpellSchool,
 		DefenseType:    row.DefenseType,
-		// The table's missile speed (20) is not used: ours has always landed instantly.
-		ProcMask:      core.ProcMaskSpellDamage,
-		Flags:         core.SpellFlagAPL | core.SpellFlagResetAttackSwing | WarlockFlagDestruction,
-		RequiredLevel: level,
-		Rank:          rank,
+		MissileSpeed:   row.MissileSpeed,
+		ProcMask:       core.ProcMaskSpellDamage,
+		Flags:          core.SpellFlagAPL | core.SpellFlagResetAttackSwing | WarlockFlagDestruction,
+		RequiredLevel:  level,
+		Rank:           rank,
 
 		ManaCost: core.ManaCostOptions{
 			FlatCost: float64(row.Cost),

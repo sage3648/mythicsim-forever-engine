@@ -41,7 +41,11 @@ func (shaman *Shaman) newElectricSpellConfig(actionID core.ActionID, row shared.
 			},
 			ModifyCast: func(sim *core.Simulation, spell *core.Spell, cast *core.Cast) {
 				castTime := shaman.ApplyCastSpeedForSpell(cast.CastTime, spell)
-				shaman.AutoAttacks.StopMeleeUntil(sim, sim.CurrentTime+castTime, false)
+				// Only a cast that runs past the next swing pushes it back; an instant (5 stack Maelstrom) one leaves the
+				// swing timer alone, as on forever-next and upstream.
+				if sim.CurrentTime+castTime > shaman.AutoAttacks.NextAttackAt() {
+					shaman.AutoAttacks.StopMeleeUntil(sim, sim.CurrentTime+castTime, false)
+				}
 			},
 		},
 

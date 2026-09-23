@@ -367,15 +367,10 @@ func (priest *Priest) registerShadowform() {
 		SpellFlag:  SpellFlagPriest,
 		FloatValue: 1,
 	})
-	halfCost := priest.AddDynamicMod(core.SpellModConfig{
-		Kind:       core.SpellMod_PowerCost_Pct_Add,
-		School:     core.SpellSchoolShadow,
-		SpellFlag:  SpellFlagPriest,
-		FloatValue: -0.5,
-	})
-
 	// The beta client's 15473: +10% Shadow damage, -50% Shadow mana cost, +100% Shadow critical
-	// strike damage bonus, -15% Physical damage taken.
+	// strike damage bonus, -15% Physical damage taken. The cost half is aura 72 (school power
+	// cost %), which the client applies after the spell mods: it halves Mental Agility's 90%
+	// to 45%, not 100 - 10 - 50 = 40%.
 	priest.ShadowformAura = priest.RegisterAura(core.Aura{
 		Label:    "Shadowform",
 		ActionID: actionID,
@@ -384,13 +379,13 @@ func (priest *Priest) registerShadowform() {
 			aura.Unit.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexShadow] *= 1.10
 			aura.Unit.PseudoStats.SchoolDamageTakenMultiplier[stats.SchoolIndexPhysical] *= 0.85
 			critDamage.Activate()
-			halfCost.Activate()
+			aura.Unit.PseudoStats.SchoolCostMultiplier[stats.SchoolIndexShadow] -= 50
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
 			aura.Unit.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexShadow] /= 1.10
 			aura.Unit.PseudoStats.SchoolDamageTakenMultiplier[stats.SchoolIndexPhysical] /= 0.85
 			critDamage.Deactivate()
-			halfCost.Deactivate()
+			aura.Unit.PseudoStats.SchoolCostMultiplier[stats.SchoolIndexShadow] += 50
 		},
 		OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
 			// The form only blocks healing; Smite and Holy Fire stay castable inside it.

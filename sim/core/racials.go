@@ -293,14 +293,18 @@ func (character *Character) registerEureka() {
 }
 
 // Touch of the Grave, the undead's Forever racial, which replaces Classic's Shadow
-// Resistance: spells and attacks have a 5% chance to drain health from the target, up to
-// 5% of the undead's own maximum health.
-// TODO: assumed baseline, beta will confirm - the tooltip's "up to 5% of your maximum
-// Health" is read as a roll between half and full, the way every other ranged damage
-// value in the sim is, and the drain is taken to be Shadow damage that can be resisted.
-// Whether it can crit, and whether it shares a cooldown between procs, are both unknown.
+// Resistance: spells and attacks have a chance to drain health from the target.
+// Client: 1260189 (warrior, paladin, rogue) procs 5% of the time, 1260201 (priest, mage,
+// warlock) 10%, both with a 1 s proc cooldown (SpellAuraOptions). The drain, 1260198, is a
+// health leech of 5% of the caster's maximum health. It is taken to be Shadow damage that
+// can be resisted; whether it can crit is unknown.
 func (character *Character) registerTouchOfTheGrave() {
-	actionID := ActionID{SpellID: 460540}
+	procChance := 0.05
+	switch character.Class {
+	case proto.Class_ClassPriest, proto.Class_ClassMage, proto.Class_ClassWarlock:
+		procChance = 0.10
+	}
+	actionID := ActionID{SpellID: 1260198}
 	healthMetrics := character.NewHealthMetrics(actionID)
 
 	drain := character.RegisterSpell(SpellConfig{
@@ -316,8 +320,7 @@ func (character *Character) registerTouchOfTheGrave() {
 		ThreatMultiplier: 1,
 
 		ApplyEffects: func(sim *Simulation, target *Unit, spell *Spell) {
-			maxHealth := character.MaxHealth()
-			result := spell.CalcAndDealDamage(sim, target, sim.Roll(maxHealth*0.025, maxHealth*0.05), spell.OutcomeMagicHit)
+			result := spell.CalcAndDealDamage(sim, target, character.MaxHealth()*0.05, spell.OutcomeMagicHit)
 
 			// Only the specs that track a health bar can be healed; for everyone else the
 			// drain is still damage, it just has nothing to return the health to.
@@ -327,14 +330,16 @@ func (character *Character) registerTouchOfTheGrave() {
 		},
 	})
 
+	icd := Cooldown{Timer: character.NewTimer(), Duration: time.Second}
 	MakePermanent(character.RegisterAura(Aura{
 		Label:    "Touch of the Grave",
 		ActionID: actionID,
 		OnSpellHitDealt: func(_ *Aura, sim *Simulation, spell *Spell, result *SpellResult) {
-			if !result.Landed() || spell == drain {
+			if !result.Landed() || spell == drain || !icd.IsReady(sim) {
 				return
 			}
-			if sim.RandomFloat("Touch of the Grave") < 0.05 {
+			if sim.RandomFloat("Touch of the Grave") < procChance {
+				icd.Use(sim)
 				drain.Cast(sim, result.Target)
 			}
 		},

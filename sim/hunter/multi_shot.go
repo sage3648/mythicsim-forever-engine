@@ -27,7 +27,7 @@ func (hunter *Hunter) getMultiShotConfig(timer *core.Timer) core.SpellConfig {
 		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagAPL | SpellFlagShot,
 		CastType:       proto.CastType_CastTypeRanged,
 		RequiredLevel:  level,
-		MissileSpeed:   24,
+		MissileSpeed:   row.MissileSpeed,
 
 		ManaCost: core.ManaCostOptions{
 			BaseCost: roundCoef(row.PowerCostPct / 100),

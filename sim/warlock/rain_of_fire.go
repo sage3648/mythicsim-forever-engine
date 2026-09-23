@@ -14,11 +14,11 @@ func (warlock *Warlock) getRainOfFireBaseConfig(rank int) core.SpellConfig {
 	// carrying the per tick damage and a 0.083 coefficient. The 0.03 on the channel's dummy effect is
 	// not the damage coefficient.
 	//
-	// Spell ID, cost, ticks and the coefficient come from the client table. The tick does not: the
-	// table reads 41/93/151/221 where ours is 40/91/149/220, and until that is settled ours stands.
+	// Spell ID, cost, tick, ticks and the coefficient come from the client table. The table tick
+	// (41/93/151/221) is each rank scaled to its cap, the server's value for every bracket's top rank.
 	row := spellData.RainOfFire.ByRank(int32(rank))
 	periodic := row.Periodic.(shared.SpellDataPeriodic)
-	baseDamage := [RainOfFireRanks + 1]float64{0, 40, 91, 149, 220}[rank]
+	baseDamage := periodic.Tick
 	level := [RainOfFireRanks + 1]int{0, 20, 34, 46, 58}[rank]
 
 	flags := core.SpellFlagAPL | core.SpellFlagResetAttackSwing | WarlockFlagDestruction | core.SpellFlagChanneled

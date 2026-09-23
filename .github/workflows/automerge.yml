@@ -1,7 +1,8 @@
 name: Auto-merge green PRs
 
 # Elliot, 2026-09-22: merge everything automatically. When Run Tests goes green on a PR
-# into master, merge it. Label a PR `hold` to keep it open.
+# into master or forever-next, merge it. Label a PR `hold` to keep it open.
+# workflow_run fires from the default branch only, so this copy also serves forever-next.
 on:
   workflow_run:
     workflows: [Run Tests]
@@ -14,7 +15,7 @@ permissions:
 
 jobs:
   merge:
-    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request'
+    if: github.repository == 'ElliotWood/Forever' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request'
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
@@ -24,9 +25,13 @@ jobs:
     steps:
       - name: Merge the PR, then deploy
         run: |
-          pr=$(gh pr list --head "$BRANCH" --base master --state open --json number,headRefOid,labels \
-            --jq ".[] | select(.headRefOid == \"$SHA\") | select([.labels[].name] | index(\"hold\") | not) | .number")
+          pr=$(gh pr list --head "$BRANCH" --state open --json number,headRefOid,labels,baseRefName \
+            --jq ".[] | select(.headRefOid == \"$SHA\") | select(.baseRefName == \"master\" or .baseRefName == \"forever-next\") | select([.labels[].name] | index(\"hold\") | not) | .number")
           [ -z "$pr" ] && { echo "nothing to merge (closed, newer commit, or on hold)"; exit 0; }
-          gh pr merge "$pr" --squash --delete-branch --match-head-commit "$SHA"
-          # A GITHUB_TOKEN merge does not fire push workflows, so start the deploy by hand.
+          # upstream-merge/* carries shared history with wowsims/forever; squashing it defeats the point.
+          method=--squash
+          [[ "$BRANCH" == upstream-merge/* ]] && method=--merge
+          gh pr merge "$pr" "$method" --delete-branch --match-head-commit "$SHA"
+          # A GITHUB_TOKEN merge does not fire push workflows, so start the deploy by hand
+          # (it also rebuilds the forever-next preview).
           gh workflow run deploy.yml --ref master

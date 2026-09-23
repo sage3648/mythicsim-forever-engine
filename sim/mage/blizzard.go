@@ -11,13 +11,17 @@ import (
 const BlizzardRanks = 6
 
 // Beta client 1.60.1.69893. Forever's Blizzard is an area trigger that casts a damage spell every
-// second (1279976 ... 1279949), 8 times; these are 8 times that spell's base. The coefficient below
+// second (1279976 ... 1279949), 8 times; the tick below is that spell's damage. The coefficient below
 // is the damage spell's, per tick; the parent spell's dummy effect carries 0.03, which is not used.
 //
-// Spell ID, cost, ticks and the coefficient come from the client table. The damage does not: the
-// table's tick reads 43/63/88/115 for ranks 2-5 where ours is 42/62/87/114 (rank 1 and 6 agree), and
-// until that is settled ours stands.
-var BlizzardBaseDamage = [BlizzardRanks + 1]float64{0, 192, 336, 496, 696, 912, 1168}
+// Spell ID, cost, ticks and the coefficient come from the client table. The tick does not: the table
+// holds each rank at level 60, but the tick grows with the caster's level up to the tick spell's max
+// level (base, per level, spell level, max level from 1279976 ... 1279949), so level 40 casts rank 3
+// for 62 (table 63) and level 50 rank 4 for 88 (ours was the unscaled 87).
+var blizzardTicks = [BlizzardRanks + 1]struct {
+	base, perLevel       float64
+	spellLevel, maxLevel int32
+}{{}, {24, 0.1, 20, 25}, {42, 0.2, 28, 33}, {62, 0.2, 36, 41}, {87, 0.3, 44, 49}, {114, 0.3, 52, 57}, {146, 0.4, 60, 65}}
 var BlizzardLevel = [BlizzardRanks + 1]int{0, 20, 28, 36, 44, 52, 60}
 
 func (mage *Mage) registerBlizzardSpell() {
@@ -35,7 +39,8 @@ func (mage *Mage) registerBlizzardSpell() {
 func (mage *Mage) newBlizzardSpellConfig(rank int) core.SpellConfig {
 	row := spellData.Blizzard.ByRank(int32(rank))
 	periodic := row.Periodic.(shared.SpellDataPeriodic)
-	baseDamage := BlizzardBaseDamage[rank] / float64(periodic.NumberOfTicks)
+	tick := blizzardTicks[rank]
+	baseDamage := shared.LevelScaled(tick.base, tick.perLevel, tick.spellLevel, tick.maxLevel, mage.Level)
 	level := BlizzardLevel[rank]
 
 	var improvedBlizzardProcApplication *core.Spell

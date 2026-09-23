@@ -10,7 +10,11 @@ import (
 const RockbiterWeaponRanks = 7
 
 var RockbiterWeaponEnchantId = [RockbiterWeaponRanks + 1]int32{0, 29, 6, 1, 503, 1663, 683, 1664}
-var RockbiterWeaponBonusAP = [RockbiterWeaponRanks + 1]float64{0, 50, 79, 118, 138, 319, 490, 653}
+
+// Each rank at the bracket that uses it (25 -> r4, 40 -> r5, 50 -> r6, 60 -> r7), from the passives'
+// aura 99 base + per level (15569 129+8.1, 16312 393+16.1, ...), floored as the server floors:
+// r4 137 and r6 489, not the rounded 138 and 490.
+var RockbiterWeaponBonusAP = [RockbiterWeaponRanks + 1]float64{0, 50, 79, 118, 137, 319, 489, 653}
 var RockbiterWeaponBonusTPS = [RockbiterWeaponRanks + 1]float64{0, 6, 10, 16, 27, 41, 55, 72}
 var RockbiterWeaponLevel = [RockbiterWeaponRanks + 1]int32{0, 1, 8, 16, 24, 34, 44, 54}
 

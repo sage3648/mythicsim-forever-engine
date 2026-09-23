@@ -53,11 +53,10 @@ func (warrior *Warrior) registerRendSpell() {
 			},
 			NumberOfTicks: periodic.NumberOfTicks,
 			TickLength:    periodic.TickLength,
-			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
-				dot.Snapshot(target, baseDamage, isRollover)
-			},
+			// Periodic damage does not snapshot in Forever (wowsims/forever 36cfc58328): each tick takes
+			// the modifiers of the moment it lands. Ticks crit live through OutcomeTick (row: Periodic Can Crit).
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-				dot.CalcAndDealPeriodicSnapshotDamage(sim, target, dot.OutcomeTick)
+				dot.Spell.CalcAndDealPeriodicDamage(sim, target, baseDamage, dot.OutcomeTick)
 			},
 		},
 

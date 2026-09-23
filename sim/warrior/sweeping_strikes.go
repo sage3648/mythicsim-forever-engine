@@ -1,8 +1,6 @@
 package warrior
 
 import (
-	"time"
-
 	"github.com/wowsims/classic/sim/core"
 )
 
@@ -47,15 +45,16 @@ func (warrior *Warrior) registerSweepingStrikesCD() {
 		},
 	})
 
-	// Forever beta client 1.60.1.69893: id, cost, cooldown, school and charges come from the client
-	// table. Its duration reads 20s where ours is 10s, so the duration stays ours.
+	// Forever beta client 1.60.1.69893: id, cost, cooldown, school, charges and duration come from the
+	// client table. The talent's trait grants 12292, whose SpellMisc duration is 20 s (index 18; the 10 s
+	// row is 1228365, not granted), so Classic's 10 s is gone.
 	row := spellData.SweepingStrikes.ByRank(1)
 	actionID := core.ActionID{SpellID: row.SpellID}
 
 	ssAura := warrior.RegisterAura(core.Aura{
 		Label:     "Sweeping Strikes",
 		ActionID:  actionID,
-		Duration:  time.Second * 10,
+		Duration:  row.Duration,
 		MaxStacks: row.ProcCharges,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			aura.SetStacks(sim, row.ProcCharges)

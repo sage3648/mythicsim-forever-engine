@@ -91,8 +91,8 @@ type Paladin struct {
 	spellsJoF        []*core.Spell
 
 	// The on-hit proc each seal aura owns, for Twist of Light to bank.
-	sealProcs    map[*core.Aura]*core.Spell
-	sealEcho     *core.Spell
+	sealProcs    map[*core.Aura]func(*core.Simulation, *core.Unit)
+	sealEcho     func(*core.Simulation, *core.Unit)
 	sealEchoAura *core.Aura
 
 	// Active abilities and shared cooldowns that are externally manipulated.

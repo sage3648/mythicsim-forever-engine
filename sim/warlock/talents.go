@@ -15,6 +15,7 @@ func (warlock *Warlock) ApplyTalents() {
 	// Affliction
 	warlock.applySuppression()
 	warlock.applyMalediction()
+	warlock.applyImprovedBaneOfAgony()
 	warlock.applyPandemic()
 	warlock.applyMalevolence()
 	warlock.applyNightfall()
@@ -115,6 +116,20 @@ func (warlock *Warlock) applySuppression() {
 	warlock.AddStat(stats.SpellHit, points*core.SpellHitRatingPerHitChance)
 	warlock.AddStat(stats.MeleeHit, points*core.MeleeHitRatingPerHitChance)
 	warlock.PseudoStats.ThreatMultiplier *= 1 - 0.04*points
+}
+
+// Improved Bane of Agony: the beta client's 18827 is an op 22 (periodic damage) % modifier, so it
+// scales the whole tick, spell power included, not only the base damage.
+func (warlock *Warlock) applyImprovedBaneOfAgony() {
+	if warlock.Talents.ImprovedBaneOfAgony == 0 {
+		return
+	}
+
+	warlock.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_PeriodicDamageDone_Flat,
+		ClassMask:  SpellMaskBaneOfAgony,
+		FloatValue: spellData.ImprovedBaneOfAgony.FractionAt(warlock.Talents.ImprovedBaneOfAgony),
+	})
 }
 
 func (warlock *Warlock) applyMalediction() {
