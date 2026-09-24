@@ -146,7 +146,7 @@ func (paladin *Paladin) registerSealOfRighteousness() {
 		aura := paladin.RegisterAura(core.Aura{
 			Label:    "Seal of Righteousness" + paladin.Label + strconv.Itoa(i+1),
 			ActionID: core.ActionID{SpellID: rank.spellID},
-			Duration: sealRow.Duration,
+			Duration: paladin.sealDuration(sealRow.Duration),
 
 			OnSpellHitDealt: func(_ *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 				if !result.Landed() {
@@ -170,7 +170,7 @@ func (paladin *Paladin) registerSealOfRighteousness() {
 			Rank:          i + 1,
 
 			ManaCost: core.ManaCostOptions{
-				FlatCost:   float64(sealRow.Cost) - paladin.getLibramSealCostReduction(),
+				FlatCost:   float64(sealRow.Cost),
 				Multiplier: paladin.benediction(),
 			},
 			Cast: core.CastConfig{

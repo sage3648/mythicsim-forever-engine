@@ -123,7 +123,7 @@ func (paladin *Paladin) registerSealOfCommand() {
 		aura := paladin.RegisterAura(core.Aura{
 			Label:    "Seal of Command" + paladin.Label + strconv.Itoa(i+1),
 			ActionID: core.ActionID{SpellID: rank.spellID},
-			Duration: sealRow.Duration,
+			Duration: paladin.sealDuration(sealRow.Duration),
 			OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 				if !result.Landed() {
 					return
@@ -157,7 +157,7 @@ func (paladin *Paladin) registerSealOfCommand() {
 			Rank:          i + 1,
 
 			ManaCost: core.ManaCostOptions{
-				FlatCost:   float64(sealRow.Cost) - paladin.getLibramSealCostReduction(),
+				FlatCost:   float64(sealRow.Cost),
 				Multiplier: paladin.benediction(),
 			},
 			Cast: core.CastConfig{

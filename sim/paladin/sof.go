@@ -72,7 +72,7 @@ func (paladin *Paladin) registerSealOfFury() {
 		aura := paladin.RegisterAura(core.Aura{
 			Label:    "Seal of Fury " + strconv.Itoa(i+1),
 			ActionID: core.ActionID{SpellID: rank.sealID},
-			Duration: 30 * time.Second,
+			Duration: paladin.sealDuration(30 * time.Second),
 			OnSpellHitDealt: func(_ *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 				if result.Landed() && spell.ProcMask.Matches(core.ProcMaskMeleeWhiteHit) {
 					proc.Cast(sim, result.Target)
@@ -87,7 +87,7 @@ func (paladin *Paladin) registerSealOfFury() {
 			SpellSchool:   core.SpellSchoolHoly,
 			Flags:         core.SpellFlagAPL,
 			RequiredLevel: int(rank.level), Rank: i + 1,
-			ManaCost: core.ManaCostOptions{FlatCost: rank.mana - paladin.getLibramSealCostReduction(), Multiplier: paladin.benediction()},
+			ManaCost: core.ManaCostOptions{FlatCost: rank.mana, Multiplier: paladin.benediction()},
 			Cast:     core.CastConfig{DefaultCast: core.Cast{GCD: core.GCDDefault}},
 			ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
 				paladin.applySeal(aura, spell, judgement, sim)

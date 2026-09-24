@@ -1,6 +1,8 @@
 package paladin
 
 import (
+	"time"
+
 	"github.com/wowsims/classic/sim/common/guardians"
 	"github.com/wowsims/classic/sim/core"
 	"github.com/wowsims/classic/sim/core/proto"
@@ -266,14 +268,13 @@ func (paladin *Paladin) applySeal(newSeal *core.Aura, sealSpell *core.Spell, jud
 	paladin.currentSeal.Activate(sim)
 }
 
-func (paladin *Paladin) getLibramSealCostReduction() float64 {
-	// if paladin.Ranged().ID == LibramOfBenediction {
-	// 	return 10
-	// }
+// Libram of Hope (22401): Increases the duration of your Seal spells by 4 sec (27848, client
+// 1.60.1.69977). Classic's took 20 mana off them instead.
+func (paladin *Paladin) sealDuration(duration time.Duration) time.Duration {
 	if paladin.Ranged().ID == LibramOfHope {
-		return 20
+		return duration + 4*time.Second
 	}
-	return 0
+	return duration
 }
 
 // The cooldown timer Holy Strike and Hammer of the Righteous share.

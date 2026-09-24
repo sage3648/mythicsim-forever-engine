@@ -75,7 +75,7 @@ func (paladin *Paladin) registerSealOfTheCrusader() {
 		aura := paladin.RegisterAura(core.Aura{
 			Label:    "Seal of the Crusader" + paladin.Label + strconv.Itoa(i+1),
 			ActionID: core.ActionID{SpellID: rank.spellID},
-			Duration: sealRow.Duration,
+			Duration: paladin.sealDuration(sealRow.Duration),
 			OnGain: func(_ *core.Aura, sim *core.Simulation) {
 				paladin.MultiplyMeleeSpeed(sim, attackSpeed)
 				paladin.AutoAttacks.MHAuto().DamageMultiplier /= attackSpeed
@@ -99,7 +99,7 @@ func (paladin *Paladin) registerSealOfTheCrusader() {
 			Rank:          i + 1,
 
 			ManaCost: core.ManaCostOptions{
-				FlatCost:   float64(sealRow.Cost) - paladin.getLibramSealCostReduction(),
+				FlatCost:   float64(sealRow.Cost),
 				Multiplier: paladin.benediction(),
 			},
 			Cast: core.CastConfig{
