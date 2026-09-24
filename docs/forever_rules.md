@@ -29,10 +29,11 @@ below is gated on `IsForever()` unless it says the class code is Forever-only.
 | Every +10 resistance racial is removed. | Racials guide | `sim/core/racials.go` |
 | Weapon skill racials become +1% crit (both pools) while the matching weapon is held; Mace Specialization moves to Dwarves. | Racials guide, *demo* | `sim/core/specializations.go` |
 | Dwarf gains Beast Slaying-style +5% vs Beasts ("Big Game Hunter"). Troll keeps Beast Slaying; both ranged specializations removed. | Racials guide | `sim/core/racials.go` |
-| Orc: Command removed (Shatter Curse replaces it). Blood Fury: 10% attack power and spell power. | Racials guide, *demo* | `sim/core/racials.go` |
-| Gnome Expansive Mind raises the resource pool (mana modelled) rather than Intellect. Eureka! cooldown/cost figures unpublished. | Racials guide | `sim/core/racials.go` |
+| Orc: Command removed (Shatter Curse replaces it). Blood Fury (20572): +10% melee attack power, ranged attack power and spell power for 15 s, 2 min cooldown, off the global cooldown. | Client 1.60.1.69977 | `sim/core/racials.go` |
+| Gnome Expansive Mind raises the resource pool (mana modelled) rather than Intellect. Eureka!: 15 s, 3 charges, 2 min cooldown; +10% damage on abilities (not white swings) and a per-class cost cut (warrior 40% rage, rogue 20% energy, mage and warlock 50% mana, priest 15% mana). | Client 1.60.1.69977 | `sim/core/racials.go` |
 | Night Elf Elune's Light: +10% crit for 15 s, 3 min cooldown. | Racials guide, cooldown confirmed by search | `sim/core/racials.go` |
-| Skyborne (both factions) racials incl. Elemental Insight +5% vs Elementals; Windshaper and High Order variants by faction. | Skyborne first look | `sim/core/racials.go` |
+| Skyborne: both factions share one racial skill line (2980). Combat effects are Wind Blessed (+1% haste) and Elemental Insight (+5% vs Elementals) only; Windshaper has no damage cooldown. | Client 1.60.1.69977 | `sim/core/racials.go` |
+| Troll Berserking (20554): a flat +10% haste and cast speed for 10 s, 3 min cooldown, no resource cost. | Client 1.60.1.69977 | `sim/core/racials.go` |
 | Racial cooldowns with no published cooldown assume 3 minutes. | Assumption | `forever_beta_checklist.md` |
 
 ## Warrior
