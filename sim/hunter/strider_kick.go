@@ -15,11 +15,13 @@ func (hunter *Hunter) registerStriderKickSpell() {
 	row := spellData.StriderKick.ByRank(1)
 
 	hunter.StriderKick = hunter.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: row.SpellID},
-		SpellSchool: row.SpellSchool,
-		DefenseType: row.DefenseType,
-		ProcMask:    core.ProcMaskMeleeMHSpecial,
-		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
+		SpellCode:      SpellCode_HunterStriderKick,
+		ClassSpellMask: SpellMaskStriderKick,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskMeleeMHSpecial,
+		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
 
 		ManaCost: core.ManaCostOptions{
 			BaseCost: roundCoef(row.PowerCostPct / 100),

@@ -43,6 +43,7 @@ const (
 	SpellCode_HunterMongooseBite
 	SpellCode_HunterWingClip
 	SpellCode_HunterVolley
+	SpellCode_HunterStriderKick
 
 	// Pet Spells
 	SpellCode_HunterPetClaw
@@ -74,6 +75,7 @@ const (
 	SpellMaskMongooseBite
 	SpellMaskWingClip
 	SpellMaskVolley
+	SpellMaskStriderKick
 
 	SpellMaskPetClaw
 	SpellMaskPetBite
@@ -82,6 +84,11 @@ const (
 	SpellMaskPetScorpidPoison
 
 	SpellMaskAll = SpellMaskPetScorpidPoison<<1 - SpellMaskAimedShot // every bit from AimedShot to PetScorpidPoison
+
+	// The melee abilities, the set the client's melee masks draw from (Predator's Edge 1310627,
+	// Efficiency 19416, Resourcefulness 440529); each names its own subset of it.
+	SpellMaskMelee = SpellMaskRaptorStrike | SpellMaskRaptorStrikeHit | SpellMaskMongooseBite |
+		SpellMaskWingClip | SpellMaskStriderKick | SpellMaskLaceratingStrikes
 )
 
 func RegisterHunter() {

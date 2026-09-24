@@ -344,10 +344,13 @@ func (hunter *Hunter) applyPredatorsEdge() {
 	critDamageBonus := 0.06 * float64(hunter.Talents.PredatorsEdge)
 	ohMultiplier := 1 + 0.1*float64(hunter.Talents.PredatorsEdge)
 
+	// Client 1310627's crit damage mask is the melee abilities (Raptor Strike, Mongoose Bite, Wing
+	// Clip, Strider Kick, Lacerating Strikes, and Counterattack, which the sim does not have). Auto
+	// attacks and the hawks are not in it.
 	hunter.AddStaticMod(core.SpellModConfig{
-		Kind:        core.SpellMod_CritMultiplier_Flat,
-		DefenseType: core.DefenseTypeMelee,
-		FloatValue:  critDamageBonus,
+		Kind:       core.SpellMod_CritMultiplier_Flat,
+		ClassMask:  SpellMaskMelee,
+		FloatValue: critDamageBonus,
 	})
 
 	// The off-hand half stays a handler: it keys on BonusCoefficient > 0, which no mod filter has.
