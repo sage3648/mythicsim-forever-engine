@@ -567,9 +567,11 @@ func applySpellBuffConsumes(character *Character, consumes *proto.Consumes) {
 			character.AddStats(stats.Stats{
 				stats.FirePower: 10,
 			})
+		// Item 21546, Era's Elixir of Greater Firepower, is the Elixir of Holy Power in the Forever
+		// client: +40 Holy damage, and no Fire.
 		case proto.FirePowerBuff_ElixirOfGreaterFirepower:
 			character.AddStats(stats.Stats{
-				stats.FirePower: 40,
+				stats.HolyPower: 40,
 			})
 		}
 	}
