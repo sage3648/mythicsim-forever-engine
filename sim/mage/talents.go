@@ -177,6 +177,13 @@ func (mage *Mage) applyArcaneConcentration() {
 		},
 	})
 
+	// Client 1.60.1.69977: 11213's SpellAuraOptions ProcCategoryRecovery (1000 ms) holds the talent
+	// to one proc a second, and nothing rolls while it is cooling down.
+	icd := core.Cooldown{
+		Timer:    mage.NewTimer(),
+		Duration: time.Second,
+	}
+
 	mage.RegisterAura(core.Aura{
 		Label:    "Arcane Concentration",
 		Duration: core.NeverExpires,
@@ -187,6 +194,9 @@ func (mage *Mage) applyArcaneConcentration() {
 			if !result.Landed() || !spell.Flags.Matches(SpellFlagMage) || spell.SpellCode == SpellCode_MageArcaneMissiles {
 				return
 			}
+			if !icd.IsReady(sim) {
+				return
+			}
 
 			// TODO: Classic verify arcane missile proc chance
 			// Arcane Missile ticks can proc CC, just at a low rate of about 1.5% with 5/5 Arcane Concentration
@@ -195,6 +205,7 @@ func (mage *Mage) applyArcaneConcentration() {
 			// }
 
 			if sim.Proc(procChance, "Arcane Concentration") {
+				icd.Use(sim)
 				mage.ClearcastingAura.Activate(sim)
 			}
 		},
