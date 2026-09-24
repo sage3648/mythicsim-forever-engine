@@ -371,9 +371,8 @@ func (warlock *Warlock) applyDemonicBrand() {
 	}
 
 	// Beta client 1.60.1 (talent 1293695): Searing Pain threat falls 17/33/50% and the brand arms 2/4/6 of
-	// the pet's attacks; the brand itself (1293696) lasts 10 sec at every rank.
-	// TODO: the client writes the pet hit as a $<minDam> to $<maxDam> formula that the exported tables
-	// do not carry, so the 39 to 42 from the BlizzCon tooltip is kept.
+	// the pet's attacks; the brand itself (1293696) lasts 10 sec at every rank. The branded hit is
+	// demonicBrandHit.
 	actionID := core.ActionID{SpellID: 18821}
 
 	warlock.AddStaticMod(core.SpellModConfig{
@@ -394,7 +393,8 @@ func (warlock *Warlock) applyDemonicBrand() {
 			ThreatMultiplier: 3,
 
 			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-				spell.CalcAndDealDamage(sim, target, sim.Roll(39, 42), spell.OutcomeMagicHit)
+				low, high := demonicBrandHit(warlock.Level, warlock.GetStat(stats.SpellPower)+warlock.GetStat(stats.ShadowPower))
+				spell.CalcAndDealDamage(sim, target, sim.Roll(low, high), spell.OutcomeMagicHit)
 			},
 		})
 
@@ -422,6 +422,15 @@ func (warlock *Warlock) applyDemonicBrand() {
 			}
 		},
 	}))
+}
+
+// The branded pet hit, from the client's SpellDescriptionVariables for 1293696/1293697 (1.60.1.69977,
+// the same text Wowhead's Forever tooltip resolves): ((level - 26) * 1.5) + 14 to + 17, plus 7.8% of
+// the warlock's Shadow spell power: 65 to 68 at level 60, where the BlizzCon tooltip's 39 to 42 had
+// no spell power term.
+func demonicBrandHit(level int32, shadowSpellPower float64) (float64, float64) {
+	base := float64(level-26)*1.5 + 0.078*shadowSpellPower
+	return base + 14, base + 17
 }
 
 func (warlock *Warlock) applyDemonicKnowledge() {

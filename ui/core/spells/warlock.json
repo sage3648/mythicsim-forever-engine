@@ -428,14 +428,13 @@
 	"18821": {
 		"ability": "Demonic Brand",
 		"assumptions": [
-			"The branded pet attack deals 39 to 42 damage at level 60 - the beta client writes it as a formula ($<minDam> to $<maxDam>) its exported tables do not carry, so the BlizzCon tooltip's numbers are kept",
 			"The extra hit carries three times normal threat and cannot miss or crit"
 		],
 		"file": "sim/warlock/talents.go",
 		"foreverId": 1293695,
-		"note": "Demonic Brand is a new Forever Demonology talent (1293695 in the beta client) standing in the tree slot Classic used for Improved Enslave Demon, so the sim keeps that talent's id 18821. The beta client confirms 17/33/50% less Searing Pain threat, 2/4/6 branded attacks and a 10 sec brand.",
+		"note": "Demonic Brand is a new Forever Demonology talent (1293695 in the beta client) standing in the tree slot Classic used for Improved Enslave Demon, so the sim keeps that talent's id 18821. The beta client confirms 17/33/50% less Searing Pain threat, 2/4/6 branded attacks and a 10 sec brand; the branded hit is its SpellDescriptionVariables formula for 1293696/1293697 (1.60.1.69977, also resolved on Wowhead's Forever tooltip), ((level - 26) * 1.5) + 14 to + 17 plus 7.8% of Shadow spell power.",
 		"source": "assumed",
-		"tooltip": "Passive\nYour Searing Pain generates 17/33/50% less threat and brands the target for 10 sec. Your pet's next 2/4/6 attacks against the target generate high threat and deal 39 to 42 Fire or Shadow damage based on the pet."
+		"tooltip": "Passive\nYour Searing Pain generates 17/33/50% less threat and brands the target for 10 sec. Your pet's next 2/4/6 attacks against the target generate high threat and deal 65 to 68 plus 7.8% of Shadow spell power Fire or Shadow damage based on the pet."
 	},
 	"18867": {
 		"ability": "Shadowburn",
