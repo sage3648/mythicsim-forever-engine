@@ -31,7 +31,8 @@ func (hunter *Hunter) ApplyTalents() {
 	}
 
 	if hunter.Talents.ImprovedTracking > 0 {
-		// Everything a raid encounter can be is trackable apart from Mechanical.
+		// Everything a raid encounter can be is trackable apart from Mechanical. Damage only: client
+		// 24293 has one effect and no critical strike damage bonus.
 		multiplier := 1 + 0.01*float64(hunter.Talents.ImprovedTracking)
 		hunter.Env.RegisterPostFinalizeEffect(func() {
 			for _, t := range hunter.Env.Encounter.Targets {
@@ -41,7 +42,6 @@ func (hunter *Hunter) ApplyTalents() {
 					proto.MobType_MobTypeUndead:
 					for _, at := range hunter.AttackTables[t.UnitIndex] {
 						at.DamageDealtMultiplier *= multiplier
-						at.CritMultiplier *= multiplier
 					}
 				}
 			}
