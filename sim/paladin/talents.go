@@ -78,6 +78,9 @@ func (paladin *Paladin) improvedSeals() float64 {
 	return 1 + 0.05*float64(paladin.Talents.ImprovedSeals)
 }
 
+// Benediction (20101) discounts the spells on its client mask: the seals, Judgement, Holy Strike,
+// Consecration, Exorcism, Holy Shock, Holy Shield and Templar's Bulwark among the spells the sim
+// casts. Hammer of the Righteous, Lay on Hands, Divine Favor and Swift Judgement are not on it.
 func (paladin *Paladin) benediction() int32 {
 	return 100 - 2*paladin.Talents.Benediction
 }

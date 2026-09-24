@@ -37,9 +37,9 @@ func (paladin *Paladin) registerHammerOfTheRighteous() {
 
 		RequiredLevel: 40,
 
+		// Benediction's client mask (20101) leaves Hammer of the Righteous out: full price.
 		ManaCost: core.ManaCostOptions{
-			BaseCost:   row.PowerCostPct / 100,
-			Multiplier: paladin.benediction(),
+			BaseCost: row.PowerCostPct / 100,
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
