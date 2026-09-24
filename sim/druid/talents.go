@@ -438,10 +438,24 @@ func (druid *Druid) applySubtlety() {
 		return
 	}
 
+	// Client 17118 is aura 10 (MOD_THREAT) on school mask 72: all the threat the druid's Arcane and
+	// Nature spells make, so the flat threat of Faerie Fire and the like as well as the damage's.
+	reduction := -0.1 * float64(druid.Talents.Subtlety)
 	druid.AddStaticMod(core.SpellModConfig{
 		Kind:       core.SpellMod_ThreatMultiplier_Pct,
 		School:     core.SpellSchoolArcane | core.SpellSchoolNature,
-		FloatValue: -0.1 * float64(druid.Talents.Subtlety),
+		FloatValue: reduction,
+	})
+	druid.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_Custom,
+		School:     core.SpellSchoolArcane | core.SpellSchoolNature,
+		FloatValue: reduction,
+		ApplyCustom: func(mod *core.SpellMod, spell *core.Spell) {
+			spell.FlatThreatBonus *= 1 + mod.GetFloatValue()
+		},
+		RemoveCustom: func(mod *core.SpellMod, spell *core.Spell) {
+			spell.FlatThreatBonus /= 1 + mod.GetFloatValue()
+		},
 	})
 }
 
