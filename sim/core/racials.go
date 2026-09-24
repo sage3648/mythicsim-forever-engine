@@ -107,43 +107,37 @@ func applyRaceEffects(agent Agent) {
 
 		// Blood Fury
 		actionID := ActionID{SpellID: 20572}
-		var bloodFuryAP, bloodFurySP float64
-		bloodFuryAura := character.RegisterAura(Aura{
-			Label:    "Blood Fury",
-			ActionID: actionID,
-			Duration: time.Second * 15,
-			// Tooltip is misleading; ap bonus is base AP plus AP from current strength, does not include +attackpower on items/buffs
-			OnGain: func(aura *Aura, sim *Simulation) {
-				if forever {
-					// Forever reads plainly off everything the orc has, and pays spell power
-					// on the same terms, so a caster orc gets something out of it at last.
-					bloodFuryAP = character.GetStat(stats.AttackPower) * 0.1
-					bloodFurySP = character.GetStat(stats.SpellPower) * 0.1
-				} else {
+		var bloodFuryAura *Aura
+		castConfig := CastConfig{
+			CD: Cooldown{
+				Timer:    character.NewTimer(),
+				Duration: time.Minute * 2,
+			},
+		}
+		if forever {
+			bloodFuryAura = character.newForeverBloodFuryAura(actionID)
+		} else {
+			var bloodFuryAP float64
+			bloodFuryAura = character.RegisterAura(Aura{
+				Label:    "Blood Fury",
+				ActionID: actionID,
+				Duration: time.Second * 15,
+				// Tooltip is misleading; ap bonus is base AP plus AP from current strength, does not include +attackpower on items/buffs
+				OnGain: func(aura *Aura, sim *Simulation) {
 					bloodFuryAP = (character.GetBaseStats()[stats.AttackPower] + (character.GetStat(stats.Strength) * APPerStrength[character.Class]) + (character.GetStat(stats.Agility) * APPerAgility[character.Class])) * 0.25
-				}
-				character.AddStatDynamic(sim, stats.AttackPower, bloodFuryAP)
-				character.AddStatDynamic(sim, stats.SpellPower, bloodFurySP)
-			},
-
-			OnExpire: func(aura *Aura, sim *Simulation) {
-				character.AddStatDynamic(sim, stats.AttackPower, -bloodFuryAP)
-				character.AddStatDynamic(sim, stats.SpellPower, -bloodFurySP)
-			},
-		})
+					character.AddStatDynamic(sim, stats.AttackPower, bloodFuryAP)
+				},
+				OnExpire: func(aura *Aura, sim *Simulation) {
+					character.AddStatDynamic(sim, stats.AttackPower, -bloodFuryAP)
+				},
+			})
+			castConfig.DefaultCast = Cast{GCD: GCDDefault}
+		}
 
 		spell := character.RegisterSpell(SpellConfig{
 			ActionID: actionID,
 			Flags:    SpellFlagNoOnCastComplete,
-			Cast: CastConfig{
-				DefaultCast: Cast{
-					GCD: GCDDefault,
-				},
-				CD: Cooldown{
-					Timer:    character.NewTimer(),
-					Duration: time.Minute * 2,
-				},
-			},
+			Cast:     castConfig,
 			ApplyEffects: func(sim *Simulation, _ *Unit, _ *Spell) {
 				bloodFuryAura.Activate(sim)
 			},
@@ -175,8 +169,7 @@ func applyRaceEffects(agent Agent) {
 		// Berserking
 		berserkingTimer := character.NewTimer()
 		if forever {
-			// Berserking is a flat 10% now instead of scaling up as health drops.
-			makeBerserkingCooldown(character, .1, berserkingTimer)
+			makeForeverBerserkingCooldown(character, berserkingTimer)
 		} else {
 			// Baseline cooldown
 			makeBerserkingCooldown(character, 0, berserkingTimer)
@@ -202,70 +195,80 @@ func applyRaceEffects(agent Agent) {
 			break
 		}
 
-		// Wind Blessed
+		// Both halves share one racial skill line in the client (2980), so they sim alike.
+		// Its only combat effects are the two passives below. Read Ley Line (regeneration),
+		// Walk on Air and Skysight (movement) do nothing the sim measures.
+
+		// Wind Blessed (1259710)
 		character.PseudoStats.MeleeSpeedMultiplier *= 1.01
 		character.PseudoStats.RangedSpeedMultiplier *= 1.01
 		character.PseudoStats.CastSpeedMultiplier *= 1.01
 
-		// Elemental Insight
+		// Elemental Insight (1259707)
 		character.mobTypeDamageAura(proto.MobType_MobTypeElemental, 1.05)
-
-		if character.Race == proto.Race_RaceSkyborneWindshaper {
-			character.registerWindshaper()
-		}
-		// The High Order racial is a health and mana regeneration cooldown, which does
-		// nothing the sim measures, so it is left out.
 	}
 }
 
-// Eureka!, the gnome's Forever racial cooldown: the next three damaging or healing
-// abilities cost 50% less mana and deal 10% more, on a two minute cooldown. Read from the
-// demo; the racials guide carries both figures.
-// TODO: beta will confirm. A warlock's tooltip listed only the damage half, so whether the
-// mana saving applies to every ability or only the caster ones is not settled; it is taken
-// here to apply to whatever the charge is spent on.
+// Eureka!, the gnome's Forever racial cooldown. The client has one per gnome class: warrior
+// 1259813, rogue 1259812, priest 1259823, mage 1259817 and warlock 1259821. Each lasts 15 s
+// on a two minute cooldown, off the global cooldown, with three charges. While it is up, the
+// class's abilities deal 10% more damage, direct and periodic, and cost less: 40% less rage,
+// 20% less energy, 50% less mana for mages and warlocks, 15% less for priests.
+//
+// Both halves are spell modifiers, so they reach abilities and spells but not white swings.
+// A charge goes to any of those abilities; the proc mask (87376) leaves out auto attacks.
 func (character *Character) registerEureka() {
-	actionID := ActionID{SpellID: 460550}
+	var actionID ActionID
+	var costReduction float64
+	switch character.Class {
+	case proto.Class_ClassWarrior:
+		actionID, costReduction = ActionID{SpellID: 1259813}, 0.40
+	case proto.Class_ClassRogue:
+		actionID, costReduction = ActionID{SpellID: 1259812}, 0.20
+	case proto.Class_ClassMage:
+		actionID, costReduction = ActionID{SpellID: 1259817}, 0.50
+	case proto.Class_ClassWarlock:
+		actionID, costReduction = ActionID{SpellID: 1259821}, 0.50
+	case proto.Class_ClassPriest:
+		actionID, costReduction = ActionID{SpellID: 1259823}, 0.15
+	default:
+		// No other class can be a gnome, and the client has no Eureka! for one.
+		return
+	}
 
-	var affected []*Spell
+	damageMod := character.AddDynamicMod(SpellModConfig{
+		Kind:       SpellMod_DamageDone_Pct,
+		ProcMask:   ProcMaskSpecial,
+		FloatValue: 0.10,
+	})
+	costMod := character.AddDynamicMod(SpellModConfig{
+		Kind:       SpellMod_PowerCost_Pct_Add,
+		ProcMask:   ProcMaskSpecial,
+		FloatValue: -costReduction,
+	})
+
 	aura := character.RegisterAura(Aura{
 		Label:     "Eureka!",
 		ActionID:  actionID,
-		Duration:  time.Minute,
+		Duration:  time.Second * 15,
 		MaxStacks: 3,
-		OnInit: func(aura *Aura, sim *Simulation) {
-			// Anything that costs mana and deals damage is a candidate; a charge is spent
-			// by whichever of them is cast first.
-			for _, spell := range character.Spellbook {
-				if spell.Cost != nil && spell.ProcMask.Matches(ProcMaskSpellDamage) {
-					affected = append(affected, spell)
-				}
-			}
-		},
 		OnGain: func(aura *Aura, sim *Simulation) {
-			character.PseudoStats.DamageDealtMultiplier *= 1.1
-			for _, spell := range affected {
-				spell.Cost.Multiplier -= 50
-			}
+			damageMod.Activate()
+			costMod.Activate()
 		},
 		OnExpire: func(aura *Aura, sim *Simulation) {
-			character.PseudoStats.DamageDealtMultiplier /= 1.1
-			for _, spell := range affected {
-				spell.Cost.Multiplier += 50
-			}
+			damageMod.Deactivate()
+			costMod.Deactivate()
 		},
 		OnStacksChange: func(aura *Aura, sim *Simulation, _ int32, newStacks int32) {
 			if newStacks == 0 {
 				aura.Deactivate(sim)
 			}
 		},
+		// OnCastComplete runs after the cast's effects, so the ability that spends the
+		// last charge still gets the bonus.
 		OnCastComplete: func(aura *Aura, sim *Simulation, spell *Spell) {
-			// OnCastComplete runs after the cast that activated the aura, so the charge the
-			// activation itself would spend is not taken.
-			if aura.RemainingDuration(sim) == aura.Duration {
-				return
-			}
-			if aura.GetStacks() > 0 && spell.ProcMask.Matches(ProcMaskSpellDamage) {
+			if spell.ProcMask.Matches(ProcMaskSpecial) {
 				aura.RemoveStack(sim)
 			}
 		},
@@ -389,45 +392,42 @@ func (character *Character) registerElunesLight() {
 	})
 }
 
-// Windshaper, the Horde half of the Skyborne. The Alliance half gets a regen cooldown
-// in its place.
-func (character *Character) registerWindshaper() {
-	actionID := ActionID{SpellID: 460530}
+// Blood Fury under Forever (client 20572): 10% more melee attack power, ranged attack
+// power and spell power for 15 s on a two minute cooldown, off the global cooldown. The
+// three effects are percentage modifiers (auras 166, 167 and 317), so they scale whatever
+// the orc gains while the buff is up rather than a snapshot taken when it is cast.
+//
+// Spell power here is split into generic and school stats. The school stats cannot carry a
+// stat dependency, so 10% of them is added when the buff lands; they only come from gear
+// and elixirs, which do not change mid-fight.
+func (character *Character) newForeverBloodFuryAura(actionID ActionID) *Aura {
+	var deps []*stats.StatDependency
+	for _, stat := range []stats.Stat{stats.AttackPower, stats.RangedAttackPower, stats.SpellPower, stats.SpellDamage} {
+		deps = append(deps, character.NewDynamicMultiplyStat(stat, 1.1))
+	}
+	schoolPowers := []stats.Stat{stats.ArcanePower, stats.FirePower, stats.FrostPower, stats.HolyPower, stats.NaturePower, stats.ShadowPower}
 
-	var attackPower, spellPower float64
-	aura := character.RegisterAura(Aura{
-		Label:    "Windshaper",
+	var schoolBonus stats.Stats
+	return character.RegisterAura(Aura{
+		Label:    "Blood Fury",
 		ActionID: actionID,
 		Duration: time.Second * 15,
 		OnGain: func(aura *Aura, sim *Simulation) {
-			attackPower = character.GetStat(stats.AttackPower) * 0.1
-			spellPower = character.GetStat(stats.SpellPower) * 0.1
-			character.AddStatDynamic(sim, stats.AttackPower, attackPower)
-			character.AddStatDynamic(sim, stats.SpellPower, spellPower)
+			for _, dep := range deps {
+				aura.Unit.EnableDynamicStatDep(sim, dep)
+			}
+			schoolBonus = stats.Stats{}
+			for _, stat := range schoolPowers {
+				schoolBonus[stat] = aura.Unit.GetStat(stat) * 0.1
+			}
+			aura.Unit.AddStatsDynamic(sim, schoolBonus)
 		},
 		OnExpire: func(aura *Aura, sim *Simulation) {
-			character.AddStatDynamic(sim, stats.AttackPower, -attackPower)
-			character.AddStatDynamic(sim, stats.SpellPower, -spellPower)
+			for _, dep := range deps {
+				aura.Unit.DisableDynamicStatDep(sim, dep)
+			}
+			aura.Unit.AddStatsDynamic(sim, schoolBonus.Invert())
 		},
-	})
-
-	spell := character.RegisterSpell(SpellConfig{
-		ActionID: actionID,
-		Flags:    SpellFlagNoOnCastComplete,
-		Cast: CastConfig{
-			CD: Cooldown{
-				Timer:    character.NewTimer(),
-				Duration: time.Minute * 3,
-			},
-		},
-		ApplyEffects: func(sim *Simulation, _ *Unit, _ *Spell) {
-			aura.Activate(sim)
-		},
-	})
-
-	character.AddMajorCooldown(MajorCooldown{
-		Spell: spell,
-		Type:  CooldownTypeDPS,
 	})
 }
 
@@ -546,6 +546,47 @@ func makeBerserkingCooldown(character *Character, customPercentage float64, time
 
 	character.AddMajorCooldown(MajorCooldown{
 		Spell: berserkingSpell,
+		Type:  CooldownTypeDPS,
+	})
+}
+
+// Berserking under Forever (client 20554): 10% melee haste, ranged haste and cast speed
+// for 10 s on a three minute cooldown, whatever the troll's health. It costs nothing and is
+// off the global cooldown. The action id is the old fixed 10% option's, so saved rotations
+// still find it.
+func makeForeverBerserkingCooldown(character *Character, timer *Timer) {
+	actionID := ActionID{SpellID: 26297, Tag: 2}
+
+	aura := character.RegisterAura(Aura{
+		Label:    "Berserking (10)",
+		ActionID: actionID,
+		Duration: time.Second * 10,
+		OnGain: func(aura *Aura, sim *Simulation) {
+			character.MultiplyCastSpeed(1.1)
+			character.MultiplyAttackSpeed(sim, 1.1)
+		},
+		OnExpire: func(aura *Aura, sim *Simulation) {
+			character.MultiplyCastSpeed(1 / 1.1)
+			character.MultiplyAttackSpeed(sim, 1/1.1)
+		},
+	})
+
+	spell := character.RegisterSpell(SpellConfig{
+		ActionID: actionID,
+		Flags:    SpellFlagNoOnCastComplete,
+		Cast: CastConfig{
+			CD: Cooldown{
+				Timer:    timer,
+				Duration: time.Minute * 3,
+			},
+		},
+		ApplyEffects: func(sim *Simulation, _ *Unit, _ *Spell) {
+			aura.Activate(sim)
+		},
+	})
+
+	character.AddMajorCooldown(MajorCooldown{
+		Spell: spell,
 		Type:  CooldownTypeDPS,
 	})
 }
