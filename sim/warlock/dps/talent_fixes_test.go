@@ -101,3 +101,29 @@ func TestWrackBoostsCorruptionAndAgonyOnly(t *testing.T) {
 		}
 	}
 }
+
+// Demonic Knowledge (412732) gives the demon the same 33/67/100% of the warlock's level in spell
+// power as the warlock, while it is out.
+func TestDemonicKnowledgeReachesTheDemon(t *testing.T) {
+	sim, wl := newTestWarlock(t, TalentsDemonicPact, DefaultPactWarlock)
+	if wl.Talents.DemonicKnowledge != 3 {
+		t.Fatalf("test talents have Demonic Knowledge %d, want 3", wl.Talents.DemonicKnowledge)
+	}
+	pet := wl.ActivePet
+	if pet == nil || !pet.IsEnabled() {
+		t.Fatal("no demon out")
+	}
+
+	bonus := float64(wl.Level)
+	for _, unit := range []*core.Unit{&wl.Unit, &pet.Unit} {
+		aura := unit.GetAura("Demonic Knowledge")
+		if aura == nil || !aura.IsActive() {
+			t.Fatalf("%s: Demonic Knowledge is not active", unit.Label)
+		}
+		with := unit.GetStat(stats.SpellPower)
+		aura.Deactivate(sim)
+		if got := with - unit.GetStat(stats.SpellPower); !near(got, bonus) {
+			t.Errorf("%s: Demonic Knowledge gives %.2f spell power, want %.2f", unit.Label, got, bonus)
+		}
+	}
+}

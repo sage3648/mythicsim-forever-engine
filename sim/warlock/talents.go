@@ -431,24 +431,29 @@ func (warlock *Warlock) applyDemonicKnowledge() {
 
 	// The tooltip only pays the bonus out while a demon is active, so it rides on the pet
 	// rather than sitting on the character sheet.
-	// 33/67/100% of level, the beta client's curve for the talent (412732).
+	// 33/67/100% of level, the beta client's curve for the talent (412732), for the warlock and,
+	// as its text says, for the demon too.
 	bonus := []float64{0, 0.33, 0.67, 1.00}[warlock.Talents.DemonicKnowledge] * float64(warlock.Level)
 
-	demonicKnowledgeAura := warlock.RegisterAura(core.Aura{
+	config := core.Aura{
 		Label:    "Demonic Knowledge",
 		ActionID: core.ActionID{SpellID: 35696},
 		Duration: core.NeverExpires,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
-			warlock.AddStatDynamic(sim, stats.SpellPower, bonus)
+			aura.Unit.AddStatDynamic(sim, stats.SpellPower, bonus)
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-			warlock.AddStatDynamic(sim, stats.SpellPower, -bonus)
+			aura.Unit.AddStatDynamic(sim, stats.SpellPower, -bonus)
 		},
-	})
+	}
+	demonicKnowledgeAura := warlock.RegisterAura(config)
 
 	for _, pet := range warlock.BasePets {
+		// The pet's copy goes when the pet does: a dismissed pet's auras all expire.
+		petAura := pet.RegisterAura(config)
 		pet.ApplyOnPetEnable(func(sim *core.Simulation) {
 			demonicKnowledgeAura.Activate(sim)
+			petAura.Activate(sim)
 		})
 		pet.ApplyOnPetDisable(func(sim *core.Simulation, isSacrifice bool) {
 			demonicKnowledgeAura.Deactivate(sim)
