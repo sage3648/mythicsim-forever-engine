@@ -50,6 +50,11 @@ const (
 	SpellMaskJudgement
 
 	SpellMaskAll = SpellMaskJudgement<<1 - SpellMaskExorcism // every bit from Exorcism to Judgement
+
+	// Divine Precision's class mask (1310904), as far as the sim casts it. Light's Vigil is on it
+	// too but not in this engine.
+	SpellMaskDivinePrecision = SpellMaskConsecration | SpellMaskExorcism | SpellMaskHolyShock |
+		SpellMaskHolyStrike | SpellMaskHolyWrath
 )
 
 type SealJudgeCode uint8

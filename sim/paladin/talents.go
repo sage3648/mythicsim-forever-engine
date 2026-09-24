@@ -16,9 +16,6 @@ func (paladin *Paladin) ApplyTalents() {
 	paladin.AddStat(stats.MeleeCrit, float64(paladin.Talents.Conviction)*core.CritRatingPerCritChance)
 	// TODO: paladin.AddStat(stats.RangedCrit, float64(paladin.Talents.Conviction)*core.CritRatingPerCritChance)
 
-	// Divine Precision: 6/12/18%, confirmed by the beta client's talent curve.
-	paladin.PseudoStats.SchoolBonusHitChance[stats.SchoolIndexHoly] += 6 * float64(paladin.Talents.DivinePrecision) * core.SpellHitRatingPerHitChance
-
 	if paladin.Talents.Toughness > 0 {
 		paladin.ApplyEquipScaling(stats.Armor, 1.0+0.02*float64(paladin.Talents.Toughness))
 	}
@@ -47,6 +44,7 @@ func (paladin *Paladin) ApplyTalents() {
 		paladin.AddStatDependency(stats.Intellect, stats.SpellPower, []float64{0, 0.33, 0.66, 1.00}[paladin.Talents.ChampionOfTheLight])
 	}
 
+	paladin.applyDivinePrecision()
 	paladin.applyWeaponSpecialization()
 	paladin.applyCrusade()
 	paladin.applyVengeance()
@@ -57,6 +55,22 @@ func (paladin *Paladin) ApplyTalents() {
 	paladin.applyConsecratedGround()
 	paladin.applyInstrumentOfLaw()
 	paladin.applySanctifiedJudgement()
+}
+
+// Divine Precision (1310904) is a miss chance spell mod (SPELLMOD_RESIST_MISS_CHANCE, 6/12/18) on a
+// class mask, not Holy school hit. Of the spells the sim casts the mask names Consecration, Exorcism,
+// Holy Shock, Holy Strike and Holy Wrath: the Holy Shield proc and Hammer of Wrath are left out, and
+// Holy Strike, a melee attack, is in.
+func (paladin *Paladin) applyDivinePrecision() {
+	if paladin.Talents.DivinePrecision == 0 {
+		return
+	}
+
+	paladin.AddStaticMod(core.SpellModConfig{
+		ClassMask:  SpellMaskDivinePrecision,
+		Kind:       core.SpellMod_BonusHit_Percent,
+		FloatValue: spellData.DivinePrecision.ValueAt(paladin.Talents.DivinePrecision),
+	})
 }
 
 // Improved Seals raises the damage of every seal and of the judgement it powers.
