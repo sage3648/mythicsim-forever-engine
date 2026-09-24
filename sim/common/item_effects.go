@@ -83,6 +83,7 @@ const (
 	RunebladeOfBaronRivendare = 13505
 
 	HeadmastersCharge          = 13937
+	OmokksGirthRestrainer      = 13959
 	GravestoneWarAxe           = 13983
 	Darrowspike                = 13984
 	Frightalon                 = 14024
@@ -827,9 +828,11 @@ func init() {
 
 	// https://www.wowhead.com/classic/item=14576/ebon-hilt-of-marduk
 	// Beta client 1.60.1 (spell 18656): 28 a tick every 3 sec for 9 sec, 84 in all, well down
-	// from Era's 70 a tick for 3 sec.
+	// from Era's 70 a tick for 3 sec. Client 1.60.1.69977 adds an equip, 1% less threat (1298501).
 	// TODO: Proc rate assumed and needs testing
 	itemhelpers.CreateWeaponProcSpell(EbonHiltOfMarduk, "Ebon Hilt of Marduk", 1.0, func(character *core.Character) *core.Spell {
+		decreaseThreatAll(character, "Ebon Hilt of Marduk")
+
 		return character.RegisterSpell(core.SpellConfig{
 			ActionID:    core.ActionID{SpellID: 18656},
 			SpellSchool: core.SpellSchoolShadow,
@@ -2940,6 +2943,12 @@ func init() {
 		thornsDamageEffect(agent, Naglering, "Naglering", core.SpellSchoolArcane, 3)
 	})
 
+	// https://www.wowhead.com/classic/item=13959/omokks-girth-restrainer
+	// Client 1.60.1.69977: Forever adds an equip, Decrease Threat All 01 (1298501), 1% less threat.
+	core.NewItemEffect(OmokksGirthRestrainer, func(agent core.Agent) {
+		decreaseThreatAll(agent.GetCharacter(), "Omokk's Girth Restrainer")
+	})
+
 	// https://www.wowhead.com/classic/item=18326/razor-gauntlets
 	// Client 1.60.1.69977 (1302193): Equip: When struck in combat inflicts 7 Nature damage to the
 	// attacker. Era's was 3 Arcane.
@@ -3042,6 +3051,15 @@ func thornsDamageEffect(agent core.Agent, itemID int32, itemName string, school 
 			}
 		},
 	}))
+}
+
+// Forever's Decrease Threat All 01 (1298501), an equip on Ebon Hilt of Marduk and Omokk's Girth
+// Restrainer: 1% less threat from everything the wearer does.
+func decreaseThreatAll(character *core.Character, itemName string) {
+	core.MakePermanent(character.RegisterAura(core.Aura{
+		Label:    "Decrease Threat All 01 (" + itemName + ")",
+		ActionID: core.ActionID{SpellID: 1298501},
+	})).AttachMultiplicativePseudoStatBuff(&character.PseudoStats.ThreatMultiplier, 0.99)
 }
 
 var minorArmorReductionEffectCategory = "MinorArmorReduction"
