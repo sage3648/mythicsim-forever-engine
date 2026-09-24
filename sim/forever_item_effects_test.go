@@ -5,6 +5,7 @@ import (
 
 	"github.com/wowsims/classic/sim/core"
 	"github.com/wowsims/classic/sim/core/proto"
+	"github.com/wowsims/classic/sim/core/stats"
 )
 
 // Item effects whose Forever behaviour differs from Classic Era's in the proc itself, checked
@@ -96,4 +97,41 @@ func TestDragonsCallWhelpSpitsAcid(t *testing.T) {
 		}
 	}
 	t.Fatal("the whelp never cast Acid Spit")
+}
+
+// Forever's consumables that differ from Era's (client 1.60.1.69977, ElliotWood/Forever #421).
+func TestForeverConsumableStats(t *testing.T) {
+	// What the consumes add: the stats after the consumes phase, less those without any.
+	consumesStats := func(consumes *proto.Consumes) stats.Stats {
+		player := itemTestWarrior(13286, &proto.APLRotation{})
+		player.Consumes = consumes
+		result := core.ComputeStats(&proto.ComputeStatsRequest{
+			Raid:      core.SinglePlayerRaidProto(player, &proto.PartyBuffs{}, &proto.RaidBuffs{}, &proto.Debuffs{}),
+			Encounter: core.MakeSingleTargetEncounter(0),
+		})
+		if result.ErrorResult != "" {
+			t.Fatal(result.ErrorResult)
+		}
+		return stats.FromFloatArray(result.RaidStats.Parties[0].Players[0].ConsumesStats.Stats)
+	}
+
+	for _, check := range []struct {
+		name     string
+		consumes *proto.Consumes
+		want     map[stats.Stat]float64
+	}{
+		{"Grilled Squid", &proto.Consumes{Food: proto.Food_FoodGrilledSquid},
+			map[stats.Stat]float64{stats.MeleeCrit: 1 * core.CritRatingPerCritChance, stats.Agility: 0}},
+		{"Nightfin Soup", &proto.Consumes{Food: proto.Food_FoodNightfinSoup},
+			map[stats.Stat]float64{stats.SpellDamage: 22, stats.MP5: 0}},
+		{"Runn Tum Tuber Surprise", &proto.Consumes{Food: proto.Food_FoodRunnTumTuberSurprise},
+			map[stats.Stat]float64{stats.Intellect: 15}},
+	} {
+		with, without := consumesStats(check.consumes), consumesStats(&proto.Consumes{})
+		for stat, want := range check.want {
+			if got := with[stat] - without[stat]; got != want {
+				t.Errorf("%s: adds %v %s, want %v", check.name, got, stat.StatName(), want)
+			}
+		}
+	}
 }

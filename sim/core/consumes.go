@@ -328,9 +328,12 @@ func applyFoodConsumes(character *Character, consumes *proto.Consumes) {
 				stats.Stamina: 12,
 				stats.Spirit:  12,
 			})
+		// Forever's well fed buffs, from client 1.60.1.69977: Grilled Squid is +1% critical strike
+		// (Era: 10 Agility), Nightfin Soup +22 spell damage (Era: 8 mana every 5 sec) and Runn Tum
+		// Tuber Surprise 15 Intellect (Era: 10).
 		case proto.Food_FoodGrilledSquid:
 			character.AddStats(stats.Stats{
-				stats.Agility: 10,
+				stats.MeleeCrit: 1 * CritRatingPerCritChance,
 			})
 		case proto.Food_FoodSmokedDesertDumpling:
 			character.AddStats(stats.Stats{
@@ -338,11 +341,11 @@ func applyFoodConsumes(character *Character, consumes *proto.Consumes) {
 			})
 		case proto.Food_FoodNightfinSoup:
 			character.AddStats(stats.Stats{
-				stats.MP5: 8,
+				stats.SpellDamage: 22,
 			})
 		case proto.Food_FoodRunnTumTuberSurprise:
 			character.AddStats(stats.Stats{
-				stats.Intellect: 10,
+				stats.Intellect: 15,
 			})
 		case proto.Food_FoodDirgesKickChimaerokChops:
 			character.AddStats(stats.Stats{
@@ -390,8 +393,10 @@ func applyFoodConsumes(character *Character, consumes *proto.Consumes) {
 	}
 }
 
+// Client 1.60.1.69977: the chili's aura (15852) has a 5% chance, 10 sec cooldown, on landed melee
+// hits to cast 15851, 65 Fire damage +-12.3% (57 to 73, spell power coefficient 1) on every
+// enemy. Era's was a flat 60.
 func DragonBreathChiliAura(character *Character) *Aura {
-	baseDamage := 60.0
 	procChance := .05
 	icd := Cooldown{
 		Timer:    character.NewTimer(),
@@ -411,7 +416,7 @@ func DragonBreathChiliAura(character *Character) *Aura {
 
 		ApplyEffects: func(sim *Simulation, target *Unit, spell *Spell) {
 			for _, aoeTarget := range sim.Environment.Encounter.TargetUnits {
-				spell.CalcAndDealDamage(sim, aoeTarget, baseDamage, spell.OutcomeMagicHitAndCrit)
+				spell.CalcAndDealDamage(sim, aoeTarget, sim.Roll(57, 73), spell.OutcomeMagicHitAndCrit)
 			}
 		},
 	})
