@@ -371,16 +371,17 @@ func (priest *Priest) registerShadowform() {
 
 	actionID := core.ActionID{SpellID: 15473}
 
+	// The crit bonus is not school-wide: 15473's op 15 mask (41984016) names Mind Blast, Mind
+	// Flay, Shadow Word: Pain and Devouring Plague of what the sim casts, not Shadow Word: Death.
 	critDamage := priest.AddDynamicMod(core.SpellModConfig{
 		Kind:       core.SpellMod_CritMultiplier_Flat,
-		School:     core.SpellSchoolShadow,
-		SpellFlag:  SpellFlagPriest,
+		ClassMask:  SpellMaskMindBlast | SpellMaskMindFlay | SpellMaskShadowWordPain | SpellMaskDevouringPlague,
 		FloatValue: 1,
 	})
-	// The beta client's 15473: +10% Shadow damage, -50% Shadow mana cost, +100% Shadow critical
-	// strike damage bonus, -15% Physical damage taken. The cost half is aura 72 (school power
-	// cost %), which the client applies after the spell mods: it halves Mental Agility's 90%
-	// to 45%, not 100 - 10 - 50 = 40%.
+	// The beta client's 15473: +10% Shadow damage, -50% Shadow mana cost, +100% critical strike
+	// damage bonus on the spells above, -15% Physical damage taken. The cost half is aura 72
+	// (school power cost %), which the client applies after the spell mods: it halves Mental
+	// Agility's 90% to 45%, not 100 - 10 - 50 = 40%.
 	priest.ShadowformAura = priest.RegisterAura(core.Aura{
 		Label:    "Shadowform",
 		ActionID: actionID,

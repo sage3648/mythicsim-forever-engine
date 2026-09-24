@@ -97,3 +97,36 @@ func TestMentalAgilityMask(t *testing.T) {
 		}
 	}
 }
+
+// Shadowform's +100% crit damage is on 15473's mask: Mind Blast, Mind Flay, Shadow Word: Pain and
+// Devouring Plague, not Shadow Word: Death.
+func TestShadowformCritDamageMask(t *testing.T) {
+	sim, p := newTestShadowPriest(t)
+	if p.ShadowformAura == nil {
+		t.Fatal("test talents have no Shadowform")
+	}
+
+	boosted := map[string]*core.Spell{
+		"Mind Blast":        topRank(p.MindBlast),
+		"Mind Flay":         mindFlay(p),
+		"Shadow Word: Pain": topRank(p.ShadowWordPain),
+		"Devouring Plague":  topRank(p.DevouringPlague),
+	}
+	swd := topRank(p.ShadowWordDeath)
+
+	p.ShadowformAura.Deactivate(sim)
+	before := map[string]float64{"Shadow Word: Death": swd.CritDamageBonus}
+	for name, spell := range boosted {
+		before[name] = spell.CritDamageBonus
+	}
+
+	p.ShadowformAura.Activate(sim)
+	for name, spell := range boosted {
+		if !near(spell.CritDamageBonus, before[name]+1) {
+			t.Errorf("%s crit damage bonus %v in Shadowform, want %v", name, spell.CritDamageBonus, before[name]+1)
+		}
+	}
+	if !near(swd.CritDamageBonus, before["Shadow Word: Death"]) {
+		t.Errorf("Shadow Word: Death crit damage bonus %v in Shadowform, want %v", swd.CritDamageBonus, before["Shadow Word: Death"])
+	}
+}
