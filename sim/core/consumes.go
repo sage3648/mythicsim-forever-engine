@@ -594,11 +594,26 @@ func applySpellBuffConsumes(character *Character, consumes *proto.Consumes) {
 		}
 	}
 
+	// Forever adds the Elixir of Nature Power (250343, +40 Nature damage) and the Greater
+	// Mageblood Elixir (250341, 20 mana every 5 sec), both client 1.60.1.69977.
+	if consumes.NaturePowerBuff != proto.NaturePowerBuff_NaturePowerBuffUnknown {
+		switch consumes.NaturePowerBuff {
+		case proto.NaturePowerBuff_ElixirOfNaturePower:
+			character.AddStats(stats.Stats{
+				stats.NaturePower: 40,
+			})
+		}
+	}
+
 	if consumes.ManaRegenElixir != proto.ManaRegenElixir_ManaRegenElixirUnknown {
 		switch consumes.ManaRegenElixir {
 		case proto.ManaRegenElixir_MagebloodPotion:
 			character.AddStats(stats.Stats{
 				stats.MP5: 12,
+			})
+		case proto.ManaRegenElixir_GreaterMagebloodElixir:
+			character.AddStats(stats.Stats{
+				stats.MP5: 20,
 			})
 		}
 	}

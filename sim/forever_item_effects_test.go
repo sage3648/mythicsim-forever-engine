@@ -128,6 +128,10 @@ func TestForeverConsumableStats(t *testing.T) {
 			map[stats.Stat]float64{stats.Intellect: 15}},
 		{"item 21546, the Elixir of Holy Power", &proto.Consumes{FirePowerBuff: proto.FirePowerBuff_ElixirOfGreaterFirepower},
 			map[stats.Stat]float64{stats.HolyPower: 40, stats.FirePower: 0}},
+		{"Elixir of Nature Power", &proto.Consumes{NaturePowerBuff: proto.NaturePowerBuff_ElixirOfNaturePower},
+			map[stats.Stat]float64{stats.NaturePower: 40}},
+		{"Greater Mageblood Elixir", &proto.Consumes{ManaRegenElixir: proto.ManaRegenElixir_GreaterMagebloodElixir},
+			map[stats.Stat]float64{stats.MP5: 20}},
 	} {
 		with, without := consumesStats(check.consumes), consumesStats(&proto.Consumes{})
 		for stat, want := range check.want {

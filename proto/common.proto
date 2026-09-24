@@ -421,6 +421,8 @@ enum HealthElixir {
 enum ManaRegenElixir {
 	ManaRegenElixirUnknown = 0;
 	MagebloodPotion = 1;
+	// Forever's Greater Mageblood Elixir (item 250341): 20 mana every 5 sec.
+	GreaterMagebloodElixir = 2;
 }
 
 enum StrengthBuff {
@@ -458,6 +460,12 @@ enum FirePowerBuff {
 enum FrostPowerBuff {
 	FrostPowerBuffUnknown = 0;
 	ElixirOfFrostPower = 1;
+}
+
+// Forever's Elixir of Nature Power (item 250343): +40 Nature damage.
+enum NaturePowerBuff {
+	NaturePowerBuffUnknown = 0;
+	ElixirOfNaturePower = 1;
 }
 
 enum ZanzaBuff {
@@ -698,6 +706,7 @@ message Consumes {
 	PetMiscConsumes pet_misc_consumes = 27;
 	SapperExplosive sapper_explosive = 28;
 	HitConsumable hit_consumable = 29;
+	NaturePowerBuff nature_power_buff = 30;
 }
 
 // NextIndex: 26
