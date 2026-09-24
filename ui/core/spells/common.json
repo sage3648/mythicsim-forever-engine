@@ -521,12 +521,12 @@
 		"tooltip": "Increases damage and healing done by magical spells and effects by up to 65 for 10 sec.",
 		"note": "Lightforge Armor 5 piece. The beta client cuts it from 95 to 65 spell power and moves it off 27498, which Forever no longer uses."
 	},
-	"27656": {
+	"27655": {
 		"ability": "Flame Lash (Heart of Wyrmthalak)",
 		"file": "sim/common/item_effects.go",
 		"source": "forever",
-		"note": "Beta client 1.60.1 (spell 27656). The proc trigger is unchanged. Forever adds a second effect carrying 3, which the sim has nothing to spend on.",
-		"tooltip": "Bathes your melee target in flames for 120 to 180 Fire damage."
+		"note": "Client 1.60.1.69977: the equip aura 27656 procs off melee and ranged hits (proc flags 340) and casts 27655, 140 +-20% Fire. Era's was 120 to 180 off melee only. 27656's second effect carries 3, which the sim has nothing to spend on.",
+		"tooltip": "Melee and Ranged attacks have a chance to deal 112 to 168 Fire damage."
 	},
 	"27787": {
 		"ability": "Rogue Armor Energize",

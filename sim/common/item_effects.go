@@ -81,7 +81,8 @@ const (
 	SkullforgeReaver          = 13361
 	TheCruelHandOfTimmy       = 13401
 	RunebladeOfBaronRivendare = 13505
-	// HeadmastersCharge      = 13937
+
+	HeadmastersCharge          = 13937
 	GravestoneWarAxe           = 13983
 	Darrowspike                = 13984
 	Frightalon                 = 14024
@@ -1372,44 +1373,20 @@ func init() {
 	itemhelpers.CreateWeaponCoHProcDamage(HanzoSword, "Hanzo Sword", 1.0, 16405, core.SpellSchoolPhysical, 75, 0, 0, core.DefenseTypeMelee)
 
 	// https://www.wowhead.com/classic/item=13937/headmasters-charge
-	// Use: Gives 20 additional intellect to party members within 30 yards. (10 Min Cooldown)
-	// Originally did not stack with Arcane Intellect, but is reported to stack in SoD
-	/* core.NewItemEffect(HeadmastersCharge, func(agent core.Agent) {
+	// Client 1.60.1.69977 (18264): Use: 20 Intellect for 15 min to party members within 30 yards,
+	// on a 10 min cooldown. It is a party aura; only the wearer is simulated.
+	core.NewItemEffect(HeadmastersCharge, func(agent core.Agent) {
 		character := agent.GetCharacter()
-		actionID := core.ActionID{SpellID: 18264}
-
-		buffAura := character.RegisterAura(core.Aura{
-			ActionID: actionID,
-			Label:    "Headmaster's Charge",
-			Duration: time.Minute * 15,
-			OnGain: func(aura *core.Aura, sim *core.Simulation) {
-				aura.Unit.AddStatDynamic(sim, stats.Intellect, 25)
-			},
-			OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-				aura.Unit.AddStatDynamic(sim, stats.Intellect, -25)
-			},
-		})
-		spell := character.RegisterSpell(core.SpellConfig{
-			ActionID: actionID,
-			Flags:    core.SpellFlagNoOnCastComplete | core.SpellFlagOffensiveEquipment,
-
+		core.RegisterTemporaryStatsOnUseCD(character, "Headmaster's Charge", stats.Stats{stats.Intellect: 20}, time.Minute*15, core.SpellConfig{
+			ActionID: core.ActionID{ItemID: HeadmastersCharge},
 			Cast: core.CastConfig{
 				CD: core.Cooldown{
 					Timer:    character.NewTimer(),
 					Duration: time.Minute * 10,
 				},
 			},
-
-			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-				buffAura.Activate(sim)
-			},
 		})
-
-		character.AddMajorCooldown(core.MajorCooldown{
-			Type:  core.CooldownTypeDPS,
-			Spell: spell,
-		})
-	}) */
+	})
 
 	// https://www.wowhead.com/classic/item=11635/hookfang-shanker
 	// Beta client 1.60.1 (spell 13526): 13 a tick every 2 sec for 14 sec, 91 in all. Era is 7
@@ -2456,25 +2433,31 @@ func init() {
 	///////////////////////////////////////////////////////////////////////////
 
 	// https://www.wowhead.com/classic/item=11832/burst-of-knowledge
-	// Use: Reduces mana cost of all spells by 100 for 10 sec. (5 Min Cooldown)
+	// Client 1.60.1.69977 (15646): Use: Reduces the mana cost of all spells by 150 for 10 sec, on a
+	// 6 min cooldown. Era's was 100 on a 15 min cooldown. The client's school mask (126) leaves
+	// Physical spells, a hunter's shots among them, at full cost.
+	// Not modelled: the 10 sec category cooldown (2554) it shares with Second Wind.
 	core.NewItemEffect(BurstOfKnowledge, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
+		discounted := func(spell *core.Spell) bool {
+			return spell.Cost != nil && spell.Cost.CostType() == core.CostTypeMana && spell.SpellSchool != core.SpellSchoolPhysical
+		}
 		aura := character.GetOrRegisterAura(core.Aura{
 			ActionID: core.ActionID{ItemID: BurstOfKnowledge},
 			Label:    "Burst of Knowledge",
 			Duration: time.Second * 10,
 			OnGain: func(aura *core.Aura, sim *core.Simulation) {
 				for _, spell := range aura.Unit.Spellbook {
-					if spell.Cost != nil && spell.Cost.CostType() == core.CostTypeMana {
-						spell.Cost.FlatModifier -= 100
+					if discounted(spell) {
+						spell.Cost.FlatModifier -= 150
 					}
 				}
 			},
 			OnExpire: func(aura *core.Aura, sim *core.Simulation) {
 				for _, spell := range aura.Unit.Spellbook {
-					if spell.Cost != nil && spell.Cost.CostType() == core.CostTypeMana {
-						spell.Cost.FlatModifier += 100
+					if discounted(spell) {
+						spell.Cost.FlatModifier += 150
 					}
 				}
 			},
@@ -2488,7 +2471,7 @@ func init() {
 			Cast: core.CastConfig{
 				CD: core.Cooldown{
 					Timer:    character.NewTimer(),
-					Duration: time.Minute * 15,
+					Duration: time.Minute * 6,
 				},
 			},
 
@@ -2663,26 +2646,28 @@ func init() {
 	})
 
 	// https://www.wowhead.com/classic/item=22321/heart-of-wyrmthalak
-	// Equip: Chance to bathe your melee target in flames for 120 to 180 Fire damage.
-	// TODO: Proc rate assumed from a wowhead comment and needs testing
+	// Client 1.60.1.69977: the equip aura, Flame Lash (27656), procs off melee and ranged hits
+	// (proc flags 340) and casts Flame Lash (27655), 140 +-20% Fire, so 112 to 168. Era's was 120
+	// to 180 off melee only. The triple damage against Orcs has no raid boss to apply to.
+	// TODO: Proc rate assumed from a wowhead comment and needs testing; the client stores none.
 	core.NewItemEffect(HeartOfWyrmthalak, func(agent core.Agent) {
 		character := agent.GetCharacter()
 		spell := character.RegisterSpell(core.SpellConfig{
-			ActionID:         core.ActionID{SpellID: 27656},
+			ActionID:         core.ActionID{SpellID: 27655},
 			SpellSchool:      core.SpellSchoolFire,
 			DefenseType:      core.DefenseTypeMagic,
 			ProcMask:         core.ProcMaskEmpty,
 			DamageMultiplier: 1,
 			ThreatMultiplier: 1,
 			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-				spell.CalcAndDealDamage(sim, target, sim.Roll(120, 180), spell.OutcomeMagicHitAndCrit)
+				spell.CalcAndDealDamage(sim, target, sim.Roll(112, 168), spell.OutcomeMagicHitAndCrit)
 			},
 		})
 		core.MakeProcTriggerAura(&character.Unit, core.ProcTrigger{
 			Name:              "Heart of Wyrmthalak Trigger",
 			Callback:          core.CallbackOnSpellHitDealt,
 			Outcome:           core.OutcomeLanded,
-			ProcMask:          core.ProcMaskMelee,
+			ProcMask:          core.ProcMaskMeleeOrRanged,
 			SpellFlagsExclude: core.SpellFlagSuppressEquipProcs,
 			PPM:               0.4,
 			Handler: func(sim *core.Simulation, _ *core.Spell, result *core.SpellResult) {
@@ -2877,7 +2862,7 @@ func init() {
 	// https://www.wowhead.com/classic/item=228266/drillborer-disk
 	// Equip: When struck in combat inflicts 3 Arcane damage to the attacker.
 	core.NewItemEffect(DrillborerDisk, func(agent core.Agent) {
-		thornsArcaneDamageEffect(agent, DrillborerDisk, "Drillborer Disk", 3)
+		thornsDamageEffect(agent, DrillborerDisk, "Drillborer Disk", core.SpellSchoolArcane, 3)
 	})
 
 	// Client 18825 / 18826 (Electrostatic Charge 13959): "When struck in combat has a 5% chance of
@@ -2952,13 +2937,14 @@ func init() {
 	// https://www.wowhead.com/classic/item=11669/naglering
 	// Equip: When struck in combat inflicts 3 Arcane damage to the attacker.
 	core.NewItemEffect(Naglering, func(agent core.Agent) {
-		thornsArcaneDamageEffect(agent, Naglering, "Naglering", 3)
+		thornsDamageEffect(agent, Naglering, "Naglering", core.SpellSchoolArcane, 3)
 	})
 
 	// https://www.wowhead.com/classic/item=18326/razor-gauntlets
-	// Equip: When struck in combat inflicts 3 Arcane damage to the attacker.
+	// Client 1.60.1.69977 (1302193): Equip: When struck in combat inflicts 7 Nature damage to the
+	// attacker. Era's was 3 Arcane.
 	core.NewItemEffect(RazorGauntlets, func(agent core.Agent) {
-		thornsArcaneDamageEffect(agent, RazorGauntlets, "Razor Gauntlets", 3)
+		thornsDamageEffect(agent, RazorGauntlets, "Razor Gauntlets", core.SpellSchoolNature, 7)
 	})
 
 	// https://www.wowhead.com/classic/item=1168/skullflame-shield
@@ -3031,12 +3017,12 @@ func init() {
 	core.AddEffectsToTest = true
 }
 
-func thornsArcaneDamageEffect(agent core.Agent, itemID int32, itemName string, damage float64) {
+func thornsDamageEffect(agent core.Agent, itemID int32, itemName string, school core.SpellSchool, damage float64) {
 	character := agent.GetCharacter()
 
 	procSpell := character.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{ItemID: itemID},
-		SpellSchool: core.SpellSchoolArcane,
+		SpellSchool: school,
 		ProcMask:    core.ProcMaskEmpty,
 		Flags:       core.SpellFlagBinary | core.SpellFlagNoOnCastComplete | core.SpellFlagPassiveSpell,
 
