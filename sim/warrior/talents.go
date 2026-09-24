@@ -404,7 +404,10 @@ func (warrior *Warrior) applyBastion() {
 	warrior.PseudoStats.DamageDealtMultiplier *= 1 + 0.02*float64(warrior.Talents.Bastion)
 }
 
-// 1 Rage per point, confirmed by the beta client's rank curve.
+// 1 Rage per point, confirmed by the beta client's rank curve. Its class mask (29787) is the offensive
+// abilities plus Demoralizing Shout, Spearing Strike, Death Wish, Sweeping Strikes, Challenging Shout
+// and Intimidating Shout, and leaves out Retaliation. The offensive flag covers the first three here;
+// Death Wish and Sweeping Strikes need naming. The shouts and Retaliation are not in the sim.
 func (warrior *Warrior) applyFocusedRage() {
 	if warrior.Talents.FocusedRage == 0 {
 		return
@@ -413,6 +416,11 @@ func (warrior *Warrior) applyFocusedRage() {
 	warrior.AddStaticMod(core.SpellModConfig{
 		Kind:      core.SpellMod_PowerCost_Flat,
 		SpellFlag: SpellFlagOffensive,
+		IntValue:  -warrior.Talents.FocusedRage,
+	})
+	warrior.AddStaticMod(core.SpellModConfig{
+		Kind:      core.SpellMod_PowerCost_Flat,
+		ClassMask: SpellMaskDeathWish | SpellMaskSweepingStrikes,
 		IntValue:  -warrior.Talents.FocusedRage,
 	})
 }
@@ -442,8 +450,9 @@ func (warrior *Warrior) registerDeathWishCD() {
 	core.RegisterPercentDamageModifierEffect(deathWishAura, 1.2)
 
 	warrior.DeathWish = warrior.RegisterSpell(AnyStance, core.SpellConfig{
-		ActionID: actionID,
-		Flags:    core.SpellFlagHelpful,
+		ActionID:       actionID,
+		ClassSpellMask: SpellMaskDeathWish,
+		Flags:          core.SpellFlagHelpful,
 		RageCost: core.RageCostOptions{
 			Cost: float64(row.Cost),
 		},

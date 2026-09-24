@@ -84,9 +84,10 @@ func (warrior *Warrior) registerSweepingStrikesCD() {
 	})
 
 	SweepingStrikes := warrior.RegisterSpell(BattleStance, core.SpellConfig{
-		ActionID:    actionID,
-		SpellSchool: row.SpellSchool,
-		Flags:       core.SpellFlagHelpful,
+		ActionID:       actionID,
+		ClassSpellMask: SpellMaskSweepingStrikes,
+		SpellSchool:    row.SpellSchool,
+		Flags:          core.SpellFlagHelpful,
 
 		RageCost: core.RageCostOptions{
 			Cost: float64(row.Cost),
