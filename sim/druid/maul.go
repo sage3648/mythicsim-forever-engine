@@ -28,7 +28,7 @@ func (druid *Druid) registerMaulSpell() {
 
 	switch druid.Ranged().ID {
 	case IdolOfBrutality:
-		rageCost -= 3
+		rageCost -= IdolOfBrutalityRageReduction
 	}
 
 	druid.Maul = druid.RegisterSpell(Bear, core.SpellConfig{

@@ -32,7 +32,7 @@ func (druid *Druid) registerSwipeBearSpell() {
 
 	switch druid.Ranged().ID {
 	case IdolOfBrutality:
-		rageCost -= 3
+		rageCost -= IdolOfBrutalityRageReduction
 	}
 
 	druid.SwipeBear = druid.RegisterSpell(Bear, core.SpellConfig{

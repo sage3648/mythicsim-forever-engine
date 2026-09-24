@@ -82,6 +82,12 @@ func (druid *Druid) registerMangleBearSpell() {
 	flatDamageBonus, _ := row.Direct.Range()
 	results := make([]*core.SpellResult, min(MangleBerserkTargets, druid.Env.GetNumTargets()))
 
+	rageCost := float64(row.Cost) - float64(druid.Talents.Ferocity)
+	switch druid.Ranged().ID {
+	case IdolOfBrutality:
+		rageCost -= IdolOfBrutalityRageReduction
+	}
+
 	druid.MangleBear = druid.RegisterSpell(Bear, core.SpellConfig{
 		SpellCode:      SpellCode_DruidMangle,
 		ClassSpellMask: SpellMaskMangle,
@@ -92,7 +98,7 @@ func (druid *Druid) registerMangleBearSpell() {
 		Flags:          core.SpellFlagMeleeMetrics | core.SpellFlagAPL,
 
 		RageCost: core.RageCostOptions{
-			Cost:   float64(row.Cost) - float64(druid.Talents.Ferocity),
+			Cost:   rageCost,
 			Refund: 0.8,
 		},
 		Cast: core.CastConfig{
