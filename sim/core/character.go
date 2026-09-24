@@ -41,6 +41,9 @@ type Character struct {
 	Class proto.Class
 	Spec  proto.Spec
 
+	// Racial effects are skipped, but the race's base stats are kept.
+	disableRacials bool
+
 	// Current gear.
 	Equipment
 	//Item Swap Handler
@@ -122,6 +125,8 @@ func NewCharacter(party *Party, partyIndex int, player *proto.Player) Character 
 		Race:  player.Race,
 		Class: player.Class,
 		Spec:  PlayerProtoToSpec(player),
+
+		disableRacials: player.DisableRacials,
 
 		Equipment: ProtoToEquipment(player.Equipment),
 
@@ -326,7 +331,9 @@ func (character *Character) applyAllEffects(agent Agent, raidBuffs *proto.RaidBu
 		}
 	}
 
-	applyRaceEffects(agent)
+	if !character.disableRacials {
+		applyRaceEffects(agent)
+	}
 	applyProfessionEffects(agent)
 	character.applyBuildPhaseAuras(CharacterBuildPhaseBase)
 	playerStats.BaseStats = measureStats()

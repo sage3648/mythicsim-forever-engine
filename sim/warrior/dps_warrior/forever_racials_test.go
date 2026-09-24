@@ -83,3 +83,21 @@ func TestForeverEurekaDurationAndCharges(t *testing.T) {
 		t.Errorf("Eureka! has %d charges, want 3", eureka.MaxStacks)
 	}
 }
+
+// DisableRacials measures what a race's racials are worth: the same character, base
+// stats included, with none of its racial effects.
+func TestDisableRacialsDropsRacialsButKeepsBaseStats(t *testing.T) {
+	player := foreverWarrior(proto.Race_RaceOrc)
+	player.DisableRacials = true
+	raid := core.SinglePlayerRaidProto(player, nil, core.ForeverBuffs.Raid, core.ForeverBuffs.Debuffs)
+	env, _, _ := core.NewEnvironment(raid, core.MakeSingleTargetEncounter(0), proto.Ruleset_RulesetForever, false)
+	orc := env.Raid.Parties[0].Players[0].GetCharacter()
+	if orc.GetSpell(core.ActionID{SpellID: 20572}) != nil {
+		t.Error("an orc with racials disabled still has Blood Fury")
+	}
+
+	withRacials := foreverWarriorCharacter(t, proto.Race_RaceOrc)
+	if got, want := orc.GetBaseStats(), withRacials.GetBaseStats(); got != want {
+		t.Errorf("disabling racials changed the orc's base stats: %v, want %v", got, want)
+	}
+}

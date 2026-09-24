@@ -62,6 +62,10 @@ message Player {
 	SimDatabase database = 18;
 	HealingModel healing_model = 19;
 
+	// Skip every racial effect while keeping the race's base stats, so a race's
+	// racials can be measured against the same character without them.
+	bool disable_racials = 50;
+
 	oneof spec {
 		BalanceDruid balance_druid = 20;
 		FeralDruid feral_druid = 21;
