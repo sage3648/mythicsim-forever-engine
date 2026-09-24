@@ -264,12 +264,12 @@ func (druid *Druid) applyMoonfury() {
 		return
 	}
 
-	druid.AddStaticMod(core.SpellModConfig{
-		// Client 16896: aura 79 (mod damage done %), Arcane and Nature: the whole hit, not just the base damage.
-		Kind:       core.SpellMod_DamageDone_Flat,
-		ClassMask:  SpellMaskBalance,
-		FloatValue: 0.02 * float64(druid.Talents.Moonfury),
-	})
+	// Client 16896: aura 79 (mod damage done %) on school mask 72, Arcane and Nature. That is a
+	// separate multiplier on all of the druid's Arcane and Nature damage, not a spell modifier on the
+	// Balance spells added to their other bonuses.
+	multiplier := 1 + 0.02*float64(druid.Talents.Moonfury)
+	druid.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexArcane] *= multiplier
+	druid.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexNature] *= multiplier
 }
 
 ///////////////////////////////////////////////////////////////////////////
