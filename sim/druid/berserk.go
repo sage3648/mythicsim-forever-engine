@@ -13,10 +13,12 @@ func (druid *Druid) registerBerserkCD() {
 
 	actionID := core.ActionID{SpellID: 50334}
 
-	// The beta client's Berserk (417141) has a 3 min cooldown and lasts 15 sec.
+	// The beta client's Berserk (417141) has a 3 min cooldown and lasts 15 sec. Effect 0's +100% crit
+	// has class mask 233472: Claw and Rake (one bit), Shred, Ravage and Pounce. Mangle is not in it,
+	// so the cat's Mangle does not get it; the sim has no Ravage or Pounce.
 	critMod := druid.AddDynamicMod(core.SpellModConfig{
 		Kind:       core.SpellMod_BonusCrit_Percent,
-		SpellFlag:  SpellFlagBuilder,
+		ClassMask:  SpellMaskClaw | SpellMaskRake | SpellMaskShred,
 		FloatValue: 100,
 	})
 
