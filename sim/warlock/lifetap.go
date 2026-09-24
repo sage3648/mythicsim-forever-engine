@@ -2,19 +2,25 @@ package warlock
 
 import (
 	"github.com/wowsims/classic/sim/core"
+	"github.com/wowsims/classic/sim/core/stats"
 )
 
 const LifeTapRanks = 6
 
 // Spell ID and school come from the client table; it reads no health or mana value (a dummy effect),
-// so those stay ours.
+// so the rank's $m1 stays ours: the effect's base points at the rank's max level.
 var LifeTapBaseDamage = [LifeTapRanks + 1]float64{0, 30, 75, 140, 220, 310, 424}
 
+// Life Tap is a plain mana gain, not a damage roll against the warlock. The client's 11689 converts
+// $s1 health into ($m1 + Spirit) * (1 + Improved Life Tap 18182, 10/20%) mana, so no damage done or
+// taken modifier touches either side: Shadow Mastery, Burning Shadow, Master Demonologist, Soul Link
+// and Molten Skin no longer scale it, and the 0.8 spell power term is gone. Demonic Energies hands
+// the pet a share of the restore.
 func (warlock *Warlock) getLifeTapBaseConfig(rank int) core.SpellConfig {
 	row := spellData.LifeTap.ByRank(int32(rank))
 	spellId := row.SpellID
-	baseDamage := LifeTapBaseDamage[rank]
-	spellCoef := [LifeTapRanks + 1]float64{0, 0.68, 0.8, 0.8, 0.8, 0.8, 0.8}[rank]
+	healthCost := LifeTapBaseDamage[rank]
+	manaMultiplier := 1 + 0.1*float64(warlock.Talents.ImprovedLifeTap)
 
 	level := [LifeTapRanks + 1]int{0, 6, 16, 26, 36, 46, 56}[rank]
 
@@ -33,7 +39,7 @@ func (warlock *Warlock) getLifeTapBaseConfig(rank int) core.SpellConfig {
 		ClassSpellMask: SpellMaskLifeTap,
 		DefenseType:    row.DefenseType,
 		ProcMask:       core.ProcMaskSpellDamage,
-		Flags:          core.SpellFlagAPL | core.SpellFlagResetAttackSwing | core.SpellFlagBinary | WarlockFlagAffliction,
+		Flags:          core.SpellFlagAPL | core.SpellFlagResetAttackSwing | WarlockFlagAffliction,
 		RequiredLevel:  level,
 		Rank:           rank,
 
@@ -43,17 +49,13 @@ func (warlock *Warlock) getLifeTapBaseConfig(rank int) core.SpellConfig {
 			},
 		},
 
-		BonusCoefficient: spellCoef,
-
-		DamageMultiplier: 1 + 0.1*float64(warlock.Talents.ImprovedLifeTap),
 		ThreatMultiplier: 1,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			result := spell.CalcDamage(sim, spell.Unit, baseDamage, spell.OutcomeAlwaysHit)
-			restore := result.Damage
+			restore := (healthCost + warlock.GetStat(stats.Spirit)) * manaMultiplier
 
 			if warlock.IsTanking() {
-				spell.DealDamage(sim, result)
+				warlock.RemoveHealth(sim, healthCost)
 			}
 
 			warlock.AddMana(sim, restore, manaMetrics)
