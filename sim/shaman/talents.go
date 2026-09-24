@@ -247,6 +247,15 @@ func (shaman *Shaman) applyElementalFury() {
 		School:      core.SpellSchoolFire | core.SpellSchoolFrost | core.SpellSchoolNature,
 		FloatValue:  critDamageBonus,
 	})
+
+	// The talent's class mask (16089) also names Flametongue Attack (bit 21) and Frostbrand Attack
+	// (bit 24): a shaman's own Flametongue Weapon hits crit for 2.0x in logs, while the same attack
+	// granted by Flametongue Totem crits for 1.5x on other players. Neither carries the shaman flag.
+	shaman.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_CritMultiplier_Flat,
+		ClassMask:  SpellMaskFlametongueWeapon | SpellMaskFrostbrandWeapon,
+		FloatValue: critDamageBonus,
+	})
 }
 
 func (shaman *Shaman) registerNaturesSwiftnessCD() {

@@ -26,11 +26,12 @@ func (shaman *Shaman) newFlametongueImbueSpell(weapon *core.Item) *core.Spell {
 	spellCoeff := .1
 
 	return shaman.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: row.SpellID},
-		SpellSchool: row.SpellSchool,
-		DefenseType: row.DefenseType,
-		ProcMask:    core.ProcMaskSpellDamageProc,
-		Flags:       core.SpellFlagNoOnCastComplete | core.SpellFlagPassiveSpell,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		ClassSpellMask: SpellMaskFlametongueWeapon,
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamageProc,
+		Flags:          core.SpellFlagNoOnCastComplete | core.SpellFlagPassiveSpell,
 
 		DamageMultiplier: []float64{1, 1.05, 1.1, 1.15}[shaman.Talents.ElementalWeapons],
 		ThreatMultiplier: 1,

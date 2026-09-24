@@ -83,7 +83,8 @@ const (
 	SpellCode_ShamanWaterShield
 )
 
-// Class spell masks for SpellMods (see core/spell_mod.go), one per SpellCode above.
+// Class spell masks for SpellMods (see core/spell_mod.go), one per SpellCode above, then masks for
+// spells a talent or item names that have no SpellCode.
 const (
 	SpellMaskNone      int64 = 0
 	SpellMaskChainHeal int64 = 1 << iota
@@ -101,8 +102,10 @@ const (
 	SpellMaskSearingTotem
 	SpellMaskStormstrike
 	SpellMaskWaterShield
+	SpellMaskFlametongueWeapon // the Flametongue Attack a shaman's own imbue deals
+	SpellMaskFrostbrandWeapon  // the Frostbrand Attack a shaman's own imbue deals
 
-	SpellMaskAll = SpellMaskWaterShield<<1 - SpellMaskChainHeal // every bit from ChainHeal to WaterShield
+	SpellMaskAll = SpellMaskFrostbrandWeapon<<1 - SpellMaskChainHeal // every bit from ChainHeal to FrostbrandWeapon
 )
 
 // Shaman represents a shaman character.

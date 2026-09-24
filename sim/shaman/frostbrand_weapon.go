@@ -30,10 +30,11 @@ func (shaman *Shaman) newFrostbrandImbueSpell() *core.Spell {
 	baseDamage := attackRow.Direct.(shared.SpellDataFlat).Value
 
 	return shaman.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: row.SpellID},
-		SpellSchool: attackRow.SpellSchool,
-		DefenseType: attackRow.DefenseType,
-		ProcMask:    core.ProcMaskSpellDamageProc,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		ClassSpellMask: SpellMaskFrostbrandWeapon,
+		SpellSchool:    attackRow.SpellSchool,
+		DefenseType:    attackRow.DefenseType,
+		ProcMask:       core.ProcMaskSpellDamageProc,
 
 		DamageMultiplier: []float64{1, 1.05, 1.1, 1.15}[shaman.Talents.ElementalWeapons],
 		ThreatMultiplier: 1,
