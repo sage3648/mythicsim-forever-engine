@@ -63,10 +63,12 @@ func (druid *Druid) applyGenesis() {
 		return
 	}
 
-	// Every druid spell with a dot or AoE dot. A new dot spell has to be added here.
+	// Client 1223081's periodic damage mask (SPELLMOD_DOT) names Moonfire, Insect Swarm, Rake, Rip and
+	// Lacerate of the sim's dots (and Pounce, Entangling Roots and the heals). Hurricane is not in it:
+	// its storm and the tick spell it casts (16914, 1278965) sit on a bit the mask leaves out.
 	druid.AddStaticMod(core.SpellModConfig{
 		Kind:       core.SpellMod_PeriodicDamageDone_Flat,
-		ClassMask:  SpellMaskMoonfire | SpellMaskInsectSwarm | SpellMaskHurricane | SpellMaskRake | SpellMaskRip | SpellMaskLacerateBleed,
+		ClassMask:  SpellMaskMoonfire | SpellMaskInsectSwarm | SpellMaskRake | SpellMaskRip | SpellMaskLacerateBleed,
 		FloatValue: 0.01 * float64(druid.Talents.Genesis),
 	})
 }
