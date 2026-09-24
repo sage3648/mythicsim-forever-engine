@@ -132,8 +132,10 @@ func (rogue *Rogue) finisherFlags() core.SpellFlag {
 	return core.SpellFlagMeleeMetrics | core.SpellFlagAPL
 }
 
+// Cold Blood is not on every builder: its client mask (14177) names Sinister Strike, Backstab,
+// Ambush, Eviscerate and Mutilate's hits, so those add SpellFlagColdBlooded themselves.
 func (rogue *Rogue) builderFlags() core.SpellFlag {
-	return SpellFlagBuilder | SpellFlagColdBlooded | core.SpellFlagMeleeMetrics | core.SpellFlagAPL
+	return SpellFlagBuilder | core.SpellFlagMeleeMetrics | core.SpellFlagAPL
 }
 
 func (rogue *Rogue) Initialize() {

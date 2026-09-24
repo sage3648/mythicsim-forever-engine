@@ -59,7 +59,7 @@ func (rogue *Rogue) registerMutilateSpell() {
 		SpellSchool:    row.SpellSchool,
 		DefenseType:    row.DefenseType,
 		ProcMask:       core.ProcMaskMeleeMHSpecial,
-		Flags:          rogue.builderFlags(),
+		Flags:          rogue.builderFlags() | SpellFlagColdBlooded,
 
 		EnergyCost: core.EnergyCostOptions{
 			Cost:   float64(row.Cost),

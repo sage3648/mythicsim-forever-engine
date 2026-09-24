@@ -28,7 +28,7 @@ func (rogue *Rogue) registerSinisterStrikeSpell() {
 		SpellSchool:    row.SpellSchool,
 		DefenseType:    row.DefenseType,
 		ProcMask:       core.ProcMaskMeleeMHSpecial,
-		Flags:          rogue.builderFlags(),
+		Flags:          rogue.builderFlags() | SpellFlagColdBlooded,
 
 		EnergyCost: core.EnergyCostOptions{
 			Cost:   float64(row.Cost) - []float64{0, 3, 5}[rogue.Talents.ImprovedSinisterStrike],
