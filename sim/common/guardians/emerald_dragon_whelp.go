@@ -14,7 +14,9 @@ type EmeraldDragonWhelp struct {
 
 	acidSpit *core.Spell
 
+	// When the current summon ends, so the whelp skips a spit it would not live to finish.
 	disabledAt time.Duration
+	timeout    *core.PendingAction
 }
 
 func NewEmeraldDragonWhelp(character *core.Character) *EmeraldDragonWhelp {
@@ -22,7 +24,7 @@ func NewEmeraldDragonWhelp(character *core.Character) *EmeraldDragonWhelp {
 		stats.Health:      1500, // https://wowwiki-archive.fandom.com/wiki/Dragon%27s_Call
 		stats.Intellect:   20,   // Adding the base 20 intellect to not mess with the base mana function
 		stats.Mana:        500,  // TODO: Assumed value. The whelp seems to cast 3 Acid Spits (90 mana) per spawn (Rain: In the log you can see a whelp casting 4 acid spits so i'm increasing this to 500)
-		stats.SpellDamage: 220,  // Puts the Acid Spit damage very close to the below log
+		stats.SpellDamage: 155,  // 220 on the old flat 374 matched the log below (~594 a spit); the client's 374-503 averages 438.5, so 155 keeps it
 		// Based on this log but more data needed
 		// https://sod.warcraftlogs.com/reports/xTwQVgbjF9cPnd3R#type=damage-done&ability=-13049&view=events&boss=-2&difficulty=0&wipes=2
 		stats.MeleeCrit: 4.5 * core.CritRatingPerCritChance,
@@ -63,6 +65,26 @@ func (whelp *EmeraldDragonWhelp) Initialize() {
 	whelp.registerAcidSpitSpell()
 }
 
+// Summons the whelp for duration. A proc while it is out refreshes it rather than adding a
+// second whelp, and the refreshed summon lasts the full duration from now.
+func (whelp *EmeraldDragonWhelp) Summon(sim *core.Simulation, duration time.Duration) {
+	whelp.disabledAt = sim.CurrentTime + duration
+	if whelp.timeout != nil {
+		whelp.timeout.Cancel(sim)
+	}
+	whelp.Enable(sim, whelp)
+	whelp.timeout = &core.PendingAction{
+		NextActionAt: whelp.disabledAt,
+		OnAction: func(sim *core.Simulation) {
+			whelp.timeout = nil
+			whelp.Disable(sim)
+		},
+	}
+	sim.AddPendingAction(whelp.timeout)
+}
+
+// After each swing or spit, spits half the time and otherwise waits for the next swing. The
+// spit resets the swing timer, and one the whelp would not live to finish is skipped.
 func (whelp *EmeraldDragonWhelp) ExecuteCustomRotation(sim *core.Simulation) {
 	// Run the cast check only on swings or cast completes
 	if whelp.AutoAttacks.NextAttackAt() != sim.CurrentTime+whelp.AutoAttacks.MainhandSwingSpeed() && whelp.AutoAttacks.NextAnyAttackAt()-1 > sim.CurrentTime {
@@ -70,21 +92,16 @@ func (whelp *EmeraldDragonWhelp) ExecuteCustomRotation(sim *core.Simulation) {
 		return
 	}
 
-	if sim.Proc(0.5, "Acid Spit Cast") {
-		// If the whelp will timeout during this cast just dont do it and stop attacks as well
-		// If we dont do this the timeline cast time visual for the spell never ends because we
-		// dont support hardcast interrupts
-		if sim.CurrentTime+whelp.acidSpit.CastTime() >= whelp.disabledAt {
-			whelp.AutoAttacks.StopMeleeUntil(sim, whelp.disabledAt, false)
-		} else {
-			whelp.acidSpit.Cast(sim, whelp.CurrentTarget)
-		}
-	} else {
-		whelp.WaitUntil(sim, whelp.AutoAttacks.NextAttackAt()-1)
+	if sim.CurrentTime+whelp.acidSpit.CastTime() < whelp.disabledAt && whelp.acidSpit.CanCast(sim, whelp.CurrentTarget) && sim.Proc(0.5, "Acid Spit Cast") {
+		whelp.acidSpit.Cast(sim, whelp.CurrentTarget)
+		return
 	}
+
+	whelp.WaitUntil(sim, max(sim.CurrentTime, whelp.AutoAttacks.NextAttackAt()-1))
 }
 
 func (whelp *EmeraldDragonWhelp) Reset(sim *core.Simulation) {
+	whelp.timeout = nil
 	whelp.Disable(sim)
 }
 
@@ -124,9 +141,9 @@ func (whelp *EmeraldDragonWhelp) registerAcidSpitSpell() {
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			// TODO: The one log i was looking at has 0 misses on the spell but it also has only 25 casts
 			// so i can't make a good assumption. Right now we leave it with a hit check and we can remove later.
-			// Beta client 1.60.1 (spell 9591): a flat 374, where Era rolls around 64. The whelp
-			// hits roughly six times as hard in Forever.
-			spell.CalcAndDealDamage(sim, target, 374, spell.OutcomeMagicHitAndCrit)
+			// Client 1.60.1.69977 (spell 9591): 438.5 +-29.3%, so 374 to 503 Nature, where Era rolls
+			// around 64. The whelp hits roughly six times as hard in Forever.
+			spell.CalcAndDealDamage(sim, target, sim.Roll(374, 503), spell.OutcomeMagicHitAndCrit)
 		},
 	})
 }

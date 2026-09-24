@@ -811,7 +811,7 @@ func init() {
 			Handler: func(sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 				for _, petAgent := range character.PetAgents {
 					if whelp, ok := petAgent.(*guardians.EmeraldDragonWhelp); ok {
-						whelp.EnableWithTimeout(sim, whelp, time.Second*15)
+						whelp.Summon(sim, time.Second*15)
 						break
 					}
 				}

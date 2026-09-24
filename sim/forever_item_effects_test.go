@@ -72,3 +72,28 @@ func TestIronfoeProcsOffAnyMeleeHit(t *testing.T) {
 		t.Errorf("Ironfoe proced on %.2f%% of landed swings, want about 6%% (%v procs, %v landed)", rate*100, procs, landed)
 	}
 }
+
+// Dragon's Call (10847): the Emerald Dragon Whelp spits Acid Spit (9591), 374 to 503 Nature
+// before its spell damage. It used to never spit, because the summon never told it when it
+// would despawn, and swung its extra melee instead.
+func TestDragonsCallWhelpSpitsAcid(t *testing.T) {
+	player := runItemTestSim(t, itemTestWarrior(10847, core.GetAplRotation("../ui/warrior/apls", "dps_reck").Rotation), 20)
+
+	if len(player.Pets) == 0 {
+		t.Fatal("no Emerald Dragon Whelp")
+	}
+	for _, pet := range player.Pets {
+		for _, action := range pet.Actions {
+			if action.Id.GetSpellId() != 9591 {
+				continue
+			}
+			for _, target := range action.Targets {
+				if target.Hits+target.Crits > 0 && target.Damage/float64(target.Hits+target.Crits) >= 374 {
+					return
+				}
+			}
+			t.Fatalf("Acid Spit cast but dealt too little: %v", action.Targets)
+		}
+	}
+	t.Fatal("the whelp never cast Acid Spit")
+}
