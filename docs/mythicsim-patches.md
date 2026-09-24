@@ -2,7 +2,7 @@
 
 MythicSim runs this engine from its fork (`sage3648/mythicsim-forever-engine`, branch
 `mythicsim/wowsims-forever`). The branch is ElliotWood/Forever master, which is built on the
-official wowsims/forever, plus the three patches below. The first base was `442076902` (Merge
+official wowsims/forever, plus the four patches below. The first base was `442076902` (Merge
 wowsims/forever master ea5412873).
 
 Keep the set small. Each patch exists because MythicSim needs something upstream does not do
@@ -13,6 +13,7 @@ yet. Drop a patch as soon as upstream covers it; do not keep ours alongside an u
 | 1 | `cli: sim --strict rejects unknown fields and enum names` | The worker builds requests in code. Without it, a misspelt field or a race the build does not know is dropped silently and the sim runs a different character. |
 | 2 | `core: a player option to disable racials` | The race comparison page sims each character with and without its racials to show what they are worth. |
 | 3 | `core: Forever races from client 1.60.1.69977` | Upstream has only the Classic/TBC races and their TBC racials. MythicSim's race pages need the Skyborne, the Forever pairings and the client's racials. |
+| 4 | `rotation: Destruction casts Conflagrate for Shadow and Flame` | The Destruction rotation never casts Conflagrate, so Shadow and Flame's Shadow buff never applies to the Shadow Bolt filler. |
 
 ## 1. `cli: sim --strict`
 
@@ -96,6 +97,17 @@ tables. `docs/forever_rules.md` (Racials) lists each rule and its source, and
   and delete the other rather than stacking both. If upstream adds the Skyborne to `Race`
   under other numbers, take upstream's numbers. The worker sends race names, so only saved UI
   links would notice.
+
+## 4. `rotation: Destruction casts Conflagrate for Shadow and Flame`
+
+- **What it does.** `ui/specs/warlock/dps/apls/destruction.apl.json` casts Conflagrate (18932)
+  after the Immolate refresh, while Immolate is up and either Immolate has under 4 seconds
+  left or the warlock knows Shadow and Flame (Shadow, 1293816) and its buff is down. Without
+  the talent it only Conflagrates at the end of Immolate. The rule is the one MythicSim's
+  previous engine line measured (+5.9% on the 5/5 Destruction reference, neutral for 2/5
+  builds). MythicSim copies this rotation into its worker presets.
+- **Goldens.** `sim/warlock/TestDestruction.results` (average 410.50 to 420.67 DPS).
+- **Drop it when** upstream's Destruction rotation casts Conflagrate.
 
 ## Rebasing onto a newer upstream
 
