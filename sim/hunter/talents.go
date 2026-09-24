@@ -283,18 +283,15 @@ func (hunter *Hunter) applyEfficiency() {
 		return
 	}
 
-	// Applies to Shots, Stings and melee abilities. No hunter spell is both a shot/sting and a
-	// melee special, so the two mods never stack on one spell.
-	costPct := -0.03 * float64(hunter.Talents.Efficiency)
+	// The tooltip reads "Shots, Stings and melee abilities", but client 19416's cost mask names
+	// Aimed, Arcane and Multi-Shot, Serpent Sting, Volley, Summon Hawk, Raptor Strike, Mongoose Bite,
+	// Wing Clip and Lacerating Strikes (and spells the sim does not have). Sniper Shot and Strider
+	// Kick are not in it.
 	hunter.AddStaticMod(core.SpellModConfig{
-		Kind:       core.SpellMod_PowerCost_Pct_Add,
-		SpellFlag:  SpellFlagSting | SpellFlagShot,
-		FloatValue: costPct,
-	})
-	hunter.AddStaticMod(core.SpellModConfig{
-		Kind:       core.SpellMod_PowerCost_Pct_Add,
-		ProcMask:   core.ProcMaskMeleeSpecial,
-		FloatValue: costPct,
+		Kind: core.SpellMod_PowerCost_Pct_Add,
+		ClassMask: SpellMaskAimedShot | SpellMaskArcaneShot | SpellMaskMultiShot | SpellMaskSerpentSting |
+			SpellMaskVolley | SpellMaskSummonHawk | SpellMaskMelee&^SpellMaskStriderKick,
+		FloatValue: -0.03 * float64(hunter.Talents.Efficiency),
 	})
 }
 
