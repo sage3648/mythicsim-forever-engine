@@ -166,6 +166,13 @@
 		"source": "forever",
 		"tooltip": "15 Rage\nMelee Range\nInstant\n20 sec cooldown\nA brutal attack that deals 40% weapon damage. Deals an additional 80% weapon damage against Giants, Dragonkin, and mounted targets. Mounted targets are dismounted."
 	},
+	"1318070": {
+		"ability": "Diamond Flask",
+		"file": "sim/warrior/items.go",
+		"note": "Client 1.60.1.69977: the flask's use is a 5 sec channel (363881) that grants this buff only if it runs to the end, on a 6 min cooldown. Classic's use gave 75 Strength outright (24427). The channel's heal is not simulated, and the channel is left to the APL (a pre-pull cast) rather than used automatically.",
+		"source": "forever",
+		"tooltip": "Increases Strength by 20 for 1 min."
+	},
 	"16488": {
 		"ability": "Blood Craze",
 		"file": "sim/warrior/talents.go",
@@ -240,12 +247,6 @@
 		"note": "Beta client 1.60.1.69893: rank 4 deals 640-670 plus Block Value once (Classic Era 342-358). The sim used to add Block Value twice and 15% of attack power, which was Season of Discovery's rune.",
 		"source": "forever",
 		"tooltip": "20 Rage\nMelee Range\nInstant\n6 sec cooldown\nRequires Shields\nSlam the target with your shield, causing 640 to 670 damage, increased by your Block Value, and has a 50% chance of dispelling 1 magic effect on the target. Causes a very high amount of threat."
-	},
-	"24427": {
-		"ability": "Diamond Flask",
-		"file": "sim/warrior/items.go",
-		"note": "Trinket effect, +75 Strength for 1 min on a 6 min cooldown; the sim leaves out the 9 health per 5 sec the Classic tooltip also grants, which is an upstream simplification rather than a Forever change.",
-		"source": "classic"
 	},
 	"2457": {
 		"ability": "Battle Stance",

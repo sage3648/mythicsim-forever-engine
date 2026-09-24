@@ -18,35 +18,53 @@ const (
 func init() {
 	core.AddEffectsToTest = false
 
+	// Diamond Flask
+	// Forever's use is a 5 sec channel (363881) that heals and, if it runs to the end, grants 20
+	// Strength for 60 sec (1318070), client 1.60.1.69977; Classic's gave 75 Strength outright
+	// (24427). 6 min cooldown, 1 min on its own consumable category rather than the burst trinket
+	// one. The heal is left out, and five seconds of channel belong before the pull, so it is left
+	// to the APL rather than auto-used.
 	core.NewItemEffect(DiamondFlask, func(agent core.Agent) {
 		character := agent.GetCharacter()
+		strengthAura := character.NewTemporaryStatsAura("Diamond Flask", core.ActionID{SpellID: 1318070}, stats.Stats{stats.Strength: 20}, time.Minute)
 
-		buffAura := character.NewTemporaryStatsAura("Diamond Flask", core.ActionID{SpellID: 24427}, stats.Stats{stats.Strength: 75}, time.Second*60)
-
-		triggerSpell := character.GetOrRegisterSpell(core.SpellConfig{
-			ActionID: core.ActionID{SpellID: 24427},
-			Flags:    core.SpellFlagNoOnCastComplete | core.SpellFlagOffensiveEquipment,
+		spell := character.RegisterSpell(core.SpellConfig{
+			ActionID: core.ActionID{ItemID: DiamondFlask},
+			ProcMask: core.ProcMaskEmpty,
+			Flags:    core.SpellFlagNoOnCastComplete | core.SpellFlagChanneled | core.SpellFlagHelpful,
 
 			Cast: core.CastConfig{
 				CD: core.Cooldown{
 					Timer:    character.NewTimer(),
 					Duration: time.Minute * 6,
 				},
-				SharedCD: core.Cooldown{
-					Timer:    character.GetOffensiveTrinketCD(),
-					Duration: time.Second * 60,
+			},
+
+			Hot: core.DotConfig{
+				SelfOnly: true,
+				Aura: core.Aura{
+					Label: "CHUG! CHUG! CHUG! CHUG!",
+				},
+				NumberOfTicks: 5,
+				TickLength:    time.Second,
+				OnTick: func(sim *core.Simulation, _ *core.Unit, dot *core.Dot) {
+					if dot.MaxTicksRemaining() == 0 {
+						strengthAura.Activate(sim)
+					}
 				},
 			},
 
-			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-				buffAura.Activate(sim)
+			ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
+				spell.SelfHot().Apply(sim)
 			},
 		})
 
 		character.AddMajorCooldown(core.MajorCooldown{
-			Spell:    triggerSpell,
-			Priority: core.CooldownPriorityDefault,
-			Type:     core.CooldownTypeDPS,
+			Spell: spell,
+			Type:  core.CooldownTypeDPS,
+			ShouldActivate: func(_ *core.Simulation, _ *core.Character) bool {
+				return false // Five seconds of channel belong before the pull; left to the APL.
+			},
 		})
 	})
 
