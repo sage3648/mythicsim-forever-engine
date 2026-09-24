@@ -420,6 +420,10 @@ func (mage *Mage) applyMasterOfElements() {
 
 // Hot Streak shaves cast time off Pyroblast rather than making it instant, so the stacks are
 // worth holding. Frostfire Bolt is named in the tooltip but has no Classic spell to attach to.
+//
+// Client 1.60.1.69977: the buff (400625) has ProcCharges 1, so the Pyroblast its stacks speed up
+// spends every stack when the cast completes. It used to only expire, which let one set of stacks
+// speed up every Pyroblast cast in the next 15 s.
 func (mage *Mage) applyHotStreak() {
 	if !mage.Talents.HotStreak {
 		return
@@ -432,14 +436,40 @@ func (mage *Mage) applyHotStreak() {
 		ClassMask: SpellMaskPyroblast,
 	})
 
+	// A Pyroblast already being cast when the first stack lands was not sped up by it, so it
+	// leaves the stacks for the next one rather than spending them.
+	var unsped *core.Spell
+
 	mage.HotStreakAura = mage.RegisterAura(core.Aura{
 		Label:     "Hot Streak",
 		ActionID:  core.ActionID{SpellID: 44445},
 		Duration:  time.Second * 15,
 		MaxStacks: 3,
+		OnGain: func(aura *core.Aura, sim *core.Simulation) {
+			unsped = nil
+			if !mage.IsCasting(sim) {
+				return
+			}
+			for _, spell := range mage.Pyroblast {
+				if spell != nil && spell.ActionID.SameAction(mage.Hardcast.ActionID) {
+					unsped = spell
+					break
+				}
+			}
+		},
 		OnStacksChange: func(aura *core.Aura, sim *core.Simulation, oldStacks int32, newStacks int32) {
 			castTimeMod.UpdateFloatValue(-.25 * float64(newStacks))
 			castTimeMod.Activate()
+		},
+		OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
+			if spell.SpellCode != SpellCode_MagePyroblast {
+				return
+			}
+			if spell == unsped {
+				unsped = nil
+				return
+			}
+			aura.Deactivate(sim)
 		},
 	})
 
