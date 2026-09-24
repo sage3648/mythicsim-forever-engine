@@ -900,12 +900,15 @@ func PowerInfusionAura(character *Unit, actionTag int32) *Aura {
 		Tag:      PowerInfusionAuraTag,
 		ActionID: actionID,
 		Duration: PowerInfusionDuration,
+		// Client 10060: +20% damage done to the magic schools (aura 79, mask 126) and +20% healing
+		// done (aura 136).
 		OnGain: func(aura *Aura, sim *Simulation) {
 			character.PseudoStats.SchoolDamageDealtMultiplier.MultiplyMagicSchools(1.2)
-
+			character.PseudoStats.HealingDealtMultiplier *= 1.2
 		},
 		OnExpire: func(aura *Aura, sim *Simulation) {
 			character.PseudoStats.SchoolDamageDealtMultiplier.MultiplyMagicSchools(1 / 1.2)
+			character.PseudoStats.HealingDealtMultiplier /= 1.2
 		},
 	})
 	return aura

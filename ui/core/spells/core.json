@@ -2,7 +2,7 @@
 	"10060": {
 		"ability": "Power Infusion",
 		"file": "sim/core/buffs.go",
-		"note": "Raid-buff approximation only (20% magic damage for 15 sec on a 3 min cooldown); the priest's own cast in sim/priest/power_infusion.go is commented out, so nothing Forever changed reaches this registration.",
+		"note": "+20% magic damage and +20% healing for 15 sec (client 10060, aura 79 mask 126 and aura 136), as in Classic. The raid-buff approximation runs it on a 3 min cooldown; the priest's own cast in sim/priest/power_infusion.go uses the same aura.",
 		"source": "classic"
 	},
 	"10293": {
