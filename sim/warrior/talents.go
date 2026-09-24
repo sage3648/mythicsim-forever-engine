@@ -539,7 +539,10 @@ func (warrior *Warrior) applyBloodCraze() {
 		ActionID:    core.ActionID{SpellID: 16488},
 		SpellSchool: core.SpellSchoolPhysical,
 		ProcMask:    core.ProcMaskEmpty,
-		Flags:       core.SpellFlagIgnoreAttackerModifiers | core.SpellFlagNoOnCastComplete | core.SpellFlagPassiveSpell | core.SpellFlagHelpful,
+		// A share of maximum health: the Physical damage-done mods don't raise it, and its ticks
+		// don't crit.
+		Flags: core.SpellFlagIgnoreAttackerModifiers | core.SpellFlagNoOnCastComplete | core.SpellFlagPassiveSpell |
+			core.SpellFlagHelpful | core.SpellFlagNoPeriodicCrit,
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
@@ -551,11 +554,11 @@ func (warrior *Warrior) applyBloodCraze() {
 			SelfOnly:      true,
 			NumberOfTicks: 3,
 			TickLength:    time.Second * 2,
-			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
-				dot.SnapshotBaseDamage = warrior.MaxHealth() * healthFraction / 3
-			},
+			// Each tick heals a third of the share of the warrior's maximum health at that tick. The
+			// snapshot this replaced set only the base, leaving the snapshot multiplier at 0, so
+			// every tick healed nothing.
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
-				dot.CalcAndDealPeriodicSnapshotHealing(sim, target, dot.OutcomeTick)
+				dot.Spell.CalcAndDealPeriodicHealing(sim, target, warrior.MaxHealth()*healthFraction/3, dot.OutcomeTick)
 			},
 		},
 
