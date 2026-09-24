@@ -1815,8 +1815,8 @@ func init() {
 
 	// https://www.wowhead.com/classic/item=13505/runeblade-of-baron-rivendare
 	// Equip: Increases movement speed and life regeneration rate.
-	// Beta client 1.60.1 (spell 17625): 60 health every 5 sec, tripled from Era's 20.
-	// TODO: Movement speed not implemented
+	// Beta client 1.60.1 (spell 17625): 60 health every 5 sec, tripled from Era's 20, and 8%
+	// movement speed, which does not stack with other speed bonuses.
 	core.NewItemEffect(RunebladeOfBaronRivendare, func(agent core.Agent) {
 		character := agent.GetCharacter()
 		actionID := core.ActionID{SpellID: 17625}
@@ -1824,6 +1824,9 @@ func init() {
 		character.RegisterAura(core.Aura{
 			ActionID: actionID,
 			Label:    "Unholy Aura",
+			OnInit: func(aura *core.Aura, sim *core.Simulation) {
+				character.AddMoveSpeedModifier(&aura.ActionID, 1.08)
+			},
 			OnReset: func(aura *core.Aura, sim *core.Simulation) {
 				core.StartPeriodicAction(sim, core.PeriodicActionOptions{
 					Period:   time.Second * 5,
@@ -1993,7 +1996,8 @@ func init() {
 			ThreatMultiplier: 1,
 
 			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-				spell.CalcAndDealDamage(sim, target, 5, spell.OutcomeMagicHit)
+				// Client 1.60.1.69977: 21142 has no defense type, so the reflect cannot miss.
+				spell.CalcAndDealDamage(sim, target, 5, spell.OutcomeAlwaysHit)
 			},
 		})
 
@@ -2588,12 +2592,13 @@ func init() {
 	core.NewItemEffect(EssenceOfThePureFlame, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
+		// A damage shield: it neither crits nor partially resists.
 		procSpell := character.GetOrRegisterSpell(core.SpellConfig{
 			ActionID:    core.ActionID{SpellID: 23266},
 			SpellSchool: core.SpellSchoolFire,
 			DefenseType: core.DefenseTypeMagic,
 			ProcMask:    core.ProcMaskEmpty,
-			Flags:       core.SpellFlagNoOnCastComplete | core.SpellFlagPassiveSpell,
+			Flags:       core.SpellFlagBinary | core.SpellFlagNoOnCastComplete | core.SpellFlagPassiveSpell,
 
 			DamageMultiplier: 1,
 			ThreatMultiplier: 1,
@@ -2729,6 +2734,9 @@ func init() {
 	// "doubled in Mountainous areas" has nothing to sim against.
 	core.NewItemEffect(SecondWind, func(agent core.Agent) {
 		character := agent.GetCharacter()
+		if !character.HasManaBar() {
+			return
+		}
 		actionID := core.ActionID{SpellID: 15604}
 		manaMetrics := character.NewManaMetrics(actionID)
 		spell := character.RegisterSpell(core.SpellConfig{
@@ -2751,9 +2759,13 @@ func init() {
 				})
 			},
 		})
+		// A mana cooldown, used once 630 mana (all ten ticks) would not overflow the bar.
 		character.AddMajorCooldown(core.MajorCooldown{
-			Type:  core.CooldownTypeDPS,
+			Type:  core.CooldownTypeMana,
 			Spell: spell,
+			ShouldActivate: func(_ *core.Simulation, character *core.Character) bool {
+				return character.MaxMana()-character.CurrentMana() >= 630
+			},
 		})
 	})
 
