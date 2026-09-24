@@ -27,12 +27,16 @@ below is gated on `IsForever()` unless it says the class code is Forever-only.
 | Rule | Source | Here |
 |---|---|---|
 | Every +10 resistance racial is removed. | Racials guide | `sim/core/racials.go` |
-| Weapon skill racials become +1% crit (both pools) while the matching weapon is held; Mace Specialization moves to Dwarves. | Racials guide, *demo* | `sim/core/specializations.go` |
+| Weapon skill racials become crit (both pools) while the matching weapon is held: Orc axes and Dwarf maces +1%, Human swords +2%; Mace Specialization moves to Dwarves. No race keeps racial expertise. | Racials guide, *demo* | `sim/core/racials.go` `applyWeaponSpecializationCrit` |
 | Dwarf gains Beast Slaying-style +5% vs Beasts ("Big Game Hunter"). Troll keeps Beast Slaying; both ranged specializations removed. | Racials guide | `sim/core/racials.go` |
-| Orc: Command removed (Shatter Curse replaces it). Blood Fury: 10% attack power and spell power. | Racials guide, *demo* | `sim/core/racials.go` |
-| Gnome Expansive Mind raises the resource pool (mana modelled) rather than Intellect. Eureka! cooldown/cost figures unpublished. | Racials guide | `sim/core/racials.go` |
+| Orc: Command removed (Shatter Curse replaces it). Blood Fury (20572): +10% melee attack power, ranged attack power and spell power for 15 s, 2 min cooldown, off the global cooldown. | Client 1.60.1.69977 | `sim/core/racials.go` |
+| Gnome Expansive Mind raises the resource pool (mana modelled) rather than Intellect. Eureka!: 15 s, 3 charges, 2 min cooldown; +10% damage on abilities (not white swings) and a per-class cost cut (warrior 40% rage, rogue 20% energy, mage and warlock 50% mana, priest 15% mana). | Client 1.60.1.69977 | `sim/core/racials.go` |
 | Night Elf Elune's Light: +10% crit for 15 s, 3 min cooldown. | Racials guide, cooldown confirmed by search | `sim/core/racials.go` |
-| Skyborne (both factions) racials incl. Elemental Insight +5% vs Elementals; Windshaper and High Order variants by faction. | Skyborne first look | `sim/core/racials.go` |
+| Skyborne: both factions share one racial skill line (2980). Combat effects are Wind Blessed (+1% haste) and Elemental Insight (+5% vs Elementals) only; Windshaper has no damage cooldown. Base stats sit at the class baseline (Wowhead gear planner race offsets 95 and 96 are zero). | Client 1.60.1.69977 | `sim/core/racials.go`, `sim/core/base_stats.go` |
+| Troll Berserking (20554): a flat +10% haste and cast speed for 10 s, 3 min cooldown, no resource cost. | Client 1.60.1.69977 | `sim/core/racials.go` |
+| Undead Touch of the Grave: 5% chance (10% for priests, mages and warlocks) on a hit to drain 5% of maximum health (1260189, 1260201, drain 1260198), 1 s proc cooldown. | Client 1.60.1.69893 | `sim/core/racials.go` |
+| Tauren Endurance carries +1% hit (both pools) alongside +5% health. | Racials guide | `sim/core/racials.go` |
+| The Human Spirit is Classic's +5%, not TBC's +10%. | Classic value, carried over | `sim/core/racials.go`, `sim/core/reforge_optimizer/model.go` |
 | Racial cooldowns with no published cooldown assume 3 minutes. | Assumption | `forever_beta_checklist.md` |
 
 ## Warrior

@@ -287,6 +287,8 @@ export const raceI18nKeys: Record<Race, string> = {
 	[Race.RaceTauren]: 'tauren',
 	[Race.RaceTroll]: 'troll',
 	[Race.RaceUndead]: 'undead',
+	[Race.RaceSkyborneHighOrder]: 'skyborne_high_order',
+	[Race.RaceSkyborneWindshaper]: 'skyborne_windshaper',
 };
 
 export const professionI18nKeys: Record<Profession, string> = {

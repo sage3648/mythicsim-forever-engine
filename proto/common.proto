@@ -90,6 +90,13 @@ enum Race {
 	RaceTauren = 8;
 	RaceTroll = 9;
 	RaceUndead = 10;
+
+	// The Skyborne pick a faction at character creation. Faction is derived from race
+	// everywhere in the sim, so each half gets its own entry rather than a Player level
+	// override. Both halves share one racial skill line in the client (2980), so they
+	// differ only in faction.
+	RaceSkyborneHighOrder = 11;
+	RaceSkyborneWindshaper = 12;
 }
 
 enum Faction {

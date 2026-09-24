@@ -105,6 +105,9 @@ var ClassRangedWeaponTypeCapabilities = map[proto.Class][]proto.RangedWeaponType
 	proto.Class_ClassShaman:  {proto.RangedWeaponType_RangedWeaponTypeTotem},
 }
 
+// Forever opens new race and class pairings (Undead Paladin, Human Hunter, Orc Mage, Troll
+// Warlock, Gnome Priest, Dwarf Shaman) and adds the Skyborne, who can be Warrior, Hunter,
+// Rogue or Druid on either side, Mage only as High Order and Shaman only as Windshaper.
 var ClassRaceCapabilities = map[proto.Class][]proto.Race{
 	proto.Class_ClassWarrior: {
 		proto.Race_RaceHuman,
@@ -116,12 +119,15 @@ var ClassRaceCapabilities = map[proto.Class][]proto.Race{
 		proto.Race_RaceUndead,
 		proto.Race_RaceTauren,
 		proto.Race_RaceTroll,
+		proto.Race_RaceSkyborneHighOrder,
+		proto.Race_RaceSkyborneWindshaper,
 	},
 	proto.Class_ClassPaladin: {
 		proto.Race_RaceHuman,
 		proto.Race_RaceDwarf,
 		proto.Race_RaceDraenei,
 		proto.Race_RaceBloodElf,
+		proto.Race_RaceUndead,
 	},
 	proto.Class_ClassHunter: {
 		proto.Race_RaceDwarf,
@@ -131,6 +137,9 @@ var ClassRaceCapabilities = map[proto.Class][]proto.Race{
 		proto.Race_RaceTauren,
 		proto.Race_RaceTroll,
 		proto.Race_RaceBloodElf,
+		proto.Race_RaceHuman,
+		proto.Race_RaceSkyborneHighOrder,
+		proto.Race_RaceSkyborneWindshaper,
 	},
 	proto.Class_ClassRogue: {
 		proto.Race_RaceHuman,
@@ -141,6 +150,8 @@ var ClassRaceCapabilities = map[proto.Class][]proto.Race{
 		proto.Race_RaceUndead,
 		proto.Race_RaceTroll,
 		proto.Race_RaceBloodElf,
+		proto.Race_RaceSkyborneHighOrder,
+		proto.Race_RaceSkyborneWindshaper,
 	},
 	proto.Class_ClassPriest: {
 		proto.Race_RaceHuman,
@@ -150,12 +161,15 @@ var ClassRaceCapabilities = map[proto.Class][]proto.Race{
 		proto.Race_RaceUndead,
 		proto.Race_RaceTroll,
 		proto.Race_RaceBloodElf,
+		proto.Race_RaceGnome,
 	},
 	proto.Class_ClassShaman: {
 		proto.Race_RaceDraenei,
 		proto.Race_RaceOrc,
 		proto.Race_RaceTauren,
 		proto.Race_RaceTroll,
+		proto.Race_RaceDwarf,
+		proto.Race_RaceSkyborneWindshaper,
 	},
 	proto.Class_ClassMage: {
 		proto.Race_RaceHuman,
@@ -164,6 +178,8 @@ var ClassRaceCapabilities = map[proto.Class][]proto.Race{
 		proto.Race_RaceUndead,
 		proto.Race_RaceTroll,
 		proto.Race_RaceBloodElf,
+		proto.Race_RaceOrc,
+		proto.Race_RaceSkyborneHighOrder,
 	},
 	proto.Class_ClassWarlock: {
 		proto.Race_RaceHuman,
@@ -171,10 +187,13 @@ var ClassRaceCapabilities = map[proto.Class][]proto.Race{
 		proto.Race_RaceOrc,
 		proto.Race_RaceUndead,
 		proto.Race_RaceBloodElf,
+		proto.Race_RaceTroll,
 	},
 	proto.Class_ClassDruid: {
 		proto.Race_RaceNightElf,
 		proto.Race_RaceTauren,
+		proto.Race_RaceSkyborneHighOrder,
+		proto.Race_RaceSkyborneWindshaper,
 	},
 }
 

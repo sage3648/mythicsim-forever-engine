@@ -56,12 +56,15 @@ export const raceToFaction: Record<Race, Faction> = {
 	[Race.RaceGnome]: Faction.Alliance,
 	[Race.RaceHuman]: Faction.Alliance,
 	[Race.RaceNightElf]: Faction.Alliance,
+	// The Skyborne choose a side at character creation; each half is its own race.
+	[Race.RaceSkyborneHighOrder]: Faction.Alliance,
 
 	[Race.RaceBloodElf]: Faction.Horde,
 	[Race.RaceOrc]: Faction.Horde,
 	[Race.RaceTauren]: Faction.Horde,
 	[Race.RaceTroll]: Faction.Horde,
 	[Race.RaceUndead]: Faction.Horde,
+	[Race.RaceSkyborneWindshaper]: Faction.Horde,
 };
 
 // Returns a copy of playerOptions, with the class field set.

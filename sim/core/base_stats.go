@@ -26,11 +26,11 @@ var BaseStats = map[BaseStatsKey]stats.Stats{}
 // but no attributes.
 //
 // ClassBaseStats + RaceOffsets hold TRUE pre-racial base attributes: the
-// multiplier racials (The Human Spirit ×1.1 spirit, gnome Expansive Mind
-// ×1.05 int, applied via MultiplyStat in racials.go) are NOT included here.
-// A naked character sheet shows floor(base × racial), e.g. human paladin
-// spirit 89 shows as 97; multipliers (racial, Kings, %-stat talents) stack
-// multiplicatively on the unfloored value with a single floor at the end.
+// multiplier racials (The Human Spirit ×1.05 spirit, Tauren Endurance ×1.05
+// health and, under Forever, gnome Expansive Mind ×1.05 mana, applied via
+// MultiplyStat in racials.go) are NOT included here. A naked character sheet
+// shows floor(base × racial); multipliers (racial, Kings, %-stat talents)
+// stack multiplicatively on the unfloored value with a single floor at the end.
 //
 // The game keeps one attribute row per race and class, but that table is a
 // class row plus a race offset that is the same for every class, so the two
@@ -117,6 +117,12 @@ var RaceOffsets = map[proto.Race]stats.Stats{
 		stats.Spirit:    2,
 		stats.Stamina:   -1,
 	},
+	// The Skyborne sit at the class baseline, which Wowhead's Forever gear planner
+	// confirms: races 95 and 96 in its baseStats.raceOffsets are zero for agility,
+	// strength, intellect, spirit and stamina alike, as the human's are. Snapshot in
+	// assets/db_inputs/wowhead_forever_gearplanner.txt.
+	proto.Race_RaceSkyborneHighOrder:  {},
+	proto.Race_RaceSkyborneWindshaper: {},
 }
 
 var ClassBaseStats = map[proto.Class]stats.Stats{
@@ -255,6 +261,8 @@ func AddBaseStatsCombo(r proto.Race, c proto.Class) {
 func init() {
 	AddBaseStatsCombo(proto.Race_RaceTauren, proto.Class_ClassDruid)
 	AddBaseStatsCombo(proto.Race_RaceNightElf, proto.Class_ClassDruid)
+	AddBaseStatsCombo(proto.Race_RaceSkyborneHighOrder, proto.Class_ClassDruid)
+	AddBaseStatsCombo(proto.Race_RaceSkyborneWindshaper, proto.Class_ClassDruid)
 
 	AddBaseStatsCombo(proto.Race_RaceBloodElf, proto.Class_ClassHunter)
 	AddBaseStatsCombo(proto.Race_RaceDraenei, proto.Class_ClassHunter)
@@ -263,6 +271,9 @@ func init() {
 	AddBaseStatsCombo(proto.Race_RaceOrc, proto.Class_ClassHunter)
 	AddBaseStatsCombo(proto.Race_RaceTauren, proto.Class_ClassHunter)
 	AddBaseStatsCombo(proto.Race_RaceTroll, proto.Class_ClassHunter)
+	AddBaseStatsCombo(proto.Race_RaceHuman, proto.Class_ClassHunter)
+	AddBaseStatsCombo(proto.Race_RaceSkyborneHighOrder, proto.Class_ClassHunter)
+	AddBaseStatsCombo(proto.Race_RaceSkyborneWindshaper, proto.Class_ClassHunter)
 
 	AddBaseStatsCombo(proto.Race_RaceDraenei, proto.Class_ClassMage)
 	AddBaseStatsCombo(proto.Race_RaceGnome, proto.Class_ClassMage)
@@ -272,11 +283,13 @@ func init() {
 	AddBaseStatsCombo(proto.Race_RaceTroll, proto.Class_ClassMage)
 	AddBaseStatsCombo(proto.Race_RaceUndead, proto.Class_ClassMage)
 	AddBaseStatsCombo(proto.Race_RaceOrc, proto.Class_ClassMage)
+	AddBaseStatsCombo(proto.Race_RaceSkyborneHighOrder, proto.Class_ClassMage)
 
 	AddBaseStatsCombo(proto.Race_RaceBloodElf, proto.Class_ClassPaladin)
 	AddBaseStatsCombo(proto.Race_RaceDraenei, proto.Class_ClassPaladin)
 	AddBaseStatsCombo(proto.Race_RaceHuman, proto.Class_ClassPaladin)
 	AddBaseStatsCombo(proto.Race_RaceDwarf, proto.Class_ClassPaladin)
+	AddBaseStatsCombo(proto.Race_RaceUndead, proto.Class_ClassPaladin)
 
 	AddBaseStatsCombo(proto.Race_RaceHuman, proto.Class_ClassPriest)
 	AddBaseStatsCombo(proto.Race_RaceDwarf, proto.Class_ClassPriest)
@@ -295,11 +308,15 @@ func init() {
 	AddBaseStatsCombo(proto.Race_RaceOrc, proto.Class_ClassRogue)
 	AddBaseStatsCombo(proto.Race_RaceTroll, proto.Class_ClassRogue)
 	AddBaseStatsCombo(proto.Race_RaceUndead, proto.Class_ClassRogue)
+	AddBaseStatsCombo(proto.Race_RaceSkyborneHighOrder, proto.Class_ClassRogue)
+	AddBaseStatsCombo(proto.Race_RaceSkyborneWindshaper, proto.Class_ClassRogue)
 
 	AddBaseStatsCombo(proto.Race_RaceDraenei, proto.Class_ClassShaman)
 	AddBaseStatsCombo(proto.Race_RaceOrc, proto.Class_ClassShaman)
 	AddBaseStatsCombo(proto.Race_RaceTauren, proto.Class_ClassShaman)
 	AddBaseStatsCombo(proto.Race_RaceTroll, proto.Class_ClassShaman)
+	AddBaseStatsCombo(proto.Race_RaceDwarf, proto.Class_ClassShaman)
+	AddBaseStatsCombo(proto.Race_RaceSkyborneWindshaper, proto.Class_ClassShaman)
 
 	AddBaseStatsCombo(proto.Race_RaceBloodElf, proto.Class_ClassWarlock)
 	AddBaseStatsCombo(proto.Race_RaceOrc, proto.Class_ClassWarlock)
@@ -318,4 +335,6 @@ func init() {
 	AddBaseStatsCombo(proto.Race_RaceTauren, proto.Class_ClassWarrior)
 	AddBaseStatsCombo(proto.Race_RaceTroll, proto.Class_ClassWarrior)
 	AddBaseStatsCombo(proto.Race_RaceUndead, proto.Class_ClassWarrior)
+	AddBaseStatsCombo(proto.Race_RaceSkyborneHighOrder, proto.Class_ClassWarrior)
+	AddBaseStatsCombo(proto.Race_RaceSkyborneWindshaper, proto.Class_ClassWarrior)
 }

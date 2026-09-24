@@ -107,10 +107,9 @@ func (o *reforgeOptimizer) applyReforgeStat(coeffs map[string]float64, stat stat
 	if o.player.GetDisableRacials() {
 		race = proto.Race_RaceUnknown
 	}
+	// The Human Spirit. Forever's gnome Expansive Mind raises mana rather than Intellect, so it
+	// has nothing to scale here.
 	if stat == stats.Spirit && race == proto.Race_RaceHuman {
-		amount *= 1.1
-	}
-	if stat == stats.Intellect && race == proto.Race_RaceGnome {
 		amount *= 1.05
 	}
 

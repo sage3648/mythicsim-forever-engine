@@ -276,9 +276,9 @@
 	"20572": {
 		"ability": "Blood Fury",
 		"file": "sim/core/racials.go",
-		"note": "Forever's Blood Fury reads 10% off the orc's whole attack power and pays the same 10% in spell power, with no healing penalty (docs/forever_rules.md racials table, racials guide and demo); the 15 sec duration and the 2 min cooldown are Classic's and were not reported as changed.",
+		"note": "Forever client 1.60.1.69977, spell 20572: +10% melee attack power, ranged attack power and spell power (auras 166, 167 and 317) for 15 sec on a 2 min cooldown, with no start recovery category, so it is off the global cooldown. Before this, the sim put it on the GCD, snapshotted flat stats and never raised ranged attack power.",
 		"source": "forever",
-		"tooltip": "Instant\n2 min cooldown\nIncreases your attack power and spell power by 10% for 15 sec."
+		"tooltip": "Instant\n2 min cooldown\nIncreases Attack Power and Spell Power by 10% for 15 sec."
 	},
 	"20594": {
 		"ability": "Stoneform",
@@ -383,9 +383,10 @@
 	"26297": {
 		"ability": "Berserking",
 		"file": "sim/core/racials.go",
-		"note": "Forever's Berserking is a flat 10% instead of scaling from 10% to 30% as health drops (racials guide, commit 'rework the racials the way Forever reworked them'); the 10 sec duration, the 3 min cooldown and the resource costs are Classic's. Mana users are implemented as a 10% cast-time and swing-time cut, i.e. 11.1% haste, while rage and energy users get a flat 10% attack speed.",
+		"foreverId": 20554,
+		"note": "Forever client 1.60.1.69977, spell 20554: +10% melee haste, ranged haste and cast speed for 10 sec on a 3 min cooldown, off the global cooldown and with no power cost. The sim keeps Classic's 26297 so saved rotations still find it.",
 		"source": "forever",
-		"tooltip": "7% of base mana, 5 Rage or 10 Energy\nInstant\n3 min cooldown\nIncreases your attack and casting speed by 10% for 10 sec."
+		"tooltip": "Instant\n3 min cooldown\nIncreases your spellcasting and attack speed by 10% for 10 sec."
 	},
 	"26992": {
 		"ability": "Thorns",
@@ -460,41 +461,50 @@
 		"source": "forever",
 		"tooltip": "Instant\n3 min cooldown\nIncreases your critical strike chance with spells and attacks by 10% for 15 sec."
 	},
-	"460530": {
-		"ability": "Windshaper",
-		"assumptions": [
-			"The 10% attack power and spell power is taken from the Skyborne first look and matched to Blood Fury; check the figure in the beta spellbook.",
-			"The 15 second duration is assumed from Blood Fury; no Windshaper duration was published.",
-			"The 3 minute cooldown is the default this fork gives racials with no published cooldown (beta checklist, 'How to run the pass' item 4)."
-		],
-		"file": "sim/core/racials.go",
-		"foreverId": 460530,
-		"note": "A Forever-only racial for the Horde half of the Skyborne; 460530 is Forever's own id and the Classic database cannot name or draw it. The Skyborne first look described the racial but published no figures, so every number here is read across from Blood Fury.",
-		"source": "assumed",
-		"tooltip": "Instant\n3 min cooldown\nIncreases your attack power and spell power by 10% for 15 sec."
-	},
-	"460540": {
+	"1260198": {
 		"ability": "Touch of the Grave",
 		"assumptions": [
-			"\"Up to 5% of your maximum Health\" is read as a roll between half and full, the way every other ranged damage value in the sim is; the tooltip gives only the ceiling.",
 			"The drain is taken to be Shadow damage that can be partially resisted, and cannot crit."
 		],
 		"file": "sim/core/racials.go",
-		"foreverId": 460540,
-		"note": "A Forever-only undead racial that replaces Classic's Shadow Resistance; 460540 is Forever's own id and the Classic database cannot name or draw it. The tooltip is quoted from the racials guide; how the drain rolls is not published, so the roll and the resist behaviour are assumptions the beta pass has to settle.",
+		"note": "Beta client 1.60.1.69893: the passive is 1260189 for warriors, paladins and rogues (5% chance) and 1260201 for priests, mages and warlocks (10%), both with a 1 s proc cooldown; the drain, 1260198, is a health leech of 5% of the caster's maximum health. 460540 was a placeholder id.",
 		"source": "assumed",
-		"tooltip": "Passive\nYour spells and attacks have a 5% chance to drain Health from the target, up to 5% of your maximum Health."
+		"tooltip": "Passive\nYour spells and attacks have a 5% chance (10% for priests, mages and warlocks) to drain Health from the target, up to 5% of your maximum Health."
 	},
-	"460550": {
+	"1259813": {
 		"ability": "Eureka!",
-		"assumptions": [
-			"A warlock tooltip listed only the damage half, so whether the mana saving reaches every ability or only caster ones is unsettled; it is applied to whatever spends a charge."
-		],
 		"file": "sim/core/racials.go",
-		"foreverId": 460550,
-		"note": "A Forever-only gnome racial; 460550 is Forever’s own id and the Classic database cannot name or draw it. Both figures come from the racials guide, read from the demo.",
-		"source": "assumed",
-		"tooltip": "Instant\n2 min cooldown\nYour next 3 damaging or healing abilities cost 50% less Mana and do 10% more damage or healing."
+		"note": "Forever client 1.60.1.69977, the warrior version: 15 sec, 3 charges, 2 min cooldown, off the global cooldown. -40% Rage cost and +10% direct and periodic damage are spell modifiers, and the proc mask (87376) leaves out auto attacks, so white swings neither gain nor spend a charge.",
+		"source": "forever",
+		"tooltip": "Instant\n2 min cooldown\nYour next 3 damaging abilities have their Rage cost reduced by 40% and deal 10% more damage."
+	},
+	"1259812": {
+		"ability": "Eureka!",
+		"file": "sim/core/racials.go",
+		"note": "Forever client 1.60.1.69977, the rogue version: 15 sec, 3 charges, 2 min cooldown, off the global cooldown. -20% Energy cost and +10% direct and periodic damage are spell modifiers, and the proc mask (87376) leaves out auto attacks, so white swings neither gain nor spend a charge.",
+		"source": "forever",
+		"tooltip": "Instant\n2 min cooldown\nYour next 3 damaging abilities have their Energy cost reduced by 20% and deal 10% more damage."
+	},
+	"1259817": {
+		"ability": "Eureka!",
+		"file": "sim/core/racials.go",
+		"note": "Forever client 1.60.1.69977, the mage version: 15 sec, 3 charges, 2 min cooldown, off the global cooldown. -50% Mana cost and +10% direct and periodic damage are spell modifiers, and the proc mask (87376) leaves out auto attacks, so white swings neither gain nor spend a charge.",
+		"source": "forever",
+		"tooltip": "Instant\n2 min cooldown\nYour next 3 damaging abilities have their Mana cost reduced by 50% and deal 10% more damage."
+	},
+	"1259821": {
+		"ability": "Eureka!",
+		"file": "sim/core/racials.go",
+		"note": "Forever client 1.60.1.69977, the warlock version: 15 sec, 3 charges, 2 min cooldown, off the global cooldown. -50% Mana cost and +10% direct and periodic damage are spell modifiers, and the proc mask (87376) leaves out auto attacks, so white swings neither gain nor spend a charge.",
+		"source": "forever",
+		"tooltip": "Instant\n2 min cooldown\nYour next 3 damaging abilities have their Mana cost reduced by 50% and deal 10% more damage."
+	},
+	"1259823": {
+		"ability": "Eureka!",
+		"file": "sim/core/racials.go",
+		"note": "Forever client 1.60.1.69977, the priest version: 15 sec, 3 charges, 2 min cooldown, off the global cooldown. -15% Mana cost and +10% direct and periodic damage are spell modifiers, and the proc mask (87376) leaves out auto attacks, so white swings neither gain nor spend a charge.",
+		"source": "forever",
+		"tooltip": "Instant\n2 min cooldown\nYour next 3 damaging or healing abilities have their Mana cost reduced by 15% and deal 10% more damage or healing."
 	},
 	"5242": {
 		"ability": "Battle Shout Rank 2",

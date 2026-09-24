@@ -1,13 +1,22 @@
 package core
 
 import (
-	"fmt"
+	"slices"
 	"time"
 
 	"github.com/wowsims/forever/sim/core/proto"
 	"github.com/wowsims/forever/sim/core/stats"
 )
 
+// Forever's racials. Where the client carries the racial (client 1.60.1.69977: Blood Fury,
+// Eureka!, Berserking, Touch of the Grave and the Skyborne line) the figures are the
+// client's; the rest follow the published racials guide. Against Classic, Forever drops
+// every +10 resistance racial, turns the weapon skill racials into critical strike while
+// the matching weapon is held, and gives each race a new passive or cooldown. See
+// docs/forever_rules.md.
+//
+// Blood Elves and Draenei are not Forever races. They keep the racials this engine
+// already had for them.
 func applyRaceEffects(agent Agent) {
 	character := agent.GetCharacter()
 
@@ -111,320 +120,423 @@ func applyRaceEffects(agent Agent) {
 			},
 		})
 	case proto.Race_RaceDwarf:
-		character.stats[stats.FrostResistance] += 10
-
-		hasGunEquipped := func() bool {
-			ranged := character.Ranged()
-			return ranged != nil && (ranged.RangedWeaponType == proto.RangedWeaponType_RangedWeaponTypeGun)
-		}
-
-		aura := character.RegisterAura(Aura{
-			Label:      "Gun Specialization",
-			ActionID:   ActionID{SpellID: 20595},
-			Duration:   NeverExpires,
-			BuildPhase: Ternary(hasGunEquipped(), CharacterBuildPhaseBase, CharacterBuildPhaseNone),
-		}).AttachStatBuff(stats.RangedCritPercent, 1)
-
-		if hasGunEquipped() {
-			MakePermanent(aura)
-		}
-
-		character.RegisterItemSwapCallback([]proto.ItemSlot{proto.ItemSlot_ItemSlotRanged}, func(sim *Simulation, slot proto.ItemSlot) {
-			if hasGunEquipped() {
-				aura.Activate(sim)
-			} else {
-				aura.Deactivate(sim)
-			}
-		})
-
-		actionID := ActionID{SpellID: 20594}
-
-		stoneFormAura := character.NewTemporaryStatsAuraWrapped("Stoneform", actionID, stats.Stats{}, time.Second*8, func(aura *Aura) {
-			aura.ApplyOnGain(func(aura *Aura, sim *Simulation) {
-				character.PseudoStats.ArmorMultiplier *= 1.1
-			})
-			aura.ApplyOnExpire(func(aura *Aura, sim *Simulation) {
-				character.PseudoStats.ArmorMultiplier /= 1.1
-			})
-		})
-
-		spell := character.RegisterSpell(SpellConfig{
-			ActionID: actionID,
-			Flags:    SpellFlagNoOnCastComplete,
-			Cast: CastConfig{
-				DefaultCast: Cast{
-					GCD: GCDDefault,
-				},
-				CD: Cooldown{
-					Timer:    character.NewTimer(),
-					Duration: time.Minute * 3,
-				},
-			},
-			ApplyEffects: func(sim *Simulation, _ *Unit, _ *Spell) {
-				stoneFormAura.Activate(sim)
-			},
-
-			RelatedSelfBuff: stoneFormAura.Aura,
-		})
-
-		character.AddMajorCooldown(MajorCooldown{
-			Spell: spell,
-			Type:  CooldownTypeDPS,
-		})
+		// Mace Specialization moved to the Dwarves, and pays critical strike now.
+		character.applyWeaponSpecializationCrit("Mace Specialization", 20864, 1, proto.WeaponType_WeaponTypeMace)
+		// Big Game Hunter: Beast Slaying's +5% against Beasts.
+		character.mobTypeDamageAura(proto.MobType_MobTypeBeast, 1.05)
+		character.registerStoneform()
 	case proto.Race_RaceGnome:
-		character.stats[stats.ArcaneResistance] += 10
-		character.MultiplyStat(stats.Intellect, 1.05)
+		// Expansive Mind raises the resource pool itself now rather than Intellect. Only the
+		// mana half is modelled; rage and energy have no max stat here.
+		character.MultiplyStat(stats.Mana, 1.05)
+		character.registerEureka()
 	case proto.Race_RaceHuman:
-		character.MultiplyStat(stats.Spirit, 1.10)
-		applyWeaponSpecialization(character, "Mace Specialization ", 20864, false, proto.WeaponType_WeaponTypeMace)
-		applyWeaponSpecialization(character, "Sword Specialization ", 20597, false, proto.WeaponType_WeaponTypeSword)
+		character.MultiplyStat(stats.Spirit, 1.05)
+		// Mace Specialization moved to the Dwarves.
+		character.applyWeaponSpecializationCrit("Sword Specialization", 20597, 2, proto.WeaponType_WeaponTypeSword)
 	case proto.Race_RaceNightElf:
-		character.stats[stats.NatureResistance] += 10
+		// Quickness
 		character.PseudoStats.BaseDodgeChance += 0.01
-
+		character.registerElunesLight()
 	case proto.Race_RaceOrc:
-		// Command (Pet damage +5%)
-		for _, pet := range character.Pets {
-			MakePermanent(pet.GetOrRegisterAura(Aura{
-				Label:    "Command",
-				ActionID: ActionID{SpellID: TernaryInt32(character.Class == proto.Class_ClassWarlock, 20575, 20576)},
-				Duration: NeverExpires,
-			})).AttachMultiplicativePseudoStatBuff(&pet.PseudoStats.DamageDealtMultiplier, 1.05)
-		}
-
-		// Blood Fury
-		actionID := ActionID{SpellID: 33697}
-		apFormula := float64(character.Level)*4 + 2
-		spFormula := float64(character.Level)*2 + 3
-		apBonus := 0.0
-		spBonus := 0.0
-
-		switch character.Class {
-		case proto.Class_ClassWarrior,
-			proto.Class_ClassRogue,
-			proto.Class_ClassHunter:
-			apBonus = apFormula
-		case proto.Class_ClassShaman:
-			spBonus = spFormula
-			apBonus = apFormula
-		case proto.Class_ClassWarlock:
-			spBonus = spFormula
-		}
-
-		buffStats := stats.Stats{
-			stats.AttackPower:       apBonus,
-			stats.RangedAttackPower: apBonus,
-			stats.SpellDamage:       spBonus,
-		}
-
-		RegisterTemporaryStatsOnUseCD(character,
-			"Blood Fury",
-			buffStats,
-			time.Second*15,
-			SpellConfig{
-				ActionID: actionID,
-				Cast: CastConfig{
-					CD: Cooldown{
-						Timer:    character.NewTimer(),
-						Duration: time.Minute * 2,
-					},
-				},
-			})
-
-		applyWeaponSpecialization(character, "Axe Specialization", 20574, false, proto.WeaponType_WeaponTypeAxe)
+		// Command is not one of the orc's four: Shatter Curse took its place, and dispelling a
+		// curse is nothing the sim measures.
+		character.applyWeaponSpecializationCrit("Axe Specialization", 20574, 1, proto.WeaponType_WeaponTypeAxe)
+		character.registerBloodFury()
 	case proto.Race_RaceTauren:
-		character.stats[stats.NatureResistance] += 10
+		// Endurance carries a point of hit alongside the health.
 		character.MultiplyStat(stats.Health, 1.05)
+		character.AddStat(stats.PhysicalHitPercent, 1)
+		character.AddStat(stats.SpellHitPercent, 1)
 	case proto.Race_RaceTroll:
-		hasBowEquipped := func() bool {
-			ranged := character.Ranged()
-			return ranged != nil && (ranged.RangedWeaponType == proto.RangedWeaponType_RangedWeaponTypeBow)
-		}
-
-		bowAura := character.RegisterAura(Aura{
-			Label:      "Bow Specialization",
-			ActionID:   ActionID{SpellID: 26290},
-			Duration:   NeverExpires,
-			BuildPhase: Ternary(hasBowEquipped(), CharacterBuildPhaseBase, CharacterBuildPhaseNone),
-		}).AttachStatBuff(stats.RangedCritPercent, 1)
-
-		if hasBowEquipped() {
-			MakePermanent(bowAura)
-		}
-
-		hasThrowingEquipped := func() bool {
-			ranged := character.Ranged()
-			return ranged != nil && (ranged.RangedWeaponType == proto.RangedWeaponType_RangedWeaponTypeThrown)
-		}
-
-		throwingAura := character.RegisterAura(Aura{
-			Label:      "Throwing Specialization",
-			ActionID:   ActionID{SpellID: 20558},
-			Duration:   NeverExpires,
-			BuildPhase: Ternary(hasThrowingEquipped(), CharacterBuildPhaseBase, CharacterBuildPhaseNone),
-		}).AttachStatBuff(stats.RangedCritPercent, 1)
-
-		if hasThrowingEquipped() {
-			MakePermanent(throwingAura)
-		}
-
-		character.RegisterItemSwapCallback([]proto.ItemSlot{proto.ItemSlot_ItemSlotRanged}, func(sim *Simulation, slot proto.ItemSlot) {
-			if hasBowEquipped() {
-				bowAura.Activate(sim)
-			} else {
-				bowAura.Deactivate(sim)
-			}
-			if hasThrowingEquipped() {
-				throwingAura.Activate(sim)
-			} else {
-				throwingAura.Deactivate(sim)
-			}
-		})
-
-		// Beast Slaying (+5% damage to beasts)
-		character.Env.RegisterPostFinalizeEffect(func() {
-			for _, at := range character.AttackTables {
-				if at.Defender.MobType == proto.MobType_MobTypeBeast {
-					at.DamageDealtMultiplier *= 1.05
-					at.CritMultiplier *= 1.05
-				}
-			}
-		})
-
-		// Berserking
-		sharedCD := Cooldown{
-			Timer:    character.NewTimer(),
-			Duration: time.Minute * 3,
-		}
-
-		baseSpellConfig := SpellConfig{
-			Cast: CastConfig{
-				CD: sharedCD,
-			},
-		}
-
-		if character.HasEnergyBar() {
-			baseSpellConfig.ActionID = ActionID{SpellID: 26297}
-			baseSpellConfig.EnergyCost = EnergyCostOptions{
-				Cost: 10,
-			}
-		} else if character.HasRageBar() {
-			baseSpellConfig.ActionID = ActionID{SpellID: 26296}
-			baseSpellConfig.RageCost = RageCostOptions{
-				Cost: 5,
-			}
-		} else if character.HasManaBar() {
-			baseSpellConfig.ActionID = ActionID{SpellID: 20554}
-			baseSpellConfig.ManaCost = ManaCostOptions{
-				FlatCost: int32(character.BaseMana * 0.06),
-			}
-		}
-
-		baseAuraConfig := Aura{
-			Duration: time.Second * 10,
-			ActionID: baseSpellConfig.ActionID,
-		}
-
-		createBerserkingSpell := func(labelSuffix string, tag int32, percentage float64) {
-			auraConfig := baseAuraConfig
-			auraConfig.ActionID.Tag = tag
-			auraConfig.Label = fmt.Sprintf("Berserking (%s)", labelSuffix)
-
-			berserkingAura := character.RegisterAura(auraConfig)
-			berserkingAura.
-				AttachMultiplyAttackSpeed(percentage).
-				AttachMultiplyCastSpeed(percentage)
-
-			berserkingSpellConfig := baseSpellConfig
-			berserkingSpellConfig.ActionID.Tag = tag
-			berserkingSpellConfig.RelatedSelfBuff = berserkingAura
-			berserkingSpellConfig.ApplyEffects = func(sim *Simulation, _ *Unit, _ *Spell) {
-				berserkingAura.Activate(sim)
-			}
-			berserkingSpell := character.RegisterSpell(berserkingSpellConfig)
-
-			character.AddMajorCooldown(MajorCooldown{
-				Spell: berserkingSpell,
-				Type:  CooldownTypeDPS,
-				ShouldActivate: func(sim *Simulation, character *Character) bool {
-					return tag == 1
-				},
-			})
-
-		}
-
-		for idx := range 5 {
-			percentage := 0.10 + 0.05*float64(idx)
-			createBerserkingSpell(fmt.Sprintf("%d%%", int(percentage*100)), int32(idx+1), 1+percentage)
-		}
-
+		// Forever's troll keeps neither ranged weapon specialization; Rapid Regeneration and
+		// Regeneration took their place.
+		character.mobTypeDamageAura(proto.MobType_MobTypeBeast, 1.05)
+		character.registerBerserking()
 	case proto.Race_RaceUndead:
-		character.stats[stats.ShadowResistance] += 10
+		character.registerTouchOfTheGrave()
+	case proto.Race_RaceSkyborneHighOrder, proto.Race_RaceSkyborneWindshaper:
+		// Both halves share one racial skill line in the client (2980), so they sim alike. Its
+		// only combat effects are the two passives below. Read Ley Line (regeneration), Walk on
+		// Air and Skysight (movement) do nothing the sim measures.
+
+		// Wind Blessed (1259710)
+		character.PseudoStats.MeleeSpeedMultiplier *= 1.01
+		character.PseudoStats.RangedSpeedMultiplier *= 1.01
+		character.PseudoStats.CastSpeedMultiplier *= 1.01
+
+		// Elemental Insight (1259707)
+		character.mobTypeDamageAura(proto.MobType_MobTypeElemental, 1.05)
 	}
 }
 
-func applyWeaponSpecialization(character *Character, label string, spellID int32, oneHand bool, weaponTypes ...proto.WeaponType) {
-	mask := Ternary(oneHand, character.GetDynamicProcMaskForTypesAndHand(false, weaponTypes...), character.GetDynamicProcMaskForTypes(weaponTypes...))
-	expertiseBonus := 5 * ExpertisePerQuarterPercentReduction
-
-	expSpellMod := character.AddDynamicMod(SpellModConfig{
-		Kind: SpellMod_Custom,
-		ApplyCustom: func(mod *SpellMod, spell *Spell) {
-			if spell.ProcMask.Matches(ProcMaskMeleeOH) && !spell.ProcMask.Matches(ProcMaskMeleeMH) {
-				spell.BonusExpertiseRating += mod.GetFloatValue()
+// Under Forever the weapon skill racials pay critical strike instead, and only while the
+// matching weapon is held in either hand. The tooltips read "spell and ability critical
+// strike chance", so it lands on both pools.
+func (character *Character) applyWeaponSpecializationCrit(label string, spellID int32, critPercent float64, weaponTypes ...proto.WeaponType) {
+	holdsWeapon := func() bool {
+		for _, weapon := range []*Item{character.MainHand(), character.OffHand()} {
+			if weapon != nil && weapon.ID != 0 && slices.Contains(weaponTypes, weapon.WeaponType) {
+				return true
 			}
-		},
-		RemoveCustom: func(mod *SpellMod, spell *Spell) {
-			if spell.ProcMask.Matches(ProcMaskMeleeOH) && !spell.ProcMask.Matches(ProcMaskMeleeMH) {
-				spell.BonusExpertiseRating -= mod.GetFloatValue()
-			}
-		},
-		FloatValue: expertiseBonus,
-	})
-
-	expStatAura := character.RegisterAura(Aura{
-		Label:    fmt.Sprintf("ExpertiseStatAura (%s)", label),
-		Duration: NeverExpires,
-	}).AttachStatBuff(stats.ExpertiseRating, expertiseBonus)
+		}
+		return false
+	}
 
 	aura := character.RegisterAura(Aura{
 		Label:      label,
 		ActionID:   ActionID{SpellID: spellID},
-		BuildPhase: Ternary(mask.Matches(ProcMaskMeleeMH), CharacterBuildPhaseBase, CharacterBuildPhaseNone),
 		Duration:   NeverExpires,
-
-		OnReset: func(aura *Aura, sim *Simulation) {
-			if *mask != ProcMaskUnknown {
-				aura.Activate(sim)
-			}
-		},
-
-		OnGain: func(aura *Aura, sim *Simulation) {
-			// Always add if main-hand matches
-			if mask.Matches(ProcMaskMeleeMH) {
-				expStatAura.Activate(sim)
-				if *mask == ProcMaskMeleeMH {
-					// Remove from off-hand attacks if only main-hand matches
-					expSpellMod.UpdateFloatValue(-expertiseBonus)
-					expSpellMod.Activate()
-				}
-			} else if mask.Matches(ProcMaskMeleeOH) {
-				// Only add specifically to off-hand attacks
-				expSpellMod.UpdateFloatValue(expertiseBonus)
-				expSpellMod.Activate()
-			}
-		},
-
-		OnExpire: func(aura *Aura, sim *Simulation) {
-			expStatAura.Deactivate(sim)
-			expSpellMod.Deactivate()
-		},
+		BuildPhase: Ternary(holdsWeapon(), CharacterBuildPhaseBase, CharacterBuildPhaseNone),
+	}).AttachStatsBuff(stats.Stats{
+		stats.PhysicalCritPercent: critPercent,
+		stats.SpellCritPercent:    critPercent,
 	})
 
-	character.RegisterItemSwapCallback(AllWeaponSlots(), func(sim *Simulation, slot proto.ItemSlot) {
-		aura.Deactivate(sim)
-		if mask.Matches(ProcMaskMelee) {
+	if holdsWeapon() {
+		MakePermanent(aura)
+	}
+
+	character.RegisterItemSwapCallback(AllWeaponSlots(), func(sim *Simulation, _ proto.ItemSlot) {
+		if holdsWeapon() {
 			aura.Activate(sim)
+		} else {
+			aura.Deactivate(sim)
 		}
 	})
+}
+
+// Stoneform, the dwarf's cooldown: 10% armor for 8 sec on a 3 min cooldown, as in Classic. It
+// is a survival cooldown that is only ever cast from the rotation, so a dwarf DPS does not
+// spend a global cooldown on it.
+func (character *Character) registerStoneform() {
+	actionID := ActionID{SpellID: 20594}
+
+	stoneFormAura := character.NewTemporaryStatsAuraWrapped("Stoneform", actionID, stats.Stats{}, time.Second*8, func(aura *Aura) {
+		aura.ApplyOnGain(func(aura *Aura, sim *Simulation) {
+			character.PseudoStats.ArmorMultiplier *= 1.1
+		})
+		aura.ApplyOnExpire(func(aura *Aura, sim *Simulation) {
+			character.PseudoStats.ArmorMultiplier /= 1.1
+		})
+	})
+
+	spell := character.RegisterSpell(SpellConfig{
+		ActionID: actionID,
+		Flags:    SpellFlagNoOnCastComplete,
+		Cast: CastConfig{
+			CD: Cooldown{
+				Timer:    character.NewTimer(),
+				Duration: time.Minute * 3,
+			},
+		},
+		ApplyEffects: func(sim *Simulation, _ *Unit, _ *Spell) {
+			stoneFormAura.Activate(sim)
+		},
+
+		RelatedSelfBuff: stoneFormAura.Aura,
+	})
+
+	character.AddMajorCooldown(MajorCooldown{
+		Spell: spell,
+		Type:  CooldownTypeSurvival,
+		ShouldActivate: func(_ *Simulation, _ *Character) bool {
+			// Only castable with a manual APL action.
+			return false
+		},
+	})
+}
+
+// Blood Fury under Forever (client 20572): 10% more melee attack power, ranged attack power
+// and spell power for 15 s on a two minute cooldown, off the global cooldown. The three
+// effects are percentage modifiers (auras 166, 167 and 317), so they scale whatever the orc
+// gains while the buff is up rather than a snapshot taken when it is cast.
+//
+// Spell power here is split into generic and school stats. The school stats cannot carry a
+// stat dependency, so 10% of them is added when the buff lands; they only come from gear and
+// elixirs, which do not change mid-fight.
+func (character *Character) registerBloodFury() {
+	actionID := ActionID{SpellID: 20572}
+
+	aura := character.RegisterAura(Aura{
+		Label:    "Blood Fury",
+		ActionID: actionID,
+		Duration: time.Second * 15,
+	})
+	for _, stat := range []stats.Stat{stats.AttackPower, stats.RangedAttackPower, stats.SpellDamage, stats.HealingPower} {
+		aura.AttachStatDependency(character.NewDynamicMultiplyStat(stat, 1.1))
+	}
+
+	schoolPowers := []stats.Stat{stats.ArcaneDamage, stats.FireDamage, stats.FrostDamage, stats.HolyDamage, stats.NatureDamage, stats.ShadowDamage}
+	var schoolBonus stats.Stats
+	aura.ApplyOnGain(func(aura *Aura, sim *Simulation) {
+		schoolBonus = stats.Stats{}
+		for _, stat := range schoolPowers {
+			schoolBonus[stat] = aura.Unit.GetStat(stat) * 0.1
+		}
+		aura.Unit.AddStatsDynamic(sim, schoolBonus)
+	})
+	aura.ApplyOnExpire(func(aura *Aura, sim *Simulation) {
+		aura.Unit.AddStatsDynamic(sim, schoolBonus.Invert())
+	})
+
+	spell := character.RegisterSpell(SpellConfig{
+		ActionID: actionID,
+		Flags:    SpellFlagNoOnCastComplete,
+		Cast: CastConfig{
+			CD: Cooldown{
+				Timer:    character.NewTimer(),
+				Duration: time.Minute * 2,
+			},
+		},
+		ApplyEffects: func(sim *Simulation, _ *Unit, _ *Spell) {
+			aura.Activate(sim)
+		},
+
+		RelatedSelfBuff: aura,
+	})
+
+	character.AddMajorCooldown(MajorCooldown{
+		Spell: spell,
+		Type:  CooldownTypeDPS,
+	})
+}
+
+// Eureka!, the gnome's Forever racial cooldown. The client has one per gnome class: warrior
+// 1259813, rogue 1259812, priest 1259823, mage 1259817 and warlock 1259821. Each lasts 15 s
+// on a two minute cooldown, off the global cooldown, with three charges. While it is up, the
+// class's abilities deal 10% more damage, direct and periodic, and cost less: 40% less rage,
+// 20% less energy, 50% less mana for mages and warlocks, 15% less for priests.
+//
+// Both halves are spell modifiers, so they reach abilities and spells but not white swings.
+// A charge goes to any of those abilities; the proc mask (87376) leaves out auto attacks.
+func (character *Character) registerEureka() {
+	var actionID ActionID
+	var costReduction float64
+	switch character.Class {
+	case proto.Class_ClassWarrior:
+		actionID, costReduction = ActionID{SpellID: 1259813}, 0.40
+	case proto.Class_ClassRogue:
+		actionID, costReduction = ActionID{SpellID: 1259812}, 0.20
+	case proto.Class_ClassMage:
+		actionID, costReduction = ActionID{SpellID: 1259817}, 0.50
+	case proto.Class_ClassWarlock:
+		actionID, costReduction = ActionID{SpellID: 1259821}, 0.50
+	case proto.Class_ClassPriest:
+		actionID, costReduction = ActionID{SpellID: 1259823}, 0.15
+	default:
+		// No other class can be a gnome, and the client has no Eureka! for one.
+		return
+	}
+
+	damageMod := character.AddDynamicMod(SpellModConfig{
+		Kind:       SpellMod_DamageDone_Pct,
+		ProcMask:   ProcMaskSpecial,
+		FloatValue: 0.10,
+	})
+	costMod := character.AddDynamicMod(SpellModConfig{
+		Kind:       SpellMod_PowerCost_Pct_Add,
+		ProcMask:   ProcMaskSpecial,
+		FloatValue: -costReduction,
+	})
+
+	aura := character.RegisterAura(Aura{
+		Label:     "Eureka!",
+		ActionID:  actionID,
+		Duration:  time.Second * 15,
+		MaxStacks: 3,
+		OnGain: func(aura *Aura, sim *Simulation) {
+			damageMod.Activate()
+			costMod.Activate()
+		},
+		OnExpire: func(aura *Aura, sim *Simulation) {
+			damageMod.Deactivate()
+			costMod.Deactivate()
+		},
+		OnStacksChange: func(aura *Aura, sim *Simulation, _ int32, newStacks int32) {
+			if newStacks == 0 {
+				aura.Deactivate(sim)
+			}
+		},
+		// OnCastComplete runs after the cast's effects, so the ability that spends the last
+		// charge still gets the bonus.
+		OnCastComplete: func(aura *Aura, sim *Simulation, spell *Spell) {
+			if spell.ProcMask.Matches(ProcMaskSpecial) {
+				aura.RemoveStack(sim)
+			}
+		},
+	})
+
+	spell := character.RegisterSpell(SpellConfig{
+		ActionID: actionID,
+		Flags:    SpellFlagNoOnCastComplete,
+		Cast: CastConfig{
+			CD: Cooldown{
+				Timer:    character.NewTimer(),
+				Duration: time.Minute * 2,
+			},
+		},
+		ApplyEffects: func(sim *Simulation, _ *Unit, _ *Spell) {
+			aura.Activate(sim)
+			aura.SetStacks(sim, aura.MaxStacks)
+		},
+
+		RelatedSelfBuff: aura,
+	})
+
+	character.AddMajorCooldown(MajorCooldown{
+		Spell: spell,
+		Type:  CooldownTypeDPS,
+	})
+}
+
+// Elune's Light, the night elf's Forever racial cooldown: 10% critical strike with spells
+// and attacks for 15 seconds on a three minute cooldown.
+func (character *Character) registerElunesLight() {
+	actionID := ActionID{SpellID: 460520}
+
+	aura := character.RegisterAura(Aura{
+		Label:    "Elune's Light",
+		ActionID: actionID,
+		Duration: time.Second * 15,
+	}).AttachStatsBuff(stats.Stats{
+		stats.PhysicalCritPercent: 10,
+		stats.SpellCritPercent:    10,
+	})
+
+	spell := character.RegisterSpell(SpellConfig{
+		ActionID: actionID,
+		Flags:    SpellFlagNoOnCastComplete,
+		Cast: CastConfig{
+			CD: Cooldown{
+				Timer:    character.NewTimer(),
+				Duration: time.Minute * 3,
+			},
+		},
+		ApplyEffects: func(sim *Simulation, _ *Unit, _ *Spell) {
+			aura.Activate(sim)
+		},
+
+		RelatedSelfBuff: aura,
+	})
+
+	character.AddMajorCooldown(MajorCooldown{
+		Spell: spell,
+		Type:  CooldownTypeDPS,
+	})
+}
+
+// Berserking under Forever (client 20554): 10% melee haste, ranged haste and cast speed for
+// 10 s on a three minute cooldown, whatever the troll's health. It costs nothing and is off
+// the global cooldown. The action id is the one the previous engine line gave its fixed 10%
+// option, so rotations saved against that line still find it.
+func (character *Character) registerBerserking() {
+	actionID := ActionID{SpellID: 26297, Tag: 2}
+
+	aura := character.RegisterAura(Aura{
+		Label:    "Berserking (10)",
+		ActionID: actionID,
+		Duration: time.Second * 10,
+	}).AttachMultiplyAttackSpeed(1.1).AttachMultiplyCastSpeed(1.1)
+
+	spell := character.RegisterSpell(SpellConfig{
+		ActionID: actionID,
+		Flags:    SpellFlagNoOnCastComplete,
+		Cast: CastConfig{
+			CD: Cooldown{
+				Timer:    character.NewTimer(),
+				Duration: time.Minute * 3,
+			},
+		},
+		ApplyEffects: func(sim *Simulation, _ *Unit, _ *Spell) {
+			aura.Activate(sim)
+		},
+
+		RelatedSelfBuff: aura,
+	})
+
+	character.AddMajorCooldown(MajorCooldown{
+		Spell: spell,
+		Type:  CooldownTypeDPS,
+	})
+}
+
+// Touch of the Grave, the undead's Forever racial, which replaces Classic's Shadow
+// Resistance: spells and attacks have a chance to drain health from the target.
+// Client: 1260189 (warrior, paladin, rogue) procs 5% of the time, 1260201 (priest, mage,
+// warlock) 10%, both with a 1 s proc cooldown (SpellAuraOptions). The drain, 1260198, is a
+// health leech of 5% of the caster's maximum health. It is taken to be Shadow damage that
+// can be resisted; whether it can crit is unknown.
+func (character *Character) registerTouchOfTheGrave() {
+	procChance := 0.05
+	switch character.Class {
+	case proto.Class_ClassPriest, proto.Class_ClassMage, proto.Class_ClassWarlock:
+		procChance = 0.10
+	}
+	actionID := ActionID{SpellID: 1260198}
+	healthMetrics := character.NewHealthMetrics(actionID)
+
+	drain := character.RegisterSpell(SpellConfig{
+		ActionID:    actionID,
+		SpellSchool: SpellSchoolShadow,
+		DefenseType: DefenseTypeMagic,
+		ProcMask:    ProcMaskEmpty,
+		// The drain is a proc off another hit, so it must not feed the procs that spawned it
+		// or two undead attacks would chain into each other.
+		Flags: SpellFlagNoOnCastComplete | SpellFlagPassiveSpell,
+
+		DamageMultiplier: 1,
+		ThreatMultiplier: 1,
+
+		ApplyEffects: func(sim *Simulation, target *Unit, spell *Spell) {
+			result := spell.CalcAndDealDamage(sim, target, character.GetStat(stats.Health)*0.05, spell.OutcomeMagicHit)
+
+			if result.Landed() && character.HasHealthBar() {
+				character.GainHealth(sim, result.Damage, healthMetrics)
+			}
+		},
+	})
+
+	icd := Cooldown{Timer: character.NewTimer(), Duration: time.Second}
+	MakePermanent(character.RegisterAura(Aura{
+		Label:    "Touch of the Grave",
+		ActionID: actionID,
+		OnSpellHitDealt: func(_ *Aura, sim *Simulation, spell *Spell, result *SpellResult) {
+			if !result.Landed() || spell == drain || !icd.IsReady(sim) {
+				return
+			}
+			if sim.RandomFloat("Touch of the Grave") < procChance {
+				icd.Use(sim)
+				drain.Cast(sim, result.Target)
+			}
+		},
+	}))
+}
+
+// Troll Beast Slaying, Dwarf Big Game Hunter and Skyborne Elemental Insight: more damage, and
+// a larger critical strike bonus, against one creature type.
+func (character *Character) mobTypeDamageAura(mobType proto.MobType, multiplier float64) {
+	character.Env.RegisterPostFinalizeEffect(func() {
+		for _, at := range character.AttackTables {
+			if at.Defender.MobType == mobType {
+				at.DamageDealtMultiplier *= multiplier
+				at.CritMultiplier *= multiplier
+			}
+		}
+	})
+}
+
+// GetFaction derives the character's faction from its race. The Skyborne choose a side at
+// character creation, so each half has its own race: High Order is Alliance, Windshaper Horde.
+func (character *Character) GetFaction() proto.Faction {
+	switch character.Race {
+	case proto.Race_RaceHuman, proto.Race_RaceDwarf, proto.Race_RaceGnome, proto.Race_RaceNightElf,
+		proto.Race_RaceDraenei, proto.Race_RaceSkyborneHighOrder:
+		return proto.Faction_Alliance
+	case proto.Race_RaceOrc, proto.Race_RaceTroll, proto.Race_RaceTauren, proto.Race_RaceUndead,
+		proto.Race_RaceBloodElf, proto.Race_RaceSkyborneWindshaper:
+		return proto.Faction_Horde
+	default:
+		return proto.Faction_Unknown
+	}
 }

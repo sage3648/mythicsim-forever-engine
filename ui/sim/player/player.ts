@@ -27,7 +27,6 @@ import {
 	TristateEffect,
 	UnitReference,
 	UnitStats,
-	WeaponType,
 } from '@generated/proto/common';
 import { SimDatabase } from '@generated/proto/db';
 import {
@@ -1664,25 +1663,9 @@ export class Player<SpecType extends Spec> {
 		return this.specConfig;
 	}
 
-	// Returns true/false for main-hand / off-hand
+	// Returns true/false for main-hand / off-hand. Forever turned the weapon expertise racials
+	// into critical strike (sim/core/racials.go), so no race carries racial expertise any more.
 	getActiveRacialExpertiseBonuses(): [boolean, boolean] {
-		const mainHand = this.getEquippedItem(ItemSlot.ItemSlotMainHand);
-		const offHand = this.getEquippedItem(ItemSlot.ItemSlotOffHand);
-
-		if (!mainHand && !offHand) {
-			return [false, false];
-		}
-
-		switch (this.getRace()) {
-			case Race.RaceHuman:
-				return [
-					mainHand?.item.weaponType === WeaponType.WeaponTypeMace || mainHand?.item.weaponType === WeaponType.WeaponTypeSword,
-					offHand?.item.weaponType === WeaponType.WeaponTypeMace || offHand?.item.weaponType === WeaponType.WeaponTypeSword,
-				];
-			case Race.RaceOrc:
-				return [mainHand?.item.weaponType === WeaponType.WeaponTypeAxe, offHand?.item.weaponType === WeaponType.WeaponTypeAxe];
-		}
-
 		return [false, false];
 	}
 }

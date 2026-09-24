@@ -3,7 +3,6 @@ package core
 import (
 	"fmt"
 	"math"
-	"slices"
 	"time"
 
 	googleProto "google.golang.org/protobuf/proto"
@@ -1289,14 +1288,7 @@ func JadePendantOfBlastingAura(char *Character) *Aura {
 }
 
 func DraneiRacialAura(char *Character, caster bool) *Aura {
-	alliance := []proto.Race{
-		proto.Race_RaceDraenei,
-		proto.Race_RaceDwarf,
-		proto.Race_RaceGnome,
-		proto.Race_RaceHuman,
-		proto.Race_RaceNightElf,
-	}
-	if !slices.Contains(alliance, char.Race) {
+	if char.GetFaction() != proto.Faction_Alliance {
 		return nil
 	}
 	var aura *Aura
