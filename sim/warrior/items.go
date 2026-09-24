@@ -8,11 +8,12 @@ import (
 )
 
 const (
-	MarshalsPlateGauntlets = 16484
-	GeneralsPlateGauntlets = 16548
-	RageOfMugamba          = 19577
-	GrileksCharmOfMight    = 19951
-	DiamondFlask           = 20130
+	KnightLieutenantsPlateGauntlets = 16406
+	MarshalsPlateGauntlets          = 16484
+	GeneralsPlateGauntlets          = 16548
+	RageOfMugamba                   = 19577
+	GrileksCharmOfMight             = 19951
+	DiamondFlask                    = 20130
 )
 
 func init() {
@@ -115,6 +116,19 @@ func init() {
 			Label: "Reduces the cost of your Hamstring ability by 2 rage points.",
 			OnInit: func(aura *core.Aura, sim *core.Simulation) {
 				warrior.Hamstring.Cost.FlatModifier -= 2
+			},
+		})
+	})
+
+	// Knight-Lieutenant's Plate Gauntlets: Hamstring costs 3 less rage (22778, client 1.60.1.69977),
+	// as on Marshal's and General's.
+	core.NewItemEffect(KnightLieutenantsPlateGauntlets, func(agent core.Agent) {
+		warrior := agent.(WarriorAgent).GetWarrior()
+
+		warrior.RegisterAura(core.Aura{
+			Label: "Hamstring Rage Reduction",
+			OnInit: func(aura *core.Aura, sim *core.Simulation) {
+				warrior.Hamstring.Cost.FlatModifier -= 3
 			},
 		})
 	})
