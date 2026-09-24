@@ -39,11 +39,12 @@ func (priest *Priest) registerVampiricEmbraceSpell() {
 	})
 
 	priest.VampiricEmbrace = priest.RegisterSpell(core.SpellConfig{
-		ActionID:    actionID,
-		SpellSchool: row.SpellSchool,
-		DefenseType: row.DefenseType,
-		ProcMask:    core.ProcMaskEmpty,
-		Flags:       SpellFlagPriest | core.SpellFlagAPL,
+		ActionID:       actionID,
+		ClassSpellMask: SpellMaskVampiricEmbrace,
+		SpellSchool:    row.SpellSchool,
+		DefenseType:    row.DefenseType,
+		ProcMask:       core.ProcMaskEmpty,
+		Flags:          SpellFlagPriest | core.SpellFlagAPL,
 
 		ManaCost: core.ManaCostOptions{
 			FlatCost: manaCost,

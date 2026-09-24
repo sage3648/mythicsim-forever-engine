@@ -111,20 +111,21 @@ func (priest *Priest) applyHolyPrecision() {
 	priest.addPriestMod(core.SpellMod_BonusHit_Percent, core.SpellSchoolHoly, 6*float64(priest.Talents.HolyPrecision))
 }
 
+// Mental Agility is not "every instant spell": of what the sim casts, the client's 14520 (-3/7/10%
+// cost, op 14) names Smite, Holy Fire, Holy Nova, Shadow Word: Pain, Devouring Plague, Vampiric
+// Embrace and Power Infusion (and Shadowform, which costs nothing here). The channels and
+// cooldowns - Mind Flay, Penance, Shadow Word: Death, Starshards - are not in its mask and pay
+// full price.
 func (priest *Priest) applyMentalAgility() {
 	if priest.Talents.MentalAgility == 0 {
 		return
 	}
 
-	affectedSpellCodes := []int32{SpellCode_PriestSmite, SpellCode_PriestHolyFire}
-	priest.OnSpellRegistered(func(spell *core.Spell) {
-		if spell.Cost == nil || !spell.Flags.Matches(SpellFlagPriest) {
-			return
-		}
-
-		if spell.DefaultCast.CastTime == 0 || slices.Contains(affectedSpellCodes, spell.SpellCode) {
-			spell.Cost.Multiplier -= []int32{0, 3, 7, 10}[priest.Talents.MentalAgility]
-		}
+	priest.AddStaticMod(core.SpellModConfig{
+		Kind: core.SpellMod_PowerCost_Pct_Add,
+		ClassMask: SpellMaskSmite | SpellMaskHolyFire | SpellMaskHolyNova | SpellMaskShadowWordPain |
+			SpellMaskDevouringPlague | SpellMaskVampiricEmbrace | SpellMaskPowerInfusion,
+		FloatValue: -[]float64{0, 0.03, 0.07, 0.10}[priest.Talents.MentalAgility],
 	})
 }
 

@@ -31,7 +31,8 @@ const (
 	SpellCode_PriestVampiricTouch
 )
 
-// Class spell masks for SpellMods (see core/spell_mod.go), one per SpellCode above.
+// Class spell masks for SpellMods (see core/spell_mod.go), one per SpellCode above, plus Power
+// Infusion and Vampiric Embrace, which have no SpellCode.
 const (
 	SpellMaskNone            int64 = 0
 	SpellMaskDevouringPlague int64 = 1 << iota
@@ -48,8 +49,10 @@ const (
 	SpellMaskSmite
 	SpellMaskStarshards
 	SpellMaskVampiricTouch
+	SpellMaskPowerInfusion
+	SpellMaskVampiricEmbrace
 
-	SpellMaskAll = SpellMaskVampiricTouch<<1 - SpellMaskDevouringPlague // every bit from DevouringPlague to VampiricTouch
+	SpellMaskAll = SpellMaskVampiricEmbrace<<1 - SpellMaskDevouringPlague // every bit from DevouringPlague to VampiricEmbrace
 )
 
 type Priest struct {

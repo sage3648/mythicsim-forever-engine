@@ -19,8 +19,9 @@ func (priest *Priest) registerPowerInfusionCD() {
 	powerInfusionAura := core.PowerInfusionAura(&priest.Unit, actionID.Tag)
 
 	piSpell := priest.RegisterSpell(core.SpellConfig{
-		ActionID: actionID,
-		Flags:    SpellFlagPriest | core.SpellFlagHelpful | core.SpellFlagAPL,
+		ActionID:       actionID,
+		ClassSpellMask: SpellMaskPowerInfusion,
+		Flags:          SpellFlagPriest | core.SpellFlagHelpful | core.SpellFlagAPL,
 
 		// 20% of base mana and a 3 min cooldown in the Forever beta client, as in Classic.
 		ManaCost: core.ManaCostOptions{
