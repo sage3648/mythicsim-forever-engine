@@ -23,8 +23,12 @@ func (hunter *Hunter) ApplyTalents() {
 			hunter.pet.MultiplyStat(stats.Health, 1+(0.03*float64(hunter.Talents.EnduranceTraining)))
 		}
 
+		// "You and your pet" deal 1% more damage a point (client 1223755's tooltip, one dummy
+		// effect).
 		if hunter.Talents.FocusedFire > 0 {
-			hunter.PseudoStats.DamageDealtMultiplier *= 1 + 0.01*float64(hunter.Talents.FocusedFire)
+			multiplier := 1 + 0.01*float64(hunter.Talents.FocusedFire)
+			hunter.PseudoStats.DamageDealtMultiplier *= multiplier
+			hunter.pet.PseudoStats.DamageDealtMultiplier *= multiplier
 		}
 	} else if hunter.Talents.LoneWolf {
 		hunter.PseudoStats.DamageDealtMultiplier *= 1.2
