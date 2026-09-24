@@ -32,8 +32,14 @@ The resource effect uses 1314104. At level 60 against level 63 this is 87 mana p
   The proc cannot independently miss and uses the same melee
   crit handling as Righteousness. Physical weapon specialization does not increase Holy damage.
   Both procs have identical client
-  `SpellMisc` attribute flags and `SpellCategories.DefenseType = 2`. Exact special-attack
-  and secondary proc-chain eligibility still need combat-log verification.
+  `SpellMisc` attribute flags and `SpellCategories.DefenseType = 2`, so the Fury proc now takes
+  Righteousness's proc setup as well: a main-hand special hit that does not suppress weapon
+  procs, so weapon "Chance on hit" effects and weapon enchants (Crusader and the like) roll on it,
+  while equip procs still do not. This follows wowsims/forever `fc548dc29`, which removed
+  Suppress Weapon Procs from both seals' damage spells after the game showed a weapon proc
+  landing on the seal's hit. The pin had given Fury an empty proc mask with Suppress Weapon
+  Procs, so nothing rolled on it. Secondary proc-chain eligibility beyond weapon procs still
+  needs combat-log verification.
 - Absorb strength uses damage after mitigation and Improved Seals. A new proc replaces
   remaining absorb and refreshes the 10-second duration. Replacement does not award mana.
   Stacking/overwrite behaviour needs an in-client check.

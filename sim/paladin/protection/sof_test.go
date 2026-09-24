@@ -170,4 +170,7 @@ func TestFuryMatchesClientSealCombatRules(t *testing.T) {
 	if fury == nil || righteousness == nil || fury.DamageMultiplier != righteousness.DamageMultiplier {
 		t.Fatal("Fury and Righteousness Holy procs must receive the same damage modifiers")
 	}
+	if fury.ProcMask != righteousness.ProcMask {
+		t.Fatalf("Fury proc mask %v, Righteousness %v: the client flags are identical", fury.ProcMask, righteousness.ProcMask)
+	}
 }

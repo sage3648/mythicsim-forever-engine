@@ -48,12 +48,15 @@ func (paladin *Paladin) registerSealOfFury() {
 				spell.CalcAndDealDamage(sim, target, sim.Roll(rank.judgeMin+scaling, rank.judgeMax+scaling), spell.OutcomeMeleeSpecialNoBlockDodgeParry)
 			},
 		})
+		// The proc carries the same client flags as Righteousness's, so it takes the same proc
+		// mask: a weapon's "Chance on hit" and weapon enchants roll on the Fury hit as on the
+		// swing, while equip procs still do not.
 		proc := paladin.RegisterSpell(core.SpellConfig{
 			ActionID:         core.ActionID{SpellID: rank.procID},
 			SpellSchool:      core.SpellSchoolHoly,
 			DefenseType:      core.DefenseTypeMelee,
-			ProcMask:         core.ProcMaskEmpty,
-			Flags:            core.SpellFlagMeleeMetrics | core.SpellFlagPassiveSpell | core.SpellFlagSuppressWeaponProcs | core.SpellFlagSuppressEquipProcs,
+			ProcMask:         core.ProcMaskMeleeMHSpecial,
+			Flags:            core.SpellFlagMeleeMetrics | core.SpellFlagPassiveSpell | core.SpellFlagSuppressEquipProcs,
 			DamageMultiplier: paladin.improvedSeals(),
 			ThreatMultiplier: 1,
 			BonusCoefficient: 0.1,
