@@ -272,13 +272,13 @@ func applyBuffEffects(agent Agent, playerFaction proto.Faction, raidBuffs *proto
 		ThornsAura(character, GetTristateValueInt32(raidBuffs.Thorns, 0, 3))
 	}
 
-	if raidBuffs.MoonkinAura {
-		character.AddStat(stats.SpellCrit, 3*SpellCritRatingPerCritChance)
-	}
-
-	if raidBuffs.LeaderOfThePack {
+	// Leader of the Pack (24932) and Moonkin Aura (24907) are the same Forever aura 290, 3% to all
+	// critical strike, so each gives melee, ranged and spell crit, and their tooltips make them
+	// exclusive with each other: either or both give 3% of each once.
+	if raidBuffs.MoonkinAura || raidBuffs.LeaderOfThePack {
 		character.AddStats(stats.Stats{
 			stats.MeleeCrit: 3 * CritRatingPerCritChance,
+			stats.SpellCrit: 3 * SpellCritRatingPerCritChance,
 		})
 	}
 
