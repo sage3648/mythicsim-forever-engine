@@ -660,7 +660,9 @@ func RetributionAura(character *Character, points int32) *Aura {
 }
 
 func ThornsAura(character *Character, points int32) *Aura {
-	baseDamage := 18.0
+	// Forever client 9910, Thorns rank 6 and the top rank: 22 Nature a hit (Classic Era's was 18).
+	// Improved Thorns still adds 25% a point.
+	baseDamage := 22.0
 
 	actionID := ActionID{SpellID: 9910}
 	damage := float64(baseDamage) * (1 + 0.25*float64(points))
