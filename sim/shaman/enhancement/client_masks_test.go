@@ -5,6 +5,7 @@ import (
 
 	"github.com/wowsims/classic/sim/core"
 	"github.com/wowsims/classic/sim/core/proto"
+	"github.com/wowsims/classic/sim/core/simsignals"
 	"github.com/wowsims/classic/sim/shaman"
 )
 
@@ -60,5 +61,42 @@ func TestElementalFuryReachesImbueAttacks(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+// Lightning Shield's orbs roll spell hit and crit like the new engine line's, and Tidal Mastery
+// (16194), whose class mask names Lightning Shield, adds its crit to them.
+func TestLightningShieldOrbsCrit(t *testing.T) {
+	player := &proto.Player{
+		Class:     proto.Class_ClassShaman,
+		Race:      proto.Race_RaceOrc,
+		Equipment: core.GetGearSet("../../../ui/enhancement_shaman/gear_sets", "launch").GearSet,
+		// 5/5 Tidal Mastery.
+		TalentsString: "--0000000005",
+		Spec:          PlayerOptionsSyncAuto,
+	}
+	sim := core.NewSim(&proto.RaidSimRequest{
+		SimOptions: &proto.SimOptions{RandomSeed: 1, Ruleset: proto.Ruleset_RulesetForever},
+		Raid:       core.SinglePlayerRaidProto(player, nil, nil, nil),
+		Encounter:  core.MakeSingleTargetEncounter(0),
+	}, simsignals.CreateSignals())
+	sim.Reset()
+
+	sham := sim.Raid.Parties[0].Players[0].(shaman.ShamanAgent).GetShaman()
+	orb := sham.LightningShieldProcs[shaman.LightningShieldRanks]
+	shield := sham.LightningShieldAuras[shaman.LightningShieldRanks]
+	if orb.BonusCritRating != 5 {
+		t.Errorf("orb bonus crit %v, want Tidal Mastery's 5", orb.BonusCritRating)
+	}
+	for i := 0; i < 300; i++ {
+		if !shield.IsActive() {
+			shield.Activate(sim)
+			sham.ActiveShieldAura = shield
+		}
+		orb.Cast(sim, sham.CurrentTarget)
+	}
+	metrics := orb.SpellMetrics[sham.CurrentTarget.UnitIndex]
+	if metrics.Crits == 0 || metrics.Misses == 0 {
+		t.Errorf("300 orbs: %d crits and %d misses, want some of each", metrics.Crits, metrics.Misses)
 	}
 }

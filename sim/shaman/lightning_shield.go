@@ -44,18 +44,21 @@ func (shaman *Shaman) registerNewLightningShieldSpell(rank int) {
 	maxCharges := int32(3)
 
 	shaman.LightningShieldProcs[rank] = shaman.RegisterSpell(core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: procSpellId},
-		SpellSchool: procRow.SpellSchool,
-		DefenseType: procRow.DefenseType,
-		ProcMask:    core.ProcMaskEmpty,
-		Flags:       core.SpellFlagNoOnCastComplete | core.SpellFlagPassiveSpell | SpellFlagShaman | SpellFlagLightning,
+		ActionID:       core.ActionID{SpellID: procSpellId},
+		ClassSpellMask: SpellMaskLightningShieldOrb,
+		SpellSchool:    procRow.SpellSchool,
+		DefenseType:    procRow.DefenseType,
+		ProcMask:       core.ProcMaskEmpty,
+		Flags:          core.SpellFlagNoOnCastComplete | core.SpellFlagPassiveSpell | SpellFlagShaman | SpellFlagLightning,
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
 		BonusCoefficient: roundCoef(procRow.Direct.BonusCoefficient()),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeAlwaysHit)
+			// An orb is a Nature spell hit like any other: it rolls spell hit and crit, and the
+			// crit talents that name Lightning Shield (Tidal Mastery, Elemental Fury) reach it.
+			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMagicHitAndCrit)
 			shaman.ActiveShieldAura.RemoveStack(sim)
 		},
 	})

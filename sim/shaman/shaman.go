@@ -104,8 +104,9 @@ const (
 	SpellMaskWaterShield
 	SpellMaskFlametongueWeapon // the Flametongue Attack a shaman's own imbue deals
 	SpellMaskFrostbrandWeapon  // the Frostbrand Attack a shaman's own imbue deals
+	SpellMaskLightningShieldOrb
 
-	SpellMaskAll = SpellMaskFrostbrandWeapon<<1 - SpellMaskChainHeal // every bit from ChainHeal to FrostbrandWeapon
+	SpellMaskAll = SpellMaskLightningShieldOrb<<1 - SpellMaskChainHeal // every bit from ChainHeal to LightningShieldOrb
 )
 
 // Shaman represents a shaman character.

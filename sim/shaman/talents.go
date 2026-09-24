@@ -96,6 +96,12 @@ func (shaman *Shaman) ApplyTalents() {
 			ProcMask:   core.ProcMaskSpellHealing,
 			FloatValue: float64(shaman.Talents.TidalMastery),
 		})
+		// Tidal Mastery's class mask (16194) names Lightning Shield too, and no other damage spell.
+		shaman.AddStaticMod(core.SpellModConfig{
+			Kind:       core.SpellMod_BonusCrit_Percent,
+			ClassMask:  SpellMaskLightningShieldOrb,
+			FloatValue: float64(shaman.Talents.TidalMastery),
+		})
 	}
 }
 
