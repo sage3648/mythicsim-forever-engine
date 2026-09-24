@@ -279,6 +279,75 @@
 		},
 		{
 			"action": {
+				"condition": {
+					"and": {
+						"vals": [
+							{
+								"dotIsActive": {
+									"spellId": {
+										"spellId": 25309
+									}
+								}
+							},
+							{
+								"or": {
+									"vals": [
+										{
+											"cmp": {
+												"op": "OpLt",
+												"lhs": {
+													"dotRemainingTime": {
+														"spellId": {
+															"spellId": 25309
+														}
+													}
+												},
+												"rhs": {
+													"const": {
+														"val": "4s"
+													}
+												}
+											}
+										},
+										{
+											"and": {
+												"vals": [
+													{
+														"auraIsKnown": {
+															"auraId": {
+																"spellId": 1293816
+															}
+														}
+													},
+													{
+														"not": {
+															"val": {
+																"auraIsActive": {
+																	"auraId": {
+																		"spellId": 1293816
+																	}
+																}
+															}
+														}
+													}
+												]
+											}
+										}
+									]
+								}
+							}
+						]
+					}
+				},
+				"castSpell": {
+					"spellId": {
+						"spellId": 18932
+					}
+				}
+			}
+		},
+		{
+			"action": {
 				"castSpell": {
 					"spellId": {
 						"spellId": 18871
