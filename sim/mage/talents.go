@@ -524,10 +524,11 @@ func (mage *Mage) registerCombustionCD() {
 	numCrits := 0
 
 	mage.CombustionAura = mage.RegisterAura(core.Aura{
-		Label:     "Combustion",
-		ActionID:  actionID,
-		Duration:  core.NeverExpires,
-		MaxStacks: 20,
+		Label:    "Combustion",
+		ActionID: actionID,
+		Duration: core.NeverExpires,
+		// Client 1.60.1.69977: the stacking buff (28682) has CumulativeAura 10.
+		MaxStacks: 10,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			numCrits = 0
 		},
