@@ -169,8 +169,10 @@ func applyDebuffEffects(target *Unit, targetIdx int, debuffs *proto.Debuffs, rai
 
 	// Atk spd reduction
 	if debuffs.ThunderClap != proto.TristateEffect_TristateEffectMissing {
-		// Forever: a flat 20% slow at every rank; +5% from Warrior's Conqueror's Battlegear 5pc
-		MakePermanent(ThunderClapAura(target, 8205, GetTristateValueInt32(debuffs.ThunderClap, 20, 25)))
+		// Forever client 11581 (aura 319, -20): a flat 20% slow at every rank, and Improved Thunder
+		// Clap only discounts the rage cost, so the improved option slows by 20% too. The warrior's
+		// own Thunder Clap (sim/warrior/thunder_clap.go) raises it to 30% with Conqueror's 5 piece.
+		MakePermanent(ThunderClapAura(target, 8205, 20))
 	}
 	if debuffs.Thunderfury {
 		MakePermanent(ThunderfuryASAura(target))
