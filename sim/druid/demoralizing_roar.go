@@ -28,10 +28,11 @@ func (druid *Druid) registerDemoralizingRoarSpell() {
 	row := spellData.DemoralizingRoar.ByRank(int32(rank))
 
 	druid.DemoralizingRoar = druid.RegisterSpell(Bear, core.SpellConfig{
-		ActionID:    core.ActionID{SpellID: row.SpellID},
-		SpellSchool: row.SpellSchool,
-		ProcMask:    core.ProcMaskEmpty,
-		Flags:       core.SpellFlagAPL,
+		ClassSpellMask: SpellMaskDemoralizingRoar,
+		ActionID:       core.ActionID{SpellID: row.SpellID},
+		SpellSchool:    row.SpellSchool,
+		ProcMask:       core.ProcMaskEmpty,
+		Flags:          core.SpellFlagAPL,
 
 		Rank:          rank,
 		RequiredLevel: DemoralizingRoarLevel[rank],

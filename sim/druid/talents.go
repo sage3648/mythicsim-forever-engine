@@ -8,6 +8,9 @@ import (
 )
 
 func (druid *Druid) ApplyTalents() {
+	// Omen of Clarity is a baseline passive in Forever, not a talent; it is wired in with the talents.
+	druid.applyOmenOfClarity()
+
 	// Balance
 	druid.applyGenesis()
 	druid.applyMoonglow()

@@ -34,7 +34,8 @@ const (
 	SpellCode_DruidWrath
 )
 
-// One class mask per SpellCode_Druid*, for the SpellMod system. LacerateBleed has no SpellCode.
+// One class mask per SpellCode_Druid*, for the SpellMod system. LacerateBleed and DemoralizingRoar have no
+// SpellCode.
 const (
 	SpellMaskNone int64 = 0
 	SpellMaskClaw int64 = 1 << iota
@@ -54,8 +55,9 @@ const (
 	SpellMaskSwipe
 	SpellMaskWrath
 	SpellMaskLacerateBleed
+	SpellMaskDemoralizingRoar
 
-	SpellMaskAll = SpellMaskLacerateBleed<<1 - SpellMaskClaw // every bit from Claw to LacerateBleed
+	SpellMaskAll = SpellMaskDemoralizingRoar<<1 - SpellMaskClaw // every bit from Claw to DemoralizingRoar
 
 	SpellMaskBalance = SpellMaskWrath | SpellMaskStarfire | SpellMaskMoonfire | SpellMaskInsectSwarm | SpellMaskHurricane
 )
@@ -114,6 +116,7 @@ type Druid struct {
 	BearFormAura             *core.Aura
 	BerserkAura              *core.Aura
 	CatFormAura              *core.Aura
+	ClearcastingAura         *core.Aura
 	DemoralizingRoarAuras    core.AuraArray
 	EclipseAura              *core.Aura
 	EnrageAura               *core.Aura

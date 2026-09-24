@@ -53,10 +53,14 @@ func (druid *Druid) registerMaulSpell() {
 		ThreatMultiplier:         1.75,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			// Maul skips OnCastComplete, so it spends Clearcasting here, before its hit can grant a new one.
+			druid.spendClearcasting(sim, spell)
+
 			damage := baseDamage + spell.Unit.MHWeaponDamage(sim, spell.MeleeAttackPower(target))
 			result := spell.CalcAndDealDamage(sim, target, damage, spell.OutcomeMeleeSpecialHitAndCrit)
 
-			if !result.Landed() {
+			// The rage refund is a flat share of the listed cost, so a Maul Clearcasting made free refunds nothing.
+			if !result.Landed() && spell.CurCast.Cost > 0 {
 				spell.IssueRefund(sim)
 			}
 

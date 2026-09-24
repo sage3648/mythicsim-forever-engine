@@ -13,6 +13,23 @@
 		"tooltip": "Counterattack the enemy for melee weapon damage plus 15. Can only be performed after you dodge.",
 		"note": "Beta client 1.60.1 (spell 1495). Forever changed it from a flat 25 damage to normalized weapon damage plus 15, effect type 121 where Era is 2. The sim already does this; the ranks are 15/22/37/57."
 	},
+	"16864": {
+		"ability": "Omen of Clarity",
+		"assumptions": [
+			"The client states no proc rate (16864's chance column is the 100 that means no roll of its own). The sim uses 2 procs a minute, the rate upstream's port used, measured on the paw swing for white hits, the equipped weapon for melee abilities, and the cast time (at least a global cooldown) for spells."
+		],
+		"file": "sim/druid/omen_of_clarity.go",
+		"note": "Client 1.60.1.69977: a baseline passive from level 20 rather than Classic's talent. Proc flags 0x14014 (melee swings, melee abilities, harmful and healing spells) and a 10 sec cooldown from the row; Moonkin Form (24858) doubles the chance and halves the cooldown. Periodic ticks do not proc it. The tooltip is written from the rows.",
+		"source": "assumed",
+		"tooltip": "Passive\nYour melee attacks and spells have a chance to cause you to enter a Clearcasting state, making your next damage or healing spell or offensive ability cost no Mana, Rage or Energy. Cannot occur more than once every 10 sec. Moonkin Form doubles the chance and halves the time between procs."
+	},
+	"16870": {
+		"ability": "Clearcasting",
+		"file": "sim/druid/omen_of_clarity.go",
+		"note": "Client 1.60.1.69977: 15 sec, one charge, -100% cost (SPELLMOD_COST) on its class mask: Moonfire, Starfire, Insect Swarm, Hurricane, Demoralizing Roar, Maul, Swipe, Claw, Rake, Shred, Rip, Ferocious Bite and Mangle of the spells the sim has. Wrath, Faerie Fire, Lacerate, Tiger's Fury and the forms neither cost less nor spend it. The tooltip is written from the row.",
+		"source": "forever",
+		"tooltip": "15 sec\nYour next damage or healing spell or offensive ability costs no Mana, Rage or Energy. Not consumed by Wrath or by spells or abilities that cost no resources."
+	},
 	"16886": {
 		"ability": "Nature's Grace",
 		"file": "sim/druid/talents.go",

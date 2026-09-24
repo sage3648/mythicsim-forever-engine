@@ -126,7 +126,8 @@ func (druid *Druid) registerMangleBearSpell() {
 				spell.DealDamage(sim, results[idx])
 			}
 
-			if !results[0].Landed() {
+			// The rage refund is a flat share of the listed cost, so a Mangle Clearcasting made free refunds nothing.
+			if !results[0].Landed() && spell.CurCast.Cost > 0 {
 				spell.IssueRefund(sim)
 			}
 
