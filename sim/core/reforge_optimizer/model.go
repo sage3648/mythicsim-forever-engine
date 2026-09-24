@@ -104,6 +104,9 @@ func scoreCoeffMap(coeffs map[string]float64, weights core.UnitStats) map[string
 // resolving the stat onto its child pseudo-stats when the root stat itself carries no EP.
 func (o *reforgeOptimizer) applyReforgeStat(coeffs map[string]float64, stat stats.Stat, amount float64, preCapEPs core.UnitStats) {
 	race := o.player.GetRace()
+	if o.player.GetDisableRacials() {
+		race = proto.Race_RaceUnknown
+	}
 	if stat == stats.Spirit && race == proto.Race_RaceHuman {
 		amount *= 1.1
 	}

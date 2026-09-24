@@ -90,6 +90,10 @@ message Player {
 	double dark_intent_uptime = 52;
 	bool challenge_mode = 58;
 
+	// Skip every racial effect while keeping the race's base stats, so a race's
+	// racials can be measured against the same character without them.
+	bool disable_racials = 59;
+
 	HealingModel healing_model = 49;
 
 	// Items/enchants/gems/etc to include in the database.
