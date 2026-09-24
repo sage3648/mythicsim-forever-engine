@@ -4,64 +4,19 @@ import (
 	"time"
 
 	"github.com/wowsims/classic/sim/core"
-	"github.com/wowsims/classic/sim/core/stats"
 )
 
 const (
-	FireRuby              = 20036
 	HazzarahsCharmOfMagic = 19959
 	JewelOfKajaro         = 19601
 )
 
+// Fire Ruby (20036) has no effect here. Its use in client 1.60.1.69977 is Forever's Chaos Fire
+// (24389): it refreshes Fire Ward and feeds the Fire damage Fire Ward absorbed into the next Fire
+// Blast, neither of which the sim models. Classic's 1 to 500 mana and +100 Fire power until the
+// next Fire spell are gone from the client.
 func init() {
 	core.AddEffectsToTest = false
-
-	core.NewItemEffect(FireRuby, func(agent core.Agent) {
-		character := agent.GetCharacter()
-
-		actionID := core.ActionID{ItemID: FireRuby}
-		manaMetrics := character.NewManaMetrics(actionID)
-
-		damageAura := character.GetOrRegisterAura(core.Aura{
-			Label:    "Chaos Fire",
-			ActionID: core.ActionID{SpellID: 24389},
-			Duration: time.Minute * 1,
-			OnGain: func(aura *core.Aura, sim *core.Simulation) {
-				character.AddStatDynamic(sim, stats.FirePower, 100)
-			},
-			OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-				character.AddStatDynamic(sim, stats.FirePower, -100)
-			},
-			OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
-				if spell.SpellSchool.Matches(core.SpellSchoolFire) {
-					aura.Deactivate(sim)
-				}
-			},
-		})
-
-		spell := character.RegisterSpell(core.SpellConfig{
-			ActionID:    actionID,
-			SpellSchool: core.SpellSchoolPhysical,
-			Flags:       core.SpellFlagNoOnCastComplete | core.SpellFlagOffensiveEquipment,
-
-			Cast: core.CastConfig{
-				CD: core.Cooldown{
-					Timer:    character.NewTimer(),
-					Duration: time.Minute * 3,
-				},
-			},
-
-			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-				character.AddMana(sim, sim.Roll(1, 500), manaMetrics)
-				damageAura.Activate(sim)
-			},
-		})
-
-		character.AddMajorCooldown(core.MajorCooldown{
-			Type:  core.CooldownTypeDPS,
-			Spell: spell,
-		})
-	})
 
 	// https://www.wowhead.com/forever/item=19959/hazzarahs-charm-of-magic
 	// Increases the critical hit chance of your Arcane spells by 5%, and increases the critical hit damage of your Arcane spells by 50% for 20 sec.
