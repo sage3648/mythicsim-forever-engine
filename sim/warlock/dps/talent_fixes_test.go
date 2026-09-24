@@ -60,3 +60,44 @@ func TestLifeTapIsAManaGainNotADamageRoll(t *testing.T) {
 		t.Errorf("a non-tanking warlock's health moved from %v to %v", health, wl.CurrentHealth())
 	}
 }
+
+// Affliction with Wrack (the tree's seventeenth talent) on top.
+var talentsAfflictionWrack = "25350020135211051--05500051"
+
+// Wrack's +10% (1316697 effect 2, mask 1026) reaches Corruption and Bane of Agony only, not the
+// warlock's other shadow dots.
+func TestWrackBoostsCorruptionAndAgonyOnly(t *testing.T) {
+	sim, wl := newTestWarlock(t, talentsAfflictionWrack, DefaultDestroWarlock)
+	if wl.Wrack == nil {
+		t.Fatal("test talents have no Wrack")
+	}
+	target := wl.CurrentTarget
+
+	damageTaken := func(spell *core.Spell) float64 {
+		result := spell.NewResult(target)
+		result.Damage = 1000
+		spell.ApplyPostOutcomeDamageModifiers(sim, result)
+		return result.Damage
+	}
+	spells := map[string]*core.Spell{
+		"Corruption":    wl.Corruption[len(wl.Corruption)-1],
+		"Bane of Agony": wl.BaneOfAgony[len(wl.BaneOfAgony)-1],
+		"Siphon Life":   wl.SiphonLife[len(wl.SiphonLife)-1],
+		"Drain Life":    wl.DrainLife[len(wl.DrainLife)-1],
+	}
+	before := map[string]float64{}
+	for name, spell := range spells {
+		before[name] = damageTaken(spell)
+	}
+
+	wl.Wrack.Dot(target).Activate(sim)
+	for name, spell := range spells {
+		want := before[name]
+		if name == "Corruption" || name == "Bane of Agony" {
+			want *= 1.1
+		}
+		if got := damageTaken(spell); !near(got, want) {
+			t.Errorf("%s: %.3f with Wrack on the target, want %.3f", name, got, want)
+		}
+	}
+}

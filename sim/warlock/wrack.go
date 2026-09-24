@@ -66,14 +66,16 @@ func (warlock *Warlock) registerWrackSpell() {
 		},
 	})
 
-	// Other shadow dots on the target tick for 10% more while Wrack is on it
+	// The warlock's Corruption and Bane of Agony on the target hit 10% harder while Wrack is on it:
+	// the row's second effect (aura 271) is over mask 1026, which names those two only, not every
+	// shadow dot.
 	for _, target := range warlock.Env.Encounter.TargetUnits {
 		target.AddDynamicDamageTakenModifier(func(sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if spell.Unit != &warlock.Unit || spell == warlock.Wrack {
+			if spell.Unit != &warlock.Unit {
 				return
 			}
 
-			if spell.SpellSchool.Matches(core.SpellSchoolShadow) && len(spell.Dots()) > 0 && warlock.Wrack.Dot(result.Target).IsActive() {
+			if spell.Matches(SpellMaskCorruption|SpellMaskBaneOfAgony) && warlock.Wrack.Dot(result.Target).IsActive() {
 				result.Damage *= 1.1
 			}
 		})
