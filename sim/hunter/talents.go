@@ -302,18 +302,15 @@ func (hunter *Hunter) applyResourcefulness() {
 
 	// Client curves: 30/60% cost and a 50/100% proc chance. The buff (1242688) is 50% for 30 sec
 	// at both ranks.
-	// Traps are spell damage, never melee specials, so the two mods never stack on one spell.
+	// Client 440529's cost mask is the traps, Raptor Strike, Mongoose Bite and Wing Clip (and
+	// Counterattack, which the sim does not have); Strider Kick is not in it.
 	costPct := -0.3 * float64(hunter.Talents.Resourcefulness)
 	procChance := 0.5 * float64(hunter.Talents.Resourcefulness)
 
 	hunter.AddStaticMod(core.SpellModConfig{
-		Kind:       core.SpellMod_PowerCost_Pct_Add,
-		SpellFlag:  SpellFlagTrap,
-		FloatValue: costPct,
-	})
-	hunter.AddStaticMod(core.SpellModConfig{
-		Kind:       core.SpellMod_PowerCost_Pct_Add,
-		ProcMask:   core.ProcMaskMeleeSpecial,
+		Kind: core.SpellMod_PowerCost_Pct_Add,
+		ClassMask: SpellMaskExplosiveTrap | SpellMaskFreezingTrap | SpellMaskImmolationTrap |
+			SpellMaskRaptorStrike | SpellMaskMongooseBite | SpellMaskWingClip,
 		FloatValue: costPct,
 	})
 
