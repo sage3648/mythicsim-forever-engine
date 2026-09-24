@@ -57,7 +57,8 @@ func (rogue *Rogue) applyRuthlessness() {
 	})
 }
 
-// Murder talent
+// Murder (14158) is MOD_DAMAGE_DONE_VERSUS on creature mask 80, Humanoid and Giant: 2/4% more damage
+// against them, and nothing else. It has no crit damage part.
 func (rogue *Rogue) applyMurder() {
 	if rogue.Talents.Murder == 0 {
 		return
@@ -71,7 +72,6 @@ func (rogue *Rogue) applyMurder() {
 				multiplier := []float64{1, 1.02, 1.04}[rogue.Talents.Murder]
 				for _, at := range rogue.AttackTables[t.UnitIndex] {
 					at.DamageDealtMultiplier *= multiplier
-					at.CritMultiplier *= multiplier
 				}
 			}
 		}
