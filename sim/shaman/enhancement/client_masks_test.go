@@ -1,6 +1,7 @@
 package enhancement
 
 import (
+	"math"
 	"testing"
 
 	"github.com/wowsims/classic/sim/core"
@@ -98,5 +99,44 @@ func TestLightningShieldOrbsCrit(t *testing.T) {
 	metrics := orb.SpellMetrics[sham.CurrentTarget.UnitIndex]
 	if metrics.Crits == 0 || metrics.Misses == 0 {
 		t.Errorf("300 orbs: %d crits and %d misses, want some of each", metrics.Crits, metrics.Misses)
+	}
+}
+
+// Wushoolay's Charm of Spirits (24499) and Improved Lightning Shield (16261) are both percent damage
+// modifiers on the orbs, so they add: 1 + 0.15 + 1 at 3/3, where Classic's charm doubled the total.
+func TestWushoolaysCharmAddsToImprovedLightningShield(t *testing.T) {
+	equipment := core.GetGearSet("../../../ui/enhancement_shaman/gear_sets", "launch").GearSet
+	equipment.Items[proto.ItemSlot_ItemSlotTrinket1] = &proto.ItemSpec{Id: shaman.WushoolaysCharmOfSpirits}
+	player := &proto.Player{
+		Class:     proto.Class_ClassShaman,
+		Race:      proto.Race_RaceOrc,
+		Equipment: equipment,
+		// 3/3 Improved Lightning Shield.
+		TalentsString: "-0000003",
+		Spec:          PlayerOptionsSyncAuto,
+	}
+	sim := core.NewSim(&proto.RaidSimRequest{
+		SimOptions: &proto.SimOptions{RandomSeed: 1, Ruleset: proto.Ruleset_RulesetForever},
+		Raid:       core.SinglePlayerRaidProto(player, nil, nil, nil),
+		Encounter:  core.MakeSingleTargetEncounter(0),
+	}, simsignals.CreateSignals())
+	sim.Reset()
+
+	sham := sim.Raid.Parties[0].Players[0].(shaman.ShamanAgent).GetShaman()
+	orb := sham.LightningShieldProcs[shaman.LightningShieldRanks]
+	charm := sham.GetAuraByID(core.ActionID{ItemID: shaman.WushoolaysCharmOfSpirits})
+	if charm == nil {
+		t.Fatal("no Wushoolay's Charm of Spirits aura")
+	}
+	if got := orb.DamageMultiplier * orb.DamageMultiplierAdditive; math.Abs(got-1.15) > 1e-9 {
+		t.Errorf("orb multiplier %v with 3/3 Improved Lightning Shield, want 1.15", got)
+	}
+	charm.Activate(sim)
+	if got := orb.DamageMultiplier * orb.DamageMultiplierAdditive; math.Abs(got-2.15) > 1e-9 {
+		t.Errorf("orb multiplier %v with the charm up, want 2.15", got)
+	}
+	charm.Deactivate(sim)
+	if got := orb.DamageMultiplier * orb.DamageMultiplierAdditive; math.Abs(got-1.15) > 1e-9 {
+		t.Errorf("orb multiplier %v after the charm, want 1.15", got)
 	}
 }

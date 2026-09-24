@@ -32,12 +32,10 @@ func (shaman *Shaman) registerLightningShieldSpell() {
 }
 
 func (shaman *Shaman) registerNewLightningShieldSpell(rank int) {
-	impLightningShieldBonus := 1 + []float64{0, .05, .10, .15}[shaman.Talents.ImprovedLightningShield]
-
 	row := spellData.LightningShield.ByRank(int32(rank))
 	procSpellId := LightningShieldProcSpellId[rank]
 	procRow := spellData.LightningShieldTriggered.BySpellID(procSpellId)
-	baseDamage := procRow.Direct.(shared.SpellDataFlat).Value * impLightningShieldBonus
+	baseDamage := procRow.Direct.(shared.SpellDataFlat).Value
 	level := LightningShieldLevel[rank]
 
 	baseCharges := int32(3)

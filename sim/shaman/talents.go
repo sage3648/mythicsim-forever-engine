@@ -18,6 +18,7 @@ func (shaman *Shaman) ApplyTalents() {
 	shaman.applyElementalFury()
 
 	// Enhancement Talents
+	shaman.applyImprovedLightningShield()
 	shaman.applyFlurry()
 	shaman.applyImprovedStormstrike()
 	shaman.applyMaelstromWeapon()
@@ -114,6 +115,21 @@ func (shaman *Shaman) applyConcussion() {
 		Kind:       core.SpellMod_DamageDone_Flat,
 		ClassMask:  SpellMaskLightningBolt | SpellMaskChainLightning | SpellMaskEarthShock,
 		FloatValue: 0.01 * float64(shaman.Talents.Concussion),
+	})
+}
+
+// Improved Lightning Shield (16261) is a percent damage modifier (SPELLMOD_DAMAGE, 5/10/15) on the
+// orbs, so it raises the whole orb, spell power share included, and adds with the other percent
+// modifiers on them (Wushoolay's Charm of Spirits) rather than multiplying them.
+func (shaman *Shaman) applyImprovedLightningShield() {
+	if shaman.Talents.ImprovedLightningShield == 0 {
+		return
+	}
+
+	shaman.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_DamageDone_Flat,
+		ClassMask:  SpellMaskLightningShieldOrb,
+		FloatValue: 0.05 * float64(shaman.Talents.ImprovedLightningShield),
 	})
 }
 

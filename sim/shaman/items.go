@@ -17,34 +17,30 @@ func init() {
 	// Keep these ordered by name
 
 	// https://www.wowhead.com/classic/item=19956/wushoolays-charm-of-spirits
-	// Use: Increases the damage dealt by your Lightning Shield spell by 100% for 20 sec. (3 Min Cooldown)
+	// Use: Increases the damage dealt by your Lightning Shield spell by 100% for 20 sec (24499).
+	// (3 Min Cooldown). The client's mod is a percent damage modifier (aura 108), so it adds to
+	// Improved Lightning Shield (2.15x at 3/3) rather than doubling the total the way Classic's did.
 	core.NewItemEffect(WushoolaysCharmOfSpirits, func(agent core.Agent) {
 		shaman := agent.(ShamanAgent).GetShaman()
 
 		duration := time.Second * 20
 		actionID := core.ActionID{ItemID: WushoolaysCharmOfSpirits}
 
-		var affectedSpells []*core.Spell
+		damageMod := shaman.AddDynamicMod(core.SpellModConfig{
+			Kind:       core.SpellMod_DamageDone_Flat,
+			ClassMask:  SpellMaskLightningShieldOrb,
+			FloatValue: 1,
+		})
 
 		aura := shaman.RegisterAura(core.Aura{
 			ActionID: actionID,
 			Label:    "Wushoolay's Charm of Spirits",
-			Duration: time.Second * 20,
-			OnInit: func(aura *core.Aura, sim *core.Simulation) {
-				affectedSpells = core.FilterSlice(
-					shaman.LightningShieldProcs,
-					func(spell *core.Spell) bool { return spell != nil },
-				)
+			Duration: duration,
+			OnGain: func(_ *core.Aura, _ *core.Simulation) {
+				damageMod.Activate()
 			},
-			OnGain: func(aura *core.Aura, sim *core.Simulation) {
-				for _, spell := range affectedSpells {
-					spell.DamageMultiplier *= 2
-				}
-			},
-			OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-				for _, spell := range affectedSpells {
-					spell.DamageMultiplier /= 2
-				}
+			OnExpire: func(_ *core.Aura, _ *core.Simulation) {
+				damageMod.Deactivate()
 			},
 		})
 
