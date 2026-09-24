@@ -22,12 +22,13 @@ func (mage *Mage) registerArcaneBlastSpell() {
 	actionID := core.ActionID{SpellID: 30451}
 
 	// Arcane Blast buffs the mage's other spells rather than itself, and the next one of them
-	// spends the stacks.
-	var affectedSpells []*core.Spell
-	mage.OnSpellRegistered(func(spell *core.Spell) {
-		if spell.Flags.Matches(SpellFlagMage) && spell.SpellCode != SpellCode_MageArcaneBlast {
-			affectedSpells = append(affectedSpells, spell)
-		}
+	// spends the stacks. Client 1.60.1.69977: the buff's (400573) damage mask, [12718707, 4096],
+	// names every mage damage spell but Arcane Blast, Arcane Missiles, Blizzard and Flamestrike,
+	// whatever its tooltip says. Those three still spend the stacks without gaining from them.
+	damageMod := mage.AddDynamicMod(core.SpellModConfig{
+		Kind: core.SpellMod_DamageDone_Flat,
+		ClassMask: SpellMaskArcaneExplosion | SpellMaskBlastWave | SpellMaskFireball | SpellMaskFireBlast |
+			SpellMaskFrostbolt | SpellMaskIceLance | SpellMaskPyroblast | SpellMaskScorch,
 	})
 
 	mage.ArcaneBlastAura = mage.RegisterAura(core.Aura{
@@ -35,12 +36,15 @@ func (mage *Mage) registerArcaneBlastSpell() {
 		ActionID:  actionID,
 		Duration:  time.Second * 8,
 		MaxStacks: ArcaneBlastMaxStacks,
+		OnGain: func(aura *core.Aura, sim *core.Simulation) {
+			damageMod.Activate()
+		},
+		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
+			damageMod.Deactivate()
+		},
 		OnStacksChange: func(aura *core.Aura, sim *core.Simulation, oldStacks int32, newStacks int32) {
-			delta := newStacks - oldStacks
-			for _, spell := range affectedSpells {
-				spell.DamageMultiplierAdditive += .10 * float64(delta)
-			}
-			mage.ArcaneBlast.Cost.Multiplier += 175 * delta
+			damageMod.UpdateFloatValue(.10 * float64(newStacks))
+			mage.ArcaneBlast.Cost.Multiplier += 175 * (newStacks - oldStacks)
 		},
 		OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
 			if !spell.Flags.Matches(SpellFlagMage) || !spell.ProcMask.Matches(core.ProcMaskSpellDamage) {
