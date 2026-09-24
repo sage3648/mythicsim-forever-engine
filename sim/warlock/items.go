@@ -11,32 +11,34 @@ const (
 )
 
 func init() {
-	// https://www.wowhead.com/classic/item=19957/hazzarahs-charm-of-destruction
+	// https://www.wowhead.com/forever/item=19957/hazzarahs-charm-of-destruction
 	// Use: Increases the critical hit chance of your Destruction spells by 10% for 20 sec. (3 Min Cooldown)
+	//
+	// The buff, Massive Destruction (24543), is a crit modifier over a class mask. Of what the sim
+	// casts it names Shadow Bolt, Immolate, Searing Pain, Soul Fire, Shadowburn, Conflagrate and Rain
+	// of Fire, not Incinerate, which the Destruction flag took in.
 	core.NewItemEffect(HazzarahsCharmOfDestruction, func(agent core.Agent) {
 		warlock := agent.(WarlockAgent).GetWarlock()
 
 		actionID := core.ActionID{ItemID: HazzarahsCharmOfDestruction}
 		duration := time.Second * 20
 
-		var affectedSpells []*core.Spell
+		bonusCrit := warlock.AddDynamicMod(core.SpellModConfig{
+			Kind: core.SpellMod_BonusCrit_Percent,
+			ClassMask: SpellMaskShadowBolt | SpellMaskImmolate | SpellMaskSearingPain | SpellMaskSoulFire |
+				SpellMaskShadowburn | SpellMaskConflagrate | SpellMaskRainOfFire,
+			FloatValue: 10,
+		})
 
 		buffAura := warlock.RegisterAura(core.Aura{
 			ActionID: actionID,
 			Label:    "Massive Destruction",
 			Duration: duration,
-			OnInit: func(aura *core.Aura, sim *core.Simulation) {
-				affectedSpells = core.FilterSlice(warlock.Spellbook, func(spell *core.Spell) bool { return spell.Flags.Matches(WarlockFlagDestruction) })
-			},
 			OnGain: func(aura *core.Aura, sim *core.Simulation) {
-				for _, spell := range affectedSpells {
-					spell.BonusCritRating += 10 * core.SpellCritRatingPerCritChance
-				}
+				bonusCrit.Activate()
 			},
 			OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-				for _, spell := range affectedSpells {
-					spell.BonusCritRating -= 10 * core.SpellCritRatingPerCritChance
-				}
+				bonusCrit.Deactivate()
 			},
 		})
 

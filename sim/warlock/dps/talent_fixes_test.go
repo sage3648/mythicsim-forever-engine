@@ -14,12 +14,17 @@ import (
 
 func newTestWarlock(t *testing.T, talents string, spec *proto.Player_Warlock) (*core.Simulation, *warlock.Warlock) {
 	t.Helper()
+	return newTestWarlockWithGear(t, talents, spec, core.GetGearSet("../../../ui/warlock/gear_sets", "prebis").GearSet)
+}
+
+func newTestWarlockWithGear(t *testing.T, talents string, spec *proto.Player_Warlock, gear *proto.EquipmentSpec) (*core.Simulation, *warlock.Warlock) {
+	t.Helper()
 	sim := core.NewSim(&proto.RaidSimRequest{
 		SimOptions: &proto.SimOptions{RandomSeed: 1, Ruleset: proto.Ruleset_RulesetForever},
 		Raid: core.SinglePlayerRaidProto(&proto.Player{
 			Class:         proto.Class_ClassWarlock,
 			Race:          proto.Race_RaceOrc,
-			Equipment:     core.GetGearSet("../../../ui/warlock/gear_sets", "prebis").GearSet,
+			Equipment:     gear,
 			TalentsString: talents,
 			Rotation:      core.GetAplRotation("../../../ui/warlock/apls/", "forever_pact").Rotation,
 			Spec:          spec,
@@ -125,5 +130,31 @@ func TestDemonicKnowledgeReachesTheDemon(t *testing.T) {
 		if got := with - unit.GetStat(stats.SpellPower); !near(got, bonus) {
 			t.Errorf("%s: Demonic Knowledge gives %.2f spell power, want %.2f", unit.Label, got, bonus)
 		}
+	}
+}
+
+// Hazza'rah's Charm of Destruction: Massive Destruction's (24543) crit is over a class mask that
+// leaves out Incinerate.
+func TestHazzarahsCharmOfDestructionSkipsIncinerate(t *testing.T) {
+	gear := core.GetGearSet("../../../ui/warlock/gear_sets", "prebis").GearSet
+	gear.Items[proto.ItemSlot_ItemSlotTrinket1] = &proto.ItemSpec{Id: warlock.HazzarahsCharmOfDestruction}
+	// Affliction with Incinerate, the Destruction tree's last talent.
+	sim, wl := newTestWarlockWithGear(t, "2535002013521105--0550005100000001", DefaultDestroWarlock, gear)
+	if wl.Incinerate == nil {
+		t.Fatal("test talents have no Incinerate")
+	}
+	aura := wl.GetAura("Massive Destruction")
+	if aura == nil {
+		t.Fatal("Hazza'rah's Charm of Destruction is not equipped")
+	}
+
+	shadowBolt := wl.ShadowBolt[len(wl.ShadowBolt)-1]
+	boltCrit, incinerateCrit := shadowBolt.BonusCritRating, wl.Incinerate.BonusCritRating
+	aura.Activate(sim)
+	if got, want := shadowBolt.BonusCritRating, boltCrit+10*core.SpellCritRatingPerCritChance; !near(got, want) {
+		t.Errorf("Shadow Bolt bonus crit %v under Massive Destruction, want %v", got, want)
+	}
+	if got := wl.Incinerate.BonusCritRating; !near(got, incinerateCrit) {
+		t.Errorf("Incinerate bonus crit %v under Massive Destruction, want %v", got, incinerateCrit)
 	}
 }
