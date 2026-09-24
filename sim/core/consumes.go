@@ -130,7 +130,7 @@ func applyConsumeEffects(agent Agent, partyBuffs *proto.PartyBuffs) {
 	}
 
 	// Bloodthistle (Blood Elf only): +10 spell damage and healing for 10 min.
-	if consumables.Bloodthistle && character.Race == proto.Race_RaceBloodElf {
+	if consumables.Bloodthistle && character.Race == proto.Race_RaceBloodElf && !character.RacialsDisabled() {
 		character.AddStat(stats.SpellDamage, 10)
 		character.AddStat(stats.HealingPower, 10)
 	}

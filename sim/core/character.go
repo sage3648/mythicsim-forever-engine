@@ -43,6 +43,9 @@ type Character struct {
 	Class proto.Class
 	Spec  proto.Spec
 
+	// Racial effects are skipped, but the race's base stats are kept.
+	disableRacials bool
+
 	// Current gear.
 	Equipment
 
@@ -111,6 +114,8 @@ func NewCharacter(party *Party, partyIndex int, player *proto.Player) Character 
 		Race:  player.Race,
 		Class: player.Class,
 		Spec:  PlayerProtoToSpec(player),
+
+		disableRacials: player.DisableRacials,
 
 		Equipment: ProtoToEquipment(player.Equipment).inArea(party.areaTypes()),
 
@@ -285,7 +290,9 @@ func (character *Character) applyAllEffects(agent Agent, raidBuffs *proto.RaidBu
 		return measuredStatsProto
 	}
 
-	applyRaceEffects(agent)
+	if !character.disableRacials {
+		applyRaceEffects(agent)
+	}
 	character.applyProfessionEffects()
 	character.applyBuildPhaseAuras(CharacterBuildPhaseBase)
 	playerStats.BaseStats = measureStats()
@@ -359,6 +366,12 @@ func (character *Character) AddPet(pet PetAgent) {
 
 func (character *Character) GetBaseStats() stats.Stats {
 	return character.baseStats
+}
+
+// RacialsDisabled reports whether Player.disable_racials is set. Race-conditional effects that
+// live outside applyRaceEffects (class racial spells, race-only consumables) check it too.
+func (character *Character) RacialsDisabled() bool {
+	return character.disableRacials
 }
 
 func (character *Character) AddRaidBuffs(_ *proto.RaidBuffs) {
