@@ -157,7 +157,8 @@ func (warrior *Warrior) applyBloodthrill() {
 	core.MakePermanent(warrior.RegisterAura(core.Aura{
 		Label: "Bloodthrill Trigger",
 		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if !result.Landed() || !spell.ProcMask.Matches(core.ProcMaskMelee) {
+			// 1289682's proc flags are 0x4, melee auto attacks: white swings only, not special attacks.
+			if !result.Landed() || !spell.ProcMask.Matches(core.ProcMaskMeleeWhiteHit) {
 				return
 			}
 
