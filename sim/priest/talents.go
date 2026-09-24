@@ -306,7 +306,9 @@ func (priest *Priest) registerInnerFocus() {
 
 	actionID := core.ActionID{SpellID: 14751}
 
-	// Free and +25% crit for the next priest spell that costs mana.
+	// Free and +25% crit for the next priest spell that costs mana. The cost cut (14751 effect 0)
+	// covers every priest spell; the crit (effect 1) has its own mask, which leaves out Mind Flay,
+	// Shadow Word: Death and Starshards.
 	freeCast := priest.AddDynamicMod(core.SpellModConfig{
 		Kind:       core.SpellMod_PowerCost_Pct_Add,
 		SpellFlag:  SpellFlagPriest,
@@ -315,6 +317,7 @@ func (priest *Priest) registerInnerFocus() {
 	})
 	bonusCrit := priest.AddDynamicMod(core.SpellModConfig{
 		Kind:       core.SpellMod_BonusCrit_Percent,
+		ClassMask:  SpellMaskAll &^ (SpellMaskMindFlay | SpellMaskShadowWordDeath | SpellMaskStarshards),
 		SpellFlag:  SpellFlagPriest,
 		CostType:   core.CostTypeMana,
 		FloatValue: 25,

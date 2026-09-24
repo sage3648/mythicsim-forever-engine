@@ -130,3 +130,39 @@ func TestShadowformCritDamageMask(t *testing.T) {
 		t.Errorf("Shadow Word: Death crit damage bonus %v in Shadowform, want %v", swd.CritDamageBonus, before["Shadow Word: Death"])
 	}
 }
+
+// Inner Focus makes every priest spell free, but its +25% crit (14751 effect 1) leaves out Mind
+// Flay and Shadow Word: Death.
+func TestInnerFocusCritMask(t *testing.T) {
+	sim, p := newTestShadowPriest(t)
+	if p.InnerFocusAura == nil {
+		t.Fatal("test talents have no Inner Focus")
+	}
+
+	spells := map[string]*core.Spell{
+		"Mind Blast":         topRank(p.MindBlast),
+		"Shadow Word: Pain":  topRank(p.ShadowWordPain),
+		"Mind Flay":          mindFlay(p),
+		"Shadow Word: Death": topRank(p.ShadowWordDeath),
+	}
+	crit := map[string]float64{}
+	cost := map[string]int32{}
+	for name, spell := range spells {
+		crit[name] = spell.BonusCritRating
+		cost[name] = spell.Cost.Multiplier
+	}
+
+	p.InnerFocusAura.Activate(sim)
+	for name, spell := range spells {
+		if spell.Cost.Multiplier != cost[name]-100 {
+			t.Errorf("%s cost multiplier %d with Inner Focus, want %d", name, spell.Cost.Multiplier, cost[name]-100)
+		}
+		wantCrit := crit[name]
+		if name == "Mind Blast" || name == "Shadow Word: Pain" {
+			wantCrit += 25 * core.SpellCritRatingPerCritChance
+		}
+		if !near(spell.BonusCritRating, wantCrit) {
+			t.Errorf("%s bonus crit %v with Inner Focus, want %v", name, spell.BonusCritRating, wantCrit)
+		}
+	}
+}
