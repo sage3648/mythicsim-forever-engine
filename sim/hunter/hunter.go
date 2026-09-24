@@ -139,6 +139,9 @@ type Hunter struct {
 	Volley            *core.Spell
 	WingClip          *core.Spell
 
+	// The hawks Summon Hawk keeps out, one assault each.
+	summonHawks []*core.Spell
+
 	Shots       []*core.Spell
 	Strikes     []*core.Spell
 	MeleeSpells []*core.Spell
