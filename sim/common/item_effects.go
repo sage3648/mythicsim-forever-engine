@@ -1449,17 +1449,38 @@ func init() {
 	})
 
 	// https://www.wowhead.com/classic/item=11684/ironfoe
-	// Chance on hit: Grants 2 extra attacks on your next swing.
-	itemhelpers.CreateWeaponProcSpell(Ironfoe, "Ironfoe", 0.8, func(character *core.Character) *core.Spell {
-		return character.GetOrRegisterSpell(core.SpellConfig{
+	// Forever made the chance on hit an equip, Fury of Forgewright (1301046): a 6% chance on any
+	// melee hit, with a 100 ms proc cooldown, to grant 2 extra attacks (15494). Era's was 0.8 PPM
+	// off Ironfoe's own hits. The "twice as likely against Orcs" part has no raid boss to apply to.
+	core.NewItemEffect(Ironfoe, func(agent core.Agent) {
+		character := agent.GetCharacter()
+		if !character.AutoAttacks.AutoSwingMelee {
+			return
+		}
+
+		procSpell := character.GetOrRegisterSpell(core.SpellConfig{
 			ActionID:         core.ActionID{SpellID: 15494},
 			SpellSchool:      core.SpellSchoolPhysical,
 			DefenseType:      core.DefenseTypeMelee,
 			ProcMask:         core.ProcMaskEmpty,
+			Flags:            core.SpellFlagNoOnCastComplete | core.SpellFlagPassiveSpell,
 			DamageMultiplier: 1,
 			ThreatMultiplier: 1,
-			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
 				character.AutoAttacks.ExtraMHAttackProc(sim, 2, core.ActionID{SpellID: 15494}, spell)
+			},
+		})
+
+		core.MakeProcTriggerAura(&character.Unit, core.ProcTrigger{
+			Name:              "Fury of Forgewright",
+			Callback:          core.CallbackOnSpellHitDealt,
+			Outcome:           core.OutcomeLanded,
+			ProcMask:          core.ProcMaskMelee,
+			SpellFlagsExclude: core.SpellFlagSuppressEquipProcs,
+			ProcChance:        0.06,
+			ICD:               time.Millisecond * 100,
+			Handler: func(sim *core.Simulation, _ *core.Spell, result *core.SpellResult) {
+				procSpell.Cast(sim, result.Target)
 			},
 		})
 	})

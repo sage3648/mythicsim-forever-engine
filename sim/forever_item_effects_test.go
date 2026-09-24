@@ -1,0 +1,74 @@
+package sim
+
+import (
+	"testing"
+
+	"github.com/wowsims/classic/sim/core"
+	"github.com/wowsims/classic/sim/core/proto"
+)
+
+// Item effects whose Forever behaviour differs from Classic Era's in the proc itself, checked
+// against client 1.60.1.69977 through the forever engine's item port (ElliotWood/Forever #423).
+
+// A fury warrior in the p0 BiS set with mainHand in the main hand. With no rotation the only
+// melee hits are white swings, which keeps the proc arithmetic below simple.
+func itemTestWarrior(mainHand int32, rotation *proto.APLRotation) *proto.Player {
+	equipment := core.GetGearSet("../ui/warrior/gear_sets", "p0.bis").GearSet
+	equipment.Items[proto.ItemSlot_ItemSlotMainHand] = &proto.ItemSpec{Id: mainHand}
+	return &proto.Player{
+		Class:         proto.Class_ClassWarrior,
+		Race:          proto.Race_RaceOrc,
+		Equipment:     equipment,
+		TalentsString: "30305013-050520035150310051",
+		Rotation:      rotation,
+		Spec: &proto.Player_Warrior{Warrior: &proto.Warrior{Options: &proto.Warrior_Options{
+			StartingRage: 50,
+			Shout:        proto.WarriorShout_WarriorShoutBattle,
+		}}},
+	}
+}
+
+func runItemTestSim(t *testing.T, player *proto.Player, iterations int32) *proto.UnitMetrics {
+	t.Helper()
+	result := core.RunRaidSim(&proto.RaidSimRequest{
+		Raid:       core.SinglePlayerRaidProto(player, &proto.PartyBuffs{}, &proto.RaidBuffs{}, &proto.Debuffs{}),
+		Encounter:  core.MakeSingleTargetEncounter(0),
+		SimOptions: &proto.SimOptions{Iterations: iterations, RandomSeed: 101, Ruleset: proto.Ruleset_RulesetForever},
+	})
+	if result.Error != nil {
+		t.Fatal(result.Error.Message)
+	}
+	return result.RaidMetrics.Parties[0].Players[0]
+}
+
+// Ironfoe (11684): Fury of Forgewright (1301046) is a 6% chance on any melee hit, off-hand
+// swings included, to grant 2 extra attacks (15494). Era's was 0.8 PPM off Ironfoe's own hits,
+// about 3% of main-hand swings and under 2% of all of them.
+func TestIronfoeProcsOffAnyMeleeHit(t *testing.T) {
+	warrior := itemTestWarrior(11684, &proto.APLRotation{})
+	// Hand of Justice's extra attacks would count as Ironfoe's below.
+	warrior.Equipment.Items[proto.ItemSlot_ItemSlotTrinket2] = &proto.ItemSpec{}
+	player := runItemTestSim(t, warrior, 50)
+
+	// Every proc swings twice more; those swings are the main hand's extra attack split (tag 3).
+	var landed, procs float64
+	for _, action := range player.Actions {
+		if action.Id.GetOtherId() != proto.OtherAction_OtherActionAttack {
+			continue
+		}
+		for _, target := range action.Targets {
+			landed += float64(target.Hits + target.Crits + target.Glances + target.Blocks)
+			if action.Id.Tag == 3 {
+				procs += float64(target.Casts) / 2
+			}
+		}
+	}
+	if landed == 0 || procs == 0 {
+		t.Fatalf("Ironfoe never proced (%v procs over %v landed swings)", procs, landed)
+	}
+	// The two extra attacks land inside the 100 ms proc cooldown, so they cannot proc again and
+	// the rate over all landed swings sits a little under 6%.
+	if rate := procs / landed; rate < 0.045 || rate > 0.07 {
+		t.Errorf("Ironfoe proced on %.2f%% of landed swings, want about 6%% (%v procs, %v landed)", rate*100, procs, landed)
+	}
+}
