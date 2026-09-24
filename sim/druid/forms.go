@@ -221,7 +221,8 @@ func (druid *Druid) registerCatFormSpell() {
 // into Cat Form carries over a share of the energy you left the form with, plus a
 // small amount for every second spent out of form.
 // The beta client's curve is 20-100 and the text builds all three from it: that share of the energy, a tenth of it a
-// second, and the whole of it as the cap, so 20%, 2 a second and 20 Energy per point.
+// second, and the whole of it as the cap, so 20%, 2 a second and 20 Energy per point. Client 1.60.1.69977's 17056
+// effect 1 ("up to a maximum of $m2 Energy") caps the whole refund, carried energy included: 60 at 3/5.
 func (druid *Druid) furorShiftEnergy(sim *core.Simulation) float64 {
 	if druid.Talents.Furor == 0 {
 		return 0
@@ -231,10 +232,10 @@ func (druid *Druid) furorShiftEnergy(sim *core.Simulation) float64 {
 	carryOver := druid.lastCatFormEnergy * 0.2 * points
 	outOfForm := 0.0
 	if druid.lastCatFormExitAt > 0 {
-		outOfForm = min(20*points, 2*points*(sim.CurrentTime-druid.lastCatFormExitAt).Seconds())
+		outOfForm = 2 * points * (sim.CurrentTime - druid.lastCatFormExitAt).Seconds()
 	}
 
-	return min(druid.MaxEnergy(), carryOver+outOfForm)
+	return min(20*points, carryOver+outOfForm)
 }
 
 // Dire Bear Form: 180 attack power, 1240 health, 360% more armor from items and 30%
