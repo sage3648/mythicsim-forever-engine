@@ -1,6 +1,7 @@
 package shadow
 
 import (
+	"math"
 	"testing"
 
 	"github.com/wowsims/classic/sim/core"
@@ -34,9 +35,40 @@ func topRank(spells []*core.Spell) *core.Spell {
 	return spells[len(spells)-1]
 }
 
+func near(a, b float64) bool {
+	return math.Abs(a-b) < 1e-9
+}
+
 // The channel the APL casts: the top rank's full-length Mind Flay.
 func mindFlay(p *priest.Priest) *core.Spell {
 	return p.MindFlay[priest.MindFlayRanks][0]
+}
+
+// Twin Disciplines follows 1225132's masks: the dot half on Shadow Word: Pain and Devouring
+// Plague, nothing on the channels or Shadow Word: Death.
+func TestTwinDisciplinesMask(t *testing.T) {
+	_, p := newTestShadowPriest(t)
+	if p.Talents.TwinDisciplines != 5 {
+		t.Fatalf("test talents have Twin Disciplines %d, want 5", p.Talents.TwinDisciplines)
+	}
+
+	for name, spell := range map[string]*core.Spell{
+		"Shadow Word: Pain": topRank(p.ShadowWordPain),
+		"Devouring Plague":  topRank(p.DevouringPlague),
+	} {
+		if !near(spell.PeriodicDamageMultiplierAdditive, 1.05) || !near(spell.DamageMultiplierAdditive, 1) {
+			t.Errorf("%s periodic/damage additive %v/%v, want 1.05/1", name, spell.PeriodicDamageMultiplierAdditive, spell.DamageMultiplierAdditive)
+		}
+	}
+	for name, spell := range map[string]*core.Spell{
+		"Mind Flay":          mindFlay(p),
+		"Shadow Word: Death": topRank(p.ShadowWordDeath),
+		"Mind Blast":         topRank(p.MindBlast),
+	} {
+		if !near(spell.PeriodicDamageMultiplierAdditive, 1) || !near(spell.DamageMultiplierAdditive, 1) {
+			t.Errorf("%s periodic/damage additive %v/%v, want 1/1", name, spell.PeriodicDamageMultiplierAdditive, spell.DamageMultiplierAdditive)
+		}
+	}
 }
 
 // Mental Agility follows 14520's mask: Shadow Word: Pain and Devouring Plague are cheaper, the

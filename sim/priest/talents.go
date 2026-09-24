@@ -90,16 +90,25 @@ func (priest *Priest) hasActiveHolyFire(target *core.Unit) bool {
 	return false
 }
 
+// Twin Disciplines is not "every instant spell": the client's 1225132 is two 1% a point
+// SPELL_AURA_ADD_PCT_MODIFIER effects over class masks. The damage one (op 0) names Holy Nova, the
+// dot one (op 22) Shadow Word: Pain and Devouring Plague, of what the sim casts. Mind Flay,
+// Penance, Shadow Word: Death and Starshards are in neither.
 func (priest *Priest) applyTwinDisciplines() {
 	if priest.Talents.TwinDisciplines == 0 {
 		return
 	}
 
-	points := float64(priest.Talents.TwinDisciplines)
-	priest.OnSpellRegistered(func(spell *core.Spell) {
-		if spell.Flags.Matches(SpellFlagPriest) && spell.DefaultCast.CastTime == 0 {
-			spell.DamageMultiplierAdditive += 0.01 * points
-		}
+	bonus := 0.01 * float64(priest.Talents.TwinDisciplines)
+	priest.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_DamageDone_Flat,
+		ClassMask:  SpellMaskHolyNova,
+		FloatValue: bonus,
+	})
+	priest.AddStaticMod(core.SpellModConfig{
+		Kind:       core.SpellMod_PeriodicDamageDone_Flat,
+		ClassMask:  SpellMaskShadowWordPain | SpellMaskDevouringPlague,
+		FloatValue: bonus,
 	})
 }
 
