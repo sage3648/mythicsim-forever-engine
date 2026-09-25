@@ -1,10 +1,11 @@
 # MythicSim downstream patches
 
 MythicSim runs this engine from its fork (`sage3648/mythicsim-forever-engine`, branch
-`mythicsim/wowsims-forever`). The branch is ElliotWood/Forever master, which is built on the
+`mythicsim/forever-70009-sep25`). The branch is ElliotWood/Forever master, which is built on the
 official wowsims/forever, plus the six patches below. The first base was `442076902` (Merge
-wowsims/forever master ea5412873). The current base is `6cb2603d`, which carries client
-1.60.1.70009 and its 2026-09-24 patch notes.
+wowsims/forever master ea5412873). The current base is `c88be955b7` (2026-09-25), which
+carries client 1.60.1.70009, the 2026-09-24 patch notes, lower-rank spell support for Mage,
+Warlock, Druid and Priest, the Fire and Balance rotation updates, and the arena best-build fix.
 
 Keep the set small. Each patch exists because MythicSim needs something upstream does not do
 yet. Drop a patch as soon as upstream covers it; do not keep ours alongside an upstream version.
@@ -126,7 +127,7 @@ against upstream's version:
 ## Rebasing onto a newer upstream
 
 1. Fetch ElliotWood/Forever master. Rebase the patches onto it:
-   `git rebase --onto <new upstream> <old base> mythicsim/wowsims-forever`.
+   `git rebase --onto <new upstream> <old base> <fork branch>`.
 2. Resolve `*.results` conflicts by taking upstream's side. During a rebase `--ours` is the
    upstream side and `--theirs` is the patch being replayed, so use
    `git checkout --ours -- <file>`. Never hand-merge a golden.
