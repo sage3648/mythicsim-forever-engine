@@ -36,6 +36,7 @@ type Hunter struct {
 
 	AimedShot         *core.Spell
 	ArcaneShot        *core.Spell
+	AspectOfTheBeast  *core.Spell
 	AspectOfTheHawk   *core.Spell
 	ExplosiveTrap     *core.Spell
 	FreezingTrap      *core.Spell
@@ -53,11 +54,12 @@ type Hunter struct {
 	Volley            *core.Spell
 	WingClip          *core.Spell
 
-	AspectOfTheHawkAura *core.Aura
-	RapidFireAura       *core.Aura
-	TalonOfAlarAura     *core.Aura
-	TheBeastWithinAura  *core.Aura
-	quiverBonusAura     *core.Aura
+	AspectOfTheBeastAura *core.Aura
+	AspectOfTheHawkAura  *core.Aura
+	RapidFireAura        *core.Aura
+	TalonOfAlarAura      *core.Aura
+	TheBeastWithinAura   *core.Aura
+	quiverBonusAura      *core.Aura
 
 	// Mongoose Bite is only castable in the window a dodge opens.
 	DefensiveState *core.Aura
@@ -323,6 +325,7 @@ const (
 	HunterSpellAutoShot
 	HunterSpellAimedShot
 	HunterSpellArcaneShot
+	HunterSpellAspectOfTheBeast
 	HunterSpellAspectOfTheHawk
 	HunterSpellAspectOfTheViper
 	HunterSpellBestialWrath
