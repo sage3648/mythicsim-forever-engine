@@ -2,7 +2,7 @@
 
 MythicSim runs this engine from its fork (`sage3648/mythicsim-forever-engine`, branch
 `mythicsim/wowsims-forever`). The branch is ElliotWood/Forever master, which is built on the
-official wowsims/forever, plus the three patches below. The first base was `442076902` (Merge
+official wowsims/forever, plus the five patches below. The first base was `442076902` (Merge
 wowsims/forever master ea5412873). The current base is `6cb2603d`, which carries client
 1.60.1.70009 and its 2026-09-24 patch notes.
 
@@ -14,6 +14,8 @@ yet. Drop a patch as soon as upstream covers it; do not keep ours alongside an u
 | 1 | `cli: sim --strict rejects unknown fields and enum names` | The worker builds requests in code. Without it, a misspelt field or a race the build does not know is dropped silently and the sim runs a different character. |
 | 2 | `core: a player option to disable racials` | The race comparison page sims each character with and without its racials to show what they are worth. |
 | 3 | `rotation: Destruction casts Conflagrate for Shadow and Flame` | The Destruction rotation never casts Conflagrate, so Shadow and Flame's Shadow buff never applies to the Shadow Bolt filler. |
+| 4 | `hunter: Aspect of the Beast` | Forever made Beast the melee aspect. Upstream models only Hawk, so a melee hunter has no aspect. |
+| 5 | `rotation: a melee Survival rotation` | Upstream's Survival rotation shoots from range, so Raptor Strike, Mongoose Bite and Strider Kick never fire. MythicSim ranks melee Survival. |
 
 ## 1. `cli: sim --strict`
 
@@ -69,6 +71,42 @@ against upstream's version:
 - **Goldens.** `sim/warlock/TestDestruction.results` (average 410.50 to 420.67 DPS).
 - **Drop it when** upstream's Destruction rotation casts Conflagrate.
 
+## 4. `hunter: Aspect of the Beast`
+
+- **What it does.** Registers Aspect of the Beast at its top rank (1299447): 110 melee attack
+  power, exclusive with Aspect of the Hawk. With Deadly Aspects, a landed melee auto attack has
+  Deadly Aspects' second effect as its chance (2% a rank) to trigger Quick Strikes (1299448), 30%
+  melee haste for 12 sec. Beast states no proc chance of its own, so there is no Quick Strikes
+  without the talent. Raptor Strike takes a swing's place as a special attack and does not proc it
+  (Beast's proc flags are melee auto attacks, 0x4).
+- **Files.** `sim/hunter/aspects.go`, the `AspectOfTheBeast` fields and spell mask in
+  `sim/hunter/hunter.go`, and `sim/hunter/aspects_test.go`.
+- **Tests.** `TestAspectOfTheBeastMeleeAttackPower`, `TestQuickStrikesNeedsDeadlyAspects`. No
+  golden moves: the ranged rotations cast Hawk.
+- **Drop it when** upstream models Beast. Check that its melee attack power and Quick Strikes
+  match before dropping.
+
+## 5. `rotation: a melee Survival rotation`
+
+- **What it does.** `ui/specs/hunter/dps/apls/sv_melee.apl.json` is a melee rotation: Aspect of
+  the Beast before the pull, then Raptor Strike queued on cooldown, Mongoose Bite whenever Expose
+  Prey opens it, Summon Hawk, Strider Kick, Immolation Trap, and Wing Clip in any global where
+  Raptor Strike and Strider Kick are more than half a second away. Wing Clip is a landed melee
+  special, so it can proc Expose Prey (1310532's proc flags include melee specials, 0x10), and
+  more Wing Clips mean more Mongoose Bites. Spells a build lacks are skipped, so the file serves
+  any talents. `presets.ts` publishes it as `SurvivalMeleeRotation`, which MythicSim's
+  `scripts/build-forever-gear.mjs` requires before it copies the file into the worker presets as
+  `hunter_survival`.
+- **Measured** on MythicSim's Beast Mastery reference character moved to 5 yards, with wowtbc.gg's
+  5/10/35 build, at 10,000 iterations. Raptor Strike, Mongoose Bite and Strider Kick alone sim 380
+  DPS. Adding Wing Clip takes it to 423, and Wing Clip plus Immolation Trap to 466. Explosive Trap
+  sims 1 to 2% behind Immolation Trap. Upstream's `sv.apl.json`
+  is untouched; it is the ranged Survival rotation.
+- **Tests.** `sim/hunter/survival_melee_test.go` (`TestSurvivalMelee`, 5 yards,
+  `SurvivalMeleeTalents` = wowtbc.gg's 5/10/35 with the spare point in Focused Fire) and its golden
+  `TestSurvivalMelee.results` (average 398.57 DPS on the suite's weapons-only gear).
+- **Drop it when** upstream ships a melee Survival rotation. Compare the two on the golden first.
+
 ## Rebasing onto a newer upstream
 
 1. Fetch ElliotWood/Forever master. Rebase the patches onto it:
@@ -85,10 +123,12 @@ against upstream's version:
    go test ./cmd/wowsimcli/...
    go test --tags=with_db ./sim/core -run 'DisableRacials|Racial|Skyborne'
    go test --tags=with_db ./sim/priest -run 'Starshards|Arena'
+   go test --tags=with_db ./sim/hunter -run 'Aspect|QuickStrikes|SurvivalMelee'
    ```
 
 4. Run the full suite, `go test --tags=with_db $(go list ./sim/... | grep -v sim/web)`. Only
-   `sim/warlock/TestDestruction` should fail, from patch 3's Conflagrate. Re-bless it (copy
+   `sim/warlock/TestDestruction` should fail, from patch 3's Conflagrate, and
+   `sim/hunter/TestSurvivalMelee` wherever upstream moved hunter numbers (re-bless it into patch 5). Re-bless it (copy
    `TestDestruction.results.tmp` over `TestDestruction.results`) and fold it into patch 3, so
    the patch carries the golden it moves. Any other failure is upstream's or the rebase's, not a
    golden to re-bless.
