@@ -2,7 +2,7 @@
 
 MythicSim runs this engine from its fork (`sage3648/mythicsim-forever-engine`, branch
 `mythicsim/wowsims-forever`). The branch is ElliotWood/Forever master, which is built on the
-official wowsims/forever, plus the five patches below. The first base was `442076902` (Merge
+official wowsims/forever, plus the six patches below. The first base was `442076902` (Merge
 wowsims/forever master ea5412873). The current base is `6cb2603d`, which carries client
 1.60.1.70009 and its 2026-09-24 patch notes.
 
@@ -16,6 +16,7 @@ yet. Drop a patch as soon as upstream covers it; do not keep ours alongside an u
 | 3 | `rotation: Destruction casts Conflagrate for Shadow and Flame` | The Destruction rotation never casts Conflagrate, so Shadow and Flame's Shadow buff never applies to the Shadow Bolt filler. |
 | 4 | `hunter: Aspect of the Beast` | Forever made Beast the melee aspect. Upstream models only Hawk, so a melee hunter has no aspect. |
 | 5 | `rotation: a melee Survival rotation` | Upstream's Survival rotation shoots from range, so Raptor Strike, Mongoose Bite and Strider Kick never fire. MythicSim ranks melee Survival. |
+| 6 | `items: Iceblade Hacker and Warblade of Caer Darrow proc from their own hand` | The two hand-written weapon procs fired off both hands, so a main-hand Iceblade Hacker added its Frost damage to every off-hand swing. |
 
 ## 1. `cli: sim --strict`
 
@@ -107,6 +108,21 @@ against upstream's version:
   `TestSurvivalMelee.results` (average 398.57 DPS on the suite's weapons-only gear).
 - **Drop it when** upstream ships a melee Survival rotation. Compare the two on the golden first.
 
+## 6. `items: Iceblade Hacker and Warblade of Caer Darrow proc from their own hand`
+
+- **What it does.** The two weapon procs in `sim/common/classic/items_store_gaps.go` ("Melee
+  attacks with this weapon deal 41 / 28 Frost damage") get a
+  `NewDynamicLegacyProcForWeapon(item, 0, 1)` proc manager, as every generated weapon proc has.
+  Their proc masks alone named both hands' autos and specials. A main-hand Iceblade Hacker also
+  procced off every off-hand swing, which was worth 12.5% of a dual-wielding melee hunter's damage.
+- **Tests.** `sim/rogue/weapon_proc_hand_test.go` (`TestIcebladeHackerProcsOnlyFromItsHand`). The
+  AllItems rows for the two weapons move in `TestFury`, `TestArms`, `TestProtectionWarrior` and
+  `TestRetribution`: the harness equips Warblade in the off hand beside a main-hand weapon, where
+  it used to proc off main-hand hits too (112 procs a fight on Arms, 31 now). No other row moves.
+- **Drop it when** upstream's generator carries these procs (the file says to remove an entry
+  then), or upstream scopes them to their hand. A generated `CreateWeaponCoHProcDamage` already
+  does.
+
 ## Rebasing onto a newer upstream
 
 1. Fetch ElliotWood/Forever master. Rebase the patches onto it:
@@ -124,11 +140,14 @@ against upstream's version:
    go test --tags=with_db ./sim/core -run 'DisableRacials|Racial|Skyborne'
    go test --tags=with_db ./sim/priest -run 'Starshards|Arena'
    go test --tags=with_db ./sim/hunter -run 'Aspect|QuickStrikes|SurvivalMelee'
+   go test --tags=with_db ./sim/rogue -run IcebladeHacker
    ```
 
 4. Run the full suite, `go test --tags=with_db $(go list ./sim/... | grep -v sim/web)`. Only
    `sim/warlock/TestDestruction` should fail, from patch 3's Conflagrate, and
-   `sim/hunter/TestSurvivalMelee` wherever upstream moved hunter numbers (re-bless it into patch 5). Re-bless it (copy
+   `sim/hunter/TestSurvivalMelee` wherever upstream moved hunter numbers (re-bless it into patch 5).
+   If upstream's AllItems rows for Iceblade Hacker or Warblade of Caer Darrow move, re-bless them
+   into patch 6. Re-bless it (copy
    `TestDestruction.results.tmp` over `TestDestruction.results`) and fold it into patch 3, so
    the patch carries the golden it moves. Any other failure is upstream's or the rebase's, not a
    golden to re-bless.
