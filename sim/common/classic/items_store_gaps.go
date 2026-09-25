@@ -10,7 +10,9 @@ import (
 //   - Freezing Band and The Lion Horn of Stormwind: their triggered spells (18799, 20847) have no name
 //     row in this client, so the store cannot carry them.
 //   - Iceblade Hacker and Warblade of Caer Darrow: Forever's proc masks set word-1 bit 37, which the
-//     decoder does not model yet; the rest of the mask is plain melee hits.
+//     decoder does not model yet; the rest of the mask is plain melee hits. The hand holding the
+//     weapon is the DPM's to pick, as for every generated weapon proc: with the mask alone, an
+//     Iceblade Hacker in the main hand also procced off every off-hand swing.
 //
 // Remove an entry once the generated files register it (core.NewItemEffect panics on a second one).
 func init() {
@@ -55,6 +57,10 @@ func init() {
 			RequireDamageDealt: true,
 			ProcChance:         1,
 		},
+		// "Melee attacks with this weapon": only the hand holding it, like every generated weapon proc.
+		TriggerDPM: func(character *core.Character) *core.DynamicProcManager {
+			return character.NewDynamicLegacyProcForWeapon(13952, 0, 1)
+		},
 	})
 
 	// Melee attacks with this weapon deal 28 Frost damage.
@@ -75,6 +81,10 @@ func init() {
 			Outcome:            core.OutcomeLanded,
 			RequireDamageDealt: true,
 			ProcChance:         1,
+		},
+		// "Melee attacks with this weapon": only the hand holding it, like every generated weapon proc.
+		TriggerDPM: func(character *core.Character) *core.DynamicProcManager {
+			return character.NewDynamicLegacyProcForWeapon(13982, 0, 1)
 		},
 	})
 
