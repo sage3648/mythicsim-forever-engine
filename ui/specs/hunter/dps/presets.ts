@@ -13,6 +13,7 @@ import { SavedTalents } from '@generated/proto/ui';
 import BeastMasteryAPL from './apls/bm.apl.json';
 import MarksmanshipAPL from './apls/mm.apl.json';
 import SurvivalAPL from './apls/sv.apl.json';
+import SurvivalMeleeAPL from './apls/sv_melee.apl.json';
 import LaunchGear from './gear_sets/launch.gear.json';
 import P0BisGear from './gear_sets/p0.bis.gear.json';
 import P1BisGear from './gear_sets/p1.bis.gear.json';
@@ -20,6 +21,7 @@ import P1BisGear from './gear_sets/p1.bis.gear.json';
 export const BeastMasteryRotation = PresetUtils.makePresetAPLRotation('Beast Mastery', BeastMasteryAPL);
 export const MarksmanshipRotation = PresetUtils.makePresetAPLRotation('Marksmanship', MarksmanshipAPL);
 export const SurvivalRotation = PresetUtils.makePresetAPLRotation('Survival', SurvivalAPL);
+export const SurvivalMeleeRotation = PresetUtils.makePresetAPLRotation('Survival (Melee)', SurvivalMeleeAPL);
 export const DefaultRotation = MarksmanshipRotation;
 
 // Defaults below are what master's ui/hunter (the Forever site before the switch) opens with: its
