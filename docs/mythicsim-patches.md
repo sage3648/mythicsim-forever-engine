@@ -1,11 +1,11 @@
 # MythicSim downstream patches
 
 MythicSim runs this engine from its fork (`sage3648/mythicsim-forever-engine`, branch
-`mythicsim/forever-70009-sep25`). The branch is ElliotWood/Forever master, which is built on the
+`mythicsim/forever-70009-sep26`). The branch is ElliotWood/Forever master, which is built on the
 official wowsims/forever, plus the six patches below. The first base was `442076902` (Merge
-wowsims/forever master ea5412873). The current base is `c88be955b7` (2026-09-25), which
-carries client 1.60.1.70009, the 2026-09-24 patch notes, lower-rank spell support for Mage,
-Warlock, Druid and Priest, the Fire and Balance rotation updates, and the arena best-build fix.
+wowsims/forever master ea5412873). The current base is `d45d9fa26f` (2026-09-26), which
+carries client 1.60.1.70009, the merged wowsims/forever `7d9f1559e` revision, lower-rank
+spell support, aura-cap and consumable fixes, regenerated launch gear, and arena updates.
 
 Keep the set small. Each patch exists because MythicSim needs something upstream does not do
 yet. Drop a patch as soon as upstream covers it; do not keep ours alongside an upstream version.
