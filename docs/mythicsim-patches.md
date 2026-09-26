@@ -2,7 +2,7 @@
 
 MythicSim runs this engine from its fork (`sage3648/mythicsim-forever-engine`, branch
 `mythicsim/forever-70009-sep26`). The branch is ElliotWood/Forever master, which is built on the
-official wowsims/forever, plus the six patches below. The first base was `442076902` (Merge
+official wowsims/forever, plus the nine patches below. The first base was `442076902` (Merge
 wowsims/forever master ea5412873). The current base is `d45d9fa26f` (2026-09-26), which
 carries client 1.60.1.70009, the merged wowsims/forever `7d9f1559e` revision, lower-rank
 spell support, aura-cap and consumable fixes, regenerated launch gear, and arena updates.
@@ -18,6 +18,9 @@ yet. Drop a patch as soon as upstream covers it; do not keep ours alongside an u
 | 4 | `hunter: Aspect of the Beast` | Forever made Beast the melee aspect. Upstream models only Hawk, so a melee hunter has no aspect. |
 | 5 | `rotation: a melee Survival rotation` | Upstream's Survival rotation shoots from range, so Raptor Strike, Mongoose Bite and Strider Kick never fire. MythicSim ranks melee Survival. |
 | 6 | `items: Iceblade Hacker and Warblade of Caer Darrow proc from their own hand` | The two hand-written weapon procs fired off both hands, so a main-hand Iceblade Hacker added its Frost damage to every off-hand swing. |
+| 7 | `core: RaidSim results carry the rotation's APL validations` | The engine skips an APL action whose spell the character does not know and says so only through ComputeStats, which the CLI cannot run. MythicSim lets players view and edit rotations and must show them which lines never ran. |
+| 8 | `core: prepull cast failure warnings format their values` | A bug fix that upstream would take: prepull cast failures printed `%!(EXTRA []interface {}=[])` after the message. |
+| 9 | `cli: a statweights command` | The engine computes stat weights, but only its web server exposes them. MythicSim runs the CLI. |
 
 ## 1. `cli: sim --strict`
 
@@ -124,6 +127,36 @@ against upstream's version:
   then), or upstream scopes them to their hand. A generated `CreateWeaponCoHProcDamage` already
   does.
 
+## 7. `core: RaidSim results carry the rotation's APL validations`
+
+- **What it does.** `UnitMetrics.rotation_stats` (field 17, JSON `rotationStats`) holds the
+  player's `APLStats`, the same validations `ComputeStats` returns in
+  `PlayerStats.rotation_stats`: one entry per prepull action, priority list item and group
+  action, in config order, each with its warnings ("does not know spell", "No aura found",
+  "Autocast Other Cooldowns will not cast any spells!"). `Character.GetMetricsProto` fills it
+  from `APLRotation.resultStats`, which collapses repeats, because prepull actions record their
+  cast warnings once per iteration. The concurrent result combiner copies it from the first
+  split, since every split builds the same rotation. Pets and targets leave it empty.
+- **Tests.** `sim/core/apl_result_stats_test.go`.
+- **Field number.** Only matters for binary protos. If upstream takes 17, move ours.
+- **Drop it when** upstream returns APL validations from RaidSim itself.
+
+## 8. `core: prepull cast failure warnings format their values`
+
+- **What it does.** `Spell.castFailureHelper` passed its `vals` slice to `ValidationMessage` as
+  one argument, not spread, so every prepull cast failure ended in `%!(EXTRA ...)`.
+- **Drop it when** upstream spreads `vals...` there. Worth sending upstream.
+
+## 9. `cli: a statweights command`
+
+- **What it does.** `wowsimcli statweights --infile <StatWeightsRequest> [--strict]` runs
+  `core.StatWeightsAsync` and prints the `StatWeightsResult` (weights, stdevs and EP per metric).
+  `--strict` behaves as it does for `sim`. It refuses a request with no stats to weigh.
+- **Cost.** One base sim plus a low and a high sim per stat, each at half the iterations. The
+  Retribution reference at 1,000 iterations and nine stats takes about a second on 16 cores.
+- **Tests.** `cmd/wowsimcli/cmd/basic_sim_test.go` (`TestLoadStatWeightsRequest`).
+- **Drop it when** upstream's CLI can run stat weights.
+
 ## Rebasing onto a newer upstream
 
 1. Fetch ElliotWood/Forever master. Rebase the patches onto it:
@@ -142,6 +175,7 @@ against upstream's version:
    go test --tags=with_db ./sim/priest -run 'Starshards|Arena'
    go test --tags=with_db ./sim/hunter -run 'Aspect|QuickStrikes|SurvivalMelee'
    go test --tags=with_db ./sim/rogue -run IcebladeHacker
+   go test --tags=with_db ./sim/core -run 'RotationValidations|ResultStats'
    ```
 
 4. Run the full suite, `go test --tags=with_db $(go list ./sim/... | grep -v sim/web)`. Only
