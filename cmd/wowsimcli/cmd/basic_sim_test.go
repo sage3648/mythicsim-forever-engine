@@ -76,3 +76,38 @@ func TestLoadRaidSimRequestStrictRejectsUnknownNames(t *testing.T) {
 		}
 	}
 }
+
+const knownStatWeightsRequest = `{
+	"player": {"race": "RaceOrc", "class": "ClassWarrior"},
+	"simOptions": {"iterations": 1},
+	"statsToWeigh": ["StatStrength", "StatAttackPower"],
+	"epReferenceStat": "StatAttackPower"
+}`
+
+// A misspelt field name: "statToWeigh" for "statsToWeigh".
+const unknownFieldStatWeightsRequest = `{
+	"player": {"race": "RaceOrc", "class": "ClassWarrior"},
+	"simOptions": {"iterations": 1},
+	"statToWeigh": ["StatStrength"]
+}`
+
+func TestLoadStatWeightsRequest(t *testing.T) {
+	input, err := loadStatWeightsRequest([]byte(knownStatWeightsRequest), true)
+	if err != nil {
+		t.Fatalf("known request: %v", err)
+	}
+	if len(input.StatsToWeigh) != 2 || input.EpReferenceStat != proto.Stat_StatAttackPower {
+		t.Errorf("loaded %v stats with reference %v", input.StatsToWeigh, input.EpReferenceStat)
+	}
+
+	if _, err := loadStatWeightsRequest([]byte(unknownFieldStatWeightsRequest), true); err == nil {
+		t.Error("strict loading accepted a misspelt field")
+	}
+	input, err = loadStatWeightsRequest([]byte(unknownFieldStatWeightsRequest), false)
+	if err != nil {
+		t.Fatalf("lenient loading: %v", err)
+	}
+	if len(input.StatsToWeigh) != 0 {
+		t.Errorf("the misspelt field was read as %v", input.StatsToWeigh)
+	}
+}
