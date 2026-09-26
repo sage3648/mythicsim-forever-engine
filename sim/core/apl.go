@@ -54,6 +54,10 @@ type APLRotation struct {
 	groupListValidations    [][][]*proto.APLValidation
 	uuidValidations         map[*proto.UUID][]*proto.APLValidation
 
+	// Cached result of resultStats, so repeated metrics calls don't append
+	// PostFinalize validations twice.
+	cachedResultStats *proto.APLStats
+
 	// Maps indices in filtered sim lists to indices in configs.
 	prepullIdxMap      []int
 	priorityListIdxMap []int
@@ -355,6 +359,43 @@ func (rot *APLRotation) getStats() *proto.APLStats {
 		}),
 		UuidValidations: uuidValidationsArr,
 	}
+}
+
+// resultStats returns the rotation's validations for a RaidSim result. Prepull
+// actions record their cast warnings every time they run, which is once per
+// iteration, so repeated messages on an action are collapsed to one.
+func (rot *APLRotation) resultStats() *proto.APLStats {
+	if rot.cachedResultStats != nil {
+		return rot.cachedResultStats
+	}
+
+	stats := rot.getStats()
+	dedupe := func(actionStats *proto.APLActionStats) {
+		seen := make(map[string]bool, len(actionStats.Validations))
+		kept := actionStats.Validations[:0]
+		for _, validation := range actionStats.Validations {
+			key := validation.LogLevel.String() + "|" + validation.Validation
+			if !seen[key] {
+				seen[key] = true
+				kept = append(kept, validation)
+			}
+		}
+		actionStats.Validations = kept
+	}
+	for _, actionStats := range stats.PrepullActions {
+		dedupe(actionStats)
+	}
+	for _, actionStats := range stats.PriorityList {
+		dedupe(actionStats)
+	}
+	for _, group := range stats.Groups {
+		for _, actionStats := range group.Actions {
+			dedupe(actionStats)
+		}
+	}
+
+	rot.cachedResultStats = stats
+	return stats
 }
 
 func getAllActionsSafe(action *APLAction) []*APLAction {

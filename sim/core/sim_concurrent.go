@@ -115,6 +115,9 @@ func (rsrc *raidSimResultCombiner) newUnitMetrics(baseUnit *proto.UnitMetrics) *
 		Auras:     make([]*proto.AuraMetrics, len(baseUnit.Auras)),
 		Resources: make([]*proto.ResourceMetrics, 0, len(baseUnit.Resources)),
 		Pets:      make([]*proto.UnitMetrics, len(baseUnit.Pets)),
+
+		// Every split builds the same rotation, so its validations are the same too.
+		RotationStats: baseUnit.RotationStats,
 	}
 
 	for i, aura := range baseUnit.Auras {

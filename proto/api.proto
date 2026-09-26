@@ -339,6 +339,11 @@ message UnitMetrics {
 	repeated ResourceMetrics resources = 10;
 
 	repeated UnitMetrics pets = 7;
+
+	// The rotation's validation messages, the same ones ComputeStats returns in
+	// PlayerStats.rotation_stats, so a caller that only runs RaidSim can see
+	// which APL actions were dropped or will never fire. Players only.
+	APLStats rotation_stats = 17;
 }
 
 // Results for a whole raid.

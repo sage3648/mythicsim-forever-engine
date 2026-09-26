@@ -775,6 +775,10 @@ func (character *Character) GetMetricsProto() *proto.UnitMetrics {
 		metrics.Pets[i] = pet.GetMetricsProto()
 	}
 
+	if character.Rotation != nil {
+		metrics.RotationStats = character.Rotation.resultStats()
+	}
+
 	return metrics
 }
 
