@@ -96,7 +96,7 @@ func (spell *Spell) castFailureHelper(sim *Simulation, message string, vals ...a
 	formatString := spell.ActionID.String() + " failed to cast: " + message
 
 	if sim.CurrentTime < 0 && spell.Unit.Rotation != nil {
-		spell.Unit.Rotation.ValidationMessage(proto.LogLevel_Warning, formatString, vals)
+		spell.Unit.Rotation.ValidationMessage(proto.LogLevel_Warning, formatString, vals...)
 	} else if sim.Log != nil && !spell.Flags.Matches(SpellFlagNoLogs) {
 		spell.Unit.Log(sim, fmt.Sprintf(formatString, vals...))
 	}
