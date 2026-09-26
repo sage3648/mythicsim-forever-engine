@@ -1,9 +1,9 @@
 # MythicSim downstream patches
 
 MythicSim runs this engine from its fork (`sage3648/mythicsim-forever-engine`, branch
-`mythicsim/forever-70009-sep26b`). The branch is ElliotWood/Forever master, which is built on the
+`mythicsim/forever-70009-sep26c`). The branch is ElliotWood/Forever master, which is built on the
 official wowsims/forever, plus the six patches below. The first base was `442076902` (Merge
-wowsims/forever master ea5412873). The current base is `909dd1af6f` (2026-09-26). It adds the merged Penance timing and cost fixes, Demonic Pact pre-pull sacrifice, Mana Tide Totem party restoration, Frost Mage talent fixes, and rank 4 Trueshot Aura. It also carries client 1.60.1.70009 and the earlier lower-rank spell, aura-cap, and consumable fixes.
+wowsims/forever master ea5412873). The current base is `13f5a97f06` (2026-09-26). It adds the 2026-09-26 Wowhead Forever gear planner data refresh and site changes on top of `909dd1af6f`, which added the merged Penance timing and cost fixes, Demonic Pact pre-pull sacrifice, Mana Tide Totem party restoration, Frost Mage talent fixes, and rank 4 Trueshot Aura. It also carries client 1.60.1.70009 and the earlier lower-rank spell, aura-cap, and consumable fixes.
 
 Keep the set small. Each patch exists because MythicSim needs something upstream does not do
 yet. Drop a patch as soon as upstream covers it; do not keep ours alongside an upstream version.
