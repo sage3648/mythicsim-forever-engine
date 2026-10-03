@@ -25,6 +25,10 @@ pub(crate) enum ModKind {
     PowerCostPercent,
     /// Go `SpellMod_DotDamageDone_Pct`: multiplies the dot's `PeriodicDamageMultiplier`.
     DotDamageDonePercent,
+    /// Go `SpellMod_CastTime_Flat`: adds to the default cast time, in nanoseconds.
+    CastTimeFlat,
+    /// Go `SpellMod_GlobalCooldown_Flat`: adds to the default GCD, in nanoseconds.
+    GlobalCooldownFlat,
 }
 
 #[derive(Clone, Debug)]
@@ -123,6 +127,20 @@ impl<A: Agent> Fight<A> {
                         state.cast_time_multiplier += modifier.float_value;
                     } else {
                         state.cast_time_multiplier -= modifier.float_value;
+                    }
+                }
+                ModKind::CastTimeFlat => {
+                    if sign > 0.0 {
+                        state.default_cast.cast_time += modifier.time_value;
+                    } else {
+                        state.default_cast.cast_time -= modifier.time_value;
+                    }
+                }
+                ModKind::GlobalCooldownFlat => {
+                    if sign > 0.0 {
+                        state.default_cast.gcd += modifier.time_value;
+                    } else {
+                        state.default_cast.gcd -= modifier.time_value;
                     }
                 }
                 ModKind::DotTickLengthFlat => {

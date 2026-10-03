@@ -22,7 +22,7 @@ mod spell_mod;
 use std::collections::BTreeMap;
 
 pub(crate) use aura::{AuraBehavior, AuraRef, Tracker};
-pub(crate) use damage::{SpellResult, OUTCOME_LANDED};
+pub(crate) use damage::{Outcome, SpellResult, OUTCOME_CRIT, OUTCOME_LANDED};
 pub(crate) use dot::Dot;
 pub(crate) use metrics::{ActionReport, ActionTotals, FightReport};
 pub(crate) use spell_mod::{ModId, ModKind};
@@ -328,6 +328,8 @@ pub(crate) struct Spell<S> {
     pub(crate) flat_threat_bonus: f64,
     pub(crate) damage_effect: Option<(f64, f64)>,
     pub(crate) dot: Option<DotId>,
+    /// Go `RelatedDotSpell`, whose dot `Spell.Dot` resolves to when this spell has none.
+    pub(crate) related_dot_spell: Option<SpellId>,
     /// Index into the resource metrics for this spell's mana cost.
     pub(crate) mana_metrics: Option<usize>,
     pub(crate) metrics: [SpellMetrics; 2],
@@ -358,6 +360,9 @@ pub(crate) struct Powers {
     pub(crate) spell_damage: f64,
     pub(crate) attack_power: f64,
     pub(crate) ranged_attack_power: f64,
+    pub(crate) spell_crit_percent: f64,
+    /// Nothing in scope reads physical crit yet; it follows the stat for completeness.
+    pub(crate) physical_crit_percent: f64,
 }
 
 /// Mutable player state, reset to the prepared values each iteration.
@@ -379,6 +384,9 @@ pub(crate) struct Player {
     pub(crate) mana_tick_not_casting: f64,
     pub(crate) waiting_for_mana: f64,
     pub(crate) waiting_for_mana_start: i64,
+    /// Go `spiritRegenAttribution`: the regeneration source whose bonus mana ticks credit to
+    /// its own metrics.
+    pub(crate) spirit_attribution: Option<SpiritAttribution>,
     pub(crate) gcd: i64,
     pub(crate) rotation_timer: i64,
     pub(crate) hardcast: Hardcast,
@@ -391,6 +399,14 @@ pub(crate) struct Player {
     pub(crate) oom_time: i64,
     pub(crate) went_oom: bool,
     pub(crate) first_oom: i64,
+}
+
+/// Go `spiritRegenAttribution`: the spirit regeneration state before the source applied.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct SpiritAttribution {
+    pub(crate) metrics: usize,
+    pub(crate) multiplier: f64,
+    pub(crate) force_full: bool,
 }
 
 /// Static configuration copied from the prepared input.
@@ -417,7 +433,6 @@ pub(crate) struct Config {
     pub(crate) mp5: f64,
     pub(crate) spirit_regen_per_second: f64,
     pub(crate) spell_hit_percent: f64,
-    pub(crate) spell_crit_percent: f64,
     /// The prepared stats; auras change the player's copy.
     pub(crate) powers: Powers,
     pub(crate) school_damage: [f64; 8],
@@ -503,6 +518,8 @@ pub(crate) const PRIORITY_GCD: i32 = 0;
 pub(crate) const PRIORITY_REGEN: i32 = 1;
 pub(crate) const PRIORITY_DOT: i32 = 3;
 pub(crate) const PRIORITY_PREPULL: i32 = 10;
+/// Go `SpellBatchWindow`.
+pub(crate) const SPELL_BATCH_WINDOW: i64 = 10 * crate::core::time::NS_PER_MILLISECOND;
 
 pub(crate) struct Fight<A: Agent> {
     pub(crate) agent: A,
@@ -539,6 +556,8 @@ pub(crate) struct Fight<A: Agent> {
     mana_regen_not_casting: usize,
     mana_gain_spell: Option<SpellId>,
     pub(crate) log: Option<Vec<String>>,
+    /// Lines auras log when gained, by index.
+    pub(crate) aura_logs: Vec<String>,
     pub(crate) totals: metrics::Totals,
     pub(crate) encounter_damage_taken: f64,
 }
@@ -623,8 +642,9 @@ impl<A: Agent> Fight<A> {
             mp5: stat(&player.stats, "MP5")?,
             spirit_regen_per_second: player.mana.spirit_regen_per_second,
             spell_hit_percent: stat(&player.stats, "SpellHitPercent")?,
-            spell_crit_percent: stat(&player.stats, "SpellCritPercent")?,
             powers: Powers {
+                spell_crit_percent: stat(&player.stats, "SpellCritPercent")?,
+                physical_crit_percent: stat(&player.stats, "PhysicalCritPercent")?,
                 spell_damage: stat(&player.stats, "SpellDamage")?,
                 attack_power: stat(&player.stats, "AttackPower")?,
                 ranged_attack_power: stat(&player.stats, "RangedAttackPower")?,
@@ -775,6 +795,7 @@ impl<A: Agent> Fight<A> {
                         | Effect::BloodFury { spell_id, aura, .. }
                         | Effect::ShatterCurse { spell_id, aura }
                         | Effect::ReadLeyLine { spell_id, aura, .. }
+                        | Effect::TemporaryStats { spell_id, aura, .. }
                             if id.spell_id == *spell_id && id.tag == 0 =>
                         {
                             activations.push((spells.len(), aura));
@@ -863,6 +884,7 @@ impl<A: Agent> Fight<A> {
                 flat_threat_bonus: exported.flat_threat_bonus,
                 damage_effect: exported.damage_effect.map(|e| (e.average, e.variance)),
                 dot,
+                related_dot_spell: exported.related_dot_spell,
                 mana_metrics,
                 metrics: [SpellMetrics::default(); 2],
                 action: None,
@@ -892,6 +914,7 @@ impl<A: Agent> Fight<A> {
             spell.action = Some(index);
         }
 
+        let mut aura_logs: Vec<String> = Vec::new();
         let mut trackers = [Tracker::default(), Tracker::default()];
         for (side, auras) in [(Side::Target, &target.auras), (Side::Player, &player.auras)] {
             let unit = if side == Side::Player {
@@ -983,20 +1006,49 @@ impl<A: Agent> Fight<A> {
                     _ => None,
                 }) {
                     AuraBehavior::MultiplyManaRegenSpeed(multiplier)
-                } else if let Some(stats) = effects.iter().find_map(|effect| match effect {
-                    Effect::BloodFury {
-                        aura, active_stats, ..
-                    } if side == Side::Player && *aura == exported.label => Some(active_stats),
-                    _ => None,
-                }) {
+                } else if let Some((stats, gain_log, expire_log)) =
+                    effects.iter().find_map(|effect| match effect {
+                        Effect::BloodFury {
+                            aura, active_stats, ..
+                        } if side == Side::Player && *aura == exported.label => {
+                            Some((active_stats, None, None))
+                        }
+                        Effect::TemporaryStats {
+                            aura,
+                            active_stats,
+                            gain_log,
+                            expire_log,
+                            ..
+                        } if side == Side::Player && *aura == exported.label => {
+                            Some((active_stats, Some(gain_log), Some(expire_log)))
+                        }
+                        _ => None,
+                    })
+                {
                     let active = |name: &str| stats.get(name).copied();
                     let base = config.powers;
-                    AuraBehavior::TemporaryStats(Powers {
-                        spell_damage: active("SpellDamage").unwrap_or(base.spell_damage),
-                        attack_power: active("AttackPower").unwrap_or(base.attack_power),
-                        ranged_attack_power: active("RangedAttackPower")
-                            .unwrap_or(base.ranged_attack_power),
-                    })
+                    let mut logged = |line: Option<&String>| {
+                        line.map(|line| {
+                            aura_logs.push(line.clone());
+                            aura_logs.len() - 1
+                        })
+                    };
+                    let gain_log = logged(gain_log);
+                    let expire_log = logged(expire_log);
+                    AuraBehavior::TemporaryStats {
+                        powers: Powers {
+                            spell_damage: active("SpellDamage").unwrap_or(base.spell_damage),
+                            attack_power: active("AttackPower").unwrap_or(base.attack_power),
+                            ranged_attack_power: active("RangedAttackPower")
+                                .unwrap_or(base.ranged_attack_power),
+                            spell_crit_percent: active("SpellCritPercent")
+                                .unwrap_or(base.spell_crit_percent),
+                            physical_crit_percent: active("PhysicalCritPercent")
+                                .unwrap_or(base.physical_crit_percent),
+                        },
+                        gain_log,
+                        expire_log,
+                    }
                 } else if effects.iter().any(|effect| {
                     matches!(effect, Effect::InertListener { unit: u, aura, .. } if u == unit && *aura == exported.label)
                 }) {
@@ -1068,6 +1120,7 @@ impl<A: Agent> Fight<A> {
                 mana_tick_not_casting: 0.0,
                 waiting_for_mana: 0.0,
                 waiting_for_mana_start: 0,
+                spirit_attribution: None,
                 gcd: STARTING_CD_TIME,
                 rotation_timer: STARTING_CD_TIME,
                 hardcast: Hardcast {
@@ -1115,6 +1168,7 @@ impl<A: Agent> Fight<A> {
             mana_regen_not_casting,
             mana_gain_spell,
             log: None,
+            aura_logs,
             eureka: None,
             totals: metrics::Totals::default(),
             encounter_damage_taken: 0.0,
@@ -1311,6 +1365,7 @@ impl<A: Agent> Fight<A> {
             player.spirit_regen_multiplier = initial.spirit_regen_multiplier;
             player.force_full_spirit_regen = initial.force_full_spirit_regen;
             player.five_second_rule_refresh = 0;
+            player.spirit_attribution = None;
             // Go runs reset effects first in the aura tracker's reset.
             self.reset_mods();
             A::reset(self);

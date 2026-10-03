@@ -21,6 +21,8 @@ pub(crate) enum Outcome {
     MagicHit,
     Tick,
     TickMagicCrit,
+    /// Go `OutcomeAlwaysHitNoHitCounter`.
+    AlwaysHitNoHitCounter,
 }
 
 /// Go `OutcomeLanded` for the outcomes a spell can have.
@@ -165,7 +167,7 @@ impl<A: Agent> Fight<A> {
     /// Go `Spell.SpellCritChance`.
     pub(crate) fn spell_crit_chance(&self, spell: SpellId) -> f64 {
         let state = &self.spells[spell];
-        let crit = self.config.spell_crit_percent
+        let crit = self.player.powers.spell_crit_percent
             + state.bonus_crit_percent
             + self.config.table.bonus_spell_crit_percent
             - self.config.target_reduced_crit_taken_percent;
@@ -256,6 +258,7 @@ impl<A: Agent> Fight<A> {
             Outcome::MagicHit => self.outcome_magic_hit_and_crit(spell, &mut result, binary, false),
             Outcome::Tick => self.outcome_tick(spell, &mut result, false),
             Outcome::TickMagicCrit => self.outcome_tick(spell, &mut result, true),
+            Outcome::AlwaysHitNoHitCounter => result.outcome = OUTCOME_HIT,
         }
         if partial != 0 {
             result.outcome |= partial;
@@ -281,6 +284,39 @@ impl<A: Agent> Fight<A> {
             self.player_log(&line);
         }
 
+        result.threat = if result.landed() {
+            let state = &self.spells[spell];
+            (result.damage * state.threat_multiplier + state.flat_threat_bonus)
+                * self.config.threat_multiplier
+        } else {
+            0.0
+        };
+        result
+    }
+
+    /// Go `CalcOutcome`: an outcome with no damage, no modifiers and no debug line.
+    pub(crate) fn calc_outcome(
+        &mut self,
+        spell: SpellId,
+        target: Side,
+        outcome: Outcome,
+    ) -> SpellResult {
+        let mut result = SpellResult {
+            target,
+            outcome: 0,
+            damage: 0.0,
+            threat: 0.0,
+        };
+        let binary = self.spells[spell].flags.binary;
+        match outcome {
+            Outcome::MagicHitAndCrit => {
+                self.outcome_magic_hit_and_crit(spell, &mut result, binary, true)
+            }
+            Outcome::MagicHit => self.outcome_magic_hit_and_crit(spell, &mut result, binary, false),
+            Outcome::Tick => self.outcome_tick(spell, &mut result, false),
+            Outcome::TickMagicCrit => self.outcome_tick(spell, &mut result, true),
+            Outcome::AlwaysHitNoHitCounter => result.outcome = OUTCOME_HIT,
+        }
         result.threat = if result.landed() {
             let state = &self.spells[spell];
             (result.damage * state.threat_multiplier + state.flat_threat_bonus)

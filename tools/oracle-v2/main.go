@@ -358,6 +358,9 @@ type Spell struct {
 	PushbackResist                 float64       `json:"pushback_resist"`
 	Dot                            *Dot          `json:"dot"`
 	DamageEffect                   *DamageEffect `json:"damage_effect"`
+	// The spellbook position of the spell whose dot Spell.Dot resolves to when this spell
+	// has none of its own.
+	RelatedDotSpell *int `json:"related_dot_spell,omitempty"`
 }
 
 type Aura struct {
@@ -758,6 +761,16 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 			"active_stats": activeStats(request, aura.Label),
 		})
 	}
+	// racials.go Night Elf Elune's Light: RegisterTemporaryStatsOnUseCD with Go literal stats.
+	if aura := character.GetAura("Elune's Light"); aura != nil {
+		buffs := stats.Stats{stats.PhysicalCritPercent: 10, stats.SpellCritPercent: 10}
+		effects = append(effects, map[string]any{
+			"kind": "temporary_stats", "spell_id": aura.ActionID.SpellID, "aura": aura.Label,
+			"active_stats": activeStats(request, aura.Label),
+			"gain_log":     fmt.Sprintf("Gained %s from %s.", buffs.FlatString(), aura.ActionID),
+			"expire_log":   fmt.Sprintf("Lost %s from fading %s.", buffs.FlatString(), aura.ActionID),
+		})
+	}
 	// racials.go Orc Shatter Curse: its aura changes only the player's damage taken.
 	if aura := character.GetAura("Shatter Curse"); aura != nil {
 		effects = append(effects, map[string]any{"kind": "shatter_curse", "spell_id": aura.ActionID.SpellID, "aura": aura.Label})
@@ -898,6 +911,17 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 		spells = append(spells, exportSpell(spell, target, class, timers, &unrepresented))
 	}
 	attachDamageEffects(spells, class)
+	for i, spell := range character.Spellbook {
+		if spell.RelatedDotSpell == nil {
+			continue
+		}
+		for j, related := range character.Spellbook {
+			if related == spell.RelatedDotSpell {
+				position := j
+				spells[i].RelatedDotSpell = &position
+			}
+		}
+	}
 
 	mcds := []MajorCooldown{}
 	for _, id := range character.GetMajorCooldownIDs() {

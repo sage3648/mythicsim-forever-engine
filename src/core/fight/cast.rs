@@ -690,7 +690,7 @@ impl<A: Agent> Fight<A> {
         self.player.mana_spent += amount;
     }
 
-    /// Go `Unit.ManaTick`. Spirit regeneration attribution is not modeled.
+    /// Go `Unit.ManaTick`, with its spirit regeneration attribution.
     pub(crate) fn mana_tick(&mut self) {
         let casting = self.now < self.player.five_second_rule_refresh;
         let (regen, metrics) = if casting {
@@ -701,7 +701,51 @@ impl<A: Agent> Fight<A> {
                 self.mana_regen_not_casting,
             )
         };
-        self.add_mana(regen.max(0.0), metrics);
+        let regen = regen.max(0.0);
+        let before = self.player.mana;
+        self.add_mana(regen, metrics);
+        if let Some(source) = self.player.spirit_attribution {
+            let mut spirit = self.config.spirit_regen_per_second * source.multiplier;
+            if casting && !source.force_full {
+                spirit *= self.player.spirit_regen_rate_casting;
+            }
+            let baseline =
+                ((self.config.mp5 / 5.0 + spirit) * self.player.mana_regen_multiplier * 2.0)
+                    .max(0.0);
+            let bonus = (regen - baseline).max(0.0);
+            if bonus > 0.0 {
+                // Go credits ordinary regeneration first; only the remaining room in the mana
+                // bar is an actual gain caused by the bonus.
+                let actual = self.player.mana - before;
+                let bonus_actual = bonus.min((actual - regen.min(baseline)).max(0.0));
+                let resource = &mut self.resources[metrics];
+                resource.gain -= bonus;
+                resource.actual_gain -= bonus_actual;
+                let source_metrics = &mut self.resources[source.metrics];
+                source_metrics.events += 1;
+                source_metrics.gain += bonus;
+                source_metrics.actual_gain += bonus_actual;
+            }
+        }
+    }
+
+    /// Go `StartSpiritRegenAttribution`, before the source applies its own effect.
+    pub(crate) fn start_spirit_attribution(&mut self, metrics: usize) {
+        assert!(
+            self.player.spirit_attribution.is_none(),
+            "overlapping spirit regeneration attribution"
+        );
+        self.resources[metrics].is_mana_regen = true;
+        self.player.spirit_attribution = Some(super::SpiritAttribution {
+            metrics,
+            multiplier: self.player.spirit_regen_multiplier,
+            force_full: self.player.force_full_spirit_regen,
+        });
+    }
+
+    /// Go `StopSpiritRegenAttribution`.
+    pub(crate) fn stop_spirit_attribution(&mut self) {
+        self.player.spirit_attribution = None;
     }
 
     /// Go `majorCooldownManager.reset`: copies in initial order, then a stable sort.

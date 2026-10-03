@@ -27,6 +27,8 @@ pub(crate) struct ClassGate {
     pub(crate) spell: fn(&Spell) -> Option<&'static str>,
     /// The aura labels a class effect takes responsibility for, as (unit, label).
     pub(crate) claims: for<'a> fn(&'a Effect) -> Vec<(&'static str, &'a str)>,
+    /// Class limits on the input and the spells the rotation can reach.
+    pub(crate) limits: fn(&PreparedV2, &[&Spell]) -> Vec<String>,
 }
 
 /// Effects of races, items and raid buffs, which every class shares.
@@ -41,12 +43,16 @@ const COMMON_EFFECTS: &[&str] = &[
     "potion_mana",
     "read_ley_line",
     "shatter_curse",
+    "temporary_stats",
     "touch_of_the_grave",
 ];
 
 /// Every class with an implemented gate.
-fn gates() -> [&'static ClassGate; 1] {
-    [&classes::mage::prepared::GATE]
+fn gates() -> [&'static ClassGate; 2] {
+    [
+        &classes::mage::prepared::GATE,
+        &classes::druid::prepared::GATE,
+    ]
 }
 
 /// Every effect kind implemented in Rust, sorted.
@@ -89,6 +95,9 @@ fn common_spell_capability(spell: &Spell, prepared: &PreparedV2) -> Option<&'sta
         Effect::ReadLeyLine { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
             Some("read_ley_line")
         }
+        Effect::TemporaryStats { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
+            Some("temporary_stats")
+        }
         _ => None,
     })
 }
@@ -113,7 +122,8 @@ fn common_claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         | Effect::Berserking { aura, .. }
         | Effect::BloodFury { aura, .. }
         | Effect::ShatterCurse { aura, .. }
-        | Effect::ReadLeyLine { aura, .. } => vec![("player", aura)],
+        | Effect::ReadLeyLine { aura, .. }
+        | Effect::TemporaryStats { aura, .. } => vec![("player", aura)],
         Effect::JudgementOfWisdom { aura, .. } => vec![("target", aura)],
         Effect::InertListener { unit, aura, .. } => match unit.as_str() {
             "player" => vec![("player", aura)],
@@ -147,13 +157,15 @@ fn undirected_procs(prepared: &PreparedV2) -> Vec<String> {
         .collect()
 }
 
-/// Stats a temporary stat change may set: the runtime reads the first three during a
-/// fight, and nothing in scope reads healing power.
+/// Stats a temporary stat change may set: the runtime reads spell damage, attack powers and
+/// spell crit during a fight, and nothing in scope reads healing power or physical crit.
 const DYNAMIC_STATS: &[&str] = &[
     "SpellDamage",
     "AttackPower",
     "RangedAttackPower",
     "HealingPower",
+    "SpellCritPercent",
+    "PhysicalCritPercent",
 ];
 
 /// Temporary stat changes to stats the runtime holds fixed.
@@ -163,6 +175,9 @@ fn fixed_stat_changes(prepared: &PreparedV2) -> Vec<String> {
         .iter()
         .filter_map(|effect| match effect {
             Effect::BloodFury {
+                aura, active_stats, ..
+            }
+            | Effect::TemporaryStats {
                 aura, active_stats, ..
             } => Some((aura, active_stats)),
             _ => None,
@@ -188,6 +203,18 @@ pub(crate) fn rotation_spell_index(prepared: &PreparedV2, id: &ActionId) -> Opti
                 .iter()
                 .position(|spell| spell.action_id.as_ref() == Some(id))
         })
+}
+
+/// Go `Spell.Dot`: the spell holding the dot a spell names, its own or its related dot
+/// spell's.
+pub(crate) fn dot_owner(prepared: &PreparedV2, index: usize) -> Option<usize> {
+    let spells = &prepared.player.spells;
+    match &spells[index] {
+        spell if spell.dot.is_some() => Some(index),
+        spell => spell
+            .related_dot_spell
+            .filter(|&related| spells.get(related).is_some_and(|s| s.dot.is_some())),
+    }
 }
 
 /// [`rotation_spell_index`] as the exported spell.
@@ -299,6 +326,7 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
                 }
             }
         }
+        reasons.extend((gate.limits)(prepared, &reachable));
         reasons.extend(undirected_procs(prepared));
         reasons.extend(fixed_stat_changes(prepared));
         let mut unknown = BTreeSet::new();
@@ -364,8 +392,7 @@ fn unknown_aura_conditions(prepared: &PreparedV2, rotation: &Rotation) -> Vec<St
     let aura = |id: &ActionId| find_aura(prepared, id);
     let spell = |id: &ActionId| rotation_spell_index(prepared, id);
     let dot = |id: &ActionId| {
-        rotation_spell_index(prepared, id)
-            .filter(|&index| prepared.player.spells[index].dot.is_some())
+        rotation_spell_index(prepared, id).and_then(|index| dot_owner(prepared, index))
     };
     let lookup = Lookup {
         aura: &aura,

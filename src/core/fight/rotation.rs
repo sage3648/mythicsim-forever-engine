@@ -86,9 +86,15 @@ impl<A: Agent> Fight<A> {
             })
         };
         let spell = |id: &ActionId| self.apl_spell(id);
+        // Go `GetAPLDot` through `Spell.Dot`: the spell's own dot or its related dot spell's.
         let dot = |id: &ActionId| {
             self.apl_spell(id)
-                .filter(|&spell| self.spells[spell].dot.is_some())
+                .and_then(|spell| match self.spells[spell].dot {
+                    Some(_) => Some(spell),
+                    None => self.spells[spell].related_dot_spell.filter(|&related| {
+                        self.spells.get(related).is_some_and(|s| s.dot.is_some())
+                    }),
+                })
         };
         let lookup = Lookup {
             aura: &aura,

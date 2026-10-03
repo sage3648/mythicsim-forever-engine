@@ -380,6 +380,10 @@ pub struct Spell {
     pub pushback_resist: f64,
     pub dot: Option<Dot>,
     pub damage_effect: Option<DamageEffect>,
+    /// The spellbook position of the spell whose dot Go `Spell.Dot` resolves to when this
+    /// spell has none of its own.
+    #[serde(default)]
+    pub related_dot_spell: Option<usize>,
 }
 
 impl Spell {
@@ -452,6 +456,15 @@ pub struct ManaGem {
     pub mana: f64,
 }
 
+/// A spell druid.RegisterSpell registered, by spellbook position, with the forms it may be
+/// cast in.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct DruidFormSpell {
+    pub spell: usize,
+    pub forms: Vec<String>,
+}
+
 /// Behavior Rust must execute, with the parameters Go keeps in closures. Each variant
 /// names the Go source that defines it in docs/prepared-v2.md.
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -494,6 +507,84 @@ pub enum Effect {
         spell_id: i32,
         aura: String,
         active_stats: BTreeMap<String, f64>,
+    },
+    /// An on-use cooldown whose aura adds flat stats: Go `RegisterTemporaryStatsOnUseCD`, as
+    /// the Night Elf racial Elune's Light. `active_stats` holds every stat the aura changes,
+    /// at the value Go computes while it is active; `gain_log` and `expire_log` are the lines
+    /// its gain and expiry log.
+    TemporaryStats {
+        spell_id: i32,
+        aura: String,
+        active_stats: BTreeMap<String, f64>,
+        gain_log: String,
+        expire_log: String,
+    },
+    /// The forms the druid starts in and each druid spell may be cast in.
+    DruidForms {
+        starting_form: Vec<String>,
+        spells: Vec<DruidFormSpell>,
+    },
+    /// Moonkin Form's cast, which activates its aura.
+    MoonkinForm {
+        spell_id: i32,
+        aura: String,
+    },
+    /// Every Starfire rank's direct hit.
+    Starfire {},
+    /// Every Wrath rank's hit after travel.
+    Wrath {},
+    /// Moonfire's hit, which casts its snapshotting dot spell when it lands.
+    Moonfire {
+        rank: FireballRank,
+    },
+    /// Insect Swarm's binary hit roll, then its snapshotting dot and the target debuff.
+    InsectSwarm {
+        rank: FireballRank,
+        debuff_aura: String,
+    },
+    /// Innervate's cast and aura: full spirit regeneration at a multiple, attributed to its own
+    /// regeneration metrics.
+    Innervate {
+        spell_id: i32,
+        aura: String,
+        spirit_regen_multiplier: f64,
+        regen_metrics_action_id: ActionId,
+    },
+    /// Omen of Clarity: landed spells can grant Clearcasting at a chance from their cast time,
+    /// doubled with a halved cooldown in Moonkin Form.
+    OmenOfClarity {
+        trigger_aura: String,
+        aura: String,
+        callbacks: Vec<String>,
+        outcome: Vec<String>,
+        require_damage_dealt: bool,
+        trigger_immediately: bool,
+        proc_chance: f64,
+        trigger_spells: Vec<usize>,
+        icd_ns: i64,
+        ppm: f64,
+        gcd_ns: i64,
+        moonkin_chance_multiplier: f64,
+        moonkin_cooldown_multiplier: f64,
+        cost_spells: Vec<usize>,
+        cost_percent_add: f64,
+    },
+    /// Nature's Grace: a damaging spell crit grants cast speed and a shorter GCD.
+    NaturesGrace {
+        trigger_aura: String,
+        aura: String,
+        haste_multiplier: f64,
+        gcd_reduction_ns: i64,
+        gcd_spells: Vec<usize>,
+        trigger_spells: Vec<usize>,
+    },
+    /// Eclipse: each Wrath banks charges that shorten Starfire's cast.
+    Eclipse {
+        trigger_aura: String,
+        aura: String,
+        cast_time_reduction_ns: i64,
+        charges_per_wrath: i32,
+        duration_ns: i64,
     },
     /// The Orc racial Shatter Curse: a survival cooldown whose aura lowers the player's
     /// spell damage taken, which has no effect in scope. Go never autocasts it at the
@@ -691,6 +782,17 @@ impl Effect {
             Effect::Eureka { .. } => "eureka",
             Effect::Berserking { .. } => "berserking",
             Effect::BloodFury { .. } => "blood_fury",
+            Effect::TemporaryStats { .. } => "temporary_stats",
+            Effect::DruidForms { .. } => "druid_forms",
+            Effect::MoonkinForm { .. } => "moonkin_form",
+            Effect::Starfire {} => "starfire",
+            Effect::Wrath {} => "wrath",
+            Effect::Moonfire { .. } => "moonfire",
+            Effect::InsectSwarm { .. } => "insect_swarm",
+            Effect::Innervate { .. } => "innervate",
+            Effect::OmenOfClarity { .. } => "omen_of_clarity",
+            Effect::NaturesGrace { .. } => "natures_grace",
+            Effect::Eclipse { .. } => "eclipse",
             Effect::ShatterCurse { .. } => "shatter_curse",
             Effect::ReadLeyLine { .. } => "read_ley_line",
             Effect::PresenceOfMind { .. } => "presence_of_mind",
