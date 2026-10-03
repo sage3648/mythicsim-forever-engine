@@ -202,6 +202,8 @@ pub(crate) struct Flags {
     pub(crate) proc: bool,
     pub(crate) melee_metrics: bool,
     pub(crate) no_spell_mods: bool,
+    /// Go `SpellFlagCombatPotion`, which the rotation's potion action names.
+    pub(crate) combat_potion: bool,
     pub(crate) cannot_be_dodged: bool,
 }
 
@@ -229,6 +231,7 @@ impl Flags {
                 "SpellFlagProc" => flags.proc = true,
                 "SpellFlagMeleeMetrics" => flags.melee_metrics = true,
                 "SpellFlagNoSpellMods" => flags.no_spell_mods = true,
+                "SpellFlagCombatPotion" => flags.combat_potion = true,
                 "SpellFlagCannotBeDodged" => flags.cannot_be_dodged = true,
                 _ => {}
             }
@@ -401,6 +404,8 @@ pub(crate) struct Player {
     /// Go `healthBar.currentHealth`; the player takes no damage in scope.
     pub(crate) health: f64,
     pub(crate) spell_cost_percent_modifier: i32,
+    /// Go `PseudoStats.SchoolDamageDealtMultiplier`, which auras can multiply.
+    pub(crate) school_damage_dealt_multiplier: [f64; 8],
     /// Go `PseudoStats.CastSpeedMultiplier`.
     pub(crate) cast_speed_multiplier: f64,
     pub(crate) spirit_regen_rate_casting: f64,
@@ -436,6 +441,8 @@ struct SunderRamp {
     period: i64,
     ticks: i32,
     armor_by_stacks: Vec<f64>,
+    /// A stronger permanent member of the aura's exclusive category blocks every activation.
+    blocked: bool,
 }
 
 /// Go `spiritRegenAttribution`: the spirit regeneration state before the source applied.
@@ -532,6 +539,26 @@ pub(crate) struct ResourceMetrics {
     pub(crate) is_mana_regen: bool,
 }
 
+/// The target's stats and pseudo stats that auras can change during a fight, reset to the
+/// prepared values each iteration.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct TargetState {
+    /// Go resistance stats by school index; armor at the physical index.
+    pub(crate) resistance: [f64; 8],
+    /// Go `PseudoStats.SchoolDamageTakenMultiplier`.
+    pub(crate) school_damage_taken_multiplier: [f64; 8],
+}
+
+/// Go `Unit.AddDynamicDamageTakenModifier` on the target for a modifier that multiplies the
+/// player's damage of the schools in `school_mask` while `aura` is active. Go applies every
+/// modifier after the outcome, in registration order.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct DamageTakenModifier {
+    pub(crate) school_mask: u8,
+    pub(crate) aura: AuraRef,
+    pub(crate) multiplier: f64,
+}
+
 /// A scheduled action. Each variant mirrors one Go pending action.
 #[derive(Clone, Copy, Debug)]
 pub(crate) enum Action {
@@ -585,6 +612,12 @@ pub(crate) struct Fight<A: Agent> {
     /// so a speed change undone at the end of a fight carries into the next one.
     pub(crate) cast_speed: f64,
     pub(crate) trackers: [Tracker<A::Aura>; 2],
+    /// The target's mutable stats.
+    pub(crate) target: TargetState,
+    /// The target's dynamic damage taken modifiers.
+    pub(crate) damage_taken_modifiers: Vec<DamageTakenModifier>,
+    /// Go `healthBar.DamageTakenHealthMetrics` for the player.
+    damage_taken_health: usize,
     pub(crate) spells: Vec<Spell<A::Spell>>,
     pub(crate) dots: Vec<Dot>,
     pub(crate) mods: Vec<spell_mod::SpellMod>,
@@ -787,6 +820,14 @@ impl<A: Agent> Fight<A> {
         };
         let mana_regen_casting = resource(regen_id(1), false, false);
         let mana_regen_not_casting = resource(regen_id(2), false, false);
+        let damage_taken_health = resource(
+            ActionId {
+                other_id: "OtherActionDamageTaken".into(),
+                ..ActionId::default()
+            },
+            false,
+            true,
+        );
 
         let effects = &prepared.effects;
         let mut spells = Vec::new();
@@ -1199,6 +1240,7 @@ impl<A: Agent> Fight<A> {
                 mana: config.max_mana,
                 health: config.max_health,
                 spell_cost_percent_modifier: config.initial.spell_cost_percent_modifier,
+                school_damage_dealt_multiplier: config.school_damage_dealt_multiplier,
                 cast_speed_multiplier: config.initial.cast_speed_multiplier,
                 spirit_regen_rate_casting: config.initial.spirit_regen_rate_casting,
                 spirit_regen_multiplier: config.initial.spirit_regen_multiplier,
@@ -1228,6 +1270,12 @@ impl<A: Agent> Fight<A> {
                 first_oom: 0,
             },
             cast_speed: config.cast_speed,
+            target: TargetState {
+                resistance: config.target_resistance,
+                school_damage_taken_multiplier: config.target_school_damage_taken_multiplier,
+            },
+            damage_taken_modifiers: Vec::new(),
+            damage_taken_health,
             config,
             trackers,
             spells,
@@ -1273,6 +1321,7 @@ impl<A: Agent> Fight<A> {
                 period_ns,
                 ticks,
                 armor_by_stacks,
+                blocked,
             } = effect
             {
                 let index = fight.trackers[Side::Target.index()]
@@ -1286,6 +1335,7 @@ impl<A: Agent> Fight<A> {
                     period: *period_ns,
                     ticks: *ticks,
                     armor_by_stacks: armor_by_stacks.clone(),
+                    blocked: *blocked,
                 });
             }
         }
@@ -1350,6 +1400,58 @@ impl<A: Agent> Fight<A> {
             crate::mechanics::mana::regen_per_second_casting(inputs) * 2.0;
         self.player.mana_tick_not_casting =
             crate::mechanics::mana::regen_per_second_not_casting(inputs) * 2.0;
+    }
+
+    /// Go `Spell.Dot` for the target: the spell's own dot, else its related spell's.
+    pub(crate) fn spell_dot(&self, spell: SpellId) -> Option<DotId> {
+        let state = &self.spells[spell];
+        state.dot.or_else(|| {
+            state
+                .related_dot_spell
+                .and_then(|related| self.spells.get(related)?.dot)
+        })
+    }
+
+    /// Go `AttachMultiplicativePseudoStatBuff` on a school's damage dealt multiplier: the
+    /// gain multiplies.
+    pub(crate) fn multiply_school_damage_dealt(&mut self, school_index: usize, factor: f64) {
+        self.player.school_damage_dealt_multiplier[school_index] *= factor;
+    }
+
+    /// The expiry of [`Self::multiply_school_damage_dealt`], which divides.
+    pub(crate) fn divide_school_damage_dealt(&mut self, school_index: usize, divisor: f64) {
+        self.player.school_damage_dealt_multiplier[school_index] /= divisor;
+    }
+
+    /// Go `AddStatsDynamic` on a target resistance.
+    pub(crate) fn add_target_resistance(&mut self, school_index: usize, delta: f64) {
+        self.target.resistance[school_index] += delta;
+    }
+
+    /// A parsed aura's multiplier on a target school's damage taken: Go multiplies by the
+    /// factor on gain and by its reciprocal on expiry.
+    pub(crate) fn multiply_target_school_damage_taken(&mut self, school_index: usize, factor: f64) {
+        self.target.school_damage_taken_multiplier[school_index] *= factor;
+    }
+
+    /// Go `healthBar.RemoveHealth` on the player.
+    pub(crate) fn remove_health(&mut self, amount: f64) {
+        assert!(amount >= 0.0, "negative health removal");
+        let old = self.player.health;
+        let new = (old - amount).max(0.0);
+        let resource = &mut self.resources[self.damage_taken_health];
+        resource.events += 1;
+        resource.gain += -amount;
+        resource.actual_gain += new - old;
+        if self.log.is_some() {
+            let line = format!(
+                "Spent {amount:.3} health from {} ({old:.3} --> {new:.3}) of {:.0} total.",
+                log::action_string(&self.resources[self.damage_taken_health].id),
+                self.config.max_health
+            );
+            self.player_log(&line);
+        }
+        self.player.health = new;
     }
 
     /// Go `RandomFloat(label)`.
@@ -1460,6 +1562,14 @@ impl<A: Agent> Fight<A> {
 
     /// Go `Unit.reset` followed by `Character.reset` for the player.
     fn reset_unit(&mut self, side: Side) {
+        if side == Side::Target {
+            // Go restores the initial pseudo stats; auras that changed stats undid them as
+            // they faded at the end of the last fight.
+            self.target = TargetState {
+                resistance: self.config.target_resistance,
+                school_damage_taken_multiplier: self.config.target_school_damage_taken_multiplier,
+            };
+        }
         if side == Side::Player {
             self.timers.fill(STARTING_CD_TIME);
             let player = &mut self.player;
@@ -1485,6 +1595,7 @@ impl<A: Agent> Fight<A> {
             }
             let initial = self.config.initial;
             player.spell_cost_percent_modifier = initial.spell_cost_percent_modifier;
+            player.school_damage_dealt_multiplier = self.config.school_damage_dealt_multiplier;
             player.cast_speed_multiplier = initial.cast_speed_multiplier;
             player.powers = self.config.powers;
             player.spirit_regen_rate_casting = initial.spirit_regen_rate_casting;
@@ -1622,13 +1733,11 @@ impl<A: Agent> Fight<A> {
     /// later until every tick has run.
     fn sunder_tick(&mut self, done: i32) {
         let ramp = self.sunder.clone().expect("the ramp is bound");
-        // With a stronger exclusive armor aura on the target, Go's activation does nothing; the
-        // exporter then lists only the armor without stacks.
-        if ramp.armor_by_stacks.len() > 1 {
-            self.activate_aura(ramp.aura);
-        } else {
-            // Go's Activate still counts the attempt before the exclusive effect refuses it.
+        if ramp.blocked {
+            // Go Aura.Activate counts the proc before the exclusive effect blocks it.
             self.aura_mut(ramp.aura).procs += 1;
+        } else {
+            self.activate_aura(ramp.aura);
         }
         if self.aura(ramp.aura).active {
             self.add_stack(ramp.aura);

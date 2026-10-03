@@ -50,12 +50,13 @@ const COMMON_EFFECTS: &[&str] = &[
 ];
 
 /// Every class with an implemented gate.
-fn gates() -> [&'static ClassGate; 4] {
+fn gates() -> [&'static ClassGate; 5] {
     [
         &classes::mage::prepared::GATE,
         &classes::druid::prepared::GATE,
         &classes::shaman::prepared::GATE,
         &classes::paladin::prepared::GATE,
+        &classes::warlock::prepared::GATE,
     ]
 }
 
@@ -200,9 +201,15 @@ fn fixed_stat_changes(prepared: &PreparedV2) -> Vec<String> {
 }
 
 /// Go `GetAPLSpell`: the first APL-flagged spell with the action ID, otherwise the first
-/// registered one, as a spellbook position. A missing spell drops the rotation action in Go.
+/// registered one, as a spellbook position. The potion action names the first combat
+/// potion. A missing spell drops the rotation action in Go.
 pub(crate) fn rotation_spell_index(prepared: &PreparedV2, id: &ActionId) -> Option<usize> {
     let spells = &prepared.player.spells;
+    if id.other_id == "OtherActionPotion" {
+        return spells
+            .iter()
+            .position(|spell| spell.has_flag("SpellFlagCombatPotion"));
+    }
     spells
         .iter()
         .position(|spell| spell.action_id.as_ref() == Some(id) && spell.has_flag("SpellFlagAPL"))
@@ -381,9 +388,15 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
 }
 
 fn find_aura(prepared: &PreparedV2, id: &ActionId) -> Option<FoundAura<ActionId>> {
-    prepared
-        .player
-        .auras
+    find_unit_aura(&prepared.player.auras, id)
+}
+
+/// Go `GetAuraByID` on a unit's exported auras.
+fn find_unit_aura(
+    auras: &[crate::contracts::prepared_v2::Aura],
+    id: &ActionId,
+) -> Option<FoundAura<ActionId>> {
+    auras
         .iter()
         .find(|aura| aura.action_id.as_ref() == Some(id))
         .map(|aura| FoundAura {
@@ -397,13 +410,14 @@ fn find_aura(prepared: &PreparedV2, id: &ActionId) -> Option<FoundAura<ActionId>
 /// side effects, but never runs their action.
 fn unreachable_with_one_target(prepared: &PreparedV2, rotation: &Rotation) -> BTreeSet<usize> {
     let aura = |id: &ActionId| find_aura(prepared, id);
+    let target_aura = |id: &ActionId| find_unit_aura(&prepared.target.auras, id);
     let spell = |id: &ActionId| rotation_spell_index(prepared, id);
     let dot = |id: &ActionId| {
-        rotation_spell_index(prepared, id)
-            .filter(|&index| prepared.player.spells[index].dot.is_some())
+        rotation_spell_index(prepared, id).and_then(|index| dot_owner(prepared, index))
     };
     let lookup = Lookup {
         aura: &aura,
+        target_aura: &target_aura,
         spell: &spell,
         dot: &dot,
     };
@@ -428,12 +442,15 @@ fn unknown_aura_conditions(prepared: &PreparedV2, rotation: &Rotation) -> Vec<St
     // Go resolves rotation names on the casting player: `GetAuraByID` finds the first aura
     // with the same action ID, tag included; `GetAPLSpell` and `GetAPLDot` find spells.
     let aura = |id: &ActionId| find_aura(prepared, id);
+    let target_aura = |id: &ActionId| find_unit_aura(&prepared.target.auras, id);
+    let target_known = |id: &ActionId| target_aura(id).is_some();
     let spell = |id: &ActionId| rotation_spell_index(prepared, id);
     let dot = |id: &ActionId| {
         rotation_spell_index(prepared, id).and_then(|index| dot_owner(prepared, index))
     };
     let lookup = Lookup {
         aura: &aura,
+        target_aura: &target_aura,
         spell: &spell,
         dot: &dot,
     };
@@ -449,6 +466,9 @@ fn unknown_aura_conditions(prepared: &PreparedV2, rotation: &Rotation) -> Vec<St
             condition.visit(&mut |value| match value {
                 Value::AuraIsActive(id) if !known(id) => {
                     unknown.push(("auraIsActive", id.to_string()))
+                }
+                Value::TargetAuraIsActive(id) if !target_known(id) => {
+                    unknown.push(("auraIsActive on the target", id.to_string()))
                 }
                 Value::AuraNumStacks(id) if !known(id) => {
                     unknown.push(("auraNumStacks", id.to_string()))

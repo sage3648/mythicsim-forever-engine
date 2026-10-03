@@ -106,7 +106,7 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `shatter_curse` | sim/core/racials.go | Orc survival cooldown; its damage taken change has no effect in scope |
 | `read_ley_line` | sim/core/racials.go | High Order Skyborne: the cast and Energized's regeneration multiplier |
 | `temporary_stats` | sim/core/major_cooldown.go | Night Elf Elune's Light: every stat its aura changes, computed by Go with it active, and its gain and fade log lines |
-| `sunder_armor_ramp` | sim/core/buffs/drivers.go | The raid's Sunder Armor: its period and tick count, Go literals, and target armor at each stack count read from separate Go simulations |
+| `sunder_armor_ramp` | sim/core/buffs/drivers.go | The raid's Sunder Armor: its period and tick count, Go literals, and target armor at each stack count read from separate Go simulations; `blocked` when a stronger permanent member of its category, such as Expose Armor, blocks every activation, which Go still counts as a proc |
 | `judgement_refresh` | sim/paladin/judgement.go | The melee proc mask and the judgement debuffs a landed melee strike refreshes |
 | `druid_forms` | sim/druid/druid.go, forms.go | The starting form and the forms each druid spell may be cast in |
 | `moonkin_form` | sim/druid/forms.go | The cast and its aura |
@@ -125,6 +125,14 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `searing_totem` | sim/shaman/fire_totems.go | The attack spell and its fixed base, and the fire totem auras the cast replaces |
 | `elemental_focus` | sim/shaman/talents_elemental.go | Proc chance, Clearcasting's cost modifier and charges |
 | `stoneform` | sim/core/racials.go | Dwarf survival cooldown; its physical damage taken change has no effect in scope |
+| `shadow_bolt`, `searing_pain`, `shadowburn`, `soul_fire` | sim/warlock/shadowbolt.go, searing_pain.go, shadowburn.go, soulfire.go | Damage rolls on the spells; Shadow Bolt and Soul Fire land after travel |
+| `immolate`, `corruption` | sim/warlock/immolate.go, corruption.go | The dot base and tick crit; Immolate's dot is on its related spell |
+| `bane_of_agony` | sim/warlock/agony.go | The dot base, tick crit and its ramp: half the tick at the snapshot, added back every fourth tick, Go literals |
+| `curse_of_the_elements` | sim/warlock/curse_of_elements.go, core/buffs | The target debuff's resistance changes and school damage taken multipliers, checked against Go activating it |
+| `life_tap` | sim/warlock/lifetap.go | Base amount from client data and Improved Life Tap's multiplier; Spirit comes from the stats |
+| `conflagrate` | sim/warlock/conflagrate.go | Shadow and Flame's chance to spare Immolate and its random label |
+| `improved_shadow_bolt` | sim/warlock/talents_destruction.go | The trigger spells, the target debuff and its multiplier on the warlock's shadow damage, a dynamic damage taken modifier |
+| `shadow_and_flame` | sim/warlock/talents_destruction.go | The trigger spells, which of them raise shadow damage, the two auras and their multiplier |
 
 Human racials are static and already in the prepared stats. High Order Skyborne's cast
 speed and every race's creature slaying are static too. Read Ley Line is not a major
@@ -153,7 +161,8 @@ Invalid and unsupported inputs are deliberately different outcomes.
 The exporter marks as unrepresented: more than one player or target, health fights,
 tanks, presims, healing models, pets, player auto attacks, a target that swings at a
 unit, item swapping, execute phase callbacks, target AI, caster
-damage callbacks, dynamic damage-taken modifiers, mob type bonuses, non-mana costs,
+damage callbacks, dynamic damage-taken modifiers a class effect does not describe, mob type
+bonuses, non-mana costs,
 unnamed class masks, item cooldowns without an exported effect, cast speed and temporary
 stat listeners, survival cooldowns that would wait for a nonzero defensive health
 threshold, a Shaman shield proc rate and Flame Shock ticks that roll a physical crit.
@@ -172,8 +181,10 @@ The rotation subset covers `castSpell`, `autocastOtherCooldowns`, constant-time 
 casts, `cmp` with any comparison operator, `and`, `or`, `not`, `const`, `currentMana`,
 `currentManaPercent`, `currentTime`, `remainingTime`, `numberTargets`, `math`, `auraIsKnown`,
 `auraIsActive`, `auraNumStacks`, `auraRemainingTime`, `dotIsActive`, `dotRemainingTime`,
-`spellIsKnown`, `spellIsReady` and `spellCastTime`. Action IDs may carry a rank, which Go
-ignores. The exporter records how many prepull actions Go registered; a count that differs
+`spellIsKnown`, `spellIsReady` and `spellCastTime`. `auraIsActive` may name the player or
+the current target as its source unit, as Go `GetSourceUnit` resolves it; the potion action
+casts the first combat potion, as Go `GetAPLSpell` does. Action IDs may carry a rank, which
+Go ignores. The exporter records how many prepull actions Go registered; a count that differs
 from the rotation's means a class or item registered its own, which is unsupported. A spell
 or dot the character lacks drops its term, as in Go. `math` follows Go's operand types,
 getters and wrapping arithmetic; math Go would read with a getter its operand lacks, and
@@ -206,7 +217,8 @@ the remaining races, with longer and cooldown-timing variants, and
 `fire-skyborne-read-ley-line` casts Read Ley Line from the rotation. `production-balance-druid`
 is the production Balance Druid request. `production-elemental-shaman` is the production
 Elemental Shaman request, and `elemental-shaman-dwarf-stoneform` runs it as a Dwarf with
-Stoneform timings. `production-fire` and
+Stoneform timings. `production-destruction-warlock` is the production Destruction Warlock
+request. `production-fire` and
 `production-frostfire` are the production application's Fire Missile Barrage and
 Frostfire hybrid requests at application revision 18bbcd47; its Arcane and Frost requests
 are byte-identical to `arcane-reference` and `frost-reference`. `frostfire-resistances`

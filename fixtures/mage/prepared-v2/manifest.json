@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "ec2750226d76a325537c02ff9ef1825228bdd10a70695b37bd8517b7da357ed4",
+  "exporter_sha256": "a94ce1047d13c1775a910e32b32630b00b6e460cc97d2af2f1381b4bc075f467",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -901,13 +901,34 @@
       }
     },
     {
+      "id": "production-destruction-warlock",
+      "description": "The production application's Destruction Warlock request at application revision 18bbcd47: Undead, Imp sacrificed before the pull, Shadow Bolt with Improved Shadow Bolt, Immolate, Corruption, Bane of Agony, Curse of the Elements, Conflagrate and Shadowburn with Shadow and Flame, Searing Pain, Life Tap and the raid's ramped Sunder Armor; supported and matches Go",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-destruction-warlock.request.json"
+      },
+      "prepared": "production-destruction-warlock.prepared.json",
+      "prepared_sha256": "93546bfb6e849addc44aef01a236bf17fa8ded9400faf593a422ecdc6e8dfeef",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-destruction-warlock.go-result.json",
+        "sha256": "308dd6fceb82e66b1989cc127985c52fbb4217dc43cf98db7974b9307cc32353"
+      },
+      "go_log": {
+        "file": "production-destruction-warlock.go-log.txt",
+        "sha256": "6540fdb9699f3139167b5f3bb6060f44b816d963615ee4157a64174fbac7f40a"
+      }
+    },
+    {
       "id": "paladin-auto-attacks-expose-armor",
       "description": "paladin-auto-attacks with Expose Armor as well as Sunder Armor: Expose Armor holds the exclusive armor slot, so every Sunder tick is refused.",
       "request": {
         "path": "fixtures/mage/prepared-v2/paladin-auto-attacks-expose-armor.request.json"
       },
       "prepared": "paladin-auto-attacks-expose-armor.prepared.json",
-      "prepared_sha256": "472212521f27722f951c0ed78c056d622b065c715a6b9f879ea4ccdcc5e3a69a",
+      "prepared_sha256": "0f6433e194763d445fbe838672c23f4b9695699255623c2d2d90a36cf018ee28",
       "expected_coverage": {
         "supported": true,
         "reasons": []

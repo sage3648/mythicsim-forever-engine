@@ -191,11 +191,20 @@ type classExport struct {
 	spells     []classSpellName
 	damageRows func(rows map[int32]*spelldata.Spell)
 	effects    func(agent core.Agent, character *core.Character) []map[string]any
+	// How many of the target's dynamic damage taken modifiers the class effects describe.
+	damageTakenModifiers func(agent core.Agent) int
 	// Optional: class behavior the effects cannot describe, one reason each.
 	unrepresented func(agent core.Agent, character *core.Character) []string
 }
 
 var classExports = map[proto.Class]classExport{}
+
+// Set by prepare while class effects run: the request, so an effect can reset a separate
+// simulation, and the unrepresented list, so an effect can name what it cannot describe.
+var (
+	exportRequest *proto.RaidSimRequest
+	classNotes    *[]string
+)
 
 func classSpell(class classExport, mask int64, unrepresented *[]string, id core.ActionID) string {
 	if mask == 0 {
@@ -831,6 +840,16 @@ func targetArmorWithStacks(request *proto.RaidSimRequest, label string, stacks i
 	return target.Armor()
 }
 
+// Whether activating the aura right after a reset fails, as an exclusive category with a
+// stronger active member makes it.
+func sunderBlocked(request *proto.RaidSimRequest, label string) bool {
+	simulation := core.NewSim(request, simsignals.CreateSignals())
+	simulation.Reset()
+	aura := simulation.Encounter.ActiveTargetUnits[0].GetAura(label)
+	aura.Activate(simulation)
+	return !aura.IsActive()
+}
+
 func commonEffects(character *core.Character, target *core.Unit, request *proto.RaidSimRequest, unrepresented *[]string) []map[string]any {
 	effects := []map[string]any{}
 	for _, aura := range target.GetAuras() {
@@ -883,20 +902,31 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 	// buffs/drivers.go driveSunderArmor: the raid's Sunder Armor ramps to its maximum stacks, one a
 	// default GCD from the pull, Go literals. Target armor at each stack count is read from
 	// separate reset simulations, since the stacks act through exclusive armor effects.
+	// A stronger permanent member of its exclusive category, such as the raid's Expose Armor,
+	// blocks every activation, which Go still counts as a proc, and the armor never changes.
 	if aura := target.GetAura("Sunder Armor (External)"); aura != nil {
+		blocked := sunderBlocked(request, aura.Label)
+		for _, other := range target.GetAuras() {
+			if other != aura && other.Tag == aura.Tag && other.IsActive() && other.Duration != core.NeverExpires {
+				*unrepresented = append(*unrepresented, fmt.Sprintf("%s shares its category with expiring %s", aura.Label, other.Label))
+			}
+		}
 		armor := []float64{}
 		for stacks := int32(0); stacks <= aura.MaxStacks; stacks++ {
-			value := targetArmorWithStacks(request, aura.Label, stacks)
-			if math.IsNaN(value) {
-				// driveSunderArmor activates it each tick and stacks it only while active.
-				break
+			if blocked {
+				armor = append(armor, targetArmorWithStacks(request, aura.Label, 0))
+			} else {
+				armor = append(armor, targetArmorWithStacks(request, aura.Label, stacks))
 			}
-			armor = append(armor, value)
 		}
-		effects = append(effects, map[string]any{
+		ramp := map[string]any{
 			"kind": "sunder_armor_ramp", "aura": aura.Label, "period_ns": nanos(core.GCDDefault),
 			"ticks": int32(5), "armor_by_stacks": armor,
-		})
+		}
+		if blocked {
+			ramp["blocked"] = true
+		}
+		effects = append(effects, ramp)
 	}
 	// racials.go Orc Shatter Curse: its aura changes only the player's damage taken.
 	if aura := character.GetAura("Shatter Curse"); aura != nil {
@@ -916,8 +946,20 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 		}
 	}
 	consumes := request.Raid.Parties[0].Players[0].Consumables
+	// Major cooldown items, then the potions and conjured items a rotation casts itself, which
+	// Go removed from the major cooldowns.
+	items := []*core.Spell{}
+	cooldowns := map[*core.Spell]bool{}
 	for _, cd := range character.GetMajorCooldowns() {
-		spell := cd.Spell
+		items = append(items, cd.Spell)
+		cooldowns[cd.Spell] = true
+	}
+	for _, spell := range character.Spellbook {
+		if spell.ActionID.ItemID != 0 && !cooldowns[spell] && spell.Flags.Matches(core.SpellFlagPotion|core.SpellFlagConjured) {
+			items = append(items, spell)
+		}
+	}
+	for _, spell := range items {
 		// Mage gems are described by the mana_gems effect.
 		if spell.ActionID.ItemID == 0 || spell.Matches(mage.MageSpellManaGem) {
 			continue
@@ -1021,7 +1063,12 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	note(simulation.Encounter.AllTargets[0].AI != nil, "target AI is unsupported")
 	table := character.AttackTables[target.UnitIndex]
 	note(table.DamageDoneByCasterMultiplier != nil || len(table.DamageDoneByCasterExtraMultiplier) != 0, "caster damage callbacks are unsupported")
-	note(len(target.DynamicDamageTakenModifiers) != 0, "dynamic damage taken modifiers are unsupported")
+	class, exported := classExports[character.Class]
+	described := 0
+	if exported && class.damageTakenModifiers != nil {
+		described = class.damageTakenModifiers(agent)
+	}
+	note(len(target.DynamicDamageTakenModifiers) != described, "dynamic damage taken modifiers are unsupported")
 	note(len(character.OnCastSpeedChanged) != 0, "cast speed listeners are unsupported")
 	note(len(character.OnTemporaryStatsChanges) != 0, "temporary stat listeners are unsupported")
 	if threshold := request.Raid.Parties[0].Players[0].GetCooldowns().GetHpPercentForDefensives(); threshold != 0 {
@@ -1033,7 +1080,6 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 		note(bonus != (stats.Stats{}), fmt.Sprintf("mob type bonus stats for %s are unsupported", mobType))
 	}
 
-	class, exported := classExports[character.Class]
 	note(!exported, fmt.Sprintf("%s agents are not exported", character.Class))
 
 	spells := []Spell{}
@@ -1086,7 +1132,9 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 		}
 	}
 	if exported {
+		exportRequest, classNotes = request, &unrepresented
 		effects = append(effects, class.effects(agent, character)...)
+		exportRequest, classNotes = nil, nil
 		if class.unrepresented != nil {
 			unrepresented = append(unrepresented, class.unrepresented(agent, character)...)
 		}

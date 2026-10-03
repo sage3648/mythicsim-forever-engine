@@ -2,3 +2,4 @@
 
 mod mage;
 mod shaman;
+mod warlock;

@@ -41,6 +41,7 @@ reading the Go reference. They are not effort estimates for other contributors.
 | Shared gate, class exporter files and prepull | 2026-10-03 15:46 | 2026-10-03 16:04 | 0 h 18 m | Gate and exporter split by class; prepull casts and eight rotation values; a Frost prepull request matches Go |
 | Balance Druid | 2026-10-03 16:04 | 2026-10-03 16:22 | 0 h 18 m | Druid exporter and agent, spirit regeneration attribution, dynamic spell crit, related dots; the production request matches Go after three fixes; 23 of 24 sweep variants match, 1 rejected for #622 |
 | Elemental Shaman | 2026-10-03 16:05 | 2026-10-03 16:38 | 0 h 33 m | Shaman exporter and agent, a travel hook, the math operator, one-target reachability and Stoneform; the production request matches Go on the first comparison; 48 of 48 sweep variants match, every Shaman race included |
+| Destruction Warlock | 2026-10-03 16:05 | 2026-10-03 16:46 | 0 h 41 m | Warlock exporter and agent, dynamic damage taken modifiers, target debuff stats, Sunder Armor blocked by Expose Armor, auraIsActive on the target; the production request matches Go; 24 of 24 sweep variants and 12 of 12 race variants match |
 
 ## Notes
 

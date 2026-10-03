@@ -27,6 +27,8 @@ pub(crate) enum Outcome {
     TickMagicCrit,
     /// Go `OutcomeAlwaysHitNoHitCounter`.
     AlwaysHitNoHitCounter,
+    /// Go `OutcomeMagicHitNoHitCounter`: a miss still counts.
+    MagicHitNoHitCounter,
 }
 
 /// Go `OutcomeLanded`; the runtime has no crushing blows.
@@ -134,7 +136,7 @@ impl<A: Agent> Fight<A> {
             state.damage_multiplier_additive + state.direct_damage_multiplier_additive
         };
         let internal = self.config.damage_dealt_multiplier
-            * self.school_value(spell, &self.config.school_damage_dealt_multiplier)
+            * self.school_value(spell, &self.player.school_damage_dealt_multiplier)
             * self.config.table.damage_dealt_multiplier;
         internal * state.damage_multiplier * additive
     }
@@ -146,7 +148,7 @@ impl<A: Agent> Fight<A> {
             return 1.0;
         }
         self.config.target_damage_taken_multiplier
-            * self.school_value(spell, &self.config.target_school_damage_taken_multiplier)
+            * self.school_value(spell, &self.target.school_damage_taken_multiplier)
             * self.config.table.damage_taken_multiplier
     }
 
@@ -154,10 +156,10 @@ impl<A: Agent> Fight<A> {
         let state = &self.spells[spell];
         // Go resistCoeff: Frostfire Bolt checks the lower resistance.
         let resistance = if state.frostfire {
-            let resistance = &self.config.target_resistance;
+            let resistance = &self.target.resistance;
             resistance[super::SCHOOL_INDEX_FIRE].min(resistance[super::SCHOOL_INDEX_FROST])
         } else {
-            self.config.target_resistance[state.school_index]
+            self.target.resistance[state.school_index]
         };
         resist_coefficient(
             resistance,
@@ -265,19 +267,20 @@ impl<A: Agent> Fight<A> {
         let after_target = result.damage;
 
         let partial = result.outcome & super::damage::OUTCOME_PARTIAL;
-        match outcome {
-            Outcome::MagicHitAndCrit => {
-                self.outcome_magic_hit_and_crit(spell, &mut result, binary, true)
-            }
-            Outcome::MagicHit => self.outcome_magic_hit_and_crit(spell, &mut result, binary, false),
-            Outcome::Tick => self.outcome_tick(spell, &mut result, false),
-            Outcome::TickMagicCrit => self.outcome_tick(spell, &mut result, true),
-            Outcome::AlwaysHitNoHitCounter => result.outcome = OUTCOME_HIT,
-        }
+        self.apply_outcome(spell, &mut result, binary, outcome);
         if partial != 0 {
             result.outcome |= partial;
         }
         let after_outcome = result.damage;
+        // Go ApplyPostOutcomeDamageModifiers: the target's dynamic modifiers in order.
+        for index in 0..self.damage_taken_modifiers.len() {
+            let modifier = self.damage_taken_modifiers[index];
+            if self.spells[spell].school & modifier.school_mask != 0
+                && self.aura(modifier.aura).active
+            {
+                result.damage *= modifier.multiplier;
+            }
+        }
         result.damage = result.damage.max(0.0);
 
         if self.log.is_some() {
@@ -355,15 +358,7 @@ impl<A: Agent> Fight<A> {
             threat: 0.0,
         };
         let binary = self.spells[spell].flags.binary;
-        match outcome {
-            Outcome::MagicHitAndCrit => {
-                self.outcome_magic_hit_and_crit(spell, &mut result, binary, true)
-            }
-            Outcome::MagicHit => self.outcome_magic_hit_and_crit(spell, &mut result, binary, false),
-            Outcome::Tick => self.outcome_tick(spell, &mut result, false),
-            Outcome::TickMagicCrit => self.outcome_tick(spell, &mut result, true),
-            Outcome::AlwaysHitNoHitCounter => result.outcome = OUTCOME_HIT,
-        }
+        self.apply_outcome(spell, &mut result, binary, outcome);
         result.threat = if result.landed() {
             let state = &self.spells[spell];
             (result.damage * state.threat_multiplier + state.flat_threat_bonus)
@@ -374,14 +369,39 @@ impl<A: Agent> Fight<A> {
         result
     }
 
+    /// Run an outcome applier on a result.
+    fn apply_outcome(
+        &mut self,
+        spell: SpellId,
+        result: &mut SpellResult,
+        binary: bool,
+        outcome: Outcome,
+    ) {
+        match outcome {
+            Outcome::MagicHitAndCrit => {
+                self.outcome_magic_hit_and_crit(spell, result, binary, true, true)
+            }
+            Outcome::MagicHit => {
+                self.outcome_magic_hit_and_crit(spell, result, binary, false, true)
+            }
+            Outcome::MagicHitNoHitCounter => {
+                self.outcome_magic_hit_and_crit(spell, result, binary, false, false)
+            }
+            Outcome::Tick => self.outcome_tick(spell, result, false),
+            Outcome::TickMagicCrit => self.outcome_tick(spell, result, true),
+            Outcome::AlwaysHitNoHitCounter => result.outcome = OUTCOME_HIT,
+        }
+    }
+
     /// Go `outcomeMagicHitAndCrit` with hit counters, or `outcomeMagicHit` without the crit
-    /// roll.
+    /// roll, and without the hit counter when `count_hits` is false.
     fn outcome_magic_hit_and_crit(
         &mut self,
         spell: SpellId,
         result: &mut SpellResult,
         binary: bool,
         can_crit: bool,
+        count_hits: bool,
     ) {
         let binary_hit = binary.then(|| 1.0 - 0.75 * self.resist(spell, true));
         let miss = spell_chance_to_miss(
@@ -409,10 +429,12 @@ impl<A: Agent> Fight<A> {
                 }
             } else {
                 result.outcome = OUTCOME_HIT;
-                let metrics = &mut self.spells[spell].metrics[target];
-                metrics.hits += 1;
-                if partial {
-                    metrics.resisted_hits += 1;
+                if count_hits {
+                    let metrics = &mut self.spells[spell].metrics[target];
+                    metrics.hits += 1;
+                    if partial {
+                        metrics.resisted_hits += 1;
+                    }
                 }
             }
         } else {

@@ -32,8 +32,11 @@ pub(crate) struct Item {
 
 impl<A: Agent> Fight<A> {
     /// Go `GetAPLSpell`: the first APL-flagged spell with the action ID, otherwise the first
-    /// registered one.
+    /// registered one. The potion action names the first combat potion.
     pub(crate) fn apl_spell(&self, id: &ActionId) -> Option<SpellId> {
+        if id.other_id == "OtherActionPotion" {
+            return self.spells.iter().position(|s| s.flags.combat_potion);
+        }
         let apl = self.spells.iter().position(|s| &s.id == id && s.flags.apl);
         apl.or_else(|| self.spells.iter().position(|s| &s.id == id))
     }
@@ -75,16 +78,15 @@ impl<A: Agent> Fight<A> {
     /// Go `newAPLRotation` for the supported subset. Conditions compile as the pinned
     /// reference does; coverage rejects rotations where community #622 would differ.
     pub(crate) fn compile_rotation(&self, rotation: &Rotation) -> Vec<Item> {
-        let tracker = &self.trackers[Side::Player.index()];
-        let aura = |id: &ActionId| {
+        let find = |side: Side, id: &ActionId| {
+            let tracker = &self.trackers[side.index()];
             tracker.find_by_id(id).map(|index| FoundAura {
-                aura: AuraRef {
-                    side: Side::Player,
-                    index,
-                },
+                aura: AuraRef { side, index },
                 max_stacks: tracker.auras[index].max_stacks,
             })
         };
+        let aura = |id: &ActionId| find(Side::Player, id);
+        let target_aura = |id: &ActionId| find(Side::Target, id);
         let spell = |id: &ActionId| self.apl_spell(id);
         // Go `GetAPLDot` through `Spell.Dot`: the spell's own dot or its related dot spell's.
         let dot = |id: &ActionId| {
@@ -98,6 +100,7 @@ impl<A: Agent> Fight<A> {
         };
         let lookup = Lookup {
             aura: &aura,
+            target_aura: &target_aura,
             spell: &spell,
             dot: &dot,
         };
