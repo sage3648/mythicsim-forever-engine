@@ -6147,6 +6147,33 @@
       "selected": true
     },
     {
+      "auras": [
+        "Blood Fury"
+      ],
+      "changed": [
+        "AttackPower",
+        "HealingPower",
+        "SpellDamage"
+      ],
+      "combos": [
+        {
+          "AttackPower": 10,
+          "PhysicalCritPercent": 14.1298,
+          "RangedAttackPower": 0,
+          "SpellCritPercent": 15.331999999999999,
+          "SpellDamage": 454
+        },
+        {
+          "AttackPower": 11,
+          "PhysicalCritPercent": 14.1298,
+          "RangedAttackPower": 0,
+          "SpellCritPercent": 15.331999999999999,
+          "SpellDamage": 499.40000000000003
+        }
+      ],
+      "kind": "stat_auras"
+    },
+    {
       "aura": "Chance of Death",
       "kind": "inert_listener",
       "reason": "acts only when the player takes damage",

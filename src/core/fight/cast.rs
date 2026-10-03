@@ -657,6 +657,12 @@ impl<A: Agent> Fight<A> {
                 index,
             }),
             SpellBehavior::MeleeAuto(hand) => self.apply_melee_auto(spell, target, hand),
+            SpellBehavior::RollDamage { min, max } => {
+                // Go sim.Roll: min + (max - min) * RandomFloat("Damage Roll").
+                let base = min + (max - min) * self.random("Damage Roll");
+                let result = self.calc_damage(spell, target, base);
+                self.deal_damage(spell, result, false);
+            }
             SpellBehavior::None => panic!("spell {} has no behavior", self.spells[spell].id),
         }
     }
@@ -923,6 +929,7 @@ impl<A: Agent> Fight<A> {
             SpellBehavior::Eureka | SpellBehavior::ActivateAura(_) => true,
             SpellBehavior::TouchOfTheGraveDrain { .. }
             | SpellBehavior::MeleeAuto(_)
+            | SpellBehavior::RollDamage { .. }
             | SpellBehavior::None => false,
         }
     }

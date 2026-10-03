@@ -532,6 +532,14 @@ pub struct Melee {
     pub defender_reduced_physical_hit_taken: f64,
 }
 
+/// A spell a dynamic proc manager hears, by spellbook position, with the chance it rolls.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct SpellChance {
+    pub spell: usize,
+    pub chance: f64,
+}
+
 /// A spell druid.RegisterSpell registered, by spellbook position, with the forms it may be
 /// cast in.
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -661,6 +669,40 @@ pub enum Effect {
         cast_time_reduction_ns: i64,
         charges_per_wrath: i32,
         duration_ns: i64,
+    },
+    /// Auras whose gain and expiry change stats through Go's AddStatsDynamic, and the player's
+    /// stats Rust reads for every combination of them: entry i has aura j active when bit j
+    /// of i is set. `changed` names every stat any combination changes.
+    StatAuras {
+        auras: Vec<String>,
+        combos: Vec<BTreeMap<String, f64>>,
+        changed: Vec<String>,
+    },
+    /// The Crusader weapon enchant: a weapon proc at a per-spell chance that activates the
+    /// hand's Holy Strength and heals.
+    Crusader {
+        trigger_aura: String,
+        mh_aura: String,
+        oh_aura: String,
+        chances: Vec<SpellChance>,
+        heal_min: f64,
+        heal_max: f64,
+        heal_metrics_action_id: ActionId,
+        mh_gain_log: String,
+        mh_expire_log: String,
+        oh_gain_log: String,
+        oh_expire_log: String,
+    },
+    /// Dragonbreath Chili: a chance on landed melee hits to cast a rolled Fire hit, after a
+    /// spell batch window.
+    DragonbreathChili {
+        trigger_aura: String,
+        spell_id: i32,
+        proc_chance: f64,
+        trigger_spells: Vec<usize>,
+        roll_min: f64,
+        roll_max: f64,
+        delay_ns: i64,
     },
     /// The raid's Sunder Armor, ramped one stack a period from the pull; target armor at
     /// each stack count, as Go computes it.
@@ -1176,6 +1218,9 @@ impl Effect {
             Effect::InertPet { .. } => "inert_pet",
             Effect::JudgementRefresh { .. } => "judgement_refresh",
             Effect::SunderArmorRamp { .. } => "sunder_armor_ramp",
+            Effect::StatAuras { .. } => "stat_auras",
+            Effect::Crusader { .. } => "crusader",
+            Effect::DragonbreathChili { .. } => "dragonbreath_chili",
             Effect::ShatterCurse { .. } => "shatter_curse",
             Effect::Stoneform { .. } => "stoneform",
             Effect::ReadLeyLine { .. } => "read_ley_line",
