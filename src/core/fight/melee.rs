@@ -379,6 +379,9 @@ impl<A: Agent> Fight<A> {
 
     /// The auto attack spell's `ApplyEffects`: weapon damage on the white hit table.
     pub(crate) fn apply_melee_auto(&mut self, spell: SpellId, target: Side, hand: Hand) {
+        if hand != Hand::Ranged {
+            A::before_melee_auto(self, spell, hand);
+        }
         let attack_power = self.melee_attack_power();
         let weapon = match hand {
             Hand::Main => self.autos.mh.weapon.clone(),

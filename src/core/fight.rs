@@ -28,6 +28,7 @@ use std::collections::BTreeMap;
 pub(crate) use aura::{AuraBehavior, AuraRef, Tracker};
 pub(crate) use damage::{Outcome, SpellResult, OUTCOME_CRIT, OUTCOME_LANDED};
 pub(crate) use dot::Dot;
+pub(crate) use log::action_string;
 pub(crate) use metrics::{ActionReport, ActionTotals, FightReport};
 pub(crate) use spell_mod::{ModId, ModKind};
 
@@ -79,6 +80,9 @@ pub(crate) trait Agent: Sized {
     fn cast_time(_fight: &Fight<Self>, _spell: SpellId, _behavior: Self::Spell) -> Option<i64> {
         None
     }
+    /// A class wrapper that runs before a melee auto attack's `ApplyEffects`, as Go classes
+    /// wrap `MHConfig().ApplyEffects`.
+    fn before_melee_auto(_fight: &mut Fight<Self>, _spell: SpellId, _hand: melee::Hand) {}
     /// Go `MajorCooldown.ShouldActivate` for class cooldowns.
     fn should_activate(_fight: &Fight<Self>, _spell: SpellId, _behavior: Self::Spell) -> bool {
         true

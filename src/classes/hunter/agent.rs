@@ -5,7 +5,12 @@ use std::rc::Rc;
 
 use crate::{
     contracts::prepared_v2::{Effect, PreparedV2, Spell as ExportedSpell},
-    core::fight::{Agent, AuraRef, DotId, Fight, Side, SpellId, SpellResult},
+    core::{
+        fight::{
+            action_string, melee::Hand, Agent, AuraRef, DotId, Fight, Side, SpellId, SpellResult,
+        },
+        time::{go_string, NS_PER_MILLISECOND},
+    },
 };
 
 use super::spells::{
@@ -298,6 +303,26 @@ impl Agent for HunterAgent {
             HunterSpell::Hawk => SummonHawk::tick(fight, dot),
             _ => {}
         }
+    }
+
+    /// Go hunter.go wraps the main hand auto's `ApplyEffects` with a line for a swing that
+    /// fired later than an uncontested rotation would have.
+    fn before_melee_auto(fight: &mut Fight<Self>, spell: SpellId, hand: Hand) {
+        let delay = fight.autos.mh.pending_swing_delay;
+        if fight.log.is_none()
+            || hand != Hand::Main
+            || fight.spells[spell].id.tag != 1
+            || delay <= NS_PER_MILLISECOND
+        {
+            return;
+        }
+        let line = format!(
+            "{} delayed by {}, was ready at {}",
+            action_string(&fight.spells[spell].id),
+            go_string(delay),
+            go_string(fight.now - delay)
+        );
+        fight.player_log(&line);
     }
 
     fn on_gain(fight: &mut Fight<Self>, _aura: AuraRef, kind: HunterAura) {
