@@ -732,6 +732,8 @@ type Prepared struct {
 	Target        TargetUnit       `json:"target"`
 	Player        Player           `json:"player"`
 	Melee         Melee            `json:"melee"`
+	// The target's swings at the player when the player tanks it.
+	Enemy *Enemy `json:"enemy,omitempty"`
 	Effects       []map[string]any `json:"effects"`
 	Unrepresented []string         `json:"unrepresented"`
 }
@@ -1136,7 +1138,10 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	note(len(request.Raid.GetParties()) != 1 || len(request.Raid.Parties[0].GetPlayers()) != 1, "exactly one player is supported")
 	note(len(request.Encounter.GetTargets()) != 1, "exactly one target is supported")
 	note(request.Encounter.GetUseHealth(), "health-based fights are unsupported")
-	note(len(request.Raid.GetTanks()) != 0, "tank assignments are unsupported")
+	// A tank assignment is supported when it is exactly the one player tanking the one target.
+	tanks := request.Raid.GetTanks()
+	note(len(tanks) > 1 || (len(tanks) == 1 && (tanks[0].Type != proto.UnitReference_Player || tanks[0].Index != 0)),
+		"tank assignments other than the player tanking the target are unsupported")
 
 	simulation := core.NewSim(request, simsignals.CreateSignals())
 	simulation.Reset()
@@ -1149,7 +1154,13 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	note(presims && presimmer.GetPresimOptions(request.Raid.Parties[0].Players[0]) != nil, "agent requires presims")
 	note(request.Raid.Parties[0].Players[0].GetHealingModel() != nil, "healing models are unsupported")
 	// A target only swings when it has a current target, i.e. an assigned tank.
-	note((target.AutoAttacks.AutoSwingMelee || target.AutoAttacks.AutoSwingRanged) && target.CurrentTarget != nil, "target auto attacks are unsupported")
+	note(target.AutoAttacks.AutoSwingRanged && target.CurrentTarget != nil, "target ranged auto attacks are unsupported")
+	note(target.AutoAttacks.AutoSwingMelee && target.CurrentTarget != nil && target.CurrentTarget != &character.Unit,
+		"a target swinging at another unit is unsupported")
+	// health.go trackChanceOfDeath: the player tanks a target that has it as its current target.
+	tanking := target.CurrentTarget == &character.Unit
+	note(tanking && !target.AutoAttacks.AutoSwingMelee, "a tanked target without a melee swing is unsupported")
+	note(target.SecondaryTarget != nil, "a target with a secondary target is unsupported")
 	note(character.ItemSwap.IsEnabled(), "item swapping is unsupported")
 	note(simulation.Encounter.EndFightAtHealth != 0, "health-based fights are unsupported")
 	note(privateField(simulation, "executePhaseCallbacks").Len() != 0, "execute phase callbacks are unsupported")
@@ -1247,8 +1258,10 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	effects = append(effects, commonEffects(character, target, request, &unrepresented)...)
 	effects = append(effects, inertPets...)
 	effects = append(effects, meleeProcEffects(simulation, character, &unrepresented)...)
+	statAuraLabels := []string{}
 	if statAuras := statAurasEffect(request, character, class, agent); statAuras != nil {
 		effects = append(effects, statAuras)
+		statAuraLabels = statAuras["auras"].([]string)
 	}
 	if eureka := eurekaEffect(agent, character); eureka != nil {
 		effects = append(effects, eureka)
@@ -1264,8 +1277,17 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 		{&character.Unit, "player", core.ChanceOfDeathAuraLabel, "acts only when the player takes damage"},
 		{target, "target", "Parry Haste", "acts only on parried attacks"},
 		{&character.Unit, "player", "Parry Haste", "acts only on attacks the player parries, and nothing attacks the player"},
+		{&character.Unit, "player", "Pushback trigger", "acts only on hits taken while hardcasting, which the gate rejects when tanking"},
 	} {
-		if inert.label == core.ChanceOfDeathAuraLabel && playerTakesDamage(character) {
+		if inert.label == core.ChanceOfDeathAuraLabel && playerTakesDamage(character, target) {
+			continue
+		}
+		// attack.go applyParryHaste: a parry pulls the parrying unit's next swing in, which
+		// matters once the target swings at the player.
+		if inert.label == "Parry Haste" && tanking {
+			if inert.unit.GetAura(inert.label) != nil {
+				effects = append(effects, map[string]any{"kind": "parry_haste", "unit": inert.side, "aura": inert.label})
+			}
 			continue
 		}
 		if inert.unit.GetAura(inert.label) != nil {
@@ -1273,7 +1295,7 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 		}
 	}
 	// health.go trackChanceOfDeath: once a spell can hit the player, the listener removes health.
-	if playerTakesDamage(character) && character.GetAura(core.ChanceOfDeathAuraLabel) != nil {
+	if playerTakesDamage(character, target) && character.GetAura(core.ChanceOfDeathAuraLabel) != nil {
 		effects = append(effects, map[string]any{"kind": "chance_of_death", "aura": core.ChanceOfDeathAuraLabel})
 	}
 	effects = append(effects, meleeItemListeners(character)...)
@@ -1322,6 +1344,9 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 		Effects: effects, Unrepresented: unrepresented,
 	}
 	prepared.Melee = exportMelee(character, target, table, &prepared.Unrepresented)
+	if tanking {
+		prepared.Enemy = exportEnemy(request, statAuraLabels, character, target, &prepared.Unrepresented)
+	}
 	// Last: the teardown changes the simulation.
 	prepared.Player.Mana.TeardownMax = teardownMaxMana(simulation, &character.Unit, &prepared.Unrepresented)
 	return prepared

@@ -18,6 +18,7 @@ pub(crate) const OUTCOME_DODGE: u16 = 1 << 6;
 pub(crate) const OUTCOME_GLANCE: u16 = 1 << 7;
 pub(crate) const OUTCOME_PARRY: u16 = 1 << 8;
 pub(crate) const OUTCOME_BLOCK: u16 = 1 << 9;
+pub(crate) const OUTCOME_CRUSH: u16 = 1 << 10;
 /// Go outcome appliers the runtime implements.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Outcome {
@@ -33,8 +34,9 @@ pub(crate) enum Outcome {
     TickPhysicalCrit,
 }
 
-/// Go `OutcomeLanded`; the runtime has no crushing blows.
-pub(crate) const OUTCOME_LANDED: u16 = OUTCOME_HIT | OUTCOME_CRIT | OUTCOME_GLANCE | OUTCOME_BLOCK;
+/// Go `OutcomeLanded`.
+pub(crate) const OUTCOME_LANDED: u16 =
+    OUTCOME_HIT | OUTCOME_CRIT | OUTCOME_CRUSH | OUTCOME_GLANCE | OUTCOME_BLOCK;
 
 /// Go `SpellResult`, carried by value until its damage is dealt.
 #[derive(Clone, Copy, Debug)]
@@ -81,13 +83,15 @@ impl SpellResult {
             format!("Crit{partial}")
         } else if self.outcome & OUTCOME_HIT != 0 {
             format!("Hit{partial}")
+        } else if self.outcome & OUTCOME_CRUSH != 0 {
+            "Crush".into()
         } else {
             "Empty".into()
         }
     }
 
     /// Go `SpellResult.DamageString`.
-    fn damage_string(&self) -> String {
+    pub(crate) fn damage_string(&self) -> String {
         if self.landed() {
             format!("{} for {:.3} damage", self.outcome_string(), self.damage)
         } else {

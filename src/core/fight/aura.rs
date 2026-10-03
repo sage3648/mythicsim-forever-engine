@@ -29,6 +29,8 @@ pub(crate) enum AuraBehavior<K> {
     Inert,
     /// Go health.go `trackChanceOfDeath`'s listener on hits the player takes.
     ChanceOfDeath,
+    /// Go attack.go `applyParryHaste`: a parry pulls the unit's next main hand swing in.
+    ParryHaste,
     /// Go buffs/paladin.go `AttachJudgementOfWisdomMana`.
     JudgementOfWisdom {
         chance: f64,
@@ -683,6 +685,7 @@ impl<A: Agent> Fight<A> {
                     AuraBehavior::ChanceOfDeath if !dealt && side == Side::Player => {
                         self.chance_of_death_hit_taken(result)
                     }
+                    AuraBehavior::ParryHaste if !dealt => self.parry_haste(side, result),
                     _ => {}
                 }
             }
