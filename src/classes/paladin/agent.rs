@@ -111,7 +111,7 @@ impl PaladinAgent {
             }
             "consecration" if spell.dot.is_some() => {
                 effects.iter().find_map(|effect| match effect {
-                    Effect::Consecration { ranks } => ranks
+                    Effect::Consecration { ranks, .. } => ranks
                         .iter()
                         .position(|rank| rank.spell_id == id.spell_id)
                         .map(PaladinSpell::Consecration),
@@ -203,7 +203,7 @@ impl PaladinAgent {
                     fight.agent.holy_strike =
                         ranks.iter().map(|rank| rank.weapon_percent).collect();
                 }
-                Effect::Consecration { ranks } => fight.agent.consecration = ranks.clone(),
+                Effect::Consecration { ranks, .. } => fight.agent.consecration = ranks.clone(),
                 Effect::Vengeance {
                     aura,
                     per_stack,

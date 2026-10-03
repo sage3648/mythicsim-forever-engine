@@ -210,6 +210,13 @@ pub(crate) enum SpellBehavior<S> {
         min: f64,
         max: f64,
     },
+    /// A magic hit on a client damage effect's roll, which draws only with a variance, as an
+    /// item proc built from client rows casts.
+    EffectRoll {
+        average: f64,
+        variance: f64,
+        can_crit: bool,
+    },
 }
 
 /// Go spell flags used by the runtime, parsed from exported names.
@@ -514,6 +521,17 @@ pub(crate) struct Windfury {
     pub(crate) proc_aura: AuraRef,
     pub(crate) spend_spells: Vec<bool>,
     pub(crate) extra: SpellId,
+}
+
+/// Go common/shared/shared_utils.go `applySpellDataDamageProc`: an item proc that casts a
+/// single target magic hit at once on the unit hit.
+#[derive(Clone, Debug)]
+pub(crate) struct DamageProc {
+    pub(crate) trigger_spells: Vec<bool>,
+    pub(crate) landed_only: bool,
+    pub(crate) require_damage: bool,
+    pub(crate) chance: f64,
+    pub(crate) spell: SpellId,
 }
 
 /// Go core/consumes.go `registerDragonbreathChili`.
@@ -836,6 +854,8 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) windfury: Option<Windfury>,
     /// Dragonbreath Chili, when the character ate it.
     pub(crate) chili: Option<DragonbreathChili>,
+    /// Item damage procs built from client rows, by their aura's position.
+    pub(crate) damage_procs: Vec<DamageProc>,
     /// The player's stats for each combination of active stat auras, by bit mask.
     pub(crate) stat_combos: Vec<Powers>,
     /// The active stat auras.
@@ -1149,6 +1169,17 @@ impl<A: Agent> Fight<A> {
                                 max: *roll_max,
                             })
                         }
+                        Effect::SpellDataDamageProc {
+                            spell,
+                            average,
+                            variance,
+                            can_crit,
+                            ..
+                        } if *spell == spells.len() => Some(SpellBehavior::EffectRoll {
+                            average: *average,
+                            variance: *variance,
+                            can_crit: *can_crit,
+                        }),
                         Effect::TouchOfTheGrave {
                             drain_spell_id,
                             health_fraction,
@@ -1534,6 +1565,18 @@ impl<A: Agent> Fight<A> {
                     })
                 {
                     AuraBehavior::DragonbreathChili
+                } else if let Some(proc) = (side == Side::Player)
+                    .then(|| {
+                        effects
+                            .iter()
+                            .filter(|effect| matches!(effect, Effect::SpellDataDamageProc { .. }))
+                            .position(|effect| {
+                                matches!(effect, Effect::SpellDataDamageProc { trigger_aura, .. } if *trigger_aura == exported.label)
+                            })
+                    })
+                    .flatten()
+                {
+                    AuraBehavior::SpellDataDamageProc(proc)
                 } else if effects.iter().any(|effect| {
                     matches!(effect, Effect::InertListener { unit: u, aura, .. } if u == unit && *aura == exported.label)
                 }) {
@@ -1682,6 +1725,7 @@ impl<A: Agent> Fight<A> {
             crusader: None,
             windfury: None,
             chili: None,
+            damage_procs: Vec::new(),
             eureka: None,
             pets: pet::inert_pets(effects),
             totals: metrics::Totals::default(),
@@ -1881,6 +1925,31 @@ impl<A: Agent> Fight<A> {
                     proc_aura: fight.player_aura(proc_aura)?,
                     spend_spells: mask(spend_spells),
                     extra: *extra_attack_spell,
+                });
+            }
+        }
+        for effect in effects {
+            if let Effect::SpellDataDamageProc {
+                trigger_spells,
+                landed_only,
+                require_damage,
+                proc_chance,
+                spell,
+                ..
+            } = effect
+            {
+                let mut mask = vec![false; fight.spells.len()];
+                for &trigger in trigger_spells {
+                    if let Some(slot) = mask.get_mut(trigger) {
+                        *slot = true;
+                    }
+                }
+                fight.damage_procs.push(DamageProc {
+                    trigger_spells: mask,
+                    landed_only: *landed_only,
+                    require_damage: *require_damage,
+                    chance: *proc_chance,
+                    spell: *spell,
                 });
             }
         }
