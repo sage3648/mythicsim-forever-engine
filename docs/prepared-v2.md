@@ -196,6 +196,14 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `blade_flurry`, `adrenaline_rush` | sim/rogue/talents_combat.go | Blade Flurry's attack speed multiplier; Adrenaline Rush's energy regeneration multiplier and the energy at or below which it fires as a major cooldown, a Go literal |
 | `rogue_finisher` | sim/rogue/rogue.go | Relentless Strikes' chance a combo point and energy, Go literals, and Ruthlessness's chance |
 | `instant_poison`, `deadly_poison` | sim/rogue/poisons.go | The imbued hands, the chance raised by Improved Poisons, Instant Poison's damage range and Deadly Poison's tick, Go literals |
+| `stealth` | sim/rogue/stealth.go, vanish.go | The Stealth aura and spells; every strike breaks Stealth and resumes the auto attacks, and Vanish stops them |
+| `ambush` | sim/rogue/ambush.go | The base, the main hand dagger and Cutthroat's aura |
+| `rupture` | sim/rogue/rupture.go | The tick, its step a combo point, the attack power share a point and Hemorrhage's multiplier, Go literals, and the tick outcome |
+| `mutilate` | sim/rogue/talents_assassination.go | The flat damage, weapon share, combo points and poisoned bonus, and whether both hands hold daggers |
+| `cold_blood` | sim/rogue/talents_assassination.go | The crit bonus and the spells it names |
+| `premeditation`, `preparation` | sim/rogue/talents_subtlety.go | Premeditation's combo points; the cooldowns Preparation resets |
+| `rogue_proc` | sim/rogue/talents_assassination.go, talents_subtlety.go | Seal Fate, Initiative, Cutthroat and Thousand Cuts: the spells each trigger hears, its outcome, chance and handler |
+| `thousand_cuts` | sim/rogue/talents_subtlety.go | The flat cost cut a stack and the spells that take and spend it |
 | `aimed_shot`, `sniper_shot`, `multi_shot` | sim/hunter/aimed_shot.go, sniper_shot.go, multi_shot.go | A normalized ranged weapon shot plus the rank's flat bonus from client data, none for Multi-Shot, on the ranged hit and crit table after travel; the cast time divides by the ranged haste multiplier |
 | `serpent_sting` | sim/hunter/serpent_sting.go | The tick base from client data, the share of ranged attack power each tick adds, a Go literal, and the tick outcome spelldata `TickOutcome` picks; a ranged hit roll without a hit count, then the dot after travel |
 | `aspect_of_the_hawk` | sim/hunter/aspects.go | The aura, whose ranged attack power is a stat aura, and with Deadly Aspects the Quick Shots aura, its ranged haste multiplier and the chance each ranged auto rolls |
@@ -357,7 +365,8 @@ production Shadow Priest request at application revision 18bbcd47; the
 `shadow-priest-*` cases change its rotation to reach a channel without `allowRecast`, a
 channel without an interrupt condition and a strict sequence that gives up control.
 `production-smite-priest` is the production Smite Priest hybrid request.
-`production-combat-rogue` is the production Combat Rogue request, with the Goblin Sapper
+`production-assassination-rogue` and `production-subtlety-rogue` are the production
+Assassination and Subtlety Rogue requests. `production-combat-rogue` is the production Combat Rogue request, with the Goblin Sapper
 Charge hitting the player, and `combat-rogue-orc-shatter-curse` runs it as an Orc whose
 Shatter Curse is up when the sapper goes off.
 `production-marksmanship-hunter` is the production Marksmanship Hunter request, the first

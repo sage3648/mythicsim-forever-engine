@@ -141,6 +141,18 @@ Sapper Charge, whose hit on the player removes health through Chance of Death.
 [in melee range](validation/2026-10-04-combat-rogue-melee-sweep.json) and
 [across every Rogue race](validation/2026-10-04-combat-rogue-race-sweep.json), match Go
 on all 72 variants.
+
+The production Assassination and Subtlety Rogues match as well. Assassination, at 564.460
+DPS, casts Mutilate's two hits with their poisoned bonus, Seal Fate and Cold Blood.
+Subtlety, at 540.676 DPS, opens from a prepull Stealth with Premeditation and Ambush,
+breaks Stealth to resume its swings, Vanishes back into Stealth for another Ambush,
+refreshes Vanish with Preparation, and adds Initiative, Cutthroat and a Rupture bleed whose
+ticks stack Thousand Cuts. Sweeps of each in melee range and across every Rogue race
+([Assassination](validation/2026-10-04-assassination-rogue-sweep.json),
+[its races](validation/2026-10-04-assassination-rogue-race-sweep.json),
+[Subtlety](validation/2026-10-04-subtlety-rogue-sweep.json),
+[its races](validation/2026-10-04-subtlety-rogue-race-sweep.json)) match Go on all 96
+variants.
 The production Retribution Paladin build is the first melee build: a Human with a
 two-handed weapon twisting Seal of Command and Seal of Righteousness through Twist of
 Light's Echoes, Judgement, Holy Strike, Hammer of Wrath in the execute phase, Consecration,
