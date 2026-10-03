@@ -575,6 +575,94 @@ type Reference struct {
 	Exporter       string `json:"exporter"`
 }
 
+type Weapon struct {
+	BaseDamageMin        float64 `json:"base_damage_min"`
+	BaseDamageMax        float64 `json:"base_damage_max"`
+	AttackPowerPerDPS    float64 `json:"attack_power_per_dps"`
+	SwingSpeed           float64 `json:"swing_speed"`
+	NormalizedSwingSpeed float64 `json:"normalized_swing_speed"`
+	School               uint8   `json:"school"`
+	MinRange             float64 `json:"min_range"`
+	MaxRange             float64 `json:"max_range"`
+}
+
+func exportWeapon(weapon *core.Weapon) Weapon {
+	return Weapon{BaseDamageMin: weapon.BaseDamageMin, BaseDamageMax: weapon.BaseDamageMax,
+		AttackPowerPerDPS: weapon.AttackPowerPerDPS, SwingSpeed: weapon.SwingSpeed,
+		NormalizedSwingSpeed: weapon.NormalizedSwingSpeed, School: uint8(weapon.SpellSchool),
+		MinRange: weapon.MinRange, MaxRange: weapon.MaxRange}
+}
+
+// The player's weapon attacks and the physical attack table against the target. Every value
+// the physical outcome rolls read is static in scope, so it is exported resolved.
+type Melee struct {
+	AutoSwingMelee  bool   `json:"auto_swing_melee"`
+	AutoSwingRanged bool   `json:"auto_swing_ranged"`
+	DualWielding    bool   `json:"dual_wielding"`
+	MainHand        Weapon `json:"main_hand"`
+	OffHand         Weapon `json:"off_hand"`
+	Ranged          Weapon `json:"ranged"`
+
+	BaseMissChance       float64 `json:"base_miss_chance"`
+	BaseGlanceChance     float64 `json:"base_glance_chance"`
+	GlanceMultiplier     float64 `json:"glance_multiplier"`
+	GlanceSpread         float64 `json:"glance_spread"`
+	HitSuppression       float64 `json:"hit_suppression"`
+	MeleeCritSuppression float64 `json:"melee_crit_suppression"`
+	IgnoreArmor          bool    `json:"ignore_armor"`
+	ArmorIgnoreFactor    float64 `json:"armor_ignore_factor"`
+
+	InFrontOfTarget       bool    `json:"in_front_of_target"`
+	AttackSpeedMultiplier float64 `json:"attack_speed_multiplier"`
+	MeleeSpeedMultiplier  float64 `json:"melee_speed_multiplier"`
+	DodgeReduction        float64 `json:"dodge_reduction"`
+	DisableDWMissPenalty  bool    `json:"disable_dw_miss_penalty"`
+
+	// The defender's chances before the attacker's expertise: base pseudo stat, table base
+	// and rating, as GetTotalDodgeChanceAsDefender and its siblings add them.
+	DefenderDodge                 float64 `json:"defender_dodge"`
+	DefenderParry                 float64 `json:"defender_parry"`
+	DefenderBlock                 float64 `json:"defender_block"`
+	DefenderArmor                 float64 `json:"defender_armor"`
+	DefenderBlockReduction        float64 `json:"defender_block_reduction"`
+	DefenderBonusAttackPower      float64 `json:"defender_bonus_attack_power"`
+	DefenderBonusPhysicalTaken    float64 `json:"defender_bonus_physical_damage_taken"`
+	DefenderReducedPhysicalHitPct float64 `json:"defender_reduced_physical_hit_taken"`
+}
+
+func exportMelee(character *core.Character, target *core.Unit, table *core.AttackTable, unrepresented *[]string) Melee {
+	aa := &character.AutoAttacks
+	mh := privateField(aa, "mh")
+	if aa.AutoSwingMelee && !mh.FieldByName("replaceSwing").IsNil() {
+		*unrepresented = append(*unrepresented, "main hand swings can be replaced")
+	}
+	if aa.AutoSwingRanged {
+		*unrepresented = append(*unrepresented, "ranged auto attacks are unsupported")
+	}
+	if len(character.OnMeleeAttackSpeedChanged) != 0 {
+		*unrepresented = append(*unrepresented, "melee attack speed listeners are unsupported")
+	}
+	pseudo := &character.PseudoStats
+	defender := &target.PseudoStats
+	return Melee{
+		AutoSwingMelee: aa.AutoSwingMelee, AutoSwingRanged: aa.AutoSwingRanged, DualWielding: aa.IsDualWielding,
+		MainHand: exportWeapon(aa.MH()), OffHand: exportWeapon(aa.OH()), Ranged: exportWeapon(aa.Ranged()),
+		BaseMissChance: table.BaseMissChance, BaseGlanceChance: table.BaseGlanceChance,
+		GlanceMultiplier: table.GlanceMultiplier, GlanceSpread: table.GlanceSpread,
+		HitSuppression: table.HitSuppression, MeleeCritSuppression: table.MeleeCritSuppression,
+		IgnoreArmor: table.IgnoreArmor, ArmorIgnoreFactor: table.ArmorIgnoreFactor,
+		InFrontOfTarget: pseudo.InFrontOfTarget, AttackSpeedMultiplier: pseudo.AttackSpeedMultiplier,
+		MeleeSpeedMultiplier: pseudo.MeleeSpeedMultiplier, DodgeReduction: pseudo.DodgeReduction,
+		DisableDWMissPenalty: pseudo.DisableDWMissPenalty,
+		DefenderDodge:        defender.BaseDodgeChance + table.BaseDodgeChance + target.GetDodgeFromRating(),
+		DefenderParry:        defender.BaseParryChance + table.BaseParryChance + target.GetParryFromRating(),
+		DefenderBlock:        defender.BaseBlockChance + table.BaseBlockChance + target.GetBlockFromRating(),
+		DefenderArmor:        target.Armor(), DefenderBlockReduction: target.BlockDamageReduction(),
+		DefenderBonusAttackPower: defender.BonusAttackPower, DefenderBonusPhysicalTaken: defender.BonusPhysicalDamageTaken,
+		DefenderReducedPhysicalHitPct: defender.ReducedPhysicalHitTakenChance,
+	}
+}
+
 type Prepared struct {
 	SchemaVersion int              `json:"schema_version"`
 	Contract      string           `json:"contract"`
@@ -585,6 +673,7 @@ type Prepared struct {
 	Encounter     Encounter        `json:"encounter"`
 	Target        TargetUnit       `json:"target"`
 	Player        Player           `json:"player"`
+	Melee         Melee            `json:"melee"`
 	Effects       []map[string]any `json:"effects"`
 	Unrepresented []string         `json:"unrepresented"`
 }
@@ -724,6 +813,20 @@ func activeStats(request *proto.RaidSimRequest, label string) map[string]float64
 	return changed
 }
 
+// The target's armor with the named aura active at the given stacks, from a separate reset
+// simulation so the exported one is untouched.
+func targetArmorWithStacks(request *proto.RaidSimRequest, label string, stacks int32) float64 {
+	simulation := core.NewSim(request, simsignals.CreateSignals())
+	simulation.Reset()
+	target := simulation.Encounter.ActiveTargetUnits[0]
+	if stacks > 0 {
+		aura := target.GetAura(label)
+		aura.Activate(simulation)
+		aura.SetStacks(simulation, stacks)
+	}
+	return target.Armor()
+}
+
 func commonEffects(character *core.Character, target *core.Unit, request *proto.RaidSimRequest, unrepresented *[]string) []map[string]any {
 	effects := []map[string]any{}
 	for _, aura := range target.GetAuras() {
@@ -771,6 +874,19 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 			"active_stats": activeStats(request, aura.Label),
 			"gain_log":     fmt.Sprintf("Gained %s from %s.", buffs.FlatString(), aura.ActionID),
 			"expire_log":   fmt.Sprintf("Lost %s from fading %s.", buffs.FlatString(), aura.ActionID),
+		})
+	}
+	// buffs/drivers.go driveSunderArmor: the raid's Sunder Armor ramps to its maximum stacks, one a
+	// default GCD from the pull, Go literals. Target armor at each stack count is read from
+	// separate reset simulations, since the stacks act through exclusive armor effects.
+	if aura := target.GetAura("Sunder Armor (External)"); aura != nil {
+		armor := []float64{}
+		for stacks := int32(0); stacks <= aura.MaxStacks; stacks++ {
+			armor = append(armor, targetArmorWithStacks(request, aura.Label, stacks))
+		}
+		effects = append(effects, map[string]any{
+			"kind": "sunder_armor_ramp", "aura": aura.Label, "period_ns": nanos(core.GCDDefault),
+			"ticks": int32(5), "armor_by_stacks": armor,
 		})
 	}
 	// racials.go Orc Shatter Curse: its aura changes only the player's damage taken.
@@ -888,7 +1004,6 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	note(presims && presimmer.GetPresimOptions(request.Raid.Parties[0].Players[0]) != nil, "agent requires presims")
 	note(request.Raid.Parties[0].Players[0].GetHealingModel() != nil, "healing models are unsupported")
 	note(len(character.Pets) != 0, "pets are unsupported")
-	note(character.AutoAttacks.AutoSwingMelee || character.AutoAttacks.AutoSwingRanged, "player auto attacks are unsupported")
 	// A target only swings when it has a current target, i.e. an assigned tank.
 	note((target.AutoAttacks.AutoSwingMelee || target.AutoAttacks.AutoSwingRanged) && target.CurrentTarget != nil, "target auto attacks are unsupported")
 	note(character.ItemSwap.IsEnabled(), "item swapping is unsupported")
@@ -981,6 +1096,7 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	}{
 		{&character.Unit, "player", core.ChanceOfDeathAuraLabel, "acts only when the player takes damage"},
 		{target, "target", "Parry Haste", "acts only on parried attacks"},
+		{&character.Unit, "player", "Parry Haste", "acts only on attacks the player parries, and nothing attacks the player"},
 	} {
 		if inert.unit.GetAura(inert.label) != nil {
 			effects = append(effects, map[string]any{"kind": "inert_listener", "unit": inert.side, "aura": inert.label, "reason": inert.reason})
@@ -1029,6 +1145,7 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 		},
 		Effects: effects, Unrepresented: unrepresented,
 	}
+	prepared.Melee = exportMelee(character, target, table, &prepared.Unrepresented)
 	// Last: the teardown changes the simulation.
 	prepared.Player.Mana.TeardownMax = teardownMaxMana(simulation, &character.Unit, &prepared.Unrepresented)
 	return prepared

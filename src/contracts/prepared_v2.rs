@@ -32,6 +32,7 @@ pub struct PreparedV2 {
     pub encounter: Encounter,
     pub target: Target,
     pub player: Player,
+    pub melee: Melee,
     pub effects: Vec<Effect>,
     /// Request features the exporter could not describe. Must be empty to simulate.
     pub unrepresented: Vec<String>,
@@ -456,6 +457,54 @@ pub struct ManaGem {
     pub mana: f64,
 }
 
+/// A Go `Weapon`.
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct Weapon {
+    pub base_damage_min: f64,
+    pub base_damage_max: f64,
+    pub attack_power_per_dps: f64,
+    pub swing_speed: f64,
+    pub normalized_swing_speed: f64,
+    pub school: u8,
+    pub min_range: f64,
+    pub max_range: f64,
+}
+
+/// The player's weapon attacks and the physical attack table against the target, with the
+/// defender's static chances resolved.
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct Melee {
+    pub auto_swing_melee: bool,
+    pub auto_swing_ranged: bool,
+    pub dual_wielding: bool,
+    pub main_hand: Weapon,
+    pub off_hand: Weapon,
+    pub ranged: Weapon,
+    pub base_miss_chance: f64,
+    pub base_glance_chance: f64,
+    pub glance_multiplier: f64,
+    pub glance_spread: f64,
+    pub hit_suppression: f64,
+    pub melee_crit_suppression: f64,
+    pub ignore_armor: bool,
+    pub armor_ignore_factor: f64,
+    pub in_front_of_target: bool,
+    pub attack_speed_multiplier: f64,
+    pub melee_speed_multiplier: f64,
+    pub dodge_reduction: f64,
+    pub disable_dw_miss_penalty: bool,
+    pub defender_dodge: f64,
+    pub defender_parry: f64,
+    pub defender_block: f64,
+    pub defender_armor: f64,
+    pub defender_block_reduction: f64,
+    pub defender_bonus_attack_power: f64,
+    pub defender_bonus_physical_damage_taken: f64,
+    pub defender_reduced_physical_hit_taken: f64,
+}
+
 /// A spell druid.RegisterSpell registered, by spellbook position, with the forms it may be
 /// cast in.
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -585,6 +634,20 @@ pub enum Effect {
         cast_time_reduction_ns: i64,
         charges_per_wrath: i32,
         duration_ns: i64,
+    },
+    /// The raid's Sunder Armor, ramped one stack a period from the pull; target armor at
+    /// each stack count, as Go computes it.
+    SunderArmorRamp {
+        aura: String,
+        period_ns: i64,
+        ticks: i32,
+        armor_by_stacks: Vec<f64>,
+    },
+    /// Paladin judgement.go: a landed melee strike refreshes the active judgement debuffs.
+    JudgementRefresh {
+        trigger_aura: String,
+        proc_mask: Vec<String>,
+        judgement_auras: Vec<String>,
     },
     /// The Orc racial Shatter Curse: a survival cooldown whose aura lowers the player's
     /// spell damage taken, which has no effect in scope. Go never autocasts it at the
@@ -847,6 +910,8 @@ impl Effect {
             Effect::OmenOfClarity { .. } => "omen_of_clarity",
             Effect::NaturesGrace { .. } => "natures_grace",
             Effect::Eclipse { .. } => "eclipse",
+            Effect::JudgementRefresh { .. } => "judgement_refresh",
+            Effect::SunderArmorRamp { .. } => "sunder_armor_ramp",
             Effect::ShatterCurse { .. } => "shatter_curse",
             Effect::Stoneform { .. } => "stoneform",
             Effect::ReadLeyLine { .. } => "read_ley_line",

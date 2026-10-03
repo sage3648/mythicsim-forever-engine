@@ -634,8 +634,10 @@ impl<A: Agent> Fight<A> {
     pub(crate) fn delayed_proc(&mut self, aura: AuraRef, spell: SpellId, result: SpellResult) {
         match self.aura(aura).behavior.clone() {
             AuraBehavior::JudgementOfWisdom { mana, metrics, .. } => {
-                // Go checks melee or ranged before landing; spells must land.
-                if result.outcome & super::OUTCOME_LANDED == 0 {
+                // Go: melee and ranged hits always pay; spells must land.
+                if !self.spells[spell].melee_or_ranged_proc
+                    && result.outcome & super::OUTCOME_LANDED == 0
+                {
                     return;
                 }
                 self.add_mana(mana, metrics);

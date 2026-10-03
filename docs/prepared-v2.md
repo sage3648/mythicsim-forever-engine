@@ -60,6 +60,7 @@ RNG contract and implemented effects. Tests fail if it disagrees with the engine
 | `encounter` | Base duration, variation and execute proportions, in nanoseconds |
 | `target` | Level, all stats, pseudo stats, every registered aura and whether it has a melee or ranged swing |
 | `player` | Identity, talents, stats, pseudo stats, reaction time, distance, cast speed, mana, attack table, spells, major cooldowns and rotation |
+| `melee` | The player's weapons and auto attack flags, and the physical attack table against the target with the defender's static chances resolved |
 | `effects` | Dynamic behavior and its parameters, one tagged variant per kind |
 | `unrepresented` | Request features the exporter cannot describe |
 
@@ -105,6 +106,8 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `shatter_curse` | sim/core/racials.go | Orc survival cooldown; its damage taken change has no effect in scope |
 | `read_ley_line` | sim/core/racials.go | High Order Skyborne: the cast and Energized's regeneration multiplier |
 | `temporary_stats` | sim/core/major_cooldown.go | Night Elf Elune's Light: every stat its aura changes, computed by Go with it active, and its gain and fade log lines |
+| `sunder_armor_ramp` | sim/core/buffs/drivers.go | The raid's Sunder Armor: its period and tick count, Go literals, and target armor at each stack count read from separate Go simulations |
+| `judgement_refresh` | sim/paladin/judgement.go | The melee proc mask and the judgement debuffs a landed melee strike refreshes |
 | `druid_forms` | sim/druid/druid.go, forms.go | The starting form and the forms each druid spell may be cast in |
 | `moonkin_form` | sim/druid/forms.go | The cast and its aura |
 | `starfire`, `wrath` | sim/druid/starfire.go, wrath.go | Damage rolls on the spells; Wrath lands after travel |
