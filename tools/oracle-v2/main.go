@@ -866,6 +866,11 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 			})
 		}
 	}
+	// buffs/drivers.go driveBattleShout schedules the party shout with its own draws and
+	// changes attack power without a listener, so the gate cannot see it.
+	if hasAura(&character.Unit, "Battle Shout (External)") {
+		*unrepresented = append(*unrepresented, "the party Battle Shout is not exported")
+	}
 	// racials.go applyTouchOfTheGrave: Go literals.
 	if hasAura(&character.Unit, "Touch of the Grave") {
 		chance := 0.1
