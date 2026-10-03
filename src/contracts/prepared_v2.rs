@@ -662,12 +662,92 @@ pub enum Effect {
         period_ns: i64,
         ticks: i32,
         armor_by_stacks: Vec<f64>,
+        /// A stronger permanent member of the aura's exclusive category, such as the raid's
+        /// Expose Armor, blocks every activation, which Go still counts as a proc.
+        #[serde(default)]
+        blocked: bool,
     },
     /// Paladin judgement.go: a landed melee strike refreshes the active judgement debuffs.
     JudgementRefresh {
         trigger_aura: String,
         proc_mask: Vec<String>,
         judgement_auras: Vec<String>,
+    },
+    /// Every Mind Blast rank's direct hit.
+    MindBlast {},
+    /// Every Shadow Word: Death rank's direct hit; Early Demise adds crit in the 20% execute
+    /// phase.
+    ShadowWordDeath {
+        early_demise_crit: f64,
+    },
+    /// Every Shadow Word: Pain rank: a hit roll without a hit count, then a snapshotting dot
+    /// whose ticks roll only a crit.
+    ShadowWordPain {
+        ranks: Vec<FireballRank>,
+    },
+    /// Every Devouring Plague rank: Shadow Word: Pain's shape, each tick healing the priest for
+    /// its damage under the rank's action ID with this tag.
+    DevouringPlague {
+        ranks: Vec<FireballRank>,
+        heal_metrics_tag: i32,
+    },
+    /// Every Mind Flay rank: a binary hit roll, then a channel.
+    MindFlay {
+        ranks: Vec<FireballRank>,
+    },
+    /// Shadowform's cast and aura: Shadow damage and cost modifiers on `school_spells`, a crit
+    /// damage bonus on `crit_spells`, and helpful Holy casts in `cancel_spells` end it.
+    Shadowform {
+        spell_id: i32,
+        aura: String,
+        damage_percent: f64,
+        cost_percent: f64,
+        crit_multiplier: f64,
+        school_spells: Vec<usize>,
+        crit_spells: Vec<usize>,
+        cancel_spells: Vec<usize>,
+    },
+    /// Inner Focus: the next priest spell is free and gains crit; the cooldown restarts when
+    /// the aura ends.
+    InnerFocus {
+        spell_id: i32,
+        aura: String,
+        cost_percent: i32,
+        crit_percent: f64,
+        crit_spells: Vec<usize>,
+        spender_spells: Vec<usize>,
+    },
+    /// Shadow Weaving: landed Shadow spells stack a Shadow damage bonus.
+    ShadowWeaving {
+        trigger_aura: String,
+        aura: String,
+        callbacks: Vec<String>,
+        outcome: Vec<String>,
+        trigger_immediately: bool,
+        proc_chance: f64,
+        trigger_spells: Vec<usize>,
+        damage_per_stack: f64,
+        damage_spells: Vec<usize>,
+    },
+    /// Dark Sacrifice: a self-only periodic mana gain of the client base plus Spirit over a
+    /// divisor, a major cooldown used once the whole gain fits.
+    DarkSacrifice {
+        spell_id: i32,
+        aura: String,
+        tick_base: f64,
+        spirit_divisor: f64,
+        metrics_action_id: ActionId,
+    },
+    /// A registered pet nothing summons: Go resets and dismisses it each fight, logging its
+    /// stats, and reports its zero metrics.
+    InertPet {
+        name: String,
+        label: String,
+        unit_index: i32,
+        metrics_actions: Vec<MetricsAction>,
+        auras: Vec<ActionId>,
+        dismissed_log: String,
+        reason: String,
     },
     /// The Orc racial Shatter Curse: a survival cooldown whose aura lowers the player's
     /// spell damage taken, which has no effect in scope. Go never autocasts it at the
@@ -850,6 +930,86 @@ pub enum Effect {
         aura: String,
         reason: String,
     },
+    /// Every Shadow Bolt rank: a hit after travel.
+    ShadowBolt {},
+    /// Immolate's hit and the snapshot dot on its related spell.
+    Immolate {
+        spell_id: i32,
+        tick_base: f64,
+        tick_can_crit: bool,
+    },
+    /// Corruption's snapshot dot.
+    Corruption {
+        spell_id: i32,
+        tick_base: f64,
+        tick_can_crit: bool,
+    },
+    /// Bane of Agony's ramping snapshot dot: the snapshot pays `ramp_share` of the tick and
+    /// every `ramp_every_ticks` ticks adds that share back.
+    BaneOfAgony {
+        spell_id: i32,
+        tick_base: f64,
+        tick_can_crit: bool,
+        ramp_share: f64,
+        ramp_every_ticks: i32,
+        #[serde(default)]
+        amplify: Option<f64>,
+    },
+    /// Amplify Curse's major cooldown and aura, spent by Bane of Agony.
+    AmplifyCurse {
+        spell_id: i32,
+        aura: String,
+    },
+    /// Curse of the Elements' debuff on the target: flat resistance changes and school
+    /// damage taken multipliers while it is active.
+    CurseOfTheElements {
+        spell_id: i32,
+        aura: String,
+        resistance_delta: BTreeMap<String, f64>,
+        school_damage_taken_multiplier: BTreeMap<String, f64>,
+    },
+    /// Life Tap: (base + Spirit) times the multiplier, as health spent and mana gained.
+    LifeTap {
+        spell_id: i32,
+        base_amount: f64,
+        mana_multiplier: f64,
+    },
+    /// Conflagrate's hit, which consumes Immolate unless Shadow and Flame spares it.
+    Conflagrate {
+        spell_id: i32,
+        keep_immolate_chance: f64,
+        rng_label: String,
+    },
+    /// Shadowburn's instant binary hit.
+    Shadowburn {},
+    /// Searing Pain's hit.
+    SearingPain {},
+    /// Soul Fire's hit after travel.
+    SoulFire {},
+    /// Improved Shadow Bolt: Shadow Bolt crits leave a target debuff that multiplies the
+    /// warlock's shadow damage after the outcome.
+    ImprovedShadowBolt {
+        trigger_aura: String,
+        aura: String,
+        spell_id: i32,
+        multiplier: f64,
+        /// Spellbook positions of the spells the trigger listens to.
+        trigger_spells: Vec<usize>,
+    },
+    /// Shadow and Flame: Conflagrate and Shadowburn hits multiply the warlock's shadow or
+    /// fire damage dealt for a while.
+    ShadowAndFlame {
+        trigger_aura: String,
+        shadow_aura: String,
+        fire_aura: String,
+        shadow_spell_id: i32,
+        fire_spell_id: i32,
+        multiplier: f64,
+        /// Spellbook positions of the spells the trigger listens to.
+        trigger_spells: Vec<usize>,
+        /// The trigger spells that raise shadow damage; the others raise fire damage.
+        shadow_spells: Vec<usize>,
+    },
     /// Every Lightning Bolt rank: an overload may roll when the bolt lands.
     LightningBolt {
         overload_chance: f64,
@@ -930,6 +1090,16 @@ impl Effect {
             Effect::OmenOfClarity { .. } => "omen_of_clarity",
             Effect::NaturesGrace { .. } => "natures_grace",
             Effect::Eclipse { .. } => "eclipse",
+            Effect::MindBlast {} => "mind_blast",
+            Effect::ShadowWordDeath { .. } => "shadow_word_death",
+            Effect::ShadowWordPain { .. } => "shadow_word_pain",
+            Effect::DevouringPlague { .. } => "devouring_plague",
+            Effect::MindFlay { .. } => "mind_flay",
+            Effect::Shadowform { .. } => "shadowform",
+            Effect::InnerFocus { .. } => "inner_focus",
+            Effect::ShadowWeaving { .. } => "shadow_weaving",
+            Effect::DarkSacrifice { .. } => "dark_sacrifice",
+            Effect::InertPet { .. } => "inert_pet",
             Effect::JudgementRefresh { .. } => "judgement_refresh",
             Effect::SunderArmorRamp { .. } => "sunder_armor_ramp",
             Effect::ShatterCurse { .. } => "shatter_curse",
@@ -951,6 +1121,19 @@ impl Effect {
             Effect::ConjuredMana { .. } => "conjured_mana",
             Effect::EnergizeOnUse { .. } => "energize_on_use",
             Effect::InertListener { .. } => "inert_listener",
+            Effect::ShadowBolt {} => "shadow_bolt",
+            Effect::Immolate { .. } => "immolate",
+            Effect::Corruption { .. } => "corruption",
+            Effect::BaneOfAgony { .. } => "bane_of_agony",
+            Effect::AmplifyCurse { .. } => "amplify_curse",
+            Effect::CurseOfTheElements { .. } => "curse_of_the_elements",
+            Effect::LifeTap { .. } => "life_tap",
+            Effect::Conflagrate { .. } => "conflagrate",
+            Effect::Shadowburn {} => "shadowburn",
+            Effect::SearingPain {} => "searing_pain",
+            Effect::SoulFire {} => "soul_fire",
+            Effect::ImprovedShadowBolt { .. } => "improved_shadow_bolt",
+            Effect::ShadowAndFlame { .. } => "shadow_and_flame",
             Effect::LightningBolt { .. } => "lightning_bolt",
             Effect::ChainLightning { .. } => "chain_lightning",
             Effect::FlameShock { .. } => "flame_shock",

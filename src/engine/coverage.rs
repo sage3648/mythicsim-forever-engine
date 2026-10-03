@@ -13,7 +13,10 @@ use crate::{
     classes,
     contracts::prepared_v2::{ActionId, Effect, PreparedV2, Spell},
     core::fight::DIRECT_PROC_MASKS,
-    rotation::{compile_condition, Action, FoundAura, Lookup, MissingAura, Rotation, Value},
+    rotation::{
+        compile_bool_value, compile_condition, Action, FoundAura, Lookup, MissingAura, Rotation,
+        Value,
+    },
 };
 
 /// A class's part of the gate.
@@ -39,6 +42,7 @@ const COMMON_EFFECTS: &[&str] = &[
     "energize_on_use",
     "eureka",
     "inert_listener",
+    "inert_pet",
     "judgement_of_wisdom",
     "potion_mana",
     "read_ley_line",
@@ -50,12 +54,14 @@ const COMMON_EFFECTS: &[&str] = &[
 ];
 
 /// Every class with an implemented gate.
-fn gates() -> [&'static ClassGate; 4] {
+fn gates() -> [&'static ClassGate; 6] {
     [
         &classes::mage::prepared::GATE,
         &classes::druid::prepared::GATE,
         &classes::shaman::prepared::GATE,
         &classes::paladin::prepared::GATE,
+        &classes::warlock::prepared::GATE,
+        &classes::priest::prepared::GATE,
     ]
 }
 
@@ -115,8 +121,12 @@ fn spell_capability(
     prepared: &PreparedV2,
     gate: &ClassGate,
 ) -> Option<&'static str> {
+    // A class may also implement spells Go registers without a class mask.
+    if let Some(kind) = (gate.spell)(spell) {
+        return Some(kind);
+    }
     if spell.class_spell.is_some() {
-        return (gate.spell)(spell);
+        return None;
     }
     common_spell_capability(spell, prepared)
 }
@@ -200,9 +210,15 @@ fn fixed_stat_changes(prepared: &PreparedV2) -> Vec<String> {
 }
 
 /// Go `GetAPLSpell`: the first APL-flagged spell with the action ID, otherwise the first
-/// registered one, as a spellbook position. A missing spell drops the rotation action in Go.
+/// registered one, as a spellbook position. The potion action names the first combat
+/// potion. A missing spell drops the rotation action in Go.
 pub(crate) fn rotation_spell_index(prepared: &PreparedV2, id: &ActionId) -> Option<usize> {
     let spells = &prepared.player.spells;
+    if id.other_id == "OtherActionPotion" {
+        return spells
+            .iter()
+            .position(|spell| spell.has_flag("SpellFlagCombatPotion"));
+    }
     spells
         .iter()
         .position(|spell| spell.action_id.as_ref() == Some(id) && spell.has_flag("SpellFlagAPL"))
@@ -307,15 +323,13 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
         reasons.extend(energy_without_bar(prepared, rotation));
         let mut reachable = Vec::new();
         let mut registered_prepull = 0;
+        // Prepull parsing accepts only casts.
         for prepull in &rotation.prepull {
-            match &prepull.action {
-                Action::CastSpell(id) => {
-                    if let Some(spell) = rotation_spell(prepared, id) {
-                        registered_prepull += 1;
-                        reachable.push(spell);
-                    }
+            if let Action::CastSpell(id) = &prepull.action {
+                if let Some(spell) = rotation_spell(prepared, id) {
+                    registered_prepull += 1;
+                    reachable.push(spell);
                 }
-                Action::AutocastOtherCooldowns => {}
             }
         }
         if registered_prepull != player.prepull_actions {
@@ -331,10 +345,14 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
                 continue;
             }
             match &item.action {
-                Action::CastSpell(id) => reachable.extend(rotation_spell(prepared, id)),
                 Action::AutocastOtherCooldowns => {
                     for cooldown in &player.major_cooldowns {
                         reachable.extend(rotation_spell(prepared, &cooldown.action_id));
+                    }
+                }
+                action => {
+                    for id in action.spells() {
+                        reachable.extend(rotation_spell(prepared, id));
                     }
                 }
             }
@@ -412,9 +430,15 @@ fn energy_without_bar(prepared: &PreparedV2, rotation: &Rotation) -> Vec<String>
 }
 
 fn find_aura(prepared: &PreparedV2, id: &ActionId) -> Option<FoundAura<ActionId>> {
-    prepared
-        .player
-        .auras
+    find_unit_aura(&prepared.player.auras, id)
+}
+
+/// Go `GetAuraByID` on a unit's exported auras.
+fn find_unit_aura(
+    auras: &[crate::contracts::prepared_v2::Aura],
+    id: &ActionId,
+) -> Option<FoundAura<ActionId>> {
+    auras
         .iter()
         .find(|aura| aura.action_id.as_ref() == Some(id))
         .map(|aura| FoundAura {
@@ -428,13 +452,14 @@ fn find_aura(prepared: &PreparedV2, id: &ActionId) -> Option<FoundAura<ActionId>
 /// side effects, but never runs their action.
 fn unreachable_with_one_target(prepared: &PreparedV2, rotation: &Rotation) -> BTreeSet<usize> {
     let aura = |id: &ActionId| find_aura(prepared, id);
+    let target_aura = |id: &ActionId| find_unit_aura(&prepared.target.auras, id);
     let spell = |id: &ActionId| rotation_spell_index(prepared, id);
     let dot = |id: &ActionId| {
-        rotation_spell_index(prepared, id)
-            .filter(|&index| prepared.player.spells[index].dot.is_some())
+        rotation_spell_index(prepared, id).and_then(|index| dot_owner(prepared, index))
     };
     let lookup = Lookup {
         aura: &aura,
+        target_aura: &target_aura,
         spell: &spell,
         dot: &dot,
     };
@@ -459,12 +484,15 @@ fn unknown_aura_conditions(prepared: &PreparedV2, rotation: &Rotation) -> Vec<St
     // Go resolves rotation names on the casting player: `GetAuraByID` finds the first aura
     // with the same action ID, tag included; `GetAPLSpell` and `GetAPLDot` find spells.
     let aura = |id: &ActionId| find_aura(prepared, id);
+    let target_aura = |id: &ActionId| find_unit_aura(&prepared.target.auras, id);
+    let target_known = |id: &ActionId| target_aura(id).is_some();
     let spell = |id: &ActionId| rotation_spell_index(prepared, id);
     let dot = |id: &ActionId| {
         rotation_spell_index(prepared, id).and_then(|index| dot_owner(prepared, index))
     };
     let lookup = Lookup {
         aura: &aura,
+        target_aura: &target_aura,
         spell: &spell,
         dot: &dot,
     };
@@ -472,14 +500,24 @@ fn unknown_aura_conditions(prepared: &PreparedV2, rotation: &Rotation) -> Vec<St
     for item in &rotation.priority_list {
         let pinned = compile_condition(item.condition.as_ref(), &lookup, MissingAura::Dropped);
         let fixed = compile_condition(item.condition.as_ref(), &lookup, MissingAura::Inactive);
-        if pinned.same_meaning(&fixed) {
+        // A channel's interrupt condition compiles the same way; any difference counts.
+        let interrupt = match &item.action {
+            Action::ChannelSpell { interrupt_if, .. } => interrupt_if.as_ref(),
+            _ => None,
+        };
+        let interrupt_same = compile_bool_value(interrupt, &lookup, MissingAura::Dropped)
+            == compile_bool_value(interrupt, &lookup, MissingAura::Inactive);
+        if pinned.same_meaning(&fixed) && interrupt_same {
             continue;
         }
         let mut unknown = Vec::new();
-        if let Some(condition) = &item.condition {
+        for condition in item.condition.iter().chain(interrupt) {
             condition.visit(&mut |value| match value {
                 Value::AuraIsActive(id) if !known(id) => {
                     unknown.push(("auraIsActive", id.to_string()))
+                }
+                Value::TargetAuraIsActive(id) if !target_known(id) => {
+                    unknown.push(("auraIsActive on the target", id.to_string()))
                 }
                 Value::AuraNumStacks(id) if !known(id) => {
                     unknown.push(("auraNumStacks", id.to_string()))

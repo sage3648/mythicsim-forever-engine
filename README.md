@@ -81,10 +81,29 @@ Sweeps of [its variants](validation/2026-10-04-elemental-shaman-sweep.json) and 
 [every Shaman race](validation/2026-10-04-elemental-shaman-race-sweep.json) match on all
 48 variants.
 
+The production Shadow Priest build matches too: an Undead priest with a prepull
+Shadowform and Mind Blast, Shadow Word: Pain, Devouring Plague, Shadow Word: Death with
+Early Demise, Mind Flay channels the rotation interrupts, a strict Inner Focus and Mind
+Blast sequence, Shadow Weaving, Dark Sacrifice and the Shadowfiend pet that nothing
+summons, at 613.319 DPS. [Sweeps](validation/2026-10-04-shadow-priest-sweep.json) of the
+request, also [across races](validation/2026-10-04-shadow-priest-race-sweep.json), match
+Go on every supported variant, and so does every race on the application's
+[Shadow Priest race board](validation/2026-10-04-shadow-priest-race-boards.json),
+including the Dwarf with Stoneform.
+
 The application's published race boards, the requests behind every race's production DPS
 for each supported spec, are a real production corpus: all 28 match the pinned Go engine
 in Rust at 10,000 iterations, and every DPS the production engine published equals the
 pinned result to within 4e-12 ([record](validation/2026-10-04-production-race-boards.json)).
+
+The production Destruction Warlock build matches too: an Undead warlock with the Imp
+sacrificed before the pull, a prepull Life Tap, every Shadow Bolt rank with Improved
+Shadow Bolt's debuff, Immolate, Corruption, the ramping Bane of Agony, Curse of the
+Elements on the target, Conflagrate and Shadowburn with Shadow and Flame, Searing Pain
+and the raid's ramped Sunder Armor, at 510.849 DPS. Its
+[sweep](validation/2026-10-04-destruction-warlock-sweep.json) matches Go on all 24
+variants, and a [race sweep](validation/2026-10-04-warlock-race-sweep.json) drawing
+Human, Gnome with Eureka!, Orc and Undead matches on all 12.
 
 Every race that can be a Mage is supported: Human, Gnome, Undead, Troll with
 Berserking, Orc with Blood Fury and Shatter Curse, and High Order Skyborne with Read

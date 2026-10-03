@@ -119,6 +119,8 @@ pub enum Value {
     NumberTargets,
     AuraIsKnown(ActionId),
     AuraIsActive(ActionId),
+    /// `auraIsActive` with the current target as its source unit.
+    TargetAuraIsActive(ActionId),
     AuraNumStacks(ActionId),
     AuraRemainingTime(ActionId),
     DotIsActive(ActionId),
@@ -126,6 +128,9 @@ pub enum Value {
     SpellIsKnown(ActionId),
     SpellIsReady(ActionId),
     SpellCastTime(ActionId),
+    SpellTimeToReady(ActionId),
+    DotTimeToNextTick(ActionId),
+    GcdIsReady,
 }
 
 impl Value {
@@ -178,15 +183,19 @@ impl Value {
             | Value::Not(_)
             | Value::AuraIsKnown(_)
             | Value::AuraIsActive(_)
+            | Value::TargetAuraIsActive(_)
             | Value::DotIsActive(_)
             | Value::SpellIsKnown(_)
-            | Value::SpellIsReady(_) => ValueType::Bool,
+            | Value::SpellIsReady(_)
+            | Value::GcdIsReady => ValueType::Bool,
             Value::AuraNumStacks(_) | Value::NumberTargets | Value::CurrentComboPoints => {
                 ValueType::Int
             }
             Value::AuraRemainingTime(_)
             | Value::DotRemainingTime(_)
             | Value::SpellCastTime(_)
+            | Value::SpellTimeToReady(_)
+            | Value::DotTimeToNextTick(_)
             | Value::RemainingTime
             | Value::CurrentTime
             | Value::TimeToNextEnergyTick => ValueType::Duration,
@@ -206,6 +215,26 @@ impl Value {
 pub enum Action {
     CastSpell(ActionId),
     AutocastOtherCooldowns,
+    /// Go `APLActionStrictSequence`: casts that run in order once the first is ready.
+    StrictSequence(Vec<ActionId>),
+    /// Go `APLActionChannelSpell`: a channel the rotation may interrupt.
+    ChannelSpell {
+        spell: ActionId,
+        interrupt_if: Option<Value>,
+        allow_recast: bool,
+    },
+}
+
+impl Action {
+    /// The spells the action names, in order, as Go `GetAllActions` visits casts.
+    pub fn spells(&self) -> Vec<&ActionId> {
+        match self {
+            Action::CastSpell(id) => vec![id],
+            Action::AutocastOtherCooldowns => Vec::new(),
+            Action::StrictSequence(ids) => ids.iter().collect(),
+            Action::ChannelSpell { spell, .. } => vec![spell],
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -383,6 +412,8 @@ fn parse_item(item: &Json, position: usize) -> Result<Option<Item>, Vec<String>>
         Ok(("autocastOtherCooldowns", config)) if is_empty(config) => {
             Ok(Action::AutocastOtherCooldowns)
         }
+        Ok(("strictSequence", config)) => parse_strict_sequence(config),
+        Ok(("channelSpell", config)) => parse_channel_spell(config),
         Ok((name, _)) => Err(format!("action {name} is unsupported")),
         Err(err) => Err(err),
     };
@@ -398,6 +429,59 @@ fn parse_item(item: &Json, position: usize) -> Result<Option<Item>, Vec<String>>
             Err(reasons)
         }
     }
+}
+
+/// Go `newActionStrictSequence` for sequences of unconditional casts.
+fn parse_strict_sequence(config: &Json) -> Result<Action, String> {
+    let object = config
+        .as_object()
+        .ok_or("strictSequence must be an object")?;
+    for key in object.keys() {
+        if key != "actions" {
+            return Err(format!("strictSequence field {key} is unsupported"));
+        }
+    }
+    let mut spells = Vec::new();
+    for action in object
+        .get("actions")
+        .and_then(Json::as_array)
+        .into_iter()
+        .flatten()
+    {
+        let action = action
+            .as_object()
+            .ok_or("strictSequence action must be an object")?;
+        match single(action, &["uuid"])? {
+            ("castSpell", cast) => spells.push(parse_cast_spell(cast)?),
+            (name, _) => return Err(format!("strictSequence action {name} is unsupported")),
+        }
+    }
+    Ok(Action::StrictSequence(spells))
+}
+
+/// Go `newActionChannelSpell` for the current target.
+fn parse_channel_spell(config: &Json) -> Result<Action, String> {
+    let object = config.as_object().ok_or("channelSpell must be an object")?;
+    let mut interrupt_if = None;
+    let mut allow_recast = false;
+    for (key, value) in object {
+        match key.as_str() {
+            "spellId" => {}
+            "interruptIf" => {
+                interrupt_if = Some(parse_value(value).map_err(|reasons| reasons.join("; "))?)
+            }
+            "allowRecast" => {
+                allow_recast = value.as_bool().ok_or("allowRecast must be a boolean")?
+            }
+            other => return Err(format!("channelSpell field {other} is unsupported")),
+        }
+    }
+    let spell = parse_action_id(object.get("spellId").ok_or("channelSpell has no spellId")?)?;
+    Ok(Action::ChannelSpell {
+        spell,
+        interrupt_if,
+        allow_recast,
+    })
 }
 
 fn parse_cast_spell(config: &Json) -> Result<ActionId, String> {
@@ -606,7 +690,12 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
             only(&[])?;
             Ok(Value::NumberTargets)
         }
-        "dotIsActive" | "dotRemainingTime" | "spellIsKnown" | "spellIsReady" | "spellCastTime" => {
+        "gcdIsReady" => {
+            only(&[])?;
+            Ok(Value::GcdIsReady)
+        }
+        "dotIsActive" | "dotRemainingTime" | "dotTimeToNextTick" | "spellIsKnown"
+        | "spellIsReady" | "spellCastTime" | "spellTimeToReady" => {
             // A target unit other than the current target is not modeled.
             only(&["spellId"])?;
             let id = config
@@ -616,8 +705,10 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
             Ok(match name {
                 "dotIsActive" => Value::DotIsActive(id),
                 "dotRemainingTime" => Value::DotRemainingTime(id),
+                "dotTimeToNextTick" => Value::DotTimeToNextTick(id),
                 "spellIsKnown" => Value::SpellIsKnown(id),
                 "spellIsReady" => Value::SpellIsReady(id),
+                "spellTimeToReady" => Value::SpellTimeToReady(id),
                 _ => Value::SpellCastTime(id),
             })
         }
@@ -628,8 +719,29 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
                 .ok_or_else(|| vec!["not has no val".to_string()])?;
             Ok(Value::Not(Box::new(parse_value(value)?)))
         }
+        "auraIsActive" if fields.is_some_and(|fields| fields.contains_key("sourceUnit")) => {
+            // Go GetSourceUnit: the player itself, or the current target, of the one in scope.
+            only(&["auraId", "sourceUnit"])?;
+            let id = config
+                .get("auraId")
+                .ok_or_else(|| vec![format!("{name} has no auraId")])
+                .and_then(|id| parse_action_id(id).map_err(|err| vec![err]))?;
+            let source = config.get("sourceUnit").and_then(Json::as_object);
+            let kind = source.and_then(|unit| match unit.keys().find(|key| *key != "type") {
+                Some(_) => None,
+                None => unit.get("type").and_then(Json::as_str),
+            });
+            match kind {
+                Some("Self") => Ok(Value::AuraIsActive(id)),
+                Some("CurrentTarget") => Ok(Value::TargetAuraIsActive(id)),
+                _ => Err(vec![format!(
+                    "{name} sourceUnit {} is unsupported",
+                    config.get("sourceUnit").cloned().unwrap_or_default()
+                )]),
+            }
+        }
         "auraIsKnown" | "auraIsActive" | "auraNumStacks" | "auraRemainingTime" => {
-            // sourceUnit and includeReactionTime are not modeled.
+            // sourceUnit, except on auraIsActive, and includeReactionTime are not modeled.
             only(&["auraId"])?;
             let id = config
                 .get("auraId")
@@ -883,6 +995,9 @@ pub enum Compiled<R> {
     DotRemainingTime(usize),
     SpellIsReady(usize),
     SpellCastTime(usize),
+    SpellTimeToReady(usize),
+    DotTimeToNextTick(usize),
+    GcdIsReady,
     /// Go `APLValueCoerced`.
     Coerced {
         to: ValueType,
@@ -900,13 +1015,16 @@ impl<R> Compiled<R> {
             | Compiled::Not(_)
             | Compiled::AuraIsActive(_)
             | Compiled::DotIsActive(_)
-            | Compiled::SpellIsReady(_) => ValueType::Bool,
+            | Compiled::SpellIsReady(_)
+            | Compiled::GcdIsReady => ValueType::Bool,
             Compiled::AuraNumStacks(_) | Compiled::NumberTargets | Compiled::CurrentComboPoints => {
                 ValueType::Int
             }
             Compiled::AuraRemainingTime(_)
             | Compiled::DotRemainingTime(_)
             | Compiled::SpellCastTime(_)
+            | Compiled::SpellTimeToReady(_)
+            | Compiled::DotTimeToNextTick(_)
             | Compiled::RemainingTime
             | Compiled::CurrentTime
             | Compiled::TimeToNextEnergyTick => ValueType::Duration,
@@ -1059,6 +1177,8 @@ pub struct FoundAura<R> {
 pub struct Lookup<'a, R> {
     /// Go `GetAuraByID`: the aura, or `None` when the character lacks it.
     pub aura: &'a dyn Fn(&ActionId) -> Option<FoundAura<R>>,
+    /// Go `GetAuraByID` on the current target.
+    pub target_aura: &'a dyn Fn(&ActionId) -> Option<FoundAura<R>>,
     /// Go `GetAPLSpell`: the spellbook position of the spell, or `None` when unknown.
     pub spell: &'a dyn Fn(&ActionId) -> Option<usize>,
     /// Go `GetAPLDot`: the spellbook position of the spell when it has a dot on the target.
@@ -1159,8 +1279,16 @@ fn compile_value<R>(
         Value::SpellIsKnown(id) => bool_const((lookup.spell)(id).is_some()),
         Value::SpellIsReady(id) => Compiled::SpellIsReady((lookup.spell)(id)?),
         Value::SpellCastTime(id) => Compiled::SpellCastTime((lookup.spell)(id)?),
+        Value::SpellTimeToReady(id) => Compiled::SpellTimeToReady((lookup.spell)(id)?),
+        Value::DotTimeToNextTick(id) => Compiled::DotTimeToNextTick((lookup.dot)(id)?),
+        Value::GcdIsReady => Compiled::GcdIsReady,
         Value::AuraIsKnown(id) => bool_const(aura(id).is_some()),
         Value::AuraIsActive(id) => match (aura(id), missing) {
+            (Some(found), _) => Compiled::AuraIsActive(found.aura),
+            (None, MissingAura::Dropped) => return None,
+            (None, MissingAura::Inactive) => bool_const(false),
+        },
+        Value::TargetAuraIsActive(id) => match ((lookup.target_aura)(id), missing) {
             (Some(found), _) => Compiled::AuraIsActive(found.aura),
             (None, MissingAura::Dropped) => return None,
             (None, MissingAura::Inactive) => bool_const(false),
@@ -1232,6 +1360,18 @@ fn compile_value<R>(
     })
 }
 
+/// Go `coerceTo(newAPLValue(value), Bool)`, as `newActionChannelSpell` compiles its
+/// interrupt condition: `None` when the value has none.
+pub fn compile_bool_value<R>(
+    value: Option<&Value>,
+    lookup: &Lookup<R>,
+    missing: MissingAura,
+) -> Option<Compiled<R>> {
+    value
+        .and_then(|value| compile_value(value, lookup, missing))
+        .map(|value| value.coerce(ValueType::Bool))
+}
+
 /// Go `newAPLAction`'s condition handling for one action.
 pub fn compile_condition<R>(
     condition: Option<&Value>,
@@ -1262,6 +1402,7 @@ mod tests {
     fn only_auras<'a, R>(aura: &'a dyn Fn(&ActionId) -> Option<FoundAura<R>>) -> Lookup<'a, R> {
         Lookup {
             aura,
+            target_aura: aura,
             spell: &no_spell,
             dot: &no_spell,
         }
@@ -1298,6 +1439,44 @@ mod tests {
         );
         assert_eq!(parse_const("TRUE").unwrap().value_type, ValueType::Bool);
         assert!(parse_const("hello").is_err());
+    }
+
+    #[test]
+    fn aura_is_active_reads_the_player_or_the_current_target() {
+        let item = |source: serde_json::Value| {
+            serde_json::json!({"action": {"castSpell": {"spellId": {"spellId": 1}},
+                "condition": {"auraIsActive": {"auraId": {"spellId": 2}, "sourceUnit": source}}}})
+        };
+        let rotation = serde_json::json!({"type": "TypeAPL", "priorityList": [
+            item(serde_json::json!({"type": "Self"})),
+            item(serde_json::json!({"type": "CurrentTarget"})),
+        ]});
+        let parsed = parse(&rotation).unwrap();
+        let id = ActionId {
+            spell_id: 2,
+            ..ActionId::default()
+        };
+        assert_eq!(
+            parsed.priority_list[0].condition,
+            Some(Value::AuraIsActive(id.clone()))
+        );
+        assert_eq!(
+            parsed.priority_list[1].condition,
+            Some(Value::TargetAuraIsActive(id))
+        );
+        for source in [
+            serde_json::json!({"type": "Target", "index": 1}),
+            serde_json::json!({"type": "NextTarget"}),
+        ] {
+            let rotation =
+                serde_json::json!({"type": "TypeAPL", "priorityList": [item(source.clone())]});
+            assert_eq!(
+                parse(&rotation).unwrap_err(),
+                [format!(
+                    "rotation item 1: auraIsActive sourceUnit {source} is unsupported"
+                )]
+            );
+        }
     }
 
     #[test]
@@ -1342,7 +1521,7 @@ mod tests {
             "type": "TypeAPL",
             "priorityList": [
                 {"action": {"castSpell": {"spellId": {"spellId": 25304}},
-                            "condition": {"spellTimeToReady": {"spellId": {"spellId": 1}}}}},
+                            "condition": {"spellNumCharges": {"spellId": {"spellId": 1}}}}},
                 {"action": {"wait": {"duration": {"const": {"val": "1s"}}}}}
             ]
         });
@@ -1350,7 +1529,7 @@ mod tests {
         assert_eq!(
             reasons,
             [
-                "rotation item 1: value spellTimeToReady is unsupported",
+                "rotation item 1: value spellNumCharges is unsupported",
                 "rotation item 2: action wait is unsupported"
             ]
         );
@@ -1550,5 +1729,57 @@ mod tests {
         assert_eq!(pinned, CompiledCondition::Always);
         // 0 <= 4s holds, so the fix acts as the pinned reading here.
         assert!(pinned.same_meaning(&fixed));
+    }
+
+    #[test]
+    fn sequences_and_channels_parse_with_their_values() {
+        let rotation = parse(&serde_json::json!({
+            "type": "TypeAPL",
+            "priorityList": [
+                {"action": {"strictSequence": {"actions": [
+                    {"castSpell": {"spellId": {"spellId": 14751}}},
+                    {"castSpell": {"spellId": {"spellId": 10947, "rank": 9}}},
+                ]}}},
+                {"action": {"channelSpell": {
+                    "spellId": {"spellId": 18807},
+                    "interruptIf": {"and": {"vals": [
+                        {"cmp": {"op": "OpLe",
+                            "lhs": {"spellTimeToReady": {"spellId": {"spellId": 10947}}},
+                            "rhs": {"const": {"val": "0s"}}}},
+                        {"cmp": {"op": "OpLe",
+                            "lhs": {"dotTimeToNextTick": {"spellId": {"spellId": 18807}}},
+                            "rhs": {"const": {"val": "0.05s"}}}},
+                        {"gcdIsReady": {}},
+                    ]}},
+                    "allowRecast": true,
+                }}},
+            ],
+        }))
+        .unwrap();
+        assert_eq!(
+            rotation.priority_list[0].action,
+            Action::StrictSequence(vec![ActionId::spell(14751), ActionId::spell(10947)])
+        );
+        let Action::ChannelSpell {
+            spell,
+            interrupt_if: Some(Value::And(terms)),
+            allow_recast: true,
+        } = &rotation.priority_list[1].action
+        else {
+            panic!("expected an interruptible channel");
+        };
+        assert_eq!(*spell, ActionId::spell(18807));
+        assert_eq!(terms[2], Value::GcdIsReady);
+        let types: Vec<ValueType> = terms
+            .iter()
+            .map(|term| match term {
+                Value::Compare { lhs, .. } => lhs.value_type(),
+                other => other.value_type(),
+            })
+            .collect();
+        assert_eq!(
+            types,
+            [ValueType::Duration, ValueType::Duration, ValueType::Bool]
+        );
     }
 }

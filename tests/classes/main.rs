@@ -1,4 +1,6 @@
 //! Class and spec integration tests.
 
 mod mage;
+mod priest;
 mod shaman;
+mod warlock;

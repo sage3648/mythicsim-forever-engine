@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "9fc202e324204b40ed2bce324f523e3d3715965d219fb87d8b9a90142dbd8546",
+  "exporter_sha256": "ee27f42dbf85faf4feb2df16ce9abe22d7c62df362deb8f28a2a686531133363",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -898,6 +898,128 @@
       "go_result": {
         "file": "paladin-auto-attacks-front.go-result.json",
         "sha256": "0dcfb007228ea0e5ee44d13daca6ee65ead88f0404a46f04612ce21480c9b030"
+      }
+    },
+    {
+      "id": "production-destruction-warlock",
+      "description": "The production application's Destruction Warlock request at application revision 18bbcd47: Undead, Imp sacrificed before the pull, Shadow Bolt with Improved Shadow Bolt, Immolate, Corruption, Bane of Agony, Curse of the Elements, Conflagrate and Shadowburn with Shadow and Flame, Searing Pain, Life Tap and the raid's ramped Sunder Armor; supported and matches Go",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-destruction-warlock.request.json"
+      },
+      "prepared": "production-destruction-warlock.prepared.json",
+      "prepared_sha256": "93546bfb6e849addc44aef01a236bf17fa8ded9400faf593a422ecdc6e8dfeef",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-destruction-warlock.go-result.json",
+        "sha256": "308dd6fceb82e66b1989cc127985c52fbb4217dc43cf98db7974b9307cc32353"
+      },
+      "go_log": {
+        "file": "production-destruction-warlock.go-log.txt",
+        "sha256": "6540fdb9699f3139167b5f3bb6060f44b816d963615ee4157a64174fbac7f40a"
+      }
+    },
+    {
+      "id": "paladin-auto-attacks-expose-armor",
+      "description": "paladin-auto-attacks with Expose Armor as well as Sunder Armor: Expose Armor holds the exclusive armor slot, so every Sunder tick is refused.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/paladin-auto-attacks-expose-armor.request.json"
+      },
+      "prepared": "paladin-auto-attacks-expose-armor.prepared.json",
+      "prepared_sha256": "0f6433e194763d445fbe838672c23f4b9695699255623c2d2d90a36cf018ee28",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "paladin-auto-attacks-expose-armor.go-result.json",
+        "sha256": "adae01611d33e4b2e3b39c71130cc1b25a3b7d5f65247af6071e1f964763590e"
+      }
+    },
+    {
+      "id": "production-shadow-priest",
+      "description": "The production application's Shadow Priest reference build at application revision 18bbcd47: Undead, Shadowform, Mind Blast, Shadow Word: Pain, Devouring Plague, Shadow Word: Death, Mind Flay channels the rotation interrupts, a strict Inner Focus and Mind Blast sequence, Shadow Weaving, Dark Sacrifice, Touch of the Grave and the inert Shadowfiend pet",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-shadow-priest.request.json"
+      },
+      "prepared": "production-shadow-priest.prepared.json",
+      "prepared_sha256": "5329d0acad9992357db2ded415230d0186d6af99260947145dd67cb8137b54ab",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-shadow-priest.go-result.json",
+        "sha256": "e1697d2300dc7aa2ddb397e2e74bcff8427191f96c291df082596f9d98492fea"
+      },
+      "go_log": {
+        "file": "production-shadow-priest.go-log.txt",
+        "sha256": "2207bd6214e34f55caae6cd6bd496cd7c5cd297b6a827185da017a08efa3d9d5"
+      }
+    },
+    {
+      "id": "shadow-priest-channel-no-recast",
+      "description": "The production Shadow Priest request with allowRecast off on the Mind Flay channel, so an interrupt that would recast Mind Flay keeps channeling",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/shadow-priest-channel-no-recast.request.json"
+      },
+      "prepared": "shadow-priest-channel-no-recast.prepared.json",
+      "prepared_sha256": "ef33d468ca4394c7dbff599c13b7419067d798d75bb0c1140d914276c896c99b",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "shadow-priest-channel-no-recast.go-result.json",
+        "sha256": "d0bee8d41337c569db550c7f53f59b706d42f54e62ab5e7b546f19359fd5e4ce"
+      },
+      "go_log": {
+        "file": "shadow-priest-channel-no-recast.go-log.txt",
+        "sha256": "2207bd6214e34f55caae6cd6bd496cd7c5cd297b6a827185da017a08efa3d9d5"
+      }
+    },
+    {
+      "id": "shadow-priest-channel-uninterrupted",
+      "description": "The production Shadow Priest request with no interrupt condition on the Mind Flay channel, which Go then treats as a plain cast",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/shadow-priest-channel-uninterrupted.request.json"
+      },
+      "prepared": "shadow-priest-channel-uninterrupted.prepared.json",
+      "prepared_sha256": "ee3845b4ffcd0490aa4539577e93d912044d532a3d2ebca244faade811e6e3bd",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "shadow-priest-channel-uninterrupted.go-result.json",
+        "sha256": "afccc32f3bfad05ae3817ff86aaea64f29acddd9870dda5a343fb5a81efd344c"
+      },
+      "go_log": {
+        "file": "shadow-priest-channel-uninterrupted.go-log.txt",
+        "sha256": "a4ae71a62ab8e4c3b307355c556407ac6e046690b439165c52d48e7fae3c3081"
+      }
+    },
+    {
+      "id": "shadow-priest-sequence-relinquish",
+      "description": "The production Shadow Priest request whose strict sequence follows Inner Focus with Devouring Plague, which is on cooldown, so the sequence gives up control and the rotation continues; a 300 second fight",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/shadow-priest-sequence-relinquish.request.json"
+      },
+      "prepared": "shadow-priest-sequence-relinquish.prepared.json",
+      "prepared_sha256": "3cba17a50c4d2ebd930bbcfa68c677e9515f05b72b2b708da4dd9467939d81f5",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "shadow-priest-sequence-relinquish.go-result.json",
+        "sha256": "7331e157a071bd8e45544d5519a1171c8ccca09de3ef3cac4be81e5854f808c2"
+      },
+      "go_log": {
+        "file": "shadow-priest-sequence-relinquish.go-log.txt",
+        "sha256": "fb3585e45bc91a724d94431065fa3931a5000d30f74ac1c0711abeeb598f009b"
       }
     }
   ]

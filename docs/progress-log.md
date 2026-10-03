@@ -40,7 +40,9 @@ reading the Go reference. They are not effort estimates for other contributors.
 | Production Mage builds and Frostfire Bolt | 2026-10-03 15:34 | 2026-10-03 15:46 | 0 h 12 m | Captured all 29 production reference requests; Arcane, Fire and Frost match Go; Frostfire Bolt and its school rules match on the first comparison; 48 of 48 production Fire and Frostfire sweep variants match |
 | Shared gate, class exporter files and prepull | 2026-10-03 15:46 | 2026-10-03 16:04 | 0 h 18 m | Gate and exporter split by class; prepull casts and eight rotation values; a Frost prepull request matches Go |
 | Balance Druid | 2026-10-03 16:04 | 2026-10-03 16:22 | 0 h 18 m | Druid exporter and agent, spirit regeneration attribution, dynamic spell crit, related dots; the production request matches Go after three fixes; 23 of 24 sweep variants match, 1 rejected for #622 |
+| Shadow Priest | 2026-10-03 16:03 | 2026-10-03 16:55 | 0 h 52 m | Priest exporter and agent, strict sequences, interruptible channels, inert pets, the execute phase; the production request matches Go on the first comparison; sweeps match 41 of 48, 7 rejected for #622; all six race board requests match |
 | Elemental Shaman | 2026-10-03 16:05 | 2026-10-03 16:38 | 0 h 33 m | Shaman exporter and agent, a travel hook, the math operator, one-target reachability and Stoneform; the production request matches Go on the first comparison; 48 of 48 sweep variants match, every Shaman race included |
+| Destruction Warlock | 2026-10-03 16:05 | 2026-10-03 16:46 | 0 h 41 m | Warlock exporter and agent, dynamic damage taken modifiers, target debuff stats, Sunder Armor blocked by Expose Armor, auraIsActive on the target; the production request matches Go; 24 of 24 sweep variants and 12 of 12 race variants match |
 
 ## Notes
 
