@@ -27,6 +27,8 @@ pub(crate) enum AuraBehavior<K> {
     Static,
     /// A listener that never acts in the supported scope.
     Inert,
+    /// Go health.go `trackChanceOfDeath`'s listener on hits the player takes.
+    ChanceOfDeath,
     /// Go buffs/paladin.go `AttachJudgementOfWisdomMana`.
     JudgementOfWisdom {
         chance: f64,
@@ -58,6 +60,14 @@ pub(crate) enum AuraBehavior<K> {
     },
     /// The Crusader enchant's trigger.
     Crusader,
+    /// The party Windfury Totem's totem aura, whose exclusive effect holds the trigger.
+    WindfuryTotem,
+    /// The party Windfury Totem's trigger.
+    WindfuryTrigger,
+    /// The party Windfury Totem's charges of attack power, which landed autos spend.
+    WindfuryProc {
+        bit: u32,
+    },
     /// Dragonbreath Chili's trigger.
     DragonbreathChili,
     /// The aura of a dot or channel.
@@ -427,6 +437,20 @@ impl<A: Agent> Fight<A> {
             AuraBehavior::MultiplyManaRegenSpeed(multiplier) => {
                 self.multiply_mana_regen_speed(multiplier)
             }
+            AuraBehavior::WindfuryProc { bit } => {
+                self.stat_mask |= bit;
+                self.player.powers = self.stat_combos[self.stat_mask as usize];
+            }
+            AuraBehavior::WindfuryTotem => {
+                let trigger = self
+                    .windfury
+                    .as_ref()
+                    .expect("Windfury Totem is bound")
+                    .trigger;
+                if !self.aura(trigger).active {
+                    self.activate_aura(trigger);
+                }
+            }
             AuraBehavior::TemporaryStats { bit, gain_log, .. } => {
                 if let (Some(line), true) = (gain_log, self.log.is_some()) {
                     let line = self.aura_logs[line].clone();
@@ -446,6 +470,18 @@ impl<A: Agent> Fight<A> {
             AuraBehavior::Eureka => self.eureka_expire(),
             AuraBehavior::MultiplyCastSpeed(multiplier) => {
                 self.multiply_cast_speed(1.0 / multiplier)
+            }
+            AuraBehavior::WindfuryProc { bit } => {
+                self.stat_mask &= !bit;
+                self.player.powers = self.stat_combos[self.stat_mask as usize];
+            }
+            AuraBehavior::WindfuryTotem => {
+                let trigger = self
+                    .windfury
+                    .as_ref()
+                    .expect("Windfury Totem is bound")
+                    .trigger;
+                self.deactivate_aura(trigger);
             }
             AuraBehavior::TemporaryStats {
                 bit, expire_log, ..
@@ -555,27 +591,17 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    /// Go `auraTracker.OnPeriodicDamageDealt` on the caster and `OnPeriodicDamageTaken` on the
-    /// target. Only class auras act on periodic damage in scope.
+    /// Go `auraTracker.OnPeriodicDamageDealt` on the caster, which skips no inactive aura. No
+    /// target aura in scope acts on periodic damage taken.
     pub(crate) fn on_periodic_damage(&mut self, spell: SpellId, result: &SpellResult) {
-        let caster = self.spells[spell].caster;
-        for (side, list) in [
-            (caster, List::PeriodicDamageDealt),
-            (result.target, List::PeriodicDamageTaken),
-        ] {
-            let list = list as usize;
-            let length = self.trackers[side.index()].lists[list].snapshot_len();
-            for position in 0..length {
-                let index = self.trackers[side.index()].lists[list].read(position);
-                let aura = AuraRef { side, index };
-                if !self.aura(aura).active {
-                    continue;
-                }
-                if let AuraBehavior::Class(kind) = self.aura(aura).behavior {
-                    if side == caster {
-                        A::on_periodic_damage_dealt(self, aura, kind, spell, result);
-                    }
-                }
+        let side = self.spells[spell].caster;
+        let list = List::PeriodicDamageDealt as usize;
+        let length = self.trackers[side.index()].lists[list].snapshot_len();
+        for position in 0..length {
+            let index = self.trackers[side.index()].lists[list].read(position);
+            let aura = AuraRef { side, index };
+            if let AuraBehavior::Class(kind) = self.aura(aura).behavior {
+                A::on_periodic_damage_dealt(self, aura, kind, spell, result);
             }
         }
     }
@@ -587,6 +613,8 @@ impl<A: Agent> Fight<A> {
             (caster, List::SpellHitDealt),
             (result.target, List::SpellHitTaken),
         ] {
+            // Listeners of the caster's hits, as opposed to the hits its target takes.
+            let dealt = list == List::SpellHitDealt;
             let list = list as usize;
             let length = self.trackers[side.index()].lists[list].snapshot_len();
             for position in 0..length {
@@ -596,20 +624,33 @@ impl<A: Agent> Fight<A> {
                     continue;
                 }
                 match self.aura(aura).behavior.clone() {
-                    AuraBehavior::Class(kind) if side == caster => {
+                    AuraBehavior::Class(kind) if dealt => {
                         A::on_spell_hit_dealt(self, aura, kind, spell, result)
                     }
                     AuraBehavior::JudgementOfWisdom { chance, delay, .. } => {
                         self.judgement_of_wisdom_callback(aura, spell, result, chance, delay)
                     }
-                    AuraBehavior::TouchOfTheGrave { chance, delay, .. } if side == Side::Player => {
+                    AuraBehavior::TouchOfTheGrave { chance, delay, .. } if dealt => {
                         self.touch_of_the_grave_callback(aura, spell, result, chance, delay)
                     }
-                    AuraBehavior::Crusader if side == Side::Player => {
-                        self.crusader_callback(aura, spell, result)
+                    AuraBehavior::WindfuryTrigger if dealt => {
+                        self.windfury_trigger(aura, spell, result)
                     }
-                    AuraBehavior::DragonbreathChili if side == Side::Player => {
+                    AuraBehavior::WindfuryProc { .. } if dealt => {
+                        let windfury = self.windfury.as_ref().expect("Windfury Totem is bound");
+                        // The charges' own trigger: a landed auto spends one, at once.
+                        if windfury.spend_spells[spell]
+                            && result.outcome & super::OUTCOME_LANDED != 0
+                        {
+                            self.remove_stack(aura);
+                        }
+                    }
+                    AuraBehavior::Crusader if dealt => self.crusader_callback(aura, spell, result),
+                    AuraBehavior::DragonbreathChili if dealt => {
                         self.chili_callback(aura, spell, result)
+                    }
+                    AuraBehavior::ChanceOfDeath if !dealt && side == Side::Player => {
+                        self.chance_of_death_hit_taken(result)
                     }
                     _ => {}
                 }
@@ -662,6 +703,35 @@ impl<A: Agent> Fight<A> {
                 result,
             },
         );
+    }
+
+    /// Go `AttachProcTriggerCallback` for the Windfury Totem trigger: landed hits, the
+    /// cooldown, the chance roll; then charges, one fewer when an auto granted them, and an
+    /// extra main hand attack at once.
+    fn windfury_trigger(&mut self, aura: AuraRef, spell: SpellId, result: &SpellResult) {
+        let windfury = self.windfury.clone().expect("Windfury Totem is bound");
+        if !windfury.trigger_spells[spell] || result.outcome & super::OUTCOME_LANDED == 0 {
+            return;
+        }
+        let icd = self.aura(aura).icd;
+        if let Some((timer, _)) = icd {
+            if self.timers[timer] > self.now {
+                return;
+            }
+        }
+        if windfury.trigger_chance != 1.0 && self.random_for_aura(aura) > windfury.trigger_chance {
+            return;
+        }
+        if let Some((timer, duration)) = icd {
+            self.timers[timer] = self.now + duration;
+        }
+        self.activate_aura(windfury.proc_aura);
+        let mut charges = self.aura(windfury.proc_aura).max_stacks;
+        if self.spells[spell].white_hit {
+            charges -= 1;
+        }
+        self.set_stacks(windfury.proc_aura, charges);
+        self.cast(windfury.extra, result.target);
     }
 
     /// Go `AttachProcTriggerCallback` for Crusader: a weapon proc on landed hits that rolls the

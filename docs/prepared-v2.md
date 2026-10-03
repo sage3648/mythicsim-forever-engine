@@ -108,6 +108,7 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `temporary_stats` | sim/core/major_cooldown.go | Night Elf Elune's Light: every stat its aura changes, computed by Go with it active, and its gain and fade log lines |
 | `stat_auras` | sim/core/unit.go AddStatsDynamic | The auras that change stats during a fight and the player's stats for every combination of them, each read from a separate Go simulation, since Go recomputes stats from the active bonuses |
 | `crusader` | sim/common/classic/enchants.go | Each spell's chance from the enchant's proc manager, the Holy Strength auras and their log lines, and the heal roll |
+| `windfury_totem` | sim/core/buffs/drivers.go | The totem's refresh period, the trigger and charge spenders resolved from client rows, the charge aura and the extra main hand attack spell |
 | `dragonbreath_chili` | sim/core/consumes.go | The 5% chance and listened spells, the rolled Fire hit and the spell batch delay, Go literals |
 | `sunder_armor_ramp` | sim/core/buffs/drivers.go | The raid's Sunder Armor: its period and tick count, Go literals, and target armor at each stack count read from separate Go simulations; `blocked` when a stronger permanent member of its category, such as Expose Armor, blocks every activation, which Go still counts as a proc |
 | `judgement_refresh` | sim/paladin/judgement.go | The melee proc mask and the judgement debuffs a landed melee strike refreshes |
@@ -146,6 +147,10 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `inner_focus` | sim/priest/talents_discipline.go | Cost cut, crit and its spells, the spells that spend it; the cooldown restarts when it ends |
 | `shadow_weaving` | sim/priest/talents_shadow.go | The resolved proc trigger, its spells and the damage per stack |
 | `dark_sacrifice` | sim/priest/dark_sacrifice.go | Tick base from client data plus Spirit over a divisor; used once the whole gain fits |
+| `smite`, `holy_fire` | sim/priest/smite.go, holy_fire.go | Damage rolls on every rank; Holy Fire's dot base and Periodic Can Crit, the dot applied before the hit is dealt |
+| `penance` | sim/priest/penance.go | The bolt's base and crit; a channel that ticks on application and each second |
+| `power_in_light` | sim/priest/talents_discipline.go | The target's damage taken multiplier, the spells it multiplies and the Holy Fire dots it waits for |
+| `searing_light` | sim/priest/talents_holy.go | The resolved trigger on Holy Fire ticks, Holy Purpose's Holy Nova cost modifier and the casts that end it |
 | `inert_pet` | sim/core/pet.go | A registered pet nothing summons: label, unit index, metrics actions and auras, its dismissed stats line and why it is inert |
 
 Human racials are static and already in the prepared stats. High Order Skyborne's cast
@@ -210,7 +215,8 @@ as the engine consumes more fields.
 The rotation subset covers `castSpell`, `autocastOtherCooldowns`, `strictSequence` of
 casts, `channelSpell` with `interruptIf` and `allowRecast`, constant-time prepull casts,
 `cmp` with any comparison operator, `and`, `or`, `not`, `const`, `currentMana`,
-`currentManaPercent`, `currentTime`, `remainingTime`, `numberTargets`, `math`, `gcdIsReady`,
+`currentManaPercent`, `currentTime`, `remainingTime`, `remainingTimePercent`, `numberTargets`,
+`math`, `gcdIsReady`,
 `auraIsKnown`, `auraIsActive`, `auraNumStacks`, `auraRemainingTime`, `dotIsActive`,
 `dotRemainingTime`, `dotTimeToNextTick`, `spellIsKnown`, `spellIsReady`,
 `spellTimeToReady` and `spellCastTime`. Action IDs may carry a rank, which Go ignores. A
@@ -262,6 +268,7 @@ gives the target uneven Fire and Frost resistance. `production-shadow-priest` is
 production Shadow Priest request at application revision 18bbcd47; the
 `shadow-priest-*` cases change its rotation to reach a channel without `allowRecast`, a
 channel without an interrupt condition and a strict sequence that gives up control.
+`production-smite-priest` is the production Smite Priest hybrid request.
 
 The contract tests in
 [tests/classes/mage/prepared_v2.rs](../tests/classes/mage/prepared_v2.rs)

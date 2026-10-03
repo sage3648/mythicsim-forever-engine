@@ -107,10 +107,27 @@ pub fn validate(prepared: &PreparedV2) -> Result<(), String> {
             return Err(format!("{name} must be finite and nonnegative"));
         }
     }
-    if player.cast_speed == 0.0 || player.mana.max <= 0.0 {
-        return Err("cast_speed and max_mana must be positive".into());
+    if player.cast_speed == 0.0 {
+        return Err("cast_speed must be positive".into());
     }
-    if !(player.mana.teardown_max > 0.0 && player.mana.teardown_max <= player.mana.max) {
+    // A class without a mana bar, such as a Rogue, exports no mana at all and no mana costs.
+    let manaless = player.mana.max == 0.0;
+    if manaless {
+        let mana_cost = player.spells.iter().any(|spell| {
+            spell
+                .cost
+                .as_ref()
+                .is_some_and(|cost| cost.resource == "mana")
+        });
+        if mana_cost
+            || player.mana.base != 0.0
+            || player.mana.teardown_max != 0.0
+            || player.mana.regen_per_second_casting != 0.0
+            || player.mana.regen_per_second_not_casting != 0.0
+        {
+            return Err("a player without mana must have no mana costs or regeneration".into());
+        }
+    } else if !(player.mana.teardown_max > 0.0 && player.mana.teardown_max <= player.mana.max) {
         return Err("mana teardown_max must be positive and at most max".into());
     }
     // Rust recomputes Go's starting regeneration from the exported components. A mismatch
@@ -124,18 +141,22 @@ pub fn validate(prepared: &PreparedV2) -> Result<(), String> {
         spirit_regen_multiplier: pseudo.spirit_regen_multiplier,
         mana_regen_multiplier: 1.0,
     };
-    for (name, rust, go) in [
-        (
-            "casting",
-            regen_per_second_casting(inputs),
-            player.mana.regen_per_second_casting,
-        ),
-        (
-            "not casting",
-            regen_per_second_not_casting(inputs),
-            player.mana.regen_per_second_not_casting,
-        ),
-    ] {
+    for (name, rust, go) in if manaless {
+        Vec::new()
+    } else {
+        vec![
+            (
+                "casting",
+                regen_per_second_casting(inputs),
+                player.mana.regen_per_second_casting,
+            ),
+            (
+                "not casting",
+                regen_per_second_not_casting(inputs),
+                player.mana.regen_per_second_not_casting,
+            ),
+        ]
+    } {
         // Go may fuse multiply-add on some architectures; allow only that rounding.
         if (rust - go).abs() > 1e-12 * go.abs().max(1.0) {
             return Err(format!(

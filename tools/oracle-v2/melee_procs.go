@@ -7,11 +7,13 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"time"
 	"unsafe"
 
 	"github.com/wowsims/forever/sim/core"
 	"github.com/wowsims/forever/sim/core/proto"
 	"github.com/wowsims/forever/sim/core/simsignals"
+	"github.com/wowsims/forever/sim/core/spelldata"
 	"github.com/wowsims/forever/sim/core/stats"
 )
 
@@ -22,7 +24,7 @@ var dynamicReadStats = []stats.Stat{stats.SpellDamage, stats.AttackPower, stats.
 // Auras of races, items and raid buffs whose gain and expiry change stats through
 // AddStatsDynamic. A class adds its own through classExport.statAuras.
 var commonStatAuraLabels = []string{"Blood Fury", "Elune's Light", "Holy Strength (MH)", "Holy Strength (OH)",
-	"Windfury Totem (External)"}
+	"Windfury Totem (External)", "Battle Shout (External)"}
 
 // unit.go AddStatsDynamic recomputes every stat from the active flat bonuses, so stats are a
 // function of which stat auras are active. Each combination is read from a separate reset
@@ -139,6 +141,40 @@ func meleeProcEffects(simulation *core.Simulation, character *core.Character, un
 			"proc_chance": 0.05, "trigger_spells": procTriggerSpells(character, trigger),
 			"roll_min": 57.0, "roll_max": 73.0, "delay_ns": nanos(core.SpellBatchWindow),
 		})
+	}
+	// buffs/drivers.go driveWindfuryTotem: the totem aura, refreshed every 5 seconds, holds a
+	// trigger that can grant charges of attack power and cast an extra main hand attack; the
+	// charges are spent by landed autos. Triggers resolve from client rows as Go resolves them.
+	if totem := character.GetAura("Windfury Totem"); totem != nil {
+		procAura := character.GetAura("Windfury Totem (External)")
+		trigger := character.GetAura("Windfury Totem Trigger")
+		var extra = -1
+		for i, spell := range character.Spellbook {
+			if spell.ActionID == (core.ActionID{OtherID: proto.OtherAction_OtherActionAttack, Tag: 25584}) {
+				extra = i
+			}
+		}
+		// buffs/air_totem.go: the party holds one air totem; another bidder would contest the slot.
+		if other := character.GetAura("Grace of Air Totem (External)"); other != nil {
+			*unrepresented = append(*unrepresented, fmt.Sprintf("Windfury Totem shares the air totem slot with %s", other.Label))
+		}
+		if procAura == nil || trigger == nil || extra < 0 {
+			*unrepresented = append(*unrepresented, "Windfury Totem is incomplete")
+		} else {
+			grant := spelldata.ProcTrigger(character, spelldata.MustFind(10612), nil)
+			spend := spelldata.ProcTrigger(character, spelldata.MustFind(10610), nil, spelldata.Chance(1))
+			if grant.DPM != nil || len(callbackNames(grant.Callback)) != 1 || len(callbackNames(spend.Callback)) != 1 ||
+				callbackNames(grant.Callback)[0] != "on_spell_hit_dealt" || callbackNames(spend.Callback)[0] != "on_spell_hit_dealt" {
+				*unrepresented = append(*unrepresented, "Windfury Totem's triggers listen to other callbacks")
+			}
+			effects = append(effects, map[string]any{
+				"kind": "windfury_totem", "totem_aura": totem.Label, "period_ns": nanos(5 * time.Second),
+				"trigger_aura": trigger.Label, "trigger_spells": procTriggerSpells(character, grant),
+				"trigger_outcome": outcomeNames(grant.Outcome), "trigger_proc_chance": grant.ProcChance,
+				"proc_aura": procAura.Label, "spend_spells": procTriggerSpells(character, spend),
+				"spend_outcome": outcomeNames(spend.Outcome), "extra_attack_spell": extra,
+			})
+		}
 	}
 	return effects
 }

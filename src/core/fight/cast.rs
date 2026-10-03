@@ -6,7 +6,8 @@ use crate::{
 };
 
 use super::{
-    log::action_string, Action, Agent, AuraRef, Fight, Side, SpellBehavior, SpellId, PRIORITY_GCD,
+    log::action_string, Action, Agent, AuraRef, Fight, ResourceKind, Side, SpellBehavior, SpellId,
+    PRIORITY_GCD,
 };
 
 /// Go `MaxSpellQueueWindow`.
@@ -119,13 +120,21 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    /// Go `ManaCost.MeetsRequirement`, including its out-of-mana bookkeeping.
+    /// Go `ResourceCostImpl.MeetsRequirement` for the spell's resource.
     fn meets_cost(&mut self, spell: SpellId) -> bool {
-        if self.spells[spell].cost.is_none() {
+        let Some(kind) = self.spells[spell].cost.map(|cost| cost.kind) else {
             return true;
-        }
+        };
         let cost = self.current_cost(spell);
         self.spells[spell].cur_cast.cost = cost;
+        match kind {
+            ResourceKind::Energy => self.energy_bar().current >= cost,
+            _ => self.meets_mana_cost(spell, cost),
+        }
+    }
+
+    /// Go `ManaCost.MeetsRequirement`, including its out-of-mana bookkeeping.
+    fn meets_mana_cost(&mut self, spell: SpellId, cost: f64) -> bool {
         let side = self.caster(spell);
         let now = self.now;
         let unit = self.unit_mut(side);
@@ -172,11 +181,17 @@ impl<A: Agent> Fight<A> {
     }
 
     fn cost_failure(&self, spell: SpellId) -> String {
-        format!(
-            "not enough mana (Current Mana = {:.3}, Mana Cost = {:.3})",
-            self.unit(self.caster(spell)).mana,
-            self.spells[spell].cur_cast.cost
-        )
+        let cost = self.spells[spell].cur_cast.cost;
+        match self.spells[spell].cost.map(|cost| cost.kind) {
+            Some(ResourceKind::Energy) => format!(
+                "not enough energy (Current Energy = {:.3}, Energy Cost = {cost:.3})",
+                self.energy_bar().current
+            ),
+            _ => format!(
+                "not enough mana (Current Mana = {:.3}, Mana Cost = {cost:.3})",
+                self.unit(self.caster(spell)).mana
+            ),
+        }
     }
 
     /// Go `Spell.CanCompleteCast`. Cost checks have side effects, as in Go.
@@ -400,9 +415,27 @@ impl<A: Agent> Fight<A> {
         }
     }
 
+    /// Go `Spell.SetMetricsSplit`: the spell's metrics, and the tag of its action ID in logs,
+    /// follow the split until the next one.
+    pub(crate) fn set_metrics_split(&mut self, spell: SpellId, split: usize) {
+        let state = &mut self.spells[spell];
+        assert!(
+            !state.split_metrics.is_empty(),
+            "spell has no metric splits"
+        );
+        state.split_metrics[state.split] = state.metrics;
+        state.metrics = state.split_metrics[split];
+        state.split = split;
+        state.id.tag = split as i32;
+        state.action = Some(state.split_actions[split]);
+    }
+
     /// Go `makeCastFunc`.
     fn cast_full(&mut self, spell: SpellId, target: Side) -> bool {
         self.spells[spell].cur_cast = self.spells[spell].default_cast;
+        if let SpellBehavior::Class(behavior) = self.spells[spell].behavior {
+            A::modify_cast(self, spell, behavior);
+        }
         if self.spells[spell].flags.swapped {
             return self.cast_failure(spell, |_| "spell attached to an un-equipped item".into());
         }
@@ -555,18 +588,39 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    /// Go `ManaCost.SpendCost`.
+    /// Go `ResourceCostImpl.SpendCost` for the spell's resource.
     fn spend_cost(&mut self, spell: SpellId) {
-        if self.spells[spell].cost.is_none() {
+        let Some(kind) = self.spells[spell].cost.map(|cost| cost.kind) else {
+            return;
+        };
+        let cost = self.spells[spell].cur_cast.cost;
+        if kind == ResourceKind::Energy {
+            // Go EnergyCost.SpendCost spends even a zero cost.
+            let (metrics, _) = self.spells[spell].energy_metrics.expect("energy metrics");
+            self.spend_energy(cost, metrics);
             return;
         }
-        let cost = self.spells[spell].cur_cast.cost;
         if cost > 0.0 {
             let metrics = self.spells[spell].mana_metrics.expect("mana metrics");
             self.spend_mana(cost, metrics);
             let now = self.now;
             let unit = self.unit_mut(self.spells[spell].caster);
             unit.five_second_rule_refresh = (now + 5 * NS_PER_SECOND).max(unit.hardcast.expires);
+        }
+    }
+
+    /// Go `Spell.IssueRefund`: an energy cost gives back its refund share of the cost paid.
+    pub(crate) fn issue_refund(&mut self, spell: SpellId) {
+        let Some(cost) = self.spells[spell].cost else {
+            return;
+        };
+        if cost.kind != ResourceKind::Energy {
+            return;
+        }
+        let paid = self.spells[spell].cur_cast.cost;
+        if cost.refund > 0.0 && paid > 0.0 {
+            let metrics = self.energy_bar().refund_metrics;
+            self.add_energy(cost.refund * paid, metrics);
         }
     }
 
@@ -594,6 +648,24 @@ impl<A: Agent> Fight<A> {
                 let gain = min + if spread > 1.0 { rolled } else { spread };
                 let metrics = self.item_metrics(spell);
                 self.execute_mana_gain(gain, metrics);
+            }
+            SpellBehavior::ConjuredEnergy {
+                label,
+                min,
+                spread,
+                reduction,
+                metrics,
+                ..
+            } => {
+                // Go's TernaryFloat64 evaluates both arguments, so the roll always happens.
+                let rolled = self.random(&label) * spread;
+                let gain = min + if spread > 1.0 { rolled } else { spread } - reduction;
+                // Go ExecuteResourceGain for energy.
+                if gain > 0.0 {
+                    self.add_energy(gain, metrics);
+                } else if gain < 0.0 {
+                    self.spend_energy(-gain, metrics);
+                }
             }
             SpellBehavior::EnergizeOnUse {
                 average, variance, ..
@@ -623,6 +695,7 @@ impl<A: Agent> Fight<A> {
                 index,
             }),
             SpellBehavior::MeleeAuto(hand) => self.apply_melee_auto(spell, target, hand),
+            SpellBehavior::GoblinSapper => self.apply_goblin_sapper(spell, target),
             SpellBehavior::RollDamage { min, max } => {
                 // Go sim.Roll: min + (max - min) * RandomFloat("Damage Roll").
                 let base = min + (max - min) * self.random("Damage Roll");
@@ -664,10 +737,29 @@ impl<A: Agent> Fight<A> {
         unit: Side,
         id: crate::contracts::prepared_v2::ActionId,
     ) -> usize {
+        self.new_resource_metrics_of(unit, id, super::ResourceKind::Mana)
+    }
+
+    /// Go `UnitMetrics.NewResourceMetrics`: every call registers a new metric.
+    pub(crate) fn new_resource_metrics(
+        &mut self,
+        id: crate::contracts::prepared_v2::ActionId,
+        kind: super::ResourceKind,
+    ) -> usize {
+        self.new_resource_metrics_of(Side::Player, id, kind)
+    }
+
+    /// Go `UnitMetrics.NewResourceMetrics` of an acting unit.
+    pub(crate) fn new_resource_metrics_of(
+        &mut self,
+        unit: Side,
+        id: crate::contracts::prepared_v2::ActionId,
+        kind: super::ResourceKind,
+    ) -> usize {
         self.resources.push(super::ResourceMetrics {
             id,
             unit,
-            health: false,
+            kind,
             events: 0,
             gain: 0.0,
             actual_gain: 0.0,
@@ -683,9 +775,7 @@ impl<A: Agent> Fight<A> {
         &mut self,
         id: crate::contracts::prepared_v2::ActionId,
     ) -> usize {
-        let index = self.new_mana_metrics(id);
-        self.resources[index].health = true;
-        index
+        self.new_resource_metrics(id, super::ResourceKind::Health)
     }
 
     /// Go `Unit.SetGCDTimer`.
@@ -916,9 +1006,21 @@ impl<A: Agent> Fight<A> {
                 let total_regen = casting_regen * regen_window;
                 max - (mana + total_regen) >= min + spread && *selected
             }
+            SpellBehavior::ConjuredEnergy {
+                min,
+                spread,
+                selected,
+                reduction,
+                ..
+            } => {
+                let bar = self.energy_bar();
+                bar.max - bar.current >= (min + spread) - reduction && *selected
+            }
             SpellBehavior::EnergizeOnUse { whole, .. } => max - mana >= *whole,
             // Go's default ShouldActivate.
-            SpellBehavior::Eureka | SpellBehavior::ActivateAura(_) => true,
+            SpellBehavior::Eureka
+            | SpellBehavior::ActivateAura(_)
+            | SpellBehavior::GoblinSapper => true,
             SpellBehavior::TouchOfTheGraveDrain { .. }
             | SpellBehavior::MeleeAuto(_)
             | SpellBehavior::RollDamage { .. }

@@ -63,7 +63,12 @@ impl<A: Agent> Fight<A> {
         metrics: usize,
     ) {
         let base = health_fraction * self.config.max_health;
-        let result = self.calc_damage_hit_only(spell, target, base);
+        // A proc off a hit the player took drains the player.
+        let result = match target {
+            Side::Target => self.calc_damage_hit_only(spell, target, base),
+            Side::Player => self.calc_damage_on_player(spell, base, false),
+            Side::Pet => unreachable!("a pet takes no damage in scope"),
+        };
         self.deal_damage(spell, result, false);
         if result.landed() {
             self.gain_health(result.damage, metrics);

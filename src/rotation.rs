@@ -109,7 +109,12 @@ pub enum Value {
         rhs: Box<Value>,
     },
     CurrentManaPercent,
+    RemainingTimePercent,
     CurrentMana,
+    CurrentEnergy,
+    MaxEnergy,
+    CurrentComboPoints,
+    TimeToNextEnergyTick,
     RemainingTime,
     CurrentTime,
     NumberTargets,
@@ -184,15 +189,22 @@ impl Value {
             | Value::SpellIsKnown(_)
             | Value::SpellIsReady(_)
             | Value::GcdIsReady => ValueType::Bool,
-            Value::AuraNumStacks(_) | Value::NumberTargets => ValueType::Int,
+            Value::AuraNumStacks(_) | Value::NumberTargets | Value::CurrentComboPoints => {
+                ValueType::Int
+            }
             Value::AuraRemainingTime(_)
             | Value::DotRemainingTime(_)
             | Value::SpellCastTime(_)
             | Value::SpellTimeToReady(_)
             | Value::DotTimeToNextTick(_)
             | Value::RemainingTime
-            | Value::CurrentTime => ValueType::Duration,
-            Value::CurrentManaPercent | Value::CurrentMana => ValueType::Float,
+            | Value::CurrentTime
+            | Value::TimeToNextEnergyTick => ValueType::Duration,
+            Value::CurrentManaPercent
+            | Value::CurrentMana
+            | Value::RemainingTimePercent
+            | Value::CurrentEnergy
+            | Value::MaxEnergy => ValueType::Float,
             Value::Math { op, lhs, rhs } => {
                 let (lhs, rhs) = math_operand_types(*op, lhs.value_type(), rhs.value_type());
                 op.result_type(lhs, rhs)
@@ -652,6 +664,10 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
             only(&[])?;
             Ok(Value::RemainingTime)
         }
+        "remainingTimePercent" => {
+            only(&[])?;
+            Ok(Value::RemainingTimePercent)
+        }
         "currentMana" => {
             only(&[])?;
             Ok(Value::CurrentMana)
@@ -659,6 +675,22 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
         "currentTime" => {
             only(&[])?;
             Ok(Value::CurrentTime)
+        }
+        "currentEnergy" => {
+            only(&[])?;
+            Ok(Value::CurrentEnergy)
+        }
+        "maxEnergy" => {
+            only(&[])?;
+            Ok(Value::MaxEnergy)
+        }
+        "currentComboPoints" => {
+            only(&[])?;
+            Ok(Value::CurrentComboPoints)
+        }
+        "timeToNextEnergyTick" => {
+            only(&[])?;
+            Ok(Value::TimeToNextEnergyTick)
         }
         "numberTargets" => {
             only(&[])?;
@@ -953,7 +985,12 @@ pub enum Compiled<R> {
         rhs: Box<Compiled<R>>,
     },
     CurrentManaPercent,
+    RemainingTimePercent,
     CurrentMana,
+    CurrentEnergy,
+    MaxEnergy,
+    CurrentComboPoints,
+    TimeToNextEnergyTick,
     RemainingTime,
     CurrentTime,
     NumberTargets,
@@ -987,15 +1024,22 @@ impl<R> Compiled<R> {
             | Compiled::DotIsActive(_)
             | Compiled::SpellIsReady(_)
             | Compiled::GcdIsReady => ValueType::Bool,
-            Compiled::AuraNumStacks(_) | Compiled::NumberTargets => ValueType::Int,
+            Compiled::AuraNumStacks(_) | Compiled::NumberTargets | Compiled::CurrentComboPoints => {
+                ValueType::Int
+            }
             Compiled::AuraRemainingTime(_)
             | Compiled::DotRemainingTime(_)
             | Compiled::SpellCastTime(_)
             | Compiled::SpellTimeToReady(_)
             | Compiled::DotTimeToNextTick(_)
             | Compiled::RemainingTime
-            | Compiled::CurrentTime => ValueType::Duration,
-            Compiled::CurrentManaPercent | Compiled::CurrentMana => ValueType::Float,
+            | Compiled::CurrentTime
+            | Compiled::TimeToNextEnergyTick => ValueType::Duration,
+            Compiled::CurrentManaPercent
+            | Compiled::CurrentMana
+            | Compiled::RemainingTimePercent
+            | Compiled::CurrentEnergy
+            | Compiled::MaxEnergy => ValueType::Float,
             Compiled::Math { op, lhs, rhs } => op.result_type(lhs.value_type(), rhs.value_type()),
             Compiled::Coerced { to, .. } => *to,
         }
@@ -1229,7 +1273,12 @@ fn compile_value<R>(
     Some(match value {
         Value::Const(constant) => Compiled::Const(constant.clone()),
         Value::CurrentManaPercent => Compiled::CurrentManaPercent,
+        Value::RemainingTimePercent => Compiled::RemainingTimePercent,
         Value::CurrentMana => Compiled::CurrentMana,
+        Value::CurrentEnergy => Compiled::CurrentEnergy,
+        Value::MaxEnergy => Compiled::MaxEnergy,
+        Value::CurrentComboPoints => Compiled::CurrentComboPoints,
+        Value::TimeToNextEnergyTick => Compiled::TimeToNextEnergyTick,
         Value::RemainingTime => Compiled::RemainingTime,
         Value::CurrentTime => Compiled::CurrentTime,
         Value::NumberTargets => Compiled::NumberTargets,

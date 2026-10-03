@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "79c158b485b6df56f4d8da1bc03e011d4cbaf6b7249d62db0ba909bf0cf5e835",
+  "exporter_sha256": "a7ace90374d43931b9d7a4cc96a731868c0ad619a23a8ccfb5c4d0834b1a7e7f",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -945,7 +945,7 @@
         "path": "fixtures/mage/prepared-v2/production-shadow-priest.request.json"
       },
       "prepared": "production-shadow-priest.prepared.json",
-      "prepared_sha256": "5329d0acad9992357db2ded415230d0186d6af99260947145dd67cb8137b54ab",
+      "prepared_sha256": "71b76d32cbead25b7de41a54147eea68c3c72158a6fbdc6c97d4d2e543266323",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -966,7 +966,7 @@
         "path": "fixtures/mage/prepared-v2/shadow-priest-channel-no-recast.request.json"
       },
       "prepared": "shadow-priest-channel-no-recast.prepared.json",
-      "prepared_sha256": "ef33d468ca4394c7dbff599c13b7419067d798d75bb0c1140d914276c896c99b",
+      "prepared_sha256": "560b3a67a5e786fd8de15d5918193e993e788aed1d428b922a6a3b561e167e38",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -987,7 +987,7 @@
         "path": "fixtures/mage/prepared-v2/shadow-priest-channel-uninterrupted.request.json"
       },
       "prepared": "shadow-priest-channel-uninterrupted.prepared.json",
-      "prepared_sha256": "ee3845b4ffcd0490aa4539577e93d912044d532a3d2ebca244faade811e6e3bd",
+      "prepared_sha256": "fe566d65b8e208d9ecbc602b83321ddf9982948b838c4d2e08c6cc7ed3a5c1ed",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1008,7 +1008,7 @@
         "path": "fixtures/mage/prepared-v2/shadow-priest-sequence-relinquish.request.json"
       },
       "prepared": "shadow-priest-sequence-relinquish.prepared.json",
-      "prepared_sha256": "3cba17a50c4d2ebd930bbcfa68c677e9515f05b72b2b708da4dd9467939d81f5",
+      "prepared_sha256": "a2e32b00f67efeab09d10bdf04be4aa768fdd82e2a5a7b955d5144883e4d5310",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1041,6 +1041,48 @@
       "go_log": {
         "file": "paladin-crusader-chili.go-log.txt",
         "sha256": "562d2496beaef4b1f3348b65a95aed10804a827e7666f367265cfe776aa4f3a9"
+      }
+    },
+    {
+      "id": "paladin-windfury-totem",
+      "description": "paladin-crusader-chili with the party Windfury Totem: the trigger's chance and cooldown, charges of attack power through the stat-aura combinations, one fewer when an auto grants them, the extra main hand attack and the totem refreshed every five seconds.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/paladin-windfury-totem.request.json"
+      },
+      "prepared": "paladin-windfury-totem.prepared.json",
+      "prepared_sha256": "846d8713d4ccc31f4a6c00339d634047e29d740650890e29c751f64c86eb0af9",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "paladin-windfury-totem.go-result.json",
+        "sha256": "7e5fc34c745ae732b0c66d54878e80ef4e23a78482d528230cc7fbeaa1fc3f1c"
+      },
+      "go_log": {
+        "file": "paladin-windfury-totem.go-log.txt",
+        "sha256": "1ecfb3a1cd9e60440ca5e8cf00ddab69aeab305ff16dff2bf555dc6a0cd02c9f"
+      }
+    },
+    {
+      "id": "production-smite-priest",
+      "description": "The production application's Smite Priest hybrid at application revision 18bbcd47: Undead, a prepull Holy Fire, a strict Inner Focus and Holy Fire sequence on Holy Fire's remaining time, Penance channels, Shadow Word: Pain, Devouring Plague, Smite on a mana and remaining time math condition, Power in Light, Searing Light, Dark Sacrifice and the inert Shadowfiend",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-smite-priest.request.json"
+      },
+      "prepared": "production-smite-priest.prepared.json",
+      "prepared_sha256": "72f033bb960874a74c86a78c970ade4b9cb657442719e1d08033d9c5895e0aa6",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-smite-priest.go-result.json",
+        "sha256": "613d1cbf1cae0ed15ea05921d703966b1cea663873e0290225ec35f78d1433f7"
+      },
+      "go_log": {
+        "file": "production-smite-priest.go-log.txt",
+        "sha256": "3f8fa752b345c9ec1df1e8d80af58ddb43ac5546104f7c0588c1ad1abd6375a7"
       }
     },
     {

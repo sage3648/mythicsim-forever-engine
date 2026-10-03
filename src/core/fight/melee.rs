@@ -375,6 +375,11 @@ impl<A: Agent> Fight<A> {
             + (weapon.swing_speed * attack_power) / weapon.attack_power_per_dps
     }
 
+    /// Go `getAttackPowerValueImpl` for the player, with no mob type bonus.
+    pub(crate) fn melee_attack_power(&self) -> f64 {
+        self.melee_attack_power_of(Side::Player)
+    }
+
     /// Go `getAttackPowerValueImpl` of an acting unit, with no mob type bonus.
     pub(crate) fn melee_attack_power_of(&self, side: Side) -> f64 {
         self.unit(side).powers.attack_power
