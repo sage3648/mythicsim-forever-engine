@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "1165190f35778bae03510f49974442af76c8bbcf815f32f61d03d7e345bd5d98",
+  "exporter_sha256": "5816338c0c02377c8ebd759e16e3453252093a6893f895dc2001a42fd9957bd1",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -645,6 +645,44 @@
       "go_result": {
         "file": "frost-troll-ten-minutes.go-result.json",
         "sha256": "f27c96d6d2239bab424a38a4657196304a58ac5b2d8e82c2da89cdbdc3922f0d"
+      }
+    },
+    {
+      "id": "frost-orc",
+      "description": "The Frost reference as an Orc: Blood Fury multiplies spell damage and attack power for 15 seconds; Shatter Curse, a survival cooldown, never fires on its own.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/frost-orc.request.json"
+      },
+      "prepared": "frost-orc.prepared.json",
+      "prepared_sha256": "446f453fb04abb0115f7d78c01025ab55c59ca8f3bd2fd6395f78f0666adc42b",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frost-orc.go-result.json",
+        "sha256": "7144c46d2469a9954be3d1113ab0a3215e7f6a589fefca568040c03dcc53319a"
+      },
+      "go_log": {
+        "file": "frost-orc.go-log.txt",
+        "sha256": "0d59fec3ea7e349aa04d16eb24e7537f82d01ef7ca8bd4256b05f578b8178550"
+      }
+    },
+    {
+      "id": "frost-orc-cooldown-timings",
+      "description": "The Frost reference as an Orc in 300-second fights with configured cooldown timings: Shatter Curse is cast at 10 and 200 seconds, Blood Fury at 30 and 160 seconds and then whenever ready.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/frost-orc-cooldown-timings.request.json"
+      },
+      "prepared": "frost-orc-cooldown-timings.prepared.json",
+      "prepared_sha256": "75b34dc55a9c34958cbf0ebc469936b0ddf2adf1fc62971f32c9dc29e68897c1",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frost-orc-cooldown-timings.go-result.json",
+        "sha256": "c547de3077f5f89f307d886ba44e816bf70c9eda2e37d941aff550690b8ad01a"
       }
     }
   ]

@@ -347,8 +347,18 @@ pub(crate) struct QueuedSpell {
     pub(crate) initiated_at: i64,
 }
 
+/// The stats a temporary stat change can set, as Go `Unit.stats` entries.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub(crate) struct Powers {
+    pub(crate) spell_damage: f64,
+    pub(crate) attack_power: f64,
+    pub(crate) ranged_attack_power: f64,
+}
+
 /// Mutable player state, reset to the prepared values each iteration.
 pub(crate) struct Player {
+    /// Go `Unit.stats` for the stats auras can change during a fight.
+    pub(crate) powers: Powers,
     pub(crate) mana: f64,
     /// Go `healthBar.currentHealth`; the player takes no damage in scope.
     pub(crate) health: f64,
@@ -403,11 +413,10 @@ pub(crate) struct Config {
     pub(crate) spirit_regen_per_second: f64,
     pub(crate) spell_hit_percent: f64,
     pub(crate) spell_crit_percent: f64,
-    pub(crate) spell_damage: f64,
+    /// The prepared stats; auras change the player's copy.
+    pub(crate) powers: Powers,
     pub(crate) school_damage: [f64; 8],
     pub(crate) spell_piercing: f64,
-    pub(crate) attack_power: f64,
-    pub(crate) ranged_attack_power: f64,
     pub(crate) initial: InitialPseudo,
     pub(crate) school_bonus_hit_chance: [f64; 8],
     pub(crate) damage_dealt_multiplier: f64,
@@ -441,6 +450,8 @@ pub(crate) struct MajorCooldown {
     pub(crate) spell: SpellId,
     pub(crate) priority: i32,
     pub(crate) explosive: bool,
+    /// Go `CooldownTypeSurvival`.
+    pub(crate) survival: bool,
     pub(crate) timings: Vec<i64>,
     pub(crate) uses: usize,
 }
@@ -598,7 +609,11 @@ impl<A: Agent> Fight<A> {
             spirit_regen_per_second: player.mana.spirit_regen_per_second,
             spell_hit_percent: stat(&player.stats, "SpellHitPercent")?,
             spell_crit_percent: stat(&player.stats, "SpellCritPercent")?,
-            spell_damage: stat(&player.stats, "SpellDamage")?,
+            powers: Powers {
+                spell_damage: stat(&player.stats, "SpellDamage")?,
+                attack_power: stat(&player.stats, "AttackPower")?,
+                ranged_attack_power: stat(&player.stats, "RangedAttackPower")?,
+            },
             school_damage: [
                 0.0,
                 0.0,
@@ -610,8 +625,6 @@ impl<A: Agent> Fight<A> {
                 stat(&player.stats, "ShadowDamage")?,
             ],
             spell_piercing: stat(&player.stats, "SpellPiercing")?,
-            attack_power: stat(&player.stats, "AttackPower")?,
-            ranged_attack_power: stat(&player.stats, "RangedAttackPower")?,
             initial: InitialPseudo {
                 spell_cost_percent_modifier: pseudo.spell_cost_percent_modifier,
                 cast_speed_multiplier: pseudo.cast_speed_multiplier,
@@ -744,6 +757,8 @@ impl<A: Agent> Fight<A> {
                             Some(SpellBehavior::Eureka)
                         }
                         Effect::Berserking { spell_id, aura, .. }
+                        | Effect::BloodFury { spell_id, aura, .. }
+                        | Effect::ShatterCurse { spell_id, aura }
                             if id.spell_id == *spell_id && id.tag == 0 =>
                         {
                             activations.push((spells.len(), aura));
@@ -940,6 +955,20 @@ impl<A: Agent> Fight<A> {
                     _ => None,
                 }) {
                     AuraBehavior::MultiplyCastSpeed(multiplier)
+                } else if let Some(stats) = effects.iter().find_map(|effect| match effect {
+                    Effect::BloodFury {
+                        aura, active_stats, ..
+                    } if side == Side::Player && *aura == exported.label => Some(active_stats),
+                    _ => None,
+                }) {
+                    let active = |name: &str| stats.get(name).copied();
+                    let base = config.powers;
+                    AuraBehavior::TemporaryStats(Powers {
+                        spell_damage: active("SpellDamage").unwrap_or(base.spell_damage),
+                        attack_power: active("AttackPower").unwrap_or(base.attack_power),
+                        ranged_attack_power: active("RangedAttackPower")
+                            .unwrap_or(base.ranged_attack_power),
+                    })
                 } else if effects.iter().any(|effect| {
                     matches!(effect, Effect::InertListener { unit: u, aura, .. } if u == unit && *aura == exported.label)
                 }) {
@@ -980,6 +1009,7 @@ impl<A: Agent> Fight<A> {
                 spell,
                 priority: cooldown.priority,
                 explosive: cooldown.kind.iter().any(|kind| kind == "explosive"),
+                survival: cooldown.kind.iter().any(|kind| kind == "survival"),
                 timings: cooldown.timings_ns.clone(),
                 uses: 0,
             });
@@ -996,6 +1026,7 @@ impl<A: Agent> Fight<A> {
             queue: PendingQueue::default(),
             min_tracker_time: NEVER_EXPIRES,
             player: Player {
+                powers: config.powers,
                 mana: config.max_mana,
                 health: config.max_health,
                 spell_cost_percent_modifier: config.initial.spell_cost_percent_modifier,
@@ -1224,6 +1255,7 @@ impl<A: Agent> Fight<A> {
             let initial = self.config.initial;
             player.spell_cost_percent_modifier = initial.spell_cost_percent_modifier;
             player.cast_speed_multiplier = initial.cast_speed_multiplier;
+            player.powers = self.config.powers;
             player.spirit_regen_rate_casting = initial.spirit_regen_rate_casting;
             player.spirit_regen_multiplier = initial.spirit_regen_multiplier;
             player.force_full_spirit_regen = initial.force_full_spirit_regen;

@@ -190,6 +190,25 @@ fn rotation_spells_without_behavior_are_reported() {
     );
 }
 
+/// Blood Fury sets the stats Go computes while it is active. The runtime changes only
+/// the stats it reads during a fight, so a change to any other stat is unsupported.
+#[test]
+fn temporary_stat_changes_must_be_to_dynamic_stats() {
+    let path = family().join("frost-orc.prepared.json");
+    let mut value: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+    assert!(check_prepared(&parse(value.clone()).unwrap()).is_ok());
+    let blood_fury = value["effects"]
+        .as_array_mut()
+        .unwrap()
+        .iter_mut()
+        .find(|effect| effect["kind"] == "blood_fury")
+        .unwrap();
+    blood_fury["active_stats"]["SpellHasteRating"] = json!(10.0);
+    assert!(reasons(value).contains(
+        &"Blood Fury changes SpellHasteRating, which the runtime holds fixed".to_string()
+    ));
+}
+
 /// Ignite acts on the crits of any reachable Fire spell, so a rotation that adds
 /// Fireball to an Ignite build stays supported.
 #[test]

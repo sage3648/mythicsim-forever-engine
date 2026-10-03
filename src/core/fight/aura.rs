@@ -11,8 +11,8 @@ use crate::{
 };
 
 use super::{
-    log::action_string, metrics::Aggregator, Agent, DotId, Fight, Side, SpellId, SpellResult,
-    TimerId,
+    log::action_string, metrics::Aggregator, Agent, DotId, Fight, Powers, Side, SpellId,
+    SpellResult, TimerId,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -44,6 +44,9 @@ pub(crate) enum AuraBehavior<K> {
     Eureka,
     /// Go `Aura.AttachMultiplyCastSpeed`.
     MultiplyCastSpeed(f64),
+    /// Go `NewTemporaryStatMultiplierAura`: the stats while active. Go recomputes every stat
+    /// from the same inputs on each change, so expiry restores the prepared values exactly.
+    TemporaryStats(Powers),
     /// The aura of a dot or channel.
     Dot(DotId),
     Class(K),
@@ -411,6 +414,7 @@ impl<A: Agent> Fight<A> {
             AuraBehavior::Dot(dot) => self.dot_on_gain(dot),
             AuraBehavior::Eureka => self.eureka_gain(),
             AuraBehavior::MultiplyCastSpeed(multiplier) => self.multiply_cast_speed(multiplier),
+            AuraBehavior::TemporaryStats(powers) => self.player.powers = powers,
             AuraBehavior::Class(kind) => A::on_gain(self, aura, kind),
             _ => {}
         }
@@ -423,6 +427,7 @@ impl<A: Agent> Fight<A> {
             AuraBehavior::MultiplyCastSpeed(multiplier) => {
                 self.multiply_cast_speed(1.0 / multiplier)
             }
+            AuraBehavior::TemporaryStats(_) => self.player.powers = self.config.powers,
             AuraBehavior::Class(kind) => A::on_expire(self, aura, kind),
             _ => {}
         }

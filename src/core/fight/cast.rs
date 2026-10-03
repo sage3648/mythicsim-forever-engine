@@ -772,6 +772,11 @@ impl<A: Agent> Fight<A> {
         if let Some(&timing) = self.major_cooldowns[cooldown].timings.get(uses) {
             return self.now >= timing;
         }
+        // Survival cooldowns wait for health to fall to the defensive threshold. The exporter
+        // rejects a nonzero threshold, and at zero Go never fires them on its own.
+        if self.major_cooldowns[cooldown].survival {
+            return false;
+        }
         self.cooldown_should_activate(spell)
     }
 

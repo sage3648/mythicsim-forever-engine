@@ -80,7 +80,7 @@ impl<A: Agent> Fight<A> {
     /// Go `Unit.GetSpellDamageValue`: generic plus school spell damage.
     pub(crate) fn spell_power(&self, spell: SpellId) -> f64 {
         let state = &self.spells[spell];
-        self.config.spell_damage
+        self.player.powers.spell_damage
             + state.bonus_spell_damage
             + self.config.school_damage[state.school_index]
     }
@@ -250,8 +250,8 @@ impl<A: Agent> Fight<A> {
                 "[{}] {} [DEBUG] MAP: {:.1}, RAP: {:.1}, SP: {:.1}, BaseDamage:{:.1}, AfterAttackerMods:{:.1}, AfterResistances:{:.1}, AfterTargetMods:{:.1}, AfterOutcome:{:.1}, AfterPostOutcome:{:.1}",
                 self.config.target_label,
                 action_string(&self.spells[spell].id),
-                self.config.attack_power,
-                self.config.ranged_attack_power,
+                self.player.powers.attack_power,
+                self.player.powers.ranged_attack_power,
                 self.spell_power(spell),
                 base,
                 after_attacker,

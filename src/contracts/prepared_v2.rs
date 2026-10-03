@@ -485,6 +485,21 @@ pub enum Effect {
         aura: String,
         cast_speed_multiplier: f64,
     },
+    /// The Orc racial Blood Fury: a major cooldown whose aura multiplies stats through Go's
+    /// dynamic stat dependencies. `active_stats` holds every stat the aura changes, at the
+    /// value Go computes while it is active.
+    BloodFury {
+        spell_id: i32,
+        aura: String,
+        active_stats: BTreeMap<String, f64>,
+    },
+    /// The Orc racial Shatter Curse: a survival cooldown whose aura lowers the player's
+    /// spell damage taken, which has no effect in scope. Go never autocasts it at the
+    /// default defensive health threshold; configured timings still cast it.
+    ShatterCurse {
+        spell_id: i32,
+        aura: String,
+    },
     /// Master of Elements: Fire and Frost crits refund part of the base cost.
     MasterOfElements {
         trigger_aura: String,
@@ -661,6 +676,8 @@ impl Effect {
             Effect::TouchOfTheGrave { .. } => "touch_of_the_grave",
             Effect::Eureka { .. } => "eureka",
             Effect::Berserking { .. } => "berserking",
+            Effect::BloodFury { .. } => "blood_fury",
+            Effect::ShatterCurse { .. } => "shatter_curse",
             Effect::PresenceOfMind { .. } => "presence_of_mind",
             Effect::IceLance { .. } => "ice_lance",
             Effect::ArcaneMissiles { .. } => "arcane_missiles",
