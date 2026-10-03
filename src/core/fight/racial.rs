@@ -67,6 +67,7 @@ impl<A: Agent> Fight<A> {
         let result = match target {
             Side::Target => self.calc_damage_hit_only(spell, target, base),
             Side::Player => self.calc_damage_on_player(spell, base, false),
+            Side::Pet => unreachable!("a pet takes no damage in scope"),
         };
         self.deal_damage(spell, result, false);
         if result.landed() {

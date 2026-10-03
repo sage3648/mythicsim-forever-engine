@@ -207,6 +207,7 @@ impl<A: Agent> Fight<A> {
         let hand = match side {
             Side::Player => Hand::Main,
             Side::Target => Hand::Enemy,
+            Side::Pet => unreachable!("the target never swings at a pet in scope"),
         };
         let now = self.now;
         let attack = self.autos.attack(hand);

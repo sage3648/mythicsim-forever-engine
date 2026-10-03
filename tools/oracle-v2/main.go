@@ -20,6 +20,7 @@ import (
 	"os"
 	"reflect"
 	"sort"
+	"strings"
 	"time"
 	"unsafe"
 
@@ -195,6 +196,8 @@ type classExport struct {
 	damageTakenModifiers func(agent core.Agent) int
 	// Why a registered pet never acts in this build, or "" when it may.
 	inertPet func(agent core.Agent, pet *core.Pet) string
+	// Optional: stable names for class spells Go registers without a class mask, by action.
+	unmaskedSpells map[core.ActionID]string
 	// Optional: class behavior the effects cannot describe, one reason each.
 	unrepresented func(agent core.Agent, character *core.Character) []string
 	// Optional: whether the class's main hand swing replacement always returns the swing it is
@@ -215,7 +218,7 @@ var (
 
 func classSpell(class classExport, mask int64, unrepresented *[]string, id core.ActionID) string {
 	if mask == 0 {
-		return ""
+		return class.unmaskedSpells[id]
 	}
 	for _, entry := range class.spells {
 		if entry.mask == mask {
@@ -553,6 +556,7 @@ type MetricsAction struct {
 	ActionID     *ActionID `json:"action_id"`
 	MeleeMetrics bool      `json:"melee_metrics"`
 	School       uint8     `json:"school"`
+	Passive      bool      `json:"passive,omitempty"`
 }
 
 type TargetUnit struct {
@@ -769,6 +773,7 @@ type Prepared struct {
 	Target        TargetUnit       `json:"target"`
 	Player        Player           `json:"player"`
 	Melee         Melee            `json:"melee"`
+	Pets          []Pet            `json:"pets,omitempty"`
 	// The target's swings at the player when the player tanks it.
 	Enemy *Enemy `json:"enemy,omitempty"`
 	Effects       []map[string]any `json:"effects"`
@@ -1298,6 +1303,9 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	note(!exported, fmt.Sprintf("%s agents are not exported", character.Class))
 	inertPets := []map[string]any{}
 	for _, pet := range character.Pets {
+		if simulatedPet(character, pet) {
+			continue
+		}
 		reason := ""
 		if class.inertPet != nil {
 			reason = class.inertPet(agent, pet)
@@ -1306,7 +1314,7 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 			note(true, "pets are unsupported")
 			continue
 		}
-		inertPets = append(inertPets, inertPetEffect(pet, reason))
+		inertPets = append(inertPets, inertPetEffect(request, pet, reason, note))
 	}
 
 	spells := []Spell{}
@@ -1476,6 +1484,7 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	if tanking {
 		prepared.Enemy = exportEnemy(request, statAuraLabels, character, target, &prepared.Unrepresented)
 	}
+	prepared.Pets = exportPets(request, character, target, class, timers, &prepared.Unrepresented)
 	// Last: the teardown changes the simulation.
 	prepared.Player.Mana.TeardownMax = teardownMaxMana(simulation, &character.Unit, &prepared.Unrepresented)
 	return prepared
@@ -1484,18 +1493,50 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 // A pet that is registered but never enabled. Each reset enables its unit and its agent's
 // Reset dismisses it, logging its stats; each fight's end logs that no pet is summoned. Its
 // metrics report zero, with every action and aura it registered.
-func inertPetEffect(pet *core.Pet, reason string) map[string]any {
+func inertPetEffect(request *proto.RaidSimRequest, pet *core.Pet, reason string, note func(bool, string)) map[string]any {
 	auras := []*ActionID{}
+	// Permanent auras activate at every unit's reset, enabled or not, and last the fight.
+	permanent := []*ActionID{}
 	for _, aura := range pet.GetAuras() {
-		if id := actionID(aura.ActionID); id != nil {
+		id := actionID(aura.ActionID)
+		if id != nil {
 			auras = append(auras, id)
 		}
+		if aura.IsActive() {
+			note(aura.Duration != core.NeverExpires, fmt.Sprintf("inert pet %s has the expiring aura %s", pet.Label, aura.Label))
+			if id != nil {
+				permanent = append(permanent, id)
+			}
+		}
 	}
-	return map[string]any{
+	effect := map[string]any{
 		"kind": "inert_pet", "name": pet.Name, "label": pet.Label, "unit_index": pet.UnitIndex,
 		"metrics_actions": metricsActions(&pet.Unit), "auras": auras,
 		"dismissed_log": pet.GetStats().FlatString(), "reason": reason,
 	}
+	if len(permanent) != 0 {
+		effect["permanent_auras"] = permanent
+	}
+	// Only a pet whose agent's Reset disables it logs its dismissal at each reset; a pet that is
+	// simply not enabled on start, such as a warlock's other demons, logs nothing then.
+	if !dismissedAtReset(request, pet.Label) {
+		effect["dismissed_at_reset"] = false
+	}
+	if pet.HasManaBar() {
+		effect["mana_bar"] = true
+	}
+	return effect
+}
+
+// Whether a reset logs the pet's dismissal, read from the log of a separate reset simulation.
+func dismissedAtReset(request *proto.RaidSimRequest, label string) bool {
+	simulation := core.NewSim(request, simsignals.CreateSignals())
+	logs := &strings.Builder{}
+	simulation.Log = func(message string, vals ...interface{}) {
+		logs.WriteString(fmt.Sprintf(message, vals...) + "\n")
+	}
+	simulation.Reset()
+	return strings.Contains(logs.String(), "["+label+"] Pet dismissed")
 }
 
 // Item procs (common/forever/stat_bonus_procs_auto_gen.go) whose listener, decoded by spelldata's
@@ -1553,7 +1594,8 @@ func metricsActions(unit *core.Unit) []MetricsAction {
 			}
 			seen[id] = true
 			actions = append(actions, MetricsAction{ActionID: actionID(id),
-				MeleeMetrics: spell.Flags.Matches(core.SpellFlagMeleeMetrics), School: uint8(spell.SpellSchool)})
+				MeleeMetrics: spell.Flags.Matches(core.SpellFlagMeleeMetrics), School: uint8(spell.SpellSchool),
+				Passive: spell.Flags.Matches(core.SpellFlagPassiveSpell)})
 		}
 	}
 	return actions

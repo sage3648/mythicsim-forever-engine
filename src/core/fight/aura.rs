@@ -301,10 +301,7 @@ impl<A: Agent> Fight<A> {
     }
 
     fn unit_label(&self, side: Side) -> String {
-        match side {
-            Side::Player => self.config.player_label.clone(),
-            Side::Target => self.config.target_label.clone(),
-        }
+        self.label_of(side)
     }
 
     /// Go `Aura.Refresh`.
@@ -705,16 +702,14 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    /// Go `auraTracker.OnCastComplete`. No active check, as in Go.
+    /// Go `auraTracker.OnCastComplete` on the caster. No active check, as in Go.
     pub(crate) fn on_cast_complete(&mut self, spell: SpellId) {
         let list = List::CastComplete as usize;
-        let length = self.trackers[Side::Player.index()].lists[list].snapshot_len();
+        let side = self.spells[spell].caster;
+        let length = self.trackers[side.index()].lists[list].snapshot_len();
         for position in 0..length {
-            let index = self.trackers[Side::Player.index()].lists[list].read(position);
-            let aura = AuraRef {
-                side: Side::Player,
-                index,
-            };
+            let index = self.trackers[side.index()].lists[list].read(position);
+            let aura = AuraRef { side, index };
             match self.aura(aura).behavior {
                 AuraBehavior::Class(kind) => A::on_cast_complete(self, aura, kind, spell),
                 AuraBehavior::Eureka => self.eureka_cast_complete(spell),
@@ -726,14 +721,12 @@ impl<A: Agent> Fight<A> {
     /// Go `auraTracker.OnPeriodicDamageDealt` on the caster, which skips no inactive aura. No
     /// target aura in scope acts on periodic damage taken.
     pub(crate) fn on_periodic_damage(&mut self, spell: SpellId, result: &SpellResult) {
+        let side = self.spells[spell].caster;
         let list = List::PeriodicDamageDealt as usize;
-        let length = self.trackers[Side::Player.index()].lists[list].snapshot_len();
+        let length = self.trackers[side.index()].lists[list].snapshot_len();
         for position in 0..length {
-            let index = self.trackers[Side::Player.index()].lists[list].read(position);
-            let aura = AuraRef {
-                side: Side::Player,
-                index,
-            };
+            let index = self.trackers[side.index()].lists[list].read(position);
+            let aura = AuraRef { side, index };
             if let AuraBehavior::Class(kind) = self.aura(aura).behavior {
                 A::on_periodic_damage_dealt(self, aura, kind, spell, result);
             }
@@ -742,8 +735,9 @@ impl<A: Agent> Fight<A> {
 
     /// Go `auraTracker.OnSpellHitDealt` on the caster and `OnSpellHitTaken` on the target.
     pub(crate) fn on_spell_hit(&mut self, spell: SpellId, result: &SpellResult) {
+        let caster = self.spells[spell].caster;
         for (side, list) in [
-            (Side::Player, List::SpellHitDealt),
+            (caster, List::SpellHitDealt),
             (result.target, List::SpellHitTaken),
         ] {
             // Listeners of the caster's hits, as opposed to the hits its target takes.
@@ -995,6 +989,23 @@ impl<A: Agent> Fight<A> {
                 {
                     return;
                 }
+                // Go gives the mana to the attacker, each unit with its own metrics, which a
+                // pet registers at its first proc.
+                let metrics = match self.spells[spell].caster {
+                    Side::Pet => {
+                        let id = self.resources[metrics].id.clone();
+                        match self.pet.as_ref().and_then(|pet| pet.jow_metrics) {
+                            Some(existing) => existing,
+                            None => {
+                                let created = self.new_mana_metrics_of(Side::Pet, id);
+                                self.pet.as_mut().expect("the pet is simulated").jow_metrics =
+                                    Some(created);
+                                created
+                            }
+                        }
+                    }
+                    _ => metrics,
+                };
                 self.add_mana(mana, metrics);
             }
             AuraBehavior::TouchOfTheGrave { drain, .. } => {

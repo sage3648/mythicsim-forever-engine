@@ -329,7 +329,7 @@ impl<A: Agent> Fight<A> {
             return;
         }
         self.remove_health(result.damage);
-        self.react_to_event();
+        self.react_to_event(Side::Player);
         if self.player.health <= 0.0 && !self.death.died {
             self.schedule(self.now, super::PRIORITY_GCD, Action::DeathCheck);
         }

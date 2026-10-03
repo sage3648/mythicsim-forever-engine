@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "44e1ffbfa98b68139d1d7d38e25e96cc3e55e281480c7eb8c37e086ba8854f56",
+  "exporter_sha256": "8f320cb3af8e1eed8532b450d908a586adb2a4e41f716ea4dd1cdd3ada0828f5",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -1373,6 +1373,69 @@
       "go_log": {
         "file": "warrior-troll-berserking.go-log.txt",
         "sha256": "d5774b9ef5df8616caeeeb4354becaf07f611fea83bcb3379843b121e7485381"
+      }
+    },
+    {
+      "id": "production-affliction-warlock",
+      "description": "Production Affliction Warlock (Gnome): Corruption, Bane of Agony with Amplify Curse, Immolate and Shadow Bolt with Nightfall's Shadow Trance, and a summoned Succubus casting Lash of Pain",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-affliction-warlock.request.json"
+      },
+      "prepared": "production-affliction-warlock.prepared.json",
+      "prepared_sha256": "01ef980ac642d8d8c5b570117df10d0ab39f7c0831aabb8670d06d99b8c3a881",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-affliction-warlock.go-result.json",
+        "sha256": "ba2c0f5c4e053a717e8b253dcc731b14de8b47e1e71ba6076ab6607d8617460a"
+      },
+      "go_log": {
+        "file": "production-affliction-warlock.go-log.txt",
+        "sha256": "1f2a86593cbdc42f90b9341396a1ee63d139814ca7cfaa9550ca63ab85debf7e"
+      }
+    },
+    {
+      "id": "production-demonology-warlock",
+      "description": "Production Demonology Warlock (Gnome): Demonic Pact with a sacrificed Imp and a summoned Succubus, Decimation in the execute phase, Demonic Brand charges spent by the Succubus, Demonic Energies' share of Life Tap, and an auraIsKnown guard on the demon's brand",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-demonology-warlock.request.json"
+      },
+      "prepared": "production-demonology-warlock.prepared.json",
+      "prepared_sha256": "b1831796bc1781e3dd43c0f893303d2a23aa6cc071066f169dfce7fb1484f5e3",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-demonology-warlock.go-result.json",
+        "sha256": "6419241ae819bdb5c5216dcf3c8f178dfe5f882fd476a400fa2c973ad8058aa8"
+      },
+      "go_log": {
+        "file": "production-demonology-warlock.go-log.txt",
+        "sha256": "4efb88e3dbd4da214c9c833f4af56996d121dd83a444c0cc809a9edbe998e7af"
+      }
+    },
+    {
+      "id": "demonology-warlock-voidwalker-pact",
+      "description": "production-demonology-warlock with the Voidwalker as Demonic Pact's sacrifice: Fel Energy restores a share of maximum mana every four seconds from its permanent aura",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/demonology-warlock-voidwalker-pact.request.json"
+      },
+      "prepared": "demonology-warlock-voidwalker-pact.prepared.json",
+      "prepared_sha256": "01315a860bb687a31cc8a787c316a83456dcd453bc3ec6dfb84c362a997a5b59",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "demonology-warlock-voidwalker-pact.go-result.json",
+        "sha256": "a11deff2a87b39d167cbf392910dee3aaf3d7ba262b80372207a82f4f80ccd5a"
+      },
+      "go_log": {
+        "file": "demonology-warlock-voidwalker-pact.go-log.txt",
+        "sha256": "8fd750f5070ceefdfe05ae7772c9c99804e52608f60efbea8d97f43f528701b0"
       }
     }
   ]

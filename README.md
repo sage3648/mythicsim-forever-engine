@@ -168,6 +168,20 @@ of 48 variants; the other six drop Expose Armor, so the rotation could stack the
 own Sunder Armor beside the raid's, which is rejected. All ten requests on the Warrior
 [race board](validation/2026-10-04-warrior-race-boards.json) match.
 
+The production Affliction Warlock build matches at 541.885 DPS: a Gnome warlock with
+a summoned Succubus, which the runtime simulates as its own unit with auto attacks,
+mana and Lash of Pain, Corruption, Bane of Agony with Amplify Curse, Immolate and
+Shadow Bolt with Nightfall's instant Shadow Trance. Its
+[sweep](validation/2026-10-04-affliction-warlock-sweep.json) matches Go on all 24
+variants.
+
+The production Demonology Warlock build matches at 610.212 DPS: a Gnome warlock with
+Demonic Pact keeping the sacrificed Imp's buff while the Succubus is out, Decimation in
+the execute phase, Demonic Brand charges the Succubus spends for extra hits, and
+Demonic Energies' share of Life Tap for the demon. Its
+[sweep](validation/2026-10-04-demonology-warlock-sweep.json) matches Go on all 24
+variants.
+
 Every race that can be a Mage is supported: Human, Gnome, Undead, Troll with
 Berserking, Orc with Blood Fury and Shatter Curse, and High Order Skyborne with Read
 Ley Line for rotations that cast it. A [race sweep](validation/2026-10-04-mage-race-sweep.json)
