@@ -63,7 +63,8 @@ impl<A: Agent> Fight<A> {
         remaining(self.spells[spell].cd).max(remaining(self.spells[spell].shared_cd))
     }
 
-    fn gcd_ready(&self) -> bool {
+    /// Go `GCD.IsReady`.
+    pub(crate) fn gcd_ready(&self) -> bool {
         self.player.gcd <= self.now
     }
 

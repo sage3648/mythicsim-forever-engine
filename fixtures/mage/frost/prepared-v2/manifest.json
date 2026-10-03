@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "1549ededae3344ce078b69fdbc5f8ecfaca2b4c8184897e7d9e9964ed332c3ee",
+  "exporter_sha256": "036a99cc7581fd2b59bfaa1bccf430cba32e2c41ea00e02ed950eeb6989b60c5",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -327,7 +327,7 @@
         "path": "fixtures/mage/frost/prepared-v2/arcane-blast.request.json"
       },
       "prepared": "arcane-blast.prepared.json",
-      "prepared_sha256": "9e866090add76f2381bde7ad56a4d3740d3f5d3ecab7aa3d4b0050c3e8ada13c",
+      "prepared_sha256": "5f6e76d1c39a026968fc9c75d9172b0e62bea2f4e17177a0d90f67a6a7a4ae3c",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -344,7 +344,7 @@
         "path": "fixtures/mage/frost/prepared-v2/arcane-blast-spenders.request.json"
       },
       "prepared": "arcane-blast-spenders.prepared.json",
-      "prepared_sha256": "11318d6c4395267c461d29bbea85d7335c81bc0b3ba5430b92c3d16e72e5155d",
+      "prepared_sha256": "c990120b441735c3bbfdffe8530b54dcb6a8fa716956b2795d6c2f8f2919c0c9",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -356,6 +356,44 @@
       "go_log": {
         "file": "arcane-blast-spenders.go-log.txt",
         "sha256": "6ed737130689f3fdf85d22b2820b71fea7deed147acb1b99ed9d99cbc4784f42"
+      }
+    },
+    {
+      "id": "arcane-cooldowns",
+      "description": "The application's Arcane character and rotation as a Human without fire talents: Arcane Power and Presence of Mind are cast as major cooldowns.",
+      "request": {
+        "path": "fixtures/mage/frost/prepared-v2/arcane-cooldowns.request.json"
+      },
+      "prepared": "arcane-cooldowns.prepared.json",
+      "prepared_sha256": "19aa1b5734244de78e927eb24a5bfbe7f5494a4e3cfc4bc69350809a976dfff5",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "arcane-cooldowns.go-result.json",
+        "sha256": "d1c9b29d42794740de477231ccca3a4b74690affa6cd2f9101997b4b3ea985a1"
+      },
+      "go_log": {
+        "file": "arcane-cooldowns.go-log.txt",
+        "sha256": "20a061629cb2dca97ea6d9d17529b9ce22d94cab725b5d3cdda1b2d3bc78ec1b"
+      }
+    },
+    {
+      "id": "arcane-cooldowns-long",
+      "description": "The same at 400 seconds: Presence of Mind's cooldown restarts when Arcane Blast consumes it, so its second use comes at 181.5 seconds.",
+      "request": {
+        "path": "fixtures/mage/frost/prepared-v2/arcane-cooldowns-long.request.json"
+      },
+      "prepared": "arcane-cooldowns-long.prepared.json",
+      "prepared_sha256": "d067b4fdb31e30825f017e024192ba6e89e34736026c7d6e618b2c5b06f87b1d",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "arcane-cooldowns-long.go-result.json",
+        "sha256": "e34728bb7d19b46b1b58f796fa72b46288e2f2db60555cbfb402b366a4ad6eaa"
       }
     }
   ]

@@ -19,6 +19,7 @@ reading the Go reference. They are not effort estimates for other contributors.
 | 10. Reports and timelines | 2026-10-03 12:36 | 2026-10-03 12:50 | 0 h 14 m | Whole Go result compared; fixed time to OOM after Go's aura teardown, zero distributions, target actions and every-fight logs; application parsers read identical timelines |
 | Arcane: or and auraNumStacks | 2026-10-03 12:50 | 2026-10-03 12:55 | 0 h 05 m | Arcane preset operators with Go folding and the #622 comparison |
 | Arcane: Arcane Blast and its stacks | 2026-10-03 12:55 | 2026-10-03 13:01 | 0 h 06 m | Flat damage modifier with reset rounding; stacks spent after the roll, held by Missiles; both fixtures match Go on the first comparison |
+| Arcane: Arcane Power and Presence of Mind | 2026-10-03 13:01 | 2026-10-03 13:08 | 0 h 07 m | Damage, direct damage and cast time modifiers; Presence of Mind restarts its cooldown when consumed; both fixtures match Go on the first comparison |
 
 ## Notes
 

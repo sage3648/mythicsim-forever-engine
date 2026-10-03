@@ -104,11 +104,11 @@ fn unknown_fields_and_effect_kinds_fail_deserialization() {
     effect["effects"]
         .as_array_mut()
         .unwrap()
-        .push(json!({"kind": "presence_of_mind"}));
+        .push(json!({"kind": "combustion"}));
     assert!(parse(effect)
         .unwrap_err()
         .to_string()
-        .contains("unknown variant `presence_of_mind`"));
+        .contains("unknown variant `combustion`"));
 
     let mut parameter = reference_json();
     for effect in parameter["effects"].as_array_mut().unwrap() {

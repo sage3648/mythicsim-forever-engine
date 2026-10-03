@@ -438,6 +438,19 @@ pub struct ManaGem {
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Effect {
     Frostbolt {},
+    /// Arcane Power's major cooldown and aura.
+    ArcanePower {
+        spell_id: i32,
+        aura: String,
+        damage: f64,
+        cost_percent_add: f64,
+    },
+    /// Presence of Mind's major cooldown and aura.
+    PresenceOfMind {
+        spell_id: i32,
+        aura: String,
+        cast_time_percent: f64,
+    },
     /// Arcane Blast and its stacking buff.
     ArcaneBlast {
         spell_id: i32,
@@ -546,6 +559,8 @@ impl Effect {
         match self {
             Effect::Frostbolt {} => "frostbolt",
             Effect::ArcaneBlast { .. } => "arcane_blast",
+            Effect::ArcanePower { .. } => "arcane_power",
+            Effect::PresenceOfMind { .. } => "presence_of_mind",
             Effect::IceLance { .. } => "ice_lance",
             Effect::ArcaneMissiles { .. } => "arcane_missiles",
             Effect::ColdSnap { .. } => "cold_snap",

@@ -18,6 +18,7 @@ pub(crate) const IMPLEMENTED_EFFECTS: &[&str] = &[
     "arcane_blast",
     "arcane_concentration",
     "arcane_missiles",
+    "arcane_power",
     "cold_snap",
     "conjured_mana",
     "energize_on_use",
@@ -30,6 +31,7 @@ pub(crate) const IMPLEMENTED_EFFECTS: &[&str] = &[
     "mana_gems",
     "missile_barrage",
     "potion_mana",
+    "presence_of_mind",
     "winters_chill",
 ];
 
@@ -39,6 +41,8 @@ fn spell_capability(spell: &Spell, prepared: &PreparedV2) -> Option<&'static str
         return match class_spell.as_str() {
             "frostbolt" => Some("frostbolt"),
             "arcane_blast" => Some("arcane_blast"),
+            "arcane_power" => Some("arcane_power"),
+            "presence_of_mind" => Some("presence_of_mind"),
             "ice_lance" => Some("ice_lance"),
             "arcane_missiles_cast" => Some("arcane_missiles"),
             "cold_snap" => Some("cold_snap"),
@@ -80,7 +84,10 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         } => {
             vec![("player", regen_aura), ("player", channel_aura)]
         }
-        Effect::MageArmor { aura } | Effect::ArcaneBlast { aura, .. } => vec![("player", aura)],
+        Effect::MageArmor { aura }
+        | Effect::ArcaneBlast { aura, .. }
+        | Effect::ArcanePower { aura, .. }
+        | Effect::PresenceOfMind { aura, .. } => vec![("player", aura)],
         Effect::JudgementOfWisdom { aura, .. } => vec![("target", aura)],
         Effect::InertListener { unit, aura, .. } => match unit.as_str() {
             "player" => vec![("player", aura)],

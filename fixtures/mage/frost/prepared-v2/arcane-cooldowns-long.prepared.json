@@ -6,17 +6,17 @@
     "client_build": "1.60.1.70170",
     "exporter": "tools/oracle-v2"
   },
-  "request_sha256": "b2d157f86807afaf2803e5eab7de9a50e8e3c775797a757aff99be3f05331b36",
-  "scenario_id": "arcane-blast",
+  "request_sha256": "f48626f2dbdad7be61d93f4babd6d16ae9b3b811e58505f34afba56922b23f83",
+  "scenario_id": "arcane-cooldowns-long",
   "sim": {
-    "iterations": 1000,
+    "iterations": 300,
     "seed": 42,
     "labeled_rng": false,
     "debug_first_iteration": true,
     "debug": false
   },
   "encounter": {
-    "duration_ns": 120000000000,
+    "duration_ns": 400000000000,
     "duration_variation_ns": 15000000000,
     "execute_proportion_20": 0.2,
     "execute_proportion_25": 0.25,
@@ -610,10 +610,10 @@
     "label": "arcane-mage (#1)",
     "level": 60,
     "stats": {
-      "Agility": 63,
+      "Agility": 60,
       "ArcaneDamage": 16,
       "ArcaneResistance": 42,
-      "Armor": 1057,
+      "Armor": 1051,
       "ArmorPenetration": 0,
       "AttackPower": 10,
       "BlockPercent": 0,
@@ -631,11 +631,11 @@
       "FrostDamage": 15,
       "FrostResistance": 42,
       "HealingPower": 85,
-      "Health": 2450,
+      "Health": 2460,
       "HolyDamage": 0,
-      "Intellect": 418,
+      "Intellect": 415,
       "MP5": 77,
-      "Mana": 7563.150000000001,
+      "Mana": 7158,
       "MeleeCritRating": 70,
       "MeleeHasteRating": 0,
       "MeleeHitRating": 50,
@@ -643,7 +643,7 @@
       "NatureResistance": 42,
       "ParryPercent": 0,
       "ParryRating": 0,
-      "PhysicalCritPercent": 14.4382,
+      "PhysicalCritPercent": 14.284,
       "PhysicalDamage": 0,
       "PhysicalHitPercent": 5,
       "RangedAttackPower": 0,
@@ -652,16 +652,16 @@
       "ReducedCritTakenPercent": 0,
       "ShadowDamage": 0,
       "ShadowResistance": 42,
-      "SpellCritPercent": 16.2224,
+      "SpellCritPercent": 16.172,
       "SpellCritRating": 70,
       "SpellDamage": 465,
       "SpellHasteRating": 0,
       "SpellHitPercent": 5,
       "SpellHitRating": 50,
       "SpellPiercing": 15,
-      "Spirit": 210,
-      "Stamina": 126,
-      "Strength": 49
+      "Spirit": 220,
+      "Stamina": 127,
+      "Strength": 55
     },
     "pseudo_stats": {
       "spell_cost_percent_modifier": 100,
@@ -736,18 +736,17 @@
         "exclusive_effects": 0
       },
       {
-        "label": "Eureka!",
+        "label": "Sword Specialization",
         "action_id": {
-          "spell_id": 1259817
+          "spell_id": 20597
         },
-        "duration_ns": 15000000000,
-        "max_stacks": 3,
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
         "active": false,
         "stacks": 0,
         "callbacks": [
           "on_gain",
-          "on_expire",
-          "on_cast_complete"
+          "on_expire"
         ],
         "icd": null,
         "exclusive_effects": 0
@@ -781,7 +780,7 @@
           "on_spell_hit_dealt"
         ],
         "icd": {
-          "timer": "timer-13",
+          "timer": "timer-12",
           "duration_ns": 1000000000
         },
         "exclusive_effects": 0
@@ -957,6 +956,7 @@
         "active": false,
         "stacks": 0,
         "callbacks": [
+          "on_reset",
           "on_gain",
           "on_expire",
           "on_stacks_change",
@@ -1098,7 +1098,7 @@
     ],
     "name": "arcane-mage",
     "class": "ClassMage",
-    "race": "RaceGnome",
+    "race": "RaceHuman",
     "professions": [
       "Engineering"
     ],
@@ -1126,12 +1126,12 @@
     "distance_yards": 20,
     "cast_speed": 1,
     "mana": {
-      "max": 7563.150000000001,
+      "max": 7158,
       "base": 1213,
-      "spirit_regen_per_second": 32.5,
-      "regen_per_second_casting": 47.9,
-      "regen_per_second_not_casting": 47.9,
-      "teardown_max": 6145.650000000001
+      "spirit_regen_per_second": 33.75,
+      "regen_per_second_casting": 49.15,
+      "regen_per_second_not_casting": 49.15,
+      "teardown_max": 5808
     },
     "attack_table": {
       "base_spell_miss_chance": 0.17,
@@ -1190,59 +1190,6 @@
       },
       {
         "action_id": {
-          "spell_id": 1259817
-        },
-        "rank": 0,
-        "school": 0,
-        "defense_type": "DefenseTypeNone",
-        "proc_mask": [],
-        "flags": [
-          "SpellFlagNoOnCastComplete",
-          "SpellFlagAPL",
-          "SpellFlagMCD"
-        ],
-        "missile_speed": 0,
-        "cost": null,
-        "default_cast": {
-          "cost": 0,
-          "gcd_ns": 0,
-          "gcd_min_ns": 0,
-          "cast_time_ns": 0,
-          "non_empty": false
-        },
-        "cast_kind": "simple",
-        "ignore_haste": false,
-        "has_extra_cast_condition": false,
-        "has_cast_requirement": false,
-        "min_range": 0,
-        "max_range": 0,
-        "max_charges": 0,
-        "cd": {
-          "timer": "timer-0",
-          "duration_ns": 120000000000
-        },
-        "shared_cd": null,
-        "bonus_hit_percent": 0,
-        "bonus_crit_percent": 0,
-        "bonus_spell_damage": 0,
-        "bonus_expertise_percent": 0,
-        "cast_time_multiplier": 1,
-        "cd_multiplier": 1,
-        "damage_multiplier": 0,
-        "damage_multiplier_additive": 0,
-        "direct_damage_multiplier_additive": 0,
-        "crit_multiplier_pct": 1,
-        "crit_multiplier_additive": 0,
-        "bonus_base_damage": 0,
-        "bonus_coefficient": 0,
-        "threat_multiplier": 0,
-        "flat_threat_bonus": 0,
-        "pushback_resist": 0,
-        "dot": null,
-        "damage_effect": null
-      },
-      {
-        "action_id": {
           "item_id": 14152
         },
         "rank": 0,
@@ -1271,7 +1218,7 @@
         "max_range": 0,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-1",
+          "timer": "timer-0",
           "duration_ns": 300000000000
         },
         "shared_cd": null,
@@ -1327,11 +1274,11 @@
         "max_range": 0,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-2",
+          "timer": "timer-1",
           "duration_ns": 120000000000
         },
         "shared_cd": {
-          "timer": "timer-3",
+          "timer": "timer-2",
           "duration_ns": 120000000000
         },
         "bonus_hit_percent": 0,
@@ -1384,11 +1331,11 @@
         "max_range": 0,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-4",
+          "timer": "timer-3",
           "duration_ns": 120000000000
         },
         "shared_cd": {
-          "timer": "timer-5",
+          "timer": "timer-4",
           "duration_ns": 120000000000
         },
         "bonus_hit_percent": 0,
@@ -2687,7 +2634,7 @@
         "max_range": 0,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-6",
+          "timer": "timer-5",
           "duration_ns": 10000000000
         },
         "shared_cd": null,
@@ -3626,7 +3573,7 @@
         "max_range": 0,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-7",
+          "timer": "timer-6",
           "duration_ns": 480000000000
         },
         "shared_cd": null,
@@ -4539,7 +4486,7 @@
         "max_range": 0,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-8",
+          "timer": "timer-7",
           "duration_ns": 8000000000
         },
         "shared_cd": null,
@@ -4600,7 +4547,7 @@
         "max_range": 0,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-9",
+          "timer": "timer-8",
           "duration_ns": 25000000000
         },
         "shared_cd": null,
@@ -4655,7 +4602,7 @@
         "max_range": 0,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-10",
+          "timer": "timer-9",
           "duration_ns": 120000000000
         },
         "shared_cd": null,
@@ -4710,7 +4657,7 @@
         "max_range": 0,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-10",
+          "timer": "timer-9",
           "duration_ns": 120000000000
         },
         "shared_cd": null,
@@ -4765,7 +4712,7 @@
         "max_range": 0,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-10",
+          "timer": "timer-9",
           "duration_ns": 120000000000
         },
         "shared_cd": null,
@@ -4820,7 +4767,7 @@
         "max_range": 0,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-10",
+          "timer": "timer-9",
           "duration_ns": 120000000000
         },
         "shared_cd": null,
@@ -5343,7 +5290,7 @@
         "max_range": 0,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-11",
+          "timer": "timer-10",
           "duration_ns": 180000000000
         },
         "shared_cd": null,
@@ -5397,7 +5344,7 @@
         "max_range": 0,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-12",
+          "timer": "timer-11",
           "duration_ns": 180000000000
         },
         "shared_cd": null,
@@ -5472,16 +5419,6 @@
     "major_cooldowns": [
       {
         "action_id": {
-          "spell_id": 1259817
-        },
-        "priority": 0,
-        "type": [
-          "dps"
-        ],
-        "timings_ns": []
-      },
-      {
-        "action_id": {
           "item_id": 14152
         },
         "priority": 0,
@@ -5503,16 +5440,6 @@
       {
         "action_id": {
           "item_id": 12662
-        },
-        "priority": 0,
-        "type": [
-          "mana"
-        ],
-        "timings_ns": []
-      },
-      {
-        "action_id": {
-          "spell_id": 12051
         },
         "priority": 0,
         "type": [
@@ -5584,6 +5511,113 @@
     "rotation": {
       "type": "TypeAPL",
       "priorityList": [
+        {
+          "action": {
+            "autocastOtherCooldowns": {}
+          }
+        },
+        {
+          "action": {
+            "condition": {
+              "and": {
+                "vals": [
+                  {
+                    "cmp": {
+                      "op": "OpLt",
+                      "lhs": {
+                        "currentManaPercent": {}
+                      },
+                      "rhs": {
+                        "const": {
+                          "val": "15%"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "cmp": {
+                      "op": "OpGt",
+                      "lhs": {
+                        "remainingTime": {}
+                      },
+                      "rhs": {
+                        "const": {
+                          "val": "20s"
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "castSpell": {
+              "spellId": {
+                "spellId": 12051
+              }
+            }
+          }
+        },
+        {
+          "action": {
+            "condition": {
+              "auraIsActive": {
+                "auraId": {
+                  "spellId": 44404
+                }
+              }
+            },
+            "castSpell": {
+              "spellId": {
+                "spellId": 25345
+              }
+            }
+          }
+        },
+        {
+          "action": {
+            "condition": {
+              "or": {
+                "vals": [
+                  {
+                    "cmp": {
+                      "op": "OpGe",
+                      "lhs": {
+                        "auraNumStacks": {
+                          "auraId": {
+                            "spellId": 400573
+                          }
+                        }
+                      },
+                      "rhs": {
+                        "const": {
+                          "val": "3"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "cmp": {
+                      "op": "OpLt",
+                      "lhs": {
+                        "currentManaPercent": {}
+                      },
+                      "rhs": {
+                        "const": {
+                          "val": "40%"
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "castSpell": {
+              "spellId": {
+                "spellId": 25304
+              }
+            }
+          }
+        },
         {
           "action": {
             "castSpell": {

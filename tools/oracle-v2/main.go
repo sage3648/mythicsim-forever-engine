@@ -592,6 +592,8 @@ var (
 	missileTicksLadder  = spelldata.Ranked(7268, 7269, 7270, 8419, 8418, 10273, 10274, 25346)
 	arcaneBlastLadder   = spelldata.Ranked(400574, 1239696, 1239697, 1239699, 1239700)
 	arcaneBlastBuff     = spelldata.Ranked(400573)
+	arcanePower         = spelldata.Ranked(12042)
+	presenceOfMind      = spelldata.Ranked(12043)
 	arcaneConcentration = spelldata.Talent(11213, 5)
 	clearcastingTrigger = spelldata.Ranked(12536)
 	fingersOfFrost      = spelldata.Talent(400647, 2)
@@ -705,6 +707,21 @@ func mageEffects(m *mage.Mage, character *core.Character) []map[string]any {
 			"kind": "arcane_blast", "spell_id": arcaneBlastLadder.Highest().ID, "aura": "Arcane Blast",
 			"damage_per_stack": buff.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_DAMAGE)).Average(core.CharacterLevel) / 100,
 			"cost_per_stack":   buff.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_COST)).Average(core.CharacterLevel) / 100,
+		})
+	}
+	if talents.ArcanePower { // arcane_power.go
+		rank := arcanePower.Highest()
+		effects = append(effects, map[string]any{
+			"kind": "arcane_power", "spell_id": rank.ID, "aura": "Arcane Power",
+			"damage":           rank.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_DAMAGE)).Average(core.CharacterLevel) / 100,
+			"cost_percent_add": rank.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_COST)).Average(core.CharacterLevel) / 100,
+		})
+	}
+	if talents.PresenceOfMind { // presence_of_mind.go
+		rank := presenceOfMind.Highest()
+		effects = append(effects, map[string]any{
+			"kind": "presence_of_mind", "spell_id": rank.ID, "aura": "Presence of Mind",
+			"cast_time_percent": rank.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_CASTING_TIME)).Average(core.CharacterLevel) / 100,
 		})
 	}
 	// mana_gems.go: smaller gems wait for larger ones; all share the conjured cooldown.

@@ -10,7 +10,8 @@ use crate::{
 
 use super::{
     spells::{
-        arcane_blast, arcane_missiles, cold_snap, evocation, frostbolt, ice_lance, mana_gems,
+        arcane_blast, arcane_missiles, arcane_power, cold_snap, evocation, frostbolt, ice_lance,
+        mana_gems, presence_of_mind,
     },
     talents::{arcane_concentration, fingers_of_frost, missile_barrage, winters_chill},
 };
@@ -20,6 +21,8 @@ use super::{
 pub(crate) enum MageSpell {
     Frostbolt,
     ArcaneBlast,
+    ArcanePower,
+    PresenceOfMind,
     IceLance,
     ArcaneMissiles,
     ArcaneMissile,
@@ -42,6 +45,8 @@ pub(crate) enum MageAura {
     MissileBarrageTrigger,
     EvocationRegen,
     ArcaneCharges,
+    ArcanePower,
+    PresenceOfMind,
 }
 
 /// Mage state that Go keeps in the `Mage` struct and its closures.
@@ -52,6 +57,8 @@ pub(crate) struct MageAgent {
     arcane_concentration: Option<Rc<arcane_concentration::ArcaneConcentration>>,
     missile_barrage: Option<Rc<missile_barrage::MissileBarrage>>,
     arcane_charges: Option<Rc<arcane_blast::ArcaneCharges>>,
+    arcane_power: Option<Rc<arcane_power::ArcanePower>>,
+    presence_of_mind: Option<Rc<presence_of_mind::PresenceOfMind>>,
     ice_lance_frozen_multiplier: f64,
     /// Arcane Missiles channel spell to the missile spell of the same rank.
     missiles: Vec<(SpellId, SpellId)>,
@@ -100,6 +107,14 @@ fn class_auras(prepared: &PreparedV2) -> Vec<(String, MageAura)> {
                 auras.push((aura.clone(), MageAura::ArcaneCharges));
                 continue;
             }
+            Effect::ArcanePower { aura, .. } => {
+                auras.push((aura.clone(), MageAura::ArcanePower));
+                continue;
+            }
+            Effect::PresenceOfMind { aura, .. } => {
+                auras.push((aura.clone(), MageAura::PresenceOfMind));
+                continue;
+            }
             _ => continue,
         };
         auras.push((aura.clone(), kinds.0));
@@ -113,6 +128,8 @@ impl MageAgent {
     pub(crate) fn spell(spell: &ExportedSpell, gems: &[i32]) -> Option<MageSpell> {
         match spell.class_spell.as_deref()? {
             "cold_snap" => Some(MageSpell::ColdSnap),
+            "arcane_power" => Some(MageSpell::ArcanePower),
+            "presence_of_mind" => Some(MageSpell::PresenceOfMind),
             "evocation" if spell.dot.is_some() => Some(MageSpell::Evocation),
             "mana_gem" => {
                 let item = spell.action_id.as_ref()?.item_id;
@@ -230,6 +247,31 @@ impl MageAgent {
                         arcane_blast::bind(&mut fight, aura, *damage_per_stack, *cost_per_stack)?;
                     fight.agent.arcane_charges = Some(Rc::new(bound));
                 }
+                Effect::ArcanePower {
+                    aura,
+                    damage,
+                    cost_percent_add,
+                    ..
+                } => {
+                    let bound = arcane_power::bind(&mut fight, aura, *damage, *cost_percent_add)?;
+                    fight.agent.arcane_power = Some(Rc::new(bound));
+                }
+                Effect::PresenceOfMind {
+                    spell_id,
+                    aura,
+                    cast_time_percent,
+                } => {
+                    let spell = fight
+                        .spells
+                        .iter()
+                        .position(|spell| spell.id.spell_id == *spell_id && spell.id.tag == 0)
+                        .ok_or_else(|| {
+                            format!("Presence of Mind spell {spell_id} is not registered")
+                        })?;
+                    let bound =
+                        presence_of_mind::bind(&mut fight, spell, aura, *cast_time_percent)?;
+                    fight.agent.presence_of_mind = Some(Rc::new(bound));
+                }
                 Effect::ManaGems {
                     gems,
                     regen_window_seconds,
@@ -305,6 +347,22 @@ impl MageAgent {
             .expect("Arcane Blast is bound")
     }
 
+    fn arcane_power(fight: &Fight<Self>) -> Rc<arcane_power::ArcanePower> {
+        fight
+            .agent
+            .arcane_power
+            .clone()
+            .expect("Arcane Power is bound")
+    }
+
+    fn presence_of_mind(fight: &Fight<Self>) -> Rc<presence_of_mind::PresenceOfMind> {
+        fight
+            .agent
+            .presence_of_mind
+            .clone()
+            .expect("Presence of Mind is bound")
+    }
+
     fn missile_barrage(fight: &Fight<Self>) -> Rc<missile_barrage::MissileBarrage> {
         fight
             .agent
@@ -324,6 +382,14 @@ impl Agent for MageAgent {
             MageSpell::ArcaneBlast => {
                 let charges = Self::arcane_charges(fight);
                 arcane_blast::apply(fight, spell, target, &charges);
+            }
+            MageSpell::ArcanePower => {
+                let aura = Self::arcane_power(fight).aura;
+                fight.activate_aura(aura);
+            }
+            MageSpell::PresenceOfMind => {
+                let aura = Self::presence_of_mind(fight).aura;
+                fight.activate_aura(aura);
             }
             MageSpell::IceLance => {
                 // Go IsTargetFrozen: Fingers of Frost is active.
@@ -350,6 +416,7 @@ impl Agent for MageAgent {
     fn extra_cast_condition(fight: &Fight<Self>, _spell: SpellId, behavior: MageSpell) -> bool {
         match behavior {
             MageSpell::ManaGem(gem) => fight.agent.gems.available(gem),
+            MageSpell::PresenceOfMind => fight.gcd_ready(),
             _ => true,
         }
     }
@@ -414,6 +481,8 @@ impl Agent for MageAgent {
             MageAura::Clearcasting => Self::arcane_concentration(fight).on_gain(fight),
             MageAura::MissileBarrage => Self::missile_barrage(fight).on_gain(fight),
             MageAura::ArcaneCharges => Self::arcane_charges(fight).on_gain(fight),
+            MageAura::ArcanePower => Self::arcane_power(fight).on_gain(fight),
+            MageAura::PresenceOfMind => Self::presence_of_mind(fight).on_gain(fight),
             MageAura::EvocationRegen => {
                 let (_, multiplier) = fight.agent.evocation_regen.expect("Evocation is bound");
                 evocation::regen_gain(fight, multiplier);
@@ -431,6 +500,8 @@ impl Agent for MageAgent {
             MageAura::Clearcasting => Self::arcane_concentration(fight).on_expire(fight),
             MageAura::MissileBarrage => Self::missile_barrage(fight).on_expire(fight),
             MageAura::ArcaneCharges => Self::arcane_charges(fight).on_expire(fight),
+            MageAura::ArcanePower => Self::arcane_power(fight).on_expire(fight),
+            MageAura::PresenceOfMind => Self::presence_of_mind(fight).on_expire(fight),
             MageAura::EvocationRegen => {
                 let (_, multiplier) = fight.agent.evocation_regen.expect("Evocation is bound");
                 evocation::regen_expire(fight, multiplier);
@@ -497,6 +568,9 @@ impl Agent for MageAgent {
             MageAura::MissileBarrage => Self::missile_barrage(fight).on_cast_complete(fight, spell),
             MageAura::MissileBarrageTrigger => Self::missile_barrage(fight).trigger(fight, spell),
             MageAura::ArcaneCharges => Self::arcane_charges(fight).on_cast_complete(fight, spell),
+            MageAura::PresenceOfMind => {
+                Self::presence_of_mind(fight).on_cast_complete(fight, spell)
+            }
             _ => {}
         }
     }
