@@ -3,6 +3,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/wowsims/forever/sim/core"
 	"github.com/wowsims/forever/sim/core/dbcenums"
@@ -18,6 +19,9 @@ func init() {
 		spells: warlockClassSpells, damageRows: warlockDamageRows, effects: warlockEffects,
 		damageTakenModifiers: warlockDamageTakenModifiers,
 	}
+	// pets.go: every demon is registered at construction and only the summoned one is enabled,
+	// at reset; the sim has no summon spells.
+	resetOnlyPetClasses[proto.Class_ClassWarlock] = true
 }
 
 // Warlock class masks are Go-internal bit positions, exported by stable name.
@@ -58,6 +62,8 @@ var (
 	wlShadowAndFlame       = spelldata.Talent(426316, 5)
 	wlShadowAndFlameRows   = spelldata.Ranked(426311, 1293816)
 	wlAmplifyCurse         = spelldata.Ranked(18288)
+	wlNightfall            = spelldata.Talent(18094, 2)
+	wlNightfallTriggered   = spelldata.Ranked(17941)
 	wlImprovedShadowBoltOn = spelldata.Ranked(17794)
 )
 
@@ -139,6 +145,35 @@ func warlockEffects(agent core.Agent, character *core.Character) []map[string]an
 	}
 	effects = append(effects, map[string]any{"kind": "searing_pain"})
 	effects = append(effects, map[string]any{"kind": "soul_fire"})
+	if talents.Nightfall > 0 { // talents_affliction.go applyNightfall
+		effects = append(effects, map[string]any{
+			"kind": "nightfall", "trigger_aura": "Nightfall", "aura": "Shadow Trance",
+			"aura_spell_id": wlNightfallTriggered.Highest().ID,
+			"proc_chance":   wlNightfall.FractionAt(talents.Nightfall), "rng_label": "Nightfall",
+			"trigger_spells": procTriggerSpells(character, core.ProcTrigger{ClassSpellMask: warlock.WarlockNightfallSpells}),
+			"consume_spells": procTriggerSpells(character, core.ProcTrigger{ClassSpellMask: warlock.WarlockSpellShadowBolt}),
+			"modded_spells":  spellsMatching(character, warlock.WarlockSpellShadowBolt), "cast_time_percent": -1.0,
+		})
+	}
+	// pets.go: the summoned demon casts the first of its abilities it can afford above MinMana,
+	// and otherwise waits 100 ms, a Go literal.
+	if pet := w.ActivePet; pet != nil {
+		autocast := []int{}
+		for _, ability := range pet.AutoCastAbilities {
+			for i, spell := range pet.Spellbook {
+				if spell == ability {
+					autocast = append(autocast, i)
+				}
+			}
+		}
+		effects = append(effects, map[string]any{
+			"kind": "warlock_pet", "pet": pet.Label, "min_mana": pet.MinMana, "autocast_spells": autocast,
+			"wait_ns": nanos(100 * time.Millisecond),
+		})
+	}
+	if w.Succubus != nil { // pets.go registerLashOfPainSpell: a Go literal base
+		effects = append(effects, map[string]any{"kind": "lash_of_pain", "base_damage": 50.0})
+	}
 	if talents.ImprovedShadowBolt > 0 { // talents_destruction.go applyImprovedShadowBolt
 		effects = append(effects, map[string]any{
 			"kind": "improved_shadow_bolt", "trigger_aura": "Improved Shadow Bolt Trigger",

@@ -683,6 +683,7 @@ type Prepared struct {
 	Target        TargetUnit       `json:"target"`
 	Player        Player           `json:"player"`
 	Melee         Melee            `json:"melee"`
+	Pets          []Pet            `json:"pets,omitempty"`
 	Effects       []map[string]any `json:"effects"`
 	Unrepresented []string         `json:"unrepresented"`
 }
@@ -1054,7 +1055,6 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	presimmer, presims := agent.(core.Presimmer)
 	note(presims && presimmer.GetPresimOptions(request.Raid.Parties[0].Players[0]) != nil, "agent requires presims")
 	note(request.Raid.Parties[0].Players[0].GetHealingModel() != nil, "healing models are unsupported")
-	note(len(character.Pets) != 0, "pets are unsupported")
 	// A target only swings when it has a current target, i.e. an assigned tank.
 	note((target.AutoAttacks.AutoSwingMelee || target.AutoAttacks.AutoSwingRanged) && target.CurrentTarget != nil, "target auto attacks are unsupported")
 	note(character.ItemSwap.IsEnabled(), "item swapping is unsupported")
@@ -1203,6 +1203,7 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 		Effects: effects, Unrepresented: unrepresented,
 	}
 	prepared.Melee = exportMelee(character, target, table, &prepared.Unrepresented)
+	prepared.Pets = exportPets(request, character, target, class, timers, &prepared.Unrepresented)
 	// Last: the teardown changes the simulation.
 	prepared.Player.Mana.TeardownMax = teardownMaxMana(simulation, &character.Unit, &prepared.Unrepresented)
 	return prepared
