@@ -1,5 +1,26 @@
-use forever_engine::{simulate, Request, SOURCE_REVISION};
+use forever_engine::{
+    check_prepared, contracts::prepared_v2::PreparedV2, simulate, PreparedError, Request,
+    SOURCE_REVISION,
+};
+use serde::Deserialize;
 use std::{env, fs, hint::black_box, process};
+
+/// Reads only the schema version so each contract keeps its own strict parser.
+#[derive(Deserialize)]
+struct SchemaPeek {
+    schema_version: Option<u32>,
+}
+
+fn prepared_v2(input: &[u8]) -> Result<Option<PreparedV2>, String> {
+    let peek: SchemaPeek =
+        serde_json::from_slice(input).map_err(|err| format!("request rejected: {err}"))?;
+    if peek.schema_version != Some(2) {
+        return Ok(None);
+    }
+    serde_json::from_slice(input)
+        .map(Some)
+        .map_err(|err| format!("prepared input rejected: {err}"))
+}
 
 fn run() -> Result<(), String> {
     let args: Vec<String> = env::args().skip(1).collect();
@@ -11,11 +32,30 @@ fn run() -> Result<(), String> {
         return Ok(());
     }
     if args.is_empty() || args == ["--help"] {
-        println!("forever-engine sim --infile REQUEST.json [--outfile RESULT.json] [--trace]\nforever-engine bench --infile REQUEST.json [--outfile RESULT.json] [--warmups 3] [--samples 7]\nforever-engine version");
+        println!("forever-engine sim --infile REQUEST.json [--outfile RESULT.json] [--trace]\nforever-engine bench --infile REQUEST.json [--outfile RESULT.json] [--warmups 3] [--samples 7]\nforever-engine check --infile PREPARED_V2.json\nforever-engine version");
+        return Ok(());
+    }
+    if args.len() == 3 && args[0] == "check" && args[1] == "--infile" {
+        let input = fs::read(&args[2]).map_err(|err| err.to_string())?;
+        let prepared = prepared_v2(&input)?.ok_or("check requires a prepared v2 input")?;
+        let reasons = match check_prepared(&prepared) {
+            Ok(()) => Vec::new(),
+            Err(PreparedError::Unsupported(reasons)) => reasons,
+            Err(err) => return Err(err.to_string()),
+        };
+        let report = serde_json::json!({
+            "scenario_id": prepared.scenario_id,
+            "supported": reasons.is_empty(),
+            "reasons": reasons,
+        });
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&report).map_err(|err| err.to_string())?
+        );
         return Ok(());
     }
     if args[0] != "sim" && args[0] != "bench" {
-        return Err("expected sim, bench or version".into());
+        return Err("expected sim, bench, check or version".into());
     }
     let mut infile = None;
     let mut outfile = None;
@@ -60,6 +100,11 @@ fn run() -> Result<(), String> {
         index += 1;
     }
     let input = fs::read(infile.ok_or("--infile is required")?).map_err(|err| err.to_string())?;
+    if let Some(prepared) = prepared_v2(&input)? {
+        // No prepared v2 mechanics are executable yet; report exactly what is missing.
+        check_prepared(&prepared).map_err(|err| err.to_string())?;
+        return Err("prepared v2 simulation is not implemented".into());
+    }
     let request: Request =
         serde_json::from_slice(&input).map_err(|err| format!("request rejected: {err}"))?;
     let output = if args[0] == "bench" {

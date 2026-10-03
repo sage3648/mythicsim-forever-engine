@@ -9,6 +9,8 @@ fight. Ordinary Rust tests use frozen data and need no Go checkout.
 | [fair_compare.py](fair_compare.py) | Time equivalent Go/Rust kernels with work checks and a full-engine oracle | Same tools as the comparison |
 | [inventory.py](inventory.py) | Audit the first-build inventory offline; optionally recapture and compare Go output | Python for audit; Go and pinned source checkouts for capture |
 | [oracle/main.go](oracle/main.go) | Prepare restricted reference cases and run the actual Go engine | Built by the comparison tool in isolated scratch |
+| [prepared_v2.py](prepared_v2.py) | Audit prepared v2 fixtures offline; re-export them from the pinned engine into scratch | Python for audit; Go, Git and protoc for capture |
+| [oracle-v2/main.go](oracle-v2/main.go) | Export a reset Go simulation as [prepared v2](../docs/prepared-v2.md) and run the full Go engine | Built by prepared_v2.py in isolated scratch |
 | [matched-go/](matched-go/) | Go implementation of the same narrow Rust kernel for fair timing | Go |
 | [reference-capture/](reference-capture/) | Standalone request and observation helper programs | Built in temporary modules by inventory capture |
 
@@ -17,6 +19,7 @@ Run the lightweight checks from the repository root:
 ```sh
 python3 -m unittest discover -s tools -p '*_test.py'
 python3 tools/inventory.py check
+python3 tools/prepared_v2.py check
 ```
 
 The [kernel guide](../docs/kernel.md), [inventory guide](../docs/first-frost-inventory.md)

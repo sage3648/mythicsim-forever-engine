@@ -2,6 +2,10 @@
 //! The spec owns its supported build and static decision loop. Shared spell
 //! mechanics stay in Mage's spells; scheduling and mana primitives stay shared.
 
+mod coverage;
+
+pub(crate) use coverage::{prepared_coverage, IMPLEMENTED_EFFECTS};
+
 use std::collections::BinaryHeap;
 
 use crate::{

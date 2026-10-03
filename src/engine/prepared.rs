@@ -1,0 +1,185 @@
+//! Prepared v2 entry point: identity and bound validation, then the spec coverage gate.
+//!
+//! Invalid input is a contract violation. Unsupported input is valid but outside the
+//! implemented capability set; its reasons are stable strings a worker can record as
+//! fallback reasons.
+
+use crate::{
+    classes::mage::specs::frost,
+    contracts::prepared_v2::{PreparedV2, CONTRACT, SCHEMA_VERSION},
+    mechanics::mana::{regen_per_second_casting, regen_per_second_not_casting, RegenInputs},
+    rotation, SOURCE_REVISION,
+};
+
+/// The client build whose data the pinned reference prepares.
+pub const CLIENT_BUILD: &str = "1.60.1.70170";
+
+const SECOND: i64 = 1_000_000_000;
+
+#[derive(Debug, PartialEq)]
+pub enum PreparedError {
+    /// The input violates the contract or its identity does not match this engine.
+    Invalid(String),
+    /// The input is valid but uses mechanics this engine does not implement.
+    Unsupported(Vec<String>),
+}
+
+impl std::fmt::Display for PreparedError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            PreparedError::Invalid(reason) => write!(f, "prepared input rejected: {reason}"),
+            PreparedError::Unsupported(reasons) => {
+                write!(f, "prepared input unsupported:")?;
+                for reason in reasons {
+                    write!(f, "\n  {reason}")?;
+                }
+                Ok(())
+            }
+        }
+    }
+}
+
+/// Contract identity and wire limits. These never depend on implemented mechanics.
+pub fn validate(prepared: &PreparedV2) -> Result<(), String> {
+    if prepared.schema_version != SCHEMA_VERSION || prepared.contract != CONTRACT {
+        return Err("unsupported schema version or contract".into());
+    }
+    if prepared.reference.engine_revision != SOURCE_REVISION {
+        return Err(format!(
+            "reference revision {} differs from {SOURCE_REVISION}",
+            prepared.reference.engine_revision
+        ));
+    }
+    if prepared.reference.client_build != CLIENT_BUILD {
+        return Err(format!(
+            "client build {} differs from {CLIENT_BUILD}",
+            prepared.reference.client_build
+        ));
+    }
+    if prepared.scenario_id.is_empty() || prepared.scenario_id.len() > 200 {
+        return Err("scenario_id must contain 1 to 200 bytes".into());
+    }
+    if prepared.request_sha256.len() != 64
+        || !prepared
+            .request_sha256
+            .bytes()
+            .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b))
+    {
+        return Err("request_sha256 must be 64 lowercase hexadecimal digits".into());
+    }
+    let sim = &prepared.sim;
+    let encounter = &prepared.encounter;
+    if !(1..=1_000_000).contains(&sim.iterations)
+        || sim.seed <= 0
+        || sim.seed > i64::MAX - i64::from(sim.iterations)
+    {
+        return Err("iterations must be 1 to 1000000 with a positive seed".into());
+    }
+    if !(SECOND..=600 * SECOND).contains(&encounter.duration_ns)
+        || !(0..=120 * SECOND).contains(&encounter.duration_variation_ns)
+        || encounter.duration_variation_ns >= encounter.duration_ns
+    {
+        return Err(
+            "duration must be 1 to 600 seconds with a smaller variation of at most 120 seconds"
+                .into(),
+        );
+    }
+    let player = &prepared.player;
+    if !(10_000_000..=SECOND).contains(&player.reaction_ns)
+        || !(0..=SECOND).contains(&player.channel_clip_delay_ns)
+        || !(0.0..=100.0).contains(&player.distance_yards)
+    {
+        return Err("reaction time, channel clip delay or distance is outside limits".into());
+    }
+    for (name, value) in [
+        ("cast_speed", player.cast_speed),
+        ("max_mana", player.mana.max),
+        ("base_mana", player.mana.base),
+        (
+            "spirit_regen_per_second",
+            player.mana.spirit_regen_per_second,
+        ),
+    ] {
+        if !value.is_finite() || value < 0.0 {
+            return Err(format!("{name} must be finite and nonnegative"));
+        }
+    }
+    if player.cast_speed == 0.0 || player.mana.max <= 0.0 {
+        return Err("cast_speed and max_mana must be positive".into());
+    }
+    // Rust recomputes Go's starting regeneration from the exported components. A mismatch
+    // means the components or the formula drifted, so the fight cannot be trusted.
+    let pseudo = &player.pseudo_stats;
+    let inputs = RegenInputs {
+        mp5: *player.stats.get("MP5").ok_or("player stats lack MP5")?,
+        spirit_regen_per_second: player.mana.spirit_regen_per_second,
+        spirit_regen_rate_casting: pseudo.spirit_regen_rate_casting,
+        force_full_spirit_regen: pseudo.force_full_spirit_regen,
+        spirit_regen_multiplier: pseudo.spirit_regen_multiplier,
+        mana_regen_multiplier: 1.0,
+    };
+    for (name, rust, go) in [
+        (
+            "casting",
+            regen_per_second_casting(inputs),
+            player.mana.regen_per_second_casting,
+        ),
+        (
+            "not casting",
+            regen_per_second_not_casting(inputs),
+            player.mana.regen_per_second_not_casting,
+        ),
+    ] {
+        // Go may fuse multiply-add on some architectures; allow only that rounding.
+        if (rust - go).abs() > 1e-12 * go.abs().max(1.0) {
+            return Err(format!(
+                "mana regeneration while {name} is {rust}, Go prepared {go}"
+            ));
+        }
+    }
+    for spell in &player.spells {
+        let cast = &spell.default_cast;
+        if cast.gcd_ns < 0 || cast.cast_time_ns < 0 || cast.gcd_min_ns < 0 {
+            return Err(format!(
+                "spell {:?} has a negative cast timing",
+                spell.action_id
+            ));
+        }
+        if !spell.missile_speed.is_finite() || spell.missile_speed < 0.0 {
+            return Err(format!(
+                "spell {:?} has an invalid missile speed",
+                spell.action_id
+            ));
+        }
+    }
+    Ok(())
+}
+
+/// Every reason the engine cannot simulate a valid input. Empty means supported.
+pub fn coverage(prepared: &PreparedV2) -> Vec<String> {
+    let mut reasons: Vec<String> = prepared
+        .unrepresented
+        .iter()
+        .map(|reason| format!("unrepresented by the exporter: {reason}"))
+        .collect();
+    let rotation = match rotation::parse(&prepared.player.rotation) {
+        Ok(rotation) => Some(rotation),
+        Err(rotation_reasons) => {
+            reasons.extend(rotation_reasons);
+            None
+        }
+    };
+    reasons.extend(frost::prepared_coverage(prepared, rotation.as_ref()));
+    reasons
+}
+
+/// Validate and gate a prepared v2 input.
+pub fn check(prepared: &PreparedV2) -> Result<(), PreparedError> {
+    validate(prepared).map_err(PreparedError::Invalid)?;
+    let reasons = coverage(prepared);
+    if reasons.is_empty() {
+        Ok(())
+    } else {
+        Err(PreparedError::Unsupported(reasons))
+    }
+}

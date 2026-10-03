@@ -36,6 +36,11 @@ gear import, character construction, dynamic procs, multiple spells, cooldowns a
 general rotation rules remain to be implemented. Unsupported inputs are rejected.
 The binary does not accept production `RaidSimRequest` payloads.
 
+The [prepared v2 contract](docs/prepared-v2.md) describes a complete reset Go
+simulation of a real character, exported from the pinned engine. Rust validates it
+strictly and `forever-engine check --infile PREPARED.json` lists the mechanics an
+input still needs. No v2 mechanics execute yet.
+
 See the [kernel guide](docs/kernel.md) for the input boundary and commands.
 
 ## Repository structure
@@ -51,11 +56,12 @@ This map groups the implemented code by responsibility:
 flowchart TD
     Crate["Forever Engine: one Cargo crate"]
     Crate --> Entry["Entry points and orchestration<br/>lib.rs, main.rs, engine.rs"]
-    Crate --> Types["Input and output types<br/>contracts.rs, report.rs"]
+    Crate --> Types["Input and output types<br/>contracts.rs, contracts/prepared_v2.rs, report.rs"]
     Crate --> Shared["Shared systems"]
     Crate --> Classes["Class domains: classes/"]
     Shared --> Core["core/<br/>Events, RNG, time"]
     Shared --> Mechanics["mechanics/<br/>Damage, mana"]
+    Shared --> Rotation["rotation.rs<br/>APL subset"]
     Classes --> Mage["mage/"]
     Mage --> Spells["spells/frostbolt.rs<br/>Shared Mage spell"]
     Mage --> Frost["specs/frost.rs<br/>Prepared Frostbolt simulation"]

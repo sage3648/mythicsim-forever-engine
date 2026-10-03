@@ -12,6 +12,9 @@ The full application Frost reference is separately inventoried under
 [inventory/first-frost/](../inventory/first-frost/manifest.json). It is not an input
 accepted by the Rust kernel.
 
+The first such family is [mage/frost/prepared-v2](mage/frost/prepared-v2/manifest.json),
+accepted [prepared v2](../docs/prepared-v2.md) inputs with their expected coverage.
+
 New fixture families should use `fixtures/<class>/<spec>/<schema-or-reference>/`
 with a manifest identifying source, schema and expected coverage. Class tests
 should follow the same class/spec names. Introduce a new family when it has real

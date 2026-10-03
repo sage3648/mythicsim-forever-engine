@@ -8,7 +8,8 @@ production cutover so community fixes can still be reviewed and ported.
 The detailed [engine implementation plan](docs/hybrid-migration-plan.md) defines
 the target architecture, pieces, dependencies, acceptance gates, AI-assisted
 reconciliation process and attribution checkpoints.
-Milestones advance on evidence, not promised delivery dates.
+Milestones advance on evidence, not promised delivery dates. The
+[progress log](docs/progress-log.md) records the actual time each piece took.
 
 ## Foundation completed
 
@@ -20,6 +21,9 @@ Milestones advance on evidence, not promised delivery dates.
   observation, mechanics and report consumers, source hashes and offline audit.
 - Shared engine/core/mechanics and class/spec module boundaries, mirrored class
   tests and a contributor code map. Current simulation scope remains unchanged.
+- [Prepared v2 contract](docs/prepared-v2.md): a Go exporter for real characters,
+  strict Rust types, a coverage gate with named fallback reasons, an accepted fixture
+  family and a [release compatibility manifest](release/manifest.json).
 
 ## Migration sequence
 
@@ -37,7 +41,7 @@ Milestones advance on evidence, not promised delivery dates.
 ## Start here
 
 1. Completed: [inventory the chosen Frost build and actual application consumers](docs/first-frost-inventory.md).
-2. Design prepared v2 and a release compatibility manifest.
+2. Completed: [prepared v2 and a release compatibility manifest](docs/prepared-v2.md).
 3. Establish the community change ledger and Go-to-Rust mechanics map.
 4. Consolidate reference pins and improve differential failure diagnostics.
 

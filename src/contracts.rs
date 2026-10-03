@@ -1,4 +1,8 @@
-//! Strict prepared v1 wire types. Character preparation is outside this contract.
+//! Strict prepared wire types. The v1 types below describe the isolated Frostbolt
+//! kernel; [`prepared_v2`] describes a reset Go simulation. Character preparation
+//! itself stays outside both contracts.
+
+pub mod prepared_v2;
 
 use serde::{Deserialize, Serialize};
 

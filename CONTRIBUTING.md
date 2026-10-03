@@ -77,6 +77,7 @@ From the repository root, check the comparison harness with Python 3:
 ```sh
 python3 -m unittest discover -s tools -p '*_test.py'
 python3 tools/inventory.py check
+python3 tools/prepared_v2.py check
 ```
 
 CI runs these checks on pushes and pull requests. Live differential runs and heavy

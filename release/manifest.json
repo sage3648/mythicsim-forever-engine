@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "engine": "forever-engine",
+  "package_version": "0.1.0",
+  "status": "experimental",
+  "note": "Compatibility identity for this source tree. A tagged release records its Rust commit alongside this file.",
+  "go_reference": {
+    "repository": "https://github.com/sage3648/mythicsim-forever-engine-go",
+    "revision": "6823b49eb8aff741f197ef36d83766ef6a218285"
+  },
+  "community_base": {
+    "repository": "https://github.com/ElliotWood/Forever",
+    "revision": "f4b776b4f41d5c7799b8141697a2c9e67c89d426",
+    "reconciled": false
+  },
+  "client_build": "1.60.1.70170",
+  "data": {
+    "go_database": "assets/database/db.json",
+    "sha256": "d09de662b1d7458c1ae7f1487913ad7f8ebe5025025ac366311f80a6f5e37bcd"
+  },
+  "contracts": {
+    "prepared_inputs": [1, 2],
+    "reports": [1]
+  },
+  "rng": {
+    "generator": "SplitMix64",
+    "iteration_seed": "seed + iteration index",
+    "modes": {
+      "shared": "one stream for every draw, the production request default",
+      "labeled": "one stream per label, seeded with FNV-1a 32 of the label and the hexadecimal iteration seed"
+    }
+  },
+  "capabilities": [
+    {
+      "id": "prepared-v1-frostbolt-kernel",
+      "contract": 1,
+      "status": "validated",
+      "evidence": ["fixtures/manifest.json", "validation/2026-10-03-go-parity.json"]
+    },
+    {
+      "id": "prepared-v2-contract",
+      "contract": 2,
+      "status": "validates_and_gates",
+      "implemented_effects": [],
+      "evidence": ["fixtures/mage/frost/prepared-v2/manifest.json"]
+    }
+  ]
+}

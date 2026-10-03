@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "prepared_schema_version": 2,
+  "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
+  "client_build": "1.60.1.70170",
+  "exporter": "tools/oracle-v2/main.go",
+  "exporter_sha256": "e0450db9931c16a63a2b88ca0ffd04f0df045de648450f380bc465f7bcb7fd51",
+  "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
+  "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
+  "cases": [
+    {
+      "id": "frost-reference",
+      "description": "The application's frozen Frost reference request (inventory/first-frost), unchanged.",
+      "request": {
+        "path": "inventory/first-frost/snapshot.json",
+        "pointer": "/request"
+      },
+      "prepared": "frost-reference.prepared.json",
+      "prepared_sha256": "dd578b6916c55fc527b5a5fbd0e7b376e611aa989f63cf1cf00c02cf8d157b1e",
+      "expected_coverage": {
+        "supported": false,
+        "reasons": [
+          "effect arcane_concentration is not implemented",
+          "effect arcane_missiles is not implemented",
+          "effect cold_snap is not implemented",
+          "effect conjured_mana is not implemented",
+          "effect energize_on_use is not implemented",
+          "effect evocation is not implemented",
+          "effect fingers_of_frost is not implemented",
+          "effect frostbolt is not implemented",
+          "effect ice_lance is not implemented",
+          "effect inert_listener is not implemented",
+          "effect judgement_of_wisdom is not implemented",
+          "effect mage_armor is not implemented",
+          "effect mana_gems is not implemented",
+          "effect missile_barrage is not implemented",
+          "effect potion_mana is not implemented",
+          "effect winters_chill is not implemented"
+        ]
+      }
+    }
+  ]
+}

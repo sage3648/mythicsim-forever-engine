@@ -14,7 +14,9 @@ the mechanics still needed for the first complete build.
 | --- | --- |
 | Library entry points and compatibility | [src/lib.rs](../src/lib.rs) |
 | CLI arguments and JSON files | [src/main.rs](../src/main.rs) |
-| Prepared input fields | [src/contracts.rs](../src/contracts.rs) |
+| Prepared input fields | [src/contracts.rs](../src/contracts.rs), [src/contracts/prepared_v2.rs](../src/contracts/prepared_v2.rs) |
+| Prepared v2 identity checks and coverage gate | [src/engine/prepared.rs](../src/engine/prepared.rs), [src/classes/mage/specs/frost/coverage.rs](../src/classes/mage/specs/frost/coverage.rs) |
+| Rotation (APL) subset | [src/rotation.rs](../src/rotation.rs) |
 | Strict input limits and supported-build checks | [src/engine/validation.rs](../src/engine/validation.rs) |
 | Iteration lifecycle and aggregate statistics | [src/engine.rs](../src/engine.rs) |
 | Event ordering | [src/core/events.rs](../src/core/events.rs) |
@@ -33,8 +35,11 @@ src/
   lib.rs                         public API and reference identity
   main.rs                        executable entry point
   contracts.rs                   strict prepared v1 input types
+  contracts/prepared_v2.rs       strict prepared v2 input types
   engine.rs                      validation and iteration orchestration
-  engine/validation.rs           input validation
+  engine/validation.rs           prepared v1 input validation
+  engine/prepared.rs             prepared v2 identity checks and coverage entry
+  rotation.rs                    strict APL subset parser
   core.rs                        shared scheduler/RNG module entry
   core/{events,rng,time}.rs       scheduling, random streams, time
   mechanics.rs                   reusable combat module entry
@@ -48,6 +53,7 @@ src/
       spells/frostbolt.rs        Frostbolt calculation and outcome recording
       specs.rs                   Mage spec entry
       specs/frost.rs             current prepared Frost execution
+      specs/frost/coverage.rs    prepared v2 Frost build gate
 
 tests/
   cli.rs                         executable contract tests
@@ -56,6 +62,8 @@ tests/
   classes/mage/frost.rs           Frost test entry
   classes/mage/frost/kernel.rs    timing, mana and rejection regressions
   classes/mage/frost/oracle.rs    immutable Go golden comparison
+  classes/mage/frost/prepared_v2.rs  prepared v2 contract and coverage tests
+  release.rs                     release manifest consistency
 ```
 
 Each module entry uses a descriptive filename, such as `mage.rs`, with child
@@ -139,9 +147,10 @@ renaming the accepted v1 files is unnecessary for this source refactor.
 correctness runs. `benchmarks/` retains performance evidence. They are distinct
 from runtime support and should not be used as a registry of implemented classes.
 
-General APL parsing, dynamic auras/cooldowns, data ingestion, Rust preparation and
-upstream change tracking are planned. Add `rotation`, `data`, `prepare` and
-`upstream` modules or directories when those pieces are implemented. The current
+Dynamic auras/cooldowns, data ingestion, Rust preparation and upstream change
+tracking are planned. Add `data`, `prepare` and `upstream` modules or directories
+when those pieces are implemented. `rotation.rs` currently parses the APL subset
+used by the Frost preset. The current
 Frost loop remains deliberately limited to static prepared casting.
 
 The [layout validation](../validation/2026-10-03-domain-layout.json) records 33

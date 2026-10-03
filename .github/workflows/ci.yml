@@ -38,3 +38,4 @@ jobs:
         working-directory: tools/matched-go
       - run: python3 -m unittest discover -s tools -p '*_test.py'
       - run: python3 tools/inventory.py check
+      - run: python3 tools/prepared_v2.py check

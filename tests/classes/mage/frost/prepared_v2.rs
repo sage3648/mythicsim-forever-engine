@@ -1,0 +1,188 @@
+use forever_engine::{
+    check_prepared, contracts::prepared_v2::PreparedV2, prepared_coverage, PreparedError,
+};
+use serde::Deserialize;
+use serde_json::{json, Value};
+use std::{fs, path::Path};
+
+#[derive(Deserialize)]
+struct Manifest {
+    cases: Vec<Case>,
+}
+
+#[derive(Deserialize)]
+struct Case {
+    id: String,
+    prepared: String,
+    expected_coverage: Coverage,
+}
+
+#[derive(Deserialize)]
+struct Coverage {
+    supported: bool,
+    reasons: Vec<String>,
+}
+
+fn family() -> std::path::PathBuf {
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("fixtures/mage/frost/prepared-v2")
+}
+
+fn manifest() -> Manifest {
+    serde_json::from_slice(&fs::read(family().join("manifest.json")).unwrap()).unwrap()
+}
+
+fn reference_json() -> Value {
+    serde_json::from_slice(&fs::read(family().join("frost-reference.prepared.json")).unwrap())
+        .unwrap()
+}
+
+type Mutation = (&'static str, fn(&mut Value));
+
+fn parse(value: Value) -> Result<PreparedV2, serde_json::Error> {
+    serde_json::from_value(value)
+}
+
+fn reasons(value: Value) -> Vec<String> {
+    match check_prepared(&parse(value).unwrap()) {
+        Err(PreparedError::Unsupported(reasons)) => reasons,
+        other => panic!("expected unsupported, got {other:?}"),
+    }
+}
+
+#[test]
+fn accepted_fixtures_report_their_expected_coverage() {
+    for case in manifest().cases {
+        let bytes = fs::read(family().join(&case.prepared)).unwrap();
+        let prepared: PreparedV2 = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(prepared.scenario_id, case.id);
+        let result = check_prepared(&prepared);
+        let reasons = match result {
+            Ok(()) => Vec::new(),
+            Err(PreparedError::Unsupported(reasons)) => reasons,
+            Err(err) => panic!("{} invalid: {err}", case.id),
+        };
+        assert_eq!(
+            reasons.is_empty(),
+            case.expected_coverage.supported,
+            "{}",
+            case.id
+        );
+        assert_eq!(reasons, case.expected_coverage.reasons, "{}", case.id);
+    }
+}
+
+#[test]
+fn real_reference_needs_only_named_mechanics() {
+    // The real request is fully representable: no exporter gaps, unclaimed listeners or
+    // rotation operators remain. Only unimplemented effects block it.
+    let prepared = parse(reference_json()).unwrap();
+    for reason in prepared_coverage(&prepared) {
+        assert!(
+            reason.starts_with("effect ") && reason.ends_with(" is not implemented"),
+            "{reason}"
+        );
+    }
+}
+
+#[test]
+fn unknown_fields_and_effect_kinds_fail_deserialization() {
+    let mut top = reference_json();
+    top["new_field"] = json!(1);
+    assert!(parse(top)
+        .unwrap_err()
+        .to_string()
+        .contains("unknown field `new_field`"));
+
+    let mut spell = reference_json();
+    spell["player"]["spells"][0]["new_modifier"] = json!(1.5);
+    assert!(parse(spell)
+        .unwrap_err()
+        .to_string()
+        .contains("unknown field `new_modifier`"));
+
+    let mut effect = reference_json();
+    effect["effects"]
+        .as_array_mut()
+        .unwrap()
+        .push(json!({"kind": "presence_of_mind"}));
+    assert!(parse(effect)
+        .unwrap_err()
+        .to_string()
+        .contains("unknown variant `presence_of_mind`"));
+
+    let mut parameter = reference_json();
+    for effect in parameter["effects"].as_array_mut().unwrap() {
+        if effect["kind"] == "winters_chill" {
+            effect["extra_stack_rule"] = json!(true);
+        }
+    }
+    assert!(parse(parameter).is_err());
+}
+
+#[test]
+fn identity_and_bounds_violations_are_invalid_not_unsupported() {
+    let cases: [Mutation; 5] = [
+        ("revision", |v| {
+            v["reference"]["engine_revision"] = json!("0".repeat(40))
+        }),
+        ("client", |v| {
+            v["reference"]["client_build"] = json!("1.60.0.1")
+        }),
+        ("schema", |v| v["contract"] = json!("forever-result")),
+        ("seed", |v| v["sim"]["seed"] = json!(0)),
+        ("regen", |v| {
+            v["player"]["mana"]["spirit_regen_per_second"] = json!(40.0)
+        }),
+    ];
+    for (name, mutate) in cases {
+        let mut value = reference_json();
+        mutate(&mut value);
+        let result = check_prepared(&parse(value).unwrap());
+        assert!(
+            matches!(result, Err(PreparedError::Invalid(_))),
+            "{name}: {result:?}"
+        );
+    }
+}
+
+#[test]
+fn exporter_gaps_block_simulation() {
+    let mut value = reference_json();
+    value["unrepresented"] = json!(["target auto attacks are unsupported"]);
+    assert!(reasons(value)
+        .contains(&"unrepresented by the exporter: target auto attacks are unsupported".into()));
+}
+
+#[test]
+fn active_listeners_without_an_effect_are_reported() {
+    let mut value = reference_json();
+    value["effects"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|effect| effect["aura"] != "Parry Haste");
+    assert!(reasons(value).contains(
+        &"target aura \"Parry Haste\" listens to combat events without an effect".into()
+    ));
+}
+
+#[test]
+fn unsupported_rotation_operators_are_reported() {
+    let mut value = reference_json();
+    value["player"]["rotation"]["priorityList"][3]["action"]["condition"] =
+        json!({"dotIsActive": {"spellId": {"spellId": 12579}}});
+    assert!(reasons(value).contains(&"rotation item 4: value dotIsActive is unsupported".into()));
+
+    let mut prepull = reference_json();
+    prepull["player"]["rotation"]["prepullActions"] = json!([{"action": {"castSpell": {"spellId": {"spellId": 25304}}}, "doAtValue": {"const": {"val": "-1s"}}}]);
+    assert!(reasons(prepull).contains(&"rotation field prepullActions is unsupported".into()));
+}
+
+#[test]
+fn rotation_spells_without_behavior_are_reported() {
+    let mut value = reference_json();
+    value["player"]["rotation"]["priorityList"][5]["action"]["castSpell"]["spellId"] =
+        json!({"spellId": 10151});
+    assert!(
+        reasons(value).contains(&"rotation reaches spell 10151 without a known behavior".into())
+    );
+}

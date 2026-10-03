@@ -1,8 +1,10 @@
 //! A bounded Forever simulation engine organized by shared systems and class/spec domains.
 //!
-//! Current support is prepared, single-target Frostbolt only. Character preparation,
-//! complete Mage mechanics and production reports remain separate migration work.
-//! The root re-exports preserve the original public API and prepared v1 JSON contract.
+//! Current simulation support is prepared, single-target Frostbolt only. The prepared v2
+//! contract describes complete reset Go simulations; [`check_prepared`] reports which
+//! mechanics an input still needs. Character preparation, complete Mage mechanics and
+//! production reports remain separate migration work. The root re-exports preserve the
+//! original public API and prepared v1 JSON contract.
 
 pub mod contracts;
 pub mod report;
@@ -11,10 +13,19 @@ mod classes;
 mod core;
 mod engine;
 mod mechanics;
+mod rotation;
 
 pub use classes::mage::spells::frostbolt::hit_chance;
 pub use contracts::{Caster, Request, Spell, Target};
+pub use engine::prepared::{
+    check as check_prepared, coverage as prepared_coverage, PreparedError, CLIENT_BUILD,
+};
 pub use engine::simulate;
+
+/// Prepared v2 effect kinds this engine executes. The release manifest must agree.
+pub fn implemented_prepared_effects() -> &'static [&'static str] {
+    classes::mage::specs::frost::IMPLEMENTED_EFFECTS
+}
 pub use report::{Counts, Report, TraceEvent, Work};
 
 pub const SOURCE_REVISION: &str = "6823b49eb8aff741f197ef36d83766ef6a218285";

@@ -159,5 +159,5 @@ Source hashes cover 51 relevant application and Go files. They catch changes to
 the audited surfaces; they are not a digest of every transitive build input.
 The full commit pins provide the broader reference identity.
 
-Next is piece 2: design prepared v2 and the release compatibility manifest around
-these requirements. The existing Rust schema remains unchanged in this piece.
+Piece 2 is complete: the [prepared v2 contract](prepared-v2.md) represents this
+request without gaps, and its coverage report names the mechanics still to port.

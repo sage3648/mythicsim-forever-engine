@@ -42,11 +42,11 @@ arrive; rows marked planned are not implemented capabilities.
 
 | Area | Location | Responsibility |
 | --- | --- | --- |
-| Input contracts | `src/contracts.rs`, `src/engine/validation.rs` | Strict prepared-v1 types, limits and supported-build validation; v2 planned |
+| Input contracts | `src/contracts.rs`, `src/contracts/prepared_v2.rs`, `src/engine/` | Strict prepared v1 and v2 types, limits, identity checks and the coverage gate |
 | Simulation core | `src/core/`, `src/engine.rs` | Class-independent events/RNG/time and iteration orchestration |
 | Shared mechanics | `src/mechanics/` | Binary hit math and mana; dynamic auras, cooldowns and triggers planned |
 | Class behavior | `src/classes/<class>/spells/`, `src/classes/<class>/specs/` | Shared class spell mechanics and separate spec composition; Mage Frostbolt slice present |
-| Rotation (planned) | `src/rotation.rs`, `src/rotation/` | General APL parsing; current static decisions remain in the Frost spec |
+| Rotation | `src/rotation.rs` | Strict APL subset parsing for prepared v2; execution arrives with the v2 engine |
 | Reporting | `src/report.rs`, later `src/report/` | Prototype report types; production action/timeline adapter planned |
 | Data and preparation (planned) | `src/data.rs`, `src/prepare.rs` and child directories | Versioned data consumption and eventual Rust character construction |
 | Reference tooling | `tools/oracle/`, `tools/compare.py` | Pinned Go preparation and differential comparisons |
@@ -391,7 +391,7 @@ pieces, not already-open issues. Keep each change independently reviewable.
 | Order | Piece | Depends on | Review evidence |
 | --- | --- | --- | --- |
 | 1 (complete) | Inventory the first Frost build and product contracts | Frozen app and pinned Go source | Mechanic list, request/report consumers and audited Go observation |
-| 2 | Design prepared v2 and release manifest | 1 | Examples, unknown-effect behavior and identity rules |
+| 2 (complete) | Design prepared v2 and release manifest | 1 | [Contract](prepared-v2.md), fixtures, unknown-effect behavior and identity rules |
 | 3 | Add upstream sources, change ledger and mechanics map | 1 | One traced real community fix |
 | 4 | Centralize the reference pin and improve differential diagnostics | 2, 3 | Old fixtures preserved, useful failure output |
 | 5 | Extract event, RNG and resource modules | Current kernel | Existing goldens unchanged |
@@ -403,5 +403,5 @@ pieces, not already-open issues. Keep each change independently reviewable.
 | 11 | Compare the complete Frost build and gear variants | 6 through 10 | Multi-seed, timing, resource and effect coverage |
 | 12 | Add worker routing and bounded comparison runs | 11 | Fallback reasons, batch consistency and rollback |
 
-Start with pieces 1 through 4. They establish the scope and synchronization contract
+Pieces 1 and 2 are complete. Start next with pieces 3 and 4. They establish the scope and synchronization contract
 that make the subsequent mechanic ports easier to review and maintain.
