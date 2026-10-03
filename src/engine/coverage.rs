@@ -62,7 +62,7 @@ const COMMON_EFFECTS: &[&str] = &[
 ];
 
 /// Every class with an implemented gate.
-fn gates() -> [&'static ClassGate; 7] {
+fn gates() -> [&'static ClassGate; 8] {
     [
         &classes::mage::prepared::GATE,
         &classes::druid::prepared::GATE,
@@ -71,6 +71,7 @@ fn gates() -> [&'static ClassGate; 7] {
         &classes::warlock::prepared::GATE,
         &classes::priest::prepared::GATE,
         &classes::rogue::prepared::GATE,
+        &classes::hunter::prepared::GATE,
     ]
 }
 

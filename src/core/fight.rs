@@ -74,6 +74,11 @@ pub(crate) trait Agent: Sized {
     }
     /// Go `CastConfig.ModifyCast`, run first in a full cast. It may not change the cost.
     fn modify_cast(_fight: &mut Fight<Self>, _spell: SpellId, _behavior: Self::Spell) {}
+    /// Go `Spell.CastTime` for a class spell whose `CastConfig.CastTime` replaces the default,
+    /// which the cast's `ModifyCast` also applies; `None` keeps Go's default.
+    fn cast_time(_fight: &Fight<Self>, _spell: SpellId, _behavior: Self::Spell) -> Option<i64> {
+        None
+    }
     /// Go `MajorCooldown.ShouldActivate` for class cooldowns.
     fn should_activate(_fight: &Fight<Self>, _spell: SpellId, _behavior: Self::Spell) -> bool {
         true

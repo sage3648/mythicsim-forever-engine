@@ -223,9 +223,23 @@ impl<A: Agent> Fight<A> {
         self.autos.min_time = self.autos.min_time.min(ready);
     }
 
-    /// Go `AutoAttacks.NextRangedAttackAt`, for the rotation's time to the next shot.
-    pub(crate) fn next_ranged_attack_at(&self) -> i64 {
-        self.autos.ranged.swing_at
+    /// When the rotation's `autoTimeToNext` reads the next auto attack of a kind: Go
+    /// `NextAttackAt`, `MainhandSwingAt`, `OffhandSwingAt`, `NextRangedAttackAt` and
+    /// `NextAnyAttackAt`.
+    pub(crate) fn next_auto_attack_at(&self, kind: crate::rotation::AutoAttackType) -> i64 {
+        use crate::rotation::AutoAttackType;
+        let autos = &self.autos;
+        match kind {
+            AutoAttackType::Melee => autos.mh.swing_at.min(autos.oh.swing_at),
+            AutoAttackType::MainHand => autos.mh.swing_at,
+            AutoAttackType::OffHand => autos.oh.swing_at,
+            AutoAttackType::Ranged => autos.ranged.swing_at,
+            AutoAttackType::Any => autos
+                .mh
+                .swing_at
+                .min(autos.oh.swing_at)
+                .min(autos.ranged.swing_at),
+        }
     }
 
     /// Go `RandomizeMeleeTiming` at encounter start: delay the first swings by a random whole

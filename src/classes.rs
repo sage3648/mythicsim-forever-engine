@@ -1,6 +1,7 @@
 //! Class domains. A module exists only when it contains implemented behavior.
 
 pub(crate) mod druid;
+pub(crate) mod hunter;
 pub(crate) mod mage;
 pub(crate) mod paladin;
 pub(crate) mod priest;
@@ -20,6 +21,7 @@ pub(crate) fn run_prepared(
         "ClassPaladin" => paladin::prepared::run_prepared(prepared),
         "ClassPriest" => priest::prepared::run_prepared(prepared),
         "ClassRogue" => rogue::prepared::run_prepared(prepared),
+        "ClassHunter" => hunter::prepared::run_prepared(prepared),
         other => Err(format!("class {other} has no fight agent")),
     }
 }

@@ -335,10 +335,12 @@ impl<A: Agent> Fight<A> {
                 }
             }
             // Go `Spell.CastTime`: the default cast time with current cast speed, unrounded.
-            Compiled::SpellCastTime(spell) => {
+            Compiled::SpellCastTime(spell) => self.class_cast_time(*spell).unwrap_or_else(|| {
                 let cast_time = self.spells[*spell].default_cast.cast_time;
                 self.apply_cast_speed_for_spell(cast_time, *spell)
-            }
+            }),
+            // Go `APLValueAutoTimeToNext`.
+            Compiled::AutoTimeToNext(kind) => (self.next_auto_attack_at(*kind) - self.now).max(0),
             Compiled::Coerced { inner, .. } => match inner.value_type() {
                 ValueType::Bool => {
                     if self.get_bool(inner) {
