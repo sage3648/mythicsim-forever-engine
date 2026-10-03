@@ -45,6 +45,11 @@ pub(crate) enum ShamanSpell {
     StrengthOfEarthTotem,
     StormstrikeCast,
     FrostShock,
+    MagmaTotem,
+    LightningShield,
+    GraceOfAirTotem,
+    FlametongueTotem,
+    FlametongueTotemAttack,
     /// The Flametongue Weapon hit of one hand, by its position in the effect.
     FlametongueHit(usize),
     FrostbrandHit,
@@ -67,6 +72,8 @@ pub(crate) enum ShamanAura {
     /// Stormstrike's debuff on the target.
     Stormstrike,
     FlurryTrigger,
+    FlametongueTotem,
+    FlametongueTotemTrigger,
     /// One hand's Flametongue Weapon trigger, by its position in the effect.
     FlametongueTrigger(usize),
     FrostbrandTrigger,
@@ -113,6 +120,14 @@ pub(crate) struct ShamanAgent {
     /// Frostbrand Weapon's hit spell and base, and its trigger's chance by spellbook position.
     frostbrand: Option<(SpellId, f64)>,
     frostbrand_chances: Vec<Option<f64>>,
+    /// Magma Totem's pulse base and lifetime.
+    magma: Option<(f64, i64)>,
+    /// Lightning Shield's aura and charges.
+    lightning_shield: Option<(AuraRef, i32)>,
+    grace_of_air: Option<StrengthOfEarth>,
+    flametongue_totem: Option<totems::FlametongueTotem>,
+    /// The last air totem aura cast, which a new one replaces.
+    air_totem: Option<AuraRef>,
     /// Rockbiter Weapon's gain and loss lines.
     rockbiter_logs: Option<(String, String)>,
 }
@@ -143,6 +158,17 @@ impl ShamanAgent {
             .position(|exported| std::ptr::eq(exported, spell));
         for effect in &prepared.effects {
             match effect {
+                Effect::FlametongueTotem { attack_spell, .. }
+                    if Some(*attack_spell) == position =>
+                {
+                    return Some(ShamanSpell::FlametongueTotemAttack);
+                }
+                // Go registers Lightning Shield's cast without a class mask.
+                Effect::LightningShield { spell_id, .. }
+                    if spell.class_spell.is_none() && *spell_id == id.spell_id && id.tag == 0 =>
+                {
+                    return Some(ShamanSpell::LightningShield);
+                }
                 Effect::FlametongueWeapon { hands } => {
                     if let Some(hand) = hands.iter().position(|hand| Some(hand.spell) == position) {
                         return Some(ShamanSpell::FlametongueHit(hand));
@@ -183,6 +209,17 @@ impl ShamanAgent {
             "searing_totem" if searing_attack => Some(ShamanSpell::SearingTotemAttack),
             "earth_shock" if damage && has("earth_shock") => Some(ShamanSpell::EarthShock),
             "frost_shock" if damage && has("frost_shock") => Some(ShamanSpell::FrostShock),
+            "magma_totem" if spell.dot.is_some() && has("magma_totem") => {
+                Some(ShamanSpell::MagmaTotem)
+            }
+            "flametongue_totem"
+                if prepared.effects.iter().any(|effect| {
+                    matches!(effect, Effect::FlametongueTotem { spell_id, .. }
+                        if *spell_id == id.spell_id && id.tag == 0)
+                }) =>
+            {
+                Some(ShamanSpell::FlametongueTotem)
+            }
             "stormstrike_cast" if has("stormstrike") => Some(ShamanSpell::StormstrikeCast),
             "stormstrike_damage" if has("stormstrike") && id.tag == 1 => {
                 Some(ShamanSpell::StormstrikeMainHand)
@@ -197,6 +234,14 @@ impl ShamanAgent {
                 }) =>
             {
                 Some(ShamanSpell::StrengthOfEarthTotem)
+            }
+            "basic_totem"
+                if prepared.effects.iter().any(|effect| {
+                    matches!(effect, Effect::GraceOfAirTotem { spell_id, .. }
+                        if *spell_id == id.spell_id && id.tag == 0)
+                }) =>
+            {
+                Some(ShamanSpell::GraceOfAirTotem)
             }
             _ => None,
         }
@@ -260,6 +305,12 @@ impl ShamanAgent {
                 Effect::FrostbrandWeapon { trigger_aura, .. } => {
                     vec![(trigger_aura.clone(), ShamanAura::FrostbrandTrigger)]
                 }
+                Effect::FlametongueTotem {
+                    aura, trigger_aura, ..
+                } => vec![
+                    (aura.clone(), ShamanAura::FlametongueTotem),
+                    (trigger_aura.clone(), ShamanAura::FlametongueTotemTrigger),
+                ],
                 _ => Vec::new(),
             })
             .collect();
@@ -482,6 +533,51 @@ impl ShamanAgent {
                         ));
                     }
                 }
+                Effect::MagmaTotem {
+                    pulse_damage,
+                    duration_ns,
+                    ..
+                } => fight.agent.magma = Some((*pulse_damage, *duration_ns)),
+                Effect::LightningShield { aura, charges, .. } => {
+                    fight.agent.lightning_shield = Some((fight.player_aura(aura)?, *charges));
+                }
+                Effect::GraceOfAirTotem {
+                    aura, duration_ns, ..
+                } => {
+                    fight.agent.grace_of_air = Some(StrengthOfEarth {
+                        aura: fight.player_aura(aura)?,
+                        duration: *duration_ns,
+                    });
+                }
+                Effect::FlametongueTotem {
+                    aura,
+                    trigger_aura,
+                    attack_spell,
+                    attack_deals_damage,
+                    attack_damage,
+                    trigger_spells,
+                    disabled_by_weapon,
+                    duration_ns,
+                    ..
+                } => {
+                    let mut triggers = vec![false; fight.spells.len()];
+                    for &spell in trigger_spells {
+                        *triggers
+                            .get_mut(spell)
+                            .ok_or_else(|| format!("Flametongue Totem names spell {spell}"))? =
+                            true;
+                    }
+                    fight.agent.flametongue_totem = Some(totems::FlametongueTotem {
+                        aura: fight.player_aura(aura)?,
+                        trigger: fight.player_aura(trigger_aura)?,
+                        attack: *attack_spell,
+                        attack_deals_damage: *attack_deals_damage,
+                        attack_damage: *attack_damage,
+                        triggers,
+                        enabled: !*disabled_by_weapon,
+                        duration: *duration_ns,
+                    });
+                }
                 Effect::FrostbrandWeapon {
                     spell_id,
                     base_damage,
@@ -596,6 +692,39 @@ impl ShamanAgent {
         Ok(())
     }
 
+    /// Go `cancelFireTotems`: Magma Totem's dot, Searing Totem's dot, then Flametongue Totem's
+    /// aura. Totem of Wrath is never set.
+    fn cancel_fire_totems(fight: &mut Fight<Self>) {
+        let magma = fight.spells.iter().position(|spell| {
+            matches!(
+                spell.behavior,
+                crate::core::fight::SpellBehavior::Class(ShamanSpell::MagmaTotem)
+            )
+        });
+        if let Some(dot) = magma.and_then(|spell| fight.spells[spell].dot) {
+            let aura = fight.dots[dot].aura;
+            fight.deactivate_aura(aura);
+        }
+        let searing = fight.spells.iter().position(|spell| {
+            matches!(
+                spell.behavior,
+                crate::core::fight::SpellBehavior::Class(ShamanSpell::SearingTotem)
+            )
+        });
+        if let Some(dot) = searing.and_then(|spell| fight.spells[spell].dot) {
+            let aura = fight.dots[dot].aura;
+            fight.deactivate_aura(aura);
+        }
+        if let Some(aura) = fight
+            .agent
+            .flametongue_totem
+            .as_ref()
+            .map(|state| state.aura)
+        {
+            fight.deactivate_aura(aura);
+        }
+    }
+
     fn focus(fight: &Fight<Self>) -> ElementalFocus {
         fight
             .agent
@@ -656,6 +785,57 @@ impl Agent for ShamanAgent {
             }
             ShamanSpell::EarthShock | ShamanSpell::FrostShock => {
                 earth_shock::apply(fight, spell, target)
+            }
+            ShamanSpell::MagmaTotem => {
+                Self::cancel_fire_totems(fight);
+                let dot = fight.spells[spell].dot.expect("Magma Totem has a dot");
+                fight.apply_dot(dot);
+                let (_, duration) = fight.agent.magma.expect("Magma Totem is bound");
+                let expires = fight.now + duration;
+                fight.agent.totems.set(Totem::Fire, expires);
+            }
+            ShamanSpell::FlametongueTotem => {
+                Self::cancel_fire_totems(fight);
+                let state = fight
+                    .agent
+                    .flametongue_totem
+                    .clone()
+                    .expect("Flametongue Totem is bound");
+                let expires = fight.now + state.duration;
+                fight.agent.totems.set(Totem::Fire, expires);
+                fight.activate_aura(state.aura);
+            }
+            ShamanSpell::FlametongueTotemAttack => {
+                let state = fight
+                    .agent
+                    .flametongue_totem
+                    .clone()
+                    .expect("Flametongue Totem is bound");
+                if state.attack_deals_damage {
+                    weapon_imbues::hit(fight, spell, target, state.attack_damage);
+                }
+            }
+            ShamanSpell::LightningShield => {
+                let (aura, charges) = fight
+                    .agent
+                    .lightning_shield
+                    .expect("Lightning Shield is bound");
+                // Go deactivateShields; Water Shield is a talent no supported build casts.
+                fight.deactivate_aura(aura);
+                fight.activate_aura(aura);
+                fight.set_stacks(aura, charges);
+            }
+            ShamanSpell::GraceOfAirTotem => {
+                let totem = fight
+                    .agent
+                    .grace_of_air
+                    .expect("Grace of Air Totem is bound");
+                if let Some(previous) = fight.agent.air_totem {
+                    fight.deactivate_aura(previous);
+                }
+                fight.agent.air_totem = Some(totem.aura);
+                let expires = totems::strength_of_earth(fight, totem);
+                fight.agent.totems.set(Totem::Air, expires);
             }
             ShamanSpell::FlametongueHit(hand) => {
                 let (_, deals_damage, base, _) = fight.agent.flametongue[hand];
@@ -751,6 +931,16 @@ impl Agent for ShamanAgent {
             ShamanAura::FlurryTrigger => {
                 let state = fight.agent.flurry.expect("Flurry is bound");
                 state.on_spell_hit_dealt(fight, spell, result);
+            }
+            ShamanAura::FlametongueTotemTrigger => {
+                let state = fight
+                    .agent
+                    .flametongue_totem
+                    .clone()
+                    .expect("Flametongue Totem is bound");
+                if state.triggers[spell] && result.landed() {
+                    fight.cast(state.attack, result.target);
+                }
             }
             ShamanAura::FlametongueTrigger(hand) => {
                 let (hit, _, _, ref triggers) = fight.agent.flametongue[hand];
@@ -860,6 +1050,16 @@ impl Agent for ShamanAgent {
 
     fn on_dot_tick(fight: &mut Fight<Self>, dot: DotId, behavior: ShamanSpell) {
         match behavior {
+            // Go CalcPeriodicAoeDamage and DealBatchedPeriodicDamage on the one target.
+            ShamanSpell::MagmaTotem => {
+                let (base, _) = fight.agent.magma.expect("Magma Totem is bound");
+                fight.periodic_damage_tick_on(
+                    dot,
+                    Side::Target,
+                    base,
+                    crate::core::fight::Outcome::TickMagicHitAndCrit,
+                );
+            }
             ShamanSpell::FlameShockDot => fight.snapshot_dot_tick(dot),
             ShamanSpell::SearingTotem => {
                 let state = Self::searing_totem(fight);
@@ -884,6 +1084,16 @@ impl Agent for ShamanAgent {
                 .expect("Improved Stormstrike is bound")
                 .on_gain(fight),
             ShamanAura::Flurry => fight.agent.flurry.expect("Flurry is bound").on_gain(fight),
+            ShamanAura::FlametongueTotem => {
+                let state = fight
+                    .agent
+                    .flametongue_totem
+                    .clone()
+                    .expect("Flametongue Totem is bound");
+                if state.enabled {
+                    fight.activate_aura(state.trigger);
+                }
+            }
             ShamanAura::RageOfTheFarseer => fight
                 .agent
                 .farseer
@@ -923,6 +1133,15 @@ impl Agent for ShamanAgent {
                 .flurry
                 .expect("Flurry is bound")
                 .on_expire(fight),
+            ShamanAura::FlametongueTotem => {
+                let trigger = fight
+                    .agent
+                    .flametongue_totem
+                    .as_ref()
+                    .expect("Flametongue Totem is bound")
+                    .trigger;
+                fight.deactivate_aura(trigger);
+            }
             ShamanAura::RageOfTheFarseer => fight
                 .agent
                 .farseer

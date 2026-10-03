@@ -22,13 +22,17 @@ const EFFECTS: &[&str] = &[
     "elemental_focus",
     "fire_nova",
     "flame_shock",
+    "flametongue_totem",
     "flametongue_weapon",
     "flurry",
     "frost_shock",
     "frostbrand_weapon",
+    "grace_of_air_totem",
     "improved_stormstrike",
     "lava_burst",
     "lightning_bolt",
+    "lightning_shield",
+    "magma_totem",
     "maelstrom_weapon",
     "rage_of_the_farseer",
     "rockbiter_weapon",
@@ -39,12 +43,18 @@ const EFFECTS: &[&str] = &[
 
 /// Go `applyRageOfTheFarseer` registers its cast (client 425336) without a class mask.
 const RAGE_OF_THE_FARSEER: i32 = 425336;
+/// Go `registerLightningShieldSpell` registers its cast (client 10432, the highest rank)
+/// without a class mask.
+const LIGHTNING_SHIELD: i32 = 10432;
 
 /// The effect kind whose implementation executes a Shaman spell.
 fn spell_capability(spell: &Spell) -> Option<&'static str> {
     let id = spell.action_id.clone().unwrap_or_default();
     if spell.class_spell.is_none() && id.spell_id == RAGE_OF_THE_FARSEER && id.tag == 0 {
         return Some("rage_of_the_farseer");
+    }
+    if spell.class_spell.is_none() && id.spell_id == LIGHTNING_SHIELD && id.tag == 0 {
+        return Some("lightning_shield");
     }
     match spell.class_spell.as_deref()? {
         "lightning_bolt" | "lightning_bolt_overload" => Some("lightning_bolt"),
@@ -53,10 +63,12 @@ fn spell_capability(spell: &Spell) -> Option<&'static str> {
         "lava_burst" => Some("lava_burst"),
         "fire_nova" => Some("fire_nova"),
         "searing_totem" => Some("searing_totem"),
+        "magma_totem" => Some("magma_totem"),
+        "flametongue_totem" => Some("flametongue_totem"),
         "earth_shock" => Some("earth_shock"),
         "frost_shock" => Some("frost_shock"),
         "stormstrike_cast" | "stormstrike_damage" => Some("stormstrike"),
-        // Only Strength of Earth Totem among the basic totems; `limits` rejects the others.
+        // Strength of Earth and Grace of Air among the basic totems; `limits` rejects the others.
         "basic_totem" => Some("strength_of_earth_totem"),
         _ => None,
     }
@@ -98,21 +110,59 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
             ("player", reset_aura),
         ],
         Effect::Stormstrike { aura, .. } => vec![("target", aura)],
+        Effect::LightningShield { aura, .. } => vec![("player", aura)],
+        Effect::FlametongueTotem {
+            aura, trigger_aura, ..
+        } => vec![("player", aura), ("player", trigger_aura)],
         _ => Vec::new(),
     }
 }
 
-/// Basic totems other than Strength of Earth Totem have no behavior.
+/// Basic totems other than Strength of Earth and Grace of Air have no behavior; a Grace of Air
+/// cast would contest a party air totem's slot, and a Flametongue Totem would share the party
+/// totem's benefit, which the runtime does not model.
 fn limits(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
-    let earth = prepared.effects.iter().find_map(|effect| match effect {
-        Effect::StrengthOfEarthTotem { spell_id, .. } => Some(*spell_id),
-        _ => None,
-    });
-    reachable
-        .iter()
-        .filter(|spell| spell.class_spell.as_deref() == Some("basic_totem"))
-        .filter_map(|spell| spell.action_id.as_ref())
-        .filter(|id| Some(id.spell_id) != earth || id.tag != 0)
-        .map(|id| format!("rotation reaches {id}, a totem without a known behavior"))
-        .collect()
+    let mut reasons = Vec::new();
+    let mut known = Vec::new();
+    for effect in &prepared.effects {
+        match effect {
+            Effect::StrengthOfEarthTotem { spell_id, .. } => known.push(*spell_id),
+            Effect::GraceOfAirTotem { spell_id, .. } => known.push(*spell_id),
+            _ => {}
+        }
+    }
+    for spell in reachable {
+        let Some(id) = spell.action_id.as_ref() else {
+            continue;
+        };
+        if spell.class_spell.as_deref() == Some("basic_totem")
+            && (!known.contains(&id.spell_id) || id.tag != 0)
+        {
+            reasons.push(format!(
+                "rotation reaches {id}, a totem without a known behavior"
+            ));
+        }
+        for effect in &prepared.effects {
+            match effect {
+                Effect::GraceOfAirTotem {
+                    spell_id,
+                    party_air_totem: true,
+                    ..
+                } if *spell_id == id.spell_id && id.tag == 0 => reasons.push(format!(
+                    "rotation reaches {id}, a Grace of Air Totem that contests a party air totem"
+                )),
+                Effect::FlametongueTotem {
+                    spell_id,
+                    party_totem: true,
+                    ..
+                } if *spell_id == id.spell_id && id.tag == 0 => reasons.push(format!(
+                    "rotation reaches {id}, a Flametongue Totem beside the party's"
+                )),
+                _ => {}
+            }
+        }
+    }
+    reasons.sort();
+    reasons.dedup();
+    reasons
 }

@@ -29,6 +29,8 @@ pub(crate) enum Outcome {
     AlwaysHitNoHitCounter,
     /// Go `OutcomeMagicHitNoHitCounter`: a miss still counts.
     MagicHitNoHitCounter,
+    /// Go `OutcomeTickMagicHitAndCrit`: a tick that rolls to hit, then to crit.
+    TickMagicHitAndCrit,
 }
 
 /// Go `OutcomeLanded`; the runtime has no crushing blows.
@@ -404,6 +406,21 @@ impl<A: Agent> Fight<A> {
             }
             Outcome::Tick => self.outcome_tick(spell, result, false),
             Outcome::TickMagicCrit => self.outcome_tick(spell, result, true),
+            Outcome::TickMagicHitAndCrit => {
+                let binary_hit = binary.then(|| 1.0 - 0.75 * self.resist(spell, true));
+                let miss = spell_chance_to_miss(
+                    self.config.table.base_spell_miss_chance,
+                    binary_hit,
+                    self.spell_hit_chance(spell),
+                );
+                if self.proc(1.0 - miss, "Magical Hit Roll") {
+                    self.outcome_tick(spell, result, true);
+                } else {
+                    result.outcome = OUTCOME_MISS;
+                    result.damage = 0.0;
+                    self.spells[spell].metrics[result.target.index()].misses += 1;
+                }
+            }
             Outcome::AlwaysHitNoHitCounter => result.outcome = OUTCOME_HIT,
         }
     }
@@ -505,6 +522,27 @@ impl<A: Agent> Fight<A> {
             Outcome::Tick
         };
         let result = self.calc_damage_internal(spell, side, base, attacker, outcome);
+        self.deal_damage(spell, result, true);
+    }
+
+    /// Go `CalcPeriodicDamage` and `DealPeriodicDamage` for a dot's tick on a unit of the
+    /// caller's choosing, as an area dot's pulse hits each target.
+    pub(crate) fn periodic_damage_tick_on(
+        &mut self,
+        dot: super::DotId,
+        target: Side,
+        base: f64,
+        outcome: Outcome,
+    ) {
+        let state = &self.dots[dot];
+        let spell = state.spell;
+        let mut base = base;
+        if state.bonus_coefficient > 0.0 {
+            base += state.bonus_coefficient * self.bonus_damage(spell);
+        }
+        let attacker =
+            self.attacker_multiplier(spell, true) * self.dots[dot].periodic_damage_multiplier;
+        let result = self.calc_damage_internal(spell, target, base, attacker, outcome);
         self.deal_damage(spell, result, true);
     }
 

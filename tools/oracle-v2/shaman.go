@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/wowsims/forever/sim/core"
+	"github.com/wowsims/forever/sim/core/buffs"
 	"github.com/wowsims/forever/sim/core/dbcenums"
 	"github.com/wowsims/forever/sim/core/proto"
 	"github.com/wowsims/forever/sim/core/spelldata"
@@ -65,6 +66,12 @@ var (
 	shamanFlametongueProc  = spelldata.Ranked(8026, 8028, 8029, 10444, 10445, 16343, 16344, 29469, 29470).ByID(16344)
 	shamanFrostbrandProc   = spelldata.Ranked(8034, 8037, 10458, 16352, 16353)
 	shamanFrostShock       = spelldata.Ranked(8056, 8058, 10472, 10473)
+	shamanMagmaTotem       = spelldata.Ranked(8190, 10585, 10586, 10587)
+	shamanMagmaPulse       = spelldata.Ranked(8187, 8188, 10579, 10580, 10581, 10582, 10583, 10584).ByID(10581)
+	shamanLightningShield  = spelldata.Ranked(324, 325, 905, 945, 8134, 10431, 10432)
+	shamanShieldOrb        = spelldata.Ranked(26363, 26364, 26365, 26366, 26367, 26369, 26370, 26545).ByID(26363)
+	shamanGraceOfAir       = spelldata.Ranked(8835, 10627, 25359)
+	shamanFlametongueTotem = spelldata.Ranked(8227, 8249, 10526, 16387)
 )
 
 // Shaman spell rows whose ApplyEffects roll a client damage effect: every Lightning Bolt and Chain
@@ -134,6 +141,7 @@ func shamanEffects(agent core.Agent, character *core.Character) []map[string]any
 	// shocks.go registerFrostShockSpell: the same shape on the Frost school.
 	effects = append(effects, map[string]any{"kind": "frost_shock", "spell_id": shamanFrostShock.Highest().ID})
 	effects = append(effects, shamanImbueEffects(character)...)
+	effects = append(effects, shamanTotemEffects(sham, character)...)
 	// totems.go registerStrengthOfEarthTotemSpell: the earth totem's aura; its Strength reaches the
 	// fight through the class's stat auras.
 	if aura := character.GetAura("Strength Of Earth Totem (Self)"); aura != nil {
@@ -212,6 +220,59 @@ func shamanEffects(agent core.Agent, character *core.Character) []map[string]any
 	return effects
 }
 
+// fire_totems.go, totems.go and shields.go: the totems and the shield the shaman may cast.
+func shamanTotemEffects(sham *shaman.Shaman, character *core.Character) []map[string]any {
+	effects := []map[string]any{}
+	// registerMagmaTotemSpell: an area dot on the shaman whose pulses roll hit and crit on each
+	// target from the pulse's damage row average.
+	effects = append(effects, map[string]any{
+		"kind": "magma_totem", "spell_id": shamanMagmaTotem.Highest().ID,
+		"pulse_damage": shamanMagmaPulse.DamageEffect().Average(core.CharacterLevel),
+		"duration_ns":  nanos(shamanMagmaTotem.Highest().Duration()),
+	})
+	// registerLightningShieldSpell: the cast puts up every charge. Its trigger hears only the
+	// shield self proc, which needs a proc rate the exporter rejects, so the orb never fires.
+	if aura := character.GetAura("Lightning Shield"); aura != nil {
+		effects = append(effects, map[string]any{
+			"kind": "lightning_shield", "spell_id": shamanLightningShield.Highest().ID, "aura": aura.Label,
+			"charges": int32(shamanLightningShield.Highest().ProcCharges),
+		})
+	}
+	// registerGraceOfAirTotemSpell: the air totem's aura, whose Agility is a class stat aura.
+	if aura := character.GetAura("Grace Of Air Totem (Self)"); aura != nil {
+		effects = append(effects, map[string]any{
+			"kind": "grace_of_air_totem", "spell_id": shamanGraceOfAir.Highest().ID, "aura": aura.Label,
+			"duration_ns":     nanos(shamanGraceOfAir.Highest().Duration()),
+			"party_air_totem": character.GetAura("Windfury Totem") != nil || character.GetAura("Grace of Air Totem (External)") != nil,
+		})
+	}
+	// registerFlametongueTotemSpell and buffs/flametongue_totem.go: the totem's aura turns on the
+	// trigger, which casts the hit off landed main hand autos, unless a main hand Flametongue Weapon
+	// or the party's totem holds the benefit.
+	if aura := sham.FlametongueTotemAura; aura != nil {
+		trigger := spelldata.ProcTrigger(character, spelldata.MustFind(15036), nil)
+		trigger.ProcMask &= core.ProcMaskMeleeMH
+		attack := -1
+		for i, spell := range character.Spellbook {
+			if spell.ActionID == (core.ActionID{SpellID: 16389}) {
+				attack = i
+			}
+		}
+		weapon := character.MainHand()
+		effects = append(effects, map[string]any{
+			"kind": "flametongue_totem", "spell_id": shamanFlametongueTotem.Highest().ID, "aura": aura.Label,
+			"trigger_aura": buffs.FlametongueTotemTriggerLabel, "attack_spell": attack,
+			"attack_deals_damage": weapon != nil && weapon.SwingSpeed != 0,
+			"attack_damage":       buffs.FlametongueTotemBaseDamage(weapon.SwingSpeed),
+			"trigger_spells":      procTriggerSpells(character, trigger), "trigger_outcome": outcomeNames(trigger.Outcome),
+			"disabled_by_weapon": character.GetAura("Flametongue Imbue ItemSlotMainHand") != nil,
+			"duration_ns":        nanos(shamanFlametongueTotem.Highest().Duration()),
+			"party_totem":        character.GetAura("Flametongue Totem") != nil,
+		})
+	}
+	return effects
+}
+
 // weapon_imbues.go: Flametongue and Frostbrand Weapon, weapon procs that cast an imbue hit.
 func shamanImbueEffects(character *core.Character) []map[string]any {
 	effects := []map[string]any{}
@@ -264,7 +325,7 @@ func shamanImbueEffects(character *core.Character) []map[string]any {
 
 // The class auras whose gain and loss change stats through AddStatsDynamic.
 func shamanStatAuras(_ core.Agent, _ *core.Character) []string {
-	return []string{"Strength Of Earth Totem (Self)"}
+	return []string{"Strength Of Earth Totem (Self)", "Grace Of Air Totem (Self)"}
 }
 
 // enhancement.go ApplySyncType: Auto returns the main hand swing unchanged whenever the two

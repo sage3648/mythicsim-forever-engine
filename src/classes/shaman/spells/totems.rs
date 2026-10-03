@@ -58,3 +58,20 @@ pub(crate) fn strength_of_earth<A: Agent>(fight: &mut Fight<A>, totem: StrengthO
     fight.activate_aura(totem.aura);
     expires
 }
+
+/// Flametongue Totem, from Go sim/shaman/fire_totems.go `registerFlametongueTotemSpell` and
+/// sim/core/buffs/flametongue_totem.go: the totem's aura turns the trigger on unless a main
+/// hand Flametongue Weapon holds the benefit, and the trigger casts the fire hit off landed
+/// main hand autos.
+#[derive(Clone, Debug)]
+pub(crate) struct FlametongueTotem {
+    pub(crate) aura: AuraRef,
+    pub(crate) trigger: AuraRef,
+    pub(crate) attack: crate::core::fight::SpellId,
+    pub(crate) attack_deals_damage: bool,
+    pub(crate) attack_damage: f64,
+    /// The spells whose landed hits cast the attack, by spellbook position.
+    pub(crate) triggers: Vec<bool>,
+    pub(crate) enabled: bool,
+    pub(crate) duration: i64,
+}

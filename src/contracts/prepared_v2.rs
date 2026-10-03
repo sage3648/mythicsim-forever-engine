@@ -1219,6 +1219,43 @@ pub enum Effect {
         /// The proc manager's chance for each spell the trigger hears.
         chances: Vec<SpellChance>,
     },
+    /// Magma Totem: an area dot on the shaman whose pulses roll hit and crit on each target.
+    MagmaTotem {
+        spell_id: i32,
+        pulse_damage: f64,
+        duration_ns: i64,
+    },
+    /// Lightning Shield: the cast puts up every charge; without a shield proc rate the orbs
+    /// never fire.
+    LightningShield {
+        spell_id: i32,
+        aura: String,
+        charges: i32,
+    },
+    /// Grace of Air Totem: the air totem's aura, whose Agility is a class stat aura.
+    GraceOfAirTotem {
+        spell_id: i32,
+        aura: String,
+        duration_ns: i64,
+        /// Whether a party air totem holds the slot the cast would contest.
+        party_air_totem: bool,
+    },
+    /// Flametongue Totem: the totem's aura turns on a trigger that casts a fire hit off landed
+    /// main hand autos, unless a main hand Flametongue Weapon holds the benefit.
+    FlametongueTotem {
+        spell_id: i32,
+        aura: String,
+        trigger_aura: String,
+        attack_spell: usize,
+        attack_deals_damage: bool,
+        attack_damage: f64,
+        trigger_spells: Vec<usize>,
+        trigger_outcome: Vec<String>,
+        disabled_by_weapon: bool,
+        duration_ns: i64,
+        /// Whether the party's Flametongue Totem shares the benefit.
+        party_totem: bool,
+    },
     /// Frost Shock: Earth Shock's shape on the Frost school.
     FrostShock {
         spell_id: i32,
@@ -1447,6 +1484,10 @@ impl Effect {
             Effect::RageOfTheFarseer { .. } => "rage_of_the_farseer",
             Effect::RockbiterWeapon { .. } => "rockbiter_weapon",
             Effect::FrostShock { .. } => "frost_shock",
+            Effect::MagmaTotem { .. } => "magma_totem",
+            Effect::LightningShield { .. } => "lightning_shield",
+            Effect::GraceOfAirTotem { .. } => "grace_of_air_totem",
+            Effect::FlametongueTotem { .. } => "flametongue_totem",
             Effect::FlametongueWeapon { .. } => "flametongue_weapon",
             Effect::FrostbrandWeapon { .. } => "frostbrand_weapon",
             Effect::ConjuredEnergy { .. } => "conjured_energy",
