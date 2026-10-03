@@ -47,6 +47,8 @@ pub(crate) enum MageAura {
     ArcaneCharges,
     ArcanePower,
     PresenceOfMind,
+    /// Ignite's trigger, which only fire spell crits reach; coverage rejects those.
+    IgniteTrigger,
 }
 
 /// Mage state that Go keeps in the `Mage` struct and its closures.
@@ -109,6 +111,10 @@ fn class_auras(prepared: &PreparedV2) -> Vec<(String, MageAura)> {
             }
             Effect::ArcanePower { aura, .. } => {
                 auras.push((aura.clone(), MageAura::ArcanePower));
+                continue;
+            }
+            Effect::Ignite { trigger_aura, .. } => {
+                auras.push((trigger_aura.clone(), MageAura::IgniteTrigger));
                 continue;
             }
             Effect::PresenceOfMind { aura, .. } => {

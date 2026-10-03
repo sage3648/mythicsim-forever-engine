@@ -187,6 +187,32 @@ fn rotation_spells_without_behavior_are_reported() {
     );
 }
 
+/// Ignite's trigger is claimed as inert only while no reachable spell is fire.
+#[test]
+fn ignite_is_inert_only_without_fire_spells() {
+    let path = family().join("arcane-ignite.prepared.json");
+    let mut value: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+    assert!(check_prepared(&parse(value.clone()).unwrap()).is_ok());
+    let fireball = value["player"]["spells"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .rfind(|spell| spell["class_spell"] == "fireball")
+        .unwrap()["action_id"]
+        .clone();
+    let id = fireball["spell_id"].as_i64().unwrap();
+    value["player"]["rotation"]["priorityList"]
+        .as_array_mut()
+        .unwrap()
+        .insert(
+            0,
+            json!({"action": {"castSpell": {"spellId": {"spellId": id}}}}),
+        );
+    assert!(reasons(value).contains(&format!(
+        "spell {id} is a fire spell, whose crits Ignite would act on"
+    )));
+}
+
 /// Community fix ElliotWood/Forever#622 (252f57aa8), recorded in upstream/changes.json.
 /// Without Fingers of Frost, pinned Go drops the Ice Lance condition and casts Ice Lance on
 /// every global cooldown; the fix reads the missing aura as inactive. Rust rejects the

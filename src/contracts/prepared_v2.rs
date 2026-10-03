@@ -438,6 +438,11 @@ pub struct ManaGem {
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Effect {
     Frostbolt {},
+    /// Ignite: crits of fire spells feed a fire dot.
+    Ignite {
+        trigger_aura: String,
+        spell_id: i32,
+    },
     /// Arcane Power's major cooldown and aura.
     ArcanePower {
         spell_id: i32,
@@ -560,6 +565,7 @@ impl Effect {
             Effect::Frostbolt {} => "frostbolt",
             Effect::ArcaneBlast { .. } => "arcane_blast",
             Effect::ArcanePower { .. } => "arcane_power",
+            Effect::Ignite { .. } => "ignite",
             Effect::PresenceOfMind { .. } => "presence_of_mind",
             Effect::IceLance { .. } => "ice_lance",
             Effect::ArcaneMissiles { .. } => "arcane_missiles",

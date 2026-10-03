@@ -594,6 +594,7 @@ var (
 	arcaneBlastBuff     = spelldata.Ranked(400573)
 	arcanePower         = spelldata.Ranked(12042)
 	presenceOfMind      = spelldata.Ranked(12043)
+	igniteTriggered     = spelldata.Ranked(412538)
 	arcaneConcentration = spelldata.Talent(11213, 5)
 	clearcastingTrigger = spelldata.Ranked(12536)
 	fingersOfFrost      = spelldata.Talent(400647, 2)
@@ -707,6 +708,11 @@ func mageEffects(m *mage.Mage, character *core.Character) []map[string]any {
 			"kind": "arcane_blast", "spell_id": arcaneBlastLadder.Highest().ID, "aura": "Arcane Blast",
 			"damage_per_stack": buff.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_DAMAGE)).Average(core.CharacterLevel) / 100,
 			"cost_per_stack":   buff.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_COST)).Average(core.CharacterLevel) / 100,
+		})
+	}
+	if talents.Ignite > 0 { // talents_fire.go registerIgnite: fire spell crits feed a dot
+		effects = append(effects, map[string]any{
+			"kind": "ignite", "trigger_aura": "Ignite Talent", "spell_id": igniteTriggered.Highest().ID,
 		})
 	}
 	if talents.ArcanePower { // arcane_power.go

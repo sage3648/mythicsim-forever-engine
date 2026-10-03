@@ -26,6 +26,7 @@ pub(crate) const IMPLEMENTED_EFFECTS: &[&str] = &[
     "fingers_of_frost",
     "frostbolt",
     "ice_lance",
+    "ignite",
     "inert_listener",
     "judgement_of_wisdom",
     "mana_gems",
@@ -84,6 +85,7 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         } => {
             vec![("player", regen_aura), ("player", channel_aura)]
         }
+        Effect::Ignite { trigger_aura, .. } => vec![("player", trigger_aura)],
         Effect::MageArmor { aura }
         | Effect::ArcaneBlast { aura, .. }
         | Effect::ArcanePower { aura, .. }
@@ -96,6 +98,56 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         },
         _ => Vec::new(),
     }
+}
+
+/// Go `SpellSchoolFire`.
+const FIRE: u8 = 4;
+
+/// Ignite's trigger is claimed as a listener that never acts, which holds only while no
+/// spell Rust can deal damage with is fire: the reachable spells and the missiles their
+/// channels cast.
+fn active_ignite(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
+    if !prepared
+        .effects
+        .iter()
+        .any(|effect| matches!(effect, Effect::Ignite { .. }))
+    {
+        return Vec::new();
+    }
+    let missiles = prepared.effects.iter().flat_map(|effect| match effect {
+        Effect::ArcaneMissiles { ranks } => ranks
+            .iter()
+            .filter(|rank| {
+                reachable.iter().any(|spell| {
+                    spell.action_id.as_ref().map(|id| id.spell_id) == Some(rank.channel_spell_id)
+                })
+            })
+            .map(|rank| rank.tick_spell_id)
+            .collect(),
+        _ => Vec::new(),
+    });
+    let ticks: Vec<&Spell> = missiles
+        .flat_map(|id| {
+            prepared
+                .player
+                .spells
+                .iter()
+                .filter(move |spell| spell.action_id.as_ref().map(|a| a.spell_id) == Some(id))
+        })
+        .collect();
+    reachable
+        .iter()
+        .chain(ticks.iter())
+        .filter(|spell| spell.school & FIRE != 0)
+        .map(|spell| {
+            format!(
+                "{} is a fire spell, whose crits Ignite would act on",
+                spell.action_id.clone().unwrap_or_default()
+            )
+        })
+        .collect::<BTreeSet<_>>()
+        .into_iter()
+        .collect()
 }
 
 /// Go `GetAPLCastSpell`/`GetAPLSpell`: the first APL-flagged spell with the action ID,
@@ -192,6 +244,7 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
                 }
             }
         }
+        reasons.extend(active_ignite(prepared, &reachable));
         let mut unknown = BTreeSet::new();
         let mut limited = BTreeSet::new();
         for spell in reachable {
