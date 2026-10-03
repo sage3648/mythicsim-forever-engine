@@ -121,7 +121,7 @@ fn unknown_fields_and_effect_kinds_fail_deserialization() {
 
 #[test]
 fn identity_and_bounds_violations_are_invalid_not_unsupported() {
-    let cases: [Mutation; 5] = [
+    let cases: [Mutation; 6] = [
         ("revision", |v| {
             v["reference"]["engine_revision"] = json!("0".repeat(40))
         }),
@@ -132,6 +132,9 @@ fn identity_and_bounds_violations_are_invalid_not_unsupported() {
         ("seed", |v| v["sim"]["seed"] = json!(0)),
         ("regen", |v| {
             v["player"]["mana"]["spirit_regen_per_second"] = json!(40.0)
+        }),
+        ("cast speed", |v| {
+            v["player"]["stats"]["SpellHasteRating"] = json!(10.0)
         }),
     ];
     for (name, mutate) in cases {

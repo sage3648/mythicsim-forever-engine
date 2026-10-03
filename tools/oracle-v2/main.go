@@ -888,6 +888,12 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 			"health_fraction": 0.05, "delay_ns": nanos(core.SpellBatchWindow),
 		})
 	}
+	// racials.go Troll Berserking: AttachMultiplyCastSpeed with a Go literal.
+	if aura := character.GetAura("Berserking"); aura != nil {
+		effects = append(effects, map[string]any{
+			"kind": "berserking", "spell_id": aura.ActionID.SpellID, "aura": aura.Label, "cast_speed_multiplier": 1.1,
+		})
+	}
 	consumes := request.Raid.Parties[0].Players[0].Consumables
 	for _, cd := range character.GetMajorCooldowns() {
 		spell := cd.Spell
@@ -997,6 +1003,7 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	table := character.AttackTables[target.UnitIndex]
 	note(table.DamageDoneByCasterMultiplier != nil || len(table.DamageDoneByCasterExtraMultiplier) != 0, "caster damage callbacks are unsupported")
 	note(len(target.DynamicDamageTakenModifiers) != 0, "dynamic damage taken modifiers are unsupported")
+	note(len(character.OnCastSpeedChanged) != 0, "cast speed listeners are unsupported")
 	for mobType, bonus := range table.MobTypeBonusStats {
 		note(bonus != (stats.Stats{}), fmt.Sprintf("mob type bonus stats for %s are unsupported", mobType))
 	}

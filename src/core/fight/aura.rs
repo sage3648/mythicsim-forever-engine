@@ -42,6 +42,8 @@ pub(crate) enum AuraBehavior<K> {
     },
     /// Go racials.go `applyEureka`'s aura.
     Eureka,
+    /// Go `Aura.AttachMultiplyCastSpeed`.
+    MultiplyCastSpeed(f64),
     /// The aura of a dot or channel.
     Dot(DotId),
     Class(K),
@@ -408,6 +410,7 @@ impl<A: Agent> Fight<A> {
         match self.aura(aura).behavior {
             AuraBehavior::Dot(dot) => self.dot_on_gain(dot),
             AuraBehavior::Eureka => self.eureka_gain(),
+            AuraBehavior::MultiplyCastSpeed(multiplier) => self.multiply_cast_speed(multiplier),
             AuraBehavior::Class(kind) => A::on_gain(self, aura, kind),
             _ => {}
         }
@@ -417,6 +420,9 @@ impl<A: Agent> Fight<A> {
         match self.aura(aura).behavior {
             AuraBehavior::Dot(dot) => self.dot_on_expire(dot),
             AuraBehavior::Eureka => self.eureka_expire(),
+            AuraBehavior::MultiplyCastSpeed(multiplier) => {
+                self.multiply_cast_speed(1.0 / multiplier)
+            }
             AuraBehavior::Class(kind) => A::on_expire(self, aura, kind),
             _ => {}
         }

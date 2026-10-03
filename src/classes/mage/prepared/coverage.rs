@@ -20,6 +20,7 @@ pub(crate) const IMPLEMENTED_EFFECTS: &[&str] = &[
     "arcane_concentration",
     "arcane_missiles",
     "arcane_power",
+    "berserking",
     "cold_snap",
     "combustion",
     "conjured_mana",
@@ -77,6 +78,9 @@ fn spell_capability(spell: &Spell, prepared: &PreparedV2) -> Option<&'static str
         Effect::Eureka { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
             Some("eureka")
         }
+        Effect::Berserking { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
+            Some("berserking")
+        }
         _ => None,
     })
 }
@@ -118,6 +122,7 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         | Effect::ArcanePower { aura, .. }
         | Effect::Combustion { aura, .. }
         | Effect::Eureka { aura, .. }
+        | Effect::Berserking { aura, .. }
         | Effect::PresenceOfMind { aura, .. } => vec![("player", aura)],
         Effect::JudgementOfWisdom { aura, .. } => vec![("target", aura)],
         Effect::InertListener { unit, aura, .. } => match unit.as_str() {

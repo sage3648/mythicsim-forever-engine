@@ -5,22 +5,33 @@ use crate::{
     core::time::{go_string, round, NS_PER_MILLISECOND, NS_PER_SECOND, STARTING_CD_TIME},
 };
 
-use super::{log::action_string, Action, Agent, Fight, Side, SpellBehavior, SpellId, PRIORITY_GCD};
+use super::{
+    log::action_string, Action, Agent, AuraRef, Fight, Side, SpellBehavior, SpellId, PRIORITY_GCD,
+};
 
 /// Go `MaxSpellQueueWindow`.
 const MAX_SPELL_QUEUE_WINDOW: i64 = 400 * NS_PER_MILLISECOND;
 
 impl<A: Agent> Fight<A> {
+    /// Go `MultiplyCastSpeed` and `updateCastSpeed`. The undo multiplies by the reciprocal,
+    /// as Go does, so the multiplier can drift from its starting value by rounding.
+    pub(crate) fn multiply_cast_speed(&mut self, amount: f64) {
+        self.player.cast_speed_multiplier *= amount;
+        self.cast_speed = crate::mechanics::haste::cast_speed(
+            self.player.cast_speed_multiplier,
+            self.config.spell_haste_rating,
+        );
+    }
+
     /// Go `ApplyCastSpeed`.
     pub(crate) fn apply_cast_speed(&self, duration: i64) -> i64 {
-        (duration as f64 * self.config.cast_speed) as i64
+        (duration as f64 * self.cast_speed) as i64
     }
 
     /// Go `ApplyCastSpeedForSpell`.
     pub(crate) fn apply_cast_speed_for_spell(&self, duration: i64, spell: SpellId) -> i64 {
-        (duration as f64
-            * self.config.cast_speed
-            * self.spells[spell].cast_time_multiplier.max(0.0)) as i64
+        (duration as f64 * self.cast_speed * self.spells[spell].cast_time_multiplier.max(0.0))
+            as i64
     }
 
     /// Go `SpellCost.GetCurrentCost`, with Go's int32 percentage arithmetic.
@@ -550,6 +561,10 @@ impl<A: Agent> Fight<A> {
                 let aura = self.eureka.as_ref().expect("Eureka! is bound").aura;
                 self.activate_aura(aura);
             }
+            SpellBehavior::ActivateAura(index) => self.activate_aura(AuraRef {
+                side: Side::Player,
+                index,
+            }),
             SpellBehavior::None => panic!("spell {} has no behavior", self.spells[spell].id),
         }
     }
@@ -742,7 +757,7 @@ impl<A: Agent> Fight<A> {
             }
             SpellBehavior::EnergizeOnUse { whole, .. } => max - mana >= *whole,
             // Go's default ShouldActivate.
-            SpellBehavior::Eureka => true,
+            SpellBehavior::Eureka | SpellBehavior::ActivateAura(_) => true,
             SpellBehavior::TouchOfTheGraveDrain { .. } | SpellBehavior::None => false,
         }
     }

@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "23e91d75df473814c887d4a1432e7fcf574955a44f7259fab2df5cd3865295d7",
+  "exporter_sha256": "1165190f35778bae03510f49974442af76c8bbcf815f32f61d03d7e345bd5d98",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -607,6 +607,44 @@
       "go_log": {
         "file": "fire-reference.go-log.txt",
         "sha256": "02118eb5685b4828ffbf0628e192afea5a9c35ae6313206db4ba4965b5bc5c77"
+      }
+    },
+    {
+      "id": "frost-troll",
+      "description": "The Frost reference as a Troll: Berserking, a major cooldown that multiplies cast speed for 10 seconds.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/frost-troll.request.json"
+      },
+      "prepared": "frost-troll.prepared.json",
+      "prepared_sha256": "ac965b730607ddb13a44fec14fde3503956769396e81cbd2de8a95bb40ffcbb0",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frost-troll.go-result.json",
+        "sha256": "37e14147ea7e0bdd463237eec4e0bbb514457282f86dc3889ec43de58a0e7de6"
+      },
+      "go_log": {
+        "file": "frost-troll.go-log.txt",
+        "sha256": "6fc301070068583ddcbc27559d443e7dcb2c8ac90200c4d0ee089e4e002c56a1"
+      }
+    },
+    {
+      "id": "frost-troll-ten-minutes",
+      "description": "The Frost reference as a Troll in 600-second fights: Berserking expires and is cast again, and every mana cooldown fires.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/frost-troll-ten-minutes.request.json"
+      },
+      "prepared": "frost-troll-ten-minutes.prepared.json",
+      "prepared_sha256": "7275382f15b76e9e9bd4db53d0345c813497d1173fadb7b8bf4e352865fa7417",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frost-troll-ten-minutes.go-result.json",
+        "sha256": "f27c96d6d2239bab424a38a4657196304a58ac5b2d8e82c2da89cdbdc3922f0d"
       }
     }
   ]

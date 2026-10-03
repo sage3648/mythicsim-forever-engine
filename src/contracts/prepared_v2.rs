@@ -478,6 +478,13 @@ pub enum Effect {
         health_fraction: f64,
         delay_ns: i64,
     },
+    /// The Troll racial Berserking: a major cooldown whose aura multiplies cast speed. Its
+    /// attack speed share has no effect in scope, where player auto attacks are unrepresented.
+    Berserking {
+        spell_id: i32,
+        aura: String,
+        cast_speed_multiplier: f64,
+    },
     /// Master of Elements: Fire and Frost crits refund part of the base cost.
     MasterOfElements {
         trigger_aura: String,
@@ -653,6 +660,7 @@ impl Effect {
             Effect::Scorch { .. } => "scorch",
             Effect::TouchOfTheGrave { .. } => "touch_of_the_grave",
             Effect::Eureka { .. } => "eureka",
+            Effect::Berserking { .. } => "berserking",
             Effect::PresenceOfMind { .. } => "presence_of_mind",
             Effect::IceLance { .. } => "ice_lance",
             Effect::ArcaneMissiles { .. } => "arcane_missiles",
