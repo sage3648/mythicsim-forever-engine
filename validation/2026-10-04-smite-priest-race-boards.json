@@ -1,0 +1,99 @@
+{
+  "kind": "production_corpus",
+  "date": "2026-10-04",
+  "reference": {
+    "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
+    "client_build": "1.60.1.70170"
+  },
+  "scope": "The production application's Smite Priest race board (web/src/lib/forever-races.json at application revision 18bbcd47, generated 2026-10-03T13:57:55Z by production engine f43215d07e51fc228c2e32366d7563b03d76fec8): every race variant, at the board's own seed and 10000 iterations, exported with the pinned Go engine and run by Go and Rust.",
+  "generator": "python3 tools/boards.py <application>/web/src/lib/forever-races.json --slug smite-priest --output <scratch>",
+  "rerun": "python3 tools/prepared_v2.py compare --output <scratch> validation/2026-10-04-smite-priest-race-boards/*.request.json",
+  "criteria": {
+    "comparison": "full RaidSimResult except elapsedNs, lists keyed by ID",
+    "integer_counts": "exact",
+    "floats": "relative 1e-9",
+    "first_fight_debug_log": "line identical"
+  },
+  "matched": 6,
+  "rejected": 0,
+  "mismatched": 0,
+  "notes": [
+    "production_dps is what the production engine published for the variant; it is context, not a criterion, because that engine is newer than the pinned reference.",
+    "Every published production DPS equals the pinned Go result to within 5.2e-15 relative.",
+    "The board's request is the production Smite Priest request with the board's seed and iteration count."
+  ],
+  "cases": [
+    {
+      "scenario": "smite-priest--RaceUndead",
+      "slug": "smite-priest",
+      "race": "RaceUndead",
+      "production_dps": 505.6563638042818,
+      "production_iterations": 10000,
+      "request_sha256": "ee1feba842688c7297b3ff9359f9f7b61b6cbaf028c90d71dd9c25f328f72a8d",
+      "go_dps": 505.6563638042831,
+      "rust_dps": 505.6563638042831,
+      "passed": true,
+      "production_minus_pinned_dps": -1.3073986337985843e-12
+    },
+    {
+      "scenario": "smite-priest--RaceGnome",
+      "slug": "smite-priest",
+      "race": "RaceGnome",
+      "production_dps": 501.97586360496905,
+      "production_iterations": 10000,
+      "request_sha256": "a9cdaa98ee1ca593af652f512374bfa668692d11fb563d6c8d4e3bc2682a8eee",
+      "go_dps": 501.97586360497166,
+      "rust_dps": 501.97586360497166,
+      "passed": true,
+      "production_minus_pinned_dps": -2.6147972675971687e-12
+    },
+    {
+      "scenario": "smite-priest--RaceNightElf",
+      "slug": "smite-priest",
+      "race": "RaceNightElf",
+      "production_dps": 501.07212513988014,
+      "production_iterations": 10000,
+      "request_sha256": "2c382eea1e80884278da574bbc6266e595dd7b2885addc78a19fc1576ac86238",
+      "go_dps": 501.07212513987935,
+      "rust_dps": 501.07212513987935,
+      "passed": true,
+      "production_minus_pinned_dps": 7.958078640513122e-13
+    },
+    {
+      "scenario": "smite-priest--RaceTroll",
+      "slug": "smite-priest",
+      "race": "RaceTroll",
+      "production_dps": 500.7440972218911,
+      "production_iterations": 10000,
+      "request_sha256": "cc5c75c4d4a40bdaf1ebad30a439e962824f58a95ed3506fe801a91c94778213",
+      "go_dps": 500.7440972218888,
+      "rust_dps": 500.7440972218888,
+      "passed": true,
+      "production_minus_pinned_dps": 2.2737367544323206e-12
+    },
+    {
+      "scenario": "smite-priest--RaceHuman",
+      "slug": "smite-priest",
+      "race": "RaceHuman",
+      "production_dps": 498.52799061370104,
+      "production_iterations": 10000,
+      "request_sha256": "1d226a266fc8cf609b9d9cdda7e2ac9a7487fc6b8f3a7bca41519f58a76783a9",
+      "go_dps": 498.52799061370035,
+      "rust_dps": 498.52799061370035,
+      "passed": true,
+      "production_minus_pinned_dps": 6.821210263296962e-13
+    },
+    {
+      "scenario": "smite-priest--RaceDwarf",
+      "slug": "smite-priest",
+      "race": "RaceDwarf",
+      "production_dps": 498.2771917803312,
+      "production_iterations": 10000,
+      "request_sha256": "b9004809257a5ce2a114117d55e502d7ea7e274b33d99f0f070c5a191aaeb6f5",
+      "go_dps": 498.2771917803302,
+      "rust_dps": 498.2771917803302,
+      "passed": true,
+      "production_minus_pinned_dps": 9.663381206337363e-13
+    }
+  ]
+}

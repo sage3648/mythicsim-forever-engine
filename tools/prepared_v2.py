@@ -289,10 +289,17 @@ def dps(result):
     return result["raidMetrics"]["dps"].get("avg", 0)
 
 
+def deviation(value):
+    """A reported deviation as a number. sqrt(sumSq/n - mean^2) is NaN when cancellation leaves
+    a negative residue, which protojson writes as "NaN"; the variance it stands for is zero."""
+    return 0.0 if value == "NaN" else value
+
+
 def stdev_mean(key, go, rust):
     """The mean beside a standard deviation, when both engines report one."""
     mean_key = key.replace("Stdev", "Avg") if key.endswith("Stdev") else "avg" if key == "stdev" else None
-    if mean_key is None or not all(isinstance(side.get(k), (int, float)) for side in (go, rust) for k in (key, mean_key)):
+    if mean_key is None or not all(isinstance(deviation(side.get(key)), (int, float)) and isinstance(side.get(mean_key), (int, float))
+                                   for side in (go, rust)):
         return None
     return go[mean_key]
 
@@ -300,6 +307,7 @@ def stdev_mean(key, go, rust):
 def variance_matches(go, rust, mean):
     """Both engines take sqrt(sumSq/n - mean^2), which cancels when every sample is nearly
     equal, and Go may fuse the subtraction. Compare variances at the scale of mean^2."""
+    go, rust = deviation(go), deviation(rust)
     return abs(go * go - rust * rust) <= TOLERANCE * max(1.0, mean * mean)
 
 
