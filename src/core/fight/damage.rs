@@ -27,6 +27,8 @@ pub(crate) enum Outcome {
     TickMagicCrit,
     /// Go `OutcomeAlwaysHitNoHitCounter`.
     AlwaysHitNoHitCounter,
+    /// Go `OutcomeAlwaysHit`: a hit that counts, a partial resist included.
+    AlwaysHit,
     /// Go `OutcomeMagicHitNoHitCounter`: a miss still counts.
     MagicHitNoHitCounter,
 }
@@ -238,6 +240,22 @@ impl<A: Agent> Fight<A> {
         self.calc_damage_internal(spell, target, base, attacker, Outcome::MagicHit)
     }
 
+    /// Go `CalcDamage` with a given outcome applier.
+    pub(crate) fn calc_damage_with_outcome(
+        &mut self,
+        spell: SpellId,
+        target: Side,
+        base_damage: f64,
+        outcome: Outcome,
+    ) -> SpellResult {
+        let attacker = self.attacker_multiplier(spell, false);
+        let mut base = base_damage;
+        if self.spells[spell].bonus_coefficient > 0.0 {
+            base += self.spells[spell].bonus_coefficient * self.bonus_damage(spell);
+        }
+        self.calc_damage_internal(spell, target, base, attacker, outcome)
+    }
+
     /// Go `calcDamageInternal` for a direct magic spell.
     fn calc_damage_internal(
         &mut self,
@@ -408,6 +426,15 @@ impl<A: Agent> Fight<A> {
             Outcome::Tick => self.outcome_tick(spell, result, false),
             Outcome::TickMagicCrit => self.outcome_tick(spell, result, true),
             Outcome::AlwaysHitNoHitCounter => result.outcome = OUTCOME_HIT,
+            Outcome::AlwaysHit => {
+                let partial = result.outcome & OUTCOME_PARTIAL != 0;
+                result.outcome = OUTCOME_HIT;
+                let metrics = &mut self.spells[spell].metrics[result.target.index()];
+                metrics.hits += 1;
+                if partial {
+                    metrics.resisted_hits += 1;
+                }
+            }
         }
     }
 

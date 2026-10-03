@@ -119,6 +119,12 @@ pub enum Value {
     CurrentTime,
     NumberTargets,
     AuraIsKnown(ActionId),
+    /// `auraIsKnown` with one of the player's pets, by its position among them, as its
+    /// source unit.
+    PetAuraIsKnown {
+        pet: usize,
+        id: ActionId,
+    },
     AuraIsActive(ActionId),
     /// `auraIsActive` with the current target as its source unit.
     TargetAuraIsActive(ActionId),
@@ -183,6 +189,7 @@ impl Value {
             | Value::Or(_)
             | Value::Not(_)
             | Value::AuraIsKnown(_)
+            | Value::PetAuraIsKnown { .. }
             | Value::AuraIsActive(_)
             | Value::TargetAuraIsActive(_)
             | Value::DotIsActive(_)
@@ -746,6 +753,49 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
                 )]),
             }
         }
+        "auraIsKnown" if fields.is_some_and(|fields| fields.contains_key("sourceUnit")) => {
+            // Go GetSourceUnit: the player itself, or a pet of the player by its index.
+            only(&["auraId", "sourceUnit"])?;
+            let id = config
+                .get("auraId")
+                .ok_or_else(|| vec![format!("{name} has no auraId")])
+                .and_then(|id| parse_action_id(id).map_err(|err| vec![err]))?;
+            let unsupported = || {
+                vec![format!(
+                    "{name} sourceUnit {} is unsupported",
+                    config.get("sourceUnit").cloned().unwrap_or_default()
+                )]
+            };
+            let source = config
+                .get("sourceUnit")
+                .and_then(Json::as_object)
+                .ok_or_else(unsupported)?;
+            let kind = source.get("type").and_then(Json::as_str);
+            let owner_is_self =
+                source
+                    .get("owner")
+                    .and_then(Json::as_object)
+                    .is_some_and(|owner| {
+                        owner.len() == 1 && owner.get("type").and_then(Json::as_str) == Some("Self")
+                    });
+            let known_keys = source
+                .keys()
+                .all(|key| ["type", "index", "owner"].contains(&key.as_str()));
+            match kind {
+                Some("Self") if source.len() == 1 => Ok(Value::AuraIsKnown(id)),
+                Some("Pet") if owner_is_self && known_keys => {
+                    let pet = match source.get("index") {
+                        None => 0,
+                        Some(index) => index
+                            .as_u64()
+                            .and_then(|index| usize::try_from(index).ok())
+                            .ok_or_else(unsupported)?,
+                    };
+                    Ok(Value::PetAuraIsKnown { pet, id })
+                }
+                _ => Err(unsupported()),
+            }
+        }
         "auraIsKnown" | "auraIsActive" | "auraNumStacks" | "auraRemainingTime" => {
             // sourceUnit, except on auraIsActive, and includeReactionTime are not modeled.
             only(&["auraId"])?;
@@ -1191,6 +1241,9 @@ pub struct Lookup<'a, R> {
     pub spell: &'a dyn Fn(&ActionId) -> Option<usize>,
     /// Go `GetAPLDot`: the spellbook position of the spell when it has a dot on the target.
     pub dot: &'a dyn Fn(&ActionId) -> Option<usize>,
+    /// Go `GetAuraByID` on the player's pet at a position among its pets: whether it has the
+    /// aura, false when there is no such pet.
+    pub pet_aura_known: &'a dyn Fn(usize, &ActionId) -> bool,
 }
 
 /// What Go `newAPLAction` makes of an action's condition.
@@ -1292,6 +1345,7 @@ fn compile_value<R>(
         Value::DotTimeToNextTick(id) => Compiled::DotTimeToNextTick((lookup.dot)(id)?),
         Value::GcdIsReady => Compiled::GcdIsReady,
         Value::AuraIsKnown(id) => bool_const(aura(id).is_some()),
+        Value::PetAuraIsKnown { pet, id } => bool_const((lookup.pet_aura_known)(*pet, id)),
         Value::AuraIsActive(id) => match (aura(id), missing) {
             (Some(found), _) => Compiled::AuraIsActive(found.aura),
             (None, MissingAura::Dropped) => return None,
@@ -1414,6 +1468,7 @@ mod tests {
             target_aura: aura,
             spell: &no_spell,
             dot: &no_spell,
+            pet_aura_known: &|_, _| false,
         }
     }
 

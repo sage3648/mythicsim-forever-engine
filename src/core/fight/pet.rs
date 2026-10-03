@@ -7,17 +7,21 @@
 //! never enabled is an [`InertPet`]: its swing timer reset only rolls an offset for enemies,
 //! and only enabled units start the encounter, so no random number is drawn for it. Its
 //! metrics report zero, its time to out of mana the hour Go uses for a unit that never spends,
-//! and every action metric lists one more unit. A pet whose agent's Reset dismisses it logs
+//! and every action metric lists one more unit. Its permanent auras still activate at each
+//! reset and fade at each fight's end, so they report a whole fight's uptime. A pet whose agent's Reset dismisses it logs
 //! that at each reset; every inert pet logs that none is summoned at each fight's end.
 
 use crate::{
     contracts::prepared_v2::{ActionId, Effect, Pet as ExportedPet, PreparedV2},
+    core::fight::log::action_string,
     core::time::{seconds, NEVER_EXPIRES, NS_PER_SECOND, STARTING_CD_TIME},
 };
 
 use super::{
-    melee, metrics::Distribution, unit_config, ActionReport, ActionTotals, Agent, BuildError,
-    Config, Fight, Hardcast, Player, Side, SpellId, UnitSource,
+    melee,
+    metrics::{Aggregator, Distribution},
+    unit_config, ActionReport, ActionTotals, Agent, BuildError, Config, Fight, Hardcast, Player,
+    Side, SpellId, UnitSource,
 };
 
 /// A pet Go registers but never enables.
@@ -27,8 +31,15 @@ pub(crate) struct InertPet {
     pub(crate) unit_index: i32,
     /// The actions its metrics list, with zero results.
     pub(crate) actions: Vec<ActionTotals>,
-    /// The auras its metrics list, never active.
+    /// The auras its metrics list.
     pub(crate) auras: Vec<ActionId>,
+    /// Positions in `auras` of the permanent auras, in registration order.
+    pub(crate) permanent: Vec<usize>,
+    /// When the permanent auras last activated.
+    aura_start: i64,
+    /// Each aura's uptime across iterations, in seconds, and its activations.
+    pub(crate) aura_uptime: Vec<Aggregator>,
+    pub(crate) aura_procs: Vec<i64>,
     /// Go `pet.GetStats().FlatString()`, logged when the reset dismisses it.
     pub(crate) dismissed_log: String,
     /// Whether each reset logs its dismissal.
@@ -39,42 +50,58 @@ pub(crate) struct InertPet {
 }
 
 /// The inert pets a prepared input describes, in Go's order.
-pub(crate) fn inert_pets(effects: &[Effect]) -> Vec<InertPet> {
-    effects
-        .iter()
-        .filter_map(|effect| match effect {
-            Effect::InertPet {
-                name,
-                label,
-                unit_index,
-                metrics_actions,
-                auras,
-                dismissed_log,
-                dismissed_at_reset,
-                mana_bar,
-                ..
-            } => Some(InertPet {
-                name: name.clone(),
-                label: label.clone(),
-                unit_index: *unit_index,
-                actions: metrics_actions
+pub(crate) fn inert_pets(effects: &[Effect]) -> Result<Vec<InertPet>, BuildError> {
+    let mut pets = Vec::new();
+    for effect in effects {
+        let Effect::InertPet {
+            name,
+            label,
+            unit_index,
+            metrics_actions,
+            auras,
+            permanent_auras,
+            dismissed_log,
+            dismissed_at_reset,
+            mana_bar,
+            ..
+        } = effect
+        else {
+            continue;
+        };
+        let permanent = permanent_auras
+            .iter()
+            .map(|id| {
+                auras
                     .iter()
-                    .map(|action| ActionTotals {
-                        id: action.action_id.clone(),
-                        melee: action.melee_metrics,
-                        passive: false,
-                        school: action.school,
-                        targets: [ActionReport::new(0), ActionReport::new(1)],
-                    })
-                    .collect(),
-                auras: auras.clone(),
-                dismissed_log: dismissed_log.clone(),
-                dismissed_at_reset: *dismissed_at_reset,
-                tto: mana_bar.then(Distribution::default),
-            }),
-            _ => None,
-        })
-        .collect()
+                    .position(|aura| aura == id)
+                    .ok_or_else(|| format!("{label}'s permanent aura {id:?} is unlisted"))
+            })
+            .collect::<Result<_, _>>()?;
+        pets.push(InertPet {
+            name: name.clone(),
+            label: label.clone(),
+            unit_index: *unit_index,
+            actions: metrics_actions
+                .iter()
+                .map(|action| ActionTotals {
+                    id: action.action_id.clone(),
+                    melee: action.melee_metrics,
+                    passive: action.passive,
+                    school: action.school,
+                    targets: [ActionReport::new(0), ActionReport::new(1)],
+                })
+                .collect(),
+            auras: auras.clone(),
+            permanent,
+            aura_start: 0,
+            aura_uptime: vec![Aggregator::default(); auras.len()],
+            aura_procs: vec![0; auras.len()],
+            dismissed_log: dismissed_log.clone(),
+            dismissed_at_reset: *dismissed_at_reset,
+            tto: mana_bar.then(Distribution::default),
+        });
+    }
+    Ok(pets)
 }
 
 /// A pet's distributions across iterations.
@@ -176,6 +203,15 @@ impl<A: Agent> Fight<A> {
                 if !done_active && unit < self.pets[index].unit_index {
                     self.reset_active_pet();
                     done_active = true;
+                }
+            }
+            // Go `auraTracker.reset` of the pet's unit: its permanent auras activate.
+            self.pets[index].aura_start = self.now;
+            if self.log.is_some() {
+                let label = self.pets[index].label.clone();
+                for position in self.pets[index].permanent.clone() {
+                    let id = action_string(&self.pets[index].auras[position]);
+                    self.log_at(self.now, &label, &format!("Aura gained: {id}"));
                 }
             }
             if self.log.is_some() && self.pets[index].dismissed_at_reset {
@@ -305,8 +341,26 @@ impl<A: Agent> Fight<A> {
                     done_active = true;
                 }
             }
+            // Go `auraTracker.doneIteration`: the permanent auras fade, then every aura folds
+            // its uptime.
+            let label = self.pets[index].label.clone();
+            let uptime = seconds((self.now - self.pets[index].aura_start.max(0)).max(0));
+            for position in self.pets[index].permanent.clone() {
+                if self.log.is_some() {
+                    let id = action_string(&self.pets[index].auras[position]);
+                    self.log_at(self.now, &label, &format!("Aura faded: {id}"));
+                }
+            }
+            let pet = &mut self.pets[index];
+            for position in 0..pet.auras.len() {
+                if pet.permanent.contains(&position) {
+                    pet.aura_uptime[position].add(uptime);
+                    pet.aura_procs[position] += 1;
+                } else {
+                    pet.aura_uptime[position].add(0.0);
+                }
+            }
             if self.log.is_some() {
-                let label = self.pets[index].label.clone();
                 self.log_at(self.now, &label, "No pet summoned");
             }
         }
@@ -376,4 +430,31 @@ impl<A: Agent> Fight<A> {
         units.sort_unstable();
         units
     }
+}
+
+/// The aura actions of each of the player's pets, simulated or inert, in Go registration
+/// order, which is unit index order: Go `PetAgents`, read by a rotation's pet source unit.
+pub(crate) fn pet_agent_auras(prepared: &PreparedV2) -> Vec<Vec<ActionId>> {
+    let mut pets: Vec<(i32, Vec<ActionId>)> = prepared
+        .pets
+        .iter()
+        .map(|pet| {
+            let auras = pet
+                .auras
+                .iter()
+                .filter_map(|aura| aura.action_id.clone())
+                .collect();
+            (pet.index, auras)
+        })
+        .collect();
+    for effect in &prepared.effects {
+        if let Effect::InertPet {
+            unit_index, auras, ..
+        } = effect
+        {
+            pets.push((*unit_index, auras.clone()));
+        }
+    }
+    pets.sort_by_key(|(index, _)| *index);
+    pets.into_iter().map(|(_, auras)| auras).collect()
 }

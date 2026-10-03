@@ -558,11 +558,15 @@ fn unreachable_with_one_target(prepared: &PreparedV2, rotation: &Rotation) -> BT
     let dot = |id: &ActionId| {
         rotation_spell_index(prepared, id).and_then(|index| dot_owner(prepared, index))
     };
+    let pet_auras = crate::core::fight::pet::pet_agent_auras(prepared);
+    let pet_aura_known =
+        |pet: usize, id: &ActionId| pet_auras.get(pet).is_some_and(|auras| auras.contains(id));
     let lookup = Lookup {
         aura: &aura,
         target_aura: &target_aura,
         spell: &spell,
         dot: &dot,
+        pet_aura_known: &pet_aura_known,
     };
     rotation
         .priority_list
@@ -591,11 +595,15 @@ fn unknown_aura_conditions(prepared: &PreparedV2, rotation: &Rotation) -> Vec<St
     let dot = |id: &ActionId| {
         rotation_spell_index(prepared, id).and_then(|index| dot_owner(prepared, index))
     };
+    let pet_auras = crate::core::fight::pet::pet_agent_auras(prepared);
+    let pet_aura_known =
+        |pet: usize, id: &ActionId| pet_auras.get(pet).is_some_and(|auras| auras.contains(id));
     let lookup = Lookup {
         aura: &aura,
         target_aura: &target_aura,
         spell: &spell,
         dot: &dot,
+        pet_aura_known: &pet_aura_known,
     };
     let mut reasons = Vec::new();
     for item in &rotation.priority_list {

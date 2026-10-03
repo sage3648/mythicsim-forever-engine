@@ -526,6 +526,7 @@ type MetricsAction struct {
 	ActionID     *ActionID `json:"action_id"`
 	MeleeMetrics bool      `json:"melee_metrics"`
 	School       uint8     `json:"school"`
+	Passive      bool      `json:"passive,omitempty"`
 }
 
 type TargetUnit struct {
@@ -1170,7 +1171,7 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 			note(true, "pets are unsupported")
 			continue
 		}
-		inertPets = append(inertPets, inertPetEffect(request, pet, reason))
+		inertPets = append(inertPets, inertPetEffect(request, pet, reason, note))
 	}
 
 	spells := []Spell{}
@@ -1317,17 +1318,29 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 // A pet that is registered but never enabled. Each reset enables its unit and its agent's
 // Reset dismisses it, logging its stats; each fight's end logs that no pet is summoned. Its
 // metrics report zero, with every action and aura it registered.
-func inertPetEffect(request *proto.RaidSimRequest, pet *core.Pet, reason string) map[string]any {
+func inertPetEffect(request *proto.RaidSimRequest, pet *core.Pet, reason string, note func(bool, string)) map[string]any {
 	auras := []*ActionID{}
+	// Permanent auras activate at every unit's reset, enabled or not, and last the fight.
+	permanent := []*ActionID{}
 	for _, aura := range pet.GetAuras() {
-		if id := actionID(aura.ActionID); id != nil {
+		id := actionID(aura.ActionID)
+		if id != nil {
 			auras = append(auras, id)
+		}
+		if aura.IsActive() {
+			note(aura.Duration != core.NeverExpires, fmt.Sprintf("inert pet %s has the expiring aura %s", pet.Label, aura.Label))
+			if id != nil {
+				permanent = append(permanent, id)
+			}
 		}
 	}
 	effect := map[string]any{
 		"kind": "inert_pet", "name": pet.Name, "label": pet.Label, "unit_index": pet.UnitIndex,
 		"metrics_actions": metricsActions(&pet.Unit), "auras": auras,
 		"dismissed_log": pet.GetStats().FlatString(), "reason": reason,
+	}
+	if len(permanent) != 0 {
+		effect["permanent_auras"] = permanent
 	}
 	// Only a pet whose agent's Reset disables it logs its dismissal at each reset; a pet that is
 	// simply not enabled on start, such as a warlock's other demons, logs nothing then.
@@ -1406,7 +1419,8 @@ func metricsActions(unit *core.Unit) []MetricsAction {
 			}
 			seen[id] = true
 			actions = append(actions, MetricsAction{ActionID: actionID(id),
-				MeleeMetrics: spell.Flags.Matches(core.SpellFlagMeleeMetrics), School: uint8(spell.SpellSchool)})
+				MeleeMetrics: spell.Flags.Matches(core.SpellFlagMeleeMetrics), School: uint8(spell.SpellSchool),
+				Passive: spell.Flags.Matches(core.SpellFlagPassiveSpell)})
 		}
 	}
 	return actions

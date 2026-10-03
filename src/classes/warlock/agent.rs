@@ -21,6 +21,8 @@ use super::{
         searing_pain, shadow_bolt, shadowburn, soul_fire,
     },
     talents::{
+        decimation::{self, Decimation},
+        demonic_brand::{self, DemonicBrand},
         improved_shadow_bolt::{self, ImprovedShadowBolt},
         nightfall::{self, Nightfall},
         shadow_and_flame::{self, ShadowAndFlame},
@@ -45,6 +47,8 @@ pub(crate) enum WarlockSpell {
     AmplifyCurse,
     /// The Succubus's Lash of Pain.
     LashOfPain,
+    /// The demon's Demonic Brand hit.
+    DemonicBrand,
 }
 
 /// Class auras with Rust behavior.
@@ -56,6 +60,11 @@ pub(crate) enum WarlockAura {
     ShadowAndFlame,
     NightfallTrigger,
     ShadowTrance,
+    DecimationTrigger,
+    Decimation,
+    DemonicBrandTrigger,
+    /// The demon's aura that spends the brand's charges.
+    DemonicBrandConsumer,
 }
 
 /// Warlock state that Go keeps in the `Warlock` struct and its closures.
@@ -74,6 +83,8 @@ pub(crate) struct WarlockAgent {
     nightfall: Option<Rc<Nightfall>>,
     demon: Option<Rc<DemonAi>>,
     lash_of_pain_base: f64,
+    decimation: Option<Rc<Decimation>>,
+    demonic_brand: Option<Rc<DemonicBrand>>,
 }
 
 /// Aura labels claimed by implemented class effects, as (unit, label, kind).
@@ -113,6 +124,30 @@ fn class_auras(prepared: &PreparedV2) -> Vec<(&'static str, String, WarlockAura)
                 ));
                 auras.push(("player", aura.clone(), WarlockAura::ShadowTrance));
             }
+            Effect::Decimation {
+                trigger_aura, aura, ..
+            } => {
+                auras.push((
+                    "player",
+                    trigger_aura.clone(),
+                    WarlockAura::DecimationTrigger,
+                ));
+                auras.push(("player", aura.clone(), WarlockAura::Decimation));
+            }
+            Effect::DemonicBrand {
+                trigger_aura,
+                consumer_aura,
+                ..
+            } => {
+                auras.push((
+                    "player",
+                    trigger_aura.clone(),
+                    WarlockAura::DemonicBrandTrigger,
+                ));
+                if let Some(consumer) = consumer_aura {
+                    auras.push(("pet", consumer.clone(), WarlockAura::DemonicBrandConsumer));
+                }
+            }
             _ => {}
         }
     }
@@ -140,6 +175,7 @@ impl WarlockAgent {
             "soul_fire" if damage => Some(WarlockSpell::SoulFire),
             "amplify_curse" => Some(WarlockSpell::AmplifyCurse),
             "succubus_lash_of_pain" => Some(WarlockSpell::LashOfPain),
+            "demonic_brand" => Some(WarlockSpell::DemonicBrand),
             _ => None,
         }
     }
@@ -219,6 +255,7 @@ impl WarlockAgent {
                     spell_id,
                     base_amount,
                     mana_multiplier,
+                    pet_mana_share,
                 } => {
                     let bound = life_tap::bind(
                         &mut fight,
@@ -226,6 +263,7 @@ impl WarlockAgent {
                         *base_amount,
                         *mana_multiplier,
                         spirit,
+                        *pet_mana_share,
                     );
                     fight.agent.life_tap = Some(bound);
                 }
@@ -292,6 +330,64 @@ impl WarlockAgent {
                     fight.agent.demon = Some(Rc::new(bound));
                 }
                 Effect::LashOfPain { base_damage } => fight.agent.lash_of_pain_base = *base_damage,
+                Effect::Decimation {
+                    aura,
+                    execute_phase,
+                    trigger_spells,
+                    damage_spells,
+                    damage_done_flat,
+                    cast_spells,
+                    cast_time_percent,
+                    ..
+                } => {
+                    let bound = decimation::bind(
+                        &mut fight,
+                        aura,
+                        *execute_phase,
+                        trigger_spells,
+                        damage_spells,
+                        *damage_done_flat,
+                        cast_spells,
+                        *cast_time_percent,
+                    )?;
+                    fight.agent.decimation = Some(Rc::new(bound));
+                }
+                Effect::DemonicBrand {
+                    target_aura,
+                    charges,
+                    trigger_spells,
+                    pet,
+                    marker_aura,
+                    brand_spell,
+                    min_damage,
+                    max_damage,
+                    spell_power_coefficient,
+                    school_power_stat,
+                    ..
+                } => {
+                    let demon = match (pet, marker_aura, brand_spell, school_power_stat) {
+                        (None, ..) => None,
+                        (Some(_), Some(marker_aura), Some(brand_spell), Some(stat)) => {
+                            Some(demonic_brand::DemonConfig {
+                                marker_aura,
+                                brand_spell: *brand_spell,
+                                min_damage: *min_damage,
+                                max_damage: *max_damage,
+                                coefficient: *spell_power_coefficient,
+                                school_power: prepared
+                                    .player
+                                    .stats
+                                    .get(stat)
+                                    .copied()
+                                    .ok_or_else(|| format!("prepared stats lack {stat}"))?,
+                            })
+                        }
+                        _ => return Err("Demonic Brand's demon half is incomplete".into()),
+                    };
+                    let bound =
+                        demonic_brand::bind(&fight, target_aura, *charges, trigger_spells, demon)?;
+                    fight.agent.demonic_brand = Some(Rc::new(bound));
+                }
                 _ => {}
             }
         }
@@ -386,6 +482,14 @@ impl Agent for WarlockAgent {
                 let base = fight.agent.lash_of_pain_base;
                 pets::lash_of_pain(fight, spell, target, base);
             }
+            WarlockSpell::DemonicBrand => {
+                let brand = fight
+                    .agent
+                    .demonic_brand
+                    .clone()
+                    .expect("Demonic Brand is bound");
+                brand.brand_hit(fight, spell, target);
+            }
             WarlockSpell::ImmolateDot => panic!("Immolate's dot spell is never cast"),
         }
     }
@@ -474,6 +578,10 @@ impl Agent for WarlockAgent {
                 let talent = fight.agent.nightfall.clone().expect("bound");
                 talent.on_gain(fight);
             }
+            WarlockAura::Decimation => {
+                let talent = fight.agent.decimation.clone().expect("bound");
+                talent.on_gain(fight);
+            }
             _ => {}
         }
     }
@@ -490,6 +598,10 @@ impl Agent for WarlockAgent {
             }
             WarlockAura::ShadowTrance => {
                 let talent = fight.agent.nightfall.clone().expect("bound");
+                talent.on_expire(fight);
+            }
+            WarlockAura::Decimation => {
+                let talent = fight.agent.decimation.clone().expect("bound");
                 talent.on_expire(fight);
             }
             _ => {}
@@ -511,6 +623,18 @@ impl Agent for WarlockAgent {
             WarlockAura::ShadowAndFlameTrigger => {
                 let talent = fight.agent.shadow_and_flame.clone().expect("bound");
                 talent.on_spell_hit_dealt(fight, spell, result);
+            }
+            WarlockAura::DecimationTrigger => {
+                let talent = fight.agent.decimation.clone().expect("bound");
+                talent.on_spell_hit_dealt(fight, spell, result);
+            }
+            WarlockAura::DemonicBrandTrigger => {
+                let talent = fight.agent.demonic_brand.clone().expect("bound");
+                talent.on_spell_hit_dealt(fight, spell, result);
+            }
+            WarlockAura::DemonicBrandConsumer => {
+                let talent = fight.agent.demonic_brand.clone().expect("bound");
+                talent.on_demon_hit(fight, spell, result);
             }
             _ => {}
         }

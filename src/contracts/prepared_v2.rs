@@ -297,6 +297,9 @@ pub struct MetricsAction {
     pub action_id: ActionId,
     pub melee_metrics: bool,
     pub school: u8,
+    /// Go `SpellFlagPassiveSpell`, which metrics report.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub passive: bool,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -892,6 +895,10 @@ pub enum Effect {
         unit_index: i32,
         metrics_actions: Vec<MetricsAction>,
         auras: Vec<ActionId>,
+        /// The auras with an action that every reset activates for the fight, in
+        /// registration order.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        permanent_auras: Vec<ActionId>,
         dismissed_log: String,
         reason: String,
         /// Whether each reset logs its dismissal, as when its agent's Reset disables it.
@@ -1125,6 +1132,9 @@ pub enum Effect {
         spell_id: i32,
         base_amount: f64,
         mana_multiplier: f64,
+        /// Demonic Energies: the share of the restore the summoned demon gains.
+        #[serde(default, skip_serializing_if = "is_zero_f64")]
+        pet_mana_share: f64,
     },
     /// Conflagrate's hit, which consumes Immolate unless Shadow and Flame spares it.
     Conflagrate {
@@ -1149,6 +1159,52 @@ pub enum Effect {
         /// Spellbook positions of the spells Shadow Trance's cast time modifier changes.
         modded_spells: Vec<usize>,
         cast_time_percent: f64,
+    },
+    /// Decimation: a landed hit of its spells inside the execute phase grants an aura whose
+    /// modifiers raise their damage and cut Soul Fire's cast time.
+    Decimation {
+        trigger_aura: String,
+        aura: String,
+        /// Go `IsExecutePhase<N>`'s threshold.
+        execute_phase: i32,
+        /// Spellbook positions of the spells whose landed hits trigger it.
+        trigger_spells: Vec<usize>,
+        /// Spellbook positions and value of the aura's damage done modifier.
+        damage_spells: Vec<usize>,
+        damage_done_flat: f64,
+        /// Spellbook positions and value of the aura's cast time modifier.
+        cast_spells: Vec<usize>,
+        cast_time_percent: f64,
+    },
+    /// Demonic Brand: a landed Searing Pain brands its target with charges, and each landed
+    /// direct hit of the summoned demon spends one for an extra hit. Without a summoned demon
+    /// the trigger does nothing.
+    DemonicBrand {
+        trigger_aura: String,
+        /// The brand on the target.
+        target_aura: String,
+        charges: i32,
+        trigger_spells: Vec<usize>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        pet: Option<String>,
+        /// The demon's copy of the brand's stacks.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        marker_aura: Option<String>,
+        /// The demon's permanent aura that spends charges.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        consumer_aura: Option<String>,
+        /// The extra hit's position in the demon's spellbook.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        brand_spell: Option<usize>,
+        #[serde(default, skip_serializing_if = "is_zero_f64")]
+        min_damage: f64,
+        #[serde(default, skip_serializing_if = "is_zero_f64")]
+        max_damage: f64,
+        /// The share of the warlock's spell power and school power the hit adds.
+        #[serde(default, skip_serializing_if = "is_zero_f64")]
+        spell_power_coefficient: f64,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        school_power_stat: Option<String>,
     },
     /// The summoned demon's AI: the first ability it can cast while its mana stays above
     /// `min_mana`, otherwise a wait.
@@ -1410,6 +1466,8 @@ impl Effect {
             Effect::Conflagrate { .. } => "conflagrate",
             Effect::Shadowburn {} => "shadowburn",
             Effect::Nightfall { .. } => "nightfall",
+            Effect::Decimation { .. } => "decimation",
+            Effect::DemonicBrand { .. } => "demonic_brand",
             Effect::WarlockPet { .. } => "warlock_pet",
             Effect::LashOfPain { .. } => "lash_of_pain",
             Effect::SearingPain {} => "searing_pain",

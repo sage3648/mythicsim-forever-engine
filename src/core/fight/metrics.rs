@@ -649,15 +649,20 @@ impl<A: Agent> Fight<A> {
                         auras: pet
                             .auras
                             .iter()
-                            .map(|id| AuraMetricsReport {
-                                id: id.into(),
-                                uptime_seconds_avg: 0.0,
-                                uptime_seconds_stdev: 0.0,
-                                procs_avg: 0.0,
-                                aggregator_data: AggregatorData {
-                                    n: self.totals.iterations,
-                                    sum_sq: 0.0,
-                                },
+                            .enumerate()
+                            .map(|(position, id)| {
+                                let uptime = &pet.aura_uptime[position];
+                                let (avg, stdev) = uptime.mean_and_stdev();
+                                AuraMetricsReport {
+                                    id: id.into(),
+                                    uptime_seconds_avg: avg,
+                                    uptime_seconds_stdev: stdev,
+                                    procs_avg: pet.aura_procs[position] as f64 / n,
+                                    aggregator_data: AggregatorData {
+                                        n: uptime.n,
+                                        sum_sq: uptime.sum_sq,
+                                    },
+                                }
                             })
                             .collect(),
                         resources: Vec::new(),

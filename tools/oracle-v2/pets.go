@@ -105,11 +105,16 @@ func exportPets(request *proto.RaidSimRequest, character *core.Character, target
 }
 
 // The stats line Disable logs: the pet's stats once its inheritance is removed, from a separate
-// reset simulation.
+// reset simulation. Pet.doneIteration expires the pet's auras first, undoing their stat buffs.
 func petDismissStats(request *proto.RaidSimRequest, index int) string {
 	simulation := core.NewSim(request, simsignals.CreateSignals())
 	simulation.Reset()
 	pet := simulation.Raid.Parties[0].Players[0].GetCharacter().PetAgents[index].GetPet()
+	for _, aura := range pet.GetAuras() {
+		if aura.IsActive() {
+			aura.Deactivate(simulation)
+		}
+	}
 	pet.Disable(simulation)
 	return pet.GetStats().FlatString()
 }

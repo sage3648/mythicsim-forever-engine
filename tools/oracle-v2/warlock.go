@@ -19,7 +19,9 @@ func init() {
 		spells: warlockClassSpells, damageRows: warlockDamageRows, effects: warlockEffects,
 		damageTakenModifiers: warlockDamageTakenModifiers, inertPet: warlockInertPet,
 		// talents_affliction.go registerAmplifyCurse registers its cast without a class mask.
-		unmaskedSpells: map[core.ActionID]string{{SpellID: 18288}: "amplify_curse"},
+		// talents_demonology.go applyDemonicBrand registers each demon's brand hit without one.
+		unmaskedSpells: map[core.ActionID]string{{SpellID: 18288}: "amplify_curse",
+			{SpellID: 1293697}: "demonic_brand", {SpellID: 1293698}: "demonic_brand"},
 	}
 	// pets.go: every demon is registered at construction and only the summoned one is enabled,
 	// at reset; the sim has no summon spells.
@@ -67,6 +69,8 @@ var (
 	wlNightfall            = spelldata.Talent(18094, 2)
 	wlNightfallTriggered   = spelldata.Ranked(17941)
 	wlImprovedShadowBoltOn = spelldata.Ranked(17794)
+	wlDecimation           = spelldata.Talent(440870, 2)
+	wlDemonicEnergies      = spelldata.Talent(1225214, 2)
 )
 
 func warlockDamageRows(rows map[int32]*spelldata.Spell) {
@@ -140,10 +144,15 @@ func warlockEffects(agent core.Agent, character *core.Character) []map[string]an
 	}
 	// lifetap.go: (base + Spirit) * (1 + Improved Life Tap) health into as much mana.
 	lifeTap := wlLifeTapLadder.Highest()
-	effects = append(effects, map[string]any{
+	tap := map[string]any{
 		"kind": "life_tap", "spell_id": lifeTap.ID, "base_amount": lifeTap.EffectN(1).Average(core.CharacterLevel),
 		"mana_multiplier": 1 + wlImprovedLifeTap.FractionAt(talents.ImprovedLifeTap),
-	})
+	}
+	// Demonic Energies hands the summoned demon a share of the restore.
+	if share := wlDemonicEnergies.EffectAt(2).FractionAt(talents.DemonicEnergies); share > 0 && w.ActivePet != nil {
+		tap["pet_mana_share"] = share
+	}
+	effects = append(effects, tap)
 	if talents.Conflagrate { // conflagrate.go
 		effects = append(effects, map[string]any{
 			"kind": "conflagrate", "spell_id": wlConflagrateLadder.Highest().ID,
@@ -184,6 +193,44 @@ func warlockEffects(agent core.Agent, character *core.Character) []map[string]an
 	}
 	if w.Succubus != nil { // pets.go registerLashOfPainSpell: a Go literal base
 		effects = append(effects, map[string]any{"kind": "lash_of_pain", "base_damage": 50.0})
+	}
+	if talents.Decimation > 0 { // talents_demonology.go applyDecimation
+		points := talents.Decimation
+		effects = append(effects, map[string]any{
+			"kind": "decimation", "trigger_aura": "Decimation Trigger", "aura": w.DecimationAura.Label,
+			"execute_phase": int32(35),
+			"trigger_spells": procTriggerSpells(character, core.ProcTrigger{
+				ClassSpellMask: warlock.WarlockSpellShadowBolt | warlock.WarlockSpellSearingPain,
+			}),
+			"damage_spells":     spellsMatching(character, warlock.WarlockSpellShadowBolt|warlock.WarlockSpellSearingPain),
+			"damage_done_flat":  wlDecimation.EffectAt(4).FractionAt(points),
+			"cast_spells":       spellsMatching(character, warlock.WarlockSpellSoulFire),
+			"cast_time_percent": wlDecimation.EffectAt(1).FractionAt(points),
+		})
+	}
+	if talents.DemonicBrand > 0 && !w.Options.SacrificeSummon { // talents_demonology.go applyDemonicBrand
+		brand := map[string]any{
+			"kind": "demonic_brand", "trigger_aura": "Demonic Brand Trigger",
+			"target_aura": w.DemonicBrandAuras.Get(target).Label, "charges": w.DemonicBrandAuras.Get(target).MaxStacks,
+			"trigger_spells": procTriggerSpells(character, core.ProcTrigger{ClassSpellMask: warlock.WarlockSpellSearingPain}),
+		}
+		if pet := w.ActivePet; pet != nil {
+			brandID, power := int32(1293697), stats.ShadowDamage
+			if pet == w.Imp {
+				brandID, power = 1293698, stats.FireDamage
+			}
+			for i, spell := range pet.Spellbook {
+				if spell.ActionID.SpellID == brandID {
+					brand["brand_spell"] = i
+				}
+			}
+			// The hit's roll and spell power share are Go literals.
+			levelBonus := float64(core.CharacterLevel-26) * 1.5
+			brand["pet"], brand["marker_aura"], brand["consumer_aura"] = pet.Label, pet.DemonicBrandAura.Label, "Demonic Brand consumer"
+			brand["min_damage"], brand["max_damage"], brand["spell_power_coefficient"] = levelBonus+14, levelBonus+17, 0.078
+			brand["school_power_stat"] = power.StatName()
+		}
+		effects = append(effects, brand)
 	}
 	if talents.ImprovedShadowBolt > 0 { // talents_destruction.go applyImprovedShadowBolt
 		effects = append(effects, map[string]any{

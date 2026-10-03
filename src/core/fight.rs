@@ -18,7 +18,7 @@ pub(crate) mod energy;
 mod log;
 pub(crate) mod melee;
 pub(crate) mod metrics;
-mod pet;
+pub(crate) mod pet;
 mod racial;
 mod rotation;
 mod spell_mod;
@@ -863,6 +863,9 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) pets: Vec<pet::InertPet>,
     /// The pet enabled at each reset, which Rust simulates.
     pub(crate) pet: Option<Box<pet::ActivePet>>,
+    /// The auras of each of the player's pets, in Go registration order, for the rotation's
+    /// pet source units.
+    pub(crate) pet_agent_auras: Vec<Vec<ActionId>>,
     mana_regen_casting: usize,
     mana_regen_not_casting: usize,
     mana_gain_spell: Option<SpellId>,
@@ -1763,8 +1766,9 @@ impl<A: Agent> Fight<A> {
             windfury: None,
             chili: None,
             eureka: None,
-            pets: pet::inert_pets(effects),
+            pets: pet::inert_pets(effects)?,
             pet: None,
+            pet_agent_auras: pet::pet_agent_auras(prepared),
             totals: metrics::Totals::default(),
             encounter_damage_taken: 0.0,
         };
@@ -2373,6 +2377,11 @@ impl<A: Agent> Fight<A> {
     /// Go `IsExecutePhase20`.
     pub(crate) fn is_execute_phase_20(&self) -> bool {
         self.execute_phase <= 20
+    }
+
+    /// Go `IsExecutePhase35`.
+    pub(crate) fn is_execute_phase_35(&self) -> bool {
+        self.execute_phase <= 35
     }
 
     /// Go `Simulation.Step`. Returns false when the fight is over.

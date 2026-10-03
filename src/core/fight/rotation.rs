@@ -126,11 +126,17 @@ impl<A: Agent> Fight<A> {
                     }),
                 })
         };
+        let pet_aura_known = |pet: usize, id: &ActionId| {
+            self.pet_agent_auras
+                .get(pet)
+                .is_some_and(|auras| auras.contains(id))
+        };
         let lookup = Lookup {
             aura: &aura,
             target_aura: &target_aura,
             spell: &spell,
             dot: &dot,
+            pet_aura_known: &pet_aura_known,
         };
         let mut items = Vec::new();
         for item in &rotation.priority_list {

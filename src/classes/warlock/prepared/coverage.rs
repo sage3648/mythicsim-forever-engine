@@ -21,6 +21,8 @@ const EFFECTS: &[&str] = &[
     "conflagrate",
     "corruption",
     "curse_of_the_elements",
+    "decimation",
+    "demonic_brand",
     "immolate",
     "improved_shadow_bolt",
     "lash_of_pain",
@@ -51,8 +53,15 @@ fn spell_capability(spell: &Spell) -> Option<&'static str> {
         "soul_fire" if damage => Some("soul_fire"),
         "amplify_curse" => Some("amplify_curse"),
         "succubus_lash_of_pain" => Some("lash_of_pain"),
+        "demonic_brand" if damage_free(spell) => Some("demonic_brand"),
         _ => None,
     }
+}
+
+/// The demon's brand hit computes its own damage; an exported client damage row would mean
+/// Go changed it.
+fn damage_free(spell: &Spell) -> bool {
+    spell.damage_effect.is_none() && spell.dot.is_none()
 }
 
 /// Aura labels a Warlock effect takes responsibility for, as (unit, label).
@@ -76,13 +85,47 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
             trigger_aura, aura, ..
         } => vec![("player", trigger_aura), ("player", aura)],
         Effect::WarlockPet { pet, .. } => vec![("pet unit", pet)],
+        Effect::Decimation {
+            trigger_aura, aura, ..
+        } => vec![("player", trigger_aura), ("player", aura)],
+        Effect::DemonicBrand {
+            trigger_aura,
+            consumer_aura,
+            ..
+        } => {
+            let mut claimed = vec![("player", trigger_aura.as_str())];
+            if let Some(consumer) = consumer_aura {
+                claimed.push(("pet", consumer.as_str()));
+            }
+            claimed
+        }
         _ => Vec::new(),
     }
 }
 
-/// The demon's abilities, which its AI reaches, need a behavior too.
+/// The demon's abilities, which its AI reaches, need a behavior too, and the brand hit reads
+/// the warlock's school power as fixed.
 fn limits(prepared: &PreparedV2, _reachable: &[&Spell]) -> Vec<String> {
     let mut reasons = Vec::new();
+    for effect in &prepared.effects {
+        let Effect::DemonicBrand {
+            school_power_stat: Some(stat),
+            ..
+        } = effect
+        else {
+            continue;
+        };
+        let changes = prepared.effects.iter().any(|effect| match effect {
+            Effect::StatAuras { changed, .. } => changed.contains(stat),
+            Effect::TemporaryStats { active_stats, .. } => active_stats.contains_key(stat),
+            _ => false,
+        });
+        if changes {
+            reasons.push(format!(
+                "Demonic Brand reads {stat}, which an aura changes during the fight"
+            ));
+        }
+    }
     for effect in &prepared.effects {
         let Effect::WarlockPet {
             pet,
