@@ -328,6 +328,8 @@ pub(crate) struct UnitReport {
     actions: Vec<ActionMetricsReport>,
     auras: Vec<AuraMetricsReport>,
     resources: Vec<ResourceMetricsReport>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pets: Vec<TargetReport>,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -537,6 +539,8 @@ impl<A: Agent> Fight<A> {
         logs: String,
         elapsed_ns: u64,
     ) -> FightReport {
+        // Go lists every unit in each action's targets; pets never take a hit in scope.
+        let extra_units = self.extra_unit_indexes();
         let action_report = |action: &ActionTotals| ActionMetricsReport {
             id: (&action.id).into(),
             is_melee: action.melee,
@@ -549,6 +553,7 @@ impl<A: Agent> Fight<A> {
                     target.cast_time_ms = milliseconds(target.cast_time) as f64;
                     target
                 })
+                .chain(extra_units.iter().map(|&unit| ActionReport::new(unit)))
                 .collect(),
             spell_school: action.school,
         };
@@ -584,6 +589,35 @@ impl<A: Agent> Fight<A> {
             actions,
             auras: self.aura_reports(Side::Player),
             resources,
+            pets: self
+                .pets
+                .iter()
+                .map(|pet| TargetReport {
+                    name: pet.name.clone(),
+                    unit_index: pet.unit_index,
+                    dps: zero.clone(),
+                    threat: zero.clone(),
+                    dtps: zero.clone(),
+                    tmi: zero.clone(),
+                    hps: zero.clone(),
+                    tto: zero.clone(),
+                    actions: pet.actions.iter().map(action_report).collect(),
+                    auras: pet
+                        .auras
+                        .iter()
+                        .map(|id| AuraMetricsReport {
+                            id: id.into(),
+                            uptime_seconds_avg: 0.0,
+                            uptime_seconds_stdev: 0.0,
+                            procs_avg: 0.0,
+                            aggregator_data: AggregatorData {
+                                n: self.totals.iterations,
+                                sum_sq: 0.0,
+                            },
+                        })
+                        .collect(),
+                })
+                .collect(),
         };
         let target = TargetReport {
             name: self.config.target_label.clone(),

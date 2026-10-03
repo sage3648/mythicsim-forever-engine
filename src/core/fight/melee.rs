@@ -80,10 +80,52 @@ impl AutoAttacks {
 impl<A: Agent> Fight<A> {
     /// Go `TotalMeleeHasteMultiplier`.
     pub(crate) fn melee_haste_multiplier(&self) -> f64 {
-        let melee = &self.config.melee;
-        melee.attack_speed_multiplier
-            * melee.melee_speed_multiplier
+        self.player.attack_speed_multiplier
+            * self.player.melee_speed_multiplier
             * (1.0 + self.config.melee_haste_rating / (PHYSICAL_HASTE_RATING_PER_PERCENT * 100.0))
+    }
+
+    /// Go `Unit.MultiplyMeleeSpeed`.
+    #[allow(dead_code)] // Shared with the class domains in progress.
+    pub(crate) fn multiply_melee_speed(&mut self, amount: f64) {
+        self.player.melee_speed_multiplier *= amount;
+        self.update_swing_timers();
+    }
+
+    /// Go `Unit.MultiplyAttackSpeed`.
+    #[allow(dead_code)] // Shared with the class domains in progress.
+    pub(crate) fn multiply_attack_speed(&mut self, amount: f64) {
+        self.player.attack_speed_multiplier *= amount;
+        self.update_swing_timers();
+    }
+
+    /// Go `AutoAttacks.UpdateSwingTimers`: the remaining part of each pending swing scales with
+    /// the change in speed, the off hand by the main hand's factor.
+    pub(crate) fn update_swing_timers(&mut self) {
+        if !(self.autos.mh.enabled || self.autos.oh.enabled) || !self.autos.melee {
+            return;
+        }
+        if !self.autos.mh.enabled {
+            return;
+        }
+        let haste = self.melee_haste_multiplier();
+        let now = self.now;
+        let old = self.autos.mh.cur_swing_speed;
+        self.autos.mh.update_swing_duration(haste);
+        let factor = old / self.autos.mh.cur_swing_speed;
+        let remaining = self.autos.mh.swing_at - now;
+        if remaining > 0 {
+            self.autos.mh.swing_at = now + (remaining as f64 * factor) as i64;
+        }
+        self.autos.min_time = self.autos.min_time.min(self.autos.mh.swing_at);
+        if self.autos.dual_wielding && self.autos.oh.enabled {
+            self.autos.oh.update_swing_duration(haste);
+            let remaining = self.autos.oh.swing_at - now;
+            if remaining > 0 {
+                self.autos.oh.swing_at = now + (remaining as f64 * factor) as i64;
+            }
+            self.autos.min_time = self.autos.min_time.min(self.autos.oh.swing_at);
+        }
     }
 
     /// Go `AutoAttacks.reset` and the simulation's weapon attack reset.
@@ -232,6 +274,68 @@ impl<A: Agent> Fight<A> {
         self.deal_damage(spell, result, false);
     }
 
+    /// Go `Unit.MHWeaponDamage`.
+    #[allow(dead_code)] // Shared with the class domains in progress.
+    pub(crate) fn mh_weapon_damage(&mut self, attack_power: f64) -> f64 {
+        let weapon = self.autos.mh.weapon.clone();
+        self.weapon_damage(&weapon, attack_power)
+    }
+
+    /// Go `Unit.OHWeaponDamage`: half the off hand's roll.
+    #[allow(dead_code)] // Shared with the class domains in progress.
+    pub(crate) fn oh_weapon_damage(&mut self, attack_power: f64) -> f64 {
+        let weapon = self.autos.oh.weapon.clone();
+        0.5 * self.weapon_damage(&weapon, attack_power)
+    }
+
+    /// Go `Unit.MHNormalizedWeaponDamage`.
+    #[allow(dead_code)] // Shared with the class domains in progress.
+    pub(crate) fn mh_normalized_weapon_damage(&mut self, attack_power: f64) -> f64 {
+        let weapon = self.autos.mh.weapon.clone();
+        self.normalized_weapon_damage(&weapon, attack_power)
+    }
+
+    /// Go `Unit.OHNormalizedWeaponDamage`: half the off hand's normalized roll.
+    #[allow(dead_code)] // Shared with the class domains in progress.
+    pub(crate) fn oh_normalized_weapon_damage(&mut self, attack_power: f64) -> f64 {
+        let weapon = self.autos.oh.weapon.clone();
+        0.5 * self.normalized_weapon_damage(&weapon, attack_power)
+    }
+
+    /// Go `Weapon.CalculateNormalizedWeaponDamage`.
+    #[allow(dead_code)] // Shared with the class domains in progress.
+    pub(crate) fn normalized_weapon_damage(&mut self, weapon: &Weapon, attack_power: f64) -> f64 {
+        let roll = self.random("Weapon Base Damage");
+        weapon.base_damage_min
+            + (weapon.base_damage_max - weapon.base_damage_min) * roll
+            + (weapon.normalized_swing_speed * attack_power) / weapon.attack_power_per_dps
+    }
+
+    /// Go `CalcOutcome` with a physical outcome applier: no damage, modifiers or debug line.
+    #[allow(dead_code)] // Shared with the class domains in progress.
+    pub(crate) fn calc_physical_outcome(
+        &mut self,
+        spell: SpellId,
+        target: Side,
+        outcome: PhysicalOutcome,
+    ) -> SpellResult {
+        let mut result = SpellResult {
+            target,
+            outcome: 0,
+            damage: 0.0,
+            threat: 0.0,
+        };
+        self.apply_physical_outcome(spell, &mut result, outcome);
+        result.threat = if result.landed() {
+            let state = &self.spells[spell];
+            (result.damage * state.threat_multiplier + state.flat_threat_bonus)
+                * self.config.threat_multiplier
+        } else {
+            0.0
+        };
+        result
+    }
+
     /// Go `Weapon.CalculateWeaponDamage`.
     pub(crate) fn weapon_damage(&mut self, weapon: &Weapon, attack_power: f64) -> f64 {
         let roll = self.random("Weapon Base Damage");
@@ -290,9 +394,7 @@ impl<A: Agent> Fight<A> {
             result.damage *= self.target_multiplier(spell);
         }
         let after_target = result.damage;
-        match outcome {
-            PhysicalOutcome::MeleeWhite => self.outcome_melee_white(spell, &mut result),
-        }
+        self.apply_physical_outcome(spell, &mut result, outcome);
         let after_outcome = result.damage;
         result.damage = result.damage.max(0.0);
         if self.log.is_some() {
@@ -342,86 +444,294 @@ impl<A: Agent> Fight<A> {
         (self.config.expertise_percent + self.spells[spell].bonus_expertise_percent) / 100.0
     }
 
-    /// Go `outcomeMeleeWhite` with hit counters.
-    fn outcome_melee_white(&mut self, spell: SpellId, result: &mut SpellResult) {
-        let roll = self.random("White Hit Table");
-        let target = result.target.index();
-        let melee = self.config.melee.clone();
-        // Miss, with the dual wield penalty.
-        let mut miss = melee.base_miss_chance - self.physical_hit_chance(spell);
-        if self.autos.dual_wielding && !melee.disable_dw_miss_penalty {
+    /// Go `applyAttackTableMiss` and `applyAttackTableMissNoDWPenalty`.
+    fn table_miss(
+        &mut self,
+        spell: SpellId,
+        result: &mut SpellResult,
+        roll: f64,
+        chance: &mut f64,
+        dw_penalty: bool,
+    ) -> bool {
+        let mut miss = self.config.melee.base_miss_chance - self.physical_hit_chance(spell);
+        if dw_penalty && self.autos.dual_wielding && !self.config.melee.disable_dw_miss_penalty {
             miss += 0.19;
         }
-        let mut chance = miss.max(0.0);
-        if roll < chance {
+        *chance = miss.max(0.0);
+        if roll < *chance {
             result.outcome = OUTCOME_MISS;
-            self.spells[spell].metrics[target].misses += 1;
+            self.spells[spell].metrics[result.target.index()].misses += 1;
             result.damage = 0.0;
-            return;
+            return true;
         }
-        let suppression = self.dodge_parry_suppression(spell);
-        if !self.spells[spell].flags.cannot_be_dodged {
-            chance += (melee.defender_dodge - suppression - melee.dodge_reduction).max(0.0);
-            if roll < chance {
-                result.outcome = OUTCOME_DODGE;
-                self.spells[spell].metrics[target].dodges += 1;
-                result.damage = 0.0;
-                return;
-            }
+        false
+    }
+
+    /// Go `applyAttackTableDodge`.
+    fn table_dodge(
+        &mut self,
+        spell: SpellId,
+        result: &mut SpellResult,
+        roll: f64,
+        chance: &mut f64,
+    ) -> bool {
+        if self.spells[spell].flags.cannot_be_dodged {
+            return false;
         }
-        if melee.in_front_of_target {
-            chance += (melee.defender_parry - suppression).max(0.0);
-            if roll < chance {
-                result.outcome = OUTCOME_PARRY;
-                self.spells[spell].metrics[target].parries += 1;
-                result.damage = 0.0;
-                return;
-            }
+        let melee = &self.config.melee;
+        *chance +=
+            (melee.defender_dodge - self.dodge_parry_suppression(spell) - melee.dodge_reduction)
+                .max(0.0);
+        if roll < *chance {
+            result.outcome = OUTCOME_DODGE;
+            self.spells[spell].metrics[result.target.index()].dodges += 1;
+            result.damage = 0.0;
+            return true;
         }
-        chance += melee.base_glance_chance;
-        if roll < chance {
+        false
+    }
+
+    /// Go `applyAttackTableParry`.
+    fn table_parry(
+        &mut self,
+        spell: SpellId,
+        result: &mut SpellResult,
+        roll: f64,
+        chance: &mut f64,
+    ) -> bool {
+        *chance +=
+            (self.config.melee.defender_parry - self.dodge_parry_suppression(spell)).max(0.0);
+        if roll < *chance {
+            result.outcome = OUTCOME_PARRY;
+            self.spells[spell].metrics[result.target.index()].parries += 1;
+            result.damage = 0.0;
+            return true;
+        }
+        false
+    }
+
+    /// Go `applyAttackTableGlance`.
+    fn table_glance(
+        &mut self,
+        spell: SpellId,
+        result: &mut SpellResult,
+        roll: f64,
+        chance: &mut f64,
+    ) -> bool {
+        *chance += self.config.melee.base_glance_chance;
+        if roll < *chance {
             result.outcome = OUTCOME_GLANCE;
-            self.spells[spell].metrics[target].glances += 1;
+            self.spells[spell].metrics[result.target.index()].glances += 1;
             let spread = 2.0 * self.random("Glance Damage") - 1.0;
+            let melee = &self.config.melee;
             result.damage *= melee.glance_multiplier + melee.glance_spread * spread;
-            return;
+            return true;
         }
-        if melee.in_front_of_target {
-            chance += melee.defender_block.max(0.0);
-            if roll < chance {
-                result.outcome |= OUTCOME_BLOCK;
-                self.spells[spell].metrics[target].blocks += 1;
-                result.damage = if self.spells[spell].flags.binary {
-                    0.0
-                } else {
-                    (result.damage - melee.defender_block_reduction).max(0.0)
-                };
-                return;
+        false
+    }
+
+    /// Go `applyAttackTableBlock`: a blocked crit moves from crits to blocked crits.
+    fn table_block(
+        &mut self,
+        spell: SpellId,
+        result: &mut SpellResult,
+        roll: f64,
+        chance: &mut f64,
+    ) -> bool {
+        *chance += self.config.melee.defender_block.max(0.0);
+        if roll < *chance {
+            let partial = result.outcome & OUTCOME_PARTIAL != 0;
+            result.outcome |= OUTCOME_BLOCK;
+            let metrics = &mut self.spells[spell].metrics[result.target.index()];
+            if result.outcome & OUTCOME_CRIT != 0 {
+                metrics.crits -= 1;
+                metrics.blocked_crits += 1;
+                if partial {
+                    metrics.resisted_crits -= 1;
+                }
+            } else {
+                metrics.blocks += 1;
             }
+            result.damage = if self.spells[spell].flags.binary {
+                0.0
+            } else {
+                (result.damage - self.config.melee.defender_block_reduction).max(0.0)
+            };
+            return true;
         }
-        chance += self.physical_crit_chance(spell);
+        false
+    }
+
+    /// Go `applyAttackTableCrit` on the shared roll.
+    fn table_crit(
+        &mut self,
+        spell: SpellId,
+        result: &mut SpellResult,
+        roll: f64,
+        chance: &mut f64,
+        count: bool,
+    ) -> bool {
+        *chance += self.physical_crit_chance(spell);
+        if roll < *chance {
+            self.land_crit(spell, result, count);
+            return true;
+        }
+        false
+    }
+
+    /// Go `applyAttackTableCritSeparateRoll`.
+    fn table_crit_separate(
+        &mut self,
+        spell: SpellId,
+        result: &mut SpellResult,
+        count: bool,
+    ) -> bool {
+        if self.random("Physical Crit Roll") < self.physical_crit_chance(spell) {
+            self.land_crit(spell, result, count);
+            return true;
+        }
+        false
+    }
+
+    fn land_crit(&mut self, spell: SpellId, result: &mut SpellResult, count: bool) {
         let partial = result.outcome & OUTCOME_PARTIAL != 0;
-        if roll < chance {
-            result.outcome = OUTCOME_CRIT;
-            let metrics = &mut self.spells[spell].metrics[target];
+        result.outcome = OUTCOME_CRIT;
+        if count {
+            let metrics = &mut self.spells[spell].metrics[result.target.index()];
             metrics.crits += 1;
             if partial {
                 metrics.resisted_crits += 1;
             }
-            result.damage *= self.crit_multiplier(spell);
-            return;
         }
+        result.damage *= self.crit_multiplier(spell);
+    }
+
+    /// Go `applyAttackTableHit`.
+    fn table_hit(&mut self, spell: SpellId, result: &mut SpellResult, count: bool) {
+        let partial = result.outcome & OUTCOME_PARTIAL != 0;
         result.outcome = OUTCOME_HIT;
-        let metrics = &mut self.spells[spell].metrics[target];
-        metrics.hits += 1;
-        if partial {
-            metrics.resisted_hits += 1;
+        if count {
+            let metrics = &mut self.spells[spell].metrics[result.target.index()];
+            metrics.hits += 1;
+            if partial {
+                metrics.resisted_hits += 1;
+            }
+        }
+    }
+
+    /// Apply a physical outcome, composed as Go composes each applier.
+    pub(crate) fn apply_physical_outcome(
+        &mut self,
+        spell: SpellId,
+        result: &mut SpellResult,
+        outcome: PhysicalOutcome,
+    ) {
+        let front = self.config.melee.in_front_of_target;
+        let mut chance = 0.0;
+        match outcome {
+            PhysicalOutcome::MeleeWhite => {
+                let roll = self.random("White Hit Table");
+                let _ = self.table_miss(spell, result, roll, &mut chance, true)
+                    || self.table_dodge(spell, result, roll, &mut chance)
+                    || (front && self.table_parry(spell, result, roll, &mut chance))
+                    || self.table_glance(spell, result, roll, &mut chance)
+                    || (front && self.table_block(spell, result, roll, &mut chance))
+                    || self.table_crit(spell, result, roll, &mut chance, true)
+                    || {
+                        self.table_hit(spell, result, true);
+                        true
+                    };
+            }
+            PhysicalOutcome::MeleeSpecialHit { count } => {
+                let roll = self.random("White Hit Table");
+                let _ = self.table_miss(spell, result, roll, &mut chance, false)
+                    || self.table_dodge(spell, result, roll, &mut chance)
+                    || (front && self.table_parry(spell, result, roll, &mut chance))
+                    || {
+                        self.table_hit(spell, result, count);
+                        true
+                    };
+            }
+            PhysicalOutcome::MeleeSpecialHitAndCrit { count } => {
+                let roll = self.random("White Hit Table");
+                if self.table_miss(spell, result, roll, &mut chance, false)
+                    || self.table_dodge(spell, result, roll, &mut chance)
+                {
+                    return;
+                }
+                if front {
+                    if self.table_parry(spell, result, roll, &mut chance) {
+                        return;
+                    }
+                    if self.table_crit_separate(spell, result, count) {
+                        self.table_block(spell, result, roll, &mut chance);
+                    } else if !self.table_block(spell, result, roll, &mut chance) {
+                        self.table_hit(spell, result, count);
+                    }
+                } else if !self.table_crit_separate(spell, result, count) {
+                    self.table_hit(spell, result, count);
+                }
+            }
+            PhysicalOutcome::MeleeWeaponSpecialHitAndCrit { count } => {
+                if !front {
+                    return self.apply_physical_outcome(
+                        spell,
+                        result,
+                        PhysicalOutcome::MeleeSpecialHitAndCrit { count },
+                    );
+                }
+                let roll = self.random("White Hit Table");
+                let _ = self.table_miss(spell, result, roll, &mut chance, false)
+                    || self.table_dodge(spell, result, roll, &mut chance)
+                    || self.table_parry(spell, result, roll, &mut chance)
+                    || self.table_block(spell, result, roll, &mut chance)
+                    || self.table_crit_separate(spell, result, count)
+                    || {
+                        self.table_hit(spell, result, count);
+                        true
+                    };
+            }
+            PhysicalOutcome::MeleeSpecialBlockAndCrit { count } => {
+                if front {
+                    let roll = self.random("White Hit Table");
+                    let _ = self.table_crit_separate(spell, result, count)
+                        || self.table_block(spell, result, roll, &mut chance)
+                        || {
+                            self.table_hit(spell, result, count);
+                            true
+                        };
+                } else if !self.table_crit_separate(spell, result, count) {
+                    self.table_hit(spell, result, count);
+                }
+            }
+            PhysicalOutcome::MeleeSpecialNoBlockDodgeParry { count } => {
+                let roll = self.random("White Hit Table");
+                let _ = self.table_miss(spell, result, roll, &mut chance, false)
+                    || self.table_crit_separate(spell, result, count)
+                    || {
+                        self.table_hit(spell, result, count);
+                        true
+                    };
+            }
+            PhysicalOutcome::MeleeSpecialCritOnly { count } => {
+                if !self.table_crit_separate(spell, result, count) {
+                    self.table_hit(spell, result, count);
+                }
+            }
         }
     }
 }
 
-/// Go physical outcome appliers the runtime implements.
+/// Go physical outcome appliers the runtime implements; `count` is false for the
+/// `NoHitCounter` variants. The names follow Go's.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[allow(clippy::enum_variant_names, dead_code)] // Shared with the class domains in progress.
 pub(crate) enum PhysicalOutcome {
     MeleeWhite,
+    MeleeSpecialHit { count: bool },
+    MeleeSpecialHitAndCrit { count: bool },
+    MeleeWeaponSpecialHitAndCrit { count: bool },
+    MeleeSpecialBlockAndCrit { count: bool },
+    MeleeSpecialNoBlockDodgeParry { count: bool },
+    MeleeSpecialCritOnly { count: bool },
 }

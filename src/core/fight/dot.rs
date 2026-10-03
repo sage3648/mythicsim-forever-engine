@@ -2,7 +2,10 @@
 
 use crate::{contracts::prepared_v2::Dot as ExportedDot, core::queue::Handle};
 
-use super::{Action, Agent, AuraRef, DotId, Fight, Side, SpellBehavior, SpellId, PRIORITY_GCD};
+use super::{
+    cast::MAX_SPELL_QUEUE_WINDOW, Action, Agent, AuraRef, DotId, Fight, Side, SpellBehavior,
+    SpellId, PRIORITY_GCD,
+};
 
 pub(crate) struct Dot {
     pub(crate) spell: SpellId,
@@ -150,6 +153,7 @@ impl<A: Agent> Fight<A> {
         if self.dots[dot].channeled {
             let delay = self.config.channel_clip_delay;
             self.player.channeled_dot = None;
+            self.forget_channel_interrupt();
             if self.player.gcd <= self.now {
                 self.wait_until(self.now + delay);
             }
@@ -176,13 +180,17 @@ impl<A: Agent> Fight<A> {
         }
         self.dots[dot].remaining_ticks -= 1;
         self.tick_once(dot);
-        if self.dots[dot].channeled
-            && self.dots[dot].remaining_ticks == 0
-            && self.player.gcd <= self.now
-        {
-            // Without an interrupt condition the rotation cannot cut a channel short.
-            let delay = self.config.channel_clip_delay;
-            self.wait_until(self.now + delay);
+        if self.dots[dot].channeled {
+            if self.dots[dot].remaining_ticks == 0 && self.gcd_ready() {
+                let delay = self.config.channel_clip_delay;
+                self.wait_until(self.now + delay);
+            } else if self.should_interrupt_channel()
+                // Interrupts the spell queue window alone would trigger wait for the GCD.
+                && (self.gcd_ready() || self.gcd_time_to_ready() > MAX_SPELL_QUEUE_WINDOW)
+            {
+                self.interrupt_channel(dot);
+                return;
+            }
         }
         let aura = self.dots[dot].aura;
         let state = &self.dots[dot];

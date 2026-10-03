@@ -132,7 +132,7 @@ impl<A: Agent> Fight<A> {
     }
 
     /// Go `healthBar.GainHealth`.
-    fn gain_health(&mut self, amount: f64, metrics: usize) {
+    pub(crate) fn gain_health(&mut self, amount: f64, metrics: usize) {
         let old = self.player.health;
         let new = (old + amount).min(self.config.max_health);
         let resource = &mut self.resources[metrics];
