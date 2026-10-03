@@ -144,6 +144,8 @@ impl<A: Agent> Fight<A> {
             let spell = self.dots[dot].spell;
             self.spells[spell].metrics[aura.side.index()].total_cast_time += channel_time;
         }
+        // Go clears the stored amount once the dot is gone.
+        self.dots[dot].snapshot_base = 0.0;
     }
 
     /// Go `Dot.TickOnce`.

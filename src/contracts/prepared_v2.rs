@@ -505,6 +505,8 @@ pub enum Effect {
     Ignite {
         trigger_aura: String,
         spell_id: i32,
+        share: f64,
+        num_ticks: i32,
     },
     /// Arcane Power's major cooldown and aura.
     ArcanePower {

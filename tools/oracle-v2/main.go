@@ -595,6 +595,7 @@ var (
 	arcanePower         = spelldata.Ranked(12042)
 	presenceOfMind      = spelldata.Ranked(12043)
 	igniteTriggered     = spelldata.Ranked(412538)
+	igniteTalent        = spelldata.Talent(11119, 5)
 	fireBlastLadder     = spelldata.Ranked(2136, 2137, 2138, 8412, 8413, 10197, 10199)
 	scorchLadder        = spelldata.Ranked(2948, 8444, 8445, 8446, 10205, 10206, 10207)
 	improvedScorch      = spelldata.Talent(11095, 3)
@@ -780,6 +781,8 @@ func mageEffects(m *mage.Mage, character *core.Character) []map[string]any {
 	if talents.Ignite > 0 { // talents_fire.go registerIgnite: fire spell crits feed a dot
 		effects = append(effects, map[string]any{
 			"kind": "ignite", "trigger_aura": "Ignite Talent", "spell_id": igniteTriggered.Highest().ID,
+			"share":     igniteTalent.FractionAt(talents.Ignite),
+			"num_ticks": int32(igniteTriggered.Highest().Duration() / (2 * time.Second)),
 		})
 	}
 	if talents.ArcanePower { // arcane_power.go

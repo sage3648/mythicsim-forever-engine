@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "88fdf8f1d7c9f479bc6c88dd83d98c07c0a539a44c46249feadde113a34cc73d",
+  "exporter_sha256": "0ed1f09bb5ed434ae12cc1de46f41e92924b8ecef27a54b443067af2b3467e1f",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -403,7 +403,7 @@
         "path": "fixtures/mage/prepared-v2/arcane-ignite.request.json"
       },
       "prepared": "arcane-ignite.prepared.json",
-      "prepared_sha256": "10512fc054df5769319156b4200966a7d813039bec74d4c3ae71de1a3f1338d1",
+      "prepared_sha256": "2ee0ecf027eb0dafe39ca26f4aba561367e69d4c6b01a2ea7af88a2cee2b36b3",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -420,7 +420,7 @@
         "path": "fixtures/mage/prepared-v2/arcane-reference.request.json"
       },
       "prepared": "arcane-reference.prepared.json",
-      "prepared_sha256": "c793a52b7fecc0894655fd1c3bcefa9eb85cc51ff9571671e822088dc2107ce1",
+      "prepared_sha256": "1720f2d140d01f1c9fc87106739f4610464ac305d5aba8002a711feec1ab4cad",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -441,7 +441,7 @@
         "path": "fixtures/mage/prepared-v2/arcane-no-missile-barrage.request.json"
       },
       "prepared": "arcane-no-missile-barrage.prepared.json",
-      "prepared_sha256": "14f8587d8d8899edb2ffc8e5c8727de0215c61c3fcaf2f4d2a85cad83df40e1a",
+      "prepared_sha256": "93f3ae6dbfbbdeeb8ae208e7c126f0550acdc121889e796664ba94fac4720f91",
       "expected_coverage": {
         "supported": false,
         "reasons": [
@@ -565,6 +565,27 @@
       "go_log": {
         "file": "fire-combustion.go-log.txt",
         "sha256": "37c27c054b10734ab2de7e7b207bd836ebe66904ddc802ec6dbe7d35aa165a8f"
+      }
+    },
+    {
+      "id": "fire-ignite",
+      "description": "The Combustion case with Ignite: Fire crits pay a share of their damage over Ignite's ticks, and a crit while the dot runs rolls what it still owes into the new dot.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-ignite.request.json"
+      },
+      "prepared": "fire-ignite.prepared.json",
+      "prepared_sha256": "fa0b160826a56130089eef77a2df5f0210b3688ca3efd3dcfefd1af9ca18ac5a",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fire-ignite.go-result.json",
+        "sha256": "a03af3cb1757c1972248005404e7f92392c0868b13ee19343ba2d8c62267094f"
+      },
+      "go_log": {
+        "file": "fire-ignite.go-log.txt",
+        "sha256": "7c5b3030497478142eab555d67e194ed93da3eb409f0e8e000b014a833225058"
       }
     }
   ]

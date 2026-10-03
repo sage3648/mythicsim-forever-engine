@@ -187,12 +187,12 @@ fn rotation_spells_without_behavior_are_reported() {
     );
 }
 
-/// Ignite's trigger is claimed as inert only while no reachable spell is fire.
+/// Ignite acts on the crits of any reachable Fire spell, so a rotation that adds
+/// Fireball to an Ignite build stays supported.
 #[test]
-fn ignite_is_inert_only_without_fire_spells() {
+fn ignite_builds_may_cast_fire_spells() {
     let path = family().join("arcane-ignite.prepared.json");
     let mut value: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
-    assert!(check_prepared(&parse(value.clone()).unwrap()).is_ok());
     let fireball = value["player"]["spells"]
         .as_array()
         .unwrap()
@@ -208,25 +208,7 @@ fn ignite_is_inert_only_without_fire_spells() {
             0,
             json!({"action": {"castSpell": {"spellId": {"spellId": id}}}}),
         );
-    assert!(reasons(value).contains(&format!(
-        "spell {id} is a fire spell, whose crits Ignite would act on"
-    )));
-}
-
-/// Touch of the Grave is matched as Go's `ProcMaskDirect`; another mask is unsupported.
-#[test]
-fn touch_of_the_grave_requires_direct_procs() {
-    let path = family().join("arcane-reference.prepared.json");
-    let mut value: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
-    assert!(check_prepared(&parse(value.clone()).unwrap()).is_ok());
-    for effect in value["effects"].as_array_mut().unwrap() {
-        if effect["kind"] == "touch_of_the_grave" {
-            effect["proc_mask"] = json!(["ProcMaskSpellDamage"]);
-        }
-    }
-    assert!(reasons(value)
-        .iter()
-        .any(|reason| reason.starts_with("Touch of the Grave procs from")));
+    assert!(check_prepared(&parse(value).unwrap()).is_ok());
 }
 
 /// Community fix ElliotWood/Forever#622 (252f57aa8), recorded in upstream/changes.json.

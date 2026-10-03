@@ -55,6 +55,7 @@ fn spell_capability(spell: &Spell, prepared: &PreparedV2) -> Option<&'static str
             "fire_blast" => Some("fire_blast"),
             "fireball" => Some("fireball"),
             "combustion" => Some("combustion"),
+            "ignite" => Some("ignite"),
             "pyroblast" => Some("pyroblast"),
             "scorch" => Some("scorch"),
             "presence_of_mind" => Some("presence_of_mind"),
@@ -142,56 +143,6 @@ fn undirected_procs(prepared: &PreparedV2) -> Vec<String> {
             }
             _ => None,
         })
-        .collect()
-}
-
-/// Go `SpellSchoolFire`.
-const FIRE: u8 = 4;
-
-/// Ignite's trigger is claimed as a listener that never acts, which holds only while no
-/// spell Rust can deal damage with is fire: the reachable spells and the missiles their
-/// channels cast.
-fn active_ignite(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
-    if !prepared
-        .effects
-        .iter()
-        .any(|effect| matches!(effect, Effect::Ignite { .. }))
-    {
-        return Vec::new();
-    }
-    let missiles = prepared.effects.iter().flat_map(|effect| match effect {
-        Effect::ArcaneMissiles { ranks } => ranks
-            .iter()
-            .filter(|rank| {
-                reachable.iter().any(|spell| {
-                    spell.action_id.as_ref().map(|id| id.spell_id) == Some(rank.channel_spell_id)
-                })
-            })
-            .map(|rank| rank.tick_spell_id)
-            .collect(),
-        _ => Vec::new(),
-    });
-    let ticks: Vec<&Spell> = missiles
-        .flat_map(|id| {
-            prepared
-                .player
-                .spells
-                .iter()
-                .filter(move |spell| spell.action_id.as_ref().map(|a| a.spell_id) == Some(id))
-        })
-        .collect();
-    reachable
-        .iter()
-        .chain(ticks.iter())
-        .filter(|spell| spell.school & FIRE != 0)
-        .map(|spell| {
-            format!(
-                "{} is a fire spell, whose crits Ignite would act on",
-                spell.action_id.clone().unwrap_or_default()
-            )
-        })
-        .collect::<BTreeSet<_>>()
-        .into_iter()
         .collect()
 }
 
@@ -289,7 +240,6 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
                 }
             }
         }
-        reasons.extend(active_ignite(prepared, &reachable));
         reasons.extend(undirected_procs(prepared));
         let mut unknown = BTreeSet::new();
         let mut limited = BTreeSet::new();

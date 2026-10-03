@@ -351,6 +351,25 @@ impl<A: Agent> Fight<A> {
         }
     }
 
+    /// Go `Spell.CalcAndDealPeriodicDamage` for a dot's tick on a base amount.
+    pub(crate) fn periodic_damage_tick(&mut self, dot: super::DotId, base: f64) {
+        let state = &self.dots[dot];
+        let (spell, side, can_crit) = (state.spell, state.side, state.tick_can_crit);
+        let mut base = base;
+        if state.bonus_coefficient > 0.0 {
+            base += state.bonus_coefficient * self.bonus_damage(spell);
+        }
+        let attacker =
+            self.attacker_multiplier(spell, true) * self.dots[dot].periodic_damage_multiplier;
+        let outcome = if can_crit {
+            Outcome::TickMagicCrit
+        } else {
+            Outcome::Tick
+        };
+        let result = self.calc_damage_internal(spell, side, base, attacker, outcome);
+        self.deal_damage(spell, result, true);
+    }
+
     /// Go `Dot.CalcAndDealPeriodicSnapshotDamage` for a dot built by `Snapshot`, which ticks
     /// on the caster's current spell power and attacker multiplier.
     pub(crate) fn snapshot_dot_tick(&mut self, dot: super::DotId) {

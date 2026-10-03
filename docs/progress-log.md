@@ -30,6 +30,7 @@ reading the Go reference. They are not effort estimates for other contributors.
 | Fire: Master of Elements | 2026-10-03 13:35 | 2026-10-03 13:37 | 0 h 02 m | Crit refund with internal cooldown and its own mana metrics; matches Go on the first comparison |
 | Fire: Heating Up and Pyroblast | 2026-10-03 13:37 | 2026-10-03 13:39 | 0 h 02 m | Crit stacks cut Pyroblast's cast time; Pyroblast reuses the bolt and dot path; matches Go on the first comparison |
 | Fire: Combustion | 2026-10-03 13:39 | 2026-10-03 13:42 | 0 h 03 m | Stacking Fire crit until three crits, cooldown started on expiry; matches Go on the first comparison |
+| Fire: Ignite | 2026-10-03 13:42 | 2026-10-03 13:45 | 0 h 03 m | Crit share over ticks with owed damage rolled forward; generic periodic ticks; matches Go on the first comparison |
 
 ## Notes
 

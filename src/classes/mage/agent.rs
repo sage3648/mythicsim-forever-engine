@@ -14,8 +14,8 @@ use super::{
         frostbolt, ice_lance, mana_gems, presence_of_mind, scorch,
     },
     talents::{
-        arcane_concentration, fingers_of_frost, heating_up, master_of_elements, missile_barrage,
-        winters_chill,
+        arcane_concentration, fingers_of_frost, heating_up, ignite, master_of_elements,
+        missile_barrage, winters_chill,
     },
 };
 
@@ -30,6 +30,7 @@ pub(crate) enum MageSpell {
     Fireball,
     Pyroblast,
     Combustion,
+    Ignite,
     Scorch,
     IceLance,
     ArcaneMissiles,
@@ -55,7 +56,6 @@ pub(crate) enum MageAura {
     ArcaneCharges,
     ArcanePower,
     PresenceOfMind,
-    /// Ignite's trigger, which only fire spell crits reach; coverage rejects those.
     IgniteTrigger,
     FireVulnerability,
     MasterOfElementsTrigger,
@@ -78,6 +78,7 @@ pub(crate) struct MageAgent {
     master_of_elements: Option<Rc<master_of_elements::MasterOfElements>>,
     heating_up: Option<Rc<heating_up::HeatingUp>>,
     combustion: Option<Rc<combustion::Combustion>>,
+    ignite: Option<Rc<ignite::Ignite>>,
     ice_lance_frozen_multiplier: f64,
     /// Arcane Missiles channel spell to the missile spell of the same rank.
     missiles: Vec<(SpellId, SpellId)>,
@@ -174,6 +175,7 @@ impl MageAgent {
             "cold_snap" => Some(MageSpell::ColdSnap),
             "arcane_power" => Some(MageSpell::ArcanePower),
             "combustion" => Some(MageSpell::Combustion),
+            "ignite" if spell.dot.is_some() => Some(MageSpell::Ignite),
             "fire_blast" if spell.damage_effect.is_some() => Some(MageSpell::FireBlast),
             "fireball" if spell.damage_effect.is_some() && spell.dot.is_some() => {
                 Some(MageSpell::Fireball)
@@ -312,6 +314,15 @@ impl MageAgent {
                         metrics_action_id,
                     )?;
                     fight.agent.master_of_elements = Some(Rc::new(bound));
+                }
+                Effect::Ignite {
+                    spell_id,
+                    share,
+                    num_ticks,
+                    ..
+                } => {
+                    let bound = ignite::bind(&fight, *spell_id, *share, *num_ticks)?;
+                    fight.agent.ignite = Some(Rc::new(bound));
                 }
                 Effect::Combustion {
                     spell_id,
@@ -483,6 +494,10 @@ impl MageAgent {
             .expect("Arcane Power is bound")
     }
 
+    fn ignite(fight: &Fight<Self>) -> Rc<ignite::Ignite> {
+        fight.agent.ignite.clone().expect("Ignite is bound")
+    }
+
     fn combustion(fight: &Fight<Self>) -> Rc<combustion::Combustion> {
         fight.agent.combustion.clone().expect("Combustion is bound")
     }
@@ -536,6 +551,7 @@ impl Agent for MageAgent {
                 let state = Self::combustion(fight);
                 combustion::apply(fight, &state);
             }
+            MageSpell::Ignite => Self::ignite(fight).apply(fight),
             MageSpell::Fireball | MageSpell::Pyroblast => {
                 let base = fight.roll_damage_effect(spell);
                 let result = fight.calc_damage(spell, target, base);
@@ -620,6 +636,10 @@ impl Agent for MageAgent {
     fn on_dot_tick(fight: &mut Fight<Self>, dot: DotId, behavior: MageSpell) {
         if matches!(behavior, MageSpell::Fireball | MageSpell::Pyroblast) {
             fight.snapshot_dot_tick(dot);
+            return;
+        }
+        if behavior == MageSpell::Ignite {
+            Self::ignite(fight).tick(fight);
             return;
         }
         if behavior == MageSpell::ArcaneMissiles {
@@ -713,6 +733,7 @@ impl Agent for MageAgent {
             MageAura::ArcaneConcentrationTrigger => {
                 Self::arcane_concentration(fight).on_spell_hit_dealt(fight, spell, result)
             }
+            MageAura::IgniteTrigger => Self::ignite(fight).on_spell_hit_dealt(fight, spell, result),
             MageAura::HeatingUpTrigger => {
                 Self::heating_up(fight).on_spell_hit_dealt(fight, spell, result)
             }
