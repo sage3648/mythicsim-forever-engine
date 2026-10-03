@@ -66,6 +66,9 @@ pub enum Value {
     SpellIsKnown(ActionId),
     SpellIsReady(ActionId),
     SpellCastTime(ActionId),
+    SpellTimeToReady(ActionId),
+    DotTimeToNextTick(ActionId),
+    GcdIsReady,
 }
 
 impl Value {
@@ -97,11 +100,14 @@ impl Value {
             | Value::AuraIsActive(_)
             | Value::DotIsActive(_)
             | Value::SpellIsKnown(_)
-            | Value::SpellIsReady(_) => ValueType::Bool,
+            | Value::SpellIsReady(_)
+            | Value::GcdIsReady => ValueType::Bool,
             Value::AuraNumStacks(_) | Value::NumberTargets => ValueType::Int,
             Value::AuraRemainingTime(_)
             | Value::DotRemainingTime(_)
             | Value::SpellCastTime(_)
+            | Value::SpellTimeToReady(_)
+            | Value::DotTimeToNextTick(_)
             | Value::RemainingTime
             | Value::CurrentTime => ValueType::Duration,
             Value::CurrentManaPercent | Value::CurrentMana => ValueType::Float,
@@ -113,6 +119,26 @@ impl Value {
 pub enum Action {
     CastSpell(ActionId),
     AutocastOtherCooldowns,
+    /// Go `APLActionStrictSequence`: casts that run in order once the first is ready.
+    StrictSequence(Vec<ActionId>),
+    /// Go `APLActionChannelSpell`: a channel the rotation may interrupt.
+    ChannelSpell {
+        spell: ActionId,
+        interrupt_if: Option<Value>,
+        allow_recast: bool,
+    },
+}
+
+impl Action {
+    /// The spells the action names, in order, as Go `GetAllActions` visits casts.
+    pub fn spells(&self) -> Vec<&ActionId> {
+        match self {
+            Action::CastSpell(id) => vec![id],
+            Action::AutocastOtherCooldowns => Vec::new(),
+            Action::StrictSequence(ids) => ids.iter().collect(),
+            Action::ChannelSpell { spell, .. } => vec![spell],
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -290,6 +316,8 @@ fn parse_item(item: &Json, position: usize) -> Result<Option<Item>, Vec<String>>
         Ok(("autocastOtherCooldowns", config)) if is_empty(config) => {
             Ok(Action::AutocastOtherCooldowns)
         }
+        Ok(("strictSequence", config)) => parse_strict_sequence(config),
+        Ok(("channelSpell", config)) => parse_channel_spell(config),
         Ok((name, _)) => Err(format!("action {name} is unsupported")),
         Err(err) => Err(err),
     };
@@ -305,6 +333,59 @@ fn parse_item(item: &Json, position: usize) -> Result<Option<Item>, Vec<String>>
             Err(reasons)
         }
     }
+}
+
+/// Go `newActionStrictSequence` for sequences of unconditional casts.
+fn parse_strict_sequence(config: &Json) -> Result<Action, String> {
+    let object = config
+        .as_object()
+        .ok_or("strictSequence must be an object")?;
+    for key in object.keys() {
+        if key != "actions" {
+            return Err(format!("strictSequence field {key} is unsupported"));
+        }
+    }
+    let mut spells = Vec::new();
+    for action in object
+        .get("actions")
+        .and_then(Json::as_array)
+        .into_iter()
+        .flatten()
+    {
+        let action = action
+            .as_object()
+            .ok_or("strictSequence action must be an object")?;
+        match single(action, &["uuid"])? {
+            ("castSpell", cast) => spells.push(parse_cast_spell(cast)?),
+            (name, _) => return Err(format!("strictSequence action {name} is unsupported")),
+        }
+    }
+    Ok(Action::StrictSequence(spells))
+}
+
+/// Go `newActionChannelSpell` for the current target.
+fn parse_channel_spell(config: &Json) -> Result<Action, String> {
+    let object = config.as_object().ok_or("channelSpell must be an object")?;
+    let mut interrupt_if = None;
+    let mut allow_recast = false;
+    for (key, value) in object {
+        match key.as_str() {
+            "spellId" => {}
+            "interruptIf" => {
+                interrupt_if = Some(parse_value(value).map_err(|reasons| reasons.join("; "))?)
+            }
+            "allowRecast" => {
+                allow_recast = value.as_bool().ok_or("allowRecast must be a boolean")?
+            }
+            other => return Err(format!("channelSpell field {other} is unsupported")),
+        }
+    }
+    let spell = parse_action_id(object.get("spellId").ok_or("channelSpell has no spellId")?)?;
+    Ok(Action::ChannelSpell {
+        spell,
+        interrupt_if,
+        allow_recast,
+    })
 }
 
 fn parse_cast_spell(config: &Json) -> Result<ActionId, String> {
@@ -456,7 +537,12 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
             only(&[])?;
             Ok(Value::NumberTargets)
         }
-        "dotIsActive" | "dotRemainingTime" | "spellIsKnown" | "spellIsReady" | "spellCastTime" => {
+        "gcdIsReady" => {
+            only(&[])?;
+            Ok(Value::GcdIsReady)
+        }
+        "dotIsActive" | "dotRemainingTime" | "dotTimeToNextTick" | "spellIsKnown"
+        | "spellIsReady" | "spellCastTime" | "spellTimeToReady" => {
             // A target unit other than the current target is not modeled.
             only(&["spellId"])?;
             let id = config
@@ -466,8 +552,10 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
             Ok(match name {
                 "dotIsActive" => Value::DotIsActive(id),
                 "dotRemainingTime" => Value::DotRemainingTime(id),
+                "dotTimeToNextTick" => Value::DotTimeToNextTick(id),
                 "spellIsKnown" => Value::SpellIsKnown(id),
                 "spellIsReady" => Value::SpellIsReady(id),
+                "spellTimeToReady" => Value::SpellTimeToReady(id),
                 _ => Value::SpellCastTime(id),
             })
         }
@@ -723,6 +811,9 @@ pub enum Compiled<R> {
     DotRemainingTime(usize),
     SpellIsReady(usize),
     SpellCastTime(usize),
+    SpellTimeToReady(usize),
+    DotTimeToNextTick(usize),
+    GcdIsReady,
     /// Go `APLValueCoerced`.
     Coerced {
         to: ValueType,
@@ -740,11 +831,14 @@ impl<R> Compiled<R> {
             | Compiled::Not(_)
             | Compiled::AuraIsActive(_)
             | Compiled::DotIsActive(_)
-            | Compiled::SpellIsReady(_) => ValueType::Bool,
+            | Compiled::SpellIsReady(_)
+            | Compiled::GcdIsReady => ValueType::Bool,
             Compiled::AuraNumStacks(_) | Compiled::NumberTargets => ValueType::Int,
             Compiled::AuraRemainingTime(_)
             | Compiled::DotRemainingTime(_)
             | Compiled::SpellCastTime(_)
+            | Compiled::SpellTimeToReady(_)
+            | Compiled::DotTimeToNextTick(_)
             | Compiled::RemainingTime
             | Compiled::CurrentTime => ValueType::Duration,
             Compiled::CurrentManaPercent | Compiled::CurrentMana => ValueType::Float,
@@ -977,6 +1071,9 @@ fn compile_value<R>(
         Value::SpellIsKnown(id) => bool_const((lookup.spell)(id).is_some()),
         Value::SpellIsReady(id) => Compiled::SpellIsReady((lookup.spell)(id)?),
         Value::SpellCastTime(id) => Compiled::SpellCastTime((lookup.spell)(id)?),
+        Value::SpellTimeToReady(id) => Compiled::SpellTimeToReady((lookup.spell)(id)?),
+        Value::DotTimeToNextTick(id) => Compiled::DotTimeToNextTick((lookup.dot)(id)?),
+        Value::GcdIsReady => Compiled::GcdIsReady,
         Value::AuraIsKnown(id) => bool_const(aura(id).is_some()),
         Value::AuraIsActive(id) => match (aura(id), missing) {
             (Some(found), _) => Compiled::AuraIsActive(found.aura),
@@ -1020,6 +1117,18 @@ fn compile_value<R>(
         Value::And(values) => return fold(values, lookup, missing, false, Compiled::And),
         Value::Or(values) => return fold(values, lookup, missing, true, Compiled::Or),
     })
+}
+
+/// Go `coerceTo(newAPLValue(value), Bool)`, as `newActionChannelSpell` compiles its
+/// interrupt condition: `None` when the value has none.
+pub fn compile_bool_value<R>(
+    value: Option<&Value>,
+    lookup: &Lookup<R>,
+    missing: MissingAura,
+) -> Option<Compiled<R>> {
+    value
+        .and_then(|value| compile_value(value, lookup, missing))
+        .map(|value| value.coerce(ValueType::Bool))
 }
 
 /// Go `newAPLAction`'s condition handling for one action.
@@ -1096,7 +1205,7 @@ mod tests {
             "type": "TypeAPL",
             "priorityList": [
                 {"action": {"castSpell": {"spellId": {"spellId": 25304}},
-                            "condition": {"spellTimeToReady": {"spellId": {"spellId": 1}}}}},
+                            "condition": {"spellNumCharges": {"spellId": {"spellId": 1}}}}},
                 {"action": {"wait": {"duration": {"const": {"val": "1s"}}}}}
             ]
         });
@@ -1104,7 +1213,7 @@ mod tests {
         assert_eq!(
             reasons,
             [
-                "rotation item 1: value spellTimeToReady is unsupported",
+                "rotation item 1: value spellNumCharges is unsupported",
                 "rotation item 2: action wait is unsupported"
             ]
         );

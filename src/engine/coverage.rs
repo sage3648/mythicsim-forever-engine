@@ -13,7 +13,10 @@ use crate::{
     classes,
     contracts::prepared_v2::{ActionId, Effect, PreparedV2, Spell},
     core::fight::DIRECT_PROC_MASKS,
-    rotation::{compile_condition, Action, FoundAura, Lookup, MissingAura, Rotation, Value},
+    rotation::{
+        compile_bool_value, compile_condition, Action, FoundAura, Lookup, MissingAura, Rotation,
+        Value,
+    },
 };
 
 /// A class's part of the gate.
@@ -39,6 +42,7 @@ const COMMON_EFFECTS: &[&str] = &[
     "energize_on_use",
     "eureka",
     "inert_listener",
+    "inert_pet",
     "judgement_of_wisdom",
     "potion_mana",
     "read_ley_line",
@@ -48,10 +52,11 @@ const COMMON_EFFECTS: &[&str] = &[
 ];
 
 /// Every class with an implemented gate.
-fn gates() -> [&'static ClassGate; 2] {
+fn gates() -> [&'static ClassGate; 3] {
     [
         &classes::mage::prepared::GATE,
         &classes::druid::prepared::GATE,
+        &classes::priest::prepared::GATE,
     ]
 }
 
@@ -108,8 +113,12 @@ fn spell_capability(
     prepared: &PreparedV2,
     gate: &ClassGate,
 ) -> Option<&'static str> {
+    // A class may also implement spells Go registers without a class mask.
+    if let Some(kind) = (gate.spell)(spell) {
+        return Some(kind);
+    }
     if spell.class_spell.is_some() {
-        return (gate.spell)(spell);
+        return None;
     }
     common_spell_capability(spell, prepared)
 }
@@ -298,15 +307,13 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
         reasons.extend(unknown_aura_conditions(prepared, rotation));
         let mut reachable = Vec::new();
         let mut registered_prepull = 0;
+        // Prepull parsing accepts only casts.
         for prepull in &rotation.prepull {
-            match &prepull.action {
-                Action::CastSpell(id) => {
-                    if let Some(spell) = rotation_spell(prepared, id) {
-                        registered_prepull += 1;
-                        reachable.push(spell);
-                    }
+            if let Action::CastSpell(id) = &prepull.action {
+                if let Some(spell) = rotation_spell(prepared, id) {
+                    registered_prepull += 1;
+                    reachable.push(spell);
                 }
-                Action::AutocastOtherCooldowns => {}
             }
         }
         if registered_prepull != player.prepull_actions {
@@ -318,10 +325,14 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
         }
         for item in &rotation.priority_list {
             match &item.action {
-                Action::CastSpell(id) => reachable.extend(rotation_spell(prepared, id)),
                 Action::AutocastOtherCooldowns => {
                     for cooldown in &player.major_cooldowns {
                         reachable.extend(rotation_spell(prepared, &cooldown.action_id));
+                    }
+                }
+                action => {
+                    for id in action.spells() {
+                        reachable.extend(rotation_spell(prepared, id));
                     }
                 }
             }
@@ -403,11 +414,18 @@ fn unknown_aura_conditions(prepared: &PreparedV2, rotation: &Rotation) -> Vec<St
     for item in &rotation.priority_list {
         let pinned = compile_condition(item.condition.as_ref(), &lookup, MissingAura::Dropped);
         let fixed = compile_condition(item.condition.as_ref(), &lookup, MissingAura::Inactive);
-        if pinned.same_meaning(&fixed) {
+        // A channel's interrupt condition compiles the same way; any difference counts.
+        let interrupt = match &item.action {
+            Action::ChannelSpell { interrupt_if, .. } => interrupt_if.as_ref(),
+            _ => None,
+        };
+        let interrupt_same = compile_bool_value(interrupt, &lookup, MissingAura::Dropped)
+            == compile_bool_value(interrupt, &lookup, MissingAura::Inactive);
+        if pinned.same_meaning(&fixed) && interrupt_same {
             continue;
         }
         let mut unknown = Vec::new();
-        if let Some(condition) = &item.condition {
+        for condition in item.condition.iter().chain(interrupt) {
             condition.visit(&mut |value| match value {
                 Value::AuraIsActive(id) if !known(id) => {
                     unknown.push(("auraIsActive", id.to_string()))

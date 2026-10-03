@@ -586,6 +586,82 @@ pub enum Effect {
         charges_per_wrath: i32,
         duration_ns: i64,
     },
+    /// Every Mind Blast rank's direct hit.
+    MindBlast {},
+    /// Every Shadow Word: Death rank's direct hit; Early Demise adds crit in the 20% execute
+    /// phase.
+    ShadowWordDeath {
+        early_demise_crit: f64,
+    },
+    /// Every Shadow Word: Pain rank: a hit roll without a hit count, then a snapshotting dot
+    /// whose ticks roll only a crit.
+    ShadowWordPain {
+        ranks: Vec<FireballRank>,
+    },
+    /// Every Devouring Plague rank: Shadow Word: Pain's shape, each tick healing the priest for
+    /// its damage under the rank's action ID with this tag.
+    DevouringPlague {
+        ranks: Vec<FireballRank>,
+        heal_metrics_tag: i32,
+    },
+    /// Every Mind Flay rank: a binary hit roll, then a channel.
+    MindFlay {
+        ranks: Vec<FireballRank>,
+    },
+    /// Shadowform's cast and aura: Shadow damage and cost modifiers on `school_spells`, a crit
+    /// damage bonus on `crit_spells`, and helpful Holy casts in `cancel_spells` end it.
+    Shadowform {
+        spell_id: i32,
+        aura: String,
+        damage_percent: f64,
+        cost_percent: f64,
+        crit_multiplier: f64,
+        school_spells: Vec<usize>,
+        crit_spells: Vec<usize>,
+        cancel_spells: Vec<usize>,
+    },
+    /// Inner Focus: the next priest spell is free and gains crit; the cooldown restarts when
+    /// the aura ends.
+    InnerFocus {
+        spell_id: i32,
+        aura: String,
+        cost_percent: i32,
+        crit_percent: f64,
+        crit_spells: Vec<usize>,
+        spender_spells: Vec<usize>,
+    },
+    /// Shadow Weaving: landed Shadow spells stack a Shadow damage bonus.
+    ShadowWeaving {
+        trigger_aura: String,
+        aura: String,
+        callbacks: Vec<String>,
+        outcome: Vec<String>,
+        trigger_immediately: bool,
+        proc_chance: f64,
+        trigger_spells: Vec<usize>,
+        damage_per_stack: f64,
+        damage_spells: Vec<usize>,
+    },
+    /// Dark Sacrifice: a self-only periodic mana gain of the client base plus Spirit over a
+    /// divisor, a major cooldown used once the whole gain fits.
+    DarkSacrifice {
+        spell_id: i32,
+        aura: String,
+        tick_base: f64,
+        spirit_divisor: f64,
+        metrics_action_id: ActionId,
+    },
+    /// A registered pet nothing summons: Go resets and dismisses it each fight, logging its
+    /// stats, and reports its zero metrics.
+    InertPet {
+        name: String,
+        label: String,
+        unit_index: i32,
+        metrics_actions: Vec<MetricsAction>,
+        auras: Vec<ActionId>,
+        dismissed_log: String,
+        reason: String,
+    },
     /// The Orc racial Shatter Curse: a survival cooldown whose aura lowers the player's
     /// spell damage taken, which has no effect in scope. Go never autocasts it at the
     /// default defensive health threshold; configured timings still cast it.
@@ -793,6 +869,16 @@ impl Effect {
             Effect::OmenOfClarity { .. } => "omen_of_clarity",
             Effect::NaturesGrace { .. } => "natures_grace",
             Effect::Eclipse { .. } => "eclipse",
+            Effect::MindBlast {} => "mind_blast",
+            Effect::ShadowWordDeath { .. } => "shadow_word_death",
+            Effect::ShadowWordPain { .. } => "shadow_word_pain",
+            Effect::DevouringPlague { .. } => "devouring_plague",
+            Effect::MindFlay { .. } => "mind_flay",
+            Effect::Shadowform { .. } => "shadowform",
+            Effect::InnerFocus { .. } => "inner_focus",
+            Effect::ShadowWeaving { .. } => "shadow_weaving",
+            Effect::DarkSacrifice { .. } => "dark_sacrifice",
+            Effect::InertPet { .. } => "inert_pet",
             Effect::ShatterCurse { .. } => "shatter_curse",
             Effect::ReadLeyLine { .. } => "read_ley_line",
             Effect::PresenceOfMind { .. } => "presence_of_mind",

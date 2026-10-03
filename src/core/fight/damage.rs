@@ -23,6 +23,8 @@ pub(crate) enum Outcome {
     TickMagicCrit,
     /// Go `OutcomeAlwaysHitNoHitCounter`.
     AlwaysHitNoHitCounter,
+    /// Go `OutcomeMagicHitNoHitCounter`: a hit roll that counts misses but not hits.
+    MagicHitNoHitCounter,
 }
 
 /// Go `OutcomeLanded` for the outcomes a spell can have.
@@ -253,9 +255,14 @@ impl<A: Agent> Fight<A> {
         let partial = result.outcome & super::damage::OUTCOME_PARTIAL;
         match outcome {
             Outcome::MagicHitAndCrit => {
-                self.outcome_magic_hit_and_crit(spell, &mut result, binary, true)
+                self.outcome_magic_hit_and_crit(spell, &mut result, binary, true, true)
             }
-            Outcome::MagicHit => self.outcome_magic_hit_and_crit(spell, &mut result, binary, false),
+            Outcome::MagicHit => {
+                self.outcome_magic_hit_and_crit(spell, &mut result, binary, false, true)
+            }
+            Outcome::MagicHitNoHitCounter => {
+                self.outcome_magic_hit_and_crit(spell, &mut result, binary, false, false)
+            }
             Outcome::Tick => self.outcome_tick(spell, &mut result, false),
             Outcome::TickMagicCrit => self.outcome_tick(spell, &mut result, true),
             Outcome::AlwaysHitNoHitCounter => result.outcome = OUTCOME_HIT,
@@ -310,9 +317,14 @@ impl<A: Agent> Fight<A> {
         let binary = self.spells[spell].flags.binary;
         match outcome {
             Outcome::MagicHitAndCrit => {
-                self.outcome_magic_hit_and_crit(spell, &mut result, binary, true)
+                self.outcome_magic_hit_and_crit(spell, &mut result, binary, true, true)
             }
-            Outcome::MagicHit => self.outcome_magic_hit_and_crit(spell, &mut result, binary, false),
+            Outcome::MagicHit => {
+                self.outcome_magic_hit_and_crit(spell, &mut result, binary, false, true)
+            }
+            Outcome::MagicHitNoHitCounter => {
+                self.outcome_magic_hit_and_crit(spell, &mut result, binary, false, false)
+            }
             Outcome::Tick => self.outcome_tick(spell, &mut result, false),
             Outcome::TickMagicCrit => self.outcome_tick(spell, &mut result, true),
             Outcome::AlwaysHitNoHitCounter => result.outcome = OUTCOME_HIT,
@@ -335,6 +347,7 @@ impl<A: Agent> Fight<A> {
         result: &mut SpellResult,
         binary: bool,
         can_crit: bool,
+        count_hits: bool,
     ) {
         let binary_hit = binary.then(|| 1.0 - 0.75 * self.resist(spell, true));
         let miss = spell_chance_to_miss(
@@ -362,10 +375,12 @@ impl<A: Agent> Fight<A> {
                 }
             } else {
                 result.outcome = OUTCOME_HIT;
-                let metrics = &mut self.spells[spell].metrics[target];
-                metrics.hits += 1;
-                if partial {
-                    metrics.resisted_hits += 1;
+                if count_hits {
+                    let metrics = &mut self.spells[spell].metrics[target];
+                    metrics.hits += 1;
+                    if partial {
+                        metrics.resisted_hits += 1;
+                    }
                 }
             }
         } else {
@@ -426,7 +441,7 @@ impl<A: Agent> Fight<A> {
 
     /// Go `Dot.CalcAndDealPeriodicSnapshotDamage` for a dot built by `Snapshot`, which ticks
     /// on the caster's current spell power and attacker multiplier.
-    pub(crate) fn snapshot_dot_tick(&mut self, dot: super::DotId) {
+    pub(crate) fn snapshot_dot_tick(&mut self, dot: super::DotId) -> SpellResult {
         let state = &self.dots[dot];
         let (spell, side, can_crit) = (state.spell, state.side, state.tick_can_crit);
         let mut base = state.snapshot_base;
@@ -442,6 +457,7 @@ impl<A: Agent> Fight<A> {
         };
         let result = self.calc_damage_internal(spell, side, base, attacker, outcome);
         self.deal_damage(spell, result, true);
+        result
     }
 
     /// Go `Spell.TravelTime`.

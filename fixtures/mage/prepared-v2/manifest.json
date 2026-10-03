@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "71dec82fe2054a29369ca07ceff6e0daf1b5bee35323d1fa403cfd95c05a5637",
+  "exporter_sha256": "54918a4fa6406a853bbec2d98d2548b0db69e3fe26208611e064bf054a33afbd",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -818,6 +818,27 @@
       "go_log": {
         "file": "production-balance-druid.go-log.txt",
         "sha256": "505e94e36967e68385b0bdec177f99bfef087c87d7f61474165d2e9311fab883"
+      }
+    },
+    {
+      "id": "production-shadow-priest",
+      "description": "The production application's Shadow Priest reference build at application revision 18bbcd47: Undead, Shadowform, Mind Blast, Shadow Word: Pain, Devouring Plague, Shadow Word: Death, Mind Flay channels the rotation interrupts, a strict Inner Focus and Mind Blast sequence, Shadow Weaving, Dark Sacrifice, Touch of the Grave and the inert Shadowfiend pet",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-shadow-priest.request.json"
+      },
+      "prepared": "production-shadow-priest.prepared.json",
+      "prepared_sha256": "24bf05d74388caf32132c3132017dc6ab283d07eedc7840c65afbac37611f854",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-shadow-priest.go-result.json",
+        "sha256": "e1697d2300dc7aa2ddb397e2e74bcff8427191f96c291df082596f9d98492fea"
+      },
+      "go_log": {
+        "file": "production-shadow-priest.go-log.txt",
+        "sha256": "2207bd6214e34f55caae6cd6bd496cd7c5cd297b6a827185da017a08efa3d9d5"
       }
     }
   ]

@@ -172,9 +172,9 @@ fn active_listeners_without_an_effect_are_reported() {
 fn unsupported_rotation_operators_are_reported() {
     let mut value = reference_json();
     value["player"]["rotation"]["priorityList"][3]["action"]["condition"] =
-        json!({"spellTimeToReady": {"spellId": {"spellId": 12579}}});
+        json!({"spellNumCharges": {"spellId": {"spellId": 12579}}});
     assert!(
-        reasons(value).contains(&"rotation item 4: value spellTimeToReady is unsupported".into())
+        reasons(value).contains(&"rotation item 4: value spellNumCharges is unsupported".into())
     );
 
     let mut prepull = reference_json();
