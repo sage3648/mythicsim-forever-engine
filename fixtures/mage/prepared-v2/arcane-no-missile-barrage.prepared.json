@@ -1,0 +1,6039 @@
+{
+  "schema_version": 2,
+  "contract": "forever-prepared",
+  "reference": {
+    "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
+    "client_build": "1.60.1.70170",
+    "exporter": "tools/oracle-v2"
+  },
+  "request_sha256": "015206f20ba8566ebd6df1920ebfff966390b8fcee3dbfee0dd529e4939dae0b",
+  "scenario_id": "arcane-no-missile-barrage",
+  "sim": {
+    "iterations": 3000,
+    "seed": 42,
+    "labeled_rng": false,
+    "debug_first_iteration": true,
+    "debug": false
+  },
+  "encounter": {
+    "duration_ns": 120000000000,
+    "duration_variation_ns": 15000000000,
+    "execute_proportion_20": 0.2,
+    "execute_proportion_25": 0.25,
+    "execute_proportion_35": 0.35,
+    "execute_proportion_45": 0.45,
+    "execute_proportion_90": 0.9
+  },
+  "target": {
+    "index": 0,
+    "label": "Target 1",
+    "level": 63,
+    "mob_type": "MobTypeUnknown",
+    "stats": {
+      "Agility": 0,
+      "ArcaneDamage": 0,
+      "ArcaneResistance": -75,
+      "Armor": 3731,
+      "ArmorPenetration": 0,
+      "AttackPower": 805,
+      "BlockPercent": 0,
+      "BlockRating": 0,
+      "BlockValue": 54,
+      "BonusArmor": 0,
+      "DefenseRating": 0,
+      "DodgePercent": 0,
+      "DodgeRating": 0,
+      "ExpertisePercent": 0,
+      "ExpertiseRating": 0,
+      "FeralAttackPower": 0,
+      "FireDamage": 0,
+      "FireResistance": -75,
+      "FrostDamage": 0,
+      "FrostResistance": -75,
+      "HealingPower": 0,
+      "Health": 127393,
+      "HolyDamage": 0,
+      "Intellect": 0,
+      "MP5": 0,
+      "Mana": 0,
+      "MeleeCritRating": 0,
+      "MeleeHasteRating": 0,
+      "MeleeHitRating": 0,
+      "NatureDamage": 0,
+      "NatureResistance": -75,
+      "ParryPercent": 0,
+      "ParryRating": 0,
+      "PhysicalCritPercent": 5.6,
+      "PhysicalDamage": 0,
+      "PhysicalHitPercent": 0,
+      "RangedAttackPower": 0,
+      "RangedCritPercent": 0,
+      "RangedHitPercent": 0,
+      "ReducedCritTakenPercent": 0,
+      "ShadowDamage": 0,
+      "ShadowResistance": -75,
+      "SpellCritPercent": 0,
+      "SpellCritRating": 0,
+      "SpellDamage": 0,
+      "SpellHasteRating": 0,
+      "SpellHitPercent": 0,
+      "SpellHitRating": 0,
+      "SpellPiercing": 0,
+      "Spirit": 0,
+      "Stamina": 0,
+      "Strength": 0
+    },
+    "pseudo_stats": {
+      "spell_cost_percent_modifier": 100,
+      "cast_speed_multiplier": 1,
+      "spirit_regen_rate_casting": 0,
+      "force_full_spirit_regen": false,
+      "spirit_regen_multiplier": 1,
+      "threat_multiplier": 1,
+      "damage_dealt_multiplier": 1,
+      "school_damage_dealt_multiplier": {
+        "arcane": 1,
+        "fire": 1,
+        "frost": 1,
+        "holy": 1,
+        "nature": 1,
+        "none": 1,
+        "physical": 1,
+        "shadow": 1
+      },
+      "dot_damage_multiplier_additive": 1,
+      "crit_damage_multiplier": 1,
+      "damage_taken_multiplier": 1,
+      "school_damage_taken_multiplier": {
+        "arcane": 1.1,
+        "fire": 1.1,
+        "frost": 1.1,
+        "holy": 1.1,
+        "nature": 1.1,
+        "none": 1,
+        "physical": 1,
+        "shadow": 1.1
+      },
+      "school_bonus_spell_damage": {
+        "arcane": 0,
+        "fire": 0,
+        "frost": 0,
+        "holy": 0,
+        "nature": 0,
+        "none": 0,
+        "physical": 0,
+        "shadow": 0
+      },
+      "school_bonus_hit_chance": {
+        "arcane": 0,
+        "fire": 0,
+        "frost": 0,
+        "holy": 0,
+        "nature": 0,
+        "none": 0,
+        "physical": 0,
+        "shadow": 0
+      },
+      "bonus_spell_damage_taken": 0,
+      "bonus_spell_crit_percent_taken": 0,
+      "reduced_crit_taken_percent": 0,
+      "incapacitated": false
+    },
+    "auras": [
+      {
+        "label": "Judgement of Wisdom (External)",
+        "action_id": {
+          "spell_id": 20355,
+          "tag": -1
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire",
+          "on_spell_hit_taken"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Curse of the Elements (External)",
+        "tag": "CurseOfElements",
+        "action_id": {
+          "spell_id": 1311680,
+          "tag": -1
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 1
+      },
+      {
+        "label": "Ignite-1",
+        "action_id": {
+          "spell_id": 412538
+        },
+        "duration_ns": 4000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "ArcaneMissiles-1-1",
+        "action_id": {
+          "spell_id": 5143
+        },
+        "duration_ns": 3000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "ArcaneMissiles-2-1",
+        "action_id": {
+          "spell_id": 5144
+        },
+        "duration_ns": 4000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "ArcaneMissiles-3-1",
+        "action_id": {
+          "spell_id": 5145
+        },
+        "duration_ns": 5000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "ArcaneMissiles-4-1",
+        "action_id": {
+          "spell_id": 8416
+        },
+        "duration_ns": 5000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "ArcaneMissiles-5-1",
+        "action_id": {
+          "spell_id": 8417
+        },
+        "duration_ns": 5000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "ArcaneMissiles-6-1",
+        "action_id": {
+          "spell_id": 10211
+        },
+        "duration_ns": 5000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "ArcaneMissiles-7-1",
+        "action_id": {
+          "spell_id": 10212
+        },
+        "duration_ns": 5000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "ArcaneMissiles-8-1",
+        "action_id": {
+          "spell_id": 25345
+        },
+        "duration_ns": 5000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "FrostfireBoltDoT-1-1",
+        "action_id": {
+          "spell_id": 401502
+        },
+        "duration_ns": 9000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "FrostfireBoltDoT-2-1",
+        "action_id": {
+          "spell_id": 1237312
+        },
+        "duration_ns": 9000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "FrostfireBoltDoT-3-1",
+        "action_id": {
+          "spell_id": 1237313
+        },
+        "duration_ns": 9000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "FireballDoT-1-1",
+        "action_id": {
+          "spell_id": 133
+        },
+        "duration_ns": 4000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "FireballDoT-2-1",
+        "action_id": {
+          "spell_id": 143
+        },
+        "duration_ns": 6000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "FireballDoT-3-1",
+        "action_id": {
+          "spell_id": 145
+        },
+        "duration_ns": 6000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "FireballDoT-4-1",
+        "action_id": {
+          "spell_id": 3140
+        },
+        "duration_ns": 8000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "FireballDoT-5-1",
+        "action_id": {
+          "spell_id": 8400
+        },
+        "duration_ns": 8000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "FireballDoT-6-1",
+        "action_id": {
+          "spell_id": 8401
+        },
+        "duration_ns": 8000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "FireballDoT-7-1",
+        "action_id": {
+          "spell_id": 8402
+        },
+        "duration_ns": 8000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "FireballDoT-8-1",
+        "action_id": {
+          "spell_id": 10148
+        },
+        "duration_ns": 8000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "FireballDoT-9-1",
+        "action_id": {
+          "spell_id": 10149
+        },
+        "duration_ns": 8000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "FireballDoT-10-1",
+        "action_id": {
+          "spell_id": 10150
+        },
+        "duration_ns": 8000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "FireballDoT-11-1",
+        "action_id": {
+          "spell_id": 10151
+        },
+        "duration_ns": 8000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "FireballDoT-12-1",
+        "action_id": {
+          "spell_id": 25306
+        },
+        "duration_ns": 8000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "PyroblastDoT-1",
+        "action_id": {
+          "spell_id": 18809
+        },
+        "duration_ns": 12000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Parry Haste",
+        "action_id": null,
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_spell_hit_taken"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Movement",
+        "action_id": {
+          "other_id": "OtherActionMove"
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 100,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      }
+    ],
+    "auto_swing_melee": true,
+    "auto_swing_ranged": false,
+    "metrics_actions": [
+      {
+        "action_id": {
+          "other_id": "OtherActionMove"
+        },
+        "melee_metrics": true,
+        "school": 0
+      },
+      {
+        "action_id": {
+          "other_id": "OtherActionAttack",
+          "tag": 1
+        },
+        "melee_metrics": true,
+        "school": 1
+      },
+      {
+        "action_id": {
+          "other_id": "OtherActionAttack",
+          "tag": 2
+        },
+        "melee_metrics": true,
+        "school": 1
+      }
+    ]
+  },
+  "player": {
+    "index": 1,
+    "label": "arcane-mage (#1)",
+    "level": 60,
+    "stats": {
+      "Agility": 58,
+      "ArcaneDamage": 16,
+      "ArcaneResistance": 42,
+      "Armor": 1047,
+      "ArmorPenetration": 0,
+      "AttackPower": 10,
+      "BlockPercent": 0,
+      "BlockRating": 0,
+      "BlockValue": 0,
+      "BonusArmor": 0,
+      "DefenseRating": 0,
+      "DodgePercent": 0,
+      "DodgeRating": 0,
+      "ExpertisePercent": 0,
+      "ExpertiseRating": 0,
+      "FeralAttackPower": 0,
+      "FireDamage": 0,
+      "FireResistance": 42,
+      "FrostDamage": 15,
+      "FrostResistance": 42,
+      "HealingPower": 85,
+      "Health": 2470,
+      "HolyDamage": 0,
+      "Intellect": 412,
+      "MP5": 77,
+      "Mana": 7113,
+      "MeleeCritRating": 70,
+      "MeleeHasteRating": 0,
+      "MeleeHitRating": 50,
+      "NatureDamage": 0,
+      "NatureResistance": 42,
+      "ParryPercent": 0,
+      "ParryRating": 0,
+      "PhysicalCritPercent": 14.1812,
+      "PhysicalDamage": 0,
+      "PhysicalHitPercent": 5,
+      "RangedAttackPower": 0,
+      "RangedCritPercent": 0,
+      "RangedHitPercent": 0,
+      "ReducedCritTakenPercent": 0,
+      "ShadowDamage": 0,
+      "ShadowResistance": 42,
+      "SpellCritPercent": 16.121599999999997,
+      "SpellCritRating": 70,
+      "SpellDamage": 465,
+      "SpellHasteRating": 0,
+      "SpellHitPercent": 5,
+      "SpellHitRating": 50,
+      "SpellPiercing": 15,
+      "Spirit": 215,
+      "Stamina": 128,
+      "Strength": 53
+    },
+    "pseudo_stats": {
+      "spell_cost_percent_modifier": 100,
+      "cast_speed_multiplier": 1,
+      "spirit_regen_rate_casting": 1,
+      "force_full_spirit_regen": false,
+      "spirit_regen_multiplier": 1,
+      "threat_multiplier": 1,
+      "damage_dealt_multiplier": 1,
+      "school_damage_dealt_multiplier": {
+        "arcane": 1,
+        "fire": 1,
+        "frost": 1,
+        "holy": 1,
+        "nature": 1,
+        "none": 1,
+        "physical": 1,
+        "shadow": 1
+      },
+      "dot_damage_multiplier_additive": 1,
+      "crit_damage_multiplier": 1,
+      "damage_taken_multiplier": 1,
+      "school_damage_taken_multiplier": {
+        "arcane": 1,
+        "fire": 1,
+        "frost": 1,
+        "holy": 1,
+        "nature": 1,
+        "none": 1,
+        "physical": 1,
+        "shadow": 1
+      },
+      "school_bonus_spell_damage": {
+        "arcane": 0,
+        "fire": 0,
+        "frost": 0,
+        "holy": 0,
+        "nature": 0,
+        "none": 0,
+        "physical": 0,
+        "shadow": 0
+      },
+      "school_bonus_hit_chance": {
+        "arcane": 5,
+        "fire": 5,
+        "frost": 5,
+        "holy": 0,
+        "nature": 0,
+        "none": 0,
+        "physical": 0,
+        "shadow": 0
+      },
+      "bonus_spell_damage_taken": 0,
+      "bonus_spell_crit_percent_taken": 0,
+      "reduced_crit_taken_percent": 0,
+      "incapacitated": false
+    },
+    "auras": [
+      {
+        "label": "Chance of Death",
+        "action_id": null,
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_spell_hit_taken",
+          "on_periodic_damage_taken"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Touch of the Grave",
+        "action_id": null,
+        "action_id_for_proc": {
+          "spell_id": 1260201
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_spell_hit_dealt"
+        ],
+        "icd": {
+          "timer": "timer-12",
+          "duration_ns": 1000000000
+        },
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Clearcasting",
+        "action_id": {
+          "spell_id": 12536
+        },
+        "duration_ns": 15000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire",
+          "on_cast_complete"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Arcane Concentration",
+        "action_id": null,
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_spell_hit_dealt"
+        ],
+        "icd": {
+          "timer": "timer-13",
+          "duration_ns": 1000000000
+        },
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Ignite Talent",
+        "action_id": null,
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_spell_hit_dealt"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Mana Spring Totem (External)",
+        "tag": "ManaSpringTotem",
+        "action_id": {
+          "spell_id": 10494,
+          "tag": -1
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 1
+      },
+      {
+        "label": "Moonkin Aura (External)",
+        "tag": "DruidCritAura",
+        "action_id": {
+          "spell_id": 24907,
+          "tag": -1
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 1
+      },
+      {
+        "label": "Arcane Brilliance (External)",
+        "tag": "StatBuff",
+        "action_id": {
+          "spell_id": 23028,
+          "tag": -1
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 1
+      },
+      {
+        "label": "Prayer of Spirit (External)",
+        "tag": "StatBuff",
+        "action_id": {
+          "spell_id": 27681,
+          "tag": -1
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 1
+      },
+      {
+        "label": "Gift of the Wild (External)",
+        "action_id": {
+          "spell_id": 21850,
+          "tag": -1
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 5
+      },
+      {
+        "label": "Greater Blessing of Kings (External)",
+        "action_id": {
+          "spell_id": 25898,
+          "tag": -1
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Greater Blessing of Wisdom (External)",
+        "action_id": {
+          "spell_id": 25918,
+          "tag": -1
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Arcane Blast",
+        "action_id": {
+          "spell_id": 400573
+        },
+        "duration_ns": 8000000000,
+        "max_stacks": 4,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire",
+          "on_stacks_change",
+          "on_cast_complete"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Mage Armor",
+        "action_id": {
+          "spell_id": 22783
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Blizzard",
+        "action_id": {
+          "spell_id": 10187
+        },
+        "duration_ns": 8000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Evocation Regen",
+        "action_id": {
+          "spell_id": 12051
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Evocation",
+        "action_id": {
+          "spell_id": 12051
+        },
+        "duration_ns": 8000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Flamestrikearcane-mage (#1) Rank 6",
+        "action_id": {
+          "spell_id": 10216
+        },
+        "duration_ns": 8000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Presence of Mind",
+        "action_id": {
+          "spell_id": 12043
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire",
+          "on_cast_complete"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Arcane Power",
+        "action_id": {
+          "spell_id": 12042
+        },
+        "duration_ns": 15000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Movement",
+        "action_id": {
+          "other_id": "OtherActionMove"
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 100,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      }
+    ],
+    "name": "arcane-mage",
+    "class": "ClassMage",
+    "race": "RaceUndead",
+    "professions": [
+      "Engineering"
+    ],
+    "talents_string": "055205003100301531-230500001-005",
+    "talents": {
+      "arcane_blast": 1,
+      "arcane_concentration": 5,
+      "arcane_focus": 5,
+      "arcane_impact": 3,
+      "arcane_instability": 3,
+      "arcane_meditation": 3,
+      "arcane_mind": 5,
+      "arcane_power": 1,
+      "arcane_subtlety": 2,
+      "elemental_precision": 5,
+      "ignite": 5,
+      "improved_channeling": 5,
+      "incineration": 3,
+      "presence_of_mind": 1,
+      "pyroblast": 1,
+      "wake_of_fire": 2
+    },
+    "class_options": {
+      "defaultMageArmor": "MageArmorMageArmor"
+    },
+    "reaction_ns": 100000000,
+    "channel_clip_delay_ns": 0,
+    "distance_yards": 20,
+    "cast_speed": 1,
+    "mana": {
+      "max": 7113,
+      "base": 1213,
+      "spirit_regen_per_second": 33.125,
+      "regen_per_second_casting": 48.525,
+      "regen_per_second_not_casting": 48.525,
+      "teardown_max": 5778
+    },
+    "attack_table": {
+      "base_spell_miss_chance": 0.17,
+      "spell_crit_suppression": 0,
+      "bonus_spell_crit_percent": 0,
+      "crit_multiplier": 1,
+      "damage_dealt_multiplier": 1,
+      "damage_taken_multiplier": 1
+    },
+    "spells": [
+      {
+        "action_id": {
+          "other_id": "OtherActionManaGain"
+        },
+        "rank": 0,
+        "school": 0,
+        "defense_type": "DefenseTypeNone",
+        "proc_mask": [],
+        "flags": [],
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "autos_or_procs",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 1260198
+        },
+        "rank": 0,
+        "school": 32,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskEmpty"
+        ],
+        "flags": [
+          "SpellFlagIgnoreAttackerModifiers",
+          "SpellFlagNoSpellMods",
+          "SpellFlagPassiveSpell",
+          "SpellFlagProc"
+        ],
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "autos_or_procs",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "item_id": 14152
+        },
+        "rank": 0,
+        "school": 1,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [],
+        "flags": [
+          "SpellFlagHelpful",
+          "SpellFlagAPL",
+          "SpellFlagMCD"
+        ],
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "simple",
+        "ignore_haste": true,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": {
+          "timer": "timer-0",
+          "duration_ns": 300000000000
+        },
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 412538
+        },
+        "rank": 0,
+        "school": 4,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagIgnoreResists",
+          "SpellFlagIgnoreTargetModifiers",
+          "SpellFlagIgnoreAttackerModifiers",
+          "SpellFlagNoOnCastComplete",
+          "SpellFlagNoSpellMods",
+          "SpellFlagProc"
+        ],
+        "class_spell": "ignite",
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "autos_or_procs",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "Ignite-1",
+          "base_tick_count": 2,
+          "base_tick_length_ns": 2000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": false
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "item_id": 13444
+        },
+        "rank": 0,
+        "school": 0,
+        "defense_type": "DefenseTypeNone",
+        "proc_mask": [],
+        "flags": [
+          "SpellFlagNoOnCastComplete",
+          "SpellFlagAPL",
+          "SpellFlagMCD",
+          "SpellFlagEncounterOnly",
+          "SpellFlagPotion",
+          "SpellFlagCombatPotion"
+        ],
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "simple",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": {
+          "timer": "timer-1",
+          "duration_ns": 120000000000
+        },
+        "shared_cd": {
+          "timer": "timer-2",
+          "duration_ns": 120000000000
+        },
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "item_id": 12662
+        },
+        "rank": 0,
+        "school": 0,
+        "defense_type": "DefenseTypeNone",
+        "proc_mask": [],
+        "flags": [
+          "SpellFlagNoOnCastComplete",
+          "SpellFlagAPL",
+          "SpellFlagMCD",
+          "SpellFlagConjured"
+        ],
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "simple",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": {
+          "timer": "timer-3",
+          "duration_ns": 120000000000
+        },
+        "shared_cd": {
+          "timer": "timer-4",
+          "duration_ns": 120000000000
+        },
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 1239700
+        },
+        "rank": 0,
+        "school": 64,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagAPL"
+        ],
+        "class_spell": "arcane_blast",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 181,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 181,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 2500000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 15,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 1,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.7139999866485596,
+        "threat_multiplier": 0.7,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": {
+          "average": 394,
+          "variance": 0.15102040767669678
+        }
+      },
+      {
+        "action_id": {
+          "spell_id": 10202
+        },
+        "rank": 0,
+        "school": 64,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagAPL"
+        ],
+        "class_spell": "arcane_explosion",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 390,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 390,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 9,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 1,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.14300000667572021,
+        "threat_multiplier": 0.7,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 7268
+        },
+        "rank": 0,
+        "school": 64,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagNoOnCastComplete"
+        ],
+        "class_spell": "arcane_missiles_tick",
+        "missile_speed": 20,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "autos_or_procs",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 9,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 1,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.28600001335144043,
+        "threat_multiplier": 0.7,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": {
+          "average": 25,
+          "variance": 0
+        }
+      },
+      {
+        "action_id": {
+          "spell_id": 5143
+        },
+        "rank": 1,
+        "school": 64,
+        "defense_type": "DefenseTypeNone",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagChanneled",
+          "SpellFlagAPL"
+        ],
+        "class_spell": "arcane_missiles_cast",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 85,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 85,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 9,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 1,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "ArcaneMissiles-1-1",
+          "base_tick_count": 3,
+          "base_tick_length_ns": 1000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": true
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 7269
+        },
+        "rank": 0,
+        "school": 64,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagNoOnCastComplete"
+        ],
+        "class_spell": "arcane_missiles_tick",
+        "missile_speed": 20,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "autos_or_procs",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 9,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 1,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.28600001335144043,
+        "threat_multiplier": 0.7,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": {
+          "average": 32,
+          "variance": 0
+        }
+      },
+      {
+        "action_id": {
+          "spell_id": 5144
+        },
+        "rank": 2,
+        "school": 64,
+        "defense_type": "DefenseTypeNone",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagChanneled",
+          "SpellFlagAPL"
+        ],
+        "class_spell": "arcane_missiles_cast",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 140,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 140,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 9,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 1,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "ArcaneMissiles-2-1",
+          "base_tick_count": 4,
+          "base_tick_length_ns": 1000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": true
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 7270
+        },
+        "rank": 0,
+        "school": 64,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagNoOnCastComplete"
+        ],
+        "class_spell": "arcane_missiles_tick",
+        "missile_speed": 20,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "autos_or_procs",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 9,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 1,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.28600001335144043,
+        "threat_multiplier": 0.7,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": {
+          "average": 46,
+          "variance": 0
+        }
+      },
+      {
+        "action_id": {
+          "spell_id": 5145
+        },
+        "rank": 3,
+        "school": 64,
+        "defense_type": "DefenseTypeNone",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagChanneled",
+          "SpellFlagAPL"
+        ],
+        "class_spell": "arcane_missiles_cast",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 235,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 235,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 9,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 1,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "ArcaneMissiles-3-1",
+          "base_tick_count": 5,
+          "base_tick_length_ns": 1000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": true
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 8419
+        },
+        "rank": 0,
+        "school": 64,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagNoOnCastComplete"
+        ],
+        "class_spell": "arcane_missiles_tick",
+        "missile_speed": 20,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "autos_or_procs",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 9,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 1,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.28600001335144043,
+        "threat_multiplier": 0.7,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": {
+          "average": 68,
+          "variance": 0
+        }
+      },
+      {
+        "action_id": {
+          "spell_id": 8416
+        },
+        "rank": 4,
+        "school": 64,
+        "defense_type": "DefenseTypeNone",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagChanneled",
+          "SpellFlagAPL"
+        ],
+        "class_spell": "arcane_missiles_cast",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 320,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 320,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 9,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 1,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "ArcaneMissiles-4-1",
+          "base_tick_count": 5,
+          "base_tick_length_ns": 1000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": true
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 8418
+        },
+        "rank": 0,
+        "school": 64,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagNoOnCastComplete"
+        ],
+        "class_spell": "arcane_missiles_tick",
+        "missile_speed": 20,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "autos_or_procs",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 9,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 1,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.28600001335144043,
+        "threat_multiplier": 0.7,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": {
+          "average": 97,
+          "variance": 0
+        }
+      },
+      {
+        "action_id": {
+          "spell_id": 8417
+        },
+        "rank": 5,
+        "school": 64,
+        "defense_type": "DefenseTypeNone",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagChanneled",
+          "SpellFlagAPL"
+        ],
+        "class_spell": "arcane_missiles_cast",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 410,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 410,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 9,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 1,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "ArcaneMissiles-5-1",
+          "base_tick_count": 5,
+          "base_tick_length_ns": 1000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": true
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 10273
+        },
+        "rank": 0,
+        "school": 64,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagNoOnCastComplete"
+        ],
+        "class_spell": "arcane_missiles_tick",
+        "missile_speed": 20,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "autos_or_procs",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 9,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 1,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.28600001335144043,
+        "threat_multiplier": 0.7,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": {
+          "average": 133,
+          "variance": 0
+        }
+      },
+      {
+        "action_id": {
+          "spell_id": 10211
+        },
+        "rank": 6,
+        "school": 64,
+        "defense_type": "DefenseTypeNone",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagChanneled",
+          "SpellFlagAPL"
+        ],
+        "class_spell": "arcane_missiles_cast",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 500,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 500,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 9,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 1,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "ArcaneMissiles-6-1",
+          "base_tick_count": 5,
+          "base_tick_length_ns": 1000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": true
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 10274
+        },
+        "rank": 0,
+        "school": 64,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagNoOnCastComplete"
+        ],
+        "class_spell": "arcane_missiles_tick",
+        "missile_speed": 20,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "autos_or_procs",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 9,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 1,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.28600001335144043,
+        "threat_multiplier": 0.7,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": {
+          "average": 174,
+          "variance": 0
+        }
+      },
+      {
+        "action_id": {
+          "spell_id": 10212
+        },
+        "rank": 7,
+        "school": 64,
+        "defense_type": "DefenseTypeNone",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagChanneled",
+          "SpellFlagAPL"
+        ],
+        "class_spell": "arcane_missiles_cast",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 595,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 595,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 9,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 1,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "ArcaneMissiles-7-1",
+          "base_tick_count": 5,
+          "base_tick_length_ns": 1000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": true
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 25346
+        },
+        "rank": 0,
+        "school": 64,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagNoOnCastComplete"
+        ],
+        "class_spell": "arcane_missiles_tick",
+        "missile_speed": 20,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "autos_or_procs",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 9,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 1,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.28600001335144043,
+        "threat_multiplier": 0.7,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": {
+          "average": 209,
+          "variance": 0
+        }
+      },
+      {
+        "action_id": {
+          "spell_id": 25345
+        },
+        "rank": 8,
+        "school": 64,
+        "defense_type": "DefenseTypeNone",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagChanneled",
+          "SpellFlagAPL"
+        ],
+        "class_spell": "arcane_missiles_cast",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 655,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 655,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 9,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 1,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "ArcaneMissiles-8-1",
+          "base_tick_count": 5,
+          "base_tick_length_ns": 1000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": true
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 1279949
+        },
+        "rank": 0,
+        "school": 16,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagNoOnCastComplete"
+        ],
+        "class_spell": "blizzard",
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "autos_or_procs",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.041999999433755875,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 10187
+        },
+        "rank": 0,
+        "school": 16,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagChanneled",
+          "SpellFlagAPL"
+        ],
+        "class_spell": "blizzard",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 1400,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 1400,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "self",
+          "aura_label": "Blizzard",
+          "base_tick_count": 8,
+          "base_tick_length_ns": 1000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": true
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 10161
+        },
+        "rank": 0,
+        "school": 16,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagBinary",
+          "SpellFlagAPL"
+        ],
+        "class_spell": "cone_of_cold",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 555,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 555,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": {
+          "timer": "timer-5",
+          "duration_ns": 10000000000
+        },
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.1289999932050705,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 116
+        },
+        "rank": 1,
+        "school": 16,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagBinary",
+          "SpellFlagAPL"
+        ],
+        "class_spell": "frostbolt",
+        "missile_speed": 28,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 25,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 25,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 1500000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.40700000524520874,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": {
+          "average": 21,
+          "variance": 0.10526315867900848
+        }
+      },
+      {
+        "action_id": {
+          "spell_id": 205
+        },
+        "rank": 2,
+        "school": 16,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagBinary",
+          "SpellFlagAPL"
+        ],
+        "class_spell": "frostbolt",
+        "missile_speed": 28,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 35,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 35,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 1800000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.48899999260902405,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": {
+          "average": 35,
+          "variance": 0.12121211737394333
+        }
+      },
+      {
+        "action_id": {
+          "spell_id": 837
+        },
+        "rank": 3,
+        "school": 16,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagBinary",
+          "SpellFlagAPL"
+        ],
+        "class_spell": "frostbolt",
+        "missile_speed": 28,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 50,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 50,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 2200000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.597000002861023,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": {
+          "average": 49,
+          "variance": 0.1111111119389534
+        }
+      },
+      {
+        "action_id": {
+          "spell_id": 7322
+        },
+        "rank": 4,
+        "school": 16,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagBinary",
+          "SpellFlagAPL"
+        ],
+        "class_spell": "frostbolt",
+        "missile_speed": 28,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 65,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 65,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 2600000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.7059999704360962,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": {
+          "average": 64,
+          "variance": 0.10256409645080566
+        }
+      },
+      {
+        "action_id": {
+          "spell_id": 8406
+        },
+        "rank": 5,
+        "school": 16,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagBinary",
+          "SpellFlagAPL"
+        ],
+        "class_spell": "frostbolt",
+        "missile_speed": 28,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 100,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 100,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 3000000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.8140000104904175,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": {
+          "average": 101,
+          "variance": 0.09090909361839294
+        }
+      },
+      {
+        "action_id": {
+          "spell_id": 8407
+        },
+        "rank": 6,
+        "school": 16,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagBinary",
+          "SpellFlagAPL"
+        ],
+        "class_spell": "frostbolt",
+        "missile_speed": 28,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 130,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 130,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 3000000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.8140000104904175,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": {
+          "average": 140,
+          "variance": 0.08791209012269974
+        }
+      },
+      {
+        "action_id": {
+          "spell_id": 8408
+        },
+        "rank": 7,
+        "school": 16,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagBinary",
+          "SpellFlagAPL"
+        ],
+        "class_spell": "frostbolt",
+        "missile_speed": 28,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 160,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 160,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 3000000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.8140000104904175,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": {
+          "average": 189,
+          "variance": 0.08438818901777267
+        }
+      },
+      {
+        "action_id": {
+          "spell_id": 10179
+        },
+        "rank": 8,
+        "school": 16,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagBinary",
+          "SpellFlagAPL"
+        ],
+        "class_spell": "frostbolt",
+        "missile_speed": 28,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 195,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 195,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 3000000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.8140000104904175,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": {
+          "average": 253,
+          "variance": 0.07894736528396606
+        }
+      },
+      {
+        "action_id": {
+          "spell_id": 10180
+        },
+        "rank": 9,
+        "school": 16,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagBinary",
+          "SpellFlagAPL"
+        ],
+        "class_spell": "frostbolt",
+        "missile_speed": 28,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 225,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 225,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 3000000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.8140000104904175,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": {
+          "average": 318,
+          "variance": 0.08152174204587936
+        }
+      },
+      {
+        "action_id": {
+          "spell_id": 10181
+        },
+        "rank": 10,
+        "school": 16,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagBinary",
+          "SpellFlagAPL"
+        ],
+        "class_spell": "frostbolt",
+        "missile_speed": 28,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 260,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 260,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 3000000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.8140000104904175,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": {
+          "average": 397,
+          "variance": 0.07623318582773209
+        }
+      },
+      {
+        "action_id": {
+          "spell_id": 25304
+        },
+        "rank": 11,
+        "school": 16,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagBinary",
+          "SpellFlagAPL"
+        ],
+        "class_spell": "frostbolt",
+        "missile_speed": 28,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 290,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 290,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 3000000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.8140000104904175,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": {
+          "average": 475,
+          "variance": 0.07476635277271271
+        }
+      },
+      {
+        "action_id": {
+          "spell_id": 401502
+        },
+        "rank": 1,
+        "school": 20,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagBinary",
+          "SpellFlagAPL"
+        ],
+        "class_spell": "frostfire_bolt",
+        "missile_speed": 24,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 205,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 205,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 3000000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1,
+        "direct_damage_multiplier_additive": 0.03,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.8140000104904175,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "FrostfireBoltDoT-1-1",
+          "base_tick_count": 3,
+          "base_tick_length_ns": 3000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": false
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 1237312
+        },
+        "rank": 2,
+        "school": 20,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagBinary",
+          "SpellFlagAPL"
+        ],
+        "class_spell": "frostfire_bolt",
+        "missile_speed": 24,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 285,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 285,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 3000000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1,
+        "direct_damage_multiplier_additive": 0.03,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.8140000104904175,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "FrostfireBoltDoT-2-1",
+          "base_tick_count": 3,
+          "base_tick_length_ns": 3000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": false
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 1237313
+        },
+        "rank": 3,
+        "school": 20,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagBinary",
+          "SpellFlagAPL"
+        ],
+        "class_spell": "frostfire_bolt",
+        "missile_speed": 24,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 370,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 370,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 3000000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1,
+        "direct_damage_multiplier_additive": 0.03,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.8140000104904175,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "FrostfireBoltDoT-3-1",
+          "base_tick_count": 3,
+          "base_tick_length_ns": 3000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": false
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 12051
+        },
+        "rank": 0,
+        "school": 0,
+        "defense_type": "DefenseTypeNone",
+        "proc_mask": [],
+        "flags": [
+          "SpellFlagChanneled",
+          "SpellFlagHelpful",
+          "SpellFlagAPL",
+          "SpellFlagMCD"
+        ],
+        "class_spell": "evocation",
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": {
+          "timer": "timer-6",
+          "duration_ns": 480000000000
+        },
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "self",
+          "aura_label": "Evocation",
+          "base_tick_count": 32,
+          "base_tick_length_ns": 250000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": true
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 133
+        },
+        "rank": 1,
+        "school": 4,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagAPL"
+        ],
+        "class_spell": "fireball",
+        "missile_speed": 24,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 30,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 30,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 1500000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.42899999022483826,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "FireballDoT-1-1",
+          "base_tick_count": 2,
+          "base_tick_length_ns": 2000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": false
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 143
+        },
+        "rank": 2,
+        "school": 4,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagAPL"
+        ],
+        "class_spell": "fireball",
+        "missile_speed": 24,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 45,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 45,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 2000000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.5709999799728394,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "FireballDoT-2-1",
+          "base_tick_count": 3,
+          "base_tick_length_ns": 2000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": false
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 145
+        },
+        "rank": 3,
+        "school": 4,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagAPL"
+        ],
+        "class_spell": "fireball",
+        "missile_speed": 24,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 65,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 65,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 2500000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.7139999866485596,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "FireballDoT-3-1",
+          "base_tick_count": 3,
+          "base_tick_length_ns": 2000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": false
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 3140
+        },
+        "rank": 4,
+        "school": 4,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagAPL"
+        ],
+        "class_spell": "fireball",
+        "missile_speed": 24,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 95,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 95,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 3000000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.8569999933242798,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "FireballDoT-4-1",
+          "base_tick_count": 4,
+          "base_tick_length_ns": 2000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": false
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 8400
+        },
+        "rank": 5,
+        "school": 4,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagAPL"
+        ],
+        "class_spell": "fireball",
+        "missile_speed": 24,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 140,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 140,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 3500000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 1,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "FireballDoT-5-1",
+          "base_tick_count": 4,
+          "base_tick_length_ns": 2000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": false
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 8401
+        },
+        "rank": 6,
+        "school": 4,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagAPL"
+        ],
+        "class_spell": "fireball",
+        "missile_speed": 24,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 185,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 185,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 3500000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 1,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "FireballDoT-6-1",
+          "base_tick_count": 4,
+          "base_tick_length_ns": 2000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": false
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 8402
+        },
+        "rank": 7,
+        "school": 4,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagAPL"
+        ],
+        "class_spell": "fireball",
+        "missile_speed": 24,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 220,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 220,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 3500000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 1,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "FireballDoT-7-1",
+          "base_tick_count": 4,
+          "base_tick_length_ns": 2000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": false
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 10148
+        },
+        "rank": 8,
+        "school": 4,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagAPL"
+        ],
+        "class_spell": "fireball",
+        "missile_speed": 24,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 260,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 260,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 3500000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 1,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "FireballDoT-8-1",
+          "base_tick_count": 4,
+          "base_tick_length_ns": 2000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": false
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 10149
+        },
+        "rank": 9,
+        "school": 4,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagAPL"
+        ],
+        "class_spell": "fireball",
+        "missile_speed": 24,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 305,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 305,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 3500000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 1,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "FireballDoT-9-1",
+          "base_tick_count": 4,
+          "base_tick_length_ns": 2000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": false
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 10150
+        },
+        "rank": 10,
+        "school": 4,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagAPL"
+        ],
+        "class_spell": "fireball",
+        "missile_speed": 24,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 350,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 350,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 3500000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 1,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "FireballDoT-10-1",
+          "base_tick_count": 4,
+          "base_tick_length_ns": 2000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": false
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 10151
+        },
+        "rank": 11,
+        "school": 4,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagAPL"
+        ],
+        "class_spell": "fireball",
+        "missile_speed": 24,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 395,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 395,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 3500000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 1,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "FireballDoT-11-1",
+          "base_tick_count": 4,
+          "base_tick_length_ns": 2000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": false
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 25306
+        },
+        "rank": 12,
+        "school": 4,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagAPL"
+        ],
+        "class_spell": "fireball",
+        "missile_speed": 24,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 410,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 410,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 3500000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 1,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "FireballDoT-12-1",
+          "base_tick_count": 4,
+          "base_tick_length_ns": 2000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": false
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 10199
+        },
+        "rank": 0,
+        "school": 4,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagAPL"
+        ],
+        "class_spell": "fire_blast",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 340,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 340,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": {
+          "timer": "timer-7",
+          "duration_ns": 6000000000
+        },
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 9,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.42899999022483826,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 10230
+        },
+        "rank": 0,
+        "school": 16,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagBinary",
+          "SpellFlagAPL"
+        ],
+        "class_spell": "frost_nova",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 145,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 145,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": {
+          "timer": "timer-8",
+          "duration_ns": 25000000000
+        },
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.028999999165534973,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "item_id": 5514
+        },
+        "rank": 0,
+        "school": 0,
+        "defense_type": "DefenseTypeNone",
+        "proc_mask": [],
+        "flags": [
+          "SpellFlagHelpful",
+          "SpellFlagNoOnCastComplete",
+          "SpellFlagAPL",
+          "SpellFlagMCD"
+        ],
+        "class_spell": "mana_gem",
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "simple",
+        "ignore_haste": false,
+        "has_extra_cast_condition": true,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": {
+          "timer": "timer-9",
+          "duration_ns": 120000000000
+        },
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "item_id": 5513
+        },
+        "rank": 0,
+        "school": 0,
+        "defense_type": "DefenseTypeNone",
+        "proc_mask": [],
+        "flags": [
+          "SpellFlagHelpful",
+          "SpellFlagNoOnCastComplete",
+          "SpellFlagAPL",
+          "SpellFlagMCD"
+        ],
+        "class_spell": "mana_gem",
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "simple",
+        "ignore_haste": false,
+        "has_extra_cast_condition": true,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": {
+          "timer": "timer-9",
+          "duration_ns": 120000000000
+        },
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "item_id": 8007
+        },
+        "rank": 0,
+        "school": 0,
+        "defense_type": "DefenseTypeNone",
+        "proc_mask": [],
+        "flags": [
+          "SpellFlagHelpful",
+          "SpellFlagNoOnCastComplete",
+          "SpellFlagAPL",
+          "SpellFlagMCD"
+        ],
+        "class_spell": "mana_gem",
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "simple",
+        "ignore_haste": false,
+        "has_extra_cast_condition": true,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": {
+          "timer": "timer-9",
+          "duration_ns": 120000000000
+        },
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "item_id": 8008
+        },
+        "rank": 0,
+        "school": 0,
+        "defense_type": "DefenseTypeNone",
+        "proc_mask": [],
+        "flags": [
+          "SpellFlagHelpful",
+          "SpellFlagNoOnCastComplete",
+          "SpellFlagAPL",
+          "SpellFlagMCD"
+        ],
+        "class_spell": "mana_gem",
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "simple",
+        "ignore_haste": false,
+        "has_extra_cast_condition": true,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": {
+          "timer": "timer-9",
+          "duration_ns": 120000000000
+        },
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 2948
+        },
+        "rank": 1,
+        "school": 4,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagAPL"
+        ],
+        "class_spell": "scorch",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 50,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 50,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 1500000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 9,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.42899999022483826,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 8444
+        },
+        "rank": 2,
+        "school": 4,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagAPL"
+        ],
+        "class_spell": "scorch",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 65,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 65,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 1500000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 9,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.42899999022483826,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 8445
+        },
+        "rank": 3,
+        "school": 4,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagAPL"
+        ],
+        "class_spell": "scorch",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 80,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 80,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 1500000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 9,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.42899999022483826,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 8446
+        },
+        "rank": 4,
+        "school": 4,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagAPL"
+        ],
+        "class_spell": "scorch",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 100,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 100,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 1500000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 9,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.42899999022483826,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 10205
+        },
+        "rank": 5,
+        "school": 4,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagAPL"
+        ],
+        "class_spell": "scorch",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 115,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 115,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 1500000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 9,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.42899999022483826,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 10206
+        },
+        "rank": 6,
+        "school": 4,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagAPL"
+        ],
+        "class_spell": "scorch",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 135,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 135,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 1500000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 9,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.42899999022483826,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 10207
+        },
+        "rank": 7,
+        "school": 4,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagAPL"
+        ],
+        "class_spell": "scorch",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 150,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 150,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 1500000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 9,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.42899999022483826,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 10216
+        },
+        "rank": 6,
+        "school": 4,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagAPL"
+        ],
+        "class_spell": "flamestrike",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 990,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 990,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 3000000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0.15700000524520874,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "self",
+          "aura_label": "Flamestrikearcane-mage (#1) Rank 6",
+          "base_tick_count": 4,
+          "base_tick_length_ns": 2000000000,
+          "bonus_coefficient": 0.03200000151991844,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": false
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 12043
+        },
+        "rank": 0,
+        "school": 0,
+        "defense_type": "DefenseTypeNone",
+        "proc_mask": [],
+        "flags": [
+          "SpellFlagNoOnCastComplete",
+          "SpellFlagAPL",
+          "SpellFlagMCD"
+        ],
+        "class_spell": "presence_of_mind",
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "simple",
+        "ignore_haste": false,
+        "has_extra_cast_condition": true,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": {
+          "timer": "timer-10",
+          "duration_ns": 180000000000
+        },
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 12042
+        },
+        "rank": 0,
+        "school": 0,
+        "defense_type": "DefenseTypeNone",
+        "proc_mask": [],
+        "flags": [
+          "SpellFlagNoOnCastComplete",
+          "SpellFlagAPL",
+          "SpellFlagMCD"
+        ],
+        "class_spell": "arcane_power",
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "simple",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": {
+          "timer": "timer-11",
+          "duration_ns": 180000000000
+        },
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 18809
+        },
+        "rank": 0,
+        "school": 4,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagAPL"
+        ],
+        "class_spell": "pyroblast",
+        "missile_speed": 24,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 440,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 440,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 6000000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 3,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.03,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 1,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "PyroblastDoT-1",
+          "base_tick_count": 4,
+          "base_tick_length_ns": 3000000000,
+          "bonus_coefficient": 0.15000000596046448,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": false
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "other_id": "OtherActionMove"
+        },
+        "rank": 0,
+        "school": 0,
+        "defense_type": "DefenseTypeNone",
+        "proc_mask": [],
+        "flags": [
+          "SpellFlagMeleeMetrics"
+        ],
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "autos_or_procs",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      }
+    ],
+    "major_cooldowns": [
+      {
+        "action_id": {
+          "item_id": 14152
+        },
+        "priority": 0,
+        "type": [
+          "mana"
+        ],
+        "timings_ns": []
+      },
+      {
+        "action_id": {
+          "item_id": 13444
+        },
+        "priority": 0,
+        "type": [
+          "mana"
+        ],
+        "timings_ns": []
+      },
+      {
+        "action_id": {
+          "item_id": 12662
+        },
+        "priority": 0,
+        "type": [
+          "mana"
+        ],
+        "timings_ns": []
+      },
+      {
+        "action_id": {
+          "item_id": 5514
+        },
+        "priority": 400,
+        "type": [
+          "mana"
+        ],
+        "timings_ns": []
+      },
+      {
+        "action_id": {
+          "item_id": 5513
+        },
+        "priority": 600,
+        "type": [
+          "mana"
+        ],
+        "timings_ns": []
+      },
+      {
+        "action_id": {
+          "item_id": 8007
+        },
+        "priority": 850,
+        "type": [
+          "mana"
+        ],
+        "timings_ns": []
+      },
+      {
+        "action_id": {
+          "item_id": 8008
+        },
+        "priority": 1100,
+        "type": [
+          "mana"
+        ],
+        "timings_ns": []
+      },
+      {
+        "action_id": {
+          "spell_id": 12043
+        },
+        "priority": 0,
+        "type": [
+          "dps"
+        ],
+        "timings_ns": []
+      },
+      {
+        "action_id": {
+          "spell_id": 12042
+        },
+        "priority": 0,
+        "type": [
+          "dps"
+        ],
+        "timings_ns": []
+      }
+    ],
+    "rotation": {
+      "type": "TypeAPL",
+      "priorityList": [
+        {
+          "action": {
+            "autocastOtherCooldowns": {}
+          }
+        },
+        {
+          "action": {
+            "condition": {
+              "and": {
+                "vals": [
+                  {
+                    "cmp": {
+                      "op": "OpLt",
+                      "lhs": {
+                        "currentManaPercent": {}
+                      },
+                      "rhs": {
+                        "const": {
+                          "val": "15%"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "cmp": {
+                      "op": "OpGt",
+                      "lhs": {
+                        "remainingTime": {}
+                      },
+                      "rhs": {
+                        "const": {
+                          "val": "20s"
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "castSpell": {
+              "spellId": {
+                "spellId": 12051
+              }
+            }
+          }
+        },
+        {
+          "action": {
+            "condition": {
+              "auraIsActive": {
+                "auraId": {
+                  "spellId": 44404
+                }
+              }
+            },
+            "castSpell": {
+              "spellId": {
+                "spellId": 25345
+              }
+            }
+          }
+        },
+        {
+          "action": {
+            "condition": {
+              "or": {
+                "vals": [
+                  {
+                    "cmp": {
+                      "op": "OpGe",
+                      "lhs": {
+                        "auraNumStacks": {
+                          "auraId": {
+                            "spellId": 400573
+                          }
+                        }
+                      },
+                      "rhs": {
+                        "const": {
+                          "val": "3"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "cmp": {
+                      "op": "OpLt",
+                      "lhs": {
+                        "currentManaPercent": {}
+                      },
+                      "rhs": {
+                        "const": {
+                          "val": "40%"
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "castSpell": {
+              "spellId": {
+                "spellId": 25304
+              }
+            }
+          }
+        },
+        {
+          "action": {
+            "castSpell": {
+              "spellId": {
+                "spellId": 1239700
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "effects": [
+    {
+      "aura": "Clearcasting",
+      "aura_duration_ns": 15000000000,
+      "icd_ns": 1000000000,
+      "kind": "arcane_concentration",
+      "proc_chance": 0.1,
+      "talent_rank": 5,
+      "trigger_aura": "Arcane Concentration"
+    },
+    {
+      "channel_aura": "Evocation",
+      "kind": "evocation",
+      "regen_aura": "Evocation Regen",
+      "regen_multiplier": 15,
+      "spell_id": 12051
+    },
+    {
+      "kind": "arcane_missiles",
+      "ranks": [
+        {
+          "channel_spell_id": 5143,
+          "tick_spell_id": 7268
+        },
+        {
+          "channel_spell_id": 5144,
+          "tick_spell_id": 7269
+        },
+        {
+          "channel_spell_id": 5145,
+          "tick_spell_id": 7270
+        },
+        {
+          "channel_spell_id": 8416,
+          "tick_spell_id": 8419
+        },
+        {
+          "channel_spell_id": 8417,
+          "tick_spell_id": 8418
+        },
+        {
+          "channel_spell_id": 10211,
+          "tick_spell_id": 10273
+        },
+        {
+          "channel_spell_id": 10212,
+          "tick_spell_id": 10274
+        },
+        {
+          "channel_spell_id": 25345,
+          "tick_spell_id": 25346
+        }
+      ]
+    },
+    {
+      "kind": "frostbolt"
+    },
+    {
+      "aura": "Arcane Blast",
+      "cost_per_stack": 1.75,
+      "damage_per_stack": 0.1,
+      "kind": "arcane_blast",
+      "spell_id": 1239700
+    },
+    {
+      "kind": "ignite",
+      "spell_id": 412538,
+      "trigger_aura": "Ignite Talent"
+    },
+    {
+      "aura": "Arcane Power",
+      "cost_percent_add": 0.3,
+      "damage": 0.3,
+      "kind": "arcane_power",
+      "spell_id": 12042
+    },
+    {
+      "aura": "Presence of Mind",
+      "cast_time_percent": -1,
+      "kind": "presence_of_mind",
+      "spell_id": 12043
+    },
+    {
+      "gems": [
+        {
+          "item_id": 5514,
+          "mana": 400
+        },
+        {
+          "item_id": 5513,
+          "mana": 600
+        },
+        {
+          "item_id": 8007,
+          "mana": 850
+        },
+        {
+          "item_id": 8008,
+          "mana": 1100
+        }
+      ],
+      "kind": "mana_gems",
+      "regen_window_seconds": 2
+    },
+    {
+      "aura": "Mage Armor",
+      "kind": "mage_armor"
+    },
+    {
+      "aura": "Judgement of Wisdom (External)",
+      "delay_ns": 10000000,
+      "kind": "judgement_of_wisdom",
+      "mana": 59,
+      "metrics_action_id": {
+        "spell_id": 20355
+      },
+      "proc_chance": 0.5,
+      "proc_mask": [
+        "ProcMaskMeleeMHAuto",
+        "ProcMaskMeleeOHAuto",
+        "ProcMaskMeleeMHSpecial",
+        "ProcMaskMeleeOHSpecial",
+        "ProcMaskRangedAuto",
+        "ProcMaskRangedSpecial",
+        "ProcMaskSpellDamage"
+      ]
+    },
+    {
+      "delay_ns": 10000000,
+      "drain_spell_id": 1260198,
+      "health_fraction": 0.05,
+      "kind": "touch_of_the_grave",
+      "proc_chance": 0.1,
+      "proc_mask": [
+        "ProcMaskMeleeMHAuto",
+        "ProcMaskMeleeOHAuto",
+        "ProcMaskMeleeMHSpecial",
+        "ProcMaskMeleeOHSpecial",
+        "ProcMaskRangedAuto",
+        "ProcMaskRangedSpecial",
+        "ProcMaskSpellDamage"
+      ],
+      "trigger_aura": "Touch of the Grave"
+    },
+    {
+      "average": 500,
+      "item_id": 14152,
+      "kind": "energize_on_use",
+      "spell_id": 18385,
+      "variance": 0.5,
+      "whole": 625
+    },
+    {
+      "gains": [
+        {
+          "min": 1800,
+          "spread": 0
+        }
+      ],
+      "item_id": 13444,
+      "kind": "potion_mana",
+      "regen_window_seconds": 5,
+      "rng_label": "Major Mana Potion",
+      "stone_multiplier": 1
+    },
+    {
+      "gains": [
+        {
+          "min": 1200,
+          "spread": 0
+        }
+      ],
+      "item_id": 12662,
+      "kind": "conjured_mana",
+      "regen_window_seconds": 5,
+      "rng_label": "Demonic Rune",
+      "selected": true
+    },
+    {
+      "aura": "Chance of Death",
+      "kind": "inert_listener",
+      "reason": "acts only when the player takes damage",
+      "unit": "player"
+    },
+    {
+      "aura": "Parry Haste",
+      "kind": "inert_listener",
+      "reason": "acts only on parried attacks",
+      "unit": "target"
+    }
+  ],
+  "unrepresented": []
+}

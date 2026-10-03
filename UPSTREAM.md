@@ -54,11 +54,14 @@ to Frost scope, 4 deferred client data updates and 1 applicable fix. That fix,
 rotation reads an aura the character cannot have. The pinned reference drops such a
 condition, so a Frost build without Fingers of Frost casts Ice Lance on every global
 cooldown (about 81 casts and 211 DPS per fight, against 593 DPS for the talented
-reference). Rust compiles each condition both ways. Where the results differ, it
-rejects the rotation with both behaviors named until the reference adopts the fix;
-where they agree, as when an `auraIsKnown` guard prunes the action either way, it runs.
-The regressions are the `frost-no-fingers` and `reference-no-missile-barrage` prepared
-fixtures.
+reference). The Arcane preset reads Missile Barrage without a guard, so an Arcane build
+without it casts Arcane Missiles whenever the rule is reached (449.7 DPS and no Arcane
+Blasts, against 396.6 DPS for the rotation as written). Rust compiles each condition
+both ways. Where they act differently, it rejects the rotation with both behaviors
+named until the reference adopts the fix; where they act the same, as when an
+`auraIsKnown` guard prunes the action either way or a missing stack count leaves a
+constant comparison, it runs. The regressions are the `frost-no-fingers`,
+`arcane-no-missile-barrage` and `reference-no-missile-barrage` prepared fixtures.
 
 ## Reconcile a fix
 

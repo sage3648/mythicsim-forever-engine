@@ -51,6 +51,13 @@ application's request, as in the frozen production observation. The whole Go res
 matches, including time to out of mana and the target's metrics, and the application's
 own parsers read identical first-fight and averaged timelines from both logs.
 
+The application's Arcane reference build, with Arcane Blast and its stacks, Arcane
+Power, Presence of Mind and the Undead racial Touch of the Grave, also matches: 538.672
+DPS and the first-fight log. Randomized sweeps of both builds match Go on every
+supported variant ([Frost](validation/2026-10-03-frost-sweep.json),
+[Arcane](validation/2026-10-03-arcane-sweep.json)). Builds where community fix #622
+would change the rotation are rejected; see [UPSTREAM.md](UPSTREAM.md).
+
 See the [kernel guide](docs/kernel.md) for the input boundary and commands.
 
 ## Repository structure

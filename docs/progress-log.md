@@ -22,6 +22,8 @@ reading the Go reference. They are not effort estimates for other contributors.
 | Arcane: Arcane Power and Presence of Mind | 2026-10-03 13:01 | 2026-10-03 13:08 | 0 h 07 m | Damage, direct damage and cast time modifiers; Presence of Mind restarts its cooldown when consumed; both fixtures match Go on the first comparison |
 | Arcane: Ignite as an inert listener | 2026-10-03 13:06 | 2026-10-03 13:09 | 0 h 03 m | Claimed only while no reachable spell is fire; Arcane with fire talents matches Go |
 | Arcane: Touch of the Grave and the reference build | 2026-10-03 13:09 | 2026-10-03 13:15 | 0 h 06 m | Racial proc with internal cooldown and batch delay, hit-only drain, health metrics; the application's Arcane request matches Go on the first comparison |
+| Refactor: Mage-wide gate and fixture family | 2026-10-03 13:15 | 2026-10-03 13:17 | 0 h 02 m | Source-only move from the Frost spec to the Mage class; goldens unchanged |
+| Arcane: randomized sweep | 2026-10-03 13:17 | 2026-10-03 13:22 | 0 h 05 m | Reusable sweep generator; 18 variants match, 6 rejected for #622; the guard now compares meaning |
 
 ## Notes
 

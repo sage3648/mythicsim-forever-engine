@@ -230,12 +230,13 @@
       "mechanics": [
         "rotation_interpreter"
       ],
-      "reason": "Covered mechanic. Pinned Go drops an auraIsActive condition naming an aura the character lacks, so the action fires whenever reached. Frost without Fingers of Frost then casts Ice Lance on every global cooldown (pinned Go, 200 fights: 80.9 Ice Lance and 0 Frostbolt casts per fight, 211 DPS against 593 for the reference).",
+      "reason": "Covered mechanic. Pinned Go drops an auraIsActive condition naming an aura the character lacks, so the action fires whenever reached. Frost without Fingers of Frost then casts Ice Lance on every global cooldown (pinned Go, 200 fights: 80.9 Ice Lance and 0 Frostbolt casts per fight, 211 DPS against 593 for the reference). The Arcane preset reads Missile Barrage unguarded: without the talent pinned Go casts Arcane Missiles whenever reached (449.7 DPS, no Arcane Blasts) against 396.6 DPS for the rotation as written.",
       "adoption": {
         "reference": "pending",
-        "rust": "guarded: conditions are compiled under both readings; rotations where they differ are rejected with both behaviors named"
+        "rust": "guarded: conditions are compiled under both readings; rotations where they act differently are rejected with both behaviors named"
       },
       "regression": [
+        "fixtures/mage/prepared-v2/manifest.json#arcane-no-missile-barrage",
         "fixtures/mage/prepared-v2/manifest.json#frost-no-fingers",
         "fixtures/mage/prepared-v2/manifest.json#reference-no-missile-barrage",
         "tests/classes/mage/prepared_v2.rs"

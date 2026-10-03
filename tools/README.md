@@ -10,6 +10,7 @@ fight. Ordinary Rust tests use frozen data and need no Go checkout.
 | [inventory.py](inventory.py) | Audit the first-build inventory offline; optionally recapture and compare Go output | Python for audit; Go and pinned source checkouts for capture |
 | [oracle/main.go](oracle/main.go) | Prepare restricted reference cases and run the actual Go engine | Built by the comparison tool in isolated scratch |
 | [prepared_v2.py](prepared_v2.py) | Audit prepared v2 fixtures offline; re-export them from the pinned engine into scratch | Python for audit; Go, Git and protoc for capture |
+| [sweep.py](sweep.py) | Generate seeded randomized variants of one request for a compatibility sweep | Python |
 | [upstream.py](upstream.py) | Audit the [upstream ledger](../UPSTREAM.md#ledger), optionally against a community clone | Python; Git for the range check |
 | [oracle-v2/main.go](oracle-v2/main.go) | Export a reset Go simulation as [prepared v2](../docs/prepared-v2.md) and run the full Go engine | Built by prepared_v2.py in isolated scratch |
 | [matched-go/](matched-go/) | Go implementation of the same narrow Rust kernel for fair timing | Go |

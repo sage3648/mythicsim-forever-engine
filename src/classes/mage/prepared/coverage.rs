@@ -339,7 +339,7 @@ fn unknown_aura_conditions(prepared: &PreparedV2, rotation: &Rotation) -> Vec<St
     for item in &rotation.priority_list {
         let pinned = compile_condition(item.condition.as_ref(), &aura, MissingAura::Dropped);
         let fixed = compile_condition(item.condition.as_ref(), &aura, MissingAura::Inactive);
-        if pinned == fixed {
+        if pinned.same_meaning(&fixed) {
             continue;
         }
         let mut unknown = Vec::new();

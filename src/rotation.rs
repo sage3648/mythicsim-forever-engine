@@ -638,6 +638,88 @@ impl<R> Compiled<R> {
     }
 }
 
+impl<R: Clone> Compiled<R> {
+    /// What the value means, with comparisons of constants evaluated and And and Or
+    /// simplified. Go keeps such comparisons, so this is only for comparing compilations.
+    fn folded(&self) -> Compiled<R> {
+        match self {
+            Compiled::Compare { op, lhs, rhs } => {
+                let (lhs, rhs) = (lhs.folded(), rhs.folded());
+                match (&lhs, &rhs) {
+                    (Compiled::Const(a), Compiled::Const(b)) if a.value_type == b.value_type => {
+                        let result = match a.value_type {
+                            ValueType::Int => Some(op.apply(a.int, b.int)),
+                            ValueType::Float => Some(op.apply(a.float, b.float)),
+                            ValueType::Duration => Some(op.apply(a.duration_ns, b.duration_ns)),
+                            ValueType::Bool => match op {
+                                CompareOp::Eq => Some(a.boolean == b.boolean),
+                                CompareOp::Ne => Some(a.boolean != b.boolean),
+                                _ => None,
+                            },
+                            ValueType::String => None,
+                        };
+                        match result {
+                            Some(value) => bool_const(value),
+                            None => Compiled::Compare {
+                                op: *op,
+                                lhs: Box::new(lhs),
+                                rhs: Box::new(rhs),
+                            },
+                        }
+                    }
+                    _ => Compiled::Compare {
+                        op: *op,
+                        lhs: Box::new(lhs),
+                        rhs: Box::new(rhs),
+                    },
+                }
+            }
+            Compiled::And(values) => simplify(values, true, Compiled::And),
+            Compiled::Or(values) => simplify(values, false, Compiled::Or),
+            Compiled::Coerced { to, inner } => Compiled::Coerced {
+                to: *to,
+                inner: Box::new(inner.folded()),
+            },
+            other => other.clone(),
+        }
+    }
+}
+
+/// Fold And (`identity` true) or Or (`identity` false): identity terms drop out, the
+/// other constant decides, and one remaining term stands for the operator.
+fn simplify<R: Clone>(
+    values: &[Compiled<R>],
+    identity: bool,
+    build: fn(Vec<Compiled<R>>) -> Compiled<R>,
+) -> Compiled<R> {
+    let mut kept = Vec::new();
+    for value in values.iter().map(Compiled::folded) {
+        match value.const_bool() {
+            Some(constant) if constant == identity => {}
+            Some(_) => return bool_const(!identity),
+            None => kept.push(value),
+        }
+    }
+    match kept.len() {
+        0 => bool_const(identity),
+        1 => kept.pop().expect("one value"),
+        _ => build(kept),
+    }
+}
+
+impl CompareOp {
+    fn apply<T: PartialOrd>(self, lhs: T, rhs: T) -> bool {
+        match self {
+            CompareOp::Eq => lhs == rhs,
+            CompareOp::Ne => lhs != rhs,
+            CompareOp::Lt => lhs < rhs,
+            CompareOp::Le => lhs <= rhs,
+            CompareOp::Gt => lhs > rhs,
+            CompareOp::Ge => lhs >= rhs,
+        }
+    }
+}
+
 /// How `auraIsActive` and `auraNumStacks` read an aura the character cannot have.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MissingAura {
@@ -662,6 +744,27 @@ pub enum CompiledCondition<R> {
     /// No condition, a constant true, or a condition that compiled to no value.
     Always,
     When(Compiled<R>),
+}
+
+impl<R: Clone + PartialEq> CompiledCondition<R> {
+    /// Whether two compilations act the same, though Go may keep constant comparisons.
+    pub fn same_meaning(&self, other: &Self) -> bool {
+        self.folded() == other.folded()
+    }
+
+    fn folded(&self) -> Self {
+        match self {
+            CompiledCondition::When(value) => {
+                let value = value.folded();
+                match value.const_bool() {
+                    Some(true) => CompiledCondition::Always,
+                    Some(false) => CompiledCondition::Pruned,
+                    None => CompiledCondition::When(value),
+                }
+            }
+            other => other.clone(),
+        }
+    }
 }
 
 fn bool_const<R>(value: bool) -> Compiled<R> {
@@ -925,6 +1028,21 @@ mod tests {
             (pinned, fixed),
             (CompiledCondition::Always, CompiledCondition::Always)
         );
+        // Without the stacking aura, pinned Go keeps only the mana term and the fix keeps a
+        // constant 0 >= 3 beside it: different shapes, the same meaning.
+        let low_mana = serde_json::json!({"cmp": {
+            "op": "OpLt", "lhs": {"currentManaPercent": {}}, "rhs": {"const": {"val": "40%"}},
+        }});
+        let (pinned, fixed) = compile(
+            serde_json::json!({"or": {"vals": [stacks(44404), low_mana.clone()]}}),
+            4,
+        );
+        assert_ne!(pinned, fixed);
+        assert!(pinned.same_meaning(&fixed));
+        // A missing aura that would otherwise fire every time does not mean the same.
+        let active = serde_json::json!({"auraIsActive": {"auraId": {"spellId": 44404}}});
+        let (pinned, fixed) = compile(active, 4);
+        assert!(!pinned.same_meaning(&fixed));
         // One remaining term stands for the Or.
         let (pinned, _) = compile(
             serde_json::json!({"or": {"vals": [stacks(400573), stacks(44404)]}}),

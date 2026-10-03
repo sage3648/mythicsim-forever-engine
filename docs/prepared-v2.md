@@ -137,11 +137,12 @@ The rotation subset covers the Frost and Arcane presets: `castSpell`, `autocastO
 `remainingTime`, `auraIsKnown`, `auraIsActive` and `auraNumStacks`. Constants follow Go parsing,
 including `time.ParseDuration` and percent constants. A rotation spell the character
 does not know is dropped, as in Go; a known spell without a Rust behavior is
-unsupported. For an `auraIsActive` naming an aura the character lacks, the pinned
-reference drops the term while community fix #622 reads the aura as inactive (see
-[UPSTREAM.md](../UPSTREAM.md#ledger)). Rust compiles every condition both ways, with
-Go's coercion and constant folding, and rejects the rotation only where the results
-differ. An `auraIsKnown` guard that prunes the action under both readings is supported.
+unsupported. For an `auraIsActive` or `auraNumStacks` naming an aura the character
+lacks, the pinned reference drops the term while community fix #622 reads the aura as
+inactive, with no stacks (see [UPSTREAM.md](../UPSTREAM.md#ledger)). Rust compiles every
+condition both ways, with Go's coercion and constant folding, and rejects the rotation
+only where the two act differently. Comparisons of constants, which Go keeps, are
+evaluated for that check only.
 
 ## Examples
 
@@ -151,7 +152,8 @@ request; it is supported and keeps Go's result and first-fight log as goldens.
 `frost-no-fingers` is the same request without Fingers of Frost, the regression for
 community fix #622, and stays unsupported. `reference-no-missile-barrage` drops Missile
 Barrage, whose Arcane Missiles rule is guarded by `auraIsKnown`; it is supported and
-matches Go.
+matches Go. `arcane-reference` is the application's Arcane request, built by its own
+`BuildRequest`; `arcane-no-missile-barrage` is the #622 regression for the Arcane preset.
 
 The contract tests in
 [tests/classes/mage/prepared_v2.rs](../tests/classes/mage/prepared_v2.rs)

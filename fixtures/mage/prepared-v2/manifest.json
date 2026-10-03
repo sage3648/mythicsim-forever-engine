@@ -433,6 +433,21 @@
         "file": "arcane-reference.go-log.txt",
         "sha256": "d343f82d364dd55cc6a115ef9d0925536c26d4cc0f0b0c0aa41bb812022fc038"
       }
+    },
+    {
+      "id": "arcane-no-missile-barrage",
+      "description": "The application's Arcane reference without Missile Barrage. Regression for community fix #622: the preset's unguarded Arcane Missiles rule makes pinned Go cast Missiles whenever reached (449.7 DPS, no Arcane Blasts) where the fix reads the aura as inactive (396.6 DPS).",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/arcane-no-missile-barrage.request.json"
+      },
+      "prepared": "arcane-no-missile-barrage.prepared.json",
+      "prepared_sha256": "cada58a22a5bc86df41f56e744d48109a372494a7a2557daf6246a20f54f205d",
+      "expected_coverage": {
+        "supported": false,
+        "reasons": [
+          "rotation item 3: auraIsActive names spell 44404, which the character lacks; the pinned reference drops the condition and community #622 reads it as inactive"
+        ]
+      }
     }
   ]
 }

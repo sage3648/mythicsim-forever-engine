@@ -93,6 +93,23 @@
         "Debug logs omit Go's stat recalculation lines, which the application's parsers ignore",
         "Rotations where community fix #622 would change a condition are rejected"
       ]
+    },
+    {
+      "id": "mage-arcane-reference-build",
+      "contract": 2,
+      "status": "validated_against_go",
+      "scope": "The application's Arcane reference build and its race, talent and cooldown variants in the fixture family, plus 24 randomized variants; the whole RaidSimResult and the first-fight log.",
+      "evidence": [
+        "fixtures/mage/prepared-v2/manifest.json",
+        "tests/classes/mage/prepared_v2.rs",
+        "validation/2026-10-03-arcane-sweep.json"
+      ],
+      "known_differences": [
+        "Floating-point aggregates differ from Go on arm64 within 1e-9 relative, from Go's fused multiply-add",
+        "Debug logs omit Go's stat recalculation lines, which the application's parsers ignore",
+        "Rotations where community fix #622 would change a condition are rejected, including Arcane builds without Missile Barrage",
+        "Gnome's Eureka! racial is not implemented"
+      ]
     }
   ]
 }
