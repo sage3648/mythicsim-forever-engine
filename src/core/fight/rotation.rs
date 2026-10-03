@@ -4,12 +4,14 @@ use crate::{
     contracts::prepared_v2::ActionId,
     core::time::NEVER_EXPIRES,
     rotation::{
-        compile_bool_value, compile_condition, Action as ParsedAction, CompareOp,
+        compile_bool_value, compile_condition, Action as ParsedAction, AutoType, CompareOp,
         CompiledCondition, FoundAura, Lookup, MathOp, MissingAura, Rotation, ValueType,
     },
 };
 
 use super::{cast::MAX_SPELL_QUEUE_WINDOW, Agent, AuraRef, DotId, Fight, Side, SpellId};
+
+use std::rc::Rc;
 
 pub(crate) type Compiled = crate::rotation::Compiled<AuraRef>;
 
@@ -25,7 +27,7 @@ pub(crate) enum Act {
     /// Go `APLActionChannelSpell` with an interrupt condition.
     Channel {
         spell: SpellId,
-        interrupt: Compiled,
+        interrupt: Rc<Compiled>,
         allow_recast: bool,
     },
 }
@@ -42,7 +44,8 @@ enum Ready {
 
 #[derive(Clone, Debug)]
 pub(crate) struct Item {
-    condition: Option<Compiled>,
+    /// Shared so evaluation, which can change the fight, never borrows the rotation.
+    condition: Option<Rc<Compiled>>,
     action: Act,
 }
 
@@ -168,7 +171,7 @@ impl<A: Agent> Fight<A> {
                     Some(interrupt) => match self.apl_spell(spell) {
                         Some(spell) if self.spells[spell].flags.channeled => Act::Channel {
                             spell,
-                            interrupt,
+                            interrupt: Rc::new(interrupt),
                             allow_recast: *allow_recast,
                         },
                         _ => continue,
@@ -181,14 +184,14 @@ impl<A: Agent> Fight<A> {
                     // the major cooldowns in Go's export.
                     CompiledCondition::Pruned => continue,
                     CompiledCondition::Always => None,
-                    CompiledCondition::When(condition) => Some(condition),
+                    CompiledCondition::When(condition) => Some(Rc::new(condition)),
                 };
             items.push(Item { condition, action });
         }
         items
     }
 
-    fn get_bool(&self, value: &Compiled) -> bool {
+    fn get_bool(&mut self, value: &Compiled) -> bool {
         match value {
             Compiled::Const(constant) => constant.boolean,
             Compiled::AuraIsActive(aura) => self.aura(*aura).active,
@@ -202,6 +205,8 @@ impl<A: Agent> Fight<A> {
             Compiled::GcdIsReady => {
                 self.gcd_ready() || self.gcd_time_to_ready() <= MAX_SPELL_QUEUE_WINDOW
             }
+            // Go `APLValueSpellCanCast`: `CanCastOrQueue`, with its cost check's side effects.
+            Compiled::SpellCanCast(spell) => self.can_cast_or_queue(*spell),
             Compiled::And(values) => values.iter().all(|value| self.get_bool(value)),
             Compiled::Or(values) => values.iter().any(|value| self.get_bool(value)),
             Compiled::Not(value) => !self.get_bool(value),
@@ -227,7 +232,7 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    fn get_int(&self, value: &Compiled) -> i32 {
+    fn get_int(&mut self, value: &Compiled) -> i32 {
         match value {
             Compiled::Const(constant) => constant.int,
             Compiled::AuraNumStacks(aura) => self.aura(*aura).stacks,
@@ -257,7 +262,7 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    fn get_float(&self, value: &Compiled) -> f64 {
+    fn get_float(&mut self, value: &Compiled) -> f64 {
         match value {
             Compiled::Const(constant) => constant.float,
             Compiled::CurrentManaPercent => self.player.mana / self.config.max_mana,
@@ -289,7 +294,7 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    fn get_duration(&self, value: &Compiled) -> i64 {
+    fn get_duration(&mut self, value: &Compiled) -> i64 {
         match value {
             Compiled::Const(constant) => constant.duration_ns,
             // Go `APLValueAuraRemainingTime`: zero when inactive.
@@ -316,6 +321,15 @@ impl<A: Agent> Fight<A> {
             }
             Compiled::Math { op, lhs, rhs } => self.math_duration(*op, lhs, rhs),
             Compiled::CurrentTime => self.now,
+            // Go `APLValueAutoTimeToNext`.
+            Compiled::AutoTimeToNext(auto) => {
+                let at = match auto {
+                    AutoType::Melee => self.next_attack_at(),
+                    AutoType::MainHand => self.autos.mh.swing_at,
+                    AutoType::OffHand => self.autos.oh.swing_at,
+                };
+                (at - self.now).max(0)
+            }
             // Go `APLValueDotRemainingTime`: zero when inactive.
             Compiled::DotRemainingTime(spell) => {
                 if self.dot_active(*spell) {
@@ -352,19 +366,25 @@ impl<A: Agent> Fight<A> {
 
     /// Go `APLValueMath.GetDuration`: int64 arithmetic, which wraps, and float products
     /// truncated toward zero.
-    fn math_duration(&self, op: MathOp, lhs: &Compiled, rhs: &Compiled) -> i64 {
-        let scale = |duration: i64, by: &Compiled| match by.value_type() {
-            ValueType::Int => duration.wrapping_mul(i64::from(self.get_int(by))),
-            ValueType::Float => (duration as f64 * self.get_float(by)) as i64,
-            other => panic!("invalid {other:?} operand for duration multiplication"),
-        };
+    fn math_duration(&mut self, op: MathOp, lhs: &Compiled, rhs: &Compiled) -> i64 {
+        fn scale<A: Agent>(fight: &mut Fight<A>, duration: i64, by: &Compiled) -> i64 {
+            match by.value_type() {
+                ValueType::Int => duration.wrapping_mul(i64::from(fight.get_int(by))),
+                ValueType::Float => (duration as f64 * fight.get_float(by)) as i64,
+                other => panic!("invalid {other:?} operand for duration multiplication"),
+            }
+        }
         match op {
             MathOp::Add => self.get_duration(lhs).wrapping_add(self.get_duration(rhs)),
             MathOp::Sub => self.get_duration(lhs).wrapping_sub(self.get_duration(rhs)),
             MathOp::Mul if lhs.value_type() == ValueType::Duration => {
-                scale(self.get_duration(lhs), rhs)
+                let duration = self.get_duration(lhs);
+                scale(self, duration, rhs)
             }
-            MathOp::Mul => scale(self.get_duration(rhs), lhs),
+            MathOp::Mul => {
+                let duration = self.get_duration(rhs);
+                scale(self, duration, lhs)
+            }
             MathOp::Div => match rhs.value_type() {
                 ValueType::Int => {
                     let divisor = self.get_int(rhs);
@@ -413,8 +433,8 @@ impl<A: Agent> Fight<A> {
 
     /// Go `APLAction.IsReady`: the condition, then the action's readiness.
     fn item_ready(&mut self, item: usize) -> Option<Ready> {
-        if let Some(condition) = &self.rotation[item].condition {
-            if !self.get_bool(condition) {
+        if let Some(condition) = self.rotation[item].condition.clone() {
+            if !self.get_bool(&condition) {
                 return None;
             }
         }
@@ -519,18 +539,19 @@ impl<A: Agent> Fight<A> {
     }
 
     /// Go `Dot.ChannelCanBeInterrupted`.
-    fn channel_can_be_interrupted(&self, dot: DotId) -> bool {
+    fn channel_can_be_interrupted(&mut self, dot: DotId) -> bool {
         let state = &self.dots[dot];
         if !state.channeled || state.remaining_ticks == 0 {
             return false;
         }
-        match self.apl.interrupt_channel_if {
+        let interrupt = match self.apl.interrupt_channel_if {
             Some(item) => match &self.rotation[item].action {
-                Act::Channel { interrupt, .. } => self.get_bool(interrupt),
-                _ => false,
+                Act::Channel { interrupt, .. } => Rc::clone(interrupt),
+                _ => return false,
             },
-            None => false,
-        }
+            None => return false,
+        };
+        self.get_bool(&interrupt)
     }
 
     /// Whether two spells share a class spell mask, as Go `Spell.Matches` with the other's
@@ -548,8 +569,8 @@ impl<A: Agent> Fight<A> {
         let channeled = self.dots[dot].spell;
         self.player.channeled_dot = None;
         for item in 0..self.rotation.len() {
-            if let Some(condition) = &self.rotation[item].condition {
-                if !self.get_bool(condition) {
+            if let Some(condition) = self.rotation[item].condition.clone() {
+                if !self.get_bool(&condition) {
                     continue;
                 }
             }

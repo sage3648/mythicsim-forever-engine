@@ -28,6 +28,11 @@ pub(crate) fn bind<A: Agent>(
 }
 
 impl JudgementRefresh {
+    /// The judgement auras, in Go's order.
+    pub(crate) fn judgements(&self) -> &[AuraRef] {
+        &self.judgements
+    }
+
     pub(crate) fn on_spell_hit_dealt<A: Agent>(
         &self,
         fight: &mut Fight<A>,

@@ -127,6 +127,19 @@ pub enum Value {
     SpellTimeToReady(ActionId),
     DotTimeToNextTick(ActionId),
     GcdIsReady,
+    /// Go `APLValueSpellCanCast`: `CanCastOrQueue` on the current target.
+    SpellCanCast(ActionId),
+    /// Go `APLValueAutoTimeToNext` for the melee swings.
+    AutoTimeToNext(AutoType),
+}
+
+/// The swings Go `APLValueAutoTimeToNext` reads, by its `APLValueAutoAttackType`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum AutoType {
+    /// `MeleeAuto`: the earlier of the two hands.
+    Melee,
+    MainHand,
+    OffHand,
 }
 
 impl Value {
@@ -183,6 +196,7 @@ impl Value {
             | Value::DotIsActive(_)
             | Value::SpellIsKnown(_)
             | Value::SpellIsReady(_)
+            | Value::SpellCanCast(_)
             | Value::GcdIsReady => ValueType::Bool,
             Value::AuraNumStacks(_) | Value::NumberTargets => ValueType::Int,
             Value::AuraRemainingTime(_)
@@ -190,6 +204,7 @@ impl Value {
             | Value::SpellCastTime(_)
             | Value::SpellTimeToReady(_)
             | Value::DotTimeToNextTick(_)
+            | Value::AutoTimeToNext(_)
             | Value::RemainingTime
             | Value::CurrentTime => ValueType::Duration,
             Value::CurrentManaPercent | Value::CurrentMana => ValueType::Float,
@@ -668,8 +683,19 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
             only(&[])?;
             Ok(Value::GcdIsReady)
         }
+        "autoTimeToNext" => {
+            only(&["autoType"])?;
+            match config.get("autoType").and_then(Json::as_str) {
+                Some("MeleeAuto") => Ok(Value::AutoTimeToNext(AutoType::Melee)),
+                Some("MainHandAuto") => Ok(Value::AutoTimeToNext(AutoType::MainHand)),
+                Some("OffHandAuto") => Ok(Value::AutoTimeToNext(AutoType::OffHand)),
+                other => Err(vec![format!(
+                    "autoTimeToNext auto type {other:?} is unsupported"
+                )]),
+            }
+        }
         "dotIsActive" | "dotRemainingTime" | "dotTimeToNextTick" | "spellIsKnown"
-        | "spellIsReady" | "spellCastTime" | "spellTimeToReady" => {
+        | "spellIsReady" | "spellCastTime" | "spellTimeToReady" | "spellCanCast" => {
             // A target unit other than the current target is not modeled.
             only(&["spellId"])?;
             let id = config
@@ -683,6 +709,7 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
                 "spellIsKnown" => Value::SpellIsKnown(id),
                 "spellIsReady" => Value::SpellIsReady(id),
                 "spellTimeToReady" => Value::SpellTimeToReady(id),
+                "spellCanCast" => Value::SpellCanCast(id),
                 _ => Value::SpellCastTime(id),
             })
         }
@@ -968,6 +995,8 @@ pub enum Compiled<R> {
     SpellTimeToReady(usize),
     DotTimeToNextTick(usize),
     GcdIsReady,
+    SpellCanCast(usize),
+    AutoTimeToNext(AutoType),
     /// Go `APLValueCoerced`.
     Coerced {
         to: ValueType,
@@ -986,9 +1015,11 @@ impl<R> Compiled<R> {
             | Compiled::AuraIsActive(_)
             | Compiled::DotIsActive(_)
             | Compiled::SpellIsReady(_)
+            | Compiled::SpellCanCast(_)
             | Compiled::GcdIsReady => ValueType::Bool,
             Compiled::AuraNumStacks(_) | Compiled::NumberTargets => ValueType::Int,
             Compiled::AuraRemainingTime(_)
+            | Compiled::AutoTimeToNext(_)
             | Compiled::DotRemainingTime(_)
             | Compiled::SpellCastTime(_)
             | Compiled::SpellTimeToReady(_)
@@ -1240,6 +1271,8 @@ fn compile_value<R>(
         Value::SpellIsReady(id) => Compiled::SpellIsReady((lookup.spell)(id)?),
         Value::SpellCastTime(id) => Compiled::SpellCastTime((lookup.spell)(id)?),
         Value::SpellTimeToReady(id) => Compiled::SpellTimeToReady((lookup.spell)(id)?),
+        Value::SpellCanCast(id) => Compiled::SpellCanCast((lookup.spell)(id)?),
+        Value::AutoTimeToNext(auto) => Compiled::AutoTimeToNext(*auto),
         Value::DotTimeToNextTick(id) => Compiled::DotTimeToNextTick((lookup.dot)(id)?),
         Value::GcdIsReady => Compiled::GcdIsReady,
         Value::AuraIsKnown(id) => bool_const(aura(id).is_some()),

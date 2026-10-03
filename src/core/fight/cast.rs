@@ -370,6 +370,9 @@ impl<A: Agent> Fight<A> {
     /// Go `makeCastFunc`.
     fn cast_full(&mut self, spell: SpellId, target: Side) -> bool {
         self.spells[spell].cur_cast = self.spells[spell].default_cast;
+        if let SpellBehavior::Class(behavior) = self.spells[spell].behavior {
+            A::modify_cast(self, spell, behavior);
+        }
         if self.spells[spell].flags.swapped {
             return self.cast_failure(spell, |_| "spell attached to an un-equipped item".into());
         }

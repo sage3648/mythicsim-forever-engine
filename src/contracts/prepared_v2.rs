@@ -243,6 +243,54 @@ pub struct Mana {
     pub teardown_max: f64,
 }
 
+/// A Seal of Command rank: the castable seal, its aura and its judgement.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct SealOfCommandRank {
+    pub seal_spell_id: i32,
+    pub aura: String,
+    pub judgement_spell_id: i32,
+}
+
+/// A Seal of Righteousness rank: the castable seal, its aura, its judgement, the damage spell
+/// it fires on a hit and the per-hit value per hundred of swing speed.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct SealOfRighteousnessRank {
+    pub seal_spell_id: i32,
+    pub aura: String,
+    pub judgement_spell_id: i32,
+    pub proc_spell_id: i32,
+    pub per_hit_value: f64,
+}
+
+/// A Holy Strike rank's percent of the normalized weapon swing plus the flat roll.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct HolyStrikeRank {
+    pub spell_id: i32,
+    pub weapon_percent: f64,
+}
+
+/// A Consecration rank: the tick every target takes and the bonus the first targets take.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct ConsecrationRank {
+    pub spell_id: i32,
+    pub tick: f64,
+    pub bonus: f64,
+    pub bonus_coefficient: f64,
+    pub bonus_targets: i32,
+}
+
+/// One Twist of Light Echo: its aura and the seal whose effect it replays.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct SealEcho {
+    pub aura: String,
+    pub seal: String,
+}
+
 /// A Fireball rank's dot: the base amount its ticks snapshot and whether they can crit.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -710,6 +758,76 @@ pub enum Effect {
         proc_mask: Vec<String>,
         judgement_auras: Vec<String>,
     },
+    /// Paladin judgement.go: Judgement casts the active seal's judgement, then wakes the
+    /// rotation a delay after its cooldown ends.
+    Judgement {
+        spell_id: i32,
+        wake_delay_ns: i64,
+    },
+    /// Paladin seal_of_command.go: every rank's seal and judgement, and the proc its seal and
+    /// Echo roll on landed white hits.
+    SealOfCommand {
+        ranks: Vec<SealOfCommandRank>,
+        proc_spell_id: i32,
+        weapon_percent: f64,
+        coefficient: f64,
+        proc_chance: f64,
+        rng_label: String,
+        icd_ns: i64,
+        deal_delay_ns: i64,
+    },
+    /// Paladin seal_of_righteousness.go: every rank's seal, judgement and per-hit proc.
+    SealOfRighteousness {
+        ranks: Vec<SealOfRighteousnessRank>,
+        hand_multiplier: f64,
+        swing_speed: f64,
+        deal_delay_ns: i64,
+    },
+    /// Paladin holy_strike.go: every rank's weapon percent; the flat roll is on the spell.
+    HolyStrike {
+        ranks: Vec<HolyStrikeRank>,
+    },
+    /// Paladin hammer_of_wrath.go: the damage rolls are on the spells.
+    HammerOfWrath {},
+    /// Paladin consecration.go: every rank's tick and the bonus the first targets take.
+    Consecration {
+        ranks: Vec<ConsecrationRank>,
+    },
+    /// Paladin talents_retribution.go Vengeance: crits stack a Holy and Physical damage mod.
+    Vengeance {
+        trigger_aura: String,
+        aura: String,
+        per_stack: f64,
+        spells: Vec<usize>,
+    },
+    /// Paladin talents_retribution.go Vindication: landed melee hits activate the target's
+    /// aura and the paladin's attack power aura.
+    Vindication {
+        trigger_aura: String,
+        proc_chance: f64,
+        aura: String,
+        target_aura: String,
+    },
+    /// Paladin talents_retribution.go Sanctified Judgement: Judgement returns part of the
+    /// active seal's cost.
+    SanctifiedJudgement {
+        trigger_aura: String,
+        proc_chance: f64,
+        refund: f64,
+        metrics_action_id: ActionId,
+    },
+    /// Paladin talents_retribution.go Sacred Arbiter: a landed Holy Strike refreshes every
+    /// judgement aura on the target.
+    SacredArbiter {
+        trigger_aura: String,
+        judgement_auras: Vec<String>,
+    },
+    /// Paladin talents_retribution.go Twist of Light: a replaced seal leaves an Echo that the
+    /// next landed white hit consumes.
+    TwistOfLight {
+        trigger_aura: String,
+        echoes: Vec<SealEcho>,
+    },
     /// Every Mind Blast rank's direct hit.
     MindBlast {},
     /// Every Shadow Word: Death rank's direct hit; Early Demise adds crit in the 20% execute
@@ -1138,6 +1256,17 @@ impl Effect {
             Effect::DarkSacrifice { .. } => "dark_sacrifice",
             Effect::InertPet { .. } => "inert_pet",
             Effect::JudgementRefresh { .. } => "judgement_refresh",
+            Effect::Judgement { .. } => "judgement",
+            Effect::SealOfCommand { .. } => "seal_of_command",
+            Effect::SealOfRighteousness { .. } => "seal_of_righteousness",
+            Effect::HolyStrike { .. } => "holy_strike",
+            Effect::HammerOfWrath { .. } => "hammer_of_wrath",
+            Effect::Consecration { .. } => "consecration",
+            Effect::Vengeance { .. } => "vengeance",
+            Effect::Vindication { .. } => "vindication",
+            Effect::SanctifiedJudgement { .. } => "sanctified_judgement",
+            Effect::SacredArbiter { .. } => "sacred_arbiter",
+            Effect::TwistOfLight { .. } => "twist_of_light",
             Effect::SunderArmorRamp { .. } => "sunder_armor_ramp",
             Effect::StatAuras { .. } => "stat_auras",
             Effect::WindfuryTotem { .. } => "windfury_totem",

@@ -259,6 +259,14 @@ impl<A: Agent> Fight<A> {
         }
     }
 
+    /// Go `Unit.ReactToEvent(sim, false, false)`: evaluate now, without reaction time.
+    pub(crate) fn react_to_event_now(&mut self) {
+        self.do_next_action();
+        if self.player.rotation_timer > self.now {
+            self.set_rotation_timer(self.now);
+        }
+    }
+
     /// The auto attack spell's `ApplyEffects`: weapon damage on the white hit table.
     pub(crate) fn apply_melee_auto(&mut self, spell: SpellId, target: Side, hand: Hand) {
         let attack_power = self.melee_attack_power();
@@ -350,7 +358,7 @@ impl<A: Agent> Fight<A> {
     }
 
     /// Go `GetArmorDamageModifier`.
-    fn armor_modifier(&self) -> f64 {
+    pub(crate) fn armor_modifier(&self) -> f64 {
         let melee = &self.config.melee;
         if melee.ignore_armor {
             return 1.0;
@@ -425,18 +433,43 @@ impl<A: Agent> Fight<A> {
         self.spells[spell].bonus_base_damage + self.config.physical_damage
     }
 
-    /// Go `PhysicalHitChance` for melee.
+    /// Go `PhysicalHitChance`, with ranged hit for a ranged attack.
     fn physical_hit_chance(&self, spell: SpellId) -> f64 {
-        let hit = self.config.physical_hit_percent + self.spells[spell].bonus_hit_percent
+        let mut hit = self.config.physical_hit_percent + self.spells[spell].bonus_hit_percent
             - self.config.melee.defender_reduced_physical_hit_taken;
+        if self.spells[spell].ranged_proc {
+            hit += self.config.ranged_hit_percent;
+        }
         (hit / 100.0 - self.config.melee.hit_suppression).max(0.0)
     }
 
-    /// Go `PhysicalCritChance` for melee.
+    /// Go `PhysicalCritChance`, with ranged crit for a ranged attack.
     fn physical_crit_chance(&self, spell: SpellId) -> f64 {
-        let crit = self.player.powers.physical_crit_percent + self.spells[spell].bonus_crit_percent
+        let mut crit = self.player.powers.physical_crit_percent
+            + self.spells[spell].bonus_crit_percent
             - self.config.target_reduced_crit_taken_percent;
+        if self.spells[spell].ranged_proc {
+            crit += self.config.ranged_crit_percent;
+        }
         (crit / 100.0 - self.config.melee.melee_crit_suppression).max(0.0)
+    }
+
+    /// Go `AutoAttacks.StopMeleeUntil`: the swings restart a full swing after `ready_at`.
+    pub(crate) fn stop_melee_until(&mut self, ready_at: i64) {
+        if !self.autos.melee {
+            return;
+        }
+        self.autos.mh.swing_at = ready_at + self.autos.mh.cur_swing_duration;
+        self.autos.min_time = self.autos.min_time.min(self.autos.mh.swing_at);
+        if self.autos.dual_wielding {
+            self.autos.oh.swing_at = ready_at + self.autos.oh.cur_swing_duration;
+            self.autos.min_time = self.autos.min_time.min(self.autos.oh.swing_at);
+        }
+    }
+
+    /// Go `AutoAttacks.NextAttackAt`: the earlier of the two hands' next swings.
+    pub(crate) fn next_attack_at(&self) -> i64 {
+        self.autos.mh.swing_at.min(self.autos.oh.swing_at)
     }
 
     /// Go `DodgeParrySuppression`.
@@ -718,6 +751,21 @@ impl<A: Agent> Fight<A> {
                     self.table_hit(spell, result, count);
                 }
             }
+            PhysicalOutcome::RangedHitAndCrit { count } => {
+                let roll = self.random("White Hit Table");
+                if self.table_miss(spell, result, roll, &mut chance, false) {
+                    return;
+                }
+                if front {
+                    if self.table_crit_separate(spell, result, count) {
+                        self.table_block(spell, result, roll, &mut chance);
+                    } else if !self.table_block(spell, result, roll, &mut chance) {
+                        self.table_hit(spell, result, count);
+                    }
+                } else if !self.table_crit_separate(spell, result, count) {
+                    self.table_hit(spell, result, count);
+                }
+            }
         }
     }
 }
@@ -734,4 +782,5 @@ pub(crate) enum PhysicalOutcome {
     MeleeSpecialBlockAndCrit { count: bool },
     MeleeSpecialNoBlockDodgeParry { count: bool },
     MeleeSpecialCritOnly { count: bool },
+    RangedHitAndCrit { count: bool },
 }

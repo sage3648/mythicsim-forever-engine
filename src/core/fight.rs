@@ -70,6 +70,8 @@ pub(crate) trait Agent: Sized {
     fn extra_cast_condition(_fight: &Fight<Self>, _spell: SpellId, _behavior: Self::Spell) -> bool {
         true
     }
+    /// Go `CastConfig.ModifyCast`, run as a full cast starts.
+    fn modify_cast(_fight: &mut Fight<Self>, _spell: SpellId, _behavior: Self::Spell) {}
     /// Go `MajorCooldown.ShouldActivate` for class cooldowns.
     fn should_activate(_fight: &Fight<Self>, _spell: SpellId, _behavior: Self::Spell) -> bool {
         true
@@ -334,6 +336,8 @@ pub(crate) struct Spell<S> {
     pub(crate) melee_proc: bool,
     /// Go `ProcMaskMeleeOrRanged`.
     pub(crate) melee_or_ranged_proc: bool,
+    /// Go `ProcMaskRanged`.
+    pub(crate) ranged_proc: bool,
     /// Go `ProcMaskMeleeOH`: `Spell.IsOH`.
     pub(crate) off_hand_proc: bool,
     /// Go `ProcMaskMeleeWhiteHit`.
@@ -552,6 +556,9 @@ pub(crate) struct Config {
     pub(crate) expertise_percent: f64,
     pub(crate) armor_penetration: f64,
     pub(crate) physical_damage: f64,
+    /// Go `RangedHitPercent` and `RangedCritPercent`, which ranged attacks add.
+    pub(crate) ranged_hit_percent: f64,
+    pub(crate) ranged_crit_percent: f64,
 }
 
 /// The pseudo stats Go restores at each reset, after permanent auras applied.
@@ -640,9 +647,17 @@ pub(crate) enum Action {
     SunderTick(i32),
     /// The party Windfury Totem's periodic refresh.
     WindfuryRefresh,
+    /// A computed result dealt later: Go `NewDelayedAction` with `DealDamage`.
+    DelayedDamage {
+        spell: SpellId,
+        result: SpellResult,
+    },
+    /// Go `Unit.ReactToEvent(sim, false, false)` from a pending action.
+    React,
 }
 
 /// Go `ActionPriority`.
+pub(crate) const PRIORITY_LOW: i32 = -1;
 pub(crate) const PRIORITY_GCD: i32 = 0;
 pub(crate) const PRIORITY_REGEN: i32 = 1;
 pub(crate) const PRIORITY_AUTO: i32 = 2;
@@ -863,6 +878,8 @@ impl<A: Agent> Fight<A> {
             expertise_percent: stat(&player.stats, "ExpertisePercent")?,
             armor_penetration: stat(&player.stats, "ArmorPenetration")?,
             physical_damage: stat(&player.stats, "PhysicalDamage")?,
+            ranged_hit_percent: stat(&player.stats, "RangedHitPercent")?,
+            ranged_crit_percent: stat(&player.stats, "RangedCritPercent")?,
         };
 
         let mut timer_names: Vec<String> = Vec::new();
@@ -1064,6 +1081,9 @@ impl<A: Agent> Fight<A> {
                             | "ProcMaskRangedAuto"
                             | "ProcMaskRangedSpecial"
                     )
+                }),
+                ranged_proc: exported.proc_mask.iter().any(|mask| {
+                    mask == "ProcMaskRangedAuto" || mask == "ProcMaskRangedSpecial"
                 }),
                 melee_proc: exported.proc_mask.iter().any(|mask| {
                     matches!(
@@ -2059,6 +2079,8 @@ impl<A: Agent> Fight<A> {
                     Action::WindfuryRefresh,
                 );
             }
+            Action::DelayedDamage { spell, result } => self.deal_damage(spell, result, false),
+            Action::React => self.react_to_event_now(),
         }
     }
 
