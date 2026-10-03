@@ -27,6 +27,8 @@ pub(crate) enum AuraBehavior<K> {
     Static,
     /// A listener that never acts in the supported scope.
     Inert,
+    /// Go health.go `trackChanceOfDeath`'s listener on hits the player takes.
+    ChanceOfDeath,
     /// Go buffs/paladin.go `AttachJudgementOfWisdomMana`.
     JudgementOfWisdom {
         chance: f64,
@@ -594,12 +596,31 @@ impl<A: Agent> Fight<A> {
         }
     }
 
+    /// Go `auraTracker.OnPeriodicDamageDealt` on the caster, which skips no inactive aura. No
+    /// target aura in scope acts on periodic damage taken.
+    pub(crate) fn on_periodic_damage(&mut self, spell: SpellId, result: &SpellResult) {
+        let list = List::PeriodicDamageDealt as usize;
+        let length = self.trackers[Side::Player.index()].lists[list].snapshot_len();
+        for position in 0..length {
+            let index = self.trackers[Side::Player.index()].lists[list].read(position);
+            let aura = AuraRef {
+                side: Side::Player,
+                index,
+            };
+            if let AuraBehavior::Class(kind) = self.aura(aura).behavior {
+                A::on_periodic_damage_dealt(self, aura, kind, spell, result);
+            }
+        }
+    }
+
     /// Go `auraTracker.OnSpellHitDealt` on the caster and `OnSpellHitTaken` on the target.
     pub(crate) fn on_spell_hit(&mut self, spell: SpellId, result: &SpellResult) {
         for (side, list) in [
             (Side::Player, List::SpellHitDealt),
             (result.target, List::SpellHitTaken),
         ] {
+            // Listeners of the caster's hits, as opposed to the hits its target takes.
+            let dealt = list == List::SpellHitDealt;
             let list = list as usize;
             let length = self.trackers[side.index()].lists[list].snapshot_len();
             for position in 0..length {
@@ -609,19 +630,19 @@ impl<A: Agent> Fight<A> {
                     continue;
                 }
                 match self.aura(aura).behavior.clone() {
-                    AuraBehavior::Class(kind) if side == Side::Player => {
+                    AuraBehavior::Class(kind) if dealt => {
                         A::on_spell_hit_dealt(self, aura, kind, spell, result)
                     }
                     AuraBehavior::JudgementOfWisdom { chance, delay, .. } => {
                         self.judgement_of_wisdom_callback(aura, spell, result, chance, delay)
                     }
-                    AuraBehavior::TouchOfTheGrave { chance, delay, .. } if side == Side::Player => {
+                    AuraBehavior::TouchOfTheGrave { chance, delay, .. } if dealt => {
                         self.touch_of_the_grave_callback(aura, spell, result, chance, delay)
                     }
-                    AuraBehavior::WindfuryTrigger if side == Side::Player => {
+                    AuraBehavior::WindfuryTrigger if dealt => {
                         self.windfury_trigger(aura, spell, result)
                     }
-                    AuraBehavior::WindfuryProc { .. } if side == Side::Player => {
+                    AuraBehavior::WindfuryProc { .. } if dealt => {
                         let windfury = self.windfury.as_ref().expect("Windfury Totem is bound");
                         // The charges' own trigger: a landed auto spends one, at once.
                         if windfury.spend_spells[spell]
@@ -630,11 +651,12 @@ impl<A: Agent> Fight<A> {
                             self.remove_stack(aura);
                         }
                     }
-                    AuraBehavior::Crusader if side == Side::Player => {
-                        self.crusader_callback(aura, spell, result)
-                    }
-                    AuraBehavior::DragonbreathChili if side == Side::Player => {
+                    AuraBehavior::Crusader if dealt => self.crusader_callback(aura, spell, result),
+                    AuraBehavior::DragonbreathChili if dealt => {
                         self.chili_callback(aura, spell, result)
+                    }
+                    AuraBehavior::ChanceOfDeath if !dealt && side == Side::Player => {
+                        self.chance_of_death_hit_taken(result)
                     }
                     _ => {}
                 }

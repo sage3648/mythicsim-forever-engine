@@ -236,6 +236,7 @@ impl<A: Agent> Fight<A> {
         match value {
             Compiled::Const(constant) => constant.int,
             Compiled::AuraNumStacks(aura) => self.aura(*aura).stacks,
+            Compiled::CurrentComboPoints => self.energy_bar().combo_points,
             // One target in scope.
             Compiled::NumberTargets => 1,
             // Go `APLValueMath.GetInt`: int32 arithmetic, which wraps.
@@ -266,7 +267,13 @@ impl<A: Agent> Fight<A> {
         match value {
             Compiled::Const(constant) => constant.float,
             Compiled::CurrentManaPercent => self.player.mana / self.config.max_mana,
+            // Go `GetRemainingDurationPercent` for a fight timed by duration.
+            Compiled::RemainingTimePercent => {
+                (self.duration - self.now) as f64 / self.duration as f64
+            }
             Compiled::CurrentMana => self.player.mana,
+            Compiled::CurrentEnergy => self.energy_bar().current,
+            Compiled::MaxEnergy => self.energy_bar().max,
             Compiled::NumberTargets => 1.0,
             // Go `APLValueMath.GetFloat`.
             Compiled::Math { op, lhs, rhs } => match op {
@@ -330,6 +337,7 @@ impl<A: Agent> Fight<A> {
                 };
                 (at - self.now).max(0)
             }
+            Compiled::TimeToNextEnergyTick => self.time_to_next_energy_tick(),
             // Go `APLValueDotRemainingTime`: zero when inactive.
             Compiled::DotRemainingTime(spell) => {
                 if self.dot_active(*spell) {

@@ -124,6 +124,14 @@ fn is_zero(value: &i32) -> bool {
     *value == 0
 }
 
+fn is_zero_usize(value: &usize) -> bool {
+    *value == 0
+}
+
+fn is_zero_f64(value: &f64) -> bool {
+    *value == 0.0
+}
+
 impl ActionId {
     pub fn spell(spell_id: i32) -> Self {
         Self {
@@ -291,6 +299,16 @@ pub struct SealEcho {
     pub seal: String,
 }
 
+/// Go `energyBar` for a player that has one, and its combo points.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct Energy {
+    pub max_energy: f64,
+    pub max_combo_points: i32,
+    pub tick_duration_ns: i64,
+    pub energy_per_tick: f64,
+}
+
 /// A Fireball rank's dot: the base amount its ticks snapshot and whether they can crit.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -337,6 +355,9 @@ pub struct Cost {
     pub flat_modifier: i32,
     pub percent_modifier: f64,
     pub additive_percent_modifier: f64,
+    /// Go `EnergyCost.Refund`: the share of an energy cost a missed strike gives back.
+    #[serde(default, skip_serializing_if = "is_zero_f64")]
+    pub refund: f64,
 }
 
 #[derive(Clone, Copy, Debug, Default, Deserialize, Serialize, PartialEq)]
@@ -433,6 +454,9 @@ pub struct Spell {
     /// spell has none of its own.
     #[serde(default)]
     pub related_dot_spell: Option<usize>,
+    /// Go `MetricSplits`: the spell reports one tagged metric entry per split.
+    #[serde(default, skip_serializing_if = "is_zero_usize")]
+    pub metric_splits: usize,
 }
 
 impl Spell {
@@ -474,6 +498,9 @@ pub struct Player {
     /// Go `Unit.CastSpeed`, the factor applied to hasted durations.
     pub cast_speed: f64,
     pub mana: Mana,
+    /// Go `energyBar`, absent for a player without one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub energy: Option<Energy>,
     pub attack_table: AttackTable,
     pub spells: Vec<Spell>,
     /// Go's initial major cooldown order after the rotation claimed its spells.
@@ -893,6 +920,40 @@ pub enum Effect {
         spirit_divisor: f64,
         metrics_action_id: ActionId,
     },
+    /// Every Smite rank's cast on its own client row.
+    Smite {},
+    /// Every Holy Fire rank: the hit rolls, a landed hit applies a snapshotting dot, then the
+    /// hit is dealt.
+    HolyFire {
+        ranks: Vec<FireballRank>,
+    },
+    /// Penance: a hit roll without a hit count, then a channel that ticks on application and
+    /// each second after.
+    Penance {
+        spell_id: i32,
+        tick_base: f64,
+        tick_can_crit: bool,
+    },
+    /// Power in Light: the target's dynamic damage taken modifier multiplies `spells` while any
+    /// Holy Fire in `holy_fire_spells` burns it.
+    PowerInLight {
+        multiplier: f64,
+        spells: Vec<usize>,
+        holy_fire_spells: Vec<usize>,
+    },
+    /// Searing Light: Holy Fire ticks may grant a free Holy Nova.
+    SearingLight {
+        trigger_aura: String,
+        aura: String,
+        callbacks: Vec<String>,
+        outcome: Vec<String>,
+        trigger_immediately: bool,
+        proc_chance: f64,
+        trigger_spells: Vec<usize>,
+        cost_percent_add: f64,
+        cost_spells: Vec<usize>,
+        cancel_spells: Vec<usize>,
+    },
     /// A registered pet nothing summons: Go resets and dismisses it each fight, logging its
     /// stats, and reports its zero metrics.
     InertPet {
@@ -1212,6 +1273,95 @@ pub enum Effect {
         cost_percent_add: f64,
         max_stacks: i32,
     },
+    /// Go consumes.go conjured item that restores energy, such as Thistle Tea.
+    ConjuredEnergy {
+        item_id: i32,
+        rng_label: String,
+        gains: Vec<ManaGain>,
+        selected: bool,
+        level_reduction: f64,
+    },
+    SinisterStrike {
+        spell_id: i32,
+        base_damage: f64,
+    },
+    Backstab {
+        spell_id: i32,
+        base_damage: f64,
+        main_hand_dagger: bool,
+        extra_combo_point_chance: f64,
+        extra_combo_point_action: ActionId,
+    },
+    Eviscerate {
+        spell_id: i32,
+        damage_average: f64,
+        damage_variance: f64,
+        combo_point_damage: f64,
+        attack_power_per_combo_point: f64,
+    },
+    SliceAndDice {
+        spell_id: i32,
+        aura: String,
+        durations_ns: Vec<i64>,
+        melee_speed_multiplier: f64,
+    },
+    BladeFlurry {
+        spell_id: i32,
+        aura: String,
+        attack_speed_multiplier: f64,
+    },
+    AdrenalineRush {
+        spell_id: i32,
+        aura: String,
+        regen_multiplier: f64,
+        energy_threshold: f64,
+    },
+    RogueFinisher {
+        relentless_strikes: bool,
+        relentless_strikes_chance_per_point: f64,
+        relentless_strikes_energy: f64,
+        relentless_strikes_action: ActionId,
+        ruthlessness_chance: f64,
+        ruthlessness_action: ActionId,
+    },
+    InstantPoison {
+        trigger_aura: String,
+        spell_id: i32,
+        proc_mask: Vec<String>,
+        proc_chance: f64,
+        min_damage: f64,
+        max_damage: f64,
+    },
+    DeadlyPoison {
+        trigger_aura: String,
+        spell_id: i32,
+        tag: i32,
+        proc_mask: Vec<String>,
+        proc_chance: f64,
+        tick_damage: f64,
+    },
+    /// Go consumes.go Goblin Sapper Charge: a rolled Fire hit on the target and a second roll
+    /// on the player, which rolls on the player's attack table against itself.
+    GoblinSapper {
+        item_id: i32,
+        self_tag: i32,
+        min_damage: f64,
+        max_damage: f64,
+        aoe_cap_multiplier: f64,
+        self_attack_table: AttackTable,
+    },
+    /// Go health.go trackChanceOfDeath once a spell can hit the player.
+    ChanceOfDeath {
+        aura: String,
+    },
+    /// Go aura_helpers.go ApplyFixedUptimeAura: a periodic roll that activates the aura and a
+    /// first roll with a random duration.
+    FixedUptimeAura {
+        aura: String,
+        uptime: f64,
+        tick_length_ns: i64,
+        start_time_ns: i64,
+    },
 }
 
 impl Effect {
@@ -1255,6 +1405,11 @@ impl Effect {
             Effect::ShadowWeaving { .. } => "shadow_weaving",
             Effect::DarkSacrifice { .. } => "dark_sacrifice",
             Effect::InertPet { .. } => "inert_pet",
+            Effect::Smite {} => "smite",
+            Effect::HolyFire { .. } => "holy_fire",
+            Effect::Penance { .. } => "penance",
+            Effect::PowerInLight { .. } => "power_in_light",
+            Effect::SearingLight { .. } => "searing_light",
             Effect::JudgementRefresh { .. } => "judgement_refresh",
             Effect::Judgement { .. } => "judgement",
             Effect::SealOfCommand { .. } => "seal_of_command",
@@ -1311,6 +1466,19 @@ impl Effect {
             Effect::FireNova { .. } => "fire_nova",
             Effect::SearingTotem { .. } => "searing_totem",
             Effect::ElementalFocus { .. } => "elemental_focus",
+            Effect::ConjuredEnergy { .. } => "conjured_energy",
+            Effect::SinisterStrike { .. } => "sinister_strike",
+            Effect::Backstab { .. } => "backstab",
+            Effect::Eviscerate { .. } => "eviscerate",
+            Effect::SliceAndDice { .. } => "slice_and_dice",
+            Effect::BladeFlurry { .. } => "blade_flurry",
+            Effect::AdrenalineRush { .. } => "adrenaline_rush",
+            Effect::RogueFinisher { .. } => "rogue_finisher",
+            Effect::InstantPoison { .. } => "instant_poison",
+            Effect::DeadlyPoison { .. } => "deadly_poison",
+            Effect::GoblinSapper { .. } => "goblin_sapper",
+            Effect::ChanceOfDeath { .. } => "chance_of_death",
+            Effect::FixedUptimeAura { .. } => "fixed_uptime_aura",
         }
     }
 }

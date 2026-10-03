@@ -12,7 +12,9 @@
 mod aura;
 mod cast;
 mod damage;
+pub(crate) mod damage_taken;
 mod dot;
+pub(crate) mod energy;
 mod log;
 pub(crate) mod melee;
 pub(crate) mod metrics;
@@ -70,7 +72,7 @@ pub(crate) trait Agent: Sized {
     fn extra_cast_condition(_fight: &Fight<Self>, _spell: SpellId, _behavior: Self::Spell) -> bool {
         true
     }
-    /// Go `CastConfig.ModifyCast`, run as a full cast starts.
+    /// Go `CastConfig.ModifyCast`, run first in a full cast. It may not change the cost.
     fn modify_cast(_fight: &mut Fight<Self>, _spell: SpellId, _behavior: Self::Spell) {}
     /// Go `MajorCooldown.ShouldActivate` for class cooldowns.
     fn should_activate(_fight: &Fight<Self>, _spell: SpellId, _behavior: Self::Spell) -> bool {
@@ -112,6 +114,15 @@ pub(crate) trait Agent: Sized {
     ) {
     }
     fn on_spell_hit_dealt(
+        _fight: &mut Fight<Self>,
+        _aura: AuraRef,
+        _kind: Self::Aura,
+        _spell: SpellId,
+        _result: &SpellResult,
+    ) {
+    }
+    /// Go `OnPeriodicDamageDealt` for a class aura.
+    fn on_periodic_damage_dealt(
         _fight: &mut Fight<Self>,
         _aura: AuraRef,
         _kind: Self::Aura,
@@ -163,6 +174,18 @@ pub(crate) enum SpellBehavior<S> {
         selected: bool,
         regen_window: f64,
     },
+    /// Go consumes.go conjured item restoring energy, such as Thistle Tea, less its level
+    /// reduction.
+    ConjuredEnergy {
+        label: String,
+        min: f64,
+        spread: f64,
+        selected: bool,
+        reduction: f64,
+        metrics: usize,
+    },
+    /// Go consumes.go Goblin Sapper Charge: a Fire hit on the target and one on the player.
+    GoblinSapper,
     /// Go spell_data_energize.go: an item use that rolls a client energize effect.
     EnergizeOnUse {
         average: f64,
@@ -278,9 +301,13 @@ impl Cast {
     }
 }
 
-/// Go `SpellCost` for mana.
+/// Go `SpellCost`.
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct Cost {
+    /// The resource the cost spends.
+    pub(crate) kind: ResourceKind,
+    /// Go `EnergyCost.Refund`.
+    pub(crate) refund: f64,
     pub(crate) base: i32,
     pub(crate) flat_modifier: i32,
     pub(crate) percent_modifier: f64,
@@ -377,9 +404,18 @@ pub(crate) struct Spell<S> {
     pub(crate) related_dot_spell: Option<SpellId>,
     /// Index into the resource metrics for this spell's mana cost.
     pub(crate) mana_metrics: Option<usize>,
+    /// Indexes into the resource metrics for this spell's energy cost and combo points.
+    pub(crate) energy_metrics: Option<(usize, usize)>,
     pub(crate) metrics: [SpellMetrics; 2],
-    /// Index into the fight's action metrics, absent for `SpellFlagNoMetrics`.
+    /// Index into the fight's action metrics, absent for `SpellFlagNoMetrics`; the current
+    /// split's for a spell with metric splits.
     pub(crate) action: Option<usize>,
+    /// Go `splitSpellMetrics`, by split; `metrics` holds the current split's while it is set.
+    pub(crate) split_metrics: Vec<[SpellMetrics; 2]>,
+    /// The action metrics of each split.
+    pub(crate) split_actions: Vec<usize>,
+    /// The current split, which Go keeps across iterations.
+    pub(crate) split: usize,
 }
 
 /// Go `Hardcast`.
@@ -497,6 +533,18 @@ struct SunderRamp {
     blocked: bool,
 }
 
+/// Go aura_helpers.go `ApplyFixedUptimeAura` for a player aura.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct FixedUptime {
+    aura: AuraRef,
+    uptime: f64,
+    chance_per_tick: f64,
+    tick_length: i64,
+    start_time: i64,
+    /// The aura's own duration, which the first roll replaces for its activation only.
+    duration: i64,
+}
+
 /// Go `spiritRegenAttribution`: the spirit regeneration state before the source applied.
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct SpiritAttribution {
@@ -583,11 +631,35 @@ pub(crate) struct MajorCooldown {
     pub(crate) uses: usize,
 }
 
-/// Go `ResourceMetrics` for mana, or for health when `health` is set.
+/// Go `proto.ResourceType` of a resource metric.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum ResourceKind {
+    Mana,
+    Health,
+    #[allow(dead_code)] // Shared with the Warrior domain in progress.
+    Rage,
+    Energy,
+    ComboPoints,
+}
+
+impl ResourceKind {
+    /// The Go proto enum name, as Go's result JSON writes it.
+    pub(crate) fn proto_name(self) -> &'static str {
+        match self {
+            ResourceKind::Mana => "ResourceTypeMana",
+            ResourceKind::Health => "ResourceTypeHealth",
+            ResourceKind::Rage => "ResourceTypeRage",
+            ResourceKind::Energy => "ResourceTypeEnergy",
+            ResourceKind::ComboPoints => "ResourceTypeComboPoints",
+        }
+    }
+}
+
+/// Go `ResourceMetrics`.
 #[derive(Clone, Debug)]
 pub(crate) struct ResourceMetrics {
     pub(crate) id: ActionId,
-    pub(crate) health: bool,
+    pub(crate) kind: ResourceKind,
     pub(crate) events: i32,
     pub(crate) gain: f64,
     pub(crate) actual_gain: f64,
@@ -613,6 +685,16 @@ pub(crate) struct TargetState {
 pub(crate) struct DamageTakenModifier {
     pub(crate) school_mask: u8,
     pub(crate) aura: AuraRef,
+    pub(crate) multiplier: f64,
+}
+
+/// Go `Unit.AddDynamicDamageTakenModifier` on the target for a modifier that multiplies the
+/// player's damage of the spells in `spells` while any aura in `auras` is active, as a class
+/// asking whether one of its dots burns the target does.
+#[derive(Clone, Debug)]
+pub(crate) struct SpellDamageTakenModifier {
+    pub(crate) spells: Vec<bool>,
+    pub(crate) auras: Vec<AuraRef>,
     pub(crate) multiplier: f64,
 }
 
@@ -645,6 +727,13 @@ pub(crate) enum Action {
     Prepull(SpellId),
     /// A tick of the raid's Sunder Armor ramp, with the ticks done so far.
     SunderTick(i32),
+    /// Go trackChanceOfDeath's pending action: mark the player dead if health is still gone.
+    DeathCheck,
+    /// A fixed uptime aura's periodic roll, or its first roll.
+    FixedUptime {
+        index: usize,
+        first: bool,
+    },
     /// The party Windfury Totem's periodic refresh.
     WindfuryRefresh,
     /// A computed result dealt later: Go `NewDelayedAction` with `DealDamage`.
@@ -678,6 +767,18 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) rng: SimRng,
     pub(crate) queue: PendingQueue<Action>,
     min_tracker_time: i64,
+    /// Go `sim.minTaskTime`.
+    min_task_time: i64,
+    /// Go `energyBar`, for a player that has one.
+    pub(crate) energy: Option<energy::EnergyBar>,
+    /// The player as the defender of its own spells, when a spell can hit the player.
+    pub(crate) self_target: Option<damage_taken::SelfTarget>,
+    /// The Goblin Sapper Charge, when the character has it.
+    pub(crate) goblin_sapper: Option<damage_taken::GoblinSapper>,
+    /// Go `UnitMetrics.Died` for the player.
+    pub(crate) death: damage_taken::Death,
+    /// Auras Go keeps up through `ApplyFixedUptimeAura`.
+    pub(crate) fixed_uptime: Vec<FixedUptime>,
     pub(crate) player: Player,
     /// Go `Unit.CastSpeed`. Go's unit reset restores the pseudo stats but not this value,
     /// so a speed change undone at the end of a fight carries into the next one.
@@ -687,6 +788,9 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) target: TargetState,
     /// The target's dynamic damage taken modifiers.
     pub(crate) damage_taken_modifiers: Vec<DamageTakenModifier>,
+    /// Spell-conditioned modifiers, applied after `damage_taken_modifiers`; no class registers
+    /// both kinds, so Go's single registration order is kept.
+    pub(crate) spell_damage_taken_modifiers: Vec<SpellDamageTakenModifier>,
     /// Go `healthBar.DamageTakenHealthMetrics` for the player.
     damage_taken_health: usize,
     pub(crate) spells: Vec<Spell<A::Spell>>,
@@ -894,10 +998,10 @@ impl<A: Agent> Fight<A> {
         };
 
         let mut resources = Vec::new();
-        let mut resource = |id: ActionId, regen: bool, health: bool| {
+        let mut resource = |id: ActionId, regen: bool, kind: ResourceKind| {
             resources.push(ResourceMetrics {
                 id,
-                health,
+                kind,
                 events: 0,
                 gain: 0.0,
                 actual_gain: 0.0,
@@ -912,15 +1016,15 @@ impl<A: Agent> Fight<A> {
             tag,
             ..ActionId::default()
         };
-        let mana_regen_casting = resource(regen_id(1), false, false);
-        let mana_regen_not_casting = resource(regen_id(2), false, false);
+        let mana_regen_casting = resource(regen_id(1), false, ResourceKind::Mana);
+        let mana_regen_not_casting = resource(regen_id(2), false, ResourceKind::Mana);
         let damage_taken_health = resource(
             ActionId {
                 other_id: "OtherActionDamageTaken".into(),
                 ..ActionId::default()
             },
             false,
-            true,
+            ResourceKind::Health,
         );
 
         let effects = &prepared.effects;
@@ -983,6 +1087,25 @@ impl<A: Agent> Fight<A> {
                                 regen_window: *regen_window_seconds,
                             })
                         }
+                        Effect::ConjuredEnergy {
+                            item_id,
+                            rng_label,
+                            gains,
+                            selected,
+                            level_reduction,
+                        } if *item_id == item && gains.len() == 1 => {
+                            Some(SpellBehavior::ConjuredEnergy {
+                                label: rng_label.clone(),
+                                min: gains[0].min,
+                                spread: gains[0].spread,
+                                selected: *selected,
+                                reduction: *level_reduction,
+                                metrics: resource(id.clone(), false, ResourceKind::Energy),
+                            })
+                        }
+                        Effect::GoblinSapper { item_id, .. } if *item_id == item && id.tag == 0 => {
+                            Some(SpellBehavior::GoblinSapper)
+                        }
                         Effect::EnergizeOnUse {
                             item_id,
                             average,
@@ -1028,7 +1151,7 @@ impl<A: Agent> Fight<A> {
                         } if id.spell_id == *drain_spell_id && id.tag == 0 => {
                             Some(SpellBehavior::TouchOfTheGraveDrain {
                                 health_fraction: *health_fraction,
-                                metrics: resource(id.clone(), false, true),
+                                metrics: resource(id.clone(), false, ResourceKind::Health),
                             })
                         }
                         _ => None,
@@ -1036,12 +1159,27 @@ impl<A: Agent> Fight<A> {
                     .unwrap_or(SpellBehavior::None)
             };
             let cost = exported.cost.as_ref().map(|cost| Cost {
+                kind: if cost.resource == "energy" {
+                    ResourceKind::Energy
+                } else {
+                    ResourceKind::Mana
+                },
+                refund: cost.refund,
                 base: cost.base_cost,
                 flat_modifier: cost.flat_modifier,
                 percent_modifier: cost.percent_modifier,
                 additive_percent_modifier: cost.additive_percent_modifier,
             });
-            let mana_metrics = cost.map(|_| resource(id.clone(), false, false));
+            // Go newEnergyCost registers the energy metrics, then the combo point metrics.
+            let (mana_metrics, energy_metrics) = match cost.map(|cost| cost.kind) {
+                Some(ResourceKind::Energy) => {
+                    let energy = resource(id.clone(), false, ResourceKind::Energy);
+                    let combo = resource(id.clone(), false, ResourceKind::ComboPoints);
+                    (None, Some((energy, combo)))
+                }
+                Some(kind) => (Some(resource(id.clone(), false, kind)), None),
+                None => (None, None),
+            };
             let spell_id = spells.len();
             let dot = exported.dot.as_ref().map(|exported_dot| {
                 dots.push(Dot::new(spell_id, exported_dot));
@@ -1138,32 +1276,55 @@ impl<A: Agent> Fight<A> {
                 dot,
                 related_dot_spell: exported.related_dot_spell,
                 mana_metrics,
+                energy_metrics,
                 metrics: [SpellMetrics::default(); 2],
                 action: None,
+                split_metrics: Vec::new(),
+                split_actions: Vec::new(),
+                split: 0,
                 id,
             });
         }
 
-        // Go keys action metrics by action ID in spellbook order.
+        // Go keys action metrics by action ID in spellbook order, one tagged ID per metric
+        // split.
         let mut actions: Vec<ActionTotals> = Vec::new();
-        for spell in &mut spells {
+        for (spell, exported) in spells.iter_mut().zip(&player.spells) {
             if spell.flags.no_metrics {
                 continue;
             }
-            let index = match actions.iter().position(|action| action.id == spell.id) {
-                Some(index) => index,
-                None => {
-                    actions.push(ActionTotals {
-                        id: spell.id.clone(),
-                        melee: spell.flags.melee_metrics,
-                        passive: spell.flags.passive,
-                        school: spell.school,
-                        targets: [ActionReport::new(0), ActionReport::new(1)],
-                    });
-                    actions.len() - 1
-                }
+            let ids: Vec<ActionId> = if exported.metric_splits > 1 {
+                (0..exported.metric_splits)
+                    .map(|tag| ActionId {
+                        tag: tag as i32,
+                        ..spell.id.clone()
+                    })
+                    .collect()
+            } else {
+                vec![spell.id.clone()]
             };
-            spell.action = Some(index);
+            let mut indexes = Vec::new();
+            for id in ids {
+                let index = match actions.iter().position(|action| action.id == id) {
+                    Some(index) => index,
+                    None => {
+                        actions.push(ActionTotals {
+                            id,
+                            melee: spell.flags.melee_metrics,
+                            passive: spell.flags.passive,
+                            school: spell.school,
+                            targets: [ActionReport::new(0), ActionReport::new(1)],
+                        });
+                        actions.len() - 1
+                    }
+                };
+                indexes.push(index);
+            }
+            spell.action = Some(indexes[0]);
+            if indexes.len() > 1 {
+                spell.split_metrics = vec![[SpellMetrics::default(); 2]; indexes.len()];
+                spell.split_actions = indexes;
+            }
         }
 
         let mut aura_logs: Vec<String> = Vec::new();
@@ -1224,7 +1385,7 @@ impl<A: Agent> Fight<A> {
                     )),
                     _ => None,
                 }) {
-                    let metrics = resource(jow.2.clone(), false, false);
+                    let metrics = resource(jow.2.clone(), false, ResourceKind::Mana);
                     AuraBehavior::JudgementOfWisdom {
                         chance: jow.0,
                         mana: jow.1,
@@ -1347,6 +1508,12 @@ impl<A: Agent> Fight<A> {
                     }
                 } else if side == Side::Player
                     && effects.iter().any(|effect| {
+                        matches!(effect, Effect::ChanceOfDeath { aura } if *aura == exported.label)
+                    })
+                {
+                    AuraBehavior::ChanceOfDeath
+                } else if side == Side::Player
+                    && effects.iter().any(|effect| {
                         matches!(effect, Effect::Crusader { trigger_aura, .. } if *trigger_aura == exported.label)
                     })
                 {
@@ -1415,6 +1582,12 @@ impl<A: Agent> Fight<A> {
             rng: SimRng::new(prepared.sim.labeled_rng, prepared.sim.seed as u64),
             queue: PendingQueue::default(),
             min_tracker_time: NEVER_EXPIRES,
+            min_task_time: NEVER_EXPIRES,
+            energy: None,
+            self_target: None,
+            goblin_sapper: None,
+            death: damage_taken::Death::default(),
+            fixed_uptime: Vec::new(),
             player: Player {
                 powers: config.powers,
                 mana: config.max_mana,
@@ -1457,6 +1630,7 @@ impl<A: Agent> Fight<A> {
                 school_damage_taken_multiplier: config.target_school_damage_taken_multiplier,
             },
             damage_taken_modifiers: Vec::new(),
+            spell_damage_taken_modifiers: Vec::new(),
             damage_taken_health,
             config,
             trackers,
@@ -1502,6 +1676,61 @@ impl<A: Agent> Fight<A> {
             totals: metrics::Totals::default(),
             encounter_damage_taken: 0.0,
         };
+        if let Some(energy) = &player.energy {
+            fight.enable_energy_bar(energy);
+        }
+        for effect in effects {
+            if let Effect::FixedUptimeAura {
+                aura,
+                uptime,
+                tick_length_ns,
+                start_time_ns,
+            } = effect
+            {
+                let aura = fight.player_aura(aura)?;
+                let duration = fight.aura(aura).duration;
+                let ticks_per_aura = duration as f64 / *tick_length_ns as f64;
+                fight.fixed_uptime.push(FixedUptime {
+                    aura,
+                    uptime: *uptime,
+                    chance_per_tick: if *uptime == 1.0 {
+                        1.0
+                    } else {
+                        1.0 - (1.0 - uptime).powf(1.0 / ticks_per_aura)
+                    },
+                    tick_length: *tick_length_ns,
+                    start_time: *start_time_ns,
+                    duration,
+                });
+            }
+        }
+        for effect in effects {
+            if let Effect::GoblinSapper {
+                item_id,
+                self_tag,
+                min_damage,
+                max_damage,
+                aoe_cap_multiplier,
+                self_attack_table,
+            } = effect
+            {
+                let self_spell = fight
+                    .spells
+                    .iter()
+                    .position(|spell| spell.id.item_id == *item_id && spell.id.tag == *self_tag)
+                    .ok_or_else(|| {
+                        format!("Goblin Sapper Charge {item_id} has no self damage spell")
+                    })?;
+                fight.self_target =
+                    Some(damage_taken::SelfTarget::new(prepared, self_attack_table)?);
+                fight.goblin_sapper = Some(damage_taken::GoblinSapper {
+                    min_damage: *min_damage,
+                    max_damage: *max_damage,
+                    aoe_cap_multiplier: *aoe_cap_multiplier,
+                    self_spell,
+                });
+            }
+        }
         fight.rotation = fight.compile_rotation(&parsed);
         fight.prepull = fight.compile_prepull(&parsed);
         for effect in effects {
@@ -1545,17 +1774,8 @@ impl<A: Agent> Fight<A> {
                             *slot = Some(entry.chance);
                         }
                     }
-                    let heal_metrics = fight.resources.len();
-                    fight.resources.push(ResourceMetrics {
-                        id: heal_metrics_action_id.clone(),
-                        health: true,
-                        events: 0,
-                        gain: 0.0,
-                        actual_gain: 0.0,
-                        previous_events: 0,
-                        previous_actual_gain: 0.0,
-                        is_mana_regen: false,
-                    });
+                    let heal_metrics = fight
+                        .new_resource_metrics(heal_metrics_action_id.clone(), ResourceKind::Health);
                     fight.crusader = Some(Crusader {
                         chances: by_spell,
                         mh_aura: fight.player_aura(mh_aura)?,
@@ -1668,6 +1888,11 @@ impl<A: Agent> Fight<A> {
             }
         }
         Ok(fight)
+    }
+
+    /// Go `HasManaBar`: a class without mana, such as a Rogue, exports no maximum mana.
+    pub(crate) fn has_mana_bar(&self) -> bool {
+        self.config.max_mana > 0.0
     }
 
     /// The mana regeneration inputs for Go `ManaRegenPerSecondWhileCasting`.
@@ -1841,6 +2066,7 @@ impl<A: Agent> Fight<A> {
         self.end_of_combat = self.duration;
         self.now = 0;
         self.min_tracker_time = NEVER_EXPIRES;
+        self.min_task_time = NEVER_EXPIRES;
         // Go's environment always rolls the pet heartbeat offset, even without pets.
         self.random("Pet Stat Inheritance");
         self.encounter_damage_taken = 0.0;
@@ -1850,13 +2076,15 @@ impl<A: Agent> Fight<A> {
         // Go Character.reset resets the pets after the owner's agent.
         self.reset_inert_pets();
         // Go initManaTickAction, after the environment reset: two seconds after the prepull
-        // starts.
-        let prepull_start = self.prepull.first().map_or(0, |&(at, _)| at);
-        self.schedule(
-            prepull_start + 2 * crate::core::time::NS_PER_SECOND,
-            PRIORITY_REGEN,
-            Action::ManaTick,
-        );
+        // starts, when a unit has a mana bar.
+        if self.has_mana_bar() {
+            let prepull_start = self.prepull.first().map_or(0, |&(at, _)| at);
+            self.schedule(
+                prepull_start + 2 * crate::core::time::NS_PER_SECOND,
+                PRIORITY_REGEN,
+                Action::ManaTick,
+            );
+        }
     }
 
     /// Go `Unit.reset` followed by `Character.reset` for the player.
@@ -1871,6 +2099,8 @@ impl<A: Agent> Fight<A> {
         }
         if side == Side::Player {
             self.timers.fill(STARTING_CD_TIME);
+            // Go UnitMetrics.reset.
+            self.death.died = false;
             let player = &mut self.player;
             player.gcd = STARTING_CD_TIME;
             player.rotation_timer = STARTING_CD_TIME;
@@ -1909,6 +2139,23 @@ impl<A: Agent> Fight<A> {
             // Go runs reset effects first in the aura tracker's reset.
             self.reset_mods();
             A::reset(self);
+            // Go ApplyFixedUptimeAura's reset effect: the periodic roll, then the first one.
+            for index in 0..self.fixed_uptime.len() {
+                let fixed = self.fixed_uptime[index];
+                self.schedule(
+                    self.now + fixed.tick_length,
+                    PRIORITY_GCD,
+                    Action::FixedUptime {
+                        index,
+                        first: false,
+                    },
+                );
+                self.schedule(
+                    self.now + fixed.start_time,
+                    PRIORITY_GCD,
+                    Action::FixedUptime { index, first: true },
+                );
+            }
         }
         self.reset_auras(side);
         // Go driveWindfuryTotem's OnReset: the totem refreshes every period from the reset.
@@ -1928,6 +2175,7 @@ impl<A: Agent> Fight<A> {
         if side == Side::Player {
             for spell in &mut self.spells {
                 spell.metrics = [SpellMetrics::default(); 2];
+                spell.split_metrics.fill([SpellMetrics::default(); 2]);
             }
             self.player.mana = self.config.max_mana;
             self.player.health = self.config.max_health;
@@ -1935,6 +2183,9 @@ impl<A: Agent> Fight<A> {
             self.player.waiting_for_mana = 0.0;
             self.player.waiting_for_mana_start = 0;
             self.update_mana_regen_rates();
+            // Go energyBar.reset, after the mana and health bars.
+            let prepull_start = self.prepull.first().map_or(0, |&(at, _)| at);
+            self.reset_energy(prepull_start);
         }
         // Go AutoAttacks.reset: an enemy with a melee swing rolls its opening offset.
         if side == Side::Target && self.config.target_auto_swing_melee {
@@ -1975,11 +2226,19 @@ impl<A: Agent> Fight<A> {
     fn step(&mut self) -> bool {
         // Go runs due weapon swings before the next pending action, ties included.
         let next = self.queue.peek_time().unwrap_or(NEVER_EXPIRES);
-        if self.due_weapon_attack(next) {
+        if self.due_weapon_attack(next) && self.autos.min_time <= self.min_task_time {
             if self.autos.min_time > self.end_of_combat {
                 return false;
             }
             self.advance_weapon_attacks();
+            return true;
+        }
+        // Then due tasks, the energy ticks.
+        if self.due_task(next) {
+            if self.min_task_time > self.end_of_combat {
+                return false;
+            }
+            self.advance_tasks();
             return true;
         }
         let Some((time, handle, action)) = self.queue.pop() else {
@@ -2070,6 +2329,8 @@ impl<A: Agent> Fight<A> {
             } => self.delayed_proc(aura, spell, result),
             Action::Prepull(spell) => self.cast_or_queue(spell, Side::Target),
             Action::SunderTick(done) => self.sunder_tick(done),
+            Action::DeathCheck => self.death_check(),
+            Action::FixedUptime { index, first } => self.fixed_uptime_roll(index, first),
             Action::WindfuryRefresh => {
                 let windfury = self.windfury.clone().expect("Windfury Totem is bound");
                 self.activate_aura(windfury.totem);
@@ -2082,6 +2343,37 @@ impl<A: Agent> Fight<A> {
             Action::DelayedDamage { spell, result } => self.deal_damage(spell, result, false),
             Action::React => self.react_to_event_now(),
         }
+    }
+
+    /// Go ApplyFixedUptimeAura's actions. The periodic roll activates the aura, adding a stack
+    /// when it stacks, and comes back a period later. The first roll activates it once, for a
+    /// random share of its duration, so the collapsed chance keeps the uptime.
+    fn fixed_uptime_roll(&mut self, index: usize, first: bool) {
+        let fixed = self.fixed_uptime[index];
+        if first {
+            if self.random("FixedAura") < fixed.uptime {
+                let span = (fixed.duration - fixed.tick_length) as f64;
+                let random = fixed.tick_length + (span * self.random("FixedAuraDur")) as i64;
+                self.aura_mut(fixed.aura).duration = random;
+                self.activate_aura(fixed.aura);
+                self.aura_mut(fixed.aura).duration = fixed.duration;
+            }
+            return;
+        }
+        if self.random("FixedAura") < fixed.chance_per_tick {
+            self.activate_aura(fixed.aura);
+            if self.aura(fixed.aura).max_stacks > 0 {
+                self.add_stack(fixed.aura);
+            }
+        }
+        self.schedule(
+            self.now + fixed.tick_length,
+            PRIORITY_GCD,
+            Action::FixedUptime {
+                index,
+                first: false,
+            },
+        );
     }
 
     /// Go driveSunderArmor's periodic action: activate, add a stack, and come back a period

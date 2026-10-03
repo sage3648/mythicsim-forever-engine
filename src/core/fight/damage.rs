@@ -327,6 +327,16 @@ impl<A: Agent> Fight<A> {
                 result.damage *= modifier.multiplier;
             }
         }
+        for modifier in &self.spell_damage_taken_modifiers {
+            if modifier.spells[spell]
+                && modifier
+                    .auras
+                    .iter()
+                    .any(|&aura| self.trackers[aura.side.index()].auras[aura.index].active)
+            {
+                result.damage *= modifier.multiplier;
+            }
+        }
         result.damage = result.damage.max(0.0);
 
         if self.log.is_some() {
@@ -692,9 +702,13 @@ impl<A: Agent> Fight<A> {
             self.encounter_damage_taken += result.damage;
         }
         if self.log.is_some() && !self.spells[spell].flags.no_logs {
+            let label = match result.target {
+                Side::Target => &self.config.target_label,
+                Side::Player => &self.config.player_label,
+            };
             let line = format!(
                 "[{}] {}{} {} (SpellSchool: {}). (Threat: {:.3})",
-                self.config.target_label,
+                label,
                 action_string(&self.spells[spell].id),
                 if periodic { " tick" } else { "" },
                 result.damage_string(),
@@ -703,8 +717,12 @@ impl<A: Agent> Fight<A> {
             );
             self.player_log(&line);
         }
-        if !self.spells[spell].flags.no_on_damage_dealt && !periodic {
-            self.on_spell_hit(spell, &result);
+        if !self.spells[spell].flags.no_on_damage_dealt {
+            if periodic {
+                self.on_periodic_damage(spell, &result);
+            } else {
+                self.on_spell_hit(spell, &result);
+            }
         }
     }
 }

@@ -3456,7 +3456,10 @@
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
-        "damage_effect": null
+        "damage_effect": {
+          "average": 17,
+          "variance": 0.2666666805744171
+        }
       },
       {
         "action_id": {
@@ -3513,7 +3516,10 @@
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
-        "damage_effect": null
+        "damage_effect": {
+          "average": 31,
+          "variance": 0.2142857164144516
+        }
       },
       {
         "action_id": {
@@ -3570,7 +3576,10 @@
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
-        "damage_effect": null
+        "damage_effect": {
+          "average": 50,
+          "variance": 0.13793103396892548
+        }
       },
       {
         "action_id": {
@@ -3627,7 +3636,10 @@
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
-        "damage_effect": null
+        "damage_effect": {
+          "average": 64,
+          "variance": 0.1428571492433548
+        }
       },
       {
         "action_id": {
@@ -3684,7 +3696,10 @@
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
-        "damage_effect": null
+        "damage_effect": {
+          "average": 86,
+          "variance": 0.125
+        }
       },
       {
         "action_id": {
@@ -3741,7 +3756,10 @@
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
-        "damage_effect": null
+        "damage_effect": {
+          "average": 99,
+          "variance": 0.12389379739761353
+        }
       },
       {
         "action_id": {
@@ -3798,7 +3816,10 @@
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
-        "damage_effect": null
+        "damage_effect": {
+          "average": 131,
+          "variance": 0.1180327832698822
+        }
       },
       {
         "action_id": {
@@ -3855,7 +3876,10 @@
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
-        "damage_effect": null
+        "damage_effect": {
+          "average": 176,
+          "variance": 0.1119592934846878
+        }
       },
       {
         "action_id": {
@@ -3925,7 +3949,10 @@
           "haste_reduces_duration": false,
           "channeled": false
         },
-        "damage_effect": null
+        "damage_effect": {
+          "average": 63,
+          "variance": 0.22727273404598236
+        }
       },
       {
         "action_id": {
@@ -3995,7 +4022,10 @@
           "haste_reduces_duration": false,
           "channeled": false
         },
-        "damage_effect": null
+        "damage_effect": {
+          "average": 71,
+          "variance": 0.2222222238779068
+        }
       },
       {
         "action_id": {
@@ -4065,7 +4095,10 @@
           "haste_reduces_duration": false,
           "channeled": false
         },
-        "damage_effect": null
+        "damage_effect": {
+          "average": 89,
+          "variance": 0.2281879186630249
+        }
       },
       {
         "action_id": {
@@ -4135,7 +4168,10 @@
           "haste_reduces_duration": false,
           "channeled": false
         },
-        "damage_effect": null
+        "damage_effect": {
+          "average": 101,
+          "variance": 0.23529411852359772
+        }
       },
       {
         "action_id": {
@@ -4205,7 +4241,10 @@
           "haste_reduces_duration": false,
           "channeled": false
         },
-        "damage_effect": null
+        "damage_effect": {
+          "average": 115,
+          "variance": 0.23376622796058655
+        }
       },
       {
         "action_id": {
@@ -4275,7 +4314,10 @@
           "haste_reduces_duration": false,
           "channeled": false
         },
-        "damage_effect": null
+        "damage_effect": {
+          "average": 149,
+          "variance": 0.2361111044883728
+        }
       },
       {
         "action_id": {
@@ -4345,7 +4387,10 @@
           "haste_reduces_duration": false,
           "channeled": false
         },
-        "damage_effect": null
+        "damage_effect": {
+          "average": 184,
+          "variance": 0.23768116533756256
+        }
       },
       {
         "action_id": {
@@ -4415,7 +4460,10 @@
           "haste_reduces_duration": false,
           "channeled": false
         },
-        "damage_effect": null
+        "damage_effect": {
+          "average": 208,
+          "variance": 0.23383083939552307
+        }
       },
       {
         "action_id": {
@@ -6046,6 +6094,54 @@
         59,
         60,
         61
+      ]
+    },
+    {
+      "kind": "smite"
+    },
+    {
+      "kind": "holy_fire",
+      "ranks": [
+        {
+          "spell_id": 14914,
+          "tick_base": 4,
+          "tick_can_crit": true
+        },
+        {
+          "spell_id": 15262,
+          "tick_base": 5,
+          "tick_can_crit": true
+        },
+        {
+          "spell_id": 15263,
+          "tick_base": 6,
+          "tick_can_crit": true
+        },
+        {
+          "spell_id": 15264,
+          "tick_base": 7,
+          "tick_can_crit": true
+        },
+        {
+          "spell_id": 15265,
+          "tick_base": 13,
+          "tick_can_crit": true
+        },
+        {
+          "spell_id": 15266,
+          "tick_base": 10,
+          "tick_can_crit": true
+        },
+        {
+          "spell_id": 15267,
+          "tick_base": 13,
+          "tick_can_crit": true
+        },
+        {
+          "spell_id": 15261,
+          "tick_base": 15,
+          "tick_can_crit": true
+        }
       ]
     },
     {

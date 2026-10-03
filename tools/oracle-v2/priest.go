@@ -14,6 +14,7 @@ import (
 func init() {
 	classExports[proto.Class_ClassPriest] = classExport{
 		spells: priestClassSpells, damageRows: priestDamageRows, effects: priestEffects, inertPet: priestInertPet,
+		damageTakenModifiers: priestDamageTakenModifiers,
 	}
 }
 
@@ -37,12 +38,28 @@ var (
 	priestInnerFocus             = spelldata.Ranked(14751)
 	priestShadowform             = spelldata.Ranked(15473)
 	priestEarlyDemise            = spelldata.Talent(1310076, 2)
+	priestPenance                = spelldata.Ranked(402174, 1240720, 1240721, 1316995)
+	priestPowerInLight           = spelldata.Talent(1309969, 5)
+	priestSearingLight           = spelldata.Talent(14909, 2)
+	priestSearingLightTriggered  = spelldata.Ranked(1284536)
 )
 
 // mind_blast.go and shadow_word_death.go register every rank, each rolling its own row.
 func priestDamageRows(rows map[int32]*spelldata.Spell) {
 	priest.MindBlastRankMap.Each(func(_ int32, row *spelldata.Spell) { rows[row.ID] = row })
 	priest.ShadowWordDeathRankMap.Each(func(_ int32, row *spelldata.Spell) { rows[row.ID] = row })
+	// smite.go and holy_fire.go: every rank rolls its own row.
+	priest.SmiteRankMap.Each(func(_ int32, row *spelldata.Spell) { rows[row.ID] = row })
+	priest.HolyFireRankMap.Each(func(_ int32, row *spelldata.Spell) { rows[row.ID] = row })
+}
+
+// Dynamic damage taken modifiers the priest effects describe: Power in Light registers one on
+// every target (talents_discipline.go applyPowerInLight).
+func priestDamageTakenModifiers(agent core.Agent) int {
+	if agent.(priest.PriestAgent).GetPriest().Talents.PowerInLight > 0 {
+		return 1
+	}
+	return 0
 }
 
 // The spellbook positions a spell modifier with a class mask and school applies to, by core
@@ -138,6 +155,48 @@ func priestEffects(agent core.Agent, character *core.Character) []map[string]any
 			"trigger_spells":   procTriggerSpells(character, trigger),
 			"damage_per_stack": stack.Effect(dbcenums.A_MOD_SCHOOL_MASK_DAMAGE_FROM_CASTER, 32).Average(core.CharacterLevel) / 100,
 			"damage_spells":    priestModSpells(character, priest.PriestSpellsAll, core.SpellSchoolShadow),
+		})
+	}
+	// smite.go: a cast on the rank's own row.
+	effects = append(effects, map[string]any{"kind": "smite"})
+	// holy_fire.go: the hit rolls, a landed hit applies the snapshotting dot, then it is dealt.
+	effects = append(effects, map[string]any{"kind": "holy_fire", "ranks": priestDotRanks(priest.HolyFireRankMap)})
+	if talents.Penance { // penance.go: the bolt on application and a channel tick a second
+		rank := priestPenance.Highest()
+		bolt := spelldata.Find(1316993)
+		effects = append(effects, map[string]any{
+			"kind": "penance", "spell_id": rank.ID, "tick_base": bolt.DamageEffect().Average(core.CharacterLevel), "tick_can_crit": true,
+		})
+	}
+	if talents.PowerInLight > 0 { // talents_discipline.go applyPowerInLight
+		holyFire := []int{}
+		for i, spell := range character.Spellbook {
+			for _, known := range p.HolyFire {
+				if spell == known {
+					holyFire = append(holyFire, i)
+				}
+			}
+		}
+		effects = append(effects, map[string]any{
+			"kind": "power_in_light", "multiplier": priestPowerInLight.MultiplierAt(talents.PowerInLight),
+			"spells":           spellsMatching(character, priest.PriestSpellSmite|priest.PriestSpellPenance),
+			"holy_fire_spells": holyFire,
+		})
+	}
+	if aura := p.SearingLightAura; aura != nil { // talents_holy.go applySearingLight
+		free := priestSearingLightTriggered.Highest()
+		trigger := core.ProcTrigger{
+			Name: "Searing Light Trigger", Callback: core.CallbackOnPeriodicDamageDealt, ClassSpellMask: priest.PriestSpellHolyFire,
+			ProcChance: priestSearingLight.EffectAt(2).FractionAt(talents.SearingLight), TriggerImmediately: true,
+		}
+		effects = append(effects, map[string]any{
+			"kind": "searing_light", "trigger_aura": trigger.Name, "aura": aura.Label,
+			"callbacks": callbackNames(trigger.Callback), "outcome": outcomeNames(trigger.Outcome),
+			"trigger_immediately": trigger.TriggerImmediately, "proc_chance": trigger.ProcChance,
+			"trigger_spells":   procTriggerSpells(character, trigger),
+			"cost_percent_add": free.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_COST)).Average(core.CharacterLevel) / 100,
+			"cost_spells":      priestModSpells(character, priest.PriestSpellHolyNova, 0),
+			"cancel_spells":    spellsMatching(character, priest.PriestSpellHolyNova),
 		})
 	}
 	// dark_sacrifice.go: each tick pays the client base plus a fifth of Spirit; the cooldown
