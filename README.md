@@ -113,6 +113,15 @@ and the raid's ramped Sunder Armor, at 510.849 DPS. Its
 variants, and a [race sweep](validation/2026-10-04-warlock-race-sweep.json) drawing
 Human, Gnome with Eureka!, Orc and Undead matches on all 12.
 
+The production Retribution Paladin build is the first melee build: a Human with a
+two-handed weapon twisting Seal of Command and Seal of Righteousness through Twist of
+Light's Echoes, Judgement, Holy Strike, Hammer of Wrath in the execute phase, Consecration,
+Vengeance, Vindication, Sanctified Judgement and Sacred Arbiter, with Crusader, the party
+Windfury Totem and Battle Shout, Dragonbreath Chili and the raid's ramped Sunder Armor, at
+671.848 DPS. Its [sweep](validation/2026-10-04-retribution-paladin-sweep.json) and a
+[race sweep](validation/2026-10-04-retribution-paladin-race-sweep.json) across Human,
+Dwarf and Undead match Go on every supported variant.
+
 Every race that can be a Mage is supported: Human, Gnome, Undead, Troll with
 Berserking, Orc with Blood Fury and Shatter Curse, and High Order Skyborne with Read
 Ley Line for rotations that cast it. A [race sweep](validation/2026-10-04-mage-race-sweep.json)

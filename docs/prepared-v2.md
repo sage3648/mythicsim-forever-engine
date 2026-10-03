@@ -72,7 +72,11 @@ roll. Flags and masks are exported by name so a Go bit reordering cannot silentl
 change Rust behavior.
 
 Each aura carries its label, IDs, duration, stacks, whether it is active after the
-reset and which Go callbacks it registers. Order is Go registration order, which
+reset and which Go callbacks it registers. A permanent aura the reset activated but a
+later member of its exclusive category displaced during the same reset, as Moonkin Aura
+displaces Leader of the Pack, names that aura in `displaced_by`, and Rust replays the
+gain and fade; one an earlier member blocked is marked `blocked_at_reset` and counts its
+proc. Order is Go registration order, which
 determines callback order and therefore random draw order.
 
 `major_cooldowns` is Go's initial order after the rotation removed the spells it
@@ -112,6 +116,17 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `dragonbreath_chili` | sim/core/consumes.go | The 5% chance and listened spells, the rolled Fire hit and the spell batch delay, Go literals |
 | `sunder_armor_ramp` | sim/core/buffs/drivers.go | The raid's Sunder Armor: its period and tick count, Go literals, and target armor at each stack count read from separate Go simulations; `blocked` when a stronger permanent member of its category, such as Expose Armor, blocks every activation, which Go still counts as a proc |
 | `judgement_refresh` | sim/paladin/judgement.go | The melee proc mask and the judgement debuffs a landed melee strike refreshes |
+| `judgement` | sim/paladin/judgement.go | The spell and the batch window after its cooldown when it wakes the rotation; it casts the active seal's judgement |
+| `seal_of_command` | sim/paladin/seal_of_command.go, seals.go | Every rank's seal, aura and judgement, the proc's weapon percent with Improved Seals and its coefficient, the main hand's chance from Go's 7 procs a minute manager, the 1 second cooldown each rank keeps and the batch window its damage waits; Judgement of Command's roll is on its spell |
+| `seal_of_righteousness` | sim/paladin/seal_of_righteousness.go, seals.go | Every rank's seal, aura, judgement, damage spell and per-hit value, and the weapon's hand multiplier and speed, Go literals; Judgement of Righteousness's roll is on its spell |
+| `holy_strike` | sim/paladin/holy_strike.go | Every rank's percent of the normalized swing; the flat roll is on the spell |
+| `hammer_of_wrath` | sim/paladin/hammer_of_wrath.go | The rolls on the spells; the 20% execute phase gates the cast and a real cast pauses the swing |
+| `consecration` | sim/paladin/consecration.go | Every rank's tick, the bonus the first targets take, its coefficient and the target count |
+| `vengeance` | sim/paladin/talents_retribution.go | The damage per stack and the Holy and Physical spells the mod reaches, as Go's shouldApply matches them |
+| `vindication` | sim/paladin/talents_retribution.go | The trigger, a Go literal chance, the target's aura and the paladin's attack power aura, whose stats are in `stat_auras` |
+| `sanctified_judgement` | sim/paladin/talents_retribution.go | The chance and the share of the active seal's last cost Judgement refunds |
+| `sacred_arbiter` | sim/paladin/talents_retribution.go | The target's judgement auras a landed Holy Strike refreshes |
+| `twist_of_light` | sim/paladin/talents_retribution.go | The Echo auras in Go's fixed order and the seal each replays |
 | `druid_forms` | sim/druid/druid.go, forms.go | The starting form and the forms each druid spell may be cast in |
 | `moonkin_form` | sim/druid/forms.go | The cast and its aura |
 | `starfire`, `wrath` | sim/druid/starfire.go, wrath.go | Damage rolls on the spells; Wrath lands after travel |
@@ -205,7 +220,9 @@ casts, `channelSpell` with `interruptIf` and `allowRecast`, constant-time prepul
 `math`, `gcdIsReady`,
 `auraIsKnown`, `auraIsActive`, `auraNumStacks`, `auraRemainingTime`, `dotIsActive`,
 `dotRemainingTime`, `dotTimeToNextTick`, `spellIsKnown`, `spellIsReady`,
-`spellTimeToReady` and `spellCastTime`. Action IDs may carry a rank, which Go ignores. A
+`spellTimeToReady`, `spellCastTime`, `spellCanCast`, whose cost check has Go's side
+effects, and `autoTimeToNext` for the melee, main hand and off hand swings. Action IDs
+may carry a rank, which Go ignores. A
 strict sequence controls the rotation as Go's does, including the sequence flag its
 readiness check leaves set and the hook that advances it when a queued cast fires. A
 channel's interrupt condition is evaluated on each tick and each GCD wake, with Go's
@@ -255,6 +272,9 @@ production Shadow Priest request at application revision 18bbcd47; the
 `shadow-priest-*` cases change its rotation to reach a channel without `allowRecast`, a
 channel without an interrupt condition and a strict sequence that gives up control.
 `production-smite-priest` is the production Smite Priest hybrid request.
+`production-retribution-paladin` is the production Retribution Paladin request, and the
+`paladin-*` cases strip it to its auto attacks and the weapon, consumable and raid procs
+they carry.
 
 The contract tests in
 [tests/classes/mage/prepared_v2.rs](../tests/classes/mage/prepared_v2.rs)
