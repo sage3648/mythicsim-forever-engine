@@ -420,6 +420,14 @@ type Mana struct {
 	RegenPerSecondNotCasting float64 `json:"regen_per_second_not_casting"`
 }
 
+type TargetUnit struct {
+	Unit
+	// Go AutoAttacks.reset rolls an opening swing offset for an enemy with a melee swing,
+	// even when it never swings because no unit tanks it.
+	AutoSwingMelee  bool `json:"auto_swing_melee"`
+	AutoSwingRanged bool `json:"auto_swing_ranged"`
+}
+
 type Unit struct {
 	Index       int32              `json:"index"`
 	Label       string             `json:"label"`
@@ -481,7 +489,7 @@ type Prepared struct {
 	ScenarioID    string           `json:"scenario_id"`
 	Sim           SimOptions       `json:"sim"`
 	Encounter     Encounter        `json:"encounter"`
-	Target        Unit             `json:"target"`
+	Target        TargetUnit       `json:"target"`
 	Player        Player           `json:"player"`
 	Effects       []map[string]any `json:"effects"`
 	Unrepresented []string         `json:"unrepresented"`
@@ -889,8 +897,11 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 			ExecuteProportion20: simulation.Encounter.ExecuteProportion_20, ExecuteProportion25: simulation.Encounter.ExecuteProportion_25,
 			ExecuteProportion35: simulation.Encounter.ExecuteProportion_35, ExecuteProportion45: simulation.Encounter.ExecuteProportion_45,
 			ExecuteProportion90: simulation.Encounter.ExecuteProportion_90},
-		Target: Unit{Index: target.UnitIndex, Label: target.Label, Level: target.Level, MobType: target.MobType.String(),
-			Stats: statValues(target.GetStats()), PseudoStats: exportPseudo(target.PseudoStats), Auras: exportAuras(target, timers)},
+		Target: TargetUnit{
+			Unit: Unit{Index: target.UnitIndex, Label: target.Label, Level: target.Level, MobType: target.MobType.String(),
+				Stats: statValues(target.GetStats()), PseudoStats: exportPseudo(target.PseudoStats), Auras: exportAuras(target, timers)},
+			AutoSwingMelee: target.AutoAttacks.AutoSwingMelee, AutoSwingRanged: target.AutoAttacks.AutoSwingRanged,
+		},
 		Player: Player{
 			Unit: Unit{Index: character.UnitIndex, Label: character.Label, Level: character.Level,
 				Stats: statValues(character.GetStats()), PseudoStats: exportPseudo(character.PseudoStats), Auras: exportAuras(&character.Unit, timers)},

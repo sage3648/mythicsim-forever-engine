@@ -3,3 +3,4 @@
 pub(crate) mod agent;
 pub(crate) mod specs;
 pub(crate) mod spells;
+pub(crate) mod talents;

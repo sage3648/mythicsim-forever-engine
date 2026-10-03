@@ -8,6 +8,8 @@ compare Export requests with the pinned Go engine, run Go and Rust on each and c
         exercised metric and the first-fight debug log. Writes only to --output.
 accept  Maintainer command: register a new case and derive its Go goldens. Refuses to
         replace existing cases or files.
+refresh Maintainer command after a reviewed exporter change: re-export prepared inputs
+        and require every Go golden to stay byte-identical.
 """
 
 import argparse
@@ -142,6 +144,31 @@ def accept(cache, source, case_id, request, description, keep_log, family=FAMILY
     return case
 
 
+def refresh(cache, source, family=FAMILY):
+    """Maintainer command after a reviewed exporter change: re-export accepted prepared
+    inputs, record their digests and require every Go golden to stay byte-identical."""
+    manifest = load(family / "manifest.json")
+    exporter = build_exporter(cache.resolve(), source)
+    import tempfile
+    with tempfile.TemporaryDirectory() as scratch:
+        scratch = Path(scratch)
+        for case in manifest["cases"]:
+            request_path = scratch / f"{case['id']}.request.json"
+            request_path.write_text(json.dumps(request_of(case), indent=2) + "\n")
+            if "go_result" in case:
+                result, log = go_golden(exporter, request_path, scratch / case["id"])
+                if result != load(family / case["go_result"]["file"]):
+                    raise ValueError(f"{case['id']}: the Go result changed; this is not an exporter-only change")
+                if "go_log" in case and log != (family / case["go_log"]["file"]).read_text():
+                    raise ValueError(f"{case['id']}: the Go log changed; this is not an exporter-only change")
+            prepared_path = family / case["prepared"]
+            command([exporter, "prepare", "--infile", request_path, "--outfile", prepared_path, "--scenario", case["id"]])
+            case["prepared_sha256"] = digest(prepared_path)
+    manifest["exporter_sha256"] = digest(HELPER)
+    (family / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    return manifest
+
+
 def capture(cache, source, output, family=FAMILY):
     manifest = check(family)
     output = output.resolve()
@@ -171,7 +198,7 @@ def capture(cache, source, output, family=FAMILY):
 
 TOLERANCE = 1e-9
 # Go log lines Rust does not reproduce: stat recalculation details from preparation.
-SKIPPED_LOG_LINES = ("Dynamic stat change:",)
+SKIPPED_LOG_LINES = ("Dynamic stat change:", "Dynamic dep enabled", "Dynamic dep disabled")
 
 
 def id_key(identity):
@@ -299,7 +326,7 @@ def compare_cases(cache, source, output, requests):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("command", choices=["check", "capture", "compare", "accept"], nargs="?", default="check")
+    parser.add_argument("command", choices=["check", "capture", "compare", "accept", "refresh"], nargs="?", default="check")
     parser.add_argument("--case", help="accept: new case identifier")
     parser.add_argument("--description", help="accept: what the case covers")
     parser.add_argument("--keep-log", action="store_true", help="accept: keep the Go first-fight log golden")
@@ -310,6 +337,10 @@ def main():
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     try:
+        if args.command == "refresh":
+            manifest = refresh(args.cache, args.source)
+            print(f"Refreshed {len(manifest['cases'])} prepared inputs; Go goldens unchanged.")
+            return 0
         if args.command == "accept":
             if not (args.case and args.description and len(args.requests) == 1):
                 parser.error("accept needs --case, --description and one request")

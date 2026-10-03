@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "e0450db9931c16a63a2b88ca0ffd04f0df045de648450f380bc465f7bcb7fd51",
+  "exporter_sha256": "c107ac900cbb9b122f0691c9581a05522cf7abc8604fda9d003c48d5ba119e94",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -16,7 +16,7 @@
         "pointer": "/request"
       },
       "prepared": "frost-reference.prepared.json",
-      "prepared_sha256": "dd578b6916c55fc527b5a5fbd0e7b376e611aa989f63cf1cf00c02cf8d157b1e",
+      "prepared_sha256": "7a52eee9bee0fc83588a7c1e09d601d7a36b3636a08872558906b7afce19c402",
       "expected_coverage": {
         "supported": false,
         "reasons": [
@@ -28,11 +28,9 @@
           "effect evocation is not implemented",
           "effect fingers_of_frost is not implemented",
           "effect ice_lance is not implemented",
-          "effect judgement_of_wisdom is not implemented",
           "effect mana_gems is not implemented",
           "effect missile_barrage is not implemented",
-          "effect potion_mana is not implemented",
-          "effect winters_chill is not implemented"
+          "effect potion_mana is not implemented"
         ]
       }
     },
@@ -43,7 +41,7 @@
         "path": "fixtures/mage/frost/prepared-v2/frost-no-fingers.request.json"
       },
       "prepared": "frost-no-fingers.prepared.json",
-      "prepared_sha256": "353ca6241f95f297b02a59d7c996e41759d3b47898e0f68c95bb99db9eb317c4",
+      "prepared_sha256": "a1564fcdea5e9d9942d6e645073b4b5d27d545698c9f3314bc10cc61514c5e70",
       "expected_coverage": {
         "supported": false,
         "reasons": [
@@ -54,11 +52,9 @@
           "effect energize_on_use is not implemented",
           "effect evocation is not implemented",
           "effect ice_lance is not implemented",
-          "effect judgement_of_wisdom is not implemented",
           "effect mana_gems is not implemented",
           "effect missile_barrage is not implemented",
           "effect potion_mana is not implemented",
-          "effect winters_chill is not implemented",
           "rotation item 4: auraIsActive names spell 400669, which the character lacks; the pinned reference drops the condition and community #622 reads it as inactive"
         ]
       }
@@ -70,7 +66,7 @@
         "path": "fixtures/mage/frost/prepared-v2/frostbolt-labeled.request.json"
       },
       "prepared": "frostbolt-labeled.prepared.json",
-      "prepared_sha256": "24f3753b48dbf4df24a249b1b65c29588b2681b15885d13ffd81ca9f890050f6",
+      "prepared_sha256": "aaa9ea1192fb763bf283bd54959a5d938274e929c39caa553808c1abf6b9aa45",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -87,7 +83,7 @@
         "path": "fixtures/mage/frost/prepared-v2/frostbolt-shared-oom.request.json"
       },
       "prepared": "frostbolt-shared-oom.prepared.json",
-      "prepared_sha256": "f4aded579f2a87ebe7df30fbfd9b1356a437484e6ff0cdb952bd7d843e5e2be5",
+      "prepared_sha256": "a2f7d4c0056b3df5d0dbb5ef6436dcedb25180779f2c7fb662362368abd174c7",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -108,7 +104,7 @@
         "path": "fixtures/mage/frost/prepared-v2/frostbolt-shared-meditation.request.json"
       },
       "prepared": "frostbolt-shared-meditation.prepared.json",
-      "prepared_sha256": "9d4dcb28fc70f3f642ac8a542245a2606082cf71cf0f40d3acb8a69581278aea",
+      "prepared_sha256": "ded85e8cbf7d54a7a9be2968cc81f8a5ae5c33a74f3b291c760c068add5c27dd",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -125,7 +121,7 @@
         "path": "fixtures/mage/frost/prepared-v2/frostbolt-shared-haste.request.json"
       },
       "prepared": "frostbolt-shared-haste.prepared.json",
-      "prepared_sha256": "7061863aaa89db2718dbde69a1d1944428cf1ace0fbe16b0f47143b2093eb92e",
+      "prepared_sha256": "393b3505c7a9cd3ac298ea707a5ffc7bf73f766dc20eabb3d9976d3a6a7b3100",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -142,7 +138,7 @@
         "path": "fixtures/mage/frost/prepared-v2/frostbolt-shared-boundary.request.json"
       },
       "prepared": "frostbolt-shared-boundary.prepared.json",
-      "prepared_sha256": "1e5bb8f622bbc31d474682254793be805b3d32168e77cb9589d8f213eecb54a7",
+      "prepared_sha256": "78133fa18eb52985065802617f51197ea15e4e9d39005a19f50dd824019114e0",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -150,6 +146,44 @@
       "go_result": {
         "file": "frostbolt-shared-boundary.go-result.json",
         "sha256": "7767a9ff50850fa1aba9f07350baab94a383b25c90dd5c81fc8c1c15efe54715"
+      }
+    },
+    {
+      "id": "reference-winters-chill",
+      "description": "The reference character, gear, buffs, consumables and Judgement of Wisdom with only Winter's Chill among proc talents, casting Frostbolt.",
+      "request": {
+        "path": "fixtures/mage/frost/prepared-v2/reference-winters-chill.request.json"
+      },
+      "prepared": "reference-winters-chill.prepared.json",
+      "prepared_sha256": "25a0efb743d2137abf7c6bd7e186474efed2d1a157989570e2eae4cf5949b98c",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "reference-winters-chill.go-result.json",
+        "sha256": "ca56e00e7f53c74028837ba680c6d4a34a9716e7703086ae42a6b9db2c130bda"
+      }
+    },
+    {
+      "id": "reference-winters-chill-rank3",
+      "description": "As reference-winters-chill with Winter's Chill at rank 3, so each landed Frost spell rolls its proc; keeps the first-fight log golden.",
+      "request": {
+        "path": "fixtures/mage/frost/prepared-v2/reference-winters-chill-rank3.request.json"
+      },
+      "prepared": "reference-winters-chill-rank3.prepared.json",
+      "prepared_sha256": "256164105ad14f2dca52c4ae51f52e652bf3f43ebbf41eecea49f3273f600372",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "reference-winters-chill-rank3.go-result.json",
+        "sha256": "67e321b98fb8818280560acf133ae4a2b4e07f70bf3ac6ec048d85f90917ebcb"
+      },
+      "go_log": {
+        "file": "reference-winters-chill-rank3.go-log.txt",
+        "sha256": "206df87ea98c41f2467f34fdc39cbd4dd204b7a6a7e6784fecbb807dec71fdac"
       }
     }
   ]

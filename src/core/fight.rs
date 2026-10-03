@@ -16,6 +16,7 @@ mod dot;
 mod log;
 pub(crate) mod metrics;
 mod rotation;
+mod spell_mod;
 
 use std::collections::BTreeMap;
 
@@ -23,6 +24,7 @@ pub(crate) use aura::{AuraBehavior, AuraRef, Tracker};
 pub(crate) use damage::{SpellResult, OUTCOME_LANDED};
 pub(crate) use dot::Dot;
 pub(crate) use metrics::{ActionReport, ActionTotals, FightReport};
+pub(crate) use spell_mod::{ModId, ModKind};
 
 use crate::{
     contracts::prepared_v2::{ActionId, Effect, PreparedV2, Schools},
@@ -164,6 +166,7 @@ pub(crate) struct Flags {
     pub(crate) can_cast_while_moving: bool,
     pub(crate) proc: bool,
     pub(crate) melee_metrics: bool,
+    pub(crate) no_spell_mods: bool,
 }
 
 impl Flags {
@@ -189,6 +192,7 @@ impl Flags {
                 "SpellFlagCanCastWhileMoving" => flags.can_cast_while_moving = true,
                 "SpellFlagProc" => flags.proc = true,
                 "SpellFlagMeleeMetrics" => flags.melee_metrics = true,
+                "SpellFlagNoSpellMods" => flags.no_spell_mods = true,
                 _ => {}
             }
         }
@@ -268,7 +272,8 @@ pub(crate) struct Spell<S> {
     pub(crate) school_index: usize,
     pub(crate) magic_defense: bool,
     pub(crate) direct_proc: bool,
-    #[allow(dead_code)] // Staged for the remaining Frost mechanics; removed as each lands.
+    /// Go `ProcMaskSpellDamage`.
+    pub(crate) proc_spell_damage: bool,
     pub(crate) class_spell: Option<String>,
     pub(crate) class_spell_mask: bool,
     pub(crate) missile_speed: f64,
@@ -388,6 +393,7 @@ pub(crate) struct Config {
     pub(crate) target_bonus_spell_damage_taken: f64,
     pub(crate) target_reduced_crit_taken_percent: f64,
     pub(crate) dot_damage_multiplier_additive: f64,
+    pub(crate) target_auto_swing_melee: bool,
 }
 
 /// The pseudo stats Go restores at each reset, after permanent auras applied.
@@ -448,7 +454,6 @@ pub(crate) const PRIORITY_DOT: i32 = 3;
 pub(crate) const PRIORITY_PREPULL: i32 = 10;
 
 pub(crate) struct Fight<A: Agent> {
-    #[allow(dead_code)] // Staged for the remaining Frost mechanics; removed as each lands.
     pub(crate) agent: A,
     pub(crate) config: Config,
     pub(crate) now: i64,
@@ -461,6 +466,7 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) trackers: [Tracker<A::Aura>; 2],
     pub(crate) spells: Vec<Spell<A::Spell>>,
     pub(crate) dots: Vec<Dot>,
+    pub(crate) mods: Vec<spell_mod::SpellMod>,
     pub(crate) timers: Vec<i64>,
     pub(crate) major_cooldowns: Vec<MajorCooldown>,
     pub(crate) cooldown_order: Vec<usize>,
@@ -592,6 +598,7 @@ impl<A: Agent> Fight<A> {
             target_bonus_spell_damage_taken: target_pseudo.bonus_spell_damage_taken,
             target_reduced_crit_taken_percent: target_pseudo.reduced_crit_taken_percent,
             dot_damage_multiplier_additive: pseudo.dot_damage_multiplier_additive,
+            target_auto_swing_melee: target.auto_swing_melee,
         };
 
         let mut timer_names: Vec<String> = Vec::new();
@@ -718,6 +725,10 @@ impl<A: Agent> Fight<A> {
                             | "ProcMaskSpellDamage"
                     )
                 }),
+                proc_spell_damage: exported
+                    .proc_mask
+                    .iter()
+                    .any(|mask| mask == "ProcMaskSpellDamage"),
                 class_spell: exported.class_spell.clone(),
                 class_spell_mask: exported.class_spell.is_some(),
                 missile_speed: exported.missile_speed,
@@ -905,6 +916,7 @@ impl<A: Agent> Fight<A> {
             trackers,
             spells,
             dots,
+            mods: Vec::new(),
             timers: vec![STARTING_CD_TIME; timer_names.len()],
             cooldown_order: (0..major_cooldowns.len()).collect(),
             major_cooldowns,
@@ -1073,6 +1085,10 @@ impl<A: Agent> Fight<A> {
             self.player.waiting_for_mana = 0.0;
             self.player.waiting_for_mana_start = 0;
             self.update_mana_regen_rates();
+        }
+        // Go AutoAttacks.reset: an enemy with a melee swing rolls its opening offset.
+        if side == Side::Target && self.config.target_auto_swing_melee {
+            self.random("Enemy Swing Offset");
         }
         self.rotation_reset(side);
         // Go addTracker: the target's tracker first, then the player's.

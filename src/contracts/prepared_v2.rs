@@ -218,6 +218,10 @@ pub struct Target {
     pub stats: BTreeMap<String, f64>,
     pub pseudo_stats: PseudoStats,
     pub auras: Vec<Aura>,
+    /// Go rolls an opening swing offset for an enemy with a melee swing at every reset,
+    /// even when the enemy never swings.
+    pub auto_swing_melee: bool,
+    pub auto_swing_ranged: bool,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

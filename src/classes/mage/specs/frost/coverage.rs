@@ -14,7 +14,12 @@ use crate::{
 };
 
 /// Effect kinds implemented in Rust and validated against the pinned Go reference.
-pub(crate) const IMPLEMENTED_EFFECTS: &[&str] = &["frostbolt", "inert_listener"];
+pub(crate) const IMPLEMENTED_EFFECTS: &[&str] = &[
+    "frostbolt",
+    "inert_listener",
+    "judgement_of_wisdom",
+    "winters_chill",
+];
 
 /// The effect kind whose implementation executes a castable spell.
 fn spell_capability(spell: &Spell, prepared: &PreparedV2) -> Option<&'static str> {

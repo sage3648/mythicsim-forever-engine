@@ -14,7 +14,8 @@
     "parse_only",
     "pinned",
     "not_ported",
-    "out_of_scope"
+    "out_of_scope",
+    "go_prepared_static_and_dynamic_crit"
   ],
   "mechanics": [
     {
@@ -177,8 +178,10 @@
       "rust": [
         "src/core/fight/aura.rs"
       ],
-      "status": "implemented_unvalidated",
-      "tests": [],
+      "status": "validated_frostbolt_v2",
+      "tests": [
+        "tests/classes/mage/frost/prepared_v2.rs"
+      ],
       "upstream_changes": [],
       "fork_patches": []
     },
@@ -187,12 +190,16 @@
       "go": [
         "sim/core/spell_mod.go"
       ],
-      "rust": [],
-      "status": "go_prepared_static_only",
-      "tests": [],
+      "rust": [
+        "src/core/fight/spell_mod.rs"
+      ],
+      "status": "go_prepared_static_and_dynamic_crit",
+      "tests": [
+        "tests/classes/mage/frost/prepared_v2.rs"
+      ],
       "upstream_changes": [],
       "fork_patches": [],
-      "note": "Static modifiers arrive prepared; dynamic ones are not implemented."
+      "note": "Static modifiers arrive prepared; dynamic modifiers replay Go's add, subtract and update order."
     },
     {
       "id": "channels_and_dots",
@@ -309,9 +316,13 @@
       "go": [
         "sim/mage/talents_frost.go"
       ],
-      "rust": [],
-      "status": "not_ported",
-      "tests": [],
+      "rust": [
+        "src/classes/mage/talents/winters_chill.rs"
+      ],
+      "status": "validated_frostbolt_v2",
+      "tests": [
+        "tests/classes/mage/frost/prepared_v2.rs"
+      ],
       "upstream_changes": [],
       "fork_patches": []
     },
@@ -423,8 +434,10 @@
       "rust": [
         "src/core/fight/aura.rs"
       ],
-      "status": "implemented_unvalidated",
-      "tests": [],
+      "status": "validated_frostbolt_v2",
+      "tests": [
+        "tests/classes/mage/frost/prepared_v2.rs"
+      ],
       "upstream_changes": [],
       "fork_patches": []
     },

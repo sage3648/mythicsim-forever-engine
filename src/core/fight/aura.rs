@@ -367,7 +367,6 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    #[allow(dead_code)] // Staged for the remaining Frost mechanics; removed as each lands.
     pub(crate) fn add_stack(&mut self, aura: AuraRef) {
         let stacks = self.aura(aura).stacks + 1;
         self.set_stacks(aura, stacks);

@@ -9,8 +9,9 @@ effects Rust must execute. The Rust types live in
 Status: the contract, exporter, fixtures, coverage gate and fight runtime are
 implemented. `forever-engine check` reports exactly which mechanics an input still
 needs; `sim` runs inputs whose coverage is complete and refuses the rest. Implemented
-effects today are `frostbolt` and `inert_listener`, so supported builds cast Frostbolt
-only. Prepared v1 and its goldens are unchanged.
+effects today are `frostbolt`, `winters_chill`, `judgement_of_wisdom` and
+`inert_listener`, so supported builds cast Frostbolt, with Winter's Chill and Judgement
+of Wisdom on the full reference character. Prepared v1 and its goldens are unchanged.
 
 ## Boundary
 
@@ -58,7 +59,7 @@ RNG contract and implemented effects. Tests fail if it disagrees with the engine
 | --- | --- |
 | `sim` | Iterations, seed, `labeled_rng` and first-iteration debug |
 | `encounter` | Base duration, variation and execute proportions, in nanoseconds |
-| `target` | Level, all stats, pseudo stats and every registered aura |
+| `target` | Level, all stats, pseudo stats, every registered aura and whether it has a melee or ranged swing |
 | `player` | Identity, talents, stats, pseudo stats, reaction time, distance, cast speed, mana, attack table, spells, major cooldowns and rotation |
 | `effects` | Dynamic behavior and its parameters, one tagged variant per kind |
 | `unrepresented` | Request features the exporter cannot describe |
@@ -124,6 +125,10 @@ unit, item swapping, prepull actions, execute phase callbacks, target AI, caster
 damage callbacks, dynamic damage-taken modifiers, mob type bonuses, non-mana costs,
 unnamed class masks and item cooldowns without an exported effect.
 
+A target with a configured melee swing that no unit tanks never swings, but Go still
+rolls its opening swing offset at every reset, so the target exports its swing flags
+and Rust makes the same draw.
+
 Rust recomputes Go's starting mana regeneration from the exported components and
 rejects the input as invalid if it disagrees. Further preparation checks will be added
 as the engine consumes more fields.
@@ -185,8 +190,10 @@ python3 tools/prepared_v2.py compare --output output/prepared-v2-compare REQUEST
 The fixture family keeps Go goldens for supported cases, compared in CI without Go:
 Frostbolt with labeled streams, and with the shared stream across duration variation,
 running out of mana, haste, Arcane Meditation and a three-second travel boundary.
-`frostbolt-shared-oom` also keeps its 1,700-line first-fight log. All eleven
-historical v1 scenarios also pass the live comparison through the v2 path.
+`frostbolt-shared-oom` also keeps its 1,700-line first-fight log. The reference
+character with Winter's Chill (rank 5, and rank 3 so its proc rolls) and Judgement of
+Wisdom also matches; the rank 3 case keeps its log. All eleven historical v1 scenarios
+pass the live comparison through the v2 path.
 
 ## Reproduce
 
@@ -204,6 +211,9 @@ scratch storage, requiring an exact match. This needs Go, Git and protoc, like t
 python3 tools/prepared_v2.py capture --output output/prepared-v2-capture
 python3 tools/prepared_v2.py accept --case ID --description TEXT fixtures/mage/frost/prepared-v2/ID.request.json
 ```
+
+After a reviewed exporter change, `refresh` re-exports the accepted prepared inputs and
+fails unless every Go golden stays byte-identical.
 
 Report coverage for any prepared input:
 
