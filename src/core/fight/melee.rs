@@ -77,7 +77,7 @@ pub(crate) struct AutoAttacks {
     pub(crate) enemy: WeaponAttack,
     /// Go `sim.weaponAttacks`, in the order swings were added, by unit. The player's copy
     /// holds the simulation's list; a pet's stays empty.
-    attacks: Vec<(Side, Hand)>,
+    attacks: WeaponAttackList,
     /// Go `sim.minWeaponAttackTime`, likewise kept in the player's copy.
     pub(crate) min_time: i64,
 }
@@ -95,6 +95,51 @@ impl AutoAttacks {
     /// Go `AutoAttacks.anyEnabled`.
     fn any_enabled(&self) -> bool {
         self.mh.enabled || self.oh.enabled || self.ranged.enabled
+    }
+}
+
+/// Go `sim.weaponAttacks`: a slice whose removal swaps the last entry into the gap. Go's range
+/// loop over it captures the length and reads the backing array, so a removal during a swing
+/// leaves the old last entry visible to the loop; the list keeps the backing array to match.
+#[derive(Clone, Debug, Default)]
+pub(crate) struct WeaponAttackList {
+    backing: Vec<(Side, Hand)>,
+    len: usize,
+}
+
+impl WeaponAttackList {
+    fn clear(&mut self) {
+        self.len = 0;
+    }
+
+    /// Go `append`, which writes into the backing array while it has room.
+    fn push(&mut self, entry: (Side, Hand)) {
+        if self.len < self.backing.len() {
+            self.backing[self.len] = entry;
+        } else {
+            self.backing.push(entry);
+        }
+        self.len += 1;
+    }
+
+    /// Go `removeWeaponAttack`.
+    fn remove(&mut self, entry: (Side, Hand)) {
+        if let Some(index) = self.backing[..self.len].iter().position(|&e| e == entry) {
+            self.backing[index] = self.backing[self.len - 1];
+            self.len -= 1;
+        }
+    }
+
+    fn len(&self) -> usize {
+        self.len
+    }
+}
+
+impl std::ops::Index<usize> for WeaponAttackList {
+    type Output = (Side, Hand);
+
+    fn index(&self, index: usize) -> &(Side, Hand) {
+        &self.backing[index]
     }
 }
 
@@ -471,6 +516,63 @@ impl<A: Agent> Fight<A> {
             self.react_to_event(side);
         }
         self.autos_of_mut(side).attack(hand).swing_at
+    }
+
+    /// Go `AutoAttacks.CancelMeleeSwing`: the swings leave the simulation's list. The next
+    /// weapon attack time stays, as Go only lowers it.
+    pub(crate) fn cancel_melee_swing(&mut self) {
+        if !self.autos.melee {
+            return;
+        }
+        if self.autos.mh.enabled {
+            self.autos.attacks.remove((Side::Player, Hand::Main));
+            self.autos.mh.enabled = false;
+        }
+        if self.autos.dual_wielding && self.autos.oh.enabled {
+            self.autos.oh.enabled = false;
+            self.autos.attacks.remove((Side::Player, Hand::Off));
+        }
+    }
+
+    /// Go `AutoAttacks.EnableMeleeSwing`: each hand resumes no earlier than now, and a
+    /// stopped hand rejoins the simulation's list.
+    pub(crate) fn enable_melee_swing(&mut self) {
+        if !self.autos.melee || self.now < 0 {
+            return;
+        }
+        let now = self.now;
+        let distance = self.config.distance;
+        self.autos.mh.swing_at = self.autos.mh.swing_at.max(now).max(0);
+        if in_range(&self.autos.mh.weapon, distance) && !self.autos.mh.enabled {
+            self.autos.mh.enabled = true;
+            self.add_weapon_attack(Hand::Main);
+        }
+        if self.autos.dual_wielding && !self.autos.oh.enabled {
+            // No ranged swing in scope, so the off hand resumes without an offset.
+            self.autos.oh.swing_at = self.autos.oh.swing_at.max(now).max(0);
+            if in_range(&self.autos.oh.weapon, distance) {
+                self.autos.oh.enabled = true;
+                self.add_weapon_attack(Hand::Off);
+            }
+        }
+    }
+
+    /// Go `WeaponAttack.addWeaponAttack` for a melee hand.
+    fn add_weapon_attack(&mut self, hand: Hand) {
+        let haste = self.melee_haste_multiplier();
+        let attack = self.autos.attack(hand);
+        if !attack.enabled {
+            return;
+        }
+        // An empty slot never swings.
+        if attack.weapon.swing_speed <= 0.0 {
+            attack.enabled = false;
+            return;
+        }
+        attack.update_swing_duration(haste);
+        let swing_at = attack.swing_at;
+        self.autos.attacks.push((Side::Player, hand));
+        self.autos.min_time = self.autos.min_time.min(swing_at);
     }
 
     /// Go `AutoAttacks.ExtraMHAttacks`: the main hand swings now, then again for each extra

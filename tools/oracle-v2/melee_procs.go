@@ -256,6 +256,7 @@ func meleeProcEffects(simulation *core.Simulation, character *core.Character, un
 				"trigger_outcome": outcomeNames(grant.Outcome), "trigger_proc_chance": grant.ProcChance,
 				"proc_aura": procAura.Label, "spend_spells": procTriggerSpells(character, spend),
 				"spend_outcome": outcomeNames(spend.Outcome), "extra_attack_spell": extra,
+				"trigger_require_damage": grant.RequireDamageDealt, "spend_require_damage": spend.RequireDamageDealt,
 			})
 		}
 	}

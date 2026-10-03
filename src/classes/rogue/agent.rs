@@ -1,8 +1,8 @@
 //! The Rogue class agent for the fight runtime: class spells and auras by name, and the hooks
 //! that dispatch to each spell's and talent's module.
 //!
-//! Go's `BreakStealth` opens every Rogue strike. Stealth is never active in scope: the gate
-//! rejects a rotation that reaches the Stealth spell, which has no behavior here.
+//! Go's `BreakStealth` opens every Rogue strike and cooldown but Slice and Dice, Cold Blood,
+//! Premeditation and Preparation.
 
 use std::rc::Rc;
 
@@ -13,14 +13,25 @@ use crate::{
 
 use super::{
     spells::{
+        ambush::Ambush,
         backstab::Backstab,
         eviscerate::Eviscerate,
         finisher::{self, Finisher},
+        mutilate::Mutilate,
         poisons::{self, PoisonProc},
+        rupture::{self, Rupture},
         sinister_strike,
         slice_and_dice::SliceAndDice,
+        stealth::Stealth,
     },
-    talents::{adrenaline_rush::AdrenalineRush, blade_flurry::BladeFlurry},
+    talents::{
+        adrenaline_rush::AdrenalineRush,
+        blade_flurry::BladeFlurry,
+        cold_blood::{self, ColdBlood},
+        procs::{self, Handler, Proc},
+        subtlety::{self, Premeditation, Preparation},
+        thousand_cuts::{self, ThousandCuts},
+    },
 };
 
 /// What a Rogue spell does when its effects apply.
@@ -34,6 +45,15 @@ pub(crate) enum RogueSpell {
     AdrenalineRush,
     InstantPoison,
     DeadlyPoison,
+    Ambush,
+    Rupture,
+    Mutilate,
+    MutilateHit,
+    ColdBlood,
+    Premeditation,
+    Preparation,
+    Stealth,
+    Vanish,
 }
 
 /// Class auras with Rust behavior.
@@ -44,6 +64,10 @@ pub(crate) enum RogueAura {
     SliceAndDice,
     BladeFlurry,
     AdrenalineRush,
+    ColdBlood,
+    ThousandCuts,
+    /// A talent proc trigger, by its index in the agent's triggers.
+    Proc(usize),
 }
 
 /// Rogue state that Go keeps in the `Rogue` struct and its closures.
@@ -60,6 +84,16 @@ pub(crate) struct RogueAgent {
     instant_poison_damage: (f64, f64),
     deadly_poison: Option<Rc<PoisonProc>>,
     deadly_poison_tick: f64,
+    stealth: Option<Stealth>,
+    ambush: Option<Ambush>,
+    rupture: Option<Rc<Rupture>>,
+    rupture_snapshot: rupture::Snapshot,
+    mutilate: Option<Mutilate>,
+    cold_blood: Option<Rc<ColdBlood>>,
+    premeditation: Option<Premeditation>,
+    preparation: Option<Rc<Preparation>>,
+    thousand_cuts: Option<Rc<ThousandCuts>>,
+    procs: Vec<Rc<Proc>>,
 }
 
 /// Whether a prepared input carries the effect of a kind.
@@ -95,6 +129,17 @@ impl RogueAgent {
             "deadly_poison" if spell.dot.is_some() && has("deadly_poison") => {
                 Some(RogueSpell::DeadlyPoison)
             }
+            "ambush" if energy && has("ambush") => Some(RogueSpell::Ambush),
+            "rupture" if energy && spell.dot.is_some() && has("rupture") => {
+                Some(RogueSpell::Rupture)
+            }
+            "mutilate" if energy && has("mutilate") => Some(RogueSpell::Mutilate),
+            "mutilate_hit" if has("mutilate") => Some(RogueSpell::MutilateHit),
+            "cold_blood" if has("cold_blood") => Some(RogueSpell::ColdBlood),
+            "premeditation" if has("premeditation") => Some(RogueSpell::Premeditation),
+            "preparation" if has("preparation") => Some(RogueSpell::Preparation),
+            "stealth" if has("stealth") => Some(RogueSpell::Stealth),
+            "vanish" if has("stealth") => Some(RogueSpell::Vanish),
             _ => None,
         }
     }
@@ -116,8 +161,23 @@ impl RogueAgent {
                 Effect::AdrenalineRush { aura, .. } => {
                     Some((aura.clone(), RogueAura::AdrenalineRush))
                 }
+                Effect::ColdBlood { aura, .. } => Some((aura.clone(), RogueAura::ColdBlood)),
+                Effect::ThousandCuts { aura, .. } => Some((aura.clone(), RogueAura::ThousandCuts)),
                 _ => None,
             })
+            .chain(
+                prepared
+                    .effects
+                    .iter()
+                    .filter(|effect| matches!(effect, Effect::RogueProc { .. }))
+                    .enumerate()
+                    .filter_map(|(index, effect)| match effect {
+                        Effect::RogueProc { trigger_aura, .. } => {
+                            Some((trigger_aura.clone(), RogueAura::Proc(index)))
+                        }
+                        _ => None,
+                    }),
+            )
             .collect();
         let spell = |exported: &ExportedSpell| RogueAgent::spell(prepared, exported);
         let mut fight = Fight::new(prepared, RogueAgent::default(), spell, |unit, label| {
@@ -284,10 +344,195 @@ impl RogueAgent {
                     fight.agent.deadly_poison = Some(Rc::new(bound));
                     fight.agent.deadly_poison_tick = *tick_damage;
                 }
+                Effect::Stealth { aura, .. } => {
+                    fight.agent.stealth = Some(Stealth {
+                        aura: fight.player_aura(aura)?,
+                    });
+                }
+                Effect::Ambush {
+                    base_damage,
+                    main_hand_dagger,
+                    cutthroat_aura,
+                    ..
+                } => {
+                    let cutthroat = if cutthroat_aura.is_empty() {
+                        None
+                    } else {
+                        Some(fight.player_aura(cutthroat_aura)?)
+                    };
+                    fight.agent.ambush = Some(Ambush {
+                        base_damage: *base_damage,
+                        main_hand_dagger: *main_hand_dagger,
+                        cutthroat,
+                    });
+                }
+                Effect::Rupture {
+                    tick_damage,
+                    damage_per_combo_point,
+                    base_tick_count,
+                    attack_power_shares,
+                    tick_can_crit,
+                    magic,
+                    hemorrhage_aura,
+                    hemorrhage_multiplier,
+                    ..
+                } => {
+                    // spelldata TickOutcome for a dot whose hit was rolled on the special table.
+                    let tick_outcome = match (tick_can_crit, magic) {
+                        (true, true) => crate::core::fight::Outcome::TickMagicHitAndCrit,
+                        (true, false) => crate::core::fight::Outcome::TickPhysicalCrit,
+                        (false, true) => {
+                            return Err("Rupture ticks that roll a magic hit are unsupported".into())
+                        }
+                        (false, false) => crate::core::fight::Outcome::Tick,
+                    };
+                    let hemorrhage = if hemorrhage_aura.is_empty() {
+                        None
+                    } else {
+                        let index = fight.trackers[Side::Target.index()]
+                            .find(hemorrhage_aura)
+                            .ok_or_else(|| {
+                                format!("target aura {hemorrhage_aura} is not registered")
+                            })?;
+                        Some(AuraRef {
+                            side: Side::Target,
+                            index,
+                        })
+                    };
+                    fight.agent.rupture = Some(Rc::new(Rupture {
+                        tick_damage: *tick_damage,
+                        damage_per_combo_point: *damage_per_combo_point,
+                        base_tick_count: *base_tick_count,
+                        attack_power_shares: attack_power_shares.clone(),
+                        tick_outcome,
+                        hemorrhage,
+                        hemorrhage_multiplier: *hemorrhage_multiplier,
+                    }));
+                }
+                Effect::Mutilate {
+                    flat_damage,
+                    poison_bonus,
+                    combo_points,
+                    daggers,
+                    ..
+                } => {
+                    let hand = |tag: i32| {
+                        fight.spells.iter().position(|spell| {
+                            spell.class_spell.as_deref() == Some("mutilate_hit")
+                                && spell.id.tag == tag
+                        })
+                    };
+                    let (main_hand, off_hand) = (
+                        hand(1).ok_or("Mutilate has no main hand hit")?,
+                        hand(2).ok_or("Mutilate has no off hand hit")?,
+                    );
+                    fight.agent.mutilate = Some(Mutilate {
+                        flat_damage: *flat_damage,
+                        poison_bonus: *poison_bonus,
+                        combo_points: *combo_points,
+                        daggers: *daggers,
+                        main_hand,
+                        off_hand,
+                    });
+                }
+                Effect::ColdBlood {
+                    aura,
+                    crit_bonus,
+                    class_spells,
+                    ..
+                } => {
+                    let bound = cold_blood::bind(&mut fight, aura, *crit_bonus, class_spells)?;
+                    fight.agent.cold_blood = Some(Rc::new(bound));
+                }
+                Effect::Premeditation { combo_points, .. } => {
+                    let spell = class_spell(&fight, RogueSpell::Premeditation)
+                        .ok_or("Premeditation has no spell")?;
+                    fight.agent.premeditation = Some(subtlety::bind_premeditation(
+                        &mut fight,
+                        spell,
+                        *combo_points,
+                    ));
+                }
+                Effect::Preparation {
+                    reset_spell_ids, ..
+                } => {
+                    let reset = reset_spell_ids
+                        .iter()
+                        .map(|id| {
+                            fight
+                                .spells
+                                .iter()
+                                .position(|spell| spell.id.spell_id == *id && spell.id.tag == 0)
+                                .ok_or_else(|| format!("Preparation resets unknown spell {id}"))
+                        })
+                        .collect::<Result<Vec<_>, String>>()?;
+                    let vanish = class_spell(&fight, RogueSpell::Vanish);
+                    fight.agent.preparation = Some(Rc::new(Preparation { reset, vanish }));
+                }
+                Effect::ThousandCuts {
+                    aura,
+                    cost_per_stack,
+                    class_spells,
+                } => {
+                    let bound =
+                        thousand_cuts::bind(&mut fight, aura, *cost_per_stack, class_spells)?;
+                    fight.agent.thousand_cuts = Some(Rc::new(bound));
+                }
+                Effect::RogueProc {
+                    handler,
+                    proc_chance,
+                    spells,
+                    outcome,
+                    periodic,
+                    delay_ns,
+                    action,
+                    aura,
+                    ..
+                } => {
+                    let handler = match (handler.as_str(), action, aura) {
+                        ("combo_point", Some(action), _) => {
+                            Handler::ComboPoint(fight.new_resource_metrics(
+                                action.clone(),
+                                crate::core::fight::ResourceKind::ComboPoints,
+                            ))
+                        }
+                        ("activate", _, Some(aura)) => Handler::Activate(fight.player_aura(aura)?),
+                        ("stack", _, Some(aura)) => Handler::Stack(fight.player_aura(aura)?),
+                        (other, _, _) => return Err(format!("unknown Rogue proc handler {other}")),
+                    };
+                    let mut heard = vec![false; fight.spells.len()];
+                    for &spell in spells {
+                        if let Some(slot) = heard.get_mut(spell) {
+                            *slot = true;
+                        }
+                    }
+                    fight.agent.procs.push(Rc::new(Proc {
+                        handler,
+                        chance: *proc_chance,
+                        outcome: procs::outcome_mask(outcome)?,
+                        periodic: *periodic,
+                        delay: *delay_ns,
+                        spells: heard,
+                    }));
+                }
                 _ => {}
             }
         }
         Ok(fight)
+    }
+
+    /// Go `BreakStealth`.
+    fn break_stealth(fight: &mut Fight<Self>) {
+        if let Some(stealth) = fight.agent.stealth {
+            stealth.break_stealth(fight);
+        }
+    }
+
+    /// Go `isPoisoned`: the rogue's Deadly Poison is on the target.
+    fn poison_dot_aura(fight: &Fight<Self>) -> Option<AuraRef> {
+        let poison = fight.agent.deadly_poison.as_ref()?;
+        let dot = fight.spells[poison.spell].dot?;
+        Some(fight.dots[dot].aura)
     }
 
     fn finisher(fight: &Fight<Self>) -> Finisher {
@@ -300,6 +545,19 @@ impl Agent for RogueAgent {
     type Aura = RogueAura;
 
     fn apply_effects(fight: &mut Fight<Self>, spell: SpellId, target: Side, behavior: RogueSpell) {
+        if matches!(
+            behavior,
+            RogueSpell::SinisterStrike
+                | RogueSpell::Backstab
+                | RogueSpell::Eviscerate
+                | RogueSpell::BladeFlurry
+                | RogueSpell::AdrenalineRush
+                | RogueSpell::Ambush
+                | RogueSpell::Rupture
+                | RogueSpell::Mutilate
+        ) {
+            Self::break_stealth(fight);
+        }
         match behavior {
             RogueSpell::SinisterStrike => {
                 let base = fight.agent.sinister_strike;
@@ -342,6 +600,44 @@ impl Agent for RogueAgent {
                 let tick = fight.agent.deadly_poison_tick;
                 poisons::deadly_poison(fight, spell, target, tick);
             }
+            RogueSpell::Ambush => {
+                let ambush = fight.agent.ambush.expect("Ambush is bound");
+                ambush.apply(fight, spell, target);
+            }
+            RogueSpell::Rupture => {
+                let rupture = fight.agent.rupture.clone().expect("Rupture is bound");
+                let finisher = Self::finisher(fight);
+                if let Some(snapshot) = rupture.apply(fight, spell, target, &finisher) {
+                    fight.agent.rupture_snapshot = snapshot;
+                }
+            }
+            RogueSpell::Mutilate => {
+                let mutilate = fight.agent.mutilate.expect("Mutilate is bound");
+                mutilate.apply(fight, spell, target);
+            }
+            RogueSpell::MutilateHit => {
+                let mutilate = fight.agent.mutilate.expect("Mutilate is bound");
+                let poison = Self::poison_dot_aura(fight);
+                mutilate.hit(fight, spell, target, poison);
+            }
+            RogueSpell::ColdBlood => {
+                let cold_blood = fight.agent.cold_blood.clone().expect("Cold Blood is bound");
+                cold_blood.apply(fight);
+            }
+            RogueSpell::Premeditation => {
+                let premeditation = fight.agent.premeditation.expect("Premeditation is bound");
+                premeditation.apply(fight);
+            }
+            RogueSpell::Preparation => {
+                let preparation = fight
+                    .agent
+                    .preparation
+                    .clone()
+                    .expect("Preparation is bound");
+                preparation.apply(fight);
+            }
+            RogueSpell::Stealth => fight.agent.stealth.expect("Stealth is bound").apply(fight),
+            RogueSpell::Vanish => fight.agent.stealth.expect("Stealth is bound").vanish(fight),
         }
     }
 
@@ -351,15 +647,31 @@ impl Agent for RogueAgent {
                 .agent
                 .backstab
                 .is_some_and(|backstab| backstab.can_cast(fight)),
-            RogueSpell::Eviscerate | RogueSpell::SliceAndDice => {
+            RogueSpell::Eviscerate | RogueSpell::SliceAndDice | RogueSpell::Rupture => {
                 fight.energy_bar().combo_points > 0
             }
+            RogueSpell::Ambush => fight
+                .agent
+                .ambush
+                .is_some_and(|ambush| ambush.can_cast(fight, fight.agent.stealth)),
+            RogueSpell::Mutilate => fight
+                .agent
+                .mutilate
+                .is_some_and(|mutilate| mutilate.daggers),
+            RogueSpell::Premeditation => fight
+                .agent
+                .stealth
+                .is_some_and(|stealth| stealth.active(fight)),
+            RogueSpell::Stealth => Stealth::can_cast(fight),
             _ => true,
         }
     }
 
     fn modify_cast(fight: &mut Fight<Self>, spell: SpellId, behavior: RogueSpell) {
-        if matches!(behavior, RogueSpell::Eviscerate | RogueSpell::SliceAndDice) {
+        if matches!(
+            behavior,
+            RogueSpell::Eviscerate | RogueSpell::SliceAndDice | RogueSpell::Rupture
+        ) {
             let points = fight.energy_bar().combo_points as usize;
             fight.set_metrics_split(spell, points);
         }
@@ -371,13 +683,24 @@ impl Agent for RogueAgent {
                 .agent
                 .adrenaline_rush
                 .is_some_and(|rush| rush.should_activate(fight)),
+            RogueSpell::Preparation => fight
+                .agent
+                .preparation
+                .as_ref()
+                .is_some_and(|preparation| preparation.should_activate(fight)),
             _ => true,
         }
     }
 
     fn on_dot_tick(fight: &mut Fight<Self>, dot: DotId, behavior: RogueSpell) {
-        if behavior == RogueSpell::DeadlyPoison {
-            fight.snapshot_dot_tick(dot);
+        match behavior {
+            RogueSpell::DeadlyPoison => fight.snapshot_dot_tick(dot),
+            RogueSpell::Rupture => {
+                let rupture = fight.agent.rupture.clone().expect("Rupture is bound");
+                let snapshot = fight.agent.rupture_snapshot;
+                rupture.tick(fight, dot, snapshot);
+            }
+            _ => {}
         }
     }
 
@@ -389,7 +712,73 @@ impl Agent for RogueAgent {
             }
             RogueAura::BladeFlurry => fight.agent.blade_flurry.expect("bound").on_gain(fight),
             RogueAura::AdrenalineRush => fight.agent.adrenaline_rush.expect("bound").on_gain(fight),
+            RogueAura::ColdBlood => fight
+                .agent
+                .cold_blood
+                .clone()
+                .expect("bound")
+                .on_gain(fight),
+            RogueAura::ThousandCuts => fight
+                .agent
+                .thousand_cuts
+                .clone()
+                .expect("bound")
+                .on_gain(fight),
             _ => {}
+        }
+    }
+
+    fn on_stacks_change(
+        fight: &mut Fight<Self>,
+        _aura: AuraRef,
+        kind: RogueAura,
+        _old: i32,
+        new: i32,
+    ) {
+        if kind == RogueAura::ThousandCuts {
+            let cuts = fight.agent.thousand_cuts.clone().expect("bound");
+            cuts.on_stacks_change(fight, new);
+        }
+    }
+
+    fn on_apply_effects(
+        fight: &mut Fight<Self>,
+        _aura: AuraRef,
+        kind: RogueAura,
+        spell: SpellId,
+        _target: Side,
+    ) {
+        if kind == RogueAura::ThousandCuts {
+            let cuts = fight.agent.thousand_cuts.clone().expect("bound");
+            cuts.on_apply_effects(fight, spell);
+        }
+    }
+
+    fn on_periodic_damage_dealt(
+        fight: &mut Fight<Self>,
+        aura: AuraRef,
+        kind: RogueAura,
+        spell: SpellId,
+        result: &SpellResult,
+    ) {
+        if let RogueAura::Proc(index) = kind {
+            let trigger = fight.agent.procs[index].clone();
+            if trigger.periodic {
+                trigger.callback(fight, aura, spell, result);
+            }
+        }
+    }
+
+    fn on_delayed_proc(
+        fight: &mut Fight<Self>,
+        _aura: AuraRef,
+        kind: RogueAura,
+        _spell: SpellId,
+        _result: SpellResult,
+    ) {
+        if let RogueAura::Proc(index) = kind {
+            let trigger = fight.agent.procs[index].clone();
+            trigger.handle(fight);
         }
     }
 
@@ -403,13 +792,25 @@ impl Agent for RogueAgent {
             RogueAura::AdrenalineRush => {
                 fight.agent.adrenaline_rush.expect("bound").on_expire(fight)
             }
+            RogueAura::ColdBlood => fight
+                .agent
+                .cold_blood
+                .clone()
+                .expect("bound")
+                .on_expire(fight),
+            RogueAura::ThousandCuts => fight
+                .agent
+                .thousand_cuts
+                .clone()
+                .expect("bound")
+                .on_expire(fight),
             _ => {}
         }
     }
 
     fn on_spell_hit_dealt(
         fight: &mut Fight<Self>,
-        _aura: AuraRef,
+        aura: AuraRef,
         kind: RogueAura,
         spell: SpellId,
         result: &SpellResult,
@@ -417,6 +818,18 @@ impl Agent for RogueAgent {
         let poison = match kind {
             RogueAura::InstantPoisonTrigger => fight.agent.instant_poison.clone(),
             RogueAura::DeadlyPoisonTrigger => fight.agent.deadly_poison.clone(),
+            RogueAura::ColdBlood => {
+                let cold_blood = fight.agent.cold_blood.clone().expect("bound");
+                cold_blood.on_spell_hit_dealt(fight, spell);
+                None
+            }
+            RogueAura::Proc(index) => {
+                let trigger = fight.agent.procs[index].clone();
+                if !trigger.periodic {
+                    trigger.callback(fight, aura, spell, result);
+                }
+                None
+            }
             // Blade Flurry's listener needs a second target.
             _ => None,
         };

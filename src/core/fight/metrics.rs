@@ -611,7 +611,7 @@ impl<A: Agent> Fight<A> {
             .auras
             .iter()
             .filter_map(|aura| {
-                let id = aura.action_id.as_ref()?;
+                let id = aura.metrics_id.as_ref()?;
                 let n = aura.aggregate.n;
                 let (avg, stdev) = aura.aggregate.mean_and_stdev();
                 Some(AuraMetricsReport {

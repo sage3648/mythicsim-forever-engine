@@ -158,7 +158,7 @@ func rogueEffects(agent core.Agent, character *core.Character) []map[string]any 
 			"tick_damage": 23.0,
 		})
 	}
-	return effects
+	return append(effects, rogueSpecEffects(r, character)...)
 }
 
 // Rogue behavior the exporter cannot describe.

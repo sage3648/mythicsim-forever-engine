@@ -3006,6 +3006,38 @@
       "trigger_aura": "Deadly Poison"
     },
     {
+      "aura": "Stealth",
+      "kind": "stealth",
+      "spell_id": 1784,
+      "vanish_spell_id": 1856
+    },
+    {
+      "base_damage": 116,
+      "cutthroat_aura": "",
+      "kind": "ambush",
+      "main_hand_dagger": true,
+      "spell_id": 11269
+    },
+    {
+      "attack_power_shares": [
+        0,
+        0.01,
+        0.02,
+        0.03,
+        0.03,
+        0.03
+      ],
+      "base_tick_count": 3,
+      "damage_per_combo_point": 4.730000019073486,
+      "hemorrhage_aura": "",
+      "hemorrhage_multiplier": 1.15,
+      "kind": "rupture",
+      "magic": false,
+      "spell_id": 11275,
+      "tick_can_crit": true,
+      "tick_damage": 35
+    },
+    {
       "active_stats": {
         "AttackPower": 1224.3000000000002,
         "RangedAttackPower": 218.9,
@@ -3174,6 +3206,7 @@
         "Crit",
         "Crush"
       ],
+      "spend_require_damage": true,
       "spend_spells": [
         23,
         24,
@@ -3189,6 +3222,7 @@
         "Crush"
       ],
       "trigger_proc_chance": 0.2,
+      "trigger_require_damage": true,
       "trigger_spells": [
         9,
         10,
