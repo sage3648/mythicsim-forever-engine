@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "045c7e8861471668234c1477547f50606dc6ef5d352855c40d2eb5b223e45116",
+  "exporter_sha256": "aecc310101c349ef893050454250a581c2b12fcb4afe76b94b51d812b12d1a3e",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -839,6 +839,27 @@
       "go_log": {
         "file": "production-elemental-shaman.go-log.txt",
         "sha256": "0e1ac90d92a89c85643d670e978f69d22c31f0b46df429e3eecb42d8e1aefd9e"
+      }
+    },
+    {
+      "id": "elemental-shaman-dwarf-stoneform",
+      "description": "The production Elemental Shaman request as a Dwarf in 300-second fights with Stoneform timings at 10 and 200 seconds: the survival cooldown is cast at its timings, and its physical damage taken change has no effect.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/elemental-shaman-dwarf-stoneform.request.json"
+      },
+      "prepared": "elemental-shaman-dwarf-stoneform.prepared.json",
+      "prepared_sha256": "d1d2f2fb15d0b9d37249367fe767f9265b3c2021b9372d9d6f630d180b3c0416",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "elemental-shaman-dwarf-stoneform.go-result.json",
+        "sha256": "51867257f1add02a35667a2ba0fd76a995169768b6a5b58d341f781881fcdd34"
+      },
+      "go_log": {
+        "file": "elemental-shaman-dwarf-stoneform.go-log.txt",
+        "sha256": "f2652a69aae3883d60bb6e80bdd3ed6e30f4d01b005c74fd171b5ee2d6fc9b83"
       }
     }
   ]

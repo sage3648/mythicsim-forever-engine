@@ -43,6 +43,7 @@ const COMMON_EFFECTS: &[&str] = &[
     "potion_mana",
     "read_ley_line",
     "shatter_curse",
+    "stoneform",
     "temporary_stats",
     "touch_of_the_grave",
 ];
@@ -93,6 +94,9 @@ fn common_spell_capability(spell: &Spell, prepared: &PreparedV2) -> Option<&'sta
         Effect::ShatterCurse { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
             Some("shatter_curse")
         }
+        Effect::Stoneform { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
+            Some("stoneform")
+        }
         Effect::ReadLeyLine { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
             Some("read_ley_line")
         }
@@ -123,6 +127,7 @@ fn common_claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         | Effect::Berserking { aura, .. }
         | Effect::BloodFury { aura, .. }
         | Effect::ShatterCurse { aura, .. }
+        | Effect::Stoneform { aura, .. }
         | Effect::ReadLeyLine { aura, .. }
         | Effect::TemporaryStats { aura, .. } => vec![("player", aura)],
         Effect::JudgementOfWisdom { aura, .. } => vec![("target", aura)],

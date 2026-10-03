@@ -777,6 +777,10 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 	if aura := character.GetAura("Shatter Curse"); aura != nil {
 		effects = append(effects, map[string]any{"kind": "shatter_curse", "spell_id": aura.ActionID.SpellID, "aura": aura.Label})
 	}
+	// racials.go Dwarf Stoneform: its aura changes only the player's physical damage taken.
+	if aura := character.GetAura("Stoneform"); aura != nil {
+		effects = append(effects, map[string]any{"kind": "stoneform", "spell_id": aura.ActionID.SpellID, "aura": aura.Label})
+	}
 	// racials.go High Order Skyborne Read Ley Line: Energized doubles mana regeneration, a
 	// Go literal undone with 0.5.
 	if aura := character.GetAura("Energized"); aura != nil {
