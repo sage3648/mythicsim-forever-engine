@@ -351,6 +351,9 @@ fn unknown_aura_conditions(prepared: &PreparedV2, rotation: &Rotation) -> Vec<St
                 Value::AuraNumStacks(id) if !known(id) => {
                     unknown.push(("auraNumStacks", id.to_string()))
                 }
+                Value::AuraRemainingTime(id) if !known(id) => {
+                    unknown.push(("auraRemainingTime", id.to_string()))
+                }
                 _ => {}
             });
         }

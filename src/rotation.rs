@@ -51,11 +51,13 @@ pub enum Value {
     },
     And(Vec<Value>),
     Or(Vec<Value>),
+    Not(Box<Value>),
     CurrentManaPercent,
     RemainingTime,
     AuraIsKnown(ActionId),
     AuraIsActive(ActionId),
     AuraNumStacks(ActionId),
+    AuraRemainingTime(ActionId),
 }
 
 impl Value {
@@ -70,6 +72,7 @@ impl Value {
             Value::And(values) | Value::Or(values) => {
                 values.iter().for_each(|value| value.visit(f))
             }
+            Value::Not(value) => value.visit(f),
             _ => {}
         }
     }
@@ -81,9 +84,11 @@ impl Value {
             Value::Compare { .. }
             | Value::And(_)
             | Value::Or(_)
+            | Value::Not(_)
             | Value::AuraIsKnown(_)
             | Value::AuraIsActive(_) => ValueType::Bool,
             Value::AuraNumStacks(_) => ValueType::Int,
+            Value::AuraRemainingTime(_) => ValueType::Duration,
             Value::CurrentManaPercent => ValueType::Float,
             Value::RemainingTime => ValueType::Duration,
         }
@@ -357,7 +362,14 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
             only(&[])?;
             Ok(Value::RemainingTime)
         }
-        "auraIsKnown" | "auraIsActive" | "auraNumStacks" => {
+        "not" => {
+            only(&["val"])?;
+            let value = config
+                .get("val")
+                .ok_or_else(|| vec!["not has no val".to_string()])?;
+            Ok(Value::Not(Box::new(parse_value(value)?)))
+        }
+        "auraIsKnown" | "auraIsActive" | "auraNumStacks" | "auraRemainingTime" => {
             // sourceUnit and includeReactionTime are not modeled.
             only(&["auraId"])?;
             let id = config
@@ -367,7 +379,8 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
             Ok(match name {
                 "auraIsKnown" => Value::AuraIsKnown(id),
                 "auraIsActive" => Value::AuraIsActive(id),
-                _ => Value::AuraNumStacks(id),
+                "auraNumStacks" => Value::AuraNumStacks(id),
+                _ => Value::AuraRemainingTime(id),
             })
         }
         other => Err(vec![format!("value {other} is unsupported")]),
@@ -587,10 +600,12 @@ pub enum Compiled<R> {
     },
     And(Vec<Compiled<R>>),
     Or(Vec<Compiled<R>>),
+    Not(Box<Compiled<R>>),
     CurrentManaPercent,
     RemainingTime,
     AuraIsActive(R),
     AuraNumStacks(R),
+    AuraRemainingTime(R),
     /// Go `APLValueCoerced`.
     Coerced {
         to: ValueType,
@@ -605,8 +620,10 @@ impl<R> Compiled<R> {
             Compiled::Compare { .. }
             | Compiled::And(_)
             | Compiled::Or(_)
+            | Compiled::Not(_)
             | Compiled::AuraIsActive(_) => ValueType::Bool,
             Compiled::AuraNumStacks(_) => ValueType::Int,
+            Compiled::AuraRemainingTime(_) => ValueType::Duration,
             Compiled::CurrentManaPercent => ValueType::Float,
             Compiled::RemainingTime => ValueType::Duration,
             Compiled::Coerced { to, .. } => *to,
@@ -675,6 +692,13 @@ impl<R: Clone> Compiled<R> {
                 }
             }
             Compiled::And(values) => simplify(values, true, Compiled::And),
+            Compiled::Not(value) => {
+                let value = value.folded();
+                match value.const_bool() {
+                    Some(constant) => bool_const(!constant),
+                    None => Compiled::Not(Box::new(value)),
+                }
+            }
             Compiled::Or(values) => simplify(values, false, Compiled::Or),
             Compiled::Coerced { to, inner } => Compiled::Coerced {
                 to: *to,
@@ -834,6 +858,21 @@ fn compile_value<R>(
                 op: *op,
                 lhs: Box::new(lhs.coerce(to)),
                 rhs: Box::new(rhs.coerce(to)),
+            }
+        }
+        Value::AuraRemainingTime(id) => match (aura(id), missing) {
+            (Some(found), _) => Compiled::AuraRemainingTime(found.aura),
+            (None, MissingAura::Dropped) => return None,
+            (None, MissingAura::Inactive) => {
+                Compiled::Const(parse_const("0ms").expect("duration constant"))
+            }
+        },
+        // Go `newValueNot` folds a constant operand.
+        Value::Not(value) => {
+            let value = compile_value(value, aura, missing)?.coerce(ValueType::Bool);
+            match value.const_bool() {
+                Some(constant) => bool_const(!constant),
+                None => Compiled::Not(Box::new(value)),
             }
         }
         Value::And(values) => return fold(values, aura, missing, false, Compiled::And),
@@ -1052,5 +1091,56 @@ mod tests {
             pinned,
             CompiledCondition::When(Compiled::Compare { .. })
         ));
+    }
+
+    #[test]
+    fn not_and_remaining_time_fold_as_go_does() {
+        let compile = |json: serde_json::Value| {
+            let rotation = parse(&serde_json::json!({
+                "type": "TypeAPL",
+                "priorityList": [{"action": {
+                    "castSpell": {"spellId": {"spellId": 10207}},
+                    "condition": json,
+                }}],
+            }))
+            .unwrap();
+            let condition = rotation.priority_list[0].condition.clone();
+            // The character has 22959 and lacks 400625.
+            let find = |id: &ActionId| {
+                (id.spell_id == 22959).then_some(FoundAura {
+                    aura: (),
+                    max_stacks: 5,
+                })
+            };
+            (
+                compile_condition(condition.as_ref(), &find, MissingAura::Dropped),
+                compile_condition(condition.as_ref(), &find, MissingAura::Inactive),
+            )
+        };
+        let known = |id: i32| serde_json::json!({"auraIsKnown": {"auraId": {"spellId": id}}});
+        // Go folds Not of a constant.
+        assert_eq!(
+            compile(serde_json::json!({"not": {"val": known(22959)}})),
+            (CompiledCondition::Pruned, CompiledCondition::Pruned)
+        );
+        assert_eq!(
+            compile(serde_json::json!({"not": {"val": known(400625)}})),
+            (CompiledCondition::Always, CompiledCondition::Always)
+        );
+        // Remaining time compares as a duration; a missing aura has none under the fix.
+        let remaining = |id: i32| {
+            serde_json::json!({"cmp": {"op": "OpLe",
+                "lhs": {"auraRemainingTime": {"auraId": {"spellId": id}}}, "rhs": {"const": {"val": "4s"}}}})
+        };
+        let (pinned, fixed) = compile(remaining(22959));
+        assert_eq!(pinned, fixed);
+        assert!(matches!(
+            pinned,
+            CompiledCondition::When(Compiled::Compare { .. })
+        ));
+        let (pinned, fixed) = compile(remaining(400625));
+        assert_eq!(pinned, CompiledCondition::Always);
+        // 0 <= 4s holds, so the fix acts as the pinned reading here.
+        assert!(pinned.same_meaning(&fixed));
     }
 }

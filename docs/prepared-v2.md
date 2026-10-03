@@ -132,9 +132,10 @@ Rust recomputes Go's starting mana regeneration from the exported components and
 rejects the input as invalid if it disagrees. Further preparation checks will be added
 as the engine consumes more fields.
 
-The rotation subset covers the Frost and Arcane presets: `castSpell`, `autocastOtherCooldowns`,
+The rotation subset covers the Frost, Arcane and Fire presets: `castSpell`, `autocastOtherCooldowns`,
 `cmp` with any comparison operator, `and`, `or`, `const`, `currentManaPercent`,
-`remainingTime`, `auraIsKnown`, `auraIsActive` and `auraNumStacks`. Constants follow Go parsing,
+`remainingTime`, `not`, `auraIsKnown`, `auraIsActive`, `auraNumStacks` and `auraRemainingTime`.
+Constants follow Go parsing,
 including `time.ParseDuration` and percent constants. A rotation spell the character
 does not know is dropped, as in Go; a known spell without a Rust behavior is
 unsupported. For an `auraIsActive` or `auraNumStacks` naming an aura the character

@@ -76,6 +76,7 @@ impl<A: Agent> Fight<A> {
             Compiled::AuraIsActive(aura) => self.aura(*aura).active,
             Compiled::And(values) => values.iter().all(|value| self.get_bool(value)),
             Compiled::Or(values) => values.iter().any(|value| self.get_bool(value)),
+            Compiled::Not(value) => !self.get_bool(value),
             Compiled::Compare { op, lhs, rhs } => match lhs.value_type() {
                 ValueType::Bool => match op {
                     CompareOp::Eq => self.get_bool(lhs) == self.get_bool(rhs),
@@ -131,6 +132,15 @@ impl<A: Agent> Fight<A> {
     fn get_duration(&self, value: &Compiled) -> i64 {
         match value {
             Compiled::Const(constant) => constant.duration_ns,
+            // Go `APLValueAuraRemainingTime`: zero when inactive.
+            Compiled::AuraRemainingTime(aura) => {
+                let state = self.aura(*aura);
+                match (state.active, state.expires) {
+                    (false, _) => 0,
+                    (true, crate::core::time::NEVER_EXPIRES) => crate::core::time::NEVER_EXPIRES,
+                    (true, expires) => expires - self.now,
+                }
+            }
             Compiled::RemainingTime => self.duration - self.now,
             Compiled::Coerced { inner, .. } => match inner.value_type() {
                 ValueType::Bool => {
