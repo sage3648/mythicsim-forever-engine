@@ -14,6 +14,7 @@ mod cast;
 mod damage;
 pub(crate) mod damage_taken;
 mod dot;
+mod enemy;
 pub(crate) mod energy;
 mod log;
 pub(crate) mod melee;
@@ -324,6 +325,7 @@ pub(crate) struct SpellMetrics {
     pub(crate) glances: i32,
     pub(crate) blocks: i32,
     pub(crate) blocked_crits: i32,
+    pub(crate) crushes: i32,
     pub(crate) hits: i32,
     pub(crate) resisted_hits: i32,
     pub(crate) crits: i32,
@@ -343,6 +345,7 @@ pub(crate) struct SpellMetrics {
     pub(crate) total_glance_damage: f64,
     pub(crate) total_block_damage: f64,
     pub(crate) total_blocked_crit_damage: f64,
+    pub(crate) total_crush_damage: f64,
     pub(crate) total_threat: f64,
     pub(crate) total_cast_time: i64,
 }
@@ -764,6 +767,8 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) goblin_sapper: Option<damage_taken::GoblinSapper>,
     /// Go `UnitMetrics.Died` for the player.
     pub(crate) death: damage_taken::Death,
+    /// The target's swings at the player, when the player tanks it.
+    pub(crate) enemy: Option<enemy::EnemyAttack>,
     /// Auras Go keeps up through `ApplyFixedUptimeAura`.
     pub(crate) fixed_uptime: Vec<FixedUptime>,
     pub(crate) player: Player,
@@ -1494,6 +1499,10 @@ impl<A: Agent> Fight<A> {
                     })
                 {
                     AuraBehavior::ChanceOfDeath
+                } else if effects.iter().any(|effect| {
+                    matches!(effect, Effect::ParryHaste { unit: u, aura } if u == unit && *aura == exported.label)
+                }) {
+                    AuraBehavior::ParryHaste
                 } else if side == Side::Player
                     && effects.iter().any(|effect| {
                         matches!(effect, Effect::Crusader { trigger_aura, .. } if *trigger_aura == exported.label)
@@ -1568,6 +1577,7 @@ impl<A: Agent> Fight<A> {
             energy: None,
             self_target: None,
             goblin_sapper: None,
+            enemy: None,
             death: damage_taken::Death::default(),
             fixed_uptime: Vec::new(),
             player: Player {
@@ -1712,6 +1722,25 @@ impl<A: Agent> Fight<A> {
                     self_spell,
                 });
             }
+        }
+        if let Some(values) = &prepared.enemy {
+            let action = fight
+                .target_actions
+                .iter()
+                .position(|action| action.id == values.action_id)
+                .ok_or("the target's swing has no target action")?;
+            if values.rolls.len() != fight.stat_combos.len().max(1) {
+                return Err(format!(
+                    "the target's swing has {} rolls for {} stat aura combinations",
+                    values.rolls.len(),
+                    fight.stat_combos.len()
+                ));
+            }
+            fight.enemy = Some(enemy::EnemyAttack {
+                values: values.clone(),
+                action,
+                metrics: SpellMetrics::default(),
+            });
         }
         fight.rotation = fight.compile_rotation(&parsed);
         fight.prepull = fight.compile_prepull(&parsed);
@@ -2171,7 +2200,8 @@ impl<A: Agent> Fight<A> {
         }
         // Go AutoAttacks.reset: an enemy with a melee swing rolls its opening offset.
         if side == Side::Target && self.config.target_auto_swing_melee {
-            self.random("Enemy Swing Offset");
+            let roll = self.random("Enemy Swing Offset");
+            self.reset_enemy_attack(roll);
         }
         self.rotation_reset(side);
         // Go addTracker: the target's tracker first, then the player's.
@@ -2393,6 +2423,8 @@ impl<A: Agent> Fight<A> {
         // No supported unit has encounter start callbacks. The player starts its swings, then
         // its rotation at max(0, GCD ready).
         self.randomize_melee_timing();
+        // Go AllUnits lists the target first, so its swing joins the weapon attacks first.
+        self.start_enemy_attack();
         self.start_auto_attacks();
         let ready = self.player.gcd.max(0);
         self.set_gcd_timer(ready);
@@ -2414,6 +2446,7 @@ impl<A: Agent> Fight<A> {
         for spell in 0..self.spells.len() {
             self.spell_done_iteration(spell);
         }
+        self.enemy_done_iteration();
         let damage = self.totals.iteration_damage;
         self.aura_done_iteration(Side::Target);
         self.unit_done_iteration(damage);

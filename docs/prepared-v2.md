@@ -61,6 +61,7 @@ RNG contract and implemented effects. Tests fail if it disagrees with the engine
 | `target` | Level, all stats, pseudo stats, every registered aura and whether it has a melee or ranged swing |
 | `player` | Identity, talents, stats, pseudo stats, reaction time, distance, cast speed, mana, attack table, spells, major cooldowns and rotation |
 | `melee` | The player's weapons and auto attack flags, and the physical attack table against the target with the defender's static chances resolved |
+| `enemy` | Present only when the player tanks the target: the target's main hand swing at the player, every step of its damage and table resolved as Go computes it at reset, its table steps for each stat aura combination, and the auras whose activation would change it |
 | `effects` | Dynamic behavior and its parameters, one tagged variant per kind |
 | `unrepresented` | Request features the exporter cannot describe |
 
@@ -147,6 +148,7 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `penance` | sim/priest/penance.go | The bolt's base and crit; a channel that ticks on application and each second |
 | `power_in_light` | sim/priest/talents_discipline.go | The target's damage taken multiplier, the spells it multiplies and the Holy Fire dots it waits for |
 | `searing_light` | sim/priest/talents_holy.go | The resolved trigger on Holy Fire ticks, Holy Purpose's Holy Nova cost modifier and the casts that end it |
+| `parry_haste` | sim/core/attack.go applyParryHaste | Which unit's Parry Haste acts once the target swings at the player; a parry pulls that unit's next main hand swing in |
 | `inert_pet` | sim/core/pet.go | A registered pet nothing summons: label, unit index, metrics actions and auras, its dismissed stats line and why it is inert |
 
 Human racials are static and already in the prepared stats. High Order Skyborne's cast
@@ -351,7 +353,13 @@ cargo run --locked -- check --infile fixtures/mage/prepared-v2/frost-reference.p
 - Each class has its own exporter file under `tools/oracle-v2/` naming its class spells,
   damage rows and effects; a class without one is unrepresented. The fixture manifest pins
   the digest of every exporter source.
-- The contract describes one player and one target. Multiple targets, pets, incoming
-  damage and job modes such as stat weights need contract additions.
+- The contract describes one player and one target. Multiple targets, pets and job modes
+  such as stat weights need contract additions.
+- Incoming damage covers the target's main hand swing at the one player tanking it. The
+  gate rejects a dual wielding or ranged target, a healing model, a hardcast or channel
+  the rotation can reach while tanking (Go drops the tank's avoidance and pushes the cast
+  back), listeners of the swing other than Chance of Death and Parry Haste, and any aura
+  something in scope activates that would change the swing. Stat auras change only the
+  table steps, which are exported for each combination.
 - Accepting an input does not validate gameplay. Parity with Go is established per
   mechanic by the comparisons that accompany each implementation.
