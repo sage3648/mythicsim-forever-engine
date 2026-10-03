@@ -143,11 +143,8 @@ impl FingersOfFrost {
         if state.flags.proc || !is_class(state.class_spell.as_deref(), CHILL) || !result.landed() {
             return false;
         }
-        if self.proc_chance != 1.0 {
-            let label = fight.aura(self.trigger).label.clone();
-            if fight.random(&label) > self.proc_chance {
-                return false;
-            }
+        if self.proc_chance != 1.0 && fight.random_for_aura(self.trigger) > self.proc_chance {
+            return false;
         }
         true
     }

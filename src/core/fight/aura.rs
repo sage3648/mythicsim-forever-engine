@@ -263,7 +263,12 @@ impl<A: Agent> Fight<A> {
     pub(crate) fn activate_aura(&mut self, aura: AuraRef) {
         self.aura_mut(aura).procs += 1;
         if self.aura(aura).active {
-            if let Some(id) = self.aura(aura).action_id.clone() {
+            if let Some(id) = self
+                .aura(aura)
+                .action_id
+                .clone()
+                .filter(|_| self.log.is_some())
+            {
                 let line = format!("Aura refreshed: {}", action_string(&id));
                 self.unit_log(aura.side, &line);
             }
@@ -295,7 +300,12 @@ impl<A: Agent> Fight<A> {
                 tracker.add_to(list, aura.index);
             }
         }
-        if let Some(id) = self.aura(aura).action_id.clone() {
+        if let Some(id) = self
+            .aura(aura)
+            .action_id
+            .clone()
+            .filter(|_| self.log.is_some())
+        {
             let line = format!("Aura gained: {}", action_string(&id));
             self.unit_log(aura.side, &line);
         }
@@ -363,7 +373,7 @@ impl<A: Agent> Fight<A> {
         if old == new {
             return;
         }
-        if let Some(id) = state.action_id.clone() {
+        if let Some(id) = state.action_id.clone().filter(|_| self.log.is_some()) {
             let line = format!("{} stacks: {old} --> {new}", action_string(&id));
             self.unit_log(aura.side, &line);
         }
@@ -431,21 +441,26 @@ impl<A: Agent> Fight<A> {
         if self.now < self.trackers[side.index()].min_expires {
             return self.trackers[side.index()].min_expires;
         }
-        'restart: loop {
+        loop {
+            let tracker = &self.trackers[side.index()];
             let mut min = NEVER_EXPIRES;
-            let active = self.trackers[side.index()].lists[List::Active as usize]
-                .live()
-                .to_vec();
-            for index in active {
-                let expires = self.trackers[side.index()].auras[index].expires;
+            let mut expired = None;
+            for &index in tracker.lists[List::Active as usize].live() {
+                let expires = tracker.auras[index].expires;
                 if expires <= self.now {
-                    self.deactivate_aura(AuraRef { side, index });
-                    continue 'restart;
+                    expired = Some(index);
+                    break;
                 }
                 min = min.min(expires);
             }
-            self.trackers[side.index()].min_expires = min;
-            return min;
+            // Deactivation edits the list, so scan again from the start, as Go does.
+            match expired {
+                Some(index) => self.deactivate_aura(AuraRef { side, index }),
+                None => {
+                    self.trackers[side.index()].min_expires = min;
+                    return min;
+                }
+            }
         }
     }
 
@@ -528,8 +543,7 @@ impl<A: Agent> Fight<A> {
         if spell_state.flags.proc || !spell_state.direct_proc {
             return;
         }
-        let label = self.aura(aura).label.clone();
-        if chance != 1.0 && self.random(&label) > chance {
+        if chance != 1.0 && self.random_for_aura(aura) > chance {
             return;
         }
         let result = *result;

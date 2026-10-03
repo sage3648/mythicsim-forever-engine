@@ -12,7 +12,7 @@ use super::{Agent, AuraRef, Fight, Side, SpellId};
 
 pub(crate) type Compiled = crate::rotation::Compiled<AuraRef>;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub(crate) enum Act {
     Cast(SpellId),
     Autocast,
@@ -148,16 +148,12 @@ impl<A: Agent> Fight<A> {
 
     /// Go `APLAction.IsReady`: the condition, then the action's readiness.
     fn item_ready(&mut self, item: usize) -> Option<Ready> {
-        let (condition, action) = {
-            let entry = &self.rotation[item];
-            (entry.condition.clone(), entry.action.clone())
-        };
-        if let Some(condition) = &condition {
+        if let Some(condition) = &self.rotation[item].condition {
             if !self.get_bool(condition) {
                 return None;
             }
         }
-        match action {
+        match self.rotation[item].action {
             Act::Cast(spell) => {
                 let ready = self.can_cast_or_queue(spell) && {
                     let flags = self.spells[spell].flags;

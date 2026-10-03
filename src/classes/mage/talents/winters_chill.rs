@@ -70,11 +70,8 @@ impl WintersChill {
         {
             return;
         }
-        if self.proc_chance != 1.0 {
-            let label = fight.aura(self.trigger).label.clone();
-            if fight.random(&label) > self.proc_chance {
-                return;
-            }
+        if self.proc_chance != 1.0 && fight.random_for_aura(self.trigger) > self.proc_chance {
+            return;
         }
         fight.activate_aura(self.aura);
         fight.add_stack(self.aura);

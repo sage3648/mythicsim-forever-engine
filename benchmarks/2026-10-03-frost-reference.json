@@ -1,0 +1,53 @@
+{
+  "method": "Complete Frost reference request (inventory/first-frost), 3000 iterations, seed 42, first-fight debug log on. Go: the pinned engine's RunRaidSim through tools/oracle-v2 sim, GOMAXPROCS=1, one process per sample, elapsedNs from the result. Rust: forever-engine bench on the frost-reference prepared fixture, 3 in-process warmups, elapsed_ns of the iteration loop. Both produce DPS 590.9470407845581.",
+  "source_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
+  "go_version": "go version go1.25.6 darwin/arm64",
+  "rust_version": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+  "machine": {
+    "platform": "macOS-26.5-arm64-arm-64bit-Mach-O",
+    "cpu": "Apple M2 Max"
+  },
+  "prepared_sha256": "7a52eee9bee0fc83588a7c1e09d601d7a36b3636a08872558906b7afce19c402",
+  "samples_ns": {
+    "go": [
+      212398583,
+      370757292,
+      235129291,
+      199544542,
+      211148250,
+      194373333,
+      197999250,
+      193410333,
+      193439500,
+      216394958
+    ],
+    "rust_before_optimization": [
+      357396084,
+      294538042,
+      272132958,
+      278804750,
+      267385500,
+      271248500,
+      273293333
+    ],
+    "rust": [
+      75171541,
+      128544792,
+      127414375,
+      90177542,
+      75356375,
+      77942916,
+      75131375,
+      78598417,
+      83076333,
+      93421625
+    ]
+  },
+  "median_ms": {
+    "go": 205.346,
+    "rust_before_optimization": 273.293,
+    "rust": 80.837
+  },
+  "go_rust_median_ratio": 2.54,
+  "limitations": "Shared host without CPU affinity; few samples; Go times include per-process warmup effects that Rust's in-process warmups avoid; Rust excludes JSON parsing and Go preparation, which the exporter performs. One build and one request; not a production or multi-spec claim."
+}

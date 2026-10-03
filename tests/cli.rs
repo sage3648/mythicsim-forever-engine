@@ -58,3 +58,27 @@ fn benchmark_reports_only_requested_samples_after_warmup() {
         assert_eq!(report["dps_mean"], reports[0]["dps_mean"]);
     }
 }
+
+#[test]
+fn prepared_benchmark_repeats_one_result() {
+    let input = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("fixtures/mage/frost/prepared-v2/reference-clearcasting.prepared.json");
+    let result = Command::new(env!("CARGO_BIN_EXE_forever-engine"))
+        .args(["bench", "--infile"])
+        .arg(input)
+        .args(["--warmups", "1", "--samples", "2"])
+        .output()
+        .unwrap();
+    assert!(result.status.success());
+    let value: serde_json::Value = serde_json::from_slice(&result.stdout).unwrap();
+    assert_eq!(value["warmups"], 1);
+    assert_eq!(value["samples"], 2);
+    assert_eq!(value["elapsed_ns_samples"].as_array().unwrap().len(), 2);
+    assert_eq!(value["report"]["scenario_id"], "reference-clearcasting");
+    assert!(
+        value["report"]["result"]["raidMetrics"]["dps"]["avg"]
+            .as_f64()
+            .unwrap()
+            > 0.0
+    );
+}

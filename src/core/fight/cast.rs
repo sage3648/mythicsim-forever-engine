@@ -128,14 +128,13 @@ impl<A: Agent> Fight<A> {
     pub(crate) fn can_complete_cast(&mut self, spell: SpellId, log_failure: bool) -> bool {
         if !self.extra_cast_condition(spell) {
             if log_failure {
-                self.cast_failure(spell, "extra spell condition");
+                self.cast_failure(spell, |_| "extra spell condition".into());
             }
             return false;
         }
         if !self.meets_cost(spell) {
             if log_failure {
-                let reason = self.cost_failure(spell);
-                self.cast_failure(spell, &reason);
+                self.cast_failure(spell, |fight| fight.cost_failure(spell));
             }
             return false;
         }
@@ -242,8 +241,10 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    fn cast_failure(&mut self, spell: SpellId, reason: &str) -> bool {
+    /// Go `castFailureHelper`. The reason is only formatted when logging.
+    fn cast_failure(&mut self, spell: SpellId, reason: impl FnOnce(&Self) -> String) -> bool {
         if self.now >= 0 && !self.spells[spell].flags.no_logs && self.log.is_some() {
+            let reason = reason(self);
             let line = format!(
                 "{} failed to cast: {reason}",
                 action_string(&self.spells[spell].id)
@@ -285,29 +286,31 @@ impl<A: Agent> Fight<A> {
     /// Go `makeCastFuncSimple`.
     fn cast_simple(&mut self, spell: SpellId, target: Side) -> bool {
         if self.spells[spell].flags.swapped {
-            return self.cast_failure(spell, "spell attached to an un-equipped item");
+            return self.cast_failure(spell, |_| "spell attached to an un-equipped item".into());
         }
         if !self.extra_cast_condition(spell) {
-            return self.cast_failure(spell, "extra spell condition");
+            return self.cast_failure(spell, |_| "extra spell condition".into());
         }
         if let Some((timer, _)) = self.spells[spell].cd {
             if self.timers[timer] > self.now {
-                let reason = format!(
-                    "still on cooldown for {}, curTime = {}",
-                    go_string((self.timers[timer] - self.now).max(0)),
-                    go_string(self.now)
-                );
-                return self.cast_failure(spell, &reason);
+                return self.cast_failure(spell, |fight| {
+                    format!(
+                        "still on cooldown for {}, curTime = {}",
+                        go_string((fight.timers[timer] - fight.now).max(0)),
+                        go_string(fight.now)
+                    )
+                });
             }
         }
         if let Some((timer, _)) = self.spells[spell].shared_cd {
             if self.timers[timer] > self.now {
-                let reason = format!(
-                    "still on shared cooldown for {}, curTime = {}",
-                    go_string((self.timers[timer] - self.now).max(0)),
-                    go_string(self.now)
-                );
-                return self.cast_failure(spell, &reason);
+                return self.cast_failure(spell, |fight| {
+                    format!(
+                        "still on shared cooldown for {}, curTime = {}",
+                        go_string((fight.timers[timer] - fight.now).max(0)),
+                        go_string(fight.now)
+                    )
+                });
             }
         }
         self.log_instant_cast(spell);
@@ -338,14 +341,13 @@ impl<A: Agent> Fight<A> {
     fn cast_full(&mut self, spell: SpellId, target: Side) -> bool {
         self.spells[spell].cur_cast = self.spells[spell].default_cast;
         if self.spells[spell].flags.swapped {
-            return self.cast_failure(spell, "spell attached to an un-equipped item");
+            return self.cast_failure(spell, |_| "spell attached to an un-equipped item".into());
         }
         if !self.extra_cast_condition(spell) {
-            return self.cast_failure(spell, "extra spell condition");
+            return self.cast_failure(spell, |_| "extra spell condition".into());
         }
         if self.spells[spell].cost.is_some() && !self.meets_cost(spell) {
-            let reason = self.cost_failure(spell);
-            return self.cast_failure(spell, &reason);
+            return self.cast_failure(spell, |fight| fight.cost_failure(spell));
         }
         // Go hastes both the GCD and the cast time unless the spell ignores haste. A spell
         // with no GCD and no cast time ignores it implicitly.
@@ -362,44 +364,48 @@ impl<A: Agent> Fight<A> {
         }
         if let Some((timer, _)) = self.spells[spell].cd {
             if self.timers[timer] > self.now {
-                let reason = format!(
-                    "still on cooldown for {}, curTime = {}",
-                    go_string((self.timers[timer] - self.now).max(0)),
-                    go_string(self.now)
-                );
-                return self.cast_failure(spell, &reason);
+                return self.cast_failure(spell, |fight| {
+                    format!(
+                        "still on cooldown for {}, curTime = {}",
+                        go_string((fight.timers[timer] - fight.now).max(0)),
+                        go_string(fight.now)
+                    )
+                });
             }
         }
         if let Some((timer, _)) = self.spells[spell].shared_cd {
             if self.timers[timer] > self.now {
-                let reason = format!(
-                    "still on shared cooldown for {}, curTime = {}",
-                    go_string((self.timers[timer] - self.now).max(0)),
-                    go_string(self.now)
-                );
-                return self.cast_failure(spell, &reason);
+                return self.cast_failure(spell, |fight| {
+                    format!(
+                        "still on shared cooldown for {}, curTime = {}",
+                        go_string((fight.timers[timer] - fight.now).max(0)),
+                        go_string(fight.now)
+                    )
+                });
             }
         }
         if self.spells[spell].cur_cast.gcd > 0 && !self.gcd_ready() {
-            let reason = format!(
-                "GCD on cooldown for {}, curTime = {}",
-                go_string((self.player.gcd - self.now).max(0)),
-                go_string(self.now)
-            );
-            return self.cast_failure(spell, &reason);
+            return self.cast_failure(spell, |fight| {
+                format!(
+                    "GCD on cooldown for {}, curTime = {}",
+                    go_string((fight.player.gcd - fight.now).max(0)),
+                    go_string(fight.now)
+                )
+            });
         }
         if self.player.hardcast.expires > self.now {
-            let hardcast = self.player.hardcast;
-            let id = hardcast
-                .spell
-                .map(|s| action_string(&self.spells[s].id))
-                .unwrap_or_else(|| "{}".into());
-            let reason = format!(
-                "casting/channeling {id} for {}, curTime = {}",
-                go_string(hardcast.expires - self.now),
-                go_string(self.now)
-            );
-            return self.cast_failure(spell, &reason);
+            return self.cast_failure(spell, |fight| {
+                let hardcast = fight.player.hardcast;
+                let id = hardcast
+                    .spell
+                    .map(|s| action_string(&fight.spells[s].id))
+                    .unwrap_or_else(|| "{}".into());
+                format!(
+                    "casting/channeling {id} for {}, curTime = {}",
+                    go_string(hardcast.expires - fight.now),
+                    go_string(fight.now)
+                )
+            });
         }
 
         let cur = self.spells[spell].cur_cast;

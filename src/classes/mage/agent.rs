@@ -1,6 +1,8 @@
 //! The Mage class agent for the fight runtime: class spells and auras by name, and the
 //! hooks that dispatch to each spell's and talent's module.
 
+use std::rc::Rc;
+
 use crate::{
     contracts::prepared_v2::{Effect, PreparedV2, Spell as ExportedSpell},
     core::fight::{Agent, AuraRef, DotId, Fight, Side, SpellId, SpellResult},
@@ -41,10 +43,10 @@ pub(crate) enum MageAura {
 /// Mage state that Go keeps in the `Mage` struct and its closures.
 #[derive(Default)]
 pub(crate) struct MageAgent {
-    winters_chill: Option<winters_chill::WintersChill>,
+    winters_chill: Option<Rc<winters_chill::WintersChill>>,
     fingers_of_frost: Option<fingers_of_frost::FingersOfFrost>,
-    arcane_concentration: Option<arcane_concentration::ArcaneConcentration>,
-    missile_barrage: Option<missile_barrage::MissileBarrage>,
+    arcane_concentration: Option<Rc<arcane_concentration::ArcaneConcentration>>,
+    missile_barrage: Option<Rc<missile_barrage::MissileBarrage>>,
     ice_lance_frozen_multiplier: f64,
     /// Arcane Missiles channel spell to the missile spell of the same rank.
     missiles: Vec<(SpellId, SpellId)>,
@@ -157,7 +159,7 @@ impl MageAgent {
                         *proc_chance,
                         *crit_per_stack,
                     )?;
-                    fight.agent.winters_chill = Some(bound);
+                    fight.agent.winters_chill = Some(Rc::new(bound));
                 }
                 Effect::FingersOfFrost {
                     aura,
@@ -183,7 +185,7 @@ impl MageAgent {
                 } => {
                     let bound =
                         arcane_concentration::bind(&fight, aura, trigger_aura, *proc_chance)?;
-                    fight.agent.arcane_concentration = Some(bound);
+                    fight.agent.arcane_concentration = Some(Rc::new(bound));
                 }
                 Effect::MissileBarrage {
                     aura,
@@ -203,7 +205,7 @@ impl MageAgent {
                         *cost_percent_add,
                         *tick_length_delta_ns,
                     )?;
-                    fight.agent.missile_barrage = Some(bound);
+                    fight.agent.missile_barrage = Some(Rc::new(bound));
                 }
                 Effect::IceLance {
                     frozen_multiplier, ..
@@ -259,7 +261,7 @@ impl MageAgent {
         value
     }
 
-    fn winters_chill(fight: &Fight<Self>) -> winters_chill::WintersChill {
+    fn winters_chill(fight: &Fight<Self>) -> Rc<winters_chill::WintersChill> {
         fight
             .agent
             .winters_chill
@@ -267,7 +269,7 @@ impl MageAgent {
             .expect("Winter's Chill is bound")
     }
 
-    fn arcane_concentration(fight: &Fight<Self>) -> arcane_concentration::ArcaneConcentration {
+    fn arcane_concentration(fight: &Fight<Self>) -> Rc<arcane_concentration::ArcaneConcentration> {
         fight
             .agent
             .arcane_concentration
@@ -275,7 +277,7 @@ impl MageAgent {
             .expect("Arcane Concentration is bound")
     }
 
-    fn missile_barrage(fight: &Fight<Self>) -> missile_barrage::MissileBarrage {
+    fn missile_barrage(fight: &Fight<Self>) -> Rc<missile_barrage::MissileBarrage> {
         fight
             .agent
             .missile_barrage

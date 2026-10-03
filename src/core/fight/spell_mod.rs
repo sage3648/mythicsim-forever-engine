@@ -46,7 +46,7 @@ impl<A: Agent> Fight<A> {
     }
 
     fn apply_mod(&mut self, id: ModId, sign: f64) {
-        let modifier = self.mods[id].clone();
+        let modifier = &self.mods[id];
         for &spell in &modifier.affected {
             let state = &mut self.spells[spell];
             match modifier.kind {

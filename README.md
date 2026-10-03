@@ -117,6 +117,12 @@ fight scenarios; Go was faster in the three-second boundary cases. Results and
 work counters matched. These are local, single-threaded Frostbolt kernel timings,
 not full-engine or production speedups.
 
+The complete Frost reference build, which matches Go exactly, runs 3000 fights in a
+median 81 ms in Rust against 205 ms for the pinned Go engine (2.5x), single threaded on
+one machine. Before the allocation pass Rust took 273 ms. See the
+[full-build snapshot](benchmarks/2026-10-03-frost-reference.json) for samples and
+limitations; `forever-engine bench --infile PREPARED_V2.json` reproduces the Rust side.
+
 - [Fair comparison and limitations](docs/forever-rust-fair-comparison-2026-10-03.md)
 - [Raw benchmark snapshot](benchmarks/2026-10-03-fair.json)
 - [Original prototype report](docs/forever-rust-prototype-2026-10-03.md)

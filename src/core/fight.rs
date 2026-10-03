@@ -961,6 +961,12 @@ impl<A: Agent> Fight<A> {
         self.rng.next_f64(label)
     }
 
+    /// `random` labeled with an aura's label, as Go proc triggers do.
+    pub(crate) fn random_for_aura(&mut self, aura: AuraRef) -> f64 {
+        let label = &self.trackers[aura.side.index()].auras[aura.index].label;
+        self.rng.next_f64(label)
+    }
+
     /// Go `Proc(p, label)`: no draw at the extremes.
     pub(crate) fn proc(&mut self, chance: f64, label: &str) -> bool {
         if chance >= 1.0 {

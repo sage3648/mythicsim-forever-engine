@@ -32,7 +32,7 @@ fn run() -> Result<(), String> {
         return Ok(());
     }
     if args.is_empty() || args == ["--help"] {
-        println!("forever-engine sim --infile REQUEST.json [--outfile RESULT.json] [--trace]\nforever-engine bench --infile REQUEST.json [--outfile RESULT.json] [--warmups 3] [--samples 7]\nforever-engine check --infile PREPARED_V2.json\nforever-engine version");
+        println!("forever-engine sim --infile REQUEST.json [--outfile RESULT.json] [--trace]\nforever-engine bench --infile REQUEST.json|PREPARED_V2.json [--outfile RESULT.json] [--warmups 3] [--samples 7]\nforever-engine check --infile PREPARED_V2.json\nforever-engine version");
         return Ok(());
     }
     if args.len() == 3 && args[0] == "check" && args[1] == "--infile" {
@@ -101,14 +101,37 @@ fn run() -> Result<(), String> {
     }
     let input = fs::read(infile.ok_or("--infile is required")?).map_err(|err| err.to_string())?;
     if let Some(prepared) = prepared_v2(&input)? {
-        if args[0] != "sim" || trace {
+        if trace {
             return Err(
-                "prepared v2 inputs support sim without --trace; set debugFirstIteration for logs"
+                "prepared v2 inputs do not support --trace; set debugFirstIteration for logs"
                     .into(),
             );
         }
         let report = simulate_prepared(&prepared).map_err(|err| err.to_string())?;
-        let output = serde_json::to_string_pretty(&report).map_err(|err| err.to_string())?;
+        let output = if args[0] == "bench" {
+            if warmups > 20 || !(1..=100).contains(&samples) {
+                return Err("bench requires 0 to 20 warmups and 1 to 100 samples".into());
+            }
+            for _ in 1..warmups {
+                black_box(simulate_prepared(black_box(&prepared)).map_err(|err| err.to_string())?);
+            }
+            let mut timings = Vec::with_capacity(samples as usize);
+            for _ in 0..samples {
+                let sample = black_box(simulate_prepared(black_box(&prepared)))
+                    .map_err(|err| err.to_string())?;
+                if sample.result != report.result {
+                    return Err("bench samples produced different results".into());
+                }
+                timings.push(sample.elapsed_ns);
+            }
+            serde_json::to_string_pretty(&serde_json::json!({
+                "warmups": warmups.max(1), "samples": samples,
+                "elapsed_ns_samples": timings, "report": report,
+            }))
+        } else {
+            serde_json::to_string_pretty(&report)
+        }
+        .map_err(|err| err.to_string())?;
         if let Some(path) = outfile {
             fs::write(path, output + "\n").map_err(|err| err.to_string())?;
         } else {
