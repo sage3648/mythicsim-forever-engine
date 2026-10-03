@@ -174,6 +174,21 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `serpent_sting` | sim/hunter/serpent_sting.go | The tick base from client data, the share of ranged attack power each tick adds, a Go literal, and the tick outcome spelldata `TickOutcome` picks; a ranged hit roll without a hit count, then the dot after travel |
 | `aspect_of_the_hawk` | sim/hunter/aspects.go | The aura, whose ranged attack power is a stat aura, and with Deadly Aspects the Quick Shots aura, its ranged haste multiplier and the chance each ranged auto rolls |
 | `rapid_fire` | sim/hunter/rapid_fire.go | The aura and its attack speed multiplier from client data |
+| `rage_bar` | sim/core/rage.go | The rage a landed main and off hand white hit gives, resolved from the weapons with Go's operation order, the crit multiplier and the threat a point of gained rage generates; rage from damage taken uses the hit's damage before armor |
+| `potion_resource` | sim/core/consumes.go | A potion's instant rage or mana gains, rolled under its name, and its temporary stat aura with the lines it logs |
+| `player_damage_taken` | sim/warrior/talents_fury.go, recklessness.go | The auras that multiply the player's damage taken while up, and each multiplier from client data |
+| `extra_attack_proc` | sim/common/classic/items_weapons.go, common/forever/items_trinkets.go | Ironfoe's and the Hand of Justice's chance on landed melee hits, Go literals, and how many extra main hand attacks each grants |
+| `warrior_stances` | sim/warrior/stances.go | The starting stance and each stance's cast and aura; a stance change is rejected |
+| `bloodthirst`, `hamstring` | sim/warrior/talents_fury.go, hamstring.go | Bloodthirst's attack power share and base, Hamstring's base, from client data, on the special hit table with a refund on a miss |
+| `whirlwind` | sim/warrior/whirlwind.go | Whether Raging Blows adds the off hand's normalized strike |
+| `execute` | sim/warrior/execute.go | The base and the damage for each extra rage, from the dummy effect's base and chain amplitude |
+| `bloodrage` | sim/warrior/bloodrage.go | Instant and periodic rage with Improved Bloodrage, the ticks and period, the share of base health it costs, and the rage below which it fires as a major cooldown, a Go literal |
+| `berserker_rage`, `death_wish`, `recklessness` | sim/warrior/berserker_rage.go, talents_fury.go, recklessness.go | Improved Berserker Rage's rage; Death Wish's physical damage multiplier and the GCD it waits; Recklessness's crit is a stat aura |
+| `sunder_armor` | sim/warrior/sunder_armor.go | Whether another aura holds the armor category for good, as the raid's Expose Armor does; otherwise reaching it is rejected |
+| `deep_wounds` | sim/warrior/talents_arms.go | The share of the main hand's average damage and the tick outcome; a crit restarts the bleed with what it still owed |
+| `unbridled_wrath`, `warrior_flurry`, `anger_management` | sim/warrior/talents_fury.go, talents_arms.go | Unbridled Wrath's chance and rage, doubled for a two-hander; Flurry's melee speed and charges; Anger Management's rage and period |
+| `heroic_strike_queue` | sim/warrior/heroic_strike_cleave.go | The queue delay and each strike's queue aura and base; the next main hand swing casts the queued strike instead |
+| `overpower_window` | sim/warrior/overpower.go | The window a dodged hit opens |
 | `summon_hawk` | sim/hunter/summon_hawk.go | The dive bomb's base from client data and its share of ranged attack power, a Go literal, whether it always hits, and the hawk slots, physical dots whose ticks roll the physical crit |
 
 Human racials are static and already in the prepared stats. High Order Skyborne's cast
@@ -201,11 +216,11 @@ Invalid and unsupported inputs are deliberately different outcomes.
 | Rotation-reachable spell without a known behavior | Unsupported |
 
 The exporter marks as unrepresented: more than one player or target, health fights,
-tanks, presims, healing models, pets that may act, main hand swings a class can replace while
-in range, ranged attack speed listeners, a target that swings at a
+tanks, presims, healing models, pets that may act, main hand swings a class other than the
+Warrior can replace while in range, ranged attack speed listeners, a target that swings at a
 unit, item swapping, execute phase callbacks, target AI, caster
 damage callbacks, dynamic damage-taken modifiers a class effect does not describe, mob type
-bonuses, costs other than mana and energy,
+bonuses, costs other than mana, energy and rage,
 unnamed class masks, item cooldowns without an exported effect, cast speed and temporary
 stat listeners, survival cooldowns that would wait for a nonzero defensive health
 threshold, a Shaman shield proc rate and Flame Shock ticks that roll a physical crit.
@@ -243,9 +258,10 @@ The rotation subset covers `castSpell`, `autocastOtherCooldowns`, `strictSequenc
 casts, `channelSpell` with `interruptIf` and `allowRecast`, constant-time prepull casts,
 `cmp` with any comparison operator, `and`, `or`, `not`, `const`, `currentMana`,
 `currentManaPercent`, `currentEnergy`, `maxEnergy`, `currentComboPoints`,
-`timeToNextEnergyTick`, `currentTime`, `remainingTime`, `remainingTimePercent`, `numberTargets`,
+`timeToNextEnergyTick`, `currentRage`, `isExecutePhase`, `currentTime`, `remainingTime`, `remainingTimePercent`, `numberTargets`,
 `math`, `totemRemainingTime` (a Shaman's), `gcdIsReady`,
-`auraIsKnown`, `auraIsActive`, `auraNumStacks`, `auraRemainingTime`, `dotIsActive`,
+`auraIsKnown`, `auraIsActive` and `auraNumStacks` (on the player or the current target),
+`auraRemainingTime`, `dotIsActive`,
 `dotRemainingTime`, `dotTimeToNextTick`, `spellIsKnown`, `spellIsReady`,
 `spellTimeToReady`, `spellCastTime`, which reads a class's own cast time such as a Hunter
 shot's, and `autoTimeToNext` for any auto attack kind. Action IDs may carry a rank, which Go ignores. A
@@ -305,6 +321,10 @@ Charge hitting the player, and `combat-rogue-orc-shatter-curse` runs it as an Or
 Shatter Curse is up when the sapper goes off.
 `production-marksmanship-hunter` is the production Marksmanship Hunter request, the first
 build with ranged auto attacks.
+`production-warrior` is the production Fury Warrior request, the first with a rage bar;
+`warrior-heroic-strike` and `warrior-cleave` queue those strikes onto main hand swings,
+`warrior-troll-berserking` is its race board's Troll request and
+`warrior-orc-shatter-curse` runs it as an Orc with Shatter Curse timings.
 
 The contract tests in
 [tests/classes/mage/prepared_v2.rs](../tests/classes/mage/prepared_v2.rs)

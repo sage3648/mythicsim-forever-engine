@@ -140,6 +140,19 @@ Sapper Charge, whose hit on the player removes health through Chance of Death.
 [across every Rogue race](validation/2026-10-04-combat-rogue-race-sweep.json), match Go
 on all 72 variants.
 
+The production Fury Warrior build is the first with a rage bar: a Human dual wielding
+Ironfoe in Berserker Stance, rage from white hits and from the sapper's hit on the player,
+Bloodthirst, Whirlwind with Raging Blows, Execute in the execute phase, Hamstring, a
+prepull Bloodrage, Death Wish, Recklessness, Deep Wounds, Flurry, Unbridled Wrath, Anger
+Management, Ironfoe's extra attacks, the Mighty Rage Potion, Windfury Totem, Crusader,
+Dragonbreath Chili and the Goblin Sapper Charge, at 847.464 DPS. Queued Heroic Strike and
+Cleave, which replace main hand swings, match too.
+[Sweeps](validation/2026-10-04-warrior-sweep.json) of the request and
+[across every Warrior race](validation/2026-10-04-warrior-race-sweep.json) match Go on 42
+of 48 variants; the other six drop Expose Armor, so the rotation could stack the warrior's
+own Sunder Armor beside the raid's, which is rejected. All ten requests on the Warrior
+[race board](validation/2026-10-04-warrior-race-boards.json) match.
+
 Every race that can be a Mage is supported: Human, Gnome, Undead, Troll with
 Berserking, Orc with Blood Fury and Shatter Curse, and High Order Skyborne with Read
 Ley Line for rotations that cast it. A [race sweep](validation/2026-10-04-mage-race-sweep.json)
