@@ -462,7 +462,7 @@ impl<A: Agent> Fight<A> {
             }
             AuraBehavior::WindfuryProc { bit } => {
                 self.stat_mask |= bit;
-                self.player.powers = self.stat_combos[self.stat_mask as usize];
+                self.apply_stat_combo();
             }
             AuraBehavior::WindfuryTotem => {
                 let trigger = self
@@ -480,7 +480,7 @@ impl<A: Agent> Fight<A> {
                     self.player_log(&line);
                 }
                 self.stat_mask |= bit;
-                self.player.powers = self.stat_combos[self.stat_mask as usize];
+                self.apply_stat_combo();
             }
             AuraBehavior::Class(kind) => A::on_gain(self, aura, kind),
             _ => {}
@@ -501,7 +501,7 @@ impl<A: Agent> Fight<A> {
             } => self.multiply_self_damage_taken(multiplier, schools, true),
             AuraBehavior::WindfuryProc { bit } => {
                 self.stat_mask &= !bit;
-                self.player.powers = self.stat_combos[self.stat_mask as usize];
+                self.apply_stat_combo();
             }
             AuraBehavior::WindfuryTotem => {
                 let trigger = self
@@ -519,13 +519,24 @@ impl<A: Agent> Fight<A> {
                     self.player_log(&line);
                 }
                 self.stat_mask &= !bit;
-                self.player.powers = self.stat_combos[self.stat_mask as usize];
+                self.apply_stat_combo();
             }
             AuraBehavior::MultiplyManaRegenSpeed(multiplier) => {
                 self.multiply_mana_regen_speed(1.0 / multiplier)
             }
             AuraBehavior::Class(kind) => A::on_expire(self, aura, kind),
             _ => {}
+        }
+    }
+
+    /// Go `AddStatsDynamic` for the active stat auras: the stats of their combination, and
+    /// `UpdateManaRegenRates` when MP5 moves, as `processDynamicBonus` does.
+    pub(crate) fn apply_stat_combo(&mut self) {
+        let powers = self.stat_combos[self.stat_mask as usize];
+        let mp5_changed = powers.mp5 != self.player.powers.mp5;
+        self.player.powers = powers;
+        if mp5_changed {
+            self.update_mana_regen_rates();
         }
     }
 

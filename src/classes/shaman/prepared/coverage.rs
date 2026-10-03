@@ -33,6 +33,7 @@ const EFFECTS: &[&str] = &[
     "lightning_bolt",
     "lightning_shield",
     "magma_totem",
+    "mana_spring_totem",
     "maelstrom_weapon",
     "rage_of_the_farseer",
     "rockbiter_weapon",
@@ -68,7 +69,8 @@ fn spell_capability(spell: &Spell) -> Option<&'static str> {
         "earth_shock" => Some("earth_shock"),
         "frost_shock" => Some("frost_shock"),
         "stormstrike_cast" | "stormstrike_damage" => Some("stormstrike"),
-        // Strength of Earth and Grace of Air among the basic totems; `limits` rejects the others.
+        // Strength of Earth, Grace of Air and Mana Spring among the basic totems; `limits` rejects
+        // the others.
         "basic_totem" => Some("strength_of_earth_totem"),
         _ => None,
     }
@@ -128,6 +130,7 @@ fn limits(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
         match effect {
             Effect::StrengthOfEarthTotem { spell_id, .. } => known.push(*spell_id),
             Effect::GraceOfAirTotem { spell_id, .. } => known.push(*spell_id),
+            Effect::ManaSpringTotem { spell_id, .. } => known.push(*spell_id),
             _ => {}
         }
     }

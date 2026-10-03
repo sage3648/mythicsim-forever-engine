@@ -819,7 +819,7 @@ impl<A: Agent> Fight<A> {
                 spirit *= self.player.spirit_regen_rate_casting;
             }
             let baseline =
-                ((self.config.mp5 / 5.0 + spirit) * self.player.mana_regen_multiplier * 2.0)
+                ((self.player.powers.mp5 / 5.0 + spirit) * self.player.mana_regen_multiplier * 2.0)
                     .max(0.0);
             let bonus = (regen - baseline).max(0.0);
             if bonus > 0.0 {

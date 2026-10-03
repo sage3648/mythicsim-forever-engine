@@ -19,7 +19,7 @@ import (
 
 // The stats the Rust runtime reads during a fight.
 var dynamicReadStats = []stats.Stat{stats.SpellDamage, stats.AttackPower, stats.RangedAttackPower,
-	stats.SpellCritPercent, stats.PhysicalCritPercent}
+	stats.SpellCritPercent, stats.PhysicalCritPercent, stats.MP5}
 
 // Auras of races, items and raid buffs whose gain and expiry change stats through
 // AddStatsDynamic. A class adds its own through classExport.statAuras.

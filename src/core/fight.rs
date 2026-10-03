@@ -466,6 +466,8 @@ pub(crate) struct Powers {
     pub(crate) spell_crit_percent: f64,
     /// Nothing in scope reads physical crit yet; it follows the stat for completeness.
     pub(crate) physical_crit_percent: f64,
+    /// Go `stats.MP5`, which mana regeneration reads.
+    pub(crate) mp5: f64,
 }
 
 /// Mutable player state, reset to the prepared values each iteration.
@@ -596,7 +598,6 @@ pub(crate) struct Config {
     pub(crate) max_mana: f64,
     pub(crate) max_health: f64,
     pub(crate) teardown_max_mana: f64,
-    pub(crate) mp5: f64,
     pub(crate) spirit_regen_per_second: f64,
     pub(crate) spell_hit_percent: f64,
     /// The prepared stats; auras change the player's copy.
@@ -936,7 +937,6 @@ impl<A: Agent> Fight<A> {
             max_mana: player.mana.max,
             max_health: stat(&player.stats, "Health")?,
             teardown_max_mana: player.mana.teardown_max,
-            mp5: stat(&player.stats, "MP5")?,
             spirit_regen_per_second: player.mana.spirit_regen_per_second,
             spell_hit_percent: stat(&player.stats, "SpellHitPercent")?,
             powers: Powers {
@@ -945,6 +945,7 @@ impl<A: Agent> Fight<A> {
                 spell_damage: stat(&player.stats, "SpellDamage")?,
                 attack_power: stat(&player.stats, "AttackPower")?,
                 ranged_attack_power: stat(&player.stats, "RangedAttackPower")?,
+                mp5: stat(&player.stats, "MP5")?,
             },
             school_damage: [
                 0.0,
@@ -1359,6 +1360,7 @@ impl<A: Agent> Fight<A> {
                     ranged_attack_power: read("RangedAttackPower")?,
                     spell_crit_percent: read("SpellCritPercent")?,
                     physical_crit_percent: read("PhysicalCritPercent")?,
+                    mp5: read("MP5")?,
                 })
             })
             .collect::<Result<_, BuildError>>()?;
@@ -1997,7 +1999,7 @@ impl<A: Agent> Fight<A> {
     /// The mana regeneration inputs for Go `ManaRegenPerSecondWhileCasting`.
     pub(crate) fn regen_inputs(&self) -> RegenInputs {
         RegenInputs {
-            mp5: self.config.mp5,
+            mp5: self.player.powers.mp5,
             spirit_regen_per_second: self.config.spirit_regen_per_second,
             spirit_regen_rate_casting: self.player.spirit_regen_rate_casting,
             force_full_spirit_regen: self.player.force_full_spirit_regen,

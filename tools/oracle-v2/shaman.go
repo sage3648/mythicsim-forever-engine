@@ -72,6 +72,7 @@ var (
 	shamanShieldOrb        = spelldata.Ranked(26363, 26364, 26365, 26366, 26367, 26369, 26370, 26545).ByID(26363)
 	shamanGraceOfAir       = spelldata.Ranked(8835, 10627, 25359)
 	shamanFlametongueTotem = spelldata.Ranked(8227, 8249, 10526, 16387)
+	shamanManaSpring       = spelldata.Ranked(5675, 10495, 10496, 10497)
 )
 
 // Shaman spell rows whose ApplyEffects roll a client damage effect: every Lightning Bolt and Chain
@@ -246,6 +247,13 @@ func shamanTotemEffects(sham *shaman.Shaman, character *core.Character) []map[st
 			"party_air_totem": character.GetAura("Windfury Totem") != nil || character.GetAura("Grace of Air Totem (External)") != nil,
 		})
 	}
+	// registerManaSpringTotemSpell: the water totem's aura, whose MP5 is a class stat aura.
+	if aura := character.GetAura("Mana Spring Totem (Self)"); aura != nil {
+		effects = append(effects, map[string]any{
+			"kind": "mana_spring_totem", "spell_id": shamanManaSpring.Highest().ID, "aura": aura.Label,
+			"duration_ns": nanos(shamanManaSpring.Highest().Duration()),
+		})
+	}
 	// registerFlametongueTotemSpell and buffs/flametongue_totem.go: the totem's aura turns on the
 	// trigger, which casts the hit off landed main hand autos, unless a main hand Flametongue Weapon
 	// or the party's totem holds the benefit.
@@ -325,7 +333,7 @@ func shamanImbueEffects(character *core.Character) []map[string]any {
 
 // The class auras whose gain and loss change stats through AddStatsDynamic.
 func shamanStatAuras(_ core.Agent, _ *core.Character) []string {
-	return []string{"Strength Of Earth Totem (Self)", "Grace Of Air Totem (Self)"}
+	return []string{"Strength Of Earth Totem (Self)", "Grace Of Air Totem (Self)", "Mana Spring Totem (Self)"}
 }
 
 // enhancement.go ApplySyncType: Auto returns the main hand swing unchanged whenever the two

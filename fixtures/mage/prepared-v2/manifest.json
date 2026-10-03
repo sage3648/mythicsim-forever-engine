@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "b85c740c6153d5a305dca8ee2062d6e50c5d92772dbcdd90d29c80e7bbf4b7da",
+  "exporter_sha256": "c3a35d0d12beab0587adaa0aa024fa5733549d9a979f2e6974d1d5cac2dc8f0b",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -654,7 +654,7 @@
         "path": "fixtures/mage/prepared-v2/frost-orc.request.json"
       },
       "prepared": "frost-orc.prepared.json",
-      "prepared_sha256": "4a60a4b57e70b3863dd8ca753773f7ea4d2a88f2ae0a08de298b121805cb2531",
+      "prepared_sha256": "bf5480b2e27d936be908e844f6f1b95b399a7c822218b7b89f3e332aee07d034",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -675,7 +675,7 @@
         "path": "fixtures/mage/prepared-v2/frost-orc-cooldown-timings.request.json"
       },
       "prepared": "frost-orc-cooldown-timings.prepared.json",
-      "prepared_sha256": "5adfabf5341fdce1f67256fb49a817a47981487bd6d283f65e0bc21eb1f3da32",
+      "prepared_sha256": "b8f28ab4b490b23d05238733cb07a51e3a94df1ebeec0f19b1fa6a7a8d13aae5",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -806,7 +806,7 @@
         "path": "fixtures/mage/prepared-v2/production-balance-druid.request.json"
       },
       "prepared": "production-balance-druid.prepared.json",
-      "prepared_sha256": "9fe9b4a7cd74f2d2b65a1edaf427169d8ad26a8b2727e01793068d046ece9643",
+      "prepared_sha256": "d9af4312b810ba1535efaad266a15a32a8bbc2db8e85777aad366e198c632b98",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -827,7 +827,7 @@
         "path": "fixtures/mage/prepared-v2/production-elemental-shaman.request.json"
       },
       "prepared": "production-elemental-shaman.prepared.json",
-      "prepared_sha256": "af8482e042f41e6b11c2a7a8da0288d16ddf442ada07c8040641b4a54aebcceb",
+      "prepared_sha256": "3bf16b0048d0d4e71912a0a030ebfbde21296f981fded2aa02c1e35f1d7a4d76",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -848,7 +848,7 @@
         "path": "fixtures/mage/prepared-v2/elemental-shaman-dwarf-stoneform.request.json"
       },
       "prepared": "elemental-shaman-dwarf-stoneform.prepared.json",
-      "prepared_sha256": "98d21b08f97b6052d57919143c4bee3993b2d343080529434b3ccc5c2017e43a",
+      "prepared_sha256": "021d5165323924d4e9ed3a29f308deb1135b126e9623d7cecdffa0304a8d2ea8",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1029,7 +1029,7 @@
         "path": "fixtures/mage/prepared-v2/paladin-crusader-chili.request.json"
       },
       "prepared": "paladin-crusader-chili.prepared.json",
-      "prepared_sha256": "dc52c13f7eac1ec689d35c3ef5acc0d91b06799be8edeb9201671e38d95a0121",
+      "prepared_sha256": "7e3c786dd374a6add20016701542957de46efcd2a7aa04c9ec38a9bdeaf2d62c",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1050,7 +1050,7 @@
         "path": "fixtures/mage/prepared-v2/paladin-windfury-totem.request.json"
       },
       "prepared": "paladin-windfury-totem.prepared.json",
-      "prepared_sha256": "846d8713d4ccc31f4a6c00339d634047e29d740650890e29c751f64c86eb0af9",
+      "prepared_sha256": "56627243809e9391ec72e3053c57bfc54bd4e8b789157c78edd6bb4f6043b051",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1113,7 +1113,7 @@
         "path": "fixtures/mage/prepared-v2/tank-protection-paladin-autos.request.json"
       },
       "prepared": "tank-protection-paladin-autos.prepared.json",
-      "prepared_sha256": "ad1f825bf54a6be2b460d3042d2b9f43cfd87c2f2256b6de2dcc1f70064bd975",
+      "prepared_sha256": "e1b5415971433e9767587769d3c173eda1398a2d27be43b9ee669c3af4670a74",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1134,7 +1134,7 @@
         "path": "fixtures/mage/prepared-v2/enhancement-shaman-no-battle-shout.request.json"
       },
       "prepared": "enhancement-shaman-no-battle-shout.prepared.json",
-      "prepared_sha256": "1ef5ddc28092a1b3b1edd18fef9f910e3fb1de927b65166894d018cf2fa3b9f6",
+      "prepared_sha256": "cc6af175cc62ba9a4cf56356d2348f024925f2f6ffbf36f22f6c8fe2f4019c81",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1155,7 +1155,7 @@
         "path": "fixtures/mage/prepared-v2/production-enhancement-shaman.request.json"
       },
       "prepared": "production-enhancement-shaman.prepared.json",
-      "prepared_sha256": "2fc719c5317d08d1ab0308e9cefa9eb75e3c756a7bd49dc5a56678387dece724",
+      "prepared_sha256": "b8e21afb3f2da6e09f62215402bf8a3806fd15b053eb8a8e9262fb99fdfdb4f5",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1176,7 +1176,7 @@
         "path": "fixtures/mage/prepared-v2/production-combat-rogue.request.json"
       },
       "prepared": "production-combat-rogue.prepared.json",
-      "prepared_sha256": "b3bc7df87578721bb0d880b117e57dfd505caece437aafb2586ac5abd431f0c7",
+      "prepared_sha256": "ca5ae3723658e19b58d0d28c21884c48b345ff1530bb70a1e2f96373f475c8e3",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1197,7 +1197,7 @@
         "path": "fixtures/mage/prepared-v2/combat-rogue-orc-shatter-curse.request.json"
       },
       "prepared": "combat-rogue-orc-shatter-curse.prepared.json",
-      "prepared_sha256": "f3d51cf81b139d81b325b831cea17ed0903fdb8a5bc93bc4f1a2b7da35e24767",
+      "prepared_sha256": "d180f5e480d6993455886fed53b1bce4b4286df7f6e84df3730d26df6860a9cb",
       "expected_coverage": {
         "supported": true,
         "reasons": []

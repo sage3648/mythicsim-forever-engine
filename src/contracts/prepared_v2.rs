@@ -1293,6 +1293,12 @@ pub enum Effect {
         /// Whether a party air totem holds the slot the cast would contest.
         party_air_totem: bool,
     },
+    /// Mana Spring Totem: the water totem's aura, whose MP5 is a class stat aura.
+    ManaSpringTotem {
+        spell_id: i32,
+        aura: String,
+        duration_ns: i64,
+    },
     /// Flametongue Totem: the totem's aura turns on a trigger that casts a fire hit off landed
     /// main hand autos, unless a main hand Flametongue Weapon holds the benefit.
     FlametongueTotem {
@@ -1556,6 +1562,7 @@ impl Effect {
             Effect::MagmaTotem { .. } => "magma_totem",
             Effect::LightningShield { .. } => "lightning_shield",
             Effect::GraceOfAirTotem { .. } => "grace_of_air_totem",
+            Effect::ManaSpringTotem { .. } => "mana_spring_totem",
             Effect::FlametongueTotem { .. } => "flametongue_totem",
             Effect::FlametongueWeapon { .. } => "flametongue_weapon",
             Effect::FrostbrandWeapon { .. } => "frostbrand_weapon",

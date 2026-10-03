@@ -48,6 +48,7 @@ pub(crate) enum ShamanSpell {
     MagmaTotem,
     LightningShield,
     GraceOfAirTotem,
+    ManaSpringTotem,
     FlametongueTotem,
     FlametongueTotemAttack,
     /// The Flametongue Weapon hit of one hand, by its position in the effect.
@@ -125,6 +126,7 @@ pub(crate) struct ShamanAgent {
     /// Lightning Shield's aura and charges.
     lightning_shield: Option<(AuraRef, i32)>,
     grace_of_air: Option<StrengthOfEarth>,
+    mana_spring: Option<StrengthOfEarth>,
     flametongue_totem: Option<totems::FlametongueTotem>,
     /// The last air totem aura cast, which a new one replaces.
     air_totem: Option<AuraRef>,
@@ -242,6 +244,14 @@ impl ShamanAgent {
                 }) =>
             {
                 Some(ShamanSpell::GraceOfAirTotem)
+            }
+            "basic_totem"
+                if prepared.effects.iter().any(|effect| {
+                    matches!(effect, Effect::ManaSpringTotem { spell_id, .. }
+                        if *spell_id == id.spell_id && id.tag == 0)
+                }) =>
+            {
+                Some(ShamanSpell::ManaSpringTotem)
             }
             _ => None,
         }
@@ -549,6 +559,14 @@ impl ShamanAgent {
                         duration: *duration_ns,
                     });
                 }
+                Effect::ManaSpringTotem {
+                    aura, duration_ns, ..
+                } => {
+                    fight.agent.mana_spring = Some(StrengthOfEarth {
+                        aura: fight.player_aura(aura)?,
+                        duration: *duration_ns,
+                    });
+                }
                 Effect::FlametongueTotem {
                     aura,
                     trigger_aura,
@@ -836,6 +854,12 @@ impl Agent for ShamanAgent {
                 fight.agent.air_totem = Some(totem.aura);
                 let expires = totems::strength_of_earth(fight, totem);
                 fight.agent.totems.set(Totem::Air, expires);
+            }
+            ShamanSpell::ManaSpringTotem => {
+                // The only water totem in scope is this one, so the previous aura is its own.
+                let totem = fight.agent.mana_spring.expect("Mana Spring Totem is bound");
+                let expires = totems::strength_of_earth(fight, totem);
+                fight.agent.totems.set(Totem::Water, expires);
             }
             ShamanSpell::FlametongueHit(hand) => {
                 let (_, deals_damage, base, _) = fight.agent.flametongue[hand];

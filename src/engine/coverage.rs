@@ -214,6 +214,7 @@ const DYNAMIC_STATS: &[&str] = &[
     "HealingPower",
     "SpellCritPercent",
     "PhysicalCritPercent",
+    "MP5",
 ];
 
 /// Stats a stat aura may change without the runtime reading them: inputs to the stats it
