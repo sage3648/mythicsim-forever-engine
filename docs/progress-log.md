@@ -32,6 +32,7 @@ reading the Go reference. They are not effort estimates for other contributors.
 | Fire: Combustion | 2026-10-03 13:39 | 2026-10-03 13:42 | 0 h 03 m | Stacking Fire crit until three crits, cooldown started on expiry; matches Go on the first comparison |
 | Fire: Ignite | 2026-10-03 13:42 | 2026-10-03 13:45 | 0 h 03 m | Crit share over ticks with owed damage rolled forward; generic periodic ticks; matches Go on the first comparison |
 | Fire: Eureka! and the reference build | 2026-10-03 13:45 | 2026-10-03 13:49 | 0 h 04 m | Gnome racial in the shared runtime from exporter-resolved spell lists; the application's Fire request matches Go on the first comparison |
+| Fire: randomized sweep | 2026-10-03 13:49 | 2026-10-03 13:51 | 0 h 02 m | 24 of 24 variants match; Frost and Arcane sweeps rerun unchanged |
 
 ## Notes
 

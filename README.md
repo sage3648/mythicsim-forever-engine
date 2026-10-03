@@ -53,9 +53,13 @@ own parsers read identical first-fight and averaged timelines from both logs.
 
 The application's Arcane reference build, with Arcane Blast and its stacks, Arcane
 Power, Presence of Mind and the Undead racial Touch of the Grave, also matches: 538.672
-DPS and the first-fight log. Randomized sweeps of both builds match Go on every
-supported variant ([Frost](validation/2026-10-03-frost-sweep.json),
-[Arcane](validation/2026-10-03-arcane-sweep.json)). Builds where community fix #622
+DPS and the first-fight log. So does its Fire reference build, with Scorch and Improved
+Scorch, Fireball and Pyroblast dots, Fire Blast, Heating Up, Combustion, Ignite, Master
+of Elements and the Gnome racial Eureka!: 565.163 DPS. Randomized sweeps of all three
+builds match Go on every supported variant
+([Frost](validation/2026-10-03-frost-sweep.json),
+[Arcane](validation/2026-10-03-arcane-sweep.json),
+[Fire](validation/2026-10-03-fire-sweep.json)). Builds where community fix #622
 would change the rotation are rejected; see [UPSTREAM.md](UPSTREAM.md).
 
 See the [kernel guide](docs/kernel.md) for the input boundary and commands.

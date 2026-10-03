@@ -155,6 +155,8 @@ community fix #622, and stays unsupported. `reference-no-missile-barrage` drops 
 Barrage, whose Arcane Missiles rule is guarded by `auraIsKnown`; it is supported and
 matches Go. `arcane-reference` is the application's Arcane request, built by its own
 `BuildRequest`; `arcane-no-missile-barrage` is the #622 regression for the Arcane preset.
+`fire-reference` is the application's Fire request; the `fire-*` cases add its talents
+one at a time.
 
 The contract tests in
 [tests/classes/mage/prepared_v2.rs](../tests/classes/mage/prepared_v2.rs)

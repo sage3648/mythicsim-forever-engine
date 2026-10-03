@@ -27,7 +27,7 @@ Milestones advance on evidence, not promised delivery dates. The
 - [Upstream ledger](UPSTREAM.md#ledger): reviewed community range, dispositions, a
   Frost mechanics map and one applicable fix traced to a Rust guard and regression.
 - A class-independent fight runtime mirroring Go, with Mage plugged in. The complete
-  Frost and Arcane reference builds reproduce the pinned Go engine on the
+  Frost, Arcane and Fire reference builds reproduce the pinned Go engine on the
   application's requests, on their variants and on randomized sweeps, across the
   whole result and the logs the application parses into timelines.
 
