@@ -32,6 +32,13 @@ var commonStatAuraLabels = []string{"Blood Fury", "Elune's Light", "Holy Strengt
 func statAurasEffect(request *proto.RaidSimRequest, character *core.Character, class classExport, agent core.Agent) map[string]any {
 	labels := []string{}
 	candidates := append([]string{}, commonStatAuraLabels...)
+	// consumes.go: a potion's stat buff is a temporary stats aura named for the potion.
+	for _, spell := range character.Spellbook {
+		if consumable := core.GetConsumableByID(spell.ActionID.ItemID); spell.ActionID.ItemID != 0 &&
+			spell.Flags.Matches(core.SpellFlagPotion) && consumable.BuffDuration > 0 {
+			candidates = append(candidates, consumable.Name)
+		}
+	}
 	if class.statAuras != nil {
 		candidates = append(candidates, class.statAuras(agent, character)...)
 	}
@@ -132,6 +139,20 @@ func meleeProcEffects(simulation *core.Simulation, character *core.Character, un
 			})
 		}
 	}
+	// common/classic/items_weapons.go Ironfoe (11684) and common/forever/items_trinkets.go Hand of
+	// Justice (11815): proc triggers on landed melee hits, Go literal chances, with the aura's
+	// cooldown, whose handlers grant two and one extra main hand attacks at once.
+	for _, item := range []struct {
+		label   string
+		chance  float64
+		attacks int32
+	}{{"Fury of Forgewright", 0.06, 2}, {"Hand of Justice", 0.01, 1}} {
+		if aura := character.GetAura(item.label); aura != nil {
+			effects = append(effects, map[string]any{
+				"kind": "extra_attack_proc", "trigger_aura": aura.Label, "proc_chance": item.chance, "attacks": item.attacks,
+			})
+		}
+	}
 	// core/consumes.go registerDragonbreathChili: a 5% proc on landed melee hits, Go literals,
 	// whose handler waits a spell batch window and casts a rolled Fire hit.
 	if aura := character.GetAura("Dragonbreath Chili"); aura != nil {
@@ -178,3 +199,4 @@ func meleeProcEffects(simulation *core.Simulation, character *core.Character, un
 	}
 	return effects
 }
+

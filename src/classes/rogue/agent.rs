@@ -4,6 +4,8 @@
 //! Go's `BreakStealth` opens every Rogue strike. Stealth is never active in scope: the gate
 //! rejects a rotation that reaches the Stealth spell, which has no behavior here.
 
+use std::rc::Rc;
+
 use crate::{
     contracts::prepared_v2::{Effect, PreparedV2, Spell as ExportedSpell},
     core::fight::{Agent, AuraRef, DotId, Fight, Side, SpellId, SpellResult},
@@ -54,9 +56,9 @@ pub(crate) struct RogueAgent {
     blade_flurry: Option<BladeFlurry>,
     adrenaline_rush: Option<AdrenalineRush>,
     finisher: Option<Finisher>,
-    instant_poison: Option<PoisonProc>,
+    instant_poison: Option<Rc<PoisonProc>>,
     instant_poison_damage: (f64, f64),
-    deadly_poison: Option<PoisonProc>,
+    deadly_poison: Option<Rc<PoisonProc>>,
     deadly_poison_tick: f64,
 }
 
@@ -257,7 +259,7 @@ impl RogueAgent {
                         proc_mask,
                         *proc_chance,
                     )?;
-                    fight.agent.instant_poison = Some(bound);
+                    fight.agent.instant_poison = Some(Rc::new(bound));
                     fight.agent.instant_poison_damage = (*min_damage, *max_damage);
                 }
                 Effect::DeadlyPoison {
@@ -279,7 +281,7 @@ impl RogueAgent {
                         .ok_or("Deadly Poison has no dot")?;
                     // The dot is 25349, which carries Periodic Can Crit in the client.
                     fight.dots[dot].tick_can_crit = true;
-                    fight.agent.deadly_poison = Some(bound);
+                    fight.agent.deadly_poison = Some(Rc::new(bound));
                     fight.agent.deadly_poison_tick = *tick_damage;
                 }
                 _ => {}

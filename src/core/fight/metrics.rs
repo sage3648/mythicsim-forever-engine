@@ -106,8 +106,11 @@ pub(crate) struct Totals {
     pub(crate) threat: Distribution,
     pub(crate) tto: Distribution,
     pub(crate) target_dtps: Distribution,
-    /// Damage the player takes from its own spells.
+    /// Damage the player takes, from its own spells and the target's swings.
     pub(crate) player_dtps: Distribution,
+    /// The target's damage and threat from its swings at the player.
+    pub(crate) target_dps: Distribution,
+    pub(crate) target_threat: Distribution,
     /// Every distribution Go keeps that stays zero in scope: healing, damage taken by the
     /// player, TMI, and the target's own output.
     pub(crate) zero: Distribution,
@@ -205,6 +208,8 @@ pub(crate) struct ActionReport {
     pub(crate) blocked_crits: i32,
     #[serde(skip_serializing_if = "is_zero_i")]
     pub(crate) glances: i32,
+    #[serde(skip_serializing_if = "is_zero_i")]
+    pub(crate) crushes: i32,
     #[serde(skip_serializing_if = "is_zero_f")]
     pub(crate) damage: f64,
     #[serde(skip_serializing_if = "is_zero_f")]
@@ -227,6 +232,8 @@ pub(crate) struct ActionReport {
     pub(crate) block_damage: f64,
     #[serde(skip_serializing_if = "is_zero_f")]
     pub(crate) blocked_crit_damage: f64,
+    #[serde(skip_serializing_if = "is_zero_f")]
+    pub(crate) crush_damage: f64,
     #[serde(skip_serializing_if = "is_zero_f")]
     pub(crate) threat: f64,
     #[serde(skip_serializing_if = "is_zero_f")]
@@ -512,6 +519,8 @@ impl<A: Agent> Fight<A> {
             totals.glance_damage += metrics.total_glance_damage;
             totals.block_damage += metrics.total_block_damage;
             totals.blocked_crit_damage += metrics.total_blocked_crit_damage;
+            totals.crushes += metrics.crushes;
+            totals.crush_damage += metrics.total_crush_damage;
             totals.threat += metrics.total_threat;
             if !passive {
                 totals.cast_time += metrics.total_cast_time;
@@ -584,6 +593,8 @@ impl<A: Agent> Fight<A> {
         self.totals.tto.done_iteration(duration, seed);
         self.totals.target_dtps.done_iteration(duration, seed);
         self.totals.player_dtps.done_iteration(duration, seed);
+        self.totals.target_dps.done_iteration(duration, seed);
+        self.totals.target_threat.done_iteration(duration, seed);
         if self.death.died {
             self.death.iterations_dead += 1;
             self.death.seeds.push(seed);
@@ -761,8 +772,8 @@ impl<A: Agent> Fight<A> {
         let target = TargetReport {
             name: self.config.target_label.clone(),
             unit_index: Side::Target.index() as i32,
-            dps: zero.clone(),
-            threat: zero.clone(),
+            dps: self.totals.target_dps.report(),
+            threat: self.totals.target_threat.report(),
             dtps: self.totals.target_dtps.report(),
             tmi: zero.clone(),
             hps: zero.clone(),

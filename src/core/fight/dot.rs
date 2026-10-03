@@ -82,6 +82,11 @@ impl Dot {
         total - self.remaining_ticks
     }
 
+    /// Go `Dot.HastedTickCount`: the base duration over the snapshotted tick period.
+    pub(crate) fn hasted_tick_count(&self) -> i32 {
+        (self.base_duration() as f64 / self.tick_period as f64).round_ties_even() as i32
+    }
+
     /// Go `Dot.BaseDuration`.
     fn base_duration(&self) -> i64 {
         (f64::from(self.base_tick_count)

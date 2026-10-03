@@ -94,7 +94,7 @@ func exportPets(request *proto.RaidSimRequest, character *core.Character, target
 			AttackTable: AttackTable{BaseSpellMissChance: table.BaseSpellMissChance, SpellCritSuppression: table.SpellCritSuppression,
 				BonusSpellCritPercent: table.BonusSpellCritPercent, CritMultiplier: table.CritMultiplier,
 				DamageDealtMultiplier: table.DamageDealtMultiplier, DamageTakenMultiplier: table.DamageTakenMultiplier},
-			Melee:  exportMelee(&pet.Character, target, table, unrepresented),
+			Melee:  exportMelee(&pet.Character, target, table, false, unrepresented),
 			Spells: spells, MetricsActions: metricsActions(&pet.Unit),
 			SummonLog: summon, DismissLog: dismiss,
 			DynamicStat: privateField(pet, "isDynamic").Bool(),
