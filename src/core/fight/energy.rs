@@ -24,6 +24,8 @@ pub(crate) struct EnergyBar {
     pub(crate) regen_multiplier: f64,
     pub(crate) regen_metrics: usize,
     pub(crate) refund_metrics: usize,
+    /// Go `EncounterStartMetrics`, which only ResetComboPoints credits; nothing in scope does.
+    #[allow(dead_code)]
     pub(crate) encounter_start_metrics: usize,
 }
 

@@ -12,6 +12,7 @@
 mod aura;
 mod cast;
 mod damage;
+pub(crate) mod damage_taken;
 mod dot;
 pub(crate) mod energy;
 mod log;
@@ -174,6 +175,8 @@ pub(crate) enum SpellBehavior<S> {
         reduction: f64,
         metrics: usize,
     },
+    /// Go consumes.go Goblin Sapper Charge: a Fire hit on the target and one on the player.
+    GoblinSapper,
     /// Go spell_data_energize.go: an item use that rolls a client energize effect.
     EnergizeOnUse {
         average: f64,
@@ -519,6 +522,18 @@ struct SunderRamp {
     blocked: bool,
 }
 
+/// Go aura_helpers.go `ApplyFixedUptimeAura` for a player aura.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct FixedUptime {
+    aura: AuraRef,
+    uptime: f64,
+    chance_per_tick: f64,
+    tick_length: i64,
+    start_time: i64,
+    /// The aura's own duration, which the first roll replaces for its activation only.
+    duration: i64,
+}
+
 /// Go `spiritRegenAttribution`: the spirit regeneration state before the source applied.
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct SpiritAttribution {
@@ -607,6 +622,7 @@ pub(crate) struct MajorCooldown {
 pub(crate) enum ResourceKind {
     Mana,
     Health,
+    #[allow(dead_code)] // Shared with the Warrior domain in progress.
     Rage,
     Energy,
     ComboPoints,
@@ -687,6 +703,13 @@ pub(crate) enum Action {
     Prepull(SpellId),
     /// A tick of the raid's Sunder Armor ramp, with the ticks done so far.
     SunderTick(i32),
+    /// Go trackChanceOfDeath's pending action: mark the player dead if health is still gone.
+    DeathCheck,
+    /// A fixed uptime aura's periodic roll, or its first roll.
+    FixedUptime {
+        index: usize,
+        first: bool,
+    },
     /// The party Windfury Totem's periodic refresh.
     WindfuryRefresh,
 }
@@ -716,6 +739,14 @@ pub(crate) struct Fight<A: Agent> {
     min_task_time: i64,
     /// Go `energyBar`, for a player that has one.
     pub(crate) energy: Option<energy::EnergyBar>,
+    /// The player as the defender of its own spells, when a spell can hit the player.
+    pub(crate) self_target: Option<damage_taken::SelfTarget>,
+    /// The Goblin Sapper Charge, when the character has it.
+    pub(crate) goblin_sapper: Option<damage_taken::GoblinSapper>,
+    /// Go `UnitMetrics.Died` for the player.
+    pub(crate) death: damage_taken::Death,
+    /// Auras Go keeps up through `ApplyFixedUptimeAura`.
+    pub(crate) fixed_uptime: Vec<FixedUptime>,
     pub(crate) player: Player,
     /// Go `Unit.CastSpeed`. Go's unit reset restores the pseudo stats but not this value,
     /// so a speed change undone at the end of a fight carries into the next one.
@@ -1034,6 +1065,9 @@ impl<A: Agent> Fight<A> {
                                 reduction: *level_reduction,
                                 metrics: resource(id.clone(), false, ResourceKind::Energy),
                             })
+                        }
+                        Effect::GoblinSapper { item_id, .. } if *item_id == item && id.tag == 0 => {
+                            Some(SpellBehavior::GoblinSapper)
                         }
                         Effect::EnergizeOnUse {
                             item_id,
@@ -1434,6 +1468,12 @@ impl<A: Agent> Fight<A> {
                     }
                 } else if side == Side::Player
                     && effects.iter().any(|effect| {
+                        matches!(effect, Effect::ChanceOfDeath { aura } if *aura == exported.label)
+                    })
+                {
+                    AuraBehavior::ChanceOfDeath
+                } else if side == Side::Player
+                    && effects.iter().any(|effect| {
                         matches!(effect, Effect::Crusader { trigger_aura, .. } if *trigger_aura == exported.label)
                     })
                 {
@@ -1504,6 +1544,10 @@ impl<A: Agent> Fight<A> {
             min_tracker_time: NEVER_EXPIRES,
             min_task_time: NEVER_EXPIRES,
             energy: None,
+            self_target: None,
+            goblin_sapper: None,
+            death: damage_taken::Death::default(),
+            fixed_uptime: Vec::new(),
             player: Player {
                 powers: config.powers,
                 mana: config.max_mana,
@@ -1593,6 +1637,58 @@ impl<A: Agent> Fight<A> {
         };
         if let Some(energy) = &player.energy {
             fight.enable_energy_bar(energy);
+        }
+        for effect in effects {
+            if let Effect::FixedUptimeAura {
+                aura,
+                uptime,
+                tick_length_ns,
+                start_time_ns,
+            } = effect
+            {
+                let aura = fight.player_aura(aura)?;
+                let duration = fight.aura(aura).duration;
+                let ticks_per_aura = duration as f64 / *tick_length_ns as f64;
+                fight.fixed_uptime.push(FixedUptime {
+                    aura,
+                    uptime: *uptime,
+                    chance_per_tick: if *uptime == 1.0 {
+                        1.0
+                    } else {
+                        1.0 - (1.0 - uptime).powf(1.0 / ticks_per_aura)
+                    },
+                    tick_length: *tick_length_ns,
+                    start_time: *start_time_ns,
+                    duration,
+                });
+            }
+        }
+        for effect in effects {
+            if let Effect::GoblinSapper {
+                item_id,
+                self_tag,
+                min_damage,
+                max_damage,
+                aoe_cap_multiplier,
+                self_attack_table,
+            } = effect
+            {
+                let self_spell = fight
+                    .spells
+                    .iter()
+                    .position(|spell| spell.id.item_id == *item_id && spell.id.tag == *self_tag)
+                    .ok_or_else(|| {
+                        format!("Goblin Sapper Charge {item_id} has no self damage spell")
+                    })?;
+                fight.self_target =
+                    Some(damage_taken::SelfTarget::new(prepared, self_attack_table)?);
+                fight.goblin_sapper = Some(damage_taken::GoblinSapper {
+                    min_damage: *min_damage,
+                    max_damage: *max_damage,
+                    aoe_cap_multiplier: *aoe_cap_multiplier,
+                    self_spell,
+                });
+            }
         }
         fight.rotation = fight.compile_rotation(&parsed);
         fight.prepull = fight.compile_prepull(&parsed);
@@ -1962,6 +2058,8 @@ impl<A: Agent> Fight<A> {
         }
         if side == Side::Player {
             self.timers.fill(STARTING_CD_TIME);
+            // Go UnitMetrics.reset.
+            self.death.died = false;
             let player = &mut self.player;
             player.gcd = STARTING_CD_TIME;
             player.rotation_timer = STARTING_CD_TIME;
@@ -2000,6 +2098,23 @@ impl<A: Agent> Fight<A> {
             // Go runs reset effects first in the aura tracker's reset.
             self.reset_mods();
             A::reset(self);
+            // Go ApplyFixedUptimeAura's reset effect: the periodic roll, then the first one.
+            for index in 0..self.fixed_uptime.len() {
+                let fixed = self.fixed_uptime[index];
+                self.schedule(
+                    self.now + fixed.tick_length,
+                    PRIORITY_GCD,
+                    Action::FixedUptime {
+                        index,
+                        first: false,
+                    },
+                );
+                self.schedule(
+                    self.now + fixed.start_time,
+                    PRIORITY_GCD,
+                    Action::FixedUptime { index, first: true },
+                );
+            }
         }
         self.reset_auras(side);
         // Go driveWindfuryTotem's OnReset: the totem refreshes every period from the reset.
@@ -2173,6 +2288,8 @@ impl<A: Agent> Fight<A> {
             } => self.delayed_proc(aura, spell, result),
             Action::Prepull(spell) => self.cast_or_queue(spell, Side::Target),
             Action::SunderTick(done) => self.sunder_tick(done),
+            Action::DeathCheck => self.death_check(),
+            Action::FixedUptime { index, first } => self.fixed_uptime_roll(index, first),
             Action::WindfuryRefresh => {
                 let windfury = self.windfury.clone().expect("Windfury Totem is bound");
                 self.activate_aura(windfury.totem);
@@ -2183,6 +2300,37 @@ impl<A: Agent> Fight<A> {
                 );
             }
         }
+    }
+
+    /// Go ApplyFixedUptimeAura's actions. The periodic roll activates the aura, adding a stack
+    /// when it stacks, and comes back a period later. The first roll activates it once, for a
+    /// random share of its duration, so the collapsed chance keeps the uptime.
+    fn fixed_uptime_roll(&mut self, index: usize, first: bool) {
+        let fixed = self.fixed_uptime[index];
+        if first {
+            if self.random("FixedAura") < fixed.uptime {
+                let span = (fixed.duration - fixed.tick_length) as f64;
+                let random = fixed.tick_length + (span * self.random("FixedAuraDur")) as i64;
+                self.aura_mut(fixed.aura).duration = random;
+                self.activate_aura(fixed.aura);
+                self.aura_mut(fixed.aura).duration = fixed.duration;
+            }
+            return;
+        }
+        if self.random("FixedAura") < fixed.chance_per_tick {
+            self.activate_aura(fixed.aura);
+            if self.aura(fixed.aura).max_stacks > 0 {
+                self.add_stack(fixed.aura);
+            }
+        }
+        self.schedule(
+            self.now + fixed.tick_length,
+            PRIORITY_GCD,
+            Action::FixedUptime {
+                index,
+                first: false,
+            },
+        );
     }
 
     /// Go driveSunderArmor's periodic action: activate, add a stack, and come back a period

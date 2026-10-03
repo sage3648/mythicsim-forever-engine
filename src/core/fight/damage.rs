@@ -608,9 +608,13 @@ impl<A: Agent> Fight<A> {
             self.encounter_damage_taken += result.damage;
         }
         if self.log.is_some() && !self.spells[spell].flags.no_logs {
+            let label = match result.target {
+                Side::Target => &self.config.target_label,
+                Side::Player => &self.config.player_label,
+            };
             let line = format!(
                 "[{}] {}{} {} (SpellSchool: {}). (Threat: {:.3})",
-                self.config.target_label,
+                label,
                 action_string(&self.spells[spell].id),
                 if periodic { " tick" } else { "" },
                 result.damage_string(),

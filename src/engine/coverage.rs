@@ -38,12 +38,15 @@ pub(crate) struct ClassGate {
 const COMMON_EFFECTS: &[&str] = &[
     "berserking",
     "blood_fury",
+    "chance_of_death",
     "conjured_energy",
     "conjured_mana",
     "crusader",
     "dragonbreath_chili",
     "energize_on_use",
     "eureka",
+    "fixed_uptime_aura",
+    "goblin_sapper",
     "inert_listener",
     "inert_pet",
     "judgement_of_wisdom",
@@ -96,6 +99,9 @@ fn common_spell_capability(spell: &Spell, prepared: &PreparedV2) -> Option<&'sta
         Effect::PotionMana { item_id, .. } if *item_id == item => Some("potion_mana"),
         Effect::ConjuredMana { item_id, .. } if *item_id == item => Some("conjured_mana"),
         Effect::ConjuredEnergy { item_id, .. } if *item_id == item => Some("conjured_energy"),
+        Effect::GoblinSapper { item_id, .. } if *item_id == item && id.tag == 0 => {
+            Some("goblin_sapper")
+        }
         Effect::EnergizeOnUse { item_id, .. } if *item_id == item => Some("energize_on_use"),
         Effect::Eureka { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
             Some("eureka")
@@ -150,6 +156,7 @@ fn common_claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         | Effect::ReadLeyLine { aura, .. }
         | Effect::TemporaryStats { aura, .. } => vec![("player", aura)],
         Effect::JudgementOfWisdom { aura, .. } => vec![("target", aura)],
+        Effect::ChanceOfDeath { aura } => vec![("player", aura)],
         Effect::Crusader { trigger_aura, .. } | Effect::DragonbreathChili { trigger_aura, .. } => {
             vec![("player", trigger_aura)]
         }

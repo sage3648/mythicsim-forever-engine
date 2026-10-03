@@ -1188,6 +1188,28 @@ pub enum Effect {
         proc_chance: f64,
         tick_damage: f64,
     },
+    /// Go consumes.go Goblin Sapper Charge: a rolled Fire hit on the target and a second roll
+    /// on the player, which rolls on the player's attack table against itself.
+    GoblinSapper {
+        item_id: i32,
+        self_tag: i32,
+        min_damage: f64,
+        max_damage: f64,
+        aoe_cap_multiplier: f64,
+        self_attack_table: AttackTable,
+    },
+    /// Go health.go trackChanceOfDeath once a spell can hit the player.
+    ChanceOfDeath {
+        aura: String,
+    },
+    /// Go aura_helpers.go ApplyFixedUptimeAura: a periodic roll that activates the aura and a
+    /// first roll with a random duration.
+    FixedUptimeAura {
+        aura: String,
+        uptime: f64,
+        tick_length_ns: i64,
+        start_time_ns: i64,
+    },
 }
 
 impl Effect {
@@ -1286,6 +1308,9 @@ impl Effect {
             Effect::RogueFinisher { .. } => "rogue_finisher",
             Effect::InstantPoison { .. } => "instant_poison",
             Effect::DeadlyPoison { .. } => "deadly_poison",
+            Effect::GoblinSapper { .. } => "goblin_sapper",
+            Effect::ChanceOfDeath { .. } => "chance_of_death",
+            Effect::FixedUptimeAura { .. } => "fixed_uptime_aura",
         }
     }
 }

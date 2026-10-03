@@ -942,6 +942,21 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 	// separate reset simulations, since the stacks act through exclusive armor effects.
 	// A stronger permanent member of its exclusive category, such as the raid's Expose Armor,
 	// blocks every activation, which Go still counts as a proc, and the armor never changes.
+	// buffs.go ApplyFixedShoutAura: the party's Battle Shout is up for good, through
+	// ApplyFixedUptimeAura's rolls: a period of its duration and a nanosecond, and a first try a
+	// nanosecond before the pull with a rolled duration. Behind the player's own shout it chains
+	// instead.
+	if aura := character.GetAura("Battle Shout (External)"); aura != nil {
+		for _, own := range character.GetAurasWithTag(buffs.BattleShoutCategory) {
+			if own.ActionID.Tag == 0 {
+				*unrepresented = append(*unrepresented, "the party's Battle Shout chains behind the player's own")
+			}
+		}
+		effects = append(effects, map[string]any{
+			"kind": "fixed_uptime_aura", "aura": aura.Label, "uptime": 1.0,
+			"tick_length_ns": nanos(aura.Duration + 1), "start_time_ns": int64(-1),
+		})
+	}
 	if aura := target.GetAura("Sunder Armor (External)"); aura != nil {
 		blocked := sunderBlocked(request, aura.Label)
 		for _, other := range target.GetAuras() {
@@ -1060,6 +1075,8 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 				"kind": "conjured_energy", "item_id": item, "rng_label": consumable.Name, "gains": energyGains,
 				"selected": consumes.GetConjuredId() == item, "level_reduction": reduction,
 			})
+		case spell.ActionID.SameAction(core.GoblinSapperActionID): // consumes.go newGoblinSapperSpell
+			effects = append(effects, goblinSapperEffect(character, unrepresented))
 		default:
 			// shared.NewSpellDataEnergizeOnUse: an item use spell that restores mana.
 			found := false
@@ -1227,9 +1244,16 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 		{target, "target", "Parry Haste", "acts only on parried attacks"},
 		{&character.Unit, "player", "Parry Haste", "acts only on attacks the player parries, and nothing attacks the player"},
 	} {
+		if inert.label == core.ChanceOfDeathAuraLabel && playerTakesDamage(character) {
+			continue
+		}
 		if inert.unit.GetAura(inert.label) != nil {
 			effects = append(effects, map[string]any{"kind": "inert_listener", "unit": inert.side, "aura": inert.label, "reason": inert.reason})
 		}
+	}
+	// health.go trackChanceOfDeath: once a spell can hit the player, the listener removes health.
+	if playerTakesDamage(character) && character.GetAura(core.ChanceOfDeathAuraLabel) != nil {
+		effects = append(effects, map[string]any{"kind": "chance_of_death", "aura": core.ChanceOfDeathAuraLabel})
 	}
 	effects = append(effects, meleeItemListeners(character)...)
 

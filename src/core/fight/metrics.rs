@@ -106,6 +106,8 @@ pub(crate) struct Totals {
     pub(crate) threat: Distribution,
     pub(crate) tto: Distribution,
     pub(crate) target_dtps: Distribution,
+    /// Damage the player takes from its own spells.
+    pub(crate) player_dtps: Distribution,
     /// Every distribution Go keeps that stays zero in scope: healing, damage taken by the
     /// player, TMI, and the target's own output.
     pub(crate) zero: Distribution,
@@ -325,6 +327,10 @@ pub(crate) struct UnitReport {
     tto: DistributionReport,
     #[serde(skip_serializing_if = "is_zero_f")]
     seconds_oom_avg: f64,
+    #[serde(skip_serializing_if = "is_zero_f")]
+    chance_of_death: f64,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    death_seeds: Vec<String>,
     actions: Vec<ActionMetricsReport>,
     auras: Vec<AuraMetricsReport>,
     resources: Vec<ResourceMetricsReport>,
@@ -481,6 +487,11 @@ impl<A: Agent> Fight<A> {
             if !passive {
                 totals.cast_time += metrics.total_cast_time;
             }
+            if target == Side::Player.index() {
+                // Go adds damage on any unit to that unit's damage taken; the player is no
+                // opponent of its own, so its healing would go to healing done.
+                self.totals.player_dtps.total += metrics.total_damage;
+            }
             if target == Side::Target.index() {
                 self.totals.target_dtps.total += metrics.total_damage;
                 self.totals.dps.total += metrics.total_damage;
@@ -527,6 +538,12 @@ impl<A: Agent> Fight<A> {
         self.totals.threat.done_iteration(duration, seed);
         self.totals.tto.done_iteration(duration, seed);
         self.totals.target_dtps.done_iteration(duration, seed);
+        self.totals.player_dtps.done_iteration(duration, seed);
+        if self.death.died {
+            self.death.iterations_dead += 1;
+            self.death.seeds.push(seed);
+            self.death.seeds.sort_unstable();
+        }
         self.totals.zero.done_iteration(duration, seed);
         self.totals.oom_seconds += seconds(self.player.oom_time);
         self.totals.iterations += 1;
@@ -599,11 +616,13 @@ impl<A: Agent> Fight<A> {
             unit_index: Side::Player.index() as i32,
             dps: self.totals.dps.report(),
             threat: self.totals.threat.report(),
-            dtps: zero.clone(),
+            dtps: self.totals.player_dtps.report(),
             tmi: zero.clone(),
             hps: zero.clone(),
             tto: self.totals.tto.report(),
             seconds_oom_avg: self.totals.oom_seconds / n,
+            chance_of_death: f64::from(self.death.iterations_dead) / n,
+            death_seeds: self.death.seeds.iter().map(i64::to_string).collect(),
             actions,
             auras: self.aura_reports(Side::Player),
             resources,

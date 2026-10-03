@@ -657,6 +657,7 @@ impl<A: Agent> Fight<A> {
                 index,
             }),
             SpellBehavior::MeleeAuto(hand) => self.apply_melee_auto(spell, target, hand),
+            SpellBehavior::GoblinSapper => self.apply_goblin_sapper(spell, target),
             SpellBehavior::RollDamage { min, max } => {
                 // Go sim.Roll: min + (max - min) * RandomFloat("Damage Roll").
                 let base = min + (max - min) * self.random("Damage Roll");
@@ -926,7 +927,9 @@ impl<A: Agent> Fight<A> {
             }
             SpellBehavior::EnergizeOnUse { whole, .. } => max - mana >= *whole,
             // Go's default ShouldActivate.
-            SpellBehavior::Eureka | SpellBehavior::ActivateAura(_) => true,
+            SpellBehavior::Eureka
+            | SpellBehavior::ActivateAura(_)
+            | SpellBehavior::GoblinSapper => true,
             SpellBehavior::TouchOfTheGraveDrain { .. }
             | SpellBehavior::MeleeAuto(_)
             | SpellBehavior::RollDamage { .. }
