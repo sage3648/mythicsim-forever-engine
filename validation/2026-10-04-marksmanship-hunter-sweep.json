@@ -15,12 +15,12 @@
     "deviations": "as variances at the scale of mean^2",
     "first_fight_debug_log": "line identical"
   },
-  "matched": 17,
-  "rejected": 7,
+  "matched": 24,
+  "rejected": 0,
   "mismatched": 0,
   "notes": [
-    "Seven variants place the hunter in melee range, where its main hand swings and Go's Raptor Strike replacement reacts before each swing; the exporter rejects them as main hand swings that can be replaced.",
-    "Two variants empty the ranged slot: Go's weapon damage is NaN and its built-in max keeps the NaN, which Rust now mirrors."
+    "Seven variants place the hunter in melee range: its main hand swings, Go's Raptor Strike replacement reacts before each swing and keeps it because the rotation never queues Raptor Strike, and the hunter's late main hand swing line is logged.",
+    "Two variants empty the ranged slot: Go's weapon damage is NaN and its built-in max keeps the NaN, which Rust mirrors."
   ],
   "cases": [
     {
@@ -64,12 +64,9 @@
       "target_level": 61,
       "talents": "50002005021-0050552011503051-",
       "equipped_items": 11,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "unrepresented by the exporter: main hand swings can be replaced"
-      ]
+      "go_dps": 187.0579155429598,
+      "rust_dps": 187.0579155429598,
+      "passed": true
     },
     {
       "scenario": "sweep-03",
@@ -127,12 +124,9 @@
       "target_level": 62,
       "talents": "50032005020-0050542010503031-",
       "equipped_items": 14,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "unrepresented by the exporter: main hand swings can be replaced"
-      ]
+      "go_dps": 205.0067980150868,
+      "rust_dps": 205.0067980150868,
+      "passed": true
     },
     {
       "scenario": "sweep-07",
@@ -160,12 +154,9 @@
       "target_level": 62,
       "talents": "50032005021-0000552011503031-",
       "equipped_items": 13,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "unrepresented by the exporter: main hand swings can be replaced"
-      ]
+      "go_dps": 360.56257339247543,
+      "rust_dps": 360.56257339247543,
+      "passed": true
     },
     {
       "scenario": "sweep-09",
@@ -238,12 +229,9 @@
       "target_level": 62,
       "talents": "50030002021-0050552010503051-",
       "equipped_items": 13,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "unrepresented by the exporter: main hand swings can be replaced"
-      ]
+      "go_dps": 336.3611563678867,
+      "rust_dps": 336.3611563678867,
+      "passed": true
     },
     {
       "scenario": "sweep-14",
@@ -256,12 +244,9 @@
       "target_level": 62,
       "talents": "50030000021-0050552011503021-",
       "equipped_items": 13,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "unrepresented by the exporter: main hand swings can be replaced"
-      ]
+      "go_dps": 335.4412746280066,
+      "rust_dps": 335.4412746280066,
+      "passed": true
     },
     {
       "scenario": "sweep-15",
@@ -379,12 +364,9 @@
       "target_level": 63,
       "talents": "50032005021-0050550011200051-",
       "equipped_items": 10,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "unrepresented by the exporter: main hand swings can be replaced"
-      ]
+      "go_dps": 210.01731057230566,
+      "rust_dps": 210.01731057230566,
+      "passed": true
     },
     {
       "scenario": "sweep-23",
@@ -397,12 +379,9 @@
       "target_level": 63,
       "talents": "50032004020-0050512011503051-",
       "equipped_items": 13,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "unrepresented by the exporter: main hand swings can be replaced"
-      ]
+      "go_dps": 149.395106865501,
+      "rust_dps": 149.395106865501,
+      "passed": true
     }
   ]
 }
