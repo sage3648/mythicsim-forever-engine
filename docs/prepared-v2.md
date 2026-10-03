@@ -104,6 +104,7 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `conjured_mana` | sim/core/consumes.go | Gain range, label, whether it is the selected item |
 | `conjured_energy` | sim/core/consumes.go | Thistle Tea: gain range, label, whether it is the selected item and its level reduction, a Go literal |
 | `goblin_sapper` | sim/core/consumes.go | The rolled range and AoE cap of the hit on the target and the hit on the player, and the player's attack table against itself |
+| `basic_explosive` | sim/core/consumes.go | Dense Dynamite, Thorium Grenade, Ez-Thro Dynamite II, Crystal Charge, Cryoblast and the SAF-T and EZ-Thro bombs: the rolled range, Go literals checked against the registered spell's school and missile speed, and the AoE cap; the hit flies when the explosive has a missile speed. A tank's hardcast drops its avoidance, whose rolls the target's swing exports as `reduced_avoidance_rolls` |
 | `chance_of_death` | sim/core/health.go | Once a spell can hit the player: a hit that deals damage removes health, the rotation reacts, and a pending action marks the player dead at zero |
 | `fixed_uptime_aura` | sim/core/buffs.go, aura_helpers.go | The party Battle Shout: uptime, roll period and first roll time, Go literals |
 | `energize_proc` | sim/common/forever/item_sets_classic.go | Shadowcraft Armor's energize: each spell's chance from the proc manager, the energy, its metrics and the spell batch delay |
@@ -323,7 +324,9 @@ channel without an interrupt condition and a strict sequence that gives up contr
 Charge hitting the player, and `combat-rogue-orc-shatter-curse` runs it as an Orc whose
 Shatter Curse is up when the sapper goes off.
 `production-marksmanship-hunter` is the production Marksmanship Hunter request, the first
-build with ranged auto attacks.
+build with ranged auto attacks. `tank-protection-paladin-dense-dynamite`,
+`retribution-dense-dynamite` and `marksmanship-hunter-thorium-grenade` throw basic
+explosives, the first while tanking.
 `production-retribution-paladin` is the production Retribution Paladin request and
 `production-shockadin-paladin` the production Shockadin hybrid; the `paladin-*` cases
 strip the Retribution request to its auto attacks and the weapon, consumable and raid

@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "23e4e6317781d6b0c0a42f0d1f2d7363205e568a5424b597c856fbee198e45bd",
+  "exporter_sha256": "cee1db4f43b743e46812ddcfe84641b79fb9f85239be2e23a5a661fdd51f1a71",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -1092,7 +1092,7 @@
         "path": "fixtures/mage/prepared-v2/tank-ret-autos.request.json"
       },
       "prepared": "tank-ret-autos.prepared.json",
-      "prepared_sha256": "bba4ccea1bdb0aa8c8c2f7e2b7f78fb0cdfcba6e35afbc34c353c1d9dcc7b7df",
+      "prepared_sha256": "7000b16a3e2100009540d155a016e788cfd38937b02ed4653756b342cf75da70",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1113,7 +1113,7 @@
         "path": "fixtures/mage/prepared-v2/tank-protection-paladin-autos.request.json"
       },
       "prepared": "tank-protection-paladin-autos.prepared.json",
-      "prepared_sha256": "bc2eed5b9915a6e1252bd33ea4d53e51f7bdf0a01d86970a8f1572f81d27c64a",
+      "prepared_sha256": "042a3284a3df9df2d34e5345497d4890e7238eddf4ff47a518546ffebbfd2398",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1335,6 +1335,65 @@
       "go_log": {
         "file": "production-shockadin-paladin.go-log.txt",
         "sha256": "9a8e8b0b81a04623bc72a05df19ddd43e0e189fc767c9ab92a04421ec2e859d5"
+      }
+    },
+    {
+      "id": "tank-protection-paladin-dense-dynamite",
+      "description": "tank-protection-paladin-autos with its Dense Dynamite kept and a Consecration and Holy Strike rotation that holds the GCD, so the explosive's hardcast drops the tank's avoidance while the target swings",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/tank-protection-paladin-dense-dynamite.request.json"
+      },
+      "prepared": "tank-protection-paladin-dense-dynamite.prepared.json",
+      "prepared_sha256": "36318fd54f03580af7c62ff86224f1d89c3c439b4dfe9e523386d917f25ef0ce",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "tank-protection-paladin-dense-dynamite.go-result.json",
+        "sha256": "c1192d568f1d2c61ece1a4c41f320c1a81c6444c61444334169bb33437fd96d7"
+      },
+      "go_log": {
+        "file": "tank-protection-paladin-dense-dynamite.go-log.txt",
+        "sha256": "91bb6106f2305c6cd1e21dc761b47f5fc89a5734e4451ca48b3564aa9f73209a"
+      }
+    },
+    {
+      "id": "retribution-dense-dynamite",
+      "description": "The production Retribution Paladin request with Dense Dynamite as its explosive: a one second cast whose rolled Fire hit flies at speed 14",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/retribution-dense-dynamite.request.json"
+      },
+      "prepared": "retribution-dense-dynamite.prepared.json",
+      "prepared_sha256": "e87bffaefb01dd55fd5443fb01f882ee2e929972d3cdfecb3c82e54a0f7ffbb5",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "retribution-dense-dynamite.go-result.json",
+        "sha256": "9e9c39a99c61483adbaf11c3d37660a1ede51f0e2f4b300e513dcb5d6ed1289c"
+      },
+      "go_log": {
+        "file": "retribution-dense-dynamite.go-log.txt",
+        "sha256": "ab1a2ac98a26e444aff1e1f13644eef764fc757ac2d2eb29c4a31858a1342a0f"
+      }
+    },
+    {
+      "id": "marksmanship-hunter-thorium-grenade",
+      "description": "The production Marksmanship Hunter request with Thorium Grenade as its explosive, an engineer's grenade flying at speed 25 across 12 yards",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/marksmanship-hunter-thorium-grenade.request.json"
+      },
+      "prepared": "marksmanship-hunter-thorium-grenade.prepared.json",
+      "prepared_sha256": "520a64d8e7dec21717a5d05c4a680476763a3c6b55e9f351ead35329468cad7a",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "marksmanship-hunter-thorium-grenade.go-result.json",
+        "sha256": "420a480bb57bbf6dbdc323c15c30d724d9b9c909067c5e562b8e5560c07ad590"
       }
     }
   ]

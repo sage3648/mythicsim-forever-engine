@@ -321,6 +321,26 @@ impl<A: Agent> Fight<A> {
         self.deal_damage(sapper.self_spell, result, false);
     }
 
+    /// Go `newBasicExplosiveSpellConfig`'s `ApplyEffects` without the self hit: a rolled magic
+    /// hit scaled by the AoE cap on the one target, dealt after travel when the explosive flies.
+    pub(crate) fn apply_basic_explosive(
+        &mut self,
+        spell: SpellId,
+        target: Side,
+        min: f64,
+        max: f64,
+        aoe_cap_multiplier: f64,
+    ) {
+        // Go sim.Roll.
+        let base = (min + (max - min) * self.random("Damage Roll")) * aoe_cap_multiplier;
+        let result = self.calc_damage(spell, target, base);
+        if self.spells[spell].missile_speed > 0.0 {
+            self.deal_damage_after_travel(spell, result);
+        } else {
+            self.deal_damage(spell, result, false);
+        }
+    }
+
     /// The Chance of Death listener's `OnSpellHitTaken`: a hit that deals damage removes that
     /// much health, the rotation reacts, and at zero health a pending action marks the player
     /// dead unless health came back first.

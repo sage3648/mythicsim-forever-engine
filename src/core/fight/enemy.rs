@@ -49,7 +49,13 @@ impl<A: Agent> Fight<A> {
             .values
             .clone();
         // The stat aura combination picks the rolls, as it picks the player's powers.
-        let rolls = values.rolls[self.stat_mask as usize % values.rolls.len()].clone();
+        // A hardcast holds the tank's reduced avoidance aura.
+        let table = if self.player.reduced_avoidance && !values.reduced_avoidance_rolls.is_empty() {
+            &values.reduced_avoidance_rolls
+        } else {
+            &values.rolls
+        };
+        let rolls = table[self.stat_mask as usize % table.len()].clone();
         // Go Weapon.EnemyWeaponDamage.
         let spread = 1.0 + values.damage_spread * self.random("Enemy Weapon Damage");
         let weapon = values.base_damage_min

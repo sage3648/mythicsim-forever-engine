@@ -1158,6 +1158,8 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 			})
 		case spell.ActionID.SameAction(core.GoblinSapperActionID): // consumes.go newGoblinSapperSpell
 			effects = append(effects, goblinSapperEffect(character, unrepresented))
+		case spell.Flags.Matches(core.SpellFlagExplosive) && basicExplosives[item] != (basicExplosive{}):
+			effects = append(effects, basicExplosiveEffect(character, spell, unrepresented))
 		default:
 			// shared.NewSpellDataEnergizeOnUse: an item use spell that restores mana.
 			found := false
@@ -1383,7 +1385,7 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 		{&character.Unit, "player", core.ChanceOfDeathAuraLabel, "acts only when the player takes damage"},
 		{target, "target", "Parry Haste", "acts only on parried attacks"},
 		{&character.Unit, "player", "Parry Haste", "acts only on attacks the player parries, and nothing attacks the player"},
-		{&character.Unit, "player", "Pushback trigger", "acts only on hits taken while hardcasting, which the gate rejects when tanking"},
+		{&character.Unit, "player", "Pushback trigger", "acts only on hits taken while channeling or casting a spell that can be pushed back, which the gate rejects when tanking"},
 	} {
 		if inert.label == core.ChanceOfDeathAuraLabel && playerTakesDamage(character, target) {
 			continue

@@ -6,8 +6,8 @@
     "client_build": "1.60.1.70170",
     "exporter": "tools/oracle-v2"
   },
-  "request_sha256": "a4a88424af2e0e62b0a14a2b9d1d5190797122c895dad2c4f69aebb9c1e940ec",
-  "scenario_id": "tank-ret-autos",
+  "request_sha256": "3e82786b621100f2939099ce0b17e6bd465804181a45931a53be2a90d2276204",
+  "scenario_id": "tank-protection-paladin-dense-dynamite",
   "sim": {
     "iterations": 200,
     "seed": 42,
@@ -33,7 +33,7 @@
       "Agility": 0,
       "ArcaneDamage": 0,
       "ArcaneResistance": 0,
-      "Armor": 3226,
+      "Armor": 976,
       "ArmorPenetration": 0,
       "AttackPower": 805,
       "BlockPercent": 0,
@@ -198,21 +198,20 @@
         "exclusive_effects": 1
       },
       {
-        "label": "Sunder Armor (External)",
+        "label": "Expose Armor (External)",
         "tag": "MajorArmorReduction",
         "action_id": {
-          "spell_id": 11597,
+          "spell_id": 11198,
           "tag": -1
         },
         "duration_ns": 9223372036854775807,
-        "max_stacks": 5,
-        "active": false,
+        "max_stacks": 0,
+        "active": true,
         "stacks": 0,
         "callbacks": [
           "on_reset",
           "on_gain",
-          "on_expire",
-          "on_stacks_change"
+          "on_expire"
         ],
         "icd": null,
         "exclusive_effects": 1
@@ -523,61 +522,61 @@
   },
   "player": {
     "index": 1,
-    "label": "retribution-paladin (#1)",
+    "label": "protection-paladin (#1)",
     "level": 60,
     "stats": {
-      "Agility": 121,
+      "Agility": 181,
       "ArcaneDamage": 0,
-      "ArcaneResistance": 0,
-      "Armor": 2592,
+      "ArcaneResistance": 27,
+      "Armor": 6350,
       "ArmorPenetration": 0,
-      "AttackPower": 672,
+      "AttackPower": 1211,
       "BlockPercent": 0,
       "BlockRating": 0,
-      "BlockValue": 8.75,
+      "BlockValue": 57.65,
       "BonusArmor": 0,
       "DefenseRating": 0,
-      "DodgePercent": 6.122599999999999,
-      "DodgeRating": 73.4712,
+      "DodgePercent": 9.1586,
+      "DodgeRating": 109.9032,
       "ExpertisePercent": 0,
       "ExpertiseRating": 0,
       "FeralAttackPower": 0,
       "FireDamage": 0,
-      "FireResistance": 0,
+      "FireResistance": 27,
       "FrostDamage": 0,
-      "FrostResistance": 0,
-      "HealingPower": 7,
-      "Health": 2991,
-      "HolyDamage": 0,
-      "Intellect": 105,
-      "MP5": 0,
-      "Mana": 2807,
-      "MeleeCritRating": 91,
+      "FrostResistance": 27,
+      "HealingPower": 0,
+      "Health": 5821,
+      "HolyDamage": 40,
+      "Intellect": 141,
+      "MP5": 40,
+      "Mana": 3347,
+      "MeleeCritRating": 105,
       "MeleeHasteRating": 0,
-      "MeleeHitRating": 75,
+      "MeleeHitRating": 85,
       "NatureDamage": 0,
-      "NatureResistance": 0,
+      "NatureResistance": 27,
       "ParryPercent": 0,
       "ParryRating": 0,
-      "PhysicalCritPercent": 15.3226,
+      "PhysicalCritPercent": 19.3586,
       "PhysicalDamage": 0,
-      "PhysicalHitPercent": 7.5,
-      "RangedAttackPower": 82,
-      "RangedCritPercent": 0,
+      "PhysicalHitPercent": 8.5,
+      "RangedAttackPower": 112,
+      "RangedCritPercent": -2,
       "RangedHitPercent": 0,
       "ReducedCritTakenPercent": 0,
       "ShadowDamage": 0,
-      "ShadowResistance": 0,
-      "SpellCritPercent": 13.753499999999999,
-      "SpellCritRating": 91,
-      "SpellDamage": 7,
+      "ShadowResistance": 27,
+      "SpellCritPercent": 11.3547,
+      "SpellCritRating": 77,
+      "SpellDamage": 35,
       "SpellHasteRating": 0,
-      "SpellHitPercent": 7.5,
-      "SpellHitRating": 75,
+      "SpellHitPercent": 8.5,
+      "SpellHitRating": 85,
       "SpellPiercing": 0,
-      "Spirit": 78,
-      "Stamina": 179,
-      "Strength": 195
+      "Spirit": 154,
+      "Stamina": 330,
+      "Strength": 393
     },
     "pseudo_stats": {
       "spell_cost_percent_modifier": 100,
@@ -652,9 +651,211 @@
         "exclusive_effects": 0
       },
       {
-        "label": "Sword Specialization",
+        "label": "Touch of the Grave",
+        "action_id": null,
+        "action_id_for_proc": {
+          "spell_id": 1260189
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_spell_hit_dealt"
+        ],
+        "icd": {
+          "timer": "timer-14",
+          "duration_ns": 1000000000
+        },
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Holy Strength (MH)",
         "action_id": {
-          "spell_id": 20597
+          "spell_id": 20007,
+          "tag": 1
+        },
+        "duration_ns": 15000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Holy Strength (OH)",
+        "action_id": {
+          "spell_id": 20007,
+          "tag": 2
+        },
+        "duration_ns": 15000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Enchant Weapon - Crusader",
+        "action_id": null,
+        "action_id_for_proc": {
+          "spell_id": 20007
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_spell_hit_dealt"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Battle Shout (External)",
+        "tag": "BattleShout",
+        "action_id": {
+          "spell_id": 25289,
+          "tag": -1
+        },
+        "duration_ns": 180000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_init",
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 1
+      },
+      {
+        "label": "Windfury Totem (External)",
+        "tag": "WindfuryTotem",
+        "action_id": {
+          "spell_id": 10610,
+          "tag": -1
+        },
+        "duration_ns": 1000000000,
+        "max_stacks": 2,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire",
+          "on_spell_hit_dealt"
+        ],
+        "icd": null,
+        "exclusive_effects": 1
+      },
+      {
+        "label": "Windfury Totem Trigger",
+        "action_id": {
+          "spell_id": 25580,
+          "tag": -1
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_spell_hit_dealt"
+        ],
+        "icd": {
+          "timer": "timer-15",
+          "duration_ns": 100000000
+        },
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Windfury Totem",
+        "action_id": {
+          "spell_id": 25587,
+          "tag": -1
+        },
+        "duration_ns": 10000000000,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_init",
+          "on_reset"
+        ],
+        "icd": null,
+        "exclusive_effects": 2
+      },
+      {
+        "label": "Arcane Brilliance (External)",
+        "tag": "StatBuff",
+        "action_id": {
+          "spell_id": 23028,
+          "tag": -1
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 1
+      },
+      {
+        "label": "Prayer of Spirit (External)",
+        "tag": "StatBuff",
+        "action_id": {
+          "spell_id": 27681,
+          "tag": -1
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 1
+      },
+      {
+        "label": "Gift of the Wild (External)",
+        "action_id": {
+          "spell_id": 21850,
+          "tag": -1
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 5
+      },
+      {
+        "label": "Prayer of Fortitude (External)",
+        "action_id": {
+          "spell_id": 21564,
+          "tag": -1
         },
         "duration_ns": 9223372036854775807,
         "max_stacks": 0,
@@ -669,8 +870,11 @@
         "exclusive_effects": 0
       },
       {
-        "label": "Bloodmail Regalia 2P",
-        "action_id": null,
+        "label": "Greater Blessing of Kings (External)",
+        "action_id": {
+          "spell_id": 25898,
+          "tag": -1
+        },
         "duration_ns": 9223372036854775807,
         "max_stacks": 0,
         "active": true,
@@ -681,6 +885,62 @@
           "on_expire"
         ],
         "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Greater Blessing of Might (External)",
+        "action_id": {
+          "spell_id": 25916,
+          "tag": -1
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Greater Blessing of Wisdom (External)",
+        "action_id": {
+          "spell_id": 25918,
+          "tag": -1
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Dragonbreath Chili",
+        "action_id": null,
+        "action_id_for_proc": {
+          "spell_id": 15852
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_spell_hit_dealt"
+        ],
+        "icd": {
+          "timer": "timer-16",
+          "duration_ns": 10000000000
+        },
         "exclusive_effects": 0
       },
       {
@@ -713,7 +973,7 @@
         "exclusive_effects": 0
       },
       {
-        "label": "Judgement Refreshretribution-paladin (#1)",
+        "label": "Judgement Refreshprotection-paladin (#1)",
         "action_id": null,
         "duration_ns": 9223372036854775807,
         "max_stacks": 0,
@@ -727,7 +987,7 @@
         "exclusive_effects": 0
       },
       {
-        "label": "Seal of Righteousnessretribution-paladin (#1) Rank 1",
+        "label": "Seal of Righteousnessprotection-paladin (#1) Rank 1",
         "action_id": {
           "spell_id": 21084
         },
@@ -745,7 +1005,7 @@
         "exclusive_effects": 1
       },
       {
-        "label": "Seal of Righteousnessretribution-paladin (#1) Rank 2",
+        "label": "Seal of Righteousnessprotection-paladin (#1) Rank 2",
         "action_id": {
           "spell_id": 20287
         },
@@ -763,7 +1023,7 @@
         "exclusive_effects": 1
       },
       {
-        "label": "Seal of Righteousnessretribution-paladin (#1) Rank 3",
+        "label": "Seal of Righteousnessprotection-paladin (#1) Rank 3",
         "action_id": {
           "spell_id": 20288
         },
@@ -781,7 +1041,7 @@
         "exclusive_effects": 1
       },
       {
-        "label": "Seal of Righteousnessretribution-paladin (#1) Rank 4",
+        "label": "Seal of Righteousnessprotection-paladin (#1) Rank 4",
         "action_id": {
           "spell_id": 20289
         },
@@ -799,7 +1059,7 @@
         "exclusive_effects": 1
       },
       {
-        "label": "Seal of Righteousnessretribution-paladin (#1) Rank 5",
+        "label": "Seal of Righteousnessprotection-paladin (#1) Rank 5",
         "action_id": {
           "spell_id": 20290
         },
@@ -817,7 +1077,7 @@
         "exclusive_effects": 1
       },
       {
-        "label": "Seal of Righteousnessretribution-paladin (#1) Rank 6",
+        "label": "Seal of Righteousnessprotection-paladin (#1) Rank 6",
         "action_id": {
           "spell_id": 20291
         },
@@ -835,7 +1095,7 @@
         "exclusive_effects": 1
       },
       {
-        "label": "Seal of Righteousnessretribution-paladin (#1) Rank 7",
+        "label": "Seal of Righteousnessprotection-paladin (#1) Rank 7",
         "action_id": {
           "spell_id": 20292
         },
@@ -853,7 +1113,7 @@
         "exclusive_effects": 1
       },
       {
-        "label": "Seal of Righteousnessretribution-paladin (#1) Rank 8",
+        "label": "Seal of Righteousnessprotection-paladin (#1) Rank 8",
         "action_id": {
           "spell_id": 20293
         },
@@ -871,7 +1131,7 @@
         "exclusive_effects": 1
       },
       {
-        "label": "Seal of Lightretribution-paladin (#1) Rank 1",
+        "label": "Seal of Lightprotection-paladin (#1) Rank 1",
         "action_id": {
           "spell_id": 20165
         },
@@ -889,7 +1149,7 @@
         "exclusive_effects": 1
       },
       {
-        "label": "Seal of Lightretribution-paladin (#1) Rank 2",
+        "label": "Seal of Lightprotection-paladin (#1) Rank 2",
         "action_id": {
           "spell_id": 20347
         },
@@ -907,7 +1167,7 @@
         "exclusive_effects": 1
       },
       {
-        "label": "Seal of Lightretribution-paladin (#1) Rank 3",
+        "label": "Seal of Lightprotection-paladin (#1) Rank 3",
         "action_id": {
           "spell_id": 20348
         },
@@ -925,7 +1185,7 @@
         "exclusive_effects": 1
       },
       {
-        "label": "Seal of Lightretribution-paladin (#1) Rank 4",
+        "label": "Seal of Lightprotection-paladin (#1) Rank 4",
         "action_id": {
           "spell_id": 20349
         },
@@ -943,7 +1203,7 @@
         "exclusive_effects": 1
       },
       {
-        "label": "Seal of Wisdomretribution-paladin (#1) Rank 1",
+        "label": "Seal of Wisdomprotection-paladin (#1) Rank 1",
         "action_id": {
           "spell_id": 20166
         },
@@ -961,7 +1221,7 @@
         "exclusive_effects": 1
       },
       {
-        "label": "Seal of Wisdomretribution-paladin (#1) Rank 2",
+        "label": "Seal of Wisdomprotection-paladin (#1) Rank 2",
         "action_id": {
           "spell_id": 20356
         },
@@ -979,7 +1239,7 @@
         "exclusive_effects": 1
       },
       {
-        "label": "Seal of Wisdomretribution-paladin (#1) Rank 3",
+        "label": "Seal of Wisdomprotection-paladin (#1) Rank 3",
         "action_id": {
           "spell_id": 20357
         },
@@ -997,7 +1257,7 @@
         "exclusive_effects": 1
       },
       {
-        "label": "Seal of Justiceretribution-paladin (#1)",
+        "label": "Seal of Justiceprotection-paladin (#1)",
         "action_id": {
           "spell_id": 20164
         },
@@ -1010,7 +1270,7 @@
         "exclusive_effects": 1
       },
       {
-        "label": "Seal of the Crusaderretribution-paladin (#1) Rank 1",
+        "label": "Seal of the Crusaderprotection-paladin (#1) Rank 1",
         "action_id": {
           "spell_id": 21082
         },
@@ -1026,7 +1286,7 @@
         "exclusive_effects": 1
       },
       {
-        "label": "Seal of the Crusaderretribution-paladin (#1) Rank 2",
+        "label": "Seal of the Crusaderprotection-paladin (#1) Rank 2",
         "action_id": {
           "spell_id": 20162
         },
@@ -1042,7 +1302,7 @@
         "exclusive_effects": 1
       },
       {
-        "label": "Seal of the Crusaderretribution-paladin (#1) Rank 3",
+        "label": "Seal of the Crusaderprotection-paladin (#1) Rank 3",
         "action_id": {
           "spell_id": 20305
         },
@@ -1058,7 +1318,7 @@
         "exclusive_effects": 1
       },
       {
-        "label": "Seal of the Crusaderretribution-paladin (#1) Rank 4",
+        "label": "Seal of the Crusaderprotection-paladin (#1) Rank 4",
         "action_id": {
           "spell_id": 20306
         },
@@ -1074,7 +1334,7 @@
         "exclusive_effects": 1
       },
       {
-        "label": "Seal of the Crusaderretribution-paladin (#1) Rank 5",
+        "label": "Seal of the Crusaderprotection-paladin (#1) Rank 5",
         "action_id": {
           "spell_id": 20307
         },
@@ -1090,7 +1350,7 @@
         "exclusive_effects": 1
       },
       {
-        "label": "Seal of the Crusaderretribution-paladin (#1) Rank 6",
+        "label": "Seal of the Crusaderprotection-paladin (#1) Rank 6",
         "action_id": {
           "spell_id": 20308
         },
@@ -1106,7 +1366,7 @@
         "exclusive_effects": 1
       },
       {
-        "label": "Seal of Fury Shieldretribution-paladin (#1) Rank 1",
+        "label": "Seal of Fury Shieldprotection-paladin (#1) Rank 1",
         "action_id": {
           "spell_id": 1311649,
           "tag": 1
@@ -1122,7 +1382,7 @@
         "exclusive_effects": 0
       },
       {
-        "label": "Seal of Furyretribution-paladin (#1) Rank 1",
+        "label": "Seal of Furyprotection-paladin (#1) Rank 1",
         "action_id": {
           "spell_id": 1311649
         },
@@ -1140,7 +1400,7 @@
         "exclusive_effects": 1
       },
       {
-        "label": "Seal of Fury Shieldretribution-paladin (#1) Rank 2",
+        "label": "Seal of Fury Shieldprotection-paladin (#1) Rank 2",
         "action_id": {
           "spell_id": 1311656,
           "tag": 1
@@ -1156,7 +1416,7 @@
         "exclusive_effects": 0
       },
       {
-        "label": "Seal of Furyretribution-paladin (#1) Rank 2",
+        "label": "Seal of Furyprotection-paladin (#1) Rank 2",
         "action_id": {
           "spell_id": 1311656
         },
@@ -1174,7 +1434,7 @@
         "exclusive_effects": 1
       },
       {
-        "label": "Seal of Fury Shieldretribution-paladin (#1) Rank 3",
+        "label": "Seal of Fury Shieldprotection-paladin (#1) Rank 3",
         "action_id": {
           "spell_id": 20163,
           "tag": 1
@@ -1190,7 +1450,7 @@
         "exclusive_effects": 0
       },
       {
-        "label": "Seal of Furyretribution-paladin (#1) Rank 3",
+        "label": "Seal of Furyprotection-paladin (#1) Rank 3",
         "action_id": {
           "spell_id": 20163
         },
@@ -1208,7 +1468,7 @@
         "exclusive_effects": 1
       },
       {
-        "label": "Seal of Fury Shieldretribution-paladin (#1) Rank 4",
+        "label": "Seal of Fury Shieldprotection-paladin (#1) Rank 4",
         "action_id": {
           "spell_id": 20419,
           "tag": 1
@@ -1224,7 +1484,7 @@
         "exclusive_effects": 0
       },
       {
-        "label": "Seal of Furyretribution-paladin (#1) Rank 4",
+        "label": "Seal of Furyprotection-paladin (#1) Rank 4",
         "action_id": {
           "spell_id": 20419
         },
@@ -1242,7 +1502,7 @@
         "exclusive_effects": 1
       },
       {
-        "label": "Seal of Fury Shieldretribution-paladin (#1) Rank 5",
+        "label": "Seal of Fury Shieldprotection-paladin (#1) Rank 5",
         "action_id": {
           "spell_id": 20421,
           "tag": 1
@@ -1258,7 +1518,7 @@
         "exclusive_effects": 0
       },
       {
-        "label": "Seal of Furyretribution-paladin (#1) Rank 5",
+        "label": "Seal of Furyprotection-paladin (#1) Rank 5",
         "action_id": {
           "spell_id": 20421
         },
@@ -1276,7 +1536,7 @@
         "exclusive_effects": 1
       },
       {
-        "label": "Seal of Fury Shieldretribution-paladin (#1) Rank 6",
+        "label": "Seal of Fury Shieldprotection-paladin (#1) Rank 6",
         "action_id": {
           "spell_id": 20422,
           "tag": 1
@@ -1292,7 +1552,7 @@
         "exclusive_effects": 0
       },
       {
-        "label": "Seal of Furyretribution-paladin (#1) Rank 6",
+        "label": "Seal of Furyprotection-paladin (#1) Rank 6",
         "action_id": {
           "spell_id": 20422
         },
@@ -1310,7 +1570,7 @@
         "exclusive_effects": 1
       },
       {
-        "label": "Seal of Fury Shieldretribution-paladin (#1) Rank 7",
+        "label": "Seal of Fury Shieldprotection-paladin (#1) Rank 7",
         "action_id": {
           "spell_id": 20423,
           "tag": 1
@@ -1326,7 +1586,7 @@
         "exclusive_effects": 0
       },
       {
-        "label": "Seal of Furyretribution-paladin (#1) Rank 7",
+        "label": "Seal of Furyprotection-paladin (#1) Rank 7",
         "action_id": {
           "spell_id": 20423
         },
@@ -1708,7 +1968,7 @@
         "exclusive_effects": 3
       },
       {
-        "label": "Consecrationretribution-paladin (#1) Rank 1",
+        "label": "Consecrationprotection-paladin (#1) Rank 1",
         "action_id": {
           "spell_id": 26573
         },
@@ -1724,7 +1984,7 @@
         "exclusive_effects": 0
       },
       {
-        "label": "Consecrationretribution-paladin (#1) Rank 2",
+        "label": "Consecrationprotection-paladin (#1) Rank 2",
         "action_id": {
           "spell_id": 20116
         },
@@ -1740,7 +2000,7 @@
         "exclusive_effects": 0
       },
       {
-        "label": "Consecrationretribution-paladin (#1) Rank 3",
+        "label": "Consecrationprotection-paladin (#1) Rank 3",
         "action_id": {
           "spell_id": 20922
         },
@@ -1756,7 +2016,7 @@
         "exclusive_effects": 0
       },
       {
-        "label": "Consecrationretribution-paladin (#1) Rank 4",
+        "label": "Consecrationprotection-paladin (#1) Rank 4",
         "action_id": {
           "spell_id": 20923
         },
@@ -1772,7 +2032,7 @@
         "exclusive_effects": 0
       },
       {
-        "label": "Consecrationretribution-paladin (#1) Rank 5",
+        "label": "Consecrationprotection-paladin (#1) Rank 5",
         "action_id": {
           "spell_id": 20924
         },
@@ -1847,9 +2107,9 @@
         "exclusive_effects": 0
       }
     ],
-    "name": "retribution-paladin",
+    "name": "protection-paladin",
     "class": "ClassPaladin",
-    "race": "RaceHuman",
+    "race": "RaceUndead",
     "professions": [
       "Engineering"
     ],
@@ -1858,15 +2118,15 @@
     "class_options": {},
     "reaction_ns": 100000000,
     "channel_clip_delay_ns": 0,
-    "distance_yards": 0,
+    "distance_yards": 5,
     "cast_speed": 1,
     "mana": {
-      "max": 2807,
+      "max": 3347,
       "base": 1512,
-      "spirit_regen_per_second": 15.3,
-      "regen_per_second_casting": 0,
-      "regen_per_second_not_casting": 15.3,
-      "teardown_max": 2807
+      "spirit_regen_per_second": 22.900000000000002,
+      "regen_per_second_casting": 8,
+      "regen_per_second_not_casting": 30.900000000000002,
+      "teardown_max": 2462
     },
     "attack_table": {
       "base_spell_miss_chance": 0.17,
@@ -1918,6 +2178,281 @@
         "bonus_base_damage": 0,
         "bonus_coefficient": 0,
         "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 1260198
+        },
+        "rank": 0,
+        "school": 32,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskEmpty"
+        ],
+        "flags": [
+          "SpellFlagIgnoreAttackerModifiers",
+          "SpellFlagNoSpellMods",
+          "SpellFlagPassiveSpell",
+          "SpellFlagProc"
+        ],
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "autos_or_procs",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 15851
+        },
+        "rank": 0,
+        "school": 4,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamageProc"
+        ],
+        "flags": [
+          "SpellFlagNoOnCastComplete",
+          "SpellFlagPassiveSpell"
+        ],
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "autos_or_procs",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 1,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "item_id": 13444
+        },
+        "rank": 0,
+        "school": 0,
+        "defense_type": "DefenseTypeNone",
+        "proc_mask": [],
+        "flags": [
+          "SpellFlagNoOnCastComplete",
+          "SpellFlagAPL",
+          "SpellFlagMCD",
+          "SpellFlagEncounterOnly",
+          "SpellFlagPotion",
+          "SpellFlagCombatPotion"
+        ],
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "simple",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": {
+          "timer": "timer-0",
+          "duration_ns": 120000000000
+        },
+        "shared_cd": {
+          "timer": "timer-1",
+          "duration_ns": 120000000000
+        },
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "item_id": 12662
+        },
+        "rank": 0,
+        "school": 0,
+        "defense_type": "DefenseTypeNone",
+        "proc_mask": [],
+        "flags": [
+          "SpellFlagNoOnCastComplete",
+          "SpellFlagAPL",
+          "SpellFlagMCD",
+          "SpellFlagConjured"
+        ],
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "simple",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": {
+          "timer": "timer-2",
+          "duration_ns": 120000000000
+        },
+        "shared_cd": {
+          "timer": "timer-3",
+          "duration_ns": 120000000000
+        },
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "item_id": 18641
+        },
+        "rank": 0,
+        "school": 4,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskEmpty"
+        ],
+        "flags": [
+          "SpellFlagAPL",
+          "SpellFlagMCD",
+          "SpellFlagExplosive"
+        ],
+        "missile_speed": 14,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 1000000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": {
+          "timer": "timer-4",
+          "duration_ns": 60000000000
+        },
+        "bonus_hit_percent": 100,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 1,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
@@ -2019,7 +2554,7 @@
         "max_range": 10,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-0",
+          "timer": "timer-5",
           "duration_ns": 10000000000
         },
         "shared_cd": null,
@@ -2143,7 +2678,7 @@
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.06959999799728393,
+        "bonus_coefficient": 0.057999998331069946,
         "threat_multiplier": 1,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
@@ -2308,7 +2843,7 @@
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.15,
+        "bonus_coefficient": 0.125,
         "threat_multiplier": 1,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
@@ -2473,7 +3008,7 @@
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.22200000286102295,
+        "bonus_coefficient": 0.1850000023841858,
         "threat_multiplier": 1,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
@@ -2638,7 +3173,7 @@
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.24000000357627868,
+        "bonus_coefficient": 0.20000000298023224,
         "threat_multiplier": 1,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
@@ -2803,7 +3338,7 @@
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.24000000357627868,
+        "bonus_coefficient": 0.20000000298023224,
         "threat_multiplier": 1,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
@@ -2968,7 +3503,7 @@
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.24000000357627868,
+        "bonus_coefficient": 0.20000000298023224,
         "threat_multiplier": 1,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
@@ -3133,7 +3668,7 @@
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.24000000357627868,
+        "bonus_coefficient": 0.20000000298023224,
         "threat_multiplier": 1,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
@@ -3298,7 +3833,7 @@
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.24000000357627868,
+        "bonus_coefficient": 0.20000000298023224,
         "threat_multiplier": 1,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
@@ -7821,7 +8356,7 @@
         "max_range": 5,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-1",
+          "timer": "timer-6",
           "duration_ns": 10000000000
         },
         "shared_cd": null,
@@ -7885,7 +8420,7 @@
         "max_range": 5,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-1",
+          "timer": "timer-6",
           "duration_ns": 10000000000
         },
         "shared_cd": null,
@@ -7949,7 +8484,7 @@
         "max_range": 5,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-1",
+          "timer": "timer-6",
           "duration_ns": 10000000000
         },
         "shared_cd": null,
@@ -8013,7 +8548,7 @@
         "max_range": 5,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-1",
+          "timer": "timer-6",
           "duration_ns": 10000000000
         },
         "shared_cd": null,
@@ -8077,7 +8612,7 @@
         "max_range": 5,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-1",
+          "timer": "timer-6",
           "duration_ns": 10000000000
         },
         "shared_cd": null,
@@ -8141,7 +8676,7 @@
         "max_range": 5,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-1",
+          "timer": "timer-6",
           "duration_ns": 10000000000
         },
         "shared_cd": null,
@@ -8205,7 +8740,7 @@
         "max_range": 5,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-1",
+          "timer": "timer-6",
           "duration_ns": 10000000000
         },
         "shared_cd": null,
@@ -8269,7 +8804,7 @@
         "max_range": 5,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-1",
+          "timer": "timer-6",
           "duration_ns": 10000000000
         },
         "shared_cd": null,
@@ -8333,7 +8868,7 @@
         "max_range": 5,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-1",
+          "timer": "timer-6",
           "duration_ns": 6000000000
         },
         "shared_cd": null,
@@ -8393,7 +8928,7 @@
         "max_range": 8,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-2",
+          "timer": "timer-7",
           "duration_ns": 8000000000
         },
         "shared_cd": null,
@@ -8415,7 +8950,7 @@
         "pushback_resist": 0,
         "dot": {
           "unit": "self",
-          "aura_label": "Consecrationretribution-paladin (#1) Rank 1",
+          "aura_label": "Consecrationprotection-paladin (#1) Rank 1",
           "base_tick_count": 8,
           "base_tick_length_ns": 1000000000,
           "bonus_coefficient": 0,
@@ -8466,7 +9001,7 @@
         "max_range": 8,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-2",
+          "timer": "timer-7",
           "duration_ns": 8000000000
         },
         "shared_cd": null,
@@ -8488,7 +9023,7 @@
         "pushback_resist": 0,
         "dot": {
           "unit": "self",
-          "aura_label": "Consecrationretribution-paladin (#1) Rank 2",
+          "aura_label": "Consecrationprotection-paladin (#1) Rank 2",
           "base_tick_count": 8,
           "base_tick_length_ns": 1000000000,
           "bonus_coefficient": 0,
@@ -8539,7 +9074,7 @@
         "max_range": 8,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-2",
+          "timer": "timer-7",
           "duration_ns": 8000000000
         },
         "shared_cd": null,
@@ -8561,7 +9096,7 @@
         "pushback_resist": 0,
         "dot": {
           "unit": "self",
-          "aura_label": "Consecrationretribution-paladin (#1) Rank 3",
+          "aura_label": "Consecrationprotection-paladin (#1) Rank 3",
           "base_tick_count": 8,
           "base_tick_length_ns": 1000000000,
           "bonus_coefficient": 0,
@@ -8612,7 +9147,7 @@
         "max_range": 8,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-2",
+          "timer": "timer-7",
           "duration_ns": 8000000000
         },
         "shared_cd": null,
@@ -8634,7 +9169,7 @@
         "pushback_resist": 0,
         "dot": {
           "unit": "self",
-          "aura_label": "Consecrationretribution-paladin (#1) Rank 4",
+          "aura_label": "Consecrationprotection-paladin (#1) Rank 4",
           "base_tick_count": 8,
           "base_tick_length_ns": 1000000000,
           "bonus_coefficient": 0,
@@ -8685,7 +9220,7 @@
         "max_range": 8,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-2",
+          "timer": "timer-7",
           "duration_ns": 8000000000
         },
         "shared_cd": null,
@@ -8707,7 +9242,7 @@
         "pushback_resist": 0,
         "dot": {
           "unit": "self",
-          "aura_label": "Consecrationretribution-paladin (#1) Rank 5",
+          "aura_label": "Consecrationprotection-paladin (#1) Rank 5",
           "base_tick_count": 8,
           "base_tick_length_ns": 1000000000,
           "bonus_coefficient": 0,
@@ -8758,7 +9293,7 @@
         "max_range": 30,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-3",
+          "timer": "timer-8",
           "duration_ns": 15000000000
         },
         "shared_cd": null,
@@ -8818,7 +9353,7 @@
         "max_range": 30,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-3",
+          "timer": "timer-8",
           "duration_ns": 15000000000
         },
         "shared_cd": null,
@@ -8878,7 +9413,7 @@
         "max_range": 30,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-3",
+          "timer": "timer-8",
           "duration_ns": 15000000000
         },
         "shared_cd": null,
@@ -8938,7 +9473,7 @@
         "max_range": 30,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-3",
+          "timer": "timer-8",
           "duration_ns": 15000000000
         },
         "shared_cd": null,
@@ -8998,7 +9533,7 @@
         "max_range": 30,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-3",
+          "timer": "timer-8",
           "duration_ns": 15000000000
         },
         "shared_cd": null,
@@ -9058,7 +9593,7 @@
         "max_range": 30,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-3",
+          "timer": "timer-8",
           "duration_ns": 15000000000
         },
         "shared_cd": null,
@@ -9118,7 +9653,7 @@
         "max_range": 30,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-4",
+          "timer": "timer-9",
           "duration_ns": 6000000000
         },
         "shared_cd": null,
@@ -9181,7 +9716,7 @@
         "max_range": 30,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-4",
+          "timer": "timer-9",
           "duration_ns": 6000000000
         },
         "shared_cd": null,
@@ -9244,7 +9779,7 @@
         "max_range": 30,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-4",
+          "timer": "timer-9",
           "duration_ns": 6000000000
         },
         "shared_cd": null,
@@ -9307,7 +9842,7 @@
         "max_range": 20,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-5",
+          "timer": "timer-10",
           "duration_ns": 60000000000
         },
         "shared_cd": null,
@@ -9367,7 +9902,7 @@
         "max_range": 20,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-5",
+          "timer": "timer-10",
           "duration_ns": 60000000000
         },
         "shared_cd": null,
@@ -10292,7 +10827,7 @@
         "max_range": 40,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-6",
+          "timer": "timer-11",
           "duration_ns": 1200000000000
         },
         "shared_cd": null,
@@ -10347,7 +10882,7 @@
         "max_range": 40,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-7",
+          "timer": "timer-12",
           "duration_ns": 1200000000000
         },
         "shared_cd": null,
@@ -10402,7 +10937,7 @@
         "max_range": 40,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-8",
+          "timer": "timer-13",
           "duration_ns": 1200000000000
         },
         "shared_cd": null,
@@ -10578,11 +11113,121 @@
         "pushback_resist": 0,
         "dot": null,
         "damage_effect": null
+      },
+      {
+        "action_id": {
+          "other_id": "OtherActionAttack",
+          "tag": 25584
+        },
+        "rank": 0,
+        "school": 1,
+        "defense_type": "DefenseTypeMelee",
+        "proc_mask": [
+          "ProcMaskMeleeMHAuto"
+        ],
+        "flags": [
+          "SpellFlagIncludeTargetBonusDamage",
+          "SpellFlagMeleeMetrics",
+          "SpellFlagNoOnCastComplete"
+        ],
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "autos_or_procs",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 1,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
       }
     ],
-    "major_cooldowns": [],
+    "major_cooldowns": [
+      {
+        "action_id": {
+          "item_id": 13444
+        },
+        "priority": 0,
+        "type": [
+          "mana"
+        ],
+        "timings_ns": []
+      },
+      {
+        "action_id": {
+          "item_id": 12662
+        },
+        "priority": 0,
+        "type": [
+          "mana"
+        ],
+        "timings_ns": []
+      },
+      {
+        "action_id": {
+          "item_id": 18641
+        },
+        "priority": -990,
+        "type": [
+          "dps",
+          "explosive"
+        ],
+        "timings_ns": []
+      }
+    ],
     "rotation": {
-      "type": "TypeAPL"
+      "type": "TypeAPL",
+      "priorityList": [
+        {
+          "action": {
+            "autocastOtherCooldowns": {}
+          }
+        },
+        {
+          "action": {
+            "castSpell": {
+              "spellId": {
+                "spellId": 20924
+              }
+            }
+          }
+        },
+        {
+          "action": {
+            "castSpell": {
+              "spellId": {
+                "spellId": 10333
+              }
+            }
+          }
+        }
+      ]
     },
     "prepull_actions": 0
   },
@@ -10591,11 +11236,11 @@
     "auto_swing_ranged": false,
     "dual_wielding": false,
     "main_hand": {
-      "base_damage_min": 166,
-      "base_damage_max": 250,
+      "base_damage_min": 57,
+      "base_damage_max": 87,
       "attack_power_per_dps": 14,
-      "swing_speed": 3.5,
-      "normalized_swing_speed": 3.3,
+      "swing_speed": 1.8,
+      "normalized_swing_speed": 2.4,
       "school": 0,
       "min_range": 0,
       "max_range": 5
@@ -10636,7 +11281,7 @@
     "defender_dodge": 0.065,
     "defender_parry": 0.14,
     "defender_block": 0.05,
-    "defender_armor": 3226,
+    "defender_armor": 976,
     "defender_block_reduction": 54,
     "defender_bonus_attack_power": 0,
     "defender_bonus_physical_damage_taken": 8,
@@ -10658,16 +11303,196 @@
     "attacker_multiplier": 1,
     "rolls": [
       {
-        "armor_multiplier": 0.6894692703965497,
+        "armor_multiplier": 0.4754233787691037,
         "bonus_damage_taken": 0,
         "target_multiplier": 1,
         "miss_chance": 0.044,
-        "dodge_chance": 0.062226,
+        "dodge_chance": 0.092586,
         "parry_chance": 0.044,
-        "block_chance": 0,
+        "block_chance": 0.044,
         "crit_chance": 0.055999999999999994,
         "crush_chance": 0.15,
-        "block_reduction": 8.75
+        "block_reduction": 57.65
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0.092586,
+        "parry_chance": 0.044,
+        "block_chance": 0.044,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 63.15
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0.092586,
+        "parry_chance": 0.044,
+        "block_chance": 0.044,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 63.15
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0.092586,
+        "parry_chance": 0.044,
+        "block_chance": 0.044,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 68.65
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0.092586,
+        "parry_chance": 0.044,
+        "block_chance": 0.044,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 57.65
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0.092586,
+        "parry_chance": 0.044,
+        "block_chance": 0.044,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 63.15
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0.092586,
+        "parry_chance": 0.044,
+        "block_chance": 0.044,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 63.15
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0.092586,
+        "parry_chance": 0.044,
+        "block_chance": 0.044,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 68.65
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0.092586,
+        "parry_chance": 0.044,
+        "block_chance": 0.044,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 57.65
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0.092586,
+        "parry_chance": 0.044,
+        "block_chance": 0.044,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 63.15
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0.092586,
+        "parry_chance": 0.044,
+        "block_chance": 0.044,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 63.15
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0.092586,
+        "parry_chance": 0.044,
+        "block_chance": 0.044,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 68.65
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0.092586,
+        "parry_chance": 0.044,
+        "block_chance": 0.044,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 57.65
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0.092586,
+        "parry_chance": 0.044,
+        "block_chance": 0.044,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 63.15
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0.092586,
+        "parry_chance": 0.044,
+        "block_chance": 0.044,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 63.15
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0.092586,
+        "parry_chance": 0.044,
+        "block_chance": 0.044,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 68.65
       }
     ],
     "threat_multiplier": 1,
@@ -10688,7 +11513,7 @@
     ],
     "reduced_avoidance_rolls": [
       {
-        "armor_multiplier": 0.6894692703965497,
+        "armor_multiplier": 0.4754233787691037,
         "bonus_damage_taken": 0,
         "target_multiplier": 1,
         "miss_chance": 0.044,
@@ -10697,7 +11522,187 @@
         "block_chance": 0,
         "crit_chance": 0.055999999999999994,
         "crush_chance": 0.15,
-        "block_reduction": 8.75
+        "block_reduction": 57.65
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0,
+        "parry_chance": 0,
+        "block_chance": 0,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 63.15
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0,
+        "parry_chance": 0,
+        "block_chance": 0,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 63.15
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0,
+        "parry_chance": 0,
+        "block_chance": 0,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 68.65
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0,
+        "parry_chance": 0,
+        "block_chance": 0,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 57.65
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0,
+        "parry_chance": 0,
+        "block_chance": 0,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 63.15
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0,
+        "parry_chance": 0,
+        "block_chance": 0,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 63.15
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0,
+        "parry_chance": 0,
+        "block_chance": 0,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 68.65
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0,
+        "parry_chance": 0,
+        "block_chance": 0,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 57.65
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0,
+        "parry_chance": 0,
+        "block_chance": 0,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 63.15
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0,
+        "parry_chance": 0,
+        "block_chance": 0,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 63.15
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0,
+        "parry_chance": 0,
+        "block_chance": 0,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 68.65
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0,
+        "parry_chance": 0,
+        "block_chance": 0,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 57.65
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0,
+        "parry_chance": 0,
+        "block_chance": 0,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 63.15
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0,
+        "parry_chance": 0,
+        "block_chance": 0,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 63.15
+      },
+      {
+        "armor_multiplier": 0.4754233787691037,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0,
+        "parry_chance": 0,
+        "block_chance": 0,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 68.65
       }
     ]
   },
@@ -10726,7 +11731,7 @@
         "ProcMaskMeleeMHSpecial",
         "ProcMaskMeleeOHSpecial"
       ],
-      "trigger_aura": "Judgement Refreshretribution-paladin (#1)"
+      "trigger_aura": "Judgement Refreshprotection-paladin (#1)"
     },
     {
       "kind": "judgement",
@@ -10735,67 +11740,67 @@
     },
     {
       "deal_delay_ns": 10000000,
-      "hand_multiplier": 1.2,
+      "hand_multiplier": 0.85,
       "kind": "seal_of_righteousness",
       "ranks": [
         {
-          "aura": "Seal of Righteousnessretribution-paladin (#1) Rank 1",
+          "aura": "Seal of Righteousnessprotection-paladin (#1) Rank 1",
           "judgement_spell_id": 20187,
           "per_hit_value": 216,
           "proc_spell_id": 25742,
           "seal_spell_id": 21084
         },
         {
-          "aura": "Seal of Righteousnessretribution-paladin (#1) Rank 2",
+          "aura": "Seal of Righteousnessprotection-paladin (#1) Rank 2",
           "judgement_spell_id": 20280,
           "per_hit_value": 318,
           "proc_spell_id": 25740,
           "seal_spell_id": 20287
         },
         {
-          "aura": "Seal of Righteousnessretribution-paladin (#1) Rank 3",
+          "aura": "Seal of Righteousnessprotection-paladin (#1) Rank 3",
           "judgement_spell_id": 20281,
           "per_hit_value": 490,
           "proc_spell_id": 25739,
           "seal_spell_id": 20288
         },
         {
-          "aura": "Seal of Righteousnessretribution-paladin (#1) Rank 4",
+          "aura": "Seal of Righteousnessprotection-paladin (#1) Rank 4",
           "judgement_spell_id": 20282,
           "per_hit_value": 727,
           "proc_spell_id": 25738,
           "seal_spell_id": 20289
         },
         {
-          "aura": "Seal of Righteousnessretribution-paladin (#1) Rank 5",
+          "aura": "Seal of Righteousnessprotection-paladin (#1) Rank 5",
           "judgement_spell_id": 20283,
           "per_hit_value": 1007,
           "proc_spell_id": 25737,
           "seal_spell_id": 20290
         },
         {
-          "aura": "Seal of Righteousnessretribution-paladin (#1) Rank 6",
+          "aura": "Seal of Righteousnessprotection-paladin (#1) Rank 6",
           "judgement_spell_id": 20284,
           "per_hit_value": 1328,
           "proc_spell_id": 25736,
           "seal_spell_id": 20291
         },
         {
-          "aura": "Seal of Righteousnessretribution-paladin (#1) Rank 7",
+          "aura": "Seal of Righteousnessprotection-paladin (#1) Rank 7",
           "judgement_spell_id": 20285,
           "per_hit_value": 1689,
           "proc_spell_id": 25735,
           "seal_spell_id": 20292
         },
         {
-          "aura": "Seal of Righteousnessretribution-paladin (#1) Rank 8",
+          "aura": "Seal of Righteousnessprotection-paladin (#1) Rank 8",
           "judgement_spell_id": 20286,
           "per_hit_value": 1880,
           "proc_spell_id": 25713,
           "seal_spell_id": 20293
         }
       ],
-      "swing_speed": 3.5
+      "swing_speed": 1.8
     },
     {
       "kind": "holy_strike",
@@ -10897,18 +11902,465 @@
       ]
     },
     {
-      "armor_by_stacks": [
-        3226,
-        2776,
-        2326,
-        1876,
-        1426,
-        976
+      "delay_ns": 10000000,
+      "drain_spell_id": 1260198,
+      "health_fraction": 0.05,
+      "kind": "touch_of_the_grave",
+      "proc_chance": 0.05,
+      "proc_mask": [
+        "ProcMaskMeleeMHAuto",
+        "ProcMaskMeleeOHAuto",
+        "ProcMaskMeleeMHSpecial",
+        "ProcMaskMeleeOHSpecial",
+        "ProcMaskRangedAuto",
+        "ProcMaskRangedSpecial",
+        "ProcMaskSpellDamage"
       ],
-      "aura": "Sunder Armor (External)",
-      "kind": "sunder_armor_ramp",
-      "period_ns": 1500000000,
-      "ticks": 5
+      "trigger_aura": "Touch of the Grave"
+    },
+    {
+      "aura": "Battle Shout (External)",
+      "kind": "fixed_uptime_aura",
+      "start_time_ns": -1,
+      "tick_length_ns": 180000000001,
+      "uptime": 1
+    },
+    {
+      "gains": [
+        {
+          "min": 1800,
+          "spread": 0
+        }
+      ],
+      "item_id": 13444,
+      "kind": "potion_mana",
+      "regen_window_seconds": 5,
+      "rng_label": "Major Mana Potion",
+      "stone_multiplier": 1
+    },
+    {
+      "gains": [
+        {
+          "min": 1200,
+          "spread": 0
+        }
+      ],
+      "item_id": 12662,
+      "kind": "conjured_mana",
+      "regen_window_seconds": 5,
+      "rng_label": "Demonic Rune",
+      "selected": true
+    },
+    {
+      "aoe_cap_multiplier": 1,
+      "item_id": 18641,
+      "kind": "basic_explosive",
+      "max_damage": 460,
+      "min_damage": 340
+    },
+    {
+      "chances": [
+        {
+          "spell": 8,
+          "chance": 0.03
+        },
+        {
+          "spell": 9,
+          "chance": 0.03
+        },
+        {
+          "spell": 11,
+          "chance": 0.03
+        },
+        {
+          "spell": 12,
+          "chance": 0.03
+        },
+        {
+          "spell": 14,
+          "chance": 0.03
+        },
+        {
+          "spell": 15,
+          "chance": 0.03
+        },
+        {
+          "spell": 17,
+          "chance": 0.03
+        },
+        {
+          "spell": 18,
+          "chance": 0.03
+        },
+        {
+          "spell": 20,
+          "chance": 0.03
+        },
+        {
+          "spell": 21,
+          "chance": 0.03
+        },
+        {
+          "spell": 23,
+          "chance": 0.03
+        },
+        {
+          "spell": 24,
+          "chance": 0.03
+        },
+        {
+          "spell": 26,
+          "chance": 0.03
+        },
+        {
+          "spell": 27,
+          "chance": 0.03
+        },
+        {
+          "spell": 29,
+          "chance": 0.03
+        },
+        {
+          "spell": 30,
+          "chance": 0.03
+        },
+        {
+          "spell": 67,
+          "chance": 0.03
+        },
+        {
+          "spell": 68,
+          "chance": 0.03
+        },
+        {
+          "spell": 70,
+          "chance": 0.03
+        },
+        {
+          "spell": 71,
+          "chance": 0.03
+        },
+        {
+          "spell": 73,
+          "chance": 0.03
+        },
+        {
+          "spell": 74,
+          "chance": 0.03
+        },
+        {
+          "spell": 76,
+          "chance": 0.03
+        },
+        {
+          "spell": 77,
+          "chance": 0.03
+        },
+        {
+          "spell": 79,
+          "chance": 0.03
+        },
+        {
+          "spell": 80,
+          "chance": 0.03
+        },
+        {
+          "spell": 82,
+          "chance": 0.03
+        },
+        {
+          "spell": 83,
+          "chance": 0.03
+        },
+        {
+          "spell": 85,
+          "chance": 0.03
+        },
+        {
+          "spell": 86,
+          "chance": 0.03
+        },
+        {
+          "spell": 115,
+          "chance": 0.03
+        },
+        {
+          "spell": 116,
+          "chance": 0.03
+        },
+        {
+          "spell": 117,
+          "chance": 0.03
+        },
+        {
+          "spell": 118,
+          "chance": 0.03
+        },
+        {
+          "spell": 119,
+          "chance": 0.03
+        },
+        {
+          "spell": 120,
+          "chance": 0.03
+        },
+        {
+          "spell": 121,
+          "chance": 0.03
+        },
+        {
+          "spell": 122,
+          "chance": 0.03
+        },
+        {
+          "spell": 123,
+          "chance": 0.03
+        },
+        {
+          "spell": 159,
+          "chance": 0.03
+        },
+        {
+          "spell": 161,
+          "chance": 0.03
+        }
+      ],
+      "heal_max": 125,
+      "heal_metrics_action_id": {
+        "spell_id": 20007
+      },
+      "heal_min": 75,
+      "kind": "crusader",
+      "mh_aura": "Holy Strength (MH)",
+      "mh_expire_log": "Lost {\"Strength\": 100.000,} from fading {SpellID: 20007, Tag: 1}.",
+      "mh_gain_log": "Gained {\"Strength\": 100.000,} from {SpellID: 20007, Tag: 1}.",
+      "oh_aura": "Holy Strength (OH)",
+      "oh_expire_log": "Lost {\"Strength\": 100.000,} from fading {SpellID: 20007, Tag: 2}.",
+      "oh_gain_log": "Gained {\"Strength\": 100.000,} from {SpellID: 20007, Tag: 2}.",
+      "trigger_aura": "Enchant Weapon - Crusader"
+    },
+    {
+      "delay_ns": 10000000,
+      "kind": "dragonbreath_chili",
+      "proc_chance": 0.05,
+      "roll_max": 73,
+      "roll_min": 57,
+      "spell_id": 15851,
+      "trigger_aura": "Dragonbreath Chili",
+      "trigger_spells": [
+        8,
+        11,
+        14,
+        17,
+        20,
+        23,
+        26,
+        29,
+        67,
+        70,
+        73,
+        76,
+        79,
+        82,
+        85,
+        115,
+        116,
+        117,
+        118,
+        119,
+        120,
+        121,
+        122,
+        123,
+        159,
+        160,
+        161
+      ]
+    },
+    {
+      "extra_attack_spell": 161,
+      "kind": "windfury_totem",
+      "period_ns": 5000000000,
+      "proc_aura": "Windfury Totem (External)",
+      "spend_outcome": [
+        "Hit",
+        "Glance",
+        "Block",
+        "Crit",
+        "Crush"
+      ],
+      "spend_spells": [
+        159,
+        160,
+        161
+      ],
+      "totem_aura": "Windfury Totem",
+      "trigger_aura": "Windfury Totem Trigger",
+      "trigger_outcome": [
+        "Hit",
+        "Glance",
+        "Block",
+        "Crit",
+        "Crush"
+      ],
+      "trigger_proc_chance": 0.2,
+      "trigger_spells": [
+        8,
+        11,
+        14,
+        17,
+        20,
+        23,
+        26,
+        29,
+        67,
+        70,
+        73,
+        76,
+        79,
+        82,
+        85,
+        115,
+        116,
+        117,
+        118,
+        119,
+        120,
+        121,
+        122,
+        123,
+        159,
+        160,
+        161
+      ]
+    },
+    {
+      "auras": [
+        "Holy Strength (MH)",
+        "Holy Strength (OH)",
+        "Windfury Totem (External)",
+        "Battle Shout (External)"
+      ],
+      "changed": [
+        "AttackPower",
+        "BlockValue",
+        "Strength"
+      ],
+      "combos": [
+        {
+          "AttackPower": 1211,
+          "PhysicalCritPercent": 19.3586,
+          "RangedAttackPower": 112,
+          "SpellCritPercent": 11.3547,
+          "SpellDamage": 35
+        },
+        {
+          "AttackPower": 1431,
+          "PhysicalCritPercent": 19.3586,
+          "RangedAttackPower": 112,
+          "SpellCritPercent": 11.3547,
+          "SpellDamage": 35
+        },
+        {
+          "AttackPower": 1431,
+          "PhysicalCritPercent": 19.3586,
+          "RangedAttackPower": 112,
+          "SpellCritPercent": 11.3547,
+          "SpellDamage": 35
+        },
+        {
+          "AttackPower": 1651,
+          "PhysicalCritPercent": 19.3586,
+          "RangedAttackPower": 112,
+          "SpellCritPercent": 11.3547,
+          "SpellDamage": 35
+        },
+        {
+          "AttackPower": 1457,
+          "PhysicalCritPercent": 19.3586,
+          "RangedAttackPower": 112,
+          "SpellCritPercent": 11.3547,
+          "SpellDamage": 35
+        },
+        {
+          "AttackPower": 1677,
+          "PhysicalCritPercent": 19.3586,
+          "RangedAttackPower": 112,
+          "SpellCritPercent": 11.3547,
+          "SpellDamage": 35
+        },
+        {
+          "AttackPower": 1677,
+          "PhysicalCritPercent": 19.3586,
+          "RangedAttackPower": 112,
+          "SpellCritPercent": 11.3547,
+          "SpellDamage": 35
+        },
+        {
+          "AttackPower": 1897,
+          "PhysicalCritPercent": 19.3586,
+          "RangedAttackPower": 112,
+          "SpellCritPercent": 11.3547,
+          "SpellDamage": 35
+        },
+        {
+          "AttackPower": 1350,
+          "PhysicalCritPercent": 19.3586,
+          "RangedAttackPower": 112,
+          "SpellCritPercent": 11.3547,
+          "SpellDamage": 35
+        },
+        {
+          "AttackPower": 1570,
+          "PhysicalCritPercent": 19.3586,
+          "RangedAttackPower": 112,
+          "SpellCritPercent": 11.3547,
+          "SpellDamage": 35
+        },
+        {
+          "AttackPower": 1570,
+          "PhysicalCritPercent": 19.3586,
+          "RangedAttackPower": 112,
+          "SpellCritPercent": 11.3547,
+          "SpellDamage": 35
+        },
+        {
+          "AttackPower": 1790,
+          "PhysicalCritPercent": 19.3586,
+          "RangedAttackPower": 112,
+          "SpellCritPercent": 11.3547,
+          "SpellDamage": 35
+        },
+        {
+          "AttackPower": 1596,
+          "PhysicalCritPercent": 19.3586,
+          "RangedAttackPower": 112,
+          "SpellCritPercent": 11.3547,
+          "SpellDamage": 35
+        },
+        {
+          "AttackPower": 1816,
+          "PhysicalCritPercent": 19.3586,
+          "RangedAttackPower": 112,
+          "SpellCritPercent": 11.3547,
+          "SpellDamage": 35
+        },
+        {
+          "AttackPower": 1816,
+          "PhysicalCritPercent": 19.3586,
+          "RangedAttackPower": 112,
+          "SpellCritPercent": 11.3547,
+          "SpellDamage": 35
+        },
+        {
+          "AttackPower": 2036,
+          "PhysicalCritPercent": 19.3586,
+          "RangedAttackPower": 112,
+          "SpellCritPercent": 11.3547,
+          "SpellDamage": 35
+        }
+      ],
+      "kind": "stat_auras"
     },
     {
       "aura": "Parry Haste",
