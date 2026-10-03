@@ -553,7 +553,7 @@ impl<A: Agent> Fight<A> {
         let after_target = result.damage;
         self.apply_physical_outcome(spell, &mut result, outcome);
         let after_outcome = result.damage;
-        result.damage = result.damage.max(0.0);
+        self.apply_post_outcome_modifiers(spell, &mut result);
         if self.log.is_some() {
             self.log_damage_debug(
                 spell,

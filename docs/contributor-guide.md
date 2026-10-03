@@ -27,6 +27,8 @@ Frostbolt kernel remains unchanged beside it.
 | Druid runtime hooks | [src/classes/druid/agent.rs](../src/classes/druid/agent.rs) |
 | Warlock runtime hooks and regressions | [src/classes/warlock/agent.rs](../src/classes/warlock/agent.rs), [tests/classes/warlock/](../tests/classes/warlock/) |
 | Priest runtime hooks and regressions | [src/classes/priest/agent.rs](../src/classes/priest/agent.rs), [tests/classes/priest.rs](../tests/classes/priest.rs) |
+| Hunter runtime hooks and regressions | [src/classes/hunter/agent.rs](../src/classes/hunter/agent.rs), [tests/classes/hunter.rs](../tests/classes/hunter.rs) |
+| Player melee and ranged auto attacks | [src/core/fight/melee.rs](../src/core/fight/melee.rs) |
 | Registered pets nothing summons | [src/core/fight/pet.rs](../src/core/fight/pet.rs) |
 | Shared build gate and class gates | [src/engine/coverage.rs](../src/engine/coverage.rs), `src/classes/<class>/prepared/coverage.rs` |
 | Event ordering (prepared v1 kernel) | [src/core/events.rs](../src/core/events.rs) |

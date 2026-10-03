@@ -470,7 +470,7 @@ impl<A: Agent> Fight<A> {
 
     /// Go `ApplyPostOutcomeDamageModifiers`: the target's dynamic modifiers in order, then no
     /// negative damage.
-    fn apply_post_outcome_modifiers(&self, spell: SpellId, result: &mut SpellResult) {
+    pub(crate) fn apply_post_outcome_modifiers(&self, spell: SpellId, result: &mut SpellResult) {
         for modifier in &self.damage_taken_modifiers {
             if self.spells[spell].school & modifier.school_mask != 0
                 && self.aura(modifier.aura).active
@@ -488,7 +488,10 @@ impl<A: Agent> Fight<A> {
                 result.damage *= modifier.multiplier;
             }
         }
-        result.damage = result.damage.max(0.0);
+        // Go's built-in max keeps a NaN, as an empty weapon slot's damage is.
+        if !result.damage.is_nan() {
+            result.damage = result.damage.max(0.0);
+        }
     }
 
     /// Go `OutcomeTickPhysicalCrit`: a tick that rolls the physical crit, keeping a partial
