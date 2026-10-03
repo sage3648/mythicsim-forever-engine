@@ -69,6 +69,10 @@ pub(crate) fn consecration_tick(
     let mut damage = rank.tick;
     if rank.bonus_targets > 0 {
         damage += rank.bonus + rank.bonus_coefficient * fight.bonus_damage(spell);
+        // Consecrated Ground marks the same targets, before the tick lands.
+        if let Some((aura, _)) = fight.agent.consecrated_ground {
+            fight.activate_aura(aura);
+        }
     }
     fight.periodic_damage_tick_with(dot, Side::Target, damage, Outcome::TickMagicHitAndCrit);
 }

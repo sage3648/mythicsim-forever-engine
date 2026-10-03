@@ -712,6 +712,28 @@ impl<A: Agent> Fight<A> {
                 let result = self.calc_damage(spell, target, base);
                 self.deal_damage(spell, result, false);
             }
+            SpellBehavior::EffectRoll {
+                average,
+                variance,
+                can_crit,
+            } => {
+                // Go spelldata Effect.Roll: no draw without a variance.
+                let base = if variance == 0.0 {
+                    average
+                } else {
+                    let (low, high) = (
+                        average * (1.0 - variance / 2.0),
+                        average * (1.0 + variance / 2.0),
+                    );
+                    low + (high - low) * self.random("Damage Roll")
+                };
+                let result = if can_crit {
+                    self.calc_damage(spell, target, base)
+                } else {
+                    self.calc_damage_hit_only(spell, target, base)
+                };
+                self.deal_damage(spell, result, false);
+            }
             SpellBehavior::None => panic!("spell {} has no behavior", self.spells[spell].id),
         }
     }
@@ -1019,6 +1041,7 @@ impl<A: Agent> Fight<A> {
             SpellBehavior::TouchOfTheGraveDrain { .. }
             | SpellBehavior::MeleeAuto(_)
             | SpellBehavior::RollDamage { .. }
+            | SpellBehavior::EffectRoll { .. }
             | SpellBehavior::None => false,
         }
     }

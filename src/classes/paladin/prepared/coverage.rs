@@ -17,7 +17,9 @@ pub(crate) const GATE: ClassGate = ClassGate {
 /// Paladin effect kinds implemented in Rust and validated against the pinned Go reference.
 const EFFECTS: &[&str] = &[
     "consecration",
+    "divine_favor",
     "hammer_of_wrath",
+    "holy_shock",
     "holy_strike",
     "judgement",
     "judgement_refresh",
@@ -43,6 +45,8 @@ fn spell_capability(spell: &Spell) -> Option<&'static str> {
         "holy_strike" => Some("holy_strike"),
         "hammer_of_wrath" => Some("hammer_of_wrath"),
         "consecration" => Some("consecration"),
+        "holy_shock" => Some("holy_shock"),
+        "divine_favor" => Some("divine_favor"),
         _ => None,
     }
 }
@@ -54,7 +58,10 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         | Effect::Vindication { trigger_aura, .. }
         | Effect::SanctifiedJudgement { trigger_aura, .. }
         | Effect::SacredArbiter { trigger_aura, .. }
-        | Effect::TwistOfLight { trigger_aura, .. } => vec![("player", trigger_aura)],
+        | Effect::TwistOfLight { trigger_aura, .. }
+        | Effect::DivineFavor {
+            aura: trigger_aura, ..
+        } => vec![("player", trigger_aura)],
         Effect::Vengeance {
             trigger_aura, aura, ..
         } => vec![("player", trigger_aura), ("player", aura)],

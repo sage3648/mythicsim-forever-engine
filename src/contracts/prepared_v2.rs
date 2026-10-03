@@ -302,6 +302,24 @@ pub struct ConsecrationRank {
     pub bonus_targets: i32,
 }
 
+/// Consecrated Ground: the target aura Consecration's ticks mark and its Holy damage
+/// multiplier while it holds.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct ConsecratedGround {
+    pub aura: String,
+    pub multiplier: f64,
+}
+
+/// A Holy Shock rank's damage roll.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct HolyShockRank {
+    pub spell_id: i32,
+    pub min: f64,
+    pub max: f64,
+}
+
 /// One Twist of Light Echo: its aura and the seal whose effect it replays.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -928,9 +946,37 @@ pub enum Effect {
     },
     /// Paladin hammer_of_wrath.go: the damage rolls are on the spells.
     HammerOfWrath {},
-    /// Paladin consecration.go: every rank's tick and the bonus the first targets take.
+    /// Paladin consecration.go: every rank's tick and the bonus the first targets take, and
+    /// Consecrated Ground's mark when talented.
     Consecration {
         ranks: Vec<ConsecrationRank>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        consecrated_ground: Option<ConsecratedGround>,
+    },
+    /// Paladin holy_shock.go: every rank's damage roll.
+    HolyShock {
+        ranks: Vec<HolyShockRank>,
+    },
+    /// Paladin divine_favor.go: a major cooldown whose aura raises the crit of the spells it
+    /// names until one of them is cast.
+    DivineFavor {
+        spell_id: i32,
+        aura: String,
+        crit: f64,
+        spells: Vec<String>,
+    },
+    /// An item proc common/shared/shared_utils.go builds from client rows: a listener that
+    /// casts a single target magic hit at once on the unit hit.
+    SpellDataDamageProc {
+        trigger_aura: String,
+        trigger_spells: Vec<usize>,
+        landed_only: bool,
+        require_damage: bool,
+        proc_chance: f64,
+        spell: usize,
+        average: f64,
+        variance: f64,
+        can_crit: bool,
     },
     /// Paladin talents_retribution.go Vengeance: crits stack a Holy and Physical damage mod.
     Vengeance {
@@ -1809,6 +1855,9 @@ impl Effect {
             Effect::SanctifiedJudgement { .. } => "sanctified_judgement",
             Effect::SacredArbiter { .. } => "sacred_arbiter",
             Effect::TwistOfLight { .. } => "twist_of_light",
+            Effect::HolyShock { .. } => "holy_shock",
+            Effect::DivineFavor { .. } => "divine_favor",
+            Effect::SpellDataDamageProc { .. } => "spell_data_damage_proc",
             Effect::SunderArmorRamp { .. } => "sunder_armor_ramp",
             Effect::StatAuras { .. } => "stat_auras",
             Effect::WindfuryTotem { .. } => "windfury_totem",

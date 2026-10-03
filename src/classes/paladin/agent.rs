@@ -10,6 +10,7 @@ use crate::{
 
 use super::{
     spells::{
+        holy::{self, DivineFavor},
         judgement, judgement_refresh,
         seals::{self, Seals},
         strikes,
@@ -36,6 +37,9 @@ pub(crate) enum PaladinSpell {
     HammerOfWrath,
     /// A Consecration rank, by its position in the effect.
     Consecration(usize),
+    /// A Holy Shock rank's damage, by its position in the effect.
+    HolyShock(usize),
+    DivineFavor,
 }
 
 /// Class auras with Rust behavior.
@@ -50,6 +54,7 @@ pub(crate) enum PaladinAura {
     SanctifiedJudgement,
     SacredArbiter,
     TwistOfLight,
+    DivineFavor,
 }
 
 /// Paladin state that Go keeps in the `Paladin` struct and its closures.
@@ -65,6 +70,10 @@ pub(crate) struct PaladinAgent {
     sanctified_judgement: Option<SanctifiedJudgement>,
     sacred_arbiter: Rc<Vec<AuraRef>>,
     pub(crate) echoes: Vec<Echo>,
+    holy_shock: Vec<(f64, f64)>,
+    divine_favor: Option<Rc<DivineFavor>>,
+    /// Consecrated Ground's mark on the target and its Holy damage multiplier.
+    pub(crate) consecrated_ground: Option<(AuraRef, f64)>,
 }
 
 impl PaladinAgent {
@@ -111,13 +120,26 @@ impl PaladinAgent {
             }
             "consecration" if spell.dot.is_some() => {
                 effects.iter().find_map(|effect| match effect {
-                    Effect::Consecration { ranks } => ranks
+                    Effect::Consecration { ranks, .. } => ranks
                         .iter()
                         .position(|rank| rank.spell_id == id.spell_id)
                         .map(PaladinSpell::Consecration),
                     _ => None,
                 })
             }
+            "holy_shock" => effects.iter().find_map(|effect| match effect {
+                Effect::HolyShock { ranks } => ranks
+                    .iter()
+                    .position(|rank| rank.spell_id == id.spell_id)
+                    .map(PaladinSpell::HolyShock),
+                _ => None,
+            }),
+            "divine_favor" => effects.iter().find_map(|effect| match effect {
+                Effect::DivineFavor { spell_id, .. } if *spell_id == id.spell_id => {
+                    Some(PaladinSpell::DivineFavor)
+                }
+                _ => None,
+            }),
             _ => None,
         }
     }
@@ -148,6 +170,9 @@ impl PaladinAgent {
                 }
                 Effect::TwistOfLight { trigger_aura, .. } => {
                     auras.push((trigger_aura.clone(), PaladinAura::TwistOfLight))
+                }
+                Effect::DivineFavor { aura, .. } => {
+                    auras.push((aura.clone(), PaladinAura::DivineFavor))
                 }
                 _ => {}
             }
@@ -203,7 +228,34 @@ impl PaladinAgent {
                     fight.agent.holy_strike =
                         ranks.iter().map(|rank| rank.weapon_percent).collect();
                 }
-                Effect::Consecration { ranks } => fight.agent.consecration = ranks.clone(),
+                Effect::Consecration {
+                    ranks,
+                    consecrated_ground,
+                } => {
+                    fight.agent.consecration = ranks.clone();
+                    if let Some(ground) = consecrated_ground {
+                        let aura = fight.trackers[Side::Target.index()]
+                            .find(&ground.aura)
+                            .map(|index| AuraRef {
+                                side: Side::Target,
+                                index,
+                            })
+                            .ok_or_else(|| {
+                                format!("target aura {} is not registered", ground.aura)
+                            })?;
+                        fight.agent.consecrated_ground = Some((aura, ground.multiplier));
+                    }
+                }
+                Effect::HolyShock { ranks } => {
+                    fight.agent.holy_shock =
+                        ranks.iter().map(|rank| (rank.min, rank.max)).collect();
+                }
+                Effect::DivineFavor {
+                    aura, crit, spells, ..
+                } => {
+                    let bound = DivineFavor::bind(&mut fight, aura, *crit, spells)?;
+                    fight.agent.divine_favor = Some(Rc::new(bound));
+                }
                 Effect::Vengeance {
                     aura,
                     per_stack,
@@ -261,6 +313,18 @@ impl PaladinAgent {
     }
 }
 
+impl PaladinAgent {
+    fn divine_favor(fight: &Fight<Self>) -> Rc<DivineFavor> {
+        Rc::clone(
+            fight
+                .agent
+                .divine_favor
+                .as_ref()
+                .expect("Divine Favor is bound"),
+        )
+    }
+}
+
 impl Agent for PaladinAgent {
     type Spell = PaladinSpell;
     type Aura = PaladinAura;
@@ -291,6 +355,11 @@ impl Agent for PaladinAgent {
             }
             PaladinSpell::HammerOfWrath => strikes::hammer_of_wrath(fight, spell, target),
             PaladinSpell::Consecration(_) => strikes::consecration(fight, spell, target),
+            PaladinSpell::HolyShock(rank) => {
+                let roll = fight.agent.holy_shock[rank];
+                holy::holy_shock(fight, spell, target, roll);
+            }
+            PaladinSpell::DivineFavor => Self::divine_favor(fight).apply(fight),
         }
     }
 
@@ -320,7 +389,22 @@ impl Agent for PaladinAgent {
         twist_of_light::reset(fight);
     }
 
+    fn caster_damage_multiplier(fight: &Fight<Self>, spell: SpellId) -> Option<f64> {
+        // Consecrated Ground's handler: Holy spells, while the target is marked.
+        let (aura, multiplier) = fight.agent.consecrated_ground?;
+        fight.aura(aura).active.then(|| {
+            if fight.spells[spell].school & 2 != 0 {
+                multiplier
+            } else {
+                1.0
+            }
+        })
+    }
+
     fn on_gain(fight: &mut Fight<Self>, _aura: AuraRef, kind: PaladinAura) {
+        if kind == PaladinAura::DivineFavor {
+            Self::divine_favor(fight).on_gain(fight);
+        }
         if kind == PaladinAura::Vengeance {
             fight
                 .agent
@@ -331,6 +415,9 @@ impl Agent for PaladinAgent {
     }
 
     fn on_expire(fight: &mut Fight<Self>, _aura: AuraRef, kind: PaladinAura) {
+        if kind == PaladinAura::DivineFavor {
+            Self::divine_favor(fight).on_expire(fight);
+        }
         if kind == PaladinAura::Vengeance {
             fight
                 .agent
@@ -357,6 +444,9 @@ impl Agent for PaladinAgent {
     }
 
     fn on_cast_complete(fight: &mut Fight<Self>, aura: AuraRef, kind: PaladinAura, spell: SpellId) {
+        if kind == PaladinAura::DivineFavor {
+            Self::divine_favor(fight).on_cast_complete(fight, spell);
+        }
         if kind == PaladinAura::SanctifiedJudgement {
             fight
                 .agent
@@ -396,7 +486,9 @@ impl Agent for PaladinAgent {
                 retribution::sacred_arbiter_hit(fight, &judgements, spell, result);
             }
             PaladinAura::TwistOfLight => twist_of_light::on_spell_hit_dealt(fight, spell, result),
-            PaladinAura::Vengeance | PaladinAura::SanctifiedJudgement => {}
+            PaladinAura::Vengeance
+            | PaladinAura::SanctifiedJudgement
+            | PaladinAura::DivineFavor => {}
         }
     }
 

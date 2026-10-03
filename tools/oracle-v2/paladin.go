@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	"reflect"
 	"time"
 
 	"github.com/wowsims/forever/sim/core"
@@ -80,6 +81,8 @@ var (
 	paladinImprovedSeals            = spelldata.Talent(20224, 3)
 	paladinSanctifiedJudgement      = spelldata.Talent(1311074, 3)
 	paladinVengeance                = spelldata.Talent(20049, 3)
+	paladinDivineFavor              = spelldata.Ranked(20216)
+	paladinConsecratedGround        = spelldata.Talent(1310905, 2)
 )
 
 // seal_of_righteousness.go sealOfRighteousnessProcIDs: the damage spell each rank fires.
@@ -187,7 +190,35 @@ func paladinEffects(agent core.Agent, character *core.Character) []map[string]an
 			"bonus_coefficient": bonus.Coeff(), "bonus_targets": int32(dummy.Average(core.CharacterLevel)),
 		})
 	})
-	effects = append(effects, map[string]any{"kind": "consecration", "ranks": consecrations})
+	consecration := map[string]any{"kind": "consecration", "ranks": consecrations}
+	if talents.ConsecratedGround > 0 { // talents_holy.go applyConsecratedGround
+		consecration["consecrated_ground"] = map[string]any{
+			"aura":       "Consecrated Ground" + p.Label,
+			"multiplier": paladinConsecratedGround.MultiplierAt(talents.ConsecratedGround),
+		}
+	}
+	effects = append(effects, consecration)
+	if talents.HolyShock { // holy_shock.go: the hand-written rank table, read through reflection
+		ranks := []map[string]any{}
+		table := reflect.ValueOf(paladin.HolyShockRanks)
+		for i := 0; i < table.Len(); i++ {
+			rank := table.Index(i)
+			ranks = append(ranks, map[string]any{
+				"spell_id": int32(rank.FieldByName("spellID").Int()),
+				"min":      rank.FieldByName("damage").Index(0).Float(),
+				"max":      rank.FieldByName("damage").Index(1).Float(),
+			})
+		}
+		effects = append(effects, map[string]any{"kind": "holy_shock", "ranks": ranks})
+	}
+	if talents.DivineFavor { // divine_favor.go
+		rank := paladinDivineFavor.Highest()
+		effects = append(effects, map[string]any{
+			"kind": "divine_favor", "spell_id": rank.ID, "aura": "Divine Favor" + p.Label,
+			"crit":   rank.Effect(dbcenums.A_ADD_FLAT_MODIFIER, int32(dbcenums.SPELLMOD_CRITICAL_CHANCE)).Average(core.CharacterLevel),
+			"spells": []string{"holy_light", "flash_of_light", "holy_shock_heal", "holy_shock"},
+		})
+	}
 	if talents.Vengeance > 0 { // talents_retribution.go applyVengeance
 		// The damage mod's School and ProcMask, as core shouldApply matches them.
 		spells := []int{}
@@ -257,9 +288,9 @@ func paladinUnrepresented(agent core.Agent, character *core.Character) []string 
 	if target.PseudoStats.Stunned {
 		notes = append(notes, "Judgement of Command against a stunned target is unsupported")
 	}
-	// talents_holy.go applyConsecratedGround marks targets from inside Consecration's ticks.
-	if p.Talents.ConsecratedGround > 0 {
-		notes = append(notes, "Consecrated Ground is unsupported")
+	// holy_shock.go: Light's Vigil on the enemy turns Holy Shock into the vigil's strike.
+	if p.Talents.LightsVigil {
+		notes = append(notes, "Light's Vigil is unsupported")
 	}
 	return notes
 }

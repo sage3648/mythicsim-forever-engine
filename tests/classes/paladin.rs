@@ -21,6 +21,48 @@ fn reasons(value: Value) -> Vec<String> {
     }
 }
 
+fn shockadin_json() -> Value {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("fixtures/mage/prepared-v2/production-shockadin-paladin.prepared.json");
+    serde_json::from_slice(&fs::read(path).unwrap()).unwrap()
+}
+
+#[test]
+fn production_shockadin_request_is_supported() {
+    let prepared: PreparedV2 = serde_json::from_value(shockadin_json()).unwrap();
+    assert_eq!(prepared_coverage(&prepared), Vec::<String>::new());
+}
+
+/// The Storm Gauntlets' proc is a listener only its item effect describes.
+#[test]
+fn storm_gauntlets_need_their_damage_proc() {
+    let mut value = shockadin_json();
+    value["effects"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|effect| effect["kind"] != "spell_data_damage_proc");
+    assert!(reasons(value).contains(
+        &"player aura \"Storm Gauntlets\" listens to combat events without an effect".into()
+    ));
+}
+
+#[test]
+fn holy_shock_and_divine_favor_need_their_effects() {
+    for (kind, spell) in [("holy_shock", 20930), ("divine_favor", 20216)] {
+        let mut value = shockadin_json();
+        value["effects"]
+            .as_array_mut()
+            .unwrap()
+            .retain(|effect| effect["kind"] != kind);
+        assert!(
+            reasons(value).contains(&format!(
+                "rotation reaches spell {spell} without a known behavior"
+            )),
+            "{kind}"
+        );
+    }
+}
+
 #[test]
 fn production_retribution_request_is_supported() {
     let prepared: PreparedV2 = serde_json::from_value(retribution_json()).unwrap();

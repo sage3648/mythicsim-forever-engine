@@ -116,8 +116,70 @@ func dpmChances(character *core.Character, dpm *core.DynamicProcManager, simulat
 	return chances
 }
 
-func meleeProcEffects(simulation *core.Simulation, character *core.Character, unrepresented *[]string) []map[string]any {
+// Item procs common/shared/shared_utils.go applySpellDataDamageProc builds from client rows: the
+// item's trigger aura, its trigger row and the damage row the proc casts.
+var spellDataDamageProcs = []struct {
+	label   string
+	trigger int32
+	damage  int32
+}{{"Storm Gauntlets", 16615, 16614}}
+
+// applySpellDataDamageProc: a listener resolved from the trigger row that casts the damage spell at
+// once on the unit hit. Only a single target magic hit dealt where it lands is described.
+func spellDataDamageProcEffects(character *core.Character, unrepresented *[]string) []map[string]any {
 	effects := []map[string]any{}
+	melee := false
+	for _, spell := range character.Spellbook {
+		melee = melee || spell.ProcMask.Matches(core.ProcMaskMeleeSpecial)
+	}
+	for _, proc := range spellDataDamageProcs {
+		// Without a melee special, meleeItemListeners describes the listener as inert.
+		if character.GetAura(proc.label) == nil || !melee {
+			continue
+		}
+		trigger := spelldata.MustFind(proc.trigger)
+		damage := spelldata.MustFind(proc.damage)
+		listener := spelldata.ProcTrigger(character, trigger, nil, spelldata.ItemProcChance(trigger))
+		spell := -1
+		for i, registered := range character.Spellbook {
+			if registered.ActionID == (core.ActionID{SpellID: damage.ID}) {
+				spell = i
+			}
+		}
+		effect := damage.DamageEffect()
+		// shared_utils.go damageDefenseType: a stated defense type, else the school's.
+		defense := damage.DefenseTypeCore()
+		if defense == core.DefenseTypeNone {
+			defense = core.DefenseTypeMagic
+			if damage.SpellSchool().Matches(core.SpellSchoolPhysical) {
+				defense = core.DefenseTypeMelee
+			}
+		}
+		// AttachProcTriggerCallback reads an unset chance as certain.
+		chance := listener.ProcChance
+		if chance == 0 {
+			chance = 1
+		}
+		names := callbackNames(listener.Callback)
+		if spell < 0 || effect == nil || effect == spelldata.NilEffect || damage.PeriodicDamageEffect() != spelldata.NilEffect || effect.HitsAnArea() ||
+			effect.ChainTargets > 1 || damage.AppliesAnAuraToAnEnemy() || damage.Speed != 0 || defense != core.DefenseTypeMagic ||
+			trigger.RPPM != 0 || listener.DPM != nil || listener.ExtraCondition != nil || len(names) != 1 ||
+			names[0] != "on_spell_hit_dealt" || (listener.Outcome != core.OutcomeEmpty && listener.Outcome != core.OutcomeLanded) {
+			*unrepresented = append(*unrepresented, fmt.Sprintf("%s's proc is not a single target magic hit", proc.label))
+			continue
+		}
+		effects = append(effects, map[string]any{
+			"kind": "spell_data_damage_proc", "trigger_aura": proc.label, "trigger_spells": procTriggerSpells(character, listener),
+			"landed_only": listener.Outcome == core.OutcomeLanded, "require_damage": listener.RequireDamageDealt,
+			"proc_chance": chance, "spell": spell, "average": effect.Average(core.CharacterLevel),
+			"variance": effect.Variance, "can_crit": !damage.CannotCrit(),
+		})
+	}
+	return effects
+}
+
+func meleeProcEffects(simulation *core.Simulation, character *core.Character, unrepresented *[]string) []map[string]any {
+	effects := spellDataDamageProcEffects(character, unrepresented)
 	// common/classic/enchants.go Crusader (1900): a weapon proc on landed hits, at one proc a
 	// minute of each hand's speed, that activates that hand's Holy Strength and heals.
 	if aura := character.GetAura("Enchant Weapon - Crusader"); aura != nil {

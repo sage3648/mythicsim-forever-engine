@@ -90,6 +90,8 @@ pub(crate) enum AuraBehavior<K> {
     },
     /// Go rage.go's "RageBar" aura: landed white hits give rage.
     RageBar,
+    /// An item damage proc's trigger, by its position in `Fight::damage_procs`.
+    SpellDataDamageProc(usize),
     /// The aura of a dot or channel.
     Dot(DotId),
     Class(K),
@@ -790,6 +792,9 @@ impl<A: Agent> Fight<A> {
                     AuraBehavior::DragonbreathChili if dealt => {
                         self.chili_callback(aura, spell, result)
                     }
+                    AuraBehavior::SpellDataDamageProc(proc) if dealt => {
+                        self.damage_proc_callback(aura, proc, spell, result)
+                    }
                     AuraBehavior::ChanceOfDeath if !dealt && side == Side::Player => {
                         self.chance_of_death_hit_taken(result)
                     }
@@ -906,6 +911,44 @@ impl<A: Agent> Fight<A> {
             return;
         }
         self.schedule_delayed_proc(aura, spell, *result);
+    }
+
+    /// Go `AttachProcTriggerCallback` for an item damage proc: its spells and outcome, a hit
+    /// that dealt damage, its cooldown and chance; then the damage spell at once, on the unit
+    /// hit unless that is the wearer.
+    fn damage_proc_callback(
+        &mut self,
+        aura: AuraRef,
+        proc: usize,
+        spell: SpellId,
+        result: &SpellResult,
+    ) {
+        let state = &self.damage_procs[proc];
+        if !state.trigger_spells[spell]
+            || (state.landed_only && result.outcome & super::OUTCOME_LANDED == 0)
+            || (state.require_damage && result.damage == 0.0)
+        {
+            return;
+        }
+        let (chance, damage_spell) = (state.chance, state.spell);
+        let icd = self.aura(aura).icd;
+        if let Some((timer, _)) = icd {
+            if self.timers[timer] > self.now {
+                return;
+            }
+        }
+        if chance != 1.0 && self.random_for_aura(aura) > chance {
+            return;
+        }
+        if let Some((timer, duration)) = icd {
+            self.timers[timer] = self.now + duration;
+        }
+        let target = if result.target == Side::Player {
+            Side::Target
+        } else {
+            result.target
+        };
+        self.cast(damage_spell, target);
     }
 
     /// Go `AttachProcTriggerCallback` for Dragonbreath Chili: landed melee hits, its cooldown,
