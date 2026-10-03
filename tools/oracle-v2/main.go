@@ -641,23 +641,44 @@ type Melee struct {
 	DefenderBonusAttackPower      float64 `json:"defender_bonus_attack_power"`
 	DefenderBonusPhysicalTaken    float64 `json:"defender_bonus_physical_damage_taken"`
 	DefenderReducedPhysicalHitPct float64 `json:"defender_reduced_physical_hit_taken"`
+
+	// Present only with ranged auto attacks, so builds without them export as before.
+	RangedState *RangedState `json:"ranged_state,omitempty"`
+}
+
+// The ranged auto attack's static inputs: attack.go's ranged WeaponAttack reads
+// TotalRangedHasteMultiplier, and RangedAttackPower adds the defender's bonus, Hunter's Mark.
+type RangedState struct {
+	RangedSpeedMultiplier          float64 `json:"ranged_speed_multiplier"`
+	DefenderBonusRangedAttackPower float64 `json:"defender_bonus_ranged_attack_power"`
 }
 
 func exportMelee(character *core.Character, target *core.Unit, table *core.AttackTable, unrepresented *[]string) Melee {
 	aa := &character.AutoAttacks
 	mh := privateField(aa, "mh")
-	if aa.AutoSwingMelee && !mh.FieldByName("replaceSwing").IsNil() {
-		*unrepresented = append(*unrepresented, "main hand swings can be replaced")
+	// attack.go WeaponAttack.IsInRange: a main hand out of range never swings, so nothing
+	// replaces its swings.
+	distance := character.DistanceFromTarget
+	inRange := func(weapon *core.Weapon) bool {
+		return (weapon.MinRange == 0 || weapon.MinRange < distance) && (weapon.MaxRange == 0 || weapon.MaxRange >= distance)
 	}
-	if aa.AutoSwingRanged {
-		*unrepresented = append(*unrepresented, "ranged auto attacks are unsupported")
+	if aa.AutoSwingMelee && !mh.FieldByName("replaceSwing").IsNil() && inRange(aa.MH()) {
+		*unrepresented = append(*unrepresented, "main hand swings can be replaced")
 	}
 	if len(character.OnMeleeAttackSpeedChanged) != 0 {
 		*unrepresented = append(*unrepresented, "melee attack speed listeners are unsupported")
 	}
 	pseudo := &character.PseudoStats
 	defender := &target.PseudoStats
-	return Melee{
+	var ranged *RangedState
+	if aa.AutoSwingRanged {
+		if len(character.OnRangedAttackSpeedChanged) != 0 {
+			*unrepresented = append(*unrepresented, "ranged attack speed listeners are unsupported")
+		}
+		ranged = &RangedState{RangedSpeedMultiplier: pseudo.RangedSpeedMultiplier,
+			DefenderBonusRangedAttackPower: defender.BonusRangedAttackPower}
+	}
+	return Melee{RangedState: ranged,
 		AutoSwingMelee: aa.AutoSwingMelee, AutoSwingRanged: aa.AutoSwingRanged, DualWielding: aa.IsDualWielding,
 		MainHand: exportWeapon(aa.MH()), OffHand: exportWeapon(aa.OH()), Ranged: exportWeapon(aa.Ranged()),
 		BaseMissChance: table.BaseMissChance, BaseGlanceChance: table.BaseGlanceChance,

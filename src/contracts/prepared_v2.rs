@@ -503,6 +503,18 @@ pub struct Melee {
     pub defender_bonus_attack_power: f64,
     pub defender_bonus_physical_damage_taken: f64,
     pub defender_reduced_physical_hit_taken: f64,
+    /// The ranged auto attack's static inputs, present only with ranged auto attacks.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ranged_state: Option<RangedState>,
+}
+
+/// Go attack.go's ranged auto attack inputs: the ranged speed pseudo stat and the defender's
+/// ranged attack power bonus.
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct RangedState {
+    pub ranged_speed_multiplier: f64,
+    pub defender_bonus_ranged_attack_power: f64,
 }
 
 /// A spell a dynamic proc manager hears, by spellbook position, with the chance it rolls.
@@ -1094,6 +1106,57 @@ pub enum Effect {
         cost_percent_add: f64,
         max_stacks: i32,
     },
+    /// Aimed Shot: a normalized ranged weapon shot plus the rank's flat bonus, dealt after
+    /// travel.
+    AimedShot {
+        spell_id: i32,
+        flat_bonus: f64,
+    },
+    /// Sniper Shot: Aimed Shot's shape with its own flat bonus.
+    SniperShot {
+        spell_id: i32,
+        flat_bonus: f64,
+    },
+    /// Multi-Shot: one normalized ranged weapon shot on the one target in scope.
+    MultiShot {
+        spell_id: i32,
+    },
+    /// Serpent Sting: a ranged hit roll, then after travel a dot whose ticks add a share of
+    /// ranged attack power.
+    SerpentSting {
+        spell_id: i32,
+        tick_base: f64,
+        attack_power_share: f64,
+        tick_outcome: String,
+    },
+    /// Aspect of the Hawk: activates its aura, whose ranged attack power is a stat aura;
+    /// Deadly Aspects procs a ranged haste aura on ranged autos.
+    AspectOfTheHawk {
+        spell_id: i32,
+        aura: String,
+        #[serde(default)]
+        proc_aura: Option<String>,
+        #[serde(default)]
+        haste_multiplier: Option<f64>,
+        #[serde(default)]
+        proc_chance: Option<f64>,
+    },
+    /// Rapid Fire: an aura that multiplies ranged and melee attack speed.
+    RapidFire {
+        spell_id: i32,
+        aura: String,
+        haste_multiplier: f64,
+    },
+    /// Summon Hawk: a dive bomb on a base plus a share of ranged attack power, then a hawk dot
+    /// in a free slot or the one with the least time left.
+    SummonHawk {
+        spell_id: i32,
+        base_damage: f64,
+        attack_power_share: f64,
+        always_hits: bool,
+        hawk_spells: Vec<usize>,
+        hawk_duration_ns: i64,
+    },
 }
 
 impl Effect {
@@ -1182,6 +1245,13 @@ impl Effect {
             Effect::FireNova { .. } => "fire_nova",
             Effect::SearingTotem { .. } => "searing_totem",
             Effect::ElementalFocus { .. } => "elemental_focus",
+            Effect::AimedShot { .. } => "aimed_shot",
+            Effect::SniperShot { .. } => "sniper_shot",
+            Effect::MultiShot { .. } => "multi_shot",
+            Effect::SerpentSting { .. } => "serpent_sting",
+            Effect::AspectOfTheHawk { .. } => "aspect_of_the_hawk",
+            Effect::RapidFire { .. } => "rapid_fire",
+            Effect::SummonHawk { .. } => "summon_hawk",
         }
     }
 }
