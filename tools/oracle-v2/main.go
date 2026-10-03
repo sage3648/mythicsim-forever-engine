@@ -1399,7 +1399,7 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 		{&character.Unit, "player", core.ChanceOfDeathAuraLabel, "acts only when the player takes damage"},
 		{target, "target", "Parry Haste", "acts only on parried attacks"},
 		{&character.Unit, "player", "Parry Haste", "acts only on attacks the player parries, and nothing attacks the player"},
-		{&character.Unit, "player", "Pushback trigger", "acts only on hits taken while channeling or casting a spell that can be pushed back, which the gate rejects when tanking"},
+		{&character.Unit, "player", "Pushback trigger", "acts only on hits taken during a hardcast with the pushback flag or a channel with a cast time, which the gate rejects when tanking"},
 	} {
 		if inert.label == core.ChanceOfDeathAuraLabel && playerTakesDamage(character, target) {
 			continue

@@ -623,22 +623,20 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
                     unknown.insert(id.clone());
                 }
             }
-            // Go newHardcastAction: a tank's hardcast drops its avoidance and can be pushed back.
-            // A hardcast that cannot be pushed back only holds reduced avoidance, whose rolls the
-            // exporter reads.
-            let held = !spell.has_flag("SpellFlagChanneled")
-                && !spell.has_flag("SpellFlagPushback")
-                && prepared
-                    .enemy
-                    .as_ref()
-                    .is_some_and(|enemy| !enemy.reduced_avoidance_rolls.is_empty());
-            if prepared.enemy.is_some()
-                && (spell.default_cast.cast_time_ns > 0 || spell.has_flag("SpellFlagChanneled"))
-                && !held
-            {
-                limited.insert(format!(
-                    "rotation reaches {id}, a hardcast while the target swings at the player"
-                ));
+            // Go newHardcastAction: a tank's hardcast drops its avoidance, whose rolls the exporter
+            // reads. A channel without a cast time sets no hardcast, so it keeps its avoidance;
+            // pushback, of a cast with the pushback flag or a channel with a cast time, is not
+            // modeled.
+            if let Some(enemy) = &prepared.enemy {
+                if spell.default_cast.cast_time_ns > 0
+                    && (spell.has_flag("SpellFlagChanneled")
+                        || spell.has_flag("SpellFlagPushback")
+                        || enemy.reduced_avoidance_rolls.is_empty())
+                {
+                    limited.insert(format!(
+                        "rotation reaches {id}, a hardcast while the target swings at the player"
+                    ));
+                }
             }
             for limit in runtime_limits(spell) {
                 limited.insert(format!(

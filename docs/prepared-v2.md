@@ -471,10 +471,11 @@ cargo run --locked -- check --infile fixtures/mage/prepared-v2/frost-reference.p
 - The contract describes one player, one target and at most one simulated pet. Multiple
   targets, more pets and job modes such as stat weights need contract additions.
 - Incoming damage covers the target's main hand swing at the one player tanking it. The
-  gate rejects a dual wielding or ranged target, a healing model, a hardcast or channel
-  the rotation can reach while tanking (Go drops the tank's avoidance and pushes the cast
-  back), listeners of the swing other than Chance of Death and Parry Haste, and any aura
-  something in scope activates that would change the swing. Stat auras change only the
-  table steps, which are exported for each combination.
+  gate rejects a dual wielding or ranged target, a healing model, a hardcast the rotation
+  can reach while tanking that Go could push back (one with the pushback flag, or a channel
+  with a cast time), listeners of the swing other than Chance of Death, Parry Haste and the
+  rage bar, and any aura something in scope activates that would change the swing. Stat
+  auras and a hardcast's avoidance drop change only the table steps, which are exported for
+  each case; a channel without a cast time sets no hardcast and keeps the avoidance.
 - Accepting an input does not validate gameplay. Parity with Go is established per
   mechanic by the comparisons that accompany each implementation.

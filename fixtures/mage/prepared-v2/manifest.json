@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "b38128176d8d3c4541876cc61366a241b8393add8bab2f92443264dffd660a5c",
+  "exporter_sha256": "a2a25c15450675c5217120aad55c144f7b9a35ccf559d73acc12566147d9c845",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -1092,7 +1092,7 @@
         "path": "fixtures/mage/prepared-v2/tank-ret-autos.request.json"
       },
       "prepared": "tank-ret-autos.prepared.json",
-      "prepared_sha256": "7000b16a3e2100009540d155a016e788cfd38937b02ed4653756b342cf75da70",
+      "prepared_sha256": "1d9cbf70c553ae2c4b4f57dc289c18616c55f9268be9cec069496dcc2e7882ef",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1113,7 +1113,7 @@
         "path": "fixtures/mage/prepared-v2/tank-protection-paladin-autos.request.json"
       },
       "prepared": "tank-protection-paladin-autos.prepared.json",
-      "prepared_sha256": "042a3284a3df9df2d34e5345497d4890e7238eddf4ff47a518546ffebbfd2398",
+      "prepared_sha256": "48a5a97cf89a5d53e12d0d3b7800b3c300c93bcaa8287a741b53ef23814eeb53",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1445,7 +1445,7 @@
         "path": "fixtures/mage/prepared-v2/tank-protection-paladin-dense-dynamite.request.json"
       },
       "prepared": "tank-protection-paladin-dense-dynamite.prepared.json",
-      "prepared_sha256": "36318fd54f03580af7c62ff86224f1d89c3c439b4dfe9e523386d917f25ef0ce",
+      "prepared_sha256": "9e340bf37234b6f7af9dc889ef66f29501d7afd85838b4211208c32f6d9be4da",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1495,6 +1495,27 @@
       "go_result": {
         "file": "marksmanship-hunter-thorium-grenade.go-result.json",
         "sha256": "420a480bb57bbf6dbdc323c15c30d724d9b9c909067c5e562b8e5560c07ad590"
+      }
+    },
+    {
+      "id": "tank-frost-mage",
+      "description": "The production Frost Mage tanking the target: Frostbolt hardcasts drop its avoidance to the reduced rolls, and channels without a cast time keep it",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/tank-frost-mage.request.json"
+      },
+      "prepared": "tank-frost-mage.prepared.json",
+      "prepared_sha256": "68bd853e8731f6884c8f0d00ae31479a952512df69b3737733e78b8d9f3bbea1",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "tank-frost-mage.go-result.json",
+        "sha256": "0b209b5171cd5ae14d1c1f1b25d83e192e15a85595f19aedda3dfd3d35f46786"
+      },
+      "go_log": {
+        "file": "tank-frost-mage.go-log.txt",
+        "sha256": "9b81a114137812a8b4c361ff34ab0b242e68125b3a6335b393582f1c4741dcba"
       }
     }
   ]
