@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "9cbbd78714929f8166ac7fdfbcc1a97a5e436195ace52518e62dffe53cf4d8c8",
+  "exporter_sha256": "fd975a9cfe53c70e9af47f54364e1731d06df79d6938e8f5ff1d48ced4412431",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -616,7 +616,7 @@
         "path": "fixtures/mage/prepared-v2/frost-troll.request.json"
       },
       "prepared": "frost-troll.prepared.json",
-      "prepared_sha256": "dc3b9f8e3afea63b8f8f94603d65cf95896ab18511dddbf19b539f330058a6d5",
+      "prepared_sha256": "1e720837cd0d65c49dbc1063e5329abc5fc6b32618134861a9d658df39464ee9",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -637,7 +637,7 @@
         "path": "fixtures/mage/prepared-v2/frost-troll-ten-minutes.request.json"
       },
       "prepared": "frost-troll-ten-minutes.prepared.json",
-      "prepared_sha256": "de46d679e6a9d1ccf54d004a5166044acf907b67cfc309182d0eb78c6dc34fe7",
+      "prepared_sha256": "c1ce5df48d92a7fbe67138a0663a9442526cbaab1d2b62c8d5761486a0da3bb4",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -654,7 +654,7 @@
         "path": "fixtures/mage/prepared-v2/frost-orc.request.json"
       },
       "prepared": "frost-orc.prepared.json",
-      "prepared_sha256": "85933fb11441a30f533d8c5f7c2cd33f0e0c1ee670ef90218649ed240085876f",
+      "prepared_sha256": "4a60a4b57e70b3863dd8ca753773f7ea4d2a88f2ae0a08de298b121805cb2531",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -675,7 +675,7 @@
         "path": "fixtures/mage/prepared-v2/frost-orc-cooldown-timings.request.json"
       },
       "prepared": "frost-orc-cooldown-timings.prepared.json",
-      "prepared_sha256": "1ee2914df8d7096ef74ccb5dd5b4fbd509cc703bebe57b90d30d7a7a25cef309",
+      "prepared_sha256": "5adfabf5341fdce1f67256fb49a817a47981487bd6d283f65e0bc21eb1f3da32",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -827,7 +827,7 @@
         "path": "fixtures/mage/prepared-v2/production-elemental-shaman.request.json"
       },
       "prepared": "production-elemental-shaman.prepared.json",
-      "prepared_sha256": "d68b74e5b2b2c10e17ab323271392f18b649a2615fcaab2076f8fb3d8a948c61",
+      "prepared_sha256": "6ab008f960e415440680d7e054ed30b6335cfa0912f75f734bf793e67b8e5d3e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -848,7 +848,7 @@
         "path": "fixtures/mage/prepared-v2/elemental-shaman-dwarf-stoneform.request.json"
       },
       "prepared": "elemental-shaman-dwarf-stoneform.prepared.json",
-      "prepared_sha256": "bceaf216f3135888c3680c1b4f2ebff9ac0f5a7623aad9e2938e2628e5610464",
+      "prepared_sha256": "357fa8f9a1a706323b41f4bbd43b86b32ffdfdd6d4554bf8b8205273bb6471af",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -869,7 +869,7 @@
         "path": "fixtures/mage/prepared-v2/paladin-auto-attacks.request.json"
       },
       "prepared": "paladin-auto-attacks.prepared.json",
-      "prepared_sha256": "17799703275500b398e6caccd507baba2dcac0641da6a3f28d566017177d1124",
+      "prepared_sha256": "aadf48afdd74ad91063c94da145a080864bf581c10efbf901152f29bb9ce287c",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -890,7 +890,7 @@
         "path": "fixtures/mage/prepared-v2/paladin-auto-attacks-front.request.json"
       },
       "prepared": "paladin-auto-attacks-front.prepared.json",
-      "prepared_sha256": "54109fd03bf3e365904a11b1424d8859db5c693a402e07c47f920f40d30797e0",
+      "prepared_sha256": "f4141a9c63638cc3d1a7172c82687d78373c3fa5961b3d7b6559d30d3b77ed75",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -928,7 +928,7 @@
         "path": "fixtures/mage/prepared-v2/paladin-auto-attacks-expose-armor.request.json"
       },
       "prepared": "paladin-auto-attacks-expose-armor.prepared.json",
-      "prepared_sha256": "0f6433e194763d445fbe838672c23f4b9695699255623c2d2d90a36cf018ee28",
+      "prepared_sha256": "c77a4daa70277f9de0242b3f38f1390d6b2038eda6a93fba8d65c44ad8e8c078",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1029,7 +1029,7 @@
         "path": "fixtures/mage/prepared-v2/paladin-crusader-chili.request.json"
       },
       "prepared": "paladin-crusader-chili.prepared.json",
-      "prepared_sha256": "dc52c13f7eac1ec689d35c3ef5acc0d91b06799be8edeb9201671e38d95a0121",
+      "prepared_sha256": "c61080324e4f9be5c657a5b95b80a90f85632f6ec91324c1164dfdd157fb8b09",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1050,7 +1050,7 @@
         "path": "fixtures/mage/prepared-v2/paladin-windfury-totem.request.json"
       },
       "prepared": "paladin-windfury-totem.prepared.json",
-      "prepared_sha256": "f353b2716436ece89ab1d1c1020b90cce3d401385a2e9d257b7322b2c235ef79",
+      "prepared_sha256": "ef88c20bb31380b2b1370c1992879694aab178e1afd9ab58c9fb76e813aab96a",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1092,7 +1092,7 @@
         "path": "fixtures/mage/prepared-v2/production-feral-druid.request.json"
       },
       "prepared": "production-feral-druid.prepared.json",
-      "prepared_sha256": "b70d295a2424727bfd3985a48c1b741447de1d2810f4d02ca04d1f08d0ca790a",
+      "prepared_sha256": "691ef62c9484be01b16345fd9e461547f3dc9e4e8ae1a2c338f756afb91c84b5",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1113,7 +1113,7 @@
         "path": "fixtures/mage/prepared-v2/feral-druid-faerie-fire-armor.request.json"
       },
       "prepared": "feral-druid-faerie-fire-armor.prepared.json",
-      "prepared_sha256": "8dc559cd4ab60ded5270d1abe838b83e2e01a696d8c15091b2931cdcfc5d49a6",
+      "prepared_sha256": "69843f21a807b196f08e42de7c705c712cfc59d4c01c262320e1a73a9300be4b",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1125,6 +1125,418 @@
       "go_log": {
         "file": "feral-druid-faerie-fire-armor.go-log.txt",
         "sha256": "6ee3c2a73fe859752e585cae18e3cbb7b4800e06cc3015b8a140d3258422b16c"
+      }
+    },
+    {
+      "id": "tank-ret-autos",
+      "description": "Retribution autos while tanking the target: its swings, crushes, Chance of Death and both units' parry haste",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/tank-ret-autos.request.json"
+      },
+      "prepared": "tank-ret-autos.prepared.json",
+      "prepared_sha256": "7000b16a3e2100009540d155a016e788cfd38937b02ed4653756b342cf75da70",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "tank-ret-autos.go-result.json",
+        "sha256": "b169eddb746aa1b59b0329dda97164489a96bae6e9fb92611ea08008b4406c49"
+      },
+      "go_log": {
+        "file": "tank-ret-autos.go-log.txt",
+        "sha256": "1b5c9d4fbcb4165df09be5278291b2c475c0aabbff7c41514ae0431f937e010f"
+      }
+    },
+    {
+      "id": "tank-protection-paladin-autos",
+      "description": "The production Protection Paladin without talents, rotation, Ironfoe or Dense Dynamite, tanking: blocks with Crusader's block value by stat aura combination",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/tank-protection-paladin-autos.request.json"
+      },
+      "prepared": "tank-protection-paladin-autos.prepared.json",
+      "prepared_sha256": "ad8b42c5ced8c9a1e65c08f572d9627feac6d4d78a42871c82525eae8f840b01",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "tank-protection-paladin-autos.go-result.json",
+        "sha256": "0c52e4e6a689aa7f6834d339ce21b963598e2b334bd5debdb7e64f15cd11f343"
+      },
+      "go_log": {
+        "file": "tank-protection-paladin-autos.go-log.txt",
+        "sha256": "5a61a8129e6f0fe24b8e5947868f2bdebf85e54b714b254691d5284fdb489d65"
+      }
+    },
+    {
+      "id": "enhancement-shaman-no-battle-shout",
+      "description": "The production application's Enhancement Shaman request at application revision 18bbcd47 without the party Battle Shout: Orc with Blood Fury, a two-hander with Crusader and Rockbiter, Windfury Totem, Dragonbreath Chili, Strength of Earth and Searing Totems with totemRemainingTime, Stormstrike, Flurry, Maelstrom Weapon Lightning Bolts, Elemental Devastation, Improved Stormstrike, Rage of the Farseer, Flame Shock, Fire Nova and Earth Shock.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/enhancement-shaman-no-battle-shout.request.json"
+      },
+      "prepared": "enhancement-shaman-no-battle-shout.prepared.json",
+      "prepared_sha256": "f5f51b1b689bc2753c1e15b03e2f71ad9fc950ef9d4bce3efb91f0815df99d73",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "enhancement-shaman-no-battle-shout.go-result.json",
+        "sha256": "922c26db1eaae15749230fa005aff00f9056356fa20a4a82e4da119503bb43c7"
+      },
+      "go_log": {
+        "file": "enhancement-shaman-no-battle-shout.go-log.txt",
+        "sha256": "6bd069911207ff0b14f3e8c47a7146d7c7de963a125e89b94f96022dc6e33b5c"
+      }
+    },
+    {
+      "id": "production-enhancement-shaman",
+      "description": "The production application's Enhancement Shaman request at application revision 18bbcd47: Orc with Blood Fury, a two-hander with Crusader and Rockbiter, the party Windfury Totem and Battle Shout, Dragonbreath Chili, Strength of Earth and Searing Totems with totemRemainingTime, Stormstrike, Flurry, Maelstrom Weapon Lightning Bolts, Elemental Devastation, Improved Stormstrike, Rage of the Farseer, Flame Shock, Fire Nova and Earth Shock.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-enhancement-shaman.request.json"
+      },
+      "prepared": "production-enhancement-shaman.prepared.json",
+      "prepared_sha256": "8f5f6d7f8188b8353fbba41248c3a946729d725e641af4363a3a527a5500b266",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-enhancement-shaman.go-result.json",
+        "sha256": "83e39112dc000293e294f631a0333b487c8778227fe41766ffa03eda4b0c47e2"
+      },
+      "go_log": {
+        "file": "production-enhancement-shaman.go-log.txt",
+        "sha256": "25a90ebe7e862e1ccd9c8ff7d3224468535bb9c7d1dea4948e21836ea51cda21"
+      }
+    },
+    {
+      "id": "production-combat-rogue",
+      "description": "The production application's Combat Rogue request (Undead, talents 005303105-32030320201515221-002, application revision 18bbcd47): dagger Backstab, Slice and Dice, Eviscerate, Adrenaline Rush, Blade Flurry, Instant and Deadly Poison, Thistle Tea, the Goblin Sapper Charge, Windfury Totem, Crusader, Dragonbreath Chili and Shadowcraft Armor's energize.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-combat-rogue.request.json"
+      },
+      "prepared": "production-combat-rogue.prepared.json",
+      "prepared_sha256": "9da3878b81ea2ef3b06f2fe060c1ada2954af527cf6d454b581a9c3f1907bd4c",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-combat-rogue.go-result.json",
+        "sha256": "4cf1fb9d25bc82f8a68021ae4421935da134fb316914b148345a05be7477878d"
+      },
+      "go_log": {
+        "file": "production-combat-rogue.go-log.txt",
+        "sha256": "4875bea8fa579c578a8e12b0946e782e6e25f3c02810a13f6804989e84e5c578"
+      }
+    },
+    {
+      "id": "combat-rogue-orc-shatter-curse",
+      "description": "The production Combat Rogue request as an Orc with a Shatter Curse timing at one second, 1000 iterations: the curse is up when the Goblin Sapper Charge hits the player, so the self hit takes the curse's lower Fire damage taken, and Blood Fury changes stats.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/combat-rogue-orc-shatter-curse.request.json"
+      },
+      "prepared": "combat-rogue-orc-shatter-curse.prepared.json",
+      "prepared_sha256": "c1c560d1f1f93daaf78e1fa366ae11e7b2efb79fa80469bbe3eb13eaca59a92d",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "combat-rogue-orc-shatter-curse.go-result.json",
+        "sha256": "f62059183d02d8323bac555ff412e81aef7ccafcc7b1d1a6165521895545f601"
+      },
+      "go_log": {
+        "file": "combat-rogue-orc-shatter-curse.go-log.txt",
+        "sha256": "2321ee8d6f0181266a17068f20a62fca25828ed7302765a4be6ec8f96cb10815"
+      }
+    },
+    {
+      "id": "production-warrior",
+      "description": "The production Fury Warrior request: a Human dual wielding Ironfoe in Berserker Stance with Bloodthirst, Whirlwind, Execute, Hamstring, Bloodrage, Death Wish, Recklessness, Deep Wounds, Flurry, Unbridled Wrath, Anger Management, the Mighty Rage Potion, the Goblin Sapper Charge, Windfury Totem, Crusader and Dragonbreath Chili",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-warrior.request.json"
+      },
+      "prepared": "production-warrior.prepared.json",
+      "prepared_sha256": "468930730a4dfa5345f9da123c3e82a39248625a77687f9ce2f57c31f5e81642",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-warrior.go-result.json",
+        "sha256": "9474360f60c2f9cf2aca3d40ea143927e7a68a7a2809a6f47dee7cb791328a03"
+      },
+      "go_log": {
+        "file": "production-warrior.go-log.txt",
+        "sha256": "daa9273a29ab12375d20b9bab941df8afad2ad9d5dd0c82c7226a3dd0b295c5d"
+      }
+    },
+    {
+      "id": "warrior-heroic-strike",
+      "description": "The production Fury Warrior request queueing Heroic Strike at 50 rage: the queue cast arms the strike after the realism delay, the next main hand swing and Windfury's extra swing cast it in place of the auto attack, and a miss refunds rage",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-heroic-strike.request.json"
+      },
+      "prepared": "warrior-heroic-strike.prepared.json",
+      "prepared_sha256": "a76b642c084c7e4c4144587a452534f83c97cb7b456569663e6ab61b080c2104",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-heroic-strike.go-result.json",
+        "sha256": "cd63f22d393609c60e0665a3b225fff578d746206720c250b58785693defc0c6"
+      },
+      "go_log": {
+        "file": "warrior-heroic-strike.go-log.txt",
+        "sha256": "680efa062c2ea737d30d4831aabedf6e6aabba12312bdcae7134493073145248"
+      }
+    },
+    {
+      "id": "warrior-cleave",
+      "description": "The production Fury Warrior request queueing Cleave at 40 rage, with Raging Blows' cheaper cost and no refund",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-cleave.request.json"
+      },
+      "prepared": "warrior-cleave.prepared.json",
+      "prepared_sha256": "4c1fafdd4227b714c4dd2830b55986513c3ba20faac419f8018ae500cdc68500",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-cleave.go-result.json",
+        "sha256": "4ed874d750113e86edde212560f9db5bdfc6fae8bc518ab087703cc8e9026605"
+      },
+      "go_log": {
+        "file": "warrior-cleave.go-log.txt",
+        "sha256": "246e347a84ee3ef16ca6b1686f73128e862e97180d0fc321a9bb61b6d6347092"
+      }
+    },
+    {
+      "id": "production-marksmanship-hunter",
+      "description": "The production Marksmanship Hunter request at application revision 18bbcd47: a Human with no pet, Auto Shot, a prepull Aspect of the Hawk and Aimed Shot, Multi-Shot, Sniper Shot, Summon Hawk, Serpent Sting, Rapid Fire, Deadly Aspects and the party Battle Shout",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-marksmanship-hunter.request.json"
+      },
+      "prepared": "production-marksmanship-hunter.prepared.json",
+      "prepared_sha256": "145cc2b7fc0b93cafeccf16e06aa509dedaf5001a297060accb3749f38cdf9f5",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-marksmanship-hunter.go-result.json",
+        "sha256": "4c682e3b746b730008910898d934b30f34a6bb1d1af55aae2ec4f4fd2f04a4fb"
+      },
+      "go_log": {
+        "file": "production-marksmanship-hunter.go-log.txt",
+        "sha256": "0c894d31198d78ef8bf220e71142f9f7a640b74692b5eed569852f8c9160ba21"
+      }
+    },
+    {
+      "id": "production-retribution-paladin",
+      "description": "The production Retribution Paladin request at application revision 18bbcd47: Seal of Command and Seal of Righteousness twisted with Twist of Light, Judgement, Holy Strike, Hammer of Wrath, Consecration, Vengeance, Vindication, Sanctified Judgement and Sacred Arbiter, with the party Battle Shout and Leader of the Pack displaced by Moonkin Aura",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-retribution-paladin.request.json"
+      },
+      "prepared": "production-retribution-paladin.prepared.json",
+      "prepared_sha256": "79620141bea2d1acd52352a94a585c90e86955a74c8562d8dc65e1e2fdc30d71",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-retribution-paladin.go-result.json",
+        "sha256": "3754bb0e69fe318f91e2e982ee365f854ec337aadd087ecced5fe53dbdf937d8"
+      },
+      "go_log": {
+        "file": "production-retribution-paladin.go-log.txt",
+        "sha256": "7a8155bad865e8d5b609665f1d2467383c529733103023dbed0997dceddeff8c"
+      }
+    },
+    {
+      "id": "production-shockadin-paladin",
+      "description": "The production Shockadin Paladin hybrid request at application revision 18bbcd47: prepull Divine Favor and Seal of Righteousness, Judgement, Consecration with Consecrated Ground, Hammer of Wrath, Holy Strike and Holy Shock, with the Storm Gauntlets' Nature proc",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-shockadin-paladin.request.json"
+      },
+      "prepared": "production-shockadin-paladin.prepared.json",
+      "prepared_sha256": "b9fb35b33d9e05fcf28d0d3964672703b5cdc5e8035f979ab0de17eef2142ca9",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-shockadin-paladin.go-result.json",
+        "sha256": "a22d34e6eb53919e180b0d46f990adfc0ee21d2dfeb82562a91e20ddf954cb95"
+      },
+      "go_log": {
+        "file": "production-shockadin-paladin.go-log.txt",
+        "sha256": "9a8e8b0b81a04623bc72a05df19ddd43e0e189fc767c9ab92a04421ec2e859d5"
+      }
+    },
+    {
+      "id": "warrior-orc-shatter-curse",
+      "description": "The production Fury Warrior request as an Orc with Shatter Curse at the first autocast: Blood Fury, and Shatter Curse's magic damage taken multiplier on the Goblin Sapper Charge's self hit",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-orc-shatter-curse.request.json"
+      },
+      "prepared": "warrior-orc-shatter-curse.prepared.json",
+      "prepared_sha256": "8a8074d519b70cb766a0ba8b7cfc350d2430dbdb4f4521aaac52d339623fe11b",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-orc-shatter-curse.go-result.json",
+        "sha256": "b4c0e08b51a83b644d4f13805b0c1e54e01142c57a5ae7cf17baca8db295dc4d"
+      }
+    },
+    {
+      "id": "warrior-troll-berserking",
+      "description": "The production Warrior race board's Troll request at 1000 iterations: Berserking multiplies attack speed, then cast speed, and its expiry undoes both",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-troll-berserking.request.json"
+      },
+      "prepared": "warrior-troll-berserking.prepared.json",
+      "prepared_sha256": "f786a6fdd1666aa247b88209a0e7f39b28ff4f59c6122bd67aaf12084240d352",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-troll-berserking.go-result.json",
+        "sha256": "9f3eb53a9550166656b3a4c5fbef3bb663f72f1e974725c9d9882e769daa748d"
+      },
+      "go_log": {
+        "file": "warrior-troll-berserking.go-log.txt",
+        "sha256": "d5774b9ef5df8616caeeeb4354becaf07f611fea83bcb3379843b121e7485381"
+      }
+    },
+    {
+      "id": "production-affliction-warlock",
+      "description": "Production Affliction Warlock (Gnome): Corruption, Bane of Agony with Amplify Curse, Immolate and Shadow Bolt with Nightfall's Shadow Trance, and a summoned Succubus casting Lash of Pain",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-affliction-warlock.request.json"
+      },
+      "prepared": "production-affliction-warlock.prepared.json",
+      "prepared_sha256": "01ef980ac642d8d8c5b570117df10d0ab39f7c0831aabb8670d06d99b8c3a881",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-affliction-warlock.go-result.json",
+        "sha256": "ba2c0f5c4e053a717e8b253dcc731b14de8b47e1e71ba6076ab6607d8617460a"
+      },
+      "go_log": {
+        "file": "production-affliction-warlock.go-log.txt",
+        "sha256": "1f2a86593cbdc42f90b9341396a1ee63d139814ca7cfaa9550ca63ab85debf7e"
+      }
+    },
+    {
+      "id": "production-demonology-warlock",
+      "description": "Production Demonology Warlock (Gnome): Demonic Pact with a sacrificed Imp and a summoned Succubus, Decimation in the execute phase, Demonic Brand charges spent by the Succubus, Demonic Energies' share of Life Tap, and an auraIsKnown guard on the demon's brand",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-demonology-warlock.request.json"
+      },
+      "prepared": "production-demonology-warlock.prepared.json",
+      "prepared_sha256": "b1831796bc1781e3dd43c0f893303d2a23aa6cc071066f169dfce7fb1484f5e3",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-demonology-warlock.go-result.json",
+        "sha256": "6419241ae819bdb5c5216dcf3c8f178dfe5f882fd476a400fa2c973ad8058aa8"
+      },
+      "go_log": {
+        "file": "production-demonology-warlock.go-log.txt",
+        "sha256": "4efb88e3dbd4da214c9c833f4af56996d121dd83a444c0cc809a9edbe998e7af"
+      }
+    },
+    {
+      "id": "demonology-warlock-voidwalker-pact",
+      "description": "production-demonology-warlock with the Voidwalker as Demonic Pact's sacrifice: Fel Energy restores a share of maximum mana every four seconds from its permanent aura",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/demonology-warlock-voidwalker-pact.request.json"
+      },
+      "prepared": "demonology-warlock-voidwalker-pact.prepared.json",
+      "prepared_sha256": "01315a860bb687a31cc8a787c316a83456dcd453bc3ec6dfb84c362a997a5b59",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "demonology-warlock-voidwalker-pact.go-result.json",
+        "sha256": "a11deff2a87b39d167cbf392910dee3aaf3d7ba262b80372207a82f4f80ccd5a"
+      },
+      "go_log": {
+        "file": "demonology-warlock-voidwalker-pact.go-log.txt",
+        "sha256": "8fd750f5070ceefdfe05ae7772c9c99804e52608f60efbea8d97f43f528701b0"
+      }
+    },
+    {
+      "id": "tank-protection-paladin-dense-dynamite",
+      "description": "tank-protection-paladin-autos with its Dense Dynamite kept and a Consecration and Holy Strike rotation that holds the GCD, so the explosive's hardcast drops the tank's avoidance while the target swings",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/tank-protection-paladin-dense-dynamite.request.json"
+      },
+      "prepared": "tank-protection-paladin-dense-dynamite.prepared.json",
+      "prepared_sha256": "ea94c7b3d6c25e9cfb8613ef0b15a26bdbe9e27e8764653115a9e7b4dee70144",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "tank-protection-paladin-dense-dynamite.go-result.json",
+        "sha256": "c1192d568f1d2c61ece1a4c41f320c1a81c6444c61444334169bb33437fd96d7"
+      },
+      "go_log": {
+        "file": "tank-protection-paladin-dense-dynamite.go-log.txt",
+        "sha256": "91bb6106f2305c6cd1e21dc761b47f5fc89a5734e4451ca48b3564aa9f73209a"
+      }
+    },
+    {
+      "id": "retribution-dense-dynamite",
+      "description": "The production Retribution Paladin request with Dense Dynamite as its explosive: a one second cast whose rolled Fire hit flies at speed 14",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/retribution-dense-dynamite.request.json"
+      },
+      "prepared": "retribution-dense-dynamite.prepared.json",
+      "prepared_sha256": "15030be07496e56ffd05bac2442735a7666ae2c3b0d762eb7f7c44e8eca2d087",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "retribution-dense-dynamite.go-result.json",
+        "sha256": "9e9c39a99c61483adbaf11c3d37660a1ede51f0e2f4b300e513dcb5d6ed1289c"
+      },
+      "go_log": {
+        "file": "retribution-dense-dynamite.go-log.txt",
+        "sha256": "ab1a2ac98a26e444aff1e1f13644eef764fc757ac2d2eb29c4a31858a1342a0f"
+      }
+    },
+    {
+      "id": "marksmanship-hunter-thorium-grenade",
+      "description": "The production Marksmanship Hunter request with Thorium Grenade as its explosive, an engineer's grenade flying at speed 25 across 12 yards",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/marksmanship-hunter-thorium-grenade.request.json"
+      },
+      "prepared": "marksmanship-hunter-thorium-grenade.prepared.json",
+      "prepared_sha256": "520a64d8e7dec21717a5d05c4a680476763a3c6b55e9f351ead35329468cad7a",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "marksmanship-hunter-thorium-grenade.go-result.json",
+        "sha256": "420a480bb57bbf6dbdc323c15c30d724d9b9c909067c5e562b8e5560c07ad590"
       }
     }
   ]

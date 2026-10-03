@@ -29,7 +29,59 @@ pub(crate) struct EnergyBar {
     pub(crate) encounter_start_metrics: usize,
 }
 
+/// An item proc trigger that restores energy, such as Shadowcraft Armor's.
+#[derive(Clone, Debug)]
+pub(crate) struct EnergizeProc {
+    pub(crate) label: String,
+    /// The proc manager's chance for each spell it hears, by spellbook position.
+    pub(crate) chances: Vec<Option<f64>>,
+    pub(crate) energy: f64,
+    pub(crate) metrics: usize,
+    pub(crate) delay: i64,
+}
+
 impl<A: Agent> Fight<A> {
+    /// Go `AttachProcTriggerCallback` for an energize proc: a landed hit from a spell the proc
+    /// manager hears rolls its chance, then the handler waits its delay.
+    pub(crate) fn energize_proc_callback(
+        &mut self,
+        aura: super::AuraRef,
+        index: usize,
+        spell: super::SpellId,
+        result: &super::SpellResult,
+    ) {
+        if !result.landed() {
+            return;
+        }
+        let proc = &self.energize_procs[index];
+        let Some(chance) = proc.chances[spell] else {
+            return;
+        };
+        let (label, delay) = (proc.label.clone(), proc.delay);
+        if !self.proc(chance, &label) {
+            return;
+        }
+        let result = *result;
+        self.schedule(
+            self.now + delay,
+            super::PRIORITY_DOT,
+            super::Action::DelayedProc {
+                aura,
+                spell,
+                result,
+            },
+        );
+    }
+
+    /// The energize proc's handler: energy for a character with an energy bar.
+    pub(crate) fn energize_proc_handler(&mut self, index: usize) {
+        if self.energy.is_some() {
+            let proc = &self.energize_procs[index];
+            let (energy, metrics) = (proc.energy, proc.metrics);
+            self.add_energy(energy, metrics);
+        }
+    }
+
     /// Go `EnableEnergyBar`: the bar and its three metrics, registered in Go's order.
     pub(crate) fn enable_energy_bar(&mut self, energy: &Energy) {
         let other = |name: &str| ActionId {

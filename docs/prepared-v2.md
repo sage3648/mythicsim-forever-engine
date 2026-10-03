@@ -59,8 +59,9 @@ RNG contract and implemented effects. Tests fail if it disagrees with the engine
 | `sim` | Iterations, seed, `labeled_rng`, first-iteration debug and `debug`, which logs every fight as the application's averaged timeline requests |
 | `encounter` | Base duration, variation and execute proportions, in nanoseconds |
 | `target` | Level, all stats, pseudo stats, every registered aura and whether it has a melee or ranged swing |
-| `player` | Identity, talents, stats, pseudo stats, reaction time, distance, cast speed, mana, attack table, spells, major cooldowns and rotation |
+| `player` | Identity, talents, stats, pseudo stats, reaction time, distance, cast speed, mana, an energy bar when the player has one, attack table, spells, major cooldowns and rotation |
 | `melee` | The player's weapons and auto attack flags, and the physical attack table against the target with the defender's static chances resolved |
+| `enemy` | Present only when the player tanks the target: the target's main hand swing at the player, every step of its damage and table resolved as Go computes it at reset, its table steps for each stat aura combination, and the auras whose activation would change it |
 | `effects` | Dynamic behavior and its parameters, one tagged variant per kind |
 | `unrepresented` | Request features the exporter cannot describe |
 
@@ -72,7 +73,11 @@ roll. Flags and masks are exported by name so a Go bit reordering cannot silentl
 change Rust behavior.
 
 Each aura carries its label, IDs, duration, stacks, whether it is active after the
-reset and which Go callbacks it registers. Order is Go registration order, which
+reset and which Go callbacks it registers. A permanent aura the reset activated but a
+later member of its exclusive category displaced during the same reset, as Moonkin Aura
+displaces Leader of the Pack, names that aura in `displaced_by`, and Rust replays the
+gain and fade; one an earlier member blocked is marked `blocked_at_reset` and counts its
+proc. Order is Go registration order, which
 determines callback order and therefore random draw order.
 
 `major_cooldowns` is Go's initial order after the rotation removed the spells it
@@ -97,13 +102,19 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `judgement_of_wisdom` | sim/core/buffs/paladin.go | Chance, proc mask, mana, batch delay |
 | `potion_mana` | sim/core/consumes.go | Gain range, label, alchemist stone multiplier |
 | `conjured_mana` | sim/core/consumes.go | Gain range, label, whether it is the selected item |
+| `conjured_energy` | sim/core/consumes.go | Thistle Tea: gain range, label, whether it is the selected item and its level reduction, a Go literal |
+| `goblin_sapper` | sim/core/consumes.go | The rolled range and AoE cap of the hit on the target and the hit on the player, and the player's attack table against itself |
+| `basic_explosive` | sim/core/consumes.go | Dense Dynamite, Thorium Grenade, Ez-Thro Dynamite II, Crystal Charge, Cryoblast and the SAF-T and EZ-Thro bombs: the rolled range, Go literals checked against the registered spell's school and missile speed, and the AoE cap; the hit flies when the explosive has a missile speed. A tank's hardcast drops its avoidance, whose rolls the target's swing exports as `reduced_avoidance_rolls` |
+| `chance_of_death` | sim/core/health.go | Once a spell can hit the player: a hit that deals damage removes health, the rotation reacts, and a pending action marks the player dead at zero |
+| `fixed_uptime_aura` | sim/core/buffs.go, aura_helpers.go | The party Battle Shout: uptime, roll period and first roll time, Go literals |
+| `energize_proc` | sim/common/forever/item_sets_classic.go | Shadowcraft Armor's energize: each spell's chance from the proc manager, the energy, its metrics and the spell batch delay |
 | `energize_on_use` | sim/common/shared/spell_data_energize.go | Client energize roll |
 | `inert_listener` | sim/core/health.go, sim/core/attack.go | Why the listener never acts in scope |
 | `touch_of_the_grave` | sim/core/racials.go | Undead drain: chance, proc mask, health share, batch delay |
 | `eureka` | sim/core/racials.go | Gnome: modifier values and the spell positions the class masks name |
-| `berserking` | sim/core/racials.go | Troll: cast speed multiplier, a Go literal |
+| `berserking` | sim/core/racials.go | Troll: attack and cast speed multipliers, Go literals |
 | `blood_fury` | sim/core/racials.go | Orc: every stat the aura changes, computed by Go with it active |
-| `shatter_curse` | sim/core/racials.go | Orc survival cooldown; its damage taken change has no effect in scope |
+| `shatter_curse` | sim/core/racials.go | Orc survival cooldown: the player's damage taken multiplier on each magic school, a Go literal, which only the player's own spells read in scope |
 | `read_ley_line` | sim/core/racials.go | High Order Skyborne: the cast and Energized's regeneration multiplier |
 | `temporary_stats` | sim/core/major_cooldown.go | Night Elf Elune's Light: every stat its aura changes, computed by Go with it active, and its gain and fade log lines |
 | `stat_auras` | sim/core/unit.go AddStatsDynamic | The auras that change stats during a fight and the player's stats for every combination of them, each read from a separate Go simulation, since Go recomputes stats from the active bonuses |
@@ -112,6 +123,20 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `dragonbreath_chili` | sim/core/consumes.go | The 5% chance and listened spells, the rolled Fire hit and the spell batch delay, Go literals |
 | `sunder_armor_ramp` | sim/core/buffs/drivers.go | The raid's Sunder Armor: its period and tick count, Go literals, and target armor at each stack count read from separate Go simulations; `blocked` when a stronger permanent member of its category, such as Expose Armor, blocks every activation, which Go still counts as a proc |
 | `judgement_refresh` | sim/paladin/judgement.go | The melee proc mask and the judgement debuffs a landed melee strike refreshes |
+| `judgement` | sim/paladin/judgement.go | The spell and the batch window after its cooldown when it wakes the rotation; it casts the active seal's judgement |
+| `seal_of_command` | sim/paladin/seal_of_command.go, seals.go | Every rank's seal, aura and judgement, the proc's weapon percent with Improved Seals and its coefficient, the main hand's chance from Go's 7 procs a minute manager, the 1 second cooldown each rank keeps and the batch window its damage waits; Judgement of Command's roll is on its spell |
+| `seal_of_righteousness` | sim/paladin/seal_of_righteousness.go, seals.go | Every rank's seal, aura, judgement, damage spell and per-hit value, and the weapon's hand multiplier and speed, Go literals; Judgement of Righteousness's roll is on its spell |
+| `holy_strike` | sim/paladin/holy_strike.go | Every rank's percent of the normalized swing; the flat roll is on the spell |
+| `hammer_of_wrath` | sim/paladin/hammer_of_wrath.go | The rolls on the spells; the 20% execute phase gates the cast and a real cast pauses the swing |
+| `consecration` | sim/paladin/consecration.go, talents_holy.go | Every rank's tick, the bonus the first targets take, its coefficient and the target count; with Consecrated Ground, the target aura each tick marks and its multiplier on the paladin's Holy damage, a damage done by caster handler |
+| `holy_shock` | sim/paladin/holy_shock.go | Every rank's damage roll from Go's hand-written table |
+| `divine_favor` | sim/paladin/divine_favor.go | The major cooldown, its aura's crit and the spells it names, whose cast spends it |
+| `spell_data_damage_proc` | sim/common/shared/shared_utils.go | An item proc built from client rows, such as the Storm Gauntlets': the resolved trigger's spells, outcome, damage and chance, and a single target magic hit on its damage row's roll |
+| `vengeance` | sim/paladin/talents_retribution.go | The damage per stack and the Holy and Physical spells the mod reaches, as Go's shouldApply matches them |
+| `vindication` | sim/paladin/talents_retribution.go | The trigger, a Go literal chance, the target's aura and the paladin's attack power aura, whose stats are in `stat_auras` |
+| `sanctified_judgement` | sim/paladin/talents_retribution.go | The chance and the share of the active seal's last cost Judgement refunds |
+| `sacred_arbiter` | sim/paladin/talents_retribution.go | The target's judgement auras a landed Holy Strike refreshes |
+| `twist_of_light` | sim/paladin/talents_retribution.go | The Echo auras in Go's fixed order and the seal each replays |
 | `druid_forms` | sim/druid/druid.go, forms.go | The starting form and the forms each druid spell may be cast in |
 | `moonkin_form` | sim/druid/forms.go | The cast and its aura |
 | `starfire`, `wrath` | sim/druid/starfire.go, wrath.go | Damage rolls on the spells; Wrath lands after travel |
@@ -140,14 +165,30 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `searing_totem` | sim/shaman/fire_totems.go | The attack spell and its fixed base, and the fire totem auras the cast replaces |
 | `elemental_focus` | sim/shaman/talents_elemental.go | Proc chance, Clearcasting's cost modifier and charges |
 | `stoneform` | sim/core/racials.go | Dwarf survival cooldown; its physical damage taken change has no effect in scope |
+| `earth_shock` | sim/shaman/shocks.go | Damage roll on the highest rank; a binary hit |
+| `strength_of_earth_totem` | sim/shaman/totems.go | The cast, its aura, a class stat aura, and the totem's lifetime |
+| `stormstrike` | sim/shaman/stormstrike.go | The target debuff's caster damage multiplier and the weapons that strike |
+| `elemental_devastation` | sim/shaman/talents_elemental.go | The melee crit a spell crit grants |
+| `flurry` | sim/shaman/talents_enhancement.go | Melee speed, charges and the charge cooldown, a Go literal |
+| `improved_stormstrike` | sim/shaman/talents_enhancement.go | Proc chance and the casting spirit regeneration rate it adds without refreshing rates, as Go does |
+| `maelstrom_weapon` | sim/shaman/talents_enhancement.go | Per stack cast time and cost, and the proc manager's chance per spell |
+| `rage_of_the_farseer` | sim/shaman/talents_enhancement.go | The cooldown and its melee speed |
+| `rockbiter_weapon` | sim/shaman/weapon_imbues.go | Gain and loss log lines of the permanent aura |
 | `shadow_bolt`, `searing_pain`, `shadowburn`, `soul_fire` | sim/warlock/shadowbolt.go, searing_pain.go, shadowburn.go, soulfire.go | Damage rolls on the spells; Shadow Bolt and Soul Fire land after travel |
 | `immolate`, `corruption` | sim/warlock/immolate.go, corruption.go | The dot base and tick crit; Immolate's dot is on its related spell |
 | `bane_of_agony` | sim/warlock/agony.go | The dot base, tick crit and its ramp: half the tick at the snapshot, added back every fourth tick, Go literals |
 | `curse_of_the_elements` | sim/warlock/curse_of_elements.go, core/buffs | The target debuff's resistance changes and school damage taken multipliers, checked against Go activating it |
-| `life_tap` | sim/warlock/lifetap.go | Base amount from client data and Improved Life Tap's multiplier; Spirit comes from the stats |
+| `life_tap` | sim/warlock/lifetap.go | Base amount from client data and Improved Life Tap's multiplier; Spirit comes from the stats; Demonic Energies' share for the summoned demon |
 | `conflagrate` | sim/warlock/conflagrate.go | Shadow and Flame's chance to spare Immolate and its random label |
 | `improved_shadow_bolt` | sim/warlock/talents_destruction.go | The trigger spells, the target debuff and its multiplier on the warlock's shadow damage, a dynamic damage taken modifier |
 | `shadow_and_flame` | sim/warlock/talents_destruction.go | The trigger spells, which of them raise shadow damage, the two auras and their multiplier |
+| `amplify_curse` | sim/warlock/talents_affliction.go | The aura the next Bane of Agony spends and its tick multiplier |
+| `nightfall` | sim/warlock/talents_affliction.go | The periodic trigger spells and chance, Shadow Trance's cast time modifier and the spells that spend it; both handlers wait a spell batch window |
+| `warlock_pet` | sim/warlock/pets.go | The summoned demon's autocast abilities as spellbook positions, MinMana and the fixed wait of its AI |
+| `lash_of_pain` | sim/warlock/pets.go | The Succubus's fixed base damage; the spell power share is on the spell |
+| `fel_energy` | sim/warlock/talents_demonology.go | The Voidwalker sacrifice's share of maximum mana and period, from its periodic action |
+| `decimation` | sim/warlock/talents_demonology.go | The trigger spells, the 35% execute phase, and the aura's damage and Soul Fire cast time modifiers with the spells each names |
+| `demonic_brand` | sim/warlock/talents_demonology.go | The trigger spells, the target brand and its charges, the demon's marker and consumer auras, and the brand hit's roll and spell power share, Go literals |
 | `mind_blast`, `shadow_word_death` | sim/priest/mind_blast.go, shadow_word_death.go | Damage rolls on every rank; Early Demise's crit inside the 20% execute phase |
 | `shadow_word_pain`, `devouring_plague`, `mind_flay` | sim/priest/shadow_word_pain.go, devouring_plague.go, talents_shadow.go | Each rank's dot base and Periodic Can Crit; the hit rolls once without a hit count; Devouring Plague heals for its ticks under a tagged action; Mind Flay is a binary channel |
 | `shadowform` | sim/priest/talents_shadow.go | Damage, cost and crit damage modifiers with the spells each names, and the helpful Holy spells that end it |
@@ -158,7 +199,34 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `penance` | sim/priest/penance.go | The bolt's base and crit; a channel that ticks on application and each second |
 | `power_in_light` | sim/priest/talents_discipline.go | The target's damage taken multiplier, the spells it multiplies and the Holy Fire dots it waits for |
 | `searing_light` | sim/priest/talents_holy.go | The resolved trigger on Holy Fire ticks, Holy Purpose's Holy Nova cost modifier and the casts that end it |
-| `inert_pet` | sim/core/pet.go | A registered pet nothing summons: label, unit index, metrics actions and auras, its dismissed stats line and why it is inert |
+| `parry_haste` | sim/core/attack.go applyParryHaste | Which unit's Parry Haste acts once the target swings at the player; a parry pulls that unit's next main hand swing in |
+| `inert_pet` | sim/core/pet.go | A registered pet nothing summons: label, unit index, metrics actions and auras, the permanent auras each reset activates, its dismissed stats line and why it is inert |
+| `sinister_strike`, `backstab` | sim/rogue/sinister_strike.go, backstab.go | The highest rank's base on normalized main hand damage; Backstab's main hand dagger and Puncturing Wounds' combo point chance |
+| `eviscerate` | sim/rogue/eviscerate.go | The rolled base, the bonus a combo point and 3% of attack power a point, a Go literal |
+| `slice_and_dice` | sim/rogue/slice_and_dice.go | The duration at each combo point count and the melee speed multiplier |
+| `blade_flurry`, `adrenaline_rush` | sim/rogue/talents_combat.go | Blade Flurry's attack speed multiplier; Adrenaline Rush's energy regeneration multiplier and the energy at or below which it fires as a major cooldown, a Go literal |
+| `rogue_finisher` | sim/rogue/rogue.go | Relentless Strikes' chance a combo point and energy, Go literals, and Ruthlessness's chance |
+| `instant_poison`, `deadly_poison` | sim/rogue/poisons.go | The imbued hands, the chance raised by Improved Poisons, Instant Poison's damage range and Deadly Poison's tick, Go literals |
+| `aimed_shot`, `sniper_shot`, `multi_shot` | sim/hunter/aimed_shot.go, sniper_shot.go, multi_shot.go | A normalized ranged weapon shot plus the rank's flat bonus from client data, none for Multi-Shot, on the ranged hit and crit table after travel; the cast time divides by the ranged haste multiplier |
+| `serpent_sting` | sim/hunter/serpent_sting.go | The tick base from client data, the share of ranged attack power each tick adds, a Go literal, and the tick outcome spelldata `TickOutcome` picks; a ranged hit roll without a hit count, then the dot after travel |
+| `aspect_of_the_hawk` | sim/hunter/aspects.go | The aura, whose ranged attack power is a stat aura, and with Deadly Aspects the Quick Shots aura, its ranged haste multiplier and the chance each ranged auto rolls |
+| `rapid_fire` | sim/hunter/rapid_fire.go | The aura and its attack speed multiplier from client data |
+| `rage_bar` | sim/core/rage.go | The rage a landed main and off hand white hit gives, resolved from the weapons with Go's operation order, the crit multiplier and the threat a point of gained rage generates; rage from damage taken uses the hit's damage before armor |
+| `potion_resource` | sim/core/consumes.go | A potion's instant rage or mana gains, rolled under its name, and its temporary stat aura with the lines it logs |
+| `player_damage_taken` | sim/warrior/talents_fury.go, recklessness.go | The auras that multiply the player's damage taken while up, and each multiplier from client data |
+| `extra_attack_proc` | sim/common/classic/items_weapons.go, common/forever/items_trinkets.go | Ironfoe's and the Hand of Justice's chance on landed melee hits, Go literals, and how many extra main hand attacks each grants |
+| `warrior_stances` | sim/warrior/stances.go | The starting stance and each stance's cast and aura; a stance change is rejected |
+| `bloodthirst`, `hamstring` | sim/warrior/talents_fury.go, hamstring.go | Bloodthirst's attack power share and base, Hamstring's base, from client data, on the special hit table with a refund on a miss |
+| `whirlwind` | sim/warrior/whirlwind.go | Whether Raging Blows adds the off hand's normalized strike |
+| `execute` | sim/warrior/execute.go | The base and the damage for each extra rage, from the dummy effect's base and chain amplitude |
+| `bloodrage` | sim/warrior/bloodrage.go | Instant and periodic rage with Improved Bloodrage, the ticks and period, the share of base health it costs, and the rage below which it fires as a major cooldown, a Go literal |
+| `berserker_rage`, `death_wish`, `recklessness` | sim/warrior/berserker_rage.go, talents_fury.go, recklessness.go | Improved Berserker Rage's rage; Death Wish's physical damage multiplier and the GCD it waits; Recklessness's crit is a stat aura |
+| `sunder_armor` | sim/warrior/sunder_armor.go | Whether another aura holds the armor category for good, as the raid's Expose Armor does; otherwise reaching it is rejected |
+| `deep_wounds` | sim/warrior/talents_arms.go | The share of the main hand's average damage and the tick outcome; a crit restarts the bleed with what it still owed |
+| `unbridled_wrath`, `warrior_flurry`, `anger_management` | sim/warrior/talents_fury.go, talents_arms.go | Unbridled Wrath's chance and rage, doubled for a two-hander; Flurry's melee speed and charges; Anger Management's rage and period |
+| `heroic_strike_queue` | sim/warrior/heroic_strike_cleave.go | The queue delay and each strike's queue aura and base; the next main hand swing casts the queued strike instead |
+| `overpower_window` | sim/warrior/overpower.go | The window a dodged hit opens |
+| `summon_hawk` | sim/hunter/summon_hawk.go | The dive bomb's base from client data and its share of ranged attack power, a Go literal, whether it always hits, and the hawk slots, physical dots whose ticks roll the physical crit |
 
 Human racials are static and already in the prepared stats. High Order Skyborne's cast
 speed and every race's creature slaying are static too. Read Ley Line is not a major
@@ -185,15 +253,21 @@ Invalid and unsupported inputs are deliberately different outcomes.
 | Rotation-reachable spell without a known behavior | Unsupported |
 
 The exporter marks as unrepresented: more than one player or target, health fights,
-tanks, presims, healing models, pets that may act, player auto attacks, a target that swings at a
+tanks, presims, healing models, pets that may act without a class pet effect, main hand swings a
+class other than the Warrior can replace while in range, ranged attack speed listeners, a target that swings at a
 unit, item swapping, execute phase callbacks, target AI, caster
 damage callbacks, dynamic damage-taken modifiers a class effect does not describe, mob type
-bonuses, non-mana costs,
+bonuses, costs other than mana, energy and rage,
 unnamed class masks, item cooldowns without an exported effect, cast speed and temporary
 stat listeners, survival cooldowns that would wait for a nonzero defensive health
 threshold, a Shaman shield proc rate and Flame Shock ticks that roll a physical crit.
 Item procs that hear only melee hits are inert while the player has no auto attacks and
-no spell with a melee special mask.
+no spell with a melee special mask. A class replace function on the main hand is supported
+only when its class shows it returns the swing unchanged, as Enhancement's Auto weapon sync
+does for weapons of different speeds; `melee.replace_main_hand_swing` then makes Rust react
+before each main hand swing as Go does. With ranged auto attacks the `melee` section adds
+`ranged_state`: the ranged speed pseudo stat and the defender's ranged attack power bonus,
+Hunter's Mark; a build without ranged autos omits it.
 
 A class may describe a registered pet as inert when nothing can summon it, as a priest
 without the Shadowfiend option is. Go still resets and dismisses such a pet each fight,
@@ -201,22 +275,46 @@ logging its stats, and lists it in every action's targets and its owner's metric
 never enables it, so it draws no random number: a pet's swing offset is rolled only for
 enemies, and only enabled units start the encounter.
 
+The pet a reset enables, as a warlock's summoned demon, is simulated when its class has a
+pet effect: `pets` gives its unit index, stats, auras, mana bar and regeneration, attack
+table, auto attacks, spells, metrics actions and the stats lines Go logs when it is
+enabled and dismissed. Go enables it during its owner's reset, so its swings start at
+the pull, and its rotation runs once per timestep after the player's. Its damage is part
+of the target's damage taken and its owner's DPS, and Go's OOM events leave its metrics
+alone. Guardians, a second enabled pet, inherited speed or regeneration, a delayed first
+attack, enable callbacks, focus or energy bars and pet cooldowns are unrepresented, and a
+pet that follows its owner's stats is refused when those stats can change. A rotation's
+`auraIsKnown` may name a pet of the player by its index as its source unit; it reads that
+pet's registered auras, a constant.
+
 A target with a configured melee swing that no unit tanks never swings, but Go still
 rolls its opening swing offset at every reset, so the target exports its swing flags
 and Rust makes the same draw.
 
 Rust recomputes Go's starting mana regeneration from the exported components and
-rejects the input as invalid if it disagrees. Further preparation checks will be added
+rejects the input as invalid if it disagrees. A class without a mana bar, such as a Rogue,
+exports no mana, no mana costs and no regeneration; Go schedules no mana ticks for it and
+infers no time to out of mana.
+
+The energy bar runs as Go runs it, as a simulation task outside the pending-action queue:
+each step runs due weapon swings when they come no later than the next task, then due
+tasks, then the next pending action. An energy cost carries the share of the cost a missed
+strike refunds. A spell with metric splits, such as a finisher splitting by combo points,
+reports one tagged action per split and carries the current split's tag in log lines. Further preparation checks will be added
 as the engine consumes more fields.
 
 The rotation subset covers `castSpell`, `autocastOtherCooldowns`, `strictSequence` of
 casts, `channelSpell` with `interruptIf` and `allowRecast`, constant-time prepull casts,
 `cmp` with any comparison operator, `and`, `or`, `not`, `const`, `currentMana`,
-`currentManaPercent`, `currentTime`, `remainingTime`, `remainingTimePercent`, `numberTargets`,
-`math`, `gcdIsReady`,
-`auraIsKnown`, `auraIsActive`, `auraNumStacks`, `auraRemainingTime`, `dotIsActive`,
+`currentManaPercent`, `currentEnergy`, `maxEnergy`, `currentComboPoints`,
+`timeToNextEnergyTick`, `currentRage`, `isExecutePhase`, `currentTime`, `remainingTime`, `remainingTimePercent`, `numberTargets`,
+`math`, `totemRemainingTime` (a Shaman's), `gcdIsReady`,
+`auraIsKnown`, `auraIsActive` and `auraNumStacks` (on the player or the current target),
+`auraRemainingTime`, `dotIsActive`,
 `dotRemainingTime`, `dotTimeToNextTick`, `spellIsKnown`, `spellIsReady`,
-`spellTimeToReady` and `spellCastTime`. Action IDs may carry a rank, which Go ignores. A
+`spellTimeToReady`, `spellCastTime`, which reads a class's own cast time such as a Hunter
+shot's, `spellCanCast`, whose cost check has Go's side effects, and `autoTimeToNext` for
+any auto attack kind. Action IDs may carry a rank, which Go ignores. A
 strict sequence controls the rotation as Go's does, including the sequence flag its
 readiness check leaves set and the hook that advances it when a queued cast fires. A
 channel's interrupt condition is evaluated on each tick and each GCD wake, with Go's
@@ -256,8 +354,12 @@ the remaining races, with longer and cooldown-timing variants, and
 `fire-skyborne-read-ley-line` casts Read Ley Line from the rotation. `production-balance-druid`
 is the production Balance Druid request. `production-elemental-shaman` is the production
 Elemental Shaman request, and `elemental-shaman-dwarf-stoneform` runs it as a Dwarf with
-Stoneform timings. `production-destruction-warlock` is the production Destruction Warlock
-request. `production-fire` and
+Stoneform timings. `production-enhancement-shaman` is the production Enhancement Shaman
+request, and `enhancement-shaman-no-battle-shout` is the same request without its party
+Battle Shout. `production-destruction-warlock`, `production-affliction-warlock` and
+`production-demonology-warlock` are the production Destruction, Affliction and Demonology
+Warlock requests, and `demonology-warlock-voidwalker-pact` sacrifices the Voidwalker for
+Fel Energy instead. `production-fire` and
 `production-frostfire` are the production application's Fire Missile Barrage and
 Frostfire hybrid requests at application revision 18bbcd47; its Arcane and Frost requests
 are byte-identical to `arcane-reference` and `frost-reference`. `frostfire-resistances`
@@ -266,6 +368,21 @@ production Shadow Priest request at application revision 18bbcd47; the
 `shadow-priest-*` cases change its rotation to reach a channel without `allowRecast`, a
 channel without an interrupt condition and a strict sequence that gives up control.
 `production-smite-priest` is the production Smite Priest hybrid request.
+`production-combat-rogue` is the production Combat Rogue request, with the Goblin Sapper
+Charge hitting the player, and `combat-rogue-orc-shatter-curse` runs it as an Orc whose
+Shatter Curse is up when the sapper goes off.
+`production-marksmanship-hunter` is the production Marksmanship Hunter request, the first
+build with ranged auto attacks. `tank-protection-paladin-dense-dynamite`,
+`retribution-dense-dynamite` and `marksmanship-hunter-thorium-grenade` throw basic
+explosives, the first while tanking.
+`production-retribution-paladin` is the production Retribution Paladin request and
+`production-shockadin-paladin` the production Shockadin hybrid; the `paladin-*` cases
+strip the Retribution request to its auto attacks and the weapon, consumable and raid
+procs they carry.
+`production-warrior` is the production Fury Warrior request, the first with a rage bar;
+`warrior-heroic-strike` and `warrior-cleave` queue those strikes onto main hand swings,
+`warrior-troll-berserking` is its race board's Troll request and
+`warrior-orc-shatter-curse` runs it as an Orc with Shatter Curse timings.
 `production-feral-druid` is the production Feral (cat) Druid request, and
 `feral-druid-faerie-fire-armor` runs it with the raid's Sunder Armor as the only debuff, so
 Faerie Fire's own armor reduction applies beside the Sunder Armor ramp.
@@ -365,7 +482,13 @@ cargo run --locked -- check --infile fixtures/mage/prepared-v2/frost-reference.p
 - Each class has its own exporter file under `tools/oracle-v2/` naming its class spells,
   damage rows and effects; a class without one is unrepresented. The fixture manifest pins
   the digest of every exporter source.
-- The contract describes one player and one target. Multiple targets, pets, incoming
-  damage and job modes such as stat weights need contract additions.
+- The contract describes one player, one target and at most one simulated pet. Multiple
+  targets, more pets and job modes such as stat weights need contract additions.
+- Incoming damage covers the target's main hand swing at the one player tanking it. The
+  gate rejects a dual wielding or ranged target, a healing model, a hardcast or channel
+  the rotation can reach while tanking (Go drops the tank's avoidance and pushes the cast
+  back), listeners of the swing other than Chance of Death and Parry Haste, and any aura
+  something in scope activates that would change the swing. Stat auras change only the
+  table steps, which are exported for each combination.
 - Accepting an input does not validate gameplay. Parity with Go is established per
   mechanic by the comparisons that accompany each implementation.

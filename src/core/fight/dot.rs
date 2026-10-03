@@ -36,11 +36,12 @@ pub(crate) struct Dot {
 }
 
 impl Dot {
-    pub(crate) fn new(spell: SpellId, exported: &ExportedDot) -> Self {
+    /// A dot of `spell`, cast by `caster`; a dot on "self" is on the caster.
+    pub(crate) fn new(spell: SpellId, caster: Side, exported: &ExportedDot) -> Self {
         Dot {
             spell,
             side: if exported.unit == "self" {
-                Side::Player
+                caster
             } else {
                 Side::Target
             },
@@ -79,6 +80,11 @@ impl Dot {
             (self.base_duration() as f64 / self.tick_period as f64).round_ties_even() as i32
         };
         total - self.remaining_ticks
+    }
+
+    /// Go `Dot.HastedTickCount`: the base duration over the snapshotted tick period.
+    pub(crate) fn hasted_tick_count(&self) -> i32 {
+        (self.base_duration() as f64 / self.tick_period as f64).round_ties_even() as i32
     }
 
     /// Go `Dot.BaseDuration`.

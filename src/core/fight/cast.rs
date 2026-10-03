@@ -24,15 +24,24 @@ impl<A: Agent> Fight<A> {
         );
     }
 
-    /// Go `ApplyCastSpeed`.
-    pub(crate) fn apply_cast_speed(&self, duration: i64) -> i64 {
-        (duration as f64 * self.cast_speed) as i64
+    /// Go `ApplyCastSpeed` of an acting unit.
+    pub(crate) fn apply_cast_speed_of(&self, side: Side, duration: i64) -> i64 {
+        (duration as f64 * self.unit_cast_speed(side)) as i64
     }
 
     /// Go `ApplyCastSpeedForSpell`.
     pub(crate) fn apply_cast_speed_for_spell(&self, duration: i64, spell: SpellId) -> i64 {
-        (duration as f64 * self.cast_speed * self.spells[spell].cast_time_multiplier.max(0.0))
-            as i64
+        (duration as f64
+            * self.unit_cast_speed(self.caster(spell))
+            * self.spells[spell].cast_time_multiplier.max(0.0)) as i64
+    }
+
+    /// A class spell's own `Spell.CastTime`, when its class replaces Go's default.
+    pub(crate) fn class_cast_time(&self, spell: SpellId) -> Option<i64> {
+        match self.spells[spell].behavior {
+            SpellBehavior::Class(behavior) => A::cast_time(self, spell, behavior),
+            _ => None,
+        }
     }
 
     /// Go `SpellCost.GetCurrentCost`, with Go's int32 percentage arithmetic.
@@ -41,7 +50,7 @@ impl<A: Agent> Fight<A> {
             return 0.0;
         };
         let mut value = (cost.base + cost.flat_modifier).max(0);
-        value = (value * self.player.spell_cost_percent_modifier / 100).max(0);
+        value = (value * self.unit(self.caster(spell)).spell_cost_percent_modifier / 100).max(0);
         (f64::from(value) * cost.percent_modifier * cost.additive_percent_modifier).max(0.0)
     }
 
@@ -77,7 +86,12 @@ impl<A: Agent> Fight<A> {
 
     /// Go `GCD.IsReady`.
     pub(crate) fn gcd_ready(&self) -> bool {
-        self.player.gcd <= self.now
+        self.gcd_ready_of(Side::Player)
+    }
+
+    /// Go `GCD.IsReady` of an acting unit.
+    pub(crate) fn gcd_ready_of(&self, side: Side) -> bool {
+        self.unit(side).gcd <= self.now
     }
 
     /// Go `GCD.TimeToReady`.
@@ -87,7 +101,12 @@ impl<A: Agent> Fight<A> {
 
     /// Go `Unit.CanQueueSpell`: one queued spell per timestep.
     pub(crate) fn can_queue_spell(&self) -> bool {
-        self.player
+        self.can_queue_spell_of(Side::Player)
+    }
+
+    /// Go `Unit.CanQueueSpell` of an acting unit.
+    pub(crate) fn can_queue_spell_of(&self, side: Side) -> bool {
+        self.unit(side)
             .queued
             .is_none_or(|queued| queued.initiated_at != self.now)
     }
@@ -95,7 +114,7 @@ impl<A: Agent> Fight<A> {
     fn extra_cast_condition(&mut self, spell: SpellId) -> bool {
         // Go RegisterSpell wraps the condition with the range check, which runs first.
         let state = &self.spells[spell];
-        let distance = self.config.distance;
+        let distance = self.unit_config(state.caster).distance;
         if (state.min_range != 0.0 && distance < state.min_range)
             || (state.max_range != 0.0 && distance > state.max_range)
         {
@@ -118,56 +137,72 @@ impl<A: Agent> Fight<A> {
         self.spells[spell].cur_cast.cost = cost;
         match kind {
             ResourceKind::Energy => self.energy_bar().current >= cost,
-            _ => self.meets_mana_cost(cost),
+            ResourceKind::Rage => self.current_rage() >= cost,
+            _ => self.meets_mana_cost(spell, cost),
         }
     }
 
     /// Go `ManaCost.MeetsRequirement`, including its out-of-mana bookkeeping.
-    fn meets_mana_cost(&mut self, cost: f64) -> bool {
-        let meets = self.player.mana >= cost;
+    fn meets_mana_cost(&mut self, spell: SpellId, cost: f64) -> bool {
+        let side = self.caster(spell);
+        let now = self.now;
+        let unit = self.unit_mut(side);
+        let meets = unit.mana >= cost;
+        // Go's OOM events leave a pet's metrics alone; only its end of iteration counts.
+        let is_pet = side == Side::Pet;
         if cost > 0.0 {
             if meets {
-                if self.player.waiting_for_mana != 0.0 {
-                    let duration = self.now - self.player.waiting_for_mana_start;
-                    self.add_oom_time(duration);
-                    self.player.waiting_for_mana_start = 0;
-                    self.player.waiting_for_mana = 0.0;
+                if unit.waiting_for_mana != 0.0 {
+                    let duration = now - unit.waiting_for_mana_start;
+                    unit.waiting_for_mana_start = 0;
+                    unit.waiting_for_mana = 0.0;
+                    if !is_pet {
+                        self.add_oom_time(side, duration);
+                    }
                 }
-            } else if self.player.waiting_for_mana != 0.0 {
-                self.player.waiting_for_mana = self.player.waiting_for_mana.min(cost);
+            } else if unit.waiting_for_mana != 0.0 {
+                unit.waiting_for_mana = unit.waiting_for_mana.min(cost);
             } else {
-                self.player.waiting_for_mana_start = self.now;
-                self.player.waiting_for_mana = cost;
-                self.mark_oom();
+                unit.waiting_for_mana_start = now;
+                unit.waiting_for_mana = cost;
+                if !is_pet {
+                    self.mark_oom(side);
+                }
             }
         }
         meets
     }
 
-    fn add_oom_time(&mut self, duration: i64) {
+    fn add_oom_time(&mut self, side: Side, duration: i64) {
         if duration > 0 {
-            self.player.oom_time += duration;
-            self.mark_oom();
+            self.unit_mut(side).oom_time += duration;
+            self.mark_oom(side);
         }
     }
 
-    fn mark_oom(&mut self) {
-        if !self.player.went_oom {
-            self.player.went_oom = true;
-            self.player.first_oom = self.now;
+    fn mark_oom(&mut self, side: Side) {
+        let now = self.now;
+        let unit = self.unit_mut(side);
+        if !unit.went_oom {
+            unit.went_oom = true;
+            unit.first_oom = now;
         }
     }
 
     fn cost_failure(&self, spell: SpellId) -> String {
         let cost = self.spells[spell].cur_cast.cost;
         match self.spells[spell].cost.map(|cost| cost.kind) {
+            Some(ResourceKind::Rage) => format!(
+                "not enough rage (Current Rage = {:.3}, Rage Cost = {cost:.3})",
+                self.current_rage()
+            ),
             Some(ResourceKind::Energy) => format!(
                 "not enough energy (Current Energy = {:.3}, Energy Cost = {cost:.3})",
                 self.energy_bar().current
             ),
             _ => format!(
                 "not enough mana (Current Mana = {:.3}, Mana Cost = {cost:.3})",
-                self.player.mana
+                self.unit(self.caster(spell)).mana
             ),
         }
     }
@@ -195,14 +230,16 @@ impl<A: Agent> Fight<A> {
             return false;
         }
         let state = &self.spells[spell];
+        let side = state.caster;
         if state.flags.swapped {
             return false;
         }
-        if self.player.hardcast.expires > self.now {
+        if self.unit(side).hardcast.expires > self.now {
             return false;
         }
-        let needs_gcd = state.default_cast.gcd > 0 || (state.flags.mcd && self.in_sequence());
-        if needs_gcd && !self.gcd_ready() {
+        let in_sequence = side == Side::Player && self.in_sequence();
+        let needs_gcd = state.default_cast.gcd > 0 || (state.flags.mcd && in_sequence);
+        if needs_gcd && !self.gcd_ready_of(side) {
             return false;
         }
         self.spell_ready(spell)
@@ -219,16 +256,14 @@ impl<A: Agent> Fight<A> {
             return false;
         }
         let state = &self.spells[spell];
+        let unit = self.unit(state.caster);
         if state.flags.swapped {
             return false;
         }
-        if state.flags.channeled && self.player.hardcast.expires > self.now + MAX_SPELL_QUEUE_WINDOW
-        {
+        if state.flags.channeled && unit.hardcast.expires > self.now + MAX_SPELL_QUEUE_WINDOW {
             return false;
         }
-        if state.default_cast.gcd > 0
-            && (self.player.gcd - self.now).max(0) > MAX_SPELL_QUEUE_WINDOW
-        {
+        if state.default_cast.gcd > 0 && (unit.gcd - self.now).max(0) > MAX_SPELL_QUEUE_WINDOW {
             return false;
         }
         self.spell_time_to_ready(spell) <= MAX_SPELL_QUEUE_WINDOW
@@ -236,7 +271,7 @@ impl<A: Agent> Fight<A> {
 
     /// Go `Unit.CanQueueSpell` and `Spell.CanQueue`.
     pub(crate) fn can_cast_or_queue(&mut self, spell: SpellId) -> bool {
-        self.can_queue_spell() && self.can_queue(spell)
+        self.can_queue_spell_of(self.caster(spell)) && self.can_queue(spell)
     }
 
     /// Go `Spell.CastOrQueue`.
@@ -244,10 +279,12 @@ impl<A: Agent> Fight<A> {
         if self.can_cast(spell) {
             self.cast(spell, target);
         } else if self.can_queue(spell) {
-            let mut queue_time = self.player.hardcast.expires.max(self.spell_ready_at(spell));
+            let unit = self.unit(self.caster(spell));
+            let (expires, gcd) = (unit.hardcast.expires, unit.gcd);
+            let mut queue_time = expires.max(self.spell_ready_at(spell));
             let state = &self.spells[spell];
             if state.default_cast.gcd > 0 || state.flags.mcd {
-                queue_time = queue_time.max(self.player.gcd);
+                queue_time = queue_time.max(gcd);
             }
             self.queue_spell(spell, target, queue_time);
         } else {
@@ -257,14 +294,16 @@ impl<A: Agent> Fight<A> {
 
     /// Go `Unit.QueueSpell` and `QueuedSpell.InitiateQueue`.
     fn queue_spell(&mut self, spell: SpellId, target: Side, queue_at: i64) {
-        self.cancel_queued_spell();
+        let side = self.caster(spell);
+        self.cancel_queued_spell_of(side);
         let fire_at = queue_at + 1;
-        let action = self.schedule(fire_at, PRIORITY_GCD, Action::QueuedCast);
-        self.player.queued = Some(super::QueuedSpell {
+        let action = self.schedule(fire_at, PRIORITY_GCD, Action::QueuedCast(side));
+        let now = self.now;
+        self.unit_mut(side).queued = Some(super::QueuedSpell {
             spell,
             target,
             action: Some(action),
-            initiated_at: self.now,
+            initiated_at: now,
             fire_at,
         });
         if self.log.is_some() {
@@ -273,17 +312,19 @@ impl<A: Agent> Fight<A> {
                 action_string(&self.spells[spell].id),
                 go_string(fire_at)
             );
-            self.player_log(&line);
+            self.unit_log(side, &line);
         }
     }
 
-    /// Go `QueuedSpell.Cancel`: the queue initiation time becomes -NeverExpires.
-    pub(crate) fn cancel_queued_spell(&mut self) {
-        if let Some(queued) = self.player.queued.as_mut() {
-            if let Some(action) = queued.action.take() {
+    /// Go `QueuedSpell.Cancel` for an acting unit: the queue initiation time becomes
+    /// -NeverExpires.
+    pub(crate) fn cancel_queued_spell_of(&mut self, side: Side) {
+        if let Some(queued) = self.unit_mut(side).queued.as_mut() {
+            let action = queued.action.take();
+            queued.initiated_at = -crate::core::time::NEVER_EXPIRES;
+            if let Some(action) = action {
                 self.queue.cancel(action);
             }
-            queued.initiated_at = -crate::core::time::NEVER_EXPIRES;
         }
     }
 
@@ -295,7 +336,7 @@ impl<A: Agent> Fight<A> {
                 "{} failed to cast: {reason}",
                 action_string(&self.spells[spell].id)
             );
-            self.player_log(&line);
+            self.unit_log(self.caster(spell), &line);
         }
         false
     }
@@ -303,7 +344,7 @@ impl<A: Agent> Fight<A> {
     /// Go `Spell.Cast`.
     pub(crate) fn cast(&mut self, spell: SpellId, target: Side) -> bool {
         if self.spells[spell].default_cast.effective_time() > 0 {
-            self.cancel_queued_spell();
+            self.cancel_queued_spell_of(self.caster(spell));
         }
         match self.spells[spell].cast_kind {
             CastKind::Full => self.cast_full(spell, target),
@@ -322,10 +363,14 @@ impl<A: Agent> Fight<A> {
     fn log_instant_cast(&mut self, spell: SpellId) {
         if self.log.is_some() && !self.spells[spell].flags.no_logs {
             let id = action_string(&self.spells[spell].id);
-            self.player_log(&format!(
-                "Casting {id} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)"
-            ));
-            self.player_log(&format!("Completed cast {id}"));
+            let side = self.caster(spell);
+            self.unit_log(
+                side,
+                &format!(
+                    "Casting {id} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)"
+                ),
+            );
+            self.unit_log(side, &format!("Completed cast {id}"));
         }
     }
 
@@ -401,6 +446,11 @@ impl<A: Agent> Fight<A> {
     /// Go `makeCastFunc`.
     fn cast_full(&mut self, spell: SpellId, target: Side) -> bool {
         self.spells[spell].cur_cast = self.spells[spell].default_cast;
+        // Go `ModifyCast`, before any cast check.
+        // Go CastConfig.ModifyCast, which a class may set to its own cast time.
+        if let Some(cast_time) = self.class_cast_time(spell) {
+            self.spells[spell].cur_cast.cast_time = cast_time;
+        }
         if let SpellBehavior::Class(behavior) = self.spells[spell].behavior {
             A::modify_cast(self, spell, behavior);
         }
@@ -418,9 +468,12 @@ impl<A: Agent> Fight<A> {
         let cur = self.spells[spell].cur_cast;
         let default_cast = self.spells[spell].default_cast;
         let implicit = default_cast.gcd <= 0 && default_cast.cast_time == 0;
+        let side = self.caster(spell);
         if !self.spells[spell].ignore_haste && !implicit {
-            self.spells[spell].cur_cast.gcd =
-                round(self.apply_cast_speed(cur.gcd).max(0), NS_PER_MILLISECOND);
+            self.spells[spell].cur_cast.gcd = round(
+                self.apply_cast_speed_of(side, cur.gcd).max(0),
+                NS_PER_MILLISECOND,
+            );
             self.spells[spell].cur_cast.cast_time = round(
                 self.apply_cast_speed_for_spell(cur.cast_time, spell),
                 NS_PER_MILLISECOND,
@@ -448,18 +501,18 @@ impl<A: Agent> Fight<A> {
                 });
             }
         }
-        if self.spells[spell].cur_cast.gcd > 0 && !self.gcd_ready() {
+        if self.spells[spell].cur_cast.gcd > 0 && !self.gcd_ready_of(side) {
             return self.cast_failure(spell, |fight| {
                 format!(
                     "GCD on cooldown for {}, curTime = {}",
-                    go_string((fight.player.gcd - fight.now).max(0)),
+                    go_string((fight.unit(side).gcd - fight.now).max(0)),
                     go_string(fight.now)
                 )
             });
         }
-        if self.player.hardcast.expires > self.now {
+        if self.unit(side).hardcast.expires > self.now {
             return self.cast_failure(spell, |fight| {
-                let hardcast = fight.player.hardcast;
+                let hardcast = fight.unit(side).hardcast;
                 let id = hardcast
                     .spell
                     .map(|s| action_string(&fight.spells[s].id))
@@ -479,27 +532,28 @@ impl<A: Agent> Fight<A> {
             if !channeled {
                 self.spells[spell].metrics[target.index()].total_cast_time += effective;
             }
-            let ready = (self.now + effective).max(self.player.gcd);
-            self.set_gcd_timer(ready);
+            let ready = (self.now + effective).max(self.unit(side).gcd);
+            self.set_gcd_timer_of(side, ready);
         }
 
         if cur.cast_time > 0 {
             if self.log.is_some() && !self.spells[spell].flags.no_logs {
                 self.log_casting(spell);
             }
-            self.player.hardcast = super::Hardcast {
-                expires: self.now + cur.cast_time,
+            let expires = self.now + cur.cast_time;
+            self.unit_mut(side).hardcast = super::Hardcast {
+                expires,
                 spell: Some(spell),
                 target,
             };
-            self.new_hardcast_action();
+            self.new_hardcast_action(side);
             return true;
         }
 
         if self.log.is_some() && !self.spells[spell].flags.no_logs {
             self.log_casting(spell);
             let line = format!("Completed cast {}", action_string(&self.spells[spell].id));
-            self.player_log(&line);
+            self.unit_log(side, &line);
         }
         self.spend_cost(spell);
         self.trigger_cooldowns(spell);
@@ -520,15 +574,16 @@ impl<A: Agent> Fight<A> {
             go_string(cur.gcd_time().max(0)),
             go_string(cur.effective_time())
         );
-        self.player_log(&line);
+        self.unit_log(self.caster(spell), &line);
     }
 
     /// The hardcast `OnComplete` closure from `makeCastFunc`.
     fn complete_hardcast(&mut self, spell: SpellId, target: Side) {
         if self.log.is_some() && !self.spells[spell].flags.no_logs {
             let line = format!("Completed cast {}", action_string(&self.spells[spell].id));
-            self.player_log(&line);
+            self.unit_log(self.caster(spell), &line);
         }
+        self.player.reduced_avoidance = false;
         if !self.can_complete_cast(spell, true) {
             return;
         }
@@ -540,11 +595,12 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    /// Run a due hardcast's completion, as both the rotation and hardcast actions do.
-    pub(crate) fn complete_due_hardcast(&mut self) {
-        let hardcast = self.player.hardcast;
+    /// Run an acting unit's due hardcast completion, as both its rotation and hardcast
+    /// actions do.
+    pub(crate) fn complete_due_hardcast_of(&mut self, side: Side) {
+        let hardcast = self.unit(side).hardcast;
         if hardcast.expires != STARTING_CD_TIME && hardcast.expires <= self.now {
-            self.player.hardcast.expires = STARTING_CD_TIME;
+            self.unit_mut(side).hardcast.expires = STARTING_CD_TIME;
             if let Some(spell) = hardcast.spell {
                 self.complete_hardcast(spell, hardcast.target);
             }
@@ -557,6 +613,13 @@ impl<A: Agent> Fight<A> {
             return;
         };
         let cost = self.spells[spell].cur_cast.cost;
+        if kind == ResourceKind::Rage {
+            if cost > 0.0 {
+                let metrics = self.spells[spell].mana_metrics.expect("rage metrics");
+                self.spend_rage(cost, metrics);
+            }
+            return;
+        }
         if kind == ResourceKind::Energy {
             // Go EnergyCost.SpendCost spends even a zero cost.
             let (metrics, _) = self.spells[spell].energy_metrics.expect("energy metrics");
@@ -566,8 +629,9 @@ impl<A: Agent> Fight<A> {
         if cost > 0.0 {
             let metrics = self.spells[spell].mana_metrics.expect("mana metrics");
             self.spend_mana(cost, metrics);
-            self.player.five_second_rule_refresh =
-                (self.now + 5 * NS_PER_SECOND).max(self.player.hardcast.expires);
+            let now = self.now;
+            let unit = self.unit_mut(self.spells[spell].caster);
+            unit.five_second_rule_refresh = (now + 5 * NS_PER_SECOND).max(unit.hardcast.expires);
         }
     }
 
@@ -576,6 +640,10 @@ impl<A: Agent> Fight<A> {
         let Some(cost) = self.spells[spell].cost else {
             return;
         };
+        if cost.kind == ResourceKind::Rage {
+            self.issue_rage_refund(spell);
+            return;
+        }
         if cost.kind != ResourceKind::Energy {
             return;
         }
@@ -601,6 +669,25 @@ impl<A: Agent> Fight<A> {
                 let gain = (min + self.random(&label) * spread) * stone_multiplier;
                 let metrics = self.item_metrics(spell);
                 self.execute_mana_gain(gain, metrics);
+            }
+            SpellBehavior::PotionResource {
+                label,
+                gains,
+                stone_multiplier,
+                aura,
+                ..
+            } => {
+                if let Some(index) = aura {
+                    self.activate_aura(AuraRef {
+                        side: Side::Player,
+                        index,
+                    });
+                }
+                for (kind, min, spread) in gains {
+                    let gain = (min + self.random(&label) * spread) * stone_multiplier;
+                    let metrics = self.potion_metrics(spell, kind);
+                    self.execute_resource_gain(kind, gain, metrics);
+                }
             }
             SpellBehavior::ConjuredMana {
                 label, min, spread, ..
@@ -658,15 +745,71 @@ impl<A: Agent> Fight<A> {
             }),
             SpellBehavior::MeleeAuto(hand) => self.apply_melee_auto(spell, target, hand),
             SpellBehavior::GoblinSapper => self.apply_goblin_sapper(spell, target),
+            SpellBehavior::BasicExplosive {
+                min,
+                max,
+                aoe_cap_multiplier,
+            } => self.apply_basic_explosive(spell, target, min, max, aoe_cap_multiplier),
             SpellBehavior::RollDamage { min, max } => {
                 // Go sim.Roll: min + (max - min) * RandomFloat("Damage Roll").
                 let base = min + (max - min) * self.random("Damage Roll");
                 let result = self.calc_damage(spell, target, base);
                 self.deal_damage(spell, result, false);
             }
+            SpellBehavior::EffectRoll {
+                average,
+                variance,
+                can_crit,
+            } => {
+                // Go spelldata Effect.Roll: no draw without a variance.
+                let base = if variance == 0.0 {
+                    average
+                } else {
+                    let (low, high) = (
+                        average * (1.0 - variance / 2.0),
+                        average * (1.0 + variance / 2.0),
+                    );
+                    low + (high - low) * self.random("Damage Roll")
+                };
+                let result = if can_crit {
+                    self.calc_damage(spell, target, base)
+                } else {
+                    self.calc_damage_hit_only(spell, target, base)
+                };
+                self.deal_damage(spell, result, false);
+            }
             SpellBehavior::None => panic!("spell {} has no behavior", self.spells[spell].id),
         }
         A::after_apply_effects(self, spell);
+    }
+
+    /// Go `ExecuteResourceGain`: a resource the player has no bar for is not gained, and rage
+    /// amounts are in tenths.
+    fn execute_resource_gain(&mut self, kind: ResourceKind, amount: f64, metrics: usize) {
+        match kind {
+            ResourceKind::Rage if self.rage.is_some() && amount > 0.0 => {
+                self.add_rage(amount / 10.0, metrics)
+            }
+            ResourceKind::Rage if self.rage.is_some() && amount < 0.0 => {
+                self.spend_rage(-amount / 10.0, metrics)
+            }
+            ResourceKind::Mana if self.has_mana_bar() => self.execute_mana_gain(amount, metrics),
+            _ => {}
+        }
+    }
+
+    /// The resource metrics of a potion, one per resource it restores.
+    fn potion_metrics(&mut self, spell: SpellId, kind: ResourceKind) -> usize {
+        if let SpellBehavior::PotionResource { metrics, .. } = &self.spells[spell].behavior {
+            if let Some(&(_, index)) = metrics.iter().find(|(k, _)| *k == kind) {
+                return index;
+            }
+        }
+        let index = self.new_resource_metrics(self.spells[spell].id.clone(), kind);
+        if let SpellBehavior::PotionResource { metrics, .. } = &mut self.spells[spell].behavior {
+            metrics.push((kind, index));
+        }
+        index
     }
 
     /// Go `ExecuteResourceGain` for mana: only a positive amount is gained.
@@ -681,7 +824,7 @@ impl<A: Agent> Fight<A> {
         if let Some(metrics) = self.spells[spell].mana_metrics {
             return metrics;
         }
-        let index = self.new_mana_metrics(self.spells[spell].id.clone());
+        let index = self.new_mana_metrics_of(self.caster(spell), self.spells[spell].id.clone());
         self.spells[spell].mana_metrics = Some(index);
         index
     }
@@ -691,7 +834,16 @@ impl<A: Agent> Fight<A> {
         &mut self,
         id: crate::contracts::prepared_v2::ActionId,
     ) -> usize {
-        self.new_resource_metrics(id, super::ResourceKind::Mana)
+        self.new_mana_metrics_of(Side::Player, id)
+    }
+
+    /// Go `Unit.NewManaMetrics` of an acting unit.
+    pub(crate) fn new_mana_metrics_of(
+        &mut self,
+        unit: Side,
+        id: crate::contracts::prepared_v2::ActionId,
+    ) -> usize {
+        self.new_resource_metrics_of(unit, id, super::ResourceKind::Mana)
     }
 
     /// Go `UnitMetrics.NewResourceMetrics`: every call registers a new metric.
@@ -700,8 +852,19 @@ impl<A: Agent> Fight<A> {
         id: crate::contracts::prepared_v2::ActionId,
         kind: super::ResourceKind,
     ) -> usize {
+        self.new_resource_metrics_of(Side::Player, id, kind)
+    }
+
+    /// Go `UnitMetrics.NewResourceMetrics` of an acting unit.
+    pub(crate) fn new_resource_metrics_of(
+        &mut self,
+        unit: Side,
+        id: crate::contracts::prepared_v2::ActionId,
+        kind: super::ResourceKind,
+    ) -> usize {
         self.resources.push(super::ResourceMetrics {
             id,
+            unit,
             kind,
             events: 0,
             gain: 0.0,
@@ -740,80 +903,117 @@ impl<A: Agent> Fight<A> {
 
     /// Go `Unit.SetGCDTimer`.
     pub(crate) fn set_gcd_timer(&mut self, ready: i64) {
-        self.player.gcd = ready;
-        self.set_rotation_timer(ready);
+        self.set_gcd_timer_of(Side::Player, ready);
+    }
+
+    /// Go `Unit.SetGCDTimer` of an acting unit.
+    pub(crate) fn set_gcd_timer_of(&mut self, side: Side, ready: i64) {
+        self.unit_mut(side).gcd = ready;
+        self.set_rotation_timer_of(side, ready);
     }
 
     /// Go `Unit.SetRotationTimer`.
     pub(crate) fn set_rotation_timer(&mut self, ready: i64) {
-        self.player.rotation_timer = ready;
-        if let Some(action) = self.player.rotation_action.take() {
+        self.set_rotation_timer_of(Side::Player, ready);
+    }
+
+    /// Go `Unit.SetRotationTimer` of an acting unit.
+    pub(crate) fn set_rotation_timer_of(&mut self, side: Side, ready: i64) {
+        self.unit_mut(side).rotation_timer = ready;
+        if let Some(action) = self.unit_mut(side).rotation_action.take() {
             self.queue.cancel(action);
         }
-        self.player.rotation_action = Some(self.schedule(ready, PRIORITY_GCD, Action::Rotation));
+        let action = self.schedule(ready, PRIORITY_GCD, Action::Rotation(side));
+        self.unit_mut(side).rotation_action = Some(action);
     }
 
     /// Go `Unit.WaitUntil`.
     pub(crate) fn wait_until(&mut self, ready: i64) {
+        self.wait_until_of(Side::Player, ready);
+    }
+
+    /// Go `Unit.WaitUntil` of an acting unit.
+    pub(crate) fn wait_until_of(&mut self, side: Side, ready: i64) {
         assert!(ready >= self.now, "cannot wait negative time");
-        self.set_rotation_timer(ready);
+        self.set_rotation_timer_of(side, ready);
         if self.log.is_some() && ready > self.now {
             let line = format!(
                 "Pausing rotation for {} due to resources / CDs.",
                 go_string(ready - self.now)
             );
-            self.player_log(&line);
+            self.unit_log(side, &line);
         }
     }
 
     /// Go `Unit.newHardcastAction`.
-    fn new_hardcast_action(&mut self) {
-        if let Some(action) = self.player.hardcast_action.take() {
+    fn new_hardcast_action(&mut self, side: Side) {
+        // Go: while casting, a tank's dodge, parry and block fall to zero.
+        if side == Side::Player && self.enemy.is_some() {
+            self.player.reduced_avoidance = true;
+        }
+        if let Some(action) = self.unit_mut(side).hardcast_action.take() {
             self.queue.cancel(action);
         }
-        let expires = self.player.hardcast.expires;
-        self.player.hardcast_action = Some(self.schedule(expires, PRIORITY_GCD, Action::Hardcast));
+        let expires = self.unit(side).hardcast.expires;
+        let action = self.schedule(expires, PRIORITY_GCD, Action::Hardcast(side));
+        self.unit_mut(side).hardcast_action = Some(action);
     }
 
-    /// Go `Unit.AddMana`.
+    /// Go `Unit.AddMana` on the unit whose metrics these are.
     pub(crate) fn add_mana(&mut self, amount: f64, metrics: usize) {
         assert!(amount >= 0.0, "negative mana gain");
-        let old = self.player.mana;
-        let new = (old + amount).min(self.player.powers.max_mana);
+        let side = self.resources[metrics].unit;
+        let max = self.unit(side).powers.max_mana;
+        let old = self.unit(side).mana;
+        let new = (old + amount).min(max);
         let resource = &mut self.resources[metrics];
         resource.events += 1;
         resource.gain += amount;
         resource.actual_gain += new - old;
         if self.log.is_some() {
             let line = format!(
-                "Gained {amount:.3} mana from {} ({old:.3} --> {new:.3}) of {:.0} total.",
+                "Gained {amount:.3} mana from {} ({old:.3} --> {new:.3}) of {max:.0} total.",
                 action_string(&self.resources[metrics].id),
-                self.player.powers.max_mana
             );
-            self.player_log(&line);
+            self.unit_log(side, &line);
         }
-        self.player.mana = new;
-        self.player.mana_gained += new - old;
+        let unit = self.unit_mut(side);
+        unit.mana = new;
+        unit.mana_gained += new - old;
     }
 
-    /// Go `Unit.SpendMana`.
+    /// Go `Unit.SpendMana` on the unit whose metrics these are.
     fn spend_mana(&mut self, amount: f64, metrics: usize) {
-        let new = self.player.mana - amount;
+        let side = self.resources[metrics].unit;
+        let max = self.unit(side).powers.max_mana;
+        let old = self.unit(side).mana;
+        let new = old - amount;
         let resource = &mut self.resources[metrics];
         resource.events += 1;
         resource.gain -= amount;
         resource.actual_gain -= amount;
         if self.log.is_some() {
             let line = format!(
-                "Spent {amount:.3} mana from {} ({:.3} --> {new:.3}) of {:.0} total.",
+                "Spent {amount:.3} mana from {} ({old:.3} --> {new:.3}) of {max:.0} total.",
                 action_string(&self.resources[metrics].id),
-                self.player.mana,
-                self.player.powers.max_mana
             );
-            self.player_log(&line);
+            self.unit_log(side, &line);
         }
-        self.player.mana = new;
-        self.player.mana_spent += amount;
+        let unit = self.unit_mut(side);
+        unit.mana = new;
+        unit.mana_spent += amount;
+    }
+
+    /// Go `Unit.ManaTick` for a pet, whose regeneration has no attribution in scope.
+    pub(crate) fn pet_mana_tick(&mut self) {
+        let pet = self.pet.as_ref().expect("the pet is simulated");
+        let casting = self.now < pet.state.five_second_rule_refresh;
+        let (regen, metrics) = if casting {
+            (pet.state.mana_tick_casting, pet.mana_regen_casting)
+        } else {
+            (pet.state.mana_tick_not_casting, pet.mana_regen_not_casting)
+        };
+        self.add_mana(regen.max(0.0), metrics);
     }
 
     /// Go `Unit.ManaTick`, with its spirit regeneration attribution.
@@ -963,13 +1163,24 @@ impl<A: Agent> Fight<A> {
                 bar.max - bar.current >= (min + spread) - reduction && *selected
             }
             SpellBehavior::EnergizeOnUse { whole, .. } => max - mana >= *whole,
+            // Go: only a mana gain asks whether the mana fits.
+            SpellBehavior::PotionResource {
+                gains,
+                stone_multiplier,
+                ..
+            } => gains.iter().all(|(kind, min, spread)| {
+                *kind != ResourceKind::Mana
+                    || max - (mana + casting_regen * 5.0) >= (min + spread) * stone_multiplier
+            }),
             // Go's default ShouldActivate.
             SpellBehavior::Eureka
             | SpellBehavior::ActivateAura(_)
-            | SpellBehavior::GoblinSapper => true,
+            | SpellBehavior::GoblinSapper
+            | SpellBehavior::BasicExplosive { .. } => true,
             SpellBehavior::TouchOfTheGraveDrain { .. }
             | SpellBehavior::MeleeAuto(_)
             | SpellBehavior::RollDamage { .. }
+            | SpellBehavior::EffectRoll { .. }
             | SpellBehavior::None => false,
         }
     }

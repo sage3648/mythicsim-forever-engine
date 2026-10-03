@@ -26,7 +26,6 @@ use super::{
 pub(crate) struct SelfTarget {
     table: AttackTable,
     resistance: [f64; 8],
-    damage_taken_multiplier: f64,
     school_damage_taken_multiplier: [f64; 8],
     school_bonus_spell_damage: [f64; 8],
     bonus_spell_damage_taken: f64,
@@ -89,7 +88,6 @@ impl SelfTarget {
                 stat("NatureResistance")?,
                 stat("ShadowResistance")?,
             ],
-            damage_taken_multiplier: pseudo.damage_taken_multiplier,
             school_damage_taken_multiplier: schools(&pseudo.school_damage_taken_multiplier),
             school_bonus_spell_damage: schools(&pseudo.school_bonus_spell_damage),
             bonus_spell_damage_taken: pseudo.bonus_spell_damage_taken,
@@ -104,6 +102,28 @@ impl<A: Agent> Fight<A> {
         self.self_target
             .as_ref()
             .expect("a spell that hits the player has the player's own attack table")
+    }
+
+    /// Go `AttachMultiplicativePseudoStatBuff` on the player's school damage taken: multiply on
+    /// gain, divide on expiry. Without a spell that hits the player nothing reads it.
+    pub(crate) fn multiply_self_damage_taken(
+        &mut self,
+        multiplier: f64,
+        schools: [bool; 8],
+        undo: bool,
+    ) {
+        let Some(target) = self.self_target.as_mut() else {
+            return;
+        };
+        for (index, applies) in schools.into_iter().enumerate() {
+            if applies {
+                if undo {
+                    target.school_damage_taken_multiplier[index] /= multiplier;
+                } else {
+                    target.school_damage_taken_multiplier[index] *= multiplier;
+                }
+            }
+        }
     }
 
     /// Go `CalcDamage` of a magic spell on the player with `OutcomeMagicHitAndCrit`, or with
@@ -141,6 +161,7 @@ impl<A: Agent> Fight<A> {
             threat: 0.0,
         };
         let after_attacker = result.damage;
+        let mut resistance_multiplier = 1.0;
         let state = &self.spells[spell];
         let binary = state.flags.binary;
         if !state.flags.ignore_resists && !binary {
@@ -164,9 +185,13 @@ impl<A: Agent> Fight<A> {
                 (0.25, OUTCOME_PARTIAL_3_4)
             };
             result.damage *= multiplier;
+            resistance_multiplier = multiplier;
             result.outcome |= outcome;
         }
         let after_resistances = result.damage;
+        // Go applyResistances' ArmorAndResistanceMultiplier and PostArmorAndResistanceMultiplier,
+        // which rage from damage taken reads.
+        self.player_hit_resistance = (after_resistances, resistance_multiplier);
         let state = &self.spells[spell];
         if !state.flags.ignore_target_modifiers {
             if state.school & 1 != 0 {
@@ -174,7 +199,7 @@ impl<A: Agent> Fight<A> {
             } else if state.school_index > 1 {
                 result.damage += defender.bonus_spell_damage_taken;
             }
-            result.damage *= defender.damage_taken_multiplier
+            result.damage *= self.player.damage_taken_multiplier
                 * self.school_value(spell, &defender.school_damage_taken_multiplier)
                 * defender.table.damage_taken_multiplier;
         }
@@ -296,6 +321,26 @@ impl<A: Agent> Fight<A> {
         self.deal_damage(sapper.self_spell, result, false);
     }
 
+    /// Go `newBasicExplosiveSpellConfig`'s `ApplyEffects` without the self hit: a rolled magic
+    /// hit scaled by the AoE cap on the one target, dealt after travel when the explosive flies.
+    pub(crate) fn apply_basic_explosive(
+        &mut self,
+        spell: SpellId,
+        target: Side,
+        min: f64,
+        max: f64,
+        aoe_cap_multiplier: f64,
+    ) {
+        // Go sim.Roll.
+        let base = (min + (max - min) * self.random("Damage Roll")) * aoe_cap_multiplier;
+        let result = self.calc_damage(spell, target, base);
+        if self.spells[spell].missile_speed > 0.0 {
+            self.deal_damage_after_travel(spell, result);
+        } else {
+            self.deal_damage(spell, result, false);
+        }
+    }
+
     /// The Chance of Death listener's `OnSpellHitTaken`: a hit that deals damage removes that
     /// much health, the rotation reacts, and at zero health a pending action marks the player
     /// dead unless health came back first.
@@ -304,7 +349,7 @@ impl<A: Agent> Fight<A> {
             return;
         }
         self.remove_health(result.damage);
-        self.react_to_event();
+        self.react_to_event(Side::Player);
         if self.player.health <= 0.0 && !self.death.died {
             self.schedule(self.now, super::PRIORITY_GCD, Action::DeathCheck);
         }

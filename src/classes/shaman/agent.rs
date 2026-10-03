@@ -7,14 +7,25 @@ use crate::{
 };
 
 use super::{
+    masks::{is_class, HOLDS_MELEE},
     spells::{
         chain_lightning::{self, ChainLightning},
-        fire_nova, flame_shock, lava_burst,
+        earth_shock, fire_nova, flame_shock, lava_burst,
         lightning_bolt::{self, Overload},
         searing_totem::{self, SearingTotem},
+        stormstrike::{self, Stormstrike},
+        totems::{self, Expirations, StrengthOfEarth},
     },
-    talents::elemental_focus::{self, ElementalFocus},
+    talents::{
+        elemental_devastation::{self, ElementalDevastation},
+        elemental_focus::{self, ElementalFocus},
+        flurry::{self, Flurry},
+        improved_stormstrike::{self, ImprovedStormstrike},
+        maelstrom_weapon::{self, MaelstromWeapon},
+        rage_of_the_farseer::{self, RageOfTheFarseer},
+    },
 };
+use crate::rotation::Totem;
 
 /// What a Shaman spell does when its effects apply.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -29,6 +40,12 @@ pub(crate) enum ShamanSpell {
     FireNova,
     SearingTotem,
     SearingTotemAttack,
+    EarthShock,
+    StrengthOfEarthTotem,
+    StormstrikeCast,
+    StormstrikeMainHand,
+    StormstrikeOffHand,
+    RageOfTheFarseer,
 }
 
 /// Class auras with Rust behavior.
@@ -36,6 +53,18 @@ pub(crate) enum ShamanSpell {
 pub(crate) enum ShamanAura {
     ElementalFocus,
     Clearcasting,
+    ElementalDevastationTrigger,
+    ElementalDevastation,
+    ImprovedStormstrikeTrigger,
+    ImprovedStormstrike,
+    MaelstromWeaponTrigger,
+    MaelstromWeapon,
+    /// Stormstrike's debuff on the target.
+    Stormstrike,
+    FlurryTrigger,
+    Flurry,
+    RageOfTheFarseer,
+    RockbiterWeapon,
 }
 
 /// Shaman state that Go keeps in the `Shaman` struct and its closures.
@@ -52,6 +81,26 @@ pub(crate) struct ShamanAgent {
     searing_totem: Option<SearingTotem>,
     elemental_focus: Option<ElementalFocus>,
     focus_trigger: elemental_focus::Trigger,
+    totems: Expirations,
+    searing_duration: i64,
+    strength_of_earth: Option<StrengthOfEarth>,
+    stormstrike: Option<Stormstrike>,
+    devastation: Option<ElementalDevastation>,
+    improved_stormstrike: Option<ImprovedStormstrike>,
+    maelstrom: Option<MaelstromWeapon>,
+    maelstrom_chances: maelstrom_weapon::Chances,
+    flurry: Option<Flurry>,
+    /// Flurry's charge cooldown, a Go timer: when it is ready.
+    flurry_icd: i64,
+    /// Melee auto attacks, Go `ProcMaskMeleeWhiteHit`, by spellbook position.
+    white: Vec<bool>,
+    farseer: Option<RageOfTheFarseer>,
+    /// Stormstrike's main hand strike, when the character has a main hand weapon.
+    stormstrike_main_hand: Option<SpellId>,
+    /// Go `HasMHWeapon() || HasOHWeapon()`, Stormstrike's cast condition.
+    stormstrike_weapon: bool,
+    /// Rockbiter Weapon's gain and loss lines.
+    rockbiter_logs: Option<(String, String)>,
 }
 
 /// Whether a prepared input carries the effect of a kind.
@@ -65,6 +114,14 @@ impl ShamanAgent {
         let has = |kind| has_effect(prepared, kind);
         let damage = spell.damage_effect.is_some();
         let id = spell.action_id.clone().unwrap_or_default();
+        // Class spells without a class mask, which Go casts by action ID.
+        let farseer = prepared.effects.iter().any(|effect| {
+            matches!(effect, Effect::RageOfTheFarseer { spell_id, .. }
+                if *spell_id == id.spell_id && id.tag == 0)
+        });
+        if spell.class_spell.is_none() && farseer {
+            return Some(ShamanSpell::RageOfTheFarseer);
+        }
         let searing_attack = prepared.effects.iter().any(|effect| {
             matches!(effect, Effect::SearingTotem { attack_spell_id, .. }
                 if *attack_spell_id == id.spell_id && id.tag == 0)
@@ -90,6 +147,22 @@ impl ShamanAgent {
                 Some(ShamanSpell::SearingTotem)
             }
             "searing_totem" if searing_attack => Some(ShamanSpell::SearingTotemAttack),
+            "earth_shock" if damage && has("earth_shock") => Some(ShamanSpell::EarthShock),
+            "stormstrike_cast" if has("stormstrike") => Some(ShamanSpell::StormstrikeCast),
+            "stormstrike_damage" if has("stormstrike") && id.tag == 1 => {
+                Some(ShamanSpell::StormstrikeMainHand)
+            }
+            "stormstrike_damage" if has("stormstrike") && id.tag == 2 => {
+                Some(ShamanSpell::StormstrikeOffHand)
+            }
+            "basic_totem"
+                if prepared.effects.iter().any(|effect| {
+                    matches!(effect, Effect::StrengthOfEarthTotem { spell_id, .. }
+                        if *spell_id == id.spell_id && id.tag == 0)
+                }) =>
+            {
+                Some(ShamanSpell::StrengthOfEarthTotem)
+            }
             _ => None,
         }
     }
@@ -106,19 +179,60 @@ impl ShamanAgent {
                     (trigger_aura.clone(), ShamanAura::ElementalFocus),
                     (aura.clone(), ShamanAura::Clearcasting),
                 ],
+                Effect::ElementalDevastation {
+                    trigger_aura, aura, ..
+                } => vec![
+                    (
+                        trigger_aura.clone(),
+                        ShamanAura::ElementalDevastationTrigger,
+                    ),
+                    (aura.clone(), ShamanAura::ElementalDevastation),
+                ],
+                Effect::ImprovedStormstrike {
+                    trigger_aura, aura, ..
+                } => vec![
+                    (trigger_aura.clone(), ShamanAura::ImprovedStormstrikeTrigger),
+                    (aura.clone(), ShamanAura::ImprovedStormstrike),
+                ],
+                Effect::MaelstromWeapon {
+                    trigger_aura, aura, ..
+                } => vec![
+                    (trigger_aura.clone(), ShamanAura::MaelstromWeaponTrigger),
+                    (aura.clone(), ShamanAura::MaelstromWeapon),
+                ],
+                Effect::Flurry {
+                    trigger_aura, aura, ..
+                } => vec![
+                    (trigger_aura.clone(), ShamanAura::FlurryTrigger),
+                    (aura.clone(), ShamanAura::Flurry),
+                ],
+                Effect::RageOfTheFarseer { aura, .. } => {
+                    vec![(aura.clone(), ShamanAura::RageOfTheFarseer)]
+                }
+                Effect::RockbiterWeapon { aura, .. } => {
+                    vec![(aura.clone(), ShamanAura::RockbiterWeapon)]
+                }
                 _ => Vec::new(),
+            })
+            .collect();
+        let target_auras: Vec<(String, ShamanAura)> = prepared
+            .effects
+            .iter()
+            .filter_map(|effect| match effect {
+                Effect::Stormstrike { aura, .. } => Some((aura.clone(), ShamanAura::Stormstrike)),
+                _ => None,
             })
             .collect();
         let spell = |exported: &ExportedSpell| ShamanAgent::spell(prepared, exported);
         let mut fight = Fight::new(prepared, ShamanAgent::default(), spell, |unit, label| {
-            (unit == "player")
-                .then(|| {
-                    auras
-                        .iter()
-                        .find(|(name, _)| name == label)
-                        .map(|(_, kind)| *kind)
-                })
-                .flatten()
+            let auras = match unit {
+                "player" => &auras,
+                _ => &target_auras,
+            };
+            auras
+                .iter()
+                .find(|(name, _)| name == label)
+                .map(|(_, kind)| *kind)
         })?;
         let find = |fight: &Fight<ShamanAgent>, spell_id: i32, tag: i32| {
             fight
@@ -127,6 +241,18 @@ impl ShamanAgent {
                 .position(|spell| spell.id.spell_id == spell_id && spell.id.tag == tag)
         };
         fight.agent.overloads = vec![None; fight.spells.len()];
+        fight.agent.maelstrom_chances = vec![None; fight.spells.len()];
+        fight.agent.white = prepared
+            .player
+            .spells
+            .iter()
+            .map(|spell| {
+                spell
+                    .proc_mask
+                    .iter()
+                    .any(|mask| mask == "ProcMaskMeleeMHAuto" || mask == "ProcMaskMeleeOHAuto")
+            })
+            .collect();
         for effect in &prepared.effects {
             match effect {
                 Effect::LightningBolt {
@@ -204,8 +330,10 @@ impl ShamanAgent {
                     attack_damage,
                     magma_totem_aura,
                     flametongue_totem_aura,
+                    duration_ns,
                     ..
                 } => {
+                    fight.agent.searing_duration = *duration_ns;
                     if let Some(attack) = find(&fight, *attack_spell_id, 0) {
                         let magma_totem = fight.player_aura(magma_totem_aura).ok();
                         let flametongue_totem = fight.player_aura(flametongue_totem_aura).ok();
@@ -233,6 +361,118 @@ impl ShamanAgent {
                         *max_stacks,
                     )?;
                     fight.agent.elemental_focus = Some(bound);
+                }
+                Effect::StrengthOfEarthTotem {
+                    aura, duration_ns, ..
+                } => {
+                    fight.agent.strength_of_earth = Some(StrengthOfEarth {
+                        aura: fight.player_aura(aura)?,
+                        duration: *duration_ns,
+                    });
+                }
+                Effect::Stormstrike {
+                    spell_id,
+                    aura,
+                    damage_multiplier,
+                    has_main_hand,
+                    has_off_hand,
+                } => {
+                    fight.agent.stormstrike_weapon = *has_main_hand || *has_off_hand;
+                    fight.agent.stormstrike =
+                        Some(stormstrike::bind(&fight, aura, *damage_multiplier)?);
+                    fight.agent.stormstrike_main_hand =
+                        has_main_hand.then(|| find(&fight, *spell_id, 1)).flatten();
+                }
+                Effect::Flurry {
+                    trigger_aura,
+                    aura,
+                    melee_speed_multiplier,
+                    charge_icd_ns,
+                    ..
+                } => {
+                    fight.agent.flurry = Some(flurry::bind(
+                        &fight,
+                        trigger_aura,
+                        aura,
+                        *melee_speed_multiplier,
+                        *charge_icd_ns,
+                    )?);
+                }
+                Effect::RageOfTheFarseer {
+                    aura,
+                    melee_speed_multiplier,
+                    ..
+                } => {
+                    fight.agent.farseer = Some(rage_of_the_farseer::bind(
+                        &fight,
+                        aura,
+                        *melee_speed_multiplier,
+                    )?);
+                }
+                Effect::RockbiterWeapon {
+                    gain_log,
+                    expire_log,
+                    ..
+                } => fight.agent.rockbiter_logs = Some((gain_log.clone(), expire_log.clone())),
+                Effect::ElementalDevastation {
+                    trigger_aura,
+                    aura,
+                    melee_crit,
+                } => {
+                    let melee = (0..fight.spells.len())
+                        .filter(|&spell| {
+                            let state = &fight.spells[spell];
+                            state.melee_proc && !state.flags.no_spell_mods
+                        })
+                        .collect();
+                    fight.agent.devastation = Some(elemental_devastation::bind(
+                        &mut fight,
+                        trigger_aura,
+                        aura,
+                        *melee_crit,
+                        melee,
+                    )?);
+                }
+                Effect::ImprovedStormstrike {
+                    trigger_aura,
+                    aura,
+                    proc_chance,
+                    spirit_regen_rate_casting,
+                    ..
+                } => {
+                    fight.agent.improved_stormstrike = Some(improved_stormstrike::bind(
+                        &fight,
+                        trigger_aura,
+                        aura,
+                        *proc_chance,
+                        *spirit_regen_rate_casting,
+                    )?);
+                }
+                Effect::MaelstromWeapon {
+                    trigger_aura,
+                    aura,
+                    per_stack,
+                    chances,
+                    ..
+                } => {
+                    for chance in chances {
+                        let slot = fight
+                            .agent
+                            .maelstrom_chances
+                            .get_mut(chance.spell)
+                            .ok_or_else(|| {
+                                format!("Maelstrom Weapon names spell {}", chance.spell)
+                            })?;
+                        *slot = Some(chance.chance);
+                    }
+                    let bolts = fight.spells_with_class(&["lightning_bolt"]);
+                    fight.agent.maelstrom = Some(maelstrom_weapon::bind(
+                        &mut fight,
+                        trigger_aura,
+                        aura,
+                        *per_stack,
+                        bolts,
+                    )?);
                 }
                 _ => {}
             }
@@ -323,11 +563,161 @@ impl Agent for ShamanAgent {
             ShamanSpell::SearingTotem => {
                 let state = Self::searing_totem(fight);
                 searing_totem::apply(fight, spell, &state);
+                let expires = fight.now + fight.agent.searing_duration;
+                fight.agent.totems.set(Totem::Fire, expires);
+            }
+            ShamanSpell::EarthShock => earth_shock::apply(fight, spell, target),
+            ShamanSpell::StormstrikeCast => {
+                let state = fight.agent.stormstrike.expect("Stormstrike is bound");
+                let main_hand = fight.agent.stormstrike_main_hand;
+                state.cast(fight, spell, target, main_hand);
+            }
+            ShamanSpell::StormstrikeMainHand => stormstrike::strike(fight, spell, target, true),
+            ShamanSpell::StormstrikeOffHand => stormstrike::strike(fight, spell, target, false),
+            ShamanSpell::RageOfTheFarseer => {
+                let aura = fight
+                    .agent
+                    .farseer
+                    .expect("Rage of the Farseer is bound")
+                    .aura;
+                fight.activate_aura(aura);
+            }
+            ShamanSpell::StrengthOfEarthTotem => {
+                let totem = fight
+                    .agent
+                    .strength_of_earth
+                    .expect("Strength of Earth Totem is bound");
+                let expires = totems::strength_of_earth(fight, totem);
+                fight.agent.totems.set(Totem::Earth, expires);
             }
             ShamanSpell::SearingTotemAttack => {
                 let base = Self::searing_totem(fight).attack_damage;
                 searing_totem::attack(fight, spell, target, base);
             }
+        }
+    }
+
+    fn reset(fight: &mut Fight<Self>) {
+        fight.agent.totems = Expirations::default();
+        fight.agent.flurry_icd = crate::core::time::STARTING_CD_TIME;
+    }
+
+    /// Stormstrike needs a weapon.
+    fn extra_cast_condition(fight: &Fight<Self>, _spell: SpellId, behavior: ShamanSpell) -> bool {
+        match behavior {
+            ShamanSpell::StormstrikeCast => fight.agent.stormstrike_weapon,
+            _ => true,
+        }
+    }
+
+    fn totem_expiration(fight: &Fight<Self>, totem: Totem) -> i64 {
+        fight.agent.totems.get(totem)
+    }
+
+    /// Go `holdMeleeForCast`: a hardcast holds the melee swing until it completes.
+    fn modify_cast(fight: &mut Fight<Self>, spell: SpellId, _behavior: ShamanSpell) {
+        if !is_class(fight.spells[spell].class_spell.as_deref(), HOLDS_MELEE) {
+            return;
+        }
+        let cast_time = fight.spells[spell].cur_cast.cast_time;
+        let cast_time = fight.apply_cast_speed_for_spell(cast_time, spell);
+        if cast_time > 0 {
+            fight.hold_melee_for_cast(fight.now + cast_time);
+        }
+    }
+
+    fn caster_damage_multiplier(fight: &Fight<Self>, spell: SpellId) -> Option<f64> {
+        fight
+            .agent
+            .stormstrike
+            .and_then(|state| state.caster_multiplier(fight, spell))
+    }
+
+    fn on_spell_hit_dealt(
+        fight: &mut Fight<Self>,
+        _aura: AuraRef,
+        kind: ShamanAura,
+        spell: SpellId,
+        result: &SpellResult,
+    ) {
+        match kind {
+            ShamanAura::ElementalDevastationTrigger => {
+                let state = fight
+                    .agent
+                    .devastation
+                    .expect("Elemental Devastation is bound");
+                state.on_spell_hit_dealt(fight, spell, result);
+            }
+            ShamanAura::FlurryTrigger => {
+                let state = fight.agent.flurry.expect("Flurry is bound");
+                state.on_spell_hit_dealt(fight, spell, result);
+            }
+            ShamanAura::MaelstromWeaponTrigger => {
+                let state = fight.agent.maelstrom.expect("Maelstrom Weapon is bound");
+                let chance = fight.agent.maelstrom_chances[spell];
+                state.on_spell_hit_dealt(fight, spell, result, chance);
+            }
+            _ => {}
+        }
+    }
+
+    fn on_spell_hit_taken(
+        fight: &mut Fight<Self>,
+        _aura: AuraRef,
+        kind: ShamanAura,
+        spell: SpellId,
+        result: &SpellResult,
+    ) {
+        if kind == ShamanAura::Stormstrike {
+            let state = fight.agent.stormstrike.expect("Stormstrike is bound");
+            state.on_spell_hit_taken(fight, spell, result);
+        }
+    }
+
+    fn on_delayed_proc(
+        fight: &mut Fight<Self>,
+        _aura: AuraRef,
+        kind: ShamanAura,
+        spell: SpellId,
+        result: SpellResult,
+    ) {
+        match kind {
+            ShamanAura::FlurryTrigger => {
+                let state = fight.agent.flurry.expect("Flurry is bound");
+                let white = fight.agent.white[spell];
+                let mut icd = fight.agent.flurry_icd;
+                state.handle(fight, &result, white, &mut icd);
+                fight.agent.flurry_icd = icd;
+            }
+            ShamanAura::ElementalDevastationTrigger => fight
+                .agent
+                .devastation
+                .expect("Elemental Devastation is bound")
+                .grant(fight),
+            ShamanAura::ImprovedStormstrikeTrigger => fight
+                .agent
+                .improved_stormstrike
+                .expect("Improved Stormstrike is bound")
+                .grant(fight),
+            ShamanAura::MaelstromWeaponTrigger => fight
+                .agent
+                .maelstrom
+                .expect("Maelstrom Weapon is bound")
+                .grant(fight),
+            _ => {}
+        }
+    }
+
+    fn on_stacks_change(
+        fight: &mut Fight<Self>,
+        _aura: AuraRef,
+        kind: ShamanAura,
+        _old: i32,
+        new: i32,
+    ) {
+        if kind == ShamanAura::MaelstromWeapon {
+            let state = fight.agent.maelstrom.expect("Maelstrom Weapon is bound");
+            state.on_stacks_change(fight, new);
         }
     }
 
@@ -370,14 +760,71 @@ impl Agent for ShamanAgent {
     }
 
     fn on_gain(fight: &mut Fight<Self>, _aura: AuraRef, kind: ShamanAura) {
-        if kind == ShamanAura::Clearcasting {
-            Self::focus(fight).on_gain(fight);
+        match kind {
+            ShamanAura::Clearcasting => Self::focus(fight).on_gain(fight),
+            ShamanAura::ElementalDevastation => fight
+                .agent
+                .devastation
+                .expect("Elemental Devastation is bound")
+                .on_gain(fight),
+            ShamanAura::ImprovedStormstrike => fight
+                .agent
+                .improved_stormstrike
+                .expect("Improved Stormstrike is bound")
+                .on_gain(fight),
+            ShamanAura::Flurry => fight.agent.flurry.expect("Flurry is bound").on_gain(fight),
+            ShamanAura::RageOfTheFarseer => fight
+                .agent
+                .farseer
+                .expect("Rage of the Farseer is bound")
+                .on_gain(fight),
+            ShamanAura::RockbiterWeapon => {
+                if let (Some((line, _)), true) = (&fight.agent.rockbiter_logs, fight.log.is_some())
+                {
+                    let line = line.clone();
+                    fight.player_log(&line);
+                }
+            }
+            _ => {}
         }
     }
 
     fn on_expire(fight: &mut Fight<Self>, _aura: AuraRef, kind: ShamanAura) {
-        if kind == ShamanAura::Clearcasting {
-            Self::focus(fight).on_expire(fight);
+        match kind {
+            ShamanAura::Clearcasting => Self::focus(fight).on_expire(fight),
+            ShamanAura::ElementalDevastation => fight
+                .agent
+                .devastation
+                .expect("Elemental Devastation is bound")
+                .on_expire(fight),
+            ShamanAura::ImprovedStormstrike => fight
+                .agent
+                .improved_stormstrike
+                .expect("Improved Stormstrike is bound")
+                .on_expire(fight),
+            ShamanAura::MaelstromWeapon => fight
+                .agent
+                .maelstrom
+                .expect("Maelstrom Weapon is bound")
+                .on_expire(fight),
+            ShamanAura::Flurry => fight
+                .agent
+                .flurry
+                .expect("Flurry is bound")
+                .on_expire(fight),
+            ShamanAura::RageOfTheFarseer => fight
+                .agent
+                .farseer
+                .expect("Rage of the Farseer is bound")
+                .on_expire(fight),
+            ShamanAura::RockbiterWeapon => {
+                if let (Some((_, line)), true) = (&fight.agent.rockbiter_logs, fight.log.is_some())
+                {
+                    let line = line.clone();
+                    fight.player_log(&line);
+                }
+            }
+            _ => {}
         }
     }
 
@@ -394,6 +841,24 @@ impl Agent for ShamanAgent {
                 let last = fight.agent.focus_trigger;
                 Self::focus(fight).consume(fight, spell, last);
             }
+            ShamanAura::ImprovedStormstrikeTrigger => {
+                if fight.spells[spell].class_spell.as_deref() == Some("stormstrike_cast") {
+                    fight
+                        .agent
+                        .improved_stormstrike
+                        .expect("Improved Stormstrike is bound")
+                        .on_cast_complete(fight, spell);
+                }
+            }
+            ShamanAura::MaelstromWeapon => {
+                let bolt = fight.spells[spell].class_spell.as_deref() == Some("lightning_bolt");
+                fight
+                    .agent
+                    .maelstrom
+                    .expect("Maelstrom Weapon is bound")
+                    .on_cast_complete(fight, bolt);
+            }
+            _ => {}
         }
     }
 }

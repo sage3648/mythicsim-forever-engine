@@ -37,6 +37,7 @@ pub(crate) struct ClassGate {
 /// Effects of races, items and raid buffs, which every class shares.
 const COMMON_EFFECTS: &[&str] = &[
     "aura_should_refresh",
+    "basic_explosive",
     "berserking",
     "blood_fury",
     "chance_of_death",
@@ -45,15 +46,22 @@ const COMMON_EFFECTS: &[&str] = &[
     "crusader",
     "dragonbreath_chili",
     "energize_on_use",
+    "energize_proc",
     "eureka",
+    "extra_attack_proc",
     "fixed_uptime_aura",
     "goblin_sapper",
     "inert_listener",
     "inert_pet",
     "judgement_of_wisdom",
+    "parry_haste",
     "potion_mana",
+    "player_damage_taken",
+    "potion_resource",
+    "rage_bar",
     "read_ley_line",
     "shatter_curse",
+    "spell_data_damage_proc",
     "stat_auras",
     "stoneform",
     "sunder_armor_ramp",
@@ -63,7 +71,7 @@ const COMMON_EFFECTS: &[&str] = &[
 ];
 
 /// Every class with an implemented gate.
-fn gates() -> [&'static ClassGate; 7] {
+fn gates() -> [&'static ClassGate; 9] {
     [
         &classes::mage::prepared::GATE,
         &classes::druid::prepared::GATE,
@@ -72,6 +80,8 @@ fn gates() -> [&'static ClassGate; 7] {
         &classes::warlock::prepared::GATE,
         &classes::priest::prepared::GATE,
         &classes::rogue::prepared::GATE,
+        &classes::warrior::prepared::GATE,
+        &classes::hunter::prepared::GATE,
     ]
 }
 
@@ -98,10 +108,23 @@ fn common_spell_capability(spell: &Spell, prepared: &PreparedV2) -> Option<&'sta
     let item = id.item_id;
     prepared.effects.iter().find_map(|effect| match effect {
         Effect::PotionMana { item_id, .. } if *item_id == item => Some("potion_mana"),
+        Effect::PotionResource { item_id, .. } if *item_id == item => Some("potion_resource"),
+        // Class spells Go registers without a class mask, named by their effect's spell.
+        Effect::Bloodrage { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
+            Some("bloodrage")
+        }
+        Effect::HeroicStrikeQueue { strikes, .. }
+            if id.tag == 1 && strikes.iter().any(|strike| strike.spell_id == id.spell_id) =>
+        {
+            Some("heroic_strike_queue")
+        }
         Effect::ConjuredMana { item_id, .. } if *item_id == item => Some("conjured_mana"),
         Effect::ConjuredEnergy { item_id, .. } if *item_id == item => Some("conjured_energy"),
         Effect::GoblinSapper { item_id, .. } if *item_id == item && id.tag == 0 => {
             Some("goblin_sapper")
+        }
+        Effect::BasicExplosive { item_id, .. } if *item_id == item && id.tag == 0 => {
+            Some("basic_explosive")
         }
         Effect::EnergizeOnUse { item_id, .. } if *item_id == item => Some("energize_on_use"),
         Effect::Eureka { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
@@ -164,10 +187,18 @@ fn common_claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         | Effect::ReadLeyLine { aura, .. }
         | Effect::TemporaryStats { aura, .. } => vec![("player", aura)],
         Effect::JudgementOfWisdom { aura, .. } => vec![("target", aura)],
+        Effect::RageBar { aura, .. } => vec![("player", aura)],
+        Effect::ExtraAttackProc { trigger_aura, .. } => vec![("player", trigger_aura)],
         Effect::ChanceOfDeath { aura } => vec![("player", aura)],
-        Effect::Crusader { trigger_aura, .. } | Effect::DragonbreathChili { trigger_aura, .. } => {
-            vec![("player", trigger_aura)]
-        }
+        Effect::ParryHaste { unit, aura } => match unit.as_str() {
+            "player" => vec![("player", aura)],
+            "target" => vec![("target", aura)],
+            _ => Vec::new(),
+        },
+        Effect::EnergizeProc { trigger_aura, .. } => vec![("player", trigger_aura)],
+        Effect::Crusader { trigger_aura, .. }
+        | Effect::DragonbreathChili { trigger_aura, .. }
+        | Effect::SpellDataDamageProc { trigger_aura, .. } => vec![("player", trigger_aura)],
         Effect::WindfuryTotem {
             trigger_aura,
             proc_aura,
@@ -283,6 +314,105 @@ fn fixed_stat_changes(prepared: &PreparedV2) -> Vec<String> {
         .collect()
 }
 
+/// Stats that change the player's health, which stay fixed while the player tanks. The
+/// target's swings carry their rolls for each stat aura combination.
+const DEFENDER_STATS: &[&str] = &["Stamina", "Health"];
+
+/// Effects whose behaviors act on the hits the player takes from the target's swings.
+const HIT_TAKEN_EFFECTS: &[&str] = &[
+    "chance_of_death",
+    "parry_haste",
+    "rage_bar",
+    "inert_listener",
+];
+
+/// Callbacks the target's own swings fire on the target.
+const TARGET_CASTER_CALLBACKS: &[&str] = &[
+    "on_apply_effects",
+    "on_cast_complete",
+    "on_spell_hit_dealt",
+    "on_periodic_damage_dealt",
+];
+
+/// What the runtime cannot follow once the target swings at the player: listeners of the
+/// swings it does not run, auras something in scope activates that change the swings, and
+/// defender stats a stat aura changes.
+fn tank_limits(
+    prepared: &PreparedV2,
+    enemy: &crate::contracts::prepared_v2::Enemy,
+    claims: &dyn Fn(&Effect) -> Vec<(&'static str, String)>,
+) -> Vec<String> {
+    let mut reasons = Vec::new();
+    // An aura only becomes active in the runtime through an effect that names it.
+    let mut named: BTreeSet<String> = BTreeSet::new();
+    for effect in &prepared.effects {
+        for (unit, label) in claims(effect) {
+            named.insert(format!("{unit}:{label}"));
+        }
+        match effect {
+            Effect::StatAuras { auras, .. } => {
+                named.extend(auras.iter().map(|label| format!("player:{label}")));
+            }
+            Effect::FixedUptimeAura { aura, .. } => {
+                named.insert(format!("player:{aura}"));
+            }
+            _ => {}
+        }
+    }
+    let can_be_active = |unit: &str, aura: &crate::contracts::prepared_v2::Aura| {
+        aura.active || named.contains(&format!("{unit}:{}", aura.label))
+    };
+    for aura in &prepared.player.auras {
+        if !can_be_active("player", aura)
+            || !aura.callbacks.iter().any(|c| c == "on_spell_hit_taken")
+        {
+            continue;
+        }
+        let handled = prepared.effects.iter().any(|effect| {
+            HIT_TAKEN_EFFECTS.contains(&effect.kind())
+                && claims(effect)
+                    .iter()
+                    .any(|(unit, label)| *unit == "player" && *label == aura.label)
+        });
+        if !handled {
+            reasons.push(format!(
+                "player aura {:?} reacts to the target's swings",
+                aura.label
+            ));
+        }
+    }
+    for aura in &prepared.target.auras {
+        if can_be_active("target", aura)
+            && aura
+                .callbacks
+                .iter()
+                .any(|c| TARGET_CASTER_CALLBACKS.contains(&c.as_str()))
+        {
+            reasons.push(format!(
+                "target aura {:?} reacts to the target's own swings",
+                aura.label
+            ));
+        }
+    }
+    for aura in &enemy.changing_auras {
+        if named.contains(aura) {
+            reasons.push(format!("{aura} changes the target's swings at the player"));
+        }
+    }
+    for effect in &prepared.effects {
+        if let Effect::StatAuras { auras, changed, .. } = effect {
+            for stat in changed {
+                if DEFENDER_STATS.contains(&stat.as_str()) {
+                    reasons.push(format!(
+                        "stat auras {auras:?} change {stat}, which the player's health holds fixed"
+                    ));
+                }
+            }
+        }
+    }
+    reasons
+}
+
 /// Go `GetAPLSpell`: the first APL-flagged spell with the action ID, otherwise the first
 /// registered one, as a spellbook position. The potion action names the first combat
 /// potion. A missing spell drops the rotation action in Go.
@@ -368,9 +498,14 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
             .collect::<Vec<_>>()
     };
     let mut required: BTreeSet<&str> = BTreeSet::new();
+    let no_auras = Vec::new();
     for (unit, auras) in [
         ("player", &player.auras),
         ("target", &prepared.target.auras),
+        (
+            "pet",
+            prepared.pets.first().map_or(&no_auras, |pet| &pet.auras),
+        ),
     ] {
         for aura in auras {
             if !aura.active || !aura.has_event_callbacks() {
@@ -393,10 +528,64 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
         }
     }
 
+    // A simulated pet needs a class effect that runs it, which claims the pet by its label.
+    if prepared.pets.len() > 1 {
+        reasons.push("more than one simulated pet is unsupported".into());
+    }
+    for pet in &prepared.pets {
+        let claimant = prepared.effects.iter().find(|effect| {
+            claims(effect)
+                .iter()
+                .any(|(u, label)| *u == "pet unit" && *label == pet.label)
+        });
+        match claimant {
+            Some(effect) => {
+                required.insert(effect.kind());
+            }
+            None => reasons.push(format!("pet {:?} has no behavior", pet.label)),
+        }
+        // Go passes the owner's stat changes to a dynamic pet at its next heartbeat.
+        let owner_stats_change = prepared.effects.iter().any(|effect| {
+            matches!(
+                effect,
+                Effect::StatAuras { .. }
+                    | Effect::BloodFury { .. }
+                    | Effect::TemporaryStats { .. }
+                    | Effect::Crusader { .. }
+            )
+        });
+        if pet.dynamic_stats && owner_stats_change {
+            reasons.push(format!(
+                "pet {:?} inherits the owner's stat changes, which is unsupported",
+                pet.label
+            ));
+        }
+    }
+    if let Some(enemy) = &prepared.enemy {
+        reasons.extend(tank_limits(prepared, enemy, &claims));
+    }
+
     if let Some(rotation) = rotation {
         reasons.extend(unknown_aura_conditions(prepared, rotation));
         reasons.extend(aura_refresh_conditions(prepared, rotation));
+        if player.class != "ClassShaman" {
+            for item in &rotation.priority_list {
+                let mut totems = false;
+                if let Some(condition) = &item.condition {
+                    condition.visit(&mut |value| {
+                        totems |= matches!(value, Value::TotemRemainingTime { .. })
+                    });
+                }
+                if totems {
+                    reasons.push(format!(
+                        "rotation item {}: totemRemainingTime needs a Shaman",
+                        item.position
+                    ));
+                }
+            }
+        }
         reasons.extend(energy_without_bar(prepared, rotation));
+        reasons.extend(rage_without_bar(prepared, rotation));
         let mut reachable = Vec::new();
         let mut registered_prepull = 0;
         // Prepull parsing accepts only casts.
@@ -449,6 +638,23 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
                     unknown.insert(id.clone());
                 }
             }
+            // Go newHardcastAction: a tank's hardcast drops its avoidance and can be pushed back.
+            // A hardcast that cannot be pushed back only holds reduced avoidance, whose rolls the
+            // exporter reads.
+            let held = !spell.has_flag("SpellFlagChanneled")
+                && !spell.has_flag("SpellFlagPushback")
+                && prepared
+                    .enemy
+                    .as_ref()
+                    .is_some_and(|enemy| !enemy.reduced_avoidance_rolls.is_empty());
+            if prepared.enemy.is_some()
+                && (spell.default_cast.cast_time_ns > 0 || spell.has_flag("SpellFlagChanneled"))
+                && !held
+            {
+                limited.insert(format!(
+                    "rotation reaches {id}, a hardcast while the target swings at the player"
+                ));
+            }
             for limit in runtime_limits(spell, (gate.spell)(spell).is_some()) {
                 limited.insert(format!(
                     "rotation reaches {id}, which uses unsupported {limit}"
@@ -474,6 +680,32 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
     let mut all = missing;
     all.extend(reasons);
     all
+}
+
+/// Go gives `currentRage` no value on a unit without a rage bar, which drops the term; the
+/// runtime reads the bar, so such a rotation is unsupported.
+fn rage_without_bar(prepared: &PreparedV2, rotation: &Rotation) -> Vec<String> {
+    let has_bar = prepared
+        .effects
+        .iter()
+        .any(|effect| matches!(effect, Effect::RageBar { .. }));
+    if has_bar {
+        return Vec::new();
+    }
+    let mut reasons = Vec::new();
+    for item in &rotation.priority_list {
+        let mut uses = false;
+        if let Some(condition) = &item.condition {
+            condition.visit(&mut |value| uses |= matches!(value, Value::CurrentRage));
+        }
+        if uses {
+            reasons.push(format!(
+                "rotation item {} reads rage, which the player lacks",
+                item.position
+            ));
+        }
+    }
+    reasons
 }
 
 /// Go gives energy and combo point values no value on a unit without an energy bar, which
@@ -576,11 +808,15 @@ fn unreachable_with_one_target(prepared: &PreparedV2, rotation: &Rotation) -> BT
     let dot = |id: &ActionId| {
         rotation_spell_index(prepared, id).and_then(|index| dot_owner(prepared, index))
     };
+    let pet_auras = crate::core::fight::pet::pet_agent_auras(prepared);
+    let pet_aura_known =
+        |pet: usize, id: &ActionId| pet_auras.get(pet).is_some_and(|auras| auras.contains(id));
     let lookup = Lookup {
         aura: &aura,
         target_aura: &target_aura,
         spell: &spell,
         dot: &dot,
+        pet_aura_known: &pet_aura_known,
     };
     rotation
         .priority_list
@@ -609,11 +845,15 @@ fn unknown_aura_conditions(prepared: &PreparedV2, rotation: &Rotation) -> Vec<St
     let dot = |id: &ActionId| {
         rotation_spell_index(prepared, id).and_then(|index| dot_owner(prepared, index))
     };
+    let pet_auras = crate::core::fight::pet::pet_agent_auras(prepared);
+    let pet_aura_known =
+        |pet: usize, id: &ActionId| pet_auras.get(pet).is_some_and(|auras| auras.contains(id));
     let lookup = Lookup {
         aura: &aura,
         target_aura: &target_aura,
         spell: &spell,
         dot: &dot,
+        pet_aura_known: &pet_aura_known,
     };
     let mut reasons = Vec::new();
     for item in &rotation.priority_list {
@@ -637,6 +877,9 @@ fn unknown_aura_conditions(prepared: &PreparedV2, rotation: &Rotation) -> Vec<St
                 }
                 Value::TargetAuraIsActive(id) if !target_known(id) => {
                     unknown.push(("auraIsActive on the target", id.to_string()))
+                }
+                Value::TargetAuraNumStacks(id) if !target_known(id) => {
+                    unknown.push(("auraNumStacks on the target", id.to_string()))
                 }
                 Value::AuraNumStacks(id) if !known(id) => {
                     unknown.push(("auraNumStacks", id.to_string()))

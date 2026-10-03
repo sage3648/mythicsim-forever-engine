@@ -8,10 +8,10 @@ import (
 	"github.com/wowsims/forever/sim/core"
 )
 
-// Whether a registered spell can hit the player in scope: the Goblin Sapper Charge's half
-// that goes off in the thrower's face.
-func playerTakesDamage(character *core.Character) bool {
-	return character.GetSpell(core.GoblinSapperActionID.WithTag(1)) != nil
+// Whether something can hit the player in scope: the Goblin Sapper Charge's half that goes
+// off in the thrower's face, or the target's swings when the player tanks it.
+func playerTakesDamage(character *core.Character, target *core.Unit) bool {
+	return character.GetSpell(core.GoblinSapperActionID.WithTag(1)) != nil || target.CurrentTarget == &character.Unit
 }
 
 // The player's attack table against itself, which a spell that hits the player rolls on.
@@ -31,10 +31,6 @@ func selfAttackTable(character *core.Character, unrepresented *[]string) AttackT
 // consumes.go newBasicExplosiveSpellConfig for the Goblin Sapper Charge: a rolled Fire hit on
 // every target, scaled by the AoE cap, dealt at once, then a second roll that hits the player.
 func goblinSapperEffect(character *core.Character, unrepresented *[]string) map[string]any {
-	// Shatter Curse changes the damage the player takes, which the runtime holds fixed.
-	if character.GetAura("Shatter Curse") != nil {
-		*unrepresented = append(*unrepresented, "Shatter Curse changes the damage the sapper deals to the player")
-	}
 	self := character.GetSpell(core.GoblinSapperActionID.WithTag(1))
 	if self == nil {
 		*unrepresented = append(*unrepresented, fmt.Sprintf("Goblin Sapper Charge %s has no self damage spell", core.GoblinSapperActionID))

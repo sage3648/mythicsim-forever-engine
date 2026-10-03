@@ -81,6 +81,13 @@ Sweeps of [its variants](validation/2026-10-04-elemental-shaman-sweep.json) and 
 [every Shaman race](validation/2026-10-04-elemental-shaman-race-sweep.json) match on all
 48 variants.
 
+The production Enhancement Shaman build, an Orc with a Crusader two-hander, Rockbiter, the
+party Windfury Totem and Battle Shout, Strength of Earth and Searing Totems, Stormstrike,
+Flurry, Maelstrom Weapon, Elemental Devastation and Rage of the Farseer, matches the pinned
+Go engine at 621.475 DPS. Sweeps of [its variants](validation/2026-10-04-enhancement-shaman-sweep.json)
+and of [every Shaman race](validation/2026-10-04-enhancement-shaman-race-sweep.json) match
+on every supported variant.
+
 The production Shadow Priest build matches too: an Undead priest with a prepull
 Shadowform and Mind Blast, Shadow Word: Pain, Devouring Plague, Shadow Word: Death with
 Early Demise, Mind Flay channels the rotation interrupts, a strict Inner Focus and Mind
@@ -98,6 +105,17 @@ taken modifier and Searing Light. [Sweeps](validation/2026-10-04-smite-priest-sw
 also [across races](validation/2026-10-04-smite-priest-race-sweep.json), match Go on all
 48 variants, and so does every race on its
 [race board](validation/2026-10-04-smite-priest-race-boards.json).
+
+The production Marksmanship Hunter is the first build with ranged auto attacks: a Human
+with no pet, Auto Shot timed by the rotation's time to the next shot, a prepull Aspect of
+the Hawk and Aimed Shot, Multi-Shot and Sniper Shot over ranged hasted casts, Serpent Sting
+with its ranged attack power share, Summon Hawk and its two hawks, Rapid Fire, Deadly
+Aspects' Quick Shots and the party Battle Shout, at 678.423 DPS. Its
+[sweep](validation/2026-10-04-marksmanship-hunter-sweep.json) matches Go on all 24
+variants, including those in melee range, where the main hand swings and Go's Raptor Strike
+replacement reacts before each swing, and so does a
+[race sweep](validation/2026-10-04-hunter-race-sweep.json) across Human, Dwarf, Night Elf,
+Orc, Troll and Tauren.
 
 The production Feral (cat) Druid matches at 578.870 DPS: a Night Elf starting in Cat Form
 with a prepull Prowl into Ravage, Shred building combo points with Blood Frenzy, Rip's bleed
@@ -121,6 +139,57 @@ and the raid's ramped Sunder Armor, at 510.849 DPS. Its
 [sweep](validation/2026-10-04-destruction-warlock-sweep.json) matches Go on all 24
 variants, and a [race sweep](validation/2026-10-04-warlock-race-sweep.json) drawing
 Human, Gnome with Eureka!, Orc and Undead matches on all 12.
+
+The production Combat Rogue build matches too, at 616.136 DPS: an Undead dagger rogue
+whose energy ticks run as Go's simulation task, with Backstab and Puncturing Wounds,
+Slice and Dice and Eviscerate splitting their metrics by combo points, Relentless Strikes,
+Ruthlessness, Adrenaline Rush, Blade Flurry, Instant and Deadly Poison, Thistle Tea,
+Shadowcraft Armor's energize, Windfury Totem, Crusader, Dragonbreath Chili and the Goblin
+Sapper Charge, whose hit on the player removes health through Chance of Death.
+[Sweeps](validation/2026-10-04-combat-rogue-sweep.json) of the request, also
+[in melee range](validation/2026-10-04-combat-rogue-melee-sweep.json) and
+[across every Rogue race](validation/2026-10-04-combat-rogue-race-sweep.json), match Go
+on all 72 variants.
+The production Retribution Paladin build is the first melee build: a Human with a
+two-handed weapon twisting Seal of Command and Seal of Righteousness through Twist of
+Light's Echoes, Judgement, Holy Strike, Hammer of Wrath in the execute phase, Consecration,
+Vengeance, Vindication, Sanctified Judgement and Sacred Arbiter, with Crusader, the party
+Windfury Totem and Battle Shout, Dragonbreath Chili and the raid's ramped Sunder Armor, at
+671.848 DPS. Its [sweep](validation/2026-10-04-retribution-paladin-sweep.json) and a
+[race sweep](validation/2026-10-04-retribution-paladin-race-sweep.json) across Human,
+Dwarf and Undead match Go on every supported variant. The production Shockadin hybrid
+matches too, at 717.022 DPS: a prepull Divine Favor and Seal of Righteousness, Judgement,
+Consecration with Consecrated Ground's mark, Hammer of Wrath, Holy Strike and Holy Shock,
+with the Storm Gauntlets' Nature proc, and its
+[race sweep](validation/2026-10-04-shockadin-paladin-sweep.json) matches on all 24
+variants.
+
+The production Fury Warrior build is the first with a rage bar: a Human dual wielding
+Ironfoe in Berserker Stance, rage from white hits and from the sapper's hit on the player,
+Bloodthirst, Whirlwind with Raging Blows, Execute in the execute phase, Hamstring, a
+prepull Bloodrage, Death Wish, Recklessness, Deep Wounds, Flurry, Unbridled Wrath, Anger
+Management, Ironfoe's extra attacks, the Mighty Rage Potion, Windfury Totem, Crusader,
+Dragonbreath Chili and the Goblin Sapper Charge, at 847.464 DPS. Queued Heroic Strike and
+Cleave, which replace main hand swings, match too.
+[Sweeps](validation/2026-10-04-warrior-sweep.json) of the request and
+[across every Warrior race](validation/2026-10-04-warrior-race-sweep.json) match Go on 42
+of 48 variants; the other six drop Expose Armor, so the rotation could stack the warrior's
+own Sunder Armor beside the raid's, which is rejected. All ten requests on the Warrior
+[race board](validation/2026-10-04-warrior-race-boards.json) match.
+
+The production Affliction Warlock build matches at 541.885 DPS: a Gnome warlock with
+a summoned Succubus, which the runtime simulates as its own unit with auto attacks,
+mana and Lash of Pain, Corruption, Bane of Agony with Amplify Curse, Immolate and
+Shadow Bolt with Nightfall's instant Shadow Trance. Its
+[sweep](validation/2026-10-04-affliction-warlock-sweep.json) matches Go on all 24
+variants.
+
+The production Demonology Warlock build matches at 610.212 DPS: a Gnome warlock with
+Demonic Pact keeping the sacrificed Imp's buff while the Succubus is out, Decimation in
+the execute phase, Demonic Brand charges the Succubus spends for extra hits, and
+Demonic Energies' share of Life Tap for the demon. Its
+[sweep](validation/2026-10-04-demonology-warlock-sweep.json) matches Go on all 24
+variants.
 
 Every race that can be a Mage is supported: Human, Gnome, Undead, Troll with
 Berserking, Orc with Blood Fury and Shatter Curse, and High Order Skyborne with Read

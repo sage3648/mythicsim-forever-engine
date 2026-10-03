@@ -18,6 +18,7 @@ pub(crate) const OUTCOME_DODGE: u16 = 1 << 6;
 pub(crate) const OUTCOME_GLANCE: u16 = 1 << 7;
 pub(crate) const OUTCOME_PARRY: u16 = 1 << 8;
 pub(crate) const OUTCOME_BLOCK: u16 = 1 << 9;
+pub(crate) const OUTCOME_CRUSH: u16 = 1 << 10;
 /// Go outcome appliers the runtime implements.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Outcome {
@@ -27,12 +28,21 @@ pub(crate) enum Outcome {
     TickMagicCrit,
     /// Go `OutcomeAlwaysHitNoHitCounter`.
     AlwaysHitNoHitCounter,
+    /// Go `OutcomeAlwaysHit`: a hit that counts, a partial resist included.
+    AlwaysHit,
     /// Go `OutcomeMagicHitNoHitCounter`: a miss still counts.
     MagicHitNoHitCounter,
+    /// Go `OutcomeTickPhysicalCrit`.
+    TickPhysicalCrit,
+    /// Go `Spell.OutcomeTickMagicHitAndCrit`: a tick that rolls to hit, then to crit.
+    TickMagicHitAndCrit,
+    /// A melee or ranged attack table applier, for a spell of any school.
+    Table(super::melee::PhysicalOutcome),
 }
 
-/// Go `OutcomeLanded`; the runtime has no crushing blows.
-pub(crate) const OUTCOME_LANDED: u16 = OUTCOME_HIT | OUTCOME_CRIT | OUTCOME_GLANCE | OUTCOME_BLOCK;
+/// Go `OutcomeLanded`.
+pub(crate) const OUTCOME_LANDED: u16 =
+    OUTCOME_HIT | OUTCOME_CRIT | OUTCOME_CRUSH | OUTCOME_GLANCE | OUTCOME_BLOCK;
 
 /// Go `SpellResult`, carried by value until its damage is dealt.
 #[derive(Clone, Copy, Debug)]
@@ -79,13 +89,15 @@ impl SpellResult {
             format!("Crit{partial}")
         } else if self.outcome & OUTCOME_HIT != 0 {
             format!("Hit{partial}")
+        } else if self.outcome & OUTCOME_CRUSH != 0 {
+            "Crush".into()
         } else {
             "Empty".into()
         }
     }
 
     /// Go `SpellResult.DamageString`.
-    fn damage_string(&self) -> String {
+    pub(crate) fn damage_string(&self) -> String {
         if self.landed() {
             format!("{} for {:.3} damage", self.outcome_string(), self.damage)
         } else {
@@ -109,9 +121,20 @@ impl<A: Agent> Fight<A> {
     /// Go `Unit.GetSpellDamageValue`: generic plus school spell damage.
     pub(crate) fn spell_power(&self, spell: SpellId) -> f64 {
         let state = &self.spells[spell];
-        self.player.powers.spell_damage
+        self.unit(state.caster).powers.spell_damage
             + state.bonus_spell_damage
-            + self.school_value(spell, &self.config.school_damage)
+            + self.school_value(spell, &self.unit_config(state.caster).school_damage)
+    }
+
+    /// Go `Spell.ThreatFromDamage`.
+    pub(crate) fn threat_of(&self, spell: SpellId, result: &SpellResult) -> f64 {
+        if result.landed() {
+            let state = &self.spells[spell];
+            (result.damage * state.threat_multiplier + state.flat_threat_bonus)
+                * self.unit(state.caster).threat_multiplier
+        } else {
+            0.0
+        }
     }
 
     /// Go `Spell.BonusDamage` for a magic spell.
@@ -130,14 +153,18 @@ impl<A: Agent> Fight<A> {
         if state.flags.ignore_attacker_modifiers {
             return 1.0;
         }
+        let config = self.unit_config(state.caster);
         let additive = if periodic {
-            state.damage_multiplier_additive + self.config.dot_damage_multiplier_additive - 1.0
+            state.damage_multiplier_additive + config.dot_damage_multiplier_additive - 1.0
         } else {
             state.damage_multiplier_additive + state.direct_damage_multiplier_additive
         };
-        let internal = self.config.damage_dealt_multiplier
-            * self.school_value(spell, &self.player.school_damage_dealt_multiplier)
-            * self.config.table.damage_dealt_multiplier;
+        let internal = config.damage_dealt_multiplier
+            * self.school_value(
+                spell,
+                &self.unit(state.caster).school_damage_dealt_multiplier,
+            )
+            * config.table.damage_dealt_multiplier;
         internal * state.damage_multiplier * additive
     }
 
@@ -147,9 +174,14 @@ impl<A: Agent> Fight<A> {
         if state.flags.ignore_target_modifiers {
             return 1.0;
         }
-        self.config.target_damage_taken_multiplier
+        let multiplier = self.config.target_damage_taken_multiplier
             * self.school_value(spell, &self.target.school_damage_taken_multiplier)
-            * self.config.table.damage_taken_multiplier
+            * self.unit_config(state.caster).table.damage_taken_multiplier;
+        // Go's DamageDoneByCasterExtraMultiplier handlers, multiplied in after the rest.
+        match A::caster_damage_multiplier(self, spell) {
+            Some(caster) => multiplier * caster,
+            None => multiplier,
+        }
     }
 
     fn resist(&self, spell: SpellId, binary: bool) -> f64 {
@@ -161,11 +193,12 @@ impl<A: Agent> Fight<A> {
         } else {
             self.target.resistance[state.school_index]
         };
+        let config = self.unit_config(state.caster);
         resist_coefficient(
             resistance,
-            self.config.spell_piercing,
-            self.config.player_level,
-            self.config.target_level,
+            config.spell_piercing,
+            config.player_level,
+            config.target_level,
             binary,
         )
     }
@@ -173,9 +206,10 @@ impl<A: Agent> Fight<A> {
     /// Go `Spell.SpellHitChance`.
     pub(crate) fn spell_hit_chance(&self, spell: SpellId) -> f64 {
         let state = &self.spells[spell];
-        let mut hit = self.config.spell_hit_percent + state.bonus_hit_percent;
+        let config = self.unit_config(state.caster);
+        let mut hit = config.spell_hit_percent + state.bonus_hit_percent;
         if state.class_spell_mask {
-            hit += self.school_value(spell, &self.config.school_bonus_hit_chance);
+            hit += self.school_value(spell, &config.school_bonus_hit_chance);
         }
         hit / 100.0
     }
@@ -183,11 +217,12 @@ impl<A: Agent> Fight<A> {
     /// Go `Spell.SpellCritChance`.
     pub(crate) fn spell_crit_chance(&self, spell: SpellId) -> f64 {
         let state = &self.spells[spell];
-        let crit = self.player.powers.spell_crit_percent
+        let config = self.unit_config(state.caster);
+        let crit = self.unit(state.caster).powers.spell_crit_percent
             + state.bonus_crit_percent
-            + self.config.table.bonus_spell_crit_percent
-            - self.config.target_reduced_crit_taken_percent;
-        (crit / 100.0 - self.config.table.spell_crit_suppression).max(0.0)
+            + config.table.bonus_spell_crit_percent
+            - config.target_reduced_crit_taken_percent;
+        (crit / 100.0 - config.table.spell_crit_suppression).max(0.0)
     }
 
     /// Go `CalcDamage` with `OutcomeMagicHitAndCrit`.
@@ -220,7 +255,48 @@ impl<A: Agent> Fight<A> {
         self.calc_damage_internal(spell, target, base, attacker, Outcome::MagicHit)
     }
 
-    /// Go `calcDamageInternal` for a direct magic spell.
+    /// Go `Spell.BonusDamage`: physical bonus damage for a physical spell, spell power and
+    /// the target's school bonus otherwise.
+    pub(crate) fn school_bonus_damage(&self, spell: SpellId) -> f64 {
+        if self.spells[spell].school & 1 != 0 {
+            self.spells[spell].bonus_base_damage + self.config.physical_damage
+        } else {
+            self.bonus_damage(spell)
+        }
+    }
+
+    /// Go `CalcDamage` with any outcome applier, for a spell of any school: armor for a
+    /// physical spell, the partial resist roll and spell damage taken otherwise.
+    pub(crate) fn calc_damage_with(
+        &mut self,
+        spell: SpellId,
+        target: Side,
+        base_damage: f64,
+        outcome: Outcome,
+    ) -> SpellResult {
+        let attacker = self.attacker_multiplier(spell, false);
+        let mut base = base_damage;
+        let coefficient = self.spells[spell].bonus_coefficient;
+        if coefficient > 0.0 {
+            base += coefficient * self.school_bonus_damage(spell);
+        } else if self.spells[spell].school & 1 != 0 {
+            base += self.school_bonus_damage(spell);
+        }
+        self.calc_damage_internal(spell, target, base, attacker, outcome)
+    }
+
+    /// Go `CalcDamage` with a given outcome applier.
+    pub(crate) fn calc_damage_with_outcome(
+        &mut self,
+        spell: SpellId,
+        target: Side,
+        base_damage: f64,
+        outcome: Outcome,
+    ) -> SpellResult {
+        self.calc_damage_with(spell, target, base_damage, outcome)
+    }
+
+    /// Go `calcDamageInternal` for a direct spell of any school.
     fn calc_damage_internal(
         &mut self,
         spell: SpellId,
@@ -238,9 +314,19 @@ impl<A: Agent> Fight<A> {
         result.damage *= attacker;
         let after_attacker = result.damage;
 
-        // Go applyResistances: binary spells and ignored resists take no partial roll.
+        // Go applyResistances: binary spells and ignored resists take no partial roll; a
+        // physical hit takes armor instead, and a physical tick takes none.
         let binary = self.spells[spell].flags.binary;
-        if !self.spells[spell].flags.ignore_resists && !binary {
+        let physical = self.spells[spell].school & 1 != 0;
+        let periodic = matches!(
+            outcome,
+            Outcome::Tick | Outcome::TickMagicCrit | Outcome::TickMagicHitAndCrit
+        );
+        if physical {
+            if !self.spells[spell].flags.ignore_resists && !periodic {
+                result.damage *= self.armor_modifier(self.caster(spell));
+            }
+        } else if !self.spells[spell].flags.ignore_resists && !binary {
             let roll = self.random("Partial Resist");
             let (none, quarter, half) = partial_resist_thresholds(self.resist(spell, false));
             let (multiplier, outcome) = if roll > none {
@@ -259,7 +345,9 @@ impl<A: Agent> Fight<A> {
 
         // Go applyTargetModifiers.
         if !self.spells[spell].flags.ignore_target_modifiers {
-            if self.spells[spell].school_index > 1 {
+            if physical {
+                result.damage += self.config.melee.defender_bonus_physical_damage_taken;
+            } else if self.spells[spell].school_index > 1 {
                 result.damage += self.config.target_bonus_spell_damage_taken;
             }
             result.damage *= self.target_multiplier(spell);
@@ -288,36 +376,8 @@ impl<A: Agent> Fight<A> {
             );
         }
 
-        result.threat = if result.landed() {
-            let state = &self.spells[spell];
-            (result.damage * state.threat_multiplier + state.flat_threat_bonus)
-                * self.player.threat_multiplier
-        } else {
-            0.0
-        };
+        result.threat = self.threat_of(spell, &result);
         result
-    }
-
-    /// Go `ApplyPostOutcomeDamageModifiers`: the target's dynamic modifiers in order.
-    pub(crate) fn apply_post_outcome_modifiers(&self, spell: SpellId, result: &mut SpellResult) {
-        for modifier in &self.damage_taken_modifiers {
-            if self.spells[spell].school & modifier.school_mask != 0
-                && self.aura(modifier.aura).active
-            {
-                result.damage *= modifier.multiplier;
-            }
-        }
-        for modifier in &self.spell_damage_taken_modifiers {
-            if modifier.spells[spell]
-                && modifier
-                    .auras
-                    .iter()
-                    .any(|&aura| self.trackers[aura.side.index()].auras[aura.index].active)
-            {
-                result.damage *= modifier.multiplier;
-            }
-        }
-        result.damage = result.damage.max(0.0);
     }
 
     /// Go `calcDamageInternal`'s debug line.
@@ -332,8 +392,8 @@ impl<A: Agent> Fight<A> {
             "[{}] {} [DEBUG] MAP: {:.1}, RAP: {:.1}, SP: {:.1}, BaseDamage:{:.1}, AfterAttackerMods:{:.1}, AfterResistances:{:.1}, AfterTargetMods:{:.1}, AfterOutcome:{:.1}, AfterPostOutcome:{:.1}",
             self.config.target_label,
             action_string(&self.spells[spell].id),
-            self.player.powers.attack_power,
-            self.player.powers.ranged_attack_power,
+            self.unit(self.caster(spell)).powers.attack_power,
+            self.unit(self.caster(spell)).powers.ranged_attack_power,
             self.spell_power(spell),
             base,
             stages[0],
@@ -342,17 +402,18 @@ impl<A: Agent> Fight<A> {
             stages[3],
             damage
         );
-        self.player_log(&line);
+        self.unit_log(self.caster(spell), &line);
     }
 
     /// Go `Spell.CritDamageMultiplier`.
     pub(crate) fn crit_multiplier(&self, spell: SpellId) -> f64 {
         let state = &self.spells[spell];
+        let config = self.unit_config(state.caster);
         crit_damage_multiplier(
             state.magic_defense,
             state.crit_multiplier_pct,
-            self.config.crit_damage_multiplier,
-            self.config.table.crit_multiplier,
+            config.crit_damage_multiplier,
+            config.table.crit_multiplier,
             state.crit_multiplier_additive,
         )
     }
@@ -372,13 +433,7 @@ impl<A: Agent> Fight<A> {
         };
         let binary = self.spells[spell].flags.binary;
         self.apply_outcome(spell, &mut result, binary, outcome);
-        result.threat = if result.landed() {
-            let state = &self.spells[spell];
-            (result.damage * state.threat_multiplier + state.flat_threat_bonus)
-                * self.player.threat_multiplier
-        } else {
-            0.0
-        };
+        result.threat = self.threat_of(spell, &result);
         result
     }
 
@@ -401,8 +456,34 @@ impl<A: Agent> Fight<A> {
                 self.outcome_magic_hit_and_crit(spell, result, binary, false, false)
             }
             Outcome::Tick => self.outcome_tick(spell, result, false),
+            Outcome::TickPhysicalCrit => self.outcome_tick_physical_crit(spell, result),
             Outcome::TickMagicCrit => self.outcome_tick(spell, result, true),
+            Outcome::TickMagicHitAndCrit => {
+                let binary_hit = binary.then(|| 1.0 - 0.75 * self.resist(spell, true));
+                let miss = spell_chance_to_miss(
+                    self.config.table.base_spell_miss_chance,
+                    binary_hit,
+                    self.spell_hit_chance(spell),
+                );
+                if self.proc(1.0 - miss, "Magical Hit Roll") {
+                    self.outcome_tick(spell, result, true);
+                } else {
+                    result.outcome = OUTCOME_MISS;
+                    result.damage = 0.0;
+                    self.spells[spell].metrics[result.target.index()].misses += 1;
+                }
+            }
+            Outcome::Table(table) => self.apply_physical_outcome(spell, result, table),
             Outcome::AlwaysHitNoHitCounter => result.outcome = OUTCOME_HIT,
+            Outcome::AlwaysHit => {
+                let partial = result.outcome & OUTCOME_PARTIAL != 0;
+                result.outcome = OUTCOME_HIT;
+                let metrics = &mut self.spells[spell].metrics[result.target.index()];
+                metrics.hits += 1;
+                if partial {
+                    metrics.resisted_hits += 1;
+                }
+            }
         }
     }
 
@@ -418,7 +499,9 @@ impl<A: Agent> Fight<A> {
     ) {
         let binary_hit = binary.then(|| 1.0 - 0.75 * self.resist(spell, true));
         let miss = spell_chance_to_miss(
-            self.config.table.base_spell_miss_chance,
+            self.unit_config(self.caster(spell))
+                .table
+                .base_spell_miss_chance,
             binary_hit,
             self.spell_hit_chance(spell),
         );
@@ -427,14 +510,7 @@ impl<A: Agent> Fight<A> {
             let partial = result.outcome & OUTCOME_PARTIAL != 0;
             if can_crit && self.random("Magical Crit Roll") < self.spell_crit_chance(spell) {
                 result.outcome = OUTCOME_CRIT;
-                let state = &self.spells[spell];
-                result.damage *= crit_damage_multiplier(
-                    state.magic_defense,
-                    state.crit_multiplier_pct,
-                    self.config.crit_damage_multiplier,
-                    self.config.table.crit_multiplier,
-                    state.crit_multiplier_additive,
-                );
+                result.damage *= self.crit_multiplier(spell);
                 let metrics = &mut self.spells[spell].metrics[target];
                 metrics.crits += 1;
                 if partial {
@@ -464,14 +540,7 @@ impl<A: Agent> Fight<A> {
         let target = result.target.index();
         if can_crit && self.random("Magical Crit Roll") < self.spell_crit_chance(spell) {
             result.outcome = OUTCOME_CRIT;
-            let state = &self.spells[spell];
-            result.damage *= crit_damage_multiplier(
-                state.magic_defense,
-                state.crit_multiplier_pct,
-                self.config.crit_damage_multiplier,
-                self.config.table.crit_multiplier,
-                state.crit_multiplier_additive,
-            );
+            result.damage *= self.crit_multiplier(spell);
             let metrics = &mut self.spells[spell].metrics[target];
             metrics.crit_ticks += 1;
             if partial {
@@ -485,6 +554,110 @@ impl<A: Agent> Fight<A> {
                 metrics.resisted_ticks += 1;
             }
         }
+    }
+
+    /// Go `ApplyPostOutcomeDamageModifiers`: the target's dynamic modifiers in order, then no
+    /// negative damage.
+    pub(crate) fn apply_post_outcome_modifiers(&self, spell: SpellId, result: &mut SpellResult) {
+        for modifier in &self.damage_taken_modifiers {
+            if self.spells[spell].caster == modifier.source
+                && self.spells[spell].school & modifier.school_mask != 0
+                && self.aura(modifier.aura).active
+            {
+                result.damage *= modifier.multiplier;
+            }
+        }
+        for modifier in &self.spell_damage_taken_modifiers {
+            if modifier.spells[spell]
+                && modifier
+                    .auras
+                    .iter()
+                    .any(|&aura| self.trackers[aura.side.index()].auras[aura.index].active)
+            {
+                result.damage *= modifier.multiplier;
+            }
+        }
+        // Go's built-in max keeps a NaN, as an empty weapon slot's damage is.
+        if !result.damage.is_nan() {
+            result.damage = result.damage.max(0.0);
+        }
+    }
+
+    /// Go `OutcomeTickPhysicalCrit`: a tick that rolls the physical crit, keeping a partial
+    /// resist in its counters.
+    fn outcome_tick_physical_crit(&mut self, spell: SpellId, result: &mut SpellResult) {
+        let partial = result.outcome & OUTCOME_PARTIAL != 0;
+        let target = result.target.index();
+        if self.random("Physical Crit Roll") < self.physical_crit_chance(spell) {
+            result.outcome = OUTCOME_CRIT;
+            result.damage *= self.crit_multiplier(spell);
+            let metrics = &mut self.spells[spell].metrics[target];
+            metrics.crit_ticks += 1;
+            if partial {
+                metrics.resisted_crit_ticks += 1;
+            }
+        } else {
+            result.outcome = OUTCOME_HIT;
+            let metrics = &mut self.spells[spell].metrics[target];
+            metrics.ticks += 1;
+            if partial {
+                metrics.resisted_ticks += 1;
+            }
+        }
+    }
+
+    /// Go `calcDamageInternal` for a periodic tick of any school: a physical tick ignores armor
+    /// and takes the defender's physical bonus, a magic tick rolls its partial resist.
+    pub(crate) fn calc_tick_damage(
+        &mut self,
+        spell: SpellId,
+        target: Side,
+        base: f64,
+        attacker: f64,
+        outcome: Outcome,
+    ) -> SpellResult {
+        if self.spells[spell].school & 1 == 0 {
+            return self.calc_damage_internal(spell, target, base, attacker, outcome);
+        }
+        let mut result = SpellResult {
+            target,
+            outcome: 0,
+            damage: base * attacker,
+            threat: 0.0,
+        };
+        let after_attacker = result.damage;
+        // Go ResistanceMultiplier: every physical dot ignores armor.
+        let after_resistances = result.damage;
+        if !self.spells[spell].flags.ignore_target_modifiers {
+            result.damage += self.config.melee.defender_bonus_physical_damage_taken;
+            result.damage *= self.target_multiplier(spell);
+        }
+        let after_target = result.damage;
+        let binary = self.spells[spell].flags.binary;
+        self.apply_outcome(spell, &mut result, binary, outcome);
+        let after_outcome = result.damage;
+        self.apply_post_outcome_modifiers(spell, &mut result);
+        if self.log.is_some() {
+            self.log_damage_debug(
+                spell,
+                base,
+                [
+                    after_attacker,
+                    after_resistances,
+                    after_target,
+                    after_outcome,
+                ],
+                result.damage,
+            );
+        }
+        result.threat = if result.landed() {
+            let state = &self.spells[spell];
+            (result.damage * state.threat_multiplier + state.flat_threat_bonus)
+                * self.config.threat_multiplier
+        } else {
+            0.0
+        };
+        result
     }
 
     /// Go `Spell.CalcAndDealPeriodicDamage` for a dot's tick on a base amount.
@@ -504,6 +677,28 @@ impl<A: Agent> Fight<A> {
         };
         let result = self.calc_damage_internal(spell, side, base, attacker, outcome);
         self.deal_damage(spell, result, true);
+    }
+
+    /// Go `Spell.CalcAndDealPeriodicDamage` for a dot's tick on a base amount against a
+    /// target, with a given outcome applier; an area dot on the caster names its target.
+    pub(crate) fn periodic_damage_tick_with(
+        &mut self,
+        dot: super::DotId,
+        side: Side,
+        base: f64,
+        outcome: Outcome,
+    ) -> SpellResult {
+        let state = &self.dots[dot];
+        let spell = state.spell;
+        let mut base = base;
+        if state.bonus_coefficient > 0.0 {
+            base += state.bonus_coefficient * self.school_bonus_damage(spell);
+        }
+        let attacker =
+            self.attacker_multiplier(spell, true) * self.dots[dot].periodic_damage_multiplier;
+        let result = self.calc_damage_internal(spell, side, base, attacker, outcome);
+        self.deal_damage(spell, result, true);
+        result
     }
 
     /// Go `Dot.CalcAndDealPeriodicSnapshotDamage` for a dot built by `Snapshot`, which ticks
@@ -538,7 +733,9 @@ impl<A: Agent> Fight<A> {
         if speed == 0.0 {
             0
         } else {
-            (crate::core::time::NS_PER_SECOND as f64 * self.config.distance / speed) as i64
+            (crate::core::time::NS_PER_SECOND as f64
+                * self.unit_config(self.caster(spell)).distance
+                / speed) as i64
         }
     }
 
@@ -621,10 +818,7 @@ impl<A: Agent> Fight<A> {
             self.encounter_damage_taken += result.damage;
         }
         if self.log.is_some() && !self.spells[spell].flags.no_logs {
-            let label = match result.target {
-                Side::Target => &self.config.target_label,
-                Side::Player => &self.config.player_label,
-            };
+            let label = self.label_of(result.target);
             let line = format!(
                 "[{}] {}{} {} (SpellSchool: {}). (Threat: {:.3})",
                 label,
@@ -634,7 +828,7 @@ impl<A: Agent> Fight<A> {
                 self.spells[spell].school,
                 result.threat
             );
-            self.player_log(&line);
+            self.unit_log(self.caster(spell), &line);
         }
         if !self.spells[spell].flags.no_on_damage_dealt {
             if periodic {

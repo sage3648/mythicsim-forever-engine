@@ -33,6 +33,12 @@ pub struct PreparedV2 {
     pub target: Target,
     pub player: Player,
     pub melee: Melee,
+    /// The pet enabled at each reset, which Rust simulates; at most one.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub pets: Vec<Pet>,
+    /// The target's swings at the player when the player tanks it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub enemy: Option<Enemy>,
     pub effects: Vec<Effect>,
     /// Request features the exporter could not describe. Must be empty to simulate.
     pub unrepresented: Vec<String>,
@@ -124,6 +130,14 @@ fn is_zero(value: &i32) -> bool {
     *value == 0
 }
 
+fn yes() -> bool {
+    true
+}
+
+fn is_true(value: &bool) -> bool {
+    *value
+}
+
 fn is_zero_usize(value: &usize) -> bool {
     *value == 0
 }
@@ -194,6 +208,14 @@ pub struct Aura {
     pub callbacks: Vec<String>,
     pub icd: Option<Cooldown>,
     pub exclusive_effects: u32,
+    /// A permanent aura its reset activated and the named later member of its exclusive
+    /// category displaced during the same reset.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub displaced_by: Option<String>,
+    /// A permanent aura an earlier member of its exclusive category blocked at the reset,
+    /// which still counted a proc.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub blocked_at_reset: bool,
 }
 
 /// Callbacks that react to combat events rather than an aura's own lifetime.
@@ -251,6 +273,72 @@ pub struct Mana {
     pub teardown_max: f64,
 }
 
+/// A Seal of Command rank: the castable seal, its aura and its judgement.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct SealOfCommandRank {
+    pub seal_spell_id: i32,
+    pub aura: String,
+    pub judgement_spell_id: i32,
+}
+
+/// A Seal of Righteousness rank: the castable seal, its aura, its judgement, the damage spell
+/// it fires on a hit and the per-hit value per hundred of swing speed.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct SealOfRighteousnessRank {
+    pub seal_spell_id: i32,
+    pub aura: String,
+    pub judgement_spell_id: i32,
+    pub proc_spell_id: i32,
+    pub per_hit_value: f64,
+}
+
+/// A Holy Strike rank's percent of the normalized weapon swing plus the flat roll.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct HolyStrikeRank {
+    pub spell_id: i32,
+    pub weapon_percent: f64,
+}
+
+/// A Consecration rank: the tick every target takes and the bonus the first targets take.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct ConsecrationRank {
+    pub spell_id: i32,
+    pub tick: f64,
+    pub bonus: f64,
+    pub bonus_coefficient: f64,
+    pub bonus_targets: i32,
+}
+
+/// Consecrated Ground: the target aura Consecration's ticks mark and its Holy damage
+/// multiplier while it holds.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct ConsecratedGround {
+    pub aura: String,
+    pub multiplier: f64,
+}
+
+/// A Holy Shock rank's damage roll.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct HolyShockRank {
+    pub spell_id: i32,
+    pub min: f64,
+    pub max: f64,
+}
+
+/// One Twist of Light Echo: its aura and the seal whose effect it replays.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct SealEcho {
+    pub aura: String,
+    pub seal: String,
+}
+
 /// Go `energyBar` for a player that has one, and its combo points.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -286,6 +374,9 @@ pub struct MetricsAction {
     pub action_id: ActionId,
     pub melee_metrics: bool,
     pub school: u8,
+    /// Go `SpellFlagPassiveSpell`, which metrics report.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub passive: bool,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -307,7 +398,8 @@ pub struct Cost {
     pub flat_modifier: i32,
     pub percent_modifier: f64,
     pub additive_percent_modifier: f64,
-    /// Go `EnergyCost.Refund`: the share of an energy cost a missed strike gives back.
+    /// Go `EnergyCost.Refund` or `RageCost.Refund`: the share of the cost a missed strike
+    /// gives back.
     #[serde(default, skip_serializing_if = "is_zero_f64")]
     pub refund: f64,
 }
@@ -463,6 +555,43 @@ pub struct Player {
     pub prepull_actions: usize,
 }
 
+/// A pet Go enables at each reset, as core/pet.go builds it.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct Pet {
+    pub index: i32,
+    pub label: String,
+    pub level: i32,
+    pub mob_type: Option<String>,
+    pub stats: BTreeMap<String, f64>,
+    pub pseudo_stats: PseudoStats,
+    pub auras: Vec<Aura>,
+    pub name: String,
+    pub reaction_ns: i64,
+    pub distance_yards: f64,
+    pub cast_speed: f64,
+    pub mana: PetMana,
+    pub attack_table: AttackTable,
+    pub melee: Melee,
+    pub spells: Vec<Spell>,
+    pub metrics_actions: Vec<MetricsAction>,
+    /// The lines Go's Enable logs after its stat change: the pet's stats and inheritance.
+    pub summon_log: Vec<String>,
+    /// The stats line Go's Disable logs once the inheritance is gone.
+    pub dismiss_log: String,
+    /// Go `isDynamic`: the pet follows its owner's stat changes.
+    pub dynamic_stats: bool,
+}
+
+/// A pet's mana bar and its regeneration, which Go computes from the pet's own stats.
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct PetMana {
+    pub max: f64,
+    pub regen_per_second_casting: f64,
+    pub regen_per_second_not_casting: f64,
+}
+
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ManaGain {
@@ -530,6 +659,73 @@ pub struct Melee {
     pub defender_bonus_attack_power: f64,
     pub defender_bonus_physical_damage_taken: f64,
     pub defender_reduced_physical_hit_taken: f64,
+    /// A class replace function on the main hand, which the exporter admits only when it
+    /// returns the swing unchanged: Go still reacts to the event before each main hand swing.
+    #[serde(default)]
+    pub replace_main_hand_swing: bool,
+    /// The ranged auto attack's static inputs, present only with ranged auto attacks.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ranged_state: Option<RangedState>,
+}
+
+/// Go attack.go's ranged auto attack inputs: the ranged speed pseudo stat and the defender's
+/// ranged attack power bonus.
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct RangedState {
+    pub ranged_speed_multiplier: f64,
+    pub defender_bonus_ranged_attack_power: f64,
+}
+
+/// The target's main hand swings at the player when the player tanks it: Go attack.go's enemy
+/// `ApplyEffects`, `CalcDamage` and `outcomeEnemyMeleeWhite`, with every value resolved as Go
+/// computes it at reset.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct Enemy {
+    pub action_id: ActionId,
+    pub school: u8,
+    pub swing_speed: f64,
+    pub melee_haste_multiplier: f64,
+    pub base_damage_min: f64,
+    pub damage_spread: f64,
+    pub attack_power: f64,
+    pub attack_power_coefficient: f64,
+    pub bonus_damage: f64,
+    pub attacker_multiplier: f64,
+    /// The steps that read the player's defenses, by stat aura combination as the stat_auras
+    /// effect numbers them; one entry without stat auras.
+    pub rolls: Vec<EnemyRolls>,
+    pub threat_multiplier: f64,
+    pub flat_threat_bonus: f64,
+    pub unit_threat_multiplier: f64,
+    pub log_attack_power: f64,
+    pub log_ranged_attack_power: f64,
+    pub log_spell_power: f64,
+    /// Auras inactive at reset whose activation changes a value above, as "player:label" or
+    /// "target:label".
+    pub changing_auras: Vec<String>,
+    /// The rolls while a hardcast holds the tank's reduced avoidance aura, by stat aura
+    /// combination; empty when the player does not tank.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub reduced_avoidance_rolls: Vec<EnemyRolls>,
+}
+
+/// The steps of the target's swing that read the player's defenses.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct EnemyRolls {
+    pub armor_multiplier: f64,
+    pub bonus_damage_taken: f64,
+    pub target_multiplier: f64,
+    /// What each step of the table adds to the running chance, zero for a skipped step.
+    pub miss_chance: f64,
+    pub dodge_chance: f64,
+    pub parry_chance: f64,
+    pub block_chance: f64,
+    pub crit_chance: f64,
+    pub crush_chance: f64,
+    pub block_reduction: f64,
 }
 
 /// A spell a dynamic proc manager hears, by spellbook position, with the chance it rolls.
@@ -556,6 +752,42 @@ pub struct CatBuilder {
     pub kind: String,
     pub spell: usize,
     pub flat_damage: f64,
+}
+
+/// An aura and the multiplier it attaches.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct AuraMultiplier {
+    pub aura: String,
+    pub multiplier: f64,
+}
+
+/// A potion's instant resource gain, as Go `resourceGainConfig`.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct ResourceGain {
+    pub resource: String,
+    pub min: f64,
+    pub spread: f64,
+}
+
+/// A warrior stance's cast and aura.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct WarriorStance {
+    pub spell_id: i32,
+    pub stance: String,
+    pub aura: String,
+}
+
+/// Heroic Strike or Cleave: the strike, its queue aura and its base damage.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct QueuedStrike {
+    pub spell_id: i32,
+    pub queue_aura: String,
+    pub base_damage: f64,
+    pub cleave: bool,
 }
 
 /// Behavior Rust must execute, with the parameters Go keeps in closures. Each variant
@@ -586,11 +818,12 @@ pub enum Effect {
         health_fraction: f64,
         delay_ns: i64,
     },
-    /// The Troll racial Berserking: a major cooldown whose aura multiplies cast speed. Its
-    /// attack speed share has no effect in scope, where player auto attacks are unrepresented.
+    /// The Troll racial Berserking: a major cooldown whose aura multiplies attack speed and
+    /// then cast speed.
     Berserking {
         spell_id: i32,
         aura: String,
+        attack_speed_multiplier: f64,
         cast_speed_multiplier: f64,
     },
     /// The Orc racial Blood Fury: a major cooldown whose aura multiplies stats through Go's
@@ -827,9 +1060,9 @@ pub enum Effect {
         extra_attack_spell: usize,
         /// Whether a landed hit dealing no damage is ignored, as the client's proc flags say.
         #[serde(default)]
-        trigger_require_damage_dealt: bool,
+        trigger_require_damage: bool,
         #[serde(default)]
-        spend_require_damage_dealt: bool,
+        spend_require_damage: bool,
     },
     /// The raid's Sunder Armor, ramped one stack a period from the pull; target armor at
     /// each stack count, as Go computes it.
@@ -848,6 +1081,104 @@ pub enum Effect {
         trigger_aura: String,
         proc_mask: Vec<String>,
         judgement_auras: Vec<String>,
+    },
+    /// Paladin judgement.go: Judgement casts the active seal's judgement, then wakes the
+    /// rotation a delay after its cooldown ends.
+    Judgement {
+        spell_id: i32,
+        wake_delay_ns: i64,
+    },
+    /// Paladin seal_of_command.go: every rank's seal and judgement, and the proc its seal and
+    /// Echo roll on landed white hits.
+    SealOfCommand {
+        ranks: Vec<SealOfCommandRank>,
+        proc_spell_id: i32,
+        weapon_percent: f64,
+        coefficient: f64,
+        proc_chance: f64,
+        rng_label: String,
+        icd_ns: i64,
+        deal_delay_ns: i64,
+    },
+    /// Paladin seal_of_righteousness.go: every rank's seal, judgement and per-hit proc.
+    SealOfRighteousness {
+        ranks: Vec<SealOfRighteousnessRank>,
+        hand_multiplier: f64,
+        swing_speed: f64,
+        deal_delay_ns: i64,
+    },
+    /// Paladin holy_strike.go: every rank's weapon percent; the flat roll is on the spell.
+    HolyStrike {
+        ranks: Vec<HolyStrikeRank>,
+    },
+    /// Paladin hammer_of_wrath.go: the damage rolls are on the spells.
+    HammerOfWrath {},
+    /// Paladin consecration.go: every rank's tick and the bonus the first targets take, and
+    /// Consecrated Ground's mark when talented.
+    Consecration {
+        ranks: Vec<ConsecrationRank>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        consecrated_ground: Option<ConsecratedGround>,
+    },
+    /// Paladin holy_shock.go: every rank's damage roll.
+    HolyShock {
+        ranks: Vec<HolyShockRank>,
+    },
+    /// Paladin divine_favor.go: a major cooldown whose aura raises the crit of the spells it
+    /// names until one of them is cast.
+    DivineFavor {
+        spell_id: i32,
+        aura: String,
+        crit: f64,
+        spells: Vec<String>,
+    },
+    /// An item proc common/shared/shared_utils.go builds from client rows: a listener that
+    /// casts a single target magic hit at once on the unit hit.
+    SpellDataDamageProc {
+        trigger_aura: String,
+        trigger_spells: Vec<usize>,
+        landed_only: bool,
+        require_damage: bool,
+        proc_chance: f64,
+        spell: usize,
+        average: f64,
+        variance: f64,
+        can_crit: bool,
+    },
+    /// Paladin talents_retribution.go Vengeance: crits stack a Holy and Physical damage mod.
+    Vengeance {
+        trigger_aura: String,
+        aura: String,
+        per_stack: f64,
+        spells: Vec<usize>,
+    },
+    /// Paladin talents_retribution.go Vindication: landed melee hits activate the target's
+    /// aura and the paladin's attack power aura.
+    Vindication {
+        trigger_aura: String,
+        proc_chance: f64,
+        aura: String,
+        target_aura: String,
+    },
+    /// Paladin talents_retribution.go Sanctified Judgement: Judgement returns part of the
+    /// active seal's cost.
+    SanctifiedJudgement {
+        trigger_aura: String,
+        proc_chance: f64,
+        refund: f64,
+        metrics_action_id: ActionId,
+    },
+    /// Paladin talents_retribution.go Sacred Arbiter: a landed Holy Strike refreshes every
+    /// judgement aura on the target.
+    SacredArbiter {
+        trigger_aura: String,
+        judgement_auras: Vec<String>,
+    },
+    /// Paladin talents_retribution.go Twist of Light: a replaced seal leaves an Echo that the
+    /// next landed white hit consumes.
+    TwistOfLight {
+        trigger_aura: String,
+        echoes: Vec<SealEcho>,
     },
     /// Every Mind Blast rank's direct hit.
     MindBlast {},
@@ -956,15 +1287,28 @@ pub enum Effect {
         unit_index: i32,
         metrics_actions: Vec<MetricsAction>,
         auras: Vec<ActionId>,
+        /// The auras with an action that every reset activates for the fight, in
+        /// registration order.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        permanent_auras: Vec<ActionId>,
         dismissed_log: String,
         reason: String,
+        /// Whether each reset logs its dismissal, as when its agent's Reset disables it.
+        #[serde(default = "yes", skip_serializing_if = "is_true")]
+        dismissed_at_reset: bool,
+        /// Whether it has a mana bar, which gives it Go's time to out of mana.
+        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+        mana_bar: bool,
     },
-    /// The Orc racial Shatter Curse: a survival cooldown whose aura lowers the player's
-    /// spell damage taken, which has no effect in scope. Go never autocasts it at the
-    /// default defensive health threshold; configured timings still cast it.
+    /// The Orc racial Shatter Curse: a survival cooldown whose aura multiplies the player's
+    /// damage taken of the named schools, which only the player's own spells deal in scope.
+    /// Go never autocasts it at the default defensive health threshold; configured timings
+    /// still cast it.
     ShatterCurse {
         spell_id: i32,
         aura: String,
+        school_damage_taken_multiplier: f64,
+        schools: Vec<String>,
     },
     /// The Dwarf racial Stoneform: a survival cooldown whose aura lowers the player's
     /// physical damage taken, which has no effect in scope. Go never autocasts it at the
@@ -1183,6 +1527,9 @@ pub enum Effect {
         spell_id: i32,
         base_amount: f64,
         mana_multiplier: f64,
+        /// Demonic Energies: the share of the restore the summoned demon gains.
+        #[serde(default, skip_serializing_if = "is_zero_f64")]
+        pet_mana_share: f64,
     },
     /// Conflagrate's hit, which consumes Immolate unless Shadow and Flame spares it.
     Conflagrate {
@@ -1192,6 +1539,89 @@ pub enum Effect {
     },
     /// Shadowburn's instant binary hit.
     Shadowburn {},
+    /// Nightfall: periodic damage of its spells may grant Shadow Trance, which makes Shadow
+    /// Bolt instant until an instant Shadow Bolt completes.
+    Nightfall {
+        trigger_aura: String,
+        aura: String,
+        aura_spell_id: i32,
+        proc_chance: f64,
+        rng_label: String,
+        /// Spellbook positions of the spells whose periodic damage rolls the chance.
+        trigger_spells: Vec<usize>,
+        /// Spellbook positions of the spells whose instant cast consumes Shadow Trance.
+        consume_spells: Vec<usize>,
+        /// Spellbook positions of the spells Shadow Trance's cast time modifier changes.
+        modded_spells: Vec<usize>,
+        cast_time_percent: f64,
+    },
+    /// Fel Energy, the Voidwalker's sacrifice: its permanent aura restores a share of maximum
+    /// mana every period.
+    FelEnergy {
+        aura: String,
+        spell_id: i32,
+        mana_fraction: f64,
+        period_ns: i64,
+    },
+    /// Decimation: a landed hit of its spells inside the execute phase grants an aura whose
+    /// modifiers raise their damage and cut Soul Fire's cast time.
+    Decimation {
+        trigger_aura: String,
+        aura: String,
+        /// Go `IsExecutePhase<N>`'s threshold.
+        execute_phase: i32,
+        /// Spellbook positions of the spells whose landed hits trigger it.
+        trigger_spells: Vec<usize>,
+        /// Spellbook positions and value of the aura's damage done modifier.
+        damage_spells: Vec<usize>,
+        damage_done_flat: f64,
+        /// Spellbook positions and value of the aura's cast time modifier.
+        cast_spells: Vec<usize>,
+        cast_time_percent: f64,
+    },
+    /// Demonic Brand: a landed Searing Pain brands its target with charges, and each landed
+    /// direct hit of the summoned demon spends one for an extra hit. Without a summoned demon
+    /// the trigger does nothing.
+    DemonicBrand {
+        trigger_aura: String,
+        /// The brand on the target.
+        target_aura: String,
+        charges: i32,
+        trigger_spells: Vec<usize>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        pet: Option<String>,
+        /// The demon's copy of the brand's stacks.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        marker_aura: Option<String>,
+        /// The demon's permanent aura that spends charges.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        consumer_aura: Option<String>,
+        /// The extra hit's position in the demon's spellbook.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        brand_spell: Option<usize>,
+        #[serde(default, skip_serializing_if = "is_zero_f64")]
+        min_damage: f64,
+        #[serde(default, skip_serializing_if = "is_zero_f64")]
+        max_damage: f64,
+        /// The share of the warlock's spell power and school power the hit adds.
+        #[serde(default, skip_serializing_if = "is_zero_f64")]
+        spell_power_coefficient: f64,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        school_power_stat: Option<String>,
+    },
+    /// The summoned demon's AI: the first ability it can cast while its mana stays above
+    /// `min_mana`, otherwise a wait.
+    WarlockPet {
+        pet: String,
+        min_mana: f64,
+        /// Positions in the pet's spellbook.
+        autocast_spells: Vec<usize>,
+        wait_ns: i64,
+    },
+    /// The Succubus's Lash of Pain: a fixed base, a Go literal.
+    LashOfPain {
+        base_damage: f64,
+    },
     /// Searing Pain's hit.
     SearingPain {},
     /// Soul Fire's hit after travel.
@@ -1258,6 +1688,73 @@ pub enum Effect {
         attack_damage: f64,
         magma_totem_aura: String,
         flametongue_totem_aura: String,
+        /// The fire totem's lifetime, for `totemRemainingTime`.
+        duration_ns: i64,
+    },
+    /// Earth Shock: a binary hit from the highest rank's damage roll.
+    EarthShock {
+        spell_id: i32,
+    },
+    /// Strength of Earth Totem: the earth totem's aura, whose Strength is a class stat aura.
+    StrengthOfEarthTotem {
+        spell_id: i32,
+        aura: String,
+        duration_ns: i64,
+    },
+    /// Stormstrike: a melee strike whose target debuff raises this shaman's lightning damage
+    /// until its charges are spent.
+    Stormstrike {
+        spell_id: i32,
+        aura: String,
+        damage_multiplier: f64,
+        /// Go `HasMHWeapon` and `HasOHWeapon`: its cast condition, and whether it strikes.
+        has_main_hand: bool,
+        has_off_hand: bool,
+    },
+    /// Elemental Devastation: spell crits raise melee crit for a while.
+    ElementalDevastation {
+        trigger_aura: String,
+        aura: String,
+        melee_crit: f64,
+    },
+    /// Flurry: melee crits grant charges of melee speed that white hits spend.
+    Flurry {
+        trigger_aura: String,
+        aura: String,
+        melee_speed_multiplier: f64,
+        charge_icd_ns: i64,
+        max_stacks: i32,
+    },
+    /// Improved Stormstrike: Stormstrike may raise casting spirit regeneration; its cooldown
+    /// reset hears only hits the player takes.
+    ImprovedStormstrike {
+        trigger_aura: String,
+        aura: String,
+        reset_aura: String,
+        proc_chance: f64,
+        spirit_regen_rate_casting: f64,
+    },
+    /// Maelstrom Weapon: landed melee hits stack a Lightning Bolt cast time and cost cut.
+    MaelstromWeapon {
+        trigger_aura: String,
+        aura: String,
+        per_stack: f64,
+        max_stacks: i32,
+        /// The proc manager's chance for each spell the trigger hears.
+        chances: Vec<SpellChance>,
+    },
+    /// Rockbiter Weapon: a permanent attack power aura, already in the prepared stats, that
+    /// logs its gain and loss.
+    RockbiterWeapon {
+        aura: String,
+        gain_log: String,
+        expire_log: String,
+    },
+    /// Rage of the Farseer: a major cooldown whose aura multiplies melee speed.
+    RageOfTheFarseer {
+        spell_id: i32,
+        aura: String,
+        melee_speed_multiplier: f64,
     },
     /// Elemental Focus: a completed elemental cast may grant Clearcasting.
     ElementalFocus {
@@ -1266,6 +1763,195 @@ pub enum Effect {
         proc_chance: f64,
         cost_percent_add: f64,
         max_stacks: i32,
+    },
+    /// core/rage.go: a rage bar, with the rage each landed white hit gives.
+    RageBar {
+        aura: String,
+        max_rage: f64,
+        starting_rage: f64,
+        main_hand_rage: f64,
+        off_hand_rage: f64,
+        crit_multiplier: f64,
+        threat_per_rage: f64,
+    },
+    /// Go `AttachMultiplicativePseudoStatBuff` on the player's damage taken multiplier, for
+    /// auras that are not up from the reset: the gain multiplies, the expiry divides.
+    PlayerDamageTaken {
+        auras: Vec<AuraMultiplier>,
+    },
+    /// An item proc trigger whose handler grants extra main hand attacks at once: Ironfoe's
+    /// Fury of Forgewright and the Hand of Justice.
+    ExtraAttackProc {
+        trigger_aura: String,
+        proc_chance: f64,
+        attacks: i32,
+    },
+    /// A potion that restores rage or mana and may carry a temporary stat aura.
+    PotionResource {
+        item_id: i32,
+        rng_label: String,
+        gains: Vec<ResourceGain>,
+        stone_multiplier: f64,
+        #[serde(default)]
+        aura: Option<String>,
+        #[serde(default)]
+        gain_log: Option<String>,
+        #[serde(default)]
+        expire_log: Option<String>,
+    },
+    /// Warrior stances.go: the starting stance and each stance's cast and aura.
+    WarriorStances {
+        default_stance: String,
+        stances: Vec<WarriorStance>,
+        max_retained_rage: f64,
+    },
+    /// Bloodthirst: attack power share plus a client base, on the special hit table.
+    Bloodthirst {
+        spell_id: i32,
+        attack_power_share: f64,
+        base_damage: f64,
+    },
+    /// Whirlwind: a normalized main hand strike, and the off hand's with Raging Blows.
+    Whirlwind {
+        spell_id: i32,
+        off_hand: bool,
+    },
+    /// Execute: a base plus damage for each extra rage it spends.
+    Execute {
+        spell_id: i32,
+        base_damage: f64,
+        damage_per_rage: f64,
+    },
+    /// Hamstring: a fixed base on the special hit table.
+    Hamstring {
+        spell_id: i32,
+        base_damage: f64,
+    },
+    /// Bloodrage: instant and periodic rage for a share of base health.
+    Bloodrage {
+        spell_id: i32,
+        instant_rage: f64,
+        rage_per_tick: f64,
+        ticks: i32,
+        period_ns: i64,
+        health_cost: f64,
+        rage_threshold: f64,
+    },
+    /// Berserker Rage: rage from Improved Berserker Rage and an aura.
+    BerserkerRage {
+        spell_id: i32,
+        aura: String,
+        rage_gain: f64,
+    },
+    /// Death Wish: physical damage dealt multiplied while its aura lasts.
+    DeathWish {
+        spell_id: i32,
+        aura: String,
+        physical_multiplier: f64,
+        wait_ns: i64,
+    },
+    /// Recklessness: an aura whose crit is a temporary stat change.
+    Recklessness {
+        spell_id: i32,
+        aura: String,
+    },
+    /// The warrior's own Sunder Armor; blocked when another aura holds the armor category
+    /// for good.
+    SunderArmor {
+        spell_id: i32,
+        aura: String,
+        blocked: bool,
+    },
+    /// Deep Wounds: a physical crit casts a bleed that carries what it still owed.
+    DeepWounds {
+        spell_id: i32,
+        trigger_aura: String,
+        share: f64,
+        tick_can_crit: bool,
+        tick_magic: bool,
+    },
+    /// Unbridled Wrath: landed white hits may grant rage a spell batch window later.
+    UnbridledWrath {
+        trigger_aura: String,
+        spell_id: i32,
+        proc_chance: f64,
+        rage: f64,
+        two_handed: bool,
+        delay_ns: i64,
+    },
+    /// The Warrior's Flurry: a melee crit grants melee speed for a few white swings.
+    WarriorFlurry {
+        trigger_aura: String,
+        aura: String,
+        melee_speed_multiplier: f64,
+        charges: i32,
+    },
+    /// Anger Management: rage every period from the reset.
+    AngerManagement {
+        spell_id: i32,
+        rage: f64,
+        period_ns: i64,
+    },
+    /// Heroic Strike and Cleave: queued onto the next main hand swing.
+    HeroicStrikeQueue {
+        queue_delay_ns: i64,
+        strikes: Vec<QueuedStrike>,
+    },
+    /// Overpower: a dodge opens its window.
+    OverpowerWindow {
+        trigger_aura: String,
+        aura: String,
+    },
+    /// Aimed Shot: a normalized ranged weapon shot plus the rank's flat bonus, dealt after
+    /// travel.
+    AimedShot {
+        spell_id: i32,
+        flat_bonus: f64,
+    },
+    /// Sniper Shot: Aimed Shot's shape with its own flat bonus.
+    SniperShot {
+        spell_id: i32,
+        flat_bonus: f64,
+    },
+    /// Multi-Shot: one normalized ranged weapon shot on the one target in scope.
+    MultiShot {
+        spell_id: i32,
+    },
+    /// Serpent Sting: a ranged hit roll, then after travel a dot whose ticks add a share of
+    /// ranged attack power.
+    SerpentSting {
+        spell_id: i32,
+        tick_base: f64,
+        attack_power_share: f64,
+        tick_outcome: String,
+    },
+    /// Aspect of the Hawk: activates its aura, whose ranged attack power is a stat aura;
+    /// Deadly Aspects procs a ranged haste aura on ranged autos.
+    AspectOfTheHawk {
+        spell_id: i32,
+        aura: String,
+        #[serde(default)]
+        proc_aura: Option<String>,
+        #[serde(default)]
+        haste_multiplier: Option<f64>,
+        #[serde(default)]
+        proc_chance: Option<f64>,
+    },
+    /// Rapid Fire: an aura that multiplies ranged and melee attack speed.
+    RapidFire {
+        spell_id: i32,
+        aura: String,
+        haste_multiplier: f64,
+    },
+    /// Summon Hawk: a dive bomb on a base plus a share of ranged attack power, then a hawk dot
+    /// in a free slot or the one with the least time left.
+    SummonHawk {
+        spell_id: i32,
+        base_damage: f64,
+        attack_power_share: f64,
+        always_hits: bool,
+        hawk_spells: Vec<usize>,
+        hawk_duration_ns: i64,
     },
     /// Go consumes.go conjured item that restores energy, such as Thistle Tea.
     ConjuredEnergy {
@@ -1344,9 +2030,33 @@ pub enum Effect {
         aoe_cap_multiplier: f64,
         self_attack_table: AttackTable,
     },
+    /// Go consumes.go newBasicExplosiveSpellConfig without the self hit: a rolled hit on every
+    /// target scaled by the AoE cap, dealt after travel when the explosive flies.
+    BasicExplosive {
+        item_id: i32,
+        min_damage: f64,
+        max_damage: f64,
+        aoe_cap_multiplier: f64,
+    },
     /// Go health.go trackChanceOfDeath once a spell can hit the player.
     ChanceOfDeath {
         aura: String,
+    },
+    /// Go attack.go applyParryHaste once the target swings at the player: a parry pulls the
+    /// parrying unit's next main hand swing in.
+    ParryHaste {
+        unit: String,
+        aura: String,
+    },
+    /// An item proc trigger that restores energy a spell batch window after a landed hit, such
+    /// as Shadowcraft Armor's: the chance each spell rolls, by spellbook position.
+    EnergizeProc {
+        trigger_aura: String,
+        rng_label: String,
+        chances: Vec<SpellChance>,
+        energy: f64,
+        metrics_action_id: ActionId,
+        delay_ns: i64,
     },
     /// Go aura_helpers.go ApplyFixedUptimeAura: a periodic roll that activates the aura and a
     /// first roll with a random duration.
@@ -1405,6 +2115,20 @@ impl Effect {
             Effect::PowerInLight { .. } => "power_in_light",
             Effect::SearingLight { .. } => "searing_light",
             Effect::JudgementRefresh { .. } => "judgement_refresh",
+            Effect::Judgement { .. } => "judgement",
+            Effect::SealOfCommand { .. } => "seal_of_command",
+            Effect::SealOfRighteousness { .. } => "seal_of_righteousness",
+            Effect::HolyStrike { .. } => "holy_strike",
+            Effect::HammerOfWrath { .. } => "hammer_of_wrath",
+            Effect::Consecration { .. } => "consecration",
+            Effect::Vengeance { .. } => "vengeance",
+            Effect::Vindication { .. } => "vindication",
+            Effect::SanctifiedJudgement { .. } => "sanctified_judgement",
+            Effect::SacredArbiter { .. } => "sacred_arbiter",
+            Effect::TwistOfLight { .. } => "twist_of_light",
+            Effect::HolyShock { .. } => "holy_shock",
+            Effect::DivineFavor { .. } => "divine_favor",
+            Effect::SpellDataDamageProc { .. } => "spell_data_damage_proc",
             Effect::SunderArmorRamp { .. } => "sunder_armor_ramp",
             Effect::StatAuras { .. } => "stat_auras",
             Effect::CatForm { .. } => "cat_form",
@@ -1449,6 +2173,12 @@ impl Effect {
             Effect::LifeTap { .. } => "life_tap",
             Effect::Conflagrate { .. } => "conflagrate",
             Effect::Shadowburn {} => "shadowburn",
+            Effect::Nightfall { .. } => "nightfall",
+            Effect::Decimation { .. } => "decimation",
+            Effect::FelEnergy { .. } => "fel_energy",
+            Effect::DemonicBrand { .. } => "demonic_brand",
+            Effect::WarlockPet { .. } => "warlock_pet",
+            Effect::LashOfPain { .. } => "lash_of_pain",
             Effect::SearingPain {} => "searing_pain",
             Effect::SoulFire {} => "soul_fire",
             Effect::ImprovedShadowBolt { .. } => "improved_shadow_bolt",
@@ -1460,6 +2190,42 @@ impl Effect {
             Effect::FireNova { .. } => "fire_nova",
             Effect::SearingTotem { .. } => "searing_totem",
             Effect::ElementalFocus { .. } => "elemental_focus",
+            Effect::EarthShock { .. } => "earth_shock",
+            Effect::StrengthOfEarthTotem { .. } => "strength_of_earth_totem",
+            Effect::Stormstrike { .. } => "stormstrike",
+            Effect::ElementalDevastation { .. } => "elemental_devastation",
+            Effect::Flurry { .. } => "flurry",
+            Effect::ImprovedStormstrike { .. } => "improved_stormstrike",
+            Effect::MaelstromWeapon { .. } => "maelstrom_weapon",
+            Effect::RageOfTheFarseer { .. } => "rage_of_the_farseer",
+            Effect::RockbiterWeapon { .. } => "rockbiter_weapon",
+            Effect::RageBar { .. } => "rage_bar",
+            Effect::ExtraAttackProc { .. } => "extra_attack_proc",
+            Effect::PlayerDamageTaken { .. } => "player_damage_taken",
+            Effect::PotionResource { .. } => "potion_resource",
+            Effect::WarriorStances { .. } => "warrior_stances",
+            Effect::Bloodthirst { .. } => "bloodthirst",
+            Effect::Whirlwind { .. } => "whirlwind",
+            Effect::Execute { .. } => "execute",
+            Effect::Hamstring { .. } => "hamstring",
+            Effect::Bloodrage { .. } => "bloodrage",
+            Effect::BerserkerRage { .. } => "berserker_rage",
+            Effect::DeathWish { .. } => "death_wish",
+            Effect::Recklessness { .. } => "recklessness",
+            Effect::SunderArmor { .. } => "sunder_armor",
+            Effect::DeepWounds { .. } => "deep_wounds",
+            Effect::UnbridledWrath { .. } => "unbridled_wrath",
+            Effect::WarriorFlurry { .. } => "warrior_flurry",
+            Effect::AngerManagement { .. } => "anger_management",
+            Effect::HeroicStrikeQueue { .. } => "heroic_strike_queue",
+            Effect::OverpowerWindow { .. } => "overpower_window",
+            Effect::AimedShot { .. } => "aimed_shot",
+            Effect::SniperShot { .. } => "sniper_shot",
+            Effect::MultiShot { .. } => "multi_shot",
+            Effect::SerpentSting { .. } => "serpent_sting",
+            Effect::AspectOfTheHawk { .. } => "aspect_of_the_hawk",
+            Effect::RapidFire { .. } => "rapid_fire",
+            Effect::SummonHawk { .. } => "summon_hawk",
             Effect::ConjuredEnergy { .. } => "conjured_energy",
             Effect::SinisterStrike { .. } => "sinister_strike",
             Effect::Backstab { .. } => "backstab",
@@ -1471,8 +2237,11 @@ impl Effect {
             Effect::InstantPoison { .. } => "instant_poison",
             Effect::DeadlyPoison { .. } => "deadly_poison",
             Effect::GoblinSapper { .. } => "goblin_sapper",
+            Effect::BasicExplosive { .. } => "basic_explosive",
             Effect::ChanceOfDeath { .. } => "chance_of_death",
+            Effect::ParryHaste { .. } => "parry_haste",
             Effect::FixedUptimeAura { .. } => "fixed_uptime_aura",
+            Effect::EnergizeProc { .. } => "energize_proc",
         }
     }
 }

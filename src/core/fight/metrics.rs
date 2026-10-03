@@ -64,7 +64,7 @@ impl Default for Distribution {
 
 impl Distribution {
     /// Go `DistributionMetrics.doneIteration`.
-    fn done_iteration(&mut self, duration: i64, seed: i64) {
+    pub(crate) fn done_iteration(&mut self, duration: i64, seed: i64) {
         let value = self.total / seconds(duration);
         self.aggregate.add(value);
         if value > self.max {
@@ -80,7 +80,7 @@ impl Distribution {
         self.total = 0.0;
     }
 
-    fn report(&self) -> DistributionReport {
+    pub(crate) fn report(&self) -> DistributionReport {
         let (avg, stdev) = self.aggregate.mean_and_stdev();
         DistributionReport {
             avg,
@@ -106,8 +106,11 @@ pub(crate) struct Totals {
     pub(crate) threat: Distribution,
     pub(crate) tto: Distribution,
     pub(crate) target_dtps: Distribution,
-    /// Damage the player takes from its own spells.
+    /// Damage the player takes, from its own spells and the target's swings.
     pub(crate) player_dtps: Distribution,
+    /// The target's damage and threat from its swings at the player.
+    pub(crate) target_dps: Distribution,
+    pub(crate) target_threat: Distribution,
     /// Every distribution Go keeps that stays zero in scope: healing, damage taken by the
     /// player, TMI, and the target's own output.
     pub(crate) zero: Distribution,
@@ -117,16 +120,6 @@ pub(crate) struct Totals {
 
 fn is_zero_f(value: &f64) -> bool {
     *value == 0.0
-}
-
-/// A deviation as protojson writes it: a number, or "NaN" when cancellation left
-/// `sqrt(sumSq/n - mean^2)` a negative residue, as Go reports it.
-fn deviation<S: serde::Serializer>(value: &f64, serializer: S) -> Result<S::Ok, S::Error> {
-    if value.is_nan() {
-        serializer.serialize_str("NaN")
-    } else {
-        serializer.serialize_f64(*value)
-    }
 }
 
 fn is_zero_i(value: &i32) -> bool {
@@ -143,6 +136,16 @@ fn is_zero_u32(value: &u32) -> bool {
 
 fn is_zero_string(value: &str) -> bool {
     value == "0"
+}
+
+/// A deviation as protojson writes it: a number, or "NaN" when cancellation left
+/// `sqrt(sumSq/n - mean^2)` a negative residue, as Go reports it.
+fn deviation<S: serde::Serializer>(value: &f64, serializer: S) -> Result<S::Ok, S::Error> {
+    if value.is_nan() {
+        serializer.serialize_str("NaN")
+    } else {
+        serializer.serialize_f64(*value)
+    }
 }
 
 #[derive(Clone, Debug, Serialize, PartialEq)]
@@ -205,6 +208,8 @@ pub(crate) struct ActionReport {
     pub(crate) blocked_crits: i32,
     #[serde(skip_serializing_if = "is_zero_i")]
     pub(crate) glances: i32,
+    #[serde(skip_serializing_if = "is_zero_i")]
+    pub(crate) crushes: i32,
     #[serde(skip_serializing_if = "is_zero_f")]
     pub(crate) damage: f64,
     #[serde(skip_serializing_if = "is_zero_f")]
@@ -227,6 +232,8 @@ pub(crate) struct ActionReport {
     pub(crate) block_damage: f64,
     #[serde(skip_serializing_if = "is_zero_f")]
     pub(crate) blocked_crit_damage: f64,
+    #[serde(skip_serializing_if = "is_zero_f")]
+    pub(crate) crush_damage: f64,
     #[serde(skip_serializing_if = "is_zero_f")]
     pub(crate) threat: f64,
     #[serde(skip_serializing_if = "is_zero_f")]
@@ -306,7 +313,7 @@ struct ResourceMetricsReport {
 
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct DistributionReport {
+pub(crate) struct DistributionReport {
     #[serde(skip_serializing_if = "is_zero_f")]
     avg: f64,
     #[serde(skip_serializing_if = "is_zero_f")]
@@ -347,7 +354,7 @@ pub(crate) struct UnitReport {
     auras: Vec<AuraMetricsReport>,
     resources: Vec<ResourceMetricsReport>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
-    pets: Vec<TargetReport>,
+    pets: Vec<UnitReport>,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -410,22 +417,34 @@ impl<A: Agent> Fight<A> {
 
     /// Go `manaBar.doneIteration`: out-of-mana time and mana-gain threat.
     pub(crate) fn player_done_iteration(&mut self) {
-        if self.player.waiting_for_mana != 0.0 {
-            let duration = self.now - self.player.waiting_for_mana_start;
+        self.mana_done_iteration(Side::Player);
+    }
+
+    /// Go `manaBar.doneIteration` of an acting unit.
+    pub(crate) fn mana_done_iteration(&mut self, side: Side) {
+        let now = self.now;
+        let unit = self.unit_mut(side);
+        if unit.waiting_for_mana != 0.0 {
+            let duration = now - unit.waiting_for_mana_start;
             if duration > 0 {
-                self.player.oom_time += duration;
-                if !self.player.went_oom {
-                    self.player.went_oom = true;
-                    self.player.first_oom = self.now;
+                unit.oom_time += duration;
+                if !unit.went_oom {
+                    unit.went_oom = true;
+                    unit.first_oom = now;
                 }
             }
         }
-        let Some(gain_spell) = self.mana_gain_spell else {
+        let gain_spell = match side {
+            Side::Pet => self.pet.as_ref().and_then(|pet| pet.mana_gain_spell),
+            _ => self.mana_gain_spell,
+        };
+        let Some(gain_spell) = gain_spell else {
             return;
         };
         for index in 0..self.resources.len() {
             let resource = &self.resources[index];
-            if resource.kind != super::ResourceKind::Mana
+            if resource.unit != side
+                || resource.kind != super::ResourceKind::Mana
                 || resource.is_mana_regen
                 || resource.id.other_id == "OtherActionManaRegen"
             {
@@ -441,7 +460,7 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    /// Go `Spell.doneIteration` and `UnitMetrics.addSpellMetrics`.
+    /// Go `Spell.doneIteration` and `UnitMetrics.addSpellMetrics`, for the caster's metrics.
     pub(crate) fn spell_done_iteration(&mut self, spell: usize) {
         if self.spells[spell].action.is_none() {
             return;
@@ -465,8 +484,13 @@ impl<A: Agent> Fight<A> {
     /// Go `UnitMetrics.addSpellMetrics`.
     fn add_spell_metrics(&mut self, spell: usize, action: usize, all: [super::SpellMetrics; 2]) {
         let passive = self.spells[spell].flags.passive;
+        let caster = self.spells[spell].caster;
         for (target, metrics) in all.into_iter().enumerate() {
-            let totals = &mut self.actions[action].targets[target];
+            let actions = match caster {
+                Side::Pet => &mut self.pet.as_mut().expect("the pet is simulated").actions,
+                _ => &mut self.actions,
+            };
+            let totals = &mut actions[action].targets[target];
             if !passive {
                 totals.casts += metrics.casts;
             }
@@ -495,6 +519,8 @@ impl<A: Agent> Fight<A> {
             totals.glance_damage += metrics.total_glance_damage;
             totals.block_damage += metrics.total_block_damage;
             totals.blocked_crit_damage += metrics.total_blocked_crit_damage;
+            totals.crushes += metrics.crushes;
+            totals.crush_damage += metrics.total_crush_damage;
             totals.threat += metrics.total_threat;
             if !passive {
                 totals.cast_time += metrics.total_cast_time;
@@ -506,24 +532,33 @@ impl<A: Agent> Fight<A> {
             }
             if target == Side::Target.index() {
                 self.totals.target_dtps.total += metrics.total_damage;
-                self.totals.dps.total += metrics.total_damage;
-                self.totals.threat.total += metrics.total_threat;
+                match caster {
+                    Side::Pet => {
+                        let totals = &mut self.pet.as_mut().expect("the pet is simulated").totals;
+                        totals.dps.total += metrics.total_damage;
+                        totals.threat.total += metrics.total_threat;
+                    }
+                    _ => {
+                        self.totals.dps.total += metrics.total_damage;
+                        self.totals.threat.total += metrics.total_threat;
+                    }
+                }
             }
         }
     }
 
-    /// Go `UnitMetrics.doneIteration` for the player and the target.
-    pub(crate) fn unit_done_iteration(&mut self, _damage: f64) {
-        let seed = self.iteration_seed();
+    /// Go's time to out of mana for an acting unit at the end of a fight, its mana clamped to
+    /// the lowest maximum of its aura teardown.
+    pub(crate) fn time_to_oom(&self, side: Side, teardown_max_mana: f64) -> i64 {
+        let unit = self.unit(side);
         let duration_seconds = seconds(self.duration);
-        let time_to_oom = if self.player.went_oom {
-            self.player.first_oom
+        let time_to_oom = if unit.went_oom {
+            unit.first_oom
         } else {
-            let spent_per_second =
-                (self.player.mana_spent - self.player.mana_gained) / duration_seconds;
+            let spent_per_second = (unit.mana_spent - unit.mana_gained) / duration_seconds;
             if spent_per_second > 0.0 {
                 // Go's aura teardown clamps current mana to the falling maximum first.
-                let mana = self.player.mana.min(self.config.teardown_max_mana);
+                let mana = unit.mana.min(teardown_max_mana);
                 let remaining = crate::core::time::from_seconds(mana / spent_per_second);
                 // Go adds durations with int64 wraparound; an overflow turns negative and
                 // falls back to 60 minutes below.
@@ -534,11 +569,18 @@ impl<A: Agent> Fight<A> {
                 60 * 60 * NS_PER_SECOND
             }
         };
-        let time_to_oom = if time_to_oom < 0 {
+        if time_to_oom < 0 {
             60 * 60 * NS_PER_SECOND
         } else {
             time_to_oom
-        };
+        }
+    }
+
+    /// Go `UnitMetrics.doneIteration` for the player, its pets and the target.
+    pub(crate) fn unit_done_iteration(&mut self, _damage: f64) {
+        let seed = self.iteration_seed();
+        let duration_seconds = seconds(self.duration);
+        let time_to_oom = self.time_to_oom(Side::Player, self.config.teardown_max_mana);
         // Go infers time to out of mana only for a unit with a mana bar.
         self.totals.tto.total = if self.has_mana_bar() {
             seconds(time_to_oom) * duration_seconds
@@ -551,6 +593,8 @@ impl<A: Agent> Fight<A> {
         self.totals.tto.done_iteration(duration, seed);
         self.totals.target_dtps.done_iteration(duration, seed);
         self.totals.player_dtps.done_iteration(duration, seed);
+        self.totals.target_dps.done_iteration(duration, seed);
+        self.totals.target_threat.done_iteration(duration, seed);
         if self.death.died {
             self.death.iterations_dead += 1;
             self.death.seeds.push(seed);
@@ -558,6 +602,7 @@ impl<A: Agent> Fight<A> {
         }
         self.totals.zero.done_iteration(duration, seed);
         self.totals.oom_seconds += seconds(self.player.oom_time);
+        self.pets_metrics_done_iteration(seed);
         self.totals.iterations += 1;
     }
 
@@ -579,6 +624,101 @@ impl<A: Agent> Fight<A> {
                         sum_sq: aura.aggregate.sum_sq,
                     },
                 })
+            })
+            .collect()
+    }
+
+    /// The pets' metrics, in Go's registration order.
+    fn pet_reports(
+        &self,
+        action_report: &dyn Fn(&ActionTotals) -> ActionMetricsReport,
+        zero: &DistributionReport,
+        n: f64,
+    ) -> Vec<UnitReport> {
+        let mut reports: Vec<(i32, UnitReport)> = self
+            .pets
+            .iter()
+            .map(|pet| {
+                (
+                    pet.unit_index,
+                    UnitReport {
+                        name: pet.name.clone(),
+                        unit_index: pet.unit_index,
+                        dps: zero.clone(),
+                        threat: zero.clone(),
+                        dtps: zero.clone(),
+                        tmi: zero.clone(),
+                        hps: zero.clone(),
+                        tto: pet
+                            .tto
+                            .as_ref()
+                            .map_or_else(|| zero.clone(), Distribution::report),
+                        seconds_oom_avg: 0.0,
+                        chance_of_death: 0.0,
+                        death_seeds: Vec::new(),
+                        actions: pet.actions.iter().map(action_report).collect(),
+                        auras: pet
+                            .auras
+                            .iter()
+                            .enumerate()
+                            .map(|(position, id)| {
+                                let uptime = &pet.aura_uptime[position];
+                                let (avg, stdev) = uptime.mean_and_stdev();
+                                AuraMetricsReport {
+                                    id: id.into(),
+                                    uptime_seconds_avg: avg,
+                                    uptime_seconds_stdev: stdev,
+                                    procs_avg: pet.aura_procs[position] as f64 / n,
+                                    aggregator_data: AggregatorData {
+                                        n: uptime.n,
+                                        sum_sq: uptime.sum_sq,
+                                    },
+                                }
+                            })
+                            .collect(),
+                        resources: Vec::new(),
+                        pets: Vec::new(),
+                    },
+                )
+            })
+            .collect();
+        if let Some(pet) = self.pet.as_ref() {
+            reports.push((
+                pet.unit_index,
+                UnitReport {
+                    name: pet.name.clone(),
+                    unit_index: pet.unit_index,
+                    dps: pet.totals.dps.report(),
+                    threat: pet.totals.threat.report(),
+                    dtps: zero.clone(),
+                    tmi: zero.clone(),
+                    hps: zero.clone(),
+                    tto: pet.totals.tto.report(),
+                    seconds_oom_avg: pet.totals.oom_seconds / n,
+                    chance_of_death: 0.0,
+                    death_seeds: Vec::new(),
+                    actions: pet.actions.iter().map(action_report).collect(),
+                    auras: self.aura_reports(Side::Pet),
+                    resources: self.resource_reports(Side::Pet),
+                    pets: Vec::new(),
+                },
+            ));
+        }
+        reports.sort_by_key(|(unit, _)| *unit);
+        reports.into_iter().map(|(_, report)| report).collect()
+    }
+
+    /// A unit's resource metrics that saw an event.
+    fn resource_reports(&self, side: Side) -> Vec<ResourceMetricsReport> {
+        self.resources
+            .iter()
+            .filter(|resource| resource.unit == side && resource.events > 0)
+            .map(|resource| ResourceMetricsReport {
+                id: (&resource.id).into(),
+                kind: resource.kind.proto_name(),
+                events: resource.events,
+                gain: resource.gain,
+                actual_gain: resource.actual_gain,
             })
             .collect()
     }
@@ -609,18 +749,7 @@ impl<A: Agent> Fight<A> {
             spell_school: action.school,
         };
         let actions = self.actions.iter().map(action_report).collect();
-        let resources = self
-            .resources
-            .iter()
-            .filter(|resource| resource.events > 0)
-            .map(|resource| ResourceMetricsReport {
-                id: (&resource.id).into(),
-                kind: resource.kind.proto_name(),
-                events: resource.events,
-                gain: resource.gain,
-                actual_gain: resource.actual_gain,
-            })
-            .collect();
+        let resources = self.resource_reports(Side::Player);
         let n = f64::from(self.totals.iterations);
         let zero = self.totals.zero.report();
         let player = UnitReport {
@@ -638,41 +767,13 @@ impl<A: Agent> Fight<A> {
             actions,
             auras: self.aura_reports(Side::Player),
             resources,
-            pets: self
-                .pets
-                .iter()
-                .map(|pet| TargetReport {
-                    name: pet.name.clone(),
-                    unit_index: pet.unit_index,
-                    dps: zero.clone(),
-                    threat: zero.clone(),
-                    dtps: zero.clone(),
-                    tmi: zero.clone(),
-                    hps: zero.clone(),
-                    tto: zero.clone(),
-                    actions: pet.actions.iter().map(action_report).collect(),
-                    auras: pet
-                        .auras
-                        .iter()
-                        .map(|id| AuraMetricsReport {
-                            id: id.into(),
-                            uptime_seconds_avg: 0.0,
-                            uptime_seconds_stdev: 0.0,
-                            procs_avg: 0.0,
-                            aggregator_data: AggregatorData {
-                                n: self.totals.iterations,
-                                sum_sq: 0.0,
-                            },
-                        })
-                        .collect(),
-                })
-                .collect(),
+            pets: self.pet_reports(&action_report, &zero, n),
         };
         let target = TargetReport {
             name: self.config.target_label.clone(),
             unit_index: Side::Target.index() as i32,
-            dps: zero.clone(),
-            threat: zero.clone(),
+            dps: self.totals.target_dps.report(),
+            threat: self.totals.target_threat.report(),
             dtps: self.totals.target_dtps.report(),
             tmi: zero.clone(),
             hps: zero.clone(),

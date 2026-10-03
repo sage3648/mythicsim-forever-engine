@@ -41,6 +41,15 @@ pub enum CompareOp {
     Ge,
 }
 
+/// Go `ShamanTotems_TotemType`, the totem slot a Shaman value reads.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Totem {
+    Earth,
+    Air,
+    Fire,
+    Water,
+}
+
 /// Go `APLValueMath_MathOperator`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MathOp {
@@ -108,6 +117,11 @@ pub enum Value {
         lhs: Box<Value>,
         rhs: Box<Value>,
     },
+    /// Go sim/shaman/apl_values.go `APLValueTotemRemainingTime`; no totem type gives no value.
+    TotemRemainingTime {
+        totem: Option<Totem>,
+        include_reaction_time: bool,
+    },
     CurrentManaPercent,
     RemainingTimePercent,
     CurrentMana,
@@ -115,14 +129,26 @@ pub enum Value {
     MaxEnergy,
     CurrentComboPoints,
     TimeToNextEnergyTick,
+    /// Go `APLValueCurrentRage`.
+    CurrentRage,
+    /// Go `APLValueIsExecutePhase`, by its percent threshold.
+    IsExecutePhase(i32),
     RemainingTime,
     CurrentTime,
     NumberTargets,
     AuraIsKnown(ActionId),
+    /// `auraIsKnown` with one of the player's pets, by its position among them, as its
+    /// source unit.
+    PetAuraIsKnown {
+        pet: usize,
+        id: ActionId,
+    },
     AuraIsActive(ActionId),
     /// `auraIsActive` with the current target as its source unit.
     TargetAuraIsActive(ActionId),
     AuraNumStacks(ActionId),
+    /// `auraNumStacks` with the current target as its source unit.
+    TargetAuraNumStacks(ActionId),
     AuraRemainingTime(ActionId),
     DotIsActive(ActionId),
     DotRemainingTime(ActionId),
@@ -143,6 +169,20 @@ pub enum Value {
     FrontOfTarget,
     /// Go `APLValueMaxMana`.
     MaxMana,
+    /// Go `APLValueSpellCanCast`: `CanCastOrQueue` on the current target.
+    SpellCanCast(ActionId),
+    /// Go `APLValueAutoTimeToNext`.
+    AutoTimeToNext(AutoAttackType),
+}
+
+/// Go `APLValueAutoAttackType`: which auto attack a value reads. Unknown reads as any.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum AutoAttackType {
+    Any,
+    Melee,
+    MainHand,
+    OffHand,
+    Ranged,
 }
 
 impl Value {
@@ -195,6 +235,7 @@ impl Value {
             | Value::Or(_)
             | Value::Not(_)
             | Value::AuraIsKnown(_)
+            | Value::PetAuraIsKnown { .. }
             | Value::AuraIsActive(_)
             | Value::TargetAuraIsActive(_)
             | Value::AuraShouldRefresh { .. }
@@ -202,22 +243,28 @@ impl Value {
             | Value::DotIsActive(_)
             | Value::SpellIsKnown(_)
             | Value::SpellIsReady(_)
+            | Value::IsExecutePhase(_)
+            | Value::SpellCanCast(_)
             | Value::GcdIsReady => ValueType::Bool,
-            Value::AuraNumStacks(_) | Value::NumberTargets | Value::CurrentComboPoints => {
-                ValueType::Int
-            }
+            Value::AuraNumStacks(_)
+            | Value::TargetAuraNumStacks(_)
+            | Value::NumberTargets
+            | Value::CurrentComboPoints => ValueType::Int,
             Value::AuraRemainingTime(_)
             | Value::DotRemainingTime(_)
             | Value::SpellCastTime(_)
             | Value::SpellTimeToReady(_)
             | Value::DotTimeToNextTick(_)
+            | Value::AutoTimeToNext(_)
             | Value::RemainingTime
+            | Value::TotemRemainingTime { .. }
             | Value::CurrentTime
             | Value::TimeToNextEnergyTick => ValueType::Duration,
             Value::CurrentManaPercent
             | Value::CurrentMana
             | Value::RemainingTimePercent
             | Value::CurrentEnergy
+            | Value::CurrentRage
             | Value::MaxEnergy
             | Value::MaxMana => ValueType::Float,
             Value::Math { op, lhs, rhs } => {
@@ -699,6 +746,23 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
             only(&[])?;
             Ok(Value::MaxEnergy)
         }
+        "currentRage" => {
+            only(&[])?;
+            Ok(Value::CurrentRage)
+        }
+        "isExecutePhase" => {
+            only(&["threshold"])?;
+            match config.get("threshold").and_then(Json::as_str) {
+                Some("E20") => Ok(Value::IsExecutePhase(20)),
+                Some("E25") => Ok(Value::IsExecutePhase(25)),
+                Some("E35") => Ok(Value::IsExecutePhase(35)),
+                Some("E45") => Ok(Value::IsExecutePhase(45)),
+                Some("E90") => Ok(Value::IsExecutePhase(90)),
+                other => Err(vec![format!(
+                    "isExecutePhase threshold {other:?} is unsupported"
+                )]),
+            }
+        }
         "currentComboPoints" => {
             only(&[])?;
             Ok(Value::CurrentComboPoints)
@@ -711,12 +775,51 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
             only(&[])?;
             Ok(Value::NumberTargets)
         }
+        "totemRemainingTime" => {
+            only(&["totemType", "includeReactionTime"])?;
+            let totem = match config.get("totemType").and_then(Json::as_str) {
+                None | Some("TypeUnknownTotem") => None,
+                Some("Earth") => Some(Totem::Earth),
+                Some("Air") => Some(Totem::Air),
+                Some("Fire") => Some(Totem::Fire),
+                Some("Water") => Some(Totem::Water),
+                Some(other) => return Err(vec![format!("totem type {other} is unsupported")]),
+            };
+            let include_reaction_time = match config.get("includeReactionTime") {
+                None => false,
+                Some(value) => value
+                    .as_bool()
+                    .ok_or_else(|| vec!["includeReactionTime must be a boolean".to_string()])?,
+            };
+            Ok(Value::TotemRemainingTime {
+                totem,
+                include_reaction_time,
+            })
+        }
         "gcdIsReady" => {
             only(&[])?;
             Ok(Value::GcdIsReady)
         }
+        "autoTimeToNext" => {
+            only(&["autoType"])?;
+            // protojson writes the enum by name and omits the zero value, UnknownAuto, which
+            // Go's switch reads as any auto attack.
+            let kind = match config.get("autoType").map(|kind| kind.as_str()) {
+                None | Some(Some("UnknownAuto" | "AnyAuto")) => AutoAttackType::Any,
+                Some(Some("MeleeAuto")) => AutoAttackType::Melee,
+                Some(Some("MainHandAuto")) => AutoAttackType::MainHand,
+                Some(Some("OffHandAuto")) => AutoAttackType::OffHand,
+                Some(Some("RangedAuto")) => AutoAttackType::Ranged,
+                Some(other) => {
+                    return Err(vec![format!(
+                        "autoTimeToNext autoType {other:?} is unsupported"
+                    )])
+                }
+            };
+            Ok(Value::AutoTimeToNext(kind))
+        }
         "dotIsActive" | "dotRemainingTime" | "dotTimeToNextTick" | "spellIsKnown"
-        | "spellIsReady" | "spellCastTime" | "spellTimeToReady" => {
+        | "spellIsReady" | "spellCastTime" | "spellTimeToReady" | "spellCanCast" => {
             // A target unit other than the current target is not modeled.
             only(&["spellId"])?;
             let id = config
@@ -730,6 +833,7 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
                 "spellIsKnown" => Value::SpellIsKnown(id),
                 "spellIsReady" => Value::SpellIsReady(id),
                 "spellTimeToReady" => Value::SpellTimeToReady(id),
+                "spellCanCast" => Value::SpellCanCast(id),
                 _ => Value::SpellCastTime(id),
             })
         }
@@ -740,7 +844,9 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
                 .ok_or_else(|| vec!["not has no val".to_string()])?;
             Ok(Value::Not(Box::new(parse_value(value)?)))
         }
-        "auraIsActive" if fields.is_some_and(|fields| fields.contains_key("sourceUnit")) => {
+        "auraIsActive" | "auraNumStacks"
+            if fields.is_some_and(|fields| fields.contains_key("sourceUnit")) =>
+        {
             // Go GetSourceUnit: the player itself, or the current target, of the one in scope.
             only(&["auraId", "sourceUnit"])?;
             let id = config
@@ -752,13 +858,58 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
                 Some(_) => None,
                 None => unit.get("type").and_then(Json::as_str),
             });
-            match kind {
-                Some("Self") => Ok(Value::AuraIsActive(id)),
-                Some("CurrentTarget") => Ok(Value::TargetAuraIsActive(id)),
+            match (kind, name) {
+                (Some("Self"), "auraIsActive") => Ok(Value::AuraIsActive(id)),
+                (Some("Self"), _) => Ok(Value::AuraNumStacks(id)),
+                (Some("CurrentTarget"), "auraIsActive") => Ok(Value::TargetAuraIsActive(id)),
+                (Some("CurrentTarget"), _) => Ok(Value::TargetAuraNumStacks(id)),
                 _ => Err(vec![format!(
                     "{name} sourceUnit {} is unsupported",
                     config.get("sourceUnit").cloned().unwrap_or_default()
                 )]),
+            }
+        }
+        "auraIsKnown" if fields.is_some_and(|fields| fields.contains_key("sourceUnit")) => {
+            // Go GetSourceUnit: the player itself, or a pet of the player by its index.
+            only(&["auraId", "sourceUnit"])?;
+            let id = config
+                .get("auraId")
+                .ok_or_else(|| vec![format!("{name} has no auraId")])
+                .and_then(|id| parse_action_id(id).map_err(|err| vec![err]))?;
+            let unsupported = || {
+                vec![format!(
+                    "{name} sourceUnit {} is unsupported",
+                    config.get("sourceUnit").cloned().unwrap_or_default()
+                )]
+            };
+            let source = config
+                .get("sourceUnit")
+                .and_then(Json::as_object)
+                .ok_or_else(unsupported)?;
+            let kind = source.get("type").and_then(Json::as_str);
+            let owner_is_self =
+                source
+                    .get("owner")
+                    .and_then(Json::as_object)
+                    .is_some_and(|owner| {
+                        owner.len() == 1 && owner.get("type").and_then(Json::as_str) == Some("Self")
+                    });
+            let known_keys = source
+                .keys()
+                .all(|key| ["type", "index", "owner"].contains(&key.as_str()));
+            match kind {
+                Some("Self") if source.len() == 1 => Ok(Value::AuraIsKnown(id)),
+                Some("Pet") if owner_is_self && known_keys => {
+                    let pet = match source.get("index") {
+                        None => 0,
+                        Some(index) => index
+                            .as_u64()
+                            .and_then(|index| usize::try_from(index).ok())
+                            .ok_or_else(unsupported)?,
+                    };
+                    Ok(Value::PetAuraIsKnown { pet, id })
+                }
+                _ => Err(unsupported()),
             }
         }
         "auraShouldRefresh" => {
@@ -805,7 +956,8 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
             Ok(Value::MaxMana)
         }
         "auraIsKnown" | "auraIsActive" | "auraNumStacks" | "auraRemainingTime" => {
-            // sourceUnit, except on auraIsActive, and includeReactionTime are not modeled.
+            // sourceUnit, except on auraIsActive and auraNumStacks, and includeReactionTime
+            // are not modeled.
             only(&["auraId"])?;
             let id = config
                 .get("auraId")
@@ -1042,6 +1194,10 @@ pub enum Compiled<R> {
         lhs: Box<Compiled<R>>,
         rhs: Box<Compiled<R>>,
     },
+    TotemRemainingTime {
+        totem: Totem,
+        include_reaction_time: bool,
+    },
     CurrentManaPercent,
     RemainingTimePercent,
     CurrentMana,
@@ -1056,6 +1212,8 @@ pub enum Compiled<R> {
     },
     CurrentComboPoints,
     TimeToNextEnergyTick,
+    CurrentRage,
+    IsExecutePhase(i32),
     RemainingTime,
     CurrentTime,
     NumberTargets,
@@ -1070,6 +1228,8 @@ pub enum Compiled<R> {
     SpellTimeToReady(usize),
     DotTimeToNextTick(usize),
     GcdIsReady,
+    SpellCanCast(usize),
+    AutoTimeToNext(AutoAttackType),
     /// Go `APLValueCoerced`.
     Coerced {
         to: ValueType,
@@ -1088,22 +1248,27 @@ impl<R> Compiled<R> {
             | Compiled::AuraIsActive(_)
             | Compiled::DotIsActive(_)
             | Compiled::SpellIsReady(_)
+            | Compiled::IsExecutePhase(_)
+            | Compiled::SpellCanCast(_)
             | Compiled::GcdIsReady => ValueType::Bool,
             Compiled::AuraNumStacks(_) | Compiled::NumberTargets | Compiled::CurrentComboPoints => {
                 ValueType::Int
             }
             Compiled::AuraRemainingTime(_)
+            | Compiled::AutoTimeToNext(_)
             | Compiled::DotRemainingTime(_)
             | Compiled::SpellCastTime(_)
             | Compiled::SpellTimeToReady(_)
             | Compiled::DotTimeToNextTick(_)
             | Compiled::RemainingTime
+            | Compiled::TotemRemainingTime { .. }
             | Compiled::CurrentTime
             | Compiled::TimeToNextEnergyTick => ValueType::Duration,
             Compiled::CurrentManaPercent
             | Compiled::CurrentMana
             | Compiled::RemainingTimePercent
             | Compiled::CurrentEnergy
+            | Compiled::CurrentRage
             | Compiled::MaxEnergy
             | Compiled::MaxMana => ValueType::Float,
             Compiled::FrontOfTarget | Compiled::AuraShouldRefresh { .. } => ValueType::Bool,
@@ -1258,6 +1423,9 @@ pub struct Lookup<'a, R> {
     pub spell: &'a dyn Fn(&ActionId) -> Option<usize>,
     /// Go `GetAPLDot`: the spellbook position of the spell when it has a dot on the target.
     pub dot: &'a dyn Fn(&ActionId) -> Option<usize>,
+    /// Go `GetAuraByID` on the player's pet at a position among its pets: whether it has the
+    /// aura, false when there is no such pet.
+    pub pet_aura_known: &'a dyn Fn(usize, &ActionId) -> bool,
 }
 
 /// What Go `newAPLAction` makes of an action's condition.
@@ -1343,6 +1511,8 @@ fn compile_value<R>(
         Value::RemainingTimePercent => Compiled::RemainingTimePercent,
         Value::CurrentMana => Compiled::CurrentMana,
         Value::CurrentEnergy => Compiled::CurrentEnergy,
+        Value::CurrentRage => Compiled::CurrentRage,
+        Value::IsExecutePhase(threshold) => Compiled::IsExecutePhase(*threshold),
         Value::MaxEnergy => Compiled::MaxEnergy,
         Value::MaxMana => Compiled::MaxMana,
         Value::FrontOfTarget => Compiled::FrontOfTarget,
@@ -1368,6 +1538,13 @@ fn compile_value<R>(
         Value::RemainingTime => Compiled::RemainingTime,
         Value::CurrentTime => Compiled::CurrentTime,
         Value::NumberTargets => Compiled::NumberTargets,
+        Value::TotemRemainingTime {
+            totem,
+            include_reaction_time,
+        } => Compiled::TotemRemainingTime {
+            totem: (*totem)?,
+            include_reaction_time: *include_reaction_time,
+        },
         Value::DotIsActive(id) => Compiled::DotIsActive((lookup.dot)(id)?),
         Value::DotRemainingTime(id) => Compiled::DotRemainingTime((lookup.dot)(id)?),
         // Go `newValueSpellIsKnown` is a constant.
@@ -1375,9 +1552,12 @@ fn compile_value<R>(
         Value::SpellIsReady(id) => Compiled::SpellIsReady((lookup.spell)(id)?),
         Value::SpellCastTime(id) => Compiled::SpellCastTime((lookup.spell)(id)?),
         Value::SpellTimeToReady(id) => Compiled::SpellTimeToReady((lookup.spell)(id)?),
+        Value::SpellCanCast(id) => Compiled::SpellCanCast((lookup.spell)(id)?),
+        Value::AutoTimeToNext(auto) => Compiled::AutoTimeToNext(*auto),
         Value::DotTimeToNextTick(id) => Compiled::DotTimeToNextTick((lookup.dot)(id)?),
         Value::GcdIsReady => Compiled::GcdIsReady,
         Value::AuraIsKnown(id) => bool_const(aura(id).is_some()),
+        Value::PetAuraIsKnown { pet, id } => bool_const((lookup.pet_aura_known)(*pet, id)),
         Value::AuraIsActive(id) => match (aura(id), missing) {
             (Some(found), _) => Compiled::AuraIsActive(found.aura),
             (None, MissingAura::Dropped) => return None,
@@ -1387,6 +1567,14 @@ fn compile_value<R>(
             (Some(found), _) => Compiled::AuraIsActive(found.aura),
             (None, MissingAura::Dropped) => return None,
             (None, MissingAura::Inactive) => bool_const(false),
+        },
+        Value::TargetAuraNumStacks(id) => match ((lookup.target_aura)(id), missing) {
+            (Some(found), _) if found.max_stacks == 0 => return None,
+            (Some(found), _) => Compiled::AuraNumStacks(found.aura),
+            (None, MissingAura::Dropped) => return None,
+            (None, MissingAura::Inactive) => {
+                Compiled::Const(parse_const("0").expect("int constant"))
+            }
         },
         Value::AuraNumStacks(id) => match (aura(id), missing) {
             // Go warns that the aura does not stack and drops the value, fix or not.
@@ -1500,7 +1688,44 @@ mod tests {
             target_aura: aura,
             spell: &no_spell,
             dot: &no_spell,
+            pet_aura_known: &|_, _| false,
         }
+    }
+
+    /// Go `GetSourceUnit` on a pet of the player reads that pet's auras, a constant.
+    #[test]
+    fn aura_is_known_reads_a_pet_of_the_player() {
+        let pet = serde_json::json!({"auraIsKnown": {
+            "auraId": {"spellId": 1293696},
+            "sourceUnit": {"type": "Pet", "index": 1, "owner": {"type": "Self"}}
+        }});
+        let value = parse_value(&pet).unwrap();
+        let id = ActionId {
+            spell_id: 1293696,
+            ..ActionId::default()
+        };
+        assert_eq!(
+            value,
+            Value::PetAuraIsKnown {
+                pet: 1,
+                id: id.clone()
+            }
+        );
+        let none = |_: &ActionId| -> Option<FoundAura<ActionId>> { None };
+        let known = |pet: usize, aura: &ActionId| pet == 1 && *aura == id;
+        let lookup = Lookup {
+            pet_aura_known: &known,
+            ..only_auras(&none)
+        };
+        assert_eq!(
+            compile_condition(Some(&value), &lookup, MissingAura::Dropped),
+            CompiledCondition::Always
+        );
+        let other = serde_json::json!({"auraIsKnown": {
+            "auraId": {"spellId": 1293696},
+            "sourceUnit": {"type": "Pet", "index": 0, "owner": {"type": "CurrentTarget"}}
+        }});
+        assert!(parse_value(&other).is_err());
     }
 
     #[test]
