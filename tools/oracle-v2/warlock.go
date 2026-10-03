@@ -70,6 +70,8 @@ var (
 	wlNightfallTriggered   = spelldata.Ranked(17941)
 	wlImprovedShadowBoltOn = spelldata.Ranked(17794)
 	wlDecimation           = spelldata.Talent(440870, 2)
+	wlBaneOfDoomLadder     = spelldata.Ranked(603)
+	wlSiphonLifeLadder     = spelldata.Ranked(18265, 18879, 18880, 18881)
 	wlDemonicEnergies      = spelldata.Talent(1225214, 2)
 	wlDemonicSacrificeOn   = spelldata.Ranked(18789, 18790, 18791, 18792)
 )
@@ -128,6 +130,13 @@ func warlockEffects(agent core.Agent, character *core.Character) []map[string]an
 	// immolate.go, corruption.go: a snapshot dot of the client's periodic effect.
 	effects = append(effects, withKind("immolate", warlockTick(wlImmolateLadder.Highest(), unrepresented)))
 	effects = append(effects, withKind("corruption", warlockTick(wlCorruptionLadder.Highest(), unrepresented)))
+	// doom.go: one snapshot tick a minute on, on the bane slot.
+	effects = append(effects, withKind("bane_of_doom", warlockTick(wlBaneOfDoomLadder.Highest(), unrepresented)))
+	if talents.SiphonLife { // siphon_life.go: Corruption's shape, healing for each tick
+		siphon := withKind("siphon_life", warlockTick(wlSiphonLifeLadder.Highest(), unrepresented))
+		siphon["self_healing_multiplier"] = w.PseudoStats.SelfHealingMultiplier
+		effects = append(effects, siphon)
+	}
 	// agony.go: the snapshot pays half the tick and every fourth tick adds that half back, Go literals.
 	agony := withKind("bane_of_agony", warlockTick(wlBaneOfAgonyLadder.Highest(), unrepresented))
 	agony["ramp_share"], agony["ramp_every_ticks"] = 0.5, int32(4)

@@ -18,6 +18,7 @@ pub(crate) const GATE: ClassGate = ClassGate {
 const EFFECTS: &[&str] = &[
     "amplify_curse",
     "bane_of_agony",
+    "bane_of_doom",
     "conflagrate",
     "corruption",
     "curse_of_the_elements",
@@ -34,6 +35,7 @@ const EFFECTS: &[&str] = &[
     "shadow_and_flame",
     "shadow_bolt",
     "shadowburn",
+    "siphon_life",
     "soul_fire",
     "warlock_pet",
 ];
@@ -47,6 +49,8 @@ fn spell_capability(spell: &Spell) -> Option<&'static str> {
         "immolate" if damage && spell.related_dot_spell.is_some() => Some("immolate"),
         "corruption" if dot => Some("corruption"),
         "bane_of_agony" if dot => Some("bane_of_agony"),
+        "bane_of_doom" if dot => Some("bane_of_doom"),
+        "siphon_life" if dot => Some("siphon_life"),
         "curse_of_the_elements" => Some("curse_of_the_elements"),
         "life_tap" => Some("life_tap"),
         "conflagrate" if damage => Some("conflagrate"),

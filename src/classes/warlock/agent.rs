@@ -12,13 +12,16 @@ use super::{
     pets::{self, DemonAi},
     spells::{
         bane_of_agony::{self, BaneOfAgony},
+        bane_of_doom,
         bind_snapshot_dot,
         conflagrate::Conflagrate,
         corruption,
         curse_of_the_elements::{self, CurseOfTheElements},
         find_spell, immolate,
         life_tap::{self, LifeTap},
-        searing_pain, shadow_bolt, shadowburn, soul_fire,
+        searing_pain, shadow_bolt, shadowburn,
+        siphon_life::SiphonLife,
+        soul_fire,
     },
     talents::{
         decimation::{self, Decimation},
@@ -45,6 +48,8 @@ pub(crate) enum WarlockSpell {
     SearingPain,
     SoulFire,
     AmplifyCurse,
+    SiphonLife,
+    BaneOfDoom,
     /// The Succubus's Lash of Pain.
     LashOfPain,
     /// The demon's Demonic Brand hit.
@@ -81,6 +86,10 @@ pub(crate) struct WarlockAgent {
     immolate_dot: Option<DotId>,
     corruption_dot: Option<DotId>,
     pub(crate) bane_of_agony: Option<BaneOfAgony>,
+    siphon_life: Option<SiphonLife>,
+    bane_of_doom_dot: Option<DotId>,
+    /// Go `currentActiveBane` on the one target.
+    pub(crate) bane_slot: Option<AuraRef>,
     curse_of_the_elements: Option<Rc<CurseOfTheElements>>,
     life_tap: Option<LifeTap>,
     conflagrate: Option<Rc<Conflagrate>>,
@@ -188,6 +197,8 @@ impl WarlockAgent {
             "searing_pain" if damage => Some(WarlockSpell::SearingPain),
             "soul_fire" if damage => Some(WarlockSpell::SoulFire),
             "amplify_curse" => Some(WarlockSpell::AmplifyCurse),
+            "siphon_life" if dot => Some(WarlockSpell::SiphonLife),
+            "bane_of_doom" if dot => Some(WarlockSpell::BaneOfDoom),
             "succubus_lash_of_pain" => Some(WarlockSpell::LashOfPain),
             "demonic_brand" => Some(WarlockSpell::DemonicBrand),
             "imp_firebolt" => Some(WarlockSpell::Firebolt),
@@ -232,6 +243,27 @@ impl WarlockAgent {
                 } => {
                     let dot = bind_snapshot_dot(&mut fight, *spell_id, *tick_base, *tick_can_crit)?;
                     fight.agent.corruption_dot = Some(dot);
+                }
+                Effect::SiphonLife {
+                    spell_id,
+                    tick_base,
+                    tick_can_crit,
+                    self_healing_multiplier,
+                } => {
+                    let dot = bind_snapshot_dot(&mut fight, *spell_id, *tick_base, *tick_can_crit)?;
+                    let metrics = fight.spells[find_spell(&fight, *spell_id)?]
+                        .health_metrics
+                        .ok_or("Siphon Life has no health metrics")?;
+                    fight.agent.siphon_life =
+                        Some(SiphonLife::new(dot, *self_healing_multiplier, metrics));
+                }
+                Effect::BaneOfDoom {
+                    spell_id,
+                    tick_base,
+                    tick_can_crit,
+                } => {
+                    let dot = bind_snapshot_dot(&mut fight, *spell_id, *tick_base, *tick_can_crit)?;
+                    fight.agent.bane_of_doom_dot = Some(dot);
                 }
                 Effect::BaneOfAgony {
                     spell_id,
@@ -485,6 +517,14 @@ impl Agent for WarlockAgent {
                 corruption::apply(fight, spell, target, dot);
             }
             WarlockSpell::BaneOfAgony => bane_of_agony::apply(fight, spell, target),
+            WarlockSpell::SiphonLife => {
+                let dot = fight.agent.siphon_life.expect("Siphon Life is bound").dot;
+                corruption::apply(fight, spell, target, dot);
+            }
+            WarlockSpell::BaneOfDoom => {
+                let dot = fight.agent.bane_of_doom_dot.expect("Bane of Doom is bound");
+                bane_of_doom::apply(fight, spell, target, dot);
+            }
             WarlockSpell::CurseOfTheElements => {
                 let curse = fight
                     .agent
@@ -535,6 +575,11 @@ impl Agent for WarlockAgent {
             let max_mana = fight.unit_config(Side::Player).max_mana;
             fight.add_mana(max_mana * fraction, metrics);
         }
+    }
+
+    fn health_metrics_before_cost(behavior: WarlockSpell) -> bool {
+        // siphon_life.go registers its health metrics before the spell.
+        behavior == WarlockSpell::SiphonLife
     }
 
     fn pet_rotation(fight: &mut Fight<Self>) {
@@ -602,7 +647,13 @@ impl Agent for WarlockAgent {
     fn on_dot_tick(fight: &mut Fight<Self>, dot: DotId, behavior: WarlockSpell) {
         match behavior {
             WarlockSpell::BaneOfAgony => bane_of_agony::tick(fight),
-            WarlockSpell::ImmolateDot | WarlockSpell::Corruption => fight.snapshot_dot_tick(dot),
+            WarlockSpell::ImmolateDot | WarlockSpell::Corruption | WarlockSpell::BaneOfDoom => {
+                fight.snapshot_dot_tick(dot)
+            }
+            WarlockSpell::SiphonLife => {
+                let siphon = fight.agent.siphon_life.expect("Siphon Life is bound");
+                siphon.tick(fight);
+            }
             _ => {}
         }
     }

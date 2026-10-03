@@ -1,6 +1,5 @@
 //! Bane of Agony (11713), from Go sim/warlock/agony.go. Forever moved Curse of Agony onto
-//! the bane slot, where only Agony lives in supported builds, so taking the slot never
-//! replaces anything. The dot ramps: the snapshot pays a share of the tick, and every few
+//! the bane slot, which it takes from Bane of Doom. The dot ramps: the snapshot pays a share of the tick, and every few
 //! ticks that share is added back to the stored amount.
 
 use crate::{
@@ -46,6 +45,7 @@ pub(crate) fn apply(fight: &mut Fight<WarlockAgent>, spell: SpellId, target: Sid
     if result.landed() {
         let mut agony = state(fight);
         let aura = fight.dots[agony.dot].aura;
+        super::take_bane_slot(fight, aura);
         fight.deactivate_aura(aura);
         let mut base = agony.tick_base;
         if let Some((amplify, factor)) = agony.amplify {

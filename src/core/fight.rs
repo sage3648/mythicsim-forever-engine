@@ -73,6 +73,12 @@ pub(crate) trait Agent: Sized {
 
     /// Go `Spell.ApplyEffects`.
     fn apply_effects(fight: &mut Fight<Self>, spell: SpellId, target: Side, behavior: Self::Spell);
+    /// Whether the class registers health metrics under the spell's action before the spell
+    /// itself, as Go classes do for a spell that heals its caster; they then come first in
+    /// the caster's resource metrics.
+    fn health_metrics_before_cost(_behavior: Self::Spell) -> bool {
+        false
+    }
     /// Go `ExtraCastCondition`.
     fn extra_cast_condition(_fight: &Fight<Self>, _spell: SpellId, _behavior: Self::Spell) -> bool {
         true
@@ -476,6 +482,9 @@ pub(crate) struct Spell<S> {
     pub(crate) mana_metrics: Option<usize>,
     /// Indexes into the resource metrics for this spell's energy cost and combo points.
     pub(crate) energy_metrics: Option<(usize, usize)>,
+    /// The health metrics a class registers before the spell, per
+    /// [`Agent::health_metrics_before_cost`].
+    pub(crate) health_metrics: Option<usize>,
     /// Go `Spell.ResourceMetrics`: the rage metrics a white hit without a cost registers on
     /// its first landed hit.
     pub(crate) rage_metrics: Option<usize>,
@@ -1535,6 +1544,12 @@ impl<A: Agent> Fight<A> {
                 percent_modifier: cost.percent_modifier,
                 additive_percent_modifier: cost.additive_percent_modifier,
             });
+            let health_metrics = match &behavior {
+                SpellBehavior::Class(class) if A::health_metrics_before_cost(*class) => Some(
+                    resource(caster, id.clone(), false, ResourceKind::Health),
+                ),
+                _ => None,
+            };
             // Go newEnergyCost registers the energy metrics, then the combo point metrics.
             let (mana_metrics, energy_metrics) = match cost.map(|cost| cost.kind) {
                 Some(ResourceKind::Energy) => {
@@ -1643,6 +1658,7 @@ impl<A: Agent> Fight<A> {
                 related_dot_spell: exported.related_dot_spell,
                 mana_metrics,
                 energy_metrics,
+                health_metrics,
                 rage_metrics: None,
                 white_hand: match exported.proc_mask.as_slice() {
                     [mask] if mask == "ProcMaskMeleeMHAuto" => Some(melee::Hand::Main),

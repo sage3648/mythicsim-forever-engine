@@ -1,6 +1,7 @@
 //! Warlock spell mechanics reusable by any Warlock build that casts them.
 
 pub(crate) mod bane_of_agony;
+pub(crate) mod bane_of_doom;
 pub(crate) mod conflagrate;
 pub(crate) mod corruption;
 pub(crate) mod curse_of_the_elements;
@@ -9,9 +10,23 @@ pub(crate) mod life_tap;
 pub(crate) mod searing_pain;
 pub(crate) mod shadow_bolt;
 pub(crate) mod shadowburn;
+pub(crate) mod siphon_life;
 pub(crate) mod soul_fire;
 
-use crate::core::fight::{Agent, DotId, Fight, SpellId};
+use crate::{
+    classes::warlock::agent::WarlockAgent,
+    core::fight::{Agent, AuraRef, DotId, Fight, SpellId},
+};
+
+/// Go `takeBaneSlot` on the one target: a different bane holding it fades first.
+pub(crate) fn take_bane_slot(fight: &mut Fight<WarlockAgent>, aura: AuraRef) {
+    if let Some(active) = fight.agent.bane_slot {
+        if active != aura {
+            fight.deactivate_aura(active);
+        }
+    }
+    fight.agent.bane_slot = Some(aura);
+}
 
 /// The untagged spell with an exported spell ID.
 pub(crate) fn find_spell<A: Agent>(fight: &Fight<A>, spell_id: i32) -> Result<SpellId, String> {

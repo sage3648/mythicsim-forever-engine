@@ -1386,6 +1386,19 @@ pub enum Effect {
         tick_base: f64,
         tick_can_crit: bool,
     },
+    /// Siphon Life's snapshot dot, which heals the warlock for each tick's damage.
+    SiphonLife {
+        spell_id: i32,
+        tick_base: f64,
+        tick_can_crit: bool,
+        self_healing_multiplier: f64,
+    },
+    /// Bane of Doom's one-tick snapshot dot on the bane slot.
+    BaneOfDoom {
+        spell_id: i32,
+        tick_base: f64,
+        tick_can_crit: bool,
+    },
     /// Bane of Agony's ramping snapshot dot: the snapshot pays `ramp_share` of the tick and
     /// every `ramp_every_ticks` ticks adds that share back.
     BaneOfAgony {
@@ -2057,6 +2070,8 @@ impl Effect {
             Effect::Shadowburn {} => "shadowburn",
             Effect::Nightfall { .. } => "nightfall",
             Effect::Decimation { .. } => "decimation",
+            Effect::SiphonLife { .. } => "siphon_life",
+            Effect::BaneOfDoom { .. } => "bane_of_doom",
             Effect::Firebolt { .. } => "firebolt",
             Effect::FelEnergy { .. } => "fel_energy",
             Effect::DemonicBrand { .. } => "demonic_brand",
