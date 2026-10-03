@@ -760,6 +760,53 @@ pub enum Effect {
         aura: String,
         reason: String,
     },
+    /// Every Lightning Bolt rank: an overload may roll when the bolt lands.
+    LightningBolt {
+        overload_chance: f64,
+        overload_tag: i32,
+        rng_label: String,
+    },
+    /// Every Chain Lightning rank: a third of the overload chance per hit and a bounce
+    /// reduction on later targets.
+    ChainLightning {
+        overload_chance: f64,
+        overload_tag: i32,
+        rng_label: String,
+        bounce_reduction: f64,
+        bounce_bonus: f64,
+    },
+    /// Flame Shock's hit and the dot it applies when it lands.
+    FlameShock {
+        spell_id: i32,
+        tick_base: f64,
+        tick_can_crit: bool,
+    },
+    /// Lava Burst, stronger against a target burning with Flame Shock.
+    LavaBurst {
+        spell_id: i32,
+        flame_shock_bonus: f64,
+    },
+    /// Fire Nova: one hit on each target from a fixed base.
+    FireNova {
+        spell_id: i32,
+        base_damage: f64,
+    },
+    /// Searing Totem: a target dot whose ticks cast the totem's attack.
+    SearingTotem {
+        spell_id: i32,
+        attack_spell_id: i32,
+        attack_damage: f64,
+        magma_totem_aura: String,
+        flametongue_totem_aura: String,
+    },
+    /// Elemental Focus: a completed elemental cast may grant Clearcasting.
+    ElementalFocus {
+        trigger_aura: String,
+        aura: String,
+        proc_chance: f64,
+        cost_percent_add: f64,
+        max_stacks: i32,
+    },
 }
 
 impl Effect {
@@ -811,6 +858,13 @@ impl Effect {
             Effect::ConjuredMana { .. } => "conjured_mana",
             Effect::EnergizeOnUse { .. } => "energize_on_use",
             Effect::InertListener { .. } => "inert_listener",
+            Effect::LightningBolt { .. } => "lightning_bolt",
+            Effect::ChainLightning { .. } => "chain_lightning",
+            Effect::FlameShock { .. } => "flame_shock",
+            Effect::LavaBurst { .. } => "lava_burst",
+            Effect::FireNova { .. } => "fire_nova",
+            Effect::SearingTotem { .. } => "searing_totem",
+            Effect::ElementalFocus { .. } => "elemental_focus",
         }
     }
 }

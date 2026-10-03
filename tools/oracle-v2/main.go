@@ -191,6 +191,8 @@ type classExport struct {
 	spells     []classSpellName
 	damageRows func(rows map[int32]*spelldata.Spell)
 	effects    func(agent core.Agent, character *core.Character) []map[string]any
+	// Optional: class behavior the effects cannot describe, one reason each.
+	unrepresented func(agent core.Agent, character *core.Character) []string
 }
 
 var classExports = map[proto.Class]classExport{}
@@ -957,6 +959,9 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	}
 	if exported {
 		effects = append(effects, class.effects(agent, character)...)
+		if class.unrepresented != nil {
+			unrepresented = append(unrepresented, class.unrepresented(agent, character)...)
+		}
 	}
 	effects = append(effects, commonEffects(character, target, request, &unrepresented)...)
 	if eureka := eurekaEffect(agent, character); eureka != nil {
@@ -977,6 +982,7 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 			effects = append(effects, map[string]any{"kind": "inert_listener", "unit": inert.side, "aura": inert.label, "reason": inert.reason})
 		}
 	}
+	effects = append(effects, meleeItemListeners(character)...)
 
 	professions := []string{}
 	for _, profession := range []proto.Profession{player.Profession1, player.Profession2} {
@@ -1022,6 +1028,36 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	// Last: the teardown changes the simulation.
 	prepared.Player.Mana.TeardownMax = teardownMaxMana(simulation, &character.Unit, &prepared.Unrepresented)
 	return prepared
+}
+
+// Item procs (common/forever/stat_bonus_procs_auto_gen.go) whose listener, decoded by spelldata's
+// ProcTrigger from the trigger row, hears only melee hits. Melee autos need auto attacks, which are
+// unrepresented, so the listener never acts unless a spell with a melee special mask exists.
+var meleeItemProcs = []struct {
+	label   string
+	trigger int32
+}{{"Storm Gauntlets", 16615}}
+
+func meleeItemListeners(character *core.Character) []map[string]any {
+	for _, spell := range character.Spellbook {
+		if spell.ProcMask.Matches(core.ProcMaskMeleeSpecial) {
+			return nil
+		}
+	}
+	effects := []map[string]any{}
+	for _, item := range meleeItemProcs {
+		if character.GetAura(item.label) == nil {
+			continue
+		}
+		listener := spelldata.ProcTrigger(character, spelldata.Find(item.trigger), nil)
+		if listener.ProcMask == core.ProcMaskUnknown || listener.ProcMask&^core.ProcMaskMelee != 0 {
+			continue
+		}
+		effects = append(effects, map[string]any{
+			"kind": "inert_listener", "unit": "player", "aura": item.label, "reason": "acts only on melee hits",
+		})
+	}
+	return effects
 }
 
 // Go Spell.doneIteration: every spell without SpellFlagNoMetrics reports under its action

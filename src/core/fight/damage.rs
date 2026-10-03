@@ -468,6 +468,12 @@ impl<A: Agent> Fight<A> {
         );
     }
 
+    /// Go `WaitTravelTime` with a class callback, run by [`Agent::on_travel`] on arrival.
+    pub(crate) fn class_after_travel(&mut self, spell: SpellId, result: SpellResult) {
+        let at = self.now + self.travel_time(spell);
+        self.schedule(at, PRIORITY_GCD, Action::ClassTravel { spell, result });
+    }
+
     /// The same, then `Dot.Apply` when the hit landed.
     pub(crate) fn deal_damage_after_travel_then_dot(
         &mut self,

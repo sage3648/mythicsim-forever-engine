@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "71dec82fe2054a29369ca07ceff6e0daf1b5bee35323d1fa403cfd95c05a5637",
+  "exporter_sha256": "045c7e8861471668234c1477547f50606dc6ef5d352855c40d2eb5b223e45116",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -818,6 +818,27 @@
       "go_log": {
         "file": "production-balance-druid.go-log.txt",
         "sha256": "505e94e36967e68385b0bdec177f99bfef087c87d7f61474165d2e9311fab883"
+      }
+    },
+    {
+      "id": "production-elemental-shaman",
+      "description": "The production application's Elemental Shaman request at application revision 18bbcd47: Tauren, Lightning Bolt with a prepull cast and a downranked filler, Chain Lightning, Flame Shock, Lava Burst, Fire Nova and Searing Totem, Lightning Overload, Elemental Focus and the math rotation operator.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-elemental-shaman.request.json"
+      },
+      "prepared": "production-elemental-shaman.prepared.json",
+      "prepared_sha256": "cd6a3a132621b4bc53a2a1613357462127c3c97896334d2dc791fc7269894d25",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-elemental-shaman.go-result.json",
+        "sha256": "de5d3343940ec32cb50b2c08787a5ebcc317a4931542f8ecc1ef265094454a36"
+      },
+      "go_log": {
+        "file": "production-elemental-shaman.go-log.txt",
+        "sha256": "0e1ac90d92a89c85643d670e978f69d22c31f0b46df429e3eecb42d8e1aefd9e"
       }
     }
   ]

@@ -72,6 +72,16 @@ pub(crate) trait Agent: Sized {
     fn should_activate(_fight: &Fight<Self>, _spell: SpellId, _behavior: Self::Spell) -> bool {
         true
     }
+    /// The `WaitTravelTime` callback of a class spell scheduled with
+    /// [`Fight::class_after_travel`]: by default the result is dealt on arrival.
+    fn on_travel(
+        fight: &mut Fight<Self>,
+        spell: SpellId,
+        result: SpellResult,
+        _behavior: Self::Spell,
+    ) {
+        fight.deal_damage(spell, result, false);
+    }
     /// A dot or channel tick of a class spell.
     fn on_dot_tick(_fight: &mut Fight<Self>, _dot: DotId, _behavior: Self::Spell) {}
     /// The class part of a dot aura's OnGain, which Go runs before the dot's own.
@@ -504,6 +514,11 @@ pub(crate) enum Action {
         dot: Option<DotId>,
     },
     DotTick(DotId),
+    /// A class spell's travel callback: [`Agent::on_travel`].
+    ClassTravel {
+        spell: SpellId,
+        result: SpellResult,
+    },
     DelayedProc {
         aura: AuraRef,
         spell: SpellId,
@@ -1460,6 +1475,11 @@ impl<A: Agent> Fight<A> {
                 }
             }
             Action::DotTick(dot) => self.periodic_tick(dot, handle),
+            Action::ClassTravel { spell, result } => {
+                if let SpellBehavior::Class(behavior) = self.spells[spell].behavior {
+                    A::on_travel(self, spell, result, behavior);
+                }
+            }
             Action::DelayedProc {
                 aura,
                 spell,
