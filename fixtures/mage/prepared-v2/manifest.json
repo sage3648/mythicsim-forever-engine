@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "a7815548b70bb34346d0a72c90bb0e439862b264dc4233d9aae6c24e29d2f55a",
+  "exporter_sha256": "88fdf8f1d7c9f479bc6c88dd83d98c07c0a539a44c46249feadde113a34cc73d",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -544,6 +544,27 @@
       "go_log": {
         "file": "fire-heating-up.go-log.txt",
         "sha256": "bbb5d6508af6250f3fc34d2d6ed7a5cc0b1e26585a400d7d99ec47b6ab2d13cc"
+      }
+    },
+    {
+      "id": "fire-combustion",
+      "description": "The Heating Up case with Combustion and the reference's Combustion and cooldown rules: each landed Fire hit adds crit until three crits end the buff and start the cooldown.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-combustion.request.json"
+      },
+      "prepared": "fire-combustion.prepared.json",
+      "prepared_sha256": "4d7e13284042a53841bd76edd4ee5651e62ade4b516f1d8e1ac46d0476361370",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fire-combustion.go-result.json",
+        "sha256": "4fdde963d4c8e235926663d7f9e467ea789055e8173663a2876fe886cf1ff291"
+      },
+      "go_log": {
+        "file": "fire-combustion.go-log.txt",
+        "sha256": "37c27c054b10734ab2de7e7b207bd836ebe66904ddc802ec6dbe7d35aa165a8f"
       }
     }
   ]

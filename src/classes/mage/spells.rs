@@ -4,6 +4,7 @@ pub(crate) mod arcane_blast;
 pub(crate) mod arcane_missiles;
 pub(crate) mod arcane_power;
 pub(crate) mod cold_snap;
+pub(crate) mod combustion;
 pub(crate) mod evocation;
 pub(crate) mod fire_blast;
 pub(crate) mod frostbolt;

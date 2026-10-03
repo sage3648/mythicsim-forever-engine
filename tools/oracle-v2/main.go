@@ -602,6 +602,8 @@ var (
 	masterOfElements    = spelldata.Talent(29074, 3)
 	pyroblastLadder     = spelldata.Ranked(11366, 12505, 12522, 12523, 12524, 12525, 12526, 18809)
 	heatingUpTriggered  = spelldata.Ranked(400625)
+	combustion          = spelldata.Ranked(11129)
+	combustionTriggered = spelldata.Ranked(28682)
 	fireballLadder      = spelldata.Ranked(133, 143, 145, 3140, 8400, 8401, 8402, 10148, 10149, 10150, 10151, 25306)
 	arcaneConcentration = spelldata.Talent(11213, 5)
 	clearcastingTrigger = spelldata.Ranked(12536)
@@ -751,6 +753,14 @@ func mageEffects(m *mage.Mage, character *core.Character) []map[string]any {
 		effects = append(effects, map[string]any{
 			"kind": "pyroblast", "spell_id": row.ID, "tick_base": row.PeriodicEffect().Average(core.CharacterLevel),
 			"tick_can_crit": row.PeriodicCanCrit() && row.DefenseTypeCore() == core.DefenseTypeMagic,
+		})
+	}
+	if talents.Combustion { // combustion.go
+		buff := combustionTriggered.Highest()
+		effects = append(effects, map[string]any{
+			"kind": "combustion", "spell_id": combustion.Highest().ID, "aura": "Combustion",
+			"crit_per_stack": buff.Effect(dbcenums.A_ADD_FLAT_MODIFIER, int32(dbcenums.SPELLMOD_CRITICAL_CHANCE)).Average(core.CharacterLevel),
+			"max_crits":      int32(combustion.Highest().ProcCharges),
 		})
 	}
 	if talents.HeatingUp { // talents_fire.go registerHotStreak

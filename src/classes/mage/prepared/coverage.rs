@@ -21,6 +21,7 @@ pub(crate) const IMPLEMENTED_EFFECTS: &[&str] = &[
     "arcane_missiles",
     "arcane_power",
     "cold_snap",
+    "combustion",
     "conjured_mana",
     "energize_on_use",
     "evocation",
@@ -53,6 +54,7 @@ fn spell_capability(spell: &Spell, prepared: &PreparedV2) -> Option<&'static str
             "arcane_power" => Some("arcane_power"),
             "fire_blast" => Some("fire_blast"),
             "fireball" => Some("fireball"),
+            "combustion" => Some("combustion"),
             "pyroblast" => Some("pyroblast"),
             "scorch" => Some("scorch"),
             "presence_of_mind" => Some("presence_of_mind"),
@@ -108,6 +110,7 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         Effect::MageArmor { aura }
         | Effect::ArcaneBlast { aura, .. }
         | Effect::ArcanePower { aura, .. }
+        | Effect::Combustion { aura, .. }
         | Effect::PresenceOfMind { aura, .. } => vec![("player", aura)],
         Effect::JudgementOfWisdom { aura, .. } => vec![("target", aura)],
         Effect::InertListener { unit, aura, .. } => match unit.as_str() {

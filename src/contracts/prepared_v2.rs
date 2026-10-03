@@ -483,6 +483,13 @@ pub enum Effect {
         trigger_aura: String,
         cast_time_per_stack: f64,
     },
+    /// Combustion's major cooldown and stacking Fire crit buff.
+    Combustion {
+        spell_id: i32,
+        aura: String,
+        crit_per_stack: f64,
+        max_crits: i32,
+    },
     /// Fire Blast's instant hit.
     FireBlast {},
     /// Every Fireball rank: a hit after travel, then a dot that snapshots.
@@ -623,6 +630,7 @@ impl Effect {
             Effect::ArcanePower { .. } => "arcane_power",
             Effect::Ignite { .. } => "ignite",
             Effect::FireBlast {} => "fire_blast",
+            Effect::Combustion { .. } => "combustion",
             Effect::Pyroblast { .. } => "pyroblast",
             Effect::HeatingUp { .. } => "heating_up",
             Effect::MasterOfElements { .. } => "master_of_elements",
