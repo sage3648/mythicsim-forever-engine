@@ -35,6 +35,14 @@ impl<A: Agent> Fight<A> {
             as i64
     }
 
+    /// A class spell's own `Spell.CastTime`, when its class replaces Go's default.
+    pub(crate) fn class_cast_time(&self, spell: SpellId) -> Option<i64> {
+        match self.spells[spell].behavior {
+            SpellBehavior::Class(behavior) => A::cast_time(self, spell, behavior),
+            _ => None,
+        }
+    }
+
     /// Go `SpellCost.GetCurrentCost`, with Go's int32 percentage arithmetic.
     pub(crate) fn current_cost(&self, spell: SpellId) -> f64 {
         let Some(cost) = self.spells[spell].cost else {
@@ -407,6 +415,10 @@ impl<A: Agent> Fight<A> {
     fn cast_full(&mut self, spell: SpellId, target: Side) -> bool {
         self.spells[spell].cur_cast = self.spells[spell].default_cast;
         // Go `ModifyCast`, before any cast check.
+        // Go CastConfig.ModifyCast, which a class may set to its own cast time.
+        if let Some(cast_time) = self.class_cast_time(spell) {
+            self.spells[spell].cur_cast.cast_time = cast_time;
+        }
         if let SpellBehavior::Class(behavior) = self.spells[spell].behavior {
             A::modify_cast(self, spell, behavior);
         }

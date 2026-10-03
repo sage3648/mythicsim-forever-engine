@@ -30,6 +30,8 @@ pub(crate) enum Outcome {
     AlwaysHitNoHitCounter,
     /// Go `OutcomeMagicHitNoHitCounter`: a miss still counts.
     MagicHitNoHitCounter,
+    /// Go `OutcomeTickPhysicalCrit`.
+    TickPhysicalCrit,
 }
 
 /// Go `OutcomeLanded`.
@@ -281,26 +283,7 @@ impl<A: Agent> Fight<A> {
             result.outcome |= partial;
         }
         let after_outcome = result.damage;
-        // Go ApplyPostOutcomeDamageModifiers: the target's dynamic modifiers in order.
-        for index in 0..self.damage_taken_modifiers.len() {
-            let modifier = self.damage_taken_modifiers[index];
-            if self.spells[spell].school & modifier.school_mask != 0
-                && self.aura(modifier.aura).active
-            {
-                result.damage *= modifier.multiplier;
-            }
-        }
-        for modifier in &self.spell_damage_taken_modifiers {
-            if modifier.spells[spell]
-                && modifier
-                    .auras
-                    .iter()
-                    .any(|&aura| self.trackers[aura.side.index()].auras[aura.index].active)
-            {
-                result.damage *= modifier.multiplier;
-            }
-        }
-        result.damage = result.damage.max(0.0);
+        self.apply_post_outcome_modifiers(spell, &mut result);
 
         if self.log.is_some() {
             self.log_damage_debug(
@@ -407,6 +390,7 @@ impl<A: Agent> Fight<A> {
                 self.outcome_magic_hit_and_crit(spell, result, binary, false, false)
             }
             Outcome::Tick => self.outcome_tick(spell, result, false),
+            Outcome::TickPhysicalCrit => self.outcome_tick_physical_crit(spell, result),
             Outcome::TickMagicCrit => self.outcome_tick(spell, result, true),
             Outcome::AlwaysHitNoHitCounter => result.outcome = OUTCOME_HIT,
         }
@@ -491,6 +475,109 @@ impl<A: Agent> Fight<A> {
                 metrics.resisted_ticks += 1;
             }
         }
+    }
+
+    /// Go `ApplyPostOutcomeDamageModifiers`: the target's dynamic modifiers in order, then no
+    /// negative damage.
+    pub(crate) fn apply_post_outcome_modifiers(&self, spell: SpellId, result: &mut SpellResult) {
+        for modifier in &self.damage_taken_modifiers {
+            if self.spells[spell].school & modifier.school_mask != 0
+                && self.aura(modifier.aura).active
+            {
+                result.damage *= modifier.multiplier;
+            }
+        }
+        for modifier in &self.spell_damage_taken_modifiers {
+            if modifier.spells[spell]
+                && modifier
+                    .auras
+                    .iter()
+                    .any(|&aura| self.trackers[aura.side.index()].auras[aura.index].active)
+            {
+                result.damage *= modifier.multiplier;
+            }
+        }
+        // Go's built-in max keeps a NaN, as an empty weapon slot's damage is.
+        if !result.damage.is_nan() {
+            result.damage = result.damage.max(0.0);
+        }
+    }
+
+    /// Go `OutcomeTickPhysicalCrit`: a tick that rolls the physical crit, keeping a partial
+    /// resist in its counters.
+    fn outcome_tick_physical_crit(&mut self, spell: SpellId, result: &mut SpellResult) {
+        let partial = result.outcome & OUTCOME_PARTIAL != 0;
+        let target = result.target.index();
+        if self.random("Physical Crit Roll") < self.physical_crit_chance(spell) {
+            result.outcome = OUTCOME_CRIT;
+            result.damage *= self.crit_multiplier(spell);
+            let metrics = &mut self.spells[spell].metrics[target];
+            metrics.crit_ticks += 1;
+            if partial {
+                metrics.resisted_crit_ticks += 1;
+            }
+        } else {
+            result.outcome = OUTCOME_HIT;
+            let metrics = &mut self.spells[spell].metrics[target];
+            metrics.ticks += 1;
+            if partial {
+                metrics.resisted_ticks += 1;
+            }
+        }
+    }
+
+    /// Go `calcDamageInternal` for a periodic tick of any school: a physical tick ignores armor
+    /// and takes the defender's physical bonus, a magic tick rolls its partial resist.
+    pub(crate) fn calc_tick_damage(
+        &mut self,
+        spell: SpellId,
+        target: Side,
+        base: f64,
+        attacker: f64,
+        outcome: Outcome,
+    ) -> SpellResult {
+        if self.spells[spell].school & 1 == 0 {
+            return self.calc_damage_internal(spell, target, base, attacker, outcome);
+        }
+        let mut result = SpellResult {
+            target,
+            outcome: 0,
+            damage: base * attacker,
+            threat: 0.0,
+        };
+        let after_attacker = result.damage;
+        // Go ResistanceMultiplier: every physical dot ignores armor.
+        let after_resistances = result.damage;
+        if !self.spells[spell].flags.ignore_target_modifiers {
+            result.damage += self.config.melee.defender_bonus_physical_damage_taken;
+            result.damage *= self.target_multiplier(spell);
+        }
+        let after_target = result.damage;
+        let binary = self.spells[spell].flags.binary;
+        self.apply_outcome(spell, &mut result, binary, outcome);
+        let after_outcome = result.damage;
+        self.apply_post_outcome_modifiers(spell, &mut result);
+        if self.log.is_some() {
+            self.log_damage_debug(
+                spell,
+                base,
+                [
+                    after_attacker,
+                    after_resistances,
+                    after_target,
+                    after_outcome,
+                ],
+                result.damage,
+            );
+        }
+        result.threat = if result.landed() {
+            let state = &self.spells[spell];
+            (result.damage * state.threat_multiplier + state.flat_threat_bonus)
+                * self.config.threat_multiplier
+        } else {
+            0.0
+        };
+        result
     }
 
     /// Go `Spell.CalcAndDealPeriodicDamage` for a dot's tick on a base amount.

@@ -452,6 +452,31 @@ impl<A: Agent> Fight<A> {
         self.set_stacks(aura, stacks);
     }
 
+    /// Go `AddStatsDynamic` for a stat aura a class aura owns: the player's stats become the
+    /// combination with the aura's bit set or cleared.
+    pub(crate) fn set_stat_aura(&mut self, bit: u32, active: bool) {
+        if active {
+            self.stat_mask |= bit;
+        } else {
+            self.stat_mask &= !bit;
+        }
+        self.player.powers = self.stat_combos[self.stat_mask as usize];
+    }
+
+    /// A stat aura's bit in the active stat mask, by label.
+    pub(crate) fn stat_aura_bit(
+        effects: &[crate::contracts::prepared_v2::Effect],
+        label: &str,
+    ) -> Option<u32> {
+        effects.iter().find_map(|effect| match effect {
+            crate::contracts::prepared_v2::Effect::StatAuras { auras, .. } => auras
+                .iter()
+                .position(|aura| aura == label)
+                .map(|bit| 1 << bit),
+            _ => None,
+        })
+    }
+
     fn on_gain(&mut self, aura: AuraRef) {
         self.multiply_damage_taken_for(aura, false);
         match self.aura(aura).behavior {

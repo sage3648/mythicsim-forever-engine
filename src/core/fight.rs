@@ -30,6 +30,7 @@ use std::collections::BTreeMap;
 pub(crate) use aura::{AuraBehavior, AuraRef, Tracker};
 pub(crate) use damage::{Outcome, SpellResult, OUTCOME_CRIT, OUTCOME_DODGE, OUTCOME_LANDED};
 pub(crate) use dot::Dot;
+pub(crate) use log::action_string;
 pub(crate) use metrics::{ActionReport, ActionTotals, FightReport};
 pub(crate) use spell_mod::{ModId, ModKind};
 
@@ -76,6 +77,14 @@ pub(crate) trait Agent: Sized {
     }
     /// Go `CastConfig.ModifyCast`, run first in a full cast. It may not change the cost.
     fn modify_cast(_fight: &mut Fight<Self>, _spell: SpellId, _behavior: Self::Spell) {}
+    /// Go `Spell.CastTime` for a class spell whose `CastConfig.CastTime` replaces the default,
+    /// which the cast's `ModifyCast` also applies; `None` keeps Go's default.
+    fn cast_time(_fight: &Fight<Self>, _spell: SpellId, _behavior: Self::Spell) -> Option<i64> {
+        None
+    }
+    /// A class wrapper that runs before a melee auto attack's `ApplyEffects`, as Go classes
+    /// wrap `MHConfig().ApplyEffects`.
+    fn before_melee_auto(_fight: &mut Fight<Self>, _spell: SpellId, _hand: melee::Hand) {}
     /// Go `MajorCooldown.ShouldActivate` for class cooldowns.
     fn should_activate(_fight: &Fight<Self>, _spell: SpellId, _behavior: Self::Spell) -> bool {
         true
@@ -404,6 +413,8 @@ pub(crate) struct Spell<S> {
     pub(crate) melee_proc: bool,
     /// Go `ProcMaskMeleeOrRanged`.
     pub(crate) melee_or_ranged_proc: bool,
+    /// Go `ProcMaskRanged`: `Spell.IsRanged`.
+    pub(crate) ranged_proc: bool,
     /// Go `ProcMaskMeleeOH`: `Spell.IsOH`.
     pub(crate) off_hand_proc: bool,
     /// Go `ProcMaskMeleeWhiteHit`.
@@ -509,6 +520,8 @@ pub(crate) struct Player {
     /// Go `PseudoStats.AttackSpeedMultiplier` and `MeleeSpeedMultiplier`.
     pub(crate) attack_speed_multiplier: f64,
     pub(crate) melee_speed_multiplier: f64,
+    /// Go `PseudoStats.RangedSpeedMultiplier`.
+    pub(crate) ranged_speed_multiplier: f64,
     pub(crate) spirit_regen_rate_casting: f64,
     pub(crate) spirit_regen_multiplier: f64,
     pub(crate) force_full_spirit_regen: bool,
@@ -652,6 +665,13 @@ pub(crate) struct Config {
     pub(crate) expertise_percent: f64,
     pub(crate) armor_penetration: f64,
     pub(crate) physical_damage: f64,
+    /// Go `RangedHitPercent` and `RangedCritPercent`, which ranged attacks add.
+    pub(crate) ranged_hit_percent: f64,
+    pub(crate) ranged_crit_percent: f64,
+    /// The ranged speed pseudo stat after the reset, and the defender's ranged attack power
+    /// bonus, Hunter's Mark.
+    pub(crate) ranged_speed_multiplier: f64,
+    pub(crate) defender_bonus_ranged_attack_power: f64,
 }
 
 /// The pseudo stats Go restores at each reset, after permanent auras applied.
@@ -1045,6 +1065,18 @@ impl<A: Agent> Fight<A> {
             expertise_percent: stat(&player.stats, "ExpertisePercent")?,
             armor_penetration: stat(&player.stats, "ArmorPenetration")?,
             physical_damage: stat(&player.stats, "PhysicalDamage")?,
+            ranged_hit_percent: stat(&player.stats, "RangedHitPercent")?,
+            ranged_crit_percent: stat(&player.stats, "RangedCritPercent")?,
+            ranged_speed_multiplier: prepared
+                .melee
+                .ranged_state
+                .as_ref()
+                .map_or(1.0, |ranged| ranged.ranged_speed_multiplier),
+            defender_bonus_ranged_attack_power: prepared
+                .melee
+                .ranged_state
+                .as_ref()
+                .map_or(0.0, |ranged| ranged.defender_bonus_ranged_attack_power),
         };
 
         let mut timer_names: Vec<String> = Vec::new();
@@ -1156,6 +1188,8 @@ impl<A: Agent> Fight<A> {
                 } else {
                     melee::Hand::Main
                 })
+            } else if id.other_id == "OtherActionShoot" && prepared.melee.auto_swing_ranged {
+                SpellBehavior::MeleeAuto(melee::Hand::Ranged)
             } else {
                 effects
                     .iter()
@@ -1338,6 +1372,10 @@ impl<A: Agent> Fight<A> {
                     .proc_mask
                     .iter()
                     .any(|mask| mask == "ProcMaskMeleeOHAuto" || mask == "ProcMaskMeleeOHSpecial"),
+                ranged_proc: exported
+                    .proc_mask
+                    .iter()
+                    .any(|mask| mask == "ProcMaskRangedAuto" || mask == "ProcMaskRangedSpecial"),
                 melee_or_ranged_proc: exported.proc_mask.iter().any(|mask| {
                     matches!(
                         mask.as_str(),
@@ -1811,6 +1849,7 @@ impl<A: Agent> Fight<A> {
                 cast_speed_multiplier: config.initial.cast_speed_multiplier,
                 attack_speed_multiplier: config.melee.attack_speed_multiplier,
                 melee_speed_multiplier: config.melee.melee_speed_multiplier,
+                ranged_speed_multiplier: config.ranged_speed_multiplier,
                 spirit_regen_rate_casting: config.initial.spirit_regen_rate_casting,
                 spirit_regen_multiplier: config.initial.spirit_regen_multiplier,
                 force_full_spirit_regen: config.initial.force_full_spirit_regen,
@@ -2142,6 +2181,12 @@ impl<A: Agent> Fight<A> {
         };
         fight.autos.mh.spell = auto_spell(1);
         fight.autos.oh.spell = auto_spell(2);
+        fight.autos.ranged_auto = prepared.melee.auto_swing_ranged;
+        fight.autos.ranged.weapon = prepared.melee.ranged.clone();
+        fight.autos.ranged.spell = fight
+            .spells
+            .iter()
+            .position(|spell| spell.id.other_id == "OtherActionShoot");
         for effect in effects {
             if let Effect::Eureka {
                 aura,
@@ -2405,6 +2450,7 @@ impl<A: Agent> Fight<A> {
             player.cast_speed_multiplier = initial.cast_speed_multiplier;
             player.attack_speed_multiplier = self.config.melee.attack_speed_multiplier;
             player.melee_speed_multiplier = self.config.melee.melee_speed_multiplier;
+            player.ranged_speed_multiplier = self.config.ranged_speed_multiplier;
             player.powers = self.config.powers;
             self.stat_mask = 0;
             player.spirit_regen_rate_casting = initial.spirit_regen_rate_casting;

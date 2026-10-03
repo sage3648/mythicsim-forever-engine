@@ -152,6 +152,18 @@ pub enum Value {
     SpellTimeToReady(ActionId),
     DotTimeToNextTick(ActionId),
     GcdIsReady,
+    /// Go `APLValueAutoTimeToNext`.
+    AutoTimeToNext(AutoAttackType),
+}
+
+/// Go `APLValueAutoAttackType`: which auto attack a value reads. Unknown reads as any.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum AutoAttackType {
+    Any,
+    Melee,
+    MainHand,
+    OffHand,
+    Ranged,
 }
 
 impl Value {
@@ -219,6 +231,7 @@ impl Value {
             | Value::SpellCastTime(_)
             | Value::SpellTimeToReady(_)
             | Value::DotTimeToNextTick(_)
+            | Value::AutoTimeToNext(_)
             | Value::RemainingTime
             | Value::TotemRemainingTime { .. }
             | Value::CurrentTime
@@ -762,6 +775,24 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
             only(&[])?;
             Ok(Value::GcdIsReady)
         }
+        "autoTimeToNext" => {
+            only(&["autoType"])?;
+            // protojson writes the enum by name and omits the zero value, UnknownAuto, which
+            // Go's switch reads as any auto attack.
+            let kind = match config.get("autoType").map(|kind| kind.as_str()) {
+                None | Some(Some("UnknownAuto" | "AnyAuto")) => AutoAttackType::Any,
+                Some(Some("MeleeAuto")) => AutoAttackType::Melee,
+                Some(Some("MainHandAuto")) => AutoAttackType::MainHand,
+                Some(Some("OffHandAuto")) => AutoAttackType::OffHand,
+                Some(Some("RangedAuto")) => AutoAttackType::Ranged,
+                Some(other) => {
+                    return Err(vec![format!(
+                        "autoTimeToNext autoType {other:?} is unsupported"
+                    )])
+                }
+            };
+            Ok(Value::AutoTimeToNext(kind))
+        }
         "dotIsActive" | "dotRemainingTime" | "dotTimeToNextTick" | "spellIsKnown"
         | "spellIsReady" | "spellCastTime" | "spellTimeToReady" => {
             // A target unit other than the current target is not modeled.
@@ -1078,6 +1109,7 @@ pub enum Compiled<R> {
     SpellTimeToReady(usize),
     DotTimeToNextTick(usize),
     GcdIsReady,
+    AutoTimeToNext(AutoAttackType),
     /// Go `APLValueCoerced`.
     Coerced {
         to: ValueType,
@@ -1106,6 +1138,7 @@ impl<R> Compiled<R> {
             | Compiled::SpellCastTime(_)
             | Compiled::SpellTimeToReady(_)
             | Compiled::DotTimeToNextTick(_)
+            | Compiled::AutoTimeToNext(_)
             | Compiled::RemainingTime
             | Compiled::TotemRemainingTime { .. }
             | Compiled::CurrentTime
@@ -1376,6 +1409,7 @@ fn compile_value<R>(
         Value::SpellTimeToReady(id) => Compiled::SpellTimeToReady((lookup.spell)(id)?),
         Value::DotTimeToNextTick(id) => Compiled::DotTimeToNextTick((lookup.dot)(id)?),
         Value::GcdIsReady => Compiled::GcdIsReady,
+        Value::AutoTimeToNext(kind) => Compiled::AutoTimeToNext(*kind),
         Value::AuraIsKnown(id) => bool_const(aura(id).is_some()),
         Value::AuraIsActive(id) => match (aura(id), missing) {
             (Some(found), _) => Compiled::AuraIsActive(found.aura),

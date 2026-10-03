@@ -672,29 +672,49 @@ type Melee struct {
 	// A class replace function on the main hand: Go's swing reacts to the event first, even
 	// when the replacement returns the swing unchanged.
 	ReplaceMainHandSwing bool `json:"replace_main_hand_swing,omitempty"`
+
+	// Present only with ranged auto attacks, so builds without them export as before.
+	RangedState *RangedState `json:"ranged_state,omitempty"`
+}
+
+// The ranged auto attack's static inputs: attack.go's ranged WeaponAttack reads
+// TotalRangedHasteMultiplier, and RangedAttackPower adds the defender's bonus, Hunter's Mark.
+type RangedState struct {
+	RangedSpeedMultiplier          float64 `json:"ranged_speed_multiplier"`
+	DefenderBonusRangedAttackPower float64 `json:"defender_bonus_ranged_attack_power"`
 }
 
 func exportMelee(character *core.Character, target *core.Unit, table *core.AttackTable, keepsSwing bool, unrepresented *[]string) Melee {
 	aa := &character.AutoAttacks
 	mh := privateField(aa, "mh")
+	// attack.go WeaponAttack.IsInRange: a main hand out of range never swings, so nothing
+	// replaces its swings.
+	distance := character.DistanceFromTarget
+	inRange := func(weapon *core.Weapon) bool {
+		return (weapon.MinRange == 0 || weapon.MinRange < distance) && (weapon.MaxRange == 0 || weapon.MaxRange >= distance)
+	}
 	// A class replace function on the main hand: Go's swing reacts to the event first, even
 	// when the replacement returns the swing unchanged. A Warrior describes its replacement
 	// in its effects; another class needs one that keeps the swing.
 	replaced := aa.AutoSwingMelee && !mh.FieldByName("replaceSwing").IsNil()
-	if replaced && !keepsSwing && character.Class != proto.Class_ClassWarrior {
+	if replaced && inRange(aa.MH()) && !keepsSwing && character.Class != proto.Class_ClassWarrior {
 		*unrepresented = append(*unrepresented, "main hand swings can be replaced")
-	}
-	if aa.AutoSwingRanged {
-		*unrepresented = append(*unrepresented, "ranged auto attacks are unsupported")
 	}
 	if len(character.OnMeleeAttackSpeedChanged) != 0 {
 		*unrepresented = append(*unrepresented, "melee attack speed listeners are unsupported")
 	}
 	pseudo := &character.PseudoStats
 	defender := &target.PseudoStats
-	return Melee{
-		ReplaceMainHandSwing: replaced,
-		AutoSwingMelee:       aa.AutoSwingMelee, AutoSwingRanged: aa.AutoSwingRanged, DualWielding: aa.IsDualWielding,
+	var ranged *RangedState
+	if aa.AutoSwingRanged {
+		if len(character.OnRangedAttackSpeedChanged) != 0 {
+			*unrepresented = append(*unrepresented, "ranged attack speed listeners are unsupported")
+		}
+		ranged = &RangedState{RangedSpeedMultiplier: pseudo.RangedSpeedMultiplier,
+			DefenderBonusRangedAttackPower: defender.BonusRangedAttackPower}
+	}
+	return Melee{RangedState: ranged, ReplaceMainHandSwing: replaced,
+		AutoSwingMelee: aa.AutoSwingMelee, AutoSwingRanged: aa.AutoSwingRanged, DualWielding: aa.IsDualWielding,
 		MainHand: exportWeapon(aa.MH()), OffHand: exportWeapon(aa.OH()), Ranged: exportWeapon(aa.Ranged()),
 		BaseMissChance: table.BaseMissChance, BaseGlanceChance: table.BaseGlanceChance,
 		GlanceMultiplier: table.GlanceMultiplier, GlanceSpread: table.GlanceSpread,
