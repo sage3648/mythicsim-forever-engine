@@ -15,6 +15,7 @@ reading the Go reference. They are not effort estimates for other contributors.
 | 8. Mana recovery, cooldowns and the complete reference build | 2026-10-03 11:59 | 2026-10-03 12:04 | 0 h 05 m | Cold Snap, gems, Evocation, consumables; found Go's ready-time quirk; full reference matches Go |
 | 11. Randomized Frost compatibility sweep | 2026-10-03 12:05 | 2026-10-03 12:16 | 0 h 11 m | 24 variants match Go; #622 guard narrowed to conditions whose compilation differs |
 | Performance: output-identical allocation pass | 2026-10-03 12:21 | 2026-10-03 12:30 | 0 h 09 m | 273 ms to 81 ms for the reference build (Go 205 ms); 41 inputs byte-identical before and after |
+| 4. Reference pin centralization | 2026-10-03 12:31 | 2026-10-03 12:36 | 0 h 05 m | One written pin read by Rust, Python and Go helpers; 17 prepared inputs and 11 v1 cases reproduce unchanged |
 
 ## Notes
 

@@ -18,7 +18,6 @@ import sys
 import time
 
 ROOT = Path(__file__).resolve().parents[1]
-PIN = "6823b49eb8aff741f197ef36d83766ef6a218285"
 
 
 def command(args, *, cwd=None, timeout=300):
@@ -27,6 +26,18 @@ def command(args, *, cwd=None, timeout=300):
 
 def load(path):
     return json.loads(path.read_text())
+
+
+# upstream/sources.json is the only place the reference pin is written down.
+REFERENCE = next(source for source in load(ROOT / "upstream" / "sources.json")["sources"]
+                 if source["id"] == "reference")
+PIN = REFERENCE["pinned_revision"]
+CLIENT_BUILD = REFERENCE["client_build"]
+
+
+def go_pin_flags():
+    """Linker flags that give the Go helpers the pin instead of a copy in their source."""
+    return ["-ldflags", f"-X main.engineRevision={PIN} -X main.clientBuild={CLIENT_BUILD}"]
 
 
 def build_oracle(cache, source):
@@ -47,7 +58,7 @@ def build_oracle(cache, source):
     binary = cache / "forever-go-oracle"
     stamp = cache / "build.json"
     compiler = subprocess.check_output(["go", "version"], text=True).strip()
-    identity = {"revision": PIN, "helper_sha256": digest, "compiler": compiler}
+    identity = {"revision": PIN, "client_build": CLIENT_BUILD, "helper_sha256": digest, "compiler": compiler}
     if binary.exists() and stamp.exists() and load(stamp) == identity:
         return binary, compiler
     plugin = cache / "protoc-gen-go"
@@ -60,7 +71,8 @@ def build_oracle(cache, source):
     target = checkout / "cmd" / "mythicsim-rust-oracle"
     target.mkdir(exist_ok=True)
     shutil.copy2(helper, target / "main.go")
-    command(["go", "build", "-trimpath", "--tags=with_db", "-o", binary, "./cmd/mythicsim-rust-oracle"], cwd=checkout)
+    command(["go", "build", "-trimpath", "--tags=with_db", *go_pin_flags(), "-o", binary, "./cmd/mythicsim-rust-oracle"],
+            cwd=checkout)
     stamp.write_text(json.dumps(identity, indent=2) + "\n")
     return binary, compiler
 

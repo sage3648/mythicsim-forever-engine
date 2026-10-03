@@ -22,7 +22,7 @@ import shutil
 import subprocess
 import sys
 
-from compare import ROOT, PIN, build_oracle, command, load
+from compare import ROOT, PIN, CLIENT_BUILD, build_oracle, command, go_pin_flags, load
 
 FAMILY = ROOT / "fixtures" / "mage" / "frost" / "prepared-v2"
 HELPER = ROOT / "tools" / "oracle-v2" / "main.go"
@@ -51,6 +51,7 @@ def check(family=FAMILY):
     require(manifest["schema_version"] == 1, "unknown manifest schema")
     require(manifest["prepared_schema_version"] == 2, "family must contain prepared v2 inputs")
     require(manifest["engine_revision"] == PIN, "engine revision differs from the comparison pin")
+    require(manifest["client_build"] == CLIENT_BUILD, "client build differs from the reference pin")
     require(manifest["exporter_sha256"] == digest(HELPER),
             "tools/oracle-v2/main.go changed: recapture and review the prepared fixtures")
     ids = [case["id"] for case in manifest["cases"]]
@@ -64,6 +65,7 @@ def check(family=FAMILY):
         prepared = load(prepared_path)
         require(prepared["scenario_id"] == case["id"], f"scenario identifier differs: {case['id']}")
         require(prepared["reference"]["engine_revision"] == PIN, f"reference revision differs: {case['id']}")
+        require(prepared["reference"]["client_build"] == CLIENT_BUILD, f"client build differs: {case['id']}")
         require(prepared["unrepresented"] == [], f"unrepresented features in accepted case {case['id']}")
         for key in ("go_result", "go_log"):
             if key in case:
@@ -84,7 +86,7 @@ def build_exporter(cache, source):
     """Reuse the v1 oracle checkout, generated protos and pin checks; add the v2 helper."""
     build_oracle(cache, source)
     checkout = cache / "source"
-    identity = {"revision": PIN, "helper_sha256": digest(HELPER),
+    identity = {"revision": PIN, "client_build": CLIENT_BUILD, "helper_sha256": digest(HELPER),
                 "compiler": subprocess.check_output(["go", "version"], text=True).strip()}
     binary = cache / "forever-go-oracle-v2"
     stamp = cache / "build-v2.json"
@@ -93,7 +95,8 @@ def build_exporter(cache, source):
     target = checkout / "cmd" / "mythicsim-rust-oracle-v2"
     target.mkdir(exist_ok=True)
     shutil.copy2(HELPER, target / "main.go")
-    command(["go", "build", "-trimpath", "--tags=with_db", "-o", binary, "./cmd/mythicsim-rust-oracle-v2"], cwd=checkout)
+    command(["go", "build", "-trimpath", "--tags=with_db", *go_pin_flags(), "-o", binary,
+             "./cmd/mythicsim-rust-oracle-v2"], cwd=checkout)
     stamp.write_text(json.dumps(identity, indent=2) + "\n")
     return binary
 

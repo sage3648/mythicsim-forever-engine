@@ -11,8 +11,8 @@ use crate::{
     rotation, SOURCE_REVISION,
 };
 
-/// The client build whose data the pinned reference prepares.
-pub const CLIENT_BUILD: &str = "1.60.1.70170";
+/// The client build whose data the pinned reference prepares, from upstream/sources.json.
+pub const CLIENT_BUILD: &str = env!("FOREVER_CLIENT_BUILD");
 
 const SECOND: i64 = 1_000_000_000;
 

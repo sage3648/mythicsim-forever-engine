@@ -35,11 +35,13 @@ import (
 	googleProto "google.golang.org/protobuf/proto"
 )
 
-const (
-	engineRevision = "6823b49eb8aff741f197ef36d83766ef6a218285"
-	clientBuild    = "1.60.1.70170"
-	schemaVersion  = 2
+// The reference pin, set at build time from upstream/sources.json with -ldflags -X.
+var (
+	engineRevision string
+	clientBuild    string
 )
+
+const schemaVersion = 2
 
 func fail(err error) {
 	if err != nil {
@@ -936,6 +938,9 @@ func run(request *proto.RaidSimRequest, output string) {
 }
 
 func main() {
+	if engineRevision == "" || clientBuild == "" {
+		fail(fmt.Errorf("build with the pin from upstream/sources.json (tools/prepared_v2.py does this)"))
+	}
 	sim.RegisterAll()
 	if len(os.Args) < 2 {
 		fail(fmt.Errorf("expected prepare or sim"))

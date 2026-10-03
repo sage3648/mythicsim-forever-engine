@@ -394,9 +394,9 @@ pieces, not already-open issues. Keep each change independently reviewable.
 | 1 (complete) | Inventory the first Frost build and product contracts | Frozen app and pinned Go source | Mechanic list, request/report consumers and audited Go observation |
 | 2 (complete) | Design prepared v2 and release manifest | 1 | [Contract](prepared-v2.md), fixtures, unknown-effect behavior and identity rules |
 | 3 (complete) | Add upstream sources, change ledger and mechanics map | 1 | [Ledger](../UPSTREAM.md#ledger) with community fix #622 traced to a Rust guard and regression |
-| 4 (diagnostics complete) | Centralize the reference pin and improve differential diagnostics | 2, 3 | First differing metric and log line reported; pin centralization pending |
+| 4 (complete) | Centralize the reference pin and improve differential diagnostics | 2, 3 | First differing metric and log line reported; the pin is read from `upstream/sources.json` everywhere |
 | 5 (complete) | Extract event, RNG and resource modules | Current kernel | Go-ordered queue, shared and labeled RNG, mana and metrics in `core/fight`; v1 goldens unchanged |
-| 6 | Export real Frost character preparation from Go | 2, 4 | Prepared-state comparisons |
+| 6 (complete) | Export real Frost character preparation from Go | 2, 4 | `tools/oracle-v2` exports resolved state; Rust recomputes starting regeneration and rejects disagreement |
 | 7 (complete for Frost) | Add aura lifetime, stacks, charges and cooldown primitives | 5 | Auras, stacks, cooldowns, channels and dynamic modifiers validated by the Frost build; charges unsupported |
 | 8 (complete) | Port required Frost spells and procs in separate PRs | 6, 7 | Each mechanic matched pinned Go in isolating fixtures |
 | 9 (complete) | Interpret the selected preset operators | 2, 8 | Preset operators run; unsupported operators and conditions #622 would change are rejected |
@@ -404,5 +404,5 @@ pieces, not already-open issues. Keep each change independently reviewable.
 | 11 (Frost sweep complete) | Compare the complete Frost build and gear variants | 6 through 10 | [24 randomized variants](../validation/2026-10-03-frost-sweep.json) match Go; report adapter pending |
 | 12 | Add worker routing and bounded comparison runs | 11 | Fallback reasons, batch consistency and rollback |
 
-Pieces 1 to 3 and 5 to 9 are complete; piece 4 has pin centralization pending. Pieces 1 to 3 establish the scope and synchronization contract
+Pieces 1 to 9 are complete. Pieces 1 to 3 establish the scope and synchronization contract
 that make the subsequent mechanic ports easier to review and maintain.

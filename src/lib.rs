@@ -29,4 +29,5 @@ pub fn implemented_prepared_effects() -> &'static [&'static str] {
 }
 pub use report::{Counts, Report, TraceEvent, Work};
 
-pub const SOURCE_REVISION: &str = "6823b49eb8aff741f197ef36d83766ef6a218285";
+/// The pinned Go reference revision, from upstream/sources.json.
+pub const SOURCE_REVISION: &str = env!("FOREVER_REFERENCE_REVISION");

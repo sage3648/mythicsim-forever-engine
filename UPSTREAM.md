@@ -11,9 +11,22 @@ Go is a reference implementation, not proof of live-game correctness. Forever ca
 intentionally differ from inherited Classic behavior. Fixture client build:
 `1.60.1.70170`.
 
-The pin is encoded in Rust, comparison tools, the matched Go kernel and fixture
-metadata. Update these deliberately together. Historical benchmark snapshots
-retain their original source revision and source digest.
+The pin is written once, in [upstream/sources.json](upstream/sources.json). The Rust
+build script, the Python tools and the Go helpers they build (through `-ldflags -X`)
+all read it from there. Fixtures, manifests, validation records and benchmark
+snapshots keep the revision they were made with as provenance, and the checks
+reject accepted fixtures whose revision or client build differs from the pin. The
+matched Go kernel behind the historical benchmarks keeps its own revision, because
+its source digest is part of that benchmark's record.
+
+To move the pin:
+
+1. Change `pinned_revision`, `client_build` and, if the fork rebased,
+   `community_base` in `upstream/sources.json`.
+2. Run `python3 tools/prepared_v2.py refresh` and `python3 tools/compare.py`. Every
+   Go golden that changes is a reference behavior change to review, not to accept.
+3. Re-run the [compatibility sweep](validation/2026-10-03-frost-sweep.json) and
+   review the ledger range against the new community base.
 
 ## Ledger
 

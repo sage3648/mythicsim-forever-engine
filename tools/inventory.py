@@ -185,11 +185,13 @@ def capture(app_source, engine_source, output):
         engine = work / "engine"
         go_module(app, "github.com/mythicsim/mythicsim/worker", app_source / "worker", "request/main.go")
         go_module(engine, "github.com/wowsims/forever", engine_source, "observe/main.go")
-        snapshot = subprocess.check_output(["go", "run", "-mod=mod", "."], cwd=app)
+        manifest = load(DIRECTORY / "manifest.json")
+        revision = ["-ldflags", f"-X main.engineRevision={manifest['sources']['engine']['revision']}"]
+        snapshot = subprocess.check_output(["go", "run", "-mod=mod", *revision, "."], cwd=app)
         (output / "snapshot.json").write_bytes(snapshot)
         subprocess.run(["go", "run", "-mod=mod", "-tags", "with_db", ".",
                         str(output / "snapshot.json"), str(work / "result.json")], cwd=engine, check=True)
-        report = subprocess.check_output(["go", "run", "-mod=mod", ".", "--result",
+        report = subprocess.check_output(["go", "run", "-mod=mod", *revision, ".", "--result",
                                           str(work / "result.json")], cwd=app)
         observation = compact_observation(json.loads(report))
         (output / "observation.json").write_text(json.dumps(observation, indent=2, sort_keys=True) + "\n")

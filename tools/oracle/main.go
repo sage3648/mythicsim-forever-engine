@@ -19,7 +19,8 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
-const sourceRevision = "6823b49eb8aff741f197ef36d83766ef6a218285"
+// The reference pin, set at build time from upstream/sources.json with -ldflags -X.
+var engineRevision string
 
 func fail(err error) {
 	if err != nil {
@@ -121,7 +122,7 @@ func prepare(directory string, iterations int, seed int64) {
 			fail(fmt.Errorf("no Frostbolt damage effect"))
 		}
 		writeJSON(rustPath, map[string]any{
-			"schema_version": 1, "source_revision": sourceRevision, "scenario_id": c.ID,
+			"schema_version": 1, "source_revision": engineRevision, "scenario_id": c.ID,
 			"iterations": iterations, "seed": seed, "duration_ns": simulation.BaseDuration.Nanoseconds(),
 			"reaction_ns": character.ReactionTime.Nanoseconds(),
 			"caster": map[string]any{
@@ -144,7 +145,7 @@ func prepare(directory string, iterations int, seed int64) {
 		})
 		manifest = append(manifest, map[string]any{"id": c.ID, "go": filepath.Base(goPath), "rust": filepath.Base(rustPath), "equipment_ids": ids, "talents_string": c.Talents})
 	}
-	writeJSON(filepath.Join(directory, "manifest.json"), map[string]any{"source_revision": sourceRevision, "cases": manifest})
+	writeJSON(filepath.Join(directory, "manifest.json"), map[string]any{"source_revision": engineRevision, "cases": manifest})
 }
 
 func run(request *proto.RaidSimRequest, output string) {
@@ -174,7 +175,7 @@ func run(request *proto.RaidSimRequest, output string) {
 		}
 	}
 	writeJSON(output, map[string]any{
-		"engine": "forever-go-oracle", "source_revision": sourceRevision,
+		"engine": "forever-go-oracle", "source_revision": engineRevision,
 		"iterations": request.SimOptions.Iterations, "seed": request.SimOptions.RandomSeed,
 		"dps_mean": player.Dps.Avg, "dps_stdev": player.Dps.Stdev,
 		"dps_standard_error": player.Dps.Stdev / math.Sqrt(float64(request.SimOptions.Iterations)),
@@ -184,6 +185,9 @@ func run(request *proto.RaidSimRequest, output string) {
 }
 
 func main() {
+	if engineRevision == "" {
+		fail(fmt.Errorf("build with the pin from upstream/sources.json (tools/compare.py does this)"))
+	}
 	sim.RegisterAll()
 	if len(os.Args) < 2 {
 		fail(fmt.Errorf("expected prepare or sim"))

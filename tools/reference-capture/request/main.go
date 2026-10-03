@@ -8,6 +8,10 @@ import (
 	"github.com/mythicsim/mythicsim/worker/forever"
 )
 
+// The engine revision the report names, set by tools/inventory.py with -ldflags -X from
+// the inventory manifest.
+var engineRevision string
+
 func must(err error) {
 	if err != nil {
 		panic(err)
@@ -15,6 +19,9 @@ func must(err error) {
 }
 
 func main() {
+	if engineRevision == "" {
+		panic("build with the engine revision from the inventory manifest (tools/inventory.py does this)")
+	}
 	build, err := forever.ReferenceBuildBySlug("frost-mage")
 	must(err)
 	built, err := forever.BuildRequest(&build.Export, forever.RequestOptions{Iterations: 3000, RandomSeed: 42, Timeline: true})
@@ -32,7 +39,7 @@ func main() {
 		must(err)
 		stripped, log, duration, err := forever.TakeLogs(data)
 		must(err)
-		report := forever.NewReport(&build.Export, built, summary, "6823b49eb8aff741f197ef36d83766ef6a218285", stripped)
+		report := forever.NewReport(&build.Export, built, summary, engineRevision, stripped)
 		report.Timeline = forever.ParseTimeline(log, build.Export.Name, duration)
 		report.CombatLog = log != ""
 		value = report
