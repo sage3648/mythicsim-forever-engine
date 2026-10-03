@@ -155,9 +155,11 @@ fn limits(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
             } => {
                 reasons.push("Rip ticks on the magic table".into());
             }
-            Effect::FaerieFire { refresh, .. } if refresh.iter().any(|mode| mode != "never") => {
+            Effect::FaerieFire { refresh, .. }
+                if refresh.as_slice() != ["own"] && refresh.as_slice() != ["never"] =>
+            {
                 reasons.push(format!(
-                    "Faerie Fire's armor reduction can take effect ({refresh:?}), which is not modeled"
+                    "Faerie Fire's armor reduction reads {refresh:?}, which is not modeled"
                 ));
             }
             _ => {}

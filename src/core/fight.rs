@@ -827,6 +827,8 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) autos: melee::AutoAttacks,
     /// Go `Unit.Armor()` for the target, which the Sunder Armor ramp lowers.
     pub(crate) target_armor: f64,
+    /// Armor changes from auras other than the Sunder Armor ramp, which sets the rest.
+    target_armor_delta: f64,
     sunder: Option<SunderRamp>,
     /// Gnome's Eureka!, when the character has it.
     pub(crate) eureka: Option<racial::Eureka>,
@@ -1689,6 +1691,7 @@ impl<A: Agent> Fight<A> {
             log: None,
             autos: melee::AutoAttacks::default(),
             target_armor: prepared.melee.defender_armor,
+            target_armor_delta: 0.0,
             sunder: None,
             aura_logs,
             stat_combos,
@@ -2009,6 +2012,12 @@ impl<A: Agent> Fight<A> {
         self.target.school_damage_taken_multiplier[school_index] *= factor;
     }
 
+    /// Go `AddStatsDynamic` on the target's armor, for an armor debuff the class applies.
+    pub(crate) fn add_target_armor(&mut self, delta: f64) {
+        self.target_armor += delta;
+        self.target_armor_delta += delta;
+    }
+
     /// Go `healthBar.RemoveHealth` on the player.
     pub(crate) fn remove_health(&mut self, amount: f64) {
         assert!(amount >= 0.0, "negative health removal");
@@ -2227,6 +2236,7 @@ impl<A: Agent> Fight<A> {
         // Go ScheduledAura's OnReset: the ramp's first tick at the pull, at dot priority.
         if side == Side::Target {
             self.target_armor = self.config.melee.defender_armor;
+            self.target_armor_delta = 0.0;
             if self.sunder.is_some() {
                 self.schedule(0, PRIORITY_DOT, Action::SunderTick(0));
             }
@@ -2447,7 +2457,8 @@ impl<A: Agent> Fight<A> {
             self.add_stack(ramp.aura);
         }
         let stacks = self.aura(ramp.aura).stacks.max(0) as usize;
-        self.target_armor = ramp.armor_by_stacks[stacks.min(ramp.armor_by_stacks.len() - 1)];
+        self.target_armor = ramp.armor_by_stacks[stacks.min(ramp.armor_by_stacks.len() - 1)]
+            + self.target_armor_delta;
         if done + 1 < ramp.ticks {
             self.schedule(
                 self.now + ramp.period,

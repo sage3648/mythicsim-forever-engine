@@ -64,6 +64,8 @@ pub(crate) enum DruidAura {
     BloodFrenzy,
     /// Blood Frenzy's bear half, which acts only in Bear Form.
     BloodFrenzyBear,
+    /// The target's Faerie Fire.
+    FaerieFire,
 }
 
 /// Druid state that Go keeps in the `Druid` struct and its closures.
@@ -227,6 +229,14 @@ impl DruidAgent {
     /// Build a fight for a prepared input that passed the coverage gate.
     pub(crate) fn fight(prepared: &PreparedV2) -> Result<Fight<DruidAgent>, String> {
         let auras = class_auras(prepared);
+        let target_auras: Vec<(String, DruidAura)> = prepared
+            .effects
+            .iter()
+            .filter_map(|effect| match effect {
+                Effect::FaerieFire { aura, .. } => Some((aura.clone(), DruidAura::FaerieFire)),
+                _ => None,
+            })
+            .collect();
         let positions: Vec<*const ExportedSpell> = prepared
             .player
             .spells
@@ -242,15 +252,15 @@ impl DruidAgent {
                     .position(|&spell| std::ptr::eq(spell, exported))?;
                 DruidAgent::spell(prepared, position, exported)
             },
-            |unit, label| {
-                (unit == "player")
-                    .then(|| {
-                        auras
-                            .iter()
-                            .find(|(name, _)| name == label)
-                            .map(|(_, kind)| *kind)
-                    })
-                    .flatten()
+            |unit, label| match unit {
+                "player" => auras
+                    .iter()
+                    .find(|(name, _)| name == label)
+                    .map(|(_, kind)| *kind),
+                _ => target_auras
+                    .iter()
+                    .find(|(name, _)| name == label)
+                    .map(|(_, kind)| *kind),
             },
         )?;
         let find_spell = |fight: &Fight<DruidAgent>, id: i32, tag: i32| {
@@ -506,7 +516,12 @@ impl DruidAgent {
                     let bound = shifting_power::bind(&mut fight, *spell, *energy);
                     fight.agent.shifting_power = Some(bound);
                 }
-                Effect::FaerieFire { aura, .. } => {
+                Effect::FaerieFire {
+                    aura,
+                    armor_reduction,
+                    refresh,
+                    ..
+                } => {
                     let index = fight.trackers[Side::Target.index()]
                         .find(aura)
                         .ok_or_else(|| format!("target aura {aura} is not registered"))?;
@@ -515,6 +530,7 @@ impl DruidAgent {
                             side: Side::Target,
                             index,
                         },
+                        armor: (refresh.as_slice() == ["own"]).then_some(*armor_reduction),
                     });
                 }
                 Effect::Berserk {
@@ -761,8 +777,13 @@ impl Agent for DruidAgent {
     }
 
     fn on_exclusive_gain(fight: &mut Fight<Self>, _aura: AuraRef, kind: DruidAura) {
-        if kind == DruidAura::CatForm {
-            Self::cat_form(fight).on_exclusive_gain(fight);
+        match kind {
+            DruidAura::CatForm => Self::cat_form(fight).on_exclusive_gain(fight),
+            DruidAura::FaerieFire => {
+                let faerie_fire = fight.agent.faerie_fire.expect("Faerie Fire is bound");
+                faerie_fire.on_exclusive_gain(fight);
+            }
+            _ => {}
         }
     }
 
@@ -788,6 +809,10 @@ impl Agent for DruidAgent {
             DruidAura::CatForm => Self::cat_form(fight).on_expire(fight),
             DruidAura::Prowl => Self::prowl(fight).on_expire(fight),
             DruidAura::Berserk => fight.agent.berserk.expect("bound").on_expire(fight),
+            DruidAura::FaerieFire => {
+                let faerie_fire = fight.agent.faerie_fire.expect("Faerie Fire is bound");
+                faerie_fire.on_expire(fight);
+            }
             _ => {}
         }
     }
