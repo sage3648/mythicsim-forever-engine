@@ -955,6 +955,8 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) damage_procs: Vec<DamageProc>,
     /// Go `HardcastAvoidanceAura`, which a tank's hardcast holds.
     pub(crate) reduced_avoidance: Option<AuraRef>,
+    /// Set bonus stat procs: each spell's chance, the roll's label and the aura activated.
+    pub(crate) stat_procs: Vec<(Vec<Option<f64>>, String, AuraRef)>,
     /// The player's stats for each combination of active stat auras, by bit mask.
     pub(crate) stat_combos: Vec<Powers>,
     /// The active stat auras.
@@ -1747,6 +1749,12 @@ impl<A: Agent> Fight<A> {
                             oh_expire_log,
                             ..
                         } if *oh_aura == exported.label => Some((oh_gain_log, oh_expire_log)),
+                        Effect::StatProc {
+                            aura,
+                            gain_log,
+                            expire_log,
+                            ..
+                        } if *aura == exported.label => Some((gain_log, expire_log)),
                         _ => None,
                     });
                     let mut logged = |line: &String| {
@@ -1827,6 +1835,18 @@ impl<A: Agent> Fight<A> {
                     .flatten()
                 {
                     AuraBehavior::SpellDataDamageProc(proc)
+                } else if let Some(proc) = (side == Side::Player)
+                    .then(|| {
+                        effects
+                            .iter()
+                            .filter(|effect| matches!(effect, Effect::StatProc { .. }))
+                            .position(|effect| {
+                                matches!(effect, Effect::StatProc { trigger_aura, .. } if *trigger_aura == exported.label)
+                            })
+                    })
+                    .flatten()
+                {
+                    AuraBehavior::StatProc(proc)
                 } else if effects.iter().any(|effect| {
                     matches!(effect, Effect::InertListener { unit: u, aura, .. } if u == unit && *aura == exported.label)
                 }) {
@@ -1992,6 +2012,7 @@ impl<A: Agent> Fight<A> {
             chili: None,
             damage_procs: Vec::new(),
             reduced_avoidance: None,
+            stat_procs: Vec::new(),
             eureka: None,
             pets: pet::inert_pets(effects),
             totals: metrics::Totals::default(),
@@ -2280,6 +2301,24 @@ impl<A: Agent> Fight<A> {
                     chance: *proc_chance,
                     spell: *spell,
                 });
+            }
+        }
+        for effect in effects {
+            if let Effect::StatProc {
+                rng_label,
+                aura,
+                chances,
+                ..
+            } = effect
+            {
+                let mut by_spell = vec![None; fight.spells.len()];
+                for entry in chances {
+                    if let Some(slot) = by_spell.get_mut(entry.spell) {
+                        *slot = Some(entry.chance);
+                    }
+                }
+                let aura = fight.player_aura(aura)?;
+                fight.stat_procs.push((by_spell, rng_label.clone(), aura));
             }
         }
         // Go character.go: a tank's hardcast holds "Reduced avoidance", a stat aura whose

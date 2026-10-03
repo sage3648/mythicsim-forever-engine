@@ -92,6 +92,8 @@ pub(crate) enum AuraBehavior<K> {
     RageBar,
     /// An item damage proc's trigger, by its position in `Fight::damage_procs`.
     SpellDataDamageProc(usize),
+    /// A set bonus stat proc's trigger, by its position in `Fight::stat_procs`.
+    StatProc(usize),
     /// The aura of a dot or channel.
     Dot(DotId),
     Class(K),
@@ -795,6 +797,20 @@ impl<A: Agent> Fight<A> {
                     AuraBehavior::SpellDataDamageProc(proc) if dealt => {
                         self.damage_proc_callback(aura, proc, spell, result)
                     }
+                    AuraBehavior::StatProc(proc) if dealt => {
+                        // Go AttachProcTriggerCallback: landed hits the manager hears, its roll
+                        // under the trigger's name, then the handler a batch window later.
+                        if result.outcome & super::OUTCOME_LANDED == 0 {
+                            continue;
+                        }
+                        let Some(chance) = self.stat_procs[proc].0[spell] else {
+                            continue;
+                        };
+                        let label = self.stat_procs[proc].1.clone();
+                        if self.proc(chance, &label) {
+                            self.schedule_delayed_proc(aura, spell, *result);
+                        }
+                    }
                     AuraBehavior::ChanceOfDeath if !dealt && side == Side::Player => {
                         self.chance_of_death_hit_taken(result)
                     }
@@ -1012,6 +1028,10 @@ impl<A: Agent> Fight<A> {
                 let heal = crusader.heal_min
                     + (crusader.heal_max - crusader.heal_min) * self.random("Damage Roll");
                 self.gain_health(heal, crusader.heal_metrics);
+            }
+            AuraBehavior::StatProc(proc) => {
+                let aura = self.stat_procs[proc].2;
+                self.activate_aura(aura);
             }
             AuraBehavior::DragonbreathChili => {
                 let chili = self.chili.clone().expect("Dragonbreath Chili is bound");

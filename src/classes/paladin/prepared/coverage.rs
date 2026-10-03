@@ -22,6 +22,7 @@ const EFFECTS: &[&str] = &[
     "holy_shield",
     "holy_shock",
     "holy_strike",
+    "illumination",
     "iron_creed",
     "judgement",
     "judgement_refresh",
@@ -71,6 +72,7 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         | Effect::SanctifiedJudgement { trigger_aura, .. }
         | Effect::SacredArbiter { trigger_aura, .. }
         | Effect::ShieldSpecialization { trigger_aura, .. }
+        | Effect::Illumination { trigger_aura }
         | Effect::DivineFavor {
             aura: trigger_aura, ..
         }
@@ -137,9 +139,29 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
     }
 }
 
+/// Class limits: Templar's Bulwark and Illumination.
+fn limits(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
+    let mut reasons = bulwark_limits(prepared);
+    // Illumination hears only heal crits, and the runtime casts no heal.
+    let illumination = prepared
+        .effects
+        .iter()
+        .any(|effect| matches!(effect, Effect::Illumination { .. }));
+    let heals = reachable.iter().any(|spell| {
+        spell
+            .proc_mask
+            .iter()
+            .any(|mask| mask == "ProcMaskSpellHealing")
+    });
+    if illumination && heals {
+        reasons.push("Illumination with a reachable heal is unsupported".into());
+    }
+    reasons
+}
+
 /// Templar's Bulwark is described only as the survival cooldown Go never fires without a
 /// health threshold: a rotation that casts it, or a timing that fires it, is unsupported.
-fn limits(prepared: &PreparedV2, _reachable: &[&Spell]) -> Vec<String> {
+fn bulwark_limits(prepared: &PreparedV2) -> Vec<String> {
     let Some(bulwark) = prepared.effects.iter().find_map(|effect| match effect {
         Effect::TemplarsBulwark { spell_id } => Some(*spell_id),
         _ => None,

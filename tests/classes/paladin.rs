@@ -4,7 +4,7 @@
 use forever_engine::{
     check_prepared, contracts::prepared_v2::PreparedV2, prepared_coverage, PreparedError,
 };
-use serde_json::Value;
+use serde_json::{json, Value};
 use std::{fs, path::Path};
 
 fn retribution_json() -> Value {
@@ -25,6 +25,56 @@ fn shockadin_json() -> Value {
     let path = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("fixtures/mage/prepared-v2/production-shockadin-paladin.prepared.json");
     serde_json::from_slice(&fs::read(path).unwrap()).unwrap()
+}
+
+fn tank_json(case: &str) -> Value {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join(format!("fixtures/mage/prepared-v2/{case}.prepared.json"));
+    serde_json::from_slice(&fs::read(path).unwrap()).unwrap()
+}
+
+#[test]
+fn tanking_paladins_are_supported() {
+    for case in [
+        "protection-paladin-no-dynamite",
+        "ret-protection-paladin-no-dynamite",
+        "holy-protection-paladin-no-dynamite",
+    ] {
+        let prepared: PreparedV2 = serde_json::from_value(tank_json(case)).unwrap();
+        assert_eq!(prepared_coverage(&prepared), Vec::<String>::new(), "{case}");
+    }
+}
+
+/// A tank's hardcast is followed only through the "Reduced avoidance" stat aura.
+#[test]
+fn a_tanking_hardcast_needs_reduced_avoidance_combinations() {
+    let mut value = tank_json("protection-paladin-no-dynamite");
+    for effect in value["effects"].as_array_mut().unwrap() {
+        if effect["kind"] == "stat_auras" {
+            let auras = effect["auras"].as_array_mut().unwrap();
+            let position = auras
+                .iter()
+                .position(|aura| aura == "Reduced avoidance")
+                .unwrap();
+            auras[position] = json!("Renamed avoidance");
+        }
+    }
+    assert!(reasons(value).contains(
+        &"rotation reaches spell 24239, a hardcast while the target swings at the player".into()
+    ));
+}
+
+/// Templar's Bulwark is described only as the survival cooldown Go never fires.
+#[test]
+fn templars_bulwark_cast_by_the_rotation_is_unsupported() {
+    let mut value = tank_json("protection-paladin-no-dynamite");
+    let list = value["player"]["rotation"]["priorityList"]
+        .as_array_mut()
+        .unwrap();
+    list.push(json!({"action": {"castSpell": {"spellId": {"spellId": 1311015}}}}));
+    assert!(
+        reasons(value).contains(&"a rotation that casts Templar's Bulwark is unsupported".into())
+    );
 }
 
 #[test]

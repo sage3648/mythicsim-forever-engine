@@ -884,6 +884,21 @@ pub enum Effect {
         oh_gain_log: String,
         oh_expire_log: String,
     },
+    /// A set bonus proc (common/forever setStatProc): each spell's chance from the trigger's
+    /// proc manager on landed hits, keyed by the trigger's name, and the temporary stats aura
+    /// it activates a spell batch window later, with its log lines.
+    StatProc {
+        trigger_aura: String,
+        rng_label: String,
+        aura: String,
+        chances: Vec<SpellChance>,
+        gain_log: String,
+        expire_log: String,
+    },
+    /// Paladin talents_holy.go Illumination: it hears only the crits of heals.
+    Illumination {
+        trigger_aura: String,
+    },
     /// Dragonbreath Chili: a chance on landed melee hits to cast a rolled Fire hit, after a
     /// spell batch window.
     DragonbreathChili {
@@ -1926,6 +1941,8 @@ impl Effect {
             Effect::SacredArbiter { .. } => "sacred_arbiter",
             Effect::TwistOfLight { .. } => "twist_of_light",
             Effect::HolyShock { .. } => "holy_shock",
+            Effect::StatProc { .. } => "stat_proc",
+            Effect::Illumination { .. } => "illumination",
             Effect::RighteousFury { .. } => "righteous_fury",
             Effect::SwiftJudgement { .. } => "swift_judgement",
             Effect::TemplarsBulwark { .. } => "templars_bulwark",

@@ -26,7 +26,7 @@ var dynamicReadStats = []stats.Stat{stats.SpellDamage, stats.AttackPower, stats.
 // character.go's "Reduced avoidance", which a tank's hardcast holds, changes only the target's
 // swings at the player: its rolls join the combinations.
 var commonStatAuraLabels = []string{"Blood Fury", "Elune's Light", "Holy Strength (MH)", "Holy Strength (OH)",
-	"Windfury Totem (External)", "Battle Shout (External)", "Reduced avoidance"}
+	"Windfury Totem (External)", "Battle Shout (External)", "Reduced avoidance", "Crusader's Wrath"}
 
 // unit.go AddStatsDynamic recomputes every stat from the active flat bonuses, so stats are a
 // function of which stat auras are active. Each combination is read from a separate reset
@@ -180,8 +180,47 @@ func spellDataDamageProcEffects(character *core.Character, unrepresented *[]stri
 	return effects
 }
 
+// Set bonuses common/forever/item_sets_classic.go setStatProc builds: a proc trigger on the
+// set bonus aura, rolling its proc manager on the hits it hears, that activates a temporary
+// stats aura a batch window later. The trigger's name keys the roll.
+var setStatProcs = []struct {
+	setAura  string
+	name     string
+	aura     string
+	auraID   int32
+	stats    stats.Stats
+	procMask core.ProcMask
+}{{"Lightforge Armor 5P", "Item - Crusader's Wrath Proc - Lightforge Armor", "Crusader's Wrath", 27499,
+	stats.Stats{stats.SpellDamage: 65, stats.HealingPower: 65}, core.ProcMaskMeleeWhiteHit}}
+
+func setStatProcEffects(simulation *core.Simulation, character *core.Character, unrepresented *[]string) []map[string]any {
+	effects := []map[string]any{}
+	for _, proc := range setStatProcs {
+		setAura := character.GetAura(proc.setAura)
+		if setAura == nil {
+			continue
+		}
+		if setAura.Dpm == nil || character.GetAura(proc.aura) == nil {
+			*unrepresented = append(*unrepresented, fmt.Sprintf("%s has no proc manager", proc.setAura))
+			continue
+		}
+		id := core.ActionID{SpellID: proc.auraID}
+		effects = append(effects, map[string]any{
+			"kind": "stat_proc", "trigger_aura": proc.setAura, "rng_label": proc.name, "aura": proc.aura,
+			// AttachProcTriggerCallback: the trigger's mask and eligibility, then its manager.
+			"chances": dpmChances(character, setAura.Dpm, simulation, func(spell *core.Spell) bool {
+				return spell.ProcMask.Matches(proc.procMask) && !spell.Flags.Matches(core.SpellFlagProc)
+			}),
+			"gain_log":   fmt.Sprintf("Gained %s from %s.", proc.stats.FlatString(), id),
+			"expire_log": fmt.Sprintf("Lost %s from fading %s.", proc.stats.FlatString(), id),
+		})
+	}
+	return effects
+}
+
 func meleeProcEffects(simulation *core.Simulation, character *core.Character, unrepresented *[]string) []map[string]any {
 	effects := spellDataDamageProcEffects(character, unrepresented)
+	effects = append(effects, setStatProcEffects(simulation, character, unrepresented)...)
 	// common/classic/enchants.go Crusader (1900): a weapon proc on landed hits, at one proc a
 	// minute of each hand's speed, that activates that hand's Holy Strength and heals.
 	if aura := character.GetAura("Enchant Weapon - Crusader"); aura != nil {

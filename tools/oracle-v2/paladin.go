@@ -357,6 +357,9 @@ func paladinTankEffects(p *paladin.Paladin, character *core.Character) []map[str
 			"kind": "iron_creed", "trigger_aura": "Iron Creed - Trigger" + p.Label, "aura": "Iron Creed" + p.Label,
 		})
 	}
+	if talents.Illumination > 0 { // talents_holy.go applyIllumination: it hears only heal crits
+		effects = append(effects, map[string]any{"kind": "illumination", "trigger_aura": "Illumination" + p.Label})
+	}
 	if talents.HolyShield { // holy_shield.go, the highest rank
 		rank := paladin.HolyShieldRankMap.Highest()
 		proc := -1
