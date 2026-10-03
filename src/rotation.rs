@@ -1472,6 +1472,42 @@ mod tests {
         }
     }
 
+    /// Go `GetSourceUnit` on a pet of the player reads that pet's auras, a constant.
+    #[test]
+    fn aura_is_known_reads_a_pet_of_the_player() {
+        let pet = serde_json::json!({"auraIsKnown": {
+            "auraId": {"spellId": 1293696},
+            "sourceUnit": {"type": "Pet", "index": 1, "owner": {"type": "Self"}}
+        }});
+        let value = parse_value(&pet).unwrap();
+        let id = ActionId {
+            spell_id: 1293696,
+            ..ActionId::default()
+        };
+        assert_eq!(
+            value,
+            Value::PetAuraIsKnown {
+                pet: 1,
+                id: id.clone()
+            }
+        );
+        let none = |_: &ActionId| -> Option<FoundAura<ActionId>> { None };
+        let known = |pet: usize, aura: &ActionId| pet == 1 && *aura == id;
+        let lookup = Lookup {
+            pet_aura_known: &known,
+            ..only_auras(&none)
+        };
+        assert_eq!(
+            compile_condition(Some(&value), &lookup, MissingAura::Dropped),
+            CompiledCondition::Always
+        );
+        let other = serde_json::json!({"auraIsKnown": {
+            "auraId": {"spellId": 1293696},
+            "sourceUnit": {"type": "Pet", "index": 0, "owner": {"type": "CurrentTarget"}}
+        }});
+        assert!(parse_value(&other).is_err());
+    }
+
     #[test]
     fn duration_parser_matches_go_examples() {
         assert_eq!(parse_go_duration("25s"), Some(25_000_000_000));

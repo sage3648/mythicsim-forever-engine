@@ -45,6 +45,7 @@ reading the Go reference. They are not effort estimates for other contributors.
 | Destruction Warlock | 2026-10-03 16:05 | 2026-10-03 16:46 | 0 h 41 m | Warlock exporter and agent, dynamic damage taken modifiers, target debuff stats, Sunder Armor blocked by Expose Armor, auraIsActive on the target; the production request matches Go; 24 of 24 sweep variants and 12 of 12 race variants match |
 | Smite Priest | 2026-10-03 17:05 | 2026-10-03 17:25 | 0 h 20 m | Smite, Holy Fire, Penance, Power in Light and Searing Light; a spell-conditioned damage taken modifier, periodic damage dispatch and remainingTimePercent; the production request matches Go on the first comparison; 48 of 48 sweep variants and all six race board requests match |
 | Affliction Warlock and pets | 2026-10-03 16:47 | 2026-10-03 17:52 | 1 h 05 m | Simulated pets as units in the shared runtime: reset enable, auto attacks, mana, rotation, metrics and logs; Nightfall, Amplify Curse and the Succubus's AI; the production request matches Go after two fixes; 24 of 24 sweep variants match |
+| Demonology Warlock | 2026-10-03 17:52 | 2026-10-03 18:25 | 0 h 33 m | Decimation, Demonic Brand spent by the demon's hits, Demonic Energies, inert pets' permanent auras and a pet source unit for auraIsKnown; the production request matches Go after three fixes; 24 of 24 sweep variants match |
 
 ## Notes
 

@@ -108,6 +108,15 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
 fn limits(prepared: &PreparedV2, _reachable: &[&Spell]) -> Vec<String> {
     let mut reasons = Vec::new();
     for effect in &prepared.effects {
+        if let Effect::Decimation { execute_phase, .. } = effect {
+            if *execute_phase != 35 {
+                reasons.push(format!(
+                    "Decimation's execute phase {execute_phase} is unsupported"
+                ));
+            }
+        }
+    }
+    for effect in &prepared.effects {
         let Effect::DemonicBrand {
             school_power_stat: Some(stat),
             ..

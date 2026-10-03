@@ -133,7 +133,7 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `immolate`, `corruption` | sim/warlock/immolate.go, corruption.go | The dot base and tick crit; Immolate's dot is on its related spell |
 | `bane_of_agony` | sim/warlock/agony.go | The dot base, tick crit and its ramp: half the tick at the snapshot, added back every fourth tick, Go literals |
 | `curse_of_the_elements` | sim/warlock/curse_of_elements.go, core/buffs | The target debuff's resistance changes and school damage taken multipliers, checked against Go activating it |
-| `life_tap` | sim/warlock/lifetap.go | Base amount from client data and Improved Life Tap's multiplier; Spirit comes from the stats |
+| `life_tap` | sim/warlock/lifetap.go | Base amount from client data and Improved Life Tap's multiplier; Spirit comes from the stats; Demonic Energies' share for the summoned demon |
 | `conflagrate` | sim/warlock/conflagrate.go | Shadow and Flame's chance to spare Immolate and its random label |
 | `improved_shadow_bolt` | sim/warlock/talents_destruction.go | The trigger spells, the target debuff and its multiplier on the warlock's shadow damage, a dynamic damage taken modifier |
 | `shadow_and_flame` | sim/warlock/talents_destruction.go | The trigger spells, which of them raise shadow damage, the two auras and their multiplier |
@@ -141,6 +141,8 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `nightfall` | sim/warlock/talents_affliction.go | The periodic trigger spells and chance, Shadow Trance's cast time modifier and the spells that spend it; both handlers wait a spell batch window |
 | `warlock_pet` | sim/warlock/pets.go | The summoned demon's autocast abilities as spellbook positions, MinMana and the fixed wait of its AI |
 | `lash_of_pain` | sim/warlock/pets.go | The Succubus's fixed base damage; the spell power share is on the spell |
+| `decimation` | sim/warlock/talents_demonology.go | The trigger spells, the 35% execute phase, and the aura's damage and Soul Fire cast time modifiers with the spells each names |
+| `demonic_brand` | sim/warlock/talents_demonology.go | The trigger spells, the target brand and its charges, the demon's marker and consumer auras, and the brand hit's roll and spell power share, Go literals |
 | `mind_blast`, `shadow_word_death` | sim/priest/mind_blast.go, shadow_word_death.go | Damage rolls on every rank; Early Demise's crit inside the 20% execute phase |
 | `shadow_word_pain`, `devouring_plague`, `mind_flay` | sim/priest/shadow_word_pain.go, devouring_plague.go, talents_shadow.go | Each rank's dot base and Periodic Can Crit; the hit rolls once without a hit count; Devouring Plague heals for its ticks under a tagged action; Mind Flay is a binary channel |
 | `shadowform` | sim/priest/talents_shadow.go | Damage, cost and crit damage modifiers with the spells each names, and the helpful Holy spells that end it |
@@ -151,7 +153,7 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `penance` | sim/priest/penance.go | The bolt's base and crit; a channel that ticks on application and each second |
 | `power_in_light` | sim/priest/talents_discipline.go | The target's damage taken multiplier, the spells it multiplies and the Holy Fire dots it waits for |
 | `searing_light` | sim/priest/talents_holy.go | The resolved trigger on Holy Fire ticks, Holy Purpose's Holy Nova cost modifier and the casts that end it |
-| `inert_pet` | sim/core/pet.go | A registered pet nothing summons: label, unit index, metrics actions and auras, its dismissed stats line and why it is inert |
+| `inert_pet` | sim/core/pet.go | A registered pet nothing summons: label, unit index, metrics actions and auras, the permanent auras each reset activates, its dismissed stats line and why it is inert |
 
 Human racials are static and already in the prepared stats. High Order Skyborne's cast
 speed and every race's creature slaying are static too. Read Ley Line is not a major
@@ -202,7 +204,9 @@ the pull, and its rotation runs once per timestep after the player's. Its damage
 of the target's damage taken and its owner's DPS, and Go's OOM events leave its metrics
 alone. Guardians, a second enabled pet, inherited speed or regeneration, a delayed first
 attack, enable callbacks, focus or energy bars and pet cooldowns are unrepresented, and a
-pet that follows its owner's stats is refused when those stats can change.
+pet that follows its owner's stats is refused when those stats can change. A rotation's
+`auraIsKnown` may name a pet of the player by its index as its source unit; it reads that
+pet's registered auras, a constant.
 
 A target with a configured melee swing that no unit tanks never swings, but Go still
 rolls its opening swing offset at every reset, so the target exports its swing flags
@@ -259,8 +263,9 @@ the remaining races, with longer and cooldown-timing variants, and
 `fire-skyborne-read-ley-line` casts Read Ley Line from the rotation. `production-balance-druid`
 is the production Balance Druid request. `production-elemental-shaman` is the production
 Elemental Shaman request, and `elemental-shaman-dwarf-stoneform` runs it as a Dwarf with
-Stoneform timings. `production-destruction-warlock` and `production-affliction-warlock`
-are the production Destruction and Affliction Warlock requests. `production-fire` and
+Stoneform timings. `production-destruction-warlock`, `production-affliction-warlock` and
+`production-demonology-warlock` are the production Destruction, Affliction and Demonology
+Warlock requests. `production-fire` and
 `production-frostfire` are the production application's Fire Missile Barrage and
 Frostfire hybrid requests at application revision 18bbcd47; its Arcane and Frost requests
 are byte-identical to `arcane-reference` and `frost-reference`. `frostfire-resistances`

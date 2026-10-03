@@ -1105,6 +1105,27 @@
         "file": "production-affliction-warlock.go-log.txt",
         "sha256": "1f2a86593cbdc42f90b9341396a1ee63d139814ca7cfaa9550ca63ab85debf7e"
       }
+    },
+    {
+      "id": "production-demonology-warlock",
+      "description": "Production Demonology Warlock (Gnome): Demonic Pact with a sacrificed Imp and a summoned Succubus, Decimation in the execute phase, Demonic Brand charges spent by the Succubus, Demonic Energies' share of Life Tap, and an auraIsKnown guard on the demon's brand",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-demonology-warlock.request.json"
+      },
+      "prepared": "production-demonology-warlock.prepared.json",
+      "prepared_sha256": "b1831796bc1781e3dd43c0f893303d2a23aa6cc071066f169dfce7fb1484f5e3",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-demonology-warlock.go-result.json",
+        "sha256": "6419241ae819bdb5c5216dcf3c8f178dfe5f882fd476a400fa2c973ad8058aa8"
+      },
+      "go_log": {
+        "file": "production-demonology-warlock.go-log.txt",
+        "sha256": "4efb88e3dbd4da214c9c833f4af56996d121dd83a444c0cc809a9edbe998e7af"
+      }
     }
   ]
 }
