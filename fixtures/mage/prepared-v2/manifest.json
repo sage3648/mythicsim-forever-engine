@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "7c8adddc32f2c146a3c57522bb3b43052924c0880a1e3103e5e619485a40848b",
+  "exporter_sha256": "79c158b485b6df56f4d8da1bc03e011d4cbaf6b7249d62db0ba909bf0cf5e835",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -1041,6 +1041,27 @@
       "go_log": {
         "file": "paladin-crusader-chili.go-log.txt",
         "sha256": "562d2496beaef4b1f3348b65a95aed10804a827e7666f367265cfe776aa4f3a9"
+      }
+    },
+    {
+      "id": "production-affliction-warlock",
+      "description": "Production Affliction Warlock (Gnome): Corruption, Bane of Agony with Amplify Curse, Immolate and Shadow Bolt with Nightfall's Shadow Trance, and a summoned Succubus casting Lash of Pain",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-affliction-warlock.request.json"
+      },
+      "prepared": "production-affliction-warlock.prepared.json",
+      "prepared_sha256": "01ef980ac642d8d8c5b570117df10d0ab39f7c0831aabb8670d06d99b8c3a881",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-affliction-warlock.go-result.json",
+        "sha256": "ba2c0f5c4e053a717e8b253dcc731b14de8b47e1e71ba6076ab6607d8617460a"
+      },
+      "go_log": {
+        "file": "production-affliction-warlock.go-log.txt",
+        "sha256": "1f2a86593cbdc42f90b9341396a1ee63d139814ca7cfaa9550ca63ab85debf7e"
       }
     }
   ]

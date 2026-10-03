@@ -105,6 +105,13 @@ and the raid's ramped Sunder Armor, at 510.849 DPS. Its
 variants, and a [race sweep](validation/2026-10-04-warlock-race-sweep.json) drawing
 Human, Gnome with Eureka!, Orc and Undead matches on all 12.
 
+The production Affliction Warlock build matches at 541.885 DPS: a Gnome warlock with
+a summoned Succubus, which the runtime simulates as its own unit with auto attacks,
+mana and Lash of Pain, Corruption, Bane of Agony with Amplify Curse, Immolate and
+Shadow Bolt with Nightfall's instant Shadow Trance. Its
+[sweep](validation/2026-10-04-affliction-warlock-sweep.json) matches Go on all 24
+variants.
+
 Every race that can be a Mage is supported: Human, Gnome, Undead, Troll with
 Berserking, Orc with Blood Fury and Shatter Curse, and High Order Skyborne with Read
 Ley Line for rotations that cast it. A [race sweep](validation/2026-10-04-mage-race-sweep.json)

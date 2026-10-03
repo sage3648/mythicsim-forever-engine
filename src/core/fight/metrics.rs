@@ -133,6 +133,22 @@ fn is_zero_string(value: &str) -> bool {
     value == "0"
 }
 
+/// A deviation as protojson writes it: a non-finite value, as from the cancellation of a
+/// constant sample, is the string "NaN" or "Infinity".
+fn protojson_f64<S: serde::Serializer>(value: &f64, serializer: S) -> Result<S::Ok, S::Error> {
+    if value.is_nan() {
+        serializer.serialize_str("NaN")
+    } else if value.is_infinite() {
+        serializer.serialize_str(if *value > 0.0 {
+            "Infinity"
+        } else {
+            "-Infinity"
+        })
+    } else {
+        serializer.serialize_f64(*value)
+    }
+}
+
 #[derive(Clone, Debug, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct ActionIdReport {
@@ -270,7 +286,7 @@ struct AuraMetricsReport {
     id: ActionIdReport,
     #[serde(skip_serializing_if = "is_zero_f")]
     uptime_seconds_avg: f64,
-    #[serde(skip_serializing_if = "is_zero_f")]
+    #[serde(skip_serializing_if = "is_zero_f", serialize_with = "protojson_f64")]
     uptime_seconds_stdev: f64,
     #[serde(skip_serializing_if = "is_zero_f")]
     procs_avg: f64,
@@ -296,7 +312,7 @@ struct ResourceMetricsReport {
 pub(crate) struct DistributionReport {
     #[serde(skip_serializing_if = "is_zero_f")]
     avg: f64,
-    #[serde(skip_serializing_if = "is_zero_f")]
+    #[serde(skip_serializing_if = "is_zero_f", serialize_with = "protojson_f64")]
     stdev: f64,
     #[serde(skip_serializing_if = "is_zero_f")]
     max: f64,

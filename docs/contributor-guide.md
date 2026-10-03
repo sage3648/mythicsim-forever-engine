@@ -27,7 +27,8 @@ Frostbolt kernel remains unchanged beside it.
 | Druid runtime hooks | [src/classes/druid/agent.rs](../src/classes/druid/agent.rs) |
 | Warlock runtime hooks and regressions | [src/classes/warlock/agent.rs](../src/classes/warlock/agent.rs), [tests/classes/warlock/](../tests/classes/warlock/) |
 | Priest runtime hooks and regressions | [src/classes/priest/agent.rs](../src/classes/priest/agent.rs), [tests/classes/priest.rs](../tests/classes/priest.rs) |
-| Registered pets nothing summons | [src/core/fight/pet.rs](../src/core/fight/pet.rs) |
+| Pets: simulated summons and registered pets nothing summons | [src/core/fight/pet.rs](../src/core/fight/pet.rs) |
+| Warlock demon AI and abilities | [src/classes/warlock/pets.rs](../src/classes/warlock/pets.rs) |
 | Shared build gate and class gates | [src/engine/coverage.rs](../src/engine/coverage.rs), `src/classes/<class>/prepared/coverage.rs` |
 | Event ordering (prepared v1 kernel) | [src/core/events.rs](../src/core/events.rs) |
 | Seeded random streams | [src/core/rng.rs](../src/core/rng.rs) |

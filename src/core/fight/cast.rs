@@ -130,20 +130,26 @@ impl<A: Agent> Fight<A> {
         let now = self.now;
         let unit = self.unit_mut(side);
         let meets = unit.mana >= cost;
+        // Go's OOM events leave a pet's metrics alone; only its end of iteration counts.
+        let is_pet = side == Side::Pet;
         if cost > 0.0 {
             if meets {
                 if unit.waiting_for_mana != 0.0 {
                     let duration = now - unit.waiting_for_mana_start;
                     unit.waiting_for_mana_start = 0;
                     unit.waiting_for_mana = 0.0;
-                    self.add_oom_time(side, duration);
+                    if !is_pet {
+                        self.add_oom_time(side, duration);
+                    }
                 }
             } else if unit.waiting_for_mana != 0.0 {
                 unit.waiting_for_mana = unit.waiting_for_mana.min(cost);
             } else {
                 unit.waiting_for_mana_start = now;
                 unit.waiting_for_mana = cost;
-                self.mark_oom(side);
+                if !is_pet {
+                    self.mark_oom(side);
+                }
             }
         }
         meets

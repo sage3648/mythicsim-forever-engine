@@ -58,7 +58,7 @@ impl Nightfall {
         if self.proc_chance != 1.0 && fight.random(&self.rng_label) > self.proc_chance {
             return;
         }
-        fight.schedule_delayed_proc(trigger, spell, result.clone());
+        fight.schedule_delayed_proc(trigger, spell, *result);
     }
 
     /// The trigger's delayed handler: grant Shadow Trance.

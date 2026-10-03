@@ -136,6 +136,10 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `conflagrate` | sim/warlock/conflagrate.go | Shadow and Flame's chance to spare Immolate and its random label |
 | `improved_shadow_bolt` | sim/warlock/talents_destruction.go | The trigger spells, the target debuff and its multiplier on the warlock's shadow damage, a dynamic damage taken modifier |
 | `shadow_and_flame` | sim/warlock/talents_destruction.go | The trigger spells, which of them raise shadow damage, the two auras and their multiplier |
+| `amplify_curse` | sim/warlock/talents_affliction.go | The aura the next Bane of Agony spends and its tick multiplier |
+| `nightfall` | sim/warlock/talents_affliction.go | The periodic trigger spells and chance, Shadow Trance's cast time modifier and the spells that spend it; both handlers wait a spell batch window |
+| `warlock_pet` | sim/warlock/pets.go | The summoned demon's autocast abilities as spellbook positions, MinMana and the fixed wait of its AI |
+| `lash_of_pain` | sim/warlock/pets.go | The Succubus's fixed base damage; the spell power share is on the spell |
 | `mind_blast`, `shadow_word_death` | sim/priest/mind_blast.go, shadow_word_death.go | Damage rolls on every rank; Early Demise's crit inside the 20% execute phase |
 | `shadow_word_pain`, `devouring_plague`, `mind_flay` | sim/priest/shadow_word_pain.go, devouring_plague.go, talents_shadow.go | Each rank's dot base and Periodic Can Crit; the hit rolls once without a hit count; Devouring Plague heals for its ticks under a tagged action; Mind Flay is a binary channel |
 | `shadowform` | sim/priest/talents_shadow.go | Damage, cost and crit damage modifiers with the spells each names, and the helpful Holy spells that end it |
@@ -169,7 +173,7 @@ Invalid and unsupported inputs are deliberately different outcomes.
 | Rotation-reachable spell without a known behavior | Unsupported |
 
 The exporter marks as unrepresented: more than one player or target, health fights,
-tanks, presims, healing models, pets that may act, player auto attacks, a target that swings at a
+tanks, presims, healing models, pets that may act without a class pet effect, player auto attacks, a target that swings at a
 unit, item swapping, execute phase callbacks, target AI, caster
 damage callbacks, dynamic damage-taken modifiers a class effect does not describe, mob type
 bonuses, non-mana costs,
@@ -184,6 +188,16 @@ without the Shadowfiend option is. Go still resets and dismisses such a pet each
 logging its stats, and lists it in every action's targets and its owner's metrics, but
 never enables it, so it draws no random number: a pet's swing offset is rolled only for
 enemies, and only enabled units start the encounter.
+
+The pet a reset enables, as a warlock's summoned demon, is simulated when its class has a
+pet effect: `pets` gives its unit index, stats, auras, mana bar and regeneration, attack
+table, auto attacks, spells, metrics actions and the stats lines Go logs when it is
+enabled and dismissed. Go enables it during its owner's reset, so its swings start at
+the pull, and its rotation runs once per timestep after the player's. Its damage is part
+of the target's damage taken and its owner's DPS, and Go's OOM events leave its metrics
+alone. Guardians, a second enabled pet, inherited speed or regeneration, a delayed first
+attack, enable callbacks, focus or energy bars and pet cooldowns are unrepresented, and a
+pet that follows its owner's stats is refused when those stats can change.
 
 A target with a configured melee swing that no unit tanks never swings, but Go still
 rolls its opening swing offset at every reset, so the target exports its swing flags
@@ -239,8 +253,8 @@ the remaining races, with longer and cooldown-timing variants, and
 `fire-skyborne-read-ley-line` casts Read Ley Line from the rotation. `production-balance-druid`
 is the production Balance Druid request. `production-elemental-shaman` is the production
 Elemental Shaman request, and `elemental-shaman-dwarf-stoneform` runs it as a Dwarf with
-Stoneform timings. `production-destruction-warlock` is the production Destruction Warlock
-request. `production-fire` and
+Stoneform timings. `production-destruction-warlock` and `production-affliction-warlock`
+are the production Destruction and Affliction Warlock requests. `production-fire` and
 `production-frostfire` are the production application's Fire Missile Barrage and
 Frostfire hybrid requests at application revision 18bbcd47; its Arcane and Frost requests
 are byte-identical to `arcane-reference` and `frost-reference`. `frostfire-resistances`
@@ -344,7 +358,7 @@ cargo run --locked -- check --infile fixtures/mage/prepared-v2/frost-reference.p
 - Each class has its own exporter file under `tools/oracle-v2/` naming its class spells,
   damage rows and effects; a class without one is unrepresented. The fixture manifest pins
   the digest of every exporter source.
-- The contract describes one player and one target. Multiple targets, pets, incoming
+- The contract describes one player, one target and at most one simulated pet. Multiple targets, more pets, incoming
   damage and job modes such as stat weights need contract additions.
 - Accepting an input does not validate gameplay. Parity with Go is established per
   mechanic by the comparisons that accompany each implementation.
