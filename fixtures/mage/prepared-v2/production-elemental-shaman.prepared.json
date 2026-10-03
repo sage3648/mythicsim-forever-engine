@@ -3778,7 +3778,10 @@
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
-        "damage_effect": null
+        "damage_effect": {
+          "average": 286,
+          "variance": 0.0560000017285347
+        }
       },
       {
         "action_id": {
@@ -4257,6 +4260,51 @@
       "spell_id": 10414
     },
     {
+      "kind": "frost_shock",
+      "spell_id": 10473
+    },
+    {
+      "duration_ns": 20000000000,
+      "kind": "magma_totem",
+      "pulse_damage": 73,
+      "spell_id": 10587
+    },
+    {
+      "aura": "Lightning Shield",
+      "charges": 3,
+      "kind": "lightning_shield",
+      "spell_id": 10432
+    },
+    {
+      "aura": "Grace Of Air Totem (Self)",
+      "duration_ns": 300000000000,
+      "kind": "grace_of_air_totem",
+      "party_air_totem": false,
+      "spell_id": 25359
+    },
+    {
+      "attack_damage": 21.808000000000003,
+      "attack_deals_damage": true,
+      "attack_spell": 39,
+      "aura": "Flametongue Totem (Self)",
+      "disabled_by_weapon": false,
+      "duration_ns": 300000000000,
+      "kind": "flametongue_totem",
+      "party_totem": false,
+      "spell_id": 16387,
+      "trigger_aura": "Flametongue Totem Trigger",
+      "trigger_outcome": [
+        "Hit",
+        "Glance",
+        "Block",
+        "Crit",
+        "Crush"
+      ],
+      "trigger_spells": [
+        51
+      ]
+    },
+    {
       "aura": "Strength Of Earth Totem (Self)",
       "duration_ns": 300000000000,
       "kind": "strength_of_earth_totem",
@@ -4317,10 +4365,16 @@
     },
     {
       "auras": [
-        "Strength Of Earth Totem (Self)"
+        "Strength Of Earth Totem (Self)",
+        "Grace Of Air Totem (Self)"
       ],
       "changed": [
+        "Agility",
+        "Armor",
         "AttackPower",
+        "DodgePercent",
+        "DodgeRating",
+        "PhysicalCritPercent",
         "Strength"
       ],
       "combos": [
@@ -4334,6 +4388,20 @@
         {
           "AttackPower": 572,
           "PhysicalCritPercent": 10.6116,
+          "RangedAttackPower": 40,
+          "SpellCritPercent": 12.775599999999999,
+          "SpellDamage": 439
+        },
+        {
+          "AttackPower": 456,
+          "PhysicalCritPercent": 15.5392,
+          "RangedAttackPower": 40,
+          "SpellCritPercent": 12.775599999999999,
+          "SpellDamage": 439
+        },
+        {
+          "AttackPower": 572,
+          "PhysicalCritPercent": 15.5392,
           "RangedAttackPower": 40,
           "SpellCritPercent": 12.775599999999999,
           "SpellDamage": 439

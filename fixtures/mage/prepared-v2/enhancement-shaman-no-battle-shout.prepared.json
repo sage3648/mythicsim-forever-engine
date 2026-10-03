@@ -4512,7 +4512,10 @@
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
-        "damage_effect": null
+        "damage_effect": {
+          "average": 286,
+          "variance": 0.0560000017285347
+        }
       },
       {
         "action_id": {
@@ -5149,6 +5152,53 @@
       "spell_id": 10414
     },
     {
+      "kind": "frost_shock",
+      "spell_id": 10473
+    },
+    {
+      "duration_ns": 20000000000,
+      "kind": "magma_totem",
+      "pulse_damage": 73,
+      "spell_id": 10587
+    },
+    {
+      "aura": "Lightning Shield",
+      "charges": 3,
+      "kind": "lightning_shield",
+      "spell_id": 10432
+    },
+    {
+      "aura": "Grace Of Air Totem (Self)",
+      "duration_ns": 300000000000,
+      "kind": "grace_of_air_totem",
+      "party_air_totem": true,
+      "spell_id": 25359
+    },
+    {
+      "attack_damage": 51.794,
+      "attack_deals_damage": true,
+      "attack_spell": 44,
+      "aura": "Flametongue Totem (Self)",
+      "disabled_by_weapon": false,
+      "duration_ns": 300000000000,
+      "kind": "flametongue_totem",
+      "party_totem": false,
+      "spell_id": 16387,
+      "trigger_aura": "Flametongue Totem Trigger",
+      "trigger_outcome": [
+        "Hit",
+        "Glance",
+        "Block",
+        "Crit",
+        "Crush"
+      ],
+      "trigger_spells": [
+        56,
+        58,
+        59
+      ]
+    },
+    {
       "aura": "Strength Of Earth Totem (Self)",
       "duration_ns": 300000000000,
       "kind": "strength_of_earth_totem",
@@ -5414,10 +5464,16 @@
         "Holy Strength (MH)",
         "Holy Strength (OH)",
         "Windfury Totem (External)",
-        "Strength Of Earth Totem (Self)"
+        "Strength Of Earth Totem (Self)",
+        "Grace Of Air Totem (Self)"
       ],
       "changed": [
+        "Agility",
+        "Armor",
         "AttackPower",
+        "DodgePercent",
+        "DodgeRating",
+        "PhysicalCritPercent",
         "RangedAttackPower",
         "SpellDamage",
         "Strength"
@@ -5643,6 +5699,230 @@
         {
           "AttackPower": 3086.1600000000003,
           "PhysicalCritPercent": 22.6808,
+          "RangedAttackPower": 116.60000000000001,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 266.53000000000003
+        },
+        {
+          "AttackPower": 2001.6,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 106,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 242.3
+        },
+        {
+          "AttackPower": 2201.76,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 116.60000000000001,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 266.53000000000003
+        },
+        {
+          "AttackPower": 2221.6,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 106,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 242.3
+        },
+        {
+          "AttackPower": 2443.76,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 116.60000000000001,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 266.53000000000003
+        },
+        {
+          "AttackPower": 2221.6,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 106,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 242.3
+        },
+        {
+          "AttackPower": 2443.76,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 116.60000000000001,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 266.53000000000003
+        },
+        {
+          "AttackPower": 2441.6,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 106,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 242.3
+        },
+        {
+          "AttackPower": 2685.76,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 116.60000000000001,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 266.53000000000003
+        },
+        {
+          "AttackPower": 2247.6,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 106,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 242.3
+        },
+        {
+          "AttackPower": 2472.36,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 116.60000000000001,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 266.53000000000003
+        },
+        {
+          "AttackPower": 2467.6,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 106,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 242.3
+        },
+        {
+          "AttackPower": 2714.36,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 116.60000000000001,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 266.53000000000003
+        },
+        {
+          "AttackPower": 2467.6,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 106,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 242.3
+        },
+        {
+          "AttackPower": 2714.36,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 116.60000000000001,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 266.53000000000003
+        },
+        {
+          "AttackPower": 2687.6,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 106,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 242.3
+        },
+        {
+          "AttackPower": 2956.36,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 116.60000000000001,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 266.53000000000003
+        },
+        {
+          "AttackPower": 2119.6,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 106,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 242.3
+        },
+        {
+          "AttackPower": 2331.56,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 116.60000000000001,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 266.53000000000003
+        },
+        {
+          "AttackPower": 2339.6,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 106,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 242.3
+        },
+        {
+          "AttackPower": 2573.56,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 116.60000000000001,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 266.53000000000003
+        },
+        {
+          "AttackPower": 2339.6,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 106,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 242.3
+        },
+        {
+          "AttackPower": 2573.56,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 116.60000000000001,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 266.53000000000003
+        },
+        {
+          "AttackPower": 2559.6,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 106,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 242.3
+        },
+        {
+          "AttackPower": 2815.56,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 116.60000000000001,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 266.53000000000003
+        },
+        {
+          "AttackPower": 2365.6,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 106,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 242.3
+        },
+        {
+          "AttackPower": 2602.1600000000003,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 116.60000000000001,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 266.53000000000003
+        },
+        {
+          "AttackPower": 2585.6,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 106,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 242.3
+        },
+        {
+          "AttackPower": 2844.1600000000003,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 116.60000000000001,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 266.53000000000003
+        },
+        {
+          "AttackPower": 2585.6,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 106,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 242.3
+        },
+        {
+          "AttackPower": 2844.1600000000003,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 116.60000000000001,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 266.53000000000003
+        },
+        {
+          "AttackPower": 2805.6,
+          "PhysicalCritPercent": 27.6592,
+          "RangedAttackPower": 106,
+          "SpellCritPercent": 13.027899999999999,
+          "SpellDamage": 242.3
+        },
+        {
+          "AttackPower": 3086.1600000000003,
+          "PhysicalCritPercent": 27.6592,
           "RangedAttackPower": 116.60000000000001,
           "SpellCritPercent": 13.027899999999999,
           "SpellDamage": 266.53000000000003

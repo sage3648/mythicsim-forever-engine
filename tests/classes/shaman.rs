@@ -28,11 +28,17 @@ fn production_elemental_request_is_supported() {
 }
 
 /// The rotation's Magma Totem and its Chain Lightning on several targets wait for two
-/// targets, which never happens with the one target in scope, so Magma Totem needs no
+/// targets, which never happens with the one target in scope, so Magma Totem would need no
 /// behavior. Without that condition it does.
 #[test]
 fn magma_totem_is_reachable_only_without_its_target_count_condition() {
     let mut value = elemental_json();
+    value["effects"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|effect| effect["kind"] != "magma_totem");
+    let prepared: PreparedV2 = serde_json::from_value(value.clone()).unwrap();
+    assert_eq!(prepared_coverage(&prepared), Vec::<String>::new());
     let item = &mut value["player"]["rotation"]["priorityList"][1]["action"];
     assert_eq!(item["castSpell"]["spellId"]["spellId"], 10587);
     item.as_object_mut().unwrap().remove("condition");
@@ -88,15 +94,24 @@ fn enhancement_request_without_battle_shout_is_supported() {
     assert_eq!(prepared_coverage(&prepared), Vec::<String>::new());
 }
 
-/// Strength of Earth Totem is the only basic totem with a behavior.
+/// Strength of Earth and Grace of Air are the basic totems with a behavior, and a Grace of Air
+/// cast may not contest the party's Windfury Totem.
 #[test]
 fn other_basic_totems_are_rejected() {
     let mut value = enhancement_json();
     let item = &mut value["player"]["rotation"]["priorityList"][0]["action"];
     assert_eq!(item["castSpell"]["spellId"]["spellId"], 25361);
-    item["castSpell"]["spellId"]["spellId"] = json!(25359);
+    item["castSpell"]["spellId"]["spellId"] = json!(10497);
     assert!(reasons(value)
-        .contains(&"rotation reaches spell 25359, a totem without a known behavior".into()));
+        .contains(&"rotation reaches spell 10497, a totem without a known behavior".into()));
+
+    let mut value = enhancement_json();
+    value["player"]["rotation"]["priorityList"][0]["action"]["castSpell"]["spellId"]["spellId"] =
+        json!(25359);
+    assert!(reasons(value).contains(
+        &"rotation reaches spell 25359, a Grace of Air Totem that contests a party air totem"
+            .into()
+    ));
 }
 
 /// Go reads totem slots only on a Shaman.
