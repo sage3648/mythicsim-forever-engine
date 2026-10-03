@@ -41,8 +41,11 @@ to Frost scope, 4 deferred client data updates and 1 applicable fix. That fix,
 rotation reads an aura the character cannot have. The pinned reference drops such a
 condition, so a Frost build without Fingers of Frost casts Ice Lance on every global
 cooldown (about 81 casts and 211 DPS per fight, against 593 DPS for the talented
-reference). Until the reference adopts the fix, Rust rejects affected rotations with
-both behaviors named. The regression is the `frost-no-fingers` prepared fixture.
+reference). Rust compiles each condition both ways. Where the results differ, it
+rejects the rotation with both behaviors named until the reference adopts the fix;
+where they agree, as when an `auraIsKnown` guard prunes the action either way, it runs.
+The regressions are the `frost-no-fingers` and `reference-no-missile-barrage` prepared
+fixtures.
 
 ## Reconcile a fix
 

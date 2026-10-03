@@ -137,9 +137,11 @@ The rotation subset is the frozen Frost preset's: `castSpell`, `autocastOtherCoo
 `remainingTime`, `auraIsKnown` and `auraIsActive`. Constants follow Go parsing,
 including `time.ParseDuration` and percent constants. A rotation spell the character
 does not know is dropped, as in Go; a known spell without a Rust behavior is
-unsupported. An `auraIsActive` naming an aura the character lacks is unsupported:
-the pinned reference drops that condition while community fix #622 reads the aura
-as inactive (see [UPSTREAM.md](../UPSTREAM.md#ledger)).
+unsupported. For an `auraIsActive` naming an aura the character lacks, the pinned
+reference drops the term while community fix #622 reads the aura as inactive (see
+[UPSTREAM.md](../UPSTREAM.md#ledger)). Rust compiles every condition both ways, with
+Go's coercion and constant folding, and rejects the rotation only where the results
+differ. An `auraIsKnown` guard that prunes the action under both readings is supported.
 
 ## Examples
 
@@ -147,7 +149,9 @@ The [fixture family](../fixtures/mage/frost/prepared-v2/manifest.json) holds acc
 inputs and their expected coverage. `frost-reference` is the frozen application
 request; it is supported and keeps Go's result and first-fight log as goldens.
 `frost-no-fingers` is the same request without Fingers of Frost, the regression for
-community fix #622, and stays unsupported.
+community fix #622, and stays unsupported. `reference-no-missile-barrage` drops Missile
+Barrage, whose Arcane Missiles rule is guarded by `auraIsKnown`; it is supported and
+matches Go.
 
 The contract tests in
 [tests/classes/mage/frost/prepared_v2.rs](../tests/classes/mage/frost/prepared_v2.rs)

@@ -233,10 +233,11 @@
       "reason": "Covered mechanic. Pinned Go drops an auraIsActive condition naming an aura the character lacks, so the action fires whenever reached. Frost without Fingers of Frost then casts Ice Lance on every global cooldown (pinned Go, 200 fights: 80.9 Ice Lance and 0 Frostbolt casts per fight, 211 DPS against 593 for the reference).",
       "adoption": {
         "reference": "pending",
-        "rust": "guarded: rotations reading an unknown aura are rejected with both behaviors named"
+        "rust": "guarded: conditions are compiled under both readings; rotations where they differ are rejected with both behaviors named"
       },
       "regression": [
         "fixtures/mage/frost/prepared-v2/manifest.json#frost-no-fingers",
+        "fixtures/mage/frost/prepared-v2/manifest.json#reference-no-missile-barrage",
         "tests/classes/mage/frost/prepared_v2.rs"
       ]
     },

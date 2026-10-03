@@ -567,6 +567,153 @@ fn leading_fraction(s: &[u8]) -> (u64, &[u8], bool, f64) {
     (value, &s[index..], index > 0, scale)
 }
 
+/// A compiled condition: Go's constant folding and type coercion applied. `R` names an
+/// aura: a runtime handle, or the action ID when only the compiled shape matters.
+#[derive(Clone, Debug, PartialEq)]
+pub enum Compiled<R> {
+    Const(Const),
+    Compare {
+        op: CompareOp,
+        lhs: Box<Compiled<R>>,
+        rhs: Box<Compiled<R>>,
+    },
+    And(Vec<Compiled<R>>),
+    CurrentManaPercent,
+    RemainingTime,
+    AuraIsActive(R),
+    /// Go `APLValueCoerced`.
+    Coerced {
+        to: ValueType,
+        inner: Box<Compiled<R>>,
+    },
+}
+
+impl<R> Compiled<R> {
+    pub fn value_type(&self) -> ValueType {
+        match self {
+            Compiled::Const(constant) => constant.value_type,
+            Compiled::Compare { .. } | Compiled::And(_) | Compiled::AuraIsActive(_) => {
+                ValueType::Bool
+            }
+            Compiled::CurrentManaPercent => ValueType::Float,
+            Compiled::RemainingTime => ValueType::Duration,
+            Compiled::Coerced { to, .. } => *to,
+        }
+    }
+
+    fn const_bool(&self) -> Option<bool> {
+        match self {
+            Compiled::Const(constant) if constant.value_type == ValueType::Bool => {
+                Some(constant.boolean)
+            }
+            _ => None,
+        }
+    }
+
+    /// Go `coerceTo`: a constant changes type in place; anything else is wrapped.
+    fn coerce(self, to: ValueType) -> Self {
+        if self.value_type() == to {
+            self
+        } else if let Compiled::Const(mut constant) = self {
+            constant.value_type = to;
+            Compiled::Const(constant)
+        } else {
+            Compiled::Coerced {
+                to,
+                inner: Box::new(self),
+            }
+        }
+    }
+}
+
+/// How `auraIsActive` reads an aura the character cannot have.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum MissingAura {
+    /// The pinned reference: no value, so the term drops out of its parent.
+    Dropped,
+    /// Community fix ElliotWood/Forever#622: a constant false.
+    Inactive,
+}
+
+/// What Go `newAPLAction` makes of an action's condition.
+#[derive(Clone, Debug, PartialEq)]
+pub enum CompiledCondition<R> {
+    /// A constant false condition removes the action.
+    Pruned,
+    /// No condition, a constant true, or a condition that compiled to no value.
+    Always,
+    When(Compiled<R>),
+}
+
+fn bool_const<R>(value: bool) -> Compiled<R> {
+    Compiled::Const(parse_const(if value { "true" } else { "false" }).expect("bool constant"))
+}
+
+/// Go `newAPLValue` for the supported subset. `aura` resolves an action ID on the
+/// casting player as Go `GetAuraByID` does, or returns `None` when the character lacks it.
+fn compile_value<R>(
+    value: &Value,
+    aura: &dyn Fn(&ActionId) -> Option<R>,
+    missing: MissingAura,
+) -> Option<Compiled<R>> {
+    Some(match value {
+        Value::Const(constant) => Compiled::Const(constant.clone()),
+        Value::CurrentManaPercent => Compiled::CurrentManaPercent,
+        Value::RemainingTime => Compiled::RemainingTime,
+        Value::AuraIsKnown(id) => bool_const(aura(id).is_some()),
+        Value::AuraIsActive(id) => match (aura(id), missing) {
+            (Some(resolved), _) => Compiled::AuraIsActive(resolved),
+            (None, MissingAura::Dropped) => return None,
+            (None, MissingAura::Inactive) => bool_const(false),
+        },
+        Value::Compare { op, lhs, rhs } => {
+            let lhs = compile_value(lhs, aura, missing)?;
+            let rhs = compile_value(rhs, aura, missing)?;
+            let to = lhs.value_type().max(rhs.value_type());
+            Compiled::Compare {
+                op: *op,
+                lhs: Box::new(lhs.coerce(to)),
+                rhs: Box::new(rhs.coerce(to)),
+            }
+        }
+        Value::And(values) => {
+            let mut compiled: Vec<_> = values
+                .iter()
+                .filter_map(|value| compile_value(value, aura, missing))
+                .map(|value| value.coerce(ValueType::Bool))
+                .collect();
+            match compiled.len() {
+                0 => return None,
+                1 => compiled.pop().expect("one value"),
+                // Go short-circuits an And holding a constant false to that constant.
+                _ => match compiled.iter().position(|v| v.const_bool() == Some(false)) {
+                    Some(index) => compiled.swap_remove(index),
+                    None => Compiled::And(compiled),
+                },
+            }
+        }
+    })
+}
+
+/// Go `newAPLAction`'s condition handling for one action.
+pub fn compile_condition<R>(
+    condition: Option<&Value>,
+    aura: &dyn Fn(&ActionId) -> Option<R>,
+    missing: MissingAura,
+) -> CompiledCondition<R> {
+    let compiled = condition
+        .and_then(|value| compile_value(value, aura, missing))
+        .map(|value| value.coerce(ValueType::Bool));
+    match compiled {
+        None => CompiledCondition::Always,
+        Some(value) => match value.const_bool() {
+            Some(false) => CompiledCondition::Pruned,
+            Some(true) => CompiledCondition::Always,
+            None => CompiledCondition::When(value),
+        },
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -622,5 +769,59 @@ mod tests {
                 "rotation item 2: action wait is unsupported"
             ]
         );
+    }
+
+    /// Conditions over spell 44404, an aura the test character lacks.
+    fn conditions(json: serde_json::Value) -> (CompiledCondition<()>, CompiledCondition<()>) {
+        let rotation = parse(&serde_json::json!({
+            "type": "TypeAPL",
+            "priorityList": [{"action": {
+                "castSpell": {"spellId": {"spellId": 25345}},
+                "condition": json,
+            }}],
+        }))
+        .unwrap();
+        let condition = rotation.priority_list[0].condition.as_ref();
+        let lacks = |_: &ActionId| None::<()>;
+        (
+            compile_condition(condition, &lacks, MissingAura::Dropped),
+            compile_condition(condition, &lacks, MissingAura::Inactive),
+        )
+    }
+
+    #[test]
+    fn missing_auras_compile_as_pinned_go_and_community_622() {
+        let active = serde_json::json!({"auraIsActive": {"auraId": {"spellId": 44404}}});
+        let known = serde_json::json!({"auraIsKnown": {"auraId": {"spellId": 44404}}});
+        let low_mana = serde_json::json!({"cmp": {
+            "op": "OpLt", "lhs": {"currentManaPercent": {}}, "rhs": {"const": {"val": "20%"}},
+        }});
+        // Unguarded: pinned Go fires on every pass, the fix never fires.
+        assert_eq!(
+            conditions(active.clone()),
+            (CompiledCondition::Always, CompiledCondition::Pruned)
+        );
+        // An auraIsKnown guard prunes the action under both readings.
+        assert_eq!(
+            conditions(serde_json::json!({"and": {"vals": [known, active.clone()]}})),
+            (CompiledCondition::Pruned, CompiledCondition::Pruned)
+        );
+        // Pinned Go keeps the other terms of an And; the fix prunes it.
+        let (pinned, fixed) =
+            conditions(serde_json::json!({"and": {"vals": [low_mana, active.clone()]}}));
+        assert!(matches!(
+            pinned,
+            CompiledCondition::When(Compiled::Compare { .. })
+        ));
+        assert_eq!(fixed, CompiledCondition::Pruned);
+        // Go does not fold comparisons, so the fix leaves a live constant comparison.
+        let (pinned, fixed) = conditions(serde_json::json!({"cmp": {
+            "op": "OpEq", "lhs": active, "rhs": {"const": {"val": "false"}},
+        }}));
+        assert_eq!(pinned, CompiledCondition::Always);
+        assert!(matches!(
+            fixed,
+            CompiledCondition::When(Compiled::Compare { .. })
+        ));
     }
 }

@@ -1,51 +1,16 @@
 //! Go apl.go: compile the parsed rotation and run `DoNextAction`.
 
-use crate::rotation::{Action as ParsedAction, CompareOp, Const, Rotation, Value, ValueType};
+use crate::{
+    contracts::prepared_v2::ActionId,
+    rotation::{
+        compile_condition, Action as ParsedAction, CompareOp, CompiledCondition, MissingAura,
+        Rotation, ValueType,
+    },
+};
 
 use super::{Agent, AuraRef, Fight, Side, SpellId};
 
-/// A compiled APL value with Go's coercion applied.
-#[derive(Clone, Debug)]
-pub(crate) enum Compiled {
-    Const(Const),
-    Compare {
-        op: CompareOp,
-        lhs: Box<Compiled>,
-        rhs: Box<Compiled>,
-    },
-    And(Vec<Compiled>),
-    CurrentManaPercent,
-    RemainingTime,
-    AuraIsActive(AuraRef),
-    /// Go `APLValueCoerced`.
-    Coerced {
-        to: ValueType,
-        inner: Box<Compiled>,
-    },
-}
-
-impl Compiled {
-    fn value_type(&self) -> ValueType {
-        match self {
-            Compiled::Const(constant) => constant.value_type,
-            Compiled::Compare { .. } | Compiled::And(_) | Compiled::AuraIsActive(_) => {
-                ValueType::Bool
-            }
-            Compiled::CurrentManaPercent => ValueType::Float,
-            Compiled::RemainingTime => ValueType::Duration,
-            Compiled::Coerced { to, .. } => *to,
-        }
-    }
-
-    fn const_bool(&self) -> Option<bool> {
-        match self {
-            Compiled::Const(constant) if constant.value_type == ValueType::Bool => {
-                Some(constant.boolean)
-            }
-            _ => None,
-        }
-    }
-}
+pub(crate) type Compiled = crate::rotation::Compiled<AuraRef>;
 
 #[derive(Clone, Debug)]
 pub(crate) enum Act {
@@ -65,24 +30,17 @@ pub(crate) struct Item {
     action: Act,
 }
 
-/// Go `coerceTo`: a constant changes type in place; anything else is wrapped.
-fn coerce(value: Compiled, to: ValueType) -> Compiled {
-    if value.value_type() == to {
-        value
-    } else if let Compiled::Const(mut constant) = value {
-        constant.value_type = to;
-        Compiled::Const(constant)
-    } else {
-        Compiled::Coerced {
-            to,
-            inner: Box::new(value),
-        }
-    }
-}
-
 impl<A: Agent> Fight<A> {
-    /// Go `newAPLRotation` for the supported subset.
-    pub(crate) fn compile_rotation(&self, rotation: &Rotation) -> Result<Vec<Item>, String> {
+    /// Go `newAPLRotation` for the supported subset. Conditions compile as the pinned
+    /// reference does; coverage rejects rotations where community #622 would differ.
+    pub(crate) fn compile_rotation(&self, rotation: &Rotation) -> Vec<Item> {
+        let tracker = &self.trackers[Side::Player.index()];
+        let aura = |id: &ActionId| {
+            tracker.find_by_id(id).map(|index| AuraRef {
+                side: Side::Player,
+                index,
+            })
+        };
         let mut items = Vec::new();
         for item in &rotation.priority_list {
             let action = match &item.action {
@@ -96,84 +54,17 @@ impl<A: Agent> Fight<A> {
                 }
                 ParsedAction::AutocastOtherCooldowns => Act::Autocast,
             };
-            let condition = match &item.condition {
-                Some(value) => self
-                    .compile_value(value)?
-                    .map(|value| coerce(value, ValueType::Bool)),
-                None => None,
-            };
-            match condition.as_ref().and_then(Compiled::const_bool) {
-                // A constant false condition prunes the action; its spells already left the
-                // major cooldowns in Go's export.
-                Some(false) => continue,
-                Some(true) => items.push(Item {
-                    condition: None,
-                    action,
-                }),
-                None => items.push(Item { condition, action }),
-            }
-        }
-        Ok(items)
-    }
-
-    fn compile_value(&self, value: &Value) -> Result<Option<Compiled>, String> {
-        Ok(Some(match value {
-            Value::Const(constant) => Compiled::Const(constant.clone()),
-            Value::CurrentManaPercent => Compiled::CurrentManaPercent,
-            Value::RemainingTime => Compiled::RemainingTime,
-            Value::AuraIsKnown(id) => {
-                let known = self.trackers[Side::Player.index()].find_by_id(id).is_some();
-                Compiled::Const(crate::rotation::parse_const(if known {
-                    "true"
-                } else {
-                    "false"
-                })?)
-            }
-            Value::AuraIsActive(id) => match self.trackers[Side::Player.index()].find_by_id(id) {
-                Some(index) => Compiled::AuraIsActive(AuraRef {
-                    side: Side::Player,
-                    index,
-                }),
-                None => {
-                    return Err(format!(
-                        "auraIsActive names {id}, which the character lacks"
-                    ))
-                }
-            },
-            Value::Compare { op, lhs, rhs } => {
-                let (Some(lhs), Some(rhs)) = (self.compile_value(lhs)?, self.compile_value(rhs)?)
-                else {
-                    return Ok(None);
+            let condition =
+                match compile_condition(item.condition.as_ref(), &aura, MissingAura::Dropped) {
+                    // A constant false condition prunes the action; its spells already left
+                    // the major cooldowns in Go's export.
+                    CompiledCondition::Pruned => continue,
+                    CompiledCondition::Always => None,
+                    CompiledCondition::When(condition) => Some(condition),
                 };
-                let to = lhs.value_type().max(rhs.value_type());
-                Compiled::Compare {
-                    op: *op,
-                    lhs: Box::new(coerce(lhs, to)),
-                    rhs: Box::new(coerce(rhs, to)),
-                }
-            }
-            Value::And(values) => {
-                let mut compiled = Vec::new();
-                for value in values {
-                    if let Some(value) = self.compile_value(value)? {
-                        compiled.push(coerce(value, ValueType::Bool));
-                    }
-                }
-                match compiled.len() {
-                    0 => return Ok(None),
-                    1 => compiled.pop().expect("one value"),
-                    _ => {
-                        if let Some(false_value) =
-                            compiled.iter().find(|v| v.const_bool() == Some(false))
-                        {
-                            false_value.clone()
-                        } else {
-                            Compiled::And(compiled)
-                        }
-                    }
-                }
-            }
-        }))
+            items.push(Item { condition, action });
+        }
+        items
     }
 
     fn get_bool(&self, value: &Compiled) -> bool {

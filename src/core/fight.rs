@@ -931,7 +931,7 @@ impl<A: Agent> Fight<A> {
             totals: metrics::Totals::default(),
             encounter_damage_taken: 0.0,
         };
-        fight.rotation = fight.compile_rotation(&parsed)?;
+        fight.rotation = fight.compile_rotation(&parsed);
         Ok(fight)
     }
 

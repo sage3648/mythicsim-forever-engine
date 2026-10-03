@@ -399,10 +399,10 @@ pieces, not already-open issues. Keep each change independently reviewable.
 | 6 | Export real Frost character preparation from Go | 2, 4 | Prepared-state comparisons |
 | 7 (complete for Frost) | Add aura lifetime, stacks, charges and cooldown primitives | 5 | Auras, stacks, cooldowns, channels and dynamic modifiers validated by the Frost build; charges unsupported |
 | 8 (complete) | Port required Frost spells and procs in separate PRs | 6, 7 | Each mechanic matched pinned Go in isolating fixtures |
-| 9 (complete) | Interpret the selected preset operators | 2, 8 | Preset operators run; unsupported operators and #622 conditions are rejected |
+| 9 (complete) | Interpret the selected preset operators | 2, 8 | Preset operators run; unsupported operators and conditions #622 would change are rejected |
 | 10 | Produce required reports and timelines | 1, 8, 9 | Existing consumer compatibility |
-| 11 | Compare the complete Frost build and gear variants | 6 through 10 | Multi-seed, timing, resource and effect coverage |
+| 11 (Frost sweep complete) | Compare the complete Frost build and gear variants | 6 through 10 | [24 randomized variants](../validation/2026-10-03-frost-sweep.json) match Go; report adapter pending |
 | 12 | Add worker routing and bounded comparison runs | 11 | Fallback reasons, batch consistency and rollback |
 
-Pieces 1 to 3 are complete. Start next with piece 4. They establish the scope and synchronization contract
+Pieces 1 to 3 and 5 to 9 are complete; piece 4 has pin centralization pending. Pieces 1 to 3 establish the scope and synchronization contract
 that make the subsequent mechanic ports easier to review and maintain.

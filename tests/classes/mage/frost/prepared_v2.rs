@@ -209,6 +209,17 @@ fn community_fix_622_unknown_aura_conditions_are_rejected() {
         .any(|reason| reason.contains("#622")));
 }
 
+/// Without Missile Barrage the Arcane Missiles rule names a missing aura behind an
+/// `auraIsKnown` guard. Both readings prune the rule, so the build is supported; its Go
+/// golden casts no Arcane Missiles.
+#[test]
+fn community_fix_622_guarded_conditions_are_supported() {
+    let bytes = fs::read(family().join("reference-no-missile-barrage.prepared.json")).unwrap();
+    let prepared: PreparedV2 = serde_json::from_slice(&bytes).unwrap();
+    assert!(!prepared.player.talents.contains_key("missile_barrage"));
+    assert_eq!(prepared_coverage(&prepared), Vec::<String>::new());
+}
+
 /// The comparable view of a Go `RaidSimResult`, matching tools/prepared_v2.py `compact`.
 fn compact(result: &Value) -> Value {
     let player = &result["raidMetrics"]["parties"][0]["players"][0];

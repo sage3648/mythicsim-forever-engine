@@ -302,6 +302,23 @@
         "file": "reference-ten-minutes.go-result.json",
         "sha256": "41f3198d463dddb1978491ff6ab7bffee5c01b0aac7bd6bd8f798ff60f54144d"
       }
+    },
+    {
+      "id": "reference-no-missile-barrage",
+      "description": "The Frost reference with Missile Barrage unlearned. The rotation guards the Arcane Missiles rule with auraIsKnown, so pinned Go and community #622 both prune it and the build is supported.",
+      "request": {
+        "path": "fixtures/mage/frost/prepared-v2/reference-no-missile-barrage.request.json"
+      },
+      "prepared": "reference-no-missile-barrage.prepared.json",
+      "prepared_sha256": "4ecb7ea3dc3329a0fae688056a55ec73c35d72a4db5dbb8dc0d55a8bf60f4e5f",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "reference-no-missile-barrage.go-result.json",
+        "sha256": "17d97d7697cba74f732ed259934911f369d039fd3a6710b877723ec1294424e6"
+      }
     }
   ]
 }

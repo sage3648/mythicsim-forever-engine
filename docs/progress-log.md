@@ -13,6 +13,7 @@ reading the Go reference. They are not effort estimates for other contributors.
 | 8. Ice Lance, Fingers of Frost and Shatter | 2026-10-03 11:54 | 2026-10-03 11:56 | 0 h 02 m | In-flight cast rule and charge use; ranks 2 and 1 match Go on the first comparison |
 | 8. Clearcasting, Missile Barrage and Arcane Missiles | 2026-10-03 11:56 | 2026-10-03 11:59 | 0 h 03 m | Channel ticks, partial resists and tick-length modifier; every proc talent matches Go |
 | 8. Mana recovery, cooldowns and the complete reference build | 2026-10-03 11:59 | 2026-10-03 12:04 | 0 h 05 m | Cold Snap, gems, Evocation, consumables; found Go's ready-time quirk; full reference matches Go |
+| 11. Randomized Frost compatibility sweep | 2026-10-03 12:05 | 2026-10-03 12:16 | 0 h 11 m | 24 variants match Go; #622 guard narrowed to conditions whose compilation differs |
 
 ## Notes
 

@@ -10,7 +10,7 @@ use std::collections::BTreeSet;
 
 use crate::{
     contracts::prepared_v2::{ActionId, Effect, PreparedV2, Spell},
-    rotation::{Action, Rotation},
+    rotation::{compile_condition, Action, MissingAura, Rotation},
 };
 
 /// Effect kinds implemented in Rust and validated against the pinned Go reference.
@@ -229,19 +229,26 @@ fn player_has_aura(prepared: &PreparedV2, id: &ActionId) -> bool {
         .any(|aura| aura.action_id.as_ref() == Some(id))
 }
 
-/// Pinned Go returns no value for `auraIsActive` on an aura the character cannot have,
-/// which drops the condition so the action fires whenever it is reached. Community fix
-/// ElliotWood/Forever#622 (252f57aa8) reads such an aura as inactive instead. Until the
-/// reference adopts the fix, reject these rotations rather than copy either behavior.
-/// See upstream/changes.json.
+/// Pinned Go gives `auraIsActive` on an aura the character cannot have no value, which
+/// drops the term from its condition; community fix ElliotWood/Forever#622 (252f57aa8)
+/// reads the aura as inactive instead. Where both compile to the same action, as when an
+/// `auraIsKnown` guard already prunes it, the input is unaffected. Otherwise reject it
+/// until the reference adopts the fix. See upstream/changes.json.
 fn unknown_aura_conditions(prepared: &PreparedV2, rotation: &Rotation) -> Vec<String> {
+    let known = |id: &ActionId| player_has_aura(prepared, id);
+    let aura = |id: &ActionId| known(id).then(|| id.clone());
     let mut reasons = Vec::new();
     for item in &rotation.priority_list {
+        let pinned = compile_condition(item.condition.as_ref(), &aura, MissingAura::Dropped);
+        let fixed = compile_condition(item.condition.as_ref(), &aura, MissingAura::Inactive);
+        if pinned == fixed {
+            continue;
+        }
         let mut unknown = Vec::new();
         if let Some(condition) = &item.condition {
             condition.visit(&mut |value| {
                 if let crate::rotation::Value::AuraIsActive(id) = value {
-                    if !player_has_aura(prepared, id) {
+                    if !known(id) {
                         unknown.push(id.to_string());
                     }
                 }
