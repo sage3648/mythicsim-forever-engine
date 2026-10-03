@@ -863,6 +863,23 @@ func eurekaEffect(agent core.Agent, character *core.Character) map[string]any {
 	}
 }
 
+// The player stats that change while the named aura is active, read from a separate reset
+// simulation so the exported one is untouched.
+func activeStats(request *proto.RaidSimRequest, label string) map[string]float64 {
+	simulation := core.NewSim(request, simsignals.CreateSignals())
+	simulation.Reset()
+	character := simulation.Raid.Parties[0].Players[0].GetCharacter()
+	before := statValues(character.GetStats())
+	character.GetAura(label).Activate(simulation)
+	changed := map[string]float64{}
+	for name, value := range statValues(character.GetStats()) {
+		if value != before[name] {
+			changed[name] = value
+		}
+	}
+	return changed
+}
+
 func commonEffects(character *core.Character, target *core.Unit, request *proto.RaidSimRequest, unrepresented *[]string) []map[string]any {
 	effects := []map[string]any{}
 	for _, aura := range target.GetAuras() {
@@ -887,6 +904,33 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 			"proc_chance": chance, "proc_mask": procMaskNames(core.ProcMaskMelee | core.ProcMaskRanged | core.ProcMaskSpellDamage),
 			"health_fraction": 0.05, "delay_ns": nanos(core.SpellBatchWindow),
 		})
+	}
+	// racials.go Troll Berserking: AttachMultiplyCastSpeed with a Go literal.
+	if aura := character.GetAura("Berserking"); aura != nil {
+		effects = append(effects, map[string]any{
+			"kind": "berserking", "spell_id": aura.ActionID.SpellID, "aura": aura.Label, "cast_speed_multiplier": 1.1,
+		})
+	}
+	// racials.go Orc Blood Fury: Go computes the buffed stats through its dynamic stat
+	// dependencies, so a separate reset simulation activates the aura and reports them.
+	if aura := character.GetAura("Blood Fury"); aura != nil {
+		effects = append(effects, map[string]any{
+			"kind": "blood_fury", "spell_id": aura.ActionID.SpellID, "aura": aura.Label,
+			"active_stats": activeStats(request, aura.Label),
+		})
+	}
+	// racials.go Orc Shatter Curse: its aura changes only the player's damage taken.
+	if aura := character.GetAura("Shatter Curse"); aura != nil {
+		effects = append(effects, map[string]any{"kind": "shatter_curse", "spell_id": aura.ActionID.SpellID, "aura": aura.Label})
+	}
+	// racials.go High Order Skyborne Read Ley Line: Energized doubles mana regeneration, a
+	// Go literal undone with 0.5.
+	if aura := character.GetAura("Energized"); aura != nil {
+		for _, spell := range character.Spellbook {
+			if spell.RelatedSelfBuff == aura {
+				effects = append(effects, map[string]any{"kind": "read_ley_line", "spell_id": spell.ActionID.SpellID, "aura": aura.Label, "regen_multiplier": 2.0})
+			}
+		}
 	}
 	consumes := request.Raid.Parties[0].Players[0].Consumables
 	for _, cd := range character.GetMajorCooldowns() {
@@ -997,6 +1041,13 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	table := character.AttackTables[target.UnitIndex]
 	note(table.DamageDoneByCasterMultiplier != nil || len(table.DamageDoneByCasterExtraMultiplier) != 0, "caster damage callbacks are unsupported")
 	note(len(target.DynamicDamageTakenModifiers) != 0, "dynamic damage taken modifiers are unsupported")
+	note(len(character.OnCastSpeedChanged) != 0, "cast speed listeners are unsupported")
+	note(len(character.OnTemporaryStatsChanges) != 0, "temporary stat listeners are unsupported")
+	if threshold := request.Raid.Parties[0].Players[0].GetCooldowns().GetHpPercentForDefensives(); threshold != 0 {
+		for _, cd := range character.GetMajorCooldowns() {
+			note(cd.Type.Matches(core.CooldownTypeSurvival), fmt.Sprintf("survival cooldown %s waits for health %v", cd.Spell.ActionID, threshold))
+		}
+	}
 	for mobType, bonus := range table.MobTypeBonusStats {
 		note(bonus != (stats.Stats{}), fmt.Sprintf("mob type bonus stats for %s are unsupported", mobType))
 	}

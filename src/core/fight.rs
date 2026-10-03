@@ -163,6 +163,8 @@ pub(crate) enum SpellBehavior<S> {
     },
     /// Go racials.go Eureka!'s cast, which activates its aura.
     Eureka,
+    /// A racial whose `ApplyEffects` only activates its player aura.
+    ActivateAura(usize),
 }
 
 /// Go spell flags used by the runtime, parsed from exported names.
@@ -345,12 +347,24 @@ pub(crate) struct QueuedSpell {
     pub(crate) initiated_at: i64,
 }
 
+/// The stats a temporary stat change can set, as Go `Unit.stats` entries.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub(crate) struct Powers {
+    pub(crate) spell_damage: f64,
+    pub(crate) attack_power: f64,
+    pub(crate) ranged_attack_power: f64,
+}
+
 /// Mutable player state, reset to the prepared values each iteration.
 pub(crate) struct Player {
+    /// Go `Unit.stats` for the stats auras can change during a fight.
+    pub(crate) powers: Powers,
     pub(crate) mana: f64,
     /// Go `healthBar.currentHealth`; the player takes no damage in scope.
     pub(crate) health: f64,
     pub(crate) spell_cost_percent_modifier: i32,
+    /// Go `PseudoStats.CastSpeedMultiplier`.
+    pub(crate) cast_speed_multiplier: f64,
     pub(crate) spirit_regen_rate_casting: f64,
     pub(crate) spirit_regen_multiplier: f64,
     pub(crate) force_full_spirit_regen: bool,
@@ -391,6 +405,7 @@ pub(crate) struct Config {
     pub(crate) channel_clip_delay: i64,
     pub(crate) distance: f64,
     pub(crate) cast_speed: f64,
+    pub(crate) spell_haste_rating: f64,
     pub(crate) max_mana: f64,
     pub(crate) max_health: f64,
     pub(crate) teardown_max_mana: f64,
@@ -398,11 +413,10 @@ pub(crate) struct Config {
     pub(crate) spirit_regen_per_second: f64,
     pub(crate) spell_hit_percent: f64,
     pub(crate) spell_crit_percent: f64,
-    pub(crate) spell_damage: f64,
+    /// The prepared stats; auras change the player's copy.
+    pub(crate) powers: Powers,
     pub(crate) school_damage: [f64; 8],
     pub(crate) spell_piercing: f64,
-    pub(crate) attack_power: f64,
-    pub(crate) ranged_attack_power: f64,
     pub(crate) initial: InitialPseudo,
     pub(crate) school_bonus_hit_chance: [f64; 8],
     pub(crate) damage_dealt_multiplier: f64,
@@ -424,6 +438,7 @@ pub(crate) struct Config {
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct InitialPseudo {
     pub(crate) spell_cost_percent_modifier: i32,
+    pub(crate) cast_speed_multiplier: f64,
     pub(crate) spirit_regen_rate_casting: f64,
     pub(crate) spirit_regen_multiplier: f64,
     pub(crate) force_full_spirit_regen: bool,
@@ -435,6 +450,8 @@ pub(crate) struct MajorCooldown {
     pub(crate) spell: SpellId,
     pub(crate) priority: i32,
     pub(crate) explosive: bool,
+    /// Go `CooldownTypeSurvival`.
+    pub(crate) survival: bool,
     pub(crate) timings: Vec<i64>,
     pub(crate) uses: usize,
 }
@@ -490,6 +507,9 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) queue: PendingQueue<Action>,
     min_tracker_time: i64,
     pub(crate) player: Player,
+    /// Go `Unit.CastSpeed`. Go's unit reset restores the pseudo stats but not this value,
+    /// so a speed change undone at the end of a fight carries into the next one.
+    pub(crate) cast_speed: f64,
     pub(crate) trackers: [Tracker<A::Aura>; 2],
     pub(crate) spells: Vec<Spell<A::Spell>>,
     pub(crate) dots: Vec<Dot>,
@@ -581,6 +601,7 @@ impl<A: Agent> Fight<A> {
             channel_clip_delay: player.channel_clip_delay_ns,
             distance: player.distance_yards,
             cast_speed: player.cast_speed,
+            spell_haste_rating: stat(&player.stats, "SpellHasteRating")?,
             max_mana: player.mana.max,
             max_health: stat(&player.stats, "Health")?,
             teardown_max_mana: player.mana.teardown_max,
@@ -588,7 +609,11 @@ impl<A: Agent> Fight<A> {
             spirit_regen_per_second: player.mana.spirit_regen_per_second,
             spell_hit_percent: stat(&player.stats, "SpellHitPercent")?,
             spell_crit_percent: stat(&player.stats, "SpellCritPercent")?,
-            spell_damage: stat(&player.stats, "SpellDamage")?,
+            powers: Powers {
+                spell_damage: stat(&player.stats, "SpellDamage")?,
+                attack_power: stat(&player.stats, "AttackPower")?,
+                ranged_attack_power: stat(&player.stats, "RangedAttackPower")?,
+            },
             school_damage: [
                 0.0,
                 0.0,
@@ -600,10 +625,9 @@ impl<A: Agent> Fight<A> {
                 stat(&player.stats, "ShadowDamage")?,
             ],
             spell_piercing: stat(&player.stats, "SpellPiercing")?,
-            attack_power: stat(&player.stats, "AttackPower")?,
-            ranged_attack_power: stat(&player.stats, "RangedAttackPower")?,
             initial: InitialPseudo {
                 spell_cost_percent_modifier: pseudo.spell_cost_percent_modifier,
+                cast_speed_multiplier: pseudo.cast_speed_multiplier,
                 spirit_regen_rate_casting: pseudo.spirit_regen_rate_casting,
                 spirit_regen_multiplier: pseudo.spirit_regen_multiplier,
                 force_full_spirit_regen: pseudo.force_full_spirit_regen,
@@ -672,6 +696,8 @@ impl<A: Agent> Fight<A> {
         let mut spells = Vec::new();
         let mut dots = Vec::new();
         let mut mana_gain_spell = None;
+        // Spells that activate a player aura, resolved once the auras are registered.
+        let mut activations: Vec<(SpellId, &str)> = Vec::new();
         for exported in &player.spells {
             let id = exported.action_id.clone().unwrap_or_default();
             if id.other_id == "OtherActionManaGain" {
@@ -729,6 +755,15 @@ impl<A: Agent> Fight<A> {
                             if id.spell_id == *spell_id && id.tag == 0 =>
                         {
                             Some(SpellBehavior::Eureka)
+                        }
+                        Effect::Berserking { spell_id, aura, .. }
+                        | Effect::BloodFury { spell_id, aura, .. }
+                        | Effect::ShatterCurse { spell_id, aura }
+                        | Effect::ReadLeyLine { spell_id, aura, .. }
+                            if id.spell_id == *spell_id && id.tag == 0 =>
+                        {
+                            activations.push((spells.len(), aura));
+                            Some(SpellBehavior::None)
                         }
                         Effect::TouchOfTheGrave {
                             drain_spell_id,
@@ -910,6 +945,40 @@ impl<A: Agent> Fight<A> {
                         .any(|effect| matches!(effect, Effect::Eureka { aura, .. } if *aura == exported.label))
                 {
                     AuraBehavior::Eureka
+                } else if let Some(multiplier) = effects.iter().find_map(|effect| match effect {
+                    Effect::Berserking {
+                        aura,
+                        cast_speed_multiplier,
+                        ..
+                    } if side == Side::Player && *aura == exported.label => {
+                        Some(*cast_speed_multiplier)
+                    }
+                    _ => None,
+                }) {
+                    AuraBehavior::MultiplyCastSpeed(multiplier)
+                } else if let Some(multiplier) = effects.iter().find_map(|effect| match effect {
+                    Effect::ReadLeyLine {
+                        aura,
+                        regen_multiplier,
+                        ..
+                    } if side == Side::Player && *aura == exported.label => Some(*regen_multiplier),
+                    _ => None,
+                }) {
+                    AuraBehavior::MultiplyManaRegenSpeed(multiplier)
+                } else if let Some(stats) = effects.iter().find_map(|effect| match effect {
+                    Effect::BloodFury {
+                        aura, active_stats, ..
+                    } if side == Side::Player && *aura == exported.label => Some(active_stats),
+                    _ => None,
+                }) {
+                    let active = |name: &str| stats.get(name).copied();
+                    let base = config.powers;
+                    AuraBehavior::TemporaryStats(Powers {
+                        spell_damage: active("SpellDamage").unwrap_or(base.spell_damage),
+                        attack_power: active("AttackPower").unwrap_or(base.attack_power),
+                        ranged_attack_power: active("RangedAttackPower")
+                            .unwrap_or(base.ranged_attack_power),
+                    })
                 } else if effects.iter().any(|effect| {
                     matches!(effect, Effect::InertListener { unit: u, aura, .. } if u == unit && *aura == exported.label)
                 }) {
@@ -923,6 +992,12 @@ impl<A: Agent> Fight<A> {
                     .map(|icd| (timer(&icd.timer), icd.duration_ns));
                 trackers[side.index()].register(exported, behavior, icd);
             }
+        }
+        for (spell, label) in activations {
+            let aura = trackers[Side::Player.index()]
+                .find(label)
+                .ok_or_else(|| format!("aura {label} is not registered"))?;
+            spells[spell].behavior = SpellBehavior::ActivateAura(aura);
         }
         for dot in &mut dots {
             dot.aura = trackers[dot.side.index()]
@@ -944,6 +1019,7 @@ impl<A: Agent> Fight<A> {
                 spell,
                 priority: cooldown.priority,
                 explosive: cooldown.kind.iter().any(|kind| kind == "explosive"),
+                survival: cooldown.kind.iter().any(|kind| kind == "survival"),
                 timings: cooldown.timings_ns.clone(),
                 uses: 0,
             });
@@ -960,9 +1036,11 @@ impl<A: Agent> Fight<A> {
             queue: PendingQueue::default(),
             min_tracker_time: NEVER_EXPIRES,
             player: Player {
+                powers: config.powers,
                 mana: config.max_mana,
                 health: config.max_health,
                 spell_cost_percent_modifier: config.initial.spell_cost_percent_modifier,
+                cast_speed_multiplier: config.initial.cast_speed_multiplier,
                 spirit_regen_rate_casting: config.initial.spirit_regen_rate_casting,
                 spirit_regen_multiplier: config.initial.spirit_regen_multiplier,
                 force_full_spirit_regen: config.initial.force_full_spirit_regen,
@@ -989,6 +1067,7 @@ impl<A: Agent> Fight<A> {
                 went_oom: false,
                 first_oom: 0,
             },
+            cast_speed: config.cast_speed,
             config,
             trackers,
             spells,
@@ -1056,6 +1135,12 @@ impl<A: Agent> Fight<A> {
             spirit_regen_multiplier: self.player.spirit_regen_multiplier,
             mana_regen_multiplier: self.player.mana_regen_multiplier,
         }
+    }
+
+    /// Go `MultiplyManaRegenSpeed`.
+    pub(crate) fn multiply_mana_regen_speed(&mut self, multiplier: f64) {
+        self.player.mana_regen_multiplier *= multiplier;
+        self.update_mana_regen_rates();
     }
 
     /// Go `UpdateManaRegenRates`.
@@ -1185,6 +1270,8 @@ impl<A: Agent> Fight<A> {
             }
             let initial = self.config.initial;
             player.spell_cost_percent_modifier = initial.spell_cost_percent_modifier;
+            player.cast_speed_multiplier = initial.cast_speed_multiplier;
+            player.powers = self.config.powers;
             player.spirit_regen_rate_casting = initial.spirit_regen_rate_casting;
             player.spirit_regen_multiplier = initial.spirit_regen_multiplier;
             player.force_full_spirit_regen = initial.force_full_spirit_regen;

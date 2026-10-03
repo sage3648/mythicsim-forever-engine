@@ -20,6 +20,8 @@ pub(crate) const IMPLEMENTED_EFFECTS: &[&str] = &[
     "arcane_concentration",
     "arcane_missiles",
     "arcane_power",
+    "berserking",
+    "blood_fury",
     "cold_snap",
     "combustion",
     "conjured_mana",
@@ -41,7 +43,9 @@ pub(crate) const IMPLEMENTED_EFFECTS: &[&str] = &[
     "potion_mana",
     "presence_of_mind",
     "pyroblast",
+    "read_ley_line",
     "scorch",
+    "shatter_curse",
     "touch_of_the_grave",
     "winters_chill",
 ];
@@ -76,6 +80,18 @@ fn spell_capability(spell: &Spell, prepared: &PreparedV2) -> Option<&'static str
         Effect::EnergizeOnUse { item_id, .. } if *item_id == item => Some("energize_on_use"),
         Effect::Eureka { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
             Some("eureka")
+        }
+        Effect::Berserking { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
+            Some("berserking")
+        }
+        Effect::BloodFury { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
+            Some("blood_fury")
+        }
+        Effect::ShatterCurse { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
+            Some("shatter_curse")
+        }
+        Effect::ReadLeyLine { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
+            Some("read_ley_line")
         }
         _ => None,
     })
@@ -118,6 +134,10 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         | Effect::ArcanePower { aura, .. }
         | Effect::Combustion { aura, .. }
         | Effect::Eureka { aura, .. }
+        | Effect::Berserking { aura, .. }
+        | Effect::BloodFury { aura, .. }
+        | Effect::ShatterCurse { aura, .. }
+        | Effect::ReadLeyLine { aura, .. }
         | Effect::PresenceOfMind { aura, .. } => vec![("player", aura)],
         Effect::JudgementOfWisdom { aura, .. } => vec![("target", aura)],
         Effect::InertListener { unit, aura, .. } => match unit.as_str() {
@@ -148,6 +168,35 @@ fn undirected_procs(prepared: &PreparedV2) -> Vec<String> {
                     .then(|| format!("{trigger_aura} procs from {proc_mask:?}, not direct hits"))
             }
             _ => None,
+        })
+        .collect()
+}
+
+/// Stats a temporary stat change may set: the runtime reads the first three during a
+/// fight, and nothing in scope reads healing power.
+const DYNAMIC_STATS: &[&str] = &[
+    "SpellDamage",
+    "AttackPower",
+    "RangedAttackPower",
+    "HealingPower",
+];
+
+/// Temporary stat changes to stats the runtime holds fixed.
+fn fixed_stat_changes(prepared: &PreparedV2) -> Vec<String> {
+    prepared
+        .effects
+        .iter()
+        .filter_map(|effect| match effect {
+            Effect::BloodFury {
+                aura, active_stats, ..
+            } => Some((aura, active_stats)),
+            _ => None,
+        })
+        .flat_map(|(aura, stats)| {
+            stats
+                .keys()
+                .filter(|stat| !DYNAMIC_STATS.contains(&stat.as_str()))
+                .map(move |stat| format!("{aura} changes {stat}, which the runtime holds fixed"))
         })
         .collect()
 }
@@ -247,6 +296,7 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
             }
         }
         reasons.extend(undirected_procs(prepared));
+        reasons.extend(fixed_stat_changes(prepared));
         let mut unknown = BTreeSet::new();
         let mut limited = BTreeSet::new();
         for spell in reachable {

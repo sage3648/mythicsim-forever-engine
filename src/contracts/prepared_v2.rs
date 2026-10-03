@@ -478,6 +478,35 @@ pub enum Effect {
         health_fraction: f64,
         delay_ns: i64,
     },
+    /// The Troll racial Berserking: a major cooldown whose aura multiplies cast speed. Its
+    /// attack speed share has no effect in scope, where player auto attacks are unrepresented.
+    Berserking {
+        spell_id: i32,
+        aura: String,
+        cast_speed_multiplier: f64,
+    },
+    /// The Orc racial Blood Fury: a major cooldown whose aura multiplies stats through Go's
+    /// dynamic stat dependencies. `active_stats` holds every stat the aura changes, at the
+    /// value Go computes while it is active.
+    BloodFury {
+        spell_id: i32,
+        aura: String,
+        active_stats: BTreeMap<String, f64>,
+    },
+    /// The Orc racial Shatter Curse: a survival cooldown whose aura lowers the player's
+    /// spell damage taken, which has no effect in scope. Go never autocasts it at the
+    /// default defensive health threshold; configured timings still cast it.
+    ShatterCurse {
+        spell_id: i32,
+        aura: String,
+    },
+    /// The High Order Skyborne racial Read Ley Line: a cast that only a rotation action
+    /// uses, whose aura Energized multiplies mana regeneration.
+    ReadLeyLine {
+        spell_id: i32,
+        aura: String,
+        regen_multiplier: f64,
+    },
     /// Master of Elements: Fire and Frost crits refund part of the base cost.
     MasterOfElements {
         trigger_aura: String,
@@ -653,6 +682,10 @@ impl Effect {
             Effect::Scorch { .. } => "scorch",
             Effect::TouchOfTheGrave { .. } => "touch_of_the_grave",
             Effect::Eureka { .. } => "eureka",
+            Effect::Berserking { .. } => "berserking",
+            Effect::BloodFury { .. } => "blood_fury",
+            Effect::ShatterCurse { .. } => "shatter_curse",
+            Effect::ReadLeyLine { .. } => "read_ley_line",
             Effect::PresenceOfMind { .. } => "presence_of_mind",
             Effect::IceLance { .. } => "ice_lance",
             Effect::ArcaneMissiles { .. } => "arcane_missiles",

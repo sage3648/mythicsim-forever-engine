@@ -3,8 +3,10 @@
 
 Each variant changes the fight length and its variation, the target level, the
 distance, some talent ranks, empties some gear slots, drops some raid buffs, debuffs
-and consumables, and varies reaction time and the random stream mode. The same seed
-always gives the same variants. Compare them with `tools/prepared_v2.py compare`.
+and consumables, and varies reaction time and the random stream mode. With --races it
+also draws each variant's race from the given list, from a separate stream, so the
+variants are otherwise those of the same seed without races. The same seed and
+options always give the same variants. Compare them with `tools/prepared_v2.py compare`.
 Uses only Python's standard library.
 """
 
@@ -48,7 +50,11 @@ def variant(base, rng, iterations):
     request = copy.deepcopy(base)
     encounter = request["encounter"]
     encounter["duration"] = rng.choice(DURATIONS)
+    # The contract requires a variation shorter than the fight; redraw only when it is not,
+    # so earlier sweeps, which never drew such a pair, keep their variants.
     encounter["durationVariation"] = rng.choice(VARIATIONS)
+    while encounter["durationVariation"] >= encounter["duration"]:
+        encounter["durationVariation"] = rng.choice(VARIATIONS)
     encounter["targets"][0]["level"] = rng.randint(60, 63)
     raid = request["raid"]
     for key in ("buffs", "debuffs"):
@@ -79,9 +85,16 @@ def variant(base, rng, iterations):
     return request
 
 
-def generate(base, seed, count, iterations=300):
+def generate(base, seed, count, iterations=300, races=()):
     rng = random.Random(seed)
-    return [variant(base, rng, iterations) for _ in range(count)]
+    race_rng = random.Random(f"races-{seed}")
+    variants = []
+    for _ in range(count):
+        request = variant(base, rng, iterations)
+        if races:
+            request["raid"]["parties"][0]["players"][0]["race"] = race_rng.choice(races)
+        variants.append(request)
+    return variants
 
 
 def main():
@@ -91,11 +104,13 @@ def main():
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--count", type=int, default=24)
     parser.add_argument("--iterations", type=int, default=300)
+    parser.add_argument("--races", default="", help="comma-separated Go race names to draw from")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     base = resolve(json.loads(args.base.read_text()), args.pointer)
     args.output.mkdir(parents=True, exist_ok=False)
-    for index, request in enumerate(generate(base, args.seed, args.count, args.iterations)):
+    races = tuple(race for race in args.races.split(",") if race)
+    for index, request in enumerate(generate(base, args.seed, args.count, args.iterations, races)):
         (args.output / f"sweep-{index:02d}.json").write_text(json.dumps(request, indent=2) + "\n")
     print(f"Wrote {args.count} variants to {args.output}")
 

@@ -55,6 +55,8 @@
         "arcane_concentration",
         "arcane_missiles",
         "arcane_power",
+        "berserking",
+        "blood_fury",
         "cold_snap",
         "combustion",
         "conjured_mana",
@@ -76,7 +78,9 @@
         "potion_mana",
         "presence_of_mind",
         "pyroblast",
+        "read_ley_line",
         "scorch",
+        "shatter_curse",
         "touch_of_the_grave",
         "winters_chill"
       ],
@@ -132,6 +136,23 @@
         "Floating-point aggregates differ from Go on arm64 within 1e-9 relative, from Go's fused multiply-add",
         "Debug logs omit Go's stat recalculation lines, which the application's parsers ignore",
         "Rotations where community fix #622 would change a condition are rejected"
+      ]
+    },
+    {
+      "id": "mage-races",
+      "contract": 2,
+      "status": "validated_against_go",
+      "scope": "Every race that can be a Mage in the pinned engine: Human, Gnome, Undead, Troll, Orc and High Order Skyborne, with Berserking, Blood Fury, Shatter Curse and Read Ley Line alongside the earlier racials. The race cases in the fixture family, plus 72 randomized variants of the Frost, Arcane and Fire reference builds with races drawn from all six; the whole RaidSimResult and the first-fight log.",
+      "evidence": [
+        "fixtures/mage/prepared-v2/manifest.json",
+        "tests/classes/mage/prepared_v2.rs",
+        "validation/2026-10-04-mage-race-sweep.json"
+      ],
+      "known_differences": [
+        "Floating-point aggregates differ from Go on arm64 within 1e-9 relative, from Go's fused multiply-add",
+        "Debug logs omit Go's stat recalculation lines, which the application's parsers ignore",
+        "Rotations where community fix #622 would change a condition are rejected",
+        "Survival cooldowns that would wait for a nonzero defensive health threshold are rejected"
       ]
     }
   ]

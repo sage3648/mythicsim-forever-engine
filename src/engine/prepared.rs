@@ -7,7 +7,10 @@
 use crate::{
     classes::mage,
     contracts::prepared_v2::{PreparedV2, CONTRACT, SCHEMA_VERSION},
-    mechanics::mana::{regen_per_second_casting, regen_per_second_not_casting, RegenInputs},
+    mechanics::{
+        haste::cast_speed,
+        mana::{regen_per_second_casting, regen_per_second_not_casting, RegenInputs},
+    },
     rotation, SOURCE_REVISION,
 };
 
@@ -139,6 +142,19 @@ pub fn validate(prepared: &PreparedV2) -> Result<(), String> {
                 "mana regeneration while {name} is {rust}, Go prepared {go}"
             ));
         }
+    }
+    // Rust recomputes cast speed when an aura multiplies it, so the formula must agree with
+    // the cast speed Go prepared.
+    let haste_rating = *player
+        .stats
+        .get("SpellHasteRating")
+        .ok_or("player stats lack SpellHasteRating")?;
+    let speed = cast_speed(pseudo.cast_speed_multiplier, haste_rating);
+    if (speed - player.cast_speed).abs() > 1e-12 * player.cast_speed {
+        return Err(format!(
+            "cast speed is {speed}, Go prepared {}",
+            player.cast_speed
+        ));
     }
     for spell in &player.spells {
         let cast = &spell.default_cast;

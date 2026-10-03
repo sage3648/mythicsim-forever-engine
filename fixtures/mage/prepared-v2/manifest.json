@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "23e91d75df473814c887d4a1432e7fcf574955a44f7259fab2df5cd3865295d7",
+  "exporter_sha256": "87af8da9969b6f2acd60089f2c65453fdbbe0c508985b3481bf0dc4d70c6f1f1",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -607,6 +607,120 @@
       "go_log": {
         "file": "fire-reference.go-log.txt",
         "sha256": "02118eb5685b4828ffbf0628e192afea5a9c35ae6313206db4ba4965b5bc5c77"
+      }
+    },
+    {
+      "id": "frost-troll",
+      "description": "The Frost reference as a Troll: Berserking, a major cooldown that multiplies cast speed for 10 seconds.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/frost-troll.request.json"
+      },
+      "prepared": "frost-troll.prepared.json",
+      "prepared_sha256": "ac965b730607ddb13a44fec14fde3503956769396e81cbd2de8a95bb40ffcbb0",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frost-troll.go-result.json",
+        "sha256": "37e14147ea7e0bdd463237eec4e0bbb514457282f86dc3889ec43de58a0e7de6"
+      },
+      "go_log": {
+        "file": "frost-troll.go-log.txt",
+        "sha256": "6fc301070068583ddcbc27559d443e7dcb2c8ac90200c4d0ee089e4e002c56a1"
+      }
+    },
+    {
+      "id": "frost-troll-ten-minutes",
+      "description": "The Frost reference as a Troll in 600-second fights: Berserking expires and is cast again, and every mana cooldown fires.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/frost-troll-ten-minutes.request.json"
+      },
+      "prepared": "frost-troll-ten-minutes.prepared.json",
+      "prepared_sha256": "7275382f15b76e9e9bd4db53d0345c813497d1173fadb7b8bf4e352865fa7417",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frost-troll-ten-minutes.go-result.json",
+        "sha256": "f27c96d6d2239bab424a38a4657196304a58ac5b2d8e82c2da89cdbdc3922f0d"
+      }
+    },
+    {
+      "id": "frost-orc",
+      "description": "The Frost reference as an Orc: Blood Fury multiplies spell damage and attack power for 15 seconds; Shatter Curse, a survival cooldown, never fires on its own.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/frost-orc.request.json"
+      },
+      "prepared": "frost-orc.prepared.json",
+      "prepared_sha256": "446f453fb04abb0115f7d78c01025ab55c59ca8f3bd2fd6395f78f0666adc42b",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frost-orc.go-result.json",
+        "sha256": "7144c46d2469a9954be3d1113ab0a3215e7f6a589fefca568040c03dcc53319a"
+      },
+      "go_log": {
+        "file": "frost-orc.go-log.txt",
+        "sha256": "0d59fec3ea7e349aa04d16eb24e7537f82d01ef7ca8bd4256b05f578b8178550"
+      }
+    },
+    {
+      "id": "frost-orc-cooldown-timings",
+      "description": "The Frost reference as an Orc in 300-second fights with configured cooldown timings: Shatter Curse is cast at 10 and 200 seconds, Blood Fury at 30 and 160 seconds and then whenever ready.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/frost-orc-cooldown-timings.request.json"
+      },
+      "prepared": "frost-orc-cooldown-timings.prepared.json",
+      "prepared_sha256": "75b34dc55a9c34958cbf0ebc469936b0ddf2adf1fc62971f32c9dc29e68897c1",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frost-orc-cooldown-timings.go-result.json",
+        "sha256": "c547de3077f5f89f307d886ba44e816bf70c9eda2e37d941aff550690b8ad01a"
+      }
+    },
+    {
+      "id": "frost-skyborne",
+      "description": "The Frost reference as a High Order Skyborne: one percent cast speed and Elemental slaying are static; Read Ley Line is cast only by a rotation action, and this rotation has none.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/frost-skyborne.request.json"
+      },
+      "prepared": "frost-skyborne.prepared.json",
+      "prepared_sha256": "c51d92b50e3594e005ad5796b8cd7d746e640ed03c8bd947cb71658ceeb8f712",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frost-skyborne.go-result.json",
+        "sha256": "baf7a813416f25d1a58364aa5f7bd7cb1f9c40675d5d7a52b89becc0f063dca8"
+      }
+    },
+    {
+      "id": "fire-skyborne-read-ley-line",
+      "description": "The Fire reference as a High Order Skyborne whose rotation casts Read Ley Line below 60% mana: a two-second cast whose aura Energized doubles mana regeneration for 15 seconds.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-skyborne-read-ley-line.request.json"
+      },
+      "prepared": "fire-skyborne-read-ley-line.prepared.json",
+      "prepared_sha256": "060786fa638db03e599b9aa6e5c43f8ec16dbbbe9cbbd8716351d4683e88c6f8",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fire-skyborne-read-ley-line.go-result.json",
+        "sha256": "a81baebe298b58c0c5d81d2c7ef2c8db31d080177bfa3891c63785fc8846e436"
+      },
+      "go_log": {
+        "file": "fire-skyborne-read-ley-line.go-log.txt",
+        "sha256": "426d8cd7b6b1a7a263cca6c029bd1e05fc7573bea54bcc846f7d9f65a514622c"
       }
     }
   ]

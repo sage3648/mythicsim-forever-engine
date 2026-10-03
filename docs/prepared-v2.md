@@ -97,6 +97,16 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `conjured_mana` | sim/core/consumes.go | Gain range, label, whether it is the selected item |
 | `energize_on_use` | sim/common/shared/spell_data_energize.go | Client energize roll |
 | `inert_listener` | sim/core/health.go, sim/core/attack.go | Why the listener never acts in scope |
+| `touch_of_the_grave` | sim/core/racials.go | Undead drain: chance, proc mask, health share, batch delay |
+| `eureka` | sim/core/racials.go | Gnome: modifier values and the spell positions the class masks name |
+| `berserking` | sim/core/racials.go | Troll: cast speed multiplier, a Go literal |
+| `blood_fury` | sim/core/racials.go | Orc: every stat the aura changes, computed by Go with it active |
+| `shatter_curse` | sim/core/racials.go | Orc survival cooldown; its damage taken change has no effect in scope |
+| `read_ley_line` | sim/core/racials.go | High Order Skyborne: the cast and Energized's regeneration multiplier |
+
+Human racials are static and already in the prepared stats. High Order Skyborne's cast
+speed and every race's creature slaying are static too. Read Ley Line is not a major
+cooldown: only a rotation action casts it.
 
 Client-data parameters are computed in the exporter with the same `spelldata`
 expressions the Go source uses. Missile Barrage chances, Judgement of Wisdom's 50%
@@ -122,7 +132,9 @@ The exporter marks as unrepresented: more than one player or target, health figh
 tanks, presims, healing models, pets, player auto attacks, a target that swings at a
 unit, item swapping, prepull actions, execute phase callbacks, target AI, caster
 damage callbacks, dynamic damage-taken modifiers, mob type bonuses, non-mana costs,
-unnamed class masks and item cooldowns without an exported effect.
+unnamed class masks, item cooldowns without an exported effect, cast speed and temporary
+stat listeners, and survival cooldowns that would wait for a nonzero defensive health
+threshold.
 
 A target with a configured melee swing that no unit tanks never swings, but Go still
 rolls its opening swing offset at every reset, so the target exports its swing flags
@@ -156,7 +168,9 @@ Barrage, whose Arcane Missiles rule is guarded by `auraIsKnown`; it is supported
 matches Go. `arcane-reference` is the application's Arcane request, built by its own
 `BuildRequest`; `arcane-no-missile-barrage` is the #622 regression for the Arcane preset.
 `fire-reference` is the application's Fire request; the `fire-*` cases add its talents
-one at a time.
+one at a time. `frost-troll`, `frost-orc` and `frost-skyborne` run the Frost request as
+the remaining races, with longer and cooldown-timing variants, and
+`fire-skyborne-read-ley-line` casts Read Ley Line from the rotation.
 
 The contract tests in
 [tests/classes/mage/prepared_v2.rs](../tests/classes/mage/prepared_v2.rs)

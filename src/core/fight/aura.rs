@@ -11,8 +11,8 @@ use crate::{
 };
 
 use super::{
-    log::action_string, metrics::Aggregator, Agent, DotId, Fight, Side, SpellId, SpellResult,
-    TimerId,
+    log::action_string, metrics::Aggregator, Agent, DotId, Fight, Powers, Side, SpellId,
+    SpellResult, TimerId,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -42,6 +42,14 @@ pub(crate) enum AuraBehavior<K> {
     },
     /// Go racials.go `applyEureka`'s aura.
     Eureka,
+    /// Go `Aura.AttachMultiplyCastSpeed`.
+    MultiplyCastSpeed(f64),
+    /// Go `MultiplyManaRegenSpeed` on gain and its reciprocal on expire, as racials.go
+    /// Energized does with 2 and 0.5.
+    MultiplyManaRegenSpeed(f64),
+    /// Go `NewTemporaryStatMultiplierAura`: the stats while active. Go recomputes every stat
+    /// from the same inputs on each change, so expiry restores the prepared values exactly.
+    TemporaryStats(Powers),
     /// The aura of a dot or channel.
     Dot(DotId),
     Class(K),
@@ -408,6 +416,11 @@ impl<A: Agent> Fight<A> {
         match self.aura(aura).behavior {
             AuraBehavior::Dot(dot) => self.dot_on_gain(dot),
             AuraBehavior::Eureka => self.eureka_gain(),
+            AuraBehavior::MultiplyCastSpeed(multiplier) => self.multiply_cast_speed(multiplier),
+            AuraBehavior::MultiplyManaRegenSpeed(multiplier) => {
+                self.multiply_mana_regen_speed(multiplier)
+            }
+            AuraBehavior::TemporaryStats(powers) => self.player.powers = powers,
             AuraBehavior::Class(kind) => A::on_gain(self, aura, kind),
             _ => {}
         }
@@ -417,6 +430,13 @@ impl<A: Agent> Fight<A> {
         match self.aura(aura).behavior {
             AuraBehavior::Dot(dot) => self.dot_on_expire(dot),
             AuraBehavior::Eureka => self.eureka_expire(),
+            AuraBehavior::MultiplyCastSpeed(multiplier) => {
+                self.multiply_cast_speed(1.0 / multiplier)
+            }
+            AuraBehavior::TemporaryStats(_) => self.player.powers = self.config.powers,
+            AuraBehavior::MultiplyManaRegenSpeed(multiplier) => {
+                self.multiply_mana_regen_speed(1.0 / multiplier)
+            }
             AuraBehavior::Class(kind) => A::on_expire(self, aura, kind),
             _ => {}
         }
