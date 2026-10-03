@@ -257,6 +257,7 @@ func paladinEffects(agent core.Agent, character *core.Character) []map[string]an
 			"kind": "sacred_arbiter", "trigger_aura": "Sacred Arbiter" + p.Label, "judgement_auras": tagged,
 		})
 	}
+	effects = append(effects, paladinTankEffects(p, character)...)
 	if talents.TwistOfLight { // talents_retribution.go applyTwistOfLight, in its fixed order
 		echoes := []map[string]any{}
 		for _, echo := range []struct {
@@ -270,13 +271,107 @@ func paladinEffects(agent core.Agent, character *core.Character) []map[string]an
 	return effects
 }
 
-// talents_retribution.go applyVindication: the paladin's own aura multiplies attack power.
-func paladinStatAuras(agent core.Agent, _ *core.Character) []string {
+// The paladin auras whose gain or loss changes the stats the runtime reads or the target's
+// swings at a tanking paladin, so their rolls are read for every combination:
+// talents_retribution.go Vindication's attack power, talents_protection.go Redoubt's block
+// chance, Improved Righteous Fury's and Iron Creed's damage taken, and holy_shield.go's block
+// chance, for the highest rank only, the one the runtime casts.
+func paladinStatAuras(agent core.Agent, character *core.Character) []string {
 	p := agent.(paladin.PaladinAgent).GetPaladin()
-	if p.Talents.Vindication == 0 {
-		return nil
+	talents := p.Talents
+	labels := []string{}
+	if talents.Vindication > 0 {
+		labels = append(labels, "Vindication"+p.Label)
 	}
-	return []string{"Vindication" + p.Label}
+	if character.Unit.HardcastAvoidanceAura == nil {
+		return labels
+	}
+	if talents.Redoubt > 0 {
+		labels = append(labels, "Redoubt"+p.Label)
+	}
+	if talents.HolyShield {
+		labels = append(labels, fmt.Sprintf("Holy Shield%s Rank %d", p.Label, paladin.HolyShieldRankMap.Highest().RankNumber()))
+	}
+	if talents.IronCreed > 0 {
+		labels = append(labels, "Iron Creed"+p.Label)
+	}
+	if talents.ImprovedRighteousFury > 0 {
+		labels = append(labels, "Righteous Fury")
+	}
+	return labels
+}
+
+// The talents and spells of a paladin tanking the target.
+func paladinTankEffects(p *paladin.Paladin, character *core.Character) []map[string]any {
+	talents := p.Talents
+	effects := []map[string]any{}
+	// righteous_fury.go: a Holy threat mod while the aura holds; Instrument of Law's threat
+	// reduction holds only while it is down.
+	fury := spelldata.Ranked(25780).Highest()
+	rf := map[string]any{
+		"kind": "righteous_fury", "spell_id": fury.ID, "aura": "Righteous Fury",
+		"threat_percent": fury.Effect(dbcenums.A_MOD_THREAT, 2).Percent(),
+	}
+	if talents.InstrumentOfLaw > 0 {
+		law := spelldata.Talent(1311085, 2)
+		rf["instrument_of_law"] = map[string]any{
+			"aura":       "Instrument of Law" + p.Label,
+			"multiplier": 1 - law.Effect(dbcenums.A_MOD_THREAT, 127).FractionAt(talents.InstrumentOfLaw),
+		}
+	}
+	effects = append(effects, rf)
+	if talents.SwiftJudgement { // swift_judgement.go
+		rank := spelldata.Ranked(1310994).Highest()
+		effects = append(effects, map[string]any{
+			"kind": "swift_judgement", "spell_id": rank.ID, "aura": "Swift Judgement" + p.Label,
+			"cost_percent_add": rank.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_COST)).Percent(),
+		})
+	}
+	if talents.TemplarsBulwark { // templars_bulwark.go: a survival cooldown Go never fires at 0 health
+		effects = append(effects, map[string]any{"kind": "templars_bulwark", "spell_id": spelldata.Ranked(1311015).Highest().ID})
+	}
+	if talents.Redoubt > 0 { // talents_protection.go applyRedoubt: the chance is a Go literal
+		effects = append(effects, map[string]any{
+			"kind": "redoubt", "trigger_aura": "Redoubt - Trigger" + p.Label, "aura": "Redoubt" + p.Label,
+			"proc_chance": 0.02 * float64(talents.Redoubt),
+		})
+	}
+	if talents.ShieldSpecialization > 0 { // talents_protection.go applyShieldSpecialization
+		share := spelldata.Ranked(1310925).Highest()
+		effects = append(effects, map[string]any{
+			"kind": "shield_specialization", "trigger_aura": "Shield Specialization" + p.Label,
+			"proc_chance":       spelldata.Talent(20150, 3).EffectAt(2).FractionAt(talents.ShieldSpecialization),
+			"mana_share":        share.EffectN(1).Percent(),
+			"metrics_action_id": actionID(core.ActionID{SpellID: share.ID}),
+		})
+	}
+	if talents.Reckoning > 0 { // talents_protection.go applyReckoning
+		block := spelldata.Talent(20177, 5).FractionAt(talents.Reckoning)
+		effects = append(effects, map[string]any{
+			"kind": "reckoning", "block_aura": "Reckoning - Block" + p.Label, "crit_aura": "Reckoning - Crit" + p.Label,
+			"block_chance": block, "crit_chance": block * 2.5,
+		})
+	}
+	if talents.IronCreed > 0 { // talents_protection.go applyIronCreed
+		effects = append(effects, map[string]any{
+			"kind": "iron_creed", "trigger_aura": "Iron Creed - Trigger" + p.Label, "aura": "Iron Creed" + p.Label,
+		})
+	}
+	if talents.HolyShield { // holy_shield.go, the highest rank
+		rank := paladin.HolyShieldRankMap.Highest()
+		proc := -1
+		for i, spell := range character.Spellbook {
+			if spell.ActionID == (core.ActionID{SpellID: rank.ID, Tag: 2}) {
+				proc = i
+			}
+		}
+		effects = append(effects, map[string]any{
+			"kind": "holy_shield", "spell_id": rank.ID, "proc_spell": proc,
+			"aura":    fmt.Sprintf("Holy Shield%s Rank %d", p.Label, rank.RankNumber()),
+			"charges": int32(rank.ProcCharges), "damage": rank.Effect(dbcenums.A_PROC_TRIGGER_DAMAGE, 0).Average(core.CharacterLevel),
+		})
+	}
+	return effects
 }
 
 // Paladin behavior the effects cannot describe.
@@ -287,6 +382,10 @@ func paladinUnrepresented(agent core.Agent, character *core.Character) []string 
 	// seal_of_command.go doubles its judgement on a stunned target.
 	if target.PseudoStats.Stunned {
 		notes = append(notes, "Judgement of Command against a stunned target is unsupported")
+	}
+	// holy_shield.go casts only with a shield to block with.
+	if p.Talents.HolyShield && !character.PseudoStats.CanBlock {
+		notes = append(notes, "Holy Shield without a shield is unsupported")
 	}
 	// holy_shock.go: Light's Vigil on the enemy turns Holy Shock into the vigil's strike.
 	if p.Talents.LightsVigil {

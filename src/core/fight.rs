@@ -28,7 +28,9 @@ mod spell_mod;
 use std::collections::BTreeMap;
 
 pub(crate) use aura::{AuraBehavior, AuraRef, Tracker};
-pub(crate) use damage::{Outcome, SpellResult, OUTCOME_CRIT, OUTCOME_DODGE, OUTCOME_LANDED};
+pub(crate) use damage::{
+    Outcome, SpellResult, OUTCOME_BLOCK, OUTCOME_CRIT, OUTCOME_DODGE, OUTCOME_LANDED,
+};
 pub(crate) use dot::Dot;
 pub(crate) use log::action_string;
 pub(crate) use metrics::{ActionReport, ActionTotals, FightReport};
@@ -145,6 +147,14 @@ pub(crate) trait Agent: Sized {
         _aura: AuraRef,
         _kind: Self::Aura,
         _spell: SpellId,
+        _result: &SpellResult,
+    ) {
+    }
+    /// Go `OnSpellHitTaken` of a class aura on the player, for the target's swing at it.
+    fn on_enemy_hit_taken(
+        _fight: &mut Fight<Self>,
+        _aura: AuraRef,
+        _kind: Self::Aura,
         _result: &SpellResult,
     ) {
     }
@@ -518,6 +528,8 @@ pub(crate) struct Player {
     /// Go `healthBar.currentHealth`; the player takes no damage in scope.
     pub(crate) health: f64,
     pub(crate) spell_cost_percent_modifier: i32,
+    /// Go `PseudoStats.ThreatMultiplier`, which auras can multiply.
+    pub(crate) threat_multiplier: f64,
     /// Go `PseudoStats.SchoolDamageDealtMultiplier`, which auras can multiply.
     pub(crate) school_damage_dealt_multiplier: [f64; 8],
     /// Go `PseudoStats.DamageTakenMultiplier`, which auras can multiply.
@@ -941,6 +953,8 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) chili: Option<DragonbreathChili>,
     /// Item damage procs built from client rows, by their aura's position.
     pub(crate) damage_procs: Vec<DamageProc>,
+    /// Go `HardcastAvoidanceAura`, which a tank's hardcast holds.
+    pub(crate) reduced_avoidance: Option<AuraRef>,
     /// The player's stats for each combination of active stat auras, by bit mask.
     pub(crate) stat_combos: Vec<Powers>,
     /// The active stat auras.
@@ -1895,6 +1909,7 @@ impl<A: Agent> Fight<A> {
                 mana: config.max_mana,
                 health: config.max_health,
                 spell_cost_percent_modifier: config.initial.spell_cost_percent_modifier,
+                threat_multiplier: config.threat_multiplier,
                 school_damage_dealt_multiplier: config.school_damage_dealt_multiplier,
                 damage_taken_multiplier: prepared.player.pseudo_stats.damage_taken_multiplier,
                 cast_speed_multiplier: config.initial.cast_speed_multiplier,
@@ -1976,6 +1991,7 @@ impl<A: Agent> Fight<A> {
             windfury: None,
             chili: None,
             damage_procs: Vec::new(),
+            reduced_avoidance: None,
             eureka: None,
             pets: pet::inert_pets(effects),
             totals: metrics::Totals::default(),
@@ -2076,10 +2092,30 @@ impl<A: Agent> Fight<A> {
                     fight.stat_combos.len()
                 ));
             }
+            let attack_power_auras = values
+                .attack_power_auras
+                .iter()
+                .map(|entry| {
+                    fight.trackers[Side::Target.index()]
+                        .find(&entry.aura)
+                        .map(|index| {
+                            (
+                                AuraRef {
+                                    side: Side::Target,
+                                    index,
+                                },
+                                entry.attack_power,
+                                entry.log_attack_power,
+                            )
+                        })
+                        .ok_or_else(|| format!("target aura {} is not registered", entry.aura))
+                })
+                .collect::<Result<_, BuildError>>()?;
             fight.enemy = Some(enemy::EnemyAttack {
                 values: values.clone(),
                 action,
                 metrics: SpellMetrics::default(),
+                attack_power_auras,
             });
         }
         for effect in effects {
@@ -2245,6 +2281,11 @@ impl<A: Agent> Fight<A> {
                     spell: *spell,
                 });
             }
+        }
+        // Go character.go: a tank's hardcast holds "Reduced avoidance", a stat aura whose
+        // combinations carry the target's rolls without dodge, parry or block.
+        if prepared.enemy.is_some() {
+            fight.reduced_avoidance = fight.player_aura("Reduced avoidance").ok();
         }
         fight.autos.melee = prepared.melee.auto_swing_melee;
         fight.autos.dual_wielding = prepared.melee.dual_wielding;
@@ -2522,6 +2563,7 @@ impl<A: Agent> Fight<A> {
             }
             let initial = self.config.initial;
             player.spell_cost_percent_modifier = initial.spell_cost_percent_modifier;
+            player.threat_multiplier = self.config.threat_multiplier;
             player.school_damage_dealt_multiplier = self.config.school_damage_dealt_multiplier;
             player.damage_taken_multiplier = self.config.damage_taken_multiplier;
             player.cast_speed_multiplier = initial.cast_speed_multiplier;

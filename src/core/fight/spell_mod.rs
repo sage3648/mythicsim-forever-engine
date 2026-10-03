@@ -19,6 +19,8 @@ pub(crate) enum ModKind {
     DirectDamageDoneFlat,
     /// Go `SpellMod_CastTime_Pct`: adds to `CastTimeMultiplier`.
     CastTimePercent,
+    /// Go `SpellMod_ThreatMultiplier_Pct`: multiplies `ThreatMultiplier` by one plus the value.
+    ThreatMultiplierPercent,
     /// Go `SpellMod_DamageDone_Pct`: multiplies `DamageMultiplier` by one plus the value.
     DamageDonePercent,
     /// Go `SpellMod_PowerCost_Pct`: multiplies the cost's `PercentModifier`.
@@ -96,6 +98,13 @@ impl<A: Agent> Fight<A> {
                         state.direct_damage_multiplier_additive += modifier.float_value;
                     } else {
                         state.direct_damage_multiplier_additive -= modifier.float_value;
+                    }
+                }
+                ModKind::ThreatMultiplierPercent => {
+                    if sign > 0.0 {
+                        state.threat_multiplier *= 1.0 + modifier.float_value;
+                    } else {
+                        state.threat_multiplier /= 1.0 + modifier.float_value;
                     }
                 }
                 ModKind::DamageDonePercent => {

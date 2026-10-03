@@ -605,7 +605,7 @@ impl<A: Agent> Fight<A> {
         result.threat = if result.landed() {
             let state = &self.spells[spell];
             (result.damage * state.threat_multiplier + state.flat_threat_bonus)
-                * self.config.threat_multiplier
+                * self.player.threat_multiplier
         } else {
             0.0
         };
@@ -689,7 +689,7 @@ impl<A: Agent> Fight<A> {
         result.threat = if result.landed() {
             let state = &self.spells[spell];
             (result.damage * state.threat_multiplier + state.flat_threat_bonus)
-                * self.config.threat_multiplier
+                * self.player.threat_multiplier
         } else {
             0.0
         };
@@ -746,7 +746,7 @@ impl<A: Agent> Fight<A> {
         }
         let state = &self.spells[spell];
         result.threat = (result.damage * state.threat_multiplier + state.flat_threat_bonus)
-            * self.config.threat_multiplier;
+            * self.player.threat_multiplier;
         result
     }
 

@@ -23,8 +23,10 @@ var dynamicReadStats = []stats.Stat{stats.SpellDamage, stats.AttackPower, stats.
 
 // Auras of races, items and raid buffs whose gain and expiry change stats through
 // AddStatsDynamic. A class adds its own through classExport.statAuras.
+// character.go's "Reduced avoidance", which a tank's hardcast holds, changes only the target's
+// swings at the player: its rolls join the combinations.
 var commonStatAuraLabels = []string{"Blood Fury", "Elune's Light", "Holy Strength (MH)", "Holy Strength (OH)",
-	"Windfury Totem (External)", "Battle Shout (External)"}
+	"Windfury Totem (External)", "Battle Shout (External)", "Reduced avoidance"}
 
 // unit.go AddStatsDynamic recomputes every stat from the active flat bonuses, so stats are a
 // function of which stat auras are active. Each combination is read from a separate reset

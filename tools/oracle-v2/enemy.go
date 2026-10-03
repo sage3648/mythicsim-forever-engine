@@ -42,6 +42,17 @@ type Enemy struct {
 	// Auras inactive at reset whose activation changes a value above, as "player:label" or
 	// "target:label". The gate rejects a build where something in scope activates one.
 	ChangingAuras []string `json:"changing_auras"`
+	// Target auras inactive at reset whose activation changes only the target's attack power,
+	// with the swing's attack power and the debug line's MAP while each is active alone.
+	AttackPowerAuras []EnemyAttackPowerAura `json:"attack_power_auras,omitempty"`
+}
+
+// A target aura that changes only the target's attack power, as a debuff a player's talent puts
+// on it does.
+type EnemyAttackPowerAura struct {
+	Aura           string  `json:"aura"`
+	AttackPower    float64 `json:"attack_power"`
+	LogAttackPower float64 `json:"log_attack_power"`
 }
 
 // The steps of the target's swing that read the player's defenses.
@@ -137,8 +148,9 @@ func exportEnemy(request *proto.RaidSimRequest, statAuras []string, character *c
 	if acting := actingDamageTakenModifiers(request); acting > 0 {
 		*unrepresented = append(*unrepresented, fmt.Sprintf("%d damage taken modifiers on the player act at reset", acting))
 	}
-	values, changing := enemyAtReset(request, statAuras)
+	values, changing, attackPower := enemyAtReset(request, statAuras)
 	values.ChangingAuras = changing
+	values.AttackPowerAuras = attackPower
 	// The rolls under every stat aura combination; nothing else of the swing may change.
 	if len(statAuras) > 0 {
 		values.Rolls = nil
@@ -153,7 +165,7 @@ func exportEnemy(request *proto.RaidSimRequest, statAuras []string, character *c
 			}
 			combo := enemyValues(simulation, character, simulation.Encounter.ActiveTargetUnits[0])
 			values.Rolls = append(values.Rolls, combo.Rolls[0])
-			combo.Rolls, combo.ChangingAuras = values.Rolls, values.ChangingAuras
+			combo.Rolls, combo.ChangingAuras, combo.AttackPowerAuras = values.Rolls, values.ChangingAuras, values.AttackPowerAuras
 			note(encodeEnemy(combo) != encodeEnemy(values), "stat auras change the target's swing beyond its rolls")
 		}
 	}
@@ -171,7 +183,7 @@ func encodeEnemy(values Enemy) string {
 // The target's swings at reset, and the player and target auras inactive at reset whose
 // activation, at one stack or at most, changes one of their values. Each aura is checked in a
 // separate reset simulation.
-func enemyAtReset(request *proto.RaidSimRequest, statAuras []string) (Enemy, []string) {
+func enemyAtReset(request *proto.RaidSimRequest, statAuras []string) (Enemy, []string, []EnemyAttackPowerAura) {
 	encode := encodeEnemy
 	fresh := func() (*core.Simulation, *core.Character, *core.Unit) {
 		simulation := core.NewSim(request, simsignals.CreateSignals())
@@ -200,6 +212,7 @@ func enemyAtReset(request *proto.RaidSimRequest, statAuras []string) (Enemy, []s
 		}
 	}
 	changed := []string{}
+	attackPower := []EnemyAttackPowerAura{}
 	base.ChangingAuras = []string{}
 	for _, c := range candidates {
 		differs, ok := func() (differs bool, ok bool) {
@@ -215,7 +228,15 @@ func enemyAtReset(request *proto.RaidSimRequest, statAuras []string) (Enemy, []s
 			}
 			aura := unit.GetAura(c.label)
 			aura.Activate(simulation)
-			if encode(enemyValues(simulation, character, target)) != baseline {
+			if values := enemyValues(simulation, character, target); encode(values) != baseline {
+				// A target aura without stacks that changes nothing but the attack power.
+				onlyPower := values
+				onlyPower.AttackPower, onlyPower.LogAttackPower = base.AttackPower, base.LogAttackPower
+				if !c.player && aura.MaxStacks == 0 && encode(onlyPower) == baseline {
+					attackPower = append(attackPower, EnemyAttackPowerAura{Aura: c.label,
+						AttackPower: values.AttackPower, LogAttackPower: values.LogAttackPower})
+					return false, true
+				}
 				return true, true
 			}
 			if aura.MaxStacks > 1 {
@@ -230,7 +251,7 @@ func enemyAtReset(request *proto.RaidSimRequest, statAuras []string) (Enemy, []s
 			changed = append(changed, name(c))
 		}
 	}
-	return base, changed
+	return base, changed, attackPower
 }
 
 // How many of the player's dynamic damage taken modifiers change a target melee hit in a

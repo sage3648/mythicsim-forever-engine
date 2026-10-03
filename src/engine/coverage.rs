@@ -245,6 +245,7 @@ const INERT_STATS: &[&str] = &[
     "Armor",
     "BonusArmor",
     "BlockValue",
+    "BlockPercent",
     "DodgeRating",
     "DodgePercent",
     "ParryRating",
@@ -302,7 +303,15 @@ fn fixed_stat_changes(prepared: &PreparedV2) -> Vec<String> {
 const DEFENDER_STATS: &[&str] = &["Stamina", "Health"];
 
 /// Effects whose behaviors act on the hits the player takes from the target's swings.
-const HIT_TAKEN_EFFECTS: &[&str] = &["chance_of_death", "parry_haste", "inert_listener"];
+const HIT_TAKEN_EFFECTS: &[&str] = &[
+    "chance_of_death",
+    "parry_haste",
+    "inert_listener",
+    "redoubt",
+    "shield_specialization",
+    "reckoning",
+    "holy_shield",
+];
 
 /// Callbacks the target's own swings fire on the target.
 const TARGET_CASTER_CALLBACKS: &[&str] = &[
@@ -376,6 +385,18 @@ fn tank_limits(
         if named.contains(aura) {
             reasons.push(format!("{aura} changes the target's swings at the player"));
         }
+    }
+    // Each attack power aura's value holds while it is the only one active.
+    let attack_power: Vec<&str> = enemy
+        .attack_power_auras
+        .iter()
+        .filter(|entry| named.contains(&format!("target:{}", entry.aura)))
+        .map(|entry| entry.aura.as_str())
+        .collect();
+    if attack_power.len() > 1 {
+        reasons.push(format!(
+            "target auras {attack_power:?} change the target's attack power together"
+        ));
     }
     for effect in &prepared.effects {
         if let Effect::StatAuras { auras, changed, .. } = effect {
@@ -576,9 +597,17 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
                     unknown.insert(id.clone());
                 }
             }
-            // Go newHardcastAction: a tank's hardcast drops its avoidance and can be pushed back.
+            // Go newHardcastAction: a tank's hardcast drops its avoidance, which the runtime
+            // follows through the "Reduced avoidance" stat aura, and can be pushed back or
+            // channeled, which it does not.
+            let avoidance_followed = prepared.effects.iter().any(|effect| {
+                matches!(effect, Effect::StatAuras { auras, .. }
+                    if auras.iter().any(|aura| aura == "Reduced avoidance"))
+            });
             if prepared.enemy.is_some()
-                && (spell.default_cast.cast_time_ns > 0 || spell.has_flag("SpellFlagChanneled"))
+                && (spell.has_flag("SpellFlagChanneled")
+                    || (spell.default_cast.cast_time_ns > 0
+                        && (spell.has_flag("SpellFlagPushback") || !avoidance_followed)))
             {
                 limited.insert(format!(
                     "rotation reaches {id}, a hardcast while the target swings at the player"

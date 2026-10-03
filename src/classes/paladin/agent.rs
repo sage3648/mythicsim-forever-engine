@@ -16,6 +16,10 @@ use super::{
         strikes,
     },
     talents::{
+        protection::{
+            self, HolyShield, IronCreed, Reckoning, Redoubt, RighteousFury, ShieldSpecialization,
+            SwiftJudgement,
+        },
         retribution::{self, SanctifiedJudgement, Vengeance, Vindication},
         twist_of_light::{self, Echo},
     },
@@ -40,6 +44,11 @@ pub(crate) enum PaladinSpell {
     /// A Holy Shock rank's damage, by its position in the effect.
     HolyShock(usize),
     DivineFavor,
+    RighteousFury,
+    SwiftJudgement,
+    TemplarsBulwark,
+    HolyShield,
+    HolyShieldProc,
 }
 
 /// Class auras with Rust behavior.
@@ -55,6 +64,17 @@ pub(crate) enum PaladinAura {
     SacredArbiter,
     TwistOfLight,
     DivineFavor,
+    RighteousFury,
+    InstrumentOfLaw,
+    SwiftJudgement,
+    RedoubtTrigger,
+    Redoubt,
+    ShieldSpecialization,
+    ReckoningBlock,
+    ReckoningCrit,
+    IronCreedTrigger,
+    IronCreed,
+    HolyShield,
 }
 
 /// Paladin state that Go keeps in the `Paladin` struct and its closures.
@@ -74,6 +94,14 @@ pub(crate) struct PaladinAgent {
     divine_favor: Option<Rc<DivineFavor>>,
     /// Consecrated Ground's mark on the target and its Holy damage multiplier.
     pub(crate) consecrated_ground: Option<(AuraRef, f64)>,
+    pub(crate) righteous_fury: Option<RighteousFury>,
+    swift_judgement: Option<Rc<SwiftJudgement>>,
+    redoubt: Option<Rc<Redoubt>>,
+    shield_specialization: Option<Rc<ShieldSpecialization>>,
+    reckoning: Option<Rc<Reckoning>>,
+    iron_creed: Option<Rc<IronCreed>>,
+    holy_shield: Option<Rc<HolyShield>>,
+    forbearance: Option<AuraRef>,
 }
 
 impl PaladinAgent {
@@ -81,6 +109,15 @@ impl PaladinAgent {
     fn spell(prepared: &PreparedV2, spell: &ExportedSpell) -> Option<PaladinSpell> {
         let effects = &prepared.effects;
         let id = spell.action_id.clone().unwrap_or_default();
+        // Holy Shield's damage carries its rank's tag 2.
+        if spell.class_spell.as_deref() == Some("holy_shield_proc") {
+            return effects.iter().find_map(|effect| match effect {
+                Effect::HolyShield { spell_id, .. } if *spell_id == id.spell_id && id.tag == 2 => {
+                    Some(PaladinSpell::HolyShieldProc)
+                }
+                _ => None,
+            });
+        }
         if id.tag != 0 {
             return None;
         }
@@ -134,6 +171,15 @@ impl PaladinAgent {
                     .map(PaladinSpell::HolyShock),
                 _ => None,
             }),
+            "righteous_fury" if has("righteous_fury") => Some(PaladinSpell::RighteousFury),
+            "swift_judgement" if has("swift_judgement") => Some(PaladinSpell::SwiftJudgement),
+            "templars_bulwark" if has("templars_bulwark") => Some(PaladinSpell::TemplarsBulwark),
+            "holy_shield" => effects.iter().find_map(|effect| match effect {
+                Effect::HolyShield { spell_id, .. } if *spell_id == id.spell_id => {
+                    Some(PaladinSpell::HolyShield)
+                }
+                _ => None,
+            }),
             "divine_favor" => effects.iter().find_map(|effect| match effect {
                 Effect::DivineFavor { spell_id, .. } if *spell_id == id.spell_id => {
                     Some(PaladinSpell::DivineFavor)
@@ -173,6 +219,45 @@ impl PaladinAgent {
                 }
                 Effect::DivineFavor { aura, .. } => {
                     auras.push((aura.clone(), PaladinAura::DivineFavor))
+                }
+                Effect::RighteousFury {
+                    aura,
+                    instrument_of_law,
+                    ..
+                } => {
+                    auras.push((aura.clone(), PaladinAura::RighteousFury));
+                    if let Some(law) = instrument_of_law {
+                        auras.push((law.aura.clone(), PaladinAura::InstrumentOfLaw));
+                    }
+                }
+                Effect::SwiftJudgement { aura, .. } => {
+                    auras.push((aura.clone(), PaladinAura::SwiftJudgement))
+                }
+                Effect::Redoubt {
+                    trigger_aura, aura, ..
+                } => {
+                    auras.push((trigger_aura.clone(), PaladinAura::RedoubtTrigger));
+                    auras.push((aura.clone(), PaladinAura::Redoubt));
+                }
+                Effect::ShieldSpecialization { trigger_aura, .. } => {
+                    auras.push((trigger_aura.clone(), PaladinAura::ShieldSpecialization))
+                }
+                Effect::Reckoning {
+                    block_aura,
+                    crit_aura,
+                    ..
+                } => {
+                    auras.push((block_aura.clone(), PaladinAura::ReckoningBlock));
+                    auras.push((crit_aura.clone(), PaladinAura::ReckoningCrit));
+                }
+                Effect::IronCreed {
+                    trigger_aura, aura, ..
+                } => {
+                    auras.push((trigger_aura.clone(), PaladinAura::IronCreedTrigger));
+                    auras.push((aura.clone(), PaladinAura::IronCreed));
+                }
+                Effect::HolyShield { aura, .. } => {
+                    auras.push((aura.clone(), PaladinAura::HolyShield))
                 }
                 _ => {}
             }
@@ -250,6 +335,74 @@ impl PaladinAgent {
                     fight.agent.holy_shock =
                         ranks.iter().map(|rank| (rank.min, rank.max)).collect();
                 }
+                Effect::RighteousFury {
+                    aura,
+                    threat_percent,
+                    instrument_of_law,
+                    ..
+                } => {
+                    let law = instrument_of_law
+                        .as_ref()
+                        .map(|law| (law.aura.as_str(), law.multiplier));
+                    let bound =
+                        RighteousFury::bind(&mut fight, effects, aura, *threat_percent, law)?;
+                    fight.agent.righteous_fury = Some(bound);
+                }
+                Effect::SwiftJudgement {
+                    aura,
+                    cost_percent_add,
+                    ..
+                } => {
+                    let bound = SwiftJudgement::bind(&mut fight, aura, *cost_percent_add)?;
+                    fight.agent.swift_judgement = Some(Rc::new(bound));
+                }
+                Effect::TemplarsBulwark { .. } => {
+                    fight.agent.forbearance = fight.player_aura("Forbearance").ok();
+                }
+                Effect::Redoubt {
+                    aura, proc_chance, ..
+                } => {
+                    let bound = Redoubt::bind(&fight, effects, aura, *proc_chance)?;
+                    fight.agent.redoubt = Some(Rc::new(bound));
+                }
+                Effect::ShieldSpecialization {
+                    proc_chance,
+                    mana_share,
+                    metrics_action_id,
+                    ..
+                } => {
+                    let metrics = fight.new_mana_metrics(metrics_action_id.clone());
+                    fight.agent.shield_specialization = Some(Rc::new(ShieldSpecialization {
+                        chance: *proc_chance,
+                        mana_share: *mana_share,
+                        metrics,
+                    }));
+                }
+                Effect::Reckoning {
+                    block_chance,
+                    crit_chance,
+                    ..
+                } => {
+                    fight.agent.reckoning = Some(Rc::new(Reckoning {
+                        block_chance: *block_chance,
+                        crit_chance: *crit_chance,
+                    }));
+                }
+                Effect::IronCreed { aura, .. } => {
+                    let bound = IronCreed::bind(&fight, effects, aura)?;
+                    fight.agent.iron_creed = Some(Rc::new(bound));
+                }
+                Effect::HolyShield {
+                    proc_spell,
+                    aura,
+                    charges,
+                    damage,
+                    ..
+                } => {
+                    let bound =
+                        HolyShield::bind(&fight, effects, aura, *proc_spell, *charges, *damage)?;
+                    fight.agent.holy_shield = Some(Rc::new(bound));
+                }
                 Effect::DivineFavor {
                     aura, crit, spells, ..
                 } => {
@@ -314,6 +467,54 @@ impl PaladinAgent {
 }
 
 impl PaladinAgent {
+    /// A bound talent or spell state.
+    fn bound<T>(state: &Option<Rc<T>>) -> Rc<T> {
+        Rc::clone(state.as_ref().expect("the effect is bound"))
+    }
+
+    /// The gain and loss of the tanking auras.
+    fn protection_toggle(fight: &mut Fight<Self>, kind: PaladinAura, active: bool) {
+        match kind {
+            PaladinAura::RighteousFury => {
+                let fury = fight
+                    .agent
+                    .righteous_fury
+                    .clone()
+                    .expect("Righteous Fury is bound");
+                if active {
+                    fury.on_gain(fight);
+                } else {
+                    fury.on_expire(fight);
+                }
+            }
+            PaladinAura::InstrumentOfLaw => {
+                let fury = fight
+                    .agent
+                    .righteous_fury
+                    .as_ref()
+                    .expect("Righteous Fury is bound");
+                let multiplier = fury.law.expect("Instrument of Law is bound").1;
+                if active {
+                    protection::law_gain(fight, multiplier);
+                } else {
+                    protection::law_expire(fight, multiplier);
+                }
+            }
+            PaladinAura::SwiftJudgement => {
+                let swift = Self::bound(&fight.agent.swift_judgement);
+                if active {
+                    swift.on_gain(fight);
+                } else {
+                    swift.on_expire(fight);
+                }
+            }
+            PaladinAura::Redoubt => Self::bound(&fight.agent.redoubt).toggle(fight, active),
+            PaladinAura::IronCreed => Self::bound(&fight.agent.iron_creed).toggle(fight, active),
+            PaladinAura::HolyShield => Self::bound(&fight.agent.holy_shield).toggle(fight, active),
+            _ => {}
+        }
+    }
+
     fn divine_favor(fight: &Fight<Self>) -> Rc<DivineFavor> {
         Rc::clone(
             fight
@@ -360,6 +561,25 @@ impl Agent for PaladinAgent {
                 holy::holy_shock(fight, spell, target, roll);
             }
             PaladinSpell::DivineFavor => Self::divine_favor(fight).apply(fight),
+            PaladinSpell::RighteousFury => {
+                let aura = fight
+                    .agent
+                    .righteous_fury
+                    .as_ref()
+                    .expect("Righteous Fury is bound")
+                    .aura;
+                fight.activate_aura(aura);
+            }
+            PaladinSpell::SwiftJudgement => Self::bound(&fight.agent.swift_judgement).apply(fight),
+            PaladinSpell::TemplarsBulwark => {
+                unreachable!(
+                    "the gate admits Templar's Bulwark only as a survival cooldown Go never fires"
+                )
+            }
+            PaladinSpell::HolyShield => Self::bound(&fight.agent.holy_shield).apply(fight),
+            PaladinSpell::HolyShieldProc => {
+                Self::bound(&fight.agent.holy_shield).proc_damage(fight, spell, target)
+            }
         }
     }
 
@@ -367,6 +587,22 @@ impl Agent for PaladinAgent {
         match behavior {
             PaladinSpell::Judgement => seals::active_seal(fight).is_some(),
             PaladinSpell::HammerOfWrath => fight.is_execute_phase_20(),
+            PaladinSpell::TemplarsBulwark => !fight
+                .agent
+                .forbearance
+                .is_some_and(|aura| fight.aura(aura).active),
+            _ => true,
+        }
+    }
+
+    fn should_activate(fight: &Fight<Self>, _spell: SpellId, behavior: PaladinSpell) -> bool {
+        match behavior {
+            PaladinSpell::SwiftJudgement => fight
+                .agent
+                .swift_judgement
+                .as_ref()
+                .expect("Swift Judgement is bound")
+                .should_activate(fight),
             _ => true,
         }
     }
@@ -386,6 +622,9 @@ impl Agent for PaladinAgent {
 
     fn reset(fight: &mut Fight<Self>) {
         fight.agent.seals.current = None;
+        if let Some(fury) = fight.agent.righteous_fury.as_mut() {
+            fury.law_at_reset = true;
+        }
         twist_of_light::reset(fight);
     }
 
@@ -402,6 +641,7 @@ impl Agent for PaladinAgent {
     }
 
     fn on_gain(fight: &mut Fight<Self>, _aura: AuraRef, kind: PaladinAura) {
+        Self::protection_toggle(fight, kind, true);
         if kind == PaladinAura::DivineFavor {
             Self::divine_favor(fight).on_gain(fight);
         }
@@ -415,6 +655,7 @@ impl Agent for PaladinAgent {
     }
 
     fn on_expire(fight: &mut Fight<Self>, _aura: AuraRef, kind: PaladinAura) {
+        Self::protection_toggle(fight, kind, false);
         if kind == PaladinAura::DivineFavor {
             Self::divine_favor(fight).on_expire(fight);
         }
@@ -444,6 +685,9 @@ impl Agent for PaladinAgent {
     }
 
     fn on_cast_complete(fight: &mut Fight<Self>, aura: AuraRef, kind: PaladinAura, spell: SpellId) {
+        if kind == PaladinAura::SwiftJudgement {
+            Self::bound(&fight.agent.swift_judgement).on_cast_complete(fight, spell);
+        }
         if kind == PaladinAura::DivineFavor {
             Self::divine_favor(fight).on_cast_complete(fight, spell);
         }
@@ -486,9 +730,35 @@ impl Agent for PaladinAgent {
                 retribution::sacred_arbiter_hit(fight, &judgements, spell, result);
             }
             PaladinAura::TwistOfLight => twist_of_light::on_spell_hit_dealt(fight, spell, result),
-            PaladinAura::Vengeance
-            | PaladinAura::SanctifiedJudgement
-            | PaladinAura::DivineFavor => {}
+            PaladinAura::IronCreedTrigger => {
+                Self::bound(&fight.agent.iron_creed).trigger(fight, aura, spell, result)
+            }
+            _ => {}
+        }
+    }
+
+    fn on_enemy_hit_taken(
+        fight: &mut Fight<Self>,
+        aura: AuraRef,
+        kind: PaladinAura,
+        result: &SpellResult,
+    ) {
+        match kind {
+            PaladinAura::RedoubtTrigger => {
+                Self::bound(&fight.agent.redoubt).trigger(fight, aura, result)
+            }
+            PaladinAura::Redoubt => Self::bound(&fight.agent.redoubt).block(fight, result),
+            PaladinAura::ShieldSpecialization => {
+                Self::bound(&fight.agent.shield_specialization).trigger(fight, aura, result)
+            }
+            PaladinAura::ReckoningBlock => {
+                Self::bound(&fight.agent.reckoning).trigger(fight, aura, true, result)
+            }
+            PaladinAura::ReckoningCrit => {
+                Self::bound(&fight.agent.reckoning).trigger(fight, aura, false, result)
+            }
+            PaladinAura::HolyShield => Self::bound(&fight.agent.holy_shield).block(fight, result),
+            _ => {}
         }
     }
 
@@ -511,6 +781,11 @@ impl Agent for PaladinAgent {
                 .vindication
                 .expect("Vindication is bound")
                 .on_delayed_proc(fight),
+            PaladinAura::ReckoningBlock | PaladinAura::ReckoningCrit => fight.extra_mh_attacks(1),
+            PaladinAura::IronCreedTrigger => {
+                let aura = Self::bound(&fight.agent.iron_creed).aura;
+                fight.activate_aura(aura);
+            }
             _ => {}
         }
     }

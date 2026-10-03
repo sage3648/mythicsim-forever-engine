@@ -25,6 +25,9 @@ pub(crate) struct EnemyAttack {
     /// The target action the swing's metrics belong to.
     pub(crate) action: usize,
     pub(crate) metrics: SpellMetrics,
+    /// Target auras that change only the swing's attack power, with its attack power and the
+    /// debug line's MAP while active. The gate admits at most one an effect can activate.
+    pub(crate) attack_power_auras: Vec<(super::AuraRef, f64, f64)>,
 }
 
 impl<A: Agent> Fight<A> {
@@ -42,12 +45,16 @@ impl<A: Agent> Fight<A> {
             );
             self.unit_log(Side::Target, &format!("Completed cast {action}"));
         }
-        let values = self
-            .enemy
-            .as_ref()
-            .expect("the target swings")
-            .values
-            .clone();
+        let enemy = self.enemy.as_ref().expect("the target swings");
+        let mut values = enemy.values.clone();
+        if let Some(&(_, attack_power, log_attack_power)) = enemy
+            .attack_power_auras
+            .iter()
+            .find(|(aura, _, _)| self.aura(*aura).active)
+        {
+            values.attack_power = attack_power;
+            values.log_attack_power = log_attack_power;
+        }
         // The stat aura combination picks the rolls, as it picks the player's powers.
         let rolls = values.rolls[self.stat_mask as usize % values.rolls.len()].clone();
         // Go Weapon.EnemyWeaponDamage.
@@ -189,6 +196,7 @@ impl<A: Agent> Fight<A> {
             match self.aura(aura).behavior {
                 AuraBehavior::ChanceOfDeath => self.chance_of_death_hit_taken(result),
                 AuraBehavior::ParryHaste => self.parry_haste(side, result),
+                AuraBehavior::Class(kind) => A::on_enemy_hit_taken(self, aura, kind, result),
                 _ => {}
             }
         }

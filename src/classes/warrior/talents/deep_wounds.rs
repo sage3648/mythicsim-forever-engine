@@ -45,7 +45,7 @@ pub(crate) fn apply<A: Agent>(
 ) {
     // Go CalcAndDealOutcome with OutcomeAlwaysHitNoHitCounter: no damage and no counter.
     let state = &fight.spells[spell];
-    let threat = state.flat_threat_bonus * fight.config.threat_multiplier;
+    let threat = state.flat_threat_bonus * fight.player.threat_multiplier;
     let result = SpellResult {
         target,
         outcome: OUTCOME_HIT,

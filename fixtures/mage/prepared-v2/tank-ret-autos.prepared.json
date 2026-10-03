@@ -10668,6 +10668,18 @@
         "crit_chance": 0.055999999999999994,
         "crush_chance": 0.15,
         "block_reduction": 8.75
+      },
+      {
+        "armor_multiplier": 0.6894692703965497,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0,
+        "parry_chance": 0,
+        "block_chance": 0,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 8.75
       }
     ],
     "threat_multiplier": 1,
@@ -10683,8 +10695,7 @@
       "player:Devotion Aura Rank 4 (Player)",
       "player:Devotion Aura Rank 5 (Player)",
       "player:Devotion Aura Rank 6 (Player)",
-      "player:Devotion Aura Rank 7 (Player)",
-      "player:Reduced avoidance"
+      "player:Devotion Aura Rank 7 (Player)"
     ]
   },
   "effects": [
@@ -10864,6 +10875,12 @@
       ]
     },
     {
+      "aura": "Righteous Fury",
+      "kind": "righteous_fury",
+      "spell_id": 25780,
+      "threat_percent": 0.6
+    },
+    {
       "aura": "Judgement of Wisdom (External)",
       "delay_ns": 10000000,
       "kind": "judgement_of_wisdom",
@@ -10897,6 +10914,29 @@
       "ticks": 5
     },
     {
+      "auras": [
+        "Reduced avoidance"
+      ],
+      "changed": [],
+      "combos": [
+        {
+          "AttackPower": 672,
+          "PhysicalCritPercent": 15.3226,
+          "RangedAttackPower": 82,
+          "SpellCritPercent": 13.753499999999999,
+          "SpellDamage": 7
+        },
+        {
+          "AttackPower": 672,
+          "PhysicalCritPercent": 15.3226,
+          "RangedAttackPower": 82,
+          "SpellCritPercent": 13.753499999999999,
+          "SpellDamage": 7
+        }
+      ],
+      "kind": "stat_auras"
+    },
+    {
       "aura": "Parry Haste",
       "kind": "parry_haste",
       "unit": "target"
@@ -10909,7 +10949,7 @@
     {
       "aura": "Pushback trigger",
       "kind": "inert_listener",
-      "reason": "acts only on hits taken while hardcasting, which the gate rejects when tanking",
+      "reason": "acts only on hits taken while casting a spell that can be pushed back, which the gate rejects when tanking",
       "unit": "player"
     },
     {

@@ -547,6 +547,9 @@ impl<A: Agent> Fight<A> {
             let line = format!("Completed cast {}", action_string(&self.spells[spell].id));
             self.player_log(&line);
         }
+        if let Some(aura) = self.reduced_avoidance {
+            self.deactivate_aura(aura);
+        }
         if !self.can_complete_cast(spell, true) {
             return;
         }
@@ -849,6 +852,10 @@ impl<A: Agent> Fight<A> {
 
     /// Go `Unit.newHardcastAction`.
     fn new_hardcast_action(&mut self) {
+        // Go: while casting, a tank's dodge, parry and block drop to zero.
+        if let Some(aura) = self.reduced_avoidance {
+            self.activate_aura(aura);
+        }
         if let Some(action) = self.player.hardcast_action.take() {
             self.queue.cancel(action);
         }

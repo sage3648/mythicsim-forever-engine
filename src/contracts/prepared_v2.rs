@@ -654,6 +654,19 @@ pub struct Enemy {
     /// Auras inactive at reset whose activation changes a value above, as "player:label" or
     /// "target:label".
     pub changing_auras: Vec<String>,
+    /// Target auras that change only the target's attack power, with the swing's attack power
+    /// and the debug line's MAP while each is active alone.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub attack_power_auras: Vec<EnemyAttackPowerAura>,
+}
+
+/// A target aura that changes only the target's attack power.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct EnemyAttackPowerAura {
+    pub aura: String,
+    pub attack_power: f64,
+    pub log_attack_power: f64,
 }
 
 /// The steps of the target's swing that read the player's defenses.
@@ -952,6 +965,63 @@ pub enum Effect {
         ranks: Vec<ConsecrationRank>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         consecrated_ground: Option<ConsecratedGround>,
+    },
+    /// Paladin righteous_fury.go: the aura's Holy threat mod, and Instrument of Law's threat
+    /// reduction that holds only while the aura is down.
+    RighteousFury {
+        spell_id: i32,
+        aura: String,
+        threat_percent: f64,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        instrument_of_law: Option<AuraMultiplier>,
+    },
+    /// Paladin swift_judgement.go: a major cooldown that finishes Judgement's cooldown and
+    /// makes the next Judgement free.
+    SwiftJudgement {
+        spell_id: i32,
+        aura: String,
+        cost_percent_add: f64,
+    },
+    /// Paladin templars_bulwark.go: a survival cooldown Go never fires at no health threshold.
+    TemplarsBulwark {
+        spell_id: i32,
+    },
+    /// Paladin talents_protection.go Redoubt: landed melee hits taken can raise block chance
+    /// for a few blocks.
+    Redoubt {
+        trigger_aura: String,
+        aura: String,
+        proc_chance: f64,
+    },
+    /// Paladin talents_protection.go Shield Specialization: blocks restore mana.
+    ShieldSpecialization {
+        trigger_aura: String,
+        proc_chance: f64,
+        mana_share: f64,
+        metrics_action_id: ActionId,
+    },
+    /// Paladin talents_protection.go Reckoning: blocks and crits taken can grant an extra
+    /// attack.
+    Reckoning {
+        block_aura: String,
+        crit_aura: String,
+        block_chance: f64,
+        crit_chance: f64,
+    },
+    /// Paladin talents_protection.go Iron Creed: a landed Holy Strike under Righteous Fury
+    /// lowers damage taken.
+    IronCreed {
+        trigger_aura: String,
+        aura: String,
+    },
+    /// Paladin holy_shield.go: the highest rank's block chance aura, whose charges blocks
+    /// spend to deal Holy damage.
+    HolyShield {
+        spell_id: i32,
+        proc_spell: usize,
+        aura: String,
+        charges: i32,
+        damage: f64,
     },
     /// Paladin holy_shock.go: every rank's damage roll.
     HolyShock {
@@ -1856,6 +1926,14 @@ impl Effect {
             Effect::SacredArbiter { .. } => "sacred_arbiter",
             Effect::TwistOfLight { .. } => "twist_of_light",
             Effect::HolyShock { .. } => "holy_shock",
+            Effect::RighteousFury { .. } => "righteous_fury",
+            Effect::SwiftJudgement { .. } => "swift_judgement",
+            Effect::TemplarsBulwark { .. } => "templars_bulwark",
+            Effect::Redoubt { .. } => "redoubt",
+            Effect::ShieldSpecialization { .. } => "shield_specialization",
+            Effect::Reckoning { .. } => "reckoning",
+            Effect::IronCreed { .. } => "iron_creed",
+            Effect::HolyShield { .. } => "holy_shield",
             Effect::DivineFavor { .. } => "divine_favor",
             Effect::SpellDataDamageProc { .. } => "spell_data_damage_proc",
             Effect::SunderArmorRamp { .. } => "sunder_armor_ramp",
