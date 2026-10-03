@@ -62,6 +62,11 @@ builds match Go on every supported variant
 [Fire](validation/2026-10-03-fire-sweep.json)). Builds where community fix #622
 would change the rotation are rejected; see [UPSTREAM.md](UPSTREAM.md).
 
+Every race that can be a Mage is supported: Human, Gnome, Undead, Troll with
+Berserking, Orc with Blood Fury and Shatter Curse, and High Order Skyborne with Read
+Ley Line for rotations that cast it. A [race sweep](validation/2026-10-04-mage-race-sweep.json)
+of all three builds, drawing races from all six, matches Go on every supported variant.
+
 See the [kernel guide](docs/kernel.md) for the input boundary and commands.
 
 ## Repository structure
