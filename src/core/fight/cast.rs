@@ -79,6 +79,18 @@ impl<A: Agent> Fight<A> {
         self.player.gcd <= self.now
     }
 
+    /// Go `GCD.TimeToReady`.
+    pub(crate) fn gcd_time_to_ready(&self) -> i64 {
+        (self.player.gcd - self.now).max(0)
+    }
+
+    /// Go `Unit.CanQueueSpell`: one queued spell per timestep.
+    pub(crate) fn can_queue_spell(&self) -> bool {
+        self.player
+            .queued
+            .is_none_or(|queued| queued.initiated_at != self.now)
+    }
+
     fn extra_cast_condition(&self, spell: SpellId) -> bool {
         // Go RegisterSpell wraps the condition with the range check, which runs first.
         let state = &self.spells[spell];
@@ -180,8 +192,9 @@ impl<A: Agent> Fight<A> {
         self.spell_ready(spell)
     }
 
+    /// Go `Rotation.inSequence`.
     fn in_sequence(&self) -> bool {
-        false
+        self.apl.in_sequence
     }
 
     /// Go `Spell.CanQueue`.
@@ -207,11 +220,7 @@ impl<A: Agent> Fight<A> {
 
     /// Go `Unit.CanQueueSpell` and `Spell.CanQueue`.
     pub(crate) fn can_cast_or_queue(&mut self, spell: SpellId) -> bool {
-        let can_queue_spell = self
-            .player
-            .queued
-            .is_none_or(|queued| queued.initiated_at != self.now);
-        can_queue_spell && self.can_queue(spell)
+        self.can_queue_spell() && self.can_queue(spell)
     }
 
     /// Go `Spell.CastOrQueue`.
@@ -240,6 +249,7 @@ impl<A: Agent> Fight<A> {
             target,
             action: Some(action),
             initiated_at: self.now,
+            fire_at,
         });
         if self.log.is_some() {
             let line = format!(
@@ -611,6 +621,16 @@ impl<A: Agent> Fight<A> {
             is_mana_regen: false,
         });
         self.resources.len() - 1
+    }
+
+    /// Go `Unit.NewHealthMetrics`: every call registers a new metric.
+    pub(crate) fn new_health_metrics(
+        &mut self,
+        id: crate::contracts::prepared_v2::ActionId,
+    ) -> usize {
+        let index = self.new_mana_metrics(id);
+        self.resources[index].health = true;
+        index
     }
 
     /// Go `Unit.SetGCDTimer`.

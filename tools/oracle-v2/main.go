@@ -193,6 +193,8 @@ type classExport struct {
 	effects    func(agent core.Agent, character *core.Character) []map[string]any
 	// How many of the target's dynamic damage taken modifiers the class effects describe.
 	damageTakenModifiers func(agent core.Agent) int
+	// Why a registered pet never acts in this build, or "" when it may.
+	inertPet func(agent core.Agent, pet *core.Pet) string
 	// Optional: class behavior the effects cannot describe, one reason each.
 	unrepresented func(agent core.Agent, character *core.Character) []string
 }
@@ -1054,7 +1056,6 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	presimmer, presims := agent.(core.Presimmer)
 	note(presims && presimmer.GetPresimOptions(request.Raid.Parties[0].Players[0]) != nil, "agent requires presims")
 	note(request.Raid.Parties[0].Players[0].GetHealingModel() != nil, "healing models are unsupported")
-	note(len(character.Pets) != 0, "pets are unsupported")
 	// A target only swings when it has a current target, i.e. an assigned tank.
 	note((target.AutoAttacks.AutoSwingMelee || target.AutoAttacks.AutoSwingRanged) && target.CurrentTarget != nil, "target auto attacks are unsupported")
 	note(character.ItemSwap.IsEnabled(), "item swapping is unsupported")
@@ -1081,6 +1082,18 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	}
 
 	note(!exported, fmt.Sprintf("%s agents are not exported", character.Class))
+	inertPets := []map[string]any{}
+	for _, pet := range character.Pets {
+		reason := ""
+		if class.inertPet != nil {
+			reason = class.inertPet(agent, pet)
+		}
+		if reason == "" {
+			note(true, "pets are unsupported")
+			continue
+		}
+		inertPets = append(inertPets, inertPetEffect(pet, reason))
+	}
 
 	spells := []Spell{}
 	for _, spell := range character.Spellbook {
@@ -1140,6 +1153,7 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 		}
 	}
 	effects = append(effects, commonEffects(character, target, request, &unrepresented)...)
+	effects = append(effects, inertPets...)
 	if eureka := eurekaEffect(agent, character); eureka != nil {
 		effects = append(effects, eureka)
 	}
@@ -1206,6 +1220,23 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	// Last: the teardown changes the simulation.
 	prepared.Player.Mana.TeardownMax = teardownMaxMana(simulation, &character.Unit, &prepared.Unrepresented)
 	return prepared
+}
+
+// A pet that is registered but never enabled. Each reset enables its unit and its agent's
+// Reset dismisses it, logging its stats; each fight's end logs that no pet is summoned. Its
+// metrics report zero, with every action and aura it registered.
+func inertPetEffect(pet *core.Pet, reason string) map[string]any {
+	auras := []*ActionID{}
+	for _, aura := range pet.GetAuras() {
+		if id := actionID(aura.ActionID); id != nil {
+			auras = append(auras, id)
+		}
+	}
+	return map[string]any{
+		"kind": "inert_pet", "name": pet.Name, "label": pet.Label, "unit_index": pet.UnitIndex,
+		"metrics_actions": metricsActions(&pet.Unit), "auras": auras,
+		"dismissed_log": pet.GetStats().FlatString(), "reason": reason,
+	}
 }
 
 // Item procs (common/forever/stat_bonus_procs_auto_gen.go) whose listener, decoded by spelldata's

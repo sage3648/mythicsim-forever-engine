@@ -2,32 +2,60 @@
 
 use crate::{
     contracts::prepared_v2::ActionId,
+    core::time::NEVER_EXPIRES,
     rotation::{
-        compile_condition, Action as ParsedAction, CompareOp, CompiledCondition, FoundAura, Lookup,
-        MathOp, MissingAura, Rotation, ValueType,
+        compile_bool_value, compile_condition, Action as ParsedAction, CompareOp,
+        CompiledCondition, FoundAura, Lookup, MathOp, MissingAura, Rotation, ValueType,
     },
 };
 
-use super::{cast::MAX_SPELL_QUEUE_WINDOW, Agent, AuraRef, Fight, Side, SpellId};
+use super::{cast::MAX_SPELL_QUEUE_WINDOW, Agent, AuraRef, DotId, Fight, Side, SpellId};
 
 pub(crate) type Compiled = crate::rotation::Compiled<AuraRef>;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 pub(crate) enum Act {
     Cast(SpellId),
     Autocast,
+    /// Go `APLActionStrictSequence`: its casts and the next one to run.
+    StrictSequence {
+        spells: Vec<SpellId>,
+        next: usize,
+    },
+    /// Go `APLActionChannelSpell` with an interrupt condition.
+    Channel {
+        spell: SpellId,
+        interrupt: Compiled,
+        allow_recast: bool,
+    },
 }
 
 /// A ready action. Go keeps the cooldown found by `IsReady` for `Execute`.
 enum Ready {
     Cast(SpellId),
     Autocast(usize),
+    /// A strict sequence taking control of the rotation.
+    Sequence(usize),
+    /// A channel and the item whose interrupt condition it carries.
+    Channel(usize, SpellId),
 }
 
 #[derive(Clone, Debug)]
 pub(crate) struct Item {
     condition: Option<Compiled>,
     action: Act,
+}
+
+/// Go `APLRotation` fields beyond the priority list: the controlling strict sequence, the
+/// sequence flag that lifts major cooldown restrictions, the running channel's interrupt
+/// condition and the sequences hooked to the queued spell's action.
+#[derive(Clone, Debug, Default)]
+pub(crate) struct AplState {
+    pub(crate) controlling: Option<usize>,
+    pub(crate) in_sequence: bool,
+    interrupt_channel_if: Option<usize>,
+    allow_channel_recast: bool,
+    pub(crate) queue_hooks: Vec<usize>,
 }
 
 impl<A: Agent> Fight<A> {
@@ -68,7 +96,7 @@ impl<A: Agent> Fight<A> {
                 ParsedAction::CastSpell(id) => self
                     .apl_cast_spell(id)
                     .map(|spell| (prepull.do_at_ns, spell)),
-                ParsedAction::AutocastOtherCooldowns => None,
+                _ => None,
             })
             .collect();
         prepull.sort_by_key(|(do_at, _)| *do_at);
@@ -113,6 +141,39 @@ impl<A: Agent> Fight<A> {
                     None => continue,
                 },
                 ParsedAction::AutocastOtherCooldowns => Act::Autocast,
+                // Go newActionStrictSequence drops unknown casts, and the action when none
+                // remain.
+                ParsedAction::StrictSequence(ids) => {
+                    let spells: Vec<SpellId> = ids
+                        .iter()
+                        .filter_map(|id| self.apl_cast_spell(id))
+                        .collect();
+                    if spells.is_empty() {
+                        continue;
+                    }
+                    Act::StrictSequence { spells, next: 0 }
+                }
+                // Go newActionChannelSpell: without an interrupt condition it is a cast;
+                // otherwise the spell must be a channel.
+                ParsedAction::ChannelSpell {
+                    spell,
+                    interrupt_if,
+                    allow_recast,
+                } => match compile_bool_value(interrupt_if.as_ref(), &lookup, MissingAura::Dropped)
+                {
+                    None => match self.apl_cast_spell(spell) {
+                        Some(spell) => Act::Cast(spell),
+                        None => continue,
+                    },
+                    Some(interrupt) => match self.apl_spell(spell) {
+                        Some(spell) if self.spells[spell].flags.channeled => Act::Channel {
+                            spell,
+                            interrupt,
+                            allow_recast: *allow_recast,
+                        },
+                        _ => continue,
+                    },
+                },
             };
             let condition =
                 match compile_condition(item.condition.as_ref(), &lookup, MissingAura::Dropped) {
@@ -136,6 +197,10 @@ impl<A: Agent> Fight<A> {
             Compiled::SpellIsReady(spell) => {
                 self.spell_ready(*spell)
                     || self.spell_time_to_ready(*spell) <= MAX_SPELL_QUEUE_WINDOW
+            }
+            // Go `APLValueGCDIsReady`: ready, or ready within the spell queue window.
+            Compiled::GcdIsReady => {
+                self.gcd_ready() || self.gcd_time_to_ready() <= MAX_SPELL_QUEUE_WINDOW
             }
             Compiled::And(values) => values.iter().all(|value| self.get_bool(value)),
             Compiled::Or(values) => values.iter().any(|value| self.get_bool(value)),
@@ -237,6 +302,18 @@ impl<A: Agent> Fight<A> {
                 }
             }
             Compiled::RemainingTime => self.duration - self.now,
+            // Go `Spell.TimeToReady`.
+            Compiled::SpellTimeToReady(spell) => self.spell_time_to_ready(*spell),
+            // Go `Dot.TimeUntilNextTick`: the next tick time is zero while inactive.
+            Compiled::DotTimeToNextTick(spell) => {
+                let next = if self.dot_active(*spell) {
+                    let dot = self.spells[*spell].dot.expect("compiled dots have a dot");
+                    self.dots[dot].tick_next_at
+                } else {
+                    0
+                };
+                next - self.now
+            }
             Compiled::Math { op, lhs, rhs } => self.math_duration(*op, lhs, rhs),
             Compiled::CurrentTime => self.now,
             // Go `APLValueDotRemainingTime`: zero when inactive.
@@ -310,6 +387,30 @@ impl<A: Agent> Fight<A> {
         self.aura(self.dots[dot].aura).active
     }
 
+    /// Go `APLActionCastSpell.IsReady`: castable or queueable, and major cooldowns wait for
+    /// the GCD unless reactive or inside a sequence.
+    fn cast_ready(&mut self, spell: SpellId) -> bool {
+        self.can_cast_or_queue(spell) && {
+            let flags = self.spells[spell].flags;
+            !flags.mcd || flags.reactive || self.gcd_ready() || self.apl.in_sequence
+        }
+    }
+
+    /// Go `APLActionStrictSequence.IsReady`. A ready sequence leaves the sequence flag set,
+    /// as Go does.
+    fn sequence_ready(&mut self, item: usize) -> bool {
+        let Act::StrictSequence { ref spells, .. } = self.rotation[item].action else {
+            unreachable!("item is a strict sequence");
+        };
+        let first = spells[0];
+        self.apl.in_sequence = true;
+        if self.gcd_time_to_ready() > MAX_SPELL_QUEUE_WINDOW || !self.cast_ready(first) {
+            self.apl.in_sequence = false;
+            return false;
+        }
+        true
+    }
+
     /// Go `APLAction.IsReady`: the condition, then the action's readiness.
     fn item_ready(&mut self, item: usize) -> Option<Ready> {
         if let Some(condition) = &self.rotation[item].condition {
@@ -318,15 +419,196 @@ impl<A: Agent> Fight<A> {
             }
         }
         match self.rotation[item].action {
-            Act::Cast(spell) => {
-                let ready = self.can_cast_or_queue(spell) && {
-                    let flags = self.spells[spell].flags;
-                    !flags.mcd || flags.reactive || self.player.gcd <= self.now
-                };
-                ready.then_some(Ready::Cast(spell))
-            }
+            Act::Cast(spell) => self.cast_ready(spell).then_some(Ready::Cast(spell)),
             Act::Autocast => self.autocast_ready().map(Ready::Autocast),
+            Act::StrictSequence { .. } => {
+                self.sequence_ready(item).then_some(Ready::Sequence(item))
+            }
+            Act::Channel { spell, .. } => self
+                .can_cast_or_queue(spell)
+                .then_some(Ready::Channel(item, spell)),
         }
+    }
+
+    /// Go `APLRotation.getNextAction`.
+    fn next_action(&mut self) -> Option<Ready> {
+        if let Some(item) = self.apl.controlling {
+            return self.sequence_next_action(item);
+        }
+        (0..self.rotation.len()).find_map(|item| self.item_ready(item))
+    }
+
+    /// Go `APLActionStrictSequence.GetNextAction`.
+    fn sequence_next_action(&mut self, item: usize) -> Option<Ready> {
+        let Act::StrictSequence { ref spells, next } = self.rotation[item].action else {
+            unreachable!("only strict sequences control the rotation");
+        };
+        let spell = spells[next];
+        if self.cast_ready(spell) {
+            // Off the GCD the step advances now; otherwise the cast queues and the step
+            // stays until it fires.
+            if self.gcd_ready() {
+                self.advance_sequence(item);
+            }
+            Some(Ready::Cast(spell))
+        } else if !self.can_queue_spell() {
+            // A spell was queued this timestep: advance when its action fires.
+            if !self.apl.queue_hooks.contains(&item) {
+                self.apl.queue_hooks.push(item);
+            }
+            let fire_at = self.player.queued.expect("a queued spell").fire_at;
+            self.set_rotation_timer(fire_at + 1);
+            None
+        } else if self.gcd_time_to_ready() <= MAX_SPELL_QUEUE_WINDOW {
+            // The GCD is ready and the step is not: the sequence is bad, so leave it.
+            self.relinquish_sequence(item);
+            self.next_action()
+        } else {
+            None
+        }
+    }
+
+    /// Go `APLActionStrictSequence.advanceSequence`.
+    pub(crate) fn advance_sequence(&mut self, item: usize) {
+        let Act::StrictSequence {
+            ref spells,
+            ref mut next,
+        } = self.rotation[item].action
+        else {
+            unreachable!("item is a strict sequence");
+        };
+        *next += 1;
+        if *next == spells.len() {
+            self.relinquish_sequence(item);
+        }
+    }
+
+    /// Go `APLActionStrictSequence.relinquishControl`.
+    fn relinquish_sequence(&mut self, item: usize) {
+        if let Act::StrictSequence { ref mut next, .. } = self.rotation[item].action {
+            *next = 0;
+        }
+        self.apl.queue_hooks.retain(|&hooked| hooked != item);
+        self.apl.in_sequence = false;
+        assert_eq!(
+            self.apl.controlling,
+            Some(item),
+            "wrong APL controlling action"
+        );
+        self.apl.controlling = None;
+    }
+
+    fn execute(&mut self, action: Ready) {
+        match action {
+            Ready::Cast(spell) => self.cast_or_queue(spell, Side::Target),
+            Ready::Autocast(cooldown) => self.autocast(cooldown),
+            Ready::Sequence(item) => {
+                self.apl.in_sequence = true;
+                assert!(self.apl.controlling.is_none(), "nested controlling actions");
+                self.apl.controlling = Some(item);
+            }
+            Ready::Channel(item, spell) => {
+                self.cast_or_queue(spell, Side::Target);
+                let Act::Channel { allow_recast, .. } = self.rotation[item].action else {
+                    unreachable!("item is a channel");
+                };
+                self.apl.interrupt_channel_if = Some(item);
+                self.apl.allow_channel_recast = allow_recast;
+            }
+        }
+    }
+
+    /// Go `Dot.ChannelCanBeInterrupted`.
+    fn channel_can_be_interrupted(&self, dot: DotId) -> bool {
+        let state = &self.dots[dot];
+        if !state.channeled || state.remaining_ticks == 0 {
+            return false;
+        }
+        match self.apl.interrupt_channel_if {
+            Some(item) => match &self.rotation[item].action {
+                Act::Channel { interrupt, .. } => self.get_bool(interrupt),
+                _ => false,
+            },
+            None => false,
+        }
+    }
+
+    /// Whether two spells share a class spell mask, as Go `Spell.Matches` with the other's
+    /// mask.
+    fn same_class_spell(&self, a: SpellId, b: SpellId) -> bool {
+        match (&self.spells[a].class_spell, &self.spells[b].class_spell) {
+            (Some(a), Some(b)) => a == b,
+            _ => false,
+        }
+    }
+
+    /// Go `nextActionWouldRecastChannel`, evaluated with no channel running. The caller
+    /// restores the channel.
+    fn next_action_would_recast_channel(&mut self, dot: DotId) -> bool {
+        let channeled = self.dots[dot].spell;
+        self.player.channeled_dot = None;
+        for item in 0..self.rotation.len() {
+            if let Some(condition) = &self.rotation[item].condition {
+                if !self.get_bool(condition) {
+                    continue;
+                }
+            }
+            let spell = match self.rotation[item].action {
+                Act::Cast(spell) | Act::Channel { spell, .. } => spell,
+                Act::Autocast => continue,
+                Act::StrictSequence { .. } => {
+                    // A different action that is fully ready would be cast first.
+                    if self.sequence_ready(item) {
+                        return false;
+                    }
+                    continue;
+                }
+            };
+            // Go uses CanCast, so a spell queued this timestep does not block the recast.
+            let can_cast = self.can_cast(spell);
+            if spell == channeled || self.same_class_spell(spell, channeled) {
+                return can_cast;
+            }
+            if can_cast {
+                return false;
+            }
+        }
+        false
+    }
+
+    /// Go `APLRotation.shouldInterruptChannel`.
+    pub(crate) fn should_interrupt_channel(&mut self) -> bool {
+        let Some(dot) = self.player.channeled_dot else {
+            return false;
+        };
+        if !self.channel_can_be_interrupted(dot) {
+            return false;
+        }
+        let would_recast = self.next_action_would_recast_channel(dot);
+        self.player.channeled_dot = Some(dot);
+        if would_recast {
+            self.apl.allow_channel_recast
+        } else {
+            true
+        }
+    }
+
+    /// End a channel the rotation interrupts: no tick runs on expiry, then the rotation
+    /// waits out the clip delay when the GCD is ready.
+    pub(crate) fn interrupt_channel(&mut self, dot: DotId) {
+        let delay = self.config.channel_clip_delay;
+        self.dots[dot].tick_next_at = NEVER_EXPIRES;
+        let aura = self.dots[dot].aura;
+        self.deactivate_aura(aura);
+        if self.gcd_ready() {
+            self.wait_until(self.now + delay);
+        }
+    }
+
+    /// Go channel OnExpire: the rotation forgets the channel's interrupt condition.
+    pub(crate) fn forget_channel_interrupt(&mut self) {
+        self.apl.interrupt_channel_if = None;
+        self.apl.allow_channel_recast = false;
     }
 
     /// Go `APLRotation.DoNextAction`.
@@ -335,10 +617,15 @@ impl<A: Agent> Fight<A> {
             return;
         }
         if let Some(dot) = self.player.channeled_dot {
-            // With no interrupt condition, a channel only ends here once its ticks are spent.
+            // All ticks spent but the aura not yet expired: end it now.
             if self.dots[dot].remaining_ticks == 0 {
                 let aura = self.dots[dot].aura;
                 self.deactivate_aura(aura);
+                return;
+            }
+            // Go also evaluates the interrupt condition when the GCD fires.
+            if self.should_interrupt_channel() {
+                self.interrupt_channel(dot);
             }
             return;
         }
@@ -347,20 +634,9 @@ impl<A: Agent> Fight<A> {
         }
         self.in_rotation = true;
         let mut executed = 0;
-        loop {
-            let mut next = None;
-            for item in 0..self.rotation.len() {
-                if let Some(action) = self.item_ready(item) {
-                    next = Some(action);
-                    break;
-                }
-            }
-            let Some(action) = next else { break };
+        while let Some(action) = self.next_action() {
             assert!(executed <= 1000, "infinite rotation loop");
-            match action {
-                Ready::Cast(spell) => self.cast_or_queue(spell, Side::Target),
-                Ready::Autocast(cooldown) => self.autocast(cooldown),
-            }
+            self.execute(action);
             executed += 1;
         }
         self.in_rotation = false;
@@ -373,10 +649,20 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    /// Go `APLRotation.reset`.
+    /// Go `APLRotation.reset` and each action's `Reset`.
     pub(crate) fn rotation_reset(&mut self, side: Side) {
         if side == Side::Player {
             self.in_rotation = false;
+            self.apl.controlling = None;
+            self.apl.interrupt_channel_if = None;
+            self.apl.allow_channel_recast = false;
+            for item in 0..self.rotation.len() {
+                if let Act::StrictSequence { ref mut next, .. } = self.rotation[item].action {
+                    *next = 0;
+                    self.apl.queue_hooks.retain(|&hooked| hooked != item);
+                    self.apl.in_sequence = false;
+                }
+            }
         }
     }
 }

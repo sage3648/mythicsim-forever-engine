@@ -496,6 +496,11 @@ impl<A: Agent> Fight<A> {
     /// Go `Dot.CalcAndDealPeriodicSnapshotDamage` for a dot built by `Snapshot`, which ticks
     /// on the caster's current spell power and attacker multiplier.
     pub(crate) fn snapshot_dot_tick(&mut self, dot: super::DotId) {
+        self.snapshot_dot_tick_result(dot);
+    }
+
+    /// [`Self::snapshot_dot_tick`], returning the tick's result as Go does.
+    pub(crate) fn snapshot_dot_tick_result(&mut self, dot: super::DotId) -> SpellResult {
         let state = &self.dots[dot];
         let (spell, side, can_crit) = (state.spell, state.side, state.tick_can_crit);
         let mut base = state.snapshot_base;
@@ -511,6 +516,7 @@ impl<A: Agent> Fight<A> {
         };
         let result = self.calc_damage_internal(spell, side, base, attacker, outcome);
         self.deal_damage(spell, result, true);
+        result
     }
 
     /// Go `Spell.TravelTime`.

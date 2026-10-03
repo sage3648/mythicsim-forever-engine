@@ -16,6 +16,7 @@ mod dot;
 mod log;
 pub(crate) mod melee;
 pub(crate) mod metrics;
+mod pet;
 mod racial;
 mod rotation;
 mod spell_mod;
@@ -383,6 +384,8 @@ pub(crate) struct QueuedSpell {
     pub(crate) target: Side,
     pub(crate) action: Option<Handle>,
     pub(crate) initiated_at: i64,
+    /// Go `queueAction.NextActionAt`, kept after the action runs.
+    pub(crate) fire_at: i64,
 }
 
 /// The stats a temporary stat change can set, as Go `Unit.stats` entries.
@@ -461,6 +464,8 @@ pub(crate) struct Config {
     pub(crate) debug: bool,
     pub(crate) base_duration: i64,
     pub(crate) duration_variation: i64,
+    /// Go `ExecuteProportion_90`, `_45`, `_35`, `_25` and `_20`.
+    pub(crate) execute_proportions: [f64; 5],
     pub(crate) player_label: String,
     pub(crate) player_name: String,
     pub(crate) target_label: String,
@@ -604,6 +609,9 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) now: i64,
     pub(crate) duration: i64,
     end_of_combat: i64,
+    /// Go `executePhase` and `nextExecuteDuration` for a fight timed by duration.
+    execute_phase: i32,
+    next_execute: i64,
     pub(crate) rng: SimRng,
     pub(crate) queue: PendingQueue<Action>,
     min_tracker_time: i64,
@@ -629,6 +637,8 @@ pub(crate) struct Fight<A: Agent> {
     /// Prepull casts by time, in Go's stable time order.
     prepull: Vec<(i64, SpellId)>,
     in_rotation: bool,
+    /// Go `APLRotation` state for sequences and channels.
+    pub(crate) apl: rotation::AplState,
     pub(crate) resources: Vec<ResourceMetrics>,
     pub(crate) actions: Vec<ActionTotals>,
     /// The target's registered actions; it never acts, so their metrics stay zero.
@@ -640,6 +650,8 @@ pub(crate) struct Fight<A: Agent> {
     sunder: Option<SunderRamp>,
     /// Gnome's Eureka!, when the character has it.
     pub(crate) eureka: Option<racial::Eureka>,
+    /// Registered pets that nothing summons.
+    pub(crate) pets: Vec<pet::InertPet>,
     mana_regen_casting: usize,
     mana_regen_not_casting: usize,
     mana_gain_spell: Option<SpellId>,
@@ -714,6 +726,13 @@ impl<A: Agent> Fight<A> {
             debug: prepared.sim.debug,
             base_duration: prepared.encounter.duration_ns,
             duration_variation: prepared.encounter.duration_variation_ns,
+            execute_proportions: [
+                prepared.encounter.execute_proportion_90,
+                prepared.encounter.execute_proportion_45,
+                prepared.encounter.execute_proportion_35,
+                prepared.encounter.execute_proportion_25,
+                prepared.encounter.execute_proportion_20,
+            ],
             player_label: player.label.clone(),
             player_name: player.name.clone(),
             target_label: target.label.clone(),
@@ -1232,6 +1251,8 @@ impl<A: Agent> Fight<A> {
             now: 0,
             duration: config.base_duration,
             end_of_combat: config.base_duration,
+            execute_phase: 0,
+            next_execute: NEVER_EXPIRES,
             rng: SimRng::new(prepared.sim.labeled_rng, prepared.sim.seed as u64),
             queue: PendingQueue::default(),
             min_tracker_time: NEVER_EXPIRES,
@@ -1288,6 +1309,7 @@ impl<A: Agent> Fight<A> {
             rotation: Vec::new(),
             prepull: Vec::new(),
             in_rotation: false,
+            apl: rotation::AplState::default(),
             resources,
             actions,
             target_actions: target
@@ -1310,6 +1332,7 @@ impl<A: Agent> Fight<A> {
             sunder: None,
             aura_logs,
             eureka: None,
+            pets: pet::inert_pets(effects),
             totals: metrics::Totals::default(),
             encounter_damage_taken: 0.0,
         };
@@ -1541,6 +1564,8 @@ impl<A: Agent> Fight<A> {
             self.duration += (roll * variation as f64) as i64 - self.config.duration_variation;
         }
         self.queue.clear();
+        self.execute_phase = 0;
+        self.next_execute_phase();
         self.end_of_combat = self.duration;
         self.now = 0;
         self.min_tracker_time = NEVER_EXPIRES;
@@ -1550,6 +1575,8 @@ impl<A: Agent> Fight<A> {
         self.reset_unit(Side::Target);
         self.reset_unit(Side::Player);
         self.reset_cooldown_manager();
+        // Go Character.reset resets the pets after the owner's agent.
+        self.reset_inert_pets();
         // Go initManaTickAction, after the environment reset: two seconds after the prepull
         // starts.
         let prepull_start = self.prepull.first().map_or(0, |&(at, _)| at);
@@ -1637,6 +1664,31 @@ impl<A: Agent> Fight<A> {
         self.reschedule_tracker(tracker_min);
     }
 
+    /// Go `nextExecutePhase` for a fight that ends by duration.
+    fn next_execute_phase(&mut self) {
+        self.next_execute = NEVER_EXPIRES;
+        let [p90, p45, p35, p25, p20] = self.config.execute_proportions;
+        let (phase, proportion) = match self.execute_phase {
+            0 => (100, p90),
+            100 => (90, p45),
+            90 => (45, p35),
+            45 => (35, p25),
+            35 => (25, p20),
+            25 => {
+                self.execute_phase = 20;
+                return;
+            }
+            phase => panic!("executePhase = {phase} invalid"),
+        };
+        self.execute_phase = phase;
+        self.next_execute = ((1.0 - proportion) * self.duration as f64) as i64;
+    }
+
+    /// Go `IsExecutePhase20`.
+    pub(crate) fn is_execute_phase_20(&self) -> bool {
+        self.execute_phase <= 20
+    }
+
     /// Go `Simulation.Step`. Returns false when the fight is over.
     fn step(&mut self) -> bool {
         // Go runs due weapon swings before the next pending action, ties included.
@@ -1668,6 +1720,11 @@ impl<A: Agent> Fight<A> {
     /// Go `Simulation.advance`: expire auras whose time has come.
     pub(crate) fn advance_to(&mut self, time: i64) {
         self.now = time;
+        // Go loops so equal proportions pass several phases in one advance. No execute phase
+        // callbacks are registered in scope.
+        while self.now >= self.next_execute {
+            self.next_execute_phase();
+        }
         if self.now >= self.min_tracker_time {
             self.min_tracker_time = NEVER_EXPIRES;
             for side in [Side::Target, Side::Player] {
@@ -1704,7 +1761,12 @@ impl<A: Agent> Fight<A> {
                         queued.action = None;
                     }
                     let (spell, target) = (queued.spell, queued.target);
+                    // A strict sequence's hook unhooks itself, casts, then advances it.
+                    let hooks = std::mem::take(&mut self.apl.queue_hooks);
                     self.cast(spell, target);
+                    for item in hooks {
+                        self.advance_sequence(item);
+                    }
                 }
             }
             Action::Travel { spell, result, dot } => {
@@ -1780,6 +1842,8 @@ impl<A: Agent> Fight<A> {
             spell: None,
             target: Side::Target,
         };
+        // Go Character.doneIteration finishes the pets first.
+        self.inert_pets_done_iteration();
         self.player_done_iteration();
         self.aura_done_iteration(Side::Player);
         for spell in 0..self.spells.len() {
