@@ -8,10 +8,10 @@ import (
 	"github.com/wowsims/forever/sim/core"
 )
 
-// Whether a registered spell can hit the player in scope: the Goblin Sapper Charge's half
-// that goes off in the thrower's face.
-func playerTakesDamage(character *core.Character) bool {
-	return character.GetSpell(core.GoblinSapperActionID.WithTag(1)) != nil
+// Whether something can hit the player in scope: the Goblin Sapper Charge's half that goes
+// off in the thrower's face, or the target's swings when the player tanks it.
+func playerTakesDamage(character *core.Character, target *core.Unit) bool {
+	return character.GetSpell(core.GoblinSapperActionID.WithTag(1)) != nil || target.CurrentTarget == &character.Unit
 }
 
 // The player's attack table against itself, which a spell that hits the player rolls on.

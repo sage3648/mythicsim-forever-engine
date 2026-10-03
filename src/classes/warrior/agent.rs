@@ -169,7 +169,7 @@ impl WarriorAgent {
                 Effect::UnbridledWrath { trigger_aura, .. } => {
                     auras.push((trigger_aura.clone(), WarriorAura::UnbridledWrath))
                 }
-                Effect::Flurry {
+                Effect::WarriorFlurry {
                     trigger_aura, aura, ..
                 } => {
                     auras.push((trigger_aura.clone(), WarriorAura::FlurryTrigger));
@@ -337,7 +337,7 @@ impl WarriorAgent {
                         metrics,
                     });
                 }
-                Effect::Flurry {
+                Effect::WarriorFlurry {
                     aura,
                     melee_speed_multiplier,
                     charges,

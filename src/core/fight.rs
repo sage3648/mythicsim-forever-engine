@@ -14,6 +14,7 @@ mod cast;
 mod damage;
 pub(crate) mod damage_taken;
 mod dot;
+mod enemy;
 pub(crate) mod energy;
 mod log;
 pub(crate) mod melee;
@@ -29,6 +30,7 @@ use std::collections::BTreeMap;
 pub(crate) use aura::{AuraBehavior, AuraRef, Tracker};
 pub(crate) use damage::{Outcome, SpellResult, OUTCOME_CRIT, OUTCOME_DODGE, OUTCOME_LANDED};
 pub(crate) use dot::Dot;
+pub(crate) use log::action_string;
 pub(crate) use metrics::{ActionReport, ActionTotals, FightReport};
 pub(crate) use spell_mod::{ModId, ModKind};
 
@@ -75,6 +77,14 @@ pub(crate) trait Agent: Sized {
     }
     /// Go `CastConfig.ModifyCast`, run first in a full cast. It may not change the cost.
     fn modify_cast(_fight: &mut Fight<Self>, _spell: SpellId, _behavior: Self::Spell) {}
+    /// Go `Spell.CastTime` for a class spell whose `CastConfig.CastTime` replaces the default,
+    /// which the cast's `ModifyCast` also applies; `None` keeps Go's default.
+    fn cast_time(_fight: &Fight<Self>, _spell: SpellId, _behavior: Self::Spell) -> Option<i64> {
+        None
+    }
+    /// A class wrapper that runs before a melee auto attack's `ApplyEffects`, as Go classes
+    /// wrap `MHConfig().ApplyEffects`.
+    fn before_melee_auto(_fight: &mut Fight<Self>, _spell: SpellId, _hand: melee::Hand) {}
     /// Go `MajorCooldown.ShouldActivate` for class cooldowns.
     fn should_activate(_fight: &Fight<Self>, _spell: SpellId, _behavior: Self::Spell) -> bool {
         true
@@ -88,6 +98,16 @@ pub(crate) trait Agent: Sized {
         _behavior: Self::Spell,
     ) {
         fight.deal_damage(spell, result, false);
+    }
+    /// Go `DamageDoneByCasterExtraMultiplier` on the target's attack table: the active
+    /// handler's multiplier for a spell, if any handler is active.
+    fn caster_damage_multiplier(_fight: &Fight<Self>, _spell: SpellId) -> Option<f64> {
+        None
+    }
+    /// When a class's totem of the slot expires, for Go's `totemRemainingTime`. The gate
+    /// admits the value only for a class that implements this.
+    fn totem_expiration(_fight: &Fight<Self>, _totem: crate::rotation::Totem) -> i64 {
+        unreachable!("totemRemainingTime needs a class with totems")
     }
     /// Go `ReplaceMHSwing`: the spell a main hand swing casts instead of the auto attack.
     fn replace_mh_swing(_fight: &mut Fight<Self>, swing: SpellId) -> SpellId {
@@ -121,6 +141,15 @@ pub(crate) trait Agent: Sized {
     ) {
     }
     fn on_spell_hit_dealt(
+        _fight: &mut Fight<Self>,
+        _aura: AuraRef,
+        _kind: Self::Aura,
+        _spell: SpellId,
+        _result: &SpellResult,
+    ) {
+    }
+    /// Go `OnSpellHitTaken` of a class aura on the target, for the player's hit.
+    fn on_spell_hit_taken(
         _fight: &mut Fight<Self>,
         _aura: AuraRef,
         _kind: Self::Aura,
@@ -343,6 +372,7 @@ pub(crate) struct SpellMetrics {
     pub(crate) glances: i32,
     pub(crate) blocks: i32,
     pub(crate) blocked_crits: i32,
+    pub(crate) crushes: i32,
     pub(crate) hits: i32,
     pub(crate) resisted_hits: i32,
     pub(crate) crits: i32,
@@ -362,6 +392,7 @@ pub(crate) struct SpellMetrics {
     pub(crate) total_glance_damage: f64,
     pub(crate) total_block_damage: f64,
     pub(crate) total_blocked_crit_damage: f64,
+    pub(crate) total_crush_damage: f64,
     pub(crate) total_threat: f64,
     pub(crate) total_cast_time: i64,
 }
@@ -382,6 +413,8 @@ pub(crate) struct Spell<S> {
     pub(crate) melee_proc: bool,
     /// Go `ProcMaskMeleeOrRanged`.
     pub(crate) melee_or_ranged_proc: bool,
+    /// Go `ProcMaskRanged`: `Spell.IsRanged`.
+    pub(crate) ranged_proc: bool,
     /// Go `ProcMaskMeleeOH`: `Spell.IsOH`.
     pub(crate) off_hand_proc: bool,
     /// Go `ProcMaskMeleeWhiteHit`.
@@ -482,13 +515,13 @@ pub(crate) struct Player {
     pub(crate) school_damage_dealt_multiplier: [f64; 8],
     /// Go `PseudoStats.DamageTakenMultiplier`, which auras can multiply.
     pub(crate) damage_taken_multiplier: f64,
-    /// Go `PseudoStats.SchoolDamageTakenMultiplier`, which auras can multiply.
-    pub(crate) school_damage_taken_multiplier: [f64; 8],
     /// Go `PseudoStats.CastSpeedMultiplier`.
     pub(crate) cast_speed_multiplier: f64,
     /// Go `PseudoStats.AttackSpeedMultiplier` and `MeleeSpeedMultiplier`.
     pub(crate) attack_speed_multiplier: f64,
     pub(crate) melee_speed_multiplier: f64,
+    /// Go `PseudoStats.RangedSpeedMultiplier`.
+    pub(crate) ranged_speed_multiplier: f64,
     pub(crate) spirit_regen_rate_casting: f64,
     pub(crate) spirit_regen_multiplier: f64,
     pub(crate) force_full_spirit_regen: bool,
@@ -591,8 +624,6 @@ pub(crate) struct Config {
     pub(crate) execute_proportions: [f64; 5],
     /// Go `PseudoStats.DamageTakenMultiplier` for the player after the reset.
     pub(crate) damage_taken_multiplier: f64,
-    /// Go `PseudoStats.SchoolDamageTakenMultiplier` for the player after the reset.
-    pub(crate) school_damage_taken_multiplier: [f64; 8],
     pub(crate) player_label: String,
     pub(crate) player_name: String,
     pub(crate) target_label: String,
@@ -634,6 +665,13 @@ pub(crate) struct Config {
     pub(crate) expertise_percent: f64,
     pub(crate) armor_penetration: f64,
     pub(crate) physical_damage: f64,
+    /// Go `RangedHitPercent` and `RangedCritPercent`, which ranged attacks add.
+    pub(crate) ranged_hit_percent: f64,
+    pub(crate) ranged_crit_percent: f64,
+    /// The ranged speed pseudo stat after the reset, and the defender's ranged attack power
+    /// bonus, Hunter's Mark.
+    pub(crate) ranged_speed_multiplier: f64,
+    pub(crate) defender_bonus_ranged_attack_power: f64,
 }
 
 /// The pseudo stats Go restores at each reset, after permanent auras applied.
@@ -810,13 +848,16 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) goblin_sapper: Option<damage_taken::GoblinSapper>,
     /// Go `UnitMetrics.Died` for the player.
     pub(crate) death: damage_taken::Death,
+    /// The target's swings at the player, when the player tanks it.
+    pub(crate) enemy: Option<enemy::EnemyAttack>,
     /// Auras Go keeps up through `ApplyFixedUptimeAura`.
     pub(crate) fixed_uptime: Vec<FixedUptime>,
+    /// Item procs that restore energy.
+    pub(crate) energize_procs: Vec<energy::EnergizeProc>,
     /// Go `rageBar`, for a player that has one.
     pub(crate) rage: Option<rage::RageBar>,
-    /// Player auras that multiply the player's damage taken, by aura index, with the schools
-    /// they change, none for every school.
-    pub(crate) damage_taken_auras: Vec<(usize, f64, Vec<usize>)>,
+    /// Player auras that multiply the player's damage taken, by aura index.
+    pub(crate) damage_taken_auras: Vec<(usize, f64)>,
     /// The last hit on the player's resistance multiplier and the damage after it, as Go
     /// `SpellResult` carries them for rage from damage taken.
     pub(crate) player_hit_resistance: (f64, f64),
@@ -945,7 +986,6 @@ impl<A: Agent> Fight<A> {
             base_duration: prepared.encounter.duration_ns,
             duration_variation: prepared.encounter.duration_variation_ns,
             damage_taken_multiplier: pseudo.damage_taken_multiplier,
-            school_damage_taken_multiplier: schools(&pseudo.school_damage_taken_multiplier),
             execute_proportions: [
                 prepared.encounter.execute_proportion_90,
                 prepared.encounter.execute_proportion_45,
@@ -1025,6 +1065,18 @@ impl<A: Agent> Fight<A> {
             expertise_percent: stat(&player.stats, "ExpertisePercent")?,
             armor_penetration: stat(&player.stats, "ArmorPenetration")?,
             physical_damage: stat(&player.stats, "PhysicalDamage")?,
+            ranged_hit_percent: stat(&player.stats, "RangedHitPercent")?,
+            ranged_crit_percent: stat(&player.stats, "RangedCritPercent")?,
+            ranged_speed_multiplier: prepared
+                .melee
+                .ranged_state
+                .as_ref()
+                .map_or(1.0, |ranged| ranged.ranged_speed_multiplier),
+            defender_bonus_ranged_attack_power: prepared
+                .melee
+                .ranged_state
+                .as_ref()
+                .map_or(0.0, |ranged| ranged.defender_bonus_ranged_attack_power),
         };
 
         let mut timer_names: Vec<String> = Vec::new();
@@ -1136,6 +1188,8 @@ impl<A: Agent> Fight<A> {
                 } else {
                     melee::Hand::Main
                 })
+            } else if id.other_id == "OtherActionShoot" && prepared.melee.auto_swing_ranged {
+                SpellBehavior::MeleeAuto(melee::Hand::Ranged)
             } else {
                 effects
                     .iter()
@@ -1233,7 +1287,7 @@ impl<A: Agent> Fight<A> {
                         }
                         Effect::Berserking { spell_id, aura, .. }
                         | Effect::BloodFury { spell_id, aura, .. }
-                        | Effect::ShatterCurse { spell_id, aura }
+                        | Effect::ShatterCurse { spell_id, aura, .. }
                         | Effect::Stoneform { spell_id, aura }
                         | Effect::ReadLeyLine { spell_id, aura, .. }
                         | Effect::TemporaryStats { spell_id, aura, .. }
@@ -1318,6 +1372,10 @@ impl<A: Agent> Fight<A> {
                     .proc_mask
                     .iter()
                     .any(|mask| mask == "ProcMaskMeleeOHAuto" || mask == "ProcMaskMeleeOHSpecial"),
+                ranged_proc: exported
+                    .proc_mask
+                    .iter()
+                    .any(|mask| mask == "ProcMaskRangedAuto" || mask == "ProcMaskRangedSpecial"),
                 melee_or_ranged_proc: exported.proc_mask.iter().any(|mask| {
                     matches!(
                         mask.as_str(),
@@ -1537,18 +1595,44 @@ impl<A: Agent> Fight<A> {
                         .any(|effect| matches!(effect, Effect::Eureka { aura, .. } if *aura == exported.label))
                 {
                     AuraBehavior::Eureka
-                } else if let Some((cast, attack)) = effects.iter().find_map(|effect| match effect {
+                } else if let Some((attack, cast)) = effects.iter().find_map(|effect| match effect {
                     Effect::Berserking {
                         aura,
-                        cast_speed_multiplier,
                         attack_speed_multiplier,
+                        cast_speed_multiplier,
                         ..
                     } if side == Side::Player && *aura == exported.label => {
-                        Some((*cast_speed_multiplier, *attack_speed_multiplier))
+                        Some((*attack_speed_multiplier, *cast_speed_multiplier))
                     }
                     _ => None,
                 }) {
-                    AuraBehavior::MultiplySpeeds { attack, cast }
+                    AuraBehavior::MultiplyAttackAndCastSpeed { attack, cast }
+                } else if let Some((multiplier, schools)) =
+                    effects.iter().find_map(|effect| match effect {
+                        Effect::ShatterCurse {
+                            aura,
+                            school_damage_taken_multiplier,
+                            schools,
+                            ..
+                        } if side == Side::Player && *aura == exported.label => {
+                            Some((*school_damage_taken_multiplier, schools))
+                        }
+                        _ => None,
+                    })
+                {
+                    let names = ["none", "physical", "arcane", "fire", "frost", "holy", "nature", "shadow"];
+                    let mut mask = [false; 8];
+                    for school in schools {
+                        let index = names
+                            .iter()
+                            .position(|name| name == school)
+                            .ok_or_else(|| format!("unknown school {school}"))?;
+                        mask[index] = true;
+                    }
+                    AuraBehavior::MultiplySelfDamageTaken {
+                        multiplier,
+                        schools: mask,
+                    }
                 } else if let Some(multiplier) = effects.iter().find_map(|effect| match effect {
                     Effect::ReadLeyLine {
                         aura,
@@ -1631,6 +1715,22 @@ impl<A: Agent> Fight<A> {
                     })
                 {
                     AuraBehavior::ChanceOfDeath
+                } else if effects.iter().any(|effect| {
+                    matches!(effect, Effect::ParryHaste { unit: u, aura } if u == unit && *aura == exported.label)
+                }) {
+                    AuraBehavior::ParryHaste
+                } else if let Some(index) = (side == Side::Player)
+                    .then(|| {
+                        effects
+                            .iter()
+                            .filter(|effect| matches!(effect, Effect::EnergizeProc { .. }))
+                            .position(|effect| {
+                                matches!(effect, Effect::EnergizeProc { trigger_aura, .. } if *trigger_aura == exported.label)
+                            })
+                    })
+                    .flatten()
+                {
+                    AuraBehavior::EnergizeProc(index)
                 } else if side == Side::Player
                     && effects.iter().any(|effect| {
                         matches!(effect, Effect::Crusader { trigger_aura, .. } if *trigger_aura == exported.label)
@@ -1735,8 +1835,10 @@ impl<A: Agent> Fight<A> {
             damage_taken_auras: Vec::new(),
             self_target: None,
             goblin_sapper: None,
+            enemy: None,
             death: damage_taken::Death::default(),
             fixed_uptime: Vec::new(),
+            energize_procs: Vec::new(),
             player: Player {
                 powers: config.powers,
                 mana: config.max_mana,
@@ -1744,12 +1846,10 @@ impl<A: Agent> Fight<A> {
                 spell_cost_percent_modifier: config.initial.spell_cost_percent_modifier,
                 school_damage_dealt_multiplier: config.school_damage_dealt_multiplier,
                 damage_taken_multiplier: prepared.player.pseudo_stats.damage_taken_multiplier,
-                school_damage_taken_multiplier: schools(
-                    &prepared.player.pseudo_stats.school_damage_taken_multiplier,
-                ),
                 cast_speed_multiplier: config.initial.cast_speed_multiplier,
                 attack_speed_multiplier: config.melee.attack_speed_multiplier,
                 melee_speed_multiplier: config.melee.melee_speed_multiplier,
+                ranged_speed_multiplier: config.ranged_speed_multiplier,
                 spirit_regen_rate_casting: config.initial.spirit_regen_rate_casting,
                 spirit_regen_multiplier: config.initial.spirit_regen_multiplier,
                 force_full_spirit_regen: config.initial.force_full_spirit_regen,
@@ -1833,6 +1933,33 @@ impl<A: Agent> Fight<A> {
             fight.enable_energy_bar(energy);
         }
         for effect in effects {
+            if let Effect::EnergizeProc {
+                rng_label,
+                chances,
+                energy,
+                metrics_action_id,
+                delay_ns,
+                ..
+            } = effect
+            {
+                let mut by_spell = vec![None; fight.spells.len()];
+                for entry in chances {
+                    if let Some(slot) = by_spell.get_mut(entry.spell) {
+                        *slot = Some(entry.chance);
+                    }
+                }
+                let metrics =
+                    fight.new_resource_metrics(metrics_action_id.clone(), ResourceKind::Energy);
+                fight.energize_procs.push(energy::EnergizeProc {
+                    label: rng_label.clone(),
+                    chances: by_spell,
+                    energy: *energy,
+                    metrics,
+                    delay: *delay_ns,
+                });
+            }
+        }
+        for effect in effects {
             if let Effect::FixedUptimeAura {
                 aura,
                 uptime,
@@ -1884,15 +2011,32 @@ impl<A: Agent> Fight<A> {
                 });
             }
         }
+        if let Some(values) = &prepared.enemy {
+            let action = fight
+                .target_actions
+                .iter()
+                .position(|action| action.id == values.action_id)
+                .ok_or("the target's swing has no target action")?;
+            if values.rolls.len() != fight.stat_combos.len().max(1) {
+                return Err(format!(
+                    "the target's swing has {} rolls for {} stat aura combinations",
+                    values.rolls.len(),
+                    fight.stat_combos.len()
+                ));
+            }
+            fight.enemy = Some(enemy::EnemyAttack {
+                values: values.clone(),
+                action,
+                metrics: SpellMetrics::default(),
+            });
+        }
         for effect in effects {
             if let Effect::PlayerDamageTaken { auras } = effect {
                 for entry in auras {
                     let aura = fight.player_aura(&entry.aura)?;
-                    fight.damage_taken_auras.push((
-                        aura.index,
-                        entry.multiplier,
-                        entry.schools.clone(),
-                    ));
+                    fight
+                        .damage_taken_auras
+                        .push((aura.index, entry.multiplier));
                 }
             }
         }
@@ -2037,6 +2181,12 @@ impl<A: Agent> Fight<A> {
         };
         fight.autos.mh.spell = auto_spell(1);
         fight.autos.oh.spell = auto_spell(2);
+        fight.autos.ranged_auto = prepared.melee.auto_swing_ranged;
+        fight.autos.ranged.weapon = prepared.melee.ranged.clone();
+        fight.autos.ranged.spell = fight
+            .spells
+            .iter()
+            .position(|spell| spell.id.other_id == "OtherActionShoot");
         for effect in effects {
             if let Effect::Eureka {
                 aura,
@@ -2297,10 +2447,10 @@ impl<A: Agent> Fight<A> {
             player.spell_cost_percent_modifier = initial.spell_cost_percent_modifier;
             player.school_damage_dealt_multiplier = self.config.school_damage_dealt_multiplier;
             player.damage_taken_multiplier = self.config.damage_taken_multiplier;
-            player.school_damage_taken_multiplier = self.config.school_damage_taken_multiplier;
             player.cast_speed_multiplier = initial.cast_speed_multiplier;
             player.attack_speed_multiplier = self.config.melee.attack_speed_multiplier;
             player.melee_speed_multiplier = self.config.melee.melee_speed_multiplier;
+            player.ranged_speed_multiplier = self.config.ranged_speed_multiplier;
             player.powers = self.config.powers;
             self.stat_mask = 0;
             player.spirit_regen_rate_casting = initial.spirit_regen_rate_casting;
@@ -2363,7 +2513,8 @@ impl<A: Agent> Fight<A> {
         }
         // Go AutoAttacks.reset: an enemy with a melee swing rolls its opening offset.
         if side == Side::Target && self.config.target_auto_swing_melee {
-            self.random("Enemy Swing Offset");
+            let roll = self.random("Enemy Swing Offset");
+            self.reset_enemy_attack(roll);
         }
         self.rotation_reset(side);
         // Go addTracker: the target's tracker first, then the player's.
@@ -2615,6 +2766,8 @@ impl<A: Agent> Fight<A> {
         // No supported unit has encounter start callbacks. The player starts its swings, then
         // its rotation at max(0, GCD ready).
         self.randomize_melee_timing();
+        // Go AllUnits lists the target first, so its swing joins the weapon attacks first.
+        self.start_enemy_attack();
         self.start_auto_attacks();
         let ready = self.player.gcd.max(0);
         self.set_gcd_timer(ready);
@@ -2637,6 +2790,7 @@ impl<A: Agent> Fight<A> {
         for spell in 0..self.spells.len() {
             self.spell_done_iteration(spell);
         }
+        self.enemy_done_iteration();
         let damage = self.totals.iteration_damage;
         self.aura_done_iteration(Side::Target);
         self.unit_done_iteration(damage);

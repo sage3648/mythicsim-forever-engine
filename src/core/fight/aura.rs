@@ -29,6 +29,10 @@ pub(crate) enum AuraBehavior<K> {
     Inert,
     /// Go health.go `trackChanceOfDeath`'s listener on hits the player takes.
     ChanceOfDeath,
+    /// Go attack.go `applyParryHaste`: a parry pulls the unit's next main hand swing in.
+    ParryHaste,
+    /// An item proc that restores energy: [`super::energy::EnergizeProc`], by index.
+    EnergizeProc(usize),
     /// Go buffs/paladin.go `AttachJudgementOfWisdomMana`.
     JudgementOfWisdom {
         chance: f64,
@@ -44,11 +48,16 @@ pub(crate) enum AuraBehavior<K> {
     },
     /// Go racials.go `applyEureka`'s aura.
     Eureka,
-    /// Go `Aura.AttachMultiplyAttackSpeed` followed by `AttachMultiplyCastSpeed`, as the Troll
-    /// racial Berserking attaches them.
-    MultiplySpeeds {
+    /// Go `AttachMultiplyAttackSpeed` followed by `AttachMultiplyCastSpeed`, as Berserking.
+    MultiplyAttackAndCastSpeed {
         attack: f64,
         cast: f64,
+    },
+    /// Go `AttachMultiplicativePseudoStatBuff` on the player's damage taken of each school, as
+    /// Orc Shatter Curse attaches it.
+    MultiplySelfDamageTaken {
+        multiplier: f64,
+        schools: [bool; 8],
     },
     /// Go `MultiplyManaRegenSpeed` on gain and its reciprocal on expire, as racials.go
     /// Energized does with 2 and 0.5.
@@ -443,15 +452,44 @@ impl<A: Agent> Fight<A> {
         self.set_stacks(aura, stacks);
     }
 
+    /// Go `AddStatsDynamic` for a stat aura a class aura owns: the player's stats become the
+    /// combination with the aura's bit set or cleared.
+    pub(crate) fn set_stat_aura(&mut self, bit: u32, active: bool) {
+        if active {
+            self.stat_mask |= bit;
+        } else {
+            self.stat_mask &= !bit;
+        }
+        self.player.powers = self.stat_combos[self.stat_mask as usize];
+    }
+
+    /// A stat aura's bit in the active stat mask, by label.
+    pub(crate) fn stat_aura_bit(
+        effects: &[crate::contracts::prepared_v2::Effect],
+        label: &str,
+    ) -> Option<u32> {
+        effects.iter().find_map(|effect| match effect {
+            crate::contracts::prepared_v2::Effect::StatAuras { auras, .. } => auras
+                .iter()
+                .position(|aura| aura == label)
+                .map(|bit| 1 << bit),
+            _ => None,
+        })
+    }
+
     fn on_gain(&mut self, aura: AuraRef) {
         self.multiply_damage_taken_for(aura, false);
         match self.aura(aura).behavior {
             AuraBehavior::Dot(dot) => self.dot_on_gain(dot),
             AuraBehavior::Eureka => self.eureka_gain(),
-            AuraBehavior::MultiplySpeeds { attack, cast } => {
+            AuraBehavior::MultiplyAttackAndCastSpeed { attack, cast } => {
                 self.multiply_attack_speed(attack);
                 self.multiply_cast_speed(cast);
             }
+            AuraBehavior::MultiplySelfDamageTaken {
+                multiplier,
+                schools,
+            } => self.multiply_self_damage_taken(multiplier, schools, false),
             AuraBehavior::MultiplyManaRegenSpeed(multiplier) => {
                 self.multiply_mana_regen_speed(multiplier)
             }
@@ -487,10 +525,14 @@ impl<A: Agent> Fight<A> {
         match self.aura(aura).behavior {
             AuraBehavior::Dot(dot) => self.dot_on_expire(dot),
             AuraBehavior::Eureka => self.eureka_expire(),
-            AuraBehavior::MultiplySpeeds { attack, cast } => {
+            AuraBehavior::MultiplyAttackAndCastSpeed { attack, cast } => {
                 self.multiply_attack_speed(1.0 / attack);
                 self.multiply_cast_speed(1.0 / cast);
             }
+            AuraBehavior::MultiplySelfDamageTaken {
+                multiplier,
+                schools,
+            } => self.multiply_self_damage_taken(multiplier, schools, true),
             AuraBehavior::WindfuryProc { bit } => {
                 self.stat_mask &= !bit;
                 self.player.powers = self.stat_combos[self.stat_mask as usize];
@@ -557,31 +599,12 @@ impl<A: Agent> Fight<A> {
             return;
         }
         for position in 0..self.damage_taken_auras.len() {
-            let (index, multiplier) = (
-                self.damage_taken_auras[position].0,
-                self.damage_taken_auras[position].1,
-            );
-            if index != aura.index {
-                continue;
-            }
-            let schools = self.damage_taken_auras[position].2.clone();
-            let player = &mut self.player;
-            let mut targets: Vec<&mut f64> = if schools.is_empty() {
-                vec![&mut player.damage_taken_multiplier]
-            } else {
-                player
-                    .school_damage_taken_multiplier
-                    .iter_mut()
-                    .enumerate()
-                    .filter(|(school, _)| schools.contains(school))
-                    .map(|(_, value)| value)
-                    .collect()
-            };
-            for value in targets.iter_mut() {
+            let (index, multiplier) = self.damage_taken_auras[position];
+            if index == aura.index {
                 if expire {
-                    **value /= multiplier;
+                    self.player.damage_taken_multiplier /= multiplier;
                 } else {
-                    **value *= multiplier;
+                    self.player.damage_taken_multiplier *= multiplier;
                 }
             }
         }
@@ -716,6 +739,9 @@ impl<A: Agent> Fight<A> {
                     AuraBehavior::Class(kind) if dealt => {
                         A::on_spell_hit_dealt(self, aura, kind, spell, result)
                     }
+                    AuraBehavior::Class(kind) => {
+                        A::on_spell_hit_taken(self, aura, kind, spell, result)
+                    }
                     AuraBehavior::RageBar if dealt => self.rage_bar_hit_dealt(spell, result),
                     AuraBehavior::ExtraAttackProc { chance, attacks } if dealt => {
                         self.extra_attack_proc(aura, spell, result, chance, attacks)
@@ -747,6 +773,10 @@ impl<A: Agent> Fight<A> {
                     }
                     AuraBehavior::ChanceOfDeath if !dealt && side == Side::Player => {
                         self.chance_of_death_hit_taken(result)
+                    }
+                    AuraBehavior::ParryHaste if !dealt => self.parry_haste(side, result),
+                    AuraBehavior::EnergizeProc(index) if dealt => {
+                        self.energize_proc_callback(aura, index, spell, result)
                     }
                     _ => {}
                 }
@@ -925,6 +955,7 @@ impl<A: Agent> Fight<A> {
                 let chili = self.chili.clone().expect("Dragonbreath Chili is bound");
                 self.cast(chili.spell, result.target);
             }
+            AuraBehavior::EnergizeProc(index) => self.energize_proc_handler(index),
             AuraBehavior::Class(kind) => A::on_delayed_proc(self, aura, kind, spell, result),
             _ => {}
         }

@@ -41,6 +41,15 @@ pub enum CompareOp {
     Ge,
 }
 
+/// Go `ShamanTotems_TotemType`, the totem slot a Shaman value reads.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Totem {
+    Earth,
+    Air,
+    Fire,
+    Water,
+}
+
 /// Go `APLValueMath_MathOperator`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MathOp {
@@ -108,6 +117,11 @@ pub enum Value {
         lhs: Box<Value>,
         rhs: Box<Value>,
     },
+    /// Go sim/shaman/apl_values.go `APLValueTotemRemainingTime`; no totem type gives no value.
+    TotemRemainingTime {
+        totem: Option<Totem>,
+        include_reaction_time: bool,
+    },
     CurrentManaPercent,
     RemainingTimePercent,
     CurrentMana,
@@ -138,6 +152,18 @@ pub enum Value {
     SpellTimeToReady(ActionId),
     DotTimeToNextTick(ActionId),
     GcdIsReady,
+    /// Go `APLValueAutoTimeToNext`.
+    AutoTimeToNext(AutoAttackType),
+}
+
+/// Go `APLValueAutoAttackType`: which auto attack a value reads. Unknown reads as any.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum AutoAttackType {
+    Any,
+    Melee,
+    MainHand,
+    OffHand,
+    Ranged,
 }
 
 impl Value {
@@ -205,7 +231,9 @@ impl Value {
             | Value::SpellCastTime(_)
             | Value::SpellTimeToReady(_)
             | Value::DotTimeToNextTick(_)
+            | Value::AutoTimeToNext(_)
             | Value::RemainingTime
+            | Value::TotemRemainingTime { .. }
             | Value::CurrentTime
             | Value::TimeToNextEnergyTick => ValueType::Duration,
             Value::CurrentManaPercent
@@ -722,9 +750,48 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
             only(&[])?;
             Ok(Value::NumberTargets)
         }
+        "totemRemainingTime" => {
+            only(&["totemType", "includeReactionTime"])?;
+            let totem = match config.get("totemType").and_then(Json::as_str) {
+                None | Some("TypeUnknownTotem") => None,
+                Some("Earth") => Some(Totem::Earth),
+                Some("Air") => Some(Totem::Air),
+                Some("Fire") => Some(Totem::Fire),
+                Some("Water") => Some(Totem::Water),
+                Some(other) => return Err(vec![format!("totem type {other} is unsupported")]),
+            };
+            let include_reaction_time = match config.get("includeReactionTime") {
+                None => false,
+                Some(value) => value
+                    .as_bool()
+                    .ok_or_else(|| vec!["includeReactionTime must be a boolean".to_string()])?,
+            };
+            Ok(Value::TotemRemainingTime {
+                totem,
+                include_reaction_time,
+            })
+        }
         "gcdIsReady" => {
             only(&[])?;
             Ok(Value::GcdIsReady)
+        }
+        "autoTimeToNext" => {
+            only(&["autoType"])?;
+            // protojson writes the enum by name and omits the zero value, UnknownAuto, which
+            // Go's switch reads as any auto attack.
+            let kind = match config.get("autoType").map(|kind| kind.as_str()) {
+                None | Some(Some("UnknownAuto" | "AnyAuto")) => AutoAttackType::Any,
+                Some(Some("MeleeAuto")) => AutoAttackType::Melee,
+                Some(Some("MainHandAuto")) => AutoAttackType::MainHand,
+                Some(Some("OffHandAuto")) => AutoAttackType::OffHand,
+                Some(Some("RangedAuto")) => AutoAttackType::Ranged,
+                Some(other) => {
+                    return Err(vec![format!(
+                        "autoTimeToNext autoType {other:?} is unsupported"
+                    )])
+                }
+            };
+            Ok(Value::AutoTimeToNext(kind))
         }
         "dotIsActive" | "dotRemainingTime" | "dotTimeToNextTick" | "spellIsKnown"
         | "spellIsReady" | "spellCastTime" | "spellTimeToReady" => {
@@ -1015,6 +1082,10 @@ pub enum Compiled<R> {
         lhs: Box<Compiled<R>>,
         rhs: Box<Compiled<R>>,
     },
+    TotemRemainingTime {
+        totem: Totem,
+        include_reaction_time: bool,
+    },
     CurrentManaPercent,
     RemainingTimePercent,
     CurrentMana,
@@ -1038,6 +1109,7 @@ pub enum Compiled<R> {
     SpellTimeToReady(usize),
     DotTimeToNextTick(usize),
     GcdIsReady,
+    AutoTimeToNext(AutoAttackType),
     /// Go `APLValueCoerced`.
     Coerced {
         to: ValueType,
@@ -1066,7 +1138,9 @@ impl<R> Compiled<R> {
             | Compiled::SpellCastTime(_)
             | Compiled::SpellTimeToReady(_)
             | Compiled::DotTimeToNextTick(_)
+            | Compiled::AutoTimeToNext(_)
             | Compiled::RemainingTime
+            | Compiled::TotemRemainingTime { .. }
             | Compiled::CurrentTime
             | Compiled::TimeToNextEnergyTick => ValueType::Duration,
             Compiled::CurrentManaPercent
@@ -1319,6 +1393,13 @@ fn compile_value<R>(
         Value::RemainingTime => Compiled::RemainingTime,
         Value::CurrentTime => Compiled::CurrentTime,
         Value::NumberTargets => Compiled::NumberTargets,
+        Value::TotemRemainingTime {
+            totem,
+            include_reaction_time,
+        } => Compiled::TotemRemainingTime {
+            totem: (*totem)?,
+            include_reaction_time: *include_reaction_time,
+        },
         Value::DotIsActive(id) => Compiled::DotIsActive((lookup.dot)(id)?),
         Value::DotRemainingTime(id) => Compiled::DotRemainingTime((lookup.dot)(id)?),
         // Go `newValueSpellIsKnown` is a constant.
@@ -1328,6 +1409,7 @@ fn compile_value<R>(
         Value::SpellTimeToReady(id) => Compiled::SpellTimeToReady((lookup.spell)(id)?),
         Value::DotTimeToNextTick(id) => Compiled::DotTimeToNextTick((lookup.dot)(id)?),
         Value::GcdIsReady => Compiled::GcdIsReady,
+        Value::AutoTimeToNext(kind) => Compiled::AutoTimeToNext(*kind),
         Value::AuraIsKnown(id) => bool_const(aura(id).is_some()),
         Value::AuraIsActive(id) => match (aura(id), missing) {
             (Some(found), _) => Compiled::AuraIsActive(found.aura),

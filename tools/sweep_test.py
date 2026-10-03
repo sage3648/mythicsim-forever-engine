@@ -34,6 +34,12 @@ class SweepTests(unittest.TestCase):
         for request in generate(BASE, 20261004, 200):
             self.assertLess(request["encounter"]["durationVariation"], request["encounter"]["duration"])
 
+    def test_max_distance_keeps_variants_in_range(self):
+        distances = {request["raid"]["parties"][0]["players"][0]["distanceFromTarget"]
+                     for request in generate(BASE, 20261004, 50, max_distance=5)}
+        self.assertTrue(distances <= {0, 5})
+        self.assertEqual(generate(BASE, 7, 3), generate(BASE, 7, 3, max_distance=None))
+
     def test_base_request_is_not_modified(self):
         before = json.dumps(BASE, sort_keys=True)
         generate(BASE, 3, 5)

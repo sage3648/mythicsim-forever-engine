@@ -3576,7 +3576,10 @@
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
-        "damage_effect": null
+        "damage_effect": {
+          "average": 301,
+          "variance": 0.05273069813847542
+        }
       },
       {
         "action_id": {
@@ -4243,10 +4246,21 @@
     {
       "attack_damage": 47,
       "attack_spell_id": 10436,
+      "duration_ns": 55000000000,
       "flametongue_totem_aura": "Flametongue Totem (Self)",
       "kind": "searing_totem",
       "magma_totem_aura": "Magma Totem",
       "spell_id": 10438
+    },
+    {
+      "kind": "earth_shock",
+      "spell_id": 10414
+    },
+    {
+      "aura": "Strength Of Earth Totem (Self)",
+      "duration_ns": 300000000000,
+      "kind": "strength_of_earth_totem",
+      "spell_id": 25361
     },
     {
       "aura": "Clearcasting",
@@ -4300,6 +4314,32 @@
       "regen_window_seconds": 5,
       "rng_label": "Demonic Rune",
       "selected": true
+    },
+    {
+      "auras": [
+        "Strength Of Earth Totem (Self)"
+      ],
+      "changed": [
+        "AttackPower",
+        "Strength"
+      ],
+      "combos": [
+        {
+          "AttackPower": 456,
+          "PhysicalCritPercent": 10.6116,
+          "RangedAttackPower": 40,
+          "SpellCritPercent": 12.775599999999999,
+          "SpellDamage": 439
+        },
+        {
+          "AttackPower": 572,
+          "PhysicalCritPercent": 10.6116,
+          "RangedAttackPower": 40,
+          "SpellCritPercent": 12.775599999999999,
+          "SpellDamage": 439
+        }
+      ],
+      "kind": "stat_auras"
     },
     {
       "aura": "Chance of Death",

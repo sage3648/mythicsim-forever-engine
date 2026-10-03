@@ -228,7 +228,7 @@ func warriorEffects(agent core.Agent, character *core.Character) []map[string]an
 	if talents.Flurry > 0 { // talents_fury.go registerFlurry
 		buff := warriorFlurryTriggered.Highest()
 		effects = append(effects, map[string]any{
-			"kind": "flurry", "trigger_aura": "Flurry - Trigger", "aura": "Flurry",
+			"kind": "warrior_flurry", "trigger_aura": "Flurry - Trigger", "aura": "Flurry",
 			"melee_speed_multiplier": warriorFlurry.MultiplierAt(talents.Flurry), "charges": int32(buff.ProcCharges),
 		})
 	}

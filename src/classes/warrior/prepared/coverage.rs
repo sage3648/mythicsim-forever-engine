@@ -23,7 +23,7 @@ const EFFECTS: &[&str] = &[
     "death_wish",
     "deep_wounds",
     "execute",
-    "flurry",
+    "warrior_flurry",
     "hamstring",
     "heroic_strike_queue",
     "overpower_window",
@@ -61,7 +61,7 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         Effect::DeepWounds { trigger_aura, .. }
         | Effect::UnbridledWrath { trigger_aura, .. }
         | Effect::OverpowerWindow { trigger_aura, .. } => vec![("player", trigger_aura)],
-        Effect::Flurry {
+        Effect::WarriorFlurry {
             trigger_aura, aura, ..
         } => vec![("player", trigger_aura), ("player", aura)],
         _ => Vec::new(),

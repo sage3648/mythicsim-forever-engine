@@ -199,3 +199,4 @@ func meleeProcEffects(simulation *core.Simulation, character *core.Character, un
 	}
 	return effects
 }
+

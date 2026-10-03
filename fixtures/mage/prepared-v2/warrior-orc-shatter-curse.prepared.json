@@ -5159,7 +5159,7 @@
     {
       "aura": "Flurry",
       "charges": 3,
-      "kind": "flurry",
+      "kind": "warrior_flurry",
       "melee_speed_multiplier": 1.25,
       "trigger_aura": "Flurry - Trigger"
     },
@@ -5232,24 +5232,16 @@
     {
       "aura": "Shatter Curse",
       "kind": "shatter_curse",
-      "spell_id": 1299026
-    },
-    {
-      "auras": [
-        {
-          "aura": "Shatter Curse",
-          "multiplier": 0.85,
-          "schools": [
-            2,
-            3,
-            4,
-            5,
-            6,
-            7
-          ]
-        }
+      "school_damage_taken_multiplier": 0.85,
+      "schools": [
+        "arcane",
+        "fire",
+        "frost",
+        "holy",
+        "nature",
+        "shadow"
       ],
-      "kind": "player_damage_taken"
+      "spell_id": 1299026
     },
     {
       "aoe_cap_multiplier": 1,

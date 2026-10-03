@@ -135,7 +135,7 @@ impl<A: Agent> Fight<A> {
         let mut generated = match self.spells[spell].white_hand {
             Some(Hand::Main) => bar.main_hand_rage,
             Some(Hand::Off) => bar.off_hand_rage,
-            None => return,
+            Some(Hand::Enemy | Hand::Ranged) | None => return,
         };
         if result.crit() {
             generated *= bar.crit_multiplier;
