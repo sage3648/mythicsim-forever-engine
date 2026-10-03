@@ -11,6 +11,8 @@ fight. Ordinary Rust tests use frozen data and need no Go checkout.
 | [oracle/main.go](oracle/main.go) | Prepare restricted reference cases and run the actual Go engine | Built by the comparison tool in isolated scratch |
 | [prepared_v2.py](prepared_v2.py) | Audit prepared v2 fixtures offline; re-export them from the pinned engine into scratch | Python for audit; Go, Git and protoc for capture |
 | [census.py](census.py) | Count which prepared inputs or requests Rust would run and rank the reasons blocking the rest | Python and Rust for prepared inputs; Go, Git and protoc to export requests |
+| [boards.py](boards.py) | Write the application's published race board requests, one per spec and race, for a comparison | Python |
+| [sweep_record.py](sweep_record.py) | Write a sweep's validation record from a comparison run | Python |
 | [sweep.py](sweep.py) | Generate seeded randomized variants of one request for a compatibility sweep | Python |
 | [upstream.py](upstream.py) | Audit the [upstream ledger](../UPSTREAM.md#ledger), optionally against a community clone | Python; Git for the range check |
 | [oracle-v2/main.go](oracle-v2/main.go) | Export a reset Go simulation as [prepared v2](../docs/prepared-v2.md) and run the full Go engine | Built by prepared_v2.py in isolated scratch |
