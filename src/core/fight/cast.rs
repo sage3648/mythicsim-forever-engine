@@ -383,9 +383,27 @@ impl<A: Agent> Fight<A> {
         }
     }
 
+    /// Go `Spell.SetMetricsSplit`: the spell's metrics, and the tag of its action ID in logs,
+    /// follow the split until the next one.
+    pub(crate) fn set_metrics_split(&mut self, spell: SpellId, split: usize) {
+        let state = &mut self.spells[spell];
+        assert!(
+            !state.split_metrics.is_empty(),
+            "spell has no metric splits"
+        );
+        state.split_metrics[state.split] = state.metrics;
+        state.metrics = state.split_metrics[split];
+        state.split = split;
+        state.id.tag = split as i32;
+        state.action = Some(state.split_actions[split]);
+    }
+
     /// Go `makeCastFunc`.
     fn cast_full(&mut self, spell: SpellId, target: Side) -> bool {
         self.spells[spell].cur_cast = self.spells[spell].default_cast;
+        if let SpellBehavior::Class(behavior) = self.spells[spell].behavior {
+            A::modify_cast(self, spell, behavior);
+        }
         if self.spells[spell].flags.swapped {
             return self.cast_failure(spell, |_| "spell attached to an un-equipped item".into());
         }
@@ -592,6 +610,24 @@ impl<A: Agent> Fight<A> {
                 let gain = min + if spread > 1.0 { rolled } else { spread };
                 let metrics = self.item_metrics(spell);
                 self.execute_mana_gain(gain, metrics);
+            }
+            SpellBehavior::ConjuredEnergy {
+                label,
+                min,
+                spread,
+                reduction,
+                metrics,
+                ..
+            } => {
+                // Go's TernaryFloat64 evaluates both arguments, so the roll always happens.
+                let rolled = self.random(&label) * spread;
+                let gain = min + if spread > 1.0 { rolled } else { spread } - reduction;
+                // Go ExecuteResourceGain for energy.
+                if gain > 0.0 {
+                    self.add_energy(gain, metrics);
+                } else if gain < 0.0 {
+                    self.spend_energy(-gain, metrics);
+                }
             }
             SpellBehavior::EnergizeOnUse {
                 average, variance, ..
@@ -871,6 +907,16 @@ impl<A: Agent> Fight<A> {
             } => {
                 let total_regen = casting_regen * regen_window;
                 max - (mana + total_regen) >= min + spread && *selected
+            }
+            SpellBehavior::ConjuredEnergy {
+                min,
+                spread,
+                selected,
+                reduction,
+                ..
+            } => {
+                let bar = self.energy_bar();
+                bar.max - bar.current >= (min + spread) - reduction && *selected
             }
             SpellBehavior::EnergizeOnUse { whole, .. } => max - mana >= *whole,
             // Go's default ShouldActivate.

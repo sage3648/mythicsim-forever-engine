@@ -425,12 +425,29 @@ impl<A: Agent> Fight<A> {
 
     /// Go `Spell.doneIteration` and `UnitMetrics.addSpellMetrics`.
     pub(crate) fn spell_done_iteration(&mut self, spell: usize) {
-        let Some(action) = self.spells[spell].action else {
+        if self.spells[spell].action.is_none() {
             return;
-        };
+        }
+        if self.spells[spell].split_metrics.is_empty() {
+            let metrics = self.spells[spell].metrics;
+            let action = self.spells[spell].action.expect("checked above");
+            self.add_spell_metrics(spell, action, metrics);
+            return;
+        }
+        // Go Spell.doneIteration: each split under its own tagged ID.
+        let state = &mut self.spells[spell];
+        state.split_metrics[state.split] = state.metrics;
+        for split in 0..self.spells[spell].split_metrics.len() {
+            let metrics = self.spells[spell].split_metrics[split];
+            let action = self.spells[spell].split_actions[split];
+            self.add_spell_metrics(spell, action, metrics);
+        }
+    }
+
+    /// Go `UnitMetrics.addSpellMetrics`.
+    fn add_spell_metrics(&mut self, spell: usize, action: usize, all: [super::SpellMetrics; 2]) {
         let passive = self.spells[spell].flags.passive;
-        for target in 0..2 {
-            let metrics = self.spells[spell].metrics[target];
+        for (target, metrics) in all.into_iter().enumerate() {
             let totals = &mut self.actions[action].targets[target];
             if !passive {
                 totals.casts += metrics.casts;

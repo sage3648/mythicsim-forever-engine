@@ -124,6 +124,10 @@ fn is_zero(value: &i32) -> bool {
     *value == 0
 }
 
+fn is_zero_usize(value: &usize) -> bool {
+    *value == 0
+}
+
 fn is_zero_f64(value: &f64) -> bool {
     *value == 0.0
 }
@@ -402,6 +406,9 @@ pub struct Spell {
     /// spell has none of its own.
     #[serde(default)]
     pub related_dot_spell: Option<usize>,
+    /// Go `MetricSplits`: the spell reports one tagged metric entry per split.
+    #[serde(default, skip_serializing_if = "is_zero_usize")]
+    pub metric_splits: usize,
 }
 
 impl Spell {
@@ -1057,6 +1064,73 @@ pub enum Effect {
         cost_percent_add: f64,
         max_stacks: i32,
     },
+    /// Go consumes.go conjured item that restores energy, such as Thistle Tea.
+    ConjuredEnergy {
+        item_id: i32,
+        rng_label: String,
+        gains: Vec<ManaGain>,
+        selected: bool,
+        level_reduction: f64,
+    },
+    SinisterStrike {
+        spell_id: i32,
+        base_damage: f64,
+    },
+    Backstab {
+        spell_id: i32,
+        base_damage: f64,
+        main_hand_dagger: bool,
+        extra_combo_point_chance: f64,
+        extra_combo_point_action: ActionId,
+    },
+    Eviscerate {
+        spell_id: i32,
+        damage_average: f64,
+        damage_variance: f64,
+        combo_point_damage: f64,
+        attack_power_per_combo_point: f64,
+    },
+    SliceAndDice {
+        spell_id: i32,
+        aura: String,
+        durations_ns: Vec<i64>,
+        melee_speed_multiplier: f64,
+    },
+    BladeFlurry {
+        spell_id: i32,
+        aura: String,
+        attack_speed_multiplier: f64,
+    },
+    AdrenalineRush {
+        spell_id: i32,
+        aura: String,
+        regen_multiplier: f64,
+        energy_threshold: f64,
+    },
+    RogueFinisher {
+        relentless_strikes: bool,
+        relentless_strikes_chance_per_point: f64,
+        relentless_strikes_energy: f64,
+        relentless_strikes_action: ActionId,
+        ruthlessness_chance: f64,
+        ruthlessness_action: ActionId,
+    },
+    InstantPoison {
+        trigger_aura: String,
+        spell_id: i32,
+        proc_mask: Vec<String>,
+        proc_chance: f64,
+        min_damage: f64,
+        max_damage: f64,
+    },
+    DeadlyPoison {
+        trigger_aura: String,
+        spell_id: i32,
+        tag: i32,
+        proc_mask: Vec<String>,
+        proc_chance: f64,
+        tick_damage: f64,
+    },
 }
 
 impl Effect {
@@ -1141,6 +1215,16 @@ impl Effect {
             Effect::FireNova { .. } => "fire_nova",
             Effect::SearingTotem { .. } => "searing_totem",
             Effect::ElementalFocus { .. } => "elemental_focus",
+            Effect::ConjuredEnergy { .. } => "conjured_energy",
+            Effect::SinisterStrike { .. } => "sinister_strike",
+            Effect::Backstab { .. } => "backstab",
+            Effect::Eviscerate { .. } => "eviscerate",
+            Effect::SliceAndDice { .. } => "slice_and_dice",
+            Effect::BladeFlurry { .. } => "blade_flurry",
+            Effect::AdrenalineRush { .. } => "adrenaline_rush",
+            Effect::RogueFinisher { .. } => "rogue_finisher",
+            Effect::InstantPoison { .. } => "instant_poison",
+            Effect::DeadlyPoison { .. } => "deadly_poison",
         }
     }
 }

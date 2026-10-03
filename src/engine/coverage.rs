@@ -38,6 +38,7 @@ pub(crate) struct ClassGate {
 const COMMON_EFFECTS: &[&str] = &[
     "berserking",
     "blood_fury",
+    "conjured_energy",
     "conjured_mana",
     "energize_on_use",
     "eureka",
@@ -89,6 +90,7 @@ fn common_spell_capability(spell: &Spell, prepared: &PreparedV2) -> Option<&'sta
     prepared.effects.iter().find_map(|effect| match effect {
         Effect::PotionMana { item_id, .. } if *item_id == item => Some("potion_mana"),
         Effect::ConjuredMana { item_id, .. } if *item_id == item => Some("conjured_mana"),
+        Effect::ConjuredEnergy { item_id, .. } if *item_id == item => Some("conjured_energy"),
         Effect::EnergizeOnUse { item_id, .. } if *item_id == item => Some("energize_on_use"),
         Effect::Eureka { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
             Some("eureka")

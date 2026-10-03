@@ -71,6 +71,8 @@ pub(crate) trait Agent: Sized {
     fn extra_cast_condition(_fight: &Fight<Self>, _spell: SpellId, _behavior: Self::Spell) -> bool {
         true
     }
+    /// Go `CastConfig.ModifyCast`, run first in a full cast. It may not change the cost.
+    fn modify_cast(_fight: &mut Fight<Self>, _spell: SpellId, _behavior: Self::Spell) {}
     /// Go `MajorCooldown.ShouldActivate` for class cooldowns.
     fn should_activate(_fight: &Fight<Self>, _spell: SpellId, _behavior: Self::Spell) -> bool {
         true
@@ -161,6 +163,16 @@ pub(crate) enum SpellBehavior<S> {
         spread: f64,
         selected: bool,
         regen_window: f64,
+    },
+    /// Go consumes.go conjured item restoring energy, such as Thistle Tea, less its level
+    /// reduction.
+    ConjuredEnergy {
+        label: String,
+        min: f64,
+        spread: f64,
+        selected: bool,
+        reduction: f64,
+        metrics: usize,
     },
     /// Go spell_data_energize.go: an item use that rolls a client energize effect.
     EnergizeOnUse {
@@ -372,8 +384,15 @@ pub(crate) struct Spell<S> {
     /// Indexes into the resource metrics for this spell's energy cost and combo points.
     pub(crate) energy_metrics: Option<(usize, usize)>,
     pub(crate) metrics: [SpellMetrics; 2],
-    /// Index into the fight's action metrics, absent for `SpellFlagNoMetrics`.
+    /// Index into the fight's action metrics, absent for `SpellFlagNoMetrics`; the current
+    /// split's for a spell with metric splits.
     pub(crate) action: Option<usize>,
+    /// Go `splitSpellMetrics`, by split; `metrics` holds the current split's while it is set.
+    pub(crate) split_metrics: Vec<[SpellMetrics; 2]>,
+    /// The action metrics of each split.
+    pub(crate) split_actions: Vec<usize>,
+    /// The current split, which Go keeps across iterations.
+    pub(crate) split: usize,
 }
 
 /// Go `Hardcast`.
@@ -936,6 +955,22 @@ impl<A: Agent> Fight<A> {
                                 regen_window: *regen_window_seconds,
                             })
                         }
+                        Effect::ConjuredEnergy {
+                            item_id,
+                            rng_label,
+                            gains,
+                            selected,
+                            level_reduction,
+                        } if *item_id == item && gains.len() == 1 => {
+                            Some(SpellBehavior::ConjuredEnergy {
+                                label: rng_label.clone(),
+                                min: gains[0].min,
+                                spread: gains[0].spread,
+                                selected: *selected,
+                                reduction: *level_reduction,
+                                metrics: resource(id.clone(), false, ResourceKind::Energy),
+                            })
+                        }
                         Effect::EnergizeOnUse {
                             item_id,
                             average,
@@ -1087,30 +1122,52 @@ impl<A: Agent> Fight<A> {
                 energy_metrics,
                 metrics: [SpellMetrics::default(); 2],
                 action: None,
+                split_metrics: Vec::new(),
+                split_actions: Vec::new(),
+                split: 0,
                 id,
             });
         }
 
-        // Go keys action metrics by action ID in spellbook order.
+        // Go keys action metrics by action ID in spellbook order, one tagged ID per metric
+        // split.
         let mut actions: Vec<ActionTotals> = Vec::new();
-        for spell in &mut spells {
+        for (spell, exported) in spells.iter_mut().zip(&player.spells) {
             if spell.flags.no_metrics {
                 continue;
             }
-            let index = match actions.iter().position(|action| action.id == spell.id) {
-                Some(index) => index,
-                None => {
-                    actions.push(ActionTotals {
-                        id: spell.id.clone(),
-                        melee: spell.flags.melee_metrics,
-                        passive: spell.flags.passive,
-                        school: spell.school,
-                        targets: [ActionReport::new(0), ActionReport::new(1)],
-                    });
-                    actions.len() - 1
-                }
+            let ids: Vec<ActionId> = if exported.metric_splits > 1 {
+                (0..exported.metric_splits)
+                    .map(|tag| ActionId {
+                        tag: tag as i32,
+                        ..spell.id.clone()
+                    })
+                    .collect()
+            } else {
+                vec![spell.id.clone()]
             };
-            spell.action = Some(index);
+            let mut indexes = Vec::new();
+            for id in ids {
+                let index = match actions.iter().position(|action| action.id == id) {
+                    Some(index) => index,
+                    None => {
+                        actions.push(ActionTotals {
+                            id,
+                            melee: spell.flags.melee_metrics,
+                            passive: spell.flags.passive,
+                            school: spell.school,
+                            targets: [ActionReport::new(0), ActionReport::new(1)],
+                        });
+                        actions.len() - 1
+                    }
+                };
+                indexes.push(index);
+            }
+            spell.action = Some(indexes[0]);
+            if indexes.len() > 1 {
+                spell.split_metrics = vec![[SpellMetrics::default(); 2]; indexes.len()];
+                spell.split_actions = indexes;
+            }
         }
 
         let mut aura_logs: Vec<String> = Vec::new();
@@ -1709,6 +1766,7 @@ impl<A: Agent> Fight<A> {
         if side == Side::Player {
             for spell in &mut self.spells {
                 spell.metrics = [SpellMetrics::default(); 2];
+                spell.split_metrics.fill([SpellMetrics::default(); 2]);
             }
             self.player.mana = self.config.max_mana;
             self.player.health = self.config.max_health;
