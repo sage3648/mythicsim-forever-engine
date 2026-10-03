@@ -24,7 +24,7 @@ import sys
 
 from compare import ROOT, PIN, CLIENT_BUILD, build_oracle, command, go_pin_flags, load
 
-FAMILY = ROOT / "fixtures" / "mage" / "frost" / "prepared-v2"
+FAMILY = ROOT / "fixtures" / "mage" / "prepared-v2"
 HELPER = ROOT / "tools" / "oracle-v2" / "main.go"
 
 

@@ -17,7 +17,7 @@ Frostbolt kernel remains unchanged beside it.
 | Library entry points and compatibility | [src/lib.rs](../src/lib.rs) |
 | CLI arguments and JSON files | [src/main.rs](../src/main.rs) |
 | Prepared input fields | [src/contracts.rs](../src/contracts.rs), [src/contracts/prepared_v2.rs](../src/contracts/prepared_v2.rs) |
-| Prepared v2 identity checks and coverage gate | [src/engine/prepared.rs](../src/engine/prepared.rs), [src/classes/mage/specs/frost/coverage.rs](../src/classes/mage/specs/frost/coverage.rs) |
+| Prepared v2 identity checks and coverage gate | [src/engine/prepared.rs](../src/engine/prepared.rs), [src/classes/mage/prepared/coverage.rs](../src/classes/mage/prepared/coverage.rs) |
 | Rotation (APL) subset | [src/rotation.rs](../src/rotation.rs) |
 | Strict input limits and supported-build checks | [src/engine/validation.rs](../src/engine/validation.rs) |
 | Iteration lifecycle and aggregate statistics | [src/engine.rs](../src/engine.rs) |
@@ -57,11 +57,13 @@ src/
     mage.rs                      Mage domain entry
     mage/
       agent.rs                   Mage hooks for the fight runtime
-      spells.rs                  shared Mage spell entry
-      spells/frostbolt.rs        Frostbolt calculation and outcome recording
+      masks.rs                   Go Mage class masks by exported name
+      prepared.rs                prepared v2 execution for Mage builds
+      prepared/coverage.rs       prepared v2 Mage build gate
+      spells.rs                  Mage spell entry: Frostbolt, Arcane Blast, cooldowns
+      talents.rs                 Mage talent entry: procs and their auras
       specs.rs                   Mage spec entry
-      specs/frost.rs             current prepared Frost execution
-      specs/frost/coverage.rs    prepared v2 Frost build gate
+      specs/frost.rs             prepared v1 Frostbolt kernel
 
 tests/
   cli.rs                         executable contract tests
@@ -70,7 +72,7 @@ tests/
   classes/mage/frost.rs           Frost test entry
   classes/mage/frost/kernel.rs    timing, mana and rejection regressions
   classes/mage/frost/oracle.rs    immutable Go golden comparison
-  classes/mage/frost/prepared_v2.rs  prepared v2 contract and coverage tests
+  classes/mage/prepared_v2.rs    prepared v2 contract, coverage and Go golden tests
   release.rs                     release manifest consistency
 ```
 

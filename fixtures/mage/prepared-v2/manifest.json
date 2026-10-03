@@ -34,7 +34,7 @@
       "id": "frost-no-fingers",
       "description": "The Frost reference with Fingers of Frost unlearned. Regression for community fix #622: pinned Go drops the Ice Lance condition and casts Ice Lance on every global cooldown.",
       "request": {
-        "path": "fixtures/mage/frost/prepared-v2/frost-no-fingers.request.json"
+        "path": "fixtures/mage/prepared-v2/frost-no-fingers.request.json"
       },
       "prepared": "frost-no-fingers.prepared.json",
       "prepared_sha256": "a6d098ea2fd5a7c9d8b727d5a9e3306536bf44d9865d7d554305ee2c89d6f388",
@@ -49,7 +49,7 @@
       "id": "frostbolt-labeled",
       "description": "Frostbolt only with labeled random streams: the v1 static-frost-60 character through the v2 contract.",
       "request": {
-        "path": "fixtures/mage/frost/prepared-v2/frostbolt-labeled.request.json"
+        "path": "fixtures/mage/prepared-v2/frostbolt-labeled.request.json"
       },
       "prepared": "frostbolt-labeled.prepared.json",
       "prepared_sha256": "f7fd3f39af0adcfcc5fc0f3ab08cab409aa8b5cb5edd39fd0057c58ee4664058",
@@ -66,7 +66,7 @@
       "id": "frostbolt-shared-oom",
       "description": "Frostbolt only, shared random stream, 120 +/- 15 second fights that run out of mana; keeps the first-fight log golden.",
       "request": {
-        "path": "fixtures/mage/frost/prepared-v2/frostbolt-shared-oom.request.json"
+        "path": "fixtures/mage/prepared-v2/frostbolt-shared-oom.request.json"
       },
       "prepared": "frostbolt-shared-oom.prepared.json",
       "prepared_sha256": "10a20a0148d5182aa39eee7e254a1255c585c726c0f64796cccb186883d68524",
@@ -87,7 +87,7 @@
       "id": "frostbolt-shared-meditation",
       "description": "Frostbolt only, shared stream, 300 +/- 30 seconds with Arcane Meditation regeneration while casting.",
       "request": {
-        "path": "fixtures/mage/frost/prepared-v2/frostbolt-shared-meditation.request.json"
+        "path": "fixtures/mage/prepared-v2/frostbolt-shared-meditation.request.json"
       },
       "prepared": "frostbolt-shared-meditation.prepared.json",
       "prepared_sha256": "c5f05a82f5cc3c68530a879e35aa8cc1dd18318043327cf42708e165fe6264cb",
@@ -104,7 +104,7 @@
       "id": "frostbolt-shared-haste",
       "description": "Frostbolt only, shared stream, spell haste rating and 60 +/- 10 second fights.",
       "request": {
-        "path": "fixtures/mage/frost/prepared-v2/frostbolt-shared-haste.request.json"
+        "path": "fixtures/mage/prepared-v2/frostbolt-shared-haste.request.json"
       },
       "prepared": "frostbolt-shared-haste.prepared.json",
       "prepared_sha256": "3182fc6f41d40176bdf87486fdefe7e19cc86e0c654e36501008096e65adc406",
@@ -121,7 +121,7 @@
       "id": "frostbolt-shared-boundary",
       "description": "Frostbolt only, shared stream, 3 +/- 1 second fights at 30 yards: casts complete without their missiles landing.",
       "request": {
-        "path": "fixtures/mage/frost/prepared-v2/frostbolt-shared-boundary.request.json"
+        "path": "fixtures/mage/prepared-v2/frostbolt-shared-boundary.request.json"
       },
       "prepared": "frostbolt-shared-boundary.prepared.json",
       "prepared_sha256": "e013a0f7e35865750245af2b400e7fb7e27b882f63aeb4117e399fe12d46a2f0",
@@ -138,7 +138,7 @@
       "id": "reference-winters-chill",
       "description": "The reference character, gear, buffs, consumables and Judgement of Wisdom with only Winter's Chill among proc talents, casting Frostbolt.",
       "request": {
-        "path": "fixtures/mage/frost/prepared-v2/reference-winters-chill.request.json"
+        "path": "fixtures/mage/prepared-v2/reference-winters-chill.request.json"
       },
       "prepared": "reference-winters-chill.prepared.json",
       "prepared_sha256": "0c7fde07d804bdda6bf7a89188ac743f0862c79e539b60e04f6d54e7f9ac6d8e",
@@ -155,7 +155,7 @@
       "id": "reference-winters-chill-rank3",
       "description": "As reference-winters-chill with Winter's Chill at rank 3, so each landed Frost spell rolls its proc; keeps the first-fight log golden.",
       "request": {
-        "path": "fixtures/mage/frost/prepared-v2/reference-winters-chill-rank3.request.json"
+        "path": "fixtures/mage/prepared-v2/reference-winters-chill-rank3.request.json"
       },
       "prepared": "reference-winters-chill-rank3.prepared.json",
       "prepared_sha256": "79af94b7fb0375d3cd956ab062e49541044ef7131fbf625b39e896467a133f54",
@@ -176,7 +176,7 @@
       "id": "reference-fingers-of-frost",
       "description": "The reference character with Fingers of Frost 2, Shatter 3 and Winter's Chill; Ice Lance while Fingers of Frost is active, then Frostbolt. Keeps the first-fight log golden.",
       "request": {
-        "path": "fixtures/mage/frost/prepared-v2/reference-fingers-of-frost.request.json"
+        "path": "fixtures/mage/prepared-v2/reference-fingers-of-frost.request.json"
       },
       "prepared": "reference-fingers-of-frost.prepared.json",
       "prepared_sha256": "1b3fca2845e9d617f8b905d7a3d2bbd2b6b562b6f36ec7d17543a62724c8fae4",
@@ -197,7 +197,7 @@
       "id": "reference-fingers-of-frost-rank1",
       "description": "As reference-fingers-of-frost with Fingers of Frost and Shatter at rank 1: one charge per proc and a smaller Shatter bonus.",
       "request": {
-        "path": "fixtures/mage/frost/prepared-v2/reference-fingers-of-frost-rank1.request.json"
+        "path": "fixtures/mage/prepared-v2/reference-fingers-of-frost-rank1.request.json"
       },
       "prepared": "reference-fingers-of-frost-rank1.prepared.json",
       "prepared_sha256": "4e2a4c7ecc94147bcd67d6cb5adce8c7ab5b0758af910d7a4fdd4528a18455f9",
@@ -214,7 +214,7 @@
       "id": "reference-clearcasting",
       "description": "The reference character with Arcane Concentration and Winter's Chill casting Frostbolt: Clearcasting procs, its internal cooldown and free casts.",
       "request": {
-        "path": "fixtures/mage/frost/prepared-v2/reference-clearcasting.request.json"
+        "path": "fixtures/mage/prepared-v2/reference-clearcasting.request.json"
       },
       "prepared": "reference-clearcasting.prepared.json",
       "prepared_sha256": "b9337bbb2ad560fdfa413c9250c966ed87fef1986e8b67dc9d078107de5e2c2f",
@@ -231,7 +231,7 @@
       "id": "reference-missile-barrage",
       "description": "The reference character with Missile Barrage and Winter's Chill: Arcane Missiles while Missile Barrage is active, then Frostbolt. Keeps the first-fight log golden.",
       "request": {
-        "path": "fixtures/mage/frost/prepared-v2/reference-missile-barrage.request.json"
+        "path": "fixtures/mage/prepared-v2/reference-missile-barrage.request.json"
       },
       "prepared": "reference-missile-barrage.prepared.json",
       "prepared_sha256": "59b83ddca32ec9d5e6d251a483bfbf443512bd7e5812bd28f2b1cf7519547384",
@@ -252,7 +252,7 @@
       "id": "reference-procs",
       "description": "The reference character and talents with the reference rotation's Ice Lance, Arcane Missiles and Frostbolt rules: every proc talent, without mana recovery or cooldowns. Keeps the first-fight log golden.",
       "request": {
-        "path": "fixtures/mage/frost/prepared-v2/reference-procs.request.json"
+        "path": "fixtures/mage/prepared-v2/reference-procs.request.json"
       },
       "prepared": "reference-procs.prepared.json",
       "prepared_sha256": "e4857074ca290029425179682bd658fa65477be395bf93f1f551c6c43d386305",
@@ -273,7 +273,7 @@
       "id": "reference-long",
       "description": "The complete reference build in 300 +/- 30 second fights: Evocation, every mana gem, potions, runes and the Robe all fire.",
       "request": {
-        "path": "fixtures/mage/frost/prepared-v2/reference-long.request.json"
+        "path": "fixtures/mage/prepared-v2/reference-long.request.json"
       },
       "prepared": "reference-long.prepared.json",
       "prepared_sha256": "aabe9cd5d56cc6cbb7640bfaa31184c55d52c21aa62200f56e36e27c63fb0adf",
@@ -290,7 +290,7 @@
       "id": "reference-ten-minutes",
       "description": "The complete reference build in 600 +/- 60 second fights with seed 7: repeated Evocations and every cooldown cycling.",
       "request": {
-        "path": "fixtures/mage/frost/prepared-v2/reference-ten-minutes.request.json"
+        "path": "fixtures/mage/prepared-v2/reference-ten-minutes.request.json"
       },
       "prepared": "reference-ten-minutes.prepared.json",
       "prepared_sha256": "4e0963b331bcacb0b8996ecff71ae25602de29241a9755a15f557b34bf3fbaa4",
@@ -307,7 +307,7 @@
       "id": "reference-no-missile-barrage",
       "description": "The Frost reference with Missile Barrage unlearned. The rotation guards the Arcane Missiles rule with auraIsKnown, so pinned Go and community #622 both prune it and the build is supported.",
       "request": {
-        "path": "fixtures/mage/frost/prepared-v2/reference-no-missile-barrage.request.json"
+        "path": "fixtures/mage/prepared-v2/reference-no-missile-barrage.request.json"
       },
       "prepared": "reference-no-missile-barrage.prepared.json",
       "prepared_sha256": "0dcde0825f2b74e3235dff982b92ef7a1c6306412b019009433a2758c7dd179e",
@@ -324,7 +324,7 @@
       "id": "arcane-blast",
       "description": "The application's Arcane character as a Gnome without fire talents, casting only Arcane Blast: stacks raise its cost until it runs out of mana.",
       "request": {
-        "path": "fixtures/mage/frost/prepared-v2/arcane-blast.request.json"
+        "path": "fixtures/mage/prepared-v2/arcane-blast.request.json"
       },
       "prepared": "arcane-blast.prepared.json",
       "prepared_sha256": "5f6e76d1c39a026968fc9c75d9172b0e62bea2f4e17177a0d90f67a6a7a4ae3c",
@@ -341,7 +341,7 @@
       "id": "arcane-blast-spenders",
       "description": "The same character with the Arcane preset's Missiles, Frostbolt and Arcane Blast rules: Frostbolt spends the stacks after its damage is rolled, and the Missiles channel holds them until it ends.",
       "request": {
-        "path": "fixtures/mage/frost/prepared-v2/arcane-blast-spenders.request.json"
+        "path": "fixtures/mage/prepared-v2/arcane-blast-spenders.request.json"
       },
       "prepared": "arcane-blast-spenders.prepared.json",
       "prepared_sha256": "c990120b441735c3bbfdffe8530b54dcb6a8fa716956b2795d6c2f8f2919c0c9",
@@ -362,7 +362,7 @@
       "id": "arcane-cooldowns",
       "description": "The application's Arcane character and rotation as a Human without fire talents: Arcane Power and Presence of Mind are cast as major cooldowns.",
       "request": {
-        "path": "fixtures/mage/frost/prepared-v2/arcane-cooldowns.request.json"
+        "path": "fixtures/mage/prepared-v2/arcane-cooldowns.request.json"
       },
       "prepared": "arcane-cooldowns.prepared.json",
       "prepared_sha256": "19aa1b5734244de78e927eb24a5bfbe7f5494a4e3cfc4bc69350809a976dfff5",
@@ -383,7 +383,7 @@
       "id": "arcane-cooldowns-long",
       "description": "The same at 400 seconds: Presence of Mind's cooldown restarts when Arcane Blast consumes it, so its second use comes at 181.5 seconds.",
       "request": {
-        "path": "fixtures/mage/frost/prepared-v2/arcane-cooldowns-long.request.json"
+        "path": "fixtures/mage/prepared-v2/arcane-cooldowns-long.request.json"
       },
       "prepared": "arcane-cooldowns-long.prepared.json",
       "prepared_sha256": "d067b4fdb31e30825f017e024192ba6e89e34736026c7d6e618b2c5b06f87b1d",
@@ -400,7 +400,7 @@
       "id": "arcane-ignite",
       "description": "The Arcane cooldowns case with the application's fire talents, including Ignite: no reachable spell is fire, so its trigger never acts.",
       "request": {
-        "path": "fixtures/mage/frost/prepared-v2/arcane-ignite.request.json"
+        "path": "fixtures/mage/prepared-v2/arcane-ignite.request.json"
       },
       "prepared": "arcane-ignite.prepared.json",
       "prepared_sha256": "69d3c8bdfb74652e6135107083c5b0886330be02aa15f3a03c88c6b0fd3bf494",
@@ -417,7 +417,7 @@
       "id": "arcane-reference",
       "description": "The application's Arcane reference request (ReferenceBuildBySlug arcane-mage with BuildRequest at application revision ad6ea6b8, timeline on), unchanged: Undead with Touch of the Grave, Ignite talented, Arcane Blast, Arcane Power and Presence of Mind.",
       "request": {
-        "path": "fixtures/mage/frost/prepared-v2/arcane-reference.request.json"
+        "path": "fixtures/mage/prepared-v2/arcane-reference.request.json"
       },
       "prepared": "arcane-reference.prepared.json",
       "prepared_sha256": "00e36929e3cf6c011a05d00025f17b970f4a9b605f29ad19e94fb81f830c8642",

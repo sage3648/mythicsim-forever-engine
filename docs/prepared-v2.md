@@ -145,7 +145,7 @@ differ. An `auraIsKnown` guard that prunes the action under both readings is sup
 
 ## Examples
 
-The [fixture family](../fixtures/mage/frost/prepared-v2/manifest.json) holds accepted
+The [fixture family](../fixtures/mage/prepared-v2/manifest.json) holds accepted
 inputs and their expected coverage. `frost-reference` is the frozen application
 request; it is supported and keeps Go's result and first-fight log as goldens.
 `frost-no-fingers` is the same request without Fingers of Frost, the regression for
@@ -154,7 +154,7 @@ Barrage, whose Arcane Missiles rule is guarded by `auraIsKnown`; it is supported
 matches Go.
 
 The contract tests in
-[tests/classes/mage/frost/prepared_v2.rs](../tests/classes/mage/frost/prepared_v2.rs)
+[tests/classes/mage/prepared_v2.rs](../tests/classes/mage/prepared_v2.rs)
 derive rejected examples from it: unknown fields and effect kinds, identity and bound
 violations, exporter gaps, an unclaimed listener, unsupported rotation operators and
 a rotation spell without behavior.
@@ -228,7 +228,7 @@ scratch storage, requiring an exact match. This needs Go, Git and protoc, like t
 
 ```sh
 python3 tools/prepared_v2.py capture --output output/prepared-v2-capture
-python3 tools/prepared_v2.py accept --case ID --description TEXT fixtures/mage/frost/prepared-v2/ID.request.json
+python3 tools/prepared_v2.py accept --case ID --description TEXT fixtures/mage/prepared-v2/ID.request.json
 ```
 
 After a reviewed exporter change, `refresh` re-exports the accepted prepared inputs and
@@ -237,7 +237,7 @@ fails unless every Go golden stays byte-identical.
 Report coverage for any prepared input:
 
 ```sh
-cargo run --locked -- check --infile fixtures/mage/frost/prepared-v2/frost-reference.prepared.json
+cargo run --locked -- check --infile fixtures/mage/prepared-v2/frost-reference.prepared.json
 ```
 
 ## Limitations

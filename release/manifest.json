@@ -73,8 +73,8 @@
         "winters_chill"
       ],
       "evidence": [
-        "fixtures/mage/frost/prepared-v2/manifest.json",
-        "tests/classes/mage/frost/prepared_v2.rs"
+        "fixtures/mage/prepared-v2/manifest.json",
+        "tests/classes/mage/prepared_v2.rs"
       ]
     },
     {
@@ -83,8 +83,8 @@
       "status": "validated_against_go",
       "scope": "The inventoried Frost reference build and its talent, duration, seed and proc-rank variants in the fixture family, plus 24 randomized variants; the whole RaidSimResult and the logs the application parses into first-fight and averaged timelines.",
       "evidence": [
-        "fixtures/mage/frost/prepared-v2/manifest.json",
-        "tests/classes/mage/frost/prepared_v2.rs",
+        "fixtures/mage/prepared-v2/manifest.json",
+        "tests/classes/mage/prepared_v2.rs",
         "validation/2026-10-03-frost-sweep.json",
         "validation/2026-10-03-report-compatibility.json"
       ],

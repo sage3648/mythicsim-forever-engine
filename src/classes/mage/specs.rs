@@ -1,3 +1,3 @@
-//! Mage spec scope and execution. Only the prepared Frostbolt slice is supported.
+//! Mage spec scope for the prepared v1 kernel: the Frostbolt slice.
 
 pub(crate) mod frost;

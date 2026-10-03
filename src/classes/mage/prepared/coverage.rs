@@ -1,4 +1,4 @@
-//! The Frost build gate for prepared v2 inputs.
+//! The Mage build gate for prepared v2 inputs.
 //!
 //! An effect is required when an active aura that listens to combat events belongs to
 //! it, or when the rotation can reach a spell it implements. A prepared input is

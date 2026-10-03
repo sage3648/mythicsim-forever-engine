@@ -24,7 +24,7 @@ struct Coverage {
 }
 
 fn family() -> std::path::PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).join("fixtures/mage/frost/prepared-v2")
+    Path::new(env!("CARGO_MANIFEST_DIR")).join("fixtures/mage/prepared-v2")
 }
 
 fn manifest() -> Manifest {

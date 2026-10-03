@@ -5,7 +5,7 @@
 //! fallback reasons.
 
 use crate::{
-    classes::mage::specs::frost,
+    classes::mage,
     contracts::prepared_v2::{PreparedV2, CONTRACT, SCHEMA_VERSION},
     mechanics::mana::{regen_per_second_casting, regen_per_second_not_casting, RegenInputs},
     rotation, SOURCE_REVISION,
@@ -172,7 +172,10 @@ pub fn coverage(prepared: &PreparedV2) -> Vec<String> {
             None
         }
     };
-    reasons.extend(frost::prepared_coverage(prepared, rotation.as_ref()));
+    reasons.extend(mage::prepared::prepared_coverage(
+        prepared,
+        rotation.as_ref(),
+    ));
     reasons
 }
 
@@ -203,7 +206,7 @@ pub struct PreparedReport {
 /// Validate, gate and simulate a prepared v2 input.
 pub fn simulate(prepared: &PreparedV2) -> Result<PreparedReport, PreparedError> {
     check(prepared)?;
-    let report = frost::run_prepared(prepared).map_err(PreparedError::Invalid)?;
+    let report = mage::prepared::run_prepared(prepared).map_err(PreparedError::Invalid)?;
     let elapsed_ns = report.elapsed_ns;
     Ok(PreparedReport {
         engine: format!("forever-rust-{}", env!("CARGO_PKG_VERSION")),

@@ -62,7 +62,7 @@ fn benchmark_reports_only_requested_samples_after_warmup() {
 #[test]
 fn prepared_benchmark_repeats_one_result() {
     let input = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("fixtures/mage/frost/prepared-v2/reference-clearcasting.prepared.json");
+        .join("fixtures/mage/prepared-v2/reference-clearcasting.prepared.json");
     let result = Command::new(env!("CARGO_BIN_EXE_forever-engine"))
         .args(["bench", "--infile"])
         .arg(input)

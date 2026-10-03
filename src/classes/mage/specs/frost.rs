@@ -1,18 +1,7 @@
-//! Prepared Frostbolt-only Frost execution, not a complete Frost Mage simulator.
+//! The prepared v1 Frostbolt-only Frost kernel, not a complete Frost Mage simulator.
 //! The spec owns its supported build and static decision loop. Shared spell
 //! mechanics stay in Mage's spells; scheduling and mana primitives stay shared.
-
-mod coverage;
-
-pub(crate) use coverage::{prepared_coverage, IMPLEMENTED_EFFECTS};
-
-/// Run a prepared v2 input that passed the coverage gate with the shared Mage agent.
-pub(crate) fn run_prepared(
-    prepared: &crate::contracts::prepared_v2::PreparedV2,
-) -> Result<crate::core::fight::FightReport, String> {
-    let mut fight = crate::classes::mage::agent::MageAgent::fight(prepared)?;
-    Ok(fight.run())
-}
+//! Prepared v2 builds of every implemented spec run through `classes::mage::prepared`.
 
 use std::collections::BinaryHeap;
 
