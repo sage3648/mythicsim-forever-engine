@@ -51,7 +51,7 @@ fn production_build_is_supported() {
         "shadowburn",
         "improved_shadow_bolt",
         "shadow_and_flame",
-        "scheduled_aura",
+        "sunder_armor_ramp",
     ] {
         assert!(kinds.contains(&kind), "missing {kind}");
     }

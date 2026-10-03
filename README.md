@@ -74,6 +74,18 @@ credits it, Omen of Clarity, Nature's Grace and Eclipse match the pinned Go engi
 509.502 DPS, and a [sweep](validation/2026-10-04-balance-druid-sweep.json) across every
 Balance race matches on every supported variant.
 
+The production Elemental Shaman build, a Tauren with a prepull Lightning Bolt, every
+Lightning Bolt and Chain Lightning rank with Lightning Overload, Flame Shock, Lava Burst,
+Fire Nova, Searing Totem and Elemental Focus, matches the pinned Go engine at 396.972 DPS.
+Sweeps of [its variants](validation/2026-10-04-elemental-shaman-sweep.json) and of
+[every Shaman race](validation/2026-10-04-elemental-shaman-race-sweep.json) match on all
+48 variants.
+
+The application's published race boards, the requests behind every race's production DPS
+for each supported spec, are a real production corpus: all 28 match the pinned Go engine
+in Rust at 10,000 iterations, and every DPS the production engine published equals the
+pinned result to within 4e-12 ([record](validation/2026-10-04-production-race-boards.json)).
+
 The production Destruction Warlock build matches too: an Undead warlock with the Imp
 sacrificed before the pull, a prepull Life Tap, every Shadow Bolt rank with Improved
 Shadow Bolt's debuff, Immolate, Corruption, the ramping Bane of Agony, Curse of the

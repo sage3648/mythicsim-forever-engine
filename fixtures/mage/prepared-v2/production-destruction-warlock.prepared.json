@@ -3352,6 +3352,62 @@
     },
     "prepull_actions": 1
   },
+  "melee": {
+    "auto_swing_melee": false,
+    "auto_swing_ranged": false,
+    "dual_wielding": false,
+    "main_hand": {
+      "base_damage_min": 0,
+      "base_damage_max": 0,
+      "attack_power_per_dps": 0,
+      "swing_speed": 0,
+      "normalized_swing_speed": 0,
+      "school": 0,
+      "min_range": 0,
+      "max_range": 0
+    },
+    "off_hand": {
+      "base_damage_min": 0,
+      "base_damage_max": 0,
+      "attack_power_per_dps": 0,
+      "swing_speed": 0,
+      "normalized_swing_speed": 0,
+      "school": 0,
+      "min_range": 0,
+      "max_range": 0
+    },
+    "ranged": {
+      "base_damage_min": 0,
+      "base_damage_max": 0,
+      "attack_power_per_dps": 0,
+      "swing_speed": 0,
+      "normalized_swing_speed": 0,
+      "school": 0,
+      "min_range": 0,
+      "max_range": 0
+    },
+    "base_miss_chance": 0.08,
+    "base_glance_chance": 0.4,
+    "glance_multiplier": 0.65,
+    "glance_spread": 0.1,
+    "hit_suppression": 0.01,
+    "melee_crit_suppression": 0.048,
+    "ignore_armor": false,
+    "armor_ignore_factor": 0,
+    "in_front_of_target": false,
+    "attack_speed_multiplier": 1,
+    "melee_speed_multiplier": 1,
+    "dodge_reduction": 0,
+    "disable_dw_miss_penalty": false,
+    "defender_dodge": 0.065,
+    "defender_parry": 0.14,
+    "defender_block": 0.05,
+    "defender_armor": 976,
+    "defender_block_reduction": 54,
+    "defender_bonus_attack_power": 0,
+    "defender_bonus_physical_damage_taken": 0,
+    "defender_reduced_physical_hit_taken": 0
+  },
   "effects": [
     {
       "kind": "shadow_bolt"
@@ -3472,14 +3528,6 @@
       ]
     },
     {
-      "add_stack": true,
-      "aura": "Sunder Armor (External)",
-      "blocked": true,
-      "kind": "scheduled_aura",
-      "num_ticks": 5,
-      "period_ns": 1500000000
-    },
-    {
       "delay_ns": 10000000,
       "drain_spell_id": 1260198,
       "health_fraction": 0.05,
@@ -3495,6 +3543,21 @@
         "ProcMaskSpellDamage"
       ],
       "trigger_aura": "Touch of the Grave"
+    },
+    {
+      "armor_by_stacks": [
+        976,
+        976,
+        976,
+        976,
+        976,
+        976
+      ],
+      "aura": "Sunder Armor (External)",
+      "blocked": true,
+      "kind": "sunder_armor_ramp",
+      "period_ns": 1500000000,
+      "ticks": 5
     },
     {
       "gains": [

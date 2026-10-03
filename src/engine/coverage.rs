@@ -42,17 +42,20 @@ const COMMON_EFFECTS: &[&str] = &[
     "judgement_of_wisdom",
     "potion_mana",
     "read_ley_line",
-    "scheduled_aura",
     "shatter_curse",
+    "stoneform",
+    "sunder_armor_ramp",
     "temporary_stats",
     "touch_of_the_grave",
 ];
 
 /// Every class with an implemented gate.
-fn gates() -> [&'static ClassGate; 3] {
+fn gates() -> [&'static ClassGate; 5] {
     [
         &classes::mage::prepared::GATE,
         &classes::druid::prepared::GATE,
+        &classes::shaman::prepared::GATE,
+        &classes::paladin::prepared::GATE,
         &classes::warlock::prepared::GATE,
     ]
 }
@@ -94,6 +97,9 @@ fn common_spell_capability(spell: &Spell, prepared: &PreparedV2) -> Option<&'sta
         Effect::ShatterCurse { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
             Some("shatter_curse")
         }
+        Effect::Stoneform { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
+            Some("stoneform")
+        }
         Effect::ReadLeyLine { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
             Some("read_ley_line")
         }
@@ -124,11 +130,10 @@ fn common_claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         | Effect::Berserking { aura, .. }
         | Effect::BloodFury { aura, .. }
         | Effect::ShatterCurse { aura, .. }
+        | Effect::Stoneform { aura, .. }
         | Effect::ReadLeyLine { aura, .. }
         | Effect::TemporaryStats { aura, .. } => vec![("player", aura)],
-        Effect::JudgementOfWisdom { aura, .. } | Effect::ScheduledAura { aura, .. } => {
-            vec![("target", aura)]
-        }
+        Effect::JudgementOfWisdom { aura, .. } => vec![("target", aura)],
         Effect::InertListener { unit, aura, .. } => match unit.as_str() {
             "player" => vec![("player", aura)],
             "target" => vec![("target", aura)],
@@ -279,12 +284,6 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
             .collect::<Vec<_>>()
     };
     let mut required: BTreeSet<&str> = BTreeSet::new();
-    // Effects that act on their own schedule, whatever listens or casts.
-    for effect in &prepared.effects {
-        if matches!(effect, Effect::ScheduledAura { .. }) {
-            required.insert(effect.kind());
-        }
-    }
     for (unit, auras) in [
         ("player", &player.auras),
         ("target", &prepared.target.auras),
@@ -332,7 +331,11 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
                 player.prepull_actions
             ));
         }
+        let unreachable = unreachable_with_one_target(prepared, rotation);
         for item in &rotation.priority_list {
+            if unreachable.contains(&item.position) {
+                continue;
+            }
             match &item.action {
                 Action::CastSpell(id) => reachable.extend(rotation_spell(prepared, id)),
                 Action::AutocastOtherCooldowns => {
@@ -400,6 +403,33 @@ fn find_unit_aura(
             aura: id.clone(),
             max_stacks: aura.max_stacks,
         })
+}
+
+/// Rotation items, by position, whose condition can never hold against the one target the
+/// runtime supports, such as a `numberTargets` of two or more. Go still evaluates them, without
+/// side effects, but never runs their action.
+fn unreachable_with_one_target(prepared: &PreparedV2, rotation: &Rotation) -> BTreeSet<usize> {
+    let aura = |id: &ActionId| find_aura(prepared, id);
+    let target_aura = |id: &ActionId| find_unit_aura(&prepared.target.auras, id);
+    let spell = |id: &ActionId| rotation_spell_index(prepared, id);
+    let dot = |id: &ActionId| {
+        rotation_spell_index(prepared, id).and_then(|index| dot_owner(prepared, index))
+    };
+    let lookup = Lookup {
+        aura: &aura,
+        target_aura: &target_aura,
+        spell: &spell,
+        dot: &dot,
+    };
+    rotation
+        .priority_list
+        .iter()
+        .filter(|item| {
+            let condition = item.condition.as_ref().map(Value::with_one_target);
+            compile_condition(condition.as_ref(), &lookup, MissingAura::Dropped).never_holds()
+        })
+        .map(|item| item.position)
+        .collect()
 }
 
 /// Pinned Go gives `auraIsActive` and `auraNumStacks` on an aura the character cannot have

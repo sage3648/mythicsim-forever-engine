@@ -14,6 +14,10 @@ pub(crate) const OUTCOME_PARTIAL_2_4: u16 = 1 << 4;
 pub(crate) const OUTCOME_PARTIAL_3_4: u16 = 1 << 5;
 pub(crate) const OUTCOME_PARTIAL: u16 =
     OUTCOME_PARTIAL_1_4 | OUTCOME_PARTIAL_2_4 | OUTCOME_PARTIAL_3_4;
+pub(crate) const OUTCOME_DODGE: u16 = 1 << 6;
+pub(crate) const OUTCOME_GLANCE: u16 = 1 << 7;
+pub(crate) const OUTCOME_PARRY: u16 = 1 << 8;
+pub(crate) const OUTCOME_BLOCK: u16 = 1 << 9;
 /// Go outcome appliers the runtime implements.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Outcome {
@@ -27,8 +31,8 @@ pub(crate) enum Outcome {
     MagicHitNoHitCounter,
 }
 
-/// Go `OutcomeLanded` for the outcomes a spell can have.
-pub(crate) const OUTCOME_LANDED: u16 = OUTCOME_HIT | OUTCOME_CRIT;
+/// Go `OutcomeLanded`; the runtime has no crushing blows.
+pub(crate) const OUTCOME_LANDED: u16 = OUTCOME_HIT | OUTCOME_CRIT | OUTCOME_GLANCE | OUTCOME_BLOCK;
 
 /// Go `SpellResult`, carried by value until its damage is dealt.
 #[derive(Clone, Copy, Debug)]
@@ -61,6 +65,16 @@ impl SpellResult {
         };
         if self.outcome & OUTCOME_MISS != 0 {
             "Miss".into()
+        } else if self.outcome & OUTCOME_DODGE != 0 {
+            "Dodge".into()
+        } else if self.outcome & OUTCOME_PARRY != 0 {
+            "Parry".into()
+        } else if self.outcome & OUTCOME_BLOCK != 0 && self.outcome & OUTCOME_CRIT != 0 {
+            "BlockedCrit".into()
+        } else if self.outcome & OUTCOME_BLOCK != 0 {
+            "Block".into()
+        } else if self.outcome & OUTCOME_GLANCE != 0 {
+            format!("Glance{partial}")
         } else if self.outcome & OUTCOME_CRIT != 0 {
             format!("Crit{partial}")
         } else if self.outcome & OUTCOME_HIT != 0 {
@@ -128,7 +142,7 @@ impl<A: Agent> Fight<A> {
     }
 
     /// Go `Spell.TargetDamageMultiplier`.
-    fn target_multiplier(&self, spell: SpellId) -> f64 {
+    pub(crate) fn target_multiplier(&self, spell: SpellId) -> f64 {
         let state = &self.spells[spell];
         if state.flags.ignore_target_modifiers {
             return 1.0;
@@ -270,21 +284,17 @@ impl<A: Agent> Fight<A> {
         result.damage = result.damage.max(0.0);
 
         if self.log.is_some() {
-            let line = format!(
-                "[{}] {} [DEBUG] MAP: {:.1}, RAP: {:.1}, SP: {:.1}, BaseDamage:{:.1}, AfterAttackerMods:{:.1}, AfterResistances:{:.1}, AfterTargetMods:{:.1}, AfterOutcome:{:.1}, AfterPostOutcome:{:.1}",
-                self.config.target_label,
-                action_string(&self.spells[spell].id),
-                self.player.powers.attack_power,
-                self.player.powers.ranged_attack_power,
-                self.spell_power(spell),
+            self.log_damage_debug(
+                spell,
                 base,
-                after_attacker,
-                after_resistances,
-                after_target,
-                after_outcome,
-                result.damage
+                [
+                    after_attacker,
+                    after_resistances,
+                    after_target,
+                    after_outcome,
+                ],
+                result.damage,
             );
-            self.player_log(&line);
         }
 
         result.threat = if result.landed() {
@@ -295,6 +305,43 @@ impl<A: Agent> Fight<A> {
             0.0
         };
         result
+    }
+
+    /// Go `calcDamageInternal`'s debug line.
+    pub(crate) fn log_damage_debug(
+        &mut self,
+        spell: SpellId,
+        base: f64,
+        stages: [f64; 4],
+        damage: f64,
+    ) {
+        let line = format!(
+            "[{}] {} [DEBUG] MAP: {:.1}, RAP: {:.1}, SP: {:.1}, BaseDamage:{:.1}, AfterAttackerMods:{:.1}, AfterResistances:{:.1}, AfterTargetMods:{:.1}, AfterOutcome:{:.1}, AfterPostOutcome:{:.1}",
+            self.config.target_label,
+            action_string(&self.spells[spell].id),
+            self.player.powers.attack_power,
+            self.player.powers.ranged_attack_power,
+            self.spell_power(spell),
+            base,
+            stages[0],
+            stages[1],
+            stages[2],
+            stages[3],
+            damage
+        );
+        self.player_log(&line);
+    }
+
+    /// Go `Spell.CritDamageMultiplier`.
+    pub(crate) fn crit_multiplier(&self, spell: SpellId) -> f64 {
+        let state = &self.spells[spell];
+        crit_damage_multiplier(
+            state.magic_defense,
+            state.crit_multiplier_pct,
+            self.config.crit_damage_multiplier,
+            self.config.table.crit_multiplier,
+            state.crit_multiplier_additive,
+        )
     }
 
     /// Go `CalcOutcome`: an outcome with no damage, no modifiers and no debug line.
@@ -490,6 +537,12 @@ impl<A: Agent> Fight<A> {
         );
     }
 
+    /// Go `WaitTravelTime` with a class callback, run by [`Agent::on_travel`] on arrival.
+    pub(crate) fn class_after_travel(&mut self, spell: SpellId, result: SpellResult) {
+        let at = self.now + self.travel_time(spell);
+        self.schedule(at, PRIORITY_GCD, Action::ClassTravel { spell, result });
+    }
+
     /// The same, then `Dot.Apply` when the hit landed.
     pub(crate) fn deal_damage_after_travel_then_dot(
         &mut self,
@@ -524,7 +577,10 @@ impl<A: Agent> Fight<A> {
                     metrics.total_resisted_tick_damage += result.damage;
                 }
             }
-            if result.crit() {
+            let blocked = result.outcome & OUTCOME_BLOCK != 0;
+            if blocked && result.crit() {
+                metrics.total_blocked_crit_damage += result.damage;
+            } else if result.crit() {
                 metrics.total_crit_damage += result.damage;
                 if partial {
                     metrics.total_resisted_crit_damage += result.damage;
@@ -535,6 +591,10 @@ impl<A: Agent> Fight<A> {
                         metrics.total_resisted_crit_tick_damage += result.damage;
                     }
                 }
+            } else if result.outcome & OUTCOME_GLANCE != 0 {
+                metrics.total_glance_damage += result.damage;
+            } else if blocked {
+                metrics.total_block_damage += result.damage;
             }
             metrics.total_threat += result.threat;
         }

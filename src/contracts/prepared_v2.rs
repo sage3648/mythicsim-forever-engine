@@ -32,6 +32,7 @@ pub struct PreparedV2 {
     pub encounter: Encounter,
     pub target: Target,
     pub player: Player,
+    pub melee: Melee,
     pub effects: Vec<Effect>,
     /// Request features the exporter could not describe. Must be empty to simulate.
     pub unrepresented: Vec<String>,
@@ -456,6 +457,54 @@ pub struct ManaGem {
     pub mana: f64,
 }
 
+/// A Go `Weapon`.
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct Weapon {
+    pub base_damage_min: f64,
+    pub base_damage_max: f64,
+    pub attack_power_per_dps: f64,
+    pub swing_speed: f64,
+    pub normalized_swing_speed: f64,
+    pub school: u8,
+    pub min_range: f64,
+    pub max_range: f64,
+}
+
+/// The player's weapon attacks and the physical attack table against the target, with the
+/// defender's static chances resolved.
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct Melee {
+    pub auto_swing_melee: bool,
+    pub auto_swing_ranged: bool,
+    pub dual_wielding: bool,
+    pub main_hand: Weapon,
+    pub off_hand: Weapon,
+    pub ranged: Weapon,
+    pub base_miss_chance: f64,
+    pub base_glance_chance: f64,
+    pub glance_multiplier: f64,
+    pub glance_spread: f64,
+    pub hit_suppression: f64,
+    pub melee_crit_suppression: f64,
+    pub ignore_armor: bool,
+    pub armor_ignore_factor: f64,
+    pub in_front_of_target: bool,
+    pub attack_speed_multiplier: f64,
+    pub melee_speed_multiplier: f64,
+    pub dodge_reduction: f64,
+    pub disable_dw_miss_penalty: bool,
+    pub defender_dodge: f64,
+    pub defender_parry: f64,
+    pub defender_block: f64,
+    pub defender_armor: f64,
+    pub defender_block_reduction: f64,
+    pub defender_bonus_attack_power: f64,
+    pub defender_bonus_physical_damage_taken: f64,
+    pub defender_reduced_physical_hit_taken: f64,
+}
+
 /// A spell druid.RegisterSpell registered, by spellbook position, with the forms it may be
 /// cast in.
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -518,17 +567,6 @@ pub enum Effect {
         active_stats: BTreeMap<String, f64>,
         gain_log: String,
         expire_log: String,
-    },
-    /// Go `core.ScheduledAura` on a target aura, as buffs/drivers.go ramps the raid's Sunder
-    /// Armor: from the fight's start, every period for `num_ticks` ticks, activate the aura
-    /// and add a stack. `blocked` means a stronger permanent member of its exclusive category
-    /// blocks every activation, which still counts a proc.
-    ScheduledAura {
-        aura: String,
-        period_ns: i64,
-        num_ticks: i32,
-        add_stack: bool,
-        blocked: bool,
     },
     /// The forms the druid starts in and each druid spell may be cast in.
     DruidForms {
@@ -597,10 +635,35 @@ pub enum Effect {
         charges_per_wrath: i32,
         duration_ns: i64,
     },
+    /// The raid's Sunder Armor, ramped one stack a period from the pull; target armor at
+    /// each stack count, as Go computes it.
+    SunderArmorRamp {
+        aura: String,
+        period_ns: i64,
+        ticks: i32,
+        armor_by_stacks: Vec<f64>,
+        /// A stronger permanent member of the aura's exclusive category, such as the raid's
+        /// Expose Armor, blocks every activation, which Go still counts as a proc.
+        #[serde(default)]
+        blocked: bool,
+    },
+    /// Paladin judgement.go: a landed melee strike refreshes the active judgement debuffs.
+    JudgementRefresh {
+        trigger_aura: String,
+        proc_mask: Vec<String>,
+        judgement_auras: Vec<String>,
+    },
     /// The Orc racial Shatter Curse: a survival cooldown whose aura lowers the player's
     /// spell damage taken, which has no effect in scope. Go never autocasts it at the
     /// default defensive health threshold; configured timings still cast it.
     ShatterCurse {
+        spell_id: i32,
+        aura: String,
+    },
+    /// The Dwarf racial Stoneform: a survival cooldown whose aura lowers the player's
+    /// physical damage taken, which has no effect in scope. Go never autocasts it at the
+    /// default defensive health threshold; configured timings still cast it.
+    Stoneform {
         spell_id: i32,
         aura: String,
     },
@@ -851,6 +914,53 @@ pub enum Effect {
         /// The trigger spells that raise shadow damage; the others raise fire damage.
         shadow_spells: Vec<usize>,
     },
+    /// Every Lightning Bolt rank: an overload may roll when the bolt lands.
+    LightningBolt {
+        overload_chance: f64,
+        overload_tag: i32,
+        rng_label: String,
+    },
+    /// Every Chain Lightning rank: a third of the overload chance per hit and a bounce
+    /// reduction on later targets.
+    ChainLightning {
+        overload_chance: f64,
+        overload_tag: i32,
+        rng_label: String,
+        bounce_reduction: f64,
+        bounce_bonus: f64,
+    },
+    /// Flame Shock's hit and the dot it applies when it lands.
+    FlameShock {
+        spell_id: i32,
+        tick_base: f64,
+        tick_can_crit: bool,
+    },
+    /// Lava Burst, stronger against a target burning with Flame Shock.
+    LavaBurst {
+        spell_id: i32,
+        flame_shock_bonus: f64,
+    },
+    /// Fire Nova: one hit on each target from a fixed base.
+    FireNova {
+        spell_id: i32,
+        base_damage: f64,
+    },
+    /// Searing Totem: a target dot whose ticks cast the totem's attack.
+    SearingTotem {
+        spell_id: i32,
+        attack_spell_id: i32,
+        attack_damage: f64,
+        magma_totem_aura: String,
+        flametongue_totem_aura: String,
+    },
+    /// Elemental Focus: a completed elemental cast may grant Clearcasting.
+    ElementalFocus {
+        trigger_aura: String,
+        aura: String,
+        proc_chance: f64,
+        cost_percent_add: f64,
+        max_stacks: i32,
+    },
 }
 
 impl Effect {
@@ -874,7 +984,6 @@ impl Effect {
             Effect::Berserking { .. } => "berserking",
             Effect::BloodFury { .. } => "blood_fury",
             Effect::TemporaryStats { .. } => "temporary_stats",
-            Effect::ScheduledAura { .. } => "scheduled_aura",
             Effect::DruidForms { .. } => "druid_forms",
             Effect::MoonkinForm { .. } => "moonkin_form",
             Effect::Starfire {} => "starfire",
@@ -885,7 +994,10 @@ impl Effect {
             Effect::OmenOfClarity { .. } => "omen_of_clarity",
             Effect::NaturesGrace { .. } => "natures_grace",
             Effect::Eclipse { .. } => "eclipse",
+            Effect::JudgementRefresh { .. } => "judgement_refresh",
+            Effect::SunderArmorRamp { .. } => "sunder_armor_ramp",
             Effect::ShatterCurse { .. } => "shatter_curse",
+            Effect::Stoneform { .. } => "stoneform",
             Effect::ReadLeyLine { .. } => "read_ley_line",
             Effect::PresenceOfMind { .. } => "presence_of_mind",
             Effect::IceLance { .. } => "ice_lance",
@@ -916,6 +1028,13 @@ impl Effect {
             Effect::SoulFire {} => "soul_fire",
             Effect::ImprovedShadowBolt { .. } => "improved_shadow_bolt",
             Effect::ShadowAndFlame { .. } => "shadow_and_flame",
+            Effect::LightningBolt { .. } => "lightning_bolt",
+            Effect::ChainLightning { .. } => "chain_lightning",
+            Effect::FlameShock { .. } => "flame_shock",
+            Effect::LavaBurst { .. } => "lava_burst",
+            Effect::FireNova { .. } => "fire_nova",
+            Effect::SearingTotem { .. } => "searing_totem",
+            Effect::ElementalFocus { .. } => "elemental_focus",
         }
     }
 }

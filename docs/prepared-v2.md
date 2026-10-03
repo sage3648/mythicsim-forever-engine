@@ -60,6 +60,7 @@ RNG contract and implemented effects. Tests fail if it disagrees with the engine
 | `encounter` | Base duration, variation and execute proportions, in nanoseconds |
 | `target` | Level, all stats, pseudo stats, every registered aura and whether it has a melee or ranged swing |
 | `player` | Identity, talents, stats, pseudo stats, reaction time, distance, cast speed, mana, attack table, spells, major cooldowns and rotation |
+| `melee` | The player's weapons and auto attack flags, and the physical attack table against the target with the defender's static chances resolved |
 | `effects` | Dynamic behavior and its parameters, one tagged variant per kind |
 | `unrepresented` | Request features the exporter cannot describe |
 
@@ -105,6 +106,8 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `shatter_curse` | sim/core/racials.go | Orc survival cooldown; its damage taken change has no effect in scope |
 | `read_ley_line` | sim/core/racials.go | High Order Skyborne: the cast and Energized's regeneration multiplier |
 | `temporary_stats` | sim/core/major_cooldown.go | Night Elf Elune's Light: every stat its aura changes, computed by Go with it active, and its gain and fade log lines |
+| `sunder_armor_ramp` | sim/core/buffs/drivers.go | The raid's Sunder Armor: its period and tick count, Go literals, and target armor at each stack count read from separate Go simulations; `blocked` when a stronger permanent member of its category, such as Expose Armor, blocks every activation, which Go still counts as a proc |
+| `judgement_refresh` | sim/paladin/judgement.go | The melee proc mask and the judgement debuffs a landed melee strike refreshes |
 | `druid_forms` | sim/druid/druid.go, forms.go | The starting form and the forms each druid spell may be cast in |
 | `moonkin_form` | sim/druid/forms.go | The cast and its aura |
 | `starfire`, `wrath` | sim/druid/starfire.go, wrath.go | Damage rolls on the spells; Wrath lands after travel |
@@ -114,7 +117,14 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `omen_of_clarity` | sim/druid/omen_of_clarity.go | The resolved proc trigger, its cooldown, two procs a minute, Moonkin Form's multipliers and Clearcasting's cost modifier |
 | `natures_grace` | sim/druid/talents_balance.go | Cast speed multiplier, GCD reduction and the spells it reads |
 | `eclipse` | sim/druid/talents_balance.go | Starfire's cast time cut and two charges a Wrath, a Go literal |
-| `scheduled_aura` | sim/core/buffs/drivers.go, core/debuffs.go | The raid's Sunder Armor ramp: period, ticks and whether a stronger permanent member of its category blocks every activation, which Go still counts as a proc |
+| `lightning_bolt` | sim/shaman/lightning_bolt.go | Damage rolls on every rank, the Lightning Overload chance and the overload tag; the overload rolls when the bolt lands |
+| `chain_lightning` | sim/shaman/chain_lightning.go | Damage rolls on every rank, the overload chance a third of which each hit rolls, and the bounce reduction, a Go literal |
+| `flame_shock` | sim/shaman/shocks.go | The hit's damage roll, the dot's tick base and crit rule; a landed hit casts the tagged dot spell |
+| `lava_burst` | sim/shaman/lava_burst.go | The damage roll and the bonus against a target burning with Flame Shock |
+| `fire_nova` | sim/shaman/fire_totems.go | The nova's fixed base from its damage row |
+| `searing_totem` | sim/shaman/fire_totems.go | The attack spell and its fixed base, and the fire totem auras the cast replaces |
+| `elemental_focus` | sim/shaman/talents_elemental.go | Proc chance, Clearcasting's cost modifier and charges |
+| `stoneform` | sim/core/racials.go | Dwarf survival cooldown; its physical damage taken change has no effect in scope |
 | `shadow_bolt`, `searing_pain`, `shadowburn`, `soul_fire` | sim/warlock/shadowbolt.go, searing_pain.go, shadowburn.go, soulfire.go | Damage rolls on the spells; Shadow Bolt and Soul Fire land after travel |
 | `immolate`, `corruption` | sim/warlock/immolate.go, corruption.go | The dot base and tick crit; Immolate's dot is on its related spell |
 | `bane_of_agony` | sim/warlock/agony.go | The dot base, tick crit and its ramp: half the tick at the snapshot, added back every fourth tick, Go literals |
@@ -154,8 +164,10 @@ unit, item swapping, execute phase callbacks, target AI, caster
 damage callbacks, dynamic damage-taken modifiers a class effect does not describe, mob type
 bonuses, non-mana costs,
 unnamed class masks, item cooldowns without an exported effect, cast speed and temporary
-stat listeners, and survival cooldowns that would wait for a nonzero defensive health
-threshold.
+stat listeners, survival cooldowns that would wait for a nonzero defensive health
+threshold, a Shaman shield proc rate and Flame Shock ticks that roll a physical crit.
+Item procs that hear only melee hits are inert while the player has no auto attacks and
+no spell with a melee special mask.
 
 A target with a configured melee swing that no unit tanks never swings, but Go still
 rolls its opening swing offset at every reset, so the target exports its swing flags
@@ -167,14 +179,18 @@ as the engine consumes more fields.
 
 The rotation subset covers `castSpell`, `autocastOtherCooldowns`, constant-time prepull
 casts, `cmp` with any comparison operator, `and`, `or`, `not`, `const`, `currentMana`,
-`currentManaPercent`, `currentTime`, `remainingTime`, `numberTargets`, `auraIsKnown`,
+`currentManaPercent`, `currentTime`, `remainingTime`, `numberTargets`, `math`, `auraIsKnown`,
 `auraIsActive`, `auraNumStacks`, `auraRemainingTime`, `dotIsActive`, `dotRemainingTime`,
 `spellIsKnown`, `spellIsReady` and `spellCastTime`. `auraIsActive` may name the player or
 the current target as its source unit, as Go `GetSourceUnit` resolves it; the potion action
 casts the first combat potion, as Go `GetAPLSpell` does. Action IDs may carry a rank, which
 Go ignores. The exporter records how many prepull actions Go registered; a count that differs
 from the rotation's means a class or item registered its own, which is unsupported. A spell
-or dot the character lacks drops its term, as in Go.
+or dot the character lacks drops its term, as in Go. `math` follows Go's operand types,
+getters and wrapping arithmetic; math Go would read with a getter its operand lacks, and
+so panic on, is unsupported. A priority item whose condition can never hold against the
+one supported target, such as `numberTargets` of two or more, still evaluates as in Go but
+reaches no spell, so its spell needs no behavior.
 Constants follow Go parsing,
 including `time.ParseDuration` and percent constants. A rotation spell the character
 does not know is dropped, as in Go; a known spell without a Rust behavior is
@@ -199,8 +215,10 @@ matches Go. `arcane-reference` is the application's Arcane request, built by its
 one at a time. `frost-troll`, `frost-orc` and `frost-skyborne` run the Frost request as
 the remaining races, with longer and cooldown-timing variants, and
 `fire-skyborne-read-ley-line` casts Read Ley Line from the rotation. `production-balance-druid`
-is the production Balance Druid request and `production-destruction-warlock` the production
-Destruction Warlock request. `production-fire` and
+is the production Balance Druid request. `production-elemental-shaman` is the production
+Elemental Shaman request, and `elemental-shaman-dwarf-stoneform` runs it as a Dwarf with
+Stoneform timings. `production-destruction-warlock` is the production Destruction Warlock
+request. `production-fire` and
 `production-frostfire` are the production application's Fire Missile Barrage and
 Frostfire hybrid requests at application revision 18bbcd47; its Arcane and Frost requests
 are byte-identical to `arcane-reference` and `frost-reference`. `frostfire-resistances`

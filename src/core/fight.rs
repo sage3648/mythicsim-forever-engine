@@ -14,6 +14,7 @@ mod cast;
 mod damage;
 mod dot;
 mod log;
+pub(crate) mod melee;
 pub(crate) mod metrics;
 mod racial;
 mod rotation;
@@ -71,6 +72,16 @@ pub(crate) trait Agent: Sized {
     /// Go `MajorCooldown.ShouldActivate` for class cooldowns.
     fn should_activate(_fight: &Fight<Self>, _spell: SpellId, _behavior: Self::Spell) -> bool {
         true
+    }
+    /// The `WaitTravelTime` callback of a class spell scheduled with
+    /// [`Fight::class_after_travel`]: by default the result is dealt on arrival.
+    fn on_travel(
+        fight: &mut Fight<Self>,
+        spell: SpellId,
+        result: SpellResult,
+        _behavior: Self::Spell,
+    ) {
+        fight.deal_damage(spell, result, false);
     }
     /// A dot or channel tick of a class spell.
     fn on_dot_tick(_fight: &mut Fight<Self>, _dot: DotId, _behavior: Self::Spell) {}
@@ -165,6 +176,8 @@ pub(crate) enum SpellBehavior<S> {
     Eureka,
     /// A racial whose `ApplyEffects` only activates its player aura.
     ActivateAura(usize),
+    /// Go attack.go's main or off hand auto attack.
+    MeleeAuto(melee::Hand),
 }
 
 /// Go spell flags used by the runtime, parsed from exported names.
@@ -191,6 +204,7 @@ pub(crate) struct Flags {
     pub(crate) no_spell_mods: bool,
     /// Go `SpellFlagCombatPotion`, which the rotation's potion action names.
     pub(crate) combat_potion: bool,
+    pub(crate) cannot_be_dodged: bool,
 }
 
 impl Flags {
@@ -218,6 +232,7 @@ impl Flags {
                 "SpellFlagMeleeMetrics" => flags.melee_metrics = true,
                 "SpellFlagNoSpellMods" => flags.no_spell_mods = true,
                 "SpellFlagCombatPotion" => flags.combat_potion = true,
+                "SpellFlagCannotBeDodged" => flags.cannot_be_dodged = true,
                 _ => {}
             }
         }
@@ -269,6 +284,11 @@ pub(crate) struct Cost {
 pub(crate) struct SpellMetrics {
     pub(crate) casts: i32,
     pub(crate) misses: i32,
+    pub(crate) dodges: i32,
+    pub(crate) parries: i32,
+    pub(crate) glances: i32,
+    pub(crate) blocks: i32,
+    pub(crate) blocked_crits: i32,
     pub(crate) hits: i32,
     pub(crate) resisted_hits: i32,
     pub(crate) crits: i32,
@@ -285,6 +305,9 @@ pub(crate) struct SpellMetrics {
     pub(crate) total_resisted_tick_damage: f64,
     pub(crate) total_crit_tick_damage: f64,
     pub(crate) total_resisted_crit_tick_damage: f64,
+    pub(crate) total_glance_damage: f64,
+    pub(crate) total_block_damage: f64,
+    pub(crate) total_blocked_crit_damage: f64,
     pub(crate) total_threat: f64,
     pub(crate) total_cast_time: i64,
 }
@@ -301,6 +324,10 @@ pub(crate) struct Spell<S> {
     pub(crate) direct_proc: bool,
     /// Go `ProcMaskSpellDamage`.
     pub(crate) proc_spell_damage: bool,
+    /// Go `ProcMaskMelee`.
+    pub(crate) melee_proc: bool,
+    /// Go `ProcMaskMeleeOrRanged`.
+    pub(crate) melee_or_ranged_proc: bool,
     pub(crate) class_spell: Option<String>,
     pub(crate) class_spell_mask: bool,
     pub(crate) missile_speed: f64,
@@ -320,6 +347,7 @@ pub(crate) struct Spell<S> {
     pub(crate) bonus_hit_percent: f64,
     pub(crate) bonus_crit_percent: f64,
     pub(crate) bonus_spell_damage: f64,
+    pub(crate) bonus_expertise_percent: f64,
     pub(crate) damage_multiplier: f64,
     pub(crate) damage_multiplier_additive: f64,
     pub(crate) direct_damage_multiplier_additive: f64,
@@ -406,6 +434,17 @@ pub(crate) struct Player {
     pub(crate) first_oom: i64,
 }
 
+/// Go buffs/drivers.go `driveSunderArmor`.
+#[derive(Clone, Debug)]
+struct SunderRamp {
+    aura: AuraRef,
+    period: i64,
+    ticks: i32,
+    armor_by_stacks: Vec<f64>,
+    /// A stronger permanent member of the aura's exclusive category blocks every activation.
+    blocked: bool,
+}
+
 /// Go `spiritRegenAttribution`: the spirit regeneration state before the source applied.
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct SpiritAttribution {
@@ -457,6 +496,12 @@ pub(crate) struct Config {
     pub(crate) target_reduced_crit_taken_percent: f64,
     pub(crate) dot_damage_multiplier_additive: f64,
     pub(crate) target_auto_swing_melee: bool,
+    pub(crate) melee: crate::contracts::prepared_v2::Melee,
+    pub(crate) melee_haste_rating: f64,
+    pub(crate) physical_hit_percent: f64,
+    pub(crate) expertise_percent: f64,
+    pub(crate) armor_penetration: f64,
+    pub(crate) physical_damage: f64,
 }
 
 /// The pseudo stats Go restores at each reset, after permanent auras applied.
@@ -529,6 +574,11 @@ pub(crate) enum Action {
         dot: Option<DotId>,
     },
     DotTick(DotId),
+    /// A class spell's travel callback: [`Agent::on_travel`].
+    ClassTravel {
+        spell: SpellId,
+        result: SpellResult,
+    },
     DelayedProc {
         aura: AuraRef,
         spell: SpellId,
@@ -536,21 +586,8 @@ pub(crate) enum Action {
     },
     /// A rotation prepull action: Go `APLActionCastSpell.Execute`.
     Prepull(SpellId),
-    /// A tick of a target aura's `core.ScheduledAura` periodic action.
-    ScheduledAura(usize),
-}
-
-/// Go `core.ScheduledAura` on a target aura: a periodic action started at reset that
-/// activates the aura and adds a stack each tick.
-#[derive(Clone, Copy, Debug)]
-pub(crate) struct ScheduledAura {
-    pub(crate) aura: AuraRef,
-    pub(crate) period: i64,
-    pub(crate) num_ticks: i32,
-    pub(crate) add_stack: bool,
-    /// A stronger permanent member of the aura's exclusive category blocks every activation.
-    pub(crate) blocked: bool,
-    pub(crate) ticks: i32,
+    /// A tick of the raid's Sunder Armor ramp, with the ticks done so far.
+    SunderTick(i32),
 }
 
 /// Go `ActionPriority`.
@@ -596,10 +633,13 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) actions: Vec<ActionTotals>,
     /// The target's registered actions; it never acts, so their metrics stay zero.
     pub(crate) target_actions: Vec<ActionTotals>,
+    /// The player's weapon attacks.
+    pub(crate) autos: melee::AutoAttacks,
+    /// Go `Unit.Armor()` for the target, which the Sunder Armor ramp lowers.
+    pub(crate) target_armor: f64,
+    sunder: Option<SunderRamp>,
     /// Gnome's Eureka!, when the character has it.
     pub(crate) eureka: Option<racial::Eureka>,
-    /// Target auras started by `core.ScheduledAura`.
-    scheduled_auras: Vec<ScheduledAura>,
     mana_regen_casting: usize,
     mana_regen_not_casting: usize,
     mana_gain_spell: Option<SpellId>,
@@ -740,6 +780,12 @@ impl<A: Agent> Fight<A> {
             target_reduced_crit_taken_percent: target_pseudo.reduced_crit_taken_percent,
             dot_damage_multiplier_additive: pseudo.dot_damage_multiplier_additive,
             target_auto_swing_melee: target.auto_swing_melee,
+            melee: prepared.melee.clone(),
+            melee_haste_rating: stat(&player.stats, "MeleeHasteRating")?,
+            physical_hit_percent: stat(&player.stats, "PhysicalHitPercent")?,
+            expertise_percent: stat(&player.stats, "ExpertisePercent")?,
+            armor_penetration: stat(&player.stats, "ArmorPenetration")?,
+            physical_damage: stat(&player.stats, "PhysicalDamage")?,
         };
 
         let mut timer_names: Vec<String> = Vec::new();
@@ -797,6 +843,12 @@ impl<A: Agent> Fight<A> {
             let item = id.item_id;
             let behavior = if let Some(class) = class_spell(exported) {
                 SpellBehavior::Class(class)
+            } else if id.other_id == "OtherActionAttack" && (id.tag == 1 || id.tag == 2) {
+                SpellBehavior::MeleeAuto(if id.tag == 1 {
+                    melee::Hand::Main
+                } else {
+                    melee::Hand::Off
+                })
             } else {
                 effects
                     .iter()
@@ -850,6 +902,7 @@ impl<A: Agent> Fight<A> {
                         Effect::Berserking { spell_id, aura, .. }
                         | Effect::BloodFury { spell_id, aura, .. }
                         | Effect::ShatterCurse { spell_id, aura }
+                        | Effect::Stoneform { spell_id, aura }
                         | Effect::ReadLeyLine { spell_id, aura, .. }
                         | Effect::TemporaryStats { spell_id, aura, .. }
                             if id.spell_id == *spell_id && id.tag == 0 =>
@@ -899,6 +952,26 @@ impl<A: Agent> Fight<A> {
                     .proc_mask
                     .iter()
                     .any(|mask| mask == "ProcMaskSpellDamage"),
+                melee_or_ranged_proc: exported.proc_mask.iter().any(|mask| {
+                    matches!(
+                        mask.as_str(),
+                        "ProcMaskMeleeMHAuto"
+                            | "ProcMaskMeleeOHAuto"
+                            | "ProcMaskMeleeMHSpecial"
+                            | "ProcMaskMeleeOHSpecial"
+                            | "ProcMaskRangedAuto"
+                            | "ProcMaskRangedSpecial"
+                    )
+                }),
+                melee_proc: exported.proc_mask.iter().any(|mask| {
+                    matches!(
+                        mask.as_str(),
+                        "ProcMaskMeleeMHAuto"
+                            | "ProcMaskMeleeOHAuto"
+                            | "ProcMaskMeleeMHSpecial"
+                            | "ProcMaskMeleeOHSpecial"
+                    )
+                }),
                 class_spell: exported.class_spell.clone(),
                 class_spell_mask: exported.class_spell.is_some(),
                 missile_speed: exported.missile_speed,
@@ -929,6 +1002,7 @@ impl<A: Agent> Fight<A> {
                 bonus_hit_percent: exported.bonus_hit_percent,
                 bonus_crit_percent: exported.bonus_crit_percent,
                 bonus_spell_damage: exported.bonus_spell_damage,
+                bonus_expertise_percent: exported.bonus_expertise_percent,
                 damage_multiplier: exported.damage_multiplier,
                 damage_multiplier_additive: exported.damage_multiplier_additive,
                 direct_damage_multiplier_additive: exported.direct_damage_multiplier_additive,
@@ -1231,42 +1305,52 @@ impl<A: Agent> Fight<A> {
             mana_regen_not_casting,
             mana_gain_spell,
             log: None,
+            autos: melee::AutoAttacks::default(),
+            target_armor: prepared.melee.defender_armor,
+            sunder: None,
             aura_logs,
             eureka: None,
-            scheduled_auras: Vec::new(),
             totals: metrics::Totals::default(),
             encounter_damage_taken: 0.0,
         };
         fight.rotation = fight.compile_rotation(&parsed);
         fight.prepull = fight.compile_prepull(&parsed);
         for effect in effects {
-            if let Effect::ScheduledAura {
+            if let Effect::SunderArmorRamp {
                 aura,
                 period_ns,
-                num_ticks,
-                add_stack,
+                ticks,
+                armor_by_stacks,
                 blocked,
             } = effect
             {
                 let index = fight.trackers[Side::Target.index()]
                     .find(aura)
                     .ok_or_else(|| format!("target aura {aura} is not registered"))?;
-                if *period_ns <= 0 || *num_ticks <= 0 {
-                    return Err(format!("{aura} schedules no ticks"));
-                }
-                fight.scheduled_auras.push(ScheduledAura {
+                fight.sunder = Some(SunderRamp {
                     aura: AuraRef {
                         side: Side::Target,
                         index,
                     },
                     period: *period_ns,
-                    num_ticks: *num_ticks,
-                    add_stack: *add_stack,
+                    ticks: *ticks,
+                    armor_by_stacks: armor_by_stacks.clone(),
                     blocked: *blocked,
-                    ticks: 0,
                 });
             }
         }
+        fight.autos.melee = prepared.melee.auto_swing_melee;
+        fight.autos.dual_wielding = prepared.melee.dual_wielding;
+        fight.autos.mh.weapon = prepared.melee.main_hand.clone();
+        fight.autos.oh.weapon = prepared.melee.off_hand.clone();
+        let auto_spell = |tag: i32| {
+            fight
+                .spells
+                .iter()
+                .position(|spell| spell.id.other_id == "OtherActionAttack" && spell.id.tag == tag)
+        };
+        fight.autos.mh.spell = auto_spell(1);
+        fight.autos.oh.spell = auto_spell(2);
         for effect in effects {
             if let Effect::Eureka {
                 aura,
@@ -1519,16 +1603,17 @@ impl<A: Agent> Fight<A> {
             player.force_full_spirit_regen = initial.force_full_spirit_regen;
             player.five_second_rule_refresh = 0;
             player.spirit_attribution = None;
+            self.reset_auto_attacks();
             // Go runs reset effects first in the aura tracker's reset.
             self.reset_mods();
             A::reset(self);
         }
         self.reset_auras(side);
+        // Go ScheduledAura's OnReset: the ramp's first tick at the pull, at dot priority.
         if side == Side::Target {
-            // Go ScheduledAura's OnReset: a periodic action that ticks first at time zero.
-            for index in 0..self.scheduled_auras.len() {
-                self.scheduled_auras[index].ticks = 0;
-                self.schedule(0, PRIORITY_DOT, Action::ScheduledAura(index));
+            self.target_armor = self.config.melee.defender_armor;
+            if self.sunder.is_some() {
+                self.schedule(0, PRIORITY_DOT, Action::SunderTick(0));
             }
         }
         if side == Side::Player {
@@ -1554,6 +1639,15 @@ impl<A: Agent> Fight<A> {
 
     /// Go `Simulation.Step`. Returns false when the fight is over.
     fn step(&mut self) -> bool {
+        // Go runs due weapon swings before the next pending action, ties included.
+        let next = self.queue.peek_time().unwrap_or(NEVER_EXPIRES);
+        if self.due_weapon_attack(next) {
+            if self.autos.min_time > self.end_of_combat {
+                return false;
+            }
+            self.advance_weapon_attacks();
+            return true;
+        }
         let Some((time, handle, action)) = self.queue.pop() else {
             return false;
         };
@@ -1561,7 +1655,7 @@ impl<A: Agent> Fight<A> {
             return false;
         }
         if time > self.now {
-            self.advance(time);
+            self.advance_to(time);
         }
         // An expiring aura can cancel the action that is about to run.
         if !self.handle_still_valid(handle, &action) {
@@ -1572,7 +1666,7 @@ impl<A: Agent> Fight<A> {
     }
 
     /// Go `Simulation.advance`: expire auras whose time has come.
-    fn advance(&mut self, time: i64) {
+    pub(crate) fn advance_to(&mut self, time: i64) {
         self.now = time;
         if self.now >= self.min_tracker_time {
             self.min_tracker_time = NEVER_EXPIRES;
@@ -1620,32 +1714,42 @@ impl<A: Agent> Fight<A> {
                 }
             }
             Action::DotTick(dot) => self.periodic_tick(dot, handle),
+            Action::ClassTravel { spell, result } => {
+                if let SpellBehavior::Class(behavior) = self.spells[spell].behavior {
+                    A::on_travel(self, spell, result, behavior);
+                }
+            }
             Action::DelayedProc {
                 aura,
                 spell,
                 result,
             } => self.delayed_proc(aura, spell, result),
             Action::Prepull(spell) => self.cast_or_queue(spell, Side::Target),
-            Action::ScheduledAura(index) => self.scheduled_aura_tick(index),
+            Action::SunderTick(done) => self.sunder_tick(done),
         }
     }
 
-    /// One tick of a `core.ScheduledAura`, then the next while ticks remain.
-    fn scheduled_aura_tick(&mut self, index: usize) {
-        let scheduled = self.scheduled_auras[index];
-        if scheduled.blocked {
+    /// Go driveSunderArmor's periodic action: activate, add a stack, and come back a period
+    /// later until every tick has run.
+    fn sunder_tick(&mut self, done: i32) {
+        let ramp = self.sunder.clone().expect("the ramp is bound");
+        if ramp.blocked {
             // Go Aura.Activate counts the proc before the exclusive effect blocks it.
-            self.aura_mut(scheduled.aura).procs += 1;
+            self.aura_mut(ramp.aura).procs += 1;
         } else {
-            self.activate_aura(scheduled.aura);
-            if scheduled.add_stack && self.aura(scheduled.aura).active {
-                self.add_stack(scheduled.aura);
-            }
+            self.activate_aura(ramp.aura);
         }
-        self.scheduled_auras[index].ticks += 1;
-        if self.scheduled_auras[index].ticks < scheduled.num_ticks {
-            let next = self.now + scheduled.period;
-            self.schedule(next, PRIORITY_DOT, Action::ScheduledAura(index));
+        if self.aura(ramp.aura).active {
+            self.add_stack(ramp.aura);
+        }
+        let stacks = self.aura(ramp.aura).stacks.max(0) as usize;
+        self.target_armor = ramp.armor_by_stacks[stacks.min(ramp.armor_by_stacks.len() - 1)];
+        if done + 1 < ramp.ticks {
+            self.schedule(
+                self.now + ramp.period,
+                PRIORITY_DOT,
+                Action::SunderTick(done + 1),
+            );
         }
     }
 
@@ -1659,8 +1763,10 @@ impl<A: Agent> Fight<A> {
 
     /// Go encounter start: agents and auras, then each unit starts the pull.
     fn encounter_start(&mut self) {
-        // No supported unit has encounter start callbacks or auto attacks; the player starts
+        // No supported unit has encounter start callbacks. The player starts its swings, then
         // its rotation at max(0, GCD ready).
+        self.randomize_melee_timing();
+        self.start_auto_attacks();
         let ready = self.player.gcd.max(0);
         self.set_gcd_timer(ready);
     }
