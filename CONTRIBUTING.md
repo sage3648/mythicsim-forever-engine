@@ -6,6 +6,53 @@ all useful contributions. Maintainers review changes before release.
 New here? Use the [contributor code map](docs/contributor-guide.md) to find the
 owning class/spec, shared primitive or validation boundary before editing.
 
+## Code ownership and dependencies
+
+Solid arrows mean "calls or uses". The dotted arrow shows integration coverage.
+This diagram describes the current prepared Frostbolt simulation:
+
+```mermaid
+flowchart TD
+    CLI["main.rs<br/>CLI and file handling"] --> API["lib.rs<br/>Public API"]
+    API --> Engine["engine.rs<br/>Iterations and aggregation"]
+    Engine --> Validation["engine/validation.rs<br/>Request and scope checks"]
+    Engine --> Frost
+    Validation --> Frost
+
+    subgraph Mage["Class domain: classes/mage/"]
+        Frost["specs/frost.rs<br/>Build scope and fight execution"]
+        Spells["spells/frostbolt.rs<br/>Spell resolution"]
+        Frost --> Spells
+    end
+
+    subgraph Shared["Reusable systems"]
+        Core["core/<br/>Event queue, RNG, time"]
+        Mechanics["mechanics/<br/>Damage and mana primitives"]
+    end
+
+    Frost --> Core
+    Frost --> Mechanics
+    Spells --> Core
+    Spells --> Mechanics
+    Engine --> Core
+    Engine --> Types["contracts.rs and report.rs<br/>Input and output types"]
+    Frost --> Types
+    Spells --> Types
+    Tests["tests/classes/mage/frost/<br/>Kernel and Go reference checks"] -. validates .-> Frost
+```
+
+- Put reusable event, RNG and timing behavior in `core/`, and combat primitives
+  in `mechanics/`. These modules must not import class domains.
+- Put spells shared by a class in `classes/<class>/spells/`. Specs use those
+  spells and own their build rules, rotation and fight behavior under `specs/`.
+- Mirror class/spec regression tests under `tests/classes/<class>/<spec>/`.
+  Shared primitives keep focused unit tests alongside their implementation.
+- Keep CLI handling, request validation and result aggregation outside class
+  domains. Preserve the public API and JSON contracts during layout changes.
+
+For file-level examples and the steps to add a class or spec, use the
+[contributor code map](docs/contributor-guide.md).
+
 ## Development checks
 
 Install stable Rust. Rust checks use frozen fixtures and do not require Go:

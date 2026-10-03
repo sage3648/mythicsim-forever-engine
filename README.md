@@ -38,10 +38,34 @@ The binary does not accept production `RaidSimRequest` payloads.
 
 See the [kernel guide](docs/kernel.md) for the input boundary and commands.
 
+## Repository structure
+
 The code uses one Cargo crate with shared `core` and `mechanics` modules.
 Class spells live under `src/classes/<class>/spells/`, and spec behavior under
 `src/classes/<class>/specs/`. Class/spec tests mirror those domains. See the
 [contributor code map](docs/contributor-guide.md) to find a mechanic or add a class.
+
+This map groups the implemented code by responsibility:
+
+```mermaid
+flowchart TD
+    Crate["Forever Engine: one Cargo crate"]
+    Crate --> Entry["Entry points and orchestration<br/>lib.rs, main.rs, engine.rs"]
+    Crate --> Types["Input and output types<br/>contracts.rs, report.rs"]
+    Crate --> Shared["Shared systems"]
+    Crate --> Classes["Class domains: classes/"]
+    Shared --> Core["core/<br/>Events, RNG, time"]
+    Shared --> Mechanics["mechanics/<br/>Damage, mana"]
+    Classes --> Mage["mage/"]
+    Mage --> Spells["spells/frostbolt.rs<br/>Shared Mage spell"]
+    Mage --> Frost["specs/frost.rs<br/>Prepared Frostbolt simulation"]
+    Tests["tests/classes/mage/frost/<br/>Kernel and Go reference checks"] -. validates .-> Frost
+```
+
+Mage Frost is the first implemented domain. Future classes follow the same
+`spells/` and `specs/` pattern as their behavior is added. The
+[contribution guide](CONTRIBUTING.md#code-ownership-and-dependencies) shows how
+these modules depend on each other.
 
 ## Contribute
 
