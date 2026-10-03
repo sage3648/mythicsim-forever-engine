@@ -141,6 +141,10 @@ pub(crate) struct Aura<K> {
     pub(crate) behavior: AuraBehavior<K>,
     lists: [bool; LISTS],
     permanent: bool,
+    /// The later member of its exclusive category that displaces it during the reset.
+    displaced_by: Option<String>,
+    /// Blocked at the reset by an earlier member of its exclusive category.
+    blocked_at_reset: bool,
     pub(crate) icd: Option<(TimerId, i64)>,
     pub(crate) active: bool,
     pub(crate) stacks: i32,
@@ -210,8 +214,11 @@ impl<K> Tracker<K> {
             max_stacks: exported.max_stacks,
             behavior,
             lists,
-            // An aura active right after Go's reset was activated by its OnReset.
-            permanent: exported.active,
+            // An aura active right after Go's reset was activated by its OnReset, as was one
+            // a later member of its exclusive category displaced.
+            permanent: exported.active || exported.displaced_by.is_some(),
+            displaced_by: exported.displaced_by.clone(),
+            blocked_at_reset: exported.blocked_at_reset,
             icd,
             active: false,
             stacks: 0,
@@ -523,7 +530,19 @@ impl<A: Agent> Fight<A> {
             state.fade_time = -NEVER_EXPIRES;
             if state.permanent {
                 state.duration = NEVER_EXPIRES;
+                // Go ExclusiveEffect.Activate: a stronger later member of the category
+                // deactivates the earlier one before it activates.
+                let label = state.label.clone();
+                for other in 0..index {
+                    let displaced = &self.trackers[side.index()].auras[other];
+                    if displaced.active && displaced.displaced_by.as_deref() == Some(&label) {
+                        self.deactivate_aura(AuraRef { side, index: other });
+                    }
+                }
                 self.activate_aura(AuraRef { side, index });
+            } else if state.blocked_at_reset {
+                // Go Aura.Activate counts the proc before the exclusive effect blocks it.
+                state.procs += 1;
             }
         }
     }

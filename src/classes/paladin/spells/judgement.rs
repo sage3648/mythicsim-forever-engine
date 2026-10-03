@@ -9,7 +9,12 @@ use super::{super::agent::PaladinAgent, seals};
 
 /// Judgement's `ApplyEffects`: the active seal's judgement, then a rotation wake a batch
 /// window after the cooldown ends, since nothing on the GCD marks it.
-pub(crate) fn apply(fight: &mut Fight<PaladinAgent>, spell: SpellId, target: Side, wake_delay: i64) {
+pub(crate) fn apply(
+    fight: &mut Fight<PaladinAgent>,
+    spell: SpellId,
+    target: Side,
+    wake_delay: i64,
+) {
     let seal = seals::active_seal(fight).expect("Judgement needs an active seal");
     let judgement = fight.agent.seals.seals[seal].judgement;
     fight.cast(judgement, target);

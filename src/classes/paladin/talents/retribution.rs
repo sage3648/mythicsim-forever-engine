@@ -23,7 +23,8 @@ impl Vengeance {
         spells: &[usize],
     ) -> Result<Self, String> {
         let aura = fight.player_aura(aura)?;
-        let damage_mod = fight.register_mod(ModKind::DamageDonePercent, per_stack, 0, spells.to_vec());
+        let damage_mod =
+            fight.register_mod(ModKind::DamageDonePercent, per_stack, 0, spells.to_vec());
         Ok(Vengeance {
             aura,
             damage_mod,

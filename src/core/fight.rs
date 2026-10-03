@@ -1220,9 +1220,10 @@ impl<A: Agent> Fight<A> {
                             | "ProcMaskRangedSpecial"
                     )
                 }),
-                ranged_proc: exported.proc_mask.iter().any(|mask| {
-                    mask == "ProcMaskRangedAuto" || mask == "ProcMaskRangedSpecial"
-                }),
+                ranged_proc: exported
+                    .proc_mask
+                    .iter()
+                    .any(|mask| mask == "ProcMaskRangedAuto" || mask == "ProcMaskRangedSpecial"),
                 melee_proc: exported.proc_mask.iter().any(|mask| {
                     matches!(
                         mask.as_str(),

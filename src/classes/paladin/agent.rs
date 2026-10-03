@@ -200,7 +200,8 @@ impl PaladinAgent {
                     fight.agent.judgement_wake_delay = *wake_delay_ns;
                 }
                 Effect::HolyStrike { ranks } => {
-                    fight.agent.holy_strike = ranks.iter().map(|rank| rank.weapon_percent).collect();
+                    fight.agent.holy_strike =
+                        ranks.iter().map(|rank| rank.weapon_percent).collect();
                 }
                 Effect::Consecration { ranks } => fight.agent.consecration = ranks.clone(),
                 Effect::Vengeance {
@@ -277,7 +278,9 @@ impl Agent for PaladinAgent {
                 seals::righteousness_proc(fight, spell, target, seal)
             }
             PaladinSpell::JudgementOfCommand => judgement::command(fight, spell, target),
-            PaladinSpell::JudgementOfRighteousness => judgement::righteousness(fight, spell, target),
+            PaladinSpell::JudgementOfRighteousness => {
+                judgement::righteousness(fight, spell, target)
+            }
             PaladinSpell::Judgement => {
                 let delay = fight.agent.judgement_wake_delay;
                 judgement::apply(fight, spell, target, delay);
@@ -319,13 +322,21 @@ impl Agent for PaladinAgent {
 
     fn on_gain(fight: &mut Fight<Self>, _aura: AuraRef, kind: PaladinAura) {
         if kind == PaladinAura::Vengeance {
-            fight.agent.vengeance.expect("Vengeance is bound").on_gain(fight);
+            fight
+                .agent
+                .vengeance
+                .expect("Vengeance is bound")
+                .on_gain(fight);
         }
     }
 
     fn on_expire(fight: &mut Fight<Self>, _aura: AuraRef, kind: PaladinAura) {
         if kind == PaladinAura::Vengeance {
-            fight.agent.vengeance.expect("Vengeance is bound").on_expire(fight);
+            fight
+                .agent
+                .vengeance
+                .expect("Vengeance is bound")
+                .on_expire(fight);
         }
     }
 

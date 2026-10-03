@@ -60,7 +60,11 @@ pub(crate) fn consecration(fight: &mut Fight<PaladinAgent>, spell: SpellId, targ
 }
 
 /// A Consecration tick on the one target, which is among the first that take the bonus.
-pub(crate) fn consecration_tick(fight: &mut Fight<PaladinAgent>, dot: DotId, rank: &ConsecrationRank) {
+pub(crate) fn consecration_tick(
+    fight: &mut Fight<PaladinAgent>,
+    dot: DotId,
+    rank: &ConsecrationRank,
+) {
     let spell = fight.dots[dot].spell;
     let mut damage = rank.tick;
     if rank.bonus_targets > 0 {

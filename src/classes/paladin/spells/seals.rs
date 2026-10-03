@@ -267,7 +267,8 @@ pub(crate) fn command_proc(fight: &mut Fight<PaladinAgent>, spell: SpellId, targ
         .expect("Seal of Command is bound");
     let attack_power = fight.melee_attack_power();
     let weapon = fight.mh_weapon_damage(attack_power);
-    let mut base = (weapon + command.coefficient * fight.spell_power(spell)) * command.weapon_percent;
+    let mut base =
+        (weapon + command.coefficient * fight.spell_power(spell)) * command.weapon_percent;
     let holy = crate::core::fight::school_index(2);
     let target_bonus = fight.config.target_school_bonus_spell_damage[holy];
     base += command.coefficient * target_bonus;

@@ -58,7 +58,11 @@ pub(crate) fn reset(fight: &mut Fight<PaladinAgent>) {
 
 /// The permanent trigger: on a landed white hit, every Echo that is up replays its seal, in
 /// the fixed order, and fades.
-pub(crate) fn on_spell_hit_dealt(fight: &mut Fight<PaladinAgent>, spell: SpellId, result: &SpellResult) {
+pub(crate) fn on_spell_hit_dealt(
+    fight: &mut Fight<PaladinAgent>,
+    spell: SpellId,
+    result: &SpellResult,
+) {
     let state = &fight.spells[spell];
     if state.flags.proc || !state.white_hit || result.outcome & OUTCOME_LANDED == 0 {
         return;

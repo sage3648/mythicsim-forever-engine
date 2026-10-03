@@ -194,6 +194,14 @@ pub struct Aura {
     pub callbacks: Vec<String>,
     pub icd: Option<Cooldown>,
     pub exclusive_effects: u32,
+    /// A permanent aura its reset activated and the named later member of its exclusive
+    /// category displaced during the same reset.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub displaced_by: Option<String>,
+    /// A permanent aura an earlier member of its exclusive category blocked at the reset,
+    /// which still counted a proc.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub blocked_at_reset: bool,
 }
 
 /// Callbacks that react to combat events rather than an aura's own lifetime.
