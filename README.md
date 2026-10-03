@@ -45,7 +45,8 @@ still needs and `forever-engine sim` runs covered inputs. The runtime reproduces
 event order, shared or labeled random streams, casting, mana, auras, metrics and
 first-fight debug log. Frostbolt builds match the pinned Go engine exactly in counts
 and to 1e-9 in metrics, including duration variation, running out of mana, and the full
-reference character with Winter's Chill and Judgement of Wisdom.
+reference character with Ice Lance, Fingers of Frost, Shatter, Winter's Chill and
+Judgement of Wisdom.
 
 See the [kernel guide](docs/kernel.md) for the input boundary and commands.
 

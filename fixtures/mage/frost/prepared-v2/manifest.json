@@ -26,8 +26,6 @@
           "effect conjured_mana is not implemented",
           "effect energize_on_use is not implemented",
           "effect evocation is not implemented",
-          "effect fingers_of_frost is not implemented",
-          "effect ice_lance is not implemented",
           "effect mana_gems is not implemented",
           "effect missile_barrage is not implemented",
           "effect potion_mana is not implemented"
@@ -51,7 +49,6 @@
           "effect conjured_mana is not implemented",
           "effect energize_on_use is not implemented",
           "effect evocation is not implemented",
-          "effect ice_lance is not implemented",
           "effect mana_gems is not implemented",
           "effect missile_barrage is not implemented",
           "effect potion_mana is not implemented",
@@ -184,6 +181,44 @@
       "go_log": {
         "file": "reference-winters-chill-rank3.go-log.txt",
         "sha256": "206df87ea98c41f2467f34fdc39cbd4dd204b7a6a7e6784fecbb807dec71fdac"
+      }
+    },
+    {
+      "id": "reference-fingers-of-frost",
+      "description": "The reference character with Fingers of Frost 2, Shatter 3 and Winter's Chill; Ice Lance while Fingers of Frost is active, then Frostbolt. Keeps the first-fight log golden.",
+      "request": {
+        "path": "fixtures/mage/frost/prepared-v2/reference-fingers-of-frost.request.json"
+      },
+      "prepared": "reference-fingers-of-frost.prepared.json",
+      "prepared_sha256": "6603b43b51ab9917649ca4631384a967ce78bbee7abe3ec35177f89ce044184d",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "reference-fingers-of-frost.go-result.json",
+        "sha256": "ce9ff899f12c8f4a90ae3c470994303ef5acf3fcb5dac228dbf20c48e49c9215"
+      },
+      "go_log": {
+        "file": "reference-fingers-of-frost.go-log.txt",
+        "sha256": "ed916aff8a6fc0f1cebe473ce1adf71c27176de12b50b6b4d59c3e89daabfcdb"
+      }
+    },
+    {
+      "id": "reference-fingers-of-frost-rank1",
+      "description": "As reference-fingers-of-frost with Fingers of Frost and Shatter at rank 1: one charge per proc and a smaller Shatter bonus.",
+      "request": {
+        "path": "fixtures/mage/frost/prepared-v2/reference-fingers-of-frost-rank1.request.json"
+      },
+      "prepared": "reference-fingers-of-frost-rank1.prepared.json",
+      "prepared_sha256": "7a05e7220f194d8f195b587f2aef0b339282107954a2be158ff88bf0beeb4794",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "reference-fingers-of-frost-rank1.go-result.json",
+        "sha256": "78aaf3e78fa9decd6d59c91ee2c989c3bafa25ada27d60b2d81dba7d86c6989b"
       }
     }
   ]

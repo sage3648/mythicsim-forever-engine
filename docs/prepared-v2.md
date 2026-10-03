@@ -9,9 +9,10 @@ effects Rust must execute. The Rust types live in
 Status: the contract, exporter, fixtures, coverage gate and fight runtime are
 implemented. `forever-engine check` reports exactly which mechanics an input still
 needs; `sim` runs inputs whose coverage is complete and refuses the rest. Implemented
-effects today are `frostbolt`, `winters_chill`, `judgement_of_wisdom` and
-`inert_listener`, so supported builds cast Frostbolt, with Winter's Chill and Judgement
-of Wisdom on the full reference character. Prepared v1 and its goldens are unchanged.
+effects today are `frostbolt`, `ice_lance`, `fingers_of_frost`, `winters_chill`,
+`judgement_of_wisdom` and `inert_listener`, so supported builds cast Frostbolt and Ice
+Lance with Fingers of Frost, Shatter, Winter's Chill and Judgement of Wisdom on the full
+reference character. Prepared v1 and its goldens are unchanged.
 
 ## Boundary
 
@@ -192,7 +193,8 @@ Frostbolt with labeled streams, and with the shared stream across duration varia
 running out of mana, haste, Arcane Meditation and a three-second travel boundary.
 `frostbolt-shared-oom` also keeps its 1,700-line first-fight log. The reference
 character with Winter's Chill (rank 5, and rank 3 so its proc rolls) and Judgement of
-Wisdom also matches; the rank 3 case keeps its log. All eleven historical v1 scenarios
+Wisdom also matches, as does Ice Lance with Fingers of Frost and Shatter at ranks 2 and
+1, including the cast in flight when charges arrive. Two of these keep their logs. All eleven historical v1 scenarios
 pass the live comparison through the v2 path.
 
 ## Reproduce

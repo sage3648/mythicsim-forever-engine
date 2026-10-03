@@ -15,7 +15,9 @@ use crate::{
 
 /// Effect kinds implemented in Rust and validated against the pinned Go reference.
 pub(crate) const IMPLEMENTED_EFFECTS: &[&str] = &[
+    "fingers_of_frost",
     "frostbolt",
+    "ice_lance",
     "inert_listener",
     "judgement_of_wisdom",
     "winters_chill",

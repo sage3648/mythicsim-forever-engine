@@ -281,9 +281,13 @@
       "go": [
         "sim/mage/ice_lance.go"
       ],
-      "rust": [],
-      "status": "not_ported",
-      "tests": [],
+      "rust": [
+        "src/classes/mage/spells/ice_lance.rs"
+      ],
+      "status": "validated_frostbolt_v2",
+      "tests": [
+        "tests/classes/mage/frost/prepared_v2.rs"
+      ],
       "upstream_changes": [],
       "fork_patches": []
     },
@@ -303,9 +307,13 @@
       "go": [
         "sim/mage/talents_frost.go"
       ],
-      "rust": [],
-      "status": "not_ported",
-      "tests": [],
+      "rust": [
+        "src/classes/mage/talents/fingers_of_frost.rs"
+      ],
+      "status": "validated_frostbolt_v2",
+      "tests": [
+        "tests/classes/mage/frost/prepared_v2.rs"
+      ],
       "upstream_changes": [],
       "fork_patches": [
         8
