@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "896659df60d256b9682f6486fecafb9dc7e4ab7886d107e0404ecbc3940859b1",
+  "exporter_sha256": "9cbbd78714929f8166ac7fdfbcc1a97a5e436195ace52518e62dffe53cf4d8c8",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -806,7 +806,7 @@
         "path": "fixtures/mage/prepared-v2/production-balance-druid.request.json"
       },
       "prepared": "production-balance-druid.prepared.json",
-      "prepared_sha256": "9fe9b4a7cd74f2d2b65a1edaf427169d8ad26a8b2727e01793068d046ece9643",
+      "prepared_sha256": "1e00a90b87c3a4d2b74bd7389959a12e125c57246da4c7a3e1bc80e387f0c73c",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1050,7 +1050,7 @@
         "path": "fixtures/mage/prepared-v2/paladin-windfury-totem.request.json"
       },
       "prepared": "paladin-windfury-totem.prepared.json",
-      "prepared_sha256": "846d8713d4ccc31f4a6c00339d634047e29d740650890e29c751f64c86eb0af9",
+      "prepared_sha256": "f353b2716436ece89ab1d1c1020b90cce3d401385a2e9d257b7322b2c235ef79",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1083,6 +1083,27 @@
       "go_log": {
         "file": "production-smite-priest.go-log.txt",
         "sha256": "3f8fa752b345c9ec1df1e8d80af58ddb43ac5546104f7c0588c1ad1abd6375a7"
+      }
+    },
+    {
+      "id": "production-feral-druid",
+      "description": "The production application's Feral (cat) Druid: Night Elf starting in Cat Form, a prepull Prowl into Ravage, Shred with Blood Frenzy combo points, Rip on its bleed snapshot, Ferocious Bite, Shifting Power, Faerie Fire behind a stronger armor debuff, Berserk, Rend and Tear, Omen of Clarity off melee hits, Innervate and potion powershifts with Furor's carry over, form-breaking consumables, the Goblin Sapper Charge out of form, Headmaster's Charge, Windfury Totem and Dragonbreath Chili",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-feral-druid.request.json"
+      },
+      "prepared": "production-feral-druid.prepared.json",
+      "prepared_sha256": "b70d295a2424727bfd3985a48c1b741447de1d2810f4d02ca04d1f08d0ca790a",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-feral-druid.go-result.json",
+        "sha256": "87fec4f3de7711c40ac940e59a82eb77ef96a26f2c3651d8beb89fe1da5affbe"
+      },
+      "go_log": {
+        "file": "production-feral-druid.go-log.txt",
+        "sha256": "e70d376f5e46073071812adfea8242b8e42651b63e7160255dadbd728e5078c5"
       }
     }
   ]
