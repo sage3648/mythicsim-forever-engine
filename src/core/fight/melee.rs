@@ -80,6 +80,9 @@ pub(crate) struct AutoAttacks {
     attacks: WeaponAttackList,
     /// Go `sim.minWeaponAttackTime`, likewise kept in the player's copy.
     pub(crate) min_time: i64,
+    /// Go `WeaponAttack.replaceSwing` on the main hand for a replacement that returns the swing
+    /// itself, as Prowl's does: the rotation acts before each main hand swing.
+    pub(crate) react_before_mh_swing: bool,
 }
 
 impl AutoAttacks {
@@ -386,6 +389,39 @@ impl<A: Agent> Fight<A> {
         attack.natural_ready_at += offset;
     }
 
+    /// Go `AutoAttacks.SetMH`: the new weapon, timed at the current swing speed.
+    pub(crate) fn set_main_hand(&mut self, weapon: Weapon) {
+        self.autos.mh.weapon = weapon;
+        let speed = self.autos.mh.cur_swing_speed;
+        self.autos.mh.update_swing_duration(speed);
+    }
+
+    /// Go `AutoAttacks.EnableAutoSwing` for a main hand: nothing in the prepull; otherwise the
+    /// next swing no earlier than now, and a disabled main hand in range starts swinging. The
+    /// supported callers do not dual wield.
+    pub(crate) fn enable_auto_swing(&mut self) {
+        if !self.autos.melee || self.in_prepull {
+            return;
+        }
+        assert!(
+            !self.autos.dual_wielding,
+            "dual wield swings are not re-enabled"
+        );
+        let now = self.now;
+        self.autos.mh.swing_at = self.autos.mh.swing_at.max(now).max(0);
+        if in_range(&self.autos.mh.weapon, self.config.distance) && !self.autos.mh.enabled {
+            self.autos.mh.enabled = true;
+            if self.autos.mh.weapon.swing_speed <= 0.0 {
+                self.autos.mh.enabled = false;
+                return;
+            }
+            let haste = self.melee_haste_multiplier();
+            self.autos.mh.update_swing_duration(haste);
+            self.autos.attacks.push((Side::Player, Hand::Main));
+            self.autos.min_time = self.autos.min_time.min(self.autos.mh.swing_at);
+        }
+    }
+
     /// Go `AutoAttacks.startPull`: the off hand is added first.
     pub(crate) fn start_auto_attacks(&mut self, side: Side) {
         let autos = self.autos_of(side);
@@ -493,7 +529,11 @@ impl<A: Agent> Fight<A> {
             .expect("an enabled weapon attack has a spell");
         // Go: with a replacer set, the rotation runs first, then the class may replace the
         // main hand swing, as Heroic Strike does.
-        if side == Side::Player && hand == Hand::Main && self.config.melee.replace_main_hand_swing {
+        // Prowl's replacement returns the swing itself, so only the rotation runs.
+        if side == Side::Player
+            && hand == Hand::Main
+            && (self.config.melee.replace_main_hand_swing || self.autos.react_before_mh_swing)
+        {
             self.react_to_event_now();
             spell = A::replace_mh_swing(self, spell);
         }
@@ -745,6 +785,96 @@ impl<A: Agent> Fight<A> {
         result
     }
 
+    /// Go `calcDamageInternal` for a physical periodic tick on its inputs: bleeds ignore
+    /// armor, and the tick rolls physical crit when it can crit.
+    pub(crate) fn calc_physical_periodic(
+        &mut self,
+        spell: SpellId,
+        target: Side,
+        base: f64,
+        attacker: f64,
+        can_crit: bool,
+    ) -> SpellResult {
+        let mut result = SpellResult {
+            target,
+            outcome: 0,
+            damage: base * attacker,
+            threat: 0.0,
+        };
+        let after_attacker = result.damage;
+        let after_resistances = result.damage;
+        if !self.spells[spell].flags.ignore_target_modifiers {
+            result.damage += self.config.melee.defender_bonus_physical_damage_taken;
+            result.damage *= self.target_multiplier(spell);
+        }
+        let after_target = result.damage;
+        // Go OutcomeTickPhysicalCrit, or Dot.OutcomeTick.
+        let index = target.index();
+        if can_crit && self.random("Physical Crit Roll") < self.physical_crit_chance(spell) {
+            result.outcome = OUTCOME_CRIT;
+            result.damage *= self.crit_multiplier(spell);
+            self.spells[spell].metrics[index].crit_ticks += 1;
+        } else {
+            result.outcome = OUTCOME_HIT;
+            self.spells[spell].metrics[index].ticks += 1;
+        }
+        let after_outcome = result.damage;
+        self.apply_post_outcome_modifiers(spell, &mut result);
+        if self.log.is_some() {
+            self.log_damage_debug(
+                spell,
+                base,
+                [
+                    after_attacker,
+                    after_resistances,
+                    after_target,
+                    after_outcome,
+                ],
+                result.damage,
+            );
+        }
+        result.threat = self.threat_of(spell, &result);
+        result
+    }
+
+    /// Go `CalcPeriodicDamage` with `OutcomeExpectedMagicAlwaysHit` for a physical tick: no
+    /// roll, and the damage only.
+    pub(crate) fn expected_physical_periodic(
+        &mut self,
+        spell: SpellId,
+        target: Side,
+        base: f64,
+        attacker: f64,
+    ) -> f64 {
+        let mut result = SpellResult {
+            target,
+            outcome: 0,
+            damage: base * attacker,
+            threat: 0.0,
+        };
+        let after_attacker = result.damage;
+        if !self.spells[spell].flags.ignore_target_modifiers {
+            result.damage += self.config.melee.defender_bonus_physical_damage_taken;
+            result.damage *= self.target_multiplier(spell);
+        }
+        let after_target = result.damage;
+        self.apply_post_outcome_modifiers(spell, &mut result);
+        if self.log.is_some() {
+            self.log_damage_debug(
+                spell,
+                base,
+                [after_attacker, after_attacker, after_target, after_target],
+                result.damage,
+            );
+        }
+        result.damage
+    }
+
+    /// Go `Spell.PhysicalCritChance`, for class expectations.
+    pub(crate) fn spell_physical_crit_chance(&self, spell: SpellId) -> f64 {
+        self.physical_crit_chance(spell)
+    }
+
     /// Go `Weapon.CalculateWeaponDamage`.
     pub(crate) fn weapon_damage(&mut self, weapon: &Weapon, attack_power: f64) -> f64 {
         let roll = self.random("Weapon Base Damage");
@@ -868,7 +998,7 @@ impl<A: Agent> Fight<A> {
         result.outcome = OUTCOME_HIT;
         self.spells[spell].metrics[target.index()].ticks += 1;
         let after_outcome = result.damage;
-        result.damage = result.damage.max(0.0);
+        self.apply_post_outcome_modifiers(spell, &mut result);
         if self.log.is_some() {
             self.log_damage_debug(
                 spell,
@@ -882,9 +1012,7 @@ impl<A: Agent> Fight<A> {
                 result.damage,
             );
         }
-        let state = &self.spells[spell];
-        result.threat = (result.damage * state.threat_multiplier + state.flat_threat_bonus)
-            * self.config.threat_multiplier;
+        result.threat = self.threat_of(spell, &result);
         result
     }
 

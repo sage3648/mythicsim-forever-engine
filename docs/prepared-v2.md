@@ -119,7 +119,7 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `temporary_stats` | sim/core/major_cooldown.go | Night Elf Elune's Light: every stat its aura changes, computed by Go with it active, and its gain and fade log lines |
 | `stat_auras` | sim/core/unit.go AddStatsDynamic | The auras that change stats during a fight and the player's stats for every combination of them, each read from a separate Go simulation, since Go recomputes stats from the active bonuses |
 | `crusader` | sim/common/classic/enchants.go | Each spell's chance from the enchant's proc manager, the Holy Strength auras and their log lines, and the heal roll |
-| `windfury_totem` | sim/core/buffs/drivers.go | The totem's refresh period, the trigger and charge spenders resolved from client rows, the charge aura and the extra main hand attack spell |
+| `windfury_totem` | sim/core/buffs/drivers.go | The totem's refresh period, the trigger and charge spenders resolved from client rows, whether each needs damage dealt, the charge aura and the extra main hand attack spell |
 | `dragonbreath_chili` | sim/core/consumes.go | The 5% chance and listened spells, the rolled Fire hit and the spell batch delay, Go literals |
 | `sunder_armor_ramp` | sim/core/buffs/drivers.go | The raid's Sunder Armor: its period and tick count, Go literals, and target armor at each stack count read from separate Go simulations; `blocked` when a stronger permanent member of its category, such as Expose Armor, blocks every activation, which Go still counts as a proc |
 | `judgement_refresh` | sim/paladin/judgement.go | The melee proc mask and the judgement debuffs a landed melee strike refreshes |
@@ -143,9 +143,20 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `moonfire` | sim/druid/moonfire.go | The dot base and tick crit; the hit casts the tagged dot spell when it lands |
 | `insect_swarm` | sim/druid/insect_swarm.go | The dot base, tick crit and the target debuff the dot holds |
 | `innervate` | sim/druid/innervate.go, core/buffs/drivers.go | Spirit regeneration multiplier, a Go literal, and the regeneration metrics its bonus is credited to |
-| `omen_of_clarity` | sim/druid/omen_of_clarity.go | The resolved proc trigger, its cooldown, two procs a minute, Moonkin Form's multipliers and Clearcasting's cost modifier |
+| `omen_of_clarity` | sim/druid/omen_of_clarity.go | The resolved proc trigger, its cooldown, two procs a minute of a spell's cast time or the current main hand swing, Moonkin Form's multipliers and Clearcasting's cost modifier |
 | `natures_grace` | sim/druid/talents_balance.go | Cast speed multiplier, GCD reduction and the spells it reads |
 | `eclipse` | sim/druid/talents_balance.go | Starfire's cast time cut and two charges a Wrath, a Go literal |
+| `cat_form` | sim/druid/forms.go, druid.go | The aura's threat, spirit regeneration and movement speed changes with the unit's values before any aura, the paw and the equipped weapon, Faerie Fire's free and faster cast in the form, Furor's carry over cap, and the potions, conjured items and explosives that drop the form |
+| `prowl` | sim/druid/prowl.go | The aura's movement speed multiplier from client data; the rotation acts before each main hand swing while it is up |
+| `cat_builders` | sim/druid/ravage.go, shred.go, claw.go | Each builder's flat damage from client data and whether the target can be shredded |
+| `rip` | sim/druid/rip.go | The tick base and per combo point from client data, the attack power share a combo point and its cap, Go literals, tick crit and the five combo points its projection assumes |
+| `ferocious_bite` | sim/druid/ferocious_bite.go | Damage per point of excess energy and per combo point from client data, and attack power a combo point, a Go literal |
+| `shifting_power` | sim/druid/shifting_power.go | The energy from client data, plus Wolfshead Helm's |
+| `faerie_fire` | sim/druid/faerie_fire.go, core/buffs | The target debuff, its armor reduction and how its exclusive effect reads: alone in its category, or held off by a stronger permanent debuff |
+| `berserk` | sim/druid/talents_feral_combat.go | The builders' crit bonus, a Go literal |
+| `blood_frenzy` | sim/druid/talents_feral_combat.go | The cat trigger's chance, builders and crit outcome, its combo point metrics, and the bear trigger that needs Bear Form |
+| `rend_and_tear` | sim/druid/talents_feral_combat.go | The target's damage taken multiplier on the druid's special attacks and the bleeds it waits for |
+| `aura_should_refresh` | sim/core/exclusive_effect.go, apl_values_aura.go | For each aura an auraShouldRefresh value names, how each exclusive effect reads: alone in its category, or held for good by another aura |
 | `lightning_bolt` | sim/shaman/lightning_bolt.go | Damage rolls on every rank, the Lightning Overload chance and the overload tag; the overload rolls when the bolt lands |
 | `chain_lightning` | sim/shaman/chain_lightning.go | Damage rolls on every rank, the overload chance a third of which each hit rolls, and the bounce reduction, a Go literal |
 | `flame_shock` | sim/shaman/shocks.go | The hit's damage roll, the dot's tick base and crit rule; a landed hit casts the tagged dot spell |
@@ -381,6 +392,9 @@ procs they carry.
 `warrior-heroic-strike` and `warrior-cleave` queue those strikes onto main hand swings,
 `warrior-troll-berserking` is its race board's Troll request and
 `warrior-orc-shatter-curse` runs it as an Orc with Shatter Curse timings.
+`production-feral-druid` is the production Feral (cat) Druid request, and
+`feral-druid-faerie-fire-armor` runs it with the raid's Sunder Armor as the only debuff, so
+Faerie Fire's own armor reduction applies beside the Sunder Armor ramp.
 
 The contract tests in
 [tests/classes/mage/prepared_v2.rs](../tests/classes/mage/prepared_v2.rs)

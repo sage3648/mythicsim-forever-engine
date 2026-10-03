@@ -24,7 +24,7 @@ Frostbolt kernel remains unchanged beside it.
 | Fight runtime: queue, units, casting, auras, damage, channels, rotation, metrics, logs | [src/core/fight.rs](../src/core/fight.rs), [src/core/fight/](../src/core/fight/) |
 | Go pending-action ordering | [src/core/queue.rs](../src/core/queue.rs) |
 | Mage runtime hooks | [src/classes/mage/agent.rs](../src/classes/mage/agent.rs) |
-| Druid runtime hooks | [src/classes/druid/agent.rs](../src/classes/druid/agent.rs) |
+| Druid runtime hooks, forms and regressions | [src/classes/druid/agent.rs](../src/classes/druid/agent.rs), [src/classes/druid/forms.rs](../src/classes/druid/forms.rs), [tests/classes/druid.rs](../tests/classes/druid.rs) |
 | Warlock runtime hooks and regressions | [src/classes/warlock/agent.rs](../src/classes/warlock/agent.rs), [tests/classes/warlock/](../tests/classes/warlock/) |
 | Priest runtime hooks and regressions | [src/classes/priest/agent.rs](../src/classes/priest/agent.rs), [tests/classes/priest.rs](../tests/classes/priest.rs) |
 | Rogue runtime hooks and regressions | [src/classes/rogue/agent.rs](../src/classes/rogue/agent.rs), [tests/classes/rogue.rs](../tests/classes/rogue.rs) |

@@ -974,7 +974,7 @@ func sunderBlocked(request *proto.RaidSimRequest, label string) bool {
 }
 
 func commonEffects(character *core.Character, target *core.Unit, request *proto.RaidSimRequest, unrepresented *[]string) []map[string]any {
-	effects := []map[string]any{}
+	effects := auraShouldRefreshEffects(character, target, request.Raid.Parties[0].Players[0].GetRotation())
 	for _, aura := range target.GetAuras() {
 		if aura.Label == "Judgement of Wisdom (External)" { // buffs/paladin.go AttachJudgementOfWisdomMana
 			effects = append(effects, map[string]any{
@@ -1098,7 +1098,8 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 		cooldowns[cd.Spell] = true
 	}
 	for _, spell := range character.Spellbook {
-		if spell.ActionID.ItemID != 0 && !cooldowns[spell] && spell.Flags.Matches(core.SpellFlagPotion|core.SpellFlagConjured) {
+		sapper := spell.ActionID == core.GoblinSapperActionID
+		if spell.ActionID.ItemID != 0 && !cooldowns[spell] && (spell.Flags.Matches(core.SpellFlagPotion|core.SpellFlagConjured) || sapper) {
 			items = append(items, spell)
 		}
 	}
@@ -1169,6 +1170,19 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 			})
 		case spell.ActionID.SameAction(core.GoblinSapperActionID): // consumes.go newGoblinSapperSpell
 			effects = append(effects, goblinSapperEffect(character, unrepresented))
+		case temporaryStatItems[item] != nil: // RegisterTemporaryStatsOnUseCD on an item, Go literal stats
+			aura := spell.RelatedSelfBuff
+			if aura == nil {
+				*unrepresented = append(*unrepresented, fmt.Sprintf("item %d has no temporary stats aura", item))
+				break
+			}
+			bonus := temporaryStatItems[item]
+			effects = append(effects, map[string]any{
+				"kind": "temporary_stats", "spell_id": int32(0), "item_id": item, "aura": aura.Label,
+				"active_stats": activeStats(request, aura.Label),
+				"gain_log":     fmt.Sprintf("Gained %s from %s.", bonus.FlatString(), aura.ActionID),
+				"expire_log":   fmt.Sprintf("Lost %s from fading %s.", bonus.FlatString(), aura.ActionID),
+			})
 		case spell.Flags.Matches(core.SpellFlagExplosive) && basicExplosives[item] != (basicExplosive{}):
 			effects = append(effects, basicExplosiveEffect(character, spell, unrepresented))
 		default:
@@ -1197,6 +1211,12 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 		}
 	}
 	return effects
+}
+
+// Items whose use registers temporary stats with RegisterTemporaryStatsOnUseCD, by the Go
+// literal stats each passes (common/classic/items_weapons.go).
+var temporaryStatItems = map[int32]*stats.Stats{
+	13937: {stats.Intellect: 20}, // Headmaster's Charge
 }
 
 // Whether a potion restores something other than mana, or carries a stat buff: the general

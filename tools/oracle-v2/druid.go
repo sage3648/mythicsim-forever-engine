@@ -14,7 +14,10 @@ import (
 )
 
 func init() {
-	classExports[proto.Class_ClassDruid] = classExport{spells: druidClassSpells, damageRows: druidDamageRows, effects: druidEffects}
+	classExports[proto.Class_ClassDruid] = classExport{
+		spells: druidClassSpells, damageRows: druidDamageRows, effects: druidEffects,
+		statAuras: druidStatAuras, damageTakenModifiers: druidDamageTakenModifiers,
+	}
 }
 
 var druidClassSpells = []classSpellName{
@@ -56,6 +59,7 @@ var (
 func druidDamageRows(rows map[int32]*spelldata.Spell) {
 	starfireLadder.Each(func(_ int32, row *spelldata.Spell) { rows[row.ID] = row })
 	wrathLadder.Each(func(_ int32, row *spelldata.Spell) { rows[row.ID] = row })
+	druidFeralDamageRows(rows)
 	if moonfire := moonfireLadder.Highest(); moonfire != nil {
 		rows[moonfire.ID] = moonfire
 	}
@@ -86,6 +90,34 @@ func druidFormMasks(d *druid.Druid) map[*core.Spell]druid.DruidForm {
 		}
 	}
 	return masks
+}
+
+// Spells druid.RegisterSpell registers into a local variable, which no field holds, by the
+// form mask each Go file passes: innervate.go, thorns.go, starfire.go, wrath.go and
+// talents_feral_combat.go applyBerserk.
+func druidLocalFormMasks(d *druid.Druid, character *core.Character, masks map[*core.Spell]druid.DruidForm) {
+	local := []struct {
+		mask int64
+		form druid.DruidForm
+	}{
+		{druid.DruidSpellInnervate, druid.Humanoid | druid.Moonkin | druid.Tree},
+		{druid.DruidSpellThorns, druid.Humanoid},
+		{druid.DruidSpellStarfire, druid.Humanoid | druid.Moonkin},
+		{druid.DruidSpellWrath, druid.Humanoid | druid.Moonkin},
+	}
+	for _, spell := range character.Spellbook {
+		if _, ok := masks[spell]; ok || spell.ExtraCastCondition == nil {
+			continue
+		}
+		for _, entry := range local {
+			if spell.ClassSpellMask == entry.mask {
+				masks[spell] = entry.form
+			}
+		}
+		if d.BerserkAura != nil && spell.ActionID == d.BerserkAura.ActionID {
+			masks[spell] = druid.Cat | druid.Bear
+		}
+	}
 }
 
 func formNames(form druid.DruidForm) []string {
@@ -182,6 +214,7 @@ func druidEffects(agent core.Agent, character *core.Character) []map[string]any 
 	// druid.go RegisterSpell: the forms each spell may be cast in. forms.go: the form the druid
 	// starts each fight in.
 	masks := druidFormMasks(d)
+	druidLocalFormMasks(d, character, masks)
 	forms := []map[string]any{}
 	for i, spell := range character.Spellbook {
 		if mask, ok := masks[spell]; ok {
@@ -254,6 +287,7 @@ func druidEffects(agent core.Agent, character *core.Character) []map[string]any 
 			"charges_per_wrath":      int32(2), "duration_ns": nanos(eclipseTriggered.Highest().Duration()),
 		})
 	}
+	effects = append(effects, druidFeralEffects(d, character)...)
 	return effects
 }
 

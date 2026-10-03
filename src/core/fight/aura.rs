@@ -303,6 +303,12 @@ impl<A: Agent> Fight<A> {
         &mut self.trackers[aura.side.index()].auras[aura.index]
     }
 
+    /// Whether the aura reset activates the aura. An aura Go's agent reset activates later,
+    /// as a druid's starting form, is active after the reset without being permanent.
+    pub(crate) fn set_aura_permanent(&mut self, aura: AuraRef, permanent: bool) {
+        self.aura_mut(aura).permanent = permanent;
+    }
+
     fn unit_label(&self, side: Side) -> String {
         self.label_of(side)
     }
@@ -341,6 +347,10 @@ impl<A: Agent> Fight<A> {
             return;
         }
         assert!(self.aura(aura).duration != 0, "aura with zero duration");
+        // Go activates exclusive effects first.
+        if let AuraBehavior::Class(kind) = self.aura(aura).behavior {
+            A::on_exclusive_gain(self, aura, kind);
+        }
         {
             let now = self.now;
             let state = self.aura_mut(aura);
@@ -464,12 +474,12 @@ impl<A: Agent> Fight<A> {
     /// Go `AddStatsDynamic` for a stat aura a class aura owns: the player's stats become the
     /// combination with the aura's bit set or cleared.
     pub(crate) fn set_stat_aura(&mut self, bit: u32, active: bool) {
-        if active {
-            self.stat_mask |= bit;
+        let mask = if active {
+            self.stat_mask | bit
         } else {
-            self.stat_mask &= !bit;
-        }
-        self.player.powers = self.stat_combos[self.stat_mask as usize];
+            self.stat_mask & !bit
+        };
+        self.set_stat_mask(mask);
     }
 
     /// A stat aura's bit in the active stat mask, by label.
@@ -502,10 +512,7 @@ impl<A: Agent> Fight<A> {
             AuraBehavior::MultiplyManaRegenSpeed(multiplier) => {
                 self.multiply_mana_regen_speed(multiplier)
             }
-            AuraBehavior::WindfuryProc { bit } => {
-                self.stat_mask |= bit;
-                self.player.powers = self.stat_combos[self.stat_mask as usize];
-            }
+            AuraBehavior::WindfuryProc { bit } => self.set_stat_mask(self.stat_mask | bit),
             AuraBehavior::WindfuryTotem => {
                 let trigger = self
                     .windfury
@@ -521,8 +528,7 @@ impl<A: Agent> Fight<A> {
                     let line = self.aura_logs[line].clone();
                     self.player_log(&line);
                 }
-                self.stat_mask |= bit;
-                self.player.powers = self.stat_combos[self.stat_mask as usize];
+                self.set_stat_mask(self.stat_mask | bit);
             }
             AuraBehavior::Class(kind) => A::on_gain(self, aura, kind),
             _ => {}
@@ -542,10 +548,7 @@ impl<A: Agent> Fight<A> {
                 multiplier,
                 schools,
             } => self.multiply_self_damage_taken(multiplier, schools, true),
-            AuraBehavior::WindfuryProc { bit } => {
-                self.stat_mask &= !bit;
-                self.player.powers = self.stat_combos[self.stat_mask as usize];
-            }
+            AuraBehavior::WindfuryProc { bit } => self.set_stat_mask(self.stat_mask & !bit),
             AuraBehavior::WindfuryTotem => {
                 let trigger = self
                     .windfury
@@ -561,8 +564,7 @@ impl<A: Agent> Fight<A> {
                     let line = self.aura_logs[line].clone();
                     self.player_log(&line);
                 }
-                self.stat_mask &= !bit;
-                self.player.powers = self.stat_combos[self.stat_mask as usize];
+                self.set_stat_mask(self.stat_mask & !bit);
             }
             AuraBehavior::MultiplyManaRegenSpeed(multiplier) => {
                 self.multiply_mana_regen_speed(1.0 / multiplier)

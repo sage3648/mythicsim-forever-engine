@@ -131,7 +131,7 @@ impl<A: Agent> Fight<A> {
         if result.landed() {
             let state = &self.spells[spell];
             (result.damage * state.threat_multiplier + state.flat_threat_bonus)
-                * self.unit_config(state.caster).threat_multiplier
+                * self.unit(state.caster).threat_multiplier
         } else {
             0.0
         }
