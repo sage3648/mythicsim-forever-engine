@@ -53,11 +53,19 @@ pub enum Value {
     Or(Vec<Value>),
     Not(Box<Value>),
     CurrentManaPercent,
+    CurrentMana,
     RemainingTime,
+    CurrentTime,
+    NumberTargets,
     AuraIsKnown(ActionId),
     AuraIsActive(ActionId),
     AuraNumStacks(ActionId),
     AuraRemainingTime(ActionId),
+    DotIsActive(ActionId),
+    DotRemainingTime(ActionId),
+    SpellIsKnown(ActionId),
+    SpellIsReady(ActionId),
+    SpellCastTime(ActionId),
 }
 
 impl Value {
@@ -86,11 +94,17 @@ impl Value {
             | Value::Or(_)
             | Value::Not(_)
             | Value::AuraIsKnown(_)
-            | Value::AuraIsActive(_) => ValueType::Bool,
-            Value::AuraNumStacks(_) => ValueType::Int,
-            Value::AuraRemainingTime(_) => ValueType::Duration,
-            Value::CurrentManaPercent => ValueType::Float,
-            Value::RemainingTime => ValueType::Duration,
+            | Value::AuraIsActive(_)
+            | Value::DotIsActive(_)
+            | Value::SpellIsKnown(_)
+            | Value::SpellIsReady(_) => ValueType::Bool,
+            Value::AuraNumStacks(_) | Value::NumberTargets => ValueType::Int,
+            Value::AuraRemainingTime(_)
+            | Value::DotRemainingTime(_)
+            | Value::SpellCastTime(_)
+            | Value::RemainingTime
+            | Value::CurrentTime => ValueType::Duration,
+            Value::CurrentManaPercent | Value::CurrentMana => ValueType::Float,
         }
     }
 }
@@ -109,9 +123,20 @@ pub struct Item {
     pub action: Action,
 }
 
+/// Go `APLPrepullAction`: an action at a fixed time before the pull.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Prepull {
+    /// One-based position in the request's prepull list, hidden actions included.
+    pub position: usize,
+    /// Nanoseconds relative to the pull, never positive.
+    pub do_at_ns: i64,
+    pub action: Action,
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Rotation {
     pub priority_list: Vec<Item>,
+    pub prepull: Vec<Prepull>,
 }
 
 /// Parse a protojson `APLRotation`. Returns every unsupported construct, not only the first.
@@ -125,8 +150,8 @@ pub fn parse(rotation: &Json) -> Result<Rotation, Vec<String>> {
         match key.as_str() {
             "type" if value == "TypeAPL" => {}
             "type" => reasons.push(format!("rotation type {value} is unsupported")),
-            "priorityList" => {}
-            "prepullActions" | "groups" | "valueVariables" if is_empty(value) => {}
+            "priorityList" | "prepullActions" => {}
+            "groups" | "valueVariables" if is_empty(value) => {}
             other => reasons.push(format!("rotation field {other} is unsupported")),
         }
     }
@@ -151,11 +176,64 @@ pub fn parse(rotation: &Json) -> Result<Rotation, Vec<String>> {
             }
         }
     }
+    for (index, item) in object
+        .get("prepullActions")
+        .and_then(Json::as_array)
+        .into_iter()
+        .flatten()
+        .enumerate()
+    {
+        match parse_prepull(item, index + 1) {
+            Ok(Some(prepull)) => parsed.prepull.push(prepull),
+            Ok(None) => {}
+            Err(reason) => reasons.push(format!("prepull action {}: {reason}", index + 1)),
+        }
+    }
     if reasons.is_empty() {
         Ok(parsed)
     } else {
         Err(reasons)
     }
+}
+
+/// Go `newAPLRotation`'s prepull parsing: a hidden action or one after the pull is skipped.
+fn parse_prepull(item: &Json, position: usize) -> Result<Option<Prepull>, String> {
+    let object = item.as_object().ok_or("prepull action must be an object")?;
+    for key in object.keys() {
+        if !matches!(key.as_str(), "action" | "doAtValue" | "hide") {
+            return Err(format!("field {key} is unsupported"));
+        }
+    }
+    if object.get("hide").and_then(Json::as_bool) == Some(true) {
+        return Ok(None);
+    }
+    let do_at = match object.get("doAtValue").map(parse_value) {
+        Some(Ok(Value::Const(constant))) => constant,
+        Some(Ok(_)) => return Err("a do-at time other than a constant is unsupported".into()),
+        Some(Err(reasons)) => return Err(reasons.join("; ")),
+        None => return Err("no do-at time".into()),
+    };
+    // Go `GetDuration` on the constant, as its type converts it.
+    let do_at_ns = match do_at.value_type {
+        ValueType::Duration | ValueType::Int | ValueType::Float => do_at.duration_ns,
+        _ => return Err("a do-at time that is not a duration is unsupported".into()),
+    };
+    if do_at_ns > 0 {
+        return Ok(None);
+    }
+    let action = object
+        .get("action")
+        .and_then(Json::as_object)
+        .ok_or("no action")?;
+    let action = match single(action, &["uuid"])? {
+        ("castSpell", config) => Action::CastSpell(parse_cast_spell(config)?),
+        (name, _) => return Err(format!("action {name} is unsupported")),
+    };
+    Ok(Some(Prepull {
+        position,
+        do_at_ns,
+        action,
+    }))
 }
 
 fn is_empty(value: &Json) -> bool {
@@ -249,6 +327,10 @@ pub fn parse_action_id(value: &Json) -> Result<ActionId, String> {
             "spellId" => id.spell_id = json_i32(field)?,
             "itemId" => id.item_id = json_i32(field)?,
             "tag" => id.tag = json_i32(field)?,
+            // Go `ProtoToActionID` ignores the rank.
+            "rank" => {
+                json_i32(field)?;
+            }
             "otherId" => {
                 id.other_id = field
                     .as_str()
@@ -361,6 +443,33 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
         "remainingTime" => {
             only(&[])?;
             Ok(Value::RemainingTime)
+        }
+        "currentMana" => {
+            only(&[])?;
+            Ok(Value::CurrentMana)
+        }
+        "currentTime" => {
+            only(&[])?;
+            Ok(Value::CurrentTime)
+        }
+        "numberTargets" => {
+            only(&[])?;
+            Ok(Value::NumberTargets)
+        }
+        "dotIsActive" | "dotRemainingTime" | "spellIsKnown" | "spellIsReady" | "spellCastTime" => {
+            // A target unit other than the current target is not modeled.
+            only(&["spellId"])?;
+            let id = config
+                .get("spellId")
+                .ok_or_else(|| vec![format!("{name} has no spellId")])
+                .and_then(|id| parse_action_id(id).map_err(|err| vec![err]))?;
+            Ok(match name {
+                "dotIsActive" => Value::DotIsActive(id),
+                "dotRemainingTime" => Value::DotRemainingTime(id),
+                "spellIsKnown" => Value::SpellIsKnown(id),
+                "spellIsReady" => Value::SpellIsReady(id),
+                _ => Value::SpellCastTime(id),
+            })
         }
         "not" => {
             only(&["val"])?;
@@ -602,10 +711,18 @@ pub enum Compiled<R> {
     Or(Vec<Compiled<R>>),
     Not(Box<Compiled<R>>),
     CurrentManaPercent,
+    CurrentMana,
     RemainingTime,
+    CurrentTime,
+    NumberTargets,
     AuraIsActive(R),
     AuraNumStacks(R),
     AuraRemainingTime(R),
+    /// A spell by its position in the player's spellbook, with the dot it names.
+    DotIsActive(usize),
+    DotRemainingTime(usize),
+    SpellIsReady(usize),
+    SpellCastTime(usize),
     /// Go `APLValueCoerced`.
     Coerced {
         to: ValueType,
@@ -621,11 +738,16 @@ impl<R> Compiled<R> {
             | Compiled::And(_)
             | Compiled::Or(_)
             | Compiled::Not(_)
-            | Compiled::AuraIsActive(_) => ValueType::Bool,
-            Compiled::AuraNumStacks(_) => ValueType::Int,
-            Compiled::AuraRemainingTime(_) => ValueType::Duration,
-            Compiled::CurrentManaPercent => ValueType::Float,
-            Compiled::RemainingTime => ValueType::Duration,
+            | Compiled::AuraIsActive(_)
+            | Compiled::DotIsActive(_)
+            | Compiled::SpellIsReady(_) => ValueType::Bool,
+            Compiled::AuraNumStacks(_) | Compiled::NumberTargets => ValueType::Int,
+            Compiled::AuraRemainingTime(_)
+            | Compiled::DotRemainingTime(_)
+            | Compiled::SpellCastTime(_)
+            | Compiled::RemainingTime
+            | Compiled::CurrentTime => ValueType::Duration,
+            Compiled::CurrentManaPercent | Compiled::CurrentMana => ValueType::Float,
             Compiled::Coerced { to, .. } => *to,
         }
     }
@@ -760,6 +882,16 @@ pub struct FoundAura<R> {
     pub max_stacks: i32,
 }
 
+/// How compilation resolves the names a rotation uses, as Go does on the casting player.
+pub struct Lookup<'a, R> {
+    /// Go `GetAuraByID`: the aura, or `None` when the character lacks it.
+    pub aura: &'a dyn Fn(&ActionId) -> Option<FoundAura<R>>,
+    /// Go `GetAPLSpell`: the spellbook position of the spell, or `None` when unknown.
+    pub spell: &'a dyn Fn(&ActionId) -> Option<usize>,
+    /// Go `GetAPLDot`: the spellbook position of the spell when it has a dot on the target.
+    pub dot: &'a dyn Fn(&ActionId) -> Option<usize>,
+}
+
 /// What Go `newAPLAction` makes of an action's condition.
 #[derive(Clone, Debug, PartialEq)]
 pub enum CompiledCondition<R> {
@@ -799,14 +931,14 @@ fn bool_const<R>(value: bool) -> Compiled<R> {
 /// the operator, and a constant that decides the result replaces it.
 fn fold<R>(
     values: &[Value],
-    aura: &dyn Fn(&ActionId) -> Option<FoundAura<R>>,
+    lookup: &Lookup<R>,
     missing: MissingAura,
     deciding: bool,
     build: fn(Vec<Compiled<R>>) -> Compiled<R>,
 ) -> Option<Compiled<R>> {
     let mut compiled: Vec<_> = values
         .iter()
-        .filter_map(|value| compile_value(value, aura, missing))
+        .filter_map(|value| compile_value(value, lookup, missing))
         .map(|value| value.coerce(ValueType::Bool))
         .collect();
     match compiled.len() {
@@ -824,17 +956,27 @@ fn fold<R>(
     }
 }
 
-/// Go `newAPLValue` for the supported subset. `aura` resolves an action ID on the
-/// casting player as Go `GetAuraByID` does, or returns `None` when the character lacks it.
+/// Go `newAPLValue` for the supported subset. A spell or dot the character lacks gives no
+/// value, so the term drops out of its parent; community #622 changes only auras.
 fn compile_value<R>(
     value: &Value,
-    aura: &dyn Fn(&ActionId) -> Option<FoundAura<R>>,
+    lookup: &Lookup<R>,
     missing: MissingAura,
 ) -> Option<Compiled<R>> {
+    let aura = lookup.aura;
     Some(match value {
         Value::Const(constant) => Compiled::Const(constant.clone()),
         Value::CurrentManaPercent => Compiled::CurrentManaPercent,
+        Value::CurrentMana => Compiled::CurrentMana,
         Value::RemainingTime => Compiled::RemainingTime,
+        Value::CurrentTime => Compiled::CurrentTime,
+        Value::NumberTargets => Compiled::NumberTargets,
+        Value::DotIsActive(id) => Compiled::DotIsActive((lookup.dot)(id)?),
+        Value::DotRemainingTime(id) => Compiled::DotRemainingTime((lookup.dot)(id)?),
+        // Go `newValueSpellIsKnown` is a constant.
+        Value::SpellIsKnown(id) => bool_const((lookup.spell)(id).is_some()),
+        Value::SpellIsReady(id) => Compiled::SpellIsReady((lookup.spell)(id)?),
+        Value::SpellCastTime(id) => Compiled::SpellCastTime((lookup.spell)(id)?),
         Value::AuraIsKnown(id) => bool_const(aura(id).is_some()),
         Value::AuraIsActive(id) => match (aura(id), missing) {
             (Some(found), _) => Compiled::AuraIsActive(found.aura),
@@ -851,8 +993,8 @@ fn compile_value<R>(
             }
         },
         Value::Compare { op, lhs, rhs } => {
-            let lhs = compile_value(lhs, aura, missing)?;
-            let rhs = compile_value(rhs, aura, missing)?;
+            let lhs = compile_value(lhs, lookup, missing)?;
+            let rhs = compile_value(rhs, lookup, missing)?;
             let to = lhs.value_type().max(rhs.value_type());
             Compiled::Compare {
                 op: *op,
@@ -869,25 +1011,25 @@ fn compile_value<R>(
         },
         // Go `newValueNot` folds a constant operand.
         Value::Not(value) => {
-            let value = compile_value(value, aura, missing)?.coerce(ValueType::Bool);
+            let value = compile_value(value, lookup, missing)?.coerce(ValueType::Bool);
             match value.const_bool() {
                 Some(constant) => bool_const(!constant),
                 None => Compiled::Not(Box::new(value)),
             }
         }
-        Value::And(values) => return fold(values, aura, missing, false, Compiled::And),
-        Value::Or(values) => return fold(values, aura, missing, true, Compiled::Or),
+        Value::And(values) => return fold(values, lookup, missing, false, Compiled::And),
+        Value::Or(values) => return fold(values, lookup, missing, true, Compiled::Or),
     })
 }
 
 /// Go `newAPLAction`'s condition handling for one action.
 pub fn compile_condition<R>(
     condition: Option<&Value>,
-    aura: &dyn Fn(&ActionId) -> Option<FoundAura<R>>,
+    lookup: &Lookup<R>,
     missing: MissingAura,
 ) -> CompiledCondition<R> {
     let compiled = condition
-        .and_then(|value| compile_value(value, aura, missing))
+        .and_then(|value| compile_value(value, lookup, missing))
         .map(|value| value.coerce(ValueType::Bool));
     match compiled {
         None => CompiledCondition::Always,
@@ -902,6 +1044,18 @@ pub fn compile_condition<R>(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn no_spell(_: &ActionId) -> Option<usize> {
+        None
+    }
+
+    fn only_auras<'a, R>(aura: &'a dyn Fn(&ActionId) -> Option<FoundAura<R>>) -> Lookup<'a, R> {
+        Lookup {
+            aura,
+            spell: &no_spell,
+            dot: &no_spell,
+        }
+    }
 
     #[test]
     fn duration_parser_matches_go_examples() {
@@ -942,7 +1096,7 @@ mod tests {
             "type": "TypeAPL",
             "priorityList": [
                 {"action": {"castSpell": {"spellId": {"spellId": 25304}},
-                            "condition": {"dotIsActive": {"spellId": {"spellId": 1}}}}},
+                            "condition": {"spellTimeToReady": {"spellId": {"spellId": 1}}}}},
                 {"action": {"wait": {"duration": {"const": {"val": "1s"}}}}}
             ]
         });
@@ -950,7 +1104,7 @@ mod tests {
         assert_eq!(
             reasons,
             [
-                "rotation item 1: value dotIsActive is unsupported",
+                "rotation item 1: value spellTimeToReady is unsupported",
                 "rotation item 2: action wait is unsupported"
             ]
         );
@@ -969,8 +1123,8 @@ mod tests {
         let condition = rotation.priority_list[0].condition.as_ref();
         let lacks = |_: &ActionId| None::<FoundAura<()>>;
         (
-            compile_condition(condition, &lacks, MissingAura::Dropped),
-            compile_condition(condition, &lacks, MissingAura::Inactive),
+            compile_condition(condition, &only_auras(&lacks), MissingAura::Dropped),
+            compile_condition(condition, &only_auras(&lacks), MissingAura::Inactive),
         )
     }
 
@@ -1030,8 +1184,12 @@ mod tests {
                 })
             };
             (
-                compile_condition(condition.as_ref(), &find, MissingAura::Dropped),
-                compile_condition(condition.as_ref(), &find, MissingAura::Inactive),
+                compile_condition(condition.as_ref(), &only_auras(&find), MissingAura::Dropped),
+                compile_condition(
+                    condition.as_ref(),
+                    &only_auras(&find),
+                    MissingAura::Inactive,
+                ),
             )
         };
         let stacks = |id: i32| {
@@ -1113,8 +1271,12 @@ mod tests {
                 })
             };
             (
-                compile_condition(condition.as_ref(), &find, MissingAura::Dropped),
-                compile_condition(condition.as_ref(), &find, MissingAura::Inactive),
+                compile_condition(condition.as_ref(), &only_auras(&find), MissingAura::Dropped),
+                compile_condition(
+                    condition.as_ref(),
+                    &only_auras(&find),
+                    MissingAura::Inactive,
+                ),
             )
         };
         let known = |id: i32| serde_json::json!({"auraIsKnown": {"auraId": {"spellId": id}}});

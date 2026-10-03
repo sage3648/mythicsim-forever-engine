@@ -303,6 +303,9 @@ pub(crate) struct Spell<S> {
     pub(crate) missile_speed: f64,
     pub(crate) cast_kind: crate::contracts::prepared_v2::CastKind,
     pub(crate) has_extra_cast_condition: bool,
+    /// Go's range condition, part of `ExtraCastCondition` when either bound is set.
+    pub(crate) min_range: f64,
+    pub(crate) max_range: f64,
     pub(crate) ignore_haste: bool,
     pub(crate) cost: Option<Cost>,
     pub(crate) default_cast: Cast,
@@ -491,6 +494,8 @@ pub(crate) enum Action {
         spell: SpellId,
         result: SpellResult,
     },
+    /// A rotation prepull action: Go `APLActionCastSpell.Execute`.
+    Prepull(SpellId),
 }
 
 /// Go `ActionPriority`.
@@ -521,6 +526,8 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) cooldown_order: Vec<usize>,
     cooldown_min_ready: i64,
     pub(crate) rotation: Vec<rotation::Item>,
+    /// Prepull casts by time, in Go's stable time order.
+    prepull: Vec<(i64, SpellId)>,
     in_rotation: bool,
     pub(crate) resources: Vec<ResourceMetrics>,
     pub(crate) actions: Vec<ActionTotals>,
@@ -820,6 +827,8 @@ impl<A: Agent> Fight<A> {
                 missile_speed: exported.missile_speed,
                 cast_kind: exported.cast_kind,
                 has_extra_cast_condition: exported.has_extra_cast_condition,
+                min_range: exported.min_range,
+                max_range: exported.max_range,
                 ignore_haste: exported.ignore_haste,
                 cost,
                 default_cast: Cast {
@@ -1087,6 +1096,7 @@ impl<A: Agent> Fight<A> {
             major_cooldowns,
             cooldown_min_ready: NEVER_EXPIRES,
             rotation: Vec::new(),
+            prepull: Vec::new(),
             in_rotation: false,
             resources,
             actions,
@@ -1110,6 +1120,7 @@ impl<A: Agent> Fight<A> {
             encounter_damage_taken: 0.0,
         };
         fight.rotation = fight.compile_rotation(&parsed);
+        fight.prepull = fight.compile_prepull(&parsed);
         for effect in effects {
             if let Effect::Eureka {
                 aura,
@@ -1221,7 +1232,20 @@ impl<A: Agent> Fight<A> {
     /// Go `runOnce`: reset, prepull, the event loop and cleanup.
     fn run_once(&mut self) {
         self.reset();
-        self.schedule(0, PRIORITY_PREPULL + 1, Action::EncounterStart);
+        // Go PrePull: time starts at the first prepull action; later ones run first at a tie.
+        let count = self.prepull.len() as i32;
+        if let Some(&(first, _)) = self.prepull.first() {
+            self.now = first;
+        }
+        for index in 0..self.prepull.len() {
+            let (at, spell) = self.prepull[index];
+            self.schedule(
+                at,
+                PRIORITY_PREPULL + count - index as i32,
+                Action::Prepull(spell),
+            );
+        }
+        self.schedule(0, PRIORITY_PREPULL + count + 1, Action::EncounterStart);
         while self.step() {}
         self.cleanup();
     }
@@ -1244,9 +1268,11 @@ impl<A: Agent> Fight<A> {
         self.reset_unit(Side::Target);
         self.reset_unit(Side::Player);
         self.reset_cooldown_manager();
-        // Go initManaTickAction, after the environment reset.
+        // Go initManaTickAction, after the environment reset: two seconds after the prepull
+        // starts.
+        let prepull_start = self.prepull.first().map_or(0, |&(at, _)| at);
         self.schedule(
-            2 * crate::core::time::NS_PER_SECOND,
+            prepull_start + 2 * crate::core::time::NS_PER_SECOND,
             PRIORITY_REGEN,
             Action::ManaTick,
         );
@@ -1384,6 +1410,7 @@ impl<A: Agent> Fight<A> {
                 spell,
                 result,
             } => self.delayed_proc(aura, spell, result),
+            Action::Prepull(spell) => self.cast_or_queue(spell, Side::Target),
         }
     }
 

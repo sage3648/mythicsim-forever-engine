@@ -3,12 +3,12 @@
 use crate::{
     contracts::prepared_v2::ActionId,
     rotation::{
-        compile_condition, Action as ParsedAction, CompareOp, CompiledCondition, FoundAura,
+        compile_condition, Action as ParsedAction, CompareOp, CompiledCondition, FoundAura, Lookup,
         MissingAura, Rotation, ValueType,
     },
 };
 
-use super::{Agent, AuraRef, Fight, Side, SpellId};
+use super::{cast::MAX_SPELL_QUEUE_WINDOW, Agent, AuraRef, Fight, Side, SpellId};
 
 pub(crate) type Compiled = crate::rotation::Compiled<AuraRef>;
 
@@ -31,6 +31,47 @@ pub(crate) struct Item {
 }
 
 impl<A: Agent> Fight<A> {
+    /// Go `GetAPLSpell`: the first APL-flagged spell with the action ID, otherwise the first
+    /// registered one.
+    pub(crate) fn apl_spell(&self, id: &ActionId) -> Option<SpellId> {
+        let apl = self.spells.iter().position(|s| &s.id == id && s.flags.apl);
+        apl.or_else(|| self.spells.iter().position(|s| &s.id == id))
+    }
+
+    /// Go `GetAPLCastSpell`: a registered spell without the APL flag defers to an APL-flagged
+    /// spell with the same action ignoring the tag, then to `GetAPLSpell`.
+    fn apl_cast_spell(&self, id: &ActionId) -> Option<SpellId> {
+        if let Some(spell) = self.spells.iter().find(|s| &s.id == id) {
+            if !spell.flags.apl {
+                let same = |s: &super::Spell<A::Spell>| {
+                    s.id.spell_id == id.spell_id
+                        && s.id.item_id == id.item_id
+                        && s.id.other_id == id.other_id
+                };
+                if let Some(apl) = self.spells.iter().position(|s| same(s) && s.flags.apl) {
+                    return Some(apl);
+                }
+            }
+        }
+        self.apl_spell(id)
+    }
+
+    /// Go's prepull registration: each castable action at its time, in a stable time order.
+    pub(crate) fn compile_prepull(&self, rotation: &Rotation) -> Vec<(i64, SpellId)> {
+        let mut prepull: Vec<(i64, SpellId)> = rotation
+            .prepull
+            .iter()
+            .filter_map(|prepull| match &prepull.action {
+                ParsedAction::CastSpell(id) => self
+                    .apl_cast_spell(id)
+                    .map(|spell| (prepull.do_at_ns, spell)),
+                ParsedAction::AutocastOtherCooldowns => None,
+            })
+            .collect();
+        prepull.sort_by_key(|(do_at, _)| *do_at);
+        prepull
+    }
+
     /// Go `newAPLRotation` for the supported subset. Conditions compile as the pinned
     /// reference does; coverage rejects rotations where community #622 would differ.
     pub(crate) fn compile_rotation(&self, rotation: &Rotation) -> Vec<Item> {
@@ -44,21 +85,28 @@ impl<A: Agent> Fight<A> {
                 max_stacks: tracker.auras[index].max_stacks,
             })
         };
+        let spell = |id: &ActionId| self.apl_spell(id);
+        let dot = |id: &ActionId| {
+            self.apl_spell(id)
+                .filter(|&spell| self.spells[spell].dot.is_some())
+        };
+        let lookup = Lookup {
+            aura: &aura,
+            spell: &spell,
+            dot: &dot,
+        };
         let mut items = Vec::new();
         for item in &rotation.priority_list {
             let action = match &item.action {
-                ParsedAction::CastSpell(id) => {
-                    // Go GetAPLCastSpell: an unknown spell drops the action.
-                    let apl = self.spells.iter().position(|s| &s.id == id && s.flags.apl);
-                    match apl.or_else(|| self.spells.iter().position(|s| &s.id == id)) {
-                        Some(spell) => Act::Cast(spell),
-                        None => continue,
-                    }
-                }
+                // Go GetAPLCastSpell: an unknown spell drops the action.
+                ParsedAction::CastSpell(id) => match self.apl_cast_spell(id) {
+                    Some(spell) => Act::Cast(spell),
+                    None => continue,
+                },
                 ParsedAction::AutocastOtherCooldowns => Act::Autocast,
             };
             let condition =
-                match compile_condition(item.condition.as_ref(), &aura, MissingAura::Dropped) {
+                match compile_condition(item.condition.as_ref(), &lookup, MissingAura::Dropped) {
                     // A constant false condition prunes the action; its spells already left
                     // the major cooldowns in Go's export.
                     CompiledCondition::Pruned => continue,
@@ -74,6 +122,12 @@ impl<A: Agent> Fight<A> {
         match value {
             Compiled::Const(constant) => constant.boolean,
             Compiled::AuraIsActive(aura) => self.aura(*aura).active,
+            Compiled::DotIsActive(spell) => self.dot_active(*spell),
+            // Go `APLValueSpellIsReady`: ready, or ready within the spell queue window.
+            Compiled::SpellIsReady(spell) => {
+                self.spell_ready(*spell)
+                    || self.spell_time_to_ready(*spell) <= MAX_SPELL_QUEUE_WINDOW
+            }
             Compiled::And(values) => values.iter().all(|value| self.get_bool(value)),
             Compiled::Or(values) => values.iter().any(|value| self.get_bool(value)),
             Compiled::Not(value) => !self.get_bool(value),
@@ -103,6 +157,8 @@ impl<A: Agent> Fight<A> {
         match value {
             Compiled::Const(constant) => constant.int,
             Compiled::AuraNumStacks(aura) => self.aura(*aura).stacks,
+            // One target in scope.
+            Compiled::NumberTargets => 1,
             Compiled::Coerced { inner, .. } => match inner.value_type() {
                 ValueType::Bool => i32::from(self.get_bool(inner)),
                 ValueType::Int => self.get_int(inner),
@@ -118,6 +174,8 @@ impl<A: Agent> Fight<A> {
         match value {
             Compiled::Const(constant) => constant.float,
             Compiled::CurrentManaPercent => self.player.mana / self.config.max_mana,
+            Compiled::CurrentMana => self.player.mana,
+            Compiled::NumberTargets => 1.0,
             Compiled::Coerced { inner, .. } => match inner.value_type() {
                 ValueType::Bool => f64::from(u8::from(self.get_bool(inner))),
                 ValueType::Int => f64::from(self.get_int(inner)),
@@ -142,6 +200,22 @@ impl<A: Agent> Fight<A> {
                 }
             }
             Compiled::RemainingTime => self.duration - self.now,
+            Compiled::CurrentTime => self.now,
+            // Go `APLValueDotRemainingTime`: zero when inactive.
+            Compiled::DotRemainingTime(spell) => {
+                if self.dot_active(*spell) {
+                    let dot = self.spells[*spell].dot.expect("compiled dots have a dot");
+                    let aura = self.aura(self.dots[dot].aura);
+                    aura.expires - self.now
+                } else {
+                    0
+                }
+            }
+            // Go `Spell.CastTime`: the default cast time with current cast speed, unrounded.
+            Compiled::SpellCastTime(spell) => {
+                let cast_time = self.spells[*spell].default_cast.cast_time;
+                self.apply_cast_speed_for_spell(cast_time, *spell)
+            }
             Compiled::Coerced { inner, .. } => match inner.value_type() {
                 ValueType::Bool => {
                     if self.get_bool(inner) {
@@ -159,6 +233,12 @@ impl<A: Agent> Fight<A> {
             },
             _ => 0,
         }
+    }
+
+    /// Whether the dot of a compiled spell is active on its unit.
+    fn dot_active(&self, spell: SpellId) -> bool {
+        let dot = self.spells[spell].dot.expect("compiled dots have a dot");
+        self.aura(self.dots[dot].aura).active
     }
 
     /// Go `APLAction.IsReady`: the condition, then the action's readiness.

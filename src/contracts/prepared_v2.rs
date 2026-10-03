@@ -427,6 +427,8 @@ pub struct Player {
     pub major_cooldowns: Vec<MajorCooldown>,
     /// The request's APL in protojson form. Interpreted by the rotation module.
     pub rotation: serde_json::Value,
+    /// Every prepull action Go registered: the rotation's, and any a class or item adds.
+    pub prepull_actions: usize,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]

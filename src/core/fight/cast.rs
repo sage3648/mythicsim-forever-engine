@@ -10,7 +10,7 @@ use super::{
 };
 
 /// Go `MaxSpellQueueWindow`.
-const MAX_SPELL_QUEUE_WINDOW: i64 = 400 * NS_PER_MILLISECOND;
+pub(crate) const MAX_SPELL_QUEUE_WINDOW: i64 = 400 * NS_PER_MILLISECOND;
 
 impl<A: Agent> Fight<A> {
     /// Go `MultiplyCastSpeed` and `updateCastSpeed`. The undo multiplies by the reciprocal,
@@ -67,7 +67,7 @@ impl<A: Agent> Fight<A> {
     }
 
     /// Go `MaxTimeToReady`.
-    fn spell_time_to_ready(&self, spell: SpellId) -> i64 {
+    pub(crate) fn spell_time_to_ready(&self, spell: SpellId) -> i64 {
         let remaining = |timer: Option<(usize, i64)>| {
             timer.map_or(0, |(id, _)| (self.timers[id] - self.now).max(0))
         };
@@ -80,6 +80,14 @@ impl<A: Agent> Fight<A> {
     }
 
     fn extra_cast_condition(&self, spell: SpellId) -> bool {
+        // Go RegisterSpell wraps the condition with the range check, which runs first.
+        let state = &self.spells[spell];
+        let distance = self.config.distance;
+        if (state.min_range != 0.0 && distance < state.min_range)
+            || (state.max_range != 0.0 && distance > state.max_range)
+        {
+            return false;
+        }
         match &self.spells[spell].behavior {
             SpellBehavior::Class(behavior) if self.spells[spell].has_extra_cast_condition => {
                 A::extra_cast_condition(self, spell, *behavior)

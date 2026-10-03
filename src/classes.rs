@@ -1,3 +1,13 @@
 //! Class domains. A module exists only when it contains implemented behavior.
 
 pub(crate) mod mage;
+
+/// Run a prepared v2 input that passed the coverage gate with its class's agent.
+pub(crate) fn run_prepared(
+    prepared: &crate::contracts::prepared_v2::PreparedV2,
+) -> Result<crate::core::fight::FightReport, String> {
+    match prepared.player.class.as_str() {
+        "ClassMage" => mage::prepared::run_prepared(prepared),
+        other => Err(format!("class {other} has no fight agent")),
+    }
+}

@@ -131,7 +131,7 @@ Invalid and unsupported inputs are deliberately different outcomes.
 
 The exporter marks as unrepresented: more than one player or target, health fights,
 tanks, presims, healing models, pets, player auto attacks, a target that swings at a
-unit, item swapping, prepull actions, execute phase callbacks, target AI, caster
+unit, item swapping, execute phase callbacks, target AI, caster
 damage callbacks, dynamic damage-taken modifiers, mob type bonuses, non-mana costs,
 unnamed class masks, item cooldowns without an exported effect, cast speed and temporary
 stat listeners, and survival cooldowns that would wait for a nonzero defensive health
@@ -145,9 +145,14 @@ Rust recomputes Go's starting mana regeneration from the exported components and
 rejects the input as invalid if it disagrees. Further preparation checks will be added
 as the engine consumes more fields.
 
-The rotation subset covers the Frost, Arcane and Fire presets: `castSpell`, `autocastOtherCooldowns`,
-`cmp` with any comparison operator, `and`, `or`, `const`, `currentManaPercent`,
-`remainingTime`, `not`, `auraIsKnown`, `auraIsActive`, `auraNumStacks` and `auraRemainingTime`.
+The rotation subset covers `castSpell`, `autocastOtherCooldowns`, constant-time prepull
+casts, `cmp` with any comparison operator, `and`, `or`, `not`, `const`, `currentMana`,
+`currentManaPercent`, `currentTime`, `remainingTime`, `numberTargets`, `auraIsKnown`,
+`auraIsActive`, `auraNumStacks`, `auraRemainingTime`, `dotIsActive`, `dotRemainingTime`,
+`spellIsKnown`, `spellIsReady` and `spellCastTime`. Action IDs may carry a rank, which Go
+ignores. The exporter records how many prepull actions Go registered; a count that differs
+from the rotation's means a class or item registered its own, which is unsupported. A spell
+or dot the character lacks drops its term, as in Go.
 Constants follow Go parsing,
 including `time.ParseDuration` and percent constants. A rotation spell the character
 does not know is dropped, as in Go; a known spell without a Rust behavior is
@@ -269,7 +274,9 @@ cargo run --locked -- check --infile fixtures/mage/prepared-v2/frost-reference.p
 - The exporter reads four private Go fields through read-only reflection: a spell's
   dots and cast requirement flag, and a dot's haste and channel flags. A Go refactor of
   those fields fails the exporter build or run rather than changing output silently.
-- Only Mage agents are exported. Other classes need their own effect sections.
+- Each class has its own exporter file under `tools/oracle-v2/` naming its class spells,
+  damage rows and effects; a class without one is unrepresented. The fixture manifest pins
+  the digest of every exporter source.
 - The contract describes one player and one target. Multiple targets, pets, incoming
   damage and job modes such as stat weights need contract additions.
 - Accepting an input does not validate gameplay. Parity with Go is established per

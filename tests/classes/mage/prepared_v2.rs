@@ -172,12 +172,18 @@ fn active_listeners_without_an_effect_are_reported() {
 fn unsupported_rotation_operators_are_reported() {
     let mut value = reference_json();
     value["player"]["rotation"]["priorityList"][3]["action"]["condition"] =
-        json!({"dotIsActive": {"spellId": {"spellId": 12579}}});
-    assert!(reasons(value).contains(&"rotation item 4: value dotIsActive is unsupported".into()));
+        json!({"spellTimeToReady": {"spellId": {"spellId": 12579}}});
+    assert!(
+        reasons(value).contains(&"rotation item 4: value spellTimeToReady is unsupported".into())
+    );
 
     let mut prepull = reference_json();
     prepull["player"]["rotation"]["prepullActions"] = json!([{"action": {"castSpell": {"spellId": {"spellId": 25304}}}, "doAtValue": {"const": {"val": "-1s"}}}]);
-    assert!(reasons(prepull).contains(&"rotation field prepullActions is unsupported".into()));
+    // The exported count says Go registered none, so this rotation is not the one Go ran.
+    assert!(reasons(prepull).contains(
+        &"Go registered 0 prepull actions and the rotation 1; prepull actions outside the rotation are unsupported"
+            .into()
+    ));
 }
 
 #[test]
