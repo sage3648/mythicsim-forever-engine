@@ -1,4 +1,4 @@
-# Forever engine hybrid migration plan
+# Forever engine implementation plan
 
 Convert the parts of the Forever engine used by MythicSim into Rust in small,
 validated steps. Use a Go preparation adapter and a full Go fallback during the
@@ -13,6 +13,51 @@ merge directly into Rust or establish correctness by itself.
 This is an implementation plan. The current code remains a prepared Frostbolt
 prototype. Routers, general preparation, sync automation and the modules proposed
 below have not been implemented. Milestones advance on acceptance evidence, not dates.
+
+## First usable release
+
+The first usable engine release runs one complete level 60 Frost reference build
+through its real rotation, required gear effects and encounter settings. Go supplies
+preparation initially. Rust supplies combat execution and the result fields consumed
+by MythicSim. Other builds and unsupported options continue through the full Go engine.
+
+Do not call a class supported because a few spells work. Publish the supported build
+family, exact effect and rotation coverage, known discrepancies and source manifest.
+This release is a complete vertical slice that contributors can extend, not a promise
+of general Mage support.
+
+Completion requires the selected build's inventory to be closed, preparation and
+simulation comparisons to pass, and the report adapter to work with real consumers.
+Public production routing follows the rollout gate in phase 4, not the first
+successful local sim.
+
+## Proposed code organization
+
+Keep a single crate during the first release. Extract the current `src/lib.rs`
+incrementally and retain the existing fixture contract until the replacement is
+versioned and tested. The following modules are proposed, not present today.
+
+| Area | Proposed location | Responsibility |
+| --- | --- | --- |
+| Input contracts | `src/contracts/` | Strict request types, prepared states, errors and compatibility identity |
+| Simulation core | `src/core/` | Event ordering, seeded RNG, fight lifecycle and iteration state |
+| Shared mechanics | `src/mechanics/` | Resources, auras, cooldowns, damage resolution and reusable triggers |
+| Class behavior | `src/classes/mage/` initially | Spell and talent mechanics with stable source IDs |
+| Rotation | `src/rotation/` | Supported APL parsing, priority decisions and capability validation |
+| Reporting | `src/report/` | Aggregation, action metrics and timeline events |
+| Data and preparation | `src/data/`, then `src/prepare/` | Versioned data consumption and eventual Rust character construction |
+| Reference tooling | `tools/oracle/`, `tools/compare.py` | Pinned Go preparation and differential comparisons |
+| Upstream tracking | `upstream/` | Source manifests, reviewed changes and mechanics mappings |
+| Integration | MythicSim application repository | Worker routing, public report adapters and deployment flags |
+
+Keep spell behavior explicit and typed. Introduce a general abstraction only after
+multiple implemented mechanics demonstrate the shared need. Preserve Go names and
+IDs where they help trace a fix, while choosing Rust ownership and data layouts for
+the actual simulation workload.
+
+The worker, API and frontend remain outside this engine repository. Completing the
+engine conversion does not require rewriting the application's Go worker or changing
+its orchestration system.
 
 ## Migration decisions
 
@@ -294,6 +339,40 @@ Rust to reproduce a known defect simply to make comparison tests green.
   broader release suites when shared systems change. Benchmark after correctness.
 - Preserve failing cases and source manifests so contributors can reproduce them
   without production secrets, personal exports or a live server connection.
+
+## Contribution and release process
+
+Each mechanics issue should name the behavior, affected IDs, source evidence,
+dependencies and acceptance tests. A contributor can own one spell, effect,
+rotation operator, data converter or regression without owning an entire class.
+Sage maintains scope and release decisions; contributors supply implementation,
+mechanics evidence and reviews. AI assistance follows the same evidence requirements.
+
+The development loop is: select a bounded piece, establish its behavior, add a
+regression, implement it, compare the affected cases and review the resulting PR.
+Record adopted upstream commits and intentional differences with the change.
+
+Use fast frozen checks for ordinary PRs. Before widening production coverage,
+run live reference comparisons and complete job validation for the new capability.
+Release a manifest with the data, reference, schema and Rust identities, supported
+scope and known limitations. Keep old results associated with their original engine.
+
+## Attribution checkpoints
+
+Credit new work to MythicSim contributors and retain notices for included or adapted
+upstream material. Full Rust execution and independent implementation are separate
+questions; a language translation does not by itself establish independence.
+
+Prefer implementing documented mechanics in our own Rust design, with the Go engine
+used as a comparison reference. When a direct port is the practical choice, record
+its source and preserve the applicable notice. AI-assisted translations follow the
+same provenance rule as manual ports.
+
+During module replacement and before final cutover, review what remains in both the
+runtime distribution and repository: code, reference helpers, data, fixtures and
+documentation. Narrow or remove an upstream notice only when the material it covers
+is no longer included or adapted. Historical releases retain their original notices.
+The plan does not assume that a fully Rust release automatically removes attribution.
 
 ## First contribution sized pieces
 

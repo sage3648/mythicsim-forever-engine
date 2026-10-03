@@ -5,8 +5,9 @@ MythicSim. A staged hybrid migration keeps Go preparation and fallback available
 while each capability is validated. Go remains a development reference after
 production cutover so community fixes can still be reviewed and ported.
 
-The detailed [hybrid migration plan](docs/hybrid-migration-plan.md) defines the
-pieces, dependencies, acceptance gates and AI-assisted reconciliation process.
+The detailed [engine implementation plan](docs/hybrid-migration-plan.md) defines
+the target architecture, pieces, dependencies, acceptance gates, AI-assisted
+reconciliation process and attribution checkpoints.
 Milestones advance on evidence, not promised delivery dates.
 
 ## Foundation completed
@@ -35,6 +36,10 @@ Milestones advance on evidence, not promised delivery dates.
 2. Design prepared v2 and a release compatibility manifest.
 3. Establish the community change ledger and Go-to-Rust mechanics map.
 4. Consolidate reference pins and improve differential failure diagnostics.
+
+The [first usable release](docs/hybrid-migration-plan.md#first-usable-release)
+is one complete Frost build using Go preparation and Rust combat execution, with
+the required production result fields. It does not imply general Mage coverage.
 
 The [first contribution pieces](docs/hybrid-migration-plan.md#first-contribution-sized-pieces)
 provide a reviewable backlog. Production routing, general preparation and upstream

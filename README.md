@@ -41,8 +41,9 @@ See the [kernel guide](docs/kernel.md) for the input boundary and commands.
 ## Contribute
 
 Start with [CONTRIBUTING.md](CONTRIBUTING.md), the [roadmap](ROADMAP.md) and
-[architecture](docs/architecture.md). The [hybrid migration plan](docs/hybrid-migration-plan.md)
-sets out the conversion sequence and AI-assisted upstream fix process.
+[architecture](docs/architecture.md). The [engine implementation plan](docs/hybrid-migration-plan.md)
+defines the first usable release, module layout, conversion sequence and
+AI-assisted upstream fix process.
 Implementation, tests, mechanics evidence,
 documentation and reproducible bug reports are all welcome.
 
