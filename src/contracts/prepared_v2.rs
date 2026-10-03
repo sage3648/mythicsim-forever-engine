@@ -544,6 +544,19 @@ pub struct SpellChance {
     pub chance: f64,
 }
 
+/// One hand's Flametongue Weapon: its trigger, its hit spell by spellbook position, and the
+/// spells whose landed hits cast it.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct FlametongueHand {
+    pub trigger_aura: String,
+    pub spell: usize,
+    /// Whether the hand's weapon has a speed; an empty hand's hit deals nothing.
+    pub deals_damage: bool,
+    pub base_damage: f64,
+    pub trigger_spells: Vec<usize>,
+}
+
 /// A spell druid.RegisterSpell registered, by spellbook position, with the forms it may be
 /// cast in.
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -1206,6 +1219,21 @@ pub enum Effect {
         /// The proc manager's chance for each spell the trigger hears.
         chances: Vec<SpellChance>,
     },
+    /// Frost Shock: Earth Shock's shape on the Frost school.
+    FrostShock {
+        spell_id: i32,
+    },
+    /// Flametongue Weapon: each imbued hand's landed hits cast that hand's imbue hit.
+    FlametongueWeapon {
+        hands: Vec<FlametongueHand>,
+    },
+    /// Frostbrand Weapon: a proc manager's chance on landed weapon hits to cast a Frost hit.
+    FrostbrandWeapon {
+        trigger_aura: String,
+        spell_id: i32,
+        base_damage: f64,
+        chances: Vec<SpellChance>,
+    },
     /// Rockbiter Weapon: a permanent attack power aura, already in the prepared stats, that
     /// logs its gain and loss.
     RockbiterWeapon {
@@ -1418,6 +1446,9 @@ impl Effect {
             Effect::MaelstromWeapon { .. } => "maelstrom_weapon",
             Effect::RageOfTheFarseer { .. } => "rage_of_the_farseer",
             Effect::RockbiterWeapon { .. } => "rockbiter_weapon",
+            Effect::FrostShock { .. } => "frost_shock",
+            Effect::FlametongueWeapon { .. } => "flametongue_weapon",
+            Effect::FrostbrandWeapon { .. } => "frostbrand_weapon",
             Effect::ConjuredEnergy { .. } => "conjured_energy",
             Effect::SinisterStrike { .. } => "sinister_strike",
             Effect::Backstab { .. } => "backstab",

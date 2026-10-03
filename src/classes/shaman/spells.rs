@@ -9,3 +9,4 @@ pub(crate) mod lightning_bolt;
 pub(crate) mod searing_totem;
 pub(crate) mod stormstrike;
 pub(crate) mod totems;
+pub(crate) mod weapon_imbues;

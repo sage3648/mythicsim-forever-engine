@@ -22,7 +22,10 @@ const EFFECTS: &[&str] = &[
     "elemental_focus",
     "fire_nova",
     "flame_shock",
+    "flametongue_weapon",
     "flurry",
+    "frost_shock",
+    "frostbrand_weapon",
     "improved_stormstrike",
     "lava_burst",
     "lightning_bolt",
@@ -51,6 +54,7 @@ fn spell_capability(spell: &Spell) -> Option<&'static str> {
         "fire_nova" => Some("fire_nova"),
         "searing_totem" => Some("searing_totem"),
         "earth_shock" => Some("earth_shock"),
+        "frost_shock" => Some("frost_shock"),
         "stormstrike_cast" | "stormstrike_damage" => Some("stormstrike"),
         // Only Strength of Earth Totem among the basic totems; `limits` rejects the others.
         "basic_totem" => Some("strength_of_earth_totem"),
@@ -73,9 +77,15 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         | Effect::Flurry {
             trigger_aura, aura, ..
         } => vec![("player", trigger_aura), ("player", aura)],
-        Effect::RageOfTheFarseer { aura, .. } | Effect::RockbiterWeapon { aura, .. } => {
-            vec![("player", aura)]
-        }
+        Effect::RageOfTheFarseer { aura, .. }
+        | Effect::RockbiterWeapon { aura, .. }
+        | Effect::FrostbrandWeapon {
+            trigger_aura: aura, ..
+        } => vec![("player", aura)],
+        Effect::FlametongueWeapon { hands } => hands
+            .iter()
+            .map(|hand| ("player", hand.trigger_aura.as_str()))
+            .collect(),
         // The reset hears only hits the player takes, which never happen in scope.
         Effect::ImprovedStormstrike {
             trigger_aura,

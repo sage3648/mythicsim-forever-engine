@@ -62,6 +62,9 @@ var (
 	shamanFarseer          = spelldata.Ranked(425336)
 	shamanElementalWeapons = spelldata.Talent(16266, 3)
 	shamanRockbiter        = spelldata.Ranked(10400, 15567, 15568, 15569, 16311, 16312, 16313)
+	shamanFlametongueProc  = spelldata.Ranked(8026, 8028, 8029, 10444, 10445, 16343, 16344, 29469, 29470).ByID(16344)
+	shamanFrostbrandProc   = spelldata.Ranked(8034, 8037, 10458, 16352, 16353)
+	shamanFrostShock       = spelldata.Ranked(8056, 8058, 10472, 10473)
 )
 
 // Shaman spell rows whose ApplyEffects roll a client damage effect: every Lightning Bolt and Chain
@@ -77,6 +80,9 @@ func shamanDamageRows(rows map[int32]*spelldata.Spell) {
 		rows[row.ID] = row
 	}
 	if row := shamanEarthShock.Highest(); row != nil {
+		rows[row.ID] = row
+	}
+	if row := shamanFrostShock.Highest(); row != nil {
 		rows[row.ID] = row
 	}
 }
@@ -125,6 +131,9 @@ func shamanEffects(agent core.Agent, character *core.Character) []map[string]any
 	})
 	// shocks.go registerEarthShockSpell: a binary hit from the highest rank's damage roll.
 	effects = append(effects, map[string]any{"kind": "earth_shock", "spell_id": shamanEarthShock.Highest().ID})
+	// shocks.go registerFrostShockSpell: the same shape on the Frost school.
+	effects = append(effects, map[string]any{"kind": "frost_shock", "spell_id": shamanFrostShock.Highest().ID})
+	effects = append(effects, shamanImbueEffects(character)...)
 	// totems.go registerStrengthOfEarthTotemSpell: the earth totem's aura; its Strength reaches the
 	// fight through the class's stat auras.
 	if aura := character.GetAura("Strength Of Earth Totem (Self)"); aura != nil {
@@ -198,6 +207,56 @@ func shamanEffects(agent core.Agent, character *core.Character) []map[string]any
 			"proc_chance":      float64(shamanElementalFocus.Rank(1).ProcChance) / 100,
 			"cost_percent_add": clearcasting.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_COST)).Percent(),
 			"max_stacks":       int32(clearcasting.ProcCharges),
+		})
+	}
+	return effects
+}
+
+// weapon_imbues.go: Flametongue and Frostbrand Weapon, weapon procs that cast an imbue hit.
+func shamanImbueEffects(character *core.Character) []map[string]any {
+	effects := []map[string]any{}
+	// RegisterFlametongueImbue: one trigger and one hit spell for each imbued weapon, main hand first,
+	// registered in that order, the hit from the weapon's speed held to 1.3 to 4.0.
+	flametongue := []map[string]any{}
+	hits := []int{}
+	for i, spell := range character.Spellbook {
+		if spell.ActionID == (core.ActionID{SpellID: shamanFlametongueProc.ID}) {
+			hits = append(hits, i)
+		}
+	}
+	for _, hand := range []struct {
+		label  string
+		weapon *core.Item
+		mask   core.ProcMask
+	}{
+		{"Flametongue Imbue ItemSlotMainHand", character.MainHand(), core.ProcMaskMeleeMH},
+		{"Flametongue Imbue ItemSlotOffHand", character.OffHand(), core.ProcMaskMeleeOH},
+	} {
+		if character.GetAura(hand.label) == nil {
+			continue
+		}
+		if len(flametongue) >= len(hits) {
+			fail(fmt.Errorf("%s has no hit spell", hand.label))
+		}
+		speed := min(max(hand.weapon.SwingSpeed, 1.3), 4)
+		flametongue = append(flametongue, map[string]any{
+			"trigger_aura": hand.label, "spell": hits[len(flametongue)], "deals_damage": hand.weapon.SwingSpeed != 0,
+			"base_damage":    speed * shamanFlametongueProc.EffectN(1).Average(core.CharacterLevel) / 100,
+			"trigger_spells": procTriggerSpells(character, core.ProcTrigger{ProcMask: hand.mask, IsWeaponProc: true}),
+		})
+	}
+	if len(flametongue) > 0 {
+		effects = append(effects, map[string]any{"kind": "flametongue_weapon", "hands": flametongue})
+	}
+	// RegisterFrostbrandImbue: 8 procs a minute, a Go literal, from the hands it imbues.
+	if trigger := character.GetAura("Frostbrand Imbue"); trigger != nil && trigger.Dpm != nil {
+		row := shamanFrostbrandProc.Highest()
+		effects = append(effects, map[string]any{
+			"kind": "frostbrand_weapon", "trigger_aura": trigger.Label, "spell_id": row.ID,
+			"base_damage": row.DamageEffect().Average(core.CharacterLevel),
+			"chances": dpmChances(character, trigger.Dpm, nil, func(spell *core.Spell) bool {
+				return !spell.Flags.Matches(core.SpellFlagSuppressWeaponProcs)
+			}),
 		})
 	}
 	return effects

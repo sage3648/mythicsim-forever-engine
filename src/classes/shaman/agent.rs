@@ -15,6 +15,7 @@ use super::{
         searing_totem::{self, SearingTotem},
         stormstrike::{self, Stormstrike},
         totems::{self, Expirations, StrengthOfEarth},
+        weapon_imbues,
     },
     talents::{
         elemental_devastation::{self, ElementalDevastation},
@@ -43,6 +44,10 @@ pub(crate) enum ShamanSpell {
     EarthShock,
     StrengthOfEarthTotem,
     StormstrikeCast,
+    FrostShock,
+    /// The Flametongue Weapon hit of one hand, by its position in the effect.
+    FlametongueHit(usize),
+    FrostbrandHit,
     StormstrikeMainHand,
     StormstrikeOffHand,
     RageOfTheFarseer,
@@ -62,6 +67,9 @@ pub(crate) enum ShamanAura {
     /// Stormstrike's debuff on the target.
     Stormstrike,
     FlurryTrigger,
+    /// One hand's Flametongue Weapon trigger, by its position in the effect.
+    FlametongueTrigger(usize),
+    FrostbrandTrigger,
     Flurry,
     RageOfTheFarseer,
     RockbiterWeapon,
@@ -99,6 +107,12 @@ pub(crate) struct ShamanAgent {
     stormstrike_main_hand: Option<SpellId>,
     /// Go `HasMHWeapon() || HasOHWeapon()`, Stormstrike's cast condition.
     stormstrike_weapon: bool,
+    /// Each Flametongue Weapon hand: its hit spell, whether it deals damage, its base, and the
+    /// spells that trigger it by spellbook position.
+    flametongue: Vec<(SpellId, bool, f64, Vec<bool>)>,
+    /// Frostbrand Weapon's hit spell and base, and its trigger's chance by spellbook position.
+    frostbrand: Option<(SpellId, f64)>,
+    frostbrand_chances: Vec<Option<f64>>,
     /// Rockbiter Weapon's gain and loss lines.
     rockbiter_logs: Option<(String, String)>,
 }
@@ -121,6 +135,26 @@ impl ShamanAgent {
         });
         if spell.class_spell.is_none() && farseer {
             return Some(ShamanSpell::RageOfTheFarseer);
+        }
+        let position = prepared
+            .player
+            .spells
+            .iter()
+            .position(|exported| std::ptr::eq(exported, spell));
+        for effect in &prepared.effects {
+            match effect {
+                Effect::FlametongueWeapon { hands } => {
+                    if let Some(hand) = hands.iter().position(|hand| Some(hand.spell) == position) {
+                        return Some(ShamanSpell::FlametongueHit(hand));
+                    }
+                }
+                Effect::FrostbrandWeapon { spell_id, .. }
+                    if *spell_id == id.spell_id && id.tag == 0 =>
+                {
+                    return Some(ShamanSpell::FrostbrandHit);
+                }
+                _ => {}
+            }
         }
         let searing_attack = prepared.effects.iter().any(|effect| {
             matches!(effect, Effect::SearingTotem { attack_spell_id, .. }
@@ -148,6 +182,7 @@ impl ShamanAgent {
             }
             "searing_totem" if searing_attack => Some(ShamanSpell::SearingTotemAttack),
             "earth_shock" if damage && has("earth_shock") => Some(ShamanSpell::EarthShock),
+            "frost_shock" if damage && has("frost_shock") => Some(ShamanSpell::FrostShock),
             "stormstrike_cast" if has("stormstrike") => Some(ShamanSpell::StormstrikeCast),
             "stormstrike_damage" if has("stormstrike") && id.tag == 1 => {
                 Some(ShamanSpell::StormstrikeMainHand)
@@ -212,6 +247,19 @@ impl ShamanAgent {
                 Effect::RockbiterWeapon { aura, .. } => {
                     vec![(aura.clone(), ShamanAura::RockbiterWeapon)]
                 }
+                Effect::FlametongueWeapon { hands } => hands
+                    .iter()
+                    .enumerate()
+                    .map(|(hand, state)| {
+                        (
+                            state.trigger_aura.clone(),
+                            ShamanAura::FlametongueTrigger(hand),
+                        )
+                    })
+                    .collect(),
+                Effect::FrostbrandWeapon { trigger_aura, .. } => {
+                    vec![(trigger_aura.clone(), ShamanAura::FrostbrandTrigger)]
+                }
                 _ => Vec::new(),
             })
             .collect();
@@ -242,6 +290,7 @@ impl ShamanAgent {
         };
         fight.agent.overloads = vec![None; fight.spells.len()];
         fight.agent.maelstrom_chances = vec![None; fight.spells.len()];
+        fight.agent.frostbrand_chances = vec![None; fight.spells.len()];
         fight.agent.white = prepared
             .player
             .spells
@@ -414,6 +463,45 @@ impl ShamanAgent {
                     expire_log,
                     ..
                 } => fight.agent.rockbiter_logs = Some((gain_log.clone(), expire_log.clone())),
+                Effect::FlametongueWeapon { hands } => {
+                    for hand in hands {
+                        let mut triggers = vec![false; fight.spells.len()];
+                        for &spell in &hand.trigger_spells {
+                            *triggers.get_mut(spell).ok_or_else(|| {
+                                format!("Flametongue Weapon names spell {spell}")
+                            })? = true;
+                        }
+                        if hand.spell >= fight.spells.len() {
+                            return Err(format!("Flametongue Weapon names spell {}", hand.spell));
+                        }
+                        fight.agent.flametongue.push((
+                            hand.spell,
+                            hand.deals_damage,
+                            hand.base_damage,
+                            triggers,
+                        ));
+                    }
+                }
+                Effect::FrostbrandWeapon {
+                    spell_id,
+                    base_damage,
+                    chances,
+                    ..
+                } => {
+                    let spell = find(&fight, *spell_id, 0).ok_or_else(|| {
+                        format!("Frostbrand Weapon spell {spell_id} is not registered")
+                    })?;
+                    fight.agent.frostbrand = Some((spell, *base_damage));
+                    for chance in chances {
+                        *fight
+                            .agent
+                            .frostbrand_chances
+                            .get_mut(chance.spell)
+                            .ok_or_else(|| {
+                                format!("Frostbrand Weapon names spell {}", chance.spell)
+                            })? = Some(chance.chance);
+                    }
+                }
                 Effect::ElementalDevastation {
                     trigger_aura,
                     aura,
@@ -566,7 +654,19 @@ impl Agent for ShamanAgent {
                 let expires = fight.now + fight.agent.searing_duration;
                 fight.agent.totems.set(Totem::Fire, expires);
             }
-            ShamanSpell::EarthShock => earth_shock::apply(fight, spell, target),
+            ShamanSpell::EarthShock | ShamanSpell::FrostShock => {
+                earth_shock::apply(fight, spell, target)
+            }
+            ShamanSpell::FlametongueHit(hand) => {
+                let (_, deals_damage, base, _) = fight.agent.flametongue[hand];
+                if deals_damage {
+                    weapon_imbues::hit(fight, spell, target, base);
+                }
+            }
+            ShamanSpell::FrostbrandHit => {
+                let (_, base) = fight.agent.frostbrand.expect("Frostbrand Weapon is bound");
+                weapon_imbues::hit(fight, spell, target, base);
+            }
             ShamanSpell::StormstrikeCast => {
                 let state = fight.agent.stormstrike.expect("Stormstrike is bound");
                 let main_hand = fight.agent.stormstrike_main_hand;
@@ -635,7 +735,7 @@ impl Agent for ShamanAgent {
 
     fn on_spell_hit_dealt(
         fight: &mut Fight<Self>,
-        _aura: AuraRef,
+        aura: AuraRef,
         kind: ShamanAura,
         spell: SpellId,
         result: &SpellResult,
@@ -651,6 +751,17 @@ impl Agent for ShamanAgent {
             ShamanAura::FlurryTrigger => {
                 let state = fight.agent.flurry.expect("Flurry is bound");
                 state.on_spell_hit_dealt(fight, spell, result);
+            }
+            ShamanAura::FlametongueTrigger(hand) => {
+                let (hit, _, _, ref triggers) = fight.agent.flametongue[hand];
+                if triggers[spell] && result.landed() {
+                    fight.cast(hit, result.target);
+                }
+            }
+            ShamanAura::FrostbrandTrigger => {
+                let (hit, _) = fight.agent.frostbrand.expect("Frostbrand Weapon is bound");
+                let chance = fight.agent.frostbrand_chances[spell];
+                weapon_imbues::frostbrand_trigger(fight, aura, hit, result, chance);
             }
             ShamanAura::MaelstromWeaponTrigger => {
                 let state = fight.agent.maelstrom.expect("Maelstrom Weapon is bound");
