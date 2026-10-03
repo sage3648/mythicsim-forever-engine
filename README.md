@@ -91,6 +91,14 @@ Go on every supported variant, and so does every race on the application's
 [Shadow Priest race board](validation/2026-10-04-shadow-priest-race-boards.json),
 including the Dwarf with Stoneform.
 
+The production Smite Priest hybrid matches as well, at 505.456 DPS: a prepull Holy Fire, a
+strict Inner Focus and Holy Fire sequence on Holy Fire's remaining time, Penance channels,
+Shadow Word: Pain, Devouring Plague and every Smite rank, with Power in Light's damage
+taken modifier and Searing Light. [Sweeps](validation/2026-10-04-smite-priest-sweep.json),
+also [across races](validation/2026-10-04-smite-priest-race-sweep.json), match Go on all
+48 variants, and so does every race on its
+[race board](validation/2026-10-04-smite-priest-race-boards.json).
+
 The application's published race boards, the requests behind every race's production DPS
 for each supported spec, are a real production corpus: all 28 match the pinned Go engine
 in Rust at 10,000 iterations, and every DPS the production engine published equals the
