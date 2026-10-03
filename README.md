@@ -28,6 +28,32 @@ required to run the kernel or Rust tests.
 
 ## What works today
 
+Twenty of the application's 29 production reference builds, captured at application
+revision 18bbcd47, run in Rust through the prepared v2 contract and match the pinned Go
+engine on the whole result and the first-fight log:
+
+| Class | Builds |
+| --- | --- |
+| Mage | Arcane, Fire, Frost, Frostfire |
+| Druid | Balance, Feral (cat) |
+| Shaman | Elemental, Enhancement |
+| Warlock | Affliction, Demonology, Destruction |
+| Priest | Shadow, Smite |
+| Rogue | Assassination, Combat, Subtlety |
+| Paladin | Retribution, Shockadin |
+| Warrior | Fury |
+| Hunter | Marksmanship |
+
+Every race variant on the application's race boards for these builds matches too
+([casters](validation/2026-10-04-production-race-boards.json),
+[melee and ranged](validation/2026-10-04-melee-race-boards.json)), as do randomized sweeps
+of each build under `validation/`. A player tanking the target takes its swings, with
+crushing blows, blocks, parry haste, Chance of Death and a hardcast's avoidance drop. The
+remaining nine builds are the Arms, Protection and Fury/Protection Warrior, the three
+Protection Paladin builds, the Feral Bear, and the Beast Mastery and Survival Hunter.
+
+The original prepared contract, which the bare `sim` path still accepts, covers:
+
 - Level 60 caster, Frostbolt 25304 and one level 60 to 63 target.
 - Cast timing, GCD, projectile travel, hit, crit and binary resistance.
 - Mana spending, regeneration ticks, the five-second rule and mana starvation.
