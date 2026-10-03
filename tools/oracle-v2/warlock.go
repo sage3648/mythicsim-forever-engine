@@ -71,6 +71,7 @@ var (
 	wlImprovedShadowBoltOn = spelldata.Ranked(17794)
 	wlDecimation           = spelldata.Talent(440870, 2)
 	wlDemonicEnergies      = spelldata.Talent(1225214, 2)
+	wlDemonicSacrificeOn   = spelldata.Ranked(18789, 18790, 18791, 18792)
 )
 
 func warlockDamageRows(rows map[int32]*spelldata.Spell) {
@@ -193,6 +194,15 @@ func warlockEffects(agent core.Agent, character *core.Character) []map[string]an
 	}
 	if w.Succubus != nil { // pets.go registerLashOfPainSpell: a Go literal base
 		effects = append(effects, map[string]any{"kind": "lash_of_pain", "base_damage": 50.0})
+	}
+	// talents_demonology.go applyFelEnergy: the Voidwalker's sacrifice restores a share of
+	// maximum mana every period, from a periodic action its permanent aura starts.
+	if aura := w.GetAura("Demonic Sacrifice"); aura != nil && aura.ActionID.SpellID == 18792 {
+		row := wlDemonicSacrificeOn.ByID(18792)
+		effects = append(effects, map[string]any{
+			"kind": "fel_energy", "aura": aura.Label, "spell_id": row.ID,
+			"mana_fraction": row.EffectN(1).Percent(), "period_ns": nanos(row.EffectN(1).Period()),
+		})
 	}
 	if talents.Decimation > 0 { // talents_demonology.go applyDecimation
 		points := talents.Decimation

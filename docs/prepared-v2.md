@@ -156,6 +156,7 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `nightfall` | sim/warlock/talents_affliction.go | The periodic trigger spells and chance, Shadow Trance's cast time modifier and the spells that spend it; both handlers wait a spell batch window |
 | `warlock_pet` | sim/warlock/pets.go | The summoned demon's autocast abilities as spellbook positions, MinMana and the fixed wait of its AI |
 | `lash_of_pain` | sim/warlock/pets.go | The Succubus's fixed base damage; the spell power share is on the spell |
+| `fel_energy` | sim/warlock/talents_demonology.go | The Voidwalker sacrifice's share of maximum mana and period, from its periodic action |
 | `decimation` | sim/warlock/talents_demonology.go | The trigger spells, the 35% execute phase, and the aura's damage and Soul Fire cast time modifiers with the spells each names |
 | `demonic_brand` | sim/warlock/talents_demonology.go | The trigger spells, the target brand and its charges, the demon's marker and consumer auras, and the brand hit's roll and spell power share, Go literals |
 | `mind_blast`, `shadow_word_death` | sim/priest/mind_blast.go, shadow_word_death.go | Damage rolls on every rank; Early Demise's crit inside the 20% execute phase |
@@ -310,7 +311,8 @@ Stoneform timings. `production-enhancement-shaman` is the production Enhancement
 request, and `enhancement-shaman-no-battle-shout` is the same request without its party
 Battle Shout. `production-destruction-warlock`, `production-affliction-warlock` and
 `production-demonology-warlock` are the production Destruction, Affliction and Demonology
-Warlock requests. `production-fire` and
+Warlock requests, and `demonology-warlock-voidwalker-pact` sacrifices the Voidwalker for
+Fel Energy instead. `production-fire` and
 `production-frostfire` are the production application's Fire Missile Barrage and
 Frostfire hybrid requests at application revision 18bbcd47; its Arcane and Frost requests
 are byte-identical to `arcane-reference` and `frost-reference`. `frostfire-resistances`

@@ -5,7 +5,7 @@ use std::rc::Rc;
 
 use crate::{
     contracts::prepared_v2::{Effect, PreparedV2, Spell as ExportedSpell},
-    core::fight::{Agent, AuraRef, DotId, Fight, Side, SpellId, SpellResult},
+    core::fight::{Agent, AuraRef, DotId, Fight, Side, SpellId, SpellResult, PRIORITY_REGEN},
 };
 
 use super::{
@@ -65,7 +65,12 @@ pub(crate) enum WarlockAura {
     DemonicBrandTrigger,
     /// The demon's aura that spends the brand's charges.
     DemonicBrandConsumer,
+    /// The Voidwalker's sacrifice.
+    FelEnergy,
 }
+
+/// [`Agent::on_periodic`] tags of Warlock periodic actions.
+const FEL_ENERGY_TICK: u32 = 1;
 
 /// Warlock state that Go keeps in the `Warlock` struct and its closures.
 #[derive(Default)]
@@ -85,6 +90,8 @@ pub(crate) struct WarlockAgent {
     lash_of_pain_base: f64,
     decimation: Option<Rc<Decimation>>,
     demonic_brand: Option<Rc<DemonicBrand>>,
+    /// Fel Energy's period, share of maximum mana and mana metrics.
+    fel_energy: Option<(i64, f64, usize)>,
 }
 
 /// Aura labels claimed by implemented class effects, as (unit, label, kind).
@@ -123,6 +130,9 @@ fn class_auras(prepared: &PreparedV2) -> Vec<(&'static str, String, WarlockAura)
                     WarlockAura::NightfallTrigger,
                 ));
                 auras.push(("player", aura.clone(), WarlockAura::ShadowTrance));
+            }
+            Effect::FelEnergy { aura, .. } => {
+                auras.push(("player", aura.clone(), WarlockAura::FelEnergy))
             }
             Effect::Decimation {
                 trigger_aura, aura, ..
@@ -330,6 +340,18 @@ impl WarlockAgent {
                     fight.agent.demon = Some(Rc::new(bound));
                 }
                 Effect::LashOfPain { base_damage } => fight.agent.lash_of_pain_base = *base_damage,
+                Effect::FelEnergy {
+                    spell_id,
+                    mana_fraction,
+                    period_ns,
+                    ..
+                } => {
+                    let metrics = fight.new_mana_metrics(crate::contracts::prepared_v2::ActionId {
+                        spell_id: *spell_id,
+                        ..Default::default()
+                    });
+                    fight.agent.fel_energy = Some((*period_ns, *mana_fraction, metrics));
+                }
                 Effect::Decimation {
                     aura,
                     execute_phase,
@@ -494,6 +516,14 @@ impl Agent for WarlockAgent {
         }
     }
 
+    fn on_periodic(fight: &mut Fight<Self>, tag: u32) {
+        if tag == FEL_ENERGY_TICK {
+            let (_, fraction, metrics) = fight.agent.fel_energy.expect("bound");
+            let max_mana = fight.unit_config(Side::Player).max_mana;
+            fight.add_mana(max_mana * fraction, metrics);
+        }
+    }
+
     fn pet_rotation(fight: &mut Fight<Self>) {
         let demon = fight.agent.demon.clone().expect("the demon's AI is bound");
         demon.rotation(fight);
@@ -581,6 +611,11 @@ impl Agent for WarlockAgent {
             WarlockAura::Decimation => {
                 let talent = fight.agent.decimation.clone().expect("bound");
                 talent.on_gain(fight);
+            }
+            WarlockAura::FelEnergy => {
+                // Go StartPeriodicAction at the regeneration priority, first tick a period on.
+                let (period, _, _) = fight.agent.fel_energy.expect("bound");
+                fight.start_class_periodic(FEL_ENERGY_TICK, period, 0, PRIORITY_REGEN);
             }
             _ => {}
         }

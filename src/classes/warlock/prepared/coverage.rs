@@ -23,6 +23,7 @@ const EFFECTS: &[&str] = &[
     "curse_of_the_elements",
     "decimation",
     "demonic_brand",
+    "fel_energy",
     "immolate",
     "improved_shadow_bolt",
     "lash_of_pain",
@@ -107,6 +108,21 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
 /// the warlock's school power as fixed.
 fn limits(prepared: &PreparedV2, _reachable: &[&Spell]) -> Vec<String> {
     let mut reasons = Vec::new();
+    // Fel Energy's aura starts its mana restore on gain, which no combat listener shows.
+    let fel_energy = prepared.player.auras.iter().any(|aura| {
+        aura.active
+            && aura
+                .action_id
+                .as_ref()
+                .is_some_and(|id| id.spell_id == 18792)
+    });
+    let described = prepared
+        .effects
+        .iter()
+        .any(|effect| matches!(effect, Effect::FelEnergy { .. }));
+    if fel_energy && !described {
+        reasons.push("Fel Energy restores mana without an effect".into());
+    }
     for effect in &prepared.effects {
         if let Effect::Decimation { execute_phase, .. } = effect {
             if *execute_phase != 35 {

@@ -111,3 +111,15 @@ fn inert_demons_carry_their_permanent_auras() {
             .contains(&json!({"spell_id": 1293696})));
     }
 }
+
+/// The Voidwalker's sacrifice restores mana from its aura's gain, which needs its effect.
+#[test]
+fn fel_energy_needs_its_effect() {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("fixtures/mage/prepared-v2/demonology-warlock-voidwalker-pact.prepared.json");
+    let mut value: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+    let prepared: PreparedV2 = serde_json::from_value(value.clone()).unwrap();
+    assert_eq!(check_prepared(&prepared), Ok(()));
+    remove_effect(&mut value, "fel_energy");
+    assert!(reasons(value).contains(&"Fel Energy restores mana without an effect".into()));
+}

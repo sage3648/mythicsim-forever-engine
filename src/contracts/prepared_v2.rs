@@ -1267,6 +1267,14 @@ pub enum Effect {
         modded_spells: Vec<usize>,
         cast_time_percent: f64,
     },
+    /// Fel Energy, the Voidwalker's sacrifice: its permanent aura restores a share of maximum
+    /// mana every period.
+    FelEnergy {
+        aura: String,
+        spell_id: i32,
+        mana_fraction: f64,
+        period_ns: i64,
+    },
     /// Decimation: a landed hit of its spells inside the execute phase grants an aura whose
     /// modifiers raise their damage and cut Soul Fire's cast time.
     Decimation {
@@ -1846,6 +1854,7 @@ impl Effect {
             Effect::Shadowburn {} => "shadowburn",
             Effect::Nightfall { .. } => "nightfall",
             Effect::Decimation { .. } => "decimation",
+            Effect::FelEnergy { .. } => "fel_energy",
             Effect::DemonicBrand { .. } => "demonic_brand",
             Effect::WarlockPet { .. } => "warlock_pet",
             Effect::LashOfPain { .. } => "lash_of_pain",
