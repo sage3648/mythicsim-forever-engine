@@ -74,6 +74,8 @@ var (
 	shamanFlametongueTotem = spelldata.Ranked(8227, 8249, 10526, 16387)
 	shamanManaSpring       = spelldata.Ranked(5675, 10495, 10496, 10497)
 	shamanWindfuryProc     = spelldata.Ranked(8233, 8236, 10484, 16361)
+	shamanWindfuryTotem    = spelldata.Ranked(8512, 10613, 10614)
+	shamanWindfuryTotemHit = spelldata.Ranked(8515, 8516, 10608, 10609, 10610, 10612)
 )
 
 // Shaman spell rows whose ApplyEffects roll a client damage effect: every Lightning Bolt and Chain
@@ -248,6 +250,43 @@ func shamanTotemEffects(sham *shaman.Shaman, character *core.Character) []map[st
 			"party_air_totem": character.GetAura("Windfury Totem") != nil || character.GetAura("Grace of Air Totem (External)") != nil,
 		})
 	}
+	// registerWindfuryTotemSpell: the totem's aura refreshes two auras every 5 seconds, Go literals;
+	// the second's exclusive effect turns the trigger on, which grants charges of attack power and
+	// an extra main hand attack. A party air totem or a main hand Windfury Weapon would contest it.
+	if totem := character.GetAura("Windfury Totem (Self)"); totem != nil {
+		trigger := character.GetAura("Windfury Totem Trigger (Self)")
+		procAura := character.GetAura("Windfury Totem Proc (Self)")
+		extra := -1
+		for i, spell := range character.Spellbook {
+			if spell.ActionID == (core.ActionID{OtherID: proto.OtherAction_OtherActionAttack, Tag: 10610}) {
+				extra = i
+			}
+		}
+		grant := spelldata.ProcTrigger(character, shamanWindfuryTotemHit.ByID(10612), nil)
+		spend := spelldata.ProcTrigger(character, shamanWindfuryTotemHit.ByID(10610), nil, spelldata.Chance(1))
+		landed := core.OutcomeLanded
+		if trigger == nil || procAura == nil || extra < 0 || grant.DPM != nil || grant.Outcome != landed || spend.Outcome != landed ||
+			grant.Callback != core.CallbackOnSpellHitDealt || spend.Callback != core.CallbackOnSpellHitDealt ||
+			spend.ICD != 0 || spend.DPM != nil || !grant.RequireDamageDealt || !spend.RequireDamageDealt ||
+			grant.ExtraCondition != nil || spend.ExtraCondition != nil {
+			fail(fmt.Errorf("Windfury Totem (Self) is not the shape the runtime implements"))
+		}
+		value := shamanWindfuryTotemHit.ByID(10610).EffectN(1).Average(core.CharacterLevel)
+		bonus := stats.Stats{stats.AttackPower: value}
+		effects = append(effects, map[string]any{
+			"kind": "windfury_totem_self", "spell_id": shamanWindfuryTotem.Highest().ID, "totem_aura": totem.Label,
+			"duration_ns": nanos(shamanWindfuryTotem.Highest().Duration()), "period_ns": nanos(5 * time.Second),
+			"tracking_aura": "Windfury Party Weapon Buff Tracking Aura", "dummy_aura": "Windfury Dummy Aura (self)",
+			"trigger_aura": trigger.Label, "trigger_spells": procTriggerSpells(character, grant),
+			"trigger_proc_chance": grant.ProcChance, "proc_aura": procAura.Label,
+			"spend_spells": procTriggerSpells(character, spend), "extra_spell": extra,
+			"white_spells":    procTriggerSpells(character, core.ProcTrigger{ProcMask: core.ProcMaskMeleeWhiteHit, CanProcFromProcs: true}),
+			"proc_gain_log":   fmt.Sprintf("Gained %s from %s.", bonus.FlatString(), procAura.ActionID),
+			"proc_expire_log": fmt.Sprintf("Lost %s from fading %s.", bonus.FlatString(), procAura.ActionID),
+			"contested": character.GetAura("Windfury Totem") != nil || character.GetAura("Grace of Air Totem (External)") != nil ||
+				character.GetAura("Windfury Imbue") != nil && character.MainHand().TempEnchant == 283,
+		})
+	}
 	// registerManaSpringTotemSpell: the water totem's aura, whose MP5 is a class stat aura.
 	if aura := character.GetAura("Mana Spring Totem (Self)"); aura != nil {
 		effects = append(effects, map[string]any{
@@ -375,7 +414,7 @@ func shamanImbueEffects(sham *shaman.Shaman, character *core.Character) []map[st
 // The class auras whose gain and loss change stats through AddStatsDynamic.
 func shamanStatAuras(_ core.Agent, _ *core.Character) []string {
 	return []string{"Strength Of Earth Totem (Self)", "Grace Of Air Totem (Self)", "Mana Spring Totem (Self)",
-		"Windfury Weapon Attack Power"}
+		"Windfury Weapon Attack Power", "Windfury Totem Proc (Self)"}
 }
 
 // enhancement.go ApplySyncType: every sync type's replacement returns the main hand swing it

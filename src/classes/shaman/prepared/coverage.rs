@@ -41,6 +41,7 @@ const EFFECTS: &[&str] = &[
     "stormstrike",
     "strength_of_earth_totem",
     "weapon_sync",
+    "windfury_totem_self",
     "windfury_weapon",
 ];
 
@@ -123,12 +124,27 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         Effect::FlametongueTotem {
             aura, trigger_aura, ..
         } => vec![("player", aura), ("player", trigger_aura)],
+        Effect::WindfuryTotemSelf {
+            totem_aura,
+            tracking_aura,
+            dummy_aura,
+            trigger_aura,
+            proc_aura,
+            ..
+        } => vec![
+            ("player", totem_aura),
+            ("player", tracking_aura),
+            ("player", dummy_aura),
+            ("player", trigger_aura),
+            ("player", proc_aura),
+        ],
         _ => Vec::new(),
     }
 }
 
-/// Basic totems other than Strength of Earth and Grace of Air have no behavior; a Grace of Air
-/// cast would contest a party air totem's slot, and a Flametongue Totem would share the party
+/// Basic totems other than Strength of Earth, Grace of Air, Mana Spring and Windfury have no
+/// behavior; a Grace of Air or Windfury cast would contest a party air totem's slot (and a
+/// Windfury cast a main hand Windfury Weapon), and a Flametongue Totem would share the party
 /// totem's benefit, which the runtime does not model.
 fn limits(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
     let mut reasons = Vec::new();
@@ -138,6 +154,7 @@ fn limits(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
             Effect::StrengthOfEarthTotem { spell_id, .. } => known.push(*spell_id),
             Effect::GraceOfAirTotem { spell_id, .. } => known.push(*spell_id),
             Effect::ManaSpringTotem { spell_id, .. } => known.push(*spell_id),
+            Effect::WindfuryTotemSelf { spell_id, .. } => known.push(*spell_id),
             _ => {}
         }
     }
@@ -160,6 +177,13 @@ fn limits(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
                     ..
                 } if *spell_id == id.spell_id && id.tag == 0 => reasons.push(format!(
                     "rotation reaches {id}, a Grace of Air Totem that contests a party air totem"
+                )),
+                Effect::WindfuryTotemSelf {
+                    spell_id,
+                    contested: true,
+                    ..
+                } if *spell_id == id.spell_id && id.tag == 0 => reasons.push(format!(
+                    "rotation reaches {id}, a Windfury Totem that contests a party air totem or Windfury Weapon"
                 )),
                 Effect::FlametongueTotem {
                     spell_id,

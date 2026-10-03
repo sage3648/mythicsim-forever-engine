@@ -3,7 +3,10 @@
 
 use crate::{
     contracts::prepared_v2::{Effect, PreparedV2, Spell as ExportedSpell},
-    core::fight::{Agent, AuraRef, DotId, Fight, Side, SpellId, SpellResult},
+    core::{
+        fight::{Agent, AuraRef, DotId, Fight, Side, SpellId, SpellResult, PRIORITY_AUTO},
+        queue::Handle,
+    },
 };
 
 use super::{
@@ -15,8 +18,8 @@ use super::{
         searing_totem::{self, SearingTotem},
         stormstrike::{self, Stormstrike},
         totems::{self, Expirations, StrengthOfEarth},
-        weapon_imbues,
-        weapon_sync,
+        weapon_imbues, weapon_sync,
+        windfury_totem::{self, WindfuryTotem},
         windfury_weapon::{self, WindfuryWeapon},
     },
     talents::{
@@ -51,6 +54,7 @@ pub(crate) enum ShamanSpell {
     LightningShield,
     GraceOfAirTotem,
     ManaSpringTotem,
+    WindfuryTotem,
     FlametongueTotem,
     FlametongueTotemAttack,
     /// The Flametongue Weapon hit of one hand, by its position in the effect.
@@ -79,6 +83,11 @@ pub(crate) enum ShamanAura {
     FlametongueTotemTrigger,
     WindfuryImbue,
     WindfuryWeaponAttackPower,
+    /// The shaman's own Windfury Totem's aura, its dummy aura, its trigger and its charges.
+    WindfuryTotem,
+    WindfuryTotemDummy,
+    WindfuryTotemTrigger,
+    WindfuryTotemProc,
     /// One hand's Flametongue Weapon trigger, by its position in the effect.
     FlametongueTrigger(usize),
     FrostbrandTrigger,
@@ -133,6 +142,9 @@ pub(crate) struct ShamanAgent {
     mana_spring: Option<StrengthOfEarth>,
     flametongue_totem: Option<totems::FlametongueTotem>,
     windfury_weapon: Option<WindfuryWeapon>,
+    windfury_totem: Option<WindfuryTotem>,
+    /// The Windfury Totem's pending periodic tick, which its expiry cancels.
+    windfury_totem_tick: Option<Handle>,
     /// Enhancement's weapon sync: whether it delays or syncs the off hand, and Flurry's charge
     /// cooldown it waits out.
     weapon_sync: Option<(weapon_sync::Sync, i64)>,
@@ -261,6 +273,14 @@ impl ShamanAgent {
             {
                 Some(ShamanSpell::ManaSpringTotem)
             }
+            "basic_totem"
+                if prepared.effects.iter().any(|effect| {
+                    matches!(effect, Effect::WindfuryTotemSelf { spell_id, .. }
+                        if *spell_id == id.spell_id && id.tag == 0)
+                }) =>
+            {
+                Some(ShamanSpell::WindfuryTotem)
+            }
             _ => None,
         }
     }
@@ -336,6 +356,18 @@ impl ShamanAgent {
                 } => vec![
                     (trigger_aura.clone(), ShamanAura::WindfuryImbue),
                     (ap_aura.clone(), ShamanAura::WindfuryWeaponAttackPower),
+                ],
+                Effect::WindfuryTotemSelf {
+                    totem_aura,
+                    dummy_aura,
+                    trigger_aura,
+                    proc_aura,
+                    ..
+                } => vec![
+                    (totem_aura.clone(), ShamanAura::WindfuryTotem),
+                    (dummy_aura.clone(), ShamanAura::WindfuryTotemDummy),
+                    (trigger_aura.clone(), ShamanAura::WindfuryTotemTrigger),
+                    (proc_aura.clone(), ShamanAura::WindfuryTotemProc),
                 ],
                 _ => Vec::new(),
             })
@@ -602,11 +634,15 @@ impl ShamanAgent {
                         *blocks_windfury_totem,
                     )?);
                 }
+                Effect::WindfuryTotemSelf { .. } => {
+                    fight.agent.windfury_totem = Some(windfury_totem::bind(&fight, effect)?);
+                }
                 Effect::WeaponSync {
                     sync,
                     flurry_icd_ns,
                 } => {
-                    fight.agent.weapon_sync = Some((weapon_sync::Sync::parse(sync)?, *flurry_icd_ns));
+                    fight.agent.weapon_sync =
+                        Some((weapon_sync::Sync::parse(sync)?, *flurry_icd_ns));
                 }
                 Effect::ManaSpringTotem {
                     aura, duration_ns, ..
@@ -806,6 +842,14 @@ impl ShamanAgent {
             .clone()
             .expect("Searing Totem is bound")
     }
+
+    fn windfury_totem(fight: &Fight<Self>) -> WindfuryTotem {
+        fight
+            .agent
+            .windfury_totem
+            .clone()
+            .expect("Windfury Totem is bound")
+    }
 }
 
 impl Agent for ShamanAgent {
@@ -904,6 +948,18 @@ impl Agent for ShamanAgent {
                 let expires = totems::strength_of_earth(fight, totem);
                 fight.agent.totems.set(Totem::Air, expires);
             }
+            ShamanSpell::WindfuryTotem => {
+                let totem = Self::windfury_totem(fight);
+                if let Some(previous) = fight.agent.air_totem {
+                    fight.deactivate_aura(previous);
+                }
+                fight
+                    .agent
+                    .totems
+                    .set(Totem::Air, fight.now + totem.duration);
+                fight.agent.air_totem = Some(totem.totem);
+                fight.activate_aura(totem.totem);
+            }
             ShamanSpell::ManaSpringTotem => {
                 // The only water totem in scope is this one, so the previous aura is its own.
                 let totem = fight.agent.mana_spring.expect("Mana Spring Totem is bound");
@@ -971,6 +1027,19 @@ impl Agent for ShamanAgent {
         swing
     }
 
+    /// Go `AttachPeriodicAction`'s tick on the Windfury Totem's aura: its effect, then the next.
+    fn on_class_action(fight: &mut Fight<Self>, _tag: u32) {
+        let totem = Self::windfury_totem(fight);
+        totem.tick(fight);
+        let next = fight.now + totem.period;
+        fight.agent.windfury_totem_tick = Some(fight.schedule_class_action(next, PRIORITY_AUTO, 0));
+    }
+
+    /// The Windfury Totem's expiry cancels its pending tick, even one already popped.
+    fn class_action_valid(fight: &Fight<Self>, _tag: u32, handle: Handle) -> bool {
+        fight.agent.windfury_totem_tick == Some(handle)
+    }
+
     fn totem_expiration(fight: &Fight<Self>, totem: Totem) -> i64 {
         fight.agent.totems.get(totem)
     }
@@ -1028,6 +1097,12 @@ impl Agent for ShamanAgent {
                     .clone()
                     .expect("Windfury Weapon is bound");
                 state.on_spend_hit(fight, spell, result);
+            }
+            ShamanAura::WindfuryTotemTrigger => {
+                Self::windfury_totem(fight).on_trigger_hit(fight, spell, result);
+            }
+            ShamanAura::WindfuryTotemProc => {
+                Self::windfury_totem(fight).on_spend_hit(fight, spell, result);
             }
             ShamanAura::FlametongueTotemTrigger => {
                 let state = fight
@@ -1176,6 +1251,9 @@ impl Agent for ShamanAgent {
     }
 
     fn on_exclusive_gain(fight: &mut Fight<Self>, _aura: AuraRef, kind: ShamanAura) {
+        if kind == ShamanAura::WindfuryTotemDummy {
+            Self::windfury_totem(fight).on_dummy_gain(fight);
+        }
         if kind == ShamanAura::WindfuryImbue {
             let state = fight
                 .agent
@@ -1218,6 +1296,13 @@ impl Agent for ShamanAgent {
                     .expect("Windfury Weapon is bound");
                 state.on_ap_gain(fight);
             }
+            ShamanAura::WindfuryTotem => {
+                // Go AttachPeriodicAction with TickImmediately: the first tick is pending now.
+                let now = fight.now;
+                fight.agent.windfury_totem_tick =
+                    Some(fight.schedule_class_action(now, PRIORITY_AUTO, 0));
+            }
+            ShamanAura::WindfuryTotemProc => Self::windfury_totem(fight).on_proc_gain(fight),
             ShamanAura::RageOfTheFarseer => fight
                 .agent
                 .farseer
@@ -1265,6 +1350,14 @@ impl Agent for ShamanAgent {
                     .expect("Windfury Weapon is bound");
                 state.on_ap_expire(fight);
             }
+            ShamanAura::WindfuryTotem => {
+                Self::windfury_totem(fight).on_totem_expire(fight);
+                if let Some(tick) = fight.agent.windfury_totem_tick.take() {
+                    fight.queue.cancel(tick);
+                }
+            }
+            ShamanAura::WindfuryTotemDummy => Self::windfury_totem(fight).on_dummy_expire(fight),
+            ShamanAura::WindfuryTotemProc => Self::windfury_totem(fight).on_proc_expire(fight),
             ShamanAura::WindfuryImbue => {
                 let state = fight
                     .agent

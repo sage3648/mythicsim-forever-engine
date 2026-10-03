@@ -4381,6 +4381,31 @@
       "spell_id": 25359
     },
     {
+      "contested": false,
+      "dummy_aura": "Windfury Dummy Aura (self)",
+      "duration_ns": 300000000000,
+      "extra_spell": 52,
+      "kind": "windfury_totem_self",
+      "period_ns": 5000000000,
+      "proc_aura": "Windfury Totem Proc (Self)",
+      "proc_expire_log": "Lost {\"AttackPower\": 246.000,} from fading {SpellID: 10610}.",
+      "proc_gain_log": "Gained {\"AttackPower\": 246.000,} from {SpellID: 10610}.",
+      "spell_id": 10614,
+      "spend_spells": [
+        52
+      ],
+      "totem_aura": "Windfury Totem (Self)",
+      "tracking_aura": "Windfury Party Weapon Buff Tracking Aura",
+      "trigger_aura": "Windfury Totem Trigger (Self)",
+      "trigger_proc_chance": 0.2,
+      "trigger_spells": [
+        52
+      ],
+      "white_spells": [
+        52
+      ]
+    },
+    {
       "aura": "Mana Spring Totem (Self)",
       "duration_ns": 300000000000,
       "kind": "mana_spring_totem",
@@ -4476,7 +4501,8 @@
       "auras": [
         "Strength Of Earth Totem (Self)",
         "Grace Of Air Totem (Self)",
-        "Mana Spring Totem (Self)"
+        "Mana Spring Totem (Self)",
+        "Windfury Totem Proc (Self)"
       ],
       "changed": [
         "Agility",
@@ -4546,6 +4572,70 @@
         },
         {
           "AttackPower": 566,
+          "MP5": 77,
+          "PhysicalCritPercent": 15.6408,
+          "RangedAttackPower": 40,
+          "SpellCritPercent": 12.8432,
+          "SpellDamage": 439
+        },
+        {
+          "AttackPower": 696,
+          "MP5": 77,
+          "PhysicalCritPercent": 10.6624,
+          "RangedAttackPower": 40,
+          "SpellCritPercent": 12.8432,
+          "SpellDamage": 439
+        },
+        {
+          "AttackPower": 812,
+          "MP5": 77,
+          "PhysicalCritPercent": 10.6624,
+          "RangedAttackPower": 40,
+          "SpellCritPercent": 12.8432,
+          "SpellDamage": 439
+        },
+        {
+          "AttackPower": 696,
+          "MP5": 77,
+          "PhysicalCritPercent": 15.6408,
+          "RangedAttackPower": 40,
+          "SpellCritPercent": 12.8432,
+          "SpellDamage": 439
+        },
+        {
+          "AttackPower": 812,
+          "MP5": 77,
+          "PhysicalCritPercent": 15.6408,
+          "RangedAttackPower": 40,
+          "SpellCritPercent": 12.8432,
+          "SpellDamage": 439
+        },
+        {
+          "AttackPower": 696,
+          "MP5": 77,
+          "PhysicalCritPercent": 10.6624,
+          "RangedAttackPower": 40,
+          "SpellCritPercent": 12.8432,
+          "SpellDamage": 439
+        },
+        {
+          "AttackPower": 812,
+          "MP5": 77,
+          "PhysicalCritPercent": 10.6624,
+          "RangedAttackPower": 40,
+          "SpellCritPercent": 12.8432,
+          "SpellDamage": 439
+        },
+        {
+          "AttackPower": 696,
+          "MP5": 77,
+          "PhysicalCritPercent": 15.6408,
+          "RangedAttackPower": 40,
+          "SpellCritPercent": 12.8432,
+          "SpellDamage": 439
+        },
+        {
+          "AttackPower": 812,
           "MP5": 77,
           "PhysicalCritPercent": 15.6408,
           "RangedAttackPower": 40,

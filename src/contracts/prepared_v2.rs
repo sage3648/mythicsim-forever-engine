@@ -1342,6 +1342,28 @@ pub enum Effect {
         /// Whether a party air totem holds the slot the cast would contest.
         party_air_totem: bool,
     },
+    /// The shaman's own Windfury Totem: the totem's aura refreshes a tracking aura and a dummy
+    /// aura every period, the dummy's exclusive effect turns the trigger on, and the trigger
+    /// grants the proc aura's charges and an extra main hand attack. Spellbook positions name
+    /// the spells; `contested` says a party air totem or a main hand imbue would contest it.
+    WindfuryTotemSelf {
+        spell_id: i32,
+        totem_aura: String,
+        duration_ns: i64,
+        period_ns: i64,
+        tracking_aura: String,
+        dummy_aura: String,
+        trigger_aura: String,
+        trigger_spells: Vec<usize>,
+        trigger_proc_chance: f64,
+        proc_aura: String,
+        spend_spells: Vec<usize>,
+        extra_spell: usize,
+        white_spells: Vec<usize>,
+        proc_gain_log: String,
+        proc_expire_log: String,
+        contested: bool,
+    },
     /// Mana Spring Totem: the water totem's aura, whose MP5 is a class stat aura.
     ManaSpringTotem {
         spell_id: i32,
@@ -1827,6 +1849,7 @@ impl Effect {
             Effect::LightningShield { .. } => "lightning_shield",
             Effect::GraceOfAirTotem { .. } => "grace_of_air_totem",
             Effect::ManaSpringTotem { .. } => "mana_spring_totem",
+            Effect::WindfuryTotemSelf { .. } => "windfury_totem_self",
             Effect::FlametongueTotem { .. } => "flametongue_totem",
             Effect::FlametongueWeapon { .. } => "flametongue_weapon",
             Effect::FrostbrandWeapon { .. } => "frostbrand_weapon",

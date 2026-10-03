@@ -115,6 +115,13 @@ pub(crate) trait Agent: Sized {
     }
     /// A tick of a periodic action a class started with [`Fight::start_class_periodic`].
     fn on_periodic(_fight: &mut Fight<Self>, _tag: u32) {}
+    /// A pending action a class scheduled with [`Fight::schedule_class_action`].
+    fn on_class_action(_fight: &mut Fight<Self>, _tag: u32) {}
+    /// Whether a class action popped from the queue still stands once time has advanced: Go
+    /// checks `cancelled` again after the advance, which can expire the aura that owns it.
+    fn class_action_valid(_fight: &Fight<Self>, _tag: u32, _handle: Handle) -> bool {
+        true
+    }
     /// A dot or channel tick of a class spell.
     fn on_dot_tick(_fight: &mut Fight<Self>, _dot: DotId, _behavior: Self::Spell) {}
     /// The class part of a dot aura's OnGain, which Go runs before the dot's own.
@@ -810,6 +817,8 @@ pub(crate) enum Action {
     WindfuryRefresh,
     /// A tick of a class periodic action: Go `StartPeriodicAction` without a tick on start.
     ClassPeriodic(Periodic),
+    /// A class's own pending action, which it may cancel: [`Agent::on_class_action`].
+    ClassAction(u32),
 }
 
 /// Go `PeriodicActionOptions` for a class periodic action, carried by its pending action.
@@ -1191,6 +1200,7 @@ impl<A: Agent> Fight<A> {
                     || effects.iter().any(|effect| {
                         matches!(effect, Effect::WindfuryTotem { extra_attack_spell, .. }
                             | Effect::WindfuryWeapon { extra_spell: extra_attack_spell, .. }
+                            | Effect::WindfuryTotemSelf { extra_spell: extra_attack_spell, .. }
                             if *extra_attack_spell == spells.len())
                     }))
             {
@@ -2686,6 +2696,7 @@ impl<A: Agent> Fight<A> {
                     Action::WindfuryRefresh,
                 );
             }
+            Action::ClassAction(tag) => A::on_class_action(self, tag),
             Action::ClassPeriodic(periodic) => {
                 A::on_periodic(self, periodic.tag);
                 let done = periodic.done + 1;
@@ -2730,6 +2741,12 @@ impl<A: Agent> Fight<A> {
                 first: false,
             },
         );
+    }
+
+    /// Go `AddPendingAction` for a class: the action runs at `at`, unless cancelled through the
+    /// returned handle.
+    pub(crate) fn schedule_class_action(&mut self, at: i64, priority: i32, tag: u32) -> Handle {
+        self.schedule(at, priority, Action::ClassAction(tag))
     }
 
     /// Go `StartPeriodicAction` for a class: the first tick a period from now.
@@ -2778,6 +2795,7 @@ impl<A: Agent> Fight<A> {
     fn handle_still_valid(&mut self, handle: Handle, action: &Action) -> bool {
         match action {
             Action::DotTick(dot) => self.dots[*dot].tick_action == Some(handle),
+            Action::ClassAction(tag) => A::class_action_valid(self, *tag, handle),
             _ => true,
         }
     }

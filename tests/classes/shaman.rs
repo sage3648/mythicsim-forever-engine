@@ -94,16 +94,28 @@ fn enhancement_request_without_battle_shout_is_supported() {
     assert_eq!(prepared_coverage(&prepared), Vec::<String>::new());
 }
 
-/// Strength of Earth and Grace of Air are the basic totems with a behavior, and a Grace of Air
-/// cast may not contest the party's Windfury Totem.
+/// A basic totem needs the effect that gives it a behavior, and a Grace of Air or Windfury
+/// Totem cast may not contest the party's Windfury Totem.
 #[test]
 fn other_basic_totems_are_rejected() {
     let mut value = enhancement_json();
+    value["effects"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|effect| effect["kind"] != "windfury_totem_self");
     let item = &mut value["player"]["rotation"]["priorityList"][0]["action"];
     assert_eq!(item["castSpell"]["spellId"]["spellId"], 25361);
     item["castSpell"]["spellId"]["spellId"] = json!(10614);
     assert!(reasons(value)
         .contains(&"rotation reaches spell 10614, a totem without a known behavior".into()));
+
+    let mut value = enhancement_json();
+    value["player"]["rotation"]["priorityList"][0]["action"]["castSpell"]["spellId"]["spellId"] =
+        json!(10614);
+    assert!(reasons(value).contains(
+        &"rotation reaches spell 10614, a Windfury Totem that contests a party air totem or Windfury Weapon"
+            .into()
+    ));
 
     let mut value = enhancement_json();
     value["player"]["rotation"]["priorityList"][0]["action"]["castSpell"]["spellId"]["spellId"] =
