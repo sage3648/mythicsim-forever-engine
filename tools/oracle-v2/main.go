@@ -599,6 +599,7 @@ var (
 	scorchLadder        = spelldata.Ranked(2948, 8444, 8445, 8446, 10205, 10206, 10207)
 	improvedScorch      = spelldata.Talent(11095, 3)
 	fireVulnerability   = spelldata.Ranked(22959)
+	fireballLadder      = spelldata.Ranked(133, 143, 145, 3140, 8400, 8401, 8402, 10148, 10149, 10150, 10151, 25306)
 	arcaneConcentration = spelldata.Talent(11213, 5)
 	clearcastingTrigger = spelldata.Ranked(12536)
 	fingersOfFrost      = spelldata.Talent(400647, 2)
@@ -635,6 +636,7 @@ func attachDamageEffects(spells []Spell, character *core.Character) {
 		rows[fireBlast.ID] = fireBlast
 	}
 	scorchLadder.Each(func(_ int32, row *spelldata.Spell) { rows[row.ID] = row })
+	fireballLadder.Each(func(_ int32, row *spelldata.Spell) { rows[row.ID] = row })
 	for i := range spells {
 		id := spells[i].ActionID
 		if id == nil || id.SpellID == 0 || id.Tag != 0 {
@@ -720,6 +722,15 @@ func mageEffects(m *mage.Mage, character *core.Character) []map[string]any {
 	}
 	// fire_blast.go
 	effects = append(effects, map[string]any{"kind": "fire_blast"})
+	// fireball.go: every rank; the hit lands after travel, then its dot snapshots and ticks.
+	fireballs := []map[string]any{}
+	fireballLadder.Each(func(_ int32, row *spelldata.Spell) {
+		fireballs = append(fireballs, map[string]any{
+			"spell_id": row.ID, "tick_base": row.PeriodicEffect().Average(core.CharacterLevel),
+			"tick_can_crit": row.PeriodicCanCrit() && row.DefenseTypeCore() == core.DefenseTypeMagic,
+		})
+	})
+	effects = append(effects, map[string]any{"kind": "fireball", "ranks": fireballs})
 	// scorch.go: every rank; Improved Scorch stacks Fire Vulnerability on the mage itself.
 	scorch := map[string]any{"kind": "scorch"}
 	if talents.ImprovedScorch > 0 {

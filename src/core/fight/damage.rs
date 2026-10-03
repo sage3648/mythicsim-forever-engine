@@ -14,6 +14,15 @@ pub(crate) const OUTCOME_PARTIAL_2_4: u16 = 1 << 4;
 pub(crate) const OUTCOME_PARTIAL_3_4: u16 = 1 << 5;
 pub(crate) const OUTCOME_PARTIAL: u16 =
     OUTCOME_PARTIAL_1_4 | OUTCOME_PARTIAL_2_4 | OUTCOME_PARTIAL_3_4;
+/// Go outcome appliers the runtime implements.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum Outcome {
+    MagicHitAndCrit,
+    MagicHit,
+    Tick,
+    TickMagicCrit,
+}
+
 /// Go `OutcomeLanded` for the outcomes a spell can have.
 pub(crate) const OUTCOME_LANDED: u16 = OUTCOME_HIT | OUTCOME_CRIT;
 
@@ -77,7 +86,7 @@ impl<A: Agent> Fight<A> {
     }
 
     /// Go `Spell.BonusDamage` for a magic spell.
-    fn bonus_damage(&self, spell: SpellId) -> f64 {
+    pub(crate) fn bonus_damage(&self, spell: SpellId) -> f64 {
         let state = &self.spells[spell];
         let mut bonus = state.bonus_base_damage;
         bonus += self.spell_power(spell)
@@ -157,7 +166,7 @@ impl<A: Agent> Fight<A> {
         if self.spells[spell].bonus_coefficient > 0.0 {
             base += self.spells[spell].bonus_coefficient * self.bonus_damage(spell);
         }
-        self.calc_damage_internal(spell, target, base, attacker, true)
+        self.calc_damage_internal(spell, target, base, attacker, Outcome::MagicHitAndCrit)
     }
 
     /// Go `CalcDamage` with `OutcomeMagicHit`: no crit roll.
@@ -172,7 +181,7 @@ impl<A: Agent> Fight<A> {
         if self.spells[spell].bonus_coefficient > 0.0 {
             base += self.spells[spell].bonus_coefficient * self.bonus_damage(spell);
         }
-        self.calc_damage_internal(spell, target, base, attacker, false)
+        self.calc_damage_internal(spell, target, base, attacker, Outcome::MagicHit)
     }
 
     /// Go `calcDamageInternal` for a direct magic spell.
@@ -182,7 +191,7 @@ impl<A: Agent> Fight<A> {
         target: Side,
         base: f64,
         attacker: f64,
-        can_crit: bool,
+        outcome: Outcome,
     ) -> SpellResult {
         let mut result = SpellResult {
             target,
@@ -222,7 +231,14 @@ impl<A: Agent> Fight<A> {
         let after_target = result.damage;
 
         let partial = result.outcome & super::damage::OUTCOME_PARTIAL;
-        self.outcome_magic_hit_and_crit(spell, &mut result, binary, can_crit);
+        match outcome {
+            Outcome::MagicHitAndCrit => {
+                self.outcome_magic_hit_and_crit(spell, &mut result, binary, true)
+            }
+            Outcome::MagicHit => self.outcome_magic_hit_and_crit(spell, &mut result, binary, false),
+            Outcome::Tick => self.outcome_tick(spell, &mut result, false),
+            Outcome::TickMagicCrit => self.outcome_tick(spell, &mut result, true),
+        }
         if partial != 0 {
             result.outcome |= partial;
         }
@@ -305,6 +321,56 @@ impl<A: Agent> Fight<A> {
         }
     }
 
+    /// Go `Dot.OutcomeTick`, or `OutcomeTickMagicCrit` when the tick can crit: a tick never
+    /// rolls to hit, since the dot did that when it landed.
+    fn outcome_tick(&mut self, spell: SpellId, result: &mut SpellResult, can_crit: bool) {
+        let partial = result.outcome & OUTCOME_PARTIAL != 0;
+        let target = result.target.index();
+        if can_crit && self.random("Magical Crit Roll") < self.spell_crit_chance(spell) {
+            result.outcome = OUTCOME_CRIT;
+            let state = &self.spells[spell];
+            result.damage *= crit_damage_multiplier(
+                state.magic_defense,
+                state.crit_multiplier_pct,
+                self.config.crit_damage_multiplier,
+                self.config.table.crit_multiplier,
+                state.crit_multiplier_additive,
+            );
+            let metrics = &mut self.spells[spell].metrics[target];
+            metrics.crit_ticks += 1;
+            if partial {
+                metrics.resisted_crit_ticks += 1;
+            }
+        } else {
+            result.outcome = OUTCOME_HIT;
+            let metrics = &mut self.spells[spell].metrics[target];
+            metrics.ticks += 1;
+            if partial {
+                metrics.resisted_ticks += 1;
+            }
+        }
+    }
+
+    /// Go `Dot.CalcAndDealPeriodicSnapshotDamage` for a dot built by `Snapshot`, which ticks
+    /// on the caster's current spell power and attacker multiplier.
+    pub(crate) fn snapshot_dot_tick(&mut self, dot: super::DotId) {
+        let state = &self.dots[dot];
+        let (spell, side, can_crit) = (state.spell, state.side, state.tick_can_crit);
+        let mut base = state.snapshot_base;
+        if state.reads_spell_power {
+            base += state.bonus_coefficient * self.bonus_damage(spell) - state.snapshot_spell_power;
+        }
+        let attacker =
+            self.attacker_multiplier(spell, true) * self.dots[dot].periodic_damage_multiplier;
+        let outcome = if can_crit {
+            Outcome::TickMagicCrit
+        } else {
+            Outcome::Tick
+        };
+        let result = self.calc_damage_internal(spell, side, base, attacker, outcome);
+        self.deal_damage(spell, result, true);
+    }
+
     /// Go `Spell.TravelTime`.
     pub(crate) fn travel_time(&self, spell: SpellId) -> i64 {
         let speed = self.spells[spell].missile_speed;
@@ -318,7 +384,34 @@ impl<A: Agent> Fight<A> {
     /// Go `WaitTravelTime` followed by `DealDamage` on arrival.
     pub(crate) fn deal_damage_after_travel(&mut self, spell: SpellId, result: SpellResult) {
         let at = self.now + self.travel_time(spell);
-        self.schedule(at, PRIORITY_GCD, Action::Travel { spell, result });
+        self.schedule(
+            at,
+            PRIORITY_GCD,
+            Action::Travel {
+                spell,
+                result,
+                dot: None,
+            },
+        );
+    }
+
+    /// The same, then `Dot.Apply` when the hit landed.
+    pub(crate) fn deal_damage_after_travel_then_dot(
+        &mut self,
+        spell: SpellId,
+        result: SpellResult,
+        dot: super::DotId,
+    ) {
+        let at = self.now + self.travel_time(spell);
+        self.schedule(
+            at,
+            PRIORITY_GCD,
+            Action::Travel {
+                spell,
+                result,
+                dot: Some(dot),
+            },
+        );
     }
 
     /// Go `dealDamageInternal`.

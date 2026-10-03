@@ -242,6 +242,15 @@ pub struct Mana {
     pub teardown_max: f64,
 }
 
+/// A Fireball rank's dot: the base amount its ticks snapshot and whether they can crit.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct FireballRank {
+    pub spell_id: i32,
+    pub tick_base: f64,
+    pub tick_can_crit: bool,
+}
+
 /// Improved Scorch's stacking Fire Vulnerability buff on the mage.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -458,6 +467,10 @@ pub enum Effect {
     },
     /// Fire Blast's instant hit.
     FireBlast {},
+    /// Every Fireball rank: a hit after travel, then a dot that snapshots.
+    Fireball {
+        ranks: Vec<FireballRank>,
+    },
     /// Every Scorch rank, with Improved Scorch when talented.
     Scorch {
         #[serde(default)]
@@ -592,6 +605,7 @@ impl Effect {
             Effect::ArcanePower { .. } => "arcane_power",
             Effect::Ignite { .. } => "ignite",
             Effect::FireBlast {} => "fire_blast",
+            Effect::Fireball { .. } => "fireball",
             Effect::Scorch { .. } => "scorch",
             Effect::TouchOfTheGrave { .. } => "touch_of_the_grave",
             Effect::PresenceOfMind { .. } => "presence_of_mind",

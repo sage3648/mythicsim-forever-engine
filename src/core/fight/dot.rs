@@ -20,6 +20,14 @@ pub(crate) struct Dot {
     pub(crate) tick_action: Option<Handle>,
     /// Go `tickAction.NextActionAt`, kept after the action runs.
     pub(crate) tick_next_at: i64,
+    pub(crate) bonus_coefficient: f64,
+    pub(crate) periodic_damage_multiplier: f64,
+    /// The base amount `Dot.Snapshot` starts from, for a damage dot its spell sets up.
+    pub(crate) tick_base: Option<f64>,
+    pub(crate) tick_can_crit: bool,
+    pub(crate) snapshot_base: f64,
+    pub(crate) snapshot_spell_power: f64,
+    pub(crate) reads_spell_power: bool,
 }
 
 impl Dot {
@@ -46,6 +54,13 @@ impl Dot {
             channeled: exported.channeled,
             tick_action: None,
             tick_next_at: 0,
+            bonus_coefficient: exported.bonus_coefficient,
+            periodic_damage_multiplier: exported.periodic_damage_multiplier,
+            tick_base: None,
+            tick_can_crit: false,
+            snapshot_base: 0.0,
+            snapshot_spell_power: 0.0,
+            reads_spell_power: false,
         }
     }
 
@@ -59,10 +74,13 @@ impl Dot {
 }
 
 impl<A: Agent> Fight<A> {
-    /// Go `Dot.Apply`: replace any running copy, recompute ticks and activate.
+    /// Go `Dot.Apply`: replace any running copy, snapshot, recompute ticks and activate.
     pub(crate) fn apply_dot(&mut self, dot: DotId) {
         let aura = self.dots[dot].aura;
         self.deactivate_aura(aura);
+        if let Some(base) = self.dots[dot].tick_base {
+            self.snapshot_dot(dot, base);
+        }
         let state = &mut self.dots[dot];
         assert!(!state.affected_by_haste, "hasted dots are not supported");
         state.tick_period = state.base_tick_length;
@@ -71,6 +89,21 @@ impl<A: Agent> Fight<A> {
         let duration = state.tick_period * i64::from(state.remaining_ticks);
         self.aura_mut(aura).duration = duration;
         self.activate_aura(aura);
+    }
+
+    /// Go `Dot.Snapshot`: the base amount plus the spell power share it was given now.
+    fn snapshot_dot(&mut self, dot: DotId, base: f64) {
+        let spell = self.dots[dot].spell;
+        let coefficient = self.dots[dot].bonus_coefficient;
+        let spell_power = if coefficient > 0.0 {
+            coefficient * self.bonus_damage(spell)
+        } else {
+            0.0
+        };
+        let state = &mut self.dots[dot];
+        state.reads_spell_power = coefficient > 0.0;
+        state.snapshot_spell_power = spell_power;
+        state.snapshot_base = base + spell_power;
     }
 
     /// Go `newDot` OnGain: the first tick is one period away.

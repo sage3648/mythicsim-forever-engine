@@ -3567,7 +3567,10 @@
           "haste_reduces_duration": false,
           "channeled": false
         },
-        "damage_effect": null
+        "damage_effect": {
+          "average": 20,
+          "variance": 0.4444444477558136
+        }
       },
       {
         "action_id": {
@@ -3637,7 +3640,10 @@
           "haste_reduces_duration": false,
           "channeled": false
         },
-        "damage_effect": null
+        "damage_effect": {
+          "average": 39,
+          "variance": 0.3684210479259491
+        }
       },
       {
         "action_id": {
@@ -3707,7 +3713,10 @@
           "haste_reduces_duration": false,
           "channeled": false
         },
-        "damage_effect": null
+        "damage_effect": {
+          "average": 56,
+          "variance": 0.3174603283405304
+        }
       },
       {
         "action_id": {
@@ -3777,7 +3786,10 @@
           "haste_reduces_duration": false,
           "channeled": false
         },
-        "damage_effect": null
+        "damage_effect": {
+          "average": 78,
+          "variance": 0.3199999928474426
+        }
       },
       {
         "action_id": {
@@ -3847,7 +3859,10 @@
           "haste_reduces_duration": false,
           "channeled": false
         },
-        "damage_effect": null
+        "damage_effect": {
+          "average": 114,
+          "variance": 0.29447853565216064
+        }
       },
       {
         "action_id": {
@@ -3917,7 +3932,10 @@
           "haste_reduces_duration": false,
           "channeled": false
         },
-        "damage_effect": null
+        "damage_effect": {
+          "average": 160,
+          "variance": 0.2844827473163605
+        }
       },
       {
         "action_id": {
@@ -3987,7 +4005,10 @@
           "haste_reduces_duration": false,
           "channeled": false
         },
-        "damage_effect": null
+        "damage_effect": {
+          "average": 196,
+          "variance": 0.2711864411830902
+        }
       },
       {
         "action_id": {
@@ -4057,7 +4078,10 @@
           "haste_reduces_duration": false,
           "channeled": false
         },
-        "damage_effect": null
+        "damage_effect": {
+          "average": 243,
+          "variance": 0.26229506731033325
+        }
       },
       {
         "action_id": {
@@ -4127,7 +4151,10 @@
           "haste_reduces_duration": false,
           "channeled": false
         },
-        "damage_effect": null
+        "damage_effect": {
+          "average": 309,
+          "variance": 0.2538975477218628
+        }
       },
       {
         "action_id": {
@@ -4197,7 +4224,10 @@
           "haste_reduces_duration": false,
           "channeled": false
         },
-        "damage_effect": null
+        "damage_effect": {
+          "average": 384,
+          "variance": 0.24723246693611145
+        }
       },
       {
         "action_id": {
@@ -4267,7 +4297,10 @@
           "haste_reduces_duration": false,
           "channeled": false
         },
-        "damage_effect": null
+        "damage_effect": {
+          "average": 451,
+          "variance": 0.24137930572032928
+        }
       },
       {
         "action_id": {
@@ -4337,7 +4370,10 @@
           "haste_reduces_duration": false,
           "channeled": false
         },
-        "damage_effect": null
+        "damage_effect": {
+          "average": 483,
+          "variance": 0.2418879121541977
+        }
       },
       {
         "action_id": {
@@ -5457,6 +5493,71 @@
     },
     {
       "kind": "fire_blast"
+    },
+    {
+      "kind": "fireball",
+      "ranks": [
+        {
+          "spell_id": 133,
+          "tick_base": 1,
+          "tick_can_crit": true
+        },
+        {
+          "spell_id": 143,
+          "tick_base": 1,
+          "tick_can_crit": true
+        },
+        {
+          "spell_id": 145,
+          "tick_base": 2,
+          "tick_can_crit": true
+        },
+        {
+          "spell_id": 3140,
+          "tick_base": 3,
+          "tick_can_crit": true
+        },
+        {
+          "spell_id": 8400,
+          "tick_base": 4,
+          "tick_can_crit": true
+        },
+        {
+          "spell_id": 8401,
+          "tick_base": 6,
+          "tick_can_crit": true
+        },
+        {
+          "spell_id": 8402,
+          "tick_base": 6,
+          "tick_can_crit": true
+        },
+        {
+          "spell_id": 10148,
+          "tick_base": 8,
+          "tick_can_crit": true
+        },
+        {
+          "spell_id": 10149,
+          "tick_base": 10,
+          "tick_can_crit": true
+        },
+        {
+          "spell_id": 10150,
+          "tick_base": 12,
+          "tick_can_crit": true
+        },
+        {
+          "spell_id": 10151,
+          "tick_base": 14,
+          "tick_can_crit": true
+        },
+        {
+          "spell_id": 25306,
+          "tick_base": 15,
+          "tick_can_crit": true
+        }
+      ]
     },
     {
       "improved_scorch": {

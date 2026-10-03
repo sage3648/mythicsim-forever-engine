@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "e49e3123652bd3ac327437d74a542ccf82fe3c6b1f7781874e57ccdeeed2d748",
+  "exporter_sha256": "89df2ed4086692132a481e17fd55323c63b7507137068bdbbaec768039a22710",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -16,7 +16,7 @@
         "pointer": "/request"
       },
       "prepared": "frost-reference.prepared.json",
-      "prepared_sha256": "c653e078043a0ce2fb29aeebe98ab76630cc58899a19bf5f26e7f1ffad82ec39",
+      "prepared_sha256": "7f72f9d52fae0a8ba8ec6bfa75c2e2b625e6c65e59cd8d9049fdfbd3e23f197c",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -37,7 +37,7 @@
         "path": "fixtures/mage/prepared-v2/frost-no-fingers.request.json"
       },
       "prepared": "frost-no-fingers.prepared.json",
-      "prepared_sha256": "1d496b0916292733953d1853a235915afb96461d2245c30dba7da973438ed16b",
+      "prepared_sha256": "29d5a302c156abc56af1c7b945fd7528d5283ed675fd4551941e1dc2e5d443e3",
       "expected_coverage": {
         "supported": false,
         "reasons": [
@@ -52,7 +52,7 @@
         "path": "fixtures/mage/prepared-v2/frostbolt-labeled.request.json"
       },
       "prepared": "frostbolt-labeled.prepared.json",
-      "prepared_sha256": "b03e1b690644ed3bff807ab9738740ae629ddbe09c99ce9343b67f781f549e84",
+      "prepared_sha256": "6d7292706ba527c23f9e47f52ee426f974ca97136a358711655d20fab77cdd7e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -69,7 +69,7 @@
         "path": "fixtures/mage/prepared-v2/frostbolt-shared-oom.request.json"
       },
       "prepared": "frostbolt-shared-oom.prepared.json",
-      "prepared_sha256": "f57b867708088d733e663600852388cc34fa53551b1971af6e148501865e40cd",
+      "prepared_sha256": "7cea59251e8f9fe9b1f040b76836d53d44bbc81984744547a259e2813d49118b",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -90,7 +90,7 @@
         "path": "fixtures/mage/prepared-v2/frostbolt-shared-meditation.request.json"
       },
       "prepared": "frostbolt-shared-meditation.prepared.json",
-      "prepared_sha256": "c385d3581c35688edd7594f029266b98279e193f696aa51430c9a0b7b7ef5717",
+      "prepared_sha256": "938760734ebe203f51285c723e45b9df8b1793451d073281ac74c4f43f5ef544",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -107,7 +107,7 @@
         "path": "fixtures/mage/prepared-v2/frostbolt-shared-haste.request.json"
       },
       "prepared": "frostbolt-shared-haste.prepared.json",
-      "prepared_sha256": "bc49e1277d69a208d0556e65a9366d6b2696f1e3c52153354402d587d70ba1a9",
+      "prepared_sha256": "77d33c0e0ac6b0718db90c24fa5b58d98d45ae8dec6b4525512661cc3970c661",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -124,7 +124,7 @@
         "path": "fixtures/mage/prepared-v2/frostbolt-shared-boundary.request.json"
       },
       "prepared": "frostbolt-shared-boundary.prepared.json",
-      "prepared_sha256": "ad2baa8a2b06bc67c2c09e76857d37efddf1cd8bcf9ea9477da8f9502802c5ac",
+      "prepared_sha256": "20185880d5cb94a7fe5691e774d1b872e8817dff4803043dde1a67f928ae8a9b",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -141,7 +141,7 @@
         "path": "fixtures/mage/prepared-v2/reference-winters-chill.request.json"
       },
       "prepared": "reference-winters-chill.prepared.json",
-      "prepared_sha256": "89d2852ca4acded0dc0570793b2429cb1a323a5dae3b9909abb9fb5122e24771",
+      "prepared_sha256": "2b21205d11db2f2bdbc3b1659fde874ba53ff8963885c9a0d913918093a83169",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -158,7 +158,7 @@
         "path": "fixtures/mage/prepared-v2/reference-winters-chill-rank3.request.json"
       },
       "prepared": "reference-winters-chill-rank3.prepared.json",
-      "prepared_sha256": "c2d04074eb883d86f08dd8e78a404545243d6bee8a20bfe2d87a453e5eb1647e",
+      "prepared_sha256": "bcd93abdf92ebff5688ee4552263648b5106bffaad0e6ed6c5d4c79cf797dce2",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -179,7 +179,7 @@
         "path": "fixtures/mage/prepared-v2/reference-fingers-of-frost.request.json"
       },
       "prepared": "reference-fingers-of-frost.prepared.json",
-      "prepared_sha256": "3ecf797da035d5b1bc76cd7a17244309c8376babc768adc358439850015499c0",
+      "prepared_sha256": "31ef74bbdcd130c5f213f1f739fb1f2fe42eff9e803b2f741f878b12de4d3112",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -200,7 +200,7 @@
         "path": "fixtures/mage/prepared-v2/reference-fingers-of-frost-rank1.request.json"
       },
       "prepared": "reference-fingers-of-frost-rank1.prepared.json",
-      "prepared_sha256": "8a7fd82b7dcfaba12701c6b5b3e44ff8fd02a21e377f5e2f4612edc99645207f",
+      "prepared_sha256": "bb561565e7ec5c767fe1982cb59d224c9ae7cef8360fe89cd7daa01303638dc8",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -217,7 +217,7 @@
         "path": "fixtures/mage/prepared-v2/reference-clearcasting.request.json"
       },
       "prepared": "reference-clearcasting.prepared.json",
-      "prepared_sha256": "d4f69a39f788b9a27b5214da9e73068abb5e0eeef88bf6d78e85b286fa46fb61",
+      "prepared_sha256": "3bdd1c582f89145845b70af4ae0ba3dddbe0fafc1a5670f4bcc65e95f10ba3da",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -234,7 +234,7 @@
         "path": "fixtures/mage/prepared-v2/reference-missile-barrage.request.json"
       },
       "prepared": "reference-missile-barrage.prepared.json",
-      "prepared_sha256": "49bd9973d255fe5645cd9522eb853024f58a0a590a58b5e736f3525d921910fb",
+      "prepared_sha256": "5c78cb2e2d1741b2e8bb30d2338482f7779677b0d5850106324e682ad3d1f3cb",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -255,7 +255,7 @@
         "path": "fixtures/mage/prepared-v2/reference-procs.request.json"
       },
       "prepared": "reference-procs.prepared.json",
-      "prepared_sha256": "75114aa9f7b3c75db7a0fecb456a220e82d3626afedac6c1ccef373739de9632",
+      "prepared_sha256": "67ef5486129fbb3470010f731e7388f62b380ad7b0ad5a28d82661891831ea94",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -276,7 +276,7 @@
         "path": "fixtures/mage/prepared-v2/reference-long.request.json"
       },
       "prepared": "reference-long.prepared.json",
-      "prepared_sha256": "6da82034d8a877a4c7f141481749c9b6c322acfd549307f43ec1480f8280418f",
+      "prepared_sha256": "134a4bb259bd5d9222709450c1848b3df9f010224121afc1eff2f096a1fc418a",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -293,7 +293,7 @@
         "path": "fixtures/mage/prepared-v2/reference-ten-minutes.request.json"
       },
       "prepared": "reference-ten-minutes.prepared.json",
-      "prepared_sha256": "b6f7e92bba6da16e075dce1d9360c72e5c85c96389ca0374f56baa9bda42daff",
+      "prepared_sha256": "c7cdec5e9818bd3face7bb1287c5f1f38c109ea1098d55c5347b3a3e2973bd55",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -310,7 +310,7 @@
         "path": "fixtures/mage/prepared-v2/reference-no-missile-barrage.request.json"
       },
       "prepared": "reference-no-missile-barrage.prepared.json",
-      "prepared_sha256": "b9564a0059bf3e47d37d099a02a0bd428677330bef0b6272b86f65905cc316c9",
+      "prepared_sha256": "f33c9e25edef69734356911858fc683d38e05511d8e645961e07ef1aa5433392",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -327,7 +327,7 @@
         "path": "fixtures/mage/prepared-v2/arcane-blast.request.json"
       },
       "prepared": "arcane-blast.prepared.json",
-      "prepared_sha256": "5145a9727c61229abeda04c3f15ed6d5dd52131c14fbe095df4a93010715cedc",
+      "prepared_sha256": "799c99414e0db7948557f79d51b533df30395be151c868bc98cf7a0192c3bdd9",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -344,7 +344,7 @@
         "path": "fixtures/mage/prepared-v2/arcane-blast-spenders.request.json"
       },
       "prepared": "arcane-blast-spenders.prepared.json",
-      "prepared_sha256": "2036cb0a90ec59ed38cfc9e8b6272f5e2332079471fd680953d3a8f5f2a23364",
+      "prepared_sha256": "260559645a2023d6518e023d4002975b822b707fdd78b6c953bd4eac48e4ed23",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -365,7 +365,7 @@
         "path": "fixtures/mage/prepared-v2/arcane-cooldowns.request.json"
       },
       "prepared": "arcane-cooldowns.prepared.json",
-      "prepared_sha256": "7600ad4940f72e1fa1f7a571e195e36f2cb19eb141c967031e0dd27bd1449401",
+      "prepared_sha256": "e549538a413dbeed3e074b4b562dc68ce90885f1c41c7ef702025ebb027224ba",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -386,7 +386,7 @@
         "path": "fixtures/mage/prepared-v2/arcane-cooldowns-long.request.json"
       },
       "prepared": "arcane-cooldowns-long.prepared.json",
-      "prepared_sha256": "16de632826374260366df3d11d033a6668bd9e40b11c11f775c4ca132878761b",
+      "prepared_sha256": "ac1d8dd55f16a41339b9939f1cf5ceb1b482d226a3a168fd6b917e0f76a7ef8e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -403,7 +403,7 @@
         "path": "fixtures/mage/prepared-v2/arcane-ignite.request.json"
       },
       "prepared": "arcane-ignite.prepared.json",
-      "prepared_sha256": "0d087b8506c738b6d6954e20b6c06db9951a658c9363f2fee03a47a66d278e25",
+      "prepared_sha256": "005fa2bad791195c0f2657704131236d54e1c4a167cccbf175ce71af7074975a",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -420,7 +420,7 @@
         "path": "fixtures/mage/prepared-v2/arcane-reference.request.json"
       },
       "prepared": "arcane-reference.prepared.json",
-      "prepared_sha256": "cb0c0527c7779a7f3b24e26852d661f84024450c1beb1130ef1d138a1ae08d16",
+      "prepared_sha256": "0dbebf84002483e432c7ed22bd23bfabe913cd3c19e515032794abe8b094b455",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -441,7 +441,7 @@
         "path": "fixtures/mage/prepared-v2/arcane-no-missile-barrage.request.json"
       },
       "prepared": "arcane-no-missile-barrage.prepared.json",
-      "prepared_sha256": "6f4940f723029eeff372a11bf84dd7dfc2a25047f5b916b721716b715259ff8d",
+      "prepared_sha256": "092376c1840eced474d6b82685e65f9f83f80c8f9b63c76b1427b19d80ff3a6e",
       "expected_coverage": {
         "supported": false,
         "reasons": [
@@ -456,7 +456,7 @@
         "path": "fixtures/mage/prepared-v2/fire-scorch.request.json"
       },
       "prepared": "fire-scorch.prepared.json",
-      "prepared_sha256": "92e26ac5f5b9aaade4590d6c16b34bb126157d1d9890e15b0da90464e7fde18f",
+      "prepared_sha256": "1318c65431f00f356e7c1dc3cae47893b740a57ff65e4d9aaf60c66cb732fbc9",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -468,6 +468,44 @@
       "go_log": {
         "file": "fire-scorch.go-log.txt",
         "sha256": "a1e35ddd7e44c8704bc46e92f8313edd1160d826c968b436b0fc6179ae31ca72"
+      }
+    },
+    {
+      "id": "fire-fireball",
+      "description": "The fire-scorch character casting Fire Blast and Fireball: the hit lands after travel, then the dot snapshots and ticks on current spell power and multipliers.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-fireball.request.json"
+      },
+      "prepared": "fire-fireball.prepared.json",
+      "prepared_sha256": "6ae81cd3b246ff9d819f0601ce976c74350fc87a4cbf83308a1b8a9a9ce5c18b",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fire-fireball.go-result.json",
+        "sha256": "104bcdf15752077f909dd6112f4efd853cd4da37ed18335a92fc3613235f06fe"
+      }
+    },
+    {
+      "id": "fire-fireball-scorch",
+      "description": "The same with Scorch while Fire Vulnerability has fewer than five stacks: the stacks change under running Fireball dots.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-fireball-scorch.request.json"
+      },
+      "prepared": "fire-fireball-scorch.prepared.json",
+      "prepared_sha256": "0c40ea3a21eb6f96c7b30b20be44781add83bb0957e2c14d00836d141c23e3db",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fire-fireball-scorch.go-result.json",
+        "sha256": "dd1625e5c08941854852091ab13d6593ff24a98d9c58e54497cead7d002e9337"
+      },
+      "go_log": {
+        "file": "fire-fireball-scorch.go-log.txt",
+        "sha256": "d67170879a64d2f040c61aede023bde8b1536226a0651198f26b364305791779"
       }
     }
   ]

@@ -6,18 +6,18 @@
     "client_build": "1.60.1.70170",
     "exporter": "tools/oracle-v2"
   },
-  "request_sha256": "5a0d153f386b534d5b68d58161f1cb9dd7ec4a4076b7c05e45b3484d1763fffd",
-  "scenario_id": "reference-ten-minutes",
+  "request_sha256": "c4edc5ba5041d51f7cfeda31bb0b5b74cfafc84ffb23839b010edb49ae3abe63",
+  "scenario_id": "fire-fireball",
   "sim": {
-    "iterations": 300,
-    "seed": 7,
+    "iterations": 1000,
+    "seed": 42,
     "labeled_rng": false,
-    "debug_first_iteration": false,
+    "debug_first_iteration": true,
     "debug": false
   },
   "encounter": {
-    "duration_ns": 600000000000,
-    "duration_variation_ns": 60000000000,
+    "duration_ns": 120000000000,
+    "duration_variation_ns": 15000000000,
     "execute_proportion_20": 0.2,
     "execute_proportion_25": 0.25,
     "execute_proportion_35": 0.35,
@@ -547,6 +547,22 @@
         "exclusive_effects": 0
       },
       {
+        "label": "PyroblastDoT-1",
+        "action_id": {
+          "spell_id": 18809
+        },
+        "duration_ns": 12000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
         "label": "Parry Haste",
         "action_id": null,
         "duration_ns": 9223372036854775807,
@@ -607,15 +623,15 @@
   },
   "player": {
     "index": 1,
-    "label": "frost-mage (#1)",
+    "label": "fire-mage (#1)",
     "level": 60,
     "stats": {
       "Agility": 60,
       "ArcaneDamage": 0,
       "ArcaneResistance": 42,
-      "Armor": 1047,
+      "Armor": 1060,
       "ArmorPenetration": 0,
-      "AttackPower": 10,
+      "AttackPower": -10,
       "BlockPercent": 0,
       "BlockRating": 0,
       "BlockValue": 0,
@@ -626,41 +642,41 @@
       "ExpertisePercent": 0,
       "ExpertiseRating": 0,
       "FeralAttackPower": 0,
-      "FireDamage": 0,
-      "FireResistance": 42,
-      "FrostDamage": 44,
+      "FireDamage": 80,
+      "FireResistance": 57,
+      "FrostDamage": 0,
       "FrostResistance": 42,
       "HealingPower": 85,
-      "Health": 2560,
+      "Health": 2310,
       "HolyDamage": 0,
-      "Intellect": 368,
+      "Intellect": 371,
       "MP5": 77,
-      "Mana": 6453,
-      "MeleeCritRating": 70,
+      "Mana": 6498,
+      "MeleeCritRating": 98,
       "MeleeHasteRating": 0,
-      "MeleeHitRating": 50,
+      "MeleeHitRating": 40,
       "NatureDamage": 0,
       "NatureResistance": 42,
       "ParryPercent": 0,
       "ParryRating": 0,
       "PhysicalCritPercent": 16.284,
       "PhysicalDamage": 0,
-      "PhysicalHitPercent": 5,
+      "PhysicalHitPercent": 4,
       "RangedAttackPower": 0,
       "RangedCritPercent": 0,
       "RangedHitPercent": 0,
       "ReducedCritTakenPercent": 0,
       "ShadowDamage": 0,
       "ShadowResistance": 42,
-      "SpellCritPercent": 17.3824,
-      "SpellCritRating": 70,
-      "SpellDamage": 454,
+      "SpellCritPercent": 17.4328,
+      "SpellCritRating": 98,
+      "SpellDamage": 400,
       "SpellHasteRating": 0,
-      "SpellHitPercent": 5,
-      "SpellHitRating": 50,
+      "SpellHitPercent": 4,
+      "SpellHitRating": 40,
       "SpellPiercing": 15,
-      "Spirit": 220,
-      "Stamina": 137,
+      "Spirit": 239,
+      "Stamina": 112,
       "Strength": 55
     },
     "pseudo_stats": {
@@ -705,7 +721,7 @@
         "shadow": 0
       },
       "school_bonus_hit_chance": {
-        "arcane": 5,
+        "arcane": 3,
         "fire": 5,
         "frost": 5,
         "holy": 0,
@@ -742,10 +758,9 @@
         },
         "duration_ns": 9223372036854775807,
         "max_stacks": 0,
-        "active": true,
+        "active": false,
         "stacks": 0,
         "callbacks": [
-          "on_reset",
           "on_gain",
           "on_expire"
         ],
@@ -781,102 +796,9 @@
           "on_spell_hit_dealt"
         ],
         "icd": {
-          "timer": "timer-11",
+          "timer": "timer-10",
           "duration_ns": 1000000000
         },
-        "exclusive_effects": 0
-      },
-      {
-        "label": "Missile Barrage",
-        "action_id": {
-          "spell_id": 44404
-        },
-        "duration_ns": 15000000000,
-        "max_stacks": 0,
-        "active": false,
-        "stacks": 0,
-        "callbacks": [
-          "on_gain",
-          "on_expire",
-          "on_cast_complete"
-        ],
-        "icd": null,
-        "exclusive_effects": 0
-      },
-      {
-        "label": "Missile Barrage Trigger",
-        "action_id": null,
-        "duration_ns": 9223372036854775807,
-        "max_stacks": 0,
-        "active": true,
-        "stacks": 0,
-        "callbacks": [
-          "on_reset",
-          "on_cast_complete"
-        ],
-        "icd": null,
-        "exclusive_effects": 0
-      },
-      {
-        "label": "Fingers of Frost",
-        "action_id": {
-          "spell_id": 400669
-        },
-        "duration_ns": 15000000000,
-        "max_stacks": 2,
-        "active": false,
-        "stacks": 0,
-        "callbacks": [
-          "on_gain",
-          "on_expire",
-          "on_cast_complete"
-        ],
-        "icd": null,
-        "exclusive_effects": 0
-      },
-      {
-        "label": "Fingers of Frost Trigger",
-        "action_id": null,
-        "duration_ns": 9223372036854775807,
-        "max_stacks": 0,
-        "active": true,
-        "stacks": 0,
-        "callbacks": [
-          "on_reset",
-          "on_spell_hit_dealt"
-        ],
-        "icd": null,
-        "exclusive_effects": 0
-      },
-      {
-        "label": "Winter's Chill",
-        "action_id": {
-          "spell_id": 12579
-        },
-        "duration_ns": 15000000000,
-        "max_stacks": 5,
-        "active": false,
-        "stacks": 0,
-        "callbacks": [
-          "on_gain",
-          "on_expire",
-          "on_stacks_change"
-        ],
-        "icd": null,
-        "exclusive_effects": 0
-      },
-      {
-        "label": "Winters Chill Talent",
-        "action_id": null,
-        "duration_ns": 9223372036854775807,
-        "max_stacks": 0,
-        "active": true,
-        "stacks": 0,
-        "callbacks": [
-          "on_reset",
-          "on_spell_hit_dealt"
-        ],
-        "icd": null,
         "exclusive_effects": 0
       },
       {
@@ -1075,7 +997,24 @@
         "exclusive_effects": 0
       },
       {
-        "label": "Flamestrikefrost-mage (#1) Rank 6",
+        "label": "Fire Vulnerability",
+        "action_id": {
+          "spell_id": 22959
+        },
+        "duration_ns": 30000000000,
+        "max_stacks": 5,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire",
+          "on_stacks_change"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Flamestrikefire-mage (#1) Rank 6",
         "action_id": {
           "spell_id": 10216
         },
@@ -1107,31 +1046,27 @@
         "exclusive_effects": 0
       }
     ],
-    "name": "frost-mage",
+    "name": "fire-mage",
     "class": "ClassMage",
     "race": "RaceHuman",
     "professions": [
       "Engineering"
     ],
-    "talents_string": "05020500300001-03-0555000301001301251",
+    "talents_string": "230205-03502020130003050-005",
     "talents": {
       "arcane_concentration": 5,
-      "arcane_focus": 5,
-      "arcane_impact": 3,
+      "arcane_focus": 3,
       "arcane_subtlety": 2,
-      "cold_snap": 1,
+      "burning_soul": 2,
+      "critical_mass": 3,
       "elemental_precision": 5,
-      "fingers_of_frost": 2,
-      "ice_barrier": 1,
-      "ice_block": 1,
-      "ice_lance": 1,
-      "ice_shards": 5,
-      "improved_frostbolt": 5,
+      "fire_power": 5,
+      "flame_throwing": 2,
+      "improved_fireball": 5,
+      "improved_scorch": 3,
       "incineration": 3,
-      "missile_barrage": 1,
-      "piercing_ice": 3,
-      "shatter": 3,
-      "winters_chill": 5
+      "pyroblast": 1,
+      "wand_specialization": 2
     },
     "class_options": {
       "defaultMageArmor": "MageArmorMageArmor"
@@ -1141,12 +1076,12 @@
     "distance_yards": 20,
     "cast_speed": 1,
     "mana": {
-      "max": 6453,
+      "max": 6498,
       "base": 1213,
-      "spirit_regen_per_second": 33.75,
-      "regen_per_second_casting": 32.275,
-      "regen_per_second_not_casting": 49.15,
-      "teardown_max": 5253
+      "spirit_regen_per_second": 36.125,
+      "regen_per_second_casting": 33.4625,
+      "regen_per_second_not_casting": 51.525,
+      "teardown_max": 5298
     },
     "attack_table": {
       "base_spell_miss_chance": 0.17,
@@ -1411,7 +1346,7 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 6,
+        "bonus_crit_percent": 0,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
@@ -1462,7 +1397,7 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 6,
+        "bonus_crit_percent": 0,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
@@ -1523,7 +1458,7 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 6,
+        "bonus_crit_percent": 0,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
@@ -1587,7 +1522,7 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 6,
+        "bonus_crit_percent": 0,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
@@ -1648,7 +1583,7 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 6,
+        "bonus_crit_percent": 0,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
@@ -1712,7 +1647,7 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 6,
+        "bonus_crit_percent": 0,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
@@ -1773,7 +1708,7 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 6,
+        "bonus_crit_percent": 0,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
@@ -1837,7 +1772,7 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 6,
+        "bonus_crit_percent": 0,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
@@ -1898,7 +1833,7 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 6,
+        "bonus_crit_percent": 0,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
@@ -1962,7 +1897,7 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 6,
+        "bonus_crit_percent": 0,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
@@ -2023,7 +1958,7 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 6,
+        "bonus_crit_percent": 0,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
@@ -2087,7 +2022,7 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 6,
+        "bonus_crit_percent": 0,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
@@ -2148,7 +2083,7 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 6,
+        "bonus_crit_percent": 0,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
@@ -2212,7 +2147,7 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 6,
+        "bonus_crit_percent": 0,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
@@ -2273,7 +2208,7 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 6,
+        "bonus_crit_percent": 0,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
@@ -2337,7 +2272,7 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 6,
+        "bonus_crit_percent": 0,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
@@ -2398,7 +2333,7 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 6,
+        "bonus_crit_percent": 0,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
@@ -2468,10 +2403,10 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1.06,
+        "damage_multiplier_additive": 1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
-        "crit_multiplier_additive": 1,
+        "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.041999999433755875,
         "threat_multiplier": 1,
@@ -2526,10 +2461,10 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 0,
-        "damage_multiplier_additive": 0.06,
+        "damage_multiplier_additive": 0,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
-        "crit_multiplier_additive": 1,
+        "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0,
         "threat_multiplier": 0,
@@ -2600,10 +2535,10 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1.06,
+        "damage_multiplier_additive": 1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
-        "crit_multiplier_additive": 1,
+        "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.1289999932050705,
         "threat_multiplier": 1,
@@ -2639,7 +2574,7 @@
           "cost": 25,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
-          "cast_time_ns": 1000000000,
+          "cast_time_ns": 1500000000,
           "non_empty": false
         },
         "cast_kind": "full",
@@ -2658,10 +2593,10 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1.06,
+        "damage_multiplier_additive": 1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
-        "crit_multiplier_additive": 1,
+        "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.40700000524520874,
         "threat_multiplier": 1,
@@ -2700,7 +2635,7 @@
           "cost": 35,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
-          "cast_time_ns": 1300000000,
+          "cast_time_ns": 1800000000,
           "non_empty": false
         },
         "cast_kind": "full",
@@ -2719,10 +2654,10 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1.06,
+        "damage_multiplier_additive": 1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
-        "crit_multiplier_additive": 1,
+        "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.48899999260902405,
         "threat_multiplier": 1,
@@ -2761,7 +2696,7 @@
           "cost": 50,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
-          "cast_time_ns": 1700000000,
+          "cast_time_ns": 2200000000,
           "non_empty": false
         },
         "cast_kind": "full",
@@ -2780,10 +2715,10 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1.06,
+        "damage_multiplier_additive": 1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
-        "crit_multiplier_additive": 1,
+        "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.597000002861023,
         "threat_multiplier": 1,
@@ -2822,7 +2757,7 @@
           "cost": 65,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
-          "cast_time_ns": 2100000000,
+          "cast_time_ns": 2600000000,
           "non_empty": false
         },
         "cast_kind": "full",
@@ -2841,10 +2776,10 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1.06,
+        "damage_multiplier_additive": 1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
-        "crit_multiplier_additive": 1,
+        "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.7059999704360962,
         "threat_multiplier": 1,
@@ -2883,7 +2818,7 @@
           "cost": 100,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
-          "cast_time_ns": 2500000000,
+          "cast_time_ns": 3000000000,
           "non_empty": false
         },
         "cast_kind": "full",
@@ -2902,10 +2837,10 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1.06,
+        "damage_multiplier_additive": 1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
-        "crit_multiplier_additive": 1,
+        "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.8140000104904175,
         "threat_multiplier": 1,
@@ -2944,7 +2879,7 @@
           "cost": 130,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
-          "cast_time_ns": 2500000000,
+          "cast_time_ns": 3000000000,
           "non_empty": false
         },
         "cast_kind": "full",
@@ -2963,10 +2898,10 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1.06,
+        "damage_multiplier_additive": 1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
-        "crit_multiplier_additive": 1,
+        "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.8140000104904175,
         "threat_multiplier": 1,
@@ -3005,7 +2940,7 @@
           "cost": 160,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
-          "cast_time_ns": 2500000000,
+          "cast_time_ns": 3000000000,
           "non_empty": false
         },
         "cast_kind": "full",
@@ -3024,10 +2959,10 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1.06,
+        "damage_multiplier_additive": 1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
-        "crit_multiplier_additive": 1,
+        "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.8140000104904175,
         "threat_multiplier": 1,
@@ -3066,7 +3001,7 @@
           "cost": 195,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
-          "cast_time_ns": 2500000000,
+          "cast_time_ns": 3000000000,
           "non_empty": false
         },
         "cast_kind": "full",
@@ -3085,10 +3020,10 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1.06,
+        "damage_multiplier_additive": 1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
-        "crit_multiplier_additive": 1,
+        "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.8140000104904175,
         "threat_multiplier": 1,
@@ -3127,7 +3062,7 @@
           "cost": 225,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
-          "cast_time_ns": 2500000000,
+          "cast_time_ns": 3000000000,
           "non_empty": false
         },
         "cast_kind": "full",
@@ -3146,10 +3081,10 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1.06,
+        "damage_multiplier_additive": 1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
-        "crit_multiplier_additive": 1,
+        "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.8140000104904175,
         "threat_multiplier": 1,
@@ -3188,7 +3123,7 @@
           "cost": 260,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
-          "cast_time_ns": 2500000000,
+          "cast_time_ns": 3000000000,
           "non_empty": false
         },
         "cast_kind": "full",
@@ -3207,10 +3142,10 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1.06,
+        "damage_multiplier_additive": 1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
-        "crit_multiplier_additive": 1,
+        "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.8140000104904175,
         "threat_multiplier": 1,
@@ -3249,7 +3184,7 @@
           "cost": 290,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
-          "cast_time_ns": 2500000000,
+          "cast_time_ns": 3000000000,
           "non_empty": false
         },
         "cast_kind": "full",
@@ -3268,10 +3203,10 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1.06,
+        "damage_multiplier_additive": 1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
-        "crit_multiplier_additive": 1,
+        "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.8140000104904175,
         "threat_multiplier": 1,
@@ -3310,7 +3245,7 @@
           "cost": 205,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
-          "cast_time_ns": 3000000000,
+          "cast_time_ns": 2500000000,
           "non_empty": false
         },
         "cast_kind": "full",
@@ -3323,19 +3258,19 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 0,
+        "bonus_crit_percent": 6,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1.06,
+        "damage_multiplier_additive": 1.1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
-        "crit_multiplier_additive": 1,
+        "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.8140000104904175,
-        "threat_multiplier": 1,
+        "threat_multiplier": 0.8,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": {
@@ -3381,7 +3316,7 @@
           "cost": 285,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
-          "cast_time_ns": 3000000000,
+          "cast_time_ns": 2500000000,
           "non_empty": false
         },
         "cast_kind": "full",
@@ -3394,19 +3329,19 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 0,
+        "bonus_crit_percent": 6,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1.06,
+        "damage_multiplier_additive": 1.1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
-        "crit_multiplier_additive": 1,
+        "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.8140000104904175,
-        "threat_multiplier": 1,
+        "threat_multiplier": 0.8,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": {
@@ -3452,7 +3387,7 @@
           "cost": 370,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
-          "cast_time_ns": 3000000000,
+          "cast_time_ns": 2500000000,
           "non_empty": false
         },
         "cast_kind": "full",
@@ -3465,19 +3400,19 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 0,
+        "bonus_crit_percent": 6,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1.06,
+        "damage_multiplier_additive": 1.1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
-        "crit_multiplier_additive": 1,
+        "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.8140000104904175,
-        "threat_multiplier": 1,
+        "threat_multiplier": 0.8,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": {
@@ -3590,7 +3525,7 @@
           "cost": 30,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
-          "cast_time_ns": 1500000000,
+          "cast_time_ns": 1000000000,
           "non_empty": false
         },
         "cast_kind": "full",
@@ -3603,19 +3538,19 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 0,
+        "bonus_crit_percent": 6,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.42899999022483826,
-        "threat_multiplier": 1,
+        "threat_multiplier": 0.8,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": {
@@ -3663,7 +3598,7 @@
           "cost": 45,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
-          "cast_time_ns": 2000000000,
+          "cast_time_ns": 1500000000,
           "non_empty": false
         },
         "cast_kind": "full",
@@ -3676,19 +3611,19 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 0,
+        "bonus_crit_percent": 6,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.5709999799728394,
-        "threat_multiplier": 1,
+        "threat_multiplier": 0.8,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": {
@@ -3736,7 +3671,7 @@
           "cost": 65,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
-          "cast_time_ns": 2500000000,
+          "cast_time_ns": 2000000000,
           "non_empty": false
         },
         "cast_kind": "full",
@@ -3749,19 +3684,19 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 0,
+        "bonus_crit_percent": 6,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.7139999866485596,
-        "threat_multiplier": 1,
+        "threat_multiplier": 0.8,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": {
@@ -3809,7 +3744,7 @@
           "cost": 95,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
-          "cast_time_ns": 3000000000,
+          "cast_time_ns": 2500000000,
           "non_empty": false
         },
         "cast_kind": "full",
@@ -3822,19 +3757,19 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 0,
+        "bonus_crit_percent": 6,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.8569999933242798,
-        "threat_multiplier": 1,
+        "threat_multiplier": 0.8,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": {
@@ -3882,7 +3817,7 @@
           "cost": 140,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
-          "cast_time_ns": 3500000000,
+          "cast_time_ns": 3000000000,
           "non_empty": false
         },
         "cast_kind": "full",
@@ -3895,19 +3830,19 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 0,
+        "bonus_crit_percent": 6,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 1,
-        "threat_multiplier": 1,
+        "threat_multiplier": 0.8,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": {
@@ -3955,7 +3890,7 @@
           "cost": 185,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
-          "cast_time_ns": 3500000000,
+          "cast_time_ns": 3000000000,
           "non_empty": false
         },
         "cast_kind": "full",
@@ -3968,19 +3903,19 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 0,
+        "bonus_crit_percent": 6,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 1,
-        "threat_multiplier": 1,
+        "threat_multiplier": 0.8,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": {
@@ -4028,7 +3963,7 @@
           "cost": 220,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
-          "cast_time_ns": 3500000000,
+          "cast_time_ns": 3000000000,
           "non_empty": false
         },
         "cast_kind": "full",
@@ -4041,19 +3976,19 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 0,
+        "bonus_crit_percent": 6,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 1,
-        "threat_multiplier": 1,
+        "threat_multiplier": 0.8,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": {
@@ -4101,7 +4036,7 @@
           "cost": 260,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
-          "cast_time_ns": 3500000000,
+          "cast_time_ns": 3000000000,
           "non_empty": false
         },
         "cast_kind": "full",
@@ -4114,19 +4049,19 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 0,
+        "bonus_crit_percent": 6,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 1,
-        "threat_multiplier": 1,
+        "threat_multiplier": 0.8,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": {
@@ -4174,7 +4109,7 @@
           "cost": 305,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
-          "cast_time_ns": 3500000000,
+          "cast_time_ns": 3000000000,
           "non_empty": false
         },
         "cast_kind": "full",
@@ -4187,19 +4122,19 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 0,
+        "bonus_crit_percent": 6,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 1,
-        "threat_multiplier": 1,
+        "threat_multiplier": 0.8,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": {
@@ -4247,7 +4182,7 @@
           "cost": 350,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
-          "cast_time_ns": 3500000000,
+          "cast_time_ns": 3000000000,
           "non_empty": false
         },
         "cast_kind": "full",
@@ -4260,19 +4195,19 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 0,
+        "bonus_crit_percent": 6,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 1,
-        "threat_multiplier": 1,
+        "threat_multiplier": 0.8,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": {
@@ -4320,7 +4255,7 @@
           "cost": 395,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
-          "cast_time_ns": 3500000000,
+          "cast_time_ns": 3000000000,
           "non_empty": false
         },
         "cast_kind": "full",
@@ -4333,19 +4268,19 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 0,
+        "bonus_crit_percent": 6,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 1,
-        "threat_multiplier": 1,
+        "threat_multiplier": 0.8,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": {
@@ -4393,7 +4328,7 @@
           "cost": 410,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
-          "cast_time_ns": 3500000000,
+          "cast_time_ns": 3000000000,
           "non_empty": false
         },
         "cast_kind": "full",
@@ -4406,19 +4341,19 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 0,
+        "bonus_crit_percent": 6,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 1,
-        "threat_multiplier": 1,
+        "threat_multiplier": 0.8,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": {
@@ -4482,19 +4417,19 @@
         },
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 6,
+        "bonus_crit_percent": 12,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.42899999022483826,
-        "threat_multiplier": 1,
+        "threat_multiplier": 0.8,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
@@ -4552,10 +4487,10 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1.06,
+        "damage_multiplier_additive": 1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
-        "crit_multiplier_additive": 1,
+        "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.028999999165534973,
         "threat_multiplier": 1,
@@ -4563,67 +4498,6 @@
         "pushback_resist": 0,
         "dot": null,
         "damage_effect": null
-      },
-      {
-        "action_id": {
-          "spell_id": 1240047
-        },
-        "rank": 0,
-        "school": 16,
-        "defense_type": "DefenseTypeMagic",
-        "proc_mask": [
-          "ProcMaskSpellDamage"
-        ],
-        "flags": [
-          "SpellFlagBinary",
-          "SpellFlagAPL"
-        ],
-        "class_spell": "ice_lance",
-        "missile_speed": 38,
-        "cost": {
-          "resource": "mana",
-          "base_cost": 160,
-          "flat_modifier": 0,
-          "percent_modifier": 1,
-          "additive_percent_modifier": 1
-        },
-        "default_cast": {
-          "cost": 160,
-          "gcd_ns": 1500000000,
-          "gcd_min_ns": 0,
-          "cast_time_ns": 0,
-          "non_empty": false
-        },
-        "cast_kind": "full",
-        "ignore_haste": false,
-        "has_extra_cast_condition": false,
-        "has_cast_requirement": false,
-        "min_range": 0,
-        "max_range": 0,
-        "max_charges": 0,
-        "cd": null,
-        "shared_cd": null,
-        "bonus_hit_percent": 0,
-        "bonus_crit_percent": 6,
-        "bonus_spell_damage": 0,
-        "bonus_expertise_percent": 0,
-        "cast_time_multiplier": 1,
-        "cd_multiplier": 1,
-        "damage_multiplier": 1,
-        "damage_multiplier_additive": 1.06,
-        "direct_damage_multiplier_additive": 0,
-        "crit_multiplier_pct": 1,
-        "crit_multiplier_additive": 1,
-        "bonus_base_damage": 0,
-        "bonus_coefficient": 0.143,
-        "threat_multiplier": 1,
-        "flat_threat_bonus": 0,
-        "pushback_resist": 0,
-        "dot": null,
-        "damage_effect": {
-          "average": 148,
-          "variance": 0.1666666716337204
-        }
       },
       {
         "action_id": {
@@ -4884,19 +4758,19 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 6,
+        "bonus_crit_percent": 12,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.42899999022483826,
-        "threat_multiplier": 1,
+        "threat_multiplier": 0.8,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
@@ -4944,19 +4818,19 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 6,
+        "bonus_crit_percent": 12,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.42899999022483826,
-        "threat_multiplier": 1,
+        "threat_multiplier": 0.8,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
@@ -5004,19 +4878,19 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 6,
+        "bonus_crit_percent": 12,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.42899999022483826,
-        "threat_multiplier": 1,
+        "threat_multiplier": 0.8,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
@@ -5064,19 +4938,19 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 6,
+        "bonus_crit_percent": 12,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.42899999022483826,
-        "threat_multiplier": 1,
+        "threat_multiplier": 0.8,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
@@ -5124,19 +4998,19 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 6,
+        "bonus_crit_percent": 12,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.42899999022483826,
-        "threat_multiplier": 1,
+        "threat_multiplier": 0.8,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
@@ -5184,19 +5058,19 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 6,
+        "bonus_crit_percent": 12,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.42899999022483826,
-        "threat_multiplier": 1,
+        "threat_multiplier": 0.8,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
@@ -5244,19 +5118,19 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 6,
+        "bonus_crit_percent": 12,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.42899999022483826,
-        "threat_multiplier": 1,
+        "threat_multiplier": 0.8,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
@@ -5304,24 +5178,24 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 0,
+        "bonus_crit_percent": 6,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
         "bonus_coefficient": 0.15700000524520874,
-        "threat_multiplier": 1,
+        "threat_multiplier": 0.8,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": {
           "unit": "self",
-          "aura_label": "Flamestrikefrost-mage (#1) Rank 6",
+          "aura_label": "Flamestrikefire-mage (#1) Rank 6",
           "base_tick_count": 4,
           "base_tick_length_ns": 2000000000,
           "bonus_coefficient": 0.03200000151991844,
@@ -5337,56 +5211,72 @@
       },
       {
         "action_id": {
-          "spell_id": 12472
+          "spell_id": 18809
         },
         "rank": 0,
-        "school": 0,
-        "defense_type": "DefenseTypeNone",
-        "proc_mask": [],
-        "flags": [
-          "SpellFlagNoOnCastComplete",
-          "SpellFlagAPL",
-          "SpellFlagMCD"
+        "school": 4,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
         ],
-        "class_spell": "cold_snap",
-        "missile_speed": 0,
-        "cost": null,
+        "flags": [
+          "SpellFlagAPL"
+        ],
+        "class_spell": "pyroblast",
+        "missile_speed": 24,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 440,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
         "default_cast": {
-          "cost": 0,
-          "gcd_ns": 0,
+          "cost": 440,
+          "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
-          "cast_time_ns": 0,
+          "cast_time_ns": 6000000000,
           "non_empty": false
         },
-        "cast_kind": "simple",
+        "cast_kind": "full",
         "ignore_haste": false,
         "has_extra_cast_condition": false,
         "has_cast_requirement": false,
         "min_range": 0,
         "max_range": 0,
         "max_charges": 0,
-        "cd": {
-          "timer": "timer-10",
-          "duration_ns": 600000000000
-        },
+        "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 0,
+        "bonus_crit_percent": 6,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
-        "damage_multiplier": 0,
-        "damage_multiplier_additive": 0,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0,
-        "threat_multiplier": 0,
+        "bonus_coefficient": 1,
+        "threat_multiplier": 0.8,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
-        "dot": null,
+        "dot": {
+          "unit": "target",
+          "aura_label": "PyroblastDoT-1",
+          "base_tick_count": 4,
+          "base_tick_length_ns": 3000000000,
+          "bonus_coefficient": 0.15000000596046448,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": false
+        },
         "damage_effect": null
       },
       {
@@ -5471,6 +5361,16 @@
       },
       {
         "action_id": {
+          "spell_id": 12051
+        },
+        "priority": 0,
+        "type": [
+          "mana"
+        ],
+        "timings_ns": []
+      },
+      {
+        "action_id": {
           "item_id": 5514
         },
         "priority": 400,
@@ -5501,11 +5401,11 @@
       },
       {
         "action_id": {
-          "spell_id": 12472
+          "item_id": 8008
         },
-        "priority": 0,
+        "priority": 1100,
         "type": [
-          "dps"
+          "mana"
         ],
         "timings_ns": []
       }
@@ -5515,113 +5415,9 @@
       "priorityList": [
         {
           "action": {
-            "condition": {
-              "cmp": {
-                "op": "OpLe",
-                "lhs": {
-                  "currentManaPercent": {}
-                },
-                "rhs": {
-                  "const": {
-                    "val": "80%"
-                  }
-                }
-              }
-            },
             "castSpell": {
               "spellId": {
-                "itemId": 8008
-              }
-            }
-          }
-        },
-        {
-          "action": {
-            "autocastOtherCooldowns": {}
-          }
-        },
-        {
-          "action": {
-            "condition": {
-              "and": {
-                "vals": [
-                  {
-                    "cmp": {
-                      "op": "OpLt",
-                      "lhs": {
-                        "currentManaPercent": {}
-                      },
-                      "rhs": {
-                        "const": {
-                          "val": "20%"
-                        }
-                      }
-                    }
-                  },
-                  {
-                    "cmp": {
-                      "op": "OpGt",
-                      "lhs": {
-                        "remainingTime": {}
-                      },
-                      "rhs": {
-                        "const": {
-                          "val": "25s"
-                        }
-                      }
-                    }
-                  }
-                ]
-              }
-            },
-            "castSpell": {
-              "spellId": {
-                "spellId": 12051
-              }
-            }
-          }
-        },
-        {
-          "action": {
-            "condition": {
-              "auraIsActive": {
-                "auraId": {
-                  "spellId": 400669
-                }
-              }
-            },
-            "castSpell": {
-              "spellId": {
-                "spellId": 1240047
-              }
-            }
-          }
-        },
-        {
-          "action": {
-            "condition": {
-              "and": {
-                "vals": [
-                  {
-                    "auraIsKnown": {
-                      "auraId": {
-                        "spellId": 44404
-                      }
-                    }
-                  },
-                  {
-                    "auraIsActive": {
-                      "auraId": {
-                        "spellId": 44404
-                      }
-                    }
-                  }
-                ]
-              }
-            },
-            "castSpell": {
-              "spellId": {
-                "spellId": 25345
+                "spellId": 10199
               }
             }
           }
@@ -5630,7 +5426,7 @@
           "action": {
             "castSpell": {
               "spellId": {
-                "spellId": 25304
+                "spellId": 25306
               }
             }
           }
@@ -5647,46 +5443,6 @@
       "proc_chance": 0.1,
       "talent_rank": 5,
       "trigger_aura": "Arcane Concentration"
-    },
-    {
-      "arcane_blast_chance": 0.4,
-      "aura": "Missile Barrage",
-      "bolt_chance": 0.2,
-      "cost_percent_add": -1,
-      "kind": "missile_barrage",
-      "rng_label": "Missile Barrage",
-      "tick_length_delta_ns": -500000000,
-      "trigger_aura": "Missile Barrage Trigger"
-    },
-    {
-      "aura": "Fingers of Frost",
-      "duration_ns": 15000000000,
-      "kind": "fingers_of_frost",
-      "max_stacks": 2,
-      "proc_chance": 0.15,
-      "shatter_crit": 50,
-      "shatter_rank": 3,
-      "talent_rank": 2,
-      "trigger_aura": "Fingers of Frost Trigger"
-    },
-    {
-      "aura": "Winter's Chill",
-      "crit_per_stack": 2,
-      "duration_ns": 15000000000,
-      "kind": "winters_chill",
-      "max_stacks": 5,
-      "proc_chance": 1,
-      "talent_rank": 5,
-      "trigger_aura": "Winters Chill Talent"
-    },
-    {
-      "frozen_multiplier": 4,
-      "kind": "ice_lance",
-      "spell_id": 1240047
-    },
-    {
-      "kind": "cold_snap",
-      "spell_id": 12472
     },
     {
       "channel_aura": "Evocation",
@@ -5804,6 +5560,11 @@
       ]
     },
     {
+      "improved_scorch": {
+        "aura": "Fire Vulnerability",
+        "damage_per_stack": 0.03,
+        "proc_chance": 1
+      },
       "kind": "scorch"
     },
     {

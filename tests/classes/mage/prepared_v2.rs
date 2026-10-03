@@ -181,9 +181,9 @@ fn unsupported_rotation_operators_are_reported() {
 fn rotation_spells_without_behavior_are_reported() {
     let mut value = reference_json();
     value["player"]["rotation"]["priorityList"][5]["action"]["castSpell"]["spellId"] =
-        json!({"spellId": 10151});
+        json!({"spellId": 10202});
     assert!(
-        reasons(value).contains(&"rotation reaches spell 10151 without a known behavior".into())
+        reasons(value).contains(&"rotation reaches spell 10202 without a known behavior".into())
     );
 }
 

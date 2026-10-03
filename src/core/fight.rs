@@ -461,6 +461,8 @@ pub(crate) enum Action {
     Travel {
         spell: SpellId,
         result: SpellResult,
+        /// A dot the spell applies when it lands.
+        dot: Option<DotId>,
     },
     DotTick(DotId),
     DelayedProc {
@@ -1239,7 +1241,12 @@ impl<A: Agent> Fight<A> {
                     self.cast(spell, target);
                 }
             }
-            Action::Travel { spell, result } => self.deal_damage(spell, result, false),
+            Action::Travel { spell, result, dot } => {
+                self.deal_damage(spell, result, false);
+                if let (Some(dot), true) = (dot, result.landed()) {
+                    self.apply_dot(dot);
+                }
+            }
             Action::DotTick(dot) => self.periodic_tick(dot, handle),
             Action::DelayedProc {
                 aura,

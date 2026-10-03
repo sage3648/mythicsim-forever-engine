@@ -24,6 +24,7 @@ pub(crate) enum MageSpell {
     ArcanePower,
     PresenceOfMind,
     FireBlast,
+    Fireball,
     Scorch,
     IceLance,
     ArcaneMissiles,
@@ -146,6 +147,9 @@ impl MageAgent {
             "cold_snap" => Some(MageSpell::ColdSnap),
             "arcane_power" => Some(MageSpell::ArcanePower),
             "fire_blast" if spell.damage_effect.is_some() => Some(MageSpell::FireBlast),
+            "fireball" if spell.damage_effect.is_some() && spell.dot.is_some() => {
+                Some(MageSpell::Fireball)
+            }
             "scorch" if spell.damage_effect.is_some() => Some(MageSpell::Scorch),
             "presence_of_mind" => Some(MageSpell::PresenceOfMind),
             "evocation" if spell.dot.is_some() => Some(MageSpell::Evocation),
@@ -264,6 +268,19 @@ impl MageAgent {
                     let bound =
                         arcane_blast::bind(&mut fight, aura, *damage_per_stack, *cost_per_stack)?;
                     fight.agent.arcane_charges = Some(Rc::new(bound));
+                }
+                Effect::Fireball { ranks } => {
+                    for rank in ranks {
+                        let dot = fight
+                            .spells
+                            .iter()
+                            .find(|spell| spell.id.spell_id == rank.spell_id && spell.id.tag == 0)
+                            .and_then(|spell| spell.dot);
+                        if let Some(dot) = dot {
+                            fight.dots[dot].tick_base = Some(rank.tick_base);
+                            fight.dots[dot].tick_can_crit = rank.tick_can_crit;
+                        }
+                    }
                 }
                 Effect::Scorch {
                     improved_scorch: Some(improved),
@@ -425,6 +442,12 @@ impl Agent for MageAgent {
                 fight.activate_aura(aura);
             }
             MageSpell::FireBlast => fire_blast::apply(fight, spell, target),
+            MageSpell::Fireball => {
+                let base = fight.roll_damage_effect(spell);
+                let result = fight.calc_damage(spell, target, base);
+                let dot = fight.spells[spell].dot.expect("Fireball has a dot");
+                fight.deal_damage_after_travel_then_dot(spell, result, dot);
+            }
             MageSpell::Scorch => {
                 let improved = fight.agent.improved_scorch.clone();
                 scorch::apply(fight, spell, target, improved.as_deref());
@@ -500,6 +523,10 @@ impl Agent for MageAgent {
     }
 
     fn on_dot_tick(fight: &mut Fight<Self>, dot: DotId, behavior: MageSpell) {
+        if behavior == MageSpell::Fireball {
+            fight.snapshot_dot_tick(dot);
+            return;
+        }
         if behavior == MageSpell::ArcaneMissiles {
             let channel = fight.dots[dot].spell;
             let side = fight.dots[dot].side;
