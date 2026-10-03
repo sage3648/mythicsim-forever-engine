@@ -456,6 +456,19 @@ pub struct ManaGem {
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Effect {
     Frostbolt {},
+    /// The Gnome racial Eureka!: a major cooldown whose three stacks lower the cost and raise
+    /// the damage of the spells the class names, resolved into spell positions.
+    Eureka {
+        spell_id: i32,
+        aura: String,
+        cost_percent: f64,
+        damage_percent: f64,
+        tick_cancel_percent: f64,
+        cost_spells: Vec<usize>,
+        damage_spells: Vec<usize>,
+        tick_cancel_spells: Vec<usize>,
+        spending_spells: Vec<usize>,
+    },
     /// The Undead racial Touch of the Grave: landed hits can drain the target.
     TouchOfTheGrave {
         trigger_aura: String,
@@ -639,6 +652,7 @@ impl Effect {
             Effect::Fireball { .. } => "fireball",
             Effect::Scorch { .. } => "scorch",
             Effect::TouchOfTheGrave { .. } => "touch_of_the_grave",
+            Effect::Eureka { .. } => "eureka",
             Effect::PresenceOfMind { .. } => "presence_of_mind",
             Effect::IceLance { .. } => "ice_lance",
             Effect::ArcaneMissiles { .. } => "arcane_missiles",

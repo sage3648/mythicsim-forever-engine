@@ -161,6 +161,8 @@ pub(crate) enum SpellBehavior<S> {
         health_fraction: f64,
         metrics: usize,
     },
+    /// Go racials.go Eureka!'s cast, which activates its aura.
+    Eureka,
 }
 
 /// Go spell flags used by the runtime, parsed from exported names.
@@ -502,6 +504,8 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) actions: Vec<ActionTotals>,
     /// The target's registered actions; it never acts, so their metrics stay zero.
     pub(crate) target_actions: Vec<ActionTotals>,
+    /// Gnome's Eureka!, when the character has it.
+    pub(crate) eureka: Option<racial::Eureka>,
     mana_regen_casting: usize,
     mana_regen_not_casting: usize,
     mana_gain_spell: Option<SpellId>,
@@ -721,6 +725,11 @@ impl<A: Agent> Fight<A> {
                             variance: *variance,
                             whole: *whole,
                         }),
+                        Effect::Eureka { spell_id, .. }
+                            if id.spell_id == *spell_id && id.tag == 0 =>
+                        {
+                            Some(SpellBehavior::Eureka)
+                        }
                         Effect::TouchOfTheGrave {
                             drain_spell_id,
                             health_fraction,
@@ -895,6 +904,12 @@ impl<A: Agent> Fight<A> {
                         delay,
                         drain,
                     }
+                } else if side == Side::Player
+                    && effects
+                        .iter()
+                        .any(|effect| matches!(effect, Effect::Eureka { aura, .. } if *aura == exported.label))
+                {
+                    AuraBehavior::Eureka
                 } else if effects.iter().any(|effect| {
                     matches!(effect, Effect::InertListener { unit: u, aura, .. } if u == unit && *aura == exported.label)
                 }) {
@@ -1002,10 +1017,32 @@ impl<A: Agent> Fight<A> {
             mana_regen_not_casting,
             mana_gain_spell,
             log: None,
+            eureka: None,
             totals: metrics::Totals::default(),
             encounter_damage_taken: 0.0,
         };
         fight.rotation = fight.compile_rotation(&parsed);
+        for effect in effects {
+            if let Effect::Eureka {
+                aura,
+                cost_percent,
+                damage_percent,
+                tick_cancel_percent,
+                cost_spells,
+                damage_spells,
+                tick_cancel_spells,
+                spending_spells,
+                ..
+            } = effect
+            {
+                fight.eureka = Some(fight.bind_eureka(
+                    aura,
+                    [*cost_percent, *damage_percent, *tick_cancel_percent],
+                    [cost_spells, damage_spells, tick_cancel_spells],
+                    spending_spells,
+                )?);
+            }
+        }
         Ok(fight)
     }
 

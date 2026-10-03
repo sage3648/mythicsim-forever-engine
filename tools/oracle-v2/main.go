@@ -16,6 +16,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"math"
 	"os"
 	"reflect"
 	"sort"
@@ -816,6 +817,52 @@ func mageEffects(m *mage.Mage, character *core.Character) []map[string]any {
 	return effects
 }
 
+// racials.go applyEureka: the class names its spells by masks only Go can read, so the
+// exporter resolves them, with spell_mod.go shouldApply's rules, into spell positions.
+func eurekaEffect(agent core.Agent, character *core.Character) map[string]any {
+	aura := character.GetAura("Eureka!")
+	if aura == nil {
+		return nil
+	}
+	masks := core.EurekaSpells{Cost: math.MaxInt64, Damage: math.MaxInt64}
+	if eurekaAgent, ok := agent.(core.EurekaAgent); ok {
+		masks = eurekaAgent.EurekaSpells()
+	}
+	procMask := core.ProcMaskSpecial
+	if character.Class == proto.Class_ClassPriest {
+		procMask |= core.ProcMaskSpellHealing
+	}
+	spent := masks.Cost | masks.Damage | masks.Tick
+	directOnly := masks.Damage &^ masks.Tick
+	modded := func(spell *core.Spell, mask int64) bool {
+		return mask != 0 && !spell.Flags.Matches(core.SpellFlagNoSpellMods) && spell.Matches(mask) && procMask.Matches(spell.ProcMask)
+	}
+	cost, damage, ticks, spending := []int{}, []int{}, []int{}, []int{}
+	for i, spell := range character.Spellbook {
+		mana := false
+		if spell.Cost != nil {
+			_, mana = spell.Cost.ResourceCostImpl.(*core.ManaCost)
+		}
+		if mana && modded(spell, masks.Cost) {
+			cost = append(cost, i)
+		}
+		if modded(spell, masks.Damage|masks.Tick) {
+			damage = append(damage, i)
+		}
+		if modded(spell, directOnly) {
+			ticks = append(ticks, i)
+		}
+		if spell.Matches(spent) && spell.ProcMask.Matches(procMask) {
+			spending = append(spending, i)
+		}
+	}
+	return map[string]any{
+		"kind": "eureka", "spell_id": aura.ActionID.SpellID, "aura": aura.Label,
+		"cost_percent": -0.1, "damage_percent": 0.1, "tick_cancel_percent": 1/1.1 - 1,
+		"cost_spells": cost, "damage_spells": damage, "tick_cancel_spells": ticks, "spending_spells": spending,
+	}
+}
+
 func commonEffects(character *core.Character, target *core.Unit, request *proto.RaidSimRequest, unrepresented *[]string) []map[string]any {
 	effects := []map[string]any{}
 	for _, aura := range target.GetAuras() {
@@ -999,6 +1046,9 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 		effects = append(effects, mageEffects(m, character)...)
 	}
 	effects = append(effects, commonEffects(character, target, request, &unrepresented)...)
+	if eureka := eurekaEffect(agent, character); eureka != nil {
+		effects = append(effects, eureka)
+	}
 	// Listeners that receive the player's spell events but act only on events outside the
 	// supported scope: health.go trackChanceOfDeath and attack.go Parry Haste.
 	for _, inert := range []struct {

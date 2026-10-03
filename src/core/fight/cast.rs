@@ -546,6 +546,10 @@ impl<A: Agent> Fight<A> {
                 health_fraction,
                 metrics,
             } => self.touch_of_the_grave_drain(spell, target, health_fraction, metrics),
+            SpellBehavior::Eureka => {
+                let aura = self.eureka.as_ref().expect("Eureka! is bound").aura;
+                self.activate_aura(aura);
+            }
             SpellBehavior::None => panic!("spell {} has no behavior", self.spells[spell].id),
         }
     }
@@ -737,6 +741,8 @@ impl<A: Agent> Fight<A> {
                 max - (mana + total_regen) >= min + spread && *selected
             }
             SpellBehavior::EnergizeOnUse { whole, .. } => max - mana >= *whole,
+            // Go's default ShouldActivate.
+            SpellBehavior::Eureka => true,
             SpellBehavior::TouchOfTheGraveDrain { .. } | SpellBehavior::None => false,
         }
     }

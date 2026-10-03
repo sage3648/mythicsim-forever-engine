@@ -21,6 +21,10 @@ pub(crate) enum ModKind {
     CastTimePercent,
     /// Go `SpellMod_DamageDone_Pct`: multiplies `DamageMultiplier` by one plus the value.
     DamageDonePercent,
+    /// Go `SpellMod_PowerCost_Pct`: multiplies the cost's `PercentModifier`.
+    PowerCostPercent,
+    /// Go `SpellMod_DotDamageDone_Pct`: multiplies the dot's `PeriodicDamageMultiplier`.
+    DotDamageDonePercent,
 }
 
 #[derive(Clone, Debug)]
@@ -93,6 +97,25 @@ impl<A: Agent> Fight<A> {
                         state.damage_multiplier *= 1.0 + modifier.float_value;
                     } else {
                         state.damage_multiplier /= 1.0 + modifier.float_value;
+                    }
+                }
+                ModKind::PowerCostPercent => {
+                    if let Some(cost) = state.cost.as_mut() {
+                        if sign > 0.0 {
+                            cost.percent_modifier *= 1.0 + modifier.float_value;
+                        } else {
+                            cost.percent_modifier /= 1.0 + modifier.float_value;
+                        }
+                    }
+                }
+                ModKind::DotDamageDonePercent => {
+                    if let Some(dot) = state.dot {
+                        let value = &mut self.dots[dot].periodic_damage_multiplier;
+                        if sign > 0.0 {
+                            *value *= 1.0 + modifier.float_value;
+                        } else {
+                            *value /= 1.0 + modifier.float_value;
+                        }
                     }
                 }
                 ModKind::CastTimePercent => {

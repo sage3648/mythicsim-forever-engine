@@ -24,6 +24,7 @@ pub(crate) const IMPLEMENTED_EFFECTS: &[&str] = &[
     "combustion",
     "conjured_mana",
     "energize_on_use",
+    "eureka",
     "evocation",
     "fingers_of_frost",
     "fire_blast",
@@ -67,11 +68,15 @@ fn spell_capability(spell: &Spell, prepared: &PreparedV2) -> Option<&'static str
             _ => None,
         };
     }
-    let item = spell.action_id.as_ref().map_or(0, |id| id.item_id);
+    let id = spell.action_id.clone().unwrap_or_default();
+    let item = id.item_id;
     prepared.effects.iter().find_map(|effect| match effect {
         Effect::PotionMana { item_id, .. } if *item_id == item => Some("potion_mana"),
         Effect::ConjuredMana { item_id, .. } if *item_id == item => Some("conjured_mana"),
         Effect::EnergizeOnUse { item_id, .. } if *item_id == item => Some("energize_on_use"),
+        Effect::Eureka { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
+            Some("eureka")
+        }
         _ => None,
     })
 }
@@ -112,6 +117,7 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         | Effect::ArcaneBlast { aura, .. }
         | Effect::ArcanePower { aura, .. }
         | Effect::Combustion { aura, .. }
+        | Effect::Eureka { aura, .. }
         | Effect::PresenceOfMind { aura, .. } => vec![("player", aura)],
         Effect::JudgementOfWisdom { aura, .. } => vec![("target", aura)],
         Effect::InertListener { unit, aura, .. } => match unit.as_str() {

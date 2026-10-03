@@ -1,6 +1,17 @@
 //! Go racials.go effects with runtime behavior.
 
-use super::{Action, Agent, AuraRef, Fight, Side, SpellId, SpellResult, PRIORITY_DOT};
+use super::{
+    Action, Agent, AuraRef, Fight, ModId, ModKind, Side, SpellId, SpellResult, PRIORITY_DOT,
+};
+
+/// Go racials.go `applyEureka`: its aura and modifiers, and the casts that spend a stack.
+#[derive(Clone, Debug)]
+pub(crate) struct Eureka {
+    pub(crate) aura: AuraRef,
+    /// Cost, damage and the tick cancel, in Go's registration and activation order.
+    mods: Vec<ModId>,
+    spends: Vec<bool>,
+}
 
 impl<A: Agent> Fight<A> {
     /// Touch of the Grave's proc trigger: Go `AttachProcTriggerCallback` with
@@ -56,6 +67,67 @@ impl<A: Agent> Fight<A> {
         self.deal_damage(spell, result, false);
         if result.landed() {
             self.gain_health(result.damage, metrics);
+        }
+    }
+
+    /// Register Eureka!'s modifiers on the spells the exporter resolved from the class masks.
+    pub(crate) fn bind_eureka(
+        &mut self,
+        aura: &str,
+        values: [f64; 3],
+        spells: [&Vec<usize>; 3],
+        spending: &[usize],
+    ) -> Result<Eureka, String> {
+        let aura = self.player_aura(aura)?;
+        let count = self.spells.len();
+        if spells
+            .iter()
+            .flat_map(|list| list.iter())
+            .chain(spending)
+            .any(|&spell| spell >= count)
+        {
+            return Err("Eureka! names a spell position outside the spellbook".into());
+        }
+        let kinds = [
+            ModKind::PowerCostPercent,
+            ModKind::DamageDonePercent,
+            ModKind::DotDamageDonePercent,
+        ];
+        let mods = kinds
+            .into_iter()
+            .zip(values)
+            .zip(spells)
+            .map(|((kind, value), spells)| self.register_mod(kind, value, 0, spells.clone()))
+            .collect();
+        let mut spends = vec![false; count];
+        for &spell in spending {
+            spends[spell] = true;
+        }
+        Ok(Eureka { aura, mods, spends })
+    }
+
+    /// Eureka!'s OnGain: three stacks, then its modifiers.
+    pub(crate) fn eureka_gain(&mut self) {
+        let eureka = self.eureka.clone().expect("Eureka! is bound");
+        self.set_stacks(eureka.aura, 3);
+        for modifier in eureka.mods {
+            self.activate_mod(modifier);
+        }
+    }
+
+    pub(crate) fn eureka_expire(&mut self) {
+        let eureka = self.eureka.clone().expect("Eureka! is bound");
+        for modifier in eureka.mods {
+            self.deactivate_mod(modifier);
+        }
+    }
+
+    /// Eureka!'s OnCastComplete: a named spell spends a stack.
+    pub(crate) fn eureka_cast_complete(&mut self, spell: SpellId) {
+        let eureka = self.eureka.as_ref().expect("Eureka! is bound");
+        if eureka.spends[spell] {
+            let aura = eureka.aura;
+            self.remove_stack(aura);
         }
     }
 

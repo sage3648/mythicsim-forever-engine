@@ -40,6 +40,8 @@ pub(crate) enum AuraBehavior<K> {
         delay: i64,
         drain: SpellId,
     },
+    /// Go racials.go `applyEureka`'s aura.
+    Eureka,
     /// The aura of a dot or channel.
     Dot(DotId),
     Class(K),
@@ -405,6 +407,7 @@ impl<A: Agent> Fight<A> {
     fn on_gain(&mut self, aura: AuraRef) {
         match self.aura(aura).behavior {
             AuraBehavior::Dot(dot) => self.dot_on_gain(dot),
+            AuraBehavior::Eureka => self.eureka_gain(),
             AuraBehavior::Class(kind) => A::on_gain(self, aura, kind),
             _ => {}
         }
@@ -413,6 +416,7 @@ impl<A: Agent> Fight<A> {
     fn on_expire(&mut self, aura: AuraRef) {
         match self.aura(aura).behavior {
             AuraBehavior::Dot(dot) => self.dot_on_expire(dot),
+            AuraBehavior::Eureka => self.eureka_expire(),
             AuraBehavior::Class(kind) => A::on_expire(self, aura, kind),
             _ => {}
         }
@@ -502,8 +506,10 @@ impl<A: Agent> Fight<A> {
                 side: Side::Player,
                 index,
             };
-            if let AuraBehavior::Class(kind) = self.aura(aura).behavior {
-                A::on_cast_complete(self, aura, kind, spell);
+            match self.aura(aura).behavior {
+                AuraBehavior::Class(kind) => A::on_cast_complete(self, aura, kind, spell),
+                AuraBehavior::Eureka => self.eureka_cast_complete(spell),
+                _ => {}
             }
         }
     }
