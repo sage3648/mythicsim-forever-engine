@@ -99,10 +99,10 @@ func priestEffects(agent core.Agent, character *core.Character) []map[string]any
 		rank := priestShadowform.Highest()
 		effects = append(effects, map[string]any{
 			"kind": "shadowform", "spell_id": rank.ID, "aura": aura.Label,
-			"damage_percent": rank.Effect(dbcenums.A_MOD_DAMAGE_PERCENT_DONE, 32).Average(core.CharacterLevel) / 100,
-			"cost_percent":   rank.Effect(dbcenums.A_MOD_POWER_COST_SCHOOL_PCT, 32).Average(core.CharacterLevel) / 100,
+			"damage_percent":  rank.Effect(dbcenums.A_MOD_DAMAGE_PERCENT_DONE, 32).Average(core.CharacterLevel) / 100,
+			"cost_percent":    rank.Effect(dbcenums.A_MOD_POWER_COST_SCHOOL_PCT, 32).Average(core.CharacterLevel) / 100,
 			"crit_multiplier": rank.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_CRIT_DAMAGE_BONUS)).Average(core.CharacterLevel) / 100,
-			"school_spells": priestModSpells(character, priest.PriestSpellsAll, core.SpellSchoolShadow),
+			"school_spells":   priestModSpells(character, priest.PriestSpellsAll, core.SpellSchoolShadow),
 			"crit_spells": priestModSpells(character, priest.PriestSpellMindBlast|priest.PriestSpellMindFlay|priest.PriestSpellShadowWordPain|
 				priest.PriestSpellDevouringPlague|priest.PriestSpellShadowWordDeath, 0),
 			"cancel_spells": priestShadowformCancels(character),
@@ -135,7 +135,7 @@ func priestEffects(agent core.Agent, character *core.Character) []map[string]any
 			"kind": "shadow_weaving", "trigger_aura": trigger.Name, "aura": aura.Label,
 			"callbacks": callbackNames(trigger.Callback), "outcome": outcomeNames(trigger.Outcome),
 			"trigger_immediately": trigger.TriggerImmediately, "proc_chance": trigger.ProcChance,
-			"trigger_spells": procTriggerSpells(character, trigger),
+			"trigger_spells":   procTriggerSpells(character, trigger),
 			"damage_per_stack": stack.Effect(dbcenums.A_MOD_SCHOOL_MASK_DAMAGE_FROM_CASTER, 32).Average(core.CharacterLevel) / 100,
 			"damage_spells":    priestModSpells(character, priest.PriestSpellsAll, core.SpellSchoolShadow),
 		})

@@ -48,15 +48,18 @@ const COMMON_EFFECTS: &[&str] = &[
     "read_ley_line",
     "shatter_curse",
     "stoneform",
+    "sunder_armor_ramp",
     "temporary_stats",
     "touch_of_the_grave",
 ];
 
 /// Every class with an implemented gate.
-fn gates() -> [&'static ClassGate; 3] {
+fn gates() -> [&'static ClassGate; 5] {
     [
         &classes::mage::prepared::GATE,
         &classes::druid::prepared::GATE,
+        &classes::shaman::prepared::GATE,
+        &classes::paladin::prepared::GATE,
         &classes::priest::prepared::GATE,
     ]
 }
@@ -328,7 +331,11 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
                 player.prepull_actions
             ));
         }
+        let unreachable = unreachable_with_one_target(prepared, rotation);
         for item in &rotation.priority_list {
+            if unreachable.contains(&item.position) {
+                continue;
+            }
             match &item.action {
                 Action::AutocastOtherCooldowns => {
                     for cooldown in &player.major_cooldowns {
@@ -394,6 +401,32 @@ fn find_aura(prepared: &PreparedV2, id: &ActionId) -> Option<FoundAura<ActionId>
             aura: id.clone(),
             max_stacks: aura.max_stacks,
         })
+}
+
+/// Rotation items, by position, whose condition can never hold against the one target the
+/// runtime supports, such as a `numberTargets` of two or more. Go still evaluates them, without
+/// side effects, but never runs their action.
+fn unreachable_with_one_target(prepared: &PreparedV2, rotation: &Rotation) -> BTreeSet<usize> {
+    let aura = |id: &ActionId| find_aura(prepared, id);
+    let spell = |id: &ActionId| rotation_spell_index(prepared, id);
+    let dot = |id: &ActionId| {
+        rotation_spell_index(prepared, id)
+            .filter(|&index| prepared.player.spells[index].dot.is_some())
+    };
+    let lookup = Lookup {
+        aura: &aura,
+        spell: &spell,
+        dot: &dot,
+    };
+    rotation
+        .priority_list
+        .iter()
+        .filter(|item| {
+            let condition = item.condition.as_ref().map(Value::with_one_target);
+            compile_condition(condition.as_ref(), &lookup, MissingAura::Dropped).never_holds()
+        })
+        .map(|item| item.position)
+        .collect()
 }
 
 /// Pinned Go gives `auraIsActive` and `auraNumStacks` on an aura the character cannot have

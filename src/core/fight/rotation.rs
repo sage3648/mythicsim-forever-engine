@@ -5,7 +5,7 @@ use crate::{
     core::time::NEVER_EXPIRES,
     rotation::{
         compile_bool_value, compile_condition, Action as ParsedAction, CompareOp,
-        CompiledCondition, FoundAura, Lookup, MissingAura, Rotation, ValueType,
+        CompiledCondition, FoundAura, Lookup, MathOp, MissingAura, Rotation, ValueType,
     },
 };
 
@@ -230,6 +230,19 @@ impl<A: Agent> Fight<A> {
             Compiled::AuraNumStacks(aura) => self.aura(*aura).stacks,
             // One target in scope.
             Compiled::NumberTargets => 1,
+            // Go `APLValueMath.GetInt`: int32 arithmetic, which wraps.
+            Compiled::Math { op, lhs, rhs } => {
+                let (lhs, rhs) = (self.get_int(lhs), self.get_int(rhs));
+                match op {
+                    MathOp::Add => lhs.wrapping_add(rhs),
+                    MathOp::Sub => lhs.wrapping_sub(rhs),
+                    MathOp::Mul => lhs.wrapping_mul(rhs),
+                    MathOp::Div => {
+                        assert!(rhs != 0, "integer division by zero");
+                        lhs.wrapping_div(rhs)
+                    }
+                }
+            }
             Compiled::Coerced { inner, .. } => match inner.value_type() {
                 ValueType::Bool => i32::from(self.get_bool(inner)),
                 ValueType::Int => self.get_int(inner),
@@ -247,6 +260,21 @@ impl<A: Agent> Fight<A> {
             Compiled::CurrentManaPercent => self.player.mana / self.config.max_mana,
             Compiled::CurrentMana => self.player.mana,
             Compiled::NumberTargets => 1.0,
+            // Go `APLValueMath.GetFloat`.
+            Compiled::Math { op, lhs, rhs } => match op {
+                MathOp::Add => self.get_float(lhs) + self.get_float(rhs),
+                MathOp::Sub => self.get_float(lhs) - self.get_float(rhs),
+                MathOp::Mul => self.get_float(lhs) * self.get_float(rhs),
+                MathOp::Div
+                    if lhs.value_type() == ValueType::Duration
+                        && rhs.value_type() == ValueType::Duration =>
+                {
+                    let divisor = crate::core::time::seconds(self.get_duration(rhs));
+                    assert!(divisor != 0.0, "Division by zero in duration / duration");
+                    crate::core::time::seconds(self.get_duration(lhs)) / divisor
+                }
+                MathOp::Div => self.get_float(lhs) / self.get_float(rhs),
+            },
             Compiled::Coerced { inner, .. } => match inner.value_type() {
                 ValueType::Bool => f64::from(u8::from(self.get_bool(inner))),
                 ValueType::Int => f64::from(self.get_int(inner)),
@@ -283,6 +311,7 @@ impl<A: Agent> Fight<A> {
                 };
                 next - self.now
             }
+            Compiled::Math { op, lhs, rhs } => self.math_duration(*op, lhs, rhs),
             Compiled::CurrentTime => self.now,
             // Go `APLValueDotRemainingTime`: zero when inactive.
             Compiled::DotRemainingTime(spell) => {
@@ -315,6 +344,37 @@ impl<A: Agent> Fight<A> {
                 ValueType::String => 0,
             },
             _ => 0,
+        }
+    }
+
+    /// Go `APLValueMath.GetDuration`: int64 arithmetic, which wraps, and float products
+    /// truncated toward zero.
+    fn math_duration(&self, op: MathOp, lhs: &Compiled, rhs: &Compiled) -> i64 {
+        let scale = |duration: i64, by: &Compiled| match by.value_type() {
+            ValueType::Int => duration.wrapping_mul(i64::from(self.get_int(by))),
+            ValueType::Float => (duration as f64 * self.get_float(by)) as i64,
+            other => panic!("invalid {other:?} operand for duration multiplication"),
+        };
+        match op {
+            MathOp::Add => self.get_duration(lhs).wrapping_add(self.get_duration(rhs)),
+            MathOp::Sub => self.get_duration(lhs).wrapping_sub(self.get_duration(rhs)),
+            MathOp::Mul if lhs.value_type() == ValueType::Duration => {
+                scale(self.get_duration(lhs), rhs)
+            }
+            MathOp::Mul => scale(self.get_duration(rhs), lhs),
+            MathOp::Div => match rhs.value_type() {
+                ValueType::Int => {
+                    let divisor = self.get_int(rhs);
+                    assert!(divisor != 0, "Division by zero in duration / int");
+                    self.get_duration(lhs).wrapping_div(i64::from(divisor))
+                }
+                ValueType::Float => {
+                    let divisor = self.get_float(rhs);
+                    assert!(divisor != 0.0, "Division by zero in duration / float");
+                    (self.get_duration(lhs) as f64 / divisor) as i64
+                }
+                other => panic!("invalid {other:?} divisor for duration division"),
+            },
         }
     }
 

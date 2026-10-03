@@ -183,6 +183,16 @@ pub(crate) struct ActionReport {
     pub(crate) resisted_crit_ticks: i32,
     #[serde(skip_serializing_if = "is_zero_i")]
     pub(crate) misses: i32,
+    #[serde(skip_serializing_if = "is_zero_i")]
+    pub(crate) dodges: i32,
+    #[serde(skip_serializing_if = "is_zero_i")]
+    pub(crate) parries: i32,
+    #[serde(skip_serializing_if = "is_zero_i")]
+    pub(crate) blocks: i32,
+    #[serde(skip_serializing_if = "is_zero_i")]
+    pub(crate) blocked_crits: i32,
+    #[serde(skip_serializing_if = "is_zero_i")]
+    pub(crate) glances: i32,
     #[serde(skip_serializing_if = "is_zero_f")]
     pub(crate) damage: f64,
     #[serde(skip_serializing_if = "is_zero_f")]
@@ -199,6 +209,12 @@ pub(crate) struct ActionReport {
     pub(crate) crit_tick_damage: f64,
     #[serde(skip_serializing_if = "is_zero_f")]
     pub(crate) resisted_crit_tick_damage: f64,
+    #[serde(skip_serializing_if = "is_zero_f")]
+    pub(crate) glance_damage: f64,
+    #[serde(skip_serializing_if = "is_zero_f")]
+    pub(crate) block_damage: f64,
+    #[serde(skip_serializing_if = "is_zero_f")]
+    pub(crate) blocked_crit_damage: f64,
     #[serde(skip_serializing_if = "is_zero_f")]
     pub(crate) threat: f64,
     #[serde(skip_serializing_if = "is_zero_f")]
@@ -420,6 +436,11 @@ impl<A: Agent> Fight<A> {
                 totals.casts += metrics.casts;
             }
             totals.misses += metrics.misses;
+            totals.dodges += metrics.dodges;
+            totals.parries += metrics.parries;
+            totals.blocks += metrics.blocks;
+            totals.blocked_crits += metrics.blocked_crits;
+            totals.glances += metrics.glances;
             totals.hits += metrics.hits;
             totals.resisted_hits += metrics.resisted_hits;
             totals.crits += metrics.crits;
@@ -436,6 +457,9 @@ impl<A: Agent> Fight<A> {
             totals.resisted_tick_damage += metrics.total_resisted_tick_damage;
             totals.crit_tick_damage += metrics.total_crit_tick_damage;
             totals.resisted_crit_tick_damage += metrics.total_resisted_crit_tick_damage;
+            totals.glance_damage += metrics.total_glance_damage;
+            totals.block_damage += metrics.total_block_damage;
+            totals.blocked_crit_damage += metrics.total_blocked_crit_damage;
             totals.threat += metrics.total_threat;
             if !passive {
                 totals.cast_time += metrics.total_cast_time;

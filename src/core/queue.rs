@@ -88,6 +88,18 @@ impl<T> PendingQueue<T> {
         self.slot(handle).and_then(Option::take).is_some()
     }
 
+    /// The time of the next live action, dropping cancelled entries on the way.
+    pub(crate) fn peek_time(&mut self) -> Option<i64> {
+        while let Some(entry) = self.heap.peek() {
+            let index = (entry.sequence - self.base) as usize;
+            if self.slots[index].is_some() {
+                return Some(entry.time);
+            }
+            self.heap.pop();
+        }
+        None
+    }
+
     /// Pop the next live action.
     pub(crate) fn pop(&mut self) -> Option<(i64, Handle, T)> {
         while let Some(entry) = self.heap.pop() {

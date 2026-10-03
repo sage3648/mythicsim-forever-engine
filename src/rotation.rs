@@ -41,6 +41,57 @@ pub enum CompareOp {
     Ge,
 }
 
+/// Go `APLValueMath_MathOperator`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum MathOp {
+    Add,
+    Sub,
+    Mul,
+    Div,
+}
+
+impl MathOp {
+    /// Go `APLValueMath.Type`, from the operand types after `newValueMath` coerced them.
+    pub fn result_type(self, lhs: ValueType, rhs: ValueType) -> ValueType {
+        match self {
+            MathOp::Add | MathOp::Sub => lhs,
+            MathOp::Mul if lhs == ValueType::Duration || rhs == ValueType::Duration => {
+                ValueType::Duration
+            }
+            MathOp::Div if lhs == ValueType::Duration && rhs == ValueType::Duration => {
+                ValueType::Float
+            }
+            _ if lhs == ValueType::Float || rhs == ValueType::Float => ValueType::Float,
+            _ => lhs,
+        }
+    }
+
+    /// The getter types Go's `APLValueMath` reads its operands with, when it is read with
+    /// the getter of its own type.
+    fn operand_getters(self, lhs: ValueType, rhs: ValueType) -> (ValueType, ValueType) {
+        match (self, self.result_type(lhs, rhs)) {
+            (MathOp::Add | MathOp::Sub, result) => (result, result),
+            // A duration product or quotient reads each operand with its own getter.
+            (MathOp::Mul | MathOp::Div, ValueType::Duration) => (lhs, rhs),
+            (MathOp::Div, ValueType::Float)
+                if lhs == ValueType::Duration && rhs == ValueType::Duration =>
+            {
+                (lhs, rhs)
+            }
+            (_, result) => (result, result),
+        }
+    }
+}
+
+/// Operand types after `newValueMath`, which coerces addition and subtraction operands to
+/// the higher of their two types.
+fn math_operand_types(op: MathOp, lhs: ValueType, rhs: ValueType) -> (ValueType, ValueType) {
+    match op {
+        MathOp::Add | MathOp::Sub => (lhs.max(rhs), lhs.max(rhs)),
+        MathOp::Mul | MathOp::Div => (lhs, rhs),
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum Value {
     Const(Const),
@@ -52,6 +103,11 @@ pub enum Value {
     And(Vec<Value>),
     Or(Vec<Value>),
     Not(Box<Value>),
+    Math {
+        op: MathOp,
+        lhs: Box<Value>,
+        rhs: Box<Value>,
+    },
     CurrentManaPercent,
     CurrentMana,
     RemainingTime,
@@ -76,7 +132,7 @@ impl Value {
     pub fn visit(&self, f: &mut impl FnMut(&Value)) {
         f(self);
         match self {
-            Value::Compare { lhs, rhs, .. } => {
+            Value::Compare { lhs, rhs, .. } | Value::Math { lhs, rhs, .. } => {
                 lhs.visit(f);
                 rhs.visit(f);
             }
@@ -85,6 +141,29 @@ impl Value {
             }
             Value::Not(value) => value.visit(f),
             _ => {}
+        }
+    }
+
+    /// This value with `numberTargets` read as the one target the runtime supports, a
+    /// constant that folds.
+    pub fn with_one_target(&self) -> Value {
+        let map = |value: &Value| Box::new(value.with_one_target());
+        match self {
+            Value::NumberTargets => Value::Const(parse_const("1").expect("int constant")),
+            Value::Compare { op, lhs, rhs } => Value::Compare {
+                op: *op,
+                lhs: map(lhs),
+                rhs: map(rhs),
+            },
+            Value::Math { op, lhs, rhs } => Value::Math {
+                op: *op,
+                lhs: map(lhs),
+                rhs: map(rhs),
+            },
+            Value::And(values) => Value::And(values.iter().map(Value::with_one_target).collect()),
+            Value::Or(values) => Value::Or(values.iter().map(Value::with_one_target).collect()),
+            Value::Not(value) => Value::Not(map(value)),
+            other => other.clone(),
         }
     }
 
@@ -111,6 +190,10 @@ impl Value {
             | Value::RemainingTime
             | Value::CurrentTime => ValueType::Duration,
             Value::CurrentManaPercent | Value::CurrentMana => ValueType::Float,
+            Value::Math { op, lhs, rhs } => {
+                let (lhs, rhs) = math_operand_types(*op, lhs.value_type(), rhs.value_type());
+                op.result_type(lhs, rhs)
+            }
         }
     }
 }
@@ -494,6 +577,47 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
                 (lhs, rhs) => Err(lhs.err().into_iter().chain(rhs.err()).flatten().collect()),
             }
         }
+        "math" => {
+            only(&["op", "lhs", "rhs"])?;
+            let op = match config.get("op").and_then(Json::as_str) {
+                Some("OpAdd") => MathOp::Add,
+                Some("OpSub") => MathOp::Sub,
+                Some("OpMul") => MathOp::Mul,
+                Some("OpDiv") => MathOp::Div,
+                other => return Err(vec![format!("math operator {other:?} is unsupported")]),
+            };
+            let lhs = config
+                .get("lhs")
+                .ok_or_else(|| vec!["math has no lhs".to_string()]);
+            let rhs = config
+                .get("rhs")
+                .ok_or_else(|| vec!["math has no rhs".to_string()]);
+            let (lhs, rhs) = match (lhs.and_then(parse_value), rhs.and_then(parse_value)) {
+                (Ok(lhs), Ok(rhs)) => (lhs, rhs),
+                (lhs, rhs) => {
+                    return Err(lhs.err().into_iter().chain(rhs.err()).flatten().collect())
+                }
+            };
+            // Go panics when it reads an operand with a getter its type lacks. Constants and
+            // the coerced operands of a sum or difference answer every getter.
+            let (lhs_type, rhs_type) = math_operand_types(op, lhs.value_type(), rhs.value_type());
+            let (lhs_getter, rhs_getter) = op.operand_getters(lhs_type, rhs_type);
+            let answers = |value: &Value, getter: ValueType| {
+                matches!(value, Value::Const(_))
+                    || matches!(op, MathOp::Add | MathOp::Sub)
+                    || value.value_type() == getter
+            };
+            if !answers(&lhs, lhs_getter) || !answers(&rhs, rhs_getter) {
+                return Err(vec![
+                    "math that reads an operand as another type is unsupported".into(),
+                ]);
+            }
+            Ok(Value::Math {
+                op,
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+            })
+        }
         "and" | "or" => {
             only(&["vals"])?;
             let mut values = Vec::new();
@@ -798,6 +922,12 @@ pub enum Compiled<R> {
     And(Vec<Compiled<R>>),
     Or(Vec<Compiled<R>>),
     Not(Box<Compiled<R>>),
+    /// Go `APLValueMath`.
+    Math {
+        op: MathOp,
+        lhs: Box<Compiled<R>>,
+        rhs: Box<Compiled<R>>,
+    },
     CurrentManaPercent,
     CurrentMana,
     RemainingTime,
@@ -842,6 +972,7 @@ impl<R> Compiled<R> {
             | Compiled::RemainingTime
             | Compiled::CurrentTime => ValueType::Duration,
             Compiled::CurrentManaPercent | Compiled::CurrentMana => ValueType::Float,
+            Compiled::Math { op, lhs, rhs } => op.result_type(lhs.value_type(), rhs.value_type()),
             Compiled::Coerced { to, .. } => *to,
         }
     }
@@ -919,6 +1050,12 @@ impl<R: Clone> Compiled<R> {
             Compiled::Coerced { to, inner } => Compiled::Coerced {
                 to: *to,
                 inner: Box::new(inner.folded()),
+            },
+            // Go never folds arithmetic; its operands still fold.
+            Compiled::Math { op, lhs, rhs } => Compiled::Math {
+                op: *op,
+                lhs: Box::new(lhs.folded()),
+                rhs: Box::new(rhs.folded()),
             },
             other => other.clone(),
         }
@@ -1000,6 +1137,11 @@ impl<R: Clone + PartialEq> CompiledCondition<R> {
     /// Whether two compilations act the same, though Go may keep constant comparisons.
     pub fn same_meaning(&self, other: &Self) -> bool {
         self.folded() == other.folded()
+    }
+
+    /// Whether the condition can never hold, though Go may keep evaluating it.
+    pub fn never_holds(&self) -> bool {
+        self.folded() == CompiledCondition::Pruned
     }
 
     fn folded(&self) -> Self {
@@ -1097,6 +1239,34 @@ fn compile_value<R>(
                 op: *op,
                 lhs: Box::new(lhs.coerce(to)),
                 rhs: Box::new(rhs.coerce(to)),
+            }
+        }
+        Value::Math { op, lhs, rhs } => {
+            let lhs = compile_value(lhs, lookup, missing)?;
+            let rhs = compile_value(rhs, lookup, missing)?;
+            let (lhs, rhs) = match op {
+                MathOp::Add | MathOp::Sub => {
+                    let to = lhs.value_type().max(rhs.value_type());
+                    (lhs.coerce(to), rhs.coerce(to))
+                }
+                MathOp::Mul | MathOp::Div => (lhs, rhs),
+            };
+            let (lhs_type, rhs_type) = (lhs.value_type(), rhs.value_type());
+            let numeric = |t: ValueType| matches!(t, ValueType::Int | ValueType::Float);
+            // Go newValueMath warns and gives no value for these.
+            if matches!(lhs_type, ValueType::Bool | ValueType::String)
+                || matches!(rhs_type, ValueType::Bool | ValueType::String)
+                || (*op == MathOp::Mul
+                    && lhs_type == ValueType::Duration
+                    && rhs_type == ValueType::Duration)
+                || (*op == MathOp::Div && numeric(lhs_type) && rhs_type == ValueType::Duration)
+            {
+                return None;
+            }
+            Compiled::Math {
+                op: *op,
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
             }
         }
         Value::AuraRemainingTime(id) => match (aura(id), missing) {
@@ -1197,6 +1367,42 @@ mod tests {
         );
         assert_eq!(parse_const("TRUE").unwrap().value_type, ValueType::Bool);
         assert!(parse_const("hello").is_err());
+    }
+
+    #[test]
+    fn math_types_follow_go() {
+        let math = |op: &str, lhs: serde_json::Value, rhs: serde_json::Value| {
+            parse_value(&serde_json::json!({"math": {"op": op, "lhs": lhs, "rhs": rhs}}))
+        };
+        let remaining = || serde_json::json!({"remainingTime": {}});
+        let mana = || serde_json::json!({"currentMana": {}});
+        let constant = |val: &str| serde_json::json!({"const": {"val": val}});
+        let typed = |value: Result<Value, Vec<String>>| value.unwrap().value_type();
+        // A duration times an integer stays a duration; a sum takes the higher type.
+        assert_eq!(
+            typed(math("OpMul", remaining(), constant("100"))),
+            ValueType::Duration
+        );
+        assert_eq!(
+            typed(math("OpAdd", constant("1"), mana())),
+            ValueType::Float
+        );
+        assert_eq!(
+            typed(math("OpDiv", remaining(), remaining())),
+            ValueType::Float
+        );
+        assert_eq!(
+            typed(math("OpDiv", remaining(), constant("2"))),
+            ValueType::Duration
+        );
+        assert_eq!(
+            typed(math("OpMul", constant("2"), constant("3"))),
+            ValueType::Int
+        );
+        // A duration over a float is a float, which Go reads from the duration and panics.
+        assert!(math("OpDiv", remaining(), constant("2.5")).is_err());
+        assert!(math("OpMul", serde_json::json!({"numberTargets": {}}), mana()).is_err());
+        assert!(math("OpMod", mana(), mana()).is_err());
     }
 
     #[test]

@@ -583,6 +583,7 @@ impl<A: Agent> Fight<A> {
                 side: Side::Player,
                 index,
             }),
+            SpellBehavior::MeleeAuto(hand) => self.apply_melee_auto(spell, target, hand),
             SpellBehavior::None => panic!("spell {} has no behavior", self.spells[spell].id),
         }
     }
@@ -830,7 +831,9 @@ impl<A: Agent> Fight<A> {
             SpellBehavior::EnergizeOnUse { whole, .. } => max - mana >= *whole,
             // Go's default ShouldActivate.
             SpellBehavior::Eureka | SpellBehavior::ActivateAura(_) => true,
-            SpellBehavior::TouchOfTheGraveDrain { .. } | SpellBehavior::None => false,
+            SpellBehavior::TouchOfTheGraveDrain { .. }
+            | SpellBehavior::MeleeAuto(_)
+            | SpellBehavior::None => false,
         }
     }
 

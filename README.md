@@ -74,6 +74,13 @@ credits it, Omen of Clarity, Nature's Grace and Eclipse match the pinned Go engi
 509.502 DPS, and a [sweep](validation/2026-10-04-balance-druid-sweep.json) across every
 Balance race matches on every supported variant.
 
+The production Elemental Shaman build, a Tauren with a prepull Lightning Bolt, every
+Lightning Bolt and Chain Lightning rank with Lightning Overload, Flame Shock, Lava Burst,
+Fire Nova, Searing Totem and Elemental Focus, matches the pinned Go engine at 396.972 DPS.
+Sweeps of [its variants](validation/2026-10-04-elemental-shaman-sweep.json) and of
+[every Shaman race](validation/2026-10-04-elemental-shaman-race-sweep.json) match on all
+48 variants.
+
 The production Shadow Priest build matches too: an Undead priest with a prepull
 Shadowform and Mind Blast, Shadow Word: Pain, Devouring Plague, Shadow Word: Death with
 Early Demise, Mind Flay channels the rotation interrupts, a strict Inner Focus and Mind
