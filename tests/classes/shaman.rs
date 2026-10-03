@@ -101,9 +101,9 @@ fn other_basic_totems_are_rejected() {
     let mut value = enhancement_json();
     let item = &mut value["player"]["rotation"]["priorityList"][0]["action"];
     assert_eq!(item["castSpell"]["spellId"]["spellId"], 25361);
-    item["castSpell"]["spellId"]["spellId"] = json!(10497);
+    item["castSpell"]["spellId"]["spellId"] = json!(10614);
     assert!(reasons(value)
-        .contains(&"rotation reaches spell 10497, a totem without a known behavior".into()));
+        .contains(&"rotation reaches spell 10614, a totem without a known behavior".into()));
 
     let mut value = enhancement_json();
     value["player"]["rotation"]["priorityList"][0]["action"]["castSpell"]["spellId"]["spellId"] =
