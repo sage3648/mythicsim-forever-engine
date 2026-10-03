@@ -99,6 +99,15 @@ also [across races](validation/2026-10-04-smite-priest-race-sweep.json), match G
 48 variants, and so does every race on its
 [race board](validation/2026-10-04-smite-priest-race-boards.json).
 
+The production Feral (cat) Druid matches at 578.870 DPS: a Night Elf starting in Cat Form
+with a prepull Prowl into Ravage, Shred building combo points with Blood Frenzy, Rip's bleed
+reading attack power at each tick, Ferocious Bite, Shifting Power, Faerie Fire, Berserk,
+Rend and Tear and Omen of Clarity off melee hits. Innervate and the mana potion drop the
+form, and the cat shifts back with Furor's energy carry over, swinging the equipped weapon
+while out of form. [Sweeps](validation/2026-10-04-feral-druid-sweep.json), also
+[as Tauren](validation/2026-10-04-feral-druid-race-sweep.json), match Go on all 48
+variants.
+
 The application's published race boards, the requests behind every race's production DPS
 for each supported spec, are a real production corpus: all 44 match the pinned Go engine
 in Rust at 10,000 iterations, and every DPS the production engine published equals the

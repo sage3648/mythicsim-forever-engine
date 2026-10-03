@@ -44,6 +44,7 @@ reading the Go reference. They are not effort estimates for other contributors.
 | Elemental Shaman | 2026-10-03 16:05 | 2026-10-03 16:38 | 0 h 33 m | Shaman exporter and agent, a travel hook, the math operator, one-target reachability and Stoneform; the production request matches Go on the first comparison; 48 of 48 sweep variants match, every Shaman race included |
 | Destruction Warlock | 2026-10-03 16:05 | 2026-10-03 16:46 | 0 h 41 m | Warlock exporter and agent, dynamic damage taken modifiers, target debuff stats, Sunder Armor blocked by Expose Armor, auraIsActive on the target; the production request matches Go; 24 of 24 sweep variants and 12 of 12 race variants match |
 | Smite Priest | 2026-10-03 17:05 | 2026-10-03 17:25 | 0 h 20 m | Smite, Holy Fire, Penance, Power in Light and Searing Light; a spell-conditioned damage taken modifier, periodic damage dispatch and remainingTimePercent; the production request matches Go on the first comparison; 48 of 48 sweep variants and all six race board requests match |
+| Feral (cat) Druid | 2026-10-03 17:35 | 2026-10-03 18:55 | 1 h 20 m | Cat Form, form checks and form-clearing casts, Prowl's replaced swing, the builders, Rip's bleed, Ferocious Bite, Shifting Power, Faerie Fire's armor readings, Berserk, Blood Frenzy, Rend and Tear; dynamic threat and maximum mana, weapon swaps, auraShouldRefresh, frontOfTarget and maxMana; the production request matches Go after a Windfury damage requirement fix; 48 of 48 sweep variants match |
 
 ## Notes
 
