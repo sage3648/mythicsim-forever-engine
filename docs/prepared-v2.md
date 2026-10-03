@@ -9,11 +9,8 @@ effects Rust must execute. The Rust types live in
 Status: the contract, exporter, fixtures, coverage gate and fight runtime are
 implemented. `forever-engine check` reports exactly which mechanics an input still
 needs; `sim` runs inputs whose coverage is complete and refuses the rest. Implemented
-effects today are `frostbolt`, `ice_lance`, `arcane_missiles`, `fingers_of_frost`,
-`winters_chill`, `arcane_concentration`, `missile_barrage`, `judgement_of_wisdom` and
-`inert_listener`. Supported builds cast Frostbolt, Ice Lance and Arcane Missiles with
-every proc talent of the reference build; mana gems, Evocation, consumables, the Robe
-and Cold Snap remain. Prepared v1 and its goldens are unchanged.
+effects cover every effect of the inventoried Frost reference build, and the frozen
+application request is supported. Prepared v1 and its goldens are unchanged.
 
 ## Boundary
 
@@ -147,11 +144,10 @@ as inactive (see [UPSTREAM.md](../UPSTREAM.md#ledger)).
 ## Examples
 
 The [fixture family](../fixtures/mage/frost/prepared-v2/manifest.json) holds accepted
-inputs and their expected coverage. Today it contains the frozen application Frost
-reference. It is fully representable: nothing is unrepresented, every active listener
-is claimed and its rotation is inside the subset. Its remaining reasons are the 16
-effect kinds listed above, which shrink as mechanics land. `frost-no-fingers` is the
-same request without Fingers of Frost, the regression for community fix #622.
+inputs and their expected coverage. `frost-reference` is the frozen application
+request; it is supported and keeps Go's result and first-fight log as goldens.
+`frost-no-fingers` is the same request without Fingers of Frost, the regression for
+community fix #622, and stays unsupported.
 
 The contract tests in
 [tests/classes/mage/frost/prepared_v2.rs](../tests/classes/mage/frost/prepared_v2.rs)
@@ -198,7 +194,8 @@ Wisdom also matches, as does Ice Lance with Fingers of Frost and Shatter at rank
 1, including the cast in flight when charges arrive, and Clearcasting, Missile Barrage
 and the Arcane Missiles channel. `reference-procs` runs the reference character and
 talents with the reference rotation's Ice Lance, Arcane Missiles and Frostbolt rules.
-Four of these cases keep their logs. All eleven historical v1 scenarios
+The complete build also matches in 300 and 600 second fights, where Evocation, every
+mana gem, potions, runes and the Robe fire. Five cases keep their logs. All eleven historical v1 scenarios
 pass the live comparison through the v2 path.
 
 ## Reproduce

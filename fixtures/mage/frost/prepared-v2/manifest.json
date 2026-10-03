@@ -18,15 +18,16 @@
       "prepared": "frost-reference.prepared.json",
       "prepared_sha256": "7a52eee9bee0fc83588a7c1e09d601d7a36b3636a08872558906b7afce19c402",
       "expected_coverage": {
-        "supported": false,
-        "reasons": [
-          "effect cold_snap is not implemented",
-          "effect conjured_mana is not implemented",
-          "effect energize_on_use is not implemented",
-          "effect evocation is not implemented",
-          "effect mana_gems is not implemented",
-          "effect potion_mana is not implemented"
-        ]
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frost-reference.go-result.json",
+        "sha256": "f0bc5de0787f62f554d519ef23b930c49cb77f9c73a82e73934d984eed2f9d6f"
+      },
+      "go_log": {
+        "file": "frost-reference.go-log.txt",
+        "sha256": "c0537f2a37eb6e64c949d0a100c14a995f447bcf8238b1b7fe75cd9aa5165d95"
       }
     },
     {
@@ -40,12 +41,6 @@
       "expected_coverage": {
         "supported": false,
         "reasons": [
-          "effect cold_snap is not implemented",
-          "effect conjured_mana is not implemented",
-          "effect energize_on_use is not implemented",
-          "effect evocation is not implemented",
-          "effect mana_gems is not implemented",
-          "effect potion_mana is not implemented",
           "rotation item 4: auraIsActive names spell 400669, which the character lacks; the pinned reference drops the condition and community #622 reads it as inactive"
         ]
       }
@@ -272,6 +267,40 @@
       "go_log": {
         "file": "reference-procs.go-log.txt",
         "sha256": "5f885ee3e5798a9ecc54d3449b556d4e11818b017be92eee94aa14c2ad9e0ad7"
+      }
+    },
+    {
+      "id": "reference-long",
+      "description": "The complete reference build in 300 +/- 30 second fights: Evocation, every mana gem, potions, runes and the Robe all fire.",
+      "request": {
+        "path": "fixtures/mage/frost/prepared-v2/reference-long.request.json"
+      },
+      "prepared": "reference-long.prepared.json",
+      "prepared_sha256": "4d00f46841709221a6e87a77d39d383ccc23f00e9f8cac161aa615805d4997c1",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "reference-long.go-result.json",
+        "sha256": "1bf31453f0e82a1d59d302e62f3771fc8784f573e89fe32ebdece1d8f81e1c2c"
+      }
+    },
+    {
+      "id": "reference-ten-minutes",
+      "description": "The complete reference build in 600 +/- 60 second fights with seed 7: repeated Evocations and every cooldown cycling.",
+      "request": {
+        "path": "fixtures/mage/frost/prepared-v2/reference-ten-minutes.request.json"
+      },
+      "prepared": "reference-ten-minutes.prepared.json",
+      "prepared_sha256": "8e4b1aff542f572de03b1c02afedc9df298a870dceabcd9f25e0ab76ab31d258",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "reference-ten-minutes.go-result.json",
+        "sha256": "41f3198d463dddb1978491ff6ab7bffee5c01b0aac7bd6bd8f798ff60f54144d"
       }
     }
   ]

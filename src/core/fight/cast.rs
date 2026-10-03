@@ -37,19 +37,22 @@ impl<A: Agent> Fight<A> {
         timer.is_none_or(|(id, _)| self.timers[id] <= self.now)
     }
 
-    fn timer_ready_at(&self, timer: Option<(usize, i64)>) -> i64 {
-        timer.map_or(0, |(id, _)| self.timers[id])
-    }
-
     /// Go `BothTimersReady` for a spell's cooldown and shared cooldown.
     pub(crate) fn spell_ready(&self, spell: SpellId) -> bool {
         self.timer_ready(self.spells[spell].cd) && self.timer_ready(self.spells[spell].shared_cd)
     }
 
-    /// Go `Spell.ReadyAt`.
+    /// Go `Spell.ReadyAt` through `BothTimersReadyAt`: the first timer's value replaces the
+    /// zero default, so an unused cooldown reads as Go's negative starting time.
     pub(crate) fn spell_ready_at(&self, spell: SpellId) -> i64 {
-        self.timer_ready_at(self.spells[spell].cd)
-            .max(self.timer_ready_at(self.spells[spell].shared_cd))
+        let mut ready = 0;
+        if let Some((timer, _)) = self.spells[spell].cd {
+            ready = self.timers[timer];
+        }
+        if let Some((timer, _)) = self.spells[spell].shared_cd {
+            ready = ready.max(self.timers[timer]);
+        }
+        ready
     }
 
     /// Go `MaxTimeToReady`.

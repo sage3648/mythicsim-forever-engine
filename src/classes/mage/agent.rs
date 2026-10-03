@@ -7,7 +7,7 @@ use crate::{
 };
 
 use super::{
-    spells::{arcane_missiles, frostbolt, ice_lance},
+    spells::{arcane_missiles, cold_snap, evocation, frostbolt, ice_lance, mana_gems},
     talents::{arcane_concentration, fingers_of_frost, missile_barrage, winters_chill},
 };
 
@@ -18,6 +18,10 @@ pub(crate) enum MageSpell {
     IceLance,
     ArcaneMissiles,
     ArcaneMissile,
+    ColdSnap,
+    Evocation,
+    /// A mana gem by its index in Go's order, smallest first.
+    ManaGem(usize),
 }
 
 /// Class auras with Rust behavior.
@@ -31,6 +35,7 @@ pub(crate) enum MageAura {
     ArcaneConcentrationTrigger,
     MissileBarrage,
     MissileBarrageTrigger,
+    EvocationRegen,
 }
 
 /// Mage state that Go keeps in the `Mage` struct and its closures.
@@ -43,6 +48,8 @@ pub(crate) struct MageAgent {
     ice_lance_frozen_multiplier: f64,
     /// Arcane Missiles channel spell to the missile spell of the same rank.
     missiles: Vec<(SpellId, SpellId)>,
+    gems: mana_gems::ManaGems,
+    evocation_regen: Option<(AuraRef, f64)>,
 }
 
 /// Player aura labels claimed by implemented class effects.
@@ -78,6 +85,10 @@ fn class_auras(prepared: &PreparedV2) -> Vec<(String, MageAura)> {
                 trigger_aura,
                 (MageAura::MissileBarrage, MageAura::MissileBarrageTrigger),
             ),
+            Effect::Evocation { regen_aura, .. } => {
+                auras.push((regen_aura.clone(), MageAura::EvocationRegen));
+                continue;
+            }
             _ => continue,
         };
         auras.push((aura.clone(), kinds.0));
@@ -88,8 +99,16 @@ fn class_auras(prepared: &PreparedV2) -> Vec<(String, MageAura)> {
 
 impl MageAgent {
     /// The class behavior of an exported spell, if Rust implements it.
-    pub(crate) fn spell(spell: &ExportedSpell) -> Option<MageSpell> {
+    pub(crate) fn spell(spell: &ExportedSpell, gems: &[i32]) -> Option<MageSpell> {
         match spell.class_spell.as_deref()? {
+            "cold_snap" => Some(MageSpell::ColdSnap),
+            "evocation" if spell.dot.is_some() => Some(MageSpell::Evocation),
+            "mana_gem" => {
+                let item = spell.action_id.as_ref()?.item_id;
+                gems.iter()
+                    .position(|gem| *gem == item)
+                    .map(MageSpell::ManaGem)
+            }
             "frostbolt" if spell.damage_effect.is_some() => Some(MageSpell::Frostbolt),
             "ice_lance" if spell.damage_effect.is_some() => Some(MageSpell::IceLance),
             "arcane_missiles_cast" if spell.dot.is_some() => Some(MageSpell::ArcaneMissiles),
@@ -103,21 +122,25 @@ impl MageAgent {
     /// Build a fight for a prepared input that passed the coverage gate.
     pub(crate) fn fight(prepared: &PreparedV2) -> Result<Fight<MageAgent>, String> {
         let auras = class_auras(prepared);
-        let mut fight = Fight::new(
-            prepared,
-            MageAgent::default(),
-            MageAgent::spell,
-            |unit, label| {
-                (unit == "player")
-                    .then(|| {
-                        auras
-                            .iter()
-                            .find(|(name, _)| name == label)
-                            .map(|(_, kind)| *kind)
-                    })
-                    .flatten()
-            },
-        )?;
+        let gems: Vec<i32> = prepared
+            .effects
+            .iter()
+            .find_map(|effect| match effect {
+                Effect::ManaGems { gems, .. } => Some(gems.iter().map(|gem| gem.item_id).collect()),
+                _ => None,
+            })
+            .unwrap_or_default();
+        let spell = |exported: &ExportedSpell| MageAgent::spell(exported, &gems);
+        let mut fight = Fight::new(prepared, MageAgent::default(), spell, |unit, label| {
+            (unit == "player")
+                .then(|| {
+                    auras
+                        .iter()
+                        .find(|(name, _)| name == label)
+                        .map(|(_, kind)| *kind)
+                })
+                .flatten()
+        })?;
         for effect in &prepared.effects {
             match effect {
                 Effect::WintersChill {
@@ -185,6 +208,21 @@ impl MageAgent {
                 Effect::IceLance {
                     frozen_multiplier, ..
                 } => fight.agent.ice_lance_frozen_multiplier = *frozen_multiplier,
+                Effect::ManaGems {
+                    gems,
+                    regen_window_seconds,
+                } => {
+                    let mana = gems.iter().map(|gem| gem.mana).collect();
+                    fight.agent.gems = mana_gems::ManaGems::new(mana, *regen_window_seconds);
+                }
+                Effect::Evocation {
+                    regen_aura,
+                    regen_multiplier,
+                    ..
+                } => {
+                    let aura = fight.player_aura(regen_aura)?;
+                    fight.agent.evocation_regen = Some((aura, *regen_multiplier));
+                }
                 Effect::ArcaneMissiles { ranks } => {
                     for rank in ranks {
                         let find = |id: i32| {
@@ -265,6 +303,47 @@ impl Agent for MageAgent {
             }
             MageSpell::ArcaneMissiles => arcane_missiles::apply_channel(fight, spell),
             MageSpell::ArcaneMissile => arcane_missiles::apply_missile(fight, spell, target),
+            MageSpell::ColdSnap => cold_snap::apply(fight),
+            MageSpell::Evocation => evocation::apply(fight, spell),
+            MageSpell::ManaGem(gem) => {
+                let mana = fight.agent.gems.mana[gem];
+                mana_gems::apply(fight, spell, mana);
+                fight.agent.gems.used[gem] = true;
+            }
+        }
+    }
+
+    fn extra_cast_condition(fight: &Fight<Self>, _spell: SpellId, behavior: MageSpell) -> bool {
+        match behavior {
+            MageSpell::ManaGem(gem) => fight.agent.gems.available(gem),
+            _ => true,
+        }
+    }
+
+    fn should_activate(fight: &Fight<Self>, _spell: SpellId, behavior: MageSpell) -> bool {
+        match behavior {
+            MageSpell::ManaGem(gem) => fight.agent.gems.should_activate(fight, gem),
+            // Go leaves Evocation to the rotation.
+            MageSpell::Evocation => false,
+            _ => true,
+        }
+    }
+
+    fn reset(fight: &mut Fight<Self>) {
+        fight.agent.gems.reset();
+    }
+
+    fn on_dot_gain(fight: &mut Fight<Self>, _dot: DotId, behavior: MageSpell) {
+        if behavior == MageSpell::Evocation {
+            let (aura, _) = fight.agent.evocation_regen.expect("Evocation is bound");
+            fight.activate_aura(aura);
+        }
+    }
+
+    fn on_dot_expire(fight: &mut Fight<Self>, _dot: DotId, behavior: MageSpell) {
+        if behavior == MageSpell::Evocation {
+            let (aura, _) = fight.agent.evocation_regen.expect("Evocation is bound");
+            fight.deactivate_aura(aura);
         }
     }
 
@@ -291,6 +370,10 @@ impl Agent for MageAgent {
             }
             MageAura::Clearcasting => Self::arcane_concentration(fight).on_gain(fight),
             MageAura::MissileBarrage => Self::missile_barrage(fight).on_gain(fight),
+            MageAura::EvocationRegen => {
+                let (_, multiplier) = fight.agent.evocation_regen.expect("Evocation is bound");
+                evocation::regen_gain(fight, multiplier);
+            }
             _ => {}
         }
     }
@@ -303,6 +386,10 @@ impl Agent for MageAgent {
             }
             MageAura::Clearcasting => Self::arcane_concentration(fight).on_expire(fight),
             MageAura::MissileBarrage => Self::missile_barrage(fight).on_expire(fight),
+            MageAura::EvocationRegen => {
+                let (_, multiplier) = fight.agent.evocation_regen.expect("Evocation is bound");
+                evocation::regen_expire(fight, multiplier);
+            }
             _ => {}
         }
     }

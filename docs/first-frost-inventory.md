@@ -160,4 +160,7 @@ the audited surfaces; they are not a digest of every transitive build input.
 The full commit pins provide the broader reference identity.
 
 Piece 2 is complete: the [prepared v2 contract](prepared-v2.md) represents this
-request without gaps, and its coverage report names the mechanics still to port.
+request without gaps. Rust now runs it and reproduces the observation below exactly in
+counts and to 1e-9 in metrics. The `rust_status` fields in the frozen manifest record
+the state at capture; the live port status is in
+[upstream/mechanics-map.json](../upstream/mechanics-map.json).

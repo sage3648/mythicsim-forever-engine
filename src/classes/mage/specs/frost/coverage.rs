@@ -17,12 +17,18 @@ use crate::{
 pub(crate) const IMPLEMENTED_EFFECTS: &[&str] = &[
     "arcane_concentration",
     "arcane_missiles",
+    "cold_snap",
+    "conjured_mana",
+    "energize_on_use",
+    "evocation",
     "fingers_of_frost",
     "frostbolt",
     "ice_lance",
     "inert_listener",
     "judgement_of_wisdom",
+    "mana_gems",
     "missile_barrage",
+    "potion_mana",
     "winters_chill",
 ];
 

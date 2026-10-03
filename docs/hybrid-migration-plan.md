@@ -11,9 +11,9 @@ mechanics with evidence. AI can prepare those ports; it cannot make Go commits
 merge directly into Rust or establish correctness by itself.
 
 This is an implementation plan. The code runs prepared v2 fights for real characters
-through a class-independent runtime that mirrors Go, with Mage plugged in; supported
-builds cast Frostbolt only so far. Routers, Rust preparation, the complete Frost build
-and sync automation remain planned.
+through a class-independent runtime that mirrors Go, with Mage plugged in. The
+complete Frost reference build reproduces the pinned Go engine. Report adapters,
+routers, Rust preparation and sync automation remain planned.
 Milestones advance on acceptance evidence, not dates.
 
 ## First usable release
@@ -397,9 +397,9 @@ pieces, not already-open issues. Keep each change independently reviewable.
 | 4 (diagnostics complete) | Centralize the reference pin and improve differential diagnostics | 2, 3 | First differing metric and log line reported; pin centralization pending |
 | 5 (complete) | Extract event, RNG and resource modules | Current kernel | Go-ordered queue, shared and labeled RNG, mana and metrics in `core/fight`; v1 goldens unchanged |
 | 6 | Export real Frost character preparation from Go | 2, 4 | Prepared-state comparisons |
-| 7 (in progress) | Add aura lifetime, stacks, charges and cooldown primitives | 5 | Aura lifecycle, stacks, cooldowns and channels implemented; validated as each Frost mechanic lands |
-| 8 | Port required Frost spells and procs in separate PRs | 6, 7 | Upstream evidence and mechanic regressions |
-| 9 | Interpret the selected preset operators | 2, 8 | Priority, condition and unsupported-rule tests |
+| 7 (complete for Frost) | Add aura lifetime, stacks, charges and cooldown primitives | 5 | Auras, stacks, cooldowns, channels and dynamic modifiers validated by the Frost build; charges unsupported |
+| 8 (complete) | Port required Frost spells and procs in separate PRs | 6, 7 | Each mechanic matched pinned Go in isolating fixtures |
+| 9 (complete) | Interpret the selected preset operators | 2, 8 | Preset operators run; unsupported operators and #622 conditions are rejected |
 | 10 | Produce required reports and timelines | 1, 8, 9 | Existing consumer compatibility |
 | 11 | Compare the complete Frost build and gear variants | 6 through 10 | Multi-seed, timing, resource and effect coverage |
 | 12 | Add worker routing and bounded comparison runs | 11 | Fallback reasons, batch consistency and rollback |

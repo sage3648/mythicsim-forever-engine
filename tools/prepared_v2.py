@@ -10,6 +10,7 @@ accept  Maintainer command: register a new case and derive its Go goldens. Refus
         replace existing cases or files.
 refresh Maintainer command after a reviewed exporter change: re-export prepared inputs
         and require every Go golden to stay byte-identical.
+promote Maintainer command: attach Go goldens to an accepted case Rust now supports.
 """
 
 import argparse
@@ -140,6 +141,37 @@ def accept(cache, source, case_id, request, description, keep_log, family=FAMILY
             log_path.write_text(log)
             case["go_log"] = {"file": log_path.name, "sha256": digest(log_path)}
     manifest["cases"].append(case)
+    (family / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    return case
+
+
+def promote(cache, source, case_id, keep_log, family=FAMILY):
+    """Attach Go goldens to an accepted case once Rust supports it. Refuses to replace them."""
+    manifest = check(family)
+    case = next((case for case in manifest["cases"] if case["id"] == case_id), None)
+    if case is None:
+        raise ValueError(f"no case {case_id}")
+    if "go_result" in case:
+        raise ValueError(f"{case_id} already has Go goldens")
+    completed = subprocess.run(["cargo", "run", "--locked", "--quiet", "--manifest-path", ROOT / "Cargo.toml", "--",
+                                "check", "--infile", family / case["prepared"]], capture_output=True, text=True, check=True)
+    coverage = json.loads(completed.stdout)
+    if not coverage["supported"]:
+        raise ValueError(f"{case_id} is not supported: {coverage['reasons']}")
+    exporter = build_exporter(cache.resolve(), source)
+    import tempfile
+    with tempfile.TemporaryDirectory() as scratch:
+        request_path = Path(scratch) / "request.json"
+        request_path.write_text(json.dumps(request_of(case), indent=2) + "\n")
+        result, log = go_golden(exporter, request_path, Path(scratch) / "go")
+    result_path = family / f"{case_id}.go-result.json"
+    result_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
+    case["go_result"] = {"file": result_path.name, "sha256": digest(result_path)}
+    if keep_log:
+        log_path = family / f"{case_id}.go-log.txt"
+        log_path.write_text(log)
+        case["go_log"] = {"file": log_path.name, "sha256": digest(log_path)}
+    case["expected_coverage"] = {"supported": True, "reasons": []}
     (family / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     return case
 
@@ -326,7 +358,7 @@ def compare_cases(cache, source, output, requests):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("command", choices=["check", "capture", "compare", "accept", "refresh"], nargs="?", default="check")
+    parser.add_argument("command", choices=["check", "capture", "compare", "accept", "refresh", "promote"], nargs="?", default="check")
     parser.add_argument("--case", help="accept: new case identifier")
     parser.add_argument("--description", help="accept: what the case covers")
     parser.add_argument("--keep-log", action="store_true", help="accept: keep the Go first-fight log golden")
@@ -337,6 +369,12 @@ def main():
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
     try:
+        if args.command == "promote":
+            if not args.case:
+                parser.error("promote needs --case")
+            case = promote(args.cache, args.source, args.case, args.keep_log)
+            print(f"Promoted {case['id']} with Go goldens")
+            return 0
         if args.command == "refresh":
             manifest = refresh(args.cache, args.source)
             print(f"Refreshed {len(manifest['cases'])} prepared inputs; Go goldens unchanged.")

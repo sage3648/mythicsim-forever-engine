@@ -26,6 +26,9 @@ Milestones advance on evidence, not promised delivery dates. The
   family and a [release compatibility manifest](release/manifest.json).
 - [Upstream ledger](UPSTREAM.md#ledger): reviewed community range, dispositions, a
   Frost mechanics map and one applicable fix traced to a Rust guard and regression.
+- A class-independent fight runtime mirroring Go, with Mage plugged in. The complete
+  Frost reference build reproduces the pinned Go engine on the application's request
+  and on talent, duration and proc-rank variants.
 
 ## Migration sequence
 

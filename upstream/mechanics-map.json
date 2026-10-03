@@ -4,7 +4,7 @@
   "statuses": [
     "validated",
     "implemented_unvalidated",
-    "validated_frostbolt_v2",
+    "validated_frost_reference",
     "prepared_v1_only",
     "prepared_v1_labeled_only",
     "prepared_v1_binary_only",
@@ -78,7 +78,7 @@
         "src/core/fight.rs",
         "src/core/queue.rs"
       ],
-      "status": "validated_frostbolt_v2",
+      "status": "validated_frost_reference",
       "tests": [
         "tests/classes/mage/frost/kernel.rs",
         "tests/classes/mage/frost/oracle.rs",
@@ -96,7 +96,7 @@
       "rust": [
         "src/core/rng.rs"
       ],
-      "status": "validated_frostbolt_v2",
+      "status": "validated_frost_reference",
       "tests": [
         "tests/classes/mage/frost/kernel.rs",
         "tests/classes/mage/frost/oracle.rs",
@@ -117,7 +117,7 @@
         "src/classes/mage/specs/frost.rs",
         "src/core/fight/cast.rs"
       ],
-      "status": "validated_frostbolt_v2",
+      "status": "validated_frost_reference",
       "tests": [
         "tests/classes/mage/frost/kernel.rs",
         "tests/classes/mage/frost/oracle.rs",
@@ -138,7 +138,7 @@
         "src/core/fight/damage.rs",
         "src/mechanics/damage.rs"
       ],
-      "status": "validated_frostbolt_v2",
+      "status": "validated_frost_reference",
       "tests": [
         "tests/classes/mage/frost/kernel.rs",
         "tests/classes/mage/frost/oracle.rs",
@@ -157,7 +157,7 @@
         "src/core/fight/cast.rs",
         "src/mechanics/mana.rs"
       ],
-      "status": "validated_frostbolt_v2",
+      "status": "validated_frost_reference",
       "tests": [
         "tests/classes/mage/frost/kernel.rs",
         "tests/classes/mage/frost/oracle.rs",
@@ -178,7 +178,7 @@
       "rust": [
         "src/core/fight/aura.rs"
       ],
-      "status": "validated_frostbolt_v2",
+      "status": "validated_frost_reference",
       "tests": [
         "tests/classes/mage/frost/prepared_v2.rs"
       ],
@@ -209,7 +209,7 @@
       "rust": [
         "src/core/fight/dot.rs"
       ],
-      "status": "validated_frostbolt_v2",
+      "status": "validated_frost_reference",
       "tests": [
         "tests/classes/mage/frost/prepared_v2.rs"
       ],
@@ -227,8 +227,10 @@
       "rust": [
         "src/core/fight/cast.rs"
       ],
-      "status": "implemented_unvalidated",
-      "tests": [],
+      "status": "validated_frost_reference",
+      "tests": [
+        "tests/classes/mage/frost/prepared_v2.rs"
+      ],
       "upstream_changes": [],
       "fork_patches": []
     },
@@ -248,7 +250,7 @@
         "src/core/fight/rotation.rs",
         "src/rotation.rs"
       ],
-      "status": "validated_frostbolt_v2",
+      "status": "validated_frost_reference",
       "tests": [
         "tests/classes/mage/frost/prepared_v2.rs"
       ],
@@ -267,7 +269,7 @@
         "src/classes/mage/agent.rs",
         "src/classes/mage/spells/frostbolt.rs"
       ],
-      "status": "validated_frostbolt_v2",
+      "status": "validated_frost_reference",
       "tests": [
         "tests/classes/mage/frost/kernel.rs",
         "tests/classes/mage/frost/oracle.rs",
@@ -286,7 +288,7 @@
       "rust": [
         "src/classes/mage/spells/ice_lance.rs"
       ],
-      "status": "validated_frostbolt_v2",
+      "status": "validated_frost_reference",
       "tests": [
         "tests/classes/mage/frost/prepared_v2.rs"
       ],
@@ -302,7 +304,7 @@
         "src/classes/mage/spells/arcane_missiles.rs",
         "src/core/fight/dot.rs"
       ],
-      "status": "validated_frostbolt_v2",
+      "status": "validated_frost_reference",
       "tests": [
         "tests/classes/mage/frost/prepared_v2.rs"
       ],
@@ -317,7 +319,7 @@
       "rust": [
         "src/classes/mage/talents/fingers_of_frost.rs"
       ],
-      "status": "validated_frostbolt_v2",
+      "status": "validated_frost_reference",
       "tests": [
         "tests/classes/mage/frost/prepared_v2.rs"
       ],
@@ -334,7 +336,7 @@
       "rust": [
         "src/classes/mage/talents/winters_chill.rs"
       ],
-      "status": "validated_frostbolt_v2",
+      "status": "validated_frost_reference",
       "tests": [
         "tests/classes/mage/frost/prepared_v2.rs"
       ],
@@ -349,7 +351,7 @@
       "rust": [
         "src/classes/mage/talents/arcane_concentration.rs"
       ],
-      "status": "validated_frostbolt_v2",
+      "status": "validated_frost_reference",
       "tests": [
         "tests/classes/mage/frost/prepared_v2.rs"
       ],
@@ -364,7 +366,7 @@
       "rust": [
         "src/classes/mage/talents/missile_barrage.rs"
       ],
-      "status": "validated_frostbolt_v2",
+      "status": "validated_frost_reference",
       "tests": [
         "tests/classes/mage/frost/prepared_v2.rs"
       ],
@@ -378,9 +380,13 @@
       "go": [
         "sim/mage/cold_snap.go"
       ],
-      "rust": [],
-      "status": "not_ported",
-      "tests": [],
+      "rust": [
+        "src/classes/mage/spells/cold_snap.rs"
+      ],
+      "status": "validated_frost_reference",
+      "tests": [
+        "tests/classes/mage/frost/prepared_v2.rs"
+      ],
       "upstream_changes": [],
       "fork_patches": []
     },
@@ -389,9 +395,13 @@
       "go": [
         "sim/mage/evocation.go"
       ],
-      "rust": [],
-      "status": "not_ported",
-      "tests": [],
+      "rust": [
+        "src/classes/mage/spells/evocation.rs"
+      ],
+      "status": "validated_frost_reference",
+      "tests": [
+        "tests/classes/mage/frost/prepared_v2.rs"
+      ],
       "upstream_changes": [],
       "fork_patches": [
         10
@@ -402,9 +412,13 @@
       "go": [
         "sim/mage/mana_gems.go"
       ],
-      "rust": [],
-      "status": "not_ported",
-      "tests": [],
+      "rust": [
+        "src/classes/mage/spells/mana_gems.rs"
+      ],
+      "status": "validated_frost_reference",
+      "tests": [
+        "tests/classes/mage/frost/prepared_v2.rs"
+      ],
       "upstream_changes": [],
       "fork_patches": []
     },
@@ -416,8 +430,10 @@
       "rust": [
         "tools/oracle-v2/main.go"
       ],
-      "status": "go_prepared",
-      "tests": [],
+      "status": "validated_frost_reference",
+      "tests": [
+        "tests/classes/mage/frost/prepared_v2.rs"
+      ],
       "upstream_changes": [],
       "fork_patches": []
     },
@@ -429,8 +445,10 @@
       "rust": [
         "src/core/fight/cast.rs"
       ],
-      "status": "implemented_unvalidated",
-      "tests": [],
+      "status": "validated_frost_reference",
+      "tests": [
+        "tests/classes/mage/frost/prepared_v2.rs"
+      ],
       "upstream_changes": [],
       "fork_patches": []
     },
@@ -443,8 +461,10 @@
       "rust": [
         "src/core/fight/cast.rs"
       ],
-      "status": "implemented_unvalidated",
-      "tests": [],
+      "status": "validated_frost_reference",
+      "tests": [
+        "tests/classes/mage/frost/prepared_v2.rs"
+      ],
       "upstream_changes": [],
       "fork_patches": []
     },
@@ -457,7 +477,7 @@
       "rust": [
         "src/core/fight/aura.rs"
       ],
-      "status": "validated_frostbolt_v2",
+      "status": "validated_frost_reference",
       "tests": [
         "tests/classes/mage/frost/prepared_v2.rs"
       ],

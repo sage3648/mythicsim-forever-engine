@@ -4,11 +4,12 @@ A community-built Rust simulation engine for WoW Forever, starting with a small,
 tested kernel and growing toward complete class support.
 
 **Status: experimental.** Rust runs complete prepared fights through a class-independent
-runtime that mirrors the pinned Go engine. Today the supported Mage builds cast
-Frostbolt only; the complete Frost reference build still needs the mechanics listed by
-its coverage report. It is not a complete Mage simulator or a production replacement
-for MythicSim's Go engine. Our goal is a purpose-built Forever engine with clear
-mechanics, reproducible tests and community contributions.
+runtime that mirrors the pinned Go engine. The inventoried Frost Mage reference build,
+the application's real request, reproduces the pinned Go engine exactly: every cast,
+hit, crit, damage total, aura, mana flow and first-fight log line. This is one build
+family, not general Mage support or a production replacement for MythicSim's Go
+engine. Our goal is a purpose-built Forever engine with clear mechanics, reproducible
+tests and community contributions.
 
 ## Get started
 
@@ -43,10 +44,10 @@ simulation of a real character, exported from the pinned engine. Rust validates 
 strictly; `forever-engine check --infile PREPARED.json` lists the mechanics an input
 still needs and `forever-engine sim` runs covered inputs. The runtime reproduces Go's
 event order, shared or labeled random streams, casting, mana, auras, metrics and
-first-fight debug log. Frostbolt builds match the pinned Go engine exactly in counts
-and to 1e-9 in metrics, including duration variation, running out of mana, and the full
-reference character casting Frostbolt, Ice Lance and Arcane Missiles with every proc
-talent of the reference build.
+first-fight debug log. The complete Frost reference build, with its rotation, proc
+talents, Evocation, mana gems, potions, runes, the Robe and Cold Snap, matches the
+pinned Go engine exactly in counts and to 1e-9 in metrics: 590.947 DPS on the
+application's request, as in the frozen production observation.
 
 See the [kernel guide](docs/kernel.md) for the input boundary and commands.
 

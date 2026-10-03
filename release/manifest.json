@@ -53,17 +53,37 @@
       "implemented_effects": [
         "arcane_concentration",
         "arcane_missiles",
+        "cold_snap",
+        "conjured_mana",
+        "energize_on_use",
+        "evocation",
         "fingers_of_frost",
         "frostbolt",
         "ice_lance",
         "inert_listener",
         "judgement_of_wisdom",
+        "mana_gems",
         "missile_barrage",
+        "potion_mana",
         "winters_chill"
       ],
       "evidence": [
         "fixtures/mage/frost/prepared-v2/manifest.json",
         "tests/classes/mage/frost/prepared_v2.rs"
+      ]
+    },
+    {
+      "id": "mage-frost-reference-build",
+      "contract": 2,
+      "status": "validated_against_go",
+      "scope": "The inventoried Frost reference build and its talent, duration, seed and proc-rank variants in the fixture family; Quick Sim result fields only.",
+      "evidence": [
+        "fixtures/mage/frost/prepared-v2/manifest.json",
+        "tests/classes/mage/frost/prepared_v2.rs"
+      ],
+      "known_differences": [
+        "Floating-point aggregates differ from Go on arm64 within 1e-9 relative, from Go's fused multiply-add",
+        "Rotations reading an aura the character lacks are rejected pending community fix #622"
       ]
     }
   ]

@@ -438,7 +438,10 @@ impl<A: Agent> Fight<A> {
             if spent_per_second > 0.0 {
                 let remaining =
                     crate::core::time::from_seconds(self.player.mana / spent_per_second);
-                (crate::core::time::from_seconds(duration_seconds) + remaining)
+                // Go adds durations with int64 wraparound; an overflow turns negative and
+                // falls back to 60 minutes below.
+                crate::core::time::from_seconds(duration_seconds)
+                    .wrapping_add(remaining)
                     .min(60 * 60 * NS_PER_SECOND)
             } else {
                 60 * 60 * NS_PER_SECOND
