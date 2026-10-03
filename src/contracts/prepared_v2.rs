@@ -33,6 +33,9 @@ pub struct PreparedV2 {
     pub target: Target,
     pub player: Player,
     pub melee: Melee,
+    /// The target's swings at the player when the player tanks it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub enemy: Option<Enemy>,
     pub effects: Vec<Effect>,
     /// Request features the exporter could not describe. Must be empty to simulate.
     pub unrepresented: Vec<String>,
@@ -586,6 +589,53 @@ pub struct Melee {
     pub defender_bonus_attack_power: f64,
     pub defender_bonus_physical_damage_taken: f64,
     pub defender_reduced_physical_hit_taken: f64,
+}
+
+/// The target's main hand swings at the player when the player tanks it: Go attack.go's enemy
+/// `ApplyEffects`, `CalcDamage` and `outcomeEnemyMeleeWhite`, with every value resolved as Go
+/// computes it at reset.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct Enemy {
+    pub action_id: ActionId,
+    pub school: u8,
+    pub swing_speed: f64,
+    pub melee_haste_multiplier: f64,
+    pub base_damage_min: f64,
+    pub damage_spread: f64,
+    pub attack_power: f64,
+    pub attack_power_coefficient: f64,
+    pub bonus_damage: f64,
+    pub attacker_multiplier: f64,
+    /// The steps that read the player's defenses, by stat aura combination as the stat_auras
+    /// effect numbers them; one entry without stat auras.
+    pub rolls: Vec<EnemyRolls>,
+    pub threat_multiplier: f64,
+    pub flat_threat_bonus: f64,
+    pub unit_threat_multiplier: f64,
+    pub log_attack_power: f64,
+    pub log_ranged_attack_power: f64,
+    pub log_spell_power: f64,
+    /// Auras inactive at reset whose activation changes a value above, as "player:label" or
+    /// "target:label".
+    pub changing_auras: Vec<String>,
+}
+
+/// The steps of the target's swing that read the player's defenses.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct EnemyRolls {
+    pub armor_multiplier: f64,
+    pub bonus_damage_taken: f64,
+    pub target_multiplier: f64,
+    /// What each step of the table adds to the running chance, zero for a skipped step.
+    pub miss_chance: f64,
+    pub dodge_chance: f64,
+    pub parry_chance: f64,
+    pub block_chance: f64,
+    pub crit_chance: f64,
+    pub crush_chance: f64,
+    pub block_reduction: f64,
 }
 
 /// A spell a dynamic proc manager hears, by spellbook position, with the chance it rolls.
@@ -1362,6 +1412,12 @@ pub enum Effect {
     ChanceOfDeath {
         aura: String,
     },
+    /// Go attack.go applyParryHaste once the target swings at the player: a parry pulls the
+    /// parrying unit's next main hand swing in.
+    ParryHaste {
+        unit: String,
+        aura: String,
+    },
     /// Go aura_helpers.go ApplyFixedUptimeAura: a periodic roll that activates the aura and a
     /// first roll with a random duration.
     FixedUptimeAura {
@@ -1486,6 +1542,7 @@ impl Effect {
             Effect::DeadlyPoison { .. } => "deadly_poison",
             Effect::GoblinSapper { .. } => "goblin_sapper",
             Effect::ChanceOfDeath { .. } => "chance_of_death",
+            Effect::ParryHaste { .. } => "parry_haste",
             Effect::FixedUptimeAura { .. } => "fixed_uptime_aura",
         }
     }

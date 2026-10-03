@@ -50,6 +50,7 @@ const COMMON_EFFECTS: &[&str] = &[
     "inert_listener",
     "inert_pet",
     "judgement_of_wisdom",
+    "parry_haste",
     "potion_mana",
     "read_ley_line",
     "shatter_curse",
@@ -157,6 +158,11 @@ fn common_claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         | Effect::TemporaryStats { aura, .. } => vec![("player", aura)],
         Effect::JudgementOfWisdom { aura, .. } => vec![("target", aura)],
         Effect::ChanceOfDeath { aura } => vec![("player", aura)],
+        Effect::ParryHaste { unit, aura } => match unit.as_str() {
+            "player" => vec![("player", aura)],
+            "target" => vec![("target", aura)],
+            _ => Vec::new(),
+        },
         Effect::Crusader { trigger_aura, .. } | Effect::DragonbreathChili { trigger_aura, .. } => {
             vec![("player", trigger_aura)]
         }
@@ -270,6 +276,100 @@ fn fixed_stat_changes(prepared: &PreparedV2) -> Vec<String> {
         .collect()
 }
 
+/// Stats that change the player's health, which stay fixed while the player tanks. The
+/// target's swings carry their rolls for each stat aura combination.
+const DEFENDER_STATS: &[&str] = &["Stamina", "Health"];
+
+/// Effects whose behaviors act on the hits the player takes from the target's swings.
+const HIT_TAKEN_EFFECTS: &[&str] = &["chance_of_death", "parry_haste", "inert_listener"];
+
+/// Callbacks the target's own swings fire on the target.
+const TARGET_CASTER_CALLBACKS: &[&str] = &[
+    "on_apply_effects",
+    "on_cast_complete",
+    "on_spell_hit_dealt",
+    "on_periodic_damage_dealt",
+];
+
+/// What the runtime cannot follow once the target swings at the player: listeners of the
+/// swings it does not run, auras something in scope activates that change the swings, and
+/// defender stats a stat aura changes.
+fn tank_limits(
+    prepared: &PreparedV2,
+    enemy: &crate::contracts::prepared_v2::Enemy,
+    claims: &dyn Fn(&Effect) -> Vec<(&'static str, String)>,
+) -> Vec<String> {
+    let mut reasons = Vec::new();
+    // An aura only becomes active in the runtime through an effect that names it.
+    let mut named: BTreeSet<String> = BTreeSet::new();
+    for effect in &prepared.effects {
+        for (unit, label) in claims(effect) {
+            named.insert(format!("{unit}:{label}"));
+        }
+        match effect {
+            Effect::StatAuras { auras, .. } => {
+                named.extend(auras.iter().map(|label| format!("player:{label}")));
+            }
+            Effect::FixedUptimeAura { aura, .. } => {
+                named.insert(format!("player:{aura}"));
+            }
+            _ => {}
+        }
+    }
+    let can_be_active = |unit: &str, aura: &crate::contracts::prepared_v2::Aura| {
+        aura.active || named.contains(&format!("{unit}:{}", aura.label))
+    };
+    for aura in &prepared.player.auras {
+        if !can_be_active("player", aura)
+            || !aura.callbacks.iter().any(|c| c == "on_spell_hit_taken")
+        {
+            continue;
+        }
+        let handled = prepared.effects.iter().any(|effect| {
+            HIT_TAKEN_EFFECTS.contains(&effect.kind())
+                && claims(effect)
+                    .iter()
+                    .any(|(unit, label)| *unit == "player" && *label == aura.label)
+        });
+        if !handled {
+            reasons.push(format!(
+                "player aura {:?} reacts to the target's swings",
+                aura.label
+            ));
+        }
+    }
+    for aura in &prepared.target.auras {
+        if can_be_active("target", aura)
+            && aura
+                .callbacks
+                .iter()
+                .any(|c| TARGET_CASTER_CALLBACKS.contains(&c.as_str()))
+        {
+            reasons.push(format!(
+                "target aura {:?} reacts to the target's own swings",
+                aura.label
+            ));
+        }
+    }
+    for aura in &enemy.changing_auras {
+        if named.contains(aura) {
+            reasons.push(format!("{aura} changes the target's swings at the player"));
+        }
+    }
+    for effect in &prepared.effects {
+        if let Effect::StatAuras { auras, changed, .. } = effect {
+            for stat in changed {
+                if DEFENDER_STATS.contains(&stat.as_str()) {
+                    reasons.push(format!(
+                        "stat auras {auras:?} change {stat}, which the player's health holds fixed"
+                    ));
+                }
+            }
+        }
+    }
+    reasons
+}
+
 /// Go `GetAPLSpell`: the first APL-flagged spell with the action ID, otherwise the first
 /// registered one, as a spellbook position. The potion action names the first combat
 /// potion. A missing spell drops the rotation action in Go.
@@ -379,6 +479,10 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
         }
     }
 
+    if let Some(enemy) = &prepared.enemy {
+        reasons.extend(tank_limits(prepared, enemy, &claims));
+    }
+
     if let Some(rotation) = rotation {
         reasons.extend(unknown_aura_conditions(prepared, rotation));
         reasons.extend(energy_without_bar(prepared, rotation));
@@ -433,6 +537,14 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
                 _ => {
                     unknown.insert(id.clone());
                 }
+            }
+            // Go newHardcastAction: a tank's hardcast drops its avoidance and can be pushed back.
+            if prepared.enemy.is_some()
+                && (spell.default_cast.cast_time_ns > 0 || spell.has_flag("SpellFlagChanneled"))
+            {
+                limited.insert(format!(
+                    "rotation reaches {id}, a hardcast while the target swings at the player"
+                ));
             }
             for limit in runtime_limits(spell) {
                 limited.insert(format!(
