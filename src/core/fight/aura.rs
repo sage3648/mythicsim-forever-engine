@@ -246,6 +246,11 @@ impl<K> Tracker<K> {
         });
     }
 
+    /// Activate the aura at every reset, as a Go `OnReset` that activates it does.
+    pub(crate) fn set_permanent(&mut self, index: usize) {
+        self.auras[index].permanent = true;
+    }
+
     pub(crate) fn find(&self, label: &str) -> Option<usize> {
         self.auras.iter().position(|aura| aura.label == label)
     }
@@ -339,6 +344,10 @@ impl<A: Agent> Fight<A> {
             state.start = now;
         }
         self.refresh_aura(aura);
+        // Go activates an aura's exclusive effects before it joins the callback lists.
+        if let AuraBehavior::Class(kind) = self.aura(aura).behavior {
+            A::on_exclusive_gain(self, aura, kind);
+        }
         let tracker = &mut self.trackers[aura.side.index()];
         if tracker.auras[aura.index].duration != NEVER_EXPIRES {
             tracker.add_to(List::Active, aura.index);
@@ -498,12 +507,9 @@ impl<A: Agent> Fight<A> {
                 self.apply_stat_combo();
             }
             AuraBehavior::WindfuryTotem => {
-                let trigger = self
-                    .windfury
-                    .as_ref()
-                    .expect("Windfury Totem is bound")
-                    .trigger;
-                if !self.aura(trigger).active {
+                let windfury = self.windfury.as_ref().expect("Windfury Totem is bound");
+                let (trigger, blocked) = (windfury.trigger, windfury.blocked);
+                if !blocked && !self.aura(trigger).active {
                     self.activate_aura(trigger);
                 }
             }

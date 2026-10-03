@@ -16,6 +16,7 @@ use super::{
         stormstrike::{self, Stormstrike},
         totems::{self, Expirations, StrengthOfEarth},
         weapon_imbues,
+        windfury_weapon::{self, WindfuryWeapon},
     },
     talents::{
         elemental_devastation::{self, ElementalDevastation},
@@ -75,6 +76,8 @@ pub(crate) enum ShamanAura {
     FlurryTrigger,
     FlametongueTotem,
     FlametongueTotemTrigger,
+    WindfuryImbue,
+    WindfuryWeaponAttackPower,
     /// One hand's Flametongue Weapon trigger, by its position in the effect.
     FlametongueTrigger(usize),
     FrostbrandTrigger,
@@ -128,6 +131,7 @@ pub(crate) struct ShamanAgent {
     grace_of_air: Option<StrengthOfEarth>,
     mana_spring: Option<StrengthOfEarth>,
     flametongue_totem: Option<totems::FlametongueTotem>,
+    windfury_weapon: Option<WindfuryWeapon>,
     /// The last air totem aura cast, which a new one replaces.
     air_totem: Option<AuraRef>,
     /// Rockbiter Weapon's gain and loss lines.
@@ -320,6 +324,14 @@ impl ShamanAgent {
                 } => vec![
                     (aura.clone(), ShamanAura::FlametongueTotem),
                     (trigger_aura.clone(), ShamanAura::FlametongueTotemTrigger),
+                ],
+                Effect::WindfuryWeapon {
+                    trigger_aura,
+                    ap_aura,
+                    ..
+                } => vec![
+                    (trigger_aura.clone(), ShamanAura::WindfuryImbue),
+                    (ap_aura.clone(), ShamanAura::WindfuryWeaponAttackPower),
                 ],
                 _ => Vec::new(),
             })
@@ -558,6 +570,33 @@ impl ShamanAgent {
                         aura: fight.player_aura(aura)?,
                         duration: *duration_ns,
                     });
+                }
+                Effect::WindfuryWeapon {
+                    trigger_aura,
+                    trigger_spells,
+                    chances,
+                    main_hand_spells,
+                    ap_aura,
+                    extra_spell,
+                    off_hand_spell,
+                    spend_spells,
+                    ap_gain_log,
+                    ap_expire_log,
+                    blocks_windfury_totem,
+                } => {
+                    fight.agent.windfury_weapon = Some(windfury_weapon::bind(
+                        &fight,
+                        trigger_aura,
+                        ap_aura,
+                        *extra_spell,
+                        *off_hand_spell,
+                        trigger_spells,
+                        main_hand_spells,
+                        chances,
+                        spend_spells,
+                        (ap_gain_log, ap_expire_log),
+                        *blocks_windfury_totem,
+                    )?);
                 }
                 Effect::ManaSpringTotem {
                     aura, duration_ns, ..
@@ -956,6 +995,22 @@ impl Agent for ShamanAgent {
                 let state = fight.agent.flurry.expect("Flurry is bound");
                 state.on_spell_hit_dealt(fight, spell, result);
             }
+            ShamanAura::WindfuryImbue => {
+                let state = fight
+                    .agent
+                    .windfury_weapon
+                    .clone()
+                    .expect("Windfury Weapon is bound");
+                state.on_trigger_hit(fight, spell, result);
+            }
+            ShamanAura::WindfuryWeaponAttackPower => {
+                let state = fight
+                    .agent
+                    .windfury_weapon
+                    .clone()
+                    .expect("Windfury Weapon is bound");
+                state.on_spend_hit(fight, spell, result);
+            }
             ShamanAura::FlametongueTotemTrigger => {
                 let state = fight
                     .agent
@@ -1007,6 +1062,14 @@ impl Agent for ShamanAgent {
         result: SpellResult,
     ) {
         match kind {
+            ShamanAura::WindfuryWeaponAttackPower => {
+                let state = fight
+                    .agent
+                    .windfury_weapon
+                    .clone()
+                    .expect("Windfury Weapon is bound");
+                state.spend(fight);
+            }
             ShamanAura::FlurryTrigger => {
                 let state = fight.agent.flurry.expect("Flurry is bound");
                 let white = fight.agent.white[spell];
@@ -1094,6 +1157,17 @@ impl Agent for ShamanAgent {
         }
     }
 
+    fn on_exclusive_gain(fight: &mut Fight<Self>, _aura: AuraRef, kind: ShamanAura) {
+        if kind == ShamanAura::WindfuryImbue {
+            let state = fight
+                .agent
+                .windfury_weapon
+                .clone()
+                .expect("Windfury Weapon is bound");
+            state.on_trigger_gain(fight);
+        }
+    }
+
     fn on_gain(fight: &mut Fight<Self>, _aura: AuraRef, kind: ShamanAura) {
         match kind {
             ShamanAura::Clearcasting => Self::focus(fight).on_gain(fight),
@@ -1117,6 +1191,14 @@ impl Agent for ShamanAgent {
                 if state.enabled {
                     fight.activate_aura(state.trigger);
                 }
+            }
+            ShamanAura::WindfuryWeaponAttackPower => {
+                let state = fight
+                    .agent
+                    .windfury_weapon
+                    .clone()
+                    .expect("Windfury Weapon is bound");
+                state.on_ap_gain(fight);
             }
             ShamanAura::RageOfTheFarseer => fight
                 .agent
@@ -1157,6 +1239,22 @@ impl Agent for ShamanAgent {
                 .flurry
                 .expect("Flurry is bound")
                 .on_expire(fight),
+            ShamanAura::WindfuryWeaponAttackPower => {
+                let state = fight
+                    .agent
+                    .windfury_weapon
+                    .clone()
+                    .expect("Windfury Weapon is bound");
+                state.on_ap_expire(fight);
+            }
+            ShamanAura::WindfuryImbue => {
+                let state = fight
+                    .agent
+                    .windfury_weapon
+                    .clone()
+                    .expect("Windfury Weapon is bound");
+                state.on_trigger_expire(fight);
+            }
             ShamanAura::FlametongueTotem => {
                 let trigger = fight
                     .agent

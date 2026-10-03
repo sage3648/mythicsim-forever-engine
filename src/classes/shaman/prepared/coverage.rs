@@ -40,6 +40,7 @@ const EFFECTS: &[&str] = &[
     "searing_totem",
     "stormstrike",
     "strength_of_earth_totem",
+    "windfury_weapon",
 ];
 
 /// Go `applyRageOfTheFarseer` registers its cast (client 425336) without a class mask.
@@ -113,6 +114,11 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         ],
         Effect::Stormstrike { aura, .. } => vec![("target", aura)],
         Effect::LightningShield { aura, .. } => vec![("player", aura)],
+        Effect::WindfuryWeapon {
+            trigger_aura,
+            ap_aura,
+            ..
+        } => vec![("player", trigger_aura), ("player", ap_aura)],
         Effect::FlametongueTotem {
             aura, trigger_aura, ..
         } => vec![("player", aura), ("player", trigger_aura)],

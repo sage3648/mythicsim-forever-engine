@@ -1364,6 +1364,23 @@ pub enum Effect {
         /// Whether the party's Flametongue Totem shares the benefit.
         party_totem: bool,
     },
+    /// Windfury Weapon: a weapon proc with its own cooldown that grants charges of attack power
+    /// and two extra attacks of the hand that procced it; landed autos spend the charges.
+    WindfuryWeapon {
+        trigger_aura: String,
+        trigger_spells: Vec<usize>,
+        chances: Vec<SpellChance>,
+        /// Spells of the main hand, whose procs grant main hand extra attacks.
+        main_hand_spells: Vec<usize>,
+        ap_aura: String,
+        extra_spell: usize,
+        off_hand_spell: i64,
+        spend_spells: Vec<usize>,
+        ap_gain_log: String,
+        ap_expire_log: String,
+        /// Whether a main hand imbue holds the party Windfury Totem's category.
+        blocks_windfury_totem: bool,
+    },
     /// Frost Shock: Earth Shock's shape on the Frost school.
     FrostShock {
         spell_id: i32,
@@ -1797,6 +1814,7 @@ impl Effect {
             Effect::RageOfTheFarseer { .. } => "rage_of_the_farseer",
             Effect::RockbiterWeapon { .. } => "rockbiter_weapon",
             Effect::FrostShock { .. } => "frost_shock",
+            Effect::WindfuryWeapon { .. } => "windfury_weapon",
             Effect::MagmaTotem { .. } => "magma_totem",
             Effect::LightningShield { .. } => "lightning_shield",
             Effect::GraceOfAirTotem { .. } => "grace_of_air_totem",

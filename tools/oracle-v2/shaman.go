@@ -73,6 +73,7 @@ var (
 	shamanGraceOfAir       = spelldata.Ranked(8835, 10627, 25359)
 	shamanFlametongueTotem = spelldata.Ranked(8227, 8249, 10526, 16387)
 	shamanManaSpring       = spelldata.Ranked(5675, 10495, 10496, 10497)
+	shamanWindfuryProc     = spelldata.Ranked(8233, 8236, 10484, 16361)
 )
 
 // Shaman spell rows whose ApplyEffects roll a client damage effect: every Lightning Bolt and Chain
@@ -141,7 +142,7 @@ func shamanEffects(agent core.Agent, character *core.Character) []map[string]any
 	effects = append(effects, map[string]any{"kind": "earth_shock", "spell_id": shamanEarthShock.Highest().ID})
 	// shocks.go registerFrostShockSpell: the same shape on the Frost school.
 	effects = append(effects, map[string]any{"kind": "frost_shock", "spell_id": shamanFrostShock.Highest().ID})
-	effects = append(effects, shamanImbueEffects(character)...)
+	effects = append(effects, shamanImbueEffects(sham, character)...)
 	effects = append(effects, shamanTotemEffects(sham, character)...)
 	// totems.go registerStrengthOfEarthTotemSpell: the earth totem's aura; its Strength reaches the
 	// fight through the class's stat auras.
@@ -282,7 +283,7 @@ func shamanTotemEffects(sham *shaman.Shaman, character *core.Character) []map[st
 }
 
 // weapon_imbues.go: Flametongue and Frostbrand Weapon, weapon procs that cast an imbue hit.
-func shamanImbueEffects(character *core.Character) []map[string]any {
+func shamanImbueEffects(sham *shaman.Shaman, character *core.Character) []map[string]any {
 	effects := []map[string]any{}
 	// RegisterFlametongueImbue: one trigger and one hit spell for each imbued weapon, main hand first,
 	// registered in that order, the hit from the weapon's speed held to 1.3 to 4.0.
@@ -317,6 +318,46 @@ func shamanImbueEffects(character *core.Character) []map[string]any {
 	if len(flametongue) > 0 {
 		effects = append(effects, map[string]any{"kind": "flametongue_weapon", "hands": flametongue})
 	}
+	// RegisterWindfuryImbue: a weapon proc with its own cooldown that grants charges of attack
+	// power and two extra attacks of the hand that procced it; landed autos spend the charges a
+	// spell batch window later.
+	if trigger := character.GetAura("Windfury Imbue"); trigger != nil && trigger.Dpm != nil {
+		ap := character.GetAura("Windfury Weapon Attack Power")
+		extra, offHand := -1, -1
+		for i, spell := range character.Spellbook {
+			switch spell.ActionID {
+			case core.ActionID{OtherID: proto.OtherAction_OtherActionAttack, Tag: shamanWindfuryProc.Highest().ID}:
+				extra = i
+			case core.ActionID{OtherID: proto.OtherAction_OtherActionAttack, Tag: 2}:
+				offHand = i
+			}
+		}
+		var mask core.ProcMask
+		if character.MainHand().TempEnchant == 283 {
+			mask |= core.ProcMaskMeleeMH
+		}
+		if character.OffHand().TempEnchant == 283 {
+			mask |= core.ProcMaskMeleeOH
+		}
+		bonus := stats.Stats{stats.AttackPower: sham.WindfuryAPBonus * (1 + shamanElementalWeapons.EffectAt(3).FractionAt(sham.Talents.ElementalWeapons))}
+		if ap == nil || extra < 0 || trigger.Icd == nil {
+			fail(fmt.Errorf("Windfury Weapon is incomplete"))
+		}
+		effects = append(effects, map[string]any{
+			"kind": "windfury_weapon", "trigger_aura": trigger.Label,
+			"trigger_spells": procTriggerSpells(character, core.ProcTrigger{ProcMask: mask, IsWeaponProc: true}),
+			"chances": dpmChances(character, trigger.Dpm, nil, func(spell *core.Spell) bool {
+				return !spell.Flags.Matches(core.SpellFlagSuppressWeaponProcs)
+			}),
+			"main_hand_spells": procTriggerSpells(character, core.ProcTrigger{ProcMask: core.ProcMaskMeleeMH, IsWeaponProc: true}),
+			"ap_aura":          ap.Label, "extra_spell": extra, "off_hand_spell": offHand,
+			// A main hand imbue outbids the party Windfury Totem's category effect.
+			"blocks_windfury_totem": mask.Matches(core.ProcMaskMeleeMH),
+			"spend_spells":          procTriggerSpells(character, core.ProcTrigger{ProcMask: core.ProcMaskMeleeMHAuto | core.ProcMaskMeleeOHAuto}),
+			"ap_gain_log":           fmt.Sprintf("Gained %s from %s.", bonus.FlatString(), ap.ActionID),
+			"ap_expire_log":         fmt.Sprintf("Lost %s from fading %s.", bonus.FlatString(), ap.ActionID),
+		})
+	}
 	// RegisterFrostbrandImbue: 8 procs a minute, a Go literal, from the hands it imbues.
 	if trigger := character.GetAura("Frostbrand Imbue"); trigger != nil && trigger.Dpm != nil {
 		row := shamanFrostbrandProc.Highest()
@@ -333,7 +374,8 @@ func shamanImbueEffects(character *core.Character) []map[string]any {
 
 // The class auras whose gain and loss change stats through AddStatsDynamic.
 func shamanStatAuras(_ core.Agent, _ *core.Character) []string {
-	return []string{"Strength Of Earth Totem (Self)", "Grace Of Air Totem (Self)", "Mana Spring Totem (Self)"}
+	return []string{"Strength Of Earth Totem (Self)", "Grace Of Air Totem (Self)", "Mana Spring Totem (Self)",
+		"Windfury Weapon Attack Power"}
 }
 
 // enhancement.go ApplySyncType: Auto returns the main hand swing unchanged whenever the two

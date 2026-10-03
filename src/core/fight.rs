@@ -123,6 +123,9 @@ pub(crate) trait Agent: Sized {
     fn on_dot_expire(_fight: &mut Fight<Self>, _dot: DotId, _behavior: Self::Spell) {}
     /// Go reset effects registered by the class, run before auras reset.
     fn reset(_fight: &mut Fight<Self>) {}
+    /// The exclusive effects of a class aura, which Go activates before the aura joins the
+    /// callback lists and logs its gain.
+    fn on_exclusive_gain(_fight: &mut Fight<Self>, _aura: AuraRef, _kind: Self::Aura) {}
     fn on_gain(_fight: &mut Fight<Self>, _aura: AuraRef, _kind: Self::Aura) {}
     fn on_expire(_fight: &mut Fight<Self>, _aura: AuraRef, _kind: Self::Aura) {}
     fn on_stacks_change(
@@ -572,6 +575,9 @@ pub(crate) struct Windfury {
     pub(crate) proc_aura: AuraRef,
     pub(crate) spend_spells: Vec<bool>,
     pub(crate) extra: SpellId,
+    /// Whether a higher Windfury Totem category effect, as a main hand Windfury Weapon's,
+    /// holds the category, so the totem's effect cannot turn the trigger on.
+    pub(crate) blocked: bool,
 }
 
 /// Go core/consumes.go `registerDragonbreathChili`.
@@ -918,6 +924,8 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) stat_combos: Vec<Powers>,
     /// The active stat auras.
     pub(crate) stat_mask: u32,
+    /// The labels of the stat auras, bit by bit.
+    pub(crate) stat_aura_labels: Vec<String>,
     pub(crate) totals: metrics::Totals,
     pub(crate) encounter_damage_taken: f64,
 }
@@ -1181,7 +1189,9 @@ impl<A: Agent> Fight<A> {
                 && (id.tag == 1
                     || id.tag == 2
                     || effects.iter().any(|effect| {
-                        matches!(effect, Effect::WindfuryTotem { extra_attack_spell, .. } if *extra_attack_spell == spells.len())
+                        matches!(effect, Effect::WindfuryTotem { extra_attack_spell, .. }
+                            | Effect::WindfuryWeapon { extra_spell: extra_attack_spell, .. }
+                            if *extra_attack_spell == spells.len())
                     }))
             {
                 SpellBehavior::MeleeAuto(if id.tag == 2 {
@@ -1923,6 +1933,7 @@ impl<A: Agent> Fight<A> {
             aura_logs,
             stat_combos,
             stat_mask: 0,
+            stat_aura_labels: stat_aura_labels.clone(),
             crusader: None,
             windfury: None,
             chili: None,
@@ -2159,6 +2170,13 @@ impl<A: Agent> Fight<A> {
                 // the totem logs its gain; the trigger is registered first, so activating it in
                 // registration order at reset gives the same sequence.
                 let trigger = fight.player_aura(trigger_aura)?;
+                let totem = fight.player_aura(totem_aura)?;
+                // Go's OnReset activates the totem, and its effect the trigger, every reset, even
+                // when a main hand Windfury Weapon then outbids the effect and takes both down,
+                // which leaves them inactive in the exported reset state.
+                let tracker = &mut fight.trackers[Side::Player.index()];
+                tracker.set_permanent(trigger.index);
+                tracker.set_permanent(totem.index);
                 fight.windfury = Some(Windfury {
                     totem: fight.player_aura(totem_aura)?,
                     period: *period_ns,
@@ -2168,6 +2186,7 @@ impl<A: Agent> Fight<A> {
                     proc_aura: fight.player_aura(proc_aura)?,
                     spend_spells: mask(spend_spells),
                     extra: *extra_attack_spell,
+                    blocked: false,
                 });
             }
         }
