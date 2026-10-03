@@ -64,6 +64,9 @@ impl<A: Agent> Fight<A> {
         let after_attacker = result.damage;
         result.damage *= rolls.armor_multiplier;
         let after_resistances = result.damage;
+        // Go SpellResult's PostArmorAndResistanceMultiplier and ArmorAndResistanceMultiplier,
+        // which rage from damage taken reads.
+        self.player_hit_resistance = (after_resistances, rolls.armor_multiplier);
         result.damage += rolls.bonus_damage_taken;
         result.damage *= rolls.target_multiplier;
         let after_target = result.damage;
@@ -189,6 +192,7 @@ impl<A: Agent> Fight<A> {
             match self.aura(aura).behavior {
                 AuraBehavior::ChanceOfDeath => self.chance_of_death_hit_taken(result),
                 AuraBehavior::ParryHaste => self.parry_haste(side, result),
+                AuraBehavior::RageBar => self.rage_bar_hit_taken(result),
                 _ => {}
             }
         }

@@ -302,7 +302,12 @@ fn fixed_stat_changes(prepared: &PreparedV2) -> Vec<String> {
 const DEFENDER_STATS: &[&str] = &["Stamina", "Health"];
 
 /// Effects whose behaviors act on the hits the player takes from the target's swings.
-const HIT_TAKEN_EFFECTS: &[&str] = &["chance_of_death", "parry_haste", "inert_listener"];
+const HIT_TAKEN_EFFECTS: &[&str] = &[
+    "chance_of_death",
+    "parry_haste",
+    "rage_bar",
+    "inert_listener",
+];
 
 /// Callbacks the target's own swings fire on the target.
 const TARGET_CASTER_CALLBACKS: &[&str] = &[
