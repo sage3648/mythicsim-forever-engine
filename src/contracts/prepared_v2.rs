@@ -533,6 +533,10 @@ pub struct Melee {
     pub defender_bonus_attack_power: f64,
     pub defender_bonus_physical_damage_taken: f64,
     pub defender_reduced_physical_hit_taken: f64,
+    /// A class replace function on the main hand, which the exporter admits only when it
+    /// returns the swing unchanged: Go still reacts to the event before each main hand swing.
+    #[serde(default)]
+    pub replace_main_hand_swing: bool,
 }
 
 /// The target's main hand swings at the player when the player tanks it: Go attack.go's enemy
@@ -627,12 +631,13 @@ pub enum Effect {
         health_fraction: f64,
         delay_ns: i64,
     },
-    /// The Troll racial Berserking: a major cooldown whose aura multiplies cast speed. Its
-    /// attack speed share has no effect in scope, where player auto attacks are unrepresented.
+    /// The Troll racial Berserking: a major cooldown whose aura multiplies attack speed and
+    /// then cast speed.
     Berserking {
         spell_id: i32,
         aura: String,
         cast_speed_multiplier: f64,
+        attack_speed_multiplier: f64,
     },
     /// The Orc racial Blood Fury: a major cooldown whose aura multiplies stats through Go's
     /// dynamic stat dependencies. `active_stats` holds every stat the aura changes, at the
@@ -1196,6 +1201,73 @@ pub enum Effect {
         attack_damage: f64,
         magma_totem_aura: String,
         flametongue_totem_aura: String,
+        /// The fire totem's lifetime, for `totemRemainingTime`.
+        duration_ns: i64,
+    },
+    /// Earth Shock: a binary hit from the highest rank's damage roll.
+    EarthShock {
+        spell_id: i32,
+    },
+    /// Strength of Earth Totem: the earth totem's aura, whose Strength is a class stat aura.
+    StrengthOfEarthTotem {
+        spell_id: i32,
+        aura: String,
+        duration_ns: i64,
+    },
+    /// Stormstrike: a melee strike whose target debuff raises this shaman's lightning damage
+    /// until its charges are spent.
+    Stormstrike {
+        spell_id: i32,
+        aura: String,
+        damage_multiplier: f64,
+        /// Go `HasMHWeapon` and `HasOHWeapon`: its cast condition, and whether it strikes.
+        has_main_hand: bool,
+        has_off_hand: bool,
+    },
+    /// Elemental Devastation: spell crits raise melee crit for a while.
+    ElementalDevastation {
+        trigger_aura: String,
+        aura: String,
+        melee_crit: f64,
+    },
+    /// Flurry: melee crits grant charges of melee speed that white hits spend.
+    Flurry {
+        trigger_aura: String,
+        aura: String,
+        melee_speed_multiplier: f64,
+        charge_icd_ns: i64,
+        max_stacks: i32,
+    },
+    /// Improved Stormstrike: Stormstrike may raise casting spirit regeneration; its cooldown
+    /// reset hears only hits the player takes.
+    ImprovedStormstrike {
+        trigger_aura: String,
+        aura: String,
+        reset_aura: String,
+        proc_chance: f64,
+        spirit_regen_rate_casting: f64,
+    },
+    /// Maelstrom Weapon: landed melee hits stack a Lightning Bolt cast time and cost cut.
+    MaelstromWeapon {
+        trigger_aura: String,
+        aura: String,
+        per_stack: f64,
+        max_stacks: i32,
+        /// The proc manager's chance for each spell the trigger hears.
+        chances: Vec<SpellChance>,
+    },
+    /// Rockbiter Weapon: a permanent attack power aura, already in the prepared stats, that
+    /// logs its gain and loss.
+    RockbiterWeapon {
+        aura: String,
+        gain_log: String,
+        expire_log: String,
+    },
+    /// Rage of the Farseer: a major cooldown whose aura multiplies melee speed.
+    RageOfTheFarseer {
+        spell_id: i32,
+        aura: String,
+        melee_speed_multiplier: f64,
     },
     /// Elemental Focus: a completed elemental cast may grant Clearcasting.
     ElementalFocus {
@@ -1393,6 +1465,15 @@ impl Effect {
             Effect::FireNova { .. } => "fire_nova",
             Effect::SearingTotem { .. } => "searing_totem",
             Effect::ElementalFocus { .. } => "elemental_focus",
+            Effect::EarthShock { .. } => "earth_shock",
+            Effect::StrengthOfEarthTotem { .. } => "strength_of_earth_totem",
+            Effect::Stormstrike { .. } => "stormstrike",
+            Effect::ElementalDevastation { .. } => "elemental_devastation",
+            Effect::Flurry { .. } => "flurry",
+            Effect::ImprovedStormstrike { .. } => "improved_stormstrike",
+            Effect::MaelstromWeapon { .. } => "maelstrom_weapon",
+            Effect::RageOfTheFarseer { .. } => "rage_of_the_farseer",
+            Effect::RockbiterWeapon { .. } => "rockbiter_weapon",
             Effect::ConjuredEnergy { .. } => "conjured_energy",
             Effect::SinisterStrike { .. } => "sinister_strike",
             Effect::Backstab { .. } => "backstab",

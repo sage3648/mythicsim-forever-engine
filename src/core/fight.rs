@@ -89,6 +89,16 @@ pub(crate) trait Agent: Sized {
     ) {
         fight.deal_damage(spell, result, false);
     }
+    /// Go `DamageDoneByCasterExtraMultiplier` on the target's attack table: the active
+    /// handler's multiplier for a spell, if any handler is active.
+    fn caster_damage_multiplier(_fight: &Fight<Self>, _spell: SpellId) -> Option<f64> {
+        None
+    }
+    /// When a class's totem of the slot expires, for Go's `totemRemainingTime`. The gate
+    /// admits the value only for a class that implements this.
+    fn totem_expiration(_fight: &Fight<Self>, _totem: crate::rotation::Totem) -> i64 {
+        unreachable!("totemRemainingTime needs a class with totems")
+    }
     /// A dot or channel tick of a class spell.
     fn on_dot_tick(_fight: &mut Fight<Self>, _dot: DotId, _behavior: Self::Spell) {}
     /// The class part of a dot aura's OnGain, which Go runs before the dot's own.
@@ -115,6 +125,15 @@ pub(crate) trait Agent: Sized {
     ) {
     }
     fn on_spell_hit_dealt(
+        _fight: &mut Fight<Self>,
+        _aura: AuraRef,
+        _kind: Self::Aura,
+        _spell: SpellId,
+        _result: &SpellResult,
+    ) {
+    }
+    /// Go `OnSpellHitTaken` of a class aura on the target, for the player's hit.
+    fn on_spell_hit_taken(
         _fight: &mut Fight<Self>,
         _aura: AuraRef,
         _kind: Self::Aura,
@@ -1412,17 +1431,18 @@ impl<A: Agent> Fight<A> {
                         .any(|effect| matches!(effect, Effect::Eureka { aura, .. } if *aura == exported.label))
                 {
                     AuraBehavior::Eureka
-                } else if let Some(multiplier) = effects.iter().find_map(|effect| match effect {
+                } else if let Some((attack, cast)) = effects.iter().find_map(|effect| match effect {
                     Effect::Berserking {
                         aura,
                         cast_speed_multiplier,
+                        attack_speed_multiplier,
                         ..
                     } if side == Side::Player && *aura == exported.label => {
-                        Some(*cast_speed_multiplier)
+                        Some((*attack_speed_multiplier, *cast_speed_multiplier))
                     }
                     _ => None,
                 }) {
-                    AuraBehavior::MultiplyCastSpeed(multiplier)
+                    AuraBehavior::MultiplyAttackAndCastSpeed { attack, cast }
                 } else if let Some(multiplier) = effects.iter().find_map(|effect| match effect {
                     Effect::ReadLeyLine {
                         aura,

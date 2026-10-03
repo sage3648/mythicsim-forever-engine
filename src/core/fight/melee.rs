@@ -280,6 +280,11 @@ impl<A: Agent> Fight<A> {
         if now < attack.swing_at {
             return attack.swing_at;
         }
+        // Go swing: with a replace function the rotation reacts before the swing.
+        if hand == Hand::Main && self.config.melee.replace_main_hand_swing {
+            self.react_to_event_now();
+        }
+        let attack = self.autos.attack(hand);
         attack.previous_swing = attack.swing_at;
         attack.swing_at = now + attack.cur_swing_duration;
         attack.natural_ready_at = attack.swing_at;
@@ -298,10 +303,49 @@ impl<A: Agent> Fight<A> {
         swing_at
     }
 
+    /// Go `AutoAttacks.HoldMeleeForCast`: a swing due before the cast ends waits for it; a
+    /// later one restarts its timer from the cast's end.
+    pub(crate) fn hold_melee_for_cast(&mut self, cast_end: i64) {
+        // Go heldSwingLag.
+        const HELD_SWING_LAG: i64 = 1;
+        if !self.autos.melee {
+            return;
+        }
+        let now = self.now;
+        let hands: &[Hand] = if self.autos.dual_wielding {
+            &[Hand::Main, Hand::Off]
+        } else {
+            &[Hand::Main]
+        };
+        for &hand in hands {
+            let attack = self.autos.attack(hand);
+            if attack.swing_at <= now + HELD_SWING_LAG {
+                continue;
+            }
+            attack.swing_at = if attack.swing_at <= cast_end {
+                cast_end + HELD_SWING_LAG
+            } else {
+                cast_end + attack.cur_swing_duration
+            };
+            // Go rescheduleWeaponAttack.
+            let swing_at = attack.swing_at;
+            self.autos.min_time = self.autos.min_time.min(swing_at);
+        }
+    }
+
     /// Go `Unit.ReactToEvent(sim, false, true)`.
     pub(crate) fn react_to_event(&mut self) {
         self.do_next_action();
         let evaluation = self.now + self.config.reaction;
+        if self.player.rotation_timer > evaluation {
+            self.set_rotation_timer(evaluation);
+        }
+    }
+
+    /// Go `Unit.ReactToEvent(sim, false, false)`.
+    fn react_to_event_now(&mut self) {
+        self.do_next_action();
+        let evaluation = self.now;
         if self.player.rotation_timer > evaluation {
             self.set_rotation_timer(evaluation);
         }

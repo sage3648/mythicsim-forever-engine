@@ -401,6 +401,7 @@ impl<A: Agent> Fight<A> {
     /// Go `makeCastFunc`.
     fn cast_full(&mut self, spell: SpellId, target: Side) -> bool {
         self.spells[spell].cur_cast = self.spells[spell].default_cast;
+        // Go `ModifyCast`, before any cast check.
         if let SpellBehavior::Class(behavior) = self.spells[spell].behavior {
             A::modify_cast(self, spell, behavior);
         }

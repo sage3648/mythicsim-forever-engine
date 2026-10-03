@@ -485,6 +485,22 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
 
     if let Some(rotation) = rotation {
         reasons.extend(unknown_aura_conditions(prepared, rotation));
+        if player.class != "ClassShaman" {
+            for item in &rotation.priority_list {
+                let mut totems = false;
+                if let Some(condition) = &item.condition {
+                    condition.visit(&mut |value| {
+                        totems |= matches!(value, Value::TotemRemainingTime { .. })
+                    });
+                }
+                if totems {
+                    reasons.push(format!(
+                        "rotation item {}: totemRemainingTime needs a Shaman",
+                        item.position
+                    ));
+                }
+            }
+        }
         reasons.extend(energy_without_bar(prepared, rotation));
         let mut reachable = Vec::new();
         let mut registered_prepull = 0;
