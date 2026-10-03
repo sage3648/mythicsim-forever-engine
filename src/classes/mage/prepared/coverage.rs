@@ -28,6 +28,7 @@ pub(crate) const IMPLEMENTED_EFFECTS: &[&str] = &[
     "fire_blast",
     "fireball",
     "frostbolt",
+    "heating_up",
     "ice_lance",
     "ignite",
     "inert_listener",
@@ -37,6 +38,7 @@ pub(crate) const IMPLEMENTED_EFFECTS: &[&str] = &[
     "missile_barrage",
     "potion_mana",
     "presence_of_mind",
+    "pyroblast",
     "scorch",
     "touch_of_the_grave",
     "winters_chill",
@@ -51,6 +53,7 @@ fn spell_capability(spell: &Spell, prepared: &PreparedV2) -> Option<&'static str
             "arcane_power" => Some("arcane_power"),
             "fire_blast" => Some("fire_blast"),
             "fireball" => Some("fireball"),
+            "pyroblast" => Some("pyroblast"),
             "scorch" => Some("scorch"),
             "presence_of_mind" => Some("presence_of_mind"),
             "ice_lance" => Some("ice_lance"),
@@ -77,6 +80,9 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
             trigger_aura, aura, ..
         }
         | Effect::MissileBarrage {
+            trigger_aura, aura, ..
+        }
+        | Effect::HeatingUp {
             trigger_aura, aura, ..
         }
         | Effect::FingersOfFrost {

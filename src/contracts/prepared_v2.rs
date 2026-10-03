@@ -471,6 +471,18 @@ pub enum Effect {
         refund: f64,
         metrics_action_id: ActionId,
     },
+    /// Pyroblast, Fireball's shape at its highest rank.
+    Pyroblast {
+        spell_id: i32,
+        tick_base: f64,
+        tick_can_crit: bool,
+    },
+    /// Heating Up: crits stack a Pyroblast cast time cut.
+    HeatingUp {
+        aura: String,
+        trigger_aura: String,
+        cast_time_per_stack: f64,
+    },
     /// Fire Blast's instant hit.
     FireBlast {},
     /// Every Fireball rank: a hit after travel, then a dot that snapshots.
@@ -611,6 +623,8 @@ impl Effect {
             Effect::ArcanePower { .. } => "arcane_power",
             Effect::Ignite { .. } => "ignite",
             Effect::FireBlast {} => "fire_blast",
+            Effect::Pyroblast { .. } => "pyroblast",
+            Effect::HeatingUp { .. } => "heating_up",
             Effect::MasterOfElements { .. } => "master_of_elements",
             Effect::Fireball { .. } => "fireball",
             Effect::Scorch { .. } => "scorch",

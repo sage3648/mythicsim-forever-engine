@@ -14,7 +14,8 @@ use super::{
         ice_lance, mana_gems, presence_of_mind, scorch,
     },
     talents::{
-        arcane_concentration, fingers_of_frost, master_of_elements, missile_barrage, winters_chill,
+        arcane_concentration, fingers_of_frost, heating_up, master_of_elements, missile_barrage,
+        winters_chill,
     },
 };
 
@@ -27,6 +28,7 @@ pub(crate) enum MageSpell {
     PresenceOfMind,
     FireBlast,
     Fireball,
+    Pyroblast,
     Scorch,
     IceLance,
     ArcaneMissiles,
@@ -56,6 +58,8 @@ pub(crate) enum MageAura {
     IgniteTrigger,
     FireVulnerability,
     MasterOfElementsTrigger,
+    HeatingUp,
+    HeatingUpTrigger,
 }
 
 /// Mage state that Go keeps in the `Mage` struct and its closures.
@@ -70,6 +74,7 @@ pub(crate) struct MageAgent {
     presence_of_mind: Option<Rc<presence_of_mind::PresenceOfMind>>,
     improved_scorch: Option<Rc<scorch::ImprovedScorch>>,
     master_of_elements: Option<Rc<master_of_elements::MasterOfElements>>,
+    heating_up: Option<Rc<heating_up::HeatingUp>>,
     ice_lance_frozen_multiplier: f64,
     /// Arcane Missiles channel spell to the missile spell of the same rank.
     missiles: Vec<(SpellId, SpellId)>,
@@ -130,6 +135,13 @@ fn class_auras(prepared: &PreparedV2) -> Vec<(String, MageAura)> {
                 auras.push((trigger_aura.clone(), MageAura::MasterOfElementsTrigger));
                 continue;
             }
+            Effect::HeatingUp {
+                aura, trigger_aura, ..
+            } => (
+                aura,
+                trigger_aura,
+                (MageAura::HeatingUp, MageAura::HeatingUpTrigger),
+            ),
             Effect::Scorch {
                 improved_scorch: Some(improved),
             } => {
@@ -157,6 +169,9 @@ impl MageAgent {
             "fire_blast" if spell.damage_effect.is_some() => Some(MageSpell::FireBlast),
             "fireball" if spell.damage_effect.is_some() && spell.dot.is_some() => {
                 Some(MageSpell::Fireball)
+            }
+            "pyroblast" if spell.damage_effect.is_some() && spell.dot.is_some() => {
+                Some(MageSpell::Pyroblast)
             }
             "scorch" if spell.damage_effect.is_some() => Some(MageSpell::Scorch),
             "presence_of_mind" => Some(MageSpell::PresenceOfMind),
@@ -290,6 +305,29 @@ impl MageAgent {
                     )?;
                     fight.agent.master_of_elements = Some(Rc::new(bound));
                 }
+                Effect::Pyroblast {
+                    spell_id,
+                    tick_base,
+                    tick_can_crit,
+                } => {
+                    let dot = fight
+                        .spells
+                        .iter()
+                        .find(|spell| spell.id.spell_id == *spell_id && spell.id.tag == 0)
+                        .and_then(|spell| spell.dot);
+                    if let Some(dot) = dot {
+                        fight.dots[dot].tick_base = Some(*tick_base);
+                        fight.dots[dot].tick_can_crit = *tick_can_crit;
+                    }
+                }
+                Effect::HeatingUp {
+                    aura,
+                    cast_time_per_stack,
+                    ..
+                } => {
+                    let bound = heating_up::bind(&mut fight, aura, *cast_time_per_stack)?;
+                    fight.agent.heating_up = Some(Rc::new(bound));
+                }
                 Effect::Fireball { ranks } => {
                     for rank in ranks {
                         let dot = fight
@@ -422,6 +460,10 @@ impl MageAgent {
             .expect("Arcane Power is bound")
     }
 
+    fn heating_up(fight: &Fight<Self>) -> Rc<heating_up::HeatingUp> {
+        fight.agent.heating_up.clone().expect("Heating Up is bound")
+    }
+
     fn improved_scorch(fight: &Fight<Self>) -> Rc<scorch::ImprovedScorch> {
         fight
             .agent
@@ -463,10 +505,10 @@ impl Agent for MageAgent {
                 fight.activate_aura(aura);
             }
             MageSpell::FireBlast => fire_blast::apply(fight, spell, target),
-            MageSpell::Fireball => {
+            MageSpell::Fireball | MageSpell::Pyroblast => {
                 let base = fight.roll_damage_effect(spell);
                 let result = fight.calc_damage(spell, target, base);
-                let dot = fight.spells[spell].dot.expect("Fireball has a dot");
+                let dot = fight.spells[spell].dot.expect("the bolt has a dot");
                 fight.deal_damage_after_travel_then_dot(spell, result, dot);
             }
             MageSpell::Scorch => {
@@ -544,7 +586,7 @@ impl Agent for MageAgent {
     }
 
     fn on_dot_tick(fight: &mut Fight<Self>, dot: DotId, behavior: MageSpell) {
-        if behavior == MageSpell::Fireball {
+        if matches!(behavior, MageSpell::Fireball | MageSpell::Pyroblast) {
             fight.snapshot_dot_tick(dot);
             return;
         }
@@ -573,6 +615,7 @@ impl Agent for MageAgent {
             MageAura::ArcaneCharges => Self::arcane_charges(fight).on_gain(fight),
             MageAura::ArcanePower => Self::arcane_power(fight).on_gain(fight),
             MageAura::FireVulnerability => Self::improved_scorch(fight).on_gain(fight),
+            MageAura::HeatingUp => Self::heating_up(fight).on_gain(fight),
             MageAura::PresenceOfMind => Self::presence_of_mind(fight).on_gain(fight),
             MageAura::EvocationRegen => {
                 let (_, multiplier) = fight.agent.evocation_regen.expect("Evocation is bound");
@@ -593,6 +636,7 @@ impl Agent for MageAgent {
             MageAura::ArcaneCharges => Self::arcane_charges(fight).on_expire(fight),
             MageAura::ArcanePower => Self::arcane_power(fight).on_expire(fight),
             MageAura::FireVulnerability => Self::improved_scorch(fight).on_expire(fight),
+            MageAura::HeatingUp => Self::heating_up(fight).on_expire(fight),
             MageAura::PresenceOfMind => Self::presence_of_mind(fight).on_expire(fight),
             MageAura::EvocationRegen => {
                 let (_, multiplier) = fight.agent.evocation_regen.expect("Evocation is bound");
@@ -615,6 +659,7 @@ impl Agent for MageAgent {
             MageAura::FireVulnerability => {
                 Self::improved_scorch(fight).on_stacks_change(fight, new)
             }
+            MageAura::HeatingUp => Self::heating_up(fight).on_stacks_change(fight, new),
             _ => {}
         }
     }
@@ -632,6 +677,9 @@ impl Agent for MageAgent {
             }
             MageAura::ArcaneConcentrationTrigger => {
                 Self::arcane_concentration(fight).on_spell_hit_dealt(fight, spell, result)
+            }
+            MageAura::HeatingUpTrigger => {
+                Self::heating_up(fight).on_spell_hit_dealt(fight, spell, result)
             }
             MageAura::MasterOfElementsTrigger => {
                 let state = fight
@@ -671,6 +719,7 @@ impl Agent for MageAgent {
             MageAura::MissileBarrage => Self::missile_barrage(fight).on_cast_complete(fight, spell),
             MageAura::MissileBarrageTrigger => Self::missile_barrage(fight).trigger(fight, spell),
             MageAura::ArcaneCharges => Self::arcane_charges(fight).on_cast_complete(fight, spell),
+            MageAura::HeatingUp => Self::heating_up(fight).on_cast_complete(fight, spell),
             MageAura::PresenceOfMind => {
                 Self::presence_of_mind(fight).on_cast_complete(fight, spell)
             }

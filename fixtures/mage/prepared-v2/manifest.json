@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "2ad3191286c5769a1e001770f07da597eab012300ad52e19c6e884da96e9e67c",
+  "exporter_sha256": "a7815548b70bb34346d0a72c90bb0e439862b264dc4233d9aae6c24e29d2f55a",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -403,7 +403,7 @@
         "path": "fixtures/mage/prepared-v2/arcane-ignite.request.json"
       },
       "prepared": "arcane-ignite.prepared.json",
-      "prepared_sha256": "005fa2bad791195c0f2657704131236d54e1c4a167cccbf175ce71af7074975a",
+      "prepared_sha256": "10512fc054df5769319156b4200966a7d813039bec74d4c3ae71de1a3f1338d1",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -420,7 +420,7 @@
         "path": "fixtures/mage/prepared-v2/arcane-reference.request.json"
       },
       "prepared": "arcane-reference.prepared.json",
-      "prepared_sha256": "0dbebf84002483e432c7ed22bd23bfabe913cd3c19e515032794abe8b094b455",
+      "prepared_sha256": "c793a52b7fecc0894655fd1c3bcefa9eb85cc51ff9571671e822088dc2107ce1",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -441,7 +441,7 @@
         "path": "fixtures/mage/prepared-v2/arcane-no-missile-barrage.request.json"
       },
       "prepared": "arcane-no-missile-barrage.prepared.json",
-      "prepared_sha256": "092376c1840eced474d6b82685e65f9f83f80c8f9b63c76b1427b19d80ff3a6e",
+      "prepared_sha256": "14f8587d8d8899edb2ffc8e5c8727de0215c61c3fcaf2f4d2a85cad83df40e1a",
       "expected_coverage": {
         "supported": false,
         "reasons": [
@@ -456,7 +456,7 @@
         "path": "fixtures/mage/prepared-v2/fire-scorch.request.json"
       },
       "prepared": "fire-scorch.prepared.json",
-      "prepared_sha256": "1318c65431f00f356e7c1dc3cae47893b740a57ff65e4d9aaf60c66cb732fbc9",
+      "prepared_sha256": "a38df0bb8347e8881b92ba3aea2399ff190647c16324d03c39b7d19f6af3d589",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -477,7 +477,7 @@
         "path": "fixtures/mage/prepared-v2/fire-fireball.request.json"
       },
       "prepared": "fire-fireball.prepared.json",
-      "prepared_sha256": "6ae81cd3b246ff9d819f0601ce976c74350fc87a4cbf83308a1b8a9a9ce5c18b",
+      "prepared_sha256": "735a6e4bde010851fb0a83246011e3c02fef7cd237e9e2c0c8ee720a7966404a",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -494,7 +494,7 @@
         "path": "fixtures/mage/prepared-v2/fire-fireball-scorch.request.json"
       },
       "prepared": "fire-fireball-scorch.prepared.json",
-      "prepared_sha256": "0c40ea3a21eb6f96c7b30b20be44781add83bb0957e2c14d00836d141c23e3db",
+      "prepared_sha256": "cdcfca0abdf02e47bb7f12273a382a8e86ef555a5f7c1ba55cbd42e4208c3063",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -515,7 +515,7 @@
         "path": "fixtures/mage/prepared-v2/fire-master-of-elements.request.json"
       },
       "prepared": "fire-master-of-elements.prepared.json",
-      "prepared_sha256": "4a069f6ccd78b8601a6b52d78964b763ad71787d84ffed8dd84c0a0c4e85f853",
+      "prepared_sha256": "3cda44938a987a481f3ab8343c888f210bdf971a60a9b87ea55eb96924d4ffd0",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -523,6 +523,27 @@
       "go_result": {
         "file": "fire-master-of-elements.go-result.json",
         "sha256": "577ebf122626c2aad2c349beea61459d949071b1f5d3953d60a430dabcad6a90"
+      }
+    },
+    {
+      "id": "fire-heating-up",
+      "description": "The Master of Elements case with Heating Up and the reference's Pyroblast rule: crits stack a Pyroblast cast time cut, and Pyroblast at three stacks spends them, then its own dot snapshots.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-heating-up.request.json"
+      },
+      "prepared": "fire-heating-up.prepared.json",
+      "prepared_sha256": "062609e7a4b7086a3827366a20f7cf03bef3a9f15e89934d7157f9aa1f7b1552",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fire-heating-up.go-result.json",
+        "sha256": "64a0caa02c986ee7691778ae9d8d96fd25f546a5e611d3075252bd35d7d56ec0"
+      },
+      "go_log": {
+        "file": "fire-heating-up.go-log.txt",
+        "sha256": "bbb5d6508af6250f3fc34d2d6ed7a5cc0b1e26585a400d7d99ec47b6ab2d13cc"
       }
     }
   ]

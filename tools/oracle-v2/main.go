@@ -600,6 +600,8 @@ var (
 	improvedScorch      = spelldata.Talent(11095, 3)
 	fireVulnerability   = spelldata.Ranked(22959)
 	masterOfElements    = spelldata.Talent(29074, 3)
+	pyroblastLadder     = spelldata.Ranked(11366, 12505, 12522, 12523, 12524, 12525, 12526, 18809)
+	heatingUpTriggered  = spelldata.Ranked(400625)
 	fireballLadder      = spelldata.Ranked(133, 143, 145, 3140, 8400, 8401, 8402, 10148, 10149, 10150, 10151, 25306)
 	arcaneConcentration = spelldata.Talent(11213, 5)
 	clearcastingTrigger = spelldata.Ranked(12536)
@@ -638,6 +640,9 @@ func attachDamageEffects(spells []Spell, character *core.Character) {
 	}
 	scorchLadder.Each(func(_ int32, row *spelldata.Spell) { rows[row.ID] = row })
 	fireballLadder.Each(func(_ int32, row *spelldata.Spell) { rows[row.ID] = row })
+	if pyroblast := pyroblastLadder.Highest(); pyroblast != nil {
+		rows[pyroblast.ID] = pyroblast
+	}
 	for i := range spells {
 		id := spells[i].ActionID
 		if id == nil || id.SpellID == 0 || id.Tag != 0 {
@@ -741,6 +746,20 @@ func mageEffects(m *mage.Mage, character *core.Character) []map[string]any {
 		}
 	}
 	effects = append(effects, scorch)
+	if talents.Pyroblast { // pyroblast.go: Fireball's shape, highest rank only
+		row := pyroblastLadder.Highest()
+		effects = append(effects, map[string]any{
+			"kind": "pyroblast", "spell_id": row.ID, "tick_base": row.PeriodicEffect().Average(core.CharacterLevel),
+			"tick_can_crit": row.PeriodicCanCrit() && row.DefenseTypeCore() == core.DefenseTypeMagic,
+		})
+	}
+	if talents.HeatingUp { // talents_fire.go registerHotStreak
+		buff := heatingUpTriggered.Highest()
+		effects = append(effects, map[string]any{
+			"kind": "heating_up", "aura": "Heating Up", "trigger_aura": "Heating Up Trigger",
+			"cast_time_per_stack": buff.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_CASTING_TIME)).Percent(),
+		})
+	}
 	if talents.MasterOfElements > 0 { // talents_fire.go registerMasterOfElements
 		effects = append(effects, map[string]any{
 			"kind": "master_of_elements", "trigger_aura": "Master of Elements",

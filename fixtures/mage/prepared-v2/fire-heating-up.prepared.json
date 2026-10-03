@@ -6,8 +6,8 @@
     "client_build": "1.60.1.70170",
     "exporter": "tools/oracle-v2"
   },
-  "request_sha256": "4f62d3bcae095c3575b6ff8603a3db6d6ce9c31e14e8d924a48e3879c4c4c72a",
-  "scenario_id": "fire-master-of-elements",
+  "request_sha256": "ec86179d27f92a54b5b470291bee388f2074721cf1fa302272bf222e30651361",
+  "scenario_id": "fire-heating-up",
   "sim": {
     "iterations": 1000,
     "seed": 42,
@@ -802,6 +802,39 @@
         "exclusive_effects": 0
       },
       {
+        "label": "Heating Up",
+        "action_id": {
+          "spell_id": 400625
+        },
+        "duration_ns": 20000000000,
+        "max_stacks": 3,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire",
+          "on_stacks_change",
+          "on_cast_complete"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Heating Up Trigger",
+        "action_id": null,
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_spell_hit_dealt"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
         "label": "Master of Elements",
         "action_id": null,
         "duration_ns": 9223372036854775807,
@@ -1070,7 +1103,7 @@
     "professions": [
       "Engineering"
     ],
-    "talents_string": "230205-03502020130033050-005",
+    "talents_string": "230205-03502020130133050-005",
     "talents": {
       "arcane_concentration": 5,
       "arcane_focus": 3,
@@ -1080,6 +1113,7 @@
       "elemental_precision": 5,
       "fire_power": 5,
       "flame_throwing": 2,
+      "heating_up": 1,
       "improved_fireball": 5,
       "improved_scorch": 3,
       "incineration": 3,
@@ -5437,6 +5471,45 @@
       "priorityList": [
         {
           "action": {
+            "condition": {
+              "and": {
+                "vals": [
+                  {
+                    "auraIsKnown": {
+                      "auraId": {
+                        "spellId": 400625
+                      }
+                    }
+                  },
+                  {
+                    "cmp": {
+                      "op": "OpEq",
+                      "lhs": {
+                        "auraNumStacks": {
+                          "auraId": {
+                            "spellId": 400625
+                          }
+                        }
+                      },
+                      "rhs": {
+                        "const": {
+                          "val": "3"
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "castSpell": {
+              "spellId": {
+                "spellId": 18809
+              }
+            }
+          }
+        },
+        {
+          "action": {
             "castSpell": {
               "spellId": {
                 "spellId": 10199
@@ -5620,6 +5693,12 @@
       "spell_id": 18809,
       "tick_base": 53,
       "tick_can_crit": true
+    },
+    {
+      "aura": "Heating Up",
+      "cast_time_per_stack": -0.25,
+      "kind": "heating_up",
+      "trigger_aura": "Heating Up Trigger"
     },
     {
       "kind": "master_of_elements",

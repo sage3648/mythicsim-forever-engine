@@ -5614,7 +5614,10 @@
           "haste_reduces_duration": false,
           "channeled": false
         },
-        "damage_effect": null
+        "damage_effect": {
+          "average": 583,
+          "variance": 0.2166874259710312
+        }
       },
       {
         "action_id": {
@@ -6023,6 +6026,12 @@
     },
     {
       "kind": "scorch"
+    },
+    {
+      "kind": "pyroblast",
+      "spell_id": 18809,
+      "tick_base": 53,
+      "tick_can_crit": true
     },
     {
       "kind": "ignite",
