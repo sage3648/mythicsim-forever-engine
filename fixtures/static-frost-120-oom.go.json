@@ -1,0 +1,195 @@
+{
+  "encounter": {
+    "duration": 120,
+    "targets": [
+      {
+        "level": 63,
+        "mobType": "MobTypeHumanoid",
+        "stats": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    ]
+  },
+  "raid": {
+    "parties": [
+      {
+        "players": [
+          {
+            "bonusStats": {
+              "stats": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ]
+            },
+            "class": "ClassMage",
+            "disableRacials": true,
+            "distanceFromTarget": 20,
+            "equipment": {
+              "items": [
+                {
+                  "id": 0
+                },
+                {
+                  "id": 0
+                },
+                {
+                  "id": 0
+                },
+                {
+                  "id": 0
+                },
+                {
+                  "id": 14152
+                },
+                {
+                  "id": 0
+                },
+                {
+                  "id": 0
+                },
+                {
+                  "id": 0
+                },
+                {
+                  "id": 0
+                },
+                {
+                  "id": 0
+                },
+                {
+                  "id": 0
+                },
+                {
+                  "id": 0
+                },
+                {
+                  "id": 12930
+                },
+                {
+                  "id": 0
+                },
+                {
+                  "id": 17103
+                },
+                {
+                  "id": 0
+                },
+                {
+                  "id": 0
+                }
+              ]
+            },
+            "mage": {
+              "options": {
+                "classOptions": {}
+              }
+            },
+            "name": "Rust prototype",
+            "race": "RaceHuman",
+            "reactionTimeMs": 100,
+            "rotation": {
+              "priorityList": [
+                {
+                  "action": {
+                    "castSpell": {
+                      "spellId": {
+                        "spellId": 25304
+                      }
+                    }
+                  }
+                }
+              ],
+              "type": "TypeAPL"
+            },
+            "talentsString": "--053500033"
+          }
+        ]
+      }
+    ]
+  },
+  "simOptions": {
+    "iterations": 3000,
+    "randomSeed": "42",
+    "useLabeledRands": true
+  }
+}

@@ -1,0 +1,423 @@
+{
+  "cases": [
+    {
+      "equipment_ids": [
+        0,
+        0,
+        0,
+        0,
+        14152,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        12930,
+        0,
+        17103,
+        0,
+        0
+      ],
+      "go": "untalented-60.go.json",
+      "id": "untalented-60",
+      "rust": "untalented-60.rust.json",
+      "talents_string": "--",
+      "expected": {
+        "iterations": 3000,
+        "seed": 42,
+        "dps_mean": 104.1639080556216,
+        "dps_stdev": 13.295388622275896,
+        "mana_delta_mean": -3430,
+        "counts": {
+          "casts": 39000,
+          "crits": 1707,
+          "hits": 30696,
+          "misses": 6597
+        }
+      }
+    },
+    {
+      "equipment_ids": [
+        0,
+        0,
+        0,
+        0,
+        14152,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        12930,
+        0,
+        17103,
+        0,
+        0
+      ],
+      "go": "static-frost-60.go.json",
+      "id": "static-frost-60",
+      "rust": "static-frost-60.rust.json",
+      "talents_string": "--053500033",
+      "expected": {
+        "iterations": 3000,
+        "seed": 42,
+        "dps_mean": 135.26326644098344,
+        "dps_stdev": 16.00382756729345,
+        "mana_delta_mean": -3315,
+        "counts": {
+          "casts": 45000,
+          "crits": 2036,
+          "hits": 36672,
+          "misses": 6292
+        }
+      }
+    },
+    {
+      "equipment_ids": [
+        0,
+        0,
+        0,
+        0,
+        14152,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        12930,
+        0,
+        17103,
+        0,
+        0
+      ],
+      "go": "static-frost-120-oom.go.json",
+      "id": "static-frost-120-oom",
+      "rust": "static-frost-120-oom.rust.json",
+      "talents_string": "--053500033",
+      "expected": {
+        "iterations": 3000,
+        "seed": 42,
+        "dps_mean": 85.68328260078063,
+        "dps_stdev": 9.07568279896958,
+        "mana_delta_mean": -3366,
+        "counts": {
+          "casts": 57000,
+          "crits": 2563,
+          "hits": 46492,
+          "misses": 7945
+        }
+      }
+    },
+    {
+      "equipment_ids": [
+        0,
+        0,
+        0,
+        0,
+        14152,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        12930,
+        0,
+        17103,
+        0,
+        0
+      ],
+      "go": "meditation-300-oom.go.json",
+      "id": "meditation-300-oom",
+      "rust": "meditation-300-oom.rust.json",
+      "talents_string": "0000000000003--053500033",
+      "expected": {
+        "iterations": 3000,
+        "seed": 42,
+        "dps_mean": 63.11452754914857,
+        "dps_stdev": 4.887265210619036,
+        "mana_delta_mean": -3527.5,
+        "counts": {
+          "casts": 105000,
+          "crits": 4744,
+          "hits": 85575,
+          "misses": 14681
+        }
+      }
+    },
+    {
+      "equipment_ids": [
+        0,
+        0,
+        0,
+        0,
+        14152,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        12930,
+        0,
+        17103,
+        0,
+        0
+      ],
+      "go": "resistance-60.go.json",
+      "id": "resistance-60",
+      "rust": "resistance-60.rust.json",
+      "talents_string": "--053500033",
+      "expected": {
+        "iterations": 3000,
+        "seed": 42,
+        "dps_mean": 96.41316976352469,
+        "dps_stdev": 20.675433381830906,
+        "mana_delta_mean": -3315,
+        "counts": {
+          "casts": 45000,
+          "crits": 1441,
+          "hits": 26158,
+          "misses": 17401
+        }
+      }
+    },
+    {
+      "equipment_ids": [
+        0,
+        0,
+        0,
+        0,
+        14152,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        12930,
+        0,
+        17103,
+        0,
+        0
+      ],
+      "go": "hit-cap-60.go.json",
+      "id": "hit-cap-60",
+      "rust": "hit-cap-60.rust.json",
+      "talents_string": "--053500033",
+      "expected": {
+        "iterations": 3000,
+        "seed": 42,
+        "dps_mean": 155.6333938495903,
+        "dps_stdev": 9.538371690028775,
+        "mana_delta_mean": -3315,
+        "counts": {
+          "casts": 45000,
+          "crits": 2352,
+          "hits": 42174,
+          "misses": 474
+        }
+      }
+    },
+    {
+      "equipment_ids": [
+        0,
+        0,
+        0,
+        0,
+        14152,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        12930,
+        0,
+        17103,
+        0,
+        0
+      ],
+      "go": "same-level-60.go.json",
+      "id": "same-level-60",
+      "rust": "same-level-60.rust.json",
+      "talents_string": "--053500033",
+      "expected": {
+        "iterations": 3000,
+        "seed": 42,
+        "dps_mean": 155.6333938495903,
+        "dps_stdev": 9.538371690028775,
+        "mana_delta_mean": -3315,
+        "counts": {
+          "casts": 45000,
+          "crits": 2352,
+          "hits": 42174,
+          "misses": 474
+        }
+      }
+    },
+    {
+      "equipment_ids": [
+        0,
+        0,
+        0,
+        0,
+        14152,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        12930,
+        0,
+        17103,
+        0,
+        0
+      ],
+      "go": "travel-boundary-3.go.json",
+      "id": "travel-boundary-3",
+      "rust": "travel-boundary-3.rust.json",
+      "talents_string": "--",
+      "expected": {
+        "iterations": 3000,
+        "seed": 42,
+        "dps_mean": 0,
+        "dps_stdev": 0,
+        "mana_delta_mean": -290,
+        "counts": {
+          "casts": 3000,
+          "crits": 131,
+          "hits": 2383,
+          "misses": 486
+        }
+      }
+    },
+    {
+      "equipment_ids": [
+        0,
+        0,
+        0,
+        0,
+        14152,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        12930,
+        0,
+        17103,
+        0,
+        0
+      ],
+      "go": "zero-travel-boundary-3.go.json",
+      "id": "zero-travel-boundary-3",
+      "rust": "zero-travel-boundary-3.rust.json",
+      "talents_string": "--",
+      "expected": {
+        "iterations": 3000,
+        "seed": 42,
+        "dps_mean": 161.60514580965213,
+        "dps_stdev": 73.65294509201327,
+        "mana_delta_mean": -290,
+        "counts": {
+          "casts": 3000,
+          "crits": 131,
+          "hits": 2383,
+          "misses": 486
+        }
+      }
+    },
+    {
+      "equipment_ids": [
+        0,
+        0,
+        0,
+        0,
+        14152,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        12930,
+        0,
+        18842,
+        0,
+        0
+      ],
+      "go": "staff-60.go.json",
+      "id": "staff-60",
+      "rust": "staff-60.rust.json",
+      "talents_string": "--053500033",
+      "expected": {
+        "iterations": 3000,
+        "seed": 42,
+        "dps_mean": 153.91830819301364,
+        "dps_stdev": 17.5045993608473,
+        "mana_delta_mean": -3914.5,
+        "counts": {
+          "casts": 51000,
+          "crits": 2494,
+          "hits": 41376,
+          "misses": 7130
+        }
+      }
+    },
+    {
+      "equipment_ids": [
+        0,
+        0,
+        0,
+        0,
+        14152,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        12930,
+        0,
+        17103,
+        0,
+        0
+      ],
+      "go": "haste-60.go.json",
+      "id": "haste-60",
+      "rust": "haste-60.rust.json",
+      "talents_string": "--053500033",
+      "expected": {
+        "iterations": 3000,
+        "seed": 42,
+        "dps_mean": 144.35438008289634,
+        "dps_stdev": 16.58045986873314,
+        "mana_delta_mean": -3561.5,
+        "counts": {
+          "casts": 48000,
+          "crits": 2182,
+          "hits": 39119,
+          "misses": 6699
+        }
+      }
+    }
+  ],
+  "source_revision": "6823b49eb8aff741f197ef36d83766ef6a218285"
+}

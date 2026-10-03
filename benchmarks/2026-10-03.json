@@ -1,0 +1,1435 @@
+{
+  "source_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
+  "iterations": 3000,
+  "repeats": 3,
+  "go_version": "go version go1.25.6 darwin/arm64",
+  "rust_version": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+  "machine": {
+    "platform": "macOS-26.5-arm64-arm-64bit-Mach-O",
+    "architecture": "arm64",
+    "logical_cpus": 12
+  },
+  "method": "serial Go full-engine execution versus Rust prepared Frostbolt kernel; labeled RNG; wall-clock timings; setup and supported scope differ; no production speedup claim",
+  "passed": true,
+  "results": [
+    {
+      "id": "untalented-60",
+      "seed": 42,
+      "passed": true,
+      "differences": [],
+      "dps_go": 104.1639080556216,
+      "dps_rust": 104.1639080556216,
+      "counts": {
+        "casts": 39000,
+        "hits": 30696,
+        "crits": 1707,
+        "misses": 6597
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          50447958,
+          63430750,
+          61372917
+        ],
+        "rust_kernel_ns": [
+          3479292,
+          3597833,
+          3878375
+        ],
+        "go_process_ns": [
+          194682542,
+          189465083,
+          192968792
+        ],
+        "rust_process_ns": [
+          201080334,
+          13241041,
+          13982708
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 61372917,
+        "rust_kernel_ns": 3597833,
+        "go_process_ns": 192968792,
+        "rust_process_ns": 13982708
+      },
+      "prepared_kernel_speedup": 17.058300649307515
+    },
+    {
+      "id": "static-frost-60",
+      "seed": 42,
+      "passed": true,
+      "differences": [],
+      "dps_go": 135.26326644098344,
+      "dps_rust": 135.2632664409832,
+      "counts": {
+        "casts": 45000,
+        "hits": 36672,
+        "crits": 2036,
+        "misses": 6292
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          69880292,
+          63747500,
+          63128583
+        ],
+        "rust_kernel_ns": [
+          4887333,
+          5974709,
+          3785250
+        ],
+        "go_process_ns": [
+          254433542,
+          257576458,
+          191837583
+        ],
+        "rust_process_ns": [
+          14900333,
+          25405500,
+          13123416
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 63747500,
+        "rust_kernel_ns": 4887333,
+        "go_process_ns": 254433542,
+        "rust_process_ns": 14900333
+      },
+      "prepared_kernel_speedup": 13.043412429642098
+    },
+    {
+      "id": "static-frost-120-oom",
+      "seed": 42,
+      "passed": true,
+      "differences": [],
+      "dps_go": 85.68328260078063,
+      "dps_rust": 85.68328260078086,
+      "counts": {
+        "casts": 57000,
+        "hits": 46492,
+        "crits": 2563,
+        "misses": 7945
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          131604750,
+          130972958,
+          133483625
+        ],
+        "rust_kernel_ns": [
+          6001542,
+          8639416,
+          15226625
+        ],
+        "go_process_ns": [
+          259796333,
+          296849875,
+          358472833
+        ],
+        "rust_process_ns": [
+          15742500,
+          22396834,
+          31418958
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 131604750,
+        "rust_kernel_ns": 8639416,
+        "go_process_ns": 296849875,
+        "rust_process_ns": 22396834
+      },
+      "prepared_kernel_speedup": 15.233060892078816
+    },
+    {
+      "id": "meditation-300-oom",
+      "seed": 42,
+      "passed": true,
+      "differences": [],
+      "dps_go": 63.11452754914857,
+      "dps_rust": 63.11452754914856,
+      "counts": {
+        "casts": 105000,
+        "hits": 85575,
+        "crits": 4744,
+        "misses": 14681
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          296311875,
+          442489333,
+          297035958
+        ],
+        "rust_kernel_ns": [
+          15098791,
+          14515167,
+          12772209
+        ],
+        "go_process_ns": [
+          527395667,
+          641692250,
+          480851875
+        ],
+        "rust_process_ns": [
+          22479208,
+          25530875,
+          23419666
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 297035958,
+        "rust_kernel_ns": 14515167,
+        "go_process_ns": 527395667,
+        "rust_process_ns": 23419666
+      },
+      "prepared_kernel_speedup": 20.463833313113103
+    },
+    {
+      "id": "resistance-60",
+      "seed": 42,
+      "passed": true,
+      "differences": [],
+      "dps_go": 96.41316976352469,
+      "dps_rust": 96.41316976352475,
+      "counts": {
+        "casts": 45000,
+        "hits": 26158,
+        "crits": 1441,
+        "misses": 17401
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          109069166,
+          70905875,
+          95803958
+        ],
+        "rust_kernel_ns": [
+          3802625,
+          3608958,
+          4577667
+        ],
+        "go_process_ns": [
+          252473792,
+          308847125,
+          366839875
+        ],
+        "rust_process_ns": [
+          11714917,
+          11446583,
+          11984333
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 95803958,
+        "rust_kernel_ns": 3802625,
+        "go_process_ns": 308847125,
+        "rust_process_ns": 11714917
+      },
+      "prepared_kernel_speedup": 25.19416403142566
+    },
+    {
+      "id": "hit-cap-60",
+      "seed": 42,
+      "passed": true,
+      "differences": [],
+      "dps_go": 155.6333938495903,
+      "dps_rust": 155.6333938495904,
+      "counts": {
+        "casts": 45000,
+        "hits": 42174,
+        "crits": 2352,
+        "misses": 474
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          204414667,
+          72964958,
+          67331167
+        ],
+        "rust_kernel_ns": [
+          7027459,
+          3413417,
+          3268334
+        ],
+        "go_process_ns": [
+          660333125,
+          257961667,
+          258027875
+        ],
+        "rust_process_ns": [
+          29035875,
+          13213125,
+          15715917
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 72964958,
+        "rust_kernel_ns": 3413417,
+        "go_process_ns": 258027875,
+        "rust_process_ns": 15715917
+      },
+      "prepared_kernel_speedup": 21.375928578313168
+    },
+    {
+      "id": "same-level-60",
+      "seed": 42,
+      "passed": true,
+      "differences": [],
+      "dps_go": 155.6333938495903,
+      "dps_rust": 155.6333938495904,
+      "counts": {
+        "casts": 45000,
+        "hits": 42174,
+        "crits": 2352,
+        "misses": 474
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          66132000,
+          60295333,
+          77186459
+        ],
+        "rust_kernel_ns": [
+          3790584,
+          3284042,
+          3286750
+        ],
+        "go_process_ns": [
+          309339708,
+          240334708,
+          308648583
+        ],
+        "rust_process_ns": [
+          12161250,
+          12631292,
+          12585125
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 66132000,
+        "rust_kernel_ns": 3286750,
+        "go_process_ns": 308648583,
+        "rust_process_ns": 12585125
+      },
+      "prepared_kernel_speedup": 20.12078801247433
+    },
+    {
+      "id": "travel-boundary-3",
+      "seed": 42,
+      "passed": true,
+      "differences": [],
+      "dps_go": 0,
+      "dps_rust": 0.0,
+      "counts": {
+        "casts": 3000,
+        "hits": 2383,
+        "crits": 131,
+        "misses": 486
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          24136917,
+          37379625,
+          62103208
+        ],
+        "rust_kernel_ns": [
+          1013500,
+          1583792,
+          2632708
+        ],
+        "go_process_ns": [
+          192103250,
+          252119708,
+          309183459
+        ],
+        "rust_process_ns": [
+          13902375,
+          13169000,
+          11421958
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 37379625,
+        "rust_kernel_ns": 1583792,
+        "go_process_ns": 252119708,
+        "rust_process_ns": 13169000
+      },
+      "prepared_kernel_speedup": 23.601347272874214
+    },
+    {
+      "id": "zero-travel-boundary-3",
+      "seed": 42,
+      "passed": true,
+      "differences": [],
+      "dps_go": 161.60514580965213,
+      "dps_rust": 161.6051458096528,
+      "counts": {
+        "casts": 3000,
+        "hits": 2383,
+        "crits": 131,
+        "misses": 486
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          42992584,
+          25254333,
+          31427375
+        ],
+        "rust_kernel_ns": [
+          1102084,
+          1077959,
+          1145667
+        ],
+        "go_process_ns": [
+          323970292,
+          188952042,
+          244877583
+        ],
+        "rust_process_ns": [
+          12668250,
+          7366250,
+          9907500
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 31427375,
+        "rust_kernel_ns": 1102084,
+        "go_process_ns": 244877583,
+        "rust_process_ns": 9907500
+      },
+      "prepared_kernel_speedup": 28.516315453268536
+    },
+    {
+      "id": "staff-60",
+      "seed": 42,
+      "passed": true,
+      "differences": [],
+      "dps_go": 153.91830819301364,
+      "dps_rust": 153.918308193014,
+      "counts": {
+        "casts": 51000,
+        "hits": 41376,
+        "crits": 2494,
+        "misses": 7130
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          96007458,
+          70322791,
+          58551458
+        ],
+        "rust_kernel_ns": [
+          4646750,
+          5466583,
+          4109208
+        ],
+        "go_process_ns": [
+          299514583,
+          276711542,
+          242809292
+        ],
+        "rust_process_ns": [
+          13960500,
+          13273625,
+          11844417
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 70322791,
+        "rust_kernel_ns": 4646750,
+        "go_process_ns": 276711542,
+        "rust_process_ns": 13273625
+      },
+      "prepared_kernel_speedup": 15.133758218109431
+    },
+    {
+      "id": "haste-60",
+      "seed": 42,
+      "passed": true,
+      "differences": [],
+      "dps_go": 144.35438008289634,
+      "dps_rust": 144.35438008289597,
+      "counts": {
+        "casts": 48000,
+        "hits": 39119,
+        "crits": 2182,
+        "misses": 6699
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          121269083,
+          95012875,
+          76697584
+        ],
+        "rust_kernel_ns": [
+          8529750,
+          9692208,
+          4880916
+        ],
+        "go_process_ns": [
+          313155083,
+          374212708,
+          263357917
+        ],
+        "rust_process_ns": [
+          23415541,
+          27551167,
+          13006250
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 95012875,
+        "rust_kernel_ns": 8529750,
+        "go_process_ns": 313155083,
+        "rust_process_ns": 23415541
+      },
+      "prepared_kernel_speedup": 11.138998798323515
+    },
+    {
+      "id": "untalented-60",
+      "seed": 173,
+      "passed": true,
+      "differences": [],
+      "dps_go": 104.24085238946506,
+      "dps_rust": 104.24085238946505,
+      "counts": {
+        "casts": 39000,
+        "hits": 30732,
+        "crits": 1699,
+        "misses": 6569
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          52183166,
+          70511584,
+          52793500
+        ],
+        "rust_kernel_ns": [
+          3973791,
+          3441333,
+          3957708
+        ],
+        "go_process_ns": [
+          204885916,
+          315990417,
+          203248750
+        ],
+        "rust_process_ns": [
+          14977166,
+          10327875,
+          10853750
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 52793500,
+        "rust_kernel_ns": 3957708,
+        "go_process_ns": 204885916,
+        "rust_process_ns": 10853750
+      },
+      "prepared_kernel_speedup": 13.33941260952046
+    },
+    {
+      "id": "static-frost-60",
+      "seed": 173,
+      "passed": true,
+      "differences": [],
+      "dps_go": 135.31012027684926,
+      "dps_rust": 135.31012027684872,
+      "counts": {
+        "casts": 45000,
+        "hits": 36706,
+        "crits": 2026,
+        "misses": 6268
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          61985250,
+          113119917,
+          72541750
+        ],
+        "rust_kernel_ns": [
+          8178667,
+          9846583,
+          4537792
+        ],
+        "go_process_ns": [
+          265131875,
+          387132833,
+          314314375
+        ],
+        "rust_process_ns": [
+          26719250,
+          26963792,
+          14555833
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 72541750,
+        "rust_kernel_ns": 8178667,
+        "go_process_ns": 314314375,
+        "rust_process_ns": 26719250
+      },
+      "prepared_kernel_speedup": 8.86962997759904
+    },
+    {
+      "id": "static-frost-120-oom",
+      "seed": 173,
+      "passed": true,
+      "differences": [],
+      "dps_go": 85.71320818490625,
+      "dps_rust": 85.71320818490634,
+      "counts": {
+        "casts": 57000,
+        "hits": 46525,
+        "crits": 2555,
+        "misses": 7920
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          245238291,
+          151515917,
+          151179000
+        ],
+        "rust_kernel_ns": [
+          9757291,
+          5534042,
+          6997958
+        ],
+        "go_process_ns": [
+          475980334,
+          296447208,
+          317279500
+        ],
+        "rust_process_ns": [
+          23510625,
+          12913125,
+          24315083
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 151515917,
+        "rust_kernel_ns": 6997958,
+        "go_process_ns": 317279500,
+        "rust_process_ns": 23510625
+      },
+      "prepared_kernel_speedup": 21.651447036406907
+    },
+    {
+      "id": "meditation-300-oom",
+      "seed": 173,
+      "passed": true,
+      "differences": [],
+      "dps_go": 63.14373030608052,
+      "dps_rust": 63.14373030608057,
+      "counts": {
+        "casts": 105000,
+        "hits": 85630,
+        "crits": 4738,
+        "misses": 14632
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          355917792,
+          300661958,
+          338400500
+        ],
+        "rust_kernel_ns": [
+          21186791,
+          24372750,
+          12207125
+        ],
+        "go_process_ns": [
+          490457292,
+          533127000,
+          610285708
+        ],
+        "rust_process_ns": [
+          42242334,
+          39887084,
+          23216792
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 338400500,
+        "rust_kernel_ns": 21186791,
+        "go_process_ns": 533127000,
+        "rust_process_ns": 39887084
+      },
+      "prepared_kernel_speedup": 15.97223949582549
+    },
+    {
+      "id": "resistance-60",
+      "seed": 173,
+      "passed": true,
+      "differences": [],
+      "dps_go": 96.6461317064241,
+      "dps_rust": 96.6461317064242,
+      "counts": {
+        "casts": 45000,
+        "hits": 26242,
+        "crits": 1434,
+        "misses": 17324
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          90370291,
+          60767500,
+          58710583
+        ],
+        "rust_kernel_ns": [
+          8410417,
+          6647959,
+          4343875
+        ],
+        "go_process_ns": [
+          249258334,
+          263877666,
+          197751083
+        ],
+        "rust_process_ns": [
+          26135750,
+          12103417,
+          13017125
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 60767500,
+        "rust_kernel_ns": 6647959,
+        "go_process_ns": 249258334,
+        "rust_process_ns": 13017125
+      },
+      "prepared_kernel_speedup": 9.140775386851814
+    },
+    {
+      "id": "hit-cap-60",
+      "seed": 173,
+      "passed": true,
+      "differences": [],
+      "dps_go": 155.62051461575342,
+      "dps_rust": 155.620514615753,
+      "counts": {
+        "casts": 45000,
+        "hits": 42182,
+        "crits": 2346,
+        "misses": 472
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          61081875,
+          50675542,
+          80913917
+        ],
+        "rust_kernel_ns": [
+          3988584,
+          4049375,
+          3759083
+        ],
+        "go_process_ns": [
+          249567750,
+          195220042,
+          257376458
+        ],
+        "rust_process_ns": [
+          13992917,
+          23461042,
+          24897667
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 61081875,
+        "rust_kernel_ns": 3988584,
+        "go_process_ns": 249567750,
+        "rust_process_ns": 23461042
+      },
+      "prepared_kernel_speedup": 15.314175406610467
+    },
+    {
+      "id": "same-level-60",
+      "seed": 173,
+      "passed": true,
+      "differences": [],
+      "dps_go": 155.62051461575342,
+      "dps_rust": 155.620514615753,
+      "counts": {
+        "casts": 45000,
+        "hits": 42182,
+        "crits": 2346,
+        "misses": 472
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          49536916,
+          92860666,
+          69687458
+        ],
+        "rust_kernel_ns": [
+          4379708,
+          5015167,
+          3455291
+        ],
+        "go_process_ns": [
+          242021250,
+          309973125,
+          310271542
+        ],
+        "rust_process_ns": [
+          15584458,
+          13576542,
+          11841875
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 69687458,
+        "rust_kernel_ns": 4379708,
+        "go_process_ns": 309973125,
+        "rust_process_ns": 13576542
+      },
+      "prepared_kernel_speedup": 15.91143930143288
+    },
+    {
+      "id": "travel-boundary-3",
+      "seed": 173,
+      "passed": true,
+      "differences": [],
+      "dps_go": 0,
+      "dps_rust": 0.0,
+      "counts": {
+        "casts": 3000,
+        "hits": 2387,
+        "crits": 127,
+        "misses": 486
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          22989458,
+          30101083,
+          24953167
+        ],
+        "rust_kernel_ns": [
+          1085167,
+          1089083,
+          1204750
+        ],
+        "go_process_ns": [
+          241186167,
+          248034500,
+          192425500
+        ],
+        "rust_process_ns": [
+          6999750,
+          9754000,
+          6920292
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 24953167,
+        "rust_kernel_ns": 1089083,
+        "go_process_ns": 241186167,
+        "rust_process_ns": 6999750
+      },
+      "prepared_kernel_speedup": 22.91208934488923
+    },
+    {
+      "id": "zero-travel-boundary-3",
+      "seed": 173,
+      "passed": true,
+      "differences": [],
+      "dps_go": 161.5005674290983,
+      "dps_rust": 161.50056742909845,
+      "counts": {
+        "casts": 3000,
+        "hits": 2387,
+        "crits": 127,
+        "misses": 486
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          51182375,
+          25784958,
+          32677291
+        ],
+        "rust_kernel_ns": [
+          1160750,
+          1149292,
+          1127375
+        ],
+        "go_process_ns": [
+          305071625,
+          195444125,
+          238255250
+        ],
+        "rust_process_ns": [
+          6490000,
+          5715958,
+          9454958
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 32677291,
+        "rust_kernel_ns": 1149292,
+        "go_process_ns": 238255250,
+        "rust_process_ns": 6490000
+      },
+      "prepared_kernel_speedup": 28.432540207362447
+    },
+    {
+      "id": "staff-60",
+      "seed": 173,
+      "passed": true,
+      "differences": [],
+      "dps_go": 153.9574558342577,
+      "dps_rust": 153.95745583425824,
+      "counts": {
+        "casts": 51000,
+        "hits": 41417,
+        "crits": 2479,
+        "misses": 7104
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          66548750,
+          69706334,
+          89770833
+        ],
+        "rust_kernel_ns": [
+          3672625,
+          3916541,
+          3810250
+        ],
+        "go_process_ns": [
+          301490667,
+          256887667,
+          244410083
+        ],
+        "rust_process_ns": [
+          13597458,
+          10355792,
+          15515458
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 69706334,
+        "rust_kernel_ns": 3810250,
+        "go_process_ns": 256887667,
+        "rust_process_ns": 13597458
+      },
+      "prepared_kernel_speedup": 18.294425300177153
+    },
+    {
+      "id": "haste-60",
+      "seed": 173,
+      "passed": true,
+      "differences": [],
+      "dps_go": 144.3929666356528,
+      "dps_rust": 144.39296663565284,
+      "counts": {
+        "casts": 48000,
+        "hits": 39158,
+        "crits": 2168,
+        "misses": 6674
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          155258041,
+          96201916,
+          53680042
+        ],
+        "rust_kernel_ns": [
+          3630917,
+          7729083,
+          3867750
+        ],
+        "go_process_ns": [
+          444390625,
+          250983583,
+          261926458
+        ],
+        "rust_process_ns": [
+          13917875,
+          25515833,
+          11078083
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 96201916,
+        "rust_kernel_ns": 3867750,
+        "go_process_ns": 261926458,
+        "rust_process_ns": 13917875
+      },
+      "prepared_kernel_speedup": 24.872837179238577
+    },
+    {
+      "id": "untalented-60",
+      "seed": 9001,
+      "passed": true,
+      "differences": [],
+      "dps_go": 103.68093930506929,
+      "dps_rust": 103.68093930506896,
+      "counts": {
+        "casts": 39000,
+        "hits": 30617,
+        "crits": 1662,
+        "misses": 6721
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          58201667,
+          76665917,
+          53649833
+        ],
+        "rust_kernel_ns": [
+          3767458,
+          3627583,
+          3508834
+        ],
+        "go_process_ns": [
+          248529208,
+          250364708,
+          199632625
+        ],
+        "rust_process_ns": [
+          12472750,
+          11858708,
+          12497667
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 58201667,
+        "rust_kernel_ns": 3627583,
+        "go_process_ns": 248529208,
+        "rust_process_ns": 12472750
+      },
+      "prepared_kernel_speedup": 16.04419995352277
+    },
+    {
+      "id": "static-frost-60",
+      "seed": 9001,
+      "passed": true,
+      "differences": [],
+      "dps_go": 134.83518573475388,
+      "dps_rust": 134.83518573475362,
+      "counts": {
+        "casts": 45000,
+        "hits": 36589,
+        "crits": 2018,
+        "misses": 6393
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          57145541,
+          60359666,
+          64525833
+        ],
+        "rust_kernel_ns": [
+          3637000,
+          3691250,
+          3850125
+        ],
+        "go_process_ns": [
+          242925125,
+          244634458,
+          190433167
+        ],
+        "rust_process_ns": [
+          14546791,
+          11599750,
+          12290125
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 60359666,
+        "rust_kernel_ns": 3691250,
+        "go_process_ns": 242925125,
+        "rust_process_ns": 12290125
+      },
+      "prepared_kernel_speedup": 16.352093735184557
+    },
+    {
+      "id": "static-frost-120-oom",
+      "seed": 9001,
+      "passed": true,
+      "differences": [],
+      "dps_go": 85.30516351752892,
+      "dps_rust": 85.30516351752864,
+      "counts": {
+        "casts": 57000,
+        "hits": 46400,
+        "crits": 2502,
+        "misses": 8098
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          156624375,
+          130663000,
+          171842583
+        ],
+        "rust_kernel_ns": [
+          5765209,
+          5709958,
+          7477500
+        ],
+        "go_process_ns": [
+          358117625,
+          322539625,
+          312383292
+        ],
+        "rust_process_ns": [
+          10262542,
+          17013250,
+          21787709
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 156624375,
+        "rust_kernel_ns": 5765209,
+        "go_process_ns": 322539625,
+        "rust_process_ns": 17013250
+      },
+      "prepared_kernel_speedup": 27.16716341072804
+    },
+    {
+      "id": "meditation-300-oom",
+      "seed": 9001,
+      "passed": true,
+      "differences": [],
+      "dps_go": 62.958661366756004,
+      "dps_rust": 62.95866136675624,
+      "counts": {
+        "casts": 105000,
+        "hits": 85500,
+        "crits": 4665,
+        "misses": 14835
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          331612625,
+          317873500,
+          323223584
+        ],
+        "rust_kernel_ns": [
+          15850209,
+          15798333,
+          16919584
+        ],
+        "go_process_ns": [
+          484696416,
+          480603417,
+          479520583
+        ],
+        "rust_process_ns": [
+          22598166,
+          44320916,
+          23575666
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 323223584,
+        "rust_kernel_ns": 15850209,
+        "go_process_ns": 480603417,
+        "rust_process_ns": 23575666
+      },
+      "prepared_kernel_speedup": 20.39238624550629
+    },
+    {
+      "id": "resistance-60",
+      "seed": 9001,
+      "passed": true,
+      "differences": [],
+      "dps_go": 95.70484167091851,
+      "dps_rust": 95.70484167091875,
+      "counts": {
+        "casts": 45000,
+        "hits": 26024,
+        "crits": 1405,
+        "misses": 17571
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          53828125,
+          70751333,
+          58800291
+        ],
+        "rust_kernel_ns": [
+          4013833,
+          3988334,
+          4097917
+        ],
+        "go_process_ns": [
+          202468375,
+          250283042,
+          188315292
+        ],
+        "rust_process_ns": [
+          11441083,
+          11012083,
+          12358709
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 58800291,
+        "rust_kernel_ns": 4013833,
+        "go_process_ns": 202468375,
+        "rust_process_ns": 11441083
+      },
+      "prepared_kernel_speedup": 14.649411422946596
+    },
+    {
+      "id": "hit-cap-60",
+      "seed": 9001,
+      "passed": true,
+      "differences": [],
+      "dps_go": 155.3729559866781,
+      "dps_rust": 155.37295598667777,
+      "counts": {
+        "casts": 45000,
+        "hits": 42241,
+        "crits": 2285,
+        "misses": 474
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          51950291,
+          75461750,
+          58463292
+        ],
+        "rust_kernel_ns": [
+          4033083,
+          3969084,
+          3822167
+        ],
+        "go_process_ns": [
+          251484750,
+          247867500,
+          200302459
+        ],
+        "rust_process_ns": [
+          12280459,
+          14478084,
+          12504250
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 58463292,
+        "rust_kernel_ns": 3969084,
+        "go_process_ns": 247867500,
+        "rust_process_ns": 12504250
+      },
+      "prepared_kernel_speedup": 14.72966860867646
+    },
+    {
+      "id": "same-level-60",
+      "seed": 9001,
+      "passed": true,
+      "differences": [],
+      "dps_go": 155.3729559866781,
+      "dps_rust": 155.37295598667777,
+      "counts": {
+        "casts": 45000,
+        "hits": 42241,
+        "crits": 2285,
+        "misses": 474
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          81994000,
+          61699292,
+          128999000
+        ],
+        "rust_kernel_ns": [
+          3564875,
+          3650625,
+          8733250
+        ],
+        "go_process_ns": [
+          324383542,
+          190300417,
+          370430125
+        ],
+        "rust_process_ns": [
+          12441459,
+          12788042,
+          22848542
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 81994000,
+        "rust_kernel_ns": 3650625,
+        "go_process_ns": 324383542,
+        "rust_process_ns": 12788042
+      },
+      "prepared_kernel_speedup": 22.46026365348399
+    },
+    {
+      "id": "travel-boundary-3",
+      "seed": 9001,
+      "passed": true,
+      "differences": [],
+      "dps_go": 0,
+      "dps_rust": 0.0,
+      "counts": {
+        "casts": 3000,
+        "hits": 2321,
+        "crits": 145,
+        "misses": 534
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          53598958,
+          46184000,
+          34478875
+        ],
+        "rust_kernel_ns": [
+          2522958,
+          1026667,
+          1025250
+        ],
+        "go_process_ns": [
+          313748416,
+          322989958,
+          285990042
+        ],
+        "rust_process_ns": [
+          16582750,
+          9599875,
+          14810917
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 46184000,
+        "rust_kernel_ns": 1026667,
+        "go_process_ns": 313748416,
+        "rust_process_ns": 14810917
+      },
+      "prepared_kernel_speedup": 44.984400979090594
+    },
+    {
+      "id": "zero-travel-boundary-3",
+      "seed": 9001,
+      "passed": true,
+      "differences": [],
+      "dps_go": 158.97440239288585,
+      "dps_rust": 158.97440239288605,
+      "counts": {
+        "casts": 3000,
+        "hits": 2321,
+        "crits": 145,
+        "misses": 534
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          25090792,
+          21389375,
+          33892833
+        ],
+        "rust_kernel_ns": [
+          2386792,
+          1739334,
+          1391459
+        ],
+        "go_process_ns": [
+          193894958,
+          246418666,
+          197953333
+        ],
+        "rust_process_ns": [
+          15594875,
+          12942041,
+          8266667
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 25090792,
+        "rust_kernel_ns": 1739334,
+        "go_process_ns": 197953333,
+        "rust_process_ns": 12942041
+      },
+      "prepared_kernel_speedup": 14.425516893247645
+    },
+    {
+      "id": "staff-60",
+      "seed": 9001,
+      "passed": true,
+      "differences": [],
+      "dps_go": 153.27577500659856,
+      "dps_rust": 153.27577500659817,
+      "counts": {
+        "casts": 51000,
+        "hits": 41312,
+        "crits": 2435,
+        "misses": 7253
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          69541125,
+          72315792,
+          69823167
+        ],
+        "rust_kernel_ns": [
+          3922541,
+          3936708,
+          5406375
+        ],
+        "go_process_ns": [
+          241732958,
+          308964333,
+          252311125
+        ],
+        "rust_process_ns": [
+          19814166,
+          15492125,
+          23527084
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 69823167,
+        "rust_kernel_ns": 3936708,
+        "go_process_ns": 252311125,
+        "rust_process_ns": 19814166
+      },
+      "prepared_kernel_speedup": 17.73643536680902
+    },
+    {
+      "id": "haste-60",
+      "seed": 9001,
+      "passed": true,
+      "differences": [],
+      "dps_go": 143.75786249523898,
+      "dps_rust": 143.75786249523892,
+      "counts": {
+        "casts": 48000,
+        "hits": 39031,
+        "crits": 2141,
+        "misses": 6828
+      },
+      "timing_samples": {
+        "go_kernel_ns": [
+          103766917,
+          61188334,
+          124917041
+        ],
+        "rust_kernel_ns": [
+          9508334,
+          4901125,
+          8672375
+        ],
+        "go_process_ns": [
+          351891250,
+          242951458,
+          386905542
+        ],
+        "rust_process_ns": [
+          27357666,
+          18950125,
+          25842000
+        ]
+      },
+      "timing_medians": {
+        "go_kernel_ns": 103766917,
+        "rust_kernel_ns": 8672375,
+        "go_process_ns": 351891250,
+        "rust_process_ns": 25842000
+      },
+      "prepared_kernel_speedup": 11.965224866314013
+    }
+  ]
+}
