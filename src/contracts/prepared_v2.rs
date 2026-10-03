@@ -577,11 +577,12 @@ pub enum Effect {
         health_fraction: f64,
         delay_ns: i64,
     },
-    /// The Troll racial Berserking: a major cooldown whose aura multiplies cast speed. Its
-    /// attack speed share has no effect in scope, where player auto attacks are unrepresented.
+    /// The Troll racial Berserking: a major cooldown whose aura multiplies attack speed, then
+    /// cast speed.
     Berserking {
         spell_id: i32,
         aura: String,
+        attack_speed_multiplier: f64,
         cast_speed_multiplier: f64,
     },
     /// The Orc racial Blood Fury: a major cooldown whose aura multiplies stats through Go's
@@ -847,12 +848,15 @@ pub enum Effect {
         dismissed_log: String,
         reason: String,
     },
-    /// The Orc racial Shatter Curse: a survival cooldown whose aura lowers the player's
-    /// spell damage taken, which has no effect in scope. Go never autocasts it at the
-    /// default defensive health threshold; configured timings still cast it.
+    /// The Orc racial Shatter Curse: a survival cooldown whose aura multiplies the player's
+    /// damage taken of the named schools, which only the player's own spells deal in scope.
+    /// Go never autocasts it at the default defensive health threshold; configured timings
+    /// still cast it.
     ShatterCurse {
         spell_id: i32,
         aura: String,
+        school_damage_taken_multiplier: f64,
+        schools: Vec<String>,
     },
     /// The Dwarf racial Stoneform: a survival cooldown whose aura lowers the player's
     /// physical damage taken, which has no effect in scope. Go never autocasts it at the

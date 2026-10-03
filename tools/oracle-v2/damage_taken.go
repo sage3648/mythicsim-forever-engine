@@ -31,10 +31,6 @@ func selfAttackTable(character *core.Character, unrepresented *[]string) AttackT
 // consumes.go newBasicExplosiveSpellConfig for the Goblin Sapper Charge: a rolled Fire hit on
 // every target, scaled by the AoE cap, dealt at once, then a second roll that hits the player.
 func goblinSapperEffect(character *core.Character, unrepresented *[]string) map[string]any {
-	// Shatter Curse changes the damage the player takes, which the runtime holds fixed.
-	if character.GetAura("Shatter Curse") != nil {
-		*unrepresented = append(*unrepresented, "Shatter Curse changes the damage the sapper deals to the player")
-	}
 	self := character.GetSpell(core.GoblinSapperActionID.WithTag(1))
 	if self == nil {
 		*unrepresented = append(*unrepresented, fmt.Sprintf("Goblin Sapper Charge %s has no self damage spell", core.GoblinSapperActionID))

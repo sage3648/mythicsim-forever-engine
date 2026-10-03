@@ -46,6 +46,18 @@ pub(crate) enum AuraBehavior<K> {
     },
     /// Go racials.go `applyEureka`'s aura.
     Eureka,
+    /// Go `Aura.AttachMultiplyAttackSpeed` followed by `AttachMultiplyCastSpeed`, as Troll
+    /// Berserking attaches them.
+    MultiplyAttackAndCastSpeed {
+        attack: f64,
+        cast: f64,
+    },
+    /// Go `AttachMultiplicativePseudoStatBuff` on the player's damage taken of each school, as
+    /// Orc Shatter Curse attaches it.
+    MultiplySelfDamageTaken {
+        multiplier: f64,
+        schools: [bool; 8],
+    },
     /// Go `Aura.AttachMultiplyCastSpeed`.
     MultiplyCastSpeed(f64),
     /// Go `MultiplyManaRegenSpeed` on gain and its reciprocal on expire, as racials.go
@@ -439,6 +451,14 @@ impl<A: Agent> Fight<A> {
             AuraBehavior::Dot(dot) => self.dot_on_gain(dot),
             AuraBehavior::Eureka => self.eureka_gain(),
             AuraBehavior::MultiplyCastSpeed(multiplier) => self.multiply_cast_speed(multiplier),
+            AuraBehavior::MultiplyAttackAndCastSpeed { attack, cast } => {
+                self.multiply_attack_speed(attack);
+                self.multiply_cast_speed(cast);
+            }
+            AuraBehavior::MultiplySelfDamageTaken {
+                multiplier,
+                schools,
+            } => self.multiply_self_damage_taken(multiplier, schools, false),
             AuraBehavior::MultiplyManaRegenSpeed(multiplier) => {
                 self.multiply_mana_regen_speed(multiplier)
             }
@@ -476,6 +496,14 @@ impl<A: Agent> Fight<A> {
             AuraBehavior::MultiplyCastSpeed(multiplier) => {
                 self.multiply_cast_speed(1.0 / multiplier)
             }
+            AuraBehavior::MultiplyAttackAndCastSpeed { attack, cast } => {
+                self.multiply_attack_speed(1.0 / attack);
+                self.multiply_cast_speed(1.0 / cast);
+            }
+            AuraBehavior::MultiplySelfDamageTaken {
+                multiplier,
+                schools,
+            } => self.multiply_self_damage_taken(multiplier, schools, true),
             AuraBehavior::WindfuryProc { bit } => {
                 self.stat_mask &= !bit;
                 self.player.powers = self.stat_combos[self.stat_mask as usize];

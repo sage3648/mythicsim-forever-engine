@@ -106,6 +106,28 @@ impl<A: Agent> Fight<A> {
             .expect("a spell that hits the player has the player's own attack table")
     }
 
+    /// Go `AttachMultiplicativePseudoStatBuff` on the player's school damage taken: multiply on
+    /// gain, divide on expiry. Without a spell that hits the player nothing reads it.
+    pub(crate) fn multiply_self_damage_taken(
+        &mut self,
+        multiplier: f64,
+        schools: [bool; 8],
+        undo: bool,
+    ) {
+        let Some(target) = self.self_target.as_mut() else {
+            return;
+        };
+        for (index, applies) in schools.into_iter().enumerate() {
+            if applies {
+                if undo {
+                    target.school_damage_taken_multiplier[index] /= multiplier;
+                } else {
+                    target.school_damage_taken_multiplier[index] *= multiplier;
+                }
+            }
+        }
+    }
+
     /// Go `CalcDamage` of a magic spell on the player with `OutcomeMagicHitAndCrit`, or with
     /// `OutcomeMagicHit` when it cannot crit.
     pub(crate) fn calc_damage_on_player(
