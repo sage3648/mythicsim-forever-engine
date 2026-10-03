@@ -4,3 +4,4 @@ mod mage;
 mod priest;
 mod shaman;
 mod warlock;
+mod warrior;

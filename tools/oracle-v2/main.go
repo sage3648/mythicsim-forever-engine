@@ -305,7 +305,8 @@ type Cost struct {
 	FlatModifier            int32   `json:"flat_modifier"`
 	PercentModifier         float64 `json:"percent_modifier"`
 	AdditivePercentModifier float64 `json:"additive_percent_modifier"`
-	// energy.go EnergyCost.Refund: the share of the cost a missed strike gives back.
+	// energy.go EnergyCost.Refund and rage.go RageCost.Refund: the share of the cost a missed
+	// strike gives back.
 	Refund float64 `json:"refund,omitempty"`
 }
 
@@ -665,12 +666,17 @@ type Melee struct {
 	DefenderBonusAttackPower      float64 `json:"defender_bonus_attack_power"`
 	DefenderBonusPhysicalTaken    float64 `json:"defender_bonus_physical_damage_taken"`
 	DefenderReducedPhysicalHitPct float64 `json:"defender_reduced_physical_hit_taken"`
+
+	// Go attack.go swing: with a replacer set, the rotation runs before every main hand swing.
+	ReplaceMainHandSwing bool `json:"replace_main_hand_swing,omitempty"`
 }
 
 func exportMelee(character *core.Character, target *core.Unit, table *core.AttackTable, unrepresented *[]string) Melee {
 	aa := &character.AutoAttacks
 	mh := privateField(aa, "mh")
-	if aa.AutoSwingMelee && !mh.FieldByName("replaceSwing").IsNil() {
+	// A class that replaces main hand swings describes the replacement in its effects.
+	replaced := aa.AutoSwingMelee && !mh.FieldByName("replaceSwing").IsNil()
+	if replaced && character.Class != proto.Class_ClassWarrior {
 		*unrepresented = append(*unrepresented, "main hand swings can be replaced")
 	}
 	if aa.AutoSwingRanged {
@@ -696,7 +702,7 @@ func exportMelee(character *core.Character, target *core.Unit, table *core.Attac
 		DefenderBlock:        defender.BaseBlockChance + table.BaseBlockChance + target.GetBlockFromRating(),
 		DefenderArmor:        target.Armor(), DefenderBlockReduction: target.BlockDamageReduction(),
 		DefenderBonusAttackPower: defender.BonusAttackPower, DefenderBonusPhysicalTaken: defender.BonusPhysicalDamageTaken,
-		DefenderReducedPhysicalHitPct: defender.ReducedPhysicalHitTakenChance,
+		DefenderReducedPhysicalHitPct: defender.ReducedPhysicalHitTakenChance, ReplaceMainHandSwing: replaced,
 	}
 }
 
@@ -723,6 +729,14 @@ func exportSpell(spell *core.Spell, target *core.Unit, class classExport, timers
 		switch impl := spell.Cost.ResourceCostImpl.(type) {
 		case *core.ManaCost:
 			resource = "mana"
+		case *core.RageCost:
+			resource = "rage"
+			refund = impl.Refund
+			// A refund is credited to the rage bar's refund metrics, the default and the only
+			// one any class passes.
+			if impl.Refund > 0 && impl.RefundMetrics != spell.Unit.RageRefundMetrics {
+				*unrepresented = append(*unrepresented, fmt.Sprintf("spell %s refunds rage to its own metrics", spell.ActionID))
+			}
 		case *core.EnergyCost:
 			resource = "energy"
 			refund = impl.Refund
@@ -937,18 +951,14 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 			"expire_log":   fmt.Sprintf("Lost %s from fading %s.", buffs.FlatString(), aura.ActionID),
 		})
 	}
-	// buffs/drivers.go driveSunderArmor: the raid's Sunder Armor ramps to its maximum stacks, one a
-	// default GCD from the pull, Go literals. Target armor at each stack count is read from
-	// separate reset simulations, since the stacks act through exclusive armor effects.
-	// A stronger permanent member of its exclusive category, such as the raid's Expose Armor,
-	// blocks every activation, which Go still counts as a proc, and the armor never changes.
 	// buffs.go ApplyFixedShoutAura: the party's Battle Shout is up for good, through
 	// ApplyFixedUptimeAura's rolls: a period of its duration and a nanosecond, and a first try a
 	// nanosecond before the pull with a rolled duration. Behind the player's own shout it chains
-	// instead.
+	// instead. A warrior's own shout gains only from its cast, which Rust has no behavior for, so
+	// the gate rejects a rotation that reaches it and the chain never acts.
 	if aura := character.GetAura("Battle Shout (External)"); aura != nil {
 		for _, own := range character.GetAurasWithTag(buffs.BattleShoutCategory) {
-			if own.ActionID.Tag == 0 {
+			if own.ActionID.Tag == 0 && character.Class != proto.Class_ClassWarrior {
 				*unrepresented = append(*unrepresented, "the party's Battle Shout chains behind the player's own")
 			}
 		}
@@ -957,6 +967,11 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 			"tick_length_ns": nanos(aura.Duration + 1), "start_time_ns": int64(-1),
 		})
 	}
+	// buffs/drivers.go driveSunderArmor: the raid's Sunder Armor ramps to its maximum stacks, one a
+	// default GCD from the pull, Go literals. Target armor at each stack count is read from
+	// separate reset simulations, since the stacks act through exclusive armor effects.
+	// A stronger permanent member of its exclusive category, such as the raid's Expose Armor,
+	// blocks every activation, which Go still counts as a proc, and the armor never changes.
 	if aura := target.GetAura("Sunder Armor (External)"); aura != nil {
 		blocked := sunderBlocked(request, aura.Label)
 		for _, other := range target.GetAuras() {
@@ -1020,6 +1035,8 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 		item := spell.ActionID.ItemID
 		consumable := core.GetConsumableByID(item)
 		switch {
+		case consumable.Id != 0 && spell.Flags.Matches(core.SpellFlagPotion) && potionNeedsResources(consumable):
+			effects = append(effects, potionResourceEffect(character, consumable, unrepresented))
 		case consumable.Id != 0 && spell.Flags.Matches(core.SpellFlagPotion): // consumes.go potions
 			gains := []map[string]any{}
 			for _, effectID := range consumable.EffectIds {
@@ -1103,6 +1120,53 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 		}
 	}
 	return effects
+}
+
+// Whether a potion restores something other than mana, or carries a stat buff: the general
+// potion_resource effect describes it, and potion_mana keeps the instant mana potions.
+func potionNeedsResources(consumable core.Consumable) bool {
+	if consumable.BuffDuration > 0 {
+		return true
+	}
+	for _, effectID := range consumable.EffectIds {
+		if resource := core.GetSpellEffectByID(effectID).GetResourceType(); resource != 0 && resource != proto.ResourceType_ResourceTypeMana {
+			return true
+		}
+	}
+	return false
+}
+
+// consumes.go makePotionActivationSpellInternal: the buff aura activates first, then each instant
+// gain rolls under the potion's name, times the alchemist stone multiplier.
+func potionResourceEffect(character *core.Character, consumable core.Consumable, unrepresented *[]string) map[string]any {
+	item := consumable.Id
+	gains := []map[string]any{}
+	for _, effectID := range consumable.EffectIds {
+		e := core.GetSpellEffectByID(effectID)
+		resource := e.GetResourceType()
+		periodic := e.AuraPeriodMs > 0
+		switch {
+		case resource != 0 && !periodic && e.Type == proto.EffectType_EffectTypeResourceGain &&
+			(resource == proto.ResourceType_ResourceTypeMana || resource == proto.ResourceType_ResourceTypeRage):
+			gains = append(gains, map[string]any{"resource": resource.String(), "min": e.MinEffectSize, "spread": e.EffectSpread})
+		case resource != 0 && (periodic || e.Type == proto.EffectType_EffectTypeResourceGain):
+			*unrepresented = append(*unrepresented, fmt.Sprintf("potion %d effect %d restores %s over time or a resource Rust lacks", item, effectID, resource))
+		case stats.FromProtoArray(e.Stats) != (stats.Stats{}):
+			*unrepresented = append(*unrepresented, fmt.Sprintf("potion %d effect %d applies a triggered stat aura", item, effectID))
+		}
+	}
+	effect := map[string]any{
+		"kind": "potion_resource", "item_id": item, "rng_label": consumable.Name, "gains": gains,
+		"stone_multiplier": map[bool]float64{true: 1.4, false: 1.0}[character.HasAlchStone()],
+	}
+	if consumable.BuffDuration > 0 {
+		buffs := consumable.Stats
+		actionID := core.ActionID{ItemID: item}
+		effect["aura"] = consumable.Name
+		effect["gain_log"] = fmt.Sprintf("Gained %s from %s.", buffs.FlatString(), actionID)
+		effect["expire_log"] = fmt.Sprintf("Lost %s from fading %s.", buffs.FlatString(), actionID)
+	}
+	return effect
 }
 
 func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {

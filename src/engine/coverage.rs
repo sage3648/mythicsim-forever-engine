@@ -45,12 +45,16 @@ const COMMON_EFFECTS: &[&str] = &[
     "dragonbreath_chili",
     "energize_on_use",
     "eureka",
+    "extra_attack_proc",
     "fixed_uptime_aura",
     "goblin_sapper",
     "inert_listener",
     "inert_pet",
     "judgement_of_wisdom",
     "potion_mana",
+    "player_damage_taken",
+    "potion_resource",
+    "rage_bar",
     "read_ley_line",
     "shatter_curse",
     "stat_auras",
@@ -62,7 +66,7 @@ const COMMON_EFFECTS: &[&str] = &[
 ];
 
 /// Every class with an implemented gate.
-fn gates() -> [&'static ClassGate; 7] {
+fn gates() -> [&'static ClassGate; 8] {
     [
         &classes::mage::prepared::GATE,
         &classes::druid::prepared::GATE,
@@ -71,6 +75,7 @@ fn gates() -> [&'static ClassGate; 7] {
         &classes::warlock::prepared::GATE,
         &classes::priest::prepared::GATE,
         &classes::rogue::prepared::GATE,
+        &classes::warrior::prepared::GATE,
     ]
 }
 
@@ -97,6 +102,16 @@ fn common_spell_capability(spell: &Spell, prepared: &PreparedV2) -> Option<&'sta
     let item = id.item_id;
     prepared.effects.iter().find_map(|effect| match effect {
         Effect::PotionMana { item_id, .. } if *item_id == item => Some("potion_mana"),
+        Effect::PotionResource { item_id, .. } if *item_id == item => Some("potion_resource"),
+        // Class spells Go registers without a class mask, named by their effect's spell.
+        Effect::Bloodrage { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
+            Some("bloodrage")
+        }
+        Effect::HeroicStrikeQueue { strikes, .. }
+            if id.tag == 1 && strikes.iter().any(|strike| strike.spell_id == id.spell_id) =>
+        {
+            Some("heroic_strike_queue")
+        }
         Effect::ConjuredMana { item_id, .. } if *item_id == item => Some("conjured_mana"),
         Effect::ConjuredEnergy { item_id, .. } if *item_id == item => Some("conjured_energy"),
         Effect::GoblinSapper { item_id, .. } if *item_id == item && id.tag == 0 => {
@@ -156,6 +171,8 @@ fn common_claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         | Effect::ReadLeyLine { aura, .. }
         | Effect::TemporaryStats { aura, .. } => vec![("player", aura)],
         Effect::JudgementOfWisdom { aura, .. } => vec![("target", aura)],
+        Effect::RageBar { aura, .. } => vec![("player", aura)],
+        Effect::ExtraAttackProc { trigger_aura, .. } => vec![("player", trigger_aura)],
         Effect::ChanceOfDeath { aura } => vec![("player", aura)],
         Effect::Crusader { trigger_aura, .. } | Effect::DragonbreathChili { trigger_aura, .. } => {
             vec![("player", trigger_aura)]
@@ -382,6 +399,7 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
     if let Some(rotation) = rotation {
         reasons.extend(unknown_aura_conditions(prepared, rotation));
         reasons.extend(energy_without_bar(prepared, rotation));
+        reasons.extend(rage_without_bar(prepared, rotation));
         let mut reachable = Vec::new();
         let mut registered_prepull = 0;
         // Prepull parsing accepts only casts.
@@ -459,6 +477,32 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
     let mut all = missing;
     all.extend(reasons);
     all
+}
+
+/// Go gives `currentRage` no value on a unit without a rage bar, which drops the term; the
+/// runtime reads the bar, so such a rotation is unsupported.
+fn rage_without_bar(prepared: &PreparedV2, rotation: &Rotation) -> Vec<String> {
+    let has_bar = prepared
+        .effects
+        .iter()
+        .any(|effect| matches!(effect, Effect::RageBar { .. }));
+    if has_bar {
+        return Vec::new();
+    }
+    let mut reasons = Vec::new();
+    for item in &rotation.priority_list {
+        let mut uses = false;
+        if let Some(condition) = &item.condition {
+            condition.visit(&mut |value| uses |= matches!(value, Value::CurrentRage));
+        }
+        if uses {
+            reasons.push(format!(
+                "rotation item {} reads rage, which the player lacks",
+                item.position
+            ));
+        }
+    }
+    reasons
 }
 
 /// Go gives energy and combo point values no value on a unit without an energy bar, which
@@ -580,6 +624,9 @@ fn unknown_aura_conditions(prepared: &PreparedV2, rotation: &Rotation) -> Vec<St
                 }
                 Value::TargetAuraIsActive(id) if !target_known(id) => {
                     unknown.push(("auraIsActive on the target", id.to_string()))
+                }
+                Value::TargetAuraNumStacks(id) if !target_known(id) => {
+                    unknown.push(("auraNumStacks on the target", id.to_string()))
                 }
                 Value::AuraNumStacks(id) if !known(id) => {
                     unknown.push(("auraNumStacks", id.to_string()))

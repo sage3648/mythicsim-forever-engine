@@ -37,6 +37,8 @@ pub(crate) struct WeaponAttack {
     pub(crate) swing_at: i64,
     pub(crate) previous_swing: i64,
     pub(crate) natural_ready_at: i64,
+    /// Go `extraAttacks`: extra attacks still owed after the one pulled to now.
+    pub(crate) extra_attacks: i32,
     cur_swing_speed: f64,
     pub(crate) cur_swing_duration: i64,
     pub(crate) enabled: bool,
@@ -142,6 +144,7 @@ impl<A: Agent> Fight<A> {
             attack.previous_swing = -NEVER_EXPIRES;
             attack.swing_at = NEVER_EXPIRES;
         }
+        autos.mh.extra_attacks = 0;
         autos.mh.update_swing_duration(haste);
         autos.mh.previous_swing = -autos.mh.cur_swing_duration;
         autos.mh.swing_at = 0;
@@ -232,22 +235,56 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    /// Go `WeaponAttack.trySwing` and `swing`.
+    /// Go `WeaponAttack.trySwing` and `swing`. The next swing time is read after the swing,
+    /// which a melee speed change during it can move.
     fn try_swing(&mut self, hand: Hand) -> i64 {
         let now = self.now;
-        let attack = self.autos.hand(hand);
-        if now < attack.swing_at {
-            return attack.swing_at;
+        if now < self.autos.hand(hand).swing_at {
+            return self.autos.hand(hand).swing_at;
         }
+        let mut spell = self
+            .autos
+            .hand(hand)
+            .spell
+            .expect("an enabled weapon attack has a spell");
+        // Go: with a replacer set, the rotation runs first, then the class may replace the
+        // main hand swing, as Heroic Strike does.
+        if hand == Hand::Main && self.config.melee.replace_main_hand_swing {
+            self.react_to_event_now();
+            spell = A::replace_mh_swing(self, spell);
+        }
+        let attack = self.autos.hand(hand);
         attack.previous_swing = attack.swing_at;
         attack.swing_at = now + attack.cur_swing_duration;
+        if attack.extra_attacks > 0 {
+            attack.extra_attacks -= 1;
+            attack.swing_at = now;
+        }
         attack.natural_ready_at = attack.swing_at;
-        let swing_at = attack.swing_at;
-        let spell = attack.spell.expect("an enabled weapon attack has a spell");
         self.cast(spell, Side::Target);
         // Go ReactToEvent(false, true) after the swing.
         self.react_to_event();
-        swing_at
+        self.autos.hand(hand).swing_at
+    }
+
+    /// Go `AutoAttacks.ExtraMHAttacks`: the main hand swings now, then again for each extra
+    /// attack still owed.
+    pub(crate) fn extra_mh_attacks(&mut self, count: i32) {
+        if count <= 0 || !self.autos.melee || !self.autos.mh.enabled {
+            return;
+        }
+        self.autos.mh.extra_attacks += count - 1;
+        // Go ExtraMHAttack.
+        self.autos.mh.swing_at = self.now;
+        self.autos.min_time = self.autos.min_time.min(self.now);
+    }
+
+    /// Go `Unit.ReactToEvent(sim, false, false)`: the rotation runs, then evaluates again now.
+    pub(crate) fn react_to_event_now(&mut self) {
+        self.do_next_action();
+        if self.player.rotation_timer > self.now {
+            self.set_rotation_timer(self.now);
+        }
     }
 
     /// Go `Unit.ReactToEvent(sim, false, true)`.
@@ -417,6 +454,60 @@ impl<A: Agent> Fight<A> {
         } else {
             0.0
         };
+        result
+    }
+
+    /// Go `CalcPeriodicDamage` for a physical dot with `Dot.OutcomeTick`: the periodic attacker
+    /// multiplier, no armor for a bleed, the target's physical modifiers and a tick counter.
+    pub(crate) fn calc_physical_periodic_damage(
+        &mut self,
+        spell: SpellId,
+        target: Side,
+        base_damage: f64,
+    ) -> SpellResult {
+        let dot = self.spells[spell].dot.expect("a periodic spell has a dot");
+        let coefficient = self.dots[dot].bonus_coefficient;
+        let mut base = base_damage;
+        if coefficient > 0.0 {
+            base += coefficient * self.physical_bonus_damage(spell);
+        }
+        let attacker =
+            self.attacker_multiplier(spell, true) * self.dots[dot].periodic_damage_multiplier;
+        let mut result = SpellResult {
+            target,
+            outcome: 0,
+            damage: base * attacker,
+            threat: 0.0,
+        };
+        let after_attacker = result.damage;
+        // Go ResistanceMultiplier: physical dots ignore armor.
+        let after_resistances = result.damage;
+        if !self.spells[spell].flags.ignore_target_modifiers {
+            result.damage += self.config.melee.defender_bonus_physical_damage_taken;
+            result.damage *= self.target_multiplier(spell);
+        }
+        let after_target = result.damage;
+        // Go Dot.OutcomeTick.
+        result.outcome = OUTCOME_HIT;
+        self.spells[spell].metrics[target.index()].ticks += 1;
+        let after_outcome = result.damage;
+        result.damage = result.damage.max(0.0);
+        if self.log.is_some() {
+            self.log_damage_debug(
+                spell,
+                base,
+                [
+                    after_attacker,
+                    after_resistances,
+                    after_target,
+                    after_outcome,
+                ],
+                result.damage,
+            );
+        }
+        let state = &self.spells[spell];
+        result.threat = (result.damage * state.threat_multiplier + state.flat_threat_bonus)
+            * self.config.threat_multiplier;
         result
     }
 

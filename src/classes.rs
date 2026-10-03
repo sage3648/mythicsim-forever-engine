@@ -7,6 +7,7 @@ pub(crate) mod priest;
 pub(crate) mod rogue;
 pub(crate) mod shaman;
 pub(crate) mod warlock;
+pub(crate) mod warrior;
 
 /// Run a prepared v2 input that passed the coverage gate with its class's agent.
 pub(crate) fn run_prepared(
@@ -20,6 +21,7 @@ pub(crate) fn run_prepared(
         "ClassPaladin" => paladin::prepared::run_prepared(prepared),
         "ClassPriest" => priest::prepared::run_prepared(prepared),
         "ClassRogue" => rogue::prepared::run_prepared(prepared),
+        "ClassWarrior" => warrior::prepared::run_prepared(prepared),
         other => Err(format!("class {other} has no fight agent")),
     }
 }

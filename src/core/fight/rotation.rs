@@ -202,6 +202,8 @@ impl<A: Agent> Fight<A> {
             Compiled::GcdIsReady => {
                 self.gcd_ready() || self.gcd_time_to_ready() <= MAX_SPELL_QUEUE_WINDOW
             }
+            // Go `APLValueIsExecutePhase`: the encounter's execute phase is at or below it.
+            Compiled::IsExecutePhase(threshold) => self.execute_phase <= *threshold,
             Compiled::And(values) => values.iter().all(|value| self.get_bool(value)),
             Compiled::Or(values) => values.iter().any(|value| self.get_bool(value)),
             Compiled::Not(value) => !self.get_bool(value),
@@ -268,6 +270,7 @@ impl<A: Agent> Fight<A> {
             }
             Compiled::CurrentMana => self.player.mana,
             Compiled::CurrentEnergy => self.energy_bar().current,
+            Compiled::CurrentRage => self.current_rage(),
             Compiled::MaxEnergy => self.energy_bar().max,
             Compiled::NumberTargets => 1.0,
             // Go `APLValueMath.GetFloat`.
