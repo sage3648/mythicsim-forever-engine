@@ -114,6 +114,14 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `omen_of_clarity` | sim/druid/omen_of_clarity.go | The resolved proc trigger, its cooldown, two procs a minute, Moonkin Form's multipliers and Clearcasting's cost modifier |
 | `natures_grace` | sim/druid/talents_balance.go | Cast speed multiplier, GCD reduction and the spells it reads |
 | `eclipse` | sim/druid/talents_balance.go | Starfire's cast time cut and two charges a Wrath, a Go literal |
+| `stoneform` | sim/core/racials.go | Dwarf survival cooldown; its Physical damage taken change has no effect in scope |
+| `mind_blast`, `shadow_word_death` | sim/priest/mind_blast.go, shadow_word_death.go | Damage rolls on every rank; Early Demise's crit inside the 20% execute phase |
+| `shadow_word_pain`, `devouring_plague`, `mind_flay` | sim/priest/shadow_word_pain.go, devouring_plague.go, talents_shadow.go | Each rank's dot base and Periodic Can Crit; the hit rolls once without a hit count; Devouring Plague heals for its ticks under a tagged action; Mind Flay is a binary channel |
+| `shadowform` | sim/priest/talents_shadow.go | Damage, cost and crit damage modifiers with the spells each names, and the helpful Holy spells that end it |
+| `inner_focus` | sim/priest/talents_discipline.go | Cost cut, crit and its spells, the spells that spend it; the cooldown restarts when it ends |
+| `shadow_weaving` | sim/priest/talents_shadow.go | The resolved proc trigger, its spells and the damage per stack |
+| `dark_sacrifice` | sim/priest/dark_sacrifice.go | Tick base from client data plus Spirit over a divisor; used once the whole gain fits |
+| `inert_pet` | sim/core/pet.go | A registered pet nothing summons: label, unit index, metrics actions and auras, its dismissed stats line and why it is inert |
 
 Human racials are static and already in the prepared stats. High Order Skyborne's cast
 speed and every race's creature slaying are static too. Read Ley Line is not a major
@@ -140,12 +148,18 @@ Invalid and unsupported inputs are deliberately different outcomes.
 | Rotation-reachable spell without a known behavior | Unsupported |
 
 The exporter marks as unrepresented: more than one player or target, health fights,
-tanks, presims, healing models, pets, player auto attacks, a target that swings at a
+tanks, presims, healing models, pets that may act, player auto attacks, a target that swings at a
 unit, item swapping, execute phase callbacks, target AI, caster
 damage callbacks, dynamic damage-taken modifiers, mob type bonuses, non-mana costs,
 unnamed class masks, item cooldowns without an exported effect, cast speed and temporary
 stat listeners, and survival cooldowns that would wait for a nonzero defensive health
 threshold.
+
+A class may describe a registered pet as inert when nothing can summon it, as a priest
+without the Shadowfiend option is. Go still resets and dismisses such a pet each fight,
+logging its stats, and lists it in every action's targets and its owner's metrics, but
+never enables it, so it draws no random number: a pet's swing offset is rolled only for
+enemies, and only enabled units start the encounter.
 
 A target with a configured melee swing that no unit tanks never swings, but Go still
 rolls its opening swing offset at every reset, so the target exports its swing flags
@@ -155,12 +169,17 @@ Rust recomputes Go's starting mana regeneration from the exported components and
 rejects the input as invalid if it disagrees. Further preparation checks will be added
 as the engine consumes more fields.
 
-The rotation subset covers `castSpell`, `autocastOtherCooldowns`, constant-time prepull
-casts, `cmp` with any comparison operator, `and`, `or`, `not`, `const`, `currentMana`,
-`currentManaPercent`, `currentTime`, `remainingTime`, `numberTargets`, `auraIsKnown`,
-`auraIsActive`, `auraNumStacks`, `auraRemainingTime`, `dotIsActive`, `dotRemainingTime`,
-`spellIsKnown`, `spellIsReady` and `spellCastTime`. Action IDs may carry a rank, which Go
-ignores. The exporter records how many prepull actions Go registered; a count that differs
+The rotation subset covers `castSpell`, `autocastOtherCooldowns`, `strictSequence` of
+casts, `channelSpell` with `interruptIf` and `allowRecast`, constant-time prepull casts,
+`cmp` with any comparison operator, `and`, `or`, `not`, `const`, `currentMana`,
+`currentManaPercent`, `currentTime`, `remainingTime`, `numberTargets`, `gcdIsReady`,
+`auraIsKnown`, `auraIsActive`, `auraNumStacks`, `auraRemainingTime`, `dotIsActive`,
+`dotRemainingTime`, `dotTimeToNextTick`, `spellIsKnown`, `spellIsReady`,
+`spellTimeToReady` and `spellCastTime`. Action IDs may carry a rank, which Go ignores. A
+strict sequence controls the rotation as Go's does, including the sequence flag its
+readiness check leaves set and the hook that advances it when a queued cast fires. A
+channel's interrupt condition is evaluated on each tick and each GCD wake, with Go's
+check of whether the rotation would recast the same channel. The exporter records how many prepull actions Go registered; a count that differs
 from the rotation's means a class or item registered its own, which is unsupported. A spell
 or dot the character lacks drops its term, as in Go.
 Constants follow Go parsing,
@@ -169,7 +188,7 @@ does not know is dropped, as in Go; a known spell without a Rust behavior is
 unsupported. For an `auraIsActive` or `auraNumStacks` naming an aura the character
 lacks, the pinned reference drops the term while community fix #622 reads the aura as
 inactive, with no stacks (see [UPSTREAM.md](../UPSTREAM.md#ledger)). Rust compiles every
-condition both ways, with Go's coercion and constant folding, and rejects the rotation
+condition and channel interrupt condition both ways, with Go's coercion and constant folding, and rejects the rotation
 only where the two act differently. Comparisons of constants, which Go keeps, are
 evaluated for that check only.
 
@@ -191,7 +210,10 @@ is the production Balance Druid request. `production-fire` and
 `production-frostfire` are the production application's Fire Missile Barrage and
 Frostfire hybrid requests at application revision 18bbcd47; its Arcane and Frost requests
 are byte-identical to `arcane-reference` and `frost-reference`. `frostfire-resistances`
-gives the target uneven Fire and Frost resistance.
+gives the target uneven Fire and Frost resistance. `production-shadow-priest` is the
+production Shadow Priest request at application revision 18bbcd47; the
+`shadow-priest-*` cases change its rotation to reach a channel without `allowRecast`, a
+channel without an interrupt condition and a strict sequence that gives up control.
 
 The contract tests in
 [tests/classes/mage/prepared_v2.rs](../tests/classes/mage/prepared_v2.rs)

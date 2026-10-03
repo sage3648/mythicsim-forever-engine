@@ -74,6 +74,16 @@ credits it, Omen of Clarity, Nature's Grace and Eclipse match the pinned Go engi
 509.502 DPS, and a [sweep](validation/2026-10-04-balance-druid-sweep.json) across every
 Balance race matches on every supported variant.
 
+The production Shadow Priest build matches too: an Undead priest with a prepull
+Shadowform and Mind Blast, Shadow Word: Pain, Devouring Plague, Shadow Word: Death with
+Early Demise, Mind Flay channels the rotation interrupts, a strict Inner Focus and Mind
+Blast sequence, Shadow Weaving, Dark Sacrifice and the Shadowfiend pet that nothing
+summons, at 613.319 DPS. [Sweeps](validation/2026-10-04-shadow-priest-sweep.json) of the
+request, also [across races](validation/2026-10-04-shadow-priest-race-sweep.json), match
+Go on every supported variant, and so does every race on the application's
+[Shadow Priest race board](validation/2026-10-04-shadow-priest-race-boards.json),
+including the Dwarf with Stoneform.
+
 The application's published race boards, the requests behind every race's production DPS
 for each supported spec, are a real production corpus: all 28 match the pinned Go engine
 in Rust at 10,000 iterations, and every DPS the production engine published equals the

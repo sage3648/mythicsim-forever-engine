@@ -40,6 +40,7 @@ reading the Go reference. They are not effort estimates for other contributors.
 | Production Mage builds and Frostfire Bolt | 2026-10-03 15:34 | 2026-10-03 15:46 | 0 h 12 m | Captured all 29 production reference requests; Arcane, Fire and Frost match Go; Frostfire Bolt and its school rules match on the first comparison; 48 of 48 production Fire and Frostfire sweep variants match |
 | Shared gate, class exporter files and prepull | 2026-10-03 15:46 | 2026-10-03 16:04 | 0 h 18 m | Gate and exporter split by class; prepull casts and eight rotation values; a Frost prepull request matches Go |
 | Balance Druid | 2026-10-03 16:04 | 2026-10-03 16:22 | 0 h 18 m | Druid exporter and agent, spirit regeneration attribution, dynamic spell crit, related dots; the production request matches Go after three fixes; 23 of 24 sweep variants match, 1 rejected for #622 |
+| Shadow Priest | 2026-10-03 16:03 | 2026-10-03 16:55 | 0 h 52 m | Priest exporter and agent, strict sequences, interruptible channels, inert pets, execute phase, Stoneform; the production request matches Go on the first comparison; sweeps match 41 of 48, 7 rejected for #622; all six race board requests match |
 
 ## Notes
 
