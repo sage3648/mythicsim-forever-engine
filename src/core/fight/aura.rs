@@ -58,6 +58,14 @@ pub(crate) enum AuraBehavior<K> {
     },
     /// The Crusader enchant's trigger.
     Crusader,
+    /// The party Windfury Totem's totem aura, whose exclusive effect holds the trigger.
+    WindfuryTotem,
+    /// The party Windfury Totem's trigger.
+    WindfuryTrigger,
+    /// The party Windfury Totem's charges of attack power, which landed autos spend.
+    WindfuryProc {
+        bit: u32,
+    },
     /// Dragonbreath Chili's trigger.
     DragonbreathChili,
     /// The aura of a dot or channel.
@@ -430,6 +438,20 @@ impl<A: Agent> Fight<A> {
             AuraBehavior::MultiplyManaRegenSpeed(multiplier) => {
                 self.multiply_mana_regen_speed(multiplier)
             }
+            AuraBehavior::WindfuryProc { bit } => {
+                self.stat_mask |= bit;
+                self.player.powers = self.stat_combos[self.stat_mask as usize];
+            }
+            AuraBehavior::WindfuryTotem => {
+                let trigger = self
+                    .windfury
+                    .as_ref()
+                    .expect("Windfury Totem is bound")
+                    .trigger;
+                if !self.aura(trigger).active {
+                    self.activate_aura(trigger);
+                }
+            }
             AuraBehavior::TemporaryStats { bit, gain_log, .. } => {
                 if let (Some(line), true) = (gain_log, self.log.is_some()) {
                     let line = self.aura_logs[line].clone();
@@ -449,6 +471,18 @@ impl<A: Agent> Fight<A> {
             AuraBehavior::Eureka => self.eureka_expire(),
             AuraBehavior::MultiplyCastSpeed(multiplier) => {
                 self.multiply_cast_speed(1.0 / multiplier)
+            }
+            AuraBehavior::WindfuryProc { bit } => {
+                self.stat_mask &= !bit;
+                self.player.powers = self.stat_combos[self.stat_mask as usize];
+            }
+            AuraBehavior::WindfuryTotem => {
+                let trigger = self
+                    .windfury
+                    .as_ref()
+                    .expect("Windfury Totem is bound")
+                    .trigger;
+                self.deactivate_aura(trigger);
             }
             AuraBehavior::TemporaryStats {
                 bit, expire_log, ..
@@ -584,6 +618,18 @@ impl<A: Agent> Fight<A> {
                     AuraBehavior::TouchOfTheGrave { chance, delay, .. } if side == Side::Player => {
                         self.touch_of_the_grave_callback(aura, spell, result, chance, delay)
                     }
+                    AuraBehavior::WindfuryTrigger if side == Side::Player => {
+                        self.windfury_trigger(aura, spell, result)
+                    }
+                    AuraBehavior::WindfuryProc { .. } if side == Side::Player => {
+                        let windfury = self.windfury.as_ref().expect("Windfury Totem is bound");
+                        // The charges' own trigger: a landed auto spends one, at once.
+                        if windfury.spend_spells[spell]
+                            && result.outcome & super::OUTCOME_LANDED != 0
+                        {
+                            self.remove_stack(aura);
+                        }
+                    }
                     AuraBehavior::Crusader if side == Side::Player => {
                         self.crusader_callback(aura, spell, result)
                     }
@@ -641,6 +687,35 @@ impl<A: Agent> Fight<A> {
                 result,
             },
         );
+    }
+
+    /// Go `AttachProcTriggerCallback` for the Windfury Totem trigger: landed hits, the
+    /// cooldown, the chance roll; then charges, one fewer when an auto granted them, and an
+    /// extra main hand attack at once.
+    fn windfury_trigger(&mut self, aura: AuraRef, spell: SpellId, result: &SpellResult) {
+        let windfury = self.windfury.clone().expect("Windfury Totem is bound");
+        if !windfury.trigger_spells[spell] || result.outcome & super::OUTCOME_LANDED == 0 {
+            return;
+        }
+        let icd = self.aura(aura).icd;
+        if let Some((timer, _)) = icd {
+            if self.timers[timer] > self.now {
+                return;
+            }
+        }
+        if windfury.trigger_chance != 1.0 && self.random_for_aura(aura) > windfury.trigger_chance {
+            return;
+        }
+        if let Some((timer, duration)) = icd {
+            self.timers[timer] = self.now + duration;
+        }
+        self.activate_aura(windfury.proc_aura);
+        let mut charges = self.aura(windfury.proc_aura).max_stacks;
+        if self.spells[spell].white_hit {
+            charges -= 1;
+        }
+        self.set_stacks(windfury.proc_aura, charges);
+        self.cast(windfury.extra, result.target);
     }
 
     /// Go `AttachProcTriggerCallback` for Crusader: a weapon proc on landed hits that rolls the

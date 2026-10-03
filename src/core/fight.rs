@@ -336,6 +336,8 @@ pub(crate) struct Spell<S> {
     pub(crate) melee_or_ranged_proc: bool,
     /// Go `ProcMaskMeleeOH`: `Spell.IsOH`.
     pub(crate) off_hand_proc: bool,
+    /// Go `ProcMaskMeleeWhiteHit`.
+    pub(crate) white_hit: bool,
     pub(crate) class_spell: Option<String>,
     pub(crate) class_spell_mask: bool,
     pub(crate) missile_speed: f64,
@@ -456,6 +458,19 @@ pub(crate) struct Crusader {
     pub(crate) heal_min: f64,
     pub(crate) heal_max: f64,
     pub(crate) heal_metrics: usize,
+}
+
+/// Go buffs/drivers.go `driveWindfuryTotem`.
+#[derive(Clone, Debug)]
+pub(crate) struct Windfury {
+    pub(crate) totem: AuraRef,
+    pub(crate) period: i64,
+    pub(crate) trigger: AuraRef,
+    pub(crate) trigger_spells: Vec<bool>,
+    pub(crate) trigger_chance: f64,
+    pub(crate) proc_aura: AuraRef,
+    pub(crate) spend_spells: Vec<bool>,
+    pub(crate) extra: SpellId,
 }
 
 /// Go core/consumes.go `registerDragonbreathChili`.
@@ -623,11 +638,14 @@ pub(crate) enum Action {
     Prepull(SpellId),
     /// A tick of the raid's Sunder Armor ramp, with the ticks done so far.
     SunderTick(i32),
+    /// The party Windfury Totem's periodic refresh.
+    WindfuryRefresh,
 }
 
 /// Go `ActionPriority`.
 pub(crate) const PRIORITY_GCD: i32 = 0;
 pub(crate) const PRIORITY_REGEN: i32 = 1;
+pub(crate) const PRIORITY_AUTO: i32 = 2;
 pub(crate) const PRIORITY_DOT: i32 = 3;
 pub(crate) const PRIORITY_PREPULL: i32 = 10;
 /// Go `SpellBatchWindow`.
@@ -690,6 +708,8 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) aura_logs: Vec<String>,
     /// The Crusader enchant, when a weapon carries it.
     pub(crate) crusader: Option<Crusader>,
+    /// The party Windfury Totem.
+    pub(crate) windfury: Option<Windfury>,
     /// Dragonbreath Chili, when the character ate it.
     pub(crate) chili: Option<DragonbreathChili>,
     /// The player's stats for each combination of active stat auras, by bit mask.
@@ -900,11 +920,17 @@ impl<A: Agent> Fight<A> {
             let item = id.item_id;
             let behavior = if let Some(class) = class_spell(exported) {
                 SpellBehavior::Class(class)
-            } else if id.other_id == "OtherActionAttack" && (id.tag == 1 || id.tag == 2) {
-                SpellBehavior::MeleeAuto(if id.tag == 1 {
-                    melee::Hand::Main
-                } else {
+            } else if id.other_id == "OtherActionAttack"
+                && (id.tag == 1
+                    || id.tag == 2
+                    || effects.iter().any(|effect| {
+                        matches!(effect, Effect::WindfuryTotem { extra_attack_spell, .. } if *extra_attack_spell == spells.len())
+                    }))
+            {
+                SpellBehavior::MeleeAuto(if id.tag == 2 {
                     melee::Hand::Off
+                } else {
+                    melee::Hand::Main
                 })
             } else {
                 effects
@@ -1020,6 +1046,10 @@ impl<A: Agent> Fight<A> {
                     .proc_mask
                     .iter()
                     .any(|mask| mask == "ProcMaskSpellDamage"),
+                white_hit: exported
+                    .proc_mask
+                    .iter()
+                    .any(|mask| mask == "ProcMaskMeleeMHAuto" || mask == "ProcMaskMeleeOHAuto"),
                 off_hand_proc: exported
                     .proc_mask
                     .iter()
@@ -1234,6 +1264,27 @@ impl<A: Agent> Fight<A> {
                     _ => None,
                 }) {
                     AuraBehavior::MultiplyManaRegenSpeed(multiplier)
+                } else if let Some(kind) = effects.iter().find_map(|effect| match effect {
+                    Effect::WindfuryTotem {
+                        totem_aura,
+                        trigger_aura,
+                        proc_aura,
+                        ..
+                    } if side == Side::Player => {
+                        if *totem_aura == exported.label {
+                            Some(AuraBehavior::WindfuryTotem)
+                        } else if *trigger_aura == exported.label {
+                            Some(AuraBehavior::WindfuryTrigger)
+                        } else if *proc_aura == exported.label {
+                            let bit = stat_aura_labels.iter().position(|label| label == proc_aura)?;
+                            Some(AuraBehavior::WindfuryProc { bit: 1 << bit })
+                        } else {
+                            None
+                        }
+                    }
+                    _ => None,
+                }) {
+                    kind
                 } else if let Some(bit) = stat_aura_labels
                     .iter()
                     .position(|label| side == Side::Player && *label == exported.label)
@@ -1424,6 +1475,7 @@ impl<A: Agent> Fight<A> {
             stat_combos,
             stat_mask: 0,
             crusader: None,
+            windfury: None,
             chili: None,
             eureka: None,
             pets: pet::inert_pets(effects),
@@ -1521,6 +1573,45 @@ impl<A: Agent> Fight<A> {
                     });
                 }
                 _ => {}
+            }
+        }
+        for effect in effects {
+            if let Effect::WindfuryTotem {
+                totem_aura,
+                period_ns,
+                trigger_aura,
+                trigger_spells,
+                trigger_proc_chance,
+                proc_aura,
+                spend_spells,
+                extra_attack_spell,
+                ..
+            } = effect
+            {
+                let spell_count = fight.spells.len();
+                let mask = |spells: &[usize]| {
+                    let mut mask = vec![false; spell_count];
+                    for &spell in spells {
+                        if let Some(slot) = mask.get_mut(spell) {
+                            *slot = true;
+                        }
+                    }
+                    mask
+                };
+                // Go activates the trigger through the totem's exclusive effect, which runs before
+                // the totem logs its gain; the trigger is registered first, so activating it in
+                // registration order at reset gives the same sequence.
+                let trigger = fight.player_aura(trigger_aura)?;
+                fight.windfury = Some(Windfury {
+                    totem: fight.player_aura(totem_aura)?,
+                    period: *period_ns,
+                    trigger,
+                    trigger_spells: mask(trigger_spells),
+                    trigger_chance: *trigger_proc_chance,
+                    proc_aura: fight.player_aura(proc_aura)?,
+                    spend_spells: mask(spend_spells),
+                    extra: *extra_attack_spell,
+                });
             }
         }
         fight.autos.melee = prepared.melee.auto_swing_melee;
@@ -1800,6 +1891,13 @@ impl<A: Agent> Fight<A> {
             A::reset(self);
         }
         self.reset_auras(side);
+        // Go driveWindfuryTotem's OnReset: the totem refreshes every period from the reset.
+        if side == Side::Player {
+            if let Some(windfury) = &self.windfury {
+                let period = windfury.period;
+                self.schedule(period, PRIORITY_AUTO, Action::WindfuryRefresh);
+            }
+        }
         // Go ScheduledAura's OnReset: the ramp's first tick at the pull, at dot priority.
         if side == Side::Target {
             self.target_armor = self.config.melee.defender_armor;
@@ -1952,6 +2050,15 @@ impl<A: Agent> Fight<A> {
             } => self.delayed_proc(aura, spell, result),
             Action::Prepull(spell) => self.cast_or_queue(spell, Side::Target),
             Action::SunderTick(done) => self.sunder_tick(done),
+            Action::WindfuryRefresh => {
+                let windfury = self.windfury.clone().expect("Windfury Totem is bound");
+                self.activate_aura(windfury.totem);
+                self.schedule(
+                    self.now + windfury.period,
+                    PRIORITY_AUTO,
+                    Action::WindfuryRefresh,
+                );
+            }
         }
     }
 
