@@ -87,7 +87,7 @@ impl<A: Agent> Fight<A> {
             .as_mut()
             .expect("the player has a rage bar")
             .current = new;
-        self.react_to_event();
+        self.react_to_event(Side::Player);
     }
 
     /// Go `rageBar.SpendRage`.

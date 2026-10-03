@@ -36,6 +36,7 @@ pub(crate) struct ClassGate {
 
 /// Effects of races, items and raid buffs, which every class shares.
 const COMMON_EFFECTS: &[&str] = &[
+    "basic_explosive",
     "berserking",
     "blood_fury",
     "chance_of_death",
@@ -120,6 +121,9 @@ fn common_spell_capability(spell: &Spell, prepared: &PreparedV2) -> Option<&'sta
         Effect::ConjuredEnergy { item_id, .. } if *item_id == item => Some("conjured_energy"),
         Effect::GoblinSapper { item_id, .. } if *item_id == item && id.tag == 0 => {
             Some("goblin_sapper")
+        }
+        Effect::BasicExplosive { item_id, .. } if *item_id == item && id.tag == 0 => {
+            Some("basic_explosive")
         }
         Effect::EnergizeOnUse { item_id, .. } if *item_id == item => Some("energize_on_use"),
         Effect::Eureka { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
@@ -302,7 +306,12 @@ fn fixed_stat_changes(prepared: &PreparedV2) -> Vec<String> {
 const DEFENDER_STATS: &[&str] = &["Stamina", "Health"];
 
 /// Effects whose behaviors act on the hits the player takes from the target's swings.
-const HIT_TAKEN_EFFECTS: &[&str] = &["chance_of_death", "parry_haste", "inert_listener"];
+const HIT_TAKEN_EFFECTS: &[&str] = &[
+    "chance_of_death",
+    "parry_haste",
+    "rage_bar",
+    "inert_listener",
+];
 
 /// Callbacks the target's own swings fire on the target.
 const TARGET_CASTER_CALLBACKS: &[&str] = &[
@@ -475,9 +484,14 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
             .collect::<Vec<_>>()
     };
     let mut required: BTreeSet<&str> = BTreeSet::new();
+    let no_auras = Vec::new();
     for (unit, auras) in [
         ("player", &player.auras),
         ("target", &prepared.target.auras),
+        (
+            "pet",
+            prepared.pets.first().map_or(&no_auras, |pet| &pet.auras),
+        ),
     ] {
         for aura in auras {
             if !aura.active || !aura.has_event_callbacks() {
@@ -500,6 +514,39 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
         }
     }
 
+    // A simulated pet needs a class effect that runs it, which claims the pet by its label.
+    if prepared.pets.len() > 1 {
+        reasons.push("more than one simulated pet is unsupported".into());
+    }
+    for pet in &prepared.pets {
+        let claimant = prepared.effects.iter().find(|effect| {
+            claims(effect)
+                .iter()
+                .any(|(u, label)| *u == "pet unit" && *label == pet.label)
+        });
+        match claimant {
+            Some(effect) => {
+                required.insert(effect.kind());
+            }
+            None => reasons.push(format!("pet {:?} has no behavior", pet.label)),
+        }
+        // Go passes the owner's stat changes to a dynamic pet at its next heartbeat.
+        let owner_stats_change = prepared.effects.iter().any(|effect| {
+            matches!(
+                effect,
+                Effect::StatAuras { .. }
+                    | Effect::BloodFury { .. }
+                    | Effect::TemporaryStats { .. }
+                    | Effect::Crusader { .. }
+            )
+        });
+        if pet.dynamic_stats && owner_stats_change {
+            reasons.push(format!(
+                "pet {:?} inherits the owner's stat changes, which is unsupported",
+                pet.label
+            ));
+        }
+    }
     if let Some(enemy) = &prepared.enemy {
         reasons.extend(tank_limits(prepared, enemy, &claims));
     }
@@ -577,8 +624,17 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
                 }
             }
             // Go newHardcastAction: a tank's hardcast drops its avoidance and can be pushed back.
+            // A hardcast that cannot be pushed back only holds reduced avoidance, whose rolls the
+            // exporter reads.
+            let held = !spell.has_flag("SpellFlagChanneled")
+                && !spell.has_flag("SpellFlagPushback")
+                && prepared
+                    .enemy
+                    .as_ref()
+                    .is_some_and(|enemy| !enemy.reduced_avoidance_rolls.is_empty());
             if prepared.enemy.is_some()
                 && (spell.default_cast.cast_time_ns > 0 || spell.has_flag("SpellFlagChanneled"))
+                && !held
             {
                 limited.insert(format!(
                     "rotation reaches {id}, a hardcast while the target swings at the player"
@@ -695,11 +751,15 @@ fn unreachable_with_one_target(prepared: &PreparedV2, rotation: &Rotation) -> BT
     let dot = |id: &ActionId| {
         rotation_spell_index(prepared, id).and_then(|index| dot_owner(prepared, index))
     };
+    let pet_auras = crate::core::fight::pet::pet_agent_auras(prepared);
+    let pet_aura_known =
+        |pet: usize, id: &ActionId| pet_auras.get(pet).is_some_and(|auras| auras.contains(id));
     let lookup = Lookup {
         aura: &aura,
         target_aura: &target_aura,
         spell: &spell,
         dot: &dot,
+        pet_aura_known: &pet_aura_known,
     };
     rotation
         .priority_list
@@ -728,11 +788,15 @@ fn unknown_aura_conditions(prepared: &PreparedV2, rotation: &Rotation) -> Vec<St
     let dot = |id: &ActionId| {
         rotation_spell_index(prepared, id).and_then(|index| dot_owner(prepared, index))
     };
+    let pet_auras = crate::core::fight::pet::pet_agent_auras(prepared);
+    let pet_aura_known =
+        |pet: usize, id: &ActionId| pet_auras.get(pet).is_some_and(|auras| auras.contains(id));
     let lookup = Lookup {
         aura: &aura,
         target_aura: &target_aura,
         spell: &spell,
         dot: &dot,
+        pet_aura_known: &pet_aura_known,
     };
     let mut reasons = Vec::new();
     for item in &rotation.priority_list {

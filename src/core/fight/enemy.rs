@@ -49,7 +49,13 @@ impl<A: Agent> Fight<A> {
             .values
             .clone();
         // The stat aura combination picks the rolls, as it picks the player's powers.
-        let rolls = values.rolls[self.stat_mask as usize % values.rolls.len()].clone();
+        // A hardcast holds the tank's reduced avoidance aura.
+        let table = if self.player.reduced_avoidance && !values.reduced_avoidance_rolls.is_empty() {
+            &values.reduced_avoidance_rolls
+        } else {
+            &values.rolls
+        };
+        let rolls = table[self.stat_mask as usize % table.len()].clone();
         // Go Weapon.EnemyWeaponDamage.
         let spread = 1.0 + values.damage_spread * self.random("Enemy Weapon Damage");
         let weapon = values.base_damage_min
@@ -64,6 +70,9 @@ impl<A: Agent> Fight<A> {
         let after_attacker = result.damage;
         result.damage *= rolls.armor_multiplier;
         let after_resistances = result.damage;
+        // Go SpellResult's PostArmorAndResistanceMultiplier and ArmorAndResistanceMultiplier,
+        // which rage from damage taken reads.
+        self.player_hit_resistance = (after_resistances, rolls.armor_multiplier);
         result.damage += rolls.bonus_damage_taken;
         result.damage *= rolls.target_multiplier;
         let after_target = result.damage;
@@ -189,6 +198,7 @@ impl<A: Agent> Fight<A> {
             match self.aura(aura).behavior {
                 AuraBehavior::ChanceOfDeath => self.chance_of_death_hit_taken(result),
                 AuraBehavior::ParryHaste => self.parry_haste(side, result),
+                AuraBehavior::RageBar => self.rage_bar_hit_taken(result),
                 _ => {}
             }
         }
@@ -203,6 +213,7 @@ impl<A: Agent> Fight<A> {
         let hand = match side {
             Side::Player => Hand::Main,
             Side::Target => Hand::Enemy,
+            Side::Pet => unreachable!("the target never swings at a pet in scope"),
         };
         let now = self.now;
         let attack = self.autos.attack(hand);

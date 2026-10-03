@@ -1,5 +1,6 @@
-//! Go attack.go and the physical half of spell_outcome.go and spell_resistances.go: the
-//! player's main and off hand swings, weapon damage, armor and the physical attack table.
+//! Go attack.go and the physical half of spell_outcome.go and spell_resistances.go: each
+//! acting unit's main and off hand swings, weapon damage, armor and the physical attack table.
+//! The player's and its pet's swings share Go's one simulation weapon attack list.
 //!
 //! Go runs weapon attacks outside the pending-action queue: before each action, every swing
 //! due at or before it fires first. The step loop mirrors that through
@@ -74,9 +75,10 @@ pub(crate) struct AutoAttacks {
     pub(crate) oh: WeaponAttack,
     pub(crate) ranged: WeaponAttack,
     pub(crate) enemy: WeaponAttack,
-    /// Go `sim.weaponAttacks`, in the order swings were added.
+    /// Go `sim.weaponAttacks`, in the order swings were added, by unit. The player's copy
+    /// holds the simulation's list; a pet's stays empty.
     attacks: WeaponAttackList,
-    /// Go `sim.minWeaponAttackTime`.
+    /// Go `sim.minWeaponAttackTime`, likewise kept in the player's copy.
     pub(crate) min_time: i64,
 }
 
@@ -101,7 +103,7 @@ impl AutoAttacks {
 /// leaves the old last entry visible to the loop; the list keeps the backing array to match.
 #[derive(Clone, Debug, Default)]
 pub(crate) struct WeaponAttackList {
-    backing: Vec<Hand>,
+    backing: Vec<(Side, Hand)>,
     len: usize,
 }
 
@@ -111,18 +113,18 @@ impl WeaponAttackList {
     }
 
     /// Go `append`, which writes into the backing array while it has room.
-    fn push(&mut self, hand: Hand) {
+    fn push(&mut self, entry: (Side, Hand)) {
         if self.len < self.backing.len() {
-            self.backing[self.len] = hand;
+            self.backing[self.len] = entry;
         } else {
-            self.backing.push(hand);
+            self.backing.push(entry);
         }
         self.len += 1;
     }
 
     /// Go `removeWeaponAttack`.
-    fn remove(&mut self, hand: Hand) {
-        if let Some(index) = self.backing[..self.len].iter().position(|&h| h == hand) {
+    fn remove(&mut self, entry: (Side, Hand)) {
+        if let Some(index) = self.backing[..self.len].iter().position(|&e| e == entry) {
             self.backing[index] = self.backing[self.len - 1];
             self.len -= 1;
         }
@@ -134,9 +136,9 @@ impl WeaponAttackList {
 }
 
 impl std::ops::Index<usize> for WeaponAttackList {
-    type Output = Hand;
+    type Output = (Side, Hand);
 
-    fn index(&self, index: usize) -> &Hand {
+    fn index(&self, index: usize) -> &(Side, Hand) {
         &self.backing[index]
     }
 }
@@ -148,11 +150,35 @@ fn in_range(weapon: &Weapon, distance: f64) -> bool {
 }
 
 impl<A: Agent> Fight<A> {
+    /// The weapon attacks of an acting unit.
+    pub(crate) fn autos_of(&self, side: Side) -> &AutoAttacks {
+        match side {
+            Side::Pet => &self.pet.as_ref().expect("the pet is simulated").autos,
+            _ => &self.autos,
+        }
+    }
+
+    /// [`Self::autos_of`], mutable.
+    pub(crate) fn autos_of_mut(&mut self, side: Side) -> &mut AutoAttacks {
+        match side {
+            Side::Pet => &mut self.pet.as_mut().expect("the pet is simulated").autos,
+            _ => &mut self.autos,
+        }
+    }
+
     /// Go `TotalMeleeHasteMultiplier`.
     pub(crate) fn melee_haste_multiplier(&self) -> f64 {
-        self.player.attack_speed_multiplier
-            * self.player.melee_speed_multiplier
-            * (1.0 + self.config.melee_haste_rating / (PHYSICAL_HASTE_RATING_PER_PERCENT * 100.0))
+        self.melee_haste_multiplier_of(Side::Player)
+    }
+
+    /// Go `TotalMeleeHasteMultiplier` of an acting unit.
+    pub(crate) fn melee_haste_multiplier_of(&self, side: Side) -> f64 {
+        let unit = self.unit(side);
+        unit.attack_speed_multiplier
+            * unit.melee_speed_multiplier
+            * (1.0
+                + self.unit_config(side).melee_haste_rating
+                    / (PHYSICAL_HASTE_RATING_PER_PERCENT * 100.0))
     }
 
     /// Go `Unit.MultiplyMeleeSpeed`.
@@ -220,12 +246,17 @@ impl<A: Agent> Fight<A> {
     pub(crate) fn reset_auto_attacks(&mut self) {
         self.autos.attacks.clear();
         self.autos.min_time = NEVER_EXPIRES;
-        if !self.autos.melee && !self.autos.ranged_auto {
+        self.reset_auto_attacks_of(Side::Player);
+    }
+
+    /// Go `AutoAttacks.reset` for one acting unit.
+    pub(crate) fn reset_auto_attacks_of(&mut self, side: Side) {
+        if !self.autos_of(side).melee && !self.autos_of(side).ranged_auto {
             return;
         }
-        let haste = self.melee_haste_multiplier();
+        let haste = self.melee_haste_multiplier_of(side);
         let ranged_haste = self.ranged_haste_multiplier();
-        let autos = &mut self.autos;
+        let autos = self.autos_of_mut(side);
         for attack in [&mut autos.mh, &mut autos.oh, &mut autos.ranged] {
             attack.enabled = false;
         }
@@ -296,23 +327,26 @@ impl<A: Agent> Fight<A> {
 
     /// Go `RandomizeMeleeTiming` at encounter start: delay the first swings by a random whole
     /// number of milliseconds below the reaction time, unless out of melee range.
-    pub(crate) fn randomize_melee_timing(&mut self) {
-        if !self.autos.melee || self.config.distance > MAX_MELEE_RANGE {
+    pub(crate) fn randomize_melee_timing(&mut self, side: Side) {
+        let config = self.unit_config(side);
+        if !self.autos_of(side).melee || config.distance > MAX_MELEE_RANGE {
             return;
         }
-        let reaction_ms = self.config.reaction / crate::core::time::NS_PER_MILLISECOND;
+        let reaction_ms = config.reaction / crate::core::time::NS_PER_MILLISECOND;
         let roll = self.random("Melee Timing");
         let delay = (roll * reaction_ms as f64) as i64 * crate::core::time::NS_PER_MILLISECOND;
         // Go DelayMeleeBy.
         if delay <= 0 {
             return;
         }
-        self.autos.mh.swing_at += delay;
-        self.autos.min_time = self.autos.min_time.min(self.autos.mh.swing_at);
-        if self.autos.dual_wielding {
-            self.autos.oh.swing_at += delay;
-            self.autos.min_time = self.autos.min_time.min(self.autos.oh.swing_at);
+        let autos = self.autos_of_mut(side);
+        autos.mh.swing_at += delay;
+        let mut earliest = autos.mh.swing_at;
+        if autos.dual_wielding {
+            autos.oh.swing_at += delay;
+            earliest = earliest.min(autos.oh.swing_at);
         }
+        self.autos.min_time = self.autos.min_time.min(earliest);
     }
 
     /// Go `AutoAttacks.startPull` for the target, whose swing is added before the player's.
@@ -325,7 +359,7 @@ impl<A: Agent> Fight<A> {
         attack.enabled = true;
         attack.update_swing_duration(haste);
         let swing_at = attack.swing_at;
-        self.autos.attacks.push(Hand::Enemy);
+        self.autos.attacks.push((Side::Target, Hand::Enemy));
         self.autos.min_time = self.autos.min_time.min(swing_at);
     }
 
@@ -353,14 +387,15 @@ impl<A: Agent> Fight<A> {
     }
 
     /// Go `AutoAttacks.startPull`: the off hand is added first.
-    pub(crate) fn start_auto_attacks(&mut self) {
-        if (!self.autos.melee && !self.autos.ranged_auto) || self.autos.any_enabled() {
+    pub(crate) fn start_auto_attacks(&mut self, side: Side) {
+        let autos = self.autos_of(side);
+        if (!autos.melee && !autos.ranged_auto) || autos.any_enabled() {
             return;
         }
-        if self.autos.melee {
-            self.start_melee_attacks();
+        if self.autos_of(side).melee {
+            self.start_melee_attacks(side);
         }
-        if self.autos.ranged_auto {
+        if self.autos_of(side).ranged_auto {
             let distance = self.config.distance;
             let haste = self.ranged_haste_multiplier();
             let ranged = &mut self.autos.ranged;
@@ -376,28 +411,29 @@ impl<A: Agent> Fight<A> {
                 ranged.enabled = true;
                 ranged.update_swing_duration(haste);
                 let swing_at = ranged.swing_at;
-                self.autos.attacks.push(Hand::Ranged);
+                self.autos.attacks.push((side, Hand::Ranged));
                 self.autos.min_time = self.autos.min_time.min(swing_at);
             }
         }
     }
 
     /// The melee half of Go `AutoAttacks.startPull`.
-    fn start_melee_attacks(&mut self) {
-        let haste = self.melee_haste_multiplier();
-        let distance = self.config.distance;
+    fn start_melee_attacks(&mut self, side: Side) {
+        let haste = self.melee_haste_multiplier_of(side);
+        let distance = self.unit_config(side).distance;
         let in_range = |weapon: &Weapon| in_range(weapon, distance);
-        if self.autos.mh.swing_at == NEVER_EXPIRES {
-            self.autos.mh.swing_at = 0;
-            self.autos.mh.natural_ready_at = 0;
+        let autos = self.autos_of_mut(side);
+        if autos.mh.swing_at == NEVER_EXPIRES {
+            autos.mh.swing_at = 0;
+            autos.mh.natural_ready_at = 0;
         }
-        let hands: &[Hand] = if self.autos.dual_wielding {
+        let hands: &[Hand] = if autos.dual_wielding {
             &[Hand::Off, Hand::Main]
         } else {
             &[Hand::Main]
         };
         for &hand in hands {
-            let attack = self.autos.attack(hand);
+            let attack = self.autos_of_mut(side).attack(hand);
             if !in_range(&attack.weapon) {
                 continue;
             }
@@ -409,7 +445,7 @@ impl<A: Agent> Fight<A> {
             }
             attack.update_swing_duration(haste);
             let swing_at = attack.swing_at;
-            self.autos.attacks.push(hand);
+            self.autos.attacks.push((side, hand));
             self.autos.min_time = self.autos.min_time.min(swing_at);
         }
     }
@@ -428,18 +464,18 @@ impl<A: Agent> Fight<A> {
         }
         self.autos.min_time = NEVER_EXPIRES;
         for position in 0..self.autos.attacks.len() {
-            let hand = self.autos.attacks[position];
-            let next = self.try_swing(hand);
+            let (side, hand) = self.autos.attacks[position];
+            let next = self.try_swing(side, hand);
             self.autos.min_time = self.autos.min_time.min(next);
         }
     }
 
     /// Go `WeaponAttack.trySwing` and `swing`. The next swing time is read after the swing,
     /// which a melee speed change during it can move.
-    fn try_swing(&mut self, hand: Hand) -> i64 {
+    fn try_swing(&mut self, side: Side, hand: Hand) -> i64 {
         let now = self.now;
-        if now < self.autos.attack(hand).swing_at {
-            return self.autos.attack(hand).swing_at;
+        if now < self.autos_of_mut(side).attack(hand).swing_at {
+            return self.autos_of_mut(side).attack(hand).swing_at;
         }
         if hand == Hand::Enemy {
             let attack = self.autos.attack(hand);
@@ -451,17 +487,17 @@ impl<A: Agent> Fight<A> {
             return self.autos.attack(hand).swing_at;
         }
         let mut spell = self
-            .autos
+            .autos_of_mut(side)
             .attack(hand)
             .spell
             .expect("an enabled weapon attack has a spell");
         // Go: with a replacer set, the rotation runs first, then the class may replace the
         // main hand swing, as Heroic Strike does.
-        if hand == Hand::Main && self.config.melee.replace_main_hand_swing {
+        if side == Side::Player && hand == Hand::Main && self.config.melee.replace_main_hand_swing {
             self.react_to_event_now();
             spell = A::replace_mh_swing(self, spell);
         }
-        let attack = self.autos.attack(hand);
+        let attack = self.autos_of_mut(side).attack(hand);
         attack.previous_swing = attack.swing_at;
         attack.swing_at = now + attack.cur_swing_duration;
         if attack.extra_attacks > 0 {
@@ -471,15 +507,15 @@ impl<A: Agent> Fight<A> {
         attack.pending_swing_delay = (now - attack.natural_ready_at).max(0);
         attack.natural_ready_at = attack.swing_at;
         // A melee swing resets the ranged auto timer, as if the shot had just fired.
-        if hand != Hand::Ranged && self.autos.ranged_auto {
+        if side == Side::Player && hand != Hand::Ranged && self.autos.ranged_auto {
             self.stop_ranged_until(now);
         }
         self.cast(spell, Side::Target);
         // Go ReactToEvent(false, true) after the swing, unless the player is tanking.
-        if self.enemy.is_none() {
-            self.react_to_event();
+        if side != Side::Player || self.enemy.is_none() {
+            self.react_to_event(side);
         }
-        self.autos.attack(hand).swing_at
+        self.autos_of_mut(side).attack(hand).swing_at
     }
 
     /// Go `AutoAttacks.CancelMeleeSwing`: the swings leave the simulation's list. The next
@@ -489,12 +525,12 @@ impl<A: Agent> Fight<A> {
             return;
         }
         if self.autos.mh.enabled {
-            self.autos.attacks.remove(Hand::Main);
+            self.autos.attacks.remove((Side::Player, Hand::Main));
             self.autos.mh.enabled = false;
         }
         if self.autos.dual_wielding && self.autos.oh.enabled {
             self.autos.oh.enabled = false;
-            self.autos.attacks.remove(Hand::Off);
+            self.autos.attacks.remove((Side::Player, Hand::Off));
         }
     }
 
@@ -535,7 +571,7 @@ impl<A: Agent> Fight<A> {
         }
         attack.update_swing_duration(haste);
         let swing_at = attack.swing_at;
-        self.autos.attacks.push(hand);
+        self.autos.attacks.push((Side::Player, hand));
         self.autos.min_time = self.autos.min_time.min(swing_at);
     }
 
@@ -590,11 +626,11 @@ impl<A: Agent> Fight<A> {
     }
 
     /// Go `Unit.ReactToEvent(sim, false, true)`.
-    pub(crate) fn react_to_event(&mut self) {
-        self.do_next_action();
-        let evaluation = self.now + self.config.reaction;
-        if self.player.rotation_timer > evaluation {
-            self.set_rotation_timer(evaluation);
+    pub(crate) fn react_to_event(&mut self, side: Side) {
+        self.do_next_action_of(side);
+        let evaluation = self.now + self.unit_config(side).reaction;
+        if self.unit(side).rotation_timer > evaluation {
+            self.set_rotation_timer_of(side, evaluation);
         }
     }
 
@@ -604,8 +640,9 @@ impl<A: Agent> Fight<A> {
             return self.apply_ranged_auto(spell, target);
         }
         A::before_melee_auto(self, spell, hand);
-        let attack_power = self.melee_attack_power();
-        let weapon = self.autos.attack(hand).weapon.clone();
+        let caster = self.caster(spell);
+        let attack_power = self.melee_attack_power_of(caster);
+        let weapon = self.autos_of_mut(caster).attack(hand).weapon.clone();
         let mut base = self.weapon_damage(&weapon, attack_power);
         if hand == Hand::Off {
             base *= 0.5;
@@ -638,7 +675,7 @@ impl<A: Agent> Fight<A> {
             PhysicalOutcome::RangedHitAndCrit { count: true },
         );
         self.deal_damage_after_travel(spell, result);
-        self.react_to_event();
+        self.react_to_event(Side::Player);
     }
 
     /// Go `Spell.RangedAttackPower` with no mob type bonus.
@@ -704,13 +741,7 @@ impl<A: Agent> Fight<A> {
             threat: 0.0,
         };
         self.apply_physical_outcome(spell, &mut result, outcome);
-        result.threat = if result.landed() {
-            let state = &self.spells[spell];
-            (result.damage * state.threat_multiplier + state.flat_threat_bonus)
-                * self.config.threat_multiplier
-        } else {
-            0.0
-        };
+        result.threat = self.threat_of(spell, &result);
         result
     }
 
@@ -722,21 +753,28 @@ impl<A: Agent> Fight<A> {
             + (weapon.swing_speed * attack_power) / weapon.attack_power_per_dps
     }
 
-    /// Go `getAttackPowerValueImpl` with no mob type bonus.
+    /// Go `getAttackPowerValueImpl` for the player, with no mob type bonus.
     pub(crate) fn melee_attack_power(&self) -> f64 {
-        self.player.powers.attack_power + self.config.melee.defender_bonus_attack_power
+        self.melee_attack_power_of(Side::Player)
     }
 
-    /// Go `GetArmorDamageModifier`.
-    pub(crate) fn armor_modifier(&self) -> f64 {
-        let melee = &self.config.melee;
+    /// Go `getAttackPowerValueImpl` of an acting unit, with no mob type bonus.
+    pub(crate) fn melee_attack_power_of(&self, side: Side) -> f64 {
+        self.unit(side).powers.attack_power
+            + self.unit_config(side).melee.defender_bonus_attack_power
+    }
+
+    /// Go `GetArmorDamageModifier` for the attacker.
+    pub(crate) fn armor_modifier(&self, side: Side) -> f64 {
+        let config = self.unit_config(side);
+        let melee = &config.melee;
         if melee.ignore_armor {
             return 1.0;
         }
         let ignore = melee.armor_ignore_factor.clamp(0.0, 1.0);
-        let constant = 400.0 + 85.0 * f64::from(self.config.player_level);
+        let constant = 400.0 + 85.0 * f64::from(config.player_level);
         let armor = self.target_armor - self.target_armor * ignore;
-        let armor = (armor - self.config.armor_penetration).max(0.0);
+        let armor = (armor - config.armor_penetration).max(0.0);
         (1.0 - armor / (armor + constant)).max(0.25)
     }
 
@@ -763,12 +801,16 @@ impl<A: Agent> Fight<A> {
             threat: 0.0,
         };
         let after_attacker = result.damage;
+        let caster = self.caster(spell);
         if !self.spells[spell].flags.ignore_resists {
-            result.damage *= self.armor_modifier();
+            result.damage *= self.armor_modifier(caster);
         }
         let after_resistances = result.damage;
         if !self.spells[spell].flags.ignore_target_modifiers {
-            result.damage += self.config.melee.defender_bonus_physical_damage_taken;
+            result.damage += self
+                .unit_config(caster)
+                .melee
+                .defender_bonus_physical_damage_taken;
             result.damage *= self.target_multiplier(spell);
         }
         let after_target = result.damage;
@@ -788,13 +830,7 @@ impl<A: Agent> Fight<A> {
                 result.damage,
             );
         }
-        result.threat = if result.landed() {
-            let state = &self.spells[spell];
-            (result.damage * state.threat_multiplier + state.flat_threat_bonus)
-                * self.config.threat_multiplier
-        } else {
-            0.0
-        };
+        result.threat = self.threat_of(spell, &result);
         result
     }
 
@@ -854,28 +890,31 @@ impl<A: Agent> Fight<A> {
 
     /// Go `Spell.BonusDamage` for a physical spell.
     fn physical_bonus_damage(&self, spell: SpellId) -> f64 {
-        self.spells[spell].bonus_base_damage + self.config.physical_damage
+        self.spells[spell].bonus_base_damage + self.unit_config(self.caster(spell)).physical_damage
     }
 
     /// Go `PhysicalHitChance`: ranged attacks add ranged hit.
     fn physical_hit_chance(&self, spell: SpellId) -> f64 {
-        let mut hit = self.config.physical_hit_percent + self.spells[spell].bonus_hit_percent
-            - self.config.melee.defender_reduced_physical_hit_taken;
+        let config = self.unit_config(self.caster(spell));
+        let mut hit = config.physical_hit_percent + self.spells[spell].bonus_hit_percent
+            - config.melee.defender_reduced_physical_hit_taken;
         if self.spells[spell].ranged_proc {
-            hit += self.config.ranged_hit_percent;
+            hit += config.ranged_hit_percent;
         }
-        (hit / 100.0 - self.config.melee.hit_suppression).max(0.0)
+        (hit / 100.0 - config.melee.hit_suppression).max(0.0)
     }
 
     /// Go `PhysicalCritChance`: ranged attacks add ranged crit.
     pub(crate) fn physical_crit_chance(&self, spell: SpellId) -> f64 {
-        let mut crit = self.player.powers.physical_crit_percent
+        let caster = self.caster(spell);
+        let config = self.unit_config(caster);
+        let mut crit = self.unit(caster).powers.physical_crit_percent
             + self.spells[spell].bonus_crit_percent
-            - self.config.target_reduced_crit_taken_percent;
+            - config.target_reduced_crit_taken_percent;
         if self.spells[spell].ranged_proc {
-            crit += self.config.ranged_crit_percent;
+            crit += config.ranged_crit_percent;
         }
-        (crit / 100.0 - self.config.melee.melee_crit_suppression).max(0.0)
+        (crit / 100.0 - config.melee.melee_crit_suppression).max(0.0)
     }
 
     /// Go `AutoAttacks.StopMeleeUntil`: the swings restart a full swing after `ready_at`.
@@ -893,7 +932,14 @@ impl<A: Agent> Fight<A> {
 
     /// Go `DodgeParrySuppression`.
     fn dodge_parry_suppression(&self, spell: SpellId) -> f64 {
-        (self.config.expertise_percent + self.spells[spell].bonus_expertise_percent) / 100.0
+        (self.unit_config(self.caster(spell)).expertise_percent
+            + self.spells[spell].bonus_expertise_percent)
+            / 100.0
+    }
+
+    /// The physical attack table of a spell's caster against the target.
+    fn melee_table(&self, spell: SpellId) -> &crate::contracts::prepared_v2::Melee {
+        &self.unit_config(self.caster(spell)).melee
     }
 
     /// Go `applyAttackTableMiss` and `applyAttackTableMissNoDWPenalty`.
@@ -905,8 +951,11 @@ impl<A: Agent> Fight<A> {
         chance: &mut f64,
         dw_penalty: bool,
     ) -> bool {
-        let mut miss = self.config.melee.base_miss_chance - self.physical_hit_chance(spell);
-        if dw_penalty && self.autos.dual_wielding && !self.config.melee.disable_dw_miss_penalty {
+        let mut miss = self.melee_table(spell).base_miss_chance - self.physical_hit_chance(spell);
+        if dw_penalty
+            && self.autos_of(self.caster(spell)).dual_wielding
+            && !self.melee_table(spell).disable_dw_miss_penalty
+        {
             miss += 0.19;
         }
         *chance = miss.max(0.0);
@@ -930,7 +979,7 @@ impl<A: Agent> Fight<A> {
         if self.spells[spell].flags.cannot_be_dodged {
             return false;
         }
-        let melee = &self.config.melee;
+        let melee = self.melee_table(spell);
         *chance +=
             (melee.defender_dodge - self.dodge_parry_suppression(spell) - melee.dodge_reduction)
                 .max(0.0);
@@ -952,7 +1001,7 @@ impl<A: Agent> Fight<A> {
         chance: &mut f64,
     ) -> bool {
         *chance +=
-            (self.config.melee.defender_parry - self.dodge_parry_suppression(spell)).max(0.0);
+            (self.melee_table(spell).defender_parry - self.dodge_parry_suppression(spell)).max(0.0);
         if roll < *chance {
             result.outcome = OUTCOME_PARRY;
             self.spells[spell].metrics[result.target.index()].parries += 1;
@@ -970,12 +1019,12 @@ impl<A: Agent> Fight<A> {
         roll: f64,
         chance: &mut f64,
     ) -> bool {
-        *chance += self.config.melee.base_glance_chance;
+        *chance += self.melee_table(spell).base_glance_chance;
         if roll < *chance {
             result.outcome = OUTCOME_GLANCE;
             self.spells[spell].metrics[result.target.index()].glances += 1;
             let spread = 2.0 * self.random("Glance Damage") - 1.0;
-            let melee = &self.config.melee;
+            let melee = self.melee_table(spell);
             result.damage *= melee.glance_multiplier + melee.glance_spread * spread;
             return true;
         }
@@ -990,7 +1039,7 @@ impl<A: Agent> Fight<A> {
         roll: f64,
         chance: &mut f64,
     ) -> bool {
-        *chance += self.config.melee.defender_block.max(0.0);
+        *chance += self.melee_table(spell).defender_block.max(0.0);
         if roll < *chance {
             let partial = result.outcome & OUTCOME_PARTIAL != 0;
             result.outcome |= OUTCOME_BLOCK;
@@ -1007,7 +1056,7 @@ impl<A: Agent> Fight<A> {
             result.damage = if self.spells[spell].flags.binary {
                 0.0
             } else {
-                (result.damage - self.config.melee.defender_block_reduction).max(0.0)
+                (result.damage - self.melee_table(spell).defender_block_reduction).max(0.0)
             };
             return true;
         }
@@ -1078,7 +1127,7 @@ impl<A: Agent> Fight<A> {
         result: &mut SpellResult,
         outcome: PhysicalOutcome,
     ) {
-        let front = self.config.melee.in_front_of_target;
+        let front = self.melee_table(spell).in_front_of_target;
         let mut chance = 0.0;
         match outcome {
             PhysicalOutcome::MeleeWhite => {

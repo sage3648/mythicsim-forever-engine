@@ -33,6 +33,9 @@ pub struct PreparedV2 {
     pub target: Target,
     pub player: Player,
     pub melee: Melee,
+    /// The pet enabled at each reset, which Rust simulates; at most one.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub pets: Vec<Pet>,
     /// The target's swings at the player when the player tanks it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub enemy: Option<Enemy>,
@@ -125,6 +128,14 @@ pub struct ActionId {
 
 fn is_zero(value: &i32) -> bool {
     *value == 0
+}
+
+fn yes() -> bool {
+    true
+}
+
+fn is_true(value: &bool) -> bool {
+    *value
 }
 
 fn is_zero_usize(value: &usize) -> bool {
@@ -363,6 +374,9 @@ pub struct MetricsAction {
     pub action_id: ActionId,
     pub melee_metrics: bool,
     pub school: u8,
+    /// Go `SpellFlagPassiveSpell`, which metrics report.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub passive: bool,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -541,6 +555,43 @@ pub struct Player {
     pub prepull_actions: usize,
 }
 
+/// A pet Go enables at each reset, as core/pet.go builds it.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct Pet {
+    pub index: i32,
+    pub label: String,
+    pub level: i32,
+    pub mob_type: Option<String>,
+    pub stats: BTreeMap<String, f64>,
+    pub pseudo_stats: PseudoStats,
+    pub auras: Vec<Aura>,
+    pub name: String,
+    pub reaction_ns: i64,
+    pub distance_yards: f64,
+    pub cast_speed: f64,
+    pub mana: PetMana,
+    pub attack_table: AttackTable,
+    pub melee: Melee,
+    pub spells: Vec<Spell>,
+    pub metrics_actions: Vec<MetricsAction>,
+    /// The lines Go's Enable logs after its stat change: the pet's stats and inheritance.
+    pub summon_log: Vec<String>,
+    /// The stats line Go's Disable logs once the inheritance is gone.
+    pub dismiss_log: String,
+    /// Go `isDynamic`: the pet follows its owner's stat changes.
+    pub dynamic_stats: bool,
+}
+
+/// A pet's mana bar and its regeneration, which Go computes from the pet's own stats.
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct PetMana {
+    pub max: f64,
+    pub regen_per_second_casting: f64,
+    pub regen_per_second_not_casting: f64,
+}
+
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ManaGain {
@@ -654,6 +705,10 @@ pub struct Enemy {
     /// Auras inactive at reset whose activation changes a value above, as "player:label" or
     /// "target:label".
     pub changing_auras: Vec<String>,
+    /// The rolls while a hardcast holds the tank's reduced avoidance aura, by stat aura
+    /// combination; empty when the player does not tank.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub reduced_avoidance_rolls: Vec<EnemyRolls>,
 }
 
 /// The steps of the target's swing that read the player's defenses.
@@ -1124,8 +1179,18 @@ pub enum Effect {
         unit_index: i32,
         metrics_actions: Vec<MetricsAction>,
         auras: Vec<ActionId>,
+        /// The auras with an action that every reset activates for the fight, in
+        /// registration order.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        permanent_auras: Vec<ActionId>,
         dismissed_log: String,
         reason: String,
+        /// Whether each reset logs its dismissal, as when its agent's Reset disables it.
+        #[serde(default = "yes", skip_serializing_if = "is_true")]
+        dismissed_at_reset: bool,
+        /// Whether it has a mana bar, which gives it Go's time to out of mana.
+        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+        mana_bar: bool,
     },
     /// The Orc racial Shatter Curse: a survival cooldown whose aura multiplies the player's
     /// damage taken of the named schools, which only the player's own spells deal in scope.
@@ -1354,6 +1419,9 @@ pub enum Effect {
         spell_id: i32,
         base_amount: f64,
         mana_multiplier: f64,
+        /// Demonic Energies: the share of the restore the summoned demon gains.
+        #[serde(default, skip_serializing_if = "is_zero_f64")]
+        pet_mana_share: f64,
     },
     /// Conflagrate's hit, which consumes Immolate unless Shadow and Flame spares it.
     Conflagrate {
@@ -1363,6 +1431,89 @@ pub enum Effect {
     },
     /// Shadowburn's instant binary hit.
     Shadowburn {},
+    /// Nightfall: periodic damage of its spells may grant Shadow Trance, which makes Shadow
+    /// Bolt instant until an instant Shadow Bolt completes.
+    Nightfall {
+        trigger_aura: String,
+        aura: String,
+        aura_spell_id: i32,
+        proc_chance: f64,
+        rng_label: String,
+        /// Spellbook positions of the spells whose periodic damage rolls the chance.
+        trigger_spells: Vec<usize>,
+        /// Spellbook positions of the spells whose instant cast consumes Shadow Trance.
+        consume_spells: Vec<usize>,
+        /// Spellbook positions of the spells Shadow Trance's cast time modifier changes.
+        modded_spells: Vec<usize>,
+        cast_time_percent: f64,
+    },
+    /// Fel Energy, the Voidwalker's sacrifice: its permanent aura restores a share of maximum
+    /// mana every period.
+    FelEnergy {
+        aura: String,
+        spell_id: i32,
+        mana_fraction: f64,
+        period_ns: i64,
+    },
+    /// Decimation: a landed hit of its spells inside the execute phase grants an aura whose
+    /// modifiers raise their damage and cut Soul Fire's cast time.
+    Decimation {
+        trigger_aura: String,
+        aura: String,
+        /// Go `IsExecutePhase<N>`'s threshold.
+        execute_phase: i32,
+        /// Spellbook positions of the spells whose landed hits trigger it.
+        trigger_spells: Vec<usize>,
+        /// Spellbook positions and value of the aura's damage done modifier.
+        damage_spells: Vec<usize>,
+        damage_done_flat: f64,
+        /// Spellbook positions and value of the aura's cast time modifier.
+        cast_spells: Vec<usize>,
+        cast_time_percent: f64,
+    },
+    /// Demonic Brand: a landed Searing Pain brands its target with charges, and each landed
+    /// direct hit of the summoned demon spends one for an extra hit. Without a summoned demon
+    /// the trigger does nothing.
+    DemonicBrand {
+        trigger_aura: String,
+        /// The brand on the target.
+        target_aura: String,
+        charges: i32,
+        trigger_spells: Vec<usize>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        pet: Option<String>,
+        /// The demon's copy of the brand's stacks.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        marker_aura: Option<String>,
+        /// The demon's permanent aura that spends charges.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        consumer_aura: Option<String>,
+        /// The extra hit's position in the demon's spellbook.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        brand_spell: Option<usize>,
+        #[serde(default, skip_serializing_if = "is_zero_f64")]
+        min_damage: f64,
+        #[serde(default, skip_serializing_if = "is_zero_f64")]
+        max_damage: f64,
+        /// The share of the warlock's spell power and school power the hit adds.
+        #[serde(default, skip_serializing_if = "is_zero_f64")]
+        spell_power_coefficient: f64,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        school_power_stat: Option<String>,
+    },
+    /// The summoned demon's AI: the first ability it can cast while its mana stays above
+    /// `min_mana`, otherwise a wait.
+    WarlockPet {
+        pet: String,
+        min_mana: f64,
+        /// Positions in the pet's spellbook.
+        autocast_spells: Vec<usize>,
+        wait_ns: i64,
+    },
+    /// The Succubus's Lash of Pain: a fixed base, a Go literal.
+    LashOfPain {
+        base_damage: f64,
+    },
     /// Searing Pain's hit.
     SearingPain {},
     /// Soul Fire's hit after travel.
@@ -1836,6 +1987,14 @@ pub enum Effect {
         aoe_cap_multiplier: f64,
         self_attack_table: AttackTable,
     },
+    /// Go consumes.go newBasicExplosiveSpellConfig without the self hit: a rolled hit on every
+    /// target scaled by the AoE cap, dealt after travel when the explosive flies.
+    BasicExplosive {
+        item_id: i32,
+        min_damage: f64,
+        max_damage: f64,
+        aoe_cap_multiplier: f64,
+    },
     /// Go health.go trackChanceOfDeath once a spell can hit the player.
     ChanceOfDeath {
         aura: String,
@@ -1960,6 +2119,12 @@ impl Effect {
             Effect::LifeTap { .. } => "life_tap",
             Effect::Conflagrate { .. } => "conflagrate",
             Effect::Shadowburn {} => "shadowburn",
+            Effect::Nightfall { .. } => "nightfall",
+            Effect::Decimation { .. } => "decimation",
+            Effect::FelEnergy { .. } => "fel_energy",
+            Effect::DemonicBrand { .. } => "demonic_brand",
+            Effect::WarlockPet { .. } => "warlock_pet",
+            Effect::LashOfPain { .. } => "lash_of_pain",
             Effect::SearingPain {} => "searing_pain",
             Effect::SoulFire {} => "soul_fire",
             Effect::ImprovedShadowBolt { .. } => "improved_shadow_bolt",
@@ -2027,6 +2192,7 @@ impl Effect {
             Effect::Preparation { .. } => "preparation",
             Effect::RogueProc { .. } => "rogue_proc",
             Effect::ThousandCuts { .. } => "thousand_cuts",
+            Effect::BasicExplosive { .. } => "basic_explosive",
             Effect::ChanceOfDeath { .. } => "chance_of_death",
             Effect::ParryHaste { .. } => "parry_haste",
             Effect::FixedUptimeAura { .. } => "fixed_uptime_aura",

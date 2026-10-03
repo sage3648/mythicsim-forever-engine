@@ -5,7 +5,7 @@
 
 use crate::{
     classes::warlock::agent::WarlockAgent,
-    core::fight::{DotId, Fight, Outcome, Side, SpellId},
+    core::fight::{AuraRef, DotId, Fight, Outcome, Side, SpellId},
 };
 
 #[derive(Clone, Copy, Debug)]
@@ -16,6 +16,8 @@ pub(crate) struct BaneOfAgony {
     ramp_every_ticks: i32,
     /// Go's `rampStep`, the share of the tick the last snapshot stored.
     ramp_step: f64,
+    /// Amplify Curse's aura and the factor its snapshot spends it for.
+    pub(crate) amplify: Option<(AuraRef, f64)>,
 }
 
 impl BaneOfAgony {
@@ -26,6 +28,7 @@ impl BaneOfAgony {
             ramp_share,
             ramp_every_ticks,
             ramp_step: 0.0,
+            amplify: None,
         }
     }
 }
@@ -36,16 +39,22 @@ fn state(fight: &Fight<WarlockAgent>) -> BaneOfAgony {
 
 /// `ApplyEffects`: a hit roll without a hit counter, the dot when it lands, then the empty
 /// outcome. `Dot.Apply` deactivates a running copy first, whose last tick may still be due
-/// and reads the old ramp step; then `OnSnapshot` stores the new step and snapshots it.
-/// Amplify Curse cannot be active: its cast has no Rust behavior, so a build that can cast
-/// it is rejected.
+/// and reads the old ramp step; then `OnSnapshot` raises the tick by Amplify Curse while it
+/// is active, spending it, stores the new step and snapshots it.
 pub(crate) fn apply(fight: &mut Fight<WarlockAgent>, spell: SpellId, target: Side) {
     let result = fight.calc_outcome(spell, target, Outcome::MagicHitNoHitCounter);
     if result.landed() {
         let mut agony = state(fight);
         let aura = fight.dots[agony.dot].aura;
         fight.deactivate_aura(aura);
-        agony.ramp_step = agony.tick_base * agony.ramp_share;
+        let mut base = agony.tick_base;
+        if let Some((amplify, factor)) = agony.amplify {
+            if fight.aura(amplify).active {
+                base *= factor;
+                fight.deactivate_aura(amplify);
+            }
+        }
+        agony.ramp_step = base * agony.ramp_share;
         fight.agent.bane_of_agony = Some(agony);
         fight.dots[agony.dot].tick_base = Some(agony.ramp_step);
         fight.apply_dot(agony.dot);

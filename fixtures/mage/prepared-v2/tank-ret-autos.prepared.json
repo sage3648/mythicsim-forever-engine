@@ -10685,6 +10685,20 @@
       "player:Devotion Aura Rank 6 (Player)",
       "player:Devotion Aura Rank 7 (Player)",
       "player:Reduced avoidance"
+    ],
+    "reduced_avoidance_rolls": [
+      {
+        "armor_multiplier": 0.6894692703965497,
+        "bonus_damage_taken": 0,
+        "target_multiplier": 1,
+        "miss_chance": 0.044,
+        "dodge_chance": 0,
+        "parry_chance": 0,
+        "block_chance": 0,
+        "crit_chance": 0.055999999999999994,
+        "crush_chance": 0.15,
+        "block_reduction": 8.75
+      }
     ]
   },
   "effects": [
@@ -10909,7 +10923,7 @@
     {
       "aura": "Pushback trigger",
       "kind": "inert_listener",
-      "reason": "acts only on hits taken while hardcasting, which the gate rejects when tanking",
+      "reason": "acts only on hits taken while channeling or casting a spell that can be pushed back, which the gate rejects when tanking",
       "unit": "player"
     },
     {
