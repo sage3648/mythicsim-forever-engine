@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "879e91fecdb4dff703d960484e882020b1726e64b086b8c16fe45975384b96e0",
+  "exporter_sha256": "efeb9a133309f7c6837b8069dafbb3c211549f559fcad76c9434079f688c7e02",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -1209,6 +1209,69 @@
       "go_log": {
         "file": "combat-rogue-orc-shatter-curse.go-log.txt",
         "sha256": "2321ee8d6f0181266a17068f20a62fca25828ed7302765a4be6ec8f96cb10815"
+      }
+    },
+    {
+      "id": "production-warrior",
+      "description": "The production Fury Warrior request: a Human dual wielding Ironfoe in Berserker Stance with Bloodthirst, Whirlwind, Execute, Hamstring, Bloodrage, Death Wish, Recklessness, Deep Wounds, Flurry, Unbridled Wrath, Anger Management, the Mighty Rage Potion, the Goblin Sapper Charge, Windfury Totem, Crusader and Dragonbreath Chili",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-warrior.request.json"
+      },
+      "prepared": "production-warrior.prepared.json",
+      "prepared_sha256": "0715421bc4a43e5207802475753f40a590c4bf5305c3a80a8da766d42b651c90",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-warrior.go-result.json",
+        "sha256": "9474360f60c2f9cf2aca3d40ea143927e7a68a7a2809a6f47dee7cb791328a03"
+      },
+      "go_log": {
+        "file": "production-warrior.go-log.txt",
+        "sha256": "daa9273a29ab12375d20b9bab941df8afad2ad9d5dd0c82c7226a3dd0b295c5d"
+      }
+    },
+    {
+      "id": "warrior-heroic-strike",
+      "description": "The production Fury Warrior request queueing Heroic Strike at 50 rage: the queue cast arms the strike after the realism delay, the next main hand swing and Windfury's extra swing cast it in place of the auto attack, and a miss refunds rage",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-heroic-strike.request.json"
+      },
+      "prepared": "warrior-heroic-strike.prepared.json",
+      "prepared_sha256": "c4cf993f4ddd88ea6a2aa8b4ae38c079122042a0cf4f86963f7ec34e1e9a65f0",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-heroic-strike.go-result.json",
+        "sha256": "cd63f22d393609c60e0665a3b225fff578d746206720c250b58785693defc0c6"
+      },
+      "go_log": {
+        "file": "warrior-heroic-strike.go-log.txt",
+        "sha256": "680efa062c2ea737d30d4831aabedf6e6aabba12312bdcae7134493073145248"
+      }
+    },
+    {
+      "id": "warrior-cleave",
+      "description": "The production Fury Warrior request queueing Cleave at 40 rage, with Raging Blows' cheaper cost and no refund",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-cleave.request.json"
+      },
+      "prepared": "warrior-cleave.prepared.json",
+      "prepared_sha256": "097cf2e9ba63f661ace29a662ad6f55bcc929cce87ce268607ab56ab1ddc31f8",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-cleave.go-result.json",
+        "sha256": "4ed874d750113e86edde212560f9db5bdfc6fae8bc518ab087703cc8e9026605"
+      },
+      "go_log": {
+        "file": "warrior-cleave.go-log.txt",
+        "sha256": "246e347a84ee3ef16ca6b1686f73128e862e97180d0fc321a9bb61b6d6347092"
       }
     }
   ]

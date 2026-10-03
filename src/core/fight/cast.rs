@@ -118,6 +118,7 @@ impl<A: Agent> Fight<A> {
         self.spells[spell].cur_cast.cost = cost;
         match kind {
             ResourceKind::Energy => self.energy_bar().current >= cost,
+            ResourceKind::Rage => self.current_rage() >= cost,
             _ => self.meets_mana_cost(cost),
         }
     }
@@ -161,6 +162,10 @@ impl<A: Agent> Fight<A> {
     fn cost_failure(&self, spell: SpellId) -> String {
         let cost = self.spells[spell].cur_cast.cost;
         match self.spells[spell].cost.map(|cost| cost.kind) {
+            Some(ResourceKind::Rage) => format!(
+                "not enough rage (Current Rage = {:.3}, Rage Cost = {cost:.3})",
+                self.current_rage()
+            ),
             Some(ResourceKind::Energy) => format!(
                 "not enough energy (Current Energy = {:.3}, Energy Cost = {cost:.3})",
                 self.energy_bar().current
@@ -558,6 +563,13 @@ impl<A: Agent> Fight<A> {
             return;
         };
         let cost = self.spells[spell].cur_cast.cost;
+        if kind == ResourceKind::Rage {
+            if cost > 0.0 {
+                let metrics = self.spells[spell].mana_metrics.expect("rage metrics");
+                self.spend_rage(cost, metrics);
+            }
+            return;
+        }
         if kind == ResourceKind::Energy {
             // Go EnergyCost.SpendCost spends even a zero cost.
             let (metrics, _) = self.spells[spell].energy_metrics.expect("energy metrics");
@@ -577,6 +589,10 @@ impl<A: Agent> Fight<A> {
         let Some(cost) = self.spells[spell].cost else {
             return;
         };
+        if cost.kind == ResourceKind::Rage {
+            self.issue_rage_refund(spell);
+            return;
+        }
         if cost.kind != ResourceKind::Energy {
             return;
         }
@@ -602,6 +618,25 @@ impl<A: Agent> Fight<A> {
                 let gain = (min + self.random(&label) * spread) * stone_multiplier;
                 let metrics = self.item_metrics(spell);
                 self.execute_mana_gain(gain, metrics);
+            }
+            SpellBehavior::PotionResource {
+                label,
+                gains,
+                stone_multiplier,
+                aura,
+                ..
+            } => {
+                if let Some(index) = aura {
+                    self.activate_aura(AuraRef {
+                        side: Side::Player,
+                        index,
+                    });
+                }
+                for (kind, min, spread) in gains {
+                    let gain = (min + self.random(&label) * spread) * stone_multiplier;
+                    let metrics = self.potion_metrics(spell, kind);
+                    self.execute_resource_gain(kind, gain, metrics);
+                }
             }
             SpellBehavior::ConjuredMana {
                 label, min, spread, ..
@@ -667,6 +702,35 @@ impl<A: Agent> Fight<A> {
             }
             SpellBehavior::None => panic!("spell {} has no behavior", self.spells[spell].id),
         }
+    }
+
+    /// Go `ExecuteResourceGain`: a resource the player has no bar for is not gained, and rage
+    /// amounts are in tenths.
+    fn execute_resource_gain(&mut self, kind: ResourceKind, amount: f64, metrics: usize) {
+        match kind {
+            ResourceKind::Rage if self.rage.is_some() && amount > 0.0 => {
+                self.add_rage(amount / 10.0, metrics)
+            }
+            ResourceKind::Rage if self.rage.is_some() && amount < 0.0 => {
+                self.spend_rage(-amount / 10.0, metrics)
+            }
+            ResourceKind::Mana if self.has_mana_bar() => self.execute_mana_gain(amount, metrics),
+            _ => {}
+        }
+    }
+
+    /// The resource metrics of a potion, one per resource it restores.
+    fn potion_metrics(&mut self, spell: SpellId, kind: ResourceKind) -> usize {
+        if let SpellBehavior::PotionResource { metrics, .. } = &self.spells[spell].behavior {
+            if let Some(&(_, index)) = metrics.iter().find(|(k, _)| *k == kind) {
+                return index;
+            }
+        }
+        let index = self.new_resource_metrics(self.spells[spell].id.clone(), kind);
+        if let SpellBehavior::PotionResource { metrics, .. } = &mut self.spells[spell].behavior {
+            metrics.push((kind, index));
+        }
+        index
     }
 
     /// Go `ExecuteResourceGain` for mana: only a positive amount is gained.
@@ -927,6 +991,15 @@ impl<A: Agent> Fight<A> {
                 bar.max - bar.current >= (min + spread) - reduction && *selected
             }
             SpellBehavior::EnergizeOnUse { whole, .. } => max - mana >= *whole,
+            // Go: only a mana gain asks whether the mana fits.
+            SpellBehavior::PotionResource {
+                gains,
+                stone_multiplier,
+                ..
+            } => gains.iter().all(|(kind, min, spread)| {
+                *kind != ResourceKind::Mana
+                    || max - (mana + casting_regen * 5.0) >= (min + spread) * stone_multiplier
+            }),
             // Go's default ShouldActivate.
             SpellBehavior::Eureka
             | SpellBehavior::ActivateAura(_)
