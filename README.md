@@ -67,6 +67,13 @@ first-fight log. Randomized sweeps of every build match Go on every supported va
 [Frostfire](validation/2026-10-04-frostfire-sweep.json)). Builds where community fix #622
 would change the rotation are rejected; see [UPSTREAM.md](UPSTREAM.md).
 
+The production Balance Druid build is the first class beyond Mage: a Night Elf Moonkin
+with Elune's Light, a prepull Moonkin Form and Wrath, every Starfire and Wrath rank,
+Moonfire and Insect Swarm dots, Innervate with its spirit regeneration credited as Go
+credits it, Omen of Clarity, Nature's Grace and Eclipse match the pinned Go engine at
+509.502 DPS, and a [sweep](validation/2026-10-04-balance-druid-sweep.json) across every
+Balance race matches on every supported variant.
+
 Every race that can be a Mage is supported: Human, Gnome, Undead, Troll with
 Berserking, Orc with Blood Fury and Shatter Curse, and High Order Skyborne with Read
 Ley Line for rotations that cast it. A [race sweep](validation/2026-10-04-mage-race-sweep.json)

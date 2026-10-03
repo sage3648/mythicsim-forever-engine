@@ -49,7 +49,12 @@ pub(crate) enum AuraBehavior<K> {
     MultiplyManaRegenSpeed(f64),
     /// Go `NewTemporaryStatMultiplierAura`: the stats while active. Go recomputes every stat
     /// from the same inputs on each change, so expiry restores the prepared values exactly.
-    TemporaryStats(Powers),
+    TemporaryStats {
+        powers: Powers,
+        /// Lines in `Fight::aura_logs` logged before the stats change on gain and expiry.
+        gain_log: Option<usize>,
+        expire_log: Option<usize>,
+    },
     /// The aura of a dot or channel.
     Dot(DotId),
     Class(K),
@@ -420,7 +425,15 @@ impl<A: Agent> Fight<A> {
             AuraBehavior::MultiplyManaRegenSpeed(multiplier) => {
                 self.multiply_mana_regen_speed(multiplier)
             }
-            AuraBehavior::TemporaryStats(powers) => self.player.powers = powers,
+            AuraBehavior::TemporaryStats {
+                powers, gain_log, ..
+            } => {
+                if let (Some(line), true) = (gain_log, self.log.is_some()) {
+                    let line = self.aura_logs[line].clone();
+                    self.player_log(&line);
+                }
+                self.player.powers = powers;
+            }
             AuraBehavior::Class(kind) => A::on_gain(self, aura, kind),
             _ => {}
         }
@@ -433,7 +446,13 @@ impl<A: Agent> Fight<A> {
             AuraBehavior::MultiplyCastSpeed(multiplier) => {
                 self.multiply_cast_speed(1.0 / multiplier)
             }
-            AuraBehavior::TemporaryStats(_) => self.player.powers = self.config.powers,
+            AuraBehavior::TemporaryStats { expire_log, .. } => {
+                if let (Some(line), true) = (expire_log, self.log.is_some()) {
+                    let line = self.aura_logs[line].clone();
+                    self.player_log(&line);
+                }
+                self.player.powers = self.config.powers;
+            }
             AuraBehavior::MultiplyManaRegenSpeed(multiplier) => {
                 self.multiply_mana_regen_speed(1.0 / multiplier)
             }
@@ -584,6 +603,24 @@ impl<A: Agent> Fight<A> {
         let result = *result;
         self.schedule(
             self.now + delay,
+            super::PRIORITY_DOT,
+            super::Action::DelayedProc {
+                aura,
+                spell,
+                result,
+            },
+        );
+    }
+
+    /// Go `AttachProcTriggerCallback`'s delayed handler: run it a spell batch window from now.
+    pub(crate) fn schedule_delayed_proc(
+        &mut self,
+        aura: AuraRef,
+        spell: SpellId,
+        result: SpellResult,
+    ) {
+        self.schedule(
+            self.now + super::SPELL_BATCH_WINDOW,
             super::PRIORITY_DOT,
             super::Action::DelayedProc {
                 aura,

@@ -104,6 +104,16 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `blood_fury` | sim/core/racials.go | Orc: every stat the aura changes, computed by Go with it active |
 | `shatter_curse` | sim/core/racials.go | Orc survival cooldown; its damage taken change has no effect in scope |
 | `read_ley_line` | sim/core/racials.go | High Order Skyborne: the cast and Energized's regeneration multiplier |
+| `temporary_stats` | sim/core/major_cooldown.go | Night Elf Elune's Light: every stat its aura changes, computed by Go with it active, and its gain and fade log lines |
+| `druid_forms` | sim/druid/druid.go, forms.go | The starting form and the forms each druid spell may be cast in |
+| `moonkin_form` | sim/druid/forms.go | The cast and its aura |
+| `starfire`, `wrath` | sim/druid/starfire.go, wrath.go | Damage rolls on the spells; Wrath lands after travel |
+| `moonfire` | sim/druid/moonfire.go | The dot base and tick crit; the hit casts the tagged dot spell when it lands |
+| `insect_swarm` | sim/druid/insect_swarm.go | The dot base, tick crit and the target debuff the dot holds |
+| `innervate` | sim/druid/innervate.go, core/buffs/drivers.go | Spirit regeneration multiplier, a Go literal, and the regeneration metrics its bonus is credited to |
+| `omen_of_clarity` | sim/druid/omen_of_clarity.go | The resolved proc trigger, its cooldown, two procs a minute, Moonkin Form's multipliers and Clearcasting's cost modifier |
+| `natures_grace` | sim/druid/talents_balance.go | Cast speed multiplier, GCD reduction and the spells it reads |
+| `eclipse` | sim/druid/talents_balance.go | Starfire's cast time cut and two charges a Wrath, a Go literal |
 
 Human racials are static and already in the prepared stats. High Order Skyborne's cast
 speed and every race's creature slaying are static too. Read Ley Line is not a major
@@ -176,7 +186,8 @@ matches Go. `arcane-reference` is the application's Arcane request, built by its
 `fire-reference` is the application's Fire request; the `fire-*` cases add its talents
 one at a time. `frost-troll`, `frost-orc` and `frost-skyborne` run the Frost request as
 the remaining races, with longer and cooldown-timing variants, and
-`fire-skyborne-read-ley-line` casts Read Ley Line from the rotation. `production-fire` and
+`fire-skyborne-read-ley-line` casts Read Ley Line from the rotation. `production-balance-druid`
+is the production Balance Druid request. `production-fire` and
 `production-frostfire` are the production application's Fire Missile Barrage and
 Frostfire hybrid requests at application revision 18bbcd47; its Arcane and Frost requests
 are byte-identical to `arcane-reference` and `frost-reference`. `frostfire-resistances`

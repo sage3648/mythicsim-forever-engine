@@ -24,6 +24,8 @@ Frostbolt kernel remains unchanged beside it.
 | Fight runtime: queue, units, casting, auras, damage, channels, rotation, metrics, logs | [src/core/fight.rs](../src/core/fight.rs), [src/core/fight/](../src/core/fight/) |
 | Go pending-action ordering | [src/core/queue.rs](../src/core/queue.rs) |
 | Mage runtime hooks | [src/classes/mage/agent.rs](../src/classes/mage/agent.rs) |
+| Druid runtime hooks | [src/classes/druid/agent.rs](../src/classes/druid/agent.rs) |
+| Shared build gate and class gates | [src/engine/coverage.rs](../src/engine/coverage.rs), `src/classes/<class>/prepared/coverage.rs` |
 | Event ordering (prepared v1 kernel) | [src/core/events.rs](../src/core/events.rs) |
 | Seeded random streams | [src/core/rng.rs](../src/core/rng.rs) |
 | Simulation time units | [src/core/time.rs](../src/core/time.rs) |

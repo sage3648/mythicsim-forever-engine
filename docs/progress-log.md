@@ -37,7 +37,9 @@ reading the Go reference. They are not effort estimates for other contributors.
 | Races: Orc Blood Fury and Shatter Curse | 2026-10-03 14:21 | 2026-10-03 14:24 | 0 h 03 m | Stats read live by the runtime, set from values Go computes with the aura active; survival cooldowns fire only on configured timings; Orc and its cooldown timings match Go on the first comparison |
 | Races: Skyborne Read Ley Line | 2026-10-03 14:24 | 2026-10-03 14:26 | 0 h 02 m | Mana regeneration speed aura for rotations that cast it; the three reference builds casting it match Go on the first comparison |
 | Races: randomized race sweep | 2026-10-03 14:26 | 2026-10-03 14:31 | 0 h 05 m | Opt-in race draw from its own stream; 69 of 72 variants across six races and three builds match, 3 rejected for #622; fixed the generator's invalid variation pair |
-| Production Mage builds and Frostfire Bolt | 2026-10-03 15:34 | 2026-10-03 15:50 | 0 h 16 m | Captured all 29 production reference requests; Arcane, Fire and Frost match Go; Frostfire Bolt and its school rules match on the first comparison; 48 of 48 production Fire and Frostfire sweep variants match |
+| Production Mage builds and Frostfire Bolt | 2026-10-03 15:34 | 2026-10-03 15:46 | 0 h 12 m | Captured all 29 production reference requests; Arcane, Fire and Frost match Go; Frostfire Bolt and its school rules match on the first comparison; 48 of 48 production Fire and Frostfire sweep variants match |
+| Shared gate, class exporter files and prepull | 2026-10-03 15:46 | 2026-10-03 16:04 | 0 h 18 m | Gate and exporter split by class; prepull casts and eight rotation values; a Frost prepull request matches Go |
+| Balance Druid | 2026-10-03 16:04 | 2026-10-03 16:22 | 0 h 18 m | Druid exporter and agent, spirit regeneration attribution, dynamic spell crit, related dots; the production request matches Go after three fixes; 23 of 24 sweep variants match, 1 rejected for #622 |
 
 ## Notes
 
