@@ -2,6 +2,7 @@
 
 mod hunter;
 mod mage;
+mod paladin;
 mod priest;
 mod rogue;
 mod shaman;

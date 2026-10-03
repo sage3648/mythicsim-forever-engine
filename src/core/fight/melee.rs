@@ -626,7 +626,7 @@ impl<A: Agent> Fight<A> {
     }
 
     /// Go `GetArmorDamageModifier`.
-    fn armor_modifier(&self) -> f64 {
+    pub(crate) fn armor_modifier(&self) -> f64 {
         let melee = &self.config.melee;
         if melee.ignore_armor {
             return 1.0;
@@ -774,6 +774,19 @@ impl<A: Agent> Fight<A> {
             crit += self.config.ranged_crit_percent;
         }
         (crit / 100.0 - self.config.melee.melee_crit_suppression).max(0.0)
+    }
+
+    /// Go `AutoAttacks.StopMeleeUntil`: the swings restart a full swing after `ready_at`.
+    pub(crate) fn stop_melee_until(&mut self, ready_at: i64) {
+        if !self.autos.melee {
+            return;
+        }
+        self.autos.mh.swing_at = ready_at + self.autos.mh.cur_swing_duration;
+        self.autos.min_time = self.autos.min_time.min(self.autos.mh.swing_at);
+        if self.autos.dual_wielding {
+            self.autos.oh.swing_at = ready_at + self.autos.oh.cur_swing_duration;
+            self.autos.min_time = self.autos.min_time.min(self.autos.oh.swing_at);
+        }
     }
 
     /// Go `DodgeParrySuppression`.

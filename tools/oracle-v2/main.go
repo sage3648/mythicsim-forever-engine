@@ -398,6 +398,10 @@ type Aura struct {
 	Callbacks       []string  `json:"callbacks"`
 	ICD             *Cooldown `json:"icd"`
 	Exclusive       int       `json:"exclusive_effects"`
+	// A permanent aura its reset activated and a later member of its exclusive category
+	// displaced during the same reset, or one an earlier member blocked.
+	DisplacedBy    string `json:"displaced_by,omitempty"`
+	BlockedAtReset bool   `json:"blocked_at_reset,omitempty"`
 }
 
 func auraCallbacks(aura *core.Aura) []string {
@@ -429,17 +433,39 @@ func auraCallbacks(aura *core.Aura) []string {
 
 func exportAuras(unit *core.Unit, timers *timerNames) []Aura {
 	out := []Aura{}
-	for _, aura := range unit.GetAuras() {
+	auras := unit.GetAuras()
+	position := map[*core.Aura]int{}
+	for i, aura := range auras {
+		position[aura] = i
+	}
+	for i, aura := range auras {
 		var icd *Cooldown
 		if aura.Icd != nil {
 			icd = cooldown(*aura.Icd, timers)
 		}
-		out = append(out, Aura{
+		exported := Aura{
 			Label: aura.Label, Tag: aura.Tag, ActionID: actionID(aura.ActionID),
 			ActionIDForProc: actionID(aura.ActionIDForProc), DurationNs: nanos(aura.Duration),
 			MaxStacks: aura.MaxStacks, Active: aura.IsActive(), Stacks: aura.GetStacks(),
 			Callbacks: auraCallbacks(aura), ICD: icd, Exclusive: len(aura.ExclusiveEffects),
-		})
+		}
+		// aura.go Activate: a reset that activated the aura counted a proc. An inactive one
+		// whose exclusive category another active aura holds lost it to that aura, which
+		// displaced it as it activated later in the reset, or blocked it having activated first.
+		if aura.OnReset != nil && !aura.IsActive() && privateField(aura, "metrics").FieldByName("Procs").Int() > 0 {
+			for _, ee := range aura.ExclusiveEffects {
+				holder := ee.Category.GetActiveAura()
+				if holder == nil || holder == aura || !holder.IsActive() || holder.Unit != aura.Unit {
+					continue
+				}
+				if position[holder] > i {
+					exported.DisplacedBy = holder.Label
+				} else {
+					exported.BlockedAtReset = true
+				}
+			}
+		}
+		out = append(out, exported)
 	}
 	return out
 }

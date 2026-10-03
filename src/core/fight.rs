@@ -801,6 +801,13 @@ pub(crate) enum Action {
     },
     /// The party Windfury Totem's periodic refresh.
     WindfuryRefresh,
+    /// A computed result dealt later: Go `NewDelayedAction` with `DealDamage`.
+    DelayedDamage {
+        spell: SpellId,
+        result: SpellResult,
+    },
+    /// Go `Unit.ReactToEvent(sim, false, false)` from a pending action.
+    React,
     /// A tick of a class periodic action: Go `StartPeriodicAction` without a tick on start.
     ClassPeriodic(Periodic),
 }
@@ -818,6 +825,7 @@ pub(crate) struct Periodic {
 }
 
 /// Go `ActionPriority`.
+pub(crate) const PRIORITY_LOW: i32 = -1;
 pub(crate) const PRIORITY_GCD: i32 = 0;
 pub(crate) const PRIORITY_REGEN: i32 = 1;
 pub(crate) const PRIORITY_AUTO: i32 = 2;
@@ -2677,6 +2685,8 @@ impl<A: Agent> Fight<A> {
                     );
                 }
             }
+            Action::DelayedDamage { spell, result } => self.deal_damage(spell, result, false),
+            Action::React => self.react_to_event_now(),
         }
     }
 

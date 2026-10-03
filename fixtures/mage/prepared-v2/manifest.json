@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "bfbb9d0d3a5264f48f660610eecb3cb36e122897e10e8d9e42e0dd27a854c59a",
+  "exporter_sha256": "f41ad8471b690a4886810f71f0c84178258b365cabe91d559faaff3b06389b92",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -869,7 +869,7 @@
         "path": "fixtures/mage/prepared-v2/paladin-auto-attacks.request.json"
       },
       "prepared": "paladin-auto-attacks.prepared.json",
-      "prepared_sha256": "17799703275500b398e6caccd507baba2dcac0641da6a3f28d566017177d1124",
+      "prepared_sha256": "aadf48afdd74ad91063c94da145a080864bf581c10efbf901152f29bb9ce287c",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -890,7 +890,7 @@
         "path": "fixtures/mage/prepared-v2/paladin-auto-attacks-front.request.json"
       },
       "prepared": "paladin-auto-attacks-front.prepared.json",
-      "prepared_sha256": "54109fd03bf3e365904a11b1424d8859db5c693a402e07c47f920f40d30797e0",
+      "prepared_sha256": "f4141a9c63638cc3d1a7172c82687d78373c3fa5961b3d7b6559d30d3b77ed75",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -928,7 +928,7 @@
         "path": "fixtures/mage/prepared-v2/paladin-auto-attacks-expose-armor.request.json"
       },
       "prepared": "paladin-auto-attacks-expose-armor.prepared.json",
-      "prepared_sha256": "0f6433e194763d445fbe838672c23f4b9695699255623c2d2d90a36cf018ee28",
+      "prepared_sha256": "c77a4daa70277f9de0242b3f38f1390d6b2038eda6a93fba8d65c44ad8e8c078",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1029,7 +1029,7 @@
         "path": "fixtures/mage/prepared-v2/paladin-crusader-chili.request.json"
       },
       "prepared": "paladin-crusader-chili.prepared.json",
-      "prepared_sha256": "dc52c13f7eac1ec689d35c3ef5acc0d91b06799be8edeb9201671e38d95a0121",
+      "prepared_sha256": "c61080324e4f9be5c657a5b95b80a90f85632f6ec91324c1164dfdd157fb8b09",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1050,7 +1050,7 @@
         "path": "fixtures/mage/prepared-v2/paladin-windfury-totem.request.json"
       },
       "prepared": "paladin-windfury-totem.prepared.json",
-      "prepared_sha256": "846d8713d4ccc31f4a6c00339d634047e29d740650890e29c751f64c86eb0af9",
+      "prepared_sha256": "8fc3e1bd832d2c420aa5134b6fe72d8f6ee12c69097aa2fb7ed16549eedcdf1f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1092,7 +1092,7 @@
         "path": "fixtures/mage/prepared-v2/tank-ret-autos.request.json"
       },
       "prepared": "tank-ret-autos.prepared.json",
-      "prepared_sha256": "bcfdfa43c7381e5588e668a9a6b8295372332abf1da8bf71cf1436984aec92de",
+      "prepared_sha256": "bba4ccea1bdb0aa8c8c2f7e2b7f78fb0cdfcba6e35afbc34c353c1d9dcc7b7df",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1113,7 +1113,7 @@
         "path": "fixtures/mage/prepared-v2/tank-protection-paladin-autos.request.json"
       },
       "prepared": "tank-protection-paladin-autos.prepared.json",
-      "prepared_sha256": "ad1f825bf54a6be2b460d3042d2b9f43cfd87c2f2256b6de2dcc1f70064bd975",
+      "prepared_sha256": "bc2eed5b9915a6e1252bd33ea4d53e51f7bdf0a01d86970a8f1572f81d27c64a",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1293,6 +1293,27 @@
       "go_log": {
         "file": "production-marksmanship-hunter.go-log.txt",
         "sha256": "0c894d31198d78ef8bf220e71142f9f7a640b74692b5eed569852f8c9160ba21"
+      }
+    },
+    {
+      "id": "production-retribution-paladin",
+      "description": "The production Retribution Paladin request at application revision 18bbcd47: Seal of Command and Seal of Righteousness twisted with Twist of Light, Judgement, Holy Strike, Hammer of Wrath, Consecration, Vengeance, Vindication, Sanctified Judgement and Sacred Arbiter, with the party Battle Shout and Leader of the Pack displaced by Moonkin Aura",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-retribution-paladin.request.json"
+      },
+      "prepared": "production-retribution-paladin.prepared.json",
+      "prepared_sha256": "47728db63faeaa10c4aa0319c4b7c6b4e8ef43014d66bd62aac99db25680b9b5",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-retribution-paladin.go-result.json",
+        "sha256": "3754bb0e69fe318f91e2e982ee365f854ec337aadd087ecced5fe53dbdf937d8"
+      },
+      "go_log": {
+        "file": "production-retribution-paladin.go-log.txt",
+        "sha256": "7a8155bad865e8d5b609665f1d2467383c529733103023dbed0997dceddeff8c"
       }
     }
   ]

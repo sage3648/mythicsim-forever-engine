@@ -152,6 +152,8 @@ pub enum Value {
     SpellTimeToReady(ActionId),
     DotTimeToNextTick(ActionId),
     GcdIsReady,
+    /// Go `APLValueSpellCanCast`: `CanCastOrQueue` on the current target.
+    SpellCanCast(ActionId),
     /// Go `APLValueAutoTimeToNext`.
     AutoTimeToNext(AutoAttackType),
 }
@@ -221,6 +223,7 @@ impl Value {
             | Value::SpellIsKnown(_)
             | Value::SpellIsReady(_)
             | Value::IsExecutePhase(_)
+            | Value::SpellCanCast(_)
             | Value::GcdIsReady => ValueType::Bool,
             Value::AuraNumStacks(_)
             | Value::TargetAuraNumStacks(_)
@@ -794,7 +797,7 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
             Ok(Value::AutoTimeToNext(kind))
         }
         "dotIsActive" | "dotRemainingTime" | "dotTimeToNextTick" | "spellIsKnown"
-        | "spellIsReady" | "spellCastTime" | "spellTimeToReady" => {
+        | "spellIsReady" | "spellCastTime" | "spellTimeToReady" | "spellCanCast" => {
             // A target unit other than the current target is not modeled.
             only(&["spellId"])?;
             let id = config
@@ -808,6 +811,7 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
                 "spellIsKnown" => Value::SpellIsKnown(id),
                 "spellIsReady" => Value::SpellIsReady(id),
                 "spellTimeToReady" => Value::SpellTimeToReady(id),
+                "spellCanCast" => Value::SpellCanCast(id),
                 _ => Value::SpellCastTime(id),
             })
         }
@@ -1109,6 +1113,7 @@ pub enum Compiled<R> {
     SpellTimeToReady(usize),
     DotTimeToNextTick(usize),
     GcdIsReady,
+    SpellCanCast(usize),
     AutoTimeToNext(AutoAttackType),
     /// Go `APLValueCoerced`.
     Coerced {
@@ -1129,16 +1134,17 @@ impl<R> Compiled<R> {
             | Compiled::DotIsActive(_)
             | Compiled::SpellIsReady(_)
             | Compiled::IsExecutePhase(_)
+            | Compiled::SpellCanCast(_)
             | Compiled::GcdIsReady => ValueType::Bool,
             Compiled::AuraNumStacks(_) | Compiled::NumberTargets | Compiled::CurrentComboPoints => {
                 ValueType::Int
             }
             Compiled::AuraRemainingTime(_)
+            | Compiled::AutoTimeToNext(_)
             | Compiled::DotRemainingTime(_)
             | Compiled::SpellCastTime(_)
             | Compiled::SpellTimeToReady(_)
             | Compiled::DotTimeToNextTick(_)
-            | Compiled::AutoTimeToNext(_)
             | Compiled::RemainingTime
             | Compiled::TotemRemainingTime { .. }
             | Compiled::CurrentTime
@@ -1407,9 +1413,10 @@ fn compile_value<R>(
         Value::SpellIsReady(id) => Compiled::SpellIsReady((lookup.spell)(id)?),
         Value::SpellCastTime(id) => Compiled::SpellCastTime((lookup.spell)(id)?),
         Value::SpellTimeToReady(id) => Compiled::SpellTimeToReady((lookup.spell)(id)?),
+        Value::SpellCanCast(id) => Compiled::SpellCanCast((lookup.spell)(id)?),
+        Value::AutoTimeToNext(auto) => Compiled::AutoTimeToNext(*auto),
         Value::DotTimeToNextTick(id) => Compiled::DotTimeToNextTick((lookup.dot)(id)?),
         Value::GcdIsReady => Compiled::GcdIsReady,
-        Value::AutoTimeToNext(kind) => Compiled::AutoTimeToNext(*kind),
         Value::AuraIsKnown(id) => bool_const(aura(id).is_some()),
         Value::AuraIsActive(id) => match (aura(id), missing) {
             (Some(found), _) => Compiled::AuraIsActive(found.aura),
