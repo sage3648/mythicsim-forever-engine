@@ -1161,9 +1161,7 @@ impl<A: Agent> Fight<A> {
     /// Go `Unit.reset` followed by `Character.reset` for the player.
     fn reset_unit(&mut self, side: Side) {
         if side == Side::Player {
-            for timer in &mut self.timers {
-                *timer = STARTING_CD_TIME;
-            }
+            self.timers.fill(STARTING_CD_TIME);
             let player = &mut self.player;
             player.gcd = STARTING_CD_TIME;
             player.rotation_timer = STARTING_CD_TIME;
