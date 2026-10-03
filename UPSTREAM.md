@@ -17,6 +17,10 @@ retain their original source revision and source digest.
 
 ## Reconcile a fix
 
+The [migration plan](docs/hybrid-migration-plan.md#community-fix-workflow-with-ai-assistance)
+defines the proposed change ledger, mechanics map and AI-assisted port workflow.
+These tools are planned; the current comparison harness still uses the fixed baseline.
+
 1. Identify the source repository and exact commit or issue.
 2. Classify it as applicable, already covered, irrelevant to supported scope,
    deferred, or intentionally different for Forever.

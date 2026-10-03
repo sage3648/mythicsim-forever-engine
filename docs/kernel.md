@@ -151,7 +151,8 @@ serial engine API to compare against this single-threaded Rust implementation.
 
 The current [roadmap](../ROADMAP.md) starts with one complete Frost build and a
 Go preparation adapter, then evaluates hybrid integration. Moving character
-construction and data ownership into Rust remains a later cutover decision.
+construction and data ownership into Rust is a later migration phase, with
+compatibility gates before production cutover.
 
 No worker routing, production queues, catalogs, public rankings or deployments are
 changed by this prototype.

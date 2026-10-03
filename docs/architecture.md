@@ -37,7 +37,7 @@ a process boundary, rather than calling Go for individual events.
 The current prototype lacks this router, complete preparation adapter, full fight
 model and shared production result contract.
 
-## Possible full cutover
+## Intended full cutover
 
 ```mermaid
 flowchart TD
@@ -51,4 +51,5 @@ flowchart TD
 The API, frontend and job system can retain their contracts through adapters.
 Go can remain a development reference after leaving production. Community fixes
 still need reviewed ports and regressions. See [UPSTREAM.md](../UPSTREAM.md) and
-the [roadmap](../ROADMAP.md).
+the [roadmap](../ROADMAP.md). The [migration plan](hybrid-migration-plan.md) defines
+the staged path to removing Go from production while keeping the development reference.
