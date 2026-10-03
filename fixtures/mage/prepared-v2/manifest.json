@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "ceed7d2cae16c87263730fd71538e4968b995a0d0eb04c83622bd1e3b7d52020",
+  "exporter_sha256": "71d9b5ffdf882167cdcbf0c89f252e1a101f6dea71b8a10d3647308e199a0683",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -654,7 +654,7 @@
         "path": "fixtures/mage/prepared-v2/frost-orc.request.json"
       },
       "prepared": "frost-orc.prepared.json",
-      "prepared_sha256": "20cef0b7cf298678b85a5a4b6925f72d6436c1104009aa5ace3e1030124640b9",
+      "prepared_sha256": "85933fb11441a30f533d8c5f7c2cd33f0e0c1ee670ef90218649ed240085876f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -675,7 +675,7 @@
         "path": "fixtures/mage/prepared-v2/frost-orc-cooldown-timings.request.json"
       },
       "prepared": "frost-orc-cooldown-timings.prepared.json",
-      "prepared_sha256": "abaf9d9a95a0dca5d8d74cef449171ce0e8b065f7a7f42e7be0174ce80d3d770",
+      "prepared_sha256": "1ee2914df8d7096ef74ccb5dd5b4fbd509cc703bebe57b90d30d7a7a25cef309",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -806,7 +806,7 @@
         "path": "fixtures/mage/prepared-v2/production-balance-druid.request.json"
       },
       "prepared": "production-balance-druid.prepared.json",
-      "prepared_sha256": "cea89063ab2c90102f39fdf6ed3659cfac49682bc2d66a68ffa939f99d7e1c4d",
+      "prepared_sha256": "9fe9b4a7cd74f2d2b65a1edaf427169d8ad26a8b2727e01793068d046ece9643",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1020,6 +1020,48 @@
       "go_log": {
         "file": "shadow-priest-sequence-relinquish.go-log.txt",
         "sha256": "fb3585e45bc91a724d94431065fa3931a5000d30f74ac1c0711abeeb598f009b"
+      }
+    },
+    {
+      "id": "paladin-crusader-chili",
+      "description": "paladin-auto-attacks with the production weapon and armor enchants, Crusader among them, and Dragonbreath Chili: per-hand proc chances, Holy Strength through the stat-aura combinations, the heal and the delayed chili hit.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/paladin-crusader-chili.request.json"
+      },
+      "prepared": "paladin-crusader-chili.prepared.json",
+      "prepared_sha256": "dc52c13f7eac1ec689d35c3ef5acc0d91b06799be8edeb9201671e38d95a0121",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "paladin-crusader-chili.go-result.json",
+        "sha256": "a4423c0f4200e14dfff9f2937be3704ba6bda8bc7d54383ad26215efdeba2cf3"
+      },
+      "go_log": {
+        "file": "paladin-crusader-chili.go-log.txt",
+        "sha256": "562d2496beaef4b1f3348b65a95aed10804a827e7666f367265cfe776aa4f3a9"
+      }
+    },
+    {
+      "id": "paladin-windfury-totem",
+      "description": "paladin-crusader-chili with the party Windfury Totem: the trigger's chance and cooldown, charges of attack power through the stat-aura combinations, one fewer when an auto grants them, the extra main hand attack and the totem refreshed every five seconds.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/paladin-windfury-totem.request.json"
+      },
+      "prepared": "paladin-windfury-totem.prepared.json",
+      "prepared_sha256": "846d8713d4ccc31f4a6c00339d634047e29d740650890e29c751f64c86eb0af9",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "paladin-windfury-totem.go-result.json",
+        "sha256": "7e5fc34c745ae732b0c66d54878e80ef4e23a78482d528230cc7fbeaa1fc3f1c"
+      },
+      "go_log": {
+        "file": "paladin-windfury-totem.go-log.txt",
+        "sha256": "1ecfb3a1cd9e60440ca5e8cf00ddab69aeab305ff16dff2bf555dc6a0cd02c9f"
       }
     },
     {

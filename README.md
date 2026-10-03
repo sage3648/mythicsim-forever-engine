@@ -100,7 +100,7 @@ also [across races](validation/2026-10-04-smite-priest-race-sweep.json), match G
 [race board](validation/2026-10-04-smite-priest-race-boards.json).
 
 The application's published race boards, the requests behind every race's production DPS
-for each supported spec, are a real production corpus: all 28 match the pinned Go engine
+for each supported spec, are a real production corpus: all 44 match the pinned Go engine
 in Rust at 10,000 iterations, and every DPS the production engine published equals the
 pinned result to within 4e-12 ([record](validation/2026-10-04-production-race-boards.json)).
 

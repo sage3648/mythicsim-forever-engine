@@ -197,6 +197,8 @@ type classExport struct {
 	inertPet func(agent core.Agent, pet *core.Pet) string
 	// Optional: class behavior the effects cannot describe, one reason each.
 	unrepresented func(agent core.Agent, character *core.Character) []string
+	// Optional: class auras that change stats through AddStatsDynamic when gained or lost.
+	statAuras func(agent core.Agent, character *core.Character) []string
 }
 
 var classExports = map[proto.Class]classExport{}
@@ -1154,6 +1156,10 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	}
 	effects = append(effects, commonEffects(character, target, request, &unrepresented)...)
 	effects = append(effects, inertPets...)
+	effects = append(effects, meleeProcEffects(simulation, character, &unrepresented)...)
+	if statAuras := statAurasEffect(request, character, class, agent); statAuras != nil {
+		effects = append(effects, statAuras)
+	}
 	if eureka := eurekaEffect(agent, character); eureka != nil {
 		effects = append(effects, eureka)
 	}

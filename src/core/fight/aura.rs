@@ -11,8 +11,8 @@ use crate::{
 };
 
 use super::{
-    log::action_string, metrics::Aggregator, Agent, DotId, Fight, Powers, Side, SpellId,
-    SpellResult, TimerId,
+    log::action_string, metrics::Aggregator, Agent, DotId, Fight, Side, SpellId, SpellResult,
+    TimerId,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -50,11 +50,24 @@ pub(crate) enum AuraBehavior<K> {
     /// Go `NewTemporaryStatMultiplierAura`: the stats while active. Go recomputes every stat
     /// from the same inputs on each change, so expiry restores the prepared values exactly.
     TemporaryStats {
-        powers: Powers,
+        /// The aura's bit in `Fight::stat_mask`.
+        bit: u32,
         /// Lines in `Fight::aura_logs` logged before the stats change on gain and expiry.
         gain_log: Option<usize>,
         expire_log: Option<usize>,
     },
+    /// The Crusader enchant's trigger.
+    Crusader,
+    /// The party Windfury Totem's totem aura, whose exclusive effect holds the trigger.
+    WindfuryTotem,
+    /// The party Windfury Totem's trigger.
+    WindfuryTrigger,
+    /// The party Windfury Totem's charges of attack power, which landed autos spend.
+    WindfuryProc {
+        bit: u32,
+    },
+    /// Dragonbreath Chili's trigger.
+    DragonbreathChili,
     /// The aura of a dot or channel.
     Dot(DotId),
     Class(K),
@@ -425,14 +438,27 @@ impl<A: Agent> Fight<A> {
             AuraBehavior::MultiplyManaRegenSpeed(multiplier) => {
                 self.multiply_mana_regen_speed(multiplier)
             }
-            AuraBehavior::TemporaryStats {
-                powers, gain_log, ..
-            } => {
+            AuraBehavior::WindfuryProc { bit } => {
+                self.stat_mask |= bit;
+                self.player.powers = self.stat_combos[self.stat_mask as usize];
+            }
+            AuraBehavior::WindfuryTotem => {
+                let trigger = self
+                    .windfury
+                    .as_ref()
+                    .expect("Windfury Totem is bound")
+                    .trigger;
+                if !self.aura(trigger).active {
+                    self.activate_aura(trigger);
+                }
+            }
+            AuraBehavior::TemporaryStats { bit, gain_log, .. } => {
                 if let (Some(line), true) = (gain_log, self.log.is_some()) {
                     let line = self.aura_logs[line].clone();
                     self.player_log(&line);
                 }
-                self.player.powers = powers;
+                self.stat_mask |= bit;
+                self.player.powers = self.stat_combos[self.stat_mask as usize];
             }
             AuraBehavior::Class(kind) => A::on_gain(self, aura, kind),
             _ => {}
@@ -446,12 +472,27 @@ impl<A: Agent> Fight<A> {
             AuraBehavior::MultiplyCastSpeed(multiplier) => {
                 self.multiply_cast_speed(1.0 / multiplier)
             }
-            AuraBehavior::TemporaryStats { expire_log, .. } => {
+            AuraBehavior::WindfuryProc { bit } => {
+                self.stat_mask &= !bit;
+                self.player.powers = self.stat_combos[self.stat_mask as usize];
+            }
+            AuraBehavior::WindfuryTotem => {
+                let trigger = self
+                    .windfury
+                    .as_ref()
+                    .expect("Windfury Totem is bound")
+                    .trigger;
+                self.deactivate_aura(trigger);
+            }
+            AuraBehavior::TemporaryStats {
+                bit, expire_log, ..
+            } => {
                 if let (Some(line), true) = (expire_log, self.log.is_some()) {
                     let line = self.aura_logs[line].clone();
                     self.player_log(&line);
                 }
-                self.player.powers = self.config.powers;
+                self.stat_mask &= !bit;
+                self.player.powers = self.stat_combos[self.stat_mask as usize];
             }
             AuraBehavior::MultiplyManaRegenSpeed(multiplier) => {
                 self.multiply_mana_regen_speed(1.0 / multiplier)
@@ -594,6 +635,24 @@ impl<A: Agent> Fight<A> {
                     AuraBehavior::TouchOfTheGrave { chance, delay, .. } if side == Side::Player => {
                         self.touch_of_the_grave_callback(aura, spell, result, chance, delay)
                     }
+                    AuraBehavior::WindfuryTrigger if side == Side::Player => {
+                        self.windfury_trigger(aura, spell, result)
+                    }
+                    AuraBehavior::WindfuryProc { .. } if side == Side::Player => {
+                        let windfury = self.windfury.as_ref().expect("Windfury Totem is bound");
+                        // The charges' own trigger: a landed auto spends one, at once.
+                        if windfury.spend_spells[spell]
+                            && result.outcome & super::OUTCOME_LANDED != 0
+                        {
+                            self.remove_stack(aura);
+                        }
+                    }
+                    AuraBehavior::Crusader if side == Side::Player => {
+                        self.crusader_callback(aura, spell, result)
+                    }
+                    AuraBehavior::DragonbreathChili if side == Side::Player => {
+                        self.chili_callback(aura, spell, result)
+                    }
                     _ => {}
                 }
             }
@@ -647,6 +706,93 @@ impl<A: Agent> Fight<A> {
         );
     }
 
+    /// Go `AttachProcTriggerCallback` for the Windfury Totem trigger: landed hits, the
+    /// cooldown, the chance roll; then charges, one fewer when an auto granted them, and an
+    /// extra main hand attack at once.
+    fn windfury_trigger(&mut self, aura: AuraRef, spell: SpellId, result: &SpellResult) {
+        let windfury = self.windfury.clone().expect("Windfury Totem is bound");
+        if !windfury.trigger_spells[spell] || result.outcome & super::OUTCOME_LANDED == 0 {
+            return;
+        }
+        let icd = self.aura(aura).icd;
+        if let Some((timer, _)) = icd {
+            if self.timers[timer] > self.now {
+                return;
+            }
+        }
+        if windfury.trigger_chance != 1.0 && self.random_for_aura(aura) > windfury.trigger_chance {
+            return;
+        }
+        if let Some((timer, duration)) = icd {
+            self.timers[timer] = self.now + duration;
+        }
+        self.activate_aura(windfury.proc_aura);
+        let mut charges = self.aura(windfury.proc_aura).max_stacks;
+        if self.spells[spell].white_hit {
+            charges -= 1;
+        }
+        self.set_stacks(windfury.proc_aura, charges);
+        self.cast(windfury.extra, result.target);
+    }
+
+    /// Go `AttachProcTriggerCallback` for Crusader: a weapon proc on landed hits that rolls the
+    /// hand's chance, then waits a spell batch window.
+    fn crusader_callback(&mut self, aura: AuraRef, spell: SpellId, result: &SpellResult) {
+        if result.outcome & super::OUTCOME_LANDED == 0 {
+            return;
+        }
+        let Some(chance) = self
+            .crusader
+            .as_ref()
+            .and_then(|crusader| crusader.chances[spell])
+        else {
+            return;
+        };
+        if !self.proc(
+            chance,
+            &self.trackers[aura.side.index()].auras[aura.index]
+                .label
+                .clone(),
+        ) {
+            return;
+        }
+        self.schedule_delayed_proc(aura, spell, *result);
+    }
+
+    /// Go `AttachProcTriggerCallback` for Dragonbreath Chili: landed melee hits, its cooldown,
+    /// then a chance roll, and the cast a spell batch window later.
+    fn chili_callback(&mut self, aura: AuraRef, spell: SpellId, result: &SpellResult) {
+        let Some(chili) = self.chili.as_ref() else {
+            return;
+        };
+        if !chili.spells[spell] || result.outcome & super::OUTCOME_LANDED == 0 {
+            return;
+        }
+        let (chance, delay) = (chili.proc_chance, chili.delay);
+        let icd = self.aura(aura).icd;
+        if let Some((timer, _)) = icd {
+            if self.timers[timer] > self.now {
+                return;
+            }
+        }
+        if chance != 1.0 && self.random_for_aura(aura) > chance {
+            return;
+        }
+        if let Some((timer, duration)) = icd {
+            self.timers[timer] = self.now + duration;
+        }
+        let result = *result;
+        self.schedule(
+            self.now + delay,
+            super::PRIORITY_DOT,
+            super::Action::DelayedProc {
+                aura,
+                spell,
+                result,
+            },
+        );
+    }
+
     /// The delayed half of a proc trigger.
     pub(crate) fn delayed_proc(&mut self, aura: AuraRef, spell: SpellId, result: SpellResult) {
         match self.aura(aura).behavior.clone() {
@@ -661,6 +807,23 @@ impl<A: Agent> Fight<A> {
             }
             AuraBehavior::TouchOfTheGrave { drain, .. } => {
                 self.cast(drain, result.target);
+            }
+            AuraBehavior::Crusader => {
+                let crusader = self.crusader.clone().expect("Crusader is bound");
+                // Go Ternary(spell.IsOH(), ohAura, mhAura).
+                let hand = if self.spells[spell].off_hand_proc {
+                    crusader.oh_aura
+                } else {
+                    crusader.mh_aura
+                };
+                self.activate_aura(hand);
+                let heal = crusader.heal_min
+                    + (crusader.heal_max - crusader.heal_min) * self.random("Damage Roll");
+                self.gain_health(heal, crusader.heal_metrics);
+            }
+            AuraBehavior::DragonbreathChili => {
+                let chili = self.chili.clone().expect("Dragonbreath Chili is bound");
+                self.cast(chili.spell, result.target);
             }
             AuraBehavior::Class(kind) => A::on_delayed_proc(self, aura, kind, spell, result),
             _ => {}

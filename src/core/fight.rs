@@ -188,6 +188,11 @@ pub(crate) enum SpellBehavior<S> {
     ActivateAura(usize),
     /// Go attack.go's main or off hand auto attack.
     MeleeAuto(melee::Hand),
+    /// A magic hit on a rolled base damage, as Dragonbreath Chili's proc casts.
+    RollDamage {
+        min: f64,
+        max: f64,
+    },
 }
 
 /// Go spell flags used by the runtime, parsed from exported names.
@@ -338,6 +343,10 @@ pub(crate) struct Spell<S> {
     pub(crate) melee_proc: bool,
     /// Go `ProcMaskMeleeOrRanged`.
     pub(crate) melee_or_ranged_proc: bool,
+    /// Go `ProcMaskMeleeOH`: `Spell.IsOH`.
+    pub(crate) off_hand_proc: bool,
+    /// Go `ProcMaskMeleeWhiteHit`.
+    pub(crate) white_hit: bool,
     pub(crate) class_spell: Option<String>,
     pub(crate) class_spell_mask: bool,
     pub(crate) missile_speed: f64,
@@ -420,6 +429,9 @@ pub(crate) struct Player {
     pub(crate) school_damage_dealt_multiplier: [f64; 8],
     /// Go `PseudoStats.CastSpeedMultiplier`.
     pub(crate) cast_speed_multiplier: f64,
+    /// Go `PseudoStats.AttackSpeedMultiplier` and `MeleeSpeedMultiplier`.
+    pub(crate) attack_speed_multiplier: f64,
+    pub(crate) melee_speed_multiplier: f64,
     pub(crate) spirit_regen_rate_casting: f64,
     pub(crate) spirit_regen_multiplier: f64,
     pub(crate) force_full_spirit_regen: bool,
@@ -444,6 +456,39 @@ pub(crate) struct Player {
     pub(crate) oom_time: i64,
     pub(crate) went_oom: bool,
     pub(crate) first_oom: i64,
+}
+
+/// Go common/classic/enchants.go Crusader.
+#[derive(Clone, Debug)]
+pub(crate) struct Crusader {
+    pub(crate) chances: Vec<Option<f64>>,
+    pub(crate) mh_aura: AuraRef,
+    pub(crate) oh_aura: AuraRef,
+    pub(crate) heal_min: f64,
+    pub(crate) heal_max: f64,
+    pub(crate) heal_metrics: usize,
+}
+
+/// Go buffs/drivers.go `driveWindfuryTotem`.
+#[derive(Clone, Debug)]
+pub(crate) struct Windfury {
+    pub(crate) totem: AuraRef,
+    pub(crate) period: i64,
+    pub(crate) trigger: AuraRef,
+    pub(crate) trigger_spells: Vec<bool>,
+    pub(crate) trigger_chance: f64,
+    pub(crate) proc_aura: AuraRef,
+    pub(crate) spend_spells: Vec<bool>,
+    pub(crate) extra: SpellId,
+}
+
+/// Go core/consumes.go `registerDragonbreathChili`.
+#[derive(Clone, Debug)]
+pub(crate) struct DragonbreathChili {
+    pub(crate) spells: Vec<bool>,
+    pub(crate) proc_chance: f64,
+    pub(crate) spell: SpellId,
+    pub(crate) delay: i64,
 }
 
 /// Go buffs/drivers.go `driveSunderArmor`.
@@ -612,11 +657,14 @@ pub(crate) enum Action {
     Prepull(SpellId),
     /// A tick of the raid's Sunder Armor ramp, with the ticks done so far.
     SunderTick(i32),
+    /// The party Windfury Totem's periodic refresh.
+    WindfuryRefresh,
 }
 
 /// Go `ActionPriority`.
 pub(crate) const PRIORITY_GCD: i32 = 0;
 pub(crate) const PRIORITY_REGEN: i32 = 1;
+pub(crate) const PRIORITY_AUTO: i32 = 2;
 pub(crate) const PRIORITY_DOT: i32 = 3;
 pub(crate) const PRIORITY_PREPULL: i32 = 10;
 /// Go `SpellBatchWindow`.
@@ -680,6 +728,16 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) log: Option<Vec<String>>,
     /// Lines auras log when gained, by index.
     pub(crate) aura_logs: Vec<String>,
+    /// The Crusader enchant, when a weapon carries it.
+    pub(crate) crusader: Option<Crusader>,
+    /// The party Windfury Totem.
+    pub(crate) windfury: Option<Windfury>,
+    /// Dragonbreath Chili, when the character ate it.
+    pub(crate) chili: Option<DragonbreathChili>,
+    /// The player's stats for each combination of active stat auras, by bit mask.
+    pub(crate) stat_combos: Vec<Powers>,
+    /// The active stat auras.
+    pub(crate) stat_mask: u32,
     pub(crate) totals: metrics::Totals,
     pub(crate) encounter_damage_taken: f64,
 }
@@ -884,11 +942,17 @@ impl<A: Agent> Fight<A> {
             let item = id.item_id;
             let behavior = if let Some(class) = class_spell(exported) {
                 SpellBehavior::Class(class)
-            } else if id.other_id == "OtherActionAttack" && (id.tag == 1 || id.tag == 2) {
-                SpellBehavior::MeleeAuto(if id.tag == 1 {
-                    melee::Hand::Main
-                } else {
+            } else if id.other_id == "OtherActionAttack"
+                && (id.tag == 1
+                    || id.tag == 2
+                    || effects.iter().any(|effect| {
+                        matches!(effect, Effect::WindfuryTotem { extra_attack_spell, .. } if *extra_attack_spell == spells.len())
+                    }))
+            {
+                SpellBehavior::MeleeAuto(if id.tag == 2 {
                     melee::Hand::Off
+                } else {
+                    melee::Hand::Main
                 })
             } else {
                 effects
@@ -951,6 +1015,17 @@ impl<A: Agent> Fight<A> {
                             activations.push((spells.len(), aura));
                             Some(SpellBehavior::None)
                         }
+                        Effect::DragonbreathChili {
+                            spell_id,
+                            roll_min,
+                            roll_max,
+                            ..
+                        } if id.spell_id == *spell_id && id.tag == 0 => {
+                            Some(SpellBehavior::RollDamage {
+                                min: *roll_min,
+                                max: *roll_max,
+                            })
+                        }
                         Effect::TouchOfTheGrave {
                             drain_spell_id,
                             health_fraction,
@@ -993,6 +1068,14 @@ impl<A: Agent> Fight<A> {
                     .proc_mask
                     .iter()
                     .any(|mask| mask == "ProcMaskSpellDamage"),
+                white_hit: exported
+                    .proc_mask
+                    .iter()
+                    .any(|mask| mask == "ProcMaskMeleeMHAuto" || mask == "ProcMaskMeleeOHAuto"),
+                off_hand_proc: exported
+                    .proc_mask
+                    .iter()
+                    .any(|mask| mask == "ProcMaskMeleeOHAuto" || mask == "ProcMaskMeleeOHSpecial"),
                 melee_or_ranged_proc: exported.proc_mask.iter().any(|mask| {
                     matches!(
                         mask.as_str(),
@@ -1086,6 +1169,32 @@ impl<A: Agent> Fight<A> {
         }
 
         let mut aura_logs: Vec<String> = Vec::new();
+        // Go AddStatsDynamic: the player's stats for each combination of active stat auras.
+        let (stat_aura_labels, stat_combos) = effects
+            .iter()
+            .find_map(|effect| match effect {
+                Effect::StatAuras { auras, combos, .. } => Some((auras.clone(), combos.clone())),
+                _ => None,
+            })
+            .unwrap_or_default();
+        let stat_combos: Vec<Powers> = stat_combos
+            .iter()
+            .map(|combo| {
+                let read = |name: &str| {
+                    combo
+                        .get(name)
+                        .copied()
+                        .ok_or_else(|| format!("stat combination lacks {name}"))
+                };
+                Ok(Powers {
+                    spell_damage: read("SpellDamage")?,
+                    attack_power: read("AttackPower")?,
+                    ranged_attack_power: read("RangedAttackPower")?,
+                    spell_crit_percent: read("SpellCritPercent")?,
+                    physical_crit_percent: read("PhysicalCritPercent")?,
+                })
+            })
+            .collect::<Result<_, BuildError>>()?;
         let mut trackers = [Tracker::default(), Tracker::default()];
         for (side, auras) in [(Side::Target, &target.auras), (Side::Player, &player.auras)] {
             let unit = if side == Side::Player {
@@ -1177,49 +1286,79 @@ impl<A: Agent> Fight<A> {
                     _ => None,
                 }) {
                     AuraBehavior::MultiplyManaRegenSpeed(multiplier)
-                } else if let Some((stats, gain_log, expire_log)) =
-                    effects.iter().find_map(|effect| match effect {
-                        Effect::BloodFury {
-                            aura, active_stats, ..
-                        } if side == Side::Player && *aura == exported.label => {
-                            Some((active_stats, None, None))
+                } else if let Some(kind) = effects.iter().find_map(|effect| match effect {
+                    Effect::WindfuryTotem {
+                        totem_aura,
+                        trigger_aura,
+                        proc_aura,
+                        ..
+                    } if side == Side::Player => {
+                        if *totem_aura == exported.label {
+                            Some(AuraBehavior::WindfuryTotem)
+                        } else if *trigger_aura == exported.label {
+                            Some(AuraBehavior::WindfuryTrigger)
+                        } else if *proc_aura == exported.label {
+                            let bit = stat_aura_labels.iter().position(|label| label == proc_aura)?;
+                            Some(AuraBehavior::WindfuryProc { bit: 1 << bit })
+                        } else {
+                            None
                         }
+                    }
+                    _ => None,
+                }) {
+                    kind
+                } else if let Some(bit) = stat_aura_labels
+                    .iter()
+                    .position(|label| side == Side::Player && *label == exported.label)
+                {
+                    // The lines Go's NewTemporaryStatsAura logs; multiplier and generated buffs
+                    // log none.
+                    let logs = effects.iter().find_map(|effect| match effect {
                         Effect::TemporaryStats {
                             aura,
-                            active_stats,
                             gain_log,
                             expire_log,
                             ..
-                        } if side == Side::Player && *aura == exported.label => {
-                            Some((active_stats, Some(gain_log), Some(expire_log)))
-                        }
+                        } if *aura == exported.label => Some((gain_log, expire_log)),
+                        Effect::Crusader {
+                            mh_aura,
+                            mh_gain_log,
+                            mh_expire_log,
+                            ..
+                        } if *mh_aura == exported.label => Some((mh_gain_log, mh_expire_log)),
+                        Effect::Crusader {
+                            oh_aura,
+                            oh_gain_log,
+                            oh_expire_log,
+                            ..
+                        } if *oh_aura == exported.label => Some((oh_gain_log, oh_expire_log)),
                         _ => None,
-                    })
-                {
-                    let active = |name: &str| stats.get(name).copied();
-                    let base = config.powers;
-                    let mut logged = |line: Option<&String>| {
-                        line.map(|line| {
-                            aura_logs.push(line.clone());
-                            aura_logs.len() - 1
-                        })
+                    });
+                    let mut logged = |line: &String| {
+                        aura_logs.push(line.clone());
+                        aura_logs.len() - 1
                     };
-                    let gain_log = logged(gain_log);
-                    let expire_log = logged(expire_log);
+                    let (gain_log, expire_log) = match logs {
+                        Some((gain, expire)) => (Some(logged(gain)), Some(logged(expire))),
+                        None => (None, None),
+                    };
                     AuraBehavior::TemporaryStats {
-                        powers: Powers {
-                            spell_damage: active("SpellDamage").unwrap_or(base.spell_damage),
-                            attack_power: active("AttackPower").unwrap_or(base.attack_power),
-                            ranged_attack_power: active("RangedAttackPower")
-                                .unwrap_or(base.ranged_attack_power),
-                            spell_crit_percent: active("SpellCritPercent")
-                                .unwrap_or(base.spell_crit_percent),
-                            physical_crit_percent: active("PhysicalCritPercent")
-                                .unwrap_or(base.physical_crit_percent),
-                        },
+                        bit: 1 << bit,
                         gain_log,
                         expire_log,
                     }
+                } else if side == Side::Player
+                    && effects.iter().any(|effect| {
+                        matches!(effect, Effect::Crusader { trigger_aura, .. } if *trigger_aura == exported.label)
+                    })
+                {
+                    AuraBehavior::Crusader
+                } else if side == Side::Player
+                    && effects.iter().any(|effect| {
+                        matches!(effect, Effect::DragonbreathChili { trigger_aura, .. } if *trigger_aura == exported.label)
+                    })
+                {
+                    AuraBehavior::DragonbreathChili
                 } else if effects.iter().any(|effect| {
                     matches!(effect, Effect::InertListener { unit: u, aura, .. } if u == unit && *aura == exported.label)
                 }) {
@@ -1285,6 +1424,8 @@ impl<A: Agent> Fight<A> {
                 spell_cost_percent_modifier: config.initial.spell_cost_percent_modifier,
                 school_damage_dealt_multiplier: config.school_damage_dealt_multiplier,
                 cast_speed_multiplier: config.initial.cast_speed_multiplier,
+                attack_speed_multiplier: config.melee.attack_speed_multiplier,
+                melee_speed_multiplier: config.melee.melee_speed_multiplier,
                 spirit_regen_rate_casting: config.initial.spirit_regen_rate_casting,
                 spirit_regen_multiplier: config.initial.spirit_regen_multiplier,
                 force_full_spirit_regen: config.initial.force_full_spirit_regen,
@@ -1354,6 +1495,11 @@ impl<A: Agent> Fight<A> {
             target_armor: prepared.melee.defender_armor,
             sunder: None,
             aura_logs,
+            stat_combos,
+            stat_mask: 0,
+            crusader: None,
+            windfury: None,
+            chili: None,
             eureka: None,
             pets: pet::inert_pets(effects),
             totals: metrics::Totals::default(),
@@ -1382,6 +1528,112 @@ impl<A: Agent> Fight<A> {
                     ticks: *ticks,
                     armor_by_stacks: armor_by_stacks.clone(),
                     blocked: *blocked,
+                });
+            }
+        }
+        for effect in effects {
+            match effect {
+                Effect::Crusader {
+                    mh_aura,
+                    oh_aura,
+                    chances,
+                    heal_min,
+                    heal_max,
+                    heal_metrics_action_id,
+                    ..
+                } => {
+                    let mut by_spell = vec![None; fight.spells.len()];
+                    for entry in chances {
+                        if let Some(slot) = by_spell.get_mut(entry.spell) {
+                            *slot = Some(entry.chance);
+                        }
+                    }
+                    let heal_metrics = fight.resources.len();
+                    fight.resources.push(ResourceMetrics {
+                        id: heal_metrics_action_id.clone(),
+                        health: true,
+                        events: 0,
+                        gain: 0.0,
+                        actual_gain: 0.0,
+                        previous_events: 0,
+                        previous_actual_gain: 0.0,
+                        is_mana_regen: false,
+                    });
+                    fight.crusader = Some(Crusader {
+                        chances: by_spell,
+                        mh_aura: fight.player_aura(mh_aura)?,
+                        oh_aura: fight.player_aura(oh_aura)?,
+                        heal_min: *heal_min,
+                        heal_max: *heal_max,
+                        heal_metrics,
+                    });
+                }
+                Effect::DragonbreathChili {
+                    spell_id,
+                    proc_chance,
+                    trigger_spells,
+                    delay_ns,
+                    ..
+                } => {
+                    let mut spells = vec![false; fight.spells.len()];
+                    for &spell in trigger_spells {
+                        if let Some(slot) = spells.get_mut(spell) {
+                            *slot = true;
+                        }
+                    }
+                    let spell = fight
+                        .spells
+                        .iter()
+                        .position(|spell| spell.id.spell_id == *spell_id && spell.id.tag == 0)
+                        .ok_or_else(|| {
+                            format!("Dragonbreath Chili's spell {spell_id} is not registered")
+                        })?;
+                    fight.chili = Some(DragonbreathChili {
+                        spells,
+                        proc_chance: *proc_chance,
+                        spell,
+                        delay: *delay_ns,
+                    });
+                }
+                _ => {}
+            }
+        }
+        for effect in effects {
+            if let Effect::WindfuryTotem {
+                totem_aura,
+                period_ns,
+                trigger_aura,
+                trigger_spells,
+                trigger_proc_chance,
+                proc_aura,
+                spend_spells,
+                extra_attack_spell,
+                ..
+            } = effect
+            {
+                let spell_count = fight.spells.len();
+                let mask = |spells: &[usize]| {
+                    let mut mask = vec![false; spell_count];
+                    for &spell in spells {
+                        if let Some(slot) = mask.get_mut(spell) {
+                            *slot = true;
+                        }
+                    }
+                    mask
+                };
+                // Go activates the trigger through the totem's exclusive effect, which runs before
+                // the totem logs its gain; the trigger is registered first, so activating it in
+                // registration order at reset gives the same sequence.
+                let trigger = fight.player_aura(trigger_aura)?;
+                fight.windfury = Some(Windfury {
+                    totem: fight.player_aura(totem_aura)?,
+                    period: *period_ns,
+                    trigger,
+                    trigger_spells: mask(trigger_spells),
+                    trigger_chance: *trigger_proc_chance,
+                    proc_aura: fight.player_aura(proc_aura)?,
+                    spend_spells: mask(spend_spells),
+                    extra: *extra_attack_spell,
                 });
             }
         }
@@ -1647,7 +1899,10 @@ impl<A: Agent> Fight<A> {
             player.spell_cost_percent_modifier = initial.spell_cost_percent_modifier;
             player.school_damage_dealt_multiplier = self.config.school_damage_dealt_multiplier;
             player.cast_speed_multiplier = initial.cast_speed_multiplier;
+            player.attack_speed_multiplier = self.config.melee.attack_speed_multiplier;
+            player.melee_speed_multiplier = self.config.melee.melee_speed_multiplier;
             player.powers = self.config.powers;
+            self.stat_mask = 0;
             player.spirit_regen_rate_casting = initial.spirit_regen_rate_casting;
             player.spirit_regen_multiplier = initial.spirit_regen_multiplier;
             player.force_full_spirit_regen = initial.force_full_spirit_regen;
@@ -1659,6 +1914,13 @@ impl<A: Agent> Fight<A> {
             A::reset(self);
         }
         self.reset_auras(side);
+        // Go driveWindfuryTotem's OnReset: the totem refreshes every period from the reset.
+        if side == Side::Player {
+            if let Some(windfury) = &self.windfury {
+                let period = windfury.period;
+                self.schedule(period, PRIORITY_AUTO, Action::WindfuryRefresh);
+            }
+        }
         // Go ScheduledAura's OnReset: the ramp's first tick at the pull, at dot priority.
         if side == Side::Target {
             self.target_armor = self.config.melee.defender_armor;
@@ -1811,6 +2073,15 @@ impl<A: Agent> Fight<A> {
             } => self.delayed_proc(aura, spell, result),
             Action::Prepull(spell) => self.cast_or_queue(spell, Side::Target),
             Action::SunderTick(done) => self.sunder_tick(done),
+            Action::WindfuryRefresh => {
+                let windfury = self.windfury.clone().expect("Windfury Totem is bound");
+                self.activate_aura(windfury.totem);
+                self.schedule(
+                    self.now + windfury.period,
+                    PRIORITY_AUTO,
+                    Action::WindfuryRefresh,
+                );
+            }
         }
     }
 
