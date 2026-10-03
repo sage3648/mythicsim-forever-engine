@@ -133,6 +133,15 @@ pub(crate) trait Agent: Sized {
         _new: i32,
     ) {
     }
+    /// Go `OnApplyEffects`, before the spell's effects apply.
+    fn on_apply_effects(
+        _fight: &mut Fight<Self>,
+        _aura: AuraRef,
+        _kind: Self::Aura,
+        _spell: SpellId,
+        _target: Side,
+    ) {
+    }
     fn on_cast_complete(
         _fight: &mut Fight<Self>,
         _aura: AuraRef,
@@ -577,6 +586,9 @@ pub(crate) struct Windfury {
     pub(crate) proc_aura: AuraRef,
     pub(crate) spend_spells: Vec<bool>,
     pub(crate) extra: SpellId,
+    /// Go `ProcTrigger.RequireDamageDealt` of the trigger and of the charge spender.
+    pub(crate) trigger_require_damage: bool,
+    pub(crate) spend_require_damage: bool,
 }
 
 /// Go common/shared/shared_utils.go `applySpellDataDamageProc`: an item proc that casts a
@@ -2192,6 +2204,8 @@ impl<A: Agent> Fight<A> {
                 proc_aura,
                 spend_spells,
                 extra_attack_spell,
+                trigger_require_damage,
+                spend_require_damage,
                 ..
             } = effect
             {
@@ -2218,6 +2232,8 @@ impl<A: Agent> Fight<A> {
                     proc_aura: fight.player_aura(proc_aura)?,
                     spend_spells: mask(spend_spells),
                     extra: *extra_attack_spell,
+                    trigger_require_damage: *trigger_require_damage,
+                    spend_require_damage: *spend_require_damage,
                 });
             }
         }

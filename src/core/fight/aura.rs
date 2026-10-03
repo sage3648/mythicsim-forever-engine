@@ -158,6 +158,8 @@ impl CallbackList {
 pub(crate) struct Aura<K> {
     pub(crate) label: String,
     pub(crate) action_id: Option<ActionId>,
+    /// Go `AuraMetrics.ID`, fixed at registration; a metric split retags `action_id` alone.
+    pub(crate) metrics_id: Option<ActionId>,
     pub(crate) duration: i64,
     pub(crate) max_stacks: i32,
     pub(crate) behavior: AuraBehavior<K>,
@@ -232,6 +234,7 @@ impl<K> Tracker<K> {
         self.auras.push(Aura {
             label: exported.label.clone(),
             action_id: exported.action_id.clone(),
+            metrics_id: exported.action_id.clone(),
             duration: exported.duration_ns,
             max_stacks: exported.max_stacks,
             behavior,
@@ -723,6 +726,22 @@ impl<A: Agent> Fight<A> {
         }
     }
 
+    /// Go `auraTracker.OnApplyEffects` on the caster. No active check, as in Go.
+    pub(crate) fn on_apply_effects(&mut self, spell: SpellId, target: Side) {
+        let list = List::ApplyEffects as usize;
+        let length = self.trackers[Side::Player.index()].lists[list].snapshot_len();
+        for position in 0..length {
+            let index = self.trackers[Side::Player.index()].lists[list].read(position);
+            let aura = AuraRef {
+                side: Side::Player,
+                index,
+            };
+            if let AuraBehavior::Class(kind) = self.aura(aura).behavior {
+                A::on_apply_effects(self, aura, kind, spell, target);
+            }
+        }
+    }
+
     /// Go `auraTracker.OnPeriodicDamageDealt` on the caster, which skips no inactive aura. No
     /// target aura in scope acts on periodic damage taken.
     pub(crate) fn on_periodic_damage(&mut self, spell: SpellId, result: &SpellResult) {
@@ -784,6 +803,7 @@ impl<A: Agent> Fight<A> {
                         // The charges' own trigger: a landed auto spends one, at once.
                         if windfury.spend_spells[spell]
                             && result.outcome & super::OUTCOME_LANDED != 0
+                            && !(windfury.spend_require_damage && result.damage == 0.0)
                         {
                             self.remove_stack(aura);
                         }
@@ -861,6 +881,9 @@ impl<A: Agent> Fight<A> {
     fn windfury_trigger(&mut self, aura: AuraRef, spell: SpellId, result: &SpellResult) {
         let windfury = self.windfury.clone().expect("Windfury Totem is bound");
         if !windfury.trigger_spells[spell] || result.outcome & super::OUTCOME_LANDED == 0 {
+            return;
+        }
+        if windfury.trigger_require_damage && result.damage == 0.0 {
             return;
         }
         let icd = self.aura(aura).icd;

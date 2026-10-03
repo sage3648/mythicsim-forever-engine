@@ -65,3 +65,40 @@ fn chance_of_death_acts_once_the_player_can_take_damage() {
         &"player aura \"Chance of Death\" listens to combat events without an effect".into()
     ));
 }
+
+fn fixture(name: &str) -> Value {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join(format!("fixtures/mage/prepared-v2/{name}.prepared.json"));
+    serde_json::from_slice(&fs::read(path).unwrap()).unwrap()
+}
+
+#[test]
+fn production_assassination_and_subtlety_requests_are_supported() {
+    for name in [
+        "production-assassination-rogue",
+        "production-subtlety-rogue",
+    ] {
+        let prepared: PreparedV2 = serde_json::from_value(fixture(name)).unwrap();
+        assert_eq!(prepared_coverage(&prepared), Vec::<String>::new(), "{name}");
+    }
+}
+
+/// Each talent proc trigger is claimed by its own effect.
+#[test]
+fn talent_proc_triggers_need_their_effects() {
+    let mut value = fixture("production-subtlety-rogue");
+    value["effects"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|effect| effect["kind"] != "rogue_proc");
+    let reasons = reasons(value);
+    for label in [
+        "Initiative Trigger",
+        "Cutthroat Trigger",
+        "Thousand Cuts Trigger",
+    ] {
+        assert!(reasons.contains(&format!(
+            "player aura \"{label}\" listens to combat events without an effect"
+        )));
+    }
+}

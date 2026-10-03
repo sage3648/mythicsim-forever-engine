@@ -896,6 +896,10 @@ pub enum Effect {
         spend_spells: Vec<usize>,
         spend_outcome: Vec<String>,
         extra_attack_spell: usize,
+        /// Go `ProcTrigger.RequireDamageDealt` of each trigger: a hit that deals no damage,
+        /// such as a landed Mutilate's own roll, does not reach it.
+        trigger_require_damage: bool,
+        spend_require_damage: bool,
     },
     /// The raid's Sunder Armor, ramped one stack a period from the pull; target armor at
     /// each stack count, as Go computes it.
@@ -1757,6 +1761,71 @@ pub enum Effect {
         proc_chance: f64,
         tick_damage: f64,
     },
+    /// Go sim/rogue/stealth.go and vanish.go: Stealth before the pull, and Vanish.
+    Stealth {
+        aura: String,
+        spell_id: i32,
+        vanish_spell_id: i32,
+    },
+    Ambush {
+        spell_id: i32,
+        base_damage: f64,
+        main_hand_dagger: bool,
+        cutthroat_aura: String,
+    },
+    Rupture {
+        spell_id: i32,
+        tick_damage: f64,
+        damage_per_combo_point: f64,
+        base_tick_count: i32,
+        attack_power_shares: Vec<f64>,
+        tick_can_crit: bool,
+        magic: bool,
+        hemorrhage_aura: String,
+        hemorrhage_multiplier: f64,
+    },
+    Mutilate {
+        spell_id: i32,
+        flat_damage: f64,
+        poison_bonus: f64,
+        combo_points: i32,
+        daggers: bool,
+        weapon_share: f64,
+    },
+    ColdBlood {
+        spell_id: i32,
+        aura: String,
+        crit_bonus: f64,
+        class_spells: Vec<String>,
+    },
+    Premeditation {
+        spell_id: i32,
+        combo_points: i32,
+    },
+    Preparation {
+        spell_id: i32,
+        reset_spell_ids: Vec<i32>,
+    },
+    /// A Rogue talent proc trigger: the spells it hears, the outcome and chance, and what its
+    /// handler does a spell batch window later.
+    RogueProc {
+        trigger_aura: String,
+        handler: String,
+        proc_chance: f64,
+        spells: Vec<usize>,
+        outcome: String,
+        periodic: bool,
+        delay_ns: i64,
+        #[serde(default)]
+        action: Option<ActionId>,
+        #[serde(default)]
+        aura: Option<String>,
+    },
+    ThousandCuts {
+        aura: String,
+        cost_per_stack: i32,
+        class_spells: Vec<String>,
+    },
     /// Go consumes.go Goblin Sapper Charge: a rolled Fire hit on the target and a second roll
     /// on the player, which rolls on the player's attack table against itself.
     GoblinSapper {
@@ -1949,6 +2018,15 @@ impl Effect {
             Effect::InstantPoison { .. } => "instant_poison",
             Effect::DeadlyPoison { .. } => "deadly_poison",
             Effect::GoblinSapper { .. } => "goblin_sapper",
+            Effect::Stealth { .. } => "stealth",
+            Effect::Ambush { .. } => "ambush",
+            Effect::Rupture { .. } => "rupture",
+            Effect::Mutilate { .. } => "mutilate",
+            Effect::ColdBlood { .. } => "cold_blood",
+            Effect::Premeditation { .. } => "premeditation",
+            Effect::Preparation { .. } => "preparation",
+            Effect::RogueProc { .. } => "rogue_proc",
+            Effect::ThousandCuts { .. } => "thousand_cuts",
             Effect::ChanceOfDeath { .. } => "chance_of_death",
             Effect::ParryHaste { .. } => "parry_haste",
             Effect::FixedUptimeAura { .. } => "fixed_uptime_aura",

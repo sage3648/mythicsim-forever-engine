@@ -409,6 +409,19 @@ impl<A: Agent> Fight<A> {
         state.split = split;
         state.id.tag = split as i32;
         state.action = Some(state.split_actions[split]);
+        // Go retags the spell's dot too, so its aura logs line up in the timeline.
+        if let Some(dot) = state.dot {
+            let aura = self.dots[dot].aura;
+            let id = self.spells[spell].id.clone();
+            if let Some(aura_id) = self.aura_mut(aura).action_id.as_mut() {
+                if aura_id.spell_id == id.spell_id
+                    && aura_id.item_id == id.item_id
+                    && aura_id.other_id == id.other_id
+                {
+                    aura_id.tag = split as i32;
+                }
+            }
+        }
     }
 
     /// Go `makeCastFunc`.
@@ -618,6 +631,10 @@ impl<A: Agent> Fight<A> {
     /// Go `Spell.applyEffects`.
     pub(crate) fn apply_effects(&mut self, spell: SpellId, target: Side) {
         self.spells[spell].metrics[target.index()].casts += 1;
+        // Go runs OnApplyEffects first, unless the spell skips cast completion callbacks.
+        if !self.spells[spell].flags.no_on_cast_complete {
+            self.on_apply_effects(spell, target);
+        }
         match self.spells[spell].behavior.clone() {
             SpellBehavior::Class(behavior) => A::apply_effects(self, spell, target, behavior),
             SpellBehavior::PotionMana {
