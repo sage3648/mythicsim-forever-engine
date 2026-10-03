@@ -31,6 +31,9 @@ pub(crate) enum ModKind {
     CastTimeFlat,
     /// Go `SpellMod_GlobalCooldown_Flat`: adds to the default GCD, in nanoseconds.
     GlobalCooldownFlat,
+    /// Go `SpellMod_PowerCost_Flat`: adds its integer value, held in the float value, to the
+    /// cost's `FlatModifier`.
+    PowerCostFlat,
 }
 
 #[derive(Clone, Debug)]
@@ -81,6 +84,15 @@ impl<A: Agent> Fight<A> {
                             cost.additive_percent_modifier += modifier.float_value;
                         } else {
                             cost.additive_percent_modifier -= modifier.float_value;
+                        }
+                    }
+                }
+                ModKind::PowerCostFlat => {
+                    if let Some(cost) = state.cost.as_mut() {
+                        if sign > 0.0 {
+                            cost.flat_modifier += modifier.float_value as i32;
+                        } else {
+                            cost.flat_modifier -= modifier.float_value as i32;
                         }
                     }
                 }

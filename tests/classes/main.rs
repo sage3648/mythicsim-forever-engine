@@ -1,5 +1,6 @@
 //! Class and spec integration tests.
 
+mod druid;
 mod hunter;
 mod mage;
 mod paladin;

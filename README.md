@@ -28,6 +28,32 @@ required to run the kernel or Rust tests.
 
 ## What works today
 
+Twenty of the application's 29 production reference builds, captured at application
+revision 18bbcd47, run in Rust through the prepared v2 contract and match the pinned Go
+engine on the whole result and the first-fight log:
+
+| Class | Builds |
+| --- | --- |
+| Mage | Arcane, Fire, Frost, Frostfire |
+| Druid | Balance, Feral (cat) |
+| Shaman | Elemental, Enhancement |
+| Warlock | Affliction, Demonology, Destruction |
+| Priest | Shadow, Smite |
+| Rogue | Assassination, Combat, Subtlety |
+| Paladin | Retribution, Shockadin |
+| Warrior | Fury |
+| Hunter | Marksmanship |
+
+Every race variant on the application's race boards for these builds matches too
+([casters](validation/2026-10-04-production-race-boards.json),
+[melee and ranged](validation/2026-10-04-melee-race-boards.json)), as do randomized sweeps
+of each build under `validation/`. A player tanking the target takes its swings, with
+crushing blows, blocks, parry haste, Chance of Death and a hardcast's avoidance drop. The
+remaining nine builds are the Arms, Protection and Fury/Protection Warrior, the three
+Protection Paladin builds, the Feral Bear, and the Beast Mastery and Survival Hunter.
+
+The original prepared contract, which the bare `sim` path still accepts, covers:
+
 - Level 60 caster, Frostbolt 25304 and one level 60 to 63 target.
 - Cast timing, GCD, projectile travel, hit, crit and binary resistance.
 - Mana spending, regeneration ticks, the five-second rule and mana starvation.
@@ -117,6 +143,15 @@ replacement reacts before each swing, and so does a
 [race sweep](validation/2026-10-04-hunter-race-sweep.json) across Human, Dwarf, Night Elf,
 Orc, Troll and Tauren.
 
+The production Feral (cat) Druid matches at 578.870 DPS: a Night Elf starting in Cat Form
+with a prepull Prowl into Ravage, Shred building combo points with Blood Frenzy, Rip's bleed
+reading attack power at each tick, Ferocious Bite, Shifting Power, Faerie Fire, Berserk,
+Rend and Tear and Omen of Clarity off melee hits. Innervate and the mana potion drop the
+form, and the cat shifts back with Furor's energy carry over, swinging the equipped weapon
+while out of form. [Sweeps](validation/2026-10-04-feral-druid-sweep.json), also
+[as Tauren](validation/2026-10-04-feral-druid-race-sweep.json), match Go on all 48
+variants.
+
 The application's published race boards, the requests behind every race's production DPS
 for each supported spec, are a real production corpus: all 44 match the pinned Go engine
 in Rust at 10,000 iterations, and every DPS the production engine published equals the
@@ -141,6 +176,18 @@ Sapper Charge, whose hit on the player removes health through Chance of Death.
 [in melee range](validation/2026-10-04-combat-rogue-melee-sweep.json) and
 [across every Rogue race](validation/2026-10-04-combat-rogue-race-sweep.json), match Go
 on all 72 variants.
+
+The production Assassination and Subtlety Rogues match as well. Assassination, at 564.460
+DPS, casts Mutilate's two hits with their poisoned bonus, Seal Fate and Cold Blood.
+Subtlety, at 540.676 DPS, opens from a prepull Stealth with Premeditation and Ambush,
+breaks Stealth to resume its swings, Vanishes back into Stealth for another Ambush,
+refreshes Vanish with Preparation, and adds Initiative, Cutthroat and a Rupture bleed whose
+ticks stack Thousand Cuts. Sweeps of each in melee range and across every Rogue race
+([Assassination](validation/2026-10-04-assassination-rogue-sweep.json),
+[its races](validation/2026-10-04-assassination-rogue-race-sweep.json),
+[Subtlety](validation/2026-10-04-subtlety-rogue-sweep.json),
+[its races](validation/2026-10-04-subtlety-rogue-race-sweep.json)) match Go on all 96
+variants.
 The production Retribution Paladin build is the first melee build: a Human with a
 two-handed weapon twisting Seal of Command and Seal of Righteousness through Twist of
 Light's Echoes, Judgement, Holy Strike, Hammer of Wrath in the execute phase, Consecration,
@@ -167,6 +214,20 @@ Cleave, which replace main hand swings, match too.
 of 48 variants; the other six drop Expose Armor, so the rotation could stack the warrior's
 own Sunder Armor beside the raid's, which is rejected. All ten requests on the Warrior
 [race board](validation/2026-10-04-warrior-race-boards.json) match.
+
+The production Affliction Warlock build matches at 541.885 DPS: a Gnome warlock with
+a summoned Succubus, which the runtime simulates as its own unit with auto attacks,
+mana and Lash of Pain, Corruption, Bane of Agony with Amplify Curse, Immolate and
+Shadow Bolt with Nightfall's instant Shadow Trance. Its
+[sweep](validation/2026-10-04-affliction-warlock-sweep.json) matches Go on all 24
+variants.
+
+The production Demonology Warlock build matches at 610.212 DPS: a Gnome warlock with
+Demonic Pact keeping the sacrificed Imp's buff while the Succubus is out, Decimation in
+the execute phase, Demonic Brand charges the Succubus spends for extra hits, and
+Demonic Energies' share of Life Tap for the demon. Its
+[sweep](validation/2026-10-04-demonology-warlock-sweep.json) matches Go on all 24
+variants.
 
 Every race that can be a Mage is supported: Human, Gnome, Undead, Troll with
 Berserking, Orc with Blood Fury and Shatter Curse, and High Order Skyborne with Read

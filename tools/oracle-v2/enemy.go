@@ -42,6 +42,9 @@ type Enemy struct {
 	// Auras inactive at reset whose activation changes a value above, as "player:label" or
 	// "target:label". The gate rejects a build where something in scope activates one.
 	ChangingAuras []string `json:"changing_auras"`
+	// The rolls while a hardcast holds the tank's reduced avoidance aura (gcd.go
+	// newHardcastAction), by stat aura combination.
+	ReducedAvoidanceRolls []EnemyRolls `json:"reduced_avoidance_rolls,omitempty"`
 }
 
 // The steps of the target's swing that read the player's defenses.
@@ -155,6 +158,25 @@ func exportEnemy(request *proto.RaidSimRequest, statAuras []string, character *c
 			values.Rolls = append(values.Rolls, combo.Rolls[0])
 			combo.Rolls, combo.ChangingAuras = values.Rolls, values.ChangingAuras
 			note(encodeEnemy(combo) != encodeEnemy(values), "stat auras change the target's swing beyond its rolls")
+		}
+	}
+	// gcd.go newHardcastAction: a tank's hardcast holds the reduced avoidance aura until the cast
+	// completes; read the rolls with it active under every stat aura combination.
+	if character.HardcastAvoidanceAura != nil {
+		for mask := 0; mask < 1<<len(statAuras); mask++ {
+			simulation := core.NewSim(request, simsignals.CreateSignals())
+			simulation.Reset()
+			character := simulation.Raid.Parties[0].Players[0].GetCharacter()
+			for bit, label := range statAuras {
+				if mask&(1<<bit) != 0 {
+					character.GetAura(label).Activate(simulation)
+				}
+			}
+			character.HardcastAvoidanceAura.Activate(simulation)
+			combo := enemyValues(simulation, character, simulation.Encounter.ActiveTargetUnits[0])
+			values.ReducedAvoidanceRolls = append(values.ReducedAvoidanceRolls, combo.Rolls[0])
+			combo.Rolls, combo.ChangingAuras, combo.ReducedAvoidanceRolls = values.Rolls, values.ChangingAuras, values.ReducedAvoidanceRolls
+			note(encodeEnemy(combo) != encodeEnemy(values), "reduced avoidance changes the target's swing beyond its rolls")
 		}
 	}
 	return &values

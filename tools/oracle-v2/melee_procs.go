@@ -24,11 +24,13 @@ var dynamicReadStats = []stats.Stat{stats.SpellDamage, stats.AttackPower, stats.
 // Auras of races, items and raid buffs whose gain and expiry change stats through
 // AddStatsDynamic. A class adds its own through classExport.statAuras.
 var commonStatAuraLabels = []string{"Blood Fury", "Elune's Light", "Holy Strength (MH)", "Holy Strength (OH)",
-	"Windfury Totem (External)", "Battle Shout (External)"}
+	"Windfury Totem (External)", "Battle Shout (External)", "Headmaster's Charge"}
 
 // unit.go AddStatsDynamic recomputes every stat from the active flat bonuses, so stats are a
 // function of which stat auras are active. Each combination is read from a separate reset
-// simulation with those auras active: combination i has aura j active when bit j is set.
+// simulation with exactly those auras active: combination i has aura j active when bit j is
+// set, and an aura active after the reset, as a druid's starting form, is deactivated when
+// its bit is clear. Maximum mana is read too when some combination changes it.
 func statAurasEffect(request *proto.RaidSimRequest, character *core.Character, class classExport, agent core.Agent) map[string]any {
 	labels := []string{}
 	candidates := append([]string{}, commonStatAuraLabels...)
@@ -67,8 +69,11 @@ func statAurasEffect(request *proto.RaidSimRequest, character *core.Character, c
 			}
 		}
 		for bit, label := range labels {
-			if mask&(1<<bit) != 0 {
-				player.GetAura(label).Activate(simulation)
+			aura := player.GetAura(label)
+			if want := mask&(1<<bit) != 0; want && !aura.IsActive() {
+				aura.Activate(simulation)
+			} else if !want && aura.IsActive() {
+				aura.Deactivate(simulation)
 			}
 		}
 		values := statValues(player.GetStats())
@@ -79,6 +84,7 @@ func statAurasEffect(request *proto.RaidSimRequest, character *core.Character, c
 		for _, stat := range dynamicReadStats {
 			combo[stat.StatName()] = values[stat.StatName()]
 		}
+		combo[stats.Mana.StatName()] = values[stats.Mana.StatName()]
 		combos = append(combos, combo)
 		for name, value := range values {
 			if value != base[name] {
@@ -91,6 +97,12 @@ func statAurasEffect(request *proto.RaidSimRequest, character *core.Character, c
 		names = append(names, name)
 	}
 	sort.Strings(names)
+	// Maximum mana stays out of the combinations unless one changes it.
+	if !changed[stats.Mana.StatName()] {
+		for _, combo := range combos {
+			delete(combo, stats.Mana.StatName())
+		}
+	}
 	return map[string]any{"kind": "stat_auras", "auras": labels, "combos": combos, "changed": names}
 }
 

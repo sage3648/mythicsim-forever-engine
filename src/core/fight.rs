@@ -20,7 +20,7 @@ pub(crate) mod exclusive;
 mod log;
 pub(crate) mod melee;
 pub(crate) mod metrics;
-mod pet;
+pub(crate) mod pet;
 mod racial;
 pub(crate) mod rage;
 mod rotation;
@@ -49,11 +49,13 @@ pub(crate) type SpellId = usize;
 pub(crate) type DotId = usize;
 pub(crate) type TimerId = usize;
 
-/// The two units of a supported fight, by Go unit index.
+/// The units of a supported fight: the target, the player and the pet Rust simulates. The
+/// target and the player are Go unit indexes 0 and 1; the pet's Go index is its own.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub(crate) enum Side {
     Target = 0,
     Player = 1,
+    Pet = 2,
 }
 
 impl Side {
@@ -76,6 +78,25 @@ pub(crate) trait Agent: Sized {
     fn extra_cast_condition(_fight: &Fight<Self>, _spell: SpellId, _behavior: Self::Spell) -> bool {
         true
     }
+    /// Go `ExtraCastCondition` where a class wrapper may log a failure, as the druid's form
+    /// check does. Every cast and cast check runs this one.
+    fn extra_cast_condition_logged(
+        fight: &mut Fight<Self>,
+        spell: SpellId,
+        behavior: Self::Spell,
+    ) -> bool {
+        Self::extra_cast_condition(fight, spell, behavior)
+    }
+    /// Go `Agent.Reset`, which `Character.reset` runs after the unit and its cooldown manager.
+    fn agent_reset(_fight: &mut Fight<Self>) {}
+    /// A class wrapper Go puts around any spell's `ApplyEffects`, run after them.
+    fn after_apply_effects(_fight: &mut Fight<Self>, _spell: SpellId) {}
+    /// Go `AddActivationCondition` on any major cooldown, checked before its own condition.
+    fn cooldown_activation_condition(_fight: &Fight<Self>, _spell: SpellId) -> bool {
+        true
+    }
+    /// The exclusive effects of a class aura, which Go activates before it logs the gain.
+    fn on_exclusive_gain(_fight: &mut Fight<Self>, _aura: AuraRef, _kind: Self::Aura) {}
     /// Go `CastConfig.ModifyCast`, run first in a full cast. It may not change the cost.
     fn modify_cast(_fight: &mut Fight<Self>, _spell: SpellId, _behavior: Self::Spell) {}
     /// Go `Spell.CastTime` for a class spell whose `CastConfig.CastTime` replaces the default,
@@ -134,6 +155,15 @@ pub(crate) trait Agent: Sized {
         _new: i32,
     ) {
     }
+    /// Go `OnApplyEffects`, before the spell's effects apply.
+    fn on_apply_effects(
+        _fight: &mut Fight<Self>,
+        _aura: AuraRef,
+        _kind: Self::Aura,
+        _spell: SpellId,
+        _target: Side,
+    ) {
+    }
     fn on_cast_complete(
         _fight: &mut Fight<Self>,
         _aura: AuraRef,
@@ -158,7 +188,7 @@ pub(crate) trait Agent: Sized {
         _result: &SpellResult,
     ) {
     }
-    /// Go `OnPeriodicDamageDealt` for a class aura.
+    /// Go `OnPeriodicDamageDealt` for an aura of the caster.
     fn on_periodic_damage_dealt(
         _fight: &mut Fight<Self>,
         _aura: AuraRef,
@@ -167,6 +197,9 @@ pub(crate) trait Agent: Sized {
         _result: &SpellResult,
     ) {
     }
+    /// Go `ExecuteCustomRotation` of the class's pet, which its rotation runs once per
+    /// timestep.
+    fn pet_rotation(_fight: &mut Fight<Self>) {}
     /// A proc handler that Go delays by the spell batch window.
     fn on_delayed_proc(
         _fight: &mut Fight<Self>,
@@ -235,6 +268,12 @@ pub(crate) enum SpellBehavior<S> {
     },
     /// Go consumes.go Goblin Sapper Charge: a Fire hit on the target and one on the player.
     GoblinSapper,
+    /// Go consumes.go newBasicExplosiveSpellConfig without the self hit.
+    BasicExplosive {
+        min: f64,
+        max: f64,
+        aoe_cap_multiplier: f64,
+    },
     /// Go spell_data_energize.go: an item use that rolls a client energize effect.
     EnergizeOnUse {
         average: f64,
@@ -407,6 +446,8 @@ pub(crate) struct SpellMetrics {
 
 pub(crate) struct Spell<S> {
     pub(crate) id: ActionId,
+    /// The unit that casts the spell: the player or its pet.
+    pub(crate) caster: Side,
     pub(crate) flags: Flags,
     pub(crate) behavior: SpellBehavior<S>,
     pub(crate) school: u8,
@@ -509,6 +550,8 @@ pub(crate) struct Powers {
     pub(crate) spell_crit_percent: f64,
     /// Nothing in scope reads physical crit yet; it follows the stat for completeness.
     pub(crate) physical_crit_percent: f64,
+    /// Go `MaxMana`: the Mana stat, which a stat aura can change.
+    pub(crate) max_mana: f64,
 }
 
 /// Mutable player state, reset to the prepared values each iteration.
@@ -523,8 +566,6 @@ pub(crate) struct Player {
     pub(crate) school_damage_dealt_multiplier: [f64; 8],
     /// Go `PseudoStats.DamageTakenMultiplier`, which auras can multiply.
     pub(crate) damage_taken_multiplier: f64,
-    /// Go `PseudoStats.ThreatMultiplier`, which stances multiply.
-    pub(crate) threat_multiplier: f64,
     /// Go `PseudoStats.DamageDealtMultiplier`, which Defensive Stance multiplies.
     pub(crate) damage_dealt_multiplier: f64,
     /// Go `PseudoStats.CastSpeedMultiplier`.
@@ -537,6 +578,8 @@ pub(crate) struct Player {
     pub(crate) spirit_regen_rate_casting: f64,
     pub(crate) spirit_regen_multiplier: f64,
     pub(crate) force_full_spirit_regen: bool,
+    /// Go `PseudoStats.ThreatMultiplier`, which a form or a stance can change.
+    pub(crate) threat_multiplier: f64,
     pub(crate) mana_regen_multiplier: f64,
     pub(crate) five_second_rule_refresh: i64,
     pub(crate) mana_tick_casting: f64,
@@ -550,6 +593,9 @@ pub(crate) struct Player {
     pub(crate) rotation_timer: i64,
     pub(crate) hardcast: Hardcast,
     pub(crate) hardcast_action: Option<Handle>,
+    /// Go `HardcastAvoidanceAura`'s state: a tank's hardcast drops its avoidance until the cast
+    /// completes.
+    pub(crate) reduced_avoidance: bool,
     pub(crate) rotation_action: Option<Handle>,
     pub(crate) queued: Option<QueuedSpell>,
     pub(crate) channeled_dot: Option<DotId>,
@@ -558,6 +604,53 @@ pub(crate) struct Player {
     pub(crate) oom_time: i64,
     pub(crate) went_oom: bool,
     pub(crate) first_oom: i64,
+}
+
+impl Player {
+    /// A unit's state before its first reset, from its configuration.
+    pub(crate) fn initial(config: &Config) -> Self {
+        Player {
+            powers: config.powers,
+            mana: config.max_mana,
+            health: config.max_health,
+            spell_cost_percent_modifier: config.initial.spell_cost_percent_modifier,
+            school_damage_dealt_multiplier: config.school_damage_dealt_multiplier,
+            damage_taken_multiplier: config.damage_taken_multiplier,
+            cast_speed_multiplier: config.initial.cast_speed_multiplier,
+            attack_speed_multiplier: config.melee.attack_speed_multiplier,
+            melee_speed_multiplier: config.melee.melee_speed_multiplier,
+            ranged_speed_multiplier: config.ranged_speed_multiplier,
+            spirit_regen_rate_casting: config.initial.spirit_regen_rate_casting,
+            spirit_regen_multiplier: config.initial.spirit_regen_multiplier,
+            force_full_spirit_regen: config.initial.force_full_spirit_regen,
+            threat_multiplier: config.threat_multiplier,
+            damage_dealt_multiplier: config.damage_dealt_multiplier,
+            mana_regen_multiplier: 1.0,
+            five_second_rule_refresh: 0,
+            mana_tick_casting: 0.0,
+            mana_tick_not_casting: 0.0,
+            waiting_for_mana: 0.0,
+            waiting_for_mana_start: 0,
+            spirit_attribution: None,
+            gcd: STARTING_CD_TIME,
+            rotation_timer: STARTING_CD_TIME,
+            hardcast: Hardcast {
+                expires: STARTING_CD_TIME,
+                spell: None,
+                target: Side::Target,
+            },
+            hardcast_action: None,
+            reduced_avoidance: false,
+            rotation_action: None,
+            queued: None,
+            channeled_dot: None,
+            mana_spent: 0.0,
+            mana_gained: 0.0,
+            oom_time: 0,
+            went_oom: false,
+            first_oom: 0,
+        }
+    }
 }
 
 /// Go common/classic/enchants.go Crusader.
@@ -582,7 +675,7 @@ pub(crate) struct Windfury {
     pub(crate) proc_aura: AuraRef,
     pub(crate) spend_spells: Vec<bool>,
     pub(crate) extra: SpellId,
-    /// Go `RequireDamageDealt` of the trigger and of the charge spender.
+    /// Go `ProcTrigger.RequireDamageDealt` of the trigger and of the charge spender.
     pub(crate) trigger_require_damage: bool,
     pub(crate) spend_require_damage: bool,
 }
@@ -693,6 +786,8 @@ pub(crate) struct Config {
     pub(crate) expertise_percent: f64,
     pub(crate) armor_penetration: f64,
     pub(crate) physical_damage: f64,
+    /// A pet's mana regeneration per second while casting and not, as Go computes it.
+    pub(crate) fixed_regen: Option<(f64, f64)>,
     /// Go `RangedHitPercent` and `RangedCritPercent`, which ranged attacks add.
     pub(crate) ranged_hit_percent: f64,
     pub(crate) ranged_crit_percent: f64,
@@ -752,6 +847,8 @@ impl ResourceKind {
 #[derive(Clone, Debug)]
 pub(crate) struct ResourceMetrics {
     pub(crate) id: ActionId,
+    /// The unit whose resource it measures.
+    pub(crate) unit: Side,
     pub(crate) kind: ResourceKind,
     pub(crate) events: i32,
     pub(crate) gain: f64,
@@ -776,6 +873,8 @@ pub(crate) struct TargetState {
 /// modifier after the outcome, in registration order.
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct DamageTakenModifier {
+    /// The unit whose spells it multiplies.
+    pub(crate) source: Side,
     pub(crate) school_mask: u8,
     pub(crate) aura: AuraRef,
     pub(crate) multiplier: f64,
@@ -796,9 +895,9 @@ pub(crate) struct SpellDamageTakenModifier {
 pub(crate) enum Action {
     EncounterStart,
     ManaTick,
-    Rotation,
-    Hardcast,
-    QueuedCast,
+    Rotation(Side),
+    Hardcast(Side),
+    QueuedCast(Side),
     Travel {
         spell: SpellId,
         result: SpellResult,
@@ -920,7 +1019,7 @@ pub(crate) struct Fight<A: Agent> {
     /// Go `Unit.CastSpeed`. Go's unit reset restores the pseudo stats but not this value,
     /// so a speed change undone at the end of a fight carries into the next one.
     pub(crate) cast_speed: f64,
-    pub(crate) trackers: [Tracker<A::Aura>; 2],
+    pub(crate) trackers: [Tracker<A::Aura>; 3],
     /// The target's mutable stats.
     pub(crate) target: TargetState,
     /// The target's dynamic damage taken modifiers.
@@ -951,11 +1050,18 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) autos: melee::AutoAttacks,
     /// Go `Unit.Armor()` for the target, which the Sunder Armor ramp lowers.
     pub(crate) target_armor: f64,
+    /// Armor changes from auras other than the Sunder Armor ramp, which sets the rest.
+    target_armor_delta: f64,
     sunder: Option<SunderRamp>,
     /// Gnome's Eureka!, when the character has it.
     pub(crate) eureka: Option<racial::Eureka>,
     /// Registered pets that nothing summons.
     pub(crate) pets: Vec<pet::InertPet>,
+    /// The pet enabled at each reset, which Rust simulates.
+    pub(crate) pet: Option<Box<pet::ActivePet>>,
+    /// The auras of each of the player's pets, in Go registration order, for the rotation's
+    /// pet source units.
+    pub(crate) pet_agent_auras: Vec<Vec<ActionId>>,
     mana_regen_casting: usize,
     mana_regen_not_casting: usize,
     mana_gain_spell: Option<SpellId>,
@@ -976,6 +1082,11 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) stat_mask: u32,
     pub(crate) totals: metrics::Totals,
     pub(crate) encounter_damage_taken: f64,
+    /// Go `isInPrepull`, which holds through the reset.
+    pub(crate) in_prepull: bool,
+    /// How each exclusive effect of an aura a rotation asks about reads: true when the aura
+    /// holds its category alone, false when another aura holds it for good.
+    pub(crate) aura_refresh: Vec<(AuraRef, Vec<bool>)>,
 }
 
 /// Errors that make a prepared input impossible to run despite passing coverage.
@@ -1021,6 +1132,135 @@ fn stat(stats: &BTreeMap<String, f64>, name: &str) -> Result<f64, BuildError> {
         .ok_or_else(|| format!("prepared stats lack {name}"))
 }
 
+/// The exported fields one acting unit's configuration reads: the player's, or its pet's.
+pub(crate) struct UnitSource<'a> {
+    pub(crate) label: &'a str,
+    pub(crate) name: &'a str,
+    pub(crate) level: i32,
+    pub(crate) reaction_ns: i64,
+    pub(crate) channel_clip_delay_ns: i64,
+    pub(crate) distance: f64,
+    pub(crate) cast_speed: f64,
+    pub(crate) stats: &'a BTreeMap<String, f64>,
+    pub(crate) pseudo: &'a crate::contracts::prepared_v2::PseudoStats,
+    pub(crate) table: &'a crate::contracts::prepared_v2::AttackTable,
+    pub(crate) melee: &'a crate::contracts::prepared_v2::Melee,
+    pub(crate) max_mana: f64,
+    pub(crate) teardown_max: f64,
+    pub(crate) spirit_regen_per_second: f64,
+    pub(crate) fixed_regen: Option<(f64, f64)>,
+}
+
+/// One acting unit's configuration, with the fight's own settings and the target's.
+pub(crate) fn unit_config(prepared: &PreparedV2, unit: &UnitSource) -> Result<Config, BuildError> {
+    let target = &prepared.target;
+    let pseudo = unit.pseudo;
+    let target_pseudo = &target.pseudo_stats;
+    let resistance = |name: &str| stat(&target.stats, name);
+    Ok(Config {
+        iterations: prepared.sim.iterations,
+        seed: prepared.sim.seed,
+        debug_first_iteration: prepared.sim.debug_first_iteration,
+        debug: prepared.sim.debug,
+        base_duration: prepared.encounter.duration_ns,
+        duration_variation: prepared.encounter.duration_variation_ns,
+        damage_taken_multiplier: pseudo.damage_taken_multiplier,
+        execute_proportions: [
+            prepared.encounter.execute_proportion_90,
+            prepared.encounter.execute_proportion_45,
+            prepared.encounter.execute_proportion_35,
+            prepared.encounter.execute_proportion_25,
+            prepared.encounter.execute_proportion_20,
+        ],
+        player_label: unit.label.to_string(),
+        player_name: unit.name.to_string(),
+        target_label: target.label.clone(),
+        player_level: unit.level,
+        target_level: target.level,
+        reaction: unit.reaction_ns,
+        channel_clip_delay: unit.channel_clip_delay_ns,
+        distance: unit.distance,
+        cast_speed: unit.cast_speed,
+        spell_haste_rating: stat(unit.stats, "SpellHasteRating")?,
+        max_mana: unit.max_mana,
+        max_health: stat(unit.stats, "Health")?,
+        teardown_max_mana: unit.teardown_max,
+        mp5: stat(unit.stats, "MP5")?,
+        spirit_regen_per_second: unit.spirit_regen_per_second,
+        spell_hit_percent: stat(unit.stats, "SpellHitPercent")?,
+        powers: Powers {
+            spell_crit_percent: stat(unit.stats, "SpellCritPercent")?,
+            physical_crit_percent: stat(unit.stats, "PhysicalCritPercent")?,
+            spell_damage: stat(unit.stats, "SpellDamage")?,
+            attack_power: stat(unit.stats, "AttackPower")?,
+            ranged_attack_power: stat(unit.stats, "RangedAttackPower")?,
+            max_mana: unit.max_mana,
+        },
+        school_damage: [
+            0.0,
+            0.0,
+            stat(unit.stats, "ArcaneDamage")?,
+            stat(unit.stats, "FireDamage")?,
+            stat(unit.stats, "FrostDamage")?,
+            stat(unit.stats, "HolyDamage")?,
+            stat(unit.stats, "NatureDamage")?,
+            stat(unit.stats, "ShadowDamage")?,
+        ],
+        spell_piercing: stat(unit.stats, "SpellPiercing")?,
+        initial: InitialPseudo {
+            spell_cost_percent_modifier: pseudo.spell_cost_percent_modifier,
+            cast_speed_multiplier: pseudo.cast_speed_multiplier,
+            spirit_regen_rate_casting: pseudo.spirit_regen_rate_casting,
+            spirit_regen_multiplier: pseudo.spirit_regen_multiplier,
+            force_full_spirit_regen: pseudo.force_full_spirit_regen,
+        },
+        school_bonus_hit_chance: schools(&pseudo.school_bonus_hit_chance),
+        damage_dealt_multiplier: pseudo.damage_dealt_multiplier,
+        school_damage_dealt_multiplier: schools(&pseudo.school_damage_dealt_multiplier),
+        crit_damage_multiplier: pseudo.crit_damage_multiplier,
+        threat_multiplier: pseudo.threat_multiplier,
+        table: unit.table.clone(),
+        target_resistance: [
+            0.0,
+            stat(&target.stats, "Armor")?,
+            resistance("ArcaneResistance")?,
+            resistance("FireResistance")?,
+            resistance("FrostResistance")?,
+            0.0,
+            resistance("NatureResistance")?,
+            resistance("ShadowResistance")?,
+        ],
+        target_damage_taken_multiplier: target_pseudo.damage_taken_multiplier,
+        target_school_damage_taken_multiplier: schools(
+            &target_pseudo.school_damage_taken_multiplier,
+        ),
+        target_school_bonus_spell_damage: schools(&target_pseudo.school_bonus_spell_damage),
+        target_bonus_spell_damage_taken: target_pseudo.bonus_spell_damage_taken,
+        target_reduced_crit_taken_percent: target_pseudo.reduced_crit_taken_percent,
+        dot_damage_multiplier_additive: pseudo.dot_damage_multiplier_additive,
+        target_auto_swing_melee: target.auto_swing_melee,
+        melee: unit.melee.clone(),
+        melee_haste_rating: stat(unit.stats, "MeleeHasteRating")?,
+        physical_hit_percent: stat(unit.stats, "PhysicalHitPercent")?,
+        expertise_percent: stat(unit.stats, "ExpertisePercent")?,
+        armor_penetration: stat(unit.stats, "ArmorPenetration")?,
+        fixed_regen: unit.fixed_regen,
+        physical_damage: stat(unit.stats, "PhysicalDamage")?,
+        ranged_hit_percent: stat(unit.stats, "RangedHitPercent")?,
+        ranged_crit_percent: stat(unit.stats, "RangedCritPercent")?,
+        ranged_speed_multiplier: unit
+            .melee
+            .ranged_state
+            .as_ref()
+            .map_or(1.0, |ranged| ranged.ranged_speed_multiplier),
+        defender_bonus_ranged_attack_power: unit
+            .melee
+            .ranged_state
+            .as_ref()
+            .map_or(0.0, |ranged| ranged.defender_bonus_ranged_attack_power),
+    })
+}
+
 impl<A: Agent> Fight<A> {
     /// Build a fight from a prepared input that passed [`crate::check_prepared`].
     /// `class_spell` and `class_aura` map exported entries to class behavior.
@@ -1032,109 +1272,26 @@ impl<A: Agent> Fight<A> {
     ) -> Result<Self, BuildError> {
         let player = &prepared.player;
         let target = &prepared.target;
-        let pseudo = &player.pseudo_stats;
-        let target_pseudo = &target.pseudo_stats;
-        let resistance = |name: &str| stat(&target.stats, name);
-        let config = Config {
-            iterations: prepared.sim.iterations,
-            seed: prepared.sim.seed,
-            debug_first_iteration: prepared.sim.debug_first_iteration,
-            debug: prepared.sim.debug,
-            base_duration: prepared.encounter.duration_ns,
-            duration_variation: prepared.encounter.duration_variation_ns,
-            damage_taken_multiplier: pseudo.damage_taken_multiplier,
-            execute_proportions: [
-                prepared.encounter.execute_proportion_90,
-                prepared.encounter.execute_proportion_45,
-                prepared.encounter.execute_proportion_35,
-                prepared.encounter.execute_proportion_25,
-                prepared.encounter.execute_proportion_20,
-            ],
-            player_label: player.label.clone(),
-            player_name: player.name.clone(),
-            target_label: target.label.clone(),
-            player_level: player.level,
-            target_level: target.level,
-            reaction: player.reaction_ns,
-            channel_clip_delay: player.channel_clip_delay_ns,
-            distance: player.distance_yards,
-            cast_speed: player.cast_speed,
-            spell_haste_rating: stat(&player.stats, "SpellHasteRating")?,
-            max_mana: player.mana.max,
-            max_health: stat(&player.stats, "Health")?,
-            teardown_max_mana: player.mana.teardown_max,
-            mp5: stat(&player.stats, "MP5")?,
-            spirit_regen_per_second: player.mana.spirit_regen_per_second,
-            spell_hit_percent: stat(&player.stats, "SpellHitPercent")?,
-            powers: Powers {
-                spell_crit_percent: stat(&player.stats, "SpellCritPercent")?,
-                physical_crit_percent: stat(&player.stats, "PhysicalCritPercent")?,
-                spell_damage: stat(&player.stats, "SpellDamage")?,
-                attack_power: stat(&player.stats, "AttackPower")?,
-                ranged_attack_power: stat(&player.stats, "RangedAttackPower")?,
+        let config = unit_config(
+            prepared,
+            &UnitSource {
+                label: &player.label,
+                name: &player.name,
+                level: player.level,
+                reaction_ns: player.reaction_ns,
+                channel_clip_delay_ns: player.channel_clip_delay_ns,
+                distance: player.distance_yards,
+                cast_speed: player.cast_speed,
+                stats: &player.stats,
+                pseudo: &player.pseudo_stats,
+                table: &player.attack_table,
+                melee: &prepared.melee,
+                max_mana: player.mana.max,
+                teardown_max: player.mana.teardown_max,
+                spirit_regen_per_second: player.mana.spirit_regen_per_second,
+                fixed_regen: None,
             },
-            school_damage: [
-                0.0,
-                0.0,
-                stat(&player.stats, "ArcaneDamage")?,
-                stat(&player.stats, "FireDamage")?,
-                stat(&player.stats, "FrostDamage")?,
-                stat(&player.stats, "HolyDamage")?,
-                stat(&player.stats, "NatureDamage")?,
-                stat(&player.stats, "ShadowDamage")?,
-            ],
-            spell_piercing: stat(&player.stats, "SpellPiercing")?,
-            initial: InitialPseudo {
-                spell_cost_percent_modifier: pseudo.spell_cost_percent_modifier,
-                cast_speed_multiplier: pseudo.cast_speed_multiplier,
-                spirit_regen_rate_casting: pseudo.spirit_regen_rate_casting,
-                spirit_regen_multiplier: pseudo.spirit_regen_multiplier,
-                force_full_spirit_regen: pseudo.force_full_spirit_regen,
-            },
-            school_bonus_hit_chance: schools(&pseudo.school_bonus_hit_chance),
-            damage_dealt_multiplier: pseudo.damage_dealt_multiplier,
-            school_damage_dealt_multiplier: schools(&pseudo.school_damage_dealt_multiplier),
-            crit_damage_multiplier: pseudo.crit_damage_multiplier,
-            threat_multiplier: pseudo.threat_multiplier,
-            table: player.attack_table.clone(),
-            target_resistance: [
-                0.0,
-                stat(&target.stats, "Armor")?,
-                resistance("ArcaneResistance")?,
-                resistance("FireResistance")?,
-                resistance("FrostResistance")?,
-                0.0,
-                resistance("NatureResistance")?,
-                resistance("ShadowResistance")?,
-            ],
-            target_damage_taken_multiplier: target_pseudo.damage_taken_multiplier,
-            target_school_damage_taken_multiplier: schools(
-                &target_pseudo.school_damage_taken_multiplier,
-            ),
-            target_school_bonus_spell_damage: schools(&target_pseudo.school_bonus_spell_damage),
-            target_bonus_spell_damage_taken: target_pseudo.bonus_spell_damage_taken,
-            target_reduced_crit_taken_percent: target_pseudo.reduced_crit_taken_percent,
-            dot_damage_multiplier_additive: pseudo.dot_damage_multiplier_additive,
-            target_auto_swing_melee: target.auto_swing_melee,
-            melee: prepared.melee.clone(),
-            melee_haste_rating: stat(&player.stats, "MeleeHasteRating")?,
-            physical_hit_percent: stat(&player.stats, "PhysicalHitPercent")?,
-            expertise_percent: stat(&player.stats, "ExpertisePercent")?,
-            armor_penetration: stat(&player.stats, "ArmorPenetration")?,
-            physical_damage: stat(&player.stats, "PhysicalDamage")?,
-            ranged_hit_percent: stat(&player.stats, "RangedHitPercent")?,
-            ranged_crit_percent: stat(&player.stats, "RangedCritPercent")?,
-            ranged_speed_multiplier: prepared
-                .melee
-                .ranged_state
-                .as_ref()
-                .map_or(1.0, |ranged| ranged.ranged_speed_multiplier),
-            defender_bonus_ranged_attack_power: prepared
-                .melee
-                .ranged_state
-                .as_ref()
-                .map_or(0.0, |ranged| ranged.defender_bonus_ranged_attack_power),
-        };
+        )?;
 
         let mut timer_names: Vec<String> = Vec::new();
         let mut timer = |name: &str| -> TimerId {
@@ -1148,9 +1305,10 @@ impl<A: Agent> Fight<A> {
         };
 
         let mut resources = Vec::new();
-        let mut resource = |id: ActionId, regen: bool, kind: ResourceKind| {
+        let mut resource = |unit: Side, id: ActionId, regen: bool, kind: ResourceKind| {
             resources.push(ResourceMetrics {
                 id,
+                unit,
                 kind,
                 events: 0,
                 gain: 0.0,
@@ -1166,8 +1324,14 @@ impl<A: Agent> Fight<A> {
             tag,
             ..ActionId::default()
         };
-        let mana_regen_casting = resource(regen_id(1), false, ResourceKind::Mana);
-        let mana_regen_not_casting = resource(regen_id(2), false, ResourceKind::Mana);
+        let mana_regen_casting = resource(Side::Player, regen_id(1), false, ResourceKind::Mana);
+        let mana_regen_not_casting = resource(Side::Player, regen_id(2), false, ResourceKind::Mana);
+        let pet_regen = prepared.pets.first().map(|_| {
+            (
+                resource(Side::Pet, regen_id(1), false, ResourceKind::Mana),
+                resource(Side::Pet, regen_id(2), false, ResourceKind::Mana),
+            )
+        });
         // Go EnableRageBar, in the agent constructor before the health bar: damage taken,
         // then refund and encounter start metrics.
         let other = |name: &str| ActionId {
@@ -1199,16 +1363,27 @@ impl<A: Agent> Fight<A> {
             _ => None,
         });
         if let Some(bar) = rage.as_mut() {
-            bar.damage_taken_metrics =
-                resource(other("OtherActionDamageTaken"), false, ResourceKind::Rage);
-            bar.refund_metrics = resource(other("OtherActionRefund"), false, ResourceKind::Rage);
+            bar.damage_taken_metrics = resource(
+                Side::Player,
+                other("OtherActionDamageTaken"),
+                false,
+                ResourceKind::Rage,
+            );
+            bar.refund_metrics = resource(
+                Side::Player,
+                other("OtherActionRefund"),
+                false,
+                ResourceKind::Rage,
+            );
             resource(
+                Side::Player,
                 other("OtherActionEncounterStart"),
                 false,
                 ResourceKind::Rage,
             );
         }
         let damage_taken_health = resource(
+            Side::Player,
             ActionId {
                 other_id: "OtherActionDamageTaken".into(),
                 ..ActionId::default()
@@ -1221,14 +1396,29 @@ impl<A: Agent> Fight<A> {
         let mut spells = Vec::new();
         let mut dots = Vec::new();
         let mut mana_gain_spell = None;
+        let mut pet_mana_gain_spell = None;
         // Spells that activate a player aura, resolved once the auras are registered.
         let mut activations: Vec<(SpellId, &str)> = Vec::new();
         // Potions with a temporary stat aura, resolved once the auras are registered.
         let mut potion_auras: Vec<(SpellId, &str)> = Vec::new();
-        for exported in &player.spells {
+        // The player's spellbook, then the simulated pet's.
+        let unit_spells = player
+            .spells
+            .iter()
+            .map(|spell| (Side::Player, spell))
+            .chain(
+                prepared
+                    .pets
+                    .iter()
+                    .flat_map(|pet| pet.spells.iter().map(|spell| (Side::Pet, spell))),
+            );
+        for (caster, exported) in unit_spells {
             let id = exported.action_id.clone().unwrap_or_default();
             if id.other_id == "OtherActionManaGain" {
-                mana_gain_spell = Some(spells.len());
+                match caster {
+                    Side::Pet => pet_mana_gain_spell = Some(spells.len()),
+                    _ => mana_gain_spell = Some(spells.len()),
+                }
             }
             let item = id.item_id;
             let behavior = if let Some(class) = class_spell(exported) {
@@ -1245,6 +1435,9 @@ impl<A: Agent> Fight<A> {
                 } else {
                     melee::Hand::Main
                 })
+            } else if caster == Side::Pet {
+                // A pet has no items or racials.
+                SpellBehavior::None
             } else if id.other_id == "OtherActionShoot" && prepared.melee.auto_swing_ranged {
                 SpellBehavior::MeleeAuto(melee::Hand::Ranged)
             } else {
@@ -1320,12 +1513,22 @@ impl<A: Agent> Fight<A> {
                                 spread: gains[0].spread,
                                 selected: *selected,
                                 reduction: *level_reduction,
-                                metrics: resource(id.clone(), false, ResourceKind::Energy),
+                                metrics: resource(Side::Player, id.clone(), false, ResourceKind::Energy),
                             })
                         }
                         Effect::GoblinSapper { item_id, .. } if *item_id == item && id.tag == 0 => {
                             Some(SpellBehavior::GoblinSapper)
                         }
+                        Effect::BasicExplosive {
+                            item_id,
+                            min_damage,
+                            max_damage,
+                            aoe_cap_multiplier,
+                        } if *item_id == item && id.tag == 0 => Some(SpellBehavior::BasicExplosive {
+                            min: *min_damage,
+                            max: *max_damage,
+                            aoe_cap_multiplier: *aoe_cap_multiplier,
+                        }),
                         Effect::EnergizeOnUse {
                             item_id,
                             average,
@@ -1347,9 +1550,17 @@ impl<A: Agent> Fight<A> {
                         | Effect::ShatterCurse { spell_id, aura, .. }
                         | Effect::Stoneform { spell_id, aura }
                         | Effect::ReadLeyLine { spell_id, aura, .. }
-                        | Effect::TemporaryStats { spell_id, aura, .. }
                             if id.spell_id == *spell_id && id.tag == 0 =>
                         {
+                            activations.push((spells.len(), aura));
+                            Some(SpellBehavior::None)
+                        }
+                        Effect::TemporaryStats {
+                            spell_id,
+                            item_id,
+                            aura,
+                            ..
+                        } if id.spell_id == *spell_id && id.item_id == *item_id && id.tag == 0 => {
                             activations.push((spells.len(), aura));
                             Some(SpellBehavior::None)
                         }
@@ -1382,7 +1593,7 @@ impl<A: Agent> Fight<A> {
                         } if id.spell_id == *drain_spell_id && id.tag == 0 => {
                             Some(SpellBehavior::TouchOfTheGraveDrain {
                                 health_fraction: *health_fraction,
-                                metrics: resource(id.clone(), false, ResourceKind::Health),
+                                metrics: resource(Side::Player, id.clone(), false, ResourceKind::Health),
                             })
                         }
                         _ => None,
@@ -1404,16 +1615,16 @@ impl<A: Agent> Fight<A> {
             // Go newEnergyCost registers the energy metrics, then the combo point metrics.
             let (mana_metrics, energy_metrics) = match cost.map(|cost| cost.kind) {
                 Some(ResourceKind::Energy) => {
-                    let energy = resource(id.clone(), false, ResourceKind::Energy);
-                    let combo = resource(id.clone(), false, ResourceKind::ComboPoints);
+                    let energy = resource(caster, id.clone(), false, ResourceKind::Energy);
+                    let combo = resource(caster, id.clone(), false, ResourceKind::ComboPoints);
                     (None, Some((energy, combo)))
                 }
-                Some(kind) => (Some(resource(id.clone(), false, kind)), None),
+                Some(kind) => (Some(resource(caster, id.clone(), false, kind)), None),
                 None => (None, None),
             };
             let spell_id = spells.len();
             let dot = exported.dot.as_ref().map(|exported_dot| {
-                dots.push(Dot::new(spell_id, exported_dot));
+                dots.push(Dot::new(spell_id, caster, exported_dot));
                 dots.len() - 1
             });
             let cast = &exported.default_cast;
@@ -1517,6 +1728,7 @@ impl<A: Agent> Fight<A> {
                 },
                 metrics: [SpellMetrics::default(); 2],
                 action: None,
+                caster,
                 split_metrics: Vec::new(),
                 split_actions: Vec::new(),
                 split: 0,
@@ -1524,13 +1736,22 @@ impl<A: Agent> Fight<A> {
             });
         }
 
-        // Go keys action metrics by action ID in spellbook order, one tagged ID per metric
-        // split.
+        // Go keys action metrics by action ID in spellbook order, for each unit, one tagged
+        // ID per metric split.
         let mut actions: Vec<ActionTotals> = Vec::new();
-        for (spell, exported) in spells.iter_mut().zip(&player.spells) {
+        let mut pet_actions: Vec<ActionTotals> = Vec::new();
+        let exported_spells = player
+            .spells
+            .iter()
+            .chain(prepared.pets.iter().flat_map(|pet| pet.spells.iter()));
+        for (spell, exported) in spells.iter_mut().zip(exported_spells) {
             if spell.flags.no_metrics {
                 continue;
             }
+            let actions = match spell.caster {
+                Side::Pet => &mut pet_actions,
+                _ => &mut actions,
+            };
             let ids: Vec<ActionId> = if exported.metric_splits > 1 {
                 (0..exported.metric_splits)
                     .map(|tag| ActionId {
@@ -1589,15 +1810,23 @@ impl<A: Agent> Fight<A> {
                     ranged_attack_power: read("RangedAttackPower")?,
                     spell_crit_percent: read("SpellCritPercent")?,
                     physical_crit_percent: read("PhysicalCritPercent")?,
+                    // The exporter writes the Mana stat only when a combination changes it.
+                    max_mana: combo.get("Mana").copied().unwrap_or(config.max_mana),
                 })
             })
             .collect::<Result<_, BuildError>>()?;
-        let mut trackers = [Tracker::default(), Tracker::default()];
-        for (side, auras) in [(Side::Target, &target.auras), (Side::Player, &player.auras)] {
-            let unit = if side == Side::Player {
-                "player"
-            } else {
-                "target"
+        let mut trackers = [Tracker::default(), Tracker::default(), Tracker::default()];
+        let no_auras = Vec::new();
+        let pet_auras = prepared.pets.first().map_or(&no_auras, |pet| &pet.auras);
+        for (side, auras) in [
+            (Side::Target, &target.auras),
+            (Side::Player, &player.auras),
+            (Side::Pet, pet_auras),
+        ] {
+            let unit = match side {
+                Side::Player => "player",
+                Side::Target => "target",
+                Side::Pet => "pet",
             };
             for exported in auras {
                 let behavior = if let Some(dot) = dots
@@ -1623,7 +1852,7 @@ impl<A: Agent> Fight<A> {
                     )),
                     _ => None,
                 }) {
-                    let metrics = resource(jow.2.clone(), false, ResourceKind::Mana);
+                    let metrics = resource(Side::Player, jow.2.clone(), false, ResourceKind::Mana);
                     AuraBehavior::JudgementOfWisdom {
                         chance: jow.0,
                         mana: jow.1,
@@ -1921,46 +2150,7 @@ impl<A: Agent> Fight<A> {
             death: damage_taken::Death::default(),
             fixed_uptime: Vec::new(),
             energize_procs: Vec::new(),
-            player: Player {
-                powers: config.powers,
-                mana: config.max_mana,
-                health: config.max_health,
-                spell_cost_percent_modifier: config.initial.spell_cost_percent_modifier,
-                school_damage_dealt_multiplier: config.school_damage_dealt_multiplier,
-                damage_taken_multiplier: prepared.player.pseudo_stats.damage_taken_multiplier,
-                threat_multiplier: config.threat_multiplier,
-                damage_dealt_multiplier: config.damage_dealt_multiplier,
-                cast_speed_multiplier: config.initial.cast_speed_multiplier,
-                attack_speed_multiplier: config.melee.attack_speed_multiplier,
-                melee_speed_multiplier: config.melee.melee_speed_multiplier,
-                ranged_speed_multiplier: config.ranged_speed_multiplier,
-                spirit_regen_rate_casting: config.initial.spirit_regen_rate_casting,
-                spirit_regen_multiplier: config.initial.spirit_regen_multiplier,
-                force_full_spirit_regen: config.initial.force_full_spirit_regen,
-                mana_regen_multiplier: 1.0,
-                five_second_rule_refresh: 0,
-                mana_tick_casting: 0.0,
-                mana_tick_not_casting: 0.0,
-                waiting_for_mana: 0.0,
-                waiting_for_mana_start: 0,
-                spirit_attribution: None,
-                gcd: STARTING_CD_TIME,
-                rotation_timer: STARTING_CD_TIME,
-                hardcast: Hardcast {
-                    expires: STARTING_CD_TIME,
-                    spell: None,
-                    target: Side::Target,
-                },
-                hardcast_action: None,
-                rotation_action: None,
-                queued: None,
-                channeled_dot: None,
-                mana_spent: 0.0,
-                mana_gained: 0.0,
-                oom_time: 0,
-                went_oom: false,
-                first_oom: 0,
-            },
+            player: Player::initial(&config),
             cast_speed: config.cast_speed,
             target: TargetState {
                 resistance: config.target_resistance,
@@ -2001,6 +2191,7 @@ impl<A: Agent> Fight<A> {
             log: None,
             autos: melee::AutoAttacks::default(),
             target_armor: prepared.melee.defender_armor,
+            target_armor_delta: 0.0,
             sunder: None,
             aura_logs,
             stat_combos,
@@ -2010,12 +2201,39 @@ impl<A: Agent> Fight<A> {
             chili: None,
             damage_procs: Vec::new(),
             eureka: None,
-            pets: pet::inert_pets(effects),
+            pets: pet::inert_pets(effects)?,
+            pet: None,
+            pet_agent_auras: pet::pet_agent_auras(prepared),
             totals: metrics::Totals::default(),
             encounter_damage_taken: 0.0,
+            in_prepull: false,
+            aura_refresh: Vec::new(),
         };
+        if let (Some(exported), Some(regen)) = (prepared.pets.first(), pet_regen) {
+            fight.pet = Some(Box::new(pet::ActivePet::new(
+                prepared,
+                exported,
+                regen,
+                pet_mana_gain_spell,
+                pet_actions,
+            )?));
+        }
         if let Some(energy) = &player.energy {
             fight.enable_energy_bar(energy);
+        }
+        for effect in effects {
+            if let Effect::AuraShouldRefresh { unit, aura, modes } = effect {
+                let side = if unit == "target" {
+                    Side::Target
+                } else {
+                    Side::Player
+                };
+                let index = fight.trackers[side.index()]
+                    .find(aura)
+                    .ok_or_else(|| format!("{unit} aura {aura} is not registered"))?;
+                let own = modes.iter().map(|mode| mode == "own").collect();
+                fight.aura_refresh.push((AuraRef { side, index }, own));
+            }
         }
         for effect in effects {
             if let Effect::EnergizeProc {
@@ -2326,14 +2544,28 @@ impl<A: Agent> Fight<A> {
         fight.autos.dual_wielding = prepared.melee.dual_wielding;
         fight.autos.mh.weapon = prepared.melee.main_hand.clone();
         fight.autos.oh.weapon = prepared.melee.off_hand.clone();
-        let auto_spell = |tag: i32| {
-            fight
-                .spells
-                .iter()
-                .position(|spell| spell.id.other_id == "OtherActionAttack" && spell.id.tag == tag)
+        let auto_spell = |fight: &Self, caster: Side, tag: i32| {
+            fight.spells.iter().position(|spell| {
+                spell.caster == caster
+                    && spell.id.other_id == "OtherActionAttack"
+                    && spell.id.tag == tag
+            })
         };
-        fight.autos.mh.spell = auto_spell(1);
-        fight.autos.oh.spell = auto_spell(2);
+        fight.autos.mh.spell = auto_spell(&fight, Side::Player, 1);
+        fight.autos.oh.spell = auto_spell(&fight, Side::Player, 2);
+        if let Some(exported) = prepared.pets.first() {
+            let (mh, oh) = (
+                auto_spell(&fight, Side::Pet, 1),
+                auto_spell(&fight, Side::Pet, 2),
+            );
+            let pet = fight.pet.as_mut().expect("the pet is built");
+            pet.autos.melee = exported.melee.auto_swing_melee;
+            pet.autos.dual_wielding = exported.melee.dual_wielding;
+            pet.autos.mh.weapon = exported.melee.main_hand.clone();
+            pet.autos.oh.weapon = exported.melee.off_hand.clone();
+            pet.autos.mh.spell = mh;
+            pet.autos.oh.spell = oh;
+        }
         fight.autos.ranged_auto = prepared.melee.auto_swing_ranged;
         fight.autos.ranged.weapon = prepared.melee.ranged.clone();
         fight.autos.ranged.spell = fight
@@ -2362,6 +2594,16 @@ impl<A: Agent> Fight<A> {
             }
         }
         Ok(fight)
+    }
+
+    /// Go `Unit.AddStatsDynamic` for the stat auras: the stats of the new combination, and
+    /// current mana held to a lower maximum.
+    pub(crate) fn set_stat_mask(&mut self, mask: u32) {
+        self.stat_mask = mask;
+        self.player.powers = self.stat_combos[mask as usize];
+        if self.has_mana_bar() && self.player.mana > self.player.powers.max_mana {
+            self.player.mana = self.player.powers.max_mana;
+        }
     }
 
     /// Go `HasManaBar`: a class without mana, such as a Rogue, exports no maximum mana.
@@ -2396,6 +2638,44 @@ impl<A: Agent> Fight<A> {
             crate::mechanics::mana::regen_per_second_not_casting(inputs) * 2.0;
     }
 
+    /// The state of an acting unit: the player, or its pet.
+    pub(crate) fn unit(&self, side: Side) -> &Player {
+        match side {
+            Side::Pet => &self.pet.as_ref().expect("the pet is simulated").state,
+            _ => &self.player,
+        }
+    }
+
+    /// [`Self::unit`], mutable.
+    pub(crate) fn unit_mut(&mut self, side: Side) -> &mut Player {
+        match side {
+            Side::Pet => &mut self.pet.as_mut().expect("the pet is simulated").state,
+            _ => &mut self.player,
+        }
+    }
+
+    /// The configuration of an acting unit. The fight's and the target's settings are the
+    /// same in every unit's copy.
+    pub(crate) fn unit_config(&self, side: Side) -> &Config {
+        match side {
+            Side::Pet => &self.pet.as_ref().expect("the pet is simulated").config,
+            _ => &self.config,
+        }
+    }
+
+    /// Go `Unit.CastSpeed` of an acting unit.
+    pub(crate) fn unit_cast_speed(&self, side: Side) -> f64 {
+        match side {
+            Side::Pet => self.pet.as_ref().expect("the pet is simulated").cast_speed,
+            _ => self.cast_speed,
+        }
+    }
+
+    /// The unit that casts a spell.
+    pub(crate) fn caster(&self, spell: SpellId) -> Side {
+        self.spells[spell].caster
+    }
+
     /// Go `Spell.Dot` for the target: the spell's own dot, else its related spell's.
     pub(crate) fn spell_dot(&self, spell: SpellId) -> Option<DotId> {
         let state = &self.spells[spell];
@@ -2426,6 +2706,12 @@ impl<A: Agent> Fight<A> {
     /// factor on gain and by its reciprocal on expiry.
     pub(crate) fn multiply_target_school_damage_taken(&mut self, school_index: usize, factor: f64) {
         self.target.school_damage_taken_multiplier[school_index] *= factor;
+    }
+
+    /// Go `AddStatsDynamic` on the target's armor, for an armor debuff the class applies.
+    pub(crate) fn add_target_armor(&mut self, delta: f64) {
+        self.target_armor += delta;
+        self.target_armor_delta += delta;
     }
 
     /// Go `healthBar.RemoveHealth` on the player.
@@ -2528,6 +2814,7 @@ impl<A: Agent> Fight<A> {
 
     /// Go `Simulation.reset` and `Environment.reset`.
     fn reset(&mut self) {
+        self.in_prepull = true;
         self.duration = self.config.base_duration;
         if self.config.duration_variation != 0 {
             let variation = self.config.duration_variation * 2;
@@ -2547,8 +2834,9 @@ impl<A: Agent> Fight<A> {
         self.reset_unit(Side::Target);
         self.reset_unit(Side::Player);
         self.reset_cooldown_manager();
+        A::agent_reset(self);
         // Go Character.reset resets the pets after the owner's agent.
-        self.reset_inert_pets();
+        self.reset_pets();
         // Go initManaTickAction, after the environment reset: two seconds after the prepull
         // starts, when a unit has a mana bar.
         if self.has_mana_bar() {
@@ -2559,6 +2847,7 @@ impl<A: Agent> Fight<A> {
                 Action::ManaTick,
             );
         }
+        self.in_prepull = false;
     }
 
     /// Go `Unit.reset` followed by `Character.reset` for the player.
@@ -2584,6 +2873,7 @@ impl<A: Agent> Fight<A> {
                 target: Side::Target,
             };
             player.hardcast_action = None;
+            player.reduced_avoidance = false;
             player.rotation_action = None;
             player.channeled_dot = None;
             player.queued = None;
@@ -2600,7 +2890,6 @@ impl<A: Agent> Fight<A> {
             player.spell_cost_percent_modifier = initial.spell_cost_percent_modifier;
             player.school_damage_dealt_multiplier = self.config.school_damage_dealt_multiplier;
             player.damage_taken_multiplier = self.config.damage_taken_multiplier;
-            player.threat_multiplier = self.config.threat_multiplier;
             player.damage_dealt_multiplier = self.config.damage_dealt_multiplier;
             player.cast_speed_multiplier = initial.cast_speed_multiplier;
             player.attack_speed_multiplier = self.config.melee.attack_speed_multiplier;
@@ -2611,6 +2900,7 @@ impl<A: Agent> Fight<A> {
             player.spirit_regen_rate_casting = initial.spirit_regen_rate_casting;
             player.spirit_regen_multiplier = initial.spirit_regen_multiplier;
             player.force_full_spirit_regen = initial.force_full_spirit_regen;
+            player.threat_multiplier = self.config.threat_multiplier;
             player.five_second_rule_refresh = 0;
             player.spirit_attribution = None;
             self.reset_auto_attacks();
@@ -2646,6 +2936,7 @@ impl<A: Agent> Fight<A> {
         // Go ScheduledAura's OnReset: the ramp's first tick at the pull, at dot priority.
         if side == Side::Target {
             self.target_armor = self.config.melee.defender_armor;
+            self.target_armor_delta = 0.0;
             if self.sunder.is_some() {
                 self.schedule(0, PRIORITY_DOT, Action::SunderTick(0));
             }
@@ -2702,6 +2993,11 @@ impl<A: Agent> Fight<A> {
         self.execute_phase <= 20
     }
 
+    /// Go `IsExecutePhase35`.
+    pub(crate) fn is_execute_phase_35(&self) -> bool {
+        self.execute_phase <= 35
+    }
+
     /// Go `Simulation.Step`. Returns false when the fight is over.
     fn step(&mut self) -> bool {
         // Go runs due weapon swings before the next pending action, ties included.
@@ -2748,7 +3044,11 @@ impl<A: Agent> Fight<A> {
         }
         if self.now >= self.min_tracker_time {
             self.min_tracker_time = NEVER_EXPIRES;
-            for side in [Side::Target, Side::Player] {
+            // Go adds the pet's tracker when the reset enables it, after the player's.
+            for side in [Side::Target, Side::Player, Side::Pet] {
+                if side == Side::Pet && self.pet.is_none() {
+                    continue;
+                }
                 let next = self.try_advance_tracker(side);
                 self.min_tracker_time = self.min_tracker_time.min(next);
             }
@@ -2759,24 +3059,37 @@ impl<A: Agent> Fight<A> {
         match action {
             Action::EncounterStart => self.encounter_start(),
             Action::ManaTick => {
+                // Go ticks every player with a mana bar, then every enabled pet with one.
                 self.mana_tick();
+                if self.pet.is_some() {
+                    self.pet_mana_tick();
+                }
                 let next = self.now + 2 * crate::core::time::NS_PER_SECOND;
                 self.schedule(next, PRIORITY_REGEN, Action::ManaTick);
             }
-            Action::Rotation => {
-                if self.player.rotation_action == Some(handle) {
-                    self.player.rotation_action = None;
+            Action::Rotation(side) => {
+                if self.unit(side).rotation_action == Some(handle) {
+                    self.unit_mut(side).rotation_action = None;
                 }
-                self.complete_due_hardcast();
-                self.do_next_action();
+                self.complete_due_hardcast_of(side);
+                self.do_next_action_of(side);
             }
-            Action::Hardcast => {
-                if self.player.hardcast_action == Some(handle) {
-                    self.player.hardcast_action = None;
+            Action::Hardcast(side) => {
+                if self.unit(side).hardcast_action == Some(handle) {
+                    self.unit_mut(side).hardcast_action = None;
                 }
-                self.complete_due_hardcast();
+                self.complete_due_hardcast_of(side);
             }
-            Action::QueuedCast => {
+            Action::QueuedCast(Side::Pet) => {
+                if let Some(queued) = self.unit_mut(Side::Pet).queued.as_mut() {
+                    if queued.action == Some(handle) {
+                        queued.action = None;
+                    }
+                    let (spell, target) = (queued.spell, queued.target);
+                    self.cast(spell, target);
+                }
+            }
+            Action::QueuedCast(_) => {
                 if let Some(queued) = self.player.queued.as_mut() {
                     if queued.action == Some(handle) {
                         queued.action = None;
@@ -2931,7 +3244,8 @@ impl<A: Agent> Fight<A> {
             self.add_stack(ramp.aura);
         }
         let stacks = self.aura(ramp.aura).stacks.max(0) as usize;
-        self.target_armor = ramp.armor_by_stacks[stacks.min(ramp.armor_by_stacks.len() - 1)];
+        self.target_armor = ramp.armor_by_stacks[stacks.min(ramp.armor_by_stacks.len() - 1)]
+            + self.target_armor_delta;
         if done + 1 < ramp.ticks {
             self.schedule(
                 self.now + ramp.period,
@@ -2951,14 +3265,21 @@ impl<A: Agent> Fight<A> {
 
     /// Go encounter start: agents and auras, then each unit starts the pull.
     fn encounter_start(&mut self) {
-        // No supported unit has encounter start callbacks. The player starts its swings, then
-        // its rotation at max(0, GCD ready).
-        self.randomize_melee_timing();
+        // No supported unit has encounter start callbacks. Go starts the encounter for every
+        // enabled unit, which randomizes the swings, then each starts the pull: its swings,
+        // and for the player its rotation at max(0, GCD ready).
+        self.randomize_melee_timing(Side::Player);
+        if self.pet.is_some() {
+            self.randomize_melee_timing(Side::Pet);
+        }
         // Go AllUnits lists the target first, so its swing joins the weapon attacks first.
         self.start_enemy_attack();
-        self.start_auto_attacks();
+        self.start_auto_attacks(Side::Player);
         let ready = self.player.gcd.max(0);
         self.set_gcd_timer(ready);
+        if self.pet.is_some() {
+            self.start_auto_attacks(Side::Pet);
+        }
     }
 
     /// Go `Simulation.Cleanup` and `doneIteration`.
@@ -2971,12 +3292,14 @@ impl<A: Agent> Fight<A> {
             target: Side::Target,
         };
         // Go Character.doneIteration finishes the pets first.
-        self.inert_pets_done_iteration();
+        self.pets_done_iteration();
         self.player_done_iteration();
         self.rage_done_iteration();
         self.aura_done_iteration(Side::Player);
         for spell in 0..self.spells.len() {
-            self.spell_done_iteration(spell);
+            if self.spells[spell].caster == Side::Player {
+                self.spell_done_iteration(spell);
+            }
         }
         self.enemy_done_iteration();
         let damage = self.totals.iteration_damage;

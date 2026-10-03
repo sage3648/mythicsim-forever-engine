@@ -137,6 +137,12 @@ pub enum Value {
     CurrentTime,
     NumberTargets,
     AuraIsKnown(ActionId),
+    /// `auraIsKnown` with one of the player's pets, by its position among them, as its
+    /// source unit.
+    PetAuraIsKnown {
+        pet: usize,
+        id: ActionId,
+    },
     AuraIsActive(ActionId),
     /// `auraIsActive` with the current target as its source unit.
     TargetAuraIsActive(ActionId),
@@ -152,6 +158,17 @@ pub enum Value {
     SpellTimeToReady(ActionId),
     DotTimeToNextTick(ActionId),
     GcdIsReady,
+    /// Go `APLValueAuraShouldRefresh`: the aura, whether it is on the current target, and the
+    /// overlap a refresh allows.
+    AuraShouldRefresh {
+        id: ActionId,
+        target: bool,
+        max_overlap: Box<Value>,
+    },
+    /// Go `APLValueFrontOfTarget`.
+    FrontOfTarget,
+    /// Go `APLValueMaxMana`.
+    MaxMana,
     /// Go `APLValueSpellCanCast`: `CanCastOrQueue` on the current target.
     SpellCanCast(ActionId),
     /// Go `APLValueAutoTimeToNext`.
@@ -181,6 +198,7 @@ impl Value {
                 values.iter().for_each(|value| value.visit(f))
             }
             Value::Not(value) => value.visit(f),
+            Value::AuraShouldRefresh { max_overlap, .. } => max_overlap.visit(f),
             _ => {}
         }
     }
@@ -217,8 +235,11 @@ impl Value {
             | Value::Or(_)
             | Value::Not(_)
             | Value::AuraIsKnown(_)
+            | Value::PetAuraIsKnown { .. }
             | Value::AuraIsActive(_)
             | Value::TargetAuraIsActive(_)
+            | Value::AuraShouldRefresh { .. }
+            | Value::FrontOfTarget
             | Value::DotIsActive(_)
             | Value::SpellIsKnown(_)
             | Value::SpellIsReady(_)
@@ -244,7 +265,8 @@ impl Value {
             | Value::RemainingTimePercent
             | Value::CurrentEnergy
             | Value::CurrentRage
-            | Value::MaxEnergy => ValueType::Float,
+            | Value::MaxEnergy
+            | Value::MaxMana => ValueType::Float,
             Value::Math { op, lhs, rhs } => {
                 let (lhs, rhs) = math_operand_types(*op, lhs.value_type(), rhs.value_type());
                 op.result_type(lhs, rhs)
@@ -855,6 +877,92 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
                 )]),
             }
         }
+        "auraIsKnown" if fields.is_some_and(|fields| fields.contains_key("sourceUnit")) => {
+            // Go GetSourceUnit: the player itself, or a pet of the player by its index.
+            only(&["auraId", "sourceUnit"])?;
+            let id = config
+                .get("auraId")
+                .ok_or_else(|| vec![format!("{name} has no auraId")])
+                .and_then(|id| parse_action_id(id).map_err(|err| vec![err]))?;
+            let unsupported = || {
+                vec![format!(
+                    "{name} sourceUnit {} is unsupported",
+                    config.get("sourceUnit").cloned().unwrap_or_default()
+                )]
+            };
+            let source = config
+                .get("sourceUnit")
+                .and_then(Json::as_object)
+                .ok_or_else(unsupported)?;
+            let kind = source.get("type").and_then(Json::as_str);
+            let owner_is_self =
+                source
+                    .get("owner")
+                    .and_then(Json::as_object)
+                    .is_some_and(|owner| {
+                        owner.len() == 1 && owner.get("type").and_then(Json::as_str) == Some("Self")
+                    });
+            let known_keys = source
+                .keys()
+                .all(|key| ["type", "index", "owner"].contains(&key.as_str()));
+            match kind {
+                Some("Self") if source.len() == 1 => Ok(Value::AuraIsKnown(id)),
+                Some("Pet") if owner_is_self && known_keys => {
+                    let pet = match source.get("index") {
+                        None => 0,
+                        Some(index) => index
+                            .as_u64()
+                            .and_then(|index| usize::try_from(index).ok())
+                            .ok_or_else(unsupported)?,
+                    };
+                    Ok(Value::PetAuraIsKnown { pet, id })
+                }
+                _ => Err(unsupported()),
+            }
+        }
+        "auraShouldRefresh" => {
+            only(&["auraId", "maxOverlap", "sourceUnit"])?;
+            let id = config
+                .get("auraId")
+                .ok_or_else(|| vec![format!("{name} has no auraId")])
+                .and_then(|id| parse_action_id(id).map_err(|err| vec![err]))?;
+            // Go `GetTargetUnit`: no unit reference means the current target.
+            let target = match config.get("sourceUnit") {
+                None => true,
+                Some(source) => match source.as_object() {
+                    Some(unit) if unit.keys().all(|key| key == "type") => {
+                        match unit.get("type").and_then(Json::as_str) {
+                            Some("Self") => false,
+                            Some("CurrentTarget") => true,
+                            _ => {
+                                return Err(vec![format!(
+                                    "{name} sourceUnit {source} is unsupported"
+                                )])
+                            }
+                        }
+                    }
+                    _ => return Err(vec![format!("{name} sourceUnit {source} is unsupported")]),
+                },
+            };
+            let max_overlap = match config.get("maxOverlap") {
+                Some(value) => parse_value(value)?,
+                // Go defaults a missing overlap to a constant 0ms.
+                None => Value::Const(parse_const("0ms").expect("duration constant")),
+            };
+            Ok(Value::AuraShouldRefresh {
+                id,
+                target,
+                max_overlap: Box::new(max_overlap),
+            })
+        }
+        "frontOfTarget" => {
+            only(&[])?;
+            Ok(Value::FrontOfTarget)
+        }
+        "maxMana" => {
+            only(&[])?;
+            Ok(Value::MaxMana)
+        }
         "auraIsKnown" | "auraIsActive" | "auraNumStacks" | "auraRemainingTime" => {
             // sourceUnit, except on auraIsActive and auraNumStacks, and includeReactionTime
             // are not modeled.
@@ -1103,6 +1211,13 @@ pub enum Compiled<R> {
     CurrentMana,
     CurrentEnergy,
     MaxEnergy,
+    MaxMana,
+    FrontOfTarget,
+    /// Go `APLValueAuraShouldRefresh` with the overlap coerced to a duration.
+    AuraShouldRefresh {
+        aura: R,
+        overlap: Box<Compiled<R>>,
+    },
     CurrentComboPoints,
     TimeToNextEnergyTick,
     CurrentRage,
@@ -1162,7 +1277,9 @@ impl<R> Compiled<R> {
             | Compiled::RemainingTimePercent
             | Compiled::CurrentEnergy
             | Compiled::CurrentRage
-            | Compiled::MaxEnergy => ValueType::Float,
+            | Compiled::MaxEnergy
+            | Compiled::MaxMana => ValueType::Float,
+            Compiled::FrontOfTarget | Compiled::AuraShouldRefresh { .. } => ValueType::Bool,
             Compiled::Math { op, lhs, rhs } => op.result_type(lhs.value_type(), rhs.value_type()),
             Compiled::Coerced { to, .. } => *to,
         }
@@ -1314,6 +1431,9 @@ pub struct Lookup<'a, R> {
     pub spell: &'a dyn Fn(&ActionId) -> Option<usize>,
     /// Go `GetAPLDot`: the spellbook position of the spell when it has a dot on the target.
     pub dot: &'a dyn Fn(&ActionId) -> Option<usize>,
+    /// Go `GetAuraByID` on the player's pet at a position among its pets: whether it has the
+    /// aura, false when there is no such pet.
+    pub pet_aura_known: &'a dyn Fn(usize, &ActionId) -> bool,
 }
 
 /// What Go `newAPLAction` makes of an action's condition.
@@ -1402,6 +1522,25 @@ fn compile_value<R>(
         Value::CurrentRage => Compiled::CurrentRage,
         Value::IsExecutePhase(threshold) => Compiled::IsExecutePhase(*threshold),
         Value::MaxEnergy => Compiled::MaxEnergy,
+        Value::MaxMana => Compiled::MaxMana,
+        Value::FrontOfTarget => Compiled::FrontOfTarget,
+        // Go `newValueAuraShouldRefresh`: no value without the aura.
+        Value::AuraShouldRefresh {
+            id,
+            target,
+            max_overlap,
+        } => {
+            let found = if *target {
+                (lookup.target_aura)(id)
+            } else {
+                aura(id)
+            }?;
+            let overlap = compile_value(max_overlap, lookup, missing)?.coerce(ValueType::Duration);
+            Compiled::AuraShouldRefresh {
+                aura: found.aura,
+                overlap: Box::new(overlap),
+            }
+        }
         Value::CurrentComboPoints => Compiled::CurrentComboPoints,
         Value::TimeToNextEnergyTick => Compiled::TimeToNextEnergyTick,
         Value::RemainingTime => Compiled::RemainingTime,
@@ -1426,6 +1565,7 @@ fn compile_value<R>(
         Value::DotTimeToNextTick(id) => Compiled::DotTimeToNextTick((lookup.dot)(id)?),
         Value::GcdIsReady => Compiled::GcdIsReady,
         Value::AuraIsKnown(id) => bool_const(aura(id).is_some()),
+        Value::PetAuraIsKnown { pet, id } => bool_const((lookup.pet_aura_known)(*pet, id)),
         Value::AuraIsActive(id) => match (aura(id), missing) {
             (Some(found), _) => Compiled::AuraIsActive(found.aura),
             (None, MissingAura::Dropped) => return None,
@@ -1556,7 +1696,44 @@ mod tests {
             target_aura: aura,
             spell: &no_spell,
             dot: &no_spell,
+            pet_aura_known: &|_, _| false,
         }
+    }
+
+    /// Go `GetSourceUnit` on a pet of the player reads that pet's auras, a constant.
+    #[test]
+    fn aura_is_known_reads_a_pet_of_the_player() {
+        let pet = serde_json::json!({"auraIsKnown": {
+            "auraId": {"spellId": 1293696},
+            "sourceUnit": {"type": "Pet", "index": 1, "owner": {"type": "Self"}}
+        }});
+        let value = parse_value(&pet).unwrap();
+        let id = ActionId {
+            spell_id: 1293696,
+            ..ActionId::default()
+        };
+        assert_eq!(
+            value,
+            Value::PetAuraIsKnown {
+                pet: 1,
+                id: id.clone()
+            }
+        );
+        let none = |_: &ActionId| -> Option<FoundAura<ActionId>> { None };
+        let known = |pet: usize, aura: &ActionId| pet == 1 && *aura == id;
+        let lookup = Lookup {
+            pet_aura_known: &known,
+            ..only_auras(&none)
+        };
+        assert_eq!(
+            compile_condition(Some(&value), &lookup, MissingAura::Dropped),
+            CompiledCondition::Always
+        );
+        let other = serde_json::json!({"auraIsKnown": {
+            "auraId": {"spellId": 1293696},
+            "sourceUnit": {"type": "Pet", "index": 0, "owner": {"type": "CurrentTarget"}}
+        }});
+        assert!(parse_value(&other).is_err());
     }
 
     #[test]

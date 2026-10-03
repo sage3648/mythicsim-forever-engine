@@ -158,6 +158,8 @@ impl CallbackList {
 pub(crate) struct Aura<K> {
     pub(crate) label: String,
     pub(crate) action_id: Option<ActionId>,
+    /// Go `AuraMetrics.ID`, fixed at registration; a metric split retags `action_id` alone.
+    pub(crate) metrics_id: Option<ActionId>,
     pub(crate) duration: i64,
     pub(crate) max_stacks: i32,
     pub(crate) behavior: AuraBehavior<K>,
@@ -232,6 +234,7 @@ impl<K> Tracker<K> {
         self.auras.push(Aura {
             label: exported.label.clone(),
             action_id: exported.action_id.clone(),
+            metrics_id: exported.action_id.clone(),
             duration: exported.duration_ns,
             max_stacks: exported.max_stacks,
             behavior,
@@ -300,11 +303,14 @@ impl<A: Agent> Fight<A> {
         &mut self.trackers[aura.side.index()].auras[aura.index]
     }
 
+    /// Whether the aura reset activates the aura. An aura Go's agent reset activates later,
+    /// as a druid's starting form, is active after the reset without being permanent.
+    pub(crate) fn set_aura_permanent(&mut self, aura: AuraRef, permanent: bool) {
+        self.aura_mut(aura).permanent = permanent;
+    }
+
     fn unit_label(&self, side: Side) -> String {
-        match side {
-            Side::Player => self.config.player_label.clone(),
-            Side::Target => self.config.target_label.clone(),
-        }
+        self.label_of(side)
     }
 
     /// Go `Aura.Refresh`.
@@ -341,9 +347,13 @@ impl<A: Agent> Fight<A> {
             return;
         }
         assert!(self.aura(aura).duration != 0, "aura with zero duration");
-        // Go: a stronger member of an exclusive category blocks the activation.
+        // Go activates exclusive effects first: a stronger member of an exclusive category
+        // blocks the activation, otherwise the effects' gains run.
         if !self.activate_exclusive(aura) {
             return;
+        }
+        if let AuraBehavior::Class(kind) = self.aura(aura).behavior {
+            A::on_exclusive_gain(self, aura, kind);
         }
         {
             let now = self.now;
@@ -469,12 +479,12 @@ impl<A: Agent> Fight<A> {
     /// Go `AddStatsDynamic` for a stat aura a class aura owns: the player's stats become the
     /// combination with the aura's bit set or cleared.
     pub(crate) fn set_stat_aura(&mut self, bit: u32, active: bool) {
-        if active {
-            self.stat_mask |= bit;
+        let mask = if active {
+            self.stat_mask | bit
         } else {
-            self.stat_mask &= !bit;
-        }
-        self.player.powers = self.stat_combos[self.stat_mask as usize];
+            self.stat_mask & !bit
+        };
+        self.set_stat_mask(mask);
     }
 
     /// A stat aura's bit in the active stat mask, by label.
@@ -510,10 +520,7 @@ impl<A: Agent> Fight<A> {
             AuraBehavior::MultiplyManaRegenSpeed(multiplier) => {
                 self.multiply_mana_regen_speed(multiplier)
             }
-            AuraBehavior::WindfuryProc { bit } => {
-                self.stat_mask |= bit;
-                self.player.powers = self.stat_combos[self.stat_mask as usize];
-            }
+            AuraBehavior::WindfuryProc { bit } => self.set_stat_mask(self.stat_mask | bit),
             AuraBehavior::WindfuryTotem => {
                 let trigger = self
                     .windfury
@@ -529,8 +536,7 @@ impl<A: Agent> Fight<A> {
                     let line = self.aura_logs[line].clone();
                     self.player_log(&line);
                 }
-                self.stat_mask |= bit;
-                self.player.powers = self.stat_combos[self.stat_mask as usize];
+                self.set_stat_mask(self.stat_mask | bit);
             }
             AuraBehavior::Class(kind) => A::on_gain(self, aura, kind),
             _ => {}
@@ -550,10 +556,7 @@ impl<A: Agent> Fight<A> {
                 multiplier,
                 schools,
             } => self.multiply_self_damage_taken(multiplier, schools, true),
-            AuraBehavior::WindfuryProc { bit } => {
-                self.stat_mask &= !bit;
-                self.player.powers = self.stat_combos[self.stat_mask as usize];
-            }
+            AuraBehavior::WindfuryProc { bit } => self.set_stat_mask(self.stat_mask & !bit),
             AuraBehavior::WindfuryTotem => {
                 let trigger = self
                     .windfury
@@ -569,8 +572,7 @@ impl<A: Agent> Fight<A> {
                     let line = self.aura_logs[line].clone();
                     self.player_log(&line);
                 }
-                self.stat_mask &= !bit;
-                self.player.powers = self.stat_combos[self.stat_mask as usize];
+                self.set_stat_mask(self.stat_mask & !bit);
             }
             AuraBehavior::MultiplyManaRegenSpeed(multiplier) => {
                 self.multiply_mana_regen_speed(1.0 / multiplier)
@@ -723,16 +725,14 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    /// Go `auraTracker.OnCastComplete`. No active check, as in Go.
+    /// Go `auraTracker.OnCastComplete` on the caster. No active check, as in Go.
     pub(crate) fn on_cast_complete(&mut self, spell: SpellId) {
         let list = List::CastComplete as usize;
-        let length = self.trackers[Side::Player.index()].lists[list].snapshot_len();
+        let side = self.spells[spell].caster;
+        let length = self.trackers[side.index()].lists[list].snapshot_len();
         for position in 0..length {
-            let index = self.trackers[Side::Player.index()].lists[list].read(position);
-            let aura = AuraRef {
-                side: Side::Player,
-                index,
-            };
+            let index = self.trackers[side.index()].lists[list].read(position);
+            let aura = AuraRef { side, index };
             match self.aura(aura).behavior {
                 AuraBehavior::Class(kind) => A::on_cast_complete(self, aura, kind, spell),
                 AuraBehavior::Eureka => self.eureka_cast_complete(spell),
@@ -741,10 +741,9 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    /// Go `auraTracker.OnPeriodicDamageDealt` on the caster, which skips no inactive aura. No
-    /// target aura in scope acts on periodic damage taken.
-    pub(crate) fn on_periodic_damage(&mut self, spell: SpellId, result: &SpellResult) {
-        let list = List::PeriodicDamageDealt as usize;
+    /// Go `auraTracker.OnApplyEffects` on the caster. No active check, as in Go.
+    pub(crate) fn on_apply_effects(&mut self, spell: SpellId, target: Side) {
+        let list = List::ApplyEffects as usize;
         let length = self.trackers[Side::Player.index()].lists[list].snapshot_len();
         for position in 0..length {
             let index = self.trackers[Side::Player.index()].lists[list].read(position);
@@ -753,6 +752,21 @@ impl<A: Agent> Fight<A> {
                 index,
             };
             if let AuraBehavior::Class(kind) = self.aura(aura).behavior {
+                A::on_apply_effects(self, aura, kind, spell, target);
+            }
+        }
+    }
+
+    /// Go `auraTracker.OnPeriodicDamageDealt` on the caster, which skips no inactive aura. No
+    /// target aura in scope acts on periodic damage taken.
+    pub(crate) fn on_periodic_damage(&mut self, spell: SpellId, result: &SpellResult) {
+        let side = self.spells[spell].caster;
+        let list = List::PeriodicDamageDealt as usize;
+        let length = self.trackers[side.index()].lists[list].snapshot_len();
+        for position in 0..length {
+            let index = self.trackers[side.index()].lists[list].read(position);
+            let aura = AuraRef { side, index };
+            if let AuraBehavior::Class(kind) = self.aura(aura).behavior {
                 A::on_periodic_damage_dealt(self, aura, kind, spell, result);
             }
         }
@@ -760,8 +774,9 @@ impl<A: Agent> Fight<A> {
 
     /// Go `auraTracker.OnSpellHitDealt` on the caster and `OnSpellHitTaken` on the target.
     pub(crate) fn on_spell_hit(&mut self, spell: SpellId, result: &SpellResult) {
+        let caster = self.spells[spell].caster;
         for (side, list) in [
-            (Side::Player, List::SpellHitDealt),
+            (caster, List::SpellHitDealt),
             (result.target, List::SpellHitTaken),
         ] {
             // Listeners of the caster's hits, as opposed to the hits its target takes.
@@ -879,10 +894,10 @@ impl<A: Agent> Fight<A> {
     /// extra main hand attack at once.
     fn windfury_trigger(&mut self, aura: AuraRef, spell: SpellId, result: &SpellResult) {
         let windfury = self.windfury.clone().expect("Windfury Totem is bound");
-        if !windfury.trigger_spells[spell]
-            || result.outcome & super::OUTCOME_LANDED == 0
-            || (windfury.trigger_require_damage && result.damage == 0.0)
-        {
+        if !windfury.trigger_spells[spell] || result.outcome & super::OUTCOME_LANDED == 0 {
+            return;
+        }
+        if windfury.trigger_require_damage && result.damage == 0.0 {
             return;
         }
         let icd = self.aura(aura).icd;
@@ -1017,6 +1032,23 @@ impl<A: Agent> Fight<A> {
                 {
                     return;
                 }
+                // Go gives the mana to the attacker, each unit with its own metrics, which a
+                // pet registers at its first proc.
+                let metrics = match self.spells[spell].caster {
+                    Side::Pet => {
+                        let id = self.resources[metrics].id.clone();
+                        match self.pet.as_ref().and_then(|pet| pet.jow_metrics) {
+                            Some(existing) => existing,
+                            None => {
+                                let created = self.new_mana_metrics_of(Side::Pet, id);
+                                self.pet.as_mut().expect("the pet is simulated").jow_metrics =
+                                    Some(created);
+                                created
+                            }
+                        }
+                    }
+                    _ => metrics,
+                };
                 self.add_mana(mana, metrics);
             }
             AuraBehavior::TouchOfTheGrave { drain, .. } => {
