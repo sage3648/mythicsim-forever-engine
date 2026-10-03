@@ -1402,6 +1402,23 @@ pub enum Effect {
         soul_siphon: f64,
         self_healing_multiplier: f64,
     },
+    /// Wrack: a channel scaled by Soul Siphon, and while it runs a bonus on the ticks of
+    /// `dot_spells`.
+    Wrack {
+        spell_id: i32,
+        tick_base: f64,
+        tick_can_crit: bool,
+        soul_siphon: f64,
+        dot_bonus: f64,
+        dot_spells: Vec<usize>,
+    },
+    /// Bane of Havoc: the cast takes the bane slot with the target aura; the copy listener
+    /// copies damage to other targets only.
+    BaneOfHavoc {
+        spell_id: i32,
+        aura: String,
+        copy_aura: String,
+    },
     /// Incinerate's damage bonus on a target burning with Immolate.
     Incinerate {
         immolate_bonus: f64,
@@ -2087,6 +2104,8 @@ impl Effect {
             Effect::BaneOfDoom { .. } => "bane_of_doom",
             Effect::DrainLife { .. } => "drain_life",
             Effect::Incinerate { .. } => "incinerate",
+            Effect::Wrack { .. } => "wrack",
+            Effect::BaneOfHavoc { .. } => "bane_of_havoc",
             Effect::Firebolt { .. } => "firebolt",
             Effect::FelEnergy { .. } => "fel_energy",
             Effect::DemonicBrand { .. } => "demonic_brand",

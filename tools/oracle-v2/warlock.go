@@ -21,7 +21,9 @@ func init() {
 		// talents_affliction.go registerAmplifyCurse registers its cast without a class mask.
 		// talents_demonology.go applyDemonicBrand registers each demon's brand hit without one.
 		unmaskedSpells: map[core.ActionID]string{{SpellID: 18288}: "amplify_curse",
-			{SpellID: 1293697}: "demonic_brand", {SpellID: 1293698}: "demonic_brand"},
+			{SpellID: 1293697}: "demonic_brand", {SpellID: 1293698}: "demonic_brand",
+			// talents_destruction.go applyBaneOfHavoc builds its cast from the client row alone.
+			{SpellID: 1225228}: "bane_of_havoc"},
 	}
 	// pets.go: every demon is registered at construction and only the summoned one is enabled,
 	// at reset; the sim has no summon spells.
@@ -75,6 +77,8 @@ var (
 	wlDrainLifeLadder      = spelldata.Ranked(689, 699, 709, 7651, 11699, 11700)
 	wlSoulSiphon           = spelldata.Talent(17804, 3)
 	wlIncinerateLadder     = spelldata.Ranked(412758, 1293812, 1293813)
+	wlWrackLadder          = spelldata.Ranked(1316697)
+	wlBaneOfHavoc          = spelldata.Ranked(1225228)
 	wlDemonicEnergies      = spelldata.Talent(1225214, 2)
 	wlDemonicSacrificeOn   = spelldata.Ranked(18789, 18790, 18791, 18792)
 )
@@ -100,8 +104,17 @@ func warlockInertPet(agent core.Agent, pet *core.Pet) string {
 // Dynamic damage taken modifiers the warlock effects describe: Improved Shadow Bolt registers one on
 // every target (talents_destruction.go applyImprovedShadowBolt).
 func warlockDamageTakenModifiers(agent core.Agent) int {
-	if agent.(warlock.WarlockAgent).GetWarlock().Talents.ImprovedShadowBolt > 0 {
-		return 1
+	talents := agent.(warlock.WarlockAgent).GetWarlock().Talents
+	count := 0
+	if talents.ImprovedShadowBolt > 0 {
+		count++
+	}
+	// wrack.go registerWrack: the bonus on Corruption and Bane of Agony ticks.
+	if talents.Wrack {
+		count++
+	}
+	if count > 0 {
+		return count
 	}
 	return 0
 }
@@ -138,12 +151,27 @@ func warlockEffects(agent core.Agent, character *core.Character) []map[string]an
 	// drain_life.go: a channeled dot scaled by Soul Siphon, which counts every registered
 	// Affliction aura on the target (warlock.go AfflictionCount), and healing for each tick.
 	drain := withKind("drain_life", warlockTick(wlDrainLifeLadder.Highest(), unrepresented))
-	drain["soul_siphon"] = 1.0
+	soulSiphon := 1.0
 	if talents.SoulSiphon > 0 {
-		drain["soul_siphon"] = 1 + wlSoulSiphon.FractionAt(talents.SoulSiphon)*min(w.AfflictionCount(target), 3)
+		soulSiphon = 1 + wlSoulSiphon.FractionAt(talents.SoulSiphon)*min(w.AfflictionCount(target), 3)
 	}
+	drain["soul_siphon"] = soulSiphon
 	drain["self_healing_multiplier"] = w.PseudoStats.SelfHealingMultiplier
 	effects = append(effects, drain)
+	if talents.Wrack { // wrack.go: a channel scaled by Soul Siphon and a bonus on two dots' ticks
+		row := wlWrackLadder.Highest()
+		wrack := withKind("wrack", warlockTick(row, unrepresented))
+		wrack["soul_siphon"] = soulSiphon
+		wrack["dot_bonus"] = 1 + row.EffectN(2).Percent()
+		wrack["dot_spells"] = spellsMatching(character, warlock.WarlockSpellCorruption|warlock.WarlockSpellCurseOfAgony)
+		effects = append(effects, wrack)
+	}
+	if talents.BaneOfHavoc { // talents_destruction.go applyBaneOfHavoc
+		effects = append(effects, map[string]any{
+			"kind": "bane_of_havoc", "spell_id": wlBaneOfHavoc.Highest().ID,
+			"aura": "Bane of Havoc-" + w.Label, "copy_aura": "Bane of Havoc - Copy",
+		})
+	}
 	if talents.Incinerate { // incinerate.go: the client roll, raised on a burning target
 		effects = append(effects, map[string]any{
 			"kind": "incinerate", "immolate_bonus": 1 + wlIncinerateLadder.Highest().EffectN(2).Percent(),

@@ -19,6 +19,7 @@ const EFFECTS: &[&str] = &[
     "amplify_curse",
     "bane_of_agony",
     "bane_of_doom",
+    "bane_of_havoc",
     "conflagrate",
     "corruption",
     "curse_of_the_elements",
@@ -40,6 +41,7 @@ const EFFECTS: &[&str] = &[
     "siphon_life",
     "soul_fire",
     "warlock_pet",
+    "wrack",
 ];
 
 /// The effect kind whose implementation executes a Warlock spell.
@@ -55,6 +57,8 @@ fn spell_capability(spell: &Spell) -> Option<&'static str> {
         "siphon_life" if dot => Some("siphon_life"),
         "drain_life" if dot => Some("drain_life"),
         "incinerate" if damage => Some("incinerate"),
+        "wrack" if dot => Some("wrack"),
+        "bane_of_havoc" if damage_free(spell) => Some("bane_of_havoc"),
         "curse_of_the_elements" => Some("curse_of_the_elements"),
         "life_tap" => Some("life_tap"),
         "conflagrate" if damage => Some("conflagrate"),
@@ -99,6 +103,9 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         Effect::Decimation {
             trigger_aura, aura, ..
         } => vec![("player", trigger_aura), ("player", aura)],
+        // With the one target in scope the bane is always on the hit's target, which the
+        // copy listener skips.
+        Effect::BaneOfHavoc { copy_aura, .. } => vec![("player", copy_aura)],
         Effect::DemonicBrand {
             trigger_aura,
             consumer_aura,

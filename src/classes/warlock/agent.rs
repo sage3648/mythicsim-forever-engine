@@ -5,7 +5,9 @@ use std::rc::Rc;
 
 use crate::{
     contracts::prepared_v2::{Effect, PreparedV2, Spell as ExportedSpell},
-    core::fight::{Agent, AuraRef, DotId, Fight, Side, SpellId, SpellResult, PRIORITY_REGEN},
+    core::fight::{
+        Agent, AuraRef, DotId, Fight, Outcome, Side, SpellId, SpellResult, PRIORITY_REGEN,
+    },
 };
 
 use super::{
@@ -21,7 +23,7 @@ use super::{
         life_tap::{self, LifeTap},
         searing_pain, shadow_bolt, shadowburn,
         siphon_life::SiphonLife,
-        soul_fire,
+        soul_fire, take_bane_slot,
     },
     talents::{
         decimation::{self, Decimation},
@@ -29,6 +31,7 @@ use super::{
         improved_shadow_bolt::{self, ImprovedShadowBolt},
         nightfall::{self, Nightfall},
         shadow_and_flame::{self, ShadowAndFlame},
+        wrack::{self, Wrack},
     },
 };
 
@@ -52,6 +55,8 @@ pub(crate) enum WarlockSpell {
     BaneOfDoom,
     DrainLife,
     Incinerate,
+    Wrack,
+    BaneOfHavoc,
     /// The Succubus's Lash of Pain.
     LashOfPain,
     /// The demon's Demonic Brand hit.
@@ -91,6 +96,9 @@ pub(crate) struct WarlockAgent {
     siphon_life: Option<SiphonLife>,
     bane_of_doom_dot: Option<DotId>,
     drain_life: Option<DrainLife>,
+    wrack: Option<Wrack>,
+    /// Bane of Havoc's aura on the one target.
+    bane_of_havoc: Option<AuraRef>,
     /// Incinerate's bonus on a target burning with Immolate.
     incinerate_bonus: f64,
     /// Go `currentActiveBane` on the one target.
@@ -206,6 +214,8 @@ impl WarlockAgent {
             "bane_of_doom" if dot => Some(WarlockSpell::BaneOfDoom),
             "drain_life" if dot => Some(WarlockSpell::DrainLife),
             "incinerate" if damage => Some(WarlockSpell::Incinerate),
+            "wrack" if dot => Some(WarlockSpell::Wrack),
+            "bane_of_havoc" if !damage && !dot => Some(WarlockSpell::BaneOfHavoc),
             "succubus_lash_of_pain" => Some(WarlockSpell::LashOfPain),
             "demonic_brand" => Some(WarlockSpell::DemonicBrand),
             "imp_firebolt" => Some(WarlockSpell::Firebolt),
@@ -281,6 +291,27 @@ impl WarlockAgent {
                         *self_healing_multiplier,
                         metrics,
                     ));
+                }
+                Effect::Wrack {
+                    spell_id,
+                    tick_base,
+                    tick_can_crit,
+                    soul_siphon,
+                    dot_bonus,
+                    dot_spells,
+                } => {
+                    let dot = bind_snapshot_dot(&mut fight, *spell_id, *tick_base, *tick_can_crit)?;
+                    let bound = wrack::bind(&mut fight, dot, *soul_siphon, dot_spells, *dot_bonus);
+                    fight.agent.wrack = Some(bound);
+                }
+                Effect::BaneOfHavoc { aura, .. } => {
+                    let index = fight.trackers[Side::Target.index()]
+                        .find(aura)
+                        .ok_or_else(|| format!("target aura {aura} is not registered"))?;
+                    fight.agent.bane_of_havoc = Some(AuraRef {
+                        side: Side::Target,
+                        index,
+                    });
                 }
                 Effect::Incinerate { immolate_bonus } => {
                     fight.agent.incinerate_bonus = *immolate_bonus;
@@ -557,6 +588,20 @@ impl Agent for WarlockAgent {
                 let dot = fight.agent.drain_life.expect("Drain Life is bound").dot;
                 corruption::apply(fight, spell, target, dot);
             }
+            WarlockSpell::Wrack => {
+                let dot = fight.agent.wrack.expect("Wrack is bound").dot;
+                corruption::apply(fight, spell, target, dot);
+            }
+            WarlockSpell::BaneOfHavoc => {
+                // With the one target in scope no other target holds the bane.
+                let result = fight.calc_outcome(spell, target, Outcome::MagicHitNoHitCounter);
+                if result.landed() {
+                    let aura = fight.agent.bane_of_havoc.expect("Bane of Havoc is bound");
+                    take_bane_slot(fight, aura);
+                    fight.activate_aura(aura);
+                }
+                fight.deal_damage(spell, result, false);
+            }
             WarlockSpell::Incinerate => {
                 let (immolate, bonus) = (fight.agent.immolate_dot, fight.agent.incinerate_bonus);
                 incinerate::apply(fight, spell, target, immolate, bonus);
@@ -693,6 +738,10 @@ impl Agent for WarlockAgent {
             WarlockSpell::DrainLife => {
                 let drain = fight.agent.drain_life.expect("Drain Life is bound");
                 drain.tick(fight);
+            }
+            WarlockSpell::Wrack => {
+                let wrack = fight.agent.wrack.expect("Wrack is bound");
+                wrack.tick(fight);
             }
             _ => {}
         }
