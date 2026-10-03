@@ -106,6 +106,15 @@ also [across races](validation/2026-10-04-smite-priest-race-sweep.json), match G
 48 variants, and so does every race on its
 [race board](validation/2026-10-04-smite-priest-race-boards.json).
 
+The production Marksmanship Hunter is the first build with ranged auto attacks: a Human
+with no pet, Auto Shot timed by the rotation's time to the next shot, a prepull Aspect of
+the Hawk and Aimed Shot, Multi-Shot and Sniper Shot over ranged hasted casts, Serpent Sting
+with its ranged attack power share, Summon Hawk and its two hawks, Rapid Fire, Deadly
+Aspects' Quick Shots and the party Battle Shout, at 678.423 DPS. Its
+[sweep](validation/2026-10-04-marksmanship-hunter-sweep.json) matches Go on every supported
+variant; variants in melee range, where Go's Raptor Strike replacement reacts before each
+main hand swing, are rejected.
+
 The application's published race boards, the requests behind every race's production DPS
 for each supported spec, are a real production corpus: all 44 match the pinned Go engine
 in Rust at 10,000 iterations, and every DPS the production engine published equals the

@@ -310,7 +310,8 @@ pub struct Cost {
     pub flat_modifier: i32,
     pub percent_modifier: f64,
     pub additive_percent_modifier: f64,
-    /// Go `EnergyCost.Refund`: the share of an energy cost a missed strike gives back.
+    /// Go `EnergyCost.Refund` or `RageCost.Refund`: the share of the cost a missed strike
+    /// gives back.
     #[serde(default, skip_serializing_if = "is_zero_f64")]
     pub refund: f64,
 }
@@ -537,6 +538,18 @@ pub struct Melee {
     /// returns the swing unchanged: Go still reacts to the event before each main hand swing.
     #[serde(default)]
     pub replace_main_hand_swing: bool,
+    /// The ranged auto attack's static inputs, present only with ranged auto attacks.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ranged_state: Option<RangedState>,
+}
+
+/// Go attack.go's ranged auto attack inputs: the ranged speed pseudo stat and the defender's
+/// ranged attack power bonus.
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct RangedState {
+    pub ranged_speed_multiplier: f64,
+    pub defender_bonus_ranged_attack_power: f64,
 }
 
 /// The target's main hand swings at the player when the player tanks it: Go attack.go's enemy
@@ -614,6 +627,42 @@ pub struct FlametongueHand {
 pub struct DruidFormSpell {
     pub spell: usize,
     pub forms: Vec<String>,
+}
+
+/// An aura and the multiplier it attaches.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct AuraMultiplier {
+    pub aura: String,
+    pub multiplier: f64,
+}
+
+/// A potion's instant resource gain, as Go `resourceGainConfig`.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct ResourceGain {
+    pub resource: String,
+    pub min: f64,
+    pub spread: f64,
+}
+
+/// A warrior stance's cast and aura.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct WarriorStance {
+    pub spell_id: i32,
+    pub stance: String,
+    pub aura: String,
+}
+
+/// Heroic Strike or Cleave: the strike, its queue aura and its base damage.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct QueuedStrike {
+    pub spell_id: i32,
+    pub queue_aura: String,
+    pub base_damage: f64,
+    pub cleave: bool,
 }
 
 /// Behavior Rust must execute, with the parameters Go keeps in closures. Each variant
@@ -1351,6 +1400,195 @@ pub enum Effect {
         cost_percent_add: f64,
         max_stacks: i32,
     },
+    /// core/rage.go: a rage bar, with the rage each landed white hit gives.
+    RageBar {
+        aura: String,
+        max_rage: f64,
+        starting_rage: f64,
+        main_hand_rage: f64,
+        off_hand_rage: f64,
+        crit_multiplier: f64,
+        threat_per_rage: f64,
+    },
+    /// Go `AttachMultiplicativePseudoStatBuff` on the player's damage taken multiplier, for
+    /// auras that are not up from the reset: the gain multiplies, the expiry divides.
+    PlayerDamageTaken {
+        auras: Vec<AuraMultiplier>,
+    },
+    /// An item proc trigger whose handler grants extra main hand attacks at once: Ironfoe's
+    /// Fury of Forgewright and the Hand of Justice.
+    ExtraAttackProc {
+        trigger_aura: String,
+        proc_chance: f64,
+        attacks: i32,
+    },
+    /// A potion that restores rage or mana and may carry a temporary stat aura.
+    PotionResource {
+        item_id: i32,
+        rng_label: String,
+        gains: Vec<ResourceGain>,
+        stone_multiplier: f64,
+        #[serde(default)]
+        aura: Option<String>,
+        #[serde(default)]
+        gain_log: Option<String>,
+        #[serde(default)]
+        expire_log: Option<String>,
+    },
+    /// Warrior stances.go: the starting stance and each stance's cast and aura.
+    WarriorStances {
+        default_stance: String,
+        stances: Vec<WarriorStance>,
+        max_retained_rage: f64,
+    },
+    /// Bloodthirst: attack power share plus a client base, on the special hit table.
+    Bloodthirst {
+        spell_id: i32,
+        attack_power_share: f64,
+        base_damage: f64,
+    },
+    /// Whirlwind: a normalized main hand strike, and the off hand's with Raging Blows.
+    Whirlwind {
+        spell_id: i32,
+        off_hand: bool,
+    },
+    /// Execute: a base plus damage for each extra rage it spends.
+    Execute {
+        spell_id: i32,
+        base_damage: f64,
+        damage_per_rage: f64,
+    },
+    /// Hamstring: a fixed base on the special hit table.
+    Hamstring {
+        spell_id: i32,
+        base_damage: f64,
+    },
+    /// Bloodrage: instant and periodic rage for a share of base health.
+    Bloodrage {
+        spell_id: i32,
+        instant_rage: f64,
+        rage_per_tick: f64,
+        ticks: i32,
+        period_ns: i64,
+        health_cost: f64,
+        rage_threshold: f64,
+    },
+    /// Berserker Rage: rage from Improved Berserker Rage and an aura.
+    BerserkerRage {
+        spell_id: i32,
+        aura: String,
+        rage_gain: f64,
+    },
+    /// Death Wish: physical damage dealt multiplied while its aura lasts.
+    DeathWish {
+        spell_id: i32,
+        aura: String,
+        physical_multiplier: f64,
+        wait_ns: i64,
+    },
+    /// Recklessness: an aura whose crit is a temporary stat change.
+    Recklessness {
+        spell_id: i32,
+        aura: String,
+    },
+    /// The warrior's own Sunder Armor; blocked when another aura holds the armor category
+    /// for good.
+    SunderArmor {
+        spell_id: i32,
+        aura: String,
+        blocked: bool,
+    },
+    /// Deep Wounds: a physical crit casts a bleed that carries what it still owed.
+    DeepWounds {
+        spell_id: i32,
+        trigger_aura: String,
+        share: f64,
+        tick_can_crit: bool,
+        tick_magic: bool,
+    },
+    /// Unbridled Wrath: landed white hits may grant rage a spell batch window later.
+    UnbridledWrath {
+        trigger_aura: String,
+        spell_id: i32,
+        proc_chance: f64,
+        rage: f64,
+        two_handed: bool,
+        delay_ns: i64,
+    },
+    /// The Warrior's Flurry: a melee crit grants melee speed for a few white swings.
+    WarriorFlurry {
+        trigger_aura: String,
+        aura: String,
+        melee_speed_multiplier: f64,
+        charges: i32,
+    },
+    /// Anger Management: rage every period from the reset.
+    AngerManagement {
+        spell_id: i32,
+        rage: f64,
+        period_ns: i64,
+    },
+    /// Heroic Strike and Cleave: queued onto the next main hand swing.
+    HeroicStrikeQueue {
+        queue_delay_ns: i64,
+        strikes: Vec<QueuedStrike>,
+    },
+    /// Overpower: a dodge opens its window.
+    OverpowerWindow {
+        trigger_aura: String,
+        aura: String,
+    },
+    /// Aimed Shot: a normalized ranged weapon shot plus the rank's flat bonus, dealt after
+    /// travel.
+    AimedShot {
+        spell_id: i32,
+        flat_bonus: f64,
+    },
+    /// Sniper Shot: Aimed Shot's shape with its own flat bonus.
+    SniperShot {
+        spell_id: i32,
+        flat_bonus: f64,
+    },
+    /// Multi-Shot: one normalized ranged weapon shot on the one target in scope.
+    MultiShot {
+        spell_id: i32,
+    },
+    /// Serpent Sting: a ranged hit roll, then after travel a dot whose ticks add a share of
+    /// ranged attack power.
+    SerpentSting {
+        spell_id: i32,
+        tick_base: f64,
+        attack_power_share: f64,
+        tick_outcome: String,
+    },
+    /// Aspect of the Hawk: activates its aura, whose ranged attack power is a stat aura;
+    /// Deadly Aspects procs a ranged haste aura on ranged autos.
+    AspectOfTheHawk {
+        spell_id: i32,
+        aura: String,
+        #[serde(default)]
+        proc_aura: Option<String>,
+        #[serde(default)]
+        haste_multiplier: Option<f64>,
+        #[serde(default)]
+        proc_chance: Option<f64>,
+    },
+    /// Rapid Fire: an aura that multiplies ranged and melee attack speed.
+    RapidFire {
+        spell_id: i32,
+        aura: String,
+        haste_multiplier: f64,
+    },
+    /// Summon Hawk: a dive bomb on a base plus a share of ranged attack power, then a hawk dot
+    /// in a free slot or the one with the least time left.
+    SummonHawk {
+        spell_id: i32,
+        base_damage: f64,
+        attack_power_share: f64,
+        always_hits: bool,
+        hawk_spells: Vec<usize>,
+        hawk_duration_ns: i64,
+    },
     /// Go consumes.go conjured item that restores energy, such as Thistle Tea.
     ConjuredEnergy {
         item_id: i32,
@@ -1566,6 +1804,33 @@ impl Effect {
             Effect::FlametongueTotem { .. } => "flametongue_totem",
             Effect::FlametongueWeapon { .. } => "flametongue_weapon",
             Effect::FrostbrandWeapon { .. } => "frostbrand_weapon",
+            Effect::RageBar { .. } => "rage_bar",
+            Effect::ExtraAttackProc { .. } => "extra_attack_proc",
+            Effect::PlayerDamageTaken { .. } => "player_damage_taken",
+            Effect::PotionResource { .. } => "potion_resource",
+            Effect::WarriorStances { .. } => "warrior_stances",
+            Effect::Bloodthirst { .. } => "bloodthirst",
+            Effect::Whirlwind { .. } => "whirlwind",
+            Effect::Execute { .. } => "execute",
+            Effect::Hamstring { .. } => "hamstring",
+            Effect::Bloodrage { .. } => "bloodrage",
+            Effect::BerserkerRage { .. } => "berserker_rage",
+            Effect::DeathWish { .. } => "death_wish",
+            Effect::Recklessness { .. } => "recklessness",
+            Effect::SunderArmor { .. } => "sunder_armor",
+            Effect::DeepWounds { .. } => "deep_wounds",
+            Effect::UnbridledWrath { .. } => "unbridled_wrath",
+            Effect::WarriorFlurry { .. } => "warrior_flurry",
+            Effect::AngerManagement { .. } => "anger_management",
+            Effect::HeroicStrikeQueue { .. } => "heroic_strike_queue",
+            Effect::OverpowerWindow { .. } => "overpower_window",
+            Effect::AimedShot { .. } => "aimed_shot",
+            Effect::SniperShot { .. } => "sniper_shot",
+            Effect::MultiShot { .. } => "multi_shot",
+            Effect::SerpentSting { .. } => "serpent_sting",
+            Effect::AspectOfTheHawk { .. } => "aspect_of_the_hawk",
+            Effect::RapidFire { .. } => "rapid_fire",
+            Effect::SummonHawk { .. } => "summon_hawk",
             Effect::ConjuredEnergy { .. } => "conjured_energy",
             Effect::SinisterStrike { .. } => "sinister_strike",
             Effect::Backstab { .. } => "backstab",

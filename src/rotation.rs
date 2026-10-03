@@ -129,6 +129,10 @@ pub enum Value {
     MaxEnergy,
     CurrentComboPoints,
     TimeToNextEnergyTick,
+    /// Go `APLValueCurrentRage`.
+    CurrentRage,
+    /// Go `APLValueIsExecutePhase`, by its percent threshold.
+    IsExecutePhase(i32),
     RemainingTime,
     CurrentTime,
     NumberTargets,
@@ -137,6 +141,8 @@ pub enum Value {
     /// `auraIsActive` with the current target as its source unit.
     TargetAuraIsActive(ActionId),
     AuraNumStacks(ActionId),
+    /// `auraNumStacks` with the current target as its source unit.
+    TargetAuraNumStacks(ActionId),
     AuraRemainingTime(ActionId),
     DotIsActive(ActionId),
     DotRemainingTime(ActionId),
@@ -146,6 +152,18 @@ pub enum Value {
     SpellTimeToReady(ActionId),
     DotTimeToNextTick(ActionId),
     GcdIsReady,
+    /// Go `APLValueAutoTimeToNext`.
+    AutoTimeToNext(AutoAttackType),
+}
+
+/// Go `APLValueAutoAttackType`: which auto attack a value reads. Unknown reads as any.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum AutoAttackType {
+    Any,
+    Melee,
+    MainHand,
+    OffHand,
+    Ranged,
 }
 
 impl Value {
@@ -202,15 +220,18 @@ impl Value {
             | Value::DotIsActive(_)
             | Value::SpellIsKnown(_)
             | Value::SpellIsReady(_)
+            | Value::IsExecutePhase(_)
             | Value::GcdIsReady => ValueType::Bool,
-            Value::AuraNumStacks(_) | Value::NumberTargets | Value::CurrentComboPoints => {
-                ValueType::Int
-            }
+            Value::AuraNumStacks(_)
+            | Value::TargetAuraNumStacks(_)
+            | Value::NumberTargets
+            | Value::CurrentComboPoints => ValueType::Int,
             Value::AuraRemainingTime(_)
             | Value::DotRemainingTime(_)
             | Value::SpellCastTime(_)
             | Value::SpellTimeToReady(_)
             | Value::DotTimeToNextTick(_)
+            | Value::AutoTimeToNext(_)
             | Value::RemainingTime
             | Value::TotemRemainingTime { .. }
             | Value::CurrentTime
@@ -219,6 +240,7 @@ impl Value {
             | Value::CurrentMana
             | Value::RemainingTimePercent
             | Value::CurrentEnergy
+            | Value::CurrentRage
             | Value::MaxEnergy => ValueType::Float,
             Value::Math { op, lhs, rhs } => {
                 let (lhs, rhs) = math_operand_types(*op, lhs.value_type(), rhs.value_type());
@@ -699,6 +721,23 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
             only(&[])?;
             Ok(Value::MaxEnergy)
         }
+        "currentRage" => {
+            only(&[])?;
+            Ok(Value::CurrentRage)
+        }
+        "isExecutePhase" => {
+            only(&["threshold"])?;
+            match config.get("threshold").and_then(Json::as_str) {
+                Some("E20") => Ok(Value::IsExecutePhase(20)),
+                Some("E25") => Ok(Value::IsExecutePhase(25)),
+                Some("E35") => Ok(Value::IsExecutePhase(35)),
+                Some("E45") => Ok(Value::IsExecutePhase(45)),
+                Some("E90") => Ok(Value::IsExecutePhase(90)),
+                other => Err(vec![format!(
+                    "isExecutePhase threshold {other:?} is unsupported"
+                )]),
+            }
+        }
         "currentComboPoints" => {
             only(&[])?;
             Ok(Value::CurrentComboPoints)
@@ -736,6 +775,24 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
             only(&[])?;
             Ok(Value::GcdIsReady)
         }
+        "autoTimeToNext" => {
+            only(&["autoType"])?;
+            // protojson writes the enum by name and omits the zero value, UnknownAuto, which
+            // Go's switch reads as any auto attack.
+            let kind = match config.get("autoType").map(|kind| kind.as_str()) {
+                None | Some(Some("UnknownAuto" | "AnyAuto")) => AutoAttackType::Any,
+                Some(Some("MeleeAuto")) => AutoAttackType::Melee,
+                Some(Some("MainHandAuto")) => AutoAttackType::MainHand,
+                Some(Some("OffHandAuto")) => AutoAttackType::OffHand,
+                Some(Some("RangedAuto")) => AutoAttackType::Ranged,
+                Some(other) => {
+                    return Err(vec![format!(
+                        "autoTimeToNext autoType {other:?} is unsupported"
+                    )])
+                }
+            };
+            Ok(Value::AutoTimeToNext(kind))
+        }
         "dotIsActive" | "dotRemainingTime" | "dotTimeToNextTick" | "spellIsKnown"
         | "spellIsReady" | "spellCastTime" | "spellTimeToReady" => {
             // A target unit other than the current target is not modeled.
@@ -761,7 +818,9 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
                 .ok_or_else(|| vec!["not has no val".to_string()])?;
             Ok(Value::Not(Box::new(parse_value(value)?)))
         }
-        "auraIsActive" if fields.is_some_and(|fields| fields.contains_key("sourceUnit")) => {
+        "auraIsActive" | "auraNumStacks"
+            if fields.is_some_and(|fields| fields.contains_key("sourceUnit")) =>
+        {
             // Go GetSourceUnit: the player itself, or the current target, of the one in scope.
             only(&["auraId", "sourceUnit"])?;
             let id = config
@@ -773,9 +832,11 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
                 Some(_) => None,
                 None => unit.get("type").and_then(Json::as_str),
             });
-            match kind {
-                Some("Self") => Ok(Value::AuraIsActive(id)),
-                Some("CurrentTarget") => Ok(Value::TargetAuraIsActive(id)),
+            match (kind, name) {
+                (Some("Self"), "auraIsActive") => Ok(Value::AuraIsActive(id)),
+                (Some("Self"), _) => Ok(Value::AuraNumStacks(id)),
+                (Some("CurrentTarget"), "auraIsActive") => Ok(Value::TargetAuraIsActive(id)),
+                (Some("CurrentTarget"), _) => Ok(Value::TargetAuraNumStacks(id)),
                 _ => Err(vec![format!(
                     "{name} sourceUnit {} is unsupported",
                     config.get("sourceUnit").cloned().unwrap_or_default()
@@ -783,7 +844,8 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
             }
         }
         "auraIsKnown" | "auraIsActive" | "auraNumStacks" | "auraRemainingTime" => {
-            // sourceUnit, except on auraIsActive, and includeReactionTime are not modeled.
+            // sourceUnit, except on auraIsActive and auraNumStacks, and includeReactionTime
+            // are not modeled.
             only(&["auraId"])?;
             let id = config
                 .get("auraId")
@@ -1031,6 +1093,8 @@ pub enum Compiled<R> {
     MaxEnergy,
     CurrentComboPoints,
     TimeToNextEnergyTick,
+    CurrentRage,
+    IsExecutePhase(i32),
     RemainingTime,
     CurrentTime,
     NumberTargets,
@@ -1045,6 +1109,7 @@ pub enum Compiled<R> {
     SpellTimeToReady(usize),
     DotTimeToNextTick(usize),
     GcdIsReady,
+    AutoTimeToNext(AutoAttackType),
     /// Go `APLValueCoerced`.
     Coerced {
         to: ValueType,
@@ -1063,6 +1128,7 @@ impl<R> Compiled<R> {
             | Compiled::AuraIsActive(_)
             | Compiled::DotIsActive(_)
             | Compiled::SpellIsReady(_)
+            | Compiled::IsExecutePhase(_)
             | Compiled::GcdIsReady => ValueType::Bool,
             Compiled::AuraNumStacks(_) | Compiled::NumberTargets | Compiled::CurrentComboPoints => {
                 ValueType::Int
@@ -1072,6 +1138,7 @@ impl<R> Compiled<R> {
             | Compiled::SpellCastTime(_)
             | Compiled::SpellTimeToReady(_)
             | Compiled::DotTimeToNextTick(_)
+            | Compiled::AutoTimeToNext(_)
             | Compiled::RemainingTime
             | Compiled::TotemRemainingTime { .. }
             | Compiled::CurrentTime
@@ -1080,6 +1147,7 @@ impl<R> Compiled<R> {
             | Compiled::CurrentMana
             | Compiled::RemainingTimePercent
             | Compiled::CurrentEnergy
+            | Compiled::CurrentRage
             | Compiled::MaxEnergy => ValueType::Float,
             Compiled::Math { op, lhs, rhs } => op.result_type(lhs.value_type(), rhs.value_type()),
             Compiled::Coerced { to, .. } => *to,
@@ -1317,6 +1385,8 @@ fn compile_value<R>(
         Value::RemainingTimePercent => Compiled::RemainingTimePercent,
         Value::CurrentMana => Compiled::CurrentMana,
         Value::CurrentEnergy => Compiled::CurrentEnergy,
+        Value::CurrentRage => Compiled::CurrentRage,
+        Value::IsExecutePhase(threshold) => Compiled::IsExecutePhase(*threshold),
         Value::MaxEnergy => Compiled::MaxEnergy,
         Value::CurrentComboPoints => Compiled::CurrentComboPoints,
         Value::TimeToNextEnergyTick => Compiled::TimeToNextEnergyTick,
@@ -1339,6 +1409,7 @@ fn compile_value<R>(
         Value::SpellTimeToReady(id) => Compiled::SpellTimeToReady((lookup.spell)(id)?),
         Value::DotTimeToNextTick(id) => Compiled::DotTimeToNextTick((lookup.dot)(id)?),
         Value::GcdIsReady => Compiled::GcdIsReady,
+        Value::AutoTimeToNext(kind) => Compiled::AutoTimeToNext(*kind),
         Value::AuraIsKnown(id) => bool_const(aura(id).is_some()),
         Value::AuraIsActive(id) => match (aura(id), missing) {
             (Some(found), _) => Compiled::AuraIsActive(found.aura),
@@ -1349,6 +1420,14 @@ fn compile_value<R>(
             (Some(found), _) => Compiled::AuraIsActive(found.aura),
             (None, MissingAura::Dropped) => return None,
             (None, MissingAura::Inactive) => bool_const(false),
+        },
+        Value::TargetAuraNumStacks(id) => match ((lookup.target_aura)(id), missing) {
+            (Some(found), _) if found.max_stacks == 0 => return None,
+            (Some(found), _) => Compiled::AuraNumStacks(found.aura),
+            (None, MissingAura::Dropped) => return None,
+            (None, MissingAura::Inactive) => {
+                Compiled::Const(parse_const("0").expect("int constant"))
+            }
         },
         Value::AuraNumStacks(id) => match (aura(id), missing) {
             // Go warns that the aura does not stack and drops the value, fix or not.

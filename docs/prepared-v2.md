@@ -170,6 +170,11 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `blade_flurry`, `adrenaline_rush` | sim/rogue/talents_combat.go | Blade Flurry's attack speed multiplier; Adrenaline Rush's energy regeneration multiplier and the energy at or below which it fires as a major cooldown, a Go literal |
 | `rogue_finisher` | sim/rogue/rogue.go | Relentless Strikes' chance a combo point and energy, Go literals, and Ruthlessness's chance |
 | `instant_poison`, `deadly_poison` | sim/rogue/poisons.go | The imbued hands, the chance raised by Improved Poisons, Instant Poison's damage range and Deadly Poison's tick, Go literals |
+| `aimed_shot`, `sniper_shot`, `multi_shot` | sim/hunter/aimed_shot.go, sniper_shot.go, multi_shot.go | A normalized ranged weapon shot plus the rank's flat bonus from client data, none for Multi-Shot, on the ranged hit and crit table after travel; the cast time divides by the ranged haste multiplier |
+| `serpent_sting` | sim/hunter/serpent_sting.go | The tick base from client data, the share of ranged attack power each tick adds, a Go literal, and the tick outcome spelldata `TickOutcome` picks; a ranged hit roll without a hit count, then the dot after travel |
+| `aspect_of_the_hawk` | sim/hunter/aspects.go | The aura, whose ranged attack power is a stat aura, and with Deadly Aspects the Quick Shots aura, its ranged haste multiplier and the chance each ranged auto rolls |
+| `rapid_fire` | sim/hunter/rapid_fire.go | The aura and its attack speed multiplier from client data |
+| `summon_hawk` | sim/hunter/summon_hawk.go | The dive bomb's base from client data and its share of ranged attack power, a Go literal, whether it always hits, and the hawk slots, physical dots whose ticks roll the physical crit |
 
 Human racials are static and already in the prepared stats. High Order Skyborne's cast
 speed and every race's creature slaying are static too. Read Ley Line is not a major
@@ -196,7 +201,8 @@ Invalid and unsupported inputs are deliberately different outcomes.
 | Rotation-reachable spell without a known behavior | Unsupported |
 
 The exporter marks as unrepresented: more than one player or target, health fights,
-tanks, presims, healing models, pets that may act, player auto attacks, a target that swings at a
+tanks, presims, healing models, pets that may act, main hand swings a class can replace while
+in range, ranged attack speed listeners, a target that swings at a
 unit, item swapping, execute phase callbacks, target AI, caster
 damage callbacks, dynamic damage-taken modifiers a class effect does not describe, mob type
 bonuses, costs other than mana and energy,
@@ -207,7 +213,9 @@ Item procs that hear only melee hits are inert while the player has no auto atta
 no spell with a melee special mask. A class replace function on the main hand is supported
 only when its class shows it returns the swing unchanged, as Enhancement's Auto weapon sync
 does for weapons of different speeds; `melee.replace_main_hand_swing` then makes Rust react
-before each main hand swing as Go does.
+before each main hand swing as Go does. With ranged auto attacks the `melee` section adds
+`ranged_state`: the ranged speed pseudo stat and the defender's ranged attack power bonus,
+Hunter's Mark; a build without ranged autos omits it.
 
 A class may describe a registered pet as inert when nothing can summon it, as a priest
 without the Shadowfiend option is. Go still resets and dismisses such a pet each fight,
@@ -239,7 +247,8 @@ casts, `channelSpell` with `interruptIf` and `allowRecast`, constant-time prepul
 `math`, `totemRemainingTime` (a Shaman's), `gcdIsReady`,
 `auraIsKnown`, `auraIsActive`, `auraNumStacks`, `auraRemainingTime`, `dotIsActive`,
 `dotRemainingTime`, `dotTimeToNextTick`, `spellIsKnown`, `spellIsReady`,
-`spellTimeToReady` and `spellCastTime`. Action IDs may carry a rank, which Go ignores. A
+`spellTimeToReady`, `spellCastTime`, which reads a class's own cast time such as a Hunter
+shot's, and `autoTimeToNext` for any auto attack kind. Action IDs may carry a rank, which Go ignores. A
 strict sequence controls the rotation as Go's does, including the sequence flag its
 readiness check leaves set and the hook that advances it when a queued cast fires. A
 channel's interrupt condition is evaluated on each tick and each GCD wake, with Go's
@@ -294,6 +303,8 @@ channel without an interrupt condition and a strict sequence that gives up contr
 `production-combat-rogue` is the production Combat Rogue request, with the Goblin Sapper
 Charge hitting the player, and `combat-rogue-orc-shatter-curse` runs it as an Orc whose
 Shatter Curse is up when the sapper goes off.
+`production-marksmanship-hunter` is the production Marksmanship Hunter request, the first
+build with ranged auto attacks.
 
 The contract tests in
 [tests/classes/mage/prepared_v2.rs](../tests/classes/mage/prepared_v2.rs)

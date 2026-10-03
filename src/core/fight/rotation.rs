@@ -202,6 +202,8 @@ impl<A: Agent> Fight<A> {
             Compiled::GcdIsReady => {
                 self.gcd_ready() || self.gcd_time_to_ready() <= MAX_SPELL_QUEUE_WINDOW
             }
+            // Go `APLValueIsExecutePhase`: the encounter's execute phase is at or below it.
+            Compiled::IsExecutePhase(threshold) => self.execute_phase <= *threshold,
             Compiled::And(values) => values.iter().all(|value| self.get_bool(value)),
             Compiled::Or(values) => values.iter().any(|value| self.get_bool(value)),
             Compiled::Not(value) => !self.get_bool(value),
@@ -268,6 +270,7 @@ impl<A: Agent> Fight<A> {
             }
             Compiled::CurrentMana => self.player.mana,
             Compiled::CurrentEnergy => self.energy_bar().current,
+            Compiled::CurrentRage => self.current_rage(),
             Compiled::MaxEnergy => self.energy_bar().max,
             Compiled::NumberTargets => 1.0,
             // Go `APLValueMath.GetFloat`.
@@ -347,10 +350,12 @@ impl<A: Agent> Fight<A> {
                 }
             }
             // Go `Spell.CastTime`: the default cast time with current cast speed, unrounded.
-            Compiled::SpellCastTime(spell) => {
+            Compiled::SpellCastTime(spell) => self.class_cast_time(*spell).unwrap_or_else(|| {
                 let cast_time = self.spells[*spell].default_cast.cast_time;
                 self.apply_cast_speed_for_spell(cast_time, *spell)
-            }
+            }),
+            // Go `APLValueAutoTimeToNext`.
+            Compiled::AutoTimeToNext(kind) => (self.next_auto_attack_at(*kind) - self.now).max(0),
             Compiled::Coerced { inner, .. } => match inner.value_type() {
                 ValueType::Bool => {
                     if self.get_bool(inner) {

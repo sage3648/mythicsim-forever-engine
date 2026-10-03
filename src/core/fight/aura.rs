@@ -83,6 +83,13 @@ pub(crate) enum AuraBehavior<K> {
     },
     /// Dragonbreath Chili's trigger.
     DragonbreathChili,
+    /// An item proc trigger on landed melee hits that grants extra main hand attacks.
+    ExtraAttackProc {
+        chance: f64,
+        attacks: i32,
+    },
+    /// Go rage.go's "RageBar" aura: landed white hits give rage.
+    RageBar,
     /// The aura of a dot or channel.
     Dot(DotId),
     Class(K),
@@ -445,7 +452,33 @@ impl<A: Agent> Fight<A> {
         self.set_stacks(aura, stacks);
     }
 
+    /// Go `AddStatsDynamic` for a stat aura a class aura owns: the player's stats become the
+    /// combination with the aura's bit set or cleared.
+    pub(crate) fn set_stat_aura(&mut self, bit: u32, active: bool) {
+        if active {
+            self.stat_mask |= bit;
+        } else {
+            self.stat_mask &= !bit;
+        }
+        self.player.powers = self.stat_combos[self.stat_mask as usize];
+    }
+
+    /// A stat aura's bit in the active stat mask, by label.
+    pub(crate) fn stat_aura_bit(
+        effects: &[crate::contracts::prepared_v2::Effect],
+        label: &str,
+    ) -> Option<u32> {
+        effects.iter().find_map(|effect| match effect {
+            crate::contracts::prepared_v2::Effect::StatAuras { auras, .. } => auras
+                .iter()
+                .position(|aura| aura == label)
+                .map(|bit| 1 << bit),
+            _ => None,
+        })
+    }
+
     fn on_gain(&mut self, aura: AuraRef) {
+        self.multiply_damage_taken_for(aura, false);
         match self.aura(aura).behavior {
             AuraBehavior::Dot(dot) => self.dot_on_gain(dot),
             AuraBehavior::Eureka => self.eureka_gain(),
@@ -488,6 +521,7 @@ impl<A: Agent> Fight<A> {
     }
 
     fn on_expire(&mut self, aura: AuraRef) {
+        self.multiply_damage_taken_for(aura, true);
         match self.aura(aura).behavior {
             AuraBehavior::Dot(dot) => self.dot_on_expire(dot),
             AuraBehavior::Eureka => self.eureka_expire(),
@@ -537,6 +571,53 @@ impl<A: Agent> Fight<A> {
         self.player.powers = powers;
         if mp5_changed {
             self.update_mana_regen_rates();
+        }
+    }
+
+    /// Go `AttachProcTriggerCallback` for an extra attack item: landed melee hits other than
+    /// procs, the cooldown, the chance roll, then the extra attacks at once.
+    fn extra_attack_proc(
+        &mut self,
+        aura: AuraRef,
+        spell: SpellId,
+        result: &SpellResult,
+        chance: f64,
+        attacks: i32,
+    ) {
+        let state = &self.spells[spell];
+        if state.flags.proc || !state.melee_proc || result.outcome & super::OUTCOME_LANDED == 0 {
+            return;
+        }
+        let icd = self.aura(aura).icd;
+        if let Some((timer, _)) = icd {
+            if self.timers[timer] > self.now {
+                return;
+            }
+        }
+        if chance != 1.0 && self.random_for_aura(aura) > chance {
+            return;
+        }
+        if let Some((timer, duration)) = icd {
+            self.timers[timer] = self.now + duration;
+        }
+        self.extra_mh_attacks(attacks);
+    }
+
+    /// Go `AttachMultiplicativePseudoStatBuff` on the player's damage taken multiplier. Its
+    /// callbacks join the aura's others; nothing reads the multiplier between them.
+    fn multiply_damage_taken_for(&mut self, aura: AuraRef, expire: bool) {
+        if aura.side != Side::Player {
+            return;
+        }
+        for position in 0..self.damage_taken_auras.len() {
+            let (index, multiplier) = self.damage_taken_auras[position];
+            if index == aura.index {
+                if expire {
+                    self.player.damage_taken_multiplier /= multiplier;
+                } else {
+                    self.player.damage_taken_multiplier *= multiplier;
+                }
+            }
         }
     }
 
@@ -672,6 +753,13 @@ impl<A: Agent> Fight<A> {
                     AuraBehavior::Class(kind) => {
                         A::on_spell_hit_taken(self, aura, kind, spell, result)
                     }
+                    AuraBehavior::RageBar if dealt => self.rage_bar_hit_dealt(spell, result),
+                    AuraBehavior::ExtraAttackProc { chance, attacks } if dealt => {
+                        self.extra_attack_proc(aura, spell, result, chance, attacks)
+                    }
+                    AuraBehavior::RageBar if side == Side::Player => {
+                        self.rage_bar_hit_taken(result)
+                    }
                     AuraBehavior::JudgementOfWisdom { chance, delay, .. } => {
                         self.judgement_of_wisdom_callback(aura, spell, result, chance, delay)
                     }
@@ -780,7 +868,12 @@ impl<A: Agent> Fight<A> {
             charges -= 1;
         }
         self.set_stacks(windfury.proc_aura, charges);
-        self.cast(windfury.extra, result.target);
+        // Go MaybeReplaceMHSwing: a queued Heroic Strike replaces the extra swing too.
+        let mut extra = windfury.extra;
+        if self.config.melee.replace_main_hand_swing {
+            extra = A::replace_mh_swing(self, extra);
+        }
+        self.cast(extra, result.target);
     }
 
     /// Go `AttachProcTriggerCallback` for Crusader: a weapon proc on landed hits that rolls the

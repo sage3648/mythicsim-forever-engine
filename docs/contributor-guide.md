@@ -30,6 +30,8 @@ Frostbolt kernel remains unchanged beside it.
 | Rogue runtime hooks and regressions | [src/classes/rogue/agent.rs](../src/classes/rogue/agent.rs), [tests/classes/rogue.rs](../tests/classes/rogue.rs) |
 | Energy bar, energy ticks and combo points | [src/core/fight/energy.rs](../src/core/fight/energy.rs) |
 | The player taking damage and Chance of Death | [src/core/fight/damage_taken.rs](../src/core/fight/damage_taken.rs) |
+| Hunter runtime hooks and regressions | [src/classes/hunter/agent.rs](../src/classes/hunter/agent.rs), [tests/classes/hunter.rs](../tests/classes/hunter.rs) |
+| Player melee and ranged auto attacks | [src/core/fight/melee.rs](../src/core/fight/melee.rs) |
 | Registered pets nothing summons | [src/core/fight/pet.rs](../src/core/fight/pet.rs) |
 | Shared build gate and class gates | [src/engine/coverage.rs](../src/engine/coverage.rs), `src/classes/<class>/prepared/coverage.rs` |
 | Event ordering (prepared v1 kernel) | [src/core/events.rs](../src/core/events.rs) |
