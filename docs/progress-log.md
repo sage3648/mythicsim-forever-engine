@@ -16,6 +16,7 @@ reading the Go reference. They are not effort estimates for other contributors.
 | 11. Randomized Frost compatibility sweep | 2026-10-03 12:05 | 2026-10-03 12:16 | 0 h 11 m | 24 variants match Go; #622 guard narrowed to conditions whose compilation differs |
 | Performance: output-identical allocation pass | 2026-10-03 12:21 | 2026-10-03 12:30 | 0 h 09 m | 273 ms to 81 ms for the reference build (Go 205 ms); 41 inputs byte-identical before and after |
 | 4. Reference pin centralization | 2026-10-03 12:31 | 2026-10-03 12:36 | 0 h 05 m | One written pin read by Rust, Python and Go helpers; 17 prepared inputs and 11 v1 cases reproduce unchanged |
+| 10. Reports and timelines | 2026-10-03 12:36 | 2026-10-03 12:51 | 0 h 15 m | Whole Go result compared; fixed time to OOM after Go's aura teardown, zero distributions, target actions and every-fight logs; application parsers read identical timelines |
 
 ## Notes
 

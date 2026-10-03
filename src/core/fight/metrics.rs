@@ -106,6 +106,9 @@ pub(crate) struct Totals {
     pub(crate) threat: Distribution,
     pub(crate) tto: Distribution,
     pub(crate) target_dtps: Distribution,
+    /// Every distribution Go keeps that stays zero in scope: healing, damage taken by the
+    /// player, TMI, and the target's own output.
+    pub(crate) zero: Distribution,
     pub(crate) oom_seconds: f64,
     pub(crate) iterations: u32,
 }
@@ -297,6 +300,9 @@ pub(crate) struct UnitReport {
     unit_index: i32,
     dps: DistributionReport,
     threat: DistributionReport,
+    dtps: DistributionReport,
+    tmi: DistributionReport,
+    hps: DistributionReport,
     tto: DistributionReport,
     #[serde(skip_serializing_if = "is_zero_f")]
     seconds_oom_avg: f64,
@@ -311,7 +317,13 @@ pub(crate) struct TargetReport {
     name: String,
     #[serde(skip_serializing_if = "is_zero_i")]
     unit_index: i32,
+    dps: DistributionReport,
+    threat: DistributionReport,
     dtps: DistributionReport,
+    tmi: DistributionReport,
+    hps: DistributionReport,
+    tto: DistributionReport,
+    actions: Vec<ActionMetricsReport>,
     auras: Vec<AuraMetricsReport>,
 }
 
@@ -319,6 +331,7 @@ pub(crate) struct TargetReport {
 #[serde(rename_all = "camelCase")]
 struct PartyReport {
     dps: DistributionReport,
+    hps: DistributionReport,
     players: Vec<UnitReport>,
 }
 
@@ -326,6 +339,7 @@ struct PartyReport {
 #[serde(rename_all = "camelCase")]
 struct RaidReport {
     dps: DistributionReport,
+    hps: DistributionReport,
     parties: Vec<PartyReport>,
 }
 
@@ -436,8 +450,9 @@ impl<A: Agent> Fight<A> {
             let spent_per_second =
                 (self.player.mana_spent - self.player.mana_gained) / duration_seconds;
             if spent_per_second > 0.0 {
-                let remaining =
-                    crate::core::time::from_seconds(self.player.mana / spent_per_second);
+                // Go's aura teardown clamps current mana to the falling maximum first.
+                let mana = self.player.mana.min(self.config.teardown_max_mana);
+                let remaining = crate::core::time::from_seconds(mana / spent_per_second);
                 // Go adds durations with int64 wraparound; an overflow turns negative and
                 // falls back to 60 minutes below.
                 crate::core::time::from_seconds(duration_seconds)
@@ -458,6 +473,7 @@ impl<A: Agent> Fight<A> {
         self.totals.threat.done_iteration(duration, seed);
         self.totals.tto.done_iteration(duration, seed);
         self.totals.target_dtps.done_iteration(duration, seed);
+        self.totals.zero.done_iteration(duration, seed);
         self.totals.oom_seconds += seconds(self.player.oom_time);
         self.totals.iterations += 1;
     }
@@ -491,24 +507,21 @@ impl<A: Agent> Fight<A> {
         logs: String,
         elapsed_ns: u64,
     ) -> FightReport {
-        let actions = self
-            .actions
-            .iter()
-            .map(|action| ActionMetricsReport {
-                id: (&action.id).into(),
-                is_melee: action.melee,
-                targets: action
-                    .targets
-                    .iter()
-                    .cloned()
-                    .map(|mut target| {
-                        target.cast_time_ms = milliseconds(target.cast_time) as f64;
-                        target
-                    })
-                    .collect(),
-                spell_school: action.school,
-            })
-            .collect();
+        let action_report = |action: &ActionTotals| ActionMetricsReport {
+            id: (&action.id).into(),
+            is_melee: action.melee,
+            targets: action
+                .targets
+                .iter()
+                .cloned()
+                .map(|mut target| {
+                    target.cast_time_ms = milliseconds(target.cast_time) as f64;
+                    target
+                })
+                .collect(),
+            spell_school: action.school,
+        };
+        let actions = self.actions.iter().map(action_report).collect();
         let resources = self
             .resources
             .iter()
@@ -522,11 +535,15 @@ impl<A: Agent> Fight<A> {
             })
             .collect();
         let n = f64::from(self.totals.iterations);
+        let zero = self.totals.zero.report();
         let player = UnitReport {
             name: self.config.player_name.clone(),
             unit_index: Side::Player.index() as i32,
             dps: self.totals.dps.report(),
             threat: self.totals.threat.report(),
+            dtps: zero.clone(),
+            tmi: zero.clone(),
+            hps: zero.clone(),
             tto: self.totals.tto.report(),
             seconds_oom_avg: self.totals.oom_seconds / n,
             actions,
@@ -536,15 +553,23 @@ impl<A: Agent> Fight<A> {
         let target = TargetReport {
             name: self.config.target_label.clone(),
             unit_index: Side::Target.index() as i32,
+            dps: zero.clone(),
+            threat: zero.clone(),
             dtps: self.totals.target_dtps.report(),
+            tmi: zero.clone(),
+            hps: zero.clone(),
+            tto: zero.clone(),
+            actions: self.target_actions.iter().map(action_report).collect(),
             auras: self.aura_reports(Side::Target),
         };
         let dps = self.totals.dps.report();
         FightReport {
             raid_metrics: RaidReport {
                 dps: dps.clone(),
+                hps: zero.clone(),
                 parties: vec![PartyReport {
                     dps,
+                    hps: zero,
                     players: vec![player],
                 }],
             },

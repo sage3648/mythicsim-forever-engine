@@ -1,0 +1,59 @@
+{
+  "kind": "report_compatibility",
+  "date": "2026-10-03",
+  "reference": {
+    "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
+    "client_build": "1.60.1.70170"
+  },
+  "application": {
+    "revision": "ad6ea6b8180060c59bffca414917f471131d2a3e",
+    "files": [
+      "worker/forever/timeline.go",
+      "worker/forever/timeline_average.go",
+      "worker/forever/result.go",
+      "worker/activities/run_forever_sim.go"
+    ],
+    "role": "local application checkout; the parser files were unmodified at this revision, which is newer than the inventory's 1ca72116"
+  },
+  "results": [
+    {
+      "check": "full RaidSimResult",
+      "scope": "every field except elapsedNs and the log, lists keyed by ID, integers exact, floats within 1e-9 relative, deviations as variances at the scale of mean^2",
+      "inputs": "17 prepared fixtures (16 with Go goldens) and the 24-variant sweep",
+      "passed": true
+    },
+    {
+      "check": "production CLI equals serial RunRaidSim",
+      "scope": "wowsimcli sim --strict at the pin, which runs RunRaidSimConcurrentAsync and emits unpopulated fields, on the frozen Frost reference request",
+      "method": "GOMAXPROCS 1 and 4; zero fields dropped before comparing with the serial result",
+      "fields_differing": 0,
+      "logs_identical": true,
+      "explanation": "Concurrent splits start each batch at the serial seed plus its offset, so every fight is the same; only aggregation rounding can differ."
+    },
+    {
+      "check": "first-fight timeline",
+      "scope": "application ParseTimeline on the Go and Rust logs of the frozen reference (3000 fights) and of a one-fight run",
+      "identical": true
+    },
+    {
+      "check": "averaged timeline",
+      "scope": "application AverageTimelineRequest settings (100 fights, seed 7, debug) and ParseAverageTimeline on both logs",
+      "identical": true,
+      "results_match": true
+    }
+  ],
+  "fixed": [
+    "tto: Go clamps current mana to the falling maximum while it deactivates every aura at the end of a fight; the exporter records the lowest maximum (teardown_max) and Rust applies it. Before, Rust's tto.avg was 1314 against Go's 1233 on the reference.",
+    "Zero distributions (hps, dtps, tmi, the target's dps, threat, hps, tmi and tto) and the target's registered actions are reported as Go reports them.",
+    "simOptions.debug logs every fight, as the averaged timeline needs; the exporter previously dropped it."
+  ],
+  "not_compared": [
+    "Go log lines for stat recalculation (Dynamic stat change, Dynamic dep enabled or disabled), which the application's parsers ignore",
+    "single-fight standard deviations, which Go reports as NaN on arm64 where it fuses the subtraction",
+    "protojson EmitUnpopulated: Rust omits zero fields; the application reads both"
+  ],
+  "rerun": [
+    "python3 tools/prepared_v2.py compare --output <scratch> <requests>",
+    "tools/app-timeline/main.go in a scratch module against an application checkout"
+  ]
+}

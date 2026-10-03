@@ -53,6 +53,8 @@ pub struct SimOptions {
     /// Go `useLabeledRands`: one random stream per label instead of one shared stream.
     pub labeled_rng: bool,
     pub debug_first_iteration: bool,
+    /// Go `debug`: log every iteration into one buffer.
+    pub debug: bool,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -222,6 +224,8 @@ pub struct Target {
     /// even when the enemy never swings.
     pub auto_swing_melee: bool,
     pub auto_swing_ranged: bool,
+    /// Registered actions the target reports with zero metrics, since it never acts.
+    pub metrics_actions: Vec<MetricsAction>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -233,6 +237,18 @@ pub struct Mana {
     /// Go's computed rates at the start of the fight, for preparation checks.
     pub regen_per_second_casting: f64,
     pub regen_per_second_not_casting: f64,
+    /// The lowest maximum mana while Go deactivates every aura at the end of a fight.
+    /// Each Mana change clamps current mana, and time to OOM reads it afterwards.
+    pub teardown_max: f64,
+}
+
+/// An action a unit's metrics list, from Go `Spell.doneIteration`.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct MetricsAction {
+    pub action_id: ActionId,
+    pub melee_metrics: bool,
+    pub school: u8,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

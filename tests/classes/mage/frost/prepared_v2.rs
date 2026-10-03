@@ -220,83 +220,78 @@ fn community_fix_622_guarded_conditions_are_supported() {
     assert_eq!(prepared_coverage(&prepared), Vec::<String>::new());
 }
 
-/// The comparable view of a Go `RaidSimResult`, matching tools/prepared_v2.py `compact`.
-fn compact(result: &Value) -> Value {
-    let player = &result["raidMetrics"]["parties"][0]["players"][0];
-    let target = &result["encounterMetrics"]["targets"][0];
-    let number = |value: &Value| value.as_f64().map_or(json!(0), |_| value.clone());
-    let distribution = |value: &Value| {
-        json!({
-            "avg": number(&value["avg"]), "stdev": number(&value["stdev"]),
-            "max": number(&value["max"]), "min": number(&value["min"]),
-        })
-    };
-    let key = |id: &Value| {
+/// The comparable view of a Go `RaidSimResult`, matching tools/prepared_v2.py
+/// `comparable`: every field but timing and the log, identified lists keyed by ID with an
+/// occurrence number for repeats, empty containers dropped.
+fn comparable(result: &Value) -> Value {
+    fn key(id: &Value) -> String {
         let map: std::collections::BTreeMap<String, Value> =
             serde_json::from_value(id.clone()).unwrap();
         serde_json::to_string(&map)
             .unwrap()
             .replace(':', ": ")
             .replace(',', ", ")
-    };
-    let exercised = |row: &Value| {
-        row["targets"].as_array().unwrap().iter().any(|target| {
-            target
-                .as_object()
-                .unwrap()
-                .iter()
-                .any(|(k, v)| k != "unitIndex" && v.as_f64().is_some_and(|value| value != 0.0))
-        })
-    };
-    let auras = |unit: &Value| {
-        let mut map = serde_json::Map::new();
-        for aura in unit["auras"].as_array().into_iter().flatten() {
-            if aura["procsAvg"].as_f64().unwrap_or(0.0) > 0.0 {
-                map.insert(
-                    key(&aura["id"]),
-                    json!({
-                        "uptimeSecondsAvg": number(&aura["uptimeSecondsAvg"]),
-                        "uptimeSecondsStdev": number(&aura["uptimeSecondsStdev"]),
-                        "procsAvg": number(&aura["procsAvg"]),
-                    }),
-                );
+    }
+    fn view(value: &Value) -> Value {
+        match value {
+            Value::Object(map) => Value::Object(
+                map.iter()
+                    .map(|(k, v)| (k.clone(), view(v)))
+                    .filter(|(_, v)| !is_empty(v))
+                    .collect(),
+            ),
+            Value::Array(items)
+                if !items.is_empty() && items.iter().all(|item| item.get("id").is_some()) =>
+            {
+                let mut keyed = serde_json::Map::new();
+                let mut seen = std::collections::BTreeMap::<String, usize>::new();
+                for item in items {
+                    let base = key(&item["id"]);
+                    let count = seen.entry(base.clone()).or_default();
+                    *count += 1;
+                    let name = if *count == 1 {
+                        base
+                    } else {
+                        format!("{base} #{count}")
+                    };
+                    let mut rest = item.as_object().unwrap().clone();
+                    rest.remove("id");
+                    keyed.insert(name, view(&Value::Object(rest)));
+                }
+                Value::Object(keyed)
             }
+            Value::Array(items) => Value::Array(items.iter().map(view).collect()),
+            other => other.clone(),
         }
-        Value::Object(map)
+    }
+    fn is_empty(value: &Value) -> bool {
+        matches!(value, Value::Object(map) if map.is_empty())
+            || matches!(value, Value::Array(items) if items.is_empty())
+    }
+    let mut result = result.as_object().unwrap().clone();
+    result.remove("elapsedNs");
+    result.remove("logs");
+    view(&Value::Object(result))
+}
+
+/// The mean beside a standard deviation, matching tools/prepared_v2.py `stdev_mean`.
+/// Both engines take sqrt(sumSq/n - mean^2), which cancels when the samples are nearly
+/// equal, and Go may fuse the subtraction, so deviations compare as variances.
+fn stdev_mean(
+    key: &str,
+    go: &serde_json::Map<String, Value>,
+    rust: &serde_json::Map<String, Value>,
+) -> Option<f64> {
+    let mean_key = match key.strip_suffix("Stdev") {
+        Some(stem) => format!("{stem}Avg"),
+        None if key == "stdev" => "avg".into(),
+        None => return None,
     };
-    let mut actions = serde_json::Map::new();
-    for action in player["actions"].as_array().into_iter().flatten() {
-        if exercised(action) {
-            actions.insert(key(&action["id"]), action["targets"].clone());
-        }
-    }
-    let mut resources = serde_json::Map::new();
-    for resource in player["resources"].as_array().into_iter().flatten() {
-        if resource["events"].as_i64().unwrap_or(0) > 0 {
-            resources.insert(
-                key(&resource["id"]),
-                json!({
-                    "events": number(&resource["events"]),
-                    "gain": number(&resource["gain"]),
-                    "actualGain": number(&resource["actualGain"]),
-                }),
-            );
-        }
-    }
-    json!({
-        "summary": {
-            "iterationsDone": number(&result["iterationsDone"]),
-            "avgIterationDuration": number(&result["avgIterationDuration"]),
-            "firstIterationDuration": number(&result["firstIterationDuration"]),
-            "dps": distribution(&player["dps"]),
-            "threat": distribution(&player["threat"]),
-            "secondsOomAvg": number(&player["secondsOomAvg"]),
-        },
-        "actions": actions,
-        "auras": auras(player),
-        "target_auras": auras(target),
-        "resources": resources,
-    })
+    let numbers = [go, rust].iter().all(|side| {
+        side.get(key).is_some_and(Value::is_number)
+            && side.get(&mean_key).is_some_and(Value::is_number)
+    });
+    numbers.then(|| go[&mean_key].as_f64().unwrap())
 }
 
 /// Integers exactly; floats within 1e-9 relative, the FMA and summation-order allowance
@@ -307,6 +302,13 @@ fn differences(go: &Value, rust: &Value, path: &str, out: &mut Vec<String>) {
             let keys: std::collections::BTreeSet<&String> = a.keys().chain(b.keys()).collect();
             for key in keys {
                 match (a.get(key), b.get(key)) {
+                    (Some(x), Some(y)) if stdev_mean(key, a, b).is_some() => {
+                        let mean = stdev_mean(key, a, b).unwrap();
+                        let (x, y) = (x.as_f64().unwrap(), y.as_f64().unwrap());
+                        if (x * x - y * y).abs() > 1e-9 * (mean * mean).max(1.0) {
+                            out.push(format!("{path}/{key}: Go {x}, Rust {y}"));
+                        }
+                    }
                     (Some(x), Some(y)) => differences(x, y, &format!("{path}/{key}"), out),
                     _ => out.push(format!("{path}/{key}: present on one side only")),
                 }
@@ -367,7 +369,7 @@ fn supported_cases_match_pinned_go_goldens() {
         let expected: Value =
             serde_json::from_slice(&fs::read(family().join(&golden.file)).unwrap()).unwrap();
         let mut found = Vec::new();
-        differences(&expected, &compact(&report.result), "", &mut found);
+        differences(&expected, &comparable(&report.result), "", &mut found);
         assert!(found.is_empty(), "{}:\n{}", case.id, found.join("\n"));
         if let Some(log) = case.go_log {
             let expected = fs::read_to_string(family().join(&log.file)).unwrap();

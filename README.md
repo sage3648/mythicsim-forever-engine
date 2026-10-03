@@ -47,7 +47,9 @@ event order, shared or labeled random streams, casting, mana, auras, metrics and
 first-fight debug log. The complete Frost reference build, with its rotation, proc
 talents, Evocation, mana gems, potions, runes, the Robe and Cold Snap, matches the
 pinned Go engine exactly in counts and to 1e-9 in metrics: 590.947 DPS on the
-application's request, as in the frozen production observation.
+application's request, as in the frozen production observation. The whole Go result
+matches, including time to out of mana and the target's metrics, and the application's
+own parsers read identical first-fight and averaged timelines from both logs.
 
 See the [kernel guide](docs/kernel.md) for the input boundary and commands.
 

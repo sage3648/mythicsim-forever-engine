@@ -420,6 +420,16 @@ type Mana struct {
 	SpiritRegenPerSecond     float64 `json:"spirit_regen_per_second"`
 	RegenPerSecondCasting    float64 `json:"regen_per_second_casting"`
 	RegenPerSecondNotCasting float64 `json:"regen_per_second_not_casting"`
+	// The lowest maximum mana while Go deactivates every aura at the end of a fight.
+	// Each Mana change clamps current mana, and time to OOM reads it afterwards.
+	TeardownMax float64 `json:"teardown_max"`
+}
+
+// An action the metrics list for a unit, from Spell.doneIteration and addSpellMetrics.
+type MetricsAction struct {
+	ActionID     *ActionID `json:"action_id"`
+	MeleeMetrics bool      `json:"melee_metrics"`
+	School       uint8     `json:"school"`
 }
 
 type TargetUnit struct {
@@ -428,6 +438,8 @@ type TargetUnit struct {
 	// even when it never swings because no unit tanks it.
 	AutoSwingMelee  bool `json:"auto_swing_melee"`
 	AutoSwingRanged bool `json:"auto_swing_ranged"`
+	// Registered actions the target reports with zero metrics, since it never acts.
+	MetricsActions []MetricsAction `json:"metrics_actions"`
 }
 
 type Unit struct {
@@ -475,6 +487,8 @@ type SimOptions struct {
 	Seed                int64 `json:"seed"`
 	LabeledRng          bool  `json:"labeled_rng"`
 	DebugFirstIteration bool  `json:"debug_first_iteration"`
+	// Go logs every iteration into one buffer, as the application's averaged timeline uses.
+	Debug bool `json:"debug"`
 }
 
 type Reference struct {
@@ -889,12 +903,13 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 		}
 	}
 
-	return Prepared{
+	prepared := Prepared{
 		SchemaVersion: schemaVersion, Contract: "forever-prepared",
 		Reference:     Reference{EngineRevision: engineRevision, ClientBuild: clientBuild, Exporter: "tools/oracle-v2"},
 		RequestSHA256: digest, ScenarioID: scenario,
 		Sim: SimOptions{Iterations: request.SimOptions.Iterations, Seed: request.SimOptions.RandomSeed,
-			LabeledRng: request.SimOptions.UseLabeledRands || request.SimOptions.IsTest, DebugFirstIteration: request.SimOptions.DebugFirstIteration},
+			LabeledRng: request.SimOptions.UseLabeledRands || request.SimOptions.IsTest, DebugFirstIteration: request.SimOptions.DebugFirstIteration,
+			Debug: request.SimOptions.Debug},
 		Encounter: Encounter{DurationNs: nanos(simulation.BaseDuration), DurationVariationNs: nanos(simulation.DurationVariation),
 			ExecuteProportion20: simulation.Encounter.ExecuteProportion_20, ExecuteProportion25: simulation.Encounter.ExecuteProportion_25,
 			ExecuteProportion35: simulation.Encounter.ExecuteProportion_35, ExecuteProportion45: simulation.Encounter.ExecuteProportion_45,
@@ -903,6 +918,7 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 			Unit: Unit{Index: target.UnitIndex, Label: target.Label, Level: target.Level, MobType: target.MobType.String(),
 				Stats: statValues(target.GetStats()), PseudoStats: exportPseudo(target.PseudoStats), Auras: exportAuras(target, timers)},
 			AutoSwingMelee: target.AutoAttacks.AutoSwingMelee, AutoSwingRanged: target.AutoAttacks.AutoSwingRanged,
+			MetricsActions: metricsActions(target),
 		},
 		Player: Player{
 			Unit: Unit{Index: character.UnitIndex, Label: character.Label, Level: character.Level,
@@ -919,6 +935,65 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 			Spells: spells, MajorCooldowns: mcds, Rotation: rotation,
 		},
 		Effects: effects, Unrepresented: unrepresented,
+	}
+	// Last: the teardown changes the simulation.
+	prepared.Player.Mana.TeardownMax = teardownMaxMana(simulation, &character.Unit, &prepared.Unrepresented)
+	return prepared
+}
+
+// Go Spell.doneIteration: every spell without SpellFlagNoMetrics reports under its action
+// ID, or one tagged ID per metric split; addSpellMetrics keeps the first registration.
+func metricsActions(unit *core.Unit) []MetricsAction {
+	actions := []MetricsAction{}
+	if len(unit.AttackTables) == 0 {
+		return actions
+	}
+	seen := map[core.ActionID]bool{}
+	for _, spell := range unit.Spellbook {
+		if spell.Flags.Matches(core.SpellFlagNoMetrics) {
+			continue
+		}
+		ids := []core.ActionID{spell.ActionID}
+		if splits := spell.GetMetricSplitCount(); splits > 1 {
+			ids = ids[:0]
+			for i := 0; i < splits; i++ {
+				ids = append(ids, spell.ActionID.WithTag(int32(i)))
+			}
+		}
+		for _, id := range ids {
+			if seen[id] {
+				continue
+			}
+			seen[id] = true
+			actions = append(actions, MetricsAction{ActionID: actionID(id),
+				MeleeMetrics: spell.Flags.Matches(core.SpellFlagMeleeMetrics), School: uint8(spell.SpellSchool)})
+		}
+	}
+	return actions
+}
+
+// Go auraTracker.doneIteration deactivates every aura, permanent ones included, in
+// registration order. Prepared buffs are the only auras that change maximum mana, and
+// they are active from reset, so the reset state tears down as every fight's end does.
+func teardownMaxMana(sim *core.Simulation, unit *core.Unit, unrepresented *[]string) float64 {
+	lowest := unit.MaxMana()
+	for {
+		var active *core.Aura
+		for _, aura := range unit.GetAuras() {
+			if aura.IsActive() {
+				active = aura
+				break
+			}
+		}
+		if active == nil {
+			return lowest
+		}
+		before := unit.MaxMana()
+		active.Deactivate(sim)
+		if unit.MaxMana() > before {
+			*unrepresented = append(*unrepresented, fmt.Sprintf("aura %s raises maximum mana when it fades", active.Label))
+		}
+		lowest = min(lowest, unit.MaxMana())
 	}
 }
 

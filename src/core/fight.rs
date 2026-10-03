@@ -357,6 +357,7 @@ pub(crate) struct Config {
     pub(crate) iterations: u32,
     pub(crate) seed: i64,
     pub(crate) debug_first_iteration: bool,
+    pub(crate) debug: bool,
     pub(crate) base_duration: i64,
     pub(crate) duration_variation: i64,
     pub(crate) player_label: String,
@@ -369,6 +370,7 @@ pub(crate) struct Config {
     pub(crate) distance: f64,
     pub(crate) cast_speed: f64,
     pub(crate) max_mana: f64,
+    pub(crate) teardown_max_mana: f64,
     pub(crate) mp5: f64,
     pub(crate) spirit_regen_per_second: f64,
     pub(crate) spell_hit_percent: f64,
@@ -474,6 +476,8 @@ pub(crate) struct Fight<A: Agent> {
     in_rotation: bool,
     pub(crate) resources: Vec<ResourceMetrics>,
     pub(crate) actions: Vec<ActionTotals>,
+    /// The target's registered actions; it never acts, so their metrics stay zero.
+    pub(crate) target_actions: Vec<ActionTotals>,
     mana_regen_casting: usize,
     mana_regen_not_casting: usize,
     mana_gain_spell: Option<SpellId>,
@@ -537,6 +541,7 @@ impl<A: Agent> Fight<A> {
             iterations: prepared.sim.iterations,
             seed: prepared.sim.seed,
             debug_first_iteration: prepared.sim.debug_first_iteration,
+            debug: prepared.sim.debug,
             base_duration: prepared.encounter.duration_ns,
             duration_variation: prepared.encounter.duration_variation_ns,
             player_label: player.label.clone(),
@@ -549,6 +554,7 @@ impl<A: Agent> Fight<A> {
             distance: player.distance_yards,
             cast_speed: player.cast_speed,
             max_mana: player.mana.max,
+            teardown_max_mana: player.mana.teardown_max,
             mp5: stat(&player.stats, "MP5")?,
             spirit_regen_per_second: player.mana.spirit_regen_per_second,
             spell_hit_percent: stat(&player.stats, "SpellHitPercent")?,
@@ -924,6 +930,16 @@ impl<A: Agent> Fight<A> {
             in_rotation: false,
             resources,
             actions,
+            target_actions: target
+                .metrics_actions
+                .iter()
+                .map(|action| ActionTotals {
+                    id: action.action_id.clone(),
+                    melee: action.melee_metrics,
+                    school: action.school,
+                    targets: [ActionReport::new(0), ActionReport::new(1)],
+                })
+                .collect(),
             mana_regen_casting,
             mana_regen_not_casting,
             mana_gain_spell,
@@ -997,10 +1013,12 @@ impl<A: Agent> Fight<A> {
         for iteration in 0..iterations {
             let seed = self.config.seed + i64::from(iteration);
             self.rng.reseed(seed as u64);
-            self.log = (iteration == 0 && self.config.debug_first_iteration).then(Vec::new);
+            // Go keeps one buffer: every iteration with debug, otherwise only the first.
+            let logged = self.config.debug || (iteration == 0 && self.config.debug_first_iteration);
+            self.log = logged.then(Vec::new);
             self.run_once();
             if let Some(lines) = self.log.take() {
-                logs = lines.join("");
+                logs.extend(lines);
             }
             if iteration == 0 {
                 first_duration = self.duration;

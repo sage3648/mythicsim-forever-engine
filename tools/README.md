@@ -14,6 +14,7 @@ fight. Ordinary Rust tests use frozen data and need no Go checkout.
 | [oracle-v2/main.go](oracle-v2/main.go) | Export a reset Go simulation as [prepared v2](../docs/prepared-v2.md) and run the full Go engine | Built by prepared_v2.py in isolated scratch |
 | [matched-go/](matched-go/) | Go implementation of the same narrow Rust kernel for fair timing | Go |
 | [reference-capture/](reference-capture/) | Standalone request and observation helper programs | Built in temporary modules by inventory capture |
+| [app-timeline/main.go](app-timeline/main.go) | Parse Go and Rust logs with the application's timeline helpers and compare | Go and an application checkout, in a scratch module |
 
 Run the lightweight checks from the repository root:
 

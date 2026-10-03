@@ -76,14 +76,17 @@
       "id": "mage-frost-reference-build",
       "contract": 2,
       "status": "validated_against_go",
-      "scope": "The inventoried Frost reference build and its talent, duration, seed and proc-rank variants in the fixture family; Quick Sim result fields only.",
+      "scope": "The inventoried Frost reference build and its talent, duration, seed and proc-rank variants in the fixture family, plus 24 randomized variants; the whole RaidSimResult and the logs the application parses into first-fight and averaged timelines.",
       "evidence": [
         "fixtures/mage/frost/prepared-v2/manifest.json",
-        "tests/classes/mage/frost/prepared_v2.rs"
+        "tests/classes/mage/frost/prepared_v2.rs",
+        "validation/2026-10-03-frost-sweep.json",
+        "validation/2026-10-03-report-compatibility.json"
       ],
       "known_differences": [
         "Floating-point aggregates differ from Go on arm64 within 1e-9 relative, from Go's fused multiply-add",
-        "Rotations reading an aura the character lacks are rejected pending community fix #622"
+        "Debug logs omit Go's stat recalculation lines, which the application's parsers ignore",
+        "Rotations where community fix #622 would change a condition are rejected"
       ]
     }
   ]

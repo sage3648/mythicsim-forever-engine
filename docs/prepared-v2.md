@@ -56,7 +56,7 @@ RNG contract and implemented effects. Tests fail if it disagrees with the engine
 
 | Section | Content |
 | --- | --- |
-| `sim` | Iterations, seed, `labeled_rng` and first-iteration debug |
+| `sim` | Iterations, seed, `labeled_rng`, first-iteration debug and `debug`, which logs every fight as the application's averaged timeline requests |
 | `encounter` | Base duration, variation and execute proportions, in nanoseconds |
 | `target` | Level, all stats, pseudo stats, every registered aura and whether it has a melee or ranged swing |
 | `player` | Identity, talents, stats, pseudo stats, reaction time, distance, cast speed, mana, attack table, spells, major cooldowns and rotation |
@@ -169,21 +169,33 @@ The production request uses the shared stream.
 
 Comparisons require identical integer counts and event sequences. Floating-point
 metrics use a stated tolerance of `1e-9` relative, because Go may fuse multiply-add
-instructions on some architectures and Rust does not. The production command line
-splits iterations across workers with the same per-iteration seeds, so its per-fight
-results match a serial run while its aggregate summation order differs.
+instructions on some architectures and Rust does not. Standard deviations compare as
+variances at the scale of the squared mean: both engines take
+`sqrt(sumSq/n - mean^2)`, which cancels when every fight is nearly equal. The
+production command line, `wowsimcli sim`, splits iterations across workers with the
+same per-iteration seeds, so its per-fight results match a serial run and its
+aggregates differ only in summation order; at one and four threads it matched serial
+Go on every field ([record](../validation/2026-10-03-report-compatibility.json)).
 
 ## Results and comparison
 
-`sim` writes the engine identity and a `result` in Go's `RaidSimResult` JSON shape for
-the fields Rust implements: raid, party and player DPS distributions, threat, time to
-out of mana, action, aura and resource metrics, target auras, iteration durations and
-the first-fight debug log. Zero values are omitted as protojson omits them.
+`sim` writes the engine identity and a `result` in Go's `RaidSimResult` JSON shape:
+raid, party and unit distributions (DPS, threat, time to out of mana, and the healing,
+damage taken and TMI that stay zero in scope), action, aura and resource metrics for
+the player and the target, iteration durations and the debug log. Zero values are
+omitted as protojson omits them.
 
-The comparison exports each request, runs the pinned Go engine and Rust, and checks
-every exercised action, aura and resource metric. When the request asks for a debug
-log it also diffs the first-fight logs line by line and reports the first divergent
-event. Go's internal stat-recalculation lines are skipped.
+Time to out of mana reads current mana after Go deactivates every aura at the end of a
+fight. Buffs that raise maximum mana fade then, and each change clamps current mana,
+so the exporter records the lowest maximum on the way down as `teardown_max`. The
+target never acts in scope; `metrics_actions` lists the actions Go still reports for it.
+
+The comparison exports each request, runs the pinned Go engine and Rust, and compares
+the whole result except timing and the log, with lists keyed by action ID. When the
+request asks for a debug log it also diffs the logs line by line and reports the
+first divergent event. Go's internal stat-recalculation lines are skipped; the
+application's timeline parsers do not read them, and parsing Go and Rust logs with
+those parsers gives identical first-fight and averaged timelines.
 
 ```sh
 python3 tools/prepared_v2.py compare --output output/prepared-v2-compare REQUEST.json ...

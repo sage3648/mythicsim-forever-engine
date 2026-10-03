@@ -9,8 +9,10 @@
   "generator": "Python random.Random(20261003) over duration, duration variation, target level and distance, talent ranks (including unlearned Fingers of Frost and Missile Barrage), removed gear, raid buffs and debuffs, consumables, channel clip delay, reaction time and labeled random streams.",
   "rerun": "python3 tools/prepared_v2.py compare --output <scratch> validation/2026-10-03-frost-sweep/*.json",
   "criteria": {
+    "comparison": "full RaidSimResult except elapsedNs, lists keyed by ID",
     "integer_counts": "exact",
     "floats": "relative 1e-9",
+    "deviations": "as variances at the scale of mean^2",
     "first_fight_debug_log": "line identical"
   },
   "passed": true,
@@ -401,6 +403,7 @@
     }
   ],
   "notes": [
-    "Eight variants without Missile Barrage were first rejected by the community #622 guard. The reference rotation guards its Arcane Missiles rule with auraIsKnown, so pinned Go and #622 both prune it; the guard now compares both compilations and these variants run and match Go."
+    "Eight variants without Missile Barrage were first rejected by the community #622 guard. The reference rotation guards its Arcane Missiles rule with auraIsKnown, so pinned Go and #622 both prune it; the guard now compares both compilations and these variants run and match Go.",
+    "The first run compared a compact subset that omitted tto and zero-valued distributions; Rust's tto then differed. After the teardown_max fix every variant also matches the full result."
   ]
 }

@@ -102,14 +102,14 @@ def build_exporter(cache, source):
 
 
 def go_golden(exporter, request_path, directory):
-    """Run the pinned Go engine and return its compact result and filtered first-fight log."""
+    """Run the pinned Go engine and return its comparable result and filtered log."""
     directory.mkdir(parents=True, exist_ok=True)
     result_path = directory / "go-result.raw.json"
     command([exporter, "sim", "--infile", request_path, "--outfile", result_path])
     result = load(result_path)
     lines = [line for line in result.get("logs", "").splitlines()
              if not any(skip in line for skip in SKIPPED_LOG_LINES)]
-    return compact(result), "".join(line + "\n" for line in lines)
+    return comparable(result), "".join(line + "\n" for line in lines)
 
 
 def accept(cache, source, case_id, request, description, keep_log, family=FAMILY):
@@ -245,31 +245,46 @@ def exercised(row):
                for target in row.get("targets", []) for k, v in target.items())
 
 
-def compact(result):
-    """The comparable view of a Go RaidSimResult or a Rust prepared report result."""
-    player = result["raidMetrics"]["parties"][0]["players"][0]
-    target = result["encounterMetrics"]["targets"][0]
+def comparable(result):
+    """The comparable view of a Go RaidSimResult or a Rust prepared report result: every
+    field except timing and the log. Lists of identified entries are keyed by ID, since Go
+    builds action lists from maps; a repeated ID, as two auras sharing one, gets its
+    occurrence number, which follows registration order. Empty containers are dropped,
+    since protojson omits them."""
+    def view(value):
+        if isinstance(value, dict):
+            entries = {key: view(item) for key, item in value.items()}
+            return {key: item for key, item in entries.items() if item not in ({}, [])}
+        if isinstance(value, list):
+            if value and all(isinstance(item, dict) and "id" in item for item in value):
+                keyed = {}
+                for item in value:
+                    key = id_key(item["id"])
+                    occurrence = sum(1 for existing in keyed if existing.split(" #")[0] == key)
+                    keyed[key if occurrence == 0 else f"{key} #{occurrence + 1}"] = view(
+                        {k: v for k, v in item.items() if k != "id"})
+                return keyed
+            return [view(item) for item in value]
+        return value
+    return view({key: item for key, item in result.items() if key not in ("elapsedNs", "logs")})
 
-    def distribution(value):
-        return {k: value.get(k, 0) for k in ("avg", "stdev", "max", "min")}
 
-    return {
-        "summary": {
-            "iterationsDone": result.get("iterationsDone", 0),
-            "avgIterationDuration": result.get("avgIterationDuration", 0),
-            "firstIterationDuration": result.get("firstIterationDuration", 0),
-            "dps": distribution(player.get("dps", {})),
-            "threat": distribution(player.get("threat", {})),
-            "secondsOomAvg": player.get("secondsOomAvg", 0),
-        },
-        "actions": {id_key(a["id"]): a["targets"] for a in player.get("actions", []) if exercised(a)},
-        "auras": {id_key(a["id"]): {k: a.get(k, 0) for k in ("uptimeSecondsAvg", "uptimeSecondsStdev", "procsAvg")}
-                  for a in player.get("auras", []) if a.get("procsAvg", 0) > 0},
-        "target_auras": {id_key(a["id"]): {k: a.get(k, 0) for k in ("uptimeSecondsAvg", "uptimeSecondsStdev", "procsAvg")}
-                         for a in target.get("auras", []) if a.get("procsAvg", 0) > 0},
-        "resources": {id_key(r["id"]): {k: r.get(k, 0) for k in ("events", "gain", "actualGain")}
-                      for r in player.get("resources", []) if r.get("events", 0) > 0},
-    }
+def dps(result):
+    return result["raidMetrics"]["dps"].get("avg", 0)
+
+
+def stdev_mean(key, go, rust):
+    """The mean beside a standard deviation, when both engines report one."""
+    mean_key = key.replace("Stdev", "Avg") if key.endswith("Stdev") else "avg" if key == "stdev" else None
+    if mean_key is None or not all(isinstance(side.get(k), (int, float)) for side in (go, rust) for k in (key, mean_key)):
+        return None
+    return go[mean_key]
+
+
+def variance_matches(go, rust, mean):
+    """Both engines take sqrt(sumSq/n - mean^2), which cancels when every sample is nearly
+    equal, and Go may fuse the subtraction. Compare variances at the scale of mean^2."""
+    return abs(go * go - rust * rust) <= TOLERANCE * max(1.0, mean * mean)
 
 
 def leaf_differences(go, rust, path=""):
@@ -279,6 +294,9 @@ def leaf_differences(go, rust, path=""):
         for key in sorted(set(go) | set(rust)):
             if key not in go or key not in rust:
                 differences.append(f"{path}/{key}: only in {'Go' if key in go else 'Rust'}")
+            elif (mean := stdev_mean(key, go, rust)) is not None:
+                if not variance_matches(go[key], rust[key], mean):
+                    differences.append(f"{path}/{key}: Go {go[key]!r}, Rust {rust[key]!r}")
             else:
                 differences.extend(leaf_differences(go[key], rust[key], f"{path}/{key}"))
         return differences
@@ -322,14 +340,13 @@ def compare_request(exporter, rust, request_path, scenario, directory):
     if completed.returncode != 0:
         return {"scenario": scenario, "passed": False, "rust_error": completed.stderr.strip()}
     go_result, rust_report = load(go_out), load(rust_out)
-    differences = leaf_differences(compact(go_result), compact(rust_report["result"]))
+    differences = leaf_differences(comparable(go_result), comparable(rust_report["result"]))
     log_difference = None
     if go_result.get("logs") or rust_report["result"].get("logs"):
         log_difference = first_log_difference(go_result.get("logs", ""), rust_report["result"].get("logs", ""))
     row = {"scenario": scenario, "passed": not differences and log_difference is None,
            "differences": differences, "first_log_difference": log_difference,
-           "go_dps": compact(go_result)["summary"]["dps"]["avg"],
-           "rust_dps": compact(rust_report["result"])["summary"]["dps"]["avg"]}
+           "go_dps": dps(go_result), "rust_dps": dps(rust_report["result"])}
     (directory / "comparison.json").write_text(json.dumps(row, indent=2) + "\n")
     return row
 

@@ -107,6 +107,9 @@ pub fn validate(prepared: &PreparedV2) -> Result<(), String> {
     if player.cast_speed == 0.0 || player.mana.max <= 0.0 {
         return Err("cast_speed and max_mana must be positive".into());
     }
+    if !(player.mana.teardown_max > 0.0 && player.mana.teardown_max <= player.mana.max) {
+        return Err("mana teardown_max must be positive and at most max".into());
+    }
     // Rust recomputes Go's starting regeneration from the exported components. A mismatch
     // means the components or the formula drifted, so the fight cannot be trusted.
     let pseudo = &player.pseudo_stats;

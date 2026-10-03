@@ -12,7 +12,8 @@
     "iterations": 1000,
     "seed": 42,
     "labeled_rng": false,
-    "debug_first_iteration": false
+    "debug_first_iteration": false,
+    "debug": false
   },
   "encounter": {
     "duration_ns": 120000000000,
@@ -577,7 +578,32 @@
       }
     ],
     "auto_swing_melee": true,
-    "auto_swing_ranged": false
+    "auto_swing_ranged": false,
+    "metrics_actions": [
+      {
+        "action_id": {
+          "other_id": "OtherActionMove"
+        },
+        "melee_metrics": true,
+        "school": 0
+      },
+      {
+        "action_id": {
+          "other_id": "OtherActionAttack",
+          "tag": 1
+        },
+        "melee_metrics": true,
+        "school": 1
+      },
+      {
+        "action_id": {
+          "other_id": "OtherActionAttack",
+          "tag": 2
+        },
+        "melee_metrics": true,
+        "school": 1
+      }
+    ]
   },
   "player": {
     "index": 1,
@@ -1052,7 +1078,8 @@
       "base": 1213,
       "spirit_regen_per_second": 33.75,
       "regen_per_second_casting": 32.275,
-      "regen_per_second_not_casting": 49.15
+      "regen_per_second_not_casting": 49.15,
+      "teardown_max": 5253
     },
     "attack_table": {
       "base_spell_miss_chance": 0.17,
