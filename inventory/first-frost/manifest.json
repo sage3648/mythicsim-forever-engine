@@ -1,0 +1,1845 @@
+{
+  "action_ids": [
+    {
+      "evidence": [
+        "engine:sim/core/consumes.go",
+        "engine:sim/mage/mana_gems.go",
+        "engine:sim/common/forever/stat_bonus_cds_auto_gen.go"
+      ],
+      "kind": "itemId",
+      "name": "Demonic Rune",
+      "rust_status": "not_ported",
+      "tag": 0,
+      "value": 12662
+    },
+    {
+      "evidence": [
+        "engine:sim/core/consumes.go",
+        "engine:sim/mage/mana_gems.go",
+        "engine:sim/common/forever/stat_bonus_cds_auto_gen.go"
+      ],
+      "kind": "itemId",
+      "name": "Major Mana Potion",
+      "rust_status": "not_ported",
+      "tag": 0,
+      "value": 13444
+    },
+    {
+      "evidence": [
+        "engine:sim/core/consumes.go",
+        "engine:sim/mage/mana_gems.go",
+        "engine:sim/common/forever/stat_bonus_cds_auto_gen.go"
+      ],
+      "kind": "itemId",
+      "name": "Robe of the Archmage",
+      "rust_status": "not_ported",
+      "tag": 0,
+      "value": 14152
+    },
+    {
+      "evidence": [
+        "engine:sim/core/consumes.go",
+        "engine:sim/mage/mana_gems.go",
+        "engine:sim/common/forever/stat_bonus_cds_auto_gen.go"
+      ],
+      "kind": "itemId",
+      "name": "Mana Ruby",
+      "rust_status": "not_ported",
+      "tag": 0,
+      "value": 8008
+    },
+    {
+      "evidence": [
+        "engine:proto/common.proto",
+        "app:worker/forever/timeline.go"
+      ],
+      "kind": "otherId",
+      "name": "OtherActionManaGain",
+      "rust_status": "not_ported",
+      "tag": 0,
+      "value": "OtherActionManaGain"
+    },
+    {
+      "evidence": [
+        "engine:proto/common.proto",
+        "app:worker/forever/timeline.go"
+      ],
+      "kind": "otherId",
+      "name": "OtherActionManaRegen",
+      "rust_status": "not_ported",
+      "tag": 1,
+      "value": "OtherActionManaRegen"
+    },
+    {
+      "evidence": [
+        "engine:proto/common.proto",
+        "app:worker/forever/timeline.go"
+      ],
+      "kind": "otherId",
+      "name": "OtherActionManaRegen",
+      "rust_status": "not_ported",
+      "tag": 2,
+      "value": "OtherActionManaRegen"
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Mana Spring Totem",
+      "rust_status": "not_ported",
+      "tag": -1,
+      "value": 10494
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Mana Spring Totem",
+      "rust_status": "not_ported",
+      "tag": 0,
+      "value": 10494
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Evocation",
+      "rust_status": "not_ported",
+      "tag": 0,
+      "value": 12051
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Ice Lance",
+      "rust_status": "not_ported",
+      "tag": 0,
+      "value": 1240047
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Cold Snap",
+      "rust_status": "not_ported",
+      "tag": 0,
+      "value": 12472
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Clearcasting",
+      "rust_status": "not_ported",
+      "tag": 0,
+      "value": 12536
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Winter's Chill",
+      "rust_status": "not_ported",
+      "tag": 0,
+      "value": 12579
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Curse of Elements",
+      "rust_status": "not_ported",
+      "tag": -1,
+      "value": 1311680
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Curse of Elements",
+      "rust_status": "not_ported",
+      "tag": 0,
+      "value": 1311680
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Judgement of Wisdom",
+      "rust_status": "not_ported",
+      "tag": -1,
+      "value": 20355
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Judgement of Wisdom",
+      "rust_status": "not_ported",
+      "tag": 0,
+      "value": 20355
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Human Sword Specialization",
+      "rust_status": "not_ported",
+      "tag": 0,
+      "value": 20597
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Gift of the Wild",
+      "rust_status": "not_ported",
+      "tag": -1,
+      "value": 21850
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Gift of the Wild",
+      "rust_status": "not_ported",
+      "tag": 0,
+      "value": 21850
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Mage Armor",
+      "rust_status": "not_ported",
+      "tag": 0,
+      "value": 22783
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Arcane Brilliance",
+      "rust_status": "not_ported",
+      "tag": -1,
+      "value": 23028
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Arcane Brilliance",
+      "rust_status": "not_ported",
+      "tag": 0,
+      "value": 23028
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Moonkin Aura",
+      "rust_status": "not_ported",
+      "tag": -1,
+      "value": 24907
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Moonkin Aura",
+      "rust_status": "not_ported",
+      "tag": 0,
+      "value": 24907
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Frostbolt",
+      "rust_status": "not_ported",
+      "tag": 0,
+      "value": 25304
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Arcane Missiles channel",
+      "rust_status": "not_ported",
+      "tag": 0,
+      "value": 25345
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Arcane Missiles tick",
+      "rust_status": "not_ported",
+      "tag": 0,
+      "value": 25346
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Greater Blessing of Kings",
+      "rust_status": "not_ported",
+      "tag": -1,
+      "value": 25898
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Greater Blessing of Kings",
+      "rust_status": "not_ported",
+      "tag": 0,
+      "value": 25898
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Greater Blessing of Wisdom",
+      "rust_status": "not_ported",
+      "tag": -1,
+      "value": 25918
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Greater Blessing of Wisdom",
+      "rust_status": "not_ported",
+      "tag": 0,
+      "value": 25918
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Prayer of Spirit",
+      "rust_status": "not_ported",
+      "tag": -1,
+      "value": 27681
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Prayer of Spirit",
+      "rust_status": "not_ported",
+      "tag": 0,
+      "value": 27681
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Fingers of Frost",
+      "rust_status": "not_ported",
+      "tag": 0,
+      "value": 400669
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/spell_data_auto_gen.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/core/racials.go"
+      ],
+      "kind": "spellId",
+      "name": "Missile Barrage",
+      "rust_status": "not_ported",
+      "tag": 0,
+      "value": 44404
+    }
+  ],
+  "artifacts": {
+    "observation.json": "63b16992151fc1e302071a9078ca6f4970c1f0c9becf2b6cd34fca2ffff0bcf1",
+    "snapshot.json": "13d917c2d91aa3eed0473f250d69d1228b80b367cca1d7b4dc78efa1b38b8f70"
+  },
+  "consumers": [
+    {
+      "evidence": [
+        "app:worker/activities/forever_engine.go",
+        "app:worker/forever/result.go",
+        "engine:proto/api.proto"
+      ],
+      "fields": [
+        "RaidSimRequest protojson",
+        "sim --strict --infile --outfile",
+        "RaidSimResult.error",
+        "iterationsDone"
+      ],
+      "name": "worker_subprocess",
+      "scope": "required_first_release",
+      "semantics": "Unknown fields fail; successful process exit is insufficient. Check embedded error and completed iterations."
+    },
+    {
+      "evidence": [
+        "app:worker/forever/result.go",
+        "app:api/src/routes/forever.rs"
+      ],
+      "fields": [
+        "engine",
+        "engine_version",
+        "character",
+        "spec",
+        "spec_key",
+        "rotation",
+        "rotation_info",
+        "iterations",
+        "warnings",
+        "summary",
+        "request",
+        "result"
+      ],
+      "name": "report_envelope",
+      "scope": "required_first_release",
+      "semantics": "engine is currently wowsims-forever, summary field names are PascalCase. A future Rust adapter must retain compatibility or explicitly version the parser. Never overwrite stored historical identities."
+    },
+    {
+      "evidence": [
+        "app:worker/forever/result.go",
+        "app:api/src/routes/forever.rs"
+      ],
+      "fields": [
+        "summary.DPSMean",
+        "summary.DPSStdev",
+        "summary.DPSMin",
+        "summary.DPSMax",
+        "summary.HPSMean",
+        "summary.IterationsDone",
+        "summary.AvgIterationDuration"
+      ],
+      "name": "headline_and_confidence",
+      "scope": "required_first_release",
+      "semantics": "API computes mean standard error as stdev/sqrt(iterations)/mean. Duration is measured mean fight time, not configured 120. Zero-valued proto fields can be omitted."
+    },
+    {
+      "evidence": [
+        "app:api/src/routes/forever_breakdown.rs",
+        "app:api/src/routes/forever.rs",
+        "engine:proto/api.proto",
+        "engine:sim/core/metrics_aggregator.go"
+      ],
+      "fields": [
+        "result.raidMetrics.parties[0].players[0].dps.hist",
+        "actions[].id",
+        "actions[].targets[].unitIndex",
+        "actions[].targets[].damage",
+        "actions[].targets[].casts",
+        "actions[].targets[].hits/crits/misses/ticks/critTicks",
+        "auras[].id/procsAvg/uptimeSecondsAvg",
+        "resources[].id/type/events/gain/actualGain",
+        "secondsOomAvg",
+        "tto.avg",
+        "threat.avg",
+        "dtps.avg",
+        "tmi.avg",
+        "chanceOfDeath",
+        "result.encounterMetrics.targets[].auras"
+      ],
+      "name": "actions_and_breakdown",
+      "scope": "required_first_release",
+      "semantics": "Action totals span all fights; aura uptime is already mean seconds per fight. Divide damage by iterations times average duration. Filter self damage from DPS, preserve resource overcap and separate channel from tick IDs. Preserve tags, enemy unit indices and zero/omitted fields."
+    },
+    {
+      "evidence": [
+        "app:api/src/routes/forever_advanced.rs",
+        "app:worker/forever/request.go"
+      ],
+      "fields": [
+        "request.encounter",
+        "request.raid.buffs/debuffs",
+        "request.raid.parties[0].buffs",
+        "request.raid.parties[0].players[0].buffs/consumables/mage/rotation",
+        "rotation_info",
+        "advanced",
+        "result.raidMetrics.parties[0].players[0].effectiveRotation",
+        "result.raidMetrics.parties[0].players[0].rotationStats"
+      ],
+      "name": "settings_and_rotation_card",
+      "scope": "required_first_release",
+      "semantics": "API prefers effectiveRotation, falls back to input. rotationStats missing means unvalidated; current observed Go reference omits both. Do not fabricate validation success."
+    },
+    {
+      "evidence": [
+        "app:worker/forever/timeline.go",
+        "app:worker/forever/timeline_average.go",
+        "app:worker/activities/run_forever_sim.go",
+        "app:web/src/components/sim-result-view.tsx"
+      ],
+      "fields": [
+        "timeline.duration/casts/auras/resources/always/truncated",
+        "combat_log",
+        "timeline_average.fights/bucket/start/active/casts/auras/resources/always"
+      ],
+      "name": "timelines_and_log",
+      "scope": "required_first_release",
+      "semantics": "First fight comes from debugFirstIteration. Worker normally runs a separate 100-fight seed7 debug request for averaged timeline. Logs are extracted from result and stored as a separate artifact. Only first-fight timeline is frozen in piece1."
+    },
+    {
+      "evidence": [
+        "app:api/src/routes/forever_talents.rs",
+        "app:worker/forever/result.go"
+      ],
+      "fields": [
+        "character.talents/class",
+        "request.raid.parties[0].players[0].talentsString",
+        "character.professions"
+      ],
+      "name": "talent_card",
+      "scope": "required_first_release",
+      "semantics": "Display from actual mapped request and catalog, preserve original character metadata."
+    },
+    {
+      "evidence": [
+        "app:worker/forever/statweights.go",
+        "app:worker/forever/presets/catalog.json",
+        "app:api/src/routes/forever_advanced.rs"
+      ],
+      "fields": [
+        "statweights command",
+        "stat_weights",
+        "stat_weights_error",
+        "statsToWeigh",
+        "epReferenceStat"
+      ],
+      "name": "stat_weights",
+      "scope": "deferred_go_only",
+      "semantics": "12 configured Mage stats, SpellDamage EP reference. Multiple perturbed requests must use one engine/reference for the whole job."
+    },
+    {
+      "evidence": [
+        "app:worker/activities/forever_gear.go",
+        "app:worker/activities/forever_trinket_board.go",
+        "app:api/src/routes/forever.rs"
+      ],
+      "fields": [
+        "gear_comparison",
+        "engine_sha",
+        "baseline",
+        "sets",
+        "skipped"
+      ],
+      "name": "gear_batches",
+      "scope": "deferred_go_only",
+      "semantics": "Best Gear/trinket comparisons can change effects, gear and enchants. Full comparison stays Go until every candidate is covered."
+    },
+    {
+      "evidence": [
+        "app:worker/activities/forever_lab.go",
+        "app:worker/activities/run_forever_sim.go"
+      ],
+      "fields": [
+        "scenario",
+        "reference identity",
+        "run status",
+        "eligibility"
+      ],
+      "name": "rankings_and_lab",
+      "scope": "deferred_go_only",
+      "semantics": "Public ranking and lab jobs need their own versioned scenario and release validation. This inventory does not enable them or refresh boards."
+    }
+  ],
+  "equipment": [
+    {
+      "effects": [],
+      "evidence": [
+        "app:worker/forever/data/reference_builds.json",
+        "engine:assets/database/db.json"
+      ],
+      "input": {
+        "enchant": 1509,
+        "id": 22267
+      },
+      "name": "Spellweaver's Turban",
+      "rust_status": "go_preparation_required",
+      "slot": "head"
+    },
+    {
+      "effects": [],
+      "evidence": [
+        "app:worker/forever/data/reference_builds.json",
+        "engine:assets/database/db.json"
+      ],
+      "input": {
+        "id": 22403
+      },
+      "name": "Nacreous Shell Necklace",
+      "rust_status": "go_preparation_required",
+      "slot": "neck"
+    },
+    {
+      "effects": [],
+      "evidence": [
+        "app:worker/forever/data/reference_builds.json",
+        "engine:assets/database/db.json"
+      ],
+      "input": {
+        "id": 11782
+      },
+      "name": "Boreal Mantle",
+      "rust_status": "go_preparation_required",
+      "slot": "shoulders"
+    },
+    {
+      "effects": [],
+      "evidence": [
+        "app:worker/forever/data/reference_builds.json",
+        "engine:assets/database/db.json"
+      ],
+      "input": {
+        "id": 18350
+      },
+      "name": "Amplifying Cloak",
+      "rust_status": "go_preparation_required",
+      "slot": "back"
+    },
+    {
+      "effects": [
+        {
+          "go_status": "registered_mana_on_use",
+          "name": "Replenish Mana (18385)",
+          "rust_status": "not_ported",
+          "spell_id": 18385
+        }
+      ],
+      "evidence": [
+        "app:worker/forever/data/reference_builds.json",
+        "engine:assets/database/db.json"
+      ],
+      "input": {
+        "enchant": 1891,
+        "id": 14152
+      },
+      "name": "Robe of the Archmage",
+      "rust_status": "go_preparation_required",
+      "slot": "chest"
+    },
+    {
+      "effects": [],
+      "evidence": [
+        "app:worker/forever/data/reference_builds.json",
+        "engine:assets/database/db.json"
+      ],
+      "input": {
+        "enchant": 1883,
+        "id": 18497
+      },
+      "name": "Sublime Wristguards",
+      "rust_status": "go_preparation_required",
+      "slot": "wrist"
+    },
+    {
+      "effects": [],
+      "evidence": [
+        "app:worker/forever/data/reference_builds.json",
+        "engine:assets/database/db.json"
+      ],
+      "input": {
+        "id": 14146
+      },
+      "name": "Gloves of Spell Mastery",
+      "rust_status": "go_preparation_required",
+      "slot": "hands"
+    },
+    {
+      "effects": [],
+      "evidence": [
+        "app:worker/forever/data/reference_builds.json",
+        "engine:assets/database/db.json"
+      ],
+      "input": {
+        "id": 11662
+      },
+      "name": "Ban'thok Sash",
+      "rust_status": "go_preparation_required",
+      "slot": "waist"
+    },
+    {
+      "effects": [],
+      "evidence": [
+        "app:worker/forever/data/reference_builds.json",
+        "engine:assets/database/db.json"
+      ],
+      "input": {
+        "enchant": 1509,
+        "id": 13170
+      },
+      "name": "Skyshroud Leggings",
+      "rust_status": "go_preparation_required",
+      "slot": "legs"
+    },
+    {
+      "effects": [],
+      "evidence": [
+        "app:worker/forever/data/reference_builds.json",
+        "engine:assets/database/db.json"
+      ],
+      "input": {
+        "enchant": 851,
+        "id": 11822
+      },
+      "name": "Omnicast Boots",
+      "rust_status": "go_preparation_required",
+      "slot": "feet"
+    },
+    {
+      "effects": [],
+      "evidence": [
+        "app:worker/forever/data/reference_builds.json",
+        "engine:assets/database/db.json"
+      ],
+      "input": {
+        "id": 22433
+      },
+      "name": "Don Mauricio's Band of Domination",
+      "rust_status": "go_preparation_required",
+      "slot": "finger1"
+    },
+    {
+      "effects": [],
+      "evidence": [
+        "app:worker/forever/data/reference_builds.json",
+        "engine:assets/database/db.json"
+      ],
+      "input": {
+        "id": 17713
+      },
+      "name": "Blackstone Ring",
+      "rust_status": "go_preparation_required",
+      "slot": "finger2"
+    },
+    {
+      "effects": [],
+      "evidence": [
+        "app:worker/forever/data/reference_builds.json",
+        "engine:assets/database/db.json"
+      ],
+      "input": null,
+      "name": "Empty",
+      "rust_status": "empty_slot",
+      "slot": "trinket1"
+    },
+    {
+      "effects": [],
+      "evidence": [
+        "app:worker/forever/data/reference_builds.json",
+        "engine:assets/database/db.json"
+      ],
+      "input": null,
+      "name": "Empty",
+      "rust_status": "empty_slot",
+      "slot": "trinket2"
+    },
+    {
+      "effects": [
+        {
+          "go_status": "listed_but_not_implemented",
+          "name": "Carved Mind (1302341)",
+          "rust_status": "not_ported",
+          "spell_id": 1302342
+        }
+      ],
+      "evidence": [
+        "app:worker/forever/data/reference_builds.json",
+        "engine:assets/database/db.json"
+      ],
+      "input": {
+        "id": 18396
+      },
+      "name": "Mind Carver",
+      "rust_status": "go_preparation_required",
+      "slot": "main_hand"
+    },
+    {
+      "effects": [],
+      "evidence": [
+        "app:worker/forever/data/reference_builds.json",
+        "engine:assets/database/db.json"
+      ],
+      "input": {
+        "id": 22329
+      },
+      "name": "Scepter of Interminable Focus",
+      "rust_status": "go_preparation_required",
+      "slot": "off_hand"
+    },
+    {
+      "effects": [],
+      "evidence": [
+        "app:worker/forever/data/reference_builds.json",
+        "engine:assets/database/db.json"
+      ],
+      "input": {
+        "id": 22408
+      },
+      "name": "Ritssyn's Wand of Bad Mojo",
+      "rust_status": "go_preparation_required",
+      "slot": "ranged"
+    }
+  ],
+  "kind": "planning_inventory",
+  "known_gaps": [
+    {
+      "decision": "Open correctness question. The app warns that Go does not spend a FoF charge for Arcane Missiles and DPS may be overstated. Preserve warnings and review live evidence before an intentional divergence.",
+      "evidence": [
+        "app:worker/forever/request.go",
+        "engine:sim/mage/talents_frost.go"
+      ],
+      "name": "fof_channel_consumption"
+    },
+    {
+      "decision": "Go hardcodes proc chances, duration and tick-speed effect because generated client rows are missing. Compatibility evidence only.",
+      "evidence": [
+        "engine:sim/mage/talents_arcane.go"
+      ],
+      "name": "missile_barrage_assumptions"
+    },
+    {
+      "decision": "Go uses 0.143 from preliminary beta log reasoning despite client coefficient zero. Carry uncertainty into the mechanics ledger.",
+      "evidence": [
+        "engine:sim/mage/ice_lance.go"
+      ],
+      "name": "ice_lance_coefficient"
+    },
+    {
+      "decision": "Carved Mind 1302342 exists in item data but its Go proc registration is commented out. Initial Go compatibility does not establish full in-game item support.",
+      "evidence": [
+        "engine:assets/database/db.json",
+        "engine:sim/common/forever/stat_bonus_procs_auto_gen.go"
+      ],
+      "name": "mind_carver_effect"
+    },
+    {
+      "decision": "Synthetic reference has no addon talent spell IDs; mapping is pinned and the app emits a warning. General identity mapping remains separate work.",
+      "evidence": [
+        "app:worker/forever/data/reference_builds.json",
+        "app:worker/forever/request.go",
+        "app:worker/forever/talents.go"
+      ],
+      "name": "positional_talent_export"
+    },
+    {
+      "decision": "Ice Block and Ice Barrier are selected but modeled as no-ops by Go. This scope is outgoing single-player damage without Mage incoming damage or pets.",
+      "evidence": [
+        "engine:sim/mage/talents_frost.go",
+        "engine:sim/mage/mage.go"
+      ],
+      "name": "defensive_talent_noops"
+    }
+  ],
+  "mechanics": [
+    {
+      "evidence": [
+        "app:worker/forever/request.go",
+        "engine:sim/core/racials.go",
+        "engine:assets/database/db.json"
+      ],
+      "name": "real_character_preparation",
+      "requirement": "Human base stats and Spirit multiplier, Engineering, equipped stats, static enchant effects, selected talents and raid assumptions. Apply each modifier exactly once.",
+      "rust_status": "not_ported"
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/frostbolt.go",
+        "engine:sim/mage/talents_frost.go"
+      ],
+      "name": "frostbolt",
+      "requirement": "25304 cast, GCD, travel, binary hit/resist, damage and crit, mana and triggers. Existing kernel covers isolated prepared casting only.",
+      "rust_status": "prepared_kernel_only"
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/ice_lance.go",
+        "engine:sim/mage/talents_frost.go"
+      ],
+      "name": "ice_lance",
+      "requirement": "1240047 instant cast, travel, binary hit/resist, frozen damage multiplier and charge consumption.",
+      "rust_status": "not_ported"
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/arcane_missiles.go",
+        "engine:sim/mage/talents_arcane.go"
+      ],
+      "name": "arcane_missiles",
+      "requirement": "25345 channel and 25346 separate damage ticks, haste/channel-length modifiers, travel, partial resistance, hit/crit, channel lifetime and proc callbacks.",
+      "rust_status": "not_ported"
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/talents_arcane.go",
+        "engine:sim/mage/talents_frost.go"
+      ],
+      "name": "proc_lifecycle",
+      "requirement": "Clearcasting 12536, Missile Barrage 44404, Fingers of Frost 400669 and Winter's Chill 12579: durations, stacks, ICDs, trigger order and cast snapshots.",
+      "rust_status": "not_ported"
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/mana_gems.go",
+        "engine:sim/core/consumes.go",
+        "engine:sim/common/shared/spell_data_energize.go",
+        "engine:sim/common/forever/stat_bonus_cds_auto_gen.go"
+      ],
+      "name": "mana_recovery",
+      "requirement": "Mana Ruby 8008 and registered lower gems 8007/5513/5514; Demonic Rune 12662 shares conjured cooldown. Major Mana Potion 13444 and Robe 14152 use activation predicates and own/shared timers.",
+      "rust_status": "not_ported"
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/evocation.go",
+        "app:worker/forever/presets/mage_frost.apl.json"
+      ],
+      "name": "evocation",
+      "requirement": "12051 channel and spirit-regeneration modifier. Present in rotation although not exercised in this 3000-fight observation.",
+      "rust_status": "not_ported"
+    },
+    {
+      "evidence": [
+        "engine:sim/mage/cold_snap.go",
+        "engine:sim/mage/spell_data_auto_gen.go"
+      ],
+      "name": "cold_snap",
+      "requirement": "12472 executes via autocastOtherCooldowns, resets Frost spell cooldowns, no GCD or cast-complete hook.",
+      "rust_status": "not_ported"
+    },
+    {
+      "evidence": [
+        "app:worker/forever/defaults.go",
+        "engine:sim/core/buffs.go",
+        "engine:sim/core/debuffs.go",
+        "engine:sim/mage/armors.go"
+      ],
+      "name": "raid_assumptions",
+      "requirement": "Mage Armor, Kings, Wisdom, Arcane Brilliance, Spirit, Gift, Moonkin, Mana Spring, Curse of Elements and Judgement of Wisdom; mana, spell damage, hit/crit and resistance effects.",
+      "rust_status": "not_ported"
+    },
+    {
+      "evidence": [
+        "app:worker/forever/defaults.go",
+        "engine:sim/core/consumes.go"
+      ],
+      "name": "static_consumables",
+      "requirement": "Flask 13512, food 18254, oil 20749, Mageblood 20007, Frost Power 17708, Greater Arcane 13454, Cerebral Cortex 8423.",
+      "rust_status": "not_ported"
+    },
+    {
+      "evidence": [
+        "app:worker/forever/presets/mage_frost.apl.json",
+        "engine:sim/core/apl.go"
+      ],
+      "name": "rotation_interpreter",
+      "requirement": "Ordered six-action TypeAPL; castSpell, autocastOtherCooldowns, cmp OpLe/OpLt/OpGt, and, const percent/time, currentManaPercent, remainingTime, auraIsKnown, auraIsActive. Re-evaluate at correct decision times.",
+      "rust_status": "not_ported"
+    },
+    {
+      "evidence": [
+        "app:worker/forever/request.go",
+        "app:worker/forever/timeline_average.go",
+        "engine:proto/api.proto"
+      ],
+      "name": "fight_and_reporting",
+      "requirement": "120 +/- 15 seconds, 20-yard travel, level63 target, seed42 as protojson string, 3000 fights, metrics plus first-fight and averaged timelines. The misleading target name is display metadata.",
+      "rust_status": "not_ported"
+    }
+  ],
+  "production_eligible": false,
+  "reference": {
+    "build_name": "Missile Barrage 16/3/32",
+    "deferred": [
+      "alternate gear",
+      "alternate talents/races",
+      "custom APL",
+      "multi-target",
+      "stat weights",
+      "Best Gear",
+      "rankings",
+      "other specs"
+    ],
+    "gear_source": "curated-dungeon-crafted-2026-09-23",
+    "input_origin": "synthetic application reference, no private player data",
+    "job": "fixed-reference Quick Sim",
+    "slug": "frost-mage",
+    "talent_credit": "mixarxrt's tested Missile Barrage build"
+  },
+  "request_paths": [
+    "/encounter/duration",
+    "/encounter/durationVariation",
+    "/encounter/executeProportion20",
+    "/encounter/executeProportion25",
+    "/encounter/executeProportion35",
+    "/encounter/executeProportion45",
+    "/encounter/executeProportion90",
+    "/encounter/targets/0/canCrush",
+    "/encounter/targets/0/damageSpread",
+    "/encounter/targets/0/id",
+    "/encounter/targets/0/level",
+    "/encounter/targets/0/minBaseDamage",
+    "/encounter/targets/0/name",
+    "/encounter/targets/0/parryHaste",
+    "/encounter/targets/0/stats/0",
+    "/encounter/targets/0/stats/1",
+    "/encounter/targets/0/stats/10",
+    "/encounter/targets/0/stats/11",
+    "/encounter/targets/0/stats/12",
+    "/encounter/targets/0/stats/13",
+    "/encounter/targets/0/stats/14",
+    "/encounter/targets/0/stats/15",
+    "/encounter/targets/0/stats/16",
+    "/encounter/targets/0/stats/17",
+    "/encounter/targets/0/stats/18",
+    "/encounter/targets/0/stats/19",
+    "/encounter/targets/0/stats/2",
+    "/encounter/targets/0/stats/20",
+    "/encounter/targets/0/stats/21",
+    "/encounter/targets/0/stats/22",
+    "/encounter/targets/0/stats/23",
+    "/encounter/targets/0/stats/24",
+    "/encounter/targets/0/stats/25",
+    "/encounter/targets/0/stats/26",
+    "/encounter/targets/0/stats/27",
+    "/encounter/targets/0/stats/28",
+    "/encounter/targets/0/stats/29",
+    "/encounter/targets/0/stats/3",
+    "/encounter/targets/0/stats/30",
+    "/encounter/targets/0/stats/31",
+    "/encounter/targets/0/stats/32",
+    "/encounter/targets/0/stats/33",
+    "/encounter/targets/0/stats/34",
+    "/encounter/targets/0/stats/35",
+    "/encounter/targets/0/stats/36",
+    "/encounter/targets/0/stats/37",
+    "/encounter/targets/0/stats/38",
+    "/encounter/targets/0/stats/39",
+    "/encounter/targets/0/stats/4",
+    "/encounter/targets/0/stats/40",
+    "/encounter/targets/0/stats/5",
+    "/encounter/targets/0/stats/6",
+    "/encounter/targets/0/stats/7",
+    "/encounter/targets/0/stats/8",
+    "/encounter/targets/0/stats/9",
+    "/encounter/targets/0/swingSpeed",
+    "/raid/buffs/arcaneBrilliance",
+    "/raid/buffs/giftOfTheWild",
+    "/raid/buffs/prayerOfSpirit",
+    "/raid/debuffs/curseOfElements",
+    "/raid/debuffs/judgementOfWisdom",
+    "/raid/parties/0/buffs/manaSpringTotem",
+    "/raid/parties/0/buffs/moonkinAura",
+    "/raid/parties/0/players/0/buffs/greaterBlessingOfKings",
+    "/raid/parties/0/players/0/buffs/greaterBlessingOfWisdom",
+    "/raid/parties/0/players/0/class",
+    "/raid/parties/0/players/0/consumables/conjuredId",
+    "/raid/parties/0/players/0/consumables/conjuredItems/0",
+    "/raid/parties/0/players/0/consumables/flaskId",
+    "/raid/parties/0/players/0/consumables/foodId",
+    "/raid/parties/0/players/0/consumables/guardianElixirId",
+    "/raid/parties/0/players/0/consumables/mhImbueId",
+    "/raid/parties/0/players/0/consumables/potId",
+    "/raid/parties/0/players/0/consumables/potions/0",
+    "/raid/parties/0/players/0/consumables/schoolElixirId",
+    "/raid/parties/0/players/0/consumables/spellPowerElixirId",
+    "/raid/parties/0/players/0/consumables/zanzaId",
+    "/raid/parties/0/players/0/distanceFromTarget",
+    "/raid/parties/0/players/0/equipment/items/0/enchant",
+    "/raid/parties/0/players/0/equipment/items/0/id",
+    "/raid/parties/0/players/0/equipment/items/1/id",
+    "/raid/parties/0/players/0/equipment/items/10/id",
+    "/raid/parties/0/players/0/equipment/items/11/id",
+    "/raid/parties/0/players/0/equipment/items/12/id",
+    "/raid/parties/0/players/0/equipment/items/13/id",
+    "/raid/parties/0/players/0/equipment/items/14/id",
+    "/raid/parties/0/players/0/equipment/items/2/id",
+    "/raid/parties/0/players/0/equipment/items/3/id",
+    "/raid/parties/0/players/0/equipment/items/4/enchant",
+    "/raid/parties/0/players/0/equipment/items/4/id",
+    "/raid/parties/0/players/0/equipment/items/5/enchant",
+    "/raid/parties/0/players/0/equipment/items/5/id",
+    "/raid/parties/0/players/0/equipment/items/6/id",
+    "/raid/parties/0/players/0/equipment/items/7/id",
+    "/raid/parties/0/players/0/equipment/items/8/enchant",
+    "/raid/parties/0/players/0/equipment/items/8/id",
+    "/raid/parties/0/players/0/equipment/items/9/enchant",
+    "/raid/parties/0/players/0/equipment/items/9/id",
+    "/raid/parties/0/players/0/mage/options/classOptions/defaultMageArmor",
+    "/raid/parties/0/players/0/name",
+    "/raid/parties/0/players/0/profession1",
+    "/raid/parties/0/players/0/race",
+    "/raid/parties/0/players/0/reactionTimeMs",
+    "/raid/parties/0/players/0/rotation/priorityList/0/action/castSpell/spellId/itemId",
+    "/raid/parties/0/players/0/rotation/priorityList/0/action/condition/cmp/lhs/currentManaPercent",
+    "/raid/parties/0/players/0/rotation/priorityList/0/action/condition/cmp/op",
+    "/raid/parties/0/players/0/rotation/priorityList/0/action/condition/cmp/rhs/const/val",
+    "/raid/parties/0/players/0/rotation/priorityList/1/action/autocastOtherCooldowns",
+    "/raid/parties/0/players/0/rotation/priorityList/2/action/castSpell/spellId/spellId",
+    "/raid/parties/0/players/0/rotation/priorityList/2/action/condition/and/vals/0/cmp/lhs/currentManaPercent",
+    "/raid/parties/0/players/0/rotation/priorityList/2/action/condition/and/vals/0/cmp/op",
+    "/raid/parties/0/players/0/rotation/priorityList/2/action/condition/and/vals/0/cmp/rhs/const/val",
+    "/raid/parties/0/players/0/rotation/priorityList/2/action/condition/and/vals/1/cmp/lhs/remainingTime",
+    "/raid/parties/0/players/0/rotation/priorityList/2/action/condition/and/vals/1/cmp/op",
+    "/raid/parties/0/players/0/rotation/priorityList/2/action/condition/and/vals/1/cmp/rhs/const/val",
+    "/raid/parties/0/players/0/rotation/priorityList/3/action/castSpell/spellId/spellId",
+    "/raid/parties/0/players/0/rotation/priorityList/3/action/condition/auraIsActive/auraId/spellId",
+    "/raid/parties/0/players/0/rotation/priorityList/4/action/castSpell/spellId/spellId",
+    "/raid/parties/0/players/0/rotation/priorityList/4/action/condition/and/vals/0/auraIsKnown/auraId/spellId",
+    "/raid/parties/0/players/0/rotation/priorityList/4/action/condition/and/vals/1/auraIsActive/auraId/spellId",
+    "/raid/parties/0/players/0/rotation/priorityList/5/action/castSpell/spellId/spellId",
+    "/raid/parties/0/players/0/rotation/type",
+    "/raid/parties/0/players/0/talentsString",
+    "/simOptions/debugFirstIteration",
+    "/simOptions/iterations",
+    "/simOptions/randomSeed"
+  ],
+  "schema_version": 1,
+  "source_files": {
+    "app:api/src/routes/forever.rs": {
+      "path": "api/src/routes/forever.rs",
+      "repository": "app",
+      "sha256": "e153e8f8b301fdab9592217491b1aee7a82d1c458df54fc9a1eb0255d863c547"
+    },
+    "app:api/src/routes/forever_advanced.rs": {
+      "path": "api/src/routes/forever_advanced.rs",
+      "repository": "app",
+      "sha256": "e656be37ea418fc17194d74e8b0baaebf45f39d36730235268df030b6a976130"
+    },
+    "app:api/src/routes/forever_breakdown.rs": {
+      "path": "api/src/routes/forever_breakdown.rs",
+      "repository": "app",
+      "sha256": "a2ce5a4187d07d6652cc3bacebba42039d23f20fc853457384e0ec6367339a9f"
+    },
+    "app:api/src/routes/forever_talents.rs": {
+      "path": "api/src/routes/forever_talents.rs",
+      "repository": "app",
+      "sha256": "dc5e890f6f83c70dda780e92a5f40b0ebb3649090ce5735a77e75dbf01e3def9"
+    },
+    "app:mythicsim-forever/Dockerfile": {
+      "path": "mythicsim-forever/Dockerfile",
+      "repository": "app",
+      "sha256": "5d609f8421f5022e4a8948114a851b12c3295195a5d711a9a57b67dd01e93a62"
+    },
+    "app:web/src/components/sim-result-view.tsx": {
+      "path": "web/src/components/sim-result-view.tsx",
+      "repository": "app",
+      "sha256": "6a0f2251ac9765cc3d343806834d8fe447866ed11f9e4dbf403cc7991ea817d3"
+    },
+    "app:worker/activities/forever_engine.go": {
+      "path": "worker/activities/forever_engine.go",
+      "repository": "app",
+      "sha256": "907b0fed2e386ea222507dc22ff65a92fd1cd599fa166bcae1f75270a21f7738"
+    },
+    "app:worker/activities/forever_gear.go": {
+      "path": "worker/activities/forever_gear.go",
+      "repository": "app",
+      "sha256": "87b1a11af96d43d0734f052216718da0b76354268127b6d477afa64fda48b238"
+    },
+    "app:worker/activities/forever_lab.go": {
+      "path": "worker/activities/forever_lab.go",
+      "repository": "app",
+      "sha256": "eae1cad0143d3f6fc070087ed0a3d417c131e78342fb7761c401d1a7e4ba9c9e"
+    },
+    "app:worker/activities/forever_trinket_board.go": {
+      "path": "worker/activities/forever_trinket_board.go",
+      "repository": "app",
+      "sha256": "d646750b99fbcba4e18d58e84ab69f2649a4e2d782f8e86a8915d8169d217c1e"
+    },
+    "app:worker/activities/run_forever_sim.go": {
+      "path": "worker/activities/run_forever_sim.go",
+      "repository": "app",
+      "sha256": "78aa6bfe591e710e997b1fa1228a1b77e8c24ebf8280b7b132496734aa576b51"
+    },
+    "app:worker/forever/advanced.go": {
+      "path": "worker/forever/advanced.go",
+      "repository": "app",
+      "sha256": "4519eba7ea5309f06923bee7f54a24349f6f80645af968aa38c75d88f6e87529"
+    },
+    "app:worker/forever/data.go": {
+      "path": "worker/forever/data.go",
+      "repository": "app",
+      "sha256": "24ec6cf788e5153aa4f3741a5145f4af8aecfdfffc21ce149caffbff36a12f57"
+    },
+    "app:worker/forever/data/gear.json": {
+      "path": "worker/forever/data/gear.json",
+      "repository": "app",
+      "sha256": "1db94c18bdca76ec5d9009cedc6d8600263d7ec4119a49aab6e4b4928e060e4f"
+    },
+    "app:worker/forever/data/reference_builds.json": {
+      "path": "worker/forever/data/reference_builds.json",
+      "repository": "app",
+      "sha256": "1f23e1f75bf974d2676c6a824f3446b8e5e7e743788ceabf476739ab09fc5225"
+    },
+    "app:worker/forever/defaults.go": {
+      "path": "worker/forever/defaults.go",
+      "repository": "app",
+      "sha256": "a750cd8be88d6240593cf6fd79452d8375cca4528030447078c889cf28a97e6f"
+    },
+    "app:worker/forever/export.go": {
+      "path": "worker/forever/export.go",
+      "repository": "app",
+      "sha256": "c80f8867d2710bbe02d9e9ff2b725e78f6c76beb9ca83a3bfbfbb85d4776a0b1"
+    },
+    "app:worker/forever/presets/catalog.json": {
+      "path": "worker/forever/presets/catalog.json",
+      "repository": "app",
+      "sha256": "deedf42f45a6e59e4a4cd68b1aa7c5f687632146b0ba91d483cb4ecd74b41a8e"
+    },
+    "app:worker/forever/presets/mage_frost.apl.json": {
+      "path": "worker/forever/presets/mage_frost.apl.json",
+      "repository": "app",
+      "sha256": "5b3ed51a85ac5c92517341d89559073f8c0f135b53a8ff4b5d43a2ab0be27969"
+    },
+    "app:worker/forever/request.go": {
+      "path": "worker/forever/request.go",
+      "repository": "app",
+      "sha256": "b3670a86a7722db2565d9dec2958babfc9a06efef8469360bfbf886ca1a8aa23"
+    },
+    "app:worker/forever/result.go": {
+      "path": "worker/forever/result.go",
+      "repository": "app",
+      "sha256": "376371032ea04b9529f37d05c81e2cb8943b2b6cd96f245fcf55d4a0d4914b5a"
+    },
+    "app:worker/forever/statweights.go": {
+      "path": "worker/forever/statweights.go",
+      "repository": "app",
+      "sha256": "bd6d40e6b35fff4ecf98238fdb9d406ff47c7137f47f262fcf9b4e62a0a872f9"
+    },
+    "app:worker/forever/talents.go": {
+      "path": "worker/forever/talents.go",
+      "repository": "app",
+      "sha256": "bc52f2b6c27915e4cdfe325790fac9605a7e09cb4fb7d2764ab89ef72a045682"
+    },
+    "app:worker/forever/timeline.go": {
+      "path": "worker/forever/timeline.go",
+      "repository": "app",
+      "sha256": "5aebe98e08f630495e0c54747cb2cd973955c3cbb2b804c4651d2d9ad8d43b52"
+    },
+    "app:worker/forever/timeline_average.go": {
+      "path": "worker/forever/timeline_average.go",
+      "repository": "app",
+      "sha256": "587916787033ff9fb5f851c5ea8a83674d7a41b01bcf482d1afc0e98b408e79e"
+    },
+    "engine:assets/database/db.json": {
+      "path": "assets/database/db.json",
+      "repository": "engine",
+      "sha256": "d09de662b1d7458c1ae7f1487913ad7f8ebe5025025ac366311f80a6f5e37bcd"
+    },
+    "engine:proto/api.proto": {
+      "path": "proto/api.proto",
+      "repository": "engine",
+      "sha256": "74b40238e8f313931e71e70986a89dad2f3aa9a49a920413f0b10c2c724a4eb7"
+    },
+    "engine:proto/common.proto": {
+      "path": "proto/common.proto",
+      "repository": "engine",
+      "sha256": "64b7c37e20588e79f6cb01cb13a5b65caec7537f39691aee47139baebe5ee91d"
+    },
+    "engine:proto/mage.proto": {
+      "path": "proto/mage.proto",
+      "repository": "engine",
+      "sha256": "4a40908a62e91f365c898f4ead545e9828e73ed426d391ce932623ebc619c1f4"
+    },
+    "engine:sim/common/forever/stat_bonus_cds_auto_gen.go": {
+      "path": "sim/common/forever/stat_bonus_cds_auto_gen.go",
+      "repository": "engine",
+      "sha256": "25f0256f8314414520817eb75876fc4682f599341a88de2d6256bc99a656daa4"
+    },
+    "engine:sim/common/forever/stat_bonus_procs_auto_gen.go": {
+      "path": "sim/common/forever/stat_bonus_procs_auto_gen.go",
+      "repository": "engine",
+      "sha256": "a201716996b06dbfa55fce388724def40b0f9e3886b7f18079ce4a53dab6d60b"
+    },
+    "engine:sim/common/shared/spell_data_energize.go": {
+      "path": "sim/common/shared/spell_data_energize.go",
+      "repository": "engine",
+      "sha256": "ec6d766fd040b1bfc4aed4fac23f21d0c31790f543a02ad4dba3d33b51434543"
+    },
+    "engine:sim/core/apl.go": {
+      "path": "sim/core/apl.go",
+      "repository": "engine",
+      "sha256": "bf560d3e8d91c4f2599c77056c56651efad83f7f327c7c20d0af32672e829082"
+    },
+    "engine:sim/core/buffs.go": {
+      "path": "sim/core/buffs.go",
+      "repository": "engine",
+      "sha256": "79007aa9d5ea9495425e604aa0c6008eba8df007e4e4b0a816cdc52cbc14aa14"
+    },
+    "engine:sim/core/consumes.go": {
+      "path": "sim/core/consumes.go",
+      "repository": "engine",
+      "sha256": "60167a95b8b2639c3baf6426c7a9d74604b65e86a69e329f1bae7faf576fcdf6"
+    },
+    "engine:sim/core/debuffs.go": {
+      "path": "sim/core/debuffs.go",
+      "repository": "engine",
+      "sha256": "1549c7860a4464232c4b56324ed42d8fe8df44c7a55fba2affedf563a5e02eb6"
+    },
+    "engine:sim/core/mana.go": {
+      "path": "sim/core/mana.go",
+      "repository": "engine",
+      "sha256": "c2bc9eaf8044e761fed6871324c1f56df1a1ec282362d7b6e6d3236ef6d38e11"
+    },
+    "engine:sim/core/metrics_aggregator.go": {
+      "path": "sim/core/metrics_aggregator.go",
+      "repository": "engine",
+      "sha256": "166f331cedadb1cc21099d8372c504d91d1585045846cded0d7ebeb3f8a91dd8"
+    },
+    "engine:sim/core/racials.go": {
+      "path": "sim/core/racials.go",
+      "repository": "engine",
+      "sha256": "613a0580c84a0c9f54c2dd77001cb2e334e0ad50fed54f4cd5893cd9e9ecce61"
+    },
+    "engine:sim/mage/arcane_missiles.go": {
+      "path": "sim/mage/arcane_missiles.go",
+      "repository": "engine",
+      "sha256": "bfe62af4dbaea2414fc9fc64e0fdd9ec8be05c9f2b29d8c04901fef8063bcb08"
+    },
+    "engine:sim/mage/armors.go": {
+      "path": "sim/mage/armors.go",
+      "repository": "engine",
+      "sha256": "9fca64f3fd3bca9769be6c12457fbf83f10c755dffa18d728c168e64edfccd91"
+    },
+    "engine:sim/mage/cold_snap.go": {
+      "path": "sim/mage/cold_snap.go",
+      "repository": "engine",
+      "sha256": "36c3fbade595069c4a5c5c08da2d30706d6d5b5e2847727170fc38b60ffe190e"
+    },
+    "engine:sim/mage/evocation.go": {
+      "path": "sim/mage/evocation.go",
+      "repository": "engine",
+      "sha256": "72a74808d24fe1d814a3ea3a82efe52f1bc6f69027dfc377a5497f6da7f61ed9"
+    },
+    "engine:sim/mage/frostbolt.go": {
+      "path": "sim/mage/frostbolt.go",
+      "repository": "engine",
+      "sha256": "bdae77397f90834ce069eb30678dd7bd028071574f64cd1281f7a75f710b9cd4"
+    },
+    "engine:sim/mage/ice_lance.go": {
+      "path": "sim/mage/ice_lance.go",
+      "repository": "engine",
+      "sha256": "69959dd41e4ece61bd02f31aa5a2bd246c9fa559eaf5734d68ef4e6b6e9633ce"
+    },
+    "engine:sim/mage/mage.go": {
+      "path": "sim/mage/mage.go",
+      "repository": "engine",
+      "sha256": "5dabf65a9b036a51815303e63bce5de9fffcb3ea1189a3ee5d879d982a5cbbcc"
+    },
+    "engine:sim/mage/mana_gems.go": {
+      "path": "sim/mage/mana_gems.go",
+      "repository": "engine",
+      "sha256": "3933e868c3dc7af51c4e0538e15926fad933c66c0e7a5eeba6b72910b0d1a23c"
+    },
+    "engine:sim/mage/spell_data_auto_gen.go": {
+      "path": "sim/mage/spell_data_auto_gen.go",
+      "repository": "engine",
+      "sha256": "fb2e3af366320c280653abe75dbe5a11ff78253d98f5c67ab868cc4497c80d21"
+    },
+    "engine:sim/mage/talents_arcane.go": {
+      "path": "sim/mage/talents_arcane.go",
+      "repository": "engine",
+      "sha256": "174ca75695c63820f64056a2d03cc2c0457cdf11208cf60c901be5863e753e8a"
+    },
+    "engine:sim/mage/talents_fire.go": {
+      "path": "sim/mage/talents_fire.go",
+      "repository": "engine",
+      "sha256": "f0bdd16a297e322fec84a4b1b6634261920c96bfa15a7883c0b19539ad4483a7"
+    },
+    "engine:sim/mage/talents_frost.go": {
+      "path": "sim/mage/talents_frost.go",
+      "repository": "engine",
+      "sha256": "205b21e8a417659a420993c8833ecca06fe2f18a4a152ccc34e950e6df7299ed"
+    }
+  },
+  "sources": {
+    "app": {
+      "revision": "1ca721161aba693a899466943b8f6c3a6085df67",
+      "role": "checked-out application source, not live production proof"
+    },
+    "engine": {
+      "client_build": "1.60.1.70170",
+      "community_base": "f4b776b4f41d5c7799b8141697a2c9e67c89d426",
+      "revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
+      "role": "comparison reference, not game ground truth",
+      "url": "https://github.com/sage3648/mythicsim-forever-engine-go"
+    }
+  },
+  "talents": [
+    {
+      "client_spell_ids": [
+        11222
+      ],
+      "effect": "Arcane spell hit, including Arcane Missiles ticks.",
+      "engine_rank_spell_ids": [
+        11222,
+        12839,
+        12840,
+        12841,
+        12842
+      ],
+      "evidence": [
+        "engine:proto/mage.proto",
+        "app:worker/forever/data/gear.json",
+        "engine:sim/mage/talents_arcane.go"
+      ],
+      "index": 1,
+      "name": "arcane_focus",
+      "rank": 5,
+      "rust_status": "not_ported",
+      "tree": 0
+    },
+    {
+      "client_spell_ids": [
+        11210
+      ],
+      "effect": "Arcane threat multiplier and spell penetration.",
+      "engine_rank_spell_ids": [
+        11210,
+        12592
+      ],
+      "evidence": [
+        "engine:proto/mage.proto",
+        "app:worker/forever/data/gear.json",
+        "engine:sim/mage/talents_arcane.go"
+      ],
+      "index": 3,
+      "name": "arcane_subtlety",
+      "rank": 2,
+      "rust_status": "not_ported",
+      "tree": 0
+    },
+    {
+      "client_spell_ids": [
+        11213
+      ],
+      "effect": "Clearcasting 12536: landed-hit proc, ICD, free-cast consumption and ordering.",
+      "engine_rank_spell_ids": [
+        11213,
+        12574,
+        12575,
+        12576,
+        12577
+      ],
+      "evidence": [
+        "engine:proto/mage.proto",
+        "app:worker/forever/data/gear.json",
+        "engine:sim/mage/talents_arcane.go"
+      ],
+      "index": 5,
+      "name": "arcane_concentration",
+      "rank": 5,
+      "rust_status": "not_ported",
+      "tree": 0
+    },
+    {
+      "client_spell_ids": [
+        11242
+      ],
+      "effect": "Arcane crit modifier, including missiles.",
+      "engine_rank_spell_ids": [
+        11242,
+        12467,
+        12469
+      ],
+      "evidence": [
+        "engine:proto/mage.proto",
+        "app:worker/forever/data/gear.json",
+        "engine:sim/mage/talents_arcane.go"
+      ],
+      "index": 8,
+      "name": "arcane_impact",
+      "rank": 3,
+      "rust_status": "not_ported",
+      "tree": 0
+    },
+    {
+      "client_spell_ids": [
+        400588
+      ],
+      "effect": "44404: Frostbolt completion proc; Arcane Missiles cost and channel speed modifiers.",
+      "engine_rank_spell_ids": [
+        44404
+      ],
+      "evidence": [
+        "engine:proto/mage.proto",
+        "app:worker/forever/data/gear.json",
+        "engine:sim/mage/talents_arcane.go"
+      ],
+      "index": 13,
+      "name": "missile_barrage",
+      "rank": 1,
+      "rust_status": "not_ported",
+      "tree": 0
+    },
+    {
+      "client_spell_ids": [
+        18459
+      ],
+      "effect": "Fire Blast and Scorch crit modifier; neither is cast by this preset.",
+      "engine_rank_spell_ids": [
+        18459,
+        18460,
+        0
+      ],
+      "evidence": [
+        "engine:proto/mage.proto",
+        "app:worker/forever/data/gear.json",
+        "engine:sim/mage/talents_fire.go"
+      ],
+      "index": 1,
+      "name": "incineration",
+      "rank": 3,
+      "rust_status": "not_ported",
+      "tree": 1
+    },
+    {
+      "client_spell_ids": [
+        11070
+      ],
+      "effect": "Static Frostbolt cast-time modifier, partly represented by prepared kernel parameters.",
+      "engine_rank_spell_ids": [
+        11070,
+        12473,
+        16763,
+        16765,
+        16766
+      ],
+      "evidence": [
+        "engine:proto/mage.proto",
+        "app:worker/forever/data/gear.json",
+        "engine:sim/mage/talents_frost.go"
+      ],
+      "index": 1,
+      "name": "improved_frostbolt",
+      "rank": 5,
+      "rust_status": "not_ported",
+      "tree": 2
+    },
+    {
+      "client_spell_ids": [
+        29438
+      ],
+      "effect": "Static Fire/Frost hit modifier, partly represented by prepared kernel parameters.",
+      "engine_rank_spell_ids": [
+        29438,
+        29439,
+        29440,
+        0,
+        0
+      ],
+      "evidence": [
+        "engine:proto/mage.proto",
+        "app:worker/forever/data/gear.json",
+        "engine:sim/mage/talents_frost.go"
+      ],
+      "index": 2,
+      "name": "elemental_precision",
+      "rank": 5,
+      "rust_status": "not_ported",
+      "tree": 2
+    },
+    {
+      "client_spell_ids": [
+        11207
+      ],
+      "effect": "Static Frost crit multiplier, partly represented by prepared kernel parameters.",
+      "engine_rank_spell_ids": [
+        11207,
+        12672,
+        15047,
+        15052,
+        15053
+      ],
+      "evidence": [
+        "engine:proto/mage.proto",
+        "app:worker/forever/data/gear.json",
+        "engine:sim/mage/talents_frost.go"
+      ],
+      "index": 3,
+      "name": "ice_shards",
+      "rank": 5,
+      "rust_status": "not_ported",
+      "tree": 2
+    },
+    {
+      "client_spell_ids": [
+        11151
+      ],
+      "effect": "Static Frost damage multiplier, partly represented by prepared kernel parameters.",
+      "engine_rank_spell_ids": [
+        11151,
+        12952,
+        12953
+      ],
+      "evidence": [
+        "engine:proto/mage.proto",
+        "app:worker/forever/data/gear.json",
+        "engine:sim/mage/talents_frost.go"
+      ],
+      "index": 7,
+      "name": "piercing_ice",
+      "rank": 3,
+      "rust_status": "not_ported",
+      "tree": 2
+    },
+    {
+      "client_spell_ids": [
+        1312002
+      ],
+      "effect": "Enables Ice Lance. Talent identity is distinct from its cast spell ID 1240047.",
+      "engine_rank_spell_ids": [
+        30455
+      ],
+      "evidence": [
+        "engine:proto/mage.proto",
+        "app:worker/forever/data/gear.json",
+        "engine:sim/mage/talents_frost.go"
+      ],
+      "index": 9,
+      "name": "ice_lance",
+      "rank": 1,
+      "rust_status": "not_ported",
+      "tree": 2
+    },
+    {
+      "client_spell_ids": [
+        11958
+      ],
+      "effect": "Go no-op: defensive immunity is not modeled.",
+      "engine_rank_spell_ids": [
+        11958
+      ],
+      "evidence": [
+        "engine:proto/mage.proto",
+        "app:worker/forever/data/gear.json",
+        "engine:sim/mage/talents_frost.go"
+      ],
+      "index": 12,
+      "name": "ice_block",
+      "rank": 1,
+      "rust_status": "go_noop_to_document",
+      "tree": 2
+    },
+    {
+      "client_spell_ids": [
+        11170
+      ],
+      "effect": "Dynamic crit during Fingers of Frost. Includes channel and in-flight ordering concerns.",
+      "engine_rank_spell_ids": [
+        11170,
+        12982,
+        12983
+      ],
+      "evidence": [
+        "engine:proto/mage.proto",
+        "app:worker/forever/data/gear.json",
+        "engine:sim/mage/talents_frost.go"
+      ],
+      "index": 13,
+      "name": "shatter",
+      "rank": 3,
+      "rust_status": "not_ported",
+      "tree": 2
+    },
+    {
+      "client_spell_ids": [
+        12472
+      ],
+      "effect": "Autocast cooldown resets Frost cooldowns. Pinned client uses cast ID 12472.",
+      "engine_rank_spell_ids": [
+        12472
+      ],
+      "evidence": [
+        "engine:proto/mage.proto",
+        "app:worker/forever/data/gear.json",
+        "engine:sim/mage/talents_frost.go"
+      ],
+      "index": 15,
+      "name": "cold_snap",
+      "rank": 1,
+      "rust_status": "not_ported",
+      "tree": 2
+    },
+    {
+      "client_spell_ids": [
+        400647
+      ],
+      "effect": "400669 proc aura, charges, frozen classification and Shatter activation.",
+      "engine_rank_spell_ids": [
+        44543,
+        44544
+      ],
+      "evidence": [
+        "engine:proto/mage.proto",
+        "app:worker/forever/data/gear.json",
+        "engine:sim/mage/talents_frost.go"
+      ],
+      "index": 16,
+      "name": "fingers_of_frost",
+      "rank": 2,
+      "rust_status": "not_ported",
+      "tree": 2
+    },
+    {
+      "client_spell_ids": [
+        11180
+      ],
+      "effect": "12579 stacking self aura affecting Frostbolt and Ice Lance.",
+      "engine_rank_spell_ids": [
+        11180,
+        28592,
+        28593,
+        28594,
+        28595
+      ],
+      "evidence": [
+        "engine:proto/mage.proto",
+        "app:worker/forever/data/gear.json",
+        "engine:sim/mage/talents_frost.go"
+      ],
+      "index": 17,
+      "name": "winters_chill",
+      "rank": 5,
+      "rust_status": "not_ported",
+      "tree": 2
+    },
+    {
+      "client_spell_ids": [
+        11426
+      ],
+      "effect": "Go no-op: shield and Mage incoming damage are not modeled.",
+      "engine_rank_spell_ids": [
+        11426
+      ],
+      "evidence": [
+        "engine:proto/mage.proto",
+        "app:worker/forever/data/gear.json",
+        "engine:sim/mage/talents_frost.go"
+      ],
+      "index": 18,
+      "name": "ice_barrier",
+      "rank": 1,
+      "rust_status": "go_noop_to_document",
+      "tree": 2
+    }
+  ]
+}

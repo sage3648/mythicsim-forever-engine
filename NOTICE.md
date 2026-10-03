@@ -25,3 +25,11 @@ Fixtures use synthetic characters at revision
 `6823b49eb8aff741f197ef36d83766ef6a218285`. Historical reports and snapshots retain
 the original experiment's date, compiler settings and source digest. Extracting
 them does not constitute a new timing measurement.
+
+## First-build inventory
+
+The synthetic Frost reference and its recorded Go observation retain provenance
+to the MythicSim application and pinned wowsims-derived Go engine in
+`inventory/first-frost/manifest.json`. Spell and item identities, mechanic notes
+and report semantics derive from those sources. The selected talent build is
+credited to mixarxrt in the application reference catalog and inventory.

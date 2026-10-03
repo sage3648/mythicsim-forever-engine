@@ -16,6 +16,8 @@ Milestones advance on evidence, not promised delivery dates.
 - Eleven frozen Go reference scenarios and live comparison tools.
 - Matched Go/Rust benchmark, work counters and historical results.
 - Standalone public repository, contribution guide and CI.
+- First Frost build inventory: real application request, full Go reference
+  observation, mechanics and report consumers, source hashes and offline audit.
 
 ## Migration sequence
 
@@ -32,7 +34,7 @@ Milestones advance on evidence, not promised delivery dates.
 
 ## Start here
 
-1. Inventory the chosen Frost build and actual application consumers.
+1. Completed: [inventory the chosen Frost build and actual application consumers](docs/first-frost-inventory.md).
 2. Design prepared v2 and a release compatibility manifest.
 3. Establish the community change ledger and Go-to-Rust mechanics map.
 4. Consolidate reference pins and improve differential failure diagnostics.

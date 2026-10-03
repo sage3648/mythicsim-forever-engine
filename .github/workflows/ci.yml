@@ -34,3 +34,4 @@ jobs:
       - run: go vet ./...
         working-directory: tools/matched-go
       - run: python3 -m unittest discover -s tools -p '*_test.py'
+      - run: python3 tools/inventory.py check

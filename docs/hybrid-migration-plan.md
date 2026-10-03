@@ -104,6 +104,12 @@ lossy reconstruction from the prepared snapshot.
 
 ## Phase 0 Establish scope and compatibility contracts
 
+Piece 1 is complete in the [first Frost inventory](first-frost-inventory.md) and
+[application contract inventory](application-contract-inventory.md). It freezes a
+real request and full Go observation, with required mechanics, consumer fields and
+inherited correctness questions. Contract design and production coverage remain
+pending. The Rust prototype still rejects this request.
+
 Inventory what the application actually uses: exported character inputs, reference
 and community builds, gear comparisons, preset and custom rotations, fight variation,
 configured buffs, target settings, timelines, healing metrics where consumed,
@@ -381,7 +387,7 @@ pieces, not already-open issues. Keep each change independently reviewable.
 
 | Order | Piece | Depends on | Review evidence |
 | --- | --- | --- | --- |
-| 1 | Inventory the first Frost build and product contracts | Current app and pinned Go source | Mechanic list and request/report consumers |
+| 1 (complete) | Inventory the first Frost build and product contracts | Frozen app and pinned Go source | Mechanic list, request/report consumers and audited Go observation |
 | 2 | Design prepared v2 and release manifest | 1 | Examples, unknown-effect behavior and identity rules |
 | 3 | Add upstream sources, change ledger and mechanics map | 1 | One traced real community fix |
 | 4 | Centralize the reference pin and improve differential diagnostics | 2, 3 | Old fixtures preserved, useful failure output |

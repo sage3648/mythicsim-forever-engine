@@ -49,6 +49,9 @@ documentation and reproducible bug reports are all welcome.
 
 The first milestone is one complete Frost build. Small changes with mechanics
 evidence are more useful than broad ports without regression coverage.
+The [first-build inventory](docs/first-frost-inventory.md) freezes the application's
+real Frost request, required mechanics, inherited caveats and report consumers.
+Audit it offline with `python3 tools/inventory.py check`.
 [Open an issue](https://github.com/sage3648/mythicsim-forever-engine/issues) to coordinate
 a larger contribution before starting it.
 
