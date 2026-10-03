@@ -10,6 +10,7 @@ use std::collections::BTreeSet;
 
 use crate::{
     contracts::prepared_v2::{ActionId, Effect, PreparedV2, Spell},
+    core::fight::DIRECT_PROC_MASKS,
     rotation::{compile_condition, Action, FoundAura, MissingAura, Rotation, Value},
 };
 
@@ -33,6 +34,7 @@ pub(crate) const IMPLEMENTED_EFFECTS: &[&str] = &[
     "missile_barrage",
     "potion_mana",
     "presence_of_mind",
+    "touch_of_the_grave",
     "winters_chill",
 ];
 
@@ -85,7 +87,9 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         } => {
             vec![("player", regen_aura), ("player", channel_aura)]
         }
-        Effect::Ignite { trigger_aura, .. } => vec![("player", trigger_aura)],
+        Effect::Ignite { trigger_aura, .. } | Effect::TouchOfTheGrave { trigger_aura, .. } => {
+            vec![("player", trigger_aura)]
+        }
         Effect::MageArmor { aura }
         | Effect::ArcaneBlast { aura, .. }
         | Effect::ArcanePower { aura, .. }
@@ -98,6 +102,29 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         },
         _ => Vec::new(),
     }
+}
+
+/// Proc triggers Rust matches as `ProcMaskDirect`; any other mask is unsupported.
+fn undirected_procs(prepared: &PreparedV2) -> Vec<String> {
+    prepared
+        .effects
+        .iter()
+        .filter_map(|effect| match effect {
+            Effect::TouchOfTheGrave {
+                trigger_aura,
+                proc_mask,
+                ..
+            } => {
+                let mut mask: Vec<&str> = proc_mask.iter().map(String::as_str).collect();
+                let mut direct = DIRECT_PROC_MASKS.to_vec();
+                mask.sort_unstable();
+                direct.sort_unstable();
+                (mask != direct)
+                    .then(|| format!("{trigger_aura} procs from {proc_mask:?}, not direct hits"))
+            }
+            _ => None,
+        })
+        .collect()
 }
 
 /// Go `SpellSchoolFire`.
@@ -245,6 +272,7 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
             }
         }
         reasons.extend(active_ignite(prepared, &reachable));
+        reasons.extend(undirected_procs(prepared));
         let mut unknown = BTreeSet::new();
         let mut limited = BTreeSet::new();
         for spell in reachable {

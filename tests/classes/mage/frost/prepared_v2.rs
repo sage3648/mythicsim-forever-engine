@@ -213,6 +213,22 @@ fn ignite_is_inert_only_without_fire_spells() {
     )));
 }
 
+/// Touch of the Grave is matched as Go's `ProcMaskDirect`; another mask is unsupported.
+#[test]
+fn touch_of_the_grave_requires_direct_procs() {
+    let path = family().join("arcane-reference.prepared.json");
+    let mut value: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+    assert!(check_prepared(&parse(value.clone()).unwrap()).is_ok());
+    for effect in value["effects"].as_array_mut().unwrap() {
+        if effect["kind"] == "touch_of_the_grave" {
+            effect["proc_mask"] = json!(["ProcMaskSpellDamage"]);
+        }
+    }
+    assert!(reasons(value)
+        .iter()
+        .any(|reason| reason.starts_with("Touch of the Grave procs from")));
+}
+
 /// Community fix ElliotWood/Forever#622 (252f57aa8), recorded in upstream/changes.json.
 /// Without Fingers of Frost, pinned Go drops the Ice Lance condition and casts Ice Lance on
 /// every global cooldown; the fix reads the missing aura as inactive. Rust rejects the

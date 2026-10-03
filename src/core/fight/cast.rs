@@ -542,6 +542,10 @@ impl<A: Agent> Fight<A> {
                 let metrics = self.item_metrics(spell);
                 self.add_mana(gain, metrics);
             }
+            SpellBehavior::TouchOfTheGraveDrain {
+                health_fraction,
+                metrics,
+            } => self.touch_of_the_grave_drain(spell, target, health_fraction, metrics),
             SpellBehavior::None => panic!("spell {} has no behavior", self.spells[spell].id),
         }
     }
@@ -561,6 +565,7 @@ impl<A: Agent> Fight<A> {
         let id = self.spells[spell].id.clone();
         self.resources.push(super::ResourceMetrics {
             id,
+            health: false,
             events: 0,
             gain: 0.0,
             actual_gain: 0.0,
@@ -725,7 +730,7 @@ impl<A: Agent> Fight<A> {
                 max - (mana + total_regen) >= min + spread && *selected
             }
             SpellBehavior::EnergizeOnUse { whole, .. } => max - mana >= *whole,
-            SpellBehavior::None => false,
+            SpellBehavior::TouchOfTheGraveDrain { .. } | SpellBehavior::None => false,
         }
     }
 

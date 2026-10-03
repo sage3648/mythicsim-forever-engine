@@ -157,7 +157,22 @@ impl<A: Agent> Fight<A> {
         if self.spells[spell].bonus_coefficient > 0.0 {
             base += self.spells[spell].bonus_coefficient * self.bonus_damage(spell);
         }
-        self.calc_damage_internal(spell, target, base, attacker)
+        self.calc_damage_internal(spell, target, base, attacker, true)
+    }
+
+    /// Go `CalcDamage` with `OutcomeMagicHit`: no crit roll.
+    pub(crate) fn calc_damage_hit_only(
+        &mut self,
+        spell: SpellId,
+        target: Side,
+        base_damage: f64,
+    ) -> SpellResult {
+        let attacker = self.attacker_multiplier(spell, false);
+        let mut base = base_damage;
+        if self.spells[spell].bonus_coefficient > 0.0 {
+            base += self.spells[spell].bonus_coefficient * self.bonus_damage(spell);
+        }
+        self.calc_damage_internal(spell, target, base, attacker, false)
     }
 
     /// Go `calcDamageInternal` for a direct magic spell.
@@ -167,6 +182,7 @@ impl<A: Agent> Fight<A> {
         target: Side,
         base: f64,
         attacker: f64,
+        can_crit: bool,
     ) -> SpellResult {
         let mut result = SpellResult {
             target,
@@ -206,7 +222,7 @@ impl<A: Agent> Fight<A> {
         let after_target = result.damage;
 
         let partial = result.outcome & super::damage::OUTCOME_PARTIAL;
-        self.outcome_magic_hit_and_crit(spell, &mut result, binary);
+        self.outcome_magic_hit_and_crit(spell, &mut result, binary, can_crit);
         if partial != 0 {
             result.outcome |= partial;
         }
@@ -241,12 +257,14 @@ impl<A: Agent> Fight<A> {
         result
     }
 
-    /// Go `outcomeMagicHitAndCrit` with hit counters.
+    /// Go `outcomeMagicHitAndCrit` with hit counters, or `outcomeMagicHit` without the crit
+    /// roll.
     fn outcome_magic_hit_and_crit(
         &mut self,
         spell: SpellId,
         result: &mut SpellResult,
         binary: bool,
+        can_crit: bool,
     ) {
         let binary_hit = binary.then(|| 1.0 - 0.75 * self.resist(spell, true));
         let miss = spell_chance_to_miss(
@@ -257,8 +275,7 @@ impl<A: Agent> Fight<A> {
         let target = result.target.index();
         if self.proc(1.0 - miss, "Magical Hit Roll") {
             let partial = result.outcome & OUTCOME_PARTIAL != 0;
-            let crit_chance = self.spell_crit_chance(spell);
-            if self.random("Magical Crit Roll") < crit_chance {
+            if can_crit && self.random("Magical Crit Roll") < self.spell_crit_chance(spell) {
                 result.outcome = OUTCOME_CRIT;
                 let state = &self.spells[spell];
                 result.damage *= crit_damage_multiplier(

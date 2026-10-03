@@ -34,6 +34,12 @@ pub(crate) enum AuraBehavior<K> {
         metrics: usize,
         delay: i64,
     },
+    /// Go racials.go `applyTouchOfTheGrave`: a proc trigger that casts the drain.
+    TouchOfTheGrave {
+        chance: f64,
+        delay: i64,
+        drain: SpellId,
+    },
     /// The aura of a dot or channel.
     Dot(DotId),
     Class(K),
@@ -523,6 +529,9 @@ impl<A: Agent> Fight<A> {
                     AuraBehavior::JudgementOfWisdom { chance, delay, .. } => {
                         self.judgement_of_wisdom_callback(aura, spell, result, chance, delay)
                     }
+                    AuraBehavior::TouchOfTheGrave { chance, delay, .. } if side == Side::Player => {
+                        self.touch_of_the_grave_callback(aura, spell, result, chance, delay)
+                    }
                     _ => {}
                 }
             }
@@ -567,6 +576,9 @@ impl<A: Agent> Fight<A> {
                     return;
                 }
                 self.add_mana(mana, metrics);
+            }
+            AuraBehavior::TouchOfTheGrave { drain, .. } => {
+                self.cast(drain, result.target);
             }
             AuraBehavior::Class(kind) => A::on_delayed_proc(self, aura, kind, spell, result),
             _ => {}

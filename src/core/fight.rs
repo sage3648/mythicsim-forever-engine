@@ -15,6 +15,7 @@ mod damage;
 mod dot;
 mod log;
 pub(crate) mod metrics;
+mod racial;
 mod rotation;
 mod spell_mod;
 
@@ -115,6 +116,17 @@ pub(crate) trait Agent: Sized {
     }
 }
 
+/// Go `ProcMaskDirect`, by the bit names the exporter writes.
+pub(crate) const DIRECT_PROC_MASKS: &[&str] = &[
+    "ProcMaskMeleeMHAuto",
+    "ProcMaskMeleeOHAuto",
+    "ProcMaskMeleeMHSpecial",
+    "ProcMaskMeleeOHSpecial",
+    "ProcMaskRangedAuto",
+    "ProcMaskRangedSpecial",
+    "ProcMaskSpellDamage",
+];
+
 /// What a non-class spell does. Class spells use [`SpellBehavior::Class`].
 #[derive(Clone, Debug)]
 pub(crate) enum SpellBehavior<S> {
@@ -142,6 +154,12 @@ pub(crate) enum SpellBehavior<S> {
         average: f64,
         variance: f64,
         whole: f64,
+    },
+    /// Go racials.go Touch of the Grave's drain: shadow damage from the caster's maximum
+    /// health, healing the caster for the damage dealt.
+    TouchOfTheGraveDrain {
+        health_fraction: f64,
+        metrics: usize,
     },
 }
 
@@ -328,6 +346,8 @@ pub(crate) struct QueuedSpell {
 /// Mutable player state, reset to the prepared values each iteration.
 pub(crate) struct Player {
     pub(crate) mana: f64,
+    /// Go `healthBar.currentHealth`; the player takes no damage in scope.
+    pub(crate) health: f64,
     pub(crate) spell_cost_percent_modifier: i32,
     pub(crate) spirit_regen_rate_casting: f64,
     pub(crate) spirit_regen_multiplier: f64,
@@ -370,6 +390,7 @@ pub(crate) struct Config {
     pub(crate) distance: f64,
     pub(crate) cast_speed: f64,
     pub(crate) max_mana: f64,
+    pub(crate) max_health: f64,
     pub(crate) teardown_max_mana: f64,
     pub(crate) mp5: f64,
     pub(crate) spirit_regen_per_second: f64,
@@ -416,10 +437,11 @@ pub(crate) struct MajorCooldown {
     pub(crate) uses: usize,
 }
 
-/// Go `ResourceMetrics` for mana.
+/// Go `ResourceMetrics` for mana, or for health when `health` is set.
 #[derive(Clone, Debug)]
 pub(crate) struct ResourceMetrics {
     pub(crate) id: ActionId,
+    pub(crate) health: bool,
     pub(crate) events: i32,
     pub(crate) gain: f64,
     pub(crate) actual_gain: f64,
@@ -554,6 +576,7 @@ impl<A: Agent> Fight<A> {
             distance: player.distance_yards,
             cast_speed: player.cast_speed,
             max_mana: player.mana.max,
+            max_health: stat(&player.stats, "Health")?,
             teardown_max_mana: player.mana.teardown_max,
             mp5: stat(&player.stats, "MP5")?,
             spirit_regen_per_second: player.mana.spirit_regen_per_second,
@@ -618,9 +641,10 @@ impl<A: Agent> Fight<A> {
         };
 
         let mut resources = Vec::new();
-        let mut resource = |id: ActionId, regen: bool| {
+        let mut resource = |id: ActionId, regen: bool, health: bool| {
             resources.push(ResourceMetrics {
                 id,
+                health,
                 events: 0,
                 gain: 0.0,
                 actual_gain: 0.0,
@@ -635,8 +659,8 @@ impl<A: Agent> Fight<A> {
             tag,
             ..ActionId::default()
         };
-        let mana_regen_casting = resource(regen_id(1), false);
-        let mana_regen_not_casting = resource(regen_id(2), false);
+        let mana_regen_casting = resource(regen_id(1), false, false);
+        let mana_regen_not_casting = resource(regen_id(2), false, false);
 
         let effects = &prepared.effects;
         let mut spells = Vec::new();
@@ -695,6 +719,16 @@ impl<A: Agent> Fight<A> {
                             variance: *variance,
                             whole: *whole,
                         }),
+                        Effect::TouchOfTheGrave {
+                            drain_spell_id,
+                            health_fraction,
+                            ..
+                        } if id.spell_id == *drain_spell_id && id.tag == 0 => {
+                            Some(SpellBehavior::TouchOfTheGraveDrain {
+                                health_fraction: *health_fraction,
+                                metrics: resource(id.clone(), false, true),
+                            })
+                        }
                         _ => None,
                     })
                     .unwrap_or(SpellBehavior::None)
@@ -705,7 +739,7 @@ impl<A: Agent> Fight<A> {
                 percent_modifier: cost.percent_modifier,
                 additive_percent_modifier: cost.additive_percent_modifier,
             });
-            let mana_metrics = cost.map(|_| resource(id.clone(), false));
+            let mana_metrics = cost.map(|_| resource(id.clone(), false, false));
             let spell_id = spells.len();
             let dot = exported.dot.as_ref().map(|exported_dot| {
                 dots.push(Dot::new(spell_id, exported_dot));
@@ -718,18 +752,10 @@ impl<A: Agent> Fight<A> {
                 school: exported.school,
                 school_index: school_index(exported.school),
                 magic_defense: exported.defense_type == "DefenseTypeMagic",
-                direct_proc: exported.proc_mask.iter().any(|mask| {
-                    matches!(
-                        mask.as_str(),
-                        "ProcMaskMeleeMHAuto"
-                            | "ProcMaskMeleeOHAuto"
-                            | "ProcMaskMeleeMHSpecial"
-                            | "ProcMaskMeleeOHSpecial"
-                            | "ProcMaskRangedAuto"
-                            | "ProcMaskRangedSpecial"
-                            | "ProcMaskSpellDamage"
-                    )
-                }),
+                direct_proc: exported
+                    .proc_mask
+                    .iter()
+                    .any(|mask| DIRECT_PROC_MASKS.contains(&mask.as_str())),
                 proc_spell_damage: exported
                     .proc_mask
                     .iter()
@@ -792,6 +818,7 @@ impl<A: Agent> Fight<A> {
                     actions.push(ActionTotals {
                         id: spell.id.clone(),
                         melee: spell.flags.melee_metrics,
+                        passive: spell.flags.passive,
                         school: spell.school,
                         targets: [ActionReport::new(0), ActionReport::new(1)],
                     });
@@ -832,12 +859,39 @@ impl<A: Agent> Fight<A> {
                     )),
                     _ => None,
                 }) {
-                    let metrics = resource(jow.2.clone(), false);
+                    let metrics = resource(jow.2.clone(), false, false);
                     AuraBehavior::JudgementOfWisdom {
                         chance: jow.0,
                         mana: jow.1,
                         metrics,
                         delay: jow.3,
+                    }
+                } else if let Some((chance, delay, drain)) =
+                    effects.iter().find_map(|effect| match effect {
+                        Effect::TouchOfTheGrave {
+                            trigger_aura,
+                            drain_spell_id,
+                            proc_chance,
+                            delay_ns,
+                            ..
+                        } if side == Side::Player && *trigger_aura == exported.label => Some((
+                            *proc_chance,
+                            *delay_ns,
+                            *drain_spell_id,
+                        )),
+                        _ => None,
+                    })
+                {
+                    let drain = spells
+                        .iter()
+                        .position(|spell: &Spell<A::Spell>| {
+                            spell.id.spell_id == drain && spell.id.tag == 0
+                        })
+                        .ok_or_else(|| format!("Touch of the Grave drain {drain} is not registered"))?;
+                    AuraBehavior::TouchOfTheGrave {
+                        chance,
+                        delay,
+                        drain,
                     }
                 } else if effects.iter().any(|effect| {
                     matches!(effect, Effect::InertListener { unit: u, aura, .. } if u == unit && *aura == exported.label)
@@ -890,6 +944,7 @@ impl<A: Agent> Fight<A> {
             min_tracker_time: NEVER_EXPIRES,
             player: Player {
                 mana: config.max_mana,
+                health: config.max_health,
                 spell_cost_percent_modifier: config.initial.spell_cost_percent_modifier,
                 spirit_regen_rate_casting: config.initial.spirit_regen_rate_casting,
                 spirit_regen_multiplier: config.initial.spirit_regen_multiplier,
@@ -936,6 +991,7 @@ impl<A: Agent> Fight<A> {
                 .map(|action| ActionTotals {
                     id: action.action_id.clone(),
                     melee: action.melee_metrics,
+                    passive: false,
                     school: action.school,
                     targets: [ActionReport::new(0), ActionReport::new(1)],
                 })
@@ -1106,6 +1162,7 @@ impl<A: Agent> Fight<A> {
                 spell.metrics = [SpellMetrics::default(); 2];
             }
             self.player.mana = self.config.max_mana;
+            self.player.health = self.config.max_health;
             self.player.mana_regen_multiplier = 1.0;
             self.player.waiting_for_mana = 0.0;
             self.player.waiting_for_mana_start = 0;

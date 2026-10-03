@@ -758,6 +758,19 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 			})
 		}
 	}
+	// racials.go applyTouchOfTheGrave: Go literals.
+	if hasAura(&character.Unit, "Touch of the Grave") {
+		chance := 0.1
+		switch character.Class {
+		case proto.Class_ClassWarrior, proto.Class_ClassPaladin, proto.Class_ClassRogue:
+			chance = 0.05
+		}
+		effects = append(effects, map[string]any{
+			"kind": "touch_of_the_grave", "trigger_aura": "Touch of the Grave", "drain_spell_id": int32(1260198),
+			"proc_chance": chance, "proc_mask": procMaskNames(core.ProcMaskMelee | core.ProcMaskRanged | core.ProcMaskSpellDamage),
+			"health_fraction": 0.05, "delay_ns": nanos(core.SpellBatchWindow),
+		})
+	}
 	consumes := request.Raid.Parties[0].Players[0].Consumables
 	for _, cd := range character.GetMajorCooldowns() {
 		spell := cd.Spell

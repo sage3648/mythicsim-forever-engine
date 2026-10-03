@@ -221,6 +221,7 @@ impl ActionReport {
 pub(crate) struct ActionTotals {
     pub(crate) id: ActionId,
     pub(crate) melee: bool,
+    pub(crate) passive: bool,
     pub(crate) school: u8,
     pub(crate) targets: [ActionReport; 2],
 }
@@ -231,6 +232,8 @@ struct ActionMetricsReport {
     id: ActionIdReport,
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     is_melee: bool,
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    is_passive: bool,
     targets: Vec<ActionReport>,
     #[serde(skip_serializing_if = "is_zero_u8")]
     spell_school: u8,
@@ -386,7 +389,10 @@ impl<A: Agent> Fight<A> {
         };
         for index in 0..self.resources.len() {
             let resource = &self.resources[index];
-            if resource.is_mana_regen || resource.id.other_id == "OtherActionManaRegen" {
+            if resource.health
+                || resource.is_mana_regen
+                || resource.id.other_id == "OtherActionManaRegen"
+            {
                 continue;
             }
             let actual = resource.actual_gain - resource.previous_actual_gain;
@@ -510,6 +516,7 @@ impl<A: Agent> Fight<A> {
         let action_report = |action: &ActionTotals| ActionMetricsReport {
             id: (&action.id).into(),
             is_melee: action.melee,
+            is_passive: action.passive,
             targets: action
                 .targets
                 .iter()
@@ -528,7 +535,11 @@ impl<A: Agent> Fight<A> {
             .filter(|resource| resource.events > 0)
             .map(|resource| ResourceMetricsReport {
                 id: (&resource.id).into(),
-                kind: "ResourceTypeMana",
+                kind: if resource.health {
+                    "ResourceTypeHealth"
+                } else {
+                    "ResourceTypeMana"
+                },
                 events: resource.events,
                 gain: resource.gain,
                 actual_gain: resource.actual_gain,

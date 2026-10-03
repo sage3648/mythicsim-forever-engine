@@ -438,6 +438,15 @@ pub struct ManaGem {
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Effect {
     Frostbolt {},
+    /// The Undead racial Touch of the Grave: landed hits can drain the target.
+    TouchOfTheGrave {
+        trigger_aura: String,
+        drain_spell_id: i32,
+        proc_chance: f64,
+        proc_mask: Vec<String>,
+        health_fraction: f64,
+        delay_ns: i64,
+    },
     /// Ignite: crits of fire spells feed a fire dot.
     Ignite {
         trigger_aura: String,
@@ -566,6 +575,7 @@ impl Effect {
             Effect::ArcaneBlast { .. } => "arcane_blast",
             Effect::ArcanePower { .. } => "arcane_power",
             Effect::Ignite { .. } => "ignite",
+            Effect::TouchOfTheGrave { .. } => "touch_of_the_grave",
             Effect::PresenceOfMind { .. } => "presence_of_mind",
             Effect::IceLance { .. } => "ice_lance",
             Effect::ArcaneMissiles { .. } => "arcane_missiles",
