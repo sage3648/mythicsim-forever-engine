@@ -43,6 +43,7 @@ pub(crate) const IMPLEMENTED_EFFECTS: &[&str] = &[
     "potion_mana",
     "presence_of_mind",
     "pyroblast",
+    "read_ley_line",
     "scorch",
     "shatter_curse",
     "touch_of_the_grave",
@@ -89,6 +90,9 @@ fn spell_capability(spell: &Spell, prepared: &PreparedV2) -> Option<&'static str
         Effect::ShatterCurse { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
             Some("shatter_curse")
         }
+        Effect::ReadLeyLine { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
+            Some("read_ley_line")
+        }
         _ => None,
     })
 }
@@ -133,6 +137,7 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         | Effect::Berserking { aura, .. }
         | Effect::BloodFury { aura, .. }
         | Effect::ShatterCurse { aura, .. }
+        | Effect::ReadLeyLine { aura, .. }
         | Effect::PresenceOfMind { aura, .. } => vec![("player", aura)],
         Effect::JudgementOfWisdom { aura, .. } => vec![("target", aura)],
         Effect::InertListener { unit, aura, .. } => match unit.as_str() {

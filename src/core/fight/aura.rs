@@ -44,6 +44,9 @@ pub(crate) enum AuraBehavior<K> {
     Eureka,
     /// Go `Aura.AttachMultiplyCastSpeed`.
     MultiplyCastSpeed(f64),
+    /// Go `MultiplyManaRegenSpeed` on gain and its reciprocal on expire, as racials.go
+    /// Energized does with 2 and 0.5.
+    MultiplyManaRegenSpeed(f64),
     /// Go `NewTemporaryStatMultiplierAura`: the stats while active. Go recomputes every stat
     /// from the same inputs on each change, so expiry restores the prepared values exactly.
     TemporaryStats(Powers),
@@ -414,6 +417,9 @@ impl<A: Agent> Fight<A> {
             AuraBehavior::Dot(dot) => self.dot_on_gain(dot),
             AuraBehavior::Eureka => self.eureka_gain(),
             AuraBehavior::MultiplyCastSpeed(multiplier) => self.multiply_cast_speed(multiplier),
+            AuraBehavior::MultiplyManaRegenSpeed(multiplier) => {
+                self.multiply_mana_regen_speed(multiplier)
+            }
             AuraBehavior::TemporaryStats(powers) => self.player.powers = powers,
             AuraBehavior::Class(kind) => A::on_gain(self, aura, kind),
             _ => {}
@@ -428,6 +434,9 @@ impl<A: Agent> Fight<A> {
                 self.multiply_cast_speed(1.0 / multiplier)
             }
             AuraBehavior::TemporaryStats(_) => self.player.powers = self.config.powers,
+            AuraBehavior::MultiplyManaRegenSpeed(multiplier) => {
+                self.multiply_mana_regen_speed(1.0 / multiplier)
+            }
             AuraBehavior::Class(kind) => A::on_expire(self, aura, kind),
             _ => {}
         }

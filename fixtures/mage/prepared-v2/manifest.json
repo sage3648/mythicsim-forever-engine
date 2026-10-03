@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "5816338c0c02377c8ebd759e16e3453252093a6893f895dc2001a42fd9957bd1",
+  "exporter_sha256": "87af8da9969b6f2acd60089f2c65453fdbbe0c508985b3481bf0dc4d70c6f1f1",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -683,6 +683,44 @@
       "go_result": {
         "file": "frost-orc-cooldown-timings.go-result.json",
         "sha256": "c547de3077f5f89f307d886ba44e816bf70c9eda2e37d941aff550690b8ad01a"
+      }
+    },
+    {
+      "id": "frost-skyborne",
+      "description": "The Frost reference as a High Order Skyborne: one percent cast speed and Elemental slaying are static; Read Ley Line is cast only by a rotation action, and this rotation has none.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/frost-skyborne.request.json"
+      },
+      "prepared": "frost-skyborne.prepared.json",
+      "prepared_sha256": "c51d92b50e3594e005ad5796b8cd7d746e640ed03c8bd947cb71658ceeb8f712",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frost-skyborne.go-result.json",
+        "sha256": "baf7a813416f25d1a58364aa5f7bd7cb1f9c40675d5d7a52b89becc0f063dca8"
+      }
+    },
+    {
+      "id": "fire-skyborne-read-ley-line",
+      "description": "The Fire reference as a High Order Skyborne whose rotation casts Read Ley Line below 60% mana: a two-second cast whose aura Energized doubles mana regeneration for 15 seconds.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-skyborne-read-ley-line.request.json"
+      },
+      "prepared": "fire-skyborne-read-ley-line.prepared.json",
+      "prepared_sha256": "060786fa638db03e599b9aa6e5c43f8ec16dbbbe9cbbd8716351d4683e88c6f8",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fire-skyborne-read-ley-line.go-result.json",
+        "sha256": "a81baebe298b58c0c5d81d2c7ef2c8db31d080177bfa3891c63785fc8846e436"
+      },
+      "go_log": {
+        "file": "fire-skyborne-read-ley-line.go-log.txt",
+        "sha256": "426d8cd7b6b1a7a263cca6c029bd1e05fc7573bea54bcc846f7d9f65a514622c"
       }
     }
   ]

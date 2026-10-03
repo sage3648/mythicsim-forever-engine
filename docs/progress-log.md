@@ -35,6 +35,7 @@ reading the Go reference. They are not effort estimates for other contributors.
 | Fire: randomized sweep | 2026-10-03 13:49 | 2026-10-03 13:51 | 0 h 02 m | 24 of 24 variants match; Frost and Arcane sweeps rerun unchanged |
 | Races: Troll Berserking | 2026-10-03 14:08 | 2026-10-03 14:21 | 0 h 13 m | Dynamic cast speed with Go's reciprocal undo, kept across fights as Go's reset does; Skyborne already matched; Troll matches Go on the first comparison |
 | Races: Orc Blood Fury and Shatter Curse | 2026-10-03 14:21 | 2026-10-03 14:24 | 0 h 03 m | Stats read live by the runtime, set from values Go computes with the aura active; survival cooldowns fire only on configured timings; Orc and its cooldown timings match Go on the first comparison |
+| Races: Skyborne Read Ley Line | 2026-10-03 14:24 | 2026-10-03 14:26 | 0 h 02 m | Mana regeneration speed aura for rotations that cast it; the three reference builds casting it match Go on the first comparison |
 
 ## Notes
 

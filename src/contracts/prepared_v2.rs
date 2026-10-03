@@ -500,6 +500,13 @@ pub enum Effect {
         spell_id: i32,
         aura: String,
     },
+    /// The High Order Skyborne racial Read Ley Line: a cast that only a rotation action
+    /// uses, whose aura Energized multiplies mana regeneration.
+    ReadLeyLine {
+        spell_id: i32,
+        aura: String,
+        regen_multiplier: f64,
+    },
     /// Master of Elements: Fire and Frost crits refund part of the base cost.
     MasterOfElements {
         trigger_aura: String,
@@ -678,6 +685,7 @@ impl Effect {
             Effect::Berserking { .. } => "berserking",
             Effect::BloodFury { .. } => "blood_fury",
             Effect::ShatterCurse { .. } => "shatter_curse",
+            Effect::ReadLeyLine { .. } => "read_ley_line",
             Effect::PresenceOfMind { .. } => "presence_of_mind",
             Effect::IceLance { .. } => "ice_lance",
             Effect::ArcaneMissiles { .. } => "arcane_missiles",

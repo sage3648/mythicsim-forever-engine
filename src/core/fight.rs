@@ -759,6 +759,7 @@ impl<A: Agent> Fight<A> {
                         Effect::Berserking { spell_id, aura, .. }
                         | Effect::BloodFury { spell_id, aura, .. }
                         | Effect::ShatterCurse { spell_id, aura }
+                        | Effect::ReadLeyLine { spell_id, aura, .. }
                             if id.spell_id == *spell_id && id.tag == 0 =>
                         {
                             activations.push((spells.len(), aura));
@@ -955,6 +956,15 @@ impl<A: Agent> Fight<A> {
                     _ => None,
                 }) {
                     AuraBehavior::MultiplyCastSpeed(multiplier)
+                } else if let Some(multiplier) = effects.iter().find_map(|effect| match effect {
+                    Effect::ReadLeyLine {
+                        aura,
+                        regen_multiplier,
+                        ..
+                    } if side == Side::Player && *aura == exported.label => Some(*regen_multiplier),
+                    _ => None,
+                }) {
+                    AuraBehavior::MultiplyManaRegenSpeed(multiplier)
                 } else if let Some(stats) = effects.iter().find_map(|effect| match effect {
                     Effect::BloodFury {
                         aura, active_stats, ..
@@ -1125,6 +1135,12 @@ impl<A: Agent> Fight<A> {
             spirit_regen_multiplier: self.player.spirit_regen_multiplier,
             mana_regen_multiplier: self.player.mana_regen_multiplier,
         }
+    }
+
+    /// Go `MultiplyManaRegenSpeed`.
+    pub(crate) fn multiply_mana_regen_speed(&mut self, multiplier: f64) {
+        self.player.mana_regen_multiplier *= multiplier;
+        self.update_mana_regen_rates();
     }
 
     /// Go `UpdateManaRegenRates`.

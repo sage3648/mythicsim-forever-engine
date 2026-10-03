@@ -923,6 +923,15 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 	if aura := character.GetAura("Shatter Curse"); aura != nil {
 		effects = append(effects, map[string]any{"kind": "shatter_curse", "spell_id": aura.ActionID.SpellID, "aura": aura.Label})
 	}
+	// racials.go High Order Skyborne Read Ley Line: Energized doubles mana regeneration, a
+	// Go literal undone with 0.5.
+	if aura := character.GetAura("Energized"); aura != nil {
+		for _, spell := range character.Spellbook {
+			if spell.RelatedSelfBuff == aura {
+				effects = append(effects, map[string]any{"kind": "read_ley_line", "spell_id": spell.ActionID.SpellID, "aura": aura.Label, "regen_multiplier": 2.0})
+			}
+		}
+	}
 	consumes := request.Raid.Parties[0].Players[0].Consumables
 	for _, cd := range character.GetMajorCooldowns() {
 		spell := cd.Spell
