@@ -36,6 +36,7 @@ pub(crate) struct ClassGate {
 
 /// Effects of races, items and raid buffs, which every class shares.
 const COMMON_EFFECTS: &[&str] = &[
+    "aura_should_refresh",
     "berserking",
     "blood_fury",
     "chance_of_death",
@@ -121,8 +122,15 @@ fn common_spell_capability(spell: &Spell, prepared: &PreparedV2) -> Option<&'sta
         Effect::ReadLeyLine { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
             Some("read_ley_line")
         }
-        Effect::TemporaryStats { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
+        Effect::TemporaryStats {
+            spell_id, item_id, ..
+        } if *spell_id == id.spell_id && *item_id == id.item_id && id.tag == 0 => {
             Some("temporary_stats")
+        }
+        // Class spells Go registers without a class mask, named by their effect.
+        Effect::Prowl { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => Some("prowl"),
+        Effect::Berserk { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
+            Some("berserk")
         }
         _ => None,
     })
@@ -197,8 +205,8 @@ fn undirected_procs(prepared: &PreparedV2) -> Vec<String> {
         .collect()
 }
 
-/// Stats a temporary stat change may set: the runtime reads spell damage, attack powers and
-/// spell crit during a fight, and nothing in scope reads healing power or physical crit.
+/// Stats a temporary stat change may set: the runtime reads spell damage, attack powers, crit
+/// and maximum mana during a fight, and nothing in scope reads healing power.
 const DYNAMIC_STATS: &[&str] = &[
     "SpellDamage",
     "AttackPower",
@@ -206,11 +214,14 @@ const DYNAMIC_STATS: &[&str] = &[
     "HealingPower",
     "SpellCritPercent",
     "PhysicalCritPercent",
+    "Mana",
 ];
 
 /// Stats a stat aura may change without the runtime reading them: inputs to the stats it
 /// reads, and stats nothing in scope reads.
 const INERT_STATS: &[&str] = &[
+    // Spell crit and maximum mana; mana regeneration reads only spirit and MP5.
+    "Intellect",
     "Strength",
     "Agility",
     "Stamina",
@@ -264,7 +275,9 @@ fn fixed_stat_changes(prepared: &PreparedV2) -> Vec<String> {
         .flat_map(|(aura, stats)| {
             stats
                 .keys()
-                .filter(|stat| !DYNAMIC_STATS.contains(&stat.as_str()))
+                .filter(|stat| {
+                    !DYNAMIC_STATS.contains(&stat.as_str()) && !INERT_STATS.contains(&stat.as_str())
+                })
                 .map(move |stat| format!("{aura} changes {stat}, which the runtime holds fixed"))
         })
         .collect()
@@ -307,8 +320,9 @@ pub(crate) fn rotation_spell<'a>(prepared: &'a PreparedV2, id: &ActionId) -> Opt
     rotation_spell_index(prepared, id).map(|index| &prepared.player.spells[index])
 }
 
-/// Spell properties the fight runtime does not implement.
-fn runtime_limits(spell: &Spell) -> Vec<&'static str> {
+/// Spell properties the fight runtime does not implement. A class spell computes its own
+/// damage, so a physical damage roll is a limit only on other spells.
+fn runtime_limits(spell: &Spell, class_spell: bool) -> Vec<&'static str> {
     let mut limits = Vec::new();
     if spell.max_charges != 0 {
         limits.push("charges");
@@ -316,7 +330,7 @@ fn runtime_limits(spell: &Spell) -> Vec<&'static str> {
     if spell.has_cast_requirement {
         limits.push("cast requirements");
     }
-    if spell.damage_effect.is_some() && spell.school & 1 != 0 {
+    if spell.damage_effect.is_some() && spell.school & 1 != 0 && !class_spell {
         limits.push("physical damage");
     }
     if spell
@@ -381,6 +395,7 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
 
     if let Some(rotation) = rotation {
         reasons.extend(unknown_aura_conditions(prepared, rotation));
+        reasons.extend(aura_refresh_conditions(prepared, rotation));
         reasons.extend(energy_without_bar(prepared, rotation));
         let mut reachable = Vec::new();
         let mut registered_prepull = 0;
@@ -434,7 +449,7 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
                     unknown.insert(id.clone());
                 }
             }
-            for limit in runtime_limits(spell) {
+            for limit in runtime_limits(spell, (gate.spell)(spell).is_some()) {
                 limited.insert(format!(
                     "rotation reaches {id}, which uses unsupported {limit}"
                 ));
@@ -487,6 +502,48 @@ fn energy_without_bar(prepared: &PreparedV2, rotation: &Rotation) -> Vec<String>
                 item.position
             ));
         }
+    }
+    reasons
+}
+
+/// Go `ShouldRefreshExclusiveEffects` depends on the other effects of each exclusive category,
+/// which Rust reads only from an exported reading: an aura holding its category alone, or one
+/// another aura holds for good. Any other reading, or an aura the unit lacks, is unsupported.
+fn aura_refresh_conditions(prepared: &PreparedV2, rotation: &Rotation) -> Vec<String> {
+    let mut reasons = Vec::new();
+    let conditions = rotation.priority_list.iter().flat_map(|item| {
+        let interrupt = match &item.action {
+            Action::ChannelSpell { interrupt_if, .. } => interrupt_if.as_ref(),
+            _ => None,
+        };
+        item.condition.iter().chain(interrupt)
+    });
+    for condition in conditions {
+        condition.visit(&mut |value| {
+            let Value::AuraShouldRefresh { id, target, .. } = value else {
+                return;
+            };
+            let (unit, auras) = if *target {
+                ("target", &prepared.target.auras)
+            } else {
+                ("player", &prepared.player.auras)
+            };
+            let Some(aura) = auras.iter().find(|aura| aura.action_id.as_ref() == Some(id)) else {
+                reasons.push(format!("auraShouldRefresh names {id}, which the {unit} lacks"));
+                return;
+            };
+            let read = prepared.effects.iter().any(|effect| {
+                matches!(effect, Effect::AuraShouldRefresh { unit: u, aura: label, modes }
+                    if u == unit && *label == aura.label
+                        && modes.iter().all(|mode| mode == "own" || mode == "never"))
+            });
+            if !read {
+                reasons.push(format!(
+                    "auraShouldRefresh on {unit} aura {:?} has no supported exclusive effect reading",
+                    aura.label
+                ));
+            }
+        });
     }
     reasons
 }

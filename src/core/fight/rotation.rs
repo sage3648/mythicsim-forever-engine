@@ -192,6 +192,23 @@ impl<A: Agent> Fight<A> {
         match value {
             Compiled::Const(constant) => constant.boolean,
             Compiled::AuraIsActive(aura) => self.aura(*aura).active,
+            // Go `APLValueFrontOfTarget`.
+            Compiled::FrontOfTarget => self.config.melee.in_front_of_target,
+            // Go `ShouldRefreshExclusiveEffects`: an effect holding its category alone refreshes
+            // once inactive or within the overlap of expiring; one another aura holds for good
+            // never does.
+            Compiled::AuraShouldRefresh { aura, overlap } => {
+                let window = self.get_duration(overlap);
+                let (_, own) = self
+                    .aura_refresh
+                    .iter()
+                    .find(|(refreshed, _)| refreshed == aura)
+                    .expect("the gate requires a refresh reading");
+                let state = self.aura(*aura);
+                let remaining = state.remaining(self.now);
+                own.iter()
+                    .any(|&own| own && (!state.active || remaining <= window))
+            }
             Compiled::DotIsActive(spell) => self.dot_active(*spell),
             // Go `APLValueSpellIsReady`: ready, or ready within the spell queue window.
             Compiled::SpellIsReady(spell) => {
@@ -261,7 +278,7 @@ impl<A: Agent> Fight<A> {
     fn get_float(&self, value: &Compiled) -> f64 {
         match value {
             Compiled::Const(constant) => constant.float,
-            Compiled::CurrentManaPercent => self.player.mana / self.config.max_mana,
+            Compiled::CurrentManaPercent => self.player.mana / self.player.powers.max_mana,
             // Go `GetRemainingDurationPercent` for a fight timed by duration.
             Compiled::RemainingTimePercent => {
                 (self.duration - self.now) as f64 / self.duration as f64
@@ -269,6 +286,7 @@ impl<A: Agent> Fight<A> {
             Compiled::CurrentMana => self.player.mana,
             Compiled::CurrentEnergy => self.energy_bar().current,
             Compiled::MaxEnergy => self.energy_bar().max,
+            Compiled::MaxMana => self.player.powers.max_mana,
             Compiled::NumberTargets => 1.0,
             // Go `APLValueMath.GetFloat`.
             Compiled::Math { op, lhs, rhs } => match op {

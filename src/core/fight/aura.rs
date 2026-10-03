@@ -271,6 +271,12 @@ impl<A: Agent> Fight<A> {
         &mut self.trackers[aura.side.index()].auras[aura.index]
     }
 
+    /// Whether the aura reset activates the aura. An aura Go's agent reset activates later,
+    /// as a druid's starting form, is active after the reset without being permanent.
+    pub(crate) fn set_aura_permanent(&mut self, aura: AuraRef, permanent: bool) {
+        self.aura_mut(aura).permanent = permanent;
+    }
+
     fn unit_label(&self, side: Side) -> String {
         match side {
             Side::Player => self.config.player_label.clone(),
@@ -312,6 +318,10 @@ impl<A: Agent> Fight<A> {
             return;
         }
         assert!(self.aura(aura).duration != 0, "aura with zero duration");
+        // Go activates exclusive effects first.
+        if let AuraBehavior::Class(kind) = self.aura(aura).behavior {
+            A::on_exclusive_gain(self, aura, kind);
+        }
         {
             let now = self.now;
             let state = self.aura_mut(aura);
@@ -440,10 +450,7 @@ impl<A: Agent> Fight<A> {
             AuraBehavior::MultiplyManaRegenSpeed(multiplier) => {
                 self.multiply_mana_regen_speed(multiplier)
             }
-            AuraBehavior::WindfuryProc { bit } => {
-                self.stat_mask |= bit;
-                self.player.powers = self.stat_combos[self.stat_mask as usize];
-            }
+            AuraBehavior::WindfuryProc { bit } => self.set_stat_mask(self.stat_mask | bit),
             AuraBehavior::WindfuryTotem => {
                 let trigger = self
                     .windfury
@@ -459,8 +466,7 @@ impl<A: Agent> Fight<A> {
                     let line = self.aura_logs[line].clone();
                     self.player_log(&line);
                 }
-                self.stat_mask |= bit;
-                self.player.powers = self.stat_combos[self.stat_mask as usize];
+                self.set_stat_mask(self.stat_mask | bit);
             }
             AuraBehavior::Class(kind) => A::on_gain(self, aura, kind),
             _ => {}
@@ -474,10 +480,7 @@ impl<A: Agent> Fight<A> {
             AuraBehavior::MultiplyCastSpeed(multiplier) => {
                 self.multiply_cast_speed(1.0 / multiplier)
             }
-            AuraBehavior::WindfuryProc { bit } => {
-                self.stat_mask &= !bit;
-                self.player.powers = self.stat_combos[self.stat_mask as usize];
-            }
+            AuraBehavior::WindfuryProc { bit } => self.set_stat_mask(self.stat_mask & !bit),
             AuraBehavior::WindfuryTotem => {
                 let trigger = self
                     .windfury
@@ -493,8 +496,7 @@ impl<A: Agent> Fight<A> {
                     let line = self.aura_logs[line].clone();
                     self.player_log(&line);
                 }
-                self.stat_mask &= !bit;
-                self.player.powers = self.stat_combos[self.stat_mask as usize];
+                self.set_stat_mask(self.stat_mask & !bit);
             }
             AuraBehavior::MultiplyManaRegenSpeed(multiplier) => {
                 self.multiply_mana_regen_speed(1.0 / multiplier)
@@ -647,6 +649,7 @@ impl<A: Agent> Fight<A> {
                         // The charges' own trigger: a landed auto spends one, at once.
                         if windfury.spend_spells[spell]
                             && result.outcome & super::OUTCOME_LANDED != 0
+                            && !(windfury.spend_require_damage && result.damage == 0.0)
                         {
                             self.remove_stack(aura);
                         }
@@ -717,6 +720,9 @@ impl<A: Agent> Fight<A> {
     fn windfury_trigger(&mut self, aura: AuraRef, spell: SpellId, result: &SpellResult) {
         let windfury = self.windfury.clone().expect("Windfury Totem is bound");
         if !windfury.trigger_spells[spell] || result.outcome & super::OUTCOME_LANDED == 0 {
+            return;
+        }
+        if windfury.trigger_require_damage && result.damage == 0.0 {
             return;
         }
         let icd = self.aura(aura).icd;

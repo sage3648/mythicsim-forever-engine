@@ -272,26 +272,7 @@ impl<A: Agent> Fight<A> {
             result.outcome |= partial;
         }
         let after_outcome = result.damage;
-        // Go ApplyPostOutcomeDamageModifiers: the target's dynamic modifiers in order.
-        for index in 0..self.damage_taken_modifiers.len() {
-            let modifier = self.damage_taken_modifiers[index];
-            if self.spells[spell].school & modifier.school_mask != 0
-                && self.aura(modifier.aura).active
-            {
-                result.damage *= modifier.multiplier;
-            }
-        }
-        for modifier in &self.spell_damage_taken_modifiers {
-            if modifier.spells[spell]
-                && modifier
-                    .auras
-                    .iter()
-                    .any(|&aura| self.trackers[aura.side.index()].auras[aura.index].active)
-            {
-                result.damage *= modifier.multiplier;
-            }
-        }
-        result.damage = result.damage.max(0.0);
+        self.apply_post_outcome_modifiers(spell, &mut result);
 
         if self.log.is_some() {
             self.log_damage_debug(
@@ -310,11 +291,33 @@ impl<A: Agent> Fight<A> {
         result.threat = if result.landed() {
             let state = &self.spells[spell];
             (result.damage * state.threat_multiplier + state.flat_threat_bonus)
-                * self.config.threat_multiplier
+                * self.player.threat_multiplier
         } else {
             0.0
         };
         result
+    }
+
+    /// Go `ApplyPostOutcomeDamageModifiers`: the target's dynamic modifiers in order.
+    pub(crate) fn apply_post_outcome_modifiers(&self, spell: SpellId, result: &mut SpellResult) {
+        for modifier in &self.damage_taken_modifiers {
+            if self.spells[spell].school & modifier.school_mask != 0
+                && self.aura(modifier.aura).active
+            {
+                result.damage *= modifier.multiplier;
+            }
+        }
+        for modifier in &self.spell_damage_taken_modifiers {
+            if modifier.spells[spell]
+                && modifier
+                    .auras
+                    .iter()
+                    .any(|&aura| self.trackers[aura.side.index()].auras[aura.index].active)
+            {
+                result.damage *= modifier.multiplier;
+            }
+        }
+        result.damage = result.damage.max(0.0);
     }
 
     /// Go `calcDamageInternal`'s debug line.
@@ -372,7 +375,7 @@ impl<A: Agent> Fight<A> {
         result.threat = if result.landed() {
             let state = &self.spells[spell];
             (result.damage * state.threat_multiplier + state.flat_threat_bonus)
-                * self.config.threat_multiplier
+                * self.player.threat_multiplier
         } else {
             0.0
         };

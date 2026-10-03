@@ -1,7 +1,8 @@
 //! Omen of Clarity (16864) and Clearcasting (16870), from Go sim/druid/omen_of_clarity.go, a
 //! baseline Balance passive in Forever that Go wires in with the talents. A landed hit from
 //! a listened spell can grant Clearcasting at two procs a minute of its cast time, or of the
-//! default GCD for instants; Moonkin Form doubles the chance and halves the cooldown.
+//! default GCD for instants, and a melee hit at two a minute of the current main hand swing;
+//! Moonkin Form doubles the chance and halves the cooldown.
 //! Clearcasting makes the next costed spell in its mask free.
 
 use crate::core::fight::{
@@ -13,6 +14,8 @@ pub(crate) struct OmenOfClarity {
     pub(crate) aura: AuraRef,
     trigger: AuraRef,
     trigger_spells: Vec<bool>,
+    /// Spells whose proc mask names spell damage or healing, which take the cast time.
+    spell_masked: Vec<bool>,
     cost_spells: Vec<bool>,
     icd_timer: TimerId,
     icd: i64,
@@ -31,6 +34,7 @@ pub(crate) struct Params<'a> {
     pub(crate) aura: &'a str,
     pub(crate) trigger: &'a str,
     pub(crate) trigger_spells: &'a [usize],
+    pub(crate) spell_masked: Vec<bool>,
     pub(crate) cost_spells: &'a [usize],
     pub(crate) icd: i64,
     pub(crate) ppm: f64,
@@ -85,6 +89,7 @@ pub(crate) fn bind<A: Agent>(
         aura,
         trigger,
         trigger_spells: mask(len, params.trigger_spells),
+        spell_masked: params.spell_masked,
         cost_spells: mask(len, params.cost_spells),
         icd_timer,
         icd: params.icd,
@@ -113,9 +118,14 @@ impl OmenOfClarity {
         if fight.timers[self.icd_timer] > fight.now {
             return;
         }
-        // The condition: every listened spell is a spell, so its cast time sets the chance.
-        let cast_time = fight.spells[spell].default_cast.cast_time;
-        let seconds = crate::core::time::seconds(if cast_time > 0 { cast_time } else { self.gcd });
+        // The condition: a spell's cast time, or the GCD for an instant, sets the chance; any
+        // other hit takes the current main hand swing speed.
+        let seconds = if self.spell_masked[spell] {
+            let cast_time = fight.spells[spell].default_cast.cast_time;
+            crate::core::time::seconds(if cast_time > 0 { cast_time } else { self.gcd })
+        } else {
+            fight.autos.mh.weapon.swing_speed
+        };
         let mut chance = self.ppm * seconds / 60.0;
         let mut icd = self.icd;
         if self

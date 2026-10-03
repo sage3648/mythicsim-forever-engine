@@ -549,6 +549,15 @@ pub struct DruidFormSpell {
     pub forms: Vec<String>,
 }
 
+/// One cat builder: which builder, its spell position and the rank's flat damage.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct CatBuilder {
+    pub kind: String,
+    pub spell: usize,
+    pub flat_damage: f64,
+}
+
 /// Behavior Rust must execute, with the parameters Go keeps in closures. Each variant
 /// names the Go source that defines it in docs/prepared-v2.md.
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -598,6 +607,9 @@ pub enum Effect {
     /// its gain and expiry log.
     TemporaryStats {
         spell_id: i32,
+        /// The item whose use casts it, for an item's on-use cooldown.
+        #[serde(default)]
+        item_id: i32,
         aura: String,
         active_stats: BTreeMap<String, f64>,
         gain_log: String,
@@ -670,6 +682,101 @@ pub enum Effect {
         charges_per_wrath: i32,
         duration_ns: i64,
     },
+    /// Cat Form: its cast with Furor's energy carry over, and its aura's pseudo stat, weapon,
+    /// movement speed and Faerie Fire changes. The initial values are the unit's before any
+    /// aura applied; the exported pseudo stats include the form.
+    CatForm {
+        spell_id: i32,
+        aura: String,
+        initial_threat_multiplier: f64,
+        threat_multiplier: f64,
+        initial_spirit_regen_multiplier: f64,
+        spirit_regen_multiplier: f64,
+        initial_movement_speed_multiplier: f64,
+        movement_speed_bonus: f64,
+        furor_max: f64,
+        cost_spells: Vec<usize>,
+        gcd_spells: Vec<usize>,
+        gcd_delta_ns: i64,
+        form_breaking_spells: Vec<usize>,
+        main_hand: Weapon,
+        cat_weapon: Weapon,
+    },
+    /// Prowl: a prepull cast whose aura slows movement and lets the rotation act before each
+    /// main hand swing until a hit ends it.
+    Prowl {
+        spell_id: i32,
+        aura: String,
+        movement_speed_multiplier: f64,
+    },
+    /// The cat's builders: the rank's flat damage plus main hand weapon damage, a combo point
+    /// when it lands and a refund when it does not.
+    CatBuilders {
+        builders: Vec<CatBuilder>,
+        cannot_shred: bool,
+    },
+    /// Rip: a physical bleed on combo points whose attack power share is read at each tick.
+    Rip {
+        spell: usize,
+        tick_base: f64,
+        tick_per_combo_point: f64,
+        attack_power_share_per_combo_point: f64,
+        attack_power_share_max_points: f64,
+        tick_can_crit: bool,
+        tick_magic: bool,
+        expected_combo_points: f64,
+        short_name: String,
+    },
+    /// Ferocious Bite: rolled damage per combo point and per point of excess energy.
+    FerociousBite {
+        spell: usize,
+        damage_per_energy: f64,
+        damage_per_combo_point: f64,
+        attack_power_per_combo_point: f64,
+    },
+    /// Shifting Power: mana into energy.
+    ShiftingPower {
+        spell: usize,
+        energy: f64,
+    },
+    /// Faerie Fire's hit and its target aura, with how the aura's exclusive effects read in
+    /// this fight.
+    FaerieFire {
+        spell: usize,
+        aura: String,
+        armor_reduction: f64,
+        refresh: Vec<String>,
+    },
+    /// Berserk: a cooldown whose aura raises the builders' critical strike chance.
+    Berserk {
+        spell_id: i32,
+        aura: String,
+        crit_percent: f64,
+        crit_spells: Vec<usize>,
+    },
+    /// Blood Frenzy: a cat builder crit grants a combo point; the bear half needs Bear Form.
+    BloodFrenzy {
+        trigger_aura: String,
+        bear_trigger_aura: String,
+        proc_chance: f64,
+        trigger_spells: Vec<usize>,
+        outcome: Vec<String>,
+        trigger_immediately: bool,
+        metrics_action_id: ActionId,
+    },
+    /// Rend and Tear: the target takes more from the druid's special attacks while it bleeds.
+    RendAndTear {
+        multiplier: f64,
+        spells: Vec<usize>,
+        bleed_spells: Vec<usize>,
+    },
+    /// Go exclusive_effect.go ShouldRefreshExclusiveEffects for an aura a rotation asks
+    /// about: how each of its exclusive effects reads in this fight.
+    AuraShouldRefresh {
+        unit: String,
+        aura: String,
+        modes: Vec<String>,
+    },
     /// Auras whose gain and expiry change stats through Go's AddStatsDynamic, and the player's
     /// stats Rust reads for every combination of them: entry i has aura j active when bit j
     /// of i is set. `changed` names every stat any combination changes.
@@ -718,6 +825,11 @@ pub enum Effect {
         spend_spells: Vec<usize>,
         spend_outcome: Vec<String>,
         extra_attack_spell: usize,
+        /// Whether a landed hit dealing no damage is ignored, as the client's proc flags say.
+        #[serde(default)]
+        trigger_require_damage_dealt: bool,
+        #[serde(default)]
+        spend_require_damage_dealt: bool,
     },
     /// The raid's Sunder Armor, ramped one stack a period from the pull; target armor at
     /// each stack count, as Go computes it.
@@ -1295,6 +1407,17 @@ impl Effect {
             Effect::JudgementRefresh { .. } => "judgement_refresh",
             Effect::SunderArmorRamp { .. } => "sunder_armor_ramp",
             Effect::StatAuras { .. } => "stat_auras",
+            Effect::CatForm { .. } => "cat_form",
+            Effect::Prowl { .. } => "prowl",
+            Effect::CatBuilders { .. } => "cat_builders",
+            Effect::Rip { .. } => "rip",
+            Effect::FerociousBite { .. } => "ferocious_bite",
+            Effect::ShiftingPower { .. } => "shifting_power",
+            Effect::FaerieFire { .. } => "faerie_fire",
+            Effect::Berserk { .. } => "berserk",
+            Effect::BloodFrenzy { .. } => "blood_frenzy",
+            Effect::RendAndTear { .. } => "rend_and_tear",
+            Effect::AuraShouldRefresh { .. } => "aura_should_refresh",
             Effect::WindfuryTotem { .. } => "windfury_totem",
             Effect::Crusader { .. } => "crusader",
             Effect::DragonbreathChili { .. } => "dragonbreath_chili",

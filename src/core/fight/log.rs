@@ -67,4 +67,12 @@ impl<A: Agent> Fight<A> {
     pub(crate) fn player_log(&mut self, message: &str) {
         self.unit_log(Side::Player, message);
     }
+
+    /// Go `Simulation.Log`, which names no unit.
+    pub(crate) fn sim_log(&mut self, message: &str) {
+        let now = self.now;
+        if let Some(lines) = self.log.as_mut() {
+            lines.push(format!("[{:.2}] {message}\n", seconds(now)));
+        }
+    }
 }

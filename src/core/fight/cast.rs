@@ -92,7 +92,7 @@ impl<A: Agent> Fight<A> {
             .is_none_or(|queued| queued.initiated_at != self.now)
     }
 
-    fn extra_cast_condition(&self, spell: SpellId) -> bool {
+    fn extra_cast_condition(&mut self, spell: SpellId) -> bool {
         // Go RegisterSpell wraps the condition with the range check, which runs first.
         let state = &self.spells[spell];
         let distance = self.config.distance;
@@ -101,9 +101,9 @@ impl<A: Agent> Fight<A> {
         {
             return false;
         }
-        match &self.spells[spell].behavior {
+        match self.spells[spell].behavior {
             SpellBehavior::Class(behavior) if self.spells[spell].has_extra_cast_condition => {
-                A::extra_cast_condition(self, spell, *behavior)
+                A::extra_cast_condition_logged(self, spell, behavior)
             }
             _ => true,
         }
@@ -666,6 +666,7 @@ impl<A: Agent> Fight<A> {
             }
             SpellBehavior::None => panic!("spell {} has no behavior", self.spells[spell].id),
         }
+        A::after_apply_effects(self, spell);
     }
 
     /// Go `ExecuteResourceGain` for mana: only a positive amount is gained.
@@ -710,6 +711,23 @@ impl<A: Agent> Fight<A> {
             is_mana_regen: false,
         });
         self.resources.len() - 1
+    }
+
+    /// Go `UnitMetrics.NewResourceMetrics` for a metric Go registers just before the spell's
+    /// own cost metric: the two swap places, so they keep Go's order.
+    pub(crate) fn new_resource_metrics_before_cost(
+        &mut self,
+        spell: SpellId,
+        id: crate::contracts::prepared_v2::ActionId,
+        kind: super::ResourceKind,
+    ) -> usize {
+        let index = self.new_resource_metrics(id, kind);
+        let Some(cost) = self.spells[spell].mana_metrics else {
+            return index;
+        };
+        self.resources.swap(cost, index);
+        self.spells[spell].mana_metrics = Some(index);
+        cost
     }
 
     /// Go `Unit.NewHealthMetrics`: every call registers a new metric.
@@ -761,7 +779,7 @@ impl<A: Agent> Fight<A> {
     pub(crate) fn add_mana(&mut self, amount: f64, metrics: usize) {
         assert!(amount >= 0.0, "negative mana gain");
         let old = self.player.mana;
-        let new = (old + amount).min(self.config.max_mana);
+        let new = (old + amount).min(self.player.powers.max_mana);
         let resource = &mut self.resources[metrics];
         resource.events += 1;
         resource.gain += amount;
@@ -770,7 +788,7 @@ impl<A: Agent> Fight<A> {
             let line = format!(
                 "Gained {amount:.3} mana from {} ({old:.3} --> {new:.3}) of {:.0} total.",
                 action_string(&self.resources[metrics].id),
-                self.config.max_mana
+                self.player.powers.max_mana
             );
             self.player_log(&line);
         }
@@ -790,7 +808,7 @@ impl<A: Agent> Fight<A> {
                 "Spent {amount:.3} mana from {} ({:.3} --> {new:.3}) of {:.0} total.",
                 action_string(&self.resources[metrics].id),
                 self.player.mana,
-                self.config.max_mana
+                self.player.powers.max_mana
             );
             self.player_log(&line);
         }
@@ -856,6 +874,22 @@ impl<A: Agent> Fight<A> {
         self.player.spirit_attribution = None;
     }
 
+    /// Go `MultiplySpiritRegenMultiplier`: another effect moves the attribution baseline too.
+    pub(crate) fn multiply_spirit_regen_multiplier(&mut self, multiplier: f64) {
+        self.player.spirit_regen_multiplier *= multiplier;
+        if let Some(source) = self.player.spirit_attribution.as_mut() {
+            source.multiplier *= multiplier;
+        }
+    }
+
+    /// Go `DivideSpiritRegenMultiplier`.
+    pub(crate) fn divide_spirit_regen_multiplier(&mut self, divisor: f64) {
+        self.player.spirit_regen_multiplier /= divisor;
+        if let Some(source) = self.player.spirit_attribution.as_mut() {
+            source.multiplier /= divisor;
+        }
+    }
+
     /// Go `majorCooldownManager.reset`: copies in initial order, then a stable sort.
     pub(crate) fn reset_cooldown_manager(&mut self) {
         for cooldown in &mut self.major_cooldowns {
@@ -889,7 +923,10 @@ impl<A: Agent> Fight<A> {
 
     /// Go `MajorCooldown.ShouldActivate` for the non-class cooldowns.
     fn cooldown_should_activate(&self, spell: SpellId) -> bool {
-        let max = self.config.max_mana;
+        if !A::cooldown_activation_condition(self, spell) {
+            return false;
+        }
+        let max = self.player.powers.max_mana;
         let mana = self.player.mana;
         let casting_regen = crate::mechanics::mana::regen_per_second_casting(self.regen_inputs());
         match &self.spells[spell].behavior {

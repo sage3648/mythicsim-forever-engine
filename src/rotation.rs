@@ -132,6 +132,17 @@ pub enum Value {
     SpellTimeToReady(ActionId),
     DotTimeToNextTick(ActionId),
     GcdIsReady,
+    /// Go `APLValueAuraShouldRefresh`: the aura, whether it is on the current target, and the
+    /// overlap a refresh allows.
+    AuraShouldRefresh {
+        id: ActionId,
+        target: bool,
+        max_overlap: Box<Value>,
+    },
+    /// Go `APLValueFrontOfTarget`.
+    FrontOfTarget,
+    /// Go `APLValueMaxMana`.
+    MaxMana,
 }
 
 impl Value {
@@ -147,6 +158,7 @@ impl Value {
                 values.iter().for_each(|value| value.visit(f))
             }
             Value::Not(value) => value.visit(f),
+            Value::AuraShouldRefresh { max_overlap, .. } => max_overlap.visit(f),
             _ => {}
         }
     }
@@ -185,6 +197,8 @@ impl Value {
             | Value::AuraIsKnown(_)
             | Value::AuraIsActive(_)
             | Value::TargetAuraIsActive(_)
+            | Value::AuraShouldRefresh { .. }
+            | Value::FrontOfTarget
             | Value::DotIsActive(_)
             | Value::SpellIsKnown(_)
             | Value::SpellIsReady(_)
@@ -204,7 +218,8 @@ impl Value {
             | Value::CurrentMana
             | Value::RemainingTimePercent
             | Value::CurrentEnergy
-            | Value::MaxEnergy => ValueType::Float,
+            | Value::MaxEnergy
+            | Value::MaxMana => ValueType::Float,
             Value::Math { op, lhs, rhs } => {
                 let (lhs, rhs) = math_operand_types(*op, lhs.value_type(), rhs.value_type());
                 op.result_type(lhs, rhs)
@@ -746,6 +761,49 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
                 )]),
             }
         }
+        "auraShouldRefresh" => {
+            only(&["auraId", "maxOverlap", "sourceUnit"])?;
+            let id = config
+                .get("auraId")
+                .ok_or_else(|| vec![format!("{name} has no auraId")])
+                .and_then(|id| parse_action_id(id).map_err(|err| vec![err]))?;
+            // Go `GetTargetUnit`: no unit reference means the current target.
+            let target = match config.get("sourceUnit") {
+                None => true,
+                Some(source) => match source.as_object() {
+                    Some(unit) if unit.keys().all(|key| key == "type") => {
+                        match unit.get("type").and_then(Json::as_str) {
+                            Some("Self") => false,
+                            Some("CurrentTarget") => true,
+                            _ => {
+                                return Err(vec![format!(
+                                    "{name} sourceUnit {source} is unsupported"
+                                )])
+                            }
+                        }
+                    }
+                    _ => return Err(vec![format!("{name} sourceUnit {source} is unsupported")]),
+                },
+            };
+            let max_overlap = match config.get("maxOverlap") {
+                Some(value) => parse_value(value)?,
+                // Go defaults a missing overlap to a constant 0ms.
+                None => Value::Const(parse_const("0ms").expect("duration constant")),
+            };
+            Ok(Value::AuraShouldRefresh {
+                id,
+                target,
+                max_overlap: Box::new(max_overlap),
+            })
+        }
+        "frontOfTarget" => {
+            only(&[])?;
+            Ok(Value::FrontOfTarget)
+        }
+        "maxMana" => {
+            only(&[])?;
+            Ok(Value::MaxMana)
+        }
         "auraIsKnown" | "auraIsActive" | "auraNumStacks" | "auraRemainingTime" => {
             // sourceUnit, except on auraIsActive, and includeReactionTime are not modeled.
             only(&["auraId"])?;
@@ -989,6 +1047,13 @@ pub enum Compiled<R> {
     CurrentMana,
     CurrentEnergy,
     MaxEnergy,
+    MaxMana,
+    FrontOfTarget,
+    /// Go `APLValueAuraShouldRefresh` with the overlap coerced to a duration.
+    AuraShouldRefresh {
+        aura: R,
+        overlap: Box<Compiled<R>>,
+    },
     CurrentComboPoints,
     TimeToNextEnergyTick,
     RemainingTime,
@@ -1039,7 +1104,9 @@ impl<R> Compiled<R> {
             | Compiled::CurrentMana
             | Compiled::RemainingTimePercent
             | Compiled::CurrentEnergy
-            | Compiled::MaxEnergy => ValueType::Float,
+            | Compiled::MaxEnergy
+            | Compiled::MaxMana => ValueType::Float,
+            Compiled::FrontOfTarget | Compiled::AuraShouldRefresh { .. } => ValueType::Bool,
             Compiled::Math { op, lhs, rhs } => op.result_type(lhs.value_type(), rhs.value_type()),
             Compiled::Coerced { to, .. } => *to,
         }
@@ -1277,6 +1344,25 @@ fn compile_value<R>(
         Value::CurrentMana => Compiled::CurrentMana,
         Value::CurrentEnergy => Compiled::CurrentEnergy,
         Value::MaxEnergy => Compiled::MaxEnergy,
+        Value::MaxMana => Compiled::MaxMana,
+        Value::FrontOfTarget => Compiled::FrontOfTarget,
+        // Go `newValueAuraShouldRefresh`: no value without the aura.
+        Value::AuraShouldRefresh {
+            id,
+            target,
+            max_overlap,
+        } => {
+            let found = if *target {
+                (lookup.target_aura)(id)
+            } else {
+                aura(id)
+            }?;
+            let overlap = compile_value(max_overlap, lookup, missing)?.coerce(ValueType::Duration);
+            Compiled::AuraShouldRefresh {
+                aura: found.aura,
+                overlap: Box::new(overlap),
+            }
+        }
         Value::CurrentComboPoints => Compiled::CurrentComboPoints,
         Value::TimeToNextEnergyTick => Compiled::TimeToNextEnergyTick,
         Value::RemainingTime => Compiled::RemainingTime,
