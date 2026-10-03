@@ -59,7 +59,7 @@ RNG contract and implemented effects. Tests fail if it disagrees with the engine
 | `sim` | Iterations, seed, `labeled_rng`, first-iteration debug and `debug`, which logs every fight as the application's averaged timeline requests |
 | `encounter` | Base duration, variation and execute proportions, in nanoseconds |
 | `target` | Level, all stats, pseudo stats, every registered aura and whether it has a melee or ranged swing |
-| `player` | Identity, talents, stats, pseudo stats, reaction time, distance, cast speed, mana, attack table, spells, major cooldowns and rotation |
+| `player` | Identity, talents, stats, pseudo stats, reaction time, distance, cast speed, mana, an energy bar when the player has one, attack table, spells, major cooldowns and rotation |
 | `melee` | The player's weapons and auto attack flags, and the physical attack table against the target with the defender's static chances resolved |
 | `enemy` | Present only when the player tanks the target: the target's main hand swing at the player, every step of its damage and table resolved as Go computes it at reset, its table steps for each stat aura combination, and the auras whose activation would change it |
 | `effects` | Dynamic behavior and its parameters, one tagged variant per kind |
@@ -98,13 +98,18 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `judgement_of_wisdom` | sim/core/buffs/paladin.go | Chance, proc mask, mana, batch delay |
 | `potion_mana` | sim/core/consumes.go | Gain range, label, alchemist stone multiplier |
 | `conjured_mana` | sim/core/consumes.go | Gain range, label, whether it is the selected item |
+| `conjured_energy` | sim/core/consumes.go | Thistle Tea: gain range, label, whether it is the selected item and its level reduction, a Go literal |
+| `goblin_sapper` | sim/core/consumes.go | The rolled range and AoE cap of the hit on the target and the hit on the player, and the player's attack table against itself |
+| `chance_of_death` | sim/core/health.go | Once a spell can hit the player: a hit that deals damage removes health, the rotation reacts, and a pending action marks the player dead at zero |
+| `fixed_uptime_aura` | sim/core/buffs.go, aura_helpers.go | The party Battle Shout: uptime, roll period and first roll time, Go literals |
+| `energize_proc` | sim/common/forever/item_sets_classic.go | Shadowcraft Armor's energize: each spell's chance from the proc manager, the energy, its metrics and the spell batch delay |
 | `energize_on_use` | sim/common/shared/spell_data_energize.go | Client energize roll |
 | `inert_listener` | sim/core/health.go, sim/core/attack.go | Why the listener never acts in scope |
 | `touch_of_the_grave` | sim/core/racials.go | Undead drain: chance, proc mask, health share, batch delay |
 | `eureka` | sim/core/racials.go | Gnome: modifier values and the spell positions the class masks name |
 | `berserking` | sim/core/racials.go | Troll: attack and cast speed multipliers, Go literals |
 | `blood_fury` | sim/core/racials.go | Orc: every stat the aura changes, computed by Go with it active |
-| `shatter_curse` | sim/core/racials.go | Orc survival cooldown; its damage taken change has no effect in scope |
+| `shatter_curse` | sim/core/racials.go | Orc survival cooldown: the player's damage taken multiplier on each magic school, a Go literal, which only the player's own spells read in scope |
 | `read_ley_line` | sim/core/racials.go | High Order Skyborne: the cast and Energized's regeneration multiplier |
 | `temporary_stats` | sim/core/major_cooldown.go | Night Elf Elune's Light: every stat its aura changes, computed by Go with it active, and its gain and fade log lines |
 | `stat_auras` | sim/core/unit.go AddStatsDynamic | The auras that change stats during a fight and the player's stats for every combination of them, each read from a separate Go simulation, since Go recomputes stats from the active bonuses |
@@ -159,6 +164,12 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `searing_light` | sim/priest/talents_holy.go | The resolved trigger on Holy Fire ticks, Holy Purpose's Holy Nova cost modifier and the casts that end it |
 | `parry_haste` | sim/core/attack.go applyParryHaste | Which unit's Parry Haste acts once the target swings at the player; a parry pulls that unit's next main hand swing in |
 | `inert_pet` | sim/core/pet.go | A registered pet nothing summons: label, unit index, metrics actions and auras, its dismissed stats line and why it is inert |
+| `sinister_strike`, `backstab` | sim/rogue/sinister_strike.go, backstab.go | The highest rank's base on normalized main hand damage; Backstab's main hand dagger and Puncturing Wounds' combo point chance |
+| `eviscerate` | sim/rogue/eviscerate.go | The rolled base, the bonus a combo point and 3% of attack power a point, a Go literal |
+| `slice_and_dice` | sim/rogue/slice_and_dice.go | The duration at each combo point count and the melee speed multiplier |
+| `blade_flurry`, `adrenaline_rush` | sim/rogue/talents_combat.go | Blade Flurry's attack speed multiplier; Adrenaline Rush's energy regeneration multiplier and the energy at or below which it fires as a major cooldown, a Go literal |
+| `rogue_finisher` | sim/rogue/rogue.go | Relentless Strikes' chance a combo point and energy, Go literals, and Ruthlessness's chance |
+| `instant_poison`, `deadly_poison` | sim/rogue/poisons.go | The imbued hands, the chance raised by Improved Poisons, Instant Poison's damage range and Deadly Poison's tick, Go literals |
 
 Human racials are static and already in the prepared stats. High Order Skyborne's cast
 speed and every race's creature slaying are static too. Read Ley Line is not a major
@@ -188,7 +199,7 @@ The exporter marks as unrepresented: more than one player or target, health figh
 tanks, presims, healing models, pets that may act, player auto attacks, a target that swings at a
 unit, item swapping, execute phase callbacks, target AI, caster
 damage callbacks, dynamic damage-taken modifiers a class effect does not describe, mob type
-bonuses, non-mana costs,
+bonuses, costs other than mana and energy,
 unnamed class masks, item cooldowns without an exported effect, cast speed and temporary
 stat listeners, survival cooldowns that would wait for a nonzero defensive health
 threshold, a Shaman shield proc rate and Flame Shock ticks that roll a physical crit.
@@ -209,13 +220,22 @@ rolls its opening swing offset at every reset, so the target exports its swing f
 and Rust makes the same draw.
 
 Rust recomputes Go's starting mana regeneration from the exported components and
-rejects the input as invalid if it disagrees. Further preparation checks will be added
+rejects the input as invalid if it disagrees. A class without a mana bar, such as a Rogue,
+exports no mana, no mana costs and no regeneration; Go schedules no mana ticks for it and
+infers no time to out of mana.
+
+The energy bar runs as Go runs it, as a simulation task outside the pending-action queue:
+each step runs due weapon swings when they come no later than the next task, then due
+tasks, then the next pending action. An energy cost carries the share of the cost a missed
+strike refunds. A spell with metric splits, such as a finisher splitting by combo points,
+reports one tagged action per split and carries the current split's tag in log lines. Further preparation checks will be added
 as the engine consumes more fields.
 
 The rotation subset covers `castSpell`, `autocastOtherCooldowns`, `strictSequence` of
 casts, `channelSpell` with `interruptIf` and `allowRecast`, constant-time prepull casts,
 `cmp` with any comparison operator, `and`, `or`, `not`, `const`, `currentMana`,
-`currentManaPercent`, `currentTime`, `remainingTime`, `remainingTimePercent`, `numberTargets`,
+`currentManaPercent`, `currentEnergy`, `maxEnergy`, `currentComboPoints`,
+`timeToNextEnergyTick`, `currentTime`, `remainingTime`, `remainingTimePercent`, `numberTargets`,
 `math`, `totemRemainingTime` (a Shaman's), `gcdIsReady`,
 `auraIsKnown`, `auraIsActive`, `auraNumStacks`, `auraRemainingTime`, `dotIsActive`,
 `dotRemainingTime`, `dotTimeToNextTick`, `spellIsKnown`, `spellIsReady`,
@@ -271,6 +291,9 @@ production Shadow Priest request at application revision 18bbcd47; the
 `shadow-priest-*` cases change its rotation to reach a channel without `allowRecast`, a
 channel without an interrupt condition and a strict sequence that gives up control.
 `production-smite-priest` is the production Smite Priest hybrid request.
+`production-combat-rogue` is the production Combat Rogue request, with the Goblin Sapper
+Charge hitting the player, and `combat-rogue-orc-shatter-curse` runs it as an Orc whose
+Shatter Curse is up when the sapper goes off.
 
 The contract tests in
 [tests/classes/mage/prepared_v2.rs](../tests/classes/mage/prepared_v2.rs)

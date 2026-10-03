@@ -636,8 +636,8 @@ pub enum Effect {
     Berserking {
         spell_id: i32,
         aura: String,
-        cast_speed_multiplier: f64,
         attack_speed_multiplier: f64,
+        cast_speed_multiplier: f64,
     },
     /// The Orc racial Blood Fury: a major cooldown whose aura multiplies stats through Go's
     /// dynamic stat dependencies. `active_stats` holds every stat the aura changes, at the
@@ -902,12 +902,15 @@ pub enum Effect {
         dismissed_log: String,
         reason: String,
     },
-    /// The Orc racial Shatter Curse: a survival cooldown whose aura lowers the player's
-    /// spell damage taken, which has no effect in scope. Go never autocasts it at the
-    /// default defensive health threshold; configured timings still cast it.
+    /// The Orc racial Shatter Curse: a survival cooldown whose aura multiplies the player's
+    /// damage taken of the named schools, which only the player's own spells deal in scope.
+    /// Go never autocasts it at the default defensive health threshold; configured timings
+    /// still cast it.
     ShatterCurse {
         spell_id: i32,
         aura: String,
+        school_damage_taken_multiplier: f64,
+        schools: Vec<String>,
     },
     /// The Dwarf racial Stoneform: a survival cooldown whose aura lowers the player's
     /// physical damage taken, which has no effect in scope. Go never autocasts it at the
@@ -1364,6 +1367,16 @@ pub enum Effect {
         unit: String,
         aura: String,
     },
+    /// An item proc trigger that restores energy a spell batch window after a landed hit, such
+    /// as Shadowcraft Armor's: the chance each spell rolls, by spellbook position.
+    EnergizeProc {
+        trigger_aura: String,
+        rng_label: String,
+        chances: Vec<SpellChance>,
+        energy: f64,
+        metrics_action_id: ActionId,
+        delay_ns: i64,
+    },
     /// Go aura_helpers.go ApplyFixedUptimeAura: a periodic roll that activates the aura and a
     /// first roll with a random duration.
     FixedUptimeAura {
@@ -1488,6 +1501,7 @@ impl Effect {
             Effect::ChanceOfDeath { .. } => "chance_of_death",
             Effect::ParryHaste { .. } => "parry_haste",
             Effect::FixedUptimeAura { .. } => "fixed_uptime_aura",
+            Effect::EnergizeProc { .. } => "energize_proc",
         }
     }
 }

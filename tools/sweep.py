@@ -5,7 +5,8 @@ Each variant changes the fight length and its variation, the target level, the
 distance, some talent ranks, empties some gear slots, drops some raid buffs, debuffs
 and consumables, and varies reaction time and the random stream mode. With --races it
 also draws each variant's race from the given list, from a separate stream, so the
-variants are otherwise those of the same seed without races. The same seed and
+variants are otherwise those of the same seed without races. --max-distance draws the
+distance only from those within it, so a melee build stays in range. The same seed and
 options always give the same variants. Compare them with `tools/prepared_v2.py compare`.
 Uses only Python's standard library.
 """
@@ -46,7 +47,7 @@ def drop_flags(flags, rng, chance):
     return {key: value for key, value in flags.items() if not (value is True and rng.random() < chance)}
 
 
-def variant(base, rng, iterations):
+def variant(base, rng, iterations, distances=DISTANCES):
     request = copy.deepcopy(base)
     encounter = request["encounter"]
     encounter["duration"] = rng.choice(DURATIONS)
@@ -61,7 +62,7 @@ def variant(base, rng, iterations):
         if key in raid:
             raid[key] = drop_flags(raid[key], rng, 0.25)
     player = raid["parties"][0]["players"][0]
-    player["distanceFromTarget"] = rng.choice(DISTANCES)
+    player["distanceFromTarget"] = rng.choice(distances)
     player["reactionTimeMs"] = rng.choice(REACTIONS)
     player["talentsString"] = lower_talents(player["talentsString"], rng)
     if "buffs" in player:
@@ -85,12 +86,15 @@ def variant(base, rng, iterations):
     return request
 
 
-def generate(base, seed, count, iterations=300, races=()):
+def generate(base, seed, count, iterations=300, races=(), max_distance=None):
     rng = random.Random(seed)
     race_rng = random.Random(f"races-{seed}")
+    distances = tuple(d for d in DISTANCES if max_distance is None or d <= max_distance)
+    if not distances:
+        raise ValueError(f"no distance within {max_distance}")
     variants = []
     for _ in range(count):
-        request = variant(base, rng, iterations)
+        request = variant(base, rng, iterations, distances)
         if races:
             request["raid"]["parties"][0]["players"][0]["race"] = race_rng.choice(races)
         variants.append(request)
@@ -105,12 +109,15 @@ def main():
     parser.add_argument("--count", type=int, default=24)
     parser.add_argument("--iterations", type=int, default=300)
     parser.add_argument("--races", default="", help="comma-separated Go race names to draw from")
+    parser.add_argument("--max-distance", type=float, default=None,
+                        help="draw only distances within this many yards, such as 5 for melee")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     base = resolve(json.loads(args.base.read_text()), args.pointer)
     args.output.mkdir(parents=True, exist_ok=False)
     races = tuple(race for race in args.races.split(",") if race)
-    for index, request in enumerate(generate(base, args.seed, args.count, args.iterations, races)):
+    variants = generate(base, args.seed, args.count, args.iterations, races, args.max_distance)
+    for index, request in enumerate(variants):
         (args.output / f"sweep-{index:02d}.json").write_text(json.dumps(request, indent=2) + "\n")
     print(f"Wrote {args.count} variants to {args.output}")
 

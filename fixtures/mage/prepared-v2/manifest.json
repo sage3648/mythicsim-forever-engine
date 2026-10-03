@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "3b3aa46220351f6204be75545d2968058507b21ec0cb6dc0ea0917fff2607cc1",
+  "exporter_sha256": "879e91fecdb4dff703d960484e882020b1726e64b086b8c16fe45975384b96e0",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -654,7 +654,7 @@
         "path": "fixtures/mage/prepared-v2/frost-orc.request.json"
       },
       "prepared": "frost-orc.prepared.json",
-      "prepared_sha256": "85933fb11441a30f533d8c5f7c2cd33f0e0c1ee670ef90218649ed240085876f",
+      "prepared_sha256": "4a60a4b57e70b3863dd8ca753773f7ea4d2a88f2ae0a08de298b121805cb2531",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -675,7 +675,7 @@
         "path": "fixtures/mage/prepared-v2/frost-orc-cooldown-timings.request.json"
       },
       "prepared": "frost-orc-cooldown-timings.prepared.json",
-      "prepared_sha256": "1ee2914df8d7096ef74ccb5dd5b4fbd509cc703bebe57b90d30d7a7a25cef309",
+      "prepared_sha256": "5adfabf5341fdce1f67256fb49a817a47981487bd6d283f65e0bc21eb1f3da32",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1134,7 +1134,7 @@
         "path": "fixtures/mage/prepared-v2/enhancement-shaman-no-battle-shout.request.json"
       },
       "prepared": "enhancement-shaman-no-battle-shout.prepared.json",
-      "prepared_sha256": "c3ea36c77cb10e24550a0e6a291bb93247f930e6e1f748fba45bcf6002c8bfdc",
+      "prepared_sha256": "a0a6ab4eb14757fde250b0e1769fa73369c83f13208618ea557d8beead8d1467",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1155,7 +1155,7 @@
         "path": "fixtures/mage/prepared-v2/production-enhancement-shaman.request.json"
       },
       "prepared": "production-enhancement-shaman.prepared.json",
-      "prepared_sha256": "f2d1bd381dd25d32f0e92043fa3d83488ce5eb371fd47cd8848eeeedce189f0b",
+      "prepared_sha256": "9d15bedbf8b725e9c24c2ce8c359d183f79e20c60121df45bca35e23bdbc4fe2",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1167,6 +1167,48 @@
       "go_log": {
         "file": "production-enhancement-shaman.go-log.txt",
         "sha256": "25a90ebe7e862e1ccd9c8ff7d3224468535bb9c7d1dea4948e21836ea51cda21"
+      }
+    },
+    {
+      "id": "production-combat-rogue",
+      "description": "The production application's Combat Rogue request (Undead, talents 005303105-32030320201515221-002, application revision 18bbcd47): dagger Backstab, Slice and Dice, Eviscerate, Adrenaline Rush, Blade Flurry, Instant and Deadly Poison, Thistle Tea, the Goblin Sapper Charge, Windfury Totem, Crusader, Dragonbreath Chili and Shadowcraft Armor's energize.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-combat-rogue.request.json"
+      },
+      "prepared": "production-combat-rogue.prepared.json",
+      "prepared_sha256": "b3bc7df87578721bb0d880b117e57dfd505caece437aafb2586ac5abd431f0c7",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-combat-rogue.go-result.json",
+        "sha256": "4cf1fb9d25bc82f8a68021ae4421935da134fb316914b148345a05be7477878d"
+      },
+      "go_log": {
+        "file": "production-combat-rogue.go-log.txt",
+        "sha256": "4875bea8fa579c578a8e12b0946e782e6e25f3c02810a13f6804989e84e5c578"
+      }
+    },
+    {
+      "id": "combat-rogue-orc-shatter-curse",
+      "description": "The production Combat Rogue request as an Orc with a Shatter Curse timing at one second, 1000 iterations: the curse is up when the Goblin Sapper Charge hits the player, so the self hit takes the curse's lower Fire damage taken, and Blood Fury changes stats.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/combat-rogue-orc-shatter-curse.request.json"
+      },
+      "prepared": "combat-rogue-orc-shatter-curse.prepared.json",
+      "prepared_sha256": "f3d51cf81b139d81b325b831cea17ed0903fdb8a5bc93bc4f1a2b7da35e24767",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "combat-rogue-orc-shatter-curse.go-result.json",
+        "sha256": "f62059183d02d8323bac555ff412e81aef7ccafcc7b1d1a6165521895545f601"
+      },
+      "go_log": {
+        "file": "combat-rogue-orc-shatter-curse.go-log.txt",
+        "sha256": "2321ee8d6f0181266a17068f20a62fca25828ed7302765a4be6ec8f96cb10815"
       }
     }
   ]
