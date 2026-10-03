@@ -445,6 +445,7 @@ impl Agent for HunterAgent {
         let delay = fight.autos.mh.pending_swing_delay;
         if fight.log.is_none()
             || hand != Hand::Main
+            || fight.spells[spell].caster != Side::Player
             || fight.spells[spell].id.tag != 1
             || delay <= NS_PER_MILLISECOND
         {
