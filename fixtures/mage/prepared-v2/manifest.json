@@ -1105,6 +1105,27 @@
         "file": "production-feral-druid.go-log.txt",
         "sha256": "e70d376f5e46073071812adfea8242b8e42651b63e7160255dadbd728e5078c5"
       }
+    },
+    {
+      "id": "feral-druid-faerie-fire-armor",
+      "description": "production-feral-druid with only the raid's Sunder Armor among the debuffs: Faerie Fire holds its armor category alone, so its armor reduction applies while it is up, and the Sunder Armor ramp keeps it as each stack lowers the armor",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-druid-faerie-fire-armor.request.json"
+      },
+      "prepared": "feral-druid-faerie-fire-armor.prepared.json",
+      "prepared_sha256": "8dc559cd4ab60ded5270d1abe838b83e2e01a696d8c15091b2931cdcfc5d49a6",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-druid-faerie-fire-armor.go-result.json",
+        "sha256": "07ae4e5bab3689ab8b9bc755008ecc8081601ee13eb0d79d768a43ef828a1edb"
+      },
+      "go_log": {
+        "file": "feral-druid-faerie-fire-armor.go-log.txt",
+        "sha256": "6ee3c2a73fe859752e585cae18e3cbb7b4800e06cc3015b8a140d3258422b16c"
+      }
     }
   ]
 }
