@@ -9,8 +9,8 @@ use crate::{
 };
 
 use super::{
-    spells::{dark_sacrifice, devouring_plague, direct, periodic, shadowform},
-    talents::{inner_focus, shadow_weaving},
+    spells::{dark_sacrifice, devouring_plague, direct, holy, periodic, shadowform},
+    talents::{inner_focus, power_in_light, searing_light, shadow_weaving},
 };
 
 /// What a Priest spell does when its effects apply.
@@ -24,6 +24,9 @@ pub(crate) enum PriestSpell {
     Shadowform,
     InnerFocus,
     DarkSacrifice,
+    Smite,
+    HolyFire,
+    Penance,
 }
 
 /// Class auras with Rust behavior.
@@ -33,6 +36,8 @@ pub(crate) enum PriestAura {
     InnerFocus,
     ShadowWeaving,
     ShadowWeavingTrigger,
+    SearingLight,
+    SearingLightTrigger,
 }
 
 /// Priest state that Go keeps in the `Priest` struct and its closures.
@@ -45,6 +50,7 @@ pub(crate) struct PriestAgent {
     inner_focus: Option<Rc<inner_focus::InnerFocus>>,
     shadow_weaving: Option<Rc<shadow_weaving::ShadowWeaving>>,
     dark_sacrifice: Option<Rc<dark_sacrifice::DarkSacrifice>>,
+    searing_light: Option<Rc<searing_light::SearingLight>>,
 }
 
 /// Player aura labels claimed by implemented class effects.
@@ -59,6 +65,12 @@ fn class_auras(prepared: &PreparedV2) -> Vec<(String, PriestAura)> {
             } => {
                 auras.push((aura.clone(), PriestAura::ShadowWeaving));
                 auras.push((trigger_aura.clone(), PriestAura::ShadowWeavingTrigger));
+            }
+            Effect::SearingLight {
+                aura, trigger_aura, ..
+            } => {
+                auras.push((aura.clone(), PriestAura::SearingLight));
+                auras.push((trigger_aura.clone(), PriestAura::SearingLightTrigger));
             }
             _ => {}
         }
@@ -112,6 +124,13 @@ impl PriestAgent {
                 Some(PriestSpell::MindFlay)
             }
             "shadowform" => Some(PriestSpell::Shadowform),
+            "smite" if spell.damage_effect.is_some() => Some(PriestSpell::Smite),
+            "holy_fire" if spell.damage_effect.is_some() && spell.dot.is_some() => {
+                Some(PriestSpell::HolyFire)
+            }
+            "penance" if spell.dot.as_ref().is_some_and(|dot| dot.channeled) => {
+                Some(PriestSpell::Penance)
+            }
             _ => None,
         }
     }
@@ -160,8 +179,51 @@ impl PriestAgent {
                 Effect::ShadowWordDeath { early_demise_crit } => {
                     fight.agent.early_demise_crit = *early_demise_crit;
                 }
-                Effect::ShadowWordPain { ranks } | Effect::MindFlay { ranks } => {
+                Effect::ShadowWordPain { ranks }
+                | Effect::MindFlay { ranks }
+                | Effect::HolyFire { ranks } => {
                     set_ticks(&mut fight, ranks);
+                }
+                Effect::Penance {
+                    spell_id,
+                    tick_base,
+                    tick_can_crit,
+                } => {
+                    let rank = crate::contracts::prepared_v2::FireballRank {
+                        spell_id: *spell_id,
+                        tick_base: *tick_base,
+                        tick_can_crit: *tick_can_crit,
+                    };
+                    set_ticks(&mut fight, &[rank]);
+                }
+                Effect::PowerInLight {
+                    multiplier,
+                    spells,
+                    holy_fire_spells,
+                } => power_in_light::bind(&mut fight, *multiplier, spells, holy_fire_spells)?,
+                Effect::SearingLight {
+                    trigger_aura,
+                    aura,
+                    trigger_immediately,
+                    proc_chance,
+                    trigger_spells,
+                    cost_percent_add,
+                    cost_spells,
+                    cancel_spells,
+                    ..
+                } => {
+                    let bound = searing_light::bind(
+                        &mut fight,
+                        aura,
+                        trigger_aura,
+                        *proc_chance,
+                        *trigger_immediately,
+                        trigger_spells,
+                        *cost_percent_add,
+                        cost_spells,
+                        cancel_spells,
+                    )?;
+                    fight.agent.searing_light = Some(Rc::new(bound));
                 }
                 Effect::DevouringPlague {
                     ranks,
@@ -294,6 +356,14 @@ impl PriestAgent {
             .expect("Shadow Weaving is bound")
     }
 
+    fn searing_light(fight: &Fight<Self>) -> Rc<searing_light::SearingLight> {
+        fight
+            .agent
+            .searing_light
+            .clone()
+            .expect("Searing Light is bound")
+    }
+
     fn dark_sacrifice(fight: &Fight<Self>) -> Rc<dark_sacrifice::DarkSacrifice> {
         fight
             .agent
@@ -309,7 +379,9 @@ impl Agent for PriestAgent {
 
     fn apply_effects(fight: &mut Fight<Self>, spell: SpellId, target: Side, behavior: PriestSpell) {
         match behavior {
-            PriestSpell::MindBlast => direct::apply(fight, spell, target),
+            PriestSpell::MindBlast | PriestSpell::Smite => direct::apply(fight, spell, target),
+            PriestSpell::HolyFire => holy::apply_holy_fire(fight, spell, target),
+            PriestSpell::Penance => holy::apply_penance(fight, spell, target),
             PriestSpell::ShadowWordDeath => {
                 let crit = fight.agent.early_demise_crit;
                 direct::apply_shadow_word_death(fight, spell, target, crit);
@@ -338,7 +410,10 @@ impl Agent for PriestAgent {
 
     fn on_dot_tick(fight: &mut Fight<Self>, dot: DotId, behavior: PriestSpell) {
         match behavior {
-            PriestSpell::ShadowWordPain | PriestSpell::MindFlay => {
+            PriestSpell::ShadowWordPain
+            | PriestSpell::MindFlay
+            | PriestSpell::HolyFire
+            | PriestSpell::Penance => {
                 fight.snapshot_dot_tick(dot);
             }
             PriestSpell::DevouringPlague => {
@@ -362,7 +437,8 @@ impl Agent for PriestAgent {
             PriestAura::Shadowform => Self::shadowform(fight).on_gain(fight),
             PriestAura::InnerFocus => Self::inner_focus(fight).on_gain(fight),
             PriestAura::ShadowWeaving => Self::shadow_weaving(fight).on_gain(fight),
-            PriestAura::ShadowWeavingTrigger => {}
+            PriestAura::SearingLight => Self::searing_light(fight).on_gain(fight),
+            PriestAura::ShadowWeavingTrigger | PriestAura::SearingLightTrigger => {}
         }
     }
 
@@ -371,7 +447,8 @@ impl Agent for PriestAgent {
             PriestAura::Shadowform => Self::shadowform(fight).on_expire(fight),
             PriestAura::InnerFocus => Self::inner_focus(fight).on_expire(fight),
             PriestAura::ShadowWeaving => Self::shadow_weaving(fight).on_expire(fight),
-            PriestAura::ShadowWeavingTrigger => {}
+            PriestAura::SearingLight => Self::searing_light(fight).on_expire(fight),
+            PriestAura::ShadowWeavingTrigger | PriestAura::SearingLightTrigger => {}
         }
     }
 
@@ -391,6 +468,7 @@ impl Agent for PriestAgent {
         match kind {
             PriestAura::Shadowform => Self::shadowform(fight).on_cast_complete(fight, spell),
             PriestAura::InnerFocus => Self::inner_focus(fight).on_cast_complete(fight, spell),
+            PriestAura::SearingLight => Self::searing_light(fight).on_cast_complete(fight, spell),
             _ => {}
         }
     }
@@ -407,6 +485,18 @@ impl Agent for PriestAgent {
         }
     }
 
+    fn on_periodic_damage_dealt(
+        fight: &mut Fight<Self>,
+        _aura: AuraRef,
+        kind: PriestAura,
+        spell: SpellId,
+        result: &SpellResult,
+    ) {
+        if kind == PriestAura::SearingLightTrigger {
+            Self::searing_light(fight).on_periodic_damage_dealt(fight, spell, result);
+        }
+    }
+
     fn on_delayed_proc(
         fight: &mut Fight<Self>,
         _aura: AuraRef,
@@ -414,8 +504,13 @@ impl Agent for PriestAgent {
         _spell: SpellId,
         _result: SpellResult,
     ) {
-        if kind == PriestAura::ShadowWeavingTrigger {
-            Self::shadow_weaving(fight).handler(fight);
+        match kind {
+            PriestAura::ShadowWeavingTrigger => Self::shadow_weaving(fight).handler(fight),
+            PriestAura::SearingLightTrigger => {
+                let aura = Self::searing_light(fight).aura;
+                fight.activate_aura(aura);
+            }
+            _ => {}
         }
     }
 }

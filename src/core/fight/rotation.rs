@@ -261,6 +261,10 @@ impl<A: Agent> Fight<A> {
         match value {
             Compiled::Const(constant) => constant.float,
             Compiled::CurrentManaPercent => self.player.mana / self.config.max_mana,
+            // Go `GetRemainingDurationPercent` for a fight timed by duration.
+            Compiled::RemainingTimePercent => {
+                (self.duration - self.now) as f64 / self.duration as f64
+            }
             Compiled::CurrentMana => self.player.mana,
             Compiled::NumberTargets => 1.0,
             // Go `APLValueMath.GetFloat`.

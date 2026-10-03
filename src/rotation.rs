@@ -109,6 +109,7 @@ pub enum Value {
         rhs: Box<Value>,
     },
     CurrentManaPercent,
+    RemainingTimePercent,
     CurrentMana,
     RemainingTime,
     CurrentTime,
@@ -192,7 +193,9 @@ impl Value {
             | Value::DotTimeToNextTick(_)
             | Value::RemainingTime
             | Value::CurrentTime => ValueType::Duration,
-            Value::CurrentManaPercent | Value::CurrentMana => ValueType::Float,
+            Value::CurrentManaPercent | Value::CurrentMana | Value::RemainingTimePercent => {
+                ValueType::Float
+            }
             Value::Math { op, lhs, rhs } => {
                 let (lhs, rhs) = math_operand_types(*op, lhs.value_type(), rhs.value_type());
                 op.result_type(lhs, rhs)
@@ -652,6 +655,10 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
             only(&[])?;
             Ok(Value::RemainingTime)
         }
+        "remainingTimePercent" => {
+            only(&[])?;
+            Ok(Value::RemainingTimePercent)
+        }
         "currentMana" => {
             only(&[])?;
             Ok(Value::CurrentMana)
@@ -953,6 +960,7 @@ pub enum Compiled<R> {
         rhs: Box<Compiled<R>>,
     },
     CurrentManaPercent,
+    RemainingTimePercent,
     CurrentMana,
     RemainingTime,
     CurrentTime,
@@ -995,7 +1003,9 @@ impl<R> Compiled<R> {
             | Compiled::DotTimeToNextTick(_)
             | Compiled::RemainingTime
             | Compiled::CurrentTime => ValueType::Duration,
-            Compiled::CurrentManaPercent | Compiled::CurrentMana => ValueType::Float,
+            Compiled::CurrentManaPercent
+            | Compiled::CurrentMana
+            | Compiled::RemainingTimePercent => ValueType::Float,
             Compiled::Math { op, lhs, rhs } => op.result_type(lhs.value_type(), rhs.value_type()),
             Compiled::Coerced { to, .. } => *to,
         }
@@ -1229,6 +1239,7 @@ fn compile_value<R>(
     Some(match value {
         Value::Const(constant) => Compiled::Const(constant.clone()),
         Value::CurrentManaPercent => Compiled::CurrentManaPercent,
+        Value::RemainingTimePercent => Compiled::RemainingTimePercent,
         Value::CurrentMana => Compiled::CurrentMana,
         Value::RemainingTime => Compiled::RemainingTime,
         Value::CurrentTime => Compiled::CurrentTime,
