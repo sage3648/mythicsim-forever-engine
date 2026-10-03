@@ -55,6 +55,7 @@ const COMMON_EFFECTS: &[&str] = &[
     "potion_mana",
     "read_ley_line",
     "shatter_curse",
+    "spell_data_damage_proc",
     "stat_auras",
     "stoneform",
     "sunder_armor_ramp",
@@ -165,9 +166,9 @@ fn common_claims(effect: &Effect) -> Vec<(&'static str, &str)> {
             _ => Vec::new(),
         },
         Effect::EnergizeProc { trigger_aura, .. } => vec![("player", trigger_aura)],
-        Effect::Crusader { trigger_aura, .. } | Effect::DragonbreathChili { trigger_aura, .. } => {
-            vec![("player", trigger_aura)]
-        }
+        Effect::Crusader { trigger_aura, .. }
+        | Effect::DragonbreathChili { trigger_aura, .. }
+        | Effect::SpellDataDamageProc { trigger_aura, .. } => vec![("player", trigger_aura)],
         Effect::WindfuryTotem {
             trigger_aura,
             proc_aura,

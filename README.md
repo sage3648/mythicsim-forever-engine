@@ -138,7 +138,12 @@ Vengeance, Vindication, Sanctified Judgement and Sacred Arbiter, with Crusader, 
 Windfury Totem and Battle Shout, Dragonbreath Chili and the raid's ramped Sunder Armor, at
 671.848 DPS. Its [sweep](validation/2026-10-04-retribution-paladin-sweep.json) and a
 [race sweep](validation/2026-10-04-retribution-paladin-race-sweep.json) across Human,
-Dwarf and Undead match Go on every supported variant.
+Dwarf and Undead match Go on every supported variant. The production Shockadin hybrid
+matches too, at 717.022 DPS: a prepull Divine Favor and Seal of Righteousness, Judgement,
+Consecration with Consecrated Ground's mark, Hammer of Wrath, Holy Strike and Holy Shock,
+with the Storm Gauntlets' Nature proc, and its
+[race sweep](validation/2026-10-04-shockadin-paladin-sweep.json) matches on all 24
+variants.
 
 Every race that can be a Mage is supported: Human, Gnome, Undead, Troll with
 Berserking, Orc with Blood Fury and Shatter Curse, and High Order Skyborne with Read

@@ -1231,6 +1231,27 @@
         "file": "production-retribution-paladin.go-log.txt",
         "sha256": "7a8155bad865e8d5b609665f1d2467383c529733103023dbed0997dceddeff8c"
       }
+    },
+    {
+      "id": "production-shockadin-paladin",
+      "description": "The production Shockadin Paladin hybrid request at application revision 18bbcd47: prepull Divine Favor and Seal of Righteousness, Judgement, Consecration with Consecrated Ground, Hammer of Wrath, Holy Strike and Holy Shock, with the Storm Gauntlets' Nature proc",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-shockadin-paladin.request.json"
+      },
+      "prepared": "production-shockadin-paladin.prepared.json",
+      "prepared_sha256": "666cfcb1b78f377b7cdb9346b09a2cf1dd777aec7d4165c778921b4284df0da6",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-shockadin-paladin.go-result.json",
+        "sha256": "a22d34e6eb53919e180b0d46f990adfc0ee21d2dfeb82562a91e20ddf954cb95"
+      },
+      "go_log": {
+        "file": "production-shockadin-paladin.go-log.txt",
+        "sha256": "9a8e8b0b81a04623bc72a05df19ddd43e0e189fc767c9ab92a04421ec2e859d5"
+      }
     }
   ]
 }

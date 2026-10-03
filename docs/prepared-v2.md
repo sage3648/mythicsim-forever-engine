@@ -127,7 +127,10 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `seal_of_righteousness` | sim/paladin/seal_of_righteousness.go, seals.go | Every rank's seal, aura, judgement, damage spell and per-hit value, and the weapon's hand multiplier and speed, Go literals; Judgement of Righteousness's roll is on its spell |
 | `holy_strike` | sim/paladin/holy_strike.go | Every rank's percent of the normalized swing; the flat roll is on the spell |
 | `hammer_of_wrath` | sim/paladin/hammer_of_wrath.go | The rolls on the spells; the 20% execute phase gates the cast and a real cast pauses the swing |
-| `consecration` | sim/paladin/consecration.go | Every rank's tick, the bonus the first targets take, its coefficient and the target count |
+| `consecration` | sim/paladin/consecration.go, talents_holy.go | Every rank's tick, the bonus the first targets take, its coefficient and the target count; with Consecrated Ground, the target aura each tick marks and its multiplier on the paladin's Holy damage, a damage done by caster handler |
+| `holy_shock` | sim/paladin/holy_shock.go | Every rank's damage roll from Go's hand-written table |
+| `divine_favor` | sim/paladin/divine_favor.go | The major cooldown, its aura's crit and the spells it names, whose cast spends it |
+| `spell_data_damage_proc` | sim/common/shared/shared_utils.go | An item proc built from client rows, such as the Storm Gauntlets': the resolved trigger's spells, outcome, damage and chance, and a single target magic hit on its damage row's roll |
 | `vengeance` | sim/paladin/talents_retribution.go | The damage per stack and the Holy and Physical spells the mod reaches, as Go's shouldApply matches them |
 | `vindication` | sim/paladin/talents_retribution.go | The trigger, a Go literal chance, the target's aura and the paladin's attack power aura, whose stats are in `stat_auras` |
 | `sanctified_judgement` | sim/paladin/talents_retribution.go | The chance and the share of the active seal's last cost Judgement refunds |
@@ -311,9 +314,10 @@ channel without an interrupt condition and a strict sequence that gives up contr
 `production-combat-rogue` is the production Combat Rogue request, with the Goblin Sapper
 Charge hitting the player, and `combat-rogue-orc-shatter-curse` runs it as an Orc whose
 Shatter Curse is up when the sapper goes off.
-`production-retribution-paladin` is the production Retribution Paladin request, and the
-`paladin-*` cases strip it to its auto attacks and the weapon, consumable and raid procs
-they carry.
+`production-retribution-paladin` is the production Retribution Paladin request and
+`production-shockadin-paladin` the production Shockadin hybrid; the `paladin-*` cases
+strip the Retribution request to its auto attacks and the weapon, consumable and raid
+procs they carry.
 
 The contract tests in
 [tests/classes/mage/prepared_v2.rs](../tests/classes/mage/prepared_v2.rs)
