@@ -704,6 +704,21 @@ pub enum Effect {
         roll_max: f64,
         delay_ns: i64,
     },
+    /// The party Windfury Totem: the totem aura refreshed every period holds a trigger that can
+    /// grant charges of attack power and cast an extra main hand attack; landed autos spend the
+    /// charges.
+    WindfuryTotem {
+        totem_aura: String,
+        period_ns: i64,
+        trigger_aura: String,
+        trigger_spells: Vec<usize>,
+        trigger_outcome: Vec<String>,
+        trigger_proc_chance: f64,
+        proc_aura: String,
+        spend_spells: Vec<usize>,
+        spend_outcome: Vec<String>,
+        extra_attack_spell: usize,
+    },
     /// The raid's Sunder Armor, ramped one stack a period from the pull; target armor at
     /// each stack count, as Go computes it.
     SunderArmorRamp {
@@ -1219,6 +1234,7 @@ impl Effect {
             Effect::JudgementRefresh { .. } => "judgement_refresh",
             Effect::SunderArmorRamp { .. } => "sunder_armor_ramp",
             Effect::StatAuras { .. } => "stat_auras",
+            Effect::WindfuryTotem { .. } => "windfury_totem",
             Effect::Crusader { .. } => "crusader",
             Effect::DragonbreathChili { .. } => "dragonbreath_chili",
             Effect::ShatterCurse { .. } => "shatter_curse",

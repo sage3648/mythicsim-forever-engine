@@ -55,6 +55,7 @@ const COMMON_EFFECTS: &[&str] = &[
     "sunder_armor_ramp",
     "temporary_stats",
     "touch_of_the_grave",
+    "windfury_totem",
 ];
 
 /// Every class with an implemented gate.
@@ -152,6 +153,11 @@ fn common_claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         Effect::Crusader { trigger_aura, .. } | Effect::DragonbreathChili { trigger_aura, .. } => {
             vec![("player", trigger_aura)]
         }
+        Effect::WindfuryTotem {
+            trigger_aura,
+            proc_aura,
+            ..
+        } => vec![("player", trigger_aura), ("player", proc_aura)],
         Effect::InertListener { unit, aura, .. } => match unit.as_str() {
             "player" => vec![("player", aura)],
             "target" => vec![("target", aura)],
