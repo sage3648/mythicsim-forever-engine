@@ -36,6 +36,7 @@ pub(crate) struct ClassGate {
 
 /// Effects of races, items and raid buffs, which every class shares.
 const COMMON_EFFECTS: &[&str] = &[
+    "basic_explosive",
     "berserking",
     "blood_fury",
     "chance_of_death",
@@ -120,6 +121,9 @@ fn common_spell_capability(spell: &Spell, prepared: &PreparedV2) -> Option<&'sta
         Effect::ConjuredEnergy { item_id, .. } if *item_id == item => Some("conjured_energy"),
         Effect::GoblinSapper { item_id, .. } if *item_id == item && id.tag == 0 => {
             Some("goblin_sapper")
+        }
+        Effect::BasicExplosive { item_id, .. } if *item_id == item && id.tag == 0 => {
+            Some("basic_explosive")
         }
         Effect::EnergizeOnUse { item_id, .. } if *item_id == item => Some("energize_on_use"),
         Effect::Eureka { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
@@ -620,8 +624,17 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
                 }
             }
             // Go newHardcastAction: a tank's hardcast drops its avoidance and can be pushed back.
+            // A hardcast that cannot be pushed back only holds reduced avoidance, whose rolls the
+            // exporter reads.
+            let held = !spell.has_flag("SpellFlagChanneled")
+                && !spell.has_flag("SpellFlagPushback")
+                && prepared
+                    .enemy
+                    .as_ref()
+                    .is_some_and(|enemy| !enemy.reduced_avoidance_rolls.is_empty());
             if prepared.enemy.is_some()
                 && (spell.default_cast.cast_time_ns > 0 || spell.has_flag("SpellFlagChanneled"))
+                && !held
             {
                 limited.insert(format!(
                     "rotation reaches {id}, a hardcast while the target swings at the player"

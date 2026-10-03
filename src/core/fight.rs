@@ -239,6 +239,12 @@ pub(crate) enum SpellBehavior<S> {
     },
     /// Go consumes.go Goblin Sapper Charge: a Fire hit on the target and one on the player.
     GoblinSapper,
+    /// Go consumes.go newBasicExplosiveSpellConfig without the self hit.
+    BasicExplosive {
+        min: f64,
+        max: f64,
+        aoe_cap_multiplier: f64,
+    },
     /// Go spell_data_energize.go: an item use that rolls a client energize effect.
     EnergizeOnUse {
         average: f64,
@@ -552,6 +558,9 @@ pub(crate) struct Player {
     pub(crate) rotation_timer: i64,
     pub(crate) hardcast: Hardcast,
     pub(crate) hardcast_action: Option<Handle>,
+    /// Go `HardcastAvoidanceAura`'s state: a tank's hardcast drops its avoidance until the cast
+    /// completes.
+    pub(crate) reduced_avoidance: bool,
     pub(crate) rotation_action: Option<Handle>,
     pub(crate) queued: Option<QueuedSpell>,
     pub(crate) channeled_dot: Option<DotId>,
@@ -594,6 +603,7 @@ impl Player {
                 target: Side::Target,
             },
             hardcast_action: None,
+            reduced_avoidance: false,
             rotation_action: None,
             queued: None,
             channeled_dot: None,
@@ -1440,6 +1450,16 @@ impl<A: Agent> Fight<A> {
                         Effect::GoblinSapper { item_id, .. } if *item_id == item && id.tag == 0 => {
                             Some(SpellBehavior::GoblinSapper)
                         }
+                        Effect::BasicExplosive {
+                            item_id,
+                            min_damage,
+                            max_damage,
+                            aoe_cap_multiplier,
+                        } if *item_id == item && id.tag == 0 => Some(SpellBehavior::BasicExplosive {
+                            min: *min_damage,
+                            max: *max_damage,
+                            aoe_cap_multiplier: *aoe_cap_multiplier,
+                        }),
                         Effect::EnergizeOnUse {
                             item_id,
                             average,
@@ -2693,6 +2713,7 @@ impl<A: Agent> Fight<A> {
                 target: Side::Target,
             };
             player.hardcast_action = None;
+            player.reduced_avoidance = false;
             player.rotation_action = None;
             player.channeled_dot = None;
             player.queued = None;

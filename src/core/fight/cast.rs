@@ -583,6 +583,7 @@ impl<A: Agent> Fight<A> {
             let line = format!("Completed cast {}", action_string(&self.spells[spell].id));
             self.unit_log(self.caster(spell), &line);
         }
+        self.player.reduced_avoidance = false;
         if !self.can_complete_cast(spell, true) {
             return;
         }
@@ -744,6 +745,11 @@ impl<A: Agent> Fight<A> {
             }),
             SpellBehavior::MeleeAuto(hand) => self.apply_melee_auto(spell, target, hand),
             SpellBehavior::GoblinSapper => self.apply_goblin_sapper(spell, target),
+            SpellBehavior::BasicExplosive {
+                min,
+                max,
+                aoe_cap_multiplier,
+            } => self.apply_basic_explosive(spell, target, min, max, aoe_cap_multiplier),
             SpellBehavior::RollDamage { min, max } => {
                 // Go sim.Roll: min + (max - min) * RandomFloat("Damage Roll").
                 let base = min + (max - min) * self.random("Damage Roll");
@@ -923,6 +929,10 @@ impl<A: Agent> Fight<A> {
 
     /// Go `Unit.newHardcastAction`.
     fn new_hardcast_action(&mut self, side: Side) {
+        // Go: while casting, a tank's dodge, parry and block fall to zero.
+        if side == Side::Player && self.enemy.is_some() {
+            self.player.reduced_avoidance = true;
+        }
         if let Some(action) = self.unit_mut(side).hardcast_action.take() {
             self.queue.cancel(action);
         }
@@ -1128,7 +1138,8 @@ impl<A: Agent> Fight<A> {
             // Go's default ShouldActivate.
             SpellBehavior::Eureka
             | SpellBehavior::ActivateAura(_)
-            | SpellBehavior::GoblinSapper => true,
+            | SpellBehavior::GoblinSapper
+            | SpellBehavior::BasicExplosive { .. } => true,
             SpellBehavior::TouchOfTheGraveDrain { .. }
             | SpellBehavior::MeleeAuto(_)
             | SpellBehavior::RollDamage { .. }

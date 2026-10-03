@@ -53,6 +53,7 @@ reading the Go reference. They are not effort estimates for other contributors.
 | Shockadin Paladin | 2026-10-03 18:05 | 2026-10-03 18:21 | 0 h 16 m | Holy Shock, Divine Favor, Consecrated Ground through the damage done by caster hook and the Storm Gauntlets as a client row item damage proc; the production request matches Go on the first comparison; 24 of 24 race sweep variants match |
 | Affliction Warlock and pets | 2026-10-03 16:47 | 2026-10-03 17:52 | 1 h 05 m | Simulated pets as units in the shared runtime: reset enable, auto attacks, mana, rotation, metrics and logs; Nightfall, Amplify Curse and the Succubus's AI; the production request matches Go after two fixes; 24 of 24 sweep variants match |
 | Demonology Warlock | 2026-10-03 17:52 | 2026-10-03 18:25 | 0 h 33 m | Decimation, Demonic Brand spent by the demon's hits, Demonic Energies, inert pets' permanent auras, Fel Energy and a pet source unit for auraIsKnown; the production request matches Go after three fixes; 24 of 24 sweep variants match |
+| Basic explosives | 2026-10-03 18:30 | 2026-10-03 18:55 | 0 h 25 m | Dense Dynamite and every other basic explosive as a major cooldown, and a tank's reduced avoidance while hardcasting; Dense Dynamite on a tanking Protection Paladin, on the Retribution Paladin, Thorium Grenade on the Marksmanship Hunter, Ez-Thro Dynamite II, Crystal Charge and a SAF-T bomb on other builds match Go on the first comparison |
 
 ## Notes
 

@@ -705,6 +705,10 @@ pub struct Enemy {
     /// Auras inactive at reset whose activation changes a value above, as "player:label" or
     /// "target:label".
     pub changing_auras: Vec<String>,
+    /// The rolls while a hardcast holds the tank's reduced avoidance aura, by stat aura
+    /// combination; empty when the player does not tank.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub reduced_avoidance_rolls: Vec<EnemyRolls>,
 }
 
 /// The steps of the target's swing that read the player's defenses.
@@ -1914,6 +1918,14 @@ pub enum Effect {
         aoe_cap_multiplier: f64,
         self_attack_table: AttackTable,
     },
+    /// Go consumes.go newBasicExplosiveSpellConfig without the self hit: a rolled hit on every
+    /// target scaled by the AoE cap, dealt after travel when the explosive flies.
+    BasicExplosive {
+        item_id: i32,
+        min_damage: f64,
+        max_damage: f64,
+        aoe_cap_multiplier: f64,
+    },
     /// Go health.go trackChanceOfDeath once a spell can hit the player.
     ChanceOfDeath {
         aura: String,
@@ -2102,6 +2114,7 @@ impl Effect {
             Effect::InstantPoison { .. } => "instant_poison",
             Effect::DeadlyPoison { .. } => "deadly_poison",
             Effect::GoblinSapper { .. } => "goblin_sapper",
+            Effect::BasicExplosive { .. } => "basic_explosive",
             Effect::ChanceOfDeath { .. } => "chance_of_death",
             Effect::ParryHaste { .. } => "parry_haste",
             Effect::FixedUptimeAura { .. } => "fixed_uptime_aura",
