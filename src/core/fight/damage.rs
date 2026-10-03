@@ -77,12 +77,23 @@ impl SpellResult {
 }
 
 impl<A: Agent> Fight<A> {
+    /// Go `Spell.schoolValue`: one school's entry, or the larger of Fire and Frost for
+    /// Frostfire so an effect on both schools never counts twice.
+    pub(crate) fn school_value(&self, spell: SpellId, values: &[f64; 8]) -> f64 {
+        let state = &self.spells[spell];
+        if state.frostfire {
+            values[super::SCHOOL_INDEX_FIRE].max(values[super::SCHOOL_INDEX_FROST])
+        } else {
+            values[state.school_index]
+        }
+    }
+
     /// Go `Unit.GetSpellDamageValue`: generic plus school spell damage.
     pub(crate) fn spell_power(&self, spell: SpellId) -> f64 {
         let state = &self.spells[spell];
         self.player.powers.spell_damage
             + state.bonus_spell_damage
-            + self.config.school_damage[state.school_index]
+            + self.school_value(spell, &self.config.school_damage)
     }
 
     /// Go `Spell.BonusDamage` for a magic spell.
@@ -91,7 +102,7 @@ impl<A: Agent> Fight<A> {
         let mut bonus = state.bonus_base_damage;
         bonus += self.spell_power(spell)
             + 0.0
-            + self.config.target_school_bonus_spell_damage[state.school_index];
+            + self.school_value(spell, &self.config.target_school_bonus_spell_damage);
         bonus
     }
 
@@ -107,7 +118,7 @@ impl<A: Agent> Fight<A> {
             state.damage_multiplier_additive + state.direct_damage_multiplier_additive
         };
         let internal = self.config.damage_dealt_multiplier
-            * self.config.school_damage_dealt_multiplier[state.school_index]
+            * self.school_value(spell, &self.config.school_damage_dealt_multiplier)
             * self.config.table.damage_dealt_multiplier;
         internal * state.damage_multiplier * additive
     }
@@ -119,14 +130,21 @@ impl<A: Agent> Fight<A> {
             return 1.0;
         }
         self.config.target_damage_taken_multiplier
-            * self.config.target_school_damage_taken_multiplier[state.school_index]
+            * self.school_value(spell, &self.config.target_school_damage_taken_multiplier)
             * self.config.table.damage_taken_multiplier
     }
 
     fn resist(&self, spell: SpellId, binary: bool) -> f64 {
         let state = &self.spells[spell];
+        // Go resistCoeff: Frostfire Bolt checks the lower resistance.
+        let resistance = if state.frostfire {
+            let resistance = &self.config.target_resistance;
+            resistance[super::SCHOOL_INDEX_FIRE].min(resistance[super::SCHOOL_INDEX_FROST])
+        } else {
+            self.config.target_resistance[state.school_index]
+        };
         resist_coefficient(
-            self.config.target_resistance[state.school_index],
+            resistance,
             self.config.spell_piercing,
             self.config.player_level,
             self.config.target_level,
@@ -139,7 +157,7 @@ impl<A: Agent> Fight<A> {
         let state = &self.spells[spell];
         let mut hit = self.config.spell_hit_percent + state.bonus_hit_percent;
         if state.class_spell_mask {
-            hit += self.config.school_bonus_hit_chance[state.school_index];
+            hit += self.school_value(spell, &self.config.school_bonus_hit_chance);
         }
         hit / 100.0
     }

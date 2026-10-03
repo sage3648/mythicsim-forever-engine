@@ -538,6 +538,10 @@ pub enum Effect {
     Fireball {
         ranks: Vec<FireballRank>,
     },
+    /// Every Frostfire Bolt rank: Fireball's shape with the Frostfire school.
+    FrostfireBolt {
+        ranks: Vec<FireballRank>,
+    },
     /// Every Scorch rank, with Improved Scorch when talented.
     Scorch {
         #[serde(default)]
@@ -679,6 +683,7 @@ impl Effect {
             Effect::HeatingUp { .. } => "heating_up",
             Effect::MasterOfElements { .. } => "master_of_elements",
             Effect::Fireball { .. } => "fireball",
+            Effect::FrostfireBolt { .. } => "frostfire_bolt",
             Effect::Scorch { .. } => "scorch",
             Effect::TouchOfTheGrave { .. } => "touch_of_the_grave",
             Effect::Eureka { .. } => "eureka",

@@ -28,6 +28,7 @@ pub(crate) enum MageSpell {
     PresenceOfMind,
     FireBlast,
     Fireball,
+    FrostfireBolt,
     Pyroblast,
     Combustion,
     Ignite,
@@ -179,6 +180,9 @@ impl MageAgent {
             "fire_blast" if spell.damage_effect.is_some() => Some(MageSpell::FireBlast),
             "fireball" if spell.damage_effect.is_some() && spell.dot.is_some() => {
                 Some(MageSpell::Fireball)
+            }
+            "frostfire_bolt" if spell.damage_effect.is_some() && spell.dot.is_some() => {
+                Some(MageSpell::FrostfireBolt)
             }
             "pyroblast" if spell.damage_effect.is_some() && spell.dot.is_some() => {
                 Some(MageSpell::Pyroblast)
@@ -362,7 +366,7 @@ impl MageAgent {
                     let bound = heating_up::bind(&mut fight, aura, *cast_time_per_stack)?;
                     fight.agent.heating_up = Some(Rc::new(bound));
                 }
-                Effect::Fireball { ranks } => {
+                Effect::Fireball { ranks } | Effect::FrostfireBolt { ranks } => {
                     for rank in ranks {
                         let dot = fight
                             .spells
@@ -552,7 +556,7 @@ impl Agent for MageAgent {
                 combustion::apply(fight, &state);
             }
             MageSpell::Ignite => Self::ignite(fight).apply(fight),
-            MageSpell::Fireball | MageSpell::Pyroblast => {
+            MageSpell::Fireball | MageSpell::FrostfireBolt | MageSpell::Pyroblast => {
                 let base = fight.roll_damage_effect(spell);
                 let result = fight.calc_damage(spell, target, base);
                 let dot = fight.spells[spell].dot.expect("the bolt has a dot");
@@ -634,7 +638,10 @@ impl Agent for MageAgent {
     }
 
     fn on_dot_tick(fight: &mut Fight<Self>, dot: DotId, behavior: MageSpell) {
-        if matches!(behavior, MageSpell::Fireball | MageSpell::Pyroblast) {
+        if matches!(
+            behavior,
+            MageSpell::Fireball | MageSpell::FrostfireBolt | MageSpell::Pyroblast
+        ) {
             fight.snapshot_dot_tick(dot);
             return;
         }

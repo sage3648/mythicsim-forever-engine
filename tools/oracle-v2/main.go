@@ -607,6 +607,7 @@ var (
 	combustion          = spelldata.Ranked(11129)
 	combustionTriggered = spelldata.Ranked(28682)
 	fireballLadder      = spelldata.Ranked(133, 143, 145, 3140, 8400, 8401, 8402, 10148, 10149, 10150, 10151, 25306)
+	frostfireLadder     = spelldata.Ranked(401502, 1237312, 1237313)
 	arcaneConcentration = spelldata.Talent(11213, 5)
 	clearcastingTrigger = spelldata.Ranked(12536)
 	fingersOfFrost      = spelldata.Talent(400647, 2)
@@ -644,6 +645,7 @@ func attachDamageEffects(spells []Spell, character *core.Character) {
 	}
 	scorchLadder.Each(func(_ int32, row *spelldata.Spell) { rows[row.ID] = row })
 	fireballLadder.Each(func(_ int32, row *spelldata.Spell) { rows[row.ID] = row })
+	frostfireLadder.Each(func(_ int32, row *spelldata.Spell) { rows[row.ID] = row })
 	if pyroblast := pyroblastLadder.Highest(); pyroblast != nil {
 		rows[pyroblast.ID] = pyroblast
 	}
@@ -741,6 +743,15 @@ func mageEffects(m *mage.Mage, character *core.Character) []map[string]any {
 		})
 	})
 	effects = append(effects, map[string]any{"kind": "fireball", "ranks": fireballs})
+	// frostfire_bolt.go: Fireball's shape with a Frostfire school, every rank.
+	frostfires := []map[string]any{}
+	frostfireLadder.Each(func(_ int32, row *spelldata.Spell) {
+		frostfires = append(frostfires, map[string]any{
+			"spell_id": row.ID, "tick_base": row.PeriodicEffect().Average(core.CharacterLevel),
+			"tick_can_crit": row.PeriodicCanCrit() && row.DefenseTypeCore() == core.DefenseTypeMagic,
+		})
+	})
+	effects = append(effects, map[string]any{"kind": "frostfire_bolt", "ranks": frostfires})
 	// scorch.go: every rank; Improved Scorch stacks Fire Vulnerability on the mage itself.
 	scorch := map[string]any{"kind": "scorch"}
 	if talents.ImprovedScorch > 0 {

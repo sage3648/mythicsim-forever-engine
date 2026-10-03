@@ -55,11 +55,16 @@ The application's Arcane reference build, with Arcane Blast and its stacks, Arca
 Power, Presence of Mind and the Undead racial Touch of the Grave, also matches: 538.672
 DPS and the first-fight log. So does its Fire reference build, with Scorch and Improved
 Scorch, Fireball and Pyroblast dots, Fire Blast, Heating Up, Combustion, Ignite, Master
-of Elements and the Gnome racial Eureka!: 565.163 DPS. Randomized sweeps of all three
-builds match Go on every supported variant
+of Elements and the Gnome racial Eureka!: 565.163 DPS. The production application's
+Frostfire hybrid build, with every Frostfire Bolt rank and the Frostfire school's rules,
+matches too: 597.621 DPS. All four production Mage reference builds, captured at
+application revision 18bbcd47, match the pinned Go engine on the whole result and the
+first-fight log. Randomized sweeps of every build match Go on every supported variant
 ([Frost](validation/2026-10-03-frost-sweep.json),
 [Arcane](validation/2026-10-03-arcane-sweep.json),
-[Fire](validation/2026-10-03-fire-sweep.json)). Builds where community fix #622
+[Fire](validation/2026-10-03-fire-sweep.json),
+[production Fire](validation/2026-10-04-production-fire-sweep.json),
+[Frostfire](validation/2026-10-04-frostfire-sweep.json)). Builds where community fix #622
 would change the rotation are rejected; see [UPSTREAM.md](UPSTREAM.md).
 
 Every race that can be a Mage is supported: Human, Gnome, Undead, Troll with

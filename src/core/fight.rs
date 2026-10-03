@@ -292,6 +292,8 @@ pub(crate) struct Spell<S> {
     pub(crate) behavior: SpellBehavior<S>,
     pub(crate) school: u8,
     pub(crate) school_index: usize,
+    /// Go `SpellSchoolFrostfire`, which reads the better of its two schools' bonuses.
+    pub(crate) frostfire: bool,
     pub(crate) magic_defense: bool,
     pub(crate) direct_proc: bool,
     /// Go `ProcMaskSpellDamage`.
@@ -550,6 +552,12 @@ fn schools(values: &Schools) -> [f64; 8] {
     ]
 }
 
+/// Go `SpellSchoolFrostfire`: Fire and Frost.
+pub(crate) const SCHOOL_FROSTFIRE: u8 = 4 | 16;
+/// Go `stats.SchoolIndexFire` and `SchoolIndexFrost`.
+const SCHOOL_INDEX_FIRE: usize = 3;
+const SCHOOL_INDEX_FROST: usize = 4;
+
 /// Go `SpellSchool` to `SchoolIndex`, in Go's switch order.
 pub(crate) fn school_index(school: u8) -> usize {
     match school {
@@ -797,6 +805,7 @@ impl<A: Agent> Fight<A> {
                 behavior,
                 school: exported.school,
                 school_index: school_index(exported.school),
+                frostfire: exported.school == SCHOOL_FROSTFIRE,
                 magic_defense: exported.defense_type == "DefenseTypeMagic",
                 direct_proc: exported
                     .proc_mask

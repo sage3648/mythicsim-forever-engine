@@ -3403,7 +3403,10 @@
           "haste_reduces_duration": false,
           "channeled": false
         },
-        "damage_effect": null
+        "damage_effect": {
+          "average": 110,
+          "variance": 0.15340909361839294
+        }
       },
       {
         "action_id": {
@@ -3474,7 +3477,10 @@
           "haste_reduces_duration": false,
           "channeled": false
         },
-        "damage_effect": null
+        "damage_effect": {
+          "average": 195,
+          "variance": 0.15340909361839294
+        }
       },
       {
         "action_id": {
@@ -3545,7 +3551,10 @@
           "haste_reduces_duration": false,
           "channeled": false
         },
-        "damage_effect": null
+        "damage_effect": {
+          "average": 292,
+          "variance": 0.15340909361839294
+        }
       },
       {
         "action_id": {
@@ -5850,6 +5859,26 @@
         {
           "spell_id": 25306,
           "tick_base": 15,
+          "tick_can_crit": true
+        }
+      ]
+    },
+    {
+      "kind": "frostfire_bolt",
+      "ranks": [
+        {
+          "spell_id": 401502,
+          "tick_base": 9,
+          "tick_can_crit": true
+        },
+        {
+          "spell_id": 1237312,
+          "tick_base": 13,
+          "tick_can_crit": true
+        },
+        {
+          "spell_id": 1237313,
+          "tick_base": 19,
           "tick_can_crit": true
         }
       ]

@@ -82,6 +82,7 @@ casts itself. `rotation` is the request's APL in protojson form.
 | Kind | Go source | Parameters |
 | --- | --- | --- |
 | `frostbolt` | sim/mage/frostbolt.go | Damage roll on the spell |
+| `frostfire_bolt` | sim/mage/frostfire_bolt.go | Each rank's dot base and whether its ticks crit; the Frostfire school reads the better Fire or Frost bonus and the lower resistance |
 | `ice_lance` | sim/mage/ice_lance.go | Frozen multiplier, a Go constant |
 | `arcane_missiles` | sim/mage/arcane_missiles.go | Channel rank to tick spell pairing |
 | `cold_snap` | sim/mage/cold_snap.go | Spell ID |
@@ -170,7 +171,11 @@ matches Go. `arcane-reference` is the application's Arcane request, built by its
 `fire-reference` is the application's Fire request; the `fire-*` cases add its talents
 one at a time. `frost-troll`, `frost-orc` and `frost-skyborne` run the Frost request as
 the remaining races, with longer and cooldown-timing variants, and
-`fire-skyborne-read-ley-line` casts Read Ley Line from the rotation.
+`fire-skyborne-read-ley-line` casts Read Ley Line from the rotation. `production-fire` and
+`production-frostfire` are the production application's Fire Missile Barrage and
+Frostfire hybrid requests at application revision 18bbcd47; its Arcane and Frost requests
+are byte-identical to `arcane-reference` and `frost-reference`. `frostfire-resistances`
+gives the target uneven Fire and Frost resistance.
 
 The contract tests in
 [tests/classes/mage/prepared_v2.rs](../tests/classes/mage/prepared_v2.rs)
