@@ -58,8 +58,6 @@ pub(crate) enum AuraBehavior<K> {
         multiplier: f64,
         schools: [bool; 8],
     },
-    /// Go `Aura.AttachMultiplyCastSpeed`.
-    MultiplyCastSpeed(f64),
     /// Go `MultiplyManaRegenSpeed` on gain and its reciprocal on expire, as racials.go
     /// Energized does with 2 and 0.5.
     MultiplyManaRegenSpeed(f64),
@@ -450,7 +448,6 @@ impl<A: Agent> Fight<A> {
         match self.aura(aura).behavior {
             AuraBehavior::Dot(dot) => self.dot_on_gain(dot),
             AuraBehavior::Eureka => self.eureka_gain(),
-            AuraBehavior::MultiplyCastSpeed(multiplier) => self.multiply_cast_speed(multiplier),
             AuraBehavior::MultiplyAttackAndCastSpeed { attack, cast } => {
                 self.multiply_attack_speed(attack);
                 self.multiply_cast_speed(cast);
@@ -493,9 +490,6 @@ impl<A: Agent> Fight<A> {
         match self.aura(aura).behavior {
             AuraBehavior::Dot(dot) => self.dot_on_expire(dot),
             AuraBehavior::Eureka => self.eureka_expire(),
-            AuraBehavior::MultiplyCastSpeed(multiplier) => {
-                self.multiply_cast_speed(1.0 / multiplier)
-            }
             AuraBehavior::MultiplyAttackAndCastSpeed { attack, cast } => {
                 self.multiply_attack_speed(1.0 / attack);
                 self.multiply_cast_speed(1.0 / cast);
