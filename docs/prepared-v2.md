@@ -6,10 +6,11 @@ and aura, shared timers, major cooldowns, the rotation and the parameters of the
 effects Rust must execute. The Rust types live in
 [src/contracts/prepared_v2.rs](../src/contracts/prepared_v2.rs).
 
-Status: the contract, exporter, fixtures and coverage gate are implemented. No v2
-mechanics execute yet. `forever-engine check` reports exactly which mechanics an
-input still needs, and `sim` refuses every v2 input until its coverage is complete.
-Prepared v1 and its goldens are unchanged.
+Status: the contract, exporter, fixtures, coverage gate and fight runtime are
+implemented. `forever-engine check` reports exactly which mechanics an input still
+needs; `sim` runs inputs whose coverage is complete and refuses the rest. Implemented
+effects today are `frostbolt` and `inert_listener`, so supported builds cast Frostbolt
+only. Prepared v1 and its goldens are unchanged.
 
 ## Boundary
 
@@ -165,6 +166,28 @@ instructions on some architectures and Rust does not. The production command lin
 splits iterations across workers with the same per-iteration seeds, so its per-fight
 results match a serial run while its aggregate summation order differs.
 
+## Results and comparison
+
+`sim` writes the engine identity and a `result` in Go's `RaidSimResult` JSON shape for
+the fields Rust implements: raid, party and player DPS distributions, threat, time to
+out of mana, action, aura and resource metrics, target auras, iteration durations and
+the first-fight debug log. Zero values are omitted as protojson omits them.
+
+The comparison exports each request, runs the pinned Go engine and Rust, and checks
+every exercised action, aura and resource metric. When the request asks for a debug
+log it also diffs the first-fight logs line by line and reports the first divergent
+event. Go's internal stat-recalculation lines are skipped.
+
+```sh
+python3 tools/prepared_v2.py compare --output output/prepared-v2-compare REQUEST.json ...
+```
+
+The fixture family keeps Go goldens for supported cases, compared in CI without Go:
+Frostbolt with labeled streams, and with the shared stream across duration variation,
+running out of mana, haste, Arcane Meditation and a three-second travel boundary.
+`frostbolt-shared-oom` also keeps its 1,700-line first-fight log. All eleven
+historical v1 scenarios also pass the live comparison through the v2 path.
+
 ## Reproduce
 
 Offline audit, Python only:
@@ -173,12 +196,13 @@ Offline audit, Python only:
 python3 tools/prepared_v2.py check
 ```
 
-Re-export every accepted case from the pinned Go engine into scratch storage and
-require an exact match. This needs Go, Git and protoc, like the
-[v1 comparison](kernel.md):
+Re-export every accepted case and re-derive its Go goldens from the pinned engine into
+scratch storage, requiring an exact match. This needs Go, Git and protoc, like the
+[v1 comparison](kernel.md). `accept` registers a new case and refuses to replace one:
 
 ```sh
 python3 tools/prepared_v2.py capture --output output/prepared-v2-capture
+python3 tools/prepared_v2.py accept --case ID --description TEXT fixtures/mage/frost/prepared-v2/ID.request.json
 ```
 
 Report coverage for any prepared input:

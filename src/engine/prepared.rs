@@ -183,3 +183,33 @@ pub fn check(prepared: &PreparedV2) -> Result<(), PreparedError> {
         Err(PreparedError::Unsupported(reasons))
     }
 }
+
+/// The engine identity and result of a prepared v2 simulation. `result` follows Go's
+/// `RaidSimResult` JSON for the fields Rust implements.
+#[derive(Debug, serde::Serialize)]
+pub struct PreparedReport {
+    pub engine: String,
+    pub schema_version: u32,
+    pub source_revision: String,
+    pub scenario_id: String,
+    pub request_sha256: String,
+    pub elapsed_ns: u64,
+    pub result: serde_json::Value,
+}
+
+/// Validate, gate and simulate a prepared v2 input.
+pub fn simulate(prepared: &PreparedV2) -> Result<PreparedReport, PreparedError> {
+    check(prepared)?;
+    let report = frost::run_prepared(prepared).map_err(PreparedError::Invalid)?;
+    let elapsed_ns = report.elapsed_ns;
+    Ok(PreparedReport {
+        engine: format!("forever-rust-{}", env!("CARGO_PKG_VERSION")),
+        schema_version: SCHEMA_VERSION,
+        source_revision: SOURCE_REVISION.into(),
+        scenario_id: prepared.scenario_id.clone(),
+        request_sha256: prepared.request_sha256.clone(),
+        elapsed_ns,
+        result: serde_json::to_value(&report)
+            .map_err(|err| PreparedError::Invalid(err.to_string()))?,
+    })
+}

@@ -10,9 +10,10 @@ aligned means tracking changes, importing compatible data and porting applicable
 mechanics with evidence. AI can prepare those ports; it cannot make Go commits
 merge directly into Rust or establish correctness by itself.
 
-This is an implementation plan. The current code remains a prepared Frostbolt
-prototype, now organized into shared systems and Mage class/spec domains. Routers,
-general preparation, full Mage behavior and sync automation remain planned.
+This is an implementation plan. The code runs prepared v2 fights for real characters
+through a class-independent runtime that mirrors Go, with Mage plugged in; supported
+builds cast Frostbolt only so far. Routers, Rust preparation, the complete Frost build
+and sync automation remain planned.
 Milestones advance on acceptance evidence, not dates.
 
 ## First usable release
@@ -393,10 +394,10 @@ pieces, not already-open issues. Keep each change independently reviewable.
 | 1 (complete) | Inventory the first Frost build and product contracts | Frozen app and pinned Go source | Mechanic list, request/report consumers and audited Go observation |
 | 2 (complete) | Design prepared v2 and release manifest | 1 | [Contract](prepared-v2.md), fixtures, unknown-effect behavior and identity rules |
 | 3 (complete) | Add upstream sources, change ledger and mechanics map | 1 | [Ledger](../UPSTREAM.md#ledger) with community fix #622 traced to a Rust guard and regression |
-| 4 | Centralize the reference pin and improve differential diagnostics | 2, 3 | Old fixtures preserved, useful failure output |
-| 5 | Extract event, RNG and resource modules | Current kernel | Existing goldens unchanged |
+| 4 (diagnostics complete) | Centralize the reference pin and improve differential diagnostics | 2, 3 | First differing metric and log line reported; pin centralization pending |
+| 5 (complete) | Extract event, RNG and resource modules | Current kernel | Go-ordered queue, shared and labeled RNG, mana and metrics in `core/fight`; v1 goldens unchanged |
 | 6 | Export real Frost character preparation from Go | 2, 4 | Prepared-state comparisons |
-| 7 | Add aura lifetime, stacks, charges and cooldown primitives | 5 | Same-time events and consumption boundaries |
+| 7 (in progress) | Add aura lifetime, stacks, charges and cooldown primitives | 5 | Aura lifecycle, stacks, cooldowns and channels implemented; validated as each Frost mechanic lands |
 | 8 | Port required Frost spells and procs in separate PRs | 6, 7 | Upstream evidence and mechanic regressions |
 | 9 | Interpret the selected preset operators | 2, 8 | Priority, condition and unsupported-rule tests |
 | 10 | Produce required reports and timelines | 1, 8, 9 | Existing consumer compatibility |

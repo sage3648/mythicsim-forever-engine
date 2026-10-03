@@ -3,10 +3,12 @@
 Start with [README](../README.md) for supported scope and [CONTRIBUTING](../CONTRIBUTING.md)
 for checks and evidence requirements. This map explains where behavior belongs.
 
-The project currently implements a prepared Frostbolt-only Mage kernel. The new
-module boundaries organize that implementation; they do not add full Frost, other
-specs or other classes. The [Frost inventory](first-frost-inventory.md) identifies
-the mechanics still needed for the first complete build.
+The project runs prepared v2 fights through a class-independent runtime in
+`core/fight` that mirrors Go's sim/core, with Mage behavior plugged in through
+`classes/mage/agent.rs`. Supported builds currently cast Frostbolt only. The
+[Frost inventory](first-frost-inventory.md) and the reference build's coverage report
+identify the mechanics still needed for the first complete build. The prepared v1
+Frostbolt kernel remains unchanged beside it.
 
 ## Find the code
 
@@ -19,7 +21,10 @@ the mechanics still needed for the first complete build.
 | Rotation (APL) subset | [src/rotation.rs](../src/rotation.rs) |
 | Strict input limits and supported-build checks | [src/engine/validation.rs](../src/engine/validation.rs) |
 | Iteration lifecycle and aggregate statistics | [src/engine.rs](../src/engine.rs) |
-| Event ordering | [src/core/events.rs](../src/core/events.rs) |
+| Fight runtime: queue, units, casting, auras, damage, channels, rotation, metrics, logs | [src/core/fight.rs](../src/core/fight.rs), [src/core/fight/](../src/core/fight/) |
+| Go pending-action ordering | [src/core/queue.rs](../src/core/queue.rs) |
+| Mage runtime hooks | [src/classes/mage/agent.rs](../src/classes/mage/agent.rs) |
+| Event ordering (prepared v1 kernel) | [src/core/events.rs](../src/core/events.rs) |
 | Seeded random streams | [src/core/rng.rs](../src/core/rng.rs) |
 | Simulation time units | [src/core/time.rs](../src/core/time.rs) |
 | Shared binary hit-table math | [src/mechanics/damage.rs](../src/mechanics/damage.rs) |
@@ -40,8 +45,10 @@ src/
   engine/validation.rs           prepared v1 input validation
   engine/prepared.rs             prepared v2 identity checks and coverage entry
   rotation.rs                    strict APL subset parser
-  core.rs                        shared scheduler/RNG module entry
-  core/{events,rng,time}.rs       scheduling, random streams, time
+  core.rs                        shared scheduler/RNG/runtime module entry
+  core/{events,queue,rng,time}.rs scheduling, random streams, time
+  core/fight.rs                  class-independent fight runtime and Agent hooks
+  core/fight/                    auras, casting, damage, dots, rotation, metrics, logs
   mechanics.rs                   reusable combat module entry
   mechanics/{damage,mana}.rs      shared combat primitives
   report.rs                      prototype report types
@@ -49,6 +56,7 @@ src/
   classes/
     mage.rs                      Mage domain entry
     mage/
+      agent.rs                   Mage hooks for the fight runtime
       spells.rs                  shared Mage spell entry
       spells/frostbolt.rs        Frostbolt calculation and outcome recording
       specs.rs                   Mage spec entry
@@ -78,9 +86,12 @@ One crate keeps builds and contributions straightforward. Modules provide the
 domain boundaries. Add a separate crate only when an actual dependency, reusable
 library or build requirement justifies it.
 
-`core` owns scheduling, time and random streams. Its scheduler accepts a typed
-payload and has no knowledge of Mage, Frostbolt or spec decisions. `mechanics`
-owns reusable combat rules. Neither layer imports `classes` or `engine`.
+`core` owns scheduling, time, random streams and the fight runtime. The runtime is
+generic over an `Agent`: classes supply spell effects and aura callbacks, and the
+runtime never names a class. `mechanics` owns reusable combat formulas. Neither
+layer imports `classes` or `engine`. Mirror Go's event order, random draw order and
+floating-point operation order: with a shared random stream every later draw depends
+on them.
 
 Classes consume the shared primitives. A class owns its spell and talent behavior;
 a spec owns build scope, composition and spec decisions. The engine selects the

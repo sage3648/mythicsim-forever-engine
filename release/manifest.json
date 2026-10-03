@@ -19,8 +19,14 @@
     "sha256": "d09de662b1d7458c1ae7f1487913ad7f8ebe5025025ac366311f80a6f5e37bcd"
   },
   "contracts": {
-    "prepared_inputs": [1, 2],
-    "reports": [1]
+    "prepared_inputs": [
+      1,
+      2
+    ],
+    "reports": [
+      1,
+      2
+    ]
   },
   "rng": {
     "generator": "SplitMix64",
@@ -35,14 +41,23 @@
       "id": "prepared-v1-frostbolt-kernel",
       "contract": 1,
       "status": "validated",
-      "evidence": ["fixtures/manifest.json", "validation/2026-10-03-go-parity.json"]
+      "evidence": [
+        "fixtures/manifest.json",
+        "validation/2026-10-03-go-parity.json"
+      ]
     },
     {
       "id": "prepared-v2-contract",
       "contract": 2,
-      "status": "validates_and_gates",
-      "implemented_effects": [],
-      "evidence": ["fixtures/mage/frost/prepared-v2/manifest.json"]
+      "status": "simulates_covered_inputs",
+      "implemented_effects": [
+        "frostbolt",
+        "inert_listener"
+      ],
+      "evidence": [
+        "fixtures/mage/frost/prepared-v2/manifest.json",
+        "tests/classes/mage/frost/prepared_v2.rs"
+      ]
     }
   ]
 }

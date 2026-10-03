@@ -27,11 +27,8 @@
           "effect energize_on_use is not implemented",
           "effect evocation is not implemented",
           "effect fingers_of_frost is not implemented",
-          "effect frostbolt is not implemented",
           "effect ice_lance is not implemented",
-          "effect inert_listener is not implemented",
           "effect judgement_of_wisdom is not implemented",
-          "effect mage_armor is not implemented",
           "effect mana_gems is not implemented",
           "effect missile_barrage is not implemented",
           "effect potion_mana is not implemented",
@@ -56,17 +53,103 @@
           "effect conjured_mana is not implemented",
           "effect energize_on_use is not implemented",
           "effect evocation is not implemented",
-          "effect frostbolt is not implemented",
           "effect ice_lance is not implemented",
-          "effect inert_listener is not implemented",
           "effect judgement_of_wisdom is not implemented",
-          "effect mage_armor is not implemented",
           "effect mana_gems is not implemented",
           "effect missile_barrage is not implemented",
           "effect potion_mana is not implemented",
           "effect winters_chill is not implemented",
           "rotation item 4: auraIsActive names spell 400669, which the character lacks; the pinned reference drops the condition and community #622 reads it as inactive"
         ]
+      }
+    },
+    {
+      "id": "frostbolt-labeled",
+      "description": "Frostbolt only with labeled random streams: the v1 static-frost-60 character through the v2 contract.",
+      "request": {
+        "path": "fixtures/mage/frost/prepared-v2/frostbolt-labeled.request.json"
+      },
+      "prepared": "frostbolt-labeled.prepared.json",
+      "prepared_sha256": "24f3753b48dbf4df24a249b1b65c29588b2681b15885d13ffd81ca9f890050f6",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frostbolt-labeled.go-result.json",
+        "sha256": "43186bfc11aa08cd75e7b6d54e1ab00ca75c0ad49f8cb6a05b4a9ea0fde8e62b"
+      }
+    },
+    {
+      "id": "frostbolt-shared-oom",
+      "description": "Frostbolt only, shared random stream, 120 +/- 15 second fights that run out of mana; keeps the first-fight log golden.",
+      "request": {
+        "path": "fixtures/mage/frost/prepared-v2/frostbolt-shared-oom.request.json"
+      },
+      "prepared": "frostbolt-shared-oom.prepared.json",
+      "prepared_sha256": "f4aded579f2a87ebe7df30fbfd9b1356a437484e6ff0cdb952bd7d843e5e2be5",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frostbolt-shared-oom.go-result.json",
+        "sha256": "4a79de12b21675a4dedcbe10efc5c219079b0d22bf24e2f03cf75c06fd9bae23"
+      },
+      "go_log": {
+        "file": "frostbolt-shared-oom.go-log.txt",
+        "sha256": "85b96ff7c4e1cfc989a8f855ec15d6cdf7a1c8c50453aba6f8a06c214760fe47"
+      }
+    },
+    {
+      "id": "frostbolt-shared-meditation",
+      "description": "Frostbolt only, shared stream, 300 +/- 30 seconds with Arcane Meditation regeneration while casting.",
+      "request": {
+        "path": "fixtures/mage/frost/prepared-v2/frostbolt-shared-meditation.request.json"
+      },
+      "prepared": "frostbolt-shared-meditation.prepared.json",
+      "prepared_sha256": "9d4dcb28fc70f3f642ac8a542245a2606082cf71cf0f40d3acb8a69581278aea",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frostbolt-shared-meditation.go-result.json",
+        "sha256": "0e508aa8f0542a7b5a1964d541f9711520a258ebf1047f3cbf31f863ea3a5092"
+      }
+    },
+    {
+      "id": "frostbolt-shared-haste",
+      "description": "Frostbolt only, shared stream, spell haste rating and 60 +/- 10 second fights.",
+      "request": {
+        "path": "fixtures/mage/frost/prepared-v2/frostbolt-shared-haste.request.json"
+      },
+      "prepared": "frostbolt-shared-haste.prepared.json",
+      "prepared_sha256": "7061863aaa89db2718dbde69a1d1944428cf1ace0fbe16b0f47143b2093eb92e",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frostbolt-shared-haste.go-result.json",
+        "sha256": "ae22e1b1cb783b2830bbd22dff1a203aa6f7d9cdd5a4c9a33f2481b6e2a0282c"
+      }
+    },
+    {
+      "id": "frostbolt-shared-boundary",
+      "description": "Frostbolt only, shared stream, 3 +/- 1 second fights at 30 yards: casts complete without their missiles landing.",
+      "request": {
+        "path": "fixtures/mage/frost/prepared-v2/frostbolt-shared-boundary.request.json"
+      },
+      "prepared": "frostbolt-shared-boundary.prepared.json",
+      "prepared_sha256": "1e5bb8f622bbc31d474682254793be805b3d32168e77cb9589d8f213eecb54a7",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frostbolt-shared-boundary.go-result.json",
+        "sha256": "7767a9ff50850fa1aba9f07350baab94a383b25c90dd5c81fc8c1c15efe54715"
       }
     }
   ]

@@ -1,0 +1,372 @@
+//! Go spell_result.go, spell_outcome.go and spell_resistances.go for magic spells.
+
+use crate::mechanics::damage::{
+    crit_damage_multiplier, partial_resist_thresholds, resist_coefficient, spell_chance_to_miss,
+};
+
+use super::{log::action_string, Action, Agent, Fight, Side, SpellId, PRIORITY_GCD};
+
+pub(crate) const OUTCOME_MISS: u16 = 1;
+pub(crate) const OUTCOME_HIT: u16 = 1 << 1;
+pub(crate) const OUTCOME_CRIT: u16 = 1 << 2;
+pub(crate) const OUTCOME_PARTIAL_1_4: u16 = 1 << 3;
+pub(crate) const OUTCOME_PARTIAL_2_4: u16 = 1 << 4;
+pub(crate) const OUTCOME_PARTIAL_3_4: u16 = 1 << 5;
+pub(crate) const OUTCOME_PARTIAL: u16 =
+    OUTCOME_PARTIAL_1_4 | OUTCOME_PARTIAL_2_4 | OUTCOME_PARTIAL_3_4;
+/// Go `OutcomeLanded` for the outcomes a spell can have.
+pub(crate) const OUTCOME_LANDED: u16 = OUTCOME_HIT | OUTCOME_CRIT;
+
+/// Go `SpellResult`, carried by value until its damage is dealt.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct SpellResult {
+    pub(crate) target: Side,
+    pub(crate) outcome: u16,
+    pub(crate) damage: f64,
+    pub(crate) threat: f64,
+}
+
+impl SpellResult {
+    pub(crate) fn landed(&self) -> bool {
+        self.outcome & OUTCOME_LANDED != 0
+    }
+
+    pub(crate) fn crit(&self) -> bool {
+        self.outcome & OUTCOME_CRIT != 0
+    }
+
+    /// Go `HitOutcome.String` for spell outcomes.
+    fn outcome_string(&self) -> String {
+        let partial = if self.outcome & OUTCOME_PARTIAL_1_4 != 0 {
+            " (25% Resist)"
+        } else if self.outcome & OUTCOME_PARTIAL_2_4 != 0 {
+            " (50% Resist)"
+        } else if self.outcome & OUTCOME_PARTIAL_3_4 != 0 {
+            " (75% Resist)"
+        } else {
+            ""
+        };
+        if self.outcome & OUTCOME_MISS != 0 {
+            "Miss".into()
+        } else if self.outcome & OUTCOME_CRIT != 0 {
+            format!("Crit{partial}")
+        } else if self.outcome & OUTCOME_HIT != 0 {
+            format!("Hit{partial}")
+        } else {
+            "Empty".into()
+        }
+    }
+
+    /// Go `SpellResult.DamageString`.
+    fn damage_string(&self) -> String {
+        if self.landed() {
+            format!("{} for {:.3} damage", self.outcome_string(), self.damage)
+        } else {
+            self.outcome_string()
+        }
+    }
+}
+
+impl<A: Agent> Fight<A> {
+    /// Go `Unit.GetSpellDamageValue`: generic plus school spell damage.
+    pub(crate) fn spell_power(&self, spell: SpellId) -> f64 {
+        let state = &self.spells[spell];
+        self.config.spell_damage
+            + state.bonus_spell_damage
+            + self.config.school_damage[state.school_index]
+    }
+
+    /// Go `Spell.BonusDamage` for a magic spell.
+    fn bonus_damage(&self, spell: SpellId) -> f64 {
+        let state = &self.spells[spell];
+        let mut bonus = state.bonus_base_damage;
+        bonus += self.spell_power(spell)
+            + 0.0
+            + self.config.target_school_bonus_spell_damage[state.school_index];
+        bonus
+    }
+
+    /// Go `Spell.AttackerDamageMultiplier` for a direct hit.
+    pub(crate) fn attacker_multiplier(&self, spell: SpellId, periodic: bool) -> f64 {
+        let state = &self.spells[spell];
+        if state.flags.ignore_attacker_modifiers {
+            return 1.0;
+        }
+        let additive = if periodic {
+            state.damage_multiplier_additive + self.config.dot_damage_multiplier_additive - 1.0
+        } else {
+            state.damage_multiplier_additive + state.direct_damage_multiplier_additive
+        };
+        let internal = self.config.damage_dealt_multiplier
+            * self.config.school_damage_dealt_multiplier[state.school_index]
+            * self.config.table.damage_dealt_multiplier;
+        internal * state.damage_multiplier * additive
+    }
+
+    /// Go `Spell.TargetDamageMultiplier`.
+    fn target_multiplier(&self, spell: SpellId) -> f64 {
+        let state = &self.spells[spell];
+        if state.flags.ignore_target_modifiers {
+            return 1.0;
+        }
+        self.config.target_damage_taken_multiplier
+            * self.config.target_school_damage_taken_multiplier[state.school_index]
+            * self.config.table.damage_taken_multiplier
+    }
+
+    fn resist(&self, spell: SpellId, binary: bool) -> f64 {
+        let state = &self.spells[spell];
+        resist_coefficient(
+            self.config.target_resistance[state.school_index],
+            self.config.spell_piercing,
+            self.config.player_level,
+            self.config.target_level,
+            binary,
+        )
+    }
+
+    /// Go `Spell.SpellHitChance`.
+    pub(crate) fn spell_hit_chance(&self, spell: SpellId) -> f64 {
+        let state = &self.spells[spell];
+        let mut hit = self.config.spell_hit_percent + state.bonus_hit_percent;
+        if state.class_spell_mask {
+            hit += self.config.school_bonus_hit_chance[state.school_index];
+        }
+        hit / 100.0
+    }
+
+    /// Go `Spell.SpellCritChance`.
+    pub(crate) fn spell_crit_chance(&self, spell: SpellId) -> f64 {
+        let state = &self.spells[spell];
+        let crit = self.config.spell_crit_percent
+            + state.bonus_crit_percent
+            + self.config.table.bonus_spell_crit_percent
+            - self.config.target_reduced_crit_taken_percent;
+        (crit / 100.0 - self.config.table.spell_crit_suppression).max(0.0)
+    }
+
+    /// Go `CalcDamage` with `OutcomeMagicHitAndCrit`.
+    pub(crate) fn calc_damage(
+        &mut self,
+        spell: SpellId,
+        target: Side,
+        base_damage: f64,
+    ) -> SpellResult {
+        let attacker = self.attacker_multiplier(spell, false);
+        let mut base = base_damage;
+        if self.spells[spell].bonus_coefficient > 0.0 {
+            base += self.spells[spell].bonus_coefficient * self.bonus_damage(spell);
+        }
+        self.calc_damage_internal(spell, target, base, attacker)
+    }
+
+    /// Go `calcDamageInternal` for a direct magic spell.
+    fn calc_damage_internal(
+        &mut self,
+        spell: SpellId,
+        target: Side,
+        base: f64,
+        attacker: f64,
+    ) -> SpellResult {
+        let mut result = SpellResult {
+            target,
+            outcome: 0,
+            damage: base,
+            threat: 0.0,
+        };
+        result.damage *= attacker;
+        let after_attacker = result.damage;
+
+        // Go applyResistances: binary spells and ignored resists take no partial roll.
+        let binary = self.spells[spell].flags.binary;
+        if !self.spells[spell].flags.ignore_resists && !binary {
+            let roll = self.random("Partial Resist");
+            let (none, quarter, half) = partial_resist_thresholds(self.resist(spell, false));
+            let (multiplier, outcome) = if roll > none {
+                (1.0, 0)
+            } else if roll > quarter {
+                (0.75, OUTCOME_PARTIAL_1_4)
+            } else if roll > half {
+                (0.5, OUTCOME_PARTIAL_2_4)
+            } else {
+                (0.25, OUTCOME_PARTIAL_3_4)
+            };
+            result.damage *= multiplier;
+            result.outcome |= outcome;
+        }
+        let after_resistances = result.damage;
+
+        // Go applyTargetModifiers.
+        if !self.spells[spell].flags.ignore_target_modifiers {
+            if self.spells[spell].school_index > 1 {
+                result.damage += self.config.target_bonus_spell_damage_taken;
+            }
+            result.damage *= self.target_multiplier(spell);
+        }
+        let after_target = result.damage;
+
+        let partial = result.outcome & super::damage::OUTCOME_PARTIAL;
+        self.outcome_magic_hit_and_crit(spell, &mut result, binary);
+        if partial != 0 {
+            result.outcome |= partial;
+        }
+        let after_outcome = result.damage;
+        result.damage = result.damage.max(0.0);
+
+        if self.log.is_some() {
+            let line = format!(
+                "[{}] {} [DEBUG] MAP: {:.1}, RAP: {:.1}, SP: {:.1}, BaseDamage:{:.1}, AfterAttackerMods:{:.1}, AfterResistances:{:.1}, AfterTargetMods:{:.1}, AfterOutcome:{:.1}, AfterPostOutcome:{:.1}",
+                self.config.target_label,
+                action_string(&self.spells[spell].id),
+                self.config.attack_power,
+                self.config.ranged_attack_power,
+                self.spell_power(spell),
+                base,
+                after_attacker,
+                after_resistances,
+                after_target,
+                after_outcome,
+                result.damage
+            );
+            self.player_log(&line);
+        }
+
+        result.threat = if result.landed() {
+            let state = &self.spells[spell];
+            (result.damage * state.threat_multiplier + state.flat_threat_bonus)
+                * self.config.threat_multiplier
+        } else {
+            0.0
+        };
+        result
+    }
+
+    /// Go `outcomeMagicHitAndCrit` with hit counters.
+    fn outcome_magic_hit_and_crit(
+        &mut self,
+        spell: SpellId,
+        result: &mut SpellResult,
+        binary: bool,
+    ) {
+        let binary_hit = binary.then(|| 1.0 - 0.75 * self.resist(spell, true));
+        let miss = spell_chance_to_miss(
+            self.config.table.base_spell_miss_chance,
+            binary_hit,
+            self.spell_hit_chance(spell),
+        );
+        let target = result.target.index();
+        if self.proc(1.0 - miss, "Magical Hit Roll") {
+            let partial = result.outcome & OUTCOME_PARTIAL != 0;
+            let crit_chance = self.spell_crit_chance(spell);
+            if self.random("Magical Crit Roll") < crit_chance {
+                result.outcome = OUTCOME_CRIT;
+                let state = &self.spells[spell];
+                result.damage *= crit_damage_multiplier(
+                    state.magic_defense,
+                    state.crit_multiplier_pct,
+                    self.config.crit_damage_multiplier,
+                    self.config.table.crit_multiplier,
+                    state.crit_multiplier_additive,
+                );
+                let metrics = &mut self.spells[spell].metrics[target];
+                metrics.crits += 1;
+                if partial {
+                    metrics.resisted_crits += 1;
+                }
+            } else {
+                result.outcome = OUTCOME_HIT;
+                let metrics = &mut self.spells[spell].metrics[target];
+                metrics.hits += 1;
+                if partial {
+                    metrics.resisted_hits += 1;
+                }
+            }
+        } else {
+            result.outcome = OUTCOME_MISS;
+            result.damage = 0.0;
+            self.spells[spell].metrics[target].misses += 1;
+        }
+    }
+
+    /// Go `Spell.TravelTime`.
+    pub(crate) fn travel_time(&self, spell: SpellId) -> i64 {
+        let speed = self.spells[spell].missile_speed;
+        if speed == 0.0 {
+            0
+        } else {
+            (crate::core::time::NS_PER_SECOND as f64 * self.config.distance / speed) as i64
+        }
+    }
+
+    /// Go `WaitTravelTime` followed by `DealDamage` on arrival.
+    pub(crate) fn deal_damage_after_travel(&mut self, spell: SpellId, result: SpellResult) {
+        let at = self.now + self.travel_time(spell);
+        self.schedule(at, PRIORITY_GCD, Action::Travel { spell, result });
+    }
+
+    /// Go `dealDamageInternal`.
+    pub(crate) fn deal_damage(&mut self, spell: SpellId, result: SpellResult, periodic: bool) {
+        let partial = result.outcome & OUTCOME_PARTIAL != 0;
+        if self.now >= 0 {
+            let metrics = &mut self.spells[spell].metrics[result.target.index()];
+            metrics.total_damage += result.damage;
+            if partial {
+                metrics.total_resisted_damage += result.damage;
+            }
+            if periodic {
+                metrics.total_tick_damage += result.damage;
+                if partial {
+                    metrics.total_resisted_tick_damage += result.damage;
+                }
+            }
+            if result.crit() {
+                metrics.total_crit_damage += result.damage;
+                if partial {
+                    metrics.total_resisted_crit_damage += result.damage;
+                }
+                if periodic {
+                    metrics.total_crit_tick_damage += result.damage;
+                    if partial {
+                        metrics.total_resisted_crit_tick_damage += result.damage;
+                    }
+                }
+            }
+            metrics.total_threat += result.threat;
+        }
+        if result.target == Side::Target {
+            self.encounter_damage_taken += result.damage;
+        }
+        if self.log.is_some() && !self.spells[spell].flags.no_logs {
+            let line = format!(
+                "[{}] {}{} {} (SpellSchool: {}). (Threat: {:.3})",
+                self.config.target_label,
+                action_string(&self.spells[spell].id),
+                if periodic { " tick" } else { "" },
+                result.damage_string(),
+                self.spells[spell].school,
+                result.threat
+            );
+            self.player_log(&line);
+        }
+        if !self.spells[spell].flags.no_on_damage_dealt && !periodic {
+            self.on_spell_hit(spell, &result);
+        }
+    }
+}
+
+impl<A: Agent> Fight<A> {
+    /// Go `spelldata.Effect.Roll` for a spell's exported client damage effect.
+    pub(crate) fn roll_damage_effect(&mut self, spell: SpellId) -> f64 {
+        let (average, variance) = self.spells[spell]
+            .damage_effect
+            .expect("spell has a damage effect");
+        if variance == 0.0 {
+            return average;
+        }
+        let (low, high) = (
+            average * (1.0 - variance / 2.0),
+            average * (1.0 + variance / 2.0),
+        );
+        low + (high - low) * self.random("Damage Roll")
+    }
+}

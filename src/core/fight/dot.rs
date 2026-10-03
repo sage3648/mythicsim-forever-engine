@@ -1,0 +1,151 @@
+//! Go dot.go: periodic auras and channels.
+
+use crate::{contracts::prepared_v2::Dot as ExportedDot, core::queue::Handle};
+
+use super::{Action, Agent, AuraRef, DotId, Fight, Side, SpellBehavior, SpellId, PRIORITY_GCD};
+
+#[allow(dead_code)] // Staged for Arcane Missiles and Evocation; removed when they land.
+pub(crate) struct Dot {
+    pub(crate) spell: SpellId,
+    pub(crate) side: Side,
+    pub(crate) aura_label: String,
+    pub(crate) aura: AuraRef,
+    pub(crate) base_tick_count: i32,
+    pub(crate) base_tick_length: i64,
+    pub(crate) tick_period: i64,
+    pub(crate) remaining_ticks: i32,
+    pub(crate) base_duration_multiplier: f64,
+    pub(crate) base_duration_flat: i64,
+    pub(crate) affected_by_haste: bool,
+    pub(crate) channeled: bool,
+    pub(crate) tick_action: Option<Handle>,
+    /// Go `tickAction.NextActionAt`, kept after the action runs.
+    pub(crate) tick_next_at: i64,
+}
+
+impl Dot {
+    pub(crate) fn new(spell: SpellId, exported: &ExportedDot) -> Self {
+        Dot {
+            spell,
+            side: if exported.unit == "self" {
+                Side::Player
+            } else {
+                Side::Target
+            },
+            aura_label: exported.aura_label.clone(),
+            aura: AuraRef {
+                side: Side::Target,
+                index: 0,
+            },
+            base_tick_count: exported.base_tick_count,
+            base_tick_length: exported.base_tick_length_ns,
+            tick_period: exported.base_tick_length_ns,
+            remaining_ticks: exported.base_tick_count,
+            base_duration_multiplier: exported.base_duration_multiplier,
+            base_duration_flat: exported.base_duration_flat_ns,
+            affected_by_haste: exported.affected_by_cast_speed || exported.affected_by_real_haste,
+            channeled: exported.channeled,
+            tick_action: None,
+            tick_next_at: 0,
+        }
+    }
+
+    /// Go `Dot.BaseDuration`.
+    #[allow(dead_code)] // Staged for the remaining Frost mechanics; removed as each lands.
+    fn base_duration(&self) -> i64 {
+        (f64::from(self.base_tick_count)
+            * self.base_tick_length as f64
+            * self.base_duration_multiplier) as i64
+            + self.base_duration_flat
+    }
+}
+
+impl<A: Agent> Fight<A> {
+    /// Go `Dot.Apply`: replace any running copy, recompute ticks and activate.
+    #[allow(dead_code)] // Staged for the remaining Frost mechanics; removed as each lands.
+    pub(crate) fn apply_dot(&mut self, dot: DotId) {
+        let aura = self.dots[dot].aura;
+        self.deactivate_aura(aura);
+        let state = &mut self.dots[dot];
+        assert!(!state.affected_by_haste, "hasted dots are not supported");
+        state.tick_period = state.base_tick_length;
+        let ticks = state.base_duration() as f64 / state.base_tick_length as f64;
+        state.remaining_ticks = ticks.round_ties_even() as i32;
+        let duration = state.tick_period * i64::from(state.remaining_ticks);
+        self.aura_mut(aura).duration = duration;
+        self.activate_aura(aura);
+    }
+
+    /// Go `newDot` OnGain: the first tick is one period away.
+    pub(crate) fn dot_on_gain(&mut self, dot: DotId) {
+        if let SpellBehavior::Class(behavior) = self.spells[self.dots[dot].spell].behavior {
+            A::on_dot_gain(self, dot, behavior);
+        }
+        let at = self.now + self.dots[dot].tick_period;
+        let handle = self.schedule(at, PRIORITY_GCD, Action::DotTick(dot));
+        let state = &mut self.dots[dot];
+        state.tick_action = Some(handle);
+        state.tick_next_at = at;
+        if state.channeled {
+            self.player.channeled_dot = Some(dot);
+        }
+    }
+
+    /// Go `newDot` OnExpire: a tick due now runs first, then the channel ends.
+    pub(crate) fn dot_on_expire(&mut self, dot: DotId) {
+        if let SpellBehavior::Class(behavior) = self.spells[self.dots[dot].spell].behavior {
+            A::on_dot_expire(self, dot, behavior);
+        }
+        if self.dots[dot].tick_next_at == self.now {
+            self.dots[dot].remaining_ticks -= 1;
+            self.tick_once(dot);
+        }
+        if let Some(handle) = self.dots[dot].tick_action.take() {
+            self.queue.cancel(handle);
+        }
+        if self.dots[dot].channeled {
+            let delay = self.config.channel_clip_delay;
+            self.player.channeled_dot = None;
+            if self.player.gcd <= self.now {
+                self.wait_until(self.now + delay);
+            }
+            let aura = self.dots[dot].aura;
+            let channel_time = self.aura(aura).fade_time - self.aura(aura).start;
+            let spell = self.dots[dot].spell;
+            self.spells[spell].metrics[aura.side.index()].total_cast_time += channel_time;
+        }
+    }
+
+    /// Go `Dot.TickOnce`.
+    fn tick_once(&mut self, dot: DotId) {
+        if let SpellBehavior::Class(behavior) = self.spells[self.dots[dot].spell].behavior {
+            A::on_dot_tick(self, dot, behavior);
+        }
+    }
+
+    /// Go `Dot.periodicTick`.
+    pub(crate) fn periodic_tick(&mut self, dot: DotId, handle: Handle) {
+        if self.dots[dot].tick_action != Some(handle) {
+            return;
+        }
+        self.dots[dot].remaining_ticks -= 1;
+        self.tick_once(dot);
+        if self.dots[dot].channeled
+            && self.dots[dot].remaining_ticks == 0
+            && self.player.gcd <= self.now
+        {
+            // Without an interrupt condition the rotation cannot cut a channel short.
+            let delay = self.config.channel_clip_delay;
+            self.wait_until(self.now + delay);
+        }
+        let aura = self.dots[dot].aura;
+        let state = &self.dots[dot];
+        if self.aura(aura).active && (!state.channeled || state.remaining_ticks > 0) {
+            let at = self.now + state.tick_period;
+            let handle = self.schedule(at, PRIORITY_GCD, Action::DotTick(dot));
+            let state = &mut self.dots[dot];
+            state.tick_action = Some(handle);
+            state.tick_next_at = at;
+        }
+    }
+}

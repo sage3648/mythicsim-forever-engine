@@ -6,6 +6,14 @@ mod coverage;
 
 pub(crate) use coverage::{prepared_coverage, IMPLEMENTED_EFFECTS};
 
+/// Run a prepared v2 input that passed the coverage gate with the shared Mage agent.
+pub(crate) fn run_prepared(
+    prepared: &crate::contracts::prepared_v2::PreparedV2,
+) -> Result<crate::core::fight::FightReport, String> {
+    let mut fight = crate::classes::mage::agent::MageAgent::fight(prepared)?;
+    Ok(fight.run())
+}
+
 use std::collections::BinaryHeap;
 
 use crate::{

@@ -13,6 +13,9 @@ flowchart LR
     E --> G
 ```
 
+Prepared v2 replaces the synthetic helper with an exporter for real requests and a
+class-independent fight runtime in `core/fight`; see the [contract](prepared-v2.md).
+
 Rust owns the event loop and aggregation, and never calls Go during a fight.
 Checked-in snapshots and goldens allow Rust tests without Go. `tools/matched-go`
 is a benchmark control for the same narrow model, not the full Go engine.

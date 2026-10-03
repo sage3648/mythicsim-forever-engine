@@ -1,6 +1,6 @@
 use forever_engine::{
-    check_prepared, contracts::prepared_v2::PreparedV2, simulate, PreparedError, Request,
-    SOURCE_REVISION,
+    check_prepared, contracts::prepared_v2::PreparedV2, simulate, simulate_prepared, PreparedError,
+    Request, SOURCE_REVISION,
 };
 use serde::Deserialize;
 use std::{env, fs, hint::black_box, process};
@@ -101,9 +101,20 @@ fn run() -> Result<(), String> {
     }
     let input = fs::read(infile.ok_or("--infile is required")?).map_err(|err| err.to_string())?;
     if let Some(prepared) = prepared_v2(&input)? {
-        // No prepared v2 mechanics are executable yet; report exactly what is missing.
-        check_prepared(&prepared).map_err(|err| err.to_string())?;
-        return Err("prepared v2 simulation is not implemented".into());
+        if args[0] != "sim" || trace {
+            return Err(
+                "prepared v2 inputs support sim without --trace; set debugFirstIteration for logs"
+                    .into(),
+            );
+        }
+        let report = simulate_prepared(&prepared).map_err(|err| err.to_string())?;
+        let output = serde_json::to_string_pretty(&report).map_err(|err| err.to_string())?;
+        if let Some(path) = outfile {
+            fs::write(path, output + "\n").map_err(|err| err.to_string())?;
+        } else {
+            println!("{output}");
+        }
+        return Ok(());
     }
     let request: Request =
         serde_json::from_slice(&input).map_err(|err| format!("request rejected: {err}"))?;

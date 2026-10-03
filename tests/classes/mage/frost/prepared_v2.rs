@@ -208,3 +208,170 @@ fn community_fix_622_unknown_aura_conditions_are_rejected() {
         .iter()
         .any(|reason| reason.contains("#622")));
 }
+
+/// The comparable view of a Go `RaidSimResult`, matching tools/prepared_v2.py `compact`.
+fn compact(result: &Value) -> Value {
+    let player = &result["raidMetrics"]["parties"][0]["players"][0];
+    let target = &result["encounterMetrics"]["targets"][0];
+    let number = |value: &Value| value.as_f64().map_or(json!(0), |_| value.clone());
+    let distribution = |value: &Value| {
+        json!({
+            "avg": number(&value["avg"]), "stdev": number(&value["stdev"]),
+            "max": number(&value["max"]), "min": number(&value["min"]),
+        })
+    };
+    let key = |id: &Value| {
+        let map: std::collections::BTreeMap<String, Value> =
+            serde_json::from_value(id.clone()).unwrap();
+        serde_json::to_string(&map)
+            .unwrap()
+            .replace(':', ": ")
+            .replace(',', ", ")
+    };
+    let exercised = |row: &Value| {
+        row["targets"].as_array().unwrap().iter().any(|target| {
+            target
+                .as_object()
+                .unwrap()
+                .iter()
+                .any(|(k, v)| k != "unitIndex" && v.as_f64().is_some_and(|value| value != 0.0))
+        })
+    };
+    let auras = |unit: &Value| {
+        let mut map = serde_json::Map::new();
+        for aura in unit["auras"].as_array().into_iter().flatten() {
+            if aura["procsAvg"].as_f64().unwrap_or(0.0) > 0.0 {
+                map.insert(
+                    key(&aura["id"]),
+                    json!({
+                        "uptimeSecondsAvg": number(&aura["uptimeSecondsAvg"]),
+                        "uptimeSecondsStdev": number(&aura["uptimeSecondsStdev"]),
+                        "procsAvg": number(&aura["procsAvg"]),
+                    }),
+                );
+            }
+        }
+        Value::Object(map)
+    };
+    let mut actions = serde_json::Map::new();
+    for action in player["actions"].as_array().into_iter().flatten() {
+        if exercised(action) {
+            actions.insert(key(&action["id"]), action["targets"].clone());
+        }
+    }
+    let mut resources = serde_json::Map::new();
+    for resource in player["resources"].as_array().into_iter().flatten() {
+        if resource["events"].as_i64().unwrap_or(0) > 0 {
+            resources.insert(
+                key(&resource["id"]),
+                json!({
+                    "events": number(&resource["events"]),
+                    "gain": number(&resource["gain"]),
+                    "actualGain": number(&resource["actualGain"]),
+                }),
+            );
+        }
+    }
+    json!({
+        "summary": {
+            "iterationsDone": number(&result["iterationsDone"]),
+            "avgIterationDuration": number(&result["avgIterationDuration"]),
+            "firstIterationDuration": number(&result["firstIterationDuration"]),
+            "dps": distribution(&player["dps"]),
+            "threat": distribution(&player["threat"]),
+            "secondsOomAvg": number(&player["secondsOomAvg"]),
+        },
+        "actions": actions,
+        "auras": auras(player),
+        "target_auras": auras(target),
+        "resources": resources,
+    })
+}
+
+/// Integers exactly; floats within 1e-9 relative, the FMA and summation-order allowance
+/// documented in docs/prepared-v2.md.
+fn differences(go: &Value, rust: &Value, path: &str, out: &mut Vec<String>) {
+    match (go, rust) {
+        (Value::Object(a), Value::Object(b)) => {
+            let keys: std::collections::BTreeSet<&String> = a.keys().chain(b.keys()).collect();
+            for key in keys {
+                match (a.get(key), b.get(key)) {
+                    (Some(x), Some(y)) => differences(x, y, &format!("{path}/{key}"), out),
+                    _ => out.push(format!("{path}/{key}: present on one side only")),
+                }
+            }
+        }
+        (Value::Array(a), Value::Array(b)) if a.len() == b.len() => {
+            for (index, (x, y)) in a.iter().zip(b).enumerate() {
+                differences(x, y, &format!("{path}/{index}"), out);
+            }
+        }
+        (Value::Number(a), Value::Number(b)) => {
+            let (x, y) = (a.as_f64().unwrap(), b.as_f64().unwrap());
+            let integral = a.is_i64() || a.is_u64();
+            let tolerance = if integral && (b.is_i64() || b.is_u64()) {
+                0.0
+            } else {
+                1e-9 * x.abs().max(y.abs()).max(1.0)
+            };
+            if (x - y).abs() > tolerance {
+                out.push(format!("{path}: Go {x}, Rust {y}"));
+            }
+        }
+        (a, b) if a == b => {}
+        (a, b) => out.push(format!("{path}: Go {a}, Rust {b}")),
+    }
+}
+
+#[derive(Deserialize)]
+struct Golden {
+    id: String,
+    prepared: String,
+    go_result: Option<GoldenFile>,
+    go_log: Option<GoldenFile>,
+}
+
+#[derive(Deserialize)]
+struct GoldenFile {
+    file: String,
+}
+
+#[derive(Deserialize)]
+struct GoldenManifest {
+    cases: Vec<Golden>,
+}
+
+#[test]
+fn supported_cases_match_pinned_go_goldens() {
+    let manifest: GoldenManifest =
+        serde_json::from_slice(&fs::read(family().join("manifest.json")).unwrap()).unwrap();
+    let mut checked = 0;
+    for case in manifest.cases {
+        let Some(golden) = case.go_result else {
+            continue;
+        };
+        let prepared: PreparedV2 =
+            serde_json::from_slice(&fs::read(family().join(&case.prepared)).unwrap()).unwrap();
+        let report = forever_engine::simulate_prepared(&prepared).unwrap();
+        let expected: Value =
+            serde_json::from_slice(&fs::read(family().join(&golden.file)).unwrap()).unwrap();
+        let mut found = Vec::new();
+        differences(&expected, &compact(&report.result), "", &mut found);
+        assert!(found.is_empty(), "{}:\n{}", case.id, found.join("\n"));
+        if let Some(log) = case.go_log {
+            let expected = fs::read_to_string(family().join(&log.file)).unwrap();
+            let actual = report.result["logs"].as_str().unwrap();
+            for (line, (go, rust)) in expected.lines().zip(actual.lines()).enumerate() {
+                assert_eq!(go, rust, "{} log line {}", case.id, line + 1);
+            }
+            assert_eq!(
+                expected.lines().count(),
+                actual.lines().count(),
+                "{} log length",
+                case.id
+            );
+        }
+        checked += 1;
+    }
+    assert!(checked >= 5);
+}

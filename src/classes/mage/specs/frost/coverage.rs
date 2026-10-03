@@ -1,18 +1,20 @@
 //! The Frost build gate for prepared v2 inputs.
 //!
-//! A prepared input is supported only when every effect it declares, every active aura
-//! that listens to combat events and every spell its rotation can reach has a Rust
-//! implementation. Each gap becomes one stable reason string.
+//! An effect is required when an active aura that listens to combat events belongs to
+//! it, or when the rotation can reach a spell it implements. A prepared input is
+//! supported only when every required effect has a Rust implementation, every active
+//! listener is claimed and every reachable spell stays inside the runtime's limits.
+//! Each gap becomes one stable reason string.
 
 use std::collections::BTreeSet;
 
 use crate::{
-    contracts::prepared_v2::{Effect, PreparedV2, Spell},
+    contracts::prepared_v2::{ActionId, Effect, PreparedV2, Spell},
     rotation::{Action, Rotation},
 };
 
 /// Effect kinds implemented in Rust and validated against the pinned Go reference.
-pub(crate) const IMPLEMENTED_EFFECTS: &[&str] = &[];
+pub(crate) const IMPLEMENTED_EFFECTS: &[&str] = &["frostbolt", "inert_listener"];
 
 /// The effect kind whose implementation executes a castable spell.
 fn spell_capability(spell: &Spell, prepared: &PreparedV2) -> Option<&'static str> {
@@ -73,10 +75,7 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
 
 /// Go `GetAPLCastSpell`/`GetAPLSpell`: the first APL-flagged spell with the action ID,
 /// otherwise the first registered one. A missing spell drops the rotation action in Go.
-pub(crate) fn rotation_spell<'a>(
-    prepared: &'a PreparedV2,
-    id: &crate::contracts::prepared_v2::ActionId,
-) -> Option<&'a Spell> {
+pub(crate) fn rotation_spell<'a>(prepared: &'a PreparedV2, id: &ActionId) -> Option<&'a Spell> {
     let spells = &prepared.player.spells;
     spells
         .iter()
@@ -86,6 +85,31 @@ pub(crate) fn rotation_spell<'a>(
                 .iter()
                 .find(|spell| spell.action_id.as_ref() == Some(id))
         })
+}
+
+/// Spell properties the fight runtime does not implement.
+fn runtime_limits(spell: &Spell) -> Vec<&'static str> {
+    let mut limits = Vec::new();
+    if spell.max_charges != 0 {
+        limits.push("charges");
+    }
+    if spell.has_cast_requirement {
+        limits.push("cast requirements");
+    }
+    if spell.min_range != 0.0 || spell.max_range != 0.0 {
+        limits.push("range limits");
+    }
+    if spell.damage_effect.is_some() && spell.school & 1 != 0 {
+        limits.push("physical damage");
+    }
+    if spell
+        .dot
+        .as_ref()
+        .is_some_and(|dot| dot.affected_by_cast_speed || dot.affected_by_real_haste)
+    {
+        limits.push("hasted periodic effects");
+    }
+    limits
 }
 
 pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotation>) -> Vec<String> {
@@ -104,32 +128,28 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
         ));
     }
 
-    let mut missing: BTreeSet<&str> = BTreeSet::new();
-    for effect in &prepared.effects {
-        if !IMPLEMENTED_EFFECTS.contains(&effect.kind()) {
-            missing.insert(effect.kind());
-        }
-    }
-    reasons.extend(
-        missing
-            .iter()
-            .map(|kind| format!("effect {kind} is not implemented")),
-    );
-
-    let claimed: BTreeSet<(&str, &str)> = prepared.effects.iter().flat_map(claims).collect();
+    let mut required: BTreeSet<&str> = BTreeSet::new();
     for (unit, auras) in [
         ("player", &player.auras),
         ("target", &prepared.target.auras),
     ] {
         for aura in auras {
-            if aura.active
-                && aura.has_event_callbacks()
-                && !claimed.contains(&(unit, aura.label.as_str()))
-            {
-                reasons.push(format!(
+            if !aura.active || !aura.has_event_callbacks() {
+                continue;
+            }
+            let claimant = prepared.effects.iter().find(|effect| {
+                claims(effect)
+                    .iter()
+                    .any(|(u, label)| *u == unit && *label == aura.label)
+            });
+            match claimant {
+                Some(effect) => {
+                    required.insert(effect.kind());
+                }
+                None => reasons.push(format!(
                     "{unit} aura {:?} listens to combat events without an effect",
                     aura.label
-                ));
+                )),
             }
         }
     }
@@ -147,29 +167,45 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
                 }
             }
         }
-        let mut unimplemented = BTreeSet::new();
+        let mut unknown = BTreeSet::new();
+        let mut limited = BTreeSet::new();
         for spell in reachable {
-            let id = spell.action_id.clone().unwrap_or_default();
-            // A declared but unimplemented effect is already reported above.
+            let id = spell.action_id.clone().unwrap_or_default().to_string();
             match spell_capability(spell, prepared) {
-                Some(kind) if prepared.effects.iter().any(|effect| effect.kind() == kind) => {}
-                _ => {
-                    unimplemented.insert(id.to_string());
+                Some(kind) if prepared.effects.iter().any(|effect| effect.kind() == kind) => {
+                    required.insert(kind);
                 }
+                _ => {
+                    unknown.insert(id.clone());
+                }
+            }
+            for limit in runtime_limits(spell) {
+                limited.insert(format!(
+                    "rotation reaches {id}, which uses unsupported {limit}"
+                ));
             }
         }
         reasons.extend(
-            unimplemented
+            unknown
                 .into_iter()
                 .map(|id| format!("rotation reaches {id} without a known behavior")),
         );
+        reasons.extend(limited);
     }
-    reasons
+
+    let missing: Vec<String> = required
+        .into_iter()
+        .filter(|kind| !IMPLEMENTED_EFFECTS.contains(kind))
+        .map(|kind| format!("effect {kind} is not implemented"))
+        .collect();
+    let mut all = missing;
+    all.extend(reasons);
+    all
 }
 
 /// Go resolves `auraIsActive` on the casting player with `GetAuraByID`: the first aura
 /// with the same action ID, tag included.
-fn player_has_aura(prepared: &PreparedV2, id: &crate::contracts::prepared_v2::ActionId) -> bool {
+fn player_has_aura(prepared: &PreparedV2, id: &ActionId) -> bool {
     prepared
         .player
         .auras

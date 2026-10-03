@@ -18,7 +18,8 @@ mod rotation;
 pub use classes::mage::spells::frostbolt::hit_chance;
 pub use contracts::{Caster, Request, Spell, Target};
 pub use engine::prepared::{
-    check as check_prepared, coverage as prepared_coverage, PreparedError, CLIENT_BUILD,
+    check as check_prepared, coverage as prepared_coverage, simulate as simulate_prepared,
+    PreparedError, PreparedReport, CLIENT_BUILD,
 };
 pub use engine::simulate;
 

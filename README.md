@@ -3,10 +3,12 @@
 A community-built Rust simulation engine for WoW Forever, starting with a small,
 tested kernel and growing toward complete class support.
 
-**Status: experimental.** Today this repository runs a prepared, single-target,
-Frostbolt-only Mage simulation. It is not a complete Mage simulator or a production
-replacement for MythicSim's Go engine. Our goal is a purpose-built Forever engine
-with clear mechanics, reproducible tests and community contributions.
+**Status: experimental.** Rust runs complete prepared fights through a class-independent
+runtime that mirrors the pinned Go engine. Today the supported Mage builds cast
+Frostbolt only; the complete Frost reference build still needs the mechanics listed by
+its coverage report. It is not a complete Mage simulator or a production replacement
+for MythicSim's Go engine. Our goal is a purpose-built Forever engine with clear
+mechanics, reproducible tests and community contributions.
 
 ## Get started
 
@@ -38,8 +40,11 @@ The binary does not accept production `RaidSimRequest` payloads.
 
 The [prepared v2 contract](docs/prepared-v2.md) describes a complete reset Go
 simulation of a real character, exported from the pinned engine. Rust validates it
-strictly and `forever-engine check --infile PREPARED.json` lists the mechanics an
-input still needs. No v2 mechanics execute yet.
+strictly; `forever-engine check --infile PREPARED.json` lists the mechanics an input
+still needs and `forever-engine sim` runs covered inputs. The runtime reproduces Go's
+event order, shared or labeled random streams, casting, mana, auras, metrics and
+first-fight debug log. Frostbolt-only builds match the pinned Go engine exactly in
+counts and to 1e-9 in metrics, including duration variation and running out of mana.
 
 See the [kernel guide](docs/kernel.md) for the input boundary and commands.
 
@@ -59,10 +64,11 @@ flowchart TD
     Crate --> Types["Input and output types<br/>contracts.rs, contracts/prepared_v2.rs, report.rs"]
     Crate --> Shared["Shared systems"]
     Crate --> Classes["Class domains: classes/"]
-    Shared --> Core["core/<br/>Events, RNG, time"]
+    Shared --> Core["core/<br/>Events, RNG, time,<br/>fight runtime"]
     Shared --> Mechanics["mechanics/<br/>Damage, mana"]
     Shared --> Rotation["rotation.rs<br/>APL subset"]
     Classes --> Mage["mage/"]
+    Mage --> Agent["agent.rs<br/>Mage runtime hooks"]
     Mage --> Spells["spells/frostbolt.rs<br/>Shared Mage spell"]
     Mage --> Frost["specs/frost.rs<br/>Prepared Frostbolt simulation"]
     Tests["tests/classes/mage/frost/<br/>Kernel and Go reference checks"] -. validates .-> Frost

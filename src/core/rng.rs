@@ -28,6 +28,59 @@ pub fn labeled_seed(seed: u64, label: &str) -> u64 {
     u64::from(hash)
 }
 
+/// Go's simulation random source: one shared stream, or one stream per label when the
+/// request sets `useLabeledRands`. Every iteration reseeds with `seed + iteration`.
+pub(crate) enum SimRng {
+    Shared(SplitMix64),
+    Labeled {
+        seed: u64,
+        streams: Vec<(String, SplitMix64)>,
+    },
+}
+
+impl SimRng {
+    pub(crate) fn new(labeled: bool, seed: u64) -> Self {
+        if labeled {
+            SimRng::Labeled {
+                seed,
+                streams: Vec::new(),
+            }
+        } else {
+            SimRng::Shared(SplitMix64::new(seed))
+        }
+    }
+
+    /// Go `reseedRands`: existing label streams restart from the new iteration seed and
+    /// later labels are created from it.
+    pub(crate) fn reseed(&mut self, iteration_seed: u64) {
+        match self {
+            SimRng::Shared(rng) => *rng = SplitMix64::new(iteration_seed),
+            SimRng::Labeled { seed, streams } => {
+                *seed = iteration_seed;
+                for (label, rng) in streams.iter_mut() {
+                    *rng = SplitMix64::new(labeled_seed(iteration_seed, label));
+                }
+            }
+        }
+    }
+
+    /// Go `RandomFloat(label)`.
+    pub(crate) fn next_f64(&mut self, label: &str) -> f64 {
+        match self {
+            SimRng::Shared(rng) => rng.next_f64(),
+            SimRng::Labeled { seed, streams } => {
+                if let Some((_, rng)) = streams.iter_mut().find(|(name, _)| name == label) {
+                    return rng.next_f64();
+                }
+                let mut rng = SplitMix64::new(labeled_seed(*seed, label));
+                let value = rng.next_f64();
+                streams.push((label.to_string(), rng));
+                value
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -38,5 +91,28 @@ mod tests {
         assert_eq!(rng.next_u64(), 0xe220a8397b1dcdaf);
         assert_eq!(rng.next_u64(), 0x6e789e6aa1b965f4);
         assert_eq!(rng.next_u64(), 0x06c45d188009454f);
+    }
+
+    #[test]
+    fn labeled_streams_are_independent_and_reseed_per_iteration() {
+        let mut shared = SimRng::new(false, 42);
+        let mut labeled = SimRng::new(true, 42);
+        let first_hit = labeled.next_f64("Magical Hit Roll");
+        let _ = labeled.next_f64("Damage Roll");
+        assert_eq!(
+            first_hit,
+            SplitMix64::new(labeled_seed(42, "Magical Hit Roll")).next_f64()
+        );
+        labeled.reseed(43);
+        assert_eq!(
+            labeled.next_f64("Magical Hit Roll"),
+            SplitMix64::new(labeled_seed(43, "Magical Hit Roll")).next_f64()
+        );
+        let a = shared.next_f64("Damage Roll");
+        let b = shared.next_f64("Magical Hit Roll");
+        assert_eq!((a, b), {
+            let mut rng = SplitMix64::new(42);
+            (rng.next_f64(), rng.next_f64())
+        });
     }
 }

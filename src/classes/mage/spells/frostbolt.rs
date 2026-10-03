@@ -72,3 +72,15 @@ pub(crate) fn resolve_cast(
     }
     (damage, outcome)
 }
+
+/// Go sim/mage/frostbolt.go `ApplyEffects`: roll the client damage effect, resolve magic
+/// hit and crit at cast completion, then deal the result when the missile arrives.
+pub(crate) fn apply<A: crate::core::fight::Agent>(
+    fight: &mut crate::core::fight::Fight<A>,
+    spell: crate::core::fight::SpellId,
+    target: crate::core::fight::Side,
+) {
+    let base = fight.roll_damage_effect(spell);
+    let result = fight.calc_damage(spell, target, base);
+    fight.deal_damage_after_travel(spell, result);
+}

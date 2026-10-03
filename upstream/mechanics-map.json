@@ -3,6 +3,8 @@
   "scope": "Frost reference build (inventory/first-frost)",
   "statuses": [
     "validated",
+    "implemented_unvalidated",
+    "validated_frostbolt_v2",
     "prepared_v1_only",
     "prepared_v1_labeled_only",
     "prepared_v1_binary_only",
@@ -70,13 +72,16 @@
         "sim/core/gcd.go"
       ],
       "rust": [
+        "src/classes/mage/specs/frost.rs",
         "src/core/events.rs",
-        "src/classes/mage/specs/frost.rs"
+        "src/core/fight.rs",
+        "src/core/queue.rs"
       ],
-      "status": "prepared_v1_only",
+      "status": "validated_frostbolt_v2",
       "tests": [
         "tests/classes/mage/frost/kernel.rs",
-        "tests/classes/mage/frost/oracle.rs"
+        "tests/classes/mage/frost/oracle.rs",
+        "tests/classes/mage/frost/prepared_v2.rs"
       ],
       "upstream_changes": [],
       "fork_patches": []
@@ -90,14 +95,15 @@
       "rust": [
         "src/core/rng.rs"
       ],
-      "status": "prepared_v1_labeled_only",
+      "status": "validated_frostbolt_v2",
       "tests": [
         "tests/classes/mage/frost/kernel.rs",
-        "tests/classes/mage/frost/oracle.rs"
+        "tests/classes/mage/frost/oracle.rs",
+        "tests/classes/mage/frost/prepared_v2.rs"
       ],
       "upstream_changes": [],
       "fork_patches": [],
-      "note": "Shared-stream mode, used by production requests, is not implemented yet."
+      "note": "Shared and labeled streams, including Go's reset draws for duration variation and pet stat inheritance."
     },
     {
       "id": "spell_casting",
@@ -107,12 +113,14 @@
         "sim/core/spell_queueing.go"
       ],
       "rust": [
-        "src/classes/mage/specs/frost.rs"
+        "src/classes/mage/specs/frost.rs",
+        "src/core/fight/cast.rs"
       ],
-      "status": "prepared_v1_only",
+      "status": "validated_frostbolt_v2",
       "tests": [
         "tests/classes/mage/frost/kernel.rs",
-        "tests/classes/mage/frost/oracle.rs"
+        "tests/classes/mage/frost/oracle.rs",
+        "tests/classes/mage/frost/prepared_v2.rs"
       ],
       "upstream_changes": [],
       "fork_patches": []
@@ -125,13 +133,15 @@
         "sim/core/spell_resistances.go"
       ],
       "rust": [
-        "src/mechanics/damage.rs",
-        "src/classes/mage/spells/frostbolt.rs"
+        "src/classes/mage/spells/frostbolt.rs",
+        "src/core/fight/damage.rs",
+        "src/mechanics/damage.rs"
       ],
-      "status": "prepared_v1_binary_only",
+      "status": "validated_frostbolt_v2",
       "tests": [
         "tests/classes/mage/frost/kernel.rs",
-        "tests/classes/mage/frost/oracle.rs"
+        "tests/classes/mage/frost/oracle.rs",
+        "tests/classes/mage/frost/prepared_v2.rs"
       ],
       "upstream_changes": [],
       "fork_patches": [],
@@ -143,9 +153,10 @@
         "sim/core/mana.go"
       ],
       "rust": [
+        "src/core/fight/cast.rs",
         "src/mechanics/mana.rs"
       ],
-      "status": "prepared_v1_and_v2_start_rates",
+      "status": "validated_frostbolt_v2",
       "tests": [
         "tests/classes/mage/frost/kernel.rs",
         "tests/classes/mage/frost/oracle.rs",
@@ -163,8 +174,10 @@
         "sim/core/aura_helpers.go",
         "sim/core/procs.go"
       ],
-      "rust": [],
-      "status": "not_ported",
+      "rust": [
+        "src/core/fight/aura.rs"
+      ],
+      "status": "implemented_unvalidated",
       "tests": [],
       "upstream_changes": [],
       "fork_patches": []
@@ -186,8 +199,10 @@
       "go": [
         "sim/core/dot.go"
       ],
-      "rust": [],
-      "status": "not_ported",
+      "rust": [
+        "src/core/fight/dot.rs"
+      ],
+      "status": "implemented_unvalidated",
       "tests": [],
       "upstream_changes": [],
       "fork_patches": [
@@ -200,8 +215,10 @@
         "sim/core/major_cooldown.go",
         "sim/core/apl_actions_casting.go"
       ],
-      "rust": [],
-      "status": "not_ported",
+      "rust": [
+        "src/core/fight/cast.rs"
+      ],
+      "status": "implemented_unvalidated",
       "tests": [],
       "upstream_changes": [],
       "fork_patches": []
@@ -218,10 +235,11 @@
         "sim/core/apl_values_encounter.go"
       ],
       "rust": [
-        "src/rotation.rs",
-        "src/classes/mage/specs/frost/coverage.rs"
+        "src/classes/mage/specs/frost/coverage.rs",
+        "src/core/fight/rotation.rs",
+        "src/rotation.rs"
       ],
-      "status": "parse_only",
+      "status": "validated_frostbolt_v2",
       "tests": [
         "tests/classes/mage/frost/prepared_v2.rs"
       ],
@@ -237,12 +255,14 @@
         "sim/mage/frostbolt.go"
       ],
       "rust": [
+        "src/classes/mage/agent.rs",
         "src/classes/mage/spells/frostbolt.rs"
       ],
-      "status": "prepared_v1_only",
+      "status": "validated_frostbolt_v2",
       "tests": [
         "tests/classes/mage/frost/kernel.rs",
-        "tests/classes/mage/frost/oracle.rs"
+        "tests/classes/mage/frost/oracle.rs",
+        "tests/classes/mage/frost/prepared_v2.rs"
       ],
       "upstream_changes": [],
       "fork_patches": [
@@ -372,8 +392,10 @@
       "go": [
         "sim/core/consumes.go"
       ],
-      "rust": [],
-      "status": "not_ported",
+      "rust": [
+        "src/core/fight/cast.rs"
+      ],
+      "status": "implemented_unvalidated",
       "tests": [],
       "upstream_changes": [],
       "fork_patches": []
@@ -384,8 +406,10 @@
         "sim/common/shared/spell_data_energize.go",
         "sim/common/shared/shared_utils.go"
       ],
-      "rust": [],
-      "status": "not_ported",
+      "rust": [
+        "src/core/fight/cast.rs"
+      ],
+      "status": "implemented_unvalidated",
       "tests": [],
       "upstream_changes": [],
       "fork_patches": []
@@ -396,8 +420,10 @@
         "sim/core/buffs/paladin.go",
         "sim/core/buffs/drivers.go"
       ],
-      "rust": [],
-      "status": "not_ported",
+      "rust": [
+        "src/core/fight/aura.rs"
+      ],
+      "status": "implemented_unvalidated",
       "tests": [],
       "upstream_changes": [],
       "fork_patches": []

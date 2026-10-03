@@ -9,7 +9,9 @@ owning class/spec, shared primitive or validation boundary before editing.
 ## Code ownership and dependencies
 
 Solid arrows mean "calls or uses". The dotted arrow shows integration coverage.
-This diagram describes the current prepared Frostbolt simulation:
+This diagram describes the prepared v1 Frostbolt kernel. Prepared v2 fights run in
+the class-independent runtime under `core/fight`, which Mage drives through
+`classes/mage/agent.rs`; the same dependency rules apply.
 
 ```mermaid
 flowchart TD
