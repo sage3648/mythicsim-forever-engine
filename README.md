@@ -135,6 +135,8 @@ median 81 ms in Rust against 205 ms for the pinned Go engine (2.5x), single thre
 one machine. Before the allocation pass Rust took 273 ms. See the
 [full-build snapshot](benchmarks/2026-10-03-frost-reference.json) for samples and
 limitations; `forever-engine bench --infile PREPARED_V2.json` reproduces the Rust side.
+Across the three Mage reference builds Rust runs 2.1 to 2.5 times faster than the pinned
+Go engine ([snapshot](benchmarks/2026-10-03-mage-references.json)).
 
 - [Fair comparison and limitations](docs/forever-rust-fair-comparison-2026-10-03.md)
 - [Raw benchmark snapshot](benchmarks/2026-10-03-fair.json)

@@ -1,0 +1,97 @@
+{
+  "method": "Each application reference request, 3000 iterations, seed 42, first-fight debug log on. Go: the pinned engine's RunRaidSim through tools/oracle-v2 sim, GOMAXPROCS=1, one process per sample, elapsedNs from the result. Rust: forever-engine bench on the matching prepared fixture, 2 in-process warmups, elapsed_ns of the iteration loop. Go and Rust results match.",
+  "source_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
+  "go_version": "go version go1.25.6 darwin/arm64",
+  "rust_version": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+  "machine": {
+    "platform": "macOS-26.5-arm64-arm-64bit-Mach-O",
+    "cpu": "Apple M2 Max"
+  },
+  "builds": {
+    "frost": {
+      "prepared_sha256": "7f72f9d52fae0a8ba8ec6bfa75c2e2b625e6c65e59cd8d9049fdfbd3e23f197c",
+      "samples_ns": {
+        "go": [
+          224972167,
+          205645791,
+          196526666,
+          197752958,
+          191736334,
+          187603250,
+          201378584
+        ],
+        "rust": [
+          80488000,
+          79551833,
+          79698417,
+          79205250,
+          83177708,
+          80810625,
+          79122250
+        ]
+      },
+      "median_ms": {
+        "go": 197.753,
+        "rust": 79.698
+      },
+      "go_rust_median_ratio": 2.48
+    },
+    "arcane": {
+      "prepared_sha256": "1720f2d140d01f1c9fc87106739f4610464ac305d5aba8002a711feec1ab4cad",
+      "samples_ns": {
+        "go": [
+          232300208,
+          230322917,
+          240050750,
+          239872083,
+          409002292,
+          417064833,
+          255468292
+        ],
+        "rust": [
+          120342500,
+          116438542,
+          115775375,
+          115592458,
+          115189291,
+          114789500,
+          114989166
+        ]
+      },
+      "median_ms": {
+        "go": 240.051,
+        "rust": 115.592
+      },
+      "go_rust_median_ratio": 2.08
+    },
+    "fire": {
+      "prepared_sha256": "14f96ed2946ebb06c2ddb13dd676bf2c05186e6080e76c054998a230d8ecb872",
+      "samples_ns": {
+        "go": [
+          230474750,
+          233720458,
+          248059250,
+          252380958,
+          300230584,
+          247161667,
+          397385500
+        ],
+        "rust": [
+          142120042,
+          120192333,
+          118640584,
+          117446000,
+          116711291,
+          116560875,
+          116427667
+        ]
+      },
+      "median_ms": {
+        "go": 248.059,
+        "rust": 117.446
+      },
+      "go_rust_median_ratio": 2.11
+    }
+  },
+  "limitations": "Shared host without CPU affinity; few samples; Go times include per-process effects that Rust's in-process warmups avoid; Rust excludes JSON parsing and Go preparation. One request per build; not a production claim."
+}
