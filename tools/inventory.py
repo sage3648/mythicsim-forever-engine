@@ -4,6 +4,7 @@
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 import shutil
 import subprocess
@@ -134,6 +135,33 @@ def compact_observation(report):
     }
 
 
+def compare_observations(reference, actual):
+    """Compare all saved metrics and timeline fields, with exact integer counts."""
+    expected, observed = leaves(reference), leaves(actual)
+    differences = []
+    numeric_fields = 0
+    for path in sorted(set(expected) | set(observed)):
+        if path not in expected or path not in observed:
+            differences.append({"path": path, "reason": "missing or added field"})
+            continue
+        a, b = expected[path], observed[path]
+        if type(a) is int and type(b) is int:
+            numeric_fields += 1
+            matches = a == b
+        elif type(a) in (int, float) and type(b) in (int, float):
+            numeric_fields += 1
+            matches = math.isfinite(a) and math.isfinite(b) and math.isclose(
+                a, b, abs_tol=1e-8, rel_tol=1e-12)
+        else:
+            matches = type(a) is type(b) and a == b
+        if not matches:
+            differences.append({"path": path, "expected": a, "actual": b})
+    return {"passed": not differences, "compared_fields": len(set(expected) | set(observed)),
+            "numeric_fields": numeric_fields,
+            "float_tolerance": {"absolute": 1e-8, "relative": 1e-12},
+            "integer_counts": "exact", "differences": differences}
+
+
 def go_module(directory, module, source, helper):
     directory.mkdir()
     # JSON strings are also valid quoted Go module paths and protect whitespace.
@@ -167,10 +195,13 @@ def capture(app_source, engine_source, output):
         (output / "observation.json").write_text(json.dumps(observation, indent=2, sort_keys=True) + "\n")
         snapshot_matches = json.loads(snapshot) == load(DIRECTORY / "snapshot.json")
         identities_match = action_ids(observation) == action_ids(load(DIRECTORY / "observation.json"))
+        metrics = compare_observations(load(DIRECTORY / "observation.json"), observation)
         comparison = {"snapshot_matches": snapshot_matches, "action_identities_match": identities_match,
-                      "note": "A fresh observation is not an accepted golden or a Rust comparison."}
+                      "output_comparison": metrics,
+                      "reference_engine_revision": load(DIRECTORY / "manifest.json")["sources"]["engine"]["revision"],
+                      "note": "Frozen Go output versus fresh Go execution. This is not a full-build Rust comparison."}
         (output / "comparison.json").write_text(json.dumps(comparison, indent=2) + "\n")
-        if not snapshot_matches or not identities_match:
+        if not snapshot_matches or not identities_match or not metrics["passed"]:
             raise ValueError(f"reference capture differs; review {output / 'comparison.json'}")
 
 

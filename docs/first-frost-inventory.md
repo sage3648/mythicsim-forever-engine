@@ -38,6 +38,9 @@ timeline parsed by the application's own report helpers. Registered but unused
 spell ranks are omitted. It is a historical observation, not an accepted full-build
 Rust golden, a benchmark or live-game proof.
 
+The [Go parity validation](go-parity-validation-2026-10-03.md) records a fresh
+reproduction of all saved output fields and separate live Rust kernel comparisons.
+
 The observed run completed all 3,000 iterations with mean DPS about **590.947**
 and mean fight length about **119.899 seconds**. Those numbers carry the inherited
 mechanics caveats below. No Rust full-build result exists to compare yet.
@@ -145,8 +148,11 @@ python3 tools/inventory.py capture \
 
 The output directory must not exist. Capture builds helper programs in temporary
 modules, reads supplied source and runs locally without queuing production jobs.
-It refuses to replace accepted inventory files. It compares request contents and
-action identities; metric changes still require review. Go dependencies can be
+It refuses to replace accepted inventory files. It compares request contents,
+action identities and every saved metric/timeline field. Integer counts must match
+exactly; floating-point comparisons allow only `1e-8` absolute or `1e-12` relative
+roundoff. A difference fails capture and is listed in `comparison.json` for review.
+Go dependencies can be
 downloaded on first use.
 
 Source hashes cover 51 relevant application and Go files. They catch changes to

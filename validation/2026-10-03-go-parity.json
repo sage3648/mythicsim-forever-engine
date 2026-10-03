@@ -1,0 +1,680 @@
+{
+  "kind": "correctness_validation",
+  "date": "2026-10-03",
+  "sources": {
+    "app": {
+      "revision": "1ca721161aba693a899466943b8f6c3a6085df67",
+      "role": "checked-out application source, not live production proof"
+    },
+    "engine": {
+      "client_build": "1.60.1.70170",
+      "community_base": "f4b776b4f41d5c7799b8141697a2c9e67c89d426",
+      "revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
+      "role": "comparison reference, not game ground truth",
+      "url": "https://github.com/sage3648/mythicsim-forever-engine-go"
+    }
+  },
+  "full_frost_reference": {
+    "scope": "frozen Go observation versus fresh pinned Go execution, not Rust full-build parity",
+    "iterations": 3000,
+    "seed": 42,
+    "comparison": {
+      "snapshot_matches": true,
+      "action_identities_match": true,
+      "output_comparison": {
+        "passed": true,
+        "compared_fields": 902,
+        "numeric_fields": 804,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      },
+      "reference_engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
+      "note": "Frozen Go output versus fresh Go execution. This is not a full-build Rust comparison."
+    },
+    "observation_sha256": "63b16992151fc1e302071a9078ca6f4970c1f0c9becf2b6cd34fca2ffff0bcf1",
+    "byte_identical_to_frozen": true,
+    "summary": {
+      "AvgIterationDuration": 119.89869125429367,
+      "DPSMax": 766.5247024039659,
+      "DPSMean": 590.9470407845581,
+      "DPSMin": 429.71314627725945,
+      "DPSStdev": 45.051067643035545,
+      "HPSMean": 0,
+      "IterationsDone": 3000
+    }
+  },
+  "rust_kernel": {
+    "scope": "prepared Frostbolt-only Rust kernel versus actual pinned full Go engine on restricted requests",
+    "iterations_per_case": 3000,
+    "seeds": [
+      42,
+      173,
+      9001
+    ],
+    "comparisons": 33,
+    "passed": true,
+    "go_version": "go version go1.25.6 darwin/arm64",
+    "rust_version": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+    "fields_checked": [
+      "source_revision",
+      "iterations",
+      "seed",
+      "counts",
+      "dps_mean",
+      "dps_stdev",
+      "mana_delta_mean"
+    ],
+    "float_absolute_tolerance": 1e-08,
+    "results": [
+      {
+        "id": "untalented-60",
+        "seed": 42,
+        "passed": true,
+        "differences": [],
+        "dps_go": 104.1639080556216,
+        "dps_rust": 104.1639080556216,
+        "counts": {
+          "casts": 39000,
+          "hits": 30696,
+          "crits": 1707,
+          "misses": 6597
+        },
+        "dps_stdev_go": 13.295388622275896,
+        "mana_delta_mean_go": -3430,
+        "dps_stdev_rust": 13.295388622276352,
+        "mana_delta_mean_rust": -3430.0
+      },
+      {
+        "id": "static-frost-60",
+        "seed": 42,
+        "passed": true,
+        "differences": [],
+        "dps_go": 135.26326644098344,
+        "dps_rust": 135.2632664409832,
+        "counts": {
+          "casts": 45000,
+          "hits": 36672,
+          "crits": 2036,
+          "misses": 6292
+        },
+        "dps_stdev_go": 16.00382756729345,
+        "mana_delta_mean_go": -3315,
+        "dps_stdev_rust": 16.00382756729363,
+        "mana_delta_mean_rust": -3315.0
+      },
+      {
+        "id": "static-frost-120-oom",
+        "seed": 42,
+        "passed": true,
+        "differences": [],
+        "dps_go": 85.68328260078063,
+        "dps_rust": 85.68328260078086,
+        "counts": {
+          "casts": 57000,
+          "hits": 46492,
+          "crits": 2563,
+          "misses": 7945
+        },
+        "dps_stdev_go": 9.07568279896958,
+        "mana_delta_mean_go": -3366,
+        "dps_stdev_rust": 9.075682798968726,
+        "mana_delta_mean_rust": -3366.0
+      },
+      {
+        "id": "meditation-300-oom",
+        "seed": 42,
+        "passed": true,
+        "differences": [],
+        "dps_go": 63.11452754914857,
+        "dps_rust": 63.11452754914856,
+        "counts": {
+          "casts": 105000,
+          "hits": 85575,
+          "crits": 4744,
+          "misses": 14681
+        },
+        "dps_stdev_go": 4.887265210619036,
+        "mana_delta_mean_go": -3527.5,
+        "dps_stdev_rust": 4.887265210619365,
+        "mana_delta_mean_rust": -3527.5
+      },
+      {
+        "id": "resistance-60",
+        "seed": 42,
+        "passed": true,
+        "differences": [],
+        "dps_go": 96.41316976352469,
+        "dps_rust": 96.41316976352475,
+        "counts": {
+          "casts": 45000,
+          "hits": 26158,
+          "crits": 1441,
+          "misses": 17401
+        },
+        "dps_stdev_go": 20.675433381830906,
+        "mana_delta_mean_go": -3315,
+        "dps_stdev_rust": 20.675433381830835,
+        "mana_delta_mean_rust": -3315.0
+      },
+      {
+        "id": "hit-cap-60",
+        "seed": 42,
+        "passed": true,
+        "differences": [],
+        "dps_go": 155.6333938495903,
+        "dps_rust": 155.6333938495904,
+        "counts": {
+          "casts": 45000,
+          "hits": 42174,
+          "crits": 2352,
+          "misses": 474
+        },
+        "dps_stdev_go": 9.538371690028775,
+        "mana_delta_mean_go": -3315,
+        "dps_stdev_rust": 9.538371690023661,
+        "mana_delta_mean_rust": -3315.0
+      },
+      {
+        "id": "same-level-60",
+        "seed": 42,
+        "passed": true,
+        "differences": [],
+        "dps_go": 155.6333938495903,
+        "dps_rust": 155.6333938495904,
+        "counts": {
+          "casts": 45000,
+          "hits": 42174,
+          "crits": 2352,
+          "misses": 474
+        },
+        "dps_stdev_go": 9.538371690028775,
+        "mana_delta_mean_go": -3315,
+        "dps_stdev_rust": 9.538371690023661,
+        "mana_delta_mean_rust": -3315.0
+      },
+      {
+        "id": "travel-boundary-3",
+        "seed": 42,
+        "passed": true,
+        "differences": [],
+        "dps_go": 0,
+        "dps_rust": 0.0,
+        "counts": {
+          "casts": 3000,
+          "hits": 2383,
+          "crits": 131,
+          "misses": 486
+        },
+        "dps_stdev_go": 0,
+        "mana_delta_mean_go": -290,
+        "dps_stdev_rust": 0.0,
+        "mana_delta_mean_rust": -290.0
+      },
+      {
+        "id": "zero-travel-boundary-3",
+        "seed": 42,
+        "passed": true,
+        "differences": [],
+        "dps_go": 161.60514580965213,
+        "dps_rust": 161.6051458096528,
+        "counts": {
+          "casts": 3000,
+          "hits": 2383,
+          "crits": 131,
+          "misses": 486
+        },
+        "dps_stdev_go": 73.65294509201327,
+        "mana_delta_mean_go": -290,
+        "dps_stdev_rust": 73.65294509201279,
+        "mana_delta_mean_rust": -290.0
+      },
+      {
+        "id": "staff-60",
+        "seed": 42,
+        "passed": true,
+        "differences": [],
+        "dps_go": 153.91830819301364,
+        "dps_rust": 153.918308193014,
+        "counts": {
+          "casts": 51000,
+          "hits": 41376,
+          "crits": 2494,
+          "misses": 7130
+        },
+        "dps_stdev_go": 17.5045993608473,
+        "mana_delta_mean_go": -3914.5,
+        "dps_stdev_rust": 17.504599360844374,
+        "mana_delta_mean_rust": -3914.5
+      },
+      {
+        "id": "haste-60",
+        "seed": 42,
+        "passed": true,
+        "differences": [],
+        "dps_go": 144.35438008289634,
+        "dps_rust": 144.35438008289597,
+        "counts": {
+          "casts": 48000,
+          "hits": 39119,
+          "crits": 2182,
+          "misses": 6699
+        },
+        "dps_stdev_go": 16.58045986873314,
+        "mana_delta_mean_go": -3561.5,
+        "dps_stdev_rust": 16.58045986873357,
+        "mana_delta_mean_rust": -3561.5
+      },
+      {
+        "id": "untalented-60",
+        "seed": 173,
+        "passed": true,
+        "differences": [],
+        "dps_go": 104.24085238946506,
+        "dps_rust": 104.24085238946505,
+        "counts": {
+          "casts": 39000,
+          "hits": 30732,
+          "crits": 1699,
+          "misses": 6569
+        },
+        "dps_stdev_go": 13.213596946834679,
+        "mana_delta_mean_go": -3430,
+        "dps_stdev_rust": 13.213596946834988,
+        "mana_delta_mean_rust": -3430.0
+      },
+      {
+        "id": "static-frost-60",
+        "seed": 173,
+        "passed": true,
+        "differences": [],
+        "dps_go": 135.31012027684926,
+        "dps_rust": 135.31012027684872,
+        "counts": {
+          "casts": 45000,
+          "hits": 36706,
+          "crits": 2026,
+          "misses": 6268
+        },
+        "dps_stdev_go": 15.866406904625544,
+        "mana_delta_mean_go": -3315,
+        "dps_stdev_rust": 15.866406904625801,
+        "mana_delta_mean_rust": -3315.0
+      },
+      {
+        "id": "static-frost-120-oom",
+        "seed": 173,
+        "passed": true,
+        "differences": [],
+        "dps_go": 85.71320818490625,
+        "dps_rust": 85.71320818490634,
+        "counts": {
+          "casts": 57000,
+          "hits": 46525,
+          "crits": 2555,
+          "misses": 7920
+        },
+        "dps_stdev_go": 8.985005479395483,
+        "mana_delta_mean_go": -3366,
+        "dps_stdev_rust": 8.985005479393944,
+        "mana_delta_mean_rust": -3366.0
+      },
+      {
+        "id": "meditation-300-oom",
+        "seed": 173,
+        "passed": true,
+        "differences": [],
+        "dps_go": 63.14373030608052,
+        "dps_rust": 63.14373030608057,
+        "counts": {
+          "casts": 105000,
+          "hits": 85630,
+          "crits": 4738,
+          "misses": 14632
+        },
+        "dps_stdev_go": 4.860184982046434,
+        "mana_delta_mean_go": -3527.5,
+        "dps_stdev_rust": 4.860184982044659,
+        "mana_delta_mean_rust": -3527.5
+      },
+      {
+        "id": "resistance-60",
+        "seed": 173,
+        "passed": true,
+        "differences": [],
+        "dps_go": 96.6461317064241,
+        "dps_rust": 96.6461317064242,
+        "counts": {
+          "casts": 45000,
+          "hits": 26242,
+          "crits": 1434,
+          "misses": 17324
+        },
+        "dps_stdev_go": 20.536402340146417,
+        "mana_delta_mean_go": -3315,
+        "dps_stdev_rust": 20.536402340146036,
+        "mana_delta_mean_rust": -3315.0
+      },
+      {
+        "id": "hit-cap-60",
+        "seed": 173,
+        "passed": true,
+        "differences": [],
+        "dps_go": 155.62051461575342,
+        "dps_rust": 155.620514615753,
+        "counts": {
+          "casts": 45000,
+          "hits": 42182,
+          "crits": 2346,
+          "misses": 472
+        },
+        "dps_stdev_go": 9.50087777824318,
+        "mana_delta_mean_go": -3315,
+        "dps_stdev_rust": 9.500877778239047,
+        "mana_delta_mean_rust": -3315.0
+      },
+      {
+        "id": "same-level-60",
+        "seed": 173,
+        "passed": true,
+        "differences": [],
+        "dps_go": 155.62051461575342,
+        "dps_rust": 155.620514615753,
+        "counts": {
+          "casts": 45000,
+          "hits": 42182,
+          "crits": 2346,
+          "misses": 472
+        },
+        "dps_stdev_go": 9.50087777824318,
+        "mana_delta_mean_go": -3315,
+        "dps_stdev_rust": 9.500877778239047,
+        "mana_delta_mean_rust": -3315.0
+      },
+      {
+        "id": "travel-boundary-3",
+        "seed": 173,
+        "passed": true,
+        "differences": [],
+        "dps_go": 0,
+        "dps_rust": 0.0,
+        "counts": {
+          "casts": 3000,
+          "hits": 2387,
+          "crits": 127,
+          "misses": 486
+        },
+        "dps_stdev_go": 0,
+        "mana_delta_mean_go": -290,
+        "dps_stdev_rust": 0.0,
+        "mana_delta_mean_rust": -290.0
+      },
+      {
+        "id": "zero-travel-boundary-3",
+        "seed": 173,
+        "passed": true,
+        "differences": [],
+        "dps_go": 161.5005674290983,
+        "dps_rust": 161.50056742909845,
+        "counts": {
+          "casts": 3000,
+          "hits": 2387,
+          "crits": 127,
+          "misses": 486
+        },
+        "dps_stdev_go": 73.53382853530552,
+        "mana_delta_mean_go": -290,
+        "dps_stdev_rust": 73.53382853530537,
+        "mana_delta_mean_rust": -290.0
+      },
+      {
+        "id": "staff-60",
+        "seed": 173,
+        "passed": true,
+        "differences": [],
+        "dps_go": 153.9574558342577,
+        "dps_rust": 153.95745583425824,
+        "counts": {
+          "casts": 51000,
+          "hits": 41417,
+          "crits": 2479,
+          "misses": 7104
+        },
+        "dps_stdev_go": 17.37587250268287,
+        "mana_delta_mean_go": -3914.5,
+        "dps_stdev_rust": 17.37587250268154,
+        "mana_delta_mean_rust": -3914.5
+      },
+      {
+        "id": "haste-60",
+        "seed": 173,
+        "passed": true,
+        "differences": [],
+        "dps_go": 144.3929666356528,
+        "dps_rust": 144.39296663565284,
+        "counts": {
+          "casts": 48000,
+          "hits": 39158,
+          "crits": 2168,
+          "misses": 6674
+        },
+        "dps_stdev_go": 16.46213507294167,
+        "mana_delta_mean_go": -3561.5,
+        "dps_stdev_rust": 16.46213507294092,
+        "mana_delta_mean_rust": -3561.5
+      },
+      {
+        "id": "untalented-60",
+        "seed": 9001,
+        "passed": true,
+        "differences": [],
+        "dps_go": 103.68093930506929,
+        "dps_rust": 103.68093930506896,
+        "counts": {
+          "casts": 39000,
+          "hits": 30617,
+          "crits": 1662,
+          "misses": 6721
+        },
+        "dps_stdev_go": 13.995129958549764,
+        "mana_delta_mean_go": -3430,
+        "dps_stdev_rust": 13.995129958552692,
+        "mana_delta_mean_rust": -3430.0
+      },
+      {
+        "id": "static-frost-60",
+        "seed": 9001,
+        "passed": true,
+        "differences": [],
+        "dps_go": 134.83518573475388,
+        "dps_rust": 134.83518573475362,
+        "counts": {
+          "casts": 45000,
+          "hits": 36589,
+          "crits": 2018,
+          "misses": 6393
+        },
+        "dps_stdev_go": 16.575794979286442,
+        "mana_delta_mean_go": -3315,
+        "dps_stdev_rust": 16.575794979284858,
+        "mana_delta_mean_rust": -3315.0
+      },
+      {
+        "id": "static-frost-120-oom",
+        "seed": 9001,
+        "passed": true,
+        "differences": [],
+        "dps_go": 85.30516351752892,
+        "dps_rust": 85.30516351752864,
+        "counts": {
+          "casts": 57000,
+          "hits": 46400,
+          "crits": 2502,
+          "misses": 8098
+        },
+        "dps_stdev_go": 9.221471454603805,
+        "mana_delta_mean_go": -3366,
+        "dps_stdev_rust": 9.221471454603602,
+        "mana_delta_mean_rust": -3366.0
+      },
+      {
+        "id": "meditation-300-oom",
+        "seed": 9001,
+        "passed": true,
+        "differences": [],
+        "dps_go": 62.958661366756004,
+        "dps_rust": 62.95866136675624,
+        "counts": {
+          "casts": 105000,
+          "hits": 85500,
+          "crits": 4665,
+          "misses": 14835
+        },
+        "dps_stdev_go": 4.948477567917882,
+        "mana_delta_mean_go": -3527.5,
+        "dps_stdev_rust": 4.948477567914459,
+        "mana_delta_mean_rust": -3527.5
+      },
+      {
+        "id": "resistance-60",
+        "seed": 9001,
+        "passed": true,
+        "differences": [],
+        "dps_go": 95.70484167091851,
+        "dps_rust": 95.70484167091875,
+        "counts": {
+          "casts": 45000,
+          "hits": 26024,
+          "crits": 1405,
+          "misses": 17571
+        },
+        "dps_stdev_go": 20.70253628544604,
+        "mana_delta_mean_go": -3315,
+        "dps_stdev_rust": 20.702536285445554,
+        "mana_delta_mean_rust": -3315.0
+      },
+      {
+        "id": "hit-cap-60",
+        "seed": 9001,
+        "passed": true,
+        "differences": [],
+        "dps_go": 155.3729559866781,
+        "dps_rust": 155.37295598667777,
+        "counts": {
+          "casts": 45000,
+          "hits": 42241,
+          "crits": 2285,
+          "misses": 474
+        },
+        "dps_stdev_go": 9.579615867734338,
+        "mana_delta_mean_go": -3315,
+        "dps_stdev_rust": 9.579615867744169,
+        "mana_delta_mean_rust": -3315.0
+      },
+      {
+        "id": "same-level-60",
+        "seed": 9001,
+        "passed": true,
+        "differences": [],
+        "dps_go": 155.3729559866781,
+        "dps_rust": 155.37295598667777,
+        "counts": {
+          "casts": 45000,
+          "hits": 42241,
+          "crits": 2285,
+          "misses": 474
+        },
+        "dps_stdev_go": 9.579615867734338,
+        "mana_delta_mean_go": -3315,
+        "dps_stdev_rust": 9.579615867744169,
+        "mana_delta_mean_rust": -3315.0
+      },
+      {
+        "id": "travel-boundary-3",
+        "seed": 9001,
+        "passed": true,
+        "differences": [],
+        "dps_go": 0,
+        "dps_rust": 0.0,
+        "counts": {
+          "casts": 3000,
+          "hits": 2321,
+          "crits": 145,
+          "misses": 534
+        },
+        "dps_stdev_go": 0,
+        "mana_delta_mean_go": -290,
+        "dps_stdev_rust": 0.0,
+        "mana_delta_mean_rust": -290.0
+      },
+      {
+        "id": "zero-travel-boundary-3",
+        "seed": 9001,
+        "passed": true,
+        "differences": [],
+        "dps_go": 158.97440239288585,
+        "dps_rust": 158.97440239288605,
+        "counts": {
+          "casts": 3000,
+          "hits": 2321,
+          "crits": 145,
+          "misses": 534
+        },
+        "dps_stdev_go": 76.70534385907268,
+        "mana_delta_mean_go": -290,
+        "dps_stdev_rust": 76.70534385907324,
+        "mana_delta_mean_rust": -290.0
+      },
+      {
+        "id": "staff-60",
+        "seed": 9001,
+        "passed": true,
+        "differences": [],
+        "dps_go": 153.27577500659856,
+        "dps_rust": 153.27577500659817,
+        "counts": {
+          "casts": 51000,
+          "hits": 41312,
+          "crits": 2435,
+          "misses": 7253
+        },
+        "dps_stdev_go": 17.77081214785481,
+        "mana_delta_mean_go": -3914.5,
+        "dps_stdev_rust": 17.77081214785563,
+        "mana_delta_mean_rust": -3914.5
+      },
+      {
+        "id": "haste-60",
+        "seed": 9001,
+        "passed": true,
+        "differences": [],
+        "dps_go": 143.75786249523898,
+        "dps_rust": 143.75786249523892,
+        "counts": {
+          "casts": 48000,
+          "hits": 39031,
+          "crits": 2141,
+          "misses": 6828
+        },
+        "dps_stdev_go": 17.076956361968236,
+        "mana_delta_mean_go": -3561.5,
+        "dps_stdev_rust": 17.076956361970534,
+        "mana_delta_mean_rust": -3561.5
+      }
+    ]
+  },
+  "full_build_rust_request": {
+    "supported": false,
+    "exit_code": 1,
+    "report_written": false,
+    "stderr": "request rejected: unknown field `encounter`, expected one of `schema_version`, `source_revision`, `scenario_id`, `iterations`, `seed`, `duration_ns`, `reaction_ns`, `caster`, `target`, `spell` at line 1 column 12"
+  },
+  "limitations": [
+    "Full Frost combat and production report compatibility are not implemented in Rust.",
+    "These are correctness checks, not a performance comparison or production speedup claim.",
+    "Matching Go does not independently verify game mechanics."
+  ]
+}

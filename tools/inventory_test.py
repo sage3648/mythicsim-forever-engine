@@ -101,5 +101,30 @@ class InventoryAuditTests(unittest.TestCase):
                 inventory.check(self.directory, app_source=Path(self.temporary.name))
 
 
+class ObservationComparisonTests(unittest.TestCase):
+    def test_actual_frozen_output_matches_itself(self):
+        observation = inventory.load(inventory.DIRECTORY / "observation.json")
+        result = inventory.compare_observations(observation, observation)
+        self.assertTrue(result["passed"])
+        self.assertGreater(result["numeric_fields"], 100)
+
+    def test_one_extra_cast_fails_even_for_large_count(self):
+        result = inventory.compare_observations({"casts": 1000000000}, {"casts": 1000000001})
+        self.assertFalse(result["passed"])
+        self.assertEqual(result["differences"][0]["path"], "/casts")
+
+    def test_damage_aura_resource_and_timeline_changes_fail(self):
+        for key in ("damage", "uptimeSecondsAvg", "actualGain", "start"):
+            with self.subTest(key=key):
+                self.assertFalse(inventory.compare_observations({key: 100.5}, {key: 100.51})["passed"])
+
+    def test_floating_point_roundoff_is_allowed(self):
+        self.assertTrue(inventory.compare_observations({"damage": 100.5}, {"damage": 100.5 + 1e-10})["passed"])
+
+    def test_missing_field_and_nonfinite_metric_fail(self):
+        self.assertFalse(inventory.compare_observations({"damage": 1.0}, {})["passed"])
+        self.assertFalse(inventory.compare_observations({"damage": 1.0}, {"damage": float("nan")})["passed"])
+
+
 if __name__ == "__main__":
     unittest.main()
