@@ -1,4 +1,4 @@
-# MythicSim Forever Rust
+# MythicSim Forever Engine
 
 A community-built Rust simulation engine for WoW Forever, starting with a small,
 tested kernel and growing toward complete class support.
@@ -13,8 +13,8 @@ with clear mechanics, reproducible tests and community contributions.
 Install stable Rust, then run:
 
 ```sh
-git clone https://github.com/sage3648/mythicsim-forever-rust.git
-cd mythicsim-forever-rust
+git clone https://github.com/sage3648/mythicsim-forever-engine.git
+cd mythicsim-forever-engine
 cargo test --locked
 cargo run --locked --release -- sim --infile fixtures/static-frost-60.rust.json --trace
 ```
@@ -46,7 +46,7 @@ documentation and reproducible bug reports are all welcome.
 
 The first milestone is one complete Frost build. Small changes with mechanics
 evidence are more useful than broad ports without regression coverage.
-[Open an issue](https://github.com/sage3648/mythicsim-forever-rust/issues) to coordinate
+[Open an issue](https://github.com/sage3648/mythicsim-forever-engine/issues) to coordinate
 a larger contribution before starting it.
 
 ## Correctness and upstream fixes
@@ -82,6 +82,6 @@ python3 tools/fair_compare.py
 MIT licensed. Upstream wowsims notices are retained in [LICENSE](LICENSE).
 RNG behavior, combat semantics and reference tooling derive from
 [wowsims Forever](https://github.com/ElliotWood/Forever) and
-[MythicSim's Go fork](https://github.com/sage3648/mythicsim-forever-engine).
+[MythicSim's Go fork](https://github.com/sage3648/mythicsim-forever-engine-go).
 See [NOTICE.md](NOTICE.md) for provenance. This project is not affiliated with
 Blizzard Entertainment or the WoW Forever server team.

@@ -41,7 +41,7 @@ def source_digest(paths):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--source", default="https://github.com/sage3648/mythicsim-forever-engine.git")
+    parser.add_argument("--source", default="https://github.com/sage3648/mythicsim-forever-engine-go.git")
     parser.add_argument("--output", type=Path, default=ROOT / "output" / "fair")
     parser.add_argument("--iterations", type=int, default=30000)
     parser.add_argument("--seeds", type=int, nargs="+", default=[42, 173, 9001])

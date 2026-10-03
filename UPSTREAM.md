@@ -4,7 +4,7 @@
 
 | Source | Role | Baseline |
 | --- | --- | --- |
-| [MythicSim Go engine](https://github.com/sage3648/mythicsim-forever-engine) | Fixtures and live reference | `6823b49eb8aff741f197ef36d83766ef6a218285` |
+| [MythicSim Go engine](https://github.com/sage3648/mythicsim-forever-engine-go) | Fixtures and live reference | `6823b49eb8aff741f197ef36d83766ef6a218285` |
 | [Community Forever engine](https://github.com/ElliotWood/Forever) | Changes to review for applicability | No independent reconciliation baseline yet |
 
 Go is a reference implementation, not proof of live-game correctness. Forever can

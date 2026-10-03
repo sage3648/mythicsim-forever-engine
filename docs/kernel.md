@@ -28,7 +28,7 @@ call Go during a simulation. Fields, schema versions, spell IDs and revisions ou
 the supported input contract fail with a nonzero exit. This binary must not replace
 `FOREVER_BINARY_PATH`: its input and output schemas are deliberately different.
 
-The pinned reference is `sage3648/mythicsim-forever-engine` revision
+The pinned reference is `sage3648/mythicsim-forever-engine-go` revision
 `6823b49eb8aff741f197ef36d83766ef6a218285`, the revision recorded by the production
 checkout at implementation time. This is compatibility evidence for that revision,
 not proof of current game behavior or a claim about the currently running deployment.
@@ -160,6 +160,6 @@ changed by this prototype.
 
 The reference engine, RNG behavior, and ported combat semantics are derived from the
 MIT-licensed [wowsims Forever project](https://github.com/ElliotWood/Forever) and
-[MythicSim's fork](https://github.com/sage3648/mythicsim-forever-engine).
+[MythicSim's fork](https://github.com/sage3648/mythicsim-forever-engine-go).
 The upstream copyright and MIT notice are preserved in [LICENSE](../LICENSE).
 Any eventual user-facing integration should retain the existing visible upstream link.

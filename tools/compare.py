@@ -84,7 +84,7 @@ def compare(go, rust):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--source", default="https://github.com/sage3648/mythicsim-forever-engine.git", help="local Git repository or clone URL")
+    parser.add_argument("--source", default="https://github.com/sage3648/mythicsim-forever-engine-go.git", help="local Git repository or clone URL")
     parser.add_argument("--cache", type=Path, default=ROOT / "oracle-cache")
     parser.add_argument("--output", type=Path, default=ROOT / "output")
     parser.add_argument("--iterations", type=int, default=3000)

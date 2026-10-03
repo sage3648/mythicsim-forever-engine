@@ -8,7 +8,7 @@ were extracted. Application configuration and private simulation data are exclud
 RNG behavior, combat semantics and the Go reference helper derive from the
 MIT-licensed wowsims lineage, including
 [ElliotWood/Forever](https://github.com/ElliotWood/Forever) and
-[sage3648/mythicsim-forever-engine](https://github.com/sage3648/mythicsim-forever-engine).
+[sage3648/mythicsim-forever-engine-go](https://github.com/sage3648/mythicsim-forever-engine-go).
 Upstream copyright and permission notices are preserved in [LICENSE](LICENSE).
 
 Fixtures use synthetic characters at revision
