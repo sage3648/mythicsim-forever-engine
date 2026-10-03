@@ -2,16 +2,21 @@
 package main
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/wowsims/forever/sim/core"
 	"github.com/wowsims/forever/sim/core/dbcenums"
 	"github.com/wowsims/forever/sim/core/proto"
 	"github.com/wowsims/forever/sim/core/spelldata"
+	"github.com/wowsims/forever/sim/core/stats"
 	"github.com/wowsims/forever/sim/shaman"
 )
 
 func init() {
 	classExports[proto.Class_ClassShaman] = classExport{
 		spells: shamanClassSpells, damageRows: shamanDamageRows, effects: shamanEffects, unrepresented: shamanUnrepresented,
+		swingReplacementKeepsSwing: shamanSwingReplacementKeepsSwing, statAuras: shamanStatAuras,
 	}
 }
 
@@ -43,7 +48,20 @@ var (
 	shamanSearingTotem     = spelldata.Ranked(3599, 6363, 6364, 6365, 10437, 10438)
 	shamanSearingAttack    = spelldata.Ranked(3606, 6350, 6351, 6352, 10435, 10436)
 	shamanElementalFocus   = spelldata.Ranked(16164)
-	shamanClearcasting    = spelldata.Ranked(16246)
+	shamanClearcasting     = spelldata.Ranked(16246)
+	shamanEarthShock       = spelldata.Ranked(8042, 8044, 8045, 8046, 10412, 10413, 10414)
+	shamanStrengthOfEarth  = spelldata.Ranked(8075, 8160, 8161, 10442, 25361)
+	shamanStormstrike      = spelldata.Ranked(17364)
+	shamanDevastation      = spelldata.Talent(30160, 3)
+	shamanFlurry           = spelldata.Talent(16256, 5)
+	shamanFlurryBuff       = spelldata.Ranked(16257)
+	shamanImpStormstrike   = spelldata.Talent(1223031, 2)
+	shamanImpStormBuff     = spelldata.Ranked(1238931)
+	shamanMaelstrom        = spelldata.Talent(408498, 5)
+	shamanMaelstromBuff    = spelldata.Ranked(408505)
+	shamanFarseer          = spelldata.Ranked(425336)
+	shamanElementalWeapons = spelldata.Talent(16266, 3)
+	shamanRockbiter        = spelldata.Ranked(10400, 15567, 15568, 15569, 16311, 16312, 16313)
 )
 
 // Shaman spell rows whose ApplyEffects roll a client damage effect: every Lightning Bolt and Chain
@@ -56,6 +74,9 @@ func shamanDamageRows(rows map[int32]*spelldata.Spell) {
 		rows[row.ID] = row
 	}
 	if row := shamanFlameShock.Highest(); row != nil {
+		rows[row.ID] = row
+	}
+	if row := shamanEarthShock.Highest(); row != nil {
 		rows[row.ID] = row
 	}
 }
@@ -100,7 +121,76 @@ func shamanEffects(agent core.Agent, character *core.Character) []map[string]any
 		"kind": "searing_totem", "spell_id": shamanSearingTotem.Highest().ID, "attack_spell_id": shamanSearingAttack.Highest().ID,
 		"attack_damage":    shamanSearingAttack.Highest().DamageEffect().Average(core.CharacterLevel),
 		"magma_totem_aura": sham.MagmaTotem.AOEDot().Aura.Label, "flametongue_totem_aura": sham.FlametongueTotemAura.Label,
+		"duration_ns": nanos(shamanSearingTotem.Highest().Duration()),
 	})
+	// shocks.go registerEarthShockSpell: a binary hit from the highest rank's damage roll.
+	effects = append(effects, map[string]any{"kind": "earth_shock", "spell_id": shamanEarthShock.Highest().ID})
+	// totems.go registerStrengthOfEarthTotemSpell: the earth totem's aura; its Strength reaches the
+	// fight through the class's stat auras.
+	if aura := character.GetAura("Strength Of Earth Totem (Self)"); aura != nil {
+		effects = append(effects, map[string]any{
+			"kind": "strength_of_earth_totem", "spell_id": shamanStrengthOfEarth.Highest().ID, "aura": aura.Label,
+			"duration_ns": nanos(shamanStrengthOfEarth.Highest().Duration()),
+		})
+	}
+	if talents.Stormstrike { // stormstrike.go: the target debuff raises this shaman's lightning damage.
+		row := shamanStormstrike.Highest()
+		effects = append(effects, map[string]any{
+			"kind": "stormstrike", "spell_id": row.ID, "aura": "Stormstrike-" + character.Label,
+			"damage_multiplier": 1 + row.Effect(dbcenums.A_MOD_SPELL_DAMAGE_FROM_CASTER, 0).Percent(),
+			"has_main_hand":     character.HasMHWeapon(), "has_off_hand": character.HasOHWeapon(),
+		})
+	}
+	if talents.ElementalDevastation > 0 { // talents_elemental.go applyElementalDevastation
+		effects = append(effects, map[string]any{
+			"kind": "elemental_devastation", "trigger_aura": "Elemental Devastation Trigger", "aura": "Elemental Devastation",
+			"melee_crit": shamanDevastation.Effect(dbcenums.A_DUMMY, 0).ValueAt(talents.ElementalDevastation),
+		})
+	}
+	if talents.Flurry > 0 { // talents_enhancement.go applyFlurry: a Go literal 500 ms charge cooldown.
+		effects = append(effects, map[string]any{
+			"kind": "flurry", "trigger_aura": "Flurry Trigger", "aura": "Flurry",
+			"melee_speed_multiplier": shamanFlurry.MultiplierAt(talents.Flurry), "charge_icd_ns": nanos(500 * time.Millisecond),
+			"max_stacks": int32(shamanFlurryBuff.Highest().ProcCharges),
+		})
+	}
+	if talents.Stormstrike && talents.ImprovedStormstrike > 0 { // talents_enhancement.go applyImprovedStormstrike
+		effects = append(effects, map[string]any{
+			"kind": "improved_stormstrike", "trigger_aura": "Improved Stormstrike Trigger", "aura": "Improved Stormstrike",
+			"reset_aura":                "Improved Stormstrike Reset",
+			"proc_chance":               shamanImpStormstrike.EffectAt(1).FractionAt(talents.ImprovedStormstrike),
+			"spirit_regen_rate_casting": shamanImpStormBuff.Highest().Effect(dbcenums.A_MOD_MANA_REGEN_INTERRUPT, 0).Percent(),
+		})
+	}
+	// talents_enhancement.go applyMaelstromWeapon: 2 PPM a point, a Go literal, rolled per hand.
+	if trigger := character.GetAura("Maelstrom Weapon Trigger"); talents.MaelstromWeapon > 0 && trigger != nil && trigger.Dpm != nil {
+		effects = append(effects, map[string]any{
+			"kind": "maelstrom_weapon", "trigger_aura": trigger.Label, "aura": "Maelstrom Weapon",
+			"per_stack":  shamanMaelstrom.EffectAt(1).FractionAt(talents.MaelstromWeapon),
+			"max_stacks": int32(5),
+			"chances": dpmChances(character, trigger.Dpm, nil, func(spell *core.Spell) bool {
+				return spell.ProcMask.Matches(core.ProcMaskMelee) && !spell.Flags.Matches(core.SpellFlagProc)
+			}),
+		})
+	}
+	// weapon_imbues.go RegisterRockbiterImbue: a permanent temporary stats aura, already in the
+	// prepared stats, that logs its gain and loss.
+	if aura := character.GetAura("Rockbiter Weapon"); aura != nil {
+		bonus := stats.Stats{stats.AttackPower: shamanRockbiter.Highest().EffectN(1).Average(core.CharacterLevel) *
+			(1 + shamanElementalWeapons.EffectAt(1).FractionAt(talents.ElementalWeapons))}
+		effects = append(effects, map[string]any{
+			"kind": "rockbiter_weapon", "aura": aura.Label,
+			"gain_log":   fmt.Sprintf("Gained %s from %s.", bonus.FlatString(), aura.ActionID),
+			"expire_log": fmt.Sprintf("Lost %s from fading %s.", bonus.FlatString(), aura.ActionID),
+		})
+	}
+	if talents.RageOfTheFarseer { // talents_enhancement.go applyRageOfTheFarseer
+		row := shamanFarseer.Highest()
+		effects = append(effects, map[string]any{
+			"kind": "rage_of_the_farseer", "spell_id": row.ID, "aura": "Rage of the Farseer",
+			"melee_speed_multiplier": 1 + row.Effect(dbcenums.A_MOD_MELEE_RANGED_HASTE_2, 0).Percent(),
+		})
+	}
 	if talents.ElementalFocus { // talents_elemental.go applyElementalFocus
 		clearcasting := shamanClearcasting.Highest()
 		effects = append(effects, map[string]any{
@@ -111,6 +201,22 @@ func shamanEffects(agent core.Agent, character *core.Character) []map[string]any
 		})
 	}
 	return effects
+}
+
+// The class auras whose gain and loss change stats through AddStatsDynamic.
+func shamanStatAuras(_ core.Agent, _ *core.Character) []string {
+	return []string{"Strength Of Earth Totem (Self)"}
+}
+
+// enhancement.go ApplySyncType: Auto returns the main hand swing unchanged whenever the two
+// weapons swing at different speeds, as a single weapon does against the empty off hand.
+func shamanSwingReplacementKeepsSwing(agent core.Agent, player *proto.Player) bool {
+	options := player.GetEnhancementShaman().GetOptions()
+	if options == nil || options.SyncType != proto.ShamanSyncType_Auto {
+		return false
+	}
+	character := agent.GetCharacter()
+	return character.MainHand().SwingSpeed != character.OffHand().SwingSpeed
 }
 
 // Shaman behavior the exporter cannot describe.

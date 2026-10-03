@@ -25,3 +25,15 @@ pub(crate) const SCHOOL_ELEMENTAL: u8 = 4 | 8 | 16;
 pub(crate) fn is_class(class: Option<&str>, set: &[&str]) -> bool {
     class.is_some_and(|class| set.contains(&class))
 }
+
+/// The spells Stormstrike's debuff raises and that spend its charges: Go `stormstrikeSpells`.
+pub(crate) const STORMSTRIKE_SPELLS: &[&str] = &[
+    "lightning_bolt",
+    "chain_lightning",
+    "earth_shock",
+    "lightning_bolt_overload",
+    "chain_lightning_overload",
+];
+
+/// Spells whose hardcast holds the melee swing: Go `holdMeleeForCast` as `ModifyCast`.
+pub(crate) const HOLDS_MELEE: &[&str] = &["lightning_bolt", "chain_lightning", "lava_burst"];

@@ -147,9 +147,14 @@ impl<A: Agent> Fight<A> {
         if state.flags.ignore_target_modifiers {
             return 1.0;
         }
-        self.config.target_damage_taken_multiplier
+        let multiplier = self.config.target_damage_taken_multiplier
             * self.school_value(spell, &self.target.school_damage_taken_multiplier)
-            * self.config.table.damage_taken_multiplier
+            * self.config.table.damage_taken_multiplier;
+        // Go's DamageDoneByCasterExtraMultiplier handlers, multiplied in after the rest.
+        match A::caster_damage_multiplier(self, spell) {
+            Some(caster) => multiplier * caster,
+            None => multiplier,
+        }
     }
 
     fn resist(&self, spell: SpellId, binary: bool) -> f64 {

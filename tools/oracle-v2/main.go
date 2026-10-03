@@ -197,6 +197,9 @@ type classExport struct {
 	inertPet func(agent core.Agent, pet *core.Pet) string
 	// Optional: class behavior the effects cannot describe, one reason each.
 	unrepresented func(agent core.Agent, character *core.Character) []string
+	// Optional: whether the class's main hand swing replacement always returns the swing it is
+	// given for this player, so only Go's reaction before each swing remains.
+	swingReplacementKeepsSwing func(agent core.Agent, player *proto.Player) bool
 	// Optional: class auras that change stats through AddStatsDynamic when gained or lost.
 	statAuras func(agent core.Agent, character *core.Character) []string
 }
@@ -665,12 +668,16 @@ type Melee struct {
 	DefenderBonusAttackPower      float64 `json:"defender_bonus_attack_power"`
 	DefenderBonusPhysicalTaken    float64 `json:"defender_bonus_physical_damage_taken"`
 	DefenderReducedPhysicalHitPct float64 `json:"defender_reduced_physical_hit_taken"`
+	// A class replace function on the main hand: Go's swing reacts to the event first, even
+	// when the replacement returns the swing unchanged.
+	ReplaceMainHandSwing bool `json:"replace_main_hand_swing,omitempty"`
 }
 
-func exportMelee(character *core.Character, target *core.Unit, table *core.AttackTable, unrepresented *[]string) Melee {
+func exportMelee(character *core.Character, target *core.Unit, table *core.AttackTable, keepsSwing bool, unrepresented *[]string) Melee {
 	aa := &character.AutoAttacks
 	mh := privateField(aa, "mh")
-	if aa.AutoSwingMelee && !mh.FieldByName("replaceSwing").IsNil() {
+	replaced := aa.AutoSwingMelee && !mh.FieldByName("replaceSwing").IsNil()
+	if replaced && !keepsSwing {
 		*unrepresented = append(*unrepresented, "main hand swings can be replaced")
 	}
 	if aa.AutoSwingRanged {
@@ -682,7 +689,8 @@ func exportMelee(character *core.Character, target *core.Unit, table *core.Attac
 	pseudo := &character.PseudoStats
 	defender := &target.PseudoStats
 	return Melee{
-		AutoSwingMelee: aa.AutoSwingMelee, AutoSwingRanged: aa.AutoSwingRanged, DualWielding: aa.IsDualWielding,
+		ReplaceMainHandSwing: replaced,
+		AutoSwingMelee:       aa.AutoSwingMelee, AutoSwingRanged: aa.AutoSwingRanged, DualWielding: aa.IsDualWielding,
 		MainHand: exportWeapon(aa.MH()), OffHand: exportWeapon(aa.OH()), Ranged: exportWeapon(aa.Ranged()),
 		BaseMissChance: table.BaseMissChance, BaseGlanceChance: table.BaseGlanceChance,
 		GlanceMultiplier: table.GlanceMultiplier, GlanceSpread: table.GlanceSpread,
@@ -913,10 +921,12 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 			"health_fraction": 0.05, "delay_ns": nanos(core.SpellBatchWindow),
 		})
 	}
-	// racials.go Troll Berserking: AttachMultiplyCastSpeed with a Go literal.
+	// racials.go Troll Berserking: AttachMultiplyAttackSpeed and AttachMultiplyCastSpeed, in that
+	// order, with Go literals.
 	if aura := character.GetAura("Berserking"); aura != nil {
 		effects = append(effects, map[string]any{
 			"kind": "berserking", "spell_id": aura.ActionID.SpellID, "aura": aura.Label, "cast_speed_multiplier": 1.1,
+			"attack_speed_multiplier": 1.1,
 		})
 	}
 	// racials.go Orc Blood Fury: Go computes the buffed stats through its dynamic stat
@@ -1300,7 +1310,11 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 		},
 		Effects: effects, Unrepresented: unrepresented,
 	}
-	prepared.Melee = exportMelee(character, target, table, &prepared.Unrepresented)
+	keepsSwing := false
+	if class, ok := classExports[character.Class]; ok && class.swingReplacementKeepsSwing != nil {
+		keepsSwing = class.swingReplacementKeepsSwing(agent, request.Raid.Parties[0].Players[0])
+	}
+	prepared.Melee = exportMelee(character, target, table, keepsSwing, &prepared.Unrepresented)
 	// Last: the teardown changes the simulation.
 	prepared.Player.Mana.TeardownMax = teardownMaxMana(simulation, &character.Unit, &prepared.Unrepresented)
 	return prepared

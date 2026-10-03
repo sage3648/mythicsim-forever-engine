@@ -101,7 +101,7 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `inert_listener` | sim/core/health.go, sim/core/attack.go | Why the listener never acts in scope |
 | `touch_of_the_grave` | sim/core/racials.go | Undead drain: chance, proc mask, health share, batch delay |
 | `eureka` | sim/core/racials.go | Gnome: modifier values and the spell positions the class masks name |
-| `berserking` | sim/core/racials.go | Troll: cast speed multiplier, a Go literal |
+| `berserking` | sim/core/racials.go | Troll: attack and cast speed multipliers, Go literals |
 | `blood_fury` | sim/core/racials.go | Orc: every stat the aura changes, computed by Go with it active |
 | `shatter_curse` | sim/core/racials.go | Orc survival cooldown; its damage taken change has no effect in scope |
 | `read_ley_line` | sim/core/racials.go | High Order Skyborne: the cast and Energized's regeneration multiplier |
@@ -129,6 +129,15 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `searing_totem` | sim/shaman/fire_totems.go | The attack spell and its fixed base, and the fire totem auras the cast replaces |
 | `elemental_focus` | sim/shaman/talents_elemental.go | Proc chance, Clearcasting's cost modifier and charges |
 | `stoneform` | sim/core/racials.go | Dwarf survival cooldown; its physical damage taken change has no effect in scope |
+| `earth_shock` | sim/shaman/shocks.go | Damage roll on the highest rank; a binary hit |
+| `strength_of_earth_totem` | sim/shaman/totems.go | The cast, its aura, a class stat aura, and the totem's lifetime |
+| `stormstrike` | sim/shaman/stormstrike.go | The target debuff's caster damage multiplier and the weapons that strike |
+| `elemental_devastation` | sim/shaman/talents_elemental.go | The melee crit a spell crit grants |
+| `flurry` | sim/shaman/talents_enhancement.go | Melee speed, charges and the charge cooldown, a Go literal |
+| `improved_stormstrike` | sim/shaman/talents_enhancement.go | Proc chance and the casting spirit regeneration rate it adds without refreshing rates, as Go does |
+| `maelstrom_weapon` | sim/shaman/talents_enhancement.go | Per stack cast time and cost, and the proc manager's chance per spell |
+| `rage_of_the_farseer` | sim/shaman/talents_enhancement.go | The cooldown and its melee speed |
+| `rockbiter_weapon` | sim/shaman/weapon_imbues.go | Gain and loss log lines of the permanent aura |
 | `shadow_bolt`, `searing_pain`, `shadowburn`, `soul_fire` | sim/warlock/shadowbolt.go, searing_pain.go, shadowburn.go, soulfire.go | Damage rolls on the spells; Shadow Bolt and Soul Fire land after travel |
 | `immolate`, `corruption` | sim/warlock/immolate.go, corruption.go | The dot base and tick crit; Immolate's dot is on its related spell |
 | `bane_of_agony` | sim/warlock/agony.go | The dot base, tick crit and its ramp: half the tick at the snapshot, added back every fourth tick, Go literals |
@@ -182,7 +191,10 @@ unnamed class masks, item cooldowns without an exported effect, cast speed and t
 stat listeners, survival cooldowns that would wait for a nonzero defensive health
 threshold, a Shaman shield proc rate and Flame Shock ticks that roll a physical crit.
 Item procs that hear only melee hits are inert while the player has no auto attacks and
-no spell with a melee special mask.
+no spell with a melee special mask. A class replace function on the main hand is supported
+only when its class shows it returns the swing unchanged, as Enhancement's Auto weapon sync
+does for weapons of different speeds; `melee.replace_main_hand_swing` then makes Rust react
+before each main hand swing as Go does.
 
 A class may describe a registered pet as inert when nothing can summon it, as a priest
 without the Shadowfiend option is. Go still resets and dismisses such a pet each fight,
@@ -202,7 +214,7 @@ The rotation subset covers `castSpell`, `autocastOtherCooldowns`, `strictSequenc
 casts, `channelSpell` with `interruptIf` and `allowRecast`, constant-time prepull casts,
 `cmp` with any comparison operator, `and`, `or`, `not`, `const`, `currentMana`,
 `currentManaPercent`, `currentTime`, `remainingTime`, `remainingTimePercent`, `numberTargets`,
-`math`, `gcdIsReady`,
+`math`, `totemRemainingTime` (a Shaman's), `gcdIsReady`,
 `auraIsKnown`, `auraIsActive`, `auraNumStacks`, `auraRemainingTime`, `dotIsActive`,
 `dotRemainingTime`, `dotTimeToNextTick`, `spellIsKnown`, `spellIsReady`,
 `spellTimeToReady` and `spellCastTime`. Action IDs may carry a rank, which Go ignores. A
@@ -245,7 +257,9 @@ the remaining races, with longer and cooldown-timing variants, and
 `fire-skyborne-read-ley-line` casts Read Ley Line from the rotation. `production-balance-druid`
 is the production Balance Druid request. `production-elemental-shaman` is the production
 Elemental Shaman request, and `elemental-shaman-dwarf-stoneform` runs it as a Dwarf with
-Stoneform timings. `production-destruction-warlock` is the production Destruction Warlock
+Stoneform timings. `production-enhancement-shaman` is the production Enhancement Shaman
+request, and `enhancement-shaman-no-battle-shout` is the same request without its party
+Battle Shout. `production-destruction-warlock` is the production Destruction Warlock
 request. `production-fire` and
 `production-frostfire` are the production application's Fire Missile Barrage and
 Frostfire hybrid requests at application revision 18bbcd47; its Arcane and Frost requests
