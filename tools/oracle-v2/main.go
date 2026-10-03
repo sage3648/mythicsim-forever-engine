@@ -292,6 +292,8 @@ type Cost struct {
 	FlatModifier            int32   `json:"flat_modifier"`
 	PercentModifier         float64 `json:"percent_modifier"`
 	AdditivePercentModifier float64 `json:"additive_percent_modifier"`
+	// energy.go EnergyCost.Refund: the share of the cost a missed strike gives back.
+	Refund float64 `json:"refund,omitempty"`
 }
 
 type Cast struct {
@@ -363,6 +365,8 @@ type Spell struct {
 	// The spellbook position of the spell whose dot Spell.Dot resolves to when this spell
 	// has none of its own.
 	RelatedDotSpell *int `json:"related_dot_spell,omitempty"`
+	// spell.go splitSpellMetrics: how many tagged metric entries the spell reports under.
+	MetricSplits int `json:"metric_splits,omitempty"`
 }
 
 type Aura struct {
@@ -528,6 +532,25 @@ type Unit struct {
 	Auras       []Aura             `json:"auras"`
 }
 
+// energy.go energyBar: the bar Rust runs, with its regeneration ticks and combo points.
+type Energy struct {
+	MaxEnergy      float64 `json:"max_energy"`
+	MaxComboPoints int32   `json:"max_combo_points"`
+	TickDurationNs int64   `json:"tick_duration_ns"`
+	EnergyPerTick  float64 `json:"energy_per_tick"`
+}
+
+func exportEnergy(character *core.Character, unrepresented *[]string) *Energy {
+	if !character.HasEnergyBar() {
+		return nil
+	}
+	if privateField(&character.Unit, "energyBar").FieldByName("hasNoRegen").Bool() {
+		*unrepresented = append(*unrepresented, "an energy bar without regeneration is unsupported")
+	}
+	return &Energy{MaxEnergy: character.MaximumEnergy(), MaxComboPoints: character.MaxComboPoints(),
+		TickDurationNs: nanos(character.EnergyTickDuration), EnergyPerTick: character.EnergyPerTick}
+}
+
 type Player struct {
 	Unit
 	Name               string           `json:"name"`
@@ -542,6 +565,7 @@ type Player struct {
 	DistanceYards      float64          `json:"distance_yards"`
 	CastSpeed          float64          `json:"cast_speed"`
 	Mana               Mana             `json:"mana"`
+	Energy             *Energy          `json:"energy,omitempty"`
 	AttackTable        AttackTable      `json:"attack_table"`
 	Spells             []Spell          `json:"spells"`
 	MajorCooldowns     []MajorCooldown  `json:"major_cooldowns"`
@@ -682,14 +706,23 @@ func exportSpell(spell *core.Spell, target *core.Unit, class classExport, timers
 	var cost *Cost
 	if spell.Cost != nil {
 		resource := "unknown"
-		switch spell.Cost.ResourceCostImpl.(type) {
+		refund := 0.0
+		switch impl := spell.Cost.ResourceCostImpl.(type) {
 		case *core.ManaCost:
 			resource = "mana"
+		case *core.EnergyCost:
+			resource = "energy"
+			refund = impl.Refund
+			// A refund is credited to the energy bar's refund metrics, the default and the
+			// only one any class passes.
+			if impl.Refund > 0 && impl.RefundMetrics != spell.Unit.EnergyRefundMetrics {
+				*unrepresented = append(*unrepresented, fmt.Sprintf("spell %s refunds energy to its own metrics", spell.ActionID))
+			}
 		default:
-			*unrepresented = append(*unrepresented, fmt.Sprintf("spell %s has a non-mana cost", spell.ActionID))
+			*unrepresented = append(*unrepresented, fmt.Sprintf("spell %s has an unsupported cost", spell.ActionID))
 		}
 		cost = &Cost{Resource: resource, BaseCost: spell.Cost.BaseCost, FlatModifier: spell.Cost.FlatModifier,
-			PercentModifier: spell.Cost.PercentModifier, AdditivePercentModifier: spell.Cost.AdditivePercentModifier}
+			PercentModifier: spell.Cost.PercentModifier, AdditivePercentModifier: spell.Cost.AdditivePercentModifier, Refund: refund}
 	}
 
 	// Go chooses the cast function at registration from the default cast, extra condition,
@@ -747,6 +780,7 @@ func exportSpell(spell *core.Spell, target *core.Unit, class classExport, timers
 		DirectDamageMultiplierAdditive: spell.DirectDamageMultiplierAdditive, CritMultiplierPct: spell.CritMultiplierPct,
 		CritMultiplierAdditive: spell.CritMultiplierAdditive, BonusBaseDamage: spell.BonusBaseDamage, BonusCoefficient: spell.BonusCoefficient,
 		ThreatMultiplier: spell.ThreatMultiplier, FlatThreatBonus: spell.FlatThreatBonus, PushbackResist: spell.PushbackResist, Dot: dot,
+		MetricSplits: map[bool]int{true: spell.GetMetricSplitCount(), false: 0}[spell.GetMetricSplitCount() > 1],
 	}
 }
 
@@ -934,24 +968,42 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 				"stone_multiplier": map[bool]float64{true: 1.4, false: 1.0}[character.HasAlchStone()], "regen_window_seconds": 5.0,
 			})
 		case consumable.Id != 0 && spell.Flags.Matches(core.SpellFlagConjured): // consumes.go conjured
-			gains := []map[string]any{}
+			gains, energyGains := []map[string]any{}, []map[string]any{}
 			for _, effectID := range consumable.EffectIds {
 				e := core.GetSpellEffectByID(effectID)
 				resource := e.GetResourceType()
 				if (e.Type == proto.EffectType_EffectTypeResourceGain || e.Type == proto.EffectType_EffectTypeHeal) && resource != 0 {
-					if resource != proto.ResourceType_ResourceTypeMana {
+					switch {
+					case resource == proto.ResourceType_ResourceTypeMana:
+						gains = append(gains, map[string]any{"min": e.MinEffectSize, "spread": e.EffectSpread})
+					case resource == proto.ResourceType_ResourceTypeEnergy && character.HasEnergyBar():
+						energyGains = append(energyGains, map[string]any{"min": e.MinEffectSize, "spread": e.EffectSpread})
+					default:
 						*unrepresented = append(*unrepresented, fmt.Sprintf("conjured %d restores %s", item, resource))
-						continue
 					}
-					gains = append(gains, map[string]any{"min": e.MinEffectSize, "spread": e.EffectSpread})
 				}
 			}
 			if consumable.BuffDuration > 0 {
 				*unrepresented = append(*unrepresented, fmt.Sprintf("conjured %d has a stat buff", item))
 			}
+			if len(energyGains) == 0 {
+				effects = append(effects, map[string]any{
+					"kind": "conjured_mana", "item_id": item, "rng_label": consumable.Name, "gains": gains,
+					"selected": consumes.GetConjuredId() == item, "regen_window_seconds": 5.0,
+				})
+				break
+			}
+			if len(gains) != 0 {
+				*unrepresented = append(*unrepresented, fmt.Sprintf("conjured %d restores mana and energy", item))
+			}
+			// Thistle Tea gives 2 energy less a level above 40, a Go literal.
+			reduction := 0.0
+			if item == 7676 {
+				reduction = float64(2 * max(0, core.CharacterLevel-40))
+			}
 			effects = append(effects, map[string]any{
-				"kind": "conjured_mana", "item_id": item, "rng_label": consumable.Name, "gains": gains,
-				"selected": consumes.GetConjuredId() == item, "regen_window_seconds": 5.0,
+				"kind": "conjured_energy", "item_id": item, "rng_label": consumable.Name, "gains": energyGains,
+				"selected": consumes.GetConjuredId() == item, "level_reduction": reduction,
 			})
 		default:
 			// shared.NewSpellDataEnergizeOnUse: an item use spell that restores mana.
@@ -1111,6 +1163,7 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 		}
 	}
 
+	energy := exportEnergy(character, &unrepresented)
 	prepared := Prepared{
 		SchemaVersion: schemaVersion, Contract: "forever-prepared",
 		Reference:     Reference{EngineRevision: engineRevision, ClientBuild: clientBuild, Exporter: "tools/oracle-v2"},
@@ -1137,6 +1190,7 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 			DistanceYards: character.DistanceFromTarget, CastSpeed: character.CastSpeed,
 			Mana: Mana{Max: character.MaxMana(), Base: character.BaseMana, SpiritRegenPerSecond: character.SpiritManaRegenPerSecond(),
 				RegenPerSecondCasting: character.ManaRegenPerSecondWhileCasting(), RegenPerSecondNotCasting: character.ManaRegenPerSecondWhileNotCasting()},
+			Energy: energy,
 			AttackTable: AttackTable{BaseSpellMissChance: table.BaseSpellMissChance, SpellCritSuppression: table.SpellCritSuppression,
 				BonusSpellCritPercent: table.BonusSpellCritPercent, CritMultiplier: table.CritMultiplier,
 				DamageDealtMultiplier: table.DamageDealtMultiplier, DamageTakenMultiplier: table.DamageTakenMultiplier},

@@ -304,6 +304,7 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
 
     if let Some(rotation) = rotation {
         reasons.extend(unknown_aura_conditions(prepared, rotation));
+        reasons.extend(energy_without_bar(prepared, rotation));
         let mut reachable = Vec::new();
         let mut registered_prepull = 0;
         for prepull in &rotation.prepull {
@@ -378,6 +379,36 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
     let mut all = missing;
     all.extend(reasons);
     all
+}
+
+/// Go gives energy and combo point values no value on a unit without an energy bar, which
+/// drops the term; the runtime reads the bar, so such a rotation is unsupported.
+fn energy_without_bar(prepared: &PreparedV2, rotation: &Rotation) -> Vec<String> {
+    if prepared.player.energy.is_some() {
+        return Vec::new();
+    }
+    let mut reasons = Vec::new();
+    for item in &rotation.priority_list {
+        let mut uses = false;
+        if let Some(condition) = &item.condition {
+            condition.visit(&mut |value| {
+                uses |= matches!(
+                    value,
+                    Value::CurrentEnergy
+                        | Value::MaxEnergy
+                        | Value::CurrentComboPoints
+                        | Value::TimeToNextEnergyTick
+                );
+            });
+        }
+        if uses {
+            reasons.push(format!(
+                "rotation item {} reads energy or combo points, which the player lacks",
+                item.position
+            ));
+        }
+    }
+    reasons
 }
 
 fn find_aura(prepared: &PreparedV2, id: &ActionId) -> Option<FoundAura<ActionId>> {

@@ -6,7 +6,8 @@ use crate::{
 };
 
 use super::{
-    log::action_string, Action, Agent, AuraRef, Fight, Side, SpellBehavior, SpellId, PRIORITY_GCD,
+    log::action_string, Action, Agent, AuraRef, Fight, ResourceKind, Side, SpellBehavior, SpellId,
+    PRIORITY_GCD,
 };
 
 /// Go `MaxSpellQueueWindow`.
@@ -96,13 +97,21 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    /// Go `ManaCost.MeetsRequirement`, including its out-of-mana bookkeeping.
+    /// Go `ResourceCostImpl.MeetsRequirement` for the spell's resource.
     fn meets_cost(&mut self, spell: SpellId) -> bool {
-        if self.spells[spell].cost.is_none() {
+        let Some(kind) = self.spells[spell].cost.map(|cost| cost.kind) else {
             return true;
-        }
+        };
         let cost = self.current_cost(spell);
         self.spells[spell].cur_cast.cost = cost;
+        match kind {
+            ResourceKind::Energy => self.energy_bar().current >= cost,
+            _ => self.meets_mana_cost(cost),
+        }
+    }
+
+    /// Go `ManaCost.MeetsRequirement`, including its out-of-mana bookkeeping.
+    fn meets_mana_cost(&mut self, cost: f64) -> bool {
         let meets = self.player.mana >= cost;
         if cost > 0.0 {
             if meets {
@@ -138,10 +147,17 @@ impl<A: Agent> Fight<A> {
     }
 
     fn cost_failure(&self, spell: SpellId) -> String {
-        format!(
-            "not enough mana (Current Mana = {:.3}, Mana Cost = {:.3})",
-            self.player.mana, self.spells[spell].cur_cast.cost
-        )
+        let cost = self.spells[spell].cur_cast.cost;
+        match self.spells[spell].cost.map(|cost| cost.kind) {
+            Some(ResourceKind::Energy) => format!(
+                "not enough energy (Current Energy = {:.3}, Energy Cost = {cost:.3})",
+                self.energy_bar().current
+            ),
+            _ => format!(
+                "not enough mana (Current Mana = {:.3}, Mana Cost = {cost:.3})",
+                self.player.mana
+            ),
+        }
     }
 
     /// Go `Spell.CanCompleteCast`. Cost checks have side effects, as in Go.
@@ -507,17 +523,38 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    /// Go `ManaCost.SpendCost`.
+    /// Go `ResourceCostImpl.SpendCost` for the spell's resource.
     fn spend_cost(&mut self, spell: SpellId) {
-        if self.spells[spell].cost.is_none() {
+        let Some(kind) = self.spells[spell].cost.map(|cost| cost.kind) else {
+            return;
+        };
+        let cost = self.spells[spell].cur_cast.cost;
+        if kind == ResourceKind::Energy {
+            // Go EnergyCost.SpendCost spends even a zero cost.
+            let (metrics, _) = self.spells[spell].energy_metrics.expect("energy metrics");
+            self.spend_energy(cost, metrics);
             return;
         }
-        let cost = self.spells[spell].cur_cast.cost;
         if cost > 0.0 {
             let metrics = self.spells[spell].mana_metrics.expect("mana metrics");
             self.spend_mana(cost, metrics);
             self.player.five_second_rule_refresh =
                 (self.now + 5 * NS_PER_SECOND).max(self.player.hardcast.expires);
+        }
+    }
+
+    /// Go `Spell.IssueRefund`: an energy cost gives back its refund share of the cost paid.
+    pub(crate) fn issue_refund(&mut self, spell: SpellId) {
+        let Some(cost) = self.spells[spell].cost else {
+            return;
+        };
+        if cost.kind != ResourceKind::Energy {
+            return;
+        }
+        let paid = self.spells[spell].cur_cast.cost;
+        if cost.refund > 0.0 && paid > 0.0 {
+            let metrics = self.energy_bar().refund_metrics;
+            self.add_energy(cost.refund * paid, metrics);
         }
     }
 
@@ -600,9 +637,18 @@ impl<A: Agent> Fight<A> {
         &mut self,
         id: crate::contracts::prepared_v2::ActionId,
     ) -> usize {
+        self.new_resource_metrics(id, super::ResourceKind::Mana)
+    }
+
+    /// Go `UnitMetrics.NewResourceMetrics`: every call registers a new metric.
+    pub(crate) fn new_resource_metrics(
+        &mut self,
+        id: crate::contracts::prepared_v2::ActionId,
+        kind: super::ResourceKind,
+    ) -> usize {
         self.resources.push(super::ResourceMetrics {
             id,
-            health: false,
+            kind,
             events: 0,
             gain: 0.0,
             actual_gain: 0.0,

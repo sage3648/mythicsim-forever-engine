@@ -124,6 +124,10 @@ fn is_zero(value: &i32) -> bool {
     *value == 0
 }
 
+fn is_zero_f64(value: &f64) -> bool {
+    *value == 0.0
+}
+
 impl ActionId {
     pub fn spell(spell_id: i32) -> Self {
         Self {
@@ -243,6 +247,16 @@ pub struct Mana {
     pub teardown_max: f64,
 }
 
+/// Go `energyBar` for a player that has one, and its combo points.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct Energy {
+    pub max_energy: f64,
+    pub max_combo_points: i32,
+    pub tick_duration_ns: i64,
+    pub energy_per_tick: f64,
+}
+
 /// A Fireball rank's dot: the base amount its ticks snapshot and whether they can crit.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -289,6 +303,9 @@ pub struct Cost {
     pub flat_modifier: i32,
     pub percent_modifier: f64,
     pub additive_percent_modifier: f64,
+    /// Go `EnergyCost.Refund`: the share of an energy cost a missed strike gives back.
+    #[serde(default, skip_serializing_if = "is_zero_f64")]
+    pub refund: f64,
 }
 
 #[derive(Clone, Copy, Debug, Default, Deserialize, Serialize, PartialEq)]
@@ -426,6 +443,9 @@ pub struct Player {
     /// Go `Unit.CastSpeed`, the factor applied to hasted durations.
     pub cast_speed: f64,
     pub mana: Mana,
+    /// Go `energyBar`, absent for a player without one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub energy: Option<Energy>,
     pub attack_table: AttackTable,
     pub spells: Vec<Spell>,
     /// Go's initial major cooldown order after the rotation claimed its spells.

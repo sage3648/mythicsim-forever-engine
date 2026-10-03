@@ -405,7 +405,7 @@ impl<A: Agent> Fight<A> {
         };
         for index in 0..self.resources.len() {
             let resource = &self.resources[index];
-            if resource.health
+            if resource.kind != super::ResourceKind::Mana
                 || resource.is_mana_regen
                 || resource.id.other_id == "OtherActionManaRegen"
             {
@@ -497,7 +497,12 @@ impl<A: Agent> Fight<A> {
         } else {
             time_to_oom
         };
-        self.totals.tto.total = seconds(time_to_oom) * duration_seconds;
+        // Go infers time to out of mana only for a unit with a mana bar.
+        self.totals.tto.total = if self.has_mana_bar() {
+            seconds(time_to_oom) * duration_seconds
+        } else {
+            0.0
+        };
         let duration = self.duration;
         self.totals.dps.done_iteration(duration, seed);
         self.totals.threat.done_iteration(duration, seed);
@@ -559,11 +564,7 @@ impl<A: Agent> Fight<A> {
             .filter(|resource| resource.events > 0)
             .map(|resource| ResourceMetricsReport {
                 id: (&resource.id).into(),
-                kind: if resource.health {
-                    "ResourceTypeHealth"
-                } else {
-                    "ResourceTypeMana"
-                },
+                kind: resource.kind.proto_name(),
                 events: resource.events,
                 gain: resource.gain,
                 actual_gain: resource.actual_gain,

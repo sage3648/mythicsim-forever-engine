@@ -13,6 +13,7 @@ mod aura;
 mod cast;
 mod damage;
 mod dot;
+pub(crate) mod energy;
 mod log;
 pub(crate) mod melee;
 pub(crate) mod metrics;
@@ -267,9 +268,13 @@ impl Cast {
     }
 }
 
-/// Go `SpellCost` for mana.
+/// Go `SpellCost`.
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct Cost {
+    /// The resource the cost spends.
+    pub(crate) kind: ResourceKind,
+    /// Go `EnergyCost.Refund`.
+    pub(crate) refund: f64,
     pub(crate) base: i32,
     pub(crate) flat_modifier: i32,
     pub(crate) percent_modifier: f64,
@@ -360,6 +365,8 @@ pub(crate) struct Spell<S> {
     pub(crate) related_dot_spell: Option<SpellId>,
     /// Index into the resource metrics for this spell's mana cost.
     pub(crate) mana_metrics: Option<usize>,
+    /// Indexes into the resource metrics for this spell's energy cost and combo points.
+    pub(crate) energy_metrics: Option<(usize, usize)>,
     pub(crate) metrics: [SpellMetrics; 2],
     /// Index into the fight's action metrics, absent for `SpellFlagNoMetrics`.
     pub(crate) action: Option<usize>,
@@ -519,11 +526,34 @@ pub(crate) struct MajorCooldown {
     pub(crate) uses: usize,
 }
 
-/// Go `ResourceMetrics` for mana, or for health when `health` is set.
+/// Go `proto.ResourceType` of a resource metric.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum ResourceKind {
+    Mana,
+    Health,
+    Rage,
+    Energy,
+    ComboPoints,
+}
+
+impl ResourceKind {
+    /// The Go proto enum name, as Go's result JSON writes it.
+    pub(crate) fn proto_name(self) -> &'static str {
+        match self {
+            ResourceKind::Mana => "ResourceTypeMana",
+            ResourceKind::Health => "ResourceTypeHealth",
+            ResourceKind::Rage => "ResourceTypeRage",
+            ResourceKind::Energy => "ResourceTypeEnergy",
+            ResourceKind::ComboPoints => "ResourceTypeComboPoints",
+        }
+    }
+}
+
+/// Go `ResourceMetrics`.
 #[derive(Clone, Debug)]
 pub(crate) struct ResourceMetrics {
     pub(crate) id: ActionId,
-    pub(crate) health: bool,
+    pub(crate) kind: ResourceKind,
     pub(crate) events: i32,
     pub(crate) gain: f64,
     pub(crate) actual_gain: f64,
@@ -580,6 +610,10 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) rng: SimRng,
     pub(crate) queue: PendingQueue<Action>,
     min_tracker_time: i64,
+    /// Go `sim.minTaskTime`.
+    min_task_time: i64,
+    /// Go `energyBar`, for a player that has one.
+    pub(crate) energy: Option<energy::EnergyBar>,
     pub(crate) player: Player,
     /// Go `Unit.CastSpeed`. Go's unit reset restores the pseudo stats but not this value,
     /// so a speed change undone at the end of a fight carries into the next one.
@@ -767,10 +801,10 @@ impl<A: Agent> Fight<A> {
         };
 
         let mut resources = Vec::new();
-        let mut resource = |id: ActionId, regen: bool, health: bool| {
+        let mut resource = |id: ActionId, regen: bool, kind: ResourceKind| {
             resources.push(ResourceMetrics {
                 id,
-                health,
+                kind,
                 events: 0,
                 gain: 0.0,
                 actual_gain: 0.0,
@@ -785,8 +819,8 @@ impl<A: Agent> Fight<A> {
             tag,
             ..ActionId::default()
         };
-        let mana_regen_casting = resource(regen_id(1), false, false);
-        let mana_regen_not_casting = resource(regen_id(2), false, false);
+        let mana_regen_casting = resource(regen_id(1), false, ResourceKind::Mana);
+        let mana_regen_not_casting = resource(regen_id(2), false, ResourceKind::Mana);
 
         let effects = &prepared.effects;
         let mut spells = Vec::new();
@@ -876,7 +910,7 @@ impl<A: Agent> Fight<A> {
                         } if id.spell_id == *drain_spell_id && id.tag == 0 => {
                             Some(SpellBehavior::TouchOfTheGraveDrain {
                                 health_fraction: *health_fraction,
-                                metrics: resource(id.clone(), false, true),
+                                metrics: resource(id.clone(), false, ResourceKind::Health),
                             })
                         }
                         _ => None,
@@ -884,12 +918,27 @@ impl<A: Agent> Fight<A> {
                     .unwrap_or(SpellBehavior::None)
             };
             let cost = exported.cost.as_ref().map(|cost| Cost {
+                kind: if cost.resource == "energy" {
+                    ResourceKind::Energy
+                } else {
+                    ResourceKind::Mana
+                },
+                refund: cost.refund,
                 base: cost.base_cost,
                 flat_modifier: cost.flat_modifier,
                 percent_modifier: cost.percent_modifier,
                 additive_percent_modifier: cost.additive_percent_modifier,
             });
-            let mana_metrics = cost.map(|_| resource(id.clone(), false, false));
+            // Go newEnergyCost registers the energy metrics, then the combo point metrics.
+            let (mana_metrics, energy_metrics) = match cost.map(|cost| cost.kind) {
+                Some(ResourceKind::Energy) => {
+                    let energy = resource(id.clone(), false, ResourceKind::Energy);
+                    let combo = resource(id.clone(), false, ResourceKind::ComboPoints);
+                    (None, Some((energy, combo)))
+                }
+                Some(kind) => (Some(resource(id.clone(), false, kind)), None),
+                None => (None, None),
+            };
             let spell_id = spells.len();
             let dot = exported.dot.as_ref().map(|exported_dot| {
                 dots.push(Dot::new(spell_id, exported_dot));
@@ -975,6 +1024,7 @@ impl<A: Agent> Fight<A> {
                 dot,
                 related_dot_spell: exported.related_dot_spell,
                 mana_metrics,
+                energy_metrics,
                 metrics: [SpellMetrics::default(); 2],
                 action: None,
                 id,
@@ -1035,7 +1085,7 @@ impl<A: Agent> Fight<A> {
                     )),
                     _ => None,
                 }) {
-                    let metrics = resource(jow.2.clone(), false, false);
+                    let metrics = resource(jow.2.clone(), false, ResourceKind::Mana);
                     AuraBehavior::JudgementOfWisdom {
                         chance: jow.0,
                         mana: jow.1,
@@ -1194,6 +1244,8 @@ impl<A: Agent> Fight<A> {
             rng: SimRng::new(prepared.sim.labeled_rng, prepared.sim.seed as u64),
             queue: PendingQueue::default(),
             min_tracker_time: NEVER_EXPIRES,
+            min_task_time: NEVER_EXPIRES,
+            energy: None,
             player: Player {
                 powers: config.powers,
                 mana: config.max_mana,
@@ -1265,6 +1317,9 @@ impl<A: Agent> Fight<A> {
             totals: metrics::Totals::default(),
             encounter_damage_taken: 0.0,
         };
+        if let Some(energy) = &player.energy {
+            fight.enable_energy_bar(energy);
+        }
         fight.rotation = fight.compile_rotation(&parsed);
         fight.prepull = fight.compile_prepull(&parsed);
         for effect in effects {
@@ -1323,6 +1378,11 @@ impl<A: Agent> Fight<A> {
             }
         }
         Ok(fight)
+    }
+
+    /// Go `HasManaBar`: a class without mana, such as a Rogue, exports no maximum mana.
+    pub(crate) fn has_mana_bar(&self) -> bool {
+        self.config.max_mana > 0.0
     }
 
     /// The mana regeneration inputs for Go `ManaRegenPerSecondWhileCasting`.
@@ -1442,6 +1502,7 @@ impl<A: Agent> Fight<A> {
         self.end_of_combat = self.duration;
         self.now = 0;
         self.min_tracker_time = NEVER_EXPIRES;
+        self.min_task_time = NEVER_EXPIRES;
         // Go's environment always rolls the pet heartbeat offset, even without pets.
         self.random("Pet Stat Inheritance");
         self.encounter_damage_taken = 0.0;
@@ -1449,13 +1510,15 @@ impl<A: Agent> Fight<A> {
         self.reset_unit(Side::Player);
         self.reset_cooldown_manager();
         // Go initManaTickAction, after the environment reset: two seconds after the prepull
-        // starts.
-        let prepull_start = self.prepull.first().map_or(0, |&(at, _)| at);
-        self.schedule(
-            prepull_start + 2 * crate::core::time::NS_PER_SECOND,
-            PRIORITY_REGEN,
-            Action::ManaTick,
-        );
+        // starts, when a unit has a mana bar.
+        if self.has_mana_bar() {
+            let prepull_start = self.prepull.first().map_or(0, |&(at, _)| at);
+            self.schedule(
+                prepull_start + 2 * crate::core::time::NS_PER_SECOND,
+                PRIORITY_REGEN,
+                Action::ManaTick,
+            );
+        }
     }
 
     /// Go `Unit.reset` followed by `Character.reset` for the player.
@@ -1515,6 +1578,9 @@ impl<A: Agent> Fight<A> {
             self.player.waiting_for_mana = 0.0;
             self.player.waiting_for_mana_start = 0;
             self.update_mana_regen_rates();
+            // Go energyBar.reset, after the mana and health bars.
+            let prepull_start = self.prepull.first().map_or(0, |&(at, _)| at);
+            self.reset_energy(prepull_start);
         }
         // Go AutoAttacks.reset: an enemy with a melee swing rolls its opening offset.
         if side == Side::Target && self.config.target_auto_swing_melee {
@@ -1530,11 +1596,19 @@ impl<A: Agent> Fight<A> {
     fn step(&mut self) -> bool {
         // Go runs due weapon swings before the next pending action, ties included.
         let next = self.queue.peek_time().unwrap_or(NEVER_EXPIRES);
-        if self.due_weapon_attack(next) {
+        if self.due_weapon_attack(next) && self.autos.min_time <= self.min_task_time {
             if self.autos.min_time > self.end_of_combat {
                 return false;
             }
             self.advance_weapon_attacks();
+            return true;
+        }
+        // Then due tasks, the energy ticks.
+        if self.due_task(next) {
+            if self.min_task_time > self.end_of_combat {
+                return false;
+            }
+            self.advance_tasks();
             return true;
         }
         let Some((time, handle, action)) = self.queue.pop() else {
