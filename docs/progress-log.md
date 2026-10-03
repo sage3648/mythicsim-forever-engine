@@ -24,6 +24,8 @@ reading the Go reference. They are not effort estimates for other contributors.
 | Arcane: Touch of the Grave and the reference build | 2026-10-03 13:09 | 2026-10-03 13:15 | 0 h 06 m | Racial proc with internal cooldown and batch delay, hit-only drain, health metrics; the application's Arcane request matches Go on the first comparison |
 | Refactor: Mage-wide gate and fixture family | 2026-10-03 13:15 | 2026-10-03 13:17 | 0 h 02 m | Source-only move from the Frost spec to the Mage class; goldens unchanged |
 | Arcane: randomized sweep | 2026-10-03 13:17 | 2026-10-03 13:22 | 0 h 05 m | Reusable sweep generator; 18 variants match, 6 rejected for #622; the guard now compares meaning |
+| Fire: not and auraRemainingTime | 2026-10-03 13:22 | 2026-10-03 13:26 | 0 h 04 m | Fire preset operators with Go folding and the #622 comparison |
+| Fire: Fire Blast, Scorch and Improved Scorch | 2026-10-03 13:26 | 2026-10-03 13:30 | 0 h 04 m | Percent damage modifier with a school mask; matches Go on the first comparison |
 
 ## Notes
 

@@ -19,6 +19,8 @@ pub(crate) enum ModKind {
     DirectDamageDoneFlat,
     /// Go `SpellMod_CastTime_Pct`: adds to `CastTimeMultiplier`.
     CastTimePercent,
+    /// Go `SpellMod_DamageDone_Pct`: multiplies `DamageMultiplier` by one plus the value.
+    DamageDonePercent,
 }
 
 #[derive(Clone, Debug)]
@@ -84,6 +86,13 @@ impl<A: Agent> Fight<A> {
                         state.direct_damage_multiplier_additive += modifier.float_value;
                     } else {
                         state.direct_damage_multiplier_additive -= modifier.float_value;
+                    }
+                }
+                ModKind::DamageDonePercent => {
+                    if sign > 0.0 {
+                        state.damage_multiplier *= 1.0 + modifier.float_value;
+                    } else {
+                        state.damage_multiplier /= 1.0 + modifier.float_value;
                     }
                 }
                 ModKind::CastTimePercent => {
@@ -152,6 +161,19 @@ impl<A: Agent> Fight<A> {
                 }
             }
         }
+    }
+
+    /// Spells a class- and school-masked modifier applies to: Go `shouldApply` with a
+    /// `School`, which matches any shared school bit.
+    pub(crate) fn spells_with_class_and_school(
+        &self,
+        classes: &[&str],
+        school: u8,
+    ) -> Vec<SpellId> {
+        self.spells_with_class(classes)
+            .into_iter()
+            .filter(|&spell| self.spells[spell].school & school != 0)
+            .collect()
     }
 
     /// Spells a class-masked modifier applies to, skipping `SpellFlagNoSpellMods`.

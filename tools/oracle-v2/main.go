@@ -595,6 +595,10 @@ var (
 	arcanePower         = spelldata.Ranked(12042)
 	presenceOfMind      = spelldata.Ranked(12043)
 	igniteTriggered     = spelldata.Ranked(412538)
+	fireBlastLadder     = spelldata.Ranked(2136, 2137, 2138, 8412, 8413, 10197, 10199)
+	scorchLadder        = spelldata.Ranked(2948, 8444, 8445, 8446, 10205, 10206, 10207)
+	improvedScorch      = spelldata.Talent(11095, 3)
+	fireVulnerability   = spelldata.Ranked(22959)
 	arcaneConcentration = spelldata.Talent(11213, 5)
 	clearcastingTrigger = spelldata.Ranked(12536)
 	fingersOfFrost      = spelldata.Talent(400647, 2)
@@ -627,6 +631,10 @@ func attachDamageEffects(spells []Spell, character *core.Character) {
 	if blast := arcaneBlastLadder.Highest(); blast != nil {
 		rows[blast.ID] = blast
 	}
+	if fireBlast := fireBlastLadder.Highest(); fireBlast != nil {
+		rows[fireBlast.ID] = fireBlast
+	}
+	scorchLadder.Each(func(_ int32, row *spelldata.Spell) { rows[row.ID] = row })
 	for i := range spells {
 		id := spells[i].ActionID
 		if id == nil || id.SpellID == 0 || id.Tag != 0 {
@@ -710,6 +718,17 @@ func mageEffects(m *mage.Mage, character *core.Character) []map[string]any {
 			"cost_per_stack":   buff.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_COST)).Average(core.CharacterLevel) / 100,
 		})
 	}
+	// fire_blast.go
+	effects = append(effects, map[string]any{"kind": "fire_blast"})
+	// scorch.go: every rank; Improved Scorch stacks Fire Vulnerability on the mage itself.
+	scorch := map[string]any{"kind": "scorch"}
+	if talents.ImprovedScorch > 0 {
+		scorch["improved_scorch"] = map[string]any{
+			"aura": "Fire Vulnerability", "proc_chance": improvedScorch.FractionAt(talents.ImprovedScorch),
+			"damage_per_stack": fireVulnerability.Highest().EffectN(1).Average(core.CharacterLevel) / 100,
+		}
+	}
+	effects = append(effects, scorch)
 	if talents.Ignite > 0 { // talents_fire.go registerIgnite: fire spell crits feed a dot
 		effects = append(effects, map[string]any{
 			"kind": "ignite", "trigger_aura": "Ignite Talent", "spell_id": igniteTriggered.Highest().ID,

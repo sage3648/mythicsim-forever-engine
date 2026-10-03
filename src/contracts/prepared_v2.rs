@@ -242,6 +242,15 @@ pub struct Mana {
     pub teardown_max: f64,
 }
 
+/// Improved Scorch's stacking Fire Vulnerability buff on the mage.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct ImprovedScorch {
+    pub aura: String,
+    pub proc_chance: f64,
+    pub damage_per_stack: f64,
+}
+
 /// An action a unit's metrics list, from Go `Spell.doneIteration`.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -447,6 +456,13 @@ pub enum Effect {
         health_fraction: f64,
         delay_ns: i64,
     },
+    /// Fire Blast's instant hit.
+    FireBlast {},
+    /// Every Scorch rank, with Improved Scorch when talented.
+    Scorch {
+        #[serde(default)]
+        improved_scorch: Option<ImprovedScorch>,
+    },
     /// Ignite: crits of fire spells feed a fire dot.
     Ignite {
         trigger_aura: String,
@@ -575,6 +591,8 @@ impl Effect {
             Effect::ArcaneBlast { .. } => "arcane_blast",
             Effect::ArcanePower { .. } => "arcane_power",
             Effect::Ignite { .. } => "ignite",
+            Effect::FireBlast {} => "fire_blast",
+            Effect::Scorch { .. } => "scorch",
             Effect::TouchOfTheGrave { .. } => "touch_of_the_grave",
             Effect::PresenceOfMind { .. } => "presence_of_mind",
             Effect::IceLance { .. } => "ice_lance",
