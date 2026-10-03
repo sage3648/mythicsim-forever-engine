@@ -33,6 +33,9 @@ pub struct PreparedV2 {
     pub target: Target,
     pub player: Player,
     pub melee: Melee,
+    /// The target's swings at the player when the player tanks it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub enemy: Option<Enemy>,
     pub effects: Vec<Effect>,
     /// Request features the exporter could not describe. Must be empty to simulate.
     pub unrepresented: Vec<String>,
@@ -536,6 +539,53 @@ pub struct Melee {
     pub replace_main_hand_swing: bool,
 }
 
+/// The target's main hand swings at the player when the player tanks it: Go attack.go's enemy
+/// `ApplyEffects`, `CalcDamage` and `outcomeEnemyMeleeWhite`, with every value resolved as Go
+/// computes it at reset.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct Enemy {
+    pub action_id: ActionId,
+    pub school: u8,
+    pub swing_speed: f64,
+    pub melee_haste_multiplier: f64,
+    pub base_damage_min: f64,
+    pub damage_spread: f64,
+    pub attack_power: f64,
+    pub attack_power_coefficient: f64,
+    pub bonus_damage: f64,
+    pub attacker_multiplier: f64,
+    /// The steps that read the player's defenses, by stat aura combination as the stat_auras
+    /// effect numbers them; one entry without stat auras.
+    pub rolls: Vec<EnemyRolls>,
+    pub threat_multiplier: f64,
+    pub flat_threat_bonus: f64,
+    pub unit_threat_multiplier: f64,
+    pub log_attack_power: f64,
+    pub log_ranged_attack_power: f64,
+    pub log_spell_power: f64,
+    /// Auras inactive at reset whose activation changes a value above, as "player:label" or
+    /// "target:label".
+    pub changing_auras: Vec<String>,
+}
+
+/// The steps of the target's swing that read the player's defenses.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct EnemyRolls {
+    pub armor_multiplier: f64,
+    pub bonus_damage_taken: f64,
+    pub target_multiplier: f64,
+    /// What each step of the table adds to the running chance, zero for a skipped step.
+    pub miss_chance: f64,
+    pub dodge_chance: f64,
+    pub parry_chance: f64,
+    pub block_chance: f64,
+    pub crit_chance: f64,
+    pub crush_chance: f64,
+    pub block_reduction: f64,
+}
+
 /// A spell a dynamic proc manager hears, by spellbook position, with the chance it rolls.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -599,8 +649,8 @@ pub enum Effect {
     Berserking {
         spell_id: i32,
         aura: String,
-        cast_speed_multiplier: f64,
         attack_speed_multiplier: f64,
+        cast_speed_multiplier: f64,
     },
     /// The Orc racial Blood Fury: a major cooldown whose aura multiplies stats through Go's
     /// dynamic stat dependencies. `active_stats` holds every stat the aura changes, at the
@@ -865,12 +915,15 @@ pub enum Effect {
         dismissed_log: String,
         reason: String,
     },
-    /// The Orc racial Shatter Curse: a survival cooldown whose aura lowers the player's
-    /// spell damage taken, which has no effect in scope. Go never autocasts it at the
-    /// default defensive health threshold; configured timings still cast it.
+    /// The Orc racial Shatter Curse: a survival cooldown whose aura multiplies the player's
+    /// damage taken of the named schools, which only the player's own spells deal in scope.
+    /// Go never autocasts it at the default defensive health threshold; configured timings
+    /// still cast it.
     ShatterCurse {
         spell_id: i32,
         aura: String,
+        school_damage_taken_multiplier: f64,
+        schools: Vec<String>,
     },
     /// The Dwarf racial Stoneform: a survival cooldown whose aura lowers the player's
     /// physical damage taken, which has no effect in scope. Go never autocasts it at the
@@ -1373,6 +1426,22 @@ pub enum Effect {
     ChanceOfDeath {
         aura: String,
     },
+    /// Go attack.go applyParryHaste once the target swings at the player: a parry pulls the
+    /// parrying unit's next main hand swing in.
+    ParryHaste {
+        unit: String,
+        aura: String,
+    },
+    /// An item proc trigger that restores energy a spell batch window after a landed hit, such
+    /// as Shadowcraft Armor's: the chance each spell rolls, by spellbook position.
+    EnergizeProc {
+        trigger_aura: String,
+        rng_label: String,
+        chances: Vec<SpellChance>,
+        energy: f64,
+        metrics_action_id: ActionId,
+        delay_ns: i64,
+    },
     /// Go aura_helpers.go ApplyFixedUptimeAura: a periodic roll that activates the aura and a
     /// first roll with a random duration.
     FixedUptimeAura {
@@ -1502,7 +1571,9 @@ impl Effect {
             Effect::DeadlyPoison { .. } => "deadly_poison",
             Effect::GoblinSapper { .. } => "goblin_sapper",
             Effect::ChanceOfDeath { .. } => "chance_of_death",
+            Effect::ParryHaste { .. } => "parry_haste",
             Effect::FixedUptimeAura { .. } => "fixed_uptime_aura",
+            Effect::EnergizeProc { .. } => "energize_proc",
         }
     }
 }

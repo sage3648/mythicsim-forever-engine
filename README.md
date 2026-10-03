@@ -120,6 +120,17 @@ and the raid's ramped Sunder Armor, at 510.849 DPS. Its
 variants, and a [race sweep](validation/2026-10-04-warlock-race-sweep.json) drawing
 Human, Gnome with Eureka!, Orc and Undead matches on all 12.
 
+The production Combat Rogue build matches too, at 616.136 DPS: an Undead dagger rogue
+whose energy ticks run as Go's simulation task, with Backstab and Puncturing Wounds,
+Slice and Dice and Eviscerate splitting their metrics by combo points, Relentless Strikes,
+Ruthlessness, Adrenaline Rush, Blade Flurry, Instant and Deadly Poison, Thistle Tea,
+Shadowcraft Armor's energize, Windfury Totem, Crusader, Dragonbreath Chili and the Goblin
+Sapper Charge, whose hit on the player removes health through Chance of Death.
+[Sweeps](validation/2026-10-04-combat-rogue-sweep.json) of the request, also
+[in melee range](validation/2026-10-04-combat-rogue-melee-sweep.json) and
+[across every Rogue race](validation/2026-10-04-combat-rogue-race-sweep.json), match Go
+on all 72 variants.
+
 Every race that can be a Mage is supported: Human, Gnome, Undead, Troll with
 Berserking, Orc with Blood Fury and Shatter Curse, and High Order Skyborne with Read
 Ley Line for rotations that cast it. A [race sweep](validation/2026-10-04-mage-race-sweep.json)

@@ -27,6 +27,8 @@ const PHYSICAL_HASTE_RATING_PER_PERCENT: f64 = 10.0;
 pub(crate) enum Hand {
     Main,
     Off,
+    /// The target's main hand, when it swings at the player.
+    Enemy,
 }
 
 /// Go `WeaponAttack`.
@@ -62,6 +64,7 @@ pub(crate) struct AutoAttacks {
     pub(crate) dual_wielding: bool,
     pub(crate) mh: WeaponAttack,
     pub(crate) oh: WeaponAttack,
+    pub(crate) enemy: WeaponAttack,
     /// Go `sim.weaponAttacks`, in the order swings were added.
     attacks: Vec<Hand>,
     /// Go `sim.minWeaponAttackTime`.
@@ -69,10 +72,11 @@ pub(crate) struct AutoAttacks {
 }
 
 impl AutoAttacks {
-    fn hand(&mut self, hand: Hand) -> &mut WeaponAttack {
+    pub(crate) fn attack(&mut self, hand: Hand) -> &mut WeaponAttack {
         match hand {
             Hand::Main => &mut self.mh,
             Hand::Off => &mut self.oh,
+            Hand::Enemy => &mut self.enemy,
         }
     }
 }
@@ -174,6 +178,43 @@ impl<A: Agent> Fight<A> {
         }
     }
 
+    /// Go `AutoAttacks.startPull` for the target, whose swing is added before the player's.
+    pub(crate) fn start_enemy_attack(&mut self) {
+        let Some(enemy) = &self.enemy else {
+            return;
+        };
+        let haste = enemy.values.melee_haste_multiplier;
+        let attack = &mut self.autos.enemy;
+        attack.enabled = true;
+        attack.update_swing_duration(haste);
+        let swing_at = attack.swing_at;
+        self.autos.attacks.push(Hand::Enemy);
+        self.autos.min_time = self.autos.min_time.min(swing_at);
+    }
+
+    /// Go `AutoAttacks.reset` for the target: its main hand opens at a random point of its
+    /// swing timer, from the roll Go draws at the target's reset.
+    pub(crate) fn reset_enemy_attack(&mut self, roll: f64) {
+        let Some(enemy) = &self.enemy else {
+            return;
+        };
+        let (speed, haste) = (
+            enemy.values.swing_speed,
+            enemy.values.melee_haste_multiplier,
+        );
+        let attack = &mut self.autos.enemy;
+        attack.weapon.swing_speed = speed;
+        attack.enabled = false;
+        attack.update_swing_duration(haste);
+        attack.previous_swing = -attack.cur_swing_duration;
+        attack.swing_at = 0;
+        attack.natural_ready_at = 0;
+        let offset = (roll * attack.cur_swing_duration as f64) as i64;
+        attack.previous_swing += offset;
+        attack.swing_at += offset;
+        attack.natural_ready_at += offset;
+    }
+
     /// Go `AutoAttacks.startPull`: the off hand is added first.
     pub(crate) fn start_auto_attacks(&mut self) {
         if !self.autos.melee {
@@ -195,7 +236,7 @@ impl<A: Agent> Fight<A> {
             &[Hand::Main]
         };
         for &hand in hands {
-            let attack = self.autos.hand(hand);
+            let attack = self.autos.attack(hand);
             if !in_range(&attack.weapon) {
                 continue;
             }
@@ -235,7 +276,7 @@ impl<A: Agent> Fight<A> {
     /// Go `WeaponAttack.trySwing` and `swing`.
     fn try_swing(&mut self, hand: Hand) -> i64 {
         let now = self.now;
-        let attack = self.autos.hand(hand);
+        let attack = self.autos.attack(hand);
         if now < attack.swing_at {
             return attack.swing_at;
         }
@@ -243,15 +284,22 @@ impl<A: Agent> Fight<A> {
         if hand == Hand::Main && self.config.melee.replace_main_hand_swing {
             self.react_to_event_now();
         }
-        let attack = self.autos.hand(hand);
+        let attack = self.autos.attack(hand);
         attack.previous_swing = attack.swing_at;
         attack.swing_at = now + attack.cur_swing_duration;
         attack.natural_ready_at = attack.swing_at;
         let swing_at = attack.swing_at;
+        if hand == Hand::Enemy {
+            // The target's own reaction runs no rotation in scope.
+            self.enemy_swing();
+            return swing_at;
+        }
         let spell = attack.spell.expect("an enabled weapon attack has a spell");
         self.cast(spell, Side::Target);
-        // Go ReactToEvent(false, true) after the swing.
-        self.react_to_event();
+        // Go ReactToEvent(false, true) after the swing, unless the player is tanking.
+        if self.enemy.is_none() {
+            self.react_to_event();
+        }
         swing_at
     }
 
@@ -270,7 +318,7 @@ impl<A: Agent> Fight<A> {
             &[Hand::Main]
         };
         for &hand in hands {
-            let attack = self.autos.hand(hand);
+            let attack = self.autos.attack(hand);
             if attack.swing_at <= now + HELD_SWING_LAG {
                 continue;
             }
@@ -306,10 +354,7 @@ impl<A: Agent> Fight<A> {
     /// The auto attack spell's `ApplyEffects`: weapon damage on the white hit table.
     pub(crate) fn apply_melee_auto(&mut self, spell: SpellId, target: Side, hand: Hand) {
         let attack_power = self.melee_attack_power();
-        let weapon = match hand {
-            Hand::Main => self.autos.mh.weapon.clone(),
-            Hand::Off => self.autos.oh.weapon.clone(),
-        };
+        let weapon = self.autos.attack(hand).weapon.clone();
         let mut base = self.weapon_damage(&weapon, attack_power);
         if hand == Hand::Off {
             base *= 0.5;
