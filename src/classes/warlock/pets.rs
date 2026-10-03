@@ -66,6 +66,19 @@ impl DemonAi {
     }
 }
 
+/// Go `registerFireboltSpell`'s `ApplyEffects`: the rank's damage roll with the spell power
+/// share on the magic hit and crit table, dealt at once.
+pub(crate) fn firebolt<A: Agent>(
+    fight: &mut Fight<A>,
+    spell: SpellId,
+    target: Side,
+    (min, max): (f64, f64),
+) {
+    let base = min + (max - min) * fight.random("Damage Roll");
+    let result = fight.calc_damage(spell, target, base);
+    fight.deal_damage(spell, result, false);
+}
+
 /// Go `registerLashOfPainSpell`'s `ApplyEffects`: a fixed base with the spell power share on
 /// the magic hit and crit table, dealt at once.
 pub(crate) fn lash_of_pain<A: Agent>(

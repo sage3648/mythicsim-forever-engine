@@ -49,6 +49,8 @@ pub(crate) enum WarlockSpell {
     LashOfPain,
     /// The demon's Demonic Brand hit.
     DemonicBrand,
+    /// The Imp's Firebolt.
+    Firebolt,
 }
 
 /// Class auras with Rust behavior.
@@ -88,6 +90,8 @@ pub(crate) struct WarlockAgent {
     nightfall: Option<Rc<Nightfall>>,
     demon: Option<Rc<DemonAi>>,
     lash_of_pain_base: f64,
+    /// Firebolt's damage roll bounds.
+    firebolt: (f64, f64),
     decimation: Option<Rc<Decimation>>,
     demonic_brand: Option<Rc<DemonicBrand>>,
     /// Fel Energy's period, share of maximum mana and mana metrics.
@@ -186,6 +190,7 @@ impl WarlockAgent {
             "amplify_curse" => Some(WarlockSpell::AmplifyCurse),
             "succubus_lash_of_pain" => Some(WarlockSpell::LashOfPain),
             "demonic_brand" => Some(WarlockSpell::DemonicBrand),
+            "imp_firebolt" => Some(WarlockSpell::Firebolt),
             _ => None,
         }
     }
@@ -340,6 +345,10 @@ impl WarlockAgent {
                     fight.agent.demon = Some(Rc::new(bound));
                 }
                 Effect::LashOfPain { base_damage } => fight.agent.lash_of_pain_base = *base_damage,
+                Effect::Firebolt {
+                    min_damage,
+                    max_damage,
+                } => fight.agent.firebolt = (*min_damage, *max_damage),
                 Effect::FelEnergy {
                     spell_id,
                     mana_fraction,
@@ -503,6 +512,10 @@ impl Agent for WarlockAgent {
             WarlockSpell::LashOfPain => {
                 let base = fight.agent.lash_of_pain_base;
                 pets::lash_of_pain(fight, spell, target, base);
+            }
+            WarlockSpell::Firebolt => {
+                let bounds = fight.agent.firebolt;
+                pets::firebolt(fight, spell, target, bounds);
             }
             WarlockSpell::DemonicBrand => {
                 let brand = fight

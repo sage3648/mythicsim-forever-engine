@@ -24,6 +24,7 @@ const EFFECTS: &[&str] = &[
     "decimation",
     "demonic_brand",
     "fel_energy",
+    "firebolt",
     "immolate",
     "improved_shadow_bolt",
     "lash_of_pain",
@@ -54,6 +55,7 @@ fn spell_capability(spell: &Spell) -> Option<&'static str> {
         "soul_fire" if damage => Some("soul_fire"),
         "amplify_curse" => Some("amplify_curse"),
         "succubus_lash_of_pain" => Some("lash_of_pain"),
+        "imp_firebolt" if damage_free(spell) => Some("firebolt"),
         "demonic_brand" if damage_free(spell) => Some("demonic_brand"),
         _ => None,
     }

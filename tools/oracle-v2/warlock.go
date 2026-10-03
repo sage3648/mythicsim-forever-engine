@@ -192,6 +192,13 @@ func warlockEffects(agent core.Agent, character *core.Character) []map[string]an
 			"wait_ns": nanos(100 * time.Millisecond),
 		})
 	}
+	if w.Imp != nil { // pets.go registerFireboltSpell: impFireboltEffect, unexported, mirrored here
+		effect := spelldata.Effect{BasePoints: 44, PPL: 0.6000000238418579, Variance: 0.11363636702, SpellLevel: 58, MaxLevel: 63}
+		average := effect.Average(core.CharacterLevel)
+		effects = append(effects, map[string]any{
+			"kind": "firebolt", "min_damage": average * (1 - effect.Variance/2), "max_damage": average * (1 + effect.Variance/2),
+		})
+	}
 	if w.Succubus != nil { // pets.go registerLashOfPainSpell: a Go literal base
 		effects = append(effects, map[string]any{"kind": "lash_of_pain", "base_damage": 50.0})
 	}

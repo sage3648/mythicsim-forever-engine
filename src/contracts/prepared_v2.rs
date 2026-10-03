@@ -1451,6 +1451,11 @@ pub enum Effect {
         mana_fraction: f64,
         period_ns: i64,
     },
+    /// The Imp's Firebolt: a damage roll between Go's literal bounds at level 60.
+    Firebolt {
+        min_damage: f64,
+        max_damage: f64,
+    },
     /// Decimation: a landed hit of its spells inside the execute phase grants an aura whose
     /// modifiers raise their damage and cut Soul Fire's cast time.
     Decimation {
@@ -2052,6 +2057,7 @@ impl Effect {
             Effect::Shadowburn {} => "shadowburn",
             Effect::Nightfall { .. } => "nightfall",
             Effect::Decimation { .. } => "decimation",
+            Effect::Firebolt { .. } => "firebolt",
             Effect::FelEnergy { .. } => "fel_energy",
             Effect::DemonicBrand { .. } => "demonic_brand",
             Effect::WarlockPet { .. } => "warlock_pet",
