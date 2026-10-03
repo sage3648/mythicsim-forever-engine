@@ -111,9 +111,11 @@ with no pet, Auto Shot timed by the rotation's time to the next shot, a prepull 
 the Hawk and Aimed Shot, Multi-Shot and Sniper Shot over ranged hasted casts, Serpent Sting
 with its ranged attack power share, Summon Hawk and its two hawks, Rapid Fire, Deadly
 Aspects' Quick Shots and the party Battle Shout, at 678.423 DPS. Its
-[sweep](validation/2026-10-04-marksmanship-hunter-sweep.json) matches Go on every supported
-variant; variants in melee range, where Go's Raptor Strike replacement reacts before each
-main hand swing, are rejected.
+[sweep](validation/2026-10-04-marksmanship-hunter-sweep.json) matches Go on all 24
+variants, including those in melee range, where the main hand swings and Go's Raptor Strike
+replacement reacts before each swing, and so does a
+[race sweep](validation/2026-10-04-hunter-race-sweep.json) across Human, Dwarf, Night Elf,
+Orc, Troll and Tauren.
 
 The application's published race boards, the requests behind every race's production DPS
 for each supported spec, are a real production corpus: all 44 match the pinned Go engine

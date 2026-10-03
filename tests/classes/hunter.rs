@@ -136,3 +136,15 @@ fn a_replaceable_main_hand_swing_in_range_is_rejected() {
         ["unrepresented by the exporter: main hand swings can be replaced"]
     );
 }
+
+/// In melee range the main hand swings, Go's Raptor Strike replacement keeping each swing
+/// while the rotation never queues one, and the ranged weapon's minimum range stops Auto Shot.
+#[test]
+fn in_melee_range_the_main_hand_swings_instead_of_auto_shot() {
+    let mut value = production();
+    value["player"]["distance_yards"] = json!(5.0);
+    assert!(check_prepared(&parse(value.clone())).is_ok());
+    let logs = first_fight_log(value);
+    assert!(logs.contains("Casting {OtherID: 3, Tag: 1}"), "{logs}");
+    assert!(!logs.contains("Casting {OtherID: 4}"), "{logs}");
+}

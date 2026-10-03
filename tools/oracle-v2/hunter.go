@@ -10,11 +10,13 @@ import (
 	"github.com/wowsims/forever/sim/core/proto"
 	"github.com/wowsims/forever/sim/core/spelldata"
 	"github.com/wowsims/forever/sim/hunter"
+	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 func init() {
 	classExports[proto.Class_ClassHunter] = classExport{
 		spells: hunterClassSpells, effects: hunterEffects, unrepresented: hunterUnrepresented,
+		swingReplacementKeepsSwing: hunterSwingReplacementKeepsSwing,
 		statAuras: func(core.Agent, *core.Character) []string {
 			return []string{"Aspect of the Hawk", "Aspect of the Beast"}
 		},
@@ -160,6 +162,49 @@ func hunterEffects(agent core.Agent, character *core.Character) []map[string]any
 		})
 	}
 	return effects
+}
+
+// raptor_strike.go TryRaptorStrike returns the swing it is given unless a Raptor Strike is
+// queued, and only the queue spell, which only a rotation casts, queues one. A rotation that
+// never names the queue spell keeps every swing.
+func hunterSwingReplacementKeepsSwing(agent core.Agent, player *proto.Player) bool {
+	h := agent.(hunter.HunterAgent).GetHunter()
+	if h.RaptorStrike == nil {
+		return true
+	}
+	queue := h.RaptorStrike.ActionID.WithTag(3)
+	named := false
+	var visit func(message protoreflect.Message)
+	visit = func(message protoreflect.Message) {
+		if id, ok := message.Interface().(*proto.ActionID); ok {
+			if core.ProtoToActionID(id) == queue {
+				named = true
+			}
+			return
+		}
+		message.Range(func(field protoreflect.FieldDescriptor, value protoreflect.Value) bool {
+			switch {
+			case field.IsList() && field.Message() != nil:
+				for i := 0; i < value.List().Len(); i++ {
+					visit(value.List().Get(i).Message())
+				}
+			case field.IsMap():
+				value.Map().Range(func(_ protoreflect.MapKey, entry protoreflect.Value) bool {
+					if field.MapValue().Message() != nil {
+						visit(entry.Message())
+					}
+					return true
+				})
+			case field.Message() != nil:
+				visit(value.Message())
+			}
+			return true
+		})
+	}
+	if rotation := player.GetRotation(); rotation != nil {
+		visit(rotation.ProtoReflect())
+	}
+	return !named
 }
 
 // Hunter behavior the effects cannot describe.
