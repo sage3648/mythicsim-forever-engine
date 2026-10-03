@@ -20,6 +20,7 @@ import (
 	"os"
 	"reflect"
 	"sort"
+	"strings"
 	"time"
 	"unsafe"
 
@@ -1087,6 +1088,9 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	note(!exported, fmt.Sprintf("%s agents are not exported", character.Class))
 	inertPets := []map[string]any{}
 	for _, pet := range character.Pets {
+		if simulatedPet(character, pet) {
+			continue
+		}
 		reason := ""
 		if class.inertPet != nil {
 			reason = class.inertPet(agent, pet)
@@ -1095,7 +1099,7 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 			note(true, "pets are unsupported")
 			continue
 		}
-		inertPets = append(inertPets, inertPetEffect(pet, reason))
+		inertPets = append(inertPets, inertPetEffect(request, pet, reason))
 	}
 
 	spells := []Spell{}
@@ -1233,18 +1237,38 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 // A pet that is registered but never enabled. Each reset enables its unit and its agent's
 // Reset dismisses it, logging its stats; each fight's end logs that no pet is summoned. Its
 // metrics report zero, with every action and aura it registered.
-func inertPetEffect(pet *core.Pet, reason string) map[string]any {
+func inertPetEffect(request *proto.RaidSimRequest, pet *core.Pet, reason string) map[string]any {
 	auras := []*ActionID{}
 	for _, aura := range pet.GetAuras() {
 		if id := actionID(aura.ActionID); id != nil {
 			auras = append(auras, id)
 		}
 	}
-	return map[string]any{
+	effect := map[string]any{
 		"kind": "inert_pet", "name": pet.Name, "label": pet.Label, "unit_index": pet.UnitIndex,
 		"metrics_actions": metricsActions(&pet.Unit), "auras": auras,
 		"dismissed_log": pet.GetStats().FlatString(), "reason": reason,
 	}
+	// Only a pet whose agent's Reset disables it logs its dismissal at each reset; a pet that is
+	// simply not enabled on start, such as a warlock's other demons, logs nothing then.
+	if !dismissedAtReset(request, pet.Label) {
+		effect["dismissed_at_reset"] = false
+	}
+	if pet.HasManaBar() {
+		effect["mana_bar"] = true
+	}
+	return effect
+}
+
+// Whether a reset logs the pet's dismissal, read from the log of a separate reset simulation.
+func dismissedAtReset(request *proto.RaidSimRequest, label string) bool {
+	simulation := core.NewSim(request, simsignals.CreateSignals())
+	logs := &strings.Builder{}
+	simulation.Log = func(message string, vals ...interface{}) {
+		logs.WriteString(fmt.Sprintf(message, vals...) + "\n")
+	}
+	simulation.Reset()
+	return strings.Contains(logs.String(), "["+label+"] Pet dismissed")
 }
 
 // Item procs (common/forever/stat_bonus_procs_auto_gen.go) whose listener, decoded by spelldata's

@@ -17,7 +17,7 @@ import (
 func init() {
 	classExports[proto.Class_ClassWarlock] = classExport{
 		spells: warlockClassSpells, damageRows: warlockDamageRows, effects: warlockEffects,
-		damageTakenModifiers: warlockDamageTakenModifiers,
+		damageTakenModifiers: warlockDamageTakenModifiers, inertPet: warlockInertPet,
 	}
 	// pets.go: every demon is registered at construction and only the summoned one is enabled,
 	// at reset; the sim has no summon spells.
@@ -74,6 +74,15 @@ func warlockDamageRows(rows map[int32]*spelldata.Spell) {
 			rows[row.ID] = row
 		}
 	}
+}
+
+// pets.go registers all four demons; only the summoned one is enabled on start, and the sim has no
+// summon spell to enable another.
+func warlockInertPet(agent core.Agent, pet *core.Pet) string {
+	if pet.EnabledOnStart() {
+		return ""
+	}
+	return "the warlock summoned another demon or none"
 }
 
 // Dynamic damage taken modifiers the warlock effects describe: Improved Shadow Bolt registers one on

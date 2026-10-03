@@ -28,7 +28,9 @@ pub(crate) fn bind<A: Agent>(
         side: Side::Target,
         index,
     };
+    // Go checks the spell's unit is the warlock, so the demon's shadow damage gains nothing.
     fight.damage_taken_modifiers.push(DamageTakenModifier {
+        source: Side::Player,
         school_mask: SHADOW,
         aura: debuff,
         multiplier,

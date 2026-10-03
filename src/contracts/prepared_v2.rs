@@ -33,6 +33,9 @@ pub struct PreparedV2 {
     pub target: Target,
     pub player: Player,
     pub melee: Melee,
+    /// The pet enabled at each reset, which Rust simulates; at most one.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub pets: Vec<Pet>,
     pub effects: Vec<Effect>,
     /// Request features the exporter could not describe. Must be empty to simulate.
     pub unrepresented: Vec<String>,
@@ -122,6 +125,14 @@ pub struct ActionId {
 
 fn is_zero(value: &i32) -> bool {
     *value == 0
+}
+
+fn yes() -> bool {
+    true
+}
+
+fn is_true(value: &bool) -> bool {
+    *value
 }
 
 impl ActionId {
@@ -434,6 +445,43 @@ pub struct Player {
     pub rotation: serde_json::Value,
     /// Every prepull action Go registered: the rotation's, and any a class or item adds.
     pub prepull_actions: usize,
+}
+
+/// A pet Go enables at each reset, as core/pet.go builds it.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct Pet {
+    pub index: i32,
+    pub label: String,
+    pub level: i32,
+    pub mob_type: Option<String>,
+    pub stats: BTreeMap<String, f64>,
+    pub pseudo_stats: PseudoStats,
+    pub auras: Vec<Aura>,
+    pub name: String,
+    pub reaction_ns: i64,
+    pub distance_yards: f64,
+    pub cast_speed: f64,
+    pub mana: PetMana,
+    pub attack_table: AttackTable,
+    pub melee: Melee,
+    pub spells: Vec<Spell>,
+    pub metrics_actions: Vec<MetricsAction>,
+    /// The lines Go's Enable logs after its stat change: the pet's stats and inheritance.
+    pub summon_log: Vec<String>,
+    /// The stats line Go's Disable logs once the inheritance is gone.
+    pub dismiss_log: String,
+    /// Go `isDynamic`: the pet follows its owner's stat changes.
+    pub dynamic_stats: bool,
+}
+
+/// A pet's mana bar and its regeneration, which Go computes from the pet's own stats.
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct PetMana {
+    pub max: f64,
+    pub regen_per_second_casting: f64,
+    pub regen_per_second_not_casting: f64,
 }
 
 #[derive(Clone, Copy, Debug, Deserialize, Serialize)]
@@ -770,6 +818,12 @@ pub enum Effect {
         auras: Vec<ActionId>,
         dismissed_log: String,
         reason: String,
+        /// Whether each reset logs its dismissal, as when its agent's Reset disables it.
+        #[serde(default = "yes", skip_serializing_if = "is_true")]
+        dismissed_at_reset: bool,
+        /// Whether it has a mana bar, which gives it Go's time to out of mana.
+        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+        mana_bar: bool,
     },
     /// The Orc racial Shatter Curse: a survival cooldown whose aura lowers the player's
     /// spell damage taken, which has no effect in scope. Go never autocasts it at the

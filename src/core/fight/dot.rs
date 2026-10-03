@@ -36,11 +36,12 @@ pub(crate) struct Dot {
 }
 
 impl Dot {
-    pub(crate) fn new(spell: SpellId, exported: &ExportedDot) -> Self {
+    /// A dot of `spell`, cast by `caster`; a dot on "self" is on the caster.
+    pub(crate) fn new(spell: SpellId, caster: Side, exported: &ExportedDot) -> Self {
         Dot {
             spell,
             side: if exported.unit == "self" {
-                Side::Player
+                caster
             } else {
                 Side::Target
             },

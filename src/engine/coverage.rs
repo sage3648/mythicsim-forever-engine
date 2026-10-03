@@ -338,9 +338,14 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
             .collect::<Vec<_>>()
     };
     let mut required: BTreeSet<&str> = BTreeSet::new();
+    let no_auras = Vec::new();
     for (unit, auras) in [
         ("player", &player.auras),
         ("target", &prepared.target.auras),
+        (
+            "pet",
+            prepared.pets.first().map_or(&no_auras, |pet| &pet.auras),
+        ),
     ] {
         for aura in auras {
             if !aura.active || !aura.has_event_callbacks() {
@@ -360,6 +365,40 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
                     aura.label
                 )),
             }
+        }
+    }
+
+    // A simulated pet needs a class effect that runs it, which claims the pet by its label.
+    if prepared.pets.len() > 1 {
+        reasons.push("more than one simulated pet is unsupported".into());
+    }
+    for pet in &prepared.pets {
+        let claimant = prepared.effects.iter().find(|effect| {
+            claims(effect)
+                .iter()
+                .any(|(u, label)| *u == "pet unit" && *label == pet.label)
+        });
+        match claimant {
+            Some(effect) => {
+                required.insert(effect.kind());
+            }
+            None => reasons.push(format!("pet {:?} has no behavior", pet.label)),
+        }
+        // Go passes the owner's stat changes to a dynamic pet at its next heartbeat.
+        let owner_stats_change = prepared.effects.iter().any(|effect| {
+            matches!(
+                effect,
+                Effect::StatAuras { .. }
+                    | Effect::BloodFury { .. }
+                    | Effect::TemporaryStats { .. }
+                    | Effect::Crusader { .. }
+            )
+        });
+        if pet.dynamic_stats && owner_stats_change {
+            reasons.push(format!(
+                "pet {:?} inherits the owner's stat changes, which is unsupported",
+                pet.label
+            ));
         }
     }
 

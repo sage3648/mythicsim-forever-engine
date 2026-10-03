@@ -54,12 +54,23 @@ impl<A: Agent> Fight<A> {
         }
     }
 
+    /// Go `Unit.Label`.
+    pub(crate) fn label_of(&self, side: Side) -> String {
+        match side {
+            Side::Player => self.config.player_label.clone(),
+            Side::Target => self.config.target_label.clone(),
+            Side::Pet => self
+                .pet
+                .as_ref()
+                .expect("the pet is simulated")
+                .label
+                .clone(),
+        }
+    }
+
     pub(crate) fn unit_log(&mut self, side: Side, message: &str) {
         if self.log.is_some() {
-            let label = match side {
-                Side::Player => self.config.player_label.clone(),
-                Side::Target => self.config.target_label.clone(),
-            };
+            let label = self.label_of(side);
             self.log_at(self.now, &label, message);
         }
     }
