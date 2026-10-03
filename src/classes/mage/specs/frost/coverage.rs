@@ -135,6 +135,7 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
     }
 
     if let Some(rotation) = rotation {
+        reasons.extend(unknown_aura_conditions(prepared, rotation));
         let mut reachable = Vec::new();
         for item in &rotation.priority_list {
             match &item.action {
@@ -162,6 +163,45 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
                 .into_iter()
                 .map(|id| format!("rotation reaches {id} without a known behavior")),
         );
+    }
+    reasons
+}
+
+/// Go resolves `auraIsActive` on the casting player with `GetAuraByID`: the first aura
+/// with the same action ID, tag included.
+fn player_has_aura(prepared: &PreparedV2, id: &crate::contracts::prepared_v2::ActionId) -> bool {
+    prepared
+        .player
+        .auras
+        .iter()
+        .any(|aura| aura.action_id.as_ref() == Some(id))
+}
+
+/// Pinned Go returns no value for `auraIsActive` on an aura the character cannot have,
+/// which drops the condition so the action fires whenever it is reached. Community fix
+/// ElliotWood/Forever#622 (252f57aa8) reads such an aura as inactive instead. Until the
+/// reference adopts the fix, reject these rotations rather than copy either behavior.
+/// See upstream/changes.json.
+fn unknown_aura_conditions(prepared: &PreparedV2, rotation: &Rotation) -> Vec<String> {
+    let mut reasons = Vec::new();
+    for item in &rotation.priority_list {
+        let mut unknown = Vec::new();
+        if let Some(condition) = &item.condition {
+            condition.visit(&mut |value| {
+                if let crate::rotation::Value::AuraIsActive(id) = value {
+                    if !player_has_aura(prepared, id) {
+                        unknown.push(id.to_string());
+                    }
+                }
+            });
+        }
+        for id in unknown {
+            reasons.push(format!(
+                "rotation item {}: auraIsActive names {id}, which the character lacks; \
+                 the pinned reference drops the condition and community #622 reads it as inactive",
+                item.position
+            ));
+        }
     }
     reasons
 }

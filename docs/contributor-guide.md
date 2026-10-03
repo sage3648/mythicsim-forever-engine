@@ -120,7 +120,8 @@ module name does not establish simulation coverage.
 ## Add a mechanic
 
 1. Identify the exact spell, talent or effect IDs, source revision and evidence.
-   Read the relevant [inventory](first-frost-inventory.md) and [upstream policy](../UPSTREAM.md).
+   Read the relevant [inventory](first-frost-inventory.md), [upstream policy](../UPSTREAM.md)
+   and the mechanic's entry in [upstream/mechanics-map.json](../upstream/mechanics-map.json).
 2. Put reusable combat math in `mechanics`, class behavior in that class, and spec
    decisions in its `specs` module. Preserve deterministic trigger/event ordering.
 3. Add a focused regression near the owning domain. Keep reusable primitive tests

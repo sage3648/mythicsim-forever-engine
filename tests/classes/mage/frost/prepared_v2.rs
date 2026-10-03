@@ -186,3 +186,25 @@ fn rotation_spells_without_behavior_are_reported() {
         reasons(value).contains(&"rotation reaches spell 10151 without a known behavior".into())
     );
 }
+
+/// Community fix ElliotWood/Forever#622 (252f57aa8), recorded in upstream/changes.json.
+/// Without Fingers of Frost, pinned Go drops the Ice Lance condition and casts Ice Lance on
+/// every global cooldown; the fix reads the missing aura as inactive. Rust rejects the
+/// rotation until the reference adopts the fix.
+#[test]
+fn community_fix_622_unknown_aura_conditions_are_rejected() {
+    let bytes = fs::read(family().join("frost-no-fingers.prepared.json")).unwrap();
+    let prepared: PreparedV2 = serde_json::from_slice(&bytes).unwrap();
+    assert!(!prepared.player.talents.contains_key("fingers_of_frost"));
+    let reasons = prepared_coverage(&prepared);
+    assert!(reasons.contains(
+        &"rotation item 4: auraIsActive names spell 400669, which the character lacks; \
+          the pinned reference drops the condition and community #622 reads it as inactive"
+            .to_string()
+    ));
+    // The talented reference names the same aura and is not affected.
+    let reference = parse(reference_json()).unwrap();
+    assert!(!prepared_coverage(&reference)
+        .iter()
+        .any(|reason| reason.contains("#622")));
+}

@@ -1,0 +1,421 @@
+{
+  "schema_version": 1,
+  "scope": "Frost reference build (inventory/first-frost)",
+  "statuses": [
+    "validated",
+    "prepared_v1_only",
+    "prepared_v1_labeled_only",
+    "prepared_v1_binary_only",
+    "prepared_v1_and_v2_start_rates",
+    "go_prepared",
+    "go_prepared_static_only",
+    "parse_only",
+    "pinned",
+    "not_ported",
+    "out_of_scope"
+  ],
+  "mechanics": [
+    {
+      "id": "preparation",
+      "go": [
+        "sim/core/character.go",
+        "sim/core/unit.go",
+        "sim/core/environment.go",
+        "sim/core/buffs",
+        "sim/core/consumes.go",
+        "sim/core/racials.go",
+        "sim/core/stats"
+      ],
+      "rust": [
+        "tools/oracle-v2/main.go",
+        "src/contracts/prepared_v2.rs",
+        "src/engine/prepared.rs"
+      ],
+      "status": "go_prepared",
+      "tests": [
+        "tests/classes/mage/frost/prepared_v2.rs"
+      ],
+      "upstream_changes": [],
+      "fork_patches": [
+        1,
+        2
+      ],
+      "note": "Go prepares the character; Rust validates the exported state and recomputes starting mana regeneration."
+    },
+    {
+      "id": "client_data",
+      "go": [
+        "assets/database/db.json",
+        "sim/core/spelldata"
+      ],
+      "rust": [
+        "release/manifest.json"
+      ],
+      "status": "pinned",
+      "tests": [],
+      "upstream_changes": [
+        "8bc09dc4a",
+        "036a2e2ff",
+        "9b97945c6",
+        "fe3f9aee8"
+      ],
+      "fork_patches": [],
+      "note": "Rust consumes client values only through the prepared contract."
+    },
+    {
+      "id": "scheduler",
+      "go": [
+        "sim/core/sim.go",
+        "sim/core/pending_action.go",
+        "sim/core/gcd.go"
+      ],
+      "rust": [
+        "src/core/events.rs",
+        "src/classes/mage/specs/frost.rs"
+      ],
+      "status": "prepared_v1_only",
+      "tests": [
+        "tests/classes/mage/frost/kernel.rs",
+        "tests/classes/mage/frost/oracle.rs"
+      ],
+      "upstream_changes": [],
+      "fork_patches": []
+    },
+    {
+      "id": "rng",
+      "go": [
+        "sim/core/rand.go",
+        "sim/core/sim.go"
+      ],
+      "rust": [
+        "src/core/rng.rs"
+      ],
+      "status": "prepared_v1_labeled_only",
+      "tests": [
+        "tests/classes/mage/frost/kernel.rs",
+        "tests/classes/mage/frost/oracle.rs"
+      ],
+      "upstream_changes": [],
+      "fork_patches": [],
+      "note": "Shared-stream mode, used by production requests, is not implemented yet."
+    },
+    {
+      "id": "spell_casting",
+      "go": [
+        "sim/core/cast.go",
+        "sim/core/spell.go",
+        "sim/core/spell_queueing.go"
+      ],
+      "rust": [
+        "src/classes/mage/specs/frost.rs"
+      ],
+      "status": "prepared_v1_only",
+      "tests": [
+        "tests/classes/mage/frost/kernel.rs",
+        "tests/classes/mage/frost/oracle.rs"
+      ],
+      "upstream_changes": [],
+      "fork_patches": []
+    },
+    {
+      "id": "magic_hit_crit_resist",
+      "go": [
+        "sim/core/spell_result.go",
+        "sim/core/spell_outcome.go",
+        "sim/core/spell_resistances.go"
+      ],
+      "rust": [
+        "src/mechanics/damage.rs",
+        "src/classes/mage/spells/frostbolt.rs"
+      ],
+      "status": "prepared_v1_binary_only",
+      "tests": [
+        "tests/classes/mage/frost/kernel.rs",
+        "tests/classes/mage/frost/oracle.rs"
+      ],
+      "upstream_changes": [],
+      "fork_patches": [],
+      "note": "Partial resistance for Arcane Missiles is not implemented."
+    },
+    {
+      "id": "mana_regeneration",
+      "go": [
+        "sim/core/mana.go"
+      ],
+      "rust": [
+        "src/mechanics/mana.rs"
+      ],
+      "status": "prepared_v1_and_v2_start_rates",
+      "tests": [
+        "tests/classes/mage/frost/kernel.rs",
+        "tests/classes/mage/frost/oracle.rs",
+        "tests/classes/mage/frost/prepared_v2.rs"
+      ],
+      "upstream_changes": [],
+      "fork_patches": [
+        10
+      ]
+    },
+    {
+      "id": "auras_and_callbacks",
+      "go": [
+        "sim/core/aura.go",
+        "sim/core/aura_helpers.go",
+        "sim/core/procs.go"
+      ],
+      "rust": [],
+      "status": "not_ported",
+      "tests": [],
+      "upstream_changes": [],
+      "fork_patches": []
+    },
+    {
+      "id": "spell_modifiers",
+      "go": [
+        "sim/core/spell_mod.go"
+      ],
+      "rust": [],
+      "status": "go_prepared_static_only",
+      "tests": [],
+      "upstream_changes": [],
+      "fork_patches": [],
+      "note": "Static modifiers arrive prepared; dynamic ones are not implemented."
+    },
+    {
+      "id": "channels_and_dots",
+      "go": [
+        "sim/core/dot.go"
+      ],
+      "rust": [],
+      "status": "not_ported",
+      "tests": [],
+      "upstream_changes": [],
+      "fork_patches": [
+        22
+      ]
+    },
+    {
+      "id": "major_cooldowns",
+      "go": [
+        "sim/core/major_cooldown.go",
+        "sim/core/apl_actions_casting.go"
+      ],
+      "rust": [],
+      "status": "not_ported",
+      "tests": [],
+      "upstream_changes": [],
+      "fork_patches": []
+    },
+    {
+      "id": "rotation_interpreter",
+      "go": [
+        "sim/core/apl.go",
+        "sim/core/apl_action.go",
+        "sim/core/apl_actions_casting.go",
+        "sim/core/apl_values_operators.go",
+        "sim/core/apl_values_aura.go",
+        "sim/core/apl_values_resources.go",
+        "sim/core/apl_values_encounter.go"
+      ],
+      "rust": [
+        "src/rotation.rs",
+        "src/classes/mage/specs/frost/coverage.rs"
+      ],
+      "status": "parse_only",
+      "tests": [
+        "tests/classes/mage/frost/prepared_v2.rs"
+      ],
+      "upstream_changes": [
+        "252f57aa8",
+        "0001a0c92"
+      ],
+      "fork_patches": []
+    },
+    {
+      "id": "frostbolt",
+      "go": [
+        "sim/mage/frostbolt.go"
+      ],
+      "rust": [
+        "src/classes/mage/spells/frostbolt.rs"
+      ],
+      "status": "prepared_v1_only",
+      "tests": [
+        "tests/classes/mage/frost/kernel.rs",
+        "tests/classes/mage/frost/oracle.rs"
+      ],
+      "upstream_changes": [],
+      "fork_patches": [
+        8
+      ]
+    },
+    {
+      "id": "ice_lance",
+      "go": [
+        "sim/mage/ice_lance.go"
+      ],
+      "rust": [],
+      "status": "not_ported",
+      "tests": [],
+      "upstream_changes": [],
+      "fork_patches": []
+    },
+    {
+      "id": "arcane_missiles",
+      "go": [
+        "sim/mage/arcane_missiles.go"
+      ],
+      "rust": [],
+      "status": "not_ported",
+      "tests": [],
+      "upstream_changes": [],
+      "fork_patches": []
+    },
+    {
+      "id": "fingers_of_frost_and_shatter",
+      "go": [
+        "sim/mage/talents_frost.go"
+      ],
+      "rust": [],
+      "status": "not_ported",
+      "tests": [],
+      "upstream_changes": [],
+      "fork_patches": [
+        8
+      ]
+    },
+    {
+      "id": "winters_chill",
+      "go": [
+        "sim/mage/talents_frost.go"
+      ],
+      "rust": [],
+      "status": "not_ported",
+      "tests": [],
+      "upstream_changes": [],
+      "fork_patches": []
+    },
+    {
+      "id": "arcane_concentration",
+      "go": [
+        "sim/mage/talents_arcane.go"
+      ],
+      "rust": [],
+      "status": "not_ported",
+      "tests": [],
+      "upstream_changes": [],
+      "fork_patches": []
+    },
+    {
+      "id": "missile_barrage",
+      "go": [
+        "sim/mage/talents_arcane.go"
+      ],
+      "rust": [],
+      "status": "not_ported",
+      "tests": [],
+      "upstream_changes": [],
+      "fork_patches": [
+        8
+      ]
+    },
+    {
+      "id": "cold_snap",
+      "go": [
+        "sim/mage/cold_snap.go"
+      ],
+      "rust": [],
+      "status": "not_ported",
+      "tests": [],
+      "upstream_changes": [],
+      "fork_patches": []
+    },
+    {
+      "id": "evocation",
+      "go": [
+        "sim/mage/evocation.go"
+      ],
+      "rust": [],
+      "status": "not_ported",
+      "tests": [],
+      "upstream_changes": [],
+      "fork_patches": [
+        10
+      ]
+    },
+    {
+      "id": "mana_gems",
+      "go": [
+        "sim/mage/mana_gems.go"
+      ],
+      "rust": [],
+      "status": "not_ported",
+      "tests": [],
+      "upstream_changes": [],
+      "fork_patches": []
+    },
+    {
+      "id": "mage_armor",
+      "go": [
+        "sim/mage/armors.go"
+      ],
+      "rust": [
+        "tools/oracle-v2/main.go"
+      ],
+      "status": "go_prepared",
+      "tests": [],
+      "upstream_changes": [],
+      "fork_patches": []
+    },
+    {
+      "id": "consumable_mana",
+      "go": [
+        "sim/core/consumes.go"
+      ],
+      "rust": [],
+      "status": "not_ported",
+      "tests": [],
+      "upstream_changes": [],
+      "fork_patches": []
+    },
+    {
+      "id": "energize_on_use",
+      "go": [
+        "sim/common/shared/spell_data_energize.go",
+        "sim/common/shared/shared_utils.go"
+      ],
+      "rust": [],
+      "status": "not_ported",
+      "tests": [],
+      "upstream_changes": [],
+      "fork_patches": []
+    },
+    {
+      "id": "judgement_of_wisdom",
+      "go": [
+        "sim/core/buffs/paladin.go",
+        "sim/core/buffs/drivers.go"
+      ],
+      "rust": [],
+      "status": "not_ported",
+      "tests": [],
+      "upstream_changes": [],
+      "fork_patches": []
+    },
+    {
+      "id": "frostfire_bolt",
+      "go": [
+        "sim/mage/frostfire_bolt.go"
+      ],
+      "rust": [],
+      "status": "out_of_scope",
+      "tests": [],
+      "upstream_changes": [
+        "1209a5adc"
+      ],
+      "fork_patches": [
+        8
+      ]
+    }
+  ]
+}

@@ -38,6 +38,36 @@
           "effect winters_chill is not implemented"
         ]
       }
+    },
+    {
+      "id": "frost-no-fingers",
+      "description": "The Frost reference with Fingers of Frost unlearned. Regression for community fix #622: pinned Go drops the Ice Lance condition and casts Ice Lance on every global cooldown.",
+      "request": {
+        "path": "fixtures/mage/frost/prepared-v2/frost-no-fingers.request.json"
+      },
+      "prepared": "frost-no-fingers.prepared.json",
+      "prepared_sha256": "353ca6241f95f297b02a59d7c996e41759d3b47898e0f68c95bb99db9eb317c4",
+      "expected_coverage": {
+        "supported": false,
+        "reasons": [
+          "effect arcane_concentration is not implemented",
+          "effect arcane_missiles is not implemented",
+          "effect cold_snap is not implemented",
+          "effect conjured_mana is not implemented",
+          "effect energize_on_use is not implemented",
+          "effect evocation is not implemented",
+          "effect frostbolt is not implemented",
+          "effect ice_lance is not implemented",
+          "effect inert_listener is not implemented",
+          "effect judgement_of_wisdom is not implemented",
+          "effect mage_armor is not implemented",
+          "effect mana_gems is not implemented",
+          "effect missile_barrage is not implemented",
+          "effect potion_mana is not implemented",
+          "effect winters_chill is not implemented",
+          "rotation item 4: auraIsActive names spell 400669, which the character lacks; the pinned reference drops the condition and community #622 reads it as inactive"
+        ]
+      }
     }
   ]
 }

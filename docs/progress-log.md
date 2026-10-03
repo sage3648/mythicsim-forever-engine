@@ -7,6 +7,7 @@ reading the Go reference. They are not effort estimates for other contributors.
 | Piece | Started | Finished | Elapsed | Result |
 | --- | --- | --- | --- | --- |
 | 2. Prepared v2 contract and release manifest | 2026-10-03 10:51 | 2026-10-03 11:17 | 0 h 26 m | Exporter, strict Rust types, coverage gate, fixture family, release manifest |
+| 3. Upstream ledger and mechanics map | 2026-10-03 11:17 | 2026-10-03 11:22 | 0 h 05 m | 53 community commits reviewed; fix #622 traced to a Rust guard and regression |
 
 ## Notes
 

@@ -50,7 +50,7 @@ arrive; rows marked planned are not implemented capabilities.
 | Reporting | `src/report.rs`, later `src/report/` | Prototype report types; production action/timeline adapter planned |
 | Data and preparation (planned) | `src/data.rs`, `src/prepare.rs` and child directories | Versioned data consumption and eventual Rust character construction |
 | Reference tooling | `tools/oracle/`, `tools/compare.py` | Pinned Go preparation and differential comparisons |
-| Upstream tracking (planned) | `upstream/` | Source manifests, reviewed changes and mechanics mappings |
+| Upstream tracking | `upstream/`, `tools/upstream.py` | Source manifests, reviewed changes and mechanics mappings |
 | Integration | MythicSim application repository | Worker routing, public report adapters and deployment flags |
 
 Keep spell behavior explicit and typed. Introduce a general abstraction only after
@@ -392,7 +392,7 @@ pieces, not already-open issues. Keep each change independently reviewable.
 | --- | --- | --- | --- |
 | 1 (complete) | Inventory the first Frost build and product contracts | Frozen app and pinned Go source | Mechanic list, request/report consumers and audited Go observation |
 | 2 (complete) | Design prepared v2 and release manifest | 1 | [Contract](prepared-v2.md), fixtures, unknown-effect behavior and identity rules |
-| 3 | Add upstream sources, change ledger and mechanics map | 1 | One traced real community fix |
+| 3 (complete) | Add upstream sources, change ledger and mechanics map | 1 | [Ledger](../UPSTREAM.md#ledger) with community fix #622 traced to a Rust guard and regression |
 | 4 | Centralize the reference pin and improve differential diagnostics | 2, 3 | Old fixtures preserved, useful failure output |
 | 5 | Extract event, RNG and resource modules | Current kernel | Existing goldens unchanged |
 | 6 | Export real Frost character preparation from Go | 2, 4 | Prepared-state comparisons |
@@ -403,5 +403,5 @@ pieces, not already-open issues. Keep each change independently reviewable.
 | 11 | Compare the complete Frost build and gear variants | 6 through 10 | Multi-seed, timing, resource and effect coverage |
 | 12 | Add worker routing and bounded comparison runs | 11 | Fallback reasons, batch consistency and rollback |
 
-Pieces 1 and 2 are complete. Start next with pieces 3 and 4. They establish the scope and synchronization contract
+Pieces 1 to 3 are complete. Start next with piece 4. They establish the scope and synchronization contract
 that make the subsequent mechanic ports easier to review and maintain.

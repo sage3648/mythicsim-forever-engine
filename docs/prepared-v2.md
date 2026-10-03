@@ -132,7 +132,9 @@ The rotation subset is the frozen Frost preset's: `castSpell`, `autocastOtherCoo
 `remainingTime`, `auraIsKnown` and `auraIsActive`. Constants follow Go parsing,
 including `time.ParseDuration` and percent constants. A rotation spell the character
 does not know is dropped, as in Go; a known spell without a Rust behavior is
-unsupported.
+unsupported. An `auraIsActive` naming an aura the character lacks is unsupported:
+the pinned reference drops that condition while community fix #622 reads the aura
+as inactive (see [UPSTREAM.md](../UPSTREAM.md#ledger)).
 
 ## Examples
 
@@ -140,7 +142,8 @@ The [fixture family](../fixtures/mage/frost/prepared-v2/manifest.json) holds acc
 inputs and their expected coverage. Today it contains the frozen application Frost
 reference. It is fully representable: nothing is unrepresented, every active listener
 is claimed and its rotation is inside the subset. Its remaining reasons are the 16
-effect kinds listed above, which shrink as mechanics land.
+effect kinds listed above, which shrink as mechanics land. `frost-no-fingers` is the
+same request without Fingers of Frost, the regression for community fix #622.
 
 The contract tests in
 [tests/classes/mage/frost/prepared_v2.rs](../tests/classes/mage/frost/prepared_v2.rs)

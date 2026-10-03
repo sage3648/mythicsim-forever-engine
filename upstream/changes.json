@@ -1,0 +1,628 @@
+{
+  "schema_version": 1,
+  "source": "community",
+  "range": {
+    "from": "f4b776b4f41d5c7799b8141697a2c9e67c89d426",
+    "to": "017ff78fa6b1aeb9f839c9729628e01c701c5c08",
+    "commits": 53
+  },
+  "reviewed": "2026-10-03",
+  "dispositions": [
+    "applicable",
+    "already_covered",
+    "irrelevant",
+    "deferred",
+    "intentionally_different"
+  ],
+  "changes": [
+    {
+      "commit": "fba05bf8c716808e374dc8c1e9e933c2ee2d93d5",
+      "date": "2026-10-02 09:28:12 +0000",
+      "subject": "Whirlwind swings both weapons on its own; Raging Blows cuts Whirlwind's Rage too (#613)",
+      "pr": 613,
+      "areas": [
+        "sim/warrior",
+        "ui/sim"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Another class's mechanics or rotations."
+    },
+    {
+      "commit": "5454e9688d8c1ee5d58eeeda9af3038221a78d02",
+      "date": "2026-10-02 09:28:36 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "c6a03e7ec5c50b4d1ec54070b321345e9da915af",
+      "date": "2026-10-02 09:34:28 +0000",
+      "subject": "Booming Voice takes 5% a point off the shouts' Rage cost (#614)",
+      "pr": 614,
+      "areas": [
+        "sim/warrior"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Another class's mechanics or rotations."
+    },
+    {
+      "commit": "4d624ccc6b0220852e3ed2cca71dfd16acc23181",
+      "date": "2026-10-02 09:34:53 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "1209a5adc9c94b09ced226bae780d6d543a7a68a",
+      "date": "2026-10-02 11:30:46 +0000",
+      "subject": "Piercing Ice gives Frostfire Bolt's DoT a flat 2% (#615)",
+      "pr": 615,
+      "areas": [
+        "sim/mage"
+      ],
+      "disposition": "irrelevant",
+      "mechanics": [
+        "frostfire_bolt"
+      ],
+      "reason": "Frostfire Bolt is outside the supported Frost scope; a rotation reaching it is rejected. Revisit when Frostfire Bolt is ported."
+    },
+    {
+      "commit": "785e2c1e1f8c7e4315f86280af9dfa2524adc476",
+      "date": "2026-10-02 11:31:11 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "341e701f43825c36da8228d2f003d8766677a83b",
+      "date": "2026-10-02 11:46:39 +0000",
+      "subject": "arenalib: ARENA_ROTATION_AUDIT lists stale and unused rotation spells (#617)",
+      "pr": 617,
+      "areas": [
+        "sim/arenalib"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Rotation presets, arena tooling or UI for other specs."
+    },
+    {
+      "commit": "f25b4c6e403725505a4a78ae9e8d503250480491",
+      "date": "2026-10-02 11:46:47 +0000",
+      "subject": "gear: launch sets drop Leafre's Ring of Precise Spell Power, gone from the game (#616)",
+      "pr": 616,
+      "areas": [
+        "ui/specs"
+      ],
+      "disposition": "irrelevant",
+      "reason": "UI gear presets; the reference gear does not use the removed ring."
+    },
+    {
+      "commit": "eaf205963f2ae6407ab0ba3d8dcce9fcde8ed84d",
+      "date": "2026-10-02 11:47:03 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "ca145c74fdc7ed1b1882c09eac26aed6a9ce14cb",
+      "date": "2026-10-02 12:04:17 +0000",
+      "subject": "rotations: hunters cast Arcane Shot, Smite gets a Mind Blast variant, feral drops Tiger's Fury (#618)",
+      "pr": 618,
+      "areas": [
+        "sim/arenalib",
+        "sim/hunter",
+        "sim/priest",
+        "ui/specs"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Another class's mechanics or rotations."
+    },
+    {
+      "commit": "caf9662db75c2d7544d4b86072bf7d09f3081ff3",
+      "date": "2026-10-02 12:04:45 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "a09db236fd16e2c232b3796c288cab862013d857",
+      "date": "2026-10-02 12:12:04 +0000",
+      "subject": "rotations: destruction_conflag, an optional Destruction rotation with Conflagrate (#619)",
+      "pr": 619,
+      "areas": [
+        "ui/specs"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Rotation presets, arena tooling or UI for other specs."
+    },
+    {
+      "commit": "faad1fe7c85724862964814942f22d488323ec88",
+      "date": "2026-10-02 12:12:30 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "75fc0fe33d5b260b008dc322fd525c2562b02653",
+      "date": "2026-10-02 12:40:12 +0000",
+      "subject": "arena: rank warlock builds with the Imp sacrificed, via option variants (#620)",
+      "pr": 620,
+      "areas": [
+        "sim/arenalib",
+        "sim/warlock"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Another class's mechanics or rotations."
+    },
+    {
+      "commit": "823f59b146c88185a1344e4b2f26a305ed93713a",
+      "date": "2026-10-02 12:40:35 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "8bc09dc4a3d4eed2f4a826c448618af5b519f97c",
+      "date": "2026-10-02 12:41:25 +0000",
+      "subject": "data: Forever client build 1.60.1.70178 (#621)",
+      "pr": 621,
+      "areas": [
+        "assets/db_inputs",
+        "docs/data-changes"
+      ],
+      "disposition": "deferred",
+      "mechanics": [
+        "client_data"
+      ],
+      "reason": "Client build identity 70178. Adoption advances the client build and reference pin together."
+    },
+    {
+      "commit": "d342823958f395c69843decce4bdb7ee19301f55",
+      "date": "2026-10-02 12:50:29 +0000",
+      "subject": "rotations: forever_flameshock, an optional enhancement rotation that keeps Flame Shock up (#623)",
+      "pr": 623,
+      "areas": [
+        "ui/specs"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Rotation presets, arena tooling or UI for other specs."
+    },
+    {
+      "commit": "5984094908e7afc6d1ee49e3bdcdf9b280cbb5da",
+      "date": "2026-10-02 12:50:55 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "252f57aa89a8673c5d76951e9d3bc9392dc62395",
+      "date": "2026-10-02 13:00:57 +0000",
+      "subject": "apl: an aura the character doesn't have reads as absent, not as \"no condition\" (#622)",
+      "pr": 622,
+      "areas": [
+        "sim/core",
+        "sim/shaman"
+      ],
+      "disposition": "applicable",
+      "mechanics": [
+        "rotation_interpreter"
+      ],
+      "reason": "Covered mechanic. Pinned Go drops an auraIsActive condition naming an aura the character lacks, so the action fires whenever reached. Frost without Fingers of Frost then casts Ice Lance on every global cooldown (pinned Go, 200 fights: 80.9 Ice Lance and 0 Frostbolt casts per fight, 211 DPS against 593 for the reference).",
+      "adoption": {
+        "reference": "pending",
+        "rust": "guarded: rotations reading an unknown aura are rejected with both behaviors named"
+      },
+      "regression": [
+        "fixtures/mage/frost/prepared-v2/manifest.json#frost-no-fingers",
+        "tests/classes/mage/frost/prepared_v2.rs"
+      ]
+    },
+    {
+      "commit": "5a12b75506f9047f8984d0f887ba43b5a02f456c",
+      "date": "2026-10-02 13:01:25 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "1e0474d94dc0ce7b38b4bf15f09416d20f797688",
+      "date": "2026-10-03 01:08:02 +1000",
+      "subject": "chore(arena): rebuild the leaderboard",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "2bbbbeaadd919b5dd59673b6fafeee626d0b4612",
+      "date": "2026-10-02 22:02:37 +0000",
+      "subject": "rotations: retribution keeps Seal of Righteousness up without Seal of Command (#624)",
+      "pr": 624,
+      "areas": [
+        "sim/paladin",
+        "ui/specs"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Another class's mechanics or rotations."
+    },
+    {
+      "commit": "dd5b8f9fa132b813de72aa2f87dd168e6909317f",
+      "date": "2026-10-02 22:03:04 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "6595194777874624380c76ea54f4054731159575",
+      "date": "2026-10-03 08:49:11 +1000",
+      "subject": "chore(arena): rebuild the leaderboard",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "0001a0c927cbf4272a2f0a4f6c9c26b0154d3c2d",
+      "date": "2026-10-02 23:26:04 +0000",
+      "subject": "apl: a strict sequence with a step the character doesn't have is dropped, not shortened (#625)",
+      "pr": 625,
+      "areas": [
+        "sim/core",
+        "sim/priest",
+        "ui/specs"
+      ],
+      "disposition": "irrelevant",
+      "mechanics": [
+        "rotation_interpreter"
+      ],
+      "reason": "strictSequence is outside the supported rotation subset and is rejected; revisit when sequences are implemented."
+    },
+    {
+      "commit": "fe1991d79e56edb6526f2c4e5e3107a101276844",
+      "date": "2026-10-02 23:26:30 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "954382afd04a81fccc4622e7d1b16f77dec07730",
+      "date": "2026-10-03 00:25:12 +0000",
+      "subject": "warrior: Spearing Strike needs Battle Stance (#626)",
+      "pr": 626,
+      "areas": [
+        "sim/warrior",
+        "ui/sim"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Another class's mechanics or rotations."
+    },
+    {
+      "commit": "89ff682d1f52f42f90712375c75a9dea6bee15d5",
+      "date": "2026-10-03 00:25:37 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "fb7e8590742559175ab20419d0d4cd8c51c1735f",
+      "date": "2026-10-03 00:37:31 +0000",
+      "subject": "arena: remove the run's worktree when it finishes (#627)",
+      "pr": 627,
+      "areas": [
+        "tools/arena"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Rotation presets, arena tooling or UI for other specs."
+    },
+    {
+      "commit": "d457cbd76b2e43fc6856e32c5efd77a0b47fd698",
+      "date": "2026-10-03 00:37:55 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "fe3f9aee833895a2893f725ae61dc8c6aa4a22bf",
+      "date": "2026-10-03 01:01:57 +0000",
+      "subject": "data: Wowhead Forever data changed (2026-10-03) (#628)",
+      "pr": 628,
+      "areas": [
+        "assets/db_inputs",
+        "docs/data-changes"
+      ],
+      "disposition": "deferred",
+      "mechanics": [
+        "client_data"
+      ],
+      "reason": "Wowhead gear planner input; reaches the engine only through a later database regeneration."
+    },
+    {
+      "commit": "0e645f63b0f8e00ba626922c707fb1cab14ba504",
+      "date": "2026-10-03 01:43:16 +0000",
+      "subject": "warrior: rotations cast Slam when Improved Slam makes it fast (#629)",
+      "pr": 629,
+      "areas": [
+        "sim/warrior",
+        "ui/specs"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Another class's mechanics or rotations."
+    },
+    {
+      "commit": "c45d24682a74204c3116f1b7eb40d9e9165c61d3",
+      "date": "2026-10-03 01:43:42 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "183b4649e2c3702c8fa7bb6935fcaa38bb150fa5",
+      "date": "2026-10-03 02:33:56 +0000",
+      "subject": "rotations: dps_battle, an optional warrior rotation that stays in Battle Stance for Rend and Overpower (#630)",
+      "pr": 630,
+      "areas": [
+        "ui/specs"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Rotation presets, arena tooling or UI for other specs."
+    },
+    {
+      "commit": "46b6821bfd89268228260b86f43a1a6621e15926",
+      "date": "2026-10-03 02:34:22 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "f6d4f306c94032f989e395cad396823ddca662b6",
+      "date": "2026-10-03 03:50:03 +0000",
+      "subject": "rotations: optional rogue rotations that press Ghostly Strike (#631)",
+      "pr": 631,
+      "areas": [
+        "sim/rogue",
+        "ui/specs"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Another class's mechanics or rotations."
+    },
+    {
+      "commit": "718a8c26c28b96f15a992f8bb89e9e815720ce4d",
+      "date": "2026-10-03 03:50:29 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "e54c5519f51a88362bfca2b307790838cb3c06fd",
+      "date": "2026-10-03 04:36:57 +0000",
+      "subject": "rogue: Mutilate's hand strikes no longer roll miss, dodge or parry again (#632)",
+      "pr": 632,
+      "areas": [
+        "sim/rogue",
+        "ui/sim"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Another class's mechanics or rotations."
+    },
+    {
+      "commit": "1505e5850e9e2908c0c2219e923787545f8ac703",
+      "date": "2026-10-03 04:37:57 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "44e80f1231a3a7e492520b47fc26ea0c5b5744e9",
+      "date": "2026-10-03 05:35:36 +0000",
+      "subject": "arena: rogues carry Deadly Poison in the off hand, so Mutilate's poison bonus counts (#633)",
+      "pr": 633,
+      "areas": [
+        "sim/rogue"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Another class's mechanics or rotations."
+    },
+    {
+      "commit": "4b410ab99ade7c4153687bb4aa3c86265c499129",
+      "date": "2026-10-03 05:35:59 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "036a2e2ff798b4d82e156556bc4de1453b933e5c",
+      "date": "2026-10-03 06:18:20 +0000",
+      "subject": "[DB] Update to 1.60.1.70205 with hotfixes as of 2026-10-03 (#634)",
+      "pr": 634,
+      "areas": [
+        "assets/database",
+        "assets/db_inputs",
+        "sim/common",
+        "sim/core",
+        "ui/sim"
+      ],
+      "disposition": "deferred",
+      "mechanics": [
+        "client_data"
+      ],
+      "reason": "Client data 70205 with hotfixes. Adds spell rows and item changes; no reference build item, consumable or Mage spell row changes (checked by ID). Adopt with a reference pin advance."
+    },
+    {
+      "commit": "8e160d536bbb04fbddf5e9a4ec0fd7b81ac76fd2",
+      "date": "2026-10-03 06:27:50 +0000",
+      "subject": "rotations: low-rank smite rotations finish with Shadow Word: Death under 20% (#635)",
+      "pr": 635,
+      "areas": [
+        "ui/specs"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Rotation presets, arena tooling or UI for other specs."
+    },
+    {
+      "commit": "af1e619f21c92d1a90525f2234caa1ff335254de",
+      "date": "2026-10-03 06:28:13 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "9b97945c6c2fcc896cfe3dc1a629b58294f57d9c",
+      "date": "2026-10-03 06:49:35 +0000",
+      "subject": "data: Forever client build 1.60.1.70205 (#636)",
+      "pr": 636,
+      "areas": [
+        "assets/db_inputs",
+        "docs/data-changes"
+      ],
+      "disposition": "deferred",
+      "mechanics": [
+        "client_data"
+      ],
+      "reason": "Client build identity 70205. Adopt with the database update above."
+    },
+    {
+      "commit": "4d072c36bb903fa6f0aa1cb4d8c2904029a02d0a",
+      "date": "2026-10-03 07:33:36 +0000",
+      "subject": "evidence: beta log 2701 times shaman Flurry at a per-point 10%/15%, not its buff's flat 10% (#637)",
+      "pr": 637,
+      "areas": [
+        "ui/app",
+        "ui/sim"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Evidence notes or UI for another class."
+    },
+    {
+      "commit": "153cf40dfe0c6ab0a3f13b3516233421fbd81f49",
+      "date": "2026-10-03 07:33:57 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "07757b7fb3029db0d2390d715276597d909a8943",
+      "date": "2026-10-03 08:27:24 +0000",
+      "subject": "evidence: beta logs check Sanctified Judgement's chance and rank 2 return; rank 3 returns ~2/3, not 60% (#638)",
+      "pr": 638,
+      "areas": [
+        "ui/sim"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Evidence notes or UI for another class."
+    },
+    {
+      "commit": "5ed582a3d239eb8b02523e88b8f40fbda93b41ba",
+      "date": "2026-10-03 08:27:50 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "fbffcc43d8bb4405d9a3c69ff0cd58b20b430d17",
+      "date": "2026-10-03 10:02:09 +0000",
+      "subject": "rotations: warlocks keep Bane of Doom up while a minute of the fight remains (#639)",
+      "pr": 639,
+      "areas": [
+        "sim/warlock",
+        "ui/specs"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Another class's mechanics or rotations."
+    },
+    {
+      "commit": "644534571c52afa10916b8a294b39fcb1fddc982",
+      "date": "2026-10-03 10:02:35 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "09f457068713d3d6709bb5c21a23912b59ee73dd",
+      "date": "2026-10-03 10:28:43 +0000",
+      "subject": "rotations: dps_dance, a warrior rotation that swaps to Battle Stance for Overpower after a dodge (#640)",
+      "pr": 640,
+      "areas": [
+        "ui/specs"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Rotation presets, arena tooling or UI for other specs."
+    },
+    {
+      "commit": "017ff78fa6b1aeb9f839c9729628e01c701c5c08",
+      "date": "2026-10-03 10:29:05 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    }
+  ]
+}

@@ -24,6 +24,8 @@ Milestones advance on evidence, not promised delivery dates. The
 - [Prepared v2 contract](docs/prepared-v2.md): a Go exporter for real characters,
   strict Rust types, a coverage gate with named fallback reasons, an accepted fixture
   family and a [release compatibility manifest](release/manifest.json).
+- [Upstream ledger](UPSTREAM.md#ledger): reviewed community range, dispositions, a
+  Frost mechanics map and one applicable fix traced to a Rust guard and regression.
 
 ## Migration sequence
 
@@ -42,7 +44,7 @@ Milestones advance on evidence, not promised delivery dates. The
 
 1. Completed: [inventory the chosen Frost build and actual application consumers](docs/first-frost-inventory.md).
 2. Completed: [prepared v2 and a release compatibility manifest](docs/prepared-v2.md).
-3. Establish the community change ledger and Go-to-Rust mechanics map.
+3. Completed: [the community change ledger and Go-to-Rust mechanics map](UPSTREAM.md#ledger).
 4. Consolidate reference pins and improve differential failure diagnostics.
 
 The [first usable release](docs/hybrid-migration-plan.md#first-usable-release)

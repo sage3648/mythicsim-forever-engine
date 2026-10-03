@@ -57,6 +57,19 @@ pub enum Value {
 }
 
 impl Value {
+    /// Visit this value and every nested value, parents first.
+    pub fn visit(&self, f: &mut impl FnMut(&Value)) {
+        f(self);
+        match self {
+            Value::Compare { lhs, rhs, .. } => {
+                lhs.visit(f);
+                rhs.visit(f);
+            }
+            Value::And(values) => values.iter().for_each(|value| value.visit(f)),
+            _ => {}
+        }
+    }
+
     /// The Go type before coercion.
     pub fn value_type(&self) -> ValueType {
         match self {
@@ -79,6 +92,8 @@ pub enum Action {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Item {
+    /// One-based position in the request's priority list, hidden items included.
+    pub position: usize,
     pub condition: Option<Value>,
     pub action: Action,
 }
@@ -114,7 +129,7 @@ pub fn parse(rotation: &Json) -> Result<Rotation, Vec<String>> {
         .flatten()
         .enumerate()
     {
-        match parse_item(item) {
+        match parse_item(item, index + 1) {
             Ok(Some(item)) => parsed.priority_list.push(item),
             Ok(None) => {}
             Err(mut item_reasons) => {
@@ -154,7 +169,7 @@ fn single<'a>(
     }
 }
 
-fn parse_item(item: &Json) -> Result<Option<Item>, Vec<String>> {
+fn parse_item(item: &Json, position: usize) -> Result<Option<Item>, Vec<String>> {
     let object = item
         .as_object()
         .ok_or_else(|| vec!["item must be an object".to_string()])?;
@@ -190,7 +205,11 @@ fn parse_item(item: &Json) -> Result<Option<Item>, Vec<String>> {
         Err(err) => Err(err),
     };
     match parsed {
-        Ok(action) if reasons.is_empty() => Ok(Some(Item { condition, action })),
+        Ok(action) if reasons.is_empty() => Ok(Some(Item {
+            position,
+            condition,
+            action,
+        })),
         Ok(_) => Err(reasons),
         Err(reason) => {
             reasons.push(reason);
