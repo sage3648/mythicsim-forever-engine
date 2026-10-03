@@ -452,9 +452,9 @@ fn runtime_limits(spell: &Spell) -> Vec<&'static str> {
     if spell
         .dot
         .as_ref()
-        .is_some_and(|dot| dot.affected_by_cast_speed || dot.affected_by_real_haste)
+        .is_some_and(|dot| dot.affected_by_real_haste)
     {
-        limits.push("hasted periodic effects");
+        limits.push("periodic effects hasted by real haste");
     }
     limits
 }

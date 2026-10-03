@@ -1545,9 +1545,9 @@ impl<A: Agent> Fight<A> {
                 additive_percent_modifier: cost.additive_percent_modifier,
             });
             let health_metrics = match &behavior {
-                SpellBehavior::Class(class) if A::health_metrics_before_cost(*class) => Some(
-                    resource(caster, id.clone(), false, ResourceKind::Health),
-                ),
+                SpellBehavior::Class(class) if A::health_metrics_before_cost(*class) => {
+                    Some(resource(caster, id.clone(), false, ResourceKind::Health))
+                }
                 _ => None,
             };
             // Go newEnergyCost registers the energy metrics, then the combo point metrics.

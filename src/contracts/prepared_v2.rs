@@ -1393,6 +1393,19 @@ pub enum Effect {
         tick_can_crit: bool,
         self_healing_multiplier: f64,
     },
+    /// Drain Life's channeled snapshot dot: each tick is scaled by Soul Siphon and heals the
+    /// warlock.
+    DrainLife {
+        spell_id: i32,
+        tick_base: f64,
+        tick_can_crit: bool,
+        soul_siphon: f64,
+        self_healing_multiplier: f64,
+    },
+    /// Incinerate's damage bonus on a target burning with Immolate.
+    Incinerate {
+        immolate_bonus: f64,
+    },
     /// Bane of Doom's one-tick snapshot dot on the bane slot.
     BaneOfDoom {
         spell_id: i32,
@@ -2072,6 +2085,8 @@ impl Effect {
             Effect::Decimation { .. } => "decimation",
             Effect::SiphonLife { .. } => "siphon_life",
             Effect::BaneOfDoom { .. } => "bane_of_doom",
+            Effect::DrainLife { .. } => "drain_life",
+            Effect::Incinerate { .. } => "incinerate",
             Effect::Firebolt { .. } => "firebolt",
             Effect::FelEnergy { .. } => "fel_energy",
             Effect::DemonicBrand { .. } => "demonic_brand",

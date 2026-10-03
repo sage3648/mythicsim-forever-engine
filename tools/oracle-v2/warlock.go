@@ -72,13 +72,16 @@ var (
 	wlDecimation           = spelldata.Talent(440870, 2)
 	wlBaneOfDoomLadder     = spelldata.Ranked(603)
 	wlSiphonLifeLadder     = spelldata.Ranked(18265, 18879, 18880, 18881)
+	wlDrainLifeLadder      = spelldata.Ranked(689, 699, 709, 7651, 11699, 11700)
+	wlSoulSiphon           = spelldata.Talent(17804, 3)
+	wlIncinerateLadder     = spelldata.Ranked(412758, 1293812, 1293813)
 	wlDemonicEnergies      = spelldata.Talent(1225214, 2)
 	wlDemonicSacrificeOn   = spelldata.Ranked(18789, 18790, 18791, 18792)
 )
 
 func warlockDamageRows(rows map[int32]*spelldata.Spell) {
 	wlShadowBoltLadder.Each(func(_ int32, row *spelldata.Spell) { rows[row.ID] = row })
-	for _, ladder := range []spelldata.Ladder{wlImmolateLadder, wlConflagrateLadder, wlShadowburnLadder, wlSearingPainLadder, wlSoulFireLadder} {
+	for _, ladder := range []spelldata.Ladder{wlImmolateLadder, wlConflagrateLadder, wlShadowburnLadder, wlSearingPainLadder, wlSoulFireLadder, wlIncinerateLadder} {
 		if row := ladder.Highest(); row != nil {
 			rows[row.ID] = row
 		}
@@ -132,6 +135,20 @@ func warlockEffects(agent core.Agent, character *core.Character) []map[string]an
 	effects = append(effects, withKind("corruption", warlockTick(wlCorruptionLadder.Highest(), unrepresented)))
 	// doom.go: one snapshot tick a minute on, on the bane slot.
 	effects = append(effects, withKind("bane_of_doom", warlockTick(wlBaneOfDoomLadder.Highest(), unrepresented)))
+	// drain_life.go: a channeled dot scaled by Soul Siphon, which counts every registered
+	// Affliction aura on the target (warlock.go AfflictionCount), and healing for each tick.
+	drain := withKind("drain_life", warlockTick(wlDrainLifeLadder.Highest(), unrepresented))
+	drain["soul_siphon"] = 1.0
+	if talents.SoulSiphon > 0 {
+		drain["soul_siphon"] = 1 + wlSoulSiphon.FractionAt(talents.SoulSiphon)*min(w.AfflictionCount(target), 3)
+	}
+	drain["self_healing_multiplier"] = w.PseudoStats.SelfHealingMultiplier
+	effects = append(effects, drain)
+	if talents.Incinerate { // incinerate.go: the client roll, raised on a burning target
+		effects = append(effects, map[string]any{
+			"kind": "incinerate", "immolate_bonus": 1 + wlIncinerateLadder.Highest().EffectN(2).Percent(),
+		})
+	}
 	if talents.SiphonLife { // siphon_life.go: Corruption's shape, healing for each tick
 		siphon := withKind("siphon_life", warlockTick(wlSiphonLifeLadder.Highest(), unrepresented))
 		siphon["self_healing_multiplier"] = w.PseudoStats.SelfHealingMultiplier

@@ -12,12 +12,12 @@ use super::{
     pets::{self, DemonAi},
     spells::{
         bane_of_agony::{self, BaneOfAgony},
-        bane_of_doom,
-        bind_snapshot_dot,
+        bane_of_doom, bind_snapshot_dot,
         conflagrate::Conflagrate,
         corruption,
         curse_of_the_elements::{self, CurseOfTheElements},
-        find_spell, immolate,
+        drain_life::DrainLife,
+        find_spell, immolate, incinerate,
         life_tap::{self, LifeTap},
         searing_pain, shadow_bolt, shadowburn,
         siphon_life::SiphonLife,
@@ -50,6 +50,8 @@ pub(crate) enum WarlockSpell {
     AmplifyCurse,
     SiphonLife,
     BaneOfDoom,
+    DrainLife,
+    Incinerate,
     /// The Succubus's Lash of Pain.
     LashOfPain,
     /// The demon's Demonic Brand hit.
@@ -88,6 +90,9 @@ pub(crate) struct WarlockAgent {
     pub(crate) bane_of_agony: Option<BaneOfAgony>,
     siphon_life: Option<SiphonLife>,
     bane_of_doom_dot: Option<DotId>,
+    drain_life: Option<DrainLife>,
+    /// Incinerate's bonus on a target burning with Immolate.
+    incinerate_bonus: f64,
     /// Go `currentActiveBane` on the one target.
     pub(crate) bane_slot: Option<AuraRef>,
     curse_of_the_elements: Option<Rc<CurseOfTheElements>>,
@@ -199,6 +204,8 @@ impl WarlockAgent {
             "amplify_curse" => Some(WarlockSpell::AmplifyCurse),
             "siphon_life" if dot => Some(WarlockSpell::SiphonLife),
             "bane_of_doom" if dot => Some(WarlockSpell::BaneOfDoom),
+            "drain_life" if dot => Some(WarlockSpell::DrainLife),
+            "incinerate" if damage => Some(WarlockSpell::Incinerate),
             "succubus_lash_of_pain" => Some(WarlockSpell::LashOfPain),
             "demonic_brand" => Some(WarlockSpell::DemonicBrand),
             "imp_firebolt" => Some(WarlockSpell::Firebolt),
@@ -256,6 +263,27 @@ impl WarlockAgent {
                         .ok_or("Siphon Life has no health metrics")?;
                     fight.agent.siphon_life =
                         Some(SiphonLife::new(dot, *self_healing_multiplier, metrics));
+                }
+                Effect::DrainLife {
+                    spell_id,
+                    tick_base,
+                    tick_can_crit,
+                    soul_siphon,
+                    self_healing_multiplier,
+                } => {
+                    let dot = bind_snapshot_dot(&mut fight, *spell_id, *tick_base, *tick_can_crit)?;
+                    let metrics = fight.spells[find_spell(&fight, *spell_id)?]
+                        .health_metrics
+                        .ok_or("Drain Life has no health metrics")?;
+                    fight.agent.drain_life = Some(DrainLife::new(
+                        dot,
+                        *soul_siphon,
+                        *self_healing_multiplier,
+                        metrics,
+                    ));
+                }
+                Effect::Incinerate { immolate_bonus } => {
+                    fight.agent.incinerate_bonus = *immolate_bonus;
                 }
                 Effect::BaneOfDoom {
                     spell_id,
@@ -525,6 +553,14 @@ impl Agent for WarlockAgent {
                 let dot = fight.agent.bane_of_doom_dot.expect("Bane of Doom is bound");
                 bane_of_doom::apply(fight, spell, target, dot);
             }
+            WarlockSpell::DrainLife => {
+                let dot = fight.agent.drain_life.expect("Drain Life is bound").dot;
+                corruption::apply(fight, spell, target, dot);
+            }
+            WarlockSpell::Incinerate => {
+                let (immolate, bonus) = (fight.agent.immolate_dot, fight.agent.incinerate_bonus);
+                incinerate::apply(fight, spell, target, immolate, bonus);
+            }
             WarlockSpell::CurseOfTheElements => {
                 let curse = fight
                     .agent
@@ -578,8 +614,8 @@ impl Agent for WarlockAgent {
     }
 
     fn health_metrics_before_cost(behavior: WarlockSpell) -> bool {
-        // siphon_life.go registers its health metrics before the spell.
-        behavior == WarlockSpell::SiphonLife
+        // siphon_life.go and drain_life.go register their health metrics before the spell.
+        matches!(behavior, WarlockSpell::SiphonLife | WarlockSpell::DrainLife)
     }
 
     fn pet_rotation(fight: &mut Fight<Self>) {
@@ -653,6 +689,10 @@ impl Agent for WarlockAgent {
             WarlockSpell::SiphonLife => {
                 let siphon = fight.agent.siphon_life.expect("Siphon Life is bound");
                 siphon.tick(fight);
+            }
+            WarlockSpell::DrainLife => {
+                let drain = fight.agent.drain_life.expect("Drain Life is bound");
+                drain.tick(fight);
             }
             _ => {}
         }

@@ -709,6 +709,15 @@ impl<A: Agent> Fight<A> {
 
     /// [`Self::snapshot_dot_tick`], returning the tick's result as Go does.
     pub(crate) fn snapshot_dot_tick_result(&mut self, dot: super::DotId) -> SpellResult {
+        let result = self.snapshot_dot_tick_calc(dot);
+        let spell = self.dots[dot].spell;
+        self.deal_damage(spell, result, true);
+        result
+    }
+
+    /// Go `Dot.CalcSnapshotDamage` for a dot built by `Snapshot`: the tick's result, not yet
+    /// dealt.
+    pub(crate) fn snapshot_dot_tick_calc(&mut self, dot: super::DotId) -> SpellResult {
         let state = &self.dots[dot];
         let (spell, side, can_crit) = (state.spell, state.side, state.tick_can_crit);
         let mut base = state.snapshot_base;
@@ -722,9 +731,7 @@ impl<A: Agent> Fight<A> {
         } else {
             Outcome::Tick
         };
-        let result = self.calc_damage_internal(spell, side, base, attacker, outcome);
-        self.deal_damage(spell, result, true);
-        result
+        self.calc_damage_internal(spell, side, base, attacker, outcome)
     }
 
     /// Go `Spell.TravelTime`.
