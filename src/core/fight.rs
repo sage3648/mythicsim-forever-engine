@@ -536,6 +536,21 @@ pub(crate) enum Action {
     },
     /// A rotation prepull action: Go `APLActionCastSpell.Execute`.
     Prepull(SpellId),
+    /// A tick of a target aura's `core.ScheduledAura` periodic action.
+    ScheduledAura(usize),
+}
+
+/// Go `core.ScheduledAura` on a target aura: a periodic action started at reset that
+/// activates the aura and adds a stack each tick.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct ScheduledAura {
+    pub(crate) aura: AuraRef,
+    pub(crate) period: i64,
+    pub(crate) num_ticks: i32,
+    pub(crate) add_stack: bool,
+    /// A stronger permanent member of the aura's exclusive category blocks every activation.
+    pub(crate) blocked: bool,
+    pub(crate) ticks: i32,
 }
 
 /// Go `ActionPriority`.
@@ -583,6 +598,8 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) target_actions: Vec<ActionTotals>,
     /// Gnome's Eureka!, when the character has it.
     pub(crate) eureka: Option<racial::Eureka>,
+    /// Target auras started by `core.ScheduledAura`.
+    scheduled_auras: Vec<ScheduledAura>,
     mana_regen_casting: usize,
     mana_regen_not_casting: usize,
     mana_gain_spell: Option<SpellId>,
@@ -1216,11 +1233,40 @@ impl<A: Agent> Fight<A> {
             log: None,
             aura_logs,
             eureka: None,
+            scheduled_auras: Vec::new(),
             totals: metrics::Totals::default(),
             encounter_damage_taken: 0.0,
         };
         fight.rotation = fight.compile_rotation(&parsed);
         fight.prepull = fight.compile_prepull(&parsed);
+        for effect in effects {
+            if let Effect::ScheduledAura {
+                aura,
+                period_ns,
+                num_ticks,
+                add_stack,
+                blocked,
+            } = effect
+            {
+                let index = fight.trackers[Side::Target.index()]
+                    .find(aura)
+                    .ok_or_else(|| format!("target aura {aura} is not registered"))?;
+                if *period_ns <= 0 || *num_ticks <= 0 {
+                    return Err(format!("{aura} schedules no ticks"));
+                }
+                fight.scheduled_auras.push(ScheduledAura {
+                    aura: AuraRef {
+                        side: Side::Target,
+                        index,
+                    },
+                    period: *period_ns,
+                    num_ticks: *num_ticks,
+                    add_stack: *add_stack,
+                    blocked: *blocked,
+                    ticks: 0,
+                });
+            }
+        }
         for effect in effects {
             if let Effect::Eureka {
                 aura,
@@ -1275,13 +1321,11 @@ impl<A: Agent> Fight<A> {
     /// Go `Spell.Dot` for the target: the spell's own dot, else its related spell's.
     pub(crate) fn spell_dot(&self, spell: SpellId) -> Option<DotId> {
         let state = &self.spells[spell];
-        state
-            .dot
-            .or_else(|| {
-                state
-                    .related_dot_spell
-                    .and_then(|related| self.spells.get(related)?.dot)
-            })
+        state.dot.or_else(|| {
+            state
+                .related_dot_spell
+                .and_then(|related| self.spells.get(related)?.dot)
+        })
     }
 
     /// Go `AttachMultiplicativePseudoStatBuff` on a school's damage dealt multiplier: the
@@ -1480,6 +1524,13 @@ impl<A: Agent> Fight<A> {
             A::reset(self);
         }
         self.reset_auras(side);
+        if side == Side::Target {
+            // Go ScheduledAura's OnReset: a periodic action that ticks first at time zero.
+            for index in 0..self.scheduled_auras.len() {
+                self.scheduled_auras[index].ticks = 0;
+                self.schedule(0, PRIORITY_DOT, Action::ScheduledAura(index));
+            }
+        }
         if side == Side::Player {
             for spell in &mut self.spells {
                 spell.metrics = [SpellMetrics::default(); 2];
@@ -1575,6 +1626,26 @@ impl<A: Agent> Fight<A> {
                 result,
             } => self.delayed_proc(aura, spell, result),
             Action::Prepull(spell) => self.cast_or_queue(spell, Side::Target),
+            Action::ScheduledAura(index) => self.scheduled_aura_tick(index),
+        }
+    }
+
+    /// One tick of a `core.ScheduledAura`, then the next while ticks remain.
+    fn scheduled_aura_tick(&mut self, index: usize) {
+        let scheduled = self.scheduled_auras[index];
+        if scheduled.blocked {
+            // Go Aura.Activate counts the proc before the exclusive effect blocks it.
+            self.aura_mut(scheduled.aura).procs += 1;
+        } else {
+            self.activate_aura(scheduled.aura);
+            if scheduled.add_stack && self.aura(scheduled.aura).active {
+                self.add_stack(scheduled.aura);
+            }
+        }
+        self.scheduled_auras[index].ticks += 1;
+        if self.scheduled_auras[index].ticks < scheduled.num_ticks {
+            let next = self.now + scheduled.period;
+            self.schedule(next, PRIORITY_DOT, Action::ScheduledAura(index));
         }
     }
 

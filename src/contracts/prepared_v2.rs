@@ -519,6 +519,17 @@ pub enum Effect {
         gain_log: String,
         expire_log: String,
     },
+    /// Go `core.ScheduledAura` on a target aura, as buffs/drivers.go ramps the raid's Sunder
+    /// Armor: from the fight's start, every period for `num_ticks` ticks, activate the aura
+    /// and add a stack. `blocked` means a stronger permanent member of its exclusive category
+    /// blocks every activation, which still counts a proc.
+    ScheduledAura {
+        aura: String,
+        period_ns: i64,
+        num_ticks: i32,
+        add_stack: bool,
+        blocked: bool,
+    },
     /// The forms the druid starts in and each druid spell may be cast in.
     DruidForms {
         starting_form: Vec<String>,
@@ -823,6 +834,8 @@ pub enum Effect {
         aura: String,
         spell_id: i32,
         multiplier: f64,
+        /// Spellbook positions of the spells the trigger listens to.
+        trigger_spells: Vec<usize>,
     },
     /// Shadow and Flame: Conflagrate and Shadowburn hits multiply the warlock's shadow or
     /// fire damage dealt for a while.
@@ -833,6 +846,10 @@ pub enum Effect {
         shadow_spell_id: i32,
         fire_spell_id: i32,
         multiplier: f64,
+        /// Spellbook positions of the spells the trigger listens to.
+        trigger_spells: Vec<usize>,
+        /// The trigger spells that raise shadow damage; the others raise fire damage.
+        shadow_spells: Vec<usize>,
     },
 }
 
@@ -857,6 +874,7 @@ impl Effect {
             Effect::Berserking { .. } => "berserking",
             Effect::BloodFury { .. } => "blood_fury",
             Effect::TemporaryStats { .. } => "temporary_stats",
+            Effect::ScheduledAura { .. } => "scheduled_aura",
             Effect::DruidForms { .. } => "druid_forms",
             Effect::MoonkinForm { .. } => "moonkin_form",
             Effect::Starfire {} => "starfire",

@@ -11,6 +11,7 @@ pub(crate) const GATE: ClassGate = ClassGate {
     effects: EFFECTS,
     spell: spell_capability,
     claims,
+    limits: |_, _| Vec::new(),
 };
 
 /// Warlock effect kinds implemented in Rust and validated against the pinned Go reference.

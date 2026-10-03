@@ -42,16 +42,18 @@ const COMMON_EFFECTS: &[&str] = &[
     "judgement_of_wisdom",
     "potion_mana",
     "read_ley_line",
+    "scheduled_aura",
     "shatter_curse",
     "temporary_stats",
     "touch_of_the_grave",
 ];
 
 /// Every class with an implemented gate.
-fn gates() -> [&'static ClassGate; 2] {
+fn gates() -> [&'static ClassGate; 3] {
     [
         &classes::mage::prepared::GATE,
         &classes::druid::prepared::GATE,
+        &classes::warlock::prepared::GATE,
     ]
 }
 
@@ -124,7 +126,9 @@ fn common_claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         | Effect::ShatterCurse { aura, .. }
         | Effect::ReadLeyLine { aura, .. }
         | Effect::TemporaryStats { aura, .. } => vec![("player", aura)],
-        Effect::JudgementOfWisdom { aura, .. } => vec![("target", aura)],
+        Effect::JudgementOfWisdom { aura, .. } | Effect::ScheduledAura { aura, .. } => {
+            vec![("target", aura)]
+        }
         Effect::InertListener { unit, aura, .. } => match unit.as_str() {
             "player" => vec![("player", aura)],
             "target" => vec![("target", aura)],
@@ -275,6 +279,12 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
             .collect::<Vec<_>>()
     };
     let mut required: BTreeSet<&str> = BTreeSet::new();
+    // Effects that act on their own schedule, whatever listens or casts.
+    for effect in &prepared.effects {
+        if matches!(effect, Effect::ScheduledAura { .. }) {
+            required.insert(effect.kind());
+        }
+    }
     for (unit, auras) in [
         ("player", &player.auras),
         ("target", &prepared.target.auras),

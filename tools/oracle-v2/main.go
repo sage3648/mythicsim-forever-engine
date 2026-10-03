@@ -743,6 +743,25 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 			})
 		}
 	}
+	// buffs/drivers.go driveSunderArmor: core.ScheduledAura starts a periodic action at reset
+	// that activates the raid's Sunder Armor and adds a stack, Go literals. A stronger
+	// permanent member of its exclusive category blocks every activation, which still counts
+	// a proc; a separate reset simulation tells which.
+	if aura := target.GetAura("Sunder Armor (External)"); aura != nil {
+		check := core.NewSim(request, simsignals.CreateSignals())
+		check.Reset()
+		probe := check.Encounter.ActiveTargetUnits[0].GetAura(aura.Label)
+		probe.Activate(check)
+		for _, other := range target.GetAuras() {
+			if other != aura && other.Tag == aura.Tag && other.IsActive() && other.Duration != core.NeverExpires {
+				*unrepresented = append(*unrepresented, fmt.Sprintf("%s shares its category with expiring %s", aura.Label, other.Label))
+			}
+		}
+		effects = append(effects, map[string]any{
+			"kind": "scheduled_aura", "aura": aura.Label, "period_ns": nanos(core.GCDDefault), "num_ticks": int32(5),
+			"add_stack": true, "blocked": !probe.IsActive(),
+		})
+	}
 	// racials.go applyTouchOfTheGrave: Go literals.
 	if hasAura(&character.Unit, "Touch of the Grave") {
 		chance := 0.1
@@ -794,8 +813,20 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 		}
 	}
 	consumes := request.Raid.Parties[0].Players[0].Consumables
+	// Major cooldown items, then the potions and conjured items a rotation casts itself, which
+	// Go removed from the major cooldowns.
+	items := []*core.Spell{}
+	cooldowns := map[*core.Spell]bool{}
 	for _, cd := range character.GetMajorCooldowns() {
-		spell := cd.Spell
+		items = append(items, cd.Spell)
+		cooldowns[cd.Spell] = true
+	}
+	for _, spell := range character.Spellbook {
+		if spell.ActionID.ItemID != 0 && !cooldowns[spell] && spell.Flags.Matches(core.SpellFlagPotion|core.SpellFlagConjured) {
+			items = append(items, spell)
+		}
+	}
+	for _, spell := range items {
 		// Mage gems are described by the mana_gems effect.
 		if spell.ActionID.ItemID == 0 || spell.Matches(mage.MageSpellManaGem) {
 			continue

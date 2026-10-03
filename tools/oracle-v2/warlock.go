@@ -81,14 +81,10 @@ func warlockDamageTakenModifiers(agent core.Agent) int {
 
 // The periodic tick sim/warlock/warlock.go periodicTickOutcome picks; a physical crit is not exported.
 func warlockTick(row *spelldata.Spell, unrepresented *[]string) map[string]any {
-	magic := row.DefenseTypeCore() == core.DefenseTypeMagic
-	if row.PeriodicCanCrit() && !magic {
+	if row.PeriodicCanCrit() && row.DefenseTypeCore() != core.DefenseTypeMagic {
 		*unrepresented = append(*unrepresented, fmt.Sprintf("spell %d ticks with a physical crit roll", row.ID))
 	}
-	return map[string]any{
-		"spell_id": row.ID, "tick_base": row.PeriodicEffect().Average(core.CharacterLevel),
-		"tick_can_crit": row.PeriodicCanCrit() && magic,
-	}
+	return periodicRank(row)
 }
 
 func withKind(kind string, fields map[string]any) map[string]any {
@@ -147,7 +143,8 @@ func warlockEffects(agent core.Agent, character *core.Character) []map[string]an
 		effects = append(effects, map[string]any{
 			"kind": "improved_shadow_bolt", "trigger_aura": "Improved Shadow Bolt Trigger",
 			"aura": w.ImprovedShadowBoltAuras.Get(target).Label, "spell_id": wlImprovedShadowBoltOn.Highest().ID,
-			"multiplier": 1 + wlImprovedShadowBolt.FractionAt(talents.ImprovedShadowBolt),
+			"multiplier":     1 + wlImprovedShadowBolt.FractionAt(talents.ImprovedShadowBolt),
+			"trigger_spells": procTriggerSpells(character, core.ProcTrigger{ClassSpellMask: warlock.WarlockSpellShadowBolt}),
 		})
 	}
 	if talents.ShadowAndFlame > 0 { // talents_destruction.go applyShadowAndFlame
@@ -156,6 +153,10 @@ func warlockEffects(agent core.Agent, character *core.Character) []map[string]an
 			"shadow_aura": "Shadow and Flame (Shadow)", "fire_aura": "Shadow and Flame (Fire)",
 			"shadow_spell_id": wlShadowAndFlameRows.ByID(1293816).ID, "fire_spell_id": wlShadowAndFlameRows.ByID(426311).ID,
 			"multiplier": 1 + wlShadowAndFlame.EffectAt(3).FractionAt(talents.ShadowAndFlame),
+			"trigger_spells": procTriggerSpells(character, core.ProcTrigger{
+				ClassSpellMask: warlock.WarlockSpellConflagrate | warlock.WarlockSpellShadowBurn,
+			}),
+			"shadow_spells": spellsMatching(character, warlock.WarlockSpellConflagrate),
 		})
 	}
 	return effects

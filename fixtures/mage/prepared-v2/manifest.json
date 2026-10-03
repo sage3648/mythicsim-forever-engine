@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "71dec82fe2054a29369ca07ceff6e0daf1b5bee35323d1fa403cfd95c05a5637",
+  "exporter_sha256": "f0458ed59582a24618217b59abde17475f76047776c092005ab8a48350cb8223",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -818,6 +818,27 @@
       "go_log": {
         "file": "production-balance-druid.go-log.txt",
         "sha256": "505e94e36967e68385b0bdec177f99bfef087c87d7f61474165d2e9311fab883"
+      }
+    },
+    {
+      "id": "production-destruction-warlock",
+      "description": "The production application's Destruction Warlock request at application revision 18bbcd47: Undead, Imp sacrificed before the pull, Shadow Bolt with Improved Shadow Bolt, Immolate, Corruption, Bane of Agony, Curse of the Elements, Conflagrate and Shadowburn with Shadow and Flame, Searing Pain, Life Tap and the raid's ramped Sunder Armor; supported and matches Go",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-destruction-warlock.request.json"
+      },
+      "prepared": "production-destruction-warlock.prepared.json",
+      "prepared_sha256": "c99b2e0a2711e4320cbee742cd950cc178eca233c83e1720d5cee69fb52995e5",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-destruction-warlock.go-result.json",
+        "sha256": "308dd6fceb82e66b1989cc127985c52fbb4217dc43cf98db7974b9307cc32353"
+      },
+      "go_log": {
+        "file": "production-destruction-warlock.go-log.txt",
+        "sha256": "6540fdb9699f3139167b5f3bb6060f44b816d963615ee4157a64174fbac7f40a"
       }
     }
   ]

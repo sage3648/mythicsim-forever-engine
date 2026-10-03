@@ -16,6 +16,8 @@ pub(crate) struct Dot {
     pub(crate) base_duration_multiplier: f64,
     pub(crate) base_duration_flat: i64,
     pub(crate) affected_by_haste: bool,
+    /// Go `hasteReducesDuration`, which picks how `TickCount` counts.
+    pub(crate) haste_reduces_duration: bool,
     pub(crate) channeled: bool,
     pub(crate) tick_action: Option<Handle>,
     /// Go `tickAction.NextActionAt`, kept after the action runs.
@@ -51,6 +53,7 @@ impl Dot {
             base_duration_multiplier: exported.base_duration_multiplier,
             base_duration_flat: exported.base_duration_flat_ns,
             affected_by_haste: exported.affected_by_cast_speed || exported.affected_by_real_haste,
+            haste_reduces_duration: exported.haste_reduces_duration,
             channeled: exported.channeled,
             tick_action: None,
             tick_next_at: 0,
@@ -62,6 +65,17 @@ impl Dot {
             snapshot_spell_power: 0.0,
             reads_spell_power: false,
         }
+    }
+
+    /// Go `Dot.TickCount`: the ticks dealt so far. The runtime has no extra ticks and no
+    /// hasted dots, so the hasted count is the base duration over the tick period.
+    pub(crate) fn tick_count(&self) -> i32 {
+        let total = if self.haste_reduces_duration {
+            self.base_tick_count
+        } else {
+            (self.base_duration() as f64 / self.tick_period as f64).round_ties_even() as i32
+        };
+        total - self.remaining_ticks
     }
 
     /// Go `Dot.BaseDuration`.

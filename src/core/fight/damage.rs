@@ -334,7 +334,9 @@ impl<A: Agent> Fight<A> {
             Outcome::MagicHitAndCrit => {
                 self.outcome_magic_hit_and_crit(spell, result, binary, true, true)
             }
-            Outcome::MagicHit => self.outcome_magic_hit_and_crit(spell, result, binary, false, true),
+            Outcome::MagicHit => {
+                self.outcome_magic_hit_and_crit(spell, result, binary, false, true)
+            }
             Outcome::MagicHitNoHitCounter => {
                 self.outcome_magic_hit_and_crit(spell, result, binary, false, false)
             }
