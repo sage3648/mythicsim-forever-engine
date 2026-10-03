@@ -60,6 +60,12 @@ func statAurasEffect(request *proto.RaidSimRequest, character *core.Character, c
 		simulation := core.NewSim(request, simsignals.CreateSignals())
 		simulation.Reset()
 		player := simulation.Raid.Parties[0].Players[0].GetCharacter()
+		// An aura up from the reset, such as the default stance, is down where its bit is clear.
+		for bit, label := range labels {
+			if aura := player.GetAura(label); mask&(1<<bit) == 0 && aura.IsActive() {
+				aura.Deactivate(simulation)
+			}
+		}
 		for bit, label := range labels {
 			if mask&(1<<bit) != 0 {
 				player.GetAura(label).Activate(simulation)
@@ -256,9 +262,9 @@ func meleeProcEffects(simulation *core.Simulation, character *core.Character, un
 				"trigger_outcome": outcomeNames(grant.Outcome), "trigger_proc_chance": grant.ProcChance,
 				"proc_aura": procAura.Label, "spend_spells": procTriggerSpells(character, spend),
 				"spend_outcome": outcomeNames(spend.Outcome), "extra_attack_spell": extra,
+				"trigger_require_damage": grant.RequireDamageDealt, "spend_require_damage": spend.RequireDamageDealt,
 			})
 		}
 	}
 	return effects
 }
-

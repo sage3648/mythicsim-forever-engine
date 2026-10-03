@@ -36,10 +36,9 @@ fn production_fury_request_is_supported() {
     assert_eq!(prepared_coverage(&prepared), Vec::<String>::new());
 }
 
-/// The rotation casts Berserker Stance only while it is not up; the warrior starts in it, so
-/// the cast never happens. Another stance would change stance, which the runtime lacks.
+/// A stance change runs only with the stance category and the stance passives exported.
 #[test]
-fn a_stance_change_is_unsupported() {
+fn a_stance_change_needs_the_stance_passives() {
     let mut value = fury_json();
     let last = value["player"]["rotation"]["priorityList"]
         .as_array()
@@ -49,10 +48,11 @@ fn a_stance_change_is_unsupported() {
     let item = &mut value["player"]["rotation"]["priorityList"][last]["action"];
     assert_eq!(item["castSpell"]["spellId"]["spellId"], 2458);
     item["castSpell"]["spellId"]["spellId"] = json!(2457);
-    assert_eq!(
-        reasons(value),
-        ["rotation reaches spell 2457, a stance change"]
-    );
+    value["effects"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|effect| effect["kind"] != "pseudo_stat_auras");
+    assert!(reasons(value).contains(&"rotation reaches spell 2457, a stance change".into()));
 }
 
 /// The raid's Expose Armor holds the armor category for good, so the warrior's own Sunder
@@ -67,19 +67,37 @@ fn sunder_armor_needs_a_blocked_category() {
     );
 }
 
+/// A DPS warrior casts Retaliation only by hand, so it has no behavior of its own.
 #[test]
-fn battle_shout_has_no_behavior() {
+fn retaliation_in_the_rotation_has_no_behavior() {
     let mut value = fury_json();
     value["player"]["rotation"]["priorityList"]
         .as_array_mut()
         .unwrap()
         .insert(
             0,
-            json!({"action": {"castSpell": {"spellId": {"spellId": 25289}}}}),
+            json!({"action": {"castSpell": {"spellId": {"spellId": 20230}}}}),
         );
     assert_eq!(
         reasons(value),
-        ["rotation reaches spell 25289 without a known behavior"]
+        ["rotation casts spell 20230, which has no behavior"]
+    );
+}
+
+/// Without Improved Slam the cast stops the swings, which the runtime lacks.
+#[test]
+fn slam_that_stops_the_swings_is_unsupported() {
+    let mut value = fury_json();
+    value["player"]["rotation"]["priorityList"]
+        .as_array_mut()
+        .unwrap()
+        .insert(
+            0,
+            json!({"action": {"castSpell": {"spellId": {"spellId": 11605}}}}),
+        );
+    assert_eq!(
+        reasons(value),
+        ["rotation reaches spell 11605, whose cast stops the swings"]
     );
 }
 

@@ -27,8 +27,6 @@ impl Stance {
 /// What a stance-locked Warrior spell needs before it may be cast.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum StanceLock {
-    /// A stance cast: castable only outside its stance.
-    Change(Stance),
     /// retaliation.go: Battle Stance.
     Battle,
     /// shield_wall.go: Defensive Stance and a shield, which the gate keeps out of scope.
@@ -39,9 +37,33 @@ impl StanceLock {
     /// The spell's `ExtraCastCondition` in the current stance.
     pub(crate) fn allows(self, stance: Stance) -> bool {
         match self {
-            StanceLock::Change(to) => stance != to,
             StanceLock::Battle => stance == Stance::Battle,
             StanceLock::Defensive => stance == Stance::Defensive,
         }
     }
+}
+
+/// A stance cast's aura and its rage metrics.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct StanceCast {
+    pub(crate) stance: Stance,
+    pub(crate) aura: crate::core::fight::AuraRef,
+    /// Go `NewRageMetrics(actionID)` of the stance's cast.
+    pub(crate) metrics: usize,
+}
+
+/// A stance cast's `ApplyEffects`: the aura activates, which deactivates the old stance's
+/// through their exclusive category, rage above what Tactical Mastery keeps is spent, and the
+/// warrior is in the new stance.
+pub(crate) fn change<A: crate::core::fight::Agent>(
+    fight: &mut crate::core::fight::Fight<A>,
+    cast: StanceCast,
+    max_retained_rage: f64,
+) -> Stance {
+    fight.activate_aura(cast.aura);
+    let rage = fight.current_rage();
+    if rage > max_retained_rage {
+        fight.spend_rage(rage - max_retained_rage, cast.metrics);
+    }
+    cast.stance
 }

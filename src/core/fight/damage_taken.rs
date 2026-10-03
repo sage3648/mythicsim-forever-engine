@@ -140,7 +140,7 @@ impl<A: Agent> Fight<A> {
         let attacker = if state.flags.ignore_attacker_modifiers {
             1.0
         } else {
-            self.config.damage_dealt_multiplier
+            self.player.damage_dealt_multiplier
                 * self.school_value(spell, &self.player.school_damage_dealt_multiplier)
                 * defender.table.damage_dealt_multiplier
                 * state.damage_multiplier
@@ -231,7 +231,7 @@ impl<A: Agent> Fight<A> {
         result.threat = if result.landed() {
             let state = &self.spells[spell];
             (result.damage * state.threat_multiplier + state.flat_threat_bonus)
-                * self.config.threat_multiplier
+                * self.player.threat_multiplier
         } else {
             0.0
         };

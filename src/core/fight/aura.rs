@@ -341,6 +341,10 @@ impl<A: Agent> Fight<A> {
             return;
         }
         assert!(self.aura(aura).duration != 0, "aura with zero duration");
+        // Go: a stronger member of an exclusive category blocks the activation.
+        if !self.activate_exclusive(aura) {
+            return;
+        }
         {
             let now = self.now;
             let state = self.aura_mut(aura);
@@ -425,6 +429,7 @@ impl<A: Agent> Fight<A> {
         if self.aura(aura).stacks != 0 {
             self.set_stacks(aura, 0);
         }
+        self.deactivate_exclusive(aura);
         self.on_expire(aura);
     }
 
@@ -488,6 +493,9 @@ impl<A: Agent> Fight<A> {
 
     fn on_gain(&mut self, aura: AuraRef) {
         self.multiply_damage_taken_for(aura, false);
+        if aura.side == Side::Player && !self.fixed_uptime.is_empty() {
+            self.fixed_shout_chain_gain(aura);
+        }
         match self.aura(aura).behavior {
             AuraBehavior::Dot(dot) => self.dot_on_gain(dot),
             AuraBehavior::Eureka => self.eureka_gain(),
@@ -607,13 +615,21 @@ impl<A: Agent> Fight<A> {
         if aura.side != Side::Player {
             return;
         }
+        if self.resetting_auras {
+            return;
+        }
         for position in 0..self.damage_taken_auras.len() {
-            let (index, multiplier) = self.damage_taken_auras[position];
+            let (index, multiplier, stat) = self.damage_taken_auras[position];
             if index == aura.index {
+                let value = match stat {
+                    super::PseudoStat::DamageTaken => &mut self.player.damage_taken_multiplier,
+                    super::PseudoStat::Threat => &mut self.player.threat_multiplier,
+                    super::PseudoStat::DamageDealt => &mut self.player.damage_dealt_multiplier,
+                };
                 if expire {
-                    self.player.damage_taken_multiplier /= multiplier;
+                    *value /= multiplier;
                 } else {
-                    self.player.damage_taken_multiplier *= multiplier;
+                    *value *= multiplier;
                 }
             }
         }
@@ -647,7 +663,9 @@ impl<A: Agent> Fight<A> {
                         self.deactivate_aura(AuraRef { side, index: other });
                     }
                 }
+                self.resetting_auras = true;
                 self.activate_aura(AuraRef { side, index });
+                self.resetting_auras = false;
             } else if state.blocked_at_reset {
                 // Go Aura.Activate counts the proc before the exclusive effect blocks it.
                 state.procs += 1;
@@ -784,6 +802,7 @@ impl<A: Agent> Fight<A> {
                         // The charges' own trigger: a landed auto spends one, at once.
                         if windfury.spend_spells[spell]
                             && result.outcome & super::OUTCOME_LANDED != 0
+                            && !(windfury.spend_require_damage && result.damage == 0.0)
                         {
                             self.remove_stack(aura);
                         }
@@ -860,7 +879,10 @@ impl<A: Agent> Fight<A> {
     /// extra main hand attack at once.
     fn windfury_trigger(&mut self, aura: AuraRef, spell: SpellId, result: &SpellResult) {
         let windfury = self.windfury.clone().expect("Windfury Totem is bound");
-        if !windfury.trigger_spells[spell] || result.outcome & super::OUTCOME_LANDED == 0 {
+        if !windfury.trigger_spells[spell]
+            || result.outcome & super::OUTCOME_LANDED == 0
+            || (windfury.trigger_require_damage && result.damage == 0.0)
+        {
             return;
         }
         let icd = self.aura(aura).icd;

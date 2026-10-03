@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/wowsims/forever/sim/core"
+	"github.com/wowsims/forever/sim/core/buffs"
 	"github.com/wowsims/forever/sim/core/dbcenums"
 	"github.com/wowsims/forever/sim/core/proto"
 	"github.com/wowsims/forever/sim/core/spelldata"
@@ -73,7 +74,46 @@ var (
 	warriorUnbridledWrath        = spelldata.Talent(12322, 5)
 	warriorUnbridledWrathTrigger = spelldata.Ranked(12964)
 	warriorWhirlwind             = spelldata.Ranked(1680)
+	warriorBattleShout           = spelldata.Ranked(6673, 5242, 6192, 11549, 11550, 11551, 25289)
+	warriorBattleStancePassive   = spelldata.Ranked(21156)
+	warriorBerserkerStancePass   = spelldata.Ranked(7381)
+	warriorDefensiveStancePass   = spelldata.Ranked(7376)
+	warriorBloodthrill           = spelldata.Talent(1289682, 5)
+	warriorBloodthrillTriggered  = spelldata.Ranked(1282733, 1289681)
+	warriorMortalStrike          = spelldata.Ranked(12294, 21551, 21552, 21553)
+	warriorOverpower             = spelldata.Ranked(7384, 7887, 11584, 11585)
+	warriorRend                  = spelldata.Ranked(772, 6546, 6547, 6548, 11572, 11573, 11574)
+	warriorSlam                  = spelldata.Ranked(1240193, 1464, 8820, 11604, 11605)
+	warriorSpearingStrike        = spelldata.Ranked(1310222)
+	warriorWeaponmaster          = spelldata.Talent(1290261, 5)
 )
+
+// exclusive_effect.go: a single aura category of the unit, with each member's aura, bid and
+// spell in registration order. Nil when the category does not exist.
+func exclusiveCategoryEffect(unit *core.Unit, side string, name string) map[string]any {
+	categories := privateField(unit.ExclusiveEffectManager, "categories")
+	for i := 0; i < categories.Len(); i++ {
+		category := (*core.ExclusiveCategory)(categories.Index(i).UnsafePointer())
+		if category.Name != name {
+			continue
+		}
+		if !category.SingleAura {
+			if classNotes != nil {
+				*classNotes = append(*classNotes, "exclusive category "+name+" holds several auras")
+			}
+			return nil
+		}
+		effects := privateField(category, "effects")
+		members := []map[string]any{}
+		for j := 0; j < effects.Len(); j++ {
+			effect := (*core.ExclusiveEffect)(effects.Index(j).UnsafePointer())
+			members = append(members, map[string]any{"aura": effect.Aura.Label, "priority": effect.Priority,
+				"spell_id": effect.Aura.ActionID.SpellID})
+		}
+		return map[string]any{"kind": "exclusive_category", "unit": side, "category": name, "members": members}
+	}
+	return nil
+}
 
 // The stance names Rust reads, in sim/warrior/stances.go's order.
 func warriorStanceName(stance proto.WarriorStance) string {
@@ -239,6 +279,100 @@ func warriorEffects(agent core.Agent, character *core.Character) []map[string]an
 			"period_ns": nanos(time.Duration(row.Effects[2].BasePoints) * time.Second),
 		})
 	}
+	// stances.go and battle_shout.go: the stances and the shouts are single aura categories.
+	for _, name := range []string{"Stance", buffs.BattleShoutCategory} {
+		if effect := exclusiveCategoryEffect(&character.Unit, "player", name); effect != nil {
+			effects = append(effects, effect)
+		}
+	}
+	// stances.go: each stance's passive multiplies threat, and Defensive and Berserker Stance
+	// damage taken, Defensive damage dealt too, from client data. Defiance is a separate gate.
+	effects = append(effects, map[string]any{"kind": "pseudo_stat_auras", "auras": []map[string]any{
+		{"aura": "Battle Stance", "stat": "threat",
+			"multiplier": warriorBattleStancePassive.Effect(dbcenums.A_MOD_THREAT, 127).MultiplierAt(1)},
+		{"aura": "Defensive Stance", "stat": "threat",
+			"multiplier": warriorDefensiveStancePass.Effect(dbcenums.A_MOD_THREAT, 127).MultiplierAt(1)},
+		{"aura": "Defensive Stance", "stat": "damage_taken",
+			"multiplier": warriorDefensiveStancePass.Effect(dbcenums.A_MOD_DAMAGE_PERCENT_TAKEN, 127).MultiplierAt(1)},
+		{"aura": "Defensive Stance", "stat": "damage_dealt",
+			"multiplier": warriorDefensiveStancePass.Effect(dbcenums.A_MOD_DAMAGE_PERCENT_DONE, 127).MultiplierAt(1)},
+		{"aura": "Berserker Stance", "stat": "threat",
+			"multiplier": warriorBerserkerStancePass.Effect(dbcenums.A_MOD_THREAT, 127).MultiplierAt(1)},
+		{"aura": "Berserker Stance", "stat": "damage_taken",
+			"multiplier": warriorBerserkerStancePass.Effect(dbcenums.A_MOD_DAMAGE_PERCENT_TAKEN, 127).MultiplierAt(1)},
+	}})
+	// battle_shout.go: the warrior's own shout, which outbids the party's at an equal value.
+	if own := war.BattleShout; own != nil {
+		value := buffs.BattleShoutValue(0)
+		if war.UseBattleShout && war.HasBsT2 {
+			value += buffs.BattleShoutT2Bonus
+		}
+		for _, aura := range character.GetAurasWithTag(buffs.BattleShoutCategory) {
+			if aura.ActionID.Tag == 0 {
+				effects = append(effects, map[string]any{"kind": "battle_shout", "spell_id": own.ActionID.SpellID,
+					"aura": aura.Label, "value": value, "refresh_threshold_ns": nanos(warrior.ShoutExpirationThreshold)})
+			}
+		}
+	}
+	// rend.go: the client tick base and a share of attack power a tick, a Go literal.
+	rendRow := warriorRend.Highest()
+	effects = append(effects, map[string]any{
+		"kind": "rend", "spell_id": rendRow.ID, "tick_base": rendRow.PeriodicEffect().Average(core.CharacterLevel),
+		"attack_power_per_tick": 0.02, "tick_can_crit": rendRow.PeriodicCanCrit(),
+		"tick_magic": rendRow.DefenseTypeCore() == core.DefenseTypeMagic,
+	})
+	// overpower.go: the client base on normalized main hand damage.
+	effects = append(effects, map[string]any{
+		"kind": "overpower", "spell_id": warriorOverpower.ByID(11585).ID,
+		"base_damage": warriorOverpower.ByID(11585).DamageEffect().Average(core.CharacterLevel),
+	})
+	if talents.MortalStrike { // talents_arms.go registerMortalStrike
+		row := warriorMortalStrike.Highest()
+		effects = append(effects, map[string]any{
+			"kind": "mortal_strike", "spell_id": row.ID, "base_damage": row.DamageEffect().Average(core.CharacterLevel),
+		})
+	}
+	if talents.SpearingStrike { // talents_arms.go registerSpearingStrike
+		row := warriorSpearingStrike.Highest()
+		mobMultiplier := 1.0
+		if target.MobType == proto.MobType_MobTypeGiant || target.MobType == proto.MobType_MobTypeDragonkin {
+			mobMultiplier = 1 + row.Effects[2].BasePoints
+		}
+		effects = append(effects, map[string]any{
+			"kind": "spearing_strike", "spell_id": row.ID, "weapon_share": row.Effects[1].Percent(),
+			"mob_multiplier": mobMultiplier,
+		})
+	}
+	// slam.go: the client base on main hand weapon damage. Without Improved Slam its cast stops
+	// the swings, which Rust lacks.
+	slamRow := warriorSlam.Highest()
+	effects = append(effects, map[string]any{
+		"kind": "slam", "spell_id": slamRow.ID, "base_damage": slamRow.DamageEffect().Average(core.CharacterLevel),
+		"stops_swings": talents.ImprovedSlam == 0,
+	})
+	if talents.Bloodthrill > 0 { // talents_arms.go registerBloodthrill
+		effects = append(effects, map[string]any{
+			"kind": "bloodthrill", "trigger_aura": "Bloodthrill - Trigger",
+			"proc_chance": warriorBloodthrill.FractionAt(talents.Bloodthrill),
+			"window_ns":   nanos(warriorBloodthrillTriggered.ByID(1289681).Duration()),
+			"delay_ns":    nanos(core.SpellBatchWindow),
+		})
+	}
+	if talents.Weaponmaster > 0 && character.GetAura("Weaponmaster (Sword)") != nil { // talents_arms.go
+		hands := []string{}
+		swords := war.GetProcMaskForTypes(proto.WeaponType_WeaponTypeSword)
+		if swords.Matches(core.ProcMaskMeleeMH) {
+			hands = append(hands, "main")
+		}
+		if swords.Matches(core.ProcMaskMeleeOH) {
+			hands = append(hands, "off")
+		}
+		effects = append(effects, map[string]any{
+			"kind": "weaponmaster_sword", "trigger_aura": "Weaponmaster (Sword)",
+			"proc_chance":      warriorWeaponmaster.EffectAt(3).FractionAt(talents.Weaponmaster),
+			"extra_attack_tag": int32(1290261), "sword_hands": hands,
+		})
+	}
 	// heroic_strike_cleave.go: each strike's queue spell and aura, the queue delay and the base
 	// damage the strike adds to a main hand weapon swing.
 	strikes := []map[string]any{}
@@ -300,5 +434,5 @@ func warriorUnrepresented(agent core.Agent, _ *core.Character) []string {
 // Warrior auras whose gain and expiry change stats through AddStatsDynamic: recklessness.go's
 // crit.
 func warriorStatAuras(_ core.Agent, _ *core.Character) []string {
-	return []string{"Recklessness"}
+	return []string{"Recklessness", "Berserker Stance", "Battle Shout (Player)"}
 }

@@ -46,6 +46,7 @@ const COMMON_EFFECTS: &[&str] = &[
     "energize_on_use",
     "energize_proc",
     "eureka",
+    "exclusive_category",
     "extra_attack_proc",
     "fixed_uptime_aura",
     "goblin_sapper",
@@ -56,6 +57,7 @@ const COMMON_EFFECTS: &[&str] = &[
     "potion_mana",
     "player_damage_taken",
     "potion_resource",
+    "pseudo_stat_auras",
     "rage_bar",
     "read_ley_line",
     "shatter_curse",
@@ -533,6 +535,18 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
         let mut registered_prepull = 0;
         // Prepull parsing accepts only casts.
         for prepull in &rotation.prepull {
+            match prepull_pruned(prepared, prepull) {
+                Some(true) => continue,
+                Some(false) => {}
+                None => {
+                    reasons.push(format!(
+                        "prepull action {}: the pinned reference and community #622 prune its \
+                         condition differently",
+                        prepull.position
+                    ));
+                    continue;
+                }
+            }
             if let Action::CastSpell(id) = &prepull.action {
                 if let Some(spell) = rotation_spell(prepared, id) {
                     registered_prepull += 1;
@@ -670,6 +684,30 @@ fn energy_without_bar(prepared: &PreparedV2, rotation: &Rotation) -> Vec<String>
         }
     }
     reasons
+}
+
+/// Whether Go prunes a prepull action for a constant false condition, which is the only use
+/// Go makes of it; `None` when community #622 would prune it differently.
+fn prepull_pruned(prepared: &PreparedV2, prepull: &crate::rotation::Prepull) -> Option<bool> {
+    let aura = |id: &ActionId| find_aura(prepared, id);
+    let target_aura = |id: &ActionId| find_unit_aura(&prepared.target.auras, id);
+    let spell = |id: &ActionId| rotation_spell_index(prepared, id);
+    let dot = |id: &ActionId| {
+        rotation_spell_index(prepared, id).and_then(|index| dot_owner(prepared, index))
+    };
+    let lookup = Lookup {
+        aura: &aura,
+        target_aura: &target_aura,
+        spell: &spell,
+        dot: &dot,
+    };
+    let pruned = |missing| {
+        compile_condition(prepull.condition.as_ref(), &lookup, missing).never_holds()
+            && compile_condition(prepull.condition.as_ref(), &lookup, missing)
+                == crate::rotation::CompiledCondition::Pruned
+    };
+    let pinned = pruned(MissingAura::Dropped);
+    (pinned == pruned(MissingAura::Inactive)).then_some(pinned)
 }
 
 fn find_aura(prepared: &PreparedV2, id: &ActionId) -> Option<FoundAura<ActionId>> {

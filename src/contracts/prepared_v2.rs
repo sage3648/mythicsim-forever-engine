@@ -690,6 +690,24 @@ pub struct DruidFormSpell {
     pub forms: Vec<String>,
 }
 
+/// A member of an exclusive category: its aura, Go `ExclusiveEffect.Priority` and its spell.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct ExclusiveMember {
+    pub aura: String,
+    pub priority: f64,
+    pub spell_id: i32,
+}
+
+/// An aura, the pseudo stat it multiplies, `damage_taken` or `threat`, and the multiplier.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct PseudoStatAura {
+    pub aura: String,
+    pub stat: String,
+    pub multiplier: f64,
+}
+
 /// An aura and the multiplier it attaches.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -896,6 +914,11 @@ pub enum Effect {
         spend_spells: Vec<usize>,
         spend_outcome: Vec<String>,
         extra_attack_spell: usize,
+        /// Whether the trigger and the charge spender need a hit that dealt damage.
+        #[serde(default)]
+        trigger_require_damage: bool,
+        #[serde(default)]
+        spend_require_damage: bool,
     },
     /// The raid's Sunder Armor, ramped one stack a period from the pull; target armor at
     /// each stack count, as Go computes it.
@@ -1501,6 +1524,19 @@ pub enum Effect {
         cost_percent_add: f64,
         max_stacks: i32,
     },
+    /// Go `AttachMultiplicativePseudoStatBuff` on the player's damage taken or threat
+    /// multiplier, for any player aura: the gain multiplies, the expiry divides, and an aura up
+    /// from the reset is already in the prepared values.
+    PseudoStatAuras {
+        auras: Vec<PseudoStatAura>,
+    },
+    /// exclusive_effect.go: a single aura category on a unit, with each member aura's bid and
+    /// spell, in Go's registration order.
+    ExclusiveCategory {
+        unit: String,
+        category: String,
+        members: Vec<ExclusiveMember>,
+    },
     /// core/rage.go: a rage bar, with the rage each landed white hit gives.
     RageBar {
         aura: String,
@@ -1633,6 +1669,60 @@ pub enum Effect {
     HeroicStrikeQueue {
         queue_delay_ns: i64,
         strikes: Vec<QueuedStrike>,
+    },
+    /// The warrior's own Battle Shout: its aura and the value it bids for the shout category.
+    BattleShout {
+        spell_id: i32,
+        aura: String,
+        value: f64,
+        refresh_threshold_ns: i64,
+    },
+    /// Rend: a bleed whose ticks add a share of attack power at each tick.
+    Rend {
+        spell_id: i32,
+        tick_base: f64,
+        attack_power_per_tick: f64,
+        tick_can_crit: bool,
+        tick_magic: bool,
+    },
+    /// Overpower: a base on normalized main hand damage that cannot be dodged, parried or
+    /// blocked, in its window.
+    Overpower {
+        spell_id: i32,
+        base_damage: f64,
+    },
+    /// Mortal Strike: a base on normalized main hand damage.
+    MortalStrike {
+        spell_id: i32,
+        base_damage: f64,
+    },
+    /// Spearing Strike: a share of normalized main hand damage, raised against giants and
+    /// dragonkin.
+    SpearingStrike {
+        spell_id: i32,
+        weapon_share: f64,
+        mob_multiplier: f64,
+    },
+    /// Slam: a base on main hand weapon damage after its cast.
+    Slam {
+        spell_id: i32,
+        base_damage: f64,
+        stops_swings: bool,
+    },
+    /// Bloodthrill: main hand hits on a bleeding target may open the Overpower window longer.
+    Bloodthrill {
+        trigger_aura: String,
+        proc_chance: f64,
+        window_ns: i64,
+        delay_ns: i64,
+    },
+    /// Weaponmaster with a sword: melee hits of a sword hand may grant an extra main hand
+    /// attack.
+    WeaponmasterSword {
+        trigger_aura: String,
+        proc_chance: f64,
+        extra_attack_tag: i32,
+        sword_hands: Vec<String>,
     },
     /// Overpower: a dodge opens its window.
     OverpowerWindow {
@@ -1794,6 +1884,10 @@ pub enum Effect {
         uptime: f64,
         tick_length_ns: i64,
         start_time_ns: i64,
+        /// buffs.go ApplyFixedShoutAura: the player's own aura whose gain brings this one back
+        /// a reaction time after it runs out.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        chained_by: Option<String>,
     },
 }
 
@@ -1912,6 +2006,8 @@ impl Effect {
             Effect::RageOfTheFarseer { .. } => "rage_of_the_farseer",
             Effect::RockbiterWeapon { .. } => "rockbiter_weapon",
             Effect::RageBar { .. } => "rage_bar",
+            Effect::ExclusiveCategory { .. } => "exclusive_category",
+            Effect::PseudoStatAuras { .. } => "pseudo_stat_auras",
             Effect::ExtraAttackProc { .. } => "extra_attack_proc",
             Effect::PlayerDamageTaken { .. } => "player_damage_taken",
             Effect::PotionResource { .. } => "potion_resource",
@@ -1931,6 +2027,14 @@ impl Effect {
             Effect::AngerManagement { .. } => "anger_management",
             Effect::HeroicStrikeQueue { .. } => "heroic_strike_queue",
             Effect::OverpowerWindow { .. } => "overpower_window",
+            Effect::BattleShout { .. } => "battle_shout",
+            Effect::Rend { .. } => "rend",
+            Effect::Overpower { .. } => "overpower",
+            Effect::MortalStrike { .. } => "mortal_strike",
+            Effect::SpearingStrike { .. } => "spearing_strike",
+            Effect::Slam { .. } => "slam",
+            Effect::Bloodthrill { .. } => "bloodthrill",
+            Effect::WeaponmasterSword { .. } => "weaponmaster_sword",
             Effect::AimedShot { .. } => "aimed_shot",
             Effect::SniperShot { .. } => "sniper_shot",
             Effect::MultiShot { .. } => "multi_shot",

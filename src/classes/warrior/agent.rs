@@ -8,6 +8,7 @@ use crate::{
 
 use super::{
     spells::{
+        battle_shout::{self, BattleShout},
         berserker_rage::{self, BerserkerRage},
         bloodrage::{self, Bloodrage},
         bloodthirst::{self, Bloodthirst},
@@ -15,15 +16,20 @@ use super::{
         execute::{self, Execute},
         hamstring,
         heroic_strike::{self, Queue, Strike},
-        overpower,
-        stances::{Stance, StanceLock},
+        mortal_strike, overpower,
+        rend::{self, Rend},
+        slam,
+        spearing_strike::{self, SpearingStrike},
+        stances::{self, Stance, StanceCast, StanceLock},
         whirlwind,
     },
     talents::{
         anger_management::{self, AngerManagement},
+        bloodthrill::{self, Bloodthrill},
         deep_wounds::{self, DeepWounds},
         flurry::{self, Flurry},
         unbridled_wrath::{self, UnbridledWrath},
+        weaponmaster::{self, WeaponmasterSword},
     },
 };
 
@@ -48,6 +54,14 @@ pub(crate) enum WarriorSpell {
     Strike(usize),
     /// A strike's queue cast, by strike index.
     QueueStrike(usize),
+    /// A stance cast, by its position among the stances.
+    Stance(usize),
+    BattleShout,
+    Rend,
+    Overpower,
+    MortalStrike,
+    SpearingStrike,
+    Slam,
 }
 
 /// Class auras with Rust behavior.
@@ -62,6 +76,8 @@ pub(crate) enum WarriorAura {
     BerserkerRage,
     /// A strike's queue aura, by strike index.
     Queue(usize),
+    BloodthrillTrigger,
+    WeaponmasterSword,
 }
 
 /// The class periodic tag of a strike's queue delay, plus the strike index.
@@ -88,6 +104,22 @@ pub(crate) struct WarriorAgent {
     queue: Queue,
     /// Whether each spell's proc mask holds `ProcMaskEmpty`.
     empty_mask: Vec<bool>,
+    /// Whether each spell's proc mask holds a main hand bit.
+    main_hand_mask: Vec<bool>,
+    /// Whether each spell's proc mask holds a bit of a hand that wields a sword.
+    sword_mask: Vec<bool>,
+    /// Go `WarriorInputs.DefaultStance`, which every reset restores.
+    default_stance: Stance,
+    stances: Vec<StanceCast>,
+    max_retained_rage: f64,
+    battle_shout: Option<BattleShout>,
+    rend: Option<Rend>,
+    overpower: f64,
+    mortal_strike: f64,
+    spearing_strike: Option<SpearingStrike>,
+    slam: f64,
+    bloodthrill: Option<Bloodthrill>,
+    weaponmaster: Option<WeaponmasterSword>,
 }
 
 /// Whether a prepared input carries the effect of a kind.
@@ -125,10 +157,8 @@ impl WarriorAgent {
             prepared.effects.iter().find_map(|effect| match effect {
                 Effect::WarriorStances { stances, .. } => stances
                     .iter()
-                    .find(|s| s.spell_id == id.spell_id && s.stance == name)
-                    .map(|_| {
-                        WarriorSpell::StanceLocked(StanceLock::Change(Stance::from_name(name)))
-                    }),
+                    .position(|s| s.spell_id == id.spell_id && s.stance == name)
+                    .map(WarriorSpell::Stance),
                 _ => None,
             })
         };
@@ -148,6 +178,12 @@ impl WarriorAgent {
             "battle_stance" => stance("battle"),
             "defensive_stance" => stance("defensive"),
             "berserker_stance" => stance("berserker"),
+            "battle_shout" if has("battle_shout") => Some(WarriorSpell::BattleShout),
+            "rend" if spell.dot.is_some() && has("rend") => Some(WarriorSpell::Rend),
+            "overpower" if has("overpower") => Some(WarriorSpell::Overpower),
+            "mortal_strike" if has("mortal_strike") => Some(WarriorSpell::MortalStrike),
+            "spearing_strike" if has("spearing_strike") => Some(WarriorSpell::SpearingStrike),
+            "slam" if has("slam") => Some(WarriorSpell::Slam),
             "retaliation" if has("warrior_stances") => {
                 Some(WarriorSpell::StanceLocked(StanceLock::Battle))
             }
@@ -174,6 +210,12 @@ impl WarriorAgent {
                 } => {
                     auras.push((trigger_aura.clone(), WarriorAura::FlurryTrigger));
                     auras.push((aura.clone(), WarriorAura::Flurry));
+                }
+                Effect::Bloodthrill { trigger_aura, .. } => {
+                    auras.push((trigger_aura.clone(), WarriorAura::BloodthrillTrigger))
+                }
+                Effect::WeaponmasterSword { trigger_aura, .. } => {
+                    auras.push((trigger_aura.clone(), WarriorAura::WeaponmasterSword))
                 }
                 Effect::OverpowerWindow { trigger_aura, .. } => {
                     auras.push((trigger_aura.clone(), WarriorAura::OverpowerTrigger))
@@ -209,6 +251,17 @@ impl WarriorAgent {
                 })
                 .flatten()
         })?;
+        fight.agent.main_hand_mask = prepared
+            .player
+            .spells
+            .iter()
+            .map(|spell| {
+                spell
+                    .proc_mask
+                    .iter()
+                    .any(|mask| mask == "ProcMaskMeleeMHAuto" || mask == "ProcMaskMeleeMHSpecial")
+            })
+            .collect();
         fight.agent.empty_mask = prepared
             .player
             .spells
@@ -230,8 +283,111 @@ impl WarriorAgent {
         };
         for effect in &prepared.effects {
             match effect {
-                Effect::WarriorStances { default_stance, .. } => {
-                    fight.agent.stance = Stance::from_name(default_stance);
+                Effect::WarriorStances {
+                    default_stance,
+                    stances,
+                    max_retained_rage,
+                } => {
+                    fight.agent.default_stance = Stance::from_name(default_stance);
+                    fight.agent.stance = fight.agent.default_stance;
+                    fight.agent.max_retained_rage = *max_retained_rage;
+                    for entry in stances {
+                        let aura = fight.player_aura(&entry.aura)?;
+                        let metrics = rage_metrics(&mut fight, entry.spell_id);
+                        fight.agent.stances.push(StanceCast {
+                            stance: Stance::from_name(&entry.stance),
+                            aura,
+                            metrics,
+                        });
+                    }
+                }
+                Effect::BattleShout {
+                    aura,
+                    value,
+                    refresh_threshold_ns,
+                    ..
+                } => {
+                    let aura = fight.player_aura(aura)?;
+                    let category = fight
+                        .exclusive
+                        .iter()
+                        .position(|category| category.members.iter().any(|m| m.aura == aura))
+                        .ok_or("Battle Shout has no exclusive category".to_string())?;
+                    fight.agent.battle_shout = Some(BattleShout {
+                        aura,
+                        category,
+                        value: *value,
+                        refresh_threshold: *refresh_threshold_ns,
+                    });
+                }
+                Effect::Rend {
+                    spell_id,
+                    tick_base,
+                    attack_power_per_tick,
+                    tick_can_crit,
+                    ..
+                } => {
+                    let spell = find(&fight, *spell_id, 0)?;
+                    let dot = fight.spells[spell]
+                        .dot
+                        .ok_or("Rend has no dot".to_string())?;
+                    fight.agent.rend = Some(Rend {
+                        dot,
+                        tick_base: *tick_base,
+                        attack_power_per_tick: *attack_power_per_tick,
+                        tick_can_crit: *tick_can_crit,
+                    });
+                }
+                Effect::Overpower { base_damage, .. } => fight.agent.overpower = *base_damage,
+                Effect::MortalStrike { base_damage, .. } => {
+                    fight.agent.mortal_strike = *base_damage
+                }
+                Effect::SpearingStrike {
+                    weapon_share,
+                    mob_multiplier,
+                    ..
+                } => {
+                    fight.agent.spearing_strike = Some(SpearingStrike {
+                        weapon_share: *weapon_share,
+                        mob_multiplier: *mob_multiplier,
+                    })
+                }
+                Effect::Slam { base_damage, .. } => fight.agent.slam = *base_damage,
+                Effect::WeaponmasterSword {
+                    trigger_aura,
+                    proc_chance,
+                    extra_attack_tag,
+                    sword_hands,
+                } => {
+                    let extra_attack = fight
+                        .spells
+                        .iter()
+                        .position(|spell| {
+                            spell.id.other_id == "OtherActionAttack"
+                                && spell.id.tag == *extra_attack_tag
+                        })
+                        .ok_or("Weaponmaster has no extra attack".to_string())?;
+                    fight.spells[extra_attack].behavior =
+                        crate::core::fight::SpellBehavior::MeleeAuto(
+                            crate::core::fight::melee::Hand::Main,
+                        );
+                    let hand_bits = |mask: &str| {
+                        (sword_hands.iter().any(|h| h == "main")
+                            && matches!(mask, "ProcMaskMeleeMHAuto" | "ProcMaskMeleeMHSpecial"))
+                            || (sword_hands.iter().any(|h| h == "off")
+                                && matches!(mask, "ProcMaskMeleeOHAuto" | "ProcMaskMeleeOHSpecial"))
+                    };
+                    fight.agent.sword_mask = prepared
+                        .player
+                        .spells
+                        .iter()
+                        .map(|spell| spell.proc_mask.iter().any(|mask| hand_bits(mask)))
+                        .collect();
+                    fight.agent.weaponmaster = Some(WeaponmasterSword {
+                        trigger: fight.player_aura(trigger_aura)?,
+                        proc_chance: *proc_chance,
+                        extra_attack,
+                    });
                 }
                 Effect::Bloodthirst {
                     attack_power_share,
@@ -308,7 +464,10 @@ impl WarriorAgent {
                 }
                 Effect::SunderArmor { blocked, .. } => fight.agent.sunder_blocked = *blocked,
                 Effect::DeepWounds {
-                    spell_id, share, ..
+                    spell_id,
+                    share,
+                    tick_can_crit,
+                    ..
                 } => {
                     let spell = find(&fight, *spell_id, 0)?;
                     let dot = fight.spells[spell]
@@ -318,6 +477,7 @@ impl WarriorAgent {
                         spell,
                         dot,
                         share: *share,
+                        tick_can_crit: *tick_can_crit,
                     });
                 }
                 Effect::UnbridledWrath {
@@ -384,6 +544,31 @@ impl WarriorAgent {
                     fight.agent.queue = queue;
                 }
                 _ => {}
+            }
+        }
+        for effect in &prepared.effects {
+            if let Effect::Bloodthrill {
+                trigger_aura,
+                proc_chance,
+                window_ns,
+                ..
+            } = effect
+            {
+                let rend = fight
+                    .agent
+                    .rend
+                    .ok_or("Bloodthrill needs Rend".to_string())?;
+                let window = fight
+                    .agent
+                    .overpower_window
+                    .ok_or("Bloodthrill needs the Overpower window".to_string())?;
+                fight.agent.bloodthrill = Some(Bloodthrill {
+                    trigger: fight.player_aura(trigger_aura)?,
+                    proc_chance: *proc_chance,
+                    window_duration: *window_ns,
+                    overpower_window: window,
+                    rend_dot: rend.dot,
+                });
             }
         }
         Ok(fight)
@@ -456,6 +641,39 @@ impl Agent for WarriorAgent {
                     fight.start_class_periodic(tag, delay, 1, crate::core::fight::PRIORITY_GCD);
                 }
             }
+            WarriorSpell::Stance(index) => {
+                let cast = fight.agent.stances[index];
+                let retained = fight.agent.max_retained_rage;
+                fight.agent.stance = stances::change(fight, cast, retained);
+            }
+            WarriorSpell::BattleShout => {
+                let params = fight.agent.battle_shout.expect("Battle Shout is bound");
+                battle_shout::apply(fight, spell, target, params);
+            }
+            WarriorSpell::Rend => {
+                let params = fight.agent.rend.expect("Rend is bound");
+                rend::apply(fight, spell, target, params);
+            }
+            WarriorSpell::Overpower => {
+                let base = fight.agent.overpower;
+                let window = fight.agent.overpower_window.expect("the window is bound");
+                overpower::apply(fight, spell, target, base, window);
+            }
+            WarriorSpell::MortalStrike => {
+                let base = fight.agent.mortal_strike;
+                mortal_strike::apply(fight, spell, target, base);
+            }
+            WarriorSpell::SpearingStrike => {
+                let params = fight
+                    .agent
+                    .spearing_strike
+                    .expect("Spearing Strike is bound");
+                spearing_strike::apply(fight, spell, target, params);
+            }
+            WarriorSpell::Slam => {
+                let base = fight.agent.slam;
+                slam::apply(fight, spell, target, base);
+            }
             WarriorSpell::SunderArmor | WarriorSpell::StanceLocked(_) => {
                 panic!("the gate keeps {behavior:?} from being cast")
             }
@@ -478,6 +696,23 @@ impl Agent for WarriorAgent {
             // sunder_armor.go CanApplySunderAura: the warrior's own stacks, or an empty category.
             WarriorSpell::SunderArmor => !fight.agent.sunder_blocked,
             WarriorSpell::StanceLocked(lock) => lock.allows(stance),
+            // stances.go: a stance cast needs another stance.
+            WarriorSpell::Stance(index) => fight.agent.stances[index].stance != stance,
+            WarriorSpell::BattleShout => {
+                battle_shout::condition(fight, fight.agent.battle_shout.expect("bound"))
+            }
+            // rend.go: Battle or Defensive Stance.
+            WarriorSpell::Rend => matches!(stance, Stance::Battle | Stance::Defensive),
+            // overpower.go: Battle Stance with the window open.
+            WarriorSpell::Overpower => {
+                stance == Stance::Battle
+                    && fight
+                        .agent
+                        .overpower_window
+                        .is_some_and(|window| fight.aura(window).active)
+            }
+            // talents_arms.go: Spearing Strike requires Battle Stance.
+            WarriorSpell::SpearingStrike => stance == Stance::Battle,
             WarriorSpell::QueueStrike(index) => {
                 heroic_strike::queue_condition(fight, &fight.agent.queue, index)
             }
@@ -539,12 +774,22 @@ impl Agent for WarriorAgent {
     }
 
     fn on_dot_tick(fight: &mut Fight<Self>, dot: DotId, behavior: WarriorSpell) {
-        if behavior == WarriorSpell::DeepWounds {
-            deep_wounds::tick(fight, dot);
+        match behavior {
+            WarriorSpell::DeepWounds => {
+                let params = fight.agent.deep_wounds.expect("Deep Wounds is bound");
+                deep_wounds::tick(fight, dot, params.tick_can_crit);
+            }
+            WarriorSpell::Rend => {
+                let params = fight.agent.rend.expect("Rend is bound");
+                rend::tick(fight, dot, params);
+            }
+            _ => {}
         }
     }
 
     fn reset(fight: &mut Fight<Self>) {
+        // Go Warrior.Reset: the default stance.
+        fight.agent.stance = fight.agent.default_stance;
         if let Some(params) = fight.agent.anger_management {
             anger_management::reset(fight, params);
         }
@@ -605,6 +850,16 @@ impl Agent for WarriorAgent {
                 let params = fight.agent.flurry.expect("Flurry is bound");
                 flurry::on_hit(fight, params, spell, result);
             }
+            WarriorAura::BloodthrillTrigger => {
+                let params = fight.agent.bloodthrill.expect("Bloodthrill is bound");
+                let main_hand = fight.agent.main_hand_mask[spell];
+                bloodthrill::on_hit(fight, params, spell, main_hand, result);
+            }
+            WarriorAura::WeaponmasterSword => {
+                let params = fight.agent.weaponmaster.expect("Weaponmaster is bound");
+                let sword = fight.agent.sword_mask[spell];
+                weaponmaster::on_hit(fight, params, spell, sword, result);
+            }
             WarriorAura::OverpowerTrigger => {
                 let window = fight.agent.overpower_window.expect("bound");
                 overpower::on_hit(fight, window, spell, result);
@@ -620,9 +875,16 @@ impl Agent for WarriorAgent {
         _spell: SpellId,
         _result: SpellResult,
     ) {
-        if kind == WarriorAura::UnbridledWrath {
-            let params = fight.agent.unbridled_wrath.expect("bound");
-            unbridled_wrath::grant(fight, params);
+        match kind {
+            WarriorAura::UnbridledWrath => {
+                let params = fight.agent.unbridled_wrath.expect("bound");
+                unbridled_wrath::grant(fight, params);
+            }
+            WarriorAura::BloodthrillTrigger => {
+                let params = fight.agent.bloodthrill.expect("bound");
+                bloodthrill::open(fight, params);
+            }
+            _ => {}
         }
     }
 }

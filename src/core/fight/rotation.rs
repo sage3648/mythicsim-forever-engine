@@ -92,9 +92,40 @@ impl<A: Agent> Fight<A> {
 
     /// Go's prepull registration: each castable action at its time, in a stable time order.
     pub(crate) fn compile_prepull(&self, rotation: &Rotation) -> Vec<(i64, SpellId)> {
+        let find = |side: Side, id: &ActionId| {
+            let tracker = &self.trackers[side.index()];
+            tracker.find_by_id(id).map(|index| FoundAura {
+                aura: AuraRef { side, index },
+                max_stacks: tracker.auras[index].max_stacks,
+            })
+        };
+        let aura = |id: &ActionId| find(Side::Player, id);
+        let target_aura = |id: &ActionId| find(Side::Target, id);
+        let spell = |id: &ActionId| self.apl_spell(id);
+        let dot = |id: &ActionId| {
+            self.apl_spell(id)
+                .and_then(|spell| match self.spells[spell].dot {
+                    Some(_) => Some(spell),
+                    None => self.spells[spell].related_dot_spell.filter(|&related| {
+                        self.spells.get(related).is_some_and(|s| s.dot.is_some())
+                    }),
+                })
+        };
+        let lookup = Lookup {
+            aura: &aura,
+            target_aura: &target_aura,
+            spell: &spell,
+            dot: &dot,
+        };
         let mut prepull: Vec<(i64, SpellId)> = rotation
             .prepull
             .iter()
+            // Go newAPLAction: a constant false condition drops the action; any other
+            // condition is never evaluated before the prepull cast.
+            .filter(|prepull| {
+                compile_condition(prepull.condition.as_ref(), &lookup, MissingAura::Dropped)
+                    != CompiledCondition::Pruned
+            })
             .filter_map(|prepull| match &prepull.action {
                 ParsedAction::CastSpell(id) => self
                     .apl_cast_spell(id)

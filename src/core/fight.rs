@@ -16,6 +16,7 @@ pub(crate) mod damage_taken;
 mod dot;
 mod enemy;
 pub(crate) mod energy;
+pub(crate) mod exclusive;
 mod log;
 pub(crate) mod melee;
 pub(crate) mod metrics;
@@ -522,6 +523,10 @@ pub(crate) struct Player {
     pub(crate) school_damage_dealt_multiplier: [f64; 8],
     /// Go `PseudoStats.DamageTakenMultiplier`, which auras can multiply.
     pub(crate) damage_taken_multiplier: f64,
+    /// Go `PseudoStats.ThreatMultiplier`, which stances multiply.
+    pub(crate) threat_multiplier: f64,
+    /// Go `PseudoStats.DamageDealtMultiplier`, which Defensive Stance multiplies.
+    pub(crate) damage_dealt_multiplier: f64,
     /// Go `PseudoStats.CastSpeedMultiplier`.
     pub(crate) cast_speed_multiplier: f64,
     /// Go `PseudoStats.AttackSpeedMultiplier` and `MeleeSpeedMultiplier`.
@@ -577,6 +582,9 @@ pub(crate) struct Windfury {
     pub(crate) proc_aura: AuraRef,
     pub(crate) spend_spells: Vec<bool>,
     pub(crate) extra: SpellId,
+    /// Go `RequireDamageDealt` of the trigger and of the charge spender.
+    pub(crate) trigger_require_damage: bool,
+    pub(crate) spend_require_damage: bool,
 }
 
 /// Go common/shared/shared_utils.go `applySpellDataDamageProc`: an item proc that casts a
@@ -620,6 +628,8 @@ pub(crate) struct FixedUptime {
     start_time: i64,
     /// The aura's own duration, which the first roll replaces for its activation only.
     duration: i64,
+    /// buffs.go ApplyFixedShoutAura: the player's own aura whose gain brings this one back.
+    chained_by: Option<AuraRef>,
 }
 
 /// Go `spiritRegenAttribution`: the spirit regeneration state before the source applied.
@@ -819,6 +829,12 @@ pub(crate) enum Action {
     },
     /// The party Windfury Totem's periodic refresh.
     WindfuryRefresh,
+    /// buffs.go ApplyFixedShoutAura's chain behind the player's own shout: the comeback a
+    /// reaction time after the own aura runs out, then its one periodic tick.
+    FixedShoutChain {
+        index: usize,
+        periodic: bool,
+    },
     /// A computed result dealt later: Go `NewDelayedAction` with `DealDamage`.
     DelayedDamage {
         spell: SpellId,
@@ -840,6 +856,14 @@ pub(crate) struct Periodic {
     pub(crate) num_ticks: i32,
     pub(crate) done: i32,
     pub(crate) priority: i32,
+}
+
+/// A player pseudo stat an aura multiplies.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum PseudoStat {
+    DamageTaken,
+    Threat,
+    DamageDealt,
 }
 
 /// Go `ActionPriority`.
@@ -882,8 +906,13 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) energize_procs: Vec<energy::EnergizeProc>,
     /// Go `rageBar`, for a player that has one.
     pub(crate) rage: Option<rage::RageBar>,
+    /// Single aura exclusive categories the runtime enforces.
+    pub(crate) exclusive: Vec<exclusive::Category>,
     /// Player auras that multiply the player's damage taken, by aura index.
-    pub(crate) damage_taken_auras: Vec<(usize, f64)>,
+    pub(crate) damage_taken_auras: Vec<(usize, f64, PseudoStat)>,
+    /// Set while the reset activates permanent auras, whose pseudo stats the prepared values
+    /// already hold.
+    pub(crate) resetting_auras: bool,
     /// The last hit on the player's resistance multiplier and the damage after it, as Go
     /// `SpellResult` carries them for rage from damage taken.
     pub(crate) player_hit_resistance: (f64, f64),
@@ -1882,8 +1911,10 @@ impl<A: Agent> Fight<A> {
             min_task_time: NEVER_EXPIRES,
             energy: None,
             rage,
+            exclusive: Vec::new(),
             player_hit_resistance: (0.0, 1.0),
             damage_taken_auras: Vec::new(),
+            resetting_auras: false,
             self_target: None,
             goblin_sapper: None,
             enemy: None,
@@ -1897,6 +1928,8 @@ impl<A: Agent> Fight<A> {
                 spell_cost_percent_modifier: config.initial.spell_cost_percent_modifier,
                 school_damage_dealt_multiplier: config.school_damage_dealt_multiplier,
                 damage_taken_multiplier: prepared.player.pseudo_stats.damage_taken_multiplier,
+                threat_multiplier: config.threat_multiplier,
+                damage_dealt_multiplier: config.damage_dealt_multiplier,
                 cast_speed_multiplier: config.initial.cast_speed_multiplier,
                 attack_speed_multiplier: config.melee.attack_speed_multiplier,
                 melee_speed_multiplier: config.melee.melee_speed_multiplier,
@@ -2017,8 +2050,13 @@ impl<A: Agent> Fight<A> {
                 uptime,
                 tick_length_ns,
                 start_time_ns,
+                chained_by,
             } = effect
             {
+                let chained_by = match chained_by {
+                    Some(label) => Some(fight.player_aura(label)?),
+                    None => None,
+                };
                 let aura = fight.player_aura(aura)?;
                 let duration = fight.aura(aura).duration;
                 let ticks_per_aura = duration as f64 / *tick_length_ns as f64;
@@ -2033,6 +2071,7 @@ impl<A: Agent> Fight<A> {
                     tick_length: *tick_length_ns,
                     start_time: *start_time_ns,
                     duration,
+                    chained_by,
                 });
             }
         }
@@ -2086,10 +2125,43 @@ impl<A: Agent> Fight<A> {
             if let Effect::PlayerDamageTaken { auras } = effect {
                 for entry in auras {
                     let aura = fight.player_aura(&entry.aura)?;
+                    fight.damage_taken_auras.push((
+                        aura.index,
+                        entry.multiplier,
+                        PseudoStat::DamageTaken,
+                    ));
+                }
+            }
+            if let Effect::PseudoStatAuras { auras } = effect {
+                for entry in auras {
+                    let aura = fight.player_aura(&entry.aura)?;
+                    let stat = match entry.stat.as_str() {
+                        "damage_taken" => PseudoStat::DamageTaken,
+                        "threat" => PseudoStat::Threat,
+                        "damage_dealt" => PseudoStat::DamageDealt,
+                        other => return Err(format!("pseudo stat {other} is not supported")),
+                    };
                     fight
                         .damage_taken_auras
-                        .push((aura.index, entry.multiplier));
+                        .push((aura.index, entry.multiplier, stat));
                 }
+            }
+        }
+        for effect in effects {
+            if let Effect::ExclusiveCategory { unit, members, .. } = effect {
+                let side = if unit == "target" {
+                    Side::Target
+                } else {
+                    Side::Player
+                };
+                let mut entries = Vec::new();
+                for member in members {
+                    let index = fight.trackers[side.index()]
+                        .find(&member.aura)
+                        .ok_or_else(|| format!("aura {} is not registered", member.aura))?;
+                    entries.push((AuraRef { side, index }, member.priority, member.spell_id));
+                }
+                fight.exclusive.push(exclusive::Category::new(entries));
             }
         }
         if let Some(bar) = fight.rage.as_mut() {
@@ -2192,6 +2264,8 @@ impl<A: Agent> Fight<A> {
                 proc_aura,
                 spend_spells,
                 extra_attack_spell,
+                trigger_require_damage,
+                spend_require_damage,
                 ..
             } = effect
             {
@@ -2218,6 +2292,8 @@ impl<A: Agent> Fight<A> {
                     proc_aura: fight.player_aura(proc_aura)?,
                     spend_spells: mask(spend_spells),
                     extra: *extra_attack_spell,
+                    trigger_require_damage: *trigger_require_damage,
+                    spend_require_damage: *spend_require_damage,
                 });
             }
         }
@@ -2524,6 +2600,8 @@ impl<A: Agent> Fight<A> {
             player.spell_cost_percent_modifier = initial.spell_cost_percent_modifier;
             player.school_damage_dealt_multiplier = self.config.school_damage_dealt_multiplier;
             player.damage_taken_multiplier = self.config.damage_taken_multiplier;
+            player.threat_multiplier = self.config.threat_multiplier;
+            player.damage_dealt_multiplier = self.config.damage_dealt_multiplier;
             player.cast_speed_multiplier = initial.cast_speed_multiplier;
             player.attack_speed_multiplier = self.config.melee.attack_speed_multiplier;
             player.melee_speed_multiplier = self.config.melee.melee_speed_multiplier;
@@ -2733,6 +2811,20 @@ impl<A: Agent> Fight<A> {
             Action::SunderTick(done) => self.sunder_tick(done),
             Action::DeathCheck => self.death_check(),
             Action::FixedUptime { index, first } => self.fixed_uptime_roll(index, first),
+            Action::FixedShoutChain { index, periodic } => {
+                let fixed = self.fixed_uptime[index];
+                self.activate_aura(fixed.aura);
+                if !periodic {
+                    self.schedule(
+                        self.now + fixed.duration + 1,
+                        PRIORITY_GCD,
+                        Action::FixedShoutChain {
+                            index,
+                            periodic: true,
+                        },
+                    );
+                }
+            }
             Action::WindfuryRefresh => {
                 let windfury = self.windfury.clone().expect("Windfury Totem is bound");
                 self.activate_aura(windfury.totem);
@@ -2762,6 +2854,23 @@ impl<A: Agent> Fight<A> {
     /// Go ApplyFixedUptimeAura's actions. The periodic roll activates the aura, adding a stack
     /// when it stacks, and comes back a period later. The first roll activates it once, for a
     /// random share of its duration, so the collapsed chance keeps the uptime.
+    /// The chain's OnGain on the player's own aura: come back a reaction time after it ends.
+    pub(crate) fn fixed_shout_chain_gain(&mut self, aura: AuraRef) {
+        for index in 0..self.fixed_uptime.len() {
+            if self.fixed_uptime[index].chained_by == Some(aura) {
+                let at = self.aura(aura).expires + self.config.reaction;
+                self.schedule(
+                    at,
+                    PRIORITY_GCD,
+                    Action::FixedShoutChain {
+                        index,
+                        periodic: false,
+                    },
+                );
+            }
+        }
+    }
+
     fn fixed_uptime_roll(&mut self, index: usize, first: bool) {
         let fixed = self.fixed_uptime[index];
         if first {

@@ -1022,18 +1022,19 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 	// buffs.go ApplyFixedShoutAura: the party's Battle Shout is up for good, through
 	// ApplyFixedUptimeAura's rolls: a period of its duration and a nanosecond, and a first try a
 	// nanosecond before the pull with a rolled duration. Behind the player's own shout it chains
-	// instead. A warrior's own shout gains only from its cast, which Rust has no behavior for, so
-	// the gate rejects a rotation that reaches it and the chain never acts.
+	// instead: each time the player's own shout gains, the party's comes back a reaction time
+	// after it runs out, and once more a duration and a nanosecond later.
 	if aura := character.GetAura("Battle Shout (External)"); aura != nil {
-		for _, own := range character.GetAurasWithTag(buffs.BattleShoutCategory) {
-			if own.ActionID.Tag == 0 && character.Class != proto.Class_ClassWarrior {
-				*unrepresented = append(*unrepresented, "the party's Battle Shout chains behind the player's own")
-			}
-		}
-		effects = append(effects, map[string]any{
+		effect := map[string]any{
 			"kind": "fixed_uptime_aura", "aura": aura.Label, "uptime": 1.0,
 			"tick_length_ns": nanos(aura.Duration + 1), "start_time_ns": int64(-1),
-		})
+		}
+		for _, own := range character.GetAurasWithTag(buffs.BattleShoutCategory) {
+			if own.ActionID.Tag == 0 {
+				effect["chained_by"] = own.Label
+			}
+		}
+		effects = append(effects, effect)
 	}
 	// buffs/drivers.go driveSunderArmor: the raid's Sunder Armor ramps to its maximum stacks, one a
 	// default GCD from the pull, Go literals. Target armor at each stack count is read from

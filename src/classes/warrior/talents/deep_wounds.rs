@@ -15,6 +15,8 @@ pub(crate) struct DeepWounds {
     pub(crate) spell: SpellId,
     pub(crate) dot: DotId,
     pub(crate) share: f64,
+    /// spelldata `TickOutcome`: the client row lets its ticks roll the physical crit.
+    pub(crate) tick_can_crit: bool,
 }
 
 /// The trigger's OnSpellHitDealt, which acts at once. `empty_mask` is whether the spell's proc
@@ -45,7 +47,7 @@ pub(crate) fn apply<A: Agent>(
 ) {
     // Go CalcAndDealOutcome with OutcomeAlwaysHitNoHitCounter: no damage and no counter.
     let state = &fight.spells[spell];
-    let threat = state.flat_threat_bonus * fight.config.threat_multiplier;
+    let threat = state.flat_threat_bonus * fight.player.threat_multiplier;
     let result = SpellResult {
         target,
         outcome: OUTCOME_HIT,
@@ -71,10 +73,10 @@ pub(crate) fn apply<A: Agent>(
     fight.dots[dot].snapshot_base = average.mul_add(params.share, owed) / f64::from(ticks);
 }
 
-/// A tick: the stored amount on the physical periodic path, with a plain tick outcome.
-pub(crate) fn tick<A: Agent>(fight: &mut Fight<A>, dot: DotId) {
+/// A tick: the stored amount on the physical periodic path.
+pub(crate) fn tick<A: Agent>(fight: &mut Fight<A>, dot: DotId, tick_can_crit: bool) {
     let state = &fight.dots[dot];
     let (spell, side, base) = (state.spell, state.side, state.snapshot_base);
-    let result = fight.calc_physical_periodic_damage(spell, side, base);
+    let result = fight.calc_physical_periodic_damage(spell, side, base, tick_can_crit);
     fight.deal_damage(spell, result, true);
 }

@@ -145,7 +145,7 @@ impl<A: Agent> Fight<A> {
         } else {
             state.damage_multiplier_additive + state.direct_damage_multiplier_additive
         };
-        let internal = self.config.damage_dealt_multiplier
+        let internal = self.player.damage_dealt_multiplier
             * self.school_value(spell, &self.player.school_damage_dealt_multiplier)
             * self.config.table.damage_dealt_multiplier;
         internal * state.damage_multiplier * additive
@@ -348,7 +348,7 @@ impl<A: Agent> Fight<A> {
         result.threat = if result.landed() {
             let state = &self.spells[spell];
             (result.damage * state.threat_multiplier + state.flat_threat_bonus)
-                * self.config.threat_multiplier
+                * self.player.threat_multiplier
         } else {
             0.0
         };
@@ -410,7 +410,7 @@ impl<A: Agent> Fight<A> {
         result.threat = if result.landed() {
             let state = &self.spells[spell];
             (result.damage * state.threat_multiplier + state.flat_threat_bonus)
-                * self.config.threat_multiplier
+                * self.player.threat_multiplier
         } else {
             0.0
         };
@@ -567,7 +567,7 @@ impl<A: Agent> Fight<A> {
 
     /// Go `OutcomeTickPhysicalCrit`: a tick that rolls the physical crit, keeping a partial
     /// resist in its counters.
-    fn outcome_tick_physical_crit(&mut self, spell: SpellId, result: &mut SpellResult) {
+    pub(crate) fn outcome_tick_physical_crit(&mut self, spell: SpellId, result: &mut SpellResult) {
         let partial = result.outcome & OUTCOME_PARTIAL != 0;
         let target = result.target.index();
         if self.random("Physical Crit Roll") < self.physical_crit_chance(spell) {
@@ -635,7 +635,7 @@ impl<A: Agent> Fight<A> {
         result.threat = if result.landed() {
             let state = &self.spells[spell];
             (result.damage * state.threat_multiplier + state.flat_threat_bonus)
-                * self.config.threat_multiplier
+                * self.player.threat_multiplier
         } else {
             0.0
         };

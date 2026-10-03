@@ -295,6 +295,9 @@ pub struct Prepull {
     /// Nanoseconds relative to the pull, never positive.
     pub do_at_ns: i64,
     pub action: Action,
+    /// Go compiles a prepull action's condition only to prune it: a constant false drops the
+    /// action, and anything else never stops it from running.
+    pub condition: Option<Value>,
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]
@@ -389,7 +392,11 @@ fn parse_prepull(item: &Json, position: usize) -> Result<Option<Prepull>, String
         .get("action")
         .and_then(Json::as_object)
         .ok_or("no action")?;
-    let action = match single(action, &["uuid"])? {
+    let condition = match action.get("condition") {
+        Some(condition) => Some(parse_value(condition).map_err(|reasons| reasons.join("; "))?),
+        None => None,
+    };
+    let action = match single(action, &["uuid", "condition"])? {
         ("castSpell", config) => Action::CastSpell(parse_cast_spell(config)?),
         (name, _) => return Err(format!("action {name} is unsupported")),
     };
@@ -397,6 +404,7 @@ fn parse_prepull(item: &Json, position: usize) -> Result<Option<Prepull>, String
         position,
         do_at_ns,
         action,
+        condition,
     }))
 }
 

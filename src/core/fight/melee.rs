@@ -605,7 +605,7 @@ impl<A: Agent> Fight<A> {
         result.threat = if result.landed() {
             let state = &self.spells[spell];
             (result.damage * state.threat_multiplier + state.flat_threat_bonus)
-                * self.config.threat_multiplier
+                * self.player.threat_multiplier
         } else {
             0.0
         };
@@ -689,20 +689,22 @@ impl<A: Agent> Fight<A> {
         result.threat = if result.landed() {
             let state = &self.spells[spell];
             (result.damage * state.threat_multiplier + state.flat_threat_bonus)
-                * self.config.threat_multiplier
+                * self.player.threat_multiplier
         } else {
             0.0
         };
         result
     }
 
-    /// Go `CalcPeriodicDamage` for a physical dot with `Dot.OutcomeTick`: the periodic attacker
-    /// multiplier, no armor for a bleed, the target's physical modifiers and a tick counter.
+    /// Go `CalcPeriodicDamage` for a physical dot with `Dot.OutcomeTick` or
+    /// `OutcomeTickPhysicalCrit`: the periodic attacker multiplier, no armor for a bleed, the
+    /// target's physical modifiers and a tick counter.
     pub(crate) fn calc_physical_periodic_damage(
         &mut self,
         spell: SpellId,
         target: Side,
         base_damage: f64,
+        crit: bool,
     ) -> SpellResult {
         let dot = self.spells[spell].dot.expect("a periodic spell has a dot");
         let coefficient = self.dots[dot].bonus_coefficient;
@@ -726,9 +728,13 @@ impl<A: Agent> Fight<A> {
             result.damage *= self.target_multiplier(spell);
         }
         let after_target = result.damage;
-        // Go Dot.OutcomeTick.
-        result.outcome = OUTCOME_HIT;
-        self.spells[spell].metrics[target.index()].ticks += 1;
+        // Go Dot.OutcomeTick, or OutcomeTickPhysicalCrit for a tick that can crit.
+        if crit {
+            self.outcome_tick_physical_crit(spell, &mut result);
+        } else {
+            result.outcome = OUTCOME_HIT;
+            self.spells[spell].metrics[target.index()].ticks += 1;
+        }
         let after_outcome = result.damage;
         result.damage = result.damage.max(0.0);
         if self.log.is_some() {
@@ -746,7 +752,7 @@ impl<A: Agent> Fight<A> {
         }
         let state = &self.spells[spell];
         result.threat = (result.damage * state.threat_multiplier + state.flat_threat_bonus)
-            * self.config.threat_multiplier;
+            * self.player.threat_multiplier;
         result
     }
 
