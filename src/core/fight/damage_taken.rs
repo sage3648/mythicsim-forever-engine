@@ -26,7 +26,6 @@ use super::{
 pub(crate) struct SelfTarget {
     table: AttackTable,
     resistance: [f64; 8],
-    school_damage_taken_multiplier: [f64; 8],
     school_bonus_spell_damage: [f64; 8],
     bonus_spell_damage_taken: f64,
     bonus_physical_damage_taken: f64,
@@ -88,7 +87,6 @@ impl SelfTarget {
                 stat("NatureResistance")?,
                 stat("ShadowResistance")?,
             ],
-            school_damage_taken_multiplier: schools(&pseudo.school_damage_taken_multiplier),
             school_bonus_spell_damage: schools(&pseudo.school_bonus_spell_damage),
             bonus_spell_damage_taken: pseudo.bonus_spell_damage_taken,
             bonus_physical_damage_taken: 0.0,
@@ -178,7 +176,7 @@ impl<A: Agent> Fight<A> {
                 result.damage += defender.bonus_spell_damage_taken;
             }
             result.damage *= self.player.damage_taken_multiplier
-                * self.school_value(spell, &defender.school_damage_taken_multiplier)
+                * self.school_value(spell, &self.player.school_damage_taken_multiplier)
                 * defender.table.damage_taken_multiplier;
         }
         let after_target = result.damage;

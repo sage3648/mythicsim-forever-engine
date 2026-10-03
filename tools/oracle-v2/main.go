@@ -832,12 +832,24 @@ func eurekaEffect(agent core.Agent, character *core.Character) map[string]any {
 		return mask != 0 && !spell.Flags.Matches(core.SpellFlagNoSpellMods) && spell.Matches(mask) && procMask.Matches(spell.ProcMask)
 	}
 	cost, damage, ticks, spending := []int{}, []int{}, []int{}, []int{}
-	for i, spell := range character.Spellbook {
-		mana := false
-		if spell.Cost != nil {
-			_, mana = spell.Cost.ResourceCostImpl.(*core.ManaCost)
+	// The cost modifier names the class's resource: rage for a warrior, energy for a rogue and
+	// mana otherwise, as applyEureka's ResourceType does.
+	paysClassResource := func(spell *core.Spell) bool {
+		if spell.Cost == nil {
+			return false
 		}
-		if mana && modded(spell, masks.Cost) {
+		switch spell.Cost.ResourceCostImpl.(type) {
+		case *core.RageCost:
+			return character.Class == proto.Class_ClassWarrior
+		case *core.EnergyCost:
+			return character.Class == proto.Class_ClassRogue
+		case *core.ManaCost:
+			return character.Class != proto.Class_ClassWarrior && character.Class != proto.Class_ClassRogue
+		}
+		return false
+	}
+	for i, spell := range character.Spellbook {
+		if paysClassResource(spell) && modded(spell, masks.Cost) {
 			cost = append(cost, i)
 		}
 		if modded(spell, masks.Damage|masks.Tick) {
@@ -927,10 +939,12 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 			"health_fraction": 0.05, "delay_ns": nanos(core.SpellBatchWindow),
 		})
 	}
-	// racials.go Troll Berserking: AttachMultiplyCastSpeed with a Go literal.
+	// racials.go Troll Berserking: AttachMultiplyAttackSpeed and AttachMultiplyCastSpeed with Go
+	// literals.
 	if aura := character.GetAura("Berserking"); aura != nil {
 		effects = append(effects, map[string]any{
 			"kind": "berserking", "spell_id": aura.ActionID.SpellID, "aura": aura.Label, "cast_speed_multiplier": 1.1,
+			"attack_speed_multiplier": 1.1,
 		})
 	}
 	// racials.go Orc Blood Fury: Go computes the buffed stats through its dynamic stat
@@ -999,6 +1013,15 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 	// racials.go Orc Shatter Curse: its aura changes only the player's damage taken.
 	if aura := character.GetAura("Shatter Curse"); aura != nil {
 		effects = append(effects, map[string]any{"kind": "shatter_curse", "spell_id": aura.ActionID.SpellID, "aura": aura.Label})
+		// Its 0.85 on every magic school's damage taken, Go literals, reaches the player only
+		// through the Goblin Sapper Charge's self hit.
+		if character.GetSpell(core.GoblinSapperActionID.WithTag(1)) != nil {
+			effects = append(effects, map[string]any{"kind": "player_damage_taken", "auras": []map[string]any{{
+				"aura": aura.Label, "multiplier": 0.85, "schools": []int{
+					int(stats.SchoolIndexArcane), int(stats.SchoolIndexFire), int(stats.SchoolIndexFrost),
+					int(stats.SchoolIndexHoly), int(stats.SchoolIndexNature), int(stats.SchoolIndexShadow)},
+			}}})
+		}
 	}
 	// racials.go Dwarf Stoneform: its aura changes only the player's physical damage taken.
 	if aura := character.GetAura("Stoneform"); aura != nil {

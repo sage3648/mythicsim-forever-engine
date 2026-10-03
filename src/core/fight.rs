@@ -482,6 +482,8 @@ pub(crate) struct Player {
     pub(crate) school_damage_dealt_multiplier: [f64; 8],
     /// Go `PseudoStats.DamageTakenMultiplier`, which auras can multiply.
     pub(crate) damage_taken_multiplier: f64,
+    /// Go `PseudoStats.SchoolDamageTakenMultiplier`, which auras can multiply.
+    pub(crate) school_damage_taken_multiplier: [f64; 8],
     /// Go `PseudoStats.CastSpeedMultiplier`.
     pub(crate) cast_speed_multiplier: f64,
     /// Go `PseudoStats.AttackSpeedMultiplier` and `MeleeSpeedMultiplier`.
@@ -589,6 +591,8 @@ pub(crate) struct Config {
     pub(crate) execute_proportions: [f64; 5],
     /// Go `PseudoStats.DamageTakenMultiplier` for the player after the reset.
     pub(crate) damage_taken_multiplier: f64,
+    /// Go `PseudoStats.SchoolDamageTakenMultiplier` for the player after the reset.
+    pub(crate) school_damage_taken_multiplier: [f64; 8],
     pub(crate) player_label: String,
     pub(crate) player_name: String,
     pub(crate) target_label: String,
@@ -810,8 +814,9 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) fixed_uptime: Vec<FixedUptime>,
     /// Go `rageBar`, for a player that has one.
     pub(crate) rage: Option<rage::RageBar>,
-    /// Player auras that multiply the player's damage taken, by aura index.
-    pub(crate) damage_taken_auras: Vec<(usize, f64)>,
+    /// Player auras that multiply the player's damage taken, by aura index, with the schools
+    /// they change, none for every school.
+    pub(crate) damage_taken_auras: Vec<(usize, f64, Vec<usize>)>,
     /// The last hit on the player's resistance multiplier and the damage after it, as Go
     /// `SpellResult` carries them for rage from damage taken.
     pub(crate) player_hit_resistance: (f64, f64),
@@ -940,6 +945,7 @@ impl<A: Agent> Fight<A> {
             base_duration: prepared.encounter.duration_ns,
             duration_variation: prepared.encounter.duration_variation_ns,
             damage_taken_multiplier: pseudo.damage_taken_multiplier,
+            school_damage_taken_multiplier: schools(&pseudo.school_damage_taken_multiplier),
             execute_proportions: [
                 prepared.encounter.execute_proportion_90,
                 prepared.encounter.execute_proportion_45,
@@ -1531,17 +1537,18 @@ impl<A: Agent> Fight<A> {
                         .any(|effect| matches!(effect, Effect::Eureka { aura, .. } if *aura == exported.label))
                 {
                     AuraBehavior::Eureka
-                } else if let Some(multiplier) = effects.iter().find_map(|effect| match effect {
+                } else if let Some((cast, attack)) = effects.iter().find_map(|effect| match effect {
                     Effect::Berserking {
                         aura,
                         cast_speed_multiplier,
+                        attack_speed_multiplier,
                         ..
                     } if side == Side::Player && *aura == exported.label => {
-                        Some(*cast_speed_multiplier)
+                        Some((*cast_speed_multiplier, *attack_speed_multiplier))
                     }
                     _ => None,
                 }) {
-                    AuraBehavior::MultiplyCastSpeed(multiplier)
+                    AuraBehavior::MultiplySpeeds { attack, cast }
                 } else if let Some(multiplier) = effects.iter().find_map(|effect| match effect {
                     Effect::ReadLeyLine {
                         aura,
@@ -1737,6 +1744,9 @@ impl<A: Agent> Fight<A> {
                 spell_cost_percent_modifier: config.initial.spell_cost_percent_modifier,
                 school_damage_dealt_multiplier: config.school_damage_dealt_multiplier,
                 damage_taken_multiplier: prepared.player.pseudo_stats.damage_taken_multiplier,
+                school_damage_taken_multiplier: schools(
+                    &prepared.player.pseudo_stats.school_damage_taken_multiplier,
+                ),
                 cast_speed_multiplier: config.initial.cast_speed_multiplier,
                 attack_speed_multiplier: config.melee.attack_speed_multiplier,
                 melee_speed_multiplier: config.melee.melee_speed_multiplier,
@@ -1878,9 +1888,11 @@ impl<A: Agent> Fight<A> {
             if let Effect::PlayerDamageTaken { auras } = effect {
                 for entry in auras {
                     let aura = fight.player_aura(&entry.aura)?;
-                    fight
-                        .damage_taken_auras
-                        .push((aura.index, entry.multiplier));
+                    fight.damage_taken_auras.push((
+                        aura.index,
+                        entry.multiplier,
+                        entry.schools.clone(),
+                    ));
                 }
             }
         }
@@ -2285,6 +2297,7 @@ impl<A: Agent> Fight<A> {
             player.spell_cost_percent_modifier = initial.spell_cost_percent_modifier;
             player.school_damage_dealt_multiplier = self.config.school_damage_dealt_multiplier;
             player.damage_taken_multiplier = self.config.damage_taken_multiplier;
+            player.school_damage_taken_multiplier = self.config.school_damage_taken_multiplier;
             player.cast_speed_multiplier = initial.cast_speed_multiplier;
             player.attack_speed_multiplier = self.config.melee.attack_speed_multiplier;
             player.melee_speed_multiplier = self.config.melee.melee_speed_multiplier;

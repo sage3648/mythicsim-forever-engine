@@ -560,6 +560,14 @@ pub struct DruidFormSpell {
 pub struct AuraMultiplier {
     pub aura: String,
     pub multiplier: f64,
+    /// The school indices whose damage taken multiplier the aura changes; none means the
+    /// multiplier of every school.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub schools: Vec<usize>,
+}
+
+fn unit_multiplier() -> f64 {
+    1.0
 }
 
 /// A potion's instant resource gain, as Go `resourceGainConfig`.
@@ -624,6 +632,9 @@ pub enum Effect {
         spell_id: i32,
         aura: String,
         cast_speed_multiplier: f64,
+        /// Go `AttachMultiplyAttackSpeed`, attached before the cast speed.
+        #[serde(default = "unit_multiplier")]
+        attack_speed_multiplier: f64,
     },
     /// The Orc racial Blood Fury: a major cooldown whose aura multiplies stats through Go's
     /// dynamic stat dependencies. `active_stats` holds every stat the aura changes, at the
@@ -1206,8 +1217,9 @@ pub enum Effect {
         crit_multiplier: f64,
         threat_per_rage: f64,
     },
-    /// Go `AttachMultiplicativePseudoStatBuff` on the player's damage taken multiplier, for
-    /// auras that are not up from the reset: the gain multiplies, the expiry divides.
+    /// Go `AttachMultiplicativePseudoStatBuff` on the player's damage taken multiplier, or on
+    /// some schools' multipliers, for auras that are not up from the reset: the gain
+    /// multiplies, the expiry divides.
     PlayerDamageTaken {
         auras: Vec<AuraMultiplier>,
     },

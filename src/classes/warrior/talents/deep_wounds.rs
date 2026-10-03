@@ -65,7 +65,10 @@ pub(crate) fn apply<A: Agent>(
     let weapon = &fight.autos.mh.weapon;
     let average = (weapon.base_damage_min + weapon.base_damage_max) / 2.0;
     let ticks = fight.dots[dot].hasted_tick_count();
-    fight.dots[dot].snapshot_base = (owed + average * params.share) / f64::from(ticks);
+    // The pinned Go engine runs on arm64, where the compiler fuses `owed + average*share`
+    // into one multiply-add; the stored amount is read on every tick, so the rounding shows in
+    // the log. Two sweep variants without a main hand weapon round differently otherwise.
+    fight.dots[dot].snapshot_base = average.mul_add(params.share, owed) / f64::from(ticks);
 }
 
 /// A tick: the stored amount on the physical periodic path, with a plain tick outcome.

@@ -44,8 +44,12 @@ pub(crate) enum AuraBehavior<K> {
     },
     /// Go racials.go `applyEureka`'s aura.
     Eureka,
-    /// Go `Aura.AttachMultiplyCastSpeed`.
-    MultiplyCastSpeed(f64),
+    /// Go `Aura.AttachMultiplyAttackSpeed` followed by `AttachMultiplyCastSpeed`, as the Troll
+    /// racial Berserking attaches them.
+    MultiplySpeeds {
+        attack: f64,
+        cast: f64,
+    },
     /// Go `MultiplyManaRegenSpeed` on gain and its reciprocal on expire, as racials.go
     /// Energized does with 2 and 0.5.
     MultiplyManaRegenSpeed(f64),
@@ -444,7 +448,10 @@ impl<A: Agent> Fight<A> {
         match self.aura(aura).behavior {
             AuraBehavior::Dot(dot) => self.dot_on_gain(dot),
             AuraBehavior::Eureka => self.eureka_gain(),
-            AuraBehavior::MultiplyCastSpeed(multiplier) => self.multiply_cast_speed(multiplier),
+            AuraBehavior::MultiplySpeeds { attack, cast } => {
+                self.multiply_attack_speed(attack);
+                self.multiply_cast_speed(cast);
+            }
             AuraBehavior::MultiplyManaRegenSpeed(multiplier) => {
                 self.multiply_mana_regen_speed(multiplier)
             }
@@ -480,8 +487,9 @@ impl<A: Agent> Fight<A> {
         match self.aura(aura).behavior {
             AuraBehavior::Dot(dot) => self.dot_on_expire(dot),
             AuraBehavior::Eureka => self.eureka_expire(),
-            AuraBehavior::MultiplyCastSpeed(multiplier) => {
-                self.multiply_cast_speed(1.0 / multiplier)
+            AuraBehavior::MultiplySpeeds { attack, cast } => {
+                self.multiply_attack_speed(1.0 / attack);
+                self.multiply_cast_speed(1.0 / cast);
             }
             AuraBehavior::WindfuryProc { bit } => {
                 self.stat_mask &= !bit;
@@ -549,12 +557,31 @@ impl<A: Agent> Fight<A> {
             return;
         }
         for position in 0..self.damage_taken_auras.len() {
-            let (index, multiplier) = self.damage_taken_auras[position];
-            if index == aura.index {
+            let (index, multiplier) = (
+                self.damage_taken_auras[position].0,
+                self.damage_taken_auras[position].1,
+            );
+            if index != aura.index {
+                continue;
+            }
+            let schools = self.damage_taken_auras[position].2.clone();
+            let player = &mut self.player;
+            let mut targets: Vec<&mut f64> = if schools.is_empty() {
+                vec![&mut player.damage_taken_multiplier]
+            } else {
+                player
+                    .school_damage_taken_multiplier
+                    .iter_mut()
+                    .enumerate()
+                    .filter(|(school, _)| schools.contains(school))
+                    .map(|(_, value)| value)
+                    .collect()
+            };
+            for value in targets.iter_mut() {
                 if expire {
-                    self.player.damage_taken_multiplier /= multiplier;
+                    **value /= multiplier;
                 } else {
-                    self.player.damage_taken_multiplier *= multiplier;
+                    **value *= multiplier;
                 }
             }
         }
