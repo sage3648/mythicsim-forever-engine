@@ -1622,7 +1622,14 @@ impl<A: Agent> Fight<A> {
     /// later until every tick has run.
     fn sunder_tick(&mut self, done: i32) {
         let ramp = self.sunder.clone().expect("the ramp is bound");
-        self.activate_aura(ramp.aura);
+        // With a stronger exclusive armor aura on the target, Go's activation does nothing; the
+        // exporter then lists only the armor without stacks.
+        if ramp.armor_by_stacks.len() > 1 {
+            self.activate_aura(ramp.aura);
+        } else {
+            // Go's Activate still counts the attempt before the exclusive effect refuses it.
+            self.aura_mut(ramp.aura).procs += 1;
+        }
         if self.aura(ramp.aura).active {
             self.add_stack(ramp.aura);
         }

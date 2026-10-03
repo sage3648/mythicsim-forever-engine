@@ -822,6 +822,10 @@ func targetArmorWithStacks(request *proto.RaidSimRequest, label string, stacks i
 	if stacks > 0 {
 		aura := target.GetAura(label)
 		aura.Activate(simulation)
+		// A stronger aura in the exclusive armor category, such as Expose Armor, keeps it out.
+		if !aura.IsActive() {
+			return math.NaN()
+		}
 		aura.SetStacks(simulation, stacks)
 	}
 	return target.Armor()
@@ -882,7 +886,12 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 	if aura := target.GetAura("Sunder Armor (External)"); aura != nil {
 		armor := []float64{}
 		for stacks := int32(0); stacks <= aura.MaxStacks; stacks++ {
-			armor = append(armor, targetArmorWithStacks(request, aura.Label, stacks))
+			value := targetArmorWithStacks(request, aura.Label, stacks)
+			if math.IsNaN(value) {
+				// driveSunderArmor activates it each tick and stacks it only while active.
+				break
+			}
+			armor = append(armor, value)
 		}
 		effects = append(effects, map[string]any{
 			"kind": "sunder_armor_ramp", "aura": aura.Label, "period_ns": nanos(core.GCDDefault),

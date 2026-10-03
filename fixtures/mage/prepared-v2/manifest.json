@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "9fc202e324204b40ed2bce324f523e3d3715965d219fb87d8b9a90142dbd8546",
+  "exporter_sha256": "ec2750226d76a325537c02ff9ef1825228bdd10a70695b37bd8517b7da357ed4",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -898,6 +898,23 @@
       "go_result": {
         "file": "paladin-auto-attacks-front.go-result.json",
         "sha256": "0dcfb007228ea0e5ee44d13daca6ee65ead88f0404a46f04612ce21480c9b030"
+      }
+    },
+    {
+      "id": "paladin-auto-attacks-expose-armor",
+      "description": "paladin-auto-attacks with Expose Armor as well as Sunder Armor: Expose Armor holds the exclusive armor slot, so every Sunder tick is refused.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/paladin-auto-attacks-expose-armor.request.json"
+      },
+      "prepared": "paladin-auto-attacks-expose-armor.prepared.json",
+      "prepared_sha256": "472212521f27722f951c0ed78c056d622b065c715a6b9f879ea4ccdcc5e3a69a",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "paladin-auto-attacks-expose-armor.go-result.json",
+        "sha256": "adae01611d33e4b2e3b39c71130cc1b25a3b7d5f65247af6071e1f964763590e"
       }
     }
   ]
