@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "23e4e6317781d6b0c0a42f0d1f2d7363205e568a5424b597c856fbee198e45bd",
+  "exporter_sha256": "44e1ffbfa98b68139d1d7d38e25e96cc3e55e281480c7eb8c37e086ba8854f56",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -1335,6 +1335,44 @@
       "go_log": {
         "file": "production-shockadin-paladin.go-log.txt",
         "sha256": "9a8e8b0b81a04623bc72a05df19ddd43e0e189fc767c9ab92a04421ec2e859d5"
+      }
+    },
+    {
+      "id": "warrior-orc-shatter-curse",
+      "description": "The production Fury Warrior request as an Orc with Shatter Curse at the first autocast: Blood Fury, and Shatter Curse's magic damage taken multiplier on the Goblin Sapper Charge's self hit",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-orc-shatter-curse.request.json"
+      },
+      "prepared": "warrior-orc-shatter-curse.prepared.json",
+      "prepared_sha256": "4f6483223eae23afe89c405c26dd43883cb71a5a246cd684b2ce2eb8258ac869",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-orc-shatter-curse.go-result.json",
+        "sha256": "b4c0e08b51a83b644d4f13805b0c1e54e01142c57a5ae7cf17baca8db295dc4d"
+      }
+    },
+    {
+      "id": "warrior-troll-berserking",
+      "description": "The production Warrior race board's Troll request at 1000 iterations: Berserking multiplies attack speed, then cast speed, and its expiry undoes both",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-troll-berserking.request.json"
+      },
+      "prepared": "warrior-troll-berserking.prepared.json",
+      "prepared_sha256": "73d8f95c9f48662582bca2e465466ef34fbd97039919387f77c15f7d14608cbb",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-troll-berserking.go-result.json",
+        "sha256": "9f3eb53a9550166656b3a4c5fbef3bb663f72f1e974725c9d9882e769daa748d"
+      },
+      "go_log": {
+        "file": "warrior-troll-berserking.go-log.txt",
+        "sha256": "d5774b9ef5df8616caeeeb4354becaf07f611fea83bcb3379843b121e7485381"
       }
     }
   ]

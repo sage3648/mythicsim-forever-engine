@@ -886,18 +886,24 @@ func eurekaEffect(agent core.Agent, character *core.Character) map[string]any {
 		return mask != 0 && !spell.Flags.Matches(core.SpellFlagNoSpellMods) && spell.Matches(mask) && procMask.Matches(spell.ProcMask)
 	}
 	cost, damage, ticks, spending := []int{}, []int{}, []int{}, []int{}
-	for i, spell := range character.Spellbook {
-		// The cost modifier names the class's resource: energy for a Rogue, mana for a caster.
-		paid := false
-		if spell.Cost != nil {
-			switch spell.Cost.ResourceCostImpl.(type) {
-			case *core.ManaCost:
-				paid = character.Class != proto.Class_ClassRogue && character.Class != proto.Class_ClassWarrior
-			case *core.EnergyCost:
-				paid = character.Class == proto.Class_ClassRogue
-			}
+	// The cost modifier names the class's resource: rage for a warrior, energy for a rogue and
+	// mana otherwise, as applyEureka's ResourceType does.
+	paysClassResource := func(spell *core.Spell) bool {
+		if spell.Cost == nil {
+			return false
 		}
-		if paid && modded(spell, masks.Cost) {
+		switch spell.Cost.ResourceCostImpl.(type) {
+		case *core.RageCost:
+			return character.Class == proto.Class_ClassWarrior
+		case *core.EnergyCost:
+			return character.Class == proto.Class_ClassRogue
+		case *core.ManaCost:
+			return character.Class != proto.Class_ClassWarrior && character.Class != proto.Class_ClassRogue
+		}
+		return false
+	}
+	for i, spell := range character.Spellbook {
+		if paysClassResource(spell) && modded(spell, masks.Cost) {
 			cost = append(cost, i)
 		}
 		if modded(spell, masks.Damage|masks.Tick) {
@@ -1405,6 +1411,19 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 		effects = append(effects, map[string]any{"kind": "chance_of_death", "aura": core.ChanceOfDeathAuraLabel})
 	}
 	effects = append(effects, meleeItemListeners(character)...)
+	// A class's inert listener of hits the player takes acts once the target swings at the
+	// player; only the listeners vetted for tanking stay inert.
+	if tanking {
+		for _, effect := range effects {
+			label, _ := effect["aura"].(string)
+			if effect["kind"] != "inert_listener" || effect["unit"] != "player" || label == "Pushback trigger" {
+				continue
+			}
+			if aura := character.GetAura(label); aura != nil && aura.OnSpellHitTaken != nil {
+				unrepresented = append(unrepresented, fmt.Sprintf("player aura %q reacts to the target's swings", label))
+			}
+		}
+	}
 
 	professions := []string{}
 	for _, profession := range []proto.Profession{player.Profession1, player.Profession2} {
