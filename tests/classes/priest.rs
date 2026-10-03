@@ -119,3 +119,50 @@ fn shadow_weaving_outside_spell_hits_is_rejected() {
     assert!(reasons(value)
         .contains(&"Shadow Weaving listens to [\"on_periodic_damage_dealt\"]".to_string()));
 }
+
+fn smite() -> Value {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("fixtures/mage/prepared-v2/production-smite-priest.prepared.json");
+    serde_json::from_slice(&fs::read(path).unwrap()).unwrap()
+}
+
+fn effect<'a>(value: &'a mut Value, kind: &str) -> &'a mut Value {
+    value["effects"]
+        .as_array_mut()
+        .unwrap()
+        .iter_mut()
+        .find(|effect| effect["kind"] == kind)
+        .unwrap()
+}
+
+#[test]
+fn production_smite_priest_is_supported() {
+    assert!(check_prepared(&parse(smite())).is_ok());
+}
+
+#[test]
+fn searing_light_outside_periodic_damage_is_rejected() {
+    let mut value = smite();
+    let searing = effect(&mut value, "searing_light");
+    searing["callbacks"] = json!(["on_spell_hit_dealt"]);
+    searing["outcome"] = json!(["Crit"]);
+    let reasons = reasons(value);
+    assert!(reasons.contains(&"Searing Light listens to [\"on_spell_hit_dealt\"]".to_string()));
+    assert!(reasons.contains(&"Searing Light procs on [\"Crit\"]".to_string()));
+}
+
+#[test]
+fn power_in_light_needs_a_burning_holy_fire() {
+    // With no Holy Fire named, the modifier never applies and the build deals less.
+    let mut value = smite();
+    value["sim"]["iterations"] = json!(20);
+    value["sim"]["debug_first_iteration"] = json!(false);
+    let mut unlit = value.clone();
+    effect(&mut unlit, "power_in_light")["holy_fire_spells"] = json!([]);
+    let dps = |value: Value| {
+        simulate_prepared(&parse(value)).unwrap().result["raidMetrics"]["dps"]["avg"]
+            .as_f64()
+            .unwrap()
+    };
+    assert!(dps(value) > dps(unlit));
+}

@@ -109,7 +109,7 @@ impl<A: Agent> Fight<A> {
     }
 
     /// Go `Dot.Snapshot`: the base amount plus the spell power share it was given now.
-    fn snapshot_dot(&mut self, dot: DotId, base: f64) {
+    pub(crate) fn snapshot_dot(&mut self, dot: DotId, base: f64) {
         let spell = self.dots[dot].spell;
         let coefficient = self.dots[dot].bonus_coefficient;
         let spell_power = if coefficient > 0.0 {

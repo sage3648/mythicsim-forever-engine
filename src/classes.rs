@@ -4,6 +4,7 @@ pub(crate) mod druid;
 pub(crate) mod mage;
 pub(crate) mod paladin;
 pub(crate) mod priest;
+pub(crate) mod rogue;
 pub(crate) mod shaman;
 pub(crate) mod warlock;
 
@@ -18,6 +19,7 @@ pub(crate) fn run_prepared(
         "ClassShaman" => shaman::prepared::run_prepared(prepared),
         "ClassPaladin" => paladin::prepared::run_prepared(prepared),
         "ClassPriest" => priest::prepared::run_prepared(prepared),
+        "ClassRogue" => rogue::prepared::run_prepared(prepared),
         other => Err(format!("class {other} has no fight agent")),
     }
 }

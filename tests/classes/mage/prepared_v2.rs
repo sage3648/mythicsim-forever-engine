@@ -339,11 +339,20 @@ fn stdev_mean(
         None if key == "stdev" => "avg".into(),
         None => return None,
     };
-    let numbers = [go, rust].iter().all(|side| {
-        side.get(key).is_some_and(Value::is_number)
-            && side.get(&mean_key).is_some_and(Value::is_number)
-    });
+    let numbers = [go, rust]
+        .iter()
+        .all(|side| side.get(&mean_key).is_some_and(Value::is_number));
     numbers.then(|| go[&mean_key].as_f64().unwrap())
+}
+
+/// A reported deviation as a number: protojson omits a zero, and writes "NaN" when cancellation
+/// leaves sqrt(sumSq/n - mean^2) a negative residue, whose variance is zero.
+fn deviation(value: Option<&Value>) -> Option<f64> {
+    match value {
+        None => Some(0.0),
+        Some(Value::String(text)) if text == "NaN" => Some(0.0),
+        Some(value) => value.as_f64(),
+    }
 }
 
 /// Integers exactly; floats within 1e-9 relative, the FMA and summation-order allowance
@@ -353,28 +362,16 @@ fn differences(go: &Value, rust: &Value, path: &str, out: &mut Vec<String>) {
         (Value::Object(a), Value::Object(b)) => {
             let keys: std::collections::BTreeSet<&String> = a.keys().chain(b.keys()).collect();
             for key in keys {
-                match (a.get(key), b.get(key)) {
-                    (Some(x), Some(y)) if stdev_mean(key, a, b).is_some() => {
-                        let mean = stdev_mean(key, a, b).unwrap();
-                        let (x, y) = (x.as_f64().unwrap(), y.as_f64().unwrap());
+                let (x, y) = (a.get(key), b.get(key));
+                let variances = stdev_mean(key, a, b).zip(deviation(x).zip(deviation(y)));
+                match (x, y) {
+                    _ if variances.is_some() => {
+                        let (mean, (x, y)) = variances.unwrap();
                         if (x * x - y * y).abs() > 1e-9 * (mean * mean).max(1.0) {
                             out.push(format!("{path}/{key}: Go {x}, Rust {y}"));
                         }
                     }
                     (Some(x), Some(y)) => differences(x, y, &format!("{path}/{key}"), out),
-                    // protojson omits a zero deviation; compare the other side's as a variance.
-                    (x, y)
-                        if x.or(y).is_some_and(Value::is_number) && {
-                            let zero = Value::from(0.0);
-                            let mut a = a.clone();
-                            let mut b = b.clone();
-                            a.entry(key.clone()).or_insert(zero.clone());
-                            b.entry(key.clone()).or_insert(zero);
-                            stdev_mean(key, &a, &b).is_some_and(|mean| {
-                                let (x, y) = (a[key].as_f64().unwrap(), b[key].as_f64().unwrap());
-                                (x * x - y * y).abs() <= 1e-9 * (mean * mean).max(1.0)
-                            })
-                        } => {}
                     _ => out.push(format!("{path}/{key}: present on one side only")),
                 }
             }

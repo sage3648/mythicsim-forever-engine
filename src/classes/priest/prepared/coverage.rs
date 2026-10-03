@@ -19,13 +19,18 @@ pub(crate) const GATE: ClassGate = ClassGate {
 const EFFECTS: &[&str] = &[
     "dark_sacrifice",
     "devouring_plague",
+    "holy_fire",
     "inner_focus",
     "mind_blast",
     "mind_flay",
+    "penance",
+    "power_in_light",
+    "searing_light",
     "shadow_weaving",
     "shadow_word_death",
     "shadow_word_pain",
     "shadowform",
+    "smite",
 ];
 
 /// Go registers Inner Focus (talents_discipline.go) and Dark Sacrifice (dark_sacrifice.go)
@@ -55,6 +60,9 @@ fn spell_capability(spell: &Spell) -> Option<&'static str> {
         "devouring_plague" if spell.dot.is_some() => Some("devouring_plague"),
         "mind_flay" if spell.dot.as_ref().is_some_and(|dot| dot.channeled) => Some("mind_flay"),
         "shadowform" => Some("shadowform"),
+        "smite" if spell.damage_effect.is_some() => Some("smite"),
+        "holy_fire" if spell.damage_effect.is_some() && spell.dot.is_some() => Some("holy_fire"),
+        "penance" if spell.dot.as_ref().is_some_and(|dot| dot.channeled) => Some("penance"),
         _ => None,
     }
 }
@@ -63,6 +71,9 @@ fn spell_capability(spell: &Spell) -> Option<&'static str> {
 fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
     match effect {
         Effect::ShadowWeaving {
+            trigger_aura, aura, ..
+        }
+        | Effect::SearingLight {
             trigger_aura, aura, ..
         } => vec![("player", trigger_aura), ("player", aura)],
         Effect::Shadowform { aura, .. }
@@ -79,6 +90,18 @@ const LANDED: &[&str] = &["Hit", "Glance", "Block", "Crit", "Crush"];
 fn limits(prepared: &PreparedV2, _reachable: &[&Spell]) -> Vec<String> {
     let mut reasons = Vec::new();
     for effect in &prepared.effects {
+        // Rust implements Searing Light's trigger on periodic damage dealt, any outcome.
+        if let Effect::SearingLight {
+            callbacks, outcome, ..
+        } = effect
+        {
+            if callbacks != &["on_periodic_damage_dealt"] {
+                reasons.push(format!("Searing Light listens to {callbacks:?}"));
+            }
+            if !outcome.is_empty() {
+                reasons.push(format!("Searing Light procs on {outcome:?}"));
+            }
+        }
         if let Effect::ShadowWeaving {
             callbacks,
             outcome,
