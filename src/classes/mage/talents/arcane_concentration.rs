@@ -5,7 +5,7 @@
 use crate::core::fight::{Agent, AuraRef, Fight, SpellId, SpellResult};
 
 /// Go `MageSpellsAllDamaging`, shared with Fingers of Frost.
-pub(crate) use super::fingers_of_frost::DAMAGING;
+use crate::classes::mage::masks::DAMAGING;
 
 #[derive(Clone, Debug)]
 pub(crate) struct ArcaneConcentration {

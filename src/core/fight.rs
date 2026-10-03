@@ -1096,6 +1096,8 @@ impl<A: Agent> Fight<A> {
             player.spirit_regen_multiplier = initial.spirit_regen_multiplier;
             player.force_full_spirit_regen = initial.force_full_spirit_regen;
             player.five_second_rule_refresh = 0;
+            // Go runs reset effects first in the aura tracker's reset.
+            self.reset_mods();
             A::reset(self);
         }
         self.reset_auras(side);

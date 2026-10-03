@@ -15,6 +15,7 @@ use crate::{
 
 /// Effect kinds implemented in Rust and validated against the pinned Go reference.
 pub(crate) const IMPLEMENTED_EFFECTS: &[&str] = &[
+    "arcane_blast",
     "arcane_concentration",
     "arcane_missiles",
     "cold_snap",
@@ -37,6 +38,7 @@ fn spell_capability(spell: &Spell, prepared: &PreparedV2) -> Option<&'static str
     if let Some(class_spell) = &spell.class_spell {
         return match class_spell.as_str() {
             "frostbolt" => Some("frostbolt"),
+            "arcane_blast" => Some("arcane_blast"),
             "ice_lance" => Some("ice_lance"),
             "arcane_missiles_cast" => Some("arcane_missiles"),
             "cold_snap" => Some("cold_snap"),
@@ -78,7 +80,7 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         } => {
             vec![("player", regen_aura), ("player", channel_aura)]
         }
-        Effect::MageArmor { aura } => vec![("player", aura)],
+        Effect::MageArmor { aura } | Effect::ArcaneBlast { aura, .. } => vec![("player", aura)],
         Effect::JudgementOfWisdom { aura, .. } => vec![("target", aura)],
         Effect::InertListener { unit, aura, .. } => match unit.as_str() {
             "player" => vec![("player", aura)],

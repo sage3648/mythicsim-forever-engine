@@ -17,6 +17,8 @@ reading the Go reference. They are not effort estimates for other contributors.
 | Performance: output-identical allocation pass | 2026-10-03 12:21 | 2026-10-03 12:30 | 0 h 09 m | 273 ms to 81 ms for the reference build (Go 205 ms); 41 inputs byte-identical before and after |
 | 4. Reference pin centralization | 2026-10-03 12:31 | 2026-10-03 12:36 | 0 h 05 m | One written pin read by Rust, Python and Go helpers; 17 prepared inputs and 11 v1 cases reproduce unchanged |
 | 10. Reports and timelines | 2026-10-03 12:36 | 2026-10-03 12:51 | 0 h 15 m | Whole Go result compared; fixed time to OOM after Go's aura teardown, zero distributions, target actions and every-fight logs; application parsers read identical timelines |
+| Arcane: or and auraNumStacks | 2026-10-03 12:51 | 2026-10-03 12:58 | 0 h 07 m | Arcane preset operators with Go folding and the #622 comparison |
+| Arcane: Arcane Blast and its stacks | 2026-10-03 12:58 | 2026-10-03 13:07 | 0 h 09 m | Flat damage modifier with reset rounding; stacks spent after the roll, held by Missiles; both fixtures match Go on the first comparison |
 
 ## Notes
 

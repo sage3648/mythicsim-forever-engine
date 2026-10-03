@@ -1,5 +1,6 @@
 //! Mage spell mechanics reusable by any Mage spec that casts them.
 
+pub(crate) mod arcane_blast;
 pub(crate) mod arcane_missiles;
 pub(crate) mod cold_snap;
 pub(crate) mod evocation;

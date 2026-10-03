@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "bf74baa125b12ad1bde545499056a2b49304859bbb27100ad9158eca9a2b838c",
+  "exporter_sha256": "1549ededae3344ce078b69fdbc5f8ecfaca2b4c8184897e7d9e9964ed332c3ee",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -318,6 +318,44 @@
       "go_result": {
         "file": "reference-no-missile-barrage.go-result.json",
         "sha256": "5ed6b2ea10a10a3d92b0bf3daf87aa1d65b128cc961e8779264b594f098111ad"
+      }
+    },
+    {
+      "id": "arcane-blast",
+      "description": "The application's Arcane character as a Gnome without fire talents, casting only Arcane Blast: stacks raise its cost until it runs out of mana.",
+      "request": {
+        "path": "fixtures/mage/frost/prepared-v2/arcane-blast.request.json"
+      },
+      "prepared": "arcane-blast.prepared.json",
+      "prepared_sha256": "9e866090add76f2381bde7ad56a4d3740d3f5d3ecab7aa3d4b0050c3e8ada13c",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "arcane-blast.go-result.json",
+        "sha256": "e0c13a1ac74b0f9b98c5c01162e31ff0d5ae6a6eaad46695011c1e3b70ac821d"
+      }
+    },
+    {
+      "id": "arcane-blast-spenders",
+      "description": "The same character with the Arcane preset's Missiles, Frostbolt and Arcane Blast rules: Frostbolt spends the stacks after its damage is rolled, and the Missiles channel holds them until it ends.",
+      "request": {
+        "path": "fixtures/mage/frost/prepared-v2/arcane-blast-spenders.request.json"
+      },
+      "prepared": "arcane-blast-spenders.prepared.json",
+      "prepared_sha256": "11318d6c4395267c461d29bbea85d7335c81bc0b3ba5430b92c3d16e72e5155d",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "arcane-blast-spenders.go-result.json",
+        "sha256": "920dfbbbcebde8efedb69846a49e0ccc1c65825a658a48c76b63295db5e695c1"
+      },
+      "go_log": {
+        "file": "arcane-blast-spenders.go-log.txt",
+        "sha256": "6ed737130689f3fdf85d22b2820b71fea7deed147acb1b99ed9d99cbc4784f42"
       }
     }
   ]

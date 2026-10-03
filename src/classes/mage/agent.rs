@@ -9,7 +9,9 @@ use crate::{
 };
 
 use super::{
-    spells::{arcane_missiles, cold_snap, evocation, frostbolt, ice_lance, mana_gems},
+    spells::{
+        arcane_blast, arcane_missiles, cold_snap, evocation, frostbolt, ice_lance, mana_gems,
+    },
     talents::{arcane_concentration, fingers_of_frost, missile_barrage, winters_chill},
 };
 
@@ -17,6 +19,7 @@ use super::{
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum MageSpell {
     Frostbolt,
+    ArcaneBlast,
     IceLance,
     ArcaneMissiles,
     ArcaneMissile,
@@ -38,6 +41,7 @@ pub(crate) enum MageAura {
     MissileBarrage,
     MissileBarrageTrigger,
     EvocationRegen,
+    ArcaneCharges,
 }
 
 /// Mage state that Go keeps in the `Mage` struct and its closures.
@@ -47,6 +51,7 @@ pub(crate) struct MageAgent {
     fingers_of_frost: Option<fingers_of_frost::FingersOfFrost>,
     arcane_concentration: Option<Rc<arcane_concentration::ArcaneConcentration>>,
     missile_barrage: Option<Rc<missile_barrage::MissileBarrage>>,
+    arcane_charges: Option<Rc<arcane_blast::ArcaneCharges>>,
     ice_lance_frozen_multiplier: f64,
     /// Arcane Missiles channel spell to the missile spell of the same rank.
     missiles: Vec<(SpellId, SpellId)>,
@@ -91,6 +96,10 @@ fn class_auras(prepared: &PreparedV2) -> Vec<(String, MageAura)> {
                 auras.push((regen_aura.clone(), MageAura::EvocationRegen));
                 continue;
             }
+            Effect::ArcaneBlast { aura, .. } => {
+                auras.push((aura.clone(), MageAura::ArcaneCharges));
+                continue;
+            }
             _ => continue,
         };
         auras.push((aura.clone(), kinds.0));
@@ -112,6 +121,7 @@ impl MageAgent {
                     .map(MageSpell::ManaGem)
             }
             "frostbolt" if spell.damage_effect.is_some() => Some(MageSpell::Frostbolt),
+            "arcane_blast" if spell.damage_effect.is_some() => Some(MageSpell::ArcaneBlast),
             "ice_lance" if spell.damage_effect.is_some() => Some(MageSpell::IceLance),
             "arcane_missiles_cast" if spell.dot.is_some() => Some(MageSpell::ArcaneMissiles),
             "arcane_missiles_tick" if spell.damage_effect.is_some() => {
@@ -210,6 +220,16 @@ impl MageAgent {
                 Effect::IceLance {
                     frozen_multiplier, ..
                 } => fight.agent.ice_lance_frozen_multiplier = *frozen_multiplier,
+                Effect::ArcaneBlast {
+                    aura,
+                    damage_per_stack,
+                    cost_per_stack,
+                    ..
+                } => {
+                    let bound =
+                        arcane_blast::bind(&mut fight, aura, *damage_per_stack, *cost_per_stack)?;
+                    fight.agent.arcane_charges = Some(Rc::new(bound));
+                }
                 Effect::ManaGems {
                     gems,
                     regen_window_seconds,
@@ -277,6 +297,14 @@ impl MageAgent {
             .expect("Arcane Concentration is bound")
     }
 
+    fn arcane_charges(fight: &Fight<Self>) -> Rc<arcane_blast::ArcaneCharges> {
+        fight
+            .agent
+            .arcane_charges
+            .clone()
+            .expect("Arcane Blast is bound")
+    }
+
     fn missile_barrage(fight: &Fight<Self>) -> Rc<missile_barrage::MissileBarrage> {
         fight
             .agent
@@ -293,6 +321,10 @@ impl Agent for MageAgent {
     fn apply_effects(fight: &mut Fight<Self>, spell: SpellId, target: Side, behavior: MageSpell) {
         match behavior {
             MageSpell::Frostbolt => frostbolt::apply(fight, spell, target),
+            MageSpell::ArcaneBlast => {
+                let charges = Self::arcane_charges(fight);
+                arcane_blast::apply(fight, spell, target, &charges);
+            }
             MageSpell::IceLance => {
                 // Go IsTargetFrozen: Fingers of Frost is active.
                 let frozen = fight
@@ -343,9 +375,18 @@ impl Agent for MageAgent {
     }
 
     fn on_dot_expire(fight: &mut Fight<Self>, _dot: DotId, behavior: MageSpell) {
-        if behavior == MageSpell::Evocation {
-            let (aura, _) = fight.agent.evocation_regen.expect("Evocation is bound");
-            fight.deactivate_aura(aura);
+        match behavior {
+            MageSpell::Evocation => {
+                let (aura, _) = fight.agent.evocation_regen.expect("Evocation is bound");
+                fight.deactivate_aura(aura);
+            }
+            // The channel aura's own OnExpire runs before the dot's final tick.
+            MageSpell::ArcaneMissiles => {
+                if let Some(charges) = fight.agent.arcane_charges.clone() {
+                    charges.on_channel_end(fight);
+                }
+            }
+            _ => {}
         }
     }
 
@@ -372,6 +413,7 @@ impl Agent for MageAgent {
             }
             MageAura::Clearcasting => Self::arcane_concentration(fight).on_gain(fight),
             MageAura::MissileBarrage => Self::missile_barrage(fight).on_gain(fight),
+            MageAura::ArcaneCharges => Self::arcane_charges(fight).on_gain(fight),
             MageAura::EvocationRegen => {
                 let (_, multiplier) = fight.agent.evocation_regen.expect("Evocation is bound");
                 evocation::regen_gain(fight, multiplier);
@@ -388,6 +430,7 @@ impl Agent for MageAgent {
             }
             MageAura::Clearcasting => Self::arcane_concentration(fight).on_expire(fight),
             MageAura::MissileBarrage => Self::missile_barrage(fight).on_expire(fight),
+            MageAura::ArcaneCharges => Self::arcane_charges(fight).on_expire(fight),
             MageAura::EvocationRegen => {
                 let (_, multiplier) = fight.agent.evocation_regen.expect("Evocation is bound");
                 evocation::regen_expire(fight, multiplier);
@@ -403,8 +446,10 @@ impl Agent for MageAgent {
         _old: i32,
         new: i32,
     ) {
-        if kind == MageAura::WintersChill {
-            Self::winters_chill(fight).on_stacks_change(fight, new);
+        match kind {
+            MageAura::WintersChill => Self::winters_chill(fight).on_stacks_change(fight, new),
+            MageAura::ArcaneCharges => Self::arcane_charges(fight).on_stacks_change(fight, new),
+            _ => {}
         }
     }
 
@@ -451,6 +496,7 @@ impl Agent for MageAgent {
             }
             MageAura::MissileBarrage => Self::missile_barrage(fight).on_cast_complete(fight, spell),
             MageAura::MissileBarrageTrigger => Self::missile_barrage(fight).trigger(fight, spell),
+            MageAura::ArcaneCharges => Self::arcane_charges(fight).on_cast_complete(fight, spell),
             _ => {}
         }
     }

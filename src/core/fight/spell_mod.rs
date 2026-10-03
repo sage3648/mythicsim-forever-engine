@@ -13,6 +13,8 @@ pub(crate) enum ModKind {
     PowerCostPercentAdd,
     /// Go `SpellMod_DotTickLength_Flat`, in nanoseconds.
     DotTickLengthFlat,
+    /// Go `SpellMod_DamageDone_Flat`: adds to `DamageMultiplierAdditive`.
+    DamageDoneFlat,
 }
 
 #[derive(Clone, Debug)]
@@ -66,6 +68,13 @@ impl<A: Agent> Fight<A> {
                         }
                     }
                 }
+                ModKind::DamageDoneFlat => {
+                    if sign > 0.0 {
+                        state.damage_multiplier_additive += modifier.float_value;
+                    } else {
+                        state.damage_multiplier_additive -= modifier.float_value;
+                    }
+                }
                 ModKind::DotTickLengthFlat => {
                     if let Some(dot) = state.dot {
                         if sign > 0.0 {
@@ -105,6 +114,20 @@ impl<A: Agent> Fight<A> {
             self.activate_mod(id);
         } else {
             self.mods[id].float_value = value;
+        }
+    }
+
+    /// Go `onResetDamageDoneAdd`, a reset effect of every damage-done modifier: round the
+    /// additive multiplier of its spells to four decimals, so add and subtract residue
+    /// does not carry into the next iteration.
+    pub(crate) fn reset_mods(&mut self) {
+        for modifier in &self.mods {
+            if modifier.kind == ModKind::DamageDoneFlat {
+                for &spell in &modifier.affected {
+                    let value = &mut self.spells[spell].damage_multiplier_additive;
+                    *value = (*value * 10000.0).round() / 10000.0;
+                }
+            }
         }
     }
 

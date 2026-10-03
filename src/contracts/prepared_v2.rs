@@ -438,6 +438,13 @@ pub struct ManaGem {
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Effect {
     Frostbolt {},
+    /// Arcane Blast and its stacking buff.
+    ArcaneBlast {
+        spell_id: i32,
+        aura: String,
+        damage_per_stack: f64,
+        cost_per_stack: f64,
+    },
     IceLance {
         spell_id: i32,
         frozen_multiplier: f64,
@@ -538,6 +545,7 @@ impl Effect {
     pub fn kind(&self) -> &'static str {
         match self {
             Effect::Frostbolt {} => "frostbolt",
+            Effect::ArcaneBlast { .. } => "arcane_blast",
             Effect::IceLance { .. } => "ice_lance",
             Effect::ArcaneMissiles { .. } => "arcane_missiles",
             Effect::ColdSnap { .. } => "cold_snap",

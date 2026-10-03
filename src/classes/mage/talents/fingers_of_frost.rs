@@ -4,7 +4,10 @@
 //! A spell already being cast when the charges arrive keeps no Shatter bonus and spends
 //! no charge; Go marks it in flight.
 
-use crate::core::fight::{Agent, AuraRef, Fight, ModId, ModKind, Side, SpellId, SpellResult};
+use crate::{
+    classes::mage::masks::{is_class, DAMAGING},
+    core::fight::{Agent, AuraRef, Fight, ModId, ModKind, Side, SpellId, SpellResult},
+};
 
 /// Go `MageSpellChill`: the chill effects Fingers of Frost rolls on.
 const CHILL: &[&str] = &[
@@ -12,26 +15,6 @@ const CHILL: &[&str] = &[
     "cone_of_cold",
     "frostfire_bolt",
     "improved_blizzard",
-];
-
-/// Go `MageSpellsAllDamaging`: casts that spend a charge.
-pub(crate) const DAMAGING: &[&str] = &[
-    "arcane_blast",
-    "arcane_explosion",
-    "arcane_missiles_tick",
-    "blizzard",
-    "fire_blast",
-    "fireball",
-    "flamestrike",
-    "frostbolt",
-    "ice_lance",
-    "pyroblast",
-    "pyroblast_dot",
-    "scorch",
-    "blast_wave",
-    "cone_of_cold",
-    "frost_nova",
-    "frostfire_bolt",
 ];
 
 #[derive(Clone, Debug)]
@@ -77,10 +60,6 @@ pub(crate) fn bind<A: Agent>(
         shatter_mod,
         in_flight: None,
     })
-}
-
-fn is_class(fight_class: Option<&str>, set: &[&str]) -> bool {
-    fight_class.is_some_and(|class| set.contains(&class))
 }
 
 impl FingersOfFrost {

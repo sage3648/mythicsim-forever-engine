@@ -590,6 +590,8 @@ var (
 	iceLanceLadder      = spelldata.Ranked(1312002, 400640, 1240044, 1240045, 1240046, 1240047)
 	missilesLadder      = spelldata.Ranked(5143, 5144, 5145, 8416, 8417, 10211, 10212, 25345)
 	missileTicksLadder  = spelldata.Ranked(7268, 7269, 7270, 8419, 8418, 10273, 10274, 25346)
+	arcaneBlastLadder   = spelldata.Ranked(400574, 1239696, 1239697, 1239699, 1239700)
+	arcaneBlastBuff     = spelldata.Ranked(400573)
 	arcaneConcentration = spelldata.Talent(11213, 5)
 	clearcastingTrigger = spelldata.Ranked(12536)
 	fingersOfFrost      = spelldata.Talent(400647, 2)
@@ -618,6 +620,9 @@ func attachDamageEffects(spells []Spell, character *core.Character) {
 	missileTicksLadder.Each(func(_ int32, row *spelldata.Spell) { rows[row.ID] = row })
 	if ice := iceLanceLadder.Highest(); ice != nil {
 		rows[ice.ID] = ice
+	}
+	if blast := arcaneBlastLadder.Highest(); blast != nil {
+		rows[blast.ID] = blast
 	}
 	for i := range spells {
 		id := spells[i].ActionID
@@ -694,6 +699,14 @@ func mageEffects(m *mage.Mage, character *core.Character) []map[string]any {
 	effects = append(effects, map[string]any{"kind": "arcane_missiles", "ranks": missiles})
 	// frostbolt.go
 	effects = append(effects, map[string]any{"kind": "frostbolt"})
+	if talents.ArcaneBlast { // arcane_blast.go and arcane_charge.go
+		buff := arcaneBlastBuff.Highest()
+		effects = append(effects, map[string]any{
+			"kind": "arcane_blast", "spell_id": arcaneBlastLadder.Highest().ID, "aura": "Arcane Blast",
+			"damage_per_stack": buff.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_DAMAGE)).Average(core.CharacterLevel) / 100,
+			"cost_per_stack":   buff.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_COST)).Average(core.CharacterLevel) / 100,
+		})
+	}
 	// mana_gems.go: smaller gems wait for larger ones; all share the conjured cooldown.
 	gems := []map[string]any{}
 	for _, gem := range []struct {
