@@ -3199,6 +3199,32 @@
       "stone_multiplier": 1
     },
     {
+      "auras": [
+        "Elune's Light"
+      ],
+      "changed": [
+        "PhysicalCritPercent",
+        "SpellCritPercent"
+      ],
+      "combos": [
+        {
+          "AttackPower": 168,
+          "PhysicalCritPercent": 14.55,
+          "RangedAttackPower": 0,
+          "SpellCritPercent": 17.5949,
+          "SpellDamage": 483
+        },
+        {
+          "AttackPower": 168,
+          "PhysicalCritPercent": 24.549999999999997,
+          "RangedAttackPower": 0,
+          "SpellCritPercent": 27.5949,
+          "SpellDamage": 483
+        }
+      ],
+      "kind": "stat_auras"
+    },
+    {
       "aura": "Chance of Death",
       "kind": "inert_listener",
       "reason": "acts only when the player takes damage",

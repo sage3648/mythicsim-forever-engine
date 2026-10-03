@@ -39,6 +39,8 @@ const COMMON_EFFECTS: &[&str] = &[
     "berserking",
     "blood_fury",
     "conjured_mana",
+    "crusader",
+    "dragonbreath_chili",
     "energize_on_use",
     "eureka",
     "inert_listener",
@@ -47,6 +49,7 @@ const COMMON_EFFECTS: &[&str] = &[
     "potion_mana",
     "read_ley_line",
     "shatter_curse",
+    "stat_auras",
     "stoneform",
     "sunder_armor_ramp",
     "temporary_stats",
@@ -143,6 +146,9 @@ fn common_claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         | Effect::ReadLeyLine { aura, .. }
         | Effect::TemporaryStats { aura, .. } => vec![("player", aura)],
         Effect::JudgementOfWisdom { aura, .. } => vec![("target", aura)],
+        Effect::Crusader { trigger_aura, .. } | Effect::DragonbreathChili { trigger_aura, .. } => {
+            vec![("player", trigger_aura)]
+        }
         Effect::InertListener { unit, aura, .. } => match unit.as_str() {
             "player" => vec![("player", aura)],
             "target" => vec![("target", aura)],
@@ -185,6 +191,45 @@ const DYNAMIC_STATS: &[&str] = &[
     "SpellCritPercent",
     "PhysicalCritPercent",
 ];
+
+/// Stats a stat aura may change without the runtime reading them: inputs to the stats it
+/// reads, and stats nothing in scope reads.
+const INERT_STATS: &[&str] = &[
+    "Strength",
+    "Agility",
+    "Stamina",
+    "Health",
+    "Armor",
+    "BonusArmor",
+    "BlockValue",
+    "DodgeRating",
+    "DodgePercent",
+    "ParryRating",
+    "ParryPercent",
+    "FeralAttackPower",
+];
+
+/// Stat aura combinations that change a stat the runtime holds fixed.
+fn fixed_stat_aura_changes(prepared: &PreparedV2) -> Vec<String> {
+    prepared
+        .effects
+        .iter()
+        .filter_map(|effect| match effect {
+            Effect::StatAuras { auras, changed, .. } => Some((auras, changed)),
+            _ => None,
+        })
+        .flat_map(|(auras, changed)| {
+            changed
+                .iter()
+                .filter(|stat| {
+                    !DYNAMIC_STATS.contains(&stat.as_str()) && !INERT_STATS.contains(&stat.as_str())
+                })
+                .map(move |stat| {
+                    format!("stat auras {auras:?} change {stat}, which the runtime holds fixed")
+                })
+        })
+        .collect()
+}
 
 /// Temporary stat changes to stats the runtime holds fixed.
 fn fixed_stat_changes(prepared: &PreparedV2) -> Vec<String> {
@@ -359,6 +404,7 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
         reasons.extend((gate.limits)(prepared, &reachable));
         reasons.extend(undirected_procs(prepared));
         reasons.extend(fixed_stat_changes(prepared));
+        reasons.extend(fixed_stat_aura_changes(prepared));
         let mut unknown = BTreeSet::new();
         let mut limited = BTreeSet::new();
         for spell in reachable {
