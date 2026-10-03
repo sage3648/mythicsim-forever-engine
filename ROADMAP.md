@@ -49,7 +49,9 @@ Milestones advance on evidence, not promised delivery dates. The
 1. Completed: [inventory the chosen Frost build and actual application consumers](docs/first-frost-inventory.md).
 2. Completed: [prepared v2 and a release compatibility manifest](docs/prepared-v2.md).
 3. Completed: [the community change ledger and Go-to-Rust mechanics map](UPSTREAM.md#ledger).
-4. Consolidate reference pins and improve differential failure diagnostics.
+4. Completed: one reference pin and full-result differential diagnostics.
+5. Completed: the Frost, Arcane and Fire reference builds match the pinned Go engine.
+6. Next: worker routing with Go fallback and bounded comparison runs.
 
 The [first usable release](docs/hybrid-migration-plan.md#first-usable-release)
 is one complete Frost build using Go preparation and Rust combat execution, with

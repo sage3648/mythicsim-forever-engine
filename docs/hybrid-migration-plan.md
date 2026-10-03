@@ -401,8 +401,8 @@ pieces, not already-open issues. Keep each change independently reviewable.
 | 8 (complete) | Port required Frost spells and procs in separate PRs | 6, 7 | Each mechanic matched pinned Go in isolating fixtures |
 | 9 (complete) | Interpret the selected preset operators | 2, 8 | Preset operators run; unsupported operators and conditions #622 would change are rejected |
 | 10 (complete for Frost) | Produce required reports and timelines | 1, 8, 9 | Whole `RaidSimResult` matches Go; application parsers read identical timelines ([record](../validation/2026-10-03-report-compatibility.json)) |
-| 11 (Frost sweep complete) | Compare the complete Frost build and gear variants | 6 through 10 | [24 randomized variants](../validation/2026-10-03-frost-sweep.json) match Go; report adapter pending |
+| 11 (complete for Mage) | Compare the complete Frost build and gear variants | 6 through 10 | Randomized sweeps of the Frost, Arcane and Fire reference builds match Go on every supported variant ([Frost](../validation/2026-10-03-frost-sweep.json), [Arcane](../validation/2026-10-03-arcane-sweep.json), [Fire](../validation/2026-10-03-fire-sweep.json)) |
 | 12 | Add worker routing and bounded comparison runs | 11 | Fallback reasons, batch consistency and rollback |
 
-Pieces 1 to 10 are complete for Frost. Pieces 1 to 3 establish the scope and synchronization contract
+Pieces 1 to 11 are complete for the three Mage reference builds; piece 12 is next. Pieces 1 to 3 establish the scope and synchronization contract
 that make the subsequent mechanic ports easier to review and maintain.
