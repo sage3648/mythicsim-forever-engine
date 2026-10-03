@@ -121,6 +121,15 @@ pub(crate) trait Agent: Sized {
         _result: &SpellResult,
     ) {
     }
+    /// Go `OnPeriodicDamageDealt` for a class aura.
+    fn on_periodic_damage_dealt(
+        _fight: &mut Fight<Self>,
+        _aura: AuraRef,
+        _kind: Self::Aura,
+        _spell: SpellId,
+        _result: &SpellResult,
+    ) {
+    }
     /// A proc handler that Go delays by the spell batch window.
     fn on_delayed_proc(
         _fight: &mut Fight<Self>,
@@ -674,6 +683,16 @@ pub(crate) struct DamageTakenModifier {
     pub(crate) multiplier: f64,
 }
 
+/// Go `Unit.AddDynamicDamageTakenModifier` on the target for a modifier that multiplies the
+/// player's damage of the spells in `spells` while any aura in `auras` is active, as a class
+/// asking whether one of its dots burns the target does.
+#[derive(Clone, Debug)]
+pub(crate) struct SpellDamageTakenModifier {
+    pub(crate) spells: Vec<bool>,
+    pub(crate) auras: Vec<AuraRef>,
+    pub(crate) multiplier: f64,
+}
+
 /// A scheduled action. Each variant mirrors one Go pending action.
 #[derive(Clone, Copy, Debug)]
 pub(crate) enum Action {
@@ -758,6 +777,9 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) target: TargetState,
     /// The target's dynamic damage taken modifiers.
     pub(crate) damage_taken_modifiers: Vec<DamageTakenModifier>,
+    /// Spell-conditioned modifiers, applied after `damage_taken_modifiers`; no class registers
+    /// both kinds, so Go's single registration order is kept.
+    pub(crate) spell_damage_taken_modifiers: Vec<SpellDamageTakenModifier>,
     /// Go `healthBar.DamageTakenHealthMetrics` for the player.
     damage_taken_health: usize,
     pub(crate) spells: Vec<Spell<A::Spell>>,
@@ -1605,6 +1627,7 @@ impl<A: Agent> Fight<A> {
                 school_damage_taken_multiplier: config.target_school_damage_taken_multiplier,
             },
             damage_taken_modifiers: Vec::new(),
+            spell_damage_taken_modifiers: Vec::new(),
             damage_taken_health,
             config,
             trackers,

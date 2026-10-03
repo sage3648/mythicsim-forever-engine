@@ -598,6 +598,23 @@ impl<A: Agent> Fight<A> {
         }
     }
 
+    /// Go `auraTracker.OnPeriodicDamageDealt` on the caster, which skips no inactive aura. No
+    /// target aura in scope acts on periodic damage taken.
+    pub(crate) fn on_periodic_damage(&mut self, spell: SpellId, result: &SpellResult) {
+        let list = List::PeriodicDamageDealt as usize;
+        let length = self.trackers[Side::Player.index()].lists[list].snapshot_len();
+        for position in 0..length {
+            let index = self.trackers[Side::Player.index()].lists[list].read(position);
+            let aura = AuraRef {
+                side: Side::Player,
+                index,
+            };
+            if let AuraBehavior::Class(kind) = self.aura(aura).behavior {
+                A::on_periodic_damage_dealt(self, aura, kind, spell, result);
+            }
+        }
+    }
+
     /// Go `auraTracker.OnSpellHitDealt` on the caster and `OnSpellHitTaken` on the target.
     pub(crate) fn on_spell_hit(&mut self, spell: SpellId, result: &SpellResult) {
         for (side, list) in [

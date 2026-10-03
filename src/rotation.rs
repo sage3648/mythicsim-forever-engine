@@ -109,6 +109,7 @@ pub enum Value {
         rhs: Box<Value>,
     },
     CurrentManaPercent,
+    RemainingTimePercent,
     CurrentMana,
     CurrentEnergy,
     MaxEnergy,
@@ -201,6 +202,7 @@ impl Value {
             | Value::TimeToNextEnergyTick => ValueType::Duration,
             Value::CurrentManaPercent
             | Value::CurrentMana
+            | Value::RemainingTimePercent
             | Value::CurrentEnergy
             | Value::MaxEnergy => ValueType::Float,
             Value::Math { op, lhs, rhs } => {
@@ -662,6 +664,10 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
             only(&[])?;
             Ok(Value::RemainingTime)
         }
+        "remainingTimePercent" => {
+            only(&[])?;
+            Ok(Value::RemainingTimePercent)
+        }
         "currentMana" => {
             only(&[])?;
             Ok(Value::CurrentMana)
@@ -979,6 +985,7 @@ pub enum Compiled<R> {
         rhs: Box<Compiled<R>>,
     },
     CurrentManaPercent,
+    RemainingTimePercent,
     CurrentMana,
     CurrentEnergy,
     MaxEnergy,
@@ -1030,6 +1037,7 @@ impl<R> Compiled<R> {
             | Compiled::TimeToNextEnergyTick => ValueType::Duration,
             Compiled::CurrentManaPercent
             | Compiled::CurrentMana
+            | Compiled::RemainingTimePercent
             | Compiled::CurrentEnergy
             | Compiled::MaxEnergy => ValueType::Float,
             Compiled::Math { op, lhs, rhs } => op.result_type(lhs.value_type(), rhs.value_type()),
@@ -1265,6 +1273,7 @@ fn compile_value<R>(
     Some(match value {
         Value::Const(constant) => Compiled::Const(constant.clone()),
         Value::CurrentManaPercent => Compiled::CurrentManaPercent,
+        Value::RemainingTimePercent => Compiled::RemainingTimePercent,
         Value::CurrentMana => Compiled::CurrentMana,
         Value::CurrentEnergy => Compiled::CurrentEnergy,
         Value::MaxEnergy => Compiled::MaxEnergy,

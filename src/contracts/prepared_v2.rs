@@ -802,6 +802,40 @@ pub enum Effect {
         spirit_divisor: f64,
         metrics_action_id: ActionId,
     },
+    /// Every Smite rank's cast on its own client row.
+    Smite {},
+    /// Every Holy Fire rank: the hit rolls, a landed hit applies a snapshotting dot, then the
+    /// hit is dealt.
+    HolyFire {
+        ranks: Vec<FireballRank>,
+    },
+    /// Penance: a hit roll without a hit count, then a channel that ticks on application and
+    /// each second after.
+    Penance {
+        spell_id: i32,
+        tick_base: f64,
+        tick_can_crit: bool,
+    },
+    /// Power in Light: the target's dynamic damage taken modifier multiplies `spells` while any
+    /// Holy Fire in `holy_fire_spells` burns it.
+    PowerInLight {
+        multiplier: f64,
+        spells: Vec<usize>,
+        holy_fire_spells: Vec<usize>,
+    },
+    /// Searing Light: Holy Fire ticks may grant a free Holy Nova.
+    SearingLight {
+        trigger_aura: String,
+        aura: String,
+        callbacks: Vec<String>,
+        outcome: Vec<String>,
+        trigger_immediately: bool,
+        proc_chance: f64,
+        trigger_spells: Vec<usize>,
+        cost_percent_add: f64,
+        cost_spells: Vec<usize>,
+        cancel_spells: Vec<usize>,
+    },
     /// A registered pet nothing summons: Go resets and dismisses it each fight, logging its
     /// stats, and reports its zero metrics.
     InertPet {
@@ -1263,6 +1297,11 @@ impl Effect {
             Effect::ShadowWeaving { .. } => "shadow_weaving",
             Effect::DarkSacrifice { .. } => "dark_sacrifice",
             Effect::InertPet { .. } => "inert_pet",
+            Effect::Smite {} => "smite",
+            Effect::HolyFire { .. } => "holy_fire",
+            Effect::Penance { .. } => "penance",
+            Effect::PowerInLight { .. } => "power_in_light",
+            Effect::SearingLight { .. } => "searing_light",
             Effect::JudgementRefresh { .. } => "judgement_refresh",
             Effect::SunderArmorRamp { .. } => "sunder_armor_ramp",
             Effect::StatAuras { .. } => "stat_auras",

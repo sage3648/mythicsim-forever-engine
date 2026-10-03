@@ -119,6 +119,16 @@ fn is_zero_f(value: &f64) -> bool {
     *value == 0.0
 }
 
+/// A deviation as protojson writes it: a number, or "NaN" when cancellation left
+/// `sqrt(sumSq/n - mean^2)` a negative residue, as Go reports it.
+fn deviation<S: serde::Serializer>(value: &f64, serializer: S) -> Result<S::Ok, S::Error> {
+    if value.is_nan() {
+        serializer.serialize_str("NaN")
+    } else {
+        serializer.serialize_f64(*value)
+    }
+}
+
 fn is_zero_i(value: &i32) -> bool {
     *value == 0
 }
@@ -273,6 +283,7 @@ struct AuraMetricsReport {
     #[serde(skip_serializing_if = "is_zero_f")]
     uptime_seconds_avg: f64,
     #[serde(skip_serializing_if = "is_zero_f")]
+    #[serde(serialize_with = "deviation")]
     uptime_seconds_stdev: f64,
     #[serde(skip_serializing_if = "is_zero_f")]
     procs_avg: f64,
@@ -299,6 +310,7 @@ struct DistributionReport {
     #[serde(skip_serializing_if = "is_zero_f")]
     avg: f64,
     #[serde(skip_serializing_if = "is_zero_f")]
+    #[serde(serialize_with = "deviation")]
     stdev: f64,
     #[serde(skip_serializing_if = "is_zero_f")]
     max: f64,
