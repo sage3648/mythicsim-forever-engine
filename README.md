@@ -81,6 +81,13 @@ Sweeps of [its variants](validation/2026-10-04-elemental-shaman-sweep.json) and 
 [every Shaman race](validation/2026-10-04-elemental-shaman-race-sweep.json) match on all
 48 variants.
 
+The production Enhancement Shaman build, an Orc with a Crusader two-hander, Rockbiter, the
+party Windfury Totem and Battle Shout, Strength of Earth and Searing Totems, Stormstrike,
+Flurry, Maelstrom Weapon, Elemental Devastation and Rage of the Farseer, matches the pinned
+Go engine at 621.475 DPS. Sweeps of [its variants](validation/2026-10-04-enhancement-shaman-sweep.json)
+and of [every Shaman race](validation/2026-10-04-enhancement-shaman-race-sweep.json) match
+on every supported variant.
+
 The production Shadow Priest build matches too: an Undead priest with a prepull
 Shadowform and Mind Blast, Shadow Word: Pain, Devouring Plague, Shadow Word: Death with
 Early Demise, Mind Flay channels the rotation interrupts, a strict Inner Focus and Mind
@@ -112,6 +119,17 @@ and the raid's ramped Sunder Armor, at 510.849 DPS. Its
 [sweep](validation/2026-10-04-destruction-warlock-sweep.json) matches Go on all 24
 variants, and a [race sweep](validation/2026-10-04-warlock-race-sweep.json) drawing
 Human, Gnome with Eureka!, Orc and Undead matches on all 12.
+
+The production Combat Rogue build matches too, at 616.136 DPS: an Undead dagger rogue
+whose energy ticks run as Go's simulation task, with Backstab and Puncturing Wounds,
+Slice and Dice and Eviscerate splitting their metrics by combo points, Relentless Strikes,
+Ruthlessness, Adrenaline Rush, Blade Flurry, Instant and Deadly Poison, Thistle Tea,
+Shadowcraft Armor's energize, Windfury Totem, Crusader, Dragonbreath Chili and the Goblin
+Sapper Charge, whose hit on the player removes health through Chance of Death.
+[Sweeps](validation/2026-10-04-combat-rogue-sweep.json) of the request, also
+[in melee range](validation/2026-10-04-combat-rogue-melee-sweep.json) and
+[across every Rogue race](validation/2026-10-04-combat-rogue-race-sweep.json), match Go
+on all 72 variants.
 
 The production Retribution Paladin build is the first melee build: a Human with a
 two-handed weapon twisting Seal of Command and Seal of Righteousness through Twist of

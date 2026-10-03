@@ -31,6 +31,8 @@ pub(crate) enum AuraBehavior<K> {
     ChanceOfDeath,
     /// Go attack.go `applyParryHaste`: a parry pulls the unit's next main hand swing in.
     ParryHaste,
+    /// An item proc that restores energy: [`super::energy::EnergizeProc`], by index.
+    EnergizeProc(usize),
     /// Go buffs/paladin.go `AttachJudgementOfWisdomMana`.
     JudgementOfWisdom {
         chance: f64,
@@ -46,8 +48,17 @@ pub(crate) enum AuraBehavior<K> {
     },
     /// Go racials.go `applyEureka`'s aura.
     Eureka,
-    /// Go `Aura.AttachMultiplyCastSpeed`.
-    MultiplyCastSpeed(f64),
+    /// Go `AttachMultiplyAttackSpeed` followed by `AttachMultiplyCastSpeed`, as Berserking.
+    MultiplyAttackAndCastSpeed {
+        attack: f64,
+        cast: f64,
+    },
+    /// Go `AttachMultiplicativePseudoStatBuff` on the player's damage taken of each school, as
+    /// Orc Shatter Curse attaches it.
+    MultiplySelfDamageTaken {
+        multiplier: f64,
+        schools: [bool; 8],
+    },
     /// Go `MultiplyManaRegenSpeed` on gain and its reciprocal on expire, as racials.go
     /// Energized does with 2 and 0.5.
     MultiplyManaRegenSpeed(f64),
@@ -447,7 +458,14 @@ impl<A: Agent> Fight<A> {
         match self.aura(aura).behavior {
             AuraBehavior::Dot(dot) => self.dot_on_gain(dot),
             AuraBehavior::Eureka => self.eureka_gain(),
-            AuraBehavior::MultiplyCastSpeed(multiplier) => self.multiply_cast_speed(multiplier),
+            AuraBehavior::MultiplyAttackAndCastSpeed { attack, cast } => {
+                self.multiply_attack_speed(attack);
+                self.multiply_cast_speed(cast);
+            }
+            AuraBehavior::MultiplySelfDamageTaken {
+                multiplier,
+                schools,
+            } => self.multiply_self_damage_taken(multiplier, schools, false),
             AuraBehavior::MultiplyManaRegenSpeed(multiplier) => {
                 self.multiply_mana_regen_speed(multiplier)
             }
@@ -482,9 +500,14 @@ impl<A: Agent> Fight<A> {
         match self.aura(aura).behavior {
             AuraBehavior::Dot(dot) => self.dot_on_expire(dot),
             AuraBehavior::Eureka => self.eureka_expire(),
-            AuraBehavior::MultiplyCastSpeed(multiplier) => {
-                self.multiply_cast_speed(1.0 / multiplier)
+            AuraBehavior::MultiplyAttackAndCastSpeed { attack, cast } => {
+                self.multiply_attack_speed(1.0 / attack);
+                self.multiply_cast_speed(1.0 / cast);
             }
+            AuraBehavior::MultiplySelfDamageTaken {
+                multiplier,
+                schools,
+            } => self.multiply_self_damage_taken(multiplier, schools, true),
             AuraBehavior::WindfuryProc { bit } => {
                 self.stat_mask &= !bit;
                 self.player.powers = self.stat_combos[self.stat_mask as usize];
@@ -656,6 +679,9 @@ impl<A: Agent> Fight<A> {
                     AuraBehavior::Class(kind) if dealt => {
                         A::on_spell_hit_dealt(self, aura, kind, spell, result)
                     }
+                    AuraBehavior::Class(kind) => {
+                        A::on_spell_hit_taken(self, aura, kind, spell, result)
+                    }
                     AuraBehavior::JudgementOfWisdom { chance, delay, .. } => {
                         self.judgement_of_wisdom_callback(aura, spell, result, chance, delay)
                     }
@@ -685,6 +711,9 @@ impl<A: Agent> Fight<A> {
                         self.chance_of_death_hit_taken(result)
                     }
                     AuraBehavior::ParryHaste if !dealt => self.parry_haste(side, result),
+                    AuraBehavior::EnergizeProc(index) if dealt => {
+                        self.energize_proc_callback(aura, index, spell, result)
+                    }
                     _ => {}
                 }
             }
@@ -895,6 +924,7 @@ impl<A: Agent> Fight<A> {
                 let chili = self.chili.clone().expect("Dragonbreath Chili is bound");
                 self.cast(chili.spell, result.target);
             }
+            AuraBehavior::EnergizeProc(index) => self.energize_proc_handler(index),
             AuraBehavior::Class(kind) => A::on_delayed_proc(self, aura, kind, spell, result),
             _ => {}
         }

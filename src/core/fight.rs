@@ -89,6 +89,16 @@ pub(crate) trait Agent: Sized {
     ) {
         fight.deal_damage(spell, result, false);
     }
+    /// Go `DamageDoneByCasterExtraMultiplier` on the target's attack table: the active
+    /// handler's multiplier for a spell, if any handler is active.
+    fn caster_damage_multiplier(_fight: &Fight<Self>, _spell: SpellId) -> Option<f64> {
+        None
+    }
+    /// When a class's totem of the slot expires, for Go's `totemRemainingTime`. The gate
+    /// admits the value only for a class that implements this.
+    fn totem_expiration(_fight: &Fight<Self>, _totem: crate::rotation::Totem) -> i64 {
+        unreachable!("totemRemainingTime needs a class with totems")
+    }
     /// A dot or channel tick of a class spell.
     fn on_dot_tick(_fight: &mut Fight<Self>, _dot: DotId, _behavior: Self::Spell) {}
     /// The class part of a dot aura's OnGain, which Go runs before the dot's own.
@@ -115,6 +125,15 @@ pub(crate) trait Agent: Sized {
     ) {
     }
     fn on_spell_hit_dealt(
+        _fight: &mut Fight<Self>,
+        _aura: AuraRef,
+        _kind: Self::Aura,
+        _spell: SpellId,
+        _result: &SpellResult,
+    ) {
+    }
+    /// Go `OnSpellHitTaken` of a class aura on the target, for the player's hit.
+    fn on_spell_hit_taken(
         _fight: &mut Fight<Self>,
         _aura: AuraRef,
         _kind: Self::Aura,
@@ -802,6 +821,8 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) enemy: Option<enemy::EnemyAttack>,
     /// Auras Go keeps up through `ApplyFixedUptimeAura`.
     pub(crate) fixed_uptime: Vec<FixedUptime>,
+    /// Item procs that restore energy.
+    pub(crate) energize_procs: Vec<energy::EnergizeProc>,
     pub(crate) player: Player,
     /// Go `Unit.CastSpeed`. Go's unit reset restores the pseudo stats but not this value,
     /// so a speed change undone at the end of a fight carries into the next one.
@@ -1149,7 +1170,7 @@ impl<A: Agent> Fight<A> {
                         }
                         Effect::Berserking { spell_id, aura, .. }
                         | Effect::BloodFury { spell_id, aura, .. }
-                        | Effect::ShatterCurse { spell_id, aura }
+                        | Effect::ShatterCurse { spell_id, aura, .. }
                         | Effect::Stoneform { spell_id, aura }
                         | Effect::ReadLeyLine { spell_id, aura, .. }
                         | Effect::TemporaryStats { spell_id, aura, .. }
@@ -1462,17 +1483,44 @@ impl<A: Agent> Fight<A> {
                         .any(|effect| matches!(effect, Effect::Eureka { aura, .. } if *aura == exported.label))
                 {
                     AuraBehavior::Eureka
-                } else if let Some(multiplier) = effects.iter().find_map(|effect| match effect {
+                } else if let Some((attack, cast)) = effects.iter().find_map(|effect| match effect {
                     Effect::Berserking {
                         aura,
+                        attack_speed_multiplier,
                         cast_speed_multiplier,
                         ..
                     } if side == Side::Player && *aura == exported.label => {
-                        Some(*cast_speed_multiplier)
+                        Some((*attack_speed_multiplier, *cast_speed_multiplier))
                     }
                     _ => None,
                 }) {
-                    AuraBehavior::MultiplyCastSpeed(multiplier)
+                    AuraBehavior::MultiplyAttackAndCastSpeed { attack, cast }
+                } else if let Some((multiplier, schools)) =
+                    effects.iter().find_map(|effect| match effect {
+                        Effect::ShatterCurse {
+                            aura,
+                            school_damage_taken_multiplier,
+                            schools,
+                            ..
+                        } if side == Side::Player && *aura == exported.label => {
+                            Some((*school_damage_taken_multiplier, schools))
+                        }
+                        _ => None,
+                    })
+                {
+                    let names = ["none", "physical", "arcane", "fire", "frost", "holy", "nature", "shadow"];
+                    let mut mask = [false; 8];
+                    for school in schools {
+                        let index = names
+                            .iter()
+                            .position(|name| name == school)
+                            .ok_or_else(|| format!("unknown school {school}"))?;
+                        mask[index] = true;
+                    }
+                    AuraBehavior::MultiplySelfDamageTaken {
+                        multiplier,
+                        schools: mask,
+                    }
                 } else if let Some(multiplier) = effects.iter().find_map(|effect| match effect {
                     Effect::ReadLeyLine {
                         aura,
@@ -1553,6 +1601,18 @@ impl<A: Agent> Fight<A> {
                     matches!(effect, Effect::ParryHaste { unit: u, aura } if u == unit && *aura == exported.label)
                 }) {
                     AuraBehavior::ParryHaste
+                } else if let Some(index) = (side == Side::Player)
+                    .then(|| {
+                        effects
+                            .iter()
+                            .filter(|effect| matches!(effect, Effect::EnergizeProc { .. }))
+                            .position(|effect| {
+                                matches!(effect, Effect::EnergizeProc { trigger_aura, .. } if *trigger_aura == exported.label)
+                            })
+                    })
+                    .flatten()
+                {
+                    AuraBehavior::EnergizeProc(index)
                 } else if side == Side::Player
                     && effects.iter().any(|effect| {
                         matches!(effect, Effect::Crusader { trigger_aura, .. } if *trigger_aura == exported.label)
@@ -1642,6 +1702,7 @@ impl<A: Agent> Fight<A> {
             enemy: None,
             death: damage_taken::Death::default(),
             fixed_uptime: Vec::new(),
+            energize_procs: Vec::new(),
             player: Player {
                 powers: config.powers,
                 mana: config.max_mana,
@@ -1733,6 +1794,33 @@ impl<A: Agent> Fight<A> {
         };
         if let Some(energy) = &player.energy {
             fight.enable_energy_bar(energy);
+        }
+        for effect in effects {
+            if let Effect::EnergizeProc {
+                rng_label,
+                chances,
+                energy,
+                metrics_action_id,
+                delay_ns,
+                ..
+            } = effect
+            {
+                let mut by_spell = vec![None; fight.spells.len()];
+                for entry in chances {
+                    if let Some(slot) = by_spell.get_mut(entry.spell) {
+                        *slot = Some(entry.chance);
+                    }
+                }
+                let metrics =
+                    fight.new_resource_metrics(metrics_action_id.clone(), ResourceKind::Energy);
+                fight.energize_procs.push(energy::EnergizeProc {
+                    label: rng_label.clone(),
+                    chances: by_spell,
+                    energy: *energy,
+                    metrics,
+                    delay: *delay_ns,
+                });
+            }
         }
         for effect in effects {
             if let Effect::FixedUptimeAura {

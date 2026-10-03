@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "24d2f5a5020845094ae6eef4c5f0c460bac75a3b5e88873c4e1ba282efef0562",
+  "exporter_sha256": "1b07c00b24064b07080564457010a61ed8e0f862c06598fb810461be4de3ab6b",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -616,7 +616,7 @@
         "path": "fixtures/mage/prepared-v2/frost-troll.request.json"
       },
       "prepared": "frost-troll.prepared.json",
-      "prepared_sha256": "dc3b9f8e3afea63b8f8f94603d65cf95896ab18511dddbf19b539f330058a6d5",
+      "prepared_sha256": "1e720837cd0d65c49dbc1063e5329abc5fc6b32618134861a9d658df39464ee9",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -637,7 +637,7 @@
         "path": "fixtures/mage/prepared-v2/frost-troll-ten-minutes.request.json"
       },
       "prepared": "frost-troll-ten-minutes.prepared.json",
-      "prepared_sha256": "de46d679e6a9d1ccf54d004a5166044acf907b67cfc309182d0eb78c6dc34fe7",
+      "prepared_sha256": "c1ce5df48d92a7fbe67138a0663a9442526cbaab1d2b62c8d5761486a0da3bb4",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -654,7 +654,7 @@
         "path": "fixtures/mage/prepared-v2/frost-orc.request.json"
       },
       "prepared": "frost-orc.prepared.json",
-      "prepared_sha256": "85933fb11441a30f533d8c5f7c2cd33f0e0c1ee670ef90218649ed240085876f",
+      "prepared_sha256": "4a60a4b57e70b3863dd8ca753773f7ea4d2a88f2ae0a08de298b121805cb2531",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -675,7 +675,7 @@
         "path": "fixtures/mage/prepared-v2/frost-orc-cooldown-timings.request.json"
       },
       "prepared": "frost-orc-cooldown-timings.prepared.json",
-      "prepared_sha256": "1ee2914df8d7096ef74ccb5dd5b4fbd509cc703bebe57b90d30d7a7a25cef309",
+      "prepared_sha256": "5adfabf5341fdce1f67256fb49a817a47981487bd6d283f65e0bc21eb1f3da32",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -827,7 +827,7 @@
         "path": "fixtures/mage/prepared-v2/production-elemental-shaman.request.json"
       },
       "prepared": "production-elemental-shaman.prepared.json",
-      "prepared_sha256": "d68b74e5b2b2c10e17ab323271392f18b649a2615fcaab2076f8fb3d8a948c61",
+      "prepared_sha256": "6ab008f960e415440680d7e054ed30b6335cfa0912f75f734bf793e67b8e5d3e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -848,7 +848,7 @@
         "path": "fixtures/mage/prepared-v2/elemental-shaman-dwarf-stoneform.request.json"
       },
       "prepared": "elemental-shaman-dwarf-stoneform.prepared.json",
-      "prepared_sha256": "bceaf216f3135888c3680c1b4f2ebff9ac0f5a7623aad9e2938e2628e5610464",
+      "prepared_sha256": "357fa8f9a1a706323b41f4bbd43b86b32ffdfdd6d4554bf8b8205273bb6471af",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1125,6 +1125,90 @@
       "go_log": {
         "file": "tank-protection-paladin-autos.go-log.txt",
         "sha256": "5a61a8129e6f0fe24b8e5947868f2bdebf85e54b714b254691d5284fdb489d65"
+      }
+    },
+    {
+      "id": "enhancement-shaman-no-battle-shout",
+      "description": "The production application's Enhancement Shaman request at application revision 18bbcd47 without the party Battle Shout: Orc with Blood Fury, a two-hander with Crusader and Rockbiter, Windfury Totem, Dragonbreath Chili, Strength of Earth and Searing Totems with totemRemainingTime, Stormstrike, Flurry, Maelstrom Weapon Lightning Bolts, Elemental Devastation, Improved Stormstrike, Rage of the Farseer, Flame Shock, Fire Nova and Earth Shock.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/enhancement-shaman-no-battle-shout.request.json"
+      },
+      "prepared": "enhancement-shaman-no-battle-shout.prepared.json",
+      "prepared_sha256": "a0a6ab4eb14757fde250b0e1769fa73369c83f13208618ea557d8beead8d1467",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "enhancement-shaman-no-battle-shout.go-result.json",
+        "sha256": "922c26db1eaae15749230fa005aff00f9056356fa20a4a82e4da119503bb43c7"
+      },
+      "go_log": {
+        "file": "enhancement-shaman-no-battle-shout.go-log.txt",
+        "sha256": "6bd069911207ff0b14f3e8c47a7146d7c7de963a125e89b94f96022dc6e33b5c"
+      }
+    },
+    {
+      "id": "production-enhancement-shaman",
+      "description": "The production application's Enhancement Shaman request at application revision 18bbcd47: Orc with Blood Fury, a two-hander with Crusader and Rockbiter, the party Windfury Totem and Battle Shout, Dragonbreath Chili, Strength of Earth and Searing Totems with totemRemainingTime, Stormstrike, Flurry, Maelstrom Weapon Lightning Bolts, Elemental Devastation, Improved Stormstrike, Rage of the Farseer, Flame Shock, Fire Nova and Earth Shock.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-enhancement-shaman.request.json"
+      },
+      "prepared": "production-enhancement-shaman.prepared.json",
+      "prepared_sha256": "9d15bedbf8b725e9c24c2ce8c359d183f79e20c60121df45bca35e23bdbc4fe2",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-enhancement-shaman.go-result.json",
+        "sha256": "83e39112dc000293e294f631a0333b487c8778227fe41766ffa03eda4b0c47e2"
+      },
+      "go_log": {
+        "file": "production-enhancement-shaman.go-log.txt",
+        "sha256": "25a90ebe7e862e1ccd9c8ff7d3224468535bb9c7d1dea4948e21836ea51cda21"
+      }
+    },
+    {
+      "id": "production-combat-rogue",
+      "description": "The production application's Combat Rogue request (Undead, talents 005303105-32030320201515221-002, application revision 18bbcd47): dagger Backstab, Slice and Dice, Eviscerate, Adrenaline Rush, Blade Flurry, Instant and Deadly Poison, Thistle Tea, the Goblin Sapper Charge, Windfury Totem, Crusader, Dragonbreath Chili and Shadowcraft Armor's energize.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-combat-rogue.request.json"
+      },
+      "prepared": "production-combat-rogue.prepared.json",
+      "prepared_sha256": "b3bc7df87578721bb0d880b117e57dfd505caece437aafb2586ac5abd431f0c7",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-combat-rogue.go-result.json",
+        "sha256": "4cf1fb9d25bc82f8a68021ae4421935da134fb316914b148345a05be7477878d"
+      },
+      "go_log": {
+        "file": "production-combat-rogue.go-log.txt",
+        "sha256": "4875bea8fa579c578a8e12b0946e782e6e25f3c02810a13f6804989e84e5c578"
+      }
+    },
+    {
+      "id": "combat-rogue-orc-shatter-curse",
+      "description": "The production Combat Rogue request as an Orc with a Shatter Curse timing at one second, 1000 iterations: the curse is up when the Goblin Sapper Charge hits the player, so the self hit takes the curse's lower Fire damage taken, and Blood Fury changes stats.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/combat-rogue-orc-shatter-curse.request.json"
+      },
+      "prepared": "combat-rogue-orc-shatter-curse.prepared.json",
+      "prepared_sha256": "f3d51cf81b139d81b325b831cea17ed0903fdb8a5bc93bc4f1a2b7da35e24767",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "combat-rogue-orc-shatter-curse.go-result.json",
+        "sha256": "f62059183d02d8323bac555ff412e81aef7ccafcc7b1d1a6165521895545f601"
+      },
+      "go_log": {
+        "file": "combat-rogue-orc-shatter-curse.go-log.txt",
+        "sha256": "2321ee8d6f0181266a17068f20a62fca25828ed7302765a4be6ec8f96cb10815"
       }
     },
     {

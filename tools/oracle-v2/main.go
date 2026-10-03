@@ -197,6 +197,9 @@ type classExport struct {
 	inertPet func(agent core.Agent, pet *core.Pet) string
 	// Optional: class behavior the effects cannot describe, one reason each.
 	unrepresented func(agent core.Agent, character *core.Character) []string
+	// Optional: whether the class's main hand swing replacement always returns the swing it is
+	// given for this player, so only Go's reaction before each swing remains.
+	swingReplacementKeepsSwing func(agent core.Agent, player *proto.Player) bool
 	// Optional: class auras that change stats through AddStatsDynamic when gained or lost.
 	statAuras func(agent core.Agent, character *core.Character) []string
 }
@@ -691,12 +694,16 @@ type Melee struct {
 	DefenderBonusAttackPower      float64 `json:"defender_bonus_attack_power"`
 	DefenderBonusPhysicalTaken    float64 `json:"defender_bonus_physical_damage_taken"`
 	DefenderReducedPhysicalHitPct float64 `json:"defender_reduced_physical_hit_taken"`
+	// A class replace function on the main hand: Go's swing reacts to the event first, even
+	// when the replacement returns the swing unchanged.
+	ReplaceMainHandSwing bool `json:"replace_main_hand_swing,omitempty"`
 }
 
-func exportMelee(character *core.Character, target *core.Unit, table *core.AttackTable, unrepresented *[]string) Melee {
+func exportMelee(character *core.Character, target *core.Unit, table *core.AttackTable, keepsSwing bool, unrepresented *[]string) Melee {
 	aa := &character.AutoAttacks
 	mh := privateField(aa, "mh")
-	if aa.AutoSwingMelee && !mh.FieldByName("replaceSwing").IsNil() {
+	replaced := aa.AutoSwingMelee && !mh.FieldByName("replaceSwing").IsNil()
+	if replaced && !keepsSwing {
 		*unrepresented = append(*unrepresented, "main hand swings can be replaced")
 	}
 	if aa.AutoSwingRanged {
@@ -708,7 +715,8 @@ func exportMelee(character *core.Character, target *core.Unit, table *core.Attac
 	pseudo := &character.PseudoStats
 	defender := &target.PseudoStats
 	return Melee{
-		AutoSwingMelee: aa.AutoSwingMelee, AutoSwingRanged: aa.AutoSwingRanged, DualWielding: aa.IsDualWielding,
+		ReplaceMainHandSwing: replaced,
+		AutoSwingMelee:       aa.AutoSwingMelee, AutoSwingRanged: aa.AutoSwingRanged, DualWielding: aa.IsDualWielding,
 		MainHand: exportWeapon(aa.MH()), OffHand: exportWeapon(aa.OH()), Ranged: exportWeapon(aa.Ranged()),
 		BaseMissChance: table.BaseMissChance, BaseGlanceChance: table.BaseGlanceChance,
 		GlanceMultiplier: table.GlanceMultiplier, GlanceSpread: table.GlanceSpread,
@@ -847,11 +855,17 @@ func eurekaEffect(agent core.Agent, character *core.Character) map[string]any {
 	}
 	cost, damage, ticks, spending := []int{}, []int{}, []int{}, []int{}
 	for i, spell := range character.Spellbook {
-		mana := false
+		// The cost modifier names the class's resource: energy for a Rogue, mana for a caster.
+		paid := false
 		if spell.Cost != nil {
-			_, mana = spell.Cost.ResourceCostImpl.(*core.ManaCost)
+			switch spell.Cost.ResourceCostImpl.(type) {
+			case *core.ManaCost:
+				paid = character.Class != proto.Class_ClassRogue && character.Class != proto.Class_ClassWarrior
+			case *core.EnergyCost:
+				paid = character.Class == proto.Class_ClassRogue
+			}
 		}
-		if mana && modded(spell, masks.Cost) {
+		if paid && modded(spell, masks.Cost) {
 			cost = append(cost, i)
 		}
 		if modded(spell, masks.Damage|masks.Tick) {
@@ -941,10 +955,12 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 			"health_fraction": 0.05, "delay_ns": nanos(core.SpellBatchWindow),
 		})
 	}
-	// racials.go Troll Berserking: AttachMultiplyCastSpeed with a Go literal.
+	// racials.go Troll Berserking: AttachMultiplyAttackSpeed and AttachMultiplyCastSpeed, in that
+	// order, with Go literals.
 	if aura := character.GetAura("Berserking"); aura != nil {
 		effects = append(effects, map[string]any{
 			"kind": "berserking", "spell_id": aura.ActionID.SpellID, "aura": aura.Label, "cast_speed_multiplier": 1.1,
+			"attack_speed_multiplier": 1.1,
 		})
 	}
 	// racials.go Orc Blood Fury: Go computes the buffed stats through its dynamic stat
@@ -1009,9 +1025,11 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 		}
 		effects = append(effects, ramp)
 	}
-	// racials.go Orc Shatter Curse: its aura changes only the player's damage taken.
+	// racials.go Orc Shatter Curse: its aura multiplies the player's magic damage taken, a Go
+	// literal on each magic school.
 	if aura := character.GetAura("Shatter Curse"); aura != nil {
-		effects = append(effects, map[string]any{"kind": "shatter_curse", "spell_id": aura.ActionID.SpellID, "aura": aura.Label})
+		effects = append(effects, map[string]any{"kind": "shatter_curse", "spell_id": aura.ActionID.SpellID, "aura": aura.Label,
+			"school_damage_taken_multiplier": 0.85, "schools": []string{"arcane", "fire", "frost", "holy", "nature", "shadow"}})
 	}
 	// racials.go Dwarf Stoneform: its aura changes only the player's physical damage taken.
 	if aura := character.GetAura("Stoneform"); aura != nil {
@@ -1264,6 +1282,7 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	effects = append(effects, inertPets...)
 	effects = append(effects, meleeProcEffects(simulation, character, &unrepresented)...)
 	statAuraLabels := []string{}
+	effects = append(effects, energyProcEffects(simulation, character, &unrepresented)...)
 	if statAuras := statAurasEffect(request, character, class, agent); statAuras != nil {
 		effects = append(effects, statAuras)
 		statAuraLabels = statAuras["auras"].([]string)
@@ -1348,7 +1367,11 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 		},
 		Effects: effects, Unrepresented: unrepresented,
 	}
-	prepared.Melee = exportMelee(character, target, table, &prepared.Unrepresented)
+	keepsSwing := false
+	if class, ok := classExports[character.Class]; ok && class.swingReplacementKeepsSwing != nil {
+		keepsSwing = class.swingReplacementKeepsSwing(agent, request.Raid.Parties[0].Players[0])
+	}
+	prepared.Melee = exportMelee(character, target, table, keepsSwing, &prepared.Unrepresented)
 	if tanking {
 		prepared.Enemy = exportEnemy(request, statAuraLabels, character, target, &prepared.Unrepresented)
 	}

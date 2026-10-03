@@ -327,6 +327,18 @@ impl<A: Agent> Fight<A> {
                 next - self.now
             }
             Compiled::Math { op, lhs, rhs } => self.math_duration(*op, lhs, rhs),
+            Compiled::TotemRemainingTime {
+                totem,
+                include_reaction_time,
+            } => {
+                let delay = if *include_reaction_time {
+                    self.config.reaction
+                } else {
+                    0
+                };
+                let expires = A::totem_expiration(self, *totem);
+                (expires + delay - self.now).max(0)
+            }
             Compiled::CurrentTime => self.now,
             // Go `APLValueAutoTimeToNext`.
             Compiled::AutoTimeToNext(auto) => {

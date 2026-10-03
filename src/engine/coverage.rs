@@ -44,6 +44,7 @@ const COMMON_EFFECTS: &[&str] = &[
     "crusader",
     "dragonbreath_chili",
     "energize_on_use",
+    "energize_proc",
     "eureka",
     "fixed_uptime_aura",
     "goblin_sapper",
@@ -163,6 +164,7 @@ fn common_claims(effect: &Effect) -> Vec<(&'static str, &str)> {
             "target" => vec![("target", aura)],
             _ => Vec::new(),
         },
+        Effect::EnergizeProc { trigger_aura, .. } => vec![("player", trigger_aura)],
         Effect::Crusader { trigger_aura, .. } | Effect::DragonbreathChili { trigger_aura, .. } => {
             vec![("player", trigger_aura)]
         }
@@ -485,6 +487,22 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
 
     if let Some(rotation) = rotation {
         reasons.extend(unknown_aura_conditions(prepared, rotation));
+        if player.class != "ClassShaman" {
+            for item in &rotation.priority_list {
+                let mut totems = false;
+                if let Some(condition) = &item.condition {
+                    condition.visit(&mut |value| {
+                        totems |= matches!(value, Value::TotemRemainingTime { .. })
+                    });
+                }
+                if totems {
+                    reasons.push(format!(
+                        "rotation item {}: totemRemainingTime needs a Shaman",
+                        item.position
+                    ));
+                }
+            }
+        }
         reasons.extend(energy_without_bar(prepared, rotation));
         let mut reachable = Vec::new();
         let mut registered_prepull = 0;

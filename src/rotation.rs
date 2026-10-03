@@ -41,6 +41,15 @@ pub enum CompareOp {
     Ge,
 }
 
+/// Go `ShamanTotems_TotemType`, the totem slot a Shaman value reads.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Totem {
+    Earth,
+    Air,
+    Fire,
+    Water,
+}
+
 /// Go `APLValueMath_MathOperator`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MathOp {
@@ -107,6 +116,11 @@ pub enum Value {
         op: MathOp,
         lhs: Box<Value>,
         rhs: Box<Value>,
+    },
+    /// Go sim/shaman/apl_values.go `APLValueTotemRemainingTime`; no totem type gives no value.
+    TotemRemainingTime {
+        totem: Option<Totem>,
+        include_reaction_time: bool,
     },
     CurrentManaPercent,
     RemainingTimePercent,
@@ -213,6 +227,7 @@ impl Value {
             | Value::DotTimeToNextTick(_)
             | Value::AutoTimeToNext(_)
             | Value::RemainingTime
+            | Value::TotemRemainingTime { .. }
             | Value::CurrentTime
             | Value::TimeToNextEnergyTick => ValueType::Duration,
             Value::CurrentManaPercent
@@ -711,6 +726,27 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
             only(&[])?;
             Ok(Value::NumberTargets)
         }
+        "totemRemainingTime" => {
+            only(&["totemType", "includeReactionTime"])?;
+            let totem = match config.get("totemType").and_then(Json::as_str) {
+                None | Some("TypeUnknownTotem") => None,
+                Some("Earth") => Some(Totem::Earth),
+                Some("Air") => Some(Totem::Air),
+                Some("Fire") => Some(Totem::Fire),
+                Some("Water") => Some(Totem::Water),
+                Some(other) => return Err(vec![format!("totem type {other} is unsupported")]),
+            };
+            let include_reaction_time = match config.get("includeReactionTime") {
+                None => false,
+                Some(value) => value
+                    .as_bool()
+                    .ok_or_else(|| vec!["includeReactionTime must be a boolean".to_string()])?,
+            };
+            Ok(Value::TotemRemainingTime {
+                totem,
+                include_reaction_time,
+            })
+        }
         "gcdIsReady" => {
             only(&[])?;
             Ok(Value::GcdIsReady)
@@ -1011,6 +1047,10 @@ pub enum Compiled<R> {
         lhs: Box<Compiled<R>>,
         rhs: Box<Compiled<R>>,
     },
+    TotemRemainingTime {
+        totem: Totem,
+        include_reaction_time: bool,
+    },
     CurrentManaPercent,
     RemainingTimePercent,
     CurrentMana,
@@ -1064,6 +1104,7 @@ impl<R> Compiled<R> {
             | Compiled::SpellTimeToReady(_)
             | Compiled::DotTimeToNextTick(_)
             | Compiled::RemainingTime
+            | Compiled::TotemRemainingTime { .. }
             | Compiled::CurrentTime
             | Compiled::TimeToNextEnergyTick => ValueType::Duration,
             Compiled::CurrentManaPercent
@@ -1313,6 +1354,13 @@ fn compile_value<R>(
         Value::RemainingTime => Compiled::RemainingTime,
         Value::CurrentTime => Compiled::CurrentTime,
         Value::NumberTargets => Compiled::NumberTargets,
+        Value::TotemRemainingTime {
+            totem,
+            include_reaction_time,
+        } => Compiled::TotemRemainingTime {
+            totem: (*totem)?,
+            include_reaction_time: *include_reaction_time,
+        },
         Value::DotIsActive(id) => Compiled::DotIsActive((lookup.dot)(id)?),
         Value::DotRemainingTime(id) => Compiled::DotRemainingTime((lookup.dot)(id)?),
         // Go `newValueSpellIsKnown` is a constant.
