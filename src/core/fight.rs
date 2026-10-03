@@ -16,9 +16,11 @@ pub(crate) mod damage_taken;
 mod dot;
 mod enemy;
 pub(crate) mod energy;
+mod focus;
 mod log;
 pub(crate) mod melee;
 pub(crate) mod metrics;
+pub(crate) mod movement;
 pub(crate) mod pet;
 mod racial;
 pub(crate) mod rage;
@@ -239,6 +241,8 @@ pub(crate) enum SpellBehavior<S> {
     },
     /// Go consumes.go Goblin Sapper Charge: a Fire hit on the target and one on the player.
     GoblinSapper,
+    /// Go movement.go's Movement spell: the aura and its stacks.
+    Move,
     /// Go consumes.go newBasicExplosiveSpellConfig without the self hit.
     BasicExplosive {
         min: f64,
@@ -533,6 +537,8 @@ pub(crate) struct Player {
     pub(crate) spell_cost_percent_modifier: i32,
     /// Go `PseudoStats.SchoolDamageDealtMultiplier`, which auras can multiply.
     pub(crate) school_damage_dealt_multiplier: [f64; 8],
+    /// Go `PseudoStats.DamageDealtMultiplier`, which auras can multiply.
+    pub(crate) damage_dealt_multiplier: f64,
     /// Go `PseudoStats.DamageTakenMultiplier`, which auras can multiply.
     pub(crate) damage_taken_multiplier: f64,
     /// Go `PseudoStats.CastSpeedMultiplier`.
@@ -569,6 +575,9 @@ pub(crate) struct Player {
     pub(crate) oom_time: i64,
     pub(crate) went_oom: bool,
     pub(crate) first_oom: i64,
+    /// Go `Unit.Moving` and its pending movement.
+    pub(crate) moving: bool,
+    pub(crate) movement: Option<movement::Movement>,
 }
 
 impl Player {
@@ -580,6 +589,7 @@ impl Player {
             health: config.max_health,
             spell_cost_percent_modifier: config.initial.spell_cost_percent_modifier,
             school_damage_dealt_multiplier: config.school_damage_dealt_multiplier,
+            damage_dealt_multiplier: config.damage_dealt_multiplier,
             damage_taken_multiplier: config.damage_taken_multiplier,
             cast_speed_multiplier: config.initial.cast_speed_multiplier,
             attack_speed_multiplier: config.melee.attack_speed_multiplier,
@@ -612,6 +622,8 @@ impl Player {
             oom_time: 0,
             went_oom: false,
             first_oom: 0,
+            moving: false,
+            movement: None,
         }
     }
 }
@@ -786,6 +798,7 @@ pub(crate) enum ResourceKind {
     Rage,
     Energy,
     ComboPoints,
+    Focus,
 }
 
 impl ResourceKind {
@@ -797,6 +810,7 @@ impl ResourceKind {
             ResourceKind::Rage => "ResourceTypeRage",
             ResourceKind::Energy => "ResourceTypeEnergy",
             ResourceKind::ComboPoints => "ResourceTypeComboPoints",
+            ResourceKind::Focus => "ResourceTypeFocus",
         }
     }
 }
@@ -886,6 +900,11 @@ pub(crate) enum Action {
     },
     /// The party Windfury Totem's periodic refresh.
     WindfuryRefresh,
+    /// A dynamic pet's heartbeat update after an owner stat change, which changes nothing for
+    /// a pet that inherits nothing.
+    PetInheritance,
+    /// The end of a unit's movement: Go `MovementAction.OnAction`.
+    MovementEnd(Side),
     /// A computed result dealt later: Go `NewDelayedAction` with `DealDamage`.
     DelayedDamage {
         spell: SpellId,
@@ -933,6 +952,8 @@ pub(crate) struct Fight<A: Agent> {
     min_tracker_time: i64,
     /// Go `sim.minTaskTime`.
     min_task_time: i64,
+    /// Go `Environment.heartbeatOffset`, from the reset's pet heartbeat roll.
+    pub(crate) heartbeat_offset: i64,
     /// Go `energyBar`, for a player that has one.
     pub(crate) energy: Option<energy::EnergyBar>,
     /// The player as the defender of its own spells, when a spell can hit the player.
@@ -1366,6 +1387,8 @@ impl<A: Agent> Fight<A> {
                 } else {
                     melee::Hand::Main
                 })
+            } else if caster == Side::Pet && id.other_id == "OtherActionMove" {
+                SpellBehavior::Move
             } else if caster == Side::Pet {
                 // A pet has no items or racials.
                 SpellBehavior::None
@@ -1527,6 +1550,7 @@ impl<A: Agent> Fight<A> {
                 kind: match cost.resource.as_str() {
                     "energy" => ResourceKind::Energy,
                     "rage" => ResourceKind::Rage,
+                    "focus" => ResourceKind::Focus,
                     _ => ResourceKind::Mana,
                 },
                 refund: cost.refund,
@@ -1757,6 +1781,13 @@ impl<A: Agent> Fight<A> {
                     AuraBehavior::Dot(dot)
                 } else if let Some(kind) = class_aura(unit, &exported.label) {
                     AuraBehavior::Class(kind)
+                } else if side == Side::Pet
+                    && exported
+                        .action_id
+                        .as_ref()
+                        .is_some_and(|id| id.other_id == "OtherActionMove")
+                {
+                    AuraBehavior::Movement
                 } else if let Some(jow) = effects.iter().find_map(|effect| match effect {
                     Effect::JudgementOfWisdom {
                         aura,
@@ -2059,6 +2090,7 @@ impl<A: Agent> Fight<A> {
             queue: PendingQueue::default(),
             min_tracker_time: NEVER_EXPIRES,
             min_task_time: NEVER_EXPIRES,
+            heartbeat_offset: 0,
             energy: None,
             rage,
             player_hit_resistance: (0.0, 1.0),
@@ -2512,6 +2544,14 @@ impl<A: Agent> Fight<A> {
         }
     }
 
+    /// The configuration of a unit whose distance changes as it moves: only a pet moves.
+    pub(crate) fn unit_config_mut(&mut self, side: Side) -> &mut Config {
+        match side {
+            Side::Pet => &mut self.pet.as_mut().expect("the pet is simulated").config,
+            _ => panic!("only a pet moves"),
+        }
+    }
+
     /// Go `Unit.CastSpeed` of an acting unit.
     pub(crate) fn unit_cast_speed(&self, side: Side) -> f64 {
         match side {
@@ -2671,7 +2711,12 @@ impl<A: Agent> Fight<A> {
         self.min_tracker_time = NEVER_EXPIRES;
         self.min_task_time = NEVER_EXPIRES;
         // Go's environment always rolls the pet heartbeat offset, even without pets.
-        self.random("Pet Stat Inheritance");
+        let roll = self.random("Pet Stat Inheritance");
+        // Go PetUpdateInterval and DurationFromSeconds.
+        let interval = 5_250 * crate::core::time::NS_PER_MILLISECOND;
+        let prepull_start = self.prepull.first().map_or(0, |&(at, _)| at);
+        self.heartbeat_offset = prepull_start - interval
+            + (crate::core::time::NS_PER_SECOND as f64 * (5.25 * roll)) as i64;
         self.encounter_damage_taken = 0.0;
         self.reset_unit(Side::Target);
         self.reset_unit(Side::Player);
@@ -2729,6 +2774,7 @@ impl<A: Agent> Fight<A> {
             let initial = self.config.initial;
             player.spell_cost_percent_modifier = initial.spell_cost_percent_modifier;
             player.school_damage_dealt_multiplier = self.config.school_damage_dealt_multiplier;
+            player.damage_dealt_multiplier = self.config.damage_dealt_multiplier;
             player.damage_taken_multiplier = self.config.damage_taken_multiplier;
             player.cast_speed_multiplier = initial.cast_speed_multiplier;
             player.attack_speed_multiplier = self.config.melee.attack_speed_multiplier;
@@ -2898,7 +2944,11 @@ impl<A: Agent> Fight<A> {
             Action::ManaTick => {
                 // Go ticks every player with a mana bar, then every enabled pet with one.
                 self.mana_tick();
-                if self.pet.is_some() {
+                if self
+                    .pet
+                    .as_ref()
+                    .is_some_and(|pet| pet.config.max_mana > 0.0)
+                {
                     self.pet_mana_tick();
                 }
                 let next = self.now + 2 * crate::core::time::NS_PER_SECOND;
@@ -2961,6 +3011,20 @@ impl<A: Agent> Fight<A> {
             Action::SunderTick(done) => self.sunder_tick(done),
             Action::DeathCheck => self.death_check(),
             Action::FixedUptime { index, first } => self.fixed_uptime_roll(index, first),
+            Action::PetInheritance => {
+                if let Some(pet) = self.pet.as_mut() {
+                    pet.inheritance_pending = false;
+                }
+            }
+            Action::MovementEnd(side) => {
+                if self
+                    .unit(side)
+                    .movement
+                    .is_some_and(|movement| movement.action == handle)
+                {
+                    self.finalize_movement(side);
+                }
+            }
             Action::WindfuryRefresh => {
                 let windfury = self.windfury.clone().expect("Windfury Totem is bound");
                 self.activate_aura(windfury.totem);

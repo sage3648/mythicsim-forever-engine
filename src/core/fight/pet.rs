@@ -137,6 +137,17 @@ pub(crate) struct ActivePet {
     pub(crate) last_custom: i64,
     /// Go `APLRotation.inLoop`.
     pub(crate) in_rotation: bool,
+    /// Go `focusBar`, for a pet with one.
+    pub(crate) focus: Option<super::focus::FocusBar>,
+    /// Whether the pet is enabled: from its reset to the end of the fight.
+    pub(crate) enabled: bool,
+    /// A dynamic pet whose class inheritance takes nothing: Go's heartbeat update still runs.
+    pub(crate) inherits_nothing: bool,
+    /// Go `statInheritanceAction` while it is pending.
+    pub(crate) inheritance_pending: bool,
+    /// The distance the pet starts each fight at and its movement speed.
+    pub(crate) start_distance: f64,
+    pub(crate) movement_speed: f64,
 }
 
 impl ActivePet {
@@ -188,6 +199,12 @@ impl ActivePet {
             dismiss_log: exported.dismiss_log.clone(),
             last_custom: NEVER_EXPIRES,
             in_rotation: false,
+            focus: exported.focus.as_ref().map(super::focus::FocusBar::new),
+            enabled: false,
+            inherits_nothing: exported.dynamic_stats && exported.inherits_nothing,
+            inheritance_pending: false,
+            start_distance: exported.distance_yards,
+            movement_speed: exported.movement_speed,
         })
     }
 }
@@ -252,6 +269,7 @@ impl<A: Agent> Fight<A> {
         state.first_oom = 0;
         state.spell_cost_percent_modifier = config.initial.spell_cost_percent_modifier;
         state.school_damage_dealt_multiplier = config.school_damage_dealt_multiplier;
+        state.damage_dealt_multiplier = config.damage_dealt_multiplier;
         state.cast_speed_multiplier = config.initial.cast_speed_multiplier;
         state.attack_speed_multiplier = config.melee.attack_speed_multiplier;
         state.melee_speed_multiplier = config.melee.melee_speed_multiplier;
@@ -271,6 +289,9 @@ impl<A: Agent> Fight<A> {
         state.mana_tick_not_casting = not_casting * 2.0;
         pet.last_custom = NEVER_EXPIRES;
         pet.in_rotation = false;
+        pet.config.distance = pet.start_distance;
+        pet.state.moving = false;
+        pet.state.movement = None;
         self.reset_auras(Side::Pet);
         self.reset_auto_attacks_of(Side::Pet);
         // Enable.
@@ -286,6 +307,27 @@ impl<A: Agent> Fight<A> {
         self.set_gcd_timer_of(Side::Pet, ready);
         let tracker_min = self.trackers[Side::Pet.index()].min_expires;
         self.reschedule_tracker(tracker_min);
+        let pet = self.pet.as_mut().expect("the pet is simulated");
+        pet.enabled = true;
+        pet.inheritance_pending = false;
+        self.enable_pet_focus();
+    }
+
+    /// Go `processDynamicBonus`'s pet loop after an owner stat change: a dynamic pet's
+    /// heartbeat update, which changes nothing for a pet that inherits nothing, is scheduled
+    /// at the next heartbeat unless one is pending.
+    pub(crate) fn owner_stats_changed(&mut self) {
+        let Some(pet) = self.pet.as_mut() else {
+            return;
+        };
+        if !pet.enabled || !pet.inherits_nothing || pet.inheritance_pending {
+            return;
+        }
+        pet.inheritance_pending = true;
+        const PET_UPDATE_INTERVAL: i64 = 5_250 * crate::core::time::NS_PER_MILLISECOND;
+        let beats = (self.now - self.heartbeat_offset) / PET_UPDATE_INTERVAL;
+        let next = PET_UPDATE_INTERVAL * (beats + 1) + self.heartbeat_offset;
+        self.schedule(next, super::PRIORITY_DOT, super::Action::PetInheritance);
     }
 
     /// Go `APLRotation.DoNextAction` of an acting unit.
@@ -308,6 +350,8 @@ impl<A: Agent> Fight<A> {
         }
         assert!(pet.state.channeled_dot.is_none(), "pets do not channel");
         self.pet.as_mut().expect("the pet is simulated").in_rotation = true;
+        // Go DoNextAction brings a moving unit's position up to date first.
+        self.update_position(Side::Pet, false);
         let mut executed = 0;
         loop {
             let pet = self.pet.as_mut().expect("the pet is simulated");
@@ -324,7 +368,11 @@ impl<A: Agent> Fight<A> {
         }
         let state = self.unit(Side::Pet);
         if state.rotation_timer <= self.now {
-            let next = (self.now + self.unit_config(Side::Pet).reaction).max(state.gcd);
+            // A moving unit evaluates again after its reaction time, GCD or not.
+            let mut next = self.now + self.unit_config(Side::Pet).reaction;
+            if !state.moving {
+                next = next.max(state.gcd);
+            }
             self.wait_until_of(Side::Pet, next);
         }
     }
@@ -372,6 +420,7 @@ impl<A: Agent> Fight<A> {
     /// Go `Pet.doneIteration`: the unit's own end of fight, then `Disable`, then the owner's
     /// `AddFinalPetMetrics`.
     fn active_pet_done_iteration(&mut self) {
+        self.pet.as_mut().expect("the pet is simulated").enabled = false;
         self.unit_mut(Side::Pet).hardcast = Hardcast {
             expires: 0,
             spell: None,
@@ -416,7 +465,12 @@ impl<A: Agent> Fight<A> {
         }
         let time_to_oom = self.time_to_oom(Side::Pet, f64::INFINITY);
         let pet = self.pet.as_mut().expect("the pet is simulated");
-        pet.totals.tto.total = seconds(time_to_oom) * duration_seconds;
+        // Go reports no time to out of mana for a unit without a mana bar.
+        pet.totals.tto.total = if pet.config.max_mana > 0.0 {
+            seconds(time_to_oom) * duration_seconds
+        } else {
+            0.0
+        };
         pet.totals.dps.done_iteration(duration, seed);
         pet.totals.threat.done_iteration(duration, seed);
         pet.totals.tto.done_iteration(duration, seed);

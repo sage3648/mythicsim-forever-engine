@@ -2,5 +2,6 @@
 //! talent with dynamic behavior in scope, lives with the aspect it procs from.
 
 pub(crate) mod agent;
+pub(crate) mod pet;
 pub(crate) mod prepared;
 pub(crate) mod spells;

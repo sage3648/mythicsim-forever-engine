@@ -276,7 +276,7 @@ impl<A: Agent> Fight<A> {
         next >= self.min_task_time
     }
 
-    /// Go `advanceTasks`: the energy bar is the only task.
+    /// Go `advanceTasks`: the player's energy bar, then a pet's focus bar.
     pub(crate) fn advance_tasks(&mut self) {
         if self.min_task_time > self.now {
             let time = self.min_task_time;
@@ -285,6 +285,11 @@ impl<A: Agent> Fight<A> {
         self.min_task_time = NEVER_EXPIRES;
         if self.energy.is_some() {
             let next = self.run_energy_task();
+            self.min_task_time = self.min_task_time.min(next);
+        }
+        // An enabled pet's focus task joins after the player's.
+        if self.pet_focus_task_due().is_some() {
+            let next = self.run_focus_task();
             self.min_task_time = self.min_task_time.min(next);
         }
     }

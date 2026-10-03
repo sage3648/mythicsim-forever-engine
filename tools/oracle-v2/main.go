@@ -203,6 +203,8 @@ type classExport struct {
 	// Optional: whether the class's main hand swing replacement always returns the swing it is
 	// given for this player, so only Go's reaction before each swing remains.
 	swingReplacementKeepsSwing func(agent core.Agent, player *proto.Player) bool
+	// Optional: whether a simulated dynamic pet's stat inheritance takes nothing from its owner.
+	petInheritsNothing func(pet *core.Pet) bool
 	// Optional: class auras that change stats through AddStatsDynamic when gained or lost.
 	statAuras func(agent core.Agent, character *core.Character) []string
 }
@@ -795,6 +797,11 @@ func exportSpell(spell *core.Spell, target *core.Unit, class classExport, timers
 			// one any class passes.
 			if impl.Refund > 0 && impl.RefundMetrics != spell.Unit.RageRefundMetrics {
 				*unrepresented = append(*unrepresented, fmt.Sprintf("spell %s refunds rage to its own metrics", spell.ActionID))
+			}
+		case *core.FocusCost:
+			resource = "focus"
+			if impl.Refund > 0 {
+				*unrepresented = append(*unrepresented, fmt.Sprintf("spell %s refunds focus", spell.ActionID))
 			}
 		case *core.EnergyCost:
 			resource = "energy"

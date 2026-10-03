@@ -137,6 +137,7 @@ impl<A: Agent> Fight<A> {
         self.spells[spell].cur_cast.cost = cost;
         match kind {
             ResourceKind::Energy => self.energy_bar().current >= cost,
+            ResourceKind::Focus => self.current_focus() >= cost,
             ResourceKind::Rage => self.current_rage() >= cost,
             _ => self.meets_mana_cost(spell, cost),
         }
@@ -195,6 +196,10 @@ impl<A: Agent> Fight<A> {
             Some(ResourceKind::Rage) => format!(
                 "not enough rage (Current Rage = {:.3}, Rage Cost = {cost:.3})",
                 self.current_rage()
+            ),
+            Some(ResourceKind::Focus) => format!(
+                "not enough focus (Current Focus = {:.3}, Focus Cost = {cost:.3})",
+                self.current_focus()
             ),
             Some(ResourceKind::Energy) => format!(
                 "not enough energy (Current Energy = {:.3}, Energy Cost = {cost:.3})",
@@ -620,6 +625,12 @@ impl<A: Agent> Fight<A> {
             }
             return;
         }
+        if kind == ResourceKind::Focus {
+            // Go FocusCost.SpendCost spends even a zero cost.
+            let metrics = self.spells[spell].mana_metrics.expect("focus metrics");
+            self.spend_focus(cost, metrics);
+            return;
+        }
         if kind == ResourceKind::Energy {
             // Go EnergyCost.SpendCost spends even a zero cost.
             let (metrics, _) = self.spells[spell].energy_metrics.expect("energy metrics");
@@ -745,6 +756,7 @@ impl<A: Agent> Fight<A> {
             }),
             SpellBehavior::MeleeAuto(hand) => self.apply_melee_auto(spell, target, hand),
             SpellBehavior::GoblinSapper => self.apply_goblin_sapper(spell, target),
+            SpellBehavior::Move => self.apply_movement(self.spells[spell].caster),
             SpellBehavior::BasicExplosive {
                 min,
                 max,
@@ -1142,6 +1154,7 @@ impl<A: Agent> Fight<A> {
             | SpellBehavior::BasicExplosive { .. } => true,
             SpellBehavior::TouchOfTheGraveDrain { .. }
             | SpellBehavior::MeleeAuto(_)
+            | SpellBehavior::Move
             | SpellBehavior::RollDamage { .. }
             | SpellBehavior::EffectRoll { .. }
             | SpellBehavior::None => false,

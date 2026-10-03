@@ -540,7 +540,7 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
                     | Effect::Crusader { .. }
             )
         });
-        if pet.dynamic_stats && owner_stats_change {
+        if pet.dynamic_stats && !pet.inherits_nothing && owner_stats_change {
             reasons.push(format!(
                 "pet {:?} inherits the owner's stat changes, which is unsupported",
                 pet.label

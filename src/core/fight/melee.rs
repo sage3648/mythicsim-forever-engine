@@ -150,6 +150,31 @@ impl<A: Agent> Fight<A> {
         self.update_swing_timers();
     }
 
+    /// Go `Unit.MultiplyAttackSpeed` of an acting unit. A pet has no ranged swing.
+    pub(crate) fn multiply_attack_speed_of(&mut self, side: Side, amount: f64) {
+        if side != Side::Pet {
+            return self.multiply_attack_speed(amount);
+        }
+        self.unit_mut(side).attack_speed_multiplier *= amount;
+        let autos = self.autos_of(side);
+        if !autos.any_enabled() || !autos.melee || !autos.mh.enabled {
+            return;
+        }
+        assert!(!autos.dual_wielding, "a pet does not dual wield");
+        let haste = self.melee_haste_multiplier_of(side);
+        let now = self.now;
+        let mh = &mut self.autos_of_mut(side).mh;
+        let old = mh.cur_swing_speed;
+        mh.update_swing_duration(haste);
+        let factor = old / mh.cur_swing_speed;
+        let remaining = mh.swing_at - now;
+        if remaining > 0 {
+            mh.swing_at = now + (remaining as f64 * factor) as i64;
+        }
+        let swing_at = mh.swing_at;
+        self.autos.min_time = self.autos.min_time.min(swing_at);
+    }
+
     /// Go `TotalRangedHasteMultiplier`.
     pub(crate) fn ranged_haste_multiplier(&self) -> f64 {
         self.player.attack_speed_multiplier
@@ -402,6 +427,32 @@ impl<A: Agent> Fight<A> {
             let swing_at = attack.swing_at;
             self.autos.attacks.push((side, hand));
             self.autos.min_time = self.autos.min_time.min(swing_at);
+        }
+    }
+
+    /// Go `WeaponAttack.addWeaponAttack` for an enabled attack: an empty slot never swings;
+    /// otherwise the swing joins the simulation's list at its current time.
+    pub(crate) fn add_weapon_attack(&mut self, side: Side, hand: Hand, haste: f64) {
+        let attack = self.autos_of_mut(side).attack(hand);
+        if attack.weapon.swing_speed <= 0.0 {
+            attack.enabled = false;
+            return;
+        }
+        attack.update_swing_duration(haste);
+        let swing_at = attack.swing_at;
+        self.autos.attacks.push((side, hand));
+        self.autos.min_time = self.autos.min_time.min(swing_at);
+    }
+
+    /// Go `Simulation.removeWeaponAttack`: swap removal, as Go's slice helper does.
+    pub(crate) fn remove_weapon_attack(&mut self, side: Side, hand: Hand) {
+        if let Some(index) = self
+            .autos
+            .attacks
+            .iter()
+            .position(|&entry| entry == (side, hand))
+        {
+            self.autos.attacks.swap_remove(index);
         }
     }
 

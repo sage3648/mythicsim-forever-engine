@@ -581,6 +581,24 @@ pub struct Pet {
     pub dismiss_log: String,
     /// Go `isDynamic`: the pet follows its owner's stat changes.
     pub dynamic_stats: bool,
+    /// A focus bar, for a pet without a mana bar.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub focus: Option<PetFocus>,
+    /// A dynamic pet whose class inheritance takes nothing from its owner.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub inherits_nothing: bool,
+    /// Go `GetMovementSpeed` of a pet that starts out of melee range, zero otherwise.
+    #[serde(default, skip_serializing_if = "is_zero_f64")]
+    pub movement_speed: f64,
+}
+
+/// Go focus.go `focusBar` of a pet.
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct PetFocus {
+    pub max: f64,
+    pub regen_per_tick: f64,
+    pub tick_duration_ns: i64,
 }
 
 /// A pet's mana bar and its regeneration, which Go computes from the pet's own stats.
@@ -1918,6 +1936,46 @@ pub enum Effect {
         aoe_cap_multiplier: f64,
         self_attack_table: AttackTable,
     },
+    /// Go hunter pet.go ExecuteCustomRotation: the family's ability slots, as positions in the
+    /// pet's spellbook or -1, its rotation, the wait when nothing is cast and the move into melee
+    /// range.
+    HunterPet {
+        pet: String,
+        rotation: String,
+        special_ability: i64,
+        focus_dump: i64,
+        extra_ability: i64,
+        wait_ns: i64,
+        melee_range: f64,
+        move_to: f64,
+    },
+    /// A hunter pet ability: a rolled physical hit on the melee special table.
+    HunterPetStrike {
+        spell_id: i32,
+        min_damage: f64,
+        max_damage: f64,
+    },
+    /// Intimidation: the pet's aura, its physical crit while active, and the landed hit that
+    /// ends it.
+    Intimidation {
+        spell_id: i32,
+        aura: String,
+        active_crit: f64,
+    },
+    /// Bestial Wrath: the pet's aura and its damage dealt multiplier, a Go literal.
+    BestialWrath {
+        spell_id: i32,
+        aura: String,
+        damage_multiplier: f64,
+    },
+    /// Frenzy: the pet's crits proc its attack speed aura a spell batch window later.
+    Frenzy {
+        trigger_aura: String,
+        aura: String,
+        proc_chance: f64,
+        speed_multiplier: f64,
+        delay_ns: i64,
+    },
     /// Go consumes.go newBasicExplosiveSpellConfig without the self hit: a rolled hit on every
     /// target scaled by the AoE cap, dealt after travel when the explosive flies.
     BasicExplosive {
@@ -2115,6 +2173,11 @@ impl Effect {
             Effect::DeadlyPoison { .. } => "deadly_poison",
             Effect::GoblinSapper { .. } => "goblin_sapper",
             Effect::BasicExplosive { .. } => "basic_explosive",
+            Effect::HunterPet { .. } => "hunter_pet",
+            Effect::HunterPetStrike { .. } => "hunter_pet_strike",
+            Effect::Intimidation { .. } => "intimidation",
+            Effect::BestialWrath { .. } => "bestial_wrath",
+            Effect::Frenzy { .. } => "frenzy",
             Effect::ChanceOfDeath { .. } => "chance_of_death",
             Effect::ParryHaste { .. } => "parry_haste",
             Effect::FixedUptimeAura { .. } => "fixed_uptime_aura",

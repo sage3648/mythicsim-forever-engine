@@ -159,7 +159,7 @@ impl<A: Agent> Fight<A> {
         } else {
             state.damage_multiplier_additive + state.direct_damage_multiplier_additive
         };
-        let internal = config.damage_dealt_multiplier
+        let internal = self.unit(state.caster).damage_dealt_multiplier
             * self.school_value(
                 spell,
                 &self.unit(state.caster).school_damage_dealt_multiplier,

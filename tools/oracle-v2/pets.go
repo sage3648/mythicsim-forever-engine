@@ -21,6 +21,13 @@ type PetMana struct {
 	RegenPerSecondNotCasting float64 `json:"regen_per_second_not_casting"`
 }
 
+// focus.go focusBar of a pet: Enable fills it and starts its regeneration task.
+type PetFocus struct {
+	Max            float64 `json:"max"`
+	RegenPerTick   float64 `json:"regen_per_tick"`
+	TickDurationNs int64   `json:"tick_duration_ns"`
+}
+
 type Pet struct {
 	Unit
 	Name           string          `json:"name"`
@@ -37,6 +44,13 @@ type Pet struct {
 	SummonLog   []string `json:"summon_log"`
 	DismissLog  string   `json:"dismiss_log"`
 	DynamicStat bool     `json:"dynamic_stats"`
+	// Present for a pet with a focus bar and no mana bar.
+	Focus *PetFocus `json:"focus,omitempty"`
+	// A dynamic pet whose class inheritance takes none of the owner's stats: Go still
+	// schedules its heartbeat update after each owner stat change, which changes nothing.
+	InheritsNothing bool `json:"inherits_nothing,omitempty"`
+	// Go GetMovementSpeed, for a pet that starts at its owner's distance and moves in.
+	MovementSpeed float64 `json:"movement_speed,omitempty"`
 }
 
 // Whether Rust simulates the pet: enabled at reset by a class whose pets only change there.
@@ -62,13 +76,14 @@ func exportPets(request *proto.RaidSimRequest, character *core.Character, target
 		label := pet.Label
 		note(pet.IsGuardian(), fmt.Sprintf("pet %s is a guardian", label))
 		note(!pet.IsEnabled(), fmt.Sprintf("pet %s is not enabled after the reset", label))
-		note(!pet.HasManaBar(), fmt.Sprintf("pet %s has no mana bar", label))
+		note(!pet.HasManaBar() && !pet.HasFocusBar(), fmt.Sprintf("pet %s has no mana bar", label))
+		note(pet.HasManaBar() && pet.HasFocusBar(), fmt.Sprintf("pet %s has both mana and focus", label))
 		note(privateField(pet, "hasDynamicMeleeSpeedInheritance").Bool(), fmt.Sprintf("pet %s inherits melee speed", label))
 		note(privateField(pet, "hasDynamicCastSpeedInheritance").Bool(), fmt.Sprintf("pet %s inherits cast speed", label))
 		note(privateField(pet, "hasResourceRegenInheritance").Bool(), fmt.Sprintf("pet %s inherits resource regeneration", label))
 		note(privateField(pet, "startAttackDelay").Int() != 0, fmt.Sprintf("pet %s delays its first attack", label))
 		note(pet.OnPetEnable != nil || pet.OnPetDisable != nil, fmt.Sprintf("pet %s has enable or disable callbacks", label))
-		note(pet.HasFocusBar() || pet.HasEnergyBar(), fmt.Sprintf("pet %s has a focus or energy bar", label))
+		note(pet.HasEnergyBar(), fmt.Sprintf("pet %s has an energy bar", label))
 		note(len(pet.Pets) != 0, fmt.Sprintf("pet %s has pets", label))
 		note(len(pet.OnCastSpeedChanged) != 0 || len(pet.OnTemporaryStatsChanges) != 0, fmt.Sprintf("pet %s has speed or stat listeners", label))
 		note(pet.GetMajorCooldowns() != nil && len(pet.GetMajorCooldowns()) != 0, fmt.Sprintf("pet %s has major cooldowns", label))
@@ -84,6 +99,17 @@ func exportPets(request *proto.RaidSimRequest, character *core.Character, target
 			fmt.Sprintf("Pet inherited stats: %s", pet.ApplyStatDependencies(pet.GetInheritedStats()).FlatString()),
 		}
 		dismiss := petDismissStats(request, index)
+		var focus *PetFocus
+		if pet.HasFocusBar() {
+			bar := privateField(&pet.Unit, "focusBar")
+			focus = &PetFocus{Max: bar.FieldByName("maxFocus").Float(), RegenPerTick: bar.FieldByName("focusRegenPerTick").Float(),
+				TickDurationNs: bar.FieldByName("focusTickDuration").Int()}
+		}
+		inheritsNothing := class.petInheritsNothing != nil && class.petInheritsNothing(pet)
+		movementSpeed := 0.0
+		if pet.DistanceFromTarget > core.MaxMeleeRange {
+			movementSpeed = pet.GetMovementSpeed()
+		}
 		pets = append(pets, Pet{
 			Unit: Unit{Index: pet.UnitIndex, Label: pet.Label, Level: pet.Level, Stats: statValues(pet.GetStats()),
 				PseudoStats: exportPseudo(pet.PseudoStats), Auras: exportAuras(&pet.Unit, timers)},
@@ -98,6 +124,7 @@ func exportPets(request *proto.RaidSimRequest, character *core.Character, target
 			Spells: spells, MetricsActions: metricsActions(&pet.Unit),
 			SummonLog: summon, DismissLog: dismiss,
 			DynamicStat: privateField(pet, "isDynamic").Bool(),
+			Focus:       focus, InheritsNothing: inheritsNothing, MovementSpeed: movementSpeed,
 		})
 	}
 	note(len(pets) > 1, "more than one pet is enabled at the start")

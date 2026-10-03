@@ -94,6 +94,8 @@ pub(crate) enum AuraBehavior<K> {
     SpellDataDamageProc(usize),
     /// The aura of a dot or channel.
     Dot(DotId),
+    /// Go movement.go's Movement aura, which marks its unit moving.
+    Movement,
     Class(K),
 }
 
@@ -467,6 +469,7 @@ impl<A: Agent> Fight<A> {
             self.stat_mask &= !bit;
         }
         self.player.powers = self.stat_combos[self.stat_mask as usize];
+        self.owner_stats_changed();
     }
 
     /// A stat aura's bit in the active stat mask, by label.
@@ -487,6 +490,7 @@ impl<A: Agent> Fight<A> {
         self.multiply_damage_taken_for(aura, false);
         match self.aura(aura).behavior {
             AuraBehavior::Dot(dot) => self.dot_on_gain(dot),
+            AuraBehavior::Movement => self.movement_changed(aura.side, true),
             AuraBehavior::Eureka => self.eureka_gain(),
             AuraBehavior::MultiplyAttackAndCastSpeed { attack, cast } => {
                 self.multiply_attack_speed(attack);
@@ -502,6 +506,7 @@ impl<A: Agent> Fight<A> {
             AuraBehavior::WindfuryProc { bit } => {
                 self.stat_mask |= bit;
                 self.player.powers = self.stat_combos[self.stat_mask as usize];
+                self.owner_stats_changed();
             }
             AuraBehavior::WindfuryTotem => {
                 let trigger = self
@@ -520,6 +525,7 @@ impl<A: Agent> Fight<A> {
                 }
                 self.stat_mask |= bit;
                 self.player.powers = self.stat_combos[self.stat_mask as usize];
+                self.owner_stats_changed();
             }
             AuraBehavior::Class(kind) => A::on_gain(self, aura, kind),
             _ => {}
@@ -530,6 +536,7 @@ impl<A: Agent> Fight<A> {
         self.multiply_damage_taken_for(aura, true);
         match self.aura(aura).behavior {
             AuraBehavior::Dot(dot) => self.dot_on_expire(dot),
+            AuraBehavior::Movement => self.movement_changed(aura.side, false),
             AuraBehavior::Eureka => self.eureka_expire(),
             AuraBehavior::MultiplyAttackAndCastSpeed { attack, cast } => {
                 self.multiply_attack_speed(1.0 / attack);
@@ -542,6 +549,7 @@ impl<A: Agent> Fight<A> {
             AuraBehavior::WindfuryProc { bit } => {
                 self.stat_mask &= !bit;
                 self.player.powers = self.stat_combos[self.stat_mask as usize];
+                self.owner_stats_changed();
             }
             AuraBehavior::WindfuryTotem => {
                 let trigger = self
@@ -560,6 +568,7 @@ impl<A: Agent> Fight<A> {
                 }
                 self.stat_mask &= !bit;
                 self.player.powers = self.stat_combos[self.stat_mask as usize];
+                self.owner_stats_changed();
             }
             AuraBehavior::MultiplyManaRegenSpeed(multiplier) => {
                 self.multiply_mana_regen_speed(1.0 / multiplier)
@@ -991,7 +1000,12 @@ impl<A: Agent> Fight<A> {
                 }
                 // Go gives the mana to the attacker, each unit with its own metrics, which a
                 // pet registers at its first proc.
-                let metrics = match self.spells[spell].caster {
+                // Go: a unit without a mana bar gains nothing.
+                let caster = self.spells[spell].caster;
+                if self.unit_config(caster).max_mana <= 0.0 {
+                    return;
+                }
+                let metrics = match caster {
                     Side::Pet => {
                         let id = self.resources[metrics].id.clone();
                         match self.pet.as_ref().and_then(|pet| pet.jow_metrics) {

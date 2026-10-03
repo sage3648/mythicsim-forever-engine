@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "b38128176d8d3c4541876cc61366a241b8393add8bab2f92443264dffd660a5c",
+  "exporter_sha256": "238b1d95c45b9adc101d0a6024fcfa9855190ef8d4c229160182f0e4f95dc94c",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -1495,6 +1495,27 @@
       "go_result": {
         "file": "marksmanship-hunter-thorium-grenade.go-result.json",
         "sha256": "420a480bb57bbf6dbdc323c15c30d724d9b9c909067c5e562b8e5560c07ad590"
+      }
+    },
+    {
+      "id": "production-beast-mastery-hunter",
+      "description": "The production Beast Mastery Hunter request at application revision 18bbcd47: a Human with a Cat that runs in from 12 yards on a focus bar, Bite and Claw, Intimidation, Bestial Wrath and Frenzy, beside the Marksmanship shots",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-beast-mastery-hunter.request.json"
+      },
+      "prepared": "production-beast-mastery-hunter.prepared.json",
+      "prepared_sha256": "48a41fafeb3c8e58d3ccbd94f6137e0b71d254aacab84be5398f3a7514f2f6cb",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-beast-mastery-hunter.go-result.json",
+        "sha256": "49aa10d29ca5508d450a6f1ef37e5452529bc8c5ea7e3030b952e9fffda2176a"
+      },
+      "go_log": {
+        "file": "production-beast-mastery-hunter.go-log.txt",
+        "sha256": "283942f6f60a30f1786fd5155ded76bd54d006612e433cc787a20f421023e9da"
       }
     }
   ]

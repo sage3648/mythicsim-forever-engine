@@ -13,6 +13,7 @@ use crate::{
     },
 };
 
+use super::pet::{self as hunter_pet, PetAi, PetAuras};
 use super::spells::{
     aspect_of_the_hawk::AspectOfTheHawk, rapid_fire::RapidFire, serpent_sting,
     serpent_sting::SerpentSting, shots, summon_hawk::SummonHawk,
@@ -30,6 +31,10 @@ pub(crate) enum HunterSpell {
     SummonHawk,
     /// A hawk slot's dot spell.
     Hawk,
+    /// A pet ability, by its position among the rolled ranges.
+    PetStrike(usize),
+    Intimidation,
+    BestialWrath,
 }
 
 /// Class auras with Rust behavior.
@@ -38,6 +43,10 @@ pub(crate) enum HunterAura {
     AspectOfTheHawk,
     QuickShots,
     RapidFire,
+    Intimidation,
+    BestialWrath,
+    FrenzyTrigger,
+    FrenzyEffect,
 }
 
 /// Hunter state that Go keeps in the `Hunter` struct and its closures.
@@ -49,6 +58,10 @@ pub(crate) struct HunterAgent {
     aspect: Option<Rc<AspectOfTheHawk>>,
     rapid_fire: Option<RapidFire>,
     summon_hawk: Option<Rc<SummonHawk>>,
+    /// The pet abilities' rolled ranges.
+    pet_strikes: Vec<(f64, f64)>,
+    pet_ai: Option<Rc<PetAi>>,
+    pet_auras: Rc<PetAuras>,
 }
 
 /// Player aura labels claimed by implemented class effects.
@@ -71,6 +84,45 @@ fn class_auras(prepared: &PreparedV2) -> Vec<(String, HunterAura)> {
     auras
 }
 
+/// Pet aura labels claimed by implemented class effects.
+fn pet_auras(prepared: &PreparedV2) -> Vec<(String, HunterAura)> {
+    let mut auras = Vec::new();
+    for effect in &prepared.effects {
+        match effect {
+            Effect::Intimidation { aura, .. } => {
+                auras.push((aura.clone(), HunterAura::Intimidation))
+            }
+            Effect::BestialWrath { aura, .. } => {
+                auras.push((aura.clone(), HunterAura::BestialWrath))
+            }
+            Effect::Frenzy {
+                trigger_aura, aura, ..
+            } => {
+                auras.push((trigger_aura.clone(), HunterAura::FrenzyTrigger));
+                auras.push((aura.clone(), HunterAura::FrenzyEffect));
+            }
+            _ => {}
+        }
+    }
+    auras
+}
+
+/// The pet abilities' spell IDs and rolled ranges, in effect order.
+fn pet_strikes(prepared: &PreparedV2) -> Vec<(i32, (f64, f64))> {
+    prepared
+        .effects
+        .iter()
+        .filter_map(|effect| match effect {
+            Effect::HunterPetStrike {
+                spell_id,
+                min_damage,
+                max_damage,
+            } => Some((*spell_id, (*min_damage, *max_damage))),
+            _ => None,
+        })
+        .collect()
+}
+
 /// The class behavior of an exported spell, if Rust implements it.
 pub(crate) fn spell_behavior(spell: &ExportedSpell) -> Option<HunterSpell> {
     let id = spell.action_id.clone().unwrap_or_default();
@@ -89,6 +141,8 @@ pub(crate) fn spell_behavior(spell: &ExportedSpell) -> Option<HunterSpell> {
         "aspect_of_the_hawk" => Some(HunterSpell::AspectOfTheHawk),
         "rapid_fire" => Some(HunterSpell::RapidFire),
         "summon_hawk" => Some(HunterSpell::SummonHawk),
+        "intimidation" => Some(HunterSpell::Intimidation),
+        "bestial_wrath" => Some(HunterSpell::BestialWrath),
         _ => None,
     }
 }
@@ -97,21 +151,30 @@ impl HunterAgent {
     /// Build a fight for a prepared input that passed the coverage gate.
     pub(crate) fn fight(prepared: &PreparedV2) -> Result<Fight<HunterAgent>, String> {
         let auras = class_auras(prepared);
-        let mut fight = Fight::new(
-            prepared,
-            HunterAgent::default(),
-            spell_behavior,
-            |unit, label| {
-                (unit == "player")
-                    .then(|| {
-                        auras
-                            .iter()
-                            .find(|(name, _)| name == label)
-                            .map(|(_, kind)| *kind)
-                    })
-                    .flatten()
-            },
-        )?;
+        let pet_aura_kinds = pet_auras(prepared);
+        let strikes = pet_strikes(prepared);
+        let behavior = |spell: &ExportedSpell| {
+            let id = spell.action_id.clone().unwrap_or_default();
+            if spell.class_spell.as_deref() == Some("pet_damage") && id.tag == 0 {
+                return strikes
+                    .iter()
+                    .position(|(spell_id, _)| *spell_id == id.spell_id)
+                    .map(HunterSpell::PetStrike);
+            }
+            spell_behavior(spell)
+        };
+        let mut fight = Fight::new(prepared, HunterAgent::default(), behavior, |unit, label| {
+            let list = match unit {
+                "player" => &auras,
+                "pet" => &pet_aura_kinds,
+                _ => return None,
+            };
+            list.iter()
+                .find(|(name, _)| name == label)
+                .map(|(_, kind)| *kind)
+        })?;
+        fight.agent.pet_strikes = strikes.iter().map(|(_, range)| *range).collect();
+        let mut pet_auras = PetAuras::default();
         let find_spell = |fight: &Fight<HunterAgent>, id: i32| {
             fight.spells.iter().position(|spell| {
                 spell.id.spell_id == id && spell.id.tag == 0 && spell.id.item_id == 0
@@ -119,6 +182,56 @@ impl HunterAgent {
         };
         for effect in &prepared.effects {
             match effect {
+                Effect::HunterPet {
+                    rotation,
+                    special_ability,
+                    focus_dump,
+                    extra_ability,
+                    wait_ns,
+                    melee_range,
+                    move_to,
+                    ..
+                } => {
+                    let ai = PetAi::bind(
+                        &fight,
+                        rotation,
+                        *special_ability,
+                        *focus_dump,
+                        *extra_ability,
+                        *wait_ns,
+                        *melee_range,
+                        *move_to,
+                    )?;
+                    fight.agent.pet_ai = Some(Rc::new(ai));
+                }
+                Effect::Intimidation {
+                    aura, active_crit, ..
+                } => {
+                    pet_auras.intimidation =
+                        Some((PetAuras::pet_aura(&fight, aura)?, *active_crit));
+                }
+                Effect::BestialWrath {
+                    aura,
+                    damage_multiplier,
+                    ..
+                } => {
+                    pet_auras.bestial_wrath =
+                        Some((PetAuras::pet_aura(&fight, aura)?, *damage_multiplier));
+                }
+                Effect::Frenzy {
+                    trigger_aura,
+                    aura,
+                    proc_chance,
+                    speed_multiplier,
+                    ..
+                } => {
+                    pet_auras.frenzy = Some((
+                        PetAuras::pet_aura(&fight, trigger_aura)?,
+                        PetAuras::pet_aura(&fight, aura)?,
+                        *proc_chance,
+                        *speed_multiplier,
+                    ));
+                }
                 Effect::AimedShot { flat_bonus, .. } => fight.agent.aimed_shot_bonus = *flat_bonus,
                 Effect::SniperShot { flat_bonus, .. } => {
                     fight.agent.sniper_shot_bonus = *flat_bonus
@@ -189,6 +302,7 @@ impl HunterAgent {
                 _ => {}
             }
         }
+        fight.agent.pet_auras = Rc::new(pet_auras);
         Ok(fight)
     }
 
@@ -239,6 +353,26 @@ impl Agent for HunterAgent {
             }
             HunterSpell::SummonHawk => Self::summon_hawk(fight).apply(fight, spell, target),
             HunterSpell::Hawk => panic!("a hawk is never cast"),
+            HunterSpell::PetStrike(index) => {
+                let range = fight.agent.pet_strikes[index];
+                hunter_pet::strike(fight, spell, target, range);
+            }
+            HunterSpell::Intimidation => {
+                let (aura, _) = fight
+                    .agent
+                    .pet_auras
+                    .intimidation
+                    .expect("Intimidation is bound");
+                fight.activate_aura(aura);
+            }
+            HunterSpell::BestialWrath => {
+                let (aura, _) = fight
+                    .agent
+                    .pet_auras
+                    .bestial_wrath
+                    .expect("Bestial Wrath is bound");
+                fight.activate_aura(aura);
+            }
         }
     }
 
@@ -330,6 +464,18 @@ impl Agent for HunterAgent {
             HunterAura::AspectOfTheHawk => Self::aspect(fight).on_gain(fight),
             HunterAura::QuickShots => Self::aspect(fight).quick_shots_changed(fight, true),
             HunterAura::RapidFire => Self::rapid_fire(fight).changed(fight, true),
+            HunterAura::Intimidation => fight
+                .agent
+                .pet_auras
+                .clone()
+                .intimidation_changed(fight, true),
+            HunterAura::BestialWrath => fight
+                .agent
+                .pet_auras
+                .clone()
+                .bestial_wrath_changed(fight, true),
+            HunterAura::FrenzyEffect => fight.agent.pet_auras.clone().frenzy_changed(fight, true),
+            HunterAura::FrenzyTrigger => {}
         }
     }
 
@@ -338,6 +484,18 @@ impl Agent for HunterAgent {
             HunterAura::AspectOfTheHawk => Self::aspect(fight).on_expire(fight),
             HunterAura::QuickShots => Self::aspect(fight).quick_shots_changed(fight, false),
             HunterAura::RapidFire => Self::rapid_fire(fight).changed(fight, false),
+            HunterAura::Intimidation => fight
+                .agent
+                .pet_auras
+                .clone()
+                .intimidation_changed(fight, false),
+            HunterAura::BestialWrath => fight
+                .agent
+                .pet_auras
+                .clone()
+                .bestial_wrath_changed(fight, false),
+            HunterAura::FrenzyEffect => fight.agent.pet_auras.clone().frenzy_changed(fight, false),
+            HunterAura::FrenzyTrigger => {}
         }
     }
 
@@ -346,10 +504,39 @@ impl Agent for HunterAgent {
         _aura: AuraRef,
         kind: HunterAura,
         spell: SpellId,
-        _result: &SpellResult,
+        result: &SpellResult,
     ) {
-        if kind == HunterAura::AspectOfTheHawk {
-            Self::aspect(fight).on_spell_hit_dealt(fight, spell);
+        match kind {
+            HunterAura::AspectOfTheHawk => Self::aspect(fight).on_spell_hit_dealt(fight, spell),
+            HunterAura::Intimidation => fight
+                .agent
+                .pet_auras
+                .clone()
+                .intimidation_hit(fight, result),
+            HunterAura::FrenzyTrigger => fight
+                .agent
+                .pet_auras
+                .clone()
+                .frenzy_hit(fight, spell, result),
+            _ => {}
+        }
+    }
+
+    fn on_delayed_proc(
+        fight: &mut Fight<Self>,
+        _aura: AuraRef,
+        kind: HunterAura,
+        _spell: SpellId,
+        _result: SpellResult,
+    ) {
+        if kind == HunterAura::FrenzyTrigger {
+            fight.agent.pet_auras.clone().frenzy_proc(fight);
+        }
+    }
+
+    fn pet_rotation(fight: &mut Fight<Self>) {
+        if let Some(ai) = fight.agent.pet_ai.clone() {
+            ai.rotation(fight);
         }
     }
 }

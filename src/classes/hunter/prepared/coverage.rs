@@ -18,6 +18,11 @@ pub(crate) const GATE: ClassGate = ClassGate {
 const EFFECTS: &[&str] = &[
     "aimed_shot",
     "aspect_of_the_hawk",
+    "bestial_wrath",
+    "frenzy",
+    "hunter_pet",
+    "hunter_pet_strike",
+    "intimidation",
     "multi_shot",
     "rapid_fire",
     "serpent_sting",
@@ -39,6 +44,8 @@ fn spell_capability(spell: &Spell) -> Option<&'static str> {
         "aspect_of_the_hawk" => Some("aspect_of_the_hawk"),
         "rapid_fire" => Some("rapid_fire"),
         "summon_hawk" => Some("summon_hawk"),
+        "intimidation" => Some("intimidation"),
+        "bestial_wrath" => Some("bestial_wrath"),
         _ => None,
     }
 }
@@ -54,6 +61,11 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
             claimed
         }
         Effect::RapidFire { aura, .. } => vec![("player", aura)],
+        Effect::HunterPet { pet, .. } => vec![("pet unit", pet)],
+        Effect::Frenzy { trigger_aura, .. } => vec![("pet", trigger_aura)],
+        Effect::Intimidation { aura, .. } | Effect::BestialWrath { aura, .. } => {
+            vec![("pet", aura)]
+        }
         _ => Vec::new(),
     }
 }
@@ -90,6 +102,32 @@ fn limits(prepared: &PreparedV2, _reachable: &[&Spell]) -> Vec<String> {
                 || proc_aura.is_some() != proc_chance.is_some() =>
             {
                 reasons.push("Deadly Aspects is incomplete".into());
+            }
+            Effect::HunterPet {
+                rotation,
+                special_ability,
+                focus_dump,
+                extra_ability,
+                ..
+            } => {
+                if rotation != "cat" && rotation != "default" {
+                    reasons.push(format!("the pet rotation {rotation} is unsupported"));
+                }
+                let pet_spells = prepared.pets.first().map_or(&[][..], |pet| &pet.spells[..]);
+                for slot in [special_ability, focus_dump, extra_ability] {
+                    let Ok(position) = usize::try_from(*slot) else {
+                        continue;
+                    };
+                    let strike = pet_spells.get(position).is_some_and(|spell| {
+                        let id = spell.action_id.clone().unwrap_or_default();
+                        prepared.effects.iter().any(|effect| {
+                            matches!(effect, Effect::HunterPetStrike { spell_id, .. } if *spell_id == id.spell_id)
+                        })
+                    });
+                    if !strike {
+                        reasons.push(format!("the pet's ability at {position} has no behavior"));
+                    }
+                }
             }
             _ => {}
         }
