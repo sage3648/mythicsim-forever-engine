@@ -10,7 +10,7 @@ use std::collections::BTreeSet;
 
 use crate::{
     contracts::prepared_v2::{ActionId, Effect, PreparedV2, Spell},
-    rotation::{compile_condition, Action, MissingAura, Rotation},
+    rotation::{compile_condition, Action, FoundAura, MissingAura, Rotation, Value},
 };
 
 /// Effect kinds implemented in Rust and validated against the pinned Go reference.
@@ -222,21 +222,29 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
 /// Go resolves `auraIsActive` on the casting player with `GetAuraByID`: the first aura
 /// with the same action ID, tag included.
 fn player_has_aura(prepared: &PreparedV2, id: &ActionId) -> bool {
+    find_aura(prepared, id).is_some()
+}
+
+fn find_aura(prepared: &PreparedV2, id: &ActionId) -> Option<FoundAura<ActionId>> {
     prepared
         .player
         .auras
         .iter()
-        .any(|aura| aura.action_id.as_ref() == Some(id))
+        .find(|aura| aura.action_id.as_ref() == Some(id))
+        .map(|aura| FoundAura {
+            aura: id.clone(),
+            max_stacks: aura.max_stacks,
+        })
 }
 
-/// Pinned Go gives `auraIsActive` on an aura the character cannot have no value, which
-/// drops the term from its condition; community fix ElliotWood/Forever#622 (252f57aa8)
-/// reads the aura as inactive instead. Where both compile to the same action, as when an
+/// Pinned Go gives `auraIsActive` and `auraNumStacks` on an aura the character cannot have
+/// no value, which drops the term from its condition; community fix ElliotWood/Forever#622
+/// (252f57aa8) reads the aura as inactive, with no stacks, instead. Where both compile to the same action, as when an
 /// `auraIsKnown` guard already prunes it, the input is unaffected. Otherwise reject it
 /// until the reference adopts the fix. See upstream/changes.json.
 fn unknown_aura_conditions(prepared: &PreparedV2, rotation: &Rotation) -> Vec<String> {
     let known = |id: &ActionId| player_has_aura(prepared, id);
-    let aura = |id: &ActionId| known(id).then(|| id.clone());
+    let aura = |id: &ActionId| find_aura(prepared, id);
     let mut reasons = Vec::new();
     for item in &rotation.priority_list {
         let pinned = compile_condition(item.condition.as_ref(), &aura, MissingAura::Dropped);
@@ -246,17 +254,19 @@ fn unknown_aura_conditions(prepared: &PreparedV2, rotation: &Rotation) -> Vec<St
         }
         let mut unknown = Vec::new();
         if let Some(condition) = &item.condition {
-            condition.visit(&mut |value| {
-                if let crate::rotation::Value::AuraIsActive(id) = value {
-                    if !known(id) {
-                        unknown.push(id.to_string());
-                    }
+            condition.visit(&mut |value| match value {
+                Value::AuraIsActive(id) if !known(id) => {
+                    unknown.push(("auraIsActive", id.to_string()))
                 }
+                Value::AuraNumStacks(id) if !known(id) => {
+                    unknown.push(("auraNumStacks", id.to_string()))
+                }
+                _ => {}
             });
         }
-        for id in unknown {
+        for (operator, id) in unknown {
             reasons.push(format!(
-                "rotation item {}: auraIsActive names {id}, which the character lacks; \
+                "rotation item {}: {operator} names {id}, which the character lacks; \
                  the pinned reference drops the condition and community #622 reads it as inactive",
                 item.position
             ));

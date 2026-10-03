@@ -50,10 +50,12 @@ pub enum Value {
         rhs: Box<Value>,
     },
     And(Vec<Value>),
+    Or(Vec<Value>),
     CurrentManaPercent,
     RemainingTime,
     AuraIsKnown(ActionId),
     AuraIsActive(ActionId),
+    AuraNumStacks(ActionId),
 }
 
 impl Value {
@@ -65,7 +67,9 @@ impl Value {
                 lhs.visit(f);
                 rhs.visit(f);
             }
-            Value::And(values) => values.iter().for_each(|value| value.visit(f)),
+            Value::And(values) | Value::Or(values) => {
+                values.iter().for_each(|value| value.visit(f))
+            }
             _ => {}
         }
     }
@@ -76,8 +80,10 @@ impl Value {
             Value::Const(constant) => constant.value_type,
             Value::Compare { .. }
             | Value::And(_)
+            | Value::Or(_)
             | Value::AuraIsKnown(_)
             | Value::AuraIsActive(_) => ValueType::Bool,
+            Value::AuraNumStacks(_) => ValueType::Int,
             Value::CurrentManaPercent => ValueType::Float,
             Value::RemainingTime => ValueType::Duration,
         }
@@ -320,7 +326,7 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
                 (lhs, rhs) => Err(lhs.err().into_iter().chain(rhs.err()).flatten().collect()),
             }
         }
-        "and" => {
+        "and" | "or" => {
             only(&["vals"])?;
             let mut values = Vec::new();
             let mut reasons = Vec::new();
@@ -335,10 +341,12 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
                     Err(mut value_reasons) => reasons.append(&mut value_reasons),
                 }
             }
-            if reasons.is_empty() {
+            if !reasons.is_empty() {
+                Err(reasons)
+            } else if name == "and" {
                 Ok(Value::And(values))
             } else {
-                Err(reasons)
+                Ok(Value::Or(values))
             }
         }
         "currentManaPercent" => {
@@ -349,17 +357,17 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
             only(&[])?;
             Ok(Value::RemainingTime)
         }
-        "auraIsKnown" | "auraIsActive" => {
+        "auraIsKnown" | "auraIsActive" | "auraNumStacks" => {
             // sourceUnit and includeReactionTime are not modeled.
             only(&["auraId"])?;
             let id = config
                 .get("auraId")
                 .ok_or_else(|| vec![format!("{name} has no auraId")])
                 .and_then(|id| parse_action_id(id).map_err(|err| vec![err]))?;
-            Ok(if name == "auraIsKnown" {
-                Value::AuraIsKnown(id)
-            } else {
-                Value::AuraIsActive(id)
+            Ok(match name {
+                "auraIsKnown" => Value::AuraIsKnown(id),
+                "auraIsActive" => Value::AuraIsActive(id),
+                _ => Value::AuraNumStacks(id),
             })
         }
         other => Err(vec![format!("value {other} is unsupported")]),
@@ -578,9 +586,11 @@ pub enum Compiled<R> {
         rhs: Box<Compiled<R>>,
     },
     And(Vec<Compiled<R>>),
+    Or(Vec<Compiled<R>>),
     CurrentManaPercent,
     RemainingTime,
     AuraIsActive(R),
+    AuraNumStacks(R),
     /// Go `APLValueCoerced`.
     Coerced {
         to: ValueType,
@@ -592,9 +602,11 @@ impl<R> Compiled<R> {
     pub fn value_type(&self) -> ValueType {
         match self {
             Compiled::Const(constant) => constant.value_type,
-            Compiled::Compare { .. } | Compiled::And(_) | Compiled::AuraIsActive(_) => {
-                ValueType::Bool
-            }
+            Compiled::Compare { .. }
+            | Compiled::And(_)
+            | Compiled::Or(_)
+            | Compiled::AuraIsActive(_) => ValueType::Bool,
+            Compiled::AuraNumStacks(_) => ValueType::Int,
             Compiled::CurrentManaPercent => ValueType::Float,
             Compiled::RemainingTime => ValueType::Duration,
             Compiled::Coerced { to, .. } => *to,
@@ -626,13 +638,20 @@ impl<R> Compiled<R> {
     }
 }
 
-/// How `auraIsActive` reads an aura the character cannot have.
+/// How `auraIsActive` and `auraNumStacks` read an aura the character cannot have.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MissingAura {
     /// The pinned reference: no value, so the term drops out of its parent.
     Dropped,
-    /// Community fix ElliotWood/Forever#622: a constant false.
+    /// Community fix ElliotWood/Forever#622: inactive, with no stacks.
     Inactive,
+}
+
+/// An aura a rotation names, as Go `GetAPLAura` finds it on the casting player.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct FoundAura<R> {
+    pub aura: R,
+    pub max_stacks: i32,
 }
 
 /// What Go `newAPLAction` makes of an action's condition.
@@ -649,11 +668,40 @@ fn bool_const<R>(value: bool) -> Compiled<R> {
     Compiled::Const(parse_const(if value { "true" } else { "false" }).expect("bool constant"))
 }
 
+/// Go `newValueAnd` and `newValueOr`: terms without a value drop out, one term stands for
+/// the operator, and a constant that decides the result replaces it.
+fn fold<R>(
+    values: &[Value],
+    aura: &dyn Fn(&ActionId) -> Option<FoundAura<R>>,
+    missing: MissingAura,
+    deciding: bool,
+    build: fn(Vec<Compiled<R>>) -> Compiled<R>,
+) -> Option<Compiled<R>> {
+    let mut compiled: Vec<_> = values
+        .iter()
+        .filter_map(|value| compile_value(value, aura, missing))
+        .map(|value| value.coerce(ValueType::Bool))
+        .collect();
+    match compiled.len() {
+        0 => None,
+        1 => compiled.pop(),
+        _ => Some(
+            match compiled
+                .iter()
+                .position(|v| v.const_bool() == Some(deciding))
+            {
+                Some(index) => compiled.swap_remove(index),
+                None => build(compiled),
+            },
+        ),
+    }
+}
+
 /// Go `newAPLValue` for the supported subset. `aura` resolves an action ID on the
 /// casting player as Go `GetAuraByID` does, or returns `None` when the character lacks it.
 fn compile_value<R>(
     value: &Value,
-    aura: &dyn Fn(&ActionId) -> Option<R>,
+    aura: &dyn Fn(&ActionId) -> Option<FoundAura<R>>,
     missing: MissingAura,
 ) -> Option<Compiled<R>> {
     Some(match value {
@@ -662,9 +710,18 @@ fn compile_value<R>(
         Value::RemainingTime => Compiled::RemainingTime,
         Value::AuraIsKnown(id) => bool_const(aura(id).is_some()),
         Value::AuraIsActive(id) => match (aura(id), missing) {
-            (Some(resolved), _) => Compiled::AuraIsActive(resolved),
+            (Some(found), _) => Compiled::AuraIsActive(found.aura),
             (None, MissingAura::Dropped) => return None,
             (None, MissingAura::Inactive) => bool_const(false),
+        },
+        Value::AuraNumStacks(id) => match (aura(id), missing) {
+            // Go warns that the aura does not stack and drops the value, fix or not.
+            (Some(found), _) if found.max_stacks == 0 => return None,
+            (Some(found), _) => Compiled::AuraNumStacks(found.aura),
+            (None, MissingAura::Dropped) => return None,
+            (None, MissingAura::Inactive) => {
+                Compiled::Const(parse_const("0").expect("int constant"))
+            }
         },
         Value::Compare { op, lhs, rhs } => {
             let lhs = compile_value(lhs, aura, missing)?;
@@ -676,29 +733,15 @@ fn compile_value<R>(
                 rhs: Box::new(rhs.coerce(to)),
             }
         }
-        Value::And(values) => {
-            let mut compiled: Vec<_> = values
-                .iter()
-                .filter_map(|value| compile_value(value, aura, missing))
-                .map(|value| value.coerce(ValueType::Bool))
-                .collect();
-            match compiled.len() {
-                0 => return None,
-                1 => compiled.pop().expect("one value"),
-                // Go short-circuits an And holding a constant false to that constant.
-                _ => match compiled.iter().position(|v| v.const_bool() == Some(false)) {
-                    Some(index) => compiled.swap_remove(index),
-                    None => Compiled::And(compiled),
-                },
-            }
-        }
+        Value::And(values) => return fold(values, aura, missing, false, Compiled::And),
+        Value::Or(values) => return fold(values, aura, missing, true, Compiled::Or),
     })
 }
 
 /// Go `newAPLAction`'s condition handling for one action.
 pub fn compile_condition<R>(
     condition: Option<&Value>,
-    aura: &dyn Fn(&ActionId) -> Option<R>,
+    aura: &dyn Fn(&ActionId) -> Option<FoundAura<R>>,
     missing: MissingAura,
 ) -> CompiledCondition<R> {
     let compiled = condition
@@ -782,7 +825,7 @@ mod tests {
         }))
         .unwrap();
         let condition = rotation.priority_list[0].condition.as_ref();
-        let lacks = |_: &ActionId| None::<()>;
+        let lacks = |_: &ActionId| None::<FoundAura<()>>;
         (
             compile_condition(condition, &lacks, MissingAura::Dropped),
             compile_condition(condition, &lacks, MissingAura::Inactive),
@@ -821,6 +864,74 @@ mod tests {
         assert_eq!(pinned, CompiledCondition::Always);
         assert!(matches!(
             fixed,
+            CompiledCondition::When(Compiled::Compare { .. })
+        ));
+    }
+
+    #[test]
+    fn or_and_stack_counts_fold_as_go_does() {
+        let compile = |json: serde_json::Value, max_stacks: i32| {
+            let rotation = parse(&serde_json::json!({
+                "type": "TypeAPL",
+                "priorityList": [{"action": {
+                    "castSpell": {"spellId": {"spellId": 25304}},
+                    "condition": json,
+                }}],
+            }))
+            .unwrap();
+            let condition = rotation.priority_list[0].condition.clone();
+            // The character has 400573 and lacks 44404.
+            let find = move |id: &ActionId| {
+                (id.spell_id == 400573).then_some(FoundAura {
+                    aura: (),
+                    max_stacks,
+                })
+            };
+            (
+                compile_condition(condition.as_ref(), &find, MissingAura::Dropped),
+                compile_condition(condition.as_ref(), &find, MissingAura::Inactive),
+            )
+        };
+        let stacks = |id: i32| {
+            serde_json::json!({"cmp": {"op": "OpGe",
+                "lhs": {"auraNumStacks": {"auraId": {"spellId": id}}}, "rhs": {"const": {"val": "3"}}}})
+        };
+        let known = serde_json::json!({"auraIsKnown": {"auraId": {"spellId": 400573}}});
+        // A known aura's stacks compare as integers.
+        let (pinned, fixed) = compile(stacks(400573), 4);
+        assert_eq!(pinned, fixed);
+        assert!(matches!(
+            pinned,
+            CompiledCondition::When(Compiled::Compare { .. })
+        ));
+        // Go drops the stacks of an aura without MaxStacks, with or without the fix.
+        assert_eq!(
+            compile(stacks(400573), 0),
+            (CompiledCondition::Always, CompiledCondition::Always)
+        );
+        // A missing aura: pinned Go drops the term, the fix compares a constant 0.
+        let (pinned, fixed) = compile(stacks(44404), 4);
+        assert_eq!(pinned, CompiledCondition::Always);
+        assert!(matches!(
+            fixed,
+            CompiledCondition::When(Compiled::Compare { .. })
+        ));
+        // A constant true decides an Or.
+        let (pinned, fixed) = compile(
+            serde_json::json!({"or": {"vals": [stacks(400573), known]}}),
+            4,
+        );
+        assert_eq!(
+            (pinned, fixed),
+            (CompiledCondition::Always, CompiledCondition::Always)
+        );
+        // One remaining term stands for the Or.
+        let (pinned, _) = compile(
+            serde_json::json!({"or": {"vals": [stacks(400573), stacks(44404)]}}),
+            4,
+        );
+        assert!(matches!(
+            pinned,
             CompiledCondition::When(Compiled::Compare { .. })
         ));
     }

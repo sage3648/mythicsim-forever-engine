@@ -3,8 +3,8 @@
 use crate::{
     contracts::prepared_v2::ActionId,
     rotation::{
-        compile_condition, Action as ParsedAction, CompareOp, CompiledCondition, MissingAura,
-        Rotation, ValueType,
+        compile_condition, Action as ParsedAction, CompareOp, CompiledCondition, FoundAura,
+        MissingAura, Rotation, ValueType,
     },
 };
 
@@ -36,9 +36,12 @@ impl<A: Agent> Fight<A> {
     pub(crate) fn compile_rotation(&self, rotation: &Rotation) -> Vec<Item> {
         let tracker = &self.trackers[Side::Player.index()];
         let aura = |id: &ActionId| {
-            tracker.find_by_id(id).map(|index| AuraRef {
-                side: Side::Player,
-                index,
+            tracker.find_by_id(id).map(|index| FoundAura {
+                aura: AuraRef {
+                    side: Side::Player,
+                    index,
+                },
+                max_stacks: tracker.auras[index].max_stacks,
             })
         };
         let mut items = Vec::new();
@@ -72,6 +75,7 @@ impl<A: Agent> Fight<A> {
             Compiled::Const(constant) => constant.boolean,
             Compiled::AuraIsActive(aura) => self.aura(*aura).active,
             Compiled::And(values) => values.iter().all(|value| self.get_bool(value)),
+            Compiled::Or(values) => values.iter().any(|value| self.get_bool(value)),
             Compiled::Compare { op, lhs, rhs } => match lhs.value_type() {
                 ValueType::Bool => match op {
                     CompareOp::Eq => self.get_bool(lhs) == self.get_bool(rhs),
@@ -97,6 +101,7 @@ impl<A: Agent> Fight<A> {
     fn get_int(&self, value: &Compiled) -> i32 {
         match value {
             Compiled::Const(constant) => constant.int,
+            Compiled::AuraNumStacks(aura) => self.aura(*aura).stacks,
             Compiled::Coerced { inner, .. } => match inner.value_type() {
                 ValueType::Bool => i32::from(self.get_bool(inner)),
                 ValueType::Int => self.get_int(inner),
