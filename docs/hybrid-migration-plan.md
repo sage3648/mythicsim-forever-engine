@@ -11,8 +11,9 @@ mechanics with evidence. AI can prepare those ports; it cannot make Go commits
 merge directly into Rust or establish correctness by itself.
 
 This is an implementation plan. The current code remains a prepared Frostbolt
-prototype. Routers, general preparation, sync automation and the modules proposed
-below have not been implemented. Milestones advance on acceptance evidence, not dates.
+prototype, now organized into shared systems and Mage class/spec domains. Routers,
+general preparation, full Mage behavior and sync automation remain planned.
+Milestones advance on acceptance evidence, not dates.
 
 ## First usable release
 
@@ -31,23 +32,25 @@ simulation comparisons to pass, and the report adapter to work with real consume
 Public production routing follows the rollout gate in phase 4, not the first
 successful local sim.
 
-## Proposed code organization
+## Code organization
 
-Keep a single crate during the first release. Extract the current `src/lib.rs`
-incrementally and retain the existing fixture contract until the replacement is
-versioned and tested. The following modules are proposed, not present today.
+Keep a single crate during the first release. The former `src/lib.rs` kernel is
+now split into the implemented domains below, preserving its root public API and
+prepared-v1 contract. The [contributor code map](contributor-guide.md) documents
+class/spec ownership and mirrored tests. Extend these boundaries as mechanics
+arrive; rows marked planned are not implemented capabilities.
 
-| Area | Proposed location | Responsibility |
+| Area | Location | Responsibility |
 | --- | --- | --- |
-| Input contracts | `src/contracts/` | Strict request types, prepared states, errors and compatibility identity |
-| Simulation core | `src/core/` | Event ordering, seeded RNG, fight lifecycle and iteration state |
-| Shared mechanics | `src/mechanics/` | Resources, auras, cooldowns, damage resolution and reusable triggers |
-| Class behavior | `src/classes/mage/` initially | Spell and talent mechanics with stable source IDs |
-| Rotation | `src/rotation/` | Supported APL parsing, priority decisions and capability validation |
-| Reporting | `src/report/` | Aggregation, action metrics and timeline events |
-| Data and preparation | `src/data/`, then `src/prepare/` | Versioned data consumption and eventual Rust character construction |
+| Input contracts | `src/contracts.rs`, `src/engine/validation.rs` | Strict prepared-v1 types, limits and supported-build validation; v2 planned |
+| Simulation core | `src/core/`, `src/engine.rs` | Class-independent events/RNG/time and iteration orchestration |
+| Shared mechanics | `src/mechanics/` | Binary hit math and mana; dynamic auras, cooldowns and triggers planned |
+| Class behavior | `src/classes/<class>/spells/`, `src/classes/<class>/specs/` | Shared class spell mechanics and separate spec composition; Mage Frostbolt slice present |
+| Rotation (planned) | `src/rotation.rs`, `src/rotation/` | General APL parsing; current static decisions remain in the Frost spec |
+| Reporting | `src/report.rs`, later `src/report/` | Prototype report types; production action/timeline adapter planned |
+| Data and preparation (planned) | `src/data.rs`, `src/prepare.rs` and child directories | Versioned data consumption and eventual Rust character construction |
 | Reference tooling | `tools/oracle/`, `tools/compare.py` | Pinned Go preparation and differential comparisons |
-| Upstream tracking | `upstream/` | Source manifests, reviewed changes and mechanics mappings |
+| Upstream tracking (planned) | `upstream/` | Source manifests, reviewed changes and mechanics mappings |
 | Integration | MythicSim application repository | Worker routing, public report adapters and deployment flags |
 
 Keep spell behavior explicit and typed. Introduce a general abstraction only after
@@ -168,9 +171,9 @@ of effects Rust must implement. Include every request setting that affects gamep
 Cache preparation only by the complete request and source/data identity, with no
 state leakage between characters or gear candidates.
 
-Refactor the existing Rust kernel into small modules for contracts, event scheduling,
-RNG, resources, effects, class mechanics, rotation evaluation and reporting. Preserve
-existing goldens while extracting modules. Keep one event loop and typed mechanics;
+Extend the extracted contracts, scheduling, RNG, mana, class/spec and report modules
+with versioned preparation, dynamic effects and rotation evaluation. Preserve
+existing goldens. Keep scheduling shared and fight decisions in their owning spec;
 do not build a universal plugin framework before the first class needs it.
 
 Add the reusable pieces needed by the selected build: aura activation and expiration,

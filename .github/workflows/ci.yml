@@ -25,6 +25,9 @@ jobs:
       - run: cargo fmt -- --check
       - run: cargo test --locked
       - run: cargo clippy --locked --all-targets -- -D warnings
+      - run: cargo doc --locked --no-deps --document-private-items
+        env:
+          RUSTDOCFLAGS: -D warnings
       - uses: actions/setup-go@v5
         with:
           go-version: '1.25.6'

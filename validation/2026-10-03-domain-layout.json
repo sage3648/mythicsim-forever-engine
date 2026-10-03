@@ -1,0 +1,584 @@
+{
+  "kind": "behavior_preserving_domain_layout_validation",
+  "date": "2026-10-03",
+  "source_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
+  "previous_rust_commit": "cd5c05ec4b03fe96a2fd796c1dd65fbcba3a4452",
+  "current_kernel_source_sha256": "16e1ac39a381a44ca9a82e312dc2254f8f6bd2279c2142a9a64308e1304fc3d5",
+  "iterations_per_comparison": 3000,
+  "seeds": [
+    42,
+    173,
+    9001
+  ],
+  "comparisons": 33,
+  "passed": true,
+  "ignored_field": "elapsed_ns, runtime timing is not a correctness field",
+  "checks": [
+    "Pinned full Go versus reorganized Rust",
+    "All old Rust report fields versus new Rust, including work counters and mana statistics"
+  ],
+  "scope": "Prepared Frostbolt kernel only; source organization does not extend gameplay support.",
+  "results": [
+    {
+      "scenario": "untalented-60",
+      "seed": 42,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "static-frost-60",
+      "seed": 42,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "static-frost-120-oom",
+      "seed": 42,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "meditation-300-oom",
+      "seed": 42,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "resistance-60",
+      "seed": 42,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "hit-cap-60",
+      "seed": 42,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "same-level-60",
+      "seed": 42,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "travel-boundary-3",
+      "seed": 42,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "zero-travel-boundary-3",
+      "seed": 42,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "staff-60",
+      "seed": 42,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "haste-60",
+      "seed": 42,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "untalented-60",
+      "seed": 173,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "static-frost-60",
+      "seed": 173,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "static-frost-120-oom",
+      "seed": 173,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "meditation-300-oom",
+      "seed": 173,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "resistance-60",
+      "seed": 173,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "hit-cap-60",
+      "seed": 173,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "same-level-60",
+      "seed": 173,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "travel-boundary-3",
+      "seed": 173,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "zero-travel-boundary-3",
+      "seed": 173,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "staff-60",
+      "seed": 173,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "haste-60",
+      "seed": 173,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "untalented-60",
+      "seed": 9001,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "static-frost-60",
+      "seed": 9001,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "static-frost-120-oom",
+      "seed": 9001,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "meditation-300-oom",
+      "seed": 9001,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "resistance-60",
+      "seed": 9001,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "hit-cap-60",
+      "seed": 9001,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "same-level-60",
+      "seed": 9001,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "travel-boundary-3",
+      "seed": 9001,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "zero-travel-boundary-3",
+      "seed": 9001,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "staff-60",
+      "seed": 9001,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    },
+    {
+      "scenario": "haste-60",
+      "seed": 9001,
+      "go_parity_passed": true,
+      "old_rust_fields_match_exactly": true,
+      "old_rust_comparison": {
+        "passed": true,
+        "compared_fields": 22,
+        "numeric_fields": 18,
+        "float_tolerance": {
+          "absolute": 1e-08,
+          "relative": 1e-12
+        },
+        "integer_counts": "exact",
+        "differences": []
+      }
+    }
+  ]
+}

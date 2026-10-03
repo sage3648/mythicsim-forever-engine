@@ -31,10 +31,15 @@ def run_with_env(args, env, cwd=None):
     subprocess.run([str(arg) for arg in args], env=env, cwd=cwd, check=True, timeout=180)
 
 
-def source_digest(paths):
+def kernel_source_paths(root=ROOT):
+    return [*root.joinpath("src").rglob("*.rs"), root / "Cargo.toml", root / "Cargo.lock",
+            root / "tools/matched-go/main.go", root / "tools/matched-go/go.mod"]
+
+
+def source_digest(paths, root=ROOT):
     digest = hashlib.sha256()
     for path in sorted(paths):
-        digest.update(str(path.relative_to(ROOT)).encode())
+        digest.update(str(path.relative_to(root)).encode())
         digest.update(path.read_bytes())
     return digest.hexdigest()
 
@@ -142,7 +147,7 @@ def main():
         "go_runtime": {name: env[name] for name in ("GOMAXPROCS", "GOGC", "GOMEMLIMIT")},
         "go_build": "go build -trimpath, default optimizations",
         "rust_build": "cargo release, thin LTO, one codegen unit",
-        "kernel_source_sha256": source_digest([*ROOT.glob("src/*.rs"), ROOT / "Cargo.toml", ROOT / "Cargo.lock", ROOT / "tools/matched-go/main.go", ROOT / "tools/matched-go/go.mod"]),
+        "kernel_source_sha256": source_digest(kernel_source_paths()),
         "machine": {"platform": platform.platform(), "architecture": platform.machine(), "logical_cpus": os.cpu_count()},
         "limitations": "shared host, no CPU affinity; matched Go kernel is a new implementation, not upstream optimization; single-spell prepared scope; no full-engine or production claim",
         "passed": all(row["passed"] for row in results), "results": results,

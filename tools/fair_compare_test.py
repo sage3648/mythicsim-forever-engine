@@ -1,7 +1,9 @@
 import copy
+from pathlib import Path
+import tempfile
 import unittest
 
-from fair_compare import matched_differences
+from fair_compare import kernel_source_paths, matched_differences, source_digest
 
 
 class FairComparisonTests(unittest.TestCase):
@@ -32,6 +34,23 @@ class FairComparisonTests(unittest.TestCase):
         b["scenario_id"] = "other"
         b["seed"] = 173
         self.assertEqual(len(matched_differences(a, b)), 2)
+
+
+class SourceProvenanceTests(unittest.TestCase):
+    def test_nested_class_and_shared_modules_affect_source_digest(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            paths = ["src/lib.rs", "src/core/events.rs", "src/classes/mage/specs/frost.rs",
+                     "Cargo.toml", "Cargo.lock", "tools/matched-go/main.go", "tools/matched-go/go.mod"]
+            for relative in paths:
+                path = root / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("original source\n")
+            included = kernel_source_paths(root)
+            self.assertEqual(set(included), {root / relative for relative in paths})
+            before = source_digest(included, root)
+            (root / "src/classes/mage/specs/frost.rs").write_text("changed Frost behavior\n")
+            self.assertNotEqual(before, source_digest(kernel_source_paths(root), root))
 
 
 if __name__ == "__main__":

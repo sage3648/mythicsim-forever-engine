@@ -17,6 +17,12 @@ Rust owns the event loop and aggregation, and never calls Go during a fight.
 Checked-in snapshots and goldens allow Rust tests without Go. `tools/matched-go`
 is a benchmark control for the same narrow model, not the full Go engine.
 
+The implemented code now separates shared scheduling/RNG and combat primitives
+from `classes/mage/spells` and `classes/mage/specs`. The engine owns orchestration;
+the current Frost domain owns its limited build and decisions. Contracts and report
+types stay at the boundary. See the [contributor code map](contributor-guide.md)
+for exact paths, dependency rules and new-class examples.
+
 ## Proposed hybrid
 
 ```mermaid

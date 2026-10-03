@@ -18,6 +18,8 @@ Milestones advance on evidence, not promised delivery dates.
 - Standalone public repository, contribution guide and CI.
 - First Frost build inventory: real application request, full Go reference
   observation, mechanics and report consumers, source hashes and offline audit.
+- Shared engine/core/mechanics and class/spec module boundaries, mirrored class
+  tests and a contributor code map. Current simulation scope remains unchanged.
 
 ## Migration sequence
 

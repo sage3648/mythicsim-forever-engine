@@ -3,6 +3,9 @@
 Code, small regression cases, controlled combat logs and clear documentation are
 all useful contributions. Maintainers review changes before release.
 
+New here? Use the [contributor code map](docs/contributor-guide.md) to find the
+owning class/spec, shared primitive or validation boundary before editing.
+
 ## Development checks
 
 Install stable Rust. Rust checks use frozen fixtures and do not require Go:
@@ -11,6 +14,7 @@ Install stable Rust. Rust checks use frozen fixtures and do not require Go:
 cargo fmt -- --check
 cargo test --locked
 cargo clippy --locked --all-targets -- -D warnings
+RUSTDOCFLAGS="-D warnings" cargo doc --locked --no-deps --document-private-items
 ```
 
 For the matched benchmark, install Go 1.25.6 or later and run:

@@ -38,9 +38,15 @@ The binary does not accept production `RaidSimRequest` payloads.
 
 See the [kernel guide](docs/kernel.md) for the input boundary and commands.
 
+The code uses one Cargo crate with shared `core` and `mechanics` modules.
+Class spells live under `src/classes/<class>/spells/`, and spec behavior under
+`src/classes/<class>/specs/`. Class/spec tests mirror those domains. See the
+[contributor code map](docs/contributor-guide.md) to find a mechanic or add a class.
+
 ## Contribute
 
-Start with [CONTRIBUTING.md](CONTRIBUTING.md), the [roadmap](ROADMAP.md) and
+Start with the [contributor code map](docs/contributor-guide.md),
+[CONTRIBUTING.md](CONTRIBUTING.md), the [roadmap](ROADMAP.md) and
 [architecture](docs/architecture.md). The [engine implementation plan](docs/hybrid-migration-plan.md)
 defines the first usable release, module layout, conversion sequence and
 AI-assisted upstream fix process.

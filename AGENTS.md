@@ -2,6 +2,12 @@
 
 - This experimental Rust engine is separate from the MythicSim app and Go engine.
   Read README.md and ROADMAP.md before changing scope.
+- Follow docs/contributor-guide.md for module ownership. Keep class spells and
+  talents in their class domain, spec behavior in that class's specs domain, and
+  reusable primitives in core/mechanics. Shared code must not import classes.
+- Mirror class/spec integration tests under tests/classes. Preserve the public
+  root API and existing JSON contracts during source-only refactors.
+- Add modules for implemented behavior, not placeholder classes or specs.
 - Preserve strict unsupported-input rejection and deterministic mechanics.
 - Mechanics changes need evidence and focused regressions. Do not rewrite goldens
   just to agree with a changed implementation.
