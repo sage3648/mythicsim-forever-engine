@@ -9,6 +9,7 @@ use crate::{
 };
 
 use super::{
+    pets::{self, DemonAi},
     spells::{
         bane_of_agony::{self, BaneOfAgony},
         bind_snapshot_dot,
@@ -21,6 +22,7 @@ use super::{
     },
     talents::{
         improved_shadow_bolt::{self, ImprovedShadowBolt},
+        nightfall::{self, Nightfall},
         shadow_and_flame::{self, ShadowAndFlame},
     },
 };
@@ -40,6 +42,9 @@ pub(crate) enum WarlockSpell {
     Shadowburn,
     SearingPain,
     SoulFire,
+    AmplifyCurse,
+    /// The Succubus's Lash of Pain.
+    LashOfPain,
 }
 
 /// Class auras with Rust behavior.
@@ -49,6 +54,8 @@ pub(crate) enum WarlockAura {
     ImprovedShadowBoltTrigger,
     ShadowAndFlameTrigger,
     ShadowAndFlame,
+    NightfallTrigger,
+    ShadowTrance,
 }
 
 /// Warlock state that Go keeps in the `Warlock` struct and its closures.
@@ -63,6 +70,10 @@ pub(crate) struct WarlockAgent {
     conflagrate: Option<Rc<Conflagrate>>,
     improved_shadow_bolt: Option<Rc<ImprovedShadowBolt>>,
     shadow_and_flame: Option<Rc<ShadowAndFlame>>,
+    amplify_curse: Option<AuraRef>,
+    nightfall: Option<Rc<Nightfall>>,
+    demon: Option<Rc<DemonAi>>,
+    lash_of_pain_base: f64,
 }
 
 /// Aura labels claimed by implemented class effects, as (unit, label, kind).
@@ -92,6 +103,16 @@ fn class_auras(prepared: &PreparedV2) -> Vec<(&'static str, String, WarlockAura)
                 auras.push(("player", shadow_aura.clone(), WarlockAura::ShadowAndFlame));
                 auras.push(("player", fire_aura.clone(), WarlockAura::ShadowAndFlame));
             }
+            Effect::Nightfall {
+                trigger_aura, aura, ..
+            } => {
+                auras.push((
+                    "player",
+                    trigger_aura.clone(),
+                    WarlockAura::NightfallTrigger,
+                ));
+                auras.push(("player", aura.clone(), WarlockAura::ShadowTrance));
+            }
             _ => {}
         }
     }
@@ -117,6 +138,8 @@ impl WarlockAgent {
             "shadowburn" if damage => Some(WarlockSpell::Shadowburn),
             "searing_pain" if damage => Some(WarlockSpell::SearingPain),
             "soul_fire" if damage => Some(WarlockSpell::SoulFire),
+            "amplify_curse" => Some(WarlockSpell::AmplifyCurse),
+            "succubus_lash_of_pain" => Some(WarlockSpell::LashOfPain),
             _ => None,
         }
     }
@@ -234,7 +257,57 @@ impl WarlockAgent {
                     )?;
                     fight.agent.shadow_and_flame = Some(Rc::new(bound));
                 }
+                Effect::AmplifyCurse { aura, .. } => {
+                    fight.agent.amplify_curse = Some(fight.player_aura(aura)?);
+                }
+                Effect::Nightfall {
+                    aura,
+                    proc_chance,
+                    rng_label,
+                    trigger_spells,
+                    consume_spells,
+                    modded_spells,
+                    cast_time_percent,
+                    ..
+                } => {
+                    let bound = nightfall::bind(
+                        &mut fight,
+                        aura,
+                        *proc_chance,
+                        rng_label,
+                        trigger_spells,
+                        consume_spells,
+                        modded_spells,
+                        *cast_time_percent,
+                    )?;
+                    fight.agent.nightfall = Some(Rc::new(bound));
+                }
+                Effect::WarlockPet {
+                    min_mana,
+                    autocast_spells,
+                    wait_ns,
+                    ..
+                } => {
+                    let bound = pets::bind(&fight, autocast_spells, *min_mana, *wait_ns)?;
+                    fight.agent.demon = Some(Rc::new(bound));
+                }
+                Effect::LashOfPain { base_damage } => fight.agent.lash_of_pain_base = *base_damage,
                 _ => {}
+            }
+        }
+        // Bane of Agony spends Amplify Curse, which is bound above.
+        for effect in &prepared.effects {
+            if let Effect::BaneOfAgony {
+                amplify: Some(factor),
+                ..
+            } = effect
+            {
+                if let (Some(agony), Some(aura)) = (
+                    fight.agent.bane_of_agony.as_mut(),
+                    fight.agent.amplify_curse,
+                ) {
+                    agony.amplify = Some((aura, *factor));
+                }
             }
         }
         // Conflagrate reads Immolate's dot, which is bound above.
@@ -305,7 +378,65 @@ impl Agent for WarlockAgent {
                     .expect("Conflagrate is bound");
                 conflagrate.apply(fight, spell, target);
             }
+            WarlockSpell::AmplifyCurse => {
+                let aura = fight.agent.amplify_curse.expect("Amplify Curse is bound");
+                fight.activate_aura(aura);
+            }
+            WarlockSpell::LashOfPain => {
+                let base = fight.agent.lash_of_pain_base;
+                pets::lash_of_pain(fight, spell, target, base);
+            }
             WarlockSpell::ImmolateDot => panic!("Immolate's dot spell is never cast"),
+        }
+    }
+
+    fn pet_rotation(fight: &mut Fight<Self>) {
+        let demon = fight.agent.demon.clone().expect("the demon's AI is bound");
+        demon.rotation(fight);
+    }
+
+    fn on_periodic_damage_dealt(
+        fight: &mut Fight<Self>,
+        aura: AuraRef,
+        kind: WarlockAura,
+        spell: SpellId,
+        result: &SpellResult,
+    ) {
+        if kind == WarlockAura::NightfallTrigger {
+            let talent = fight.agent.nightfall.clone().expect("bound");
+            talent.on_periodic_damage_dealt(fight, aura, spell, result);
+        }
+    }
+
+    fn on_delayed_proc(
+        fight: &mut Fight<Self>,
+        _aura: AuraRef,
+        kind: WarlockAura,
+        spell: SpellId,
+        _result: SpellResult,
+    ) {
+        match kind {
+            WarlockAura::NightfallTrigger => {
+                let talent = fight.agent.nightfall.clone().expect("bound");
+                talent.on_trigger(fight);
+            }
+            WarlockAura::ShadowTrance => {
+                let talent = fight.agent.nightfall.clone().expect("bound");
+                talent.on_consume(fight, spell);
+            }
+            _ => {}
+        }
+    }
+
+    fn on_cast_complete(
+        fight: &mut Fight<Self>,
+        _aura: AuraRef,
+        kind: WarlockAura,
+        spell: SpellId,
+    ) {
+        if kind == WarlockAura::ShadowTrance {
+            let talent = fight.agent.nightfall.clone().expect("bound");
+            talent.on_cast_complete(fight, spell);
         }
     }
 
@@ -339,6 +470,10 @@ impl Agent for WarlockAgent {
                 let talent = fight.agent.shadow_and_flame.clone().expect("bound");
                 talent.on_gain(fight, aura);
             }
+            WarlockAura::ShadowTrance => {
+                let talent = fight.agent.nightfall.clone().expect("bound");
+                talent.on_gain(fight);
+            }
             _ => {}
         }
     }
@@ -352,6 +487,10 @@ impl Agent for WarlockAgent {
             WarlockAura::ShadowAndFlame => {
                 let talent = fight.agent.shadow_and_flame.clone().expect("bound");
                 talent.on_expire(fight, aura);
+            }
+            WarlockAura::ShadowTrance => {
+                let talent = fight.agent.nightfall.clone().expect("bound");
+                talent.on_expire(fight);
             }
             _ => {}
         }

@@ -196,6 +196,8 @@ type classExport struct {
 	damageTakenModifiers func(agent core.Agent) int
 	// Why a registered pet never acts in this build, or "" when it may.
 	inertPet func(agent core.Agent, pet *core.Pet) string
+	// Optional: stable names for class spells Go registers without a class mask, by action.
+	unmaskedSpells map[core.ActionID]string
 	// Optional: class behavior the effects cannot describe, one reason each.
 	unrepresented func(agent core.Agent, character *core.Character) []string
 	// Optional: class auras that change stats through AddStatsDynamic when gained or lost.
@@ -213,7 +215,7 @@ var (
 
 func classSpell(class classExport, mask int64, unrepresented *[]string, id core.ActionID) string {
 	if mask == 0 {
-		return ""
+		return class.unmaskedSpells[id]
 	}
 	for _, entry := range class.spells {
 		if entry.mask == mask {

@@ -18,6 +18,8 @@ func init() {
 	classExports[proto.Class_ClassWarlock] = classExport{
 		spells: warlockClassSpells, damageRows: warlockDamageRows, effects: warlockEffects,
 		damageTakenModifiers: warlockDamageTakenModifiers, inertPet: warlockInertPet,
+		// talents_affliction.go registerAmplifyCurse registers its cast without a class mask.
+		unmaskedSpells: map[core.ActionID]string{{SpellID: 18288}: "amplify_curse"},
 	}
 	// pets.go: every demon is registered at construction and only the summoned one is enabled,
 	// at reset; the sim has no summon spells.

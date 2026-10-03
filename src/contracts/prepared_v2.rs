@@ -1058,6 +1058,35 @@ pub enum Effect {
     },
     /// Shadowburn's instant binary hit.
     Shadowburn {},
+    /// Nightfall: periodic damage of its spells may grant Shadow Trance, which makes Shadow
+    /// Bolt instant until an instant Shadow Bolt completes.
+    Nightfall {
+        trigger_aura: String,
+        aura: String,
+        aura_spell_id: i32,
+        proc_chance: f64,
+        rng_label: String,
+        /// Spellbook positions of the spells whose periodic damage rolls the chance.
+        trigger_spells: Vec<usize>,
+        /// Spellbook positions of the spells whose instant cast consumes Shadow Trance.
+        consume_spells: Vec<usize>,
+        /// Spellbook positions of the spells Shadow Trance's cast time modifier changes.
+        modded_spells: Vec<usize>,
+        cast_time_percent: f64,
+    },
+    /// The summoned demon's AI: the first ability it can cast while its mana stays above
+    /// `min_mana`, otherwise a wait.
+    WarlockPet {
+        pet: String,
+        min_mana: f64,
+        /// Positions in the pet's spellbook.
+        autocast_spells: Vec<usize>,
+        wait_ns: i64,
+    },
+    /// The Succubus's Lash of Pain: a fixed base, a Go literal.
+    LashOfPain {
+        base_damage: f64,
+    },
     /// Searing Pain's hit.
     SearingPain {},
     /// Soul Fire's hit after travel.
@@ -1209,6 +1238,9 @@ impl Effect {
             Effect::LifeTap { .. } => "life_tap",
             Effect::Conflagrate { .. } => "conflagrate",
             Effect::Shadowburn {} => "shadowburn",
+            Effect::Nightfall { .. } => "nightfall",
+            Effect::WarlockPet { .. } => "warlock_pet",
+            Effect::LashOfPain { .. } => "lash_of_pain",
             Effect::SearingPain {} => "searing_pain",
             Effect::SoulFire {} => "soul_fire",
             Effect::ImprovedShadowBolt { .. } => "improved_shadow_bolt",
