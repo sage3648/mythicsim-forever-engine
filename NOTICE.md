@@ -1,5 +1,15 @@
 # Provenance and acknowledgments
 
+## Project credit and upstream notices
+
+New work in this project is credited to MythicSim contributors. The project is
+maintained independently of wowsims. The wowsims copyright notice is retained for
+upstream portions adapted or included here; it does not assign the new project
+or its original contributions to the wowsims team. Both notices appear in
+[LICENSE](LICENSE) under the standard MIT terms.
+
+## Starting code and reference material
+
 This repository starts with the bounded Rust prototype and matched benchmark
 developed in [MythicSim](https://github.com/sage3648/mythicsim), commits
 `fdcea74ae6` and `bd0f4af6`. Only engine code, fixtures, benchmark tools and reports

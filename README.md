@@ -81,7 +81,8 @@ python3 tools/fair_compare.py
 
 ## License and acknowledgments
 
-MIT licensed. Upstream wowsims notices are retained in [LICENSE](LICENSE).
+MIT licensed, with new project work credited to MythicSim contributors.
+Upstream wowsims notices are retained for adapted portions in [LICENSE](LICENSE).
 RNG behavior, combat semantics and reference tooling derive from
 [wowsims Forever](https://github.com/ElliotWood/Forever) and
 [MythicSim's Go fork](https://github.com/sage3648/mythicsim-forever-engine-go).
