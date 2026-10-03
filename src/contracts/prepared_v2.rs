@@ -1381,6 +1381,13 @@ pub enum Effect {
         /// Whether a main hand imbue holds the party Windfury Totem's category.
         blocks_windfury_totem: bool,
     },
+    /// Enhancement's weapon sync: the main hand swing replacement that moves the off hand swing
+    /// before returning the swing. `sync` is "none", "auto" (weapons of equal speed, which
+    /// delay), "sync" or "delay".
+    WeaponSync {
+        sync: String,
+        flurry_icd_ns: i64,
+    },
     /// Frost Shock: Earth Shock's shape on the Frost school.
     FrostShock {
         spell_id: i32,
@@ -1814,6 +1821,7 @@ impl Effect {
             Effect::RageOfTheFarseer { .. } => "rage_of_the_farseer",
             Effect::RockbiterWeapon { .. } => "rockbiter_weapon",
             Effect::FrostShock { .. } => "frost_shock",
+            Effect::WeaponSync { .. } => "weapon_sync",
             Effect::WindfuryWeapon { .. } => "windfury_weapon",
             Effect::MagmaTotem { .. } => "magma_totem",
             Effect::LightningShield { .. } => "lightning_shield",

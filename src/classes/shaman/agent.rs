@@ -16,6 +16,7 @@ use super::{
         stormstrike::{self, Stormstrike},
         totems::{self, Expirations, StrengthOfEarth},
         weapon_imbues,
+        weapon_sync,
         windfury_weapon::{self, WindfuryWeapon},
     },
     talents::{
@@ -132,6 +133,9 @@ pub(crate) struct ShamanAgent {
     mana_spring: Option<StrengthOfEarth>,
     flametongue_totem: Option<totems::FlametongueTotem>,
     windfury_weapon: Option<WindfuryWeapon>,
+    /// Enhancement's weapon sync: whether it delays or syncs the off hand, and Flurry's charge
+    /// cooldown it waits out.
+    weapon_sync: Option<(weapon_sync::Sync, i64)>,
     /// The last air totem aura cast, which a new one replaces.
     air_totem: Option<AuraRef>,
     /// Rockbiter Weapon's gain and loss lines.
@@ -598,6 +602,12 @@ impl ShamanAgent {
                         *blocks_windfury_totem,
                     )?);
                 }
+                Effect::WeaponSync {
+                    sync,
+                    flurry_icd_ns,
+                } => {
+                    fight.agent.weapon_sync = Some((weapon_sync::Sync::parse(sync)?, *flurry_icd_ns));
+                }
                 Effect::ManaSpringTotem {
                     aura, duration_ns, ..
                 } => {
@@ -951,6 +961,14 @@ impl Agent for ShamanAgent {
             ShamanSpell::StormstrikeCast => fight.agent.stormstrike_weapon,
             _ => true,
         }
+    }
+
+    /// Go `ApplySyncType`'s replacement: it may move the off hand swing, then returns the swing.
+    fn replace_mh_swing(fight: &mut Fight<Self>, swing: SpellId) -> SpellId {
+        if let Some((sync, icd)) = fight.agent.weapon_sync {
+            weapon_sync::apply(fight, sync, icd);
+        }
+        swing
     }
 
     fn totem_expiration(fight: &Fight<Self>, totem: Totem) -> i64 {

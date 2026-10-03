@@ -17,7 +17,7 @@ import (
 func init() {
 	classExports[proto.Class_ClassShaman] = classExport{
 		spells: shamanClassSpells, damageRows: shamanDamageRows, effects: shamanEffects, unrepresented: shamanUnrepresented,
-		swingReplacementKeepsSwing: shamanSwingReplacementKeepsSwing, statAuras: shamanStatAuras,
+		swingReplacementKeepsSwing: shamanSwingReplacementKeepsSwing, playerEffects: shamanPlayerEffects, statAuras: shamanStatAuras,
 	}
 }
 
@@ -378,15 +378,34 @@ func shamanStatAuras(_ core.Agent, _ *core.Character) []string {
 		"Windfury Weapon Attack Power"}
 }
 
-// enhancement.go ApplySyncType: Auto returns the main hand swing unchanged whenever the two
-// weapons swing at different speeds, as a single weapon does against the empty off hand.
-func shamanSwingReplacementKeepsSwing(agent core.Agent, player *proto.Player) bool {
+// enhancement.go ApplySyncType: every sync type's replacement returns the main hand swing it
+// is given; the weapon_sync effect describes how it moves the off hand swing first.
+func shamanSwingReplacementKeepsSwing(_ core.Agent, player *proto.Player) bool {
+	return player.GetEnhancementShaman().GetOptions() != nil
+}
+
+// enhancement.go ApplySyncType: the main hand swing replacement that moves the off hand
+// swing, with Flurry's charge cooldown a Go literal.
+func shamanPlayerEffects(character *core.Character, player *proto.Player) []map[string]any {
 	options := player.GetEnhancementShaman().GetOptions()
-	if options == nil || options.SyncType != proto.ShamanSyncType_Auto {
-		return false
+	if options == nil {
+		return nil
 	}
-	character := agent.GetCharacter()
-	return character.MainHand().SwingSpeed != character.OffHand().SwingSpeed
+	sync := ""
+	switch options.SyncType {
+	case proto.ShamanSyncType_Auto:
+		sync = "auto"
+		if character.MainHand().SwingSpeed != character.OffHand().SwingSpeed {
+			sync = "none"
+		}
+	case proto.ShamanSyncType_SyncMainhandOffhandSwings:
+		sync = "sync"
+	case proto.ShamanSyncType_DelayOffhandSwings:
+		sync = "delay"
+	default:
+		return nil
+	}
+	return []map[string]any{{"kind": "weapon_sync", "sync": sync, "flurry_icd_ns": nanos(500 * time.Millisecond)}}
 }
 
 // Shaman behavior the exporter cannot describe.

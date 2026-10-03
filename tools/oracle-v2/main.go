@@ -200,6 +200,8 @@ type classExport struct {
 	// Optional: whether the class's main hand swing replacement always returns the swing it is
 	// given for this player, so only Go's reaction before each swing remains.
 	swingReplacementKeepsSwing func(agent core.Agent, player *proto.Player) bool
+	// Optional: effects that read the player's options, which the agent does not keep.
+	playerEffects func(character *core.Character, player *proto.Player) []map[string]any
 	// Optional: class auras that change stats through AddStatsDynamic when gained or lost.
 	statAuras func(agent core.Agent, character *core.Character) []string
 }
@@ -1329,6 +1331,9 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	if exported {
 		exportRequest, classNotes = request, &unrepresented
 		effects = append(effects, class.effects(agent, character)...)
+		if class.playerEffects != nil {
+			effects = append(effects, class.playerEffects(character, request.Raid.Parties[0].Players[0])...)
+		}
 		exportRequest, classNotes = nil, nil
 		if class.unrepresented != nil {
 			unrepresented = append(unrepresented, class.unrepresented(agent, character)...)

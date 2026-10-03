@@ -40,6 +40,7 @@ const EFFECTS: &[&str] = &[
     "searing_totem",
     "stormstrike",
     "strength_of_earth_totem",
+    "weapon_sync",
     "windfury_weapon",
 ];
 

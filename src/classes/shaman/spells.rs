@@ -10,4 +10,5 @@ pub(crate) mod searing_totem;
 pub(crate) mod stormstrike;
 pub(crate) mod totems;
 pub(crate) mod weapon_imbues;
+pub(crate) mod weapon_sync;
 pub(crate) mod windfury_weapon;
