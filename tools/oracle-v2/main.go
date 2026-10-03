@@ -191,9 +191,18 @@ type classExport struct {
 	spells     []classSpellName
 	damageRows func(rows map[int32]*spelldata.Spell)
 	effects    func(agent core.Agent, character *core.Character) []map[string]any
+	// How many of the target's dynamic damage taken modifiers the class effects describe.
+	damageTakenModifiers func(agent core.Agent) int
 }
 
 var classExports = map[proto.Class]classExport{}
+
+// Set by prepare while class effects run: the request, so an effect can reset a separate
+// simulation, and the unrepresented list, so an effect can name what it cannot describe.
+var (
+	exportRequest *proto.RaidSimRequest
+	classNotes    *[]string
+)
 
 func classSpell(class classExport, mask int64, unrepresented *[]string, id core.ActionID) string {
 	if mask == 0 {
@@ -358,6 +367,8 @@ type Spell struct {
 	PushbackResist                 float64       `json:"pushback_resist"`
 	Dot                            *Dot          `json:"dot"`
 	DamageEffect                   *DamageEffect `json:"damage_effect"`
+	// The spell holding this spell's dot, which Go's Spell.Dot and the rotation's dot values follow.
+	RelatedDotSpell *ActionID `json:"related_dot_spell,omitempty"`
 }
 
 type Aura struct {
@@ -653,7 +664,15 @@ func exportSpell(spell *core.Spell, target *core.Unit, class classExport, timers
 		DirectDamageMultiplierAdditive: spell.DirectDamageMultiplierAdditive, CritMultiplierPct: spell.CritMultiplierPct,
 		CritMultiplierAdditive: spell.CritMultiplierAdditive, BonusBaseDamage: spell.BonusBaseDamage, BonusCoefficient: spell.BonusCoefficient,
 		ThreatMultiplier: spell.ThreatMultiplier, FlatThreatBonus: spell.FlatThreatBonus, PushbackResist: spell.PushbackResist, Dot: dot,
+		RelatedDotSpell: relatedDotSpell(spell),
 	}
+}
+
+func relatedDotSpell(spell *core.Spell) *ActionID {
+	if spell.RelatedDotSpell == nil {
+		return nil
+	}
+	return actionID(spell.RelatedDotSpell.ActionID)
 }
 
 // racials.go applyEureka: the class names its spells by masks only Go can read, so the
@@ -878,7 +897,12 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	note(simulation.Encounter.AllTargets[0].AI != nil, "target AI is unsupported")
 	table := character.AttackTables[target.UnitIndex]
 	note(table.DamageDoneByCasterMultiplier != nil || len(table.DamageDoneByCasterExtraMultiplier) != 0, "caster damage callbacks are unsupported")
-	note(len(target.DynamicDamageTakenModifiers) != 0, "dynamic damage taken modifiers are unsupported")
+	class, exported := classExports[character.Class]
+	described := 0
+	if exported && class.damageTakenModifiers != nil {
+		described = class.damageTakenModifiers(agent)
+	}
+	note(len(target.DynamicDamageTakenModifiers) != described, "dynamic damage taken modifiers are unsupported")
 	note(len(character.OnCastSpeedChanged) != 0, "cast speed listeners are unsupported")
 	note(len(character.OnTemporaryStatsChanges) != 0, "temporary stat listeners are unsupported")
 	if threshold := request.Raid.Parties[0].Players[0].GetCooldowns().GetHpPercentForDefensives(); threshold != 0 {
@@ -890,7 +914,6 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 		note(bonus != (stats.Stats{}), fmt.Sprintf("mob type bonus stats for %s are unsupported", mobType))
 	}
 
-	class, exported := classExports[character.Class]
 	note(!exported, fmt.Sprintf("%s agents are not exported", character.Class))
 
 	spells := []Spell{}
@@ -932,7 +955,9 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 		}
 	}
 	if exported {
+		exportRequest, classNotes = request, &unrepresented
 		effects = append(effects, class.effects(agent, character)...)
+		exportRequest, classNotes = nil, nil
 	}
 	effects = append(effects, commonEffects(character, target, request, &unrepresented)...)
 	if eureka := eurekaEffect(agent, character); eureka != nil {

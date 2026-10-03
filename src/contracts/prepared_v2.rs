@@ -380,6 +380,10 @@ pub struct Spell {
     pub pushback_resist: f64,
     pub dot: Option<Dot>,
     pub damage_effect: Option<DamageEffect>,
+    /// The spell holding this spell's dot, which Go `Spell.Dot` and the rotation's dot
+    /// values follow when the spell has none of its own.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub related_dot_spell: Option<ActionId>,
 }
 
 impl Spell {
@@ -669,6 +673,80 @@ pub enum Effect {
         aura: String,
         reason: String,
     },
+    /// Every Shadow Bolt rank: a hit after travel.
+    ShadowBolt {},
+    /// Immolate's hit and the snapshot dot on its related spell.
+    Immolate {
+        spell_id: i32,
+        tick_base: f64,
+        tick_can_crit: bool,
+    },
+    /// Corruption's snapshot dot.
+    Corruption {
+        spell_id: i32,
+        tick_base: f64,
+        tick_can_crit: bool,
+    },
+    /// Bane of Agony's ramping snapshot dot: the snapshot pays `ramp_share` of the tick and
+    /// every `ramp_every_ticks` ticks adds that share back.
+    BaneOfAgony {
+        spell_id: i32,
+        tick_base: f64,
+        tick_can_crit: bool,
+        ramp_share: f64,
+        ramp_every_ticks: i32,
+        #[serde(default)]
+        amplify: Option<f64>,
+    },
+    /// Amplify Curse's major cooldown and aura, spent by Bane of Agony.
+    AmplifyCurse {
+        spell_id: i32,
+        aura: String,
+    },
+    /// Curse of the Elements' debuff on the target: flat resistance changes and school
+    /// damage taken multipliers while it is active.
+    CurseOfTheElements {
+        spell_id: i32,
+        aura: String,
+        resistance_delta: BTreeMap<String, f64>,
+        school_damage_taken_multiplier: BTreeMap<String, f64>,
+    },
+    /// Life Tap: (base + Spirit) times the multiplier, as health spent and mana gained.
+    LifeTap {
+        spell_id: i32,
+        base_amount: f64,
+        mana_multiplier: f64,
+    },
+    /// Conflagrate's hit, which consumes Immolate unless Shadow and Flame spares it.
+    Conflagrate {
+        spell_id: i32,
+        keep_immolate_chance: f64,
+        rng_label: String,
+    },
+    /// Shadowburn's instant binary hit.
+    Shadowburn {},
+    /// Searing Pain's hit.
+    SearingPain {},
+    /// Soul Fire's hit after travel.
+    SoulFire {},
+    /// Improved Shadow Bolt: Shadow Bolt crits leave a target debuff that multiplies the
+    /// warlock's shadow damage after the outcome.
+    ImprovedShadowBolt {
+        trigger_aura: String,
+        aura: String,
+        spell_id: i32,
+        multiplier: f64,
+    },
+    /// Shadow and Flame: Conflagrate and Shadowburn hits multiply the warlock's shadow or
+    /// fire damage dealt for a while.
+    ShadowAndFlame {
+        trigger_aura: String,
+        shadow_aura: String,
+        fire_aura: String,
+        shadow_spell_id: i32,
+        fire_spell_id: i32,
+        multiplier: f64,
+    },
 }
 
 impl Effect {
@@ -709,6 +787,19 @@ impl Effect {
             Effect::ConjuredMana { .. } => "conjured_mana",
             Effect::EnergizeOnUse { .. } => "energize_on_use",
             Effect::InertListener { .. } => "inert_listener",
+            Effect::ShadowBolt {} => "shadow_bolt",
+            Effect::Immolate { .. } => "immolate",
+            Effect::Corruption { .. } => "corruption",
+            Effect::BaneOfAgony { .. } => "bane_of_agony",
+            Effect::AmplifyCurse { .. } => "amplify_curse",
+            Effect::CurseOfTheElements { .. } => "curse_of_the_elements",
+            Effect::LifeTap { .. } => "life_tap",
+            Effect::Conflagrate { .. } => "conflagrate",
+            Effect::Shadowburn {} => "shadowburn",
+            Effect::SearingPain {} => "searing_pain",
+            Effect::SoulFire {} => "soul_fire",
+            Effect::ImprovedShadowBolt { .. } => "improved_shadow_bolt",
+            Effect::ShadowAndFlame { .. } => "shadow_and_flame",
         }
     }
 }

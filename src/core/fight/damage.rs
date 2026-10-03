@@ -118,7 +118,7 @@ impl<A: Agent> Fight<A> {
             state.damage_multiplier_additive + state.direct_damage_multiplier_additive
         };
         let internal = self.config.damage_dealt_multiplier
-            * self.school_value(spell, &self.config.school_damage_dealt_multiplier)
+            * self.school_value(spell, &self.player.school_damage_dealt_multiplier)
             * self.config.table.damage_dealt_multiplier;
         internal * state.damage_multiplier * additive
     }
@@ -130,7 +130,7 @@ impl<A: Agent> Fight<A> {
             return 1.0;
         }
         self.config.target_damage_taken_multiplier
-            * self.school_value(spell, &self.config.target_school_damage_taken_multiplier)
+            * self.school_value(spell, &self.target.school_damage_taken_multiplier)
             * self.config.table.damage_taken_multiplier
     }
 
@@ -138,10 +138,10 @@ impl<A: Agent> Fight<A> {
         let state = &self.spells[spell];
         // Go resistCoeff: Frostfire Bolt checks the lower resistance.
         let resistance = if state.frostfire {
-            let resistance = &self.config.target_resistance;
+            let resistance = &self.target.resistance;
             resistance[super::SCHOOL_INDEX_FIRE].min(resistance[super::SCHOOL_INDEX_FROST])
         } else {
-            self.config.target_resistance[state.school_index]
+            self.target.resistance[state.school_index]
         };
         resist_coefficient(
             resistance,
@@ -200,6 +200,49 @@ impl<A: Agent> Fight<A> {
             base += self.spells[spell].bonus_coefficient * self.bonus_damage(spell);
         }
         self.calc_damage_internal(spell, target, base, attacker, Outcome::MagicHit)
+    }
+
+    /// Go `CalcOutcome` with `OutcomeMagicHit`, or `OutcomeMagicHitNoHitCounter` when
+    /// `count_hits` is false: a hit roll with no damage.
+    pub(crate) fn calc_outcome_magic_hit(
+        &mut self,
+        spell: SpellId,
+        target: Side,
+        count_hits: bool,
+    ) -> SpellResult {
+        let mut result = SpellResult {
+            target,
+            outcome: 0,
+            damage: 0.0,
+            threat: 0.0,
+        };
+        let binary_hit = self.spells[spell]
+            .flags
+            .binary
+            .then(|| 1.0 - 0.75 * self.resist(spell, true));
+        let miss = spell_chance_to_miss(
+            self.config.table.base_spell_miss_chance,
+            binary_hit,
+            self.spell_hit_chance(spell),
+        );
+        let metrics_target = target.index();
+        if self.proc(1.0 - miss, "Magical Hit Roll") {
+            result.outcome = OUTCOME_HIT;
+            if count_hits {
+                self.spells[spell].metrics[metrics_target].hits += 1;
+            }
+        } else {
+            result.outcome = OUTCOME_MISS;
+            self.spells[spell].metrics[metrics_target].misses += 1;
+        }
+        result.threat = if result.landed() {
+            let state = &self.spells[spell];
+            (result.damage * state.threat_multiplier + state.flat_threat_bonus)
+                * self.config.threat_multiplier
+        } else {
+            0.0
+        };
+        result
     }
 
     /// Go `calcDamageInternal` for a direct magic spell.
@@ -261,6 +304,15 @@ impl<A: Agent> Fight<A> {
             result.outcome |= partial;
         }
         let after_outcome = result.damage;
+        // Go ApplyPostOutcomeDamageModifiers: the target's dynamic modifiers in order.
+        for index in 0..self.damage_taken_modifiers.len() {
+            let modifier = self.damage_taken_modifiers[index];
+            if self.spells[spell].school & modifier.school_mask != 0
+                && self.aura(modifier.aura).active
+            {
+                result.damage *= modifier.multiplier;
+            }
+        }
         result.damage = result.damage.max(0.0);
 
         if self.log.is_some() {

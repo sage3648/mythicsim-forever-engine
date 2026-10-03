@@ -177,9 +177,15 @@ fn fixed_stat_changes(prepared: &PreparedV2) -> Vec<String> {
 }
 
 /// Go `GetAPLSpell`: the first APL-flagged spell with the action ID, otherwise the first
-/// registered one, as a spellbook position. A missing spell drops the rotation action in Go.
+/// registered one, as a spellbook position. The potion action names the first combat
+/// potion. A missing spell drops the rotation action in Go.
 pub(crate) fn rotation_spell_index(prepared: &PreparedV2, id: &ActionId) -> Option<usize> {
     let spells = &prepared.player.spells;
+    if id.other_id == "OtherActionPotion" {
+        return spells
+            .iter()
+            .position(|spell| spell.has_flag("SpellFlagCombatPotion"));
+    }
     spells
         .iter()
         .position(|spell| spell.action_id.as_ref() == Some(id) && spell.has_flag("SpellFlagAPL"))
@@ -187,6 +193,20 @@ pub(crate) fn rotation_spell_index(prepared: &PreparedV2, id: &ActionId) -> Opti
             spells
                 .iter()
                 .position(|spell| spell.action_id.as_ref() == Some(id))
+        })
+}
+
+/// Go `Spell.Dot`: whether the spell has a dot, its own or its related spell's.
+pub(crate) fn spell_has_dot(prepared: &PreparedV2, index: usize) -> bool {
+    let spell = &prepared.player.spells[index];
+    spell.dot.is_some()
+        || spell.related_dot_spell.as_ref().is_some_and(|related| {
+            prepared
+                .player
+                .spells
+                .iter()
+                .position(|other| other.action_id.as_ref() == Some(related))
+                .is_some_and(|other| spell_has_dot(prepared, other))
         })
 }
 
@@ -341,9 +361,15 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
 }
 
 fn find_aura(prepared: &PreparedV2, id: &ActionId) -> Option<FoundAura<ActionId>> {
-    prepared
-        .player
-        .auras
+    find_unit_aura(&prepared.player.auras, id)
+}
+
+/// Go `GetAuraByID` on a unit's exported auras.
+fn find_unit_aura(
+    auras: &[crate::contracts::prepared_v2::Aura],
+    id: &ActionId,
+) -> Option<FoundAura<ActionId>> {
+    auras
         .iter()
         .find(|aura| aura.action_id.as_ref() == Some(id))
         .map(|aura| FoundAura {
@@ -362,13 +388,15 @@ fn unknown_aura_conditions(prepared: &PreparedV2, rotation: &Rotation) -> Vec<St
     // Go resolves rotation names on the casting player: `GetAuraByID` finds the first aura
     // with the same action ID, tag included; `GetAPLSpell` and `GetAPLDot` find spells.
     let aura = |id: &ActionId| find_aura(prepared, id);
+    let target_aura = |id: &ActionId| find_unit_aura(&prepared.target.auras, id);
+    let target_known = |id: &ActionId| target_aura(id).is_some();
     let spell = |id: &ActionId| rotation_spell_index(prepared, id);
     let dot = |id: &ActionId| {
-        rotation_spell_index(prepared, id)
-            .filter(|&index| prepared.player.spells[index].dot.is_some())
+        rotation_spell_index(prepared, id).filter(|&index| spell_has_dot(prepared, index))
     };
     let lookup = Lookup {
         aura: &aura,
+        target_aura: &target_aura,
         spell: &spell,
         dot: &dot,
     };
@@ -384,6 +412,9 @@ fn unknown_aura_conditions(prepared: &PreparedV2, rotation: &Rotation) -> Vec<St
             condition.visit(&mut |value| match value {
                 Value::AuraIsActive(id) if !known(id) => {
                     unknown.push(("auraIsActive", id.to_string()))
+                }
+                Value::TargetAuraIsActive(id) if !target_known(id) => {
+                    unknown.push(("auraIsActive on the target", id.to_string()))
                 }
                 Value::AuraNumStacks(id) if !known(id) => {
                     unknown.push(("auraNumStacks", id.to_string()))

@@ -59,6 +59,8 @@ pub enum Value {
     NumberTargets,
     AuraIsKnown(ActionId),
     AuraIsActive(ActionId),
+    /// `auraIsActive` with the current target as its source unit.
+    TargetAuraIsActive(ActionId),
     AuraNumStacks(ActionId),
     AuraRemainingTime(ActionId),
     DotIsActive(ActionId),
@@ -95,6 +97,7 @@ impl Value {
             | Value::Not(_)
             | Value::AuraIsKnown(_)
             | Value::AuraIsActive(_)
+            | Value::TargetAuraIsActive(_)
             | Value::DotIsActive(_)
             | Value::SpellIsKnown(_)
             | Value::SpellIsReady(_) => ValueType::Bool,
@@ -478,8 +481,29 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
                 .ok_or_else(|| vec!["not has no val".to_string()])?;
             Ok(Value::Not(Box::new(parse_value(value)?)))
         }
+        "auraIsActive" if fields.is_some_and(|fields| fields.contains_key("sourceUnit")) => {
+            // Go GetSourceUnit: the player itself, or the current target, of the one in scope.
+            only(&["auraId", "sourceUnit"])?;
+            let id = config
+                .get("auraId")
+                .ok_or_else(|| vec![format!("{name} has no auraId")])
+                .and_then(|id| parse_action_id(id).map_err(|err| vec![err]))?;
+            let source = config.get("sourceUnit").and_then(Json::as_object);
+            let kind = source.and_then(|unit| match unit.keys().find(|key| *key != "type") {
+                Some(_) => None,
+                None => unit.get("type").and_then(Json::as_str),
+            });
+            match kind {
+                Some("Self") => Ok(Value::AuraIsActive(id)),
+                Some("CurrentTarget") => Ok(Value::TargetAuraIsActive(id)),
+                _ => Err(vec![format!(
+                    "{name} sourceUnit {} is unsupported",
+                    config.get("sourceUnit").cloned().unwrap_or_default()
+                )]),
+            }
+        }
         "auraIsKnown" | "auraIsActive" | "auraNumStacks" | "auraRemainingTime" => {
-            // sourceUnit and includeReactionTime are not modeled.
+            // sourceUnit, except on auraIsActive, and includeReactionTime are not modeled.
             only(&["auraId"])?;
             let id = config
                 .get("auraId")
@@ -886,6 +910,8 @@ pub struct FoundAura<R> {
 pub struct Lookup<'a, R> {
     /// Go `GetAuraByID`: the aura, or `None` when the character lacks it.
     pub aura: &'a dyn Fn(&ActionId) -> Option<FoundAura<R>>,
+    /// Go `GetAuraByID` on the current target.
+    pub target_aura: &'a dyn Fn(&ActionId) -> Option<FoundAura<R>>,
     /// Go `GetAPLSpell`: the spellbook position of the spell, or `None` when unknown.
     pub spell: &'a dyn Fn(&ActionId) -> Option<usize>,
     /// Go `GetAPLDot`: the spellbook position of the spell when it has a dot on the target.
@@ -983,6 +1009,11 @@ fn compile_value<R>(
             (None, MissingAura::Dropped) => return None,
             (None, MissingAura::Inactive) => bool_const(false),
         },
+        Value::TargetAuraIsActive(id) => match ((lookup.target_aura)(id), missing) {
+            (Some(found), _) => Compiled::AuraIsActive(found.aura),
+            (None, MissingAura::Dropped) => return None,
+            (None, MissingAura::Inactive) => bool_const(false),
+        },
         Value::AuraNumStacks(id) => match (aura(id), missing) {
             // Go warns that the aura does not stack and drops the value, fix or not.
             (Some(found), _) if found.max_stacks == 0 => return None,
@@ -1052,6 +1083,7 @@ mod tests {
     fn only_auras<'a, R>(aura: &'a dyn Fn(&ActionId) -> Option<FoundAura<R>>) -> Lookup<'a, R> {
         Lookup {
             aura,
+            target_aura: aura,
             spell: &no_spell,
             dot: &no_spell,
         }
