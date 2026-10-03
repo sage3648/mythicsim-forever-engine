@@ -33,6 +33,7 @@ pub(crate) const IMPLEMENTED_EFFECTS: &[&str] = &[
     "inert_listener",
     "judgement_of_wisdom",
     "mana_gems",
+    "master_of_elements",
     "missile_barrage",
     "potion_mana",
     "presence_of_mind",
@@ -93,7 +94,9 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         } => {
             vec![("player", regen_aura), ("player", channel_aura)]
         }
-        Effect::Ignite { trigger_aura, .. } | Effect::TouchOfTheGrave { trigger_aura, .. } => {
+        Effect::Ignite { trigger_aura, .. }
+        | Effect::TouchOfTheGrave { trigger_aura, .. }
+        | Effect::MasterOfElements { trigger_aura, .. } => {
             vec![("player", trigger_aura)]
         }
         Effect::MageArmor { aura }

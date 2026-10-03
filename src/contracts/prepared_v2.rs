@@ -465,6 +465,12 @@ pub enum Effect {
         health_fraction: f64,
         delay_ns: i64,
     },
+    /// Master of Elements: Fire and Frost crits refund part of the base cost.
+    MasterOfElements {
+        trigger_aura: String,
+        refund: f64,
+        metrics_action_id: ActionId,
+    },
     /// Fire Blast's instant hit.
     FireBlast {},
     /// Every Fireball rank: a hit after travel, then a dot that snapshots.
@@ -605,6 +611,7 @@ impl Effect {
             Effect::ArcanePower { .. } => "arcane_power",
             Effect::Ignite { .. } => "ignite",
             Effect::FireBlast {} => "fire_blast",
+            Effect::MasterOfElements { .. } => "master_of_elements",
             Effect::Fireball { .. } => "fireball",
             Effect::Scorch { .. } => "scorch",
             Effect::TouchOfTheGrave { .. } => "touch_of_the_grave",

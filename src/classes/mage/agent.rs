@@ -13,7 +13,9 @@ use super::{
         arcane_blast, arcane_missiles, arcane_power, cold_snap, evocation, fire_blast, frostbolt,
         ice_lance, mana_gems, presence_of_mind, scorch,
     },
-    talents::{arcane_concentration, fingers_of_frost, missile_barrage, winters_chill},
+    talents::{
+        arcane_concentration, fingers_of_frost, master_of_elements, missile_barrage, winters_chill,
+    },
 };
 
 /// What a Mage spell does when its effects apply.
@@ -53,6 +55,7 @@ pub(crate) enum MageAura {
     /// Ignite's trigger, which only fire spell crits reach; coverage rejects those.
     IgniteTrigger,
     FireVulnerability,
+    MasterOfElementsTrigger,
 }
 
 /// Mage state that Go keeps in the `Mage` struct and its closures.
@@ -66,6 +69,7 @@ pub(crate) struct MageAgent {
     arcane_power: Option<Rc<arcane_power::ArcanePower>>,
     presence_of_mind: Option<Rc<presence_of_mind::PresenceOfMind>>,
     improved_scorch: Option<Rc<scorch::ImprovedScorch>>,
+    master_of_elements: Option<Rc<master_of_elements::MasterOfElements>>,
     ice_lance_frozen_multiplier: f64,
     /// Arcane Missiles channel spell to the missile spell of the same rank.
     missiles: Vec<(SpellId, SpellId)>,
@@ -120,6 +124,10 @@ fn class_auras(prepared: &PreparedV2) -> Vec<(String, MageAura)> {
             }
             Effect::Ignite { trigger_aura, .. } => {
                 auras.push((trigger_aura.clone(), MageAura::IgniteTrigger));
+                continue;
+            }
+            Effect::MasterOfElements { trigger_aura, .. } => {
+                auras.push((trigger_aura.clone(), MageAura::MasterOfElementsTrigger));
                 continue;
             }
             Effect::Scorch {
@@ -268,6 +276,19 @@ impl MageAgent {
                     let bound =
                         arcane_blast::bind(&mut fight, aura, *damage_per_stack, *cost_per_stack)?;
                     fight.agent.arcane_charges = Some(Rc::new(bound));
+                }
+                Effect::MasterOfElements {
+                    trigger_aura,
+                    refund,
+                    metrics_action_id,
+                } => {
+                    let bound = master_of_elements::bind(
+                        &mut fight,
+                        trigger_aura,
+                        *refund,
+                        metrics_action_id,
+                    )?;
+                    fight.agent.master_of_elements = Some(Rc::new(bound));
                 }
                 Effect::Fireball { ranks } => {
                     for rank in ranks {
@@ -611,6 +632,14 @@ impl Agent for MageAgent {
             }
             MageAura::ArcaneConcentrationTrigger => {
                 Self::arcane_concentration(fight).on_spell_hit_dealt(fight, spell, result)
+            }
+            MageAura::MasterOfElementsTrigger => {
+                let state = fight
+                    .agent
+                    .master_of_elements
+                    .clone()
+                    .expect("Master of Elements is bound");
+                state.on_spell_hit_dealt(fight, spell, result)
             }
             MageAura::FingersOfFrostTrigger
                 if Self::with_fingers(fight, |state, fight| {

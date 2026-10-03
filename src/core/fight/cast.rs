@@ -562,7 +562,16 @@ impl<A: Agent> Fight<A> {
         if let Some(metrics) = self.spells[spell].mana_metrics {
             return metrics;
         }
-        let id = self.spells[spell].id.clone();
+        let index = self.new_mana_metrics(self.spells[spell].id.clone());
+        self.spells[spell].mana_metrics = Some(index);
+        index
+    }
+
+    /// Go `Unit.NewManaMetrics`: every call registers a new metric.
+    pub(crate) fn new_mana_metrics(
+        &mut self,
+        id: crate::contracts::prepared_v2::ActionId,
+    ) -> usize {
         self.resources.push(super::ResourceMetrics {
             id,
             health: false,
@@ -573,9 +582,7 @@ impl<A: Agent> Fight<A> {
             previous_actual_gain: 0.0,
             is_mana_regen: false,
         });
-        let index = self.resources.len() - 1;
-        self.spells[spell].mana_metrics = Some(index);
-        index
+        self.resources.len() - 1
     }
 
     /// Go `Unit.SetGCDTimer`.

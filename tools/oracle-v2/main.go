@@ -599,6 +599,7 @@ var (
 	scorchLadder        = spelldata.Ranked(2948, 8444, 8445, 8446, 10205, 10206, 10207)
 	improvedScorch      = spelldata.Talent(11095, 3)
 	fireVulnerability   = spelldata.Ranked(22959)
+	masterOfElements    = spelldata.Talent(29074, 3)
 	fireballLadder      = spelldata.Ranked(133, 143, 145, 3140, 8400, 8401, 8402, 10148, 10149, 10150, 10151, 25306)
 	arcaneConcentration = spelldata.Talent(11213, 5)
 	clearcastingTrigger = spelldata.Ranked(12536)
@@ -740,6 +741,13 @@ func mageEffects(m *mage.Mage, character *core.Character) []map[string]any {
 		}
 	}
 	effects = append(effects, scorch)
+	if talents.MasterOfElements > 0 { // talents_fire.go registerMasterOfElements
+		effects = append(effects, map[string]any{
+			"kind": "master_of_elements", "trigger_aura": "Master of Elements",
+			"refund":            masterOfElements.FractionAt(talents.MasterOfElements),
+			"metrics_action_id": actionID(core.ActionID{SpellID: masterOfElements.Highest().ID}),
+		})
+	}
 	if talents.Ignite > 0 { // talents_fire.go registerIgnite: fire spell crits feed a dot
 		effects = append(effects, map[string]any{
 			"kind": "ignite", "trigger_aura": "Ignite Talent", "spell_id": igniteTriggered.Highest().ID,

@@ -27,6 +27,7 @@ reading the Go reference. They are not effort estimates for other contributors.
 | Fire: not and auraRemainingTime | 2026-10-03 13:22 | 2026-10-03 13:26 | 0 h 04 m | Fire preset operators with Go folding and the #622 comparison |
 | Fire: Fire Blast, Scorch and Improved Scorch | 2026-10-03 13:26 | 2026-10-03 13:30 | 0 h 04 m | Percent damage modifier with a school mask; matches Go on the first comparison |
 | Fire: Fireball and snapshot dots | 2026-10-03 13:30 | 2026-10-03 13:35 | 0 h 05 m | Target dots that snapshot and tick on current stats, tick outcomes, dots applied on landing; both fixtures match Go on the first comparison |
+| Fire: Master of Elements | 2026-10-03 13:35 | 2026-10-03 13:37 | 0 h 02 m | Crit refund with internal cooldown and its own mana metrics; matches Go on the first comparison |
 
 ## Notes
 
