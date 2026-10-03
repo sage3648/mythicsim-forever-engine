@@ -106,6 +106,8 @@ pub(crate) struct Totals {
     pub(crate) threat: Distribution,
     pub(crate) tto: Distribution,
     pub(crate) target_dtps: Distribution,
+    /// Damage the player takes from its own spells.
+    pub(crate) player_dtps: Distribution,
     /// Every distribution Go keeps that stays zero in scope: healing, damage taken by the
     /// player, TMI, and the target's own output.
     pub(crate) zero: Distribution,
@@ -337,6 +339,10 @@ pub(crate) struct UnitReport {
     tto: DistributionReport,
     #[serde(skip_serializing_if = "is_zero_f")]
     seconds_oom_avg: f64,
+    #[serde(skip_serializing_if = "is_zero_f")]
+    chance_of_death: f64,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    death_seeds: Vec<String>,
     actions: Vec<ActionMetricsReport>,
     auras: Vec<AuraMetricsReport>,
     resources: Vec<ResourceMetricsReport>,
@@ -419,7 +425,7 @@ impl<A: Agent> Fight<A> {
         };
         for index in 0..self.resources.len() {
             let resource = &self.resources[index];
-            if resource.health
+            if resource.kind != super::ResourceKind::Mana
                 || resource.is_mana_regen
                 || resource.id.other_id == "OtherActionManaRegen"
             {
@@ -437,12 +443,29 @@ impl<A: Agent> Fight<A> {
 
     /// Go `Spell.doneIteration` and `UnitMetrics.addSpellMetrics`.
     pub(crate) fn spell_done_iteration(&mut self, spell: usize) {
-        let Some(action) = self.spells[spell].action else {
+        if self.spells[spell].action.is_none() {
             return;
-        };
+        }
+        if self.spells[spell].split_metrics.is_empty() {
+            let metrics = self.spells[spell].metrics;
+            let action = self.spells[spell].action.expect("checked above");
+            self.add_spell_metrics(spell, action, metrics);
+            return;
+        }
+        // Go Spell.doneIteration: each split under its own tagged ID.
+        let state = &mut self.spells[spell];
+        state.split_metrics[state.split] = state.metrics;
+        for split in 0..self.spells[spell].split_metrics.len() {
+            let metrics = self.spells[spell].split_metrics[split];
+            let action = self.spells[spell].split_actions[split];
+            self.add_spell_metrics(spell, action, metrics);
+        }
+    }
+
+    /// Go `UnitMetrics.addSpellMetrics`.
+    fn add_spell_metrics(&mut self, spell: usize, action: usize, all: [super::SpellMetrics; 2]) {
         let passive = self.spells[spell].flags.passive;
-        for target in 0..2 {
-            let metrics = self.spells[spell].metrics[target];
+        for (target, metrics) in all.into_iter().enumerate() {
             let totals = &mut self.actions[action].targets[target];
             if !passive {
                 totals.casts += metrics.casts;
@@ -475,6 +498,11 @@ impl<A: Agent> Fight<A> {
             totals.threat += metrics.total_threat;
             if !passive {
                 totals.cast_time += metrics.total_cast_time;
+            }
+            if target == Side::Player.index() {
+                // Go adds damage on any unit to that unit's damage taken; the player is no
+                // opponent of its own, so its healing would go to healing done.
+                self.totals.player_dtps.total += metrics.total_damage;
             }
             if target == Side::Target.index() {
                 self.totals.target_dtps.total += metrics.total_damage;
@@ -511,12 +539,23 @@ impl<A: Agent> Fight<A> {
         } else {
             time_to_oom
         };
-        self.totals.tto.total = seconds(time_to_oom) * duration_seconds;
+        // Go infers time to out of mana only for a unit with a mana bar.
+        self.totals.tto.total = if self.has_mana_bar() {
+            seconds(time_to_oom) * duration_seconds
+        } else {
+            0.0
+        };
         let duration = self.duration;
         self.totals.dps.done_iteration(duration, seed);
         self.totals.threat.done_iteration(duration, seed);
         self.totals.tto.done_iteration(duration, seed);
         self.totals.target_dtps.done_iteration(duration, seed);
+        self.totals.player_dtps.done_iteration(duration, seed);
+        if self.death.died {
+            self.death.iterations_dead += 1;
+            self.death.seeds.push(seed);
+            self.death.seeds.sort_unstable();
+        }
         self.totals.zero.done_iteration(duration, seed);
         self.totals.oom_seconds += seconds(self.player.oom_time);
         self.totals.iterations += 1;
@@ -576,11 +615,7 @@ impl<A: Agent> Fight<A> {
             .filter(|resource| resource.events > 0)
             .map(|resource| ResourceMetricsReport {
                 id: (&resource.id).into(),
-                kind: if resource.health {
-                    "ResourceTypeHealth"
-                } else {
-                    "ResourceTypeMana"
-                },
+                kind: resource.kind.proto_name(),
                 events: resource.events,
                 gain: resource.gain,
                 actual_gain: resource.actual_gain,
@@ -593,11 +628,13 @@ impl<A: Agent> Fight<A> {
             unit_index: Side::Player.index() as i32,
             dps: self.totals.dps.report(),
             threat: self.totals.threat.report(),
-            dtps: zero.clone(),
+            dtps: self.totals.player_dtps.report(),
             tmi: zero.clone(),
             hps: zero.clone(),
             tto: self.totals.tto.report(),
             seconds_oom_avg: self.totals.oom_seconds / n,
+            chance_of_death: f64::from(self.death.iterations_dead) / n,
+            death_seeds: self.death.seeds.iter().map(i64::to_string).collect(),
             actions,
             auras: self.aura_reports(Side::Player),
             resources,
