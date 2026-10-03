@@ -362,6 +362,19 @@ fn differences(go: &Value, rust: &Value, path: &str, out: &mut Vec<String>) {
                         }
                     }
                     (Some(x), Some(y)) => differences(x, y, &format!("{path}/{key}"), out),
+                    // protojson omits a zero deviation; compare the other side's as a variance.
+                    (x, y)
+                        if x.or(y).is_some_and(Value::is_number) && {
+                            let zero = Value::from(0.0);
+                            let mut a = a.clone();
+                            let mut b = b.clone();
+                            a.entry(key.clone()).or_insert(zero.clone());
+                            b.entry(key.clone()).or_insert(zero);
+                            stdev_mean(key, &a, &b).is_some_and(|mean| {
+                                let (x, y) = (a[key].as_f64().unwrap(), b[key].as_f64().unwrap());
+                                (x * x - y * y).abs() <= 1e-9 * (mean * mean).max(1.0)
+                            })
+                        } => {}
                     _ => out.push(format!("{path}/{key}: present on one side only")),
                 }
             }

@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "54918a4fa6406a853bbec2d98d2548b0db69e3fe26208611e064bf054a33afbd",
+  "exporter_sha256": "57861edc624d210e8242c8164711ae2fb2ecb50b527c2f764d9b3fda8112e27f",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -839,6 +839,69 @@
       "go_log": {
         "file": "production-shadow-priest.go-log.txt",
         "sha256": "2207bd6214e34f55caae6cd6bd496cd7c5cd297b6a827185da017a08efa3d9d5"
+      }
+    },
+    {
+      "id": "shadow-priest-channel-no-recast",
+      "description": "The production Shadow Priest request with allowRecast off on the Mind Flay channel, so an interrupt that would recast Mind Flay keeps channeling",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/shadow-priest-channel-no-recast.request.json"
+      },
+      "prepared": "shadow-priest-channel-no-recast.prepared.json",
+      "prepared_sha256": "c02a0ecaf0712997f136b91acfa3e224b42c4f2832b6ed093b1cf0cfd1563b0b",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "shadow-priest-channel-no-recast.go-result.json",
+        "sha256": "d0bee8d41337c569db550c7f53f59b706d42f54e62ab5e7b546f19359fd5e4ce"
+      },
+      "go_log": {
+        "file": "shadow-priest-channel-no-recast.go-log.txt",
+        "sha256": "2207bd6214e34f55caae6cd6bd496cd7c5cd297b6a827185da017a08efa3d9d5"
+      }
+    },
+    {
+      "id": "shadow-priest-channel-uninterrupted",
+      "description": "The production Shadow Priest request with no interrupt condition on the Mind Flay channel, which Go then treats as a plain cast",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/shadow-priest-channel-uninterrupted.request.json"
+      },
+      "prepared": "shadow-priest-channel-uninterrupted.prepared.json",
+      "prepared_sha256": "452b10e2e662cc8846a775ffddb2d172c410ef594a0bd912fd2976206d3d13e4",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "shadow-priest-channel-uninterrupted.go-result.json",
+        "sha256": "afccc32f3bfad05ae3817ff86aaea64f29acddd9870dda5a343fb5a81efd344c"
+      },
+      "go_log": {
+        "file": "shadow-priest-channel-uninterrupted.go-log.txt",
+        "sha256": "a4ae71a62ab8e4c3b307355c556407ac6e046690b439165c52d48e7fae3c3081"
+      }
+    },
+    {
+      "id": "shadow-priest-sequence-relinquish",
+      "description": "The production Shadow Priest request whose strict sequence follows Inner Focus with Devouring Plague, which is on cooldown, so the sequence gives up control and the rotation continues; a 300 second fight",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/shadow-priest-sequence-relinquish.request.json"
+      },
+      "prepared": "shadow-priest-sequence-relinquish.prepared.json",
+      "prepared_sha256": "04b24bb8e33c843520d3937238540356df18b65d425a7a4eafdc465ac2a8ee48",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "shadow-priest-sequence-relinquish.go-result.json",
+        "sha256": "7331e157a071bd8e45544d5519a1171c8ccca09de3ef3cac4be81e5854f808c2"
+      },
+      "go_log": {
+        "file": "shadow-priest-sequence-relinquish.go-log.txt",
+        "sha256": "fb3585e45bc91a724d94431065fa3931a5000d30f74ac1c0711abeeb598f009b"
       }
     }
   ]

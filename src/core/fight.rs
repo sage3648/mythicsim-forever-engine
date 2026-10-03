@@ -813,6 +813,7 @@ impl<A: Agent> Fight<A> {
                         Effect::Berserking { spell_id, aura, .. }
                         | Effect::BloodFury { spell_id, aura, .. }
                         | Effect::ShatterCurse { spell_id, aura }
+                        | Effect::Stoneform { spell_id, aura }
                         | Effect::ReadLeyLine { spell_id, aura, .. }
                         | Effect::TemporaryStats { spell_id, aura, .. }
                             if id.spell_id == *spell_id && id.tag == 0 =>

@@ -309,7 +309,12 @@ def leaf_differences(go, rust, path=""):
         differences = []
         for key in sorted(set(go) | set(rust)):
             if key not in go or key not in rust:
-                differences.append(f"{path}/{key}: only in {'Go' if key in go else 'Rust'}")
+                # protojson omits a zero, so an omitted deviation is a zero deviation; one
+                # engine's cancellation may leave a residue where the other reaches zero.
+                zero_filled = ({**go, key: go.get(key, 0.0)}, {**rust, key: rust.get(key, 0.0)})
+                mean = stdev_mean(key, *zero_filled)
+                if mean is None or not variance_matches(zero_filled[0][key], zero_filled[1][key], mean):
+                    differences.append(f"{path}/{key}: only in {'Go' if key in go else 'Rust'}")
             elif (mean := stdev_mean(key, go, rust)) is not None:
                 if not variance_matches(go[key], rust[key], mean):
                     differences.append(f"{path}/{key}: Go {go[key]!r}, Rust {rust[key]!r}")

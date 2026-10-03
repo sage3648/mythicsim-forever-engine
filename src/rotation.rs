@@ -1414,4 +1414,56 @@ mod tests {
         // 0 <= 4s holds, so the fix acts as the pinned reading here.
         assert!(pinned.same_meaning(&fixed));
     }
+
+    #[test]
+    fn sequences_and_channels_parse_with_their_values() {
+        let rotation = parse(&serde_json::json!({
+            "type": "TypeAPL",
+            "priorityList": [
+                {"action": {"strictSequence": {"actions": [
+                    {"castSpell": {"spellId": {"spellId": 14751}}},
+                    {"castSpell": {"spellId": {"spellId": 10947, "rank": 9}}},
+                ]}}},
+                {"action": {"channelSpell": {
+                    "spellId": {"spellId": 18807},
+                    "interruptIf": {"and": {"vals": [
+                        {"cmp": {"op": "OpLe",
+                            "lhs": {"spellTimeToReady": {"spellId": {"spellId": 10947}}},
+                            "rhs": {"const": {"val": "0s"}}}},
+                        {"cmp": {"op": "OpLe",
+                            "lhs": {"dotTimeToNextTick": {"spellId": {"spellId": 18807}}},
+                            "rhs": {"const": {"val": "0.05s"}}}},
+                        {"gcdIsReady": {}},
+                    ]}},
+                    "allowRecast": true,
+                }}},
+            ],
+        }))
+        .unwrap();
+        assert_eq!(
+            rotation.priority_list[0].action,
+            Action::StrictSequence(vec![ActionId::spell(14751), ActionId::spell(10947)])
+        );
+        let Action::ChannelSpell {
+            spell,
+            interrupt_if: Some(Value::And(terms)),
+            allow_recast: true,
+        } = &rotation.priority_list[1].action
+        else {
+            panic!("expected an interruptible channel");
+        };
+        assert_eq!(*spell, ActionId::spell(18807));
+        assert_eq!(terms[2], Value::GcdIsReady);
+        let types: Vec<ValueType> = terms
+            .iter()
+            .map(|term| match term {
+                Value::Compare { lhs, .. } => lhs.value_type(),
+                other => other.value_type(),
+            })
+            .collect();
+        assert_eq!(
+            types,
+            [ValueType::Duration, ValueType::Duration, ValueType::Bool]
+        );
+    }
 }

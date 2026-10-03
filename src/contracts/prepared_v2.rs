@@ -669,6 +669,13 @@ pub enum Effect {
         spell_id: i32,
         aura: String,
     },
+    /// The Dwarf racial Stoneform: a survival cooldown whose aura lowers the player's
+    /// Physical damage taken, which has no effect in scope. Go never autocasts it at the
+    /// default defensive health threshold; configured timings still cast it.
+    Stoneform {
+        spell_id: i32,
+        aura: String,
+    },
     /// The High Order Skyborne racial Read Ley Line: a cast that only a rotation action
     /// uses, whose aura Energized multiplies mana regeneration.
     ReadLeyLine {
@@ -880,6 +887,7 @@ impl Effect {
             Effect::DarkSacrifice { .. } => "dark_sacrifice",
             Effect::InertPet { .. } => "inert_pet",
             Effect::ShatterCurse { .. } => "shatter_curse",
+            Effect::Stoneform { .. } => "stoneform",
             Effect::ReadLeyLine { .. } => "read_ley_line",
             Effect::PresenceOfMind { .. } => "presence_of_mind",
             Effect::IceLance { .. } => "ice_lance",
