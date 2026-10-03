@@ -114,6 +114,15 @@ casts itself. `rotation` is the request's APL in protojson form.
 | `omen_of_clarity` | sim/druid/omen_of_clarity.go | The resolved proc trigger, its cooldown, two procs a minute, Moonkin Form's multipliers and Clearcasting's cost modifier |
 | `natures_grace` | sim/druid/talents_balance.go | Cast speed multiplier, GCD reduction and the spells it reads |
 | `eclipse` | sim/druid/talents_balance.go | Starfire's cast time cut and two charges a Wrath, a Go literal |
+| `scheduled_aura` | sim/core/buffs/drivers.go, core/debuffs.go | The raid's Sunder Armor ramp: period, ticks and whether a stronger permanent member of its category blocks every activation, which Go still counts as a proc |
+| `shadow_bolt`, `searing_pain`, `shadowburn`, `soul_fire` | sim/warlock/shadowbolt.go, searing_pain.go, shadowburn.go, soulfire.go | Damage rolls on the spells; Shadow Bolt and Soul Fire land after travel |
+| `immolate`, `corruption` | sim/warlock/immolate.go, corruption.go | The dot base and tick crit; Immolate's dot is on its related spell |
+| `bane_of_agony` | sim/warlock/agony.go | The dot base, tick crit and its ramp: half the tick at the snapshot, added back every fourth tick, Go literals |
+| `curse_of_the_elements` | sim/warlock/curse_of_elements.go, core/buffs | The target debuff's resistance changes and school damage taken multipliers, checked against Go activating it |
+| `life_tap` | sim/warlock/lifetap.go | Base amount from client data and Improved Life Tap's multiplier; Spirit comes from the stats |
+| `conflagrate` | sim/warlock/conflagrate.go | Shadow and Flame's chance to spare Immolate and its random label |
+| `improved_shadow_bolt` | sim/warlock/talents_destruction.go | The trigger spells, the target debuff and its multiplier on the warlock's shadow damage, a dynamic damage taken modifier |
+| `shadow_and_flame` | sim/warlock/talents_destruction.go | The trigger spells, which of them raise shadow damage, the two auras and their multiplier |
 
 Human racials are static and already in the prepared stats. High Order Skyborne's cast
 speed and every race's creature slaying are static too. Read Ley Line is not a major
@@ -142,7 +151,8 @@ Invalid and unsupported inputs are deliberately different outcomes.
 The exporter marks as unrepresented: more than one player or target, health fights,
 tanks, presims, healing models, pets, player auto attacks, a target that swings at a
 unit, item swapping, execute phase callbacks, target AI, caster
-damage callbacks, dynamic damage-taken modifiers, mob type bonuses, non-mana costs,
+damage callbacks, dynamic damage-taken modifiers a class effect does not describe, mob type
+bonuses, non-mana costs,
 unnamed class masks, item cooldowns without an exported effect, cast speed and temporary
 stat listeners, and survival cooldowns that would wait for a nonzero defensive health
 threshold.
@@ -159,8 +169,10 @@ The rotation subset covers `castSpell`, `autocastOtherCooldowns`, constant-time 
 casts, `cmp` with any comparison operator, `and`, `or`, `not`, `const`, `currentMana`,
 `currentManaPercent`, `currentTime`, `remainingTime`, `numberTargets`, `auraIsKnown`,
 `auraIsActive`, `auraNumStacks`, `auraRemainingTime`, `dotIsActive`, `dotRemainingTime`,
-`spellIsKnown`, `spellIsReady` and `spellCastTime`. Action IDs may carry a rank, which Go
-ignores. The exporter records how many prepull actions Go registered; a count that differs
+`spellIsKnown`, `spellIsReady` and `spellCastTime`. `auraIsActive` may name the player or
+the current target as its source unit, as Go `GetSourceUnit` resolves it; the potion action
+casts the first combat potion, as Go `GetAPLSpell` does. Action IDs may carry a rank, which
+Go ignores. The exporter records how many prepull actions Go registered; a count that differs
 from the rotation's means a class or item registered its own, which is unsupported. A spell
 or dot the character lacks drops its term, as in Go.
 Constants follow Go parsing,
@@ -187,7 +199,8 @@ matches Go. `arcane-reference` is the application's Arcane request, built by its
 one at a time. `frost-troll`, `frost-orc` and `frost-skyborne` run the Frost request as
 the remaining races, with longer and cooldown-timing variants, and
 `fire-skyborne-read-ley-line` casts Read Ley Line from the rotation. `production-balance-druid`
-is the production Balance Druid request. `production-fire` and
+is the production Balance Druid request and `production-destruction-warlock` the production
+Destruction Warlock request. `production-fire` and
 `production-frostfire` are the production application's Fire Missile Barrage and
 Frostfire hybrid requests at application revision 18bbcd47; its Arcane and Frost requests
 are byte-identical to `arcane-reference` and `frost-reference`. `frostfire-resistances`

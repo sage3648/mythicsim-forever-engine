@@ -1123,6 +1123,44 @@ mod tests {
     }
 
     #[test]
+    fn aura_is_active_reads_the_player_or_the_current_target() {
+        let item = |source: serde_json::Value| {
+            serde_json::json!({"action": {"castSpell": {"spellId": {"spellId": 1}},
+                "condition": {"auraIsActive": {"auraId": {"spellId": 2}, "sourceUnit": source}}}})
+        };
+        let rotation = serde_json::json!({"type": "TypeAPL", "priorityList": [
+            item(serde_json::json!({"type": "Self"})),
+            item(serde_json::json!({"type": "CurrentTarget"})),
+        ]});
+        let parsed = parse(&rotation).unwrap();
+        let id = ActionId {
+            spell_id: 2,
+            ..ActionId::default()
+        };
+        assert_eq!(
+            parsed.priority_list[0].condition,
+            Some(Value::AuraIsActive(id.clone()))
+        );
+        assert_eq!(
+            parsed.priority_list[1].condition,
+            Some(Value::TargetAuraIsActive(id))
+        );
+        for source in [
+            serde_json::json!({"type": "Target", "index": 1}),
+            serde_json::json!({"type": "NextTarget"}),
+        ] {
+            let rotation =
+                serde_json::json!({"type": "TypeAPL", "priorityList": [item(source.clone())]});
+            assert_eq!(
+                parse(&rotation).unwrap_err(),
+                [format!(
+                    "rotation item 1: auraIsActive sourceUnit {source} is unsupported"
+                )]
+            );
+        }
+    }
+
+    #[test]
     fn unsupported_operators_are_named() {
         let rotation = serde_json::json!({
             "type": "TypeAPL",

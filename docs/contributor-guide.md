@@ -25,6 +25,7 @@ Frostbolt kernel remains unchanged beside it.
 | Go pending-action ordering | [src/core/queue.rs](../src/core/queue.rs) |
 | Mage runtime hooks | [src/classes/mage/agent.rs](../src/classes/mage/agent.rs) |
 | Druid runtime hooks | [src/classes/druid/agent.rs](../src/classes/druid/agent.rs) |
+| Warlock runtime hooks and regressions | [src/classes/warlock/agent.rs](../src/classes/warlock/agent.rs), [tests/classes/warlock/](../tests/classes/warlock/) |
 | Shared build gate and class gates | [src/engine/coverage.rs](../src/engine/coverage.rs), `src/classes/<class>/prepared/coverage.rs` |
 | Event ordering (prepared v1 kernel) | [src/core/events.rs](../src/core/events.rs) |
 | Seeded random streams | [src/core/rng.rs](../src/core/rng.rs) |
