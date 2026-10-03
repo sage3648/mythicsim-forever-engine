@@ -44,6 +44,7 @@ const COMMON_EFFECTS: &[&str] = &[
     "crusader",
     "dragonbreath_chili",
     "energize_on_use",
+    "energize_proc",
     "eureka",
     "fixed_uptime_aura",
     "goblin_sapper",
@@ -157,6 +158,7 @@ fn common_claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         | Effect::TemporaryStats { aura, .. } => vec![("player", aura)],
         Effect::JudgementOfWisdom { aura, .. } => vec![("target", aura)],
         Effect::ChanceOfDeath { aura } => vec![("player", aura)],
+        Effect::EnergizeProc { trigger_aura, .. } => vec![("player", trigger_aura)],
         Effect::Crusader { trigger_aura, .. } | Effect::DragonbreathChili { trigger_aura, .. } => {
             vec![("player", trigger_aura)]
         }

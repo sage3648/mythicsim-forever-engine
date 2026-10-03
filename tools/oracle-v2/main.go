@@ -1226,6 +1226,7 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	effects = append(effects, commonEffects(character, target, request, &unrepresented)...)
 	effects = append(effects, inertPets...)
 	effects = append(effects, meleeProcEffects(simulation, character, &unrepresented)...)
+	effects = append(effects, energyProcEffects(simulation, character, &unrepresented)...)
 	if statAuras := statAurasEffect(request, character, class, agent); statAuras != nil {
 		effects = append(effects, statAuras)
 	}

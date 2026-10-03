@@ -29,6 +29,8 @@ pub(crate) enum AuraBehavior<K> {
     Inert,
     /// Go health.go `trackChanceOfDeath`'s listener on hits the player takes.
     ChanceOfDeath,
+    /// An item proc that restores energy: [`super::energy::EnergizeProc`], by index.
+    EnergizeProc(usize),
     /// Go buffs/paladin.go `AttachJudgementOfWisdomMana`.
     JudgementOfWisdom {
         chance: f64,
@@ -641,6 +643,9 @@ impl<A: Agent> Fight<A> {
                     AuraBehavior::ChanceOfDeath if !dealt && side == Side::Player => {
                         self.chance_of_death_hit_taken(result)
                     }
+                    AuraBehavior::EnergizeProc(index) if dealt => {
+                        self.energize_proc_callback(aura, index, spell, result)
+                    }
                     _ => {}
                 }
             }
@@ -813,6 +818,7 @@ impl<A: Agent> Fight<A> {
                 let chili = self.chili.clone().expect("Dragonbreath Chili is bound");
                 self.cast(chili.spell, result.target);
             }
+            AuraBehavior::EnergizeProc(index) => self.energize_proc_handler(index),
             AuraBehavior::Class(kind) => A::on_delayed_proc(self, aura, kind, spell, result),
             _ => {}
         }
