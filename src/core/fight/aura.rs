@@ -105,7 +105,6 @@ pub(crate) struct Aura<K> {
     pub(crate) behavior: AuraBehavior<K>,
     lists: [bool; LISTS],
     permanent: bool,
-    #[allow(dead_code)] // Staged for the remaining Frost mechanics; removed as each lands.
     pub(crate) icd: Option<(TimerId, i64)>,
     pub(crate) active: bool,
     pub(crate) stacks: i32,
@@ -120,7 +119,6 @@ pub(crate) struct Aura<K> {
 }
 
 impl<K> Aura<K> {
-    #[allow(dead_code)] // Staged for the remaining Frost mechanics; removed as each lands.
     pub(crate) fn remaining(&self, now: i64) -> i64 {
         if !self.active {
             0
@@ -220,6 +218,17 @@ impl<K> Tracker<K> {
 impl<A: Agent> Fight<A> {
     pub(crate) fn aura(&self, aura: AuraRef) -> &Aura<A::Aura> {
         &self.trackers[aura.side.index()].auras[aura.index]
+    }
+
+    /// A registered player aura by label.
+    pub(crate) fn player_aura(&self, label: &str) -> Result<AuraRef, String> {
+        self.trackers[Side::Player.index()]
+            .find(label)
+            .map(|index| AuraRef {
+                side: Side::Player,
+                index,
+            })
+            .ok_or_else(|| format!("player aura {label} is not registered"))
     }
 
     pub(crate) fn aura_mut(&mut self, aura: AuraRef) -> &mut Aura<A::Aura> {

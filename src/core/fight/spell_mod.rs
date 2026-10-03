@@ -10,10 +10,8 @@ pub(crate) enum ModKind {
     /// Go `SpellMod_BonusCrit_Percent`.
     BonusCritPercent,
     /// Go `SpellMod_PowerCost_Pct_Add`.
-    #[allow(dead_code)] // Staged for Missile Barrage; removed when it lands.
     PowerCostPercentAdd,
     /// Go `SpellMod_DotTickLength_Flat`, in nanoseconds.
-    #[allow(dead_code)] // Staged for Missile Barrage; removed when it lands.
     DotTickLengthFlat,
 }
 

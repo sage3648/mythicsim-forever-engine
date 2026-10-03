@@ -20,14 +20,11 @@
       "expected_coverage": {
         "supported": false,
         "reasons": [
-          "effect arcane_concentration is not implemented",
-          "effect arcane_missiles is not implemented",
           "effect cold_snap is not implemented",
           "effect conjured_mana is not implemented",
           "effect energize_on_use is not implemented",
           "effect evocation is not implemented",
           "effect mana_gems is not implemented",
-          "effect missile_barrage is not implemented",
           "effect potion_mana is not implemented"
         ]
       }
@@ -43,14 +40,11 @@
       "expected_coverage": {
         "supported": false,
         "reasons": [
-          "effect arcane_concentration is not implemented",
-          "effect arcane_missiles is not implemented",
           "effect cold_snap is not implemented",
           "effect conjured_mana is not implemented",
           "effect energize_on_use is not implemented",
           "effect evocation is not implemented",
           "effect mana_gems is not implemented",
-          "effect missile_barrage is not implemented",
           "effect potion_mana is not implemented",
           "rotation item 4: auraIsActive names spell 400669, which the character lacks; the pinned reference drops the condition and community #622 reads it as inactive"
         ]
@@ -219,6 +213,65 @@
       "go_result": {
         "file": "reference-fingers-of-frost-rank1.go-result.json",
         "sha256": "78aaf3e78fa9decd6d59c91ee2c989c3bafa25ada27d60b2d81dba7d86c6989b"
+      }
+    },
+    {
+      "id": "reference-clearcasting",
+      "description": "The reference character with Arcane Concentration and Winter's Chill casting Frostbolt: Clearcasting procs, its internal cooldown and free casts.",
+      "request": {
+        "path": "fixtures/mage/frost/prepared-v2/reference-clearcasting.request.json"
+      },
+      "prepared": "reference-clearcasting.prepared.json",
+      "prepared_sha256": "b7ebeb3929242f4dd43899e51cbb780797a5cdd387259a3eef97616a459a415a",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "reference-clearcasting.go-result.json",
+        "sha256": "bb34f8df5a1a3024db387ed95d1e396225ca269d2cc5e9215737d8b50c653504"
+      }
+    },
+    {
+      "id": "reference-missile-barrage",
+      "description": "The reference character with Missile Barrage and Winter's Chill: Arcane Missiles while Missile Barrage is active, then Frostbolt. Keeps the first-fight log golden.",
+      "request": {
+        "path": "fixtures/mage/frost/prepared-v2/reference-missile-barrage.request.json"
+      },
+      "prepared": "reference-missile-barrage.prepared.json",
+      "prepared_sha256": "60508f0898f00ffeb459b5f573fd02aaeff2271f2ac968485b2acb6f97659add",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "reference-missile-barrage.go-result.json",
+        "sha256": "8c3e75be1851ebcd74b62102e6991f000a11752c4169a14e5d18fbf8f1d3fa6d"
+      },
+      "go_log": {
+        "file": "reference-missile-barrage.go-log.txt",
+        "sha256": "7a92c1ffeb8b49f79b3734c717f12c55295c000bf5049050efebaf58d370b56c"
+      }
+    },
+    {
+      "id": "reference-procs",
+      "description": "The reference character and talents with the reference rotation's Ice Lance, Arcane Missiles and Frostbolt rules: every proc talent, without mana recovery or cooldowns. Keeps the first-fight log golden.",
+      "request": {
+        "path": "fixtures/mage/frost/prepared-v2/reference-procs.request.json"
+      },
+      "prepared": "reference-procs.prepared.json",
+      "prepared_sha256": "bc4416c5507d584d54965716934f24e661c9806ee9c66c15eec44a76add8017b",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "reference-procs.go-result.json",
+        "sha256": "3cffa107a03bb27d2b5951a3f1e0426bee8e227fd6961533c45b24c447989080"
+      },
+      "go_log": {
+        "file": "reference-procs.go-log.txt",
+        "sha256": "5f885ee3e5798a9ecc54d3449b556d4e11818b017be92eee94aa14c2ad9e0ad7"
       }
     }
   ]

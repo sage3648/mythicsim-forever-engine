@@ -146,7 +146,7 @@
       ],
       "upstream_changes": [],
       "fork_patches": [],
-      "note": "Partial resistance for Arcane Missiles is not implemented."
+      "note": "Binary and partial resistance, hit and crit rolls validated against Go."
     },
     {
       "id": "mana_regeneration",
@@ -209,8 +209,10 @@
       "rust": [
         "src/core/fight/dot.rs"
       ],
-      "status": "implemented_unvalidated",
-      "tests": [],
+      "status": "validated_frostbolt_v2",
+      "tests": [
+        "tests/classes/mage/frost/prepared_v2.rs"
+      ],
       "upstream_changes": [],
       "fork_patches": [
         22
@@ -296,9 +298,14 @@
       "go": [
         "sim/mage/arcane_missiles.go"
       ],
-      "rust": [],
-      "status": "not_ported",
-      "tests": [],
+      "rust": [
+        "src/classes/mage/spells/arcane_missiles.rs",
+        "src/core/fight/dot.rs"
+      ],
+      "status": "validated_frostbolt_v2",
+      "tests": [
+        "tests/classes/mage/frost/prepared_v2.rs"
+      ],
       "upstream_changes": [],
       "fork_patches": []
     },
@@ -339,9 +346,13 @@
       "go": [
         "sim/mage/talents_arcane.go"
       ],
-      "rust": [],
-      "status": "not_ported",
-      "tests": [],
+      "rust": [
+        "src/classes/mage/talents/arcane_concentration.rs"
+      ],
+      "status": "validated_frostbolt_v2",
+      "tests": [
+        "tests/classes/mage/frost/prepared_v2.rs"
+      ],
       "upstream_changes": [],
       "fork_patches": []
     },
@@ -350,9 +361,13 @@
       "go": [
         "sim/mage/talents_arcane.go"
       ],
-      "rust": [],
-      "status": "not_ported",
-      "tests": [],
+      "rust": [
+        "src/classes/mage/talents/missile_barrage.rs"
+      ],
+      "status": "validated_frostbolt_v2",
+      "tests": [
+        "tests/classes/mage/frost/prepared_v2.rs"
+      ],
       "upstream_changes": [],
       "fork_patches": [
         8

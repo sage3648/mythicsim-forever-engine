@@ -15,11 +15,14 @@ use crate::{
 
 /// Effect kinds implemented in Rust and validated against the pinned Go reference.
 pub(crate) const IMPLEMENTED_EFFECTS: &[&str] = &[
+    "arcane_concentration",
+    "arcane_missiles",
     "fingers_of_frost",
     "frostbolt",
     "ice_lance",
     "inert_listener",
     "judgement_of_wisdom",
+    "missile_barrage",
     "winters_chill",
 ];
 

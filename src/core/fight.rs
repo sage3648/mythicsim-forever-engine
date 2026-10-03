@@ -300,7 +300,6 @@ pub(crate) struct Spell<S> {
     pub(crate) threat_multiplier: f64,
     pub(crate) flat_threat_bonus: f64,
     pub(crate) damage_effect: Option<(f64, f64)>,
-    #[allow(dead_code)] // Staged for the remaining Frost mechanics; removed as each lands.
     pub(crate) dot: Option<DotId>,
     /// Index into the resource metrics for this spell's mana cost.
     pub(crate) mana_metrics: Option<usize>,

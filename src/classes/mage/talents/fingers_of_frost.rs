@@ -15,7 +15,7 @@ const CHILL: &[&str] = &[
 ];
 
 /// Go `MageSpellsAllDamaging`: casts that spend a charge.
-const DAMAGING: &[&str] = &[
+pub(crate) const DAMAGING: &[&str] = &[
     "arcane_blast",
     "arcane_explosion",
     "arcane_missiles_tick",

@@ -4,7 +4,6 @@ use crate::{contracts::prepared_v2::Dot as ExportedDot, core::queue::Handle};
 
 use super::{Action, Agent, AuraRef, DotId, Fight, Side, SpellBehavior, SpellId, PRIORITY_GCD};
 
-#[allow(dead_code)] // Staged for Arcane Missiles and Evocation; removed when they land.
 pub(crate) struct Dot {
     pub(crate) spell: SpellId,
     pub(crate) side: Side,
@@ -51,7 +50,6 @@ impl Dot {
     }
 
     /// Go `Dot.BaseDuration`.
-    #[allow(dead_code)] // Staged for the remaining Frost mechanics; removed as each lands.
     fn base_duration(&self) -> i64 {
         (f64::from(self.base_tick_count)
             * self.base_tick_length as f64
@@ -62,7 +60,6 @@ impl Dot {
 
 impl<A: Agent> Fight<A> {
     /// Go `Dot.Apply`: replace any running copy, recompute ticks and activate.
-    #[allow(dead_code)] // Staged for the remaining Frost mechanics; removed as each lands.
     pub(crate) fn apply_dot(&mut self, dot: DotId) {
         let aura = self.dots[dot].aura;
         self.deactivate_aura(aura);
