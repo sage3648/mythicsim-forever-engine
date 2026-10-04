@@ -319,6 +319,7 @@ impl<A: Agent> Fight<A> {
             match self.aura(aura).behavior {
                 AuraBehavior::ChanceOfDeath => self.chance_of_death_hit_taken(result),
                 AuraBehavior::ParryHaste => self.parry_haste(side, result),
+                AuraBehavior::PushbackTrigger { chance } => self.pushback_hit_taken(chance, result),
                 AuraBehavior::Class(kind) => A::on_enemy_hit_taken(self, aura, kind, result),
                 AuraBehavior::RageBar => self.rage_bar_hit_taken(result),
                 // The target's swing is a melee hit, which Immolation hears.
@@ -328,9 +329,33 @@ impl<A: Agent> Fight<A> {
                 AuraBehavior::SpellDataDamageProc(proc) if self.damage_procs[proc].struck => {
                     self.damage_proc_callback(aura, proc, None, result)
                 }
+                AuraBehavior::SpellDataStatProc(proc) if self.spell_stat_procs[proc].struck => {
+                    self.spell_stat_proc_callback(aura, proc, None, Some(result))
+                }
+                // And a melee auto attack, which an absorb proc's melee mask hears.
+                AuraBehavior::AbsorbProc(proc) => self.absorb_proc_callback(aura, proc, result),
                 _ => {}
             }
         }
+    }
+
+    /// The "Pushback trigger" proc's `OnSpellHitTaken` for the target's swing: a landed hit that
+    /// deals damage during a hardcast with the pushback flag queues the handler a spell batch
+    /// window later. The swing is neither a channel's hit nor a dot's.
+    fn pushback_hit_taken(&mut self, chance: f64, result: &SpellResult) {
+        let hardcast = self.player.hardcast;
+        if !result.landed()
+            || result.damage == 0.0
+            || hardcast.expires <= self.now
+            || !hardcast.pushback
+        {
+            return;
+        }
+        self.schedule(
+            self.now + super::SPELL_BATCH_WINDOW,
+            super::PRIORITY_DOT,
+            super::Action::Pushback { chance },
+        );
     }
 
     /// Go `applyParryHaste`'s `OnSpellHitTaken`: a parry pulls the parrying unit's next main

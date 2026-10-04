@@ -7,7 +7,7 @@ use crate::{
 
 use super::{
     log::action_string, Action, Agent, AuraRef, Fight, ResourceKind, Side, SpellBehavior, SpellId,
-    PRIORITY_GCD,
+    PRIORITY_GCD, SPELL_PUSHBACK_DURATION,
 };
 
 /// Go `MaxSpellQueueWindow`.
@@ -563,6 +563,8 @@ impl<A: Agent> Fight<A> {
                 expires,
                 spell: Some(spell),
                 target,
+                cast_time: cur.cast_time,
+                pushback: self.spells[spell].flags.pushback,
             };
             self.new_hardcast_action(side);
             return true;
@@ -826,9 +828,13 @@ impl<A: Agent> Fight<A> {
                     },
                 );
             }
-            SpellBehavior::RollDamage { min, max } => {
+            SpellBehavior::RollDamage { min, max, can_crit } => {
                 let base = self.go_roll(min, max);
-                let result = self.calc_damage(spell, target, base);
+                let result = if can_crit {
+                    self.calc_damage(spell, target, base)
+                } else {
+                    self.calc_damage_hit_only(spell, target, base)
+                };
                 self.deal_damage(spell, result, false);
             }
             SpellBehavior::EffectRoll {
@@ -1010,6 +1016,37 @@ impl<A: Agent> Fight<A> {
             );
             self.unit_log(side, &line);
         }
+    }
+
+    /// The "Pushback trigger" handler, which Go runs a spell batch window after the hit that
+    /// passed its conditions, without looking at the hardcast again: a hardcast that finished in
+    /// between is pushed back all the same. The gate admits only casts that are not channeled.
+    pub(crate) fn pushback_handler(&mut self, chance: f64) {
+        let hardcast = self.player.hardcast;
+        let Some(spell) = hardcast.spell else {
+            return;
+        };
+        let resist = self.spells[spell].pushback_resist;
+        if !self.proc(chance - resist, "Pushback") {
+            return;
+        }
+        // Go `Hardcast.pushBack`.
+        let pushback =
+            SPELL_PUSHBACK_DURATION.min(self.now + hardcast.cast_time - hardcast.expires);
+        if pushback <= 0 {
+            return;
+        }
+        self.player.hardcast.expires += pushback;
+        if self.log.is_some() {
+            let line = format!(
+                "{} pushed back {} while casting",
+                action_string(&self.spells[spell].id),
+                go_string(pushback)
+            );
+            self.unit_log(Side::Player, &line);
+        }
+        // Re-schedule the cast at the new expiry.
+        self.new_hardcast_action(Side::Player);
     }
 
     /// Go `Unit.newHardcastAction`.

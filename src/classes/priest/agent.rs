@@ -547,9 +547,14 @@ impl Agent for PriestAgent {
                     .iter()
                     .find(|(_, heal, _)| *heal == spell)
                     .expect("the heal has a rank");
-                // Go reads the healing dealt multiplier live, which Power Infusion moves.
+                // Go reads the healing dealt multiplier live, which Power Infusion moves, and
+                // the live healing power, which a stat aura such as an on-use trinket's
+                // changes, plus the bonus healing taken the export folds into the reset value.
                 let mut healing = nova.healing;
                 healing.dealt_multiplier *= fight.agent.healing_dealt_multiplier;
+                let bonus_healing_taken = healing.healing_power - fight.config.powers.healing_power;
+                healing.healing_power =
+                    fight.unit(Side::Player).powers.healing_power + bonus_healing_taken;
                 fight.calc_and_deal_self_healing_crit(spell, base, healing);
             }
             PriestSpell::HolyFire => holy::apply_holy_fire(fight, spell, target),

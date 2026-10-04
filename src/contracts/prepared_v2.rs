@@ -1811,6 +1811,22 @@ pub enum Effect {
         average: f64,
         variance: f64,
     },
+    /// common/shared/shared_utils.go NewSpellDataAbsorbProc: a listener on the melee hits the
+    /// player takes, resolved from its trigger row, that casts the absorb row's spell, by
+    /// spellbook position, on the wearer at once; the spell's aura shields the wearer for the
+    /// absorb effect's roll against the schools its bits name.
+    SpellDataAbsorbProc {
+        trigger_aura: String,
+        /// Go `HitOutcome` names the listener hears; empty hears every outcome.
+        outcome: Vec<String>,
+        require_damage: bool,
+        proc_chance: f64,
+        spell: usize,
+        aura: String,
+        schools: u8,
+        average: f64,
+        variance: f64,
+    },
     /// common/shared/shared_utils.go NewSpellDataHealOnUse: the item use heals the wearer
     /// directly, a share of maximum health or a rolled amount.
     HealOnUse {
@@ -2319,6 +2335,10 @@ pub enum Effect {
         aura: String,
         trigger_spells: Vec<usize>,
         callbacks: Vec<String>,
+        /// A "when struck" proc, as The Lion Horn of Stormwind's: it hears the target's melee
+        /// swings on a tank, its one callback `on_spell_hit_taken`.
+        #[serde(default, skip_serializing_if = "is_false")]
+        struck: bool,
         landed_only: bool,
         require_damage: bool,
         proc_chance: f64,
@@ -3568,6 +3588,14 @@ pub enum Effect {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         melee_haste_multiplier: Option<f64>,
     },
+    /// Go character.go's "Pushback trigger" on a tanking player: a landed hit that deals damage
+    /// during a hardcast with the pushback flag pushes the cast back a spell batch window later.
+    /// `chance` is the player's `PseudoStats.PushbackChance`, which each spell's
+    /// `pushback_resist` reduces.
+    PushbackTrigger {
+        aura: String,
+        chance: f64,
+    },
     /// An item proc trigger that restores energy a spell batch window after a landed hit, such
     /// as Shadowcraft Armor's: the chance each spell rolls, by spellbook position.
     EnergizeProc {
@@ -3687,6 +3715,7 @@ impl Effect {
             Effect::SpellDataHealProc { .. } => "spell_data_heal_proc",
             Effect::SecondWind { .. } => "second_wind",
             Effect::AbsorbOnUse { .. } => "absorb_on_use",
+            Effect::SpellDataAbsorbProc { .. } => "spell_data_absorb_proc",
             Effect::HealOnUse { .. } => "heal_on_use",
             Effect::HealthRageProc { .. } => "health_rage_proc",
             Effect::DamageOnUse { .. } => "damage_on_use",
@@ -3899,6 +3928,7 @@ impl Effect {
             Effect::Frenzy { .. } => "frenzy",
             Effect::ChanceOfDeath { .. } => "chance_of_death",
             Effect::ParryHaste { .. } => "parry_haste",
+            Effect::PushbackTrigger { .. } => "pushback_trigger",
             Effect::FixedUptimeAura { .. } => "fixed_uptime_aura",
             Effect::EnergizeProc { .. } => "energize_proc",
         }

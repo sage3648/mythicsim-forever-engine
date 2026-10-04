@@ -157,9 +157,11 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `lay_on_hands` | sim/paladin/lay_on_hands.go | Each Lay on Hands rank the rotation names and the mana it restores: the cast spends all the paladin's mana, restores the rank's mana when it heals the paladin, and heals for the paladin's live maximum health through the core heal; a target with a mana bar is unsupported |
 | `stat_proc` | sim/common/forever/item_sets_classic.go | A set bonus proc: each spell's chance from its proc manager, the trigger's name that keys the roll, and the temporary stats aura it activates a batch window later, with its log lines |
 | `divine_favor` | sim/paladin/divine_favor.go | The major cooldown, its aura's crit and the spells it names, whose cast spends it |
-| `spell_data_damage_proc` | sim/common/shared/shared_utils.go | An item proc built from client rows, such as the Storm Gauntlets': the resolved trigger's spells, outcome, damage and chance, and a single target magic hit on its damage row's roll. A `struck` proc, as the Premier High Warlord's Shield Wall's, hears melee and ranged hits the player takes and answers the attacker. A weapon enchant's area hit, as Fiery Blaze's, is one hit on the encounter's only target, and an item NewProcDamageEffect builds by hand, as Heart of Wyrmthalak, rolls its Go literal `roll` range |
+| `spell_data_damage_proc` | sim/common/shared/shared_utils.go | An item proc built from client rows, such as the Storm Gauntlets': the resolved trigger's spells, outcome, damage and chance, and a single target magic hit on its damage row's roll. A `struck` proc, as the Premier High Warlord's Shield Wall's, hears melee and ranged hits the player takes and answers the attacker. A weapon enchant's area hit, as Fiery Blaze's, is one hit on the encounter's only target, and an item NewProcDamageEffect builds by hand, as Heart of Wyrmthalak, rolls its Go literal `roll` range; a tank's damage shield, as Essence of the Pure Flame's, is a `struck` proc whose fixed `roll` cannot crit |
 | `spell_data_heal_proc` | sim/common/shared/shared_utils.go | An enchant proc built from client rows, such as Recovery's: the resolved trigger's spells, outcomes and chance, its cooldown on the aura, and a direct heal on the wearer, a share of maximum health or a roll, with the healing multipliers |
 | `absorb_on_use`, `heal_on_use` | sim/common/shared/shared_utils.go | A survival item use: a shield for the absorb effect's roll against the schools its bits name, taking hits before the class's damage taken modifiers, or a direct heal on the wearer |
+| `spell_data_absorb_proc` | sim/common/shared/shared_utils.go | A tank's absorb proc built from client rows, such as Uther's Strength's and the chest absorption enchants': the resolved trigger's outcomes and chance on the target's swings, its cooldown on the aura, and the absorb row's shield on the wearer, as an item use's |
+| `spell_data_stat_proc` | sim/common/shared/shared_utils.go, sim/common/classic/items_store_gaps.go | An item or enchant proc that a spell batch window after a heard hit, heal or cast activates a temporary stats aura, such as Draconic Infused Emblem's; a `struck` one, as The Lion Horn of Stormwind's on a tank, hears the target's landed swings, and its aura joins the stat auras whose combinations carry the target's rolls |
 | `second_wind` | sim/common/classic/items_trinkets.go | Second Wind's mana each second for ten seconds and the deficit its automatic use waits for, Go literals |
 | `health_rage_proc` | sim/common/forever/item_sets_classic.go | Battlegear of Valor's Warrior's Resolve: each spell's chance from the set's proc manager, the trigger's name that keys the roll, and the heal range, rage and metrics of the handler a batch window later |
 | `armor_debuff_proc` | sim/common/forever/items_weapons.go | Bashguuder and Rivenspike: each spell's chance from the weapon's proc manager, the target's Puncture Armor, and the target's armor change at each stack count, read from a separate Go simulation |
@@ -267,6 +269,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `penance` | sim/priest/penance.go | The bolt's base and crit; a channel that ticks on application and each second |
 | `power_in_light` | sim/priest/talents_discipline.go | The target's damage taken multiplier, the spells it multiplies and the Holy Fire dots it waits for |
 | `searing_light` | sim/priest/talents_holy.go | The resolved trigger on Holy Fire ticks, Holy Purpose's Holy Nova cost modifier and the casts that end it |
+| `pushback_trigger` | sim/core/character.go | A tanking player's "Pushback trigger" aura and the player's pushback chance, which each spell's resist reduces; a damaging hit during a hardcast with the pushback flag pushes the cast back a spell batch window later, by at most half a second and never past the time the cast has run |
 | `parry_haste` | sim/core/attack.go applyParryHaste | Which unit's Parry Haste acts once the target swings at the player, a parry pulling that unit's next main hand swing in; for a target nobody tanks, its swing speed and melee haste, since its reset still rolls a swing timer that a parry pulls in and logs |
 | `inert_pet` | sim/core/pet.go | A registered pet nothing summons: label, unit index, metrics actions and auras, the permanent auras each reset activates, its dismissed stats line and why it is inert |
 | `sinister_strike`, `backstab` | sim/rogue/sinister_strike.go, backstab.go | The highest rank's base on normalized main hand damage; Backstab's main hand dagger and Puncturing Wounds' combo point chance |
@@ -518,11 +521,16 @@ Siphon Life, Bane of Doom, Drain Life, Wrack and Incinerate to the production ro
 and `demonology-warlock-orc` is the Orc race board request, whose Blood Fury the dynamic
 Succubus inherits. `affliction-warlock-death-coil` casts Death Coil, whose heal
 reaches healing done, and `demonology-warlock-recklessness` curses with Recklessness beside
-the raid's ramping Sunder Armor. `production-fire` and
+the raid's ramping Sunder Armor. `demonology-warlock-frozen-heart` opens with Searing Pain
+while Frozen Heart of the Mountain is up, so the Succubus's Demonic Brand hits read the
+raised Shadow damage. `production-fire` and
 `production-frostfire` are the production application's Fire Missile Barrage and
 Frostfire hybrid requests at application revision 18bbcd47; its Arcane and Frost requests
 are byte-identical to `arcane-reference` and `frost-reference`. `frostfire-resistances`
-gives the target uneven Fire and Frost resistance. `production-shadow-priest` is the
+gives the target uneven Fire and Frost resistance. `fire-mage-goblin-sapper` adds the
+Goblin Sapper Charge to the Fire request and has no Go golden: Rust refuses it because
+the pinned Go engine panics when Ignite hears the charge's crit on the player
+([reference defects](../UPSTREAM.md#reference-defects)). `production-shadow-priest` is the
 production Shadow Priest request at application revision 18bbcd47; the
 `shadow-priest-*` cases change its rotation to reach a channel without `allowRecast`, a
 channel without an interrupt condition and a strict sequence that gives up control.
@@ -533,6 +541,8 @@ channel without an interrupt condition and a strict sequence that gives up contr
 option, the latter in a 420 second fight that summons it twice. `smite-priest-power-infusion`
 runs the Smite request on the Smite 31/17/3 talents, whose cooldown autocast casts Power
 Infusion, and `smite-priest-holy-nova-power-infusion` heals with Holy Nova while it is up.
+`smite-priest-holy-nova-ephemeral-power` heals with Holy Nova while Talisman of Ephemeral
+Power raises healing power, which the heal reads live.
 `production-assassination-rogue` and `production-subtlety-rogue` are the production
 Assassination and Subtlety Rogue requests. `combat-swords`, `combat-riposte`,
 `combat-wound-poison`, `combat-kidney-shot`, `assassination-venom`,
@@ -611,7 +621,11 @@ leaving at the end removes health to keep its fraction of the falling maximum.
 spell and shift back, `feral-bear-druid-potion-shift-tauren` does so as a Tauren, and
 `feral-bear-druid-caster-interval` tanks in caster form for ten seconds before shifting back.
 `feral-bear-druid-demonic-rune-autocast` carries Demonic Rune, whose automatic use waits for a
-caster form the bear never takes.
+caster form the bear never takes. `feral-bear-druid-boomerang-pushback` stands the bear 10
+yards out with Linken's Boomerang, whose half second hardcast the target's swing pushes back,
+and `feral-bear-druid-boomerang-pushback-after-cast` is the seed where the hit lands in the
+batch window before the cast completes: Go pushes the finished cast back all the same and
+completes it twice.
 `feral-druid-mighty-rage-potion` has the cat drink Mighty Rage Potion, whose Rage goes to the
 cat's rage bar. `feral-druid-threat-enchant` and `feral-bear-druid-subtlety-enchant` wear the
 Threat and Subtlety enchants, whose permanent auras multiply the threat each form starts from.
@@ -620,6 +634,13 @@ Threat and Subtlety enchants, whose permanent auras multiply the threat each for
 `protection-warrior-mark-of-resolution-threshold`,
 `protection-paladin-arena-grand-master-threshold` and `feral-bear-druid-lifestone-threshold`
 set a defensive threshold, so the survival trinkets' shields and heal are used.
+`feral-bear-druid-uthers-strength`, `feral-bear-druid-minor-absorption`,
+`feral-bear-druid-lesser-absorption` and `feral-bear-druid-absorption` wear Uther's Strength
+and the chest absorption enchants, whose shields the target's swings proc on the tank.
+`feral-bear-druid-essence-of-the-pure-flame` wears Essence of the Pure Flame, whose damage
+shield hits the target on each of its landed swings.
+`feral-bear-druid-lion-horn` wears The Lion Horn of Stormwind, whose armor proc the target's
+swings raise and its later swings read.
 
 The contract tests in
 [tests/classes/mage/prepared_v2.rs](../tests/classes/mage/prepared_v2.rs)
@@ -652,6 +673,11 @@ raid, party and unit distributions (DPS, threat, time to out of mana, and the he
 damage taken and TMI that stay zero in scope), action, aura and resource metrics for
 the player and the target, iteration durations and the debug log. Zero values are
 omitted as protojson omits them.
+
+The engine identity is `engine`, `schema_version` and `source_revision`, and an `identity`
+object that states the engine name, crate version, pinned Go reference revision, client
+build and the schema version of [release/manifest.json](../release/manifest.json). Compare
+stored results only when their identities agree.
 
 Time to out of mana reads current mana after Go deactivates every aura at the end of a
 fight. Buffs that raise maximum mana fade then, and each change clamps current mana,
@@ -719,8 +745,9 @@ cargo run --locked -- check --infile fixtures/mage/prepared-v2/frost-reference.p
 - The contract describes one player, one target and the player's pets, any number of them
   simulated. Multiple targets and job modes such as stat weights need contract additions.
 - Incoming damage covers the target's main hand swing at the one player tanking it. The
-  gate rejects a dual wielding or ranged target, a healing model, a cast that can be pushed
-  back or a channel with a cast time the rotation can reach while tanking, listeners of the
+  gate rejects a dual wielding or ranged target, a healing model, a channel with a cast time
+  or a cast pushed back with a chance that needs a roll that the rotation can reach while
+  tanking, listeners of the
   swing without an effect that handles them, and any aura something in scope activates that
   would change the swing: an aura counts when an effect claims it or carries its label
   anywhere, since a class may activate an aura its effect carries without claiming it. Stat auras, among them the Paladin's Redoubt, Holy Shield, Iron

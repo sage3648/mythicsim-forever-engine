@@ -354,10 +354,12 @@ pub(crate) enum SpellBehavior<S> {
     ActivateAura(usize),
     /// Go attack.go's main or off hand auto attack.
     MeleeAuto(melee::Hand),
-    /// A magic hit on a rolled base damage, as Dragonbreath Chili's proc casts.
+    /// A magic hit on a rolled base damage, as Dragonbreath Chili's proc casts, or one that
+    /// cannot crit, as a damage shield's.
     RollDamage {
         min: f64,
         max: f64,
+        can_crit: bool,
     },
     /// Sulfuras's Fireball: a magic hit rolled between two bounds whose landing applies its burn.
     SulfurasFireball {
@@ -415,6 +417,8 @@ pub(crate) struct Flags {
     /// Go `SpellFlagCombatPotion`, which the rotation's potion action names.
     pub(crate) combat_potion: bool,
     pub(crate) cannot_be_dodged: bool,
+    /// Go `SpellFlagPushback`: damage taken during the hardcast pushes the cast back.
+    pub(crate) pushback: bool,
 }
 
 impl Flags {
@@ -443,6 +447,7 @@ impl Flags {
                 "SpellFlagNoSpellMods" => flags.no_spell_mods = true,
                 "SpellFlagCombatPotion" => flags.combat_potion = true,
                 "SpellFlagCannotBeDodged" => flags.cannot_be_dodged = true,
+                "SpellFlagPushback" => flags.pushback = true,
                 _ => {}
             }
         }
@@ -583,6 +588,8 @@ pub(crate) struct Spell<S> {
     pub(crate) bonus_coefficient: f64,
     pub(crate) threat_multiplier: f64,
     pub(crate) flat_threat_bonus: f64,
+    /// Go `Spell.PushbackResist`, which the pushback chance loses.
+    pub(crate) pushback_resist: f64,
     pub(crate) damage_effect: Option<(f64, f64)>,
     pub(crate) dot: Option<DotId>,
     /// Go `RelatedDotSpell`, whose dot `Spell.Dot` resolves to when this spell has none.
@@ -619,6 +626,23 @@ pub(crate) struct Hardcast {
     pub(crate) expires: i64,
     pub(crate) spell: Option<SpellId>,
     pub(crate) target: Side,
+    /// The cast time the hardcast started with.
+    pub(crate) cast_time: i64,
+    /// Whether the cast carries `SpellFlagPushback`.
+    pub(crate) pushback: bool,
+}
+
+impl Hardcast {
+    /// No hardcast, expiring at `expires`.
+    pub(crate) const fn idle(expires: i64) -> Self {
+        Self {
+            expires,
+            spell: None,
+            target: Side::Target,
+            cast_time: 0,
+            pushback: false,
+        }
+    }
 }
 
 /// Go `QueuedSpell`.
@@ -740,11 +764,7 @@ impl Player {
             spirit_attribution: None,
             gcd: STARTING_CD_TIME,
             rotation_timer: STARTING_CD_TIME,
-            hardcast: Hardcast {
-                expires: STARTING_CD_TIME,
-                spell: None,
-                target: Side::Target,
-            },
+            hardcast: Hardcast::idle(STARTING_CD_TIME),
             hardcast_action: None,
             reduced_avoidance: false,
             rotation_action: None,
@@ -815,6 +835,8 @@ pub(crate) struct SpellStatProc {
     pub(crate) hits: bool,
     pub(crate) heals: bool,
     pub(crate) casts: bool,
+    /// A "when struck" proc, on the target's melee swings.
+    pub(crate) struck: bool,
     pub(crate) landed_only: bool,
     pub(crate) require_damage: bool,
     pub(crate) chance: f64,
@@ -1051,6 +1073,11 @@ pub(crate) enum Action {
         spell: SpellId,
         result: SpellResult,
     },
+    /// The "Pushback trigger" handler, delayed by the spell batch window, with the player's
+    /// pushback chance.
+    Pushback {
+        chance: f64,
+    },
     /// A rotation prepull action: Go `APLActionCastSpell.Execute`.
     Prepull(SpellId),
     /// A rotation prepull action: Go `APLActionActivateAura.Execute`.
@@ -1126,6 +1153,8 @@ pub(crate) const PRIORITY_AUTO: i32 = 2;
 pub(crate) const PRIORITY_DOT: i32 = 3;
 pub(crate) const PRIORITY_PREPULL: i32 = 10;
 /// Go `SpellBatchWindow`.
+/// Go `SpellPushbackDuration`.
+pub(crate) const SPELL_PUSHBACK_DURATION: i64 = 500 * crate::core::time::NS_PER_MILLISECOND;
 pub(crate) const SPELL_BATCH_WINDOW: i64 = 10 * crate::core::time::NS_PER_MILLISECOND;
 
 pub(crate) struct Fight<A: Agent> {
@@ -1246,8 +1275,11 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) damage_procs: Vec<DamageProc>,
     /// Enchant heal procs, by their position among the heal proc effects.
     pub(crate) heal_procs: Vec<heal_proc::HealProc>,
-    /// Item use absorb shields, by their position among the absorb effects.
+    /// Absorb shields: the item uses' by their position among the absorb effects, then the
+    /// absorb procs'.
     pub(crate) item_absorbs: Vec<absorb::ItemAbsorb>,
+    /// Absorb procs on the melee hits the player takes, by their position among the effects.
+    pub(crate) absorb_procs: Vec<absorb::AbsorbProc>,
     /// Set bonus stat procs: each spell's chance, the roll's label and the aura activated.
     pub(crate) stat_procs: Vec<(Vec<Option<f64>>, String, AuraRef)>,
     /// Gear procs that heal and give rage, by their aura's position.
@@ -1315,6 +1347,14 @@ const SCHOOL_DAMAGE_STATS: [(usize, &str); 6] = [
     (6, "NatureDamage"),
     (7, "ShadowDamage"),
 ];
+
+/// The Go school index of a school spell damage stat, such as 7 for `ShadowDamage`.
+pub(crate) fn school_damage_index(stat: &str) -> Option<usize> {
+    SCHOOL_DAMAGE_STATS
+        .iter()
+        .find(|(_, name)| *name == stat)
+        .map(|(index, _)| *index)
+}
 /// The resistance stats by Go school index.
 const RESISTANCE_STATS: [(usize, &str); 5] = [
     (2, "ArcaneResistance"),
@@ -1685,7 +1725,11 @@ impl<A: Agent> Fight<A> {
                 .flatten()
             {
                 // Acid Spit rolls its base damage as Dragonbreath Chili's proc does.
-                SpellBehavior::RollDamage { min, max }
+                SpellBehavior::RollDamage {
+                    min,
+                    max,
+                    can_crit: true,
+                }
             } else if caster.is_pet() {
                 // A pet has no items or racials.
                 SpellBehavior::None
@@ -1877,6 +1921,7 @@ impl<A: Agent> Fight<A> {
                             Some(SpellBehavior::RollDamage {
                                 min: *roll_min,
                                 max: *roll_max,
+                                can_crit: true,
                             })
                         }
                         Effect::DamageOnUse {
@@ -1893,14 +1938,18 @@ impl<A: Agent> Fight<A> {
                         Effect::SpellDataHealProc { spell, .. } if *spell == spells.len() => {
                             heal_proc::self_heal(effects, spells.len()).map(SpellBehavior::SelfHeal)
                         }
+                        Effect::SpellDataAbsorbProc { spell, .. } if *spell == spells.len() => {
+                            absorb::proc_shield(effects, spells.len()).map(SpellBehavior::AbsorbOnUse)
+                        }
                         Effect::SpellDataDamageProc {
                             spell,
                             roll: Some([min, max]),
-                            can_crit: true,
+                            can_crit,
                             ..
                         } if *spell == spells.len() => Some(SpellBehavior::RollDamage {
                             min: *min,
                             max: *max,
+                            can_crit: *can_crit,
                         }),
                         Effect::SpellDataDamageProc {
                             spell,
@@ -2073,6 +2122,7 @@ impl<A: Agent> Fight<A> {
                 bonus_coefficient: exported.bonus_coefficient,
                 threat_multiplier: exported.threat_multiplier,
                 flat_threat_bonus: exported.flat_threat_bonus,
+                pushback_resist: exported.pushback_resist,
                 damage_effect: exported.damage_effect.map(|e| (e.average, e.variance)),
                 dot,
                 related_dot_spell: exported.related_dot_spell,
@@ -2472,6 +2522,18 @@ impl<A: Agent> Fight<A> {
                     })
                 {
                     AuraBehavior::ChanceOfDeath
+                } else if let Some(chance) = (side == Side::Player)
+                    .then(|| {
+                        effects.iter().find_map(|effect| match effect {
+                            Effect::PushbackTrigger { aura, chance } if *aura == exported.label => {
+                                Some(*chance)
+                            }
+                            _ => None,
+                        })
+                    })
+                    .flatten()
+                {
+                    AuraBehavior::PushbackTrigger { chance }
                 } else if effects.iter().any(|effect| {
                     matches!(effect, Effect::ParryHaste { unit: u, aura, .. } if u == unit && *aura == exported.label)
                 }) {
@@ -2561,6 +2623,18 @@ impl<A: Agent> Fight<A> {
                     .flatten()
                 {
                     AuraBehavior::HealProc(proc)
+                } else if let Some(proc) = (side == Side::Player)
+                    .then(|| {
+                        effects
+                            .iter()
+                            .filter(|effect| matches!(effect, Effect::SpellDataAbsorbProc { .. }))
+                            .position(|effect| {
+                                matches!(effect, Effect::SpellDataAbsorbProc { trigger_aura, .. } if *trigger_aura == exported.label)
+                            })
+                    })
+                    .flatten()
+                {
+                    AuraBehavior::AbsorbProc(proc)
                 } else if let Some(proc) = (side == Side::Player)
                     .then(|| {
                         effects
@@ -2737,6 +2811,7 @@ impl<A: Agent> Fight<A> {
             aura_mods: Vec::new(),
             heal_procs: Vec::new(),
             item_absorbs: Vec::new(),
+            absorb_procs: Vec::new(),
             stat_procs: Vec::new(),
             health_rage_procs: Vec::new(),
             armor_debuff_procs: Vec::new(),
@@ -3141,6 +3216,7 @@ impl<A: Agent> Fight<A> {
                     .push(absorb::ItemAbsorb::new(aura, *schools, *average, *variance));
             }
         }
+        fight.bind_absorb_procs(effects)?;
         for effect in effects {
             if let Effect::SpellDataDamageProc {
                 trigger_spells,
@@ -3184,6 +3260,7 @@ impl<A: Agent> Fight<A> {
                 aura,
                 trigger_spells,
                 callbacks,
+                struck,
                 landed_only,
                 require_damage,
                 proc_chance,
@@ -3197,12 +3274,24 @@ impl<A: Agent> Fight<A> {
                     }
                 }
                 let heard = |name: &str| callbacks.iter().any(|callback| callback == name);
+                let known = ["on_spell_hit_dealt", "on_heal_dealt", "on_cast_complete"];
+                let valid = if *struck {
+                    callbacks == &["on_spell_hit_taken"]
+                } else {
+                    callbacks
+                        .iter()
+                        .all(|callback| known.contains(&callback.as_str()))
+                };
+                if !valid {
+                    return Err(format!("a stat proc listens to {callbacks:?}"));
+                }
                 let aura = fight.player_aura(aura)?;
                 fight.spell_stat_procs.push(SpellStatProc {
                     trigger_spells: mask,
                     hits: heard("on_spell_hit_dealt"),
                     heals: heard("on_heal_dealt"),
                     casts: heard("on_cast_complete"),
+                    struck: *struck,
                     landed_only: *landed_only,
                     require_damage: *require_damage,
                     chance: *proc_chance,
@@ -3652,11 +3741,7 @@ impl<A: Agent> Fight<A> {
             let player = &mut self.player;
             player.gcd = STARTING_CD_TIME;
             player.rotation_timer = STARTING_CD_TIME;
-            player.hardcast = Hardcast {
-                expires: STARTING_CD_TIME,
-                spell: None,
-                target: Side::Target,
-            };
+            player.hardcast = Hardcast::idle(STARTING_CD_TIME);
             player.hardcast_action = None;
             player.reduced_avoidance = false;
             player.rotation_action = None;
@@ -3924,6 +4009,7 @@ impl<A: Agent> Fight<A> {
                 spell,
                 result,
             } => self.delayed_proc(aura, spell, result),
+            Action::Pushback { chance } => self.pushback_handler(chance),
             Action::Prepull(spell) => self.cast_or_queue(spell, Side::Target),
             Action::PrepullAura(aura) => self.activate_aura_action(aura),
             Action::SunderTick(done) => self.sunder_tick(done),
@@ -4141,11 +4227,7 @@ impl<A: Agent> Fight<A> {
     fn cleanup(&mut self) {
         self.now = self.duration;
         self.queue.clear();
-        self.player.hardcast = Hardcast {
-            expires: 0,
-            spell: None,
-            target: Side::Target,
-        };
+        self.player.hardcast = Hardcast::idle(0);
         // Go Character.doneIteration finishes the pets first.
         self.pets_done_iteration();
         self.player_done_iteration();

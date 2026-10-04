@@ -25,8 +25,8 @@ struct DemonBrand {
     min_damage: f64,
     max_damage: f64,
     coefficient: f64,
-    /// The warlock's school power stat, which no aura changes in scope.
-    school_power: f64,
+    /// The Go school index of the warlock's school power stat, read live at each hit.
+    school: usize,
 }
 
 /// The demon's half of the exported effect.
@@ -37,7 +37,8 @@ pub(crate) struct DemonConfig<'a> {
     pub(crate) min_damage: f64,
     pub(crate) max_damage: f64,
     pub(crate) coefficient: f64,
-    pub(crate) school_power: f64,
+    /// The Go school index of the school power stat.
+    pub(crate) school: usize,
 }
 
 pub(crate) fn bind<A: Agent>(
@@ -65,7 +66,7 @@ pub(crate) fn bind<A: Agent>(
                 min_damage: config.min_damage,
                 max_damage: config.max_damage,
                 coefficient: config.coefficient,
-                school_power: config.school_power,
+                school: config.school,
             })
         }
     };
@@ -129,10 +130,12 @@ impl DemonicBrand {
     }
 
     /// The brand hit's `ApplyEffects`: a roll plus the warlock's spell power share, on
-    /// `OutcomeAlwaysHit`.
+    /// `OutcomeAlwaysHit`. Go reads the spell damage and school power stats at each hit, so a
+    /// stat aura such as an on-use trinket's moves them.
     pub(crate) fn brand_hit<A: Agent>(&self, fight: &mut Fight<A>, spell: SpellId, target: Side) {
         let demon = self.demon.as_ref().expect("the brand hit has a demon");
-        let spell_power = fight.unit(Side::Player).powers.spell_damage + demon.school_power;
+        let spell_power = fight.unit(Side::Player).powers.spell_damage
+            + fight.player_school_damage()[demon.school];
         let roll = fight.go_roll(demon.min_damage, demon.max_damage);
         // Go's arm64 build fuses the spell power share into the roll.
         let damage = demon.coefficient.mul_add(spell_power, roll);

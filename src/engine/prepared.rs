@@ -236,6 +236,37 @@ pub fn check(prepared: &PreparedV2) -> Result<(), PreparedError> {
     }
 }
 
+/// Which engine made a result, so results of different engines or builds are never compared by
+/// mistake.
+#[derive(Clone, Debug, PartialEq, serde::Serialize)]
+pub struct EngineIdentity {
+    /// The engine's name, as release/manifest.json states it.
+    pub engine: String,
+    /// The crate version, equal to the release manifest's package version.
+    pub package_version: String,
+    /// The pinned Go reference revision whose behavior the engine reproduces.
+    pub go_reference_revision: String,
+    /// The client build of the reference's game data.
+    pub client_build: String,
+    /// The schema version of release/manifest.json, which declares the engine's capabilities.
+    pub release_manifest_schema_version: u32,
+}
+
+impl EngineIdentity {
+    /// This build's identity.
+    pub fn current() -> Self {
+        EngineIdentity {
+            engine: "forever-engine".into(),
+            package_version: env!("CARGO_PKG_VERSION").into(),
+            go_reference_revision: SOURCE_REVISION.into(),
+            client_build: CLIENT_BUILD.into(),
+            release_manifest_schema_version: env!("FOREVER_RELEASE_MANIFEST_SCHEMA_VERSION")
+                .parse()
+                .expect("the build script writes a number"),
+        }
+    }
+}
+
 /// The engine identity and result of a prepared v2 simulation. `result` follows Go's
 /// `RaidSimResult` JSON for the fields Rust implements.
 #[derive(Debug, serde::Serialize)]
@@ -243,6 +274,7 @@ pub struct PreparedReport {
     pub engine: String,
     pub schema_version: u32,
     pub source_revision: String,
+    pub identity: EngineIdentity,
     pub scenario_id: String,
     pub request_sha256: String,
     pub elapsed_ns: u64,
@@ -258,6 +290,7 @@ pub fn simulate(prepared: &PreparedV2) -> Result<PreparedReport, PreparedError> 
         engine: format!("forever-rust-{}", env!("CARGO_PKG_VERSION")),
         schema_version: SCHEMA_VERSION,
         source_revision: SOURCE_REVISION.into(),
+        identity: EngineIdentity::current(),
         scenario_id: prepared.scenario_id.clone(),
         request_sha256: prepared.request_sha256.clone(),
         elapsed_ns,
