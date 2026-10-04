@@ -20,7 +20,8 @@
   "mismatched": 0,
   "notes": [
     "Lowered talents run the build without Penance (sweep-07, sweep-09, sweep-13), Searing Light (sweep-13) or Inner Focus (sweep-11, sweep-16, whose strict sequence keeps only Holy Fire), and with Power in Light and Searing Light at lower ranks.",
-    "sweep-02, sweep-06, sweep-10 and sweep-14 report an Inner Focus uptime deviation of NaN in Go: sqrt(sumSq/n - mean^2) of a nearly constant series, where cancellation left a negative residue. Rust reaches NaN or zero for the same series and now writes NaN as protojson does; the comparison reads a NaN deviation as the zero variance it stands for."
+    "sweep-02, sweep-06, sweep-10 and sweep-14 report an Inner Focus uptime deviation of NaN in Go: sqrt(sumSq/n - mean^2) of a nearly constant series, where cancellation left a negative residue. Rust reaches NaN or zero for the same series and now writes NaN as protojson does; the comparison reads a NaN deviation as the zero variance it stands for.",
+    "Rerun at the coordinator branch at a3dbc766d (validation/2026-10-04-integration-regression-a3dbc76.json): 24 matched, 0 rejected, 0 mismatched."
   ],
   "cases": [
     {

@@ -72,7 +72,12 @@
       "talents": "055101003100301531-200100001-005",
       "equipped_items": 15,
       "passed": false,
-      "expected_rejection": "community #622: rotation item 3 reads Missile Barrage, which the character lacks"
+      "expected_rejection": "community #622: rotation item 3 reads Missile Barrage, which the character lacks",
+      "go_dps": null,
+      "rust_dps": null,
+      "rejected": [
+        "rotation item 3: auraIsActive names spell 44404, which the character lacks; the pinned reference drops the condition and community #622 reads it as inactive"
+      ]
     },
     {
       "scenario": "sweep-04",
@@ -85,7 +90,12 @@
       "talents": "053205003100301531-130500001-005",
       "equipped_items": 13,
       "passed": false,
-      "expected_rejection": "community #622: rotation item 3 reads Missile Barrage, which the character lacks"
+      "expected_rejection": "community #622: rotation item 3 reads Missile Barrage, which the character lacks",
+      "go_dps": null,
+      "rust_dps": null,
+      "rejected": [
+        "rotation item 3: auraIsActive names spell 44404, which the character lacks; the pinned reference drops the condition and community #622 reads it as inactive"
+      ]
     },
     {
       "scenario": "sweep-05",
@@ -126,7 +136,12 @@
       "talents": "055205003100301531-230500001-005",
       "equipped_items": 14,
       "passed": false,
-      "expected_rejection": "community #622: rotation item 3 reads Missile Barrage, which the character lacks"
+      "expected_rejection": "community #622: rotation item 3 reads Missile Barrage, which the character lacks",
+      "go_dps": null,
+      "rust_dps": null,
+      "rejected": [
+        "rotation item 3: auraIsActive names spell 44404, which the character lacks; the pinned reference drops the condition and community #622 reads it as inactive"
+      ]
     },
     {
       "scenario": "sweep-08",
@@ -181,7 +196,12 @@
       "talents": "055205003000301531-200200001-000",
       "equipped_items": 13,
       "passed": false,
-      "expected_rejection": "community #622: rotation item 3 reads Missile Barrage, which the character lacks"
+      "expected_rejection": "community #622: rotation item 3 reads Missile Barrage, which the character lacks",
+      "go_dps": null,
+      "rust_dps": null,
+      "rejected": [
+        "rotation item 3: auraIsActive names spell 44404, which the character lacks; the pinned reference drops the condition and community #622 reads it as inactive"
+      ]
     },
     {
       "scenario": "sweep-12",
@@ -250,7 +270,12 @@
       "talents": "025202002100301511-120500000-005",
       "equipped_items": 15,
       "passed": false,
-      "expected_rejection": "community #622: rotation item 3 reads Missile Barrage, which the character lacks"
+      "expected_rejection": "community #622: rotation item 3 reads Missile Barrage, which the character lacks",
+      "go_dps": null,
+      "rust_dps": null,
+      "rejected": [
+        "rotation item 3: auraIsActive names spell 44404, which the character lacks; the pinned reference drops the condition and community #622 reads it as inactive"
+      ]
     },
     {
       "scenario": "sweep-17",
@@ -319,7 +344,7 @@
       "talents": "055205003100311531-230200001-005",
       "equipped_items": 13,
       "go_dps": 579.8323309698499,
-      "rust_dps": 579.83233096985,
+      "rust_dps": 579.8323309698499,
       "passed": true
     },
     {
@@ -347,11 +372,17 @@
       "talents": "051205003100301531-230500001-005",
       "equipped_items": 13,
       "passed": false,
-      "expected_rejection": "community #622: rotation item 3 reads Missile Barrage, which the character lacks"
+      "expected_rejection": "community #622: rotation item 3 reads Missile Barrage, which the character lacks",
+      "go_dps": null,
+      "rust_dps": null,
+      "rejected": [
+        "rotation item 3: auraIsActive names spell 44404, which the character lacks; the pinned reference drops the condition and community #622 reads it as inactive"
+      ]
     }
   ],
   "notes": [
     "Six variants lack Missile Barrage. The Arcane preset reads its aura without an auraIsKnown guard, so pinned Go casts Arcane Missiles whenever the rule is reached; community fix #622 reads the aura as inactive. Rust rejects these inputs. On the application's character, pinned Go scores 449.7 DPS with 24.5 Missiles and no Arcane Blasts per fight, against 396.6 DPS for the rotation as written.",
-    "Variants lacking Arcane Blast compile its stack check differently under the two readings but act the same; the guard compares meaning, so they run and match. One such variant never casts, since its only remaining rule needs mana below 40%; Go and Rust both report no damage."
+    "Variants lacking Arcane Blast compile its stack check differently under the two readings but act the same; the guard compares meaning, so they run and match. One such variant never casts, since its only remaining rule needs mana below 40%; Go and Rust both report no damage.",
+    "Rerun at the coordinator branch at a3dbc766d (validation/2026-10-04-integration-regression-a3dbc76.json): 18 matched, 6 rejected, 0 mismatched."
   ]
 }

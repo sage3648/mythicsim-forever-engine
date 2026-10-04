@@ -19,7 +19,8 @@
   "mismatched": 0,
   "notes": [
     "production_dps is the board's headline DPS; for a race whose weapon specialization the board applies (weapon_spec_applied), it comes from a request with that race's weapon type, not the as-equipped request compared here. production_as_equipped_dps is the production engine's DPS for the compared request. Both are context, not criteria, because the production engine is newer than the pinned reference.",
-    "Every published as-equipped production DPS equals the pinned Go result to within 6.40e-15 relative; the one upstream commit between the pin and production engine f43215d (e4f4f1b) changes aura metrics only."
+    "Every published as-equipped production DPS equals the pinned Go result to within 6.40e-15 relative; the one upstream commit between the pin and production engine f43215d (e4f4f1b) changes aura metrics only.",
+    "Rerun at the coordinator branch at a3dbc766d (validation/2026-10-04-integration-regression-a3dbc76.json): 38 matched, 0 rejected, 0 mismatched."
   ],
   "cases": [
     {

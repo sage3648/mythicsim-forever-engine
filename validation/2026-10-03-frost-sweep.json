@@ -404,6 +404,7 @@
   ],
   "notes": [
     "Eight variants without Missile Barrage were first rejected by the community #622 guard. The reference rotation guards its Arcane Missiles rule with auraIsKnown, so pinned Go and #622 both prune it; the guard now compares both compilations and these variants run and match Go.",
-    "The first run compared a compact subset that omitted tto and zero-valued distributions; Rust's tto then differed. After the teardown_max fix every variant also matches the full result."
+    "The first run compared a compact subset that omitted tto and zero-valued distributions; Rust's tto then differed. After the teardown_max fix every variant also matches the full result.",
+    "Rerun at the coordinator branch at a3dbc766d (validation/2026-10-04-integration-regression-a3dbc76.json): 24 matched, 0 rejected, 0 mismatched."
   ]
 }

@@ -21,7 +21,8 @@
   "notes": [
     "sweep-01, sweep-12, sweep-16, sweep-19 and sweep-20 lowered Shadow Weaving to zero. The preset reads Shadow Weaving's stacks without an auraIsKnown guard, so pinned Go and community fix #622 act differently, and Rust rejects them as in the Mage and Druid sweeps.",
     "Lowered talents exercise Shadow Weaving at rank 2, whose trigger rolls, the build without Shadowform, without Mind Flay (the channel action is dropped) and without Inner Focus (the strict sequence keeps only Mind Blast).",
-    "sweep-05 and sweep-18 report a tiny Inner Focus uptime deviation in Go where Rust reaches zero, which protojson omits; the comparison reads an omitted deviation as zero and compares variances, as for any deviation."
+    "sweep-05 and sweep-18 report a tiny Inner Focus uptime deviation in Go where Rust reaches zero, which protojson omits; the comparison reads an omitted deviation as zero and compares variances, as for any deviation.",
+    "Rerun at the coordinator branch at a3dbc766d (validation/2026-10-04-integration-regression-a3dbc76.json): 19 matched, 5 rejected, 0 mismatched."
   ],
   "cases": [
     {

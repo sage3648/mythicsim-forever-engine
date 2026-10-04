@@ -16,46 +16,17 @@
   "first_fight_debug_log": "line identical"
  },
  "outcomes": {
-  "matched": 2932,
-  "rejected": 5,
+  "matched": 2937,
   "go_error": 2
  },
  "rejected_like_base": 0,
  "bases_rejected": {},
- "rejection_reasons_added_by_swaps": [
-  {
-   "reason": "unrepresented by the exporter: more than one pet is enabled at the start",
-   "variants": 3,
-   "changes": [
-    "slot 14: Dragon's Call (10847)"
-   ]
-  },
-  {
-   "reason": "more than one simulated pet is unsupported",
-   "variants": 3,
-   "changes": [
-    "slot 14: Dragon's Call (10847)"
-   ]
-  },
-  {
-   "reason": "rotation reaches item 12662, which drops Bear Form",
-   "variants": 1,
-   "changes": [
-    "conjuredItems = [12662] ([12662])"
-   ]
-  },
-  {
-   "reason": "rotation reaches item 7676, which drops Bear Form",
-   "variants": 1,
-   "changes": [
-    "conjuredItems = [7676] ([7676])"
-   ]
-  }
- ],
+ "rejection_reasons_added_by_swaps": [],
  "notes": [
   "Fixed in this branch from earlier failures: a player without a mana bar exported the Mana stat a Flask of Distilled Wisdom adds; mana ticks ran only for the player, not for a mana pet such as the Dragon's Call whelp of a Warrior or Rogue; mana gems, Dark Sacrifice, Shield Specialization and Fel Energy read the maximum mana prepared at reset instead of Go's current MaxMana.",
   "The production requests wear no trinkets, so no trinket swaps arise.",
-  "Run against the coordinator branch at 076116f, with the owners' fixes for Thistle Tea, Hack and Slash, the Paladin and Warrior Goblin Sapper Charge, the Dragon's Call tanks, Hands of Power and the Warrior robes merged. What remains: Dragon's Call adds a second pet, which the runtime does not simulate; conjured items that drop Bear Form; and the pinned Go engine's Ignite crash on a Mage's Goblin Sapper Charge."
+  "Run against the coordinator branch at 076116f, with the owners' fixes for Thistle Tea, Hack and Slash, the Paladin and Warrior Goblin Sapper Charge, the Dragon's Call tanks, Hands of Power and the Warrior robes merged. What remains: Dragon's Call adds a second pet, which the runtime does not simulate; conjured items that drop Bear Form; and the pinned Go engine's Ignite crash on a Mage's Goblin Sapper Charge.",
+  "Rerun at the coordinator branch at a3dbc766d (validation/2026-10-04-integration-regression-a3dbc76.json): 2937 matched, 0 rejected, 0 mismatched, 2 error."
  ],
  "cases": [
   {
@@ -579,11 +550,8 @@
     "name": "Dragon's Call",
     "enchant": 1900
    },
-   "outcome": "rejected",
-   "reasons": [
-    "unrepresented by the exporter: more than one pet is enabled at the start",
-    "more than one simulated pet is unsupported"
-   ]
+   "outcome": "matched",
+   "dps": 528.7491823708519
   },
   {
    "scenario": "affliction-warlock--enchant14-1900",
@@ -8025,11 +7993,8 @@
     "name": "Dragon's Call",
     "enchant": 1900
    },
-   "outcome": "rejected",
-   "reasons": [
-    "unrepresented by the exporter: more than one pet is enabled at the start",
-    "more than one simulated pet is unsupported"
-   ]
+   "outcome": "matched",
+   "dps": 602.9663471429275
   },
   {
    "scenario": "demonology-warlock--enchant14-1900",
@@ -12997,10 +12962,8 @@
     ],
     "name": null
    },
-   "outcome": "rejected",
-   "reasons": [
-    "rotation reaches item 12662, which drops Bear Form"
-   ]
+   "outcome": "matched",
+   "dps": 410.95327666795305
   },
   {
    "scenario": "feral-bear-druid--consumable-conjuredItems-7676",
@@ -13013,10 +12976,8 @@
     ],
     "name": null
    },
-   "outcome": "rejected",
-   "reasons": [
-    "rotation reaches item 7676, which drops Bear Form"
-   ]
+   "outcome": "matched",
+   "dps": 410.95327666795305
   },
   {
    "scenario": "feral-bear-druid--consumable-flaskId-13512",
@@ -21575,11 +21536,8 @@
     "name": "Dragon's Call",
     "enchant": 1900
    },
-   "outcome": "rejected",
-   "reasons": [
-    "unrepresented by the exporter: more than one pet is enabled at the start",
-    "more than one simulated pet is unsupported"
-   ]
+   "outcome": "matched",
+   "dps": 594.5566594820185
   },
   {
    "scenario": "hunter--slot16-18323-0",

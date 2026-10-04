@@ -19,7 +19,8 @@
   "rejected": 1,
   "mismatched": 0,
   "notes": [
-    "sweep-18 lowered Eclipse to zero. The preset reads Eclipse's stacks without an auraIsKnown guard, so pinned Go and community fix #622 act differently, and Rust rejects it as in the Mage sweeps."
+    "sweep-18 lowered Eclipse to zero. The preset reads Eclipse's stacks without an auraIsKnown guard, so pinned Go and community fix #622 act differently, and Rust rejects it as in the Mage sweeps.",
+    "Rerun at the coordinator branch at a3dbc766d (validation/2026-10-04-integration-regression-a3dbc76.json): 23 matched, 1 rejected, 0 mismatched."
   ],
   "cases": [
     {

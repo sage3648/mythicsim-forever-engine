@@ -15,13 +15,14 @@
     "deviations": "as variances at the scale of mean^2",
     "first_fight_debug_log": "line identical"
   },
-  "matched": 660,
-  "rejected": 109,
-  "mismatched": 20,
+  "matched": 741,
+  "rejected": 48,
+  "mismatched": 0,
   "notes": [
     "Item 276765, in the eight Launch gear sets, is absent from the pinned item database and Go panics on it, so the generator leaves its slot empty.",
     "Rejections are class behavior not yet ported: Improved Shield Bash, Sweeping Strikes, the Battlegear of Might and Valor 5P and Premier High Warlord's Shield Wall listeners (Warrior); Power Infusion (Priest); Grace of Air beside a party air totem, Sulfuras and its Immolation (Enhancement Shaman); Wildheart Raiment 5P (Feral Druid); Lay on Hands (Protection Paladin); Rivenspike Proc. The Mage rejections are the conditions on auras the character lacks that community #622 reads as inactive.",
-    "The 16 Warrior mismatches come from Enrage, which the exporter treats as inert though the Goblin Sapper Charge's self damage triggers it in Go. The 4 Demonic Pact mismatches on the MC gear differ in the dismiss stats log line, where Go prints a SpellDamage residue of -0.000."
+    "The 16 Warrior mismatches come from Enrage, which the exporter treats as inert though the Goblin Sapper Charge's self damage triggers it in Go. The 4 Demonic Pact mismatches on the MC gear differ in the dismiss stats log line, where Go prints a SpellDamage residue of -0.000.",
+    "Rerun at the coordinator branch at a3dbc766d (validation/2026-10-04-integration-regression-a3dbc76.json): 741 matched, 48 rejected, 0 mismatched."
   ],
   "cases": [
     {
@@ -335,12 +336,9 @@
       "target_level": 63,
       "talents": "050022-55000032121032212051-052",
       "equipped_items": 8,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Wildheart Raiment 5P\" listens to combat events without an effect"
-      ]
+      "go_dps": 328.0296809542837,
+      "rust_dps": 328.0296809542837,
+      "passed": true
     },
     {
       "scenario": "druid-feralcat-feral-feral-launch",
@@ -398,12 +396,9 @@
       "target_level": 63,
       "talents": "-55210032021132212051-05503",
       "equipped_items": 8,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Wildheart Raiment 5P\" listens to combat events without an effect"
-      ]
+      "go_dps": 314.51332891136093,
+      "rust_dps": 314.51332891136093,
+      "passed": true
     },
     {
       "scenario": "druid-feralcat-simple-vaelastrasz-feral-cat-9-35-7-launch",
@@ -461,12 +456,9 @@
       "target_level": 63,
       "talents": "050022-55000032121032212051-052",
       "equipped_items": 8,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Wildheart Raiment 5P\" listens to combat events without an effect"
-      ]
+      "go_dps": 217.97605437127638,
+      "rust_dps": 217.97605437127638,
+      "passed": true
     },
     {
       "scenario": "druid-feralcat-simple-vaelastrasz-feral-launch",
@@ -524,12 +516,9 @@
       "target_level": 63,
       "talents": "-55210032021132212051-05503",
       "equipped_items": 8,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Wildheart Raiment 5P\" listens to combat events without an effect"
-      ]
+      "go_dps": 210.02401147380525,
+      "rust_dps": 210.02401147380525,
+      "passed": true
     },
     {
       "scenario": "hunter-dps-beast-mastery-beast-mastery-35-16-0-launch",
@@ -3071,12 +3060,9 @@
       "target_level": 63,
       "talents": "52003003-5530513321301501",
       "equipped_items": 16,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 10310 without a known behavior"
-      ]
+      "go_dps": 380.88199217479666,
+      "rust_dps": 380.88199217479666,
+      "passed": true
     },
     {
       "scenario": "paladin-protection-p5-prot-p5-prot-launch",
@@ -3089,12 +3075,9 @@
       "target_level": 63,
       "talents": "55003-5530513321301501",
       "equipped_items": 16,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 10310 without a known behavior"
-      ]
+      "go_dps": 380.84159081316574,
+      "rust_dps": 380.84159081316574,
+      "passed": true
     },
     {
       "scenario": "paladin-protection-p5-prot-protection-0-45-6-launch",
@@ -3107,12 +3090,9 @@
       "target_level": 63,
       "talents": "-5532513321301551-15",
       "equipped_items": 16,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 10310 without a known behavior"
-      ]
+      "go_dps": 361.6046558165091,
+      "rust_dps": 361.6046558165091,
+      "passed": true
     },
     {
       "scenario": "paladin-retribution-basic-ret-p4-p5-ret-launch",
@@ -3275,12 +3255,9 @@
       "target_level": 63,
       "talents": "515030031305001031-00505023002-003",
       "equipped_items": 16,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 10060 without a known behavior"
-      ]
+      "go_dps": 248.1107484941401,
+      "rust_dps": 248.1107484941401,
+      "passed": true
     },
     {
       "scenario": "priest-dps-shadow-smite-31-17-3-p1-bis",
@@ -3293,12 +3270,9 @@
       "target_level": 63,
       "talents": "515030031305001031-00505023002-003",
       "equipped_items": 8,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 10060 without a known behavior"
-      ]
+      "go_dps": 179.11484526261563,
+      "rust_dps": 179.11484526261563,
+      "passed": true
     },
     {
       "scenario": "priest-dps-shadow-smite-31-17-3-pre-bis",
@@ -3311,12 +3285,9 @@
       "target_level": 63,
       "talents": "515030031305001031-00505023002-003",
       "equipped_items": 17,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 10060 without a known behavior"
-      ]
+      "go_dps": 239.73797499698733,
+      "rust_dps": 239.73797499698733,
+      "passed": true
     },
     {
       "scenario": "priest-dps-shadow-smite-31-17-3-smite-launch",
@@ -3329,12 +3300,9 @@
       "target_level": 63,
       "talents": "515030031305001031-00505023002-003",
       "equipped_items": 16,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 10060 without a known behavior"
-      ]
+      "go_dps": 241.78906577591346,
+      "rust_dps": 241.78906577591346,
+      "passed": true
     },
     {
       "scenario": "priest-dps-shadow-smite-launch",
@@ -3347,12 +3315,9 @@
       "target_level": 63,
       "talents": "515330031305001001-30505113002",
       "equipped_items": 16,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 10060 without a known behavior"
-      ]
+      "go_dps": 248.1107484941401,
+      "rust_dps": 248.1107484941401,
+      "passed": true
     },
     {
       "scenario": "priest-dps-shadow-smite-p1-bis",
@@ -3365,12 +3330,9 @@
       "target_level": 63,
       "talents": "515330031305001001-30505113002",
       "equipped_items": 8,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 10060 without a known behavior"
-      ]
+      "go_dps": 179.11484526261563,
+      "rust_dps": 179.11484526261563,
+      "passed": true
     },
     {
       "scenario": "priest-dps-shadow-smite-pre-bis",
@@ -3383,12 +3345,9 @@
       "target_level": 63,
       "talents": "515330031305001001-30505113002",
       "equipped_items": 17,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 10060 without a known behavior"
-      ]
+      "go_dps": 239.73797499698733,
+      "rust_dps": 239.73797499698733,
+      "passed": true
     },
     {
       "scenario": "priest-dps-shadow-smite-smite-launch",
@@ -3401,12 +3360,9 @@
       "target_level": 63,
       "talents": "515330031305001001-30505113002",
       "equipped_items": 16,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 10060 without a known behavior"
-      ]
+      "go_dps": 241.78906577591346,
+      "rust_dps": 241.78906577591346,
+      "passed": true
     },
     {
       "scenario": "priest-dps-smite-shadow-15-0-36-launch",
@@ -3539,12 +3495,9 @@
       "target_level": 63,
       "talents": "515030031305001031-00505023002-003",
       "equipped_items": 16,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 10060 without a known behavior"
-      ]
+      "go_dps": 493.5797101949784,
+      "rust_dps": 493.5797101949784,
+      "passed": true
     },
     {
       "scenario": "priest-dps-smite-smite-31-17-3-p1-bis",
@@ -3557,12 +3510,9 @@
       "target_level": 63,
       "talents": "515030031305001031-00505023002-003",
       "equipped_items": 8,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 10060 without a known behavior"
-      ]
+      "go_dps": 367.32892105281866,
+      "rust_dps": 367.32892105281866,
+      "passed": true
     },
     {
       "scenario": "priest-dps-smite-smite-31-17-3-pre-bis",
@@ -3575,12 +3525,9 @@
       "target_level": 63,
       "talents": "515030031305001031-00505023002-003",
       "equipped_items": 17,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 10060 without a known behavior"
-      ]
+      "go_dps": 438.32532680156555,
+      "rust_dps": 438.32532680156555,
+      "passed": true
     },
     {
       "scenario": "priest-dps-smite-smite-31-17-3-smite-launch",
@@ -3593,12 +3540,9 @@
       "target_level": 63,
       "talents": "515030031305001031-00505023002-003",
       "equipped_items": 16,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 10060 without a known behavior"
-      ]
+      "go_dps": 532.8821713041768,
+      "rust_dps": 532.8821713041768,
+      "passed": true
     },
     {
       "scenario": "priest-dps-smite-smite-launch",
@@ -3611,12 +3555,9 @@
       "target_level": 63,
       "talents": "515330031305001001-30505113002",
       "equipped_items": 16,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 10060 without a known behavior"
-      ]
+      "go_dps": 493.5797101949784,
+      "rust_dps": 493.5797101949784,
+      "passed": true
     },
     {
       "scenario": "priest-dps-smite-smite-p1-bis",
@@ -3629,12 +3570,9 @@
       "target_level": 63,
       "talents": "515330031305001001-30505113002",
       "equipped_items": 8,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 10060 without a known behavior"
-      ]
+      "go_dps": 367.32892105281866,
+      "rust_dps": 367.32892105281866,
+      "passed": true
     },
     {
       "scenario": "priest-dps-smite-smite-pre-bis",
@@ -3647,12 +3585,9 @@
       "target_level": 63,
       "talents": "515330031305001001-30505113002",
       "equipped_items": 17,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 10060 without a known behavior"
-      ]
+      "go_dps": 438.32532680156555,
+      "rust_dps": 438.32532680156555,
+      "passed": true
     },
     {
       "scenario": "priest-dps-smite-smite-smite-launch",
@@ -3665,12 +3600,9 @@
       "target_level": 63,
       "talents": "515330031305001001-30505113002",
       "equipped_items": 16,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 10060 without a known behavior"
-      ]
+      "go_dps": 532.8821713041768,
+      "rust_dps": 532.8821713041768,
+      "passed": true
     },
     {
       "scenario": "rogue-dps-backstab-assassination-mutilate-31-20-0-backstab-launch",
@@ -5034,7 +4966,7 @@
       "talents": "00530310551021051-302303202004",
       "equipped_items": 17,
       "go_dps": 612.4263007467282,
-      "rust_dps": 612.4263007467281,
+      "rust_dps": 612.4263007467282,
       "passed": true
     },
     {
@@ -6129,7 +6061,7 @@
       "talents": "125320101--5320003310013211551",
       "equipped_items": 17,
       "go_dps": 525.8064708271265,
-      "rust_dps": 525.8064708271264,
+      "rust_dps": 525.8064708271265,
       "passed": true
     },
     {
@@ -6519,7 +6451,7 @@
       "talents": "1053231-22530300001515231-012",
       "equipped_items": 17,
       "go_dps": 488.3643879243988,
-      "rust_dps": 488.36438792439867,
+      "rust_dps": 488.3643879243988,
       "passed": true
     },
     {
@@ -7944,7 +7876,7 @@
       "talents": "02532010531201051-225303000005",
       "equipped_items": 17,
       "go_dps": 511.00613211827516,
-      "rust_dps": 511.0061321182751,
+      "rust_dps": 511.00613211827516,
       "passed": true
     },
     {
@@ -8589,7 +8521,7 @@
       "talents": "00530310501-32003311201515231",
       "equipped_items": 17,
       "go_dps": 604.2429635877878,
-      "rust_dps": 604.2429635877877,
+      "rust_dps": 604.2429635877878,
       "passed": true
     },
     {
@@ -9084,7 +9016,7 @@
       "talents": "005303125-32003311201515131",
       "equipped_items": 17,
       "go_dps": 564.6945206767747,
-      "rust_dps": 564.6945206767748,
+      "rust_dps": 564.6945206767747,
       "passed": true
     },
     {
@@ -9698,12 +9630,9 @@
       "target_level": 63,
       "talents": "2502331-055030030205112251",
       "equipped_items": 17,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 25359, a Grace of Air Totem that contests a party air totem"
-      ]
+      "go_dps": 567.0498471072325,
+      "rust_dps": 567.0498471072325,
+      "passed": true
     },
     {
       "scenario": "shaman-enhancement-default-enhancement-16-35-0-phase-1",
@@ -9716,14 +9645,9 @@
       "target_level": 63,
       "talents": "2502331-055030030205112251",
       "equipped_items": 15,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Immolation (Hand of Ragnaros)\" listens to combat events without an effect",
-        "player aura \"Sulfuras, Hand of Ragnaros Proc\" listens to combat events without an effect",
-        "rotation reaches spell 25359, a Grace of Air Totem that contests a party air totem"
-      ]
+      "go_dps": 568.011658508966,
+      "rust_dps": 568.011658508966,
+      "passed": true
     },
     {
       "scenario": "shaman-enhancement-default-enhancement-16-35-0-phase-2",
@@ -9736,14 +9660,9 @@
       "target_level": 63,
       "talents": "2502331-055030030205112251",
       "equipped_items": 15,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Immolation (Hand of Ragnaros)\" listens to combat events without an effect",
-        "player aura \"Sulfuras, Hand of Ragnaros Proc\" listens to combat events without an effect",
-        "rotation reaches spell 25359, a Grace of Air Totem that contests a party air totem"
-      ]
+      "go_dps": 571.2539112049726,
+      "rust_dps": 571.2539112049726,
+      "passed": true
     },
     {
       "scenario": "shaman-enhancement-default-level-60-launch",
@@ -9756,12 +9675,9 @@
       "target_level": 63,
       "talents": "5505301-053030031005112251",
       "equipped_items": 17,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 25359, a Grace of Air Totem that contests a party air totem"
-      ]
+      "go_dps": 571.2330967866737,
+      "rust_dps": 571.2330967866737,
+      "passed": true
     },
     {
       "scenario": "shaman-enhancement-default-level-60-phase-1",
@@ -9774,14 +9690,9 @@
       "target_level": 63,
       "talents": "5505301-053030031005112251",
       "equipped_items": 15,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Immolation (Hand of Ragnaros)\" listens to combat events without an effect",
-        "player aura \"Sulfuras, Hand of Ragnaros Proc\" listens to combat events without an effect",
-        "rotation reaches spell 25359, a Grace of Air Totem that contests a party air totem"
-      ]
+      "go_dps": 564.5056279127112,
+      "rust_dps": 564.5056279127112,
+      "passed": true
     },
     {
       "scenario": "shaman-enhancement-default-level-60-phase-2",
@@ -9794,14 +9705,9 @@
       "target_level": 63,
       "talents": "5505301-053030031005112251",
       "equipped_items": 15,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Immolation (Hand of Ragnaros)\" listens to combat events without an effect",
-        "player aura \"Sulfuras, Hand of Ragnaros Proc\" listens to combat events without an effect",
-        "rotation reaches spell 25359, a Grace of Air Totem that contests a party air totem"
-      ]
+      "go_dps": 567.5397352330157,
+      "rust_dps": 567.5397352330157,
+      "passed": true
     },
     {
       "scenario": "warlock-dps-affliction-affliction-launch",
@@ -9921,33 +9827,7 @@
       "equipped_items": 17,
       "go_dps": 620.0246478134808,
       "rust_dps": 620.0246478134808,
-      "passed": false,
-      "differences": [],
-      "first_log_difference": {
-        "line": 2462,
-        "go": "[127.25] [affliction-warlock (#1) - Succubus] {\"Strength\": 129.000,\"Agility\": 85.000,\"Stamina\": 234.000,\"Intellect\": 70.000,\"SpellDamage\": -0.000,\"Spirit\": 150.000,\"AttackPower\": 258.000,\"Armor\": 170.000,\"Health\": 2484.000,\"Mana\": 1225.900,\"PhysicalCritPercent\": 4.250,}",
-        "rust": "[127.25] [affliction-warlock (#1) - Succubus] {\"Strength\": 129.000,\"Agility\": 85.000,\"Stamina\": 234.000,\"Intellect\": 70.000,\"Spirit\": 150.000,\"AttackPower\": 258.000,\"Armor\": 170.000,\"Health\": 2484.000,\"Mana\": 1225.900,\"PhysicalCritPercent\": 4.250,}",
-        "go_context": [
-          "[127.25] [affliction-warlock (#1) - Succubus] {SpellID: 1293696} stacks: 5 --> 0",
-          "[127.25] [affliction-warlock (#1) - Succubus] Aura faded: {SpellID: 19028}",
-          "[127.25] [affliction-warlock (#1) - Succubus] Aura faded: {SpellID: 412732}",
-          "[127.25] [affliction-warlock (#1) - Succubus] Aura faded: {SpellID: 23785, Tag: 3}",
-          "[127.25] [affliction-warlock (#1) - Succubus] Pet dismissed",
-          "[127.25] [affliction-warlock (#1) - Succubus] {\"Strength\": 129.000,\"Agility\": 85.000,\"Stamina\": 234.000,\"Intellect\": 70.000,\"SpellDamage\": -0.000,\"Spirit\": 150.000,\"AttackPower\": 258.000,\"Armor\": 170.000,\"Health\": 2484.000,\"Mana\": 1225.900,\"PhysicalCritPercent\": 4.250,}",
-          "[127.25] [affliction-warlock (#1) - Felhunter] Aura faded: {SpellID: 19028}",
-          "[127.25] [affliction-warlock (#1) - Felhunter] Aura faded: {SpellID: 412732}"
-        ],
-        "rust_context": [
-          "[127.25] [affliction-warlock (#1) - Succubus] {SpellID: 1293696} stacks: 5 --> 0",
-          "[127.25] [affliction-warlock (#1) - Succubus] Aura faded: {SpellID: 19028}",
-          "[127.25] [affliction-warlock (#1) - Succubus] Aura faded: {SpellID: 412732}",
-          "[127.25] [affliction-warlock (#1) - Succubus] Aura faded: {SpellID: 23785, Tag: 3}",
-          "[127.25] [affliction-warlock (#1) - Succubus] Pet dismissed",
-          "[127.25] [affliction-warlock (#1) - Succubus] {\"Strength\": 129.000,\"Agility\": 85.000,\"Stamina\": 234.000,\"Intellect\": 70.000,\"Spirit\": 150.000,\"AttackPower\": 258.000,\"Armor\": 170.000,\"Health\": 2484.000,\"Mana\": 1225.900,\"PhysicalCritPercent\": 4.250,}",
-          "[127.25] [affliction-warlock (#1) - Felhunter] Aura faded: {SpellID: 19028}",
-          "[127.25] [affliction-warlock (#1) - Felhunter] Aura faded: {SpellID: 412732}"
-        ]
-      }
+      "passed": true
     },
     {
       "scenario": "warlock-dps-affliction-demonic-pact-2-31-18-pre-bis",
@@ -9992,33 +9872,7 @@
       "equipped_items": 17,
       "go_dps": 611.5077046783126,
       "rust_dps": 611.5077046783126,
-      "passed": false,
-      "differences": [],
-      "first_log_difference": {
-        "line": 2443,
-        "go": "[127.25] [affliction-warlock (#1) - Succubus] {\"Strength\": 129.000,\"Agility\": 85.000,\"Stamina\": 234.000,\"Intellect\": 70.000,\"SpellDamage\": -0.000,\"Spirit\": 150.000,\"AttackPower\": 258.000,\"Armor\": 170.000,\"Health\": 2484.000,\"Mana\": 1225.900,\"PhysicalCritPercent\": 4.250,}",
-        "rust": "[127.25] [affliction-warlock (#1) - Succubus] {\"Strength\": 129.000,\"Agility\": 85.000,\"Stamina\": 234.000,\"Intellect\": 70.000,\"Spirit\": 150.000,\"AttackPower\": 258.000,\"Armor\": 170.000,\"Health\": 2484.000,\"Mana\": 1225.900,\"PhysicalCritPercent\": 4.250,}",
-        "go_context": [
-          "[127.25] [affliction-warlock (#1) - Voidwalker] No pet summoned",
-          "[127.25] [affliction-warlock (#1) - Succubus] Aura faded: {SpellID: 19028}",
-          "[127.25] [affliction-warlock (#1) - Succubus] Aura faded: {SpellID: 412732}",
-          "[127.25] [affliction-warlock (#1) - Succubus] Aura faded: {SpellID: 23785, Tag: 3}",
-          "[127.25] [affliction-warlock (#1) - Succubus] Pet dismissed",
-          "[127.25] [affliction-warlock (#1) - Succubus] {\"Strength\": 129.000,\"Agility\": 85.000,\"Stamina\": 234.000,\"Intellect\": 70.000,\"SpellDamage\": -0.000,\"Spirit\": 150.000,\"AttackPower\": 258.000,\"Armor\": 170.000,\"Health\": 2484.000,\"Mana\": 1225.900,\"PhysicalCritPercent\": 4.250,}",
-          "[127.25] [affliction-warlock (#1) - Felhunter] Aura faded: {SpellID: 19028}",
-          "[127.25] [affliction-warlock (#1) - Felhunter] Aura faded: {SpellID: 412732}"
-        ],
-        "rust_context": [
-          "[127.25] [affliction-warlock (#1) - Voidwalker] No pet summoned",
-          "[127.25] [affliction-warlock (#1) - Succubus] Aura faded: {SpellID: 19028}",
-          "[127.25] [affliction-warlock (#1) - Succubus] Aura faded: {SpellID: 412732}",
-          "[127.25] [affliction-warlock (#1) - Succubus] Aura faded: {SpellID: 23785, Tag: 3}",
-          "[127.25] [affliction-warlock (#1) - Succubus] Pet dismissed",
-          "[127.25] [affliction-warlock (#1) - Succubus] {\"Strength\": 129.000,\"Agility\": 85.000,\"Stamina\": 234.000,\"Intellect\": 70.000,\"Spirit\": 150.000,\"AttackPower\": 258.000,\"Armor\": 170.000,\"Health\": 2484.000,\"Mana\": 1225.900,\"PhysicalCritPercent\": 4.250,}",
-          "[127.25] [affliction-warlock (#1) - Felhunter] Aura faded: {SpellID: 19028}",
-          "[127.25] [affliction-warlock (#1) - Felhunter] Aura faded: {SpellID: 412732}"
-        ]
-      }
+      "passed": true
     },
     {
       "scenario": "warlock-dps-affliction-demonic-pact-pre-bis",
@@ -10603,33 +10457,7 @@
       "equipped_items": 17,
       "go_dps": 690.3252056860924,
       "rust_dps": 690.3252056860924,
-      "passed": false,
-      "differences": [],
-      "first_log_difference": {
-        "line": 2463,
-        "go": "[127.25] [demonology-warlock (#1) - Succubus] {\"Strength\": 129.000,\"Agility\": 85.000,\"Stamina\": 234.000,\"Intellect\": 70.000,\"SpellDamage\": -0.000,\"Spirit\": 150.000,\"AttackPower\": 258.000,\"Armor\": 170.000,\"Health\": 2484.000,\"Mana\": 1225.900,\"PhysicalCritPercent\": 4.250,}",
-        "rust": "[127.25] [demonology-warlock (#1) - Succubus] {\"Strength\": 129.000,\"Agility\": 85.000,\"Stamina\": 234.000,\"Intellect\": 70.000,\"Spirit\": 150.000,\"AttackPower\": 258.000,\"Armor\": 170.000,\"Health\": 2484.000,\"Mana\": 1225.900,\"PhysicalCritPercent\": 4.250,}",
-        "go_context": [
-          "[127.25] [demonology-warlock (#1) - Succubus] {SpellID: 1293696} stacks: 5 --> 0",
-          "[127.25] [demonology-warlock (#1) - Succubus] Aura faded: {SpellID: 19028}",
-          "[127.25] [demonology-warlock (#1) - Succubus] Aura faded: {SpellID: 412732}",
-          "[127.25] [demonology-warlock (#1) - Succubus] Aura faded: {SpellID: 23785, Tag: 3}",
-          "[127.25] [demonology-warlock (#1) - Succubus] Pet dismissed",
-          "[127.25] [demonology-warlock (#1) - Succubus] {\"Strength\": 129.000,\"Agility\": 85.000,\"Stamina\": 234.000,\"Intellect\": 70.000,\"SpellDamage\": -0.000,\"Spirit\": 150.000,\"AttackPower\": 258.000,\"Armor\": 170.000,\"Health\": 2484.000,\"Mana\": 1225.900,\"PhysicalCritPercent\": 4.250,}",
-          "[127.25] [demonology-warlock (#1) - Felhunter] Aura faded: {SpellID: 19028}",
-          "[127.25] [demonology-warlock (#1) - Felhunter] Aura faded: {SpellID: 412732}"
-        ],
-        "rust_context": [
-          "[127.25] [demonology-warlock (#1) - Succubus] {SpellID: 1293696} stacks: 5 --> 0",
-          "[127.25] [demonology-warlock (#1) - Succubus] Aura faded: {SpellID: 19028}",
-          "[127.25] [demonology-warlock (#1) - Succubus] Aura faded: {SpellID: 412732}",
-          "[127.25] [demonology-warlock (#1) - Succubus] Aura faded: {SpellID: 23785, Tag: 3}",
-          "[127.25] [demonology-warlock (#1) - Succubus] Pet dismissed",
-          "[127.25] [demonology-warlock (#1) - Succubus] {\"Strength\": 129.000,\"Agility\": 85.000,\"Stamina\": 234.000,\"Intellect\": 70.000,\"Spirit\": 150.000,\"AttackPower\": 258.000,\"Armor\": 170.000,\"Health\": 2484.000,\"Mana\": 1225.900,\"PhysicalCritPercent\": 4.250,}",
-          "[127.25] [demonology-warlock (#1) - Felhunter] Aura faded: {SpellID: 19028}",
-          "[127.25] [demonology-warlock (#1) - Felhunter] Aura faded: {SpellID: 412732}"
-        ]
-      }
+      "passed": true
     },
     {
       "scenario": "warlock-dps-demonic-pact-demonic-pact-2-31-18-pre-bis",
@@ -10674,33 +10502,7 @@
       "equipped_items": 17,
       "go_dps": 680.8211267398004,
       "rust_dps": 680.8211267398004,
-      "passed": false,
-      "differences": [],
-      "first_log_difference": {
-        "line": 2444,
-        "go": "[127.25] [demonology-warlock (#1) - Succubus] {\"Strength\": 129.000,\"Agility\": 85.000,\"Stamina\": 234.000,\"Intellect\": 70.000,\"SpellDamage\": -0.000,\"Spirit\": 150.000,\"AttackPower\": 258.000,\"Armor\": 170.000,\"Health\": 2484.000,\"Mana\": 1225.900,\"PhysicalCritPercent\": 4.250,}",
-        "rust": "[127.25] [demonology-warlock (#1) - Succubus] {\"Strength\": 129.000,\"Agility\": 85.000,\"Stamina\": 234.000,\"Intellect\": 70.000,\"Spirit\": 150.000,\"AttackPower\": 258.000,\"Armor\": 170.000,\"Health\": 2484.000,\"Mana\": 1225.900,\"PhysicalCritPercent\": 4.250,}",
-        "go_context": [
-          "[127.25] [demonology-warlock (#1) - Voidwalker] No pet summoned",
-          "[127.25] [demonology-warlock (#1) - Succubus] Aura faded: {SpellID: 19028}",
-          "[127.25] [demonology-warlock (#1) - Succubus] Aura faded: {SpellID: 412732}",
-          "[127.25] [demonology-warlock (#1) - Succubus] Aura faded: {SpellID: 23785, Tag: 3}",
-          "[127.25] [demonology-warlock (#1) - Succubus] Pet dismissed",
-          "[127.25] [demonology-warlock (#1) - Succubus] {\"Strength\": 129.000,\"Agility\": 85.000,\"Stamina\": 234.000,\"Intellect\": 70.000,\"SpellDamage\": -0.000,\"Spirit\": 150.000,\"AttackPower\": 258.000,\"Armor\": 170.000,\"Health\": 2484.000,\"Mana\": 1225.900,\"PhysicalCritPercent\": 4.250,}",
-          "[127.25] [demonology-warlock (#1) - Felhunter] Aura faded: {SpellID: 19028}",
-          "[127.25] [demonology-warlock (#1) - Felhunter] Aura faded: {SpellID: 412732}"
-        ],
-        "rust_context": [
-          "[127.25] [demonology-warlock (#1) - Voidwalker] No pet summoned",
-          "[127.25] [demonology-warlock (#1) - Succubus] Aura faded: {SpellID: 19028}",
-          "[127.25] [demonology-warlock (#1) - Succubus] Aura faded: {SpellID: 412732}",
-          "[127.25] [demonology-warlock (#1) - Succubus] Aura faded: {SpellID: 23785, Tag: 3}",
-          "[127.25] [demonology-warlock (#1) - Succubus] Pet dismissed",
-          "[127.25] [demonology-warlock (#1) - Succubus] {\"Strength\": 129.000,\"Agility\": 85.000,\"Stamina\": 234.000,\"Intellect\": 70.000,\"Spirit\": 150.000,\"AttackPower\": 258.000,\"Armor\": 170.000,\"Health\": 2484.000,\"Mana\": 1225.900,\"PhysicalCritPercent\": 4.250,}",
-          "[127.25] [demonology-warlock (#1) - Felhunter] Aura faded: {SpellID: 19028}",
-          "[127.25] [demonology-warlock (#1) - Felhunter] Aura faded: {SpellID: 412732}"
-        ]
-      }
+      "passed": true
     },
     {
       "scenario": "warlock-dps-demonic-pact-demonic-pact-pre-bis",
@@ -11493,12 +11295,9 @@
       "target_level": 63,
       "talents": "32305213132515201-5502",
       "equipped_items": 17,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 12723 without a known behavior"
-      ]
+      "go_dps": 516.1112197354914,
+      "rust_dps": 516.1112197354914,
+      "passed": true
     },
     {
       "scenario": "warrior-dps-dps-no-reck-arms-39-12-0-launch-arms",
@@ -11511,12 +11310,9 @@
       "target_level": 63,
       "talents": "32305213132515201-5502",
       "equipped_items": 16,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 12723 without a known behavior"
-      ]
+      "go_dps": 512.7139215901693,
+      "rust_dps": 512.7139215901693,
+      "passed": true
     },
     {
       "scenario": "warrior-dps-dps-no-reck-arms-39-12-0-p1-bis",
@@ -11529,12 +11325,9 @@
       "target_level": 63,
       "talents": "32305213132515201-5502",
       "equipped_items": 17,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 12723 without a known behavior"
-      ]
+      "go_dps": 568.283988791867,
+      "rust_dps": 568.283988791867,
+      "passed": true
     },
     {
       "scenario": "warrior-dps-dps-no-reck-arms-39-12-0-p2-bis",
@@ -11547,12 +11340,9 @@
       "target_level": 63,
       "talents": "32305213132515201-5502",
       "equipped_items": 17,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 12723 without a known behavior"
-      ]
+      "go_dps": 531.611526369932,
+      "rust_dps": 531.611526369932,
+      "passed": true
     },
     {
       "scenario": "warrior-dps-dps-no-reck-arms-39-12-0-pre-bis",
@@ -11565,13 +11355,9 @@
       "target_level": 63,
       "talents": "32305213132515201-5502",
       "equipped_items": 17,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Rivenspike Proc\" listens to combat events without an effect",
-        "rotation reaches spell 12723 without a known behavior"
-      ]
+      "go_dps": 507.07111906255597,
+      "rust_dps": 507.07111906255597,
+      "passed": true
     },
     {
       "scenario": "warrior-dps-dps-no-reck-dps-launch",
@@ -11585,55 +11371,8 @@
       "talents": "30305013-05553005150010501",
       "equipped_items": 17,
       "go_dps": 718.5971061706434,
-      "rust_dps": 715.1150668116619,
-      "passed": false,
-      "differences": [
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/aggregatorData/sumSq: Go 41545367.16684755, Rust 41583929.65729117",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/procsAvg: Go 58.30566666666667, Rust 58.059",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsAvg: Go 117.32913267552131, Rust 117.38259920149515",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsStdev: Go 9.073607215018463, Rust 9.090395506515115",
-        "/encounterMetrics/targets/0/dtps/aggregatorData/sumSq: Go 1556741707.5577118, Rust 1541786131.603327",
-        "/encounterMetrics/targets/0/dtps/avg: Go 718.5971061706434, Rust 715.1150668116619",
-        "/encounterMetrics/targets/0/dtps/hist/510: only in Rust",
-        "/encounterMetrics/targets/0/dtps/hist/570: Go 4, Rust 8",
-        "/encounterMetrics/targets/0/dtps/hist/580: Go 5, Rust 6",
-        "/encounterMetrics/targets/0/dtps/hist/600: Go 21, Rust 23",
-        "/encounterMetrics/targets/0/dtps/hist/610: Go 22, Rust 20",
-        "/encounterMetrics/targets/0/dtps/hist/620: Go 33, Rust 39",
-        "/encounterMetrics/targets/0/dtps/hist/630: Go 58, Rust 53",
-        "/encounterMetrics/targets/0/dtps/hist/640: Go 65, Rust 77",
-        "/encounterMetrics/targets/0/dtps/hist/650: Go 81, Rust 104",
-        "/encounterMetrics/targets/0/dtps/hist/660: Go 135, Rust 132",
-        "/encounterMetrics/targets/0/dtps/hist/670: Go 150, Rust 175",
-        "/encounterMetrics/targets/0/dtps/hist/680: Go 168, Rust 182",
-        "/encounterMetrics/targets/0/dtps/hist/690: Go 201, Rust 207",
-        "/encounterMetrics/targets/0/dtps/hist/700: Go 212, Rust 225"
-      ],
-      "first_log_difference": {
-        "line": 33,
-        "go": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:367.0, AfterAttackerMods:367.0, AfterResistances:311.7, AfterTargetMods:319.7, AfterOutcome:0.0, AfterPostOutcome:0.0",
-        "rust": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:398.8, AfterAttackerMods:398.8, AfterResistances:338.7, AfterTargetMods:346.7, AfterOutcome:0.0, AfterPostOutcome:0.0",
-        "go_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.190 --> 1.190) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:367.0, AfterAttackerMods:367.0, AfterResistances:311.7, AfterTargetMods:319.7, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Miss (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] No available actions!"
-        ],
-        "rust_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.190 --> 1.190) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:398.8, AfterAttackerMods:398.8, AfterResistances:338.7, AfterTargetMods:346.7, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Dodge (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Aura gained: {SpellID: 1282733}"
-        ]
-      }
+      "rust_dps": 718.5971061706434,
+      "passed": true
     },
     {
       "scenario": "warrior-dps-dps-no-reck-dps-launch-arms",
@@ -11647,55 +11386,8 @@
       "talents": "30305013-05553005150010501",
       "equipped_items": 16,
       "go_dps": 579.4478962052458,
-      "rust_dps": 579.1931479554148,
-      "passed": false,
-      "differences": [
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/aggregatorData/sumSq: Go 35679984.02214658, Rust 35827130.84923977",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/procsAvg: Go 26.913, Rust 26.991333333333333",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsAvg: Go 108.44304690603975, Rust 108.66061560009925",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsStdev: Go 11.55134559766329, Rust 11.629598752925993",
-        "/encounterMetrics/targets/0/dtps/aggregatorData/sumSq: Go 1016499005.014082, Rust 1015986567.9638478",
-        "/encounterMetrics/targets/0/dtps/avg: Go 579.4478962052458, Rust 579.1931479554148",
-        "/encounterMetrics/targets/0/dtps/hist/380: Go 1, Rust 2",
-        "/encounterMetrics/targets/0/dtps/hist/390: only in Go",
-        "/encounterMetrics/targets/0/dtps/hist/400: only in Rust",
-        "/encounterMetrics/targets/0/dtps/hist/410: Go 4, Rust 7",
-        "/encounterMetrics/targets/0/dtps/hist/420: Go 3, Rust 2",
-        "/encounterMetrics/targets/0/dtps/hist/430: Go 5, Rust 6",
-        "/encounterMetrics/targets/0/dtps/hist/440: Go 8, Rust 11",
-        "/encounterMetrics/targets/0/dtps/hist/450: Go 16, Rust 13",
-        "/encounterMetrics/targets/0/dtps/hist/460: Go 20, Rust 21",
-        "/encounterMetrics/targets/0/dtps/hist/470: Go 29, Rust 15",
-        "/encounterMetrics/targets/0/dtps/hist/480: Go 46, Rust 48",
-        "/encounterMetrics/targets/0/dtps/hist/490: Go 58, Rust 63",
-        "/encounterMetrics/targets/0/dtps/hist/500: Go 77, Rust 101",
-        "/encounterMetrics/targets/0/dtps/hist/510: Go 101, Rust 108"
-      ],
-      "first_log_difference": {
-        "line": 32,
-        "go": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:599.5, AfterAttackerMods:599.5, AfterResistances:509.1, AfterTargetMods:517.1, AfterOutcome:335.7, AfterPostOutcome:335.7",
-        "rust": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:650.7, AfterAttackerMods:650.7, AfterResistances:552.7, AfterTargetMods:560.7, AfterOutcome:320.0, AfterPostOutcome:320.0",
-        "go_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.187 --> 1.187) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:599.5, AfterAttackerMods:599.5, AfterResistances:509.1, AfterTargetMods:517.1, AfterOutcome:335.7, AfterPostOutcome:335.7",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Glance for 335.679 damage (SpellSchool: 1). (Threat: 268.543)",
-          "[0.09] [warrior (#1)] Gained 16.200 rage from {OtherID: 3, Tag: 1} (1.187 --> 17.387) of 100 total."
-        ],
-        "rust_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.187 --> 1.187) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:650.7, AfterAttackerMods:650.7, AfterResistances:552.7, AfterTargetMods:560.7, AfterOutcome:320.0, AfterPostOutcome:320.0",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Glance for 319.984 damage (SpellSchool: 1). (Threat: 255.987)",
-          "[0.09] [warrior (#1)] Gained 16.200 rage from {OtherID: 3, Tag: 1} (1.187 --> 17.387) of 100 total."
-        ]
-      }
+      "rust_dps": 579.4478962052458,
+      "passed": true
     },
     {
       "scenario": "warrior-dps-dps-no-reck-dps-p1-bis",
@@ -11709,55 +11401,8 @@
       "talents": "30305013-05553005150010501",
       "equipped_items": 17,
       "go_dps": 786.4183342757913,
-      "rust_dps": 782.1031550978389,
-      "passed": false,
-      "differences": [
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/aggregatorData/sumSq: Go 41776166.59824341, Rust 41747985.63436905",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/procsAvg: Go 62.222, Rust 61.87166666666667",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsAvg: Go 117.65651117693926, Rust 117.6204349023406",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsStdev: Go 9.073821893331496, Rust 9.023774423189405",
-        "/encounterMetrics/targets/0/dtps/aggregatorData/sumSq: Go 1866335774.485421, Rust 1846199162.3279557",
-        "/encounterMetrics/targets/0/dtps/avg: Go 786.4183342757913, Rust 782.1031550978389",
-        "/encounterMetrics/targets/0/dtps/hist/550: only in Go",
-        "/encounterMetrics/targets/0/dtps/hist/560: only in Rust",
-        "/encounterMetrics/targets/0/dtps/hist/580: only in Rust",
-        "/encounterMetrics/targets/0/dtps/hist/610: only in Rust",
-        "/encounterMetrics/targets/0/dtps/hist/620: Go 2, Rust 5",
-        "/encounterMetrics/targets/0/dtps/hist/630: Go 5, Rust 10",
-        "/encounterMetrics/targets/0/dtps/hist/640: Go 16, Rust 15",
-        "/encounterMetrics/targets/0/dtps/hist/650: Go 21, Rust 25",
-        "/encounterMetrics/targets/0/dtps/hist/670: Go 25, Rust 36",
-        "/encounterMetrics/targets/0/dtps/hist/680: Go 43, Rust 52",
-        "/encounterMetrics/targets/0/dtps/hist/690: Go 45, Rust 57",
-        "/encounterMetrics/targets/0/dtps/hist/700: Go 69, Rust 84",
-        "/encounterMetrics/targets/0/dtps/hist/710: Go 88, Rust 94",
-        "/encounterMetrics/targets/0/dtps/hist/720: Go 124, Rust 112"
-      ],
-      "first_log_difference": {
-        "line": 33,
-        "go": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1558.0, RAP: 146.0, SP: 0.0, BaseDamage:407.0, AfterAttackerMods:407.0, AfterResistances:345.7, AfterTargetMods:353.7, AfterOutcome:0.0, AfterPostOutcome:0.0",
-        "rust": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1558.0, RAP: 146.0, SP: 0.0, BaseDamage:447.2, AfterAttackerMods:447.2, AfterResistances:379.8, AfterTargetMods:387.8, AfterOutcome:0.0, AfterPostOutcome:0.0",
-        "go_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.168 --> 1.168) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1558.0, RAP: 146.0, SP: 0.0, BaseDamage:407.0, AfterAttackerMods:407.0, AfterResistances:345.7, AfterTargetMods:353.7, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Miss (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] No available actions!"
-        ],
-        "rust_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.168 --> 1.168) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1558.0, RAP: 146.0, SP: 0.0, BaseDamage:447.2, AfterAttackerMods:447.2, AfterResistances:379.8, AfterTargetMods:387.8, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Dodge (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Aura gained: {SpellID: 1282733}"
-        ]
-      }
+      "rust_dps": 786.4183342757913,
+      "passed": true
     },
     {
       "scenario": "warrior-dps-dps-no-reck-dps-p2-bis",
@@ -11771,55 +11416,8 @@
       "talents": "30305013-05553005150010501",
       "equipped_items": 17,
       "go_dps": 757.4170273081836,
-      "rust_dps": 754.5809265516402,
-      "passed": false,
-      "differences": [
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/aggregatorData/sumSq: Go 41472821.75135094, Rust 41473594.29903671",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/procsAvg: Go 57.20166666666667, Rust 57.022666666666666",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsAvg: Go 117.22271106205903, Rust 117.22918383936138",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsStdev: Go 9.116464686379379, Rust 9.047092868399696",
-        "/encounterMetrics/targets/0/dtps/aggregatorData/sumSq: Go 1732330489.2195797, Rust 1719276369.2733278",
-        "/encounterMetrics/targets/0/dtps/avg: Go 757.4170273081836, Rust 754.5809265516402",
-        "/encounterMetrics/targets/0/dtps/hist/570: Go 2, Rust 3",
-        "/encounterMetrics/targets/0/dtps/hist/600: Go 6, Rust 4",
-        "/encounterMetrics/targets/0/dtps/hist/610: Go 12, Rust 10",
-        "/encounterMetrics/targets/0/dtps/hist/620: Go 18, Rust 13",
-        "/encounterMetrics/targets/0/dtps/hist/630: Go 23, Rust 22",
-        "/encounterMetrics/targets/0/dtps/hist/640: Go 26, Rust 32",
-        "/encounterMetrics/targets/0/dtps/hist/650: Go 43, Rust 60",
-        "/encounterMetrics/targets/0/dtps/hist/660: Go 53, Rust 55",
-        "/encounterMetrics/targets/0/dtps/hist/670: Go 66, Rust 83",
-        "/encounterMetrics/targets/0/dtps/hist/680: Go 87, Rust 95",
-        "/encounterMetrics/targets/0/dtps/hist/690: Go 135, Rust 116",
-        "/encounterMetrics/targets/0/dtps/hist/700: Go 124, Rust 137",
-        "/encounterMetrics/targets/0/dtps/hist/710: Go 139, Rust 155",
-        "/encounterMetrics/targets/0/dtps/hist/720: Go 165, Rust 194"
-      ],
-      "first_log_difference": {
-        "line": 33,
-        "go": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1554.0, RAP: 146.0, SP: 0.0, BaseDamage:421.3, AfterAttackerMods:421.3, AfterResistances:357.8, AfterTargetMods:365.8, AfterOutcome:0.0, AfterPostOutcome:0.0",
-        "rust": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1554.0, RAP: 146.0, SP: 0.0, BaseDamage:458.7, AfterAttackerMods:458.7, AfterResistances:389.6, AfterTargetMods:397.6, AfterOutcome:0.0, AfterPostOutcome:0.0",
-        "go_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.165 --> 1.165) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1554.0, RAP: 146.0, SP: 0.0, BaseDamage:421.3, AfterAttackerMods:421.3, AfterResistances:357.8, AfterTargetMods:365.8, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Miss (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] No available actions!"
-        ],
-        "rust_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.165 --> 1.165) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1554.0, RAP: 146.0, SP: 0.0, BaseDamage:458.7, AfterAttackerMods:458.7, AfterResistances:389.6, AfterTargetMods:397.6, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Dodge (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Aura gained: {SpellID: 1282733}"
-        ]
-      }
+      "rust_dps": 757.4170273081836,
+      "passed": true
     },
     {
       "scenario": "warrior-dps-dps-no-reck-dps-pre-bis",
@@ -11832,12 +11430,9 @@
       "target_level": 63,
       "talents": "30305013-05553005150010501",
       "equipped_items": 17,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Rivenspike Proc\" listens to combat events without an effect"
-      ]
+      "go_dps": 745.5490287417597,
+      "rust_dps": 745.5490287417597,
+      "passed": true
     },
     {
       "scenario": "warrior-dps-dps-no-reck-fury-17-34-0-launch",
@@ -11851,55 +11446,8 @@
       "talents": "30305213-55051105050010501",
       "equipped_items": 17,
       "go_dps": 680.3120702575302,
-      "rust_dps": 677.9125250561763,
-      "passed": false,
-      "differences": [
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/aggregatorData/sumSq: Go 41431732.35483279, Rust 41456466.06743223",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/procsAvg: Go 55.313, Rust 55.149",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsAvg: Go 117.1626342692582, Rust 117.19344852033898",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsStdev: Go 9.13753701491672, Rust 9.193347942293324",
-        "/encounterMetrics/targets/0/dtps/aggregatorData/sumSq: Go 1396381578.1011949, Rust 1386384996.8281922",
-        "/encounterMetrics/targets/0/dtps/avg: Go 680.3120702575302, Rust 677.9125250561763",
-        "/encounterMetrics/targets/0/dtps/hist/500: only in Rust",
-        "/encounterMetrics/targets/0/dtps/hist/510: Go 3, Rust 1",
-        "/encounterMetrics/targets/0/dtps/hist/520: Go 2, Rust 1",
-        "/encounterMetrics/targets/0/dtps/hist/530: Go 1, Rust 3",
-        "/encounterMetrics/targets/0/dtps/hist/550: Go 10, Rust 5",
-        "/encounterMetrics/targets/0/dtps/hist/560: Go 16, Rust 18",
-        "/encounterMetrics/targets/0/dtps/hist/580: Go 23, Rust 44",
-        "/encounterMetrics/targets/0/dtps/hist/590: Go 48, Rust 61",
-        "/encounterMetrics/targets/0/dtps/hist/600: Go 79, Rust 78",
-        "/encounterMetrics/targets/0/dtps/hist/610: Go 101, Rust 91",
-        "/encounterMetrics/targets/0/dtps/hist/620: Go 118, Rust 116",
-        "/encounterMetrics/targets/0/dtps/hist/630: Go 167, Rust 159",
-        "/encounterMetrics/targets/0/dtps/hist/640: Go 168, Rust 194",
-        "/encounterMetrics/targets/0/dtps/hist/650: Go 186, Rust 190"
-      ],
-      "first_log_difference": {
-        "line": 34,
-        "go": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:367.0, AfterAttackerMods:367.0, AfterResistances:311.7, AfterTargetMods:319.7, AfterOutcome:0.0, AfterPostOutcome:0.0",
-        "rust": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:398.8, AfterAttackerMods:398.8, AfterResistances:338.7, AfterTargetMods:346.7, AfterOutcome:0.0, AfterPostOutcome:0.0",
-        "go_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.190 --> 1.190) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:367.0, AfterAttackerMods:367.0, AfterResistances:311.7, AfterTargetMods:319.7, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Miss (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] No available actions!"
-        ],
-        "rust_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.190 --> 1.190) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:398.8, AfterAttackerMods:398.8, AfterResistances:338.7, AfterTargetMods:346.7, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Dodge (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Aura gained: {SpellID: 1282733}"
-        ]
-      }
+      "rust_dps": 680.3120702575302,
+      "passed": true
     },
     {
       "scenario": "warrior-dps-dps-no-reck-fury-17-34-0-launch-arms",
@@ -11913,55 +11461,8 @@
       "talents": "30305213-55051105050010501",
       "equipped_items": 16,
       "go_dps": 579.4478962052458,
-      "rust_dps": 579.1931479554148,
-      "passed": false,
-      "differences": [
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/aggregatorData/sumSq: Go 35679984.02214658, Rust 35827130.84923977",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/procsAvg: Go 26.913, Rust 26.991333333333333",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsAvg: Go 108.44304690603975, Rust 108.66061560009925",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsStdev: Go 11.55134559766329, Rust 11.629598752925993",
-        "/encounterMetrics/targets/0/dtps/aggregatorData/sumSq: Go 1016499005.014082, Rust 1015986567.9638478",
-        "/encounterMetrics/targets/0/dtps/avg: Go 579.4478962052458, Rust 579.1931479554148",
-        "/encounterMetrics/targets/0/dtps/hist/380: Go 1, Rust 2",
-        "/encounterMetrics/targets/0/dtps/hist/390: only in Go",
-        "/encounterMetrics/targets/0/dtps/hist/400: only in Rust",
-        "/encounterMetrics/targets/0/dtps/hist/410: Go 4, Rust 7",
-        "/encounterMetrics/targets/0/dtps/hist/420: Go 3, Rust 2",
-        "/encounterMetrics/targets/0/dtps/hist/430: Go 5, Rust 6",
-        "/encounterMetrics/targets/0/dtps/hist/440: Go 8, Rust 11",
-        "/encounterMetrics/targets/0/dtps/hist/450: Go 16, Rust 13",
-        "/encounterMetrics/targets/0/dtps/hist/460: Go 20, Rust 21",
-        "/encounterMetrics/targets/0/dtps/hist/470: Go 29, Rust 15",
-        "/encounterMetrics/targets/0/dtps/hist/480: Go 46, Rust 48",
-        "/encounterMetrics/targets/0/dtps/hist/490: Go 58, Rust 63",
-        "/encounterMetrics/targets/0/dtps/hist/500: Go 77, Rust 101",
-        "/encounterMetrics/targets/0/dtps/hist/510: Go 101, Rust 108"
-      ],
-      "first_log_difference": {
-        "line": 33,
-        "go": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:599.5, AfterAttackerMods:599.5, AfterResistances:509.1, AfterTargetMods:517.1, AfterOutcome:335.7, AfterPostOutcome:335.7",
-        "rust": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:650.7, AfterAttackerMods:650.7, AfterResistances:552.7, AfterTargetMods:560.7, AfterOutcome:320.0, AfterPostOutcome:320.0",
-        "go_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.187 --> 1.187) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:599.5, AfterAttackerMods:599.5, AfterResistances:509.1, AfterTargetMods:517.1, AfterOutcome:335.7, AfterPostOutcome:335.7",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Glance for 335.679 damage (SpellSchool: 1). (Threat: 268.543)",
-          "[0.09] [warrior (#1)] Gained 16.200 rage from {OtherID: 3, Tag: 1} (1.187 --> 17.387) of 100 total."
-        ],
-        "rust_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.187 --> 1.187) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:650.7, AfterAttackerMods:650.7, AfterResistances:552.7, AfterTargetMods:560.7, AfterOutcome:320.0, AfterPostOutcome:320.0",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Glance for 319.984 damage (SpellSchool: 1). (Threat: 255.987)",
-          "[0.09] [warrior (#1)] Gained 16.200 rage from {OtherID: 3, Tag: 1} (1.187 --> 17.387) of 100 total."
-        ]
-      }
+      "rust_dps": 579.4478962052458,
+      "passed": true
     },
     {
       "scenario": "warrior-dps-dps-no-reck-fury-17-34-0-p1-bis",
@@ -11975,55 +11476,8 @@
       "talents": "30305213-55051105050010501",
       "equipped_items": 17,
       "go_dps": 742.093561729997,
-      "rust_dps": 740.6359811564522,
-      "passed": false,
-      "differences": [
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/aggregatorData/sumSq: Go 41679003.3574435, Rust 41636823.06865145",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/procsAvg: Go 58.999, Rust 58.909",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsAvg: Go 117.51578371107877, Rust 117.45804638265064",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsStdev: Go 9.112721762392706, Rust 9.085612959779224",
-        "/encounterMetrics/targets/0/dtps/aggregatorData/sumSq: Go 1662731848.3284607, Rust 1656585208.2739732",
-        "/encounterMetrics/targets/0/dtps/avg: Go 742.093561729997, Rust 740.6359811564522",
-        "/encounterMetrics/targets/0/dtps/hist/480: only in Go",
-        "/encounterMetrics/targets/0/dtps/hist/550: only in Rust",
-        "/encounterMetrics/targets/0/dtps/hist/560: Go 4, Rust 3",
-        "/encounterMetrics/targets/0/dtps/hist/570: Go 2, Rust 5",
-        "/encounterMetrics/targets/0/dtps/hist/580: Go 6, Rust 9",
-        "/encounterMetrics/targets/0/dtps/hist/590: Go 7, Rust 10",
-        "/encounterMetrics/targets/0/dtps/hist/600: Go 7, Rust 11",
-        "/encounterMetrics/targets/0/dtps/hist/610: Go 12, Rust 16",
-        "/encounterMetrics/targets/0/dtps/hist/620: Go 21, Rust 22",
-        "/encounterMetrics/targets/0/dtps/hist/630: Go 45, Rust 39",
-        "/encounterMetrics/targets/0/dtps/hist/640: Go 56, Rust 35",
-        "/encounterMetrics/targets/0/dtps/hist/650: Go 52, Rust 60",
-        "/encounterMetrics/targets/0/dtps/hist/660: Go 63, Rust 74",
-        "/encounterMetrics/targets/0/dtps/hist/670: Go 118, Rust 111"
-      ],
-      "first_log_difference": {
-        "line": 34,
-        "go": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1558.0, RAP: 146.0, SP: 0.0, BaseDamage:407.0, AfterAttackerMods:407.0, AfterResistances:345.7, AfterTargetMods:353.7, AfterOutcome:0.0, AfterPostOutcome:0.0",
-        "rust": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1558.0, RAP: 146.0, SP: 0.0, BaseDamage:447.2, AfterAttackerMods:447.2, AfterResistances:379.8, AfterTargetMods:387.8, AfterOutcome:0.0, AfterPostOutcome:0.0",
-        "go_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.168 --> 1.168) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1558.0, RAP: 146.0, SP: 0.0, BaseDamage:407.0, AfterAttackerMods:407.0, AfterResistances:345.7, AfterTargetMods:353.7, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Miss (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] No available actions!"
-        ],
-        "rust_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.168 --> 1.168) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1558.0, RAP: 146.0, SP: 0.0, BaseDamage:447.2, AfterAttackerMods:447.2, AfterResistances:379.8, AfterTargetMods:387.8, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Dodge (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Aura gained: {SpellID: 1282733}"
-        ]
-      }
+      "rust_dps": 742.093561729997,
+      "passed": true
     },
     {
       "scenario": "warrior-dps-dps-no-reck-fury-17-34-0-p2-bis",
@@ -12037,55 +11491,8 @@
       "talents": "30305213-55051105050010501",
       "equipped_items": 17,
       "go_dps": 711.5863982768155,
-      "rust_dps": 709.7091567220981,
-      "passed": false,
-      "differences": [
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/aggregatorData/sumSq: Go 41403211.27421814, Rust 41361107.065024525",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/procsAvg: Go 53.902, Rust 53.952",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsAvg: Go 117.11727241781087, Rust 117.06162255406062",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsStdev: Go 9.198637189913436, Rust 9.14397142122365",
-        "/encounterMetrics/targets/0/dtps/aggregatorData/sumSq: Go 1530244222.69083, Rust 1522009001.2223406",
-        "/encounterMetrics/targets/0/dtps/avg: Go 711.5863982768155, Rust 709.7091567220981",
-        "/encounterMetrics/targets/0/dtps/hist/1020: only in Go",
-        "/encounterMetrics/targets/0/dtps/hist/470: only in Go",
-        "/encounterMetrics/targets/0/dtps/hist/490: only in Rust",
-        "/encounterMetrics/targets/0/dtps/hist/500: only in Go",
-        "/encounterMetrics/targets/0/dtps/hist/520: only in Go",
-        "/encounterMetrics/targets/0/dtps/hist/530: Go 6, Rust 2",
-        "/encounterMetrics/targets/0/dtps/hist/540: Go 5, Rust 1",
-        "/encounterMetrics/targets/0/dtps/hist/550: Go 9, Rust 4",
-        "/encounterMetrics/targets/0/dtps/hist/560: Go 6, Rust 7",
-        "/encounterMetrics/targets/0/dtps/hist/570: Go 7, Rust 15",
-        "/encounterMetrics/targets/0/dtps/hist/580: Go 16, Rust 15",
-        "/encounterMetrics/targets/0/dtps/hist/590: Go 38, Rust 28",
-        "/encounterMetrics/targets/0/dtps/hist/600: Go 35, Rust 37",
-        "/encounterMetrics/targets/0/dtps/hist/610: Go 48, Rust 59"
-      ],
-      "first_log_difference": {
-        "line": 34,
-        "go": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1554.0, RAP: 146.0, SP: 0.0, BaseDamage:421.3, AfterAttackerMods:421.3, AfterResistances:357.8, AfterTargetMods:365.8, AfterOutcome:0.0, AfterPostOutcome:0.0",
-        "rust": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1554.0, RAP: 146.0, SP: 0.0, BaseDamage:458.7, AfterAttackerMods:458.7, AfterResistances:389.6, AfterTargetMods:397.6, AfterOutcome:0.0, AfterPostOutcome:0.0",
-        "go_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.165 --> 1.165) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1554.0, RAP: 146.0, SP: 0.0, BaseDamage:421.3, AfterAttackerMods:421.3, AfterResistances:357.8, AfterTargetMods:365.8, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Miss (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] No available actions!"
-        ],
-        "rust_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.165 --> 1.165) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1554.0, RAP: 146.0, SP: 0.0, BaseDamage:458.7, AfterAttackerMods:458.7, AfterResistances:389.6, AfterTargetMods:397.6, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Dodge (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Aura gained: {SpellID: 1282733}"
-        ]
-      }
+      "rust_dps": 711.5863982768155,
+      "passed": true
     },
     {
       "scenario": "warrior-dps-dps-no-reck-fury-17-34-0-pre-bis",
@@ -12098,12 +11505,9 @@
       "target_level": 63,
       "talents": "30305213-55051105050010501",
       "equipped_items": 17,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Rivenspike Proc\" listens to combat events without an effect"
-      ]
+      "go_dps": 704.6678700724872,
+      "rust_dps": 704.6678700724872,
+      "passed": true
     },
     {
       "scenario": "warrior-dps-dps-with-reck-arms-39-12-0-launch",
@@ -12116,12 +11520,9 @@
       "target_level": 63,
       "talents": "32305213132515201-5502",
       "equipped_items": 17,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 12723 without a known behavior"
-      ]
+      "go_dps": 539.847850867872,
+      "rust_dps": 539.847850867872,
+      "passed": true
     },
     {
       "scenario": "warrior-dps-dps-with-reck-arms-39-12-0-launch-arms",
@@ -12134,12 +11535,9 @@
       "target_level": 63,
       "talents": "32305213132515201-5502",
       "equipped_items": 16,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 12723 without a known behavior"
-      ]
+      "go_dps": 542.7980812213439,
+      "rust_dps": 542.7980812213439,
+      "passed": true
     },
     {
       "scenario": "warrior-dps-dps-with-reck-arms-39-12-0-p1-bis",
@@ -12152,12 +11550,9 @@
       "target_level": 63,
       "talents": "32305213132515201-5502",
       "equipped_items": 17,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 12723 without a known behavior"
-      ]
+      "go_dps": 589.1609312795663,
+      "rust_dps": 589.1609312795663,
+      "passed": true
     },
     {
       "scenario": "warrior-dps-dps-with-reck-arms-39-12-0-p2-bis",
@@ -12170,12 +11565,9 @@
       "target_level": 63,
       "talents": "32305213132515201-5502",
       "equipped_items": 17,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 12723 without a known behavior"
-      ]
+      "go_dps": 552.4467825841649,
+      "rust_dps": 552.4467825841649,
+      "passed": true
     },
     {
       "scenario": "warrior-dps-dps-with-reck-arms-39-12-0-pre-bis",
@@ -12188,13 +11580,9 @@
       "target_level": 63,
       "talents": "32305213132515201-5502",
       "equipped_items": 17,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Rivenspike Proc\" listens to combat events without an effect",
-        "rotation reaches spell 12723 without a known behavior"
-      ]
+      "go_dps": 525.3780989057663,
+      "rust_dps": 525.3780989057663,
+      "passed": true
     },
     {
       "scenario": "warrior-dps-dps-with-reck-dps-launch",
@@ -12208,55 +11596,8 @@
       "talents": "30305013-05553005150010501",
       "equipped_items": 17,
       "go_dps": 753.1961127425149,
-      "rust_dps": 750.0550269478674,
-      "passed": false,
-      "differences": [
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/aggregatorData/sumSq: Go 41575480.20654993, Rust 41605168.00010037",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/procsAvg: Go 65.226, Rust 64.97666666666667",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsAvg: Go 117.37236304711197, Rust 117.41303403767881",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsStdev: Go 9.067623443893781, Rust 9.086736016505897",
-        "/encounterMetrics/targets/0/dtps/aggregatorData/sumSq: Go 1709726905.4745886, Rust 1695694876.5290961",
-        "/encounterMetrics/targets/0/dtps/avg: Go 753.1961127425149, Rust 750.0550269478674",
-        "/encounterMetrics/targets/0/dtps/hist/540: only in Rust",
-        "/encounterMetrics/targets/0/dtps/hist/570: only in Go",
-        "/encounterMetrics/targets/0/dtps/hist/580: only in Rust",
-        "/encounterMetrics/targets/0/dtps/hist/590: Go 2, Rust 1",
-        "/encounterMetrics/targets/0/dtps/hist/600: Go 5, Rust 3",
-        "/encounterMetrics/targets/0/dtps/hist/610: Go 3, Rust 6",
-        "/encounterMetrics/targets/0/dtps/hist/620: Go 9, Rust 12",
-        "/encounterMetrics/targets/0/dtps/hist/630: Go 10, Rust 16",
-        "/encounterMetrics/targets/0/dtps/hist/640: Go 23, Rust 28",
-        "/encounterMetrics/targets/0/dtps/hist/650: Go 40, Rust 25",
-        "/encounterMetrics/targets/0/dtps/hist/660: Go 47, Rust 55",
-        "/encounterMetrics/targets/0/dtps/hist/670: Go 51, Rust 85",
-        "/encounterMetrics/targets/0/dtps/hist/680: Go 92, Rust 88",
-        "/encounterMetrics/targets/0/dtps/hist/690: Go 105, Rust 122"
-      ],
-      "first_log_difference": {
-        "line": 33,
-        "go": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:367.0, AfterAttackerMods:367.0, AfterResistances:311.7, AfterTargetMods:319.7, AfterOutcome:0.0, AfterPostOutcome:0.0",
-        "rust": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:398.8, AfterAttackerMods:398.8, AfterResistances:338.7, AfterTargetMods:346.7, AfterOutcome:0.0, AfterPostOutcome:0.0",
-        "go_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.190 --> 1.190) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:367.0, AfterAttackerMods:367.0, AfterResistances:311.7, AfterTargetMods:319.7, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Miss (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] No available actions!"
-        ],
-        "rust_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.190 --> 1.190) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:398.8, AfterAttackerMods:398.8, AfterResistances:338.7, AfterTargetMods:346.7, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Dodge (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Aura gained: {SpellID: 1282733}"
-        ]
-      }
+      "rust_dps": 753.1961127425149,
+      "passed": true
     },
     {
       "scenario": "warrior-dps-dps-with-reck-dps-launch-arms",
@@ -12270,55 +11611,8 @@
       "talents": "30305013-05553005150010501",
       "equipped_items": 16,
       "go_dps": 613.7578378878437,
-      "rust_dps": 613.7962372555064,
-      "passed": false,
-      "differences": [
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/aggregatorData/sumSq: Go 35994548.358054005, Rust 36158701.71899606",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/procsAvg: Go 32.17966666666667, Rust 32.31666666666667",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsAvg: Go 108.94209345156418, Rust 109.1833882799239",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsStdev: Go 11.393114605263118, Rust 11.484263002651213",
-        "/encounterMetrics/targets/0/dtps/aggregatorData/sumSq: Go 1140220641.29877, Rust 1140581381.511854",
-        "/encounterMetrics/targets/0/dtps/avg: Go 613.7578378878437, Rust 613.7962372555064",
-        "/encounterMetrics/targets/0/dtps/hist/410: Go 2, Rust 1",
-        "/encounterMetrics/targets/0/dtps/hist/440: Go 2, Rust 1",
-        "/encounterMetrics/targets/0/dtps/hist/450: Go 1, Rust 5",
-        "/encounterMetrics/targets/0/dtps/hist/460: Go 4, Rust 6",
-        "/encounterMetrics/targets/0/dtps/hist/470: Go 11, Rust 7",
-        "/encounterMetrics/targets/0/dtps/hist/480: Go 15, Rust 18",
-        "/encounterMetrics/targets/0/dtps/hist/490: Go 16, Rust 21",
-        "/encounterMetrics/targets/0/dtps/hist/500: Go 29, Rust 35",
-        "/encounterMetrics/targets/0/dtps/hist/510: Go 46, Rust 43",
-        "/encounterMetrics/targets/0/dtps/hist/520: Go 55, Rust 62",
-        "/encounterMetrics/targets/0/dtps/hist/530: Go 70, Rust 78",
-        "/encounterMetrics/targets/0/dtps/hist/540: Go 96, Rust 91",
-        "/encounterMetrics/targets/0/dtps/hist/550: Go 110, Rust 112",
-        "/encounterMetrics/targets/0/dtps/hist/560: Go 133, Rust 122"
-      ],
-      "first_log_difference": {
-        "line": 32,
-        "go": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:599.5, AfterAttackerMods:599.5, AfterResistances:509.1, AfterTargetMods:517.1, AfterOutcome:335.7, AfterPostOutcome:335.7",
-        "rust": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:650.7, AfterAttackerMods:650.7, AfterResistances:552.7, AfterTargetMods:560.7, AfterOutcome:320.0, AfterPostOutcome:320.0",
-        "go_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.187 --> 1.187) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:599.5, AfterAttackerMods:599.5, AfterResistances:509.1, AfterTargetMods:517.1, AfterOutcome:335.7, AfterPostOutcome:335.7",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Glance for 335.679 damage (SpellSchool: 1). (Threat: 268.543)",
-          "[0.09] [warrior (#1)] Gained 16.200 rage from {OtherID: 3, Tag: 1} (1.187 --> 17.387) of 100 total."
-        ],
-        "rust_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.187 --> 1.187) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:650.7, AfterAttackerMods:650.7, AfterResistances:552.7, AfterTargetMods:560.7, AfterOutcome:320.0, AfterPostOutcome:320.0",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Glance for 319.984 damage (SpellSchool: 1). (Threat: 255.987)",
-          "[0.09] [warrior (#1)] Gained 16.200 rage from {OtherID: 3, Tag: 1} (1.187 --> 17.387) of 100 total."
-        ]
-      }
+      "rust_dps": 613.7578378878437,
+      "passed": true
     },
     {
       "scenario": "warrior-dps-dps-with-reck-dps-p1-bis",
@@ -12332,55 +11626,8 @@
       "talents": "30305013-05553005150010501",
       "equipped_items": 17,
       "go_dps": 817.7930556967013,
-      "rust_dps": 812.9067255239972,
-      "passed": false,
-      "differences": [
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/aggregatorData/sumSq: Go 41786495.33280071, Rust 41761916.49123253",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/procsAvg: Go 68.343, Rust 67.89733333333334",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsAvg: Go 117.67190125701194, Rust 117.64028115204091",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsStdev: Go 9.06396338034686, Rust 9.02236559221641",
-        "/encounterMetrics/targets/0/dtps/aggregatorData/sumSq: Go 2017216386.8101325, Rust 1993566551.5932665",
-        "/encounterMetrics/targets/0/dtps/avg: Go 817.7930556967013, Rust 812.9067255239972",
-        "/encounterMetrics/targets/0/dtps/hist/1000: only in Go",
-        "/encounterMetrics/targets/0/dtps/hist/1010: only in Go",
-        "/encounterMetrics/targets/0/dtps/hist/1020: only in Go",
-        "/encounterMetrics/targets/0/dtps/hist/1030: only in Go",
-        "/encounterMetrics/targets/0/dtps/hist/1050: only in Rust",
-        "/encounterMetrics/targets/0/dtps/hist/1070: only in Rust",
-        "/encounterMetrics/targets/0/dtps/hist/610: only in Rust",
-        "/encounterMetrics/targets/0/dtps/hist/630: only in Go",
-        "/encounterMetrics/targets/0/dtps/hist/640: Go 2, Rust 7",
-        "/encounterMetrics/targets/0/dtps/hist/650: Go 2, Rust 6",
-        "/encounterMetrics/targets/0/dtps/hist/660: Go 8, Rust 4",
-        "/encounterMetrics/targets/0/dtps/hist/670: Go 9, Rust 12",
-        "/encounterMetrics/targets/0/dtps/hist/680: Go 19, Rust 18",
-        "/encounterMetrics/targets/0/dtps/hist/690: Go 18, Rust 26"
-      ],
-      "first_log_difference": {
-        "line": 33,
-        "go": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1558.0, RAP: 146.0, SP: 0.0, BaseDamage:407.0, AfterAttackerMods:407.0, AfterResistances:345.7, AfterTargetMods:353.7, AfterOutcome:0.0, AfterPostOutcome:0.0",
-        "rust": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1558.0, RAP: 146.0, SP: 0.0, BaseDamage:447.2, AfterAttackerMods:447.2, AfterResistances:379.8, AfterTargetMods:387.8, AfterOutcome:0.0, AfterPostOutcome:0.0",
-        "go_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.168 --> 1.168) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1558.0, RAP: 146.0, SP: 0.0, BaseDamage:407.0, AfterAttackerMods:407.0, AfterResistances:345.7, AfterTargetMods:353.7, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Miss (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] No available actions!"
-        ],
-        "rust_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.168 --> 1.168) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1558.0, RAP: 146.0, SP: 0.0, BaseDamage:447.2, AfterAttackerMods:447.2, AfterResistances:379.8, AfterTargetMods:387.8, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Dodge (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Aura gained: {SpellID: 1282733}"
-        ]
-      }
+      "rust_dps": 817.7930556967013,
+      "passed": true
     },
     {
       "scenario": "warrior-dps-dps-with-reck-dps-p2-bis",
@@ -12394,55 +11641,8 @@
       "talents": "30305013-05553005150010501",
       "equipped_items": 17,
       "go_dps": 790.6448220090658,
-      "rust_dps": 786.2320545776204,
-      "passed": false,
-      "differences": [
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/aggregatorData/sumSq: Go 41505294.35037805, Rust 41494716.19010357",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/procsAvg: Go 63.26766666666666, Rust 62.939",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsAvg: Go 117.27000000200644, Rust 117.2597536517207",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsStdev: Go 9.101934757077379, Rust 9.040035227012611",
-        "/encounterMetrics/targets/0/dtps/aggregatorData/sumSq: Go 1886743722.429531, Rust 1865768147.2858732",
-        "/encounterMetrics/targets/0/dtps/avg: Go 790.6448220090658, Rust 786.2320545776204",
-        "/encounterMetrics/targets/0/dtps/hist/1020: only in Rust",
-        "/encounterMetrics/targets/0/dtps/hist/580: only in Rust",
-        "/encounterMetrics/targets/0/dtps/hist/600: only in Go",
-        "/encounterMetrics/targets/0/dtps/hist/610: only in Rust",
-        "/encounterMetrics/targets/0/dtps/hist/630: Go 7, Rust 5",
-        "/encounterMetrics/targets/0/dtps/hist/640: Go 13, Rust 9",
-        "/encounterMetrics/targets/0/dtps/hist/660: Go 13, Rust 26",
-        "/encounterMetrics/targets/0/dtps/hist/670: Go 32, Rust 40",
-        "/encounterMetrics/targets/0/dtps/hist/680: Go 36, Rust 39",
-        "/encounterMetrics/targets/0/dtps/hist/690: Go 50, Rust 69",
-        "/encounterMetrics/targets/0/dtps/hist/700: Go 68, Rust 76",
-        "/encounterMetrics/targets/0/dtps/hist/710: Go 89, Rust 85",
-        "/encounterMetrics/targets/0/dtps/hist/720: Go 98, Rust 107",
-        "/encounterMetrics/targets/0/dtps/hist/730: Go 129, Rust 130"
-      ],
-      "first_log_difference": {
-        "line": 33,
-        "go": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1554.0, RAP: 146.0, SP: 0.0, BaseDamage:421.3, AfterAttackerMods:421.3, AfterResistances:357.8, AfterTargetMods:365.8, AfterOutcome:0.0, AfterPostOutcome:0.0",
-        "rust": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1554.0, RAP: 146.0, SP: 0.0, BaseDamage:458.7, AfterAttackerMods:458.7, AfterResistances:389.6, AfterTargetMods:397.6, AfterOutcome:0.0, AfterPostOutcome:0.0",
-        "go_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.165 --> 1.165) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1554.0, RAP: 146.0, SP: 0.0, BaseDamage:421.3, AfterAttackerMods:421.3, AfterResistances:357.8, AfterTargetMods:365.8, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Miss (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] No available actions!"
-        ],
-        "rust_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.165 --> 1.165) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1554.0, RAP: 146.0, SP: 0.0, BaseDamage:458.7, AfterAttackerMods:458.7, AfterResistances:389.6, AfterTargetMods:397.6, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Dodge (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Aura gained: {SpellID: 1282733}"
-        ]
-      }
+      "rust_dps": 790.6448220090658,
+      "passed": true
     },
     {
       "scenario": "warrior-dps-dps-with-reck-dps-pre-bis",
@@ -12455,12 +11655,9 @@
       "target_level": 63,
       "talents": "30305013-05553005150010501",
       "equipped_items": 17,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Rivenspike Proc\" listens to combat events without an effect"
-      ]
+      "go_dps": 778.5076222738134,
+      "rust_dps": 778.5076222738134,
+      "passed": true
     },
     {
       "scenario": "warrior-dps-dps-with-reck-fury-17-34-0-launch",
@@ -12474,55 +11671,8 @@
       "talents": "30305213-55051105050010501",
       "equipped_items": 17,
       "go_dps": 712.9424045486929,
-      "rust_dps": 711.5920055506625,
-      "passed": false,
-      "differences": [
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/aggregatorData/sumSq: Go 41456396.51416542, Rust 41487740.17682291",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/procsAvg: Go 61.644, Rust 61.626",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsAvg: Go 117.19780463701048, Rust 117.23832408102598",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsStdev: Go 9.136379278481437, Rust 9.188149556899884",
-        "/encounterMetrics/targets/0/dtps/aggregatorData/sumSq: Go 1532986484.1087248, Rust 1526865783.1877983",
-        "/encounterMetrics/targets/0/dtps/avg: Go 712.9424045486929, Rust 711.5920055506625",
-        "/encounterMetrics/targets/0/dtps/hist/510: only in Go",
-        "/encounterMetrics/targets/0/dtps/hist/520: only in Rust",
-        "/encounterMetrics/targets/0/dtps/hist/540: only in Rust",
-        "/encounterMetrics/targets/0/dtps/hist/550: only in Rust",
-        "/encounterMetrics/targets/0/dtps/hist/570: Go 9, Rust 4",
-        "/encounterMetrics/targets/0/dtps/hist/590: Go 6, Rust 11",
-        "/encounterMetrics/targets/0/dtps/hist/610: Go 35, Rust 28",
-        "/encounterMetrics/targets/0/dtps/hist/620: Go 52, Rust 48",
-        "/encounterMetrics/targets/0/dtps/hist/630: Go 63, Rust 75",
-        "/encounterMetrics/targets/0/dtps/hist/640: Go 97, Rust 77",
-        "/encounterMetrics/targets/0/dtps/hist/650: Go 114, Rust 120",
-        "/encounterMetrics/targets/0/dtps/hist/660: Go 153, Rust 148",
-        "/encounterMetrics/targets/0/dtps/hist/670: Go 167, Rust 165",
-        "/encounterMetrics/targets/0/dtps/hist/680: Go 173, Rust 198"
-      ],
-      "first_log_difference": {
-        "line": 34,
-        "go": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:367.0, AfterAttackerMods:367.0, AfterResistances:311.7, AfterTargetMods:319.7, AfterOutcome:0.0, AfterPostOutcome:0.0",
-        "rust": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:398.8, AfterAttackerMods:398.8, AfterResistances:338.7, AfterTargetMods:346.7, AfterOutcome:0.0, AfterPostOutcome:0.0",
-        "go_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.190 --> 1.190) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:367.0, AfterAttackerMods:367.0, AfterResistances:311.7, AfterTargetMods:319.7, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Miss (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] No available actions!"
-        ],
-        "rust_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.190 --> 1.190) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:398.8, AfterAttackerMods:398.8, AfterResistances:338.7, AfterTargetMods:346.7, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Dodge (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Aura gained: {SpellID: 1282733}"
-        ]
-      }
+      "rust_dps": 712.9424045486929,
+      "passed": true
     },
     {
       "scenario": "warrior-dps-dps-with-reck-fury-17-34-0-launch-arms",
@@ -12536,55 +11686,8 @@
       "talents": "30305213-55051105050010501",
       "equipped_items": 16,
       "go_dps": 613.7578378878437,
-      "rust_dps": 613.7962372555064,
-      "passed": false,
-      "differences": [
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/aggregatorData/sumSq: Go 35994548.358054005, Rust 36158701.71899606",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/procsAvg: Go 32.17966666666667, Rust 32.31666666666667",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsAvg: Go 108.94209345156418, Rust 109.1833882799239",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsStdev: Go 11.393114605263118, Rust 11.484263002651213",
-        "/encounterMetrics/targets/0/dtps/aggregatorData/sumSq: Go 1140220641.29877, Rust 1140581381.511854",
-        "/encounterMetrics/targets/0/dtps/avg: Go 613.7578378878437, Rust 613.7962372555064",
-        "/encounterMetrics/targets/0/dtps/hist/410: Go 2, Rust 1",
-        "/encounterMetrics/targets/0/dtps/hist/440: Go 2, Rust 1",
-        "/encounterMetrics/targets/0/dtps/hist/450: Go 1, Rust 5",
-        "/encounterMetrics/targets/0/dtps/hist/460: Go 4, Rust 6",
-        "/encounterMetrics/targets/0/dtps/hist/470: Go 11, Rust 7",
-        "/encounterMetrics/targets/0/dtps/hist/480: Go 15, Rust 18",
-        "/encounterMetrics/targets/0/dtps/hist/490: Go 16, Rust 21",
-        "/encounterMetrics/targets/0/dtps/hist/500: Go 29, Rust 35",
-        "/encounterMetrics/targets/0/dtps/hist/510: Go 46, Rust 43",
-        "/encounterMetrics/targets/0/dtps/hist/520: Go 55, Rust 62",
-        "/encounterMetrics/targets/0/dtps/hist/530: Go 70, Rust 78",
-        "/encounterMetrics/targets/0/dtps/hist/540: Go 96, Rust 91",
-        "/encounterMetrics/targets/0/dtps/hist/550: Go 110, Rust 112",
-        "/encounterMetrics/targets/0/dtps/hist/560: Go 133, Rust 122"
-      ],
-      "first_log_difference": {
-        "line": 33,
-        "go": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:599.5, AfterAttackerMods:599.5, AfterResistances:509.1, AfterTargetMods:517.1, AfterOutcome:335.7, AfterPostOutcome:335.7",
-        "rust": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:650.7, AfterAttackerMods:650.7, AfterResistances:552.7, AfterTargetMods:560.7, AfterOutcome:320.0, AfterPostOutcome:320.0",
-        "go_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.187 --> 1.187) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:599.5, AfterAttackerMods:599.5, AfterResistances:509.1, AfterTargetMods:517.1, AfterOutcome:335.7, AfterPostOutcome:335.7",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Glance for 335.679 damage (SpellSchool: 1). (Threat: 268.543)",
-          "[0.09] [warrior (#1)] Gained 16.200 rage from {OtherID: 3, Tag: 1} (1.187 --> 17.387) of 100 total."
-        ],
-        "rust_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.187 --> 1.187) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1598.0, RAP: 78.0, SP: 0.0, BaseDamage:650.7, AfterAttackerMods:650.7, AfterResistances:552.7, AfterTargetMods:560.7, AfterOutcome:320.0, AfterPostOutcome:320.0",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Glance for 319.984 damage (SpellSchool: 1). (Threat: 255.987)",
-          "[0.09] [warrior (#1)] Gained 16.200 rage from {OtherID: 3, Tag: 1} (1.187 --> 17.387) of 100 total."
-        ]
-      }
+      "rust_dps": 613.7578378878437,
+      "passed": true
     },
     {
       "scenario": "warrior-dps-dps-with-reck-fury-17-34-0-p1-bis",
@@ -12598,55 +11701,8 @@
       "talents": "30305213-55051105050010501",
       "equipped_items": 17,
       "go_dps": 770.7130747986736,
-      "rust_dps": 769.6211140303443,
-      "passed": false,
-      "differences": [
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/aggregatorData/sumSq: Go 41691133.23335214, Rust 41655763.34595204",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/procsAvg: Go 64.49866666666667, Rust 64.407",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsAvg: Go 117.53361455434342, Rust 117.48470357183596",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsStdev: Go 9.104606576256536, Rust 9.088392337950372",
-        "/encounterMetrics/targets/0/dtps/aggregatorData/sumSq: Go 1792946632.675625, Rust 1787934383.60458",
-        "/encounterMetrics/targets/0/dtps/avg: Go 770.7130747986736, Rust 769.6211140303443",
-        "/encounterMetrics/targets/0/dtps/hist/1000: Go 2, Rust 1",
-        "/encounterMetrics/targets/0/dtps/hist/530: only in Go",
-        "/encounterMetrics/targets/0/dtps/hist/570: only in Rust",
-        "/encounterMetrics/targets/0/dtps/hist/580: Go 3, Rust 1",
-        "/encounterMetrics/targets/0/dtps/hist/590: only in Rust",
-        "/encounterMetrics/targets/0/dtps/hist/600: Go 4, Rust 2",
-        "/encounterMetrics/targets/0/dtps/hist/610: Go 4, Rust 5",
-        "/encounterMetrics/targets/0/dtps/hist/630: Go 14, Rust 18",
-        "/encounterMetrics/targets/0/dtps/hist/640: Go 19, Rust 12",
-        "/encounterMetrics/targets/0/dtps/hist/650: Go 27, Rust 24",
-        "/encounterMetrics/targets/0/dtps/hist/660: Go 36, Rust 35",
-        "/encounterMetrics/targets/0/dtps/hist/670: Go 51, Rust 49",
-        "/encounterMetrics/targets/0/dtps/hist/680: Go 58, Rust 70",
-        "/encounterMetrics/targets/0/dtps/hist/690: Go 63, Rust 89"
-      ],
-      "first_log_difference": {
-        "line": 34,
-        "go": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1558.0, RAP: 146.0, SP: 0.0, BaseDamage:407.0, AfterAttackerMods:407.0, AfterResistances:345.7, AfterTargetMods:353.7, AfterOutcome:0.0, AfterPostOutcome:0.0",
-        "rust": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1558.0, RAP: 146.0, SP: 0.0, BaseDamage:447.2, AfterAttackerMods:447.2, AfterResistances:379.8, AfterTargetMods:387.8, AfterOutcome:0.0, AfterPostOutcome:0.0",
-        "go_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.168 --> 1.168) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1558.0, RAP: 146.0, SP: 0.0, BaseDamage:407.0, AfterAttackerMods:407.0, AfterResistances:345.7, AfterTargetMods:353.7, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Miss (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] No available actions!"
-        ],
-        "rust_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.168 --> 1.168) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1558.0, RAP: 146.0, SP: 0.0, BaseDamage:447.2, AfterAttackerMods:447.2, AfterResistances:379.8, AfterTargetMods:387.8, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Dodge (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Aura gained: {SpellID: 1282733}"
-        ]
-      }
+      "rust_dps": 770.7130747986736,
+      "passed": true
     },
     {
       "scenario": "warrior-dps-dps-with-reck-fury-17-34-0-p2-bis",
@@ -12660,55 +11716,8 @@
       "talents": "30305213-55051105050010501",
       "equipped_items": 17,
       "go_dps": 741.214006150264,
-      "rust_dps": 740.0017027544206,
-      "passed": false,
-      "differences": [
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/aggregatorData/sumSq: Go 41432835.03915308, Rust 41393956.04897462",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/procsAvg: Go 59.262, Rust 59.394666666666666",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsAvg: Go 117.16101341602322, Rust 117.10965891304724",
-        "/encounterMetrics/targets/0/auras/{\"spellId\": 412609}/uptimeSecondsStdev: Go 9.17834126525328, Rust 9.127603131597068",
-        "/encounterMetrics/targets/0/dtps/aggregatorData/sumSq: Go 1659684917.7623205, Rust 1654054186.4613726",
-        "/encounterMetrics/targets/0/dtps/avg: Go 741.214006150264, Rust 740.0017027544206",
-        "/encounterMetrics/targets/0/dtps/hist/1020: only in Go",
-        "/encounterMetrics/targets/0/dtps/hist/530: only in Go",
-        "/encounterMetrics/targets/0/dtps/hist/540: Go 2, Rust 1",
-        "/encounterMetrics/targets/0/dtps/hist/550: Go 4, Rust 1",
-        "/encounterMetrics/targets/0/dtps/hist/560: Go 4, Rust 1",
-        "/encounterMetrics/targets/0/dtps/hist/570: Go 5, Rust 4",
-        "/encounterMetrics/targets/0/dtps/hist/580: Go 8, Rust 6",
-        "/encounterMetrics/targets/0/dtps/hist/590: Go 12, Rust 7",
-        "/encounterMetrics/targets/0/dtps/hist/600: Go 12, Rust 15",
-        "/encounterMetrics/targets/0/dtps/hist/610: Go 13, Rust 19",
-        "/encounterMetrics/targets/0/dtps/hist/620: Go 24, Rust 32",
-        "/encounterMetrics/targets/0/dtps/hist/630: Go 35, Rust 37",
-        "/encounterMetrics/targets/0/dtps/hist/640: Go 56, Rust 46",
-        "/encounterMetrics/targets/0/dtps/hist/650: Go 52, Rust 78"
-      ],
-      "first_log_difference": {
-        "line": 34,
-        "go": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1554.0, RAP: 146.0, SP: 0.0, BaseDamage:421.3, AfterAttackerMods:421.3, AfterResistances:357.8, AfterTargetMods:365.8, AfterOutcome:0.0, AfterPostOutcome:0.0",
-        "rust": "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1554.0, RAP: 146.0, SP: 0.0, BaseDamage:458.7, AfterAttackerMods:458.7, AfterResistances:389.6, AfterTargetMods:397.6, AfterOutcome:0.0, AfterPostOutcome:0.0",
-        "go_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.165 --> 1.165) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1554.0, RAP: 146.0, SP: 0.0, BaseDamage:421.3, AfterAttackerMods:421.3, AfterResistances:357.8, AfterTargetMods:365.8, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Miss (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] No available actions!"
-        ],
-        "rust_context": [
-          "[0.00] [warrior (#1)] Completed cast {SpellID: 25289}",
-          "[0.00] [warrior (#1)] Spent 10.000 rage from {SpellID: 25289} (11.165 --> 1.165) of 100 total.",
-          "[0.00] [warrior (#1)] [Target 1] {SpellID: 25289} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1554.0, RAP: 146.0, SP: 0.0, BaseDamage:458.7, AfterAttackerMods:458.7, AfterResistances:389.6, AfterTargetMods:397.6, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.09] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} Dodge (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [warrior (#1)] Aura gained: {SpellID: 1282733}"
-        ]
-      }
+      "rust_dps": 741.214006150264,
+      "passed": true
     },
     {
       "scenario": "warrior-dps-dps-with-reck-fury-17-34-0-pre-bis",
@@ -12721,12 +11730,9 @@
       "target_level": 63,
       "talents": "30305213-55051105050010501",
       "equipped_items": 17,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Rivenspike Proc\" listens to combat events without an effect"
-      ]
+      "go_dps": 733.9738126226813,
+      "rust_dps": 733.9738126226813,
+      "passed": true
     },
     {
       "scenario": "warrior-protection-dps-no-reck-protection-1-0-50-launch",
@@ -12739,14 +11745,9 @@
       "target_level": 63,
       "talents": "1--255533123331221351",
       "equipped_items": 17,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Premier High Warlord's Shield Wall\" listens to combat events without an effect",
-        "player aura \"Improved Shield Bash\" listens to combat events without an effect",
-        "player aura \"Premier High Warlord's Shield Wall\" reacts to the target's swings"
-      ]
+      "go_dps": 330.90727255426197,
+      "rust_dps": 330.90727255426197,
+      "passed": true
     },
     {
       "scenario": "warrior-protection-dps-no-reck-protection-1-0-50-p1-bis",
@@ -12759,14 +11760,9 @@
       "target_level": 63,
       "talents": "1--255533123331221351",
       "equipped_items": 8,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Battlegear of Might 5P\" listens to combat events without an effect",
-        "player aura \"Improved Shield Bash\" listens to combat events without an effect",
-        "player aura \"Battlegear of Might 5P\" reacts to the target's swings"
-      ]
+      "go_dps": 182.2216778812857,
+      "rust_dps": 182.2216778812857,
+      "passed": true
     },
     {
       "scenario": "warrior-protection-dps-no-reck-protection-1-0-50-pre-bis",
@@ -12779,13 +11775,9 @@
       "target_level": 63,
       "talents": "1--255533123331221351",
       "equipped_items": 8,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Battlegear of Valor 5P\" listens to combat events without an effect",
-        "player aura \"Improved Shield Bash\" listens to combat events without an effect"
-      ]
+      "go_dps": 190.18773163703926,
+      "rust_dps": 190.18773163703926,
+      "passed": true
     },
     {
       "scenario": "warrior-protection-dps-no-reck-protection-launch",
@@ -12798,14 +11790,9 @@
       "target_level": 63,
       "talents": "31--255533123330201351",
       "equipped_items": 17,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Premier High Warlord's Shield Wall\" listens to combat events without an effect",
-        "player aura \"Improved Shield Bash\" listens to combat events without an effect",
-        "player aura \"Premier High Warlord's Shield Wall\" reacts to the target's swings"
-      ]
+      "go_dps": 334.0768296456493,
+      "rust_dps": 334.0768296456493,
+      "passed": true
     },
     {
       "scenario": "warrior-protection-dps-no-reck-protection-p1-bis",
@@ -12818,14 +11805,9 @@
       "target_level": 63,
       "talents": "31--255533123330201351",
       "equipped_items": 8,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Battlegear of Might 5P\" listens to combat events without an effect",
-        "player aura \"Improved Shield Bash\" listens to combat events without an effect",
-        "player aura \"Battlegear of Might 5P\" reacts to the target's swings"
-      ]
+      "go_dps": 179.74416711930562,
+      "rust_dps": 179.74416711930562,
+      "passed": true
     },
     {
       "scenario": "warrior-protection-dps-no-reck-protection-pre-bis",
@@ -12838,13 +11820,9 @@
       "target_level": 63,
       "talents": "31--255533123330201351",
       "equipped_items": 8,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Battlegear of Valor 5P\" listens to combat events without an effect",
-        "player aura \"Improved Shield Bash\" listens to combat events without an effect"
-      ]
+      "go_dps": 188.54884026773763,
+      "rust_dps": 188.54884026773763,
+      "passed": true
     },
     {
       "scenario": "warrior-protection-dps-with-reck-protection-1-0-50-launch",
@@ -12857,14 +11835,9 @@
       "target_level": 63,
       "talents": "1--255533123331221351",
       "equipped_items": 17,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Premier High Warlord's Shield Wall\" listens to combat events without an effect",
-        "player aura \"Improved Shield Bash\" listens to combat events without an effect",
-        "player aura \"Premier High Warlord's Shield Wall\" reacts to the target's swings"
-      ]
+      "go_dps": 359.77602910392653,
+      "rust_dps": 359.77602910392653,
+      "passed": true
     },
     {
       "scenario": "warrior-protection-dps-with-reck-protection-1-0-50-p1-bis",
@@ -12877,14 +11850,9 @@
       "target_level": 63,
       "talents": "1--255533123331221351",
       "equipped_items": 8,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Battlegear of Might 5P\" listens to combat events without an effect",
-        "player aura \"Improved Shield Bash\" listens to combat events without an effect",
-        "player aura \"Battlegear of Might 5P\" reacts to the target's swings"
-      ]
+      "go_dps": 204.94816058635354,
+      "rust_dps": 204.94816058635354,
+      "passed": true
     },
     {
       "scenario": "warrior-protection-dps-with-reck-protection-1-0-50-pre-bis",
@@ -12897,13 +11865,9 @@
       "target_level": 63,
       "talents": "1--255533123331221351",
       "equipped_items": 8,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Battlegear of Valor 5P\" listens to combat events without an effect",
-        "player aura \"Improved Shield Bash\" listens to combat events without an effect"
-      ]
+      "go_dps": 211.86658617234514,
+      "rust_dps": 211.86658617234514,
+      "passed": true
     },
     {
       "scenario": "warrior-protection-dps-with-reck-protection-launch",
@@ -12916,14 +11880,9 @@
       "target_level": 63,
       "talents": "31--255533123330201351",
       "equipped_items": 17,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Premier High Warlord's Shield Wall\" listens to combat events without an effect",
-        "player aura \"Improved Shield Bash\" listens to combat events without an effect",
-        "player aura \"Premier High Warlord's Shield Wall\" reacts to the target's swings"
-      ]
+      "go_dps": 362.9415404448699,
+      "rust_dps": 362.9415404448699,
+      "passed": true
     },
     {
       "scenario": "warrior-protection-dps-with-reck-protection-p1-bis",
@@ -12936,14 +11895,9 @@
       "target_level": 63,
       "talents": "31--255533123330201351",
       "equipped_items": 8,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Battlegear of Might 5P\" listens to combat events without an effect",
-        "player aura \"Improved Shield Bash\" listens to combat events without an effect",
-        "player aura \"Battlegear of Might 5P\" reacts to the target's swings"
-      ]
+      "go_dps": 201.9114491402925,
+      "rust_dps": 201.9114491402925,
+      "passed": true
     },
     {
       "scenario": "warrior-protection-dps-with-reck-protection-pre-bis",
@@ -12956,13 +11910,9 @@
       "target_level": 63,
       "talents": "31--255533123330201351",
       "equipped_items": 8,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Battlegear of Valor 5P\" listens to combat events without an effect",
-        "player aura \"Improved Shield Bash\" listens to combat events without an effect"
-      ]
+      "go_dps": 209.34488777656875,
+      "rust_dps": 209.34488777656875,
+      "passed": true
     },
     {
       "scenario": "warrior-protection-protection-protection-1-0-50-launch",
@@ -12975,14 +11925,9 @@
       "target_level": 63,
       "talents": "1--255533123331221351",
       "equipped_items": 17,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Premier High Warlord's Shield Wall\" listens to combat events without an effect",
-        "player aura \"Improved Shield Bash\" listens to combat events without an effect",
-        "player aura \"Premier High Warlord's Shield Wall\" reacts to the target's swings"
-      ]
+      "go_dps": 389.56972874837913,
+      "rust_dps": 389.56972874837913,
+      "passed": true
     },
     {
       "scenario": "warrior-protection-protection-protection-1-0-50-p1-bis",
@@ -12995,14 +11940,9 @@
       "target_level": 63,
       "talents": "1--255533123331221351",
       "equipped_items": 8,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Battlegear of Might 5P\" listens to combat events without an effect",
-        "player aura \"Improved Shield Bash\" listens to combat events without an effect",
-        "player aura \"Battlegear of Might 5P\" reacts to the target's swings"
-      ]
+      "go_dps": 179.0749210133195,
+      "rust_dps": 179.0749210133195,
+      "passed": true
     },
     {
       "scenario": "warrior-protection-protection-protection-1-0-50-pre-bis",
@@ -13015,13 +11955,9 @@
       "target_level": 63,
       "talents": "1--255533123331221351",
       "equipped_items": 8,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Battlegear of Valor 5P\" listens to combat events without an effect",
-        "player aura \"Improved Shield Bash\" listens to combat events without an effect"
-      ]
+      "go_dps": 179.30789841389762,
+      "rust_dps": 179.30789841389762,
+      "passed": true
     },
     {
       "scenario": "warrior-protection-protection-protection-launch",
@@ -13034,14 +11970,9 @@
       "target_level": 63,
       "talents": "31--255533123330201351",
       "equipped_items": 17,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Premier High Warlord's Shield Wall\" listens to combat events without an effect",
-        "player aura \"Improved Shield Bash\" listens to combat events without an effect",
-        "player aura \"Premier High Warlord's Shield Wall\" reacts to the target's swings"
-      ]
+      "go_dps": 394.33747134093164,
+      "rust_dps": 394.33747134093164,
+      "passed": true
     },
     {
       "scenario": "warrior-protection-protection-protection-p1-bis",
@@ -13054,14 +11985,9 @@
       "target_level": 63,
       "talents": "31--255533123330201351",
       "equipped_items": 8,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Battlegear of Might 5P\" listens to combat events without an effect",
-        "player aura \"Improved Shield Bash\" listens to combat events without an effect",
-        "player aura \"Battlegear of Might 5P\" reacts to the target's swings"
-      ]
+      "go_dps": 186.5599016323091,
+      "rust_dps": 186.5599016323091,
+      "passed": true
     },
     {
       "scenario": "warrior-protection-protection-protection-pre-bis",
@@ -13074,13 +12000,9 @@
       "target_level": 63,
       "talents": "31--255533123330201351",
       "equipped_items": 8,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Battlegear of Valor 5P\" listens to combat events without an effect",
-        "player aura \"Improved Shield Bash\" listens to combat events without an effect"
-      ]
+      "go_dps": 188.35681296059815,
+      "rust_dps": 188.35681296059815,
+      "passed": true
     }
   ]
 }

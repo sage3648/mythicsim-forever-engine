@@ -25,7 +25,8 @@
   "Fixed in this branch from the first run (868 matched, 31 rejected): a caster's party Windfury Totem, which Go gives no extra attack and no spell can trigger, was unrepresented (10 variants); a party Grace of Air beside a party Windfury Totem was unrepresented, although Go's air totem slot lets Windfury Totem displace it during the reset (18 variants); Rust now turns the Windfury Totem trigger on in the totem's exclusive effect, after the displacement, as Go does; and the exporter keeps a spell action ID that is only a tag, which Go lists in the metrics.",
   "The three Warlock variants with the raid's Curse of the Elements, rejected before, match since the Warlock owner's fix (22219e5): the raid's curse holds the exclusive category, so Go blocks the Warlock's own curse on every landed cast and the production rotations recast it every GCD, at a much lower DPS.",
   "Rerun against the coordinator branch at 0705079, which carries this branch's fixes and the Warlock fix; regression fixtures balance-druid-party-windfury-totem and warrior-party-grace-of-air-and-windfury.",
-  "The builder only switches assumptions off; turning one on and the tristate levels go beyond it, as requests a user can send through the API."
+  "The builder only switches assumptions off; turning one on and the tristate levels go beyond it, as requests a user can send through the API.",
+  "Rerun at the coordinator branch at a3dbc766d (validation/2026-10-04-integration-regression-a3dbc76.json): 899 matched, 0 rejected, 0 mismatched."
  ],
  "cases": [
   {
