@@ -1665,7 +1665,7 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 		effects = append(effects, map[string]any{"kind": "chance_of_death", "aura": core.ChanceOfDeathAuraLabel})
 	}
 	effects = append(effects, meleeItemListeners(character)...)
-	effects = append(effects, hitTakenItemListeners(character)...)
+	effects = append(effects, hitTakenItemListeners(character, tanking, &unrepresented)...)
 	// A class's inert listener of hits the player takes acts once anything hits the player: the
 	// target's swings when it tanks the player, or the Goblin Sapper Charge's self hit. Only the
 	// listeners vetted for those hits stay inert: the pushback trigger, since a hardcast keeps
@@ -1852,14 +1852,16 @@ func meleeItemListeners(character *core.Character) []map[string]any {
 // items_store_gaps.go (The Lion Horn of Stormwind), and Uther's Strength and the chest absorption
 // enchants, whose trigger rows spelldata decodes (stat_bonus_procs_auto_gen.go, enchants_auto_gen.go).
 // Only the target's swings land melee hits on the player, which the tanking check below reports; a
-// Goblin Sapper's hit on the thrower is spell damage.
+// Goblin Sapper's hit on the thrower is spell damage. The absorb row of the ones
+// shared.NewSpellDataAbsorbProc builds lets a tank's proc be described.
 var hitTakenItemProcs = []struct {
-	label   string
-	trigger int32
-}{{"Essence of the Pure Flame", 0}, {"The Lion Horn of Stormwind", 0}, {"Uther's Strength", 8397},
-	{"Enchant Chest - Minor Absorption", 7445}, {"Enchant Chest - Lesser Absorption", 7446}, {"Enchant Chest - Absorption", 1249072}}
+	label           string
+	trigger, absorb int32
+}{{"Essence of the Pure Flame", 0, 0}, {"The Lion Horn of Stormwind", 0, 0}, {"Uther's Strength", 8397, 10368},
+	{"Enchant Chest - Minor Absorption", 7445, 7423}, {"Enchant Chest - Lesser Absorption", 7446, 7447},
+	{"Enchant Chest - Absorption", 1249072, 1249073}}
 
-func hitTakenItemListeners(character *core.Character) []map[string]any {
+func hitTakenItemListeners(character *core.Character, tanking bool, unrepresented *[]string) []map[string]any {
 	lifecycle := map[string]bool{"on_init": true, "on_reset": true, "on_done_iteration": true, "on_gain": true,
 		"on_expire": true, "on_stacks_change": true, "on_encounter_start": true}
 	effects := []map[string]any{}
@@ -1878,6 +1880,14 @@ func hitTakenItemListeners(character *core.Character) []map[string]any {
 			heard = heard && len(names) == 1 && names[0] == "on_spell_hit_taken" &&
 				listener.ProcMask != core.ProcMaskUnknown && listener.ProcMask&^core.ProcMaskMelee == 0
 		}
+		if heard && tanking && item.absorb != 0 {
+			if effect := spellDataAbsorbProc(character, aura, item.trigger, item.absorb); effect != nil {
+				effects = append(effects, effect)
+			} else {
+				*unrepresented = append(*unrepresented, fmt.Sprintf("%s's proc is not an absorb shield on the wearer", item.label))
+			}
+			continue
+		}
 		if heard {
 			effects = append(effects, map[string]any{
 				"kind": "inert_listener", "unit": "player", "aura": item.label, "reason": "hears only melee hits the player takes",
@@ -1885,6 +1895,41 @@ func hitTakenItemListeners(character *core.Character) []map[string]any {
 		}
 	}
 	return effects
+}
+
+// shared.NewSpellDataAbsorbProc: a listener resolved from the trigger row (applySpellDataSelfProc)
+// that casts the absorb row's spell on the wearer at once, whose aura shields it against the
+// schools the absorb effect masks for the amount the effect rolls (spellDataAbsorbSpell). Only a
+// listener on the melee hits the player takes, at a static chance, is described, or nil.
+func spellDataAbsorbProc(character *core.Character, aura *core.Aura, triggerID, absorbID int32) map[string]any {
+	trigger := spelldata.MustFind(triggerID)
+	row := spelldata.MustFind(absorbID)
+	listener := spelldata.ProcTrigger(character, trigger, nil, spelldata.ItemProcChance(trigger))
+	absorb := row.AbsorbEffect()
+	spell := -1
+	for i, registered := range character.Spellbook {
+		if registered.ActionID == (core.ActionID{SpellID: row.ID}) {
+			spell = i
+		}
+	}
+	if spell < 0 || absorb == spelldata.NilEffect || character.Spellbook[spell].RelatedSelfBuff == nil ||
+		listener.DPM != nil || trigger.RPPM != 0 || listener.ExtraCondition != nil || listener.CanProcFromProcs ||
+		listener.IsWeaponProc || listener.ClassSpellMask != 0 || listener.SpellFlags != core.SpellFlagNone ||
+		listener.ProcMaskExclude != core.ProcMaskUnknown || (listener.ICD != 0) != (aura.Icd != nil) ||
+		(aura.Icd != nil && aura.Icd.Duration != listener.ICD) {
+		return nil
+	}
+	// AttachProcTriggerCallback reads an unset chance as certain.
+	chance := listener.ProcChance
+	if chance == 0 {
+		chance = 1
+	}
+	return map[string]any{
+		"kind": "spell_data_absorb_proc", "trigger_aura": aura.Label, "outcome": outcomeNames(listener.Outcome),
+		"require_damage": listener.RequireDamageDealt, "proc_chance": chance, "spell": spell,
+		"aura": character.Spellbook[spell].RelatedSelfBuff.Label, "schools": absorb.Misc,
+		"average": absorb.Average(character.Level), "variance": absorb.Variance,
+	}
 }
 
 // Go Spell.doneIteration: every spell without SpellFlagNoMetrics reports under its action

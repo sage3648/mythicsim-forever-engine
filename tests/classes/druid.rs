@@ -218,3 +218,48 @@ fn wildheart_raiment_is_inert_on_a_cat() {
         &"player aura \"Wildheart Raiment 5P\" listens to combat events without an effect".into()
     ));
 }
+
+fn accepted(case: &str) -> Value {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join(format!("fixtures/mage/prepared-v2/{case}.prepared.json"));
+    serde_json::from_slice(&fs::read(path).unwrap()).unwrap()
+}
+
+/// A tank's absorb proc hears the target's swings, so it needs its effect.
+#[test]
+fn absorb_procs_need_their_effect() {
+    let mut value = accepted("feral-bear-druid-uthers-strength");
+    assert!(check_prepared(&parse(value.clone())).is_ok());
+    value["effects"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|effect| effect["kind"] != "spell_data_absorb_proc");
+    assert!(reasons(value)
+        .contains(&"player aura \"Uther's Strength\" reacts to the target's swings".into()));
+}
+
+/// Enchant Chest - Absorption's 25% chance waits out the trigger's 5 second cooldown.
+#[test]
+fn absorption_enchant_waits_for_its_cooldown() {
+    let value = accepted("feral-bear-druid-absorption");
+    // The shortest time between two shields in the first fight.
+    let shortest_gap = |value: Value| {
+        let times: Vec<f64> = first_fight_log(value)
+            .lines()
+            .filter(|line| line.ends_with("Aura gained: {SpellID: 1249073}"))
+            .map(|line| line[1..line.find(']').unwrap()].parse().unwrap())
+            .collect();
+        times
+            .windows(2)
+            .map(|pair| pair[1] - pair[0])
+            .fold(f64::INFINITY, f64::min)
+    };
+    let mut uncooled = value.clone();
+    for aura in uncooled["player"]["auras"].as_array_mut().unwrap() {
+        if aura["label"] == "Enchant Chest - Absorption" {
+            aura["icd"] = Value::Null;
+        }
+    }
+    assert!(shortest_gap(value) >= 5.0);
+    assert!(shortest_gap(uncooled) < 5.0);
+}

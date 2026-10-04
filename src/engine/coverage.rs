@@ -76,6 +76,7 @@ const COMMON_EFFECTS: &[&str] = &[
     "spell_data_heal_proc",
     "second_wind",
     "absorb_on_use",
+    "spell_data_absorb_proc",
     "heal_on_use",
     "stat_proc",
     "stat_auras",
@@ -273,6 +274,9 @@ fn common_claims(effect: &Effect) -> Vec<(&'static str, &str)> {
             trigger_aura, aura, ..
         } => vec![("player", trigger_aura), ("player", aura)],
         Effect::HealthRageProc { trigger_aura, .. } => vec![("player", trigger_aura)],
+        Effect::SpellDataAbsorbProc {
+            trigger_aura, aura, ..
+        } => vec![("player", trigger_aura), ("player", aura)],
         Effect::ArmorDebuffProc {
             trigger_aura, aura, ..
         } => vec![("player", trigger_aura), ("target", aura)],
@@ -487,6 +491,7 @@ const HIT_TAKEN_EFFECTS: &[&str] = &[
     "blood_craze",
     "riposte",
     "spell_data_damage_proc",
+    "spell_data_absorb_proc",
     "battlegear_of_might_rage",
 ];
 

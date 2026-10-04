@@ -1246,8 +1246,11 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) damage_procs: Vec<DamageProc>,
     /// Enchant heal procs, by their position among the heal proc effects.
     pub(crate) heal_procs: Vec<heal_proc::HealProc>,
-    /// Item use absorb shields, by their position among the absorb effects.
+    /// Absorb shields: the item uses' by their position among the absorb effects, then the
+    /// absorb procs'.
     pub(crate) item_absorbs: Vec<absorb::ItemAbsorb>,
+    /// Absorb procs on the melee hits the player takes, by their position among the effects.
+    pub(crate) absorb_procs: Vec<absorb::AbsorbProc>,
     /// Set bonus stat procs: each spell's chance, the roll's label and the aura activated.
     pub(crate) stat_procs: Vec<(Vec<Option<f64>>, String, AuraRef)>,
     /// Gear procs that heal and give rage, by their aura's position.
@@ -1892,6 +1895,9 @@ impl<A: Agent> Fight<A> {
                         }
                         Effect::SpellDataHealProc { spell, .. } if *spell == spells.len() => {
                             heal_proc::self_heal(effects, spells.len()).map(SpellBehavior::SelfHeal)
+                        }
+                        Effect::SpellDataAbsorbProc { spell, .. } if *spell == spells.len() => {
+                            absorb::proc_shield(effects, spells.len()).map(SpellBehavior::AbsorbOnUse)
                         }
                         Effect::SpellDataDamageProc {
                             spell,
@@ -2565,6 +2571,18 @@ impl<A: Agent> Fight<A> {
                     .then(|| {
                         effects
                             .iter()
+                            .filter(|effect| matches!(effect, Effect::SpellDataAbsorbProc { .. }))
+                            .position(|effect| {
+                                matches!(effect, Effect::SpellDataAbsorbProc { trigger_aura, .. } if *trigger_aura == exported.label)
+                            })
+                    })
+                    .flatten()
+                {
+                    AuraBehavior::AbsorbProc(proc)
+                } else if let Some(proc) = (side == Side::Player)
+                    .then(|| {
+                        effects
+                            .iter()
                             .filter(|effect| matches!(effect, Effect::StatProc { .. }))
                             .position(|effect| {
                                 matches!(effect, Effect::StatProc { trigger_aura, .. } if *trigger_aura == exported.label)
@@ -2737,6 +2755,7 @@ impl<A: Agent> Fight<A> {
             aura_mods: Vec::new(),
             heal_procs: Vec::new(),
             item_absorbs: Vec::new(),
+            absorb_procs: Vec::new(),
             stat_procs: Vec::new(),
             health_rage_procs: Vec::new(),
             armor_debuff_procs: Vec::new(),
@@ -3141,6 +3160,7 @@ impl<A: Agent> Fight<A> {
                     .push(absorb::ItemAbsorb::new(aura, *schools, *average, *variance));
             }
         }
+        fight.bind_absorb_procs(effects)?;
         for effect in effects {
             if let Effect::SpellDataDamageProc {
                 trigger_spells,

@@ -1811,6 +1811,22 @@ pub enum Effect {
         average: f64,
         variance: f64,
     },
+    /// common/shared/shared_utils.go NewSpellDataAbsorbProc: a listener on the melee hits the
+    /// player takes, resolved from its trigger row, that casts the absorb row's spell, by
+    /// spellbook position, on the wearer at once; the spell's aura shields the wearer for the
+    /// absorb effect's roll against the schools its bits name.
+    SpellDataAbsorbProc {
+        trigger_aura: String,
+        /// Go `HitOutcome` names the listener hears; empty hears every outcome.
+        outcome: Vec<String>,
+        require_damage: bool,
+        proc_chance: f64,
+        spell: usize,
+        aura: String,
+        schools: u8,
+        average: f64,
+        variance: f64,
+    },
     /// common/shared/shared_utils.go NewSpellDataHealOnUse: the item use heals the wearer
     /// directly, a share of maximum health or a rolled amount.
     HealOnUse {
@@ -3687,6 +3703,7 @@ impl Effect {
             Effect::SpellDataHealProc { .. } => "spell_data_heal_proc",
             Effect::SecondWind { .. } => "second_wind",
             Effect::AbsorbOnUse { .. } => "absorb_on_use",
+            Effect::SpellDataAbsorbProc { .. } => "spell_data_absorb_proc",
             Effect::HealOnUse { .. } => "heal_on_use",
             Effect::HealthRageProc { .. } => "health_rage_proc",
             Effect::DamageOnUse { .. } => "damage_on_use",

@@ -106,6 +106,9 @@ pub(crate) enum AuraBehavior<K> {
     SpellDataDamageProc(usize),
     /// An enchant heal proc's trigger, by its position in `Fight::heal_procs`.
     HealProc(usize),
+    /// An absorb proc's trigger on the melee hits the player takes, by its position in
+    /// `Fight::absorb_procs`.
+    AbsorbProc(usize),
     /// A set bonus stat proc's trigger, by its position in `Fight::stat_procs`.
     StatProc(usize),
     /// A gear proc's trigger that heals and gives rage, by its position in
