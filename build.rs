@@ -1,4 +1,5 @@
-//! Read the reference pin from upstream/sources.json, its only written copy.
+//! Read the reference pin from upstream/sources.json, its only written copy, and the release
+//! manifest's schema version from release/manifest.json.
 
 use std::{env, fs, path::Path};
 
@@ -21,4 +22,12 @@ fn main() {
             .unwrap_or_else(|| panic!("sources.json reference lacks {field}"));
         println!("cargo:rustc-env={variable}={value}");
     }
+    let path = Path::new(&env::var("CARGO_MANIFEST_DIR").unwrap()).join("release/manifest.json");
+    println!("cargo:rerun-if-changed={}", path.display());
+    let text = fs::read_to_string(&path).expect("read release/manifest.json");
+    let manifest: serde_json::Value = serde_json::from_str(&text).expect("parse manifest.json");
+    let version = manifest["schema_version"]
+        .as_u64()
+        .expect("release/manifest.json lacks schema_version");
+    println!("cargo:rustc-env=FOREVER_RELEASE_MANIFEST_SCHEMA_VERSION={version}");
 }
