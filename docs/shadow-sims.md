@@ -47,6 +47,21 @@ production. Production used its own random numbers, so the DPS difference is
 given in standard errors (`standard_errors`): a few either way is noise, a
 large value is a real gap. Ability rows pair the two results by action ID.
 
+## Comparison alerts
+
+The application posts each shadow verdict to the admin-only Discord channel
+named "comparison", through the webhook in `DISCORD_SHADOW_WEBHOOK_URL`. The
+webhook URL is a secret: anyone with it can post to the channel, and this
+repository is public. Keep it in `~/forever-shadow/.env`, readable only by its
+owner, beside the bundles, and load it with `set -a; . ~/forever-shadow/.env;
+set +a`. `.env` files are ignored by Git here. A webhook only posts; reading the
+channel needs the application's admin endpoint or a Discord bot.
+
+The bundle the worker runs is the Rust pin of the alerts. After a change lands
+on `main`, build a bundle at the new commit and point the worker's
+`FOREVER_SHADOW_BUNDLE` at it, as the application's
+`docs/forever-shadow-sims.md` describes.
+
 ## From a mismatch to a fix
 
 Take the request from the shadow run's output folder and accept it as a
