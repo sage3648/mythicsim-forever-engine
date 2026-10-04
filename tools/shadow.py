@@ -9,12 +9,15 @@ run    Compare one RaidSimRequest. The pinned exporter prepares it, the Rust gat
        verdict and writes it to --output/verdict.json. The verdict status is match,
        mismatch, refused (the gate's reasons) or error (the failing stage).
 
-The verdict compares Rust with the pinned Go engine, not with the production result,
-because production can run a later Go revision with an unseeded request.
+The status is an exact check against the pinned Go engine. With --production, the
+verdict also summarizes the production result, the Rust result and the pinned Go
+result (DPS and the top abilities per fight), and compares Rust with production
+statistically, since a production run uses its own unseeded random numbers.
 """
 
 import argparse
 import json
+import math
 from pathlib import Path
 import platform
 import shutil
@@ -31,6 +34,8 @@ EXPORTER = "forever-go-oracle-v2"
 # The tools a bundle needs to run a comparison, by path from the repository root.
 BUNDLED_TOOLS = ("tools/compare.py", "tools/prepared_v2.py", "tools/shadow.py", "upstream/sources.json")
 MAX_DIFFERENCES = 20
+# Abilities kept in each result summary, by damage per second.
+TOP_ABILITIES = 8
 
 
 class StageError(Exception):
@@ -70,7 +75,61 @@ def compare_results(go_result, rust_result):
     return differences, log_difference
 
 
-def shadow(request_path, output, bundle, seed, timeout):
+def summary(result):
+    """One result in brief: the player's DPS, the fight and the abilities that did the most
+    damage, per average fight. The engine records totals over every iteration."""
+    player = result["raidMetrics"]["parties"][0]["players"][0]
+    iterations = result.get("iterationsDone", 0)
+    fight = result.get("avgIterationDuration", 0.0)
+    dps = player.get("dps", {})
+    brief = {"dps": dps.get("avg", 0.0), "stdev": prepared_v2.deviation(dps.get("stdev", 0.0)),
+             "min": dps.get("min"), "max": dps.get("max"), "iterations": iterations,
+             "fight_seconds": fight, "abilities": [], "pets": []}
+    if iterations <= 0 or fight <= 0:
+        return brief
+    abilities = []
+    for action in player.get("actions", []):
+        targets = action.get("targets", [])
+        damage = sum(target.get("damage", 0.0) for target in targets)
+        if damage <= 0:
+            continue
+        hits = sum(target.get("hits", 0) for target in targets)
+        crits = sum(target.get("crits", 0) for target in targets)
+        abilities.append({"id": action["id"], "dps": damage / (iterations * fight),
+                          "casts": sum(target.get("casts", 0) for target in targets) / iterations,
+                          "crit_pct": 100.0 * crits / (hits + crits) if hits + crits else None})
+    abilities.sort(key=lambda ability: -ability["dps"])
+    brief["abilities"] = abilities[:TOP_ABILITIES]
+    brief["pets"] = [{"name": pet.get("name"), "dps": pet["dps"]["avg"]}
+                     for pet in player.get("pets", []) if pet.get("dps", {}).get("avg", 0) > 0]
+    return brief
+
+
+def standard_error(brief):
+    return brief["stdev"] / math.sqrt(brief["iterations"]) if brief["iterations"] > 0 else None
+
+
+def versus_production(production, rust):
+    """Rust against the production result. The runs use different random numbers, so the
+    DPS difference is given in standard errors of the difference: a few either way is
+    noise, a large value is a real difference. Abilities are matched by ID."""
+    errors = [standard_error(production), standard_error(rust)]
+    combined = math.sqrt(sum(e * e for e in errors)) if None not in errors else 0.0
+    difference = rust["dps"] - production["dps"]
+    by_id = {json.dumps(a["id"], sort_keys=True): a for a in production["abilities"]}
+    abilities = []
+    for ability in rust["abilities"]:
+        other = by_id.pop(json.dumps(ability["id"], sort_keys=True), None)
+        abilities.append({"id": ability["id"], "production_dps": other["dps"] if other else None,
+                          "rust_dps": ability["dps"]})
+    abilities += [{"id": a["id"], "production_dps": a["dps"], "rust_dps": None} for a in by_id.values()]
+    return {"dps_difference": difference,
+            "dps_difference_pct": 100.0 * difference / production["dps"] if production["dps"] else None,
+            "standard_errors": difference / combined if combined > 0 else None,
+            "abilities": abilities}
+
+
+def shadow(request_path, output, bundle, seed, timeout, production_path=None):
     """Compare one request and return the verdict. Never raises for an engine failure."""
     output.mkdir(parents=True, exist_ok=False)
     engine, exporter = bundle / "bin" / ENGINE, bundle / "bin" / EXPORTER
@@ -78,6 +137,13 @@ def shadow(request_path, output, bundle, seed, timeout):
     manifest = bundle / "manifest.json"
     if manifest.exists():
         verdict["bundle"] = json.loads(manifest.read_text())
+    production = None
+    if production_path is not None:
+        try:
+            production = summary(json.loads(Path(production_path).read_text()))
+            verdict["production"] = production
+        except (OSError, ValueError, KeyError, IndexError, TypeError) as error:
+            verdict["production_error"] = f"{type(error).__name__}: {error}"
     try:
         request = seeded(json.loads(Path(request_path).read_text()), seed)
         verdict["iterations"] = int(request["simOptions"].get("iterations", 0) or 0)
@@ -114,6 +180,9 @@ def shadow(request_path, output, bundle, seed, timeout):
         if go_result.get("error"):
             raise StageError("go", json.dumps(go_result["error"]))
         differences, log_difference = compare_results(go_result, rust_result)
+        verdict["go"], verdict["rust"] = summary(go_result), summary(rust_result)
+        if production is not None:
+            verdict["versus_production"] = versus_production(production, verdict["rust"])
         verdict.update(
             status="match" if not differences and log_difference is None else "mismatch",
             go_dps=prepared_v2.dps(go_result), rust_dps=prepared_v2.dps(rust_result),
@@ -124,7 +193,7 @@ def shadow(request_path, output, bundle, seed, timeout):
             verdict["speedup"] = round(timings["go"] / timings["rust"], 3)
     except StageError as error:
         verdict.update(status="error", stage=error.stage, error=str(error))
-    except (OSError, ValueError, KeyError) as error:
+    except (OSError, ValueError, KeyError, IndexError, TypeError) as error:
         verdict.update(status="error", stage="compare", error=f"{type(error).__name__}: {error}")
     return verdict
 
@@ -168,6 +237,7 @@ def main():
     parser.add_argument("command", choices=["build", "run"])
     parser.add_argument("--output", type=Path, required=True, help="new folder to write")
     parser.add_argument("--request", type=Path, help="run: RaidSimRequest JSON")
+    parser.add_argument("--production", type=Path, help="run: the production RaidSimResult to compare with")
     parser.add_argument("--seed", type=int, default=1, help="run: seed for an unseeded request")
     parser.add_argument("--timeout", type=int, default=300, help="run: seconds per step")
     parser.add_argument("--bundle", type=Path, default=ROOT, help="run: bundle folder (default: this one)")
@@ -189,7 +259,7 @@ def main():
         parser.error("--seed must not be 0, which Go reads as unseeded")
     if args.output.exists():
         parser.error(f"{args.output} exists; each run writes a new folder")
-    verdict = shadow(args.request, args.output, args.bundle.resolve(), args.seed, args.timeout)
+    verdict = shadow(args.request, args.output, args.bundle.resolve(), args.seed, args.timeout, args.production)
     (args.output / "verdict.json").write_text(json.dumps(verdict, indent=2) + "\n")
     print(json.dumps(verdict))
     return 0
