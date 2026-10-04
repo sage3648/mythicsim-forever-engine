@@ -263,3 +263,25 @@ fn absorption_enchant_waits_for_its_cooldown() {
     assert!(shortest_gap(value) >= 5.0);
     assert!(shortest_gap(uncooled) < 5.0);
 }
+
+/// Essence of the Pure Flame's damage shield hits each tank's attacker on its landed swings,
+/// for a fixed amount that cannot crit.
+#[test]
+fn damage_shield_hits_the_attacker_without_crits() {
+    let value = accepted("feral-bear-druid-essence-of-the-pure-flame");
+    let mut without = value.clone();
+    without["effects"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|effect| effect["trigger_aura"] != "Essence of the Pure Flame");
+    assert!(reasons(without).contains(
+        &"player aura \"Essence of the Pure Flame\" reacts to the target's swings".into()
+    ));
+    let log = first_fight_log(value);
+    let hits: Vec<&str> = log
+        .lines()
+        .filter(|line| line.contains("[Target 1] {SpellID: 23266} Hit for 13.650 damage"))
+        .collect();
+    assert!(!hits.is_empty());
+    assert!(!log.contains("{SpellID: 23266} Crit"));
+}

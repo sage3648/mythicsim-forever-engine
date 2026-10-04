@@ -354,10 +354,12 @@ pub(crate) enum SpellBehavior<S> {
     ActivateAura(usize),
     /// Go attack.go's main or off hand auto attack.
     MeleeAuto(melee::Hand),
-    /// A magic hit on a rolled base damage, as Dragonbreath Chili's proc casts.
+    /// A magic hit on a rolled base damage, as Dragonbreath Chili's proc casts, or one that
+    /// cannot crit, as a damage shield's.
     RollDamage {
         min: f64,
         max: f64,
+        can_crit: bool,
     },
     /// Sulfuras's Fireball: a magic hit rolled between two bounds whose landing applies its burn.
     SulfurasFireball {
@@ -1688,7 +1690,11 @@ impl<A: Agent> Fight<A> {
                 .flatten()
             {
                 // Acid Spit rolls its base damage as Dragonbreath Chili's proc does.
-                SpellBehavior::RollDamage { min, max }
+                SpellBehavior::RollDamage {
+                    min,
+                    max,
+                    can_crit: true,
+                }
             } else if caster.is_pet() {
                 // A pet has no items or racials.
                 SpellBehavior::None
@@ -1880,6 +1886,7 @@ impl<A: Agent> Fight<A> {
                             Some(SpellBehavior::RollDamage {
                                 min: *roll_min,
                                 max: *roll_max,
+                                can_crit: true,
                             })
                         }
                         Effect::DamageOnUse {
@@ -1902,11 +1909,12 @@ impl<A: Agent> Fight<A> {
                         Effect::SpellDataDamageProc {
                             spell,
                             roll: Some([min, max]),
-                            can_crit: true,
+                            can_crit,
                             ..
                         } if *spell == spells.len() => Some(SpellBehavior::RollDamage {
                             min: *min,
                             max: *max,
+                            can_crit: *can_crit,
                         }),
                         Effect::SpellDataDamageProc {
                             spell,

@@ -1853,7 +1853,7 @@ func meleeItemListeners(character *core.Character) []map[string]any {
 // enchants, whose trigger rows spelldata decodes (stat_bonus_procs_auto_gen.go, enchants_auto_gen.go).
 // Only the target's swings land melee hits on the player, which the tanking check below reports; a
 // Goblin Sapper's hit on the thrower is spell damage. The absorb row of the ones
-// shared.NewSpellDataAbsorbProc builds lets a tank's proc be described.
+// shared.NewSpellDataAbsorbProc builds, and the damage shield's spell, let a tank's proc be described.
 var hitTakenItemProcs = []struct {
 	label           string
 	trigger, absorb int32
@@ -1880,6 +1880,14 @@ func hitTakenItemListeners(character *core.Character, tanking bool, unrepresente
 			heard = heard && len(names) == 1 && names[0] == "on_spell_hit_taken" &&
 				listener.ProcMask != core.ProcMaskUnknown && listener.ProcMask&^core.ProcMaskMelee == 0
 		}
+		if heard && tanking && item.label == "Essence of the Pure Flame" {
+			if effect := damageShieldProc(character, aura, 23266, 13); effect != nil {
+				effects = append(effects, effect)
+			} else {
+				*unrepresented = append(*unrepresented, fmt.Sprintf("%s's proc is not a damage shield", item.label))
+			}
+			continue
+		}
 		if heard && tanking && item.absorb != 0 {
 			if effect := spellDataAbsorbProc(character, aura, item.trigger, item.absorb); effect != nil {
 				effects = append(effects, effect)
@@ -1895,6 +1903,28 @@ func hitTakenItemListeners(character *core.Character, tanking bool, unrepresente
 		}
 	}
 	return effects
+}
+
+// classic items_armor.go newDamageShieldEffect, through shared.NewProcDamageEffect: a listener on
+// landed melee hits the wearer takes, at no chance or cooldown, that casts a fixed magic hit of
+// the school on the attacker at once (procDamageHandler), which cannot crit. Only that shape is
+// described, or nil.
+func damageShieldProc(character *core.Character, aura *core.Aura, spellID int32, damage float64) map[string]any {
+	spell := -1
+	for i, registered := range character.Spellbook {
+		if registered.ActionID == (core.ActionID{SpellID: spellID}) {
+			spell = i
+		}
+	}
+	if spell < 0 || aura.Dpm != nil || aura.Icd != nil || character.Spellbook[spell].DefenseType != core.DefenseTypeMagic ||
+		aura.OnSpellHitDealt != nil || aura.OnSpellHitTaken == nil || aura.OnPeriodicDamageDealt != nil {
+		return nil
+	}
+	return map[string]any{
+		"kind": "spell_data_damage_proc", "trigger_aura": aura.Label, "trigger_spells": []int{}, "struck": true,
+		"landed_only": true, "require_damage": false, "proc_chance": 1.0, "spell": spell,
+		"average": 0.0, "variance": 0.0, "roll": []float64{damage, damage}, "can_crit": false,
+	}
 }
 
 // shared.NewSpellDataAbsorbProc: a listener resolved from the trigger row (applySpellDataSelfProc)
