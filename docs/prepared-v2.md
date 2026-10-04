@@ -674,6 +674,11 @@ damage taken and TMI that stay zero in scope), action, aura and resource metrics
 the player and the target, iteration durations and the debug log. Zero values are
 omitted as protojson omits them.
 
+The engine identity is `engine`, `schema_version` and `source_revision`, and an `identity`
+object that states the engine name, crate version, pinned Go reference revision, client
+build and the schema version of [release/manifest.json](../release/manifest.json). Compare
+stored results only when their identities agree.
+
 Time to out of mana reads current mana after Go deactivates every aura at the end of a
 fight. Buffs that raise maximum mana fade then, and each change clamps current mana,
 so the exporter records the lowest maximum on the way down as `teardown_max`. The
