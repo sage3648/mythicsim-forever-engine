@@ -51,10 +51,14 @@ buffs, presets, trinkets, pets and tanking.
 
 ## Evidence
 
-- 255 accepted fixtures with Go results, checked by `cargo test`.
-- About 7,900 production variants and 3,500 random variants compared with Go.
+- 255 accepted fixtures, 253 of them with Go results, checked by `cargo test`.
+- 7,922 production variants (race boards, builder starters, gear, buffs, talents,
+  class options and presets) and 3,500 random variants compared with Go. None
+  differ. Rust refuses 172 of them, and the pinned Go engine crashes on 2.
+- The latest full rerun covered 24,173 inputs in 121 records, with no mismatches.
   [docs/validation-summary.md](docs/validation-summary.md) lists every record.
-- Rust is faster on every production build: a median of 1.47x at 10,000 iterations
+- Rust is faster on all 27 benchmarked production builds: 1.30x to 1.98x, with a
+  median of 1.47x at 10,000 iterations
   ([snapshot](benchmarks/2026-10-04-production-builds.json)).
 - Earlier timings came from the MythicSim prototype. See the
   [fair comparison](docs/forever-rust-fair-comparison-2026-10-03.md) and the
