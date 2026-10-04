@@ -104,11 +104,11 @@ fn unknown_fields_and_effect_kinds_fail_deserialization() {
     effect["effects"]
         .as_array_mut()
         .unwrap()
-        .push(json!({"kind": "blizzard"}));
+        .push(json!({"kind": "mana_shield"}));
     assert!(parse(effect)
         .unwrap_err()
         .to_string()
-        .contains("unknown variant `blizzard`"));
+        .contains("unknown variant `mana_shield`"));
 
     let mut parameter = reference_json();
     for effect in parameter["effects"].as_array_mut().unwrap() {
@@ -121,7 +121,7 @@ fn unknown_fields_and_effect_kinds_fail_deserialization() {
 
 #[test]
 fn identity_and_bounds_violations_are_invalid_not_unsupported() {
-    let cases: [Mutation; 5] = [
+    let cases: [Mutation; 6] = [
         ("revision", |v| {
             v["reference"]["engine_revision"] = json!("0".repeat(40))
         }),
@@ -132,6 +132,9 @@ fn identity_and_bounds_violations_are_invalid_not_unsupported() {
         ("seed", |v| v["sim"]["seed"] = json!(0)),
         ("regen", |v| {
             v["player"]["mana"]["spirit_regen_per_second"] = json!(40.0)
+        }),
+        ("cast speed", |v| {
+            v["player"]["stats"]["SpellHasteRating"] = json!(10.0)
         }),
     ];
     for (name, mutate) in cases {
@@ -165,26 +168,150 @@ fn active_listeners_without_an_effect_are_reported() {
     ));
 }
 
+/// The weapon enchant damage procs and the listeners of melee hits taken from the app's item
+/// catalog each need their effect; the procs carry their proc manager's chance per spell.
+#[test]
+fn catalog_item_procs_need_their_effects() {
+    let path = family().join("combat-rogue-item-procs.prepared.json");
+    let value: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+    assert!(check_prepared(&parse(value.clone()).unwrap()).is_ok());
+    let weapon_procs: Vec<&Value> = value["effects"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|effect| effect["kind"] == "spell_data_damage_proc" && effect["chances"].is_array())
+        .collect();
+    assert_eq!(weapon_procs.len(), 2);
+    for (aura, kind) in [
+        ("Enchant Weapon - Fiery Weapon", "spell_data_damage_proc"),
+        ("Enchant Weapon - Lifestealing", "spell_data_damage_proc"),
+        ("Orb of Fire", "spell_data_damage_proc"),
+        ("The Lion Horn of Stormwind", "inert_listener"),
+        ("Enchant Chest - Absorption", "inert_listener"),
+    ] {
+        let mut value = value.clone();
+        value["effects"].as_array_mut().unwrap().retain(|effect| {
+            !(effect["kind"] == kind && effect["trigger_aura"] == aura || effect["aura"] == aura)
+        });
+        assert!(
+            reasons(value).contains(&format!(
+                "player aura \"{aura}\" listens to combat events without an effect"
+            )),
+            "{aura}"
+        );
+    }
+}
+
+/// The spell data stat procs and the mana on-use items each need their effect.
+#[test]
+fn spell_procs_and_mana_items_need_their_effects() {
+    let load = |case: &str| -> Value {
+        let path = family().join(format!("{case}.prepared.json"));
+        serde_json::from_slice(&fs::read(path).unwrap()).unwrap()
+    };
+    for case in [
+        "arcane-mage-spell-stat-procs",
+        "fire-mage-mana-on-use-trinkets",
+        "elemental-shaman-insight-earthen-sigil",
+    ] {
+        assert!(
+            check_prepared(&parse(load(case)).unwrap()).is_ok(),
+            "{case}"
+        );
+    }
+    for (case, trigger) in [
+        (
+            "arcane-mage-spell-stat-procs",
+            "Enchant Weapon - Grand Sorcerer",
+        ),
+        ("arcane-mage-spell-stat-procs", "Draconic Infused Emblem"),
+        (
+            "elemental-shaman-insight-earthen-sigil",
+            "Enchant Weapon - Insight",
+        ),
+    ] {
+        let mut value = load(case);
+        value["effects"]
+            .as_array_mut()
+            .unwrap()
+            .retain(|effect| effect["trigger_aura"] != trigger);
+        assert!(
+            reasons(value).contains(&format!(
+                "player aura \"{trigger}\" listens to combat events without an effect"
+            )),
+            "{trigger}"
+        );
+    }
+    for (case, item) in [
+        ("fire-mage-mana-on-use-trinkets", 18371),
+        ("fire-mage-mana-on-use-trinkets", 11832),
+        ("elemental-shaman-insight-earthen-sigil", 20525),
+    ] {
+        let mut value = load(case);
+        value["effects"]
+            .as_array_mut()
+            .unwrap()
+            .retain(|effect| effect["item_id"] != item);
+        assert!(
+            reasons(value).contains(&format!(
+                "rotation reaches item {item} without a known behavior"
+            )),
+            "{item}"
+        );
+    }
+}
+
 #[test]
 fn unsupported_rotation_operators_are_reported() {
     let mut value = reference_json();
     value["player"]["rotation"]["priorityList"][3]["action"]["condition"] =
-        json!({"dotIsActive": {"spellId": {"spellId": 12579}}});
-    assert!(reasons(value).contains(&"rotation item 4: value dotIsActive is unsupported".into()));
+        json!({"spellNumCharges": {"spellId": {"spellId": 12579}}});
+    assert!(
+        reasons(value).contains(&"rotation item 4: value spellNumCharges is unsupported".into())
+    );
 
     let mut prepull = reference_json();
     prepull["player"]["rotation"]["prepullActions"] = json!([{"action": {"castSpell": {"spellId": {"spellId": 25304}}}, "doAtValue": {"const": {"val": "-1s"}}}]);
-    assert!(reasons(prepull).contains(&"rotation field prepullActions is unsupported".into()));
+    // The exported count says Go registered none, so this rotation is not the one Go ran.
+    assert!(reasons(prepull).contains(
+        &"Go registered 0 prepull actions and the rotation 1; prepull actions outside the rotation are unsupported"
+            .into()
+    ));
 }
 
 #[test]
 fn rotation_spells_without_behavior_are_reported() {
+    // Arcane Explosion runs only with the effect that describes it.
     let mut value = reference_json();
     value["player"]["rotation"]["priorityList"][5]["action"]["castSpell"]["spellId"] =
         json!({"spellId": 10202});
+    assert!(check_prepared(&parse(value.clone()).unwrap()).is_ok());
+    value["effects"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|effect| effect["kind"] != "arcane_explosion");
     assert!(
         reasons(value).contains(&"rotation reaches spell 10202 without a known behavior".into())
     );
+}
+
+/// Blood Fury sets the stats Go computes while it is active. The runtime changes only
+/// the stats it reads during a fight, so a change to any other stat is unsupported.
+#[test]
+fn temporary_stat_changes_must_be_to_dynamic_stats() {
+    let path = family().join("frost-orc.prepared.json");
+    let mut value: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+    assert!(check_prepared(&parse(value.clone()).unwrap()).is_ok());
+    let blood_fury = value["effects"]
+        .as_array_mut()
+        .unwrap()
+        .iter_mut()
+        .find(|effect| effect["kind"] == "blood_fury")
+        .unwrap();
+    blood_fury["active_stats"]["SpellHasteRating"] = json!(10.0);
+    assert!(reasons(value).contains(
+        &"Blood Fury changes SpellHasteRating, which the runtime holds fixed".to_string()
+    ));
 }
 
 /// Ignite acts on the crits of any reachable Fire spell, so a rotation that adds
@@ -311,11 +438,20 @@ fn stdev_mean(
         None if key == "stdev" => "avg".into(),
         None => return None,
     };
-    let numbers = [go, rust].iter().all(|side| {
-        side.get(key).is_some_and(Value::is_number)
-            && side.get(&mean_key).is_some_and(Value::is_number)
-    });
+    let numbers = [go, rust]
+        .iter()
+        .all(|side| side.get(&mean_key).is_some_and(Value::is_number));
     numbers.then(|| go[&mean_key].as_f64().unwrap())
+}
+
+/// A reported deviation as a number: protojson omits a zero, and writes "NaN" when cancellation
+/// leaves sqrt(sumSq/n - mean^2) a negative residue, whose variance is zero.
+fn deviation(value: Option<&Value>) -> Option<f64> {
+    match value {
+        None => Some(0.0),
+        Some(Value::String(text)) if text == "NaN" => Some(0.0),
+        Some(value) => value.as_f64(),
+    }
 }
 
 /// Integers exactly; floats within 1e-9 relative, the FMA and summation-order allowance
@@ -325,10 +461,11 @@ fn differences(go: &Value, rust: &Value, path: &str, out: &mut Vec<String>) {
         (Value::Object(a), Value::Object(b)) => {
             let keys: std::collections::BTreeSet<&String> = a.keys().chain(b.keys()).collect();
             for key in keys {
-                match (a.get(key), b.get(key)) {
-                    (Some(x), Some(y)) if stdev_mean(key, a, b).is_some() => {
-                        let mean = stdev_mean(key, a, b).unwrap();
-                        let (x, y) = (x.as_f64().unwrap(), y.as_f64().unwrap());
+                let (x, y) = (a.get(key), b.get(key));
+                let variances = stdev_mean(key, a, b).zip(deviation(x).zip(deviation(y)));
+                match (x, y) {
+                    _ if variances.is_some() => {
+                        let (mean, (x, y)) = variances.unwrap();
                         if (x * x - y * y).abs() > 1e-9 * (mean * mean).max(1.0) {
                             out.push(format!("{path}/{key}: Go {x}, Rust {y}"));
                         }
@@ -411,4 +548,20 @@ fn supported_cases_match_pinned_go_goldens() {
         checked += 1;
     }
     assert!(checked >= 5);
+}
+
+/// A damage on-use item runs only on outcome appliers the runtime knows: Linken's Boomerang's
+/// melee table, renamed to one it does not, leaves its cooldown without a behavior.
+#[test]
+fn damage_on_use_needs_a_known_outcome() {
+    let path = family().join("arcane-mage-linkens-boomerang.prepared.json");
+    let mut value: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+    assert!(check_prepared(&parse(value.clone()).unwrap()).is_ok());
+    for effect in value["effects"].as_array_mut().unwrap() {
+        if effect["kind"] == "damage_on_use" {
+            assert_eq!(effect["direct"]["outcome"], "melee_special_hit_and_crit");
+            effect["direct"]["outcome"] = json!("ranged_hit_and_crit");
+        }
+    }
+    assert!(reasons(value).contains(&"rotation reaches item 11905 without a known behavior".into()));
 }

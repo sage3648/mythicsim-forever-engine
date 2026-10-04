@@ -52,7 +52,10 @@ pub(crate) fn regen_per_second_casting(inputs: RegenInputs) -> f64 {
 
 /// Go `ManaRegenPerSecondWhileNotCasting`.
 pub(crate) fn regen_per_second_not_casting(inputs: RegenInputs) -> f64 {
-    let mut regen = inputs.mp5 / 5.0;
-    regen += inputs.spirit_regen_per_second * inputs.spirit_regen_multiplier;
+    let regen = inputs.mp5 / 5.0;
+    // The arm64 build fuses the spirit regeneration's multiply into the add.
+    let regen = inputs
+        .spirit_regen_per_second
+        .mul_add(inputs.spirit_regen_multiplier, regen);
     regen * inputs.mana_regen_multiplier
 }

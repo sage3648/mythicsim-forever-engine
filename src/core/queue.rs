@@ -2,45 +2,53 @@
 //!
 //! Go keeps a sorted slice: earliest time first, then higher priority, then the action
 //! inserted first. Cancelling removes an action without disturbing the others. A binary
-//! heap with insertion sequence numbers and cancelled slots gives the same pop order.
+//! heap with insertion sequence numbers and cancelled slots gives the same pop order. Each
+//! entry packs the three keys into one integer, so the heap compares them in one step.
 
-use std::{cmp::Ordering, collections::BinaryHeap};
+use std::{cmp::Reverse, collections::BinaryHeap};
 
 /// Identifies one scheduled action. A handle is never reused within a queue's lifetime.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub(crate) struct Handle(u64);
 
-#[derive(Debug)]
-struct Entry {
-    time: i64,
-    priority: i32,
-    sequence: u64,
-}
+/// Bits of the packed key below the time: the inverted priority, then the sequence.
+const SEQUENCE_BITS: u32 = 40;
+const PRIORITY_BITS: u32 = 24;
+const PRIORITY_BIAS: i64 = (1 << (PRIORITY_BITS - 1)) - 1;
 
-impl PartialEq for Entry {
-    fn eq(&self, other: &Self) -> bool {
-        self.sequence == other.sequence
+/// An entry's ordering key, smallest first: the time (biased to sort as unsigned), the
+/// priority inverted so a higher one sorts first, and the insertion sequence.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct Entry(u128);
+
+impl Entry {
+    fn new(time: i64, priority: i32, sequence: u64) -> Self {
+        let inverted = PRIORITY_BIAS - i64::from(priority);
+        assert!(
+            (0..1 << PRIORITY_BITS).contains(&inverted),
+            "action priority out of range"
+        );
+        assert!(sequence < 1 << SEQUENCE_BITS, "too many scheduled actions");
+        let time = (time as u64) ^ (1 << 63);
+        Entry(
+            (u128::from(time) << (PRIORITY_BITS + SEQUENCE_BITS))
+                | ((inverted as u128) << SEQUENCE_BITS)
+                | u128::from(sequence),
+        )
     }
-}
-impl Eq for Entry {}
-impl PartialOrd for Entry {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
+
+    fn time(self) -> i64 {
+        ((self.0 >> (PRIORITY_BITS + SEQUENCE_BITS)) as u64 ^ (1 << 63)) as i64
     }
-}
-impl Ord for Entry {
-    // BinaryHeap pops the greatest entry: earliest time, highest priority, first inserted.
-    fn cmp(&self, other: &Self) -> Ordering {
-        other
-            .time
-            .cmp(&self.time)
-            .then(self.priority.cmp(&other.priority))
-            .then(other.sequence.cmp(&self.sequence))
+
+    fn sequence(self) -> u64 {
+        (self.0 & ((1 << SEQUENCE_BITS) - 1)) as u64
     }
 }
 
 pub(crate) struct PendingQueue<T> {
-    heap: BinaryHeap<Entry>,
+    /// The heap pops its greatest entry, so it holds them reversed.
+    heap: BinaryHeap<Reverse<Entry>>,
     /// Payloads by sequence offset; `None` once popped or cancelled.
     slots: Vec<Option<T>>,
     base: u64,
@@ -69,11 +77,8 @@ impl<T> PendingQueue<T> {
     pub(crate) fn push(&mut self, time: i64, priority: i32, payload: T) -> Handle {
         let sequence = self.next;
         self.next += 1;
-        self.heap.push(Entry {
-            time,
-            priority,
-            sequence,
-        });
+        self.heap
+            .push(Reverse(Entry::new(time, priority, sequence)));
         self.slots.push(Some(payload));
         Handle(sequence)
     }
@@ -88,12 +93,24 @@ impl<T> PendingQueue<T> {
         self.slot(handle).and_then(Option::take).is_some()
     }
 
+    /// The time of the next live action, dropping cancelled entries on the way.
+    pub(crate) fn peek_time(&mut self) -> Option<i64> {
+        while let Some(&Reverse(entry)) = self.heap.peek() {
+            let index = (entry.sequence() - self.base) as usize;
+            if self.slots[index].is_some() {
+                return Some(entry.time());
+            }
+            self.heap.pop();
+        }
+        None
+    }
+
     /// Pop the next live action.
     pub(crate) fn pop(&mut self) -> Option<(i64, Handle, T)> {
-        while let Some(entry) = self.heap.pop() {
-            let index = (entry.sequence - self.base) as usize;
+        while let Some(Reverse(entry)) = self.heap.pop() {
+            let index = (entry.sequence() - self.base) as usize;
             if let Some(payload) = self.slots[index].take() {
-                return Some((entry.time, Handle(entry.sequence), payload));
+                return Some((entry.time(), Handle(entry.sequence()), payload));
             }
         }
         None
@@ -116,6 +133,25 @@ mod tests {
         assert!(!queue.cancel(cancelled));
         let order: Vec<_> = std::iter::from_fn(|| queue.pop().map(|(_, _, p)| p)).collect();
         assert_eq!(order, ["earlier", "regen", "first_gcd", "second_gcd"]);
+    }
+
+    #[test]
+    fn packed_keys_order_negative_and_extreme_times() {
+        let mut queue = PendingQueue::default();
+        queue.push(i64::MAX, 0, "never");
+        queue.push(-3_000_000_000, 0, "prepull");
+        queue.push(0, -5, "low");
+        queue.push(0, 5, "high");
+        let order: Vec<_> = std::iter::from_fn(|| queue.pop().map(|(t, _, p)| (t, p))).collect();
+        assert_eq!(
+            order,
+            [
+                (-3_000_000_000, "prepull"),
+                (0, "high"),
+                (0, "low"),
+                (i64::MAX, "never")
+            ]
+        );
     }
 
     #[test]

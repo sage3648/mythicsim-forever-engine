@@ -25,7 +25,20 @@ import sys
 from compare import ROOT, PIN, CLIENT_BUILD, build_oracle, command, go_pin_flags, load
 
 FAMILY = ROOT / "fixtures" / "mage" / "prepared-v2"
-HELPER = ROOT / "tools" / "oracle-v2" / "main.go"
+EXPORTER = ROOT / "tools" / "oracle-v2"
+
+
+def exporter_files():
+    """The exporter's Go sources: main.go and one file per exported class."""
+    return sorted(path for path in EXPORTER.glob("*.go") if not path.name.endswith("_test.go"))
+
+
+def exporter_digest():
+    """SHA-256 over every exporter source, by name and content, in name order."""
+    combined = hashlib.sha256()
+    for path in exporter_files():
+        combined.update(path.name.encode() + b"\0" + path.read_bytes() + b"\0")
+    return combined.hexdigest()
 
 
 def digest(path):
@@ -52,8 +65,8 @@ def check(family=FAMILY):
     require(manifest["prepared_schema_version"] == 2, "family must contain prepared v2 inputs")
     require(manifest["engine_revision"] == PIN, "engine revision differs from the comparison pin")
     require(manifest["client_build"] == CLIENT_BUILD, "client build differs from the reference pin")
-    require(manifest["exporter_sha256"] == digest(HELPER),
-            "tools/oracle-v2/main.go changed: recapture and review the prepared fixtures")
+    require(manifest["exporter_sha256"] == exporter_digest(),
+            "tools/oracle-v2 changed: recapture and review the prepared fixtures")
     ids = [case["id"] for case in manifest["cases"]]
     require(len(ids) == len(set(ids)), "duplicate case identifiers")
     for case in manifest["cases"]:
@@ -86,7 +99,7 @@ def build_exporter(cache, source):
     """Reuse the v1 oracle checkout, generated protos and pin checks; add the v2 helper."""
     build_oracle(cache, source)
     checkout = cache / "source"
-    identity = {"revision": PIN, "client_build": CLIENT_BUILD, "helper_sha256": digest(HELPER),
+    identity = {"revision": PIN, "client_build": CLIENT_BUILD, "helper_sha256": exporter_digest(),
                 "compiler": subprocess.check_output(["go", "version"], text=True).strip()}
     binary = cache / "forever-go-oracle-v2"
     stamp = cache / "build-v2.json"
@@ -94,7 +107,10 @@ def build_exporter(cache, source):
         return binary
     target = checkout / "cmd" / "mythicsim-rust-oracle-v2"
     target.mkdir(exist_ok=True)
-    shutil.copy2(HELPER, target / "main.go")
+    for stale in target.glob("*.go"):
+        stale.unlink()
+    for source in exporter_files():
+        shutil.copy2(source, target / source.name)
     command(["go", "build", "-trimpath", "--tags=with_db", *go_pin_flags(), "-o", binary,
              "./cmd/mythicsim-rust-oracle-v2"], cwd=checkout)
     stamp.write_text(json.dumps(identity, indent=2) + "\n")
@@ -199,7 +215,7 @@ def refresh(cache, source, family=FAMILY):
             prepared_path = family / case["prepared"]
             command([exporter, "prepare", "--infile", request_path, "--outfile", prepared_path, "--scenario", case["id"]])
             case["prepared_sha256"] = digest(prepared_path)
-    manifest["exporter_sha256"] = digest(HELPER)
+    manifest["exporter_sha256"] = exporter_digest()
     (family / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     return manifest
 
@@ -273,10 +289,17 @@ def dps(result):
     return result["raidMetrics"]["dps"].get("avg", 0)
 
 
+def deviation(value):
+    """A reported deviation as a number. sqrt(sumSq/n - mean^2) is NaN when cancellation leaves
+    a negative residue, which protojson writes as "NaN"; the variance it stands for is zero."""
+    return 0.0 if value == "NaN" else value
+
+
 def stdev_mean(key, go, rust):
     """The mean beside a standard deviation, when both engines report one."""
     mean_key = key.replace("Stdev", "Avg") if key.endswith("Stdev") else "avg" if key == "stdev" else None
-    if mean_key is None or not all(isinstance(side.get(k), (int, float)) for side in (go, rust) for k in (key, mean_key)):
+    if mean_key is None or not all(isinstance(deviation(side.get(key)), (int, float)) and isinstance(side.get(mean_key), (int, float))
+                                   for side in (go, rust)):
         return None
     return go[mean_key]
 
@@ -284,6 +307,7 @@ def stdev_mean(key, go, rust):
 def variance_matches(go, rust, mean):
     """Both engines take sqrt(sumSq/n - mean^2), which cancels when every sample is nearly
     equal, and Go may fuse the subtraction. Compare variances at the scale of mean^2."""
+    go, rust = deviation(go), deviation(rust)
     return abs(go * go - rust * rust) <= TOLERANCE * max(1.0, mean * mean)
 
 
@@ -293,7 +317,12 @@ def leaf_differences(go, rust, path=""):
         differences = []
         for key in sorted(set(go) | set(rust)):
             if key not in go or key not in rust:
-                differences.append(f"{path}/{key}: only in {'Go' if key in go else 'Rust'}")
+                # protojson omits a zero, so an omitted deviation is a zero deviation; one
+                # engine's cancellation may leave a residue where the other reaches zero.
+                zero_filled = ({**go, key: go.get(key, 0.0)}, {**rust, key: rust.get(key, 0.0)})
+                mean = stdev_mean(key, *zero_filled)
+                if mean is None or not variance_matches(zero_filled[0][key], zero_filled[1][key], mean):
+                    differences.append(f"{path}/{key}: only in {'Go' if key in go else 'Rust'}")
             elif (mean := stdev_mean(key, go, rust)) is not None:
                 if not variance_matches(go[key], rust[key], mean):
                     differences.append(f"{path}/{key}: Go {go[key]!r}, Rust {rust[key]!r}")

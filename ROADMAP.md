@@ -30,6 +30,8 @@ Milestones advance on evidence, not promised delivery dates. The
   Frost, Arcane and Fire reference builds reproduce the pinned Go engine on the
   application's requests, on their variants and on randomized sweeps, across the
   whole result and the logs the application parses into timelines.
+- Every race that can be a Mage, with its racials, matches Go on all three builds and
+  on a randomized race sweep.
 
 ## Migration sequence
 

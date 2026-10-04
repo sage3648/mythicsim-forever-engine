@@ -62,8 +62,13 @@ impl<A: Agent> Fight<A> {
         health_fraction: f64,
         metrics: usize,
     ) {
-        let base = health_fraction * self.config.max_health;
-        let result = self.calc_damage_hit_only(spell, target, base);
+        let base = health_fraction * self.player_max_health();
+        // A proc off a hit the player took drains the player.
+        let result = match target {
+            Side::Target => self.calc_damage_hit_only(spell, target, base),
+            Side::Player => self.calc_damage_on_player(spell, base, false),
+            Side::Pet(_) => unreachable!("a pet takes no damage in scope"),
+        };
         self.deal_damage(spell, result, false);
         if result.landed() {
             self.gain_health(result.damage, metrics);
@@ -132,18 +137,18 @@ impl<A: Agent> Fight<A> {
     }
 
     /// Go `healthBar.GainHealth`.
-    fn gain_health(&mut self, amount: f64, metrics: usize) {
+    pub(crate) fn gain_health(&mut self, amount: f64, metrics: usize) {
         let old = self.player.health;
-        let new = (old + amount).min(self.config.max_health);
+        let max_health = self.player_max_health();
+        let new = (old + amount).min(max_health);
         let resource = &mut self.resources[metrics];
         resource.events += 1;
         resource.gain += amount;
         resource.actual_gain += new - old;
         if self.log.is_some() {
             let line = format!(
-                "Gained {amount:.3} health from {} ({old:.3} --> {new:.3}) of {:.0} total.",
+                "Gained {amount:.3} health from {} ({old:.3} --> {new:.3}) of {max_health:.0} total.",
                 super::log::action_string(&self.resources[metrics].id),
-                self.config.max_health
             );
             self.player_log(&line);
         }

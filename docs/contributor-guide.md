@@ -24,6 +24,17 @@ Frostbolt kernel remains unchanged beside it.
 | Fight runtime: queue, units, casting, auras, damage, channels, rotation, metrics, logs | [src/core/fight.rs](../src/core/fight.rs), [src/core/fight/](../src/core/fight/) |
 | Go pending-action ordering | [src/core/queue.rs](../src/core/queue.rs) |
 | Mage runtime hooks | [src/classes/mage/agent.rs](../src/classes/mage/agent.rs) |
+| Druid runtime hooks, forms and regressions | [src/classes/druid/agent.rs](../src/classes/druid/agent.rs), [src/classes/druid/forms.rs](../src/classes/druid/forms.rs), [tests/classes/druid.rs](../tests/classes/druid.rs) |
+| Warlock runtime hooks and regressions | [src/classes/warlock/agent.rs](../src/classes/warlock/agent.rs), [tests/classes/warlock/](../tests/classes/warlock/) |
+| Priest runtime hooks and regressions | [src/classes/priest/agent.rs](../src/classes/priest/agent.rs), [tests/classes/priest.rs](../tests/classes/priest.rs) |
+| Rogue runtime hooks and regressions | [src/classes/rogue/agent.rs](../src/classes/rogue/agent.rs), [tests/classes/rogue.rs](../tests/classes/rogue.rs) |
+| Energy bar, energy ticks and combo points | [src/core/fight/energy.rs](../src/core/fight/energy.rs) |
+| The player taking damage and Chance of Death | [src/core/fight/damage_taken.rs](../src/core/fight/damage_taken.rs) |
+| Hunter runtime hooks and regressions | [src/classes/hunter/agent.rs](../src/classes/hunter/agent.rs), [tests/classes/hunter.rs](../tests/classes/hunter.rs) |
+| Player melee and ranged auto attacks | [src/core/fight/melee.rs](../src/core/fight/melee.rs) |
+| Pets: simulated summons and registered pets nothing summons | [src/core/fight/pet.rs](../src/core/fight/pet.rs) |
+| Warlock demon AI and abilities | [src/classes/warlock/pets.rs](../src/classes/warlock/pets.rs) |
+| Shared build gate and class gates | [src/engine/coverage.rs](../src/engine/coverage.rs), `src/classes/<class>/prepared/coverage.rs` |
 | Event ordering (prepared v1 kernel) | [src/core/events.rs](../src/core/events.rs) |
 | Seeded random streams | [src/core/rng.rs](../src/core/rng.rs) |
 | Simulation time units | [src/core/time.rs](../src/core/time.rs) |
@@ -143,6 +154,42 @@ module name does not establish simulation coverage.
    is implemented. Unknown input must still fail before simulation.
 5. Run the contribution checks and the relevant pinned Go comparison. Explain
    intentional corrections rather than changing old goldens to hide a discrepancy.
+
+### Match Go's fused multiply-adds
+
+The pinned reference runs as an arm64 build, and Go's arm64 compiler fuses a
+floating point add or subtract with a product that feeds it into one `FMADD`,
+`FMSUB`, `FNMSUB` or `FNMADD` instruction, which rounds once. The rewrite works
+on SSA values, so it reaches across statements, struct fields and inlined calls:
+`a := x * y` followed by `b := a + z` fuses, and so does `base + Roll(...)`
+when `Roll` is inlined. Only an explicit `float64(...)` conversion or an
+out-of-line call stops it. A Rust formula that rounds the product first agrees
+almost always and then differs in the last bit of one value, which surfaces
+rarely, as a 0.001 log difference or a flipped comparison.
+
+Do not guess from the source. Run
+
+```sh
+python3 tools/fma_scan.py
+```
+
+after `tools/prepared_v2.py` has built `oracle-cache/forever-go-oracle-v2`. It
+lists every fused instruction of the simulation packages and the exporter by
+function and Go source line. Where a ported formula appears there, write it with
+`mul_add` in the same shape: Go's `a + x*y` is `x.mul_add(y, a)`, `a - x*y` is
+`(-x).mul_add(y, a)` and `x*y - a` is `x.mul_add(y, -a)`. When the line holds
+several operations, read the instruction operands with
+`go tool objdump -s '<function regex>' oracle-cache/forever-go-oracle-v2` to see
+which product feeds which add. The shared helpers follow the binary:
+`Fight::go_roll` is `Simulation.Roll`, `Fight::effect_roll` is spelldata
+`Effect.Roll`, which needs the row's average and variance rather than its bounds,
+and `threat_of`, `calc_damage`, `snapshot_dot`, the weapon rolls, the resist
+tables and the metric aggregates already fuse where Go does. Two forms need no
+`mul_add`: `x * 2` compiles to `x + x`, and its fused form equals the doubled
+rounded product, and an exact product, such as an integer times an integer or
+anything times 1, rounds the same either way. The
+[fused multiply-add audit](../validation/2026-10-04-fma-audit.json) records every
+site the binary fuses and what the runtime does with it.
 
 To inspect every internal module in generated Rust documentation:
 

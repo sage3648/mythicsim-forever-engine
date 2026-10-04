@@ -51,6 +51,20 @@ class ComparableTests(unittest.TestCase):
         self.assertEqual(leaf_differences(go, rust), [])
         self.assertTrue(leaf_differences({"avg": 600.0, "stdev": 50.0}, {"avg": 600.0, "stdev": 50.01}))
 
+    def test_omitted_deviations_are_zero(self):
+        # Go's fused subtraction leaves a residue where Rust reaches zero, which protojson omits.
+        go = {"uptimeSecondsAvg": 3.000000000033333, "uptimeSecondsStdev": 2.980230374683199e-08}
+        rust = {"uptimeSecondsAvg": 3.000000000033333}
+        self.assertEqual(leaf_differences(go, rust), [])
+        self.assertTrue(leaf_differences({"avg": 600.0, "stdev": 50.0}, {"avg": 600.0}))
+
+    def test_nan_deviations_are_zero_variance(self):
+        # A negative cancellation residue makes sqrt NaN, which protojson writes as "NaN".
+        go = {"uptimeSecondsAvg": 6.00000000004, "uptimeSecondsStdev": "NaN"}
+        self.assertEqual(leaf_differences(go, {"uptimeSecondsAvg": 6.00000000004}), [])
+        self.assertEqual(leaf_differences(go, dict(go)), [])
+        self.assertEqual(leaf_differences(go, {**go, "uptimeSecondsStdev": 1e-8}), [])
+
 
 if __name__ == "__main__":
     unittest.main()

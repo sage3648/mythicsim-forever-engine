@@ -38,7 +38,7 @@ impl ManaGems {
         }
         let total_regen = crate::mechanics::mana::regen_per_second_casting(fight.regen_inputs())
             * self.regen_window;
-        fight.config.max_mana - (fight.player.mana + total_regen) >= self.mana[gem]
+        fight.player.powers.max_mana - (fight.player.mana + total_regen) >= self.mana[gem]
     }
 }
 

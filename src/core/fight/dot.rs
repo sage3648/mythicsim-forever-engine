@@ -2,7 +2,10 @@
 
 use crate::{contracts::prepared_v2::Dot as ExportedDot, core::queue::Handle};
 
-use super::{Action, Agent, AuraRef, DotId, Fight, Side, SpellBehavior, SpellId, PRIORITY_GCD};
+use super::{
+    cast::MAX_SPELL_QUEUE_WINDOW, Action, Agent, AuraRef, DotId, Fight, Side, SpellBehavior,
+    SpellId, PRIORITY_GCD,
+};
 
 pub(crate) struct Dot {
     pub(crate) spell: SpellId,
@@ -16,6 +19,10 @@ pub(crate) struct Dot {
     pub(crate) base_duration_multiplier: f64,
     pub(crate) base_duration_flat: i64,
     pub(crate) affected_by_haste: bool,
+    /// Go `affectedByCastSpeed`, which the runtime implements; real haste it does not.
+    pub(crate) affected_by_cast_speed: bool,
+    /// Go `hasteReducesDuration`, which picks how `TickCount` counts.
+    pub(crate) haste_reduces_duration: bool,
     pub(crate) channeled: bool,
     pub(crate) tick_action: Option<Handle>,
     /// Go `tickAction.NextActionAt`, kept after the action runs.
@@ -31,11 +38,12 @@ pub(crate) struct Dot {
 }
 
 impl Dot {
-    pub(crate) fn new(spell: SpellId, exported: &ExportedDot) -> Self {
+    /// A dot of `spell`, cast by `caster`; a dot on "self" is on the caster.
+    pub(crate) fn new(spell: SpellId, caster: Side, exported: &ExportedDot) -> Self {
         Dot {
             spell,
             side: if exported.unit == "self" {
-                Side::Player
+                caster
             } else {
                 Side::Target
             },
@@ -51,6 +59,8 @@ impl Dot {
             base_duration_multiplier: exported.base_duration_multiplier,
             base_duration_flat: exported.base_duration_flat_ns,
             affected_by_haste: exported.affected_by_cast_speed || exported.affected_by_real_haste,
+            affected_by_cast_speed: exported.affected_by_cast_speed,
+            haste_reduces_duration: exported.haste_reduces_duration,
             channeled: exported.channeled,
             tick_action: None,
             tick_next_at: 0,
@@ -62,6 +72,22 @@ impl Dot {
             snapshot_spell_power: 0.0,
             reads_spell_power: false,
         }
+    }
+
+    /// Go `Dot.TickCount`: the ticks dealt so far. The runtime has no extra ticks and no
+    /// hasted dots, so the hasted count is the base duration over the tick period.
+    pub(crate) fn tick_count(&self) -> i32 {
+        let total = if self.haste_reduces_duration {
+            self.base_tick_count
+        } else {
+            (self.base_duration() as f64 / self.tick_period as f64).round_ties_even() as i32
+        };
+        total - self.remaining_ticks
+    }
+
+    /// Go `Dot.HastedTickCount`: the base duration over the snapshotted tick period.
+    pub(crate) fn hasted_tick_count(&self) -> i32 {
+        (self.base_duration() as f64 / self.tick_period as f64).round_ties_even() as i32
     }
 
     /// Go `Dot.BaseDuration`.
@@ -81,29 +107,55 @@ impl<A: Agent> Fight<A> {
         if let Some(base) = self.dots[dot].tick_base {
             self.snapshot_dot(dot, base);
         }
+        // Go recomputeAuraDuration.
+        let period = self.calc_tick_period(dot);
         let state = &mut self.dots[dot];
-        assert!(!state.affected_by_haste, "hasted dots are not supported");
-        state.tick_period = state.base_tick_length;
+        state.tick_period = period;
         let ticks = state.base_duration() as f64 / state.base_tick_length as f64;
         state.remaining_ticks = ticks.round_ties_even() as i32;
+        if state.affected_by_haste && !state.haste_reduces_duration {
+            state.remaining_ticks = state.hasted_tick_count();
+        }
         let duration = state.tick_period * i64::from(state.remaining_ticks);
         self.aura_mut(aura).duration = duration;
         self.activate_aura(aura);
     }
 
-    /// Go `Dot.Snapshot`: the base amount plus the spell power share it was given now.
-    fn snapshot_dot(&mut self, dot: DotId, base: f64) {
+    /// Go `Dot.CalcTickPeriod`: a dot affected by cast speed ticks faster, rounded to the
+    /// millisecond as in game; a channel also takes the spell's cast time multiplier.
+    pub(crate) fn calc_tick_period(&self, dot: DotId) -> i64 {
+        let state = &self.dots[dot];
+        assert!(
+            !state.affected_by_haste || state.affected_by_cast_speed,
+            "dots hasted by real haste are not supported"
+        );
+        if !state.affected_by_cast_speed {
+            return state.base_tick_length;
+        }
+        let hasted = if state.channeled {
+            self.apply_cast_speed_for_spell(state.base_tick_length, state.spell)
+        } else {
+            self.apply_cast_speed_of(self.caster(state.spell), state.base_tick_length)
+        };
+        round_to_millisecond(hasted)
+    }
+
+    /// Go `Dot.Snapshot`: the base amount plus the spell power share it was given now. The
+    /// reference arm64 build fuses the share's multiply into that add, though it also stores
+    /// the share: Go's ARM64 rules fuse an add of a product without checking its other uses.
+    pub(crate) fn snapshot_dot(&mut self, dot: DotId, base: f64) {
         let spell = self.dots[dot].spell;
         let coefficient = self.dots[dot].bonus_coefficient;
-        let spell_power = if coefficient > 0.0 {
-            coefficient * self.bonus_damage(spell)
+        let (spell_power, snapshot) = if coefficient > 0.0 {
+            let bonus = self.bonus_damage(spell);
+            (coefficient * bonus, coefficient.mul_add(bonus, base))
         } else {
-            0.0
+            (0.0, base)
         };
         let state = &mut self.dots[dot];
         state.reads_spell_power = coefficient > 0.0;
         state.snapshot_spell_power = spell_power;
-        state.snapshot_base = base + spell_power;
+        state.snapshot_base = snapshot;
     }
 
     /// Go `newDot` OnGain: the first tick is one period away.
@@ -136,6 +188,7 @@ impl<A: Agent> Fight<A> {
         if self.dots[dot].channeled {
             let delay = self.config.channel_clip_delay;
             self.player.channeled_dot = None;
+            self.forget_channel_interrupt();
             if self.player.gcd <= self.now {
                 self.wait_until(self.now + delay);
             }
@@ -150,8 +203,29 @@ impl<A: Agent> Fight<A> {
 
     /// Go `Dot.TickOnce`.
     fn tick_once(&mut self, dot: DotId) {
-        if let SpellBehavior::Class(behavior) = self.spells[self.dots[dot].spell].behavior {
-            A::on_dot_tick(self, dot, behavior);
+        let spell = self.dots[dot].spell;
+        match self.spells[spell].behavior.clone() {
+            SpellBehavior::Class(behavior) => A::on_dot_tick(self, dot, behavior),
+            // Go `CalcAndDealPeriodicSnapshotDamage` with `OutcomeTick`.
+            SpellBehavior::SulfurasFireball { .. } => self.snapshot_dot_tick(dot),
+            // Go spelldata PeriodicDamageTick: the row's amount on current stats.
+            SpellBehavior::OnUseDamage(params) => {
+                if let Some(base) = params.tick_base() {
+                    self.periodic_damage_tick(dot, base);
+                }
+            }
+            // Go spell_data_energize.go: each tick of the self hot rolls the gain.
+            SpellBehavior::EnergizeOnUse {
+                average,
+                variance,
+                periodic: true,
+                ..
+            } => {
+                let gain = self.effect_roll(average, variance);
+                let metrics = self.item_metrics(spell);
+                self.add_mana(gain, metrics);
+            }
+            _ => {}
         }
     }
 
@@ -162,13 +236,17 @@ impl<A: Agent> Fight<A> {
         }
         self.dots[dot].remaining_ticks -= 1;
         self.tick_once(dot);
-        if self.dots[dot].channeled
-            && self.dots[dot].remaining_ticks == 0
-            && self.player.gcd <= self.now
-        {
-            // Without an interrupt condition the rotation cannot cut a channel short.
-            let delay = self.config.channel_clip_delay;
-            self.wait_until(self.now + delay);
+        if self.dots[dot].channeled {
+            if self.dots[dot].remaining_ticks == 0 && self.gcd_ready() {
+                let delay = self.config.channel_clip_delay;
+                self.wait_until(self.now + delay);
+            } else if self.should_interrupt_channel()
+                // Interrupts the spell queue window alone would trigger wait for the GCD.
+                && (self.gcd_ready() || self.gcd_time_to_ready() > MAX_SPELL_QUEUE_WINDOW)
+            {
+                self.interrupt_channel(dot);
+                return;
+            }
         }
         let aura = self.dots[dot].aura;
         let state = &self.dots[dot];
@@ -179,5 +257,36 @@ impl<A: Agent> Fight<A> {
             state.tick_action = Some(handle);
             state.tick_next_at = at;
         }
+    }
+}
+
+/// Go `Duration.Round(time.Millisecond)`: to the nearest millisecond, halves away from zero.
+fn round_to_millisecond(duration: i64) -> i64 {
+    let unit = crate::core::time::NS_PER_MILLISECOND;
+    let mut remainder = duration % unit;
+    if duration < 0 {
+        remainder = -remainder;
+        if remainder + remainder < unit {
+            return duration + remainder;
+        }
+        return duration - unit + remainder;
+    }
+    if remainder + remainder < unit {
+        duration - remainder
+    } else {
+        duration + unit - remainder
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::round_to_millisecond;
+
+    #[test]
+    fn rounds_like_go_duration_round() {
+        assert_eq!(round_to_millisecond(1_000_499_999), 1_000_000_000);
+        assert_eq!(round_to_millisecond(1_000_500_000), 1_001_000_000);
+        assert_eq!(round_to_millisecond(909_090_909), 909_000_000);
+        assert_eq!(round_to_millisecond(-1_500_000), -2_000_000);
     }
 }

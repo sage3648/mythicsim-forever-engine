@@ -5,9 +5,12 @@
 //! fallback reasons.
 
 use crate::{
-    classes::mage,
+    classes,
     contracts::prepared_v2::{PreparedV2, CONTRACT, SCHEMA_VERSION},
-    mechanics::mana::{regen_per_second_casting, regen_per_second_not_casting, RegenInputs},
+    mechanics::{
+        haste::cast_speed,
+        mana::{regen_per_second_casting, regen_per_second_not_casting, RegenInputs},
+    },
     rotation, SOURCE_REVISION,
 };
 
@@ -67,6 +70,15 @@ pub fn validate(prepared: &PreparedV2) -> Result<(), String> {
     {
         return Err("request_sha256 must be 64 lowercase hexadecimal digits".into());
     }
+    // Side::Pet(i) is the pet at position i, in Go unit index order, which fits in a u8.
+    if prepared.pets.len() > usize::from(u8::MAX)
+        || prepared
+            .pets
+            .windows(2)
+            .any(|pair| pair[0].index >= pair[1].index)
+    {
+        return Err("pets must be fewer than 256, in increasing unit index order".into());
+    }
     let sim = &prepared.sim;
     let encounter = &prepared.encounter;
     if !(1..=1_000_000).contains(&sim.iterations)
@@ -104,10 +116,27 @@ pub fn validate(prepared: &PreparedV2) -> Result<(), String> {
             return Err(format!("{name} must be finite and nonnegative"));
         }
     }
-    if player.cast_speed == 0.0 || player.mana.max <= 0.0 {
-        return Err("cast_speed and max_mana must be positive".into());
+    if player.cast_speed == 0.0 {
+        return Err("cast_speed must be positive".into());
     }
-    if !(player.mana.teardown_max > 0.0 && player.mana.teardown_max <= player.mana.max) {
+    // A class without a mana bar, such as a Rogue, exports no mana at all and no mana costs.
+    let manaless = player.mana.max == 0.0;
+    if manaless {
+        let mana_cost = player.spells.iter().any(|spell| {
+            spell
+                .cost
+                .as_ref()
+                .is_some_and(|cost| cost.resource == "mana")
+        });
+        if mana_cost
+            || player.mana.base != 0.0
+            || player.mana.teardown_max != 0.0
+            || player.mana.regen_per_second_casting != 0.0
+            || player.mana.regen_per_second_not_casting != 0.0
+        {
+            return Err("a player without mana must have no mana costs or regeneration".into());
+        }
+    } else if !(player.mana.teardown_max > 0.0 && player.mana.teardown_max <= player.mana.max) {
         return Err("mana teardown_max must be positive and at most max".into());
     }
     // Rust recomputes Go's starting regeneration from the exported components. A mismatch
@@ -121,24 +150,41 @@ pub fn validate(prepared: &PreparedV2) -> Result<(), String> {
         spirit_regen_multiplier: pseudo.spirit_regen_multiplier,
         mana_regen_multiplier: 1.0,
     };
-    for (name, rust, go) in [
-        (
-            "casting",
-            regen_per_second_casting(inputs),
-            player.mana.regen_per_second_casting,
-        ),
-        (
-            "not casting",
-            regen_per_second_not_casting(inputs),
-            player.mana.regen_per_second_not_casting,
-        ),
-    ] {
+    for (name, rust, go) in if manaless {
+        Vec::new()
+    } else {
+        vec![
+            (
+                "casting",
+                regen_per_second_casting(inputs),
+                player.mana.regen_per_second_casting,
+            ),
+            (
+                "not casting",
+                regen_per_second_not_casting(inputs),
+                player.mana.regen_per_second_not_casting,
+            ),
+        ]
+    } {
         // Go may fuse multiply-add on some architectures; allow only that rounding.
         if (rust - go).abs() > 1e-12 * go.abs().max(1.0) {
             return Err(format!(
                 "mana regeneration while {name} is {rust}, Go prepared {go}"
             ));
         }
+    }
+    // Rust recomputes cast speed when an aura multiplies it, so the formula must agree with
+    // the cast speed Go prepared.
+    let haste_rating = *player
+        .stats
+        .get("SpellHasteRating")
+        .ok_or("player stats lack SpellHasteRating")?;
+    let speed = cast_speed(pseudo.cast_speed_multiplier, haste_rating);
+    if (speed - player.cast_speed).abs() > 1e-12 * player.cast_speed {
+        return Err(format!(
+            "cast speed is {speed}, Go prepared {}",
+            player.cast_speed
+        ));
     }
     for spell in &player.spells {
         let cast = &spell.default_cast;
@@ -172,7 +218,7 @@ pub fn coverage(prepared: &PreparedV2) -> Vec<String> {
             None
         }
     };
-    reasons.extend(mage::prepared::prepared_coverage(
+    reasons.extend(super::coverage::prepared_coverage(
         prepared,
         rotation.as_ref(),
     ));
@@ -206,7 +252,7 @@ pub struct PreparedReport {
 /// Validate, gate and simulate a prepared v2 input.
 pub fn simulate(prepared: &PreparedV2) -> Result<PreparedReport, PreparedError> {
     check(prepared)?;
-    let report = mage::prepared::run_prepared(prepared).map_err(PreparedError::Invalid)?;
+    let report = classes::run_prepared(prepared).map_err(PreparedError::Invalid)?;
     let elapsed_ns = report.elapsed_ns;
     Ok(PreparedReport {
         engine: format!("forever-rust-{}", env!("CARGO_PKG_VERSION")),

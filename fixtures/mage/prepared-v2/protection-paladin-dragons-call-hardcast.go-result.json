@@ -1,0 +1,3454 @@
+{
+  "avgIterationDuration": 117.900515032,
+  "encounterMetrics": {
+    "targets": [
+      {
+        "actions": {
+          "{\"otherId\": \"OtherActionAttack\", \"tag\": 1}": {
+            "isMelee": true,
+            "spellSchool": 1,
+            "targets": [
+              {},
+              {
+                "blockDamage": 58658.816192435166,
+                "blocks": 31,
+                "casts": 64,
+                "critDamage": 7963.266148498273,
+                "crits": 2,
+                "crushDamage": 21968.163665871743,
+                "crushes": 7,
+                "damage": 112438.82701034227,
+                "dodges": 7,
+                "hits": 12,
+                "misses": 1,
+                "parries": 4,
+                "threat": 112438.82701034227,
+                "unitIndex": 1
+              },
+              {
+                "unitIndex": 2
+              }
+            ]
+          },
+          "{\"otherId\": \"OtherActionAttack\", \"tag\": 2}": {
+            "isMelee": true,
+            "spellSchool": 1,
+            "targets": [
+              {},
+              {
+                "unitIndex": 1
+              },
+              {
+                "unitIndex": 2
+              }
+            ]
+          },
+          "{\"otherId\": \"OtherActionMove\"}": {
+            "isMelee": true,
+            "targets": [
+              {},
+              {
+                "unitIndex": 1
+              },
+              {
+                "unitIndex": 2
+              }
+            ]
+          }
+        },
+        "auras": {
+          "{\"otherId\": \"OtherActionMove\"}": {
+            "aggregatorData": {
+              "n": 1
+            }
+          },
+          "{\"spellId\": 11198, \"tag\": -1}": {
+            "aggregatorData": {
+              "n": 1,
+              "sumSq": 13900.531444810858
+            },
+            "procsAvg": 1,
+            "uptimeSecondsAvg": 117.900515032,
+            "uptimeSecondsStdev": 3.380066118678506e-07
+          },
+          "{\"spellId\": 11374, \"tag\": -1}": {
+            "aggregatorData": {
+              "n": 1,
+              "sumSq": 13900.531444810858
+            },
+            "procsAvg": 1,
+            "uptimeSecondsAvg": 117.900515032,
+            "uptimeSecondsStdev": 3.380066118678506e-07
+          },
+          "{\"spellId\": 11717, \"tag\": -1}": {
+            "aggregatorData": {
+              "n": 1,
+              "sumSq": 13900.531444810858
+            },
+            "procsAvg": 1,
+            "uptimeSecondsAvg": 117.900515032,
+            "uptimeSecondsStdev": 3.380066118678506e-07
+          },
+          "{\"spellId\": 20184}": {
+            "aggregatorData": {
+              "n": 1
+            }
+          },
+          "{\"spellId\": 20185}": {
+            "aggregatorData": {
+              "n": 1
+            }
+          },
+          "{\"spellId\": 20186}": {
+            "aggregatorData": {
+              "n": 1
+            }
+          },
+          "{\"spellId\": 20188}": {
+            "aggregatorData": {
+              "n": 1
+            }
+          },
+          "{\"spellId\": 20300}": {
+            "aggregatorData": {
+              "n": 1
+            }
+          },
+          "{\"spellId\": 20301}": {
+            "aggregatorData": {
+              "n": 1
+            }
+          },
+          "{\"spellId\": 20302}": {
+            "aggregatorData": {
+              "n": 1
+            }
+          },
+          "{\"spellId\": 20303}": {
+            "aggregatorData": {
+              "n": 1,
+              "sumSq": 13900.531444810858
+            },
+            "procsAvg": 1,
+            "uptimeSecondsAvg": 117.900515032,
+            "uptimeSecondsStdev": 3.380066118678506e-07
+          },
+          "{\"spellId\": 20303} #2": {
+            "aggregatorData": {
+              "n": 1
+            }
+          },
+          "{\"spellId\": 20344}": {
+            "aggregatorData": {
+              "n": 1
+            }
+          },
+          "{\"spellId\": 20345}": {
+            "aggregatorData": {
+              "n": 1
+            }
+          },
+          "{\"spellId\": 20346}": {
+            "aggregatorData": {
+              "n": 1
+            }
+          },
+          "{\"spellId\": 20354}": {
+            "aggregatorData": {
+              "n": 1
+            }
+          },
+          "{\"spellId\": 20355, \"tag\": -1}": {
+            "aggregatorData": {
+              "n": 1,
+              "sumSq": 13900.531444810858
+            },
+            "procsAvg": 1,
+            "uptimeSecondsAvg": 117.900515032,
+            "uptimeSecondsStdev": 3.380066118678506e-07
+          },
+          "{\"spellId\": 20355}": {
+            "aggregatorData": {
+              "n": 1
+            }
+          },
+          "{\"spellId\": 21183}": {
+            "aggregatorData": {
+              "n": 1
+            }
+          },
+          "{\"spellId\": 9907, \"tag\": -1}": {
+            "aggregatorData": {
+              "n": 1,
+              "sumSq": 13900.531444810858
+            },
+            "procsAvg": 1,
+            "uptimeSecondsAvg": 117.900515032,
+            "uptimeSecondsStdev": 3.380066118678506e-07
+          }
+        },
+        "dps": {
+          "aggregatorData": {
+            "n": 1,
+            "sumSq": 909496.8684942749
+          },
+          "avg": 953.6754523915748,
+          "hist": {
+            "950": 1
+          },
+          "max": 953.6754523915748,
+          "maxSeed": "85",
+          "min": 953.6754523915748,
+          "minSeed": "85",
+          "stdev": 3.766099879949371e-06
+        },
+        "dtps": {
+          "aggregatorData": {
+            "n": 1,
+            "sumSq": 245890.36096930815
+          },
+          "avg": 495.87333157703506,
+          "hist": {
+            "500": 1
+          },
+          "max": 495.87333157703506,
+          "maxSeed": "85",
+          "min": 495.87333157703506,
+          "minSeed": "85",
+          "stdev": "NaN"
+        },
+        "hps": {
+          "aggregatorData": {
+            "n": 1
+          },
+          "hist": {
+            "0": 1
+          },
+          "minSeed": "85"
+        },
+        "name": "Target 1",
+        "threat": {
+          "aggregatorData": {
+            "n": 1,
+            "sumSq": 909496.8684942749
+          },
+          "avg": 953.6754523915748,
+          "hist": {
+            "950": 1
+          },
+          "max": 953.6754523915748,
+          "maxSeed": "85",
+          "min": 953.6754523915748,
+          "minSeed": "85",
+          "stdev": 3.766099879949371e-06
+        },
+        "tmi": {
+          "aggregatorData": {
+            "n": 1
+          },
+          "hist": {
+            "0": 1
+          },
+          "minSeed": "85"
+        },
+        "tto": {
+          "aggregatorData": {
+            "n": 1
+          },
+          "hist": {
+            "0": 1
+          },
+          "minSeed": "85"
+        }
+      }
+    ]
+  },
+  "firstIterationDuration": 117.900515032,
+  "iterationsDone": 1,
+  "raidMetrics": {
+    "dps": {
+      "aggregatorData": {
+        "n": 1,
+        "sumSq": 245890.36096930815
+      },
+      "avg": 495.87333157703506,
+      "hist": {
+        "500": 1
+      },
+      "max": 495.87333157703506,
+      "maxSeed": "85",
+      "min": 495.87333157703506,
+      "minSeed": "85",
+      "stdev": "NaN"
+    },
+    "hps": {
+      "aggregatorData": {
+        "n": 1
+      },
+      "hist": {
+        "0": 1
+      },
+      "minSeed": "85"
+    },
+    "parties": [
+      {
+        "dps": {
+          "aggregatorData": {
+            "n": 1,
+            "sumSq": 245890.36096930815
+          },
+          "avg": 495.87333157703506,
+          "hist": {
+            "500": 1
+          },
+          "max": 495.87333157703506,
+          "maxSeed": "85",
+          "min": 495.87333157703506,
+          "minSeed": "85",
+          "stdev": "NaN"
+        },
+        "hps": {
+          "aggregatorData": {
+            "n": 1
+          },
+          "hist": {
+            "0": 1
+          },
+          "minSeed": "85"
+        },
+        "players": [
+          {
+            "actions": {
+              "{\"itemId\": 12662}": {
+                "targets": [
+                  {
+                    "casts": 1
+                  },
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"itemId\": 13444}": {
+                "targets": [
+                  {
+                    "casts": 1
+                  },
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"itemId\": 18641}": {
+                "spellSchool": 4,
+                "targets": [
+                  {
+                    "castTimeMs": 2000,
+                    "casts": 2,
+                    "damage": 717.035282475485,
+                    "hits": 2,
+                    "threat": 717.035282475485
+                  },
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"otherId\": \"OtherActionAttack\", \"tag\": 1}": {
+                "isMelee": true,
+                "spellSchool": 1,
+                "targets": [
+                  {
+                    "blockDamage": 607.020672291774,
+                    "blocks": 2,
+                    "casts": 49,
+                    "critDamage": 4927.936641983122,
+                    "crits": 7,
+                    "damage": 14046.65959748426,
+                    "dodges": 2,
+                    "glanceDamage": 4180.809376117498,
+                    "glances": 18,
+                    "hits": 12,
+                    "parries": 8,
+                    "threat": 14046.65959748426
+                  },
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"otherId\": \"OtherActionAttack\", \"tag\": 25584}": {
+                "isMelee": true,
+                "spellSchool": 1,
+                "targets": [
+                  {
+                    "casts": 14,
+                    "critDamage": 881.8166784989452,
+                    "crits": 1,
+                    "damage": 3077.586413905624,
+                    "dodges": 2,
+                    "glanceDamage": 1087.3350534209449,
+                    "glances": 4,
+                    "hits": 3,
+                    "parries": 4,
+                    "threat": 3077.586413905624
+                  },
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"otherId\": \"OtherActionAttack\", \"tag\": 2}": {
+                "isMelee": true,
+                "spellSchool": 1,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"otherId\": \"OtherActionManaGain\"}": {
+                "targets": [
+                  {
+                    "casts": 82,
+                    "threat": 5167.480000000001
+                  },
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"otherId\": \"OtherActionMove\"}": {
+                "isMelee": true,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 1026}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 10290}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 10291}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 10292}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 10293}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 10298, \"tag\": 2}": {
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 10298}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 10299, \"tag\": 2}": {
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 10299}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 10300, \"tag\": 2}": {
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 10300}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 10301, \"tag\": 2}": {
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 10301}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 10310}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 10312}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 10313}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 10314}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 10318}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 10328}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 10329}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 1032}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 10332}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 10333}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {
+                    "blockDamage": 834.4675398578455,
+                    "blocks": 3,
+                    "castTimeMs": 18000,
+                    "casts": 12,
+                    "damage": 3116.70967130797,
+                    "dodges": 1,
+                    "hits": 7,
+                    "parries": 1,
+                    "threat": 6233.41934261594
+                  },
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 1042}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 1260198}": {
+                "isPassive": true,
+                "spellSchool": 32,
+                "targets": [
+                  {
+                    "damage": 2255.6375000000003,
+                    "hits": 8,
+                    "resistedDamage": 218.28750000000002,
+                    "resistedHits": 1,
+                    "threat": 2255.6375000000003
+                  },
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 1310994}": {
+                "spellSchool": 1,
+                "targets": [
+                  {},
+                  {
+                    "casts": 2,
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 1311015}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 1311647}": {
+                "isMelee": true,
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 1311649}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 1311650}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 1311654}": {
+                "isMelee": true,
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 1311655}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 1311656}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 15851}": {
+                "isPassive": true,
+                "spellSchool": 4,
+                "targets": [
+                  {
+                    "damage": 210.65946083306898,
+                    "hits": 2,
+                    "threat": 210.65946083306898
+                  },
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 1866}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 19746}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 19750}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 19876}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 19888}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 19891}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 19895}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 19896}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 19897}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 19898}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 19899}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 19900}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 19939}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 19940}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 19941}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 19942}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 19943}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20116}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20162}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20163}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20164}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20165}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20166}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20167}": {
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20168}": {
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20183}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20184}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20185}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20186}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20187}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20188}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20231}": {
+                "isMelee": true,
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20271}": {
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20280}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20281}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20282}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20283}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20284}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20285}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20286}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {
+                    "casts": 17,
+                    "critDamage": 4125.862763394998,
+                    "crits": 6,
+                    "damage": 7910.618324671571,
+                    "hits": 11,
+                    "threat": 12656.989319474513
+                  },
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20287}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20288}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20289}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20290}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20291}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20292}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20293}": {
+                "spellSchool": 2,
+                "targets": [
+                  {
+                    "castTimeMs": 7500,
+                    "casts": 5
+                  },
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20300}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20301}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20302}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20303}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20305}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20306}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20307}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20308}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20333}": {
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20334}": {
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20340}": {
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20344}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20345}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20346}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20347}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20348}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20349}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20350}": {
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20351}": {
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20354}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20355}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20356}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20357}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20411}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20412}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20413}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20414}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20415}": {
+                "isMelee": true,
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20416}": {
+                "isMelee": true,
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20417}": {
+                "isMelee": true,
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20418}": {
+                "isMelee": true,
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20419}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20421}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20422}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20423}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20922}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20923}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20924}": {
+                "spellSchool": 2,
+                "targets": [
+                  {
+                    "castTimeMs": 18000,
+                    "casts": 12,
+                    "critDamage": 1151.624994724989,
+                    "critTickDamage": 1151.624994724989,
+                    "critTicks": 14,
+                    "damage": 5389.604975312948,
+                    "hits": 11,
+                    "misses": 5,
+                    "resistedCritDamage": 230.3249989449978,
+                    "resistedCritTickDamage": 230.3249989449978,
+                    "resistedCritTicks": 4,
+                    "resistedDamage": 783.1049964129925,
+                    "resistedTickDamage": 783.1049964129925,
+                    "resistedTicks": 13,
+                    "threat": 8623.367960500711,
+                    "tickDamage": 5389.604975312948,
+                    "ticks": 73
+                  },
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20925, \"tag\": 2}": {
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20925}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20927, \"tag\": 2}": {
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20927}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20928, \"tag\": 2}": {
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {
+                    "damage": 6956.519987761974,
+                    "hits": 29,
+                    "misses": 1,
+                    "threat": 13356.518376502998
+                  },
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 20928}": {
+                "spellSchool": 2,
+                "targets": [
+                  {
+                    "castTimeMs": 18000,
+                    "casts": 12
+                  },
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 21082}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 21084}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 21183}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 24239}": {
+                "spellSchool": 2,
+                "targets": [
+                  {
+                    "castTimeMs": 4000,
+                    "casts": 4,
+                    "critDamage": 1209.5093755373828,
+                    "crits": 1,
+                    "damage": 2837.4023847515914,
+                    "hits": 3,
+                    "resistedDamage": 434.0673829756023,
+                    "resistedHits": 1,
+                    "threat": 4539.843815602547
+                  },
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 24274}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 24275}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 2495}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 25292}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 25713}": {
+                "isMelee": true,
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {
+                    "critDamage": 751.6687560662627,
+                    "crits": 4,
+                    "damage": 4961.013790037332,
+                    "hits": 43,
+                    "resistedCritDamage": 150.33375121325253,
+                    "resistedCrits": 1,
+                    "resistedDamage": 350.7787528309226,
+                    "resistedHits": 3,
+                    "threat": 7937.6220640597385
+                  },
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 25735}": {
+                "isMelee": true,
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 25736}": {
+                "isMelee": true,
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 25737}": {
+                "isMelee": true,
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 25738}": {
+                "isMelee": true,
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 25739}": {
+                "isMelee": true,
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 25740}": {
+                "isMelee": true,
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 25742}": {
+                "isMelee": true,
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 25780}": {
+                "spellSchool": 2,
+                "targets": [
+                  {
+                    "castTimeMs": 1500,
+                    "casts": 1
+                  },
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 26573}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 2800}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 2812}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 3472}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 407632}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 465}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 5569}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 5614}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 5615}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 633}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 635}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 639}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 643}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 647}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 678}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 679}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 680}": {
+                "isMelee": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 7294, \"tag\": 2}": {
+                "isPassive": true,
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 7294}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              },
+              "{\"spellId\": 879}": {
+                "spellSchool": 2,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  },
+                  {
+                    "unitIndex": 2
+                  }
+                ]
+              }
+            },
+            "auras": {
+              "{\"otherId\": \"OtherActionMove\"}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 10290}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 10291}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 10292}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 10293}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 10298}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 10299}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 10300}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 10301}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 1032}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 10610, \"tag\": -1}": {
+                "aggregatorData": {
+                  "n": 1,
+                  "sumSq": 49
+                },
+                "procsAvg": 14,
+                "uptimeSecondsAvg": 7
+              },
+              "{\"spellId\": 1310994}": {
+                "aggregatorData": {
+                  "n": 1
+                },
+                "procsAvg": 2
+              },
+              "{\"spellId\": 1311015}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 1311033}": {
+                "aggregatorData": {
+                  "n": 1,
+                  "sumSq": 3600
+                },
+                "procsAvg": 10,
+                "uptimeSecondsAvg": 60
+              },
+              "{\"spellId\": 1311649, \"tag\": 1}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 1311649}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 1311656, \"tag\": 1}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 1311656}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 19746}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 19876}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 19888}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 19891}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 19895}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 19896}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 19897}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 19898}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 19899}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 19900}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20007, \"tag\": 1}": {
+                "aggregatorData": {
+                  "n": 1,
+                  "sumSq": 2325.306749384834
+                },
+                "procsAvg": 5,
+                "uptimeSecondsAvg": 48.221434543,
+                "uptimeSecondsStdev": 4.3561018692830386e-07
+              },
+              "{\"spellId\": 20007, \"tag\": 2}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20116}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20128}": {
+                "aggregatorData": {
+                  "n": 1,
+                  "sumSq": 2938.77993916733
+                },
+                "procsAvg": 9,
+                "uptimeSecondsAvg": 54.210515024,
+                "uptimeSecondsStdev": 4.2368433406374774e-07
+              },
+              "{\"spellId\": 20162}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20163, \"tag\": 1}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20163}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20164}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20165}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20166}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20287}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20288}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20289}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20290}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20291}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20292}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20293}": {
+                "aggregatorData": {
+                  "n": 1,
+                  "sumSq": 13900.531444810858
+                },
+                "procsAvg": 5,
+                "uptimeSecondsAvg": 117.900515032,
+                "uptimeSecondsStdev": 3.380066118678506e-07
+              },
+              "{\"spellId\": 20305}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20306}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20307}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20308}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20347}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20348}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20349}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20356}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20357}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20419, \"tag\": 1}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20419}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20421, \"tag\": 1}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20421}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20422, \"tag\": 1}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20422}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20423, \"tag\": 1}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20423}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20922}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20923}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20924}": {
+                "aggregatorData": {
+                  "n": 1,
+                  "sumSq": 8440.19153077501
+                },
+                "procsAvg": 12,
+                "uptimeSecondsAvg": 91.870515024,
+                "uptimeSecondsStdev": "NaN"
+              },
+              "{\"spellId\": 20925}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20927}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 20928}": {
+                "aggregatorData": {
+                  "n": 1,
+                  "sumSq": 11956.152567533038
+                },
+                "procsAvg": 12,
+                "uptimeSecondsAvg": 109.344193113,
+                "uptimeSecondsStdev": 6.272349429167437e-07
+              },
+              "{\"spellId\": 21082}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 21084}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 21564, \"tag\": -1}": {
+                "aggregatorData": {
+                  "n": 1,
+                  "sumSq": 13900.531444810858
+                },
+                "procsAvg": 1,
+                "uptimeSecondsAvg": 117.900515032,
+                "uptimeSecondsStdev": 3.380066118678506e-07
+              },
+              "{\"spellId\": 21850, \"tag\": -1}": {
+                "aggregatorData": {
+                  "n": 1,
+                  "sumSq": 13900.531444810858
+                },
+                "procsAvg": 1,
+                "uptimeSecondsAvg": 117.900515032,
+                "uptimeSecondsStdev": 3.380066118678506e-07
+              },
+              "{\"spellId\": 23028, \"tag\": -1}": {
+                "aggregatorData": {
+                  "n": 1,
+                  "sumSq": 13900.531444810858
+                },
+                "procsAvg": 1,
+                "uptimeSecondsAvg": 117.900515032,
+                "uptimeSecondsStdev": 3.380066118678506e-07
+              },
+              "{\"spellId\": 25289, \"tag\": -1}": {
+                "aggregatorData": {
+                  "n": 1,
+                  "sumSq": 13900.531444810858
+                },
+                "procsAvg": 1,
+                "uptimeSecondsAvg": 117.900515032,
+                "uptimeSecondsStdev": 3.380066118678506e-07
+              },
+              "{\"spellId\": 25580, \"tag\": -1}": {
+                "aggregatorData": {
+                  "n": 1,
+                  "sumSq": 13900.531444810858
+                },
+                "procsAvg": 1,
+                "uptimeSecondsAvg": 117.900515032,
+                "uptimeSecondsStdev": 3.380066118678506e-07
+              },
+              "{\"spellId\": 25587, \"tag\": -1}": {
+                "aggregatorData": {
+                  "n": 1,
+                  "sumSq": 13900.531444810858
+                },
+                "procsAvg": 24,
+                "uptimeSecondsAvg": 117.900515032,
+                "uptimeSecondsStdev": 3.380066118678506e-07
+              },
+              "{\"spellId\": 25771}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 25780}": {
+                "aggregatorData": {
+                  "n": 1,
+                  "sumSq": 13900.531444810858
+                },
+                "procsAvg": 1,
+                "uptimeSecondsAvg": 117.900515032,
+                "uptimeSecondsStdev": 3.380066118678506e-07
+              },
+              "{\"spellId\": 25898, \"tag\": -1}": {
+                "aggregatorData": {
+                  "n": 1,
+                  "sumSq": 13900.531444810858
+                },
+                "procsAvg": 1,
+                "uptimeSecondsAvg": 117.900515032,
+                "uptimeSecondsStdev": 3.380066118678506e-07
+              },
+              "{\"spellId\": 25916, \"tag\": -1}": {
+                "aggregatorData": {
+                  "n": 1,
+                  "sumSq": 13900.531444810858
+                },
+                "procsAvg": 1,
+                "uptimeSecondsAvg": 117.900515032,
+                "uptimeSecondsStdev": 3.380066118678506e-07
+              },
+              "{\"spellId\": 25918, \"tag\": -1}": {
+                "aggregatorData": {
+                  "n": 1,
+                  "sumSq": 13900.531444810858
+                },
+                "procsAvg": 1,
+                "uptimeSecondsAvg": 117.900515032,
+                "uptimeSecondsStdev": 3.380066118678506e-07
+              },
+              "{\"spellId\": 26573}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 27681, \"tag\": -1}": {
+                "aggregatorData": {
+                  "n": 1,
+                  "sumSq": 13900.531444810858
+                },
+                "procsAvg": 1,
+                "uptimeSecondsAvg": 117.900515032,
+                "uptimeSecondsStdev": 3.380066118678506e-07
+              },
+              "{\"spellId\": 465}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 643}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              },
+              "{\"spellId\": 7294}": {
+                "aggregatorData": {
+                  "n": 1
+                }
+              }
+            },
+            "chanceOfDeath": 1,
+            "deathSeeds": [
+              "85"
+            ],
+            "dps": {
+              "aggregatorData": {
+                "n": 1,
+                "sumSq": 245890.36096930815
+              },
+              "avg": 495.87333157703506,
+              "hist": {
+                "500": 1
+              },
+              "max": 495.87333157703506,
+              "maxSeed": "85",
+              "min": 495.87333157703506,
+              "minSeed": "85",
+              "stdev": "NaN"
+            },
+            "dtps": {
+              "aggregatorData": {
+                "n": 1,
+                "sumSq": 909496.8684942749
+              },
+              "avg": 953.6754523915748,
+              "hist": {
+                "950": 1
+              },
+              "max": 953.6754523915748,
+              "maxSeed": "85",
+              "min": 953.6754523915748,
+              "minSeed": "85",
+              "stdev": 3.766099879949371e-06
+            },
+            "hps": {
+              "aggregatorData": {
+                "n": 1
+              },
+              "hist": {
+                "0": 1
+              },
+              "minSeed": "85"
+            },
+            "name": "protection-paladin",
+            "pets": [
+              {
+                "actions": {
+                  "{\"otherId\": \"OtherActionAttack\", \"tag\": 1}": {
+                    "isMelee": true,
+                    "spellSchool": 1,
+                    "targets": [
+                      {
+                        "casts": 18,
+                        "damage": 793.3598048820717,
+                        "glanceDamage": 278.3314048590364,
+                        "glances": 5,
+                        "hits": 6,
+                        "misses": 3,
+                        "parries": 4,
+                        "threat": 793.3598048820717
+                      },
+                      {
+                        "unitIndex": 1
+                      },
+                      {
+                        "unitIndex": 2
+                      }
+                    ]
+                  },
+                  "{\"otherId\": \"OtherActionAttack\", \"tag\": 2}": {
+                    "isMelee": true,
+                    "spellSchool": 1,
+                    "targets": [
+                      {},
+                      {
+                        "unitIndex": 1
+                      },
+                      {
+                        "unitIndex": 2
+                      }
+                    ]
+                  },
+                  "{\"otherId\": \"OtherActionManaGain\"}": {
+                    "targets": [
+                      {
+                        "casts": 18,
+                        "threat": 455
+                      },
+                      {
+                        "unitIndex": 1
+                      },
+                      {
+                        "unitIndex": 2
+                      }
+                    ]
+                  },
+                  "{\"otherId\": \"OtherActionMove\"}": {
+                    "isMelee": true,
+                    "targets": [
+                      {},
+                      {
+                        "unitIndex": 1
+                      },
+                      {
+                        "unitIndex": 2
+                      }
+                    ]
+                  },
+                  "{\"spellId\": 9591}": {
+                    "spellSchool": 8,
+                    "targets": [
+                      {
+                        "castTimeMs": 42000,
+                        "casts": 14,
+                        "critDamage": 1485.201228654118,
+                        "crits": 2,
+                        "damage": 6190.913990142252,
+                        "hits": 9,
+                        "misses": 3,
+                        "resistedCritDamage": 682.2108558412715,
+                        "resistedCrits": 1,
+                        "resistedDamage": 1939.71615279962,
+                        "resistedHits": 3,
+                        "threat": 6190.913990142252
+                      },
+                      {
+                        "unitIndex": 1
+                      },
+                      {
+                        "unitIndex": 2
+                      }
+                    ]
+                  }
+                },
+                "auras": {
+                  "{\"otherId\": \"OtherActionMove\"}": {
+                    "aggregatorData": {
+                      "n": 1
+                    }
+                  }
+                },
+                "dps": {
+                  "aggregatorData": {
+                    "n": 1,
+                    "sumSq": 3509.2241356047816
+                  },
+                  "avg": 59.238704709039524,
+                  "hist": {
+                    "60": 1
+                  },
+                  "max": 59.238704709039524,
+                  "maxSeed": "85",
+                  "min": 59.238704709039524,
+                  "minSeed": "85",
+                  "stdev": 3.4528055561339673e-07
+                },
+                "dtps": {
+                  "aggregatorData": {
+                    "n": 1
+                  },
+                  "hist": {
+                    "0": 1
+                  },
+                  "minSeed": "85"
+                },
+                "hps": {
+                  "aggregatorData": {
+                    "n": 1
+                  },
+                  "hist": {
+                    "0": 1
+                  },
+                  "minSeed": "85"
+                },
+                "name": "Emerald Dragon Whelp",
+                "resources": {
+                  "{\"otherId\": \"OtherActionManaRegen\", \"tag\": 1}": {
+                    "events": 32,
+                    "type": "ResourceTypeMana"
+                  },
+                  "{\"otherId\": \"OtherActionManaRegen\", \"tag\": 2}": {
+                    "actualGain": 15,
+                    "events": 6,
+                    "gain": 90,
+                    "type": "ResourceTypeMana"
+                  },
+                  "{\"spellId\": 20355}": {
+                    "actualGain": 910,
+                    "events": 18,
+                    "gain": 1062,
+                    "type": "ResourceTypeMana"
+                  },
+                  "{\"spellId\": 9591}": {
+                    "actualGain": -1260,
+                    "events": 14,
+                    "gain": -1260,
+                    "type": "ResourceTypeMana"
+                  }
+                },
+                "threat": {
+                  "aggregatorData": {
+                    "n": 1,
+                    "sumSq": 3981.3437937292215
+                  },
+                  "avg": 63.097890564813824,
+                  "hist": {
+                    "60": 1
+                  },
+                  "max": 63.097890564813824,
+                  "maxSeed": "85",
+                  "min": 63.097890564813824,
+                  "minSeed": "85",
+                  "stdev": 3.56603769697917e-07
+                },
+                "tmi": {
+                  "aggregatorData": {
+                    "n": 1
+                  },
+                  "hist": {
+                    "0": 1
+                  },
+                  "minSeed": "85"
+                },
+                "tto": {
+                  "aggregatorData": {
+                    "n": 1,
+                    "sumSq": 62615.375865271024
+                  },
+                  "avg": 250.230645336,
+                  "hist": {
+                    "250": 1
+                  },
+                  "max": 250.230645336,
+                  "maxSeed": "85",
+                  "min": 250.230645336,
+                  "minSeed": "85",
+                  "stdev": 9.023397641235139e-07
+                },
+                "unitIndex": 2
+              }
+            ],
+            "resources": {
+              "{\"itemId\": 12662}": {
+                "actualGain": 1200,
+                "events": 1,
+                "gain": 1200,
+                "type": "ResourceTypeMana"
+              },
+              "{\"itemId\": 13444}": {
+                "actualGain": 1800,
+                "events": 1,
+                "gain": 1800,
+                "type": "ResourceTypeMana"
+              },
+              "{\"otherId\": \"OtherActionDamageTaken\"}": {
+                "actualGain": -8638.081794453365,
+                "events": 52,
+                "gain": -112438.82701034227,
+                "type": "ResourceTypeHealth"
+              },
+              "{\"otherId\": \"OtherActionManaRegen\", \"tag\": 1}": {
+                "actualGain": 911.9999999999998,
+                "events": 59,
+                "gain": 944,
+                "type": "ResourceTypeMana"
+              },
+              "{\"otherId\": \"OtherActionManaRegen\", \"tag\": 2}": {
+                "actualGain": 123.60000000000036,
+                "events": 2,
+                "gain": 123.60000000000001,
+                "type": "ResourceTypeMana"
+              },
+              "{\"spellId\": 10333}": {
+                "actualGain": -240,
+                "events": 12,
+                "gain": -240,
+                "type": "ResourceTypeMana"
+              },
+              "{\"spellId\": 1260198}": {
+                "actualGain": 2255.6375000000003,
+                "events": 8,
+                "gain": 2255.6375000000003,
+                "type": "ResourceTypeHealth"
+              },
+              "{\"spellId\": 1310925}": {
+                "actualGain": 4089.9600000000023,
+                "events": 22,
+                "gain": 4418.040000000001,
+                "type": "ResourceTypeMana"
+              },
+              "{\"spellId\": 20007}": {
+                "actualGain": 561.4442944533653,
+                "events": 5,
+                "gain": 561.4442944533653,
+                "type": "ResourceTypeHealth"
+              },
+              "{\"spellId\": 20271}": {
+                "actualGain": -1350,
+                "events": 15,
+                "gain": -1350,
+                "type": "ResourceTypeMana"
+              },
+              "{\"spellId\": 20293}": {
+                "actualGain": -1000,
+                "events": 5,
+                "gain": -1000,
+                "type": "ResourceTypeMana"
+              },
+              "{\"spellId\": 20355}": {
+                "actualGain": 3245,
+                "events": 58,
+                "gain": 3422,
+                "type": "ResourceTypeMana"
+              },
+              "{\"spellId\": 20924}": {
+                "actualGain": -6780,
+                "events": 12,
+                "gain": -6780,
+                "type": "ResourceTypeMana"
+              },
+              "{\"spellId\": 20928}": {
+                "actualGain": -2880,
+                "events": 12,
+                "gain": -2880,
+                "type": "ResourceTypeMana"
+              },
+              "{\"spellId\": 24239}": {
+                "actualGain": -1700,
+                "events": 4,
+                "gain": -1700,
+                "type": "ResourceTypeMana"
+              },
+              "{\"spellId\": 25780}": {
+                "actualGain": -453,
+                "events": 1,
+                "gain": -453,
+                "type": "ResourceTypeMana"
+              }
+            },
+            "secondsOomAvg": 1,
+            "threat": {
+              "aggregatorData": {
+                "n": 1,
+                "sumSq": 446963.9769395077
+              },
+              "avg": 668.5536455210664,
+              "hist": {
+                "670": 1
+              },
+              "max": 668.5536455210664,
+              "maxSeed": "85",
+              "min": 668.5536455210664,
+              "minSeed": "85",
+              "stdev": "NaN"
+            },
+            "tmi": {
+              "aggregatorData": {
+                "n": 1
+              },
+              "hist": {
+                "0": 1
+              },
+              "minSeed": "85"
+            },
+            "tto": {
+              "aggregatorData": {
+                "n": 1,
+                "sumSq": 13002.840901824477
+              },
+              "avg": 114.03000000799999,
+              "hist": {
+                "110": 1
+              },
+              "max": 114.03000000799999,
+              "maxSeed": "85",
+              "min": 114.03000000799999,
+              "minSeed": "85",
+              "stdev": "NaN"
+            },
+            "unitIndex": 1
+          }
+        ]
+      }
+    ]
+  }
+}
