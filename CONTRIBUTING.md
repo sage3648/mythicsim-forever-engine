@@ -93,6 +93,11 @@ whether it is current. Record the production census with
 `python3 tools/validation_summary.py census REPORT --revision REV` from a
 `tools/census.py` report of the production requests.
 
+Records whose `generator` field is a command keep only their base requests. Their
+`variants/` folders are not committed, because the generator rebuilds them exactly.
+To rerun such a record, run its generator with `<scratch>` set to a folder that does
+not exist yet, then point the record's rerun command at that folder.
+
 The [first-build inventory guide](docs/first-frost-inventory.md) explains source
 provenance verification and scratch capture. Ordinary audits need neither Go nor
 access to the application repository. Captures never replace accepted snapshots.

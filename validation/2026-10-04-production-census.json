@@ -1,0 +1,219 @@
+{
+ "kind": "production_census",
+ "date": "2026-10-04",
+ "source_revision": "73589e29b",
+ "scope": "Which production requests (output/prod-requests) the Rust engine runs, each exported with the pinned Go engine and checked by the Rust gate, with the reasons that block the rest.",
+ "generator": "python3 tools/census.py --output <scratch> output/prod-requests",
+ "summary": {
+  "inputs": 29,
+  "outcomes": {
+   "supported": 29
+  },
+  "reason_groups": []
+ },
+ "inputs": [
+  {
+   "input": "output/prod-requests/affliction-warlock.request.json",
+   "kind": "request",
+   "request_sha256": "a542eadf15c9f1667cb10640ae586e8f9a93c31f316899973f380a87eb32b9a1",
+   "outcome": "supported",
+   "reasons": []
+  },
+  {
+   "input": "output/prod-requests/arcane-mage.request.json",
+   "kind": "request",
+   "request_sha256": "373ee8a3013ed344abe5b844a7d13830b83b6eca52134ca5487e6ea5bc969bf4",
+   "outcome": "supported",
+   "reasons": []
+  },
+  {
+   "input": "output/prod-requests/arms-warrior.request.json",
+   "kind": "request",
+   "request_sha256": "86c6d495638ac1520d056338c8348cb3058d2ffc70f37c292823814381a43632",
+   "outcome": "supported",
+   "reasons": []
+  },
+  {
+   "input": "output/prod-requests/assassination-rogue.request.json",
+   "kind": "request",
+   "request_sha256": "23f54cacec10e1f08dfa5fba72fc2b02823bcd052393491a3a070df46a4429b3",
+   "outcome": "supported",
+   "reasons": []
+  },
+  {
+   "input": "output/prod-requests/balance-druid.request.json",
+   "kind": "request",
+   "request_sha256": "cd329dd5e3eea95afb9c0d7d7630a705f2bda924d6525aa7ad320ca46fef3bdc",
+   "outcome": "supported",
+   "reasons": []
+  },
+  {
+   "input": "output/prod-requests/combat-rogue.request.json",
+   "kind": "request",
+   "request_sha256": "09cf2a0398c54abfbd449fd7981318db9e09fbd6688e2db4dfd08d9417a193cf",
+   "outcome": "supported",
+   "reasons": []
+  },
+  {
+   "input": "output/prod-requests/demonology-warlock.request.json",
+   "kind": "request",
+   "request_sha256": "80a9cd582d06b60c354266fb4716d305ec7fe5ef28f56e744ae6981f6ed624eb",
+   "outcome": "supported",
+   "reasons": []
+  },
+  {
+   "input": "output/prod-requests/destruction-warlock.request.json",
+   "kind": "request",
+   "request_sha256": "f347d4735d0d805565fea7ab20b128c9e1c34b6481c27a7c3f5258227ee87b9c",
+   "outcome": "supported",
+   "reasons": []
+  },
+  {
+   "input": "output/prod-requests/elemental-shaman.request.json",
+   "kind": "request",
+   "request_sha256": "4bf041a36be894ac98807269cfdf48040fe2a9247e5471eb84b24d5178660596",
+   "outcome": "supported",
+   "reasons": []
+  },
+  {
+   "input": "output/prod-requests/enhancement-shaman.request.json",
+   "kind": "request",
+   "request_sha256": "dfae5e45d51cab1519ea2ec9814aa8adcc8489176decc5eade77144228d3cc6f",
+   "outcome": "supported",
+   "reasons": []
+  },
+  {
+   "input": "output/prod-requests/feral-bear-druid.request.json",
+   "kind": "request",
+   "request_sha256": "5443e4045ed502363265474e91012d45b9ab1f9e334c86f62aa8e337f8dafafc",
+   "outcome": "supported",
+   "reasons": []
+  },
+  {
+   "input": "output/prod-requests/feral-druid.request.json",
+   "kind": "request",
+   "request_sha256": "d488be1f4c0262f06d308da71937752a09dd07e227f65141e4dec41e23cd97b7",
+   "outcome": "supported",
+   "reasons": []
+  },
+  {
+   "input": "output/prod-requests/fire-mage.request.json",
+   "kind": "request",
+   "request_sha256": "b9ac606dc4149332030104dde82152e92d3008ef4d6c3ec46ecb163fb02d545e",
+   "outcome": "supported",
+   "reasons": []
+  },
+  {
+   "input": "output/prod-requests/frost-mage.request.json",
+   "kind": "request",
+   "request_sha256": "d23ab771cb36b32ba3334df2f0d70187c854055883f65267237a4d067cf53a1f",
+   "outcome": "supported",
+   "reasons": []
+  },
+  {
+   "input": "output/prod-requests/frostfire-mage.request.json",
+   "kind": "request",
+   "request_sha256": "033c7ef56d689b514c713d4e48273aea1bbadb57fe094e16f728ee70aa7e094a",
+   "outcome": "supported",
+   "reasons": []
+  },
+  {
+   "input": "output/prod-requests/fury-protection-warrior.request.json",
+   "kind": "request",
+   "request_sha256": "4547082f6250102338040c01a850b5d008c713cf97c43051d73abedcca4b4f88",
+   "outcome": "supported",
+   "reasons": []
+  },
+  {
+   "input": "output/prod-requests/holy-protection-paladin.request.json",
+   "kind": "request",
+   "request_sha256": "1cfac4a445b5ae159a7467f3b9f3e454e936f077748158efb52228ca29d06da8",
+   "outcome": "supported",
+   "reasons": []
+  },
+  {
+   "input": "output/prod-requests/hunter.request.json",
+   "kind": "request",
+   "request_sha256": "37a60ed9637c4593b0983ca5428f9509649e5766f0deacf262166cd89faf28b2",
+   "outcome": "supported",
+   "reasons": []
+  },
+  {
+   "input": "output/prod-requests/marksmanship-hunter.request.json",
+   "kind": "request",
+   "request_sha256": "64b2f8204feadf23af31d93a97740b03b130c7d8377a78516794cb28febc0071",
+   "outcome": "supported",
+   "reasons": []
+  },
+  {
+   "input": "output/prod-requests/protection-paladin.request.json",
+   "kind": "request",
+   "request_sha256": "f4bdb34d60ff59b7bf65644bb1133ce4a93f3a234246fe50c826b0643cceb64b",
+   "outcome": "supported",
+   "reasons": []
+  },
+  {
+   "input": "output/prod-requests/protection-warrior.request.json",
+   "kind": "request",
+   "request_sha256": "ba584bfd8cde5b12acb5ccb0ad7cf003750f5710807441bfa59d3cf9d1adfd44",
+   "outcome": "supported",
+   "reasons": []
+  },
+  {
+   "input": "output/prod-requests/ret-protection-paladin.request.json",
+   "kind": "request",
+   "request_sha256": "3329a4fccd161f17e9845138130fbbaaf93d914d50bb02c0bc028577953495ca",
+   "outcome": "supported",
+   "reasons": []
+  },
+  {
+   "input": "output/prod-requests/retribution-paladin.request.json",
+   "kind": "request",
+   "request_sha256": "2a140676027c6c6056b82c023afc71108eb9dd4d24bb3ebee94c13cd4e77d68c",
+   "outcome": "supported",
+   "reasons": []
+  },
+  {
+   "input": "output/prod-requests/shadow-priest.request.json",
+   "kind": "request",
+   "request_sha256": "ea6dce006be186c1dc6bbc9c397ea30f024334955571cf158707b37031e5da16",
+   "outcome": "supported",
+   "reasons": []
+  },
+  {
+   "input": "output/prod-requests/shockadin-paladin.request.json",
+   "kind": "request",
+   "request_sha256": "41385b3be98405fdaefa321b5debc8212b48f720036c73628b11840897fb2e8d",
+   "outcome": "supported",
+   "reasons": []
+  },
+  {
+   "input": "output/prod-requests/smite-priest.request.json",
+   "kind": "request",
+   "request_sha256": "f964b88c17c5138a64d084b209c52acf8d573b17ebb5169fee0ce72d69ae85f3",
+   "outcome": "supported",
+   "reasons": []
+  },
+  {
+   "input": "output/prod-requests/subtlety-rogue.request.json",
+   "kind": "request",
+   "request_sha256": "92daa297e6af003cf295a20a3a51c622119ecf2840235c5460a997c771c6ee60",
+   "outcome": "supported",
+   "reasons": []
+  },
+  {
+   "input": "output/prod-requests/survival-hunter.request.json",
+   "kind": "request",
+   "request_sha256": "ef8c833a043bf9db4e598be9b7ef741c71da09c653625cad4b399fa5aa748d8d",
+   "outcome": "supported",
+   "reasons": []
+  },
+  {
+   "input": "output/prod-requests/warrior.request.json",
+   "kind": "request",
+   "request_sha256": "5618fe2275e8c2ee86c3664ef9ed401ded6e4d098e69700fd57550870613c686",
+   "outcome": "supported",
+   "reasons": []
+  }
+ ]
+}

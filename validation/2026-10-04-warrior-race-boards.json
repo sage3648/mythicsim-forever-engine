@@ -1,0 +1,148 @@
+{
+  "kind": "production_corpus",
+  "date": "2026-10-04",
+  "reference": {
+    "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
+    "client_build": "1.60.1.70170"
+  },
+  "scope": "The production application's Fury Warrior race board (web/src/lib/forever-races.json at application revision 18bbcd47, generated 2026-10-03T13:57:55Z by production engine f43215d07e51fc228c2e32366d7563b03d76fec8): every race variant, at the board's own seed and 10000 iterations, exported with the pinned Go engine and run by Go and Rust.",
+  "generator": "python3 tools/boards.py <application>/web/src/lib/forever-races.json --slug warrior --output <scratch>",
+  "rerun": "python3 tools/prepared_v2.py compare --output <scratch> validation/2026-10-04-warrior-race-boards/*.request.json",
+  "criteria": {
+    "comparison": "full RaidSimResult except elapsedNs, lists keyed by ID",
+    "integer_counts": "exact",
+    "floats": "relative 1e-9",
+    "first_fight_debug_log": "line identical"
+  },
+  "matched": 10,
+  "rejected": 0,
+  "mismatched": 0,
+  "notes": [
+    "production_dps is what the production engine published for the variant; it is context, not a criterion, because that engine is newer than the pinned reference.",
+    "Every published production DPS equals the pinned Go result to within 1e-12 relative, except the Orc variant, which the production engine puts 7.499 DPS above the pinned result; that engine is newer than the pinned reference, and Rust matches the pinned result.",
+    "The board's request is the production Fury Warrior request with the board's seed and iteration count.",
+    "The Troll variant exercises Berserking's attack speed, and the Orc variant Blood Fury."
+  ],
+  "cases": [
+    {
+      "scenario": "warrior--RaceHuman",
+      "slug": "warrior",
+      "race": "RaceHuman",
+      "production_dps": 846.4053377976654,
+      "production_iterations": 10000,
+      "request_sha256": "962c0be587f309f5ca621cfd861145c8f59a47772f8f86c4f90f7e9a6d8bca68",
+      "go_dps": 846.4053377976628,
+      "rust_dps": 846.4053377976628,
+      "passed": true,
+      "production_minus_pinned_dps": 2.6147972675971687e-12
+    },
+    {
+      "scenario": "warrior--RaceOrc",
+      "slug": "warrior",
+      "race": "RaceOrc",
+      "production_dps": 843.6308818475152,
+      "production_iterations": 10000,
+      "request_sha256": "3b8035d365167ac61ef09e66e736d6863811b3b1cee00b4fe4f0617f04024329",
+      "go_dps": 836.1319327261689,
+      "rust_dps": 836.1319327261689,
+      "passed": true,
+      "production_minus_pinned_dps": 7.4989491213463
+    },
+    {
+      "scenario": "warrior--RaceTroll",
+      "slug": "warrior",
+      "race": "RaceTroll",
+      "production_dps": 841.6754955891572,
+      "production_iterations": 10000,
+      "request_sha256": "398f885b32f41fdc52a800d4243d310698ac0de2030976f955a1eaa270db4343",
+      "go_dps": 841.6754955891557,
+      "rust_dps": 841.6754955891557,
+      "passed": true,
+      "production_minus_pinned_dps": 1.4779288903810084e-12
+    },
+    {
+      "scenario": "warrior--RaceNightElf",
+      "slug": "warrior",
+      "race": "RaceNightElf",
+      "production_dps": 841.27253309483,
+      "production_iterations": 10000,
+      "request_sha256": "057149d15ba9a5c6bae5652808193fffdc08f36031f58c30f29eb77c9afda908",
+      "go_dps": 841.27253309483,
+      "rust_dps": 841.27253309483,
+      "passed": true,
+      "production_minus_pinned_dps": 0.0
+    },
+    {
+      "scenario": "warrior--RaceUndead",
+      "slug": "warrior",
+      "race": "RaceUndead",
+      "production_dps": 840.4893509149339,
+      "production_iterations": 10000,
+      "request_sha256": "c3435ebe6d69313cfb33bf5a8f82c555533ed5c53cf1282008d56cc16d4a5da1",
+      "go_dps": 840.4893509149324,
+      "rust_dps": 840.4893509149324,
+      "passed": true,
+      "production_minus_pinned_dps": 1.4779288903810084e-12
+    },
+    {
+      "scenario": "warrior--RaceGnome",
+      "slug": "warrior",
+      "race": "RaceGnome",
+      "production_dps": 839.6320220294452,
+      "production_iterations": 10000,
+      "request_sha256": "e47c1b09daa3070475f87d65c6b961c32444ec5daea45febf60da5515e3b6223",
+      "go_dps": 839.6320220294481,
+      "rust_dps": 839.6320220294481,
+      "passed": true,
+      "production_minus_pinned_dps": -2.8421709430404007e-12
+    },
+    {
+      "scenario": "warrior--RaceTauren",
+      "slug": "warrior",
+      "race": "RaceTauren",
+      "production_dps": 839.3148361494011,
+      "production_iterations": 10000,
+      "request_sha256": "7eec7fe325050df9473ab26a83b42a5cffec9ce7dc7954b9e3460b174f84c221",
+      "go_dps": 839.3148361494036,
+      "rust_dps": 839.3148361494036,
+      "passed": true,
+      "production_minus_pinned_dps": -2.5011104298755527e-12
+    },
+    {
+      "scenario": "warrior--RaceDwarf",
+      "slug": "warrior",
+      "race": "RaceDwarf",
+      "production_dps": 837.7763237612318,
+      "production_iterations": 10000,
+      "request_sha256": "c87b00076ee8a4ba4d6120d5d9760994aaeeddbc64584bfc3269997173a34df5",
+      "go_dps": 837.7763237612321,
+      "rust_dps": 837.7763237612321,
+      "passed": true,
+      "production_minus_pinned_dps": -3.410605131648481e-13
+    },
+    {
+      "scenario": "warrior--RaceHighOrderSkyborne",
+      "slug": "warrior",
+      "race": "RaceHighOrderSkyborne",
+      "production_dps": 836.32482523836,
+      "production_iterations": 10000,
+      "request_sha256": "c59eebe76cb4190d4ff57dbce9f53d47a1f22c2ed9c8777d671134be17628798",
+      "go_dps": 836.3248252383579,
+      "rust_dps": 836.3248252383581,
+      "passed": true,
+      "production_minus_pinned_dps": 2.0463630789890885e-12
+    },
+    {
+      "scenario": "warrior--RaceWindshaperSkyborne",
+      "slug": "warrior",
+      "race": "RaceWindshaperSkyborne",
+      "production_dps": 836.32482523836,
+      "production_iterations": 10000,
+      "request_sha256": "a41469461b623af91f7e640f5dfa028048efcb89de257d9f3d547e5daf3e3346",
+      "go_dps": 836.3248252383579,
+      "rust_dps": 836.3248252383581,
+      "passed": true,
+      "production_minus_pinned_dps": 2.0463630789890885e-12
+    }
+  ]
+}
