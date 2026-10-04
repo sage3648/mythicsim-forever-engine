@@ -5175,6 +5175,27 @@
         "file": "feral-druid-wildheart-raiment.go-result.json",
         "sha256": "84ffac399293adbc5efbcd0631bd489cc86bedb3a561284d223e6d382a7bd4b2"
       }
+    },
+    {
+      "id": "smite-priest-holy-nova-ephemeral-power",
+      "description": "Smite Priest casting Holy Nova with Talisman of Ephemeral Power, whose healing power the heal reads while the talisman is up",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/smite-priest-holy-nova-ephemeral-power.request.json"
+      },
+      "prepared": "smite-priest-holy-nova-ephemeral-power.prepared.json",
+      "prepared_sha256": "a87aab1c8d0c8bb30d34b42a809e73624710168ced6cbd829b7da23da0a81d30",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "smite-priest-holy-nova-ephemeral-power.go-result.json",
+        "sha256": "35f8b9f6c915e63b4fbf464adcd88a948aa421148cb4c9d478d30d1c9c83a4a3"
+      },
+      "go_log": {
+        "file": "smite-priest-holy-nova-ephemeral-power.go-log.txt",
+        "sha256": "3bc5834a7e39c733dc1ad85461df1d976ba27593032998db03aefcd9b001765a"
+      }
     }
   ]
 }

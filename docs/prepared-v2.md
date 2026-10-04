@@ -533,6 +533,8 @@ channel without an interrupt condition and a strict sequence that gives up contr
 option, the latter in a 420 second fight that summons it twice. `smite-priest-power-infusion`
 runs the Smite request on the Smite 31/17/3 talents, whose cooldown autocast casts Power
 Infusion, and `smite-priest-holy-nova-power-infusion` heals with Holy Nova while it is up.
+`smite-priest-holy-nova-ephemeral-power` heals with Holy Nova while Talisman of Ephemeral
+Power raises healing power, which the heal reads live.
 `production-assassination-rogue` and `production-subtlety-rogue` are the production
 Assassination and Subtlety Rogue requests. `combat-swords`, `combat-riposte`,
 `combat-wound-poison`, `combat-kidney-shot`, `assassination-venom`,

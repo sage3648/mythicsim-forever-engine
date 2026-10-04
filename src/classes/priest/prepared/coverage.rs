@@ -108,30 +108,6 @@ const LANDED: &[&str] = &["Hit", "Glance", "Block", "Crit", "Crush"];
 /// Rust implements Shadow Weaving's trigger on landed spell hits dealt.
 fn limits(prepared: &PreparedV2, _reachable: &[&Spell]) -> Vec<String> {
     let mut reasons = Vec::new();
-    // Holy Nova's heal reads the healing power exported at reset.
-    if prepared
-        .effects
-        .iter()
-        .any(|e| matches!(e, Effect::HolyNova { .. }))
-    {
-        for effect in &prepared.effects {
-            let changes = match effect {
-                Effect::StatAuras { changed, .. } => changed.iter().any(|s| s == "HealingPower"),
-                Effect::BloodFury { active_stats, .. }
-                | Effect::TemporaryStats { active_stats, .. } => {
-                    active_stats.contains_key("HealingPower")
-                }
-                _ => false,
-            };
-            if changes {
-                reasons.push(format!(
-                    "{} changes healing power, which Holy Nova reads as fixed",
-                    effect.kind()
-                ));
-            }
-        }
-    }
-    // Dark Sacrifice's ticks read the Spirit exported at reset.
     for effect in &prepared.effects {
         // Rust implements Searing Light's trigger on periodic damage dealt, any outcome.
         if let Effect::SearingLight {

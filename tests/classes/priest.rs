@@ -174,14 +174,20 @@ fn accepted(case: &str) -> Value {
 }
 
 #[test]
-fn holy_nova_reads_a_fixed_healing_power() {
-    let mut value = accepted("smite-priest-holy-nova");
-    assert!(check_prepared(&parse(value.clone())).is_ok());
-    value["effects"].as_array_mut().unwrap().push(json!({
-        "kind": "stat_auras", "auras": [], "combos": [], "changed": ["HealingPower"],
-    }));
-    assert!(reasons(value)
-        .contains(&"stat_auras changes healing power, which Holy Nova reads as fixed".to_string()));
+fn holy_nova_reads_the_live_healing_power() {
+    // Talisman of Ephemeral Power raises healing power for a while, and the heal follows it.
+    let mut value = accepted("smite-priest-holy-nova-ephemeral-power");
+    value["sim"]["iterations"] = json!(1);
+    let report = simulate_prepared(&parse(value)).unwrap();
+    let logs = report.result["logs"].as_str().unwrap();
+    let mut powers: Vec<&str> = logs
+        .lines()
+        .filter(|line| line.contains("{SpellID: 27805} [DEBUG] HealingPower: "))
+        .map(|line| line.split("HealingPower: ").nth(1).unwrap())
+        .map(|rest| rest.split(',').next().unwrap())
+        .collect();
+    powers.dedup();
+    assert!(powers.len() > 1, "{powers:?}");
 }
 
 #[test]
