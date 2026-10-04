@@ -522,7 +522,10 @@ the raid's ramping Sunder Armor. `production-fire` and
 `production-frostfire` are the production application's Fire Missile Barrage and
 Frostfire hybrid requests at application revision 18bbcd47; its Arcane and Frost requests
 are byte-identical to `arcane-reference` and `frost-reference`. `frostfire-resistances`
-gives the target uneven Fire and Frost resistance. `production-shadow-priest` is the
+gives the target uneven Fire and Frost resistance. `fire-mage-goblin-sapper` adds the
+Goblin Sapper Charge to the Fire request and has no Go golden: Rust refuses it because
+the pinned Go engine panics when Ignite hears the charge's crit on the player
+([reference defects](../UPSTREAM.md#reference-defects)). `production-shadow-priest` is the
 production Shadow Priest request at application revision 18bbcd47; the
 `shadow-priest-*` cases change its rotation to reach a channel without `allowRecast`, a
 channel without an interrupt condition and a strict sequence that gives up control.

@@ -5175,6 +5175,21 @@
         "file": "feral-druid-wildheart-raiment.go-result.json",
         "sha256": "84ffac399293adbc5efbcd0631bd489cc86bedb3a561284d223e6d382a7bd4b2"
       }
+    },
+    {
+      "id": "fire-mage-goblin-sapper",
+      "description": "The production Fire request with the Goblin Sapper Charge, refused because Ignite would hear the charge's crit on the player, where the pinned Go engine panics",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-mage-goblin-sapper.request.json"
+      },
+      "prepared": "fire-mage-goblin-sapper.prepared.json",
+      "prepared_sha256": "0773b6fcec8547924843c49ae7a5068d2fe6902c3d4014e4a008f2dcdaa3b1b1",
+      "expected_coverage": {
+        "supported": false,
+        "reasons": [
+          "Ignite would hear the crit of item 10646's hit on the player, where the pinned Go engine panics"
+        ]
+      }
     }
   ]
 }
