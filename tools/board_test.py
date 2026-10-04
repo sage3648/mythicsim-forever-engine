@@ -59,16 +59,20 @@ class BoardTest(unittest.TestCase):
         self.assertIn("- 2 variants: `the demon \"Imp N\" is not simulated`", candidates)
         self.assertNotIn("swings", candidates)
 
-    def test_recently_closed_issues_are_ticked(self):
+    def test_recently_closed_issues_are_ticked_in_place(self):
         text = self.render([
-            issue(21, "Holy Nova", "2. Coverage gaps", state="CLOSED", closed_at="2026-10-15T08:00:00Z"),
+            issue(21, "Holy Nova", "2. Coverage gaps", ["priority: 2 medium"], state="CLOSED",
+                  closed_at="2026-10-15T08:00:00Z"),
             issue(5, "Old", "2. Coverage gaps", state="CLOSED", closed_at="2026-09-01T08:00:00Z"),
-            issue(22, "Brand", "2. Coverage gaps"),
+            issue(22, "Brand", "2. Coverage gaps", ["priority: 3 low"]),
+            issue(8, "Command", "1. Production routing", body="## Depends on\n\n#21\n"),
         ])
-        recent = text.split("## Recently completed")[1]
-        self.assertIn("- [x] #21 Holy Nova", recent)
+        gaps = text.split("## 2. Coverage gaps")[1].split("##")[0]
+        self.assertEqual([line for line in gaps.splitlines() if line.startswith("- ")],
+                         ["- [x] #21 Holy Nova", "- [ ] #22 Brand"])
         self.assertNotIn("#5 Old", text)
-        self.assertNotIn("- [ ] #21", text)
+        # A closed dependency no longer blocks.
+        self.assertIn("- [ ] #8 Command\n", text)
 
 
 if __name__ == "__main__":

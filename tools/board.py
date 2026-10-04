@@ -9,7 +9,7 @@ The board lists every open issue except the board itself:
 - the status a contributor last gave in an issue comment whose first line starts with
   "Status:", else "in progress" while the issue carries the `claimed` label.
 
-Issues closed in the last two weeks follow, ticked. It ends with the refusal reasons of validation/ records that no issue, open or closed, states
+Issues closed in the last two weeks stay in their section, ticked. It ends with the refusal reasons of validation/ records that no issue, open or closed, states
 as its "Reason today", so new gaps surface as candidates for an issue.
 
     python3 tools/board.py render [--issues FILE]   # print the board
@@ -149,30 +149,31 @@ def candidates(issues, directory):
 
 
 def render(issues, directory=ROOT / "validation", now=None):
-    open_issues = [issue for issue in issues if issue["state"].upper() == "OPEN" and issue["number"] != BOARD]
-    open_numbers = {issue["number"] for issue in open_issues}
+    cutoff = (now or datetime.now(timezone.utc)) - timedelta(days=RECENT_DAYS)
+
+    def recent(issue):
+        return (issue["state"].upper() == "CLOSED" and issue.get("closedAt")
+                and datetime.fromisoformat(issue["closedAt"].replace("Z", "+00:00")) >= cutoff)
+
+    listed = [issue for issue in issues if issue["number"] != BOARD
+              and (issue["state"].upper() == "OPEN" or recent(issue))]
+    open_numbers = {issue["number"] for issue in listed if issue["state"].upper() == "OPEN"}
     sections = {}
-    for issue in open_issues:
+    for issue in listed:
         sections.setdefault(section(issue), []).append(issue)
     lines = [HEADER]
     for title in sorted(sections, key=section_key):
         lines.append(f"## {title}\n")
         for issue in sorted(sections[title], key=lambda issue: (priority(issue), issue["number"])):
+            if issue["state"].upper() != "OPEN":
+                lines.append(f"- [x] #{issue['number']} {issue['title']}")
+                continue
             notes = [f"after #{number}" for number in dependencies(issue) if number in open_numbers]
             current = status(issue)
             if current:
                 notes.append(f"status: {current}")
             suffix = f" ({'; '.join(notes)})" if notes else ""
             lines.append(f"- [ ] #{issue['number']} {issue['title']}{suffix}")
-        lines.append("")
-    cutoff = (now or datetime.now(timezone.utc)) - timedelta(days=RECENT_DAYS)
-    recent = [issue for issue in issues
-              if issue["state"].upper() == "CLOSED" and issue.get("closedAt")
-              and datetime.fromisoformat(issue["closedAt"].replace("Z", "+00:00")) >= cutoff]
-    if recent:
-        lines.append("## Recently completed\n")
-        for issue in sorted(recent, key=lambda issue: issue["closedAt"], reverse=True):
-            lines.append(f"- [x] #{issue['number']} {issue['title']}")
         lines.append("")
     found = candidates(issues, directory)
     if found:
