@@ -3,7 +3,7 @@
 A community Rust simulation engine for WoW Forever. 
 
 **Status: experimental.** All 29 production builds run in Rust and give the same
-result as the pinned Go engine. Production still uses Go. Routing real jobs to Rust,
+result as the pinned comparison go engine. Production still uses Go. Routing real jobs to Rust,
 with Go as the fallback, is the next step.
 
 ## Quick start
