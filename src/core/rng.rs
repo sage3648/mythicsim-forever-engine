@@ -64,6 +64,17 @@ impl SimRng {
         }
     }
 
+    /// Go `Proc(p, label)`: no draw at the extremes.
+    pub(crate) fn proc(&mut self, chance: f64, label: &str) -> bool {
+        if chance >= 1.0 {
+            true
+        } else if chance <= 0.0 {
+            false
+        } else {
+            self.next_f64(label) < chance
+        }
+    }
+
     /// Go `RandomFloat(label)`.
     pub(crate) fn next_f64(&mut self, label: &str) -> f64 {
         match self {

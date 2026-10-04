@@ -59,21 +59,32 @@ pub(crate) fn resist_coefficient(
     coefficient.min(1.0)
 }
 
-/// Go `partialResistRollThresholds`: rolls above the first threshold resist nothing.
+/// Go `binaryHitChance`'s 1 - 0.75 * coefficient, fused by the arm64 build.
+pub(crate) fn binary_resist_hit(coefficient: f64) -> f64 {
+    (-0.75f64).mul_add(coefficient, 1.0)
+}
+
+/// Go `partialResistRollThresholds`: rolls above the first threshold resist nothing. The
+/// arm64 build fuses the coefficient times 3 into the step's subtraction and each line's
+/// multiply into its add.
 pub(crate) fn partial_resist_thresholds(coefficient: f64) -> (f64, f64, f64) {
     let value = coefficient * 3.0;
     if value <= 1.0 {
         (0.76 * value, 0.21 * value, 0.03 * value)
     } else if value <= 2.0 {
-        let value = value - 1.0;
+        let value = coefficient.mul_add(3.0, -1.0);
         (
-            0.76 + 0.24 * value,
-            0.21 + 0.57 * value,
-            0.03 + 0.19 * value,
+            0.24f64.mul_add(value, 0.76),
+            0.57f64.mul_add(value, 0.21),
+            0.19f64.mul_add(value, 0.03),
         )
     } else {
-        let value = value - 2.0;
-        (1.0, 0.78 + 0.18 * value, 0.22 + 0.58 * value)
+        let value = coefficient.mul_add(3.0, -2.0);
+        (
+            1.0,
+            0.18f64.mul_add(value, 0.78),
+            0.58f64.mul_add(value, 0.22),
+        )
     }
 }
 
@@ -101,7 +112,36 @@ pub(crate) fn crit_damage_multiplier(
     crit_multiplier_additive: f64,
 ) -> f64 {
     let base = if magic { 1.5 } else { 2.0 };
-    (base * crit_multiplier_pct * unit_crit_damage_multiplier * table_crit_multiplier - 1.0)
-        * (crit_multiplier_additive + 1.0)
-        + 1.0
+    // The arm64 build fuses the table multiplier into the subtraction and the additive
+    // scale into the final add.
+    let bonus = (base * crit_multiplier_pct * unit_crit_damage_multiplier)
+        .mul_add(table_crit_multiplier, -1.0);
+    bonus.mul_add(crit_multiplier_additive + 1.0, 1.0)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Inputs where Go's arm64 fused forms and a rounded product disagree in the last bit; the
+    // expected values are the single-rounding results the reference computes.
+
+    #[test]
+    fn crit_damage_multiplier_fuses_the_table_and_additive_scales() {
+        let fused = crit_damage_multiplier(false, 1.0, 1.29, 1.13, 0.7);
+        assert_eq!(fused, 4.25618);
+        assert_ne!(fused, (2.0 * 1.29 * 1.13 - 1.0) * 1.7 + 1.0);
+    }
+
+    #[test]
+    fn partial_resist_thresholds_fuse_each_step() {
+        let (none, _, _) = partial_resist_thresholds(0.3384242699249872);
+        assert_eq!(none, 0.7636654743459907);
+    }
+
+    #[test]
+    fn binary_resist_hit_fuses_the_coefficient() {
+        assert_eq!(binary_resist_hit(0.7609477375418205), 0.4292891968436346);
+        assert_ne!(1.0 - 0.75 * 0.7609477375418205, 0.4292891968436346);
+    }
 }

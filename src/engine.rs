@@ -1,6 +1,7 @@
 //! Engine entry point: validation, iteration lifecycle and aggregate results.
 //! Class-specific fight decisions are delegated to their spec domain.
 
+pub(crate) mod coverage;
 pub(crate) mod prepared;
 mod validation;
 

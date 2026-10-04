@@ -20,6 +20,7 @@ import (
 	"os"
 	"reflect"
 	"sort"
+	"strings"
 	"time"
 	"unsafe"
 
@@ -34,6 +35,8 @@ import (
 	"github.com/wowsims/forever/sim/mage"
 	"google.golang.org/protobuf/encoding/protojson"
 	googleProto "google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // The reference pin, set at build time from upstream/sources.json with -ldflags -X.
@@ -103,6 +106,15 @@ func actionID(id core.ActionID) *ActionID {
 		out.OtherID = id.OtherID.String()
 	}
 	return out
+}
+
+// A spell's action ID, where a tag alone still names the action in Go's metrics, as the extra
+// attack a Windfury Totem registers from a caster's empty main hand configuration.
+func spellActionID(id core.ActionID) *ActionID {
+	if id.IsEmptyAction() && id.Tag != 0 {
+		return &ActionID{Tag: id.Tag}
+	}
+	return actionID(id)
 }
 
 // Timers are shared pointers in Go. Identities are assigned in first-seen order so
@@ -177,35 +189,51 @@ func statValues(values stats.Stats) map[string]float64 {
 	return out
 }
 
-// Mage class masks are Go-internal bit positions. Export the stable class spell name
-// instead of the bit so a Go reordering cannot silently change Rust behavior.
-var mageClassSpells = []struct {
+// A class's export: stable names for its Go-internal class mask bits, so a Go reordering
+// cannot silently change Rust behavior; the client rows its spells roll damage from; and
+// the effects whose parameters Go keeps in closures. Each class file registers one.
+type classSpellName struct {
 	mask int64
 	name string
-}{
-	{mage.MageSpellArcaneBlast, "arcane_blast"}, {mage.MageSpellArcaneExplosion, "arcane_explosion"},
-	{mage.MageSpellArcanePower, "arcane_power"}, {mage.MageSpellArcaneMissilesCast, "arcane_missiles_cast"},
-	{mage.MageSpellArcaneMissilesTick, "arcane_missiles_tick"}, {mage.MageSpellBlastWave, "blast_wave"},
-	{mage.MageSpellBlizzard, "blizzard"}, {mage.MageSpellColdSnap, "cold_snap"},
-	{mage.MageSpellConeOfCold, "cone_of_cold"}, {mage.MageSpellEvocation, "evocation"},
-	{mage.MageSpellFireBlast, "fire_blast"}, {mage.MageSpellFireball, "fireball"},
-	{mage.MageSpellFlamestrike, "flamestrike"}, {mage.MageSpellFlamestrikeDot, "flamestrike_dot"},
-	{mage.MageSpellFrostArmor, "frost_armor"}, {mage.MageSpellFrostbolt, "frostbolt"},
-	{mage.MageSpellFrostNova, "frost_nova"}, {mage.MageSpellIceBarrier, "ice_barrier"},
-	{mage.MageSpellIceBlock, "ice_block"}, {mage.MageSpellIceLance, "ice_lance"},
-	{mage.MageSpellIgnite, "ignite"}, {mage.MageSpellMageArmor, "mage_armor"},
-	{mage.MageSpellManaGems, "mana_gems"}, {mage.MageSpellMoltenArmor, "molten_armor"},
-	{mage.MageSpellPresenceOfMind, "presence_of_mind"}, {mage.MageSpellPyroblast, "pyroblast"},
-	{mage.MageSpellPyroblastDot, "pyroblast_dot"}, {mage.MageSpellScorch, "scorch"},
-	{mage.MageSpellManaGem, "mana_gem"}, {mage.MageSpellCombustion, "combustion"},
-	{mage.MageSpellImprovedBlizzard, "improved_blizzard"}, {mage.MageSpellFrostfireBolt, "frostfire_bolt"},
 }
 
-func classSpell(mask int64, unrepresented *[]string, id core.ActionID) string {
+type classExport struct {
+	spells     []classSpellName
+	damageRows func(rows map[int32]*spelldata.Spell)
+	effects    func(agent core.Agent, character *core.Character) []map[string]any
+	// How many of the target's dynamic damage taken modifiers the class effects describe.
+	damageTakenModifiers func(agent core.Agent) int
+	// Why a registered pet never acts in this build, or "" when it may.
+	inertPet func(agent core.Agent, pet *core.Pet) string
+	// Optional: stable names for class spells Go registers without a class mask, by action.
+	unmaskedSpells map[core.ActionID]string
+	// Optional: class behavior the effects cannot describe, one reason each.
+	unrepresented func(agent core.Agent, character *core.Character) []string
+	// Optional: whether the class's main hand swing replacement always returns the swing it is
+	// given for this player, so only Go's reaction before each swing remains.
+	swingReplacementKeepsSwing func(agent core.Agent, player *proto.Player) bool
+	// Optional: effects that read the player's options, which the agent does not keep.
+	playerEffects func(character *core.Character, player *proto.Player) []map[string]any
+	// Optional: class auras that change stats through AddStatsDynamic when gained or lost.
+	statAuras func(agent core.Agent, character *core.Character) []string
+	// Optional: how many execute phase callbacks the class effects describe.
+	executeCallbacks func(agent core.Agent) int
+}
+
+var classExports = map[proto.Class]classExport{}
+
+// Set by prepare while class effects run: the request, so an effect can reset a separate
+// simulation, and the unrepresented list, so an effect can name what it cannot describe.
+var (
+	exportRequest *proto.RaidSimRequest
+	classNotes    *[]string
+)
+
+func classSpell(class classExport, mask int64, unrepresented *[]string, id core.ActionID) string {
 	if mask == 0 {
-		return ""
+		return class.unmaskedSpells[id]
 	}
-	for _, entry := range mageClassSpells {
+	for _, entry := range class.spells {
 		if entry.mask == mask {
 			return entry.name
 		}
@@ -214,12 +242,91 @@ func classSpell(mask int64, unrepresented *[]string, id core.ActionID) string {
 	return ""
 }
 
+func damageEffect(row *spelldata.Spell) *DamageEffect {
+	effect := row.DamageEffect()
+	if effect == nil {
+		fail(fmt.Errorf("spell %d has no damage effect", row.ID))
+	}
+	return &DamageEffect{Average: effect.Average(core.CharacterLevel), Variance: effect.Variance}
+}
+
+func attachDamageEffects(spells []Spell, class classExport) {
+	rows := map[int32]*spelldata.Spell{}
+	if class.damageRows != nil {
+		class.damageRows(rows)
+	}
+	for i := range spells {
+		id := spells[i].ActionID
+		if id == nil || id.SpellID == 0 || id.Tag != 0 {
+			continue
+		}
+		if row, ok := rows[id.SpellID]; ok {
+			spells[i].DamageEffect = damageEffect(row)
+		}
+	}
+}
+
+func hasAura(unit *core.Unit, label string) bool { return unit.GetAura(label) != nil }
+
+// The spec's class options, the options.class_options of whichever spec the player sets.
+func specClassOptions(player *proto.Player) googleProto.Message {
+	reflected := player.ProtoReflect()
+	field := reflected.WhichOneof(reflected.Descriptor().Oneofs().ByName("spec"))
+	if field == nil || field.Message() == nil {
+		return &emptypb.Empty{}
+	}
+	spec := reflected.Get(field).Message()
+	options := spec.Descriptor().Fields().ByName("options")
+	if options == nil || !spec.Has(options) {
+		return &emptypb.Empty{}
+	}
+	message := spec.Get(options).Message()
+	classOptions := message.Descriptor().Fields().ByName("class_options")
+	if classOptions == nil || !message.Has(classOptions) {
+		return &emptypb.Empty{}
+	}
+	return message.Get(classOptions).Message().Interface()
+}
+
+// The class talents proto, found as the Talents field of the agent or a struct it embeds.
+func classTalents(agent core.Agent) protoreflect.Message {
+	var search func(value reflect.Value) protoreflect.Message
+	search = func(value reflect.Value) protoreflect.Message {
+		for value.Kind() == reflect.Pointer || value.Kind() == reflect.Interface {
+			if value.IsNil() {
+				return nil
+			}
+			value = value.Elem()
+		}
+		if value.Kind() != reflect.Struct {
+			return nil
+		}
+		if field := value.FieldByName("Talents"); field.IsValid() && field.CanInterface() {
+			if message, ok := field.Interface().(googleProto.Message); ok && !field.IsNil() {
+				return message.ProtoReflect()
+			}
+		}
+		for i := 0; i < value.NumField(); i++ {
+			if value.Type().Field(i).Anonymous {
+				if found := search(value.Field(i)); found != nil {
+					return found
+				}
+			}
+		}
+		return nil
+	}
+	return search(reflect.ValueOf(agent))
+}
+
 type Cost struct {
 	Resource                string  `json:"resource"`
 	BaseCost                int32   `json:"base_cost"`
 	FlatModifier            int32   `json:"flat_modifier"`
 	PercentModifier         float64 `json:"percent_modifier"`
 	AdditivePercentModifier float64 `json:"additive_percent_modifier"`
+	// energy.go EnergyCost.Refund and rage.go RageCost.Refund: the share of the cost a missed
+	// strike gives back.
+	Refund float64 `json:"refund,omitempty"`
 }
 
 type Cast struct {
@@ -288,6 +395,11 @@ type Spell struct {
 	PushbackResist                 float64       `json:"pushback_resist"`
 	Dot                            *Dot          `json:"dot"`
 	DamageEffect                   *DamageEffect `json:"damage_effect"`
+	// The spellbook position of the spell whose dot Spell.Dot resolves to when this spell
+	// has none of its own.
+	RelatedDotSpell *int `json:"related_dot_spell,omitempty"`
+	// spell.go splitSpellMetrics: how many tagged metric entries the spell reports under.
+	MetricSplits int `json:"metric_splits,omitempty"`
 }
 
 type Aura struct {
@@ -302,6 +414,13 @@ type Aura struct {
 	Callbacks       []string  `json:"callbacks"`
 	ICD             *Cooldown `json:"icd"`
 	Exclusive       int       `json:"exclusive_effects"`
+	// A permanent aura its reset activated and a later member of its exclusive category
+	// displaced during the same reset, or one an earlier member blocked.
+	DisplacedBy    string `json:"displaced_by,omitempty"`
+	BlockedAtReset bool   `json:"blocked_at_reset,omitempty"`
+	// An action ID set after registration, as item_sets.go ExposeToAPL sets a set bonus
+	// tracker's: the aura logs it, but its metrics kept the empty ID and Go lists none.
+	MetricsHidden bool `json:"metrics_hidden,omitempty"`
 }
 
 func auraCallbacks(aura *core.Aura) []string {
@@ -333,17 +452,41 @@ func auraCallbacks(aura *core.Aura) []string {
 
 func exportAuras(unit *core.Unit, timers *timerNames) []Aura {
 	out := []Aura{}
-	for _, aura := range unit.GetAuras() {
+	auras := unit.GetAuras()
+	position := map[*core.Aura]int{}
+	for i, aura := range auras {
+		position[aura] = i
+	}
+	for i, aura := range auras {
 		var icd *Cooldown
 		if aura.Icd != nil {
 			icd = cooldown(*aura.Icd, timers)
 		}
-		out = append(out, Aura{
+		exported := Aura{
 			Label: aura.Label, Tag: aura.Tag, ActionID: actionID(aura.ActionID),
 			ActionIDForProc: actionID(aura.ActionIDForProc), DurationNs: nanos(aura.Duration),
 			MaxStacks: aura.MaxStacks, Active: aura.IsActive(), Stacks: aura.GetStacks(),
 			Callbacks: auraCallbacks(aura), ICD: icd, Exclusive: len(aura.ExclusiveEffects),
-		})
+		}
+		metricsID := readPrivate(privateField(aura, "metrics").FieldByName("ID")).Interface().(core.ActionID)
+		exported.MetricsHidden = metricsID.IsEmptyAction() && !aura.ActionID.IsEmptyAction()
+		// aura.go Activate: a reset that activated the aura counted a proc. An inactive one
+		// whose exclusive category another active aura holds lost it to that aura, which
+		// displaced it as it activated later in the reset, or blocked it having activated first.
+		if aura.OnReset != nil && !aura.IsActive() && privateField(aura, "metrics").FieldByName("Procs").Int() > 0 {
+			for _, ee := range aura.ExclusiveEffects {
+				holder := ee.Category.GetActiveAura()
+				if holder == nil || holder == aura || !holder.IsActive() || holder.Unit != aura.Unit {
+					continue
+				}
+				if position[holder] > i {
+					exported.DisplacedBy = holder.Label
+				} else {
+					exported.BlockedAtReset = true
+				}
+			}
+		}
+		out = append(out, exported)
 	}
 	return out
 }
@@ -400,6 +543,9 @@ type MajorCooldown struct {
 	Priority int32     `json:"priority"`
 	Type     []string  `json:"type"`
 	Timings  []int64   `json:"timings_ns"`
+	// The cooldown's spell by its position, written only when an earlier spell shares its
+	// action ID, as Sweeping Strikes' hit precedes its cast: Go holds the spell itself.
+	Spell *int `json:"spell,omitempty"`
 }
 
 func cooldownTypeNames(t core.CooldownType) []string {
@@ -431,6 +577,7 @@ type MetricsAction struct {
 	ActionID     *ActionID `json:"action_id"`
 	MeleeMetrics bool      `json:"melee_metrics"`
 	School       uint8     `json:"school"`
+	Passive      bool      `json:"passive,omitempty"`
 }
 
 type TargetUnit struct {
@@ -453,6 +600,25 @@ type Unit struct {
 	Auras       []Aura             `json:"auras"`
 }
 
+// energy.go energyBar: the bar Rust runs, with its regeneration ticks and combo points.
+type Energy struct {
+	MaxEnergy      float64 `json:"max_energy"`
+	MaxComboPoints int32   `json:"max_combo_points"`
+	TickDurationNs int64   `json:"tick_duration_ns"`
+	EnergyPerTick  float64 `json:"energy_per_tick"`
+}
+
+func exportEnergy(character *core.Character, unrepresented *[]string) *Energy {
+	if !character.HasEnergyBar() {
+		return nil
+	}
+	if privateField(&character.Unit, "energyBar").FieldByName("hasNoRegen").Bool() {
+		*unrepresented = append(*unrepresented, "an energy bar without regeneration is unsupported")
+	}
+	return &Energy{MaxEnergy: character.MaximumEnergy(), MaxComboPoints: character.MaxComboPoints(),
+		TickDurationNs: nanos(character.EnergyTickDuration), EnergyPerTick: character.EnergyPerTick}
+}
+
 type Player struct {
 	Unit
 	Name               string           `json:"name"`
@@ -467,10 +633,19 @@ type Player struct {
 	DistanceYards      float64          `json:"distance_yards"`
 	CastSpeed          float64          `json:"cast_speed"`
 	Mana               Mana             `json:"mana"`
+	Energy             *Energy          `json:"energy,omitempty"`
 	AttackTable        AttackTable      `json:"attack_table"`
 	Spells             []Spell          `json:"spells"`
 	MajorCooldowns     []MajorCooldown  `json:"major_cooldowns"`
 	Rotation           json.RawMessage  `json:"rotation"`
+	// Every prepull action Go registered, the rotation's and any a class or item adds.
+	PrepullActions int `json:"prepull_actions"`
+	// The health a fight starts with, where it differs from the maximum: health.go resets to the
+	// maximum before the agent's reset, and a form the agent then enters raises the maximum.
+	HealthAtReset *float64 `json:"health_at_reset,omitempty"`
+	// major_cooldown.go shouldActivateHelper: survival cooldowns wait for the health share to
+	// fall to this threshold; at zero they never fire on their own.
+	HpPercentForDefensives float64 `json:"hp_percent_for_defensives,omitempty"`
 }
 
 type Encounter struct {
@@ -498,32 +673,177 @@ type Reference struct {
 	Exporter       string `json:"exporter"`
 }
 
+type Weapon struct {
+	BaseDamageMin        float64 `json:"base_damage_min"`
+	BaseDamageMax        float64 `json:"base_damage_max"`
+	AttackPowerPerDPS    float64 `json:"attack_power_per_dps"`
+	SwingSpeed           float64 `json:"swing_speed"`
+	NormalizedSwingSpeed float64 `json:"normalized_swing_speed"`
+	School               uint8   `json:"school"`
+	MinRange             float64 `json:"min_range"`
+	MaxRange             float64 `json:"max_range"`
+}
+
+func exportWeapon(weapon *core.Weapon) Weapon {
+	return Weapon{BaseDamageMin: weapon.BaseDamageMin, BaseDamageMax: weapon.BaseDamageMax,
+		AttackPowerPerDPS: weapon.AttackPowerPerDPS, SwingSpeed: weapon.SwingSpeed,
+		NormalizedSwingSpeed: weapon.NormalizedSwingSpeed, School: uint8(weapon.SpellSchool),
+		MinRange: weapon.MinRange, MaxRange: weapon.MaxRange}
+}
+
+// The player's weapon attacks and the physical attack table against the target. Every value
+// the physical outcome rolls read is static in scope, so it is exported resolved.
+type Melee struct {
+	AutoSwingMelee  bool   `json:"auto_swing_melee"`
+	AutoSwingRanged bool   `json:"auto_swing_ranged"`
+	DualWielding    bool   `json:"dual_wielding"`
+	MainHand        Weapon `json:"main_hand"`
+	OffHand         Weapon `json:"off_hand"`
+	Ranged          Weapon `json:"ranged"`
+
+	BaseMissChance       float64 `json:"base_miss_chance"`
+	BaseGlanceChance     float64 `json:"base_glance_chance"`
+	GlanceMultiplier     float64 `json:"glance_multiplier"`
+	GlanceSpread         float64 `json:"glance_spread"`
+	HitSuppression       float64 `json:"hit_suppression"`
+	MeleeCritSuppression float64 `json:"melee_crit_suppression"`
+	IgnoreArmor          bool    `json:"ignore_armor"`
+	ArmorIgnoreFactor    float64 `json:"armor_ignore_factor"`
+
+	InFrontOfTarget       bool    `json:"in_front_of_target"`
+	AttackSpeedMultiplier float64 `json:"attack_speed_multiplier"`
+	MeleeSpeedMultiplier  float64 `json:"melee_speed_multiplier"`
+	DodgeReduction        float64 `json:"dodge_reduction"`
+	DisableDWMissPenalty  bool    `json:"disable_dw_miss_penalty"`
+
+	// The defender's chances before the attacker's expertise: base pseudo stat, table base
+	// and rating, as GetTotalDodgeChanceAsDefender and its siblings add them.
+	DefenderDodge                 float64 `json:"defender_dodge"`
+	DefenderParry                 float64 `json:"defender_parry"`
+	DefenderBlock                 float64 `json:"defender_block"`
+	DefenderArmor                 float64 `json:"defender_armor"`
+	DefenderBlockReduction        float64 `json:"defender_block_reduction"`
+	DefenderBonusAttackPower      float64 `json:"defender_bonus_attack_power"`
+	DefenderBonusPhysicalTaken    float64 `json:"defender_bonus_physical_damage_taken"`
+	DefenderReducedPhysicalHitPct float64 `json:"defender_reduced_physical_hit_taken"`
+	// A class replace function on the main hand: Go's swing reacts to the event first, even
+	// when the replacement returns the swing unchanged.
+	ReplaceMainHandSwing bool `json:"replace_main_hand_swing,omitempty"`
+
+	// Present only with ranged auto attacks, so builds without them export as before.
+	RangedState *RangedState `json:"ranged_state,omitempty"`
+}
+
+// The ranged auto attack's static inputs: attack.go's ranged WeaponAttack reads
+// TotalRangedHasteMultiplier, and RangedAttackPower adds the defender's bonus, Hunter's Mark.
+type RangedState struct {
+	RangedSpeedMultiplier          float64 `json:"ranged_speed_multiplier"`
+	DefenderBonusRangedAttackPower float64 `json:"defender_bonus_ranged_attack_power"`
+}
+
+func exportMelee(character *core.Character, target *core.Unit, table *core.AttackTable, keepsSwing bool, unrepresented *[]string) Melee {
+	aa := &character.AutoAttacks
+	mh := privateField(aa, "mh")
+	// attack.go WeaponAttack.IsInRange: a main hand out of range never swings, so nothing
+	// replaces its swings.
+	distance := character.DistanceFromTarget
+	inRange := func(weapon *core.Weapon) bool {
+		return (weapon.MinRange == 0 || weapon.MinRange < distance) && (weapon.MaxRange == 0 || weapon.MaxRange >= distance)
+	}
+	// A class replace function on the main hand: Go's swing reacts to the event first, even
+	// when the replacement returns the swing unchanged. A Warrior or Hunter describes its
+	// replacement in its effects, and so does a bear Druid's Maul queue; another class needs one
+	// that keeps the swing.
+	replaced := aa.AutoSwingMelee && !mh.FieldByName("replaceSwing").IsNil()
+	describes := character.Class == proto.Class_ClassWarrior || character.Class == proto.Class_ClassHunter ||
+		(character.Class == proto.Class_ClassDruid && character.GetAura("Maul Queue Aura") != nil)
+	if replaced && inRange(aa.MH()) && !keepsSwing && !describes {
+		*unrepresented = append(*unrepresented, "main hand swings can be replaced")
+	}
+	if len(character.OnMeleeAttackSpeedChanged) != 0 {
+		*unrepresented = append(*unrepresented, "melee attack speed listeners are unsupported")
+	}
+	pseudo := &character.PseudoStats
+	defender := &target.PseudoStats
+	var ranged *RangedState
+	if aa.AutoSwingRanged {
+		if len(character.OnRangedAttackSpeedChanged) != 0 {
+			*unrepresented = append(*unrepresented, "ranged attack speed listeners are unsupported")
+		}
+		ranged = &RangedState{RangedSpeedMultiplier: pseudo.RangedSpeedMultiplier,
+			DefenderBonusRangedAttackPower: defender.BonusRangedAttackPower}
+	}
+	return Melee{RangedState: ranged, ReplaceMainHandSwing: replaced,
+		AutoSwingMelee: aa.AutoSwingMelee, AutoSwingRanged: aa.AutoSwingRanged, DualWielding: aa.IsDualWielding,
+		MainHand: exportWeapon(aa.MH()), OffHand: exportWeapon(aa.OH()), Ranged: exportWeapon(aa.Ranged()),
+		BaseMissChance: table.BaseMissChance, BaseGlanceChance: table.BaseGlanceChance,
+		GlanceMultiplier: table.GlanceMultiplier, GlanceSpread: table.GlanceSpread,
+		HitSuppression: table.HitSuppression, MeleeCritSuppression: table.MeleeCritSuppression,
+		IgnoreArmor: table.IgnoreArmor, ArmorIgnoreFactor: table.ArmorIgnoreFactor,
+		InFrontOfTarget: pseudo.InFrontOfTarget, AttackSpeedMultiplier: pseudo.AttackSpeedMultiplier,
+		MeleeSpeedMultiplier: pseudo.MeleeSpeedMultiplier, DodgeReduction: pseudo.DodgeReduction,
+		DisableDWMissPenalty: pseudo.DisableDWMissPenalty,
+		DefenderDodge:        defender.BaseDodgeChance + table.BaseDodgeChance + target.GetDodgeFromRating(),
+		DefenderParry:        defender.BaseParryChance + table.BaseParryChance + target.GetParryFromRating(),
+		DefenderBlock:        defender.BaseBlockChance + table.BaseBlockChance + target.GetBlockFromRating(),
+		DefenderArmor:        target.Armor(), DefenderBlockReduction: target.BlockDamageReduction(),
+		DefenderBonusAttackPower: defender.BonusAttackPower, DefenderBonusPhysicalTaken: defender.BonusPhysicalDamageTaken,
+		DefenderReducedPhysicalHitPct: defender.ReducedPhysicalHitTakenChance,
+	}
+}
+
 type Prepared struct {
-	SchemaVersion int              `json:"schema_version"`
-	Contract      string           `json:"contract"`
-	Reference     Reference        `json:"reference"`
-	RequestSHA256 string           `json:"request_sha256"`
-	ScenarioID    string           `json:"scenario_id"`
-	Sim           SimOptions       `json:"sim"`
-	Encounter     Encounter        `json:"encounter"`
-	Target        TargetUnit       `json:"target"`
-	Player        Player           `json:"player"`
+	SchemaVersion int        `json:"schema_version"`
+	Contract      string     `json:"contract"`
+	Reference     Reference  `json:"reference"`
+	RequestSHA256 string     `json:"request_sha256"`
+	ScenarioID    string     `json:"scenario_id"`
+	Sim           SimOptions `json:"sim"`
+	Encounter     Encounter  `json:"encounter"`
+	Target        TargetUnit `json:"target"`
+	Player        Player     `json:"player"`
+	Melee         Melee      `json:"melee"`
+	Pets          []Pet      `json:"pets,omitempty"`
+	// The target's swings at the player when the player tanks it.
+	Enemy         *Enemy           `json:"enemy,omitempty"`
 	Effects       []map[string]any `json:"effects"`
 	Unrepresented []string         `json:"unrepresented"`
 }
 
-func exportSpell(spell *core.Spell, target *core.Unit, timers *timerNames, unrepresented *[]string) Spell {
+func exportSpell(spell *core.Spell, target *core.Unit, class classExport, timers *timerNames, unrepresented *[]string) Spell {
 	var cost *Cost
 	if spell.Cost != nil {
 		resource := "unknown"
-		switch spell.Cost.ResourceCostImpl.(type) {
+		refund := 0.0
+		switch impl := spell.Cost.ResourceCostImpl.(type) {
 		case *core.ManaCost:
 			resource = "mana"
+		case *core.RageCost:
+			resource = "rage"
+			refund = impl.Refund
+			// A refund is credited to the rage bar's refund metrics, the default and the only
+			// one any class passes.
+			if impl.Refund > 0 && impl.RefundMetrics != spell.Unit.RageRefundMetrics {
+				*unrepresented = append(*unrepresented, fmt.Sprintf("spell %s refunds rage to its own metrics", spell.ActionID))
+			}
+		case *core.FocusCost:
+			resource = "focus"
+			if impl.Refund > 0 {
+				*unrepresented = append(*unrepresented, fmt.Sprintf("spell %s refunds focus", spell.ActionID))
+			}
+		case *core.EnergyCost:
+			resource = "energy"
+			refund = impl.Refund
+			// A refund is credited to the energy bar's refund metrics, the default and the
+			// only one any class passes.
+			if impl.Refund > 0 && impl.RefundMetrics != spell.Unit.EnergyRefundMetrics {
+				*unrepresented = append(*unrepresented, fmt.Sprintf("spell %s refunds energy to its own metrics", spell.ActionID))
+			}
 		default:
-			*unrepresented = append(*unrepresented, fmt.Sprintf("spell %s has a non-mana cost", spell.ActionID))
+			*unrepresented = append(*unrepresented, fmt.Sprintf("spell %s has an unsupported cost", spell.ActionID))
 		}
 		cost = &Cost{Resource: resource, BaseCost: spell.Cost.BaseCost, FlatModifier: spell.Cost.FlatModifier,
-			PercentModifier: spell.Cost.PercentModifier, AdditivePercentModifier: spell.Cost.AdditivePercentModifier}
+			PercentModifier: spell.Cost.PercentModifier, AdditivePercentModifier: spell.Cost.AdditivePercentModifier, Refund: refund}
 	}
 
 	// Go chooses the cast function at registration from the default cast, extra condition,
@@ -566,9 +886,9 @@ func exportSpell(spell *core.Spell, target *core.Unit, timers *timerNames, unrep
 	}
 
 	return Spell{
-		ActionID: actionID(spell.ActionID), Rank: spell.Rank, School: uint8(spell.SpellSchool),
+		ActionID: spellActionID(spell.ActionID), Rank: spell.Rank, School: uint8(spell.SpellSchool),
 		DefenseType: spell.DefenseType.String(), ProcMask: procMaskNames(spell.ProcMask), Flags: flagNames(spell.Flags),
-		ClassSpell: classSpell(spell.ClassSpellMask, unrepresented, spell.ActionID), MissileSpeed: spell.MissileSpeed,
+		ClassSpell: classSpell(class, spell.ClassSpellMask, unrepresented, spell.ActionID), MissileSpeed: spell.MissileSpeed,
 		Cost: cost,
 		DefaultCast: Cast{Cost: spell.DefaultCast.Cost, GCDNs: nanos(spell.DefaultCast.GCD), GCDMinNs: nanos(spell.DefaultCast.GCDMin),
 			CastTimeNs: nanos(spell.DefaultCast.CastTime), NonEmpty: spell.DefaultCast.NonEmpty},
@@ -581,240 +901,8 @@ func exportSpell(spell *core.Spell, target *core.Unit, timers *timerNames, unrep
 		DirectDamageMultiplierAdditive: spell.DirectDamageMultiplierAdditive, CritMultiplierPct: spell.CritMultiplierPct,
 		CritMultiplierAdditive: spell.CritMultiplierAdditive, BonusBaseDamage: spell.BonusBaseDamage, BonusCoefficient: spell.BonusCoefficient,
 		ThreatMultiplier: spell.ThreatMultiplier, FlatThreatBonus: spell.FlatThreatBonus, PushbackResist: spell.PushbackResist, Dot: dot,
+		MetricSplits: map[bool]int{true: spell.GetMetricSplitCount(), false: 0}[spell.GetMetricSplitCount() > 1],
 	}
-}
-
-// Mage spell rows whose ApplyEffects roll a client damage effect. The ladders and the
-// rank pairing mirror sim/mage/frostbolt.go, ice_lance.go and arcane_missiles.go.
-var (
-	frostboltLadder     = spelldata.Ranked(116, 205, 837, 7322, 8406, 8407, 8408, 10179, 10180, 10181, 25304)
-	iceLanceLadder      = spelldata.Ranked(1312002, 400640, 1240044, 1240045, 1240046, 1240047)
-	missilesLadder      = spelldata.Ranked(5143, 5144, 5145, 8416, 8417, 10211, 10212, 25345)
-	missileTicksLadder  = spelldata.Ranked(7268, 7269, 7270, 8419, 8418, 10273, 10274, 25346)
-	arcaneBlastLadder   = spelldata.Ranked(400574, 1239696, 1239697, 1239699, 1239700)
-	arcaneBlastBuff     = spelldata.Ranked(400573)
-	arcanePower         = spelldata.Ranked(12042)
-	presenceOfMind      = spelldata.Ranked(12043)
-	igniteTriggered     = spelldata.Ranked(412538)
-	igniteTalent        = spelldata.Talent(11119, 5)
-	fireBlastLadder     = spelldata.Ranked(2136, 2137, 2138, 8412, 8413, 10197, 10199)
-	scorchLadder        = spelldata.Ranked(2948, 8444, 8445, 8446, 10205, 10206, 10207)
-	improvedScorch      = spelldata.Talent(11095, 3)
-	fireVulnerability   = spelldata.Ranked(22959)
-	masterOfElements    = spelldata.Talent(29074, 3)
-	pyroblastLadder     = spelldata.Ranked(11366, 12505, 12522, 12523, 12524, 12525, 12526, 18809)
-	heatingUpTriggered  = spelldata.Ranked(400625)
-	combustion          = spelldata.Ranked(11129)
-	combustionTriggered = spelldata.Ranked(28682)
-	fireballLadder      = spelldata.Ranked(133, 143, 145, 3140, 8400, 8401, 8402, 10148, 10149, 10150, 10151, 25306)
-	arcaneConcentration = spelldata.Talent(11213, 5)
-	clearcastingTrigger = spelldata.Ranked(12536)
-	fingersOfFrost      = spelldata.Talent(400647, 2)
-	fingersTriggered    = spelldata.Ranked(400669)
-	shatter             = spelldata.Talent(11170, 3)
-	wintersChill        = spelldata.Talent(11180, 5)
-	wintersChillTrigger = spelldata.Ranked(12579)
-	evocationLadder     = spelldata.Ranked(12051)
-	agateTriggered      = spelldata.Ranked(5405)
-	jadeTriggered       = spelldata.Ranked(10052)
-	citrineTriggered    = spelldata.Ranked(10057)
-	rubyTriggered       = spelldata.Ranked(10058)
-)
-
-func damageEffect(row *spelldata.Spell) *DamageEffect {
-	effect := row.DamageEffect()
-	if effect == nil {
-		fail(fmt.Errorf("spell %d has no damage effect", row.ID))
-	}
-	return &DamageEffect{Average: effect.Average(core.CharacterLevel), Variance: effect.Variance}
-}
-
-func attachDamageEffects(spells []Spell, character *core.Character) {
-	rows := map[int32]*spelldata.Spell{}
-	frostboltLadder.Each(func(_ int32, row *spelldata.Spell) { rows[row.ID] = row })
-	missileTicksLadder.Each(func(_ int32, row *spelldata.Spell) { rows[row.ID] = row })
-	if ice := iceLanceLadder.Highest(); ice != nil {
-		rows[ice.ID] = ice
-	}
-	if blast := arcaneBlastLadder.Highest(); blast != nil {
-		rows[blast.ID] = blast
-	}
-	if fireBlast := fireBlastLadder.Highest(); fireBlast != nil {
-		rows[fireBlast.ID] = fireBlast
-	}
-	scorchLadder.Each(func(_ int32, row *spelldata.Spell) { rows[row.ID] = row })
-	fireballLadder.Each(func(_ int32, row *spelldata.Spell) { rows[row.ID] = row })
-	if pyroblast := pyroblastLadder.Highest(); pyroblast != nil {
-		rows[pyroblast.ID] = pyroblast
-	}
-	for i := range spells {
-		id := spells[i].ActionID
-		if id == nil || id.SpellID == 0 || id.Tag != 0 {
-			continue
-		}
-		if row, ok := rows[id.SpellID]; ok {
-			spells[i].DamageEffect = damageEffect(row)
-		}
-	}
-}
-
-func hasAura(unit *core.Unit, label string) bool { return unit.GetAura(label) != nil }
-
-// Effects whose parameters live in Go closures. Each formula mirrors the cited Go file
-// at the pinned revision; Rust reads these values rather than client tables.
-func mageEffects(m *mage.Mage, character *core.Character) []map[string]any {
-	talents := m.Talents
-	effects := []map[string]any{}
-	unit := &character.Unit
-	if talents.ArcaneConcentration > 0 { // talents_arcane.go registerArcaneConcentration
-		effects = append(effects, map[string]any{
-			"kind": "arcane_concentration", "talent_rank": talents.ArcaneConcentration,
-			"proc_chance": arcaneConcentration.EffectAt(1).FractionAt(talents.ArcaneConcentration),
-			"icd_ns":      nanos(arcaneConcentration.Highest().ICD()), "trigger_aura": "Arcane Concentration",
-			"aura": "Clearcasting", "aura_duration_ns": nanos(clearcastingTrigger.Highest().Duration()),
-		})
-	}
-	if talents.MissileBarrage { // talents_arcane.go registerMissileBarrage: Go literals
-		effects = append(effects, map[string]any{
-			"kind": "missile_barrage", "trigger_aura": "Missile Barrage Trigger", "aura": "Missile Barrage",
-			"arcane_blast_chance": 0.40, "bolt_chance": 0.20, "rng_label": "Missile Barrage",
-			"cost_percent_add": -1.0, "tick_length_delta_ns": nanos(-500 * time.Millisecond),
-		})
-	}
-	if talents.FingersOfFrost > 0 { // talents_frost.go registerFingersOfFrost
-		effects = append(effects, map[string]any{
-			"kind": "fingers_of_frost", "talent_rank": talents.FingersOfFrost, "shatter_rank": talents.Shatter,
-			"proc_chance":  fingersOfFrost.EffectAt(2).FractionAt(talents.FingersOfFrost),
-			"max_stacks":   int32(fingersOfFrost.EffectAt(1).ValueAt(talents.FingersOfFrost)),
-			"shatter_crit": shatter.ValueAt(talents.Shatter), "duration_ns": nanos(fingersTriggered.Highest().Duration()),
-			"trigger_aura": "Fingers of Frost Trigger", "aura": "Fingers of Frost",
-		})
-	}
-	if talents.WintersChill > 0 { // talents_frost.go registerWinterChill
-		effects = append(effects, map[string]any{
-			"kind": "winters_chill", "talent_rank": talents.WintersChill,
-			"proc_chance":    wintersChill.EffectAt(2).FractionAt(talents.WintersChill),
-			"max_stacks":     int32(wintersChill.EffectAt(1).ValueAt(talents.WintersChill)),
-			"crit_per_stack": wintersChillTrigger.Highest().EffectN(1).Average(core.CharacterLevel),
-			"duration_ns":    nanos(wintersChillTrigger.Highest().Duration()),
-			"trigger_aura":   "Winters Chill Talent", "aura": "Winter's Chill",
-		})
-	}
-	if talents.IceLance { // ice_lance.go
-		effects = append(effects, map[string]any{
-			"kind": "ice_lance", "spell_id": iceLanceLadder.Highest().ID, "frozen_multiplier": mage.IceLanceFrozenMultiplier,
-		})
-	}
-	if talents.ColdSnap { // cold_snap.go
-		effects = append(effects, map[string]any{"kind": "cold_snap", "spell_id": spelldata.Ranked(12472).Highest().ID})
-	}
-	// evocation.go
-	evocation := evocationLadder.Highest()
-	effects = append(effects, map[string]any{
-		"kind": "evocation", "spell_id": evocation.ID, "regen_aura": "Evocation Regen", "channel_aura": "Evocation",
-		"regen_multiplier": evocation.Effect(dbcenums.A_MOD_POWER_REGEN_PERCENT, 0).Average(core.CharacterLevel) / 100,
-	})
-	// arcane_missiles.go: channel rank N fires tick rank N.
-	missiles := []map[string]any{}
-	missilesLadder.Each(func(rank int32, row *spelldata.Spell) {
-		missiles = append(missiles, map[string]any{"channel_spell_id": row.ID, "tick_spell_id": missileTicksLadder.Rank(rank).ID})
-	})
-	effects = append(effects, map[string]any{"kind": "arcane_missiles", "ranks": missiles})
-	// frostbolt.go
-	effects = append(effects, map[string]any{"kind": "frostbolt"})
-	if talents.ArcaneBlast { // arcane_blast.go and arcane_charge.go
-		buff := arcaneBlastBuff.Highest()
-		effects = append(effects, map[string]any{
-			"kind": "arcane_blast", "spell_id": arcaneBlastLadder.Highest().ID, "aura": "Arcane Blast",
-			"damage_per_stack": buff.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_DAMAGE)).Average(core.CharacterLevel) / 100,
-			"cost_per_stack":   buff.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_COST)).Average(core.CharacterLevel) / 100,
-		})
-	}
-	// fire_blast.go
-	effects = append(effects, map[string]any{"kind": "fire_blast"})
-	// fireball.go: every rank; the hit lands after travel, then its dot snapshots and ticks.
-	fireballs := []map[string]any{}
-	fireballLadder.Each(func(_ int32, row *spelldata.Spell) {
-		fireballs = append(fireballs, map[string]any{
-			"spell_id": row.ID, "tick_base": row.PeriodicEffect().Average(core.CharacterLevel),
-			"tick_can_crit": row.PeriodicCanCrit() && row.DefenseTypeCore() == core.DefenseTypeMagic,
-		})
-	})
-	effects = append(effects, map[string]any{"kind": "fireball", "ranks": fireballs})
-	// scorch.go: every rank; Improved Scorch stacks Fire Vulnerability on the mage itself.
-	scorch := map[string]any{"kind": "scorch"}
-	if talents.ImprovedScorch > 0 {
-		scorch["improved_scorch"] = map[string]any{
-			"aura": "Fire Vulnerability", "proc_chance": improvedScorch.FractionAt(talents.ImprovedScorch),
-			"damage_per_stack": fireVulnerability.Highest().EffectN(1).Average(core.CharacterLevel) / 100,
-		}
-	}
-	effects = append(effects, scorch)
-	if talents.Pyroblast { // pyroblast.go: Fireball's shape, highest rank only
-		row := pyroblastLadder.Highest()
-		effects = append(effects, map[string]any{
-			"kind": "pyroblast", "spell_id": row.ID, "tick_base": row.PeriodicEffect().Average(core.CharacterLevel),
-			"tick_can_crit": row.PeriodicCanCrit() && row.DefenseTypeCore() == core.DefenseTypeMagic,
-		})
-	}
-	if talents.Combustion { // combustion.go
-		buff := combustionTriggered.Highest()
-		effects = append(effects, map[string]any{
-			"kind": "combustion", "spell_id": combustion.Highest().ID, "aura": "Combustion",
-			"crit_per_stack": buff.Effect(dbcenums.A_ADD_FLAT_MODIFIER, int32(dbcenums.SPELLMOD_CRITICAL_CHANCE)).Average(core.CharacterLevel),
-			"max_crits":      int32(combustion.Highest().ProcCharges),
-		})
-	}
-	if talents.HeatingUp { // talents_fire.go registerHotStreak
-		buff := heatingUpTriggered.Highest()
-		effects = append(effects, map[string]any{
-			"kind": "heating_up", "aura": "Heating Up", "trigger_aura": "Heating Up Trigger",
-			"cast_time_per_stack": buff.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_CASTING_TIME)).Percent(),
-		})
-	}
-	if talents.MasterOfElements > 0 { // talents_fire.go registerMasterOfElements
-		effects = append(effects, map[string]any{
-			"kind": "master_of_elements", "trigger_aura": "Master of Elements",
-			"refund":            masterOfElements.FractionAt(talents.MasterOfElements),
-			"metrics_action_id": actionID(core.ActionID{SpellID: masterOfElements.Highest().ID}),
-		})
-	}
-	if talents.Ignite > 0 { // talents_fire.go registerIgnite: fire spell crits feed a dot
-		effects = append(effects, map[string]any{
-			"kind": "ignite", "trigger_aura": "Ignite Talent", "spell_id": igniteTriggered.Highest().ID,
-			"share":     igniteTalent.FractionAt(talents.Ignite),
-			"num_ticks": int32(igniteTriggered.Highest().Duration() / (2 * time.Second)),
-		})
-	}
-	if talents.ArcanePower { // arcane_power.go
-		rank := arcanePower.Highest()
-		effects = append(effects, map[string]any{
-			"kind": "arcane_power", "spell_id": rank.ID, "aura": "Arcane Power",
-			"damage":           rank.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_DAMAGE)).Average(core.CharacterLevel) / 100,
-			"cost_percent_add": rank.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_COST)).Average(core.CharacterLevel) / 100,
-		})
-	}
-	if talents.PresenceOfMind { // presence_of_mind.go
-		rank := presenceOfMind.Highest()
-		effects = append(effects, map[string]any{
-			"kind": "presence_of_mind", "spell_id": rank.ID, "aura": "Presence of Mind",
-			"cast_time_percent": rank.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_CASTING_TIME)).Average(core.CharacterLevel) / 100,
-		})
-	}
-	// mana_gems.go: smaller gems wait for larger ones; all share the conjured cooldown.
-	gems := []map[string]any{}
-	for _, gem := range []struct {
-		item int32
-		row  *spelldata.Spell
-	}{{5514, agateTriggered.Highest()}, {5513, jadeTriggered.Highest()}, {8007, citrineTriggered.Highest()}, {8008, rubyTriggered.Highest()}} {
-		gems = append(gems, map[string]any{"item_id": gem.item, "mana": gem.row.EnergizeEffect().Average(core.CharacterLevel)})
-	}
-	effects = append(effects, map[string]any{"kind": "mana_gems", "gems": gems, "regen_window_seconds": 2.0})
-	// armors.go: the regen part is already in the prepared pseudo stats.
-	if hasAura(unit, "Mage Armor") {
-		effects = append(effects, map[string]any{"kind": "mage_armor", "aura": "Mage Armor"})
-	}
-	return effects
 }
 
 // racials.go applyEureka: the class names its spells by masks only Go can read, so the
@@ -838,12 +926,24 @@ func eurekaEffect(agent core.Agent, character *core.Character) map[string]any {
 		return mask != 0 && !spell.Flags.Matches(core.SpellFlagNoSpellMods) && spell.Matches(mask) && procMask.Matches(spell.ProcMask)
 	}
 	cost, damage, ticks, spending := []int{}, []int{}, []int{}, []int{}
-	for i, spell := range character.Spellbook {
-		mana := false
-		if spell.Cost != nil {
-			_, mana = spell.Cost.ResourceCostImpl.(*core.ManaCost)
+	// The cost modifier names the class's resource: rage for a warrior, energy for a rogue and
+	// mana otherwise, as applyEureka's ResourceType does.
+	paysClassResource := func(spell *core.Spell) bool {
+		if spell.Cost == nil {
+			return false
 		}
-		if mana && modded(spell, masks.Cost) {
+		switch spell.Cost.ResourceCostImpl.(type) {
+		case *core.RageCost:
+			return character.Class == proto.Class_ClassWarrior
+		case *core.EnergyCost:
+			return character.Class == proto.Class_ClassRogue
+		case *core.ManaCost:
+			return character.Class != proto.Class_ClassWarrior && character.Class != proto.Class_ClassRogue
+		}
+		return false
+	}
+	for i, spell := range character.Spellbook {
+		if paysClassResource(spell) && modded(spell, masks.Cost) {
 			cost = append(cost, i)
 		}
 		if modded(spell, masks.Damage|masks.Tick) {
@@ -863,8 +963,53 @@ func eurekaEffect(agent core.Agent, character *core.Character) map[string]any {
 	}
 }
 
+// The player stats that change while the named aura is active, read from a separate reset
+// simulation so the exported one is untouched.
+func activeStats(request *proto.RaidSimRequest, label string) map[string]float64 {
+	simulation := core.NewSim(request, simsignals.CreateSignals())
+	simulation.Reset()
+	character := simulation.Raid.Parties[0].Players[0].GetCharacter()
+	before := statValues(character.GetStats())
+	character.GetAura(label).Activate(simulation)
+	changed := map[string]float64{}
+	for name, value := range statValues(character.GetStats()) {
+		if value != before[name] {
+			changed[name] = value
+		}
+	}
+	return changed
+}
+
+// The target's armor with the named aura active at the given stacks, from a separate reset
+// simulation so the exported one is untouched.
+func targetArmorWithStacks(request *proto.RaidSimRequest, label string, stacks int32) float64 {
+	simulation := core.NewSim(request, simsignals.CreateSignals())
+	simulation.Reset()
+	target := simulation.Encounter.ActiveTargetUnits[0]
+	if stacks > 0 {
+		aura := target.GetAura(label)
+		aura.Activate(simulation)
+		// A stronger aura in the exclusive armor category, such as Expose Armor, keeps it out.
+		if !aura.IsActive() {
+			return math.NaN()
+		}
+		aura.SetStacks(simulation, stacks)
+	}
+	return target.Armor()
+}
+
+// Whether activating the aura right after a reset fails, as an exclusive category with a
+// stronger active member makes it.
+func sunderBlocked(request *proto.RaidSimRequest, label string) bool {
+	simulation := core.NewSim(request, simsignals.CreateSignals())
+	simulation.Reset()
+	aura := simulation.Encounter.ActiveTargetUnits[0].GetAura(label)
+	aura.Activate(simulation)
+	return !aura.IsActive()
+}
+
 func commonEffects(character *core.Character, target *core.Unit, request *proto.RaidSimRequest, unrepresented *[]string) []map[string]any {
-	effects := []map[string]any{}
+	effects := auraShouldRefreshEffects(character, target, request.Raid.Parties[0].Players[0].GetRotation())
 	for _, aura := range target.GetAuras() {
 		if aura.Label == "Judgement of Wisdom (External)" { // buffs/paladin.go AttachJudgementOfWisdomMana
 			effects = append(effects, map[string]any{
@@ -888,9 +1033,115 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 			"health_fraction": 0.05, "delay_ns": nanos(core.SpellBatchWindow),
 		})
 	}
+	// racials.go Troll Berserking: AttachMultiplyAttackSpeed and AttachMultiplyCastSpeed, in that
+	// order, with Go literals.
+	if aura := character.GetAura("Berserking"); aura != nil {
+		effects = append(effects, map[string]any{
+			"kind": "berserking", "spell_id": aura.ActionID.SpellID, "aura": aura.Label, "cast_speed_multiplier": 1.1,
+			"attack_speed_multiplier": 1.1,
+		})
+	}
+	// racials.go Orc Blood Fury: Go computes the buffed stats through its dynamic stat
+	// dependencies, so a separate reset simulation activates the aura and reports them.
+	if aura := character.GetAura("Blood Fury"); aura != nil {
+		effects = append(effects, map[string]any{
+			"kind": "blood_fury", "spell_id": aura.ActionID.SpellID, "aura": aura.Label,
+			"active_stats": activeStats(request, aura.Label),
+		})
+	}
+	// racials.go Night Elf Elune's Light: RegisterTemporaryStatsOnUseCD with Go literal stats.
+	if aura := character.GetAura("Elune's Light"); aura != nil {
+		buffs := stats.Stats{stats.PhysicalCritPercent: 10, stats.SpellCritPercent: 10}
+		effects = append(effects, map[string]any{
+			"kind": "temporary_stats", "spell_id": aura.ActionID.SpellID, "aura": aura.Label,
+			"active_stats": activeStats(request, aura.Label),
+			"gain_log":     fmt.Sprintf("Gained %s from %s.", buffs.FlatString(), aura.ActionID),
+			"expire_log":   fmt.Sprintf("Lost %s from fading %s.", buffs.FlatString(), aura.ActionID),
+		})
+	}
+	// buffs.go ApplyFixedShoutAura: the party's Battle Shout is up for good, through
+	// ApplyFixedUptimeAura's rolls: a period of its duration and a nanosecond, and a first try a
+	// nanosecond before the pull with a rolled duration. Behind the player's own shout it chains
+	// instead: each time the player's own shout gains, the party's comes back a reaction time
+	// after it runs out, and once more a duration and a nanosecond later.
+	if aura := character.GetAura("Battle Shout (External)"); aura != nil {
+		effect := map[string]any{
+			"kind": "fixed_uptime_aura", "aura": aura.Label, "uptime": 1.0,
+			"tick_length_ns": nanos(aura.Duration + 1), "start_time_ns": int64(-1),
+		}
+		for _, own := range character.GetAurasWithTag(buffs.BattleShoutCategory) {
+			if own.ActionID.Tag == 0 {
+				effect["chained_by"] = own.Label
+			}
+		}
+		effects = append(effects, effect)
+	}
+	// buffs/drivers.go driveSunderArmor: the raid's Sunder Armor ramps to its maximum stacks, one a
+	// default GCD from the pull, Go literals. Target armor at each stack count is read from
+	// separate reset simulations, since the stacks act through exclusive armor effects.
+	// A stronger permanent member of its exclusive category, such as the raid's Expose Armor,
+	// blocks every activation, which Go still counts as a proc, and the armor never changes.
+	if aura := target.GetAura("Sunder Armor (External)"); aura != nil {
+		blocked := sunderBlocked(request, aura.Label)
+		for _, other := range target.GetAuras() {
+			if other != aura && other.Tag == aura.Tag && other.IsActive() && other.Duration != core.NeverExpires {
+				*unrepresented = append(*unrepresented, fmt.Sprintf("%s shares its category with expiring %s", aura.Label, other.Label))
+			}
+		}
+		armor := []float64{}
+		for stacks := int32(0); stacks <= aura.MaxStacks; stacks++ {
+			if blocked {
+				armor = append(armor, targetArmorWithStacks(request, aura.Label, 0))
+			} else {
+				armor = append(armor, targetArmorWithStacks(request, aura.Label, stacks))
+			}
+		}
+		ramp := map[string]any{
+			"kind": "sunder_armor_ramp", "aura": aura.Label, "period_ns": nanos(core.GCDDefault),
+			"ticks": int32(5), "armor_by_stacks": armor,
+		}
+		if blocked {
+			ramp["blocked"] = true
+		}
+		effects = append(effects, ramp)
+	}
+	// racials.go Orc Shatter Curse: its aura multiplies the player's magic damage taken, a Go
+	// literal on each magic school.
+	if aura := character.GetAura("Shatter Curse"); aura != nil {
+		effects = append(effects, map[string]any{"kind": "shatter_curse", "spell_id": aura.ActionID.SpellID, "aura": aura.Label,
+			"school_damage_taken_multiplier": 0.85, "schools": []string{"arcane", "fire", "frost", "holy", "nature", "shadow"}})
+	}
+	// racials.go Dwarf Stoneform: its aura multiplies only the player's physical damage taken,
+	// a Go literal.
+	if aura := character.GetAura("Stoneform"); aura != nil {
+		effects = append(effects, map[string]any{"kind": "stoneform", "spell_id": aura.ActionID.SpellID, "aura": aura.Label,
+			"school_damage_taken_multiplier": 0.9, "schools": []string{"physical"}})
+	}
+	// racials.go High Order Skyborne Read Ley Line: Energized doubles mana regeneration, a
+	// Go literal undone with 0.5.
+	if aura := character.GetAura("Energized"); aura != nil {
+		for _, spell := range character.Spellbook {
+			if spell.RelatedSelfBuff == aura {
+				effects = append(effects, map[string]any{"kind": "read_ley_line", "spell_id": spell.ActionID.SpellID, "aura": aura.Label, "regen_multiplier": 2.0})
+			}
+		}
+	}
 	consumes := request.Raid.Parties[0].Players[0].Consumables
+	// Major cooldown items, then the potions and conjured items a rotation casts itself, which
+	// Go removed from the major cooldowns.
+	items := []*core.Spell{}
+	cooldowns := map[*core.Spell]bool{}
 	for _, cd := range character.GetMajorCooldowns() {
-		spell := cd.Spell
+		items = append(items, cd.Spell)
+		cooldowns[cd.Spell] = true
+	}
+	for _, spell := range character.Spellbook {
+		sapper := spell.ActionID == core.GoblinSapperActionID
+		if spell.ActionID.ItemID != 0 && !cooldowns[spell] && (spell.Flags.Matches(core.SpellFlagPotion|core.SpellFlagConjured) || sapper) {
+			items = append(items, spell)
+		}
+	}
+	for _, spell := range items {
 		// Mage gems are described by the mana_gems effect.
 		if spell.ActionID.ItemID == 0 || spell.Matches(mage.MageSpellManaGem) {
 			continue
@@ -898,6 +1149,8 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 		item := spell.ActionID.ItemID
 		consumable := core.GetConsumableByID(item)
 		switch {
+		case consumable.Id != 0 && spell.Flags.Matches(core.SpellFlagPotion) && potionNeedsResources(consumable):
+			effects = append(effects, potionResourceEffect(character, consumable, unrepresented))
 		case consumable.Id != 0 && spell.Flags.Matches(core.SpellFlagPotion): // consumes.go potions
 			gains := []map[string]any{}
 			for _, effectID := range consumable.EffectIds {
@@ -916,43 +1169,121 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 				"stone_multiplier": map[bool]float64{true: 1.4, false: 1.0}[character.HasAlchStone()], "regen_window_seconds": 5.0,
 			})
 		case consumable.Id != 0 && spell.Flags.Matches(core.SpellFlagConjured): // consumes.go conjured
-			gains := []map[string]any{}
+			gains, energyGains := []map[string]any{}, []map[string]any{}
 			for _, effectID := range consumable.EffectIds {
 				e := core.GetSpellEffectByID(effectID)
 				resource := e.GetResourceType()
 				if (e.Type == proto.EffectType_EffectTypeResourceGain || e.Type == proto.EffectType_EffectTypeHeal) && resource != 0 {
-					if resource != proto.ResourceType_ResourceTypeMana {
+					switch {
+					case resource == proto.ResourceType_ResourceTypeMana:
+						gains = append(gains, map[string]any{"min": e.MinEffectSize, "spread": e.EffectSpread})
+					// A class without an energy bar keeps Go's empty bar: the cast never activates.
+					case resource == proto.ResourceType_ResourceTypeEnergy:
+						energyGains = append(energyGains, map[string]any{"min": e.MinEffectSize, "spread": e.EffectSpread})
+					default:
 						*unrepresented = append(*unrepresented, fmt.Sprintf("conjured %d restores %s", item, resource))
-						continue
 					}
-					gains = append(gains, map[string]any{"min": e.MinEffectSize, "spread": e.EffectSpread})
 				}
 			}
 			if consumable.BuffDuration > 0 {
 				*unrepresented = append(*unrepresented, fmt.Sprintf("conjured %d has a stat buff", item))
 			}
+			if len(energyGains) == 0 {
+				effects = append(effects, map[string]any{
+					"kind": "conjured_mana", "item_id": item, "rng_label": consumable.Name, "gains": gains,
+					"selected": consumes.GetConjuredId() == item, "regen_window_seconds": 5.0,
+				})
+				break
+			}
+			if len(gains) != 0 {
+				*unrepresented = append(*unrepresented, fmt.Sprintf("conjured %d restores mana and energy", item))
+			}
+			// Thistle Tea gives 2 energy less a level above 40, a Go literal.
+			reduction := 0.0
+			if item == 7676 {
+				reduction = float64(2 * max(0, core.CharacterLevel-40))
+			}
 			effects = append(effects, map[string]any{
-				"kind": "conjured_mana", "item_id": item, "rng_label": consumable.Name, "gains": gains,
-				"selected": consumes.GetConjuredId() == item, "regen_window_seconds": 5.0,
+				"kind": "conjured_energy", "item_id": item, "rng_label": consumable.Name, "gains": energyGains,
+				"selected": consumes.GetConjuredId() == item, "level_reduction": reduction,
 			})
+		case spell.ActionID.SameAction(core.GoblinSapperActionID): // consumes.go newGoblinSapperSpell
+			effects = append(effects, goblinSapperEffect(character, request, unrepresented))
+		case temporaryStatItems[item] != nil || simpleStatActive(character, spell) != nil:
+			// RegisterTemporaryStatsOnUseCD on an item: Go literal stats, or shared.NewSimpleStatActive's
+			// on-use buff from the item's database effect.
+			aura := spell.RelatedSelfBuff
+			if aura == nil {
+				*unrepresented = append(*unrepresented, fmt.Sprintf("item %d has no temporary stats aura", item))
+				break
+			}
+			bonus := temporaryStatItems[item]
+			if bonus == nil {
+				bonus = simpleStatActive(character, spell)
+			}
+			effects = append(effects, map[string]any{
+				"kind": "temporary_stats", "spell_id": int32(0), "item_id": item, "aura": aura.Label,
+				"active_stats": activeStats(request, aura.Label),
+				"gain_log":     fmt.Sprintf("Gained %s from %s.", bonus.FlatString(), aura.ActionID),
+				"expire_log":   fmt.Sprintf("Lost %s from fading %s.", bonus.FlatString(), aura.ActionID),
+			})
+		case speedOnUse(spell) != nil: // shared.NewSpellDataSpeedOnUse
+			effects = append(effects, speedOnUse(spell))
+		case damageOnUseItems[item]: // shared.NewSpellDataDamageOnUse
+			if effect := damageOnUseEffect(character, spell, unrepresented); len(effect) != 0 {
+				effects = append(effects, effect)
+			}
+		case spell.Flags.Matches(core.SpellFlagExplosive) && basicExplosives[item] != (basicExplosive{}):
+			effects = append(effects, basicExplosiveEffect(character, spell, unrepresented))
+		case item == 11832: // common/classic/items_trinkets.go Burst of Knowledge
+			if effect := spellCostAuraOnUseEffect(request, character, spell, "Burst of Knowledge"); effect != nil {
+				effects = append(effects, effect)
+			} else {
+				*unrepresented = append(*unrepresented, "Burst of Knowledge has no aura")
+			}
+		case survivalOnUse(character, spell, item) != nil:
+			effects = append(effects, survivalOnUse(character, spell, item))
+		case item == 11819 && character.HasManaBar():
+			// common/classic/items_trinkets.go Second Wind: Go literals, 63 mana a second for 10
+			// seconds on its own metrics, and the automatic use waits for 630 mana missing.
+			effects = append(effects, map[string]any{
+				"kind": "second_wind", "item_id": item, "mana": 63.0, "ticks": 10, "period_ns": nanos(time.Second),
+				"metrics_spell_id": 15604, "min_deficit": 630.0,
+			})
+		case classItemUseEffects[item] != nil: // a use effect a class file registers itself
+			effects = append(effects, classItemUseEffects[item](character.Env.GetAgentFromUnit(&character.Unit), spell))
 		default:
-			// shared.NewSpellDataEnergizeOnUse: an item use spell that restores mana.
+			// shared.NewSpellDataEnergizeOnUse: an item use spell that restores mana, at once or as a
+			// self hot of the row's ticks; the manager waits until the whole gain fits. It has no
+			// self buff; an item whose use activates one registered another effect.
 			found := false
-			if dbItem := core.GetItemByID(item); dbItem != nil {
+			if dbItem := core.GetItemByID(item); dbItem != nil && spell.RelatedSelfBuff == nil {
 				for _, itemEffect := range dbItem.ItemEffects {
 					if itemEffect.GetOnUse() == nil {
 						continue
 					}
 					row := spelldata.Find(itemEffect.BuffId)
 					effect := row.ProcEnergizeEffect()
-					if effect == nil || dbcenums.PowerType(effect.Misc) != dbcenums.POWER_MANA || effect.Aura == dbcenums.A_PERIODIC_ENERGIZE {
+					if effect == spelldata.NilEffect || dbcenums.PowerType(effect.Misc) != dbcenums.POWER_MANA {
 						continue
 					}
+					periodic := effect.Aura == dbcenums.A_PERIODIC_ENERGIZE
+					ticks := 1.0
+					if periodic {
+						if spell.SelfHot() == nil {
+							continue
+						}
+						ticks = float64(spelldata.DotConfig(row, effect).NumberOfTicks)
+					}
 					found = true
-					effects = append(effects, map[string]any{
+					energize := map[string]any{
 						"kind": "energize_on_use", "item_id": item, "spell_id": row.ID,
-						"average": effect.Average(character.Level), "variance": effect.Variance, "whole": effect.Max(character.Level),
-					})
+						"average": effect.Average(character.Level), "variance": effect.Variance, "whole": effect.Max(character.Level) * ticks,
+					}
+					if periodic {
+						energize["periodic"] = true
+					}
+					effects = append(effects, energize)
 				}
 			}
 			if !found {
@@ -961,6 +1292,172 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 		}
 	}
 	return effects
+}
+
+// shared.NewSpellDataAbsorbOnUse and NewSpellDataHealOnUse: an item use whose row shields the
+// wearer against the schools its absorb effect masks, for the amount the effect rolls, or heals it
+// directly, a share of maximum health or a rolled amount, through CalcAndDealHealing.
+func survivalOnUse(character *core.Character, spell *core.Spell, item int32) map[string]any {
+	effect := onlyOnUseEffect(item)
+	if effect == nil {
+		return nil
+	}
+	row := spelldata.Find(effect.BuffId)
+	if row == nil {
+		return nil
+	}
+	if absorb := row.AbsorbEffect(); absorb != spelldata.NilEffect && spell.RelatedSelfBuff != nil {
+		return map[string]any{
+			"kind": "absorb_on_use", "item_id": item, "aura": spell.RelatedSelfBuff.Label,
+			"schools": absorb.Misc, "average": absorb.Average(character.Level), "variance": absorb.Variance,
+		}
+	}
+	heal := row.ProcHealEffect()
+	if heal == spelldata.NilEffect || heal.Aura == dbcenums.A_PERIODIC_HEAL || spell.RelatedSelfBuff != nil || spell.BonusCoefficient != 0 {
+		return nil
+	}
+	exported := map[string]any{
+		"kind": "heal_on_use", "item_id": item, "can_crit": !row.CannotCrit(),
+		"healing_dealt_multiplier":       character.PseudoStats.HealingDealtMultiplier,
+		"healing_taken_multiplier":       character.PseudoStats.HealingTakenMultiplier,
+		"table_healing_dealt_multiplier": character.AttackTables[character.UnitIndex].HealingDealtMultiplier,
+		"bonus_healing_taken":            character.PseudoStats.BonusHealingTaken,
+	}
+	if heal.Type == dbcenums.E_HEAL_PCT {
+		exported["max_health_share"] = heal.Percent()
+	} else {
+		exported["average"], exported["variance"] = heal.Average(character.Level), heal.Variance
+	}
+	return exported
+}
+
+// Items whose use effect a class package registers with its own NewItemEffect, by item ID, and
+// the effect each exports; a class file adds its own.
+var classItemUseEffects = map[int32]func(agent core.Agent, spell *core.Spell) map[string]any{}
+
+// The item's one use effect, or nil.
+func onlyOnUseEffect(item int32) *proto.ItemEffect {
+	dbItem := core.GetItemByID(item)
+	if item == 0 || dbItem == nil {
+		return nil
+	}
+	var onUse *proto.ItemEffect
+	for _, effect := range dbItem.ItemEffects {
+		if effect.GetOnUse() == nil {
+			continue
+		}
+		if onUse != nil {
+			return nil
+		}
+		onUse = effect
+	}
+	return onUse
+}
+
+// shared.NewSpellDataSpeedOnUse: the use activates the buff row's aura, its self buff, which
+// multiplies melee, ranged and cast speed by the row's haste percents while up
+// (AttachHastePseudoStats, in that order). Nil for any other item use.
+func speedOnUse(spell *core.Spell) map[string]any {
+	onUse := onlyOnUseEffect(spell.ActionID.ItemID)
+	if onUse == nil || spell.RelatedSelfBuff == nil {
+		return nil
+	}
+	row := spelldata.Find(onUse.BuffId)
+	if len(row.SpeedEffects()) == 0 || spell.RelatedSelfBuff.Label != spelldata.AuraConfig(row).Label {
+		return nil
+	}
+	pseudo := row.SpeedPseudoStats()
+	multiplier := func(stat proto.PseudoStat) float64 {
+		return 1 + stats.PseudoStatValue(pseudo, stat)/100
+	}
+	return map[string]any{
+		"kind": "speed_on_use", "item_id": spell.ActionID.ItemID, "aura": spell.RelatedSelfBuff.Label,
+		"melee_multiplier":  multiplier(proto.PseudoStat_PseudoStatMeleeHastePercent),
+		"ranged_multiplier": multiplier(proto.PseudoStat_PseudoStatRangedHastePercent),
+		"cast_multiplier":   multiplier(proto.PseudoStat_PseudoStatSpellHastePercent),
+	}
+}
+
+// shared.NewSimpleStatActive: an on-use item whose one use effect's buff, its self buff, carries
+// the effect's scaling stats times the buff row's area bonus (onUseStatBuff). Nil for any other
+// item use.
+func simpleStatActive(character *core.Character, spell *core.Spell) *stats.Stats {
+	item := spell.ActionID.ItemID
+	if spell.RelatedSelfBuff == nil || temporaryStatItems[item] != nil || speedOnUse(spell) != nil {
+		return nil
+	}
+	onUse := onlyOnUseEffect(item)
+	if onUse == nil || onUse.BuffName != spell.RelatedSelfBuff.Label || onUse.GetScalingOptions()[int32(0)] == nil {
+		return nil
+	}
+	amount, _ := spelldata.Find(onUse.BuffId).AreaBonus(&character.Env.Encounter)
+	bonus := stats.FromProtoMap(onUse.GetScalingOptions()[int32(0)].GetStats()).Multiply(amount)
+	return &bonus
+}
+
+// Items whose use registers temporary stats with RegisterTemporaryStatsOnUseCD, by the Go
+// literal stats each passes (common/classic/items_weapons.go).
+var temporaryStatItems = map[int32]*stats.Stats{
+	13937: {stats.Intellect: 20}, // Headmaster's Charge
+}
+
+// Whether a potion restores something other than mana, or carries a stat buff: the general
+// potion_resource effect describes it, and potion_mana keeps the instant mana potions.
+func potionNeedsResources(consumable core.Consumable) bool {
+	if consumable.BuffDuration > 0 {
+		return true
+	}
+	for _, effectID := range consumable.EffectIds {
+		if resource := core.GetSpellEffectByID(effectID).GetResourceType(); resource != 0 && resource != proto.ResourceType_ResourceTypeMana {
+			return true
+		}
+	}
+	return false
+}
+
+// consumes.go makePotionActivationSpellInternal: the buff aura activates first, then each instant
+// gain rolls under the potion's name, times the alchemist stone multiplier.
+func potionResourceEffect(character *core.Character, consumable core.Consumable, unrepresented *[]string) map[string]any {
+	item := consumable.Id
+	gains := []map[string]any{}
+	for _, effectID := range consumable.EffectIds {
+		e := core.GetSpellEffectByID(effectID)
+		resource := e.GetResourceType()
+		periodic := e.AuraPeriodMs > 0
+		switch {
+		case resource != 0 && !periodic && e.Type == proto.EffectType_EffectTypeResourceGain &&
+			(resource == proto.ResourceType_ResourceTypeMana || resource == proto.ResourceType_ResourceTypeRage):
+			gains = append(gains, map[string]any{"resource": resource.String(), "min": e.MinEffectSize, "spread": e.EffectSpread})
+		case resource != 0 && (periodic || e.Type == proto.EffectType_EffectTypeResourceGain):
+			*unrepresented = append(*unrepresented, fmt.Sprintf("potion %d effect %d restores %s over time or a resource Rust lacks", item, effectID, resource))
+		case stats.FromProtoArray(e.Stats) != (stats.Stats{}):
+			*unrepresented = append(*unrepresented, fmt.Sprintf("potion %d effect %d applies a triggered stat aura", item, effectID))
+		}
+	}
+	effect := map[string]any{
+		"kind": "potion_resource", "item_id": item, "rng_label": consumable.Name, "gains": gains,
+		"stone_multiplier": map[bool]float64{true: 1.4, false: 1.0}[character.HasAlchStone()],
+	}
+	if consumable.BuffDuration > 0 {
+		buffs := consumable.Stats
+		actionID := core.ActionID{ItemID: item}
+		effect["aura"] = consumable.Name
+		effect["gain_log"] = fmt.Sprintf("Gained %s from %s.", buffs.FlatString(), actionID)
+		effect["expire_log"] = fmt.Sprintf("Lost %s from fading %s.", buffs.FlatString(), actionID)
+	}
+	return effect
+}
+
+// The player's health after a separate simulation's reset, when it is not the maximum.
+func healthAtReset(request *proto.RaidSimRequest) *float64 {
+	simulation := core.NewSim(request, simsignals.CreateSignals())
+	simulation.Reset()
+	character := simulation.Raid.Parties[0].Players[0].GetCharacter()
+	if !character.HasHealthBar() || character.CurrentHealth() == character.MaxHealth() {
+		return nil
+	}
+	health := character.CurrentHealth()
+	return &health
 }
 
 func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
@@ -973,7 +1470,10 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	note(len(request.Raid.GetParties()) != 1 || len(request.Raid.Parties[0].GetPlayers()) != 1, "exactly one player is supported")
 	note(len(request.Encounter.GetTargets()) != 1, "exactly one target is supported")
 	note(request.Encounter.GetUseHealth(), "health-based fights are unsupported")
-	note(len(request.Raid.GetTanks()) != 0, "tank assignments are unsupported")
+	// A tank assignment is supported when it is exactly the one player tanking the one target.
+	tanks := request.Raid.GetTanks()
+	note(len(tanks) > 1 || (len(tanks) == 1 && (tanks[0].Type != proto.UnitReference_Player || tanks[0].Index != 0)),
+		"tank assignments other than the player tanking the target are unsupported")
 
 	simulation := core.NewSim(request, simsignals.CreateSignals())
 	simulation.Reset()
@@ -985,30 +1485,69 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	presimmer, presims := agent.(core.Presimmer)
 	note(presims && presimmer.GetPresimOptions(request.Raid.Parties[0].Players[0]) != nil, "agent requires presims")
 	note(request.Raid.Parties[0].Players[0].GetHealingModel() != nil, "healing models are unsupported")
-	note(len(character.Pets) != 0, "pets are unsupported")
-	note(character.AutoAttacks.AutoSwingMelee || character.AutoAttacks.AutoSwingRanged, "player auto attacks are unsupported")
 	// A target only swings when it has a current target, i.e. an assigned tank.
-	note((target.AutoAttacks.AutoSwingMelee || target.AutoAttacks.AutoSwingRanged) && target.CurrentTarget != nil, "target auto attacks are unsupported")
+	note(target.AutoAttacks.AutoSwingRanged && target.CurrentTarget != nil, "target ranged auto attacks are unsupported")
+	note(target.AutoAttacks.AutoSwingMelee && target.CurrentTarget != nil && target.CurrentTarget != &character.Unit,
+		"a target swinging at another unit is unsupported")
+	// health.go trackChanceOfDeath: the player tanks a target that has it as its current target.
+	tanking := target.CurrentTarget == &character.Unit
+	note(tanking && !target.AutoAttacks.AutoSwingMelee, "a tanked target without a melee swing is unsupported")
+	note(target.SecondaryTarget != nil, "a target with a secondary target is unsupported")
 	note(character.ItemSwap.IsEnabled(), "item swapping is unsupported")
 	note(simulation.Encounter.EndFightAtHealth != 0, "health-based fights are unsupported")
-	note(simulation.PrepullStartTime() != 0, "prepull actions are unsupported")
-	note(privateField(simulation, "executePhaseCallbacks").Len() != 0, "execute phase callbacks are unsupported")
+	describedCallbacks := 0
+	if export, ok := classExports[character.Class]; ok && export.executeCallbacks != nil {
+		describedCallbacks = export.executeCallbacks(agent)
+	}
+	note(privateField(simulation, "executePhaseCallbacks").Len() != describedCallbacks, "execute phase callbacks are unsupported")
 	note(simulation.Encounter.AllTargets[0].AI != nil, "target AI is unsupported")
 	table := character.AttackTables[target.UnitIndex]
 	note(table.DamageDoneByCasterMultiplier != nil || len(table.DamageDoneByCasterExtraMultiplier) != 0, "caster damage callbacks are unsupported")
-	note(len(target.DynamicDamageTakenModifiers) != 0, "dynamic damage taken modifiers are unsupported")
+	class, exported := classExports[character.Class]
+	described := 0
+	if exported && class.damageTakenModifiers != nil {
+		described = class.damageTakenModifiers(agent)
+	}
+	note(len(target.DynamicDamageTakenModifiers) != described, "dynamic damage taken modifiers are unsupported")
+	note(len(character.OnCastSpeedChanged) != 0, "cast speed listeners are unsupported")
+	note(len(character.OnTemporaryStatsChanges) != 0, "temporary stat listeners are unsupported")
 	for mobType, bonus := range table.MobTypeBonusStats {
 		note(bonus != (stats.Stats{}), fmt.Sprintf("mob type bonus stats for %s are unsupported", mobType))
 	}
 
-	mageAgent, isMage := agent.(mage.MageAgent)
-	note(!isMage, "only Mage agents are exported")
+	note(!exported, fmt.Sprintf("%s agents are not exported", character.Class))
+	inertPets := []map[string]any{}
+	for _, pet := range character.Pets {
+		if simulatedPet(character, pet) {
+			continue
+		}
+		reason := ""
+		if class.inertPet != nil {
+			reason = class.inertPet(agent, pet)
+		}
+		if reason == "" {
+			note(true, "pets are unsupported")
+			continue
+		}
+		inertPets = append(inertPets, inertPetEffect(request, pet, reason, note))
+	}
 
 	spells := []Spell{}
 	for _, spell := range character.Spellbook {
-		spells = append(spells, exportSpell(spell, target, timers, &unrepresented))
+		spells = append(spells, exportSpell(spell, target, class, timers, &unrepresented))
 	}
-	attachDamageEffects(spells, character)
+	attachDamageEffects(spells, class)
+	for i, spell := range character.Spellbook {
+		if spell.RelatedDotSpell == nil {
+			continue
+		}
+		for j, related := range character.Spellbook {
+			if related == spell.RelatedDotSpell {
+				position := j
+				spells[i].RelatedDotSpell = &position
+			}
+		}
+	}
 
 	mcds := []MajorCooldown{}
 	for _, id := range character.GetMajorCooldownIDs() {
@@ -1017,21 +1556,34 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 		for _, t := range mcd.GetTimings() {
 			timings = append(timings, nanos(t))
 		}
-		mcds = append(mcds, MajorCooldown{ActionID: actionID(mcd.Spell.ActionID), Priority: mcd.Priority,
-			Type: cooldownTypeNames(mcd.Type), Timings: timings})
+		cooldown := MajorCooldown{ActionID: actionID(mcd.Spell.ActionID), Priority: mcd.Priority,
+			Type: cooldownTypeNames(mcd.Type), Timings: timings}
+		for _, spell := range character.Spellbook {
+			if spell.ActionID != mcd.Spell.ActionID {
+				continue
+			}
+			if spell != mcd.Spell {
+				for j, own := range character.Spellbook {
+					if own == mcd.Spell {
+						position := j
+						cooldown.Spell = &position
+					}
+				}
+			}
+			break
+		}
+		mcds = append(mcds, cooldown)
 	}
 
 	player := request.Raid.Parties[0].Players[0]
 	rotation, err := protojson.MarshalOptions{UseProtoNames: false}.Marshal(player.GetRotation())
 	fail(err)
-	classOptions, err := protojson.Marshal(player.GetMage().GetOptions().GetClassOptions())
+	classOptions, err := protojson.Marshal(specClassOptions(player))
 	fail(err)
 
 	talents := map[string]int32{}
 	effects := []map[string]any{}
-	if isMage {
-		m := mageAgent.GetMage()
-		reflected := m.Talents.ProtoReflect()
+	if reflected := classTalents(agent); reflected != nil {
 		fields := reflected.Descriptor().Fields()
 		for i := 0; i < fields.Len(); i++ {
 			field := fields.Get(i)
@@ -1043,9 +1595,29 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 				talents[string(field.Name())] = int32(value.Int())
 			}
 		}
-		effects = append(effects, mageEffects(m, character)...)
+	}
+	if exported {
+		exportRequest, classNotes = request, &unrepresented
+		effects = append(effects, class.effects(agent, character)...)
+		if class.playerEffects != nil {
+			effects = append(effects, class.playerEffects(character, request.Raid.Parties[0].Players[0])...)
+		}
+		exportRequest, classNotes = nil, nil
+		if class.unrepresented != nil {
+			unrepresented = append(unrepresented, class.unrepresented(agent, character)...)
+		}
 	}
 	effects = append(effects, commonEffects(character, target, request, &unrepresented)...)
+	effects = append(effects, inertPets...)
+	effects = append(effects, meleeProcEffects(simulation, character, &unrepresented)...)
+	effects = append(effects, gearProcEffects(request, simulation, character, &unrepresented)...)
+	effects = append(effects, spellDataStatProcEffects(character, &unrepresented)...)
+	statAuraLabels := []string{}
+	effects = append(effects, energyProcEffects(simulation, character, &unrepresented)...)
+	if statAuras := statAurasEffect(request, character, class, agent); statAuras != nil {
+		effects = append(effects, statAuras)
+		statAuraLabels = statAuras["auras"].([]string)
+	}
 	if eureka := eurekaEffect(agent, character); eureka != nil {
 		effects = append(effects, eureka)
 	}
@@ -1059,9 +1631,63 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	}{
 		{&character.Unit, "player", core.ChanceOfDeathAuraLabel, "acts only when the player takes damage"},
 		{target, "target", "Parry Haste", "acts only on parried attacks"},
+		{&character.Unit, "player", "Parry Haste", "acts only on attacks the player parries, and nothing attacks the player"},
+		{&character.Unit, "player", "Pushback trigger", "acts only on hits taken during a hardcast with the pushback flag or a channel with a cast time, which the gate rejects when tanking"},
+		// common/classic/items_store_gaps.go Freezing Band: melee hits taken only.
+		{&character.Unit, "player", "Freezing Band", "acts only on melee hits the player takes"},
 	} {
+		if inert.label == core.ChanceOfDeathAuraLabel && playerTakesDamage(character, target) {
+			continue
+		}
+		// attack.go applyParryHaste: a parry pulls the parrying unit's next swing in, which
+		// matters once the target swings at the player.
+		if inert.label == "Parry Haste" && tanking {
+			if inert.unit.GetAura(inert.label) != nil {
+				effects = append(effects, map[string]any{"kind": "parry_haste", "unit": inert.side, "aura": inert.label})
+			}
+			continue
+		}
+		// An untanked target never swings, but its reset still rolls a swing timer, and a parry
+		// of an attack from in front pulls that timer in and logs it while time is left on it.
+		if inert.label == "Parry Haste" && inert.unit == target && target.AutoAttacks.AutoSwingMelee {
+			if inert.unit.GetAura(inert.label) != nil {
+				effects = append(effects, map[string]any{"kind": "parry_haste", "unit": inert.side, "aura": inert.label,
+					"swing_speed": target.AutoAttacks.MH().SwingSpeed, "melee_haste_multiplier": target.TotalMeleeHasteMultiplier()})
+			}
+			continue
+		}
 		if inert.unit.GetAura(inert.label) != nil {
 			effects = append(effects, map[string]any{"kind": "inert_listener", "unit": inert.side, "aura": inert.label, "reason": inert.reason})
+		}
+	}
+	// health.go trackChanceOfDeath: once a spell can hit the player, the listener removes health.
+	if playerTakesDamage(character, target) && character.GetAura(core.ChanceOfDeathAuraLabel) != nil {
+		effects = append(effects, map[string]any{"kind": "chance_of_death", "aura": core.ChanceOfDeathAuraLabel})
+	}
+	effects = append(effects, meleeItemListeners(character)...)
+	effects = append(effects, hitTakenItemListeners(character)...)
+	// A class's inert listener of hits the player takes acts once anything hits the player: the
+	// target's swings when it tanks the player, or the Goblin Sapper Charge's self hit. Only the
+	// listeners vetted for those hits stay inert: the pushback trigger, since a hardcast keeps
+	// the sapper from being thrown; and without a tank, the listeners of parried, dodged or
+	// blocked attacks, which the sapper's magic hit never is, the procs on melee hits taken,
+	// which its spell hit is not, and a form's rage bar no spell enters.
+	if playerTakesDamage(character, target) {
+		sapperOnly := map[string]bool{"Parry Haste": true, "Riposte Trigger": true, "Defensive State - Trigger": true,
+			"Revenge - Trigger": true, "RageBar": true, "Freezing Band": true, "Wildheart Raiment 5P": true}
+		for _, effect := range effects {
+			label, _ := effect["aura"].(string)
+			if effect["kind"] != "inert_listener" || effect["unit"] != "player" || label == "Pushback trigger" ||
+				(!tanking && (sapperOnly[label] || effect["reason"] == "hears only melee hits the player takes")) {
+				continue
+			}
+			if aura := character.GetAura(label); aura != nil && aura.OnSpellHitTaken != nil {
+				if tanking {
+					unrepresented = append(unrepresented, fmt.Sprintf("player aura %q reacts to the target's swings", label))
+				} else {
+					unrepresented = append(unrepresented, fmt.Sprintf("player aura %q reacts to the Goblin Sapper Charge's hit on the player", label))
+				}
+			}
 		}
 	}
 
@@ -1072,6 +1698,7 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 		}
 	}
 
+	energy := exportEnergy(character, &unrepresented)
 	prepared := Prepared{
 		SchemaVersion: schemaVersion, Contract: "forever-prepared",
 		Reference:     Reference{EngineRevision: engineRevision, ClientBuild: clientBuild, Exporter: "tools/oracle-v2"},
@@ -1098,16 +1725,166 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 			DistanceYards: character.DistanceFromTarget, CastSpeed: character.CastSpeed,
 			Mana: Mana{Max: character.MaxMana(), Base: character.BaseMana, SpiritRegenPerSecond: character.SpiritManaRegenPerSecond(),
 				RegenPerSecondCasting: character.ManaRegenPerSecondWhileCasting(), RegenPerSecondNotCasting: character.ManaRegenPerSecondWhileNotCasting()},
+			Energy: energy,
 			AttackTable: AttackTable{BaseSpellMissChance: table.BaseSpellMissChance, SpellCritSuppression: table.SpellCritSuppression,
 				BonusSpellCritPercent: table.BonusSpellCritPercent, CritMultiplier: table.CritMultiplier,
 				DamageDealtMultiplier: table.DamageDealtMultiplier, DamageTakenMultiplier: table.DamageTakenMultiplier},
 			Spells: spells, MajorCooldowns: mcds, Rotation: rotation,
+			PrepullActions:         privateField(simulation.Environment, "prepullActions").Len(),
+			HealthAtReset:          healthAtReset(request),
+			HpPercentForDefensives: request.Raid.Parties[0].Players[0].GetCooldowns().GetHpPercentForDefensives(),
 		},
 		Effects: effects, Unrepresented: unrepresented,
 	}
+	keepsSwing := false
+	if class, ok := classExports[character.Class]; ok && class.swingReplacementKeepsSwing != nil {
+		keepsSwing = class.swingReplacementKeepsSwing(agent, request.Raid.Parties[0].Players[0])
+	}
+	prepared.Melee = exportMelee(character, target, table, keepsSwing, &prepared.Unrepresented)
+	if tanking {
+		// The auras whose damage taken multiplier an effect multiplies, which the runtime
+		// tracks live.
+		tracked := []string{}
+		for _, effect := range effects {
+			auras, _ := effect["auras"].([]map[string]any)
+			for _, entry := range auras {
+				label, _ := entry["aura"].(string)
+				switch {
+				case effect["kind"] == "player_damage_taken",
+					effect["kind"] == "pseudo_stat_auras" && entry["stat"] == "damage_taken":
+					tracked = append(tracked, label)
+				}
+			}
+		}
+		prepared.Enemy = exportEnemy(request, statAuraLabels, tracked, character, target, &prepared.Unrepresented)
+	}
+	prepared.Pets = exportPets(request, character, target, class, timers, &prepared.Unrepresented)
 	// Last: the teardown changes the simulation.
 	prepared.Player.Mana.TeardownMax = teardownMaxMana(simulation, &character.Unit, &prepared.Unrepresented)
+	// A class without a mana bar has no mana, whatever its Mana, Intellect or Spirit stats say.
+	if !character.HasManaBar() {
+		prepared.Player.Mana = Mana{}
+	}
 	return prepared
+}
+
+// A pet that is registered but never enabled. Each reset enables its unit and its agent's
+// Reset dismisses it, logging its stats; each fight's end logs that no pet is summoned. Its
+// metrics report zero, with every action and aura it registered.
+func inertPetEffect(request *proto.RaidSimRequest, pet *core.Pet, reason string, note func(bool, string)) map[string]any {
+	auras := []*ActionID{}
+	// Permanent auras activate at every unit's reset, enabled or not, and last the fight.
+	permanent := []*ActionID{}
+	for _, aura := range pet.GetAuras() {
+		id := actionID(aura.ActionID)
+		if id != nil {
+			auras = append(auras, id)
+		}
+		if aura.IsActive() {
+			note(aura.Duration != core.NeverExpires, fmt.Sprintf("inert pet %s has the expiring aura %s", pet.Label, aura.Label))
+			if id != nil {
+				permanent = append(permanent, id)
+			}
+		}
+	}
+	effect := map[string]any{
+		"kind": "inert_pet", "name": pet.Name, "label": pet.Label, "unit_index": pet.UnitIndex,
+		"metrics_actions": metricsActions(&pet.Unit), "auras": auras,
+		"dismissed_log": pet.GetStats().FlatString(), "reason": reason,
+	}
+	if len(permanent) != 0 {
+		effect["permanent_auras"] = permanent
+	}
+	// Only a pet whose agent's Reset disables it logs its dismissal at each reset; a pet that is
+	// simply not enabled on start, such as a warlock's other demons, logs nothing then.
+	if !dismissedAtReset(request, pet.Label) {
+		effect["dismissed_at_reset"] = false
+	}
+	if pet.HasManaBar() {
+		effect["mana_bar"] = true
+	}
+	return effect
+}
+
+// Whether a reset logs the pet's dismissal, read from the log of a separate reset simulation.
+func dismissedAtReset(request *proto.RaidSimRequest, label string) bool {
+	simulation := core.NewSim(request, simsignals.CreateSignals())
+	logs := &strings.Builder{}
+	simulation.Log = func(message string, vals ...interface{}) {
+		logs.WriteString(fmt.Sprintf(message, vals...) + "\n")
+	}
+	simulation.Reset()
+	return strings.Contains(logs.String(), "["+label+"] Pet dismissed")
+}
+
+// Item procs (common/forever/stat_bonus_procs_auto_gen.go) whose listener, decoded by spelldata's
+// ProcTrigger from the trigger row, hears only melee hits. Melee autos need auto attacks, which are
+// unrepresented, so the listener never acts unless a spell with a melee special mask exists.
+var meleeItemProcs = []struct {
+	label   string
+	trigger int32
+}{{"Storm Gauntlets", 16615}, {"Orb of Fire", 16982}}
+
+func meleeItemListeners(character *core.Character) []map[string]any {
+	for _, spell := range character.Spellbook {
+		if spell.ProcMask.Matches(core.ProcMaskMeleeSpecial) {
+			return nil
+		}
+	}
+	effects := []map[string]any{}
+	for _, item := range meleeItemProcs {
+		if character.GetAura(item.label) == nil {
+			continue
+		}
+		listener := spelldata.ProcTrigger(character, spelldata.Find(item.trigger), nil)
+		if listener.ProcMask == core.ProcMaskUnknown || listener.ProcMask&^core.ProcMaskMelee != 0 {
+			continue
+		}
+		effects = append(effects, map[string]any{
+			"kind": "inert_listener", "unit": "player", "aura": item.label, "reason": "acts only on melee hits",
+		})
+	}
+	return effects
+}
+
+// Item procs whose listener hears only the melee hits the player takes: Go literal triggers in
+// common/classic/items_trinkets.go (Essence of the Pure Flame's newDamageShieldEffect) and
+// items_store_gaps.go (The Lion Horn of Stormwind), and Uther's Strength and the chest absorption
+// enchants, whose trigger rows spelldata decodes (stat_bonus_procs_auto_gen.go, enchants_auto_gen.go).
+// Only the target's swings land melee hits on the player, which the tanking check below reports; a
+// Goblin Sapper's hit on the thrower is spell damage.
+var hitTakenItemProcs = []struct {
+	label   string
+	trigger int32
+}{{"Essence of the Pure Flame", 0}, {"The Lion Horn of Stormwind", 0}, {"Uther's Strength", 8397},
+	{"Enchant Chest - Minor Absorption", 7445}, {"Enchant Chest - Lesser Absorption", 7446}, {"Enchant Chest - Absorption", 1249072}}
+
+func hitTakenItemListeners(character *core.Character) []map[string]any {
+	lifecycle := map[string]bool{"on_init": true, "on_reset": true, "on_done_iteration": true, "on_gain": true,
+		"on_expire": true, "on_stacks_change": true, "on_encounter_start": true}
+	effects := []map[string]any{}
+	for _, item := range hitTakenItemProcs {
+		aura := character.GetAura(item.label)
+		if aura == nil {
+			continue
+		}
+		heard := true
+		for _, callback := range auraCallbacks(aura) {
+			heard = heard && (lifecycle[callback] || callback == "on_spell_hit_taken")
+		}
+		if item.trigger != 0 {
+			listener := spelldata.ProcTrigger(character, spelldata.Find(item.trigger), nil)
+			names := callbackNames(listener.Callback)
+			heard = heard && len(names) == 1 && names[0] == "on_spell_hit_taken" &&
+				listener.ProcMask != core.ProcMaskUnknown && listener.ProcMask&^core.ProcMaskMelee == 0
+		}
+		if heard {
+			effects = append(effects, map[string]any{
+				"kind": "inert_listener", "unit": "player", "aura": item.label, "reason": "hears only melee hits the player takes",
+			})
+		}
+	}
+	return effects
 }
 
 // Go Spell.doneIteration: every spell without SpellFlagNoMetrics reports under its action
@@ -1135,7 +1912,8 @@ func metricsActions(unit *core.Unit) []MetricsAction {
 			}
 			seen[id] = true
 			actions = append(actions, MetricsAction{ActionID: actionID(id),
-				MeleeMetrics: spell.Flags.Matches(core.SpellFlagMeleeMetrics), School: uint8(spell.SpellSchool)})
+				MeleeMetrics: spell.Flags.Matches(core.SpellFlagMeleeMetrics), School: uint8(spell.SpellSchool),
+				Passive: spell.Flags.Matches(core.SpellFlagPassiveSpell)})
 		}
 	}
 	return actions

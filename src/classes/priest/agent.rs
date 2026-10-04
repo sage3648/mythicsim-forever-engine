@@ -1,0 +1,717 @@
+//! The Priest class agent for the fight runtime: class spells and auras by name, and the
+//! hooks that dispatch to each spell's and talent's module.
+
+use std::rc::Rc;
+
+use crate::{
+    contracts::prepared_v2::{Effect, PreparedV2, Spell as ExportedSpell},
+    core::fight::{Agent, AuraRef, DotId, Fight, Side, SpellId, SpellResult},
+};
+
+use super::{
+    spells::{dark_sacrifice, devouring_plague, direct, holy, periodic, shadowfiend, shadowform},
+    talents::{inner_focus, power_in_light, power_infusion, searing_light, shadow_weaving},
+};
+
+/// What a Priest spell does when its effects apply.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum PriestSpell {
+    MindBlast,
+    ShadowWordDeath,
+    ShadowWordPain,
+    DevouringPlague,
+    MindFlay,
+    Starshards,
+    HolyNova,
+    HolyNovaHeal,
+    PowerInfusion,
+    Shadowfiend,
+    Shadowform,
+    InnerFocus,
+    DarkSacrifice,
+    Smite,
+    HolyFire,
+    Penance,
+}
+
+/// Class auras with Rust behavior.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum PriestAura {
+    Shadowform,
+    InnerFocus,
+    ShadowWeaving,
+    ShadowWeavingTrigger,
+    SearingLight,
+    SearingLightTrigger,
+    ShadowfiendManaRestore,
+    PowerInfusion,
+}
+
+/// Priest state that Go keeps in the `Priest` struct and its closures.
+#[derive(Default)]
+pub(crate) struct PriestAgent {
+    early_demise_crit: f64,
+    /// Devouring Plague ranks by spell, with their health metrics.
+    devouring_plague: Vec<(SpellId, usize)>,
+    shadowform: Option<Rc<shadowform::Shadowform>>,
+    inner_focus: Option<Rc<inner_focus::InnerFocus>>,
+    shadow_weaving: Option<Rc<shadow_weaving::ShadowWeaving>>,
+    dark_sacrifice: Option<Rc<dark_sacrifice::DarkSacrifice>>,
+    searing_light: Option<Rc<searing_light::SearingLight>>,
+    /// Holy Nova's heal spell and base by damage spell, and the healing modifiers.
+    holy_nova: Option<Rc<HolyNova>>,
+    power_infusion: Option<Rc<power_infusion::PowerInfusion>>,
+    /// Go `PseudoStats.HealingDealtMultiplier` relative to the exported one, which Power
+    /// Infusion multiplies while up.
+    pub(crate) healing_dealt_multiplier: f64,
+    shadowfiend: Option<Rc<shadowfiend::Shadowfiend>>,
+}
+
+/// Holy Nova's ranks resolved to spells.
+#[derive(Clone, Debug)]
+pub(crate) struct HolyNova {
+    heals: Vec<(SpellId, SpellId, f64)>,
+    healing: crate::core::fight::healing::Healing,
+}
+
+/// Aura labels claimed by implemented class effects, as (unit, label, kind).
+fn class_auras(prepared: &PreparedV2) -> Vec<(&'static str, String, PriestAura)> {
+    let mut auras: Vec<(&'static str, String, PriestAura)> = player_auras(prepared)
+        .into_iter()
+        .map(|(label, kind)| ("player", label, kind))
+        .collect();
+    for effect in &prepared.effects {
+        if let Effect::Shadowfiend {
+            mana_restore_aura, ..
+        } = effect
+        {
+            auras.push((
+                "pet",
+                mana_restore_aura.clone(),
+                PriestAura::ShadowfiendManaRestore,
+            ));
+        }
+    }
+    auras
+}
+
+/// Player aura labels claimed by implemented class effects.
+fn player_auras(prepared: &PreparedV2) -> Vec<(String, PriestAura)> {
+    let mut auras = Vec::new();
+    for effect in &prepared.effects {
+        match effect {
+            Effect::Shadowform { aura, .. } => auras.push((aura.clone(), PriestAura::Shadowform)),
+            Effect::PowerInfusion { aura, .. } => {
+                auras.push((aura.clone(), PriestAura::PowerInfusion))
+            }
+            Effect::InnerFocus { aura, .. } => auras.push((aura.clone(), PriestAura::InnerFocus)),
+            Effect::ShadowWeaving {
+                aura, trigger_aura, ..
+            } => {
+                auras.push((aura.clone(), PriestAura::ShadowWeaving));
+                auras.push((trigger_aura.clone(), PriestAura::ShadowWeavingTrigger));
+            }
+            Effect::SearingLight {
+                aura, trigger_aura, ..
+            } => {
+                auras.push((aura.clone(), PriestAura::SearingLight));
+                auras.push((trigger_aura.clone(), PriestAura::SearingLightTrigger));
+            }
+            _ => {}
+        }
+    }
+    auras
+}
+
+/// The spell IDs of class spells Go registers without a class mask.
+#[derive(Clone, Copy, Debug, Default)]
+pub(crate) struct UnmaskedSpells {
+    pub(crate) inner_focus: Option<i32>,
+    pub(crate) dark_sacrifice: Option<i32>,
+    /// Holy Nova's triggered heals, which carry no class mask.
+    pub(crate) holy_nova_heals: [i32; 8],
+}
+
+impl UnmaskedSpells {
+    pub(crate) fn of(effects: &[Effect]) -> Self {
+        let mut ids = UnmaskedSpells::default();
+        for effect in effects {
+            match effect {
+                Effect::InnerFocus { spell_id, .. } => ids.inner_focus = Some(*spell_id),
+                Effect::DarkSacrifice { spell_id, .. } => ids.dark_sacrifice = Some(*spell_id),
+                Effect::HolyNova { ranks, .. } => {
+                    for (slot, rank) in ids.holy_nova_heals.iter_mut().zip(ranks) {
+                        *slot = rank.heal_spell_id;
+                    }
+                }
+                _ => {}
+            }
+        }
+        ids
+    }
+}
+
+impl PriestAgent {
+    /// The class behavior of an exported spell, if Rust implements it.
+    pub(crate) fn spell(spell: &ExportedSpell, unmasked: UnmaskedSpells) -> Option<PriestSpell> {
+        let id = spell.action_id.clone().unwrap_or_default();
+        let Some(class) = spell.class_spell.as_deref() else {
+            let own = |known: Option<i32>| known == Some(id.spell_id) && id.tag == 0;
+            let heal =
+                id.spell_id != 0 && id.tag == 0 && unmasked.holy_nova_heals.contains(&id.spell_id);
+            return if heal {
+                Some(PriestSpell::HolyNovaHeal)
+            } else if own(unmasked.inner_focus) {
+                Some(PriestSpell::InnerFocus)
+            } else if own(unmasked.dark_sacrifice) && spell.dot.is_some() {
+                Some(PriestSpell::DarkSacrifice)
+            } else {
+                None
+            };
+        };
+        match class {
+            "mind_blast" if spell.damage_effect.is_some() => Some(PriestSpell::MindBlast),
+            "shadow_word_death" if spell.damage_effect.is_some() => {
+                Some(PriestSpell::ShadowWordDeath)
+            }
+            "shadow_word_pain" if spell.dot.is_some() => Some(PriestSpell::ShadowWordPain),
+            "devouring_plague" if spell.dot.is_some() => Some(PriestSpell::DevouringPlague),
+            "mind_flay" if spell.dot.as_ref().is_some_and(|dot| dot.channeled) => {
+                Some(PriestSpell::MindFlay)
+            }
+            "starshards" if spell.dot.as_ref().is_some_and(|dot| dot.channeled) => {
+                Some(PriestSpell::Starshards)
+            }
+            "shadowform" => Some(PriestSpell::Shadowform),
+            "shadowfiend" => Some(PriestSpell::Shadowfiend),
+            "power_infusion" => Some(PriestSpell::PowerInfusion),
+            "smite" if spell.damage_effect.is_some() => Some(PriestSpell::Smite),
+            "holy_nova" if spell.damage_effect.is_some() => Some(PriestSpell::HolyNova),
+            "holy_fire" if spell.damage_effect.is_some() && spell.dot.is_some() => {
+                Some(PriestSpell::HolyFire)
+            }
+            "penance" if spell.dot.as_ref().is_some_and(|dot| dot.channeled) => {
+                Some(PriestSpell::Penance)
+            }
+            _ => None,
+        }
+    }
+
+    /// Build a fight for a prepared input that passed the coverage gate.
+    pub(crate) fn fight(prepared: &PreparedV2) -> Result<Fight<PriestAgent>, String> {
+        let auras = class_auras(prepared);
+        let unmasked = UnmaskedSpells::of(&prepared.effects);
+        let mut fight = Fight::new(
+            prepared,
+            PriestAgent::default(),
+            |spell| PriestAgent::spell(spell, unmasked),
+            |unit, label| {
+                auras
+                    .iter()
+                    .find(|(owner, name, _)| *owner == unit && name == label)
+                    .map(|(_, _, kind)| *kind)
+            },
+        )?;
+        let find_spell = |fight: &Fight<PriestAgent>, id: i32| {
+            fight.spells.iter().position(|spell| {
+                spell.id.spell_id == id && spell.id.tag == 0 && spell.id.item_id == 0
+            })
+        };
+        let set_ticks =
+            |fight: &mut Fight<PriestAgent>,
+             ranks: &[crate::contracts::prepared_v2::FireballRank]| {
+                for rank in ranks {
+                    let dot = fight
+                        .spells
+                        .iter()
+                        .find(|spell| spell.id.spell_id == rank.spell_id && spell.id.tag == 0)
+                        .and_then(|spell| spell.dot);
+                    if let Some(dot) = dot {
+                        fight.dots[dot].tick_base = Some(rank.tick_base);
+                        fight.dots[dot].tick_can_crit = rank.tick_can_crit;
+                    }
+                }
+            };
+        for effect in &prepared.effects {
+            match effect {
+                Effect::HolyNova {
+                    ranks,
+                    healing_dealt_multiplier,
+                    healing_taken_multiplier,
+                    table_healing_dealt_multiplier,
+                    healing_power,
+                } => {
+                    let mut heals = Vec::new();
+                    for rank in ranks {
+                        let spell = find_spell(&fight, rank.spell_id)
+                            .ok_or("a Holy Nova rank is not registered")?;
+                        let heal = find_spell(&fight, rank.heal_spell_id)
+                            .ok_or("a Holy Nova heal is not registered")?;
+                        heals.push((spell, heal, rank.heal_base));
+                    }
+                    fight.agent.holy_nova = Some(Rc::new(HolyNova {
+                        heals,
+                        healing: crate::core::fight::healing::Healing {
+                            dealt_multiplier: *healing_dealt_multiplier,
+                            taken_multiplier: *healing_taken_multiplier,
+                            table_multiplier: *table_healing_dealt_multiplier,
+                            healing_power: *healing_power,
+                        },
+                    }));
+                }
+                Effect::Shadowfiend {
+                    aura,
+                    duration_ns,
+                    pet,
+                    attack_power_coefficient,
+                    attack_power_without_deps,
+                    attack_power_dependency_terms,
+                    stats,
+                    mana_restore_aura,
+                    mana_restore_fraction,
+                    mana_restore_action_id,
+                    ..
+                } => {
+                    let bound = shadowfiend::bind(
+                        &mut fight,
+                        aura,
+                        *duration_ns,
+                        pet,
+                        mana_restore_aura,
+                        *mana_restore_fraction,
+                        *mana_restore_action_id,
+                        *attack_power_coefficient,
+                        *attack_power_without_deps,
+                        attack_power_dependency_terms,
+                        stats,
+                    )?;
+                    fight.agent.shadowfiend = Some(Rc::new(bound));
+                }
+                Effect::PowerInfusion {
+                    aura,
+                    damage_multiplier,
+                    schools,
+                    healing_multiplier,
+                    ..
+                } => {
+                    let bound = power_infusion::bind(
+                        &mut fight,
+                        aura,
+                        *damage_multiplier,
+                        schools,
+                        *healing_multiplier,
+                    )?;
+                    fight.agent.power_infusion = Some(Rc::new(bound));
+                }
+                Effect::ShadowWordDeath { early_demise_crit } => {
+                    fight.agent.early_demise_crit = *early_demise_crit;
+                }
+                Effect::ShadowWordPain { ranks }
+                | Effect::MindFlay { ranks }
+                | Effect::Starshards { ranks }
+                | Effect::HolyFire { ranks } => {
+                    set_ticks(&mut fight, ranks);
+                }
+                Effect::Penance {
+                    spell_id,
+                    tick_base,
+                    tick_can_crit,
+                } => {
+                    let rank = crate::contracts::prepared_v2::FireballRank {
+                        spell_id: *spell_id,
+                        tick_base: *tick_base,
+                        tick_can_crit: *tick_can_crit,
+                    };
+                    set_ticks(&mut fight, &[rank]);
+                }
+                Effect::PowerInLight {
+                    multiplier,
+                    spells,
+                    holy_fire_spells,
+                } => power_in_light::bind(&mut fight, *multiplier, spells, holy_fire_spells)?,
+                Effect::SearingLight {
+                    trigger_aura,
+                    aura,
+                    trigger_immediately,
+                    proc_chance,
+                    trigger_spells,
+                    cost_percent_add,
+                    cost_spells,
+                    cancel_spells,
+                    ..
+                } => {
+                    let bound = searing_light::bind(
+                        &mut fight,
+                        aura,
+                        trigger_aura,
+                        *proc_chance,
+                        *trigger_immediately,
+                        trigger_spells,
+                        *cost_percent_add,
+                        cost_spells,
+                        cancel_spells,
+                    )?;
+                    fight.agent.searing_light = Some(Rc::new(bound));
+                }
+                Effect::DevouringPlague {
+                    ranks,
+                    heal_metrics_tag,
+                } => {
+                    set_ticks(&mut fight, ranks);
+                    // Go registers each rank's health metrics with the spell.
+                    for rank in ranks {
+                        if let Some(spell) = find_spell(&fight, rank.spell_id) {
+                            let mut id = fight.spells[spell].id.clone();
+                            id.tag = *heal_metrics_tag;
+                            let metrics = fight.new_health_metrics(id);
+                            fight.agent.devouring_plague.push((spell, metrics));
+                        }
+                    }
+                }
+                Effect::Shadowform {
+                    aura,
+                    damage_percent,
+                    cost_percent,
+                    crit_multiplier,
+                    school_spells,
+                    crit_spells,
+                    cancel_spells,
+                    ..
+                } => {
+                    let bound = shadowform::bind(
+                        &mut fight,
+                        aura,
+                        *damage_percent,
+                        *cost_percent,
+                        *crit_multiplier,
+                        school_spells,
+                        crit_spells,
+                        cancel_spells,
+                    )?;
+                    fight.agent.shadowform = Some(Rc::new(bound));
+                }
+                Effect::InnerFocus {
+                    spell_id,
+                    aura,
+                    cost_percent,
+                    crit_percent,
+                    crit_spells,
+                    spender_spells,
+                } => {
+                    let spell = find_spell(&fight, *spell_id)
+                        .ok_or_else(|| format!("Inner Focus {spell_id} is not registered"))?;
+                    let bound = inner_focus::bind(
+                        &mut fight,
+                        spell,
+                        aura,
+                        *cost_percent,
+                        *crit_percent,
+                        crit_spells,
+                        spender_spells,
+                    )?;
+                    fight.agent.inner_focus = Some(Rc::new(bound));
+                }
+                Effect::ShadowWeaving {
+                    trigger_aura,
+                    aura,
+                    trigger_immediately,
+                    proc_chance,
+                    trigger_spells,
+                    damage_per_stack,
+                    damage_spells,
+                    ..
+                } => {
+                    let bound = shadow_weaving::bind(
+                        &mut fight,
+                        aura,
+                        trigger_aura,
+                        *proc_chance,
+                        *trigger_immediately,
+                        trigger_spells,
+                        *damage_per_stack,
+                        damage_spells,
+                    )?;
+                    fight.agent.shadow_weaving = Some(Rc::new(bound));
+                }
+                Effect::DarkSacrifice {
+                    spell_id,
+                    tick_base,
+                    spirit_divisor,
+                    metrics_action_id,
+                    ..
+                } => {
+                    let spell = find_spell(&fight, *spell_id)
+                        .ok_or_else(|| format!("Dark Sacrifice {spell_id} is not registered"))?;
+                    let spirit = prepared
+                        .player
+                        .stats
+                        .get("Spirit")
+                        .copied()
+                        .ok_or("prepared stats lack Spirit")?;
+                    let bound = dark_sacrifice::bind(
+                        &mut fight,
+                        spell,
+                        *tick_base,
+                        spirit,
+                        *spirit_divisor,
+                        metrics_action_id,
+                    )?;
+                    fight.agent.dark_sacrifice = Some(Rc::new(bound));
+                }
+                _ => {}
+            }
+        }
+        Ok(fight)
+    }
+
+    fn shadowform(fight: &Fight<Self>) -> Rc<shadowform::Shadowform> {
+        fight.agent.shadowform.clone().expect("Shadowform is bound")
+    }
+
+    fn inner_focus(fight: &Fight<Self>) -> Rc<inner_focus::InnerFocus> {
+        fight
+            .agent
+            .inner_focus
+            .clone()
+            .expect("Inner Focus is bound")
+    }
+
+    fn shadow_weaving(fight: &Fight<Self>) -> Rc<shadow_weaving::ShadowWeaving> {
+        fight
+            .agent
+            .shadow_weaving
+            .clone()
+            .expect("Shadow Weaving is bound")
+    }
+
+    fn searing_light(fight: &Fight<Self>) -> Rc<searing_light::SearingLight> {
+        fight
+            .agent
+            .searing_light
+            .clone()
+            .expect("Searing Light is bound")
+    }
+
+    fn dark_sacrifice(fight: &Fight<Self>) -> Rc<dark_sacrifice::DarkSacrifice> {
+        fight
+            .agent
+            .dark_sacrifice
+            .clone()
+            .expect("Dark Sacrifice is bound")
+    }
+}
+
+impl Agent for PriestAgent {
+    type Spell = PriestSpell;
+    type Aura = PriestAura;
+
+    /// Go restores the initial pseudo stats at each reset.
+    fn reset(fight: &mut Fight<Self>) {
+        fight.agent.healing_dealt_multiplier = 1.0;
+    }
+
+    fn apply_effects(fight: &mut Fight<Self>, spell: SpellId, target: Side, behavior: PriestSpell) {
+        match behavior {
+            PriestSpell::MindBlast | PriestSpell::Smite => direct::apply(fight, spell, target),
+            // talents_holy.go: the hit on each target, then the heal cast on the priest.
+            PriestSpell::HolyNova => {
+                direct::apply(fight, spell, target);
+                let nova = fight.agent.holy_nova.clone().expect("Holy Nova is bound");
+                let &(_, heal, _) = nova
+                    .heals
+                    .iter()
+                    .find(|(rank, _, _)| *rank == spell)
+                    .expect("the rank has a heal");
+                fight.cast(heal, Side::Player);
+            }
+            PriestSpell::PowerInfusion => {
+                let bound = fight
+                    .agent
+                    .power_infusion
+                    .clone()
+                    .expect("Power Infusion is bound");
+                bound.apply(fight);
+            }
+            PriestSpell::Shadowfiend => {
+                let bound = fight
+                    .agent
+                    .shadowfiend
+                    .clone()
+                    .expect("Shadowfiend is bound");
+                shadowfiend::summon(fight, &bound);
+            }
+            PriestSpell::HolyNovaHeal => {
+                let nova = fight.agent.holy_nova.clone().expect("Holy Nova is bound");
+                let &(_, _, base) = nova
+                    .heals
+                    .iter()
+                    .find(|(_, heal, _)| *heal == spell)
+                    .expect("the heal has a rank");
+                // Go reads the healing dealt multiplier live, which Power Infusion moves.
+                let mut healing = nova.healing;
+                healing.dealt_multiplier *= fight.agent.healing_dealt_multiplier;
+                fight.calc_and_deal_self_healing_crit(spell, base, healing);
+            }
+            PriestSpell::HolyFire => holy::apply_holy_fire(fight, spell, target),
+            PriestSpell::Penance => holy::apply_penance(fight, spell, target),
+            PriestSpell::ShadowWordDeath => {
+                let crit = fight.agent.early_demise_crit;
+                direct::apply_shadow_word_death(fight, spell, target, crit);
+            }
+            PriestSpell::ShadowWordPain
+            | PriestSpell::DevouringPlague
+            | PriestSpell::MindFlay
+            | PriestSpell::Starshards => periodic::apply(fight, spell, target),
+            PriestSpell::Shadowform => {
+                let aura = Self::shadowform(fight).aura;
+                fight.activate_aura(aura);
+            }
+            PriestSpell::InnerFocus => {
+                let aura = Self::inner_focus(fight).aura;
+                fight.activate_aura(aura);
+            }
+            PriestSpell::DarkSacrifice => Self::dark_sacrifice(fight).apply(fight),
+        }
+    }
+
+    fn should_activate(fight: &Fight<Self>, _spell: SpellId, behavior: PriestSpell) -> bool {
+        match behavior {
+            PriestSpell::DarkSacrifice => Self::dark_sacrifice(fight).should_activate(fight),
+            _ => true,
+        }
+    }
+
+    fn on_dot_tick(fight: &mut Fight<Self>, dot: DotId, behavior: PriestSpell) {
+        match behavior {
+            PriestSpell::ShadowWordPain
+            | PriestSpell::MindFlay
+            | PriestSpell::Starshards
+            | PriestSpell::HolyFire
+            | PriestSpell::Penance => {
+                fight.snapshot_dot_tick(dot);
+            }
+            PriestSpell::DevouringPlague => {
+                let spell = fight.dots[dot].spell;
+                let metrics = fight
+                    .agent
+                    .devouring_plague
+                    .iter()
+                    .find(|(rank, _)| *rank == spell)
+                    .map(|(_, metrics)| *metrics)
+                    .expect("every Devouring Plague rank has health metrics");
+                devouring_plague::tick(fight, dot, metrics);
+            }
+            PriestSpell::DarkSacrifice => Self::dark_sacrifice(fight).tick(fight),
+            _ => {}
+        }
+    }
+
+    fn on_gain(fight: &mut Fight<Self>, _aura: AuraRef, kind: PriestAura) {
+        match kind {
+            PriestAura::Shadowform => Self::shadowform(fight).on_gain(fight),
+            PriestAura::InnerFocus => Self::inner_focus(fight).on_gain(fight),
+            PriestAura::ShadowWeaving => Self::shadow_weaving(fight).on_gain(fight),
+            PriestAura::SearingLight => Self::searing_light(fight).on_gain(fight),
+            PriestAura::PowerInfusion => {
+                let bound = fight.agent.power_infusion.clone().expect("bound");
+                bound.on_gain(fight);
+            }
+            PriestAura::ShadowWeavingTrigger
+            | PriestAura::SearingLightTrigger
+            | PriestAura::ShadowfiendManaRestore => {}
+        }
+    }
+
+    fn on_expire(fight: &mut Fight<Self>, _aura: AuraRef, kind: PriestAura) {
+        match kind {
+            PriestAura::Shadowform => Self::shadowform(fight).on_expire(fight),
+            PriestAura::InnerFocus => Self::inner_focus(fight).on_expire(fight),
+            PriestAura::ShadowWeaving => Self::shadow_weaving(fight).on_expire(fight),
+            PriestAura::SearingLight => Self::searing_light(fight).on_expire(fight),
+            PriestAura::PowerInfusion => {
+                let bound = fight.agent.power_infusion.clone().expect("bound");
+                bound.on_expire(fight);
+            }
+            PriestAura::ShadowWeavingTrigger
+            | PriestAura::SearingLightTrigger
+            | PriestAura::ShadowfiendManaRestore => {}
+        }
+    }
+
+    fn on_stacks_change(
+        fight: &mut Fight<Self>,
+        _aura: AuraRef,
+        kind: PriestAura,
+        _old: i32,
+        new: i32,
+    ) {
+        if kind == PriestAura::ShadowWeaving {
+            Self::shadow_weaving(fight).on_stacks_change(fight, new);
+        }
+    }
+
+    fn on_cast_complete(fight: &mut Fight<Self>, _aura: AuraRef, kind: PriestAura, spell: SpellId) {
+        match kind {
+            PriestAura::Shadowform => Self::shadowform(fight).on_cast_complete(fight, spell),
+            PriestAura::InnerFocus => Self::inner_focus(fight).on_cast_complete(fight, spell),
+            PriestAura::SearingLight => Self::searing_light(fight).on_cast_complete(fight, spell),
+            _ => {}
+        }
+    }
+
+    fn on_spell_hit_dealt(
+        fight: &mut Fight<Self>,
+        aura: AuraRef,
+        kind: PriestAura,
+        spell: SpellId,
+        result: &SpellResult,
+    ) {
+        match kind {
+            PriestAura::ShadowWeavingTrigger => {
+                Self::shadow_weaving(fight).on_spell_hit_dealt(fight, spell, result);
+            }
+            // Go AttachProcTriggerCallback: the handler waits a spell batch window.
+            PriestAura::ShadowfiendManaRestore => {
+                fight.schedule_delayed_proc(aura, spell, *result);
+            }
+            _ => {}
+        }
+    }
+
+    fn on_periodic_damage_dealt(
+        fight: &mut Fight<Self>,
+        _aura: AuraRef,
+        kind: PriestAura,
+        spell: SpellId,
+        result: &SpellResult,
+    ) {
+        if kind == PriestAura::SearingLightTrigger {
+            Self::searing_light(fight).on_periodic_damage_dealt(fight, spell, result);
+        }
+    }
+
+    fn on_delayed_proc(
+        fight: &mut Fight<Self>,
+        _aura: AuraRef,
+        kind: PriestAura,
+        _spell: SpellId,
+        result: SpellResult,
+    ) {
+        match kind {
+            PriestAura::ShadowfiendManaRestore => {
+                let bound = fight
+                    .agent
+                    .shadowfiend
+                    .clone()
+                    .expect("Shadowfiend is bound");
+                shadowfiend::restore(fight, &bound, &result);
+            }
+            PriestAura::ShadowWeavingTrigger => Self::shadow_weaving(fight).handler(fight),
+            PriestAura::SearingLightTrigger => {
+                let aura = Self::searing_light(fight).aura;
+                fight.activate_aura(aura);
+            }
+            _ => {}
+        }
+    }
+}

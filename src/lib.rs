@@ -25,7 +25,7 @@ pub use engine::simulate;
 
 /// Prepared v2 effect kinds this engine executes. The release manifest must agree.
 pub fn implemented_prepared_effects() -> &'static [&'static str] {
-    classes::mage::prepared::IMPLEMENTED_EFFECTS
+    engine::coverage::implemented_effects()
 }
 pub use report::{Counts, Report, TraceEvent, Work};
 

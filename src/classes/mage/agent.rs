@@ -10,8 +10,9 @@ use crate::{
 
 use super::{
     spells::{
-        arcane_blast, arcane_missiles, arcane_power, cold_snap, combustion, evocation, fire_blast,
-        frostbolt, ice_lance, mana_gems, presence_of_mind, scorch,
+        arcane_blast, arcane_missiles, arcane_power, area_hit, blizzard, cold_snap, combustion,
+        evocation, fire_blast, flamestrike, frostbolt, ice_lance, mana_gems, presence_of_mind,
+        scorch,
     },
     talents::{
         arcane_concentration, fingers_of_frost, heating_up, ignite, master_of_elements,
@@ -28,6 +29,7 @@ pub(crate) enum MageSpell {
     PresenceOfMind,
     FireBlast,
     Fireball,
+    FrostfireBolt,
     Pyroblast,
     Combustion,
     Ignite,
@@ -39,6 +41,15 @@ pub(crate) enum MageSpell {
     Evocation,
     /// A mana gem by its index in Go's order, smallest first.
     ManaGem(usize),
+    /// Arcane Explosion, Cone of Cold, Frost Nova or Blast Wave.
+    AreaHit,
+    Flamestrike,
+    /// Blizzard's channel.
+    Blizzard,
+    /// The spell each Blizzard period casts.
+    BlizzardTick,
+    /// Improved Blizzard's chill.
+    ImprovedBlizzard,
 }
 
 /// Class auras with Rust behavior.
@@ -84,6 +95,9 @@ pub(crate) struct MageAgent {
     missiles: Vec<(SpellId, SpellId)>,
     gems: mana_gems::ManaGems,
     evocation_regen: Option<(AuraRef, f64)>,
+    blizzard: Option<blizzard::Blizzard>,
+    /// Each Flamestrike rank's spell and tick amount.
+    flamestrike_ticks: Vec<(SpellId, f64)>,
 }
 
 /// Player aura labels claimed by implemented class effects.
@@ -180,6 +194,9 @@ impl MageAgent {
             "fireball" if spell.damage_effect.is_some() && spell.dot.is_some() => {
                 Some(MageSpell::Fireball)
             }
+            "frostfire_bolt" if spell.damage_effect.is_some() && spell.dot.is_some() => {
+                Some(MageSpell::FrostfireBolt)
+            }
             "pyroblast" if spell.damage_effect.is_some() && spell.dot.is_some() => {
                 Some(MageSpell::Pyroblast)
             }
@@ -199,6 +216,17 @@ impl MageAgent {
             "arcane_missiles_tick" if spell.damage_effect.is_some() => {
                 Some(MageSpell::ArcaneMissile)
             }
+            "arcane_explosion" | "cone_of_cold" | "frost_nova" | "blast_wave"
+                if spell.damage_effect.is_some() =>
+            {
+                Some(MageSpell::AreaHit)
+            }
+            "flamestrike" if spell.damage_effect.is_some() && spell.dot.is_some() => {
+                Some(MageSpell::Flamestrike)
+            }
+            "blizzard" if spell.dot.is_some() => Some(MageSpell::Blizzard),
+            "blizzard" => Some(MageSpell::BlizzardTick),
+            "improved_blizzard" => Some(MageSpell::ImprovedBlizzard),
             _ => None,
         }
     }
@@ -362,7 +390,7 @@ impl MageAgent {
                     let bound = heating_up::bind(&mut fight, aura, *cast_time_per_stack)?;
                     fight.agent.heating_up = Some(Rc::new(bound));
                 }
-                Effect::Fireball { ranks } => {
+                Effect::Fireball { ranks } | Effect::FrostfireBolt { ranks } => {
                     for rank in ranks {
                         let dot = fight
                             .spells
@@ -425,6 +453,30 @@ impl MageAgent {
                 } => {
                     let aura = fight.player_aura(regen_aura)?;
                     fight.agent.evocation_regen = Some((aura, *regen_multiplier));
+                }
+                Effect::Flamestrike { ranks } => {
+                    for rank in ranks {
+                        if let Some(spell) = fight.spells.iter().position(|spell| {
+                            spell.id.spell_id == rank.spell_id && spell.id.tag == 0
+                        }) {
+                            fight.agent.flamestrike_ticks.push((spell, rank.tick_base));
+                        }
+                    }
+                }
+                Effect::Blizzard {
+                    spell_id,
+                    tick_spell_id,
+                    tick_base,
+                    improved_blizzard_spell_id,
+                } => {
+                    let bound = blizzard::bind(
+                        &fight,
+                        *spell_id,
+                        *tick_spell_id,
+                        *tick_base,
+                        *improved_blizzard_spell_id,
+                    )?;
+                    fight.agent.blizzard = Some(bound);
                 }
                 Effect::ArcaneMissiles { ranks } => {
                     for rank in ranks {
@@ -552,7 +604,7 @@ impl Agent for MageAgent {
                 combustion::apply(fight, &state);
             }
             MageSpell::Ignite => Self::ignite(fight).apply(fight),
-            MageSpell::Fireball | MageSpell::Pyroblast => {
+            MageSpell::Fireball | MageSpell::FrostfireBolt | MageSpell::Pyroblast => {
                 let base = fight.roll_damage_effect(spell);
                 let result = fight.calc_damage(spell, target, base);
                 let dot = fight.spells[spell].dot.expect("the bolt has a dot");
@@ -585,6 +637,14 @@ impl Agent for MageAgent {
                 mana_gems::apply(fight, spell, mana);
                 fight.agent.gems.used[gem] = true;
             }
+            MageSpell::AreaHit => area_hit::apply(fight, spell),
+            MageSpell::Flamestrike => flamestrike::apply(fight, spell),
+            MageSpell::Blizzard => blizzard::apply_channel(fight, spell),
+            MageSpell::BlizzardTick => {
+                let state = fight.agent.blizzard.expect("Blizzard is bound");
+                state.apply_tick(fight, spell);
+            }
+            MageSpell::ImprovedBlizzard => blizzard::apply_chill(fight, spell, target),
         }
     }
 
@@ -634,12 +694,32 @@ impl Agent for MageAgent {
     }
 
     fn on_dot_tick(fight: &mut Fight<Self>, dot: DotId, behavior: MageSpell) {
-        if matches!(behavior, MageSpell::Fireball | MageSpell::Pyroblast) {
+        if matches!(
+            behavior,
+            MageSpell::Fireball | MageSpell::FrostfireBolt | MageSpell::Pyroblast
+        ) {
             fight.snapshot_dot_tick(dot);
             return;
         }
         if behavior == MageSpell::Ignite {
             Self::ignite(fight).tick(fight);
+            return;
+        }
+        if behavior == MageSpell::Flamestrike {
+            let spell = fight.dots[dot].spell;
+            let (_, tick_base) = *fight
+                .agent
+                .flamestrike_ticks
+                .iter()
+                .find(|(rank, _)| *rank == spell)
+                .expect("every Flamestrike rank has a tick amount");
+            flamestrike::tick(fight, dot, tick_base);
+            return;
+        }
+        if behavior == MageSpell::Blizzard {
+            let state = fight.agent.blizzard.expect("Blizzard is bound");
+            let side = fight.dots[dot].side;
+            state.on_channel_tick(fight, side);
             return;
         }
         if behavior == MageSpell::ArcaneMissiles {

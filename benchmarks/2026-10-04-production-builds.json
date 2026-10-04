@@ -1,0 +1,590 @@
+{
+ "kind": "production_benchmark",
+ "date": "2026-10-04",
+ "method": "Each production prepared v2 fixture and its request with 10000 iterations and the first-fight debug log off. Go: the pinned engine through tools/oracle-v2 sim with GOMAXPROCS=1, elapsedNs from the result. Rust: forever-engine sim on the prepared input, elapsed_ns of the iteration loop. Go, the Rust build before and the Rust build after ran in turn, five rounds per fixture; each figure is the minimum over the rounds. cpu_s is the process user plus system time, which includes setup and parsing. The two Rust builds produced identical results, elapsed time aside, on every fixture. A load spike on the shared machine disturbed the first run of three fixtures (Affliction and Demonology Warlock, Shadow Priest), which were measured again with seven rounds.",
+ "command": "python3 tools/production_bench.py --base <rust before> --current <rust after> --output <scratch>/report.json --rounds 5",
+ "rust_before_revision": "e1c3aec6a34ff5e8d1b884bc07db60bbdd9d4443",
+ "rust_after": "the commit that adds this record",
+ "go_version": "go version go1.25.6 darwin/arm64",
+ "rust_version": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+ "machine": {
+  "platform": "macOS-26.5-arm64-arm-64bit-Mach-O",
+  "cpu": "Apple M2 Max"
+ },
+ "limitations": "One shared development machine running other workloads; samples are minimums over five interleaved rounds, and single figures can move by several percent between runs.",
+ "summary": {
+  "go_over_rust_after_min": 1.3,
+  "go_over_rust_after_median": 1.47,
+  "go_over_rust_before_min": 0.72,
+  "go_over_rust_before_median": 1.17
+ },
+ "builds": [
+  {
+   "case": "production-affliction-warlock",
+   "dps": 541.1957492580206,
+   "go_dps": 541.1957492580206,
+   "rust_results_identical": true,
+   "elapsed_s": {
+    "go": 1.429,
+    "rust_before": 1.1,
+    "rust_after": 1.037
+   },
+   "cpu_s": {
+    "go": 1.52,
+    "rust_before": 1.101,
+    "rust_after": 1.038
+   },
+   "go_over_rust": {
+    "before": 1.3,
+    "after": 1.38
+   },
+   "rust_after_over_before": 0.943
+  },
+  {
+   "case": "production-arms-warrior",
+   "dps": 746.9246115881426,
+   "go_dps": 746.9246115881426,
+   "rust_results_identical": true,
+   "elapsed_s": {
+    "go": 2.177,
+    "rust_before": 2.065,
+    "rust_after": 1.606
+   },
+   "cpu_s": {
+    "go": 2.262,
+    "rust_before": 2.065,
+    "rust_after": 1.607
+   },
+   "go_over_rust": {
+    "before": 1.05,
+    "after": 1.36
+   },
+   "rust_after_over_before": 0.778
+  },
+  {
+   "case": "production-assassination-rogue",
+   "dps": 565.3072994893572,
+   "go_dps": 565.3072994893572,
+   "rust_results_identical": true,
+   "elapsed_s": {
+    "go": 1.891,
+    "rust_before": 1.908,
+    "rust_after": 1.36
+   },
+   "cpu_s": {
+    "go": 1.989,
+    "rust_before": 1.907,
+    "rust_after": 1.359
+   },
+   "go_over_rust": {
+    "before": 0.99,
+    "after": 1.39
+   },
+   "rust_after_over_before": 0.713
+  },
+  {
+   "case": "production-balance-druid",
+   "dps": 508.80468253435043,
+   "go_dps": 508.80468253435043,
+   "rust_results_identical": true,
+   "elapsed_s": {
+    "go": 0.677,
+    "rust_before": 0.38,
+    "rust_after": 0.354
+   },
+   "cpu_s": {
+    "go": 0.778,
+    "rust_before": 0.382,
+    "rust_after": 0.357
+   },
+   "go_over_rust": {
+    "before": 1.78,
+    "after": 1.91
+   },
+   "rust_after_over_before": 0.932
+  },
+  {
+   "case": "production-beast-mastery-hunter",
+   "dps": 605.5633265073709,
+   "go_dps": 605.5633265073709,
+   "rust_results_identical": true,
+   "elapsed_s": {
+    "go": 2.086,
+    "rust_before": 1.597,
+    "rust_after": 1.434
+   },
+   "cpu_s": {
+    "go": 2.175,
+    "rust_before": 1.597,
+    "rust_after": 1.435
+   },
+   "go_over_rust": {
+    "before": 1.31,
+    "after": 1.45
+   },
+   "rust_after_over_before": 0.898
+  },
+  {
+   "case": "production-combat-rogue",
+   "dps": 615.5947914460694,
+   "go_dps": 615.5947914460694,
+   "rust_results_identical": true,
+   "elapsed_s": {
+    "go": 1.925,
+    "rust_before": 2.016,
+    "rust_after": 1.388
+   },
+   "cpu_s": {
+    "go": 2.023,
+    "rust_before": 2.015,
+    "rust_after": 1.389
+   },
+   "go_over_rust": {
+    "before": 0.95,
+    "after": 1.39
+   },
+   "rust_after_over_before": 0.688
+  },
+  {
+   "case": "production-demonology-warlock",
+   "dps": 609.6168580479787,
+   "go_dps": 609.6168580479787,
+   "rust_results_identical": true,
+   "elapsed_s": {
+    "go": 1.494,
+    "rust_before": 1.12,
+    "rust_after": 1.067
+   },
+   "cpu_s": {
+    "go": 1.597,
+    "rust_before": 1.122,
+    "rust_after": 1.068
+   },
+   "go_over_rust": {
+    "before": 1.33,
+    "after": 1.4
+   },
+   "rust_after_over_before": 0.953
+  },
+  {
+   "case": "production-destruction-warlock",
+   "dps": 510.4562192643769,
+   "go_dps": 510.4562192643769,
+   "rust_results_identical": true,
+   "elapsed_s": {
+    "go": 0.756,
+    "rust_before": 0.532,
+    "rust_after": 0.461
+   },
+   "cpu_s": {
+    "go": 0.85,
+    "rust_before": 0.534,
+    "rust_after": 0.463
+   },
+   "go_over_rust": {
+    "before": 1.42,
+    "after": 1.64
+   },
+   "rust_after_over_before": 0.867
+  },
+  {
+   "case": "production-elemental-shaman",
+   "dps": 396.94892788644995,
+   "go_dps": 396.94892788644995,
+   "rust_results_identical": true,
+   "elapsed_s": {
+    "go": 0.804,
+    "rust_before": 0.503,
+    "rust_after": 0.459
+   },
+   "cpu_s": {
+    "go": 0.906,
+    "rust_before": 0.505,
+    "rust_after": 0.461
+   },
+   "go_over_rust": {
+    "before": 1.6,
+    "after": 1.75
+   },
+   "rust_after_over_before": 0.913
+  },
+  {
+   "case": "production-enhancement-shaman",
+   "dps": 621.7342047096159,
+   "go_dps": 621.7342047096159,
+   "rust_results_identical": true,
+   "elapsed_s": {
+    "go": 1.829,
+    "rust_before": 1.553,
+    "rust_after": 1.242
+   },
+   "cpu_s": {
+    "go": 1.911,
+    "rust_before": 1.554,
+    "rust_after": 1.243
+   },
+   "go_over_rust": {
+    "before": 1.18,
+    "after": 1.47
+   },
+   "rust_after_over_before": 0.8
+  },
+  {
+   "case": "production-feral-bear-druid",
+   "dps": 408.7573588361029,
+   "go_dps": 408.7573588361029,
+   "rust_results_identical": true,
+   "elapsed_s": {
+    "go": 1.614,
+    "rust_before": 1.747,
+    "rust_after": 1.104
+   },
+   "cpu_s": {
+    "go": 1.696,
+    "rust_before": 1.749,
+    "rust_after": 1.105
+   },
+   "go_over_rust": {
+    "before": 0.92,
+    "after": 1.46
+   },
+   "rust_after_over_before": 0.632
+  },
+  {
+   "case": "production-feral-druid",
+   "dps": 578.3563607841801,
+   "go_dps": 578.3563607841801,
+   "rust_results_identical": true,
+   "elapsed_s": {
+    "go": 2.27,
+    "rust_before": 2.149,
+    "rust_after": 1.751
+   },
+   "cpu_s": {
+    "go": 2.355,
+    "rust_before": 2.149,
+    "rust_after": 1.751
+   },
+   "go_over_rust": {
+    "before": 1.06,
+    "after": 1.3
+   },
+   "rust_after_over_before": 0.815
+  },
+  {
+   "case": "production-fire",
+   "dps": 589.3603423193599,
+   "go_dps": 589.3603423193599,
+   "rust_results_identical": true,
+   "elapsed_s": {
+    "go": 0.834,
+    "rust_before": 0.568,
+    "rust_after": 0.508
+   },
+   "cpu_s": {
+    "go": 0.928,
+    "rust_before": 0.57,
+    "rust_after": 0.511
+   },
+   "go_over_rust": {
+    "before": 1.47,
+    "after": 1.64
+   },
+   "rust_after_over_before": 0.894
+  },
+  {
+   "case": "production-frostfire",
+   "dps": 597.086823483999,
+   "go_dps": 597.086823483999,
+   "rust_results_identical": true,
+   "elapsed_s": {
+    "go": 0.708,
+    "rust_before": 0.397,
+    "rust_after": 0.358
+   },
+   "cpu_s": {
+    "go": 0.801,
+    "rust_before": 0.399,
+    "rust_after": 0.361
+   },
+   "go_over_rust": {
+    "before": 1.78,
+    "after": 1.98
+   },
+   "rust_after_over_before": 0.902
+  },
+  {
+   "case": "production-fury-protection-warrior",
+   "dps": 542.5647321327264,
+   "go_dps": 542.5647321327264,
+   "rust_results_identical": true,
+   "elapsed_s": {
+    "go": 2.633,
+    "rust_before": 3.672,
+    "rust_after": 1.918
+   },
+   "cpu_s": {
+    "go": 2.724,
+    "rust_before": 3.67,
+    "rust_after": 1.919
+   },
+   "go_over_rust": {
+    "before": 0.72,
+    "after": 1.37
+   },
+   "rust_after_over_before": 0.522
+  },
+  {
+   "case": "production-holy-protection-paladin",
+   "dps": 467.3458014424372,
+   "go_dps": 467.3458014424372,
+   "rust_results_identical": true,
+   "elapsed_s": {
+    "go": 2.177,
+    "rust_before": 2.491,
+    "rust_after": 1.441
+   },
+   "cpu_s": {
+    "go": 2.266,
+    "rust_before": 2.491,
+    "rust_after": 1.443
+   },
+   "go_over_rust": {
+    "before": 0.87,
+    "after": 1.51
+   },
+   "rust_after_over_before": 0.578
+  },
+  {
+   "case": "production-marksmanship-hunter",
+   "dps": 678.0949246180853,
+   "go_dps": 678.0949246180853,
+   "rust_results_identical": true,
+   "elapsed_s": {
+    "go": 1.377,
+    "rust_before": 1.187,
+    "rust_after": 0.985
+   },
+   "cpu_s": {
+    "go": 1.479,
+    "rust_before": 1.188,
+    "rust_after": 0.987
+   },
+   "go_over_rust": {
+    "before": 1.16,
+    "after": 1.4
+   },
+   "rust_after_over_before": 0.83
+  },
+  {
+   "case": "production-protection-paladin",
+   "dps": 464.30900110136474,
+   "go_dps": 464.30900110136474,
+   "rust_results_identical": true,
+   "elapsed_s": {
+    "go": 2.445,
+    "rust_before": 3.384,
+    "rust_after": 1.613
+   },
+   "cpu_s": {
+    "go": 2.554,
+    "rust_before": 3.383,
+    "rust_after": 1.616
+   },
+   "go_over_rust": {
+    "before": 0.72,
+    "after": 1.52
+   },
+   "rust_after_over_before": 0.477
+  },
+  {
+   "case": "production-protection-warrior",
+   "dps": 464.65255677821233,
+   "go_dps": 464.65255677821233,
+   "rust_results_identical": true,
+   "elapsed_s": {
+    "go": 2.401,
+    "rust_before": 3.275,
+    "rust_after": 1.778
+   },
+   "cpu_s": {
+    "go": 2.503,
+    "rust_before": 3.275,
+    "rust_after": 1.773
+   },
+   "go_over_rust": {
+    "before": 0.73,
+    "after": 1.35
+   },
+   "rust_after_over_before": 0.543
+  },
+  {
+   "case": "production-ret-protection-paladin",
+   "dps": 476.36259811001514,
+   "go_dps": 476.36259811001514,
+   "rust_results_identical": true,
+   "elapsed_s": {
+    "go": 2.6,
+    "rust_before": 2.817,
+    "rust_after": 1.73
+   },
+   "cpu_s": {
+    "go": 2.719,
+    "rust_before": 2.815,
+    "rust_after": 1.731
+   },
+   "go_over_rust": {
+    "before": 0.92,
+    "after": 1.5
+   },
+   "rust_after_over_before": 0.614
+  },
+  {
+   "case": "production-retribution-paladin",
+   "dps": 671.854631541173,
+   "go_dps": 671.8546315411731,
+   "rust_results_identical": true,
+   "elapsed_s": {
+    "go": 2.238,
+    "rust_before": 1.914,
+    "rust_after": 1.527
+   },
+   "cpu_s": {
+    "go": 2.341,
+    "rust_before": 1.91,
+    "rust_after": 1.525
+   },
+   "go_over_rust": {
+    "before": 1.17,
+    "after": 1.47
+   },
+   "rust_after_over_before": 0.798
+  },
+  {
+   "case": "production-shadow-priest",
+   "dps": 612.9745342030551,
+   "go_dps": 612.9745342030551,
+   "rust_results_identical": true,
+   "elapsed_s": {
+    "go": 0.657,
+    "rust_before": 0.389,
+    "rust_after": 0.376
+   },
+   "cpu_s": {
+    "go": 0.759,
+    "rust_before": 0.392,
+    "rust_after": 0.378
+   },
+   "go_over_rust": {
+    "before": 1.69,
+    "after": 1.75
+   },
+   "rust_after_over_before": 0.967
+  },
+  {
+   "case": "production-shockadin-paladin",
+   "dps": 715.9297937331522,
+   "go_dps": 715.9297937331522,
+   "rust_results_identical": true,
+   "elapsed_s": {
+    "go": 2.181,
+    "rust_before": 1.73,
+    "rust_after": 1.478
+   },
+   "cpu_s": {
+    "go": 2.269,
+    "rust_before": 1.723,
+    "rust_after": 1.469
+   },
+   "go_over_rust": {
+    "before": 1.26,
+    "after": 1.48
+   },
+   "rust_after_over_before": 0.854
+  },
+  {
+   "case": "production-smite-priest",
+   "dps": 505.5225413943018,
+   "go_dps": 505.5225413943018,
+   "rust_results_identical": true,
+   "elapsed_s": {
+    "go": 0.701,
+    "rust_before": 0.393,
+    "rust_after": 0.374
+   },
+   "cpu_s": {
+    "go": 0.809,
+    "rust_before": 0.396,
+    "rust_after": 0.376
+   },
+   "go_over_rust": {
+    "before": 1.78,
+    "after": 1.87
+   },
+   "rust_after_over_before": 0.952
+  },
+  {
+   "case": "production-subtlety-rogue",
+   "dps": 540.7693636094662,
+   "go_dps": 540.7693636094662,
+   "rust_results_identical": true,
+   "elapsed_s": {
+    "go": 2.248,
+    "rust_before": 2.322,
+    "rust_after": 1.724
+   },
+   "cpu_s": {
+    "go": 2.353,
+    "rust_before": 2.319,
+    "rust_after": 1.723
+   },
+   "go_over_rust": {
+    "before": 0.97,
+    "after": 1.3
+   },
+   "rust_after_over_before": 0.742
+  },
+  {
+   "case": "production-survival-hunter",
+   "dps": 760.9044742091779,
+   "go_dps": 760.9044742091779,
+   "rust_results_identical": true,
+   "elapsed_s": {
+    "go": 2.268,
+    "rust_before": 1.77,
+    "rust_after": 1.439
+   },
+   "cpu_s": {
+    "go": 2.375,
+    "rust_before": 1.758,
+    "rust_after": 1.432
+   },
+   "go_over_rust": {
+    "before": 1.28,
+    "after": 1.58
+   },
+   "rust_after_over_before": 0.813
+  },
+  {
+   "case": "production-warrior",
+   "dps": 847.113743196409,
+   "go_dps": 847.113743196409,
+   "rust_results_identical": true,
+   "elapsed_s": {
+    "go": 2.499,
+    "rust_before": 2.499,
+    "rust_after": 1.649
+   },
+   "cpu_s": {
+    "go": 2.574,
+    "rust_before": 2.498,
+    "rust_after": 1.65
+   },
+   "go_over_rust": {
+    "before": 1.0,
+    "after": 1.52
+   },
+   "rust_after_over_before": 0.66
+  }
+ ]
+}

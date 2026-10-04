@@ -86,6 +86,18 @@ python3 tools/upstream.py check
 CI runs these checks on pushes and pull requests. Live differential runs and heavy
 benchmarks remain explicit local commands.
 
+After adding or refreshing a record under `validation/` or `benchmarks/`, regenerate
+[docs/validation-summary.md](docs/validation-summary.md) with
+`python3 tools/validation_summary.py`; `python3 tools/validation_summary.py check` reports
+whether it is current. Record the production census with
+`python3 tools/validation_summary.py census REPORT --revision REV` from a
+`tools/census.py` report of the production requests.
+
+Records whose `generator` field is a command keep only their base requests. Their
+`variants/` folders are not committed, because the generator rebuilds them exactly.
+To rerun such a record, run its generator with `<scratch>` set to a folder that does
+not exist yet, then point the record's rerun command at that folder.
+
 The [first-build inventory guide](docs/first-frost-inventory.md) explains source
 provenance verification and scratch capture. Ordinary audits need neither Go nor
 access to the application repository. Captures never replace accepted snapshots.

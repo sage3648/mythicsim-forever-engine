@@ -1,0 +1,2303 @@
+{
+  "kind": "fma_audit",
+  "date": "2026-10-04",
+  "reference": {
+    "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
+    "client_build": "1.60.1.70170",
+    "binary": "oracle-cache/forever-go-oracle-v2",
+    "compiler": "go version go1.25.6 darwin/arm64"
+  },
+  "scope": "Every floating point multiply that the pinned Go reference's arm64 build fuses into an add or subtract (FMADDD, FMSUBD, FNMSUBD, FNMADDD), in the simulation packages and the exporter, and what the Rust runtime does at each site.",
+  "generator": "python3 tools/fma_scan.py",
+  "method": [
+    "List the fused instructions of the oracle binary with go tool objdump, by function and Go source line.",
+    "Read the operands of each runtime site from the disassembly where its line holds several operations.",
+    "Port each runtime site with mul_add in the fused shape; mark sites the export resolves, sites the runtime does not reach, and sites where both forms agree for every input.",
+    "Require every Go golden and every recorded sweep and race board to keep matching.",
+    "Search randomized variants for ones where the runtime before and after the audit log differently, and let Go decide each."
+  ],
+  "site_counts": {
+    "fused in Rust": 91,
+    "no change: the fused and the rounded forms agree for every input": 7,
+    "export only: Go computes it before the export, and Rust reads the value": 54,
+    "not in the runtime: the behavior is rejected or not ported": 22
+  },
+  "sites": [
+    {
+      "go": "sim.go:274",
+      "function": "sim/common/classic.(*EmeraldDragonWhelp).Initialize.func1(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return min + (max-min)*sim.RandomFloat(label)",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage go_roll and effect_roll, used by every Simulation.Roll port"
+    },
+    {
+      "go": "sim.go:274",
+      "function": "sim/common/classic.init.1.func3.2(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return min + (max-min)*sim.RandomFloat(label)",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage go_roll and effect_roll, used by every Simulation.Roll port"
+    },
+    {
+      "go": "sim.go:274",
+      "function": "sim/common/classic.init.4.func3.1(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return min + (max-min)*sim.RandomFloat(label)",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage go_roll and effect_roll, used by every Simulation.Roll port"
+    },
+    {
+      "go": "sim.go:274",
+      "function": "sim/common/classic.init.5.func7.5(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return min + (max-min)*sim.RandomFloat(label)",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage go_roll and effect_roll, used by every Simulation.Roll port"
+    },
+    {
+      "go": "sim.go:274",
+      "function": "sim/common/forever.init.3.func1.1(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return min + (max-min)*sim.RandomFloat(label)",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage go_roll and effect_roll, used by every Simulation.Roll port"
+    },
+    {
+      "go": "sim.go:274",
+      "function": "sim/common/forever.init.func10.1(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return min + (max-min)*sim.RandomFloat(label)",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage go_roll and effect_roll, used by every Simulation.Roll port"
+    },
+    {
+      "go": "sim.go:274",
+      "function": "sim/common/forever.init.func11.1(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return min + (max-min)*sim.RandomFloat(label)",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage go_roll and effect_roll, used by every Simulation.Roll port"
+    },
+    {
+      "go": "sim.go:274",
+      "function": "sim/common/forever.setMeleeDamageProc.func1(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return min + (max-min)*sim.RandomFloat(label)",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage go_roll and effect_roll, used by every Simulation.Roll port"
+    },
+    {
+      "go": "sim.go:274",
+      "function": "sim/common/shared.NewProcDamageEffect.func1.1(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return min + (max-min)*sim.RandomFloat(label)",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage go_roll and effect_roll, used by every Simulation.Roll port"
+    },
+    {
+      "go": "spell_resistances.go:141",
+      "function": "sim/core.(*AttackTable).GetArmorDamageModifier(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "armorConstant := 400 + 85*float64(at.Attacker.Level)",
+      "status": "no change: the fused and the rounded forms agree for every input",
+      "rust": "400 + 85 x level is exact"
+    },
+    {
+      "go": "spell_resistances.go:142",
+      "function": "sim/core.(*AttackTable).GetArmorDamageModifier(SB)",
+      "instruction": "FMSUBD",
+      "count": 1,
+      "source": "defenderArmor := at.Defender.Armor() - (at.Defender.Armor() * ignoreArmorFactor)",
+      "status": "fused in Rust",
+      "rust": "core::fight::melee armor_modifier"
+    },
+    {
+      "go": "utils.go:284",
+      "function": "sim/core.(*AuraMetrics).ToProto(SB)",
+      "instruction": "FMSUBD",
+      "count": 1,
+      "source": "stdDev := math.Sqrt(x.sumSq/float64(x.n) - mean*mean)",
+      "status": "fused in Rust",
+      "rust": "core::fight::metrics Aggregator::mean_and_stdev"
+    },
+    {
+      "go": "character.go:765",
+      "function": "sim/core.(*Character).GetPseudoStatsProto(SB)",
+      "instruction": "FNMSUBD",
+      "count": 1,
+      "source": "proto.PseudoStat_PseudoStatMeleeHastePercent:     (character.TotalMeleeHasteMultiplier() - 1) * 100,",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "GetPseudoStatsProto"
+    },
+    {
+      "go": "character.go:766",
+      "function": "sim/core.(*Character).GetPseudoStatsProto(SB)",
+      "instruction": "FNMSUBD",
+      "count": 1,
+      "source": "proto.PseudoStat_PseudoStatRangedHastePercent:    (character.TotalRangedHasteMultiplier() - 1) * 100,",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "GetPseudoStatsProto"
+    },
+    {
+      "go": "character.go:767",
+      "function": "sim/core.(*Character).GetPseudoStatsProto(SB)",
+      "instruction": "FNMSUBD",
+      "count": 1,
+      "source": "proto.PseudoStat_PseudoStatSpellHastePercent:     (character.TotalSpellHasteMultiplier() - 1) * 100,",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "GetPseudoStatsProto"
+    },
+    {
+      "go": "character.go:240",
+      "function": "sim/core.(*Character).applyEquipScalingInternal(SB)",
+      "instruction": "FNMSUBD",
+      "count": 1,
+      "source": "return character.cachedEquipStats[stat] * (newMultiplier - oldMultiplier)",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "equip scaling at build"
+    },
+    {
+      "go": "health.go:258",
+      "function": "sim/core.(*Character).applyHealingModel.func2.1(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "timeToNextHeal = DurationFromSeconds(minCadence + magnitudeRoll*cadenceVariationLow)",
+      "status": "not in the runtime: the behavior is rejected or not ported",
+      "rust": "healing model"
+    },
+    {
+      "go": "health.go:260",
+      "function": "sim/core.(*Character).applyHealingModel.func2.1(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "timeToNextHeal = DurationFromSeconds(medianCadence + magnitudeRoll*healingModel.CadenceVariation)",
+      "status": "not in the runtime: the behavior is rejected or not ported",
+      "rust": "healing model"
+    },
+    {
+      "go": "sim.go:274",
+      "function": "sim/core.(*Character).newBasicExplosiveSpellConfig.func1(SB)",
+      "instruction": "FMADDD",
+      "count": 2,
+      "source": "return min + (max-min)*sim.RandomFloat(label)",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage go_roll and effect_roll, used by every Simulation.Roll port"
+    },
+    {
+      "go": "utils.go:284",
+      "function": "sim/core.(*DistributionMetrics).ToProto(SB)",
+      "instruction": "FMSUBD",
+      "count": 1,
+      "source": "stdDev := math.Sqrt(x.sumSq/float64(x.n) - mean*mean)",
+      "status": "fused in Rust",
+      "rust": "core::fight::metrics Aggregator::mean_and_stdev"
+    },
+    {
+      "go": "utils.go:270",
+      "function": "sim/core.(*DistributionMetrics).doneIteration(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "x.sumSq += v * v",
+      "status": "fused in Rust",
+      "rust": "core::fight::metrics Aggregator::add"
+    },
+    {
+      "go": "spell_result.go:668",
+      "function": "sim/core.(*Dot).Snapshot(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "dot.SnapshotBaseDamage += dot.snapshotSpellPower",
+      "status": "fused in Rust",
+      "rust": "core::fight::dot snapshot_dot"
+    },
+    {
+      "go": "spell_result.go:755",
+      "function": "sim/core.(*Dot).SnapshotHeal(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "dot.SnapshotBaseDamage += dot.BonusCoefficient * dot.Spell.HealingPower(target)",
+      "status": "not in the runtime: the behavior is rejected or not ported",
+      "rust": "SnapshotHeal with a bonus coefficient"
+    },
+    {
+      "go": "spell_result.go:457",
+      "function": "sim/core.(*Dot).currentTickInputs(SB)",
+      "instruction": "FNMSUBD",
+      "count": 1,
+      "source": "baseDamage += dot.BonusCoefficient*dot.Spell.BonusDamage(attackTable) - dot.snapshotSpellPower",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage snapshot_dot_tick_calc"
+    },
+    {
+      "go": "spell_result.go:460",
+      "function": "sim/core.(*Dot).currentTickInputs(SB)",
+      "instruction": "FNMSUBD",
+      "count": 1,
+      "source": "baseDamage += dot.attackPowerShare*dot.currentAttackPower(target) - dot.snapshotAttackPower",
+      "status": "fused in Rust",
+      "rust": "the bleeds of Rogue (rupture bleed_tick) and Druid (rip tick); Hunter serpent_sting already fused"
+    },
+    {
+      "go": "spell_result.go:418",
+      "function": "sim/core.(*Spell).CalcDamage(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "baseDamage += spell.BonusCoefficient * spell.BonusDamage(attackTable)",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage calc_damage, calc_damage_hit_only, calc_damage_with"
+    },
+    {
+      "go": "spell_result.go:155",
+      "function": "sim/core.(*Spell).CalcOutcome(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "threat := (damage*spell.ThreatMultiplier + spell.FlatThreatBonus) * spell.Unit.PseudoStats.ThreatMultiplier",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage threat_of, core::fight::enemy threat"
+    },
+    {
+      "go": "spell_result.go:435",
+      "function": "sim/core.(*Spell).CalcPeriodicDamage(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "baseDamage += dot.BonusCoefficient * spell.BonusDamage(attackTable)",
+      "status": "fused in Rust",
+      "rust": "core::fight::dot snapshot and tick paths with a bonus coefficient; core::fight::damage periodic_damage_tick and periodic_damage_tick_with, fused with the Mage broadening (Flamestrike's area dot; Shaman Magma Totem's ticks also take this path, and its fixtures match Go either way)"
+    },
+    {
+      "go": "spell.go:828",
+      "function": "sim/core.(*Spell).CritDamageMultiplier(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return (base*spell.CritMultiplierPct*spell.Unit.PseudoStats.CritDamageMultiplier*tableMultiplier-1)*(spell.CritMultiplierAdditive+1) + 1",
+      "status": "fused in Rust",
+      "rust": "mechanics::damage crit_damage_multiplier"
+    },
+    {
+      "go": "spell.go:828",
+      "function": "sim/core.(*Spell).CritDamageMultiplier(SB)",
+      "instruction": "FNMSUBD",
+      "count": 1,
+      "source": "return (base*spell.CritMultiplierPct*spell.Unit.PseudoStats.CritDamageMultiplier*tableMultiplier-1)*(spell.CritMultiplierAdditive+1) + 1",
+      "status": "fused in Rust",
+      "rust": "mechanics::damage crit_damage_multiplier"
+    },
+    {
+      "go": "spell_outcome.go:848",
+      "function": "sim/core.(*Spell).OutcomeExpectedMagicCrit(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "averageMultiplier += spell.SpellCritChance(result.Target) * (spell.CritDamageMultiplier(attackTable) - 1)",
+      "status": "not in the runtime: the behavior is rejected or not ported",
+      "rust": "expected magic crit"
+    },
+    {
+      "go": "spell_outcome.go:856",
+      "function": "sim/core.(*Spell).OutcomeExpectedMagicHitAndCrit(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "averageMultiplier += averageMultiplier * spell.SpellCritChance(result.Target) * (spell.CritDamageMultiplier(attackTable) - 1)",
+      "status": "not in the runtime: the behavior is rejected or not ported",
+      "rust": "expected magic hit and crit"
+    },
+    {
+      "go": "spell_outcome.go:886",
+      "function": "sim/core.(*Spell).OutcomeExpectedMeleeWeaponSpecialHitAndCrit(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "averageMultiplier := (1.0 - missChance - dodgeChance - parryChance) * (1.0 + (spell.CritDamageMultiplier(attackTable)-1)*critChance)",
+      "status": "not in the runtime: the behavior is rejected or not ported",
+      "rust": "expected weapon special damage"
+    },
+    {
+      "go": "spell_outcome.go:887",
+      "function": "sim/core.(*Spell).OutcomeExpectedMeleeWeaponSpecialHitAndCrit(SB)",
+      "instruction": "FMSUBD",
+      "count": 1,
+      "source": "averageMultiplier -= (((spell.CritDamageMultiplier(attackTable) - 1) * critChance) * (blockChance * (result.Target.BlockDamageReduction() / result.Damage)))",
+      "status": "not in the runtime: the behavior is rejected or not ported",
+      "rust": "expected weapon special damage"
+    },
+    {
+      "go": "spell_outcome.go:876",
+      "function": "sim/core.(*Spell).OutcomeExpectedMeleeWhite(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "averageMultiplier := 1.0 - missChance - dodgeChance - parryChance + (spell.CritDamageMultiplier(attackTable)-1)*critChance - glanceChance*(1.0-attackTable.GlanceMultiplier) - (blockChance * (result.Target.BlockDamageReduction() / result.Damage))",
+      "status": "not in the runtime: the behavior is rejected or not ported",
+      "rust": "expected melee white damage"
+    },
+    {
+      "go": "spell_outcome.go:876",
+      "function": "sim/core.(*Spell).OutcomeExpectedMeleeWhite(SB)",
+      "instruction": "FMSUBD",
+      "count": 2,
+      "source": "averageMultiplier := 1.0 - missChance - dodgeChance - parryChance + (spell.CritDamageMultiplier(attackTable)-1)*critChance - glanceChance*(1.0-attackTable.GlanceMultiplier) - (blockChance * (result.Target.BlockDamageReduction() / result.Damage))",
+      "status": "not in the runtime: the behavior is rejected or not ported",
+      "rust": "expected melee white damage"
+    },
+    {
+      "go": "spell_resistances.go:111",
+      "function": "sim/core.(*Spell).SpellChanceToMiss(SB)",
+      "instruction": "FMSUBD",
+      "count": 1,
+      "source": "return 1 - 0.75*resistCoeff",
+      "status": "fused in Rust",
+      "rust": "mechanics::damage binary_resist_hit"
+    },
+    {
+      "go": "spell_result.go:155",
+      "function": "sim/core.(*Spell).calcDamageInternal(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "threat := (damage*spell.ThreatMultiplier + spell.FlatThreatBonus) * spell.Unit.PseudoStats.ThreatMultiplier",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage threat_of, core::fight::enemy threat"
+    },
+    {
+      "go": "spell_result.go:737",
+      "function": "sim/core.(*Spell).calcHealing(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "baseHealing += spell.BonusCoefficient * spell.HealingPower(target)",
+      "status": "not in the runtime: the behavior is rejected or not ported",
+      "rust": "healing with a bonus coefficient is refused"
+    },
+    {
+      "go": "spell_result.go:155",
+      "function": "sim/core.(*Spell).calcHealingInternal(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "threat := (damage*spell.ThreatMultiplier + spell.FlatThreatBonus) * spell.Unit.PseudoStats.ThreatMultiplier",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage threat_of, core::fight::enemy threat"
+    },
+    {
+      "go": "spell_outcome.go:629",
+      "function": "sim/core.(*SpellResult).applyAttackTableBlock(SB)",
+      "instruction": "FMSUBD",
+      "count": 1,
+      "source": "result.Damage = max(0, result.Damage-result.Target.BlockDamageReduction())",
+      "status": "no change: the fused and the rounded forms agree for every input",
+      "rust": "the target blocks with a block value multiplier of 1, so the product is exact"
+    },
+    {
+      "go": "spell_outcome.go:670",
+      "function": "sim/core.(*SpellResult).applyAttackTableGlance(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "result.Damage *= attackTable.GlanceMultiplier + attackTable.GlanceSpread*(2*sim.RandomFloat(\"Glance Damage\")-1)",
+      "status": "fused in Rust",
+      "rust": "core::fight::melee glance"
+    },
+    {
+      "go": "spell_outcome.go:753",
+      "function": "sim/core.(*SpellResult).applyEnemyAttackTableBlock(SB)",
+      "instruction": "FMSUBD",
+      "count": 1,
+      "source": "result.Damage = max(0, result.Damage-result.Target.BlockDamageReduction())",
+      "status": "fused in Rust",
+      "rust": "core::fight::enemy enemy_outcome, from the block value and multiplier the rolls carry"
+    },
+    {
+      "go": "attack.go:148",
+      "function": "sim/core.(*Unit).EnableAutoAttacks.func2(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return weapon.AverageDamage() + (weapon.SwingSpeed*attackPower)/weapon.AttackPowerPerDPS",
+      "status": "not in the runtime: the behavior is rejected or not ported",
+      "rust": "expected average weapon damage"
+    },
+    {
+      "go": "attack.go:131",
+      "function": "sim/core.(*Unit).EnableAutoAttacks.func5(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "rand := 1 + damageSpread*sim.RandomFloat(\"Enemy Weapon Damage\")",
+      "status": "fused in Rust",
+      "rust": "core::fight::enemy enemy_swing"
+    },
+    {
+      "go": "attack.go:131",
+      "function": "sim/core.(*Unit).EnableAutoAttacks.func6(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "rand := 1 + damageSpread*sim.RandomFloat(\"Enemy Weapon Damage\")",
+      "status": "fused in Rust",
+      "rust": "core::fight::enemy enemy_swing"
+    },
+    {
+      "go": "mana.go:174",
+      "function": "sim/core.(*Unit).ManaTick(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return unit.spiritRegenBase + unit.stats[stats.Spirit]*unit.spiritRegenPerSpirit",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "spirit regeneration per second, exported per stat aura combination"
+    },
+    {
+      "go": "mana.go:234",
+      "function": "sim/core.(*Unit).ManaTick(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "baseline := max(0, (unit.MP5ManaRegenPerSecond()+spirit)*unit.manaRegenMultiplier*2)",
+      "status": "no change: the fused and the rounded forms agree for every input",
+      "rust": "x * 2 compiles to x + x, and fma(a, b, round(a * b)) is twice the rounded product"
+    },
+    {
+      "go": "mana.go:174",
+      "function": "sim/core.(*Unit).UpdateManaRegenRates(SB)",
+      "instruction": "FMADDD",
+      "count": 2,
+      "source": "return unit.spiritRegenBase + unit.stats[stats.Spirit]*unit.spiritRegenPerSpirit",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "spirit regeneration per second, exported per stat aura combination"
+    },
+    {
+      "go": "mana.go:201",
+      "function": "sim/core.(*Unit).UpdateManaRegenRates(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "regenRate += unit.SpiritManaRegenPerSecond() * unit.PseudoStats.SpiritRegenMultiplier",
+      "status": "fused in Rust",
+      "rust": "mechanics::mana regen_per_second_not_casting"
+    },
+    {
+      "go": "mana.go:209",
+      "function": "sim/core.(*Unit).UpdateManaRegenRates(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "unit.manaTickWhileCasting = unit.ManaRegenPerSecondWhileCasting() * 2",
+      "status": "no change: the fused and the rounded forms agree for every input",
+      "rust": "x * 2 compiles to x + x, and fma(a, b, round(a * b)) is twice the rounded product"
+    },
+    {
+      "go": "mana.go:210",
+      "function": "sim/core.(*Unit).UpdateManaRegenRates(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "unit.manaTickWhileNotCasting = unit.ManaRegenPerSecondWhileNotCasting() * 2",
+      "status": "no change: the fused and the rounded forms agree for every input",
+      "rust": "x * 2 compiles to x + x, and fma(a, b, round(a * b)) is twice the rounded product"
+    },
+    {
+      "go": "spell_resistances.go:122",
+      "function": "sim/core.(*Unit).partialResistRollThresholds(SB)",
+      "instruction": "FNMSUBD",
+      "count": 1,
+      "source": "val -= 1",
+      "status": "fused in Rust",
+      "rust": "mechanics::damage partial_resist_thresholds"
+    },
+    {
+      "go": "spell_resistances.go:123",
+      "function": "sim/core.(*Unit).partialResistRollThresholds(SB)",
+      "instruction": "FMADDD",
+      "count": 3,
+      "source": "return 0.76 + 0.24*val, 0.21 + 0.57*val, 0.03 + 0.19*val",
+      "status": "fused in Rust",
+      "rust": "mechanics::damage partial_resist_thresholds"
+    },
+    {
+      "go": "spell_resistances.go:125",
+      "function": "sim/core.(*Unit).partialResistRollThresholds(SB)",
+      "instruction": "FNMSUBD",
+      "count": 1,
+      "source": "val -= 2",
+      "status": "fused in Rust",
+      "rust": "mechanics::damage partial_resist_thresholds"
+    },
+    {
+      "go": "spell_resistances.go:126",
+      "function": "sim/core.(*Unit).partialResistRollThresholds(SB)",
+      "instruction": "FMADDD",
+      "count": 2,
+      "source": "return 1, 0.78 + 0.18*val, 0.22 + 0.58*val",
+      "status": "fused in Rust",
+      "rust": "mechanics::damage partial_resist_thresholds"
+    },
+    {
+      "go": "attack.go:136",
+      "function": "sim/core.(*Weapon).CalculateNormalizedWeaponDamage(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return weapon.BaseDamageMin + (weapon.BaseDamageMax-weapon.BaseDamageMin)*sim.RandomFloat(\"Weapon Base Damage\")",
+      "status": "fused in Rust",
+      "rust": "core::fight::melee weapon_damage and normalized_weapon_damage"
+    },
+    {
+      "go": "attack.go:136",
+      "function": "sim/core.(*Weapon).CalculateWeaponDamage(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return weapon.BaseDamageMin + (weapon.BaseDamageMax-weapon.BaseDamageMin)*sim.RandomFloat(\"Weapon Base Damage\")",
+      "status": "fused in Rust",
+      "rust": "core::fight::melee weapon_damage and normalized_weapon_damage"
+    },
+    {
+      "go": "utils.go:270",
+      "function": "sim/core.(*auraTracker).doneIteration(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "x.sumSq += v * v",
+      "status": "fused in Rust",
+      "rust": "core::fight::metrics Aggregator::add"
+    },
+    {
+      "go": "spell.go:782",
+      "function": "sim/core.(*manaBar).doneIteration(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "spell.SpellMetrics[target.UnitIndex].TotalThreat += threatAmount",
+      "status": "fused in Rust",
+      "rust": "core::fight::rage rage_done_iteration, core::fight::metrics mana gain threat"
+    },
+    {
+      "go": "spell.go:782",
+      "function": "sim/core.(*rageBar).doneIteration(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "spell.SpellMetrics[target.UnitIndex].TotalThreat += threatAmount",
+      "status": "fused in Rust",
+      "rust": "core::fight::rage rage_done_iteration, core::fight::metrics mana gain threat"
+    },
+    {
+      "go": "consumes.go:517",
+      "function": "sim/core.makeConjuredActivationSpellInternal.func2(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "shouldActivate = character.MaxMana()-(character.CurrentMana()+totalRegen) >= manaGain",
+      "status": "fused in Rust",
+      "rust": "core::fight::cast conjured mana should_activate"
+    },
+    {
+      "go": "mana.go:174",
+      "function": "sim/core.makeConjuredActivationSpellInternal.func2(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return unit.spiritRegenBase + unit.stats[stats.Spirit]*unit.spiritRegenPerSpirit",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "spirit regeneration per second, exported per stat aura combination"
+    },
+    {
+      "go": "consumes.go:329",
+      "function": "sim/core.makePotionActivationSpellInternal.func1(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "gain := config.min + sim.RandomFloat(potion.Name)*config.spread",
+      "status": "fused in Rust",
+      "rust": "core::fight::cast potion gains"
+    },
+    {
+      "go": "consumes.go:354",
+      "function": "sim/core.makePotionActivationSpellInternal.func2(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "shouldActivate = character.MaxMana()-(character.CurrentMana()+totalRegen) >= manaGain",
+      "status": "fused in Rust",
+      "rust": "core::fight::cast potion should_activate"
+    },
+    {
+      "go": "mana.go:174",
+      "function": "sim/core.makePotionActivationSpellInternal.func2(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return unit.spiritRegenBase + unit.stats[stats.Spirit]*unit.spiritRegenPerSpirit",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "spirit regeneration per second, exported per stat aura combination"
+    },
+    {
+      "go": "attack.go:81",
+      "function": "sim/core.newWeaponFromItem(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "BaseDamageMin:        item.WeaponDamageMin + item.Enchant.WeaponDamage + bonusDps*item.SwingSpeed,",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "weapon bounds"
+    },
+    {
+      "go": "attack.go:82",
+      "function": "sim/core.newWeaponFromItem(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "BaseDamageMax:        item.WeaponDamageMax + item.Enchant.WeaponDamage + bonusDps*item.SwingSpeed,",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "weapon bounds"
+    },
+    {
+      "go": "sim.go:274",
+      "function": "sim/core.registerDragonbreathChili.func1(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return min + (max-min)*sim.RandomFloat(label)",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage go_roll and effect_roll, used by every Simulation.Roll port"
+    },
+    {
+      "go": "paladin.go:82",
+      "function": "sim/core/buffs.RetributionAuraBuff(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "damage, coefficient = rank.Value+RetributionAuraSpellPowerCoefficient*externalSpellPower, 0",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "Retribution Aura damage at build"
+    },
+    {
+      "go": "effect.go:88",
+      "function": "sim/core/spelldata.(*Effect).Max(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return e.Average(level) * (1 + e.Variance/2)",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "spelldata Effect.Max"
+    },
+    {
+      "go": "effect.go:97",
+      "function": "sim/core/spelldata.(*Effect).Roll(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return sim.Roll(average*(1-e.Variance/2), average*(1+e.Variance/2))",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage effect_roll"
+    },
+    {
+      "go": "effect.go:97",
+      "function": "sim/core/spelldata.(*Effect).Roll(SB)",
+      "instruction": "FMSUBD",
+      "count": 1,
+      "source": "return sim.Roll(average*(1-e.Variance/2), average*(1+e.Variance/2))",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage effect_roll"
+    },
+    {
+      "go": "sim.go:274",
+      "function": "sim/core/spelldata.(*Effect).Roll(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return min + (max-min)*sim.RandomFloat(label)",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage go_roll and effect_roll, used by every Simulation.Roll port"
+    },
+    {
+      "go": "sim.go:274",
+      "function": "sim/core/spelldata.(*Effect).Roll(SB)",
+      "instruction": "FMSUBD",
+      "count": 1,
+      "source": "return min + (max-min)*sim.RandomFloat(label)",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage go_roll and effect_roll, used by every Simulation.Roll port"
+    },
+    {
+      "go": "parse_effects_table.go:692",
+      "function": "sim/core/spelldata.(*parser).statsBuff.additive.func2(SB)",
+      "instruction": "FNMSUBD",
+      "count": 1,
+      "source": "delta := v*level - current",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "stat buff deltas, read through the stat aura combinations"
+    },
+    {
+      "go": "parse_effects_table.go:692",
+      "function": "sim/core/spelldata.(*parser).statsBuff.additive.func4(SB)",
+      "instruction": "FNMSUBD",
+      "count": 1,
+      "source": "delta := v*level - current",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "stat buff deltas, read through the stat aura combinations"
+    },
+    {
+      "go": "parse_effects_table.go:692",
+      "function": "sim/core/spelldata.init.func25.init.func25.1.(*parser).pseudoAdd.additive.10(SB)",
+      "instruction": "FNMSUBD",
+      "count": 1,
+      "source": "delta := v*level - current",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "stat buff deltas, read through the stat aura combinations"
+    },
+    {
+      "go": "parse_effects_table.go:692",
+      "function": "sim/core/spelldata.init.func25.init.func25.1.(*parser).pseudoAdd.additive.8(SB)",
+      "instruction": "FNMSUBD",
+      "count": 1,
+      "source": "delta := v*level - current",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "stat buff deltas, read through the stat aura combinations"
+    },
+    {
+      "go": "parse_effects_table.go:692",
+      "function": "sim/core/spelldata.init.func25.init.func25.2.(*parser).pseudoAdd.additive.11(SB)",
+      "instruction": "FNMSUBD",
+      "count": 1,
+      "source": "delta := v*level - current",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "stat buff deltas, read through the stat aura combinations"
+    },
+    {
+      "go": "parse_effects_table.go:692",
+      "function": "sim/core/spelldata.init.func25.init.func25.2.(*parser).pseudoAdd.additive.9(SB)",
+      "instruction": "FNMSUBD",
+      "count": 1,
+      "source": "delta := v*level - current",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "stat buff deltas, read through the stat aura combinations"
+    },
+    {
+      "go": "parse_effects_table.go:692",
+      "function": "sim/core/spelldata.init.func29.(*parser).pseudoAdd.additive.2(SB)",
+      "instruction": "FNMSUBD",
+      "count": 1,
+      "source": "delta := v*level - current",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "stat buff deltas, read through the stat aura combinations"
+    },
+    {
+      "go": "parse_effects_table.go:692",
+      "function": "sim/core/spelldata.init.func43.(*parser).pseudoAdd.additive.2(SB)",
+      "instruction": "FNMSUBD",
+      "count": 1,
+      "source": "delta := v*level - current",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "stat buff deltas, read through the stat aura combinations"
+    },
+    {
+      "go": "parse_effects_table.go:692",
+      "function": "sim/core/spelldata.init.func44.(*parser).pseudoAdd.additive.2(SB)",
+      "instruction": "FNMSUBD",
+      "count": 1,
+      "source": "delta := v*level - current",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "stat buff deltas, read through the stat aura combinations"
+    },
+    {
+      "go": "deps.go:277",
+      "function": "sim/core/stats.(*StatDependencyManager).ApplyStatDependencies(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "s[dep.dst] += math.Floor(s[dep.src]/dep.step) * dep.step * dep.amount",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "stat dependencies"
+    },
+    {
+      "go": "deps.go:282",
+      "function": "sim/core/stats.(*StatDependencyManager).ApplyStatDependencies(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "s[dep.dst] += math.Floor(s[dep.src]) * dep.amount",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "stat dependencies"
+    },
+    {
+      "go": "deps.go:284",
+      "function": "sim/core/stats.(*StatDependencyManager).ApplyStatDependencies(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "s[dep.dst] += s[dep.src] * dep.amount",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "stat dependencies"
+    },
+    {
+      "go": "unit.go:289",
+      "function": "sim/druid.(*Druid).applyNaturalReaction(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "unit.stats[stat] += amount",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "AddStat at build"
+    },
+    {
+      "go": "talents_feral_combat.go:60",
+      "function": "sim/druid.(*Druid).applyThickHide(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "armor := perLevel*float64(core.CharacterLevel) + perDefense*defenseSkill",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "Thick Hide armor at build"
+    },
+    {
+      "go": "attack.go:148",
+      "function": "sim/druid.(*Druid).registerClawSpell.func2(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return weapon.AverageDamage() + (weapon.SwingSpeed*attackPower)/weapon.AttackPowerPerDPS",
+      "status": "not in the runtime: the behavior is rejected or not ported",
+      "rust": "expected average weapon damage"
+    },
+    {
+      "go": "ferocious_bite.go:50",
+      "function": "sim/druid.(*Druid).registerFerociousBiteSpell.func2(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "baseDamage := ferociousBiteDamage(ferociousBiteRank.DamageEffect().Roll(sim, core.CharacterLevel), cp, spell.MeleeAttackPower(target)) + ferociousBiteDamagePerEnergy*excessEnergy",
+      "status": "fused in Rust",
+      "rust": "classes::druid::spells::ferocious_bite"
+    },
+    {
+      "go": "ferocious_bite.go:70",
+      "function": "sim/druid.(*Druid).registerFerociousBiteSpell.func2(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return base +",
+      "status": "fused in Rust",
+      "rust": "classes::druid::spells::ferocious_bite"
+    },
+    {
+      "go": "ferocious_bite.go:71",
+      "function": "sim/druid.(*Druid).registerFerociousBiteSpell.func2(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "ferociousBiteDamagePerComboPoint*comboPoints +",
+      "status": "fused in Rust",
+      "rust": "classes::druid::spells::ferocious_bite"
+    },
+    {
+      "go": "ferocious_bite.go:70",
+      "function": "sim/druid.(*Druid).registerFerociousBiteSpell.func3(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return base +",
+      "status": "fused in Rust",
+      "rust": "classes::druid::spells::ferocious_bite"
+    },
+    {
+      "go": "ferocious_bite.go:71",
+      "function": "sim/druid.(*Druid).registerFerociousBiteSpell.func3(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "ferociousBiteDamagePerComboPoint*comboPoints +",
+      "status": "fused in Rust",
+      "rust": "classes::druid::spells::ferocious_bite"
+    },
+    {
+      "go": "attack.go:148",
+      "function": "sim/druid.(*Druid).registerMaulSpell.func2(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return weapon.AverageDamage() + (weapon.SwingSpeed*attackPower)/weapon.AttackPowerPerDPS",
+      "status": "not in the runtime: the behavior is rejected or not ported",
+      "rust": "expected average weapon damage"
+    },
+    {
+      "go": "rake.go:77",
+      "function": "sim/druid.(*Druid).registerRakeSpell.func4(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "ticks.Damage *= 1 + critChance*(spell.CritDamageMultiplier(attackTable)-1)",
+      "status": "fused in Rust",
+      "rust": "classes::druid::spells::rake expected_tick"
+    },
+    {
+      "go": "attack.go:148",
+      "function": "sim/druid.(*Druid).registerRavageSpell.func3(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return weapon.AverageDamage() + (weapon.SwingSpeed*attackPower)/weapon.AttackPowerPerDPS",
+      "status": "not in the runtime: the behavior is rejected or not ported",
+      "rust": "expected average weapon damage"
+    },
+    {
+      "go": "rip.go:53",
+      "function": "sim/druid.(*Druid).registerRipSpell.func2(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "dot.SnapshotPhysical(target, ripFlatDamage(comboPoints)+share*dot.Spell.MeleeAttackPower(target))",
+      "status": "fused in Rust",
+      "rust": "classes::druid::spells::rip snapshot"
+    },
+    {
+      "go": "rip.go:92",
+      "function": "sim/druid.(*Druid).registerRipSpell.func2(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return ripTick.Average(core.CharacterLevel) + ripTickPerComboPoint*comboPoints",
+      "status": "fused in Rust",
+      "rust": "classes::druid::spells::rip flat_damage"
+    },
+    {
+      "go": "rip.go:83",
+      "function": "sim/druid.(*Druid).registerRipSpell.func5(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "result.Damage *= 1 + critChance*(spell.CritDamageMultiplier(attackTable)-1)",
+      "status": "fused in Rust",
+      "rust": "classes::druid::spells::rip expected_tick"
+    },
+    {
+      "go": "attack.go:148",
+      "function": "sim/druid.(*Druid).registerShredSpell.func3(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return weapon.AverageDamage() + (weapon.SwingSpeed*attackPower)/weapon.AttackPowerPerDPS",
+      "status": "not in the runtime: the behavior is rejected or not ported",
+      "rust": "expected average weapon damage"
+    },
+    {
+      "go": "swipe.go:44",
+      "function": "sim/druid.(*Druid).registerSwipeBearSpell.func1(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "baseDamage := swipeRank.DamageEffect().Average(core.CharacterLevel) +",
+      "status": "not in the runtime: the behavior is rejected or not ported",
+      "rust": "bear Swipe"
+    },
+    {
+      "go": "forms.go:430",
+      "function": "sim/druid.(*Druid).restoreHealthFraction(SB)",
+      "instruction": "FNMSUBD",
+      "count": 1,
+      "source": "delta := fraction*druid.MaxHealth() - druid.CurrentHealth()",
+      "status": "fused in Rust",
+      "rust": "classes::druid::spells::bear BearForm on_expire"
+    },
+    {
+      "go": "rip.go:101",
+      "function": "sim/druid.ripTickDamage(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return ripFlatDamage(comboPoints) + ripAttackPowerShare(comboPoints)*attackPower",
+      "status": "fused in Rust",
+      "rust": "classes::druid::spells::rip expected_tick"
+    },
+    {
+      "go": "rip.go:92",
+      "function": "sim/druid.ripTickDamage(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return ripTick.Average(core.CharacterLevel) + ripTickPerComboPoint*comboPoints",
+      "status": "fused in Rust",
+      "rust": "classes::druid::spells::rip flat_damage"
+    },
+    {
+      "go": "attack.go:131",
+      "function": "sim/encounters.(*DefaultTankAI).registerCleave.func1(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "rand := 1 + damageSpread*sim.RandomFloat(\"Enemy Weapon Damage\")",
+      "status": "fused in Rust",
+      "rust": "core::fight::enemy enemy_swing"
+    },
+    {
+      "go": "sim.go:274",
+      "function": "sim/encounters.(*DefaultTankAI).registerMagicSpell.func2(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return min + (max-min)*sim.RandomFloat(label)",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage go_roll and effect_roll, used by every Simulation.Roll port"
+    },
+    {
+      "go": "arcane_shot.go:43",
+      "function": "sim/hunter.(*Hunter).registerArcaneShotSpell.func1(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "result := spell.CalcDamage(sim, target, baseDamage+arcaneShotRAPCoefficient*spell.RangedAttackPower(target), spell.OutcomeRangedHitAndCrit)",
+      "status": "fused in Rust",
+      "rust": "classes::hunter::spells::shots arcane_shot"
+    },
+    {
+      "go": "sim.go:274",
+      "function": "sim/hunter.(*Hunter).registerExplosiveTrapSpell.func3(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return min + (max-min)*sim.RandomFloat(label)",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage go_roll and effect_roll, used by every Simulation.Roll port"
+    },
+    {
+      "go": "serpent_sting.go:45",
+      "function": "sim/hunter.(*Hunter).registerSerpentStingSpell.func1(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "dot.Snapshot(target, tickDamage+rapPerTick*dot.Spell.RangedAttackPower(target))",
+      "status": "fused in Rust",
+      "rust": "classes::hunter::spells::serpent_sting, fused before the audit"
+    },
+    {
+      "go": "summon_hawk.go:87",
+      "function": "sim/hunter.(*Hunter).registerSummonHawkSpell.func3(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "damage := baseDamage + 0.05*spell.RangedAttackPower(target)",
+      "status": "fused in Rust",
+      "rust": "classes::hunter::spells::summon_hawk, fused before the audit"
+    },
+    {
+      "go": "sim.go:274",
+      "function": "sim/hunter.(*HunterPet).newBite.func2(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return min + (max-min)*sim.RandomFloat(label)",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage go_roll and effect_roll, used by every Simulation.Roll port"
+    },
+    {
+      "go": "sim.go:274",
+      "function": "sim/hunter.(*HunterPet).newClaw.func2(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return min + (max-min)*sim.RandomFloat(label)",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage go_roll and effect_roll, used by every Simulation.Roll port"
+    },
+    {
+      "go": "sim.go:274",
+      "function": "sim/hunter.(*HunterPet).newLightningBreath.func2(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return min + (max-min)*sim.RandomFloat(label)",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage go_roll and effect_roll, used by every Simulation.Roll port"
+    },
+    {
+      "go": "hunter.go:117",
+      "function": "sim/hunter.NewHunter(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "rangedWeapon.BaseDamageMin += hunter.AmmoDamageBonus",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "ammo damage at build"
+    },
+    {
+      "go": "item_sets.go:151",
+      "function": "sim/hunter.init.0.func1.4(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "ranged.BaseDamageMin += hunter.AmmoDamageBonus",
+      "status": "not in the runtime: the behavior is rejected or not ported",
+      "rust": "ammo set bonus"
+    },
+    {
+      "go": "item_sets.go:152",
+      "function": "sim/hunter.init.0.func1.4(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "ranged.BaseDamageMax += hunter.AmmoDamageBonus",
+      "status": "not in the runtime: the behavior is rejected or not ported",
+      "rust": "ammo set bonus"
+    },
+    {
+      "go": "talents_fire.go:140",
+      "function": "sim/mage.(*Mage).registerIgnite.func4(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "dot.SnapshotBaseDamage = (owed + result.Damage*share) / float64(numTicks)",
+      "status": "fused in Rust",
+      "rust": "classes::mage::talents::ignite"
+    },
+    {
+      "go": "mana.go:174",
+      "function": "sim/mage.(*Mage).registerManaGems.func5(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return unit.spiritRegenBase + unit.stats[stats.Spirit]*unit.spiritRegenPerSpirit",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "spirit regeneration per second, exported per stat aura combination"
+    },
+    {
+      "go": "mana_gems.go:76",
+      "function": "sim/mage.(*Mage).registerManaGems.func5(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "totalRegen := character.ManaRegenPerSecondWhileCasting() * 2",
+      "status": "no change: the fused and the rounded forms agree for every input",
+      "rust": "x * 2 compiles to x + x"
+    },
+    {
+      "go": "talents_protection.go:137",
+      "function": "sim/paladin.(*Paladin).applyImprovedSealOfFury.func1(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "paladin.AddMana(sim, mana*(1+perLevel*levels), manaMetrics)",
+      "status": "not in the runtime: the behavior is rejected or not ported",
+      "rust": "Improved Seal of Fury"
+    },
+    {
+      "go": "consecration.go:42",
+      "function": "sim/paladin.(*Paladin).registerConsecration.func1(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "damage += bonus.Average(core.CharacterLevel) + bonus.Coeff()*dot.Spell.BonusDamage(dot.Spell.Unit.AttackTables[target.UnitIndex])",
+      "status": "fused in Rust",
+      "rust": "classes::paladin::spells::strikes consecration_tick"
+    },
+    {
+      "go": "sim.go:274",
+      "function": "sim/paladin.(*Paladin).registerHolyShockRank.func1(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return min + (max-min)*sim.RandomFloat(label)",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage go_roll and effect_roll, used by every Simulation.Roll port"
+    },
+    {
+      "go": "seal_of_command.go:80",
+      "function": "sim/paladin.(*Paladin).registerSealOfCommand.func2(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "baseDamage := (weaponDamage + coefficient*spell.SpellDamage(target)) * weaponPercent",
+      "status": "fused in Rust",
+      "rust": "classes::paladin::spells::seals"
+    },
+    {
+      "go": "seal_of_command.go:84",
+      "function": "sim/paladin.(*Paladin).registerSealOfCommand.func2(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "baseDamage += coefficient * targetBonus",
+      "status": "fused in Rust",
+      "rust": "classes::paladin::spells::seals"
+    },
+    {
+      "go": "effect.go:88",
+      "function": "sim/paladin.(*Paladin).registerSealOfTheCrusader(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return e.Average(level) * (1 + e.Variance/2)",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "spelldata Effect.Max"
+    },
+    {
+      "go": "seal_of_the_crusader.go:56",
+      "function": "sim/paladin.(*Paladin).registerSealOfTheCrusader(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "attackPower := rank.Effect(dbcenums.A_MOD_ATTACK_POWER, 0).Max(core.CharacterLevel) + paladin.sealOfTheCrusaderBonusAttackPower",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "Seal of the Crusader attack power at build"
+    },
+    {
+      "go": "talents_assassination.go:323",
+      "function": "sim/rogue.(*Rogue).newMutilateHitSpell.func1(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "baseDamage += spell.Unit.OHNormalizedWeaponDamage(sim, spell.MeleeAttackPower(target))",
+      "status": "fused in Rust",
+      "rust": "classes::rogue::spells::mutilate off hand"
+    },
+    {
+      "go": "unit.go:289",
+      "function": "sim/rogue.(*Rogue).registerDeflection(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "unit.stats[stat] += amount",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "AddStat at build"
+    },
+    {
+      "go": "eviscerate.go:53",
+      "function": "sim/rogue.(*Rogue).registerEviscerate.func3(SB)",
+      "instruction": "FMADDD",
+      "count": 2,
+      "source": "baseDamage := damage.Roll(sim, core.CharacterLevel) + comboDamageBonus*comboPoints +",
+      "status": "fused in Rust",
+      "rust": "classes::rogue::spells::eviscerate"
+    },
+    {
+      "go": "garrote.go:56",
+      "function": "sim/rogue.(*Rogue).registerGarrote.func2(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "dot.SnapshotPhysical(target, tickDamage+dot.Spell.MeleeAttackPower(target)*garroteAttackPowerShare)",
+      "status": "fused in Rust",
+      "rust": "classes::rogue::spells::rupture snapshot_share"
+    },
+    {
+      "go": "sim.go:274",
+      "function": "sim/rogue.(*Rogue).registerInstantPoisonSpell.func1(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return min + (max-min)*sim.RandomFloat(label)",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage go_roll and effect_roll, used by every Simulation.Roll port"
+    },
+    {
+      "go": "unit.go:289",
+      "function": "sim/rogue.(*Rogue).registerLightningReflexes(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "unit.stats[stat] += amount",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "AddStat at build"
+    },
+    {
+      "go": "rupture.go:69",
+      "function": "sim/rogue.(*Rogue).registerRupture.func3(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "flat := (tickDamage + damagePerComboPoint*float64(rogue.ComboPoints())) * multiplier",
+      "status": "fused in Rust",
+      "rust": "classes::rogue::spells::rupture snapshot"
+    },
+    {
+      "go": "rupture.go:70",
+      "function": "sim/rogue.(*Rogue).registerRupture.func3(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "dot.SnapshotPhysical(target, flat+share*rogue.Rupture.MeleeAttackPower(target))",
+      "status": "fused in Rust",
+      "rust": "classes::rogue::spells::rupture snapshot"
+    },
+    {
+      "go": "sim.go:274",
+      "function": "sim/rogue.init.func15.4(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return min + (max-min)*sim.RandomFloat(label)",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage go_roll and effect_roll, used by every Simulation.Roll port"
+    },
+    {
+      "go": "unit.go:289",
+      "function": "sim/shaman.(*Shaman).applyAnticipation(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "unit.stats[stat] += amount",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "AddStat at build"
+    },
+    {
+      "go": "unit.go:289",
+      "function": "sim/shaman.(*Shaman).applyTidalFocus(SB)",
+      "instruction": "FMADDD",
+      "count": 2,
+      "source": "unit.stats[stat] += amount",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "AddStat at build"
+    },
+    {
+      "go": "sim.go:274",
+      "function": "sim/warlock.(*Warlock).applyDemonicBrand.func3(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return min + (max-min)*sim.RandomFloat(label)",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage go_roll and effect_roll, used by every Simulation.Roll port"
+    },
+    {
+      "go": "talents_demonology.go:276",
+      "function": "sim/warlock.(*Warlock).applyDemonicBrand.func3(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "damage := sim.Roll(levelBonus+14, levelBonus+17) + 0.078*spellPower",
+      "status": "fused in Rust",
+      "rust": "classes::warlock::talents::demonic_brand brand_hit"
+    },
+    {
+      "go": "drain_life.go:75",
+      "function": "sim/warlock.(*Warlock).soulSiphonMultiplier(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return 1 + perEffect*min(warlock.AfflictionCount(target), 3)",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "Soul Siphon multiplier"
+    },
+    {
+      "go": "mana.go:174",
+      "function": "sim/warlock.(*WarlockPet).ExecuteCustomRotation(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return unit.spiritRegenBase + unit.stats[stats.Spirit]*unit.spiritRegenPerSpirit",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "spirit regeneration per second, exported per stat aura combination"
+    },
+    {
+      "go": "items.go:150",
+      "function": "sim/warlock.init.func5.2(SB)",
+      "instruction": "FMSUBD",
+      "count": 1,
+      "source": "snapShotterBonusCoeff := dot.SnapshotBaseDamage - currentBaseDamage",
+      "status": "not in the runtime: the behavior is rejected or not ported",
+      "rust": "Warlock T5 four piece"
+    },
+    {
+      "go": "items.go:155",
+      "function": "sim/warlock.init.func5.2(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "dot.SnapshotBaseDamage = newBaseDamage + snapShotterBonusCoeff",
+      "status": "not in the runtime: the behavior is rejected or not ported",
+      "rust": "Warlock T5 four piece"
+    },
+    {
+      "go": "talents_fury.go:232",
+      "function": "sim/warrior.(*Warrior).registerBloodthirst.func1(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "baseDamage := spell.MeleeAttackPower(target)*apShare + bloodthirstRank.DamageEffect().Average(core.CharacterLevel)",
+      "status": "fused in Rust",
+      "rust": "classes::warrior::spells::bloodthirst"
+    },
+    {
+      "go": "talents_arms.go:157",
+      "function": "sim/warrior.(*Warrior).registerDeepWounds.func2(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "dot.SnapshotBaseDamage = (owed + warrior.AutoAttacks.MH().AverageDamage()*share) / float64(dot.HastedTickCount())",
+      "status": "fused in Rust",
+      "rust": "classes::warrior::talents::deep_wounds, fused before the audit"
+    },
+    {
+      "go": "execute.go:54",
+      "function": "sim/warrior.(*Warrior).registerExecute.func2(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "baseDamage := executeBaseDamage + executeDamagePerRage*extraRage",
+      "status": "fused in Rust",
+      "rust": "classes::warrior::spells::execute"
+    },
+    {
+      "go": "rend.go:50",
+      "function": "sim/warrior.(*Warrior).registerRend.func2(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "dot.Spell.CalcAndDealPeriodicDamage(sim, target, tick.Average(core.CharacterLevel)+apPerTick*dot.Spell.MeleeAttackPower(target), rendRank.TickOutcome(dot))",
+      "status": "fused in Rust",
+      "rust": "classes::warrior::spells::rend"
+    },
+    {
+      "go": "revenge.go:74",
+      "function": "sim/warrior.(*Warrior).registerRevenge.func3(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "baseDamage := revengeRank.DamageEffect().Roll(sim, core.CharacterLevel) + 0.25*spell.MeleeAttackPower(target)",
+      "status": "fused in Rust",
+      "rust": "classes::warrior::spells::revenge"
+    },
+    {
+      "go": "talents_protection.go:257",
+      "function": "sim/warrior.(*Warrior).registerShieldSlam.func2(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "baseDamage := shieldSlamRank.DamageEffect().Roll(sim, core.CharacterLevel) + warrior.BlockDamageReduction()",
+      "status": "no change: the fused and the rounded forms agree for every input",
+      "rust": "only a Paladin changes the block value multiplier, so the Shield Slam of a Warrior adds an exact product"
+    },
+    {
+      "go": "thunder_clap.go:77",
+      "function": "sim/warrior.(*Warrior).registerThunderClap.func4(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "results := spell.CalcCleaveDamage(sim, target, int32(thunderClapRank.MaxTargets), thunderClapBaseDamage+apShare*spell.MeleeAttackPower(target), spell.OutcomeMagicHitAndCrit)",
+      "status": "fused in Rust",
+      "rust": "classes::warrior::spells::thunder_clap, fused before the audit"
+    },
+    {
+      "go": "victory_rush.go:51",
+      "function": "sim/warrior.(*Warrior).registerVictoryRush.func2(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "baseDamage := victoryRushRank.DamageEffect().Average(core.CharacterLevel) + victoryRushAPCoef*spell.MeleeAttackPower(target)",
+      "status": "not in the runtime: the behavior is rejected or not ported",
+      "rust": "Victory Rush"
+    },
+    {
+      "go": "sim.go:274",
+      "function": "sim/warrior.init.func17.1(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return min + (max-min)*sim.RandomFloat(label)",
+      "status": "fused in Rust",
+      "rust": "core::fight::damage go_roll and effect_roll, used by every Simulation.Roll port"
+    },
+    {
+      "go": "pets.go:105",
+      "function": "main.applyDependencies(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "s[dep.dst] += math.Floor(s[dep.src]/dep.step) * dep.step * dep.amount",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "exporter pet stat dependencies"
+    },
+    {
+      "go": "pets.go:107",
+      "function": "main.applyDependencies(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "s[dep.dst] += math.Floor(s[dep.src]) * dep.amount",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "exporter pet stat dependencies"
+    },
+    {
+      "go": "pets.go:109",
+      "function": "main.applyDependencies(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "s[dep.dst] += s[dep.src] * dep.amount",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "exporter pet stat dependencies"
+    },
+    {
+      "go": "druid_bear.go:60",
+      "function": "main.bearFormHealthBonus(SB)",
+      "instruction": "FNMSUBD",
+      "count": 1,
+      "source": "if math.Abs(health/(inForm-bonus)*outOfForm-d.CurrentHealth()) > 1e-9*health {",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "exporter check"
+    },
+    {
+      "go": "druid_bear.go:71",
+      "function": "main.bearFormHealthBonus(SB)",
+      "instruction": "FNMSUBD",
+      "count": 1,
+      "source": "if math.Abs(health/(outOfForm+bonus)*d.MaxHealth()-d.CurrentHealth()) > 1e-9*health {",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "exporter check"
+    },
+    {
+      "go": "effect.go:88",
+      "function": "main.commonEffects(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return e.Average(level) * (1 + e.Variance/2)",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "spelldata Effect.Max"
+    },
+    {
+      "go": "warrior.go:110",
+      "function": "main.damageRoll(SB)",
+      "instruction": "FMSUBD",
+      "count": 1,
+      "source": "return map[string]any{\"average\": average, \"min\": average * (1 - effect.Variance/2),",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "exporter bounds"
+    },
+    {
+      "go": "warrior.go:111",
+      "function": "main.damageRoll(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "\"max\": average * (1 + effect.Variance/2), \"rolls\": effect.Variance != 0, \"variance\": effect.Variance}",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "exporter bounds"
+    },
+    {
+      "go": "mana.go:174",
+      "function": "main.exportPets(SB)",
+      "instruction": "FMADDD",
+      "count": 2,
+      "source": "return unit.spiritRegenBase + unit.stats[stats.Spirit]*unit.spiritRegenPerSpirit",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "spirit regeneration per second, exported per stat aura combination"
+    },
+    {
+      "go": "mana.go:201",
+      "function": "main.exportPets(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "regenRate += unit.SpiritManaRegenPerSecond() * unit.PseudoStats.SpiritRegenMultiplier",
+      "status": "fused in Rust",
+      "rust": "mechanics::mana regen_per_second_not_casting"
+    },
+    {
+      "go": "hunter.go:357",
+      "function": "main.hunterPetRowStrike(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "\"min_damage\": average * (1 - effect.Variance/2), \"max_damage\": average * (1 + effect.Variance/2),",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "exporter bounds"
+    },
+    {
+      "go": "hunter.go:357",
+      "function": "main.hunterPetRowStrike(SB)",
+      "instruction": "FMSUBD",
+      "count": 1,
+      "source": "\"min_damage\": average * (1 - effect.Variance/2), \"max_damage\": average * (1 + effect.Variance/2),",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "exporter bounds"
+    },
+    {
+      "go": "paladin.go:580",
+      "function": "main.paladinHealEffect(SB)",
+      "instruction": "FMADDD",
+      "count": 2,
+      "source": "\"min\": average * (1 - heal.Variance/2), \"max\": average * (1 + heal.Variance/2),",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "exporter bounds"
+    },
+    {
+      "go": "paladin.go:580",
+      "function": "main.paladinHealEffect(SB)",
+      "instruction": "FMSUBD",
+      "count": 2,
+      "source": "\"min\": average * (1 - heal.Variance/2), \"max\": average * (1 + heal.Variance/2),",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "exporter bounds"
+    },
+    {
+      "go": "mana.go:174",
+      "function": "main.prepare(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return unit.spiritRegenBase + unit.stats[stats.Spirit]*unit.spiritRegenPerSpirit",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "spirit regeneration per second, exported per stat aura combination"
+    },
+    {
+      "go": "mana.go:201",
+      "function": "main.prepare(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "regenRate += unit.SpiritManaRegenPerSecond() * unit.PseudoStats.SpiritRegenMultiplier",
+      "status": "fused in Rust",
+      "rust": "mechanics::mana regen_per_second_not_casting"
+    },
+    {
+      "go": "mana.go:174",
+      "function": "main.statAurasEffect(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "return unit.spiritRegenBase + unit.stats[stats.Spirit]*unit.spiritRegenPerSpirit",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "spirit regeneration per second, exported per stat aura combination"
+    },
+    {
+      "go": "warlock.go:158",
+      "function": "main.warlockEffects(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "soulSiphon = 1 + wlSoulSiphon.FractionAt(talents.SoulSiphon)*min(w.AfflictionCount(target), 3)",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "exporter Soul Siphon"
+    },
+    {
+      "go": "warlock.go:273",
+      "function": "main.warlockEffects(SB)",
+      "instruction": "FMADDD",
+      "count": 1,
+      "source": "\"kind\": \"firebolt\", \"min_damage\": average * (1 - effect.Variance/2), \"max_damage\": average * (1 + effect.Variance/2),",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "exporter bounds"
+    },
+    {
+      "go": "warlock.go:273",
+      "function": "main.warlockEffects(SB)",
+      "instruction": "FMSUBD",
+      "count": 1,
+      "source": "\"kind\": \"firebolt\", \"min_damage\": average * (1 - effect.Variance/2), \"max_damage\": average * (1 + effect.Variance/2),",
+      "status": "export only: Go computes it before the export, and Rust reads the value",
+      "rust": "exporter bounds"
+    }
+  ],
+  "evidence": {
+    "fixtures": "All 193 prepared v2 fixtures keep their Go goldens and Rust matches each.",
+    "sweeps": {
+      "totals": {
+        "runs": 2334,
+        "matched": 2294,
+        "rejected": 40,
+        "mismatched": 0
+      },
+      "note": "Every sweep and race board under validation/, rerun after the audit: no mismatch. The rejections are those the records list; the Enhancement Shaman records are older than later work that made their four rejected variants run, and they match.",
+      "sets": [
+        {
+          "set": "2026-10-04-affliction-warlock-broad-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-affliction-warlock-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-arms-warrior-race-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-arms-warrior-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-assassination-rogue-race-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-assassination-rogue-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-assassination-venom-race-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-balance-druid-sweep",
+          "runs": 24,
+          "matched": 23,
+          "rejected": 1,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-beast-mastery-hunter-race-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-beast-mastery-hunter-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-combat-kidney-shot-race-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-combat-rogue-melee-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-combat-rogue-race-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-combat-rogue-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-combat-swords-race-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-combat-swords-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-combat-wound-poison-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-demonology-warlock-recklessness-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-demonology-warlock-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-destruction-warlock-broad-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-destruction-warlock-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-elemental-shaman-race-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-elemental-shaman-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-enhancement-shaman-dual-wield-imbues-sweep",
+          "runs": 24,
+          "matched": 22,
+          "rejected": 2,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-enhancement-shaman-frostbrand-sync-sweep",
+          "runs": 24,
+          "matched": 22,
+          "rejected": 2,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-enhancement-shaman-race-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-enhancement-shaman-self-totems-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-enhancement-shaman-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-feral-bear-druid-defensives-race-sweep",
+          "runs": 16,
+          "matched": 16,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-feral-bear-druid-melee-sweep",
+          "runs": 17,
+          "matched": 17,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-feral-bear-druid-race-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-feral-bear-druid-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-feral-druid-race-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-feral-druid-rake-race-sweep",
+          "runs": 16,
+          "matched": 16,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-feral-druid-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-frostfire-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-fury-protection-warrior-race-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-fury-protection-warrior-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-holy-protection-paladin-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-hunter-option-census",
+          "runs": 125,
+          "matched": 124,
+          "rejected": 1,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-hunter-pet-family-sweep",
+          "runs": 34,
+          "matched": 34,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-hunter-preset-matrix",
+          "runs": 32,
+          "matched": 30,
+          "rejected": 2,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-hunter-race-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-marksmanship-hunter-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-paladin-libram-sweep",
+          "runs": 36,
+          "matched": 36,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-paladin-talent-sweep",
+          "runs": 69,
+          "matched": 69,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-production-fire-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-protection-bulwark-heal-paladin-sweep",
+          "runs": 24,
+          "matched": 15,
+          "rejected": 9,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-protection-eye-for-an-eye-paladin-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-protection-paladin-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-protection-warrior-race-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-protection-warrior-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-ret-protection-paladin-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-retribution-crusader-held-paladin-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-retribution-crusader-paladin-sweep",
+          "runs": 24,
+          "matched": 18,
+          "rejected": 6,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-retribution-exorcism-paladin-sweep",
+          "runs": 24,
+          "matched": 19,
+          "rejected": 5,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-retribution-paladin-race-sweep",
+          "runs": 24,
+          "matched": 23,
+          "rejected": 1,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-retribution-paladin-sweep",
+          "runs": 24,
+          "matched": 20,
+          "rejected": 4,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-shadow-priest-race-sweep",
+          "runs": 24,
+          "matched": 22,
+          "rejected": 2,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-shadow-priest-shadowfiend-race-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-shadow-priest-starshards-sweep",
+          "runs": 16,
+          "matched": 16,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-shadow-priest-sweep",
+          "runs": 24,
+          "matched": 19,
+          "rejected": 5,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-shockadin-holy-light-paladin-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-shockadin-paladin-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-shockadin-self-heal-paladin-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-shockadin-vigil-paladin-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-smite-priest-holy-nova-race-sweep",
+          "runs": 16,
+          "matched": 16,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-smite-priest-race-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-smite-priest-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-subtlety-quietus-race-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-subtlety-rogue-race-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-subtlety-rogue-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-survival-hunter-race-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-survival-hunter-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-warlock-race-sweep",
+          "runs": 12,
+          "matched": 12,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-warrior-race-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-warrior-sweep",
+          "runs": 24,
+          "matched": 24,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-arms-warrior-race-boards",
+          "runs": 10,
+          "matched": 10,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-builder-starters",
+          "runs": 166,
+          "matched": 166,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-feral-warlock-rogue-race-boards",
+          "runs": 32,
+          "matched": 32,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-fury-protection-warrior-race-boards",
+          "runs": 10,
+          "matched": 10,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-melee-race-boards",
+          "runs": 38,
+          "matched": 38,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-production-race-boards",
+          "runs": 44,
+          "matched": 44,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-protection-warrior-race-boards",
+          "runs": 10,
+          "matched": 10,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-shadow-priest-race-boards",
+          "runs": 6,
+          "matched": 6,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-smite-priest-race-boards",
+          "runs": 6,
+          "matched": 6,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-tank-and-pet-race-boards",
+          "runs": 29,
+          "matched": 29,
+          "rejected": 0,
+          "mismatched": 0
+        },
+        {
+          "set": "2026-10-04-warrior-race-boards",
+          "runs": 10,
+          "matched": 10,
+          "rejected": 0,
+          "mismatched": 0
+        }
+      ]
+    },
+    "after_merging_0705079": {
+      "scan": "The rescan finds only exporter sites new; the bear shift's health fraction is fused in classes::druid::spells::bear_form, and Expose Armor's armor values come from the export.",
+      "sample": [
+        "2026-10-04-feral-bear-druid-caster-interval-race-sweep 16 passed 16 rejected 0 mismatched []",
+        "2026-10-04-feral-bear-druid-defensives-race-sweep 16 passed 16 rejected 0 mismatched []",
+        "2026-10-04-feral-bear-druid-melee-sweep 17 passed 17 rejected 0 mismatched []",
+        "2026-10-04-feral-bear-druid-potion-shift-race-sweep 16 passed 16 rejected 0 mismatched []",
+        "2026-10-04-feral-bear-druid-race-sweep 24 passed 24 rejected 0 mismatched []",
+        "2026-10-04-feral-bear-druid-sweep 24 passed 24 rejected 0 mismatched []",
+        "2026-10-04-holy-protection-paladin-sweep 24 passed 24 rejected 0 mismatched []",
+        "2026-10-04-protection-paladin-sweep 24 passed 24 rejected 0 mismatched []",
+        "2026-10-04-protection-paladin-threshold-sweep 24 passed 24 rejected 0 mismatched []",
+        "2026-10-04-ret-protection-paladin-sweep 24 passed 24 rejected 0 mismatched []",
+        "2026-10-04-affliction-warlock-broad-sweep 24 passed 24 rejected 0 mismatched []",
+        "2026-10-04-affliction-warlock-sweep 24 passed 24 rejected 0 mismatched []",
+        "2026-10-04-fury-protection-warrior-race-sweep 24 passed 24 rejected 0 mismatched []",
+        "2026-10-04-fury-protection-warrior-sweep 24 passed 24 rejected 0 mismatched []",
+        "2026-10-04-fury-protection-warrior-threshold-sweep 24 passed 24 rejected 0 mismatched []",
+        "2026-10-04-fury-protection-warrior-race-boards 10 passed 10 rejected 0 mismatched []",
+        "2026-10-04-enhancement-shaman-race-sweep 24 passed 24 rejected 0 mismatched []"
+      ]
+    },
+    "searches": [
+      {
+        "seed": 7001,
+        "variants_per_build": 30,
+        "variants": 810
+      },
+      {
+        "seed": 7002,
+        "variants_per_build": 80,
+        "variants": 2160
+      },
+      {
+        "seed": 7003,
+        "variants_per_build": 200,
+        "variants": 5400
+      }
+    ],
+    "search_note": "python3 tools/sweep.py draws the variants of each production request; each is exported once and run by the runtime at 076116f and after the audit. The second and third searches compare results within the comparison tolerance and find no difference; four first-fight logs differ across the searches, and Go matches the audited runtime on each while the older one logs 0.001 or a 0.1 debug base off.",
+    "distinguishing_cases": [
+      {
+        "variant": "production-affliction-warlock, seed 7001, sweep-17",
+        "fixture": "affliction-warlock-lash-of-pain-rounding",
+        "site": "spell_result.go:418",
+        "go": "Succubus Lash of Pain Hit (25% Resist) for 49.727",
+        "before": "49.726",
+        "after": "matches Go"
+      },
+      {
+        "variant": "production-affliction-warlock, seed 7003, sweep-08",
+        "site": "spell_result.go:418",
+        "go": "Succubus Lash of Pain Hit for 63.943",
+        "before": "63.942",
+        "after": "matches Go"
+      },
+      {
+        "variant": "production-warrior, seed 7003, sweep-57",
+        "fixture": "warrior-bloodthirst-rounding",
+        "site": "talents_fury.go:232",
+        "go": "Bloodthirst BaseDamage:555.1",
+        "before": "BaseDamage:555.2",
+        "after": "matches Go"
+      },
+      {
+        "variant": "production-fury-protection-warrior, seed 7003, sweep-169",
+        "site": "talents_fury.go:232",
+        "go": "Bloodthirst BaseDamage:538.1",
+        "before": "BaseDamage:538.0",
+        "after": "matches Go"
+      },
+      {
+        "variant": "fury-protection-warrior with Robe of Winter Night (gear swap validation)",
+        "fixture": "fury-protection-warrior-winter-night",
+        "site": "thunder_clap.go:77",
+        "go": "Thunder Clap Hit for 134.436",
+        "before": "134.437",
+        "after": "matches Go, fused before the audit"
+      }
+    ]
+  }
+}

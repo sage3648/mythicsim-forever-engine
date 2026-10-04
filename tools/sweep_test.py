@@ -22,6 +22,24 @@ class SweepTests(unittest.TestCase):
             self.assertEqual([len(tree) for tree in lowered.split("-")], [len(tree) for tree in base.split("-")])
             self.assertTrue(all(int(a) <= int(b) for a, b in zip(lowered.replace("-", ""), base.replace("-", ""))))
 
+    def test_races_change_only_the_race(self):
+        races = ("RaceTroll", "RaceOrc")
+        with_races = generate(BASE, 7, 6, races=races)
+        self.assertTrue({request["raid"]["parties"][0]["players"][0]["race"] for request in with_races} <= set(races))
+        for plain, raced in zip(generate(BASE, 7, 6), with_races):
+            raced["raid"]["parties"][0]["players"][0]["race"] = plain["raid"]["parties"][0]["players"][0]["race"]
+            self.assertEqual(plain, raced)
+
+    def test_variation_is_shorter_than_the_fight(self):
+        for request in generate(BASE, 20261004, 200):
+            self.assertLess(request["encounter"]["durationVariation"], request["encounter"]["duration"])
+
+    def test_max_distance_keeps_variants_in_range(self):
+        distances = {request["raid"]["parties"][0]["players"][0]["distanceFromTarget"]
+                     for request in generate(BASE, 20261004, 50, max_distance=5)}
+        self.assertTrue(distances <= {0, 5})
+        self.assertEqual(generate(BASE, 7, 3), generate(BASE, 7, 3, max_distance=None))
+
     def test_base_request_is_not_modified(self):
         before = json.dumps(BASE, sort_keys=True)
         generate(BASE, 3, 5)

@@ -19,12 +19,23 @@ pub(crate) enum ModKind {
     DirectDamageDoneFlat,
     /// Go `SpellMod_CastTime_Pct`: adds to `CastTimeMultiplier`.
     CastTimePercent,
+    /// Go `SpellMod_ThreatMultiplier_Pct`: multiplies `ThreatMultiplier` by one plus the value.
+    ThreatMultiplierPercent,
     /// Go `SpellMod_DamageDone_Pct`: multiplies `DamageMultiplier` by one plus the value.
     DamageDonePercent,
     /// Go `SpellMod_PowerCost_Pct`: multiplies the cost's `PercentModifier`.
     PowerCostPercent,
     /// Go `SpellMod_DotDamageDone_Pct`: multiplies the dot's `PeriodicDamageMultiplier`.
     DotDamageDonePercent,
+    /// Go `SpellMod_CritMultiplier_Flat`: adds to `CritMultiplierAdditive`.
+    CritMultiplierFlat,
+    /// Go `SpellMod_CastTime_Flat`: adds to the default cast time, in nanoseconds.
+    CastTimeFlat,
+    /// Go `SpellMod_GlobalCooldown_Flat`: adds to the default GCD, in nanoseconds.
+    GlobalCooldownFlat,
+    /// Go `SpellMod_PowerCost_Flat`: adds its integer value, held in the float value, to the
+    /// cost's `FlatModifier`.
+    PowerCostFlat,
 }
 
 #[derive(Clone, Debug)]
@@ -78,6 +89,15 @@ impl<A: Agent> Fight<A> {
                         }
                     }
                 }
+                ModKind::PowerCostFlat => {
+                    if let Some(cost) = state.cost.as_mut() {
+                        if sign > 0.0 {
+                            cost.flat_modifier += modifier.float_value as i32;
+                        } else {
+                            cost.flat_modifier -= modifier.float_value as i32;
+                        }
+                    }
+                }
                 ModKind::DamageDoneFlat => {
                     if sign > 0.0 {
                         state.damage_multiplier_additive += modifier.float_value;
@@ -90,6 +110,13 @@ impl<A: Agent> Fight<A> {
                         state.direct_damage_multiplier_additive += modifier.float_value;
                     } else {
                         state.direct_damage_multiplier_additive -= modifier.float_value;
+                    }
+                }
+                ModKind::ThreatMultiplierPercent => {
+                    if sign > 0.0 {
+                        state.threat_multiplier *= 1.0 + modifier.float_value;
+                    } else {
+                        state.threat_multiplier /= 1.0 + modifier.float_value;
                     }
                 }
                 ModKind::DamageDonePercent => {
@@ -123,6 +150,27 @@ impl<A: Agent> Fight<A> {
                         state.cast_time_multiplier += modifier.float_value;
                     } else {
                         state.cast_time_multiplier -= modifier.float_value;
+                    }
+                }
+                ModKind::CritMultiplierFlat => {
+                    if sign > 0.0 {
+                        state.crit_multiplier_additive += modifier.float_value;
+                    } else {
+                        state.crit_multiplier_additive -= modifier.float_value;
+                    }
+                }
+                ModKind::CastTimeFlat => {
+                    if sign > 0.0 {
+                        state.default_cast.cast_time += modifier.time_value;
+                    } else {
+                        state.default_cast.cast_time -= modifier.time_value;
+                    }
+                }
+                ModKind::GlobalCooldownFlat => {
+                    if sign > 0.0 {
+                        state.default_cast.gcd += modifier.time_value;
+                    } else {
+                        state.default_cast.gcd -= modifier.time_value;
                     }
                 }
                 ModKind::DotTickLengthFlat => {

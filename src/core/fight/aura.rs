@@ -27,6 +27,12 @@ pub(crate) enum AuraBehavior<K> {
     Static,
     /// A listener that never acts in the supported scope.
     Inert,
+    /// Go health.go `trackChanceOfDeath`'s listener on hits the player takes.
+    ChanceOfDeath,
+    /// Go attack.go `applyParryHaste`: a parry pulls the unit's next main hand swing in.
+    ParryHaste,
+    /// An item proc that restores energy: [`super::energy::EnergizeProc`], by index.
+    EnergizeProc(usize),
     /// Go buffs/paladin.go `AttachJudgementOfWisdomMana`.
     JudgementOfWisdom {
         chance: f64,
@@ -42,8 +48,82 @@ pub(crate) enum AuraBehavior<K> {
     },
     /// Go racials.go `applyEureka`'s aura.
     Eureka,
+    /// Go `AttachMultiplyAttackSpeed` followed by `AttachMultiplyCastSpeed`, as Berserking.
+    MultiplyAttackAndCastSpeed {
+        attack: f64,
+        cast: f64,
+    },
+    /// Go `AttachHastePseudoStats`: melee, ranged and cast speed multipliers, each attached only
+    /// when it changes speed, in that order.
+    MultiplySpeeds {
+        melee: f64,
+        ranged: f64,
+        cast: f64,
+    },
+    /// Go `AttachMultiplicativePseudoStatBuff` on the player's damage taken of each school, as
+    /// Orc Shatter Curse attaches it.
+    MultiplySelfDamageTaken {
+        multiplier: f64,
+        schools: [bool; 8],
+    },
+    /// Go `MultiplyManaRegenSpeed` on gain and its reciprocal on expire, as racials.go
+    /// Energized does with 2 and 0.5.
+    MultiplyManaRegenSpeed(f64),
+    /// Go `NewTemporaryStatMultiplierAura`: the stats while active. Go recomputes every stat
+    /// from the same inputs on each change, so expiry restores the prepared values exactly.
+    TemporaryStats {
+        /// The aura's bit in `Fight::stat_mask`.
+        bit: u32,
+        /// Lines in `Fight::aura_logs` logged before the stats change on gain and expiry.
+        gain_log: Option<usize>,
+        expire_log: Option<usize>,
+    },
+    /// The Crusader enchant's trigger.
+    Crusader,
+    /// Dragon's Call's trigger, which summons the Emerald Dragon Whelp.
+    EmeraldDragonWhelp,
+    /// Sulfuras, Hand of Ragnaros's weapon proc trigger and its Immolation.
+    SulfurasProc,
+    SulfurasImmolation,
+    /// The party Windfury Totem's totem aura, whose exclusive effect holds the trigger.
+    WindfuryTotem,
+    /// The party Windfury Totem's trigger.
+    WindfuryTrigger,
+    /// The party Windfury Totem's charges of attack power, which landed autos spend.
+    WindfuryProc {
+        bit: u32,
+    },
+    /// Dragonbreath Chili's trigger.
+    DragonbreathChili,
+    /// An item proc trigger on landed melee hits that grants extra main hand attacks.
+    ExtraAttackProc {
+        chance: f64,
+        attacks: i32,
+    },
+    /// Go rage.go's "RageBar" aura: landed white hits give rage.
+    RageBar,
+    /// An item damage proc's trigger, by its position in `Fight::damage_procs`.
+    SpellDataDamageProc(usize),
+    /// An enchant heal proc's trigger, by its position in `Fight::heal_procs`.
+    HealProc(usize),
+    /// A set bonus stat proc's trigger, by its position in `Fight::stat_procs`.
+    StatProc(usize),
+    /// A gear proc's trigger that heals and gives rage, by its position in
+    /// `Fight::health_rage_procs`.
+    HealthRageProc(usize),
+    /// A gear proc's trigger that stacks an armor debuff on the target, by its position in
+    /// `Fight::armor_debuff_procs`.
+    ArmorDebuffTrigger(usize),
+    /// That armor debuff on the target.
+    ArmorDebuff(usize),
+    /// A spell data stat proc's trigger, by its position in `Fight::spell_stat_procs`.
+    SpellDataStatProc(usize),
+    /// An aura whose spell mods, at this position in `Fight::aura_mods`, apply while active.
+    SpellMods(usize),
     /// The aura of a dot or channel.
     Dot(DotId),
+    /// Go movement.go's Movement aura, which marks its unit moving.
+    Movement,
     Class(K),
 }
 
@@ -58,9 +138,10 @@ pub(crate) enum List {
     PeriodicDamageDealt,
     PeriodicDamageTaken,
     EncounterStart,
+    HealDealt,
 }
 
-const LISTS: usize = 8;
+const LISTS: usize = 9;
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct CallbackList {
@@ -108,11 +189,17 @@ impl CallbackList {
 pub(crate) struct Aura<K> {
     pub(crate) label: String,
     pub(crate) action_id: Option<ActionId>,
+    /// Go `AuraMetrics.ID`, fixed at registration; a metric split retags `action_id` alone.
+    pub(crate) metrics_id: Option<ActionId>,
     pub(crate) duration: i64,
     pub(crate) max_stacks: i32,
     pub(crate) behavior: AuraBehavior<K>,
     lists: [bool; LISTS],
     permanent: bool,
+    /// The later member of its exclusive category that displaces it during the reset.
+    displaced_by: Option<String>,
+    /// Blocked at the reset by an earlier member of its exclusive category.
+    blocked_at_reset: bool,
     pub(crate) icd: Option<(TimerId, i64)>,
     pub(crate) active: bool,
     pub(crate) stacks: i32,
@@ -171,6 +258,7 @@ impl<K> Tracker<K> {
                 "on_periodic_damage_dealt" => List::PeriodicDamageDealt,
                 "on_periodic_damage_taken" => List::PeriodicDamageTaken,
                 "on_encounter_start" => List::EncounterStart,
+                "on_heal_dealt" => List::HealDealt,
                 _ => continue,
             };
             lists[list as usize] = true;
@@ -178,12 +266,19 @@ impl<K> Tracker<K> {
         self.auras.push(Aura {
             label: exported.label.clone(),
             action_id: exported.action_id.clone(),
+            metrics_id: exported
+                .action_id
+                .clone()
+                .filter(|_| !exported.metrics_hidden),
             duration: exported.duration_ns,
             max_stacks: exported.max_stacks,
             behavior,
             lists,
-            // An aura active right after Go's reset was activated by its OnReset.
-            permanent: exported.active,
+            // An aura active right after Go's reset was activated by its OnReset, as was one
+            // a later member of its exclusive category displaced.
+            permanent: exported.active || exported.displaced_by.is_some(),
+            displaced_by: exported.displaced_by.clone(),
+            blocked_at_reset: exported.blocked_at_reset,
             icd,
             active: false,
             stacks: 0,
@@ -196,6 +291,17 @@ impl<K> Tracker<K> {
             aggregate: Aggregator::default(),
             procs_sum: 0,
         });
+    }
+
+    /// Activate the aura at every reset, as a Go `OnReset` that activates it does.
+    pub(crate) fn set_permanent(&mut self, index: usize) {
+        self.auras[index].permanent = true;
+    }
+
+    /// Leave the aura to whatever activates it at reset, as an effect another aura's activation
+    /// turns on, though the exported reset state shows it active.
+    pub(crate) fn clear_permanent(&mut self, index: usize) {
+        self.auras[index].permanent = false;
     }
 
     pub(crate) fn find(&self, label: &str) -> Option<usize> {
@@ -243,11 +349,14 @@ impl<A: Agent> Fight<A> {
         &mut self.trackers[aura.side.index()].auras[aura.index]
     }
 
+    /// Whether the aura reset activates the aura. An aura Go's agent reset activates later,
+    /// as a druid's starting form, is active after the reset without being permanent.
+    pub(crate) fn set_aura_permanent(&mut self, aura: AuraRef, permanent: bool) {
+        self.aura_mut(aura).permanent = permanent;
+    }
+
     fn unit_label(&self, side: Side) -> String {
-        match side {
-            Side::Player => self.config.player_label.clone(),
-            Side::Target => self.config.target_label.clone(),
-        }
+        self.label_of(side)
     }
 
     /// Go `Aura.Refresh`.
@@ -284,6 +393,24 @@ impl<A: Agent> Fight<A> {
             return;
         }
         assert!(self.aura(aura).duration != 0, "aura with zero duration");
+        // Go activates exclusive effects first: a stronger member of an exclusive category
+        // blocks the activation, otherwise the effects' gains run.
+        if !self.activate_exclusive(aura) {
+            return;
+        }
+        match self.aura(aura).behavior {
+            AuraBehavior::Class(kind) => A::on_exclusive_gain(self, aura, kind),
+            // The party Windfury Totem's effect turns its trigger on, after the air totem slot
+            // has displaced any weaker air totem, unless a stronger effect holds its category.
+            AuraBehavior::WindfuryTotem => {
+                let windfury = self.windfury.as_ref().expect("Windfury Totem is bound");
+                let (trigger, blocked) = (windfury.trigger, windfury.blocked);
+                if !blocked && !self.aura(trigger).active {
+                    self.activate_aura(trigger);
+                }
+            }
+            _ => {}
+        }
         {
             let now = self.now;
             let state = self.aura_mut(aura);
@@ -303,6 +430,7 @@ impl<A: Agent> Fight<A> {
             List::PeriodicDamageDealt,
             List::PeriodicDamageTaken,
             List::EncounterStart,
+            List::HealDealt,
         ] {
             if tracker.auras[aura.index].lists[list as usize] {
                 tracker.add_to(list, aura.index);
@@ -362,11 +490,16 @@ impl<A: Agent> Fight<A> {
             List::PeriodicDamageDealt,
             List::PeriodicDamageTaken,
             List::EncounterStart,
+            List::HealDealt,
         ] {
             tracker.remove_from(list, aura.index);
         }
         if self.aura(aura).stacks != 0 {
             self.set_stacks(aura, 0);
+        }
+        self.deactivate_exclusive(aura);
+        if let Side::Pet(_) = aura.side {
+            self.pet_aura_expired(aura);
         }
         self.on_expire(aura);
     }
@@ -386,9 +519,12 @@ impl<A: Agent> Fight<A> {
             self.unit_log(aura.side, &line);
         }
         self.aura_mut(aura).stacks = new;
-        if let AuraBehavior::Class(kind) = self.aura(aura).behavior {
-            A::on_stacks_change(self, aura, kind, old, new);
+        match self.aura(aura).behavior {
+            AuraBehavior::Class(kind) => A::on_stacks_change(self, aura, kind, old, new),
+            AuraBehavior::ArmorDebuff(proc) => self.armor_debuff_stacks_changed(proc, old, new),
+            _ => {}
         }
+        self.exclusive_stacks_changed(aura, new);
         if self.aura(aura).stacks == 0 {
             self.deactivate_aura(aura);
         }
@@ -404,21 +540,176 @@ impl<A: Agent> Fight<A> {
         self.set_stacks(aura, stacks);
     }
 
+    /// Go `AddStatsDynamic` for a stat aura a class aura owns: the player's stats become the
+    /// combination with the aura's bit set or cleared.
+    pub(crate) fn set_stat_aura(&mut self, bit: u32, active: bool) {
+        let mask = if active {
+            self.stat_mask | bit
+        } else {
+            self.stat_mask & !bit
+        };
+        self.set_stat_mask(mask);
+    }
+
+    /// A stat aura's bit in the active stat mask, by label.
+    pub(crate) fn stat_aura_bit(
+        effects: &[crate::contracts::prepared_v2::Effect],
+        label: &str,
+    ) -> Option<u32> {
+        effects.iter().find_map(|effect| match effect {
+            crate::contracts::prepared_v2::Effect::StatAuras { auras, .. } => auras
+                .iter()
+                .position(|aura| aura == label)
+                .map(|bit| 1 << bit),
+            _ => None,
+        })
+    }
+
     fn on_gain(&mut self, aura: AuraRef) {
+        self.multiply_damage_taken_for(aura, false);
+        if aura.side == Side::Player && !self.fixed_uptime.is_empty() {
+            self.fixed_shout_chain_gain(aura);
+        }
         match self.aura(aura).behavior {
             AuraBehavior::Dot(dot) => self.dot_on_gain(dot),
+            AuraBehavior::Movement => self.movement_changed(aura.side, true),
             AuraBehavior::Eureka => self.eureka_gain(),
+            AuraBehavior::MultiplyAttackAndCastSpeed { attack, cast } => {
+                self.multiply_attack_speed(attack);
+                self.multiply_cast_speed(cast);
+            }
+            AuraBehavior::MultiplySpeeds {
+                melee,
+                ranged,
+                cast,
+            } => self.multiply_speeds(melee, ranged, cast, false),
+            AuraBehavior::MultiplySelfDamageTaken {
+                multiplier,
+                schools,
+            } => self.multiply_self_damage_taken(multiplier, schools, false),
+            AuraBehavior::MultiplyManaRegenSpeed(multiplier) => {
+                self.multiply_mana_regen_speed(multiplier)
+            }
+            AuraBehavior::WindfuryProc { bit } => self.set_stat_mask(self.stat_mask | bit),
+            AuraBehavior::SpellMods(index) => {
+                for position in 0..self.aura_mods[index].len() {
+                    self.activate_mod(self.aura_mods[index][position]);
+                }
+            }
+            AuraBehavior::TemporaryStats { bit, gain_log, .. } => {
+                if let (Some(line), true) = (gain_log, self.log.is_some()) {
+                    let line = self.aura_logs[line].clone();
+                    self.player_log(&line);
+                }
+                self.set_stat_mask(self.stat_mask | bit);
+            }
             AuraBehavior::Class(kind) => A::on_gain(self, aura, kind),
             _ => {}
         }
     }
 
     fn on_expire(&mut self, aura: AuraRef) {
+        self.multiply_damage_taken_for(aura, true);
         match self.aura(aura).behavior {
             AuraBehavior::Dot(dot) => self.dot_on_expire(dot),
+            AuraBehavior::Movement => self.movement_changed(aura.side, false),
             AuraBehavior::Eureka => self.eureka_expire(),
+            AuraBehavior::MultiplyAttackAndCastSpeed { attack, cast } => {
+                self.multiply_attack_speed(1.0 / attack);
+                self.multiply_cast_speed(1.0 / cast);
+            }
+            AuraBehavior::MultiplySpeeds {
+                melee,
+                ranged,
+                cast,
+            } => self.multiply_speeds(melee, ranged, cast, true),
+            AuraBehavior::MultiplySelfDamageTaken {
+                multiplier,
+                schools,
+            } => self.multiply_self_damage_taken(multiplier, schools, true),
+            AuraBehavior::WindfuryProc { bit } => self.set_stat_mask(self.stat_mask & !bit),
+            AuraBehavior::SpellMods(index) => {
+                for position in 0..self.aura_mods[index].len() {
+                    self.deactivate_mod(self.aura_mods[index][position]);
+                }
+            }
+            AuraBehavior::WindfuryTotem => {
+                let trigger = self
+                    .windfury
+                    .as_ref()
+                    .expect("Windfury Totem is bound")
+                    .trigger;
+                self.deactivate_aura(trigger);
+            }
+            AuraBehavior::TemporaryStats {
+                bit, expire_log, ..
+            } => {
+                if let (Some(line), true) = (expire_log, self.log.is_some()) {
+                    let line = self.aura_logs[line].clone();
+                    self.player_log(&line);
+                }
+                self.set_stat_mask(self.stat_mask & !bit);
+            }
+            AuraBehavior::MultiplyManaRegenSpeed(multiplier) => {
+                self.multiply_mana_regen_speed(1.0 / multiplier)
+            }
             AuraBehavior::Class(kind) => A::on_expire(self, aura, kind),
             _ => {}
+        }
+    }
+
+    /// Go `AttachProcTriggerCallback` for an extra attack item: landed melee hits other than
+    /// procs, the cooldown, the chance roll, then the extra attacks at once.
+    fn extra_attack_proc(
+        &mut self,
+        aura: AuraRef,
+        spell: SpellId,
+        result: &SpellResult,
+        chance: f64,
+        attacks: i32,
+    ) {
+        let state = &self.spells[spell];
+        if state.flags.proc || !state.melee_proc || result.outcome & super::OUTCOME_LANDED == 0 {
+            return;
+        }
+        let icd = self.aura(aura).icd;
+        if let Some((timer, _)) = icd {
+            if self.timers[timer] > self.now {
+                return;
+            }
+        }
+        if chance != 1.0 && self.random_for_aura(aura) > chance {
+            return;
+        }
+        if let Some((timer, duration)) = icd {
+            self.timers[timer] = self.now + duration;
+        }
+        self.extra_mh_attacks(attacks);
+    }
+
+    /// Go `AttachMultiplicativePseudoStatBuff` on the player's damage taken multiplier. Its
+    /// callbacks join the aura's others; nothing reads the multiplier between them.
+    fn multiply_damage_taken_for(&mut self, aura: AuraRef, expire: bool) {
+        if aura.side != Side::Player {
+            return;
+        }
+        if self.resetting_auras {
+            return;
+        }
+        for position in 0..self.damage_taken_auras.len() {
+            let (index, multiplier, stat) = self.damage_taken_auras[position];
+            if index == aura.index {
+                let value = match stat {
+                    super::PseudoStat::DamageTaken => &mut self.player.damage_taken_multiplier,
+                    super::PseudoStat::Threat => &mut self.player.threat_multiplier,
+                    super::PseudoStat::DamageDealt => &mut self.player.damage_dealt_multiplier,
+                };
+                if expire {
+                    *value /= multiplier;
+                } else {
+                    *value *= multiplier;
+                }
+            }
         }
     }
 
@@ -430,6 +721,8 @@ impl<A: Agent> Fight<A> {
             list.clear();
         }
         tracker.min_expires = NEVER_EXPIRES;
+        // Few units have an aura another displaces at reset; the rest skip the search.
+        let displacing = tracker.auras.iter().any(|aura| aura.displaced_by.is_some());
         for index in 0..self.trackers[side.index()].auras.len() {
             let state = &mut self.trackers[side.index()].auras[index];
             assert!(
@@ -441,9 +734,39 @@ impl<A: Agent> Fight<A> {
             state.fade_time = -NEVER_EXPIRES;
             if state.permanent {
                 state.duration = NEVER_EXPIRES;
+                // Go ExclusiveEffect.Activate: a stronger later member of the category
+                // deactivates the earlier one before it activates.
+                if displacing {
+                    let label = state.label.clone();
+                    for other in 0..index {
+                        let displaced = &self.trackers[side.index()].auras[other];
+                        if displaced.active && displaced.displaced_by.as_deref() == Some(&label) {
+                            self.displace_aura(AuraRef { side, index: other });
+                        }
+                    }
+                }
+                self.resetting_auras = true;
                 self.activate_aura(AuraRef { side, index });
+                self.resetting_auras = false;
+            } else if state.blocked_at_reset {
+                // Go Aura.Activate counts the proc before the exclusive effect blocks it.
+                state.procs += 1;
             }
         }
+    }
+
+    /// Go `ExclusiveEffect.Deactivate` of a displaced aura's effect: its OnExpire, which for
+    /// the party Windfury Totem turns the trigger off before taking the totem down.
+    fn displace_aura(&mut self, aura: AuraRef) {
+        if let AuraBehavior::WindfuryTotem = self.aura(aura).behavior {
+            let trigger = self
+                .windfury
+                .as_ref()
+                .expect("Windfury Totem is bound")
+                .trigger;
+            self.deactivate_aura(trigger);
+        }
+        self.deactivate_aura(aura);
     }
 
     /// Go `auraTracker.tryAdvance` and `advance`.
@@ -474,6 +797,60 @@ impl<A: Agent> Fight<A> {
         }
     }
 
+    /// Go `AttachHastePseudoStats`'s gain or expiry: each speed it attached, multiplied by its
+    /// multiplier or its reciprocal.
+    fn multiply_speeds(&mut self, melee: f64, ranged: f64, cast: f64, expire: bool) {
+        let factor = |multiplier: f64| if expire { 1.0 / multiplier } else { multiplier };
+        if melee != 1.0 {
+            self.multiply_melee_speed(factor(melee));
+        }
+        if ranged != 1.0 {
+            self.multiply_ranged_speed(factor(ranged));
+        }
+        if cast != 1.0 {
+            self.multiply_cast_speed(factor(cast));
+        }
+    }
+
+    /// Go `APLActionActivateAura.Execute`: an aura whose cooldown is not ready only logs so;
+    /// otherwise it activates and its cooldown starts.
+    pub(crate) fn activate_aura_action(&mut self, aura: AuraRef) {
+        let id = self.aura(aura).action_id.clone().unwrap_or_default();
+        let icd = self.aura(aura).icd;
+        if let Some((timer, _)) = icd {
+            if self.timers[timer] > self.now {
+                if self.log.is_some() {
+                    let line = format!(
+                        "Could not activate aura {} because it's not ready",
+                        super::log::action_string(&id)
+                    );
+                    self.unit_log(aura.side, &line);
+                }
+                return;
+            }
+        }
+        if self.log.is_some() {
+            let line = format!("Activating aura {}", super::log::action_string(&id));
+            self.unit_log(aura.side, &line);
+        }
+        self.activate_aura(aura);
+        if let Some((timer, duration)) = icd {
+            self.timers[timer] = self.now + duration;
+        }
+    }
+
+    /// Go `auraTracker.expireAll`: deactivate the active auras, first listed first.
+    pub(crate) fn expire_all_auras(&mut self, side: Side) {
+        loop {
+            let tracker = &self.trackers[side.index()];
+            let Some(&index) = tracker.lists[List::Active as usize].live().first() else {
+                break;
+            };
+            self.deactivate_aura(AuraRef { side, index });
+        }
+        self.trackers[side.index()].min_expires = NEVER_EXPIRES;
+    }
+
     /// Go `auraTracker.doneIteration`: deactivate every aura in registration order, then
     /// fold this iteration's uptime and procs into the aggregates.
     pub(crate) fn aura_done_iteration(&mut self, side: Side) {
@@ -496,9 +873,28 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    /// Go `auraTracker.OnCastComplete`. No active check, as in Go.
+    /// Go `auraTracker.OnCastComplete` on the caster. No active check, as in Go.
     pub(crate) fn on_cast_complete(&mut self, spell: SpellId) {
         let list = List::CastComplete as usize;
+        let side = self.spells[spell].caster;
+        let length = self.trackers[side.index()].lists[list].snapshot_len();
+        for position in 0..length {
+            let index = self.trackers[side.index()].lists[list].read(position);
+            let aura = AuraRef { side, index };
+            match self.aura(aura).behavior {
+                AuraBehavior::Class(kind) => A::on_cast_complete(self, aura, kind, spell),
+                AuraBehavior::Eureka => self.eureka_cast_complete(spell),
+                AuraBehavior::SpellDataStatProc(proc) if self.spell_stat_procs[proc].casts => {
+                    self.spell_stat_proc_callback(aura, proc, spell, None)
+                }
+                _ => {}
+            }
+        }
+    }
+
+    /// Go `auraTracker.OnApplyEffects` on the caster. No active check, as in Go.
+    pub(crate) fn on_apply_effects(&mut self, spell: SpellId, target: Side) {
+        let list = List::ApplyEffects as usize;
         let length = self.trackers[Side::Player.index()].lists[list].snapshot_len();
         for position in 0..length {
             let index = self.trackers[Side::Player.index()].lists[list].read(position);
@@ -506,9 +902,43 @@ impl<A: Agent> Fight<A> {
                 side: Side::Player,
                 index,
             };
+            if let AuraBehavior::Class(kind) = self.aura(aura).behavior {
+                A::on_apply_effects(self, aura, kind, spell, target);
+            }
+        }
+    }
+
+    /// Go `auraTracker.OnPeriodicDamageDealt` on the caster, which skips no inactive aura. No
+    /// target aura in scope acts on periodic damage taken.
+    pub(crate) fn on_periodic_damage(&mut self, spell: SpellId, result: &SpellResult) {
+        let side = self.spells[spell].caster;
+        let list = List::PeriodicDamageDealt as usize;
+        let length = self.trackers[side.index()].lists[list].snapshot_len();
+        for position in 0..length {
+            let index = self.trackers[side.index()].lists[list].read(position);
+            let aura = AuraRef { side, index };
+            if let AuraBehavior::Class(kind) = self.aura(aura).behavior {
+                A::on_periodic_damage_dealt(self, aura, kind, spell, result);
+            }
+        }
+    }
+
+    /// Go `auraTracker.OnHealDealt` on the caster, for the class auras that listen to heals.
+    pub(crate) fn on_heal_dealt(&mut self, spell: SpellId, result: &SpellResult) {
+        let side = self.spells[spell].caster;
+        let list = List::HealDealt as usize;
+        let length = self.trackers[side.index()].lists[list].snapshot_len();
+        for position in 0..length {
+            let index = self.trackers[side.index()].lists[list].read(position);
+            let aura = AuraRef { side, index };
+            if !self.aura(aura).active {
+                continue;
+            }
             match self.aura(aura).behavior {
-                AuraBehavior::Class(kind) => A::on_cast_complete(self, aura, kind, spell),
-                AuraBehavior::Eureka => self.eureka_cast_complete(spell),
+                AuraBehavior::Class(kind) => A::on_heal_dealt(self, aura, kind, spell, result),
+                AuraBehavior::SpellDataStatProc(proc) if self.spell_stat_procs[proc].heals => {
+                    self.spell_stat_proc_callback(aura, proc, spell, Some(result))
+                }
                 _ => {}
             }
         }
@@ -516,10 +946,13 @@ impl<A: Agent> Fight<A> {
 
     /// Go `auraTracker.OnSpellHitDealt` on the caster and `OnSpellHitTaken` on the target.
     pub(crate) fn on_spell_hit(&mut self, spell: SpellId, result: &SpellResult) {
+        let caster = self.spells[spell].caster;
         for (side, list) in [
-            (Side::Player, List::SpellHitDealt),
+            (caster, List::SpellHitDealt),
             (result.target, List::SpellHitTaken),
         ] {
+            // Listeners of the caster's hits, as opposed to the hits its target takes.
+            let dealt = list == List::SpellHitDealt;
             let list = list as usize;
             let length = self.trackers[side.index()].lists[list].snapshot_len();
             for position in 0..length {
@@ -529,14 +962,88 @@ impl<A: Agent> Fight<A> {
                     continue;
                 }
                 match self.aura(aura).behavior.clone() {
-                    AuraBehavior::Class(kind) if side == Side::Player => {
+                    AuraBehavior::Class(kind) if dealt => {
                         A::on_spell_hit_dealt(self, aura, kind, spell, result)
+                    }
+                    AuraBehavior::Class(kind) => {
+                        A::on_spell_hit_taken(self, aura, kind, spell, result)
+                    }
+                    AuraBehavior::RageBar if dealt => self.rage_bar_hit_dealt(spell, result),
+                    AuraBehavior::ExtraAttackProc { chance, attacks } if dealt => {
+                        self.extra_attack_proc(aura, spell, result, chance, attacks)
+                    }
+                    AuraBehavior::RageBar if side == Side::Player => {
+                        self.rage_bar_hit_taken(result)
                     }
                     AuraBehavior::JudgementOfWisdom { chance, delay, .. } => {
                         self.judgement_of_wisdom_callback(aura, spell, result, chance, delay)
                     }
-                    AuraBehavior::TouchOfTheGrave { chance, delay, .. } if side == Side::Player => {
+                    AuraBehavior::TouchOfTheGrave { chance, delay, .. } if dealt => {
                         self.touch_of_the_grave_callback(aura, spell, result, chance, delay)
+                    }
+                    AuraBehavior::WindfuryTrigger if dealt => {
+                        self.windfury_trigger(aura, spell, result)
+                    }
+                    AuraBehavior::WindfuryProc { .. } if dealt => {
+                        let windfury = self.windfury.as_ref().expect("Windfury Totem is bound");
+                        // The charges' own trigger: a landed auto spends one, at once.
+                        if windfury.spend_spells[spell]
+                            && result.outcome & super::OUTCOME_LANDED != 0
+                            && !(windfury.spend_require_damage && result.damage == 0.0)
+                        {
+                            self.remove_stack(aura);
+                        }
+                    }
+                    AuraBehavior::Crusader if dealt => self.crusader_callback(aura, spell, result),
+                    AuraBehavior::EmeraldDragonWhelp if dealt => {
+                        self.whelp_callback(aura, spell, result)
+                    }
+                    AuraBehavior::SulfurasProc if dealt => {
+                        self.sulfuras_callback(aura, spell, result)
+                    }
+
+                    AuraBehavior::DragonbreathChili if dealt => {
+                        self.chili_callback(aura, spell, result)
+                    }
+                    AuraBehavior::SpellDataDamageProc(proc)
+                        if dealt != self.damage_procs[proc].struck =>
+                    {
+                        self.damage_proc_callback(aura, proc, Some(spell), result)
+                    }
+                    AuraBehavior::HealProc(proc) if dealt => {
+                        self.heal_proc_callback(aura, proc, spell, result)
+                    }
+                    AuraBehavior::HealthRageProc(proc) if dealt => {
+                        self.health_rage_proc_callback(aura, proc, spell, result)
+                    }
+                    AuraBehavior::ArmorDebuffTrigger(proc) if dealt => {
+                        self.armor_debuff_proc_callback(aura, proc, spell, result)
+                    }
+                    AuraBehavior::SpellDataStatProc(proc)
+                        if dealt && self.spell_stat_procs[proc].hits =>
+                    {
+                        self.spell_stat_proc_callback(aura, proc, spell, Some(result))
+                    }
+                    AuraBehavior::StatProc(proc) if dealt => {
+                        // Go AttachProcTriggerCallback: landed hits the manager hears, its roll
+                        // under the trigger's name, then the handler a batch window later.
+                        if result.outcome & super::OUTCOME_LANDED == 0 {
+                            continue;
+                        }
+                        let Some(chance) = self.stat_procs[proc].0[spell] else {
+                            continue;
+                        };
+                        // Go `Proc(chance, label)`, reading the label in place.
+                        if self.rng.proc(chance, &self.stat_procs[proc].1) {
+                            self.schedule_delayed_proc(aura, spell, *result);
+                        }
+                    }
+                    AuraBehavior::ChanceOfDeath if !dealt && side == Side::Player => {
+                        self.chance_of_death_hit_taken(result)
+                    }
+                    AuraBehavior::ParryHaste if !dealt => self.parry_haste(side, result),
+                    AuraBehavior::EnergizeProc(index) if dealt => {
+                        self.energize_proc_callback(aura, index, spell, result)
                     }
                     _ => {}
                 }
@@ -573,19 +1080,290 @@ impl<A: Agent> Fight<A> {
         );
     }
 
+    /// Go `AttachProcTriggerCallback`'s delayed handler: run it a spell batch window from now.
+    pub(crate) fn schedule_delayed_proc(
+        &mut self,
+        aura: AuraRef,
+        spell: SpellId,
+        result: SpellResult,
+    ) {
+        self.schedule(
+            self.now + super::SPELL_BATCH_WINDOW,
+            super::PRIORITY_DOT,
+            super::Action::DelayedProc {
+                aura,
+                spell,
+                result,
+            },
+        );
+    }
+
+    /// Go `AttachProcTriggerCallback` for the Windfury Totem trigger: landed hits, the
+    /// cooldown, the chance roll; then charges, one fewer when an auto granted them, and an
+    /// extra main hand attack at once.
+    fn windfury_trigger(&mut self, aura: AuraRef, spell: SpellId, result: &SpellResult) {
+        let windfury = self.windfury.as_ref().expect("Windfury Totem is bound");
+        if !windfury.trigger_spells[spell] || result.outcome & super::OUTCOME_LANDED == 0 {
+            return;
+        }
+        if windfury.trigger_require_damage && result.damage == 0.0 {
+            return;
+        }
+        let (trigger_chance, proc_aura, extra) =
+            (windfury.trigger_chance, windfury.proc_aura, windfury.extra);
+        let icd = self.aura(aura).icd;
+        if let Some((timer, _)) = icd {
+            if self.timers[timer] > self.now {
+                return;
+            }
+        }
+        if trigger_chance != 1.0 && self.random_for_aura(aura) > trigger_chance {
+            return;
+        }
+        if let Some((timer, duration)) = icd {
+            self.timers[timer] = self.now + duration;
+        }
+        self.activate_aura(proc_aura);
+        let mut charges = self.aura(proc_aura).max_stacks;
+        if self.spells[spell].white_hit {
+            charges -= 1;
+        }
+        self.set_stacks(proc_aura, charges);
+        // Go MaybeReplaceMHSwing: a queued Heroic Strike replaces the extra swing too.
+        let mut extra = extra.expect("a Windfury Totem a spell triggers has an extra attack");
+        if self.config.melee.replace_main_hand_swing {
+            extra = A::replace_mh_swing(self, extra);
+        }
+        self.cast(extra, result.target);
+    }
+
+    /// Go `AttachProcTriggerCallback` for Crusader: a weapon proc on landed hits that rolls the
+    /// hand's chance, then waits a spell batch window.
+    fn crusader_callback(&mut self, aura: AuraRef, spell: SpellId, result: &SpellResult) {
+        if result.outcome & super::OUTCOME_LANDED == 0 {
+            return;
+        }
+        let Some(chance) = self
+            .crusader
+            .as_ref()
+            .and_then(|crusader| crusader.chances[spell])
+        else {
+            return;
+        };
+        if !self.proc_for_aura(chance, aura) {
+            return;
+        }
+        self.schedule_delayed_proc(aura, spell, *result);
+    }
+
+    /// Go `AttachProcTriggerCallback` for an item damage proc: its spells and outcome, a hit
+    /// that dealt damage, its cooldown and chance; then the damage spell at once, on the unit
+    /// hit unless that is the wearer.
+    pub(crate) fn damage_proc_callback(
+        &mut self,
+        aura: AuraRef,
+        proc: usize,
+        spell: Option<SpellId>,
+        result: &SpellResult,
+    ) {
+        let state = &self.damage_procs[proc];
+        // A struck proc's trigger mask: melee and ranged hits, none flagged a proc. The
+        // target's swing, which has no spell of the player's, is such a hit.
+        let heard = match spell {
+            None => state.struck,
+            Some(spell) if state.struck => {
+                self.spells[spell].melee_or_ranged_proc && !self.spells[spell].flags.proc
+            }
+            Some(spell) => state.trigger_spells[spell],
+        };
+        if !heard
+            || (state.landed_only && result.outcome & super::OUTCOME_LANDED == 0)
+            || (state.require_damage && result.damage == 0.0)
+        {
+            return;
+        }
+        let (chance, damage_spell) = (state.chance, state.spell);
+        // The target's swing is no spell of the player's; no proc manager in scope hears it.
+        let manager = state
+            .chances
+            .as_ref()
+            .map(|chances| spell.and_then(|spell| chances[spell]));
+        let icd = self.aura(aura).icd;
+        if let Some((timer, _)) = icd {
+            if self.timers[timer] > self.now {
+                return;
+            }
+        }
+        if chance != 1.0 && self.random_for_aura(aura) > chance {
+            return;
+        }
+        // Go `DynamicProcManager.Proc` under the trigger's name, after the static chance; a spell
+        // its masks miss never procs.
+        if let Some(manager) = manager {
+            match manager {
+                Some(chance) if self.proc_for_aura(chance, aura) => {}
+                _ => return,
+            }
+        }
+        if let Some((timer, duration)) = icd {
+            self.timers[timer] = self.now + duration;
+        }
+        let target = if result.target == Side::Player {
+            Side::Target
+        } else {
+            result.target
+        };
+        self.cast(damage_spell, target);
+    }
+
+    /// Go `AttachProcTriggerCallback` for a spell data stat proc: the spells it hears, and for a
+    /// hit or heal its outcome and damage; its cooldown and chance; then the handler a spell batch
+    /// window later. A cast carries no result.
+    fn spell_stat_proc_callback(
+        &mut self,
+        aura: AuraRef,
+        proc: usize,
+        spell: SpellId,
+        result: Option<&SpellResult>,
+    ) {
+        let state = &self.spell_stat_procs[proc];
+        if !state.trigger_spells[spell] {
+            return;
+        }
+        if let Some(result) = result {
+            if (state.landed_only && result.outcome & super::OUTCOME_LANDED == 0)
+                || (state.require_damage && result.damage == 0.0)
+            {
+                return;
+            }
+        }
+        let chance = state.chance;
+        let icd = self.aura(aura).icd;
+        if let Some((timer, _)) = icd {
+            if self.timers[timer] > self.now {
+                return;
+            }
+        }
+        if chance != 1.0 && self.random_for_aura(aura) > chance {
+            return;
+        }
+        if let Some((timer, duration)) = icd {
+            self.timers[timer] = self.now + duration;
+        }
+        let result = result.copied().unwrap_or(SpellResult {
+            target: Side::Target,
+            outcome: 0,
+            damage: 0.0,
+            threat: 0.0,
+        });
+        self.schedule_delayed_proc(aura, spell, result);
+    }
+
+    /// Go `AttachProcTriggerCallback` for Dragonbreath Chili: landed melee hits, its cooldown,
+    /// then a chance roll, and the cast a spell batch window later.
+    fn chili_callback(&mut self, aura: AuraRef, spell: SpellId, result: &SpellResult) {
+        let Some(chili) = self.chili.as_ref() else {
+            return;
+        };
+        if !chili.spells[spell] || result.outcome & super::OUTCOME_LANDED == 0 {
+            return;
+        }
+        let (chance, delay) = (chili.proc_chance, chili.delay);
+        let icd = self.aura(aura).icd;
+        if let Some((timer, _)) = icd {
+            if self.timers[timer] > self.now {
+                return;
+            }
+        }
+        if chance != 1.0 && self.random_for_aura(aura) > chance {
+            return;
+        }
+        if let Some((timer, duration)) = icd {
+            self.timers[timer] = self.now + duration;
+        }
+        let result = *result;
+        self.schedule(
+            self.now + delay,
+            super::PRIORITY_DOT,
+            super::Action::DelayedProc {
+                aura,
+                spell,
+                result,
+            },
+        );
+    }
+
     /// The delayed half of a proc trigger.
     pub(crate) fn delayed_proc(&mut self, aura: AuraRef, spell: SpellId, result: SpellResult) {
         match self.aura(aura).behavior.clone() {
             AuraBehavior::JudgementOfWisdom { mana, metrics, .. } => {
-                // Go checks melee or ranged before landing; spells must land.
-                if result.outcome & super::OUTCOME_LANDED == 0 {
+                // Go: melee and ranged hits always pay; spells must land.
+                if !self.spells[spell].melee_or_ranged_proc
+                    && result.outcome & super::OUTCOME_LANDED == 0
+                {
                     return;
                 }
+                // Go gives the mana to the attacker, each unit with its own metrics, which a
+                // pet registers at its first proc.
+                // Go: a unit without a mana bar gains nothing.
+                let caster = self.spells[spell].caster;
+                if self.unit_config(caster).max_mana <= 0.0 {
+                    return;
+                }
+                let metrics = match caster {
+                    Side::Pet(_) => {
+                        let id = self.resources[metrics].id.clone();
+                        match self.active_pet(caster).jow_metrics {
+                            Some(existing) => existing,
+                            None => {
+                                let created = self.new_mana_metrics_of(caster, id);
+                                self.active_pet_mut(caster).jow_metrics = Some(created);
+                                created
+                            }
+                        }
+                    }
+                    _ => metrics,
+                };
                 self.add_mana(mana, metrics);
             }
             AuraBehavior::TouchOfTheGrave { drain, .. } => {
                 self.cast(drain, result.target);
             }
+            AuraBehavior::Crusader => {
+                let crusader = self.crusader.as_ref().expect("Crusader is bound");
+                // Go Ternary(spell.IsOH(), ohAura, mhAura).
+                let hand = if self.spells[spell].off_hand_proc {
+                    crusader.oh_aura
+                } else {
+                    crusader.mh_aura
+                };
+                let (heal_min, heal_max, heal_metrics) =
+                    (crusader.heal_min, crusader.heal_max, crusader.heal_metrics);
+                self.activate_aura(hand);
+                let heal = self.go_roll(heal_min, heal_max);
+                self.gain_health(heal, heal_metrics);
+            }
+            AuraBehavior::EmeraldDragonWhelp => self.whelp_summon(),
+            AuraBehavior::SulfurasImmolation => self.sulfuras_immolation_hit(),
+            AuraBehavior::StatProc(proc) => {
+                let aura = self.stat_procs[proc].2;
+                self.activate_aura(aura);
+            }
+            AuraBehavior::HealthRageProc(proc) => self.health_rage_proc_handler(proc),
+            AuraBehavior::ArmorDebuffTrigger(proc) => self.armor_debuff_proc_handler(proc),
+            AuraBehavior::SpellDataStatProc(proc) => {
+                let aura = self.spell_stat_procs[proc].aura;
+                self.activate_aura(aura);
+            }
+            AuraBehavior::DragonbreathChili => {
+                let spell = self
+                    .chili
+                    .as_ref()
+                    .expect("Dragonbreath Chili is bound")
+                    .spell;
+                self.cast(spell, result.target);
+            }
+            AuraBehavior::EnergizeProc(index) => self.energize_proc_handler(index),
             AuraBehavior::Class(kind) => A::on_delayed_proc(self, aura, kind, spell, result),
             _ => {}
         }

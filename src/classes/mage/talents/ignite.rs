@@ -78,7 +78,8 @@ impl Ignite {
             0.0
         };
         fight.cast(self.spell, result.target);
+        // Go's arm64 build fuses the share's multiply into the owed amount.
         fight.dots[self.dot].snapshot_base =
-            (owed + result.damage * self.share) / f64::from(self.num_ticks);
+            result.damage.mul_add(self.share, owed) / f64::from(self.num_ticks);
     }
 }

@@ -956,7 +956,10 @@
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
-        "damage_effect": null
+        "damage_effect": {
+          "average": 248,
+          "variance": 0.07905138283967972
+        }
       },
       {
         "action_id": {
@@ -2139,7 +2142,10 @@
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
-        "damage_effect": null
+        "damage_effect": {
+          "average": 343,
+          "variance": 0.08571428805589676
+        }
       },
       {
         "action_id": {
@@ -2881,7 +2887,10 @@
           "haste_reduces_duration": false,
           "channeled": false
         },
-        "damage_effect": null
+        "damage_effect": {
+          "average": 110,
+          "variance": 0.15340909361839294
+        }
       },
       {
         "action_id": {
@@ -2952,7 +2961,10 @@
           "haste_reduces_duration": false,
           "channeled": false
         },
-        "damage_effect": null
+        "damage_effect": {
+          "average": 195,
+          "variance": 0.15340909361839294
+        }
       },
       {
         "action_id": {
@@ -3023,7 +3035,10 @@
           "haste_reduces_duration": false,
           "channeled": false
         },
-        "damage_effect": null
+        "damage_effect": {
+          "average": 292,
+          "variance": 0.15340909361839294
+        }
       },
       {
         "action_id": {
@@ -4091,7 +4106,10 @@
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
-        "damage_effect": null
+        "damage_effect": {
+          "average": 75,
+          "variance": 0.1066666692495346
+        }
       },
       {
         "action_id": {
@@ -4801,7 +4819,10 @@
           "haste_reduces_duration": false,
           "channeled": false
         },
-        "damage_effect": null
+        "damage_effect": {
+          "average": 423,
+          "variance": 0.20143884420394897
+        }
       },
       {
         "action_id": {
@@ -4927,7 +4948,64 @@
           }
         }
       ]
-    }
+    },
+    "prepull_actions": 0
+  },
+  "melee": {
+    "auto_swing_melee": false,
+    "auto_swing_ranged": false,
+    "dual_wielding": false,
+    "main_hand": {
+      "base_damage_min": 0,
+      "base_damage_max": 0,
+      "attack_power_per_dps": 0,
+      "swing_speed": 0,
+      "normalized_swing_speed": 0,
+      "school": 0,
+      "min_range": 0,
+      "max_range": 0
+    },
+    "off_hand": {
+      "base_damage_min": 0,
+      "base_damage_max": 0,
+      "attack_power_per_dps": 0,
+      "swing_speed": 0,
+      "normalized_swing_speed": 0,
+      "school": 0,
+      "min_range": 0,
+      "max_range": 0
+    },
+    "ranged": {
+      "base_damage_min": 0,
+      "base_damage_max": 0,
+      "attack_power_per_dps": 0,
+      "swing_speed": 0,
+      "normalized_swing_speed": 0,
+      "school": 0,
+      "min_range": 0,
+      "max_range": 0
+    },
+    "base_miss_chance": 0.08,
+    "base_glance_chance": 0.4,
+    "glance_multiplier": 0.65,
+    "glance_spread": 0.1,
+    "hit_suppression": 0.01,
+    "melee_crit_suppression": 0.048,
+    "ignore_armor": false,
+    "armor_ignore_factor": 0,
+    "in_front_of_target": false,
+    "attack_speed_multiplier": 1,
+    "melee_speed_multiplier": 1,
+    "dodge_reduction": 0,
+    "disable_dw_miss_penalty": false,
+    "defender_dodge": 0.065,
+    "defender_parry": 0.14,
+    "defender_block": 0.05,
+    "defender_armor": 0,
+    "defender_block_reduction": 54,
+    "defender_bonus_attack_power": 0,
+    "defender_bonus_physical_damage_taken": 0,
+    "defender_reduced_physical_hit_taken": 0
   },
   "effects": [
     {
@@ -5046,7 +5124,51 @@
       ]
     },
     {
+      "kind": "frostfire_bolt",
+      "ranks": [
+        {
+          "spell_id": 401502,
+          "tick_base": 9,
+          "tick_can_crit": true
+        },
+        {
+          "spell_id": 1237312,
+          "tick_base": 13,
+          "tick_can_crit": true
+        },
+        {
+          "spell_id": 1237313,
+          "tick_base": 19,
+          "tick_can_crit": true
+        }
+      ]
+    },
+    {
       "kind": "scorch"
+    },
+    {
+      "kind": "arcane_explosion"
+    },
+    {
+      "kind": "cone_of_cold"
+    },
+    {
+      "kind": "frost_nova"
+    },
+    {
+      "kind": "flamestrike",
+      "ranks": [
+        {
+          "spell_id": 10216,
+          "tick_base": 83
+        }
+      ]
+    },
+    {
+      "kind": "blizzard",
+      "spell_id": 10187,
+      "tick_base": 146,
+      "tick_spell_id": 1279949
     },
     {
       "gems": [

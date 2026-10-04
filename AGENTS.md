@@ -17,3 +17,5 @@
 - Do not use em dashes or en dashes in prose, comments, commits or Markdown.
 - Use the configured human Git author. No AI coauthor trailers, generation footers,
   task links or session links in commits and PRs.
+- Name a branch after the change itself, such as `feral-bear-parity`, never with a
+  `claude/` prefix or any other tool or agent prefix.

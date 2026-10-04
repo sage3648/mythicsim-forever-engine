@@ -3,7 +3,7 @@
 
 mod coverage;
 
-pub(crate) use coverage::{prepared_coverage, IMPLEMENTED_EFFECTS};
+pub(crate) use coverage::GATE;
 
 /// Run a prepared v2 input that passed the coverage gate with the Mage agent.
 pub(crate) fn run_prepared(
