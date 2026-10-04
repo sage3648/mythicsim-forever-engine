@@ -6,8 +6,8 @@ use std::rc::Rc;
 use crate::{
     contracts::prepared_v2::{Effect, PreparedV2, Spell as ExportedSpell},
     core::fight::{
-        healing::Healing, Agent, AuraRef, DotId, Fight, Outcome, Side, SpellBehavior, SpellId,
-        SpellResult, PRIORITY_REGEN,
+        healing::Healing, school_damage_index, Agent, AuraRef, DotId, Fight, Outcome, Side,
+        SpellBehavior, SpellId, SpellResult, PRIORITY_REGEN,
     },
 };
 
@@ -565,12 +565,9 @@ impl WarlockAgent {
                                 min_damage: *min_damage,
                                 max_damage: *max_damage,
                                 coefficient: *spell_power_coefficient,
-                                school_power: prepared
-                                    .player
-                                    .stats
-                                    .get(stat)
-                                    .copied()
-                                    .ok_or_else(|| format!("prepared stats lack {stat}"))?,
+                                school: school_damage_index(stat).ok_or_else(|| {
+                                    format!("{stat} is not a school spell damage stat")
+                                })?,
                             })
                         }
                         _ => return Err("Demonic Brand's demon half is incomplete".into()),

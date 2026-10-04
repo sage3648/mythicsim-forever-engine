@@ -5175,6 +5175,27 @@
         "file": "feral-druid-wildheart-raiment.go-result.json",
         "sha256": "84ffac399293adbc5efbcd0631bd489cc86bedb3a561284d223e6d382a7bd4b2"
       }
+    },
+    {
+      "id": "demonology-warlock-frozen-heart",
+      "description": "Demonology Warlock opening with Searing Pain while Frozen Heart of the Mountain is up, so the Succubus's Demonic Brand hits read the raised Shadow damage",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/demonology-warlock-frozen-heart.request.json"
+      },
+      "prepared": "demonology-warlock-frozen-heart.prepared.json",
+      "prepared_sha256": "fcfb8136eff05d5a141d0a8b608d48c5ab7303b3364708d0c9ccf2c376a3768b",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "demonology-warlock-frozen-heart.go-result.json",
+        "sha256": "a5b055d38fbc4e3a26f1341ed53665710e9432ade7469f4ad42fadfeabc5f841"
+      },
+      "go_log": {
+        "file": "demonology-warlock-frozen-heart.go-log.txt",
+        "sha256": "2591868d5435c421de5df5227e6f6c3748b97351b9d0fd7db184eba2349a018f"
+      }
     }
   ]
 }

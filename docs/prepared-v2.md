@@ -518,7 +518,9 @@ Siphon Life, Bane of Doom, Drain Life, Wrack and Incinerate to the production ro
 and `demonology-warlock-orc` is the Orc race board request, whose Blood Fury the dynamic
 Succubus inherits. `affliction-warlock-death-coil` casts Death Coil, whose heal
 reaches healing done, and `demonology-warlock-recklessness` curses with Recklessness beside
-the raid's ramping Sunder Armor. `production-fire` and
+the raid's ramping Sunder Armor. `demonology-warlock-frozen-heart` opens with Searing Pain
+while Frozen Heart of the Mountain is up, so the Succubus's Demonic Brand hits read the
+raised Shadow damage. `production-fire` and
 `production-frostfire` are the production application's Fire Missile Barrage and
 Frostfire hybrid requests at application revision 18bbcd47; its Arcane and Frost requests
 are byte-identical to `arcane-reference` and `frost-reference`. `frostfire-resistances`

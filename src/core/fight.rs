@@ -1315,6 +1315,14 @@ const SCHOOL_DAMAGE_STATS: [(usize, &str); 6] = [
     (6, "NatureDamage"),
     (7, "ShadowDamage"),
 ];
+
+/// The Go school index of a school spell damage stat, such as 7 for `ShadowDamage`.
+pub(crate) fn school_damage_index(stat: &str) -> Option<usize> {
+    SCHOOL_DAMAGE_STATS
+        .iter()
+        .find(|(_, name)| *name == stat)
+        .map(|(index, _)| *index)
+}
 /// The resistance stats by Go school index.
 const RESISTANCE_STATS: [(usize, &str); 5] = [
     (2, "ArcaneResistance"),
