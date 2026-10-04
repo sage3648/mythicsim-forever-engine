@@ -218,3 +218,61 @@ fn wildheart_raiment_is_inert_on_a_cat() {
         &"player aura \"Wildheart Raiment 5P\" listens to combat events without an effect".into()
     ));
 }
+
+fn boomerang(case: &str) -> Value {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join(format!("fixtures/mage/prepared-v2/{case}.prepared.json"));
+    serde_json::from_slice(&fs::read(path).unwrap()).unwrap()
+}
+
+const BOOMERANG_REFUSAL: &str =
+    "rotation reaches item 11905, a hardcast while the target swings at the player";
+
+/// A tank's hardcast with the pushback flag runs through the "Pushback trigger" the exporter
+/// reads: without it, or with a chance that needs a roll, the gate still refuses it.
+#[test]
+fn a_tanking_pushback_hardcast_needs_the_trigger_and_a_certain_chance() {
+    let value = boomerang("feral-bear-druid-boomerang-pushback");
+    assert_eq!(check_prepared(&parse(value.clone())), Ok(()));
+
+    let mut untriggered = value.clone();
+    untriggered["effects"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|effect| effect["kind"] != "pushback_trigger");
+    assert!(reasons(untriggered).contains(&BOOMERANG_REFUSAL.into()));
+
+    let mut rolled = value.clone();
+    effect(&mut rolled, "pushback_trigger")["chance"] = json!(0.65);
+    assert!(reasons(rolled).contains(
+        &"rotation reaches item 11905, a hardcast the target's swings push back with a chance \
+          that needs a roll"
+            .into()
+    ));
+
+    // A chance the cast's resist cancels never rolls and never pushes back.
+    let mut resisted = value.clone();
+    effect(&mut resisted, "pushback_trigger")["chance"] = json!(0.0);
+    assert_eq!(check_prepared(&parse(resisted.clone())), Ok(()));
+    assert!(!first_fight_log(resisted).contains("pushed back"));
+
+    // A hardcast without the reduced avoidance rolls keeps its refusal.
+    let mut unrolled = value;
+    unrolled["enemy"]
+        .as_object_mut()
+        .unwrap()
+        .remove("reduced_avoidance_rolls");
+    assert!(reasons(unrolled).contains(&BOOMERANG_REFUSAL.into()));
+}
+
+/// Go pushes back by the time the cast has run, never more than half a second, and a hit in the
+/// batch window before the cast completes still pushes the finished cast back and completes it
+/// again.
+#[test]
+fn a_hit_pushes_the_hardcast_back_by_the_time_it_has_run() {
+    let log = first_fight_log(boomerang("feral-bear-druid-boomerang-pushback"));
+    assert!(log.contains("{ItemID: 11905} pushed back 475.418331ms while casting"));
+    let log = first_fight_log(boomerang("feral-bear-druid-boomerang-pushback-after-cast"));
+    assert!(log.contains("{ItemID: 11905} pushed back 500ms while casting"));
+    assert_eq!(log.matches("Completed cast {ItemID: 11905}").count(), 2);
+}

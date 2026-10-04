@@ -267,6 +267,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `penance` | sim/priest/penance.go | The bolt's base and crit; a channel that ticks on application and each second |
 | `power_in_light` | sim/priest/talents_discipline.go | The target's damage taken multiplier, the spells it multiplies and the Holy Fire dots it waits for |
 | `searing_light` | sim/priest/talents_holy.go | The resolved trigger on Holy Fire ticks, Holy Purpose's Holy Nova cost modifier and the casts that end it |
+| `pushback_trigger` | sim/core/character.go | A tanking player's "Pushback trigger" aura and the player's pushback chance, which each spell's resist reduces; a damaging hit during a hardcast with the pushback flag pushes the cast back a spell batch window later, by at most half a second and never past the time the cast has run |
 | `parry_haste` | sim/core/attack.go applyParryHaste | Which unit's Parry Haste acts once the target swings at the player, a parry pulling that unit's next main hand swing in; for a target nobody tanks, its swing speed and melee haste, since its reset still rolls a swing timer that a parry pulls in and logs |
 | `inert_pet` | sim/core/pet.go | A registered pet nothing summons: label, unit index, metrics actions and auras, the permanent auras each reset activates, its dismissed stats line and why it is inert |
 | `sinister_strike`, `backstab` | sim/rogue/sinister_strike.go, backstab.go | The highest rank's base on normalized main hand damage; Backstab's main hand dagger and Puncturing Wounds' combo point chance |
@@ -611,7 +612,11 @@ leaving at the end removes health to keep its fraction of the falling maximum.
 spell and shift back, `feral-bear-druid-potion-shift-tauren` does so as a Tauren, and
 `feral-bear-druid-caster-interval` tanks in caster form for ten seconds before shifting back.
 `feral-bear-druid-demonic-rune-autocast` carries Demonic Rune, whose automatic use waits for a
-caster form the bear never takes.
+caster form the bear never takes. `feral-bear-druid-boomerang-pushback` stands the bear 10
+yards out with Linken's Boomerang, whose half second hardcast the target's swing pushes back,
+and `feral-bear-druid-boomerang-pushback-after-cast` is the seed where the hit lands in the
+batch window before the cast completes: Go pushes the finished cast back all the same and
+completes it twice.
 `feral-druid-mighty-rage-potion` has the cat drink Mighty Rage Potion, whose Rage goes to the
 cat's rage bar. `feral-druid-threat-enchant` and `feral-bear-druid-subtlety-enchant` wear the
 Threat and Subtlety enchants, whose permanent auras multiply the threat each form starts from.
@@ -719,8 +724,9 @@ cargo run --locked -- check --infile fixtures/mage/prepared-v2/frost-reference.p
 - The contract describes one player, one target and the player's pets, any number of them
   simulated. Multiple targets and job modes such as stat weights need contract additions.
 - Incoming damage covers the target's main hand swing at the one player tanking it. The
-  gate rejects a dual wielding or ranged target, a healing model, a cast that can be pushed
-  back or a channel with a cast time the rotation can reach while tanking, listeners of the
+  gate rejects a dual wielding or ranged target, a healing model, a channel with a cast time
+  or a cast pushed back with a chance that needs a roll that the rotation can reach while
+  tanking, listeners of the
   swing without an effect that handles them, and any aura something in scope activates that
   would change the swing: an aura counts when an effect claims it or carries its label
   anywhere, since a class may activate an aura its effect carries without claiming it. Stat auras, among them the Paladin's Redoubt, Holy Shield, Iron

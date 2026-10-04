@@ -3568,6 +3568,14 @@ pub enum Effect {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         melee_haste_multiplier: Option<f64>,
     },
+    /// Go character.go's "Pushback trigger" on a tanking player: a landed hit that deals damage
+    /// during a hardcast with the pushback flag pushes the cast back a spell batch window later.
+    /// `chance` is the player's `PseudoStats.PushbackChance`, which each spell's
+    /// `pushback_resist` reduces.
+    PushbackTrigger {
+        aura: String,
+        chance: f64,
+    },
     /// An item proc trigger that restores energy a spell batch window after a landed hit, such
     /// as Shadowcraft Armor's: the chance each spell rolls, by spellbook position.
     EnergizeProc {
@@ -3899,6 +3907,7 @@ impl Effect {
             Effect::Frenzy { .. } => "frenzy",
             Effect::ChanceOfDeath { .. } => "chance_of_death",
             Effect::ParryHaste { .. } => "parry_haste",
+            Effect::PushbackTrigger { .. } => "pushback_trigger",
             Effect::FixedUptimeAura { .. } => "fixed_uptime_aura",
             Effect::EnergizeProc { .. } => "energize_proc",
         }
