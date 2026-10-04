@@ -888,7 +888,7 @@ impl<A: Agent> Fight<A> {
                 AuraBehavior::Class(kind) => A::on_cast_complete(self, aura, kind, spell),
                 AuraBehavior::Eureka => self.eureka_cast_complete(spell),
                 AuraBehavior::SpellDataStatProc(proc) if self.spell_stat_procs[proc].casts => {
-                    self.spell_stat_proc_callback(aura, proc, spell, None)
+                    self.spell_stat_proc_callback(aura, proc, Some(spell), None)
                 }
                 _ => {}
             }
@@ -940,7 +940,7 @@ impl<A: Agent> Fight<A> {
             match self.aura(aura).behavior {
                 AuraBehavior::Class(kind) => A::on_heal_dealt(self, aura, kind, spell, result),
                 AuraBehavior::SpellDataStatProc(proc) if self.spell_stat_procs[proc].heals => {
-                    self.spell_stat_proc_callback(aura, proc, spell, Some(result))
+                    self.spell_stat_proc_callback(aura, proc, Some(spell), Some(result))
                 }
                 _ => {}
             }
@@ -1025,7 +1025,7 @@ impl<A: Agent> Fight<A> {
                     AuraBehavior::SpellDataStatProc(proc)
                         if dealt && self.spell_stat_procs[proc].hits =>
                     {
-                        self.spell_stat_proc_callback(aura, proc, spell, Some(result))
+                        self.spell_stat_proc_callback(aura, proc, Some(spell), Some(result))
                     }
                     AuraBehavior::StatProc(proc) if dealt => {
                         // Go AttachProcTriggerCallback: landed hits the manager hears, its roll
@@ -1222,15 +1222,20 @@ impl<A: Agent> Fight<A> {
     /// Go `AttachProcTriggerCallback` for a spell data stat proc: the spells it hears, and for a
     /// hit or heal its outcome and damage; its cooldown and chance; then the handler a spell batch
     /// window later. A cast carries no result.
-    fn spell_stat_proc_callback(
+    pub(crate) fn spell_stat_proc_callback(
         &mut self,
         aura: AuraRef,
         proc: usize,
-        spell: SpellId,
+        spell: Option<SpellId>,
         result: Option<&SpellResult>,
     ) {
         let state = &self.spell_stat_procs[proc];
-        if !state.trigger_spells[spell] {
+        // A struck proc hears the target's swing, which is no spell of the player's.
+        let heard = match spell {
+            Some(spell) => state.trigger_spells[spell],
+            None => state.struck,
+        };
+        if !heard {
             return;
         }
         if let Some(result) = result {
@@ -1259,7 +1264,8 @@ impl<A: Agent> Fight<A> {
             damage: 0.0,
             threat: 0.0,
         });
-        self.schedule_delayed_proc(aura, spell, result);
+        // The handler a batch window later activates the aura and reads no spell.
+        self.schedule_delayed_proc(aura, spell.unwrap_or(0), result);
     }
 
     /// Go `AttachProcTriggerCallback` for Dragonbreath Chili: landed melee hits, its cooldown,

@@ -328,6 +328,9 @@ impl<A: Agent> Fight<A> {
                 AuraBehavior::SpellDataDamageProc(proc) if self.damage_procs[proc].struck => {
                     self.damage_proc_callback(aura, proc, None, result)
                 }
+                AuraBehavior::SpellDataStatProc(proc) if self.spell_stat_procs[proc].struck => {
+                    self.spell_stat_proc_callback(aura, proc, None, Some(result))
+                }
                 // And a melee auto attack, which an absorb proc's melee mask hears.
                 AuraBehavior::AbsorbProc(proc) => self.absorb_proc_callback(aura, proc, result),
                 _ => {}

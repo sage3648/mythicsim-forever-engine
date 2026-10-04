@@ -59,6 +59,7 @@ func statAurasEffect(request *proto.RaidSimRequest, character *core.Character, c
 		candidates = append(candidates, class.statAuras(agent, character)...)
 	}
 	candidates = append(candidates, spellDataStatProcAuras(character)...)
+	candidates = append(candidates, lionHornProcAura(character)...)
 	// shared.NewSimpleStatActive: an item's on-use buff is a temporary stats aura.
 	for _, spell := range character.Spellbook {
 		if simpleStatActive(character, spell) != nil {

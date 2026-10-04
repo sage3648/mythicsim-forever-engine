@@ -492,6 +492,7 @@ const HIT_TAKEN_EFFECTS: &[&str] = &[
     "riposte",
     "spell_data_damage_proc",
     "spell_data_absorb_proc",
+    "spell_data_stat_proc",
     "battlegear_of_might_rage",
 ];
 

@@ -2335,6 +2335,10 @@ pub enum Effect {
         aura: String,
         trigger_spells: Vec<usize>,
         callbacks: Vec<String>,
+        /// A "when struck" proc, as The Lion Horn of Stormwind's: it hears the target's melee
+        /// swings on a tank, its one callback `on_spell_hit_taken`.
+        #[serde(default, skip_serializing_if = "is_false")]
+        struck: bool,
         landed_only: bool,
         require_damage: bool,
         proc_chance: f64,

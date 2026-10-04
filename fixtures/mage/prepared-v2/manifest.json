@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "293721b68387b8ba6c509b1967d20dfc29e9d73d677f22219521e2a4202d9114",
+  "exporter_sha256": "de3b4c4675c33ce2867c55b755054f7660ade8569a8da7f4d3aac55d91986c2b",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -5279,6 +5279,27 @@
       "go_log": {
         "file": "feral-bear-druid-essence-of-the-pure-flame.go-log.txt",
         "sha256": "b5a49cd6dad7d4deebfe4331dcd0eb36db7f8087d42febd4dd0a20b158f79b4c"
+      }
+    },
+    {
+      "id": "feral-bear-druid-lion-horn",
+      "description": "The production Feral Bear request with The Lion Horn of Stormwind, whose 725 armor proc the target's swings raise a spell batch window after they land",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-bear-druid-lion-horn.request.json"
+      },
+      "prepared": "feral-bear-druid-lion-horn.prepared.json",
+      "prepared_sha256": "ae8101a108612515a2b19a27c48a1d31f0cb4881a5d6048da440b933400b009a",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-bear-druid-lion-horn.go-result.json",
+        "sha256": "8183c6bbeeb5c42a5b28266784a2ade905555bcf7647f7dfdb506a4872f3196b"
+      },
+      "go_log": {
+        "file": "feral-bear-druid-lion-horn.go-log.txt",
+        "sha256": "6e2c9bf85099ec1bbcd475491bc080b3afa18300835b689284262e8920d15ae9"
       }
     }
   ]

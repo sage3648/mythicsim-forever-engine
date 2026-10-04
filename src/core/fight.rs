@@ -817,6 +817,8 @@ pub(crate) struct SpellStatProc {
     pub(crate) hits: bool,
     pub(crate) heals: bool,
     pub(crate) casts: bool,
+    /// A "when struck" proc, on the target's melee swings.
+    pub(crate) struck: bool,
     pub(crate) landed_only: bool,
     pub(crate) require_damage: bool,
     pub(crate) chance: f64,
@@ -3212,6 +3214,7 @@ impl<A: Agent> Fight<A> {
                 aura,
                 trigger_spells,
                 callbacks,
+                struck,
                 landed_only,
                 require_damage,
                 proc_chance,
@@ -3225,12 +3228,24 @@ impl<A: Agent> Fight<A> {
                     }
                 }
                 let heard = |name: &str| callbacks.iter().any(|callback| callback == name);
+                let known = ["on_spell_hit_dealt", "on_heal_dealt", "on_cast_complete"];
+                let valid = if *struck {
+                    callbacks == &["on_spell_hit_taken"]
+                } else {
+                    callbacks
+                        .iter()
+                        .all(|callback| known.contains(&callback.as_str()))
+                };
+                if !valid {
+                    return Err(format!("a stat proc listens to {callbacks:?}"));
+                }
                 let aura = fight.player_aura(aura)?;
                 fight.spell_stat_procs.push(SpellStatProc {
                     trigger_spells: mask,
                     hits: heard("on_spell_hit_dealt"),
                     heals: heard("on_heal_dealt"),
                     casts: heard("on_cast_complete"),
+                    struck: *struck,
                     landed_only: *landed_only,
                     require_damage: *require_damage,
                     chance: *proc_chance,

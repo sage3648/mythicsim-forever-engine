@@ -51,7 +51,7 @@ buffs, presets, trinkets, pets and tanking.
 
 ## Evidence
 
-- 260 accepted fixtures, 258 of them with Go results, checked by `cargo test`.
+- 261 accepted fixtures, 259 of them with Go results, checked by `cargo test`.
 - 7,922 production variants (race boards, builder starters, gear, buffs, talents,
   class options and presets) and 3,500 random variants compared with Go. None
   differ. Rust refuses 172 of them, and the pinned Go engine crashes on 2.

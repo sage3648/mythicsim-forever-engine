@@ -1888,6 +1888,14 @@ func hitTakenItemListeners(character *core.Character, tanking bool, unrepresente
 			}
 			continue
 		}
+		if heard && tanking && item.label == lionHorn {
+			if effect := lionHornProc(character, aura); effect != nil {
+				effects = append(effects, effect)
+			} else {
+				*unrepresented = append(*unrepresented, fmt.Sprintf("%s's proc is not a chance stat proc", item.label))
+			}
+			continue
+		}
 		if heard && tanking && item.absorb != 0 {
 			if effect := spellDataAbsorbProc(character, aura, item.trigger, item.absorb); effect != nil {
 				effects = append(effects, effect)
@@ -1903,6 +1911,50 @@ func hitTakenItemListeners(character *core.Character, tanking bool, unrepresente
 		}
 	}
 	return effects
+}
+
+// classic items_store_gaps.go The Lion Horn of Stormwind, through shared.NewProcStatBonusEffect:
+// a listener on landed melee hits the wearer takes that dealt damage, at the item effect's chance
+// and cooldown, that a spell batch window later activates the effect's temporary stats aura
+// (factory_StatBonusEffect, buildProcAura). Only a proc without a rate or stacks is described, or
+// nil. A tank's proc aura joins the stat auras, whose combinations carry the target's rolls.
+const lionHorn = "The Lion Horn of Stormwind"
+
+func lionHornProcAura(character *core.Character) []string {
+	target := character.Env.Encounter.ActiveTargetUnits[0]
+	if character.GetAura(lionHorn) == nil || target.CurrentTarget != &character.Unit {
+		return nil
+	}
+	return []string{lionHorn + " Proc"}
+}
+
+func lionHornProc(character *core.Character, trigger *core.Aura) map[string]any {
+	procAura := character.GetAura(lionHorn + " Proc")
+	var entry *proto.ItemEffect
+	for _, candidate := range core.GetItemByID(14557).ItemEffects {
+		if candidate.GetProc() != nil {
+			entry = candidate
+		}
+	}
+	if procAura == nil || entry == nil || entry.GetStackingAura() != nil || entry.MaxCumulativeStacks > 0 ||
+		trigger.Dpm != nil || entry.GetProc().GetPpm() != 0 ||
+		(entry.GetProc().IcdMs != 0) != (trigger.Icd != nil) ||
+		(trigger.Icd != nil && trigger.Icd.Duration != time.Millisecond*time.Duration(entry.GetProc().IcdMs)) {
+		return nil
+	}
+	// AttachProcTriggerCallback reads an unset chance as certain.
+	chance := entry.GetProc().GetProcChance()
+	if chance == 0 {
+		chance = 1
+	}
+	bonus := stats.FromProtoMap(entry.GetScalingOptions()[int32(0)].GetStats())
+	return map[string]any{
+		"kind": "spell_data_stat_proc", "trigger_aura": trigger.Label, "aura": procAura.Label,
+		"trigger_spells": []int{}, "callbacks": []string{"on_spell_hit_taken"}, "struck": true,
+		"landed_only": true, "require_damage": true, "proc_chance": chance,
+		"gain_log":   fmt.Sprintf("Gained %s from %s.", bonus.FlatString(), procAura.ActionID),
+		"expire_log": fmt.Sprintf("Lost %s from fading %s.", bonus.FlatString(), procAura.ActionID),
+	}
 }
 
 // classic items_armor.go newDamageShieldEffect, through shared.NewProcDamageEffect: a listener on

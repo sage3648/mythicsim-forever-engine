@@ -285,3 +285,43 @@ fn damage_shield_hits_the_attacker_without_crits() {
     assert!(!hits.is_empty());
     assert!(!log.contains("{SpellID: 23266} Crit"));
 }
+
+/// The Lion Horn of Stormwind hears the target's swings on a tank, and a batch window after
+/// one lands raises armor, which the target's later swings read through the stat auras.
+#[test]
+fn lion_horn_raises_armor_after_a_swing() {
+    let value = accepted("feral-bear-druid-lion-horn");
+    let mut without = value.clone();
+    without["effects"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|effect| effect["trigger_aura"] != "The Lion Horn of Stormwind");
+    assert!(reasons(without).contains(
+        &"player aura \"The Lion Horn of Stormwind\" reacts to the target's swings".into()
+    ));
+    // A struck proc hears only hits taken.
+    let mut misheard = value.clone();
+    for effect in misheard["effects"].as_array_mut().unwrap() {
+        if effect["trigger_aura"] == "The Lion Horn of Stormwind" {
+            effect["callbacks"] = json!(["on_spell_hit_dealt"]);
+        }
+    }
+    assert!(simulate_prepared(&parse(misheard)).is_err());
+    let log = first_fight_log(value);
+    let lines: Vec<&str> = log.lines().collect();
+    let gain = lines
+        .iter()
+        .position(|line| line.ends_with("Aura gained: {SpellID: 18946}"))
+        .unwrap();
+    let time = |line: &str| -> f64 { line[1..line.find(']').unwrap()].parse().unwrap() };
+    // The last swing before the gain landed one spell batch window earlier.
+    let swing = lines[..gain]
+        .iter()
+        .rev()
+        .find(|line| {
+            line.contains("[Target 1] [feral-bear-druid (#1)] {OtherID: 3, Tag: 1}")
+                && line.contains(" damage (SpellSchool: 1)")
+        })
+        .unwrap();
+    assert!((time(lines[gain]) - time(swing) - 0.01).abs() < 1e-9);
+}
