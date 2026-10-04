@@ -218,3 +218,110 @@ fn wildheart_raiment_is_inert_on_a_cat() {
         &"player aura \"Wildheart Raiment 5P\" listens to combat events without an effect".into()
     ));
 }
+
+fn accepted(case: &str) -> Value {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join(format!("fixtures/mage/prepared-v2/{case}.prepared.json"));
+    serde_json::from_slice(&fs::read(path).unwrap()).unwrap()
+}
+
+/// A tank's absorb proc hears the target's swings, so it needs its effect.
+#[test]
+fn absorb_procs_need_their_effect() {
+    let mut value = accepted("feral-bear-druid-uthers-strength");
+    assert!(check_prepared(&parse(value.clone())).is_ok());
+    value["effects"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|effect| effect["kind"] != "spell_data_absorb_proc");
+    assert!(reasons(value)
+        .contains(&"player aura \"Uther's Strength\" reacts to the target's swings".into()));
+}
+
+/// Enchant Chest - Absorption's 25% chance waits out the trigger's 5 second cooldown.
+#[test]
+fn absorption_enchant_waits_for_its_cooldown() {
+    let value = accepted("feral-bear-druid-absorption");
+    // The shortest time between two shields in the first fight.
+    let shortest_gap = |value: Value| {
+        let times: Vec<f64> = first_fight_log(value)
+            .lines()
+            .filter(|line| line.ends_with("Aura gained: {SpellID: 1249073}"))
+            .map(|line| line[1..line.find(']').unwrap()].parse().unwrap())
+            .collect();
+        times
+            .windows(2)
+            .map(|pair| pair[1] - pair[0])
+            .fold(f64::INFINITY, f64::min)
+    };
+    let mut uncooled = value.clone();
+    for aura in uncooled["player"]["auras"].as_array_mut().unwrap() {
+        if aura["label"] == "Enchant Chest - Absorption" {
+            aura["icd"] = Value::Null;
+        }
+    }
+    assert!(shortest_gap(value) >= 5.0);
+    assert!(shortest_gap(uncooled) < 5.0);
+}
+
+/// Essence of the Pure Flame's damage shield hits each tank's attacker on its landed swings,
+/// for a fixed amount that cannot crit.
+#[test]
+fn damage_shield_hits_the_attacker_without_crits() {
+    let value = accepted("feral-bear-druid-essence-of-the-pure-flame");
+    let mut without = value.clone();
+    without["effects"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|effect| effect["trigger_aura"] != "Essence of the Pure Flame");
+    assert!(reasons(without).contains(
+        &"player aura \"Essence of the Pure Flame\" reacts to the target's swings".into()
+    ));
+    let log = first_fight_log(value);
+    let hits: Vec<&str> = log
+        .lines()
+        .filter(|line| line.contains("[Target 1] {SpellID: 23266} Hit for 13.650 damage"))
+        .collect();
+    assert!(!hits.is_empty());
+    assert!(!log.contains("{SpellID: 23266} Crit"));
+}
+
+/// The Lion Horn of Stormwind hears the target's swings on a tank, and a batch window after
+/// one lands raises armor, which the target's later swings read through the stat auras.
+#[test]
+fn lion_horn_raises_armor_after_a_swing() {
+    let value = accepted("feral-bear-druid-lion-horn");
+    let mut without = value.clone();
+    without["effects"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|effect| effect["trigger_aura"] != "The Lion Horn of Stormwind");
+    assert!(reasons(without).contains(
+        &"player aura \"The Lion Horn of Stormwind\" reacts to the target's swings".into()
+    ));
+    // A struck proc hears only hits taken.
+    let mut misheard = value.clone();
+    for effect in misheard["effects"].as_array_mut().unwrap() {
+        if effect["trigger_aura"] == "The Lion Horn of Stormwind" {
+            effect["callbacks"] = json!(["on_spell_hit_dealt"]);
+        }
+    }
+    assert!(simulate_prepared(&parse(misheard)).is_err());
+    let log = first_fight_log(value);
+    let lines: Vec<&str> = log.lines().collect();
+    let gain = lines
+        .iter()
+        .position(|line| line.ends_with("Aura gained: {SpellID: 18946}"))
+        .unwrap();
+    let time = |line: &str| -> f64 { line[1..line.find(']').unwrap()].parse().unwrap() };
+    // The last swing before the gain landed one spell batch window earlier.
+    let swing = lines[..gain]
+        .iter()
+        .rev()
+        .find(|line| {
+            line.contains("[Target 1] [feral-bear-druid (#1)] {OtherID: 3, Tag: 1}")
+                && line.contains(" damage (SpellSchool: 1)")
+        })
+        .unwrap();
+    assert!((time(lines[gain]) - time(swing) - 0.01).abs() < 1e-9);
+}

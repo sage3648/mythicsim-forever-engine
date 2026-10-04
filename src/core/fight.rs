@@ -354,10 +354,12 @@ pub(crate) enum SpellBehavior<S> {
     ActivateAura(usize),
     /// Go attack.go's main or off hand auto attack.
     MeleeAuto(melee::Hand),
-    /// A magic hit on a rolled base damage, as Dragonbreath Chili's proc casts.
+    /// A magic hit on a rolled base damage, as Dragonbreath Chili's proc casts, or one that
+    /// cannot crit, as a damage shield's.
     RollDamage {
         min: f64,
         max: f64,
+        can_crit: bool,
     },
     /// Sulfuras's Fireball: a magic hit rolled between two bounds whose landing applies its burn.
     SulfurasFireball {
@@ -815,6 +817,8 @@ pub(crate) struct SpellStatProc {
     pub(crate) hits: bool,
     pub(crate) heals: bool,
     pub(crate) casts: bool,
+    /// A "when struck" proc, on the target's melee swings.
+    pub(crate) struck: bool,
     pub(crate) landed_only: bool,
     pub(crate) require_damage: bool,
     pub(crate) chance: f64,
@@ -1246,8 +1250,11 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) damage_procs: Vec<DamageProc>,
     /// Enchant heal procs, by their position among the heal proc effects.
     pub(crate) heal_procs: Vec<heal_proc::HealProc>,
-    /// Item use absorb shields, by their position among the absorb effects.
+    /// Absorb shields: the item uses' by their position among the absorb effects, then the
+    /// absorb procs'.
     pub(crate) item_absorbs: Vec<absorb::ItemAbsorb>,
+    /// Absorb procs on the melee hits the player takes, by their position among the effects.
+    pub(crate) absorb_procs: Vec<absorb::AbsorbProc>,
     /// Set bonus stat procs: each spell's chance, the roll's label and the aura activated.
     pub(crate) stat_procs: Vec<(Vec<Option<f64>>, String, AuraRef)>,
     /// Gear procs that heal and give rage, by their aura's position.
@@ -1693,7 +1700,11 @@ impl<A: Agent> Fight<A> {
                 .flatten()
             {
                 // Acid Spit rolls its base damage as Dragonbreath Chili's proc does.
-                SpellBehavior::RollDamage { min, max }
+                SpellBehavior::RollDamage {
+                    min,
+                    max,
+                    can_crit: true,
+                }
             } else if caster.is_pet() {
                 // A pet has no items or racials.
                 SpellBehavior::None
@@ -1885,6 +1896,7 @@ impl<A: Agent> Fight<A> {
                             Some(SpellBehavior::RollDamage {
                                 min: *roll_min,
                                 max: *roll_max,
+                                can_crit: true,
                             })
                         }
                         Effect::DamageOnUse {
@@ -1901,14 +1913,18 @@ impl<A: Agent> Fight<A> {
                         Effect::SpellDataHealProc { spell, .. } if *spell == spells.len() => {
                             heal_proc::self_heal(effects, spells.len()).map(SpellBehavior::SelfHeal)
                         }
+                        Effect::SpellDataAbsorbProc { spell, .. } if *spell == spells.len() => {
+                            absorb::proc_shield(effects, spells.len()).map(SpellBehavior::AbsorbOnUse)
+                        }
                         Effect::SpellDataDamageProc {
                             spell,
                             roll: Some([min, max]),
-                            can_crit: true,
+                            can_crit,
                             ..
                         } if *spell == spells.len() => Some(SpellBehavior::RollDamage {
                             min: *min,
                             max: *max,
+                            can_crit: *can_crit,
                         }),
                         Effect::SpellDataDamageProc {
                             spell,
@@ -2573,6 +2589,18 @@ impl<A: Agent> Fight<A> {
                     .then(|| {
                         effects
                             .iter()
+                            .filter(|effect| matches!(effect, Effect::SpellDataAbsorbProc { .. }))
+                            .position(|effect| {
+                                matches!(effect, Effect::SpellDataAbsorbProc { trigger_aura, .. } if *trigger_aura == exported.label)
+                            })
+                    })
+                    .flatten()
+                {
+                    AuraBehavior::AbsorbProc(proc)
+                } else if let Some(proc) = (side == Side::Player)
+                    .then(|| {
+                        effects
+                            .iter()
                             .filter(|effect| matches!(effect, Effect::StatProc { .. }))
                             .position(|effect| {
                                 matches!(effect, Effect::StatProc { trigger_aura, .. } if *trigger_aura == exported.label)
@@ -2745,6 +2773,7 @@ impl<A: Agent> Fight<A> {
             aura_mods: Vec::new(),
             heal_procs: Vec::new(),
             item_absorbs: Vec::new(),
+            absorb_procs: Vec::new(),
             stat_procs: Vec::new(),
             health_rage_procs: Vec::new(),
             armor_debuff_procs: Vec::new(),
@@ -3149,6 +3178,7 @@ impl<A: Agent> Fight<A> {
                     .push(absorb::ItemAbsorb::new(aura, *schools, *average, *variance));
             }
         }
+        fight.bind_absorb_procs(effects)?;
         for effect in effects {
             if let Effect::SpellDataDamageProc {
                 trigger_spells,
@@ -3192,6 +3222,7 @@ impl<A: Agent> Fight<A> {
                 aura,
                 trigger_spells,
                 callbacks,
+                struck,
                 landed_only,
                 require_damage,
                 proc_chance,
@@ -3205,12 +3236,24 @@ impl<A: Agent> Fight<A> {
                     }
                 }
                 let heard = |name: &str| callbacks.iter().any(|callback| callback == name);
+                let known = ["on_spell_hit_dealt", "on_heal_dealt", "on_cast_complete"];
+                let valid = if *struck {
+                    callbacks == &["on_spell_hit_taken"]
+                } else {
+                    callbacks
+                        .iter()
+                        .all(|callback| known.contains(&callback.as_str()))
+                };
+                if !valid {
+                    return Err(format!("a stat proc listens to {callbacks:?}"));
+                }
                 let aura = fight.player_aura(aura)?;
                 fight.spell_stat_procs.push(SpellStatProc {
                     trigger_spells: mask,
                     hits: heard("on_spell_hit_dealt"),
                     heals: heard("on_heal_dealt"),
                     casts: heard("on_cast_complete"),
+                    struck: *struck,
                     landed_only: *landed_only,
                     require_damage: *require_damage,
                     chance: *proc_chance,

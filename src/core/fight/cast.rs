@@ -826,9 +826,13 @@ impl<A: Agent> Fight<A> {
                     },
                 );
             }
-            SpellBehavior::RollDamage { min, max } => {
+            SpellBehavior::RollDamage { min, max, can_crit } => {
                 let base = self.go_roll(min, max);
-                let result = self.calc_damage(spell, target, base);
+                let result = if can_crit {
+                    self.calc_damage(spell, target, base)
+                } else {
+                    self.calc_damage_hit_only(spell, target, base)
+                };
                 self.deal_damage(spell, result, false);
             }
             SpellBehavior::EffectRoll {

@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "d56d1d41ec040d9f2b0cccc09709cb6f565e855268843c423f22a7e4b128cf3b",
+  "exporter_sha256": "de3b4c4675c33ce2867c55b755054f7660ade8569a8da7f4d3aac55d91986c2b",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -5231,6 +5231,132 @@
         "reasons": [
           "Ignite would hear the crit of item 10646's hit on the player, where the pinned Go engine panics"
         ]
+      }
+    },
+    {
+      "id": "feral-bear-druid-uthers-strength",
+      "description": "The production Feral Bear request with Uther's Strength, whose 216 point shield against every school the target's swings proc",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-bear-druid-uthers-strength.request.json"
+      },
+      "prepared": "feral-bear-druid-uthers-strength.prepared.json",
+      "prepared_sha256": "1e0c8b10024bdbfbbab8badb0d7a8d069809c1a364d2280b9d4f0f633e2c5407",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-bear-druid-uthers-strength.go-result.json",
+        "sha256": "3a2f5c39bc99d47dcf3b2d6412f8120ffa1f93cc673bb054665c23d19151ff98"
+      },
+      "go_log": {
+        "file": "feral-bear-druid-uthers-strength.go-log.txt",
+        "sha256": "1f2a713dd40b7c4acb71512168994ee6c73365a94d2db93f8184b5f506813bbc"
+      }
+    },
+    {
+      "id": "feral-bear-druid-minor-absorption",
+      "description": "The production Feral Bear request with Enchant Chest - Minor Absorption, whose 10 point shield the target's swings proc behind a 5 second cooldown",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-bear-druid-minor-absorption.request.json"
+      },
+      "prepared": "feral-bear-druid-minor-absorption.prepared.json",
+      "prepared_sha256": "14068a01d02d1610c2d37de85a250e8217a454ca5d206ce70ef73880cf060958",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-bear-druid-minor-absorption.go-result.json",
+        "sha256": "ed41be7639a6f89f4c08043f0738b3e4d3709a455534bb3a7acbd26c94c68313"
+      },
+      "go_log": {
+        "file": "feral-bear-druid-minor-absorption.go-log.txt",
+        "sha256": "54c549484bc7801005c82172bb3e1564c80c814237ed9e3ae06d97a5e6070f97"
+      }
+    },
+    {
+      "id": "feral-bear-druid-lesser-absorption",
+      "description": "The production Feral Bear request with Enchant Chest - Lesser Absorption, whose 25 point shield the target's swings proc behind a 5 second cooldown",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-bear-druid-lesser-absorption.request.json"
+      },
+      "prepared": "feral-bear-druid-lesser-absorption.prepared.json",
+      "prepared_sha256": "cb29b86b2acf13c714cf448d056a2090758d1c9391affaff1fc292c7306a976a",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-bear-druid-lesser-absorption.go-result.json",
+        "sha256": "f61a76617790a52c2611de6cf33f69a9313fb23b6bbcd26511db98d5ff61bdb7"
+      },
+      "go_log": {
+        "file": "feral-bear-druid-lesser-absorption.go-log.txt",
+        "sha256": "362f883ba6822369b0dbc463a15eeedfe6c2a1df0bfadfe964d1571f857f962a"
+      }
+    },
+    {
+      "id": "feral-bear-druid-absorption",
+      "description": "The production Feral Bear request with Enchant Chest - Absorption, whose 50 point shield the target's swings proc behind a 5 second cooldown",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-bear-druid-absorption.request.json"
+      },
+      "prepared": "feral-bear-druid-absorption.prepared.json",
+      "prepared_sha256": "6c38d616cf180c6bfa0ad6a1965a51652739a04319d9f797a47ad1b87689c03a",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-bear-druid-absorption.go-result.json",
+        "sha256": "f28083b03be4714e2d71ae3fc498fd9383c72f21468d842f34a22ee04be3dd9b"
+      },
+      "go_log": {
+        "file": "feral-bear-druid-absorption.go-log.txt",
+        "sha256": "fa92fc3c6be1f3d5d401b58d77ebd093e744200f2540667d8546c60292550604"
+      }
+    },
+    {
+      "id": "feral-bear-druid-essence-of-the-pure-flame",
+      "description": "The production Feral Bear request with Essence of the Pure Flame, whose damage shield hits the target for 13 Fire on each of its landed swings",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-bear-druid-essence-of-the-pure-flame.request.json"
+      },
+      "prepared": "feral-bear-druid-essence-of-the-pure-flame.prepared.json",
+      "prepared_sha256": "1e8889994a1a5457b294ac71abc9a42845f1109987d51ad1a4eaab8120007d8c",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-bear-druid-essence-of-the-pure-flame.go-result.json",
+        "sha256": "e9cf83ec80604e02b9e4e37566ee25c4251b495145f1436d09ddf5ef60807ab4"
+      },
+      "go_log": {
+        "file": "feral-bear-druid-essence-of-the-pure-flame.go-log.txt",
+        "sha256": "b5a49cd6dad7d4deebfe4331dcd0eb36db7f8087d42febd4dd0a20b158f79b4c"
+      }
+    },
+    {
+      "id": "feral-bear-druid-lion-horn",
+      "description": "The production Feral Bear request with The Lion Horn of Stormwind, whose 725 armor proc the target's swings raise a spell batch window after they land",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-bear-druid-lion-horn.request.json"
+      },
+      "prepared": "feral-bear-druid-lion-horn.prepared.json",
+      "prepared_sha256": "ae8101a108612515a2b19a27c48a1d31f0cb4881a5d6048da440b933400b009a",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-bear-druid-lion-horn.go-result.json",
+        "sha256": "8183c6bbeeb5c42a5b28266784a2ade905555bcf7647f7dfdb506a4872f3196b"
+      },
+      "go_log": {
+        "file": "feral-bear-druid-lion-horn.go-log.txt",
+        "sha256": "6e2c9bf85099ec1bbcd475491bc080b3afa18300835b689284262e8920d15ae9"
       }
     }
   ]
