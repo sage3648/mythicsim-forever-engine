@@ -109,6 +109,13 @@ def standard_error(brief):
     return brief["stdev"] / math.sqrt(brief["iterations"]) if brief["iterations"] > 0 else None
 
 
+def ability_key(identity):
+    """An action ID with its zero fields left out. The production CLI writes protojson with
+    EmitUnpopulated, so its IDs carry `"tag": 0` and `"rank": 0` where Rust and the pinned
+    Go result omit them."""
+    return json.dumps({k: v for k, v in identity.items() if v not in (0, "", None)}, sort_keys=True)
+
+
 def versus_production(production, rust):
     """Rust against the production result. The runs use different random numbers, so the
     DPS difference is given in standard errors of the difference: a few either way is
@@ -116,10 +123,10 @@ def versus_production(production, rust):
     errors = [standard_error(production), standard_error(rust)]
     combined = math.sqrt(sum(e * e for e in errors)) if None not in errors else 0.0
     difference = rust["dps"] - production["dps"]
-    by_id = {json.dumps(a["id"], sort_keys=True): a for a in production["abilities"]}
+    by_id = {ability_key(a["id"]): a for a in production["abilities"]}
     abilities = []
     for ability in rust["abilities"]:
-        other = by_id.pop(json.dumps(ability["id"], sort_keys=True), None)
+        other = by_id.pop(ability_key(ability["id"]), None)
         abilities.append({"id": ability["id"], "production_dps": other["dps"] if other else None,
                           "rust_dps": ability["dps"]})
     abilities += [{"id": a["id"], "production_dps": a["dps"], "rust_dps": None} for a in by_id.values()]

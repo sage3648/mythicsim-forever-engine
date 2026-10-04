@@ -92,6 +92,15 @@ class ShadowTest(unittest.TestCase):
         fireball = versus["abilities"][0]
         self.assertEqual((fireball["production_dps"], fireball["rust_dps"]), (9.0, 10.0))
 
+    def test_production_ids_with_explicit_zeros_pair_with_rust(self):
+        # The production CLI emits unpopulated fields: {"spellId": 133, "tag": 0, "rank": 0}.
+        production = result(498.0, fireball=900.0)
+        for action in production["raidMetrics"]["parties"][0]["players"][0]["actions"]:
+            action["id"] = {**action["id"], "tag": 0, "rank": 0}
+        versus = self.verdict(production=production)["versus_production"]
+        self.assertTrue(all(row["production_dps"] is not None and row["rust_dps"] is not None
+                            for row in versus["abilities"]), versus["abilities"])
+
     def test_a_refusal_still_summarizes_production(self):
         verdict = self.verdict(production=RESULT, reasons=["needs a mechanic"])
         self.assertEqual(verdict["status"], "refused")
