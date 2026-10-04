@@ -81,9 +81,9 @@ The [contributor code map](docs/contributor-guide.md) shows where each mechanic 
 
 ## Contribute
 
-Pick an item from the [issue board](https://github.com/sage3648/mythicsim-forever-engine/issues).
-Items are grouped by milestone and ordered by priority. Comment on an issue to claim
-it before you start.
+Start with the pinned [contributor board](https://github.com/sage3648/mythicsim-forever-engine/issues/25).
+It lists open work in order, grouped by milestone. Comment on an issue to claim it
+before you start. Items marked `good first issue` are a good start.
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) for the checks to run. Every mechanics
 change needs a fixture or test that shows it matches Go. The [roadmap](ROADMAP.md)
