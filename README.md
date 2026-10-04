@@ -56,6 +56,8 @@ buffs, presets, trinkets, pets and tanking.
   class options and presets) and 3,500 random variants compared with Go. None
   differ. Rust refuses 172 of them, and the pinned Go engine crashes on 2.
 - The latest full rerun covered 24,173 inputs in 121 records, with no mismatches.
+- [Shadow sims](docs/shadow-sims.md) compare Rust with Go on real MythicSim traffic,
+  without users seeing them.
   [docs/validation-summary.md](docs/validation-summary.md) lists every record.
 - Rust is faster on all 27 benchmarked production builds: 1.30x to 1.98x, with a
   median of 1.47x at 10,000 iterations
