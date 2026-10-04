@@ -5217,6 +5217,21 @@
         "file": "demonology-warlock-frozen-heart.go-log.txt",
         "sha256": "2591868d5435c421de5df5227e6f6c3748b97351b9d0fd7db184eba2349a018f"
       }
+    },
+    {
+      "id": "fire-mage-goblin-sapper",
+      "description": "The production Fire request with the Goblin Sapper Charge, refused because Ignite would hear the charge's crit on the player, where the pinned Go engine panics",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-mage-goblin-sapper.request.json"
+      },
+      "prepared": "fire-mage-goblin-sapper.prepared.json",
+      "prepared_sha256": "0773b6fcec8547924843c49ae7a5068d2fe6902c3d4014e4a008f2dcdaa3b1b1",
+      "expected_coverage": {
+        "supported": false,
+        "reasons": [
+          "Ignite would hear the crit of item 10646's hit on the player, where the pinned Go engine panics"
+        ]
+      }
     }
   ]
 }

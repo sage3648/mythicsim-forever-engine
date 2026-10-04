@@ -338,6 +338,23 @@ fn ignite_builds_may_cast_fire_spells() {
     assert!(check_prepared(&parse(value).unwrap()).is_ok());
 }
 
+/// The pinned Go engine panics when Ignite hears the Goblin Sapper Charge's crit on the
+/// player, so an Ignite build is refused while its rotation can reach the charge. See
+/// UPSTREAM.md.
+#[test]
+fn ignite_builds_refuse_a_reachable_goblin_sapper() {
+    let path = family().join("fire-mage-goblin-sapper.prepared.json");
+    let mut value: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+    let reason = "Ignite would hear the crit of item 10646's hit on the player, where the pinned Go engine panics";
+    assert_eq!(reasons(value.clone()), vec![reason.to_string()]);
+    // Without the charge among the autocast cooldowns, nothing reaches it.
+    value["player"]["major_cooldowns"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|cooldown| cooldown["action_id"]["item_id"] != 10646);
+    assert!(check_prepared(&parse(value).unwrap()).is_ok());
+}
+
 /// Community fix ElliotWood/Forever#622 (252f57aa8), recorded in upstream/changes.json.
 /// Without Fingers of Frost, pinned Go drops the Ice Lance condition and casts Ice Lance on
 /// every global cooldown; the fix reads the missing aura as inactive. Rust rejects the

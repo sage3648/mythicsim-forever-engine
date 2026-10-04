@@ -2,7 +2,7 @@
 //! and the auras Mage effects claim. The shared gate is in `engine/coverage.rs`.
 
 use crate::{
-    contracts::prepared_v2::{Effect, Spell},
+    contracts::prepared_v2::{Effect, PreparedV2, Spell},
     engine::coverage::ClassGate,
 };
 
@@ -11,7 +11,7 @@ pub(crate) const GATE: ClassGate = ClassGate {
     effects: EFFECTS,
     spell: spell_capability,
     claims,
-    limits: |_, _| Vec::new(),
+    limits,
 };
 
 /// Mage effect kinds implemented in Rust and validated against the pinned Go reference.
@@ -112,4 +112,38 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         | Effect::PresenceOfMind { aura, .. } => vec![("player", aura)],
         _ => Vec::new(),
     }
+}
+
+/// The pinned Go engine panics when Ignite hears the Goblin Sapper Charge's crit on the
+/// player, whose Ignite dot does not exist (mage/talents_fire.go:135). With no reference
+/// result, an Ignite build whose rotation reaches the charge is refused. See UPSTREAM.md.
+fn limits(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
+    if !prepared
+        .effects
+        .iter()
+        .any(|effect| matches!(effect, Effect::Ignite { .. }))
+    {
+        return Vec::new();
+    }
+    prepared
+        .effects
+        .iter()
+        .filter_map(|effect| match effect {
+            Effect::GoblinSapper { item_id, .. } => Some(*item_id),
+            _ => None,
+        })
+        .filter(|item| {
+            reachable.iter().any(|spell| {
+                spell
+                    .action_id
+                    .as_ref()
+                    .is_some_and(|id| id.item_id == *item)
+            })
+        })
+        .map(|item| {
+            format!(
+                "Ignite would hear the crit of item {item}'s hit on the player, where the pinned Go engine panics"
+            )
+        })
+        .collect()
 }

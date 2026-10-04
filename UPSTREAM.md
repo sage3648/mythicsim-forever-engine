@@ -63,6 +63,40 @@ named until the reference adopts the fix; where they act the same, as when an
 constant comparison, it runs. The regressions are the `frost-no-fingers`,
 `arcane-no-missile-barrage` and `reference-no-missile-barrage` prepared fixtures.
 
+## Reference defects
+
+Bugs in the reference that block a comparison. Rust refuses the affected inputs until the
+reference is fixed, since there is no Go result to match.
+
+### Ignite on the Goblin Sapper Charge's hit on the player
+
+The pinned engine panics with a nil pointer dereference at `sim/mage/talents_fire.go:135`
+when a Mage with Ignite throws a Goblin Sapper Charge and the charge's hit on the Mage
+crits. Community commit `8fb1a2d75a`, in the adopted base, deals that hit through its own
+spell with `ProcMaskSpellDamage` and School Fire. The Mage's `OnSpellHitDealt` hears it,
+and Ignite's trigger (`ProcMaskSpellDamage`, `OutcomeCrit`, Fire) calls
+`mage.Ignite.Dot(result.Target)` with the Mage as the target. Dots exist only on enemies,
+so `dot.IsActive()` dereferences nil. The handler is unchanged on community `master` at
+`b49be9e13` (2026-10-04).
+
+- Reproduction: run the pinned engine on
+  `fixtures/mage/prepared-v2/fire-mage-goblin-sapper.request.json`, the production Fire
+  request with `goblinSapper` set. The first charge whose hit on the Mage crits panics,
+  inside `Character.newBasicExplosiveSpellConfig` (`sim/core/consumes.go:650`).
+- Affected records: the Arcane and Fire Mage `goblinSapper` variants in
+  `validation/2026-10-04-production-gear-swaps.json`, recorded as `go_error`.
+- Report: not filed yet. A report to the community engine should carry the reproduction
+  above and the trace.
+- Rust now: the Mage gate refuses an Ignite build whose rotation reaches the charge. This
+  also refuses the Frostfire variant, which matched only because its rotation never
+  reaches the autocast while the global cooldown is busy, the only time Go casts an
+  explosive. Before the guard, Rust rolled the Mage's own crit into an Ignite on the
+  target.
+- Once Go is fixed and the pin moves: compare the fixed Ignite trigger with Rust. If, as
+  expected, Ignite ignores hits on a unit that is not an enemy, make Rust's Ignite trigger
+  ignore hits on the player, drop the guard, promote `fire-mage-goblin-sapper` with
+  `python3 tools/prepared_v2.py promote` and rerun the affected gear swap variants.
+
 ## Reconcile a fix
 
 The [migration plan](docs/hybrid-migration-plan.md#community-fix-workflow-with-ai-assistance)
