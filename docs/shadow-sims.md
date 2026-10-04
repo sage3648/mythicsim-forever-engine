@@ -39,6 +39,14 @@ both engines draw the same numbers.
 `timings_ms` holds the wall time of the prepare, Go and Rust steps, process
 start included. `speedup` is the Go time over the Rust time.
 
+With `--production RESULT.json`, the production `RaidSimResult` of the same
+request, the verdict also carries `production`, `rust` and `go` summaries:
+DPS with its standard deviation, the fight length, active pets and the top
+abilities per average fight. `versus_production` compares Rust with
+production. Production used its own random numbers, so the DPS difference is
+given in standard errors (`standard_errors`): a few either way is noise, a
+large value is a real gap. Ability rows pair the two results by action ID.
+
 ## From a mismatch to a fix
 
 Take the request from the shadow run's output folder and accept it as a
