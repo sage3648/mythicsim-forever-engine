@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 import json
 from pathlib import Path
 import tempfile
@@ -6,8 +7,8 @@ import unittest
 import board
 
 
-def issue(number, title, milestone=None, labels=(), body="", comments=(), state="OPEN"):
-    return {"number": number, "title": title, "state": state,
+def issue(number, title, milestone=None, labels=(), body="", comments=(), state="OPEN", closed_at=None):
+    return {"number": number, "title": title, "state": state, "closedAt": closed_at,
             "milestone": {"title": milestone} if milestone else None,
             "labels": [{"name": name} for name in labels], "body": body,
             "comments": [{"body": text} for text in comments]}
@@ -17,7 +18,7 @@ class BoardTest(unittest.TestCase):
     def render(self, issues, cases=()):
         with tempfile.TemporaryDirectory() as directory:
             Path(directory, "record.json").write_text(json.dumps({"cases": list(cases)}))
-            return board.render(issues, Path(directory))
+            return board.render(issues, Path(directory), datetime(2026, 10, 20, tzinfo=timezone.utc))
 
     def test_sections_follow_milestones_then_priority(self):
         text = self.render([
@@ -57,6 +58,17 @@ class BoardTest(unittest.TestCase):
         candidates = text.split("## Refusals without an issue")[1]
         self.assertIn("- 2 variants: `the demon \"Imp N\" is not simulated`", candidates)
         self.assertNotIn("swings", candidates)
+
+    def test_recently_closed_issues_are_ticked(self):
+        text = self.render([
+            issue(21, "Holy Nova", "2. Coverage gaps", state="CLOSED", closed_at="2026-10-15T08:00:00Z"),
+            issue(5, "Old", "2. Coverage gaps", state="CLOSED", closed_at="2026-09-01T08:00:00Z"),
+            issue(22, "Brand", "2. Coverage gaps"),
+        ])
+        recent = text.split("## Recently completed")[1]
+        self.assertIn("- [x] #21 Holy Nova", recent)
+        self.assertNotIn("#5 Old", text)
+        self.assertNotIn("- [ ] #21", text)
 
 
 if __name__ == "__main__":
