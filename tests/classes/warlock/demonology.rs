@@ -2,7 +2,9 @@
 //! Brand and the inert demons. Its Go result and first-fight log goldens are compared with
 //! every other supported case in tests/classes/mage/prepared_v2.rs.
 
-use forever_engine::{check_prepared, contracts::prepared_v2::PreparedV2, PreparedError};
+use forever_engine::{
+    check_prepared, contracts::prepared_v2::PreparedV2, simulate_prepared, PreparedError,
+};
 use serde_json::{json, Value};
 use std::{fs, path::Path};
 
@@ -78,16 +80,39 @@ fn decimation_needs_the_35_percent_phase() {
     assert!(reasons(value).contains(&"Decimation's execute phase 20 is unsupported".into()));
 }
 
-/// The brand hit reads the warlock's shadow power as fixed.
+/// The brand hit reads the warlock's live Shadow damage, which Frozen Heart of the Mountain
+/// raises by 29 for its first 15 seconds.
 #[test]
-fn brand_needs_fixed_school_power() {
-    let mut value = production();
-    value["effects"].as_array_mut().unwrap().push(json!({
-        "kind": "stat_auras", "auras": [], "combos": [], "changed": ["ShadowDamage"]
-    }));
-    assert!(reasons(value).contains(
-        &"Demonic Brand reads ShadowDamage, which an aura changes during the fight".into()
-    ));
+fn brand_reads_the_live_school_power() {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("fixtures/mage/prepared-v2/demonology-warlock-frozen-heart.prepared.json");
+    let mut value: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+    value["sim"]["iterations"] = json!(1);
+    let first_brand_base = |value: Value| -> f64 {
+        let prepared: PreparedV2 = serde_json::from_value(value).unwrap();
+        let report = simulate_prepared(&prepared).unwrap();
+        let logs = report.result["logs"].as_str().unwrap();
+        let line = logs
+            .lines()
+            .find(|line| line.contains("{SpellID: 1293697} [DEBUG]"))
+            .unwrap();
+        let rest = line.split("BaseDamage:").nth(1).unwrap();
+        rest.split(',').next().unwrap().parse().unwrap()
+    };
+    let raised = first_brand_base(value.clone());
+    // The same fight with the trinket leaving Shadow damage alone.
+    let combos = effect(&mut value, "stat_auras")["combos"]
+        .as_array_mut()
+        .unwrap();
+    let reset = combos[0]["ShadowDamage"].clone();
+    for combo in combos {
+        combo["ShadowDamage"] = reset.clone();
+    }
+    let fixed = first_brand_base(value);
+    assert!(
+        (raised - fixed - 0.078 * 29.0).abs() < 0.06,
+        "{raised} {fixed}"
+    );
 }
 
 /// The inert demons export their permanent auras, which Go activates at every reset, and

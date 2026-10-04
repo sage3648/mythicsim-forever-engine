@@ -168,25 +168,6 @@ fn limits(prepared: &PreparedV2, _reachable: &[&Spell]) -> Vec<String> {
         }
     }
     for effect in &prepared.effects {
-        let Effect::DemonicBrand {
-            school_power_stat: Some(stat),
-            ..
-        } = effect
-        else {
-            continue;
-        };
-        let changes = prepared.effects.iter().any(|effect| match effect {
-            Effect::StatAuras { changed, .. } => changed.contains(stat),
-            Effect::TemporaryStats { active_stats, .. } => active_stats.contains_key(stat),
-            _ => false,
-        });
-        if changes {
-            reasons.push(format!(
-                "Demonic Brand reads {stat}, which an aura changes during the fight"
-            ));
-        }
-    }
-    for effect in &prepared.effects {
         let Effect::WarlockPet {
             pet,
             autocast_spells,
