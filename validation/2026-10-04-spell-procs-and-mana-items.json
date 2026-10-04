@@ -16,8 +16,8 @@
   "first_fight_debug_log": "line identical"
  },
  "outcomes": {
-  "rejected": 28,
-  "matched": 396
+  "matched": 416,
+  "rejected": 8
  },
  "outcomes_by_change": {
   "enchant Enchant 2H Weapon - Grand Arcanist (7941)": {
@@ -28,8 +28,8 @@
    "rejected": 1
   },
   "enchant Enchant Weapon - Insight (8216)": {
-   "rejected": 5,
-   "matched": 29
+   "matched": 33,
+   "rejected": 1
   },
   "trinket Burst of Knowledge (11832)": {
    "matched": 58
@@ -42,52 +42,18 @@
    "matched": 58
   },
   "trinket Golden Banana (270226)": {
-   "rejected": 10,
-   "matched": 48
+   "matched": 56,
+   "rejected": 2
   },
   "trinket Mindtap Talisman (18371)": {
    "matched": 58
   },
   "trinket Serenity Field (272439)": {
-   "rejected": 10,
-   "matched": 48
+   "matched": 56,
+   "rejected": 2
   }
  },
  "rejection_reasons_added": [
-  {
-   "reason": "stat_auras changes Spirit, which Life Tap reads as fixed",
-   "variants": 15,
-   "changes": [
-    "enchant Enchant Weapon - Insight (8216)",
-    "trinket Golden Banana (270226)",
-    "trinket Serenity Field (272439)"
-   ]
-  },
-  {
-   "reason": "temporary_stats changes Spirit, which Life Tap reads as fixed",
-   "variants": 12,
-   "changes": [
-    "trinket Golden Banana (270226)",
-    "trinket Serenity Field (272439)"
-   ]
-  },
-  {
-   "reason": "stat_auras changes Spirit, which Dark Sacrifice reads as fixed",
-   "variants": 10,
-   "changes": [
-    "enchant Enchant Weapon - Insight (8216)",
-    "trinket Golden Banana (270226)",
-    "trinket Serenity Field (272439)"
-   ]
-  },
-  {
-   "reason": "temporary_stats changes Spirit, which Dark Sacrifice reads as fixed",
-   "variants": 8,
-   "changes": [
-    "trinket Golden Banana (270226)",
-    "trinket Serenity Field (272439)"
-   ]
-  },
   {
    "reason": "stat_auras changes healing power, which Holy Nova reads as fixed",
    "variants": 8,
@@ -110,11 +76,12 @@
  ],
  "notes": [
   "Before this branch every one of these variants was rejected: the items had no exported effect, or their stat auras changed Spirit, which the gate held fixed.",
-  "Spirit now passes the stat gate: the stat combinations carry the spirit regeneration it feeds, and only Life Tap (Warlock) and Dark Sacrifice (Priest), which read the Spirit exported at reset, refuse a change of it. Holy Nova's fixed healing power stays refused for the Smite Priest."
+  "Spirit now passes the stat gate: the stat combinations carry the spirit regeneration it feeds, and only Life Tap (Warlock) and Dark Sacrifice (Priest), which read the Spirit exported at reset, refuse a change of it. Holy Nova's fixed healing power stays refused for the Smite Priest.",
+  "Rerun at the coordinator branch at a3dbc766d (validation/2026-10-04-integration-regression-a3dbc76.json): 416 matched, 8 rejected, 0 mismatched."
  ],
  "cases": [
-  {"scenario": "affliction-warlock--trinket1-272439", "outcome": "rejected", "reasons": ["temporary_stats changes Spirit, which Life Tap reads as fixed", "stat_auras changes Spirit, which Life Tap reads as fixed"]},
-  {"scenario": "affliction-warlock--trinket2-272439", "outcome": "rejected", "reasons": ["temporary_stats changes Spirit, which Life Tap reads as fixed", "stat_auras changes Spirit, which Life Tap reads as fixed"]},
+  {"scenario": "affliction-warlock--trinket1-272439", "outcome": "matched", "dps": 549.1839473217372},
+  {"scenario": "affliction-warlock--trinket2-272439", "outcome": "matched", "dps": 549.1839473217372},
   {"scenario": "affliction-warlock--trinket1-22268", "outcome": "matched", "dps": 558.5562280874312},
   {"scenario": "affliction-warlock--trinket2-22268", "outcome": "matched", "dps": 558.5562280874312},
   {"scenario": "affliction-warlock--trinket1-18371", "outcome": "matched", "dps": 545.4721374444873},
@@ -123,10 +90,10 @@
   {"scenario": "affliction-warlock--trinket2-11832", "outcome": "matched", "dps": 545.5678285875654},
   {"scenario": "affliction-warlock--trinket1-20525", "outcome": "matched", "dps": 541.8622774359097},
   {"scenario": "affliction-warlock--trinket2-20525", "outcome": "matched", "dps": 541.8622774359097},
-  {"scenario": "affliction-warlock--trinket1-270226", "outcome": "rejected", "reasons": ["temporary_stats changes Spirit, which Life Tap reads as fixed", "stat_auras changes Spirit, which Life Tap reads as fixed"]},
-  {"scenario": "affliction-warlock--trinket2-270226", "outcome": "rejected", "reasons": ["temporary_stats changes Spirit, which Life Tap reads as fixed", "stat_auras changes Spirit, which Life Tap reads as fixed"]},
+  {"scenario": "affliction-warlock--trinket1-270226", "outcome": "matched", "dps": 542.3363720677095},
+  {"scenario": "affliction-warlock--trinket2-270226", "outcome": "matched", "dps": 542.3363720677095},
   {"scenario": "affliction-warlock--enchant-18372-7942", "outcome": "matched", "dps": 558.0165192830137},
-  {"scenario": "affliction-warlock--enchant-18372-8216", "outcome": "rejected", "reasons": ["stat_auras changes Spirit, which Life Tap reads as fixed"]},
+  {"scenario": "affliction-warlock--enchant-18372-8216", "outcome": "matched", "dps": 545.9501073020477},
   {"scenario": "arcane-mage--trinket1-272439", "outcome": "matched", "dps": 552.4560530398902},
   {"scenario": "arcane-mage--trinket2-272439", "outcome": "matched", "dps": 552.4560530398902},
   {"scenario": "arcane-mage--trinket1-22268", "outcome": "matched", "dps": 563.0868663999534},
@@ -202,8 +169,8 @@
   {"scenario": "combat-rogue--enchant-12590-8216", "outcome": "matched", "dps": 601.0956862067609},
   {"scenario": "combat-rogue--enchant-13368-7942", "outcome": "matched", "dps": 601.3820330702705},
   {"scenario": "combat-rogue--enchant-13368-8216", "outcome": "matched", "dps": 601.3820330702705},
-  {"scenario": "demonology-warlock--trinket1-272439", "outcome": "rejected", "reasons": ["temporary_stats changes Spirit, which Life Tap reads as fixed", "stat_auras changes Spirit, which Life Tap reads as fixed"]},
-  {"scenario": "demonology-warlock--trinket2-272439", "outcome": "rejected", "reasons": ["temporary_stats changes Spirit, which Life Tap reads as fixed", "stat_auras changes Spirit, which Life Tap reads as fixed"]},
+  {"scenario": "demonology-warlock--trinket1-272439", "outcome": "matched", "dps": 634.3194797590563},
+  {"scenario": "demonology-warlock--trinket2-272439", "outcome": "matched", "dps": 634.3194797590563},
   {"scenario": "demonology-warlock--trinket1-22268", "outcome": "matched", "dps": 642.3988320759607},
   {"scenario": "demonology-warlock--trinket2-22268", "outcome": "matched", "dps": 642.3988320759607},
   {"scenario": "demonology-warlock--trinket1-18371", "outcome": "matched", "dps": 626.2770951350893},
@@ -212,12 +179,12 @@
   {"scenario": "demonology-warlock--trinket2-11832", "outcome": "matched", "dps": 624.3763989682132},
   {"scenario": "demonology-warlock--trinket1-20525", "outcome": "matched", "dps": 629.0928054728012},
   {"scenario": "demonology-warlock--trinket2-20525", "outcome": "matched", "dps": 629.0928054728012},
-  {"scenario": "demonology-warlock--trinket1-270226", "outcome": "rejected", "reasons": ["temporary_stats changes Spirit, which Life Tap reads as fixed", "stat_auras changes Spirit, which Life Tap reads as fixed"]},
-  {"scenario": "demonology-warlock--trinket2-270226", "outcome": "rejected", "reasons": ["temporary_stats changes Spirit, which Life Tap reads as fixed", "stat_auras changes Spirit, which Life Tap reads as fixed"]},
+  {"scenario": "demonology-warlock--trinket1-270226", "outcome": "matched", "dps": 618.0685161974272},
+  {"scenario": "demonology-warlock--trinket2-270226", "outcome": "matched", "dps": 618.0685161974272},
   {"scenario": "demonology-warlock--enchant-18372-7942", "outcome": "matched", "dps": 623.0880199065975},
-  {"scenario": "demonology-warlock--enchant-18372-8216", "outcome": "rejected", "reasons": ["stat_auras changes Spirit, which Life Tap reads as fixed"]},
-  {"scenario": "destruction-warlock--trinket1-272439", "outcome": "rejected", "reasons": ["temporary_stats changes Spirit, which Life Tap reads as fixed", "stat_auras changes Spirit, which Life Tap reads as fixed"]},
-  {"scenario": "destruction-warlock--trinket2-272439", "outcome": "rejected", "reasons": ["temporary_stats changes Spirit, which Life Tap reads as fixed", "stat_auras changes Spirit, which Life Tap reads as fixed"]},
+  {"scenario": "demonology-warlock--enchant-18372-8216", "outcome": "matched", "dps": 608.916551306883},
+  {"scenario": "destruction-warlock--trinket1-272439", "outcome": "matched", "dps": 526.4322448508821},
+  {"scenario": "destruction-warlock--trinket2-272439", "outcome": "matched", "dps": 526.4322448508821},
   {"scenario": "destruction-warlock--trinket1-22268", "outcome": "matched", "dps": 538.2812129900852},
   {"scenario": "destruction-warlock--trinket2-22268", "outcome": "matched", "dps": 538.2812129900852},
   {"scenario": "destruction-warlock--trinket1-18371", "outcome": "matched", "dps": 519.8544827083161},
@@ -226,10 +193,10 @@
   {"scenario": "destruction-warlock--trinket2-11832", "outcome": "matched", "dps": 516.550735753118},
   {"scenario": "destruction-warlock--trinket1-20525", "outcome": "matched", "dps": 516.5474328643446},
   {"scenario": "destruction-warlock--trinket2-20525", "outcome": "matched", "dps": 516.5474328643446},
-  {"scenario": "destruction-warlock--trinket1-270226", "outcome": "rejected", "reasons": ["temporary_stats changes Spirit, which Life Tap reads as fixed", "stat_auras changes Spirit, which Life Tap reads as fixed"]},
-  {"scenario": "destruction-warlock--trinket2-270226", "outcome": "rejected", "reasons": ["temporary_stats changes Spirit, which Life Tap reads as fixed", "stat_auras changes Spirit, which Life Tap reads as fixed"]},
+  {"scenario": "destruction-warlock--trinket1-270226", "outcome": "matched", "dps": 520.6661568672957},
+  {"scenario": "destruction-warlock--trinket2-270226", "outcome": "matched", "dps": 520.6661568672957},
   {"scenario": "destruction-warlock--enchant-18372-7942", "outcome": "matched", "dps": 526.9510198976056},
-  {"scenario": "destruction-warlock--enchant-18372-8216", "outcome": "rejected", "reasons": ["stat_auras changes Spirit, which Life Tap reads as fixed"]},
+  {"scenario": "destruction-warlock--enchant-18372-8216", "outcome": "matched", "dps": 510.26686622333756},
   {"scenario": "elemental-shaman--trinket1-272439", "outcome": "matched", "dps": 399.4923461888905},
   {"scenario": "elemental-shaman--trinket2-272439", "outcome": "matched", "dps": 399.4923461888905},
   {"scenario": "elemental-shaman--trinket1-22268", "outcome": "matched", "dps": 412.57415664534506},
@@ -446,8 +413,8 @@
   {"scenario": "retribution-paladin--enchant-12592-7941", "outcome": "matched", "dps": 671.0825228806818},
   {"scenario": "retribution-paladin--enchant-12592-7942", "outcome": "matched", "dps": 668.2840231689518},
   {"scenario": "retribution-paladin--enchant-12592-8216", "outcome": "matched", "dps": 663.6198689935234},
-  {"scenario": "shadow-priest--trinket1-272439", "outcome": "rejected", "reasons": ["temporary_stats changes Spirit, which Dark Sacrifice reads as fixed", "stat_auras changes Spirit, which Dark Sacrifice reads as fixed"]},
-  {"scenario": "shadow-priest--trinket2-272439", "outcome": "rejected", "reasons": ["temporary_stats changes Spirit, which Dark Sacrifice reads as fixed", "stat_auras changes Spirit, which Dark Sacrifice reads as fixed"]},
+  {"scenario": "shadow-priest--trinket1-272439", "outcome": "matched", "dps": 627.4182687383117},
+  {"scenario": "shadow-priest--trinket2-272439", "outcome": "matched", "dps": 627.4182687383117},
   {"scenario": "shadow-priest--trinket1-22268", "outcome": "matched", "dps": 637.4477062334057},
   {"scenario": "shadow-priest--trinket2-22268", "outcome": "matched", "dps": 637.4477062334057},
   {"scenario": "shadow-priest--trinket1-18371", "outcome": "matched", "dps": 614.835397758174},
@@ -456,10 +423,10 @@
   {"scenario": "shadow-priest--trinket2-11832", "outcome": "matched", "dps": 619.6573434911815},
   {"scenario": "shadow-priest--trinket1-20525", "outcome": "matched", "dps": 617.8931114513056},
   {"scenario": "shadow-priest--trinket2-20525", "outcome": "matched", "dps": 617.8931114513056},
-  {"scenario": "shadow-priest--trinket1-270226", "outcome": "rejected", "reasons": ["temporary_stats changes Spirit, which Dark Sacrifice reads as fixed", "stat_auras changes Spirit, which Dark Sacrifice reads as fixed"]},
-  {"scenario": "shadow-priest--trinket2-270226", "outcome": "rejected", "reasons": ["temporary_stats changes Spirit, which Dark Sacrifice reads as fixed", "stat_auras changes Spirit, which Dark Sacrifice reads as fixed"]},
+  {"scenario": "shadow-priest--trinket1-270226", "outcome": "matched", "dps": 614.6959055063697},
+  {"scenario": "shadow-priest--trinket2-270226", "outcome": "matched", "dps": 614.6959055063697},
   {"scenario": "shadow-priest--enchant-13349-7942", "outcome": "matched", "dps": 630.0872355576114},
-  {"scenario": "shadow-priest--enchant-13349-8216", "outcome": "rejected", "reasons": ["stat_auras changes Spirit, which Dark Sacrifice reads as fixed"]},
+  {"scenario": "shadow-priest--enchant-13349-8216", "outcome": "matched", "dps": 614.1145877548346},
   {"scenario": "shockadin-paladin--trinket1-272439", "outcome": "matched", "dps": 728.4489424306853},
   {"scenario": "shockadin-paladin--trinket2-272439", "outcome": "matched", "dps": 728.4489424306853},
   {"scenario": "shockadin-paladin--trinket1-22268", "outcome": "matched", "dps": 738.1587056398574},
@@ -475,8 +442,8 @@
   {"scenario": "shockadin-paladin--enchant-12592-7941", "outcome": "matched", "dps": 712.355938640819},
   {"scenario": "shockadin-paladin--enchant-12592-7942", "outcome": "matched", "dps": 704.3945875169735},
   {"scenario": "shockadin-paladin--enchant-12592-8216", "outcome": "matched", "dps": 704.0895441053678},
-  {"scenario": "smite-priest--trinket1-272439", "outcome": "rejected", "reasons": ["temporary_stats changes healing power, which Holy Nova reads as fixed", "stat_auras changes healing power, which Holy Nova reads as fixed", "temporary_stats changes Spirit, which Dark Sacrifice reads as fixed", "stat_auras changes Spirit, which Dark Sacrifice reads as fixed"]},
-  {"scenario": "smite-priest--trinket2-272439", "outcome": "rejected", "reasons": ["temporary_stats changes healing power, which Holy Nova reads as fixed", "stat_auras changes healing power, which Holy Nova reads as fixed", "temporary_stats changes Spirit, which Dark Sacrifice reads as fixed", "stat_auras changes Spirit, which Dark Sacrifice reads as fixed"]},
+  {"scenario": "smite-priest--trinket1-272439", "outcome": "rejected", "reasons": ["temporary_stats changes healing power, which Holy Nova reads as fixed", "stat_auras changes healing power, which Holy Nova reads as fixed"]},
+  {"scenario": "smite-priest--trinket2-272439", "outcome": "rejected", "reasons": ["temporary_stats changes healing power, which Holy Nova reads as fixed", "stat_auras changes healing power, which Holy Nova reads as fixed"]},
   {"scenario": "smite-priest--trinket1-22268", "outcome": "rejected", "reasons": ["stat_auras changes healing power, which Holy Nova reads as fixed"]},
   {"scenario": "smite-priest--trinket2-22268", "outcome": "rejected", "reasons": ["stat_auras changes healing power, which Holy Nova reads as fixed"]},
   {"scenario": "smite-priest--trinket1-18371", "outcome": "matched", "dps": 503.62908439337957},
@@ -485,10 +452,10 @@
   {"scenario": "smite-priest--trinket2-11832", "outcome": "matched", "dps": 510.31585634775286},
   {"scenario": "smite-priest--trinket1-20525", "outcome": "matched", "dps": 506.57391655778775},
   {"scenario": "smite-priest--trinket2-20525", "outcome": "matched", "dps": 506.57391655778775},
-  {"scenario": "smite-priest--trinket1-270226", "outcome": "rejected", "reasons": ["temporary_stats changes healing power, which Holy Nova reads as fixed", "stat_auras changes healing power, which Holy Nova reads as fixed", "temporary_stats changes Spirit, which Dark Sacrifice reads as fixed", "stat_auras changes Spirit, which Dark Sacrifice reads as fixed"]},
-  {"scenario": "smite-priest--trinket2-270226", "outcome": "rejected", "reasons": ["temporary_stats changes healing power, which Holy Nova reads as fixed", "stat_auras changes healing power, which Holy Nova reads as fixed", "temporary_stats changes Spirit, which Dark Sacrifice reads as fixed", "stat_auras changes Spirit, which Dark Sacrifice reads as fixed"]},
+  {"scenario": "smite-priest--trinket1-270226", "outcome": "rejected", "reasons": ["temporary_stats changes healing power, which Holy Nova reads as fixed", "stat_auras changes healing power, which Holy Nova reads as fixed"]},
+  {"scenario": "smite-priest--trinket2-270226", "outcome": "rejected", "reasons": ["temporary_stats changes healing power, which Holy Nova reads as fixed", "stat_auras changes healing power, which Holy Nova reads as fixed"]},
   {"scenario": "smite-priest--enchant-13964-7942", "outcome": "rejected", "reasons": ["stat_auras changes healing power, which Holy Nova reads as fixed"]},
-  {"scenario": "smite-priest--enchant-13964-8216", "outcome": "rejected", "reasons": ["stat_auras changes healing power, which Holy Nova reads as fixed", "stat_auras changes Spirit, which Dark Sacrifice reads as fixed"]},
+  {"scenario": "smite-priest--enchant-13964-8216", "outcome": "rejected", "reasons": ["stat_auras changes healing power, which Holy Nova reads as fixed"]},
   {"scenario": "subtlety-rogue--trinket1-272439", "outcome": "matched", "dps": 542.2776557778278},
   {"scenario": "subtlety-rogue--trinket2-272439", "outcome": "matched", "dps": 542.2776557778278},
   {"scenario": "subtlety-rogue--trinket1-22268", "outcome": "matched", "dps": 538.5020948747641},

@@ -15,11 +15,12 @@
     "deviations": "as variances at the scale of mean^2",
     "first_fight_debug_log": "line identical"
   },
-  "matched": 20,
-  "rejected": 4,
+  "matched": 24,
+  "rejected": 0,
   "mismatched": 0,
   "notes": [
-    "Four variants empty the main hand, so Enhancement's Auto weapon sync compares two equal unarmed speeds and delays the off hand swing; that replacement is unrepresented and Rust rejects them."
+    "Four variants empty the main hand, so Enhancement's Auto weapon sync compares two equal unarmed speeds and delays the off hand swing; that replacement is unrepresented and Rust rejects them.",
+    "Rerun at the coordinator branch at a3dbc766d (validation/2026-10-04-integration-regression-a3dbc76.json): 24 matched, 0 rejected, 0 mismatched."
   ],
   "cases": [
     {
@@ -63,12 +64,9 @@
       "target_level": 60,
       "talents": "450033102-055020031005102251",
       "equipped_items": 10,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "unrepresented by the exporter: main hand swings can be replaced"
-      ]
+      "go_dps": 363.5902151541052,
+      "rust_dps": 363.5902151541052,
+      "passed": true
     },
     {
       "scenario": "sweep-03",
@@ -127,7 +125,7 @@
       "talents": "450033102-033030031005102251",
       "equipped_items": 8,
       "go_dps": 204.8318284478506,
-      "rust_dps": 204.83182844785057,
+      "rust_dps": 204.8318284478506,
       "passed": true
     },
     {
@@ -201,12 +199,9 @@
       "target_level": 61,
       "talents": "450030102-055020031000100051",
       "equipped_items": 11,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "unrepresented by the exporter: main hand swings can be replaced"
-      ]
+      "go_dps": 293.19760395788677,
+      "rust_dps": 293.19760395788677,
+      "passed": true
     },
     {
       "scenario": "sweep-12",
@@ -219,12 +214,9 @@
       "target_level": 61,
       "talents": "450033102-055030031005102221",
       "equipped_items": 11,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "unrepresented by the exporter: main hand swings can be replaced"
-      ]
+      "go_dps": 283.55068500189844,
+      "rust_dps": 283.55068500189844,
+      "passed": true
     },
     {
       "scenario": "sweep-13",
@@ -297,12 +289,9 @@
       "target_level": 63,
       "talents": "450033002-050030030003002031",
       "equipped_items": 9,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "unrepresented by the exporter: main hand swings can be replaced"
-      ]
+      "go_dps": 99.22166658889687,
+      "rust_dps": 99.22166658889687,
+      "passed": true
     },
     {
       "scenario": "sweep-18",

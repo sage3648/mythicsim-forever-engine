@@ -75,7 +75,8 @@
   "First run against the coordinator branch at 0705079: 1003 matched, 12 rejected and 1 mismatched. Rerun after the hit-taken listener fixes on claude/sapper-listeners from 4afbe5d, recorded here.",
   "The seven rejections for community #622 come from removing a talent whose aura the rotation reads (Missile Barrage, Fingers of Frost, Ice Lance, Eclipse, Maelstrom Weapon, Seal of Command and Shadow Weaving): the pinned reference drops such a condition, which #622 reads as inactive, so the gate refuses it by design.",
   "Fixed since the first run: Enrage raised on the production Warrior procs in Go from the Goblin Sapper Charge hitting the player, which the exporter had marked inert because nothing tanks the player (warrior--raise-enrage, Go 789.504 against Rust 795.333 DPS); a player listener of hits taken is now inert only while nothing hits the player. Blood Craze raised left its Bloodthirst listener without an effect, Improved Hamstring raised had no effect, and Improved Shield Bash is now inert while Rust has no Shield Bash.",
-  "The production Destruction Warlock tree already strands a point: 24 points sit above the row of Shadow and Flame, which needs 25. The builder rules refuse only changes that strand more, so its variants keep that point."
+  "The production Destruction Warlock tree already strands a point: 24 points sit above the row of Shadow and Flame, which needs 25. The builder rules refuse only changes that strand more, so its variants keep that point.",
+  "Rerun at the coordinator branch at a3dbc766d (validation/2026-10-04-integration-regression-a3dbc76.json): 1009 matched, 7 rejected, 0 mismatched."
  ],
  "cases": [
   {

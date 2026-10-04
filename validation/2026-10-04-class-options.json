@@ -15,13 +15,14 @@
     "deviations": "as variances at the scale of mean^2",
     "first_fight_debug_log": "line identical"
   },
-  "matched": 1074,
-  "rejected": 17,
-  "mismatched": 6,
+  "matched": 1087,
+  "rejected": 10,
+  "mismatched": 0,
   "notes": [
     "BuildRequest refused 659 choices a spec does not take (imbues outside Enhancement, demons outside Warlock, and so on); they are not variants.",
     "The 6 mismatches share one cause, routed to the target swing owner: a melee attack from in front of a target no one tanks can be parried, and Go logs the parry haste that moves the swing the target never takes. Rust does not track that swing, so only the first-fight log differs; every result matches.",
-    "Fixed here: a Feral cat's rage bar, which a Mighty Rage Potion fills and whose Rage makes threat at each fight's end, and a mana potion on a unit without a mana bar, which rolls but gives nothing."
+    "Fixed here: a Feral cat's rage bar, which a Mighty Rage Potion fills and whose Rage makes threat at each fight's end, and a mana potion on a unit without a mana bar, which rolls but gives nothing.",
+    "Rerun at the coordinator branch at a3dbc766d (validation/2026-10-04-integration-regression-a3dbc76.json): 1087 matched, 10 rejected, 0 mismatched."
   ],
   "cases": [
     {
@@ -231,7 +232,7 @@
       "talents": "0555002013520005--0550005003",
       "equipped_items": 15,
       "go_dps": 577.1437465435401,
-      "rust_dps": 577.1437465435403,
+      "rust_dps": 577.1437465435401,
       "passed": true
     },
     {
@@ -412,33 +413,7 @@
       "equipped_items": 15,
       "go_dps": 528.9518091629748,
       "rust_dps": 528.9518091629748,
-      "passed": false,
-      "differences": [],
-      "first_log_difference": {
-        "line": 39,
-        "go": "[0.03] [Target 1] MH Swing reduced by 123.20226ms due to parry haste, will now occur at 434ms",
-        "rust": "[0.04] [affliction-warlock (#1) - Succubus] Gained 59.000 mana from {SpellID: 20355} (906.000 --> 965.000) of 1066 total.",
-        "go_context": [
-          "[0.00] [affliction-warlock (#1)] [Target 1] {SpellID: 1311680} Hit for 0.000 damage (SpellSchool: 32). (Threat: 0.000)",
-          "[0.03] [affliction-warlock (#1) - Succubus] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.03] [affliction-warlock (#1) - Succubus] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.03] [affliction-warlock (#1) - Succubus] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 328.4, RAP: 0.0, SP: 41.4, BaseDamage:164.2, AfterAttackerMods:164.2, AfterResistances:139.4, AfterTargetMods:139.4, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.03] [affliction-warlock (#1) - Succubus] [Target 1] {OtherID: 3, Tag: 1} Parry (SpellSchool: 1). (Threat: 0.000)",
-          "[0.03] [Target 1] MH Swing reduced by 123.20226ms due to parry haste, will now occur at 434ms",
-          "[0.04] [affliction-warlock (#1) - Succubus] Gained 59.000 mana from {SpellID: 20355} (906.000 --> 965.000) of 1066 total.",
-          "[0.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs."
-        ],
-        "rust_context": [
-          "[0.00] [affliction-warlock (#1)] [Target 1] {SpellID: 1311680} Hit for 0.000 damage (SpellSchool: 32). (Threat: 0.000)",
-          "[0.03] [affliction-warlock (#1) - Succubus] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.03] [affliction-warlock (#1) - Succubus] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.03] [affliction-warlock (#1) - Succubus] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 328.4, RAP: 0.0, SP: 41.4, BaseDamage:164.2, AfterAttackerMods:164.2, AfterResistances:139.4, AfterTargetMods:139.4, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.03] [affliction-warlock (#1) - Succubus] [Target 1] {OtherID: 3, Tag: 1} Parry (SpellSchool: 1). (Threat: 0.000)",
-          "[0.04] [affliction-warlock (#1) - Succubus] Gained 59.000 mana from {SpellID: 20355} (906.000 --> 965.000) of 1066 total.",
-          "[0.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.",
-          "[0.23] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs."
-        ]
-      }
+      "passed": true
     },
     {
       "scenario": "affliction-warlock--potion-GreaterStoneshield",
@@ -1433,7 +1408,7 @@
       "talents": "30305213132515201-4505",
       "equipped_items": 14,
       "go_dps": 709.2031957863366,
-      "rust_dps": 709.2031957863364,
+      "rust_dps": 709.2031957863366,
       "passed": true
     },
     {
@@ -1553,7 +1528,7 @@
       "talents": "30305213132515201-4505",
       "equipped_items": 14,
       "go_dps": 709.2031957863366,
-      "rust_dps": 709.2031957863364,
+      "rust_dps": 709.2031957863366,
       "passed": true
     },
     {
@@ -2138,7 +2113,7 @@
       "talents": "0053031055110105-30230320201401",
       "equipped_items": 15,
       "go_dps": 449.60055486934453,
-      "rust_dps": 449.6005548693446,
+      "rust_dps": 449.60055486934453,
       "passed": true
     },
     {
@@ -2752,15 +2727,9 @@
       "target_level": 63,
       "talents": "5532220115501351--505",
       "equipped_items": 15,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation item 3: action multidot is unsupported",
-        "rotation item 4: action multidot is unsupported",
-        "prepull action 1: action activateAura is unsupported",
-        "prepull actions outside the rotation are unsupported"
-      ]
+      "go_dps": 458.36320870596956,
+      "rust_dps": 458.36320870596956,
+      "passed": true
     },
     {
       "scenario": "balance-druid--target-level-60",
@@ -3044,7 +3013,7 @@
       "talents": "005303105-32030320201515221-002",
       "equipped_items": 15,
       "go_dps": 590.4326703685871,
-      "rust_dps": 590.432670368587,
+      "rust_dps": 590.4326703685871,
       "passed": true
     },
     {
@@ -3328,13 +3297,9 @@
       "target_level": 63,
       "talents": "005303105-32030320201515221-002",
       "equipped_items": 15,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation item 7: value autoSwingTime is unsupported",
-        "prepull actions outside the rotation are unsupported"
-      ]
+      "go_dps": 550.6431533419959,
+      "rust_dps": 550.6431533419959,
+      "passed": true
     },
     {
       "scenario": "combat-rogue--rotation-rogue-dps-forever_hemorrhage",
@@ -3874,33 +3839,7 @@
       "equipped_items": 15,
       "go_dps": 593.4314667623645,
       "rust_dps": 593.4314667623645,
-      "passed": false,
-      "differences": [],
-      "first_log_difference": {
-        "line": 45,
-        "go": "[0.03] [Target 1] MH Swing reduced by 123.20226ms due to parry haste, will now occur at 434ms",
-        "rust": "[0.04] [demonology-warlock (#1) - Succubus] Gained 59.000 mana from {SpellID: 20355} (1065.900 --> 1124.900) of 1226 total.",
-        "go_context": [
-          "[0.00] [demonology-warlock (#1)] [Target 1] {SpellID: 1311680} Hit for 0.000 damage (SpellSchool: 32). (Threat: 0.000)",
-          "[0.03] [demonology-warlock (#1) - Succubus] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.03] [demonology-warlock (#1) - Succubus] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.03] [demonology-warlock (#1) - Succubus] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 334.2, RAP: 0.0, SP: 104.8, BaseDamage:165.0, AfterAttackerMods:186.9, AfterResistances:158.8, AfterTargetMods:158.8, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.03] [demonology-warlock (#1) - Succubus] [Target 1] {OtherID: 3, Tag: 1} Parry (SpellSchool: 1). (Threat: 0.000)",
-          "[0.03] [Target 1] MH Swing reduced by 123.20226ms due to parry haste, will now occur at 434ms",
-          "[0.04] [demonology-warlock (#1) - Succubus] Gained 59.000 mana from {SpellID: 20355} (1065.900 --> 1124.900) of 1226 total.",
-          "[0.13] [demonology-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs."
-        ],
-        "rust_context": [
-          "[0.00] [demonology-warlock (#1)] [Target 1] {SpellID: 1311680} Hit for 0.000 damage (SpellSchool: 32). (Threat: 0.000)",
-          "[0.03] [demonology-warlock (#1) - Succubus] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.03] [demonology-warlock (#1) - Succubus] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.03] [demonology-warlock (#1) - Succubus] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 334.2, RAP: 0.0, SP: 104.8, BaseDamage:165.0, AfterAttackerMods:186.9, AfterResistances:158.8, AfterTargetMods:158.8, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.03] [demonology-warlock (#1) - Succubus] [Target 1] {OtherID: 3, Tag: 1} Parry (SpellSchool: 1). (Threat: 0.000)",
-          "[0.04] [demonology-warlock (#1) - Succubus] Gained 59.000 mana from {SpellID: 20355} (1065.900 --> 1124.900) of 1226 total.",
-          "[0.13] [demonology-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.",
-          "[0.23] [demonology-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs."
-        ]
-      }
+      "passed": true
     },
     {
       "scenario": "demonology-warlock--pact-None",
@@ -4004,7 +3943,7 @@
       "talents": "02-0025003231020301351-0550005003",
       "equipped_items": 15,
       "go_dps": 598.6136266079261,
-      "rust_dps": 598.613626607926,
+      "rust_dps": 598.6136266079261,
       "passed": true
     },
     {
@@ -4019,7 +3958,7 @@
       "talents": "02-0025003231020301351-0550005003",
       "equipped_items": 15,
       "go_dps": 598.6136266079261,
-      "rust_dps": 598.613626607926,
+      "rust_dps": 598.6136266079261,
       "passed": true
     },
     {
@@ -5748,33 +5687,7 @@
       "equipped_items": 13,
       "go_dps": 538.9956451408224,
       "rust_dps": 538.9956451408224,
-      "passed": false,
-      "differences": [],
-      "first_log_difference": {
-        "line": 57,
-        "go": "[0.07] [Target 1] MH Swing reduced by 91.048414ms due to parry haste, will now occur at 466.153846ms",
-        "rust": "[0.07] [enhancement-shaman (#1)] No available actions!",
-        "go_context": [
-          "[0.01] [enhancement-shaman (#1)] Aura gained: {SpellID: 1238931}",
-          "[0.07] [enhancement-shaman (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.07] [enhancement-shaman (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.07] [enhancement-shaman (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 2484.5, RAP: 116.6, SP: 266.5, BaseDamage:848.3, AfterAttackerMods:848.3, AfterResistances:720.5, AfterTargetMods:720.5, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.07] [enhancement-shaman (#1)] [Target 1] {OtherID: 3, Tag: 1} Parry (SpellSchool: 1). (Threat: 0.000)",
-          "[0.07] [Target 1] MH Swing reduced by 91.048414ms due to parry haste, will now occur at 466.153846ms",
-          "[0.07] [enhancement-shaman (#1)] No available actions!",
-          "[0.07] [enhancement-shaman (#1)] Pausing rotation for 1.433846154s due to resources / CDs."
-        ],
-        "rust_context": [
-          "[0.01] [enhancement-shaman (#1)] Aura gained: {SpellID: 1238931}",
-          "[0.07] [enhancement-shaman (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.07] [enhancement-shaman (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.07] [enhancement-shaman (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 2484.5, RAP: 116.6, SP: 266.5, BaseDamage:848.3, AfterAttackerMods:848.3, AfterResistances:720.5, AfterTargetMods:720.5, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.07] [enhancement-shaman (#1)] [Target 1] {OtherID: 3, Tag: 1} Parry (SpellSchool: 1). (Threat: 0.000)",
-          "[0.07] [enhancement-shaman (#1)] No available actions!",
-          "[0.07] [enhancement-shaman (#1)] Pausing rotation for 1.433846154s due to resources / CDs.",
-          "[0.08] [enhancement-shaman (#1)] Gained 59.000 mana from {SpellID: 20355} (3596.600 --> 3655.600) of 4105 total."
-        ]
-      }
+      "passed": true
     },
     {
       "scenario": "enhancement-shaman--potion-GreaterStoneshield",
@@ -6869,33 +6782,7 @@
       "equipped_items": 14,
       "go_dps": 491.16915994028136,
       "rust_dps": 491.16915994028136,
-      "passed": false,
-      "differences": [],
-      "first_log_difference": {
-        "line": 43,
-        "go": "[0.02] [Target 1] MH Swing reduced by 136.20226ms due to parry haste, will now occur at 421ms",
-        "rust": "[0.12] [feral-druid (#1)] No available actions!",
-        "go_context": [
-          "[0.00] [Target 1] Aura gained: {SpellID: 9907}",
-          "[0.02] [feral-druid (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.02] [feral-druid (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.02] [feral-druid (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1586.0, RAP: 148.0, SP: 0.0, BaseDamage:174.6, AfterAttackerMods:179.8, AfterResistances:152.7, AfterTargetMods:152.7, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.02] [feral-druid (#1)] [Target 1] {OtherID: 3, Tag: 1} Parry (SpellSchool: 1). (Threat: 0.000)",
-          "[0.02] [Target 1] MH Swing reduced by 136.20226ms due to parry haste, will now occur at 421ms",
-          "[0.12] [feral-druid (#1)] No available actions!",
-          "[0.12] [feral-druid (#1)] Pausing rotation for 879ms due to resources / CDs."
-        ],
-        "rust_context": [
-          "[0.00] [Target 1] Aura gained: {SpellID: 9907}",
-          "[0.02] [feral-druid (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.02] [feral-druid (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.02] [feral-druid (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1586.0, RAP: 148.0, SP: 0.0, BaseDamage:174.6, AfterAttackerMods:179.8, AfterResistances:152.7, AfterTargetMods:152.7, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.02] [feral-druid (#1)] [Target 1] {OtherID: 3, Tag: 1} Parry (SpellSchool: 1). (Threat: 0.000)",
-          "[0.12] [feral-druid (#1)] No available actions!",
-          "[0.12] [feral-druid (#1)] Pausing rotation for 879ms due to resources / CDs.",
-          "[0.50] [feral-druid (#1)] Gained 77.764 mana from {OtherID: 2, Tag: 2} (5694.000 --> 5771.764) of 6054 total."
-        ]
-      }
+      "passed": true
     },
     {
       "scenario": "feral-druid--potion-GreaterStoneshield",
@@ -8040,7 +7927,7 @@
       "talents": "05020500300001-03-0555000301001301251",
       "equipped_items": 15,
       "go_dps": 356.6170424399146,
-      "rust_dps": 356.61704243991454,
+      "rust_dps": 356.6170424399146,
       "passed": true
     },
     {
@@ -9216,7 +9103,7 @@
       "talents": "-05351030052010501-25003312031",
       "equipped_items": 15,
       "go_dps": 552.7440429376363,
-      "rust_dps": 552.7440429376362,
+      "rust_dps": 552.7440429376363,
       "passed": true
     },
     {
@@ -9245,12 +9132,9 @@
       "target_level": 63,
       "talents": "-05351030052010501-25003312031",
       "equipped_items": 15,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Blood Craze - Bloodthirst\" listens to combat events without an effect"
-      ]
+      "go_dps": 609.6145482338186,
+      "rust_dps": 609.6145482338186,
+      "passed": true
     },
     {
       "scenario": "fury-protection-warrior--target-level-60",
@@ -9789,7 +9673,7 @@
       "talents": "5500300300312125-05302133013-",
       "equipped_items": 15,
       "go_dps": 425.2667341418458,
-      "rust_dps": 425.26673414184575,
+      "rust_dps": 425.2667341418458,
       "passed": true
     },
     {
@@ -9804,7 +9688,7 @@
       "talents": "5500300300312125-05302133013-",
       "equipped_items": 15,
       "go_dps": 425.0064689913995,
-      "rust_dps": 425.00646899139946,
+      "rust_dps": 425.0064689913995,
       "passed": true
     },
     {
@@ -9818,12 +9702,9 @@
       "target_level": 63,
       "talents": "5500300300312125-05302133013-",
       "equipped_items": 15,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 20423 without a known behavior"
-      ]
+      "go_dps": 455.7513379180276,
+      "rust_dps": 455.7513379180276,
+      "passed": true
     },
     {
       "scenario": "holy-protection-paladin--simspec-retribution-paladin",
@@ -10122,7 +10003,7 @@
       "talents": "5320001505101251-00503520014",
       "equipped_items": 14,
       "go_dps": 598.9923281712396,
-      "rust_dps": 598.9923281712395,
+      "rust_dps": 598.9923281712396,
       "passed": true
     },
     {
@@ -11546,12 +11427,9 @@
       "target_level": 63,
       "talents": "50003-0530213301301551-50203",
       "equipped_items": 15,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 20423 without a known behavior"
-      ]
+      "go_dps": 440.83875271047094,
+      "rust_dps": 440.83875271047094,
+      "passed": true
     },
     {
       "scenario": "protection-paladin--simspec-retribution-paladin",
@@ -12167,12 +12045,9 @@
       "target_level": 63,
       "talents": "-0505203005-250033120310021251",
       "equipped_items": 15,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "player aura \"Blood Craze - Bloodthirst\" listens to combat events without an effect"
-      ]
+      "go_dps": 488.0094753801988,
+      "rust_dps": 488.0094753801988,
+      "passed": true
     },
     {
       "scenario": "protection-warrior--target-level-60",
@@ -12291,7 +12166,7 @@
       "talents": "-05302133013-0522533100103032",
       "equipped_items": 15,
       "go_dps": 433.5235233064644,
-      "rust_dps": 433.52352330646437,
+      "rust_dps": 433.5235233064644,
       "passed": true
     },
     {
@@ -12321,7 +12196,7 @@
       "talents": "-05302133013-0522533100103032",
       "equipped_items": 15,
       "go_dps": 474.70566640127424,
-      "rust_dps": 474.70566640127413,
+      "rust_dps": 474.70566640127424,
       "passed": true
     },
     {
@@ -12336,7 +12211,7 @@
       "talents": "-05302133013-0522533100103032",
       "equipped_items": 15,
       "go_dps": 475.58019802501417,
-      "rust_dps": 475.5801980250141,
+      "rust_dps": 475.58019802501417,
       "passed": true
     },
     {
@@ -12411,7 +12286,7 @@
       "talents": "-05302133013-0522533100103032",
       "equipped_items": 15,
       "go_dps": 469.68645176296945,
-      "rust_dps": 469.6864517629694,
+      "rust_dps": 469.68645176296945,
       "passed": true
     },
     {
@@ -12426,7 +12301,7 @@
       "talents": "-05302133013-0522533100103032",
       "equipped_items": 15,
       "go_dps": 485.47137286334464,
-      "rust_dps": 485.4713728633446,
+      "rust_dps": 485.47137286334464,
       "passed": true
     },
     {
@@ -12456,7 +12331,7 @@
       "talents": "-05302133013-0522533100103032",
       "equipped_items": 15,
       "go_dps": 474.74450305887297,
-      "rust_dps": 474.74450305887285,
+      "rust_dps": 474.74450305887297,
       "passed": true
     },
     {
@@ -12501,7 +12376,7 @@
       "talents": "-05302133013-0522533100103032",
       "equipped_items": 15,
       "go_dps": 509.31749373072785,
-      "rust_dps": 509.3174937307278,
+      "rust_dps": 509.31749373072785,
       "passed": true
     },
     {
@@ -12516,7 +12391,7 @@
       "talents": "-05302133013-0522533100103032",
       "equipped_items": 15,
       "go_dps": 474.70566640127424,
-      "rust_dps": 474.70566640127413,
+      "rust_dps": 474.70566640127424,
       "passed": true
     },
     {
@@ -12531,7 +12406,7 @@
       "talents": "-05302133013-0522533100103032",
       "equipped_items": 15,
       "go_dps": 474.70566640127424,
-      "rust_dps": 474.70566640127413,
+      "rust_dps": 474.70566640127424,
       "passed": true
     },
     {
@@ -12546,7 +12421,7 @@
       "talents": "-05302133013-0522533100103032",
       "equipped_items": 15,
       "go_dps": 474.70566640127424,
-      "rust_dps": 474.70566640127413,
+      "rust_dps": 474.70566640127424,
       "passed": true
     },
     {
@@ -12561,7 +12436,7 @@
       "talents": "-05302133013-0522533100103032",
       "equipped_items": 15,
       "go_dps": 474.70566640127424,
-      "rust_dps": 474.70566640127413,
+      "rust_dps": 474.70566640127424,
       "passed": true
     },
     {
@@ -12576,7 +12451,7 @@
       "talents": "-05302133013-0522533100103032",
       "equipped_items": 15,
       "go_dps": 474.70566640127424,
-      "rust_dps": 474.70566640127413,
+      "rust_dps": 474.70566640127424,
       "passed": true
     },
     {
@@ -12591,7 +12466,7 @@
       "talents": "-05302133013-0522533100103032",
       "equipped_items": 15,
       "go_dps": 474.70566640127424,
-      "rust_dps": 474.70566640127413,
+      "rust_dps": 474.70566640127424,
       "passed": true
     },
     {
@@ -12621,7 +12496,7 @@
       "talents": "-05302133013-0522533100103032",
       "equipped_items": 15,
       "go_dps": 474.70566640127424,
-      "rust_dps": 474.70566640127413,
+      "rust_dps": 474.70566640127424,
       "passed": true
     },
     {
@@ -12651,7 +12526,7 @@
       "talents": "-05302133013-0522533100103032",
       "equipped_items": 15,
       "go_dps": 474.70566640127424,
-      "rust_dps": 474.70566640127413,
+      "rust_dps": 474.70566640127424,
       "passed": true
     },
     {
@@ -12666,7 +12541,7 @@
       "talents": "-05302133013-0522533100103032",
       "equipped_items": 15,
       "go_dps": 476.56856652215083,
-      "rust_dps": 476.5685665221508,
+      "rust_dps": 476.56856652215083,
       "passed": true
     },
     {
@@ -12681,7 +12556,7 @@
       "talents": "-05302133013-0522533100103032",
       "equipped_items": 15,
       "go_dps": 474.70566640127424,
-      "rust_dps": 474.70566640127413,
+      "rust_dps": 474.70566640127424,
       "passed": true
     },
     {
@@ -12696,7 +12571,7 @@
       "talents": "-05302133013-0522533100103032",
       "equipped_items": 15,
       "go_dps": 389.3059890630239,
-      "rust_dps": 389.30598906302384,
+      "rust_dps": 389.3059890630239,
       "passed": true
     },
     {
@@ -12711,7 +12586,7 @@
       "talents": "-05302133013-0522533100103032",
       "equipped_items": 15,
       "go_dps": 472.0991838534347,
-      "rust_dps": 472.0991838534346,
+      "rust_dps": 472.0991838534347,
       "passed": true
     },
     {
@@ -12726,7 +12601,7 @@
       "talents": "-05302133013-0522533100103032",
       "equipped_items": 15,
       "go_dps": 474.6383809088228,
-      "rust_dps": 474.63838090882274,
+      "rust_dps": 474.6383809088228,
       "passed": true
     },
     {
@@ -12740,12 +12615,9 @@
       "target_level": 63,
       "talents": "-05302133013-0522533100103032",
       "equipped_items": 15,
-      "go_dps": null,
-      "rust_dps": null,
-      "passed": false,
-      "rejected": [
-        "rotation reaches spell 20423 without a known behavior"
-      ]
+      "go_dps": 447.642531542984,
+      "rust_dps": 447.642531542984,
+      "passed": true
     },
     {
       "scenario": "ret-protection-paladin--simspec-retribution-paladin",
@@ -12819,7 +12691,7 @@
       "talents": "-05302133013-0522533100103032",
       "equipped_items": 15,
       "go_dps": 470.9895629662798,
-      "rust_dps": 470.9895629662797,
+      "rust_dps": 470.9895629662798,
       "passed": true
     },
     {
@@ -12834,7 +12706,7 @@
       "talents": "-05302133013-0522533100103032",
       "equipped_items": 15,
       "go_dps": 475.7306090729792,
-      "rust_dps": 475.7306090729791,
+      "rust_dps": 475.7306090729792,
       "passed": true
     },
     {
@@ -12849,7 +12721,7 @@
       "talents": "-05302133013-0522533100103032",
       "equipped_items": 15,
       "go_dps": 473.5593643464418,
-      "rust_dps": 473.55936434644167,
+      "rust_dps": 473.5593643464418,
       "passed": true
     },
     {
@@ -12864,7 +12736,7 @@
       "talents": "-05302133013-0522533100103032",
       "equipped_items": 15,
       "go_dps": 475.6278314602243,
-      "rust_dps": 475.6278314602242,
+      "rust_dps": 475.6278314602243,
       "passed": true
     },
     {
@@ -13014,7 +12886,7 @@
       "talents": "52003-503-05225231001330321",
       "equipped_items": 14,
       "go_dps": 663.8582911920533,
-      "rust_dps": 663.8582911920532,
+      "rust_dps": 663.8582911920533,
       "passed": true
     },
     {
@@ -13029,7 +12901,7 @@
       "talents": "52003-503-05225231001330321",
       "equipped_items": 14,
       "go_dps": 666.5776492528424,
-      "rust_dps": 666.5776492528423,
+      "rust_dps": 666.5776492528424,
       "passed": true
     },
     {
@@ -13239,34 +13111,8 @@
       "talents": "52003-503-05225231001330321",
       "equipped_items": 14,
       "go_dps": 585.0659861290284,
-      "rust_dps": 585.0659861290283,
-      "passed": false,
-      "differences": [],
-      "first_log_difference": {
-        "line": 48,
-        "go": "[0.09] [Target 1] MH Swing reduced by 71.20226ms due to parry haste, will now occur at 486ms",
-        "rust": "[0.10] [retribution-paladin (#1)] Gained 59.000 mana from {SpellID: 20355} (3622.200 --> 3681.200) of 3902 total.",
-        "go_context": [
-          "[0.01] [retribution-paladin (#1)] Aura gained: {SpellID: 440667, Tag: 1}",
-          "[0.09] [retribution-paladin (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [retribution-paladin (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [retribution-paladin (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1375.0, RAP: 122.0, SP: 298.8, BaseDamage:565.6, AfterAttackerMods:599.6, AfterResistances:398.4, AfterTargetMods:406.4, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.09] [retribution-paladin (#1)] [Target 1] {OtherID: 3, Tag: 1} Parry (SpellSchool: 1). (Threat: 0.000)",
-          "[0.09] [Target 1] MH Swing reduced by 71.20226ms due to parry haste, will now occur at 486ms",
-          "[0.10] [retribution-paladin (#1)] Gained 59.000 mana from {SpellID: 20355} (3622.200 --> 3681.200) of 3902 total.",
-          "[0.19] [retribution-paladin (#1)] No available actions!"
-        ],
-        "rust_context": [
-          "[0.01] [retribution-paladin (#1)] Aura gained: {SpellID: 440667, Tag: 1}",
-          "[0.09] [retribution-paladin (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.09] [retribution-paladin (#1)] Completed cast {OtherID: 3, Tag: 1}",
-          "[0.09] [retribution-paladin (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1375.0, RAP: 122.0, SP: 298.8, BaseDamage:565.6, AfterAttackerMods:599.6, AfterResistances:398.4, AfterTargetMods:406.4, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.09] [retribution-paladin (#1)] [Target 1] {OtherID: 3, Tag: 1} Parry (SpellSchool: 1). (Threat: 0.000)",
-          "[0.10] [retribution-paladin (#1)] Gained 59.000 mana from {SpellID: 20355} (3622.200 --> 3681.200) of 3902 total.",
-          "[0.19] [retribution-paladin (#1)] No available actions!",
-          "[0.19] [retribution-paladin (#1)] Pausing rotation for 1.314s due to resources / CDs."
-        ]
-      }
+      "rust_dps": 585.0659861290284,
+      "passed": true
     },
     {
       "scenario": "retribution-paladin--potion-GreaterStoneshield",
@@ -13400,7 +13246,7 @@
       "talents": "52003-503-05225231001330321",
       "equipped_items": 14,
       "go_dps": 666.8852483978827,
-      "rust_dps": 666.8852483978826,
+      "rust_dps": 666.8852483978827,
       "passed": true
     },
     {
@@ -14105,7 +13951,7 @@
       "talents": "550031032001012--052252300012303",
       "equipped_items": 14,
       "go_dps": 706.6681520951133,
-      "rust_dps": 706.6681520951134,
+      "rust_dps": 706.6681520951133,
       "passed": true
     },
     {
@@ -14165,7 +14011,7 @@
       "talents": "550031032001012--052252300012303",
       "equipped_items": 14,
       "go_dps": 715.2328359862927,
-      "rust_dps": 715.2328359862928,
+      "rust_dps": 715.2328359862927,
       "passed": true
     },
     {
@@ -14285,7 +14131,7 @@
       "talents": "550031032001012--052252300012303",
       "equipped_items": 14,
       "go_dps": 715.2328359862927,
-      "rust_dps": 715.2328359862928,
+      "rust_dps": 715.2328359862927,
       "passed": true
     },
     {
@@ -14483,7 +14329,7 @@
       "talents": "550031032001012--052252300012303",
       "equipped_items": 14,
       "go_dps": 717.5219488307761,
-      "rust_dps": 717.5219488307762,
+      "rust_dps": 717.5219488307761,
       "passed": true
     },
     {
@@ -15566,7 +15412,7 @@
       "talents": "0053021-302301-5023203300013111051",
       "equipped_items": 15,
       "go_dps": 541.0606608675082,
-      "rust_dps": 541.0606608675083,
+      "rust_dps": 541.0606608675082,
       "passed": true
     },
     {
@@ -15942,33 +15788,7 @@
       "equipped_items": 15,
       "go_dps": 589.4560716083587,
       "rust_dps": 589.4560716083587,
-      "passed": false,
-      "differences": [],
-      "first_log_difference": {
-        "line": 54,
-        "go": "[0.06] [Target 1] MH Swing reduced by 95.773689ms due to parry haste, will now occur at 461.428571ms",
-        "rust": "[0.06] [survival-hunter (#1)] Aura faded: {SpellID: 14266, Tag: 3}",
-        "go_context": [
-          "[0.06] [survival-hunter (#1)] Spent 40.000 mana from {SpellID: 14266} (3611.000 --> 3571.000) of 3810 total.",
-          "[0.06] [survival-hunter (#1)] Casting {SpellID: 14266, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.06] [survival-hunter (#1)] Completed cast {SpellID: 14266, Tag: 1}",
-          "[0.06] [survival-hunter (#1)] [Target 1] {SpellID: 14266, Tag: 1} [DEBUG] MAP: 1452.0, RAP: 1293.0, SP: 9.0, BaseDamage:414.1, AfterAttackerMods:496.9, AfterResistances:422.0, AfterTargetMods:422.0, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.06] [survival-hunter (#1)] [Target 1] {SpellID: 14266, Tag: 1} Parry (SpellSchool: 1). (Threat: 0.000)",
-          "[0.06] [Target 1] MH Swing reduced by 95.773689ms due to parry haste, will now occur at 461.428571ms",
-          "[0.06] [survival-hunter (#1)] Aura faded: {SpellID: 14266, Tag: 3}",
-          "[0.06] [survival-hunter (#1)] No available actions!"
-        ],
-        "rust_context": [
-          "[0.06] [survival-hunter (#1)] Spent 40.000 mana from {SpellID: 14266} (3611.000 --> 3571.000) of 3810 total.",
-          "[0.06] [survival-hunter (#1)] Casting {SpellID: 14266, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)",
-          "[0.06] [survival-hunter (#1)] Completed cast {SpellID: 14266, Tag: 1}",
-          "[0.06] [survival-hunter (#1)] [Target 1] {SpellID: 14266, Tag: 1} [DEBUG] MAP: 1452.0, RAP: 1293.0, SP: 9.0, BaseDamage:414.1, AfterAttackerMods:496.9, AfterResistances:422.0, AfterTargetMods:422.0, AfterOutcome:0.0, AfterPostOutcome:0.0",
-          "[0.06] [survival-hunter (#1)] [Target 1] {SpellID: 14266, Tag: 1} Parry (SpellSchool: 1). (Threat: 0.000)",
-          "[0.06] [survival-hunter (#1)] Aura faded: {SpellID: 14266, Tag: 3}",
-          "[0.06] [survival-hunter (#1)] No available actions!",
-          "[0.06] [survival-hunter (#1)] Pausing rotation for 1.438571429s due to resources / CDs."
-        ]
-      }
+      "passed": true
     },
     {
       "scenario": "survival-hunter--potion-GreaterStoneshield",
@@ -16132,7 +15952,7 @@
       "talents": "20315013002-25253005102010501-2",
       "equipped_items": 15,
       "go_dps": 742.1784619160644,
-      "rust_dps": 742.1784619160645,
+      "rust_dps": 742.1784619160644,
       "passed": true
     },
     {
@@ -16342,7 +16162,7 @@
       "talents": "20315013002-25253005102010501-2",
       "equipped_items": 15,
       "go_dps": 722.884819890306,
-      "rust_dps": 722.8848198903058,
+      "rust_dps": 722.884819890306,
       "passed": true
     },
     {
@@ -16462,7 +16282,7 @@
       "talents": "20315013002-25253005102010501-2",
       "equipped_items": 15,
       "go_dps": 722.884819890306,
-      "rust_dps": 722.8848198903058,
+      "rust_dps": 722.884819890306,
       "passed": true
     },
     {
@@ -16672,7 +16492,7 @@
       "talents": "20315013002-25253005102010501-2",
       "equipped_items": 15,
       "go_dps": 844.3235942300931,
-      "rust_dps": 844.3235942300932,
+      "rust_dps": 844.3235942300931,
       "passed": true
     },
     {
@@ -16699,30 +16519,6 @@
     {
       "reason": "rotation item N: auraNumStacks names spell ID, which the character lacks; the pinned reference drops the condition and community #622 reads it as inactive",
       "variants": 4
-    },
-    {
-      "reason": "rotation reaches spell ID without a known behavior",
-      "variants": 3
-    },
-    {
-      "reason": "rotation item N: action multidot is unsupported",
-      "variants": 2
-    },
-    {
-      "reason": "prepull actions outside the rotation are unsupported",
-      "variants": 2
-    },
-    {
-      "reason": "player aura \"Blood Craze - Bloodthirst\" listens to combat events without an effect",
-      "variants": 2
-    },
-    {
-      "reason": "prepull action N: action activateAura is unsupported",
-      "variants": 1
-    },
-    {
-      "reason": "rotation item N: value autoSwingTime is unsupported",
-      "variants": 1
     }
   ]
 }

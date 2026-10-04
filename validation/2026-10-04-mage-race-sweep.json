@@ -111,7 +111,12 @@
       "talents": "05010500200001-03-0555000200001001051",
       "equipped_items": 15,
       "passed": false,
-      "expected_rejection": "community #622: the rotation reads Fingers of Frost, which the character lacks"
+      "expected_rejection": "community #622: the rotation reads Fingers of Frost, which the character lacks",
+      "go_dps": null,
+      "rust_dps": null,
+      "rejected": [
+        "rotation item 5: auraIsActive names spell 400669, which the character lacks; the pinned reference drops the condition and community #622 reads it as inactive"
+      ]
     },
     {
       "spec": "frost",
@@ -262,7 +267,7 @@
         "Touch of the Grave drain": 4200
       },
       "go_dps": 411.93528909789205,
-      "rust_dps": 411.935289097892,
+      "rust_dps": 411.93528909789205,
       "passed": true
     },
     {
@@ -463,7 +468,7 @@
         "Eureka!": 600
       },
       "go_dps": 461.82619785150706,
-      "rust_dps": 461.8261978515072,
+      "rust_dps": 461.82619785150706,
       "passed": true
     },
     {
@@ -479,7 +484,12 @@
       "talents": "050002001100301531-230500001-005",
       "equipped_items": 13,
       "passed": false,
-      "expected_rejection": "community #622: the rotation reads Missile Barrage, which the character lacks"
+      "expected_rejection": "community #622: the rotation reads Missile Barrage, which the character lacks",
+      "go_dps": null,
+      "rust_dps": null,
+      "rejected": [
+        "rotation item 4: auraIsActive names spell 44404, which the character lacks; the pinned reference drops the condition and community #622 reads it as inactive"
+      ]
     },
     {
       "spec": "arcane",
@@ -885,7 +895,12 @@
       "talents": "023205001100301531-230500001-004",
       "equipped_items": 12,
       "passed": false,
-      "expected_rejection": "community #622: the rotation reads Missile Barrage, which the character lacks"
+      "expected_rejection": "community #622: the rotation reads Missile Barrage, which the character lacks",
+      "go_dps": null,
+      "rust_dps": null,
+      "rejected": [
+        "rotation item 4: auraIsActive names spell 44404, which the character lacks; the pinned reference drops the condition and community #622 reads it as inactive"
+      ]
     },
     {
       "spec": "arcane",
@@ -1359,6 +1374,7 @@
     "Each race appears in at least one matched variant of the sweep. Variants of races other than High Order Skyborne do not know Read Ley Line; Go drops that rule, and so does Rust.",
     "racial_casts sums casts over all iterations; for Touch of the Grave it counts drain procs, hit or missed. Human racials are static. One Skyborne Frost variant never fell below 60% mana and cast no Read Ley Line.",
     "Three variants lowered Fingers of Frost or Missile Barrage to zero. Their presets read those auras without an auraIsKnown guard, so pinned Go and community fix #622 act differently, and Rust rejects them as in the earlier sweeps.",
-    "tools/sweep.py now redraws a duration variation that is not shorter than the fight, which the contract rejects. Earlier sweeps never drew one and regenerate unchanged."
+    "tools/sweep.py now redraws a duration variation that is not shorter than the fight, which the contract rejects. Earlier sweeps never drew one and regenerate unchanged.",
+    "Rerun at the coordinator branch at a3dbc766d (validation/2026-10-04-integration-regression-a3dbc76.json): 69 matched, 3 rejected, 0 mismatched."
   ]
 }
