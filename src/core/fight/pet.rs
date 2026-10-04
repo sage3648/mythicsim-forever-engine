@@ -545,11 +545,7 @@ impl<A: Agent> Fight<A> {
         let state = &mut pet.state;
         state.gcd = STARTING_CD_TIME;
         state.rotation_timer = STARTING_CD_TIME;
-        state.hardcast = Hardcast {
-            expires: STARTING_CD_TIME,
-            spell: None,
-            target: Side::Target,
-        };
+        state.hardcast = Hardcast::idle(STARTING_CD_TIME);
         state.hardcast_action = None;
         state.rotation_action = None;
         state.channeled_dot = None;
@@ -723,11 +719,7 @@ impl<A: Agent> Fight<A> {
         self.cancel_melee_swing(side);
         let pet = self.active_pet_mut(side);
         pet.enabled = false;
-        pet.state.hardcast = Hardcast {
-            expires: 0,
-            spell: None,
-            target: Side::Target,
-        };
+        pet.state.hardcast = Hardcast::idle(0);
         if let Some(handle) = pet.timeout.take() {
             self.queue.cancel(handle);
         }
@@ -832,11 +824,7 @@ impl<A: Agent> Fight<A> {
         let pet = self.active_pet_mut(side);
         let was_enabled = pet.enabled;
         pet.enabled = false;
-        self.unit_mut(side).hardcast = Hardcast {
-            expires: 0,
-            spell: None,
-            target: Side::Target,
-        };
+        self.unit_mut(side).hardcast = Hardcast::idle(0);
         self.mana_done_iteration(side);
         self.aura_done_iteration(side);
         for spell in 0..self.spells.len() {

@@ -417,6 +417,8 @@ pub(crate) struct Flags {
     /// Go `SpellFlagCombatPotion`, which the rotation's potion action names.
     pub(crate) combat_potion: bool,
     pub(crate) cannot_be_dodged: bool,
+    /// Go `SpellFlagPushback`: damage taken during the hardcast pushes the cast back.
+    pub(crate) pushback: bool,
 }
 
 impl Flags {
@@ -445,6 +447,7 @@ impl Flags {
                 "SpellFlagNoSpellMods" => flags.no_spell_mods = true,
                 "SpellFlagCombatPotion" => flags.combat_potion = true,
                 "SpellFlagCannotBeDodged" => flags.cannot_be_dodged = true,
+                "SpellFlagPushback" => flags.pushback = true,
                 _ => {}
             }
         }
@@ -585,6 +588,8 @@ pub(crate) struct Spell<S> {
     pub(crate) bonus_coefficient: f64,
     pub(crate) threat_multiplier: f64,
     pub(crate) flat_threat_bonus: f64,
+    /// Go `Spell.PushbackResist`, which the pushback chance loses.
+    pub(crate) pushback_resist: f64,
     pub(crate) damage_effect: Option<(f64, f64)>,
     pub(crate) dot: Option<DotId>,
     /// Go `RelatedDotSpell`, whose dot `Spell.Dot` resolves to when this spell has none.
@@ -621,6 +626,23 @@ pub(crate) struct Hardcast {
     pub(crate) expires: i64,
     pub(crate) spell: Option<SpellId>,
     pub(crate) target: Side,
+    /// The cast time the hardcast started with.
+    pub(crate) cast_time: i64,
+    /// Whether the cast carries `SpellFlagPushback`.
+    pub(crate) pushback: bool,
+}
+
+impl Hardcast {
+    /// No hardcast, expiring at `expires`.
+    pub(crate) const fn idle(expires: i64) -> Self {
+        Self {
+            expires,
+            spell: None,
+            target: Side::Target,
+            cast_time: 0,
+            pushback: false,
+        }
+    }
 }
 
 /// Go `QueuedSpell`.
@@ -742,11 +764,7 @@ impl Player {
             spirit_attribution: None,
             gcd: STARTING_CD_TIME,
             rotation_timer: STARTING_CD_TIME,
-            hardcast: Hardcast {
-                expires: STARTING_CD_TIME,
-                spell: None,
-                target: Side::Target,
-            },
+            hardcast: Hardcast::idle(STARTING_CD_TIME),
             hardcast_action: None,
             reduced_avoidance: false,
             rotation_action: None,
@@ -1055,6 +1073,11 @@ pub(crate) enum Action {
         spell: SpellId,
         result: SpellResult,
     },
+    /// The "Pushback trigger" handler, delayed by the spell batch window, with the player's
+    /// pushback chance.
+    Pushback {
+        chance: f64,
+    },
     /// A rotation prepull action: Go `APLActionCastSpell.Execute`.
     Prepull(SpellId),
     /// A rotation prepull action: Go `APLActionActivateAura.Execute`.
@@ -1130,6 +1153,8 @@ pub(crate) const PRIORITY_AUTO: i32 = 2;
 pub(crate) const PRIORITY_DOT: i32 = 3;
 pub(crate) const PRIORITY_PREPULL: i32 = 10;
 /// Go `SpellBatchWindow`.
+/// Go `SpellPushbackDuration`.
+pub(crate) const SPELL_PUSHBACK_DURATION: i64 = 500 * crate::core::time::NS_PER_MILLISECOND;
 pub(crate) const SPELL_BATCH_WINDOW: i64 = 10 * crate::core::time::NS_PER_MILLISECOND;
 
 pub(crate) struct Fight<A: Agent> {
@@ -2097,6 +2122,7 @@ impl<A: Agent> Fight<A> {
                 bonus_coefficient: exported.bonus_coefficient,
                 threat_multiplier: exported.threat_multiplier,
                 flat_threat_bonus: exported.flat_threat_bonus,
+                pushback_resist: exported.pushback_resist,
                 damage_effect: exported.damage_effect.map(|e| (e.average, e.variance)),
                 dot,
                 related_dot_spell: exported.related_dot_spell,
@@ -2496,6 +2522,18 @@ impl<A: Agent> Fight<A> {
                     })
                 {
                     AuraBehavior::ChanceOfDeath
+                } else if let Some(chance) = (side == Side::Player)
+                    .then(|| {
+                        effects.iter().find_map(|effect| match effect {
+                            Effect::PushbackTrigger { aura, chance } if *aura == exported.label => {
+                                Some(*chance)
+                            }
+                            _ => None,
+                        })
+                    })
+                    .flatten()
+                {
+                    AuraBehavior::PushbackTrigger { chance }
                 } else if effects.iter().any(|effect| {
                     matches!(effect, Effect::ParryHaste { unit: u, aura, .. } if u == unit && *aura == exported.label)
                 }) {
@@ -3703,11 +3741,7 @@ impl<A: Agent> Fight<A> {
             let player = &mut self.player;
             player.gcd = STARTING_CD_TIME;
             player.rotation_timer = STARTING_CD_TIME;
-            player.hardcast = Hardcast {
-                expires: STARTING_CD_TIME,
-                spell: None,
-                target: Side::Target,
-            };
+            player.hardcast = Hardcast::idle(STARTING_CD_TIME);
             player.hardcast_action = None;
             player.reduced_avoidance = false;
             player.rotation_action = None;
@@ -3975,6 +4009,7 @@ impl<A: Agent> Fight<A> {
                 spell,
                 result,
             } => self.delayed_proc(aura, spell, result),
+            Action::Pushback { chance } => self.pushback_handler(chance),
             Action::Prepull(spell) => self.cast_or_queue(spell, Side::Target),
             Action::PrepullAura(aura) => self.activate_aura_action(aura),
             Action::SunderTick(done) => self.sunder_tick(done),
@@ -4192,11 +4227,7 @@ impl<A: Agent> Fight<A> {
     fn cleanup(&mut self) {
         self.now = self.duration;
         self.queue.clear();
-        self.player.hardcast = Hardcast {
-            expires: 0,
-            spell: None,
-            target: Side::Target,
-        };
+        self.player.hardcast = Hardcast::idle(0);
         // Go Character.doneIteration finishes the pets first.
         self.pets_done_iteration();
         self.player_done_iteration();

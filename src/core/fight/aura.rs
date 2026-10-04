@@ -31,6 +31,10 @@ pub(crate) enum AuraBehavior<K> {
     ChanceOfDeath,
     /// Go attack.go `applyParryHaste`: a parry pulls the unit's next main hand swing in.
     ParryHaste,
+    /// Go character.go's "Pushback trigger" on a tanking player, with its pushback chance.
+    PushbackTrigger {
+        chance: f64,
+    },
     /// An item proc that restores energy: [`super::energy::EnergizeProc`], by index.
     EnergizeProc(usize),
     /// Go buffs/paladin.go `AttachJudgementOfWisdomMana`.

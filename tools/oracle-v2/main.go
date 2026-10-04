@@ -1621,6 +1621,17 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	if eureka := eurekaEffect(agent, character); eureka != nil {
 		effects = append(effects, eureka)
 	}
+	// character.go's Pushback trigger exists for a tanking player: a hit that deals damage during
+	// a hardcast with the pushback flag pushes the cast back with the player's pushback chance,
+	// which the spells' own resists reduce. The gate rejects a channel with a cast time. The
+	// Goblin Sapper Charge's hit never lands during a hardcast, which keeps the sapper from being
+	// thrown, so the trigger ignores it.
+	if tanking {
+		if character.GetAura("Pushback trigger") != nil {
+			effects = append(effects, map[string]any{"kind": "pushback_trigger", "aura": "Pushback trigger",
+				"chance": character.PseudoStats.PushbackChance})
+		}
+	}
 	// Listeners that receive the player's spell events but act only on events outside the
 	// supported scope: health.go trackChanceOfDeath and attack.go Parry Haste.
 	for _, inert := range []struct {
@@ -1632,7 +1643,6 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 		{&character.Unit, "player", core.ChanceOfDeathAuraLabel, "acts only when the player takes damage"},
 		{target, "target", "Parry Haste", "acts only on parried attacks"},
 		{&character.Unit, "player", "Parry Haste", "acts only on attacks the player parries, and nothing attacks the player"},
-		{&character.Unit, "player", "Pushback trigger", "acts only on hits taken during a hardcast with the pushback flag or a channel with a cast time, which the gate rejects when tanking"},
 		// common/classic/items_store_gaps.go Freezing Band: melee hits taken only.
 		{&character.Unit, "player", "Freezing Band", "acts only on melee hits the player takes"},
 	} {
@@ -1668,8 +1678,7 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	effects = append(effects, hitTakenItemListeners(character, tanking, &unrepresented)...)
 	// A class's inert listener of hits the player takes acts once anything hits the player: the
 	// target's swings when it tanks the player, or the Goblin Sapper Charge's self hit. Only the
-	// listeners vetted for those hits stay inert: the pushback trigger, since a hardcast keeps
-	// the sapper from being thrown; and without a tank, the listeners of parried, dodged or
+	// listeners vetted for those hits stay inert: without a tank, the listeners of parried, dodged or
 	// blocked attacks, which the sapper's magic hit never is, the procs on melee hits taken,
 	// which its spell hit is not, and a form's rage bar no spell enters.
 	if playerTakesDamage(character, target) {
@@ -1677,7 +1686,7 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 			"Revenge - Trigger": true, "RageBar": true, "Freezing Band": true, "Wildheart Raiment 5P": true}
 		for _, effect := range effects {
 			label, _ := effect["aura"].(string)
-			if effect["kind"] != "inert_listener" || effect["unit"] != "player" || label == "Pushback trigger" ||
+			if effect["kind"] != "inert_listener" || effect["unit"] != "player" ||
 				(!tanking && (sapperOnly[label] || effect["reason"] == "hears only melee hits the player takes")) {
 				continue
 			}

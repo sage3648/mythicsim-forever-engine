@@ -8504,15 +8504,14 @@
       "kind": "stat_auras"
     },
     {
+      "aura": "Pushback trigger",
+      "chance": 1,
+      "kind": "pushback_trigger"
+    },
+    {
       "aura": "Parry Haste",
       "kind": "parry_haste",
       "unit": "target"
-    },
-    {
-      "aura": "Pushback trigger",
-      "kind": "inert_listener",
-      "reason": "acts only on hits taken during a hardcast with the pushback flag or a channel with a cast time, which the gate rejects when tanking",
-      "unit": "player"
     },
     {
       "aura": "Chance of Death",

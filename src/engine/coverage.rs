@@ -62,6 +62,7 @@ const COMMON_EFFECTS: &[&str] = &[
     "player_damage_taken",
     "potion_resource",
     "pseudo_stat_auras",
+    "pushback_trigger",
     "rage_bar",
     "redoubt",
     "shield_specialization",
@@ -254,6 +255,7 @@ fn common_claims(effect: &Effect) -> Vec<(&'static str, &str)> {
             "target" => vec![("target", aura)],
             _ => Vec::new(),
         },
+        Effect::PushbackTrigger { aura, .. } => vec![("player", aura)],
         Effect::EnergizeProc { trigger_aura, .. } => vec![("player", trigger_aura)],
         Effect::Crusader { trigger_aura, .. }
         | Effect::DragonbreathChili { trigger_aura, .. }
@@ -477,6 +479,7 @@ const HIT_TAKEN_EFFECTS: &[&str] = &[
     "natural_reaction",
     "natures_bounty",
     "parry_haste",
+    "pushback_trigger",
     "rage_bar",
     "redoubt",
     "shield_specialization",
@@ -1044,18 +1047,33 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
                 }
             }
             // Go newHardcastAction: a tank's hardcast drops its avoidance, whose rolls the exporter
-            // reads. A channel without a cast time sets no hardcast, so it keeps its avoidance;
-            // pushback, of a cast with the pushback flag or a channel with a cast time, is not
-            // modeled.
+            // reads. A channel without a cast time sets no hardcast, so it keeps its avoidance.
+            // Pushback of a channel with a cast time is not modeled. A cast with the pushback
+            // flag is pushed back by every damaging hit, which needs the trigger the exporter
+            // reads and a chance of one or none: no other chance has been compared with Go.
             if let Some(enemy) = &prepared.enemy {
-                if spell.default_cast.cast_time_ns > 0
-                    && (spell.has_flag("SpellFlagChanneled")
-                        || spell.has_flag("SpellFlagPushback")
-                        || enemy.reduced_avoidance_rolls.is_empty())
-                {
-                    limited.insert(format!(
-                        "rotation reaches {id}, a hardcast while the target swings at the player"
-                    ));
+                if spell.default_cast.cast_time_ns > 0 {
+                    let pushback_chance = prepared.effects.iter().find_map(|effect| match effect {
+                        Effect::PushbackTrigger { chance, .. } => Some(*chance),
+                        _ => None,
+                    });
+                    let pushes_back = spell.has_flag("SpellFlagPushback");
+                    if spell.has_flag("SpellFlagChanneled")
+                        || enemy.reduced_avoidance_rolls.is_empty()
+                        || (pushes_back && pushback_chance.is_none())
+                    {
+                        limited.insert(format!(
+                            "rotation reaches {id}, a hardcast while the target swings at the player"
+                        ));
+                    } else if let Some(chance) = pushback_chance {
+                        let rolled = chance - spell.pushback_resist;
+                        if pushes_back && rolled > 0.0 && rolled < 1.0 {
+                            limited.insert(format!(
+                                "rotation reaches {id}, a hardcast the target's swings push back \
+                                 with a chance that needs a roll"
+                            ));
+                        }
+                    }
                 }
             }
             for limit in runtime_limits(spell, (gate.spell)(spell).is_some()) {

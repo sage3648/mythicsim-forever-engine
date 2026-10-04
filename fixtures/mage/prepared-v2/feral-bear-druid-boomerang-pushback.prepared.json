@@ -6,11 +6,11 @@
     "client_build": "1.60.1.70170",
     "exporter": "tools/oracle-v2"
   },
-  "request_sha256": "5443e4045ed502363265474e91012d45b9ab1f9e334c86f62aa8e337f8dafafc",
-  "scenario_id": "production-feral-bear-druid",
+  "request_sha256": "57815d50d15f7dc1769245acd5bef52a45e18ac7920db5e25b3dac4bd4e38db1",
+  "scenario_id": "feral-bear-druid-boomerang-pushback",
   "sim": {
-    "iterations": 3000,
-    "seed": 42,
+    "iterations": 30,
+    "seed": 5,
     "labeled_rng": false,
     "debug_first_iteration": true,
     "debug": false
@@ -576,7 +576,7 @@
           "on_heal_dealt"
         ],
         "icd": {
-          "timer": "timer-9",
+          "timer": "timer-11",
           "duration_ns": 10000000000
         },
         "exclusive_effects": 0
@@ -772,7 +772,7 @@
           "on_spell_hit_dealt"
         ],
         "icd": {
-          "timer": "timer-10",
+          "timer": "timer-12",
           "duration_ns": 100000000
         },
         "exclusive_effects": 0
@@ -918,7 +918,7 @@
           "on_spell_hit_dealt"
         ],
         "icd": {
-          "timer": "timer-11",
+          "timer": "timer-13",
           "duration_ns": 10000000000
         },
         "exclusive_effects": 0
@@ -1109,7 +1109,7 @@
     },
     "reaction_ns": 100000000,
     "channel_clip_delay_ns": 0,
-    "distance_yards": 0,
+    "distance_yards": 10,
     "cast_speed": 1,
     "mana": {
       "max": 3139,
@@ -1281,6 +1281,65 @@
       },
       {
         "action_id": {
+          "item_id": 11905
+        },
+        "rank": 0,
+        "school": 1,
+        "defense_type": "DefenseTypeMelee",
+        "proc_mask": [
+          "ProcMaskEmpty"
+        ],
+        "flags": [
+          "SpellFlagMeleeMetrics",
+          "SpellFlagAPL",
+          "SpellFlagMCD",
+          "SpellFlagPushback"
+        ],
+        "missile_speed": 20,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 500000000,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": true,
+        "has_extra_cast_condition": true,
+        "has_cast_requirement": false,
+        "min_range": 8,
+        "max_range": 30,
+        "max_charges": 0,
+        "cd": {
+          "timer": "timer-1",
+          "duration_ns": 180000000000
+        },
+        "shared_cd": {
+          "timer": "timer-2",
+          "duration_ns": 10000000000
+        },
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
           "spell_id": 417141
         },
         "rank": 0,
@@ -1309,7 +1368,7 @@
         "max_range": 0,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-1",
+          "timer": "timer-3",
           "duration_ns": 180000000000
         },
         "shared_cd": null,
@@ -1417,11 +1476,11 @@
         "max_range": 0,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-2",
+          "timer": "timer-4",
           "duration_ns": 120000000000
         },
         "shared_cd": {
-          "timer": "timer-3",
+          "timer": "timer-5",
           "duration_ns": 120000000000
         },
         "bonus_hit_percent": 0,
@@ -1480,7 +1539,7 @@
         "max_range": 30,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-4",
+          "timer": "timer-6",
           "duration_ns": 360000000000
         },
         "shared_cd": null,
@@ -1698,7 +1757,7 @@
         "max_range": 0,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-5",
+          "timer": "timer-7",
           "duration_ns": 60000000000
         },
         "shared_cd": null,
@@ -1865,7 +1924,7 @@
         "max_range": 0,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-6",
+          "timer": "timer-8",
           "duration_ns": 60000000000
         },
         "shared_cd": null,
@@ -1921,7 +1980,7 @@
         "max_range": 0,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-7",
+          "timer": "timer-9",
           "duration_ns": 180000000000
         },
         "shared_cd": null,
@@ -2055,7 +2114,7 @@
         "max_range": 5,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-8",
+          "timer": "timer-10",
           "duration_ns": 6000000000
         },
         "shared_cd": null,
@@ -2465,6 +2524,16 @@
       {
         "action_id": {
           "spell_id": 1259799
+        },
+        "priority": 0,
+        "type": [
+          "dps"
+        ],
+        "timings_ns": []
+      },
+      {
+        "action_id": {
+          "item_id": 11905
         },
         "priority": 0,
         "type": [
@@ -6888,7 +6957,7 @@
             "bear",
             "cat"
           ],
-          "spell": 3
+          "spell": 4
         },
         {
           "forms": [
@@ -6896,21 +6965,11 @@
             "moonkin",
             "tree"
           ],
-          "spell": 6
+          "spell": 7
         },
         {
           "forms": [
             "humanoid"
-          ],
-          "spell": 8
-        },
-        {
-          "forms": [
-            "humanoid",
-            "bear",
-            "cat",
-            "moonkin",
-            "tree"
           ],
           "spell": 9
         },
@@ -6926,9 +6985,19 @@
         },
         {
           "forms": [
-            "bear"
+            "humanoid",
+            "bear",
+            "cat",
+            "moonkin",
+            "tree"
           ],
           "spell": 11
+        },
+        {
+          "forms": [
+            "bear"
+          ],
+          "spell": 12
         },
         {
           "forms": [
@@ -6937,12 +7006,6 @@
             "cat",
             "moonkin",
             "tree"
-          ],
-          "spell": 12
-        },
-        {
-          "forms": [
-            "bear"
           ],
           "spell": 13
         },
@@ -6968,13 +7031,19 @@
           "forms": [
             "bear"
           ],
-          "spell": 18
+          "spell": 17
         },
         {
           "forms": [
             "bear"
           ],
           "spell": 19
+        },
+        {
+          "forms": [
+            "bear"
+          ],
+          "spell": 20
         }
       ],
       "starting_form": [
@@ -7005,12 +7074,12 @@
       ],
       "cost_percent_add": -1,
       "cost_spells": [
-        8,
-        11,
-        15,
+        9,
+        12,
         16,
         17,
-        19
+        18,
+        20
       ],
       "gcd_ns": 1500000000,
       "icd_ns": 10000000000,
@@ -7030,15 +7099,15 @@
       "trigger_aura": "Omen of Clarity",
       "trigger_immediately": false,
       "trigger_spells": [
-        12,
-        15,
+        13,
         16,
         17,
         18,
         19,
-        21,
+        20,
         22,
-        23
+        23,
+        24
       ]
     },
     {
@@ -7048,7 +7117,7 @@
       "refresh": [
         "never"
       ],
-      "spell": 12
+      "spell": 13
     },
     {
       "aura": "Berserk",
@@ -7061,14 +7130,14 @@
       "bear_rage": 5,
       "bear_trigger_aura": "Blood Frenzy (Bear)",
       "bear_trigger_spells": [
-        15,
         16,
         17,
         18,
         19,
-        21,
+        20,
         22,
-        23
+        23,
+        24
       ],
       "kind": "blood_frenzy",
       "metrics_action_id": {
@@ -7081,21 +7150,21 @@
       "trigger_aura": "Blood Frenzy (Cat)",
       "trigger_immediately": false,
       "trigger_spells": [
-        16
+        17
       ]
     },
     {
       "bleed_spells": [
-        15
+        16
       ],
       "kind": "rend_and_tear",
       "multiplier": 1.1,
       "spells": [
-        15,
         16,
         17,
         18,
-        19
+        19,
+        20
       ]
     },
     {
@@ -7121,10 +7190,10 @@
         "max_range": 5
       },
       "cost_spells": [
-        12
+        13
       ],
       "form_breaking_spells": [
-        5
+        6
       ],
       "furor_proc_chance": 1,
       "health_bonus": 1240,
@@ -7141,7 +7210,7 @@
         "min_range": 0,
         "max_range": 5
       },
-      "spell": 9,
+      "spell": 10,
       "spell_id": 9634,
       "spirit_regen_multiplier": 0.911337,
       "threat_multiplier": 1.3
@@ -7158,20 +7227,20 @@
     {
       "aura": "Demoralizing Roar (Player)",
       "kind": "demoralizing_roar",
-      "spell": 11
+      "spell": 12
     },
     {
       "flat_damage": 128,
       "kind": "maul",
       "queue_aura": "Maul Queue Aura",
-      "queue_spell": 18,
+      "queue_spell": 19,
       "realism_ns": 50000000,
-      "spell": 17
+      "spell": 18
     },
     {
       "kind": "lacerate",
       "max_stacks": 5,
-      "spell": 15,
+      "spell": 16,
       "tick_base": 15,
       "tick_can_crit": true,
       "tick_magic": false,
@@ -7180,7 +7249,7 @@
     {
       "flat_damage": 77,
       "kind": "primal_bite",
-      "spell": 16
+      "spell": 17
     },
     {
       "aura": "Barkskin",
@@ -7194,7 +7263,7 @@
       "kind": "frenzied_regeneration",
       "max_rage_per_tick": 10,
       "period_ns": 1000000000,
-      "spell": 14,
+      "spell": 15,
       "ticks": 10
     },
     {
@@ -7260,6 +7329,17 @@
       "ticks": 5
     },
     {
+      "direct": {
+        "average": 150,
+        "outcome": "melee_special_hit_and_crit",
+        "scale": 1,
+        "variance": 0.4933333396911621
+      },
+      "item_id": 11905,
+      "kind": "damage_on_use",
+      "spell": 3
+    },
+    {
       "aura": "Greater Stoneshield Potion",
       "expire_log": "Lost {\"Armor\": 2000.000,} from fading {ItemID: 13455}.",
       "gain_log": "Gained {\"Armor\": 2000.000,} from {ItemID: 13455}.",
@@ -7278,18 +7358,18 @@
       "spell_id": 15851,
       "trigger_aura": "Dragonbreath Chili",
       "trigger_spells": [
-        15,
         16,
         17,
         18,
         19,
-        21,
+        20,
         22,
-        23
+        23,
+        24
       ]
     },
     {
-      "extra_attack_spell": 23,
+      "extra_attack_spell": 24,
       "kind": "windfury_totem",
       "period_ns": 5000000000,
       "proc_aura": "Windfury Totem (External)",
@@ -7302,9 +7382,9 @@
       ],
       "spend_require_damage": true,
       "spend_spells": [
-        21,
         22,
-        23
+        23,
+        24
       ],
       "totem_aura": "Windfury Totem",
       "trigger_aura": "Windfury Totem Trigger",
@@ -7318,14 +7398,14 @@
       "trigger_proc_chance": 0.2,
       "trigger_require_damage": true,
       "trigger_spells": [
-        15,
         16,
         17,
         18,
         19,
-        21,
+        20,
         22,
-        23
+        23,
+        24
       ]
     },
     {
