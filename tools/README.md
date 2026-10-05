@@ -12,6 +12,7 @@ fight. Ordinary Rust tests use frozen data and need no Go checkout.
 | [prepared_v2.py](prepared_v2.py) | Audit prepared v2 fixtures offline; re-export them from the pinned engine into scratch | Python for audit; Go, Git and protoc for capture |
 | [census.py](census.py) | Count which prepared inputs or requests Rust would run and rank the reasons blocking the rest | Python and Rust for prepared inputs; Go, Git and protoc to export requests |
 | [production_bench.py](production_bench.py) | Time the pinned Go engine and two Rust builds on the production prepared v2 fixtures, checking the Rust results agree | Python, two Rust release binaries and the oracle `prepared_v2.py` builds |
+| [route.py](route.py) | Run one production request in Rust, or report a fallback with refusal codes or a fault, for the application worker ([routing guide](../docs/routing.md)) | Python and a bundle from `shadow.py build` |
 | [board.py](board.py) | Render the ordered contributor board (issue #25) from milestones, priority labels, "Depends on" sections and `Status:` comments, list record refusals no issue states, and check or update the issue | Python and the GitHub CLI |
 | [validation_summary.py](validation_summary.py) | Summarize every validation and benchmark record into [docs/validation-summary.md](../docs/validation-summary.md), with totals | Python |
 | [boards.py](boards.py) | Write the application's published race board requests, one per spec and race, for a comparison | Python |

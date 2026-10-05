@@ -106,8 +106,12 @@ fn other_basic_totems_are_rejected() {
     let item = &mut value["player"]["rotation"]["priorityList"][0]["action"];
     assert_eq!(item["castSpell"]["spellId"]["spellId"], 25361);
     item["castSpell"]["spellId"]["spellId"] = json!(10614);
-    assert!(reasons(value)
+    assert!(reasons(value.clone())
         .contains(&"rotation reaches spell 10614, a totem without a known behavior".into()));
+    assert!(crate::refusal_codes(value).contains(&(
+        "class_limit",
+        "rotation reaches spell 10614, a totem without a known behavior".into()
+    )));
 
     // The exported air totem category resolves an own air totem beside the party's.
     for spell in [10614, 25359] {

@@ -146,5 +146,9 @@ fn fel_energy_needs_its_effect() {
     let prepared: PreparedV2 = serde_json::from_value(value.clone()).unwrap();
     assert_eq!(check_prepared(&prepared), Ok(()));
     remove_effect(&mut value, "fel_energy");
-    assert!(reasons(value).contains(&"Fel Energy restores mana without an effect".into()));
+    assert!(reasons(value.clone()).contains(&"Fel Energy restores mana without an effect".into()));
+    assert!(crate::refusal_codes(value).contains(&(
+        "class_limit",
+        "Fel Energy restores mana without an effect".into()
+    )));
 }

@@ -461,3 +461,16 @@ fn explosive_trap_and_volley_reach_every_target() {
         }
     }
 }
+
+/// A Serpent Sting tick outcome the runtime does not implement is a Hunter class limit.
+#[test]
+fn an_unknown_serpent_sting_tick_is_a_class_limit() {
+    let mut value = production();
+    for effect in value["effects"].as_array_mut().unwrap() {
+        if effect["kind"] == "serpent_sting" {
+            effect["tick_outcome"] = json!("magic_hit");
+        }
+    }
+    assert!(crate::refusal_codes(value)
+        .contains(&("class_limit", "Serpent Sting ticks with magic_hit".into())));
+}

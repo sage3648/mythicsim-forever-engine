@@ -31,6 +31,9 @@ the engine.
 3. Rust runs the fight. Event order, random numbers and float math follow Go, so the
    result and the combat log are the same.
 
+[`tools/route.py`](docs/routing.md) does all three for the application worker: it runs a
+request in Rust, or reports a fallback to Go with each refusal's stable code, or a fault.
+
 ## What works
 
 | Class | Production builds |

@@ -82,3 +82,35 @@ fn prepared_benchmark_repeats_one_result() {
             > 0.0
     );
 }
+
+/// `check` keeps its fields and lists each refusal with its stable code, in the order of
+/// the reasons.
+#[test]
+fn check_reports_refusal_codes_beside_the_reasons() {
+    let family = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("fixtures/mage/prepared-v2");
+    let check = |name: &str| -> serde_json::Value {
+        let result = Command::new(env!("CARGO_BIN_EXE_forever-engine"))
+            .args(["check", "--infile"])
+            .arg(family.join(format!("{name}.prepared.json")))
+            .output()
+            .unwrap();
+        assert!(result.status.success());
+        serde_json::from_slice(&result.stdout).unwrap()
+    };
+    let refused = check("production-frost-2-targets");
+    assert_eq!(refused["supported"], false);
+    assert_eq!(
+        refused["reasons"],
+        serde_json::json!(["2 targets: several targets are not supported for ClassMage yet"])
+    );
+    assert_eq!(
+        refused["refusals"],
+        serde_json::json!([{
+            "code": "several_targets_unsupported",
+            "reason": "2 targets: several targets are not supported for ClassMage yet"
+        }])
+    );
+    let supported = check("frost-reference");
+    assert_eq!(supported["supported"], true);
+    assert_eq!(supported["refusals"], serde_json::json!([]));
+}

@@ -372,7 +372,45 @@ Invalid and unsupported inputs are deliberately different outcomes.
 | Rotation operator outside the subset | Unsupported, with item number |
 | Rotation-reachable spell without a known behavior | Unsupported |
 
-The exporter marks as unrepresented: more than one player or target, health fights,
+`forever-engine check --infile PREPARED.json` prints the scenario, whether it is
+supported, each refusal's text in `reasons`, and the same refusals with their stable
+codes in `refusals`, in the same order:
+
+```json
+{"scenario_id": "...", "supported": false,
+ "reasons": ["rotation reaches spell 10202 without a known behavior"],
+ "refusals": [{"code": "unknown_spell", "reason": "rotation reaches spell 10202 without a known behavior"}]}
+```
+
+A code names the kind of refusal and stays the same however the input varies, so a
+worker can count fallbacks by it; the text says what this input lacks. An invalid input
+is an error, never a refusal. `REFUSAL_CODES` in
+[src/engine/coverage.rs](../src/engine/coverage.rs) lists every code:
+
+| Code | Refusal |
+| --- | --- |
+| `exporter_unrepresented` | The exporter could not describe part of the request |
+| `rotation_unsupported` | The rotation uses an action, value or field the parser rejects |
+| `class_unsupported` | The player's class has no Rust gate |
+| `level_unsupported` | The player is not level 60 or the target not level 60 to 63 |
+| `target_count_invalid` | The target count is neither one nor 2 to 5 |
+| `several_targets_unsupported` | Something reaches a target past the first that Rust does not simulate there |
+| `aura_listener_unclaimed` | An aura listens to combat events with no effect that handles it |
+| `pet_unsupported` | A pet has no behavior or inherits a stat change Rust does not follow |
+| `tanking_unsupported` | The target swings at the player in a way Rust does not simulate |
+| `aura_condition_unsupported` | A rotation condition reads an aura as the pinned reference and community #622 disagree, or as Rust does not |
+| `resource_unsupported` | The rotation or a spell reads a resource the player lacks |
+| `prepull_unsupported` | A prepull action Rust cannot reproduce |
+| `cooldown_unsupported` | A survival cooldown fires at a health threshold Rust does not simulate |
+| `class_limit` | A class gate rejects the input or a spell the rotation reaches |
+| `proc_unsupported` | A proc listens to hits Rust does not deliver to it |
+| `stat_change_unsupported` | An aura changes a stat the runtime holds fixed |
+| `unknown_spell` | The rotation reaches a spell without a known behavior |
+| `spell_unsupported` | A reachable spell uses a feature the runtime does not implement |
+| `effect_unimplemented` | An effect the input needs is not implemented |
+
+The exporter marks as unrepresented: more than one player, targets that are not identical
+copies or more than five of them, health fights,
 tanks, presims, healing models, pets that may act without a class pet effect, main hand swings a
 class other than the Warrior can replace while in range, ranged attack speed listeners, a target that swings at a
 unit, item swapping, execute phase callbacks, target AI, caster

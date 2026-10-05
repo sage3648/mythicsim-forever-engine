@@ -2,8 +2,9 @@
 """Shadow comparison of one production request against the pinned Go engine.
 
 build  Build a self-contained bundle in --output: the release Rust engine, the pinned
-       Go exporter, these tools, the pin and a manifest of revisions. The application's
-       shadow worker runs requests from this bundle, so it needs neither Go nor Cargo.
+       Go exporter, these tools and tools/route.py, the pin and a manifest of revisions.
+       The application's shadow worker and router run requests from this bundle, so they
+       need neither Go nor Cargo.
 run    Compare one RaidSimRequest. The pinned exporter prepares it, the Rust gate checks
        it, then the pinned Go engine and Rust run it with the same seed. Prints one JSON
        verdict and writes it to --output/verdict.json. The verdict status is match,
@@ -32,7 +33,8 @@ SCHEMA = 1
 ENGINE = "forever-engine"
 EXPORTER = "forever-go-oracle-v2"
 # The tools a bundle needs to run a comparison, by path from the repository root.
-BUNDLED_TOOLS = ("tools/compare.py", "tools/prepared_v2.py", "tools/shadow.py", "upstream/sources.json")
+BUNDLED_TOOLS = ("tools/compare.py", "tools/prepared_v2.py", "tools/route.py", "tools/shadow.py",
+                 "upstream/sources.json")
 MAX_DIFFERENCES = 20
 # Abilities kept in each result summary, by damage per second.
 TOP_ABILITIES = 8
@@ -169,7 +171,8 @@ def shadow(request_path, output, bundle, seed, timeout, production_path=None):
             raise StageError("check", done.stderr.strip()[-2000:])
         coverage = json.loads(done.stdout)
         if not coverage["supported"]:
-            verdict.update(status="refused", reasons=coverage["reasons"])
+            verdict.update(status="refused", reasons=coverage["reasons"],
+                           refusals=coverage.get("refusals", []))
             return verdict
 
         go_out, rust_out = output / "go.json", output / "rust.json"

@@ -1,8 +1,8 @@
 //! Prepared v2 entry point: identity and bound validation, then the spec coverage gate.
 //!
 //! Invalid input is a contract violation. Unsupported input is valid but outside the
-//! implemented capability set; its reasons are stable strings a worker can record as
-//! fallback reasons.
+//! implemented capability set; each reason carries a stable code a worker can record as
+//! its fallback reason.
 
 use crate::{
     classes,
@@ -13,6 +13,8 @@ use crate::{
     },
     rotation, SOURCE_REVISION,
 };
+
+pub use super::coverage::{Refusal, REFUSAL_CODES};
 
 /// The client build whose data the pinned reference prepares, from upstream/sources.json.
 pub const CLIENT_BUILD: &str = env!("FOREVER_CLIENT_BUILD");
@@ -204,25 +206,43 @@ pub fn validate(prepared: &PreparedV2) -> Result<(), String> {
     Ok(())
 }
 
-/// Every reason the engine cannot simulate a valid input. Empty means supported.
-pub fn coverage(prepared: &PreparedV2) -> Vec<String> {
-    let mut reasons: Vec<String> = prepared
+/// Every reason the engine cannot simulate a valid input, each with its stable code. Empty
+/// means supported.
+pub fn refusals(prepared: &PreparedV2) -> Vec<Refusal> {
+    let mut refusals: Vec<Refusal> = prepared
         .unrepresented
         .iter()
-        .map(|reason| format!("unrepresented by the exporter: {reason}"))
+        .map(|reason| {
+            Refusal::new(
+                "exporter_unrepresented",
+                format!("unrepresented by the exporter: {reason}"),
+            )
+        })
         .collect();
     let rotation = match rotation::parse(&prepared.player.rotation) {
         Ok(rotation) => Some(rotation),
         Err(rotation_reasons) => {
-            reasons.extend(rotation_reasons);
+            refusals.extend(
+                rotation_reasons
+                    .into_iter()
+                    .map(|reason| Refusal::new("rotation_unsupported", reason)),
+            );
             None
         }
     };
-    reasons.extend(super::coverage::prepared_coverage(
+    refusals.extend(super::coverage::prepared_coverage(
         prepared,
         rotation.as_ref(),
     ));
-    reasons
+    refusals
+}
+
+/// Every reason the engine cannot simulate a valid input. Empty means supported.
+pub fn coverage(prepared: &PreparedV2) -> Vec<String> {
+    refusals(prepared)
+        .into_iter()
+        .map(|refusal| refusal.reason)
+        .collect()
 }
 
 /// Validate and gate a prepared v2 input.

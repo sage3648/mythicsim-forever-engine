@@ -19,6 +19,9 @@ the reference pin, the comparison tools and `manifest.json`, which records the
 Rust revision, the pin, the client build and the exporter digest. The shadow
 worker runs it with Python 3 only.
 
+The same bundle carries `tools/route.py`, which the worker calls to run a request in
+Rust or fall back to Go; see the [routing guide](routing.md).
+
 ## Compare one request
 
 ```sh
@@ -33,7 +36,7 @@ both engines draw the same numbers.
 | --- | --- |
 | `match` | Every result field and the first-fight log equal the pinned Go engine |
 | `mismatch` | `differences` and `first_log_difference` show what differs |
-| `refused` | The coverage gate declined the input; `reasons` says why |
+| `refused` | The coverage gate declined the input; `reasons` says why, and `refusals` gives each reason with its stable code |
 | `error` | A step failed; `stage` and `error` say where |
 
 `timings_ms` holds the wall time of the prepare, Go and Rust steps, process

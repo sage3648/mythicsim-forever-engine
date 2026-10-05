@@ -42,6 +42,58 @@ pub(crate) struct ClassGate {
 /// thing it does not support.
 pub(crate) type Limits = fn(&PreparedV2, &[&Spell]) -> Vec<String>;
 
+/// Why the engine cannot simulate a valid input: a short code that stays the same however
+/// the input varies, which a worker counts fallbacks by, and the text that explains this
+/// input. [`REFUSAL_CODES`] lists every code.
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize)]
+pub struct Refusal {
+    pub code: &'static str,
+    pub reason: String,
+}
+
+impl Refusal {
+    pub(crate) fn new(code: &'static str, reason: impl Into<String>) -> Self {
+        debug_assert!(
+            REFUSAL_CODES.iter().any(|(known, _)| *known == code),
+            "refusal code {code} is not in REFUSAL_CODES"
+        );
+        Refusal {
+            code,
+            reason: reason.into(),
+        }
+    }
+}
+
+/// Every refusal code, each with what it covers. docs/prepared-v2.md lists them too.
+pub const REFUSAL_CODES: &[(&str, &str)] = &[
+    ("exporter_unrepresented", "the exporter could not describe part of the request"),
+    ("rotation_unsupported", "the rotation uses an action, value or field the parser rejects"),
+    ("class_unsupported", "the player's class has no Rust gate"),
+    ("level_unsupported", "the player is not level 60 or the target not level 60 to 63"),
+    ("target_count_invalid", "the target count is neither one nor 2 to 5"),
+    ("several_targets_unsupported", "something reaches a target past the first that Rust does not simulate there"),
+    ("aura_listener_unclaimed", "an aura listens to combat events with no effect that handles it"),
+    ("pet_unsupported", "a pet has no behavior or inherits a stat change Rust does not follow"),
+    ("tanking_unsupported", "the target swings at the player in a way Rust does not simulate"),
+    ("aura_condition_unsupported", "a rotation condition reads an aura as the pinned reference and community #622 disagree, or as Rust does not"),
+    ("resource_unsupported", "the rotation or a spell reads a resource the player lacks"),
+    ("prepull_unsupported", "a prepull action Rust cannot reproduce"),
+    ("cooldown_unsupported", "a survival cooldown fires at a health threshold Rust does not simulate"),
+    ("class_limit", "a class gate rejects the input or a spell the rotation reaches"),
+    ("proc_unsupported", "a proc listens to hits Rust does not deliver to it"),
+    ("stat_change_unsupported", "an aura changes a stat the runtime holds fixed"),
+    ("unknown_spell", "the rotation reaches a spell without a known behavior"),
+    ("spell_unsupported", "a reachable spell uses a feature the runtime does not implement"),
+    ("effect_unimplemented", "an effect the input needs is not implemented"),
+];
+
+/// Each reason of one kind, under its code.
+fn coded(code: &'static str, reasons: Vec<String>) -> impl Iterator<Item = Refusal> {
+    reasons
+        .into_iter()
+        .map(move |reason| Refusal::new(code, reason))
+}
+
 /// Effects of races, items and raid buffs, which every class shares.
 const COMMON_EFFECTS: &[&str] = &[
     "aura_should_refresh",
@@ -840,27 +892,39 @@ fn runtime_limits(spell: &Spell, class_spell: bool) -> Vec<&'static str> {
     limits
 }
 
-pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotation>) -> Vec<String> {
+pub(crate) fn prepared_coverage(
+    prepared: &PreparedV2,
+    rotation: Option<&Rotation>,
+) -> Vec<Refusal> {
     let mut reasons = Vec::new();
     let player = &prepared.player;
     let Some(gate) = class_gate(&player.class) else {
-        return vec![format!("class {} is not supported", player.class)];
+        return vec![Refusal::new(
+            "class_unsupported",
+            format!("class {} is not supported", player.class),
+        )];
     };
     if player.level != 60 {
-        reasons.push(format!("player level {} is not supported", player.level));
+        reasons.push(Refusal::new(
+            "level_unsupported",
+            format!("player level {} is not supported", player.level),
+        ));
     }
     // The exporter writes the count only for a fight against several targets.
     let targets = prepared.encounter.target_count as usize;
     if targets == 1 || targets > crate::core::fight::MAX_TARGETS {
-        reasons.push(format!(
-            "target count {targets}: a fight has one target, or from 2 to {} copies of it",
-            crate::core::fight::MAX_TARGETS
+        reasons.push(Refusal::new(
+            "target_count_invalid",
+            format!(
+                "target count {targets}: a fight has one target, or from 2 to {} copies of it",
+                crate::core::fight::MAX_TARGETS
+            ),
         ));
     }
     if !(60..=63).contains(&prepared.target.level) {
-        reasons.push(format!(
-            "target level {} is not supported",
-            prepared.target.level
+        reasons.push(Refusal::new(
+            "level_unsupported",
+            format!("target level {} is not supported", prepared.target.level),
         ));
     }
 
@@ -893,9 +957,12 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
                 Some(effect) => {
                     required.insert(effect.kind());
                 }
-                None => reasons.push(format!(
-                    "{unit} aura {:?} listens to combat events without an effect",
-                    aura.label
+                None => reasons.push(Refusal::new(
+                    "aura_listener_unclaimed",
+                    format!(
+                        "{unit} aura {:?} listens to combat events without an effect",
+                        aura.label
+                    ),
                 )),
             }
         }
@@ -912,7 +979,10 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
             Some(effect) => {
                 required.insert(effect.kind());
             }
-            None => reasons.push(format!("pet {:?} has no behavior", pet.label)),
+            None => reasons.push(Refusal::new(
+                "pet_unsupported",
+                format!("pet {:?} has no behavior", pet.label),
+            )),
         }
         // Go passes the owner's stat changes to a dynamic pet at its next heartbeat; the
         // runtime follows the stats it tracks. Every owner stat change is a stat aura's.
@@ -929,21 +999,33 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
             for term in &pet.inheritance {
                 let tracked = crate::core::fight::pet::power_index(&term.owner).is_some();
                 if changed.contains(&&term.owner) && !tracked {
-                    reasons.push(format!(
-                        "pet {:?} inherits changes of {} as {}, which is unsupported",
-                        pet.label, term.owner, term.pet
+                    reasons.push(Refusal::new(
+                        "pet_unsupported",
+                        format!(
+                            "pet {:?} inherits changes of {} as {}, which is unsupported",
+                            pet.label, term.owner, term.pet
+                        ),
                     ));
                 }
             }
         }
     }
     if let Some(enemy) = &prepared.enemy {
-        reasons.extend(tank_limits(prepared, enemy, &claims, rotation));
+        reasons.extend(coded(
+            "tanking_unsupported",
+            tank_limits(prepared, enemy, &claims, rotation),
+        ));
     }
 
     if let Some(rotation) = rotation {
-        reasons.extend(unknown_aura_conditions(prepared, rotation));
-        reasons.extend(aura_refresh_conditions(prepared, rotation));
+        reasons.extend(coded(
+            "aura_condition_unsupported",
+            unknown_aura_conditions(prepared, rotation),
+        ));
+        reasons.extend(coded(
+            "aura_condition_unsupported",
+            aura_refresh_conditions(prepared, rotation),
+        ));
         if player.class != "ClassShaman" {
             for item in &rotation.priority_list {
                 let mut totems = false;
@@ -953,15 +1035,24 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
                     });
                 }
                 if totems {
-                    reasons.push(format!(
-                        "rotation item {}: totemRemainingTime needs a Shaman",
-                        item.position
+                    reasons.push(Refusal::new(
+                        "rotation_unsupported",
+                        format!(
+                            "rotation item {}: totemRemainingTime needs a Shaman",
+                            item.position
+                        ),
                     ));
                 }
             }
         }
-        reasons.extend(energy_without_bar(prepared, rotation));
-        reasons.extend(rage_without_bar(prepared, rotation));
+        reasons.extend(coded(
+            "resource_unsupported",
+            energy_without_bar(prepared, rotation),
+        ));
+        reasons.extend(coded(
+            "resource_unsupported",
+            rage_without_bar(prepared, rotation),
+        ));
         let mut reachable = Vec::new();
         let mut registered_prepull = 0;
         // Prepull parsing accepts only casts.
@@ -970,10 +1061,13 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
                 Some(true) => continue,
                 Some(false) => {}
                 None => {
-                    reasons.push(format!(
-                        "prepull action {}: the pinned reference and community #622 prune its \
-                         condition differently",
-                        prepull.position
+                    reasons.push(Refusal::new(
+                        "prepull_unsupported",
+                        format!(
+                            "prepull action {}: the pinned reference and community #622 prune \
+                             its condition differently",
+                            prepull.position
+                        ),
                     ));
                     continue;
                 }
@@ -996,10 +1090,13 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
             }
         }
         if registered_prepull != player.prepull_actions {
-            reasons.push(format!(
-                "Go registered {} prepull actions and the rotation {registered_prepull}; \
-                 prepull actions outside the rotation are unsupported",
-                player.prepull_actions
+            reasons.push(Refusal::new(
+                "prepull_unsupported",
+                format!(
+                    "Go registered {} prepull actions and the rotation {registered_prepull}; \
+                     prepull actions outside the rotation are unsupported",
+                    player.prepull_actions
+                ),
             ));
         }
         let unreachable = unreachable_items(prepared, rotation);
@@ -1028,10 +1125,13 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
                             })
                         });
                         if survival && threshold && !known {
-                            reasons.push(format!(
-                                "survival cooldown {} with a defensive health threshold is \
-                                 unsupported",
-                                cooldown.action_id.spell_id
+                            reasons.push(Refusal::new(
+                                "cooldown_unsupported",
+                                format!(
+                                    "survival cooldown {} with a defensive health threshold \
+                                     is unsupported",
+                                    cooldown.action_id.spell_id
+                                ),
                             ));
                             continue;
                         }
@@ -1045,14 +1145,27 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
                 }
             }
         }
-        reasons.extend((gate.limits)(prepared, &reachable));
-        reasons.extend(several_target_limits(prepared, gate, &reachable));
-        reasons.extend(undirected_procs(prepared));
-        reasons.extend(fixed_stat_changes(prepared));
-        reasons.extend(fixed_stat_aura_changes(prepared));
-        reasons.extend(uninherited_stat_changes(prepared));
+        reasons.extend(coded("class_limit", (gate.limits)(prepared, &reachable)));
+        reasons.extend(coded(
+            "several_targets_unsupported",
+            several_target_limits(prepared, gate, &reachable),
+        ));
+        reasons.extend(coded("proc_unsupported", undirected_procs(prepared)));
+        reasons.extend(coded(
+            "stat_change_unsupported",
+            fixed_stat_changes(prepared),
+        ));
+        reasons.extend(coded(
+            "stat_change_unsupported",
+            fixed_stat_aura_changes(prepared),
+        ));
+        reasons.extend(coded(
+            "stat_change_unsupported",
+            uninherited_stat_changes(prepared),
+        ));
         let mut unknown = BTreeSet::new();
-        let mut limited = BTreeSet::new();
+        // Sorted by text, as the reasons always were, each with its code.
+        let mut limited: BTreeSet<(String, &'static str)> = BTreeSet::new();
         for spell in reachable {
             let id = spell.action_id.clone().unwrap_or_default().to_string();
             match spell_capability(spell, prepared, gate) {
@@ -1079,41 +1192,62 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
                         || enemy.reduced_avoidance_rolls.is_empty()
                         || (pushes_back && pushback_chance.is_none())
                     {
-                        limited.insert(format!(
-                            "rotation reaches {id}, a hardcast while the target swings at the player"
+                        limited.insert((
+                            format!(
+                                "rotation reaches {id}, a hardcast while the target swings at \
+                                 the player"
+                            ),
+                            "tanking_unsupported",
                         ));
                     } else if let Some(chance) = pushback_chance {
                         let rolled = chance - spell.pushback_resist;
                         if pushes_back && rolled > 0.0 && rolled < 1.0 {
-                            limited.insert(format!(
-                                "rotation reaches {id}, a hardcast the target's swings push back \
-                                 with a chance that needs a roll"
+                            limited.insert((
+                                format!(
+                                    "rotation reaches {id}, a hardcast the target's swings push \
+                                     back with a chance that needs a roll"
+                                ),
+                                "tanking_unsupported",
                             ));
                         }
                     }
                 }
             }
             for limit in runtime_limits(spell, (gate.spell)(spell).is_some()) {
-                limited.insert(format!(
-                    "rotation reaches {id}, which uses unsupported {limit}"
+                limited.insert((
+                    format!("rotation reaches {id}, which uses unsupported {limit}"),
+                    "spell_unsupported",
                 ));
             }
         }
+        reasons.extend(unknown.into_iter().map(|id| {
+            Refusal::new(
+                "unknown_spell",
+                format!("rotation reaches {id} without a known behavior"),
+            )
+        }));
         reasons.extend(
-            unknown
+            limited
                 .into_iter()
-                .map(|id| format!("rotation reaches {id} without a known behavior")),
+                .map(|(reason, code)| Refusal::new(code, reason)),
         );
-        reasons.extend(limited);
     } else if player.prepull_actions != 0 {
-        reasons.push("prepull actions outside the rotation are unsupported".into());
+        reasons.push(Refusal::new(
+            "prepull_unsupported",
+            "prepull actions outside the rotation are unsupported",
+        ));
     }
 
     let implemented = implemented_effects();
-    let missing: Vec<String> = required
+    let missing: Vec<Refusal> = required
         .into_iter()
         .filter(|kind| !implemented.contains(kind))
-        .map(|kind| format!("effect {kind} is not implemented"))
+        .map(|kind| {
+            Refusal::new(
+                "effect_unimplemented",
+                format!("effect {kind} is not implemented"),
+            )
+        })
         .collect();
     let mut all = missing;
     all.extend(reasons);

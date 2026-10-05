@@ -1,6 +1,6 @@
 use forever_engine::{
-    check_prepared, contracts::prepared_v2::PreparedV2, simulate, simulate_prepared, PreparedError,
-    Request, SOURCE_REVISION,
+    contracts::prepared_v2::PreparedV2, prepared_refusals, simulate, simulate_prepared,
+    validate_prepared, PreparedError, Request, SOURCE_REVISION,
 };
 use serde::Deserialize;
 use std::{env, fs, hint::black_box, process};
@@ -38,15 +38,18 @@ fn run() -> Result<(), String> {
     if args.len() == 3 && args[0] == "check" && args[1] == "--infile" {
         let input = fs::read(&args[2]).map_err(|err| err.to_string())?;
         let prepared = prepared_v2(&input)?.ok_or("check requires a prepared v2 input")?;
-        let reasons = match check_prepared(&prepared) {
-            Ok(()) => Vec::new(),
-            Err(PreparedError::Unsupported(reasons)) => reasons,
-            Err(err) => return Err(err.to_string()),
-        };
+        // An invalid input is an error, never a refusal.
+        validate_prepared(&prepared).map_err(|err| PreparedError::Invalid(err).to_string())?;
+        let refusals = prepared_refusals(&prepared);
+        let reasons: Vec<&str> = refusals
+            .iter()
+            .map(|refusal| refusal.reason.as_str())
+            .collect();
         let report = serde_json::json!({
             "scenario_id": prepared.scenario_id,
-            "supported": reasons.is_empty(),
+            "supported": refusals.is_empty(),
             "reasons": reasons,
+            "refusals": refusals,
         });
         println!(
             "{}",
