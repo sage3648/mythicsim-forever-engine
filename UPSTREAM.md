@@ -4,7 +4,7 @@
 
 | Source | Role | Baseline |
 | --- | --- | --- |
-| [MythicSim Go engine](https://github.com/sage3648/mythicsim-forever-engine-go) | Fixtures and live reference | `20b551c6bff9aa780fefe17ead89029c13cabcd4`, on community base `f764984d8b05f0d5ce73aab82185fb6efa40a9a4` |
+| [MythicSim Go engine](https://github.com/sage3648/mythicsim-forever-engine-go) | Fixtures and live reference | `6383c15a7b1bfbdbd7c5b4c0c59418c636e52e1a`, on community base `f764984d8b05f0d5ce73aab82185fb6efa40a9a4` |
 | [Community Forever engine](https://github.com/ElliotWood/Forever) | Changes to review for applicability | Adopted base `f4b776b4f41d5c7799b8141697a2c9e67c89d426`; reviewed through `f764984d8b05f0d5ce73aab82185fb6efa40a9a4` (2026-10-05) |
 
 Go is a reference implementation, not proof of live-game correctness. Forever can
@@ -41,6 +41,14 @@ exclusive effect now reports that effect's uptime, and 28 builds changed DPS thr
 Mutilate (#632), Whirlwind and the warrior shout costs (#613, #614) and Piercing Ice
 (#615). Rust matches all of them, and all 2439 recorded sweep variants
 ([record](validation/2026-10-05-reference-pin-20b551c6b-sweeps.json)).
+
+The pin moved from `20b551c6b` to `6383c15a7` on 2026-10-06, one commit: the fork's
+patch 87, where a Mongoose Bite that lands with the last Lacerating Strikes bleed still up
+replaces it with its own 40% instead of a bleed that ticks for nothing, and the bleed
+reports under its own id 1310536 instead of Mongoose Bite's with tag 1. The six Survival
+Hunter goldens with Lacerating Strikes changed and Rust matches them; no other golden
+moved, and all 2439 recorded sweep variants match
+([record](validation/2026-10-06-reference-pin-6383c15a7-sweeps.json)).
 
 ## Ledger
 
