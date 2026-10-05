@@ -40,6 +40,16 @@ class SweepTests(unittest.TestCase):
         self.assertTrue(distances <= {0, 5})
         self.assertEqual(generate(BASE, 7, 3), generate(BASE, 7, 3, max_distance=None))
 
+    def test_copies_of_the_target_stay_identical(self):
+        import copy
+        base = copy.deepcopy(BASE)
+        base["encounter"]["targets"] = [base["encounter"]["targets"][0]] * 3
+        for plain, several in zip(generate(BASE, 7, 6), generate(base, 7, 6)):
+            targets = several["encounter"]["targets"]
+            self.assertEqual(len(targets), 3)
+            self.assertTrue(all(target == targets[0] for target in targets))
+            self.assertEqual(targets[0]["level"], plain["encounter"]["targets"][0]["level"])
+
     def test_base_request_is_not_modified(self):
         before = json.dumps(BASE, sort_keys=True)
         generate(BASE, 3, 5)
