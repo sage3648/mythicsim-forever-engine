@@ -119,12 +119,12 @@ func rogueEffects(agent core.Agent, character *core.Character) []map[string]any 
 			"durations_ns": durations, "melee_speed_multiplier": 1 + r.SliceAndDiceBonusFlat,
 		})
 	}
-	// talents_combat.go registerBladeFlurry: the attack speed it attaches. Its extra hit needs a
-	// second target.
+	// talents_combat.go registerBladeFlurry: the attack speed it attaches, and the spell of its
+	// extra hit on the next target, a Go literal, which needs a second target.
 	if r.BladeFlurry != nil {
 		row := rogueBladeFlurry.Highest()
 		effects = append(effects, map[string]any{
-			"kind": "blade_flurry", "spell_id": row.ID, "aura": r.BladeFlurryAura.Label,
+			"kind": "blade_flurry", "spell_id": row.ID, "aura": r.BladeFlurryAura.Label, "hit_spell_id": 22482,
 			"attack_speed_multiplier": 1 + row.Effect(dbcenums.A_MOD_MELEE_HASTE_3, 0).Average(core.CharacterLevel)/100,
 		})
 	}

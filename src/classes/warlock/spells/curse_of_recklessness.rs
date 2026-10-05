@@ -48,10 +48,10 @@ impl CurseOfRecklessness {
     }
 
     pub(crate) fn on_gain<A: Agent>(&self, fight: &mut Fight<A>) {
-        fight.add_target_armor(self.armor_delta);
+        fight.add_target_armor(Side::Target, self.armor_delta);
     }
 
     pub(crate) fn on_expire<A: Agent>(&self, fight: &mut Fight<A>) {
-        fight.add_target_armor(-self.armor_delta);
+        fight.add_target_armor(Side::Target, -self.armor_delta);
     }
 }

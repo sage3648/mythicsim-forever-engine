@@ -31,8 +31,16 @@ pub(crate) struct ClassGate {
     /// The aura labels a class effect takes responsibility for, as (unit, label).
     pub(crate) claims: for<'a> fn(&'a Effect) -> Vec<(&'static str, &'a str)>,
     /// Class limits on the input and the spells the rotation can reach.
-    pub(crate) limits: fn(&PreparedV2, &[&Spell]) -> Vec<String>,
+    pub(crate) limits: Limits,
+    /// The class's limits in a fight against several targets: the reachable spells that reach
+    /// a target past the first in Go and not yet in Rust. None for a class not yet checked
+    /// against several targets.
+    pub(crate) several_targets: Option<Limits>,
 }
+
+/// A class check of the input and the spells the rotation can reach: a reason for each
+/// thing it does not support.
+pub(crate) type Limits = fn(&PreparedV2, &[&Spell]) -> Vec<String>;
 
 /// Effects of races, items and raid buffs, which every class shares.
 const COMMON_EFFECTS: &[&str] = &[
@@ -841,6 +849,14 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
     if player.level != 60 {
         reasons.push(format!("player level {} is not supported", player.level));
     }
+    // The exporter writes the count only for a fight against several targets.
+    let targets = prepared.encounter.target_count as usize;
+    if targets == 1 || targets > crate::core::fight::MAX_TARGETS {
+        reasons.push(format!(
+            "target count {targets}: a fight has one target, or from 2 to {} copies of it",
+            crate::core::fight::MAX_TARGETS
+        ));
+    }
     if !(60..=63).contains(&prepared.target.level) {
         reasons.push(format!(
             "target level {} is not supported",
@@ -986,7 +1002,7 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
                 player.prepull_actions
             ));
         }
-        let unreachable = unreachable_with_one_target(prepared, rotation);
+        let unreachable = unreachable_items(prepared, rotation);
         for item in &rotation.priority_list {
             if unreachable.contains(&item.position) {
                 continue;
@@ -1030,6 +1046,7 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
             }
         }
         reasons.extend((gate.limits)(prepared, &reachable));
+        reasons.extend(several_target_limits(prepared, gate, &reachable));
         reasons.extend(undirected_procs(prepared));
         reasons.extend(fixed_stat_changes(prepared));
         reasons.extend(fixed_stat_aura_changes(prepared));
@@ -1101,6 +1118,49 @@ pub(crate) fn prepared_coverage(prepared: &PreparedV2, rotation: Option<&Rotatio
     let mut all = missing;
     all.extend(reasons);
     all
+}
+
+/// Go reaches the targets past the first only through its area and cleave helpers, its loops
+/// over the encounter's targets and the rotation's target choices. The exporter refuses the
+/// shared ones Rust does not simulate on every target, and each class names its own; a class
+/// that has not been checked against several targets is refused.
+fn several_target_limits(
+    prepared: &PreparedV2,
+    gate: &ClassGate,
+    reachable: &[&Spell],
+) -> Vec<String> {
+    let count = prepared.encounter.target_count;
+    if count < 2 {
+        return Vec::new();
+    }
+    match gate.several_targets {
+        Some(limits) => limits(prepared, reachable),
+        None => vec![format!(
+            "{count} targets: several targets are not supported for {} yet",
+            gate.class
+        )],
+    }
+}
+
+/// The reachable spells of the given class spell names, which reach a target past the first
+/// in Go: a reason for each, naming what it does there.
+pub(crate) fn spells_reaching_other_targets(
+    reachable: &[&Spell],
+    spells: &[(&str, &str)],
+) -> Vec<String> {
+    let mut reasons = BTreeSet::new();
+    for spell in reachable {
+        let Some(class_spell) = spell.class_spell.as_deref() else {
+            continue;
+        };
+        if let Some((_, what)) = spells.iter().find(|(name, _)| *name == class_spell) {
+            let id = spell.action_id.clone().unwrap_or_default();
+            reasons.insert(format!(
+                "rotation reaches {id}, which {what} in a fight against several targets"
+            ));
+        }
+    }
+    reasons.into_iter().collect()
 }
 
 /// Go gives `currentRage` no value on a unit without a rage bar, which drops the term; the
@@ -1250,7 +1310,8 @@ fn find_unit_aura(
 /// Rotation items, by position, whose condition can never hold against the one target the
 /// runtime supports, such as a `numberTargets` of two or more. Go still evaluates them, without
 /// side effects, but never runs their action.
-fn unreachable_with_one_target(prepared: &PreparedV2, rotation: &Rotation) -> BTreeSet<usize> {
+fn unreachable_items(prepared: &PreparedV2, rotation: &Rotation) -> BTreeSet<usize> {
+    let targets = prepared.encounter.target_count.max(1) as usize;
     let aura = |id: &ActionId| find_aura(prepared, id);
     let target_aura = |id: &ActionId| find_unit_aura(&prepared.target.auras, id);
     let spell = |id: &ActionId| rotation_spell_index(prepared, id);
@@ -1271,7 +1332,10 @@ fn unreachable_with_one_target(prepared: &PreparedV2, rotation: &Rotation) -> BT
         .priority_list
         .iter()
         .filter(|item| {
-            let condition = item.condition.as_ref().map(Value::with_one_target);
+            let condition = item
+                .condition
+                .as_ref()
+                .map(|value| value.with_targets(targets));
             compile_condition(condition.as_ref(), &lookup, MissingAura::Dropped).never_holds()
         })
         .map(|item| item.position)

@@ -165,3 +165,45 @@ fn defensive_cooldowns_reach_only_vanish() {
     assert!(ids.contains(&1856));
     assert!(!ids.contains(&5277) && !ids.contains(&11305));
 }
+
+fn against(spec: &str, targets: u32) -> Value {
+    fixture(&format!("production-{spec}-rogue-{targets}-targets"))
+}
+
+fn first_fight_log(mut value: Value) -> String {
+    value["sim"]["iterations"] = serde_json::json!(1);
+    value["sim"]["debug_first_iteration"] = serde_json::json!(true);
+    let prepared: PreparedV2 = serde_json::from_value(value).unwrap();
+    let report = forever_engine::simulate_prepared(&prepared).unwrap();
+    report.result["logs"].as_str().unwrap().to_string()
+}
+
+/// Blade Flurry's extra hit lands on the target after the one each melee hit struck. Only the
+/// first target takes melee hits, and the extra hit has no proc mask to strike again, so the
+/// second target takes every one.
+#[test]
+fn blade_flurry_strikes_the_next_target() {
+    let logs = first_fight_log(against("combat", 3));
+    assert!(logs
+        .lines()
+        .any(|line| line.contains("[Target 2] {SpellID: 22482} Hit")));
+    assert!(!logs
+        .lines()
+        .any(|line| line.contains("[Target 1] {SpellID: 22482}")));
+}
+
+/// The Goblin Sapper Charge and Dragonbreath Chili hit every target, though a Subtlety Rogue's
+/// rotation gains no AoE lines.
+#[test]
+fn area_consumables_reach_every_target() {
+    let logs = first_fight_log(against("subtlety", 5));
+    for target in 1..=5 {
+        for id in ["{ItemID: 10646}", "{SpellID: 15851}"] {
+            assert!(
+                logs.lines()
+                    .any(|line| line.contains(&format!("[Target {target}] {id}"))),
+                "Target {target}: no {id}"
+            );
+        }
+    }
+}

@@ -1,6 +1,7 @@
 //! A class-independent fight runtime that mirrors the pinned Go `sim/core`.
 //!
-//! One player fights one target. The runtime owns time, the pending-action queue, random
+//! One player fights one to five identical targets, each with its own auras, dots, armor,
+//! stats and metrics. The runtime owns time, the pending-action queue, random
 //! streams, units, auras, spells, casting, damage, channels, cooldowns, the rotation and
 //! metrics. Class behavior plugs in through [`Agent`], so the runtime never names a
 //! class. Event order, random draw order and floating-point operation order follow Go,
@@ -44,7 +45,7 @@ pub(crate) use damage::{
 };
 pub(crate) use dot::Dot;
 pub(crate) use log::action_string;
-pub(crate) use metrics::{ActionReport, ActionTotals, FightReport};
+pub(crate) use metrics::{ActionTotals, FightReport};
 pub(crate) use spell_mod::{ModId, ModKind};
 
 use crate::{
@@ -61,29 +62,63 @@ pub(crate) type SpellId = usize;
 pub(crate) type DotId = usize;
 pub(crate) type TimerId = usize;
 
-/// The units of a supported fight: the target, the player and the pets Rust simulates. The
-/// target and the player are Go unit indexes 0 and 1; a pet's Go index is its own, and
+/// The units of a supported fight: the targets, the player and the pets Rust simulates.
+/// `Target` is the first target, the player's current target, and `Extra(k)` the identical
+/// copy at position `k + 1` of a fight against several; their Go unit indexes are their
+/// positions. The player's Go unit index follows the targets', and a pet's is its own.
 /// `Pet(i)` is the pet at position `i` of the simulated pets, in unit index order.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub(crate) enum Side {
     Target,
     Player,
     Pet(u8),
+    Extra(u8),
 }
 
+/// The most targets a fight can have, as the application offers.
+pub(crate) const MAX_TARGETS: usize = 5;
+
+/// The units a spell can hit, by [`Side::index`]: every target and the player.
+pub(crate) const DEFENDERS: usize = MAX_TARGETS + 1;
+
 impl Side {
-    /// The unit's position in per-unit lists: the target, the player, then each pet.
+    /// The unit's position in per-unit lists: the first target, the player, the other
+    /// targets in the room [`MAX_TARGETS`] leaves, then each pet. A unit a spell can hit
+    /// comes before [`DEFENDERS`].
     pub(crate) fn index(self) -> usize {
         match self {
             Side::Target => 0,
             Side::Player => 1,
-            Side::Pet(pet) => 2 + pet as usize,
+            Side::Extra(extra) => 2 + extra as usize,
+            Side::Pet(pet) => DEFENDERS + pet as usize,
+        }
+    }
+
+    /// The target at a position of the encounter's targets, counting from zero.
+    pub(crate) fn target(position: usize) -> Side {
+        match position {
+            0 => Side::Target,
+            position => Side::Extra(position as u8 - 1),
+        }
+    }
+
+    /// The position among the encounter's targets of a unit that is one.
+    pub(crate) fn target_position(self) -> Option<usize> {
+        match self {
+            Side::Target => Some(0),
+            Side::Extra(extra) => Some(1 + extra as usize),
+            _ => None,
         }
     }
 
     /// Whether the unit is one of the simulated pets.
     pub(crate) fn is_pet(self) -> bool {
         matches!(self, Side::Pet(_))
+    }
+
+    /// Whether the unit is one of the encounter's targets.
+    pub(crate) fn is_target(self) -> bool {
+        matches!(self, Side::Target | Side::Extra(_))
     }
 }
 
@@ -154,7 +189,11 @@ pub(crate) trait Agent: Sized {
     }
     /// Go `DamageDoneByCasterExtraMultiplier` on the target's attack table: the active
     /// handler's multiplier for a spell, if any handler is active.
-    fn caster_damage_multiplier(_fight: &Fight<Self>, _spell: SpellId) -> Option<f64> {
+    fn caster_damage_multiplier(
+        _fight: &Fight<Self>,
+        _spell: SpellId,
+        _target: Side,
+    ) -> Option<f64> {
         None
     }
     /// When a class's totem of the slot expires, for Go's `totemRemainingTime`. The gate
@@ -354,8 +393,14 @@ pub(crate) enum SpellBehavior<S> {
     ActivateAura(usize),
     /// Go attack.go's main or off hand auto attack.
     MeleeAuto(melee::Hand),
-    /// A magic hit on a rolled base damage, as Dragonbreath Chili's proc casts, or one that
-    /// cannot crit, as a damage shield's.
+    /// Go core/consumes.go Dragonbreath Chili's proc: on every target in unit index order, a
+    /// magic hit on its own rolled base damage, dealt before the next target's.
+    AreaRollDamage {
+        min: f64,
+        max: f64,
+    },
+    /// A magic hit on a rolled base damage, as Acid Spit's, or one that cannot crit, as a
+    /// damage shield's.
     RollDamage {
         min: f64,
         max: f64,
@@ -608,12 +653,14 @@ pub(crate) struct Spell<S> {
     pub(crate) rage_metrics: Option<usize>,
     /// Go rage.go's switch on the exact proc mask: the hand of a white hit that gives rage.
     pub(crate) white_hand: Option<melee::Hand>,
-    pub(crate) metrics: [SpellMetrics; 2],
+    /// The spell's metrics on each unit it can hit, by [`Side::index`], kept apart so the
+    /// spell stays small.
+    pub(crate) metrics: [SpellMetrics; DEFENDERS],
     /// Index into the fight's action metrics, absent for `SpellFlagNoMetrics`; the current
     /// split's for a spell with metric splits.
     pub(crate) action: Option<usize>,
     /// Go `splitSpellMetrics`, by split; `metrics` holds the current split's while it is set.
-    pub(crate) split_metrics: Vec<[SpellMetrics; 2]>,
+    pub(crate) split_metrics: Vec<[SpellMetrics; DEFENDERS]>,
     /// The action metrics of each split.
     pub(crate) split_actions: Vec<usize>,
     /// The current split, which Go keeps across iterations.
@@ -902,6 +949,8 @@ pub(crate) struct Config {
     pub(crate) player_label: String,
     pub(crate) player_name: String,
     pub(crate) target_label: String,
+    /// The player's Go unit index, which counts every target.
+    pub(crate) player_index: i32,
     pub(crate) player_level: i32,
     pub(crate) target_level: i32,
     pub(crate) reaction: i64,
@@ -1013,7 +1062,7 @@ pub(crate) struct ResourceMetrics {
     pub(crate) is_mana_regen: bool,
 }
 
-/// The target's stats and pseudo stats that auras can change during a fight, reset to the
+/// A target's stats and pseudo stats that auras can change during a fight, reset to the
 /// prepared values each iteration.
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct TargetState {
@@ -1024,6 +1073,17 @@ pub(crate) struct TargetState {
     /// Go `PseudoStats.SchoolBonusSpellDamage`: the spell damage each school's spells gain
     /// against the target.
     pub(crate) school_bonus_spell_damage: [f64; 8],
+}
+
+/// One target's mutable state. Every target starts each fight from the same prepared values,
+/// since a fight against several holds identical copies.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct TargetUnit {
+    pub(crate) state: TargetState,
+    /// Go `Unit.Armor()`, which the Sunder Armor ramp lowers.
+    pub(crate) armor: f64,
+    /// Armor changes from auras other than the Sunder Armor ramp, which sets the rest.
+    pub(crate) armor_delta: f64,
 }
 
 /// Go `Unit.AddDynamicDamageTakenModifier` on the target for a modifier that multiplies the
@@ -1063,6 +1123,9 @@ pub(crate) enum Action {
         dot: Option<DotId>,
     },
     DotTick(DotId),
+    /// Go `WaitTravelTime` around a loop of `DealDamage`: the results of one cast that reached
+    /// several targets, by their place in `Fight::travel_batches`, dealt in order on arrival.
+    TravelBatch(usize),
     /// A class spell's travel callback: [`Agent::on_travel`].
     ClassTravel {
         spell: SpellId,
@@ -1082,8 +1145,9 @@ pub(crate) enum Action {
     Prepull(SpellId),
     /// A rotation prepull action: Go `APLActionActivateAura.Execute`.
     PrepullAura(AuraRef),
-    /// A tick of the raid's Sunder Armor ramp, with the ticks done so far.
-    SunderTick(i32),
+    /// A tick of the raid's Sunder Armor ramp on a target, by its position, with the ticks
+    /// done so far.
+    SunderTick(u8, i32),
     /// Go trackChanceOfDeath's pending action: mark the player dead if health is still gone.
     DeathCheck,
     /// A fixed uptime aura's periodic roll, or its first roll.
@@ -1194,6 +1258,8 @@ pub(crate) struct Fight<A: Agent> {
     /// The target's major armor category and its armor at each stack count of the active
     /// member.
     pub(crate) armor_category: Option<(usize, Vec<f64>)>,
+    /// The copies of the major armor category on the targets past the first.
+    pub(crate) extra_armor_categories: Vec<(usize, Side)>,
     /// Player auras that multiply the player's damage taken, by aura index.
     pub(crate) damage_taken_auras: Vec<(usize, f64, PseudoStat)>,
     /// Set while the reset activates permanent auras, whose pseudo stats the prepared values
@@ -1208,8 +1274,18 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) cast_speed: f64,
     /// Each unit's auras, by [`Side::index`].
     pub(crate) trackers: Vec<Tracker<A::Aura>>,
-    /// The target's mutable stats.
-    pub(crate) target: TargetState,
+    /// Each target's mutable stats and armor, by position.
+    pub(crate) targets: Vec<TargetUnit>,
+    /// Whether the targets past the first hold their copies of the first's auras, dots and
+    /// exclusive categories, which the first run makes once the class finished the fight.
+    extra_targets_built: bool,
+    /// Each dot's copies on the targets past the first, in target order; a dot on the caster
+    /// has none.
+    pub(crate) dot_copies: Vec<Vec<DotId>>,
+    /// The results of casts in flight to several targets, for [`Action::TravelBatch`], and the
+    /// places free for reuse.
+    pub(crate) travel_batches: Vec<Vec<(SpellId, SpellResult)>>,
+    free_travel_batches: Vec<usize>,
     /// The target's dynamic damage taken modifiers.
     pub(crate) damage_taken_modifiers: Vec<DamageTakenModifier>,
     /// Spell-conditioned modifiers, applied after `damage_taken_modifiers`; no class registers
@@ -1236,10 +1312,6 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) target_actions: Vec<ActionTotals>,
     /// The player's weapon attacks.
     pub(crate) autos: melee::AutoAttacks,
-    /// Go `Unit.Armor()` for the target, which the Sunder Armor ramp lowers.
-    pub(crate) target_armor: f64,
-    /// Armor changes from auras other than the Sunder Armor ramp, which sets the rest.
-    target_armor_delta: f64,
     sunder: Option<SunderRamp>,
     /// Gnome's Eureka!, when the character has it.
     pub(crate) eureka: Option<racial::Eureka>,
@@ -1430,6 +1502,7 @@ pub(crate) fn unit_config(prepared: &PreparedV2, unit: &UnitSource) -> Result<Co
         player_label: unit.label.to_string(),
         player_name: unit.name.to_string(),
         target_label: target.label.clone(),
+        player_index: prepared.player.index,
         player_level: unit.level,
         target_level: target.level,
         reaction: unit.reaction_ns,
@@ -1724,7 +1797,7 @@ impl<A: Agent> Fight<A> {
                 })
                 .flatten()
             {
-                // Acid Spit rolls its base damage as Dragonbreath Chili's proc does.
+                // Acid Spit rolls its base damage as Dragonbreath Chili's proc does on a target.
                 SpellBehavior::RollDamage {
                     min,
                     max,
@@ -1918,10 +1991,9 @@ impl<A: Agent> Fight<A> {
                             roll_max,
                             ..
                         } if id.spell_id == *spell_id && id.tag == 0 => {
-                            Some(SpellBehavior::RollDamage {
+                            Some(SpellBehavior::AreaRollDamage {
                                 min: *roll_min,
                                 max: *roll_max,
-                                can_crit: true,
                             })
                         }
                         Effect::DamageOnUse {
@@ -2136,7 +2208,7 @@ impl<A: Agent> Fight<A> {
                     [mask] if mask == "ProcMaskMeleeOHAuto" => Some(melee::Hand::Off),
                     _ => None,
                 },
-                metrics: [SpellMetrics::default(); 2],
+                metrics: [SpellMetrics::default(); DEFENDERS],
                 action: None,
                 caster,
                 split_metrics: Vec::new(),
@@ -2182,7 +2254,7 @@ impl<A: Agent> Fight<A> {
                             melee: spell.flags.melee_metrics,
                             passive: spell.flags.passive,
                             school: spell.school,
-                            targets: [ActionReport::new(0), ActionReport::new(1)],
+                            targets: metrics::defender_reports(),
                         });
                         actions.len() - 1
                     }
@@ -2191,7 +2263,7 @@ impl<A: Agent> Fight<A> {
             }
             spell.action = Some(indexes[0]);
             if indexes.len() > 1 {
-                spell.split_metrics = vec![[SpellMetrics::default(); 2]; indexes.len()];
+                spell.split_metrics = vec![[SpellMetrics::default(); DEFENDERS]; indexes.len()];
                 spell.split_actions = indexes;
             }
         }
@@ -2276,7 +2348,8 @@ impl<A: Agent> Fight<A> {
                 })
             })
             .collect::<Result<_, BuildError>>()?;
-        let mut trackers: Vec<Tracker<A::Aura>> = (0..2 + prepared.pets.len())
+        // The targets past the first copy the first's trackers at the first run.
+        let mut trackers: Vec<Tracker<A::Aura>> = (0..DEFENDERS + prepared.pets.len())
             .map(|_| Tracker::default())
             .collect();
         let unit_auras = [(Side::Target, &target.auras), (Side::Player, &player.auras)]
@@ -2293,6 +2366,9 @@ impl<A: Agent> Fight<A> {
                 Side::Player => "player",
                 Side::Target => "target",
                 Side::Pet(_) => "pet",
+                Side::Extra(_) => {
+                    unreachable!("the other targets copy the first's at the first run")
+                }
             };
             for exported in auras {
                 let behavior = if let Some(dot) = dots
@@ -2739,6 +2815,7 @@ impl<A: Agent> Fight<A> {
             rage,
             exclusive: Vec::new(),
             armor_category: None,
+            extra_armor_categories: Vec::new(),
             player_hit_resistance: (0.0, 1.0),
             damage_taken_auras: Vec::new(),
             resetting_auras: false,
@@ -2751,11 +2828,23 @@ impl<A: Agent> Fight<A> {
             energize_procs: Vec::new(),
             player: Player::initial(&config),
             cast_speed: config.cast_speed,
-            target: TargetState {
-                resistance: config.target_resistance,
-                school_damage_taken_multiplier: config.target_school_damage_taken_multiplier,
-                school_bonus_spell_damage: config.target_school_bonus_spell_damage,
-            },
+            targets: vec![
+                TargetUnit {
+                    state: TargetState {
+                        resistance: config.target_resistance,
+                        school_damage_taken_multiplier: config
+                            .target_school_damage_taken_multiplier,
+                        school_bonus_spell_damage: config.target_school_bonus_spell_damage,
+                    },
+                    armor: prepared.melee.defender_armor,
+                    armor_delta: 0.0,
+                };
+                prepared.encounter.target_count.max(1) as usize
+            ],
+            extra_targets_built: false,
+            dot_copies: Vec::new(),
+            travel_batches: Vec::new(),
+            free_travel_batches: Vec::new(),
             damage_taken_modifiers: Vec::new(),
             spell_damage_taken_modifiers: Vec::new(),
             damage_taken_health,
@@ -2782,7 +2871,7 @@ impl<A: Agent> Fight<A> {
                     melee: action.melee_metrics,
                     passive: false,
                     school: action.school,
-                    targets: [ActionReport::new(0), ActionReport::new(1)],
+                    targets: metrics::defender_reports(),
                 })
                 .collect(),
             mana_regen_casting,
@@ -2790,8 +2879,6 @@ impl<A: Agent> Fight<A> {
             mana_gain_spell,
             log: None,
             autos: melee::AutoAttacks::default(),
-            target_armor: prepared.melee.defender_armor,
-            target_armor_delta: 0.0,
             sunder: None,
             aura_logs,
             stat_combos,
@@ -2821,7 +2908,13 @@ impl<A: Agent> Fight<A> {
             pet_trackers: Vec::new(),
             pet_agent_auras: pet::pet_agent_auras(prepared),
             heartbeat_offset: 0,
-            totals: metrics::Totals::default(),
+            totals: metrics::Totals {
+                target_dtps: vec![
+                    metrics::Distribution::default();
+                    prepared.encounter.target_count.max(1) as usize
+                ],
+                ..metrics::Totals::default()
+            },
             encounter_damage_taken: 0.0,
             in_prepull: false,
             health_at_reset: player.health_at_reset,
@@ -3521,27 +3614,145 @@ impl<A: Agent> Fight<A> {
         self.player.school_damage_dealt_multiplier[school_index] /= divisor;
     }
 
-    /// Go `PseudoStats.SchoolBonusSpellDamage` changed on the target, as a debuff's gain and
+    /// Go `PseudoStats.SchoolBonusSpellDamage` changed on a target, as a debuff's gain and
     /// expiry change the spell damage a school's spells gain against it.
-    pub(crate) fn add_target_school_bonus_spell_damage(&mut self, school_index: usize, delta: f64) {
-        self.target.school_bonus_spell_damage[school_index] += delta;
+    pub(crate) fn add_target_school_bonus_spell_damage(
+        &mut self,
+        target: Side,
+        school_index: usize,
+        delta: f64,
+    ) {
+        self.target_unit_mut(target).state.school_bonus_spell_damage[school_index] += delta;
     }
 
-    /// Go `AddStatsDynamic` on a target resistance.
-    pub(crate) fn add_target_resistance(&mut self, school_index: usize, delta: f64) {
-        self.target.resistance[school_index] += delta;
+    /// Go `AddStatsDynamic` on a target's resistance.
+    pub(crate) fn add_target_resistance(&mut self, target: Side, school_index: usize, delta: f64) {
+        self.target_unit_mut(target).state.resistance[school_index] += delta;
     }
 
-    /// A parsed aura's multiplier on a target school's damage taken: Go multiplies by the
+    /// A parsed aura's multiplier on a target's school damage taken: Go multiplies by the
     /// factor on gain and by its reciprocal on expiry.
-    pub(crate) fn multiply_target_school_damage_taken(&mut self, school_index: usize, factor: f64) {
-        self.target.school_damage_taken_multiplier[school_index] *= factor;
+    pub(crate) fn multiply_target_school_damage_taken(
+        &mut self,
+        target: Side,
+        school_index: usize,
+        factor: f64,
+    ) {
+        self.target_unit_mut(target)
+            .state
+            .school_damage_taken_multiplier[school_index] *= factor;
     }
 
-    /// Go `AddStatsDynamic` on the target's armor, for an armor debuff the class applies.
-    pub(crate) fn add_target_armor(&mut self, delta: f64) {
-        self.target_armor += delta;
-        self.target_armor_delta += delta;
+    /// Go `AddStatsDynamic` on a target's armor, for an armor debuff the class applies.
+    pub(crate) fn add_target_armor(&mut self, target: Side, delta: f64) {
+        let unit = self.target_unit_mut(target);
+        unit.armor += delta;
+        unit.armor_delta += delta;
+    }
+
+    /// How many units a spell can hit in this fight, the slots [`Side::index`] gives them:
+    /// every target and the player.
+    pub(crate) fn defender_count(&self) -> usize {
+        self.targets.len() + 1
+    }
+
+    /// Every target of the encounter, in unit index order.
+    pub(crate) fn target_sides(&self) -> impl Iterator<Item = Side> {
+        (0..self.targets.len()).map(Side::target)
+    }
+
+    /// Go `NextActiveTargetUnit`: the target after this one in unit index order, wrapping to
+    /// the first.
+    pub(crate) fn next_target(&self, target: Side) -> Side {
+        let position = target.target_position().expect("the unit is a target");
+        Side::target((position + 1) % self.targets.len())
+    }
+
+    /// A target's mutable state. A spell on the player, such as its own dot, reads the first
+    /// target's, as the runtime always has.
+    pub(crate) fn target_unit(&self, target: Side) -> &TargetUnit {
+        &self.targets[target.target_position().unwrap_or(0)]
+    }
+
+    fn target_unit_mut(&mut self, target: Side) -> &mut TargetUnit {
+        &mut self.targets[target.target_position().unwrap_or(0)]
+    }
+
+    /// The same aura on another target: every target holds a copy of the first's auras at the
+    /// same positions. An aura on any other unit is its own.
+    pub(crate) fn aura_on(&self, aura: AuraRef, target: Side) -> AuraRef {
+        if aura.side.is_target() && target.is_target() {
+            AuraRef {
+                side: target,
+                index: aura.index,
+            }
+        } else {
+            aura
+        }
+    }
+
+    /// A dot's copy on a target: the dot itself on the first target or on its caster.
+    pub(crate) fn dot_on(&self, dot: DotId, target: Side) -> DotId {
+        match target {
+            Side::Extra(extra) => self
+                .dot_copies
+                .get(dot)
+                .and_then(|copies| copies.get(extra as usize))
+                .copied()
+                .unwrap_or(dot),
+            _ => dot,
+        }
+    }
+
+    /// Give each target past the first its copies of the first's auras, dots and exclusive
+    /// categories. Go registers a target's auras and dots on every target alike, which the
+    /// exporter checks, so each copy sits at the first's position; a dot aura behaves as its
+    /// target's copy of the dot.
+    fn build_extra_targets(&mut self) {
+        self.extra_targets_built = true;
+        if self.targets.len() < 2 {
+            return;
+        }
+        self.dot_copies = vec![Vec::new(); self.dots.len()];
+        for extra in 0..self.targets.len() - 1 {
+            let side = Side::Extra(extra as u8);
+            for dot in 0..self.dot_copies.len() {
+                if self.dots[dot].side != Side::Target {
+                    continue;
+                }
+                let mut copy = self.dots[dot].clone();
+                copy.side = side;
+                copy.aura = AuraRef {
+                    side,
+                    index: copy.aura.index,
+                };
+                copy.tick_action = None;
+                self.dots.push(copy);
+                self.dot_copies[dot].push(self.dots.len() - 1);
+            }
+            let auras = self.trackers[Side::Target.index()].copy_auras(|behavior| match behavior {
+                AuraBehavior::Dot(dot) => AuraBehavior::Dot(self.dot_copies[*dot][extra]),
+                other => other.clone(),
+            });
+            self.trackers[side.index()].auras = auras;
+            let main_armor = self.armor_category.as_ref().map(|(category, _)| *category);
+            let on_first: Vec<usize> = (0..self.exclusive.len())
+                .filter(|&category| {
+                    self.exclusive[category]
+                        .members
+                        .iter()
+                        .all(|member| member.aura.side == Side::Target)
+                })
+                .collect();
+            for category in on_first {
+                let copy = self.exclusive[category].on_unit(side);
+                self.exclusive.push(copy);
+                if Some(category) == main_armor {
+                    self.extra_armor_categories
+                        .push((self.exclusive.len() - 1, side));
+                }
+            }
+        }
     }
 
     /// Go `GetStat(stats.Spirit)` of the player for the active stat auras, or `reset`, the
@@ -3635,6 +3846,9 @@ impl<A: Agent> Fight<A> {
 
     /// Run every iteration and return the aggregate report.
     pub(crate) fn run(&mut self) -> FightReport {
+        if !self.extra_targets_built {
+            self.build_extra_targets();
+        }
         let started = std::time::Instant::now();
         let iterations = self.config.iterations;
         let mut total_duration = 0i64;
@@ -3690,6 +3904,11 @@ impl<A: Agent> Fight<A> {
             self.duration += (roll * variation as f64) as i64 - self.config.duration_variation;
         }
         self.queue.clear();
+        // Casts still in flight at the end of the last fight never land.
+        self.free_travel_batches = (0..self.travel_batches.len()).collect();
+        for batch in &mut self.travel_batches {
+            batch.clear();
+        }
         self.execute_phase = 0;
         self.next_execute_phase();
         self.end_of_combat = self.duration;
@@ -3702,7 +3921,10 @@ impl<A: Agent> Fight<A> {
         self.heartbeat_offset = prepull_start - pet::PET_UPDATE_INTERVAL
             + crate::rotation::duration_from_seconds(pet::PET_UPDATE_INTERVAL_SECONDS * roll);
         self.encounter_damage_taken = 0.0;
-        self.reset_unit(Side::Target);
+        // Go resets every target before the raid, in unit index order.
+        for side in self.target_sides() {
+            self.reset_unit(side);
+        }
         self.reset_unit(Side::Player);
         self.reset_cooldown_manager();
         A::agent_reset(self);
@@ -3723,12 +3945,12 @@ impl<A: Agent> Fight<A> {
         self.in_prepull = false;
     }
 
-    /// Go `Unit.reset` followed by `Character.reset` for the player.
+    /// Go `Unit.reset` for a target, or followed by `Character.reset` for the player.
     fn reset_unit(&mut self, side: Side) {
-        if side == Side::Target {
+        if let Some(position) = side.target_position() {
             // Go restores the initial pseudo stats; auras that changed stats undid them as
             // they faded at the end of the last fight.
-            self.target = TargetState {
+            self.targets[position].state = TargetState {
                 resistance: self.config.target_resistance,
                 school_damage_taken_multiplier: self.config.target_school_damage_taken_multiplier,
                 school_bonus_spell_damage: self.config.target_school_bonus_spell_damage,
@@ -3806,17 +4028,22 @@ impl<A: Agent> Fight<A> {
             }
         }
         // Go ScheduledAura's OnReset: the ramp's first tick at the pull, at dot priority.
-        if side == Side::Target {
-            self.target_armor = self.config.melee.defender_armor;
-            self.target_armor_delta = 0.0;
+        if let Some(position) = side.target_position() {
+            let unit = &mut self.targets[position];
+            unit.armor = self.config.melee.defender_armor;
+            unit.armor_delta = 0.0;
             if self.sunder.is_some() {
-                self.schedule(0, PRIORITY_DOT, Action::SunderTick(0));
+                self.schedule(0, PRIORITY_DOT, Action::SunderTick(position as u8, 0));
             }
         }
         if side == Side::Player {
+            // Only the slots of the fight's targets and the player ever hold metrics.
+            let units = self.defender_count();
             for spell in &mut self.spells {
-                spell.metrics = [SpellMetrics::default(); 2];
-                spell.split_metrics.fill([SpellMetrics::default(); 2]);
+                spell.metrics[..units].fill(SpellMetrics::default());
+                for split in &mut spell.split_metrics {
+                    split[..units].fill(SpellMetrics::default());
+                }
             }
             self.player.mana = self.config.max_mana;
             self.player.health = self.health_at_reset.unwrap_or(self.config.max_health);
@@ -3829,13 +4056,16 @@ impl<A: Agent> Fight<A> {
             self.reset_energy(prepull_start);
             self.reset_rage();
         }
-        // Go AutoAttacks.reset: an enemy with a melee swing rolls its opening offset.
-        if side == Side::Target && self.config.target_auto_swing_melee {
+        // Go AutoAttacks.reset: an enemy with a melee swing rolls its opening offset. Only the
+        // first target can be tanked; the others never swing, so their rolls go unused.
+        if side.is_target() && self.config.target_auto_swing_melee {
             let roll = self.random("Enemy Swing Offset");
-            self.reset_enemy_attack(roll);
+            if side == Side::Target {
+                self.reset_enemy_attack(roll);
+            }
         }
         self.rotation_reset(side);
-        // Go addTracker: the target's tracker first, then the player's.
+        // Go addTracker: each target's tracker first, then the player's.
         let tracker_min = self.trackers[side.index()].min_expires;
         self.reschedule_tracker(tracker_min);
     }
@@ -3925,10 +4155,13 @@ impl<A: Agent> Fight<A> {
             self.min_tracker_time = NEVER_EXPIRES;
             // Go adds the pet's tracker when the pet is enabled, after the player's, and
             // removes it when the pet is disabled.
-            for side in [Side::Target, Side::Player] {
-                let next = self.try_advance_tracker(side);
+            // Go adds every target's tracker in unit index order, then the player's.
+            for position in 0..self.targets.len() {
+                let next = self.try_advance_tracker(Side::target(position));
                 self.min_tracker_time = self.min_tracker_time.min(next);
             }
+            let next = self.try_advance_tracker(Side::Player);
+            self.min_tracker_time = self.min_tracker_time.min(next);
             let mut position = 0;
             while position < self.pet_trackers.len() {
                 let next = self.try_advance_tracker(Side::Pet(self.pet_trackers[position]));
@@ -3999,6 +4232,15 @@ impl<A: Agent> Fight<A> {
                 }
             }
             Action::DotTick(dot) => self.periodic_tick(dot, handle),
+            Action::TravelBatch(batch) => {
+                let results = std::mem::take(&mut self.travel_batches[batch]);
+                for &(spell, result) in &results {
+                    self.deal_damage(spell, result, false);
+                }
+                self.travel_batches[batch] = results;
+                self.travel_batches[batch].clear();
+                self.free_travel_batches.push(batch);
+            }
             Action::ClassTravel { spell, result } => {
                 if let SpellBehavior::Class(behavior) = self.spells[spell].behavior {
                     A::on_travel(self, spell, result, behavior);
@@ -4012,7 +4254,7 @@ impl<A: Agent> Fight<A> {
             Action::Pushback { chance } => self.pushback_handler(chance),
             Action::Prepull(spell) => self.cast_or_queue(spell, Side::Target),
             Action::PrepullAura(aura) => self.activate_aura_action(aura),
-            Action::SunderTick(done) => self.sunder_tick(done),
+            Action::SunderTick(target, done) => self.sunder_tick(target, done),
             Action::DeathCheck => self.death_check(),
             Action::FixedUptime { index, first } => self.fixed_uptime_roll(index, first),
             Action::MovementEnd(side) => {
@@ -4162,30 +4404,33 @@ impl<A: Agent> Fight<A> {
         self.schedule(self.now + period, priority, Action::ClassPeriodic(periodic));
     }
 
-    /// Go driveSunderArmor's periodic action: activate, add a stack, and come back a period
-    /// later until every tick has run.
-    fn sunder_tick(&mut self, done: i32) {
+    /// Go driveSunderArmor's periodic action on a target: activate, add a stack, and come back
+    /// a period later until every tick has run.
+    fn sunder_tick(&mut self, target: u8, done: i32) {
         let ramp = self.sunder.clone().expect("the ramp is bound");
+        let side = Side::target(target as usize);
+        let aura = self.aura_on(ramp.aura, side);
         if ramp.blocked {
             // Go Aura.Activate counts the proc before the exclusive effect blocks it.
-            self.aura_mut(ramp.aura).procs += 1;
+            self.aura_mut(aura).procs += 1;
         } else {
-            self.activate_aura(ramp.aura);
+            self.activate_aura(aura);
         }
-        if self.aura(ramp.aura).active {
-            self.add_stack(ramp.aura);
+        if self.aura(aura).active {
+            self.add_stack(aura);
         }
         // With the armor category bound, its active member sets the armor.
         if self.armor_category.is_none() {
-            let stacks = self.aura(ramp.aura).stacks.max(0) as usize;
-            self.target_armor = ramp.armor_by_stacks[stacks.min(ramp.armor_by_stacks.len() - 1)]
-                + self.target_armor_delta;
+            let stacks = self.aura(aura).stacks.max(0) as usize;
+            let unit = &mut self.targets[target as usize];
+            unit.armor =
+                ramp.armor_by_stacks[stacks.min(ramp.armor_by_stacks.len() - 1)] + unit.armor_delta;
         }
         if done + 1 < ramp.ticks {
             self.schedule(
                 self.now + ramp.period,
                 PRIORITY_DOT,
-                Action::SunderTick(done + 1),
+                Action::SunderTick(target, done + 1),
             );
         }
     }
@@ -4240,7 +4485,43 @@ impl<A: Agent> Fight<A> {
         }
         self.enemy_done_iteration();
         let damage = self.totals.iteration_damage;
-        self.aura_done_iteration(Side::Target);
+        // Go finishes each target in unit index order.
+        for side in self.target_sides() {
+            self.aura_done_iteration(side);
+        }
         self.unit_done_iteration(damage);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Side, DEFENDERS, MAX_TARGETS};
+
+    /// Every target and the player come before the pets in per-unit lists, so a spell's
+    /// metrics hold one entry for each unit it can hit.
+    #[test]
+    fn defenders_come_before_pets() {
+        let defenders: Vec<usize> = (0..MAX_TARGETS)
+            .map(Side::target)
+            .chain(std::iter::once(Side::Player))
+            .map(Side::index)
+            .collect();
+        let mut sorted = defenders.clone();
+        sorted.sort_unstable();
+        sorted.dedup();
+        assert_eq!(sorted, (0..DEFENDERS).collect::<Vec<_>>());
+        assert_eq!(Side::Pet(0).index(), DEFENDERS);
+    }
+
+    #[test]
+    fn target_positions_round_trip() {
+        for position in 0..MAX_TARGETS {
+            let side = Side::target(position);
+            assert!(side.is_target());
+            assert_eq!(side.target_position(), Some(position));
+        }
+        assert_eq!(Side::target(0), Side::Target);
+        assert_eq!(Side::Player.target_position(), None);
+        assert_eq!(Side::Pet(0).target_position(), None);
     }
 }

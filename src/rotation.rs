@@ -220,12 +220,14 @@ impl Value {
         }
     }
 
-    /// This value with `numberTargets` read as the one target the runtime supports, a
-    /// constant that folds.
-    pub fn with_one_target(&self) -> Value {
-        let map = |value: &Value| Box::new(value.with_one_target());
+    /// This value with `numberTargets` read as the fight's target count, a constant that
+    /// folds.
+    pub fn with_targets(&self, count: usize) -> Value {
+        let map = |value: &Value| Box::new(value.with_targets(count));
         match self {
-            Value::NumberTargets => Value::Const(parse_const("1").expect("int constant")),
+            Value::NumberTargets => {
+                Value::Const(parse_const(&count.to_string()).expect("int constant"))
+            }
             Value::Compare { op, lhs, rhs } => Value::Compare {
                 op: *op,
                 lhs: map(lhs),
@@ -236,8 +238,18 @@ impl Value {
                 lhs: map(lhs),
                 rhs: map(rhs),
             },
-            Value::And(values) => Value::And(values.iter().map(Value::with_one_target).collect()),
-            Value::Or(values) => Value::Or(values.iter().map(Value::with_one_target).collect()),
+            Value::And(values) => Value::And(
+                values
+                    .iter()
+                    .map(|value| value.with_targets(count))
+                    .collect(),
+            ),
+            Value::Or(values) => Value::Or(
+                values
+                    .iter()
+                    .map(|value| value.with_targets(count))
+                    .collect(),
+            ),
             Value::Not(value) => Value::Not(map(value)),
             other => other.clone(),
         }

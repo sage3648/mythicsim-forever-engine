@@ -148,13 +148,16 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    /// Go `Spell.BonusDamage` for a magic spell.
-    pub(crate) fn bonus_damage(&self, spell: SpellId) -> f64 {
+    /// Go `Spell.BonusDamage` for a magic spell against a target.
+    pub(crate) fn bonus_damage(&self, spell: SpellId, target: Side) -> f64 {
         let state = &self.spells[spell];
         let mut bonus = state.bonus_base_damage;
         bonus += self.spell_power(spell)
             + 0.0
-            + self.school_value(spell, &self.target.school_bonus_spell_damage);
+            + self.school_value(
+                spell,
+                &self.target_unit(target).state.school_bonus_spell_damage,
+            );
         bonus
     }
 
@@ -179,27 +182,33 @@ impl<A: Agent> Fight<A> {
         internal * state.damage_multiplier * additive
     }
 
-    /// Go `Spell.TargetDamageMultiplier`.
-    pub(crate) fn target_multiplier(&self, spell: SpellId) -> f64 {
+    /// Go `Spell.TargetDamageMultiplier` against a target.
+    pub(crate) fn target_multiplier(&self, spell: SpellId, target: Side) -> f64 {
         let state = &self.spells[spell];
         if state.flags.ignore_target_modifiers {
             return 1.0;
         }
         let multiplier = self.config.target_damage_taken_multiplier
-            * self.school_value(spell, &self.target.school_damage_taken_multiplier)
+            * self.school_value(
+                spell,
+                &self
+                    .target_unit(target)
+                    .state
+                    .school_damage_taken_multiplier,
+            )
             * self.unit_config(state.caster).table.damage_taken_multiplier;
         // Go's DamageDoneByCasterExtraMultiplier handlers, multiplied in after the rest.
-        match A::caster_damage_multiplier(self, spell) {
+        match A::caster_damage_multiplier(self, spell, target) {
             Some(caster) => multiplier * caster,
             None => multiplier,
         }
     }
 
-    /// Go `ResistanceMultiplier`'s magic branch: the partial resist roll, its multiplier and
-    /// outcome.
-    pub(crate) fn partial_resist(&mut self, spell: SpellId) -> (f64, u16) {
+    /// Go `ResistanceMultiplier`'s magic branch against a target: the partial resist roll, its
+    /// multiplier and outcome.
+    pub(crate) fn partial_resist(&mut self, spell: SpellId, target: Side) -> (f64, u16) {
         let roll = self.random("Partial Resist");
-        let (none, quarter, half) = partial_resist_thresholds(self.resist(spell, false));
+        let (none, quarter, half) = partial_resist_thresholds(self.resist(spell, target, false));
         if roll > none {
             (1.0, 0)
         } else if roll > quarter {
@@ -211,18 +220,18 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    fn resist(&self, spell: SpellId, binary: bool) -> f64 {
+    fn resist(&self, spell: SpellId, target: Side, binary: bool) -> f64 {
         let state = &self.spells[spell];
         // Go resistCoeff: a physical spell, as a binary Thunder Clap, resists nothing.
         if state.school_index <= 1 {
             return 0.0;
         }
         // Go resistCoeff: Frostfire Bolt checks the lower resistance.
+        let resistance = &self.target_unit(target).state.resistance;
         let resistance = if state.frostfire {
-            let resistance = &self.target.resistance;
             resistance[super::SCHOOL_INDEX_FIRE].min(resistance[super::SCHOOL_INDEX_FROST])
         } else {
-            self.target.resistance[state.school_index]
+            resistance[state.school_index]
         };
         let config = self.unit_config(state.caster);
         resist_coefficient(
@@ -269,7 +278,7 @@ impl<A: Agent> Fight<A> {
             // The arm64 build fuses the share's multiply into the add.
             base = self.spells[spell]
                 .bonus_coefficient
-                .mul_add(self.bonus_damage(spell), base);
+                .mul_add(self.bonus_damage(spell, target), base);
         }
         self.calc_damage_internal(spell, target, base, attacker, Outcome::MagicHitAndCrit)
     }
@@ -286,18 +295,18 @@ impl<A: Agent> Fight<A> {
         if self.spells[spell].bonus_coefficient > 0.0 {
             base = self.spells[spell]
                 .bonus_coefficient
-                .mul_add(self.bonus_damage(spell), base);
+                .mul_add(self.bonus_damage(spell, target), base);
         }
         self.calc_damage_internal(spell, target, base, attacker, Outcome::MagicHit)
     }
 
-    /// Go `Spell.BonusDamage`: physical bonus damage for a physical spell, spell power and
-    /// the target's school bonus otherwise.
-    pub(crate) fn school_bonus_damage(&self, spell: SpellId) -> f64 {
+    /// Go `Spell.BonusDamage` against a target: physical bonus damage for a physical spell,
+    /// spell power and the target's school bonus otherwise.
+    pub(crate) fn school_bonus_damage(&self, spell: SpellId, target: Side) -> f64 {
         if self.spells[spell].school & 1 != 0 {
             self.spells[spell].bonus_base_damage + self.config.physical_damage
         } else {
-            self.bonus_damage(spell)
+            self.bonus_damage(spell, target)
         }
     }
 
@@ -314,9 +323,9 @@ impl<A: Agent> Fight<A> {
         let mut base = base_damage;
         let coefficient = self.spells[spell].bonus_coefficient;
         if coefficient > 0.0 {
-            base = coefficient.mul_add(self.school_bonus_damage(spell), base);
+            base = coefficient.mul_add(self.school_bonus_damage(spell, target), base);
         } else if self.spells[spell].school & 1 != 0 {
-            base += self.school_bonus_damage(spell);
+            base += self.school_bonus_damage(spell, target);
         }
         self.calc_damage_internal(spell, target, base, attacker, outcome)
     }
@@ -363,10 +372,10 @@ impl<A: Agent> Fight<A> {
         );
         if physical {
             if !self.spells[spell].flags.ignore_resists && !periodic {
-                result.damage *= self.armor_modifier(self.caster(spell));
+                result.damage *= self.armor_modifier(self.caster(spell), target);
             }
         } else if !self.spells[spell].flags.ignore_resists && !binary {
-            let (multiplier, outcome) = self.partial_resist(spell);
+            let (multiplier, outcome) = self.partial_resist(spell, target);
             result.damage *= multiplier;
             result.outcome |= outcome;
         }
@@ -379,7 +388,7 @@ impl<A: Agent> Fight<A> {
             } else if self.spells[spell].school_index > 1 {
                 result.damage += self.config.target_bonus_spell_damage_taken;
             }
-            result.damage *= self.target_multiplier(spell);
+            result.damage *= self.target_multiplier(spell, target);
         }
         let after_target = result.damage;
 
@@ -394,6 +403,7 @@ impl<A: Agent> Fight<A> {
         if self.log.is_some() {
             self.log_damage_debug(
                 spell,
+                result.target,
                 base,
                 [
                     after_attacker,
@@ -409,17 +419,18 @@ impl<A: Agent> Fight<A> {
         result
     }
 
-    /// Go `calcDamageInternal`'s debug line.
+    /// Go `calcDamageInternal`'s debug line, which names the target.
     pub(crate) fn log_damage_debug(
         &mut self,
         spell: SpellId,
+        target: Side,
         base: f64,
         stages: [f64; 4],
         damage: f64,
     ) {
         let line = format!(
             "[{}] {} [DEBUG] MAP: {:.1}, RAP: {:.1}, SP: {:.1}, BaseDamage:{:.1}, AfterAttackerMods:{:.1}, AfterResistances:{:.1}, AfterTargetMods:{:.1}, AfterOutcome:{:.1}, AfterPostOutcome:{:.1}",
-            self.config.target_label,
+            self.label_of(target),
             action_string(&self.spells[spell].id),
             self.unit(self.caster(spell)).powers.attack_power,
             self.unit(self.caster(spell)).powers.ranged_attack_power,
@@ -488,7 +499,8 @@ impl<A: Agent> Fight<A> {
             Outcome::TickPhysicalCrit => self.outcome_tick_physical_crit(spell, result),
             Outcome::TickMagicCrit => self.outcome_tick(spell, result, true),
             Outcome::TickMagicHitAndCrit | Outcome::TickMagicHit => {
-                let binary_hit = binary.then(|| binary_resist_hit(self.resist(spell, true)));
+                let binary_hit =
+                    binary.then(|| binary_resist_hit(self.resist(spell, result.target, true)));
                 let miss = spell_chance_to_miss(
                     self.config.table.base_spell_miss_chance,
                     binary_hit,
@@ -527,7 +539,7 @@ impl<A: Agent> Fight<A> {
         can_crit: bool,
         count_hits: bool,
     ) {
-        let binary_hit = binary.then(|| binary_resist_hit(self.resist(spell, true)));
+        let binary_hit = binary.then(|| binary_resist_hit(self.resist(spell, result.target, true)));
         let miss = spell_chance_to_miss(
             self.unit_config(self.caster(spell))
                 .table
@@ -589,10 +601,11 @@ impl<A: Agent> Fight<A> {
     /// Go `ApplyPostOutcomeDamageModifiers`: the target's dynamic modifiers in order, then no
     /// negative damage.
     pub(crate) fn apply_post_outcome_modifiers(&self, spell: SpellId, result: &mut SpellResult) {
+        // Go registers the modifiers on every target alike, each reading its own auras.
         for modifier in &self.damage_taken_modifiers {
             if self.spells[spell].caster == modifier.source
                 && self.spells[spell].school & modifier.school_mask != 0
-                && self.aura(modifier.aura).active
+                && self.aura(self.aura_on(modifier.aura, result.target)).active
             {
                 result.damage *= modifier.multiplier;
             }
@@ -602,7 +615,7 @@ impl<A: Agent> Fight<A> {
                 && modifier
                     .auras
                     .iter()
-                    .any(|&aura| self.trackers[aura.side.index()].auras[aura.index].active)
+                    .any(|&aura| self.aura(self.aura_on(aura, result.target)).active)
             {
                 result.damage *= modifier.multiplier;
             }
@@ -660,7 +673,7 @@ impl<A: Agent> Fight<A> {
         let after_resistances = result.damage;
         if !self.spells[spell].flags.ignore_target_modifiers {
             result.damage += self.config.melee.defender_bonus_physical_damage_taken;
-            result.damage *= self.target_multiplier(spell);
+            result.damage *= self.target_multiplier(spell, target);
         }
         let after_target = result.damage;
         let binary = self.spells[spell].flags.binary;
@@ -670,6 +683,7 @@ impl<A: Agent> Fight<A> {
         if self.log.is_some() {
             self.log_damage_debug(
                 spell,
+                result.target,
                 base,
                 [
                     after_attacker,
@@ -699,7 +713,7 @@ impl<A: Agent> Fight<A> {
             // Go CalcPeriodicDamage, whose share the arm64 build fuses into the add.
             base = state
                 .bonus_coefficient
-                .mul_add(self.bonus_damage(spell), base);
+                .mul_add(self.bonus_damage(spell, side), base);
         }
         let attacker =
             self.attacker_multiplier(spell, true) * self.dots[dot].periodic_damage_multiplier;
@@ -728,7 +742,7 @@ impl<A: Agent> Fight<A> {
             // Go CalcPeriodicDamage, whose share the arm64 build fuses into the add.
             base = state
                 .bonus_coefficient
-                .mul_add(self.school_bonus_damage(spell), base);
+                .mul_add(self.school_bonus_damage(spell, side), base);
         }
         let attacker =
             self.attacker_multiplier(spell, true) * self.dots[dot].periodic_damage_multiplier;
@@ -754,14 +768,25 @@ impl<A: Agent> Fight<A> {
     /// Go `Dot.CalcSnapshotDamage` for a dot built by `Snapshot`: the tick's result, not yet
     /// dealt.
     pub(crate) fn snapshot_dot_tick_calc(&mut self, dot: super::DotId) -> SpellResult {
+        let side = self.dots[dot].side;
+        self.snapshot_dot_tick_calc_on(dot, side)
+    }
+
+    /// The same against a target, as an area dot on its caster ticks on each target: the
+    /// spell power share is the target's.
+    pub(crate) fn snapshot_dot_tick_calc_on(
+        &mut self,
+        dot: super::DotId,
+        side: Side,
+    ) -> SpellResult {
         let state = &self.dots[dot];
-        let (spell, side, can_crit) = (state.spell, state.side, state.tick_can_crit);
+        let (spell, can_crit) = (state.spell, state.tick_can_crit);
         let mut base = state.snapshot_base;
         if state.reads_spell_power {
             // Go currentTickInputs: the share less the snapshot's, fused.
             base += state
                 .bonus_coefficient
-                .mul_add(self.bonus_damage(spell), -state.snapshot_spell_power);
+                .mul_add(self.bonus_damage(spell, side), -state.snapshot_spell_power);
         }
         let attacker =
             self.attacker_multiplier(spell, true) * self.dots[dot].periodic_damage_multiplier;
@@ -797,6 +822,25 @@ impl<A: Agent> Fight<A> {
                 dot: None,
             },
         );
+    }
+
+    /// Go `WaitTravelTime` around `DealDamage` of each of a cast's results, in order: one
+    /// pending action for them all.
+    pub(crate) fn deal_damage_after_travel_batch(
+        &mut self,
+        spell: SpellId,
+        results: &[SpellResult],
+    ) {
+        let at = self.now + self.travel_time(spell);
+        let batch = match self.free_travel_batches.pop() {
+            Some(batch) => batch,
+            None => {
+                self.travel_batches.push(Vec::new());
+                self.travel_batches.len() - 1
+            }
+        };
+        self.travel_batches[batch].extend(results.iter().map(|&result| (spell, result)));
+        self.schedule(at, PRIORITY_GCD, Action::TravelBatch(batch));
     }
 
     /// Go `WaitTravelTime` with a class callback, run by [`Agent::on_travel`] on arrival.

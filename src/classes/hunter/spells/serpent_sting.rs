@@ -5,17 +5,18 @@
 //! caster's current values (Go `Dot.tickOnCurrentStats`).
 
 use crate::core::fight::{
-    melee::PhysicalOutcome, Agent, DotId, Fight, Outcome, Side, SpellId, SpellResult,
+    melee::PhysicalOutcome, Agent, DotId, Fight, Outcome, Side, SpellId, SpellResult, MAX_TARGETS,
 };
 
-/// The bound Serpent Sting: its parameters and the attack power its dot snapshotted.
+/// The bound Serpent Sting: its parameters and the attack power its dot snapshotted on each
+/// target, by position.
 #[derive(Clone, Debug)]
 pub(crate) struct SerpentSting {
     pub(crate) dot: DotId,
     tick_base: f64,
     attack_power_share: f64,
     outcome: Outcome,
-    snapshot_attack_power: f64,
+    snapshot_attack_power: [f64; MAX_TARGETS],
 }
 
 /// The tick outcome the exporter names: spelldata `TickOutcome`.
@@ -42,7 +43,7 @@ impl SerpentSting {
             attack_power_share,
             outcome: tick_outcome(outcome)
                 .ok_or_else(|| format!("Serpent Sting tick outcome {outcome} is unsupported"))?,
-            snapshot_attack_power: 0.0,
+            snapshot_attack_power: [0.0; MAX_TARGETS],
         })
     }
 }
@@ -54,8 +55,8 @@ pub(crate) fn apply<A: Agent>(fight: &mut Fight<A>, spell: SpellId, target: Side
     fight.class_after_travel(spell, result);
 }
 
-/// The travel callback: the outcome, then the dot when the sting landed. Returns the attack
-/// power the dot's share snapshotted.
+/// The travel callback: the outcome, then the dot on the target hit when the sting landed.
+/// Returns the attack power the dot's share snapshotted.
 pub(crate) fn on_travel<A: Agent>(
     fight: &mut Fight<A>,
     spell: SpellId,
@@ -70,19 +71,20 @@ pub(crate) fn on_travel<A: Agent>(
     // SnapshotAttackPowerShare.
     let attack_power = fight.ranged_attack_power();
     // Go fuses each multiply and add or subtract here on the reference arm64 build.
-    fight.dots[sting.dot].tick_base = Some(
+    let dot = fight.dot_on(sting.dot, result.target);
+    fight.dots[dot].tick_base = Some(
         sting
             .attack_power_share
             .mul_add(attack_power, sting.tick_base),
     );
-    fight.apply_dot(sting.dot);
+    fight.apply_dot(dot);
     Some(sting.attack_power_share * attack_power)
 }
 
 impl SerpentSting {
-    /// Record the attack power share the latest snapshot took.
-    pub(crate) fn snapshotted(&mut self, attack_power: f64) {
-        self.snapshot_attack_power = attack_power;
+    /// Record the attack power share the latest snapshot on a target took.
+    pub(crate) fn snapshotted(&mut self, target: Side, attack_power: f64) {
+        self.snapshot_attack_power[target.target_position().expect("a target")] = attack_power;
     }
 
     /// Go `Dot.CalcAndDealPeriodicSnapshotDamage` on the caster's current stats.
@@ -93,12 +95,13 @@ impl SerpentSting {
         if state.reads_spell_power {
             base += state
                 .bonus_coefficient
-                .mul_add(fight.bonus_damage(spell), -state.snapshot_spell_power);
+                .mul_add(fight.bonus_damage(spell, side), -state.snapshot_spell_power);
         }
         if self.attack_power_share != 0.0 {
-            base += self
-                .attack_power_share
-                .mul_add(fight.ranged_attack_power(), -self.snapshot_attack_power);
+            base += self.attack_power_share.mul_add(
+                fight.ranged_attack_power(),
+                -self.snapshot_attack_power[side.target_position().expect("a target")],
+            );
         }
         let attacker =
             fight.attacker_multiplier(spell, true) * fight.dots[dot].periodic_damage_multiplier;

@@ -28,6 +28,7 @@ Frostbolt kernel remains unchanged beside it.
 | Warlock runtime hooks and regressions | [src/classes/warlock/agent.rs](../src/classes/warlock/agent.rs), [tests/classes/warlock/](../tests/classes/warlock/) |
 | Priest runtime hooks and regressions | [src/classes/priest/agent.rs](../src/classes/priest/agent.rs), [tests/classes/priest.rs](../tests/classes/priest.rs) |
 | Rogue runtime hooks and regressions | [src/classes/rogue/agent.rs](../src/classes/rogue/agent.rs), [tests/classes/rogue.rs](../tests/classes/rogue.rs) |
+| Fights against several targets: each target's state, area hits, multidot and the gate | `Side::Extra` and `TargetUnit` in [src/core/fight.rs](../src/core/fight.rs), `several_target_limits` in [src/engine/coverage.rs](../src/engine/coverage.rs), [tools/oracle-v2/targets.go](../tools/oracle-v2/targets.go) |
 | Energy bar, energy ticks and combo points | [src/core/fight/energy.rs](../src/core/fight/energy.rs) |
 | The player taking damage and Chance of Death | [src/core/fight/damage_taken.rs](../src/core/fight/damage_taken.rs) |
 | Hunter runtime hooks and regressions | [src/classes/hunter/agent.rs](../src/classes/hunter/agent.rs), [tests/classes/hunter.rs](../tests/classes/hunter.rs) |
@@ -190,6 +191,24 @@ rounded product, and an exact product, such as an integer times an integer or
 anything times 1, rounds the same either way. The
 [fused multiply-add audit](../validation/2026-10-04-fma-audit.json) records every
 site the binary fuses and what the runtime does with it.
+
+### Several targets
+
+Go creates every copy of the boss as its own unit, and Rust follows: each target holds a copy
+of the first target's auras at the same positions, its own dots, armor, resistances and
+damage taken modifiers, and its own metrics. Class code acts on the target it was given: a
+spell's `target`, or a hit's `result.target`. `Fight::dot_on` finds a dot's copy on a target
+and `Fight::aura_on` an aura's, so a debuff or dot lands where Go puts it. An area spell hits
+`Fight::target_sides` in unit index order and a cleave follows `Fight::next_target`, keeping
+Go's random draw order: calculate and deal each hit in turn, or calculate every hit before
+dealing any, exactly as the Go helper it ports does.
+
+A class opts in through its gate's `several_targets` hook, which lists the reachable spells
+that reach another target in Go but not yet in Rust. Go reaches other targets only through
+its area and cleave helpers, its loops over the encounter's targets and the rotation's target
+choices, so `grep` the class's Go package for `ActiveTargetUnits`, `AllTargetUnits`,
+`NextActiveTarget`, `Aoe` and `Cleave` before opening it. Then compare the class at 2 to 5
+targets, for example with requests from `tools/reference-capture/builds -targets N`.
 
 To inspect every internal module in generated Rust documentation:
 

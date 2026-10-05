@@ -300,6 +300,40 @@ impl<K> Tracker<K> {
         });
     }
 
+    /// Copies of the auras for another target, fresh as registered, with each behavior mapped
+    /// to the copy's.
+    pub(crate) fn copy_auras(
+        &self,
+        behavior: impl Fn(&AuraBehavior<K>) -> AuraBehavior<K>,
+    ) -> Vec<Aura<K>> {
+        self.auras
+            .iter()
+            .map(|aura| Aura {
+                label: aura.label.clone(),
+                action_id: aura.action_id.clone(),
+                metrics_id: aura.metrics_id.clone(),
+                duration: aura.duration,
+                max_stacks: aura.max_stacks,
+                behavior: behavior(&aura.behavior),
+                lists: aura.lists,
+                permanent: aura.permanent,
+                displaced_by: aura.displaced_by.clone(),
+                blocked_at_reset: aura.blocked_at_reset,
+                icd: aura.icd,
+                active: false,
+                stacks: 0,
+                start: 0,
+                expires: 0,
+                fade_time: -NEVER_EXPIRES,
+                positions: [None; LISTS],
+                uptime: 0,
+                procs: 0,
+                aggregate: Aggregator::default(),
+                procs_sum: 0,
+            })
+            .collect()
+    }
+
     /// Activate the aura at every reset, as a Go `OnReset` that activates it does.
     pub(crate) fn set_permanent(&mut self, index: usize) {
         self.auras[index].permanent = true;
@@ -528,7 +562,9 @@ impl<A: Agent> Fight<A> {
         self.aura_mut(aura).stacks = new;
         match self.aura(aura).behavior {
             AuraBehavior::Class(kind) => A::on_stacks_change(self, aura, kind, old, new),
-            AuraBehavior::ArmorDebuff(proc) => self.armor_debuff_stacks_changed(proc, old, new),
+            AuraBehavior::ArmorDebuff(proc) => {
+                self.armor_debuff_stacks_changed(proc, aura.side, old, new)
+            }
             _ => {}
         }
         self.exclusive_stacks_changed(aura, new);
@@ -1363,7 +1399,9 @@ impl<A: Agent> Fight<A> {
                 self.activate_aura(aura);
             }
             AuraBehavior::HealthRageProc(proc) => self.health_rage_proc_handler(proc),
-            AuraBehavior::ArmorDebuffTrigger(proc) => self.armor_debuff_proc_handler(proc),
+            AuraBehavior::ArmorDebuffTrigger(proc) => {
+                self.armor_debuff_proc_handler(proc, result.target)
+            }
             AuraBehavior::SpellDataStatProc(proc) => {
                 let aura = self.spell_stat_procs[proc].aura;
                 self.activate_aura(aura);

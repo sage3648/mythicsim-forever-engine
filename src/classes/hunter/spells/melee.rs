@@ -195,6 +195,6 @@ pub(crate) fn immolation_trap<A: Agent>(fight: &mut Fight<A>, spell: SpellId, ta
     fight.deal_damage(spell, result, false);
     if result.landed() {
         let dot = fight.spells[spell].dot.expect("Immolation Trap has a dot");
-        fight.apply_dot(dot);
+        fight.apply_dot(fight.dot_on(dot, target));
     }
 }

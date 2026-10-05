@@ -44,6 +44,8 @@ use super::{
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum RogueSpell {
     SinisterStrike,
+    /// Blade Flurry's extra hit on the next target.
+    BladeFlurryHit,
     Backstab,
     Eviscerate,
     SliceAndDice,
@@ -98,6 +100,8 @@ pub(crate) struct RogueAgent {
     eviscerate: Option<Eviscerate>,
     slice_and_dice: Option<SliceAndDice>,
     blade_flurry: Option<BladeFlurry>,
+    /// The damage Blade Flurry's extra hit deals, Go's `curDmg`.
+    blade_flurry_damage: f64,
     adrenaline_rush: Option<AdrenalineRush>,
     finisher: Option<Finisher>,
     instant_poison: Option<Rc<PoisonProc>>,
@@ -148,6 +152,14 @@ impl RogueAgent {
     /// The class behavior of an exported spell, if Rust implements it.
     fn spell(prepared: &PreparedV2, spell: &ExportedSpell) -> Option<RogueSpell> {
         let has = |kind| has_effect(prepared, kind);
+        let id = spell.action_id.clone().unwrap_or_default();
+        let flurry_hit = prepared.effects.iter().any(|effect| {
+            matches!(effect, Effect::BladeFlurry { hit_spell_id, .. }
+                if id.spell_id == *hit_spell_id && id.tag == 0 && id.item_id == 0)
+        });
+        if flurry_hit {
+            return Some(RogueSpell::BladeFlurryHit);
+        }
         let energy = spell
             .cost
             .as_ref()
@@ -329,11 +341,20 @@ impl RogueAgent {
                 Effect::BladeFlurry {
                     aura,
                     attack_speed_multiplier,
+                    hit_spell_id,
                     ..
                 } => {
+                    let hit = fight
+                        .spells
+                        .iter()
+                        .position(|spell| spell.id.spell_id == *hit_spell_id && spell.id.tag == 0)
+                        .ok_or_else(|| {
+                            format!("Blade Flurry's hit {hit_spell_id} is not registered")
+                        })?;
                     fight.agent.blade_flurry = Some(BladeFlurry {
                         aura: fight.player_aura(aura)?,
                         attack_speed_multiplier: *attack_speed_multiplier,
+                        hit,
                     });
                 }
                 Effect::AdrenalineRush {
@@ -796,6 +817,10 @@ impl Agent for RogueAgent {
                 let flurry = fight.agent.blade_flurry.expect("Blade Flurry is bound");
                 flurry.apply(fight);
             }
+            RogueSpell::BladeFlurryHit => {
+                let damage = fight.agent.blade_flurry_damage;
+                BladeFlurry::apply_hit(fight, spell, target, damage);
+            }
             RogueSpell::AdrenalineRush => {
                 let rush = fight
                     .agent
@@ -1145,7 +1170,14 @@ impl Agent for RogueAgent {
                 }
                 None
             }
-            // Blade Flurry's listener needs a second target.
+            RogueAura::BladeFlurry => {
+                let flurry = fight.agent.blade_flurry.expect("Blade Flurry is bound");
+                if let Some(damage) = flurry.on_spell_hit_dealt(fight, spell, result) {
+                    fight.agent.blade_flurry_damage = damage;
+                    flurry.strike(fight, result.target);
+                }
+                None
+            }
             _ => None,
         };
         if let Some(poison) = poison {

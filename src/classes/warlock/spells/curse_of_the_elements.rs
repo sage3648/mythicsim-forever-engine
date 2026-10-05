@@ -83,19 +83,19 @@ impl CurseOfTheElements {
 
     pub(crate) fn on_gain<A: Agent>(&self, fight: &mut Fight<A>) {
         for &(index, delta) in &self.resistance {
-            fight.add_target_resistance(index, delta);
+            fight.add_target_resistance(Side::Target, index, delta);
         }
         for &(index, factor) in &self.damage_taken {
-            fight.multiply_target_school_damage_taken(index, factor);
+            fight.multiply_target_school_damage_taken(Side::Target, index, factor);
         }
     }
 
     pub(crate) fn on_expire<A: Agent>(&self, fight: &mut Fight<A>) {
         for &(index, delta) in &self.resistance {
-            fight.add_target_resistance(index, -delta);
+            fight.add_target_resistance(Side::Target, index, -delta);
         }
         for &(index, factor) in &self.damage_taken {
-            fight.multiply_target_school_damage_taken(index, 1.0 / factor);
+            fight.multiply_target_school_damage_taken(Side::Target, index, 1.0 / factor);
         }
     }
 }

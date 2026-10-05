@@ -306,38 +306,50 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    /// Go `newBasicExplosiveSpellConfig`'s `ApplyEffects` for the Goblin Sapper Charge: the hit
-    /// on the target, dealt at once since it has no travel, then the roll on the player.
-    pub(crate) fn apply_goblin_sapper(&mut self, spell: SpellId, target: Side) {
+    /// Go `newBasicExplosiveSpellConfig`'s `ApplyEffects` for the Goblin Sapper Charge: one
+    /// roll, `CalcAoeDamage` on every target, the batch dealt at once since it has no travel,
+    /// then the roll on the player.
+    pub(crate) fn apply_goblin_sapper(&mut self, spell: SpellId) {
         let sapper = self
             .goblin_sapper
             .expect("the Goblin Sapper Charge is bound");
         let roll = |fight: &mut Self| fight.go_roll(sapper.min_damage, sapper.max_damage);
         let base = roll(self) * sapper.aoe_cap_multiplier;
-        let result = self.calc_damage(spell, target, base);
-        self.deal_damage(spell, result, false);
+        for result in self.calc_aoe_damage(spell, base) {
+            self.deal_damage(spell, result, false);
+        }
         let base = roll(self);
         let result = self.calc_damage_on_player(sapper.self_spell, base, true);
         self.deal_damage(sapper.self_spell, result, false);
     }
 
-    /// Go `newBasicExplosiveSpellConfig`'s `ApplyEffects` without the self hit: a rolled magic
-    /// hit scaled by the AoE cap on the one target, dealt after travel when the explosive flies.
+    /// Go `newBasicExplosiveSpellConfig`'s `ApplyEffects` without the self hit: one roll
+    /// scaled by the AoE cap, `CalcAoeDamage` on every target, and the batch dealt after
+    /// travel when the explosive flies.
     pub(crate) fn apply_basic_explosive(
         &mut self,
         spell: SpellId,
-        target: Side,
         min: f64,
         max: f64,
         aoe_cap_multiplier: f64,
     ) {
         let base = self.go_roll(min, max) * aoe_cap_multiplier;
-        let result = self.calc_damage(spell, target, base);
+        let results = self.calc_aoe_damage(spell, base);
         if self.spells[spell].missile_speed > 0.0 {
-            self.deal_damage_after_travel(spell, result);
+            self.deal_damage_after_travel_batch(spell, &results);
         } else {
-            self.deal_damage(spell, result, false);
+            for result in results {
+                self.deal_damage(spell, result, false);
+            }
         }
+    }
+
+    /// Go `Spell.CalcAoeDamage` with `OutcomeMagicHitAndCrit`: every target's result on the
+    /// same base damage, in unit index order, before any is dealt.
+    pub(crate) fn calc_aoe_damage(&mut self, spell: SpellId, base: f64) -> Vec<SpellResult> {
+        (0..self.targets.len())
+            .map(|position| self.calc_damage(spell, Side::target(position), base))
+            .collect()
     }
 
     /// The Chance of Death listener's `OnSpellHitTaken`: a hit that deals damage removes that

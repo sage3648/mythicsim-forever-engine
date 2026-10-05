@@ -41,8 +41,8 @@ pub(crate) enum Act {
         interrupt: Rc<Compiled>,
         allow_recast: bool,
     },
-    /// Go `APLActionMultidot` on the one target: its dot count after the encounter's target
-    /// count capped it, and its overlap.
+    /// Go `APLActionMultidot`: its dot count after the encounter's target count capped it,
+    /// and its overlap.
     Multidot {
         spell: SpellId,
         /// The spell whose dot it reads: its own, or its related dot spell's.
@@ -278,7 +278,7 @@ impl<A: Agent> Fight<A> {
                     Some((spell, dot_spell)) => Act::Multidot {
                         spell,
                         dot_spell,
-                        max_dots: (*max_dots).min(1),
+                        max_dots: (*max_dots).min(self.targets.len() as i32),
                         overlap: compile_duration_value(
                             max_overlap.as_ref(),
                             &lookup,
@@ -369,8 +369,8 @@ impl<A: Agent> Fight<A> {
             Compiled::Const(constant) => constant.int,
             Compiled::AuraNumStacks(aura) => self.aura(*aura).stacks,
             Compiled::CurrentComboPoints => self.energy_bar().combo_points,
-            // One target in scope.
-            Compiled::NumberTargets => 1,
+            // Go `ActiveTargetCount`: every target is active throughout.
+            Compiled::NumberTargets => self.targets.len() as i32,
             // Go `APLValueMath.GetInt`: int32 arithmetic, which wraps.
             Compiled::Math { op, lhs, rhs } => {
                 let (lhs, rhs) = (self.get_int(lhs), self.get_int(rhs));
@@ -412,7 +412,7 @@ impl<A: Agent> Fight<A> {
             Compiled::MaxMana => self.player.powers.max_mana,
             // Go `APLValueSpellCurrentCost`: no cost reads zero.
             Compiled::SpellCurrentCost(spell) => self.current_cost(*spell),
-            Compiled::NumberTargets => 1.0,
+            Compiled::NumberTargets => self.targets.len() as f64,
             // Go `APLValueMath.GetFloat`.
             Compiled::Math { op, lhs, rhs } => match op {
                 MathOp::Add => self.get_float(lhs) + self.get_float(rhs),
@@ -623,13 +623,13 @@ impl<A: Agent> Fight<A> {
             // ends within it and which the spell can be cast or queued on.
             Act::Multidot { spell, .. } => self
                 .multidot_ready(item)
-                .then_some(Ready::Cast(spell, Side::Target)),
+                .map(|target| Ready::Cast(spell, target)),
         }
     }
 
-    /// Go `APLActionMultidot.IsReady`: the overlap, then the target whose dot is down or ends
-    /// within it and which the spell can be cast or queued on.
-    fn multidot_ready(&mut self, item: usize) -> bool {
+    /// Go `APLActionMultidot.IsReady`: the overlap, then the first target in unit index order
+    /// whose dot is down or ends within it and which the spell can be cast or queued on.
+    fn multidot_ready(&mut self, item: usize) -> Option<Side> {
         let Act::Multidot {
             spell,
             dot_spell,
@@ -641,19 +641,19 @@ impl<A: Agent> Fight<A> {
         };
         let overlap = overlap.clone();
         let overlap = overlap.map_or(0, |value| self.get_duration(&value));
-        if max_dots < 1 {
-            return false;
+        let dot = self.spells[dot_spell]
+            .dot
+            .expect("multidot spells have a dot");
+        for position in 0..max_dots.max(0) as usize {
+            let target = Side::target(position);
+            let aura = self.aura(self.dots[self.dot_on(dot, target)].aura);
+            let active = aura.active;
+            let remaining = if active { aura.expires - self.now } else { 0 };
+            if (!active || remaining < overlap) && self.can_cast_or_queue(spell) {
+                return Some(target);
+            }
         }
-        let active = self.dot_active(dot_spell);
-        let remaining = if active {
-            let dot = self.spells[dot_spell]
-                .dot
-                .expect("multidot spells have a dot");
-            self.aura(self.dots[dot].aura).expires - self.now
-        } else {
-            0
-        };
-        (!active || remaining < overlap) && self.can_cast_or_queue(spell)
+        None
     }
 
     /// Go `APLRotation.getNextAction`.
@@ -808,7 +808,7 @@ impl<A: Agent> Fight<A> {
                 Act::Autocast | Act::Sequence { .. } => continue,
                 // Go: a different action that is fully ready would be cast first.
                 Act::Multidot { .. } => {
-                    if self.multidot_ready(item) {
+                    if self.multidot_ready(item).is_some() {
                         return false;
                     }
                     continue;

@@ -48,6 +48,26 @@ impl Category {
         }
     }
 
+    /// The same category on another target, which holds copies of the first target's auras
+    /// at the same positions, with no member enabled.
+    pub(crate) fn on_unit(&self, side: super::Side) -> Category {
+        Category {
+            members: self
+                .members
+                .iter()
+                .map(|member| Member {
+                    aura: AuraRef {
+                        side,
+                        index: member.aura.index,
+                    },
+                    enabled: false,
+                    ..member.clone()
+                })
+                .collect(),
+            active: None,
+        }
+    }
+
     /// Go `GetHighestPrioActiveEffect`: the first enabled member of the highest priority.
     fn highest_enabled(&self) -> Option<usize> {
         let mut best: Option<usize> = None;
@@ -177,14 +197,23 @@ impl<A: Agent> Fight<A> {
         self.exclusive_armor(category);
     }
 
-    /// The target's armor from the major armor category's active member, at its stacks.
+    /// A target's armor from its major armor category's active member, at its stacks.
     fn exclusive_armor(&mut self, category: usize) {
         let Some((armor_category, armor)) = &self.armor_category else {
             return;
         };
-        if *armor_category != category {
-            return;
-        }
+        let target = if *armor_category == category {
+            super::Side::Target
+        } else {
+            match self
+                .extra_armor_categories
+                .iter()
+                .find(|(copy, _)| *copy == category)
+            {
+                Some(&(_, side)) => side,
+                None => return,
+            }
+        };
         let active = self.exclusive[category]
             .active
             .map(|member| &self.exclusive[category].members[member]);
@@ -196,7 +225,8 @@ impl<A: Agent> Fight<A> {
             }
             None => armor[0],
         };
-        self.target_armor = base + self.target_armor_delta;
+        let unit = &mut self.targets[target.target_position().expect("a target")];
+        unit.armor = base + unit.armor_delta;
     }
 
     /// The active member of the first category the aura belongs to, and its bid: Go

@@ -74,6 +74,12 @@ pub struct Encounter {
     pub execute_proportion_35: f64,
     pub execute_proportion_45: f64,
     pub execute_proportion_90: f64,
+    /// How many targets the fight has when it has several, zero for the usual one. Every
+    /// target past the first is an idle copy of `target`: it resets, activates its permanent
+    /// auras and reports metrics, but nothing in the supported fight acts on it. Its Go unit
+    /// index follows the first's, and the player's index counts it.
+    #[serde(default, skip_serializing_if = "is_zero_u32")]
+    pub target_count: u32,
 }
 
 /// Per-school values in Go's `SchoolIndex` order.
@@ -140,6 +146,10 @@ fn yes() -> bool {
 
 fn is_true(value: &bool) -> bool {
     *value
+}
+
+fn is_zero_u32(value: &u32) -> bool {
+    *value == 0
 }
 
 fn is_zero_usize(value: &usize) -> bool {
@@ -3219,6 +3229,8 @@ pub enum Effect {
         spell_id: i32,
         aura: String,
         attack_speed_multiplier: f64,
+        /// The extra hit Blade Flurry casts on the next target.
+        hit_spell_id: i32,
     },
     AdrenalineRush {
         spell_id: i32,
@@ -3438,6 +3450,24 @@ pub enum Effect {
     ImmolationTrap {
         spell_id: i32,
         tick_base: f64,
+    },
+    /// Explosive Trap: `hits` magic hits from the cast target on, each rolled between the
+    /// bounds and scaled by the AoE cap, then the area dot on the hunter, which ticks its
+    /// snapshot of `tick_base` on every target Immolation Trap is not burning.
+    ExplosiveTrap {
+        spell_id: i32,
+        hit_min: f64,
+        hit_max: f64,
+        hits: i32,
+        aoe_cap_multiplier: f64,
+        tick_base: f64,
+    },
+    /// Volley: the channel holds the ranged swing for `ranged_delay_ns`, then the area dot on
+    /// the hunter ticks its snapshot of `tick_base` on every target.
+    Volley {
+        spell_id: i32,
+        tick_base: f64,
+        ranged_delay_ns: i64,
     },
     /// Resourcefulness: crits proc casting mana regeneration a spell batch window later.
     Resourcefulness {
@@ -3915,6 +3945,8 @@ impl Effect {
             Effect::StriderKick { .. } => "strider_kick",
             Effect::WingClip { .. } => "wing_clip",
             Effect::ImmolationTrap { .. } => "immolation_trap",
+            Effect::ExplosiveTrap { .. } => "explosive_trap",
+            Effect::Volley { .. } => "volley",
             Effect::Resourcefulness { .. } => "resourcefulness",
             Effect::RapidRecuperation { .. } => "rapid_recuperation",
             Effect::ExposePrey { .. } => "expose_prey",

@@ -1003,7 +1003,7 @@ impl Agent for PaladinAgent {
         twist_of_light::reset(fight);
     }
 
-    fn caster_damage_multiplier(fight: &Fight<Self>, spell: SpellId) -> Option<f64> {
+    fn caster_damage_multiplier(fight: &Fight<Self>, spell: SpellId, _target: Side) -> Option<f64> {
         // Consecrated Ground's handler: Holy spells, while the target is marked.
         let (aura, multiplier) = fight.agent.consecrated_ground?;
         fight.aura(aura).active.then(|| {

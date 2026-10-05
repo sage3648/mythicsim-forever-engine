@@ -4,7 +4,7 @@
   "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
   "client_build": "1.60.1.70170",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "0cd4863e7cb5bfc65692774cbb7f4b43ac99fe253b5b7b5c357bc336a83024bd",
+  "exporter_sha256": "07a54c89bd47986185a355d69c435cf3cc04b97bbe141d8855f282ace37a54a5",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -1176,7 +1176,7 @@
         "path": "fixtures/mage/prepared-v2/production-combat-rogue.request.json"
       },
       "prepared": "production-combat-rogue.prepared.json",
-      "prepared_sha256": "db057131bb3f5525792e0f8850cb7f96b2c4374d8e5886ae5708a030f667d8e6",
+      "prepared_sha256": "7dcd4f2e32d12fea6e0ab63514cdb539d0805439a0f8c085c2a7d96050601366",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1197,7 +1197,7 @@
         "path": "fixtures/mage/prepared-v2/combat-rogue-orc-shatter-curse.request.json"
       },
       "prepared": "combat-rogue-orc-shatter-curse.prepared.json",
-      "prepared_sha256": "25e148e00831c72cc31d09fc8d2eb21dc312a3814decf808768106cb648174ca",
+      "prepared_sha256": "9cc3fcfc90a42f0e5562944a1986c37ecf421b9f25d9fb59d06aec691d5383c0",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1281,7 +1281,7 @@
         "path": "fixtures/mage/prepared-v2/production-marksmanship-hunter.request.json"
       },
       "prepared": "production-marksmanship-hunter.prepared.json",
-      "prepared_sha256": "6126b95387971c9d6baca9ded9731f214292e804144acd36c5ddeec50d22ece9",
+      "prepared_sha256": "01d54a3cef78b9a158f9c9cddf317b79446f99a721fe3d65fc98c3f97df1817a",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1487,7 +1487,7 @@
         "path": "fixtures/mage/prepared-v2/marksmanship-hunter-thorium-grenade.request.json"
       },
       "prepared": "marksmanship-hunter-thorium-grenade.prepared.json",
-      "prepared_sha256": "8711668736176f501defc1db43adfcdc3fd55d1b98e041d7a7a5db57ee764979",
+      "prepared_sha256": "492843424337ff64233bd45a5a0ebe8e79fe4a33225f6302ca4e382c1e32d12f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1903,7 +1903,7 @@
         "path": "fixtures/mage/prepared-v2/production-beast-mastery-hunter.request.json"
       },
       "prepared": "production-beast-mastery-hunter.prepared.json",
-      "prepared_sha256": "56dc35b81f2adadcddf5f50a13305b4a4eb500706fea81762b6f19da5e399be8",
+      "prepared_sha256": "2582db1bc3a778f18c10126423567f993efb973f0533df79a9317a878b93e8f9",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1924,7 +1924,7 @@
         "path": "fixtures/mage/prepared-v2/survival-hunter-no-whelp.request.json"
       },
       "prepared": "survival-hunter-no-whelp.prepared.json",
-      "prepared_sha256": "353c635ceaf6968b649c69c5eb443576bde57ed191c442e374664d6f16a9f501",
+      "prepared_sha256": "a7477631ec9c1fe71c644dbecf9b42f12e4a94449ebeba218636e6a7d4524276",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1945,7 +1945,7 @@
         "path": "fixtures/mage/prepared-v2/production-survival-hunter.request.json"
       },
       "prepared": "production-survival-hunter.prepared.json",
-      "prepared_sha256": "cbb2fb2b3ad854239ff2547a47f930f5c1adc0e3ebaefde87f262c0e0c9975a8",
+      "prepared_sha256": "7e6c4c27bf8adb7a3797f62515a4a0c473b227ee34e286223d7db69207f8bb4d",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2622,7 +2622,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-pet-uptime-half.request.json"
       },
       "prepared": "beast-mastery-hunter-pet-uptime-half.prepared.json",
-      "prepared_sha256": "b6caa19a635f68efc5e1382f9517264c725e6817b4c76a978b6b03d2fd6e7716",
+      "prepared_sha256": "f3c1fd2d8beb3b1e41edefb0fb5cd71725eeb3303910c15bcbea89cd8ca52f37",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2643,7 +2643,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-wind-serpent.request.json"
       },
       "prepared": "beast-mastery-hunter-wind-serpent.prepared.json",
-      "prepared_sha256": "23091dea6fceef4da02d72c8450c8510eb95abb2c19f0ef66cc6138b7deca4ec",
+      "prepared_sha256": "61bae0a3d5c6f6712cb273ed20dca7891415e59238429ce0a940fdfd4862a0c9",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2664,7 +2664,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-bat.request.json"
       },
       "prepared": "beast-mastery-hunter-bat.prepared.json",
-      "prepared_sha256": "275242a5c73076440f8fea8fa1949e1119a3f14205fdac938f58938c0ba8bd18",
+      "prepared_sha256": "d1779e91d6e8806fefad9c6202fe90371bab79d09f5995d2f8068484b38a2929",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2685,7 +2685,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-gorilla.request.json"
       },
       "prepared": "beast-mastery-hunter-gorilla.prepared.json",
-      "prepared_sha256": "7d81e4b9d18d1915b6ee83fe380449fcce989f0647708399e39e39c09c27748b",
+      "prepared_sha256": "01068106a25fa0c1c6d71f5e50a0c5d671be1bed766ea6008c890fdc95176988",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2706,7 +2706,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-raptor.request.json"
       },
       "prepared": "beast-mastery-hunter-raptor.prepared.json",
-      "prepared_sha256": "b30db45c2c9d84cf70499fde598dfd4dbef0528c85f16be9f25723f3c71fe15d",
+      "prepared_sha256": "fb30ddd7f099d9c74cc7a674042d0bb6141613e00686086c84012d742e140dcf",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2727,7 +2727,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-spider.request.json"
       },
       "prepared": "beast-mastery-hunter-spider.prepared.json",
-      "prepared_sha256": "918ff58d9768146ffb9faa3d32c3a1ffb0eee3625c84b667b034e8d54adec16e",
+      "prepared_sha256": "01767c864d86b0072bfd63ed5d34080e7e9368a2ae65bb1fa2c0053d000e6e7e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2748,7 +2748,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-bear.request.json"
       },
       "prepared": "beast-mastery-hunter-bear.prepared.json",
-      "prepared_sha256": "78dda4afe42afabc10f3dc0c6079f5ec8e3720ba39bd8ffc0b2a67ab0f6ffd80",
+      "prepared_sha256": "b84109fda3681f803e621b0130e617c7658fdcf1518895301526bd517e2b930e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2769,7 +2769,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-scorpid.request.json"
       },
       "prepared": "beast-mastery-hunter-scorpid.prepared.json",
-      "prepared_sha256": "0d652a2b022cece892a37963e14f0af0940ca6ab44ff482a929c78c8809f9a7a",
+      "prepared_sha256": "bad6bd5322f9b213265deb6139dec11481ee52b1a8ab8cc6271e511a0e741a64",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2790,7 +2790,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-tallstrider.request.json"
       },
       "prepared": "beast-mastery-hunter-tallstrider.prepared.json",
-      "prepared_sha256": "53d6c482cccadf0b874ad88571003003c556b4f4ca29cbaa15e379692923c203",
+      "prepared_sha256": "41e61d338ae34f201d2c8f64cfdabb4a3a69637c87d9897c0717cb100971dfae",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2811,7 +2811,7 @@
         "path": "fixtures/mage/prepared-v2/marksmanship-hunter-rapid-recuperation.request.json"
       },
       "prepared": "marksmanship-hunter-rapid-recuperation.prepared.json",
-      "prepared_sha256": "b3a5233c8621a2d3d68aa1f11bf939361481cac4f4221f2f335c9ae8790234f4",
+      "prepared_sha256": "02911b78126aef76d5b000628535ad5021fbe243bc3284f112520a44b7a4ec99",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2832,7 +2832,7 @@
         "path": "fixtures/mage/prepared-v2/survival-melee-hunter-cat-heartbeat.request.json"
       },
       "prepared": "survival-melee-hunter-cat-heartbeat.prepared.json",
-      "prepared_sha256": "dde41e490ebbebe78eb27f357fa1ad71b1a2a3f1ae49063dfa3da93b045333e0",
+      "prepared_sha256": "fb28c06b55408ea1df9a9ff6ecffca6d74cb12ebd3642d70ecdbdfcd9619e1f0",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2853,7 +2853,7 @@
         "path": "fixtures/mage/prepared-v2/marksmanship-hunter-arcane-shot.request.json"
       },
       "prepared": "marksmanship-hunter-arcane-shot.prepared.json",
-      "prepared_sha256": "2df448c476da4c2487ea95b361292fc2f530abbadbaff64beae9c41f7e76b99c",
+      "prepared_sha256": "1ba3925215eb45b1120aeb7e596bbd7c3ffa42f5623bc84dc45e5af8e0a1fa67",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2874,7 +2874,7 @@
         "path": "fixtures/mage/prepared-v2/marksmanship-hunter-predators-armor.request.json"
       },
       "prepared": "marksmanship-hunter-predators-armor.prepared.json",
-      "prepared_sha256": "beb19653749b9edf4036cb651a2cff9de89511b847028f9d730d4426b764e27d",
+      "prepared_sha256": "d9bec42626e9283dbd0687c752e3ed7fc921c65a4f14f37421d0f8b3660911f2",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2895,7 +2895,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-beastmaster-armor.request.json"
       },
       "prepared": "beast-mastery-hunter-beastmaster-armor.prepared.json",
-      "prepared_sha256": "1c273868716291fd98187fdffb06dbe79d73379311bce66e555caa49f70feed9",
+      "prepared_sha256": "3e886afde8120ade6c26e2154828031373213e9ff4dc06ba75b5a6d98c1ead7f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2916,7 +2916,7 @@
         "path": "fixtures/mage/prepared-v2/marksmanship-hunter-cryptstalker-armor.request.json"
       },
       "prepared": "marksmanship-hunter-cryptstalker-armor.prepared.json",
-      "prepared_sha256": "c4f3d11876f56e6d2d4884f37b530fae130248f482d108e762c4deb79b28f269",
+      "prepared_sha256": "c5ae311e72b43b808af184761c013951d23c684f14fd3117532b45c4e4c06b07",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2937,7 +2937,7 @@
         "path": "fixtures/mage/prepared-v2/survival-hunter-beaststalker-armor.request.json"
       },
       "prepared": "survival-hunter-beaststalker-armor.prepared.json",
-      "prepared_sha256": "792b89cad02b2b33d983d68c4c407bbe6800d04651f7651c7c4372b72455aca0",
+      "prepared_sha256": "e37c42ae3328a91c7e411191cd1554896902b50150ba10cce2cc5d5a325c1cd2",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2979,7 +2979,7 @@
         "path": "fixtures/mage/prepared-v2/marksmanship-hunter-hands-of-power.request.json"
       },
       "prepared": "marksmanship-hunter-hands-of-power.prepared.json",
-      "prepared_sha256": "9f4d47fa055193b5e5a89852ac272cf356b205074b81afa4c4cc5274066e7836",
+      "prepared_sha256": "a018a21810bddf10198f7e1a41d4a9b5fe5610a144e62cd4c8adb580cea6cca7",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3000,7 +3000,7 @@
         "path": "fixtures/mage/prepared-v2/combat-swords.request.json"
       },
       "prepared": "combat-swords.prepared.json",
-      "prepared_sha256": "23fcfa2b802cecfda684dd9cd140638428f673825fdba326f3dcfcf96743f643",
+      "prepared_sha256": "2e321bc42dc09cae3c7f196fb05c097d1fc6f538c02a1fafcfb1cb0591ad48b9",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3021,7 +3021,7 @@
         "path": "fixtures/mage/prepared-v2/combat-wound-poison.request.json"
       },
       "prepared": "combat-wound-poison.prepared.json",
-      "prepared_sha256": "f5b92d46cdcf59133588c069e1c8d5dfd08b4d8dd87546015c3519aca2d53523",
+      "prepared_sha256": "8b1da17179331b1145b50bad8ffb83ca449d4059e324e3c0e7b61b342688c166",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3105,7 +3105,7 @@
         "path": "fixtures/mage/prepared-v2/combat-riposte.request.json"
       },
       "prepared": "combat-riposte.prepared.json",
-      "prepared_sha256": "51f3aa7f38cb2476258f63f37295cfd220758fa3d796059286f88bed5a81be81",
+      "prepared_sha256": "ee6938b026fa9c36941224f324a207a73a48dccf8f9d9355a814fc88b6d08ac0",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3126,7 +3126,7 @@
         "path": "fixtures/mage/prepared-v2/combat-kidney-shot.request.json"
       },
       "prepared": "combat-kidney-shot.prepared.json",
-      "prepared_sha256": "70aed755441055fa8cbe9a5e4094c87d2e3278cde294e7b3f5407328a0c69697",
+      "prepared_sha256": "ab85cea25f6a8db94a3480c33e917675d9c084f5a2c254b9e52fa1b6fc34d84a",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3766,7 +3766,7 @@
         "path": "fixtures/mage/prepared-v2/survival-hunter-cat-and-whelp.request.json"
       },
       "prepared": "survival-hunter-cat-and-whelp.prepared.json",
-      "prepared_sha256": "b226c66225f75feb1145070abb711009bb0a49c83360ebb849661e622fb206f1",
+      "prepared_sha256": "5ae4c78d4c920219573f8acd1274a7a2d29dcf80eb45df612a2f987c6fe8b093",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3787,7 +3787,7 @@
         "path": "fixtures/mage/prepared-v2/combat-expose-armor.request.json"
       },
       "prepared": "combat-expose-armor.prepared.json",
-      "prepared_sha256": "4b6c0ae2157b00d028eef60d83e2d10bec01f9fee1a5dc2624819fafe91ff01c",
+      "prepared_sha256": "757eb6b039ac015973d2f1026bf57dd848129845a418db6006a392e6fd8136d3",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3808,7 +3808,7 @@
         "path": "fixtures/mage/prepared-v2/combat-improved-expose-armor.request.json"
       },
       "prepared": "combat-improved-expose-armor.prepared.json",
-      "prepared_sha256": "559e8b05cf33f5fb0cdcae57d9b300bd52513477f47d79a1be46aa1e2f11adda",
+      "prepared_sha256": "498f4ff18b1cee3332c06bc68c8b878456145f3cd05ff9e04f69519a1b25d916",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3829,7 +3829,7 @@
         "path": "fixtures/mage/prepared-v2/combat-expose-armor-raid-expose.request.json"
       },
       "prepared": "combat-expose-armor-raid-expose.prepared.json",
-      "prepared_sha256": "a36c4ddb7db68855e5297664945d2da79b3b11d2099fa580f28b7533033a2b15",
+      "prepared_sha256": "6283d6c332548232f1002f0de096c245bde7e4ae02e42e40f074c099f616bfdb",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3850,7 +3850,7 @@
         "path": "fixtures/mage/prepared-v2/combat-kidney-shot-tank.request.json"
       },
       "prepared": "combat-kidney-shot-tank.prepared.json",
-      "prepared_sha256": "f4520f48f4910c20b8a0ff2c94b7ca13e3896f142b67de62489fc1e2187a5c28",
+      "prepared_sha256": "cc05795ce107f8c31729f0d9efa26630a23fa02ef07e47b479c7e028d6919dd2",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3871,7 +3871,7 @@
         "path": "fixtures/mage/prepared-v2/combat-riposte-tank.request.json"
       },
       "prepared": "combat-riposte-tank.prepared.json",
-      "prepared_sha256": "09977f0c50767f4975aeec45f04a81c7bddefba4c20b57abe7eb3e993d9da2e7",
+      "prepared_sha256": "318ec9305fb32cff1fb4a781dc4f8db0df49e10190f1c2e6936be1f7cdb47659",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4443,7 +4443,7 @@
         "path": "fixtures/mage/prepared-v2/combat-rogue-item-procs.request.json"
       },
       "prepared": "combat-rogue-item-procs.prepared.json",
-      "prepared_sha256": "f90c44878f2d6398db55cf97352fa476a484b666fb43e377c726e19cc2352e22",
+      "prepared_sha256": "6fff8417a26740d86420e0ccc1fd770247a6d28ab3c5726431b9a8c5d2176a46",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4956,7 +4956,7 @@
         "path": "fixtures/mage/prepared-v2/combat-rogue-defensive-cooldowns-tank.request.json"
       },
       "prepared": "combat-rogue-defensive-cooldowns-tank.prepared.json",
-      "prepared_sha256": "1e374e055ec6dffd88d82ada63761af51ec575ec77e019f5646e4d7f2a65b57c",
+      "prepared_sha256": "f34366626d4bb58c68d6154de236bb99a521924df99f3837ac12c8f5623df2eb",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5399,6 +5399,252 @@
       "go_log": {
         "file": "feral-bear-druid-boomerang-pushback-after-cast.go-log.txt",
         "sha256": "8a7bbb28bafbab353a49bb4810bd1cb5cc2ef3a7e788ddfa8c70133561f7dece"
+      }
+    },
+    {
+      "id": "production-survival-hunter-2-targets",
+      "description": "The production Survival Hunter reference build against two copies of the boss, as the application's Advanced targets setting builds it at application revision 45a3dcfd: the melee rotation with the application's Explosive Trap and Volley lines, Explosive Trap's hit on each target and its burn on every target Immolation Trap is not burning, Volley's ticks on every target, the Goblin Sapper Charge and Dragonbreath Chili on both, and the raid's debuffs and Sunder Armor ramp on each target",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-survival-hunter-2-targets.request.json"
+      },
+      "prepared": "production-survival-hunter-2-targets.prepared.json",
+      "prepared_sha256": "b75b20f999fcc54e2499bc55d8f26cf0cf41fdf062224b45ce8d60d7d44ae6cc",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-survival-hunter-2-targets.go-result.json",
+        "sha256": "0973c34add2a066ba09d818ac15bf79e531aaa11b9b6ced5c20ed44f6acde577"
+      },
+      "go_log": {
+        "file": "production-survival-hunter-2-targets.go-log.txt",
+        "sha256": "3204e8de565f7e6e321d9e3fd2d1a10e22fe75689fd43d3dde903415a0cc0dcb"
+      }
+    },
+    {
+      "id": "production-survival-hunter-5-targets",
+      "description": "The production Survival Hunter reference build against five copies of the boss at application revision 45a3dcfd: Explosive Trap's five hits and burn, Volley and the area consumables on every target, each target's own armor ramp, debuffs and metrics",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-survival-hunter-5-targets.request.json"
+      },
+      "prepared": "production-survival-hunter-5-targets.prepared.json",
+      "prepared_sha256": "40c86fbc221d4e794ff2380f070d48810cc0bd54601e06d6b3c628973c2d757e",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-survival-hunter-5-targets.go-result.json",
+        "sha256": "800493a7a8710e395cca189d033b08f011a3de0e9eb465d1e1e451980cbcea9a"
+      },
+      "go_log": {
+        "file": "production-survival-hunter-5-targets.go-log.txt",
+        "sha256": "1c207c61483b4f46cf1a687667c3c29b2f080c945e52945f102142a94df8f153"
+      }
+    },
+    {
+      "id": "production-shadow-priest-2-targets",
+      "description": "The production Shadow Priest reference build against two copies of the boss at application revision 45a3dcfd: the application's multidot of Shadow Word: Pain keeps the dot on both targets, each with its own aura, ticks and metrics, while the rotation's casts stay on the first",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-shadow-priest-2-targets.request.json"
+      },
+      "prepared": "production-shadow-priest-2-targets.prepared.json",
+      "prepared_sha256": "c7caf838ca8252f7322672e46eb7e9302e6f1d2387eb8faa8eab7e27817fe56f",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-shadow-priest-2-targets.go-result.json",
+        "sha256": "3fdc179796408cfe582c24f456605bf1ca23e3cba523d0cb44d4fa59b186242f"
+      },
+      "go_log": {
+        "file": "production-shadow-priest-2-targets.go-log.txt",
+        "sha256": "77edcbb8ddfd026d1dfa18fdb2944aa2bcd41058919dee0b5065ba7863ca1f39"
+      }
+    },
+    {
+      "id": "production-shadow-priest-5-targets",
+      "description": "The production Shadow Priest reference build against five copies of the boss at application revision 45a3dcfd: Shadow Word: Pain multidotted on every target in unit index order",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-shadow-priest-5-targets.request.json"
+      },
+      "prepared": "production-shadow-priest-5-targets.prepared.json",
+      "prepared_sha256": "0b3264a96ed01e930a679f6f0879e4a7a48550cd34fc621c119a9fae07b6c838",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-shadow-priest-5-targets.go-result.json",
+        "sha256": "c0cdf39da0ccbe4272c188cbce181b1e028cabaaa5a38e70d18f01fbf062c5b4"
+      },
+      "go_log": {
+        "file": "production-shadow-priest-5-targets.go-log.txt",
+        "sha256": "c427e28a78868469e62c686746649b157bfd7f14fd04b8e5ead97284694ef22a"
+      }
+    },
+    {
+      "id": "production-subtlety-rogue-2-targets",
+      "description": "The production Subtlety Rogue reference build against two copies of the boss at application revision 45a3dcfd, which adds no AoE lines: the Goblin Sapper Charge's one roll calculated on both targets before either is dealt, Dragonbreath Chili's own roll on each, mana and rage threat on every target, and each target's debuffs, Sunder Armor ramp and metrics",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-subtlety-rogue-2-targets.request.json"
+      },
+      "prepared": "production-subtlety-rogue-2-targets.prepared.json",
+      "prepared_sha256": "9589c77cc14b17022cfab6c722329cd15d9def7c2131409da5a326bfb270aaed",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-subtlety-rogue-2-targets.go-result.json",
+        "sha256": "f17c08aa647e81023b5dc2b14d8a0f56f127e20a695232e3e2c13a120c5e4bc0"
+      },
+      "go_log": {
+        "file": "production-subtlety-rogue-2-targets.go-log.txt",
+        "sha256": "bd4fe9efa535d43863baf47bef26749d225139700700344e241037ddb67c95cb"
+      }
+    },
+    {
+      "id": "production-subtlety-rogue-5-targets",
+      "description": "The production Subtlety Rogue reference build against five copies of the boss at application revision 45a3dcfd: the area consumables on every target and each target's own state and metrics",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-subtlety-rogue-5-targets.request.json"
+      },
+      "prepared": "production-subtlety-rogue-5-targets.prepared.json",
+      "prepared_sha256": "f0222490e959752dd90d2598f8cac513c422adfe333604bf1d9507d74e996352",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-subtlety-rogue-5-targets.go-result.json",
+        "sha256": "7d53907cb1a6d5180930896cdec06dc8514ae4f62758ba61126ea0b8064c3362"
+      },
+      "go_log": {
+        "file": "production-subtlety-rogue-5-targets.go-log.txt",
+        "sha256": "2cd0cf50f5ea9d92cdb5ebc1278eeed8c3a4c0f012c1ed22cc2163f00946667d"
+      }
+    },
+    {
+      "id": "production-combat-rogue-3-targets",
+      "description": "The production Combat Rogue reference build against three copies of the boss at application revision 45a3dcfd: Blade Flurry's extra hit (22482) on the next target for each damaging melee hit, which always hits and ignores resists and modifiers, the cast Go takes back off the hit's target, and the area consumables",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-combat-rogue-3-targets.request.json"
+      },
+      "prepared": "production-combat-rogue-3-targets.prepared.json",
+      "prepared_sha256": "346b52f3afe81c832c96e4c00a1f1c17d0a7730c2db59d175fe49bcbd8857a0a",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-combat-rogue-3-targets.go-result.json",
+        "sha256": "df49d529a969e87c29a202730b9cabc75576fd46f9124d0c11e30bd243746ee5"
+      },
+      "go_log": {
+        "file": "production-combat-rogue-3-targets.go-log.txt",
+        "sha256": "6384867f852c40c1c076af27147343cb37f213c689de2a1adc4e4420db0a5ebc"
+      }
+    },
+    {
+      "id": "production-assassination-rogue-3-targets",
+      "description": "The production Assassination Rogue reference build against three copies of the boss at application revision 45a3dcfd",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-assassination-rogue-3-targets.request.json"
+      },
+      "prepared": "production-assassination-rogue-3-targets.prepared.json",
+      "prepared_sha256": "8fbadcf8c584e3a6dedbd28249a0f7f1aabdd47afe50c81e06d0cd509b4002dc",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-assassination-rogue-3-targets.go-result.json",
+        "sha256": "0457af1733a48af62d9dffabebc956440930f701c61fa6d86cc85639be798ff7"
+      },
+      "go_log": {
+        "file": "production-assassination-rogue-3-targets.go-log.txt",
+        "sha256": "f7f5e3ba617fef6a2519542fa22f9679df54076df6b5fc6496fb515e0b68c131"
+      }
+    },
+    {
+      "id": "production-marksmanship-hunter-3-targets",
+      "description": "The production Marksmanship Hunter reference build against three copies of the boss at application revision 45a3dcfd: Multi-Shot's three shots from the cast target on, each rolling its weapon damage and landing together after one travel, and the application's Serpent Sting multidot with each target's own attack power snapshot",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-marksmanship-hunter-3-targets.request.json"
+      },
+      "prepared": "production-marksmanship-hunter-3-targets.prepared.json",
+      "prepared_sha256": "96013e7e1095e560ce93c98f23f6fa00124dcecf90a34c6c22a77be1cf762b85",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-marksmanship-hunter-3-targets.go-result.json",
+        "sha256": "10121f6915c3706a9909379d807a7d3588a694d413e719b4ee3054bc1ec586ab"
+      },
+      "go_log": {
+        "file": "production-marksmanship-hunter-3-targets.go-log.txt",
+        "sha256": "0357a2ee089cc6c4138fa2afbb4d76a8e6f1a1d95f7cde1d8e450ec9d1fe2027"
+      }
+    },
+    {
+      "id": "production-beast-mastery-hunter-3-targets",
+      "description": "The production Beast Mastery Hunter reference build against three copies of the boss at application revision 45a3dcfd: Multi-Shot on three targets and Serpent Sting on every target beside the pet on the first",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-beast-mastery-hunter-3-targets.request.json"
+      },
+      "prepared": "production-beast-mastery-hunter-3-targets.prepared.json",
+      "prepared_sha256": "258d9c99740034f54a8fb380b94055e31e7ac1980fa1f4a256688c1dacce6b3c",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-beast-mastery-hunter-3-targets.go-result.json",
+        "sha256": "5097d12e022a1e74b7bf60d067c1697522dfa6f7927ef1129b43b6a1f62dfe68"
+      },
+      "go_log": {
+        "file": "production-beast-mastery-hunter-3-targets.go-log.txt",
+        "sha256": "34a887ba327741f225600f5ba073482f578da181e78b883008c3b473a4589938"
+      }
+    },
+    {
+      "id": "production-smite-priest-3-targets",
+      "description": "The production Smite Priest reference build against three copies of the boss at application revision 45a3dcfd: Shadow Word: Pain multidotted on every target",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-smite-priest-3-targets.request.json"
+      },
+      "prepared": "production-smite-priest-3-targets.prepared.json",
+      "prepared_sha256": "8e722a2564c089a6e8825f2b5a157b77e6d996048113419c53be8175a0e8b5bf",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-smite-priest-3-targets.go-result.json",
+        "sha256": "5cd3ca6bafa3d66c57b0f35f8e72f3ba4e1b27b08e1f29a1c00d7294a40305c6"
+      },
+      "go_log": {
+        "file": "production-smite-priest-3-targets.go-log.txt",
+        "sha256": "91b402ed7ed0ee5763f659a032e39bc978ae9860c102cc3f36062d2018ae8182"
+      }
+    },
+    {
+      "id": "production-frost-2-targets",
+      "description": "The production Frost Mage reference build against two copies of the boss at application revision 45a3dcfd, whose AoE lines start at three targets: refused, since Mage is not yet checked against several targets",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-frost-2-targets.request.json"
+      },
+      "prepared": "production-frost-2-targets.prepared.json",
+      "prepared_sha256": "d5367ab5484019e9c183cbf56a24e8a552e7224b29e6ee801096976e0c6296d6",
+      "expected_coverage": {
+        "supported": false,
+        "reasons": [
+          "2 targets: several targets are not supported for ClassMage yet"
+        ]
       }
     }
   ]

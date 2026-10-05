@@ -37,5 +37,5 @@ pub(crate) fn toggle(fight: &mut Fight<PaladinAgent>, member: usize, active: boo
     } else {
         -judgement.bonus
     };
-    fight.add_target_school_bonus_spell_damage(school_index(2), delta);
+    fight.add_target_school_bonus_spell_damage(Side::Target, school_index(2), delta);
 }

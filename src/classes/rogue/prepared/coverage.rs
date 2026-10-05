@@ -12,6 +12,7 @@ pub(crate) const GATE: ClassGate = ClassGate {
     spell: spell_capability,
     claims,
     limits,
+    several_targets: Some(several_targets),
 };
 
 /// Rogue effect kinds implemented in Rust and validated against the pinned Go reference.
@@ -173,4 +174,10 @@ fn limits(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
         }
     }
     reasons
+}
+
+/// The spells that reach a target past the first in Go and not yet in Rust: none, since Blade
+/// Flurry's extra hit on the next target runs as in Go.
+fn several_targets(_prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
+    crate::engine::coverage::spells_reaching_other_targets(reachable, &[])
 }

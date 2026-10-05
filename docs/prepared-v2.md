@@ -57,8 +57,8 @@ RNG contract and implemented effects. Tests fail if it disagrees with the engine
 | Section | Content |
 | --- | --- |
 | `sim` | Iterations, seed, `labeled_rng`, first-iteration debug and `debug`, which logs every fight as the application's averaged timeline requests |
-| `encounter` | Base duration, variation and execute proportions, in nanoseconds |
-| `target` | Level, all stats, pseudo stats, every registered aura and whether it has a melee or ranged swing |
+| `encounter` | Base duration, variation and execute proportions, in nanoseconds, and `target_count`, written only for a fight against 2 to 5 targets |
+| `target` | Level, all stats, pseudo stats, every registered aura and whether it has a melee or ranged swing. In a fight against several targets every target past the first is an identical copy, which the exporter checks, so this one target describes them all |
 | `player` | Identity, talents, stats, pseudo stats, reaction time, distance, cast speed, mana, an energy bar when the player has one, attack table, spells, major cooldowns and rotation |
 | `melee` | The player's weapons and auto attack flags, and the physical attack table against the target with the defender's static chances resolved |
 | `enemy` | Present only when the player tanks the target: the target's main hand swing at the player, every step of its damage and table resolved as Go computes it at reset, its table steps for each stat aura combination, the auras whose activation would change it, and the target auras, such as Vindication's debuff, that change only its attack power, with the attack power while each holds. The target multiplier's school and attack table factors let the runtime apply the player's live damage taken multiplier and live physical school damage taken multiplier, and the target's attack speed, melee speed and haste rating factors its live melee speed; auras that change only one of those, such as Stoneform's physical damage taken, are listed apart from the rest |
@@ -110,7 +110,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `potion_mana` | sim/core/consumes.go | Gain range, label, alchemist stone multiplier |
 | `conjured_mana` | sim/core/consumes.go | Gain range, label, whether it is the selected item |
 | `conjured_energy` | sim/core/consumes.go | Thistle Tea: gain range, label, whether it is the selected item and its level reduction, a Go literal |
-| `goblin_sapper` | sim/core/consumes.go | The rolled range and AoE cap of the hit on the target and the hit on the player, and the player's attack table against itself; the player's damage taken modifiers must leave the hit unchanged at reset, as inactive absorb shields do, and a class's absorb applies to it |
+| `goblin_sapper` | sim/core/consumes.go | The rolled range and AoE cap of the hit on every target, one roll calculated on each before any is dealt, and the hit on the player, and the player's attack table against itself; the player's damage taken modifiers must leave the hit unchanged at reset, as inactive absorb shields do, and a class's absorb applies to it |
 | `basic_explosive` | sim/core/consumes.go | Dense Dynamite, Thorium Grenade, Ez-Thro Dynamite II, Crystal Charge, Cryoblast and the SAF-T and EZ-Thro bombs: the rolled range, Go literals checked against the registered spell's school and missile speed, and the AoE cap; the hit flies when the explosive has a missile speed. A tank's hardcast drops its avoidance, whose rolls the target's swing exports as `reduced_avoidance_rolls` |
 | `chance_of_death` | sim/core/health.go | Once a spell can hit the player: a hit that deals damage removes health, the rotation reacts, and a pending action marks the player dead at zero |
 | `fixed_uptime_aura` | sim/core/buffs.go, aura_helpers.go | The party Battle Shout: uptime, roll period and first roll time, Go literals |
@@ -129,7 +129,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `stat_auras` | sim/core/unit.go AddStatsDynamic | The auras that change stats during a fight and the player's stats for every combination of them, each read from a separate Go simulation, since Go recomputes stats from the active bonuses. Maximum mana, healing power, health, Spirit, the school spell damage stats and the resistances appear only when a combination changes them |
 | `crusader` | sim/common/classic/enchants.go | Each spell's chance from the enchant's proc manager, the Holy Strength auras and their log lines, and the heal roll |
 | `windfury_totem` | sim/core/buffs/drivers.go | The totem's refresh period, the trigger and charge spenders resolved from client rows, whether each needs damage dealt, the charge aura and the extra main hand attack spell, absent without melee autos when no spell can trigger the totem |
-| `dragonbreath_chili` | sim/core/consumes.go | The 5% chance and listened spells, the rolled Fire hit and the spell batch delay, Go literals |
+| `dragonbreath_chili` | sim/core/consumes.go | The 5% chance and listened spells, the rolled Fire hit on every target, each on its own roll and dealt in turn, and the spell batch delay, Go literals |
 | `emerald_dragon_whelp` | sim/common/classic/items_weapons.go, emerald_dragon_whelp.go | Dragon's Call's trigger and each spell's chance from the weapon's proc manager, the summoned whelp, the spell batch delay and 15 second summon, and Acid Spit's spell, roll and 50% spit chance, Go literals |
 | `sulfuras_hand_of_ragnaros` | sim/common/classic/items_weapons.go | The weapon proc's trigger and chance per spell, the Fireball spell with its roll and burn base, and Immolation's aura, spell and fixed hit, Go literals |
 | `sunder_armor_ramp` | sim/core/buffs/drivers.go | The raid's Sunder Armor: its period and tick count, Go literals, and target armor at each stack count read from separate Go simulations; `blocked` when a stronger permanent member of its category, such as Expose Armor, blocks every activation, which Go still counts as a proc |
@@ -275,7 +275,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `sinister_strike`, `backstab` | sim/rogue/sinister_strike.go, backstab.go | The highest rank's base on normalized main hand damage; Backstab's main hand dagger and Puncturing Wounds' combo point chance |
 | `eviscerate` | sim/rogue/eviscerate.go | The rolled base, the bonus a combo point and 3% of attack power a point, a Go literal |
 | `slice_and_dice` | sim/rogue/slice_and_dice.go | The duration at each combo point count and the melee speed multiplier |
-| `blade_flurry`, `adrenaline_rush` | sim/rogue/talents_combat.go | Blade Flurry's attack speed multiplier; Adrenaline Rush's energy regeneration multiplier and the energy at or below which it fires as a major cooldown, a Go literal |
+| `blade_flurry`, `adrenaline_rush` | sim/rogue/talents_combat.go | Blade Flurry's attack speed multiplier and the spell of its extra hit, a Go literal, which against several targets each melee hit that deals damage casts on the next target for that damage, ignoring resists and modifiers; Adrenaline Rush's energy regeneration multiplier and the energy at or below which it fires as a major cooldown, a Go literal |
 | `rogue_finisher` | sim/rogue/rogue.go | Relentless Strikes' chance a combo point and energy, Go literals, and Ruthlessness's chance |
 | `instant_poison`, `deadly_poison` | sim/rogue/poisons.go | The imbued hands, the chance raised by Improved Poisons, Instant Poison's damage range and Deadly Poison's tick, Go literals |
 | `stealth` | sim/rogue/stealth.go, vanish.go | The Stealth aura and spells; every strike breaks Stealth and resumes the auto attacks, and Vanish stops them |
@@ -344,6 +344,8 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `mongoose_bite` | sim/hunter/mongoose_bite.go, lacerating_strikes.go | The Defensive State aura it needs, the rank's flat damage from client data, and Lacerating Strikes' share and tick outcome |
 | `strider_kick`, `wing_clip` | sim/hunter/strider_kick.go, wing_clip.go | The spells; Wing Clip's flat damage from client data |
 | `immolation_trap` | sim/hunter/traps.go | The tick base from client data; a magic hit roll without a hit count, then the dot when it landed |
+| `explosive_trap` | sim/hunter/traps.go | The hit range, a Go literal, the hit count, one for each active target, the AoE cap and the tick base from client data: a magic hit on each target from the cast target on, each on its own roll, then the area dot on the hunter, which ticks its snapshot on every target that Immolation Trap is not burning |
+| `volley` | sim/hunter/volley.go | The rank's tick, a Go literal, and the ranged swing delay, the rank's duration: the channel's area dot on the hunter ticks its snapshot on every target |
 | `resourcefulness`, `expose_prey` | sim/hunter/talents_survival.go | Resourcefulness's crit trigger, chance and casting regeneration from client data; Expose Prey's chance and whether a lasting Hunter's Mark holds the target |
 
 Human racials are static and already in the prepared stats. High Order Skyborne's cast
@@ -742,8 +744,14 @@ cargo run --locked -- check --infile fixtures/mage/prepared-v2/frost-reference.p
 - Each class has its own exporter file under `tools/oracle-v2/` naming its class spells,
   damage rows and effects; a class without one is unrepresented. The fixture manifest pins
   the digest of every exporter source.
-- The contract describes one player, one target and the player's pets, any number of them
-  simulated. Multiple targets and job modes such as stat weights need contract additions.
+- The contract describes one player, one to five identical targets and the player's pets,
+  any number of them simulated. Rust keeps each target's auras, dots, debuffs, armor,
+  resistances and metrics; area hits, cleaves and the rotation's multidot reach every
+  target as in Go. The exporter refuses targets that differ from the first, a tank
+  assignment, a target aura with an internal cooldown and the item and pet effects that
+  reach other targets; the gate refuses a class not yet checked against several targets
+  and each class's spells that reach other targets without a Rust implementation. Job
+  modes such as stat weights need contract additions.
 - Incoming damage covers the target's main hand swing at the one player tanking it. The
   gate rejects a dual wielding or ranged target, a healing model, a channel with a cast time
   or a cast pushed back with a chance that needs a roll that the rotation can reach while

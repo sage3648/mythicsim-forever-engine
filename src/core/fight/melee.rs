@@ -339,7 +339,6 @@ impl<A: Agent> Fight<A> {
     }
 
     /// Go `AutoAttacks.DelayRangedUntil`.
-    #[allow(dead_code)] // Shared with the class domains in progress.
     pub(crate) fn delay_ranged_until(&mut self, ready: i64) {
         if ready <= self.autos.ranged.swing_at {
             return;
@@ -892,7 +891,7 @@ impl<A: Agent> Fight<A> {
         let after_resistances = result.damage;
         if !self.spells[spell].flags.ignore_target_modifiers {
             result.damage += self.config.melee.defender_bonus_physical_damage_taken;
-            result.damage *= self.target_multiplier(spell);
+            result.damage *= self.target_multiplier(spell, target);
         }
         let after_target = result.damage;
         // Go OutcomeTickPhysicalCrit, or Dot.OutcomeTick.
@@ -910,6 +909,7 @@ impl<A: Agent> Fight<A> {
         if self.log.is_some() {
             self.log_damage_debug(
                 spell,
+                result.target,
                 base,
                 [
                     after_attacker,
@@ -942,13 +942,14 @@ impl<A: Agent> Fight<A> {
         let after_attacker = result.damage;
         if !self.spells[spell].flags.ignore_target_modifiers {
             result.damage += self.config.melee.defender_bonus_physical_damage_taken;
-            result.damage *= self.target_multiplier(spell);
+            result.damage *= self.target_multiplier(spell, target);
         }
         let after_target = result.damage;
         self.apply_post_outcome_modifiers(spell, &mut result);
         if self.log.is_some() {
             self.log_damage_debug(
                 spell,
+                result.target,
                 base,
                 [after_attacker, after_attacker, after_target, after_target],
                 result.damage,
@@ -981,8 +982,8 @@ impl<A: Agent> Fight<A> {
             + self.unit_config(side).melee.defender_bonus_attack_power
     }
 
-    /// Go `GetArmorDamageModifier` for the attacker.
-    pub(crate) fn armor_modifier(&self, side: Side) -> f64 {
+    /// Go `GetArmorDamageModifier` for the attacker against a target.
+    pub(crate) fn armor_modifier(&self, side: Side, target: Side) -> f64 {
         let config = self.unit_config(side);
         let melee = &config.melee;
         if melee.ignore_armor {
@@ -991,7 +992,8 @@ impl<A: Agent> Fight<A> {
         let ignore = melee.armor_ignore_factor.clamp(0.0, 1.0);
         let constant = 400.0 + 85.0 * f64::from(config.player_level);
         // The arm64 build fuses the ignored share into the subtraction.
-        let armor = (-self.target_armor).mul_add(ignore, self.target_armor);
+        let target_armor = self.target_unit(target).armor;
+        let armor = (-target_armor).mul_add(ignore, target_armor);
         let armor = (armor - config.armor_penetration).max(0.0);
         (1.0 - armor / (armor + constant)).max(0.25)
     }
@@ -1027,7 +1029,7 @@ impl<A: Agent> Fight<A> {
         let after_attacker = result.damage;
         let caster = self.caster(spell);
         if !self.spells[spell].flags.ignore_resists {
-            result.damage *= self.armor_modifier(caster);
+            result.damage *= self.armor_modifier(caster, target);
         }
         let after_resistances = result.damage;
         if !self.spells[spell].flags.ignore_target_modifiers {
@@ -1035,7 +1037,7 @@ impl<A: Agent> Fight<A> {
                 .unit_config(caster)
                 .melee
                 .defender_bonus_physical_damage_taken;
-            result.damage *= self.target_multiplier(spell);
+            result.damage *= self.target_multiplier(spell, target);
         }
         let after_target = result.damage;
         self.apply_physical_outcome(spell, &mut result, outcome);
@@ -1044,6 +1046,7 @@ impl<A: Agent> Fight<A> {
         if self.log.is_some() {
             self.log_damage_debug(
                 spell,
+                result.target,
                 base,
                 [
                     after_attacker,
@@ -1072,7 +1075,7 @@ impl<A: Agent> Fight<A> {
         let mut base = base_damage;
         let coefficient = self.spells[spell].bonus_coefficient;
         if coefficient > 0.0 {
-            base += coefficient * self.bonus_damage(spell);
+            base += coefficient * self.bonus_damage(spell, target);
         }
         let mut result = SpellResult {
             target,
@@ -1082,7 +1085,7 @@ impl<A: Agent> Fight<A> {
         };
         let after_attacker = result.damage;
         if !self.spells[spell].flags.ignore_resists && !self.spells[spell].flags.binary {
-            let (multiplier, partial) = self.partial_resist(spell);
+            let (multiplier, partial) = self.partial_resist(spell, target);
             result.damage *= multiplier;
             result.outcome |= partial;
         }
@@ -1091,7 +1094,7 @@ impl<A: Agent> Fight<A> {
             if self.spells[spell].school_index > 1 {
                 result.damage += self.config.target_bonus_spell_damage_taken;
             }
-            result.damage *= self.target_multiplier(spell);
+            result.damage *= self.target_multiplier(spell, target);
         }
         let after_target = result.damage;
         let partial = result.outcome & OUTCOME_PARTIAL;
@@ -1102,6 +1105,7 @@ impl<A: Agent> Fight<A> {
         if self.log.is_some() {
             self.log_damage_debug(
                 spell,
+                result.target,
                 base,
                 [
                     after_attacker,
@@ -1145,7 +1149,7 @@ impl<A: Agent> Fight<A> {
         let after_resistances = result.damage;
         if !self.spells[spell].flags.ignore_target_modifiers {
             result.damage += self.config.melee.defender_bonus_physical_damage_taken;
-            result.damage *= self.target_multiplier(spell);
+            result.damage *= self.target_multiplier(spell, target);
         }
         let after_target = result.damage;
         // Go Dot.OutcomeTick, or OutcomeTickPhysicalCrit for a tick that can crit.
@@ -1160,6 +1164,7 @@ impl<A: Agent> Fight<A> {
         if self.log.is_some() {
             self.log_damage_debug(
                 spell,
+                result.target,
                 base,
                 [
                     after_attacker,
