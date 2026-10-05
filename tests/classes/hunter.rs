@@ -474,3 +474,26 @@ fn an_unknown_serpent_sting_tick_is_a_class_limit() {
     assert!(crate::refusal_codes(value)
         .contains(&("class_limit", "Serpent Sting ticks with magic_hit".into())));
 }
+
+/// Go lacerating_strikes.go (patch 87): a Mongoose Bite that lands with the last bleed still up
+/// replaces it with its own share, written after the cast, so no bleed ticks for nothing. The
+/// bleed reports under its own id, 1310536, not Mongoose Bite's with a tag.
+#[test]
+fn a_refreshed_lacerating_strikes_bleed_keeps_its_damage() {
+    let logs = first_fight_log(fixture("survival-hunter-no-whelp"));
+    let refreshes = logs
+        .lines()
+        .filter(|line| line.contains("[Target 1] Aura faded: {SpellID: 1310536}"))
+        .count();
+    let ticks: Vec<f64> = logs
+        .lines()
+        .filter(|line| line.contains("{SpellID: 1310536} tick "))
+        .map(|line| {
+            let damage = line.split(" for ").nth(1).unwrap();
+            damage[..damage.find(' ').unwrap()].parse().unwrap()
+        })
+        .collect();
+    assert!(refreshes > 1 && ticks.len() > 7, "{logs}");
+    assert!(ticks.iter().all(|&damage| damage > 0.0), "{ticks:?}");
+    assert!(!logs.contains("{SpellID: 14271, Tag: 1}"), "{logs}");
+}

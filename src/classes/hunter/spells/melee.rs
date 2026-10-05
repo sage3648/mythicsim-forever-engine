@@ -5,7 +5,8 @@
 //! lifts the dual wield miss penalty, and the next swing casts Raptor Strike instead when it
 //! can, which casts its hit and ends the queue. Mongoose Bite needs the Defensive State window,
 //! which it closes; a landed bite with Lacerating Strikes bleeds a share of its damage over
-//! the bleed's ticks, a snapshot a new bite's application clears, as Go's does.
+//! the bleed's ticks. A new bite replaces a running bleed with its own share, nothing rolling
+//! over, as Go's does since its patch 87.
 
 use crate::core::fight::{
     melee::PhysicalOutcome, Agent, AuraRef, DotId, Fight, Outcome, Side, SpellId,
@@ -99,28 +100,27 @@ pub(crate) struct MongooseBite {
     base_damage: f64,
     /// Lacerating Strikes: its spell, dot, share of the bite and tick outcome.
     lacerating: Option<(SpellId, DotId, f64, Outcome)>,
-    /// The bleed's stored base and attacker multiplier, which its expiry clears.
+    /// The bleed's stored base and attacker multiplier, written after each bleed's cast.
     pub(crate) bleed: (f64, f64),
 }
 
 impl MongooseBite {
     pub(crate) fn bind<A: Agent>(
         fight: &Fight<A>,
-        spell: SpellId,
         window: &str,
         base_damage: f64,
         lacerating: Option<(f64, Outcome)>,
     ) -> Result<Self, String> {
         let lacerating = match lacerating {
             Some((share, outcome)) => {
-                let id = &fight.spells[spell].id;
+                // The bleed reports under its own id (1310536), not Mongoose Bite's with a tag.
                 let bleed = fight
                     .spells
                     .iter()
                     .position(|other| {
                         other.caster == Side::Player
-                            && other.id.spell_id == id.spell_id
-                            && other.id.tag == 1
+                            && other.class_spell.as_deref() == Some("lacerating_strikes")
+                            && other.dot.is_some()
                     })
                     .ok_or("Lacerating Strikes is not registered")?;
                 let dot = fight.spells[bleed]

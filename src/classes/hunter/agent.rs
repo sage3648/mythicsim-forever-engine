@@ -221,9 +221,6 @@ pub(crate) fn spell_behavior(spell: &ExportedSpell) -> Option<HunterSpell> {
             ("summon_hawk", _) if spell.dot.is_some() => Some(HunterSpell::Hawk),
             ("raptor_strike", 1) => Some(HunterSpell::RaptorStrikeHit),
             ("raptor_strike_queue", 3) => Some(HunterSpell::RaptorStrikeQueue),
-            ("lacerating_strikes", 1) if spell.dot.is_some() => {
-                Some(HunterSpell::LaceratingStrikes)
-            }
             _ => None,
         };
     }
@@ -241,6 +238,7 @@ pub(crate) fn spell_behavior(spell: &ExportedSpell) -> Option<HunterSpell> {
         "aspect_of_the_beast" => Some(HunterSpell::AspectOfTheBeast),
         "raptor_strike" => Some(HunterSpell::RaptorStrike),
         "mongoose_bite" => Some(HunterSpell::MongooseBite),
+        "lacerating_strikes" if spell.dot.is_some() => Some(HunterSpell::LaceratingStrikes),
         "strider_kick" => Some(HunterSpell::StriderKick),
         "wing_clip" => Some(HunterSpell::WingClip),
         "immolation_trap" if spell.dot.is_some() => Some(HunterSpell::ImmolationTrap),
@@ -510,7 +508,7 @@ impl HunterAgent {
                     lacerating_share,
                     lacerating_tick_outcome,
                 } => {
-                    let spell = find_spell(&fight, *spell_id)
+                    find_spell(&fight, *spell_id)
                         .ok_or_else(|| format!("Mongoose Bite {spell_id} is not registered"))?;
                     let lacerating = match (lacerating_share, lacerating_tick_outcome) {
                         (Some(share), Some(outcome)) => Some((
@@ -522,7 +520,7 @@ impl HunterAgent {
                         (None, None) => None,
                         _ => return Err("Lacerating Strikes is incomplete".into()),
                     };
-                    let bound = MongooseBite::bind(&fight, spell, aura, *base_damage, lacerating)?;
+                    let bound = MongooseBite::bind(&fight, aura, *base_damage, lacerating)?;
                     fight.agent.mongoose_bite = Some(bound);
                 }
                 Effect::WingClip { base_damage, .. } => fight.agent.wing_clip_damage = *base_damage,
@@ -745,26 +743,15 @@ impl Agent for HunterAgent {
             HunterSpell::MongooseBite => {
                 let bite = Self::mongoose(fight);
                 if let Some((bleed, base)) = bite.apply(fight, spell, target) {
+                    // Go procLaceratingStrikes (patch 87): the bleed is cast first, replacing a
+                    // running one, and its snapshot is written after.
+                    fight.cast(bleed, target);
                     if let Some(bound) = fight.agent.mongoose_bite.as_mut() {
                         bound.bleed = (base, 1.0);
                     }
-                    fight.cast(bleed, target);
                 }
             }
-            HunterSpell::LaceratingStrikes => {
-                // Go Dot.Apply: a running bleed's expiry clears the snapshot just stored.
-                let bite = Self::mongoose(fight);
-                let dot = fight.spells[spell]
-                    .dot
-                    .expect("Lacerating Strikes has a dot");
-                let running = fight.aura(fight.dots[dot].aura).active;
-                bite.apply_bleed(fight);
-                if running {
-                    if let Some(bound) = fight.agent.mongoose_bite.as_mut() {
-                        bound.bleed = (0.0, 0.0);
-                    }
-                }
-            }
+            HunterSpell::LaceratingStrikes => Self::mongoose(fight).apply_bleed(fight),
             HunterSpell::StriderKick => melee::strider_kick(fight, spell, target),
             HunterSpell::WingClip => {
                 let base = fight.agent.wing_clip_damage;

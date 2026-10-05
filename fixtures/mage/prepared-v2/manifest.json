@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "prepared_schema_version": 2,
-  "engine_revision": "20b551c6bff9aa780fefe17ead89029c13cabcd4",
+  "engine_revision": "6383c15a7b1bfbdbd7c5b4c0c59418c636e52e1a",
   "client_build": "1.60.1.70205",
   "exporter": "tools/oracle-v2/main.go",
   "exporter_sha256": "33a1481cdf310e9899826bab5f7895c079b71038618e112e5550bff909801077",
@@ -16,7 +16,7 @@
         "pointer": "/request"
       },
       "prepared": "frost-reference.prepared.json",
-      "prepared_sha256": "eab8de7a50ec0d79ac918b527ff1490bc2a0ca98ca0008f5ac36ca8ba6ae6906",
+      "prepared_sha256": "bad1f457ff180126fc3d9158b28dc475d3715a54318badb8826fe40b64e181c5",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -37,7 +37,7 @@
         "path": "fixtures/mage/prepared-v2/frost-no-fingers.request.json"
       },
       "prepared": "frost-no-fingers.prepared.json",
-      "prepared_sha256": "819da1bcaa55f51d270f776cad9ef02332595a4163e341fab3eeaf5ee4f6534e",
+      "prepared_sha256": "e178e2f9ebe0b74ba0cad971299142f0d01cfb567aec54f8cc2b895fe34457be",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -58,7 +58,7 @@
         "path": "fixtures/mage/prepared-v2/frostbolt-labeled.request.json"
       },
       "prepared": "frostbolt-labeled.prepared.json",
-      "prepared_sha256": "046f8a663196881ca12596b71864d97a45a97abbdbc42d4970913d0d6fb9ce6a",
+      "prepared_sha256": "33da5fc9ec271ea89daa304cb2e4dd3188d390ecfd49eeb9ad321d77a2023639",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -75,7 +75,7 @@
         "path": "fixtures/mage/prepared-v2/frostbolt-shared-oom.request.json"
       },
       "prepared": "frostbolt-shared-oom.prepared.json",
-      "prepared_sha256": "8414066e6493ef67323d6c54d8aaf0b840382c6deaade4510b98e9d82c263157",
+      "prepared_sha256": "55061479e6605be5d49821ac2f5f735cb387b5e524676fd8ced736faac662162",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -96,7 +96,7 @@
         "path": "fixtures/mage/prepared-v2/frostbolt-shared-meditation.request.json"
       },
       "prepared": "frostbolt-shared-meditation.prepared.json",
-      "prepared_sha256": "d586c19cbb9a5c14b400a2b8429f01500188d02bbbe195546743ab8c4e08a019",
+      "prepared_sha256": "0bb1cfb42319f9e20a0dcaeb8b6fc33f24236aa6e3bb7fb58f3d7fb3022bd79d",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -113,7 +113,7 @@
         "path": "fixtures/mage/prepared-v2/frostbolt-shared-haste.request.json"
       },
       "prepared": "frostbolt-shared-haste.prepared.json",
-      "prepared_sha256": "8c1fa0c715d4433239d87ae666a60ef10d4c0b3bb726e27bbf48dd72e110a516",
+      "prepared_sha256": "8327d04a5d5f0752a78fda2b1e29d11a02fb954a18b132e950377efda1937d97",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -130,7 +130,7 @@
         "path": "fixtures/mage/prepared-v2/frostbolt-shared-boundary.request.json"
       },
       "prepared": "frostbolt-shared-boundary.prepared.json",
-      "prepared_sha256": "ac0a2406760499e5c18a5a76d11e07d763937151ee344f7e159fbd66e93d9650",
+      "prepared_sha256": "8136d06382f0bd071804887ba823bb04beb412e37532c688956254c9156994c6",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -147,7 +147,7 @@
         "path": "fixtures/mage/prepared-v2/reference-winters-chill.request.json"
       },
       "prepared": "reference-winters-chill.prepared.json",
-      "prepared_sha256": "39c9902a0589243a624b176566bd7904b20adca424c428c2a79e7e97524cad7b",
+      "prepared_sha256": "95d5edcf319f459da0214bbbefd00bc41f420002325acf3ca9ff37c7f5524ae2",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -164,7 +164,7 @@
         "path": "fixtures/mage/prepared-v2/reference-winters-chill-rank3.request.json"
       },
       "prepared": "reference-winters-chill-rank3.prepared.json",
-      "prepared_sha256": "058578cc5aa71d4fee1fd07656f091c15ed7f3ef55a7688f5d1ad57a34ca5765",
+      "prepared_sha256": "541d83aee57bbae7aeeb2b0364f50390bd9a0974789594d01a22cf824263e6f5",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -185,7 +185,7 @@
         "path": "fixtures/mage/prepared-v2/reference-fingers-of-frost.request.json"
       },
       "prepared": "reference-fingers-of-frost.prepared.json",
-      "prepared_sha256": "13f01ecb646c66de39abd72f4794b3a6aa409eefd531ae64e60bf133e1e8be25",
+      "prepared_sha256": "cd3ebd62097dba6f9af76edc131ba366f966055699a43c5f8f88ea4e12a105e6",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -206,7 +206,7 @@
         "path": "fixtures/mage/prepared-v2/reference-fingers-of-frost-rank1.request.json"
       },
       "prepared": "reference-fingers-of-frost-rank1.prepared.json",
-      "prepared_sha256": "a66b5f6c4a32069ddd0cdd76bc08169161d872c6bd01c70aab7df0e0b89f3a42",
+      "prepared_sha256": "471eefd177a63a5cc800323ae5c276dce7f31b46672fadc60187b8022a475f4f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -223,7 +223,7 @@
         "path": "fixtures/mage/prepared-v2/reference-clearcasting.request.json"
       },
       "prepared": "reference-clearcasting.prepared.json",
-      "prepared_sha256": "a60fd1d6cc3568116f63121d56a1906edf40116c5be932375fbb028ab30b4fad",
+      "prepared_sha256": "4344c5bf1e9354d589a5b456cb6f36a6ba032f336d46e7f9a97a7cd8c17598b8",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -240,7 +240,7 @@
         "path": "fixtures/mage/prepared-v2/reference-missile-barrage.request.json"
       },
       "prepared": "reference-missile-barrage.prepared.json",
-      "prepared_sha256": "182e33d9672701ec58977038e06c5bd790cf2b1d53eb0078482c3625997ab258",
+      "prepared_sha256": "4d88b4b0c1b1fe7d78759292b2a3d947f736004c0d233004727f6455f9fd2b90",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -261,7 +261,7 @@
         "path": "fixtures/mage/prepared-v2/reference-procs.request.json"
       },
       "prepared": "reference-procs.prepared.json",
-      "prepared_sha256": "7c3c35de0596874e61dbedb2688376e3fcfb87534ed0d4ebaac63de618767e19",
+      "prepared_sha256": "f07d43eac690d43520cb00a2abdd516300aab801459e072f9897ad7d29b6fb1d",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -282,7 +282,7 @@
         "path": "fixtures/mage/prepared-v2/reference-long.request.json"
       },
       "prepared": "reference-long.prepared.json",
-      "prepared_sha256": "17825884e997eded265118bc353bfa488637ca8731b073915349fccd68d4db41",
+      "prepared_sha256": "bfbd48c838bbfe09e3136bd8f2751d6965f892c00788b2d1b012143ac2e20cdd",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -299,7 +299,7 @@
         "path": "fixtures/mage/prepared-v2/reference-ten-minutes.request.json"
       },
       "prepared": "reference-ten-minutes.prepared.json",
-      "prepared_sha256": "4327e746696aa6ee2b8434ce529e54ad0d51f10f1b67df8c4d3755b5f5079d94",
+      "prepared_sha256": "8c7d9cd0c9444f1ccba2db0b24d5d917ff96d1c7cb3533fb4bc94c700ee10d3e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -316,7 +316,7 @@
         "path": "fixtures/mage/prepared-v2/reference-no-missile-barrage.request.json"
       },
       "prepared": "reference-no-missile-barrage.prepared.json",
-      "prepared_sha256": "8d927a2994fb0540c6446a60e2e242d5440e9261062bea9d8c91052d49e40ddb",
+      "prepared_sha256": "d61ea354bf9a8b06fb43f3dc8579095a7b62e2e7ad61abd62b5267be9550de7a",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -333,7 +333,7 @@
         "path": "fixtures/mage/prepared-v2/arcane-blast.request.json"
       },
       "prepared": "arcane-blast.prepared.json",
-      "prepared_sha256": "9e600c6ca9844f59710ee150411af303fba8c32b846b874b0263bd98498821b0",
+      "prepared_sha256": "9195e3b909a91d149cb3cb3194822f7bb9af0b6132936060b5c79dc0c16085f1",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -350,7 +350,7 @@
         "path": "fixtures/mage/prepared-v2/arcane-blast-spenders.request.json"
       },
       "prepared": "arcane-blast-spenders.prepared.json",
-      "prepared_sha256": "25e9108c52b2b0600b039e3de296618a049fb0838eb10765023f0c849da1f745",
+      "prepared_sha256": "8052d612cd1272ff0303717dd1970191574e70f71038c559b97cdfbf5c909b3d",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -371,7 +371,7 @@
         "path": "fixtures/mage/prepared-v2/arcane-cooldowns.request.json"
       },
       "prepared": "arcane-cooldowns.prepared.json",
-      "prepared_sha256": "614e72088669081cf6136dd0b053df703b149b74b0ec22e93e9a49d735c2935f",
+      "prepared_sha256": "e81ee48a5b8cf5cb5a1723c8fc27b43118b0a444be232557705fb322b9e4017f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -392,7 +392,7 @@
         "path": "fixtures/mage/prepared-v2/arcane-cooldowns-long.request.json"
       },
       "prepared": "arcane-cooldowns-long.prepared.json",
-      "prepared_sha256": "7b6fc38bf9e4626b8b4f7a5da84ad47a3b527cf229e24daf3059650cbad144bf",
+      "prepared_sha256": "e5087f52e8a7ac063371727d7592d1459901d5e23749b85510d2b9fb7db745f9",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -409,7 +409,7 @@
         "path": "fixtures/mage/prepared-v2/arcane-ignite.request.json"
       },
       "prepared": "arcane-ignite.prepared.json",
-      "prepared_sha256": "79f22af10ed47bf5a7f161231302e682f976185d7982d1dd6735f3e564226b03",
+      "prepared_sha256": "1c29be6a7acf944b97785451e4cd68e1c22f13dbcf8e37f669867756935bc71c",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -426,7 +426,7 @@
         "path": "fixtures/mage/prepared-v2/arcane-reference.request.json"
       },
       "prepared": "arcane-reference.prepared.json",
-      "prepared_sha256": "78ee606f29410c615b21d22a4210c1d5693f58d21ec2e909e4cf5a74f2ab9aec",
+      "prepared_sha256": "4bdf32c8167db714030502d925f856d8255c091718caf3a06996aed153bc47b6",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -447,7 +447,7 @@
         "path": "fixtures/mage/prepared-v2/arcane-no-missile-barrage.request.json"
       },
       "prepared": "arcane-no-missile-barrage.prepared.json",
-      "prepared_sha256": "467f941c8591e4d3eaa6c85282c62b6047796bcbae0588641dce49cd7bdb632c",
+      "prepared_sha256": "c72646b897ceac5b87f53f4a53571b432d2d283df636aef3c395a0f8b38cbad4",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -468,7 +468,7 @@
         "path": "fixtures/mage/prepared-v2/fire-scorch.request.json"
       },
       "prepared": "fire-scorch.prepared.json",
-      "prepared_sha256": "ef8a0f3460971bb7f3075bc202abf2f713730071e95e8f8b77d99c27eea2cff7",
+      "prepared_sha256": "5a282e49f4a271ff8036da71527d5c088a0a94cf0021aa787d0b12a8e34982fe",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -489,7 +489,7 @@
         "path": "fixtures/mage/prepared-v2/fire-fireball.request.json"
       },
       "prepared": "fire-fireball.prepared.json",
-      "prepared_sha256": "6e8f968bc98618ebe705ed9f1c2c8cfd54a35f15e09ff09998043c7e0c554031",
+      "prepared_sha256": "59eb561a4f853e06355b2b2765cb3d6c58fb7f3140b25299da99ed2a7277e099",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -506,7 +506,7 @@
         "path": "fixtures/mage/prepared-v2/fire-fireball-scorch.request.json"
       },
       "prepared": "fire-fireball-scorch.prepared.json",
-      "prepared_sha256": "fab12dae22e3f053f5d4ceb0cf6dd172ecc1a7b02f18cdc1e9d235ec7bfaf846",
+      "prepared_sha256": "1458721a942d0747424f86397101e1d16a660c9fc81580cab2de40f1040bb99d",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -527,7 +527,7 @@
         "path": "fixtures/mage/prepared-v2/fire-master-of-elements.request.json"
       },
       "prepared": "fire-master-of-elements.prepared.json",
-      "prepared_sha256": "ea8f2633bb7a2ea671d54f66422b00f3414f05c2e90bd30663d9f391996ae55d",
+      "prepared_sha256": "0cb584ed0e6d4c0428fb659f49d243bee805f4a956fd6afddcac2806ee777eb5",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -544,7 +544,7 @@
         "path": "fixtures/mage/prepared-v2/fire-heating-up.request.json"
       },
       "prepared": "fire-heating-up.prepared.json",
-      "prepared_sha256": "32fa3b0beec8aff20623ba4d84be7711d390618e9d6174ec556a7bfb09fd9c79",
+      "prepared_sha256": "5565cce4af5216015c3f11df7a7c6a164acea6eefcdbccfa59bc7b15de4b1be1",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -565,7 +565,7 @@
         "path": "fixtures/mage/prepared-v2/fire-combustion.request.json"
       },
       "prepared": "fire-combustion.prepared.json",
-      "prepared_sha256": "0b3ccda7649fc390d3cc65d30dab4681ae8d1c3165abc2b1d77f3e7d5e20bca1",
+      "prepared_sha256": "8be728eb8ad0fce657b89e678ba7098dd00091d0a134d0ed53ce83ce505fcbe6",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -586,7 +586,7 @@
         "path": "fixtures/mage/prepared-v2/fire-ignite.request.json"
       },
       "prepared": "fire-ignite.prepared.json",
-      "prepared_sha256": "827b5473879eec64dccd2f77734e70a18e77b30362fa83cf86686a75cee19bff",
+      "prepared_sha256": "c7cfe0f2161cb73919b582a2eccf2f90d52439a7ac55a89951f3579a5f9acc13",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -607,7 +607,7 @@
         "path": "fixtures/mage/prepared-v2/fire-reference.request.json"
       },
       "prepared": "fire-reference.prepared.json",
-      "prepared_sha256": "0e49e022564904b4bdaa29c54057344651401550fd8c3d2027c5b321b67212fb",
+      "prepared_sha256": "0757389dccbfe89f077e959ff759d40a023a1be4442466196c37744598f0cbb8",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -628,7 +628,7 @@
         "path": "fixtures/mage/prepared-v2/frost-troll.request.json"
       },
       "prepared": "frost-troll.prepared.json",
-      "prepared_sha256": "522dcc66396a03a7937751096168b369fd9c09c3d7e538191fd18600c00bbd09",
+      "prepared_sha256": "5f31282f497c83e9f8f82fcef1b77cff0f4f976dbf2aec2cf69e0045149831b9",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -649,7 +649,7 @@
         "path": "fixtures/mage/prepared-v2/frost-troll-ten-minutes.request.json"
       },
       "prepared": "frost-troll-ten-minutes.prepared.json",
-      "prepared_sha256": "acf38d7b711444cd2caa426e5e25efc24d2468054fe3f26559d6cf4cd6fef267",
+      "prepared_sha256": "8a81cf946f8d6d4a3a8f7b4d9f51e1ba1e70a2f0d674268db890ee844043e809",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -666,7 +666,7 @@
         "path": "fixtures/mage/prepared-v2/frost-orc.request.json"
       },
       "prepared": "frost-orc.prepared.json",
-      "prepared_sha256": "36cc227632e2c3782e05a7c5ff31037c15b2b93e553e94087a4659f3866ae0e3",
+      "prepared_sha256": "27fd674290dcb6aea231e0e22992a784e998873307389e51acc834936d062792",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -687,7 +687,7 @@
         "path": "fixtures/mage/prepared-v2/frost-orc-cooldown-timings.request.json"
       },
       "prepared": "frost-orc-cooldown-timings.prepared.json",
-      "prepared_sha256": "e4f41b45252026e96eed3714d9e432a09899eddd119d902aff4b02b5cdff87d1",
+      "prepared_sha256": "0c6e7345a1f6886f4ed8ab1a8b8ec26fd5db097759174e856d97bc5cf20a72dd",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -704,7 +704,7 @@
         "path": "fixtures/mage/prepared-v2/frost-skyborne.request.json"
       },
       "prepared": "frost-skyborne.prepared.json",
-      "prepared_sha256": "456f024cc717711fb8749d12c0d7d67a750088dd501da1c8040ecc1f922d807a",
+      "prepared_sha256": "5bd020a1dfb6cee83bc47d886be21b0fc6321e6358bda8c716dc29739739bed7",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -721,7 +721,7 @@
         "path": "fixtures/mage/prepared-v2/fire-skyborne-read-ley-line.request.json"
       },
       "prepared": "fire-skyborne-read-ley-line.prepared.json",
-      "prepared_sha256": "fc470b3a98c10ae00db68768bec3f4517bcb30d12ed21c6f07f33398bbc9d8dd",
+      "prepared_sha256": "88b25ab1610a45692e0a24a43228d80a88f3b8d7d93870b3479996bdd565ded5",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -742,7 +742,7 @@
         "path": "fixtures/mage/prepared-v2/production-frostfire.request.json"
       },
       "prepared": "production-frostfire.prepared.json",
-      "prepared_sha256": "565c5a8f843f33cb185de584e3cd611fb3555032541eb5f2f6d12394576c82c5",
+      "prepared_sha256": "b92acaacab801d7cad19081c2eba4606f1147d6e36eb5724b569105e35d1b058",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -763,7 +763,7 @@
         "path": "fixtures/mage/prepared-v2/production-fire.request.json"
       },
       "prepared": "production-fire.prepared.json",
-      "prepared_sha256": "2af4894aa964ada8e801bd10fa87b5d11cfa7c8d258e5c6897d1cc2ea3a5c627",
+      "prepared_sha256": "2fa764a24685f0f23156e191a337ab91a55ca5182c3c4492214542d119b1f5c4",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -780,7 +780,7 @@
         "path": "fixtures/mage/prepared-v2/frostfire-resistances.request.json"
       },
       "prepared": "frostfire-resistances.prepared.json",
-      "prepared_sha256": "065aa3585707778ce13b7388d805a07cfc587878885f2df7875ba81d023162d1",
+      "prepared_sha256": "409e1331c168f534ffc33fa6c65e0789fea851a2f329f445ab2e32732d7ef636",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -797,7 +797,7 @@
         "path": "fixtures/mage/prepared-v2/frost-prepull.request.json"
       },
       "prepared": "frost-prepull.prepared.json",
-      "prepared_sha256": "b5154bf7c8fe8a697778203c3d17ab6c4cf988389962a7e37922a54931a95599",
+      "prepared_sha256": "870806b06d30c9143db7f33d00ad8cc1a3970a3920b8a3cc08ef6c08be9e7848",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -818,7 +818,7 @@
         "path": "fixtures/mage/prepared-v2/production-balance-druid.request.json"
       },
       "prepared": "production-balance-druid.prepared.json",
-      "prepared_sha256": "30863dd3fde8891c79dc583869749c8378a19ac0991cd519417315786a7c0451",
+      "prepared_sha256": "3210c687c162b2016eed913b5741f92da18e078147b1d710c4e02f20463fb247",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -839,7 +839,7 @@
         "path": "fixtures/mage/prepared-v2/production-elemental-shaman.request.json"
       },
       "prepared": "production-elemental-shaman.prepared.json",
-      "prepared_sha256": "5960bb408046bce7b1b1ab0692c9a1f16269531a0f0e2d92aa8f926fa17c2510",
+      "prepared_sha256": "d3a1e86239bf162ec91c98d91d5de54efba6ef90ec9ad39a146397139990ecac",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -860,7 +860,7 @@
         "path": "fixtures/mage/prepared-v2/elemental-shaman-dwarf-stoneform.request.json"
       },
       "prepared": "elemental-shaman-dwarf-stoneform.prepared.json",
-      "prepared_sha256": "c3247fbbb11e395bea09da3577e8c7f513fce6c1c855093b2ff1bf2bfafd7141",
+      "prepared_sha256": "5e648db93494498525752bfcb528e22fc9c77f82ecec25b69fc9ce288610388b",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -881,7 +881,7 @@
         "path": "fixtures/mage/prepared-v2/paladin-auto-attacks.request.json"
       },
       "prepared": "paladin-auto-attacks.prepared.json",
-      "prepared_sha256": "643f5cef6defb4f13294aca6154bafd3e37d3123bae64ed4cdb2ff0ede0a4aae",
+      "prepared_sha256": "1ea90932a4d2f5918272d51e753797c3884e305fca5cdc08654bbcd4ff51c229",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -902,7 +902,7 @@
         "path": "fixtures/mage/prepared-v2/paladin-auto-attacks-front.request.json"
       },
       "prepared": "paladin-auto-attacks-front.prepared.json",
-      "prepared_sha256": "e35402bc0b1e45cd540d6663f0feb713189784a1cb3daf3d9cecf78931435264",
+      "prepared_sha256": "c8d33f7592d9dcb60f90a1fac7179e5150d0bbc204a132a7c32dc47c47970d3b",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -919,7 +919,7 @@
         "path": "fixtures/mage/prepared-v2/production-destruction-warlock.request.json"
       },
       "prepared": "production-destruction-warlock.prepared.json",
-      "prepared_sha256": "5286d23cbfba4de8654c2ec77b1d1ccb297da495b32be2e9ef7115da73129ad7",
+      "prepared_sha256": "50407cbff8f28b9fc294add62cea9719de768876aeffc757fef598fbef254526",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -940,7 +940,7 @@
         "path": "fixtures/mage/prepared-v2/paladin-auto-attacks-expose-armor.request.json"
       },
       "prepared": "paladin-auto-attacks-expose-armor.prepared.json",
-      "prepared_sha256": "98213bc2b817e6cb82bb39fe5fba82710aee75e051836f8e6864ff003dcffd27",
+      "prepared_sha256": "040fe5ab7a6533c898ceee8189754a2b1e7a1fb629f5aa2764b9ab90c9515532",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -957,7 +957,7 @@
         "path": "fixtures/mage/prepared-v2/production-shadow-priest.request.json"
       },
       "prepared": "production-shadow-priest.prepared.json",
-      "prepared_sha256": "746a5b56264048323003fb1d0daaec43d90a77093798cef040d78684ad4d7c87",
+      "prepared_sha256": "46470b8557297a91acc45c8834e74af053ce40c875d4dd79e76edefcde19d55e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -978,7 +978,7 @@
         "path": "fixtures/mage/prepared-v2/shadow-priest-channel-no-recast.request.json"
       },
       "prepared": "shadow-priest-channel-no-recast.prepared.json",
-      "prepared_sha256": "f3541a3d03589b185852e4bd73cc46c776153af7ee9251d31c12f7fbbf33b6ca",
+      "prepared_sha256": "185071f8606ea26751f01bae2d42310254bad33b90c338b756c10a0a5d4f0dcf",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -999,7 +999,7 @@
         "path": "fixtures/mage/prepared-v2/shadow-priest-channel-uninterrupted.request.json"
       },
       "prepared": "shadow-priest-channel-uninterrupted.prepared.json",
-      "prepared_sha256": "123230807dbfc99d4b6002278a1153d66e4d1c9ef02f82050e0946a18083d408",
+      "prepared_sha256": "f719fd8c87f186842f514e4e079f244ccec765dea9d777382110ae9852fec108",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1020,7 +1020,7 @@
         "path": "fixtures/mage/prepared-v2/shadow-priest-sequence-relinquish.request.json"
       },
       "prepared": "shadow-priest-sequence-relinquish.prepared.json",
-      "prepared_sha256": "c86675a656759c97ca50dddda39f337f2475ed3c1ec671eb344e54398e98ff42",
+      "prepared_sha256": "b5d079f75ecdebc7792a6d60875636c1f0f829cd3353d39092c84358f34b9a25",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1041,7 +1041,7 @@
         "path": "fixtures/mage/prepared-v2/paladin-crusader-chili.request.json"
       },
       "prepared": "paladin-crusader-chili.prepared.json",
-      "prepared_sha256": "c6f40cbdbc8b6176a881b2b069acade588462a43bd989b50cc5faad1ed7c04fd",
+      "prepared_sha256": "eba66887c868c0540f30dac61004f0dd24fb1fabe387f706056070c91e69163d",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1062,7 +1062,7 @@
         "path": "fixtures/mage/prepared-v2/paladin-windfury-totem.request.json"
       },
       "prepared": "paladin-windfury-totem.prepared.json",
-      "prepared_sha256": "c32d4a08b01c326cc9c093a703a5a9498e0fd01b5ce1fa011c20f9116a015280",
+      "prepared_sha256": "4bef20994a6b93cfe35d2f20a36081230b59962800357d00e8815e7d5bf7f3be",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1083,7 +1083,7 @@
         "path": "fixtures/mage/prepared-v2/production-smite-priest.request.json"
       },
       "prepared": "production-smite-priest.prepared.json",
-      "prepared_sha256": "cec9a9e1fcd851cd2c193a7fd9e79639d49a58cfe6e31cad65e4dc1dc6f23fc7",
+      "prepared_sha256": "923138dca65bd3ea627c45c601b43ab912d076b87f3cc300ea242ab7d9097551",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1104,7 +1104,7 @@
         "path": "fixtures/mage/prepared-v2/tank-ret-autos.request.json"
       },
       "prepared": "tank-ret-autos.prepared.json",
-      "prepared_sha256": "997d56acc82814a5017a0b356a7a4e956490e2ff4872927d8ef2679fd74f0585",
+      "prepared_sha256": "80965e0fd2d6851a058bb183f695982cb76f2d343f3ba5fba08ab96683f2ac01",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1125,7 +1125,7 @@
         "path": "fixtures/mage/prepared-v2/tank-protection-paladin-autos.request.json"
       },
       "prepared": "tank-protection-paladin-autos.prepared.json",
-      "prepared_sha256": "2ca40114a09a11d039ed2174ebd59d003af484f895ee72da48180e5e5a72a490",
+      "prepared_sha256": "31b82a3cb888f7d2a4c9c459df7e11025edcb84cd0f6e9383cfdb11bb592a5f8",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1146,7 +1146,7 @@
         "path": "fixtures/mage/prepared-v2/enhancement-shaman-no-battle-shout.request.json"
       },
       "prepared": "enhancement-shaman-no-battle-shout.prepared.json",
-      "prepared_sha256": "9a9aa2db6867eeaa7defdcd78373d5f634625f73401e3a48e79b0aee8edea433",
+      "prepared_sha256": "721cc36c76a11c2b78bb27170d669955cf4fb01380a9f726b12cdbd73e36ea34",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1167,7 +1167,7 @@
         "path": "fixtures/mage/prepared-v2/production-enhancement-shaman.request.json"
       },
       "prepared": "production-enhancement-shaman.prepared.json",
-      "prepared_sha256": "cf02d428b92989ca43bc8f6deada67b9af681b279e53e39453564e9045eb2221",
+      "prepared_sha256": "dcc2bba4ecf675412938e978e1077619a131c0135897a6fc6b5cd0a83d42170b",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1188,7 +1188,7 @@
         "path": "fixtures/mage/prepared-v2/production-combat-rogue.request.json"
       },
       "prepared": "production-combat-rogue.prepared.json",
-      "prepared_sha256": "82ef0e5822274842add2d4da30e71dc9182a41f1440019aa191ad18816c4e041",
+      "prepared_sha256": "f749ad7d46f4808972c4dd40003d3f1db049ffecd331a700fba245a7e8a8e7d2",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1209,7 +1209,7 @@
         "path": "fixtures/mage/prepared-v2/combat-rogue-orc-shatter-curse.request.json"
       },
       "prepared": "combat-rogue-orc-shatter-curse.prepared.json",
-      "prepared_sha256": "dd9c73debb08cbe228be2bd722aa8a4dc4f7f34412c6acaeedb7772ff0303a36",
+      "prepared_sha256": "36638041b41190f46dc426d27fa73940567dd554b2b7bb30024ba7b253174807",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1230,7 +1230,7 @@
         "path": "fixtures/mage/prepared-v2/production-warrior.request.json"
       },
       "prepared": "production-warrior.prepared.json",
-      "prepared_sha256": "b6fbcfdc640a7317ac297b0423044f698a2fd92db25cf865899ed01dd3fdc0d2",
+      "prepared_sha256": "41061c82b0715a0592ea44006e91602559ad757432831b0ffa4cc32dc5f91852",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1251,7 +1251,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-heroic-strike.request.json"
       },
       "prepared": "warrior-heroic-strike.prepared.json",
-      "prepared_sha256": "9e9fcdce6a49046f1faf7261c65719ce039803ea3fc5c2b3f4d102879c6d2dac",
+      "prepared_sha256": "c7ee2ea312e94b1974e8e4f4d8d5e50ff1c58ebbb48463a585248dce6ba3f8ab",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1272,7 +1272,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-cleave.request.json"
       },
       "prepared": "warrior-cleave.prepared.json",
-      "prepared_sha256": "a8a1e60793b59ef77493f0c5ea3aac2116809e632ce1f0e8fa839d1757053f42",
+      "prepared_sha256": "d97168cb1d06e797ac6821d0a6d05c2f8c589f05a294bbb990ce180a09439d26",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1293,7 +1293,7 @@
         "path": "fixtures/mage/prepared-v2/production-marksmanship-hunter.request.json"
       },
       "prepared": "production-marksmanship-hunter.prepared.json",
-      "prepared_sha256": "516605b1faf2ead5a937bc1ad8887e08e621dfa6a4a4a6a94d3b9f219520376c",
+      "prepared_sha256": "c464ceb956509280d7bf47b6a40d79d8b21b32458e6649f5b8d776f4ce0f8578",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1314,7 +1314,7 @@
         "path": "fixtures/mage/prepared-v2/production-retribution-paladin.request.json"
       },
       "prepared": "production-retribution-paladin.prepared.json",
-      "prepared_sha256": "476a392135eb5c2e094d96628781e70d8e4106d2d1768a336c661b60ac99c295",
+      "prepared_sha256": "ef6af5d49718f76c9cd710e0136de485c534fa6a5d05400f17aee56fb3be40d9",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1335,7 +1335,7 @@
         "path": "fixtures/mage/prepared-v2/production-shockadin-paladin.request.json"
       },
       "prepared": "production-shockadin-paladin.prepared.json",
-      "prepared_sha256": "59a6a20d71a0a01564022a6d568764547df5f8391e1c00b1f4726c34597492f7",
+      "prepared_sha256": "216a87e9f625eb7ac9565a9368e4ef65a2b63f5fdac81f14e8ae1db688be5aab",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1356,7 +1356,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-orc-shatter-curse.request.json"
       },
       "prepared": "warrior-orc-shatter-curse.prepared.json",
-      "prepared_sha256": "55ff610837f37c5b1762f200d5d56e561a1fbfacf1c0e420a9915bdaad2c5bbe",
+      "prepared_sha256": "fba46b7ac6cfd4011b4d4b954675d46ea963147d23f135e304a455c7bfe8125b",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1373,7 +1373,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-troll-berserking.request.json"
       },
       "prepared": "warrior-troll-berserking.prepared.json",
-      "prepared_sha256": "fa23f107a8da2b3e01a20c44b31d5676a11018119cd72331cf8cc8addad28edb",
+      "prepared_sha256": "a018beedf0fd0096e84f5425dd9e8426d5bfc09a12317074d4d995025197e814",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1394,7 +1394,7 @@
         "path": "fixtures/mage/prepared-v2/production-affliction-warlock.request.json"
       },
       "prepared": "production-affliction-warlock.prepared.json",
-      "prepared_sha256": "8dc458d95b1d007fc25d821b2014925fb88f3d4c98986df0329bf9e78d71fbdf",
+      "prepared_sha256": "1deea2933c2c6dec0689ddcfd8a5c53048ea491ab31e5f464963c0a8da25d507",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1415,7 +1415,7 @@
         "path": "fixtures/mage/prepared-v2/production-demonology-warlock.request.json"
       },
       "prepared": "production-demonology-warlock.prepared.json",
-      "prepared_sha256": "046b9b5b9fc51fb2cc500df9a64f8e5b286b7b43af1e20739c4a3486e59d1c1b",
+      "prepared_sha256": "d06eda1f4c571302603bbc4992aafd5b893e59a796aa03f590f3be4918bcf3ff",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1436,7 +1436,7 @@
         "path": "fixtures/mage/prepared-v2/demonology-warlock-voidwalker-pact.request.json"
       },
       "prepared": "demonology-warlock-voidwalker-pact.prepared.json",
-      "prepared_sha256": "6fae71eb23f2934cb17218cb68045be849313d74bd8fb2b13be40c65faffad53",
+      "prepared_sha256": "6e80fcb0e1716a8d1f368373a625b349f286565789c4695c5aa384562b7f17ca",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1457,7 +1457,7 @@
         "path": "fixtures/mage/prepared-v2/tank-protection-paladin-dense-dynamite.request.json"
       },
       "prepared": "tank-protection-paladin-dense-dynamite.prepared.json",
-      "prepared_sha256": "fa7b940a1a7435549344c59e3dea27f85fa499a0f978b78183ef269fbb610e03",
+      "prepared_sha256": "1cab01b574ff95462bb758c03295b0f0842d7e3441240f28d4f4ced14a2211b1",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1478,7 +1478,7 @@
         "path": "fixtures/mage/prepared-v2/retribution-dense-dynamite.request.json"
       },
       "prepared": "retribution-dense-dynamite.prepared.json",
-      "prepared_sha256": "74f158ff2f235002ad86656b787d5b74a5fd3ca27638e6e4bb19dae1cb2a6fee",
+      "prepared_sha256": "b39adbfe928619e86c2c65016e9e714e815140bf789bb5649a791e4e2d2c537f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1499,7 +1499,7 @@
         "path": "fixtures/mage/prepared-v2/marksmanship-hunter-thorium-grenade.request.json"
       },
       "prepared": "marksmanship-hunter-thorium-grenade.prepared.json",
-      "prepared_sha256": "45867239da0a724dba9a732c5dcffadd6ffbe516bacfce955ba6319d2c248cbf",
+      "prepared_sha256": "336850590f380f234f9254a0ee5c144b9d538a50e6d603fd1f9911017fdc505f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1516,7 +1516,7 @@
         "path": "fixtures/mage/prepared-v2/tank-frost-mage.request.json"
       },
       "prepared": "tank-frost-mage.prepared.json",
-      "prepared_sha256": "7fc18c474899542f2fe051fce0bc59eb2250a8695fe197edf132268d1b9ac04a",
+      "prepared_sha256": "7f40b4ede9faeeece815113fc449a5838f5d92d244861acfd3a5a1d6fcdacaed",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1537,7 +1537,7 @@
         "path": "fixtures/mage/prepared-v2/production-assassination-rogue.request.json"
       },
       "prepared": "production-assassination-rogue.prepared.json",
-      "prepared_sha256": "651dc57871b63bae3676955dded8b265c6ee5d5108caa344dd43b07332fe0edc",
+      "prepared_sha256": "5adabd724e178b9ff8e5e40fd444ba30ff069acc1f4102a60f7d9149d7b57722",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1558,7 +1558,7 @@
         "path": "fixtures/mage/prepared-v2/production-subtlety-rogue.request.json"
       },
       "prepared": "production-subtlety-rogue.prepared.json",
-      "prepared_sha256": "4b0caf2dad0a3f94f2532e91a47151e434e924bc15c7ddb5530df6e23b5657f8",
+      "prepared_sha256": "d7368bbf6f4b172a54c1749b9de4aefd16336b07e51a62b24ba6af57a87b8a57",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1579,7 +1579,7 @@
         "path": "fixtures/mage/prepared-v2/production-feral-druid.request.json"
       },
       "prepared": "production-feral-druid.prepared.json",
-      "prepared_sha256": "50f431483eae4a50d7d8c209b26fa80138b255cd7887fb063b17007f23709199",
+      "prepared_sha256": "bb4eee06800d28a9e6a9e070eb328e097756a05897240bb29147f8ea2d4e5198",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1600,7 +1600,7 @@
         "path": "fixtures/mage/prepared-v2/feral-druid-faerie-fire-armor.request.json"
       },
       "prepared": "feral-druid-faerie-fire-armor.prepared.json",
-      "prepared_sha256": "92f4e3cd06f2450c4aa26aee50384537e8a6d8222e85bbb5b57ad87b7f22200a",
+      "prepared_sha256": "8fc4d132eda8d9680fec5c8a441c509d6e35f7ea72da3598e7bcf515e7121e98",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1621,7 +1621,7 @@
         "path": "fixtures/mage/prepared-v2/production-feral-bear-druid.request.json"
       },
       "prepared": "production-feral-bear-druid.prepared.json",
-      "prepared_sha256": "317c599bd378eef6e4749c266c978a2c3006d25c1f110f08a2568d3c66dae11a",
+      "prepared_sha256": "a656dabeaff967325ec5ba633e88a031993722d023a0ff8785ce27379cd981c8",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1642,7 +1642,7 @@
         "path": "fixtures/mage/prepared-v2/enhancement-shaman-self-totems.request.json"
       },
       "prepared": "enhancement-shaman-self-totems.prepared.json",
-      "prepared_sha256": "87d8ebd5ac1b30a391ecaaf10d988aa0d3e77a9486cb78e580a511ad6df43718",
+      "prepared_sha256": "f495b18ee0b93a90b006f521839efce1cad15b919423bcd57f2fb71e97c73867",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1663,7 +1663,7 @@
         "path": "fixtures/mage/prepared-v2/enhancement-shaman-dual-wield-frostbrand-sync-magma.request.json"
       },
       "prepared": "enhancement-shaman-dual-wield-frostbrand-sync-magma.prepared.json",
-      "prepared_sha256": "92c2889ea976e1993d641d7084920e22e1ec8639c17834cbb6dde566b1ffbc58",
+      "prepared_sha256": "465351b9765abb71a60de1668ad785bd5ec005f81e164c500fa3910913831b28",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1684,7 +1684,7 @@
         "path": "fixtures/mage/prepared-v2/enhancement-shaman-dual-wield-windfury-flametongue.request.json"
       },
       "prepared": "enhancement-shaman-dual-wield-windfury-flametongue.prepared.json",
-      "prepared_sha256": "2d3bb6e3030af9f6dee58402365da0fac6a07317bfb9caa7aea414132c091552",
+      "prepared_sha256": "1a9734c33bd69f8c2bf47811283e1f84fb17ae5d18c4589639efbf748b88a243",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1705,7 +1705,7 @@
         "path": "fixtures/mage/prepared-v2/enhancement-shaman-dual-wield-equal-speed-delay.request.json"
       },
       "prepared": "enhancement-shaman-dual-wield-equal-speed-delay.prepared.json",
-      "prepared_sha256": "8d2d768fd70476f4e1f7b5a1e27f0ebeabe0ef98e7f0050c792ca998480b91a2",
+      "prepared_sha256": "86ae25336d98e92464cc41f410877ffcc76d0744e1fc19c3c5703a1203820737",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1726,7 +1726,7 @@
         "path": "fixtures/mage/prepared-v2/enhancement-shaman-grace-replaces-windfury-totem.request.json"
       },
       "prepared": "enhancement-shaman-grace-replaces-windfury-totem.prepared.json",
-      "prepared_sha256": "060f55e85414cfbd26cd0d8228186d742045a8575dd590c86f59612520c4da4a",
+      "prepared_sha256": "52c59dde58c2b437caea31a010229de4319dc2a971878e1d4eaf56f377128c35",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1747,7 +1747,7 @@
         "path": "fixtures/mage/prepared-v2/production-arms-warrior.request.json"
       },
       "prepared": "production-arms-warrior.prepared.json",
-      "prepared_sha256": "60f4a48d2539de0a3cea010f5a061c8e1e364d08d24833c3d92d73dc8daa139c",
+      "prepared_sha256": "d590c79e006bca8aa3f0fdcefbb10d32636a82e8f14c1e8ffa474507434860de",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1768,7 +1768,7 @@
         "path": "fixtures/mage/prepared-v2/protection-paladin-no-dynamite.request.json"
       },
       "prepared": "protection-paladin-no-dynamite.prepared.json",
-      "prepared_sha256": "6f4eca0122ebc4dac51b5331d5661bdb53134f8bad4807f86e099ad129347767",
+      "prepared_sha256": "992dec1535b2cc9fdeef9ac64c63fc14df72bb60fa8a28b12bfdabd8f1fab15e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1789,7 +1789,7 @@
         "path": "fixtures/mage/prepared-v2/ret-protection-paladin-no-dynamite.request.json"
       },
       "prepared": "ret-protection-paladin-no-dynamite.prepared.json",
-      "prepared_sha256": "55e3b636938d849bba68243191df60ef8c503448a0e4e8e049c72ef349c5a76a",
+      "prepared_sha256": "426d68a384ac0f5ab5b296c8f506f2acd5e06b9b8b08e9ce2d13449052051fa8",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1810,7 +1810,7 @@
         "path": "fixtures/mage/prepared-v2/holy-protection-paladin-no-dynamite.request.json"
       },
       "prepared": "holy-protection-paladin-no-dynamite.prepared.json",
-      "prepared_sha256": "b1ee995bc53051446eacdf76fabbcb1d8e85f87bb8fc3fc448b9e42c9a99679c",
+      "prepared_sha256": "87a2cf2040dd21dba279eea042105f1aa9d10e6f9aa89bce727f92d2b5bc42e2",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1831,7 +1831,7 @@
         "path": "fixtures/mage/prepared-v2/production-protection-paladin.request.json"
       },
       "prepared": "production-protection-paladin.prepared.json",
-      "prepared_sha256": "aa3b289fe2aa38370b9b3349d3ee847e7dc5e6f0f8648ac8f822b4e2a143a946",
+      "prepared_sha256": "a0c8af5666fe4ebf18fe75fa00371065b85cc49ec1811a16f208a9ef63e52b4d",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1852,7 +1852,7 @@
         "path": "fixtures/mage/prepared-v2/production-ret-protection-paladin.request.json"
       },
       "prepared": "production-ret-protection-paladin.prepared.json",
-      "prepared_sha256": "7bf18e4a09258a1c704c7d1f5ac0353d5f120dc2d1cf8cc69cfdeba433557e1e",
+      "prepared_sha256": "ec7c4a54b73d78bc0fcf955bae20ae709aacccdc9d183af6a999947810f1c476",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1873,7 +1873,7 @@
         "path": "fixtures/mage/prepared-v2/production-holy-protection-paladin.request.json"
       },
       "prepared": "production-holy-protection-paladin.prepared.json",
-      "prepared_sha256": "7fd52046e19650938466683f03b8a18c5ce3670a93ce5def0aa5657b9a289da3",
+      "prepared_sha256": "49d50c6fb2dec01244ed3bb0c864a4c4524030a161603fad2a5517570db2587c",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1894,7 +1894,7 @@
         "path": "fixtures/mage/prepared-v2/demonology-warlock-orc.request.json"
       },
       "prepared": "demonology-warlock-orc.prepared.json",
-      "prepared_sha256": "c4d4f6b3c4de64344f3ee49f452cd64e917c378e5d7291acd8bd76d59f3e60f1",
+      "prepared_sha256": "024826c40ccbf954d3b77cd28f890314e01646d9f71bf40c42b5eda6a6fd787b",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1915,7 +1915,7 @@
         "path": "fixtures/mage/prepared-v2/production-beast-mastery-hunter.request.json"
       },
       "prepared": "production-beast-mastery-hunter.prepared.json",
-      "prepared_sha256": "259258d4679afae503d5ebc498664ab118dad4b2395fded75a2b861adcd8875f",
+      "prepared_sha256": "c09c6b3d1a99ddb0cfe578d8dcf9595cf2f5117c31e83d8d608bf4b38669a756",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1936,18 +1936,18 @@
         "path": "fixtures/mage/prepared-v2/survival-hunter-no-whelp.request.json"
       },
       "prepared": "survival-hunter-no-whelp.prepared.json",
-      "prepared_sha256": "c9aecd7e10005fff61d57c84fa882ce490fb7919f8b763a6dea7ae4a92c1eb3c",
+      "prepared_sha256": "34d4b37d33693da9bb2a842e742d9b2c335dcc3163b8f14a7deb1476c446d7cc",
       "expected_coverage": {
         "supported": true,
         "reasons": []
       },
       "go_result": {
         "file": "survival-hunter-no-whelp.go-result.json",
-        "sha256": "a4e239040f72081bf3293a0d8978d82194597a69daa31abbf009acfd204acdbf"
+        "sha256": "ceb5f3fb6c62fb6fd751e0fca9d7f026e0c02f74f6c48e4eafe82b6f8b2805a5"
       },
       "go_log": {
         "file": "survival-hunter-no-whelp.go-log.txt",
-        "sha256": "1f11f88991576fd92f599de93aa3719d10556cebcb9c1f132c09d16fdaf3c169"
+        "sha256": "890f2c5f7a7d8fe9649d6e9740272205c32369974d0e2207cc4a441dc61b295b"
       }
     },
     {
@@ -1957,18 +1957,18 @@
         "path": "fixtures/mage/prepared-v2/production-survival-hunter.request.json"
       },
       "prepared": "production-survival-hunter.prepared.json",
-      "prepared_sha256": "1947b10c1c478833b8f78ffe5204def2365399d89a7db40acfdcf8ac6d14f751",
+      "prepared_sha256": "cc40bcf6b3d234362ec04a1210056f3468b0b37dc6503ae480ae672826583b3f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
       },
       "go_result": {
         "file": "production-survival-hunter.go-result.json",
-        "sha256": "ed2b1c6a3f5df9d764a186ccf8cc6d5c4f4f1a7fe07d9c6ecbd9824620f7fec8"
+        "sha256": "c6179621ab4d3b22c5c0ea61aaadf3fb637d74954a37c234da477d89bcb6ac17"
       },
       "go_log": {
         "file": "production-survival-hunter.go-log.txt",
-        "sha256": "2220fc8be1cd68ffcc3a07cd1f3538a7bf71f6bda364ea9881b1ea5717a251ab"
+        "sha256": "c7095e0b2b4f5687ad880160bf6d697fadd001d6fdcd5ce8756b601ac20200eb"
       }
     },
     {
@@ -1978,7 +1978,7 @@
         "path": "fixtures/mage/prepared-v2/affliction-warlock-broad.request.json"
       },
       "prepared": "affliction-warlock-broad.prepared.json",
-      "prepared_sha256": "5a45e00801be5bec4b84139c62cf580f4048a0dcd418d8871e47624afd3049a1",
+      "prepared_sha256": "138d059843d172409567344c13db1f8c4dfe34593bbceea4361b43185c37290e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1999,7 +1999,7 @@
         "path": "fixtures/mage/prepared-v2/destruction-warlock-broad.request.json"
       },
       "prepared": "destruction-warlock-broad.prepared.json",
-      "prepared_sha256": "a400c624a04090680b0dac9917ffa9dd3bc286e3a36a5401e9a397b091adda15",
+      "prepared_sha256": "15c151c22bff317ef11fc29e6ba347a0a093ab26c50b36c8d27612ca4f461202",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2020,7 +2020,7 @@
         "path": "fixtures/mage/prepared-v2/affliction-warlock-death-coil.request.json"
       },
       "prepared": "affliction-warlock-death-coil.prepared.json",
-      "prepared_sha256": "c3f75aac9d6905316d9c3f5c78959be47767f8bc53a37a06d2676de7590bf2f8",
+      "prepared_sha256": "21e0d42fe2f02b78c07a8f6c734f073a0ec264a7268d3362f3de1a813bd1bf33",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2041,7 +2041,7 @@
         "path": "fixtures/mage/prepared-v2/demonology-warlock-recklessness.request.json"
       },
       "prepared": "demonology-warlock-recklessness.prepared.json",
-      "prepared_sha256": "450fab1606518fbe003c3bcfaa617e36c0059e30def8c834f0165a79b721841a",
+      "prepared_sha256": "6d075471af990f9e1aa557af790ea1546d7101505a0a6d47aa7f4dd359745cb1",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2062,7 +2062,7 @@
         "path": "fixtures/mage/prepared-v2/production-protection-warrior.request.json"
       },
       "prepared": "production-protection-warrior.prepared.json",
-      "prepared_sha256": "00b82a84146bb4f3cdb0ef92abc16a3714290df1cdd919dccfe97bdb043795f5",
+      "prepared_sha256": "fd59f98cc166ebbf521f095c71c901b83333d5d0df7bb1b7cf8c571b9196f73f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2083,7 +2083,7 @@
         "path": "fixtures/mage/prepared-v2/production-fury-protection-warrior.request.json"
       },
       "prepared": "production-fury-protection-warrior.prepared.json",
-      "prepared_sha256": "7d9db1e4464e04122256f4699ec96b6fc14dd8ef57deb7184d08eb73b021d2fa",
+      "prepared_sha256": "01c93bd5aa4923372570d6117a1f6bee4a0b503fa490a8ab90caf442a687861b",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2104,7 +2104,7 @@
         "path": "fixtures/mage/prepared-v2/ret-undead-exorcism.request.json"
       },
       "prepared": "ret-undead-exorcism.prepared.json",
-      "prepared_sha256": "c93d3f1f571f1ac8ce478386eda9d3be109c913169f65d8a6d21b1e18901718a",
+      "prepared_sha256": "9767343f9d11247fcd7817752d09538c5142ac222b87116f8d6dde068883084b",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2125,7 +2125,7 @@
         "path": "fixtures/mage/prepared-v2/ret-exorcism-humanoid.request.json"
       },
       "prepared": "ret-exorcism-humanoid.prepared.json",
-      "prepared_sha256": "4e06af1e4da9cf1ba8dc7616d584dbc1a9c8f502c1101d608df5aa3955f0adac",
+      "prepared_sha256": "a60e573264bfc59c9b6a0a027cb56f709ebc0a7ac85ca5d56bd42bc5e4ed2283",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2142,7 +2142,7 @@
         "path": "fixtures/mage/prepared-v2/protection-holy-shield-rank2.request.json"
       },
       "prepared": "protection-holy-shield-rank2.prepared.json",
-      "prepared_sha256": "45b679b3f9044e41016d9c3c1e47a9c37dde2b245ab4744166e0c6ea2bed0767",
+      "prepared_sha256": "c84f05af0853328c1f131fa996741aa2b49c888b68d8d673422a9afc861bc2ab",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2163,7 +2163,7 @@
         "path": "fixtures/mage/prepared-v2/shockadin-lights-vigil.request.json"
       },
       "prepared": "shockadin-lights-vigil.prepared.json",
-      "prepared_sha256": "897ffbaa5280e3bd96c73a8e116b19826abaeb1c6c28028bb57280f71ca9b4a0",
+      "prepared_sha256": "17722f5159da578e6a7cc34fb32eaa53a15bd79572d95e322a06c31c30b5d4f9",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2184,7 +2184,7 @@
         "path": "fixtures/mage/prepared-v2/ret-crusader-opener.request.json"
       },
       "prepared": "ret-crusader-opener.prepared.json",
-      "prepared_sha256": "ef8b135ffebdfd91a3cbdceffc124a928c19644d813978363a3ffebcaff9e0b4",
+      "prepared_sha256": "fd5ae5fa78690d4e9dab3c257fc9cc430973be2181b280847c1bb39cd624c5f0",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2205,7 +2205,7 @@
         "path": "fixtures/mage/prepared-v2/ret-crusader-fervor-over-raid.request.json"
       },
       "prepared": "ret-crusader-fervor-over-raid.prepared.json",
-      "prepared_sha256": "d5e8e4a10cffcd014e9486a02b99121ee397a1b201352e18892c0d95dff97637",
+      "prepared_sha256": "9b97da759389073a33df43da87b49990d8ffcc8e629ab46f9f46dc9a5a3e94c7",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2226,7 +2226,7 @@
         "path": "fixtures/mage/prepared-v2/ret-crusader-held.request.json"
       },
       "prepared": "ret-crusader-held.prepared.json",
-      "prepared_sha256": "c0ec412dbd2f74adf01c1416f0c176b07621a2a0b69b035feca8cf3c886a0f56",
+      "prepared_sha256": "da8854079def982ddbc161111e9e6d264dc804c369f4623e96cd45c1620f6022",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2243,7 +2243,7 @@
         "path": "fixtures/mage/prepared-v2/protection-eye-for-an-eye.request.json"
       },
       "prepared": "protection-eye-for-an-eye.prepared.json",
-      "prepared_sha256": "e0cd11198759a733e789d1ccab19129fb9a3f82de16d145540f318d558bf3c5f",
+      "prepared_sha256": "96d963aa4319c00b1484589ec48d8232163f714c8339c2ebc76a74395f97a1be",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2264,7 +2264,7 @@
         "path": "fixtures/mage/prepared-v2/shockadin-infusion-of-light.request.json"
       },
       "prepared": "shockadin-infusion-of-light.prepared.json",
-      "prepared_sha256": "67edf2edb3d85ddb6fdc3bec4888a941d2d1194c2ab36e7f5fb12ce7314a7199",
+      "prepared_sha256": "3e4a13427b2f1ec006d79a8a586c29750a23ab3b02a059bce05a7c7a24dbacd1",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2281,7 +2281,7 @@
         "path": "fixtures/mage/prepared-v2/shockadin-holy-alacrity.request.json"
       },
       "prepared": "shockadin-holy-alacrity.prepared.json",
-      "prepared_sha256": "763f88bb9dd3a81e265e99bf19a5a30911c69cec40098ce2e18725ab28595fe3",
+      "prepared_sha256": "4bbbf8b58319f58459c0dea189f50f7f5ea1cd3a83a167e99468d588b8e6b10c",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2298,7 +2298,7 @@
         "path": "fixtures/mage/prepared-v2/ret-pursuit-of-justice.request.json"
       },
       "prepared": "ret-pursuit-of-justice.prepared.json",
-      "prepared_sha256": "584f98a904a91e93fc2464b9580a9644d9ef0e71e9b51483b684ed5c11e91468",
+      "prepared_sha256": "6c7b16da0ef5181110a4a4c93e332a1393c367640d82450feb1a5d82039d6d5c",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2319,7 +2319,7 @@
         "path": "fixtures/mage/prepared-v2/feral-druid-rake.request.json"
       },
       "prepared": "feral-druid-rake.prepared.json",
-      "prepared_sha256": "038f34ea5ab616c5ef10aefac74b0faa7af877a40b0adbaa7e18db3f15d77415",
+      "prepared_sha256": "d983407f55cea265330641f70a81ff352cadd55b42783e4e2fe8c95b1095d0a4",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2340,7 +2340,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-defensives.request.json"
       },
       "prepared": "feral-bear-druid-defensives.prepared.json",
-      "prepared_sha256": "a7f88aaf094db135e304d7e8a0739d5ea2b4f37e831de3a681ed0b2995b598ca",
+      "prepared_sha256": "63ee8cdac7a5ecf0ef9c304ea93251a00ffb0c65bc9ac26219b1d6438fd8dca9",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2361,7 +2361,7 @@
         "path": "fixtures/mage/prepared-v2/feral-druid-feralheart-wolfshead.request.json"
       },
       "prepared": "feral-druid-feralheart-wolfshead.prepared.json",
-      "prepared_sha256": "2ad6a27e278aef92826d267de2046c03b93e20e6f83ad8e5571f2f6f484e34fa",
+      "prepared_sha256": "91699346b1718cb5ad704a61333c4f8bfb5157dcfff822e421523350c2833778",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2382,7 +2382,7 @@
         "path": "fixtures/mage/prepared-v2/feral-druid-unending-life.request.json"
       },
       "prepared": "feral-druid-unending-life.prepared.json",
-      "prepared_sha256": "4422539077974a94919c1a303542507a261c94f4daaa30edd6194a526b424748",
+      "prepared_sha256": "eb501cd27ecbd358eb5ec515802395bf9eedbce2fa460beae77925c4efcc709e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2403,7 +2403,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-feralheart.request.json"
       },
       "prepared": "feral-bear-druid-feralheart.prepared.json",
-      "prepared_sha256": "2c7b04d5603fcd4df27a00f23ef57c7fdfaacb4ea1005fc40ff56511631f193b",
+      "prepared_sha256": "e2cd56f1f11048bfcd06e746fd2caf77ec39802795d53d3348d160318f594c75",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2424,7 +2424,7 @@
         "path": "fixtures/mage/prepared-v2/balance-druid-berserk-natural-reaction.request.json"
       },
       "prepared": "balance-druid-berserk-natural-reaction.prepared.json",
-      "prepared_sha256": "cf2403395d785f39ab406553c556d7471c56ad6f68de5568de02e09a98d91c51",
+      "prepared_sha256": "67f6265b579552c19faa40ba154e18e73f7e23bcdd5ca65db8d592ec5854068f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2445,7 +2445,7 @@
         "path": "fixtures/mage/prepared-v2/shadow-priest-starshards.request.json"
       },
       "prepared": "shadow-priest-starshards.prepared.json",
-      "prepared_sha256": "9f7aff6d1d2cafe610e5455978f142d3db74abb9eed784e3593e6d3a6dd9dde8",
+      "prepared_sha256": "b1ba1eb31f083df3ce87684644aa6b840579f98e4e9fe0d23d22f044a0dcf233",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2466,7 +2466,7 @@
         "path": "fixtures/mage/prepared-v2/smite-priest-holy-nova.request.json"
       },
       "prepared": "smite-priest-holy-nova.prepared.json",
-      "prepared_sha256": "3eeeea50e986e9da99d112ff17ce2102f99bef6709481e6558179f77e2cd224f",
+      "prepared_sha256": "84cc832a8a37538f1c52e09717ea1f5d5474451210cab1445425fb4568c0ef5c",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2487,7 +2487,7 @@
         "path": "fixtures/mage/prepared-v2/shadow-priest-shadowfiend.request.json"
       },
       "prepared": "shadow-priest-shadowfiend.prepared.json",
-      "prepared_sha256": "7e97da45c329b7b7e1712252747af351a38062cb7add5f447e852135367c2840",
+      "prepared_sha256": "149835f38037b69cca142bcab25f6406567cc3ffd495f3b733719bde235ae4f1",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2508,7 +2508,7 @@
         "path": "fixtures/mage/prepared-v2/shadow-priest-shadowfiend-long.request.json"
       },
       "prepared": "shadow-priest-shadowfiend-long.prepared.json",
-      "prepared_sha256": "647eeee18101807f44b21fe46e681b2f562e1bbf1e268f2134fde72259d2bf21",
+      "prepared_sha256": "27f2db202b790e4c36f60c1fde03e13074a49d79f70ae1dc2ca5e0054632c15e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2529,7 +2529,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-crusader.request.json"
       },
       "prepared": "feral-bear-druid-crusader.prepared.json",
-      "prepared_sha256": "32309ba8064da1485f79f78aa3602792941984a4825b32cae9322fc6d5d6bb69",
+      "prepared_sha256": "90287fe732c3696ba307556db780d87f7e16b78ade3366f78125432bb3c9f0ec",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2550,7 +2550,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-survives.request.json"
       },
       "prepared": "feral-bear-druid-survives.prepared.json",
-      "prepared_sha256": "90e2f24126a2519d1f61e99a40f3196d6e4da20ac4c513d35247c96bce638fda",
+      "prepared_sha256": "3c0d0d7799dd69337d05959c00955e62c9dfd133d176b675a4d777ef8baed5a3",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2571,7 +2571,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-own-sunder.request.json"
       },
       "prepared": "arms-warrior-own-sunder.prepared.json",
-      "prepared_sha256": "d2fbe4d6232edbef22f558de2240f6f96ff6613e29e598cd215c82d7fc65591a",
+      "prepared_sha256": "2e3a71c865ff5a6b895206dc1b61c16af8ce085c047572d3da076f195bf05130",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2592,7 +2592,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-own-sunder.request.json"
       },
       "prepared": "protection-warrior-own-sunder.prepared.json",
-      "prepared_sha256": "eff3e8148423acc64d0495b06e3ee3173395066bbd1c2e824bd7ebf6c4269f3a",
+      "prepared_sha256": "b140bbb90cb1056f6effc56c961608553d403a65a8dab524e070f904ece42724",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2613,7 +2613,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-no-improved-slam.request.json"
       },
       "prepared": "arms-warrior-no-improved-slam.prepared.json",
-      "prepared_sha256": "60ebdd0bdaa797fa81da2ba9a70f534bb27a404e2e10f952c8026259d8db7a1b",
+      "prepared_sha256": "3cd02f7e2ddb29472a83c28b6299e1c7bddae0bcb4cc2b5140395784440f7126",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2634,7 +2634,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-pet-uptime-half.request.json"
       },
       "prepared": "beast-mastery-hunter-pet-uptime-half.prepared.json",
-      "prepared_sha256": "513b3158f2fe5ff64ccb941bee7b54127354d25b03eda5761056633c9c19b0a2",
+      "prepared_sha256": "c02877e7492b9002f95b55f0878e9d098a478eb126ff908e9022527d8d72a6ec",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2655,7 +2655,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-wind-serpent.request.json"
       },
       "prepared": "beast-mastery-hunter-wind-serpent.prepared.json",
-      "prepared_sha256": "6524d9f697223d97529325cbb4e0f09af3a4d7b80ebc663d0e41ab0b4c47115f",
+      "prepared_sha256": "71a3dbbb7329cc959d867f931b7b140f99897d46eb8a39c145cf5f3f96f9ec9e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2676,7 +2676,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-bat.request.json"
       },
       "prepared": "beast-mastery-hunter-bat.prepared.json",
-      "prepared_sha256": "fdda478b88c31b5d31cace2470abfc51fe6f486c99fee54b8128fbcbc9134954",
+      "prepared_sha256": "7e3dec397651e3d6d16dca951e5e280e64286bd3225667b6c86e3dac6b7cb727",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2697,7 +2697,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-gorilla.request.json"
       },
       "prepared": "beast-mastery-hunter-gorilla.prepared.json",
-      "prepared_sha256": "18ebc0e2c884909b508007c529d3960368f7ebbd3c79a9fc2e7a878ac593782c",
+      "prepared_sha256": "24e214cb0d208784d95d044e6c5d3e12cdf92d0b0690aa2702e6cdea670feaa9",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2718,7 +2718,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-raptor.request.json"
       },
       "prepared": "beast-mastery-hunter-raptor.prepared.json",
-      "prepared_sha256": "bedfa107fe4e2425e38c4f7c2e18ea940c35aa2efd125ec2f87d92bc1498f497",
+      "prepared_sha256": "c77b9eacf462b636542706fb064abb333de9f323c5859067a3ef42b4554cc513",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2739,7 +2739,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-spider.request.json"
       },
       "prepared": "beast-mastery-hunter-spider.prepared.json",
-      "prepared_sha256": "6d2f10c07ef1b1a94b9aa6a81cbb6a1884e4e1200d0cc020a2681d4b31e1cc66",
+      "prepared_sha256": "7a8c1d3ac2786bf8af69c3e9423a10008d7c47ab2ffde6a3d35e210159c9f41d",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2760,7 +2760,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-bear.request.json"
       },
       "prepared": "beast-mastery-hunter-bear.prepared.json",
-      "prepared_sha256": "ad455745ad3640ecc66624a562194b44bd90fcd90300bb77edee8ae2c847c809",
+      "prepared_sha256": "7a22119ff7503023b9a7dd65a684709c0afc93370ccca6a8d35cc736e8abd6fd",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2781,7 +2781,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-scorpid.request.json"
       },
       "prepared": "beast-mastery-hunter-scorpid.prepared.json",
-      "prepared_sha256": "986cc240f5c57ba2e79caf3401d6a0bf9fd1544c840f4ce7edc5a4dfe3406000",
+      "prepared_sha256": "46c87d13898b0a8894a7e997a51d92f256e03dac7976c23987d081f6a674c6b5",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2802,7 +2802,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-tallstrider.request.json"
       },
       "prepared": "beast-mastery-hunter-tallstrider.prepared.json",
-      "prepared_sha256": "784cce85430572aef3a1406e03350140505bc7094962322d4191ee298f4cc5c1",
+      "prepared_sha256": "0348e126250877d374dfbd2363af97fbef8f991f20c25cb16fabf9e1b9ce6c1f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2823,7 +2823,7 @@
         "path": "fixtures/mage/prepared-v2/marksmanship-hunter-rapid-recuperation.request.json"
       },
       "prepared": "marksmanship-hunter-rapid-recuperation.prepared.json",
-      "prepared_sha256": "ecefbc15452efaeb2490828162b803ff584b8fdaa17f7cd474fdfc6194a0882a",
+      "prepared_sha256": "1a0ac01b2d37874c122af30724c3aaff63cbda069575b8b78de1e53f0097f434",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2844,7 +2844,7 @@
         "path": "fixtures/mage/prepared-v2/survival-melee-hunter-cat-heartbeat.request.json"
       },
       "prepared": "survival-melee-hunter-cat-heartbeat.prepared.json",
-      "prepared_sha256": "e3653eb3cb97051c34ff8a5aa4fb9d63cbcca3f52124cb68751c155d50219735",
+      "prepared_sha256": "41c7f60d87d75a9e4d66ffc17bbc2c20ff9855da337c913bdf817db0607df20a",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2865,7 +2865,7 @@
         "path": "fixtures/mage/prepared-v2/marksmanship-hunter-arcane-shot.request.json"
       },
       "prepared": "marksmanship-hunter-arcane-shot.prepared.json",
-      "prepared_sha256": "51e3b5650a62a8a6cb293d721437de7fe26c5f84f0c8bdfa85213cc6574c32fa",
+      "prepared_sha256": "d082022aec024b5fb31c4d516a47a9611a33bf822713cb84b5778f7b7c342343",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2886,7 +2886,7 @@
         "path": "fixtures/mage/prepared-v2/marksmanship-hunter-predators-armor.request.json"
       },
       "prepared": "marksmanship-hunter-predators-armor.prepared.json",
-      "prepared_sha256": "6f54b45181bf23e1c1e4b5b3fbbf7428f5e51b19bdce21a28c200f7a35e549a4",
+      "prepared_sha256": "c8edb54e663c635d4db6560c6b9d878ae4e285faf049bc428fad43539f7aa1b4",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2907,7 +2907,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-beastmaster-armor.request.json"
       },
       "prepared": "beast-mastery-hunter-beastmaster-armor.prepared.json",
-      "prepared_sha256": "83de844d4e0d9b8d81346adbf63b1ed29a8d450e5b2b35db37f073586522fb35",
+      "prepared_sha256": "3cb7a6e6dc42ef1b9bcde5edb476fb7c286ca1f0de93e59c576fb1bf3575e012",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2928,7 +2928,7 @@
         "path": "fixtures/mage/prepared-v2/marksmanship-hunter-cryptstalker-armor.request.json"
       },
       "prepared": "marksmanship-hunter-cryptstalker-armor.prepared.json",
-      "prepared_sha256": "34aa3a004e849439d049795665586a1d9d610beac0282cc9f4ce1cbd548e42e0",
+      "prepared_sha256": "86e850478ce50fd581a9cc2571abfc5c8e11c3524d0c7ef51cb11bcb4bfac216",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2949,18 +2949,18 @@
         "path": "fixtures/mage/prepared-v2/survival-hunter-beaststalker-armor.request.json"
       },
       "prepared": "survival-hunter-beaststalker-armor.prepared.json",
-      "prepared_sha256": "f45565a486674a092c64252b860eaa1c64bd7c9ce7843459b2ab791a40de0345",
+      "prepared_sha256": "7096a7fcefbd60e52dc909e75e200dd41bed373585836edd7ebeea2f1c92dac1",
       "expected_coverage": {
         "supported": true,
         "reasons": []
       },
       "go_result": {
         "file": "survival-hunter-beaststalker-armor.go-result.json",
-        "sha256": "774ebe80fcab6bbb9c542b9c0c73216f2538cfe63febe514d5462cf84d276c1a"
+        "sha256": "3c659d97b43bc7bc9878585ba3d622d5cfcd1845f0cbd23808f439f3b68cfbd0"
       },
       "go_log": {
         "file": "survival-hunter-beaststalker-armor.go-log.txt",
-        "sha256": "99929c31b82d1ecd712e0dc8fc34bb6268d00e2d5c4f41f9d57fb9a5e16c8f43"
+        "sha256": "d6808d6cb8fc632a06f796312f9dfbece61ce5d71f93f9080e68c63623c9d38a"
       }
     },
     {
@@ -2970,7 +2970,7 @@
         "path": "fixtures/mage/prepared-v2/protection-paladin-dragons-call-hardcast.request.json"
       },
       "prepared": "protection-paladin-dragons-call-hardcast.prepared.json",
-      "prepared_sha256": "26cd6140cc7adaf88c4fce924b5c52886ae3f484d12ee7ad9f6e97954cf20191",
+      "prepared_sha256": "0d5a36640559f88368a290ef7421087ace227fa3fdb9bebf36d3cb85bba01061",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2991,7 +2991,7 @@
         "path": "fixtures/mage/prepared-v2/marksmanship-hunter-hands-of-power.request.json"
       },
       "prepared": "marksmanship-hunter-hands-of-power.prepared.json",
-      "prepared_sha256": "43acd6c6d434357c14267bdbf4770b06b26b465b92a44779920caab67f4db5c4",
+      "prepared_sha256": "d9e2af2cefe1e3546f5455f3f63876687fa6cadd23a3d9eda247d85c9069081b",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3012,7 +3012,7 @@
         "path": "fixtures/mage/prepared-v2/combat-swords.request.json"
       },
       "prepared": "combat-swords.prepared.json",
-      "prepared_sha256": "65bf2f031098abba868e0356e527a3cc38790dcf4bacf6feca704de9b865a4af",
+      "prepared_sha256": "96e07d52103a8bdb6e1b0322befb66e9a5ceb9cd20097fa89009fbe2b80e8f98",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3033,7 +3033,7 @@
         "path": "fixtures/mage/prepared-v2/combat-wound-poison.request.json"
       },
       "prepared": "combat-wound-poison.prepared.json",
-      "prepared_sha256": "3194320e23362af21694768e15e21cabe6bbcfa11164492e016039897afbedee",
+      "prepared_sha256": "40a814d204424f63df92663b151039a176fa90835718d9cfc084a0b0a6e0a1ee",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3054,7 +3054,7 @@
         "path": "fixtures/mage/prepared-v2/assassination-venom.request.json"
       },
       "prepared": "assassination-venom.prepared.json",
-      "prepared_sha256": "591199f49b085bd9dbbdc5d8e4787bd725956aa1458b1195182e047f09e45cd9",
+      "prepared_sha256": "63c3971002c95d608666b09b3f173dbda6484b1fe0c88ad3d4977fe92fc8d478",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3075,7 +3075,7 @@
         "path": "fixtures/mage/prepared-v2/subtlety-ghostly-hemorrhage-garrote.request.json"
       },
       "prepared": "subtlety-ghostly-hemorrhage-garrote.prepared.json",
-      "prepared_sha256": "4b4cf979429198fce671e59b852d6522360ed85027802066ad531c3489b40eb8",
+      "prepared_sha256": "f8a505457db82865b8fb404788ed409f6f8e023831c1addde3274fdffe84e893",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3096,7 +3096,7 @@
         "path": "fixtures/mage/prepared-v2/subtlety-quietus.request.json"
       },
       "prepared": "subtlety-quietus.prepared.json",
-      "prepared_sha256": "b3b12b405e764ac62f4412b1a6d623ab9ec01ccc145a1946b60356080a178b6e",
+      "prepared_sha256": "ae5c3ceabac8ef0f51698e25401392e84b2c6a7a15e5ad121582a889ecf12fed",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3117,7 +3117,7 @@
         "path": "fixtures/mage/prepared-v2/combat-riposte.request.json"
       },
       "prepared": "combat-riposte.prepared.json",
-      "prepared_sha256": "91208a5f611f8677acc6b2e0c0ef5879fc8ff772face9dd1b1af81d2aedf04c4",
+      "prepared_sha256": "169236cdca5c963e9304f6455676bd37273607867d164c9f7d0d2ecfbb79db8d",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3138,7 +3138,7 @@
         "path": "fixtures/mage/prepared-v2/combat-kidney-shot.request.json"
       },
       "prepared": "combat-kidney-shot.prepared.json",
-      "prepared_sha256": "2f88633360ffaa02a3f7b34ee262161e6bd248abbe86889b68dc7066f7ce6031",
+      "prepared_sha256": "d25d15f0b67490d7c22131942d532b0d9eef66b13c1eb22052949bd1e3356b3b",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3159,7 +3159,7 @@
         "path": "fixtures/mage/prepared-v2/assassination-kidney-shot.request.json"
       },
       "prepared": "assassination-kidney-shot.prepared.json",
-      "prepared_sha256": "56bd6bb25af3a839b6d3539b07836f69c21cd85e854624aa0aea2d0f395100e2",
+      "prepared_sha256": "20c117d6620798f4ef06d7e12b0421b1180104b2b42edac814b268f8b15d9ce9",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3180,7 +3180,7 @@
         "path": "fixtures/mage/prepared-v2/shadow-priest-thistle-tea.request.json"
       },
       "prepared": "shadow-priest-thistle-tea.prepared.json",
-      "prepared_sha256": "2ea5f46c7d2c625f0551f00d8a9297817d47472b02785c6143a2801ab53d9bef",
+      "prepared_sha256": "5026a404600aa306f2fb5f4cc10f38155cca382c7e324f88c294c99a1dfea2be",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3201,7 +3201,7 @@
         "path": "fixtures/mage/prepared-v2/shockadin-holy-light-illumination.request.json"
       },
       "prepared": "shockadin-holy-light-illumination.prepared.json",
-      "prepared_sha256": "ddaffa0c59eaaf78cdd761a607f4c8cbe449a1240c6442e07f84fb84d8926295",
+      "prepared_sha256": "1e06320ab8b7bd5b2f293c49e9742544b71738aa441848985d0146b7b6fd8809",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3222,7 +3222,7 @@
         "path": "fixtures/mage/prepared-v2/shockadin-holy-light-self.request.json"
       },
       "prepared": "shockadin-holy-light-self.prepared.json",
-      "prepared_sha256": "27cc24984f8d6dfc3b8a7fb68610150ccf41dd22b347b44e635e27fa1b8177d6",
+      "prepared_sha256": "f13ac92519d1a88a4bb24a230a3369c00798567408b54ca36e86f30b9156297d",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3243,7 +3243,7 @@
         "path": "fixtures/mage/prepared-v2/shockadin-flash-of-light-blessed.request.json"
       },
       "prepared": "shockadin-flash-of-light-blessed.prepared.json",
-      "prepared_sha256": "ca0c2b0340ea65cda772e16d2ee225c206ef32358733cc02247a5b62c17bed27",
+      "prepared_sha256": "5a5e6374e15438e30c7512ea54b8ed54856ff6e9d151caf13e39e5673a5456d9",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3260,7 +3260,7 @@
         "path": "fixtures/mage/prepared-v2/shockadin-holy-shock-heal.request.json"
       },
       "prepared": "shockadin-holy-shock-heal.prepared.json",
-      "prepared_sha256": "e54cc6a1ad974c1981f9775acecafb32d80e3ae98e561e6aee93c8395c45c2e2",
+      "prepared_sha256": "8a5166ca7bef1fac1f30b13e091451943c1879b6f8b74cb0748331d3ae54eddb",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3277,7 +3277,7 @@
         "path": "fixtures/mage/prepared-v2/shockadin-holy-light-infusion.request.json"
       },
       "prepared": "shockadin-holy-light-infusion.prepared.json",
-      "prepared_sha256": "699ee1768033cd9917d29926dd54e68ad4b49ec74fd3946fae3550b99c6c21d0",
+      "prepared_sha256": "af4e2c974531892c97b51b694928633bc1f0682e81a2159721b6a235d58136ef",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3294,7 +3294,7 @@
         "path": "fixtures/mage/prepared-v2/protection-flash-of-light-self.request.json"
       },
       "prepared": "protection-flash-of-light-self.prepared.json",
-      "prepared_sha256": "854538406fee02905b9645fef026e350ef344b1ad2b7cdcda664e723f9fa266c",
+      "prepared_sha256": "718a47f909fee71381b3e52c8ab2f0854a4cefaf81adf9bfd8b90a65291acf44",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3315,7 +3315,7 @@
         "path": "fixtures/mage/prepared-v2/protection-bulwark-threshold.request.json"
       },
       "prepared": "protection-bulwark-threshold.prepared.json",
-      "prepared_sha256": "49a115917d65b6c07a6460dd3100c33826af4157597887ad68dd8bf0b14ab318",
+      "prepared_sha256": "6b3c50288487434e55f0db19da2618b8c40424fd7471d8a27a3be9fb2eaf9eba",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3336,7 +3336,7 @@
         "path": "fixtures/mage/prepared-v2/protection-bulwark-rotation.request.json"
       },
       "prepared": "protection-bulwark-rotation.prepared.json",
-      "prepared_sha256": "7a05be34ab3e8e041afaded6953b25f0084095e0eeb1a5c00756c4c542215a12",
+      "prepared_sha256": "ce032553ffc9dc4919929d4eb26832761a597ae75b3d9ea1499da97124fcfe32",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3353,7 +3353,7 @@
         "path": "fixtures/mage/prepared-v2/protection-paladin-sapper.request.json"
       },
       "prepared": "protection-paladin-sapper.prepared.json",
-      "prepared_sha256": "7f85ffc5686ec49ea70d73727330c22b2adaaaa7195316bddb6b8703cf22d1dd",
+      "prepared_sha256": "5a4ad05fc10556647a9c3d07f2d18cb4d4afd49932db9adbf7125a5a71c7fc9c",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3374,7 +3374,7 @@
         "path": "fixtures/mage/prepared-v2/retribution-paladin-sapper.request.json"
       },
       "prepared": "retribution-paladin-sapper.prepared.json",
-      "prepared_sha256": "1c0fb0780d240a0a0b82e8c3347022c43a4f523b89df0d72094626b30436b2c2",
+      "prepared_sha256": "fad865ec3037d7ec3b935190ea70dc9aeba24d5713571f26a2daf12ebf98149c",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3391,7 +3391,7 @@
         "path": "fixtures/mage/prepared-v2/protection-bulwark-sapper.request.json"
       },
       "prepared": "protection-bulwark-sapper.prepared.json",
-      "prepared_sha256": "6936ea0f4fb17ce0c34c198aa8af6aec7424f923d07618728a80f908431f3661",
+      "prepared_sha256": "0f084e257b9f756babd6d5befd00e4da15368b94b6d29da6318abce013b75862",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3408,7 +3408,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-goblin-sapper.request.json"
       },
       "prepared": "protection-warrior-goblin-sapper.prepared.json",
-      "prepared_sha256": "ea26005af9152a8222bc6a8b738e63872171f0db6d429ef4512918a25666e910",
+      "prepared_sha256": "abaa7e7c5740db55bd5434753837d87a6b883361f605679d6d43dff84fcc6ad3",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3429,7 +3429,7 @@
         "path": "fixtures/mage/prepared-v2/fury-protection-warrior-winter-night.request.json"
       },
       "prepared": "fury-protection-warrior-winter-night.prepared.json",
-      "prepared_sha256": "66478bdb158c58a3a7a3568b5599f2ff5ddd2e83434d531be8a2c4dca1158a8c",
+      "prepared_sha256": "3e05a64165853777920f26f9a45ea697a803665f63ae15e702ea28b6ff600ad6",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3450,7 +3450,7 @@
         "path": "fixtures/mage/prepared-v2/affliction-warlock-lash-of-pain-rounding.request.json"
       },
       "prepared": "affliction-warlock-lash-of-pain-rounding.prepared.json",
-      "prepared_sha256": "410527ea9a871d1b7bb4727d6d93df4c2f6127822db91e34d64c8613df376036",
+      "prepared_sha256": "38c6321fe7b8fbf42b9d88e62b1635e3b3abdeba23d5eb347cdacd249a625be8",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3471,7 +3471,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-bloodthirst-rounding.request.json"
       },
       "prepared": "warrior-bloodthirst-rounding.prepared.json",
-      "prepared_sha256": "8bf8d1d73d90fd56b8e4f60ef0633952012bfd3a403b3b990d9c4aacc6a0cd16",
+      "prepared_sha256": "7d45a56bf262cafc935c565a8af33978da110a0246620a1d8ee5ba105b4a7c2e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3492,7 +3492,7 @@
         "path": "fixtures/mage/prepared-v2/protection-paladin-dwarf-stoneform.request.json"
       },
       "prepared": "protection-paladin-dwarf-stoneform.prepared.json",
-      "prepared_sha256": "57bad4a7d5cabb103e632670cf0af9235746feb3037138e7b7e44c22d660fc53",
+      "prepared_sha256": "43f63a789e1168ce999fc5e8947b4f3ff27e25afa47eee27aadf9941561ac9e1",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3513,7 +3513,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-dwarf-stoneform.request.json"
       },
       "prepared": "protection-warrior-dwarf-stoneform.prepared.json",
-      "prepared_sha256": "d8505dfd2de9a7de31ff10e9db9ceaab4759aa11465cc882df7a0920f82534d6",
+      "prepared_sha256": "0bb3a7a2e36871fc64f7e87f1fbf900870a544750dfd4fd0541bb58bd7171d57",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3534,7 +3534,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-orc-shatter-curse.request.json"
       },
       "prepared": "protection-warrior-orc-shatter-curse.prepared.json",
-      "prepared_sha256": "2b5a44ae1bfb9ffd7e05193dbb24eecd7bf09dcdc1250a1d63044dc16e6524d6",
+      "prepared_sha256": "f32c4b8437555859dce4e08e517c9f8d6c8e8a0721fd6f2d2d51500fd53b15b8",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3551,7 +3551,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-sapper-orc-shatter-curse.request.json"
       },
       "prepared": "protection-warrior-sapper-orc-shatter-curse.prepared.json",
-      "prepared_sha256": "4cadce89818175e0a4f907408e0e92dc9c93a95308cd1bc100b7224ea2a37714",
+      "prepared_sha256": "d3ec9f40d9cc33e5080035589847edc070b866d64a10d5e0fd4b2d3220ecb9c1",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3568,7 +3568,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-shield-wall.request.json"
       },
       "prepared": "protection-warrior-shield-wall.prepared.json",
-      "prepared_sha256": "de39627c3815015206f243b285b415ef447bf2b35f9a96ddc0f4603090454cd0",
+      "prepared_sha256": "c47cb1377bc3992b220fc496d81490ea250500e483eef0d56fec189465c88318",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3589,7 +3589,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-thistle-tea-shift.request.json"
       },
       "prepared": "feral-bear-druid-thistle-tea-shift.prepared.json",
-      "prepared_sha256": "08873a9acf7debd786b9e36b73658b252b4e2ab0aabce467af9728c6113a8359",
+      "prepared_sha256": "91382f7736796ca901c5d3916ba4f5eaa722098a8d3ea1f043abb6f775b2a93e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3610,7 +3610,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-potion-shift.request.json"
       },
       "prepared": "feral-bear-druid-potion-shift.prepared.json",
-      "prepared_sha256": "60d8b4ecb04df6de817a2b5388e793e901580b5e47d1bedc4d0f6ba00ad08efc",
+      "prepared_sha256": "f0a84ca84fa7634abf3b3940f6073e1193934de133e702ecae1fd2916ba5eb96",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3631,7 +3631,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-innervate-shift.request.json"
       },
       "prepared": "feral-bear-druid-innervate-shift.prepared.json",
-      "prepared_sha256": "d27826d1e95849d144097678ace69994f709e0b92c097f1feecf4183c2a60761",
+      "prepared_sha256": "ffe6acb558d046e379077fa867533815d977f55f2d028a4535328a79867db100",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3652,7 +3652,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-caster-interval.request.json"
       },
       "prepared": "feral-bear-druid-caster-interval.prepared.json",
-      "prepared_sha256": "0b27d4966da1a0a28635078b3d7c28594d7c4f7be5332c4b3ac91f594480dcc4",
+      "prepared_sha256": "1f9804d70b8fef8d6f4dd8d501f7f04969ffd1f028a07092e656e6bc99171c84",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3673,7 +3673,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-potion-shift-tauren.request.json"
       },
       "prepared": "feral-bear-druid-potion-shift-tauren.prepared.json",
-      "prepared_sha256": "96c41d59c2f002c63ba0e251aa187eee30f67e73052be98124efb3ba91628067",
+      "prepared_sha256": "1399e7f5da5b19da4bc36f0a0425bd985c554eb69b2ace34d06095711fb0663a",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3694,7 +3694,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-demonic-rune-autocast.request.json"
       },
       "prepared": "feral-bear-druid-demonic-rune-autocast.prepared.json",
-      "prepared_sha256": "47267d02c2223b98c655a1cda0c64fec46e8366bed1b51bd7fe224bef795edde",
+      "prepared_sha256": "ef09a2e0360da6aaf64514e847c2f9d314a9f5f2745375a0919e66ec2e447221",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3715,7 +3715,7 @@
         "path": "fixtures/mage/prepared-v2/balance-druid-party-windfury-totem.request.json"
       },
       "prepared": "balance-druid-party-windfury-totem.prepared.json",
-      "prepared_sha256": "1b5e90e5b1ee890cb8e342299794abbc7186c01c95ee8f2c8bb397fb66c562e9",
+      "prepared_sha256": "4e893a9c38b5fd52b40eedf608a51c8e31f3e62c0c81ca4bbca7c1e6642b9b09",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3736,7 +3736,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-party-grace-of-air-and-windfury.request.json"
       },
       "prepared": "warrior-party-grace-of-air-and-windfury.prepared.json",
-      "prepared_sha256": "3e0036ca61d139c522ca58c095bee3ce15d3b5ca71fa972aeb97bdecb495b082",
+      "prepared_sha256": "4af96cef944db71bd36289d8bc0853a378204eaf8ba4b293fa49f5c9b6bdc633",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3757,7 +3757,7 @@
         "path": "fixtures/mage/prepared-v2/affliction-warlock-raid-curse-of-elements.request.json"
       },
       "prepared": "affliction-warlock-raid-curse-of-elements.prepared.json",
-      "prepared_sha256": "1cac9fa6023973bac79036f55da3ed0a514936a41b7c99a539ccf1a0146bef71",
+      "prepared_sha256": "62d0686c794b1b7e39bb7a4b024475e01a30675de20286d6a1131a7a5a0a94d7",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3778,18 +3778,18 @@
         "path": "fixtures/mage/prepared-v2/survival-hunter-cat-and-whelp.request.json"
       },
       "prepared": "survival-hunter-cat-and-whelp.prepared.json",
-      "prepared_sha256": "0057d82a8409b6898f42234289ef0b8f3c1cc057e7c9c473af50ef38b37cffb1",
+      "prepared_sha256": "93cf3c285189dfaeec397c98486ccbdb6c00d829fdac7ffb3fb96dc49a394ddd",
       "expected_coverage": {
         "supported": true,
         "reasons": []
       },
       "go_result": {
         "file": "survival-hunter-cat-and-whelp.go-result.json",
-        "sha256": "13177da7bb78b2c76d5f281888eec8a88df2f86e8181be7fcb6233e4fa1543ae"
+        "sha256": "dda188aee4fc3e62a3f1bb1fceb0f87526ef2d35cb777446d6f28ec015b5a672"
       },
       "go_log": {
         "file": "survival-hunter-cat-and-whelp.go-log.txt",
-        "sha256": "e639ddd93a6558a3e8ddc47d7216f8843e12b0b3f87d617ba09569e11edc6497"
+        "sha256": "8efbcd3bda73139a0bbc113b2c048a4da2428cd629a7627e48fbf6b4c8027d47"
       }
     },
     {
@@ -3799,7 +3799,7 @@
         "path": "fixtures/mage/prepared-v2/combat-expose-armor.request.json"
       },
       "prepared": "combat-expose-armor.prepared.json",
-      "prepared_sha256": "1028b2ddf51c1a6eb9ec64028d6559bf49b2bc1dd61a1b8e4fcf7ff2ff90b30d",
+      "prepared_sha256": "521e0b420143e7782e1fd268ca0f09fb0424bec7402aec42271faecad86df2d9",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3820,7 +3820,7 @@
         "path": "fixtures/mage/prepared-v2/combat-improved-expose-armor.request.json"
       },
       "prepared": "combat-improved-expose-armor.prepared.json",
-      "prepared_sha256": "5d26d3adab2e22a226c26c702066940259b59be5581c0707834f1f94801c4c09",
+      "prepared_sha256": "c05bb1ea3f4812d65979e3b3351710ee81e3ddcedc40721748b07d2f26eb9429",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3841,7 +3841,7 @@
         "path": "fixtures/mage/prepared-v2/combat-expose-armor-raid-expose.request.json"
       },
       "prepared": "combat-expose-armor-raid-expose.prepared.json",
-      "prepared_sha256": "c4d8f828ac85a0b3a6f535e71103523e240721430f0c387d5f53922ebcb53753",
+      "prepared_sha256": "d38c63bb86b8aa84260a54ea73ba4e948a9175af20de4891e62d348ba9c99612",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3862,7 +3862,7 @@
         "path": "fixtures/mage/prepared-v2/combat-kidney-shot-tank.request.json"
       },
       "prepared": "combat-kidney-shot-tank.prepared.json",
-      "prepared_sha256": "3c94921951f658483188d431b352a484bf2356e8042acc4bccbfff7801d5dd1f",
+      "prepared_sha256": "d5ade3b0d197b33834b98b1e0d00df631b89065d64946086f3be230a4a754cb2",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3883,7 +3883,7 @@
         "path": "fixtures/mage/prepared-v2/combat-riposte-tank.request.json"
       },
       "prepared": "combat-riposte-tank.prepared.json",
-      "prepared_sha256": "c4ea31769205f4209b093f1b784f18142ea9d514d66aa10da17d198b65db1db7",
+      "prepared_sha256": "c486989954d8e4b10b123b20505035678719782f16a6e925454958daa3b7dcf4",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3904,7 +3904,7 @@
         "path": "fixtures/mage/prepared-v2/subtlety-ghostly-strike-tank.request.json"
       },
       "prepared": "subtlety-ghostly-strike-tank.prepared.json",
-      "prepared_sha256": "b17d7802c1a1056e0b5c66995147589fac50bb4a2499dd45ce58d011fbe39a69",
+      "prepared_sha256": "6a92ababa7f50cbb696b42404ae65ce6453fd021b588dd95ffe80f4812527140",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3925,7 +3925,7 @@
         "path": "fixtures/mage/prepared-v2/feral-druid-mighty-rage-potion.request.json"
       },
       "prepared": "feral-druid-mighty-rage-potion.prepared.json",
-      "prepared_sha256": "93e1f1345d6ea5ce9e0b20b951aa51d9c4ad25ddfed02a13df532009b1d410a0",
+      "prepared_sha256": "15660cf8b064b3494f546c0956dbeb4ff286dfc983c39ca6aa6979385fcc3529",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3946,7 +3946,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-major-mana-potion.request.json"
       },
       "prepared": "warrior-major-mana-potion.prepared.json",
-      "prepared_sha256": "382eaa708cb71c705cc92ca03cebac01367f367115a3fe67848212a6d66a6fd7",
+      "prepared_sha256": "890727179bc06594aba4f77ee96e28334638f791a018abe789e4fb91c69ff729",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3967,7 +3967,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-last-stand.request.json"
       },
       "prepared": "protection-warrior-last-stand.prepared.json",
-      "prepared_sha256": "414564fd5f6785cec0238a85bb88363535950afd7695490c436250b8b0e40396",
+      "prepared_sha256": "7dce4f9a9bc80e19cec707440800225f43c5090d82a5274588ac06a0a9c06cbf",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3988,7 +3988,7 @@
         "path": "fixtures/mage/prepared-v2/fury-protection-warrior-last-stand.request.json"
       },
       "prepared": "fury-protection-warrior-last-stand.prepared.json",
-      "prepared_sha256": "c906de80642baf8bd1b3d9f36be0b37334401ae186c893aeda6a338675a03411",
+      "prepared_sha256": "0addf11831e978b9b5b5f9c2a77959b84f077ac7a667fde817e09c627c194701",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4005,7 +4005,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-sapper-last-stand.request.json"
       },
       "prepared": "protection-warrior-sapper-last-stand.prepared.json",
-      "prepared_sha256": "67b1638c8b77ec3584187bc18ec9c8ecc633363f99a07889c7274866d7627af9",
+      "prepared_sha256": "6985e94612bbb1994714cc9ded570fe1ea16229dd7f4e68beb984e1279154473",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4022,7 +4022,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-threshold.request.json"
       },
       "prepared": "feral-bear-druid-threshold.prepared.json",
-      "prepared_sha256": "9e61aa6c6f3f9d6c37a9f6851469ba2350d540c341bd431c1b3bb684644fc82c",
+      "prepared_sha256": "33f16bef9a48f3f56975422359a45195e5973f33613c6644d3300d0f6a5d305e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4043,7 +4043,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-greater-stoneshield.request.json"
       },
       "prepared": "protection-warrior-greater-stoneshield.prepared.json",
-      "prepared_sha256": "39cda014f1beacb2b91e23761e8a4ac2b9c326c689f0ee171620055cfdd8e445",
+      "prepared_sha256": "9b21a7adcf3ff384f50fa46b0e1a0f21047cbc2840110c2ff05c3b3b7d174bdd",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4060,7 +4060,7 @@
         "path": "fixtures/mage/prepared-v2/protection-paladin-healing-potion.request.json"
       },
       "prepared": "protection-paladin-healing-potion.prepared.json",
-      "prepared_sha256": "859e8d850b3e1b49691b690ff729d5bbd792d869a8a4569d39ba3055113a79f6",
+      "prepared_sha256": "5c41d030a45bb8514db8b96782dc58ef4404c676dd328bfca568e74154521425",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4077,7 +4077,7 @@
         "path": "fixtures/mage/prepared-v2/retribution-front-untanked-parry-haste.request.json"
       },
       "prepared": "retribution-front-untanked-parry-haste.prepared.json",
-      "prepared_sha256": "8354769c6825bde37a6baf79ce68f192cbd1e871fd985f1f9769401630e6e56b",
+      "prepared_sha256": "e654cec001df221d8383158326544938c39f38de5e2c21646666fa1488dc8945",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4098,7 +4098,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-enrage-sapper.request.json"
       },
       "prepared": "warrior-enrage-sapper.prepared.json",
-      "prepared_sha256": "17079c1e77a83c3120513ca850d0fb2c38f8e7b761eaf6b7ffe6c7136690af99",
+      "prepared_sha256": "41134f1b1958bf1aa32345572367d7480de6a7623a2488900e8b6af107be8ab8",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4119,7 +4119,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-blood-craze-sapper.request.json"
       },
       "prepared": "warrior-blood-craze-sapper.prepared.json",
-      "prepared_sha256": "1bce716a2af5345e0d24a97b6d789314600676d43ddff1f06e1a4f1bc8ed70c9",
+      "prepared_sha256": "779dc202a9271f479aeb1a57c6d770d3dfa41b03ce3adcb8cb71b5e8fb530d60",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4140,7 +4140,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-improved-hamstring.request.json"
       },
       "prepared": "arms-warrior-improved-hamstring.prepared.json",
-      "prepared_sha256": "84d6cfa3ab6aadceed61ab320fa7785f313e28397f624a1e0c08f18783aaede7",
+      "prepared_sha256": "da8235ce810f804d41692e57e6bc1b183c4af145bccb1c99743d0c701834ffa4",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4161,7 +4161,7 @@
         "path": "fixtures/mage/prepared-v2/arcane-arcane-explosion.request.json"
       },
       "prepared": "arcane-arcane-explosion.prepared.json",
-      "prepared_sha256": "1cbe536346d427f6415a7bc9c6f0a9c7afe0b2a3d51a568935e7c06f357a767d",
+      "prepared_sha256": "cd1423e035b4a535c52704db1a7ed1358bc879e58cb8e5f50298e04ea5583f42",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4182,7 +4182,7 @@
         "path": "fixtures/mage/prepared-v2/frost-blizzard-improved-fingers.request.json"
       },
       "prepared": "frost-blizzard-improved-fingers.prepared.json",
-      "prepared_sha256": "f6362b9917792f17d23e20660f5200c5a9099d190fe48205e80e7a169e853b3e",
+      "prepared_sha256": "8fe15bd668e89b251acc08b020501b86ce3d8bce653247ee62b607de1f6dcdd4",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4203,7 +4203,7 @@
         "path": "fixtures/mage/prepared-v2/frost-cone-of-cold-improved.request.json"
       },
       "prepared": "frost-cone-of-cold-improved.prepared.json",
-      "prepared_sha256": "219dd509fc3ab6e414931cc11b17c712ad6b06e22b26c9c46f64cf0039c23741",
+      "prepared_sha256": "62d71630a7b993c8948e1f6fe337ab9d40b811674adb484799e178961fe2e0e5",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4224,7 +4224,7 @@
         "path": "fixtures/mage/prepared-v2/frost-frost-nova-improved.request.json"
       },
       "prepared": "frost-frost-nova-improved.prepared.json",
-      "prepared_sha256": "a1362f72f559c65aa295129841582d572f31edcf9a3a7b3e7f64e7025dfd82b0",
+      "prepared_sha256": "2c1caf609691808050089a8c3e4bbedff4a711048021282d9b3915c59ee0904f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4245,7 +4245,7 @@
         "path": "fixtures/mage/prepared-v2/fire-flamestrike-improved.request.json"
       },
       "prepared": "fire-flamestrike-improved.prepared.json",
-      "prepared_sha256": "666f922d0d3ed1f9c5bb2c515695764f8d302efe9564ec76c55fc709dd74492e",
+      "prepared_sha256": "757d5abe740f0961ca96d3d9732d96f0bc0532f83d94a3bb1ccda01f90f56c4b",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4266,7 +4266,7 @@
         "path": "fixtures/mage/prepared-v2/fire-blast-wave.request.json"
       },
       "prepared": "fire-blast-wave.prepared.json",
-      "prepared_sha256": "3d19f9dbac5cd21b33c3ef02563d849b757a7378d66da3582e5c0622a9ae431d",
+      "prepared_sha256": "0bfdf49a323429ef8b527cc2051fb6e60ab90548d961c9357440855465d31d1e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4287,7 +4287,7 @@
         "path": "fixtures/mage/prepared-v2/fire-preset-p1-ephemeral-power.request.json"
       },
       "prepared": "fire-preset-p1-ephemeral-power.prepared.json",
-      "prepared_sha256": "e1184d04349ffb834782e127a9d0f73632dfaf2f77ce57210f2a462076075afd",
+      "prepared_sha256": "90fe83eb6b06f1e2972b55043ff3daca3db7b48271122b1b6eb7ad57d928ba71",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4308,7 +4308,7 @@
         "path": "fixtures/mage/prepared-v2/arcane-preset-p0-freezing-band.request.json"
       },
       "prepared": "arcane-preset-p0-freezing-band.prepared.json",
-      "prepared_sha256": "59c921dd97042e1b26850d29f5c66e05e5cbcb2812aa26af72433cad65854802",
+      "prepared_sha256": "0d7e73fbe78dd1adafa843db0ef4b7c89677c28176229482fb6df78fbb76a3bf",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4329,7 +4329,7 @@
         "path": "fixtures/mage/prepared-v2/enhancement-shaman-preset-grace-of-air.request.json"
       },
       "prepared": "enhancement-shaman-preset-grace-of-air.prepared.json",
-      "prepared_sha256": "9584051c298d195e6b5115ed6a818c2da61371a9cc16bce320f15d083601cf1f",
+      "prepared_sha256": "38e2a9a3b69f228faac4748c4cb34ae3a9a3563a0a39e5e9fa542290ea4223d7",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4350,7 +4350,7 @@
         "path": "fixtures/mage/prepared-v2/protection-paladin-sulfuras.request.json"
       },
       "prepared": "protection-paladin-sulfuras.prepared.json",
-      "prepared_sha256": "40af54d7c4ee9dfed229f492ced47dd8fd87cb36efa7e6e22bd10d1a422ae904",
+      "prepared_sha256": "f450a7238de0bbd70bb9e4df8bfc359c7595fee62eb1f555650fdb042efad283",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4371,7 +4371,7 @@
         "path": "fixtures/mage/prepared-v2/feral-druid-threat-enchant.request.json"
       },
       "prepared": "feral-druid-threat-enchant.prepared.json",
-      "prepared_sha256": "9d1903c4c81e8e160ef307f672aeb71e44bff1da64f834340822d9f6292ffa9d",
+      "prepared_sha256": "b9de6f1295ec4f2493f7c05b3a4e69b43e46cb7a03b34907f252c932ca4b0c9d",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4392,7 +4392,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-subtlety-enchant.request.json"
       },
       "prepared": "feral-bear-druid-subtlety-enchant.prepared.json",
-      "prepared_sha256": "9065a640382d3db4dacefc727babbd0785bada46b23291244b18ed23f3a3c82a",
+      "prepared_sha256": "323e0592a8c81d3d17f2d69c18c4a7d31a0d39865a32f6a027b0a9d40cded501",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4413,7 +4413,7 @@
         "path": "fixtures/mage/prepared-v2/smite-priest-power-infusion.request.json"
       },
       "prepared": "smite-priest-power-infusion.prepared.json",
-      "prepared_sha256": "9d32cc885b38c91cfa4169ad6ce42eca13999350aca9eeee3a929e9fb96355f7",
+      "prepared_sha256": "9f26fd4145b9bfc511abe5988a97c0c78ef80a22cfd9e75acf7ae4f53fc56e97",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4434,7 +4434,7 @@
         "path": "fixtures/mage/prepared-v2/smite-priest-holy-nova-power-infusion.request.json"
       },
       "prepared": "smite-priest-holy-nova-power-infusion.prepared.json",
-      "prepared_sha256": "6cd8747183958047e59f72ac94fe94300abb37ccdb1a0aa3e563855a0e319331",
+      "prepared_sha256": "a6c13c4e787fbd03d3550fa2442a7c38ffff58d7eb6371cb587302562f39d6d9",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4455,7 +4455,7 @@
         "path": "fixtures/mage/prepared-v2/combat-rogue-item-procs.request.json"
       },
       "prepared": "combat-rogue-item-procs.prepared.json",
-      "prepared_sha256": "9d7bc09c67794701bda12043de5dbbee5dd722f5a751e7008b0f2ee986cca634",
+      "prepared_sha256": "ebafcd3e59a27a99b544c207702496a01b91fed7485098a433abbeed40b795ca",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4476,7 +4476,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-sweeping-strikes.request.json"
       },
       "prepared": "arms-warrior-sweeping-strikes.prepared.json",
-      "prepared_sha256": "4088f7529a0b2be4215e011d5a781235b3bd2c9865f5e47883c5ec54d50660fe",
+      "prepared_sha256": "73db3c035ddce2c9c4875703601570cf4be9276ab0291317324ce4d9ebff5883",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4497,7 +4497,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-battlegear-of-might.request.json"
       },
       "prepared": "protection-warrior-battlegear-of-might.prepared.json",
-      "prepared_sha256": "88436cb3ff4e32a06850018509314f0f294371d83bd44fbf1b1585161d2595be",
+      "prepared_sha256": "8eb6b7bd7792bfaf1b20a347296b623d67952ad249d42f4b4887620a0a5e9d90",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4518,7 +4518,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-premier-shield-wall.request.json"
       },
       "prepared": "protection-warrior-premier-shield-wall.prepared.json",
-      "prepared_sha256": "886996543a4e5b29114f9591782d07e7a2963749d99c6b5c63a9688839427678",
+      "prepared_sha256": "3a9cce2bb5420e4229d3b192970b3b5232acb16f4c1f7e769d7bda475352376d",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4539,7 +4539,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-battlegear-of-valor.request.json"
       },
       "prepared": "protection-warrior-battlegear-of-valor.prepared.json",
-      "prepared_sha256": "37266f8a353aa7c855e6f5145d7ce6f77347ee443945138b1f316424ee5e0842",
+      "prepared_sha256": "cf597df61d0cf955940f08cd5a2c9324d579042ec9307643be825bb6d64156d0",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4560,7 +4560,7 @@
         "path": "fixtures/mage/prepared-v2/fury-warrior-rivenspike.request.json"
       },
       "prepared": "fury-warrior-rivenspike.prepared.json",
-      "prepared_sha256": "30c68ca30f31233e493bb8226da6b3039b88952d7bbc2b139c0fe2b7208763b9",
+      "prepared_sha256": "467b6b1d1a1b1ac7d9a1b3f03eda1379df7576104405278e48b0cd34c6c1e7e6",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4581,7 +4581,7 @@
         "path": "fixtures/mage/prepared-v2/fury-warrior-battlegear-of-might-sapper.request.json"
       },
       "prepared": "fury-warrior-battlegear-of-might-sapper.prepared.json",
-      "prepared_sha256": "35252e3b62f923027407733defecf7460746656040575aa702c31858763aac24",
+      "prepared_sha256": "718b6280e9fd6d09404130726f3521a8fcfe72e0eb37ada31cb1f49bcf365b1f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4602,7 +4602,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-blood-craze-ephemeral-power.request.json"
       },
       "prepared": "protection-warrior-blood-craze-ephemeral-power.prepared.json",
-      "prepared_sha256": "a2fc20f5cd278ca10d628c69f64688f0f9049b5b54b68dfec90f50e4d1fcb13c",
+      "prepared_sha256": "9454806a6196daa2eb78a0e7635e935a46f838ce533cd5b270312f277be9c7a7",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4623,7 +4623,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-blood-craze-neverending-cup.request.json"
       },
       "prepared": "protection-warrior-blood-craze-neverending-cup.prepared.json",
-      "prepared_sha256": "8a2f6652375743549deb5908d88d03f28467acb3286355b2e789c88f541ab641",
+      "prepared_sha256": "f55c77557179b78218912de9ef6db5ab5f608eac00856ef4b9b0f2dab0013fa3",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4644,7 +4644,7 @@
         "path": "fixtures/mage/prepared-v2/protection-paladin-seal-of-fury.request.json"
       },
       "prepared": "protection-paladin-seal-of-fury.prepared.json",
-      "prepared_sha256": "69c1cf913f95e25d6f210a1f487809deb54fc6d318d96f9b530b202c83163f91",
+      "prepared_sha256": "f89375b4c7e5a086de1cce6032b56393cc4aa0ef31f8aff17f7b94e42fdec468",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4665,7 +4665,7 @@
         "path": "fixtures/mage/prepared-v2/ret-protection-paladin-seal-of-fury.request.json"
       },
       "prepared": "ret-protection-paladin-seal-of-fury.prepared.json",
-      "prepared_sha256": "0fc8e619d37b7931358d85d90c8f4e9ad94b682d766df4e240b53c87255b9787",
+      "prepared_sha256": "28aad93044b43e20d9d59e4e2aae4727b6bfbc8d3cb8fdd5433ab2b1cb78d1de",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4682,7 +4682,7 @@
         "path": "fixtures/mage/prepared-v2/holy-protection-paladin-seal-of-fury.request.json"
       },
       "prepared": "holy-protection-paladin-seal-of-fury.prepared.json",
-      "prepared_sha256": "9557ca1e46278670a3043e786be695147a8ebfcc84b77057feb0e095c6e05e5d",
+      "prepared_sha256": "3d96ebc7c51e17b18d3f4dab4b2bb3f8dce777dd7d32ede65e472c5f0158cb6f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4699,7 +4699,7 @@
         "path": "fixtures/mage/prepared-v2/retribution-paladin-seal-of-fury-twist.request.json"
       },
       "prepared": "retribution-paladin-seal-of-fury-twist.prepared.json",
-      "prepared_sha256": "6c5529ca4453297b38c2240599dabc82f3ba7b0937466fd8f611e958f6bd2ac5",
+      "prepared_sha256": "1cfb0744b257665175d8361b0bf11217f115b6f2443f8b16c2d94177f037137f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4720,7 +4720,7 @@
         "path": "fixtures/mage/prepared-v2/protection-paladin-seal-of-fury-bulwark-sapper.request.json"
       },
       "prepared": "protection-paladin-seal-of-fury-bulwark-sapper.prepared.json",
-      "prepared_sha256": "26143e982ad8c077a3c1d56d1900d4a7bada37b2a2b4a51fb63730f7eafde63b",
+      "prepared_sha256": "fdb82cdc1f9490a0f101c4b82c4632ca6a27642f3d3a2a8729e1640e520708de",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4737,7 +4737,7 @@
         "path": "fixtures/mage/prepared-v2/arcane-mage-spell-stat-procs.request.json"
       },
       "prepared": "arcane-mage-spell-stat-procs.prepared.json",
-      "prepared_sha256": "b10db2cfb37d92a5d8ef4c488840d28e7c80e4d2be6943a0f1e59fc56d0322bd",
+      "prepared_sha256": "2157548550d8831eb1a61525eb04b6c5bde746bd6491727c17d545bced6e7468",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4758,7 +4758,7 @@
         "path": "fixtures/mage/prepared-v2/fire-mage-mana-on-use-trinkets.request.json"
       },
       "prepared": "fire-mage-mana-on-use-trinkets.prepared.json",
-      "prepared_sha256": "ec94588fa5bf4f66e5056381d8ba0970f8f3647b45fe3958e8811f0a0e753451",
+      "prepared_sha256": "4b8e317b19cd94a2896a6aea974f22ce689d1f16acbba31f93c3a23da3033566",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4779,7 +4779,7 @@
         "path": "fixtures/mage/prepared-v2/elemental-shaman-insight-earthen-sigil.request.json"
       },
       "prepared": "elemental-shaman-insight-earthen-sigil.prepared.json",
-      "prepared_sha256": "a7674fe6eb62c97dd3b4b98b265a6852ebc9ca1d2d668a042bdb0cdf0adc60d2",
+      "prepared_sha256": "8c629ab5f0db5c8319047b42ff3879140a02981de3aa7318a20c13eaf54ecea0",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4800,7 +4800,7 @@
         "path": "fixtures/mage/prepared-v2/arcane-mage-infernal-lasso.request.json"
       },
       "prepared": "arcane-mage-infernal-lasso.prepared.json",
-      "prepared_sha256": "d7ef2380e46d2e36da5cf3407084ff99370e62be16bf85c45153278db0a705a4",
+      "prepared_sha256": "a7f7bcd1f21e37e3e6acbc6b13cd503ea1397559ba378294e121e62c2faf9bd5",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4821,7 +4821,7 @@
         "path": "fixtures/mage/prepared-v2/arcane-mage-linkens-boomerang.request.json"
       },
       "prepared": "arcane-mage-linkens-boomerang.prepared.json",
-      "prepared_sha256": "c61853d3efc2effa4cbf99134ee77e2b37f0cadd27c5bd635277fbbef39edc9e",
+      "prepared_sha256": "e63105d64163949cc8d8fd87d42a89ecb2c076712fcbd8e4e194acb5ad0b5450",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4842,7 +4842,7 @@
         "path": "fixtures/mage/prepared-v2/arcane-mage-smokeys-lighter.request.json"
       },
       "prepared": "arcane-mage-smokeys-lighter.prepared.json",
-      "prepared_sha256": "adc388027ab521949acf8f2945cc00a51981c4f321c80492fca190714e24190e",
+      "prepared_sha256": "055b1685b3de2ddde027c92292952d1df09e82bd2bd35c8d701a3e7deb645609",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4863,7 +4863,7 @@
         "path": "fixtures/mage/prepared-v2/fury-warrior-everlook-pathcarver.request.json"
       },
       "prepared": "fury-warrior-everlook-pathcarver.prepared.json",
-      "prepared_sha256": "c68285fa342b338c09f35279d1cb8f81fa08ae11796a72d038fbf9d0b9979897",
+      "prepared_sha256": "248b0c2ae1ad86dc99feb92f8577f0fbecec0f89c143a1a38a0e307a6c474c0c",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4884,7 +4884,7 @@
         "path": "fixtures/mage/prepared-v2/affliction-warlock-golden-banana.request.json"
       },
       "prepared": "affliction-warlock-golden-banana.prepared.json",
-      "prepared_sha256": "48f4929e8265b7f7963758b1f1878b46e4dd020a07d54adacde34a322f235d5d",
+      "prepared_sha256": "4a9ffd870e7fdd17efca890e69f9fae155cbba1e95837c99936eecea80dd9bdb",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4905,7 +4905,7 @@
         "path": "fixtures/mage/prepared-v2/shadow-priest-serenity-field.request.json"
       },
       "prepared": "shadow-priest-serenity-field.prepared.json",
-      "prepared_sha256": "974530c1a4085328788abbea1aa0d866f8346e15263bc10d17c01d770ef00095",
+      "prepared_sha256": "0caae5585496322a1577c11209ccbb4991bc647755d4fe509b013b1b82eefc1d",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4926,7 +4926,7 @@
         "path": "fixtures/mage/prepared-v2/fury-warrior-prismcharm.request.json"
       },
       "prepared": "fury-warrior-prismcharm.prepared.json",
-      "prepared_sha256": "6237ddf3a20f0a6f8b39ed8083e8459740237f0755c4c3e7597130292acee39f",
+      "prepared_sha256": "805386093b400d880046f6ed68c163d3ebf6e7584fe48272a3ddc5b3b143093f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4947,7 +4947,7 @@
         "path": "fixtures/mage/prepared-v2/frost-mage-frozen-heart.request.json"
       },
       "prepared": "frost-mage-frozen-heart.prepared.json",
-      "prepared_sha256": "28a6637dbafd934d85300263928c32472570bbd91e81e4580dc04d3e450ab869",
+      "prepared_sha256": "5a0e5bd3f2bac49605db2144cdbfe61cf44a0e7f08f3746e2f1aaea516101564",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4968,7 +4968,7 @@
         "path": "fixtures/mage/prepared-v2/combat-rogue-defensive-cooldowns-tank.request.json"
       },
       "prepared": "combat-rogue-defensive-cooldowns-tank.prepared.json",
-      "prepared_sha256": "b4c7ad808db72d33b98311d3b21259178be9cddb05ab84499dbd7bc4133c707e",
+      "prepared_sha256": "a281e5d7224320c3b210097f103f0672f505f85de49101dbc45df232cbd43e0e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4989,7 +4989,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-heart-of-wyrmthalak.request.json"
       },
       "prepared": "warrior-heart-of-wyrmthalak.prepared.json",
-      "prepared_sha256": "f13048c0989f2b954b37dd47db64586064754d1811ee633e988a9229122eee7c",
+      "prepared_sha256": "0f4ea4d444ce4ce28e876560e95997ead119bc09d0f425edd330de07aa1a384e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5010,7 +5010,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-recovery.request.json"
       },
       "prepared": "arms-warrior-recovery.prepared.json",
-      "prepared_sha256": "4b1a310063c2c984ddc0280f766dbf409e56b61ff292b3975dee236f51aaccf6",
+      "prepared_sha256": "25a13f58d9d35432496cb86e879b27d61839f95a22ca8be2ffd15fd576834ba7",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5031,7 +5031,7 @@
         "path": "fixtures/mage/prepared-v2/arcane-mage-second-wind.request.json"
       },
       "prepared": "arcane-mage-second-wind.prepared.json",
-      "prepared_sha256": "818d8ae09d6c0c6ac8d04b62bebfbf7e9236a262b7d3bfe1df97b58b1dd7b8c8",
+      "prepared_sha256": "8fc7e0e51f455c5d79338ede4e21f4604f7ad5c1b532f423b1ec3cbfba358846",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5052,7 +5052,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-mark-of-resolution-threshold.request.json"
       },
       "prepared": "protection-warrior-mark-of-resolution-threshold.prepared.json",
-      "prepared_sha256": "a78071ca235c74e9adce86b8068e94abb1f6547bdb94b12ba7f182456125280f",
+      "prepared_sha256": "ad27d1682dd4487d1d903855172c189ef2cd1ba85fe1c1b32e22960165255128",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5073,7 +5073,7 @@
         "path": "fixtures/mage/prepared-v2/protection-paladin-arena-grand-master-threshold.request.json"
       },
       "prepared": "protection-paladin-arena-grand-master-threshold.prepared.json",
-      "prepared_sha256": "cf93ac10b6ffe4aead6cd7ba16362898b6170dc1dc0fed3aade776259ea9b6d7",
+      "prepared_sha256": "b07e22eeed04dd5d05b8f64447f9eb3bbe1c6b7715c7349b7c2d57157b782106",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5094,7 +5094,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-lifestone-threshold.request.json"
       },
       "prepared": "feral-bear-druid-lifestone-threshold.prepared.json",
-      "prepared_sha256": "3d91f7377c5b67812f60239598e6fadd4efd77226cfed7f7a7075cf3b67818c6",
+      "prepared_sha256": "b0a2aa8c5b9b11b409aec9b099a43e96a4c31e9add7134761331dccd5ca90c45",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5115,7 +5115,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-fiery-blaze.request.json"
       },
       "prepared": "arms-warrior-fiery-blaze.prepared.json",
-      "prepared_sha256": "6c66d31b1673ece8cf9fff55b3641168cedec8f77e752ba98b9a611057a71eec",
+      "prepared_sha256": "71c3af0c06497948a6296773ca97042580491ad5314fc8d2332bf07fb4d90895",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5136,7 +5136,7 @@
         "path": "fixtures/mage/prepared-v2/protection-paladin-lay-on-hands.request.json"
       },
       "prepared": "protection-paladin-lay-on-hands.prepared.json",
-      "prepared_sha256": "90432b63687c0543dc8325ca7e25043cc4e3a4ff2c5c45b92beb16ade71fa4ce",
+      "prepared_sha256": "2875c062f153bef22aa616912b0136ae9336d53a4bc002a5d28c44f16911cf6b",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5157,7 +5157,7 @@
         "path": "fixtures/mage/prepared-v2/affliction-warlock-pet-dismiss-residue.request.json"
       },
       "prepared": "affliction-warlock-pet-dismiss-residue.prepared.json",
-      "prepared_sha256": "869af33f49bc94e28dd94c2817c0d7ab9feb14655da44c5113b5e5de9263adba",
+      "prepared_sha256": "ddeda03ec48d64c1c1b29237965a3f3bbcd47dfec49abfa18e62a84f248253b0",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5178,7 +5178,7 @@
         "path": "fixtures/mage/prepared-v2/feral-druid-wildheart-raiment.request.json"
       },
       "prepared": "feral-druid-wildheart-raiment.prepared.json",
-      "prepared_sha256": "855d98a8a348e63c521dabb69bdf953d7237e8a9f5976f43b272f7f9de0f289a",
+      "prepared_sha256": "01e5d04658e8b18fb3ff3d1752443829a794bd6a548e4136594c7f903825a7e5",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5195,7 +5195,7 @@
         "path": "fixtures/mage/prepared-v2/smite-priest-holy-nova-ephemeral-power.request.json"
       },
       "prepared": "smite-priest-holy-nova-ephemeral-power.prepared.json",
-      "prepared_sha256": "9e72f767868155ce472bb133e316033aa231882a7ba49ef96e5a06d93816e3ed",
+      "prepared_sha256": "60a66da0074f9a3eea34b6d46f15b8d3afc7035ad8fe87279a5abf4044846ef7",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5216,7 +5216,7 @@
         "path": "fixtures/mage/prepared-v2/demonology-warlock-frozen-heart.request.json"
       },
       "prepared": "demonology-warlock-frozen-heart.prepared.json",
-      "prepared_sha256": "177530034f96735a8e1283648dd5cd736ed8e690a1b88b1028710f64c7ea93f1",
+      "prepared_sha256": "70f584a89d08585f592f83bed9bc6fdb149c0e7ca15f3e8841f87bba7721be0f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5237,7 +5237,7 @@
         "path": "fixtures/mage/prepared-v2/fire-mage-goblin-sapper.request.json"
       },
       "prepared": "fire-mage-goblin-sapper.prepared.json",
-      "prepared_sha256": "c963284d8f0356a5497814f3e99f3979b439a259c2d0d9d759c195edbf5b2cbe",
+      "prepared_sha256": "08a7e42762ccdc16da45184c89e046083043c362dc3ba0aa4d730d1affee7fc2",
       "expected_coverage": {
         "supported": false,
         "reasons": [
@@ -5252,7 +5252,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-uthers-strength.request.json"
       },
       "prepared": "feral-bear-druid-uthers-strength.prepared.json",
-      "prepared_sha256": "5e520e63f9bf4f6cb201154b40a43fc311d81b6fef6085ecb757b09ddf927f94",
+      "prepared_sha256": "46911a98bbc9609cd986523dca6e64f63a6ee83a731908d42f4c49375cecd857",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5273,7 +5273,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-minor-absorption.request.json"
       },
       "prepared": "feral-bear-druid-minor-absorption.prepared.json",
-      "prepared_sha256": "34b057af8c3faba2babcb3ca98c328d52072719e05c1bd2622b728925350dd53",
+      "prepared_sha256": "78e52a8a31eedc6dc913a61975ea2e2f3323f3d6f38bf9159929e5aeece3541e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5294,7 +5294,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-lesser-absorption.request.json"
       },
       "prepared": "feral-bear-druid-lesser-absorption.prepared.json",
-      "prepared_sha256": "b26565141fcd49e2fb323e4f89d260b4b9f400100b117a6ba78862180b291e0c",
+      "prepared_sha256": "2419af21e6adffefd8609a85ca23deb57c879a9e5abf16c681e47d26aee55865",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5315,7 +5315,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-absorption.request.json"
       },
       "prepared": "feral-bear-druid-absorption.prepared.json",
-      "prepared_sha256": "443ae7d57f68c52e9b2225a4b9552e569b878b5f7c5d912de9496f562f04bc80",
+      "prepared_sha256": "0a998c415c25d50dea62f8134a8440807f2bf2b68829951b8461e03aaf96d942",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5336,7 +5336,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-essence-of-the-pure-flame.request.json"
       },
       "prepared": "feral-bear-druid-essence-of-the-pure-flame.prepared.json",
-      "prepared_sha256": "18f3be7cfaa2042817263b33a88ba38894dd4e88ffb20ccf898c4869b303760d",
+      "prepared_sha256": "9dd63d0d298a4ac743dd604bf664da5e74908118a67fe3f9e4ad541d94d39a33",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5357,7 +5357,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-lion-horn.request.json"
       },
       "prepared": "feral-bear-druid-lion-horn.prepared.json",
-      "prepared_sha256": "36bbc03a4b957d84c996c7160362e8643a3c1e9305368e62bcd7614e855895cf",
+      "prepared_sha256": "e5bf34a9b24e559f22750ea286e45e42f13529b15f58aea8431ba507f2ce5c18",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5378,7 +5378,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-boomerang-pushback.request.json"
       },
       "prepared": "feral-bear-druid-boomerang-pushback.prepared.json",
-      "prepared_sha256": "64b7102c5a34a7d139430c8eb8d4254f18497d8aa71136804985867eb8182f63",
+      "prepared_sha256": "696fadd65426ecccb933f451c62bfe62625c3dbc21b4490a4e487ad7eb450c59",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5399,7 +5399,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-boomerang-pushback-after-cast.request.json"
       },
       "prepared": "feral-bear-druid-boomerang-pushback-after-cast.prepared.json",
-      "prepared_sha256": "9803b3e1650afc4f7cbdb0881fc77ea59b56465dbcc691eb70c7ab376992a1b6",
+      "prepared_sha256": "391f3381883619e15c447df9a62988ddef32d643223e9ba01b87ed6e763b885e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5420,18 +5420,18 @@
         "path": "fixtures/mage/prepared-v2/production-survival-hunter-2-targets.request.json"
       },
       "prepared": "production-survival-hunter-2-targets.prepared.json",
-      "prepared_sha256": "716daa60cf9e39076153d772b8c0abff4fcf3e66db81a61a692ca9d484715796",
+      "prepared_sha256": "0cb7e76191387dc607be737c6545ea7118cb9d9b17ec2bd18249cd7a95db671b",
       "expected_coverage": {
         "supported": true,
         "reasons": []
       },
       "go_result": {
         "file": "production-survival-hunter-2-targets.go-result.json",
-        "sha256": "337383863a4e80f3054a5babc2b5f54c8e4085dbc3b69d9581141dc72e764240"
+        "sha256": "3bb63972f6d47cbd8302f858d20d9244c35e4edb619fa3dd984faf2f9c0c6f67"
       },
       "go_log": {
         "file": "production-survival-hunter-2-targets.go-log.txt",
-        "sha256": "3204e8de565f7e6e321d9e3fd2d1a10e22fe75689fd43d3dde903415a0cc0dcb"
+        "sha256": "535b7c2cd99caee232f27ec8317724717d4bee406538094f19aeeb9a3968ce94"
       }
     },
     {
@@ -5441,18 +5441,18 @@
         "path": "fixtures/mage/prepared-v2/production-survival-hunter-5-targets.request.json"
       },
       "prepared": "production-survival-hunter-5-targets.prepared.json",
-      "prepared_sha256": "c357a84fd997f844b10d61aca5f0268ae5bef51fcde4e099a1461038af9f7772",
+      "prepared_sha256": "16818df0417fea0a4815b23d91d22ed27f78aae48fd3a5586ce6129359d48adc",
       "expected_coverage": {
         "supported": true,
         "reasons": []
       },
       "go_result": {
         "file": "production-survival-hunter-5-targets.go-result.json",
-        "sha256": "671b2cd4969529161e50e72d7f8aedc8b1fa4f5366eaf236765cfc79f4dfe718"
+        "sha256": "e4584b44cd78851da2bdc547a242bf03e3d59f7bb9c35f843ad94f721d680123"
       },
       "go_log": {
         "file": "production-survival-hunter-5-targets.go-log.txt",
-        "sha256": "1c207c61483b4f46cf1a687667c3c29b2f080c945e52945f102142a94df8f153"
+        "sha256": "8f60dcfbf9a93dcabca0b022027e0d82884ac6f985607f1fe6f422f88e4b7b8c"
       }
     },
     {
@@ -5462,7 +5462,7 @@
         "path": "fixtures/mage/prepared-v2/production-shadow-priest-2-targets.request.json"
       },
       "prepared": "production-shadow-priest-2-targets.prepared.json",
-      "prepared_sha256": "093a51a4552f593ab59b4c9cd9cb960f83ab2c39543872aedad2c7ef948c4c33",
+      "prepared_sha256": "39d53c6383667f8307f93f5a4b82b52f61419bde49bd028c7a4df5a4e35e1af1",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5483,7 +5483,7 @@
         "path": "fixtures/mage/prepared-v2/production-shadow-priest-5-targets.request.json"
       },
       "prepared": "production-shadow-priest-5-targets.prepared.json",
-      "prepared_sha256": "76373cb48221ddcc8cfdafb9dc65537c66c641fa1f8d0abd6e07606837504b66",
+      "prepared_sha256": "75c3c9f14a90a9adae7d01e27e5cee7153a4ee801c781fc681d79bbc0337b570",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5504,7 +5504,7 @@
         "path": "fixtures/mage/prepared-v2/production-subtlety-rogue-2-targets.request.json"
       },
       "prepared": "production-subtlety-rogue-2-targets.prepared.json",
-      "prepared_sha256": "decd652900a6a8047b928b5ff5599ab4406f59fdc6010f7d550c80f1c81fc385",
+      "prepared_sha256": "494fb3ab52a1b6def8d391e540270bdce20053a8a74135e3c1e28805b3672614",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5525,7 +5525,7 @@
         "path": "fixtures/mage/prepared-v2/production-subtlety-rogue-5-targets.request.json"
       },
       "prepared": "production-subtlety-rogue-5-targets.prepared.json",
-      "prepared_sha256": "2c26e6da111f3f48531666662cd97b86db6c4def1f4d8a310ef3e91118c7a96a",
+      "prepared_sha256": "f3a728a06dcb1755bbe749ae5abfc58fee6a3182dac309596a8c1655117de070",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5546,7 +5546,7 @@
         "path": "fixtures/mage/prepared-v2/production-combat-rogue-3-targets.request.json"
       },
       "prepared": "production-combat-rogue-3-targets.prepared.json",
-      "prepared_sha256": "7ecef3ef05b65c8bd20a47c14b9447531a789b52fbbdd88892d677ff3c1b9105",
+      "prepared_sha256": "326e7024c69131e48c48ef3eae6e6db2ff8a0588ebcdeba9f356eb5742247fe0",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5567,7 +5567,7 @@
         "path": "fixtures/mage/prepared-v2/production-assassination-rogue-3-targets.request.json"
       },
       "prepared": "production-assassination-rogue-3-targets.prepared.json",
-      "prepared_sha256": "6c778211cdfb8ba213972e8ed6e6de8d43ed3f906a0c67766aff3c4534ecae73",
+      "prepared_sha256": "5170c739b23e20daca52082bc9d3cfed903b17ddcfe2a15ebf10709f6ba324bc",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5588,7 +5588,7 @@
         "path": "fixtures/mage/prepared-v2/production-marksmanship-hunter-3-targets.request.json"
       },
       "prepared": "production-marksmanship-hunter-3-targets.prepared.json",
-      "prepared_sha256": "521b3774232658b2ea28b39bbb64dfddb0ac2b6dbff8be7d3adae3733034ddee",
+      "prepared_sha256": "d4ce4fb917e5248b9c0bc64b83123183a97e96441ca6ce5089ed0d1c6c80370b",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5609,7 +5609,7 @@
         "path": "fixtures/mage/prepared-v2/production-beast-mastery-hunter-3-targets.request.json"
       },
       "prepared": "production-beast-mastery-hunter-3-targets.prepared.json",
-      "prepared_sha256": "b80a9e2a290e5809a8be47b8e47c55487e1c0a388fed334de02c66d51333b53a",
+      "prepared_sha256": "80bb667dee7030619697cada2b498ffc5d4e3015bdca11997288ab9e6287bbde",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5630,7 +5630,7 @@
         "path": "fixtures/mage/prepared-v2/production-smite-priest-3-targets.request.json"
       },
       "prepared": "production-smite-priest-3-targets.prepared.json",
-      "prepared_sha256": "5f4b1d75f97b9cad5d8368e6e980edde08ebd3060fcbd9e4aaccb0759fec3173",
+      "prepared_sha256": "a56d06fa4ca89c61b718b8eac536f97c126bcbaeb7a49fb9b0f0c97f8804f662",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5651,7 +5651,7 @@
         "path": "fixtures/mage/prepared-v2/production-frost-2-targets.request.json"
       },
       "prepared": "production-frost-2-targets.prepared.json",
-      "prepared_sha256": "50b4b19f37106fe85250ed8e42c468d966f948540fd4fc209786fb9569213f78",
+      "prepared_sha256": "96cdea81d11fcae36efe1269945a1760372391bc851e25a0bb936be8fdbbb6af",
       "expected_coverage": {
         "supported": false,
         "reasons": [
@@ -5666,7 +5666,7 @@
         "path": "fixtures/mage/prepared-v2/fury-warrior-whirlwind-no-raging-blows.request.json"
       },
       "prepared": "fury-warrior-whirlwind-no-raging-blows.prepared.json",
-      "prepared_sha256": "692395aa043e2fc61cf1aec5897f8a81b34466aacae1edf54158f9433c750b7e",
+      "prepared_sha256": "e0820c5b5e1ec92608b2d4533230c3b43375ebda1318668f4c81ea6736adc005",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5687,7 +5687,7 @@
         "path": "fixtures/mage/prepared-v2/smite-priest-no-inner-focus.request.json"
       },
       "prepared": "smite-priest-no-inner-focus.prepared.json",
-      "prepared_sha256": "d223fa162b432e88b7cee2c57b7895e93d2c9de689dc76a8dc263a31f387f548",
+      "prepared_sha256": "8cf52620682ec463baf76a7547643e91dccd7edbb955d725a59f835368c9fe56",
       "expected_coverage": {
         "supported": true,
         "reasons": []
