@@ -1,0 +1,1596 @@
+{
+  "kind": "architecture_check",
+  "date": "2026-10-05",
+  "reference": {
+    "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
+    "client_build": "1.60.1.70170"
+  },
+  "scope": "Every accepted Go golden against the pinned Go engine built for linux/amd64 and run in the PC worker's image (ghcr.io/sage3648/mythicsim-worker:latest-amd64) under emulation on the production Mac. The PC worker bundles the Forever engine but does not poll the current Forever queue.",
+  "platform": "linux/amd64",
+  "image": "ghcr.io/sage3648/mythicsim-worker:latest-amd64",
+  "compiler": "go version go1.25.6 darwin/arm64",
+  "rerun": "python3 tools/architecture_check.py --goarch amd64 --image ghcr.io/sage3648/mythicsim-worker:latest-amd64 --output <scratch>",
+  "criteria": {
+    "comparison": "the comparable result and the filtered first-fight log, as prepared_v2.py accepts them"
+  },
+  "matched": 255,
+  "mismatched": 19,
+  "errors": 0,
+  "cases": [
+    {
+      "id": "frost-reference",
+      "matched": true
+    },
+    {
+      "id": "frostbolt-labeled",
+      "matched": true
+    },
+    {
+      "id": "frostbolt-shared-oom",
+      "matched": true
+    },
+    {
+      "id": "frostbolt-shared-meditation",
+      "matched": true
+    },
+    {
+      "id": "frostbolt-shared-haste",
+      "matched": true
+    },
+    {
+      "id": "frostbolt-shared-boundary",
+      "matched": true
+    },
+    {
+      "id": "reference-winters-chill",
+      "matched": true
+    },
+    {
+      "id": "reference-winters-chill-rank3",
+      "matched": true
+    },
+    {
+      "id": "reference-fingers-of-frost",
+      "matched": true
+    },
+    {
+      "id": "reference-fingers-of-frost-rank1",
+      "matched": true
+    },
+    {
+      "id": "reference-clearcasting",
+      "matched": true
+    },
+    {
+      "id": "reference-missile-barrage",
+      "matched": true
+    },
+    {
+      "id": "reference-procs",
+      "matched": true
+    },
+    {
+      "id": "reference-long",
+      "matched": true
+    },
+    {
+      "id": "reference-ten-minutes",
+      "matched": true
+    },
+    {
+      "id": "reference-no-missile-barrage",
+      "matched": true
+    },
+    {
+      "id": "arcane-blast",
+      "matched": true
+    },
+    {
+      "id": "arcane-blast-spenders",
+      "matched": true
+    },
+    {
+      "id": "arcane-cooldowns",
+      "matched": true
+    },
+    {
+      "id": "arcane-cooldowns-long",
+      "matched": true
+    },
+    {
+      "id": "arcane-ignite",
+      "matched": true
+    },
+    {
+      "id": "arcane-reference",
+      "matched": true
+    },
+    {
+      "id": "fire-scorch",
+      "matched": true
+    },
+    {
+      "id": "fire-fireball",
+      "matched": true
+    },
+    {
+      "id": "fire-fireball-scorch",
+      "matched": true
+    },
+    {
+      "id": "fire-master-of-elements",
+      "matched": true
+    },
+    {
+      "id": "fire-heating-up",
+      "matched": true
+    },
+    {
+      "id": "fire-combustion",
+      "matched": true
+    },
+    {
+      "id": "fire-ignite",
+      "matched": true
+    },
+    {
+      "id": "fire-reference",
+      "matched": true
+    },
+    {
+      "id": "frost-troll",
+      "matched": true
+    },
+    {
+      "id": "frost-troll-ten-minutes",
+      "matched": true
+    },
+    {
+      "id": "frost-orc",
+      "matched": true
+    },
+    {
+      "id": "frost-orc-cooldown-timings",
+      "matched": true
+    },
+    {
+      "id": "frost-skyborne",
+      "matched": true
+    },
+    {
+      "id": "fire-skyborne-read-ley-line",
+      "matched": true
+    },
+    {
+      "id": "production-frostfire",
+      "matched": true
+    },
+    {
+      "id": "production-fire",
+      "matched": true
+    },
+    {
+      "id": "frostfire-resistances",
+      "matched": true
+    },
+    {
+      "id": "frost-prepull",
+      "matched": true
+    },
+    {
+      "id": "production-balance-druid",
+      "matched": true
+    },
+    {
+      "id": "production-elemental-shaman",
+      "matched": true
+    },
+    {
+      "id": "elemental-shaman-dwarf-stoneform",
+      "matched": true
+    },
+    {
+      "id": "paladin-auto-attacks",
+      "matched": true
+    },
+    {
+      "id": "paladin-auto-attacks-front",
+      "matched": true
+    },
+    {
+      "id": "production-destruction-warlock",
+      "matched": true
+    },
+    {
+      "id": "paladin-auto-attacks-expose-armor",
+      "matched": true
+    },
+    {
+      "id": "production-shadow-priest",
+      "matched": true
+    },
+    {
+      "id": "shadow-priest-channel-no-recast",
+      "matched": true
+    },
+    {
+      "id": "shadow-priest-channel-uninterrupted",
+      "matched": true
+    },
+    {
+      "id": "shadow-priest-sequence-relinquish",
+      "matched": true
+    },
+    {
+      "id": "paladin-crusader-chili",
+      "matched": true
+    },
+    {
+      "id": "paladin-windfury-totem",
+      "matched": true
+    },
+    {
+      "id": "production-smite-priest",
+      "matched": true
+    },
+    {
+      "id": "tank-ret-autos",
+      "matched": true
+    },
+    {
+      "id": "tank-protection-paladin-autos",
+      "matched": true
+    },
+    {
+      "id": "enhancement-shaman-no-battle-shout",
+      "matched": true
+    },
+    {
+      "id": "production-enhancement-shaman",
+      "matched": true
+    },
+    {
+      "id": "production-combat-rogue",
+      "matched": true
+    },
+    {
+      "id": "combat-rogue-orc-shatter-curse",
+      "matched": true
+    },
+    {
+      "id": "production-warrior",
+      "matched": true
+    },
+    {
+      "id": "warrior-heroic-strike",
+      "matched": true
+    },
+    {
+      "id": "warrior-cleave",
+      "matched": true
+    },
+    {
+      "id": "production-marksmanship-hunter",
+      "matched": false,
+      "first_log_difference": {
+        "line": 40,
+        "golden": "[0.00] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.3, AfterAttackerMods:273.7, AfterResistances:232.5, AfterTargetMods:232.5, AfterOutcome:232.5, AfterPostOutcome:232.5",
+        "platform": "[0.00] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.4, AfterAttackerMods:273.7, AfterResistances:232.5, AfterTargetMods:232.5, AfterOutcome:232.5, AfterPostOutcome:232.5",
+        "golden_context": [
+          "[0.00] [marksmanship-hunter (#1)] Completed cast {OtherID: 4}",
+          "[0.00] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:538.1, AfterAttackerMods:678.0, AfterResistances:575.8, AfterTargetMods:575.8, AfterOutcome:575.8, AfterPostOutcome:575.8",
+          "[0.00] [marksmanship-hunter (#1)] Casting {SpellID: 1293527} (Cost = 161.500, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[0.00] [marksmanship-hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[0.00] [marksmanship-hunter (#1)] Spent 161.500 mana from {SpellID: 1293527} (3201.500 --> 3040.000) of 3465 total.",
+          "[0.00] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.3, AfterAttackerMods:273.7, AfterResistances:232.5, AfterTargetMods:232.5, AfterOutcome:232.5, AfterPostOutcome:232.5",
+          "[0.00] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 232.470 damage (SpellSchool: 1). (Threat: 232.470)",
+          "[0.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ],
+        "platform_context": [
+          "[0.00] [marksmanship-hunter (#1)] Completed cast {OtherID: 4}",
+          "[0.00] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:538.1, AfterAttackerMods:678.0, AfterResistances:575.8, AfterTargetMods:575.8, AfterOutcome:575.8, AfterPostOutcome:575.8",
+          "[0.00] [marksmanship-hunter (#1)] Casting {SpellID: 1293527} (Cost = 161.500, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[0.00] [marksmanship-hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[0.00] [marksmanship-hunter (#1)] Spent 161.500 mana from {SpellID: 1293527} (3201.500 --> 3040.000) of 3465 total.",
+          "[0.00] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.4, AfterAttackerMods:273.7, AfterResistances:232.5, AfterTargetMods:232.5, AfterOutcome:232.5, AfterPostOutcome:232.5",
+          "[0.00] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 232.470 damage (SpellSchool: 1). (Threat: 232.470)",
+          "[0.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ]
+      }
+    },
+    {
+      "id": "production-retribution-paladin",
+      "matched": true
+    },
+    {
+      "id": "production-shockadin-paladin",
+      "matched": true
+    },
+    {
+      "id": "warrior-orc-shatter-curse",
+      "matched": true
+    },
+    {
+      "id": "warrior-troll-berserking",
+      "matched": true
+    },
+    {
+      "id": "production-affliction-warlock",
+      "matched": true
+    },
+    {
+      "id": "production-demonology-warlock",
+      "matched": true
+    },
+    {
+      "id": "demonology-warlock-voidwalker-pact",
+      "matched": true
+    },
+    {
+      "id": "tank-protection-paladin-dense-dynamite",
+      "matched": true
+    },
+    {
+      "id": "retribution-dense-dynamite",
+      "matched": true
+    },
+    {
+      "id": "marksmanship-hunter-thorium-grenade",
+      "matched": true
+    },
+    {
+      "id": "tank-frost-mage",
+      "matched": true
+    },
+    {
+      "id": "production-assassination-rogue",
+      "matched": true
+    },
+    {
+      "id": "production-subtlety-rogue",
+      "matched": true
+    },
+    {
+      "id": "production-feral-druid",
+      "matched": true
+    },
+    {
+      "id": "feral-druid-faerie-fire-armor",
+      "matched": true
+    },
+    {
+      "id": "production-feral-bear-druid",
+      "matched": true
+    },
+    {
+      "id": "enhancement-shaman-self-totems",
+      "matched": true
+    },
+    {
+      "id": "enhancement-shaman-dual-wield-frostbrand-sync-magma",
+      "matched": true
+    },
+    {
+      "id": "enhancement-shaman-dual-wield-windfury-flametongue",
+      "matched": true
+    },
+    {
+      "id": "enhancement-shaman-dual-wield-equal-speed-delay",
+      "matched": true
+    },
+    {
+      "id": "enhancement-shaman-grace-replaces-windfury-totem",
+      "matched": true
+    },
+    {
+      "id": "production-arms-warrior",
+      "matched": true
+    },
+    {
+      "id": "protection-paladin-no-dynamite",
+      "matched": true
+    },
+    {
+      "id": "ret-protection-paladin-no-dynamite",
+      "matched": true
+    },
+    {
+      "id": "holy-protection-paladin-no-dynamite",
+      "matched": true
+    },
+    {
+      "id": "production-protection-paladin",
+      "matched": true
+    },
+    {
+      "id": "production-ret-protection-paladin",
+      "matched": true
+    },
+    {
+      "id": "production-holy-protection-paladin",
+      "matched": true
+    },
+    {
+      "id": "demonology-warlock-orc",
+      "matched": true
+    },
+    {
+      "id": "production-beast-mastery-hunter",
+      "matched": false,
+      "first_log_difference": {
+        "line": 123,
+        "golden": "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.3, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+        "platform": "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.4, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+        "golden_context": [
+          "[2.91] [hunter (#1)] Aura gained: {SpellID: 6150}",
+          "[2.92] [hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2718.000 --> 2777.000) of 3465 total.",
+          "[3.00] [hunter (#1)] Casting {SpellID: 1293527} (Cost = 172.900, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[3.00] [hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[3.00] [hunter (#1)] Spent 172.900 mana from {SpellID: 1293527} (2777.000 --> 2604.100) of 3465 total.",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.3, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 197.600 damage (SpellSchool: 1). (Threat: 197.600)",
+          "[3.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ],
+        "platform_context": [
+          "[2.91] [hunter (#1)] Aura gained: {SpellID: 6150}",
+          "[2.92] [hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2718.000 --> 2777.000) of 3465 total.",
+          "[3.00] [hunter (#1)] Casting {SpellID: 1293527} (Cost = 172.900, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[3.00] [hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[3.00] [hunter (#1)] Spent 172.900 mana from {SpellID: 1293527} (2777.000 --> 2604.100) of 3465 total.",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.4, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 197.600 damage (SpellSchool: 1). (Threat: 197.600)",
+          "[3.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ]
+      }
+    },
+    {
+      "id": "survival-hunter-no-whelp",
+      "matched": true
+    },
+    {
+      "id": "production-survival-hunter",
+      "matched": true
+    },
+    {
+      "id": "affliction-warlock-broad",
+      "matched": true
+    },
+    {
+      "id": "destruction-warlock-broad",
+      "matched": true
+    },
+    {
+      "id": "affliction-warlock-death-coil",
+      "matched": true
+    },
+    {
+      "id": "demonology-warlock-recklessness",
+      "matched": true
+    },
+    {
+      "id": "production-protection-warrior",
+      "matched": true
+    },
+    {
+      "id": "production-fury-protection-warrior",
+      "matched": true
+    },
+    {
+      "id": "ret-undead-exorcism",
+      "matched": true
+    },
+    {
+      "id": "ret-exorcism-humanoid",
+      "matched": true
+    },
+    {
+      "id": "protection-holy-shield-rank2",
+      "matched": true
+    },
+    {
+      "id": "shockadin-lights-vigil",
+      "matched": true
+    },
+    {
+      "id": "ret-crusader-opener",
+      "matched": true
+    },
+    {
+      "id": "ret-crusader-fervor-over-raid",
+      "matched": true
+    },
+    {
+      "id": "ret-crusader-held",
+      "matched": true
+    },
+    {
+      "id": "protection-eye-for-an-eye",
+      "matched": true
+    },
+    {
+      "id": "shockadin-infusion-of-light",
+      "matched": true
+    },
+    {
+      "id": "shockadin-holy-alacrity",
+      "matched": true
+    },
+    {
+      "id": "ret-pursuit-of-justice",
+      "matched": true
+    },
+    {
+      "id": "feral-druid-rake",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-defensives",
+      "matched": true
+    },
+    {
+      "id": "feral-druid-feralheart-wolfshead",
+      "matched": true
+    },
+    {
+      "id": "feral-druid-unending-life",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-feralheart",
+      "matched": true
+    },
+    {
+      "id": "balance-druid-berserk-natural-reaction",
+      "matched": true
+    },
+    {
+      "id": "shadow-priest-starshards",
+      "matched": true
+    },
+    {
+      "id": "smite-priest-holy-nova",
+      "matched": true
+    },
+    {
+      "id": "shadow-priest-shadowfiend",
+      "matched": true
+    },
+    {
+      "id": "shadow-priest-shadowfiend-long",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-crusader",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-survives",
+      "matched": true
+    },
+    {
+      "id": "arms-warrior-own-sunder",
+      "matched": true
+    },
+    {
+      "id": "protection-warrior-own-sunder",
+      "matched": true
+    },
+    {
+      "id": "arms-warrior-no-improved-slam",
+      "matched": true
+    },
+    {
+      "id": "beast-mastery-hunter-pet-uptime-half",
+      "matched": false,
+      "first_log_difference": {
+        "line": 123,
+        "golden": "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.3, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+        "platform": "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.4, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+        "golden_context": [
+          "[2.91] [hunter (#1)] Aura gained: {SpellID: 6150}",
+          "[2.92] [hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2718.000 --> 2777.000) of 3465 total.",
+          "[3.00] [hunter (#1)] Casting {SpellID: 1293527} (Cost = 172.900, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[3.00] [hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[3.00] [hunter (#1)] Spent 172.900 mana from {SpellID: 1293527} (2777.000 --> 2604.100) of 3465 total.",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.3, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 197.600 damage (SpellSchool: 1). (Threat: 197.600)",
+          "[3.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ],
+        "platform_context": [
+          "[2.91] [hunter (#1)] Aura gained: {SpellID: 6150}",
+          "[2.92] [hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2718.000 --> 2777.000) of 3465 total.",
+          "[3.00] [hunter (#1)] Casting {SpellID: 1293527} (Cost = 172.900, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[3.00] [hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[3.00] [hunter (#1)] Spent 172.900 mana from {SpellID: 1293527} (2777.000 --> 2604.100) of 3465 total.",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.4, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 197.600 damage (SpellSchool: 1). (Threat: 197.600)",
+          "[3.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ]
+      }
+    },
+    {
+      "id": "beast-mastery-hunter-wind-serpent",
+      "matched": false,
+      "first_log_difference": {
+        "line": 123,
+        "golden": "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.3, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+        "platform": "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.4, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+        "golden_context": [
+          "[2.91] [hunter (#1)] Aura gained: {SpellID: 6150}",
+          "[2.92] [hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2718.000 --> 2777.000) of 3465 total.",
+          "[3.00] [hunter (#1)] Casting {SpellID: 1293527} (Cost = 172.900, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[3.00] [hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[3.00] [hunter (#1)] Spent 172.900 mana from {SpellID: 1293527} (2777.000 --> 2604.100) of 3465 total.",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.3, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 197.600 damage (SpellSchool: 1). (Threat: 197.600)",
+          "[3.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ],
+        "platform_context": [
+          "[2.91] [hunter (#1)] Aura gained: {SpellID: 6150}",
+          "[2.92] [hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2718.000 --> 2777.000) of 3465 total.",
+          "[3.00] [hunter (#1)] Casting {SpellID: 1293527} (Cost = 172.900, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[3.00] [hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[3.00] [hunter (#1)] Spent 172.900 mana from {SpellID: 1293527} (2777.000 --> 2604.100) of 3465 total.",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.4, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 197.600 damage (SpellSchool: 1). (Threat: 197.600)",
+          "[3.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ]
+      }
+    },
+    {
+      "id": "beast-mastery-hunter-bat",
+      "matched": false,
+      "first_log_difference": {
+        "line": 123,
+        "golden": "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.3, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+        "platform": "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.4, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+        "golden_context": [
+          "[2.91] [hunter (#1)] Aura gained: {SpellID: 6150}",
+          "[2.92] [hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2718.000 --> 2777.000) of 3465 total.",
+          "[3.00] [hunter (#1)] Casting {SpellID: 1293527} (Cost = 172.900, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[3.00] [hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[3.00] [hunter (#1)] Spent 172.900 mana from {SpellID: 1293527} (2777.000 --> 2604.100) of 3465 total.",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.3, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 197.600 damage (SpellSchool: 1). (Threat: 197.600)",
+          "[3.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ],
+        "platform_context": [
+          "[2.91] [hunter (#1)] Aura gained: {SpellID: 6150}",
+          "[2.92] [hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2718.000 --> 2777.000) of 3465 total.",
+          "[3.00] [hunter (#1)] Casting {SpellID: 1293527} (Cost = 172.900, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[3.00] [hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[3.00] [hunter (#1)] Spent 172.900 mana from {SpellID: 1293527} (2777.000 --> 2604.100) of 3465 total.",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.4, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 197.600 damage (SpellSchool: 1). (Threat: 197.600)",
+          "[3.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ]
+      }
+    },
+    {
+      "id": "beast-mastery-hunter-gorilla",
+      "matched": false,
+      "first_log_difference": {
+        "line": 122,
+        "golden": "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.3, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+        "platform": "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.4, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+        "golden_context": [
+          "[2.91] [hunter (#1)] [Target 1] {OtherID: 4} Hit for 481.302 damage (SpellSchool: 1). (Threat: 481.302)",
+          "[2.92] [hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2777.000 --> 2836.000) of 3465 total.",
+          "[3.00] [hunter (#1)] Casting {SpellID: 1293527} (Cost = 172.900, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[3.00] [hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[3.00] [hunter (#1)] Spent 172.900 mana from {SpellID: 1293527} (2836.000 --> 2663.100) of 3465 total.",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.3, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 197.600 damage (SpellSchool: 1). (Threat: 197.600)",
+          "[3.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ],
+        "platform_context": [
+          "[2.91] [hunter (#1)] [Target 1] {OtherID: 4} Hit for 481.302 damage (SpellSchool: 1). (Threat: 481.302)",
+          "[2.92] [hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2777.000 --> 2836.000) of 3465 total.",
+          "[3.00] [hunter (#1)] Casting {SpellID: 1293527} (Cost = 172.900, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[3.00] [hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[3.00] [hunter (#1)] Spent 172.900 mana from {SpellID: 1293527} (2836.000 --> 2663.100) of 3465 total.",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.4, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 197.600 damage (SpellSchool: 1). (Threat: 197.600)",
+          "[3.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ]
+      }
+    },
+    {
+      "id": "beast-mastery-hunter-raptor",
+      "matched": false,
+      "first_log_difference": {
+        "line": 116,
+        "golden": "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.3, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+        "platform": "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.4, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+        "golden_context": [
+          "[2.71] [hunter (#1)] Pausing rotation for 291.304348ms due to resources / CDs.",
+          "[2.91] [hunter (#1)] [Target 1] {OtherID: 4} Hit for 483.626 damage (SpellSchool: 1). (Threat: 483.626)",
+          "[3.00] [hunter (#1)] Casting {SpellID: 1293527} (Cost = 172.900, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[3.00] [hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[3.00] [hunter (#1)] Spent 172.900 mana from {SpellID: 1293527} (2777.000 --> 2604.100) of 3465 total.",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.3, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 197.600 damage (SpellSchool: 1). (Threat: 197.600)",
+          "[3.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ],
+        "platform_context": [
+          "[2.71] [hunter (#1)] Pausing rotation for 291.304348ms due to resources / CDs.",
+          "[2.91] [hunter (#1)] [Target 1] {OtherID: 4} Hit for 483.626 damage (SpellSchool: 1). (Threat: 483.626)",
+          "[3.00] [hunter (#1)] Casting {SpellID: 1293527} (Cost = 172.900, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[3.00] [hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[3.00] [hunter (#1)] Spent 172.900 mana from {SpellID: 1293527} (2777.000 --> 2604.100) of 3465 total.",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.4, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 197.600 damage (SpellSchool: 1). (Threat: 197.600)",
+          "[3.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ]
+      }
+    },
+    {
+      "id": "beast-mastery-hunter-spider",
+      "matched": false,
+      "first_log_difference": {
+        "line": 119,
+        "golden": "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.3, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:395.2, AfterPostOutcome:395.2",
+        "platform": "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.4, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:395.2, AfterPostOutcome:395.2",
+        "golden_context": [
+          "[2.90] [hunter (#1) - Spider] [Target 1] {SpellID: 1265883} tick Crit for 57.184 damage (SpellSchool: 8). (Threat: 57.184)",
+          "[2.91] [hunter (#1)] [Target 1] {OtherID: 4} Hit for 481.302 damage (SpellSchool: 1). (Threat: 481.302)",
+          "[3.00] [hunter (#1)] Casting {SpellID: 1293527} (Cost = 172.900, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[3.00] [hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[3.00] [hunter (#1)] Spent 172.900 mana from {SpellID: 1293527} (2777.000 --> 2604.100) of 3465 total.",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.3, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:395.2, AfterPostOutcome:395.2",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} Crit for 395.199 damage (SpellSchool: 1). (Threat: 395.199)",
+          "[3.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ],
+        "platform_context": [
+          "[2.90] [hunter (#1) - Spider] [Target 1] {SpellID: 1265883} tick Crit for 57.184 damage (SpellSchool: 8). (Threat: 57.184)",
+          "[2.91] [hunter (#1)] [Target 1] {OtherID: 4} Hit for 481.302 damage (SpellSchool: 1). (Threat: 481.302)",
+          "[3.00] [hunter (#1)] Casting {SpellID: 1293527} (Cost = 172.900, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[3.00] [hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[3.00] [hunter (#1)] Spent 172.900 mana from {SpellID: 1293527} (2777.000 --> 2604.100) of 3465 total.",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.4, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:395.2, AfterPostOutcome:395.2",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} Crit for 395.199 damage (SpellSchool: 1). (Threat: 395.199)",
+          "[3.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ]
+      }
+    },
+    {
+      "id": "beast-mastery-hunter-bear",
+      "matched": false,
+      "first_log_difference": {
+        "line": 123,
+        "golden": "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.3, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+        "platform": "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.4, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+        "golden_context": [
+          "[2.91] [hunter (#1)] Aura gained: {SpellID: 6150}",
+          "[2.92] [hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2718.000 --> 2777.000) of 3465 total.",
+          "[3.00] [hunter (#1)] Casting {SpellID: 1293527} (Cost = 172.900, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[3.00] [hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[3.00] [hunter (#1)] Spent 172.900 mana from {SpellID: 1293527} (2777.000 --> 2604.100) of 3465 total.",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.3, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 197.600 damage (SpellSchool: 1). (Threat: 197.600)",
+          "[3.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ],
+        "platform_context": [
+          "[2.91] [hunter (#1)] Aura gained: {SpellID: 6150}",
+          "[2.92] [hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2718.000 --> 2777.000) of 3465 total.",
+          "[3.00] [hunter (#1)] Casting {SpellID: 1293527} (Cost = 172.900, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[3.00] [hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[3.00] [hunter (#1)] Spent 172.900 mana from {SpellID: 1293527} (2777.000 --> 2604.100) of 3465 total.",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.4, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 197.600 damage (SpellSchool: 1). (Threat: 197.600)",
+          "[3.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ]
+      }
+    },
+    {
+      "id": "beast-mastery-hunter-scorpid",
+      "matched": false,
+      "first_log_difference": {
+        "line": 116,
+        "golden": "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.3, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+        "platform": "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.4, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+        "golden_context": [
+          "[2.91] [hunter (#1)] [Target 1] {OtherID: 4} Hit for 463.055 damage (SpellSchool: 1). (Threat: 463.055)",
+          "[3.00] [hunter (#1) - Scorpid] Pausing rotation for 500ms due to resources / CDs.",
+          "[3.00] [hunter (#1)] Casting {SpellID: 1293527} (Cost = 172.900, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[3.00] [hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[3.00] [hunter (#1)] Spent 172.900 mana from {SpellID: 1293527} (2777.000 --> 2604.100) of 3465 total.",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.3, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 197.600 damage (SpellSchool: 1). (Threat: 197.600)",
+          "[3.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ],
+        "platform_context": [
+          "[2.91] [hunter (#1)] [Target 1] {OtherID: 4} Hit for 463.055 damage (SpellSchool: 1). (Threat: 463.055)",
+          "[3.00] [hunter (#1) - Scorpid] Pausing rotation for 500ms due to resources / CDs.",
+          "[3.00] [hunter (#1)] Casting {SpellID: 1293527} (Cost = 172.900, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[3.00] [hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[3.00] [hunter (#1)] Spent 172.900 mana from {SpellID: 1293527} (2777.000 --> 2604.100) of 3465 total.",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.4, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 197.600 damage (SpellSchool: 1). (Threat: 197.600)",
+          "[3.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ]
+      }
+    },
+    {
+      "id": "beast-mastery-hunter-tallstrider",
+      "matched": false,
+      "first_log_difference": {
+        "line": 116,
+        "golden": "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.3, AfterAttackerMods:232.7, AfterResistances:214.3, AfterTargetMods:214.3, AfterOutcome:214.3, AfterPostOutcome:214.3",
+        "platform": "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.4, AfterAttackerMods:232.7, AfterResistances:214.3, AfterTargetMods:214.3, AfterOutcome:214.3, AfterPostOutcome:214.3",
+        "golden_context": [
+          "[2.71] [hunter (#1)] Pausing rotation for 291.304348ms due to resources / CDs.",
+          "[2.91] [hunter (#1)] [Target 1] {OtherID: 4} Hit for 524.529 damage (SpellSchool: 1). (Threat: 524.529)",
+          "[3.00] [hunter (#1)] Casting {SpellID: 1293527} (Cost = 172.900, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[3.00] [hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[3.00] [hunter (#1)] Spent 172.900 mana from {SpellID: 1293527} (2777.000 --> 2604.100) of 3465 total.",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.3, AfterAttackerMods:232.7, AfterResistances:214.3, AfterTargetMods:214.3, AfterOutcome:214.3, AfterPostOutcome:214.3",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 214.312 damage (SpellSchool: 1). (Threat: 214.312)",
+          "[3.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ],
+        "platform_context": [
+          "[2.71] [hunter (#1)] Pausing rotation for 291.304348ms due to resources / CDs.",
+          "[2.91] [hunter (#1)] [Target 1] {OtherID: 4} Hit for 524.529 damage (SpellSchool: 1). (Threat: 524.529)",
+          "[3.00] [hunter (#1)] Casting {SpellID: 1293527} (Cost = 172.900, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[3.00] [hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[3.00] [hunter (#1)] Spent 172.900 mana from {SpellID: 1293527} (2777.000 --> 2604.100) of 3465 total.",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.4, AfterAttackerMods:232.7, AfterResistances:214.3, AfterTargetMods:214.3, AfterOutcome:214.3, AfterPostOutcome:214.3",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 214.312 damage (SpellSchool: 1). (Threat: 214.312)",
+          "[3.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ]
+      }
+    },
+    {
+      "id": "marksmanship-hunter-rapid-recuperation",
+      "matched": false,
+      "first_log_difference": {
+        "line": 40,
+        "golden": "[0.00] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.3, AfterAttackerMods:273.7, AfterResistances:232.5, AfterTargetMods:232.5, AfterOutcome:232.5, AfterPostOutcome:232.5",
+        "platform": "[0.00] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.4, AfterAttackerMods:273.7, AfterResistances:232.5, AfterTargetMods:232.5, AfterOutcome:232.5, AfterPostOutcome:232.5",
+        "golden_context": [
+          "[0.00] [marksmanship-hunter (#1)] Completed cast {OtherID: 4}",
+          "[0.00] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:538.1, AfterAttackerMods:678.0, AfterResistances:575.8, AfterTargetMods:575.8, AfterOutcome:575.8, AfterPostOutcome:575.8",
+          "[0.00] [marksmanship-hunter (#1)] Casting {SpellID: 1293527} (Cost = 161.500, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[0.00] [marksmanship-hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[0.00] [marksmanship-hunter (#1)] Spent 161.500 mana from {SpellID: 1293527} (3201.500 --> 3040.000) of 3465 total.",
+          "[0.00] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.3, AfterAttackerMods:273.7, AfterResistances:232.5, AfterTargetMods:232.5, AfterOutcome:232.5, AfterPostOutcome:232.5",
+          "[0.00] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 232.470 damage (SpellSchool: 1). (Threat: 232.470)",
+          "[0.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ],
+        "platform_context": [
+          "[0.00] [marksmanship-hunter (#1)] Completed cast {OtherID: 4}",
+          "[0.00] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:538.1, AfterAttackerMods:678.0, AfterResistances:575.8, AfterTargetMods:575.8, AfterOutcome:575.8, AfterPostOutcome:575.8",
+          "[0.00] [marksmanship-hunter (#1)] Casting {SpellID: 1293527} (Cost = 161.500, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[0.00] [marksmanship-hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[0.00] [marksmanship-hunter (#1)] Spent 161.500 mana from {SpellID: 1293527} (3201.500 --> 3040.000) of 3465 total.",
+          "[0.00] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.4, AfterAttackerMods:273.7, AfterResistances:232.5, AfterTargetMods:232.5, AfterOutcome:232.5, AfterPostOutcome:232.5",
+          "[0.00] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 232.470 damage (SpellSchool: 1). (Threat: 232.470)",
+          "[0.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ]
+      }
+    },
+    {
+      "id": "survival-melee-hunter-cat-heartbeat",
+      "matched": true
+    },
+    {
+      "id": "marksmanship-hunter-arcane-shot",
+      "matched": true
+    },
+    {
+      "id": "marksmanship-hunter-predators-armor",
+      "matched": true
+    },
+    {
+      "id": "beast-mastery-hunter-beastmaster-armor",
+      "matched": true
+    },
+    {
+      "id": "marksmanship-hunter-cryptstalker-armor",
+      "matched": false,
+      "first_log_difference": {
+        "line": 43,
+        "golden": "[0.00] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:209.0, AfterAttackerMods:288.4, AfterResistances:244.9, AfterTargetMods:244.9, AfterOutcome:244.9, AfterPostOutcome:244.9",
+        "platform": "[0.00] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:208.9, AfterAttackerMods:288.4, AfterResistances:244.9, AfterTargetMods:244.9, AfterOutcome:244.9, AfterPostOutcome:244.9",
+        "golden_context": [
+          "[0.00] [marksmanship-hunter (#1)] Completed cast {OtherID: 4}",
+          "[0.00] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:583.5, AfterAttackerMods:735.2, AfterResistances:624.4, AfterTargetMods:624.4, AfterOutcome:1436.2, AfterPostOutcome:1436.2",
+          "[0.00] [marksmanship-hunter (#1)] Casting {SpellID: 1293527} (Cost = 161.500, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[0.00] [marksmanship-hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[0.00] [marksmanship-hunter (#1)] Spent 161.500 mana from {SpellID: 1293527} (4388.500 --> 4227.000) of 4635 total.",
+          "[0.00] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:209.0, AfterAttackerMods:288.4, AfterResistances:244.9, AfterTargetMods:244.9, AfterOutcome:244.9, AfterPostOutcome:244.9",
+          "[0.00] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 244.894 damage (SpellSchool: 1). (Threat: 244.894)",
+          "[0.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ],
+        "platform_context": [
+          "[0.00] [marksmanship-hunter (#1)] Completed cast {OtherID: 4}",
+          "[0.00] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:583.5, AfterAttackerMods:735.2, AfterResistances:624.4, AfterTargetMods:624.4, AfterOutcome:1436.2, AfterPostOutcome:1436.2",
+          "[0.00] [marksmanship-hunter (#1)] Casting {SpellID: 1293527} (Cost = 161.500, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[0.00] [marksmanship-hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[0.00] [marksmanship-hunter (#1)] Spent 161.500 mana from {SpellID: 1293527} (4388.500 --> 4227.000) of 4635 total.",
+          "[0.00] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1565.0, RAP: 1948.0, SP: 185.0, BaseDamage:208.9, AfterAttackerMods:288.4, AfterResistances:244.9, AfterTargetMods:244.9, AfterOutcome:244.9, AfterPostOutcome:244.9",
+          "[0.00] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 244.894 damage (SpellSchool: 1). (Threat: 244.894)",
+          "[0.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ]
+      }
+    },
+    {
+      "id": "survival-hunter-beaststalker-armor",
+      "matched": true
+    },
+    {
+      "id": "protection-paladin-dragons-call-hardcast",
+      "matched": true
+    },
+    {
+      "id": "marksmanship-hunter-hands-of-power",
+      "matched": true
+    },
+    {
+      "id": "combat-swords",
+      "matched": true
+    },
+    {
+      "id": "combat-wound-poison",
+      "matched": true
+    },
+    {
+      "id": "assassination-venom",
+      "matched": true
+    },
+    {
+      "id": "subtlety-ghostly-hemorrhage-garrote",
+      "matched": true
+    },
+    {
+      "id": "subtlety-quietus",
+      "matched": true
+    },
+    {
+      "id": "combat-riposte",
+      "matched": true
+    },
+    {
+      "id": "combat-kidney-shot",
+      "matched": true
+    },
+    {
+      "id": "assassination-kidney-shot",
+      "matched": true
+    },
+    {
+      "id": "shadow-priest-thistle-tea",
+      "matched": true
+    },
+    {
+      "id": "shockadin-holy-light-illumination",
+      "matched": true
+    },
+    {
+      "id": "shockadin-holy-light-self",
+      "matched": true
+    },
+    {
+      "id": "shockadin-flash-of-light-blessed",
+      "matched": true
+    },
+    {
+      "id": "shockadin-holy-shock-heal",
+      "matched": true
+    },
+    {
+      "id": "shockadin-holy-light-infusion",
+      "matched": true
+    },
+    {
+      "id": "protection-flash-of-light-self",
+      "matched": true
+    },
+    {
+      "id": "protection-bulwark-threshold",
+      "matched": true
+    },
+    {
+      "id": "protection-bulwark-rotation",
+      "matched": true
+    },
+    {
+      "id": "protection-paladin-sapper",
+      "matched": true
+    },
+    {
+      "id": "retribution-paladin-sapper",
+      "matched": true
+    },
+    {
+      "id": "protection-bulwark-sapper",
+      "matched": true
+    },
+    {
+      "id": "protection-warrior-goblin-sapper",
+      "matched": true
+    },
+    {
+      "id": "fury-protection-warrior-winter-night",
+      "matched": false,
+      "first_log_difference": {
+        "line": 828,
+        "golden": "[30.03] [Fury-prot Warrior (#1)] [Target 1] {SpellID: 11581} Hit for 134.436 damage (SpellSchool: 1). (Threat: 200.983)",
+        "platform": "[30.03] [Fury-prot Warrior (#1)] [Target 1] {SpellID: 11581} Hit for 134.437 damage (SpellSchool: 1). (Threat: 200.983)",
+        "golden_context": [
+          "[30.03] [Fury-prot Warrior (#1)] Casting {SpellID: 11581} (Cost = 14.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[30.03] [Fury-prot Warrior (#1)] Completed cast {SpellID: 11581}",
+          "[30.03] [Fury-prot Warrior (#1)] Spent 14.000 rage from {SpellID: 11581} (26.462 --> 12.462) of 100 total.",
+          "[30.03] [Fury-prot Warrior (#1)] [Target 1] {SpellID: 11581} [DEBUG] MAP: 1470.0, RAP: 112.0, SP: 0.0, BaseDamage:140.5, AfterAttackerMods:126.4, AfterResistances:126.4, AfterTargetMods:134.4, AfterOutcome:134.4, AfterPostOutcome:134.4",
+          "[30.03] [Target 1] Aura refreshed: {SpellID: 11581}",
+          "[30.03] [Fury-prot Warrior (#1)] [Target 1] {SpellID: 11581} Hit for 134.436 damage (SpellSchool: 1). (Threat: 200.983)",
+          "[30.96] [Fury-prot Warrior (#1)] [Fury-prot Warrior (#1)] {SpellID: 16488} [DEBUG] HealingPower: 0.0, BaseHealing:59.7, AfterCasterMods:59.7, AfterTargetMods:59.7, AfterOutcome:59.7, AfterPostOutcome:59.7",
+          "[30.96] [Fury-prot Warrior (#1)] Gained 59.690 health from {SpellID: 16488} (59.690 --> 119.380) of 5969 total."
+        ],
+        "platform_context": [
+          "[30.03] [Fury-prot Warrior (#1)] Casting {SpellID: 11581} (Cost = 14.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[30.03] [Fury-prot Warrior (#1)] Completed cast {SpellID: 11581}",
+          "[30.03] [Fury-prot Warrior (#1)] Spent 14.000 rage from {SpellID: 11581} (26.462 --> 12.462) of 100 total.",
+          "[30.03] [Fury-prot Warrior (#1)] [Target 1] {SpellID: 11581} [DEBUG] MAP: 1470.0, RAP: 112.0, SP: 0.0, BaseDamage:140.5, AfterAttackerMods:126.4, AfterResistances:126.4, AfterTargetMods:134.4, AfterOutcome:134.4, AfterPostOutcome:134.4",
+          "[30.03] [Target 1] Aura refreshed: {SpellID: 11581}",
+          "[30.03] [Fury-prot Warrior (#1)] [Target 1] {SpellID: 11581} Hit for 134.437 damage (SpellSchool: 1). (Threat: 200.983)",
+          "[30.96] [Fury-prot Warrior (#1)] [Fury-prot Warrior (#1)] {SpellID: 16488} [DEBUG] HealingPower: 0.0, BaseHealing:59.7, AfterCasterMods:59.7, AfterTargetMods:59.7, AfterOutcome:59.7, AfterPostOutcome:59.7",
+          "[30.96] [Fury-prot Warrior (#1)] Gained 59.690 health from {SpellID: 16488} (59.690 --> 119.380) of 5969 total."
+        ]
+      }
+    },
+    {
+      "id": "affliction-warlock-lash-of-pain-rounding",
+      "matched": false,
+      "first_log_difference": {
+        "line": 27,
+        "golden": "[0.00] [affliction-warlock (#1) - Succubus] [Target 1] {SpellID: 11780} Hit (25% Resist) for 49.727 damage (SpellSchool: 32). (Threat: 49.727)",
+        "platform": "[0.00] [affliction-warlock (#1) - Succubus] [Target 1] {SpellID: 11780} Hit (25% Resist) for 49.726 damage (SpellSchool: 32). (Threat: 49.726)",
+        "golden_context": [
+          "[-1.00] [affliction-warlock (#1) - Succubus] Gained 0.000 mana from {OtherID: 2, Tag: 1} (1066.000 --> 1066.000) of 1066 total.",
+          "[0.00] [affliction-warlock (#1) - Succubus] Casting {SpellID: 11780} (Cost = 160.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[0.00] [affliction-warlock (#1) - Succubus] Completed cast {SpellID: 11780}",
+          "[0.00] [affliction-warlock (#1) - Succubus] Spent 160.000 mana from {SpellID: 11780} (1066.000 --> 906.000) of 1066 total.",
+          "[0.00] [affliction-warlock (#1) - Succubus] [Target 1] {SpellID: 11780} [DEBUG] MAP: 322.6, RAP: 0.0, SP: 38.0, BaseDamage:66.3, AfterAttackerMods:66.3, AfterResistances:49.7, AfterTargetMods:49.7, AfterOutcome:49.7, AfterPostOutcome:49.7",
+          "[0.00] [affliction-warlock (#1) - Succubus] [Target 1] {SpellID: 11780} Hit (25% Resist) for 49.727 damage (SpellSchool: 32). (Threat: 49.727)",
+          "[0.00] [affliction-warlock (#1)] Casting {SpellID: 1311680} (Cost = 200.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[0.00] [affliction-warlock (#1)] Completed cast {SpellID: 1311680}"
+        ],
+        "platform_context": [
+          "[-1.00] [affliction-warlock (#1) - Succubus] Gained 0.000 mana from {OtherID: 2, Tag: 1} (1066.000 --> 1066.000) of 1066 total.",
+          "[0.00] [affliction-warlock (#1) - Succubus] Casting {SpellID: 11780} (Cost = 160.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[0.00] [affliction-warlock (#1) - Succubus] Completed cast {SpellID: 11780}",
+          "[0.00] [affliction-warlock (#1) - Succubus] Spent 160.000 mana from {SpellID: 11780} (1066.000 --> 906.000) of 1066 total.",
+          "[0.00] [affliction-warlock (#1) - Succubus] [Target 1] {SpellID: 11780} [DEBUG] MAP: 322.6, RAP: 0.0, SP: 38.0, BaseDamage:66.3, AfterAttackerMods:66.3, AfterResistances:49.7, AfterTargetMods:49.7, AfterOutcome:49.7, AfterPostOutcome:49.7",
+          "[0.00] [affliction-warlock (#1) - Succubus] [Target 1] {SpellID: 11780} Hit (25% Resist) for 49.726 damage (SpellSchool: 32). (Threat: 49.726)",
+          "[0.00] [affliction-warlock (#1)] Casting {SpellID: 1311680} (Cost = 200.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[0.00] [affliction-warlock (#1)] Completed cast {SpellID: 1311680}"
+        ]
+      }
+    },
+    {
+      "id": "warrior-bloodthirst-rounding",
+      "matched": false,
+      "first_log_difference": {
+        "line": 2190,
+        "golden": "[33.00] [warrior (#1)] [Target 1] {SpellID: 23894} [DEBUG] MAP: 1127.0, RAP: 60.0, SP: 0.0, BaseDamage:555.1, AfterAttackerMods:555.1, AfterResistances:471.5, AfterTargetMods:479.5, AfterOutcome:479.5, AfterPostOutcome:479.5",
+        "platform": "[33.00] [warrior (#1)] [Target 1] {SpellID: 23894} [DEBUG] MAP: 1127.0, RAP: 60.0, SP: 0.0, BaseDamage:555.2, AfterAttackerMods:555.2, AfterResistances:471.5, AfterTargetMods:479.5, AfterOutcome:479.5, AfterPostOutcome:479.5",
+        "golden_context": [
+          "[32.99] [warrior (#1)] Pausing rotation for 10ms due to resources / CDs.",
+          "[33.00] [warrior (#1)] Gained 1.000 rage from {SpellID: 12296} (75.292 --> 76.292) of 100 total.",
+          "[33.00] [warrior (#1)] Casting {SpellID: 23894} (Cost = 30.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[33.00] [warrior (#1)] Completed cast {SpellID: 23894}",
+          "[33.00] [warrior (#1)] Spent 30.000 rage from {SpellID: 23894} (76.292 --> 46.292) of 100 total.",
+          "[33.00] [warrior (#1)] [Target 1] {SpellID: 23894} [DEBUG] MAP: 1127.0, RAP: 60.0, SP: 0.0, BaseDamage:555.1, AfterAttackerMods:555.1, AfterResistances:471.5, AfterTargetMods:479.5, AfterOutcome:479.5, AfterPostOutcome:479.5",
+          "[33.00] [warrior (#1)] [Target 1] {SpellID: 23894} Hit for 479.483 damage (SpellSchool: 1). (Threat: 383.587)",
+          "[33.21] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1127.0, RAP: 60.0, SP: 0.0, BaseDamage:160.7, AfterAttackerMods:160.7, AfterResistances:160.7, AfterTargetMods:168.7, AfterOutcome:168.7, AfterPostOutcome:168.7"
+        ],
+        "platform_context": [
+          "[32.99] [warrior (#1)] Pausing rotation for 10ms due to resources / CDs.",
+          "[33.00] [warrior (#1)] Gained 1.000 rage from {SpellID: 12296} (75.292 --> 76.292) of 100 total.",
+          "[33.00] [warrior (#1)] Casting {SpellID: 23894} (Cost = 30.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[33.00] [warrior (#1)] Completed cast {SpellID: 23894}",
+          "[33.00] [warrior (#1)] Spent 30.000 rage from {SpellID: 23894} (76.292 --> 46.292) of 100 total.",
+          "[33.00] [warrior (#1)] [Target 1] {SpellID: 23894} [DEBUG] MAP: 1127.0, RAP: 60.0, SP: 0.0, BaseDamage:555.2, AfterAttackerMods:555.2, AfterResistances:471.5, AfterTargetMods:479.5, AfterOutcome:479.5, AfterPostOutcome:479.5",
+          "[33.00] [warrior (#1)] [Target 1] {SpellID: 23894} Hit for 479.483 damage (SpellSchool: 1). (Threat: 383.587)",
+          "[33.21] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1127.0, RAP: 60.0, SP: 0.0, BaseDamage:160.7, AfterAttackerMods:160.7, AfterResistances:160.7, AfterTargetMods:168.7, AfterOutcome:168.7, AfterPostOutcome:168.7"
+        ]
+      }
+    },
+    {
+      "id": "protection-paladin-dwarf-stoneform",
+      "matched": true
+    },
+    {
+      "id": "protection-warrior-dwarf-stoneform",
+      "matched": true
+    },
+    {
+      "id": "protection-warrior-orc-shatter-curse",
+      "matched": true
+    },
+    {
+      "id": "protection-warrior-sapper-orc-shatter-curse",
+      "matched": true
+    },
+    {
+      "id": "protection-warrior-shield-wall",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-thistle-tea-shift",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-potion-shift",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-innervate-shift",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-caster-interval",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-potion-shift-tauren",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-demonic-rune-autocast",
+      "matched": true
+    },
+    {
+      "id": "balance-druid-party-windfury-totem",
+      "matched": true
+    },
+    {
+      "id": "warrior-party-grace-of-air-and-windfury",
+      "matched": true
+    },
+    {
+      "id": "affliction-warlock-raid-curse-of-elements",
+      "matched": true
+    },
+    {
+      "id": "survival-hunter-cat-and-whelp",
+      "matched": true
+    },
+    {
+      "id": "combat-expose-armor",
+      "matched": true
+    },
+    {
+      "id": "combat-improved-expose-armor",
+      "matched": true
+    },
+    {
+      "id": "combat-expose-armor-raid-expose",
+      "matched": true
+    },
+    {
+      "id": "combat-kidney-shot-tank",
+      "matched": true
+    },
+    {
+      "id": "combat-riposte-tank",
+      "matched": true
+    },
+    {
+      "id": "subtlety-ghostly-strike-tank",
+      "matched": true
+    },
+    {
+      "id": "feral-druid-mighty-rage-potion",
+      "matched": true
+    },
+    {
+      "id": "warrior-major-mana-potion",
+      "matched": true
+    },
+    {
+      "id": "protection-warrior-last-stand",
+      "matched": true
+    },
+    {
+      "id": "fury-protection-warrior-last-stand",
+      "matched": true
+    },
+    {
+      "id": "protection-warrior-sapper-last-stand",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-threshold",
+      "matched": true
+    },
+    {
+      "id": "protection-warrior-greater-stoneshield",
+      "matched": true
+    },
+    {
+      "id": "protection-paladin-healing-potion",
+      "matched": true
+    },
+    {
+      "id": "retribution-front-untanked-parry-haste",
+      "matched": true
+    },
+    {
+      "id": "warrior-enrage-sapper",
+      "matched": true
+    },
+    {
+      "id": "warrior-blood-craze-sapper",
+      "matched": true
+    },
+    {
+      "id": "arms-warrior-improved-hamstring",
+      "matched": true
+    },
+    {
+      "id": "arcane-arcane-explosion",
+      "matched": true
+    },
+    {
+      "id": "frost-blizzard-improved-fingers",
+      "matched": true
+    },
+    {
+      "id": "frost-cone-of-cold-improved",
+      "matched": true
+    },
+    {
+      "id": "frost-frost-nova-improved",
+      "matched": true
+    },
+    {
+      "id": "fire-flamestrike-improved",
+      "matched": true
+    },
+    {
+      "id": "fire-blast-wave",
+      "matched": true
+    },
+    {
+      "id": "fire-preset-p1-ephemeral-power",
+      "matched": true
+    },
+    {
+      "id": "arcane-preset-p0-freezing-band",
+      "matched": true
+    },
+    {
+      "id": "enhancement-shaman-preset-grace-of-air",
+      "matched": true
+    },
+    {
+      "id": "protection-paladin-sulfuras",
+      "matched": true
+    },
+    {
+      "id": "feral-druid-threat-enchant",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-subtlety-enchant",
+      "matched": true
+    },
+    {
+      "id": "smite-priest-power-infusion",
+      "matched": true
+    },
+    {
+      "id": "smite-priest-holy-nova-power-infusion",
+      "matched": true
+    },
+    {
+      "id": "combat-rogue-item-procs",
+      "matched": true
+    },
+    {
+      "id": "arms-warrior-sweeping-strikes",
+      "matched": false,
+      "first_log_difference": {
+        "line": 328,
+        "golden": "[11.84] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 126.388 damage (SpellSchool: 1). (Threat: 101.110)",
+        "platform": "[11.84] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 126.387 damage (SpellSchool: 1). (Threat: 101.110)",
+        "golden_context": [
+          "[11.69] [warrior (#1)] No available actions!",
+          "[11.69] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.",
+          "[11.79] [warrior (#1)] No available actions!",
+          "[11.79] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.",
+          "[11.84] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1778.0, RAP: 146.0, SP: 0.0, BaseDamage:118.4, AfterAttackerMods:118.4, AfterResistances:118.4, AfterTargetMods:126.4, AfterOutcome:126.4, AfterPostOutcome:126.4",
+          "[11.84] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 126.388 damage (SpellSchool: 1). (Threat: 101.110)",
+          "[11.89] [warrior (#1)] No available actions!",
+          "[11.89] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs."
+        ],
+        "platform_context": [
+          "[11.69] [warrior (#1)] No available actions!",
+          "[11.69] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.",
+          "[11.79] [warrior (#1)] No available actions!",
+          "[11.79] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.",
+          "[11.84] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1778.0, RAP: 146.0, SP: 0.0, BaseDamage:118.4, AfterAttackerMods:118.4, AfterResistances:118.4, AfterTargetMods:126.4, AfterOutcome:126.4, AfterPostOutcome:126.4",
+          "[11.84] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 126.387 damage (SpellSchool: 1). (Threat: 101.110)",
+          "[11.89] [warrior (#1)] No available actions!",
+          "[11.89] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs."
+        ]
+      }
+    },
+    {
+      "id": "protection-warrior-battlegear-of-might",
+      "matched": true
+    },
+    {
+      "id": "protection-warrior-premier-shield-wall",
+      "matched": true
+    },
+    {
+      "id": "protection-warrior-battlegear-of-valor",
+      "matched": true
+    },
+    {
+      "id": "fury-warrior-rivenspike",
+      "matched": true
+    },
+    {
+      "id": "fury-warrior-battlegear-of-might-sapper",
+      "matched": true
+    },
+    {
+      "id": "protection-warrior-blood-craze-ephemeral-power",
+      "matched": true
+    },
+    {
+      "id": "protection-warrior-blood-craze-neverending-cup",
+      "matched": true
+    },
+    {
+      "id": "protection-paladin-seal-of-fury",
+      "matched": true
+    },
+    {
+      "id": "ret-protection-paladin-seal-of-fury",
+      "matched": true
+    },
+    {
+      "id": "holy-protection-paladin-seal-of-fury",
+      "matched": true
+    },
+    {
+      "id": "retribution-paladin-seal-of-fury-twist",
+      "matched": true
+    },
+    {
+      "id": "protection-paladin-seal-of-fury-bulwark-sapper",
+      "matched": true
+    },
+    {
+      "id": "arcane-mage-spell-stat-procs",
+      "matched": true
+    },
+    {
+      "id": "fire-mage-mana-on-use-trinkets",
+      "matched": true
+    },
+    {
+      "id": "elemental-shaman-insight-earthen-sigil",
+      "matched": true
+    },
+    {
+      "id": "arcane-mage-infernal-lasso",
+      "matched": true
+    },
+    {
+      "id": "arcane-mage-linkens-boomerang",
+      "matched": true
+    },
+    {
+      "id": "arcane-mage-smokeys-lighter",
+      "matched": true
+    },
+    {
+      "id": "fury-warrior-everlook-pathcarver",
+      "matched": true
+    },
+    {
+      "id": "affliction-warlock-golden-banana",
+      "matched": true
+    },
+    {
+      "id": "shadow-priest-serenity-field",
+      "matched": true
+    },
+    {
+      "id": "fury-warrior-prismcharm",
+      "matched": true
+    },
+    {
+      "id": "frost-mage-frozen-heart",
+      "matched": true
+    },
+    {
+      "id": "combat-rogue-defensive-cooldowns-tank",
+      "matched": true
+    },
+    {
+      "id": "warrior-heart-of-wyrmthalak",
+      "matched": true
+    },
+    {
+      "id": "arms-warrior-recovery",
+      "matched": true
+    },
+    {
+      "id": "arcane-mage-second-wind",
+      "matched": true
+    },
+    {
+      "id": "protection-warrior-mark-of-resolution-threshold",
+      "matched": true
+    },
+    {
+      "id": "protection-paladin-arena-grand-master-threshold",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-lifestone-threshold",
+      "matched": true
+    },
+    {
+      "id": "arms-warrior-fiery-blaze",
+      "matched": true
+    },
+    {
+      "id": "protection-paladin-lay-on-hands",
+      "matched": true
+    },
+    {
+      "id": "affliction-warlock-pet-dismiss-residue",
+      "matched": true
+    },
+    {
+      "id": "feral-druid-wildheart-raiment",
+      "matched": true
+    },
+    {
+      "id": "smite-priest-holy-nova-ephemeral-power",
+      "matched": true
+    },
+    {
+      "id": "demonology-warlock-frozen-heart",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-uthers-strength",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-minor-absorption",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-lesser-absorption",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-absorption",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-essence-of-the-pure-flame",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-lion-horn",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-boomerang-pushback",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-boomerang-pushback-after-cast",
+      "matched": true
+    },
+    {
+      "id": "production-survival-hunter-2-targets",
+      "matched": true
+    },
+    {
+      "id": "production-survival-hunter-5-targets",
+      "matched": true
+    },
+    {
+      "id": "production-shadow-priest-2-targets",
+      "matched": true
+    },
+    {
+      "id": "production-shadow-priest-5-targets",
+      "matched": true
+    },
+    {
+      "id": "production-subtlety-rogue-2-targets",
+      "matched": true
+    },
+    {
+      "id": "production-subtlety-rogue-5-targets",
+      "matched": true
+    },
+    {
+      "id": "production-combat-rogue-3-targets",
+      "matched": true
+    },
+    {
+      "id": "production-assassination-rogue-3-targets",
+      "matched": true
+    },
+    {
+      "id": "production-marksmanship-hunter-3-targets",
+      "matched": false,
+      "first_log_difference": {
+        "line": 51,
+        "golden": "[0.00] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.3, AfterAttackerMods:273.7, AfterResistances:232.5, AfterTargetMods:232.5, AfterOutcome:232.5, AfterPostOutcome:232.5",
+        "platform": "[0.00] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.4, AfterAttackerMods:273.7, AfterResistances:232.5, AfterTargetMods:232.5, AfterOutcome:232.5, AfterPostOutcome:232.5",
+        "golden_context": [
+          "[0.00] [marksmanship-hunter (#1)] Completed cast {OtherID: 4}",
+          "[0.00] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:546.8, AfterAttackerMods:689.0, AfterResistances:585.1, AfterTargetMods:585.1, AfterOutcome:585.1, AfterPostOutcome:585.1",
+          "[0.00] [marksmanship-hunter (#1)] Casting {SpellID: 1293527} (Cost = 161.500, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[0.00] [marksmanship-hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[0.00] [marksmanship-hunter (#1)] Spent 161.500 mana from {SpellID: 1293527} (3260.500 --> 3099.000) of 3465 total.",
+          "[0.00] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.3, AfterAttackerMods:273.7, AfterResistances:232.5, AfterTargetMods:232.5, AfterOutcome:232.5, AfterPostOutcome:232.5",
+          "[0.00] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 232.470 damage (SpellSchool: 1). (Threat: 232.470)",
+          "[0.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ],
+        "platform_context": [
+          "[0.00] [marksmanship-hunter (#1)] Completed cast {OtherID: 4}",
+          "[0.00] [marksmanship-hunter (#1)] [Target 1] {OtherID: 4} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:546.8, AfterAttackerMods:689.0, AfterResistances:585.1, AfterTargetMods:585.1, AfterOutcome:585.1, AfterPostOutcome:585.1",
+          "[0.00] [marksmanship-hunter (#1)] Casting {SpellID: 1293527} (Cost = 161.500, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[0.00] [marksmanship-hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[0.00] [marksmanship-hunter (#1)] Spent 161.500 mana from {SpellID: 1293527} (3260.500 --> 3099.000) of 3465 total.",
+          "[0.00] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.4, AfterAttackerMods:273.7, AfterResistances:232.5, AfterTargetMods:232.5, AfterOutcome:232.5, AfterPostOutcome:232.5",
+          "[0.00] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 232.470 damage (SpellSchool: 1). (Threat: 232.470)",
+          "[0.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ]
+      }
+    },
+    {
+      "id": "production-beast-mastery-hunter-3-targets",
+      "matched": false,
+      "first_log_difference": {
+        "line": 127,
+        "golden": "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.3, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+        "platform": "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.4, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+        "golden_context": [
+          "[2.91] [hunter (#1)] [Target 1] {OtherID: 4} Hit for 481.302 damage (SpellSchool: 1). (Threat: 481.302)",
+          "[2.92] [hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2836.000 --> 2895.000) of 3465 total.",
+          "[3.00] [hunter (#1)] Casting {SpellID: 1293527} (Cost = 172.900, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[3.00] [hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[3.00] [hunter (#1)] Spent 172.900 mana from {SpellID: 1293527} (2895.000 --> 2722.100) of 3465 total.",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.3, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 197.600 damage (SpellSchool: 1). (Threat: 197.600)",
+          "[3.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ],
+        "platform_context": [
+          "[2.91] [hunter (#1)] [Target 1] {OtherID: 4} Hit for 481.302 damage (SpellSchool: 1). (Threat: 481.302)",
+          "[2.92] [hunter (#1)] Gained 59.000 mana from {SpellID: 20355} (2836.000 --> 2895.000) of 3465 total.",
+          "[3.00] [hunter (#1)] Casting {SpellID: 1293527} (Cost = 172.900, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)",
+          "[3.00] [hunter (#1)] Completed cast {SpellID: 1293527}",
+          "[3.00] [hunter (#1)] Spent 172.900 mana from {SpellID: 1293527} (2895.000 --> 2722.100) of 3465 total.",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:198.4, AfterAttackerMods:232.7, AfterResistances:197.6, AfterTargetMods:197.6, AfterOutcome:197.6, AfterPostOutcome:197.6",
+          "[3.00] [hunter (#1)] [Target 1] {SpellID: 1293527} Hit for 197.600 damage (SpellSchool: 1). (Threat: 197.600)",
+          "[3.00] [Target 1] Aura gained: {SpellID: 1293527, Tag: 1}"
+        ]
+      }
+    },
+    {
+      "id": "production-smite-priest-3-targets",
+      "matched": true
+    }
+  ],
+  "notes": [
+    "Every result agrees with the accepted goldens within the comparison tolerance. The 19 mismatches are first-fight logs alone: one value, a damage or its debug line, rounds to a different last printed digit, since Go's amd64 compiler does not fuse the multiply and add steps its arm64 compiler fuses and Rust follows with mul_add.",
+    "Production Forever sims run only on the arm64 Mac, the only poller of the Forever queue, where every golden matches. The amd64 PC worker image bundles the engine but does not poll that queue; if it did, its Go results would agree with Rust within tolerance but not exactly."
+  ]
+}
