@@ -1,11 +1,11 @@
 //! Whirlwind (1680), from Go sim/warrior/whirlwind.go: a normalized main hand strike on the
-//! weapon special table against each target, the one in scope, dealt as a batch; with Raging
-//! Blows the off hand's strike follows as its own cast.
+//! weapon special table against each target, the one in scope, dealt as a batch; with an off
+//! hand weapon the off hand's strike follows as its own cast (hotfix 112347).
 
 use crate::core::fight::{melee::PhysicalOutcome, Agent, Fight, Side, SpellId};
 
-/// The main hand strike. `off_hand` is the off hand's spell when Raging Blows adds it and the
-/// warrior holds an off hand weapon.
+/// The main hand strike. `off_hand` is the off hand's spell when the warrior holds an off hand
+/// weapon.
 pub(crate) fn apply<A: Agent>(
     fight: &mut Fight<A>,
     spell: SpellId,
@@ -22,7 +22,7 @@ pub(crate) fn apply<A: Agent>(
     }
 }
 
-/// The off hand strike, Raging Blows' tagged spell.
+/// The off hand strike, Whirlwind's tagged spell.
 pub(crate) fn apply_off_hand<A: Agent>(fight: &mut Fight<A>, spell: SpellId, target: Side) {
     let attack_power = fight.melee_attack_power();
     let base = fight.oh_normalized_weapon_damage(attack_power);

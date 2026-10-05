@@ -5,7 +5,7 @@ use crate::{
     core::time::NEVER_EXPIRES,
     rotation::{
         compile_bool_value, compile_condition, compile_duration_value, Action as ParsedAction,
-        CompareOp, CompiledCondition, FoundAura, Lookup, MathOp, MissingAura, Rotation, ValueType,
+        CompareOp, CompiledCondition, FoundAura, Lookup, MathOp, Rotation, ValueType,
     },
 };
 
@@ -158,8 +158,7 @@ impl<A: Agent> Fight<A> {
             // Go newAPLAction: a constant false condition drops the action; any other
             // condition is never evaluated before the prepull cast.
             .filter(|prepull| {
-                compile_condition(prepull.condition.as_ref(), &lookup, MissingAura::Dropped)
-                    != CompiledCondition::Pruned
+                compile_condition(prepull.condition.as_ref(), &lookup) != CompiledCondition::Pruned
             })
             .filter_map(|prepull| match &prepull.action {
                 ParsedAction::CastSpell(id) => self
@@ -175,8 +174,7 @@ impl<A: Agent> Fight<A> {
         prepull
     }
 
-    /// Go `newAPLRotation` for the supported subset. Conditions compile as the pinned
-    /// reference does; coverage rejects rotations where community #622 would differ.
+    /// Go `newAPLRotation` for the supported subset.
     pub(crate) fn compile_rotation(&self, rotation: &Rotation) -> Vec<Item> {
         let find = |side: Side, id: &ActionId| {
             let tracker = &self.trackers[side.index()];
@@ -224,13 +222,16 @@ impl<A: Agent> Fight<A> {
                     None => continue,
                 },
                 ParsedAction::AutocastOtherCooldowns => Act::Autocast,
-                // Go newActionStrictSequence drops unknown casts, and the action when none
-                // remain.
+                // Go newActionStrictSequence runs every step or none: a step the character
+                // lacks drops the whole action (ElliotWood/Forever#625).
                 ParsedAction::StrictSequence(ids) => {
-                    let spells: Vec<SpellId> = ids
+                    let Some(spells) = ids
                         .iter()
-                        .filter_map(|id| self.apl_cast_spell(id))
-                        .collect();
+                        .map(|id| self.apl_cast_spell(id))
+                        .collect::<Option<Vec<SpellId>>>()
+                    else {
+                        continue;
+                    };
                     if spells.is_empty() {
                         continue;
                     }
@@ -253,8 +254,7 @@ impl<A: Agent> Fight<A> {
                     spell,
                     interrupt_if,
                     allow_recast,
-                } => match compile_bool_value(interrupt_if.as_ref(), &lookup, MissingAura::Dropped)
-                {
+                } => match compile_bool_value(interrupt_if.as_ref(), &lookup) {
                     None => match self.apl_cast_spell(spell) {
                         Some(spell) => Act::Cast(spell, Side::Target),
                         None => continue,
@@ -279,26 +279,20 @@ impl<A: Agent> Fight<A> {
                         spell,
                         dot_spell,
                         max_dots: (*max_dots).min(self.targets.len() as i32),
-                        overlap: compile_duration_value(
-                            max_overlap.as_ref(),
-                            &lookup,
-                            MissingAura::Dropped,
-                        )
-                        .map(Rc::new),
+                        overlap: compile_duration_value(max_overlap.as_ref(), &lookup).map(Rc::new),
                     },
                     _ => continue,
                 },
                 // Parsed only among the prepull actions.
                 ParsedAction::ActivateAura(_) => continue,
             };
-            let condition =
-                match compile_condition(item.condition.as_ref(), &lookup, MissingAura::Dropped) {
-                    // A constant false condition prunes the action; its spells already left
-                    // the major cooldowns in Go's export.
-                    CompiledCondition::Pruned => continue,
-                    CompiledCondition::Always => None,
-                    CompiledCondition::When(condition) => Some(Rc::new(Cond::lower(&condition))),
-                };
+            let condition = match compile_condition(item.condition.as_ref(), &lookup) {
+                // A constant false condition prunes the action; its spells already left
+                // the major cooldowns in Go's export.
+                CompiledCondition::Pruned => continue,
+                CompiledCondition::Always => None,
+                CompiledCondition::When(condition) => Some(Rc::new(Cond::lower(&condition))),
+            };
             items.push(Item { condition, action });
         }
         items

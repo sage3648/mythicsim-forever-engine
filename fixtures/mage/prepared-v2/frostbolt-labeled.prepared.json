@@ -2,8 +2,8 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
-    "client_build": "1.60.1.70170",
+    "engine_revision": "20b551c6bff9aa780fefe17ead89029c13cabcd4",
+    "client_build": "1.60.1.70205",
     "exporter": "tools/oracle-v2"
   },
   "request_sha256": "5f2713354cf09062498b57b95e0b98fdc868c81d0bd1fbdf07377fbf9f9587d9",
@@ -684,7 +684,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "StatBuffIntellectAdd",
+            "single_aura": false,
+            "priority": 31,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Blizzard",
@@ -2863,8 +2871,8 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1.06,
-        "direct_damage_multiplier_additive": 0,
+        "damage_multiplier_additive": 1.02,
+        "direct_damage_multiplier_additive": 0.04,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 1,
         "bonus_base_damage": 0,
@@ -2937,8 +2945,8 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1.06,
-        "direct_damage_multiplier_additive": 0,
+        "damage_multiplier_additive": 1.02,
+        "direct_damage_multiplier_additive": 0.04,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 1,
         "bonus_base_damage": 0,
@@ -3011,8 +3019,8 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1.06,
-        "direct_damage_multiplier_additive": 0,
+        "damage_multiplier_additive": 1.02,
+        "direct_damage_multiplier_additive": 0.04,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 1,
         "bonus_base_damage": 0,

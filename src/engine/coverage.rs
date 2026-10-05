@@ -13,10 +13,7 @@ use crate::{
     classes,
     contracts::prepared_v2::{ActionId, Effect, MajorCooldown, PreparedV2, Spell},
     core::fight::DIRECT_PROC_MASKS,
-    rotation::{
-        compile_bool_value, compile_condition, Action, FoundAura, Lookup, MissingAura, Rotation,
-        Value,
-    },
+    rotation::{compile_condition, Action, FoundAura, Lookup, Rotation, Value},
 };
 
 /// A class's part of the gate.
@@ -66,25 +63,79 @@ impl Refusal {
 
 /// Every refusal code, each with what it covers. docs/prepared-v2.md lists them too.
 pub const REFUSAL_CODES: &[(&str, &str)] = &[
-    ("exporter_unrepresented", "the exporter could not describe part of the request"),
-    ("rotation_unsupported", "the rotation uses an action, value or field the parser rejects"),
+    (
+        "exporter_unrepresented",
+        "the exporter could not describe part of the request",
+    ),
+    (
+        "rotation_unsupported",
+        "the rotation uses an action, value or field the parser rejects",
+    ),
     ("class_unsupported", "the player's class has no Rust gate"),
-    ("level_unsupported", "the player is not level 60 or the target not level 60 to 63"),
-    ("target_count_invalid", "the target count is neither one nor 2 to 5"),
-    ("several_targets_unsupported", "something reaches a target past the first that Rust does not simulate there"),
-    ("aura_listener_unclaimed", "an aura listens to combat events with no effect that handles it"),
-    ("pet_unsupported", "a pet has no behavior or inherits a stat change Rust does not follow"),
-    ("tanking_unsupported", "the target swings at the player in a way Rust does not simulate"),
-    ("aura_condition_unsupported", "a rotation condition reads an aura as the pinned reference and community #622 disagree, or as Rust does not"),
-    ("resource_unsupported", "the rotation or a spell reads a resource the player lacks"),
-    ("prepull_unsupported", "a prepull action Rust cannot reproduce"),
-    ("cooldown_unsupported", "a survival cooldown fires at a health threshold Rust does not simulate"),
-    ("class_limit", "a class gate rejects the input or a spell the rotation reaches"),
-    ("proc_unsupported", "a proc listens to hits Rust does not deliver to it"),
-    ("stat_change_unsupported", "an aura changes a stat the runtime holds fixed"),
-    ("unknown_spell", "the rotation reaches a spell without a known behavior"),
-    ("spell_unsupported", "a reachable spell uses a feature the runtime does not implement"),
-    ("effect_unimplemented", "an effect the input needs is not implemented"),
+    (
+        "level_unsupported",
+        "the player is not level 60 or the target not level 60 to 63",
+    ),
+    (
+        "target_count_invalid",
+        "the target count is neither one nor 2 to 5",
+    ),
+    (
+        "several_targets_unsupported",
+        "something reaches a target past the first that Rust does not simulate there",
+    ),
+    (
+        "aura_listener_unclaimed",
+        "an aura listens to combat events with no effect that handles it",
+    ),
+    (
+        "pet_unsupported",
+        "a pet has no behavior or inherits a stat change Rust does not follow",
+    ),
+    (
+        "tanking_unsupported",
+        "the target swings at the player in a way Rust does not simulate",
+    ),
+    (
+        "aura_condition_unsupported",
+        "a rotation condition reads an aura as Rust does not",
+    ),
+    (
+        "resource_unsupported",
+        "the rotation or a spell reads a resource the player lacks",
+    ),
+    (
+        "prepull_unsupported",
+        "a prepull action Rust cannot reproduce",
+    ),
+    (
+        "cooldown_unsupported",
+        "a survival cooldown fires at a health threshold Rust does not simulate",
+    ),
+    (
+        "class_limit",
+        "a class gate rejects the input or a spell the rotation reaches",
+    ),
+    (
+        "proc_unsupported",
+        "a proc listens to hits Rust does not deliver to it",
+    ),
+    (
+        "stat_change_unsupported",
+        "an aura changes a stat the runtime holds fixed",
+    ),
+    (
+        "unknown_spell",
+        "the rotation reaches a spell without a known behavior",
+    ),
+    (
+        "spell_unsupported",
+        "a reachable spell uses a feature the runtime does not implement",
+    ),
+    (
+        "effect_unimplemented",
+        "an effect the input needs is not implemented",
+    ),
 ];
 
 /// Each reason of one kind, under its code.
@@ -1020,10 +1071,6 @@ pub(crate) fn prepared_coverage(
     if let Some(rotation) = rotation {
         reasons.extend(coded(
             "aura_condition_unsupported",
-            unknown_aura_conditions(prepared, rotation),
-        ));
-        reasons.extend(coded(
-            "aura_condition_unsupported",
             aura_refresh_conditions(prepared, rotation),
         ));
         if player.class != "ClassShaman" {
@@ -1057,20 +1104,8 @@ pub(crate) fn prepared_coverage(
         let mut registered_prepull = 0;
         // Prepull parsing accepts only casts.
         for prepull in &rotation.prepull {
-            match prepull_pruned(prepared, prepull) {
-                Some(true) => continue,
-                Some(false) => {}
-                None => {
-                    reasons.push(Refusal::new(
-                        "prepull_unsupported",
-                        format!(
-                            "prepull action {}: the pinned reference and community #622 prune \
-                             its condition differently",
-                            prepull.position
-                        ),
-                    ));
-                    continue;
-                }
+            if prepull_pruned(prepared, prepull) {
+                continue;
             }
             if let Action::CastSpell(id) = &prepull.action {
                 if let Some(spell) = rotation_spell(prepared, id) {
@@ -1354,8 +1389,8 @@ fn energy_without_bar(prepared: &PreparedV2, rotation: &Rotation) -> Vec<String>
 }
 
 /// Whether Go prunes a prepull action for a constant false condition, which is the only use
-/// Go makes of it; `None` when community #622 would prune it differently.
-fn prepull_pruned(prepared: &PreparedV2, prepull: &crate::rotation::Prepull) -> Option<bool> {
+/// Go makes of it.
+fn prepull_pruned(prepared: &PreparedV2, prepull: &crate::rotation::Prepull) -> bool {
     let aura = |id: &ActionId| find_aura(prepared, id);
     let target_aura = |id: &ActionId| find_unit_aura(&prepared.target.auras, id);
     let spell = |id: &ActionId| rotation_spell_index(prepared, id);
@@ -1372,13 +1407,8 @@ fn prepull_pruned(prepared: &PreparedV2, prepull: &crate::rotation::Prepull) -> 
         dot: &dot,
         pet_aura_known: &pet_aura_known,
     };
-    let pruned = |missing| {
-        compile_condition(prepull.condition.as_ref(), &lookup, missing).never_holds()
-            && compile_condition(prepull.condition.as_ref(), &lookup, missing)
-                == crate::rotation::CompiledCondition::Pruned
-    };
-    let pinned = pruned(MissingAura::Dropped);
-    (pinned == pruned(MissingAura::Inactive)).then_some(pinned)
+    compile_condition(prepull.condition.as_ref(), &lookup)
+        == crate::rotation::CompiledCondition::Pruned
 }
 
 /// Go `ShouldRefreshExclusiveEffects` depends on the other effects of each exclusive category,
@@ -1470,83 +1500,8 @@ fn unreachable_items(prepared: &PreparedV2, rotation: &Rotation) -> BTreeSet<usi
                 .condition
                 .as_ref()
                 .map(|value| value.with_targets(targets));
-            compile_condition(condition.as_ref(), &lookup, MissingAura::Dropped).never_holds()
+            compile_condition(condition.as_ref(), &lookup).never_holds()
         })
         .map(|item| item.position)
         .collect()
-}
-
-/// Pinned Go gives `auraIsActive` and `auraNumStacks` on an aura the character cannot have
-/// no value, which drops the term from its condition; community fix ElliotWood/Forever#622
-/// (252f57aa8) reads the aura as inactive, with no stacks, instead. Where both compile to the
-/// same action, as when an `auraIsKnown` guard already prunes it, the input is unaffected.
-/// Otherwise reject it until the reference adopts the fix. See upstream/changes.json.
-fn unknown_aura_conditions(prepared: &PreparedV2, rotation: &Rotation) -> Vec<String> {
-    let known = |id: &ActionId| find_aura(prepared, id).is_some();
-    // Go resolves rotation names on the casting player: `GetAuraByID` finds the first aura
-    // with the same action ID, tag included; `GetAPLSpell` and `GetAPLDot` find spells.
-    let aura = |id: &ActionId| find_aura(prepared, id);
-    let target_aura = |id: &ActionId| find_unit_aura(&prepared.target.auras, id);
-    let target_known = |id: &ActionId| target_aura(id).is_some();
-    let spell = |id: &ActionId| rotation_spell_index(prepared, id);
-    let dot = |id: &ActionId| {
-        rotation_spell_index(prepared, id).and_then(|index| dot_owner(prepared, index))
-    };
-    let pet_auras = crate::core::fight::pet::pet_agent_auras(prepared);
-    let pet_aura_known =
-        |pet: usize, id: &ActionId| pet_auras.get(pet).is_some_and(|auras| auras.contains(id));
-    let lookup = Lookup {
-        aura: &aura,
-        target_aura: &target_aura,
-        spell: &spell,
-        dot: &dot,
-        pet_aura_known: &pet_aura_known,
-    };
-    let mut reasons = Vec::new();
-    for item in &rotation.priority_list {
-        let pinned = compile_condition(item.condition.as_ref(), &lookup, MissingAura::Dropped);
-        let fixed = compile_condition(item.condition.as_ref(), &lookup, MissingAura::Inactive);
-        // A channel's interrupt condition compiles the same way; any difference counts.
-        let interrupt = match &item.action {
-            Action::ChannelSpell { interrupt_if, .. } => interrupt_if.as_ref(),
-            _ => None,
-        };
-        let interrupt_same = compile_bool_value(interrupt, &lookup, MissingAura::Dropped)
-            == compile_bool_value(interrupt, &lookup, MissingAura::Inactive);
-        if pinned.same_meaning(&fixed) && interrupt_same {
-            continue;
-        }
-        let mut unknown = Vec::new();
-        for condition in item.condition.iter().chain(interrupt) {
-            condition.visit(&mut |value| match value {
-                Value::AuraIsActive(id) if !known(id) => {
-                    unknown.push(("auraIsActive", id.to_string()))
-                }
-                Value::TargetAuraIsActive(id) if !target_known(id) => {
-                    unknown.push(("auraIsActive on the target", id.to_string()))
-                }
-                Value::TargetAuraNumStacks(id) if !target_known(id) => {
-                    unknown.push(("auraNumStacks on the target", id.to_string()))
-                }
-                Value::AuraNumStacks(id) if !known(id) => {
-                    unknown.push(("auraNumStacks", id.to_string()))
-                }
-                Value::AuraRemainingTime(id) if !known(id) => {
-                    unknown.push(("auraRemainingTime", id.to_string()))
-                }
-                Value::TargetAuraRemainingTime(id) if !target_known(id) => {
-                    unknown.push(("auraRemainingTime on the target", id.to_string()))
-                }
-                _ => {}
-            });
-        }
-        for (operator, id) in unknown {
-            reasons.push(format!(
-                "rotation item {}: {operator} names {id}, which the character lacks; \
-                 the pinned reference drops the condition and community #622 reads it as inactive",
-                item.position
-            ));
-        }
-    }
-    reasons
 }

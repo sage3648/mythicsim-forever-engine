@@ -2,8 +2,8 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
-    "client_build": "1.60.1.70170",
+    "engine_revision": "20b551c6bff9aa780fefe17ead89029c13cabcd4",
+    "client_build": "1.60.1.70205",
     "exporter": "tools/oracle-v2"
   },
   "request_sha256": "ec86179d27f92a54b5b470291bee388f2074721cf1fa302272bf222e30651361",
@@ -176,7 +176,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "CurseOfElements",
+            "single_aura": true,
+            "priority": 75,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "ArcaneMissiles-1-1",
@@ -868,7 +876,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "ManaSpringTotemMP5Add",
+            "single_aura": false,
+            "priority": 25,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Moonkin Aura (External)",
@@ -887,7 +903,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "DruidCritAura",
+            "single_aura": true,
+            "priority": 3,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Arcane Brilliance (External)",
@@ -906,7 +930,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "StatBuffIntellectAdd",
+            "single_aura": false,
+            "priority": 31,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Prayer of Spirit (External)",
@@ -925,7 +957,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "StatBuffSpiritAdd",
+            "single_aura": false,
+            "priority": 40,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Gift of the Wild (External)",
@@ -943,7 +983,39 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 5
+        "exclusive_effects": 5,
+        "exclusive_memberships": [
+          {
+            "category": "ResistanceFireFireResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          },
+          {
+            "category": "ResistanceNatureNatureResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          },
+          {
+            "category": "ResistanceFrostFrostResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          },
+          {
+            "category": "ResistanceShadowShadowResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          },
+          {
+            "category": "ResistanceArcaneArcaneResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Greater Blessing of Kings (External)",

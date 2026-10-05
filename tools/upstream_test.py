@@ -39,6 +39,17 @@ class UpstreamLedgerTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "needs a regression"):
                 check(target)
 
+    def test_a_change_the_reference_includes_is_adopted(self):
+        with tempfile.TemporaryDirectory() as directory:
+            target = self.copy(directory)
+            ledger = json.loads((target / "changes.json").read_text())
+            for change in ledger["changes"]:
+                if change.get("pr") == 622:
+                    change["adoption"]["reference"] = "pending"
+            (target / "changes.json").write_text(json.dumps(ledger))
+            with self.assertRaisesRegex(ValueError, "the reference includes this change"):
+                check(target)
+
 
 if __name__ == "__main__":
     unittest.main()

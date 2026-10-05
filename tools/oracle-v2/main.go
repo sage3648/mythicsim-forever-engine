@@ -421,6 +421,36 @@ type Aura struct {
 	// An action ID set after registration, as item_sets.go ExposeToAPL sets a set bonus
 	// tracker's: the aura logs it, but its metrics kept the empty ID and Go lists none.
 	MetricsHidden bool `json:"metrics_hidden,omitempty"`
+	// Each of the aura's exclusive effects, in the aura's order: its category, which Go's aura
+	// metrics name with the effect's uptime, and its place among the category's effects.
+	ExclusiveMemberships []ExclusiveMembership `json:"exclusive_memberships,omitempty"`
+}
+
+// One exclusive effect of an aura, from exclusive_effect.go: the category, whether it holds a
+// single aura, the effect's bid after the reset and its position among the category's effects,
+// which settles a tie for the highest bid.
+type ExclusiveMembership struct {
+	Category   string  `json:"category"`
+	SingleAura bool    `json:"single_aura"`
+	Priority   float64 `json:"priority"`
+	Position   int     `json:"position"`
+}
+
+// The aura's exclusive effects, each with its position in its category.
+func exclusiveMemberships(aura *core.Aura) []ExclusiveMembership {
+	out := []ExclusiveMembership{}
+	for _, ee := range aura.ExclusiveEffects {
+		effects := privateField(ee.Category, "effects")
+		position := -1
+		for j := 0; j < effects.Len(); j++ {
+			if (*core.ExclusiveEffect)(effects.Index(j).UnsafePointer()) == ee {
+				position = j
+			}
+		}
+		out = append(out, ExclusiveMembership{Category: ee.Category.Name, SingleAura: ee.Category.SingleAura,
+			Priority: ee.Priority, Position: position})
+	}
+	return out
 }
 
 func auraCallbacks(aura *core.Aura) []string {
@@ -467,6 +497,7 @@ func exportAuras(unit *core.Unit, timers *timerNames) []Aura {
 			ActionIDForProc: actionID(aura.ActionIDForProc), DurationNs: nanos(aura.Duration),
 			MaxStacks: aura.MaxStacks, Active: aura.IsActive(), Stacks: aura.GetStacks(),
 			Callbacks: auraCallbacks(aura), ICD: icd, Exclusive: len(aura.ExclusiveEffects),
+			ExclusiveMemberships: exclusiveMemberships(aura),
 		}
 		metricsID := readPrivate(privateField(aura, "metrics").FieldByName("ID")).Interface().(core.ActionID)
 		exported.MetricsHidden = metricsID.IsEmptyAction() && !aura.ActionID.IsEmptyAction()
@@ -1792,6 +1823,9 @@ func inertPetEffect(request *proto.RaidSimRequest, pet *core.Pet, reason string,
 		id := actionID(aura.ActionID)
 		if id != nil {
 			auras = append(auras, id)
+			// Go reports each exclusive effect's uptime with the aura, which the inert
+			// pet's metrics do not carry.
+			note(len(aura.ExclusiveEffects) != 0, fmt.Sprintf("inert pet %s's aura %s has exclusive effects", pet.Label, aura.Label))
 		}
 		if aura.IsActive() {
 			note(aura.Duration != core.NeverExpires, fmt.Sprintf("inert pet %s has the expiring aura %s", pet.Label, aura.Label))

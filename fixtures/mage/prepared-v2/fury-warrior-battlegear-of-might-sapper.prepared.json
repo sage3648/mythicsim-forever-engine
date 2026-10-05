@@ -2,8 +2,8 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
-    "client_build": "1.60.1.70170",
+    "engine_revision": "20b551c6bff9aa780fefe17ead89029c13cabcd4",
+    "client_build": "1.60.1.70205",
     "exporter": "tools/oracle-v2"
   },
   "request_sha256": "59398e327eca81caea9cd1bf8eddc4678e1f9702fe04cb2eb501f6d47f703178",
@@ -157,7 +157,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "MinorArmorReductionArmorAdd",
+            "single_aura": false,
+            "priority": -505,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Faerie Fire (External)",
@@ -176,7 +184,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "MinorArmorReductionArmorAdd",
+            "single_aura": false,
+            "priority": -505,
+            "position": 1
+          }
+        ]
       },
       {
         "label": "Expose Armor (External)",
@@ -195,7 +211,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "MajorArmorReduction",
+            "single_aura": true,
+            "priority": 2250,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Sunder Armor (External)",
@@ -215,7 +239,15 @@
           "on_stacks_change"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "MajorArmorReduction",
+            "single_aura": true,
+            "priority": 0,
+            "position": 1
+          }
+        ]
       },
       {
         "label": "Gift of Arthas (External)",
@@ -234,7 +266,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "GiftOfArthasAura",
+            "single_aura": true,
+            "priority": 8,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "DeepWounds-1",
@@ -298,7 +338,15 @@
           "on_stacks_change"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "MajorArmorReduction",
+            "single_aura": true,
+            "priority": 0,
+            "position": 2
+          }
+        ]
       },
       {
         "label": "Thunder Clap (Player)",
@@ -315,7 +363,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "AtkSpdReduction",
+            "single_aura": false,
+            "priority": 0.16666666666666663,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Demoralizing Shout (Player)",
@@ -332,7 +388,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "Demoralizing",
+            "single_aura": true,
+            "priority": 205,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Parry Haste",
@@ -659,7 +723,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "Enrage",
+            "single_aura": true,
+            "priority": 10,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Enrage - Trigger",
@@ -741,7 +813,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "BattleShout",
+            "single_aura": true,
+            "priority": 139,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Leader of the Pack (External)",
@@ -760,7 +840,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "DruidCritAura",
+            "single_aura": true,
+            "priority": 3,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Strength of Earth Totem (External)",
@@ -779,7 +867,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "StrengthOfEarthTotemStrengthAdd",
+            "single_aura": false,
+            "priority": 53,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Windfury Totem (External)",
@@ -798,7 +894,15 @@
           "on_spell_hit_dealt"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "WindfuryTotemAttackPowerAdd",
+            "single_aura": false,
+            "priority": 246,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Windfury Totem Trigger",
@@ -834,7 +938,21 @@
           "on_reset"
         ],
         "icd": null,
-        "exclusive_effects": 2
+        "exclusive_effects": 2,
+        "exclusive_memberships": [
+          {
+            "category": "AirTotem",
+            "single_aura": true,
+            "priority": 2,
+            "position": 0
+          },
+          {
+            "category": "WindfuryTotem",
+            "single_aura": false,
+            "priority": 246,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Gift of the Wild (External)",
@@ -852,7 +970,39 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 5
+        "exclusive_effects": 5,
+        "exclusive_memberships": [
+          {
+            "category": "ResistanceFireFireResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          },
+          {
+            "category": "ResistanceNatureNatureResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          },
+          {
+            "category": "ResistanceFrostFrostResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          },
+          {
+            "category": "ResistanceShadowShadowResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          },
+          {
+            "category": "ResistanceArcaneArcaneResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Greater Blessing of Kings (External)",
@@ -1155,7 +1305,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "Stance",
+            "single_aura": true,
+            "priority": 0,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Defensive Stance",
@@ -1171,7 +1329,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "Stance",
+            "single_aura": true,
+            "priority": 0,
+            "position": 1
+          }
+        ]
       },
       {
         "label": "Berserker Stance",
@@ -1188,7 +1354,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "Stance",
+            "single_aura": true,
+            "priority": 0,
+            "position": 2
+          }
+        ]
       },
       {
         "label": "Battle Shout (Player)",
@@ -1205,7 +1379,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "BattleShout",
+            "single_aura": true,
+            "priority": 139,
+            "position": 1
+          }
+        ]
       },
       {
         "label": "Parry Haste",
@@ -3605,10 +3787,10 @@
           "base_cost": 10,
           "flat_modifier": 0,
           "percent_modifier": 1,
-          "additive_percent_modifier": 1
+          "additive_percent_modifier": 0.75
         },
         "default_cast": {
-          "cost": 10,
+          "cost": 7.5,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
           "cast_time_ns": 0,
@@ -3662,10 +3844,10 @@
           "base_cost": 10,
           "flat_modifier": 0,
           "percent_modifier": 1,
-          "additive_percent_modifier": 1
+          "additive_percent_modifier": 0.75
         },
         "default_cast": {
-          "cost": 10,
+          "cost": 7.5,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
           "cast_time_ns": 0,
@@ -3719,10 +3901,10 @@
           "base_cost": 5,
           "flat_modifier": 0,
           "percent_modifier": 1,
-          "additive_percent_modifier": 1
+          "additive_percent_modifier": 0.75
         },
         "default_cast": {
-          "cost": 5,
+          "cost": 3.75,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
           "cast_time_ns": 0,
@@ -3779,10 +3961,10 @@
           "base_cost": 25,
           "flat_modifier": 0,
           "percent_modifier": 1,
-          "additive_percent_modifier": 1
+          "additive_percent_modifier": 0.75
         },
         "default_cast": {
-          "cost": 25,
+          "cost": 18.75,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
           "cast_time_ns": 0,

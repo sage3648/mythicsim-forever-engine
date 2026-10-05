@@ -58,6 +58,12 @@
               "n": 1000,
               "sumSq": 14457687.606727676
             },
+            "effects": [
+              {
+                "category": "MajorArmorReduction",
+                "uptimeSecondsAvg": 119.931696363984
+              }
+            ],
             "procsAvg": 1,
             "uptimeSecondsAvg": 119.93169636398414,
             "uptimeSecondsStdev": 8.606730737323517
@@ -67,6 +73,12 @@
               "n": 1000,
               "sumSq": 14457687.606727676
             },
+            "effects": [
+              {
+                "category": "GiftOfArthasAura",
+                "uptimeSecondsAvg": 119.931696363984
+              }
+            ],
             "procsAvg": 1,
             "uptimeSecondsAvg": 119.93169636398414,
             "uptimeSecondsStdev": 8.606730737323517
@@ -74,7 +86,12 @@
           "{\"spellId\": 11556}": {
             "aggregatorData": {
               "n": 1000
-            }
+            },
+            "effects": [
+              {
+                "category": "Demoralizing"
+              }
+            ]
           },
           "{\"spellId\": 11574}": {
             "aggregatorData": {
@@ -86,6 +103,12 @@
               "n": 1000,
               "sumSq": 13986337.63103776
             },
+            "effects": [
+              {
+                "category": "AtkSpdReduction",
+                "uptimeSecondsAvg": 117.948595363884
+              }
+            ],
             "procsAvg": 19.282,
             "uptimeSecondsAvg": 117.94859536388414,
             "uptimeSecondsStdev": 8.62939642874807
@@ -94,18 +117,33 @@
             "aggregatorData": {
               "n": 1000
             },
+            "effects": [
+              {
+                "category": "MajorArmorReduction"
+              }
+            ],
             "procsAvg": 5
           },
           "{\"spellId\": 11597}": {
             "aggregatorData": {
               "n": 1000
-            }
+            },
+            "effects": [
+              {
+                "category": "MajorArmorReduction"
+              }
+            ]
           },
           "{\"spellId\": 11717, \"tag\": -1}": {
             "aggregatorData": {
               "n": 1000,
               "sumSq": 14457687.606727676
             },
+            "effects": [
+              {
+                "category": "MinorArmorReductionArmorAdd"
+              }
+            ],
             "procsAvg": 1,
             "uptimeSecondsAvg": 119.93169636398414,
             "uptimeSecondsStdev": 8.606730737323517
@@ -134,6 +172,12 @@
               "n": 1000,
               "sumSq": 14457687.606727676
             },
+            "effects": [
+              {
+                "category": "MinorArmorReductionArmorAdd",
+                "uptimeSecondsAvg": 119.931696363984
+              }
+            ],
             "procsAvg": 1,
             "uptimeSecondsAvg": 119.93169636398414,
             "uptimeSecondsStdev": 8.606730737323517
@@ -951,6 +995,12 @@
                   "n": 1000,
                   "sumSq": 14457687.606727676
                 },
+                "effects": [
+                  {
+                    "category": "DevotionAura",
+                    "uptimeSecondsAvg": 119.931696363984
+                  }
+                ],
                 "procsAvg": 1,
                 "uptimeSecondsAvg": 119.93169636398414,
                 "uptimeSecondsStdev": 8.606730737323517
@@ -960,6 +1010,12 @@
                   "n": 1000,
                   "sumSq": 14457687.606727676
                 },
+                "effects": [
+                  {
+                    "category": "ResistanceFireFireResistanceAdd",
+                    "uptimeSecondsAvg": 119.931696363984
+                  }
+                ],
                 "procsAvg": 1,
                 "uptimeSecondsAvg": 119.93169636398414,
                 "uptimeSecondsStdev": 8.606730737323517
@@ -969,6 +1025,12 @@
                   "n": 1000,
                   "sumSq": 36101.864858645095
                 },
+                "effects": [
+                  {
+                    "category": "WindfuryTotemAttackPowerAdd",
+                    "uptimeSecondsAvg": 5.603500569905
+                  }
+                ],
                 "procsAvg": 13.02,
                 "uptimeSecondsAvg": 5.603500569905003,
                 "uptimeSecondsStdev": 2.1685585585174785
@@ -1007,6 +1069,15 @@
                   "n": 1000,
                   "sumSq": 14457687.606727676
                 },
+                "effects": [
+                  {
+                    "category": "ResistanceFireFireResistanceAdd"
+                  },
+                  {
+                    "category": "FireResistanceAura",
+                    "uptimeSecondsAvg": 119.931696363984
+                  }
+                ],
                 "procsAvg": 1,
                 "uptimeSecondsAvg": 119.93169636398414,
                 "uptimeSecondsStdev": 8.606730737323517
@@ -1040,6 +1111,27 @@
                   "n": 1000,
                   "sumSq": 14457687.606727676
                 },
+                "effects": [
+                  {
+                    "category": "ResistanceFireFireResistanceAdd"
+                  },
+                  {
+                    "category": "ResistanceNatureNatureResistanceAdd",
+                    "uptimeSecondsAvg": 119.931696363984
+                  },
+                  {
+                    "category": "ResistanceFrostFrostResistanceAdd",
+                    "uptimeSecondsAvg": 119.931696363984
+                  },
+                  {
+                    "category": "ResistanceShadowShadowResistanceAdd",
+                    "uptimeSecondsAvg": 119.931696363984
+                  },
+                  {
+                    "category": "ResistanceArcaneArcaneResistanceAdd",
+                    "uptimeSecondsAvg": 119.931696363984
+                  }
+                ],
                 "procsAvg": 1,
                 "uptimeSecondsAvg": 119.93169636398414,
                 "uptimeSecondsStdev": 8.606730737323517
@@ -1047,18 +1139,34 @@
               "{\"spellId\": 2457}": {
                 "aggregatorData": {
                   "n": 1000
-                }
+                },
+                "effects": [
+                  {
+                    "category": "Stance"
+                  }
+                ]
               },
               "{\"spellId\": 2458}": {
                 "aggregatorData": {
                   "n": 1000
-                }
+                },
+                "effects": [
+                  {
+                    "category": "Stance"
+                  }
+                ]
               },
               "{\"spellId\": 24932, \"tag\": -1}": {
                 "aggregatorData": {
                   "n": 1000,
                   "sumSq": 14457687.606727676
                 },
+                "effects": [
+                  {
+                    "category": "DruidCritAura",
+                    "uptimeSecondsAvg": 119.931696363984
+                  }
+                ],
                 "procsAvg": 1,
                 "uptimeSecondsAvg": 119.93169636398414,
                 "uptimeSecondsStdev": 8.606730737323517
@@ -1086,6 +1194,12 @@
                   "n": 1000,
                   "sumSq": 14457687.606727676
                 },
+                "effects": [
+                  {
+                    "category": "BattleShout",
+                    "uptimeSecondsAvg": 119.931696363984
+                  }
+                ],
                 "procsAvg": 1,
                 "uptimeSecondsAvg": 119.93169636398414,
                 "uptimeSecondsStdev": 8.606730737323517
@@ -1093,13 +1207,24 @@
               "{\"spellId\": 25289}": {
                 "aggregatorData": {
                   "n": 1000
-                }
+                },
+                "effects": [
+                  {
+                    "category": "BattleShout"
+                  }
+                ]
               },
               "{\"spellId\": 25362, \"tag\": -1}": {
                 "aggregatorData": {
                   "n": 1000,
                   "sumSq": 14457687.606727676
                 },
+                "effects": [
+                  {
+                    "category": "StrengthOfEarthTotemStrengthAdd",
+                    "uptimeSecondsAvg": 119.931696363984
+                  }
+                ],
                 "procsAvg": 1,
                 "uptimeSecondsAvg": 119.93169636398414,
                 "uptimeSecondsStdev": 8.606730737323517
@@ -1118,6 +1243,16 @@
                   "n": 1000,
                   "sumSq": 14457687.606727676
                 },
+                "effects": [
+                  {
+                    "category": "AirTotem",
+                    "uptimeSecondsAvg": 119.931696363984
+                  },
+                  {
+                    "category": "WindfuryTotem",
+                    "uptimeSecondsAvg": 119.931696363984
+                  }
+                ],
                 "procsAvg": 24.488,
                 "uptimeSecondsAvg": 119.93169636398414,
                 "uptimeSecondsStdev": 8.606730737323517
@@ -1155,6 +1290,12 @@
                   "n": 1000,
                   "sumSq": 14457687.606727676
                 },
+                "effects": [
+                  {
+                    "category": "Stance",
+                    "uptimeSecondsAvg": 119.931696363984
+                  }
+                ],
                 "procsAvg": 1,
                 "uptimeSecondsAvg": 119.93169636398414,
                 "uptimeSecondsStdev": 8.606730737323517

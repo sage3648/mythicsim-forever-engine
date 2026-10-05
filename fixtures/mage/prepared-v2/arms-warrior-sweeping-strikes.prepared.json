@@ -2,8 +2,8 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
-    "client_build": "1.60.1.70170",
+    "engine_revision": "20b551c6bff9aa780fefe17ead89029c13cabcd4",
+    "client_build": "1.60.1.70205",
     "exporter": "tools/oracle-v2"
   },
   "request_sha256": "bf3496f0a4c3155e5e6042a8690525c7d081bae1f33fa495bdb26de459a6a76e",
@@ -157,7 +157,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "MinorArmorReductionArmorAdd",
+            "single_aura": false,
+            "priority": -505,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Faerie Fire (External)",
@@ -176,7 +184,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "MinorArmorReductionArmorAdd",
+            "single_aura": false,
+            "priority": -505,
+            "position": 1
+          }
+        ]
       },
       {
         "label": "Expose Armor (External)",
@@ -195,7 +211,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "MajorArmorReduction",
+            "single_aura": true,
+            "priority": 2250,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Sunder Armor (External)",
@@ -215,7 +239,15 @@
           "on_stacks_change"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "MajorArmorReduction",
+            "single_aura": true,
+            "priority": 0,
+            "position": 1
+          }
+        ]
       },
       {
         "label": "Gift of Arthas (External)",
@@ -234,7 +266,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "GiftOfArthasAura",
+            "single_aura": true,
+            "priority": 8,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "DeepWounds-1",
@@ -298,7 +338,15 @@
           "on_stacks_change"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "MajorArmorReduction",
+            "single_aura": true,
+            "priority": 0,
+            "position": 2
+          }
+        ]
       },
       {
         "label": "Thunder Clap (Player)",
@@ -315,7 +363,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "AtkSpdReduction",
+            "single_aura": false,
+            "priority": 0.16666666666666663,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Demoralizing Shout (Player)",
@@ -332,7 +388,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "Demoralizing",
+            "single_aura": true,
+            "priority": 205,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Parry Haste",
@@ -799,7 +863,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "BattleShout",
+            "single_aura": true,
+            "priority": 139,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Leader of the Pack (External)",
@@ -818,7 +890,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "DruidCritAura",
+            "single_aura": true,
+            "priority": 3,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Strength of Earth Totem (External)",
@@ -837,7 +917,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "StrengthOfEarthTotemStrengthAdd",
+            "single_aura": false,
+            "priority": 53,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Windfury Totem (External)",
@@ -856,7 +944,15 @@
           "on_spell_hit_dealt"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "WindfuryTotemAttackPowerAdd",
+            "single_aura": false,
+            "priority": 246,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Windfury Totem Trigger",
@@ -892,7 +988,21 @@
           "on_reset"
         ],
         "icd": null,
-        "exclusive_effects": 2
+        "exclusive_effects": 2,
+        "exclusive_memberships": [
+          {
+            "category": "AirTotem",
+            "single_aura": true,
+            "priority": 2,
+            "position": 0
+          },
+          {
+            "category": "WindfuryTotem",
+            "single_aura": false,
+            "priority": 246,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Gift of the Wild (External)",
@@ -910,7 +1020,39 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 5
+        "exclusive_effects": 5,
+        "exclusive_memberships": [
+          {
+            "category": "ResistanceFireFireResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          },
+          {
+            "category": "ResistanceNatureNatureResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          },
+          {
+            "category": "ResistanceFrostFrostResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          },
+          {
+            "category": "ResistanceShadowShadowResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          },
+          {
+            "category": "ResistanceArcaneArcaneResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Greater Blessing of Kings (External)",
@@ -1214,7 +1356,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "Stance",
+            "single_aura": true,
+            "priority": 0,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Defensive Stance",
@@ -1230,7 +1380,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "Stance",
+            "single_aura": true,
+            "priority": 0,
+            "position": 1
+          }
+        ]
       },
       {
         "label": "Berserker Stance",
@@ -1246,7 +1404,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "Stance",
+            "single_aura": true,
+            "priority": 0,
+            "position": 2
+          }
+        ]
       },
       {
         "label": "Battle Shout (Player)",
@@ -1263,7 +1429,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "BattleShout",
+            "single_aura": true,
+            "priority": 139,
+            "position": 1
+          }
+        ]
       },
       {
         "label": "Parry Haste",
@@ -3177,6 +3351,60 @@
       {
         "action_id": {
           "spell_id": 1680,
+          "tag": 2
+        },
+        "rank": 0,
+        "school": 1,
+        "defense_type": "DefenseTypeMelee",
+        "proc_mask": [
+          "ProcMaskMeleeOHSpecial"
+        ],
+        "flags": [
+          "SpellFlagMeleeMetrics",
+          "SpellFlagNoOnCastComplete",
+          "SpellFlagPassiveSpell"
+        ],
+        "class_spell": "whirlwind_off_hand",
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "autos_or_procs",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0.2,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 1.25,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 1680,
           "tag": 1
         },
         "rank": 0,
@@ -3837,10 +4065,10 @@
           "base_cost": 10,
           "flat_modifier": 0,
           "percent_modifier": 1,
-          "additive_percent_modifier": 1
+          "additive_percent_modifier": 0.75
         },
         "default_cast": {
-          "cost": 10,
+          "cost": 7.5,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
           "cast_time_ns": 0,
@@ -3894,10 +4122,10 @@
           "base_cost": 10,
           "flat_modifier": 0,
           "percent_modifier": 1,
-          "additive_percent_modifier": 1
+          "additive_percent_modifier": 0.75
         },
         "default_cast": {
-          "cost": 10,
+          "cost": 7.5,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
           "cast_time_ns": 0,
@@ -3951,10 +4179,10 @@
           "base_cost": 5,
           "flat_modifier": 0,
           "percent_modifier": 1,
-          "additive_percent_modifier": 1
+          "additive_percent_modifier": 0.75
         },
         "default_cast": {
-          "cost": 5,
+          "cost": 3.75,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
           "cast_time_ns": 0,
@@ -4011,10 +4239,10 @@
           "base_cost": 25,
           "flat_modifier": 0,
           "percent_modifier": 1,
-          "additive_percent_modifier": 1
+          "additive_percent_modifier": 0.75
         },
         "default_cast": {
-          "cost": 25,
+          "cost": 18.75,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
           "cast_time_ns": 0,
@@ -5280,7 +5508,7 @@
     },
     {
       "kind": "whirlwind",
-      "off_hand": false,
+      "off_hand": true,
       "spell_id": 1680
     },
     {
@@ -5673,42 +5901,46 @@
         },
         {
           "spell": 32,
-          "chance": 0.043333333333333335
+          "chance": 0.041666666666666664
         },
         {
           "spell": 33,
           "chance": 0.043333333333333335
         },
         {
-          "spell": 35,
+          "spell": 34,
           "chance": 0.043333333333333335
         },
         {
-          "spell": 37,
-          "chance": 0.041666666666666664
+          "spell": 36,
+          "chance": 0.043333333333333335
         },
         {
           "spell": 38,
-          "chance": 0.043333333333333335
+          "chance": 0.041666666666666664
         },
         {
           "spell": 39,
           "chance": 0.043333333333333335
         },
         {
-          "spell": 48,
+          "spell": 40,
           "chance": 0.043333333333333335
         },
         {
           "spell": 49,
-          "chance": 0.041666666666666664
-        },
-        {
-          "spell": 50,
           "chance": 0.043333333333333335
         },
         {
+          "spell": 50,
+          "chance": 0.041666666666666664
+        },
+        {
           "spell": 51,
+          "chance": 0.043333333333333335
+        },
+        {
+          "spell": 52,
           "chance": 0.043333333333333335
         }
       ],
@@ -5757,18 +5989,19 @@
         31,
         32,
         33,
-        35,
-        37,
+        34,
+        36,
         38,
         39,
-        48,
+        40,
         49,
         50,
-        51
+        51,
+        52
       ]
     },
     {
-      "extra_attack_spell": 51,
+      "extra_attack_spell": 52,
       "kind": "windfury_totem",
       "period_ns": 5000000000,
       "proc_aura": "Windfury Totem (External)",
@@ -5784,10 +6017,10 @@
         14,
         26,
         28,
-        48,
         49,
         50,
-        51
+        51,
+        52
       ],
       "totem_aura": "Windfury Totem",
       "trigger_aura": "Windfury Totem Trigger",
@@ -5817,14 +6050,15 @@
         31,
         32,
         33,
-        35,
-        37,
+        34,
+        36,
         38,
         39,
-        48,
+        40,
         49,
         50,
-        51
+        51,
+        52
       ]
     },
     {

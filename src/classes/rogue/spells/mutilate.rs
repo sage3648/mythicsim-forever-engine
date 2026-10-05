@@ -62,11 +62,13 @@ impl Mutilate {
         if poisoned {
             fight.spells[spell].damage_multiplier *= 1.0 + self.poison_bonus;
         }
+        // The cast already rolled miss, dodge and parry: each hand strike carries the client's
+        // No Attack Miss/Dodge/Parry attributes, so it can only be blocked or crit (Go #632).
         let result = fight.calc_physical_damage(
             spell,
             target,
             base,
-            PhysicalOutcome::MeleeWeaponSpecialHitAndCrit { count: true },
+            PhysicalOutcome::MeleeSpecialBlockAndCrit { count: true },
         );
         fight.deal_damage(spell, result, false);
         fight.spells[spell].damage_multiplier = saved;

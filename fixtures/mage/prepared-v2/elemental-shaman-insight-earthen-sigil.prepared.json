@@ -2,8 +2,8 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
-    "client_build": "1.60.1.70170",
+    "engine_revision": "20b551c6bff9aa780fefe17ead89029c13cabcd4",
+    "client_build": "1.60.1.70205",
     "exporter": "tools/oracle-v2"
   },
   "request_sha256": "485055033eb2a12bc93280ee3320eab43065de4843641d377234dd6ebf7e05af",
@@ -176,7 +176,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "CurseOfElements",
+            "single_aura": true,
+            "priority": 75,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Searing Totem-1",
@@ -521,7 +529,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "ManaSpringTotemMP5Add",
+            "single_aura": false,
+            "priority": 25,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Moonkin Aura (External)",
@@ -540,7 +556,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "DruidCritAura",
+            "single_aura": true,
+            "priority": 3,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Arcane Brilliance (External)",
@@ -559,7 +583,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "StatBuffIntellectAdd",
+            "single_aura": false,
+            "priority": 31,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Prayer of Spirit (External)",
@@ -578,7 +610,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "StatBuffSpiritAdd",
+            "single_aura": false,
+            "priority": 40,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Gift of the Wild (External)",
@@ -596,7 +636,39 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 5
+        "exclusive_effects": 5,
+        "exclusive_memberships": [
+          {
+            "category": "ResistanceFireFireResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          },
+          {
+            "category": "ResistanceNatureNatureResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          },
+          {
+            "category": "ResistanceFrostFrostResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          },
+          {
+            "category": "ResistanceShadowShadowResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          },
+          {
+            "category": "ResistanceArcaneArcaneResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Prayer of Fortitude (External)",
@@ -710,7 +782,15 @@
         "stacks": 0,
         "callbacks": [],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "FlametongueTotem",
+            "single_aura": false,
+            "priority": 1363,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Windfury Totem Proc (Self)",
@@ -756,7 +836,15 @@
         "stacks": 0,
         "callbacks": [],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "WindfuryTotem",
+            "single_aura": false,
+            "priority": 246,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Windfury Party Weapon Buff Tracking Aura",
@@ -787,7 +875,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "AirTotem",
+            "single_aura": true,
+            "priority": 4,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Strength Of Earth Totem (Self)",
@@ -800,7 +896,15 @@
         "stacks": 0,
         "callbacks": [],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "StrengthOfEarthTotemStrengthAdd",
+            "single_aura": false,
+            "priority": 53,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Grace Of Air Totem (Self)",
@@ -813,7 +917,21 @@
         "stacks": 0,
         "callbacks": [],
         "icd": null,
-        "exclusive_effects": 2
+        "exclusive_effects": 2,
+        "exclusive_memberships": [
+          {
+            "category": "AirTotem",
+            "single_aura": true,
+            "priority": 3,
+            "position": 1
+          },
+          {
+            "category": "GraceOfAirTotemAgilityAdd",
+            "single_aura": false,
+            "priority": 89,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Mana Spring Totem (Self)",
@@ -826,7 +944,15 @@
         "stacks": 0,
         "callbacks": [],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "ManaSpringTotemMP5Add",
+            "single_aura": false,
+            "priority": 25,
+            "position": 1
+          }
+        ]
       },
       {
         "label": "Movement",

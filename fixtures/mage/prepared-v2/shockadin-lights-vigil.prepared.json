@@ -2,8 +2,8 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
-    "client_build": "1.60.1.70170",
+    "engine_revision": "20b551c6bff9aa780fefe17ead89029c13cabcd4",
+    "client_build": "1.60.1.70205",
     "exporter": "tools/oracle-v2"
   },
   "request_sha256": "8916da247022e285407d50d0fc6e64bb1a8a9308214b20f78e4fb131f5baad77",
@@ -176,7 +176,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "MinorArmorReductionArmorAdd",
+            "single_aura": false,
+            "priority": -505,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Faerie Fire (External)",
@@ -195,7 +203,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "MinorArmorReductionArmorAdd",
+            "single_aura": false,
+            "priority": -505,
+            "position": 1
+          }
+        ]
       },
       {
         "label": "Sunder Armor (External)",
@@ -215,7 +231,15 @@
           "on_stacks_change"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "MajorArmorReduction",
+            "single_aura": true,
+            "priority": 0,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Gift of Arthas (External)",
@@ -234,7 +258,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "GiftOfArthasAura",
+            "single_aura": true,
+            "priority": 8,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Judgement of the Crusader",
@@ -250,7 +282,15 @@
           "on_reset"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "Judgement of the Crusader",
+            "single_aura": true,
+            "priority": 161,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Light's Vigilshockadin-paladin (#1) Rank 1",
@@ -461,7 +501,15 @@
         "stacks": 0,
         "callbacks": [],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "Judgement of the Crusader",
+            "single_aura": true,
+            "priority": 23,
+            "position": 1
+          }
+        ]
       },
       {
         "label": "Judgement of the Crusader Rank 2",
@@ -475,7 +523,15 @@
         "stacks": 0,
         "callbacks": [],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "Judgement of the Crusader",
+            "single_aura": true,
+            "priority": 35,
+            "position": 2
+          }
+        ]
       },
       {
         "label": "Judgement of the Crusader Rank 3",
@@ -489,7 +545,15 @@
         "stacks": 0,
         "callbacks": [],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "Judgement of the Crusader",
+            "single_aura": true,
+            "priority": 58,
+            "position": 3
+          }
+        ]
       },
       {
         "label": "Judgement of the Crusader Rank 4",
@@ -503,7 +567,15 @@
         "stacks": 0,
         "callbacks": [],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "Judgement of the Crusader",
+            "single_aura": true,
+            "priority": 92,
+            "position": 4
+          }
+        ]
       },
       {
         "label": "Judgement of the Crusader Rank 5",
@@ -517,7 +589,15 @@
         "stacks": 0,
         "callbacks": [],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "Judgement of the Crusader",
+            "single_aura": true,
+            "priority": 127,
+            "position": 5
+          }
+        ]
       },
       {
         "label": "Judgement of the Crusader Rank 6",
@@ -531,7 +611,15 @@
         "stacks": 0,
         "callbacks": [],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "Judgement of the Crusader",
+            "single_aura": true,
+            "priority": 161,
+            "position": 6
+          }
+        ]
       },
       {
         "label": "Parry Haste",
@@ -931,7 +1019,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "BattleShout",
+            "single_aura": true,
+            "priority": 139,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Leader of the Pack (External)",
@@ -951,7 +1047,15 @@
         ],
         "icd": null,
         "exclusive_effects": 1,
-        "displaced_by": "Moonkin Aura (External)"
+        "displaced_by": "Moonkin Aura (External)",
+        "exclusive_memberships": [
+          {
+            "category": "DruidCritAura",
+            "single_aura": true,
+            "priority": 3,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Moonkin Aura (External)",
@@ -970,7 +1074,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "DruidCritAura",
+            "single_aura": true,
+            "priority": 3,
+            "position": 1
+          }
+        ]
       },
       {
         "label": "Windfury Totem (External)",
@@ -989,7 +1101,15 @@
           "on_spell_hit_dealt"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "WindfuryTotemAttackPowerAdd",
+            "single_aura": false,
+            "priority": 246,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Windfury Totem Trigger",
@@ -1025,7 +1145,21 @@
           "on_reset"
         ],
         "icd": null,
-        "exclusive_effects": 2
+        "exclusive_effects": 2,
+        "exclusive_memberships": [
+          {
+            "category": "AirTotem",
+            "single_aura": true,
+            "priority": 2,
+            "position": 0
+          },
+          {
+            "category": "WindfuryTotem",
+            "single_aura": false,
+            "priority": 246,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Arcane Brilliance (External)",
@@ -1044,7 +1178,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "StatBuffIntellectAdd",
+            "single_aura": false,
+            "priority": 31,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Prayer of Spirit (External)",
@@ -1063,7 +1205,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "StatBuffSpiritAdd",
+            "single_aura": false,
+            "priority": 40,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Gift of the Wild (External)",
@@ -1081,7 +1231,39 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 5
+        "exclusive_effects": 5,
+        "exclusive_memberships": [
+          {
+            "category": "ResistanceFireFireResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          },
+          {
+            "category": "ResistanceNatureNatureResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          },
+          {
+            "category": "ResistanceFrostFrostResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          },
+          {
+            "category": "ResistanceShadowShadowResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          },
+          {
+            "category": "ResistanceArcaneArcaneResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Fire Resistance Aura (External)",
@@ -1100,7 +1282,21 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 2
+        "exclusive_effects": 2,
+        "exclusive_memberships": [
+          {
+            "category": "ResistanceFireFireResistanceAdd",
+            "single_aura": false,
+            "priority": 60,
+            "position": 1
+          },
+          {
+            "category": "FireResistanceAura",
+            "single_aura": true,
+            "priority": 60,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Fire Resistance Totem (External)",
@@ -1118,7 +1314,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "ResistanceFireFireResistanceAdd",
+            "single_aura": false,
+            "priority": 60,
+            "position": 2
+          }
+        ]
       },
       {
         "label": "Greater Blessing of Kings (External)",
@@ -1253,7 +1457,15 @@
           "on_spell_hit_dealt"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "PaladinSeal",
+            "single_aura": true,
+            "priority": 0,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Seal of Righteousnessshockadin-paladin (#1) Rank 2",
@@ -1271,7 +1483,15 @@
           "on_spell_hit_dealt"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "PaladinSeal",
+            "single_aura": true,
+            "priority": 0,
+            "position": 1
+          }
+        ]
       },
       {
         "label": "Seal of Righteousnessshockadin-paladin (#1) Rank 3",
@@ -1289,7 +1509,15 @@
           "on_spell_hit_dealt"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "PaladinSeal",
+            "single_aura": true,
+            "priority": 0,
+            "position": 2
+          }
+        ]
       },
       {
         "label": "Seal of Righteousnessshockadin-paladin (#1) Rank 4",
@@ -1307,7 +1535,15 @@
           "on_spell_hit_dealt"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "PaladinSeal",
+            "single_aura": true,
+            "priority": 0,
+            "position": 3
+          }
+        ]
       },
       {
         "label": "Seal of Righteousnessshockadin-paladin (#1) Rank 5",
@@ -1325,7 +1561,15 @@
           "on_spell_hit_dealt"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "PaladinSeal",
+            "single_aura": true,
+            "priority": 0,
+            "position": 4
+          }
+        ]
       },
       {
         "label": "Seal of Righteousnessshockadin-paladin (#1) Rank 6",
@@ -1343,7 +1587,15 @@
           "on_spell_hit_dealt"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "PaladinSeal",
+            "single_aura": true,
+            "priority": 0,
+            "position": 5
+          }
+        ]
       },
       {
         "label": "Seal of Righteousnessshockadin-paladin (#1) Rank 7",
@@ -1361,7 +1613,15 @@
           "on_spell_hit_dealt"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "PaladinSeal",
+            "single_aura": true,
+            "priority": 0,
+            "position": 6
+          }
+        ]
       },
       {
         "label": "Seal of Righteousnessshockadin-paladin (#1) Rank 8",
@@ -1379,7 +1639,15 @@
           "on_spell_hit_dealt"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "PaladinSeal",
+            "single_aura": true,
+            "priority": 0,
+            "position": 7
+          }
+        ]
       },
       {
         "label": "Seal of Lightshockadin-paladin (#1) Rank 1",
@@ -1397,7 +1665,15 @@
           "on_spell_hit_dealt"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "PaladinSeal",
+            "single_aura": true,
+            "priority": 0,
+            "position": 8
+          }
+        ]
       },
       {
         "label": "Seal of Lightshockadin-paladin (#1) Rank 2",
@@ -1415,7 +1691,15 @@
           "on_spell_hit_dealt"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "PaladinSeal",
+            "single_aura": true,
+            "priority": 0,
+            "position": 9
+          }
+        ]
       },
       {
         "label": "Seal of Lightshockadin-paladin (#1) Rank 3",
@@ -1433,7 +1717,15 @@
           "on_spell_hit_dealt"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "PaladinSeal",
+            "single_aura": true,
+            "priority": 0,
+            "position": 10
+          }
+        ]
       },
       {
         "label": "Seal of Lightshockadin-paladin (#1) Rank 4",
@@ -1451,7 +1743,15 @@
           "on_spell_hit_dealt"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "PaladinSeal",
+            "single_aura": true,
+            "priority": 0,
+            "position": 11
+          }
+        ]
       },
       {
         "label": "Seal of Wisdomshockadin-paladin (#1) Rank 1",
@@ -1469,7 +1769,15 @@
           "on_spell_hit_dealt"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "PaladinSeal",
+            "single_aura": true,
+            "priority": 0,
+            "position": 12
+          }
+        ]
       },
       {
         "label": "Seal of Wisdomshockadin-paladin (#1) Rank 2",
@@ -1487,7 +1795,15 @@
           "on_spell_hit_dealt"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "PaladinSeal",
+            "single_aura": true,
+            "priority": 0,
+            "position": 13
+          }
+        ]
       },
       {
         "label": "Seal of Wisdomshockadin-paladin (#1) Rank 3",
@@ -1505,7 +1821,15 @@
           "on_spell_hit_dealt"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "PaladinSeal",
+            "single_aura": true,
+            "priority": 0,
+            "position": 14
+          }
+        ]
       },
       {
         "label": "Seal of Justiceshockadin-paladin (#1)",
@@ -1518,7 +1842,15 @@
         "stacks": 0,
         "callbacks": [],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "PaladinSeal",
+            "single_aura": true,
+            "priority": 0,
+            "position": 15
+          }
+        ]
       },
       {
         "label": "Seal of the Crusadershockadin-paladin (#1) Rank 1",
@@ -1534,7 +1866,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "PaladinSeal",
+            "single_aura": true,
+            "priority": 0,
+            "position": 16
+          }
+        ]
       },
       {
         "label": "Seal of the Crusadershockadin-paladin (#1) Rank 2",
@@ -1550,7 +1890,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "PaladinSeal",
+            "single_aura": true,
+            "priority": 0,
+            "position": 17
+          }
+        ]
       },
       {
         "label": "Seal of the Crusadershockadin-paladin (#1) Rank 3",
@@ -1566,7 +1914,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "PaladinSeal",
+            "single_aura": true,
+            "priority": 0,
+            "position": 18
+          }
+        ]
       },
       {
         "label": "Seal of the Crusadershockadin-paladin (#1) Rank 4",
@@ -1582,7 +1938,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "PaladinSeal",
+            "single_aura": true,
+            "priority": 0,
+            "position": 19
+          }
+        ]
       },
       {
         "label": "Seal of the Crusadershockadin-paladin (#1) Rank 5",
@@ -1598,7 +1962,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "PaladinSeal",
+            "single_aura": true,
+            "priority": 0,
+            "position": 20
+          }
+        ]
       },
       {
         "label": "Seal of the Crusadershockadin-paladin (#1) Rank 6",
@@ -1614,7 +1986,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "PaladinSeal",
+            "single_aura": true,
+            "priority": 0,
+            "position": 21
+          }
+        ]
       },
       {
         "label": "Seal of Fury Shieldshockadin-paladin (#1) Rank 1",
@@ -1648,7 +2028,15 @@
           "on_spell_hit_dealt"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "PaladinSeal",
+            "single_aura": true,
+            "priority": 0,
+            "position": 22
+          }
+        ]
       },
       {
         "label": "Seal of Fury Shieldshockadin-paladin (#1) Rank 2",
@@ -1682,7 +2070,15 @@
           "on_spell_hit_dealt"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "PaladinSeal",
+            "single_aura": true,
+            "priority": 0,
+            "position": 23
+          }
+        ]
       },
       {
         "label": "Seal of Fury Shieldshockadin-paladin (#1) Rank 3",
@@ -1716,7 +2112,15 @@
           "on_spell_hit_dealt"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "PaladinSeal",
+            "single_aura": true,
+            "priority": 0,
+            "position": 24
+          }
+        ]
       },
       {
         "label": "Seal of Fury Shieldshockadin-paladin (#1) Rank 4",
@@ -1750,7 +2154,15 @@
           "on_spell_hit_dealt"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "PaladinSeal",
+            "single_aura": true,
+            "priority": 0,
+            "position": 25
+          }
+        ]
       },
       {
         "label": "Seal of Fury Shieldshockadin-paladin (#1) Rank 5",
@@ -1784,7 +2196,15 @@
           "on_spell_hit_dealt"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "PaladinSeal",
+            "single_aura": true,
+            "priority": 0,
+            "position": 26
+          }
+        ]
       },
       {
         "label": "Seal of Fury Shieldshockadin-paladin (#1) Rank 6",
@@ -1818,7 +2238,15 @@
           "on_spell_hit_dealt"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "PaladinSeal",
+            "single_aura": true,
+            "priority": 0,
+            "position": 27
+          }
+        ]
       },
       {
         "label": "Seal of Fury Shieldshockadin-paladin (#1) Rank 7",
@@ -1852,7 +2280,15 @@
           "on_spell_hit_dealt"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "PaladinSeal",
+            "single_aura": true,
+            "priority": 0,
+            "position": 28
+          }
+        ]
       },
       {
         "label": "Devotion Aura Rank 1 (Player)",
@@ -1869,7 +2305,21 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 2
+        "exclusive_effects": 2,
+        "exclusive_memberships": [
+          {
+            "category": "DevotionAura",
+            "single_aura": true,
+            "priority": 55,
+            "position": 0
+          },
+          {
+            "category": "PaladinAura",
+            "single_aura": true,
+            "priority": 0,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Devotion Aura Rank 2 (Player)",
@@ -1886,7 +2336,21 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 2
+        "exclusive_effects": 2,
+        "exclusive_memberships": [
+          {
+            "category": "DevotionAura",
+            "single_aura": true,
+            "priority": 160,
+            "position": 1
+          },
+          {
+            "category": "PaladinAura",
+            "single_aura": true,
+            "priority": 0,
+            "position": 1
+          }
+        ]
       },
       {
         "label": "Devotion Aura Rank 3 (Player)",
@@ -1903,7 +2367,21 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 2
+        "exclusive_effects": 2,
+        "exclusive_memberships": [
+          {
+            "category": "DevotionAura",
+            "single_aura": true,
+            "priority": 275,
+            "position": 2
+          },
+          {
+            "category": "PaladinAura",
+            "single_aura": true,
+            "priority": 0,
+            "position": 2
+          }
+        ]
       },
       {
         "label": "Devotion Aura Rank 4 (Player)",
@@ -1920,7 +2398,21 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 2
+        "exclusive_effects": 2,
+        "exclusive_memberships": [
+          {
+            "category": "DevotionAura",
+            "single_aura": true,
+            "priority": 390,
+            "position": 3
+          },
+          {
+            "category": "PaladinAura",
+            "single_aura": true,
+            "priority": 0,
+            "position": 3
+          }
+        ]
       },
       {
         "label": "Devotion Aura Rank 5 (Player)",
@@ -1937,7 +2429,21 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 2
+        "exclusive_effects": 2,
+        "exclusive_memberships": [
+          {
+            "category": "DevotionAura",
+            "single_aura": true,
+            "priority": 505,
+            "position": 4
+          },
+          {
+            "category": "PaladinAura",
+            "single_aura": true,
+            "priority": 0,
+            "position": 4
+          }
+        ]
       },
       {
         "label": "Devotion Aura Rank 6 (Player)",
@@ -1954,7 +2460,21 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 2
+        "exclusive_effects": 2,
+        "exclusive_memberships": [
+          {
+            "category": "DevotionAura",
+            "single_aura": true,
+            "priority": 620,
+            "position": 5
+          },
+          {
+            "category": "PaladinAura",
+            "single_aura": true,
+            "priority": 0,
+            "position": 5
+          }
+        ]
       },
       {
         "label": "Devotion Aura Rank 7 (Player)",
@@ -1971,7 +2491,21 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 2
+        "exclusive_effects": 2,
+        "exclusive_memberships": [
+          {
+            "category": "DevotionAura",
+            "single_aura": true,
+            "priority": 735,
+            "position": 6
+          },
+          {
+            "category": "PaladinAura",
+            "single_aura": true,
+            "priority": 0,
+            "position": 6
+          }
+        ]
       },
       {
         "label": "Retribution Aura Rank 1 (Player)",
@@ -1986,7 +2520,21 @@
           "on_spell_hit_taken"
         ],
         "icd": null,
-        "exclusive_effects": 2
+        "exclusive_effects": 2,
+        "exclusive_memberships": [
+          {
+            "category": "RetributionAura",
+            "single_aura": true,
+            "priority": 7,
+            "position": 0
+          },
+          {
+            "category": "PaladinAura",
+            "single_aura": true,
+            "priority": 0,
+            "position": 7
+          }
+        ]
       },
       {
         "label": "Retribution Aura Rank 2 (Player)",
@@ -2001,7 +2549,21 @@
           "on_spell_hit_taken"
         ],
         "icd": null,
-        "exclusive_effects": 2
+        "exclusive_effects": 2,
+        "exclusive_memberships": [
+          {
+            "category": "RetributionAura",
+            "single_aura": true,
+            "priority": 12,
+            "position": 1
+          },
+          {
+            "category": "PaladinAura",
+            "single_aura": true,
+            "priority": 0,
+            "position": 8
+          }
+        ]
       },
       {
         "label": "Retribution Aura Rank 3 (Player)",
@@ -2016,7 +2578,21 @@
           "on_spell_hit_taken"
         ],
         "icd": null,
-        "exclusive_effects": 2
+        "exclusive_effects": 2,
+        "exclusive_memberships": [
+          {
+            "category": "RetributionAura",
+            "single_aura": true,
+            "priority": 18,
+            "position": 2
+          },
+          {
+            "category": "PaladinAura",
+            "single_aura": true,
+            "priority": 0,
+            "position": 9
+          }
+        ]
       },
       {
         "label": "Retribution Aura Rank 4 (Player)",
@@ -2031,7 +2607,21 @@
           "on_spell_hit_taken"
         ],
         "icd": null,
-        "exclusive_effects": 2
+        "exclusive_effects": 2,
+        "exclusive_memberships": [
+          {
+            "category": "RetributionAura",
+            "single_aura": true,
+            "priority": 24,
+            "position": 3
+          },
+          {
+            "category": "PaladinAura",
+            "single_aura": true,
+            "priority": 0,
+            "position": 10
+          }
+        ]
       },
       {
         "label": "Retribution Aura Rank 5 (Player)",
@@ -2046,7 +2636,21 @@
           "on_spell_hit_taken"
         ],
         "icd": null,
-        "exclusive_effects": 2
+        "exclusive_effects": 2,
+        "exclusive_memberships": [
+          {
+            "category": "RetributionAura",
+            "single_aura": true,
+            "priority": 30,
+            "position": 4
+          },
+          {
+            "category": "PaladinAura",
+            "single_aura": true,
+            "priority": 0,
+            "position": 11
+          }
+        ]
       },
       {
         "label": "Concentration Aura (Player)",
@@ -2063,7 +2667,21 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 2
+        "exclusive_effects": 2,
+        "exclusive_memberships": [
+          {
+            "category": "ConcentrationAura",
+            "single_aura": true,
+            "priority": 0.35,
+            "position": 0
+          },
+          {
+            "category": "PaladinAura",
+            "single_aura": true,
+            "priority": 0,
+            "position": 12
+          }
+        ]
       },
       {
         "label": "Fire Resistance Aura Rank 1 (Player)",
@@ -2080,7 +2698,27 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 3
+        "exclusive_effects": 3,
+        "exclusive_memberships": [
+          {
+            "category": "ResistanceFireFireResistanceAdd",
+            "single_aura": false,
+            "priority": 30,
+            "position": 3
+          },
+          {
+            "category": "FireResistanceAura",
+            "single_aura": true,
+            "priority": 30,
+            "position": 1
+          },
+          {
+            "category": "PaladinAura",
+            "single_aura": true,
+            "priority": 0,
+            "position": 13
+          }
+        ]
       },
       {
         "label": "Fire Resistance Aura Rank 2 (Player)",
@@ -2097,7 +2735,27 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 3
+        "exclusive_effects": 3,
+        "exclusive_memberships": [
+          {
+            "category": "ResistanceFireFireResistanceAdd",
+            "single_aura": false,
+            "priority": 45,
+            "position": 4
+          },
+          {
+            "category": "FireResistanceAura",
+            "single_aura": true,
+            "priority": 45,
+            "position": 2
+          },
+          {
+            "category": "PaladinAura",
+            "single_aura": true,
+            "priority": 0,
+            "position": 14
+          }
+        ]
       },
       {
         "label": "Fire Resistance Aura Rank 3 (Player)",
@@ -2114,7 +2772,27 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 3
+        "exclusive_effects": 3,
+        "exclusive_memberships": [
+          {
+            "category": "ResistanceFireFireResistanceAdd",
+            "single_aura": false,
+            "priority": 60,
+            "position": 5
+          },
+          {
+            "category": "FireResistanceAura",
+            "single_aura": true,
+            "priority": 60,
+            "position": 3
+          },
+          {
+            "category": "PaladinAura",
+            "single_aura": true,
+            "priority": 0,
+            "position": 15
+          }
+        ]
       },
       {
         "label": "Frost Resistance Aura Rank 1 (Player)",
@@ -2131,7 +2809,27 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 3
+        "exclusive_effects": 3,
+        "exclusive_memberships": [
+          {
+            "category": "ResistanceFrostFrostResistanceAdd",
+            "single_aura": false,
+            "priority": 30,
+            "position": 1
+          },
+          {
+            "category": "FrostResistanceAura",
+            "single_aura": true,
+            "priority": 30,
+            "position": 0
+          },
+          {
+            "category": "PaladinAura",
+            "single_aura": true,
+            "priority": 0,
+            "position": 16
+          }
+        ]
       },
       {
         "label": "Frost Resistance Aura Rank 2 (Player)",
@@ -2148,7 +2846,27 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 3
+        "exclusive_effects": 3,
+        "exclusive_memberships": [
+          {
+            "category": "ResistanceFrostFrostResistanceAdd",
+            "single_aura": false,
+            "priority": 45,
+            "position": 2
+          },
+          {
+            "category": "FrostResistanceAura",
+            "single_aura": true,
+            "priority": 45,
+            "position": 1
+          },
+          {
+            "category": "PaladinAura",
+            "single_aura": true,
+            "priority": 0,
+            "position": 17
+          }
+        ]
       },
       {
         "label": "Frost Resistance Aura Rank 3 (Player)",
@@ -2165,7 +2883,27 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 3
+        "exclusive_effects": 3,
+        "exclusive_memberships": [
+          {
+            "category": "ResistanceFrostFrostResistanceAdd",
+            "single_aura": false,
+            "priority": 60,
+            "position": 3
+          },
+          {
+            "category": "FrostResistanceAura",
+            "single_aura": true,
+            "priority": 60,
+            "position": 2
+          },
+          {
+            "category": "PaladinAura",
+            "single_aura": true,
+            "priority": 0,
+            "position": 18
+          }
+        ]
       },
       {
         "label": "Shadow Resistance Aura Rank 1 (Player)",
@@ -2182,7 +2920,27 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 3
+        "exclusive_effects": 3,
+        "exclusive_memberships": [
+          {
+            "category": "ResistanceShadowShadowResistanceAdd",
+            "single_aura": false,
+            "priority": 30,
+            "position": 1
+          },
+          {
+            "category": "ShadowResistanceAura",
+            "single_aura": true,
+            "priority": 30,
+            "position": 0
+          },
+          {
+            "category": "PaladinAura",
+            "single_aura": true,
+            "priority": 0,
+            "position": 19
+          }
+        ]
       },
       {
         "label": "Shadow Resistance Aura Rank 2 (Player)",
@@ -2199,7 +2957,27 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 3
+        "exclusive_effects": 3,
+        "exclusive_memberships": [
+          {
+            "category": "ResistanceShadowShadowResistanceAdd",
+            "single_aura": false,
+            "priority": 45,
+            "position": 2
+          },
+          {
+            "category": "ShadowResistanceAura",
+            "single_aura": true,
+            "priority": 45,
+            "position": 1
+          },
+          {
+            "category": "PaladinAura",
+            "single_aura": true,
+            "priority": 0,
+            "position": 20
+          }
+        ]
       },
       {
         "label": "Shadow Resistance Aura Rank 3 (Player)",
@@ -2216,7 +2994,27 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 3
+        "exclusive_effects": 3,
+        "exclusive_memberships": [
+          {
+            "category": "ResistanceShadowShadowResistanceAdd",
+            "single_aura": false,
+            "priority": 60,
+            "position": 3
+          },
+          {
+            "category": "ShadowResistanceAura",
+            "single_aura": true,
+            "priority": 60,
+            "position": 2
+          },
+          {
+            "category": "PaladinAura",
+            "single_aura": true,
+            "priority": 0,
+            "position": 21
+          }
+        ]
       },
       {
         "label": "Consecrationshockadin-paladin (#1) Rank 1",

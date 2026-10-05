@@ -4,7 +4,8 @@ import shutil
 import tempfile
 import unittest
 
-from prepared_v2 import FAMILY, capture, check, comparable, leaf_differences
+from compare import CLIENT_BUILD, PIN
+from prepared_v2 import FAMILY, capture, check, comparable, leaf_differences, repin
 
 
 class PreparedFixtureTests(unittest.TestCase):
@@ -29,6 +30,15 @@ class PreparedFixtureTests(unittest.TestCase):
     def test_capture_refuses_accepted_storage(self):
         with self.assertRaisesRegex(ValueError, "scratch storage"):
             capture(Path("unused-cache"), "unused-source", FAMILY / "recapture")
+
+    def test_repin_needs_a_moved_pin(self):
+        with tempfile.TemporaryDirectory() as directory:
+            family = self.copy_family(directory)
+            manifest = json.loads((family / "manifest.json").read_text())
+            manifest["engine_revision"], manifest["client_build"] = PIN, CLIENT_BUILD
+            (family / "manifest.json").write_text(json.dumps(manifest))
+            with self.assertRaisesRegex(ValueError, "already at the pin"):
+                repin(Path("unused-cache"), "unused-source", Path(directory) / "report", family)
 
 
 class ComparableTests(unittest.TestCase):
