@@ -116,8 +116,12 @@ fn shadow_weaving_outside_spell_hits_is_rejected() {
         .find(|effect| effect["kind"] == "shadow_weaving")
         .unwrap();
     weaving["callbacks"] = json!(["on_periodic_damage_dealt"]);
-    assert!(reasons(value)
+    assert!(reasons(value.clone())
         .contains(&"Shadow Weaving listens to [\"on_periodic_damage_dealt\"]".to_string()));
+    assert!(crate::refusal_codes(value).contains(&(
+        "class_limit",
+        "Shadow Weaving listens to [\"on_periodic_damage_dealt\"]".into()
+    )));
 }
 
 fn smite() -> Value {

@@ -582,3 +582,66 @@ fn damage_on_use_needs_a_known_outcome() {
     }
     assert!(reasons(value).contains(&"rotation reaches item 11905 without a known behavior".into()));
 }
+
+/// Each refusal carries a stable code a worker counts fallbacks by: the shared gate's, the
+/// exporter's and the rotation parser's, and the class and several target limits of the
+/// refused fixtures.
+#[test]
+fn refusals_carry_stable_codes() {
+    let codes = |value: Value| -> Vec<&'static str> {
+        forever_engine::prepared_refusals(&parse(value).unwrap())
+            .into_iter()
+            .map(|refusal| refusal.code)
+            .collect()
+    };
+    let mut unrepresented = reference_json();
+    unrepresented["unrepresented"] = json!(["target auto attacks are unsupported"]);
+    assert_eq!(codes(unrepresented), ["exporter_unrepresented"]);
+
+    let mut rotation = reference_json();
+    rotation["player"]["rotation"]["priorityList"][3]["action"]["condition"] =
+        json!({"spellNumCharges": {"spellId": {"spellId": 12579}}});
+    assert_eq!(codes(rotation), ["rotation_unsupported"]);
+
+    let mut listener = reference_json();
+    listener["effects"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|effect| effect["aura"] != "Parry Haste");
+    assert_eq!(codes(listener), ["aura_listener_unclaimed"]);
+
+    let mut spell = reference_json();
+    spell["player"]["rotation"]["priorityList"][5]["action"]["castSpell"]["spellId"] =
+        json!({"spellId": 10202});
+    spell["effects"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|effect| effect["kind"] != "arcane_explosion");
+    assert_eq!(codes(spell), ["unknown_spell"]);
+
+    for (case, code) in [
+        ("fire-mage-goblin-sapper", "class_limit"),
+        ("frost-no-fingers", "aura_condition_unsupported"),
+        ("production-frost-2-targets", "several_targets_unsupported"),
+    ] {
+        let path = family().join(format!("{case}.prepared.json"));
+        let value: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+        assert_eq!(codes(value), [code], "{case}");
+    }
+}
+
+/// Every code is listed once, and the contract documentation names each.
+#[test]
+fn refusal_codes_are_unique_and_documented() {
+    let docs =
+        fs::read_to_string(Path::new(env!("CARGO_MANIFEST_DIR")).join("docs/prepared-v2.md"))
+            .unwrap();
+    let mut seen = std::collections::BTreeSet::new();
+    for (code, _) in forever_engine::REFUSAL_CODES {
+        assert!(seen.insert(code), "{code} is listed twice");
+        assert!(
+            docs.contains(&format!("`{code}`")),
+            "docs/prepared-v2.md lacks {code}"
+        );
+    }
+}

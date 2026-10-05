@@ -44,6 +44,10 @@ fn poison_listener_needs_its_effect() {
 fn energy_values_need_an_energy_bar() {
     let mut value = combat_json();
     value["player"].as_object_mut().unwrap().remove("energy");
+    assert!(crate::refusal_codes(value.clone())
+        .iter()
+        .any(|(code, reason)| *code == "class_limit"
+            && reason.ends_with("which costs energy the player lacks")));
     let reasons = reasons(value);
     assert!(reasons
         .iter()

@@ -169,7 +169,8 @@ def shadow(request_path, output, bundle, seed, timeout, production_path=None):
             raise StageError("check", done.stderr.strip()[-2000:])
         coverage = json.loads(done.stdout)
         if not coverage["supported"]:
-            verdict.update(status="refused", reasons=coverage["reasons"])
+            verdict.update(status="refused", reasons=coverage["reasons"],
+                           refusals=coverage.get("refusals", []))
             return verdict
 
         go_out, rust_out = output / "go.json", output / "rust.json"

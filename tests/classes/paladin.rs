@@ -250,9 +250,13 @@ fn seal_of_the_crusader_needs_its_stat_aura() {
                 .retain(|aura| !aura.as_str().unwrap().starts_with("Seal of the Crusader"));
         }
     }
-    assert!(reasons(value).contains(
+    assert!(reasons(value.clone()).contains(
         &"Seal of the Crusader 20308 without its stat aura combinations is unsupported".into()
     ));
+    assert!(crate::refusal_codes(value).contains(&(
+        "class_limit",
+        "Seal of the Crusader 20308 without its stat aura combinations is unsupported".into()
+    )));
 }
 
 /// Holy Light, Flash of Light and Holy Shock's heal on the target or the player, with

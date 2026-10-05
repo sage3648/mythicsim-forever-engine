@@ -50,7 +50,12 @@ fn production_feral_druid_is_supported() {
 fn a_starting_form_needs_its_form_effect() {
     let mut value = feral();
     effect(&mut value, "druid_forms")["starting_form"] = json!(["bear"]);
-    assert!(reasons(value).contains(&"druid starting form [\"bear\"] is unsupported".to_string()));
+    assert!(reasons(value.clone())
+        .contains(&"druid starting form [\"bear\"] is unsupported".to_string()));
+    assert!(crate::refusal_codes(value).contains(&(
+        "class_limit",
+        "druid starting form [\"bear\"] is unsupported".into()
+    )));
 }
 
 #[test]

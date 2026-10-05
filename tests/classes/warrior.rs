@@ -52,7 +52,11 @@ fn a_stance_change_needs_the_stance_passives() {
         .as_array_mut()
         .unwrap()
         .retain(|effect| effect["kind"] != "pseudo_stat_auras");
-    assert!(reasons(value).contains(&"rotation reaches spell 2457, a stance change".into()));
+    assert!(reasons(value.clone()).contains(&"rotation reaches spell 2457, a stance change".into()));
+    assert!(crate::refusal_codes(value).contains(&(
+        "class_limit",
+        "rotation reaches spell 2457, a stance change".into()
+    )));
 }
 
 /// The raid's Expose Armor holds the armor category for good, so the warrior's own Sunder

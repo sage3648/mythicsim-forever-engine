@@ -33,7 +33,7 @@ both engines draw the same numbers.
 | --- | --- |
 | `match` | Every result field and the first-fight log equal the pinned Go engine |
 | `mismatch` | `differences` and `first_log_difference` show what differs |
-| `refused` | The coverage gate declined the input; `reasons` says why |
+| `refused` | The coverage gate declined the input; `reasons` says why, and `refusals` gives each reason with its stable code |
 | `error` | A step failed; `stage` and `error` say where |
 
 `timings_ms` holds the wall time of the prepare, Go and Rust steps, process
