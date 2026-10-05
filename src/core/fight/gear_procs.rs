@@ -184,18 +184,24 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    /// The handler: activate the target's aura and add a stack.
-    pub(crate) fn armor_debuff_proc_handler(&mut self, proc: usize) {
-        let aura = self.armor_debuff_procs[proc].aura;
+    /// The handler: activate the hit target's aura and add a stack.
+    pub(crate) fn armor_debuff_proc_handler(&mut self, proc: usize, target: Side) {
+        let aura = self.aura_on(self.armor_debuff_procs[proc].aura, target);
         self.activate_aura(aura);
         self.add_stack(aura);
     }
 
-    /// The aura's `OnStacksChange`: Go `AddStatDynamic` on the target's armor by the change.
-    pub(crate) fn armor_debuff_stacks_changed(&mut self, proc: usize, old: i32, new: i32) {
+    /// The aura's `OnStacksChange`: Go `AddStatDynamic` on its target's armor by the change.
+    pub(crate) fn armor_debuff_stacks_changed(
+        &mut self,
+        proc: usize,
+        target: Side,
+        old: i32,
+        new: i32,
+    ) {
         let armor = &self.armor_debuff_procs[proc].armor_by_stacks;
         let at = |stacks: i32| armor[(stacks.max(0) as usize).min(armor.len() - 1)];
         let delta = at(new) - at(old);
-        self.add_target_armor(delta);
+        self.add_target_armor(target, delta);
     }
 }

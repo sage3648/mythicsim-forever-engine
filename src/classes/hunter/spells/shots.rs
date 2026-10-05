@@ -7,7 +7,28 @@
 
 use crate::core::fight::{melee::PhysicalOutcome, Agent, Fight, Outcome, Side, SpellId};
 
-/// The cast's `ApplyEffects`. Multi-Shot hits min(3, targets) targets: one in scope.
+/// Multi-Shot's `ApplyEffects`: a shot on each of min(3, targets) targets from the cast
+/// target on, each rolling its own weapon damage on the cast target's ranged attack power,
+/// every result calculated before one travel deals them in turn.
+pub(crate) fn multi_shot<A: Agent>(fight: &mut Fight<A>, spell: SpellId, target: Side) {
+    let hits = fight.targets.len().min(3);
+    let mut results = Vec::with_capacity(hits);
+    let mut current = target;
+    for _ in 0..hits {
+        let attack_power = fight.ranged_attack_power();
+        let base = fight.ranged_normalized_weapon_damage(attack_power);
+        results.push(fight.calc_physical_damage(
+            spell,
+            current,
+            base,
+            PhysicalOutcome::RangedHitAndCrit { count: true },
+        ));
+        current = fight.next_target(current);
+    }
+    fight.deal_damage_after_travel_batch(spell, &results);
+}
+
+/// Aimed and Sniper Shot's `ApplyEffects`.
 pub(crate) fn apply<A: Agent>(fight: &mut Fight<A>, spell: SpellId, target: Side, flat_bonus: f64) {
     let attack_power = fight.ranged_attack_power();
     let base = fight.ranged_normalized_weapon_damage(attack_power) + flat_bonus;

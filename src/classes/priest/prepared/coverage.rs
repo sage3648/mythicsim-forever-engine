@@ -13,6 +13,7 @@ pub(crate) const GATE: ClassGate = ClassGate {
     spell: spell_capability,
     claims,
     limits,
+    several_targets: Some(several_targets),
 };
 
 /// Priest effect kinds implemented in Rust and validated against the pinned Go reference.
@@ -150,4 +151,12 @@ fn limits(prepared: &PreparedV2, _reachable: &[&Spell]) -> Vec<String> {
         }
     }
     reasons
+}
+
+/// The spells that reach a target past the first in Go and not yet in Rust.
+fn several_targets(_prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
+    crate::engine::coverage::spells_reaching_other_targets(
+        reachable,
+        &[("holy_nova", "hits every target")],
+    )
 }

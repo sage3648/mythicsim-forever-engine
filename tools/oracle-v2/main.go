@@ -656,6 +656,9 @@ type Encounter struct {
 	ExecuteProportion35 float64 `json:"execute_proportion_35"`
 	ExecuteProportion45 float64 `json:"execute_proportion_45"`
 	ExecuteProportion90 float64 `json:"execute_proportion_90"`
+	// The number of targets, written only when the fight has several. Every target past the
+	// first is an identical copy of it, which targets.go checks.
+	TargetCount int32 `json:"target_count,omitempty"`
 }
 
 type SimOptions struct {
@@ -1468,7 +1471,7 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 		}
 	}
 	note(len(request.Raid.GetParties()) != 1 || len(request.Raid.Parties[0].GetPlayers()) != 1, "exactly one player is supported")
-	note(len(request.Encounter.GetTargets()) != 1, "exactly one target is supported")
+	targetNotes(request, note)
 	note(request.Encounter.GetUseHealth(), "health-based fights are unsupported")
 	// A tank assignment is supported when it is exactly the one player tanking the one target.
 	tanks := request.Raid.GetTanks()
@@ -1481,6 +1484,7 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	character := agent.GetCharacter()
 	target := simulation.Encounter.ActiveTargetUnits[0]
 	timers := &timerNames{names: map[*core.Timer]string{}}
+	targetCopyNotes(simulation, character, note)
 
 	presimmer, presims := agent.(core.Presimmer)
 	note(presims && presimmer.GetPresimOptions(request.Raid.Parties[0].Players[0]) != nil, "agent requires presims")
@@ -1718,7 +1722,7 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 		Encounter: Encounter{DurationNs: nanos(simulation.BaseDuration), DurationVariationNs: nanos(simulation.DurationVariation),
 			ExecuteProportion20: simulation.Encounter.ExecuteProportion_20, ExecuteProportion25: simulation.Encounter.ExecuteProportion_25,
 			ExecuteProportion35: simulation.Encounter.ExecuteProportion_35, ExecuteProportion45: simulation.Encounter.ExecuteProportion_45,
-			ExecuteProportion90: simulation.Encounter.ExecuteProportion_90},
+			ExecuteProportion90: simulation.Encounter.ExecuteProportion_90, TargetCount: targetCount(request)},
 		Target: TargetUnit{
 			Unit: Unit{Index: target.UnitIndex, Label: target.Label, Level: target.Level, MobType: target.MobType.String(),
 				Stats: statValues(target.GetStats()), PseudoStats: exportPseudo(target.PseudoStats), Auras: exportAuras(target, timers)},

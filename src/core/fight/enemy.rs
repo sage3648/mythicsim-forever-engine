@@ -368,6 +368,7 @@ impl<A: Agent> Fight<A> {
             Side::Player => Hand::Main,
             Side::Target => Hand::Enemy,
             Side::Pet(_) => unreachable!("the target never swings at a pet in scope"),
+            Side::Extra(_) => unreachable!("only the first target can be tanked"),
         };
         let now = self.now;
         let attack = self.autos.attack(hand);

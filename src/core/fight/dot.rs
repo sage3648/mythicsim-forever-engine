@@ -7,6 +7,7 @@ use super::{
     SpellId, PRIORITY_GCD,
 };
 
+#[derive(Clone)]
 pub(crate) struct Dot {
     pub(crate) spell: SpellId,
     pub(crate) side: Side,
@@ -147,7 +148,7 @@ impl<A: Agent> Fight<A> {
         let spell = self.dots[dot].spell;
         let coefficient = self.dots[dot].bonus_coefficient;
         let (spell_power, snapshot) = if coefficient > 0.0 {
-            let bonus = self.bonus_damage(spell);
+            let bonus = self.bonus_damage(spell, self.dots[dot].side);
             (coefficient * bonus, coefficient.mul_add(bonus, base))
         } else {
             (0.0, base)

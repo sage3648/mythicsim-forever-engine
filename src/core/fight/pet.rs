@@ -25,8 +25,8 @@ use crate::{
 use super::{
     melee,
     metrics::{Aggregator, Distribution},
-    unit_config, Action, ActionReport, ActionTotals, Agent, BuildError, Config, Fight, Hardcast,
-    Player, Powers, Side, SpellId, UnitSource, PRIORITY_DOT,
+    unit_config, Action, ActionTotals, Agent, BuildError, Config, Fight, Hardcast, Player, Powers,
+    Side, SpellId, UnitSource, PRIORITY_DOT,
 };
 
 /// Go `PetUpdateInterval`, the period of the pets' stat inheritance heartbeat.
@@ -309,7 +309,7 @@ pub(crate) fn inert_pets(effects: &[Effect]) -> Result<Vec<InertPet>, BuildError
                     melee: action.melee_metrics,
                     passive: action.passive,
                     school: action.school,
-                    targets: [ActionReport::new(0), ActionReport::new(1)],
+                    targets: super::metrics::defender_reports(),
                 })
                 .collect(),
             auras: auras.clone(),

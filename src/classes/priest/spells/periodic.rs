@@ -14,7 +14,7 @@ pub(crate) fn apply<A: Agent>(fight: &mut Fight<A>, spell: SpellId, target: Side
         let dot = fight.spells[spell]
             .dot
             .expect("a priest dot spell has a dot");
-        fight.apply_dot(dot);
+        fight.apply_dot(fight.dot_on(dot, target));
     }
     fight.deal_damage(spell, result, false);
 }

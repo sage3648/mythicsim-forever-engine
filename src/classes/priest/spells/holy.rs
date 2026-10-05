@@ -10,7 +10,7 @@ pub(crate) fn apply_holy_fire<A: Agent>(fight: &mut Fight<A>, spell: SpellId, ta
     let result = fight.calc_damage(spell, target, base);
     if result.landed() {
         let dot = fight.spells[spell].dot.expect("Holy Fire has a dot");
-        fight.apply_dot(dot);
+        fight.apply_dot(fight.dot_on(dot, target));
     }
     fight.deal_damage(spell, result, false);
 }
@@ -22,6 +22,7 @@ pub(crate) fn apply_penance<A: Agent>(fight: &mut Fight<A>, spell: SpellId, targ
     let result = fight.calc_outcome(spell, target, Outcome::MagicHitNoHitCounter);
     if result.landed() {
         let dot = fight.spells[spell].dot.expect("Penance has a channel");
+        let dot = fight.dot_on(dot, target);
         fight.apply_dot(dot);
         fight.snapshot_dot_tick(dot);
     }

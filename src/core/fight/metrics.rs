@@ -111,7 +111,8 @@ pub(crate) struct Totals {
     pub(crate) dps: Distribution,
     pub(crate) threat: Distribution,
     pub(crate) tto: Distribution,
-    pub(crate) target_dtps: Distribution,
+    /// Each target's damage taken, by position.
+    pub(crate) target_dtps: Vec<Distribution>,
     /// Damage the player takes, from its own spells and the target's swings.
     pub(crate) player_dtps: Distribution,
     /// Go `UnitMetrics.hps` of the player: its healing on units that are not opponents.
@@ -263,6 +264,12 @@ impl ActionReport {
     }
 }
 
+/// An action's metrics on each unit a spell can hit, by [`super::Side::index`]; the report
+/// gives each its Go unit index.
+pub(crate) fn defender_reports() -> [ActionReport; super::DEFENDERS] {
+    std::array::from_fn(|_| ActionReport::default())
+}
+
 /// Go `ActionMetrics`: one entry per action ID, shared by spells with that ID.
 #[derive(Clone, Debug)]
 pub(crate) struct ActionTotals {
@@ -270,7 +277,7 @@ pub(crate) struct ActionTotals {
     pub(crate) melee: bool,
     pub(crate) passive: bool,
     pub(crate) school: u8,
-    pub(crate) targets: [ActionReport; 2],
+    pub(crate) targets: [ActionReport; super::DEFENDERS],
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -468,9 +475,13 @@ impl<A: Agent> Fight<A> {
             }
             let events = resource.events - resource.previous_events;
             self.spells[gain_spell].metrics[0].casts += events;
-            // Go ApplyAOEThreatIgnoreMultipliers, whose sum the arm64 build fuses.
-            let threat = &mut self.spells[gain_spell].metrics[Side::Target.index()].total_threat;
-            *threat = actual.mul_add(0.5, *threat);
+            // Go ApplyAOEThreatIgnoreMultipliers on every target, whose sum the arm64 build
+            // fuses.
+            for position in 0..self.targets.len() {
+                let slot = Side::target(position).index();
+                let threat = &mut self.spells[gain_spell].metrics[slot].total_threat;
+                *threat = actual.mul_add(0.5, *threat);
+            }
         }
     }
 
@@ -480,26 +491,29 @@ impl<A: Agent> Fight<A> {
             return;
         }
         if self.spells[spell].split_metrics.is_empty() {
-            let metrics = self.spells[spell].metrics;
             let action = self.spells[spell].action.expect("checked above");
-            self.add_spell_metrics(spell, action, metrics);
+            self.add_spell_metrics(spell, action, None);
             return;
         }
         // Go Spell.doneIteration: each split under its own tagged ID.
         let state = &mut self.spells[spell];
         state.split_metrics[state.split] = state.metrics;
         for split in 0..self.spells[spell].split_metrics.len() {
-            let metrics = self.spells[spell].split_metrics[split];
             let action = self.spells[spell].split_actions[split];
-            self.add_spell_metrics(spell, action, metrics);
+            self.add_spell_metrics(spell, action, Some(split));
         }
     }
 
-    /// Go `UnitMetrics.addSpellMetrics`.
-    fn add_spell_metrics(&mut self, spell: usize, action: usize, all: [super::SpellMetrics; 2]) {
+    /// Go `UnitMetrics.addSpellMetrics` for the spell's metrics, or a split's.
+    fn add_spell_metrics(&mut self, spell: usize, action: usize, split: Option<usize>) {
         let passive = self.spells[spell].flags.passive;
         let caster = self.spells[spell].caster;
-        for (target, metrics) in all.into_iter().enumerate() {
+        // Go folds each unit's metrics in unit index order: every target, then the player.
+        for target in 0..self.defender_count() {
+            let metrics = match split {
+                None => self.spells[spell].metrics[target],
+                Some(split) => self.spells[spell].split_metrics[split][target],
+            };
             let actions = match caster {
                 Side::Pet(_) => &mut self.active_pet_mut(caster).actions,
                 _ => &mut self.actions,
@@ -547,8 +561,13 @@ impl<A: Agent> Fight<A> {
                 self.totals.player_dtps.total += metrics.total_damage;
                 self.totals.player_hps.total += metrics.total_healing;
             }
-            if target == Side::Target.index() {
-                self.totals.target_dtps.total += metrics.total_damage;
+            if target != Side::Player.index() {
+                let position = if target == Side::Target.index() {
+                    0
+                } else {
+                    target - 1
+                };
+                self.totals.target_dtps[position].total += metrics.total_damage;
                 match caster {
                     Side::Pet(_) => {
                         let totals = &mut self.active_pet_mut(caster).totals;
@@ -608,7 +627,9 @@ impl<A: Agent> Fight<A> {
         self.totals.dps.done_iteration(duration, seed);
         self.totals.threat.done_iteration(duration, seed);
         self.totals.tto.done_iteration(duration, seed);
-        self.totals.target_dtps.done_iteration(duration, seed);
+        for dtps in &mut self.totals.target_dtps {
+            dtps.done_iteration(duration, seed);
+        }
         self.totals.player_dtps.done_iteration(duration, seed);
         self.totals.player_hps.done_iteration(duration, seed);
         self.totals.target_dps.done_iteration(duration, seed);
@@ -753,17 +774,25 @@ impl<A: Agent> Fight<A> {
         logs: String,
         elapsed_ns: u64,
     ) -> FightReport {
-        // Go lists every unit in each action's targets; pets never take a hit in scope.
+        // Go lists every unit in each action's targets, in unit index order: the targets, the
+        // player, then the pets, which never take a hit in scope.
         let extra_units = self.extra_unit_indexes();
+        let defenders: Vec<(usize, i32)> = (0..self.targets.len())
+            .map(|position| (Side::target(position).index(), position as i32))
+            .chain(std::iter::once((
+                Side::Player.index(),
+                self.config.player_index,
+            )))
+            .collect();
         let action_report = |action: &ActionTotals| ActionMetricsReport {
             id: (&action.id).into(),
             is_melee: action.melee,
             is_passive: action.passive,
-            targets: action
-                .targets
+            targets: defenders
                 .iter()
-                .cloned()
-                .map(|mut target| {
+                .map(|&(slot, unit)| {
+                    let mut target = action.targets[slot].clone();
+                    target.unit_index = unit;
                     target.cast_time_ms = milliseconds(target.cast_time) as f64;
                     target
                 })
@@ -777,7 +806,7 @@ impl<A: Agent> Fight<A> {
         let zero = self.totals.zero.report();
         let player = UnitReport {
             name: self.config.player_name.clone(),
-            unit_index: Side::Player.index() as i32,
+            unit_index: self.config.player_index,
             dps: self.totals.dps.report(),
             threat: self.totals.threat.report(),
             dtps: self.totals.player_dtps.report(),
@@ -792,18 +821,31 @@ impl<A: Agent> Fight<A> {
             resources,
             pets: self.pet_reports(&action_report, &zero, n),
         };
-        let target = TargetReport {
-            name: self.config.target_label.clone(),
-            unit_index: Side::Target.index() as i32,
-            dps: self.totals.target_dps.report(),
-            threat: self.totals.target_threat.report(),
-            dtps: self.totals.target_dtps.report(),
-            tmi: zero.clone(),
-            hps: zero.clone(),
-            tto: zero.clone(),
-            actions: self.target_actions.iter().map(action_report).collect(),
-            auras: self.aura_reports(Side::Target),
-        };
+        // Only the first target can be tanked, so the others' swings and threat stay zero.
+        let targets = self
+            .target_sides()
+            .enumerate()
+            .map(|(position, side)| TargetReport {
+                name: self.label_of(side),
+                unit_index: position as i32,
+                dps: if position == 0 {
+                    self.totals.target_dps.report()
+                } else {
+                    zero.clone()
+                },
+                threat: if position == 0 {
+                    self.totals.target_threat.report()
+                } else {
+                    zero.clone()
+                },
+                dtps: self.totals.target_dtps[position].report(),
+                tmi: zero.clone(),
+                hps: zero.clone(),
+                tto: zero.clone(),
+                actions: self.target_actions.iter().map(action_report).collect(),
+                auras: self.aura_reports(side),
+            })
+            .collect();
         let dps = self.totals.dps.report();
         FightReport {
             raid_metrics: RaidReport {
@@ -815,9 +857,7 @@ impl<A: Agent> Fight<A> {
                     players: vec![player],
                 }],
             },
-            encounter_metrics: EncounterReport {
-                targets: vec![target],
-            },
+            encounter_metrics: EncounterReport { targets },
             logs,
             first_iteration_duration: seconds(first_duration),
             avg_iteration_duration: seconds(total_duration) / n,

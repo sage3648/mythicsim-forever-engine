@@ -208,7 +208,7 @@ impl<A: Agent> Fight<A> {
             Int::Const(value) => *value,
             Int::AuraNumStacks(aura) => self.aura(*aura).stacks,
             Int::CurrentComboPoints => self.energy_bar().combo_points,
-            Int::NumberTargets => 1,
+            Int::NumberTargets => self.targets.len() as i32,
             Int::Other(value) => self.get_int(value),
         }
     }

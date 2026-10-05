@@ -71,6 +71,10 @@ func damageOnUseEffect(character *core.Character, spell *core.Spell, unrepresent
 		*unrepresented = append(*unrepresented, fmt.Sprintf("damage on-use item %d has no dot", item))
 		return map[string]any{}
 	}
+	if direct != spelldata.NilEffect && (direct.HitsAnArea() || direct.ChainTargets > 1) && character.Env.ActiveTargetCount() > 1 {
+		*unrepresented = append(*unrepresented, fmt.Sprintf("damage on-use item %d hits several targets", item))
+		return map[string]any{}
+	}
 	effect := map[string]any{"kind": "damage_on_use", "item_id": item, "spell": position}
 	if direct != spelldata.NilEffect {
 		scale := 1.0

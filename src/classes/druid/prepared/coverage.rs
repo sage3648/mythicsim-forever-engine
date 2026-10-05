@@ -13,6 +13,7 @@ pub(crate) const GATE: ClassGate = ClassGate {
     spell: spell_capability,
     claims,
     limits,
+    several_targets: None,
 };
 
 /// Druid effect kinds implemented in Rust and validated against the pinned Go reference.

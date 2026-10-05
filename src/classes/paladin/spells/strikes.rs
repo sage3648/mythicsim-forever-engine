@@ -102,7 +102,7 @@ pub(crate) fn consecration_tick(
         // Go's arm64 build fuses the bonus's coefficient into its average, then adds it.
         damage += rank
             .bonus_coefficient
-            .mul_add(fight.bonus_damage(spell), rank.bonus);
+            .mul_add(fight.bonus_damage(spell, Side::Target), rank.bonus);
         // Consecrated Ground marks the same targets, before the tick lands.
         if let Some((aura, _)) = fight.agent.consecrated_ground {
             fight.activate_aura(aura);

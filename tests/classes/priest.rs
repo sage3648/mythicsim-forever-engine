@@ -219,3 +219,43 @@ fn a_shadowfiend_effect_for_another_pet_is_rejected() {
         "{reasons:?}"
     );
 }
+
+fn shadow_against(targets: u32) -> Value {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join(format!(
+        "fixtures/mage/prepared-v2/production-shadow-priest-{targets}-targets.prepared.json"
+    ));
+    serde_json::from_slice(&fs::read(path).unwrap()).unwrap()
+}
+
+/// The application's multidot puts Shadow Word: Pain on every target, each with its own dot,
+/// while Mind Flay stays on the first.
+#[test]
+fn multidot_keeps_shadow_word_pain_on_every_target() {
+    let mut value = shadow_against(5);
+    value["sim"]["iterations"] = json!(1);
+    value["sim"]["debug_first_iteration"] = json!(true);
+    let report = simulate_prepared(&parse(value)).unwrap();
+    let logs = report.result["logs"].as_str().unwrap();
+    for target in 1..=5 {
+        let ticks = logs
+            .lines()
+            .filter(|line| line.contains(&format!("[Target {target}] {{SpellID: 10894}} tick")))
+            .count();
+        assert!(ticks > 0, "Target {target}: no Shadow Word: Pain ticks");
+    }
+    assert!(!logs
+        .lines()
+        .any(|line| line.contains("[Target 2] {SpellID: 18807}")));
+}
+
+/// The exporter writes a target count only for two to five targets.
+#[test]
+fn target_counts_outside_the_contract_are_refused() {
+    for count in [1, 6] {
+        let mut value = production();
+        value["encounter"]["target_count"] = json!(count);
+        assert!(reasons(value).contains(&format!(
+            "target count {count}: a fight has one target, or from 2 to 5 copies of it"
+        )));
+    }
+}

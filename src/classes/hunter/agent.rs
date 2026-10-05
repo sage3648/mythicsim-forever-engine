@@ -17,12 +17,14 @@ use super::items::ManaProc;
 use super::pet::{self as hunter_pet, PetAbility, PetAi, PetAuras};
 use super::spells::{
     aspect_of_the_hawk::AspectOfTheHawk,
+    explosive_trap::{self, ExplosiveTrap},
     melee::{self, MongooseBite, RaptorStrike},
     rapid_fire::RapidFire,
     serpent_sting,
     serpent_sting::SerpentSting,
     shots,
     summon_hawk::SummonHawk,
+    volley::{self, Volley},
 };
 use super::talents::survival::SurvivalProc;
 
@@ -53,6 +55,8 @@ pub(crate) enum HunterSpell {
     StriderKick,
     WingClip,
     ImmolationTrap,
+    ExplosiveTrap,
+    Volley,
 }
 
 /// Class auras with Rust behavior.
@@ -111,6 +115,8 @@ pub(crate) struct HunterAgent {
     expose_prey: Option<(SurvivalProc, bool)>,
     /// Rapid Recuperation's trigger and its regeneration.
     rapid_recuperation: Option<(SurvivalProc, f64)>,
+    explosive_trap: Option<ExplosiveTrap>,
+    volley: Option<Volley>,
 }
 
 /// Player aura labels claimed by implemented class effects.
@@ -238,6 +244,10 @@ pub(crate) fn spell_behavior(spell: &ExportedSpell) -> Option<HunterSpell> {
         "strider_kick" => Some(HunterSpell::StriderKick),
         "wing_clip" => Some(HunterSpell::WingClip),
         "immolation_trap" if spell.dot.is_some() => Some(HunterSpell::ImmolationTrap),
+        "explosive_trap" if spell.dot.is_some() => Some(HunterSpell::ExplosiveTrap),
+        "volley" if spell.dot.as_ref().is_some_and(|dot| dot.channeled) => {
+            Some(HunterSpell::Volley)
+        }
         _ => None,
     }
 }
@@ -527,6 +537,45 @@ impl HunterAgent {
                         .ok_or("Immolation Trap has no dot")?;
                     fight.dots[dot].tick_base = Some(*tick_base);
                 }
+                Effect::ExplosiveTrap {
+                    spell_id,
+                    hit_min,
+                    hit_max,
+                    hits,
+                    aoe_cap_multiplier,
+                    tick_base,
+                } => {
+                    let spell = find_spell(&fight, *spell_id)
+                        .ok_or_else(|| format!("Explosive Trap {spell_id} is not registered"))?;
+                    let immolation = prepared.effects.iter().find_map(|effect| match effect {
+                        Effect::ImmolationTrap { spell_id, .. } => find_spell(&fight, *spell_id),
+                        _ => None,
+                    });
+                    fight.agent.explosive_trap = Some(explosive_trap::bind(
+                        &mut fight,
+                        spell,
+                        *hit_min,
+                        *hit_max,
+                        *hits,
+                        *aoe_cap_multiplier,
+                        *tick_base,
+                        immolation,
+                    )?);
+                }
+                Effect::Volley {
+                    spell_id,
+                    tick_base,
+                    ranged_delay_ns,
+                } => {
+                    let spell = find_spell(&fight, *spell_id)
+                        .ok_or_else(|| format!("Volley {spell_id} is not registered"))?;
+                    fight.agent.volley = Some(volley::bind(
+                        &mut fight,
+                        spell,
+                        *tick_base,
+                        *ranged_delay_ns,
+                    )?);
+                }
                 Effect::Resourcefulness {
                     trigger_aura,
                     aura,
@@ -638,7 +687,7 @@ impl Agent for HunterAgent {
                 let bonus = fight.agent.sniper_shot_bonus;
                 shots::apply(fight, spell, target, bonus);
             }
-            HunterSpell::MultiShot => shots::apply(fight, spell, target, 0.0),
+            HunterSpell::MultiShot => shots::multi_shot(fight, spell, target),
             HunterSpell::ArcaneShot => {
                 let (base, share) = fight.agent.arcane_shot;
                 shots::arcane_shot(fight, spell, target, base, share);
@@ -722,6 +771,16 @@ impl Agent for HunterAgent {
                 melee::wing_clip(fight, spell, target, base);
             }
             HunterSpell::ImmolationTrap => melee::immolation_trap(fight, spell, target),
+            HunterSpell::ExplosiveTrap => fight
+                .agent
+                .explosive_trap
+                .expect("Explosive Trap is bound")
+                .apply(fight, spell, target),
+            HunterSpell::Volley => fight
+                .agent
+                .volley
+                .expect("Volley is bound")
+                .apply(fight, spell),
         }
     }
 
@@ -794,7 +853,7 @@ impl Agent for HunterAgent {
                     .expect("Serpent Sting is bound");
                 if let Some(attack_power) = serpent_sting::on_travel(fight, spell, result, &sting) {
                     if let Some(bound) = fight.agent.serpent_sting.as_mut() {
-                        bound.snapshotted(attack_power);
+                        bound.snapshotted(result.target, attack_power);
                     }
                 }
             }
@@ -815,6 +874,16 @@ impl Agent for HunterAgent {
             HunterSpell::Hawk => SummonHawk::tick(fight, dot),
             HunterSpell::LaceratingStrikes => Self::mongoose(fight).bleed_tick(fight, dot),
             HunterSpell::ImmolationTrap => fight.snapshot_dot_tick(dot),
+            HunterSpell::ExplosiveTrap => fight
+                .agent
+                .explosive_trap
+                .expect("Explosive Trap is bound")
+                .tick(fight, dot),
+            HunterSpell::Volley => fight
+                .agent
+                .volley
+                .expect("Volley is bound")
+                .tick(fight, dot),
             HunterSpell::PetAbility(index) => match fight.agent.pet_abilities[index] {
                 PetAbility::Bleed { outcome, .. } => hunter_pet::bleed_tick(fight, dot, outcome),
                 PetAbility::ScorpidPoison { .. } => {
@@ -848,7 +917,7 @@ impl Agent for HunterAgent {
         fight.player_log(&line);
     }
 
-    fn on_gain(fight: &mut Fight<Self>, _aura: AuraRef, kind: HunterAura) {
+    fn on_gain(fight: &mut Fight<Self>, aura: AuraRef, kind: HunterAura) {
         match kind {
             HunterAura::AspectOfTheHawk => Self::aspect(fight).on_gain(fight),
             HunterAura::QuickShots => Self::aspect(fight).quick_shots_changed(fight, true),
@@ -866,7 +935,7 @@ impl Agent for HunterAgent {
             HunterAura::FrenzyEffect => fight.agent.pet_auras.clone().frenzy_changed(fight, true),
             HunterAura::DustCloud => {
                 let (_, armor) = fight.agent.dust_cloud.expect("Dust Cloud is bound");
-                fight.add_target_armor(armor);
+                fight.add_target_armor(aura.side, armor);
             }
             HunterAura::AspectOfTheBeast => Self::beast(fight).on_gain(fight),
             HunterAura::QuickStrikes => Self::beast(fight).quick_shots_changed(fight, true),
@@ -893,7 +962,7 @@ impl Agent for HunterAgent {
         }
     }
 
-    fn on_expire(fight: &mut Fight<Self>, _aura: AuraRef, kind: HunterAura) {
+    fn on_expire(fight: &mut Fight<Self>, aura: AuraRef, kind: HunterAura) {
         match kind {
             HunterAura::AspectOfTheHawk => Self::aspect(fight).on_expire(fight),
             HunterAura::QuickShots => Self::aspect(fight).quick_shots_changed(fight, false),
@@ -911,7 +980,7 @@ impl Agent for HunterAgent {
             HunterAura::FrenzyEffect => fight.agent.pet_auras.clone().frenzy_changed(fight, false),
             HunterAura::DustCloud => {
                 let (_, armor) = fight.agent.dust_cloud.expect("Dust Cloud is bound");
-                fight.add_target_armor(-armor);
+                fight.add_target_armor(aura.side, -armor);
             }
             HunterAura::AspectOfTheBeast => Self::beast(fight).on_expire(fight),
             HunterAura::QuickStrikes => Self::beast(fight).quick_shots_changed(fight, false),

@@ -56,7 +56,10 @@ def variant(base, rng, iterations, distances=DISTANCES):
     encounter["durationVariation"] = rng.choice(VARIATIONS)
     while encounter["durationVariation"] >= encounter["duration"]:
         encounter["durationVariation"] = rng.choice(VARIATIONS)
-    encounter["targets"][0]["level"] = rng.randint(60, 63)
+    # A fight against several targets holds identical copies, so they share the level.
+    level = rng.randint(60, 63)
+    for target in encounter["targets"]:
+        target["level"] = level
     raid = request["raid"]
     for key in ("buffs", "debuffs"):
         if key in raid:

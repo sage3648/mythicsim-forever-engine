@@ -1056,7 +1056,7 @@ impl Agent for ShamanAgent {
         }
     }
 
-    fn caster_damage_multiplier(fight: &Fight<Self>, spell: SpellId) -> Option<f64> {
+    fn caster_damage_multiplier(fight: &Fight<Self>, spell: SpellId, _target: Side) -> Option<f64> {
         fight
             .agent
             .stormstrike

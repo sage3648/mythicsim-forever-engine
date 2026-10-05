@@ -321,3 +321,12 @@ fn gear_listeners_of_the_target_swings_need_their_effects() {
         );
     }
 }
+
+/// A class whose spells have not been checked against several targets is refused there.
+#[test]
+fn several_targets_are_refused_until_the_class_is_checked() {
+    let mut value = fury_json();
+    value["encounter"]["target_count"] = json!(3);
+    assert!(reasons(value)
+        .contains(&"3 targets: several targets are not supported for ClassWarrior yet".into()));
+}

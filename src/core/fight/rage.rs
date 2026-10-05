@@ -213,9 +213,13 @@ impl<A: Agent> Fight<A> {
             }
             let events = self.resources[index].events - self.resources[index].previous_events;
             self.spells[gain_spell].metrics[0].casts += events;
-            // Go ApplyAOEThreatIgnoreMultipliers, whose sum the arm64 build fuses.
-            let threat = &mut self.spells[gain_spell].metrics[Side::Target.index()].total_threat;
-            *threat = actual.mul_add(threat_per_rage, *threat);
+            // Go ApplyAOEThreatIgnoreMultipliers on every target, whose sum the arm64 build
+            // fuses.
+            for position in 0..self.targets.len() {
+                let slot = Side::target(position).index();
+                let threat = &mut self.spells[gain_spell].metrics[slot].total_threat;
+                *threat = actual.mul_add(threat_per_rage, *threat);
+            }
         }
     }
 }

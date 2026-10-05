@@ -788,13 +788,13 @@ impl<A: Agent> Fight<A> {
                 index,
             }),
             SpellBehavior::MeleeAuto(hand) => self.apply_melee_auto(spell, target, hand),
-            SpellBehavior::GoblinSapper => self.apply_goblin_sapper(spell, target),
+            SpellBehavior::GoblinSapper => self.apply_goblin_sapper(spell),
             SpellBehavior::Move => self.apply_movement(self.spells[spell].caster),
             SpellBehavior::BasicExplosive {
                 min,
                 max,
                 aoe_cap_multiplier,
-            } => self.apply_basic_explosive(spell, target, min, max, aoe_cap_multiplier),
+            } => self.apply_basic_explosive(spell, min, max, aoe_cap_multiplier),
             SpellBehavior::SulfurasFireball { min, max } => {
                 self.sulfuras_fireball(spell, target, min, max)
             }
@@ -827,6 +827,13 @@ impl<A: Agent> Fight<A> {
                         periodic,
                     },
                 );
+            }
+            SpellBehavior::AreaRollDamage { min, max } => {
+                for position in 0..self.targets.len() {
+                    let base = self.go_roll(min, max);
+                    let result = self.calc_damage(spell, Side::target(position), base);
+                    self.deal_damage(spell, result, false);
+                }
             }
             SpellBehavior::RollDamage { min, max, can_crit } => {
                 let base = self.go_roll(min, max);
@@ -1292,6 +1299,7 @@ impl<A: Agent> Fight<A> {
             | SpellBehavior::MeleeAuto(_)
             | SpellBehavior::Move
             | SpellBehavior::RollDamage { .. }
+            | SpellBehavior::AreaRollDamage { .. }
             | SpellBehavior::SulfurasFireball { .. }
             | SpellBehavior::FixedHit(_)
             | SpellBehavior::EffectRoll { .. }

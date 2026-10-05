@@ -419,3 +419,45 @@ fn a_cat_and_the_whelp_act_as_two_units() {
         .collect();
     assert_eq!(names, ["Cat", "Emerald Dragon Whelp"]);
 }
+
+fn survival_against(targets: u32) -> Value {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join(format!(
+        "fixtures/mage/prepared-v2/production-survival-hunter-{targets}-targets.prepared.json"
+    ));
+    serde_json::from_slice(&fs::read(path).unwrap()).unwrap()
+}
+
+/// Against several targets the application's lines reach Explosive Trap and Volley, which
+/// need the effects that describe them.
+#[test]
+fn area_spells_need_their_effects_against_several_targets() {
+    for (kind, spell) in [("explosive_trap", 14317), ("volley", 14295)] {
+        let mut value = survival_against(2);
+        value["effects"]
+            .as_array_mut()
+            .unwrap()
+            .retain(|effect| effect["kind"] != kind);
+        assert!(
+            reasons(value).contains(&format!(
+                "rotation reaches spell {spell} without a known behavior"
+            )),
+            "{kind}"
+        );
+    }
+}
+
+/// Explosive Trap hits each target in turn, then its burn ticks on every target, and Volley's
+/// channel ticks on every target, as Go traps.go and volley.go deal them.
+#[test]
+fn explosive_trap_and_volley_reach_every_target() {
+    let logs = first_fight_log(survival_against(5));
+    for target in 1..=5 {
+        for (spell, what) in [(14317, " Hit"), (14317, " tick "), (14295, " tick ")] {
+            let found = logs.lines().any(|line| {
+                line.contains(&format!("[Target {target}] {{SpellID: {spell}}}"))
+                    && line.contains(what)
+            });
+            assert!(found, "Target {target}: no {spell}{what}");
+        }
+    }
+}

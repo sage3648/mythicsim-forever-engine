@@ -80,8 +80,8 @@ impl SummonHawk {
         let (spell, side) = (state.spell, state.side);
         let mut base = state.snapshot_base;
         if state.reads_spell_power {
-            base +=
-                state.bonus_coefficient * fight.bonus_damage(spell) - state.snapshot_spell_power;
+            base += state.bonus_coefficient * fight.bonus_damage(spell, side)
+                - state.snapshot_spell_power;
         }
         let attacker =
             fight.attacker_multiplier(spell, true) * fight.dots[dot].periodic_damage_multiplier;

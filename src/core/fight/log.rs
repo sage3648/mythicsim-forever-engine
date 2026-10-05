@@ -60,6 +60,8 @@ impl<A: Agent> Fight<A> {
             Side::Player => self.config.player_label.clone(),
             Side::Target => self.config.target_label.clone(),
             Side::Pet(_) => self.active_pet(side).label.clone(),
+            // Go NewTarget: "Target" and the target's position, counting from one.
+            Side::Extra(extra) => format!("Target {}", extra as usize + 2),
         }
     }
 

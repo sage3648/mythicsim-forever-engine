@@ -16,14 +16,14 @@ impl FaerieFire {
     /// The exclusive effect's gain, before the aura's.
     pub(crate) fn on_exclusive_gain<A: Agent>(&self, fight: &mut Fight<A>) {
         if let Some(armor) = self.armor {
-            fight.add_target_armor(armor);
+            fight.add_target_armor(Side::Target, armor);
         }
     }
 
     /// The exclusive effect's expiry.
     pub(crate) fn on_expire<A: Agent>(&self, fight: &mut Fight<A>) {
         if let Some(armor) = self.armor {
-            fight.add_target_armor(-armor);
+            fight.add_target_armor(Side::Target, -armor);
         }
     }
 

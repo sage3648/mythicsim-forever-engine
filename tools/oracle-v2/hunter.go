@@ -75,6 +75,9 @@ var (
 	hunterLacerating        = spelldata.Ranked(1310536)
 	hunterImmolationTrap    = spelldata.Ranked(13795, 14302, 14303, 14304, 14305)
 	hunterImmolationEffect  = spelldata.Ranked(13797, 14298, 14299, 14300, 14301)
+	hunterExplosiveTrap     = spelldata.Ranked(13813, 14316, 14317)
+	hunterExplosiveEffect   = spelldata.Ranked(13812, 14314, 14315)
+	hunterVolley            = spelldata.Ranked(1510, 14294, 14295)
 	hunterExposePrey        = spelldata.Talent(1310532, 2)
 	hunterResourcefulBuff   = spelldata.Ranked(1242688)
 	hunterRapidRecuperation = spelldata.Talent(1223987, 2)
@@ -383,11 +386,18 @@ func hunterPetAbility(spell *core.Spell) map[string]any {
 		return hunterPetRowStrike(id, row.DamageEffect(), "melee_special")
 	}
 	// newThunderstomp: a cleave of magic hits, one roll each, so one hit on a single target.
+	// Against several it reaches the others, which Rust does not simulate.
 	if row := hunterThunderstomp.Highest(); row.ID == id {
+		if spell.Unit.Env.ActiveTargetCount() > 1 {
+			return nil
+		}
 		return hunterPetRowStrike(id, row.DamageEffect(), "magic")
 	}
-	// newSwipe: its cast condition needs three active targets.
+	// newSwipe: its cast condition needs three active targets, and it cleaves them.
 	if row := hunterSwipe.Highest(); row.ID == id {
+		if spell.Unit.Env.ActiveTargetCount() >= 3 {
+			return nil
+		}
 		return map[string]any{"kind": "hunter_pet_swipe", "spell_id": id, "min_targets": 3}
 	}
 	if row := hunterPetRow(hunterPetBleedRows, id); row != nil && spell.Dot(spell.Unit.CurrentTarget) != nil {
@@ -562,6 +572,31 @@ func hunterMeleeEffects(h *hunter.Hunter, character *core.Character) []map[strin
 		effects = append(effects, map[string]any{
 			"kind": "immolation_trap", "spell_id": h.ImmolationTrap.ActionID.SpellID,
 			"tick_base": effect.PeriodicEffect().Average(core.CharacterLevel),
+		})
+	}
+	// traps.go registerExplosiveTrapSpell: one hit for each active target, from the cast target on,
+	// each on its own roll of the Go literal range times the AoE cap, then the area dot on the
+	// hunter, which snapshots the effect row's tick and deals it to every target that Immolation
+	// Trap is not burning.
+	if h.ExplosiveTrap != nil {
+		rank := hunterExplosiveTrap.Highest()
+		effect := hunterExplosiveEffect.Rank(rank.RankNumber())
+		hitRange := map[int32][2]float64{13813: {104, 135}, 14316: {145, 193}, 14317: {208, 265}}[rank.ID]
+		effects = append(effects, map[string]any{
+			"kind": "explosive_trap", "spell_id": h.ExplosiveTrap.ActionID.SpellID,
+			"hit_min": hitRange[0], "hit_max": hitRange[1], "hits": character.Env.ActiveTargetCount(),
+			"aoe_cap_multiplier": character.Env.Encounter.AOECapMultiplier(),
+			"tick_base":          effect.Effect(dbcenums.A_PERIODIC_DAMAGE, 0).Average(core.CharacterLevel),
+		})
+	}
+	// volley.go: the channel holds the ranged swing for the rank's duration, then the area dot on
+	// the hunter snapshots the Go literal tick of the rank and deals it to every target.
+	if h.Volley != nil {
+		rank := hunterVolley.Highest()
+		tick := map[int32]float64{1510: 70, 14294: 91, 14295: 112}[rank.ID]
+		effects = append(effects, map[string]any{
+			"kind": "volley", "spell_id": h.Volley.ActionID.SpellID, "tick_base": tick,
+			"ranged_delay_ns": nanos(rank.Duration()),
 		})
 	}
 	// talents_survival.go: Resourcefulness's crit trigger and its casting regeneration, and Expose

@@ -13,6 +13,7 @@ pub(crate) const GATE: ClassGate = ClassGate {
     spell: spell_capability,
     claims,
     limits,
+    several_targets: Some(several_targets),
 };
 
 /// Hunter effect kinds implemented in Rust and validated against the pinned Go reference.
@@ -21,6 +22,7 @@ const EFFECTS: &[&str] = &[
     "arcane_shot",
     "aspect_of_the_beast",
     "aspect_of_the_hawk",
+    "explosive_trap",
     "expose_prey",
     "immolation_trap",
     "mongoose_bite",
@@ -45,6 +47,7 @@ const EFFECTS: &[&str] = &[
     "serpent_sting",
     "sniper_shot",
     "summon_hawk",
+    "volley",
 ];
 
 /// The effect kind whose implementation executes a Hunter spell.
@@ -74,6 +77,8 @@ fn spell_capability(spell: &Spell) -> Option<&'static str> {
         "strider_kick" => Some("strider_kick"),
         "wing_clip" => Some("wing_clip"),
         "immolation_trap" if spell.dot.is_some() => Some("immolation_trap"),
+        "explosive_trap" if spell.dot.is_some() => Some("explosive_trap"),
+        "volley" if spell.dot.as_ref().is_some_and(|dot| dot.channeled) => Some("volley"),
         _ => None,
     }
 }
@@ -204,4 +209,11 @@ fn limits(prepared: &PreparedV2, _reachable: &[&Spell]) -> Vec<String> {
         }
     }
     reasons
+}
+
+/// The spells that reach a target past the first in Go and not yet in Rust: none. Multi-Shot,
+/// Volley, Explosive Trap and Serpent Sting on each target run as in Go, and the exporter
+/// refuses the pet abilities that cleave.
+fn several_targets(_prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
+    crate::engine::coverage::spells_reaching_other_targets(reachable, &[])
 }

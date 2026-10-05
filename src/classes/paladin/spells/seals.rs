@@ -443,7 +443,7 @@ pub(crate) fn command_proc(fight: &mut Fight<PaladinAgent>, spell: SpellId, targ
         .mul_add(fight.spell_power(spell), weapon)
         * command.weapon_percent;
     let holy = crate::core::fight::school_index(2);
-    let target_bonus = fight.target.school_bonus_spell_damage[holy];
+    let target_bonus = fight.target_unit(target).state.school_bonus_spell_damage[holy];
     base = command.coefficient.mul_add(target_bonus, base);
     let result = fight.calc_damage_with(
         spell,
