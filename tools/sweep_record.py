@@ -4,7 +4,8 @@
 Reads the compare output directory's summary and each variant request, and writes the
 validation record: reference pin, generator and rerun commands, criteria, outcome
 counts and one row per variant. A variant whose Rust run refused the input is counted
-as rejected, with its reasons; any other failure is a mismatch. Uses only Python's
+as rejected, with its reasons; one whose export, Go run or Rust run failed is counted as
+an error, with its stage; any other failure is a mismatch, with its first differences. Uses only Python's
 standard library.
 """
 
@@ -49,7 +50,9 @@ def row(request_path, result, prepared):
         "passed": result["passed"],
     }
     if not result["passed"]:
-        if result.get("rust_error", "").startswith("prepared input unsupported"):
+        if result.get("error"):
+            out["error"] = result["error"]
+        elif result.get("rust_error", "").startswith("prepared input unsupported"):
             out["rejected"] = [line.strip() for line in result["rust_error"].splitlines()[1:]]
         else:
             out["differences"] = result.get("differences", [])[:20]
@@ -66,6 +69,7 @@ def record(compare_dir, requests, scope, generator, notes):
         prepared = load(prepared_path) if prepared_path.is_file() else None
         cases.append(row(by_scenario[result["scenario"]], result, prepared))
     rejected = sum(1 for case in cases if "rejected" in case)
+    errors = sum(1 for case in cases if "error" in case)
     matched = sum(1 for case in cases if case["passed"])
     directories = sorted({relative(Path(path).parent) for path in requests})
     return {
@@ -79,7 +83,8 @@ def record(compare_dir, requests, scope, generator, notes):
         "criteria": CRITERIA,
         "matched": matched,
         "rejected": rejected,
-        "mismatched": len(cases) - matched - rejected,
+        "mismatched": len(cases) - matched - rejected - errors,
+        "errors": errors,
         "notes": notes,
         "cases": cases,
     }
@@ -96,8 +101,9 @@ def main():
     args = parser.parse_args()
     value = record(args.compare_dir, args.requests, args.scope, args.generator, args.note)
     args.output.write_text(json.dumps(value, indent=2) + "\n")
-    print(f"{value['matched']} matched, {value['rejected']} rejected, {value['mismatched']} mismatched")
-    return 0 if value["mismatched"] == 0 else 1
+    print(f"{value['matched']} matched, {value['rejected']} rejected, {value['mismatched']} mismatched, "
+          f"{value['errors']} errors")
+    return 0 if value["mismatched"] == 0 and value["errors"] == 0 else 1
 
 
 if __name__ == "__main__":

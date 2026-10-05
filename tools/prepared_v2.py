@@ -358,17 +358,49 @@ def first_log_difference(go_logs, rust_logs):
     return None
 
 
+def error_row(scenario, stage, error):
+    """A request that failed at a stage: an error, counted apart from refusals and mismatches."""
+    if isinstance(error, subprocess.CalledProcessError):
+        message = f"exit status {error.returncode}"
+    elif isinstance(error, subprocess.TimeoutExpired):
+        message = f"timed out after {error.timeout} seconds"
+    else:
+        message = f"{type(error).__name__}: {error}"
+    return {"scenario": scenario, "passed": False, "error": {"stage": stage, "message": message}}
+
+
 def compare_request(exporter, rust, request_path, scenario, directory):
+    """Compare one request. A refusal, a mismatch or a failure at any step is a row; one
+    request's failure never stops the others."""
     directory.mkdir(parents=True, exist_ok=True)
     prepared = directory / "prepared.json"
-    command([exporter, "prepare", "--infile", request_path, "--outfile", prepared, "--scenario", scenario])
+    failures = (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError)
+    try:
+        command([exporter, "prepare", "--infile", request_path, "--outfile", prepared, "--scenario", scenario])
+    except failures as error:
+        return error_row(scenario, "prepare", error)
     go_out, rust_out = directory / "go.json", directory / "rust.json"
-    command([exporter, "sim", "--infile", request_path, "--outfile", go_out])
-    completed = subprocess.run([str(rust), "sim", "--infile", str(prepared), "--outfile", str(rust_out)],
-                               capture_output=True, text=True, timeout=600)
+    try:
+        command([exporter, "sim", "--infile", request_path, "--outfile", go_out])
+    except failures as error:
+        return error_row(scenario, "go", error)
+    try:
+        completed = subprocess.run([str(rust), "sim", "--infile", str(prepared), "--outfile", str(rust_out)],
+                                   capture_output=True, text=True, timeout=600)
+    except failures as error:
+        return error_row(scenario, "rust", error)
     if completed.returncode != 0:
-        return {"scenario": scenario, "passed": False, "rust_error": completed.stderr.strip()}
-    go_result, rust_report = load(go_out), load(rust_out)
+        if completed.stderr.startswith("prepared input unsupported"):
+            return {"scenario": scenario, "passed": False, "rust_error": completed.stderr.strip()}
+        return {"scenario": scenario, "passed": False,
+                "error": {"stage": "rust", "message": completed.stderr.strip()[-2000:]}}
+    try:
+        go_result, rust_report = load(go_out), load(rust_out)
+    except (OSError, ValueError) as error:
+        return error_row(scenario, "compare", error)
+    if go_result.get("error"):
+        return {"scenario": scenario, "passed": False,
+                "error": {"stage": "go", "message": json.dumps(go_result["error"])}}
     differences = leaf_differences(comparable(go_result), comparable(rust_report["result"]))
     log_difference = None
     if go_result.get("logs") or rust_report["result"].get("logs"):
@@ -401,6 +433,8 @@ def compare_cases(cache, source, output, requests):
             print(f"  log line {first['line']}:\n    Go:   {first['go']}\n    Rust: {first['rust']}", flush=True)
         if row.get("rust_error"):
             print(f"  Rust: {row['rust_error']}", flush=True)
+        if row.get("error"):
+            print(f"  error at {row['error']['stage']}: {row['error']['message']}", flush=True)
     (output / "summary.json").write_text(json.dumps({"passed": all(r["passed"] for r in rows), "results": rows}, indent=2) + "\n")
     return all(row["passed"] for row in rows)
 
