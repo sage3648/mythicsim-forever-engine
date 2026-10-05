@@ -16,8 +16,9 @@ build script, the Python tools and the Go helpers they build (through `-ldflags 
 all read it from there. Fixtures, manifests, validation records and benchmark
 snapshots keep the revision they were made with as provenance, and the checks
 reject accepted fixtures whose revision or client build differs from the pin. The
-matched Go kernel behind the historical benchmarks keeps its own revision, because
-its source digest is part of that benchmark's record.
+matched Go kernel in `tools/matched-go` writes its accepted revision as a constant,
+since it builds without the pin; the historical benchmarks keep the source digest
+they were measured with.
 
 To move the pin:
 
@@ -28,7 +29,8 @@ To move the pin:
    `<scratch>/repin.json`. Every change is a reference behavior change to review, not
    to accept: port it to Rust until `python3 tools/prepared_v2.py compare` matches every
    case, and run `cargo test`. Re-export the Frost kernel fixtures with
-   `tools/compare.py`'s oracle and check they keep their expected values.
+   `tools/compare.py`'s oracle, check they keep their expected values, move the
+   matched Go kernel's `revision` and run its `go test ./...`.
 3. Re-run every recorded compatibility sweep, update `release/manifest.json`, and
    review the ledger range against the new community base. Mark the applicable changes
    the reference now includes as adopted.
