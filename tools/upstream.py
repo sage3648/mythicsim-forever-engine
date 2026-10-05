@@ -35,8 +35,7 @@ def check(directory=LEDGER, community=None):
     reference, upstream = sources["reference"], sources["community"]
     require(reference["pinned_revision"] == PIN, "reference pin differs from the comparison pin")
     reviewed = upstream["last_reviewed"]
-    require(reviewed["from"] == upstream["adopted_base"] == reference["community_base"],
-            "review must start at the adopted community base")
+    require(reviewed["from"] == upstream["adopted_base"], "review must start at the adopted community base")
     require((ledger["range"]["from"], ledger["range"]["to"]) == (reviewed["from"], reviewed["to"]),
             "ledger range differs from sources.json")
     changes = ledger["changes"]
@@ -62,6 +61,16 @@ def check(directory=LEDGER, community=None):
             require(bool(change.get("regression")), f"{label}: applicable change needs a regression")
             for path in change.get("regression", []):
                 require((ROOT / path.split("#")[0]).is_file(), f"{label}: missing regression {path}")
+    # The reference's community base is the adopted base or a reviewed commit; every
+    # applicable change up to it is in the reference.
+    base = reference["community_base"]
+    require(base == upstream["adopted_base"] or base in commits,
+            "the reference's community base is neither the adopted base nor a reviewed commit")
+    included = commits[:commits.index(base) + 1] if base in commits else []
+    for change in changes:
+        if change["commit"] in included and change["disposition"] == "applicable":
+            require(change.get("adoption", {}).get("reference") == "adopted",
+                    f"{change['commit'][:9]}: the reference includes this change, so it is adopted")
     for entry in mapping["mechanics"]:
         require(entry["status"] in mapping["statuses"], f"{entry['id']}: unknown status")
         for path in entry["rust"] + entry["tests"]:

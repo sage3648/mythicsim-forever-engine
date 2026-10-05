@@ -77,21 +77,17 @@ fn a_pet_that_may_act_is_rejected() {
     );
 }
 
+/// An interrupt condition naming an aura the character lacks reads it as inactive
+/// (community fix #622), so the channel compiles as Go's does.
 #[test]
-fn interrupt_conditions_follow_the_622_guard() {
+fn interrupt_conditions_read_missing_auras_as_inactive() {
     let mut value = production();
     let channel = &mut item(&mut value, "channelSpell")["action"]["channelSpell"];
     channel["interruptIf"] = json!({"and": {"vals": [
         channel["interruptIf"].clone(),
         {"auraIsActive": {"auraId": {"spellId": 44404}}},
     ]}});
-    let reasons = reasons(value);
-    assert!(
-        reasons.iter().any(|reason| reason.starts_with(
-            "rotation item 9: auraIsActive names spell 44404, which the character lacks"
-        )),
-        "{reasons:?}"
-    );
+    assert!(check_prepared(&parse(value)).is_ok());
 }
 
 #[test]

@@ -37,7 +37,7 @@ mod spell_mod;
 mod sulfuras;
 mod whelp;
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 
 pub(crate) use aura::{AuraBehavior, AuraRef, Tracker};
 pub(crate) use damage::{
@@ -49,7 +49,7 @@ pub(crate) use metrics::{ActionTotals, FightReport};
 pub(crate) use spell_mod::{ModId, ModKind};
 
 use crate::{
-    contracts::prepared_v2::{ActionId, Effect, PreparedV2, Schools},
+    contracts::prepared_v2::{ActionId, Effect, ExclusiveMembership, PreparedV2, Schools},
     core::{
         queue::{Handle, PendingQueue},
         rng::SimRng,
@@ -1255,6 +1255,13 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) rage: Option<rage::RageBar>,
     /// Single aura exclusive categories the runtime enforces.
     pub(crate) exclusive: Vec<exclusive::Category>,
+    /// The exclusive categories the runtime only tracks for their uptime metrics: Go runs
+    /// their transitions, but no member blocks another's activation.
+    pub(crate) exclusive_tracking: Vec<exclusive::Category>,
+    /// Each aura's exclusive effects in Go's order, in the enforced or tracked categories.
+    pub(crate) aura_effects: HashMap<AuraRef, Vec<exclusive::EffectRef>>,
+    /// Each unit's exported exclusive memberships, by aura, for the first run to resolve.
+    pub(crate) exported_memberships: Vec<(AuraRef, Vec<ExclusiveMembership>)>,
     /// The target's major armor category and its armor at each stack count of the active
     /// member.
     pub(crate) armor_category: Option<(usize, Vec<f64>)>,
@@ -2352,6 +2359,7 @@ impl<A: Agent> Fight<A> {
         let mut trackers: Vec<Tracker<A::Aura>> = (0..DEFENDERS + prepared.pets.len())
             .map(|_| Tracker::default())
             .collect();
+        let mut exported_memberships = Vec::new();
         let unit_auras = [(Side::Target, &target.auras), (Side::Player, &player.auras)]
             .into_iter()
             .chain(
@@ -2751,6 +2759,15 @@ impl<A: Agent> Fight<A> {
                     .as_ref()
                     .map(|icd| (timer(&icd.timer), icd.duration_ns));
                 trackers[side.index()].register(exported, behavior, icd);
+                if !exported.exclusive_memberships.is_empty() {
+                    let index = trackers[side.index()]
+                        .find(&exported.label)
+                        .ok_or_else(|| format!("aura {} is not registered", exported.label))?;
+                    exported_memberships.push((
+                        AuraRef { side, index },
+                        exported.exclusive_memberships.clone(),
+                    ));
+                }
             }
         }
         for (spell, label) in potion_auras {
@@ -2814,6 +2831,9 @@ impl<A: Agent> Fight<A> {
             energy: None,
             rage,
             exclusive: Vec::new(),
+            exclusive_tracking: Vec::new(),
+            aura_effects: HashMap::new(),
+            exported_memberships,
             armor_category: None,
             extra_armor_categories: Vec::new(),
             player_hit_resistance: (0.0, 1.0),
@@ -3118,9 +3138,9 @@ impl<A: Agent> Fight<A> {
         for effect in effects {
             if let Effect::ExclusiveCategory {
                 unit,
+                category,
                 members,
                 armor_by_stacks,
-                ..
             } = effect
             {
                 let side = if unit == "target" {
@@ -3140,7 +3160,9 @@ impl<A: Agent> Fight<A> {
                         member.per_stack,
                     ));
                 }
-                fight.exclusive.push(exclusive::Category::new(entries));
+                let mut enforced = exclusive::Category::new(entries);
+                enforced.name = category.clone();
+                fight.exclusive.push(enforced);
                 if !armor_by_stacks.is_empty() {
                     fight.armor_category =
                         Some((fight.exclusive.len() - 1, armor_by_stacks.clone()));
@@ -3848,6 +3870,7 @@ impl<A: Agent> Fight<A> {
     pub(crate) fn run(&mut self) -> FightReport {
         if !self.extra_targets_built {
             self.build_extra_targets();
+            self.build_exclusive_tracking();
         }
         let started = std::time::Instant::now();
         let iterations = self.config.iterations;
@@ -4489,6 +4512,7 @@ impl<A: Agent> Fight<A> {
         for side in self.target_sides() {
             self.aura_done_iteration(side);
         }
+        self.exclusive_done_iteration();
         self.unit_done_iteration(damage);
     }
 }

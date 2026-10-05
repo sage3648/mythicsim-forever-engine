@@ -355,31 +355,21 @@ fn ignite_builds_refuse_a_reachable_goblin_sapper() {
     assert!(check_prepared(&parse(value).unwrap()).is_ok());
 }
 
-/// Community fix ElliotWood/Forever#622 (252f57aa8), recorded in upstream/changes.json.
-/// Without Fingers of Frost, pinned Go drops the Ice Lance condition and casts Ice Lance on
-/// every global cooldown; the fix reads the missing aura as inactive. Rust rejects the
-/// rotation until the reference adopts the fix.
+/// Community fix ElliotWood/Forever#622 (252f57aa8), in the reference since 20b551c6b.
+/// Without Fingers of Frost the Ice Lance condition reads the missing aura as inactive, so
+/// Ice Lance is never cast; before the fix Go dropped the condition and cast it on every
+/// global cooldown. The build is supported, and its Go golden casts no Ice Lance.
 #[test]
-fn community_fix_622_unknown_aura_conditions_are_rejected() {
+fn community_fix_622_unknown_aura_conditions_read_as_inactive() {
     let bytes = fs::read(family().join("frost-no-fingers.prepared.json")).unwrap();
     let prepared: PreparedV2 = serde_json::from_slice(&bytes).unwrap();
     assert!(!prepared.player.talents.contains_key("fingers_of_frost"));
-    let reasons = prepared_coverage(&prepared);
-    assert!(reasons.contains(
-        &"rotation item 4: auraIsActive names spell 400669, which the character lacks; \
-          the pinned reference drops the condition and community #622 reads it as inactive"
-            .to_string()
-    ));
-    // The talented reference names the same aura and is not affected.
-    let reference = parse(reference_json()).unwrap();
-    assert!(!prepared_coverage(&reference)
-        .iter()
-        .any(|reason| reason.contains("#622")));
+    assert_eq!(prepared_coverage(&prepared), Vec::<String>::new());
 }
 
 /// Without Missile Barrage the Arcane Missiles rule names a missing aura behind an
-/// `auraIsKnown` guard. Both readings prune the rule, so the build is supported; its Go
-/// golden casts no Arcane Missiles.
+/// `auraIsKnown` guard, which prunes the rule, so the build is supported; its Go golden
+/// casts no Arcane Missiles.
 #[test]
 fn community_fix_622_guarded_conditions_are_supported() {
     let bytes = fs::read(family().join("reference-no-missile-barrage.prepared.json")).unwrap();
@@ -619,9 +609,13 @@ fn refusals_carry_stable_codes() {
         .retain(|effect| effect["kind"] != "arcane_explosion");
     assert_eq!(codes(spell), ["unknown_spell"]);
 
+    let mut refresh = reference_json();
+    refresh["player"]["rotation"]["priorityList"][3]["action"]["condition"] =
+        json!({"auraShouldRefresh": {"auraId": {"spellId": 1}}});
+    assert_eq!(codes(refresh), ["aura_condition_unsupported"]);
+
     for (case, code) in [
         ("fire-mage-goblin-sapper", "class_limit"),
-        ("frost-no-fingers", "aura_condition_unsupported"),
         ("production-frost-2-targets", "several_targets_unsupported"),
     ] {
         let path = family().join(format!("{case}.prepared.json"));

@@ -4,29 +4,43 @@
 
 | Source | Role | Baseline |
 | --- | --- | --- |
-| [MythicSim Go engine](https://github.com/sage3648/mythicsim-forever-engine-go) | Fixtures and live reference | `6823b49eb8aff741f197ef36d83766ef6a218285` |
-| [Community Forever engine](https://github.com/ElliotWood/Forever) | Changes to review for applicability | Adopted base `f4b776b4f41d5c7799b8141697a2c9e67c89d426`; reviewed through `017ff78fa6b1aeb9f839c9729628e01c701c5c08` (2026-10-03) |
+| [MythicSim Go engine](https://github.com/sage3648/mythicsim-forever-engine-go) | Fixtures and live reference | `20b551c6bff9aa780fefe17ead89029c13cabcd4`, on community base `f764984d8b05f0d5ce73aab82185fb6efa40a9a4` |
+| [Community Forever engine](https://github.com/ElliotWood/Forever) | Changes to review for applicability | Adopted base `f4b776b4f41d5c7799b8141697a2c9e67c89d426`; reviewed through `f764984d8b05f0d5ce73aab82185fb6efa40a9a4` (2026-10-05) |
 
 Go is a reference implementation, not proof of live-game correctness. Forever can
 intentionally differ from inherited Classic behavior. Fixture client build:
-`1.60.1.70170`.
+`1.60.1.70205`.
 
 The pin is written once, in [upstream/sources.json](upstream/sources.json). The Rust
 build script, the Python tools and the Go helpers they build (through `-ldflags -X`)
 all read it from there. Fixtures, manifests, validation records and benchmark
 snapshots keep the revision they were made with as provenance, and the checks
 reject accepted fixtures whose revision or client build differs from the pin. The
-matched Go kernel behind the historical benchmarks keeps its own revision, because
-its source digest is part of that benchmark's record.
+matched Go kernel in `tools/matched-go` writes its accepted revision as a constant,
+since it builds without the pin; the historical benchmarks keep the source digest
+they were measured with.
 
 To move the pin:
 
 1. Change `pinned_revision`, `client_build` and, if the fork rebased,
    `community_base` in `upstream/sources.json`.
-2. Run `python3 tools/prepared_v2.py refresh` and `python3 tools/compare.py`. Every
-   Go golden that changes is a reference behavior change to review, not to accept.
-3. Re-run the [compatibility sweep](validation/2026-10-03-frost-sweep.json) and
-   review the ledger range against the new community base.
+2. Run `python3 tools/prepared_v2.py repin --output <scratch>`. It re-exports every
+   prepared input and Go golden at the new pin and lists each changed golden in
+   `<scratch>/repin.json`. Every change is a reference behavior change to review, not
+   to accept: port it to Rust until `python3 tools/prepared_v2.py compare` matches every
+   case, and run `cargo test`. Re-export the Frost kernel fixtures with
+   `tools/compare.py`'s oracle, check they keep their expected values, move the
+   matched Go kernel's `revision` and run its `go test ./...`.
+3. Re-run every recorded compatibility sweep, update `release/manifest.json`, and
+   review the ledger range against the new community base. Mark the applicable changes
+   the reference now includes as adopted.
+
+The pin moved from `6823b49eb` to `20b551c6b` on 2026-10-05, the fork's merge of
+community #613 to #641 plus its patch 84. 274 Go goldens changed: every aura with an
+exclusive effect now reports that effect's uptime, and 28 builds changed DPS through
+Mutilate (#632), Whirlwind and the warrior shout costs (#613, #614) and Piercing Ice
+(#615). Rust matches all of them, and all 2439 recorded sweep variants
+([record](validation/2026-10-05-reference-pin-20b551c6b-sweeps.json)).
 
 ## Ledger
 
@@ -48,20 +62,21 @@ python3 tools/upstream.py check
 python3 tools/upstream.py check --community /absolute/path/to/Forever
 ```
 
-The first review covers 53 community commits after the adopted base: 48 irrelevant
-to Frost scope, 4 deferred client data updates and 1 applicable fix. That fix,
+The first review covered 53 community commits after the adopted base: 48 irrelevant
+to Frost scope, 4 deferred client data updates and 1 applicable fix. The pin move to
+`20b551c6b` extended it to 55 commits, all now in the reference, and marked the changes
+Rust covers by then as applicable and adopted. The first fix,
 [#622](https://github.com/ElliotWood/Forever/pull/622) (`252f57aa8`), changes how a
 rotation reads an aura the character cannot have. The pinned reference drops such a
 condition, so a Frost build without Fingers of Frost casts Ice Lance on every global
 cooldown (about 81 casts and 211 DPS per fight, against 593 DPS for the talented
 reference). The Arcane preset reads Missile Barrage without a guard, so an Arcane build
 without it casts Arcane Missiles whenever the rule is reached (449.7 DPS and no Arcane
-Blasts, against 396.6 DPS for the rotation as written). Rust compiles each condition
-both ways. Where they act differently, it rejects the rotation with both behaviors
-named until the reference adopts the fix; where they act the same, as when an
-`auraIsKnown` guard prunes the action either way or a missing stack count leaves a
-constant comparison, it runs. The regressions are the `frost-no-fingers`,
-`arcane-no-missile-barrage` and `reference-no-missile-barrage` prepared fixtures.
+Blasts, against 396.6 DPS for the rotation as written). Until the reference adopted the
+fix, Rust compiled each condition both ways and rejected the rotations where they acted
+differently. Since `20b551c6b` both read a missing aura as inactive, with no stacks and
+no time left. The regressions are the `frost-no-fingers`, `arcane-no-missile-barrage`
+and `reference-no-missile-barrage` prepared fixtures.
 
 ## Reference defects
 

@@ -3,10 +3,10 @@
   "source": "community",
   "range": {
     "from": "f4b776b4f41d5c7799b8141697a2c9e67c89d426",
-    "to": "017ff78fa6b1aeb9f839c9729628e01c701c5c08",
-    "commits": 53
+    "to": "f764984d8b05f0d5ce73aab82185fb6efa40a9a4",
+    "commits": 55
   },
-  "reviewed": "2026-10-03",
+  "reviewed": "2026-10-05",
   "dispositions": [
     "applicable",
     "already_covered",
@@ -24,8 +24,16 @@
         "sim/warrior",
         "ui/sim"
       ],
-      "disposition": "irrelevant",
-      "reason": "Another class's mechanics or rotations."
+      "disposition": "applicable",
+      "reason": "Covered mechanic. Whirlwind now strikes with an off hand weapon without Raging Blows, and Raging Blows also cuts Whirlwind's Rage cost.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 20b551c6b: the exporter marks Whirlwind's off hand strike by the off hand weapon, and the exported costs carry Raging Blows"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/fury-warrior-whirlwind-no-raging-blows.go-result.json",
+        "fixtures/mage/prepared-v2/production-warrior.go-result.json"
+      ]
     },
     {
       "commit": "5454e9688d8c1ee5d58eeeda9af3038221a78d02",
@@ -45,8 +53,15 @@
       "areas": [
         "sim/warrior"
       ],
-      "disposition": "irrelevant",
-      "reason": "Another class's mechanics or rotations."
+      "disposition": "applicable",
+      "reason": "Covered mechanic. Booming Voice takes 5% a point off the shouts' Rage cost.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 20b551c6b: the exported shout costs carry the static modifier"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/production-warrior.go-result.json"
+      ]
     },
     {
       "commit": "4d624ccc6b0220852e3ed2cca71dfd16acc23181",
@@ -66,11 +81,18 @@
       "areas": [
         "sim/mage"
       ],
-      "disposition": "irrelevant",
+      "disposition": "applicable",
       "mechanics": [
         "frostfire_bolt"
       ],
-      "reason": "Frostfire Bolt is outside the supported Frost scope; a rotation reaching it is rejected. Revisit when Frostfire Bolt is ported."
+      "reason": "Covered mechanic. Piercing Ice gives Frostfire Bolt's DoT a flat 2% and its hit the full rank bonus.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 20b551c6b: the exported Frostfire Bolt multipliers carry the static modifiers"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/production-frostfire.go-result.json"
+      ]
     },
     {
       "commit": "785e2c1e1f8c7e4315f86280af9dfa2524adc476",
@@ -190,11 +212,18 @@
         "assets/db_inputs",
         "docs/data-changes"
       ],
-      "disposition": "deferred",
+      "disposition": "applicable",
       "mechanics": [
         "client_data"
       ],
-      "reason": "Client build identity 70178. Adoption advances the client build and reference pin together."
+      "reason": "Client build identity 70178. Adoption advances the client build and reference pin together.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 20b551c6b: fixtures re-exported at client build 1.60.1.70205"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/manifest.json"
+      ]
     },
     {
       "commit": "d342823958f395c69843decce4bdb7ee19301f55",
@@ -232,14 +261,13 @@
       ],
       "reason": "Covered mechanic. Pinned Go drops an auraIsActive condition naming an aura the character lacks, so the action fires whenever reached. Frost without Fingers of Frost then casts Ice Lance on every global cooldown (pinned Go, 200 fights: 80.9 Ice Lance and 0 Frostbolt casts per fight, 211 DPS against 593 for the reference). The Arcane preset reads Missile Barrage unguarded: without the talent pinned Go casts Arcane Missiles whenever reached (449.7 DPS, no Arcane Blasts) against 396.6 DPS for the rotation as written.",
       "adoption": {
-        "reference": "pending",
-        "rust": "guarded: conditions are compiled under both readings; rotations where they act differently are rejected with both behaviors named"
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 20b551c6b: a missing aura reads as inactive, with no stacks and no time left, and the guard is gone"
       },
       "regression": [
-        "fixtures/mage/prepared-v2/manifest.json#arcane-no-missile-barrage",
-        "fixtures/mage/prepared-v2/manifest.json#frost-no-fingers",
-        "fixtures/mage/prepared-v2/manifest.json#reference-no-missile-barrage",
-        "tests/classes/mage/prepared_v2.rs"
+        "tests/classes/mage/prepared_v2.rs",
+        "fixtures/mage/prepared-v2/frost-no-fingers.go-result.json",
+        "fixtures/mage/prepared-v2/arcane-no-missile-barrage.go-result.json"
       ]
     },
     {
@@ -304,11 +332,18 @@
         "sim/priest",
         "ui/specs"
       ],
-      "disposition": "irrelevant",
+      "disposition": "applicable",
       "mechanics": [
         "rotation_interpreter"
       ],
-      "reason": "strictSequence is outside the supported rotation subset and is rejected; revisit when sequences are implemented."
+      "reason": "Covered mechanic. A strict sequence with a step the character lacks is dropped whole instead of shortened.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 20b551c6b: the runtime drops the whole sequence"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/smite-priest-no-inner-focus.go-result.json"
+      ]
     },
     {
       "commit": "fe1991d79e56edb6526f2c4e5e3107a101276844",
@@ -372,11 +407,18 @@
         "assets/db_inputs",
         "docs/data-changes"
       ],
-      "disposition": "deferred",
+      "disposition": "applicable",
       "mechanics": [
         "client_data"
       ],
-      "reason": "Wowhead gear planner input; reaches the engine only through a later database regeneration."
+      "reason": "Wowhead gear planner input; reaches the engine only through a later database regeneration.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 20b551c6b: fixtures re-exported at client build 1.60.1.70205"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/manifest.json"
+      ]
     },
     {
       "commit": "0e645f63b0f8e00ba626922c707fb1cab14ba504",
@@ -452,8 +494,15 @@
         "sim/rogue",
         "ui/sim"
       ],
-      "disposition": "irrelevant",
-      "reason": "Another class's mechanics or rotations."
+      "disposition": "applicable",
+      "reason": "Covered mechanic. Mutilate's hand strikes roll only block and crit, since the cast already rolled miss, dodge and parry.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 20b551c6b: the hand strikes use the block and crit outcome"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/production-assassination-rogue.go-result.json"
+      ]
     },
     {
       "commit": "1505e5850e9e2908c0c2219e923787545f8ac703",
@@ -498,11 +547,18 @@
         "sim/core",
         "ui/sim"
       ],
-      "disposition": "deferred",
+      "disposition": "applicable",
       "mechanics": [
         "client_data"
       ],
-      "reason": "Client data 70205 with hotfixes. Adds spell rows and item changes; no reference build item, consumable or Mage spell row changes (checked by ID). Adopt with a reference pin advance."
+      "reason": "Client data 70205 with hotfixes. Adds spell rows and item changes; no reference build item, consumable or Mage spell row changes (checked by ID). Adopt with a reference pin advance.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 20b551c6b: fixtures re-exported at client build 1.60.1.70205"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/manifest.json"
+      ]
     },
     {
       "commit": "8e160d536bbb04fbddf5e9a4ec0fd7b81ac76fd2",
@@ -534,11 +590,18 @@
         "assets/db_inputs",
         "docs/data-changes"
       ],
-      "disposition": "deferred",
+      "disposition": "applicable",
       "mechanics": [
         "client_data"
       ],
-      "reason": "Client build identity 70205. Adopt with the database update above."
+      "reason": "Client build identity 70205. Adopt with the database update above.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 20b551c6b: fixtures re-exported at client build 1.60.1.70205"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/manifest.json"
+      ]
     },
     {
       "commit": "4d072c36bb903fa6f0aa1cb4d8c2904029a02d0a",
@@ -619,6 +682,27 @@
     {
       "commit": "017ff78fa6b1aeb9f839c9729628e01c701c5c08",
       "date": "2026-10-03 10:29:05 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "18f93d855c4bea4da9e2a211ba147f8ffeececce",
+      "date": "2026-10-03 11:36:18 +0000",
+      "subject": "warrior: offer Stance Dance and Battle Stance rotations; Auto picks them (#641)",
+      "pr": 641,
+      "areas": [
+        "ui/specs"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Rotation presets, arena tooling or UI for other specs."
+    },
+    {
+      "commit": "f764984d8b05f0d5ce73aab82185fb6efa40a9a4",
+      "date": "2026-10-03 11:36:45 +0000",
       "subject": "chore(changelog): record merged pull requests",
       "areas": [
         "ui/app"

@@ -75,7 +75,7 @@ multidots reach every target as in Go. Other classes still fall back to Go there
   [fair comparison](docs/forever-rust-fair-comparison-2026-10-03.md) and the
   [prototype report](docs/forever-rust-prototype-2026-10-03.md).
 
-The reference is Go revision `6823b49eb8aff741f197ef36d83766ef6a218285`. A match
+The reference is Go revision `20b551c6bff9aa780fefe17ead89029c13cabcd4`. A match
 proves the same behavior as that Go engine. It does not prove the live game.
 [UPSTREAM.md](UPSTREAM.md) explains how community fixes are reviewed and ported.
 

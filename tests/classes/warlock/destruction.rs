@@ -94,11 +94,10 @@ fn aura_source_units_outside_scope_are_unsupported() {
     );
 }
 
-/// An aura the target lacks drops the condition in pinned Go and reads as inactive with
-/// community fix #622. Under `not` both readings cast the curse, so the rule stands; alone
-/// they differ, so it is refused.
+/// An aura the target lacks reads as inactive (community fix #622), alone or under `not`,
+/// so both rules stand.
 #[test]
-fn target_auras_the_target_lacks_follow_the_622_rule() {
+fn target_auras_the_target_lacks_read_as_inactive() {
     let mut negated = production();
     let condition =
         &mut negated["player"]["rotation"]["priorityList"][CURSE_ITEM]["action"]["condition"];
@@ -110,11 +109,8 @@ fn target_auras_the_target_lacks_follow_the_622_rule() {
     value["player"]["rotation"]["priorityList"][CURSE_ITEM]["action"]["condition"] = json!({
         "auraIsActive": {"auraId": {"spellId": 17800}, "sourceUnit": {"type": "CurrentTarget"}}
     });
-    assert!(reasons(value).contains(&format!(
-        "rotation item {}: auraIsActive on the target names spell 17800, which the character \
-         lacks; the pinned reference drops the condition and community #622 reads it as inactive",
-        CURSE_ITEM + 1
-    )));
+    let prepared: PreparedV2 = serde_json::from_value(value).unwrap();
+    assert_eq!(check_prepared(&prepared), Ok(()));
 }
 
 /// The rotation's potion action resolves to the combat potion, which has a behavior.

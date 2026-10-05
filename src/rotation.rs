@@ -1596,15 +1596,6 @@ impl CompareOp {
     }
 }
 
-/// How `auraIsActive` and `auraNumStacks` read an aura the character cannot have.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum MissingAura {
-    /// The pinned reference: no value, so the term drops out of its parent.
-    Dropped,
-    /// Community fix ElliotWood/Forever#622: inactive, with no stacks.
-    Inactive,
-}
-
 /// An aura a rotation names, as Go `GetAPLAura` finds it on the casting player.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct FoundAura<R> {
@@ -1639,6 +1630,7 @@ pub enum CompiledCondition<R> {
 
 impl<R: Clone + PartialEq> CompiledCondition<R> {
     /// Whether two compilations act the same, though Go may keep constant comparisons.
+    #[cfg(test)]
     pub fn same_meaning(&self, other: &Self) -> bool {
         self.folded() == other.folded()
     }
@@ -1672,13 +1664,12 @@ fn bool_const<R>(value: bool) -> Compiled<R> {
 fn fold<R>(
     values: &[Value],
     lookup: &Lookup<R>,
-    missing: MissingAura,
     deciding: bool,
     build: fn(Vec<Compiled<R>>) -> Compiled<R>,
 ) -> Option<Compiled<R>> {
     let mut compiled: Vec<_> = values
         .iter()
-        .filter_map(|value| compile_value(value, lookup, missing))
+        .filter_map(|value| compile_value(value, lookup))
         .map(|value| value.coerce(ValueType::Bool))
         .collect();
     match compiled.len() {
@@ -1697,12 +1688,9 @@ fn fold<R>(
 }
 
 /// Go `newAPLValue` for the supported subset. A spell or dot the character lacks gives no
-/// value, so the term drops out of its parent; community #622 changes only auras.
-fn compile_value<R>(
-    value: &Value,
-    lookup: &Lookup<R>,
-    missing: MissingAura,
-) -> Option<Compiled<R>> {
+/// value, so the term drops out of its parent. An aura the character lacks reads as inactive,
+/// with no stacks and no time left (ElliotWood/Forever#622).
+fn compile_value<R>(value: &Value, lookup: &Lookup<R>) -> Option<Compiled<R>> {
     let aura = lookup.aura;
     Some(match value {
         Value::Const(constant) => Compiled::Const(constant.clone()),
@@ -1727,7 +1715,7 @@ fn compile_value<R>(
             } else {
                 aura(id)
             }?;
-            let overlap = compile_value(max_overlap, lookup, missing)?.coerce(ValueType::Duration);
+            let overlap = compile_value(max_overlap, lookup)?.coerce(ValueType::Duration);
             Compiled::AuraShouldRefresh {
                 aura: found.aura,
                 overlap: Box::new(overlap),
@@ -1761,36 +1749,28 @@ fn compile_value<R>(
         Value::GcdIsReady => Compiled::GcdIsReady,
         Value::AuraIsKnown(id) => bool_const(aura(id).is_some()),
         Value::PetAuraIsKnown { pet, id } => bool_const((lookup.pet_aura_known)(*pet, id)),
-        Value::AuraIsActive(id) => match (aura(id), missing) {
-            (Some(found), _) => Compiled::AuraIsActive(found.aura),
-            (None, MissingAura::Dropped) => return None,
-            (None, MissingAura::Inactive) => bool_const(false),
+        Value::AuraIsActive(id) => match aura(id) {
+            Some(found) => Compiled::AuraIsActive(found.aura),
+            None => bool_const(false),
         },
-        Value::TargetAuraIsActive(id) => match ((lookup.target_aura)(id), missing) {
-            (Some(found), _) => Compiled::AuraIsActive(found.aura),
-            (None, MissingAura::Dropped) => return None,
-            (None, MissingAura::Inactive) => bool_const(false),
+        Value::TargetAuraIsActive(id) => match (lookup.target_aura)(id) {
+            Some(found) => Compiled::AuraIsActive(found.aura),
+            None => bool_const(false),
         },
-        Value::TargetAuraNumStacks(id) => match ((lookup.target_aura)(id), missing) {
-            (Some(found), _) if found.max_stacks == 0 => return None,
-            (Some(found), _) => Compiled::AuraNumStacks(found.aura),
-            (None, MissingAura::Dropped) => return None,
-            (None, MissingAura::Inactive) => {
-                Compiled::Const(parse_const("0").expect("int constant"))
-            }
+        Value::TargetAuraNumStacks(id) => match (lookup.target_aura)(id) {
+            Some(found) if found.max_stacks == 0 => return None,
+            Some(found) => Compiled::AuraNumStacks(found.aura),
+            None => Compiled::Const(parse_const("0").expect("int constant")),
         },
-        Value::AuraNumStacks(id) => match (aura(id), missing) {
-            // Go warns that the aura does not stack and drops the value, fix or not.
-            (Some(found), _) if found.max_stacks == 0 => return None,
-            (Some(found), _) => Compiled::AuraNumStacks(found.aura),
-            (None, MissingAura::Dropped) => return None,
-            (None, MissingAura::Inactive) => {
-                Compiled::Const(parse_const("0").expect("int constant"))
-            }
+        Value::AuraNumStacks(id) => match aura(id) {
+            // Go warns that the aura does not stack and drops the value.
+            Some(found) if found.max_stacks == 0 => return None,
+            Some(found) => Compiled::AuraNumStacks(found.aura),
+            None => Compiled::Const(parse_const("0").expect("int constant")),
         },
         Value::Compare { op, lhs, rhs } => {
-            let lhs = compile_value(lhs, lookup, missing)?;
-            let rhs = compile_value(rhs, lookup, missing)?;
+            let lhs = compile_value(lhs, lookup)?;
+            let rhs = compile_value(rhs, lookup)?;
             let to = lhs.value_type().max(rhs.value_type());
             Compiled::Compare {
                 op: *op,
@@ -1799,8 +1779,8 @@ fn compile_value<R>(
             }
         }
         Value::Math { op, lhs, rhs } => {
-            let lhs = compile_value(lhs, lookup, missing)?;
-            let rhs = compile_value(rhs, lookup, missing)?;
+            let lhs = compile_value(lhs, lookup)?;
+            let rhs = compile_value(rhs, lookup)?;
             let (lhs, rhs) = match op {
                 MathOp::Add | MathOp::Sub => {
                     let to = lhs.value_type().max(rhs.value_type());
@@ -1826,65 +1806,47 @@ fn compile_value<R>(
                 rhs: Box::new(rhs),
             }
         }
-        Value::AuraRemainingTime(id) => match (aura(id), missing) {
-            (Some(found), _) => Compiled::AuraRemainingTime(found.aura),
-            (None, MissingAura::Dropped) => return None,
-            (None, MissingAura::Inactive) => {
-                Compiled::Const(parse_const("0ms").expect("duration constant"))
-            }
+        Value::AuraRemainingTime(id) => match aura(id) {
+            Some(found) => Compiled::AuraRemainingTime(found.aura),
+            None => Compiled::Const(parse_const("0ms").expect("duration constant")),
         },
-        Value::TargetAuraRemainingTime(id) => match ((lookup.target_aura)(id), missing) {
-            (Some(found), _) => Compiled::AuraRemainingTime(found.aura),
-            (None, MissingAura::Dropped) => return None,
-            (None, MissingAura::Inactive) => {
-                Compiled::Const(parse_const("0ms").expect("duration constant"))
-            }
+        Value::TargetAuraRemainingTime(id) => match (lookup.target_aura)(id) {
+            Some(found) => Compiled::AuraRemainingTime(found.aura),
+            None => Compiled::Const(parse_const("0ms").expect("duration constant")),
         },
         // Go `newValueNot` folds a constant operand.
         Value::Not(value) => {
-            let value = compile_value(value, lookup, missing)?.coerce(ValueType::Bool);
+            let value = compile_value(value, lookup)?.coerce(ValueType::Bool);
             match value.const_bool() {
                 Some(constant) => bool_const(!constant),
                 None => Compiled::Not(Box::new(value)),
             }
         }
-        Value::And(values) => return fold(values, lookup, missing, false, Compiled::And),
-        Value::Or(values) => return fold(values, lookup, missing, true, Compiled::Or),
+        Value::And(values) => return fold(values, lookup, false, Compiled::And),
+        Value::Or(values) => return fold(values, lookup, true, Compiled::Or),
     })
 }
 
 /// Go `coerceTo(newAPLValue(value), Bool)`, as `newActionChannelSpell` compiles its
 /// interrupt condition: `None` when the value has none.
-pub fn compile_bool_value<R>(
-    value: Option<&Value>,
-    lookup: &Lookup<R>,
-    missing: MissingAura,
-) -> Option<Compiled<R>> {
+pub fn compile_bool_value<R>(value: Option<&Value>, lookup: &Lookup<R>) -> Option<Compiled<R>> {
     value
-        .and_then(|value| compile_value(value, lookup, missing))
+        .and_then(|value| compile_value(value, lookup))
         .map(|value| value.coerce(ValueType::Bool))
 }
 
 /// Go `coerceTo(newAPLValue(value), Duration)`, as `newActionMultidot` compiles its overlap:
 /// `None` when the value has none.
-pub fn compile_duration_value<R>(
-    value: Option<&Value>,
-    lookup: &Lookup<R>,
-    missing: MissingAura,
-) -> Option<Compiled<R>> {
+pub fn compile_duration_value<R>(value: Option<&Value>, lookup: &Lookup<R>) -> Option<Compiled<R>> {
     value
-        .and_then(|value| compile_value(value, lookup, missing))
+        .and_then(|value| compile_value(value, lookup))
         .map(|value| value.coerce(ValueType::Duration))
 }
 
 /// Go `newAPLAction`'s condition handling for one action.
-pub fn compile_condition<R>(
-    condition: Option<&Value>,
-    lookup: &Lookup<R>,
-    missing: MissingAura,
-) -> CompiledCondition<R> {
+pub fn compile_condition<R>(condition: Option<&Value>, lookup: &Lookup<R>) -> CompiledCondition<R> {
     let compiled = condition
-        .and_then(|value| compile_value(value, lookup, missing))
+        .and_then(|value| compile_value(value, lookup))
         .map(|value| value.coerce(ValueType::Bool));
     match compiled {
         None => CompiledCondition::Always,
@@ -1940,7 +1902,7 @@ mod tests {
             ..only_auras(&none)
         };
         assert_eq!(
-            compile_condition(Some(&value), &lookup, MissingAura::Dropped),
+            compile_condition(Some(&value), &lookup),
             CompiledCondition::Always
         );
         let other = serde_json::json!({"auraIsKnown": {
@@ -2133,8 +2095,8 @@ mod tests {
         );
     }
 
-    /// Conditions over spell 44404, an aura the test character lacks.
-    fn conditions(json: serde_json::Value) -> (CompiledCondition<()>, CompiledCondition<()>) {
+    /// The condition over spell 44404, an aura the test character lacks.
+    fn condition(json: serde_json::Value) -> CompiledCondition<()> {
         let rotation = parse(&serde_json::json!({
             "type": "TypeAPL",
             "priorityList": [{"action": {
@@ -2145,44 +2107,34 @@ mod tests {
         .unwrap();
         let condition = rotation.priority_list[0].condition.as_ref();
         let lacks = |_: &ActionId| None::<FoundAura<()>>;
-        (
-            compile_condition(condition, &only_auras(&lacks), MissingAura::Dropped),
-            compile_condition(condition, &only_auras(&lacks), MissingAura::Inactive),
-        )
+        compile_condition(condition, &only_auras(&lacks))
     }
 
     #[test]
-    fn missing_auras_compile_as_pinned_go_and_community_622() {
+    fn missing_auras_read_as_inactive_as_community_622() {
         let active = serde_json::json!({"auraIsActive": {"auraId": {"spellId": 44404}}});
         let known = serde_json::json!({"auraIsKnown": {"auraId": {"spellId": 44404}}});
         let low_mana = serde_json::json!({"cmp": {
             "op": "OpLt", "lhs": {"currentManaPercent": {}}, "rhs": {"const": {"val": "20%"}},
         }});
-        // Unguarded: pinned Go fires on every pass, the fix never fires.
+        // Unguarded, the action never fires; the pinned reference before #622 dropped the
+        // term and fired it on every pass.
+        assert_eq!(condition(active.clone()), CompiledCondition::Pruned);
+        // An auraIsKnown guard prunes the action too.
         assert_eq!(
-            conditions(active.clone()),
-            (CompiledCondition::Always, CompiledCondition::Pruned)
+            condition(serde_json::json!({"and": {"vals": [known, active.clone()]}})),
+            CompiledCondition::Pruned
         );
-        // An auraIsKnown guard prunes the action under both readings.
+        // The constant false decides an And.
         assert_eq!(
-            conditions(serde_json::json!({"and": {"vals": [known, active.clone()]}})),
-            (CompiledCondition::Pruned, CompiledCondition::Pruned)
+            condition(serde_json::json!({"and": {"vals": [low_mana, active.clone()]}})),
+            CompiledCondition::Pruned
         );
-        // Pinned Go keeps the other terms of an And; the fix prunes it.
-        let (pinned, fixed) =
-            conditions(serde_json::json!({"and": {"vals": [low_mana, active.clone()]}}));
+        // Go does not fold comparisons, so a live constant comparison remains.
         assert!(matches!(
-            pinned,
-            CompiledCondition::When(Compiled::Compare { .. })
-        ));
-        assert_eq!(fixed, CompiledCondition::Pruned);
-        // Go does not fold comparisons, so the fix leaves a live constant comparison.
-        let (pinned, fixed) = conditions(serde_json::json!({"cmp": {
-            "op": "OpEq", "lhs": active, "rhs": {"const": {"val": "false"}},
-        }}));
-        assert_eq!(pinned, CompiledCondition::Always);
-        assert!(matches!(
-            fixed,
+            condition(serde_json::json!({"cmp": {
+                "op": "OpEq", "lhs": active, "rhs": {"const": {"val": "false"}},
+            }})),
             CompiledCondition::When(Compiled::Compare { .. })
         ));
     }
@@ -2206,14 +2158,7 @@ mod tests {
                     max_stacks,
                 })
             };
-            (
-                compile_condition(condition.as_ref(), &only_auras(&find), MissingAura::Dropped),
-                compile_condition(
-                    condition.as_ref(),
-                    &only_auras(&find),
-                    MissingAura::Inactive,
-                ),
-            )
+            compile_condition(condition.as_ref(), &only_auras(&find))
         };
         let stacks = |id: i32| {
             serde_json::json!({"cmp": {"op": "OpGe",
@@ -2221,57 +2166,38 @@ mod tests {
         };
         let known = serde_json::json!({"auraIsKnown": {"auraId": {"spellId": 400573}}});
         // A known aura's stacks compare as integers.
-        let (pinned, fixed) = compile(stacks(400573), 4);
-        assert_eq!(pinned, fixed);
         assert!(matches!(
-            pinned,
+            compile(stacks(400573), 4),
             CompiledCondition::When(Compiled::Compare { .. })
         ));
-        // Go drops the stacks of an aura without MaxStacks, with or without the fix.
-        assert_eq!(
-            compile(stacks(400573), 0),
-            (CompiledCondition::Always, CompiledCondition::Always)
-        );
-        // A missing aura: pinned Go drops the term, the fix compares a constant 0.
-        let (pinned, fixed) = compile(stacks(44404), 4);
-        assert_eq!(pinned, CompiledCondition::Always);
+        // Go drops the stacks of an aura without MaxStacks.
+        assert_eq!(compile(stacks(400573), 0), CompiledCondition::Always);
+        // A missing aura compares a constant 0, which never reaches 3.
+        let missing = compile(stacks(44404), 4);
         assert!(matches!(
-            fixed,
+            missing,
             CompiledCondition::When(Compiled::Compare { .. })
         ));
+        assert!(missing.never_holds());
         // A constant true decides an Or.
-        let (pinned, fixed) = compile(
-            serde_json::json!({"or": {"vals": [stacks(400573), known]}}),
-            4,
-        );
         assert_eq!(
-            (pinned, fixed),
-            (CompiledCondition::Always, CompiledCondition::Always)
+            compile(
+                serde_json::json!({"or": {"vals": [stacks(400573), known]}}),
+                4,
+            ),
+            CompiledCondition::Always
         );
-        // Without the stacking aura, pinned Go keeps only the mana term and the fix keeps a
-        // constant 0 >= 3 beside it: different shapes, the same meaning.
+        // Without the stacking aura, the constant 0 >= 3 beside the mana term means the mana
+        // term alone.
         let low_mana = serde_json::json!({"cmp": {
             "op": "OpLt", "lhs": {"currentManaPercent": {}}, "rhs": {"const": {"val": "40%"}},
         }});
-        let (pinned, fixed) = compile(
+        let with_missing = compile(
             serde_json::json!({"or": {"vals": [stacks(44404), low_mana.clone()]}}),
             4,
         );
-        assert_ne!(pinned, fixed);
-        assert!(pinned.same_meaning(&fixed));
-        // A missing aura that would otherwise fire every time does not mean the same.
-        let active = serde_json::json!({"auraIsActive": {"auraId": {"spellId": 44404}}});
-        let (pinned, fixed) = compile(active, 4);
-        assert!(!pinned.same_meaning(&fixed));
-        // One remaining term stands for the Or.
-        let (pinned, _) = compile(
-            serde_json::json!({"or": {"vals": [stacks(400573), stacks(44404)]}}),
-            4,
-        );
-        assert!(matches!(
-            pinned,
-            CompiledCondition::When(Compiled::Compare { .. })
-        ));
+        assert_ne!(with_missing, compile(low_mana.clone(), 4));
+        assert!(with_missing.same_meaning(&compile(low_mana, 4)));
     }
 
     #[test]
@@ -2293,40 +2219,29 @@ mod tests {
                     max_stacks: 5,
                 })
             };
-            (
-                compile_condition(condition.as_ref(), &only_auras(&find), MissingAura::Dropped),
-                compile_condition(
-                    condition.as_ref(),
-                    &only_auras(&find),
-                    MissingAura::Inactive,
-                ),
-            )
+            compile_condition(condition.as_ref(), &only_auras(&find))
         };
         let known = |id: i32| serde_json::json!({"auraIsKnown": {"auraId": {"spellId": id}}});
         // Go folds Not of a constant.
         assert_eq!(
             compile(serde_json::json!({"not": {"val": known(22959)}})),
-            (CompiledCondition::Pruned, CompiledCondition::Pruned)
+            CompiledCondition::Pruned
         );
         assert_eq!(
             compile(serde_json::json!({"not": {"val": known(400625)}})),
-            (CompiledCondition::Always, CompiledCondition::Always)
+            CompiledCondition::Always
         );
-        // Remaining time compares as a duration; a missing aura has none under the fix.
+        // Remaining time compares as a duration; a missing aura has none left.
         let remaining = |id: i32| {
             serde_json::json!({"cmp": {"op": "OpLe",
                 "lhs": {"auraRemainingTime": {"auraId": {"spellId": id}}}, "rhs": {"const": {"val": "4s"}}}})
         };
-        let (pinned, fixed) = compile(remaining(22959));
-        assert_eq!(pinned, fixed);
         assert!(matches!(
-            pinned,
+            compile(remaining(22959)),
             CompiledCondition::When(Compiled::Compare { .. })
         ));
-        let (pinned, fixed) = compile(remaining(400625));
-        assert_eq!(pinned, CompiledCondition::Always);
-        // 0 <= 4s holds, so the fix acts as the pinned reading here.
-        assert!(pinned.same_meaning(&fixed));
+        // 0 <= 4s always holds.
+        assert!(compile(remaining(400625)).same_meaning(&CompiledCondition::Always));
     }
 
     #[test]

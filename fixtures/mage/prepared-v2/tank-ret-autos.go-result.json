@@ -56,6 +56,12 @@
               "n": 200,
               "sumSq": 2925809.277267974
             },
+            "effects": [
+              {
+                "category": "GiftOfArthasAura",
+                "uptimeSecondsAvg": 120.63626456954
+              }
+            ],
             "procsAvg": 1,
             "uptimeSecondsAvg": 120.63626456954006,
             "uptimeSecondsStdev": 8.714244490935666
@@ -65,6 +71,12 @@
               "n": 200,
               "sumSq": 2925809.277267974
             },
+            "effects": [
+              {
+                "category": "MajorArmorReduction",
+                "uptimeSecondsAvg": 120.63626456954
+              }
+            ],
             "procsAvg": 5,
             "uptimeSecondsAvg": 120.63626456954006,
             "uptimeSecondsStdev": 8.714244490935666
@@ -74,6 +86,11 @@
               "n": 200,
               "sumSq": 2925809.277267974
             },
+            "effects": [
+              {
+                "category": "MinorArmorReductionArmorAdd"
+              }
+            ],
             "procsAvg": 1,
             "uptimeSecondsAvg": 120.63626456954006,
             "uptimeSecondsStdev": 8.714244490935666
@@ -96,28 +113,54 @@
           "{\"spellId\": 20188}": {
             "aggregatorData": {
               "n": 200
-            }
+            },
+            "effects": [
+              {
+                "category": "Judgement of the Crusader"
+              }
+            ]
           },
           "{\"spellId\": 20300}": {
             "aggregatorData": {
               "n": 200
-            }
+            },
+            "effects": [
+              {
+                "category": "Judgement of the Crusader"
+              }
+            ]
           },
           "{\"spellId\": 20301}": {
             "aggregatorData": {
               "n": 200
-            }
+            },
+            "effects": [
+              {
+                "category": "Judgement of the Crusader"
+              }
+            ]
           },
           "{\"spellId\": 20302}": {
             "aggregatorData": {
               "n": 200
-            }
+            },
+            "effects": [
+              {
+                "category": "Judgement of the Crusader"
+              }
+            ]
           },
           "{\"spellId\": 20303}": {
             "aggregatorData": {
               "n": 200,
               "sumSq": 2925809.277267974
             },
+            "effects": [
+              {
+                "category": "Judgement of the Crusader",
+                "uptimeSecondsAvg": 120.63626456954
+              }
+            ],
             "procsAvg": 1,
             "uptimeSecondsAvg": 120.63626456954006,
             "uptimeSecondsStdev": 8.714244490935666
@@ -125,7 +168,12 @@
           "{\"spellId\": 20303} #2": {
             "aggregatorData": {
               "n": 200
-            }
+            },
+            "effects": [
+              {
+                "category": "Judgement of the Crusader"
+              }
+            ]
           },
           "{\"spellId\": 20344}": {
             "aggregatorData": {
@@ -164,13 +212,24 @@
           "{\"spellId\": 21183}": {
             "aggregatorData": {
               "n": 200
-            }
+            },
+            "effects": [
+              {
+                "category": "Judgement of the Crusader"
+              }
+            ]
           },
           "{\"spellId\": 9907, \"tag\": -1}": {
             "aggregatorData": {
               "n": 200,
               "sumSq": 2925809.277267974
             },
+            "effects": [
+              {
+                "category": "MinorArmorReductionArmorAdd",
+                "uptimeSecondsAvg": 120.63626456954
+              }
+            ],
             "procsAvg": 1,
             "uptimeSecondsAvg": 120.63626456954006,
             "uptimeSecondsStdev": 8.714244490935666
@@ -1927,47 +1986,119 @@
               "{\"spellId\": 10290}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "DevotionAura"
+                  },
+                  {
+                    "category": "PaladinAura"
+                  }
+                ]
               },
               "{\"spellId\": 10291}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "DevotionAura"
+                  },
+                  {
+                    "category": "PaladinAura"
+                  }
+                ]
               },
               "{\"spellId\": 10292}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "DevotionAura"
+                  },
+                  {
+                    "category": "PaladinAura"
+                  }
+                ]
               },
               "{\"spellId\": 10293}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "DevotionAura"
+                  },
+                  {
+                    "category": "PaladinAura"
+                  }
+                ]
               },
               "{\"spellId\": 10298}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "RetributionAura"
+                  },
+                  {
+                    "category": "PaladinAura"
+                  }
+                ]
               },
               "{\"spellId\": 10299}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "RetributionAura"
+                  },
+                  {
+                    "category": "PaladinAura"
+                  }
+                ]
               },
               "{\"spellId\": 10300}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "RetributionAura"
+                  },
+                  {
+                    "category": "PaladinAura"
+                  }
+                ]
               },
               "{\"spellId\": 10301}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "RetributionAura"
+                  },
+                  {
+                    "category": "PaladinAura"
+                  }
+                ]
               },
               "{\"spellId\": 1032}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "DevotionAura"
+                  },
+                  {
+                    "category": "PaladinAura"
+                  }
+                ]
               },
               "{\"spellId\": 1311649, \"tag\": 1}": {
                 "aggregatorData": {
@@ -1977,7 +2108,12 @@
               "{\"spellId\": 1311649}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "PaladinSeal"
+                  }
+                ]
               },
               "{\"spellId\": 1311656, \"tag\": 1}": {
                 "aggregatorData": {
@@ -1987,57 +2123,169 @@
               "{\"spellId\": 1311656}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "PaladinSeal"
+                  }
+                ]
               },
               "{\"spellId\": 19746}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "ConcentrationAura"
+                  },
+                  {
+                    "category": "PaladinAura"
+                  }
+                ]
               },
               "{\"spellId\": 19876}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "ResistanceShadowShadowResistanceAdd"
+                  },
+                  {
+                    "category": "ShadowResistanceAura"
+                  },
+                  {
+                    "category": "PaladinAura"
+                  }
+                ]
               },
               "{\"spellId\": 19888}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "ResistanceFrostFrostResistanceAdd"
+                  },
+                  {
+                    "category": "FrostResistanceAura"
+                  },
+                  {
+                    "category": "PaladinAura"
+                  }
+                ]
               },
               "{\"spellId\": 19891}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "ResistanceFireFireResistanceAdd"
+                  },
+                  {
+                    "category": "FireResistanceAura"
+                  },
+                  {
+                    "category": "PaladinAura"
+                  }
+                ]
               },
               "{\"spellId\": 19895}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "ResistanceShadowShadowResistanceAdd"
+                  },
+                  {
+                    "category": "ShadowResistanceAura"
+                  },
+                  {
+                    "category": "PaladinAura"
+                  }
+                ]
               },
               "{\"spellId\": 19896}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "ResistanceShadowShadowResistanceAdd"
+                  },
+                  {
+                    "category": "ShadowResistanceAura"
+                  },
+                  {
+                    "category": "PaladinAura"
+                  }
+                ]
               },
               "{\"spellId\": 19897}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "ResistanceFrostFrostResistanceAdd"
+                  },
+                  {
+                    "category": "FrostResistanceAura"
+                  },
+                  {
+                    "category": "PaladinAura"
+                  }
+                ]
               },
               "{\"spellId\": 19898}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "ResistanceFrostFrostResistanceAdd"
+                  },
+                  {
+                    "category": "FrostResistanceAura"
+                  },
+                  {
+                    "category": "PaladinAura"
+                  }
+                ]
               },
               "{\"spellId\": 19899}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "ResistanceFireFireResistanceAdd"
+                  },
+                  {
+                    "category": "FireResistanceAura"
+                  },
+                  {
+                    "category": "PaladinAura"
+                  }
+                ]
               },
               "{\"spellId\": 19900}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "ResistanceFireFireResistanceAdd"
+                  },
+                  {
+                    "category": "FireResistanceAura"
+                  },
+                  {
+                    "category": "PaladinAura"
+                  }
+                ]
               },
               "{\"spellId\": 20116}": {
                 "aggregatorData": {
@@ -2047,7 +2295,12 @@
               "{\"spellId\": 20162}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "PaladinSeal"
+                  }
+                ]
               },
               "{\"spellId\": 20163, \"tag\": 1}": {
                 "aggregatorData": {
@@ -2057,102 +2310,202 @@
               "{\"spellId\": 20163}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "PaladinSeal"
+                  }
+                ]
               },
               "{\"spellId\": 20164}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "PaladinSeal"
+                  }
+                ]
               },
               "{\"spellId\": 20165}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "PaladinSeal"
+                  }
+                ]
               },
               "{\"spellId\": 20166}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "PaladinSeal"
+                  }
+                ]
               },
               "{\"spellId\": 20287}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "PaladinSeal"
+                  }
+                ]
               },
               "{\"spellId\": 20288}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "PaladinSeal"
+                  }
+                ]
               },
               "{\"spellId\": 20289}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "PaladinSeal"
+                  }
+                ]
               },
               "{\"spellId\": 20290}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "PaladinSeal"
+                  }
+                ]
               },
               "{\"spellId\": 20291}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "PaladinSeal"
+                  }
+                ]
               },
               "{\"spellId\": 20292}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "PaladinSeal"
+                  }
+                ]
               },
               "{\"spellId\": 20293}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "PaladinSeal"
+                  }
+                ]
               },
               "{\"spellId\": 20305}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "PaladinSeal"
+                  }
+                ]
               },
               "{\"spellId\": 20306}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "PaladinSeal"
+                  }
+                ]
               },
               "{\"spellId\": 20307}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "PaladinSeal"
+                  }
+                ]
               },
               "{\"spellId\": 20308}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "PaladinSeal"
+                  }
+                ]
               },
               "{\"spellId\": 20347}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "PaladinSeal"
+                  }
+                ]
               },
               "{\"spellId\": 20348}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "PaladinSeal"
+                  }
+                ]
               },
               "{\"spellId\": 20349}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "PaladinSeal"
+                  }
+                ]
               },
               "{\"spellId\": 20356}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "PaladinSeal"
+                  }
+                ]
               },
               "{\"spellId\": 20357}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "PaladinSeal"
+                  }
+                ]
               },
               "{\"spellId\": 20419, \"tag\": 1}": {
                 "aggregatorData": {
@@ -2162,7 +2515,12 @@
               "{\"spellId\": 20419}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "PaladinSeal"
+                  }
+                ]
               },
               "{\"spellId\": 20421, \"tag\": 1}": {
                 "aggregatorData": {
@@ -2172,7 +2530,12 @@
               "{\"spellId\": 20421}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "PaladinSeal"
+                  }
+                ]
               },
               "{\"spellId\": 20422, \"tag\": 1}": {
                 "aggregatorData": {
@@ -2182,7 +2545,12 @@
               "{\"spellId\": 20422}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "PaladinSeal"
+                  }
+                ]
               },
               "{\"spellId\": 20423, \"tag\": 1}": {
                 "aggregatorData": {
@@ -2192,7 +2560,12 @@
               "{\"spellId\": 20423}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "PaladinSeal"
+                  }
+                ]
               },
               "{\"spellId\": 20597}": {
                 "aggregatorData": {
@@ -2221,12 +2594,22 @@
               "{\"spellId\": 21082}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "PaladinSeal"
+                  }
+                ]
               },
               "{\"spellId\": 21084}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "PaladinSeal"
+                  }
+                ]
               },
               "{\"spellId\": 25771}": {
                 "aggregatorData": {
@@ -2246,17 +2629,41 @@
               "{\"spellId\": 465}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "DevotionAura"
+                  },
+                  {
+                    "category": "PaladinAura"
+                  }
+                ]
               },
               "{\"spellId\": 643}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "DevotionAura"
+                  },
+                  {
+                    "category": "PaladinAura"
+                  }
+                ]
               },
               "{\"spellId\": 7294}": {
                 "aggregatorData": {
                   "n": 200
-                }
+                },
+                "effects": [
+                  {
+                    "category": "RetributionAura"
+                  },
+                  {
+                    "category": "PaladinAura"
+                  }
+                ]
               }
             },
             "chanceOfDeath": 1,

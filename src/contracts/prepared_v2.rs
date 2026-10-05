@@ -233,6 +233,22 @@ pub struct Aura {
     /// An action ID set after registration: the aura logs it, but Go lists no metrics for it.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub metrics_hidden: bool,
+    /// Each of the aura's exclusive effects, in the aura's order. Go's aura metrics report each
+    /// effect's uptime under its category.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub exclusive_memberships: Vec<ExclusiveMembership>,
+}
+
+/// One exclusive effect of an aura: its category, whether the category holds a single aura,
+/// the effect's bid after the reset and its position among the category's effects, which
+/// settles a tie for the highest bid.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct ExclusiveMembership {
+    pub category: String,
+    pub single_aura: bool,
+    pub priority: f64,
+    pub position: u32,
 }
 
 /// Callbacks that react to combat events rather than an aura's own lifetime.
@@ -2894,7 +2910,7 @@ pub enum Effect {
         attack_power_share: f64,
         base_damage: f64,
     },
-    /// Whirlwind: a normalized main hand strike, and the off hand's with Raging Blows.
+    /// Whirlwind: a normalized main hand strike, and the off hand's with an off hand weapon.
     Whirlwind {
         spell_id: i32,
         off_hand: bool,

@@ -2,8 +2,8 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
-    "client_build": "1.60.1.70170",
+    "engine_revision": "20b551c6bff9aa780fefe17ead89029c13cabcd4",
+    "client_build": "1.60.1.70205",
     "exporter": "tools/oracle-v2"
   },
   "request_sha256": "57c0ef5bad0eb3d057728fea8fd949a517bb2545e9455c218129dfb8bd413f19",
@@ -684,7 +684,15 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "StatBuffIntellectAdd",
+            "single_aura": false,
+            "priority": 31,
+            "position": 0
+          }
+        ]
       },
       {
         "label": "Blizzard",

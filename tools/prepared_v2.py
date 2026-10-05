@@ -11,6 +11,9 @@ accept  Maintainer command: register a new case and derive its Go goldens. Refus
 refresh Maintainer command after a reviewed exporter change: re-export prepared inputs
         and require every Go golden to stay byte-identical.
 promote Maintainer command: attach Go goldens to an accepted case Rust now supports.
+repin   Maintainer command after a pin move: re-export prepared inputs and Go goldens at
+        the new pin and write every changed golden to --output for review. Refuses when
+        the fixtures are already at the pin.
 """
 
 import argparse
@@ -218,6 +221,55 @@ def refresh(cache, source, family=FAMILY):
     manifest["exporter_sha256"] = exporter_digest()
     (family / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     return manifest
+
+
+def repin(cache, source, output, family=FAMILY):
+    """Maintainer command after a pin move in upstream/sources.json: re-export every accepted
+    prepared input and Go golden at the new pin. Each changed golden is a reference behavior
+    change: the report in --output lists them for review, and compare must then match Rust to
+    every new golden. Refuses when the fixtures are already at the pin."""
+    manifest = load(family / "manifest.json")
+    if manifest["engine_revision"] == PIN and manifest["client_build"] == CLIENT_BUILD:
+        raise ValueError("the fixtures are already at the pin; use refresh after an exporter change")
+    output = output.resolve()
+    if output == family.resolve() or family.resolve() in output.parents:
+        raise ValueError("repin writes its report to scratch storage, not accepted fixtures")
+    output.mkdir(parents=True, exist_ok=False)
+    exporter = build_exporter(cache.resolve(), source)
+    changes = []
+    for case in manifest["cases"]:
+        request_path = output / f"{case['id']}.request.json"
+        request_path.write_text(json.dumps(request_of(case), indent=2) + "\n")
+        prepared_path = family / case["prepared"]
+        command([exporter, "prepare", "--infile", request_path, "--outfile", prepared_path, "--scenario", case["id"]])
+        case["prepared_sha256"] = digest(prepared_path)
+        if "go_result" not in case:
+            continue
+        result, log = go_golden(exporter, request_path, output / case["id"])
+        result_path = family / case["go_result"]["file"]
+        previous = load(result_path)
+        change = {"id": case["id"]}
+        if result != previous:
+            change["result"] = {"dps": [dps(previous), dps(result)],
+                                "differences": len(leaf_differences(previous, result))}
+            result_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
+            case["go_result"]["sha256"] = digest(result_path)
+        if "go_log" in case:
+            log_path = family / case["go_log"]["file"]
+            if log != log_path.read_text():
+                change["log"] = True
+                log_path.write_text(log)
+                case["go_log"]["sha256"] = digest(log_path)
+        if len(change) > 1:
+            changes.append(change)
+    previous_revision = manifest["engine_revision"]
+    manifest["engine_revision"] = PIN
+    manifest["client_build"] = CLIENT_BUILD
+    manifest["exporter_sha256"] = exporter_digest()
+    (family / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    report = {"from": previous_revision, "to": PIN, "client_build": CLIENT_BUILD, "changed": changes}
+    (output / "repin.json").write_text(json.dumps(report, indent=2) + "\n")
+    return report
 
 
 def capture(cache, source, output, family=FAMILY):
@@ -441,7 +493,7 @@ def compare_cases(cache, source, output, requests):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("command", choices=["check", "capture", "compare", "accept", "refresh", "promote"], nargs="?", default="check")
+    parser.add_argument("command", choices=["check", "capture", "compare", "accept", "refresh", "promote", "repin"], nargs="?", default="check")
     parser.add_argument("--case", help="accept: new case identifier")
     parser.add_argument("--description", help="accept: what the case covers")
     parser.add_argument("--keep-log", action="store_true", help="accept: keep the Go first-fight log golden")
@@ -461,6 +513,13 @@ def main():
         if args.command == "refresh":
             manifest = refresh(args.cache, args.source)
             print(f"Refreshed {len(manifest['cases'])} prepared inputs; Go goldens unchanged.")
+            return 0
+        if args.command == "repin":
+            if args.output is None:
+                parser.error("repin needs --output")
+            report = repin(args.cache, args.source, args.output)
+            print(f"Moved the fixtures from {report['from']} to {report['to']}: "
+                  f"{len(report['changed'])} Go goldens changed; review {args.output / 'repin.json'}")
             return 0
         if args.command == "accept":
             if not (args.case and args.description and len(args.requests) == 1):

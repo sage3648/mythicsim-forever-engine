@@ -439,6 +439,7 @@ impl<A: Agent> Fight<A> {
         if !self.activate_exclusive(aura) {
             return;
         }
+        self.track_exclusive_activate(aura);
         match self.aura(aura).behavior {
             AuraBehavior::Class(kind) => A::on_exclusive_gain(self, aura, kind),
             // The party Windfury Totem's effect turns its trigger on, after the air totem slot
@@ -494,6 +495,8 @@ impl<A: Agent> Fight<A> {
         if !self.aura(aura).active {
             return;
         }
+        // Go closes the exclusive effects' uptime before it clears the expiry.
+        self.close_exclusive_uptime(aura);
         let now = self.now;
         let has_id = {
             let state = self.aura_mut(aura);
@@ -539,6 +542,7 @@ impl<A: Agent> Fight<A> {
             self.set_stacks(aura, 0);
         }
         self.deactivate_exclusive(aura);
+        self.track_exclusive_deactivate(aura);
         if let Side::Pet(_) = aura.side {
             self.pet_aura_expired(aura);
         }

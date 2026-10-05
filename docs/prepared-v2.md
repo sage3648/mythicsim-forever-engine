@@ -43,7 +43,7 @@ Dynamic behavior is named in `effects` and implemented in Rust.
 | --- | --- |
 | `schema_version`, `contract` | `2` and `forever-prepared` |
 | `reference.engine_revision` | Must equal the engine's `SOURCE_REVISION` pin |
-| `reference.client_build` | Must equal `1.60.1.70170` |
+| `reference.client_build` | Must equal `1.60.1.70205` |
 | `reference.exporter` | `tools/oracle-v2`; the fixture manifest pins its SHA-256 |
 | `request_sha256` | SHA-256 of the deterministic protobuf encoding of the request |
 | `scenario_id` | 1 to 200 bytes, chosen by the caller |
@@ -79,8 +79,12 @@ displaces Leader of the Pack, names that aura in `displaced_by`, and Rust replay
 gain and fade; one an earlier member blocked is marked `blocked_at_reset` and counts its
 proc. An aura whose action ID was set after registration, as item_sets.go `ExposeToAPL`
 sets a set bonus tracker's, is marked `metrics_hidden`: it logs the ID, but Go lists no
-metrics for it. Order is Go registration order, which
-determines callback order and therefore random draw order.
+metrics for it. `exclusive_memberships` lists the aura's exclusive effects in Go's order,
+each with its category name, whether the category holds a single aura, its bid and its
+position in the category. Rust tracks every such effect's time holding its category and
+reports it in the aura's metrics as Go does: in an `exclusive_category` the runtime
+enforces, or in a category it only tracks, where no member blocks another. Order is Go
+registration order, which determines callback order and therefore random draw order.
 
 `major_cooldowns` is Go's initial order after the rotation removed the spells it
 casts itself. A cooldown names its spell by spellbook position in `spell` only when an
@@ -398,7 +402,7 @@ is an error, never a refusal. `REFUSAL_CODES` in
 | `aura_listener_unclaimed` | An aura listens to combat events with no effect that handles it |
 | `pet_unsupported` | A pet has no behavior or inherits a stat change Rust does not follow |
 | `tanking_unsupported` | The target swings at the player in a way Rust does not simulate |
-| `aura_condition_unsupported` | A rotation condition reads an aura as the pinned reference and community #622 disagree, or as Rust does not |
+| `aura_condition_unsupported` | A rotation condition reads an aura as Rust does not |
 | `resource_unsupported` | The rotation or a spell reads a resource the player lacks |
 | `prepull_unsupported` | A prepull action Rust cannot reproduce |
 | `cooldown_unsupported` | A survival cooldown fires at a health threshold Rust does not simulate |
@@ -522,12 +526,11 @@ reaches no spell, so its spell needs no behavior.
 Constants follow Go parsing,
 including `time.ParseDuration` and percent constants. A rotation spell the character
 does not know is dropped, as in Go; a known spell without a Rust behavior is
-unsupported. For an `auraIsActive` or `auraNumStacks` naming an aura the character
-lacks, the pinned reference drops the term while community fix #622 reads the aura as
-inactive, with no stacks (see [UPSTREAM.md](../UPSTREAM.md#ledger)). Rust compiles every
-condition and channel interrupt condition both ways, with Go's coercion and constant folding, and rejects the rotation
-only where the two act differently. Comparisons of constants, which Go keeps, are
-evaluated for that check only.
+unsupported. An `auraIsActive`, `auraNumStacks` or `auraRemainingTime` naming an aura
+the character lacks reads it as inactive, with no stacks and no time left, as community
+fix #622 does in the reference (see [UPSTREAM.md](../UPSTREAM.md#ledger)). A
+`strictSequence` with a step the character lacks is dropped whole, as community #625
+does.
 
 ## Examples
 
@@ -535,7 +538,7 @@ The [fixture family](../fixtures/mage/prepared-v2/manifest.json) holds accepted
 inputs and their expected coverage. `frost-reference` is the frozen application
 request; it is supported and keeps Go's result and first-fight log as goldens.
 `frost-no-fingers` is the same request without Fingers of Frost, the regression for
-community fix #622, and stays unsupported. `reference-no-missile-barrage` drops Missile
+community fix #622; it casts no Ice Lance. `reference-no-missile-barrage` drops Missile
 Barrage, whose Arcane Missiles rule is guarded by `auraIsKnown`; it is supported and
 matches Go. `arcane-reference` is the application's Arcane request, built by its own
 `BuildRequest`; `arcane-no-missile-barrage` is the #622 regression for the Arcane preset.

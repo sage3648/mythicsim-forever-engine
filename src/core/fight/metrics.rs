@@ -12,7 +12,7 @@ use crate::{
     core::time::{milliseconds, seconds, NS_PER_SECOND},
 };
 
-use super::{Agent, Fight, Side};
+use super::{Agent, AuraRef, Fight, Side};
 
 /// Go `aggregator`: count, sum and sum of squares.
 #[derive(Clone, Copy, Debug, Default)]
@@ -314,6 +314,17 @@ struct AuraMetricsReport {
     #[serde(skip_serializing_if = "is_zero_f")]
     procs_avg: f64,
     aggregator_data: AggregatorData,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    effects: Vec<AuraEffectMetricsReport>,
+}
+
+/// Go `AuraEffectMetrics`: an exclusive effect's average time holding its category.
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct AuraEffectMetricsReport {
+    category: String,
+    #[serde(skip_serializing_if = "is_zero_f")]
+    uptime_seconds_avg: f64,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -653,7 +664,8 @@ impl<A: Agent> Fight<A> {
         self.trackers[side.index()]
             .auras
             .iter()
-            .filter_map(|aura| {
+            .enumerate()
+            .filter_map(|(index, aura)| {
                 let id = aura.metrics_id.as_ref()?;
                 let n = aura.aggregate.n;
                 let (avg, stdev) = aura.aggregate.mean_and_stdev();
@@ -666,6 +678,14 @@ impl<A: Agent> Fight<A> {
                         n,
                         sum_sq: aura.aggregate.sum_sq,
                     },
+                    effects: self
+                        .exclusive_effect_reports(AuraRef { side, index })
+                        .into_iter()
+                        .map(|(category, uptime_seconds_avg)| AuraEffectMetricsReport {
+                            category,
+                            uptime_seconds_avg,
+                        })
+                        .collect(),
                 })
             })
             .collect()
@@ -716,6 +736,8 @@ impl<A: Agent> Fight<A> {
                                         n: uptime.n,
                                         sum_sq: uptime.sum_sq,
                                     },
+                                    // The gate refuses an inert pet aura with exclusive effects.
+                                    effects: Vec::new(),
                                 }
                             })
                             .collect(),

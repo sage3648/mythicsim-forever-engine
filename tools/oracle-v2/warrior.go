@@ -211,9 +211,9 @@ func warriorEffects(agent core.Agent, character *core.Character) []map[string]an
 			"base_damage": row.DamageEffect().Average(core.CharacterLevel),
 		})
 	}
-	// whirlwind.go: Raging Blows adds the off hand's strike.
+	// whirlwind.go: a warrior with an off hand weapon strikes with it too (hotfix 112347).
 	effects = append(effects, map[string]any{
-		"kind": "whirlwind", "spell_id": warriorWhirlwind.Highest().ID, "off_hand": talents.RagingBlows,
+		"kind": "whirlwind", "spell_id": warriorWhirlwind.Highest().ID, "off_hand": war.HasOHWeapon(),
 	})
 	// execute.go: the dummy effect's base and ten times its chain amplitude per extra rage.
 	executeRow := warriorExecute.Highest()
