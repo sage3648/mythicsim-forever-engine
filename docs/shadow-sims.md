@@ -19,6 +19,9 @@ the reference pin, the comparison tools and `manifest.json`, which records the
 Rust revision, the pin, the client build and the exporter digest. The shadow
 worker runs it with Python 3 only.
 
+The same bundle carries `tools/route.py`, which the worker calls to run a request in
+Rust or fall back to Go; see the [routing guide](routing.md).
+
 ## Compare one request
 
 ```sh
