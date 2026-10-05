@@ -1,0 +1,1120 @@
+{
+  "kind": "architecture_check",
+  "date": "2026-10-05",
+  "reference": {
+    "engine_revision": "6823b49eb8aff741f197ef36d83766ef6a218285",
+    "client_build": "1.60.1.70170"
+  },
+  "scope": "Every accepted Go golden against the pinned Go engine built for linux/arm64 and run in the production engine's image (mythicsim-forever:20b551c6b-flat1) on the production Mac, an Apple M2 Max, the only worker polling the Forever queue.",
+  "platform": "linux/arm64",
+  "image": "mythicsim-forever:20b551c6b-flat1",
+  "compiler": "go version go1.25.6 darwin/arm64",
+  "rerun": "python3 tools/architecture_check.py --goarch arm64 --image mythicsim-forever:20b551c6b-flat1 --output <scratch>",
+  "criteria": {
+    "comparison": "the comparable result and the filtered first-fight log, as prepared_v2.py accepts them"
+  },
+  "matched": 274,
+  "mismatched": 0,
+  "errors": 0,
+  "cases": [
+    {
+      "id": "frost-reference",
+      "matched": true
+    },
+    {
+      "id": "frostbolt-labeled",
+      "matched": true
+    },
+    {
+      "id": "frostbolt-shared-oom",
+      "matched": true
+    },
+    {
+      "id": "frostbolt-shared-meditation",
+      "matched": true
+    },
+    {
+      "id": "frostbolt-shared-haste",
+      "matched": true
+    },
+    {
+      "id": "frostbolt-shared-boundary",
+      "matched": true
+    },
+    {
+      "id": "reference-winters-chill",
+      "matched": true
+    },
+    {
+      "id": "reference-winters-chill-rank3",
+      "matched": true
+    },
+    {
+      "id": "reference-fingers-of-frost",
+      "matched": true
+    },
+    {
+      "id": "reference-fingers-of-frost-rank1",
+      "matched": true
+    },
+    {
+      "id": "reference-clearcasting",
+      "matched": true
+    },
+    {
+      "id": "reference-missile-barrage",
+      "matched": true
+    },
+    {
+      "id": "reference-procs",
+      "matched": true
+    },
+    {
+      "id": "reference-long",
+      "matched": true
+    },
+    {
+      "id": "reference-ten-minutes",
+      "matched": true
+    },
+    {
+      "id": "reference-no-missile-barrage",
+      "matched": true
+    },
+    {
+      "id": "arcane-blast",
+      "matched": true
+    },
+    {
+      "id": "arcane-blast-spenders",
+      "matched": true
+    },
+    {
+      "id": "arcane-cooldowns",
+      "matched": true
+    },
+    {
+      "id": "arcane-cooldowns-long",
+      "matched": true
+    },
+    {
+      "id": "arcane-ignite",
+      "matched": true
+    },
+    {
+      "id": "arcane-reference",
+      "matched": true
+    },
+    {
+      "id": "fire-scorch",
+      "matched": true
+    },
+    {
+      "id": "fire-fireball",
+      "matched": true
+    },
+    {
+      "id": "fire-fireball-scorch",
+      "matched": true
+    },
+    {
+      "id": "fire-master-of-elements",
+      "matched": true
+    },
+    {
+      "id": "fire-heating-up",
+      "matched": true
+    },
+    {
+      "id": "fire-combustion",
+      "matched": true
+    },
+    {
+      "id": "fire-ignite",
+      "matched": true
+    },
+    {
+      "id": "fire-reference",
+      "matched": true
+    },
+    {
+      "id": "frost-troll",
+      "matched": true
+    },
+    {
+      "id": "frost-troll-ten-minutes",
+      "matched": true
+    },
+    {
+      "id": "frost-orc",
+      "matched": true
+    },
+    {
+      "id": "frost-orc-cooldown-timings",
+      "matched": true
+    },
+    {
+      "id": "frost-skyborne",
+      "matched": true
+    },
+    {
+      "id": "fire-skyborne-read-ley-line",
+      "matched": true
+    },
+    {
+      "id": "production-frostfire",
+      "matched": true
+    },
+    {
+      "id": "production-fire",
+      "matched": true
+    },
+    {
+      "id": "frostfire-resistances",
+      "matched": true
+    },
+    {
+      "id": "frost-prepull",
+      "matched": true
+    },
+    {
+      "id": "production-balance-druid",
+      "matched": true
+    },
+    {
+      "id": "production-elemental-shaman",
+      "matched": true
+    },
+    {
+      "id": "elemental-shaman-dwarf-stoneform",
+      "matched": true
+    },
+    {
+      "id": "paladin-auto-attacks",
+      "matched": true
+    },
+    {
+      "id": "paladin-auto-attacks-front",
+      "matched": true
+    },
+    {
+      "id": "production-destruction-warlock",
+      "matched": true
+    },
+    {
+      "id": "paladin-auto-attacks-expose-armor",
+      "matched": true
+    },
+    {
+      "id": "production-shadow-priest",
+      "matched": true
+    },
+    {
+      "id": "shadow-priest-channel-no-recast",
+      "matched": true
+    },
+    {
+      "id": "shadow-priest-channel-uninterrupted",
+      "matched": true
+    },
+    {
+      "id": "shadow-priest-sequence-relinquish",
+      "matched": true
+    },
+    {
+      "id": "paladin-crusader-chili",
+      "matched": true
+    },
+    {
+      "id": "paladin-windfury-totem",
+      "matched": true
+    },
+    {
+      "id": "production-smite-priest",
+      "matched": true
+    },
+    {
+      "id": "tank-ret-autos",
+      "matched": true
+    },
+    {
+      "id": "tank-protection-paladin-autos",
+      "matched": true
+    },
+    {
+      "id": "enhancement-shaman-no-battle-shout",
+      "matched": true
+    },
+    {
+      "id": "production-enhancement-shaman",
+      "matched": true
+    },
+    {
+      "id": "production-combat-rogue",
+      "matched": true
+    },
+    {
+      "id": "combat-rogue-orc-shatter-curse",
+      "matched": true
+    },
+    {
+      "id": "production-warrior",
+      "matched": true
+    },
+    {
+      "id": "warrior-heroic-strike",
+      "matched": true
+    },
+    {
+      "id": "warrior-cleave",
+      "matched": true
+    },
+    {
+      "id": "production-marksmanship-hunter",
+      "matched": true
+    },
+    {
+      "id": "production-retribution-paladin",
+      "matched": true
+    },
+    {
+      "id": "production-shockadin-paladin",
+      "matched": true
+    },
+    {
+      "id": "warrior-orc-shatter-curse",
+      "matched": true
+    },
+    {
+      "id": "warrior-troll-berserking",
+      "matched": true
+    },
+    {
+      "id": "production-affliction-warlock",
+      "matched": true
+    },
+    {
+      "id": "production-demonology-warlock",
+      "matched": true
+    },
+    {
+      "id": "demonology-warlock-voidwalker-pact",
+      "matched": true
+    },
+    {
+      "id": "tank-protection-paladin-dense-dynamite",
+      "matched": true
+    },
+    {
+      "id": "retribution-dense-dynamite",
+      "matched": true
+    },
+    {
+      "id": "marksmanship-hunter-thorium-grenade",
+      "matched": true
+    },
+    {
+      "id": "tank-frost-mage",
+      "matched": true
+    },
+    {
+      "id": "production-assassination-rogue",
+      "matched": true
+    },
+    {
+      "id": "production-subtlety-rogue",
+      "matched": true
+    },
+    {
+      "id": "production-feral-druid",
+      "matched": true
+    },
+    {
+      "id": "feral-druid-faerie-fire-armor",
+      "matched": true
+    },
+    {
+      "id": "production-feral-bear-druid",
+      "matched": true
+    },
+    {
+      "id": "enhancement-shaman-self-totems",
+      "matched": true
+    },
+    {
+      "id": "enhancement-shaman-dual-wield-frostbrand-sync-magma",
+      "matched": true
+    },
+    {
+      "id": "enhancement-shaman-dual-wield-windfury-flametongue",
+      "matched": true
+    },
+    {
+      "id": "enhancement-shaman-dual-wield-equal-speed-delay",
+      "matched": true
+    },
+    {
+      "id": "enhancement-shaman-grace-replaces-windfury-totem",
+      "matched": true
+    },
+    {
+      "id": "production-arms-warrior",
+      "matched": true
+    },
+    {
+      "id": "protection-paladin-no-dynamite",
+      "matched": true
+    },
+    {
+      "id": "ret-protection-paladin-no-dynamite",
+      "matched": true
+    },
+    {
+      "id": "holy-protection-paladin-no-dynamite",
+      "matched": true
+    },
+    {
+      "id": "production-protection-paladin",
+      "matched": true
+    },
+    {
+      "id": "production-ret-protection-paladin",
+      "matched": true
+    },
+    {
+      "id": "production-holy-protection-paladin",
+      "matched": true
+    },
+    {
+      "id": "demonology-warlock-orc",
+      "matched": true
+    },
+    {
+      "id": "production-beast-mastery-hunter",
+      "matched": true
+    },
+    {
+      "id": "survival-hunter-no-whelp",
+      "matched": true
+    },
+    {
+      "id": "production-survival-hunter",
+      "matched": true
+    },
+    {
+      "id": "affliction-warlock-broad",
+      "matched": true
+    },
+    {
+      "id": "destruction-warlock-broad",
+      "matched": true
+    },
+    {
+      "id": "affliction-warlock-death-coil",
+      "matched": true
+    },
+    {
+      "id": "demonology-warlock-recklessness",
+      "matched": true
+    },
+    {
+      "id": "production-protection-warrior",
+      "matched": true
+    },
+    {
+      "id": "production-fury-protection-warrior",
+      "matched": true
+    },
+    {
+      "id": "ret-undead-exorcism",
+      "matched": true
+    },
+    {
+      "id": "ret-exorcism-humanoid",
+      "matched": true
+    },
+    {
+      "id": "protection-holy-shield-rank2",
+      "matched": true
+    },
+    {
+      "id": "shockadin-lights-vigil",
+      "matched": true
+    },
+    {
+      "id": "ret-crusader-opener",
+      "matched": true
+    },
+    {
+      "id": "ret-crusader-fervor-over-raid",
+      "matched": true
+    },
+    {
+      "id": "ret-crusader-held",
+      "matched": true
+    },
+    {
+      "id": "protection-eye-for-an-eye",
+      "matched": true
+    },
+    {
+      "id": "shockadin-infusion-of-light",
+      "matched": true
+    },
+    {
+      "id": "shockadin-holy-alacrity",
+      "matched": true
+    },
+    {
+      "id": "ret-pursuit-of-justice",
+      "matched": true
+    },
+    {
+      "id": "feral-druid-rake",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-defensives",
+      "matched": true
+    },
+    {
+      "id": "feral-druid-feralheart-wolfshead",
+      "matched": true
+    },
+    {
+      "id": "feral-druid-unending-life",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-feralheart",
+      "matched": true
+    },
+    {
+      "id": "balance-druid-berserk-natural-reaction",
+      "matched": true
+    },
+    {
+      "id": "shadow-priest-starshards",
+      "matched": true
+    },
+    {
+      "id": "smite-priest-holy-nova",
+      "matched": true
+    },
+    {
+      "id": "shadow-priest-shadowfiend",
+      "matched": true
+    },
+    {
+      "id": "shadow-priest-shadowfiend-long",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-crusader",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-survives",
+      "matched": true
+    },
+    {
+      "id": "arms-warrior-own-sunder",
+      "matched": true
+    },
+    {
+      "id": "protection-warrior-own-sunder",
+      "matched": true
+    },
+    {
+      "id": "arms-warrior-no-improved-slam",
+      "matched": true
+    },
+    {
+      "id": "beast-mastery-hunter-pet-uptime-half",
+      "matched": true
+    },
+    {
+      "id": "beast-mastery-hunter-wind-serpent",
+      "matched": true
+    },
+    {
+      "id": "beast-mastery-hunter-bat",
+      "matched": true
+    },
+    {
+      "id": "beast-mastery-hunter-gorilla",
+      "matched": true
+    },
+    {
+      "id": "beast-mastery-hunter-raptor",
+      "matched": true
+    },
+    {
+      "id": "beast-mastery-hunter-spider",
+      "matched": true
+    },
+    {
+      "id": "beast-mastery-hunter-bear",
+      "matched": true
+    },
+    {
+      "id": "beast-mastery-hunter-scorpid",
+      "matched": true
+    },
+    {
+      "id": "beast-mastery-hunter-tallstrider",
+      "matched": true
+    },
+    {
+      "id": "marksmanship-hunter-rapid-recuperation",
+      "matched": true
+    },
+    {
+      "id": "survival-melee-hunter-cat-heartbeat",
+      "matched": true
+    },
+    {
+      "id": "marksmanship-hunter-arcane-shot",
+      "matched": true
+    },
+    {
+      "id": "marksmanship-hunter-predators-armor",
+      "matched": true
+    },
+    {
+      "id": "beast-mastery-hunter-beastmaster-armor",
+      "matched": true
+    },
+    {
+      "id": "marksmanship-hunter-cryptstalker-armor",
+      "matched": true
+    },
+    {
+      "id": "survival-hunter-beaststalker-armor",
+      "matched": true
+    },
+    {
+      "id": "protection-paladin-dragons-call-hardcast",
+      "matched": true
+    },
+    {
+      "id": "marksmanship-hunter-hands-of-power",
+      "matched": true
+    },
+    {
+      "id": "combat-swords",
+      "matched": true
+    },
+    {
+      "id": "combat-wound-poison",
+      "matched": true
+    },
+    {
+      "id": "assassination-venom",
+      "matched": true
+    },
+    {
+      "id": "subtlety-ghostly-hemorrhage-garrote",
+      "matched": true
+    },
+    {
+      "id": "subtlety-quietus",
+      "matched": true
+    },
+    {
+      "id": "combat-riposte",
+      "matched": true
+    },
+    {
+      "id": "combat-kidney-shot",
+      "matched": true
+    },
+    {
+      "id": "assassination-kidney-shot",
+      "matched": true
+    },
+    {
+      "id": "shadow-priest-thistle-tea",
+      "matched": true
+    },
+    {
+      "id": "shockadin-holy-light-illumination",
+      "matched": true
+    },
+    {
+      "id": "shockadin-holy-light-self",
+      "matched": true
+    },
+    {
+      "id": "shockadin-flash-of-light-blessed",
+      "matched": true
+    },
+    {
+      "id": "shockadin-holy-shock-heal",
+      "matched": true
+    },
+    {
+      "id": "shockadin-holy-light-infusion",
+      "matched": true
+    },
+    {
+      "id": "protection-flash-of-light-self",
+      "matched": true
+    },
+    {
+      "id": "protection-bulwark-threshold",
+      "matched": true
+    },
+    {
+      "id": "protection-bulwark-rotation",
+      "matched": true
+    },
+    {
+      "id": "protection-paladin-sapper",
+      "matched": true
+    },
+    {
+      "id": "retribution-paladin-sapper",
+      "matched": true
+    },
+    {
+      "id": "protection-bulwark-sapper",
+      "matched": true
+    },
+    {
+      "id": "protection-warrior-goblin-sapper",
+      "matched": true
+    },
+    {
+      "id": "fury-protection-warrior-winter-night",
+      "matched": true
+    },
+    {
+      "id": "affliction-warlock-lash-of-pain-rounding",
+      "matched": true
+    },
+    {
+      "id": "warrior-bloodthirst-rounding",
+      "matched": true
+    },
+    {
+      "id": "protection-paladin-dwarf-stoneform",
+      "matched": true
+    },
+    {
+      "id": "protection-warrior-dwarf-stoneform",
+      "matched": true
+    },
+    {
+      "id": "protection-warrior-orc-shatter-curse",
+      "matched": true
+    },
+    {
+      "id": "protection-warrior-sapper-orc-shatter-curse",
+      "matched": true
+    },
+    {
+      "id": "protection-warrior-shield-wall",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-thistle-tea-shift",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-potion-shift",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-innervate-shift",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-caster-interval",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-potion-shift-tauren",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-demonic-rune-autocast",
+      "matched": true
+    },
+    {
+      "id": "balance-druid-party-windfury-totem",
+      "matched": true
+    },
+    {
+      "id": "warrior-party-grace-of-air-and-windfury",
+      "matched": true
+    },
+    {
+      "id": "affliction-warlock-raid-curse-of-elements",
+      "matched": true
+    },
+    {
+      "id": "survival-hunter-cat-and-whelp",
+      "matched": true
+    },
+    {
+      "id": "combat-expose-armor",
+      "matched": true
+    },
+    {
+      "id": "combat-improved-expose-armor",
+      "matched": true
+    },
+    {
+      "id": "combat-expose-armor-raid-expose",
+      "matched": true
+    },
+    {
+      "id": "combat-kidney-shot-tank",
+      "matched": true
+    },
+    {
+      "id": "combat-riposte-tank",
+      "matched": true
+    },
+    {
+      "id": "subtlety-ghostly-strike-tank",
+      "matched": true
+    },
+    {
+      "id": "feral-druid-mighty-rage-potion",
+      "matched": true
+    },
+    {
+      "id": "warrior-major-mana-potion",
+      "matched": true
+    },
+    {
+      "id": "protection-warrior-last-stand",
+      "matched": true
+    },
+    {
+      "id": "fury-protection-warrior-last-stand",
+      "matched": true
+    },
+    {
+      "id": "protection-warrior-sapper-last-stand",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-threshold",
+      "matched": true
+    },
+    {
+      "id": "protection-warrior-greater-stoneshield",
+      "matched": true
+    },
+    {
+      "id": "protection-paladin-healing-potion",
+      "matched": true
+    },
+    {
+      "id": "retribution-front-untanked-parry-haste",
+      "matched": true
+    },
+    {
+      "id": "warrior-enrage-sapper",
+      "matched": true
+    },
+    {
+      "id": "warrior-blood-craze-sapper",
+      "matched": true
+    },
+    {
+      "id": "arms-warrior-improved-hamstring",
+      "matched": true
+    },
+    {
+      "id": "arcane-arcane-explosion",
+      "matched": true
+    },
+    {
+      "id": "frost-blizzard-improved-fingers",
+      "matched": true
+    },
+    {
+      "id": "frost-cone-of-cold-improved",
+      "matched": true
+    },
+    {
+      "id": "frost-frost-nova-improved",
+      "matched": true
+    },
+    {
+      "id": "fire-flamestrike-improved",
+      "matched": true
+    },
+    {
+      "id": "fire-blast-wave",
+      "matched": true
+    },
+    {
+      "id": "fire-preset-p1-ephemeral-power",
+      "matched": true
+    },
+    {
+      "id": "arcane-preset-p0-freezing-band",
+      "matched": true
+    },
+    {
+      "id": "enhancement-shaman-preset-grace-of-air",
+      "matched": true
+    },
+    {
+      "id": "protection-paladin-sulfuras",
+      "matched": true
+    },
+    {
+      "id": "feral-druid-threat-enchant",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-subtlety-enchant",
+      "matched": true
+    },
+    {
+      "id": "smite-priest-power-infusion",
+      "matched": true
+    },
+    {
+      "id": "smite-priest-holy-nova-power-infusion",
+      "matched": true
+    },
+    {
+      "id": "combat-rogue-item-procs",
+      "matched": true
+    },
+    {
+      "id": "arms-warrior-sweeping-strikes",
+      "matched": true
+    },
+    {
+      "id": "protection-warrior-battlegear-of-might",
+      "matched": true
+    },
+    {
+      "id": "protection-warrior-premier-shield-wall",
+      "matched": true
+    },
+    {
+      "id": "protection-warrior-battlegear-of-valor",
+      "matched": true
+    },
+    {
+      "id": "fury-warrior-rivenspike",
+      "matched": true
+    },
+    {
+      "id": "fury-warrior-battlegear-of-might-sapper",
+      "matched": true
+    },
+    {
+      "id": "protection-warrior-blood-craze-ephemeral-power",
+      "matched": true
+    },
+    {
+      "id": "protection-warrior-blood-craze-neverending-cup",
+      "matched": true
+    },
+    {
+      "id": "protection-paladin-seal-of-fury",
+      "matched": true
+    },
+    {
+      "id": "ret-protection-paladin-seal-of-fury",
+      "matched": true
+    },
+    {
+      "id": "holy-protection-paladin-seal-of-fury",
+      "matched": true
+    },
+    {
+      "id": "retribution-paladin-seal-of-fury-twist",
+      "matched": true
+    },
+    {
+      "id": "protection-paladin-seal-of-fury-bulwark-sapper",
+      "matched": true
+    },
+    {
+      "id": "arcane-mage-spell-stat-procs",
+      "matched": true
+    },
+    {
+      "id": "fire-mage-mana-on-use-trinkets",
+      "matched": true
+    },
+    {
+      "id": "elemental-shaman-insight-earthen-sigil",
+      "matched": true
+    },
+    {
+      "id": "arcane-mage-infernal-lasso",
+      "matched": true
+    },
+    {
+      "id": "arcane-mage-linkens-boomerang",
+      "matched": true
+    },
+    {
+      "id": "arcane-mage-smokeys-lighter",
+      "matched": true
+    },
+    {
+      "id": "fury-warrior-everlook-pathcarver",
+      "matched": true
+    },
+    {
+      "id": "affliction-warlock-golden-banana",
+      "matched": true
+    },
+    {
+      "id": "shadow-priest-serenity-field",
+      "matched": true
+    },
+    {
+      "id": "fury-warrior-prismcharm",
+      "matched": true
+    },
+    {
+      "id": "frost-mage-frozen-heart",
+      "matched": true
+    },
+    {
+      "id": "combat-rogue-defensive-cooldowns-tank",
+      "matched": true
+    },
+    {
+      "id": "warrior-heart-of-wyrmthalak",
+      "matched": true
+    },
+    {
+      "id": "arms-warrior-recovery",
+      "matched": true
+    },
+    {
+      "id": "arcane-mage-second-wind",
+      "matched": true
+    },
+    {
+      "id": "protection-warrior-mark-of-resolution-threshold",
+      "matched": true
+    },
+    {
+      "id": "protection-paladin-arena-grand-master-threshold",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-lifestone-threshold",
+      "matched": true
+    },
+    {
+      "id": "arms-warrior-fiery-blaze",
+      "matched": true
+    },
+    {
+      "id": "protection-paladin-lay-on-hands",
+      "matched": true
+    },
+    {
+      "id": "affliction-warlock-pet-dismiss-residue",
+      "matched": true
+    },
+    {
+      "id": "feral-druid-wildheart-raiment",
+      "matched": true
+    },
+    {
+      "id": "smite-priest-holy-nova-ephemeral-power",
+      "matched": true
+    },
+    {
+      "id": "demonology-warlock-frozen-heart",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-uthers-strength",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-minor-absorption",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-lesser-absorption",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-absorption",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-essence-of-the-pure-flame",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-lion-horn",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-boomerang-pushback",
+      "matched": true
+    },
+    {
+      "id": "feral-bear-druid-boomerang-pushback-after-cast",
+      "matched": true
+    },
+    {
+      "id": "production-survival-hunter-2-targets",
+      "matched": true
+    },
+    {
+      "id": "production-survival-hunter-5-targets",
+      "matched": true
+    },
+    {
+      "id": "production-shadow-priest-2-targets",
+      "matched": true
+    },
+    {
+      "id": "production-shadow-priest-5-targets",
+      "matched": true
+    },
+    {
+      "id": "production-subtlety-rogue-2-targets",
+      "matched": true
+    },
+    {
+      "id": "production-subtlety-rogue-5-targets",
+      "matched": true
+    },
+    {
+      "id": "production-combat-rogue-3-targets",
+      "matched": true
+    },
+    {
+      "id": "production-assassination-rogue-3-targets",
+      "matched": true
+    },
+    {
+      "id": "production-marksmanship-hunter-3-targets",
+      "matched": true
+    },
+    {
+      "id": "production-beast-mastery-hunter-3-targets",
+      "matched": true
+    },
+    {
+      "id": "production-smite-priest-3-targets",
+      "matched": true
+    }
+  ],
+  "notes": [
+    "Every result and first-fight log matches the accepted goldens, which were made on darwin/arm64: the production platform computes as the reference does."
+  ]
+}

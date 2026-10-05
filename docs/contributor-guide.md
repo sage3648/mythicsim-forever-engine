@@ -192,6 +192,17 @@ anything times 1, rounds the same either way. The
 [fused multiply-add audit](../validation/2026-10-04-fma-audit.json) records every
 site the binary fuses and what the runtime does with it.
 
+Production runs the Forever engine on the same architecture: a linux/arm64 image on the
+production Mac, the only worker that polls the Forever queue. `python3
+tools/architecture_check.py --goarch arm64 --image IMAGE --output <scratch>` rebuilds the
+pinned engine for a Linux architecture, runs every accepted case in that image and
+compares it with the goldens. On linux/arm64 every result and log matches; on
+linux/amd64, where Go fuses nothing, every result agrees within the comparison tolerance
+but some first-fight logs differ in the last printed digit, so a result Go made on amd64
+is not an exact reference
+([arm64 record](../validation/2026-10-05-architecture-linux-arm64.json),
+[amd64 record](../validation/2026-10-05-architecture-linux-amd64.json)).
+
 ### Several targets
 
 Go creates every copy of the boss as its own unit, and Rust follows: each target holds a copy
