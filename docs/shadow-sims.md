@@ -50,6 +50,21 @@ production. Production used its own random numbers, so the DPS difference is
 given in standard errors (`standard_errors`): a few either way is noise, a
 large value is a real gap. Ability rows pair the two results by action ID.
 
+## Compare a folder of requests
+
+To compare a bounded sample of real jobs at once, put their requests in one folder and
+run both engines on each, then write a validation record:
+
+```sh
+python3 tools/prepared_v2.py compare --output <scratch> SAMPLE/*.json
+python3 tools/sweep_record.py <scratch> SAMPLE/*.json --scope "..." --generator "..." --output validation/DATE-NAME.json
+```
+
+The record counts each request as matched, rejected with the gate's reasons, mismatched
+with its first differing metrics and first log line, or an error with the step that failed:
+the export, the Go run or the Rust run. A failing request never stops the others.
+`tools/validation_summary.py` adds the record to [the summary](validation-summary.md).
+
 ## Comparison alerts
 
 The application posts each shadow verdict to the admin-only Discord channel
