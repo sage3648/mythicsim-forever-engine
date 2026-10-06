@@ -6594,6 +6594,174 @@
         "file": "elemental-shaman-multidot-flame-shock-3-targets.go-log.txt",
         "sha256": "a190ac02458e20471ccd4616091a15e761d7ae141ab94566270daa79b8ba2cb5"
       }
+    },
+    {
+      "id": "affliction-warlock-3-targets-aura-source-target",
+      "description": "Affliction Warlock against 3 targets: Curse of the Elements cast on each target by the aura it lacks there, with auraIsKnown, auraIsInactive, auraRemainingTime and auraNumStacks read on a target by index, the next and the previous target",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/affliction-warlock-3-targets-aura-source-target.request.json"
+      },
+      "prepared": "affliction-warlock-3-targets-aura-source-target.prepared.json",
+      "prepared_sha256": "d97a660c5811786437124f3ad17bf8b81a2194db04b79ce70ba2a212bda26ab5",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "affliction-warlock-3-targets-aura-source-target.go-result.json",
+        "sha256": "135a7fdadf2f4f73690d0041ff51aa0e0a2538d8481ba00931f8aa4248e598e4"
+      },
+      "go_log": {
+        "file": "affliction-warlock-3-targets-aura-source-target.go-log.txt",
+        "sha256": "40b8fb7a3b749653173fe7fb214e7bb58684891bacb8b60f0f7607f00da0be7e"
+      }
+    },
+    {
+      "id": "fire-mage-3-targets-dot-target-index",
+      "description": "Fire Mage against 3 targets: Fireball and Pyroblast cast on each target by its dot, read with dotIsActive, dotRemainingTime and dotTimeToNextTick on a target by index, the next and the previous target, and on one the fight lacks",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-mage-3-targets-dot-target-index.request.json"
+      },
+      "prepared": "fire-mage-3-targets-dot-target-index.prepared.json",
+      "prepared_sha256": "098d494cb2d4d8745e355f92345434e7041c4770dc266cdadade4f68e5bae5a9",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fire-mage-3-targets-dot-target-index.go-result.json",
+        "sha256": "1a054c95a0521a6c13d5d1ce162e6064a635ee44a15b475ec4d3b0be21a58df1"
+      },
+      "go_log": {
+        "file": "fire-mage-3-targets-dot-target-index.go-log.txt",
+        "sha256": "9573d2167cd75e76fde5bf919d4a149da3843e7e63453452ccb4533526223c7a"
+      }
+    },
+    {
+      "id": "warrior-3-targets-cast-target",
+      "description": "Warrior against 3 targets: Rend cast at the second, third, next, previous and current target in turn",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-3-targets-cast-target.request.json"
+      },
+      "prepared": "warrior-3-targets-cast-target.prepared.json",
+      "prepared_sha256": "4934a248566887dbf16d4afcf04912d8dc62c4ce92952aab40e8ace597e662be",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-3-targets-cast-target.go-result.json",
+        "sha256": "338dc2185d7da443543ac5d8ef093505783c16aa824f8d2b77477c292faa357c"
+      },
+      "go_log": {
+        "file": "warrior-3-targets-cast-target.go-log.txt",
+        "sha256": "21ae5fe6821aa53fd19333910544eb387e82f93d70adaf877a9866e93c9071ae"
+      }
+    },
+    {
+      "id": "shadow-priest-3-targets-multidot-reads",
+      "description": "Shadow Priest against 3 targets: Shadow Word Pain multidot, with dots and auras read on the other targets",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/shadow-priest-3-targets-multidot-reads.request.json"
+      },
+      "prepared": "shadow-priest-3-targets-multidot-reads.prepared.json",
+      "prepared_sha256": "b555a90da7e88e2cabde9617d6811519415f596a1c609ca19e26f407c53e7f8c",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "shadow-priest-3-targets-multidot-reads.go-result.json",
+        "sha256": "448a15ca2827a86b7bd491df330c1a002d33d6dcbf1fd82f081c333a814d3bc9"
+      },
+      "go_log": {
+        "file": "shadow-priest-3-targets-multidot-reads.go-log.txt",
+        "sha256": "b2eca3172c592929442522064eddc18158950ab2c982237735e0b9dc4ff908db"
+      }
+    },
+    {
+      "id": "affliction-warlock-dot-without-spell",
+      "description": "Affliction Warlock: dotIsActive and dotRemainingTime without a spell drop out of their conditions, as in Go",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/affliction-warlock-dot-without-spell.request.json"
+      },
+      "prepared": "affliction-warlock-dot-without-spell.prepared.json",
+      "prepared_sha256": "4c46ccd1ff62dc9cf3e1d3531c99dfe3c36b5b96bf221d4dfc1696830cd9e76d",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "affliction-warlock-dot-without-spell.go-result.json",
+        "sha256": "f8bdf7f6542949c11802d8eea44ca88b53d67e12a41839d3d6e72615664857e1"
+      },
+      "go_log": {
+        "file": "affliction-warlock-dot-without-spell.go-log.txt",
+        "sha256": "6ea34f6ddf84c14f3fe823fe63254b717f847a372da38f0131050c0e8e8c52fd"
+      }
+    },
+    {
+      "id": "fire-mage-ordered-boolean",
+      "description": "Fire Mage: ordered comparisons of booleans, which Go drops from the condition",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-mage-ordered-boolean.request.json"
+      },
+      "prepared": "fire-mage-ordered-boolean.prepared.json",
+      "prepared_sha256": "697cc53fb4bc9cc30e71ccfc1eb49be2589d66fcbfb8160d4cbe7719f50d46cc",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fire-mage-ordered-boolean.go-result.json",
+        "sha256": "8a21b80f4281c2314c828a5bb527540f90568b3e7a8737031edddf35fe6ea138"
+      },
+      "go_log": {
+        "file": "fire-mage-ordered-boolean.go-log.txt",
+        "sha256": "432471e71a5c0bcbfc61cc9b1136880decf424a737c5b87b3d049c5d595579a5"
+      }
+    },
+    {
+      "id": "fire-mage-aura-inactive",
+      "description": "Fire Mage: auraIsInactive on the player, on the current target and for an aura nobody has",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-mage-aura-inactive.request.json"
+      },
+      "prepared": "fire-mage-aura-inactive.prepared.json",
+      "prepared_sha256": "17beee585a68f81b3fad4f90689c7fabc9070b2eb3aa028a2eba3ecde9cd9c14",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fire-mage-aura-inactive.go-result.json",
+        "sha256": "9d8efc3d23c7ebbbdb902a8484a6ef896e1e70ac31806c1dadd8e1adbb938816"
+      },
+      "go_log": {
+        "file": "fire-mage-aura-inactive.go-log.txt",
+        "sha256": "d4e976c71d5bc3c22ff8b87c778117e012a58dc41a799cf0982828435f6b82d3"
+      }
+    },
+    {
+      "id": "warrior-dot-target-unit",
+      "description": "Warrior: dot values naming the current target as their targetUnit",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-dot-target-unit.request.json"
+      },
+      "prepared": "warrior-dot-target-unit.prepared.json",
+      "prepared_sha256": "488d881ca8c445c14a9d70a7da5c943ec905cc234d292c5a587fdb7ccd4a3622",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-dot-target-unit.go-result.json",
+        "sha256": "8b339a56de4c4c7289189ace906198898d0aed89ab4e9577fd68e9ced1c6defb"
+      },
+      "go_log": {
+        "file": "warrior-dot-target-unit.go-log.txt",
+        "sha256": "9a6127a156e67f1d82adb53777c5ef689f126a24305cf50b6fd047cf28690efd"
+      }
     }
   ]
 }

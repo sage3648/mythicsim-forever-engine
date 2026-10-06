@@ -6,6 +6,7 @@ mod mage;
 mod paladin;
 mod priest;
 mod rogue;
+mod rotation_targets;
 mod shaman;
 mod warlock;
 mod warrior;
