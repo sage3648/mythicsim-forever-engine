@@ -144,3 +144,72 @@ fn a_hellfire_that_cannot_crit_is_refused() {
     assert!(reasons(value)
         .contains(&"Hellfire's burn cannot crit, which Rust does not simulate".to_string()));
 }
+
+/// The tick spell of Rain of Fire hits every target in unit index order, each rolled in turn.
+#[test]
+fn rain_of_fire_reaches_every_target() {
+    let logs = first_fight_log(fixture("affliction-warlock-3-targets-rain-of-fire"));
+    let first_tick = logs
+        .lines()
+        .find(|line| line.contains("{SpellID: 1282385}") && !line.contains("[DEBUG]"))
+        .expect("Rain of Fire ticks");
+    let stamp = &first_tick[..first_tick.find(']').unwrap() + 1];
+    let at_stamp: Vec<&str> = logs
+        .lines()
+        .filter(|line| {
+            line.starts_with(stamp)
+                && line.contains("[Target ")
+                && line.contains("{SpellID: 1282385}")
+                && !line.contains("[DEBUG]")
+        })
+        .collect();
+    assert_eq!(at_stamp.len(), 3, "{at_stamp:?}");
+    for (index, line) in at_stamp.iter().enumerate() {
+        assert!(line.contains(&format!("[Target {}]", index + 1)), "{line}");
+    }
+}
+
+/// Hellfire calculates its tick on every target before dealing any, as Go
+/// `CalcPeriodicAoeDamage` and `DealBatchedPeriodicDamage` do: both targets' calculations,
+/// then both hits.
+#[test]
+fn hellfire_calculates_every_target_before_dealing_any() {
+    let logs = first_fight_log(fixture("demonology-warlock-2-targets-hellfire"));
+    let lines: Vec<&str> = logs
+        .lines()
+        .filter(|line| line.contains("{SpellID: 11684}"))
+        .collect();
+    let first = lines
+        .iter()
+        .position(|line| line.contains("[DEBUG]"))
+        .expect("Hellfire ticks");
+    let order: Vec<(&str, bool)> = lines[first..first + 4]
+        .iter()
+        .map(|line| {
+            let target = if line.contains("[Target 1]") {
+                "1"
+            } else {
+                "2"
+            };
+            (target, line.contains("[DEBUG]"))
+        })
+        .collect();
+    assert_eq!(
+        order,
+        [("1", true), ("2", true), ("1", false), ("2", false)]
+    );
+}
+
+/// Bane of Havoc copies damage to other targets onto the baned one, and a multidot casts a
+/// dot on a target past the first; Rust follows neither against several targets.
+#[test]
+fn what_reaches_another_target_stays_refused_by_name() {
+    assert_eq!(
+        reasons(fixture("destruction-warlock-3-targets-bane-of-havoc")),
+        ["rotation reaches spell 1225228, which copies the warlock's damage to other targets onto the baned one in a fight against several targets"]
+    );
+    assert_eq!(
+        reasons(fixture("destruction-warlock-3-targets-multidot")),
+        ["the rotation multidots, which casts a warlock dot on a target past the first"]
+    );
+}
