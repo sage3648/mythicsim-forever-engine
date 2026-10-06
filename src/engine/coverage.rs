@@ -13,7 +13,7 @@ use crate::{
     classes,
     contracts::prepared_v2::{ActionId, Effect, MajorCooldown, PreparedV2, Spell},
     core::fight::DIRECT_PROC_MASKS,
-    rotation::{compile_condition, Action, FoundAura, Lookup, Rotation, Value},
+    rotation::{compile_condition, Action, FoundAura, Lookup, Rotation, Unit, Value},
 };
 
 /// A class's part of the gate.
@@ -37,11 +37,20 @@ pub(crate) struct ClassGate {
     /// melee swings stop and start with the range, and nothing else the class does reads the
     /// player's distance.
     pub(crate) player_movement: bool,
+    /// The class's limits on a rotation cast aimed at a target past the first: the spells it
+    /// casts there, whose effects and debuffs must land on that target as in Go. None for a
+    /// class whose spells have not been checked against it.
+    pub(crate) other_target_casts: Option<Limits>,
 }
 
 /// A class check of the input and the spells the rotation can reach: a reason for each
 /// thing it does not support.
 pub(crate) type Limits = fn(&PreparedV2, &[&Spell]) -> Vec<String>;
+
+/// A [`Limits`] check that finds nothing to refuse.
+pub(crate) fn no_limits(_: &PreparedV2, _: &[&Spell]) -> Vec<String> {
+    Vec::new()
+}
 
 /// Why the engine cannot simulate a valid input: a short code that stays the same however
 /// the input varies, which a worker counts fallbacks by, and the text that explains this
@@ -920,6 +929,15 @@ pub(crate) fn dot_owner(prepared: &PreparedV2, index: usize) -> Option<usize> {
     }
 }
 
+/// Go `GetAPLDot` on a unit: the spell holding the dot a spell names. An area or self-only
+/// dot is the caster's, whatever unit is named; any other dot sits on the targets, so the
+/// player has none.
+pub(crate) fn rotation_dot(prepared: &PreparedV2, id: &ActionId, unit: Unit) -> Option<usize> {
+    let owner = rotation_spell_index(prepared, id).and_then(|index| dot_owner(prepared, index))?;
+    let dot = prepared.player.spells[owner].dot.as_ref()?;
+    (dot.unit == "self" || matches!(unit, Unit::Target(_))).then_some(owner)
+}
+
 /// [`rotation_spell_index`] as the exported spell.
 pub(crate) fn rotation_spell<'a>(prepared: &'a PreparedV2, id: &ActionId) -> Option<&'a Spell> {
     rotation_spell_index(prepared, id).map(|index| &prepared.player.spells[index])
@@ -1127,7 +1145,7 @@ pub(crate) fn prepared_coverage(
                 registered_prepull += 1;
                 prepull_moves = true;
             }
-            if let Action::CastSpell(id) = &prepull.action {
+            if let Action::CastSpell { spell: id, .. } = &prepull.action {
                 if let Some(spell) = rotation_spell(prepared, id) {
                     registered_prepull += 1;
                     reachable.push(spell);
@@ -1207,6 +1225,10 @@ pub(crate) fn prepared_coverage(
             ));
         }
         reasons.extend(coded("class_limit", (gate.limits)(prepared, &reachable)));
+        reasons.extend(coded(
+            "several_targets_unsupported",
+            other_target_casts(prepared, gate, rotation, &unreachable),
+        ));
         reasons.extend(coded(
             "several_targets_unsupported",
             several_target_limits(prepared, gate, &reachable),
@@ -1347,6 +1369,73 @@ fn several_target_limits(
     reasons
 }
 
+/// Go's `castSpell` names the unit it casts on. Rust casts a spell on a target past the first
+/// when its effects, its debuffs and its dot are all of the target they are given, which the
+/// class checks; a channel's dot aura stays on the first target, so a channel with a dot on
+/// its target is never cast elsewhere. A cast on the player is not supported either: `castFriendlySpell` casts there.
+fn other_target_casts(
+    prepared: &PreparedV2,
+    gate: &ClassGate,
+    rotation: &Rotation,
+    unreachable: &BTreeSet<usize>,
+) -> Vec<String> {
+    let targets = prepared.encounter.target_count.max(1) as usize;
+    let mut reasons = BTreeSet::new();
+    let mut spells = Vec::new();
+    for item in &rotation.priority_list {
+        let Action::CastSpell { spell: id, target } = &item.action else {
+            continue;
+        };
+        let Some(unit) = target.resolve(targets) else {
+            continue;
+        };
+        let position = match unit {
+            Unit::Target(0) => continue,
+            Unit::Target(position) => position,
+            Unit::Player => 0,
+        };
+        if unreachable.contains(&item.position) {
+            continue;
+        }
+        let Some(spell) = rotation_spell(prepared, id) else {
+            continue;
+        };
+        let place = if unit == Unit::Player {
+            "the player".to_string()
+        } else {
+            format!("target {}", position + 1)
+        };
+        if unit == Unit::Player {
+            reasons.insert(format!(
+                "rotation item {}: castSpell of {id} on the player is unsupported",
+                item.position
+            ));
+        } else if spell.has_flag("SpellFlagChanneled")
+            && spell.dot.as_ref().is_some_and(|dot| dot.unit != "self")
+        {
+            reasons.insert(format!(
+                "rotation item {}: castSpell of {id} on {place}: a channel keeps its dot on the \
+                 first target",
+                item.position
+            ));
+        } else {
+            spells.push(spell);
+        }
+    }
+    if !spells.is_empty() {
+        match gate.other_target_casts {
+            Some(limits) => reasons.extend(limits(prepared, &spells)),
+            None => {
+                reasons.insert(format!(
+                    "castSpell on a target past the first is not supported for {} yet",
+                    gate.class
+                ));
+            }
+        }
+    }
+    reasons.into_iter().collect()
+}
+
 /// The reachable spells of the given class spell names, which reach a target past the first
 /// in Go: a reason for each, naming what it does there.
 pub(crate) fn spells_reaching_other_targets(
@@ -1454,17 +1543,16 @@ fn player_movement_limits(prepared: &PreparedV2, gate: &ClassGate) -> Vec<String
 /// Go makes of it.
 fn prepull_pruned(prepared: &PreparedV2, prepull: &crate::rotation::Prepull) -> bool {
     let aura = |id: &ActionId| find_aura(prepared, id);
-    let target_aura = |id: &ActionId| find_unit_aura(&prepared.target.auras, id);
+    let target_aura = |_: usize, id: &ActionId| find_unit_aura(&prepared.target.auras, id);
     let spell = |id: &ActionId| rotation_spell_index(prepared, id);
-    let dot = |id: &ActionId| {
-        rotation_spell_index(prepared, id).and_then(|index| dot_owner(prepared, index))
-    };
+    let dot = |id: &ActionId, unit: Unit| rotation_dot(prepared, id, unit);
     let pet_auras = crate::core::fight::pet::pet_agent_auras(prepared);
     let pet_aura_known =
         |pet: usize, id: &ActionId| pet_auras.get(pet).is_some_and(|auras| auras.contains(id));
     let lookup = Lookup {
         aura: &aura,
         target_aura: &target_aura,
+        targets: prepared.encounter.target_count.max(1) as usize,
         spell: &spell,
         dot: &dot,
         pet_aura_known: &pet_aura_known,
@@ -1539,17 +1627,16 @@ fn find_unit_aura(
 fn unreachable_items(prepared: &PreparedV2, rotation: &Rotation) -> BTreeSet<usize> {
     let targets = prepared.encounter.target_count.max(1) as usize;
     let aura = |id: &ActionId| find_aura(prepared, id);
-    let target_aura = |id: &ActionId| find_unit_aura(&prepared.target.auras, id);
+    let target_aura = |_: usize, id: &ActionId| find_unit_aura(&prepared.target.auras, id);
     let spell = |id: &ActionId| rotation_spell_index(prepared, id);
-    let dot = |id: &ActionId| {
-        rotation_spell_index(prepared, id).and_then(|index| dot_owner(prepared, index))
-    };
+    let dot = |id: &ActionId, unit: Unit| rotation_dot(prepared, id, unit);
     let pet_auras = crate::core::fight::pet::pet_agent_auras(prepared);
     let pet_aura_known =
         |pet: usize, id: &ActionId| pet_auras.get(pet).is_some_and(|auras| auras.contains(id));
     let lookup = Lookup {
         aura: &aura,
         target_aura: &target_aura,
+        targets: prepared.encounter.target_count.max(1) as usize,
         spell: &spell,
         dot: &dot,
         pet_aura_known: &pet_aura_known,

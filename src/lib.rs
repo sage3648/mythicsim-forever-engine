@@ -19,8 +19,9 @@ pub use classes::mage::spells::frostbolt::hit_chance;
 pub use contracts::{Caster, Request, Spell, Target};
 pub use engine::prepared::{
     check as check_prepared, coverage as prepared_coverage, refusals as prepared_refusals,
-    simulate as simulate_prepared, validate as validate_prepared, EngineIdentity, PreparedError,
-    PreparedReport, Refusal, CLIENT_BUILD, REFUSAL_CODES,
+    simulate as simulate_prepared, simulate_gated as simulate_prepared_gated,
+    validate as validate_prepared, EngineIdentity, Gated, PreparedError, PreparedReport, Refusal,
+    CLIENT_BUILD, REFUSAL_CODES,
 };
 pub use engine::simulate;
 

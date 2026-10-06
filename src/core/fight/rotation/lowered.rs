@@ -7,7 +7,7 @@
 use super::{compare, Compiled};
 use crate::{
     core::fight::{Agent, AuraRef, Fight, SpellId},
-    rotation::{CompareOp, ValueType},
+    rotation::{CompareOp, DotAt, ValueType},
 };
 
 /// A boolean condition.
@@ -15,7 +15,7 @@ use crate::{
 pub(crate) enum Cond {
     Const(bool),
     AuraIsActive(AuraRef),
-    DotIsActive(SpellId),
+    DotIsActive(DotAt),
     IsExecutePhase(i32),
     SpellCanCast(SpellId),
     And(Box<[Cond]>),
@@ -69,7 +69,7 @@ impl Cond {
             // The getters read a constant's boolean whatever its type.
             Compiled::Const(constant) => Cond::Const(constant.boolean),
             Compiled::AuraIsActive(aura) => Cond::AuraIsActive(*aura),
-            Compiled::DotIsActive(spell) => Cond::DotIsActive(*spell),
+            Compiled::DotIsActive(dot) => Cond::DotIsActive(*dot),
             Compiled::IsExecutePhase(threshold) => Cond::IsExecutePhase(*threshold),
             Compiled::SpellCanCast(spell) => Cond::SpellCanCast(*spell),
             Compiled::And(values) => Cond::And(values.iter().map(Cond::lower).collect()),
@@ -151,7 +151,7 @@ impl<A: Agent> Fight<A> {
         match value {
             Cond::Const(value) => *value,
             Cond::AuraIsActive(aura) => self.aura(*aura).active,
-            Cond::DotIsActive(spell) => self.dot_active(*spell),
+            Cond::DotIsActive(dot) => self.dot_active(*dot),
             // Go `APLValueIsExecutePhase`: the encounter's execute phase is at or below it.
             Cond::IsExecutePhase(threshold) => self.execute_phase <= *threshold,
             // Go `APLValueSpellCanCast`: `CanCastOrQueue`, with its cost check's side effects.

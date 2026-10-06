@@ -1,0 +1,1019 @@
+{
+ "kind": "job_benchmark",
+ "date": "2026-10-06",
+ "scope": "Whole Quick Sim jobs of the 27 single-target production requests (fixtures/mage/prepared-v2/production-*.request.json) at 3000 iterations, the production Quick Sim size, run as the worker would from a bundle after the exporter reads a tank's swing from the stat aura simulations and route.py gates in the Rust simulation process: Go as one pinned engine process on the request, Rust as tools/route.py with the Go exporter's prepare and one Rust process that gates the prepared input and simulates it.",
+ "method": "tools/job_bench.py interleaves the Go job, the routed Rust job and route.py's two steps on their own, three rounds per request; each figure is the median over the rounds. Wall time is measured around each process; CPU time and peak resident set come from wait4 and include every process a job waits for. Overhead is a job's wall time minus the engine's own iteration loop time. The throughput phase runs every request's job three times, four jobs at a time, in each engine. The record it follows, 2026-10-06-whole-jobs.json, ran the gate as a separate check process, so its steps are prepare, check and sim; here the gate is part of sim.",
+ "command": "python3 tools/job_bench.py --bundle <scratch>/bundle-69d29a29e --output <scratch>/report.json --rounds 3 --iterations 3000 --concurrency 4",
+ "source_revision": "69d29a29e03aaabe751e840627074c12f5f6752a",
+ "bundle": {
+  "schema": 1,
+  "rust_revision": "69d29a29e03aaabe751e840627074c12f5f6752a",
+  "rust_dirty": false,
+  "engine_version": "forever-rust-prototype-0.1.0 source-74127c6c8454217e7d6221de5e3274cf22e621bb",
+  "reference_pin": "74127c6c8454217e7d6221de5e3274cf22e621bb",
+  "client_build": "1.60.1.70205",
+  "exporter_digest": "8067a547470182c97d954f0bb4b31685ad691281bc44692843ede807d4bc4554",
+  "platform": "Darwin-arm64"
+ },
+ "go_version": "go version go1.25.6 darwin/arm64",
+ "machine": {
+  "platform": "macOS-26.5-arm64-arm-64bit-Mach-O",
+  "cpu": "Apple M2 Max",
+  "cpus": 12
+ },
+ "limitations": "Other jobs shared the machine (load average between about 10 and 20 on 12 cores while this ran), so single figures can move by several percent; the Go and Rust jobs of a request alternate within a round so they see the same load. The earlier record's bundle was at the previous reference pin and ran on a less loaded machine, so compare the ratios of Go to Rust wall time and the step figures rather than absolute seconds. Go runs as the pinned exporter's sim command, the engine production runs, not the production image's own CLI. Process start is included for both engines, as in production.",
+ "findings": [
+  "Preparing a tank no longer dominates its job. The exporter read the target's swing from three reset simulations per stat aura combination and kept every one of them alive through the rolls' pointers into their attack tables. It now reads the rolls, and the rolls under a hardcast, from the simulation the stat auras effect builds for the combination, and the rolls hold copies. The Protection and Fury Protection Warriors' prepare step went from about 1.5 s and 610 MB to 0.28 s and 105 MB; the Paladin tanks and the Bear from about 0.25 s and 170 MB to 0.15 to 0.18 s and 101 to 103 MB. Every exported value, and every accepted fixture and Go golden, is byte identical.",
+  "Routed Warrior tank jobs reach 0.88 and 0.90 in Go over Rust wall time, up from 0.36 and 0.39; the Paladin tanks and the Bear reach 1.02 to 1.06, up from 0.82 to 0.94.",
+  "A whole routed job is now about as fast as a Go job, not clearly faster: median Go over Rust wall time 1.01 (1.00 without the tank builds), against 0.98 before, with 14 of the 27 requests faster in Rust. The Rust iteration loop is 1.27 times as fast as Go's, but a routed job still pays what a Go job does not: Python, about 0.05 s with its interpreter start, and the exporter's reset simulation for every stat aura combination, which the Go job never builds. Both jobs pay the exporter's process start of about 0.1 s.",
+  "The gate no longer runs as its own process: sim --gate gates and simulates in one process, which removes a process start and a second parse of the prepared input.",
+  "Four jobs at a time, Go ran 370.8 jobs a minute and routed Rust 349.2, against 390.3 and 315.7 before, with a peak resident set of 114.0 MB for one routed job against 656.3 MB.",
+  "Every routed job gave the same DPS as the pinned Go engine with the same seed."
+ ],
+ "summary": {
+  "cases": 27,
+  "routed_to_rust": 27,
+  "go_over_rust_wall_median": 1.01,
+  "go_over_rust_wall_min": 0.84,
+  "go_over_rust_wall_max": 1.11,
+  "overhead_s_median": {
+   "go": 0.1056,
+   "rust": 0.185
+  },
+  "peak_rss_mb_median": {
+   "go": 93.2,
+   "rust": 93.6
+  },
+  "rust_step_wall_s_median": {
+   "prepare": 0.1218,
+   "sim": 0.4844
+  },
+  "all_same_dps": true
+ },
+ "throughput": {
+  "concurrency": 4,
+  "cases": [
+   "production-affliction-warlock",
+   "production-arms-warrior",
+   "production-assassination-rogue",
+   "production-balance-druid",
+   "production-beast-mastery-hunter",
+   "production-combat-rogue",
+   "production-demonology-warlock",
+   "production-destruction-warlock",
+   "production-elemental-shaman",
+   "production-enhancement-shaman",
+   "production-feral-bear-druid",
+   "production-feral-druid",
+   "production-fire",
+   "production-frostfire",
+   "production-fury-protection-warrior",
+   "production-holy-protection-paladin",
+   "production-marksmanship-hunter",
+   "production-protection-paladin",
+   "production-protection-warrior",
+   "production-ret-protection-paladin",
+   "production-retribution-paladin",
+   "production-shadow-priest",
+   "production-shockadin-paladin",
+   "production-smite-priest",
+   "production-subtlety-rogue",
+   "production-survival-hunter",
+   "production-warrior"
+  ],
+  "go": {
+   "jobs": 81,
+   "wall_s": 13.11,
+   "jobs_per_minute": 370.8,
+   "median_job_wall_s": 0.71,
+   "peak_rss_mb": 103.5
+  },
+  "rust": {
+   "jobs": 81,
+   "wall_s": 13.92,
+   "jobs_per_minute": 349.2,
+   "median_job_wall_s": 0.695,
+   "peak_rss_mb": 114.0
+  }
+ },
+ "rows": [
+  {
+   "case": "production-affliction-warlock",
+   "decision": "rust",
+   "go": {
+    "wall_s": 0.5406,
+    "cpu_s": 0.607,
+    "peak_rss_mb": 93.4,
+    "engine_s": 0.4208
+   },
+   "rust": {
+    "wall_s": 0.5435,
+    "cpu_s": 0.5803,
+    "peak_rss_mb": 93.6,
+    "engine_s": 0.3371
+   },
+   "rust_steps": {
+    "prepare": {
+     "wall_s": 0.1218,
+     "cpu_s": 0.1642,
+     "peak_rss_mb": 90.8
+    },
+    "sim": {
+     "wall_s": 0.348,
+     "cpu_s": 0.3406,
+     "peak_rss_mb": 8.5
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 0.99,
+   "overhead_s": {
+    "go": 0.1198,
+    "rust": 0.2064
+   }
+  },
+  {
+   "case": "production-arms-warrior",
+   "decision": "rust",
+   "go": {
+    "wall_s": 0.7216,
+    "cpu_s": 0.7877,
+    "peak_rss_mb": 91.4,
+    "engine_s": 0.6152
+   },
+   "rust": {
+    "wall_s": 0.7716,
+    "cpu_s": 0.9004,
+    "peak_rss_mb": 103.8,
+    "engine_s": 0.5196
+   },
+   "rust_steps": {
+    "prepare": {
+     "wall_s": 0.1876,
+     "cpu_s": 0.3239,
+     "peak_rss_mb": 103.9
+    },
+    "sim": {
+     "wall_s": 0.5305,
+     "cpu_s": 0.5231,
+     "peak_rss_mb": 8.6
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 0.94,
+   "overhead_s": {
+    "go": 0.1064,
+    "rust": 0.252
+   }
+  },
+  {
+   "case": "production-assassination-rogue",
+   "decision": "rust",
+   "go": {
+    "wall_s": 0.6619,
+    "cpu_s": 0.7084,
+    "peak_rss_mb": 79.5,
+    "engine_s": 0.5597
+   },
+   "rust": {
+    "wall_s": 0.6557,
+    "cpu_s": 0.6946,
+    "peak_rss_mb": 78.7,
+    "engine_s": 0.4747
+   },
+   "rust_steps": {
+    "prepare": {
+     "wall_s": 0.1147,
+     "cpu_s": 0.1587,
+     "peak_rss_mb": 79.1
+    },
+    "sim": {
+     "wall_s": 0.4847,
+     "cpu_s": 0.4761,
+     "peak_rss_mb": 8.0
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.01,
+   "overhead_s": {
+    "go": 0.1022,
+    "rust": 0.181
+   }
+  },
+  {
+   "case": "production-balance-druid",
+   "decision": "rust",
+   "go": {
+    "wall_s": 0.2919,
+    "cpu_s": 0.359,
+    "peak_rss_mb": 91.0,
+    "engine_s": 0.1927
+   },
+   "rust": {
+    "wall_s": 0.2992,
+    "cpu_s": 0.3156,
+    "peak_rss_mb": 70.7,
+    "engine_s": 0.1306
+   },
+   "rust_steps": {
+    "prepare": {
+     "wall_s": 0.0984,
+     "cpu_s": 0.1275,
+     "peak_rss_mb": 70.9
+    },
+    "sim": {
+     "wall_s": 0.1407,
+     "cpu_s": 0.1343,
+     "peak_rss_mb": 6.5
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 0.98,
+   "overhead_s": {
+    "go": 0.0992,
+    "rust": 0.1686
+   }
+  },
+  {
+   "case": "production-beast-mastery-hunter",
+   "decision": "rust",
+   "go": {
+    "wall_s": 0.6886,
+    "cpu_s": 0.7894,
+    "peak_rss_mb": 94.1,
+    "engine_s": 0.5857
+   },
+   "rust": {
+    "wall_s": 0.6441,
+    "cpu_s": 0.6961,
+    "peak_rss_mb": 96.0,
+    "engine_s": 0.4591
+   },
+   "rust_steps": {
+    "prepare": {
+     "wall_s": 0.1147,
+     "cpu_s": 0.1631,
+     "peak_rss_mb": 97.1
+    },
+    "sim": {
+     "wall_s": 0.4661,
+     "cpu_s": 0.4581,
+     "peak_rss_mb": 8.1
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.07,
+   "overhead_s": {
+    "go": 0.1029,
+    "rust": 0.185
+   }
+  },
+  {
+   "case": "production-combat-rogue",
+   "decision": "rust",
+   "go": {
+    "wall_s": 0.688,
+    "cpu_s": 0.7285,
+    "peak_rss_mb": 77.7,
+    "engine_s": 0.5797
+   },
+   "rust": {
+    "wall_s": 0.6616,
+    "cpu_s": 0.694,
+    "peak_rss_mb": 81.0,
+    "engine_s": 0.4806
+   },
+   "rust_steps": {
+    "prepare": {
+     "wall_s": 0.1182,
+     "cpu_s": 0.1593,
+     "peak_rss_mb": 78.9
+    },
+    "sim": {
+     "wall_s": 0.4905,
+     "cpu_s": 0.4831,
+     "peak_rss_mb": 8.7
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.04,
+   "overhead_s": {
+    "go": 0.1083,
+    "rust": 0.181
+   }
+  },
+  {
+   "case": "production-demonology-warlock",
+   "decision": "rust",
+   "go": {
+    "wall_s": 0.5404,
+    "cpu_s": 0.6053,
+    "peak_rss_mb": 93.9,
+    "engine_s": 0.4388
+   },
+   "rust": {
+    "wall_s": 0.5598,
+    "cpu_s": 0.5701,
+    "peak_rss_mb": 87.3,
+    "engine_s": 0.3462
+   },
+   "rust_steps": {
+    "prepare": {
+     "wall_s": 0.1256,
+     "cpu_s": 0.1622,
+     "peak_rss_mb": 91.4
+    },
+    "sim": {
+     "wall_s": 0.36,
+     "cpu_s": 0.3509,
+     "peak_rss_mb": 8.6
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 0.97,
+   "overhead_s": {
+    "go": 0.1016,
+    "rust": 0.2136
+   }
+  },
+  {
+   "case": "production-destruction-warlock",
+   "decision": "rust",
+   "go": {
+    "wall_s": 0.3183,
+    "cpu_s": 0.3794,
+    "peak_rss_mb": 92.2,
+    "engine_s": 0.2199
+   },
+   "rust": {
+    "wall_s": 0.3244,
+    "cpu_s": 0.3553,
+    "peak_rss_mb": 74.6,
+    "engine_s": 0.1628
+   },
+   "rust_steps": {
+    "prepare": {
+     "wall_s": 0.1013,
+     "cpu_s": 0.1379,
+     "peak_rss_mb": 74.5
+    },
+    "sim": {
+     "wall_s": 0.1726,
+     "cpu_s": 0.1667,
+     "peak_rss_mb": 6.6
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 0.98,
+   "overhead_s": {
+    "go": 0.0984,
+    "rust": 0.1616
+   }
+  },
+  {
+   "case": "production-elemental-shaman",
+   "decision": "rust",
+   "go": {
+    "wall_s": 0.328,
+    "cpu_s": 0.3932,
+    "peak_rss_mb": 96.5,
+    "engine_s": 0.2271
+   },
+   "rust": {
+    "wall_s": 0.3262,
+    "cpu_s": 0.3523,
+    "peak_rss_mb": 79.4,
+    "engine_s": 0.1621
+   },
+   "rust_steps": {
+    "prepare": {
+     "wall_s": 0.1029,
+     "cpu_s": 0.1469,
+     "peak_rss_mb": 79.6
+    },
+    "sim": {
+     "wall_s": 0.1714,
+     "cpu_s": 0.1651,
+     "peak_rss_mb": 6.8
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.01,
+   "overhead_s": {
+    "go": 0.1009,
+    "rust": 0.1641
+   }
+  },
+  {
+   "case": "production-enhancement-shaman",
+   "decision": "rust",
+   "go": {
+    "wall_s": 0.6441,
+    "cpu_s": 0.7202,
+    "peak_rss_mb": 93.1,
+    "engine_s": 0.538
+   },
+   "rust": {
+    "wall_s": 0.7708,
+    "cpu_s": 0.9851,
+    "peak_rss_mb": 104.0,
+    "engine_s": 0.429
+   },
+   "rust_steps": {
+    "prepare": {
+     "wall_s": 0.2771,
+     "cpu_s": 0.4865,
+     "peak_rss_mb": 104.4
+    },
+    "sim": {
+     "wall_s": 0.4426,
+     "cpu_s": 0.436,
+     "peak_rss_mb": 8.7
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 0.84,
+   "overhead_s": {
+    "go": 0.1061,
+    "rust": 0.3418
+   }
+  },
+  {
+   "case": "production-feral-bear-druid",
+   "decision": "rust",
+   "go": {
+    "wall_s": 0.6268,
+    "cpu_s": 0.6526,
+    "peak_rss_mb": 91.6,
+    "engine_s": 0.5083
+   },
+   "rust": {
+    "wall_s": 0.5925,
+    "cpu_s": 0.6538,
+    "peak_rss_mb": 105.0,
+    "engine_s": 0.3745
+   },
+   "rust_steps": {
+    "prepare": {
+     "wall_s": 0.1522,
+     "cpu_s": 0.2353,
+     "peak_rss_mb": 103.4
+    },
+    "sim": {
+     "wall_s": 0.4108,
+     "cpu_s": 0.3972,
+     "peak_rss_mb": 8.6
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.06,
+   "overhead_s": {
+    "go": 0.1185,
+    "rust": 0.218
+   }
+  },
+  {
+   "case": "production-feral-druid",
+   "decision": "rust",
+   "go": {
+    "wall_s": 0.7803,
+    "cpu_s": 0.8259,
+    "peak_rss_mb": 87.0,
+    "engine_s": 0.6746
+   },
+   "rust": {
+    "wall_s": 0.7625,
+    "cpu_s": 0.7961,
+    "peak_rss_mb": 86.1,
+    "engine_s": 0.5822
+   },
+   "rust_steps": {
+    "prepare": {
+     "wall_s": 0.1188,
+     "cpu_s": 0.1674,
+     "peak_rss_mb": 86.9
+    },
+    "sim": {
+     "wall_s": 0.5939,
+     "cpu_s": 0.5833,
+     "peak_rss_mb": 7.5
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.02,
+   "overhead_s": {
+    "go": 0.1057,
+    "rust": 0.1803
+   }
+  },
+  {
+   "case": "production-fire",
+   "decision": "rust",
+   "go": {
+    "wall_s": 0.341,
+    "cpu_s": 0.4278,
+    "peak_rss_mb": 93.1,
+    "engine_s": 0.2399
+   },
+   "rust": {
+    "wall_s": 0.352,
+    "cpu_s": 0.3731,
+    "peak_rss_mb": 69.6,
+    "engine_s": 0.185
+   },
+   "rust_steps": {
+    "prepare": {
+     "wall_s": 0.1017,
+     "cpu_s": 0.1302,
+     "peak_rss_mb": 69.6
+    },
+    "sim": {
+     "wall_s": 0.1925,
+     "cpu_s": 0.1861,
+     "peak_rss_mb": 7.2
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 0.97,
+   "overhead_s": {
+    "go": 0.1011,
+    "rust": 0.167
+   }
+  },
+  {
+   "case": "production-frostfire",
+   "decision": "rust",
+   "go": {
+    "wall_s": 0.2877,
+    "cpu_s": 0.3554,
+    "peak_rss_mb": 93.2,
+    "engine_s": 0.1892
+   },
+   "rust": {
+    "wall_s": 0.2962,
+    "cpu_s": 0.3167,
+    "peak_rss_mb": 69.7,
+    "engine_s": 0.1355
+   },
+   "rust_steps": {
+    "prepare": {
+     "wall_s": 0.1012,
+     "cpu_s": 0.1301,
+     "peak_rss_mb": 69.5
+    },
+    "sim": {
+     "wall_s": 0.1453,
+     "cpu_s": 0.1386,
+     "peak_rss_mb": 6.8
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 0.97,
+   "overhead_s": {
+    "go": 0.0985,
+    "rust": 0.1607
+   }
+  },
+  {
+   "case": "production-fury-protection-warrior",
+   "decision": "rust",
+   "go": {
+    "wall_s": 0.8779,
+    "cpu_s": 0.965,
+    "peak_rss_mb": 97.4,
+    "engine_s": 0.7715
+   },
+   "rust": {
+    "wall_s": 0.9768,
+    "cpu_s": 1.2218,
+    "peak_rss_mb": 105.3,
+    "engine_s": 0.6301
+   },
+   "rust_steps": {
+    "prepare": {
+     "wall_s": 0.2804,
+     "cpu_s": 0.5266,
+     "peak_rss_mb": 104.8
+    },
+    "sim": {
+     "wall_s": 0.6426,
+     "cpu_s": 0.635,
+     "peak_rss_mb": 10.2
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 0.9,
+   "overhead_s": {
+    "go": 0.1064,
+    "rust": 0.3467
+   }
+  },
+  {
+   "case": "production-holy-protection-paladin",
+   "decision": "rust",
+   "go": {
+    "wall_s": 0.7359,
+    "cpu_s": 0.8376,
+    "peak_rss_mb": 94.4,
+    "engine_s": 0.6326
+   },
+   "rust": {
+    "wall_s": 0.721,
+    "cpu_s": 0.8386,
+    "peak_rss_mb": 101.0,
+    "engine_s": 0.4774
+   },
+   "rust_steps": {
+    "prepare": {
+     "wall_s": 0.1833,
+     "cpu_s": 0.3029,
+     "peak_rss_mb": 100.7
+    },
+    "sim": {
+     "wall_s": 0.4907,
+     "cpu_s": 0.4829,
+     "peak_rss_mb": 10.2
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.02,
+   "overhead_s": {
+    "go": 0.1033,
+    "rust": 0.2436
+   }
+  },
+  {
+   "case": "production-marksmanship-hunter",
+   "decision": "rust",
+   "go": {
+    "wall_s": 0.4952,
+    "cpu_s": 0.5748,
+    "peak_rss_mb": 92.2,
+    "engine_s": 0.3896
+   },
+   "rust": {
+    "wall_s": 0.4869,
+    "cpu_s": 0.5268,
+    "peak_rss_mb": 79.6,
+    "engine_s": 0.3138
+   },
+   "rust_steps": {
+    "prepare": {
+     "wall_s": 0.1103,
+     "cpu_s": 0.1611,
+     "peak_rss_mb": 80.6
+    },
+    "sim": {
+     "wall_s": 0.326,
+     "cpu_s": 0.3196,
+     "peak_rss_mb": 7.0
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.02,
+   "overhead_s": {
+    "go": 0.1056,
+    "rust": 0.1731
+   }
+  },
+  {
+   "case": "production-protection-paladin",
+   "decision": "rust",
+   "go": {
+    "wall_s": 0.8019,
+    "cpu_s": 0.897,
+    "peak_rss_mb": 93.3,
+    "engine_s": 0.7002
+   },
+   "rust": {
+    "wall_s": 0.783,
+    "cpu_s": 0.8975,
+    "peak_rss_mb": 102.3,
+    "engine_s": 0.5435
+   },
+   "rust_steps": {
+    "prepare": {
+     "wall_s": 0.1737,
+     "cpu_s": 0.2873,
+     "peak_rss_mb": 101.5
+    },
+    "sim": {
+     "wall_s": 0.5585,
+     "cpu_s": 0.5502,
+     "peak_rss_mb": 10.9
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.02,
+   "overhead_s": {
+    "go": 0.1017,
+    "rust": 0.2395
+   }
+  },
+  {
+   "case": "production-protection-warrior",
+   "decision": "rust",
+   "go": {
+    "wall_s": 0.8116,
+    "cpu_s": 0.8903,
+    "peak_rss_mb": 99.6,
+    "engine_s": 0.7025
+   },
+   "rust": {
+    "wall_s": 0.9219,
+    "cpu_s": 1.1624,
+    "peak_rss_mb": 106.0,
+    "engine_s": 0.5819
+   },
+   "rust_steps": {
+    "prepare": {
+     "wall_s": 0.2839,
+     "cpu_s": 0.5267,
+     "peak_rss_mb": 105.8
+    },
+    "sim": {
+     "wall_s": 0.5904,
+     "cpu_s": 0.583,
+     "peak_rss_mb": 10.1
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 0.88,
+   "overhead_s": {
+    "go": 0.1091,
+    "rust": 0.34
+   }
+  },
+  {
+   "case": "production-ret-protection-paladin",
+   "decision": "rust",
+   "go": {
+    "wall_s": 0.8451,
+    "cpu_s": 0.9631,
+    "peak_rss_mb": 99.2,
+    "engine_s": 0.739
+   },
+   "rust": {
+    "wall_s": 0.8223,
+    "cpu_s": 0.94,
+    "peak_rss_mb": 101.4,
+    "engine_s": 0.5677
+   },
+   "rust_steps": {
+    "prepare": {
+     "wall_s": 0.1782,
+     "cpu_s": 0.3008,
+     "peak_rss_mb": 103.1
+    },
+    "sim": {
+     "wall_s": 0.5807,
+     "cpu_s": 0.5727,
+     "peak_rss_mb": 11.1
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.03,
+   "overhead_s": {
+    "go": 0.1061,
+    "rust": 0.2546
+   }
+  },
+  {
+   "case": "production-retribution-paladin",
+   "decision": "rust",
+   "go": {
+    "wall_s": 0.7323,
+    "cpu_s": 0.8343,
+    "peak_rss_mb": 97.1,
+    "engine_s": 0.6257
+   },
+   "rust": {
+    "wall_s": 0.7119,
+    "cpu_s": 0.7471,
+    "peak_rss_mb": 95.5,
+    "engine_s": 0.521
+   },
+   "rust_steps": {
+    "prepare": {
+     "wall_s": 0.1259,
+     "cpu_s": 0.1903,
+     "peak_rss_mb": 97.8
+    },
+    "sim": {
+     "wall_s": 0.5308,
+     "cpu_s": 0.5234,
+     "peak_rss_mb": 9.5
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.03,
+   "overhead_s": {
+    "go": 0.1066,
+    "rust": 0.1909
+   }
+  },
+  {
+   "case": "production-shadow-priest",
+   "decision": "rust",
+   "go": {
+    "wall_s": 0.297,
+    "cpu_s": 0.3425,
+    "peak_rss_mb": 81.8,
+    "engine_s": 0.1945
+   },
+   "rust": {
+    "wall_s": 0.3029,
+    "cpu_s": 0.3191,
+    "peak_rss_mb": 71.4,
+    "engine_s": 0.141
+   },
+   "rust_steps": {
+    "prepare": {
+     "wall_s": 0.1004,
+     "cpu_s": 0.1236,
+     "peak_rss_mb": 71.3
+    },
+    "sim": {
+     "wall_s": 0.1523,
+     "cpu_s": 0.1453,
+     "peak_rss_mb": 7.0
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 0.98,
+   "overhead_s": {
+    "go": 0.1025,
+    "rust": 0.1619
+   }
+  },
+  {
+   "case": "production-shockadin-paladin",
+   "decision": "rust",
+   "go": {
+    "wall_s": 0.7121,
+    "cpu_s": 0.818,
+    "peak_rss_mb": 94.1,
+    "engine_s": 0.6083
+   },
+   "rust": {
+    "wall_s": 0.6623,
+    "cpu_s": 0.7183,
+    "peak_rss_mb": 97.4,
+    "engine_s": 0.4805
+   },
+   "rust_steps": {
+    "prepare": {
+     "wall_s": 0.1313,
+     "cpu_s": 0.1778,
+     "peak_rss_mb": 95.5
+    },
+    "sim": {
+     "wall_s": 0.4844,
+     "cpu_s": 0.477,
+     "peak_rss_mb": 9.4
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.08,
+   "overhead_s": {
+    "go": 0.1038,
+    "rust": 0.1818
+   }
+  },
+  {
+   "case": "production-smite-priest",
+   "decision": "rust",
+   "go": {
+    "wall_s": 0.3025,
+    "cpu_s": 0.3679,
+    "peak_rss_mb": 91.7,
+    "engine_s": 0.196
+   },
+   "rust": {
+    "wall_s": 0.3031,
+    "cpu_s": 0.3228,
+    "peak_rss_mb": 71.3,
+    "engine_s": 0.1365
+   },
+   "rust_steps": {
+    "prepare": {
+     "wall_s": 0.1006,
+     "cpu_s": 0.1292,
+     "peak_rss_mb": 71.4
+    },
+    "sim": {
+     "wall_s": 0.1462,
+     "cpu_s": 0.1399,
+     "peak_rss_mb": 7.0
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.0,
+   "overhead_s": {
+    "go": 0.1065,
+    "rust": 0.1666
+   }
+  },
+  {
+   "case": "production-subtlety-rogue",
+   "decision": "rust",
+   "go": {
+    "wall_s": 0.7742,
+    "cpu_s": 0.8161,
+    "peak_rss_mb": 86.8,
+    "engine_s": 0.6634
+   },
+   "rust": {
+    "wall_s": 0.7469,
+    "cpu_s": 0.7843,
+    "peak_rss_mb": 78.3,
+    "engine_s": 0.5733
+   },
+   "rust_steps": {
+    "prepare": {
+     "wall_s": 0.1094,
+     "cpu_s": 0.1548,
+     "peak_rss_mb": 80.0
+    },
+    "sim": {
+     "wall_s": 0.5879,
+     "cpu_s": 0.5801,
+     "peak_rss_mb": 8.4
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.04,
+   "overhead_s": {
+    "go": 0.1108,
+    "rust": 0.1736
+   }
+  },
+  {
+   "case": "production-survival-hunter",
+   "decision": "rust",
+   "go": {
+    "wall_s": 0.747,
+    "cpu_s": 0.8547,
+    "peak_rss_mb": 93.8,
+    "engine_s": 0.6385
+   },
+   "rust": {
+    "wall_s": 0.673,
+    "cpu_s": 0.7262,
+    "peak_rss_mb": 98.0,
+    "engine_s": 0.4789
+   },
+   "rust_steps": {
+    "prepare": {
+     "wall_s": 0.1277,
+     "cpu_s": 0.1936,
+     "peak_rss_mb": 97.5
+    },
+    "sim": {
+     "wall_s": 0.4872,
+     "cpu_s": 0.4803,
+     "peak_rss_mb": 8.0
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.11,
+   "overhead_s": {
+    "go": 0.1085,
+    "rust": 0.1941
+   }
+  },
+  {
+   "case": "production-warrior",
+   "decision": "rust",
+   "go": {
+    "wall_s": 0.8008,
+    "cpu_s": 0.8876,
+    "peak_rss_mb": 94.3,
+    "engine_s": 0.6955
+   },
+   "rust": {
+    "wall_s": 0.8434,
+    "cpu_s": 0.9641,
+    "peak_rss_mb": 100.8,
+    "engine_s": 0.5871
+   },
+   "rust_steps": {
+    "prepare": {
+     "wall_s": 0.1955,
+     "cpu_s": 0.326,
+     "peak_rss_mb": 104.4
+    },
+    "sim": {
+     "wall_s": 0.5761,
+     "cpu_s": 0.5688,
+     "peak_rss_mb": 9.2
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 0.95,
+   "overhead_s": {
+    "go": 0.1053,
+    "rust": 0.2563
+   }
+  }
+ ]
+}

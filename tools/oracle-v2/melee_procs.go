@@ -40,13 +40,8 @@ var commonStatAuraLabels = []string{"Blood Fury", "Elune's Light", "Holy Strengt
 	"Windfury Totem (External)", "Battle Shout (External)", "Headmaster's Charge", "Crusader's Wrath",
 	"Diamond Flask"}
 
-// unit.go AddStatsDynamic recomputes every stat from the active flat bonuses, so stats are a
-// function of which stat auras are active. Each combination is read from a separate reset
-// simulation with exactly those auras active: combination i has aura j active when bit j is
-// set, and an aura active after the reset, as a druid's starting form, is deactivated when
-// its bit is clear. Maximum mana and healing power are read too when some combination changes
-// them.
-func statAurasEffect(request *proto.RaidSimRequest, character *core.Character, class classExport, agent core.Agent) map[string]any {
+// The stat auras of the character, in the order a combination's bits number them.
+func characterStatAuras(character *core.Character, class classExport, agent core.Agent) []string {
 	labels := []string{}
 	candidates := append([]string{}, commonStatAuraLabels...)
 	// consumes.go: a potion's stat buff is a temporary stats aura named for the potion.
@@ -72,6 +67,21 @@ func statAurasEffect(request *proto.RaidSimRequest, character *core.Character, c
 			labels = append(labels, label)
 		}
 	}
+	return labels
+}
+
+// A function that reads more of a stat aura combination's reset simulation, which
+// statAurasEffect has already set up. `exact` is false when its own setup left a different
+// simulation than setStatAuras does, so the reader must set one up itself.
+type comboReader func(mask int, simulation *core.Simulation, player *core.Character, exact bool)
+
+// unit.go AddStatsDynamic recomputes every stat from the active flat bonuses, so stats are a
+// function of which stat auras are active. Each combination is read from a separate reset
+// simulation with exactly those auras active: combination i has aura j active when bit j is
+// set, and an aura active after the reset, as a druid's starting form, is deactivated when
+// its bit is clear. Maximum mana and healing power are read too when some combination changes
+// them. The reader, when there is one, reads the same simulations for the target's swing.
+func statAurasEffect(request *proto.RaidSimRequest, labels []string, reader comboReader) map[string]any {
 	if len(labels) == 0 {
 		return nil
 	}
@@ -92,11 +102,14 @@ func statAurasEffect(request *proto.RaidSimRequest, character *core.Character, c
 				aura.Deactivate(simulation)
 			}
 		}
+		exact := true
 		for bit, label := range labels {
 			aura := player.GetAura(label)
 			if want := mask&(1<<bit) != 0; want && !aura.IsActive() {
 				aura.Activate(simulation)
 			} else if !want && aura.IsActive() {
+				// An activation switched this aura on again: setStatAuras would leave it up.
+				exact = false
 				aura.Deactivate(simulation)
 			}
 		}
@@ -122,6 +135,9 @@ func statAurasEffect(request *proto.RaidSimRequest, character *core.Character, c
 			if value != base[name] {
 				changed[name] = true
 			}
+		}
+		if reader != nil {
+			reader(mask, simulation, player, exact)
 		}
 	}
 	names := []string{}

@@ -222,6 +222,13 @@ choices, so `grep` the class's Go package for `ActiveTargetUnits`, `AllTargetUni
 `NextActiveTarget`, `Aoe` and `Cleave` before opening it. Then compare the class at 2 to 5
 targets, for example with requests from `tools/reference-capture/builds -targets N`.
 
+A rotation's `castSpell` may name a target past the first. A class opts in through its gate's
+`other_target_casts` hook, which lists what its spells do not yet land on the target they are
+cast at, as the Warlock's Demonic Brand; `None` refuses every such cast. Check a class with
+`python3 tools/rotation_forms.py casts --output <scratch>`, which aims every cast of each
+production rotation at another target, and compare the requests with `tools/prepared_v2.py
+compare`: a debuff or aura that lands on the first target shows as a difference.
+
 To inspect every internal module in generated Rust documentation:
 
 ```sh

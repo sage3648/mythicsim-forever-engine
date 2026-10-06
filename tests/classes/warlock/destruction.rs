@@ -77,13 +77,25 @@ fn curse_of_the_elements_needs_its_effect() {
         .contains(&"rotation reaches spell 1311680 without a known behavior".to_string()));
 }
 
-/// Only the player and the current target are units in scope for a source unit.
+/// The player and the targets are units in scope for a source unit; the sets of all targets
+/// and of all players, other players and pets are not.
 #[test]
 fn aura_source_units_outside_scope_are_unsupported() {
+    for source in [
+        json!({"type": "Target", "index": 1}),
+        json!({"type": "PreviousTarget"}),
+    ] {
+        let mut value = production();
+        let condition =
+            &mut value["player"]["rotation"]["priorityList"][CURSE_ITEM]["action"]["condition"];
+        condition["not"]["val"]["auraIsActive"]["sourceUnit"] = source;
+        let prepared: PreparedV2 = serde_json::from_value(value).unwrap();
+        assert_eq!(check_prepared(&prepared), Ok(()));
+    }
     let mut value = production();
     let condition =
         &mut value["player"]["rotation"]["priorityList"][CURSE_ITEM]["action"]["condition"];
-    condition["not"]["val"]["auraIsActive"]["sourceUnit"] = json!({"type": "PreviousTarget"});
+    condition["not"]["val"]["auraIsActive"]["sourceUnit"] = json!({"type": "AllTargets"});
     let reasons = reasons(value);
     assert!(
         reasons.iter().any(|reason| reason.starts_with(&format!(

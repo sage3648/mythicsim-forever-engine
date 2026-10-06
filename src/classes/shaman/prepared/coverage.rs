@@ -14,6 +14,7 @@ pub(crate) const GATE: ClassGate = ClassGate {
     limits,
     several_targets: Some(several_targets),
     player_movement: false,
+    other_target_casts: Some(crate::engine::coverage::no_limits),
 };
 
 /// Shaman effect kinds implemented in Rust and validated against the pinned Go reference.

@@ -2,8 +2,8 @@
 
 The application worker runs engines as subprocesses. `tools/route.py` is the one
 command it calls to run a request in Rust: it takes a `RaidSimRequest`, prepares it
-with the pinned Go exporter, asks the Rust coverage gate whether it supports the
-input, and either runs Rust or tells the worker to use Go. It runs from a bundle that
+with the pinned Go exporter, has one Rust process gate the prepared input with the coverage
+gate and run it when it is supported, and otherwise tells the worker to use Go. It runs from a bundle that
 [`tools/shadow.py build`](shadow-sims.md#build-a-bundle) makes, so the worker needs
 neither Go nor Cargo, only Python 3.
 
@@ -26,14 +26,15 @@ The command prints one JSON decision and writes it to `NEW_FOLDER/decision.json`
 | --- | --- | --- | --- |
 | `rust` | Rust ran the request. `result` names `NEW_FOLDER/result.json`, its `RaidSimResult` in the JSON Go prints; `identity` is the engine that made it | 0 | Serve the Rust result |
 | `fallback` | The gate refused the input. `refusals` lists each reason with its stable code, and `codes` the distinct codes. No result is written | 0 | Run the request in Go and count the fallback by its codes |
-| `fault` | A step failed. `stage` is `request`, `prepare`, `check` or `rust`, and `error` says what failed | 2 | Record a fault; the user can still be served by Go, but a fault is never counted as a fallback |
+| `fault` | A step failed. `stage` is `request`, `prepare`, `check` or `rust`, and `error` says what failed; the gate runs in the same process as the simulation, and a `check` fault is an invalid prepared input or an unreadable refusal | 2 | Record a fault; the user can still be served by Go, but a fault is never counted as a fallback |
 
 A fault is anything that is not a decision: an unreadable request, a step that exits with
 an error or outlives its timeout, gate output that cannot be read, a refusal without a
 reason, or a Rust result without its metrics. A fault never writes `result.json`, so a
 partial simulation is never returned.
 
-Every decision also carries `timings_ms` for the steps that ran, `seed` and
+Every decision also carries `timings_ms`, the wall time of each step that ran (`prepare`, then
+`rust`, which includes the gate, or `check` alone for a refusal), `seed` and
 `seed_source` (`request`, `argument` or `drawn`), and the bundle's `manifest.json`
 when the bundle has one. The refusal codes are listed in the
 [prepared v2 contract](prepared-v2.md#unknown-and-unsupported-input).
@@ -44,15 +45,36 @@ repeated exactly.
 
 ## Cost of a routed job
 
-A routed job runs more than the simulation: Python, the Go exporter's prepare, the gate's
-check and then Rust, each its own process. The
-[whole-job benchmark](../benchmarks/2026-10-06-whole-jobs.json) measured the production
-requests at 3,000 iterations. Rust's iteration loop is about 1.27 times as fast as Go's
-and its simulation peaks at about 10 MB, but a whole routed job takes about as long as a
-Go job, since the prepare step costs about 0.1 s and 90 MB. Preparing a tank costs far more:
-the exporter exports the target's swing for every stat aura combination, up to 1.5 s and
-600 MB for a Protection Warrior. Routing therefore gains no speed until preparation gets
-cheaper; the gain to expect from it today is the memory of the simulation step.
+A routed job runs more than the simulation: Python, the Go exporter's prepare and then one
+Rust process that gates the prepared input and simulates it. The
+[whole-job benchmark](../benchmarks/2026-10-06-whole-jobs-after-cheaper-prepare.json)
+measures the production requests at 3,000 iterations. Rust's iteration loop is about 1.27
+times as fast as Go's and a Rust job peaks at about 100 MB, but a whole routed job takes
+about as long as a Go job: median Go over Rust wall time 1.01, with 14 of the 27 requests
+faster in Rust. Four jobs at a time, Go ran 371 jobs a minute and routed Rust 349.
+
+What a routed job pays that a Go job does not is Python, about 0.05 s of interpreter start
+and file handling, and the exporter's reset simulation for each stat aura combination (a
+median prepare of 0.12 s, of which about 0.1 s is the exporter's process start, which a Go
+job pays too). The loop's gain, about 0.1 s per job at this size, covers little more than
+that.
+
+Preparing a tank used to cost far more. The exporter read the target's swing from three
+reset simulations for every stat aura combination, and kept all of them in memory, which
+took 1.5 s and 610 MB for a Protection Warrior and made its routed job 2.8 times as long as
+a Go job. It now reads the swing from the simulation the stat auras effect builds for the
+combination, which takes 0.28 s and 105 MB. The Warrior tanks' routed jobs reach 0.88 and 0.90 of
+the Go job's speed, the Paladin tanks' and the Bear's 1.02 to 1.06. Every exported value is
+unchanged. The gate runs inside the Rust process (`sim --gate`), so a routed request starts
+no separate `check` process; a [batch](#batch-jobs) still gates every request first.
+
+Two costs remain that this cannot remove. The exporter's process start is Go package
+initialization, mostly loading the item database, in the pinned reference, which the
+exporter cannot make lazy. A reset simulation cannot be reused across combinations: a
+simulation reset after an aura combination read some values, such as an armor multiplier,
+one unit in the last place away from a new simulation's. Only an exporter that stays
+running between jobs, or Phase 6, which removes the Go exporter from the path, saves the
+process start for a routed job.
 
 ## Batch jobs
 
