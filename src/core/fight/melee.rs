@@ -88,8 +88,9 @@ pub(crate) struct AutoAttacks {
     pub(crate) oh: WeaponAttack,
     pub(crate) ranged: WeaponAttack,
     pub(crate) enemy: WeaponAttack,
-    /// The main hand timers of the targets past the first, which never swing at the player but
-    /// whose parry haste reads and moves them, by position among the copies.
+    /// The main hand timers of the targets past the first, by position among the copies. A
+    /// copy swings at a tank as the first target does; otherwise it only keeps the timer its
+    /// parry haste reads and moves.
     pub(crate) extra_enemies: Vec<WeaponAttack>,
     /// Go `sim.weaponAttacks`, in the order swings were added, by unit. The player's copy
     /// holds the simulation's list; a pet's stays empty.
@@ -108,6 +109,22 @@ impl AutoAttacks {
             Hand::Off => &mut self.oh,
             Hand::Ranged => &mut self.ranged,
             Hand::Enemy => &mut self.enemy,
+        }
+    }
+
+    /// The main hand swing of a target: the first target's, or its copy's timer, which opens
+    /// with the copy's reset.
+    pub(crate) fn enemy_attack(&mut self, target: Side) -> &mut WeaponAttack {
+        match target {
+            Side::Extra(extra) => {
+                let extra = usize::from(extra);
+                if self.extra_enemies.len() <= extra {
+                    self.extra_enemies
+                        .resize_with(extra + 1, WeaponAttack::default);
+                }
+                &mut self.extra_enemies[extra]
+            }
+            _ => &mut self.enemy,
         }
     }
 
@@ -393,49 +410,37 @@ impl<A: Agent> Fight<A> {
         self.autos.min_time = self.autos.min_time.min(earliest);
     }
 
-    /// Go `AutoAttacks.startPull` for the target, whose swing is added before the player's.
-    pub(crate) fn start_enemy_attack(&mut self) {
-        if self.enemy.is_none() {
-            return;
+    /// Go `AutoAttacks.startPull` for the targets, whose swings are added in unit index order
+    /// before the player's.
+    pub(crate) fn start_enemy_attacks(&mut self) {
+        for position in 0..self.enemies.len() {
+            let target = Side::target(position);
+            let haste = self.enemy_melee_haste(target);
+            let attack = self.autos.enemy_attack(target);
+            attack.enabled = true;
+            attack.update_swing_duration(haste);
+            let swing_at = attack.swing_at;
+            self.autos.attacks.push((target, Hand::Enemy));
+            self.autos.min_time = self.autos.min_time.min(swing_at);
         }
-        let haste = self.enemy_melee_haste();
-        let attack = &mut self.autos.enemy;
-        attack.enabled = true;
-        attack.update_swing_duration(haste);
-        let swing_at = attack.swing_at;
-        self.autos.attacks.push((Side::Target, Hand::Enemy));
-        self.autos.min_time = self.autos.min_time.min(swing_at);
     }
 
-    /// Go `AutoAttacks.reset` for the target: its main hand opens at a random point of its
-    /// swing timer, from the roll Go draws at the target's reset.
-    pub(crate) fn reset_enemy_attack(&mut self, roll: f64) {
-        let Some(enemy) = self.enemy.as_mut() else {
-            // An untanked target only keeps the timer, which its parry haste reads.
+    /// Go `AutoAttacks.reset` for a target: its main hand opens at a random point of its swing
+    /// timer, from the roll Go draws at the target's reset. A target the player does not tank
+    /// only keeps the timer, which its parry haste reads.
+    pub(crate) fn reset_enemy_attack(&mut self, target: Side, roll: f64) {
+        let position = target.target_position().expect("the unit is a target");
+        let Some(enemy) = self.enemies.get_mut(position) else {
             if let Some((speed, haste)) = self.untanked_swing {
-                Self::open_enemy_swing(&mut self.autos.enemy, speed, haste, roll);
+                Self::open_enemy_swing(self.autos.enemy_attack(target), speed, haste, roll);
             }
             return;
         };
         // Go Unit.reset restores the target's pseudo stats first.
         enemy.melee_speed_multiplier = enemy.values.melee_speed_multiplier.unwrap_or(1.0);
         let speed = enemy.values.swing_speed;
-        let haste = self.enemy_melee_haste();
-        Self::open_enemy_swing(&mut self.autos.enemy, speed, haste, roll);
-    }
-
-    /// The same for a target past the first, which never swings: only its timer, which its
-    /// parry haste reads, from the roll Go draws at its reset.
-    pub(crate) fn reset_extra_enemy_attack(&mut self, extra: usize, roll: f64) {
-        let Some((speed, haste)) = self.untanked_swing else {
-            return;
-        };
-        if self.autos.extra_enemies.len() <= extra {
-            self.autos
-                .extra_enemies
-                .resize_with(extra + 1, WeaponAttack::default);
-        }
-        Self::open_enemy_swing(&mut self.autos.extra_enemies[extra], speed, haste, roll);
+        let haste = self.enemy_melee_haste(target);
+        Self::open_enemy_swing(self.autos.enemy_attack(target), speed, haste, roll);
     }
 
     /// A target's main hand at its reset: disabled, opening at the roll's point of its swing.
@@ -573,17 +578,20 @@ impl<A: Agent> Fight<A> {
     /// which a melee speed change during it can move.
     fn try_swing(&mut self, side: Side, hand: Hand) -> i64 {
         let now = self.now;
-        if now < self.autos_of_mut(side).attack(hand).swing_at {
+        if hand == Hand::Enemy && now < self.autos.enemy_attack(side).swing_at {
+            return self.autos.enemy_attack(side).swing_at;
+        }
+        if hand != Hand::Enemy && now < self.autos_of_mut(side).attack(hand).swing_at {
             return self.autos_of_mut(side).attack(hand).swing_at;
         }
         if hand == Hand::Enemy {
-            let attack = self.autos.attack(hand);
+            let attack = self.autos.enemy_attack(side);
             attack.previous_swing = attack.swing_at;
             attack.swing_at = now + attack.cur_swing_duration;
             attack.natural_ready_at = attack.swing_at;
             // The target's own reaction runs no rotation in scope.
-            self.enemy_swing();
-            return self.autos.attack(hand).swing_at;
+            self.enemy_swing(side);
+            return self.autos.enemy_attack(side).swing_at;
         }
         let mut spell = self
             .autos_of_mut(side)
@@ -623,7 +631,7 @@ impl<A: Agent> Fight<A> {
         }
         self.cast(spell, Side::Target);
         // Go ReactToEvent(false, true) after the swing, unless the player is tanking.
-        if side != Side::Player || self.enemy.is_none() {
+        if side != Side::Player || !self.tanked() {
             self.react_to_event(side);
         }
         self.autos_of_mut(side).attack(hand).swing_at
@@ -874,6 +882,7 @@ impl<A: Agent> Fight<A> {
         let mut result = SpellResult {
             armor_multiplier: 0.0,
             target,
+            attacker: self.spells[spell].caster,
             outcome: 0,
             damage: 0.0,
             threat: 0.0,
@@ -896,6 +905,7 @@ impl<A: Agent> Fight<A> {
         let mut result = SpellResult {
             armor_multiplier: 0.0,
             target,
+            attacker: self.spells[spell].caster,
             outcome: 0,
             damage: base * attacker,
             threat: 0.0,
@@ -949,6 +959,7 @@ impl<A: Agent> Fight<A> {
         let mut result = SpellResult {
             armor_multiplier: 0.0,
             target,
+            attacker: self.spells[spell].caster,
             outcome: 0,
             damage: base * attacker,
             threat: 0.0,
@@ -1037,6 +1048,7 @@ impl<A: Agent> Fight<A> {
         let mut result = SpellResult {
             armor_multiplier: 0.0,
             target,
+            attacker: self.spells[spell].caster,
             outcome: 0,
             damage: base * attacker,
             threat: 0.0,
@@ -1097,6 +1109,7 @@ impl<A: Agent> Fight<A> {
         let mut result = SpellResult {
             armor_multiplier: 0.0,
             target,
+            attacker: self.spells[spell].caster,
             outcome: 0,
             damage: base * attacker,
             threat: 0.0,
@@ -1161,6 +1174,7 @@ impl<A: Agent> Fight<A> {
         let mut result = SpellResult {
             armor_multiplier: 0.0,
             target,
+            attacker: self.spells[spell].caster,
             outcome: 0,
             damage: base * attacker,
             threat: 0.0,

@@ -154,6 +154,7 @@ impl<A: Agent> Fight<A> {
         let mut result = SpellResult {
             armor_multiplier: 0.0,
             target: Side::Player,
+            attacker: self.spells[spell].caster,
             outcome: 0,
             damage: base * attacker,
             threat: 0.0,
