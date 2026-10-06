@@ -77,6 +77,12 @@ cargo clippy --locked --all-targets -- -D warnings
 RUSTDOCFLAGS="-D warnings" cargo doc --locked --no-deps --document-private-items
 ```
 
+`cargo test` builds with `opt-level = 1` (`[profile.test]` in `Cargo.toml`) and runs the Go
+golden comparison of every accepted fixture across the machine's cores, which brings the
+suite from over fifteen minutes to a few. Optimization does not change results, since Rust
+never fuses a multiply and an add unless the code says `mul_add`; the goldens still match
+exactly. A failing fixture is reported by id, with all other failures.
+
 For the matched benchmark, install Go 1.25.6 or later and run:
 
 ```sh

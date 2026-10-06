@@ -200,7 +200,9 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `demoralizing_roar` | sim/druid/demoralizing_roar.go | The spell and the target debuff, whose attack power cut the target's swing reads while it is up |
 | `maul` | sim/druid/maul.go | The strike and its flat damage, the queue spell and aura and the realism delay, a Go literal |
 | `lacerate` | sim/druid/lacerate.go | The tick a stack, the weapon share a stack from client data, the stack cap and tick crit |
-| `primal_bite` | sim/druid/primal_bite.go | The flat damage; Berserk lifts the cooldown, a Go literal |
+| `primal_bite` | sim/druid/primal_bite.go | The flat damage; Berserk lifts the cooldown, a Go literal. Against several targets, up to three strikes from the cast target onward, and only the first refunds on a miss |
+| `swipe` | sim/druid/swipe.go | The flat hit and the attack power share, Go literals; it hits the first three targets in unit order, whichever target it is cast on |
+| `hurricane` | sim/druid/hurricane.go | The channel, its triggered tick spell and the tick's fixed amount, which each tick deals to every target on the magic hit table |
 | `barkskin` | sim/druid/barkskin.go | The spell and its aura, whose physical damage taken cut is a stat aura; a cast in the fight restarts the main hand swing |
 | `frenzied_regeneration` | sim/druid/frenzied_regeneration.go | The aura, its tick count and period, the Rage a tick spends and the health a point of Rage gives, Go literals, and the healing taken multiplier |
 | `natures_bounty` | sim/druid/item_sets.go | The proc chance, a Go literal, and the mana, energy and Rage a proc gives by form, with the spells each hears and the metrics action |
@@ -255,7 +257,9 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `curse_of_recklessness` | sim/warlock/curse_of_recklessness.go, core/buffs | The target debuff's net armor change Go makes on activation through its per-stat exclusive category, applied as an offset over the Sunder Armor ramp; it and Curse of the Elements take the curse slot from each other |
 | `death_coil` | sim/warlock/death_coil.go | The effect's average; the hit lands after travel and heals the warlock through its tagged healing spell with the warlock's healing pseudo stats and attack table multiplier, which healing done counts |
 | `incinerate` | sim/warlock/incinerate.go | The bonus on a target burning with Immolate; the damage roll is the client row |
-| `bane_of_havoc` | sim/warlock/talents_destruction.go | The target aura the cast puts on the bane slot; with one target nothing is copied |
+| `bane_of_havoc` | sim/warlock/talents_destruction.go | The target aura the cast puts on the bane slot and the share of the warlock's damage to other targets that the listener copies onto the baned one, through the spell of the same ID with tag 1; with one target nothing is copied |
+| `rain_of_fire` | sim/warlock/rain_of_fire.go | The channel, an area dot on the warlock whose every tick casts the triggered tick spell: a fixed amount rolled to hit on each target, and to crit unless the client row forbids it |
+| `hellfire` | sim/warlock/hellfire.go | The channel, an area dot on the warlock whose every tick rolls a fixed amount on each target and then burns the warlock for it; a burn that would kill re-enters the due tick as Go does |
 | `fel_energy` | sim/warlock/talents_demonology.go | The Voidwalker sacrifice's share of maximum mana and period, from its periodic action |
 | `decimation` | sim/warlock/talents_demonology.go | The trigger spells, the 35% execute phase, and the aura's damage and Soul Fire cast time modifiers with the spells each names |
 | `demonic_brand` | sim/warlock/talents_demonology.go | The trigger spells, the target brand and its charges, the demon's marker and consumer auras, and the brand hit's roll and spell power share, Go literals |
@@ -789,7 +793,7 @@ cargo run --locked -- check --infile fixtures/mage/prepared-v2/frost-reference.p
   any number of them simulated. Rust keeps each target's auras, dots, debuffs, armor,
   resistances and metrics; area hits, cleaves and the rotation's multidot reach every
   target as in Go. The exporter refuses targets that differ from the first, a tank
-  assignment, a target aura with an internal cooldown and the item and pet effects that
+  assignment, since every copy would swing at the tank and Rust models one enemy swing, a target aura with an internal cooldown and the item and pet effects that
   reach other targets; the gate refuses a class not yet checked against several targets
   and each class's spells that reach other targets without a Rust implementation. Job
   modes such as stat weights need contract additions.

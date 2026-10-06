@@ -25,6 +25,6 @@ pub(crate) fn apply_dot<A: Agent>(fight: &mut Fight<A>, spell: SpellId, target: 
     let dot = fight.spells[spell]
         .dot
         .expect("Moonfire's dot spell has a dot");
-    fight.apply_dot(dot);
+    fight.apply_dot(fight.dot_on(dot, target));
     fight.deal_damage(spell, result, false);
 }

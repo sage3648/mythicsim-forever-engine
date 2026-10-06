@@ -47,6 +47,40 @@ pub(crate) enum Outcome {
 pub(crate) const OUTCOME_LANDED: u16 =
     OUTCOME_HIT | OUTCOME_CRIT | OUTCOME_CRUSH | OUTCOME_GLANCE | OUTCOME_BLOCK;
 
+/// Go `SpellResultSlice` of an area hit: one result per target, in unit index order.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct AoeResults {
+    results: [SpellResult; super::MAX_TARGETS],
+    len: usize,
+}
+
+impl Default for AoeResults {
+    fn default() -> Self {
+        AoeResults {
+            results: [SpellResult {
+                target: Side::Target,
+                outcome: 0,
+                damage: 0.0,
+                threat: 0.0,
+                armor_multiplier: 0.0,
+            }; super::MAX_TARGETS],
+            len: 0,
+        }
+    }
+}
+
+impl AoeResults {
+    fn push(&mut self, result: SpellResult) {
+        self.results[self.len] = result;
+        self.len += 1;
+    }
+
+    /// The results, in unit index order.
+    pub(crate) fn as_slice(&self) -> &[SpellResult] {
+        &self.results[..self.len]
+    }
+}
+
 /// Go `SpellResult`, carried by value until its damage is dealt.
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct SpellResult {
@@ -301,6 +335,26 @@ impl<A: Agent> Fight<A> {
                 .mul_add(self.bonus_damage(spell, target), base);
         }
         self.calc_damage_internal(spell, target, base, attacker, Outcome::MagicHit)
+    }
+
+    /// Go `Spell.CalcAndDealAoeDamageWithVariance`: each target in unit index order, its base
+    /// damage rolled, calculated and dealt in turn, so a proc on one hit can change the next
+    /// roll. `calc` is the outcome applier's calculation, such as [`Self::calc_damage`]; a
+    /// fixed amount, as Go `CalcAndDealAoeDamage`, passes a closure that rolls nothing.
+    pub(crate) fn calc_and_deal_aoe_damage_with_variance(
+        &mut self,
+        spell: SpellId,
+        mut base_damage: impl FnMut(&mut Self) -> f64,
+        calc: impl Fn(&mut Self, SpellId, Side, f64) -> SpellResult,
+    ) -> AoeResults {
+        let mut results = AoeResults::default();
+        for position in 0..self.targets.len() {
+            let base = base_damage(self);
+            let result = calc(self, spell, Side::target(position), base);
+            self.deal_damage(spell, result, false);
+            results.push(result);
+        }
+        results
     }
 
     /// Go `Spell.BonusDamage` against a target: physical bonus damage for a physical spell,
@@ -735,9 +789,9 @@ impl<A: Agent> Fight<A> {
         self.deal_damage(spell, result, true);
     }
 
-    /// Go `Spell.CalcPeriodicDamage` for a dot's tick on a base amount against a target, with a
-    /// given outcome applier, not yet dealt; an area dot on the caster names its target.
-    pub(crate) fn calc_periodic_damage_with(
+    /// Go `Spell.CalcPeriodicDamage` for a dot's tick on a base amount against a target, not
+    /// yet dealt.
+    pub(crate) fn calc_periodic_damage(
         &mut self,
         dot: super::DotId,
         side: Side,
@@ -767,10 +821,32 @@ impl<A: Agent> Fight<A> {
         base: f64,
         outcome: Outcome,
     ) -> SpellResult {
-        let result = self.calc_periodic_damage_with(dot, side, base, outcome);
+        let result = self.calc_periodic_damage(dot, side, base, outcome);
         let spell = self.dots[dot].spell;
         self.deal_damage(spell, result, true);
         result
+    }
+
+    /// Go `Spell.CalcPeriodicAoeDamage`: a fixed amount calculated on each target in unit
+    /// index order, none dealt yet, so a hit cannot change the next one's calculation.
+    pub(crate) fn calc_periodic_aoe_damage(
+        &mut self,
+        dot: super::DotId,
+        base: f64,
+        outcome: Outcome,
+    ) -> AoeResults {
+        let mut results = AoeResults::default();
+        for position in 0..self.targets.len() {
+            results.push(self.calc_periodic_damage(dot, Side::target(position), base, outcome));
+        }
+        results
+    }
+
+    /// Go `Spell.DealBatchedPeriodicDamage`: each result of an earlier calculation, in order.
+    pub(crate) fn deal_batched_periodic_damage(&mut self, spell: SpellId, results: &AoeResults) {
+        for &result in results.as_slice() {
+            self.deal_damage(spell, result, true);
+        }
     }
 
     /// Go `Dot.CalcAndDealPeriodicSnapshotDamage` for a dot built by `Snapshot`, which ticks

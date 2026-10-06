@@ -97,18 +97,13 @@ fn check_reports_refusal_codes_beside_the_reasons() {
         assert!(result.status.success());
         serde_json::from_slice(&result.stdout).unwrap()
     };
-    let refused = check("production-frost-2-targets");
+    let refused = check("fire-mage-goblin-sapper");
+    let reason = "Ignite would hear the crit of item 10646's hit on the player, where the pinned Go engine panics";
     assert_eq!(refused["supported"], false);
-    assert_eq!(
-        refused["reasons"],
-        serde_json::json!(["2 targets: several targets are not supported for ClassMage yet"])
-    );
+    assert_eq!(refused["reasons"], serde_json::json!([reason]));
     assert_eq!(
         refused["refusals"],
-        serde_json::json!([{
-            "code": "several_targets_unsupported",
-            "reason": "2 targets: several targets are not supported for ClassMage yet"
-        }])
+        serde_json::json!([{"code": "class_limit", "reason": reason}])
     );
     let supported = check("frost-reference");
     assert_eq!(supported["supported"], true);

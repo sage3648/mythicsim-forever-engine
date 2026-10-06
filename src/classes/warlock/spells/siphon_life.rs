@@ -20,9 +20,9 @@ impl SiphonLife {
         }
     }
 
-    /// `OnTick`: the snapshot tick, then the heal.
-    pub(crate) fn tick<A: Agent>(&self, fight: &mut Fight<A>) {
-        let result = fight.snapshot_dot_tick_result(self.dot);
+    /// `OnTick` of a target's dot: the snapshot tick, then the heal.
+    pub(crate) fn tick<A: Agent>(&self, fight: &mut Fight<A>, dot: DotId) {
+        let result = fight.snapshot_dot_tick_result(dot);
         fight.gain_health(
             result.damage * self.self_healing_multiplier,
             self.health_metrics,

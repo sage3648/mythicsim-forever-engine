@@ -54,10 +54,11 @@ impl Rip {
         );
         if result.landed() {
             let dot = fight.spells[spell].dot.expect("Rip has a dot");
+            let dot = fight.dot_on(dot, target);
             // Go Dot.Apply: the running copy ends, the dot snapshots, then it starts again.
             let aura = fight.dots[dot].aura;
             fight.deactivate_aura(aura);
-            self.snapshot(fight, spell, target);
+            self.snapshot(fight, spell, target, dot);
             fight.apply_dot(dot);
             let (_, combo) = fight.spells[spell].energy_metrics.expect("energy cost");
             fight.spend_combo_points(combo);
@@ -68,15 +69,16 @@ impl Rip {
     }
 
     /// `OnSnapshot`, then `UpdateBleedPower`'s log of the projected tick.
-    fn snapshot(&self, fight: &mut Fight<DruidAgent>, spell: SpellId, target: Side) {
+    fn snapshot(&self, fight: &mut Fight<DruidAgent>, spell: SpellId, target: Side, dot: DotId) {
         let combo_points = f64::from(fight.energy_bar().combo_points);
         let share = self.share(combo_points);
         let attack_power = fight.melee_attack_power();
-        fight.agent.rip_snapshot = Snapshot {
+        let snapshot = Snapshot {
             base: share.mul_add(attack_power, self.flat_damage(combo_points)),
             share,
             attack_power: share * attack_power,
         };
+        fight.agent.rip_snapshot.set(dot, snapshot);
         let power = self.expected_tick(fight, spell, target);
         if fight.log.is_some() {
             let line = format!("{} Snapshot Power: {power:.1}", self.short_name);
@@ -103,7 +105,7 @@ impl Rip {
     pub(crate) fn tick(&self, fight: &mut Fight<DruidAgent>, dot: DotId) {
         let state = &fight.dots[dot];
         let (spell, side, multiplier) = (state.spell, state.side, state.periodic_damage_multiplier);
-        let snapshot = fight.agent.rip_snapshot;
+        let snapshot = fight.agent.rip_snapshot.get(dot);
         let mut base = snapshot.base;
         if snapshot.share != 0.0 {
             base += snapshot

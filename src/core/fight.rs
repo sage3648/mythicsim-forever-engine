@@ -42,7 +42,8 @@ use std::collections::{BTreeMap, HashMap};
 
 pub(crate) use aura::{AuraBehavior, AuraRef, Tracker};
 pub(crate) use damage::{
-    Outcome, SpellResult, OUTCOME_BLOCK, OUTCOME_CRIT, OUTCOME_DODGE, OUTCOME_LANDED, OUTCOME_PARRY,
+    AoeResults, Outcome, SpellResult, OUTCOME_BLOCK, OUTCOME_CRIT, OUTCOME_DODGE, OUTCOME_LANDED,
+    OUTCOME_PARRY,
 };
 pub(crate) use dot::Dot;
 pub(crate) use log::action_string;

@@ -58,20 +58,22 @@ pub(crate) fn exorcism(fight: &mut Fight<PaladinAgent>, spell: SpellId, target: 
     fight.deal_damage(spell, result, false);
 }
 
-/// Holy Wrath: the rolled damage on an Undead or Demon target, dealt when the bolts arrive;
-/// any other target takes nothing.
-pub(crate) fn holy_wrath(
-    fight: &mut Fight<PaladinAgent>,
-    spell: SpellId,
-    target: Side,
-    hits: bool,
-) {
+/// Holy Wrath: a roll of the rank's damage for each Undead or Demon target in unit index
+/// order, every hit calculated before any is dealt when the bolts arrive; any other target
+/// takes nothing.
+pub(crate) fn holy_wrath(fight: &mut Fight<PaladinAgent>, spell: SpellId, hits: bool) {
     if !hits {
         return;
     }
-    let base = fight.roll_damage_effect(spell);
-    let result = fight.calc_damage(spell, target, base);
-    fight.deal_damage_after_travel(spell, result);
+    let sides: Vec<Side> = fight.target_sides().collect();
+    let results: Vec<_> = sides
+        .into_iter()
+        .map(|side| {
+            let base = fight.roll_damage_effect(spell);
+            fight.calc_damage(spell, side, base)
+        })
+        .collect();
+    fight.deal_damage_after_travel_batch(spell, &results);
 }
 
 /// Holy Wrath's `ModifyCast`: the cast pauses the swing.
@@ -90,23 +92,28 @@ pub(crate) fn consecration(fight: &mut Fight<PaladinAgent>, spell: SpellId, targ
     fight.apply_dot(dot);
 }
 
-/// A Consecration tick on the one target, which is among the first that take the bonus.
+/// A Consecration tick, which Go deals to each target in unit index order: the first targets
+/// take the bonus and have Consecrated Ground marked before their tick lands, and each hit is
+/// dealt before the next target's is calculated.
 pub(crate) fn consecration_tick(
     fight: &mut Fight<PaladinAgent>,
     dot: DotId,
     rank: &ConsecrationRank,
 ) {
     let spell = fight.dots[dot].spell;
-    let mut damage = rank.tick;
-    if rank.bonus_targets > 0 {
-        // Go's arm64 build fuses the bonus's coefficient into its average, then adds it.
-        damage += rank
-            .bonus_coefficient
-            .mul_add(fight.bonus_damage(spell, Side::Target), rank.bonus);
-        // Consecrated Ground marks the same targets, before the tick lands.
-        if let Some((aura, _)) = fight.agent.consecrated_ground {
-            fight.activate_aura(aura);
+    let sides: Vec<Side> = fight.target_sides().collect();
+    for (position, side) in sides.into_iter().enumerate() {
+        let mut damage = rank.tick;
+        if i32::try_from(position).is_ok_and(|position| position < rank.bonus_targets) {
+            // Go's arm64 build fuses the bonus's coefficient into its average, then adds it.
+            damage += rank
+                .bonus_coefficient
+                .mul_add(fight.bonus_damage(spell, side), rank.bonus);
+            if let Some((aura, _)) = fight.agent.consecrated_ground {
+                let marked = fight.aura_on(aura, side);
+                fight.activate_aura(marked);
+            }
         }
+        fight.periodic_damage_tick_with(dot, side, damage, Outcome::TickMagicHitAndCrit);
     }
-    fight.periodic_damage_tick_with(dot, Side::Target, damage, Outcome::TickMagicHitAndCrit);
 }

@@ -10,9 +10,7 @@ pub(crate) fn tick<A: Agent>(fight: &mut Fight<A>, dot: DotId, base: f64) {
     let targets: Vec<_> = fight.target_sides().collect();
     let results: Vec<_> = targets
         .into_iter()
-        .map(|target| {
-            fight.calc_periodic_damage_with(dot, target, base, Outcome::TickMagicHitAndCrit)
-        })
+        .map(|target| fight.calc_periodic_damage(dot, target, base, Outcome::TickMagicHitAndCrit))
         .collect();
     fight.deal_batched_aoe_damage(spell, &results, true);
 }
