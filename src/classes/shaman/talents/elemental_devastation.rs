@@ -1,6 +1,7 @@
 //! Elemental Devastation (talent 30160), from Go sim/shaman/talents_elemental.go
-//! `applyElementalDevastation`: a spell damage crit, procs included, grants a melee crit buff
-//! one spell batch window later.
+//! `applyElementalDevastation`: a spell damage crit grants a melee crit buff one spell batch
+//! window later. A crit from a spell flagged Proc, such as an overload, counts only where the
+//! talent row allows it.
 
 use crate::core::fight::{Agent, AuraRef, Fight, ModId, ModKind, SpellId, SpellResult};
 
@@ -9,6 +10,7 @@ pub(crate) struct ElementalDevastation {
     pub(crate) trigger: AuraRef,
     pub(crate) aura: AuraRef,
     crit_mod: ModId,
+    can_proc_from_procs: bool,
 }
 
 /// `melee` lists the spells with a melee proc mask, which the buff's modifier names.
@@ -18,6 +20,7 @@ pub(crate) fn bind<A: Agent>(
     aura: &str,
     melee_crit: f64,
     melee: Vec<SpellId>,
+    can_proc_from_procs: bool,
 ) -> Result<ElementalDevastation, String> {
     let trigger = fight.player_aura(trigger)?;
     let aura = fight.player_aura(aura)?;
@@ -26,6 +29,7 @@ pub(crate) fn bind<A: Agent>(
         trigger,
         aura,
         crit_mod,
+        can_proc_from_procs,
     })
 }
 
@@ -45,7 +49,11 @@ impl ElementalDevastation {
         spell: SpellId,
         result: &SpellResult,
     ) {
-        if fight.spells[spell].proc_spell_damage && result.crit() {
+        let state = &fight.spells[spell];
+        if state.proc_spell_damage
+            && (self.can_proc_from_procs || !state.flags.proc)
+            && result.crit()
+        {
             fight.schedule_delayed_proc(self.trigger, spell, *result);
         }
     }

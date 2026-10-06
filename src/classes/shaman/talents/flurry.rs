@@ -1,5 +1,6 @@
 //! Flurry (talent 16256), from Go sim/shaman/talents_enhancement.go `applyFlurry`: every melee
-//! hit, procs included, reaches the trigger, whose handler runs one spell batch window later.
+//! hit reaches the trigger, a spell flagged Proc only where the talent row allows it, and its
+//! handler runs one spell batch window later.
 //! A crit grants every charge of melee speed; otherwise a white hit spends one, at most once
 //! per charge cooldown.
 
@@ -11,6 +12,7 @@ pub(crate) struct Flurry {
     pub(crate) aura: AuraRef,
     speed: f64,
     charge_icd: i64,
+    can_proc_from_procs: bool,
 }
 
 pub(crate) fn bind<A: Agent>(
@@ -19,12 +21,14 @@ pub(crate) fn bind<A: Agent>(
     aura: &str,
     speed: f64,
     charge_icd: i64,
+    can_proc_from_procs: bool,
 ) -> Result<Flurry, String> {
     Ok(Flurry {
         trigger: fight.player_aura(trigger)?,
         aura: fight.player_aura(aura)?,
         speed,
         charge_icd,
+        can_proc_from_procs,
     })
 }
 
@@ -45,7 +49,8 @@ impl Flurry {
         spell: SpellId,
         result: &SpellResult,
     ) {
-        if fight.spells[spell].melee_proc {
+        let state = &fight.spells[spell];
+        if state.melee_proc && (self.can_proc_from_procs || !state.flags.proc) {
             fight.schedule_delayed_proc(self.trigger, spell, *result);
         }
     }

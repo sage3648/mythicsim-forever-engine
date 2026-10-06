@@ -64,7 +64,9 @@ pub(crate) enum ShamanSpell {
     StormstrikeMainHand,
     StormstrikeOffHand,
     /// Windfury Weapon's special hit of the main hand or the off hand.
-    WindfuryAttack { main_hand: bool },
+    WindfuryAttack {
+        main_hand: bool,
+    },
     RageOfTheFarseer,
 }
 
@@ -553,6 +555,7 @@ impl ShamanAgent {
                     aura,
                     melee_speed_multiplier,
                     charge_icd_ns,
+                    can_proc_from_procs,
                     ..
                 } => {
                     fight.agent.flurry = Some(flurry::bind(
@@ -561,6 +564,7 @@ impl ShamanAgent {
                         aura,
                         *melee_speed_multiplier,
                         *charge_icd_ns,
+                        *can_proc_from_procs,
                     )?);
                 }
                 Effect::RageOfTheFarseer {
@@ -706,6 +710,7 @@ impl ShamanAgent {
                     trigger_aura,
                     aura,
                     melee_crit,
+                    can_proc_from_procs,
                 } => {
                     let melee = (0..fight.spells.len())
                         .filter(|&spell| {
@@ -719,6 +724,7 @@ impl ShamanAgent {
                         aura,
                         *melee_crit,
                         melee,
+                        *can_proc_from_procs,
                     )?);
                 }
                 Effect::ImprovedStormstrike {
@@ -768,7 +774,7 @@ impl ShamanAgent {
         Ok(fight)
     }
 
-    /// Pair each rank with its overload, which rolls its parent's client damage row.
+    /// Pair each rank with its overload, which rolls a client damage row of its own.
     fn bind_overloads(
         fight: &mut Fight<ShamanAgent>,
         cast: ShamanSpell,
@@ -795,9 +801,6 @@ impl ShamanAgent {
                 .collect();
             if copies.is_empty() {
                 return Err(format!("spell {id} has no overload"));
-            }
-            for &copy in &copies {
-                fight.spells[copy].damage_effect = fight.spells[spell].damage_effect;
             }
             fight.agent.overloads[spell] = copies;
         }
