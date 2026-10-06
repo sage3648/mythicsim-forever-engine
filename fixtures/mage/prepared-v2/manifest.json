@@ -4,7 +4,7 @@
   "engine_revision": "cd7d44aec711bcc8f20ea12d3ed83cea2126ac66",
   "client_build": "1.60.1.70205",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "240f878c92a923e121ae77d34cd3640f172409f57468141b9a518716617d942a",
+  "exporter_sha256": "73f88425d5ed6b1038f58fd935f1f54077063e8682b3cf9855aa0205f11927b7",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -919,7 +919,7 @@
         "path": "fixtures/mage/prepared-v2/production-destruction-warlock.request.json"
       },
       "prepared": "production-destruction-warlock.prepared.json",
-      "prepared_sha256": "49864c3ea25c561ba30f403d11fb1e3b0a691a0d5cbb694772694c569ee90881",
+      "prepared_sha256": "60455aeda7420c66b422f4fcc327d248c5979dcc7a86a47dd33f6beee01a08ae",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1394,7 +1394,7 @@
         "path": "fixtures/mage/prepared-v2/production-affliction-warlock.request.json"
       },
       "prepared": "production-affliction-warlock.prepared.json",
-      "prepared_sha256": "b2c61cc447af49b4de8d0bf97e038ea86f8970537b109fec95fde5431f1745c5",
+      "prepared_sha256": "00a2028890c71810d149a4cbaaa1e7cbe0f7c0246e78d39f6780ef90c0308c80",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1415,7 +1415,7 @@
         "path": "fixtures/mage/prepared-v2/production-demonology-warlock.request.json"
       },
       "prepared": "production-demonology-warlock.prepared.json",
-      "prepared_sha256": "cd8b819d693d4ea059bce1107ed09952a88d70d28985c2042080e1e3c0d558dd",
+      "prepared_sha256": "f9b7592d87b5bcf84e60704393995e4814338a23063e43842930e4856fcccb44",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1436,7 +1436,7 @@
         "path": "fixtures/mage/prepared-v2/demonology-warlock-voidwalker-pact.request.json"
       },
       "prepared": "demonology-warlock-voidwalker-pact.prepared.json",
-      "prepared_sha256": "1d72bd196d580c0dd9f7f202b09fc19d40431a458f58e0b5d039ff5070e91cb6",
+      "prepared_sha256": "0cf0fbae750a4c1e5618ee015a8cbc7644d0f03e30569816478e9a4bafd90005",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1894,7 +1894,7 @@
         "path": "fixtures/mage/prepared-v2/demonology-warlock-orc.request.json"
       },
       "prepared": "demonology-warlock-orc.prepared.json",
-      "prepared_sha256": "1ed0643daa31ed56e7b66f7d7b0477acaa27c6d33ddc0a95beeae60f2587763a",
+      "prepared_sha256": "27ca5ddf41ad5118f4bebbeb25f35f50c7def7c3290f044404c7174d3efa9d68",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1978,7 +1978,7 @@
         "path": "fixtures/mage/prepared-v2/affliction-warlock-broad.request.json"
       },
       "prepared": "affliction-warlock-broad.prepared.json",
-      "prepared_sha256": "c0544f10d56a7c9f835658b75fcd8cd31cc2c8d3de32620cf7f5b59d8f614cf8",
+      "prepared_sha256": "401641047adc6acabf70c3316aceeed5c9ce9ba2b2008cc679b202f202704ebe",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1999,7 +1999,7 @@
         "path": "fixtures/mage/prepared-v2/destruction-warlock-broad.request.json"
       },
       "prepared": "destruction-warlock-broad.prepared.json",
-      "prepared_sha256": "07d7ff7fff42998d52e885a17660a437c8df29e3b85e53d82e1543e4308e4ecc",
+      "prepared_sha256": "2b6e78a03ae215fecb7b8e6462ea3b10ae2a7125ca5133ec7f108b526d951e3e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2020,7 +2020,7 @@
         "path": "fixtures/mage/prepared-v2/affliction-warlock-death-coil.request.json"
       },
       "prepared": "affliction-warlock-death-coil.prepared.json",
-      "prepared_sha256": "6f2460600f5859b693e8adff5e00aae9866310d3c99ececa0715ec9e74ef9c80",
+      "prepared_sha256": "8c35ba4c06be5f9261e7da9bb2e416f956f09617ba1afc6f15141af76ee231f5",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2041,7 +2041,7 @@
         "path": "fixtures/mage/prepared-v2/demonology-warlock-recklessness.request.json"
       },
       "prepared": "demonology-warlock-recklessness.prepared.json",
-      "prepared_sha256": "9321936e6a286025bda7cea2ad22ccaf73db85bb54e92b6b92fbbfc121d90513",
+      "prepared_sha256": "53f0cc9a17a1174acb7ed61a726b7bfd6714ddc84efff8f6d82da173fc4b00be",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3450,7 +3450,7 @@
         "path": "fixtures/mage/prepared-v2/affliction-warlock-lash-of-pain-rounding.request.json"
       },
       "prepared": "affliction-warlock-lash-of-pain-rounding.prepared.json",
-      "prepared_sha256": "e7f90764ec67a8a14ce57a9349208bff1e3da3c662ec7a77ed2add1a1a3216b5",
+      "prepared_sha256": "daa290ba3167c77530029d37dd8fbd0f1c14c53f4b8eec908ad570741a7663c5",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3757,7 +3757,7 @@
         "path": "fixtures/mage/prepared-v2/affliction-warlock-raid-curse-of-elements.request.json"
       },
       "prepared": "affliction-warlock-raid-curse-of-elements.prepared.json",
-      "prepared_sha256": "8028fbda842fbb8deee26ed294e62adb1c1c1b324f64fff98931387c12070956",
+      "prepared_sha256": "8bca8748839c19eaa4ef957cc139c7435382db9bfaec3283dc6be9415816f012",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4884,7 +4884,7 @@
         "path": "fixtures/mage/prepared-v2/affliction-warlock-golden-banana.request.json"
       },
       "prepared": "affliction-warlock-golden-banana.prepared.json",
-      "prepared_sha256": "881af94807aab93fdaf2588320d1f1fed257541132d66cbd5671fe7596fb0a7b",
+      "prepared_sha256": "36eccef07d3db8447ec6972d31ed73598682a72104bca2b4f54ff7d11560cd1b",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5157,7 +5157,7 @@
         "path": "fixtures/mage/prepared-v2/affliction-warlock-pet-dismiss-residue.request.json"
       },
       "prepared": "affliction-warlock-pet-dismiss-residue.prepared.json",
-      "prepared_sha256": "5eb903a46f72a4c3cd5986835aae95133a1d12236fa13c72f08a30f66e9a9b62",
+      "prepared_sha256": "03d4760c2255d29745a91c5b3d6339c1acab9429eb31b078b3e21fc8c4e902e5",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5216,7 +5216,7 @@
         "path": "fixtures/mage/prepared-v2/demonology-warlock-frozen-heart.request.json"
       },
       "prepared": "demonology-warlock-frozen-heart.prepared.json",
-      "prepared_sha256": "7e00c22035e5d3194094ec8ae93b91426ee1c07cd0448954344d9fbb7d646c98",
+      "prepared_sha256": "ff4eede0be47eb51755dba08fc917bef12bcf5efddae1726f419a9a94f1b5e43",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5930,7 +5930,7 @@
         "path": "fixtures/mage/prepared-v2/destruction-warlock-rain-of-fire.request.json"
       },
       "prepared": "destruction-warlock-rain-of-fire.prepared.json",
-      "prepared_sha256": "7e67d83ad46b066d47ca69a7710025734d533ddb072e66fe49efb2cca70711d8",
+      "prepared_sha256": "32a220c224c031ffdbbc3e44c9ccfe16a547a3c860ae4aab07a058a64072fdfc",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5951,7 +5951,7 @@
         "path": "fixtures/mage/prepared-v2/affliction-warlock-hellfire.request.json"
       },
       "prepared": "affliction-warlock-hellfire.prepared.json",
-      "prepared_sha256": "71e3f5750135261ca2ed5bc894a466537fea3480f904cea3fc593319db8ad0a1",
+      "prepared_sha256": "5b0db2c726cd50b230f238de2477630d4f4f4698d06e2988ac8023a5abbe7cdb",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6077,7 +6077,7 @@
         "path": "fixtures/mage/prepared-v2/affliction-warlock-3-targets-rain-of-fire.request.json"
       },
       "prepared": "affliction-warlock-3-targets-rain-of-fire.prepared.json",
-      "prepared_sha256": "4df7c9765ae5b3e41ea4c4f6e663fb71a1f7b2464601dab7a5b3be330a161d91",
+      "prepared_sha256": "e1e72d7cc8eea2179833c4762aecbf407cf147803eb7ed5f48fabb1e646c91d9",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6098,7 +6098,7 @@
         "path": "fixtures/mage/prepared-v2/destruction-warlock-5-targets-rain-of-fire.request.json"
       },
       "prepared": "destruction-warlock-5-targets-rain-of-fire.prepared.json",
-      "prepared_sha256": "0af1acb7e62c726b148810b3eea7cf6f00e6ba9cde1513e1df337260fc9f9a6b",
+      "prepared_sha256": "747139f11af44beab67e2092d734e7106961eaa30e27b679513287c208ba2466",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6119,7 +6119,7 @@
         "path": "fixtures/mage/prepared-v2/demonology-warlock-2-targets-hellfire.request.json"
       },
       "prepared": "demonology-warlock-2-targets-hellfire.prepared.json",
-      "prepared_sha256": "b9fd3a7f3aaf772758ca7651b7133bbd1c93ff5e2fac3c374b0c74b4df3afaf3",
+      "prepared_sha256": "217148d6d027c8ee1e2710c0e4f02a6a633621eef6c4c208bcd3f1ab50ec14b3",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6140,7 +6140,7 @@
         "path": "fixtures/mage/prepared-v2/destruction-warlock-3-targets-multidot.request.json"
       },
       "prepared": "destruction-warlock-3-targets-multidot.prepared.json",
-      "prepared_sha256": "b92ba9a152d5b517ace09d922c8384ea611dc4650d4385a26f045d40394970f4",
+      "prepared_sha256": "3703688b27b86cb6214b1c9e426198af4bda7642f5d79196527e590e1a6e3b8a",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6161,7 +6161,7 @@
         "path": "fixtures/mage/prepared-v2/destruction-warlock-3-targets-bane-of-havoc.request.json"
       },
       "prepared": "destruction-warlock-3-targets-bane-of-havoc.prepared.json",
-      "prepared_sha256": "144a6bce92eeee099b1efcadc628e38e39f678320aec974cdd8f4224f27b3c77",
+      "prepared_sha256": "a3bdce39a1407bc412bf3823d1007df1fc29e1e9fc1a38665eab881d5a775beb",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6203,7 +6203,7 @@
         "path": "fixtures/mage/prepared-v2/destruction-warlock-3-targets-bane-of-havoc-rain-of-fire.request.json"
       },
       "prepared": "destruction-warlock-3-targets-bane-of-havoc-rain-of-fire.prepared.json",
-      "prepared_sha256": "7f5b30f90fd46f7031da934cd865fa10c76891ad6bee10fe3a332428d7152f7d",
+      "prepared_sha256": "778968b92ac9ae80d0f3f745975cef6259caf1fb2bb05cc39bf533ab28eb3913",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6224,7 +6224,7 @@
         "path": "fixtures/mage/prepared-v2/destruction-warlock-2-targets-bane-of-havoc-hellfire.request.json"
       },
       "prepared": "destruction-warlock-2-targets-bane-of-havoc-hellfire.prepared.json",
-      "prepared_sha256": "6c2ae404fc8b6e697b86e74cf474e7c2ff52aaacd337048f9ef763a427a945d6",
+      "prepared_sha256": "bcb71c3c3f5177f25927c95fa34f47c1b06713f05151182911c8b3a51641f12a",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6287,7 +6287,7 @@
         "path": "fixtures/mage/prepared-v2/affliction-warlock-3-targets-multidot-dots.request.json"
       },
       "prepared": "affliction-warlock-3-targets-multidot-dots.prepared.json",
-      "prepared_sha256": "33ca8fb406417177a613551d1f412cd471b118e86a98ea025bc740a0d131d53b",
+      "prepared_sha256": "30257cbf02ed95eb9f711fe12c041fa8ca87461e71678a7c04cd00c1a204d3ef",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6308,7 +6308,7 @@
         "path": "fixtures/mage/prepared-v2/destruction-warlock-4-targets-multidot-immolate.request.json"
       },
       "prepared": "destruction-warlock-4-targets-multidot-immolate.prepared.json",
-      "prepared_sha256": "b848bf5819bc55c8fc9c3100a53c75c01fca94d28cba45228408a88f08825d64",
+      "prepared_sha256": "bb7f96126d510ccd5e17961c168c1baff150a501e916cd0d932fbfd8a39d905f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6602,7 +6602,7 @@
         "path": "fixtures/mage/prepared-v2/affliction-warlock-3-targets-aura-source-target.request.json"
       },
       "prepared": "affliction-warlock-3-targets-aura-source-target.prepared.json",
-      "prepared_sha256": "d7dbaf4c3e6f4a5272e5c2d63229f6decdd1c2d8dd87e8a092ed6b9375429b7e",
+      "prepared_sha256": "31c07089d307b8ce6c32929a976b5afe1225f44fb46d901f8b88f07a735cb1eb",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6686,7 +6686,7 @@
         "path": "fixtures/mage/prepared-v2/affliction-warlock-dot-without-spell.request.json"
       },
       "prepared": "affliction-warlock-dot-without-spell.prepared.json",
-      "prepared_sha256": "bb870442621b8b4bc521fc5edb2f2a47be23bdd25a4114f8f65a36e94d203757",
+      "prepared_sha256": "fdc4d1ecfdb10cad0511ed96678820c7d62c99b6e14ee43ce7d24bcaa47f078f",
       "expected_coverage": {
         "supported": true,
         "reasons": []

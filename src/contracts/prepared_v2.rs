@@ -2474,13 +2474,12 @@ pub enum Effect {
         dot_spells: Vec<usize>,
     },
     /// Rain of Fire: the channel is an area dot on the warlock whose every tick casts the
-    /// triggered tick spell, a fixed amount rolled to hit on each target, and to crit unless
-    /// the client row says it cannot.
+    /// triggered tick spell, a fixed amount rolled to hit and to crit on each target. The cast
+    /// itself rolls a hit on every target and deals no damage.
     RainOfFire {
         spell_id: i32,
         tick_spell_id: i32,
         tick_base: f64,
-        tick_can_crit: bool,
     },
     /// Hellfire: the channel is an area dot on the warlock whose every tick rolls a fixed
     /// amount on each target, then burns the warlock for it. `tick_can_crit` is false when the
