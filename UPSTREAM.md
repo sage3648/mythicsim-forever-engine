@@ -88,8 +88,9 @@ and `reference-no-missile-barrage` prepared fixtures.
 
 ## Reference defects
 
-Bugs in the reference that block a comparison. Rust refuses the affected inputs until the
-reference is fixed, since there is no Go result to match.
+Bugs in the reference. When one blocks a comparison, Rust refuses the affected inputs until
+the reference is fixed, since there is no Go result to match. When Go still gives a result,
+Rust reproduces it, so it matches the engine production runs.
 
 ### Ignite on the Goblin Sapper Charge's hit on the player
 
@@ -108,8 +109,8 @@ so `dot.IsActive()` dereferences nil. The handler is unchanged on community `mas
   inside `Character.newBasicExplosiveSpellConfig` (`sim/core/consumes.go:650`).
 - Affected records: the Arcane and Fire Mage `goblinSapper` variants in
   `validation/2026-10-04-production-gear-swaps.json`, recorded as `go_error`.
-- Report: not filed yet. A report to the community engine should carry the reproduction
-  above and the trace.
+- Report: [ElliotWood/Forever#699](https://github.com/ElliotWood/Forever/issues/699)
+  (2026-10-06), with the reproduction and the trace above.
 - Rust now: the Mage gate refuses an Ignite build whose rotation reaches the charge. This
   also refuses the Frostfire variant, which matched only because its rotation never
   reaches the autocast while the global cooldown is busy, the only time Go casts an
@@ -119,6 +120,31 @@ so `dot.IsActive()` dereferences nil. The handler is unchanged on community `mas
   expected, Ignite ignores hits on a unit that is not an enemy, make Rust's Ignite trigger
   ignore hits on the player, drop the guard, promote `fire-mage-goblin-sapper` with
   `python3 tools/prepared_v2.py promote` and rerun the affected gear swap variants.
+
+### A pushback after the hardcast completed
+
+The "Pushback trigger" in `sim/core/character.go` checks that a hardcast is in progress
+when a landed hit passes its conditions, but its handler runs a spell batch window later
+and does not check again. If the hardcast completes inside that 10 ms window, the handler
+still calls `Hardcast.pushBack` (`sim/core/cast.go`), which extends the finished cast's
+`Expires` by up to 500 ms, and `newHardcastAction` schedules the cast again. The cast
+completes a second time at once and its effect lands twice. Unlike the Ignite crash, this
+does not block a comparison: Rust reproduces it on purpose, in
+`Fight::pushback_handler`.
+
+- Reproduction: run the pinned engine on
+  `fixtures/mage/prepared-v2/feral-bear-druid-boomerang-pushback-after-cast.request.json`,
+  a tanking Feral (bear) Druid that hardcasts Linken's Boomerang for 500 ms. The target's
+  swing lands 10 ms before the cast completes. The Go log golden shows `Completed cast
+  {ItemID: 11905}` at 0.50, then `pushed back 500ms while casting` and a second `Completed
+  cast` at the same time, and the Boomerang deals two hits at 1.00.
+- Affected records: the accepted `feral-bear-druid-boomerang-pushback-after-cast` fixture,
+  which keeps Go's double completion as its golden.
+- Report: [ElliotWood/Forever#700](https://github.com/ElliotWood/Forever/issues/700)
+  (2026-10-06), proposing to re-check `Hardcast.Expires > sim.CurrentTime` in the handler.
+- Once Go is fixed and the pin moves: the repin lists the fixture's golden as changed.
+  Make `Fight::pushback_handler` return when no hardcast is in progress at the time it
+  runs, and review the changed golden as a reference behavior change.
 
 ## Reconcile a fix
 
