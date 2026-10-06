@@ -152,6 +152,7 @@ impl<A: Agent> Fight<A> {
             base += state.bonus_coefficient * bonus;
         }
         let mut result = SpellResult {
+            armor_multiplier: 0.0,
             target: Side::Player,
             outcome: 0,
             damage: base * attacker,

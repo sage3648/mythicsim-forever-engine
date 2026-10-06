@@ -73,6 +73,7 @@ impl Nightfall {
             return;
         }
         let result = SpellResult {
+            armor_multiplier: 0.0,
             target: Side::Target,
             outcome: 0,
             damage: 0.0,

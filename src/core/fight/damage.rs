@@ -54,6 +54,9 @@ pub(crate) struct SpellResult {
     pub(crate) outcome: u16,
     pub(crate) damage: f64,
     pub(crate) threat: f64,
+    /// Go `ArmorAndResistanceMultiplier`: the factor armor or a partial resist took from the
+    /// damage when the result was calculated, set by the paths that calculate damage.
+    pub(crate) armor_multiplier: f64,
 }
 
 impl SpellResult {
@@ -351,6 +354,7 @@ impl<A: Agent> Fight<A> {
         outcome: Outcome,
     ) -> SpellResult {
         let mut result = SpellResult {
+            armor_multiplier: 0.0,
             target,
             outcome: 0,
             damage: base,
@@ -370,12 +374,15 @@ impl<A: Agent> Fight<A> {
                 | Outcome::TickMagicHitAndCrit
                 | Outcome::TickMagicHit
         );
+        result.armor_multiplier = 1.0;
         if physical {
             if !self.spells[spell].flags.ignore_resists && !periodic {
-                result.damage *= self.armor_modifier(self.caster(spell), target);
+                result.armor_multiplier = self.armor_modifier(self.caster(spell), target);
+                result.damage *= result.armor_multiplier;
             }
         } else if !self.spells[spell].flags.ignore_resists && !binary {
             let (multiplier, outcome) = self.partial_resist(spell, target);
+            result.armor_multiplier = multiplier;
             result.damage *= multiplier;
             result.outcome |= outcome;
         }
@@ -466,6 +473,7 @@ impl<A: Agent> Fight<A> {
         outcome: Outcome,
     ) -> SpellResult {
         let mut result = SpellResult {
+            armor_multiplier: 0.0,
             target,
             outcome: 0,
             damage: 0.0,
@@ -663,6 +671,7 @@ impl<A: Agent> Fight<A> {
             return self.calc_damage_internal(spell, target, base, attacker, outcome);
         }
         let mut result = SpellResult {
+            armor_multiplier: 0.0,
             target,
             outcome: 0,
             damage: base * attacker,

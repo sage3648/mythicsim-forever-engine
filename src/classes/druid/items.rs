@@ -85,6 +85,7 @@ impl NaturesBounty {
             return;
         }
         let result = SpellResult {
+            armor_multiplier: 0.0,
             target: crate::core::fight::Side::Player,
             outcome: 0,
             damage: 0.0,

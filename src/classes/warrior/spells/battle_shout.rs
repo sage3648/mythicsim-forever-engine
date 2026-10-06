@@ -38,6 +38,7 @@ pub(crate) fn apply<A: Agent>(
     let threat = fight.spells[spell].flat_threat_bonus * fight.player.threat_multiplier;
     fight.spells[spell].metrics[target.index()].hits += 1;
     let result = SpellResult {
+        armor_multiplier: 0.0,
         target,
         outcome: OUTCOME_HIT,
         damage: 0.0,

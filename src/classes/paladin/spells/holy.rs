@@ -65,6 +65,7 @@ pub(crate) fn holy_light_haste_trigger(
         Some(result) if result.outcome & OUTCOME_CRIT == 0 => return,
         Some(result) => *result,
         None => SpellResult {
+            armor_multiplier: 0.0,
             target: Side::Target,
             outcome: 0,
             damage: 0.0,
