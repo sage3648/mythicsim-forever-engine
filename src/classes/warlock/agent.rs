@@ -366,15 +366,8 @@ impl WarlockAgent {
                     spell_id,
                     tick_spell_id,
                     tick_base,
-                    tick_can_crit,
                 } => {
-                    let bound = rain_of_fire::bind(
-                        &fight,
-                        *spell_id,
-                        *tick_spell_id,
-                        *tick_base,
-                        *tick_can_crit,
-                    )?;
+                    let bound = rain_of_fire::bind(&fight, *spell_id, *tick_spell_id, *tick_base)?;
                     fight.agent.rain_of_fire = Some(bound);
                 }
                 Effect::DeathCoil {

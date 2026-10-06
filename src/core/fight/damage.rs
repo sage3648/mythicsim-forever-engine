@@ -25,6 +25,8 @@ pub(crate) const OUTCOME_CRUSH: u16 = 1 << 10;
 pub(crate) enum Outcome {
     MagicHitAndCrit,
     MagicHit,
+    /// Go `Spell.OutcomeMagicCrit`: no hit roll, only the crit roll.
+    MagicCrit,
     Tick,
     TickMagicCrit,
     /// Go `OutcomeAlwaysHitNoHitCounter`.
@@ -37,8 +39,6 @@ pub(crate) enum Outcome {
     TickPhysicalCrit,
     /// Go `Spell.OutcomeTickMagicHitAndCrit`: a tick that rolls to hit, then to crit.
     TickMagicHitAndCrit,
-    /// Go `Dot.OutcomeTickMagicHit`: a tick that rolls to hit and never crits.
-    TickMagicHit,
     /// A melee or ranged attack table applier, for a spell of any school.
     Table(super::melee::PhysicalOutcome),
 }
@@ -423,10 +423,7 @@ impl<A: Agent> Fight<A> {
         let physical = self.spells[spell].school & 1 != 0;
         let periodic = matches!(
             outcome,
-            Outcome::Tick
-                | Outcome::TickMagicCrit
-                | Outcome::TickMagicHitAndCrit
-                | Outcome::TickMagicHit
+            Outcome::Tick | Outcome::TickMagicCrit | Outcome::TickMagicHitAndCrit
         );
         result.armor_multiplier = 1.0;
         if physical {
@@ -557,10 +554,11 @@ impl<A: Agent> Fight<A> {
             Outcome::MagicHitNoHitCounter => {
                 self.outcome_magic_hit_and_crit(spell, result, binary, false, false)
             }
+            Outcome::MagicCrit => self.outcome_magic_crit(spell, result),
             Outcome::Tick => self.outcome_tick(spell, result, false),
             Outcome::TickPhysicalCrit => self.outcome_tick_physical_crit(spell, result),
             Outcome::TickMagicCrit => self.outcome_tick(spell, result, true),
-            Outcome::TickMagicHitAndCrit | Outcome::TickMagicHit => {
+            Outcome::TickMagicHitAndCrit => {
                 let binary_hit =
                     binary.then(|| binary_resist_hit(self.resist(spell, result.target, true)));
                 let miss = spell_chance_to_miss(
@@ -569,8 +567,7 @@ impl<A: Agent> Fight<A> {
                     self.spell_hit_chance(spell),
                 );
                 if self.proc(1.0 - miss, "Magical Hit Roll") {
-                    let can_crit = matches!(outcome, Outcome::TickMagicHitAndCrit);
-                    self.outcome_tick(spell, result, can_crit);
+                    self.outcome_tick(spell, result, true);
                 } else {
                     result.outcome = OUTCOME_MISS;
                     result.damage = 0.0;
@@ -634,6 +631,29 @@ impl<A: Agent> Fight<A> {
             result.outcome = OUTCOME_MISS;
             result.damage = 0.0;
             self.spells[spell].metrics[target].misses += 1;
+        }
+    }
+
+    /// Go `outcomeMagicCrit`: a crit roll against the spell's crit chance, otherwise a hit; the
+    /// spell cannot miss.
+    fn outcome_magic_crit(&mut self, spell: SpellId, result: &mut SpellResult) {
+        let partial = result.outcome & OUTCOME_PARTIAL != 0;
+        let target = result.target.index();
+        if self.random("Magical Crit Roll") < self.spell_crit_chance(spell) {
+            result.outcome = OUTCOME_CRIT;
+            result.damage *= self.crit_multiplier(spell);
+            let metrics = &mut self.spells[spell].metrics[target];
+            metrics.crits += 1;
+            if partial {
+                metrics.resisted_crits += 1;
+            }
+        } else {
+            result.outcome = OUTCOME_HIT;
+            let metrics = &mut self.spells[spell].metrics[target];
+            metrics.hits += 1;
+            if partial {
+                metrics.resisted_hits += 1;
+            }
         }
     }
 

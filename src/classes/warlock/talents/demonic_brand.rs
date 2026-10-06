@@ -130,7 +130,7 @@ impl DemonicBrand {
     }
 
     /// The brand hit's `ApplyEffects`: a roll plus the warlock's spell power share, on
-    /// `OutcomeAlwaysHit`. Go reads the spell damage and school power stats at each hit, so a
+    /// `OutcomeMagicCrit`: the client row never misses and does not forbid a crit (#648). Go reads the spell damage and school power stats at each hit, so a
     /// stat aura such as an on-use trinket's moves them.
     pub(crate) fn brand_hit<A: Agent>(&self, fight: &mut Fight<A>, spell: SpellId, target: Side) {
         let demon = self.demon.as_ref().expect("the brand hit has a demon");
@@ -139,7 +139,7 @@ impl DemonicBrand {
         let roll = fight.go_roll(demon.min_damage, demon.max_damage);
         // Go's arm64 build fuses the spell power share into the roll.
         let damage = demon.coefficient.mul_add(spell_power, roll);
-        let result = fight.calc_damage_with_outcome(spell, target, damage, Outcome::AlwaysHit);
+        let result = fight.calc_damage_with_outcome(spell, target, damage, Outcome::MagicCrit);
         fight.deal_damage(spell, result, false);
     }
 }
