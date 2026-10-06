@@ -242,6 +242,8 @@ func warlockEffects(agent core.Agent, character *core.Character) []map[string]an
 	tap := map[string]any{
 		"kind": "life_tap", "spell_id": lifeTap.ID, "base_amount": lifeTap.EffectN(1).Average(core.CharacterLevel),
 		"mana_multiplier": 1 + wlImprovedLifeTap.FractionAt(talents.ImprovedLifeTap),
+		// The client flags every rank No Threat: the mana adds no threat, the demon's share neither.
+		"no_threat": lifeTap.NoThreat(),
 	}
 	// Demonic Energies hands the summoned demon a share of the restore.
 	if share := wlDemonicEnergies.EffectAt(2).FractionAt(talents.DemonicEnergies); share > 0 && w.ActivePet != nil {
