@@ -326,11 +326,110 @@ fn gear_listeners_of_the_target_swings_need_their_effects() {
     }
 }
 
-/// A class whose spells have not been checked against several targets is refused there.
+fn first_fight_log(mut value: Value) -> String {
+    value["sim"]["iterations"] = json!(1);
+    value["sim"]["debug_first_iteration"] = json!(true);
+    let prepared: PreparedV2 = serde_json::from_value(value).unwrap();
+    let report = forever_engine::simulate_prepared(&prepared).unwrap();
+    report.result["logs"].as_str().unwrap().to_string()
+}
+
+fn lines_with<'a>(logs: &'a str, target: u32, spell: &str) -> Vec<&'a str> {
+    logs.lines()
+        .filter(|line| line.contains(&format!("[Target {target}] {{SpellID: {spell}")))
+        .collect()
+}
+
+/// Whirlwind's cap on the row is four targets, so a fifth is never struck, and each of the
+/// four takes both hands' strikes.
 #[test]
-fn several_targets_are_refused_until_the_class_is_checked() {
-    let mut value = fury_json();
-    value["encounter"]["target_count"] = json!(3);
-    assert!(reasons(value)
-        .contains(&"3 targets: several targets are not supported for ClassWarrior yet".into()));
+fn whirlwind_strikes_four_of_five_targets() {
+    let logs = first_fight_log(warrior_fixture("warrior-whirlwind-5-targets"));
+    for target in 1..=4 {
+        let hits = lines_with(&logs, target, "1680");
+        for (tag, hand) in [("Tag: 1", "main"), ("Tag: 2", "off")] {
+            assert!(
+                hits.iter().any(|line| line.contains(tag)),
+                "Target {target}: no {hand} hand strike"
+            );
+        }
+    }
+    assert!(lines_with(&logs, 5, "1680").is_empty());
+}
+
+/// Cleave strikes two targets, the cast target and the next, and calculates both hits before
+/// it deals either: the damage lines of one cast come after both debug lines.
+#[test]
+fn cleave_strikes_two_targets_from_the_cast_target() {
+    let logs = first_fight_log(warrior_fixture("production-warrior-2-targets"));
+    let lines: Vec<&str> = logs.lines().collect();
+    let cast = lines
+        .iter()
+        .position(|line| line.contains("Casting {SpellID: 20569}"))
+        .unwrap();
+    let rest = &lines[cast..];
+    let position = |needle: &str, deal: bool| {
+        rest.iter()
+            .position(|line| line.contains(needle) && line.contains("[DEBUG]") != deal)
+            .unwrap()
+    };
+    let first_debug = position("[Target 1] {SpellID: 20569} ", false);
+    let second_debug = position("[Target 2] {SpellID: 20569} ", false);
+    let first_deal = position("[Target 1] {SpellID: 20569} ", true);
+    let second_deal = position("[Target 2] {SpellID: 20569} ", true);
+    assert!(first_debug < second_debug);
+    assert!(second_debug < first_deal && first_deal < second_deal);
+}
+
+/// Thunder Clap's debuff lands on each target the clap lands on, up to the row's four.
+#[test]
+fn thunder_clap_debuffs_each_target_it_lands_on() {
+    let logs = first_fight_log(warrior_fixture("arms-warrior-thunder-clap-5-targets"));
+    for target in 1..=4 {
+        let gained = format!("[Target {target}] Aura gained: {{SpellID: 11581}}");
+        assert!(logs.lines().any(|line| line.contains(&gained)), "{gained}");
+    }
+    assert!(!logs
+        .lines()
+        .any(|line| line.contains("[Target 5] Aura gained: {SpellID: 11581}")));
+}
+
+/// A landed melee hit while two targets are active casts a copy of its damage on the next
+/// target, and each copy spends a charge.
+#[test]
+fn sweeping_strikes_copies_a_hit_to_the_next_target() {
+    let logs = first_fight_log(warrior_fixture("production-arms-warrior-2-targets"));
+    assert!(lines_with(&logs, 2, "12723}").len() > 3, "{logs}");
+    assert!(logs.contains("{SpellID: 12723} stacks: 5 --> 4"));
+}
+
+/// An extra attack that a landed hit casts at once, replaced by a queued Cleave, starts a
+/// Cleave while another still deals its hits. Go shares the results between casts and reuses a
+/// cached result per target, which Rust models against two targets alone.
+#[test]
+fn cleave_with_an_extra_attack_is_refused_against_three_targets() {
+    let reason = |name: &str, targets: u32| {
+        let mut value = warrior_fixture(name);
+        value["encounter"]["target_count"] = json!(targets);
+        crate::refusal_codes(value)
+            .into_iter()
+            .find(|(code, _)| *code == "several_targets_unsupported")
+            .map(|(_, reason)| reason)
+    };
+    let cleave = |targets: u32| {
+        format!(
+            "rotation reaches spell 20569 tag 1, a Cleave that an extra attack can cast again \
+             while it deals its hits, which Go's shared results and result cache scramble \
+             against {targets} targets"
+        )
+    };
+    assert_eq!(reason("production-arms-warrior-2-targets", 2), None);
+    assert_eq!(
+        reason("production-arms-warrior-2-targets", 3),
+        Some(cleave(3))
+    );
+    // The production Fury build has the party Windfury Totem alone.
+    assert_eq!(reason("production-warrior-2-targets", 5), Some(cleave(5)));
+    // Without Cleave in the rotation nothing re-enters.
+    assert_eq!(reason("warrior-whirlwind-5-targets", 5), None);
 }

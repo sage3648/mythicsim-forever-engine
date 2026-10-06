@@ -5700,6 +5700,168 @@
         "file": "smite-priest-no-inner-focus.go-log.txt",
         "sha256": "b63a782e5a1b2b8b578b710032ef2cd272464b489bfce996d2d9bcb6068d3dcc"
       }
+    },
+    {
+      "id": "production-warrior-2-targets",
+      "description": "Production Fury Warrior reference build against 2 copies of the boss: Cleave in place of Heroic Strike and Whirlwind's cleave on two targets",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-warrior-2-targets.request.json"
+      },
+      "prepared": "production-warrior-2-targets.prepared.json",
+      "prepared_sha256": "e90233e2cec6a6394facf0ebeaea66a03c979d84117dcc86220b980b311a7aed",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-warrior-2-targets.go-result.json",
+        "sha256": "cb28d488039bb4fd0d78df9e5b2ec60f68352ee5e15a3a5e9f96d8728475817a"
+      },
+      "go_log": {
+        "file": "production-warrior-2-targets.go-log.txt",
+        "sha256": "eb6331c065793339ed4aaf0462039a6e77be9a10503fbf637018c491be01e09b"
+      }
+    },
+    {
+      "id": "production-arms-warrior-2-targets",
+      "description": "Production Arms Warrior reference build against 2 copies of the boss: Sweeping Strikes copies, Cleave and Weaponmaster's extra attack replaced by a queued Cleave on two targets",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-arms-warrior-2-targets.request.json"
+      },
+      "prepared": "production-arms-warrior-2-targets.prepared.json",
+      "prepared_sha256": "c405b4c42bb0e0383a4b1e58e911089b683dc3ebe301b69820e4e8e4b702d56d",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-arms-warrior-2-targets.go-result.json",
+        "sha256": "34bfb3dd89125626a75eebc3584db3a5e32a9b306f193401f2e05089778ec77b"
+      },
+      "go_log": {
+        "file": "production-arms-warrior-2-targets.go-log.txt",
+        "sha256": "9e4664f66da4493fda05b36a91b71cf8b8251806fbcbfb05984a494611ffd50b"
+      }
+    },
+    {
+      "id": "production-arms-warrior-3-targets",
+      "description": "Production Arms Warrior against 3 targets, refused: an extra attack casts the queued Cleave from inside Cleave's own damage loop, which Go's shared results scramble",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-arms-warrior-3-targets.request.json"
+      },
+      "prepared": "production-arms-warrior-3-targets.prepared.json",
+      "prepared_sha256": "9d0514c3081a794f62093513d52fb4a32ba35f5fbb24c40912a4ba553c3743d0",
+      "expected_coverage": {
+        "supported": false,
+        "reasons": [
+          "rotation reaches spell 20569 tag 1, a Cleave that an extra attack can cast again while it deals its hits, which Go's shared results and result cache scramble against 3 targets"
+        ]
+      }
+    },
+    {
+      "id": "warrior-whirlwind-5-targets",
+      "description": "Fury Warrior without Cleave against 5 targets: Whirlwind hits four of them, each hand's strike on one weapon roll",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-whirlwind-5-targets.request.json"
+      },
+      "prepared": "warrior-whirlwind-5-targets.prepared.json",
+      "prepared_sha256": "20ea853379be0551baedbc96da1e2732271977b8ca956b6734c0fe4f900a6a5e",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-whirlwind-5-targets.go-result.json",
+        "sha256": "550959ca085f852ea7779243185094b51836133e68096e0f44ef814df0296d50"
+      },
+      "go_log": {
+        "file": "warrior-whirlwind-5-targets.go-log.txt",
+        "sha256": "a58c8fcff111fe7c6a9b157bdb5e76ad766fff98eba5e8c81ad3b31e8acbee7f"
+      }
+    },
+    {
+      "id": "arms-warrior-thunder-clap-5-targets",
+      "description": "Arms Warrior without Cleave and with Thunder Clap from two targets against 5 targets: the clap's debuff on each landed target and Sweeping Strikes' attacks after Thunder Clap",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/arms-warrior-thunder-clap-5-targets.request.json"
+      },
+      "prepared": "arms-warrior-thunder-clap-5-targets.prepared.json",
+      "prepared_sha256": "0d758bdeb987a926614205e3e8abe93a570e70763adc8b2c9488bb13a2a13326",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "arms-warrior-thunder-clap-5-targets.go-result.json",
+        "sha256": "1a21ecd65183cb1fab8bf3cc2528b9541e639fb659d379fb22f323d018c74aa6"
+      },
+      "go_log": {
+        "file": "arms-warrior-thunder-clap-5-targets.go-log.txt",
+        "sha256": "07338c737e5a9a0e16520b3c18611a821b1efab1618fe56b0f1f99390e3084ac"
+      }
+    },
+    {
+      "id": "production-elemental-shaman-5-targets",
+      "description": "Production Elemental Shaman reference build against 5 copies of the boss: Chain Lightning's three hits and their overloads, Magma Totem's pulses and Fire Nova on every target",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-elemental-shaman-5-targets.request.json"
+      },
+      "prepared": "production-elemental-shaman-5-targets.prepared.json",
+      "prepared_sha256": "10c507da816f02adcaabd7ee8fffe510fe019f439589808a45328f34b475d2d8",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-elemental-shaman-5-targets.go-result.json",
+        "sha256": "267952c34c99f048521f85bb2d985c78215ecff1bcc146667db70468c21d690e"
+      },
+      "go_log": {
+        "file": "production-elemental-shaman-5-targets.go-log.txt",
+        "sha256": "9805afdff6feb17565c02db0a1eba806944dc3e9adac8bb53ac903708373558a"
+      }
+    },
+    {
+      "id": "production-enhancement-shaman-3-targets",
+      "description": "Production Enhancement Shaman reference build against 3 copies of the boss: Fire Nova on every target and Stormstrike's debuff on the first alone",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-enhancement-shaman-3-targets.request.json"
+      },
+      "prepared": "production-enhancement-shaman-3-targets.prepared.json",
+      "prepared_sha256": "a1de91920b46667ebf1ce21fba458908445c25053b7f193bc84f2f003af0a6b1",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-enhancement-shaman-3-targets.go-result.json",
+        "sha256": "1f31b5ea6b3a3e414241d3067d14285ba82b4ae35a4e07abf2ff8851bd077faf"
+      },
+      "go_log": {
+        "file": "production-enhancement-shaman-3-targets.go-log.txt",
+        "sha256": "afc5fb41d6f4d3b7b54083af9a5dd60c997793027dbe64efcdf91d2d4897bda6"
+      }
+    },
+    {
+      "id": "enhancement-shaman-chain-magma-4-targets",
+      "description": "Enhancement Shaman with Magma Totem and Chain Lightning against 4 targets: the Stormstrike debuff boosts only the target it is on",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/enhancement-shaman-chain-magma-4-targets.request.json"
+      },
+      "prepared": "enhancement-shaman-chain-magma-4-targets.prepared.json",
+      "prepared_sha256": "b43f1802b52338daabc12ce5155dccb504a7cba7c7d68766d5d9be1005ddd6f4",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "enhancement-shaman-chain-magma-4-targets.go-result.json",
+        "sha256": "069256f205db1d1107904b5977ed93283a5bf31df2cba122afd6e09786c1a3be"
+      },
+      "go_log": {
+        "file": "enhancement-shaman-chain-magma-4-targets.go-log.txt",
+        "sha256": "9bce2bb76f67471ac7f16fc94137ba72bf53bb2586a0fa07ab16106bfd7f0dab"
+      }
     }
   ]
 }

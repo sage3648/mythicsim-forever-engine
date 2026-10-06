@@ -169,3 +169,95 @@ fn totem_remaining_time_needs_a_shaman() {
     }});
     assert!(reasons(value).contains(&"rotation item 1: totemRemainingTime needs a Shaman".into()));
 }
+
+fn fixture(name: &str) -> Value {
+    let path = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join(format!("fixtures/mage/prepared-v2/{name}.prepared.json"));
+    serde_json::from_slice(&fs::read(path).unwrap()).unwrap()
+}
+
+fn first_fight_log(mut value: Value) -> String {
+    value["sim"]["iterations"] = json!(1);
+    value["sim"]["debug_first_iteration"] = json!(true);
+    let prepared: PreparedV2 = serde_json::from_value(value).unwrap();
+    let report = forever_engine::simulate_prepared(&prepared).unwrap();
+    report.result["logs"].as_str().unwrap().to_string()
+}
+
+fn lines_with<'a>(logs: &'a str, target: u32, spell: &str, what: &str) -> Vec<&'a str> {
+    logs.lines()
+        .filter(|line| {
+            line.contains(&format!("[Target {target}] {{SpellID: {spell}}}")) && line.contains(what)
+        })
+        .collect()
+}
+
+/// The number after `key` in a debug damage line.
+fn debug_value(line: &str, key: &str) -> f64 {
+    let value = line.split(key).nth(1).unwrap();
+    value[..value.find(',').unwrap()].parse().unwrap()
+}
+
+/// Chain Lightning hits three targets from the cast target on, and no more, each hit weaker
+/// than the one before it.
+#[test]
+fn chain_lightning_hits_three_targets() {
+    let logs = first_fight_log(fixture("production-elemental-shaman-5-targets"));
+    for target in 1..=3 {
+        assert!(
+            !lines_with(&logs, target, "10605", " for ").is_empty(),
+            "Target {target}"
+        );
+    }
+    for target in 4..=5 {
+        assert!(lines_with(&logs, target, "10605", " for ").is_empty());
+    }
+    // The bounce reduction shows in the attacker modifiers of the first cast.
+    let hits: Vec<f64> = logs
+        .lines()
+        .filter(|line| line.contains("{SpellID: 10605} [DEBUG]"))
+        .take(3)
+        .map(|line| debug_value(line, "AfterAttackerMods:"))
+        .collect();
+    assert!(
+        hits.len() == 3 && hits[0] > hits[1] && hits[1] > hits[2],
+        "{hits:?}"
+    );
+}
+
+/// Magma Totem's pulses and Fire Nova reach every target.
+#[test]
+fn magma_totem_and_fire_nova_reach_every_target() {
+    let logs = first_fight_log(fixture("production-elemental-shaman-5-targets"));
+    for target in 1..=5 {
+        assert!(
+            !lines_with(&logs, target, "10587", " tick ").is_empty(),
+            "Target {target}: no pulse"
+        );
+        assert!(
+            !lines_with(&logs, target, "408345", " ").is_empty(),
+            "Target {target}: no nova"
+        );
+    }
+}
+
+/// Stormstrike's debuff sits on the one target it was cast on, so only that target takes the
+/// bonus on the shaman's Chain Lightning, whichever hit of the cast it is.
+#[test]
+fn the_stormstrike_debuff_boosts_only_its_target() {
+    let logs = first_fight_log(fixture("enhancement-shaman-chain-magma-4-targets"));
+    let ratio =
+        |line: &str| debug_value(line, "AfterTargetMods:") / debug_value(line, "AfterResistances:");
+    let lines: Vec<&str> = logs
+        .lines()
+        .filter(|line| line.contains("{SpellID: 10605} [DEBUG]"))
+        .collect();
+    let mut boosted_first = false;
+    for pair in lines.windows(2) {
+        if pair[0].contains("[Target 1]") && pair[1].contains("[Target 2]") {
+            assert!(ratio(pair[1]) < 1.2, "{}", pair[1]);
+            boosted_first |= ratio(pair[0]) > 1.2;
+        }
+    }
+    assert!(boosted_first, "{logs}");
+}

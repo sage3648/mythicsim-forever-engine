@@ -617,6 +617,10 @@ fn refusals_carry_stable_codes() {
     for (case, code) in [
         ("fire-mage-goblin-sapper", "class_limit"),
         ("production-frost-2-targets", "several_targets_unsupported"),
+        (
+            "production-arms-warrior-3-targets",
+            "several_targets_unsupported",
+        ),
     ] {
         let path = family().join(format!("{case}.prepared.json"));
         let value: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
