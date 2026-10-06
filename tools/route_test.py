@@ -23,12 +23,15 @@ from pathlib import Path
 mode = json.loads((Path(__file__).parent / "mode.json").read_text())
 command, args = sys.argv[1], dict(zip(sys.argv[2::2], sys.argv[3::2]))
 step = {"prepare": "prepare", "check": "check", "sim": "rust"}[command]
-if mode.get("fail") == step:
-    sys.exit("broken")
 if mode.get("hang") == step:
     time.sleep(5)
+infile = json.loads(Path(args["--infile"]).read_text())
+# A batch test gives one request its own behavior.
+mode.update((infile if command == "prepare" else infile["request"]).get("fake", {}))
+if mode.get("fail") == step:
+    sys.exit("broken")
 if command == "prepare":
-    request = json.loads(Path(args["--infile"]).read_text())
+    request = infile
     Path(args["--outfile"]).write_text(json.dumps({"request": request}))
 elif command == "check":
     if "check_output" in mode:
@@ -43,7 +46,9 @@ else:
 """
 
 
-class RouteTest(unittest.TestCase):
+class BundleTest(unittest.TestCase):
+    """A bundle of fake binaries and one request."""
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)
@@ -60,6 +65,8 @@ class RouteTest(unittest.TestCase):
     def tearDown(self):
         self.temp.cleanup()
 
+
+class RouteTest(BundleTest):
     def decide(self, timeout=30, seed=7, **mode):
         mode.setdefault("result", RESULT)
         (self.bundle / "bin" / "mode.json").write_text(json.dumps(mode))
@@ -127,6 +134,68 @@ class RouteTest(unittest.TestCase):
         self.assertEqual(done.returncode, 2)
         self.assertEqual(json.loads(done.stdout)["status"], "fault")
         self.assertEqual(json.loads((self.output / "decision.json").read_text())["stage"], "rust")
+
+
+
+class BatchTest(BundleTest):
+    """A batch runs in Rust only when the gate supports every request."""
+
+    def write_batch(self, *behaviors):
+        paths = []
+        for index, fake in enumerate(behaviors):
+            path = self.root / f"candidate-{index}.json"
+            path.write_text(json.dumps({"simOptions": {"iterations": 10}, "fake": fake}))
+            paths.append(path)
+        return paths
+
+    def decide_batch(self, *behaviors, seed=7):
+        (self.bundle / "bin" / "mode.json").write_text(json.dumps({"result": RESULT}))
+        return route.route_batch(self.write_batch(*behaviors), self.output, self.bundle, 30, seed)
+
+    def results(self):
+        return sorted(self.output.glob("*/result.json"))
+
+    def test_a_fully_supported_batch_runs_every_request_in_rust(self):
+        decision = self.decide_batch({}, {}, {})
+        self.assertEqual(decision["status"], "rust")
+        self.assertEqual([entry["status"] for entry in decision["requests"]], ["rust"] * 3)
+        self.assertEqual(len(self.results()), 3)
+
+    def test_one_refused_candidate_sends_the_whole_batch_to_go(self):
+        decision = self.decide_batch({}, {"refusals": REFUSALS}, {})
+        self.assertEqual(decision["status"], "fallback")
+        self.assertEqual(decision["codes"], ["class_limit", "unknown_spell"])
+        self.assertEqual([entry.get("status") for entry in decision["requests"]], [None, "fallback", None])
+        self.assertEqual(decision["requests"][1]["refusals"], REFUSALS)
+        self.assertEqual(self.results(), [])
+        for entry in decision["requests"]:
+            self.assertNotIn("rust", entry["timings_ms"])
+
+    def test_a_fault_in_any_request_leaves_no_result(self):
+        for stage in ("prepare", "check", "rust"):
+            with self.subTest(stage=stage):
+                self.output = self.root / f"batch-{stage}"
+                decision = self.decide_batch({}, {"fail": stage}, {})
+                self.assertEqual(decision["status"], "fault")
+                self.assertEqual(decision["requests"][1]["stage"], stage)
+                self.assertEqual(self.results(), [])
+                self.assertNotIn("rust", {entry.get("status") for entry in decision["requests"]})
+
+    def test_unseeded_candidates_share_one_seed(self):
+        decision = self.decide_batch({}, {}, seed=None)
+        self.assertEqual(decision["seed_source"], "drawn")
+        seeds = {json.loads((folder / "request.json").read_text())["simOptions"]["randomSeed"]
+                 for folder in sorted(self.output.iterdir())}
+        self.assertEqual(seeds, {str(decision["seed"])})
+
+    def test_the_command_decides_a_batch(self):
+        (self.bundle / "bin" / "mode.json").write_text(json.dumps({"result": RESULT}))
+        paths = self.write_batch({}, {"refusals": REFUSALS})
+        done = subprocess.run([sys.executable, str(Path(route.__file__)), "--batch", *map(str, paths),
+                               "--output", str(self.output), "--bundle", str(self.bundle)],
+                              capture_output=True, text=True)
+        self.assertEqual(done.returncode, 0)
+        self.assertEqual(json.loads(done.stdout)["status"], "fallback")
 
 
 if __name__ == "__main__":

@@ -16,8 +16,21 @@ fault     A step failed: the request could not be read, the exporter, the gate o
           Exit status 2.
 
 The decision is printed as one JSON line and written to --output/decision.json. A request
-without a random seed gets a fresh one, as Go would draw, recorded as `seed`. Uses only
-Python's standard library.
+without a random seed gets a fresh one, as Go would draw, recorded as `seed`.
+
+With --batch, the requests of one Best Gear, stat weights or ranking job are decided
+together, so their small differences never come from two engines. Every request is
+prepared and checked first, and Rust runs only when the gate supports all of them:
+
+rust      Every request ran in Rust. Each entry of `requests` names its result.json.
+fallback  The gate refused at least one request: run the whole batch in Go. The refused
+          entries carry their refusals; `codes` gathers the distinct codes of all of them.
+          Rust runs none of the requests.
+fault     A step failed for at least one request, which the entry's `stage` and `error`
+          name. Run the whole batch in Go. No result.json is left for any request.
+
+Every request without its own seed gets the same seed, --seed or one drawn for the batch,
+so the candidates share their random numbers. Uses only Python's standard library.
 """
 
 import argparse
@@ -71,73 +84,148 @@ def seed_request(request, seed):
     return seed, source
 
 
+def bundle_manifest(bundle):
+    manifest = bundle / "manifest.json"
+    return json.loads(manifest.read_text()) if manifest.exists() else None
+
+
+def gate(request_path, output, bundle, timeout, seed, decision):
+    """Prepare and check one request into `decision`. Returns the prepared file when the
+    gate supports it; otherwise the decision holds a fallback. Raises Fault."""
+    engine, exporter = bundle / "bin" / ENGINE, bundle / "bin" / EXPORTER
+    timings = decision["timings_ms"]
+    try:
+        request = json.loads(Path(request_path).read_text())
+        decision["seed"], decision["seed_source"] = seed_request(request, seed)
+    except (OSError, ValueError, AttributeError, TypeError) as error:
+        raise Fault("request", f"{type(error).__name__}: {error}")
+    request_file = output / "request.json"
+    request_file.write_text(json.dumps(request) + "\n")
+    prepared = output / "prepared.json"
+    run_step("prepare", [exporter, "prepare", "--infile", request_file, "--outfile", prepared,
+                         "--scenario", "route"], timeout, timings)
+
+    stdout = run_step("check", [engine, "check", "--infile", prepared], timeout, timings)
+    try:
+        coverage = json.loads(stdout)
+        supported = coverage["supported"]
+        refusals = coverage["refusals"]
+    except (ValueError, KeyError, TypeError) as error:
+        raise Fault("check", f"unreadable gate output: {type(error).__name__}: {error}")
+    if supported is not True:
+        if not refusals:
+            raise Fault("check", "the gate refused the input without a reason")
+        decision.update(status="fallback", refusals=refusals,
+                        codes=sorted({refusal["code"] for refusal in refusals}))
+        return None
+    return prepared
+
+
+def run_rust(prepared, output, bundle, timeout, decision):
+    """Run a supported request in Rust and record its result in `decision`. Raises Fault."""
+    report_file = output / "rust-report.json"
+    run_step("rust", [bundle / "bin" / ENGINE, "sim", "--infile", prepared, "--outfile", report_file],
+             timeout, decision["timings_ms"])
+    try:
+        report = json.loads(report_file.read_text())
+        result = report["result"]
+        if not isinstance(result.get("raidMetrics"), dict) or result.get("iterationsDone") is None:
+            raise ValueError("the result lacks raidMetrics or iterationsDone")
+    except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
+        raise Fault("rust", f"incomplete result: {type(error).__name__}: {error}")
+    result_file = output / "result.json"
+    result_file.write_text(json.dumps(result) + "\n")
+    decision.update(status="rust", result=str(result_file), identity=report.get("identity"),
+                    request_sha256=report.get("request_sha256"))
+
+
 def route(request_path, output, bundle, timeout, seed=None):
     """Decide one request and return the decision. Never raises for a failing step."""
     output.mkdir(parents=True, exist_ok=False)
-    engine, exporter = bundle / "bin" / ENGINE, bundle / "bin" / EXPORTER
-    timings = {}
-    decision = {"schema": SCHEMA, "timings_ms": timings}
-    manifest = bundle / "manifest.json"
-    if manifest.exists():
-        decision["bundle"] = json.loads(manifest.read_text())
+    decision = {"schema": SCHEMA, "timings_ms": {}}
+    manifest = bundle_manifest(bundle)
+    if manifest is not None:
+        decision["bundle"] = manifest
     try:
-        try:
-            request = json.loads(Path(request_path).read_text())
-            decision["seed"], decision["seed_source"] = seed_request(request, seed)
-        except (OSError, ValueError, AttributeError, TypeError) as error:
-            raise Fault("request", f"{type(error).__name__}: {error}")
-        request_file = output / "request.json"
-        request_file.write_text(json.dumps(request) + "\n")
-        prepared = output / "prepared.json"
-        run_step("prepare", [exporter, "prepare", "--infile", request_file, "--outfile", prepared,
-                             "--scenario", "route"], timeout, timings)
-
-        stdout = run_step("check", [engine, "check", "--infile", prepared], timeout, timings)
-        try:
-            coverage = json.loads(stdout)
-            supported = coverage["supported"]
-            refusals = coverage["refusals"]
-        except (ValueError, KeyError, TypeError) as error:
-            raise Fault("check", f"unreadable gate output: {type(error).__name__}: {error}")
-        if supported is not True:
-            if not refusals:
-                raise Fault("check", "the gate refused the input without a reason")
-            decision.update(status="fallback", refusals=refusals,
-                            codes=sorted({refusal["code"] for refusal in refusals}))
-            return decision
-
-        report_file = output / "rust-report.json"
-        run_step("rust", [engine, "sim", "--infile", prepared, "--outfile", report_file], timeout, timings)
-        try:
-            report = json.loads(report_file.read_text())
-            result = report["result"]
-            if not isinstance(result.get("raidMetrics"), dict) or result.get("iterationsDone") is None:
-                raise ValueError("the result lacks raidMetrics or iterationsDone")
-        except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
-            raise Fault("rust", f"incomplete result: {type(error).__name__}: {error}")
-        result_file = output / "result.json"
-        result_file.write_text(json.dumps(result) + "\n")
-        decision.update(status="rust", result=str(result_file), identity=report.get("identity"),
-                        request_sha256=report.get("request_sha256"))
+        prepared = gate(request_path, output, bundle, timeout, seed, decision)
+        if prepared is not None:
+            run_rust(prepared, output, bundle, timeout, decision)
     except Fault as fault:
         decision.update(status="fault", stage=fault.stage, error=str(fault))
     return decision
 
 
+def route_batch(request_paths, output, bundle, timeout, seed=None):
+    """Decide a batch in one engine and return the decision. Never raises for a failing step."""
+    output.mkdir(parents=True, exist_ok=False)
+    source = "argument"
+    if seed is None:
+        seed, source = secrets.randbelow(MAX_SEED) + 1, "drawn"
+    decision = {"schema": SCHEMA, "batch": True, "seed": seed, "seed_source": source}
+    manifest = bundle_manifest(bundle)
+    if manifest is not None:
+        decision["bundle"] = manifest
+    entries = [{"index": index, "request": str(path), "timings_ms": {}}
+               for index, path in enumerate(request_paths)]
+    decision["requests"] = entries
+    folders = [output / f"{index:03d}" for index in range(len(entries))]
+
+    # Gate every request before running any, so a refused candidate costs no Rust run.
+    supported = []
+    for entry, folder, request_path in zip(entries, folders, request_paths):
+        folder.mkdir()
+        try:
+            prepared = gate(request_path, folder, bundle, timeout, seed, entry)
+        except Fault as fault:
+            entry.update(status="fault", stage=fault.stage, error=str(fault))
+            continue
+        if prepared is not None:
+            supported.append((entry, folder, prepared))
+    if len(supported) == len(entries):
+        for entry, folder, prepared in supported:
+            try:
+                run_rust(prepared, folder, bundle, timeout, entry)
+            except Fault as fault:
+                entry.update(status="fault", stage=fault.stage, error=str(fault))
+                break
+
+    statuses = {entry.get("status") for entry in entries}
+    if "fault" in statuses:
+        # A batch is served whole or not at all: never leave a result of a failed batch.
+        for entry in entries:
+            if entry.get("status") == "rust":
+                Path(entry.pop("result")).unlink()
+                entry["status"] = "discarded"
+        decision["status"] = "fault"
+    elif "fallback" in statuses:
+        decision.update(status="fallback",
+                        codes=sorted({code for entry in entries for code in entry.get("codes", [])}))
+    else:
+        decision["status"] = "rust"
+    return decision
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--request", type=Path, required=True, help="RaidSimRequest JSON")
+    requests = parser.add_mutually_exclusive_group(required=True)
+    requests.add_argument("--request", type=Path, help="RaidSimRequest JSON")
+    requests.add_argument("--batch", type=Path, nargs="+", metavar="REQUEST",
+                          help="the RaidSimRequest JSON files of one batch job, decided together")
     parser.add_argument("--output", type=Path, required=True, help="new folder to write")
     parser.add_argument("--bundle", type=Path, default=Path(__file__).resolve().parents[1],
                         help="bundle folder (default: the one holding this tool)")
-    parser.add_argument("--seed", type=int, help="seed for an unseeded request (default: a fresh one)")
+    parser.add_argument("--seed", type=int,
+                        help="seed for an unseeded request (default: a fresh one, shared by a batch)")
     parser.add_argument("--timeout", type=int, default=300, help="seconds per step")
     args = parser.parse_args()
     if args.seed is not None and not 0 < args.seed <= MAX_SEED:
         parser.error(f"--seed must be from 1 to {MAX_SEED}")
     if args.output.exists():
         parser.error(f"{args.output} exists; each request writes a new folder")
-    decision = route(args.request, args.output, args.bundle.resolve(), args.timeout, args.seed)
+    if args.batch:
+        decision = route_batch(args.batch, args.output, args.bundle.resolve(), args.timeout, args.seed)
+    else:
+        decision = route(args.request, args.output, args.bundle.resolve(), args.timeout, args.seed)
     (args.output / "decision.json").write_text(json.dumps(decision, indent=2) + "\n")
     print(json.dumps(decision))
     return 2 if decision["status"] == "fault" else 0
