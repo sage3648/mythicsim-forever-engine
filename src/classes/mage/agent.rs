@@ -686,12 +686,9 @@ impl Agent for MageAgent {
     }
 
     fn on_dot_expire(fight: &mut Fight<Self>, _dot: DotId, behavior: MageSpell) {
-        match behavior {
-            MageSpell::Evocation => {
-                let (aura, _) = fight.agent.evocation_regen.expect("Evocation is bound");
-                fight.deactivate_aura(aura);
-            }
-            _ => {}
+        if behavior == MageSpell::Evocation {
+            let (aura, _) = fight.agent.evocation_regen.expect("Evocation is bound");
+            fight.deactivate_aura(aura);
         }
     }
 

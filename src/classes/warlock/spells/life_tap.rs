@@ -19,6 +19,7 @@ pub(crate) struct LifeTap {
 }
 
 /// Go reads Spirit at each cast, which a stat aura such as an on-use trinket's can change.
+#[allow(clippy::too_many_arguments)]
 pub(crate) fn bind<A: Agent>(
     fight: &mut Fight<A>,
     spell_id: i32,
