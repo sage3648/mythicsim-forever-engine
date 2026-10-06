@@ -200,7 +200,9 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `demoralizing_roar` | sim/druid/demoralizing_roar.go | The spell and the target debuff, whose attack power cut the target's swing reads while it is up |
 | `maul` | sim/druid/maul.go | The strike and its flat damage, the queue spell and aura and the realism delay, a Go literal |
 | `lacerate` | sim/druid/lacerate.go | The tick a stack, the weapon share a stack from client data, the stack cap and tick crit |
-| `primal_bite` | sim/druid/primal_bite.go | The flat damage; Berserk lifts the cooldown, a Go literal |
+| `primal_bite` | sim/druid/primal_bite.go | The flat damage; Berserk lifts the cooldown, a Go literal. Against several targets, up to three strikes from the cast target onward, and only the first refunds on a miss |
+| `swipe` | sim/druid/swipe.go | The flat hit and the attack power share, Go literals; it hits the first three targets in unit order, whichever target it is cast on |
+| `hurricane` | sim/druid/hurricane.go | The channel, its triggered tick spell and the tick's fixed amount, which each tick deals to every target on the magic hit table |
 | `barkskin` | sim/druid/barkskin.go | The spell and its aura, whose physical damage taken cut is a stat aura; a cast in the fight restarts the main hand swing |
 | `frenzied_regeneration` | sim/druid/frenzied_regeneration.go | The aura, its tick count and period, the Rage a tick spends and the health a point of Rage gives, Go literals, and the healing taken multiplier |
 | `natures_bounty` | sim/druid/item_sets.go | The proc chance, a Go literal, and the mana, energy and Rage a proc gives by form, with the spells each hears and the metrics action |
@@ -789,7 +791,7 @@ cargo run --locked -- check --infile fixtures/mage/prepared-v2/frost-reference.p
   any number of them simulated. Rust keeps each target's auras, dots, debuffs, armor,
   resistances and metrics; area hits, cleaves and the rotation's multidot reach every
   target as in Go. The exporter refuses targets that differ from the first, a tank
-  assignment, a target aura with an internal cooldown and the item and pet effects that
+  assignment, since every copy would swing at the tank and Rust models one enemy swing, a target aura with an internal cooldown and the item and pet effects that
   reach other targets; the gate refuses a class not yet checked against several targets
   and each class's spells that reach other targets without a Rust implementation. Job
   modes such as stat weights need contract additions.
