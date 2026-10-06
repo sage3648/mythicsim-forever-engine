@@ -2,8 +2,9 @@
 """Run one production request in Rust, or tell the worker to use Go.
 
 The application worker calls this once per request, from a bundle that `tools/shadow.py
-build` made. The pinned Go exporter prepares the RaidSimRequest, the Rust coverage gate
-checks it, and then either Rust runs it or the decision names why Go must:
+build` made. The pinned Go exporter prepares the RaidSimRequest, and then one Rust process
+gates the prepared input and runs it when the Rust coverage gate supports it, or the decision
+names why Go must:
 
 rust      Rust ran the request. --output/result.json holds its RaidSimResult, in the JSON
           Go prints. Exit status 0.
@@ -37,7 +38,6 @@ import argparse
 import json
 import os
 from pathlib import Path
-import secrets
 import subprocess
 import sys
 import time
@@ -55,8 +55,9 @@ class Fault(Exception):
         self.stage = stage
 
 
-def run_step(stage, args, timeout, timings):
-    """Run one step, recording its wall time. A failure is a fault at that stage."""
+def run_step(stage, args, timeout, timings, accept=(0,)):
+    """Run one step, recording its wall time, and return what it finished with. A failure is a
+    fault at that stage; an exit status in `accept` is not a failure."""
     started = time.perf_counter()
     try:
         done = subprocess.run([str(arg) for arg in args], capture_output=True, text=True, timeout=timeout)
@@ -66,11 +67,11 @@ def run_step(stage, args, timeout, timings):
         raise Fault(stage, str(error))
     finally:
         timings[stage] = round((time.perf_counter() - started) * 1000, 1)
-    if done.returncode != 0:
+    if done.returncode not in accept:
         # A negative status is the signal that ended the process, for example a kill.
         reason = f"killed by signal {-done.returncode}" if done.returncode < 0 else f"exit status {done.returncode}"
         raise Fault(stage, done.stderr.strip()[-2000:] or reason)
-    return done.stdout
+    return done
 
 
 def write_atomically(path, text):
@@ -90,6 +91,12 @@ def discard_partial_output(output):
         path.unlink(missing_ok=True)
 
 
+def draw_seed():
+    """A fresh random seed from 1 to MAX_SEED. MAX_SEED is a power of two, so eight random bytes
+    reduce to it without bias."""
+    return int.from_bytes(os.urandom(8), "big") % MAX_SEED + 1
+
+
 def seed_request(request, seed):
     """The request's own seed, or the given or a fresh one written into it."""
     options = request.setdefault("simOptions", {})
@@ -97,7 +104,7 @@ def seed_request(request, seed):
     if own != 0:
         return own, "request"
     if seed is None:
-        seed, source = secrets.randbelow(MAX_SEED) + 1, "drawn"
+        seed, source = draw_seed(), "drawn"
     else:
         source = "argument"
     options["randomSeed"] = str(seed)
@@ -109,11 +116,9 @@ def bundle_manifest(bundle):
     return json.loads(manifest.read_text()) if manifest.exists() else None
 
 
-def gate(request_path, output, bundle, timeout, seed, decision):
-    """Prepare and check one request into `decision`. Returns the prepared file when the
-    gate supports it; otherwise the decision holds a fallback. Raises Fault."""
-    engine, exporter = bundle / "bin" / ENGINE, bundle / "bin" / EXPORTER
-    timings = decision["timings_ms"]
+def prepare(request_path, output, bundle, timeout, seed, decision):
+    """Seed and prepare one request into `decision`. Returns the prepared file. Raises Fault."""
+    exporter = bundle / "bin" / EXPORTER
     try:
         request = json.loads(Path(request_path).read_text())
         decision["seed"], decision["seed_source"] = seed_request(request, seed)
@@ -123,38 +128,72 @@ def gate(request_path, output, bundle, timeout, seed, decision):
     request_file.write_text(json.dumps(request) + "\n")
     prepared = output / "prepared.json"
     run_step("prepare", [exporter, "prepare", "--infile", request_file, "--outfile", prepared,
-                         "--scenario", "route"], timeout, timings)
+                         "--scenario", "route"], timeout, decision["timings_ms"])
+    return prepared
 
-    stdout = run_step("check", [engine, "check", "--infile", prepared], timeout, timings)
+
+def refuse(coverage_text, decision):
+    """Record the gate's refusal, as `check` and `sim --gate` print it, as a fallback in `decision`.
+    Raises Fault when the output is unreadable or refuses without a reason."""
     try:
-        coverage = json.loads(stdout)
+        coverage = json.loads(coverage_text)
         supported = coverage["supported"]
         refusals = coverage["refusals"]
     except (ValueError, KeyError, TypeError) as error:
         raise Fault("check", f"unreadable gate output: {type(error).__name__}: {error}")
-    if supported is not True:
-        if not refusals:
-            raise Fault("check", "the gate refused the input without a reason")
-        decision.update(status="fallback", refusals=refusals,
-                        codes=sorted({refusal["code"] for refusal in refusals}))
-        return None
-    return prepared
+    if supported is True:
+        return False
+    if not refusals:
+        raise Fault("check", "the gate refused the input without a reason")
+    decision.update(status="fallback", refusals=refusals,
+                    codes=sorted({refusal["code"] for refusal in refusals}))
+    return True
 
 
-def run_rust(prepared, output, bundle, timeout, decision):
+def gate(request_path, output, bundle, timeout, seed, decision):
+    """Prepare and check one request into `decision`, for a batch, whose requests are all gated
+    before any runs. Returns the prepared file when the gate supports it; otherwise the decision
+    holds a fallback. Raises Fault."""
+    prepared = prepare(request_path, output, bundle, timeout, seed, decision)
+    done = run_step("check", [bundle / "bin" / ENGINE, "check", "--infile", prepared], timeout,
+                    decision["timings_ms"])
+    return None if refuse(done.stdout, decision) else prepared
+
+
+def run_rust(prepared, output, bundle, timeout, decision, gated=False):
     """Run a supported request in Rust and record its result in `decision`. Raises Fault and
-    then leaves no partial output behind."""
+    then leaves no partial output behind. With `gated`, the same process first gates the input,
+    and a refusal is recorded in `decision` as a fallback, with no result."""
     try:
-        run_rust_step(prepared, output, bundle, timeout, decision)
+        run_rust_step(prepared, output, bundle, timeout, decision, gated)
     except Fault:
         discard_partial_output(output)
         raise
 
 
-def run_rust_step(prepared, output, bundle, timeout, decision):
+# The exit statuses of `forever-engine sim --gate` besides success and error: the gate
+# refused the input, or the prepared input failed validation.
+GATE_REFUSED, GATE_REJECTED = 3, 4
+
+
+def run_rust_step(prepared, output, bundle, timeout, decision, gated):
     report_file = output / "rust-report.json"
-    run_step("rust", [bundle / "bin" / ENGINE, "sim", "--infile", prepared, "--outfile", report_file],
-             timeout, decision["timings_ms"])
+    command = [bundle / "bin" / ENGINE, "sim", "--infile", prepared, "--outfile", report_file]
+    timings = decision["timings_ms"]
+    if gated:
+        done = run_step("rust", command + ["--gate"], timeout, timings, accept=(0, GATE_REFUSED, GATE_REJECTED))
+        if done.returncode == GATE_REJECTED:
+            # What a separate `check` step reported: an input that is invalid is a fault of the gate.
+            timings["check"] = timings.pop("rust")
+            raise Fault("check", done.stderr.strip()[-2000:] or f"exit status {done.returncode}")
+        if done.returncode == GATE_REFUSED:
+            # The gate ran and nothing else did: its time is the check's, as with a separate step.
+            timings["check"] = timings.pop("rust")
+            if not refuse(done.stdout, decision):
+                raise Fault("check", "the gate refused the input but reported it supported")
+            return
+    else:
+        run_step("rust", command, timeout, timings)
     try:
         report = json.loads(report_file.read_text())
         result = report["result"]
@@ -176,9 +215,9 @@ def route(request_path, output, bundle, timeout, seed=None):
     if manifest is not None:
         decision["bundle"] = manifest
     try:
-        prepared = gate(request_path, output, bundle, timeout, seed, decision)
-        if prepared is not None:
-            run_rust(prepared, output, bundle, timeout, decision)
+        # One engine process gates the prepared input and simulates it when it is supported.
+        prepared = prepare(request_path, output, bundle, timeout, seed, decision)
+        run_rust(prepared, output, bundle, timeout, decision, gated=True)
     except Fault as fault:
         decision.update(status="fault", stage=fault.stage, error=str(fault))
     return decision
@@ -189,7 +228,7 @@ def route_batch(request_paths, output, bundle, timeout, seed=None):
     output.mkdir(parents=True, exist_ok=False)
     source = "argument"
     if seed is None:
-        seed, source = secrets.randbelow(MAX_SEED) + 1, "drawn"
+        seed, source = draw_seed(), "drawn"
     decision = {"schema": SCHEMA, "batch": True, "seed": seed, "seed_source": source}
     manifest = bundle_manifest(bundle)
     if manifest is not None:

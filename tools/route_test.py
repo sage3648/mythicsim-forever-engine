@@ -23,11 +23,25 @@ from pathlib import Path
 mode = json.loads((Path(__file__).parent / "mode.json").read_text())
 command, args = sys.argv[1], dict(zip(sys.argv[2::2], sys.argv[3::2]))
 step = {"prepare": "prepare", "check": "check", "sim": "rust"}[command]
+gated = command == "sim" and "--gate" in sys.argv
+with (Path(__file__).parent / "calls.log").open("a") as calls:
+    calls.write(command + (" --gate" if gated else "") + "\\n")
 if mode.get("hang") == step:
     time.sleep(5)
 infile = json.loads(Path(args["--infile"]).read_text())
 # A batch test gives one request its own behavior.
 mode.update((infile if command == "prepare" else infile["request"]).get("fake", {}))
+if gated:
+    # sim --gate: a refusal is reported as check reports it, with status 3, and an invalid
+    # prepared input has status 4.
+    if mode.get("fail") == "check":
+        print("broken", file=sys.stderr)
+        sys.exit(4)
+    refusals = mode.get("refusals", [])
+    if "check_output" in mode or refusals:
+        print(mode["check_output"] if "check_output" in mode else
+              json.dumps({"supported": False, "reasons": [r["reason"] for r in refusals], "refusals": refusals}))
+        sys.exit(3)
 if mode.get("fail") == step:
     sys.exit("broken")
 if mode.get("partial_then") and command == "sim":
@@ -93,7 +107,15 @@ class RouteTest(BundleTest):
         self.assertEqual(decision["status"], "rust")
         self.assertEqual(json.loads(Path(decision["result"]).read_text()), RESULT)
         self.assertEqual(decision["identity"], {"engine": "forever-engine"})
-        self.assertEqual(set(decision["timings_ms"]), {"prepare", "check", "rust"})
+        # The gate runs inside the Rust step, so a supported request has no step of its own for it.
+        self.assertEqual(set(decision["timings_ms"]), {"prepare", "rust"})
+
+    def calls(self):
+        return (self.bundle / "bin" / "calls.log").read_text().split("\n")[:-1]
+
+    def test_a_single_request_gates_and_runs_in_one_engine_process(self):
+        self.decide()
+        self.assertEqual(self.calls(), ["prepare", "sim --gate"])
 
     def test_a_refused_request_falls_back_with_its_codes(self):
         decision = self.decide(refusals=REFUSALS)
@@ -101,7 +123,10 @@ class RouteTest(BundleTest):
         self.assertEqual(decision["refusals"], REFUSALS)
         self.assertEqual(decision["codes"], ["class_limit", "unknown_spell"])
         self.assertFalse((self.output / "result.json").exists())
-        self.assertNotIn("rust", decision["timings_ms"])
+        # The gate ran and nothing else did: its time is the check's.
+        self.assertEqual(set(decision["timings_ms"]), {"prepare", "check"})
+        self.assertEqual(self.calls(), ["prepare", "sim --gate"])
+        self.assertEqual(list(self.output.glob("*rust-report*")), [])
 
     def test_a_crash_at_any_step_is_a_fault(self):
         for stage in ("prepare", "check", "rust"):
@@ -146,11 +171,12 @@ class RouteTest(BundleTest):
         self.assert_nothing_to_read()
 
     def test_a_fault_before_rust_runs_leaves_no_result_either(self):
-        for stage in ("prepare", "check"):
-            with self.subTest(stage=stage):
-                self.output = self.root / f"out-{stage}"
-                self.assert_fault(self.decide(timeout=1, hang=stage), stage)
-                self.assertFalse((self.output / "rust-report.json").exists())
+        self.assert_fault(self.decide(timeout=1, hang="prepare"), "prepare")
+        self.assertFalse((self.output / "rust-report.json").exists())
+
+    def test_a_refusal_that_claims_support_is_a_fault(self):
+        supported = json.dumps({"supported": True, "refusals": []})
+        self.assert_fault(self.decide(check_output=supported), "check")
 
     def test_files_are_written_whole_or_not_at_all(self):
         target = self.root / "whole.json"
@@ -211,6 +237,9 @@ class BatchTest(BundleTest):
         self.assertEqual(decision["status"], "rust")
         self.assertEqual([entry["status"] for entry in decision["requests"]], ["rust"] * 3)
         self.assertEqual(len(self.results()), 3)
+        # A batch gates every request with `check` before any runs.
+        calls = (self.bundle / "bin" / "calls.log").read_text().split("\n")[:-1]
+        self.assertEqual(calls, ["prepare", "check"] * 3 + ["sim"] * 3)
 
     def test_one_refused_candidate_sends_the_whole_batch_to_go(self):
         decision = self.decide_batch({}, {"refusals": REFUSALS}, {})
