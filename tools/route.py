@@ -35,6 +35,7 @@ so the candidates share their random numbers. Uses only Python's standard librar
 
 import argparse
 import json
+import os
 from pathlib import Path
 import secrets
 import subprocess
@@ -66,8 +67,27 @@ def run_step(stage, args, timeout, timings):
     finally:
         timings[stage] = round((time.perf_counter() - started) * 1000, 1)
     if done.returncode != 0:
-        raise Fault(stage, done.stderr.strip()[-2000:] or f"exit status {done.returncode}")
+        # A negative status is the signal that ended the process, for example a kill.
+        reason = f"killed by signal {-done.returncode}" if done.returncode < 0 else f"exit status {done.returncode}"
+        raise Fault(stage, done.stderr.strip()[-2000:] or reason)
     return done.stdout
+
+
+def write_atomically(path, text):
+    """Write a file so a reader sees all of it or none: a sibling file renamed over the path."""
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    try:
+        temporary.write_text(text)
+        os.replace(temporary, path)
+    except BaseException:
+        temporary.unlink(missing_ok=True)
+        raise
+
+
+def discard_partial_output(output):
+    """Remove what a failed Rust step may have left: its report and the engine's temporary files."""
+    for path in [output / "rust-report.json", *output.glob(".rust-report.json.*.tmp")]:
+        path.unlink(missing_ok=True)
 
 
 def seed_request(request, seed):
@@ -122,7 +142,16 @@ def gate(request_path, output, bundle, timeout, seed, decision):
 
 
 def run_rust(prepared, output, bundle, timeout, decision):
-    """Run a supported request in Rust and record its result in `decision`. Raises Fault."""
+    """Run a supported request in Rust and record its result in `decision`. Raises Fault and
+    then leaves no partial output behind."""
+    try:
+        run_rust_step(prepared, output, bundle, timeout, decision)
+    except Fault:
+        discard_partial_output(output)
+        raise
+
+
+def run_rust_step(prepared, output, bundle, timeout, decision):
     report_file = output / "rust-report.json"
     run_step("rust", [bundle / "bin" / ENGINE, "sim", "--infile", prepared, "--outfile", report_file],
              timeout, decision["timings_ms"])
@@ -134,7 +163,7 @@ def run_rust(prepared, output, bundle, timeout, decision):
     except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
         raise Fault("rust", f"incomplete result: {type(error).__name__}: {error}")
     result_file = output / "result.json"
-    result_file.write_text(json.dumps(result) + "\n")
+    write_atomically(result_file, json.dumps(result) + "\n")
     decision.update(status="rust", result=str(result_file), identity=report.get("identity"),
                     request_sha256=report.get("request_sha256"))
 
@@ -226,7 +255,7 @@ def main():
         decision = route_batch(args.batch, args.output, args.bundle.resolve(), args.timeout, args.seed)
     else:
         decision = route(args.request, args.output, args.bundle.resolve(), args.timeout, args.seed)
-    (args.output / "decision.json").write_text(json.dumps(decision, indent=2) + "\n")
+    write_atomically(args.output / "decision.json", json.dumps(decision, indent=2) + "\n")
     print(json.dumps(decision))
     return 2 if decision["status"] == "fault" else 0
 

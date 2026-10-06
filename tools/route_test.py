@@ -18,7 +18,7 @@ REFUSALS = [{"code": "unknown_spell", "reason": "rotation reaches spell 10202 wi
 # Stand-ins for the two binaries. Each reads its behavior from a file beside it, so one
 # bundle covers every decision.
 FAKE = """#!/usr/bin/env python3
-import json, sys, time
+import json, os, signal, sys, time
 from pathlib import Path
 mode = json.loads((Path(__file__).parent / "mode.json").read_text())
 command, args = sys.argv[1], dict(zip(sys.argv[2::2], sys.argv[3::2]))
@@ -30,6 +30,16 @@ infile = json.loads(Path(args["--infile"]).read_text())
 mode.update((infile if command == "prepare" else infile["request"]).get("fake", {}))
 if mode.get("fail") == step:
     sys.exit("broken")
+if mode.get("partial_then") and command == "sim":
+    # What a run stopped part way through its output would leave behind without atomic writes.
+    Path(args["--outfile"]).write_text('{"identity": {"engine": "forever-engine"}, "result": {"raidMet')
+    Path(args["--outfile"]).with_name(".rust-report.json.1.tmp").write_text("{")
+    if mode["partial_then"] == "hang":
+        time.sleep(5)
+    elif mode["partial_then"] == "signal":
+        os.kill(os.getpid(), signal.SIGKILL)
+    elif mode["partial_then"] == "exit":
+        sys.exit(0)
 if command == "prepare":
     request = infile
     Path(args["--outfile"]).write_text(json.dumps({"request": request}))
@@ -110,6 +120,47 @@ class RouteTest(BundleTest):
 
     def test_a_timeout_is_a_fault(self):
         self.assert_fault(self.decide(timeout=1, hang="rust"), "rust")
+
+    def assert_nothing_to_read(self):
+        """A faulted Rust step leaves no result and no report, partial or whole, to read."""
+        leftovers = sorted(path.name for path in self.output.iterdir() if "rust-report" in path.name)
+        self.assertEqual(leftovers, [])
+        self.assertFalse((self.output / "result.json").exists())
+
+    def test_a_timed_out_run_leaves_no_partial_result(self):
+        decision = self.decide(timeout=1, partial_then="hang")
+        self.assert_fault(decision, "rust")
+        self.assertIn("timed out", decision["error"])
+        self.assert_nothing_to_read()
+
+    def test_a_run_ended_by_a_signal_is_a_fault_naming_it(self):
+        decision = self.decide(partial_then="signal")
+        self.assert_fault(decision, "rust")
+        self.assertIn("killed by signal 9", decision["error"])
+        self.assert_nothing_to_read()
+
+    def test_a_truncated_report_is_a_fault_not_a_result(self):
+        decision = self.decide(partial_then="exit")
+        self.assert_fault(decision, "rust")
+        self.assertIn("incomplete result", decision["error"])
+        self.assert_nothing_to_read()
+
+    def test_a_fault_before_rust_runs_leaves_no_result_either(self):
+        for stage in ("prepare", "check"):
+            with self.subTest(stage=stage):
+                self.output = self.root / f"out-{stage}"
+                self.assert_fault(self.decide(timeout=1, hang=stage), stage)
+                self.assertFalse((self.output / "rust-report.json").exists())
+
+    def test_files_are_written_whole_or_not_at_all(self):
+        target = self.root / "whole.json"
+        route.write_atomically(target, "complete\n")
+        self.assertEqual(target.read_text(), "complete\n")
+        # A failed write keeps the previous file and leaves no temporary file.
+        with self.assertRaises(TypeError):
+            route.write_atomically(target, None)
+        self.assertEqual(target.read_text(), "complete\n")
+        self.assertEqual(sorted(path.name for path in self.root.glob(".whole*")), [])
 
     def test_an_unreadable_request_is_a_fault(self):
         self.request.write_text("{")
