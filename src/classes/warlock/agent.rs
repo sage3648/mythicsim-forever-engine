@@ -6,8 +6,8 @@ use std::rc::Rc;
 use crate::{
     contracts::prepared_v2::{Effect, PreparedV2, Spell as ExportedSpell},
     core::fight::{
-        healing::Healing, school_damage_index, Agent, AuraRef, DotId, Fight, Outcome, Side,
-        SpellBehavior, SpellId, SpellResult, PRIORITY_REGEN,
+        healing::Healing, school_damage_index, Agent, AoeResults, AuraRef, DotId, Fight, Outcome,
+        Side, SpellBehavior, SpellId, SpellResult, PRIORITY_REGEN,
     },
 };
 
@@ -21,8 +21,11 @@ use super::{
         curse_of_recklessness::{self, CurseOfRecklessness},
         curse_of_the_elements::{self, CurseOfTheElements},
         drain_life::DrainLife,
-        find_spell, immolate, incinerate,
+        find_spell,
+        hellfire::{self, Hellfire},
+        immolate, incinerate,
         life_tap::{self, LifeTap},
+        rain_of_fire::{self, RainOfFire},
         searing_pain, shadow_bolt, shadowburn,
         siphon_life::SiphonLife,
         soul_fire, take_bane_slot,
@@ -59,6 +62,12 @@ pub(crate) enum WarlockSpell {
     DrainLife,
     Incinerate,
     Wrack,
+    /// Hellfire's channel.
+    Hellfire,
+    /// Rain of Fire's channel.
+    RainOfFire,
+    /// The spell each Rain of Fire period casts.
+    RainOfFireTick,
     BaneOfHavoc,
     DeathCoil,
     /// The Succubus's Lash of Pain.
@@ -102,6 +111,10 @@ pub(crate) struct WarlockAgent {
     bane_of_doom_dot: Option<DotId>,
     drain_life: Option<DrainLife>,
     wrack: Option<Wrack>,
+    pub(crate) hellfire: Option<Hellfire>,
+    /// The results of Hellfire's latest tick calculation, Go's result slice of the spell.
+    pub(crate) hellfire_results: AoeResults,
+    rain_of_fire: Option<RainOfFire>,
     /// Death Coil's base, its healing spell and the warlock's healing modifiers.
     death_coil: Option<(f64, SpellId, Healing)>,
     /// Bane of Havoc's aura on the one target.
@@ -231,6 +244,9 @@ impl WarlockAgent {
             "drain_life" if dot => Some(WarlockSpell::DrainLife),
             "incinerate" if damage => Some(WarlockSpell::Incinerate),
             "wrack" if dot => Some(WarlockSpell::Wrack),
+            "hellfire" if dot => Some(WarlockSpell::Hellfire),
+            "rain_of_fire" if dot => Some(WarlockSpell::RainOfFire),
+            "rain_of_fire" => Some(WarlockSpell::RainOfFireTick),
             "death_coil" if !dot => Some(WarlockSpell::DeathCoil),
             "bane_of_havoc" if !damage && !dot => Some(WarlockSpell::BaneOfHavoc),
             "succubus_lash_of_pain" => Some(WarlockSpell::LashOfPain),
@@ -325,6 +341,29 @@ impl WarlockAgent {
                     let dot = bind_snapshot_dot(&mut fight, *spell_id, *tick_base, *tick_can_crit)?;
                     let bound = wrack::bind(&mut fight, dot, *soul_siphon, dot_spells, *dot_bonus);
                     fight.agent.wrack = Some(bound);
+                }
+                Effect::Hellfire {
+                    spell_id,
+                    tick_base,
+                    tick_can_crit,
+                } => {
+                    find_spell(&fight, *spell_id)?;
+                    fight.agent.hellfire = Some(hellfire::bind(*tick_base, *tick_can_crit));
+                }
+                Effect::RainOfFire {
+                    spell_id,
+                    tick_spell_id,
+                    tick_base,
+                    tick_can_crit,
+                } => {
+                    let bound = rain_of_fire::bind(
+                        &fight,
+                        *spell_id,
+                        *tick_spell_id,
+                        *tick_base,
+                        *tick_can_crit,
+                    )?;
+                    fight.agent.rain_of_fire = Some(bound);
                 }
                 Effect::DeathCoil {
                     base_damage,
@@ -664,6 +703,12 @@ impl Agent for WarlockAgent {
                 let dot = fight.agent.wrack.expect("Wrack is bound").dot;
                 corruption::apply(fight, spell, target, dot);
             }
+            WarlockSpell::Hellfire => hellfire::apply_channel(fight, spell),
+            WarlockSpell::RainOfFire => rain_of_fire::apply_channel(fight, spell),
+            WarlockSpell::RainOfFireTick => {
+                let rain = fight.agent.rain_of_fire.expect("Rain of Fire is bound");
+                rain.apply_tick(fight, spell);
+            }
             WarlockSpell::DeathCoil => {
                 // The hit rolls at the cast and lands after travel.
                 let (base, _, _) = fight.agent.death_coil.expect("Death Coil is bound");
@@ -843,6 +888,12 @@ impl Agent for WarlockAgent {
             WarlockSpell::Wrack => {
                 let wrack = fight.agent.wrack.expect("Wrack is bound");
                 wrack.tick(fight);
+            }
+            WarlockSpell::Hellfire => hellfire::tick(fight, dot),
+            WarlockSpell::RainOfFire => {
+                let rain = fight.agent.rain_of_fire.expect("Rain of Fire is bound");
+                let side = fight.dots[dot].side;
+                rain.on_channel_tick(fight, side);
             }
             _ => {}
         }

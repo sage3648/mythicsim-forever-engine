@@ -2425,6 +2425,23 @@ pub enum Effect {
         dot_bonus: f64,
         dot_spells: Vec<usize>,
     },
+    /// Rain of Fire: the channel is an area dot on the warlock whose every tick casts the
+    /// triggered tick spell, a fixed amount rolled to hit on each target, and to crit unless
+    /// the client row says it cannot.
+    RainOfFire {
+        spell_id: i32,
+        tick_spell_id: i32,
+        tick_base: f64,
+        tick_can_crit: bool,
+    },
+    /// Hellfire: the channel is an area dot on the warlock whose every tick rolls a fixed
+    /// amount on each target, then burns the warlock for it. `tick_can_crit` is false when the
+    /// client row says the area hit cannot crit.
+    Hellfire {
+        spell_id: i32,
+        tick_base: f64,
+        tick_can_crit: bool,
+    },
     /// Bane of Havoc: the cast takes the bane slot with the target aura; the copy listener
     /// copies damage to other targets only.
     BaneOfHavoc {
@@ -3835,6 +3852,8 @@ impl Effect {
             Effect::DeathCoil { .. } => "death_coil",
             Effect::CurseOfRecklessness { .. } => "curse_of_recklessness",
             Effect::Wrack { .. } => "wrack",
+            Effect::RainOfFire { .. } => "rain_of_fire",
+            Effect::Hellfire { .. } => "hellfire",
             Effect::BaneOfHavoc { .. } => "bane_of_havoc",
             Effect::Firebolt { .. } => "firebolt",
             Effect::FelEnergy { .. } => "fel_energy",

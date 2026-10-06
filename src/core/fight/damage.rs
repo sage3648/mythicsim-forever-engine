@@ -788,6 +788,20 @@ impl<A: Agent> Fight<A> {
         base: f64,
         outcome: Outcome,
     ) -> SpellResult {
+        let result = self.calc_periodic_damage(dot, side, base, outcome);
+        self.deal_damage(self.dots[dot].spell, result, true);
+        result
+    }
+
+    /// Go `Spell.CalcPeriodicDamage` for a dot's tick on a base amount against a target, not
+    /// yet dealt.
+    pub(crate) fn calc_periodic_damage(
+        &mut self,
+        dot: super::DotId,
+        side: Side,
+        base: f64,
+        outcome: Outcome,
+    ) -> SpellResult {
         let state = &self.dots[dot];
         let spell = state.spell;
         let mut base = base;
@@ -799,9 +813,29 @@ impl<A: Agent> Fight<A> {
         }
         let attacker =
             self.attacker_multiplier(spell, true) * self.dots[dot].periodic_damage_multiplier;
-        let result = self.calc_damage_internal(spell, side, base, attacker, outcome);
-        self.deal_damage(spell, result, true);
-        result
+        self.calc_damage_internal(spell, side, base, attacker, outcome)
+    }
+
+    /// Go `Spell.CalcPeriodicAoeDamage`: a fixed amount calculated on each target in unit
+    /// index order, none dealt yet, so a hit cannot change the next one's calculation.
+    pub(crate) fn calc_periodic_aoe_damage(
+        &mut self,
+        dot: super::DotId,
+        base: f64,
+        outcome: Outcome,
+    ) -> AoeResults {
+        let mut results = AoeResults::default();
+        for position in 0..self.targets.len() {
+            results.push(self.calc_periodic_damage(dot, Side::target(position), base, outcome));
+        }
+        results
+    }
+
+    /// Go `Spell.DealBatchedPeriodicDamage`: each result of an earlier calculation, in order.
+    pub(crate) fn deal_batched_periodic_damage(&mut self, spell: SpellId, results: &AoeResults) {
+        for &result in results.as_slice() {
+            self.deal_damage(spell, result, true);
+        }
     }
 
     /// Go `Dot.CalcAndDealPeriodicSnapshotDamage` for a dot built by `Snapshot`, which ticks

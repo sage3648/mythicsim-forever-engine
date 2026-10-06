@@ -4,7 +4,7 @@
   "engine_revision": "6383c15a7b1bfbdbd7c5b4c0c59418c636e52e1a",
   "client_build": "1.60.1.70205",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "33a1481cdf310e9899826bab5f7895c079b71038618e112e5550bff909801077",
+  "exporter_sha256": "1a936e6a45311916260374481721cd674a2e22bae290a9d1da23cb20c4d44360",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -919,7 +919,7 @@
         "path": "fixtures/mage/prepared-v2/production-destruction-warlock.request.json"
       },
       "prepared": "production-destruction-warlock.prepared.json",
-      "prepared_sha256": "50407cbff8f28b9fc294add62cea9719de768876aeffc757fef598fbef254526",
+      "prepared_sha256": "656d87b97eaf868c5c6b2d9389465578fac100409b08dfb6fd72186d8f88f086",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1394,7 +1394,7 @@
         "path": "fixtures/mage/prepared-v2/production-affliction-warlock.request.json"
       },
       "prepared": "production-affliction-warlock.prepared.json",
-      "prepared_sha256": "1deea2933c2c6dec0689ddcfd8a5c53048ea491ab31e5f464963c0a8da25d507",
+      "prepared_sha256": "5cf8fcb642a7f69bc96225a423b36217d0ddf618c613510d60997ad2e95a49d4",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1415,7 +1415,7 @@
         "path": "fixtures/mage/prepared-v2/production-demonology-warlock.request.json"
       },
       "prepared": "production-demonology-warlock.prepared.json",
-      "prepared_sha256": "d06eda1f4c571302603bbc4992aafd5b893e59a796aa03f590f3be4918bcf3ff",
+      "prepared_sha256": "7e30a3d015a8ea52f19d57d1e165f0e6c9df1a6b41ea6f79b792e3efeb1b64b8",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1436,7 +1436,7 @@
         "path": "fixtures/mage/prepared-v2/demonology-warlock-voidwalker-pact.request.json"
       },
       "prepared": "demonology-warlock-voidwalker-pact.prepared.json",
-      "prepared_sha256": "6e80fcb0e1716a8d1f368373a625b349f286565789c4695c5aa384562b7f17ca",
+      "prepared_sha256": "283a80e5319f15fefab8b0140eda1ab101c1c9827ae4bc772515d380e3bc6e9e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1894,7 +1894,7 @@
         "path": "fixtures/mage/prepared-v2/demonology-warlock-orc.request.json"
       },
       "prepared": "demonology-warlock-orc.prepared.json",
-      "prepared_sha256": "024826c40ccbf954d3b77cd28f890314e01646d9f71bf40c42b5eda6a6fd787b",
+      "prepared_sha256": "c218f00d7e6ec2c5c97624a2ef230fa72a16bb91dfe7d7953e081f305f07e41f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1978,7 +1978,7 @@
         "path": "fixtures/mage/prepared-v2/affliction-warlock-broad.request.json"
       },
       "prepared": "affliction-warlock-broad.prepared.json",
-      "prepared_sha256": "138d059843d172409567344c13db1f8c4dfe34593bbceea4361b43185c37290e",
+      "prepared_sha256": "310f1b78e8f8e72da60fdb545b02531fb67cc6ae2271e7b6623ffc0e5aae0cc9",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1999,7 +1999,7 @@
         "path": "fixtures/mage/prepared-v2/destruction-warlock-broad.request.json"
       },
       "prepared": "destruction-warlock-broad.prepared.json",
-      "prepared_sha256": "15c151c22bff317ef11fc29e6ba347a0a093ab26c50b36c8d27612ca4f461202",
+      "prepared_sha256": "01829118454a84c45b80710e59cfef149581ac80e7d8b33802841f8811508b46",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2020,7 +2020,7 @@
         "path": "fixtures/mage/prepared-v2/affliction-warlock-death-coil.request.json"
       },
       "prepared": "affliction-warlock-death-coil.prepared.json",
-      "prepared_sha256": "21e0d42fe2f02b78c07a8f6c734f073a0ec264a7268d3362f3de1a813bd1bf33",
+      "prepared_sha256": "f97855cd29006f58f0f35681b0fe1e18c0483eed60384056f42d87cde8986af3",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2041,7 +2041,7 @@
         "path": "fixtures/mage/prepared-v2/demonology-warlock-recklessness.request.json"
       },
       "prepared": "demonology-warlock-recklessness.prepared.json",
-      "prepared_sha256": "6d075471af990f9e1aa557af790ea1546d7101505a0a6d47aa7f4dd359745cb1",
+      "prepared_sha256": "2ba4af0c8135935c888390f9c4ea39b9c9f66a938091321d4e91c79964fa15c3",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3450,7 +3450,7 @@
         "path": "fixtures/mage/prepared-v2/affliction-warlock-lash-of-pain-rounding.request.json"
       },
       "prepared": "affliction-warlock-lash-of-pain-rounding.prepared.json",
-      "prepared_sha256": "38c6321fe7b8fbf42b9d88e62b1635e3b3abdeba23d5eb347cdacd249a625be8",
+      "prepared_sha256": "d91ece7d0deb688423b1550bfdb726e701b0599788446e87735244172508d106",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3757,7 +3757,7 @@
         "path": "fixtures/mage/prepared-v2/affliction-warlock-raid-curse-of-elements.request.json"
       },
       "prepared": "affliction-warlock-raid-curse-of-elements.prepared.json",
-      "prepared_sha256": "62d0686c794b1b7e39bb7a4b024475e01a30675de20286d6a1131a7a5a0a94d7",
+      "prepared_sha256": "45ae3e7012ce000ca6ac1bccae6393d0dd44b650d06151a5dc0d14968abdeab8",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4884,7 +4884,7 @@
         "path": "fixtures/mage/prepared-v2/affliction-warlock-golden-banana.request.json"
       },
       "prepared": "affliction-warlock-golden-banana.prepared.json",
-      "prepared_sha256": "4a9ffd870e7fdd17efca890e69f9fae155cbba1e95837c99936eecea80dd9bdb",
+      "prepared_sha256": "8def70ab4e1013df41b15cfe39041d620a67063b2b87e049c0d24b5aa23d983e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5157,7 +5157,7 @@
         "path": "fixtures/mage/prepared-v2/affliction-warlock-pet-dismiss-residue.request.json"
       },
       "prepared": "affliction-warlock-pet-dismiss-residue.prepared.json",
-      "prepared_sha256": "ddeda03ec48d64c1c1b29237965a3f3bbcd47dfec49abfa18e62a84f248253b0",
+      "prepared_sha256": "060ce63cef55abbfade6b63c428d9dcce1e6bc5e51439f310b0b949c761b89d8",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5216,7 +5216,7 @@
         "path": "fixtures/mage/prepared-v2/demonology-warlock-frozen-heart.request.json"
       },
       "prepared": "demonology-warlock-frozen-heart.prepared.json",
-      "prepared_sha256": "70f584a89d08585f592f83bed9bc6fdb149c0e7ca15f3e8841f87bba7721be0f",
+      "prepared_sha256": "95314b7bc5c00d6c8c07f6cc8b3ebebef9bda68fb5f7a8743a918394b9b1802f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5705,6 +5705,48 @@
       "go_log": {
         "file": "smite-priest-no-inner-focus.go-log.txt",
         "sha256": "b63a782e5a1b2b8b578b710032ef2cd272464b489bfce996d2d9bcb6068d3dcc"
+      }
+    },
+    {
+      "id": "destruction-warlock-rain-of-fire",
+      "description": "The production Destruction Warlock casting Rain of Fire first: the channel's tick hits the one target for a fixed amount, rolled to hit and crit.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/destruction-warlock-rain-of-fire.request.json"
+      },
+      "prepared": "destruction-warlock-rain-of-fire.prepared.json",
+      "prepared_sha256": "4458ae7d387ce7fd7f5f9d786404941a218597ab8f085557f2a037eef065eeca",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "destruction-warlock-rain-of-fire.go-result.json",
+        "sha256": "d49130cfd8b36200a5c2ad49a302f271110196a2bb293395d1d717239d3444c3"
+      },
+      "go_log": {
+        "file": "destruction-warlock-rain-of-fire.go-log.txt",
+        "sha256": "d809d3a3e4e7d8110c284d025545ccabdca581dde52df5f17dc11a4f97b2d1aa"
+      }
+    },
+    {
+      "id": "affliction-warlock-hellfire",
+      "description": "The production Affliction Warlock casting Hellfire first: each tick burns the one target and the warlock, until the warlock cannot survive a tick and the stopped channel ticks once more, dealing that tick twice.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/affliction-warlock-hellfire.request.json"
+      },
+      "prepared": "affliction-warlock-hellfire.prepared.json",
+      "prepared_sha256": "3b1cafadf775bb52d746f91be8d4ea250fd6f4d161d9ab26678fbe4fd1429290",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "affliction-warlock-hellfire.go-result.json",
+        "sha256": "a0b86716ffe8767680d80eeca9988286c55e6ab722910aba1b6b56ef0dbcec19"
+      },
+      "go_log": {
+        "file": "affliction-warlock-hellfire.go-log.txt",
+        "sha256": "7f088fbdc83fde73e7892c8251cc464ce9f8aa308cd913a3ed110dee3886cd67"
       }
     }
   ]

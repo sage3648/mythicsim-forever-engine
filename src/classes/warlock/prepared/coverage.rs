@@ -31,12 +31,14 @@ const EFFECTS: &[&str] = &[
     "demonic_brand",
     "fel_energy",
     "firebolt",
+    "hellfire",
     "immolate",
     "incinerate",
     "improved_shadow_bolt",
     "lash_of_pain",
     "life_tap",
     "nightfall",
+    "rain_of_fire",
     "searing_pain",
     "shadow_and_flame",
     "shadow_bolt",
@@ -61,6 +63,8 @@ fn spell_capability(spell: &Spell) -> Option<&'static str> {
         "drain_life" if dot => Some("drain_life"),
         "incinerate" if damage => Some("incinerate"),
         "wrack" if dot => Some("wrack"),
+        "hellfire" if dot => Some("hellfire"),
+        "rain_of_fire" => Some("rain_of_fire"),
         "death_coil" if !dot => Some("death_coil"),
         "bane_of_havoc" if damage_free(spell) => Some("bane_of_havoc"),
         "curse_of_the_elements" => Some("curse_of_the_elements"),
@@ -129,8 +133,26 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
 
 /// The demon's abilities, which its AI reaches, need a behavior too, and the brand hit reads
 /// the warlock's school power as fixed.
-fn limits(prepared: &PreparedV2, _reachable: &[&Spell]) -> Vec<String> {
+fn limits(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
     let mut reasons = Vec::new();
+    // Hellfire's burn picks Go's outcome without a hit counter when its client row cannot
+    // crit, which Rust does not simulate.
+    let hellfire_cannot_crit = prepared.effects.iter().any(|effect| {
+        matches!(
+            effect,
+            Effect::Hellfire {
+                tick_can_crit: false,
+                ..
+            }
+        )
+    });
+    if hellfire_cannot_crit
+        && reachable
+            .iter()
+            .any(|spell| spell.class_spell.as_deref() == Some("hellfire"))
+    {
+        reasons.push("Hellfire's burn cannot crit, which Rust does not simulate".into());
+    }
     // Curse of Recklessness's attack power reaches a target that swings.
     for effect in &prepared.effects {
         if let Effect::CurseOfRecklessness {
