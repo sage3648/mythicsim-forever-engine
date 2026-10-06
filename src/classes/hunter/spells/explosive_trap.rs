@@ -4,7 +4,17 @@
 //! the hunter. Every tick deals the snapshot to each target that Immolation Trap is not
 //! burning (Go `HasActiveAuraWithTag("ImmolationTrap")`).
 
-use crate::core::fight::{Agent, DotId, Fight, Side, SpellId};
+use crate::core::fight::{Agent, DotId, Fight, Outcome, Side, SpellId};
+
+/// Whether a trap's tick rolls the magic crit, which its fire burn does where the effect row
+/// states Periodic Can Crit; a trap that is not a magic spell is unsupported.
+pub(crate) fn trap_tick_crit(outcome: Outcome) -> Result<bool, String> {
+    match outcome {
+        Outcome::TickMagicCrit => Ok(true),
+        Outcome::Tick => Ok(false),
+        _ => Err("trap ticks that are not magic are unsupported".into()),
+    }
+}
 
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct ExplosiveTrap {
@@ -25,10 +35,12 @@ pub(crate) fn bind<A: Agent>(
     hits: i32,
     aoe_cap_multiplier: f64,
     tick_base: f64,
+    tick_outcome: Outcome,
     immolation: Option<SpellId>,
 ) -> Result<ExplosiveTrap, String> {
     let dot = fight.spells[spell].dot.ok_or("Explosive Trap has no dot")?;
     fight.dots[dot].tick_base = Some(tick_base);
+    fight.dots[dot].tick_can_crit = trap_tick_crit(tick_outcome)?;
     Ok(ExplosiveTrap {
         hit_min,
         hit_max,
@@ -53,8 +65,8 @@ impl ExplosiveTrap {
         fight.apply_dot(dot);
     }
 
-    /// The area dot's `OnTick`: `CalcAndDealPeriodicSnapshotDamage` with `OutcomeTick` on
-    /// each target Immolation Trap is not burning, in unit index order.
+    /// The area dot's `OnTick`: `CalcAndDealPeriodicSnapshotDamage` with the effect row's tick
+    /// outcome on each target Immolation Trap is not burning, in unit index order.
     pub(crate) fn tick<A: Agent>(&self, fight: &mut Fight<A>, dot: DotId) {
         let spell = fight.dots[dot].spell;
         for position in 0..fight.targets.len() {

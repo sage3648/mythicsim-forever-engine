@@ -15,9 +15,10 @@ pub(crate) struct Ambush {
 }
 
 impl Ambush {
-    /// Go `ExtraCastCondition`.
+    /// Go `ExtraCastCondition`: "must be stealthed and behind the target", as Backstab's
+    /// attribute says.
     pub(crate) fn can_cast<A: Agent>(&self, fight: &Fight<A>, stealth: Option<Stealth>) -> bool {
-        if !self.main_hand_dagger {
+        if !self.main_hand_dagger || fight.config.melee.in_front_of_target {
             return false;
         }
         stealth.is_some_and(|stealth| stealth.active(fight))

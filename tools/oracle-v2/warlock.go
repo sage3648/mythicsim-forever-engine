@@ -179,13 +179,14 @@ func warlockEffects(agent core.Agent, character *core.Character) []map[string]an
 		"tick_base":     hellfire.Effect(dbcenums.A_PERIODIC_DAMAGE, 0).Average(core.CharacterLevel),
 		"tick_can_crit": !hellfire.Effect(dbcenums.A_PERIODIC_TRIGGER_SPELL, 0).Trigger().CannotCrit(),
 	})
-	// rain_of_fire.go: the channel casts the triggered tick of its rank every period, a fixed
-	// hit on each target that crits unless the client row says it cannot.
+	// rain_of_fire.go: the cast hits every target without damage, then the channel casts the
+	// triggered tick of its rank every period, a fixed hit on each target that rolls hit and crit
+	// (the rows lack Cannot Crit, which Go no longer reads).
 	rain := wlRainOfFireLadder.Highest()
 	rainTick := wlRainOfFireTriggered.Rank(rain.RankNumber())
 	effects = append(effects, map[string]any{
 		"kind": "rain_of_fire", "spell_id": rain.ID, "tick_spell_id": rainTick.ID,
-		"tick_base": rainTick.DamageEffect().Average(core.CharacterLevel), "tick_can_crit": !rainTick.CannotCrit(),
+		"tick_base": rainTick.DamageEffect().Average(core.CharacterLevel),
 	})
 	if talents.BaneOfHavoc { // talents_destruction.go applyBaneOfHavoc
 		effects = append(effects, map[string]any{
@@ -242,6 +243,8 @@ func warlockEffects(agent core.Agent, character *core.Character) []map[string]an
 	tap := map[string]any{
 		"kind": "life_tap", "spell_id": lifeTap.ID, "base_amount": lifeTap.EffectN(1).Average(core.CharacterLevel),
 		"mana_multiplier": 1 + wlImprovedLifeTap.FractionAt(talents.ImprovedLifeTap),
+		// The client flags every rank No Threat: the mana adds no threat, the demon's share neither.
+		"no_threat": lifeTap.NoThreat(),
 	}
 	// Demonic Energies hands the summoned demon a share of the restore.
 	if share := wlDemonicEnergies.EffectAt(2).FractionAt(talents.DemonicEnergies); share > 0 && w.ActivePet != nil {

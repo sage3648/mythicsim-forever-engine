@@ -46,6 +46,8 @@ var (
 	arcaneBlastLadder   = spelldata.Ranked(400574, 1239696, 1239697, 1239699, 1239700)
 	arcaneBlastBuff     = spelldata.Ranked(400573)
 	arcanePower         = spelldata.Ranked(12042)
+	missileBarrage      = spelldata.Talent(400588, 1)
+	missileBarrageBuff  = spelldata.Ranked(400589)
 	presenceOfMind      = spelldata.Ranked(12043)
 	igniteTriggered     = spelldata.Ranked(412538)
 	igniteTalent        = spelldata.Talent(11119, 5)
@@ -125,11 +127,14 @@ func mageEffects(agent core.Agent, character *core.Character) []map[string]any {
 			"aura": "Clearcasting", "aura_duration_ns": nanos(clearcastingTrigger.Highest().Duration()),
 		})
 	}
-	if talents.MissileBarrage { // talents_arcane.go registerMissileBarrage: Go literals
+	if talents.MissileBarrage { // talents_arcane.go registerMissileBarrage: the client rows
+		buff := missileBarrageBuff.Highest()
+		arcaneBlastChance := missileBarrage.Highest().Effect(dbcenums.A_PROC_TRIGGER_SPELL, 0).Average(core.CharacterLevel) / 100
 		effects = append(effects, map[string]any{
 			"kind": "missile_barrage", "trigger_aura": "Missile Barrage Trigger", "aura": "Missile Barrage",
-			"arcane_blast_chance": 0.40, "bolt_chance": 0.20, "rng_label": "Missile Barrage",
-			"cost_percent_add": -1.0, "tick_length_delta_ns": nanos(-500 * time.Millisecond),
+			"arcane_blast_chance": arcaneBlastChance, "bolt_chance": arcaneBlastChance / 2, "rng_label": "Missile Barrage",
+			"cost_percent_add":     buff.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_COST)).Average(core.CharacterLevel) / 100,
+			"tick_length_delta_ns": nanos(time.Duration(buff.Effect(dbcenums.A_ADD_FLAT_MODIFIER, int32(dbcenums.SPELLMOD_ACTIVATION_TIME)).Average(core.CharacterLevel)) * time.Millisecond),
 		})
 	}
 	if talents.FingersOfFrost > 0 { // talents_frost.go registerFingersOfFrost
@@ -244,6 +249,8 @@ func mageEffects(agent core.Agent, character *core.Character) []map[string]any {
 			"kind": "ignite", "trigger_aura": "Ignite Talent", "spell_id": igniteTriggered.Highest().ID,
 			"share":     igniteTalent.FractionAt(talents.Ignite),
 			"num_ticks": int32(igniteTriggered.Highest().Duration() / (2 * time.Second)),
+			// Forever's talent row lacks the bit, so a spell flagged Proc cannot trigger it.
+			"can_proc_from_procs": igniteTalent.Highest().CanProcFromProcs(),
 		})
 	}
 	if talents.ArcanePower { // arcane_power.go

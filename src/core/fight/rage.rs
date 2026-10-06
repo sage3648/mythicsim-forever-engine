@@ -194,6 +194,7 @@ impl<A: Agent> Fight<A> {
         for index in 0..self.resources.len() {
             let resource = &self.resources[index];
             if resource.kind != ResourceKind::Rage
+                || resource.no_threat
                 || matches!(
                     resource.id.other_id.as_str(),
                     "OtherActionDamageTaken" | "OtherActionRefund"

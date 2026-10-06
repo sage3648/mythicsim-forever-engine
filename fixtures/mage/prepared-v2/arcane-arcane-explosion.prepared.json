@@ -2,7 +2,7 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "74127c6c8454217e7d6221de5e3274cf22e621bb",
+    "engine_revision": "cd7d44aec711bcc8f20ea12d3ed83cea2126ac66",
     "client_build": "1.60.1.70205",
     "exporter": "tools/oracle-v2"
   },
@@ -855,7 +855,7 @@
         "stacks": 0,
         "callbacks": [
           "on_reset",
-          "on_cast_complete"
+          "on_spell_hit_dealt"
         ],
         "icd": null,
         "exclusive_effects": 0
@@ -2736,7 +2736,8 @@
           "ProcMaskSpellDamage"
         ],
         "flags": [
-          "SpellFlagNoOnCastComplete"
+          "SpellFlagNoOnCastComplete",
+          "SpellFlagProc"
         ],
         "class_spell": "blizzard",
         "missile_speed": 0,
@@ -6270,6 +6271,7 @@
       "tick_can_crit": true
     },
     {
+      "can_proc_from_procs": false,
       "kind": "ignite",
       "num_ticks": 2,
       "share": 0.4,

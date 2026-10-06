@@ -1,8 +1,8 @@
 //! Summon Hawk (1293241 to 1293527), from Go sim/hunter/summon_hawk.go: a dive bomb on the
 //! rank's base plus a share of ranged attack power, a Go literal, on the melee special table,
 //! which cannot miss when the client marks the rank always-hit. A landed dive bomb leaves a
-//! hawk: a physical dot whose ticks roll the physical crit, in a free slot or else the one with
-//! the least time left.
+//! hawk: a physical dot whose ticks roll the melee special table, in a free slot or else the one
+//! with the least time left.
 
 use crate::core::fight::{melee::PhysicalOutcome, Agent, DotId, Fight, Outcome, Side, SpellId};
 
@@ -74,7 +74,9 @@ impl SummonHawk {
         fight.apply_dot(hawk);
     }
 
-    /// A hawk's tick: Go `CalcAndDealPeriodicSnapshotDamage` with `OutcomeTickPhysicalCrit`.
+    /// A hawk's tick: Go `CalcAndDealPeriodicSnapshotDamage` with `OutcomeMeleeSpecialHitAndCrit`,
+    /// the melee special table of beta report 2701: a hawk's attacks can miss, be dodged and be
+    /// parried.
     pub(crate) fn tick<A: Agent>(fight: &mut Fight<A>, dot: DotId) {
         let state = &fight.dots[dot];
         let (spell, side) = (state.spell, state.side);
@@ -85,7 +87,8 @@ impl SummonHawk {
         }
         let attacker =
             fight.attacker_multiplier(spell, true) * fight.dots[dot].periodic_damage_multiplier;
-        let result = fight.calc_tick_damage(spell, side, base, attacker, Outcome::TickPhysicalCrit);
+        let outcome = Outcome::Table(PhysicalOutcome::MeleeSpecialHitAndCrit { count: true });
+        let result = fight.calc_tick_damage(spell, side, base, attacker, outcome);
         fight.deal_damage(spell, result, true);
     }
 }

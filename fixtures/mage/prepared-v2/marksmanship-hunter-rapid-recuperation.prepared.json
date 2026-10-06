@@ -2,7 +2,7 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "74127c6c8454217e7d6221de5e3274cf22e621bb",
+    "engine_revision": "cd7d44aec711bcc8f20ea12d3ed83cea2126ac66",
     "client_build": "1.60.1.70205",
     "exporter": "tools/oracle-v2"
   },
@@ -1046,7 +1046,7 @@
           "on_spell_hit_dealt"
         ],
         "icd": {
-          "timer": "timer-11",
+          "timer": "timer-12",
           "duration_ns": 10000000000
         },
         "exclusive_effects": 0
@@ -2685,7 +2685,7 @@
         "max_range": 5,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-9",
+          "timer": "timer-10",
           "duration_ns": 30000000000
         },
         "shared_cd": null,
@@ -2746,7 +2746,7 @@
         "max_range": 0,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-10",
+          "timer": "timer-11",
           "duration_ns": 180000000000
         },
         "shared_cd": null,
@@ -2956,7 +2956,7 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 0,
+        "bonus_crit_percent": -2,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
@@ -3445,7 +3445,9 @@
     {
       "kind": "immolation_trap",
       "spell_id": 14305,
-      "tick_base": 138
+      "tick_base": 138,
+      "tick_can_crit": true,
+      "tick_magic": true
     },
     {
       "aoe_cap_multiplier": 1,
@@ -3454,7 +3456,9 @@
       "hits": 1,
       "kind": "explosive_trap",
       "spell_id": 14317,
-      "tick_base": 33
+      "tick_base": 33,
+      "tick_can_crit": true,
+      "tick_magic": true
     },
     {
       "kind": "volley",

@@ -64,6 +64,9 @@ copy of the boss swinging at the tank on its own timer; tanks of other classes s
   differ. Rust refuses 174 of them. The 2 that crashed the Go engine before
   `74127c6c8` now match
   ([record](validation/2026-10-06-reference-pin-74127c6c8-sweeps.json)).
+- At `cd7d44aec` every recorded sweep ran again, 9,076 variants in 107 records: 9,052 match
+  Go, Rust refuses 24 and none differ
+  ([record](validation/2026-10-07-reference-pin-cd7d44aec-sweeps.json)).
 - Against 2 to 5 targets, 267 reference builds of every class, 1,955 Mage and Warlock
   census variants, 272 tank fixture requests and 2,492 random variants match Go, the area
   hits, cleaves, multidots and every copy of the boss swinging at a tank included.
@@ -78,7 +81,7 @@ copy of the boss swinging at the tank on its own timer; tanks of other classes s
   [fair comparison](docs/forever-rust-fair-comparison-2026-10-03.md) and the
   [prototype report](docs/forever-rust-prototype-2026-10-03.md).
 
-The reference is Go revision `74127c6c8454217e7d6221de5e3274cf22e621bb`. A match
+The reference is Go revision `cd7d44aec711bcc8f20ea12d3ed83cea2126ac66`. A match
 proves the same behavior as that Go engine. It does not prove the live game.
 [UPSTREAM.md](UPSTREAM.md) explains how community fixes are reviewed and ported.
 

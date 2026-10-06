@@ -15,6 +15,7 @@ pub(crate) struct Ignite {
     dot: DotId,
     share: f64,
     num_ticks: i32,
+    can_proc_from_procs: bool,
 }
 
 pub(crate) fn bind<A: Agent>(
@@ -22,6 +23,7 @@ pub(crate) fn bind<A: Agent>(
     spell_id: i32,
     share: f64,
     num_ticks: i32,
+    can_proc_from_procs: bool,
 ) -> Result<Ignite, String> {
     let spell = fight
         .spells
@@ -36,6 +38,7 @@ pub(crate) fn bind<A: Agent>(
         dot,
         share,
         num_ticks,
+        can_proc_from_procs,
     })
 }
 
@@ -58,8 +61,9 @@ impl Ignite {
         fight.periodic_damage_tick(dot, base);
     }
 
-    /// The trigger's OnSpellHitDealt: Go's proc trigger can proc from procs and matches
-    /// `ProcMaskSpellDamage` crits of any Fire spell but Ignite itself on an enemy. The fork's
+    /// The trigger's OnSpellHitDealt: Go's proc trigger matches `ProcMaskSpellDamage` crits of
+    /// any Fire spell but Ignite itself on an enemy, and hears a spell flagged Proc only where
+    /// the talent row allows it. The fork's
     /// patch 88 added the enemy condition, so the Goblin Sapper Charge's crit on the Mage, a
     /// unit with no Ignite dot, no longer reaches the handler.
     pub(crate) fn on_spell_hit_dealt<A: Agent>(
@@ -70,6 +74,7 @@ impl Ignite {
     ) {
         let state = &fight.spells[spell];
         if !state.proc_spell_damage
+            || (state.flags.proc && !self.can_proc_from_procs)
             || !result.crit()
             || state.school & FIRE == 0
             || spell == self.spell

@@ -537,19 +537,14 @@ impl RogueAgent {
                         *combo_points,
                     ));
                 }
-                Effect::Preparation {
-                    reset_spell_ids, ..
-                } => {
-                    let reset = reset_spell_ids
+                Effect::Preparation { reset_spells, .. } => {
+                    if let Some(&spell) = reset_spells
                         .iter()
-                        .map(|id| {
-                            fight
-                                .spells
-                                .iter()
-                                .position(|spell| spell.id.spell_id == *id && spell.id.tag == 0)
-                                .ok_or_else(|| format!("Preparation resets unknown spell {id}"))
-                        })
-                        .collect::<Result<Vec<_>, String>>()?;
+                        .find(|&&spell| spell >= fight.spells.len())
+                    {
+                        return Err(format!("Preparation resets unknown spell {spell}"));
+                    }
+                    let reset = reset_spells.clone();
                     let vanish = class_spell(&fight, RogueSpell::Vanish);
                     fight.agent.preparation = Some(Rc::new(Preparation { reset, vanish }));
                 }
@@ -1145,6 +1140,14 @@ impl Agent for RogueAgent {
                 .on_expire(fight),
             _ => {}
         }
+    }
+
+    fn caster_damage_multiplier(fight: &Fight<Self>, spell: SpellId, target: Side) -> Option<f64> {
+        fight
+            .agent
+            .rupture
+            .as_ref()
+            .and_then(|rupture| rupture.caster_multiplier(fight, spell, target))
     }
 
     fn on_spell_hit_dealt(

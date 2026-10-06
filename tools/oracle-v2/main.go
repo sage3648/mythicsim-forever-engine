@@ -200,7 +200,10 @@ type classSpellName struct {
 type classExport struct {
 	spells     []classSpellName
 	damageRows func(rows map[int32]*spelldata.Spell)
-	effects    func(agent core.Agent, character *core.Character) []map[string]any
+	// Optional: client damage rows of spells under an action tag, which roll a row of their own
+	// rather than the untagged spell's, such as Lightning Overload's bolts.
+	taggedDamageRows func(rows map[ActionID]*spelldata.Spell)
+	effects          func(agent core.Agent, character *core.Character) []map[string]any
 	// How many of the target's dynamic damage taken modifiers the class effects describe.
 	damageTakenModifiers func(agent core.Agent) int
 	// Why a registered pet never acts in this build, or "" when it may.
@@ -255,9 +258,19 @@ func attachDamageEffects(spells []Spell, class classExport) {
 	if class.damageRows != nil {
 		class.damageRows(rows)
 	}
+	tagged := map[ActionID]*spelldata.Spell{}
+	if class.taggedDamageRows != nil {
+		class.taggedDamageRows(tagged)
+	}
 	for i := range spells {
 		id := spells[i].ActionID
-		if id == nil || id.SpellID == 0 || id.Tag != 0 {
+		if id == nil || id.SpellID == 0 {
+			continue
+		}
+		if id.Tag != 0 {
+			if row, ok := tagged[*id]; ok {
+				spells[i].DamageEffect = damageEffect(row)
+			}
 			continue
 		}
 		if row, ok := rows[id.SpellID]; ok {
@@ -1235,14 +1248,11 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 			if len(gains) != 0 {
 				*unrepresented = append(*unrepresented, fmt.Sprintf("conjured %d restores mana and energy", item))
 			}
-			// Thistle Tea gives 2 energy less a level above 40, a Go literal.
-			reduction := 0.0
-			if item == 7676 {
-				reduction = float64(2 * max(0, core.CharacterLevel-40))
-			}
+			// Thistle Tea (9512) restores a flat 100; the cast activates once all but 10 of it fits,
+			// a Go literal (consumes.go makeConjuredActivationSpellInternal).
 			effects = append(effects, map[string]any{
 				"kind": "conjured_energy", "item_id": item, "rng_label": consumable.Name, "gains": energyGains,
-				"selected": consumes.GetConjuredId() == item, "level_reduction": reduction,
+				"selected": consumes.GetConjuredId() == item, "spill": 10.0,
 			})
 		case spell.ActionID.SameAction(core.GoblinSapperActionID): // consumes.go newGoblinSapperSpell
 			effects = append(effects, goblinSapperEffect(character, request, unrepresented))

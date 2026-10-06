@@ -366,15 +366,8 @@ impl WarlockAgent {
                     spell_id,
                     tick_spell_id,
                     tick_base,
-                    tick_can_crit,
                 } => {
-                    let bound = rain_of_fire::bind(
-                        &fight,
-                        *spell_id,
-                        *tick_spell_id,
-                        *tick_base,
-                        *tick_can_crit,
-                    )?;
+                    let bound = rain_of_fire::bind(&fight, *spell_id, *tick_spell_id, *tick_base)?;
                     fight.agent.rain_of_fire = Some(bound);
                 }
                 Effect::DeathCoil {
@@ -475,6 +468,7 @@ impl WarlockAgent {
                     base_amount,
                     mana_multiplier,
                     pet_mana_share,
+                    no_threat,
                 } => {
                     let bound = life_tap::bind(
                         &mut fight,
@@ -484,6 +478,7 @@ impl WarlockAgent {
                         spirit,
                         *pet_mana_share,
                         demon_side,
+                        *no_threat,
                     );
                     fight.agent.life_tap = Some(bound);
                 }

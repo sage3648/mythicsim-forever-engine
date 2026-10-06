@@ -2,7 +2,7 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "74127c6c8454217e7d6221de5e3274cf22e621bb",
+    "engine_revision": "cd7d44aec711bcc8f20ea12d3ed83cea2126ac66",
     "client_build": "1.60.1.70205",
     "exporter": "tools/oracle-v2"
   },
@@ -21315,6 +21315,7 @@
       "aura": "Charge",
       "kind": "warrior_charge",
       "min_range": 8,
+      "no_threat": true,
       "overshoot": 3.5,
       "rage": 15,
       "speed_multiplier": 3,
@@ -21358,8 +21359,7 @@
       "proc_chance": 0.6,
       "rage": 1,
       "spell_id": 12964,
-      "trigger_aura": "Unbridled Wrath",
-      "two_handed": false
+      "trigger_aura": "Unbridled Wrath"
     },
     {
       "aura": "Flurry",

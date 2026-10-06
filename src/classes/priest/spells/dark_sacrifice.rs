@@ -23,12 +23,14 @@ pub(crate) fn bind<A: Agent>(
     spirit: f64,
     spirit_divisor: f64,
     metrics_action_id: &crate::contracts::prepared_v2::ActionId,
+    no_threat: bool,
 ) -> Result<DarkSacrifice, String> {
     let dot = fight.spells[spell]
         .dot
         .ok_or("Dark Sacrifice has no periodic effect")?;
     let ticks = f64::from(fight.dots[dot].base_tick_count);
     let metrics = fight.new_mana_metrics(metrics_action_id.clone());
+    fight.resources[metrics].no_threat = no_threat;
     Ok(DarkSacrifice {
         spell,
         tick_base,

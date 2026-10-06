@@ -84,8 +84,7 @@
 [2.01] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [2.01] [warrior (#1)] Completed cast {SpellID: 412609}
 [2.01] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[2.01] [Target 1] Aura faded: {SpellID: 412609}
-[2.01] [Target 1] Aura gained: {SpellID: 412609}
+[2.01] [Target 1] Aura refreshed: {SpellID: 412609}
 [2.01] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [2.01] [warrior (#1)] {SpellID: 10610, Tag: -1} stacks: 2 --> 1
 [2.01] [warrior (#1)] {SpellID: 12966} stacks: 3 --> 2
@@ -93,7 +92,9 @@
 [2.11] [warrior (#1)] Pausing rotation for 1.4s due to resources / CDs.
 [3.00] [warrior (#1)] Gained 1.000 rage from {SpellID: 12296} (15.368 --> 16.368) of 100 total.
 [3.01] [warrior (#1)] Aura faded: {SpellID: 10610, Tag: -1}
-[3.10] [warrior (#1)] {SpellID: 10610, Tag: -1} stacks: 1 --> 0
+[3.09] [warrior (#1)] {SpellID: 10610, Tag: -1} stacks: 1 --> 0
+[3.09] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1504.0, RAP: 124.0, SP: 0.0, BaseDamage:28.8, AfterAttackerMods:28.8, AfterResistances:28.8, AfterTargetMods:36.8, AfterOutcome:36.8, AfterPostOutcome:36.8
+[3.09] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 36.800 damage (SpellSchool: 1). (Threat: 29.440)
 [3.10] [warrior (#1)] No available actions!
 [3.10] [warrior (#1)] Pausing rotation for 406ms due to resources / CDs.
 [3.51] [warrior (#1)] No available actions!
@@ -146,8 +147,6 @@
 [4.93] [warrior (#1)] No available actions!
 [4.93] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [5.00] [warrior (#1)] Aura refreshed: {SpellID: 25587, Tag: -1}
-[5.01] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1504.0, RAP: 124.0, SP: 0.0, BaseDamage:28.8, AfterAttackerMods:28.8, AfterResistances:28.8, AfterTargetMods:36.8, AfterOutcome:36.8, AfterPostOutcome:36.8
-[5.01] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 36.800 damage (SpellSchool: 1). (Threat: 29.440)
 [5.03] [warrior (#1)] No available actions!
 [5.03] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [5.13] [warrior (#1)] No available actions!
@@ -174,6 +173,8 @@
 [6.00] [warrior (#1)] Spent 30.000 rage from {SpellID: 23894} (33.976 --> 3.976) of 100 total.
 [6.00] [warrior (#1)] [Target 1] {SpellID: 23894} [DEBUG] MAP: 1504.0, RAP: 124.0, SP: 0.0, BaseDamage:724.8, AfterAttackerMods:724.8, AfterResistances:615.6, AfterTargetMods:623.6, AfterOutcome:623.6, AfterPostOutcome:623.6
 [6.00] [warrior (#1)] [Target 1] {SpellID: 23894} Hit for 623.565 damage (SpellSchool: 1). (Threat: 498.852)
+[6.09] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1504.0, RAP: 124.0, SP: 0.0, BaseDamage:28.8, AfterAttackerMods:28.8, AfterResistances:28.8, AfterTargetMods:36.8, AfterOutcome:36.8, AfterPostOutcome:36.8
+[6.09] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 36.800 damage (SpellSchool: 1). (Threat: 29.440)
 [6.33] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [6.33] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}
 [6.33] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1504.0, RAP: 124.0, SP: 0.0, BaseDamage:333.8, AfterAttackerMods:333.8, AfterResistances:283.5, AfterTargetMods:291.5, AfterOutcome:161.8, AfterPostOutcome:161.8
@@ -195,8 +196,6 @@
 [7.90] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [8.00] [warrior (#1)] No available actions!
 [8.00] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
-[8.01] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1504.0, RAP: 124.0, SP: 0.0, BaseDamage:28.8, AfterAttackerMods:28.8, AfterResistances:28.8, AfterTargetMods:36.8, AfterOutcome:36.8, AfterPostOutcome:36.8
-[8.01] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 36.800 damage (SpellSchool: 1). (Threat: 29.440)
 [8.10] [warrior (#1)] No available actions!
 [8.10] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [8.20] [warrior (#1)] No available actions!
@@ -226,6 +225,8 @@
 [9.00] [warrior (#1)] Gained 1.000 rage from {SpellID: 12296} (21.584 --> 22.584) of 100 total.
 [9.03] [warrior (#1)] No available actions!
 [9.03] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
+[9.09] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1504.0, RAP: 124.0, SP: 0.0, BaseDamage:28.8, AfterAttackerMods:28.8, AfterResistances:28.8, AfterTargetMods:36.8, AfterOutcome:36.8, AfterPostOutcome:36.8
+[9.09] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 36.800 damage (SpellSchool: 1). (Threat: 29.440)
 [9.13] [warrior (#1)] No available actions!
 [9.13] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [9.23] [warrior (#1)] No available actions!
@@ -265,8 +266,6 @@
 [10.83] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [10.93] [warrior (#1)] No available actions!
 [10.93] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
-[11.01] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1504.0, RAP: 124.0, SP: 0.0, BaseDamage:28.8, AfterAttackerMods:28.8, AfterResistances:28.8, AfterTargetMods:36.8, AfterOutcome:36.8, AfterPostOutcome:36.8
-[11.01] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 36.800 damage (SpellSchool: 1). (Threat: 29.440)
 [11.03] [warrior (#1)] No available actions!
 [11.03] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [11.13] [warrior (#1)] No available actions!
@@ -311,6 +310,8 @@
 [12.01] [warrior (#1)] Aura gained: {SpellID: 20007, Tag: 1}
 [12.01] [warrior (#1)] Gained {"Strength": 100.000,} from {SpellID: 20007, Tag: 1}.
 [12.01] [warrior (#1)] Gained 112.102 health from {SpellID: 20007} (3461.200 --> 3573.302) of 3799 total.
+[12.09] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1970.0, RAP: 124.0, SP: 0.0, BaseDamage:28.8, AfterAttackerMods:28.8, AfterResistances:28.8, AfterTargetMods:36.8, AfterOutcome:36.8, AfterPostOutcome:36.8
+[12.09] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 36.800 damage (SpellSchool: 1). (Threat: 29.440)
 [12.10] [warrior (#1)] No available actions!
 [12.10] [warrior (#1)] Pausing rotation for 1.4s due to resources / CDs.
 [13.00] [warrior (#1)] Aura faded: {SpellID: 10610, Tag: -1}
@@ -333,8 +334,6 @@
 [13.93] [warrior (#1)] No available actions!
 [13.93] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [14.01] [Target 1] Aura faded: {SpellID: 412609}
-[14.01] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1724.0, RAP: 124.0, SP: 0.0, BaseDamage:28.8, AfterAttackerMods:28.8, AfterResistances:28.8, AfterTargetMods:36.8, AfterOutcome:36.8, AfterPostOutcome:36.8
-[14.01] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 36.800 damage (SpellSchool: 1). (Threat: 29.440)
 [14.03] [warrior (#1)] No available actions!
 [14.03] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [14.13] [warrior (#1)] No available actions!
@@ -637,8 +636,7 @@
 [27.69] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [27.69] [warrior (#1)] Completed cast {SpellID: 412609}
 [27.69] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[27.69] [Target 1] Aura faded: {SpellID: 412609}
-[27.69] [Target 1] Aura gained: {SpellID: 412609}
+[27.69] [Target 1] Aura refreshed: {SpellID: 412609}
 [27.69] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [27.70] [warrior (#1)] Gained 1.000 rage from {SpellID: 12964} (18.156 --> 19.156) of 100 total.
 [27.79] [warrior (#1)] No available actions!
@@ -685,12 +683,12 @@
 [29.62] [warrior (#1)] Gained 1.000 rage from {SpellID: 12964} (5.460 --> 6.460) of 100 total.
 [29.71] [warrior (#1)] No available actions!
 [29.71] [warrior (#1)] Pausing rotation for 1.4s due to resources / CDs.
+[29.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1504.0, RAP: 124.0, SP: 0.0, BaseDamage:28.8, AfterAttackerMods:28.8, AfterResistances:28.8, AfterTargetMods:36.8, AfterOutcome:36.8, AfterPostOutcome:36.8
+[29.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 36.800 damage (SpellSchool: 1). (Threat: 29.440)
 [30.00] [warrior (#1)] Aura refreshed: {SpellID: 25587, Tag: -1}
 [30.00] [warrior (#1)] Gained 1.000 rage from {SpellID: 12296} (6.460 --> 7.460) of 100 total.
 [30.10] [warrior (#1)] No available actions!
 [30.10] [warrior (#1)] Pausing rotation for 1.006s due to resources / CDs.
-[30.69] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1504.0, RAP: 124.0, SP: 0.0, BaseDamage:28.8, AfterAttackerMods:28.8, AfterResistances:28.8, AfterTargetMods:36.8, AfterOutcome:36.8, AfterPostOutcome:36.8
-[30.69] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 36.800 damage (SpellSchool: 1). (Threat: 29.440)
 [31.11] [warrior (#1)] No available actions!
 [31.11] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [31.21] [warrior (#1)] No available actions!
@@ -730,6 +728,8 @@
 [32.53] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [32.63] [warrior (#1)] No available actions!
 [32.63] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
+[32.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1504.0, RAP: 124.0, SP: 0.0, BaseDamage:28.8, AfterAttackerMods:28.8, AfterResistances:28.8, AfterTargetMods:36.8, AfterOutcome:36.8, AfterPostOutcome:36.8
+[32.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 36.800 damage (SpellSchool: 1). (Threat: 29.440)
 [32.73] [warrior (#1)] No available actions!
 [32.73] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [32.83] [warrior (#1)] No available actions!
@@ -760,8 +760,6 @@
 [33.55] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [33.65] [warrior (#1)] No available actions!
 [33.65] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
-[33.69] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1504.0, RAP: 124.0, SP: 0.0, BaseDamage:28.8, AfterAttackerMods:28.8, AfterResistances:28.8, AfterTargetMods:36.8, AfterOutcome:36.8, AfterPostOutcome:36.8
-[33.69] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 36.800 damage (SpellSchool: 1). (Threat: 29.440)
 [33.75] [warrior (#1)] No available actions!
 [33.75] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [33.85] [warrior (#1)] No available actions!
@@ -812,6 +810,8 @@
 [35.57] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [35.67] [warrior (#1)] No available actions!
 [35.67] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
+[35.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1504.0, RAP: 124.0, SP: 0.0, BaseDamage:28.8, AfterAttackerMods:28.8, AfterResistances:28.8, AfterTargetMods:36.8, AfterOutcome:36.8, AfterPostOutcome:36.8
+[35.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 36.800 damage (SpellSchool: 1). (Threat: 29.440)
 [35.77] [warrior (#1)] No available actions!
 [35.77] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [35.87] [warrior (#1)] No available actions!
@@ -834,8 +834,6 @@
 [36.57] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [36.67] [warrior (#1)] No available actions!
 [36.67] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
-[36.69] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1504.0, RAP: 124.0, SP: 0.0, BaseDamage:28.8, AfterAttackerMods:28.8, AfterResistances:28.8, AfterTargetMods:36.8, AfterOutcome:36.8, AfterPostOutcome:36.8
-[36.69] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 36.800 damage (SpellSchool: 1). (Threat: 29.440)
 [36.77] [warrior (#1)] No available actions!
 [36.77] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [36.87] [warrior (#1)] No available actions!
@@ -878,8 +876,7 @@
 [37.77] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [37.77] [warrior (#1)] Completed cast {SpellID: 412609}
 [37.77] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[37.77] [Target 1] Aura faded: {SpellID: 412609}
-[37.77] [Target 1] Aura gained: {SpellID: 412609}
+[37.77] [Target 1] Aura refreshed: {SpellID: 412609}
 [37.77] [warrior (#1)] Aura gained: {SpellID: 12966}
 [37.77] [warrior (#1)] {SpellID: 12966} stacks: 0 --> 3
 [37.77] [warrior (#1)] {SpellID: 10610, Tag: -1} stacks: 2 --> 1
@@ -887,6 +884,8 @@
 [37.78] [warrior (#1)] Gained 1.000 rage from {SpellID: 12964} (19.904 --> 20.904) of 100 total.
 [37.87] [warrior (#1)] No available actions!
 [37.87] [warrior (#1)] Pausing rotation for 1.4s due to resources / CDs.
+[38.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1750.0, RAP: 124.0, SP: 0.0, BaseDamage:21.6, AfterAttackerMods:21.6, AfterResistances:21.6, AfterTargetMods:29.6, AfterOutcome:29.6, AfterPostOutcome:29.6
+[38.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 29.600 damage (SpellSchool: 1). (Threat: 23.680)
 [38.77] [warrior (#1)] Aura faded: {SpellID: 10610, Tag: -1}
 [39.00] [warrior (#1)] {SpellID: 10610, Tag: -1} stacks: 1 --> 0
 [39.00] [warrior (#1)] Gained 1.000 rage from {SpellID: 12296} (20.904 --> 21.904) of 100 total.
@@ -915,8 +914,7 @@
 [39.69] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [39.69] [warrior (#1)] Completed cast {SpellID: 412609}
 [39.69] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[39.69] [Target 1] Aura faded: {SpellID: 412609}
-[39.69] [Target 1] Aura gained: {SpellID: 412609}
+[39.69] [Target 1] Aura refreshed: {SpellID: 412609}
 [39.69] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [39.69] [warrior (#1)] {SpellID: 12966} stacks: 2 --> 3
 [39.70] [warrior (#1)] Gained 1.000 rage from {SpellID: 12964} (14.436 --> 15.436) of 100 total.
@@ -943,8 +941,7 @@
 [41.61] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [41.61] [warrior (#1)] Completed cast {SpellID: 412609}
 [41.61] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[41.61] [Target 1] Aura faded: {SpellID: 412609}
-[41.61] [Target 1] Aura gained: {SpellID: 412609}
+[41.61] [Target 1] Aura refreshed: {SpellID: 412609}
 [41.61] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [41.61] [warrior (#1)] Aura gained: {SpellID: 10610, Tag: -1}
 [41.61] [warrior (#1)] {SpellID: 10610, Tag: -1} stacks: 0 --> 1
@@ -956,6 +953,8 @@
 [41.62] [warrior (#1)] Gained 1.000 rage from {SpellID: 12964} (29.968 --> 30.968) of 100 total.
 [41.71] [warrior (#1)] No available actions!
 [41.71] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
+[41.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1750.0, RAP: 124.0, SP: 0.0, BaseDamage:45.0, AfterAttackerMods:45.0, AfterResistances:45.0, AfterTargetMods:53.0, AfterOutcome:53.0, AfterPostOutcome:53.0
+[41.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 53.000 damage (SpellSchool: 1). (Threat: 42.400)
 [41.81] [warrior (#1)] No available actions!
 [41.81] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [41.91] [warrior (#1)] No available actions!
@@ -1005,8 +1004,7 @@
 [43.53] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [43.53] [warrior (#1)] Completed cast {SpellID: 412609}
 [43.53] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[43.53] [Target 1] Aura faded: {SpellID: 412609}
-[43.53] [Target 1] Aura gained: {SpellID: 412609}
+[43.53] [Target 1] Aura refreshed: {SpellID: 412609}
 [43.53] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [43.63] [warrior (#1)] Queueing up {SpellID: 23894} to cast at 43.766000001s.
 [43.63] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
@@ -1017,6 +1015,8 @@
 [43.77] [warrior (#1)] Spent 30.000 rage from {SpellID: 23894} (46.500 --> 16.500) of 100 total.
 [43.77] [warrior (#1)] [Target 1] {SpellID: 23894} [DEBUG] MAP: 1504.0, RAP: 124.0, SP: 0.0, BaseDamage:724.8, AfterAttackerMods:724.8, AfterResistances:615.6, AfterTargetMods:623.6, AfterOutcome:623.6, AfterPostOutcome:623.6
 [43.77] [warrior (#1)] [Target 1] {SpellID: 23894} Hit for 623.565 damage (SpellSchool: 1). (Threat: 498.852)
+[44.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1504.0, RAP: 124.0, SP: 0.0, BaseDamage:48.1, AfterAttackerMods:48.1, AfterResistances:48.1, AfterTargetMods:56.1, AfterOutcome:56.1, AfterPostOutcome:56.1
+[44.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 56.150 damage (SpellSchool: 1). (Threat: 44.920)
 [45.00] [warrior (#1)] Aura refreshed: {SpellID: 25587, Tag: -1}
 [45.00] [warrior (#1)] Gained 1.000 rage from {SpellID: 12296} (16.500 --> 17.500) of 100 total.
 [45.10] [warrior (#1)] No available actions!
@@ -1035,8 +1035,7 @@
 [45.45] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [45.45] [warrior (#1)] Completed cast {SpellID: 412609}
 [45.45] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[45.45] [Target 1] Aura faded: {SpellID: 412609}
-[45.45] [Target 1] Aura gained: {SpellID: 412609}
+[45.45] [Target 1] Aura refreshed: {SpellID: 412609}
 [45.45] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [45.46] [warrior (#1)] Gained 1.000 rage from {SpellID: 12964} (32.032 --> 33.032) of 100 total.
 [45.55] [warrior (#1)] No available actions!
@@ -1093,6 +1092,8 @@
 [47.57] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [47.67] [warrior (#1)] No available actions!
 [47.67] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
+[47.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1504.0, RAP: 124.0, SP: 0.0, BaseDamage:50.5, AfterAttackerMods:50.5, AfterResistances:50.5, AfterTargetMods:58.5, AfterOutcome:58.5, AfterPostOutcome:58.5
+[47.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 58.512 damage (SpellSchool: 1). (Threat: 46.810)
 [47.77] [warrior (#1)] No available actions!
 [47.77] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [47.87] [warrior (#1)] No available actions!
@@ -1108,8 +1109,6 @@
 [48.27] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [48.37] [warrior (#1)] No available actions!
 [48.37] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
-[48.45] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1504.0, RAP: 124.0, SP: 0.0, BaseDamage:79.2, AfterAttackerMods:79.2, AfterResistances:79.2, AfterTargetMods:87.2, AfterOutcome:87.2, AfterPostOutcome:87.2
-[48.45] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 87.200 damage (SpellSchool: 1). (Threat: 69.760)
 [48.47] [warrior (#1)] No available actions!
 [48.47] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [48.57] [warrior (#1)] No available actions!
@@ -1138,8 +1137,7 @@
 [49.29] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [49.29] [warrior (#1)] Completed cast {SpellID: 412609}
 [49.29] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[49.29] [Target 1] Aura faded: {SpellID: 412609}
-[49.29] [Target 1] Aura gained: {SpellID: 412609}
+[49.29] [Target 1] Aura refreshed: {SpellID: 412609}
 [49.29] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [49.29] [warrior (#1)] {SpellID: 12966} stacks: 2 --> 3
 [49.30] [warrior (#1)] Gained 1.000 rage from {SpellID: 12964} (57.868 --> 58.868) of 100 total.
@@ -1159,13 +1157,14 @@
 [49.77] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [49.77] [warrior (#1)] Completed cast {SpellID: 412609}
 [49.77] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[49.77] [Target 1] Aura faded: {SpellID: 412609}
-[49.77] [Target 1] Aura gained: {SpellID: 412609}
+[49.77] [Target 1] Aura refreshed: {SpellID: 412609}
 [49.77] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [49.78] [warrior (#1)] Aura gained: {SpellID: 20007, Tag: 1}
 [49.78] [warrior (#1)] Gained {"Strength": 100.000,} from {SpellID: 20007, Tag: 1}.
 [49.78] [warrior (#1)] Gained 108.348 health from {SpellID: 20007} (3573.302 --> 3681.650) of 3799 total.
 [50.00] [warrior (#1)] Aura refreshed: {SpellID: 25587, Tag: -1}
+[50.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1724.0, RAP: 124.0, SP: 0.0, BaseDamage:66.7, AfterAttackerMods:66.7, AfterResistances:66.7, AfterTargetMods:74.7, AfterOutcome:74.7, AfterPostOutcome:74.7
+[50.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 74.684 damage (SpellSchool: 1). (Threat: 59.748)
 [51.00] [warrior (#1)] Gained 1.000 rage from {SpellID: 12296} (28.868 --> 29.868) of 100 total.
 [51.10] [warrior (#1)] Queueing up {SpellID: 1680, Tag: 1} to cast at 51.266000003s.
 [51.10] [warrior (#1)] Pausing rotation for 166.000002ms due to resources / CDs.
@@ -1187,8 +1186,7 @@
 [51.27] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [51.27] [warrior (#1)] Completed cast {SpellID: 412609}
 [51.27] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[51.27] [Target 1] Aura faded: {SpellID: 412609}
-[51.27] [Target 1] Aura gained: {SpellID: 412609}
+[51.27] [Target 1] Aura refreshed: {SpellID: 412609}
 [51.27] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [51.27] [warrior (#1)] {SpellID: 12966} stacks: 2 --> 3
 [51.27] [warrior (#1)] Aura gained: {SpellID: 10610, Tag: -1}
@@ -1234,6 +1232,8 @@
 [53.53] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [53.63] [warrior (#1)] No available actions!
 [53.63] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
+[53.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1724.0, RAP: 124.0, SP: 0.0, BaseDamage:64.4, AfterAttackerMods:64.4, AfterResistances:64.4, AfterTargetMods:72.4, AfterOutcome:72.4, AfterPostOutcome:72.4
+[53.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 72.413 damage (SpellSchool: 1). (Threat: 57.931)
 [53.73] [warrior (#1)] No available actions!
 [53.73] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [53.77] [warrior (#1)] Gained 1.500 rage from {SpellID: 2687} (48.780 --> 50.280) of 100 total.
@@ -1248,8 +1248,6 @@
 [54.13] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [54.23] [warrior (#1)] No available actions!
 [54.23] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
-[54.27] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1724.0, RAP: 124.0, SP: 0.0, BaseDamage:102.6, AfterAttackerMods:102.6, AfterResistances:102.6, AfterTargetMods:110.6, AfterOutcome:110.6, AfterPostOutcome:110.6
-[54.27] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 110.600 damage (SpellSchool: 1). (Threat: 88.480)
 [54.33] [warrior (#1)] No available actions!
 [54.33] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [54.43] [warrior (#1)] No available actions!
@@ -1278,8 +1276,7 @@
 [55.05] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [55.05] [warrior (#1)] Completed cast {SpellID: 412609}
 [55.05] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[55.05] [Target 1] Aura faded: {SpellID: 412609}
-[55.05] [Target 1] Aura gained: {SpellID: 412609}
+[55.05] [Target 1] Aura refreshed: {SpellID: 412609}
 [55.05] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [55.05] [warrior (#1)] {SpellID: 12966} stacks: 1 --> 3
 [55.15] [warrior (#1)] No available actions!
@@ -1302,6 +1299,8 @@
 [55.77] [warrior (#1)] Spent 30.000 rage from {SpellID: 23894} (68.812 --> 38.812) of 100 total.
 [55.77] [warrior (#1)] [Target 1] {SpellID: 23894} [DEBUG] MAP: 1724.0, RAP: 124.0, SP: 0.0, BaseDamage:823.8, AfterAttackerMods:823.8, AfterResistances:699.6, AfterTargetMods:707.6, AfterOutcome:707.6, AfterPostOutcome:707.6
 [55.77] [warrior (#1)] [Target 1] {SpellID: 23894} Hit for 707.645 damage (SpellSchool: 1). (Threat: 566.116)
+[56.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1724.0, RAP: 124.0, SP: 0.0, BaseDamage:62.7, AfterAttackerMods:62.7, AfterResistances:62.7, AfterTargetMods:70.7, AfterOutcome:70.7, AfterPostOutcome:70.7
+[56.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 70.710 damage (SpellSchool: 1). (Threat: 56.568)
 [56.77] [warrior (#1)] Gained 1.500 rage from {SpellID: 2687} (38.812 --> 40.312) of 100 total.
 [56.87] [warrior (#1)] No available actions!
 [56.87] [warrior (#1)] Pausing rotation for 400ms due to resources / CDs.
@@ -1343,8 +1342,6 @@
 [57.87] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [57.97] [warrior (#1)] No available actions!
 [57.97] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
-[58.05] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1724.0, RAP: 124.0, SP: 0.0, BaseDamage:91.4, AfterAttackerMods:91.4, AfterResistances:91.4, AfterTargetMods:99.4, AfterOutcome:99.4, AfterPostOutcome:99.4
-[58.05] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 99.350 damage (SpellSchool: 1). (Threat: 79.480)
 [58.07] [warrior (#1)] No available actions!
 [58.07] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [58.17] [warrior (#1)] No available actions!
@@ -1377,8 +1374,7 @@
 [58.89] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [58.89] [warrior (#1)] Completed cast {SpellID: 412609}
 [58.89] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[58.89] [Target 1] Aura faded: {SpellID: 412609}
-[58.89] [Target 1] Aura gained: {SpellID: 412609}
+[58.89] [Target 1] Aura refreshed: {SpellID: 412609}
 [58.89] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [58.89] [warrior (#1)] {SpellID: 12966} stacks: 1 --> 3
 [58.89] [warrior (#1)] Aura gained: {SpellID: 10610, Tag: -1}
@@ -1395,6 +1391,8 @@
 [58.90] [warrior (#1)] Gained 1.000 rage from {SpellID: 12964} (74.756 --> 75.756) of 100 total.
 [58.99] [warrior (#1)] No available actions!
 [58.99] [warrior (#1)] Pausing rotation for 1.4s due to resources / CDs.
+[59.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1724.0, RAP: 124.0, SP: 0.0, BaseDamage:61.4, AfterAttackerMods:61.4, AfterResistances:61.4, AfterTargetMods:69.4, AfterOutcome:69.4, AfterPostOutcome:69.4
+[59.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 69.432 damage (SpellSchool: 1). (Threat: 55.546)
 [59.77] [warrior (#1)] Gained 1.500 rage from {SpellID: 2687} (75.756 --> 77.256) of 100 total.
 [59.87] [warrior (#1)] No available actions!
 [59.87] [warrior (#1)] Pausing rotation for 519.999997ms due to resources / CDs.
@@ -1425,8 +1423,7 @@
 [60.81] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [60.81] [warrior (#1)] Completed cast {SpellID: 412609}
 [60.81] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[60.81] [Target 1] Aura faded: {SpellID: 412609}
-[60.81] [Target 1] Aura gained: {SpellID: 412609}
+[60.81] [Target 1] Aura refreshed: {SpellID: 412609}
 [60.81] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [60.81] [warrior (#1)] {SpellID: 12966} stacks: 2 --> 3
 [60.82] [warrior (#1)] Gained 1.000 rage from {SpellID: 12964} (94.288 --> 95.288) of 100 total.
@@ -1462,6 +1459,8 @@
 [62.73] [warrior (#1)] No available actions!
 [62.73] [warrior (#1)] Pausing rotation for 540.000004ms due to resources / CDs.
 [62.73] [warrior (#1)] {SpellID: 12966} stacks: 3 --> 2
+[62.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1680.0, RAP: 124.0, SP: 0.0, BaseDamage:60.5, AfterAttackerMods:60.5, AfterResistances:60.5, AfterTargetMods:68.5, AfterOutcome:68.5, AfterPostOutcome:68.5
+[62.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 68.474 damage (SpellSchool: 1). (Threat: 54.779)
 [62.74] [warrior (#1)] Gained 1.000 rage from {SpellID: 12964} (75.092 --> 76.092) of 100 total.
 [62.77] [warrior (#1)] Gained 1.500 rage from {SpellID: 2687} (76.092 --> 77.592) of 100 total.
 [62.83] [warrior (#1)] No available actions!
@@ -1474,8 +1473,6 @@
 [63.27] [warrior (#1)] Spent 22.000 rage from {SpellID: 1680, Tag: 1} (78.592 --> 56.592) of 100 total.
 [63.27] [warrior (#1)] [Target 1] {SpellID: 1680, Tag: 1} [DEBUG] MAP: 1680.0, RAP: 124.0, SP: 0.0, BaseDamage:404.5, AfterAttackerMods:404.5, AfterResistances:343.5, AfterTargetMods:351.5, AfterOutcome:351.5, AfterPostOutcome:351.5
 [63.27] [warrior (#1)] [Target 1] {SpellID: 1680, Tag: 1} Hit for 351.538 damage (SpellSchool: 1). (Threat: 351.538)
-[63.81] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1680.0, RAP: 124.0, SP: 0.0, BaseDamage:97.3, AfterAttackerMods:97.3, AfterResistances:97.3, AfterTargetMods:105.3, AfterOutcome:105.3, AfterPostOutcome:105.3
-[63.81] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 105.313 damage (SpellSchool: 1). (Threat: 84.250)
 [64.65] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [64.65] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}
 [64.65] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1680.0, RAP: 124.0, SP: 0.0, BaseDamage:392.7, AfterAttackerMods:392.7, AfterResistances:333.5, AfterTargetMods:341.5, AfterOutcome:683.0, AfterPostOutcome:683.0
@@ -1486,8 +1483,7 @@
 [64.65] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [64.65] [warrior (#1)] Completed cast {SpellID: 412609}
 [64.65] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[64.65] [Target 1] Aura faded: {SpellID: 412609}
-[64.65] [Target 1] Aura gained: {SpellID: 412609}
+[64.65] [Target 1] Aura refreshed: {SpellID: 412609}
 [64.65] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [64.65] [warrior (#1)] {SpellID: 12966} stacks: 2 --> 3
 [64.66] [warrior (#1)] Gained 1.000 rage from {SpellID: 12964} (71.124 --> 72.124) of 100 total.
@@ -1501,10 +1497,11 @@
 [64.77] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [64.77] [warrior (#1)] Completed cast {SpellID: 412609}
 [64.77] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[64.77] [Target 1] Aura faded: {SpellID: 412609}
-[64.77] [Target 1] Aura gained: {SpellID: 412609}
+[64.77] [Target 1] Aura refreshed: {SpellID: 412609}
 [64.77] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [65.00] [warrior (#1)] Aura refreshed: {SpellID: 25587, Tag: -1}
+[65.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1680.0, RAP: 124.0, SP: 0.0, BaseDamage:74.2, AfterAttackerMods:74.2, AfterResistances:74.2, AfterTargetMods:82.2, AfterOutcome:82.2, AfterPostOutcome:82.2
+[65.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 82.156 damage (SpellSchool: 1). (Threat: 65.725)
 [66.00] [warrior (#1)] Gained 1.000 rage from {SpellID: 12296} (62.124 --> 63.124) of 100 total.
 [66.10] [warrior (#1)] No available actions!
 [66.10] [warrior (#1)] Pausing rotation for 166.000005ms due to resources / CDs.
@@ -1548,8 +1545,6 @@
 [67.67] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [67.77] [warrior (#1)] Queueing up {SpellID: 23894} to cast at 1m7.766000005s.
 [67.77] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
-[67.77] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1460.0, RAP: 124.0, SP: 0.0, BaseDamage:101.8, AfterAttackerMods:101.8, AfterResistances:101.8, AfterTargetMods:109.8, AfterOutcome:109.8, AfterPostOutcome:109.8
-[67.77] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 109.784 damage (SpellSchool: 1). (Threat: 87.828)
 [67.77] [warrior (#1)] Casting {SpellID: 23894} (Cost = 30.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [67.77] [warrior (#1)] Completed cast {SpellID: 23894}
 [67.77] [warrior (#1)] Spent 30.000 rage from {SpellID: 23894} (71.428 --> 41.428) of 100 total.
@@ -1569,6 +1564,8 @@
 [68.50] [warrior (#1)] Gained 1.000 rage from {SpellID: 12964} (49.732 --> 50.732) of 100 total.
 [68.59] [warrior (#1)] No available actions!
 [68.59] [warrior (#1)] Pausing rotation for 680.000005ms due to resources / CDs.
+[68.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1680.0, RAP: 124.0, SP: 0.0, BaseDamage:74.2, AfterAttackerMods:74.2, AfterResistances:74.2, AfterTargetMods:82.2, AfterOutcome:82.2, AfterPostOutcome:82.2
+[68.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 82.156 damage (SpellSchool: 1). (Threat: 65.725)
 [69.00] [warrior (#1)] Gained 1.000 rage from {SpellID: 12296} (50.732 --> 51.732) of 100 total.
 [69.10] [warrior (#1)] No available actions!
 [69.10] [warrior (#1)] Pausing rotation for 166.000005ms due to resources / CDs.
@@ -1607,8 +1604,7 @@
 [70.41] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [70.41] [warrior (#1)] Completed cast {SpellID: 412609}
 [70.41] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[70.41] [Target 1] Aura faded: {SpellID: 412609}
-[70.41] [Target 1] Aura gained: {SpellID: 412609}
+[70.41] [Target 1] Aura refreshed: {SpellID: 412609}
 [70.41] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [70.41] [warrior (#1)] {SpellID: 12966} stacks: 1 --> 3
 [70.42] [warrior (#1)] Gained 1.000 rage from {SpellID: 12964} (66.264 --> 67.264) of 100 total.
@@ -1638,6 +1634,8 @@
 [71.61] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [71.71] [warrior (#1)] No available actions!
 [71.71] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
+[71.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1680.0, RAP: 124.0, SP: 0.0, BaseDamage:51.5, AfterAttackerMods:51.5, AfterResistances:51.5, AfterTargetMods:59.5, AfterOutcome:59.5, AfterPostOutcome:59.5
+[71.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 59.478 damage (SpellSchool: 1). (Threat: 47.582)
 [71.81] [warrior (#1)] No available actions!
 [71.81] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [71.91] [warrior (#1)] No available actions!
@@ -1669,8 +1667,7 @@
 [72.33] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [72.33] [warrior (#1)] Completed cast {SpellID: 412609}
 [72.33] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[72.33] [Target 1] Aura faded: {SpellID: 412609}
-[72.33] [Target 1] Aura gained: {SpellID: 412609}
+[72.33] [Target 1] Aura refreshed: {SpellID: 412609}
 [72.33] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [72.33] [warrior (#1)] {SpellID: 12966} stacks: 2 --> 3
 [72.33] [warrior (#1)] {SpellID: 10610, Tag: -1} stacks: 1 --> 0
@@ -1711,8 +1708,7 @@
 [73.77] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [73.77] [warrior (#1)] Completed cast {SpellID: 412609}
 [73.77] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[73.77] [Target 1] Aura faded: {SpellID: 412609}
-[73.77] [Target 1] Aura gained: {SpellID: 412609}
+[73.77] [Target 1] Aura refreshed: {SpellID: 412609}
 [73.77] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [74.25] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [74.25] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}
@@ -1724,6 +1720,8 @@
 [74.25] [warrior (#1)] {SpellID: 12966} stacks: 3 --> 2
 [74.35] [warrior (#1)] No available actions!
 [74.35] [warrior (#1)] Pausing rotation for 920.000006ms due to resources / CDs.
+[74.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1680.0, RAP: 124.0, SP: 0.0, BaseDamage:67.4, AfterAttackerMods:67.4, AfterResistances:67.4, AfterTargetMods:75.4, AfterOutcome:75.4, AfterPostOutcome:75.4
+[74.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 75.408 damage (SpellSchool: 1). (Threat: 60.327)
 [75.00] [warrior (#1)] Aura refreshed: {SpellID: 25587, Tag: -1}
 [75.00] [warrior (#1)] Gained 1.000 rage from {SpellID: 12296} (69.404 --> 70.404) of 100 total.
 [75.10] [warrior (#1)] Queueing up {SpellID: 1680, Tag: 1} to cast at 1m15.266000007s.
@@ -1736,8 +1734,7 @@
 [75.27] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [75.27] [warrior (#1)] Completed cast {SpellID: 412609}
 [75.27] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[75.27] [Target 1] Aura faded: {SpellID: 412609}
-[75.27] [Target 1] Aura gained: {SpellID: 412609}
+[75.27] [Target 1] Aura refreshed: {SpellID: 412609}
 [75.27] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [75.27] [warrior (#1)] {SpellID: 12966} stacks: 2 --> 3
 [75.27] [warrior (#1)] Aura gained: {SpellID: 10610, Tag: -1}
@@ -1769,8 +1766,7 @@
 [76.17] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [76.17] [warrior (#1)] Completed cast {SpellID: 412609}
 [76.17] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[76.17] [Target 1] Aura faded: {SpellID: 412609}
-[76.17] [Target 1] Aura gained: {SpellID: 412609}
+[76.17] [Target 1] Aura refreshed: {SpellID: 412609}
 [76.17] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [76.17] [warrior (#1)] {SpellID: 12966} stacks: 1 --> 3
 [76.17] [warrior (#1)] {SpellID: 10610, Tag: -1} stacks: 1 --> 0
@@ -1795,6 +1791,8 @@
 [76.78] [warrior (#1)] Gained 1.000 rage from {SpellID: 12964} (79.848 --> 80.848) of 100 total.
 [76.87] [warrior (#1)] No available actions!
 [76.87] [warrior (#1)] Pausing rotation for 1.4s due to resources / CDs.
+[77.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1926.0, RAP: 124.0, SP: 0.0, BaseDamage:79.4, AfterAttackerMods:79.4, AfterResistances:79.4, AfterTargetMods:87.4, AfterOutcome:87.4, AfterPostOutcome:87.4
+[77.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 87.356 damage (SpellSchool: 1). (Threat: 69.885)
 [77.77] [warrior (#1)] Aura faded: {SpellID: 10610, Tag: -1}
 [78.00] [warrior (#1)] {SpellID: 10610, Tag: -1} stacks: 1 --> 0
 [78.00] [warrior (#1)] Gained 1.000 rage from {SpellID: 12296} (80.848 --> 81.848) of 100 total.
@@ -1814,8 +1812,6 @@
 [78.27] [warrior (#1)] Spent 10.000 rage from {SpellID: 7373} (91.152 --> 81.152) of 100 total.
 [78.27] [warrior (#1)] [Target 1] {SpellID: 7373} [DEBUG] MAP: 1680.0, RAP: 124.0, SP: 0.0, BaseDamage:45.0, AfterAttackerMods:45.0, AfterResistances:38.2, AfterTargetMods:46.2, AfterOutcome:46.2, AfterPostOutcome:46.2
 [78.27] [warrior (#1)] [Target 1] {SpellID: 7373} Hit for 46.218 damage (SpellSchool: 1). (Threat: 154.218)
-[79.17] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1680.0, RAP: 124.0, SP: 0.0, BaseDamage:148.3, AfterAttackerMods:148.3, AfterResistances:148.3, AfterTargetMods:156.3, AfterOutcome:156.3, AfterPostOutcome:156.3
-[79.17] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 156.338 damage (SpellSchool: 1). (Threat: 125.071)
 [79.77] [warrior (#1)] Casting {SpellID: 23894} (Cost = 30.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [79.77] [warrior (#1)] Completed cast {SpellID: 23894}
 [79.77] [warrior (#1)] Spent 30.000 rage from {SpellID: 23894} (81.152 --> 51.152) of 100 total.
@@ -1851,6 +1847,8 @@
 [80.08] [warrior (#1)] Gained 1.000 rage from {SpellID: 12964} (68.760 --> 69.760) of 100 total.
 [80.17] [warrior (#1)] No available actions!
 [80.17] [warrior (#1)] Pausing rotation for 1.100000009s due to resources / CDs.
+[80.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1680.0, RAP: 124.0, SP: 0.0, BaseDamage:79.4, AfterAttackerMods:79.4, AfterResistances:79.4, AfterTargetMods:87.4, AfterOutcome:87.4, AfterPostOutcome:87.4
+[80.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 87.356 damage (SpellSchool: 1). (Threat: 69.885)
 [81.00] [warrior (#1)] Gained 1.000 rage from {SpellID: 12296} (69.760 --> 70.760) of 100 total.
 [81.10] [warrior (#1)] Queueing up {SpellID: 7373} to cast at 1m21.266000008s.
 [81.10] [warrior (#1)] Pausing rotation for 166.000007ms due to resources / CDs.
@@ -1859,8 +1857,6 @@
 [81.27] [warrior (#1)] Spent 10.000 rage from {SpellID: 7373} (70.760 --> 60.760) of 100 total.
 [81.27] [warrior (#1)] [Target 1] {SpellID: 7373} [DEBUG] MAP: 1680.0, RAP: 124.0, SP: 0.0, BaseDamage:45.0, AfterAttackerMods:45.0, AfterResistances:38.2, AfterTargetMods:46.2, AfterOutcome:46.2, AfterPostOutcome:46.2
 [81.27] [warrior (#1)] [Target 1] {SpellID: 7373} Hit for 46.218 damage (SpellSchool: 1). (Threat: 154.218)
-[82.17] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1680.0, RAP: 124.0, SP: 0.0, BaseDamage:148.3, AfterAttackerMods:148.3, AfterResistances:148.3, AfterTargetMods:156.3, AfterOutcome:156.3, AfterPostOutcome:156.3
-[82.17] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 156.338 damage (SpellSchool: 1). (Threat: 125.071)
 [82.47] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [82.47] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}
 [82.47] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1680.0, RAP: 124.0, SP: 0.0, BaseDamage:397.0, AfterAttackerMods:397.0, AfterResistances:337.2, AfterTargetMods:345.2, AfterOutcome:218.0, AfterPostOutcome:218.0
@@ -1877,7 +1873,9 @@
 [82.77] [warrior (#1)] [Target 1] {SpellID: 7373} [DEBUG] MAP: 1680.0, RAP: 124.0, SP: 0.0, BaseDamage:45.0, AfterAttackerMods:45.0, AfterResistances:38.2, AfterTargetMods:46.2, AfterOutcome:46.2, AfterPostOutcome:46.2
 [82.77] [warrior (#1)] [Target 1] {SpellID: 7373} Hit for 46.218 damage (SpellSchool: 1). (Threat: 154.218)
 [82.78] [warrior (#1)] Aura faded: {SpellID: 20007, Tag: 1}
-[84.00] [warrior (#1)] Lost {"Strength": 100.000,} from fading {SpellID: 20007, Tag: 1}.
+[83.73] [warrior (#1)] Lost {"Strength": 100.000,} from fading {SpellID: 20007, Tag: 1}.
+[83.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1460.0, RAP: 124.0, SP: 0.0, BaseDamage:79.4, AfterAttackerMods:79.4, AfterResistances:79.4, AfterTargetMods:87.4, AfterOutcome:87.4, AfterPostOutcome:87.4
+[83.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 87.356 damage (SpellSchool: 1). (Threat: 69.885)
 [84.00] [warrior (#1)] Gained 1.000 rage from {SpellID: 12296} (60.064 --> 61.064) of 100 total.
 [84.10] [warrior (#1)] No available actions!
 [84.10] [warrior (#1)] Pausing rotation for 166.000007ms due to resources / CDs.
@@ -1903,8 +1901,7 @@
 [84.87] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [84.87] [warrior (#1)] Completed cast {SpellID: 412609}
 [84.87] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[84.87] [Target 1] Aura faded: {SpellID: 412609}
-[84.87] [Target 1] Aura gained: {SpellID: 412609}
+[84.87] [Target 1] Aura refreshed: {SpellID: 412609}
 [84.87] [warrior (#1)] Aura gained: {SpellID: 12966}
 [84.87] [warrior (#1)] {SpellID: 12966} stacks: 0 --> 3
 [84.87] [warrior (#1)] Aura gained: {SpellID: 10610, Tag: -1}
@@ -1943,6 +1940,8 @@
 [85.77] [warrior (#1)] Spent 30.000 rage from {SpellID: 23894} (85.900 --> 55.900) of 100 total.
 [85.77] [warrior (#1)] [Target 1] {SpellID: 23894} [DEBUG] MAP: 1460.0, RAP: 124.0, SP: 0.0, BaseDamage:705.0, AfterAttackerMods:705.0, AfterResistances:598.7, AfterTargetMods:606.7, AfterOutcome:606.7, AfterPostOutcome:606.7
 [85.77] [warrior (#1)] [Target 1] {SpellID: 23894} Hit for 606.749 damage (SpellSchool: 1). (Threat: 485.399)
+[86.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1460.0, RAP: 124.0, SP: 0.0, BaseDamage:34.2, AfterAttackerMods:34.2, AfterResistances:34.2, AfterTargetMods:42.2, AfterOutcome:42.2, AfterPostOutcome:42.2
+[86.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 42.239 damage (SpellSchool: 1). (Threat: 33.791)
 [86.79] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [86.79] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}
 [86.79] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1460.0, RAP: 124.0, SP: 0.0, BaseDamage:342.3, AfterAttackerMods:342.3, AfterResistances:290.7, AfterTargetMods:298.7, AfterOutcome:0.0, AfterPostOutcome:0.0
@@ -1960,8 +1959,6 @@
 [87.27] [warrior (#1)] Spent 22.000 rage from {SpellID: 1680, Tag: 1} (56.900 --> 34.900) of 100 total.
 [87.27] [warrior (#1)] [Target 1] {SpellID: 1680, Tag: 1} [DEBUG] MAP: 1460.0, RAP: 124.0, SP: 0.0, BaseDamage:338.1, AfterAttackerMods:338.1, AfterResistances:287.1, AfterTargetMods:295.1, AfterOutcome:295.1, AfterPostOutcome:295.1
 [87.27] [warrior (#1)] [Target 1] {SpellID: 1680, Tag: 1} Hit for 295.130 damage (SpellSchool: 1). (Threat: 295.130)
-[87.87] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1460.0, RAP: 124.0, SP: 0.0, BaseDamage:88.6, AfterAttackerMods:88.6, AfterResistances:88.6, AfterTargetMods:96.6, AfterOutcome:96.6, AfterPostOutcome:96.6
-[87.87] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 96.569 damage (SpellSchool: 1). (Threat: 77.255)
 [88.71] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [88.71] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}
 [88.71] [warrior (#1)] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 1460.0, RAP: 124.0, SP: 0.0, BaseDamage:318.2, AfterAttackerMods:318.2, AfterResistances:270.2, AfterTargetMods:278.2, AfterOutcome:556.4, AfterPostOutcome:556.4
@@ -1972,8 +1969,7 @@
 [88.71] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [88.71] [warrior (#1)] Completed cast {SpellID: 412609}
 [88.71] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[88.71] [Target 1] Aura faded: {SpellID: 412609}
-[88.71] [Target 1] Aura gained: {SpellID: 412609}
+[88.71] [Target 1] Aura refreshed: {SpellID: 412609}
 [88.71] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [88.71] [warrior (#1)] {SpellID: 12966} stacks: 2 --> 3
 [88.72] [warrior (#1)] Gained 1.000 rage from {SpellID: 12964} (49.432 --> 50.432) of 100 total.
@@ -1997,6 +1993,8 @@
 [89.61] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [89.71] [warrior (#1)] No available actions!
 [89.71] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
+[89.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1460.0, RAP: 124.0, SP: 0.0, BaseDamage:40.1, AfterAttackerMods:40.1, AfterResistances:40.1, AfterTargetMods:48.1, AfterOutcome:48.1, AfterPostOutcome:48.1
+[89.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 48.079 damage (SpellSchool: 1). (Threat: 38.463)
 [89.81] [warrior (#1)] No available actions!
 [89.81] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [89.91] [warrior (#1)] No available actions!
@@ -2027,8 +2025,7 @@
 [90.63] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [90.63] [warrior (#1)] Completed cast {SpellID: 412609}
 [90.63] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[90.63] [Target 1] Aura faded: {SpellID: 412609}
-[90.63] [Target 1] Aura gained: {SpellID: 412609}
+[90.63] [Target 1] Aura refreshed: {SpellID: 412609}
 [90.63] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [90.64] [warrior (#1)] Gained 1.000 rage from {SpellID: 12964} (65.964 --> 66.964) of 100 total.
 [90.73] [warrior (#1)] No available actions!
@@ -2069,12 +2066,13 @@
 [92.55] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [92.55] [warrior (#1)] Completed cast {SpellID: 412609}
 [92.55] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[92.55] [Target 1] Aura faded: {SpellID: 412609}
-[92.55] [Target 1] Aura gained: {SpellID: 412609}
+[92.55] [Target 1] Aura refreshed: {SpellID: 412609}
 [92.55] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [92.56] [warrior (#1)] Gained 1.000 rage from {SpellID: 12964} (51.496 --> 52.496) of 100 total.
 [92.65] [warrior (#1)] No available actions!
 [92.65] [warrior (#1)] Pausing rotation for 620.000011ms due to resources / CDs.
+[92.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1460.0, RAP: 124.0, SP: 0.0, BaseDamage:58.9, AfterAttackerMods:58.9, AfterResistances:58.9, AfterTargetMods:66.9, AfterOutcome:66.9, AfterPostOutcome:66.9
+[92.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 66.859 damage (SpellSchool: 1). (Threat: 53.488)
 [93.00] [warrior (#1)] Gained 1.000 rage from {SpellID: 12296} (52.496 --> 53.496) of 100 total.
 [93.10] [warrior (#1)] No available actions!
 [93.10] [warrior (#1)] Pausing rotation for 166.000009ms due to resources / CDs.
@@ -2112,8 +2110,7 @@
 [94.47] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [94.47] [warrior (#1)] Completed cast {SpellID: 412609}
 [94.47] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[94.47] [Target 1] Aura faded: {SpellID: 412609}
-[94.47] [Target 1] Aura gained: {SpellID: 412609}
+[94.47] [Target 1] Aura refreshed: {SpellID: 412609}
 [94.47] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [94.47] [warrior (#1)] Aura gained: {SpellID: 10610, Tag: -1}
 [94.47] [warrior (#1)] {SpellID: 10610, Tag: -1} stacks: 0 --> 1
@@ -2149,7 +2146,9 @@
 [94.67] [warrior (#1)] Pausing rotation for 1.4s due to resources / CDs.
 [95.00] [warrior (#1)] Aura refreshed: {SpellID: 25587, Tag: -1}
 [95.57] [warrior (#1)] Aura faded: {SpellID: 10610, Tag: -1}
-[96.00] [warrior (#1)] {SpellID: 10610, Tag: -1} stacks: 1 --> 0
+[95.73] [warrior (#1)] {SpellID: 10610, Tag: -1} stacks: 1 --> 0
+[95.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1680.0, RAP: 124.0, SP: 0.0, BaseDamage:58.5, AfterAttackerMods:58.5, AfterResistances:58.5, AfterTargetMods:66.5, AfterOutcome:66.5, AfterPostOutcome:66.5
+[95.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 66.545 damage (SpellSchool: 1). (Threat: 53.236)
 [96.00] [warrior (#1)] Gained 1.000 rage from {SpellID: 12296} (77.636 --> 78.636) of 100 total.
 [96.07] [warrior (#1)] No available actions!
 [96.07] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
@@ -2211,8 +2210,8 @@
 [97.29] [warrior (#1)] Major cooldown used: {ItemID: 10646}
 [97.39] [warrior (#1)] No available actions!
 [97.39] [warrior (#1)] Pausing rotation for 1.4s due to resources / CDs.
-[97.47] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1680.0, RAP: 124.0, SP: 0.0, BaseDamage:124.0, AfterAttackerMods:148.8, AfterResistances:148.8, AfterTargetMods:156.8, AfterOutcome:156.8, AfterPostOutcome:156.8
-[97.47] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 156.832 damage (SpellSchool: 1). (Threat: 125.466)
+[98.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1680.0, RAP: 124.0, SP: 0.0, BaseDamage:58.5, AfterAttackerMods:58.5, AfterResistances:58.5, AfterTargetMods:66.5, AfterOutcome:66.5, AfterPostOutcome:66.5
+[98.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 66.545 damage (SpellSchool: 1). (Threat: 53.236)
 [98.79] [warrior (#1)] Casting {SpellID: 1719} (Cost = 0.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [98.79] [warrior (#1)] Completed cast {SpellID: 1719}
 [98.79] [warrior (#1)] Aura gained: {SpellID: 1719}
@@ -2238,8 +2237,7 @@
 [100.29] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [100.29] [warrior (#1)] Completed cast {SpellID: 412609}
 [100.29] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[100.29] [Target 1] Aura faded: {SpellID: 412609}
-[100.29] [Target 1] Aura gained: {SpellID: 412609}
+[100.29] [Target 1] Aura refreshed: {SpellID: 412609}
 [100.29] [warrior (#1)] Aura gained: {SpellID: 12966}
 [100.29] [warrior (#1)] {SpellID: 12966} stacks: 0 --> 3
 [101.01] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
@@ -2252,12 +2250,13 @@
 [101.01] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [101.01] [warrior (#1)] Completed cast {SpellID: 412609}
 [101.01] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[101.01] [Target 1] Aura faded: {SpellID: 412609}
-[101.01] [Target 1] Aura gained: {SpellID: 412609}
+[101.01] [Target 1] Aura refreshed: {SpellID: 412609}
 [101.01] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [101.02] [warrior (#1)] Gained 1.000 rage from {SpellID: 12964} (82.269 --> 83.269) of 100 total.
 [101.11] [warrior (#1)] No available actions!
 [101.11] [warrior (#1)] Pausing rotation for 680ms due to resources / CDs.
+[101.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1680.0, RAP: 124.0, SP: 0.0, BaseDamage:58.1, AfterAttackerMods:58.1, AfterResistances:58.1, AfterTargetMods:66.1, AfterOutcome:66.1, AfterPostOutcome:66.1
+[101.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 66.072 damage (SpellSchool: 1). (Threat: 52.858)
 [101.79] [warrior (#1)] Casting {SpellID: 1680, Tag: 1} (Cost = 22.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [101.79] [warrior (#1)] Completed cast {SpellID: 1680, Tag: 1}
 [101.79] [warrior (#1)] Spent 22.000 rage from {SpellID: 1680, Tag: 1} (83.269 --> 61.269) of 100 total.
@@ -2266,8 +2265,7 @@
 [101.79] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [101.79] [warrior (#1)] Completed cast {SpellID: 412609}
 [101.79] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[101.79] [Target 1] Aura faded: {SpellID: 412609}
-[101.79] [Target 1] Aura gained: {SpellID: 412609}
+[101.79] [Target 1] Aura refreshed: {SpellID: 412609}
 [101.79] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [101.79] [warrior (#1)] Aura gained: {SpellID: 10610, Tag: -1}
 [101.79] [warrior (#1)] {SpellID: 10610, Tag: -1} stacks: 0 --> 2
@@ -2296,8 +2294,7 @@
 [102.93] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [102.93] [warrior (#1)] Completed cast {SpellID: 412609}
 [102.93] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[102.93] [Target 1] Aura faded: {SpellID: 412609}
-[102.93] [Target 1] Aura gained: {SpellID: 412609}
+[102.93] [Target 1] Aura refreshed: {SpellID: 412609}
 [102.93] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [102.93] [warrior (#1)] {SpellID: 12966} stacks: 2 --> 3
 [103.03] [warrior (#1)] Queueing up {SpellID: 20662} to cast at 1m43.285999999s.
@@ -2311,8 +2308,7 @@
 [103.29] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [103.29] [warrior (#1)] Completed cast {SpellID: 412609}
 [103.29] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[103.29] [Target 1] Aura faded: {SpellID: 412609}
-[103.29] [Target 1] Aura gained: {SpellID: 412609}
+[103.29] [Target 1] Aura refreshed: {SpellID: 412609}
 [103.29] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [103.29] [warrior (#1)] Aura gained: {SpellID: 10610, Tag: -1}
 [103.29] [warrior (#1)] {SpellID: 10610, Tag: -1} stacks: 0 --> 2
@@ -2324,15 +2320,16 @@
 [103.29] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [103.29] [warrior (#1)] Completed cast {SpellID: 412609}
 [103.29] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[103.29] [Target 1] Aura faded: {SpellID: 412609}
-[103.29] [Target 1] Aura gained: {SpellID: 412609}
+[103.29] [Target 1] Aura refreshed: {SpellID: 412609}
 [103.29] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [103.29] [warrior (#1)] {SpellID: 10610, Tag: -1} stacks: 2 --> 1
 [103.30] [warrior (#1)] Gained 1.000 rage from {SpellID: 12964} (14.532 --> 15.532) of 100 total.
 [103.39] [warrior (#1)] No available actions!
 [103.39] [warrior (#1)] Pausing rotation for 1.4s due to resources / CDs.
 [104.29] [warrior (#1)] Aura faded: {SpellID: 10610, Tag: -1}
-[104.79] [warrior (#1)] {SpellID: 10610, Tag: -1} stacks: 1 --> 0
+[104.73] [warrior (#1)] {SpellID: 10610, Tag: -1} stacks: 1 --> 0
+[104.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1680.0, RAP: 124.0, SP: 0.0, BaseDamage:101.2, AfterAttackerMods:101.2, AfterResistances:101.2, AfterTargetMods:109.2, AfterOutcome:109.2, AfterPostOutcome:109.2
+[104.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 109.154 damage (SpellSchool: 1). (Threat: 87.323)
 [104.79] [warrior (#1)] Casting {SpellID: 20662} (Cost = 10.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [104.79] [warrior (#1)] Completed cast {SpellID: 20662}
 [104.79] [warrior (#1)] Spent 10.000 rage from {SpellID: 20662} (15.532 --> 5.532) of 100 total.
@@ -2342,8 +2339,7 @@
 [104.79] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [104.79] [warrior (#1)] Completed cast {SpellID: 412609}
 [104.79] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[104.79] [Target 1] Aura faded: {SpellID: 412609}
-[104.79] [Target 1] Aura gained: {SpellID: 412609}
+[104.79] [Target 1] Aura refreshed: {SpellID: 412609}
 [104.79] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [104.85] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [104.85] [warrior (#1)] Completed cast {OtherID: 3, Tag: 1}
@@ -2355,8 +2351,7 @@
 [104.85] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [104.85] [warrior (#1)] Completed cast {SpellID: 412609}
 [104.85] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[104.85] [Target 1] Aura faded: {SpellID: 412609}
-[104.85] [Target 1] Aura gained: {SpellID: 412609}
+[104.85] [Target 1] Aura refreshed: {SpellID: 412609}
 [104.85] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [104.86] [warrior (#1)] Gained 1.000 rage from {SpellID: 12964} (14.532 --> 15.532) of 100 total.
 [104.95] [warrior (#1)] No available actions!
@@ -2374,8 +2369,7 @@
 [106.29] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [106.29] [warrior (#1)] Completed cast {SpellID: 412609}
 [106.29] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[106.29] [Target 1] Aura faded: {SpellID: 412609}
-[106.29] [Target 1] Aura gained: {SpellID: 412609}
+[106.29] [Target 1] Aura refreshed: {SpellID: 412609}
 [106.29] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [106.29] [warrior (#1)] Aura gained: {SpellID: 10610, Tag: -1}
 [106.29] [warrior (#1)] {SpellID: 10610, Tag: -1} stacks: 0 --> 2
@@ -2400,8 +2394,7 @@
 [106.77] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [106.77] [warrior (#1)] Completed cast {SpellID: 412609}
 [106.77] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[106.77] [Target 1] Aura faded: {SpellID: 412609}
-[106.77] [Target 1] Aura gained: {SpellID: 412609}
+[106.77] [Target 1] Aura refreshed: {SpellID: 412609}
 [106.77] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [106.77] [warrior (#1)] {SpellID: 12966} stacks: 2 --> 3
 [106.77] [warrior (#1)] {SpellID: 10610, Tag: -1} stacks: 1 --> 0
@@ -2412,6 +2405,8 @@
 [106.78] [warrior (#1)] [Target 1] {SpellID: 15851} Crit for 102.354 damage (SpellSchool: 4). (Threat: 81.883)
 [106.87] [warrior (#1)] No available actions!
 [106.87] [warrior (#1)] Pausing rotation for 920ms due to resources / CDs.
+[107.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1680.0, RAP: 124.0, SP: 0.0, BaseDamage:133.5, AfterAttackerMods:133.5, AfterResistances:133.5, AfterTargetMods:141.5, AfterOutcome:141.5, AfterPostOutcome:141.5
+[107.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 141.466 damage (SpellSchool: 1). (Threat: 113.173)
 [107.79] [warrior (#1)] Casting {ItemID: 13442} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [107.79] [warrior (#1)] Completed cast {ItemID: 13442}
 [107.79] [warrior (#1)] Aura gained: {ItemID: 13442}
@@ -2426,8 +2421,7 @@
 [107.79] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [107.79] [warrior (#1)] Completed cast {SpellID: 412609}
 [107.79] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[107.79] [Target 1] Aura faded: {SpellID: 412609}
-[107.79] [Target 1] Aura gained: {SpellID: 412609}
+[107.79] [Target 1] Aura refreshed: {SpellID: 412609}
 [107.79] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [108.00] [warrior (#1)] Gained 1.000 rage from {SpellID: 12296} (0.000 --> 1.000) of 100 total.
 [108.10] [warrior (#1)] No available actions!
@@ -2442,8 +2436,7 @@
 [108.69] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [108.69] [warrior (#1)] Completed cast {SpellID: 412609}
 [108.69] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[108.69] [Target 1] Aura faded: {SpellID: 412609}
-[108.69] [Target 1] Aura gained: {SpellID: 412609}
+[108.69] [Target 1] Aura refreshed: {SpellID: 412609}
 [108.69] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [108.70] [warrior (#1)] Gained 1.000 rage from {SpellID: 12964} (15.532 --> 16.532) of 100 total.
 [108.79] [warrior (#1)] No available actions!
@@ -2457,8 +2450,7 @@
 [109.29] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [109.29] [warrior (#1)] Completed cast {SpellID: 412609}
 [109.29] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[109.29] [Target 1] Aura faded: {SpellID: 412609}
-[109.29] [Target 1] Aura gained: {SpellID: 412609}
+[109.29] [Target 1] Aura refreshed: {SpellID: 412609}
 [109.29] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [110.00] [warrior (#1)] Aura refreshed: {SpellID: 25587, Tag: -1}
 [110.61] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
@@ -2471,12 +2463,13 @@
 [110.61] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [110.61] [warrior (#1)] Completed cast {SpellID: 412609}
 [110.61] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[110.61] [Target 1] Aura faded: {SpellID: 412609}
-[110.61] [Target 1] Aura gained: {SpellID: 412609}
+[110.61] [Target 1] Aura refreshed: {SpellID: 412609}
 [110.61] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [110.62] [warrior (#1)] Gained 1.000 rage from {SpellID: 12964} (14.532 --> 15.532) of 100 total.
 [110.71] [warrior (#1)] Queueing up {SpellID: 20662} to cast at 1m50.785999999s.
 [110.71] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
+[110.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1812.0, RAP: 124.0, SP: 0.0, BaseDamage:157.7, AfterAttackerMods:157.7, AfterResistances:157.7, AfterTargetMods:165.7, AfterOutcome:165.7, AfterPostOutcome:165.7
+[110.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 165.699 damage (SpellSchool: 1). (Threat: 132.559)
 [110.79] [warrior (#1)] Casting {SpellID: 20662} (Cost = 10.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [110.79] [warrior (#1)] Completed cast {SpellID: 20662}
 [110.79] [warrior (#1)] Spent 10.000 rage from {SpellID: 20662} (15.532 --> 5.532) of 100 total.
@@ -2486,8 +2479,7 @@
 [110.79] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [110.79] [warrior (#1)] Completed cast {SpellID: 412609}
 [110.79] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[110.79] [Target 1] Aura faded: {SpellID: 412609}
-[110.79] [Target 1] Aura gained: {SpellID: 412609}
+[110.79] [Target 1] Aura refreshed: {SpellID: 412609}
 [110.79] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [111.00] [warrior (#1)] Gained 1.000 rage from {SpellID: 12296} (0.000 --> 1.000) of 100 total.
 [111.10] [warrior (#1)] No available actions!
@@ -2516,8 +2508,7 @@
 [112.63] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [112.63] [warrior (#1)] Completed cast {SpellID: 412609}
 [112.63] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[112.63] [Target 1] Aura faded: {SpellID: 412609}
-[112.63] [Target 1] Aura gained: {SpellID: 412609}
+[112.63] [Target 1] Aura refreshed: {SpellID: 412609}
 [112.63] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [112.63] [warrior (#1)] {SpellID: 12966} stacks: 2 --> 3
 [112.63] [warrior (#1)] Aura gained: {SpellID: 10610, Tag: -1}
@@ -2534,9 +2525,11 @@
 [112.64] [warrior (#1)] Gained 1.000 rage from {SpellID: 12964} (8.304 --> 9.304) of 100 total.
 [112.73] [warrior (#1)] No available actions!
 [112.73] [warrior (#1)] Pausing rotation for 1.4s due to resources / CDs.
-[113.79] [warrior (#1)] Aura faded: {SpellID: 1719}
 [113.63] [warrior (#1)] Aura faded: {SpellID: 10610, Tag: -1}
-[114.00] [warrior (#1)] {SpellID: 10610, Tag: -1} stacks: 1 --> 0
+[113.73] [warrior (#1)] {SpellID: 10610, Tag: -1} stacks: 1 --> 0
+[113.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1812.0, RAP: 124.0, SP: 0.0, BaseDamage:147.1, AfterAttackerMods:147.1, AfterResistances:147.1, AfterTargetMods:155.1, AfterOutcome:155.1, AfterPostOutcome:155.1
+[113.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 155.074 damage (SpellSchool: 1). (Threat: 124.060)
+[113.79] [warrior (#1)] Aura faded: {SpellID: 1719}
 [114.00] [warrior (#1)] Gained 1.000 rage from {SpellID: 12296} (9.304 --> 10.304) of 100 total.
 [114.10] [warrior (#1)] Queueing up {SpellID: 20662} to cast at 1m54.125999999s.
 [114.10] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
@@ -2556,8 +2549,6 @@
 [114.55] [warrior (#1)] No available actions!
 [114.55] [warrior (#1)] Pausing rotation for 1.080000001s due to resources / CDs.
 [115.00] [warrior (#1)] Aura refreshed: {SpellID: 25587, Tag: -1}
-[115.63] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1812.0, RAP: 124.0, SP: 0.0, BaseDamage:323.4, AfterAttackerMods:388.1, AfterResistances:388.1, AfterTargetMods:396.1, AfterOutcome:396.1, AfterPostOutcome:396.1
-[115.63] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 396.104 damage (SpellSchool: 1). (Threat: 316.883)
 [115.63] [warrior (#1)] Casting {SpellID: 2687} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [115.63] [warrior (#1)] Completed cast {SpellID: 2687}
 [115.63] [warrior (#1)] Gained 15.000 rage from {SpellID: 2687} (0.000 --> 15.000) of 100 total.
@@ -2601,6 +2592,8 @@
 [116.63] [warrior (#1)] Gained 1.500 rage from {SpellID: 2687} (18.608 --> 20.108) of 100 total.
 [116.73] [warrior (#1)] Queueing up {SpellID: 20662} to cast at 1m57.126s.
 [116.73] [warrior (#1)] Pausing rotation for 400ms due to resources / CDs.
+[116.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1812.0, RAP: 124.0, SP: 0.0, BaseDamage:147.1, AfterAttackerMods:147.1, AfterResistances:147.1, AfterTargetMods:155.1, AfterOutcome:155.1, AfterPostOutcome:155.1
+[116.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 155.074 damage (SpellSchool: 1). (Threat: 124.060)
 [117.00] [warrior (#1)] Gained 1.000 rage from {SpellID: 12296} (20.108 --> 21.108) of 100 total.
 [117.10] [warrior (#1)] Queueing up {SpellID: 20662} to cast at 1m57.126s.
 [117.10] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
@@ -2626,8 +2619,6 @@
 [117.73] [warrior (#1)] Pausing rotation for 900.000001ms due to resources / CDs.
 [118.13] [warrior (#1)] Aura faded: {SpellID: 10610, Tag: -1}
 [118.63] [warrior (#1)] {SpellID: 10610, Tag: -1} stacks: 1 --> 0
-[118.63] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1812.0, RAP: 124.0, SP: 0.0, BaseDamage:323.4, AfterAttackerMods:388.1, AfterResistances:388.1, AfterTargetMods:396.1, AfterOutcome:396.1, AfterPostOutcome:396.1
-[118.63] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 396.104 damage (SpellSchool: 1). (Threat: 316.883)
 [118.63] [warrior (#1)] Gained 1.500 rage from {SpellID: 2687} (10.804 --> 12.304) of 100 total.
 [118.63] [warrior (#1)] Casting {SpellID: 20662} (Cost = 10.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [118.63] [warrior (#1)] Completed cast {SpellID: 20662}
@@ -2649,8 +2640,7 @@
 [118.77] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [118.77] [warrior (#1)] Completed cast {SpellID: 412609}
 [118.77] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[118.77] [Target 1] Aura faded: {SpellID: 412609}
-[118.77] [Target 1] Aura gained: {SpellID: 412609}
+[118.77] [Target 1] Aura refreshed: {SpellID: 412609}
 [118.77] [warrior (#1)] Aura gained: {SpellID: 12966}
 [118.77] [warrior (#1)] {SpellID: 12966} stacks: 0 --> 3
 [118.77] [warrior (#1)] Aura gained: {SpellID: 10610, Tag: -1}
@@ -2669,6 +2659,8 @@
 [119.63] [warrior (#1)] Gained 1.500 rage from {SpellID: 2687} (31.836 --> 33.336) of 100 total.
 [119.73] [warrior (#1)] No available actions!
 [119.73] [warrior (#1)] Pausing rotation for 400.000001ms due to resources / CDs.
+[119.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1812.0, RAP: 124.0, SP: 0.0, BaseDamage:87.9, AfterAttackerMods:87.9, AfterResistances:87.9, AfterTargetMods:95.9, AfterOutcome:95.9, AfterPostOutcome:95.9
+[119.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 95.937 damage (SpellSchool: 1). (Threat: 76.750)
 [120.00] [warrior (#1)] Aura refreshed: {SpellID: 25587, Tag: -1}
 [120.00] [warrior (#1)] Gained 1.000 rage from {SpellID: 12296} (33.336 --> 34.336) of 100 total.
 [120.10] [warrior (#1)] Queueing up {SpellID: 20662} to cast at 2m0.126000001s.
@@ -2682,8 +2674,7 @@
 [120.13] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [120.13] [warrior (#1)] Completed cast {SpellID: 412609}
 [120.13] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[120.13] [Target 1] Aura faded: {SpellID: 412609}
-[120.13] [Target 1] Aura gained: {SpellID: 412609}
+[120.13] [Target 1] Aura refreshed: {SpellID: 412609}
 [120.13] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [120.13] [warrior (#1)] {SpellID: 12966} stacks: 2 --> 3
 [120.63] [warrior (#1)] Gained 1.500 rage from {SpellID: 2687} (0.000 --> 1.500) of 100 total.
@@ -2697,8 +2688,7 @@
 [120.69] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [120.69] [warrior (#1)] Completed cast {SpellID: 412609}
 [120.69] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[120.69] [Target 1] Aura faded: {SpellID: 412609}
-[120.69] [Target 1] Aura gained: {SpellID: 412609}
+[120.69] [Target 1] Aura refreshed: {SpellID: 412609}
 [120.69] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [120.69] [warrior (#1)] Aura gained: {SpellID: 10610, Tag: -1}
 [120.69] [warrior (#1)] {SpellID: 10610, Tag: -1} stacks: 0 --> 1
@@ -2710,8 +2700,7 @@
 [120.69] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [120.69] [warrior (#1)] Completed cast {SpellID: 412609}
 [120.69] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[120.69] [Target 1] Aura faded: {SpellID: 412609}
-[120.69] [Target 1] Aura gained: {SpellID: 412609}
+[120.69] [Target 1] Aura refreshed: {SpellID: 412609}
 [120.69] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [120.69] [warrior (#1)] {SpellID: 10610, Tag: -1} stacks: 1 --> 0
 [120.69] [warrior (#1)] Aura faded: {SpellID: 10610, Tag: -1}
@@ -2741,6 +2730,8 @@
 [122.63] [warrior (#1)] Gained 1.500 rage from {SpellID: 2687} (9.304 --> 10.804) of 100 total.
 [122.71] [warrior (#1)] No available actions!
 [122.71] [warrior (#1)] Pausing rotation for 420.000003ms due to resources / CDs.
+[122.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1812.0, RAP: 124.0, SP: 0.0, BaseDamage:109.2, AfterAttackerMods:109.2, AfterResistances:109.2, AfterTargetMods:117.2, AfterOutcome:117.2, AfterPostOutcome:117.2
+[122.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 117.153 damage (SpellSchool: 1). (Threat: 93.722)
 [123.00] [warrior (#1)] Gained 1.000 rage from {SpellID: 12296} (10.804 --> 11.804) of 100 total.
 [123.10] [warrior (#1)] Queueing up {SpellID: 20662} to cast at 2m3.126000002s.
 [123.10] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
@@ -2752,8 +2743,6 @@
 [123.13] [warrior (#1)] [Target 1] {SpellID: 20662} Hit for 647.067 damage (SpellSchool: 1). (Threat: 647.067)
 [123.63] [warrior (#1)] Gained 1.500 rage from {SpellID: 2687} (0.000 --> 1.500) of 100 total.
 [123.63] [warrior (#1)] Aura faded: {SpellID: 1282733}
-[123.69] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1812.0, RAP: 124.0, SP: 0.0, BaseDamage:219.3, AfterAttackerMods:263.2, AfterResistances:263.2, AfterTargetMods:271.2, AfterOutcome:271.2, AfterPostOutcome:271.2
-[123.69] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 271.172 damage (SpellSchool: 1). (Threat: 216.938)
 [123.73] [warrior (#1)] No available actions!
 [123.73] [warrior (#1)] Pausing rotation for 900.000003ms due to resources / CDs.
 [124.53] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
@@ -2793,6 +2782,8 @@
 [125.73] [warrior (#1)] {SpellID: 10610, Tag: -1} stacks: 1 --> 0
 [125.73] [warrior (#1)] No available actions!
 [125.73] [warrior (#1)] Pausing rotation for 400.000004ms due to resources / CDs.
+[125.73] [warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1812.0, RAP: 124.0, SP: 0.0, BaseDamage:109.2, AfterAttackerMods:109.2, AfterResistances:109.2, AfterTargetMods:117.2, AfterOutcome:117.2, AfterPostOutcome:117.2
+[125.73] [warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 117.153 damage (SpellSchool: 1). (Threat: 93.722)
 [126.00] [warrior (#1)] Gained 1.000 rage from {SpellID: 12296} (10.804 --> 11.804) of 100 total.
 [126.10] [warrior (#1)] Queueing up {SpellID: 20662} to cast at 2m6.126000004s.
 [126.10] [warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
@@ -2805,8 +2796,7 @@
 [126.13] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [126.13] [warrior (#1)] Completed cast {SpellID: 412609}
 [126.13] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[126.13] [Target 1] Aura faded: {SpellID: 412609}
-[126.13] [Target 1] Aura gained: {SpellID: 412609}
+[126.13] [Target 1] Aura refreshed: {SpellID: 412609}
 [126.13] [warrior (#1)] Aura gained: {SpellID: 12966}
 [126.13] [warrior (#1)] {SpellID: 12966} stacks: 0 --> 3
 [126.75] [warrior (#1)] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
@@ -2819,8 +2809,7 @@
 [126.75] [warrior (#1)] Casting {SpellID: 412609} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [126.75] [warrior (#1)] Completed cast {SpellID: 412609}
 [126.75] [warrior (#1)] [Target 1] {SpellID: 412609} Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)
-[126.75] [Target 1] Aura faded: {SpellID: 412609}
-[126.75] [Target 1] Aura gained: {SpellID: 412609}
+[126.75] [Target 1] Aura refreshed: {SpellID: 412609}
 [126.75] [warrior (#1)] Aura refreshed: {SpellID: 12966}
 [126.85] [warrior (#1)] No available actions!
 [126.85] [warrior (#1)] Pausing rotation for 780.000007ms due to resources / CDs.

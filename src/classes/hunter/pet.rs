@@ -160,7 +160,7 @@ pub(crate) enum PetAbility {
     /// Go `newSwipe`, which needs three active targets and so is never cast on one.
     Swipe,
     /// Go `newScorpidPoison`.
-    ScorpidPoison { tick_base: f64 },
+    ScorpidPoison { tick_base: f64, outcome: Outcome },
     /// Go `newDustCloud`, whose aura and armor the agent holds.
     DustCloud,
 }
@@ -217,8 +217,16 @@ impl PetAbility {
             Effect::HunterPetSwipe { min_targets, .. } if *min_targets > 1 => {
                 Some(PetAbility::Swipe)
             }
-            Effect::HunterPetScorpidPoison { tick_base, .. } => Some(PetAbility::ScorpidPoison {
+            Effect::HunterPetScorpidPoison {
+                tick_base,
+                tick_can_crit,
+                tick_magic,
+                ..
+            } => Some(PetAbility::ScorpidPoison {
                 tick_base: *tick_base,
+                // The poison's ticks roll the pet's melee crit where its row states Periodic
+                // Can Crit.
+                outcome: Outcome::tick_hit_rolled(*tick_can_crit, *tick_magic).ok()?,
             }),
             Effect::HunterPetDustCloud { .. } => Some(PetAbility::DustCloud),
             _ => None,
@@ -267,7 +275,7 @@ impl PetAbility {
                 }
             }
             PetAbility::Swipe => panic!("Swipe is never cast on one target"),
-            PetAbility::ScorpidPoison { tick_base } => {
+            PetAbility::ScorpidPoison { tick_base, .. } => {
                 let table = PhysicalOutcome::MeleeSpecialHit { count: true };
                 let result = fight.calc_outcome(spell, target, Outcome::Table(table));
                 fight.deal_damage(spell, result, false);
@@ -301,15 +309,16 @@ impl PetAbility {
 }
 
 /// Go `Dot.CalcAndDealPeriodicSnapshotDamage` on a dot that keeps its snapshot, as Scorpid
-/// Poison's does: the stored base and multiplier with a plain tick.
+/// Poison's does: the stored base and multiplier with the tick outcome its row picks.
 pub(crate) fn snapshot_tick<A: Agent>(
     fight: &mut Fight<A>,
     dot: DotId,
     base: f64,
     multiplier: f64,
+    outcome: Outcome,
 ) {
     let (spell, side) = (fight.dots[dot].spell, fight.dots[dot].side);
-    let result = fight.calc_tick_damage(spell, side, base, multiplier, Outcome::Tick);
+    let result = fight.calc_tick_damage(spell, side, base, multiplier, outcome);
     fight.deal_damage(spell, result, true);
 }
 

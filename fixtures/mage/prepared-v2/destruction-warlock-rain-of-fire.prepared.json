@@ -2,7 +2,7 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "74127c6c8454217e7d6221de5e3274cf22e621bb",
+    "engine_revision": "cd7d44aec711bcc8f20ea12d3ed83cea2126ac66",
     "client_build": "1.60.1.70205",
     "exporter": "tools/oracle-v2"
   },
@@ -2175,7 +2175,8 @@
           "ProcMaskSpellDamage"
         ],
         "flags": [
-          "SpellFlagNoOnCastComplete"
+          "SpellFlagNoOnCastComplete",
+          "SpellFlagProc"
         ],
         "class_spell": "rain_of_fire",
         "missile_speed": 0,
@@ -3583,7 +3584,6 @@
       "kind": "rain_of_fire",
       "spell_id": 11678,
       "tick_base": 221,
-      "tick_can_crit": true,
       "tick_spell_id": 1282385
     },
     {
@@ -3632,6 +3632,7 @@
       "base_amount": 424,
       "kind": "life_tap",
       "mana_multiplier": 1.2,
+      "no_threat": true,
       "spell_id": 11689
     },
     {

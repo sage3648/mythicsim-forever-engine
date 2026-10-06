@@ -1,6 +1,6 @@
 //! Master of Elements (29074), from Go sim/mage/talents_fire.go `registerMasterOfElements`:
 //! a Fire or Frost Mage spell's crit refunds a share of its base cost, at most once per
-//! internal cooldown, and only when the cast cost mana.
+//! internal cooldown, and only for a spell that has a base mana cost, whatever the cast paid.
 
 use crate::{
     classes::mage::masks::{is_class, ALL},
@@ -54,7 +54,7 @@ impl MasterOfElements {
         let Some(cost) = state.cost else {
             return;
         };
-        if state.school & FIRE_OR_FROST == 0 || state.cur_cast.cost <= 0.0 {
+        if state.school & FIRE_OR_FROST == 0 || cost.base <= 0 {
             return;
         }
         if let Some((timer, duration)) = icd {

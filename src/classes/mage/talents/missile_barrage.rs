@@ -1,9 +1,10 @@
 //! Missile Barrage (44404), from Go sim/mage/talents_arcane.go `registerMissileBarrage`.
-//! Casting Frostbolt, Fireball or Frostfire Bolt (20%) or Arcane Blast (40%) can make the
-//! next Arcane Missiles free and fire its missiles twice as often. The chances, duration
-//! and modifiers are Go literals because the client tables lack the rows.
+//! Arcane Blast landing (40%), or Frostbolt, Fireball or Frostfire Bolt landing (20%), can
+//! make the next Arcane Missiles free and fire its missiles twice as often. The client row
+//! (400588) procs on a landed harmful spell, so a miss cannot and a bolt procs when it
+//! arrives; the chances and the buff's modifiers come from the rows.
 
-use crate::core::fight::{Agent, AuraRef, Fight, ModId, ModKind, SpellId};
+use crate::core::fight::{Agent, AuraRef, Fight, ModId, ModKind, SpellId, SpellResult};
 
 #[derive(Clone, Debug)]
 pub(crate) struct MissileBarrage {
@@ -62,8 +63,16 @@ impl MissileBarrage {
         }
     }
 
-    /// The permanent trigger aura's OnCastComplete.
-    pub(crate) fn trigger<A: Agent>(&self, fight: &mut Fight<A>, spell: SpellId) {
+    /// The trigger aura's OnSpellHitDealt, which acts at once.
+    pub(crate) fn trigger<A: Agent>(
+        &self,
+        fight: &mut Fight<A>,
+        spell: SpellId,
+        result: &SpellResult,
+    ) {
+        if fight.spells[spell].flags.proc || !result.landed() {
+            return;
+        }
         let chance = match fight.spells[spell].class_spell.as_deref() {
             Some("arcane_blast") => self.arcane_blast_chance,
             Some("fireball" | "frostbolt" | "frostfire_bolt") => self.bolt_chance,

@@ -122,6 +122,38 @@ impl<A: Agent> Fight<A> {
         self.activate_aura(aura);
     }
 
+    /// Go `Dot.ApplyKeepingTickTimer`: a running dot keeps its tick timer. Its duration starts
+    /// over from now, the next tick stays where it was, and the ticks left are the ones that fit
+    /// between that tick and the new expiry. A dot that is not running applies as usual. The
+    /// aura refreshes, so nothing fades and nothing is gained.
+    pub(crate) fn apply_dot_keeping_tick_timer(&mut self, dot: DotId) {
+        let aura = self.dots[dot].aura;
+        if !self.aura(aura).active || self.dots[dot].tick_action.is_none() {
+            self.apply_dot(dot);
+            return;
+        }
+        let until_next_tick = self.dots[dot].tick_next_at - self.now;
+        if let Some(base) = self.dots[dot].tick_base {
+            self.snapshot_dot(dot, base);
+        }
+        // Go recomputeAuraDuration.
+        let period = self.calc_tick_period(dot);
+        let state = &mut self.dots[dot];
+        state.tick_period = period;
+        let ticks = state.base_duration() as f64 / state.base_tick_length as f64;
+        state.remaining_ticks = ticks.round_ties_even() as i32;
+        if state.affected_by_haste && !state.haste_reduces_duration {
+            state.remaining_ticks = state.hasted_tick_count();
+        }
+        let duration = state.tick_period * i64::from(state.remaining_ticks);
+        // Go keeps the tick timer: the ticks left fit between the next tick and the expiry. A tick
+        // due this very moment still lands, one more than a fresh dot has. The runtime counts no
+        // extra ticks, since nothing reads them.
+        state.remaining_ticks = ((duration - until_next_tick) / state.tick_period) as i32 + 1;
+        self.aura_mut(aura).duration = duration;
+        self.activate_aura(aura);
+    }
+
     /// Go `Dot.CalcTickPeriod`: a dot affected by cast speed ticks faster, rounded to the
     /// millisecond as in game; a channel also takes the spell's cast time multiplier.
     pub(crate) fn calc_tick_period(&self, dot: DotId) -> i64 {

@@ -7,7 +7,8 @@ use crate::{
     contracts::prepared_v2::{Effect, PreparedV2, Spell as ExportedSpell},
     core::{
         fight::{
-            action_string, melee::Hand, Agent, AuraRef, DotId, Fight, Side, SpellId, SpellResult,
+            action_string, melee::Hand, Agent, AuraRef, DotId, Fight, Outcome, Side, SpellId,
+            SpellResult,
         },
         time::{go_string, NS_PER_MILLISECOND},
     },
@@ -527,6 +528,8 @@ impl HunterAgent {
                 Effect::ImmolationTrap {
                     spell_id,
                     tick_base,
+                    tick_can_crit,
+                    tick_magic,
                 } => {
                     let spell = find_spell(&fight, *spell_id)
                         .ok_or_else(|| format!("Immolation Trap {spell_id} is not registered"))?;
@@ -534,6 +537,9 @@ impl HunterAgent {
                         .dot
                         .ok_or("Immolation Trap has no dot")?;
                     fight.dots[dot].tick_base = Some(*tick_base);
+                    fight.dots[dot].tick_can_crit = explosive_trap::trap_tick_crit(
+                        Outcome::tick_hit_rolled(*tick_can_crit, *tick_magic)?,
+                    )?;
                 }
                 Effect::ExplosiveTrap {
                     spell_id,
@@ -542,6 +548,8 @@ impl HunterAgent {
                     hits,
                     aoe_cap_multiplier,
                     tick_base,
+                    tick_can_crit,
+                    tick_magic,
                 } => {
                     let spell = find_spell(&fight, *spell_id)
                         .ok_or_else(|| format!("Explosive Trap {spell_id} is not registered"))?;
@@ -557,6 +565,7 @@ impl HunterAgent {
                         *hits,
                         *aoe_cap_multiplier,
                         *tick_base,
+                        Outcome::tick_hit_rolled(*tick_can_crit, *tick_magic)?,
                         immolation,
                     )?);
                 }
@@ -873,9 +882,9 @@ impl Agent for HunterAgent {
                 .tick(fight, dot),
             HunterSpell::PetAbility(index) => match fight.agent.pet_abilities[index] {
                 PetAbility::Bleed { outcome, .. } => hunter_pet::bleed_tick(fight, dot, outcome),
-                PetAbility::ScorpidPoison { .. } => {
+                PetAbility::ScorpidPoison { outcome, .. } => {
                     let (base, multiplier) = fight.agent.scorpid_snapshot;
-                    hunter_pet::snapshot_tick(fight, dot, base, multiplier);
+                    hunter_pet::snapshot_tick(fight, dot, base, multiplier, outcome);
                 }
                 _ => {}
             },

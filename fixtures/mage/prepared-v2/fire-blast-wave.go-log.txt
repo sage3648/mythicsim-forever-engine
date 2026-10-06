@@ -108,7 +108,7 @@
 [15.00] [fire-mage (#1)] {SpellID: 1259817} stacks: 2 --> 1
 [15.00] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 369.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
 [15.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} Crit for 2336.929 damage (SpellSchool: 4). (Threat: 2336.929)
-[15.83] [fire-mage (#1)] Aura gained: {SpellID: 12536}
+[15.83] [fire-mage (#1)] Aura gained: {SpellID: 44404}
 [15.83] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [15.83] [fire-mage (#1)] Completed cast {SpellID: 412538}
 [15.83] [Target 1] Aura gained: {SpellID: 412538}
@@ -124,25 +124,25 @@
 [17.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
 [18.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6377.566 --> 6442.991) of 6886 total.
 [18.00] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[18.00] [fire-mage (#1)] Spent 369.000 mana from {SpellID: 25306} (6442.991 --> 6073.991) of 6886 total.
 [18.00] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:1006.8, AfterAttackerMods:1401.0, AfterResistances:700.5, AfterTargetMods:770.6, AfterOutcome:770.6, AfterPostOutcome:770.6
 [18.00] [fire-mage (#1)] {SpellID: 1259817} stacks: 1 --> 0
 [18.00] [fire-mage (#1)] Aura faded: {SpellID: 1259817}
-[18.00] [fire-mage (#1)] Aura faded: {SpellID: 12536}
 [18.00] [fire-mage (#1)] Casting {SpellID: 18809} (Cost = 440.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
 [18.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit (50% Resist) for 770.551 damage (SpellSchool: 4). (Threat: 770.551)
-[18.83] [fire-mage (#1)] Aura gained: {SpellID: 12536}
+[18.83] [fire-mage (#1)] Aura refreshed: {SpellID: 44404}
 [18.83] [fire-mage (#1)] {SpellID: 11129} stacks: 3 --> 4
 [18.83] [Target 1] Aura faded: {SpellID: 25306}
 [18.83] [Target 1] Aura gained: {SpellID: 25306}
-[18.84] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (6442.991 --> 6501.991) of 6886 total.
+[18.84] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (6073.991 --> 6132.991) of 6886 total.
 [19.50] [fire-mage (#1)] Completed cast {SpellID: 18809}
+[19.50] [fire-mage (#1)] Spent 440.000 mana from {SpellID: 18809} (6132.991 --> 5692.991) of 6886 total.
 [19.50] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:1078.6, AfterAttackerMods:1364.4, AfterResistances:1364.4, AfterTargetMods:1500.8, AfterOutcome:1500.8, AfterPostOutcome:1500.8
 [19.50] [fire-mage (#1)] Aura faded: {SpellID: 400625}
 [19.50] [fire-mage (#1)] {SpellID: 400625} stacks: 3 --> 0
-[19.50] [fire-mage (#1)] Aura faded: {SpellID: 12536}
 [19.50] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [19.50] [fire-mage (#1)] Completed cast {SpellID: 10199}
-[19.50] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (6501.991 --> 6161.991) of 6886 total.
+[19.50] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (5692.991 --> 5352.991) of 6886 total.
 [19.50] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:690.8, AfterAttackerMods:873.9, AfterResistances:873.9, AfterTargetMods:961.3, AfterOutcome:1441.9, AfterPostOutcome:1441.9
 [19.50] [fire-mage (#1)] [Target 1] {SpellID: 10199} Crit for 1441.925 damage (SpellSchool: 4). (Threat: 1441.925)
 [19.50] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
@@ -151,692 +151,623 @@
 [19.50] [Target 1] Aura gained: {SpellID: 412538}
 [19.50] [fire-mage (#1)] Aura gained: {SpellID: 400625}
 [19.50] [fire-mage (#1)] {SpellID: 400625} stacks: 0 --> 1
-[19.50] [fire-mage (#1)] Gained 102.000 mana from {SpellID: 29074} (6161.991 --> 6263.991) of 6886 total.
+[19.50] [fire-mage (#1)] Gained 102.000 mana from {SpellID: 29074} (5352.991 --> 5454.991) of 6886 total.
 [19.50] [fire-mage (#1)] {SpellID: 11129} stacks: 4 --> 5
 [19.50] [fire-mage (#1)] Aura faded: {SpellID: 11129}
 [19.50] [fire-mage (#1)] {SpellID: 11129} stacks: 5 --> 0
-[20.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6263.991 --> 6329.416) of 6886 total.
+[20.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5454.991 --> 5520.416) of 6886 total.
 [20.33] [fire-mage (#1)] [Target 1] {SpellID: 18809} Hit for 1500.815 damage (SpellSchool: 4). (Threat: 1500.815)
 [20.33] [Target 1] Aura gained: {SpellID: 18809}
-[20.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:14.2, AfterTargetMods:15.7, AfterOutcome:15.7, AfterPostOutcome:15.7
-[20.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit (25% Resist) for 15.654 damage (SpellSchool: 4). (Threat: 15.654)
-[21.00] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[20.34] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5520.416 --> 5579.416) of 6886 total.
+[20.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[20.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[21.00] [fire-mage (#1)] Casting {SpellID: 25345} (Cost = 0.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
+[21.00] [fire-mage (#1)] Completed cast {SpellID: 25345}
+[21.00] [Target 1] Aura gained: {SpellID: 25345}
+[21.00] [fire-mage (#1)] Aura faded: {SpellID: 44404}
 [21.50] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:522.1, AfterAttackerMods:522.1, AfterResistances:522.1, AfterTargetMods:522.1, AfterOutcome:522.1, AfterPostOutcome:522.1
 [21.50] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 522.078 damage (SpellSchool: 4). (Threat: 522.078)
-[22.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6329.416 --> 6394.841) of 6886 total.
+[21.50] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[21.50] [fire-mage (#1)] Completed cast {SpellID: 25346}
+[21.50] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:355.7, AfterPostOutcome:355.7
+[22.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5579.416 --> 5644.841) of 6886 total.
+[22.00] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[22.00] [fire-mage (#1)] Completed cast {SpellID: 25346}
+[22.00] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:355.7, AfterPostOutcome:355.7
+[22.50] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit for 355.740 damage (SpellSchool: 64). (Threat: 249.018)
+[22.50] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[22.50] [fire-mage (#1)] Completed cast {SpellID: 25346}
+[22.50] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:355.7, AfterPostOutcome:355.7
+[22.51] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5644.841 --> 5703.841) of 6886 total.
 [22.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
 [22.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[23.33] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:125.0, AfterAttackerMods:158.1, AfterResistances:79.1, AfterTargetMods:87.0, AfterOutcome:87.0, AfterPostOutcome:87.0
-[23.33] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Hit (50% Resist) for 86.969 damage (SpellSchool: 4). (Threat: 86.969)
+[23.00] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit for 355.740 damage (SpellSchool: 64). (Threat: 249.018)
+[23.00] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[23.00] [fire-mage (#1)] Completed cast {SpellID: 25346}
+[23.00] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:242.6, AfterTargetMods:266.8, AfterOutcome:266.8, AfterPostOutcome:266.8
+[23.01] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5703.841 --> 5762.841) of 6886 total.
+[23.33] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:125.0, AfterAttackerMods:158.1, AfterResistances:118.6, AfterTargetMods:130.5, AfterOutcome:130.5, AfterPostOutcome:130.5
+[23.33] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Hit (25% Resist) for 130.453 damage (SpellSchool: 4). (Threat: 130.453)
 [23.50] [Target 1] Aura faded: {SpellID: 412538}
 [23.50] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:522.1, AfterAttackerMods:522.1, AfterResistances:522.1, AfterTargetMods:522.1, AfterOutcome:522.1, AfterPostOutcome:522.1
 [23.50] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 522.078 damage (SpellSchool: 4). (Threat: 522.078)
-[24.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6394.841 --> 6460.266) of 6886 total.
-[24.00] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[24.00] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (6460.266 --> 6050.266) of 6886 total.
-[24.00] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:933.5, AfterAttackerMods:1180.9, AfterResistances:1180.9, AfterTargetMods:1299.0, AfterOutcome:1948.5, AfterPostOutcome:1948.5
-[24.00] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[23.50] [Target 1] Aura faded: {SpellID: 25345}
+[23.50] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[23.50] [fire-mage (#1)] Completed cast {SpellID: 25346}
+[23.50] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:533.6, AfterPostOutcome:533.6
+[23.50] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit for 355.740 damage (SpellSchool: 64). (Threat: 249.018)
+[23.50] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[24.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5762.841 --> 5828.266) of 6886 total.
+[24.00] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit (25% Resist) for 266.805 damage (SpellSchool: 64). (Threat: 186.764)
+[24.01] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5828.266 --> 5887.266) of 6886 total.
+[24.50] [fire-mage (#1)] [Target 1] {SpellID: 25346} Crit for 533.610 damage (SpellSchool: 64). (Threat: 373.527)
 [24.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
 [24.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[24.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} Crit for 1948.523 damage (SpellSchool: 4). (Threat: 1948.523)
-[24.83] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[24.83] [fire-mage (#1)] Completed cast {SpellID: 412538}
-[24.83] [Target 1] Aura gained: {SpellID: 412538}
-[24.83] [fire-mage (#1)] Aura refreshed: {SpellID: 400625}
-[24.83] [fire-mage (#1)] {SpellID: 400625} stacks: 1 --> 2
-[24.83] [fire-mage (#1)] Gained 123.000 mana from {SpellID: 29074} (6050.266 --> 6173.266) of 6886 total.
-[24.83] [Target 1] Aura faded: {SpellID: 25306}
-[24.83] [Target 1] Aura gained: {SpellID: 25306}
-[26.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6173.266 --> 6238.691) of 6886 total.
-[26.33] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:125.0, AfterAttackerMods:158.1, AfterResistances:158.1, AfterTargetMods:173.9, AfterOutcome:260.9, AfterPostOutcome:260.9
-[26.33] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Crit for 260.906 damage (SpellSchool: 4). (Threat: 260.906)
-[26.83] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:389.7, AfterAttackerMods:389.7, AfterResistances:389.7, AfterTargetMods:389.7, AfterOutcome:389.7, AfterPostOutcome:389.7
-[26.83] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 389.705 damage (SpellSchool: 4). (Threat: 389.705)
+[26.00] [fire-mage (#1)] Gained 100.050 mana from {OtherID: 2, Tag: 2} (5887.266 --> 5987.316) of 6886 total.
+[26.33] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:125.0, AfterAttackerMods:158.1, AfterResistances:79.1, AfterTargetMods:87.0, AfterOutcome:130.5, AfterPostOutcome:130.5
+[26.33] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Crit (50% Resist) for 130.453 damage (SpellSchool: 4). (Threat: 130.453)
+[26.50] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[26.50] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (5987.316 --> 5577.316) of 6886 total.
+[26.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:953.4, AfterAttackerMods:1206.1, AfterResistances:1206.1, AfterTargetMods:1326.7, AfterOutcome:1990.0, AfterPostOutcome:1990.0
+[26.50] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
+[26.50] [fire-mage (#1)] Completed cast {SpellID: 10199}
+[26.50] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (5577.316 --> 5237.316) of 6886 total.
+[26.50] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:666.8, AfterAttackerMods:843.5, AfterResistances:843.5, AfterTargetMods:927.8, AfterOutcome:0.0, AfterPostOutcome:0.0
+[26.50] [fire-mage (#1)] [Target 1] {SpellID: 10199} Miss (SpellSchool: 4). (Threat: 0.000)
+[26.83] [Target 1] Aura faded: {SpellID: 25306}
 [26.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
 [26.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[27.00] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[27.00] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (6238.691 --> 5828.691) of 6886 total.
-[27.00] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:910.6, AfterAttackerMods:1151.9, AfterResistances:1151.9, AfterTargetMods:1267.1, AfterOutcome:1267.1, AfterPostOutcome:1267.1
-[27.00] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
-[27.00] [fire-mage (#1)] Completed cast {SpellID: 10199}
-[27.00] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (5828.691 --> 5488.691) of 6886 total.
-[27.00] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:674.7, AfterAttackerMods:853.4, AfterResistances:640.1, AfterTargetMods:704.1, AfterOutcome:704.1, AfterPostOutcome:704.1
-[27.00] [fire-mage (#1)] [Target 1] {SpellID: 10199} Hit (25% Resist) for 704.087 damage (SpellSchool: 4). (Threat: 704.087)
-[27.01] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5488.691 --> 5547.691) of 6886 total.
-[27.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1267.138 damage (SpellSchool: 4). (Threat: 1267.138)
-[27.83] [Target 1] Aura faded: {SpellID: 25306}
-[27.83] [Target 1] Aura gained: {SpellID: 25306}
-[27.84] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5547.691 --> 5606.691) of 6886 total.
-[28.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5606.691 --> 5672.116) of 6886 total.
-[28.50] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[28.83] [Target 1] Aura faded: {SpellID: 412538}
-[28.83] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:389.7, AfterAttackerMods:389.7, AfterResistances:389.7, AfterTargetMods:389.7, AfterOutcome:389.7, AfterPostOutcome:389.7
-[28.83] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 389.705 damage (SpellSchool: 4). (Threat: 389.705)
+[27.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} Crit for 1990.032 damage (SpellSchool: 4). (Threat: 1990.032)
+[27.33] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[27.33] [fire-mage (#1)] Completed cast {SpellID: 412538}
+[27.33] [Target 1] Aura gained: {SpellID: 412538}
+[27.33] [fire-mage (#1)] Aura refreshed: {SpellID: 400625}
+[27.33] [fire-mage (#1)] {SpellID: 400625} stacks: 1 --> 2
+[27.33] [fire-mage (#1)] Gained 123.000 mana from {SpellID: 29074} (5237.316 --> 5360.316) of 6886 total.
+[27.33] [Target 1] Aura gained: {SpellID: 25306}
+[28.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5360.316 --> 5425.741) of 6886 total.
+[28.00] [fire-mage (#1)] Casting {ItemID: 8008} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[28.00] [fire-mage (#1)] Completed cast {ItemID: 8008}
+[28.00] [fire-mage (#1)] Gained 1100.000 mana from {ItemID: 8008} (5425.741 --> 6525.741) of 6886 total.
+[28.00] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
 [29.33] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:125.0, AfterAttackerMods:158.1, AfterResistances:158.1, AfterTargetMods:173.9, AfterOutcome:173.9, AfterPostOutcome:173.9
 [29.33] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Hit for 173.938 damage (SpellSchool: 4). (Threat: 173.938)
-[29.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:14.2, AfterTargetMods:15.7, AfterOutcome:15.7, AfterPostOutcome:15.7
-[29.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit (25% Resist) for 15.654 damage (SpellSchool: 4). (Threat: 15.654)
-[30.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5672.116 --> 5737.541) of 6886 total.
-[31.50] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[31.50] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (5737.541 --> 5327.541) of 6886 total.
-[31.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:937.2, AfterAttackerMods:1185.5, AfterResistances:1185.5, AfterTargetMods:1304.1, AfterOutcome:1304.1, AfterPostOutcome:1304.1
-[31.50] [fire-mage (#1)] Casting {ItemID: 8008} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[31.50] [fire-mage (#1)] Completed cast {ItemID: 8008}
-[31.50] [fire-mage (#1)] Gained 1100.000 mana from {ItemID: 8008} (5327.541 --> 6427.541) of 6886 total.
-[31.50] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[31.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
-[31.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[32.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6427.541 --> 6492.966) of 6886 total.
+[29.33] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:398.0, AfterAttackerMods:398.0, AfterResistances:398.0, AfterTargetMods:398.0, AfterOutcome:398.0, AfterPostOutcome:398.0
+[29.33] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 398.006 damage (SpellSchool: 4). (Threat: 398.006)
+[29.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:31.3, AfterPostOutcome:31.3
+[29.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit for 31.309 damage (SpellSchool: 4). (Threat: 31.309)
+[30.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6525.741 --> 6591.166) of 6886 total.
+[31.00] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[31.00] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (6591.166 --> 6181.166) of 6886 total.
+[31.00] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:927.4, AfterAttackerMods:1173.2, AfterResistances:879.9, AfterTargetMods:967.9, AfterOutcome:967.9, AfterPostOutcome:967.9
+[31.00] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[31.33] [Target 1] Aura faded: {SpellID: 412538}
+[31.33] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:398.0, AfterAttackerMods:398.0, AfterResistances:398.0, AfterTargetMods:398.0, AfterOutcome:398.0, AfterPostOutcome:398.0
+[31.33] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 398.006 damage (SpellSchool: 4). (Threat: 398.006)
+[31.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:9.5, AfterTargetMods:10.4, AfterOutcome:10.4, AfterPostOutcome:10.4
+[31.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit (50% Resist) for 10.436 damage (SpellSchool: 4). (Threat: 10.436)
+[31.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit (25% Resist) for 967.863 damage (SpellSchool: 4). (Threat: 967.863)
+[31.83] [Target 1] Aura faded: {SpellID: 25306}
+[31.83] [Target 1] Aura gained: {SpellID: 25306}
+[32.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6181.166 --> 6246.591) of 6886 total.
 [32.33] [Target 1] Aura faded: {SpellID: 18809}
-[32.33] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:125.0, AfterAttackerMods:158.1, AfterResistances:158.1, AfterTargetMods:173.9, AfterOutcome:173.9, AfterPostOutcome:173.9
-[32.33] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Hit for 173.938 damage (SpellSchool: 4). (Threat: 173.938)
-[32.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1304.071 damage (SpellSchool: 4). (Threat: 1304.071)
-[32.33] [Target 1] Aura faded: {SpellID: 25306}
-[32.33] [Target 1] Aura gained: {SpellID: 25306}
-[32.34] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (6492.966 --> 6551.966) of 6886 total.
-[34.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6551.966 --> 6617.391) of 6886 total.
-[34.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:9.5, AfterTargetMods:10.4, AfterOutcome:15.7, AfterPostOutcome:15.7
-[34.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit (50% Resist) for 15.654 damage (SpellSchool: 4). (Threat: 15.654)
-[34.50] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[34.50] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (6617.391 --> 6207.391) of 6886 total.
-[34.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:917.0, AfterAttackerMods:1160.1, AfterResistances:870.0, AfterTargetMods:957.0, AfterOutcome:1435.6, AfterPostOutcome:1435.6
-[34.50] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
-[34.50] [fire-mage (#1)] Completed cast {SpellID: 10199}
-[34.50] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (6207.391 --> 5867.391) of 6886 total.
-[34.50] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:678.8, AfterAttackerMods:858.7, AfterResistances:858.7, AfterTargetMods:944.5, AfterOutcome:0.0, AfterPostOutcome:0.0
-[34.50] [fire-mage (#1)] [Target 1] {SpellID: 10199} Miss (SpellSchool: 4). (Threat: 0.000)
-[35.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} Crit (25% Resist) for 1435.567 damage (SpellSchool: 4). (Threat: 1435.567)
-[35.33] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[35.33] [fire-mage (#1)] Completed cast {SpellID: 412538}
-[35.33] [Target 1] Aura gained: {SpellID: 412538}
-[35.33] [fire-mage (#1)] Aura refreshed: {SpellID: 400625}
-[35.33] [fire-mage (#1)] {SpellID: 400625} stacks: 2 --> 3
-[35.33] [fire-mage (#1)] Gained 123.000 mana from {SpellID: 29074} (5867.391 --> 5990.391) of 6886 total.
-[35.33] [Target 1] Aura faded: {SpellID: 25306}
-[35.33] [Target 1] Aura gained: {SpellID: 25306}
-[36.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5990.391 --> 6055.816) of 6886 total.
-[36.00] [fire-mage (#1)] Casting {SpellID: 18809} (Cost = 440.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
-[37.33] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:287.1, AfterAttackerMods:287.1, AfterResistances:287.1, AfterTargetMods:287.1, AfterOutcome:287.1, AfterPostOutcome:287.1
-[37.33] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 287.113 damage (SpellSchool: 4). (Threat: 287.113)
-[37.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
-[37.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[37.50] [fire-mage (#1)] Completed cast {SpellID: 18809}
-[37.50] [fire-mage (#1)] Spent 440.000 mana from {SpellID: 18809} (6055.816 --> 5615.816) of 6886 total.
-[37.50] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:1022.8, AfterAttackerMods:1293.9, AfterResistances:1293.9, AfterTargetMods:1423.3, AfterOutcome:1423.3, AfterPostOutcome:1423.3
-[37.50] [fire-mage (#1)] Aura faded: {SpellID: 400625}
-[37.50] [fire-mage (#1)] {SpellID: 400625} stacks: 3 --> 0
-[37.50] [fire-mage (#1)] Casting {SpellID: 10207} (Cost = 150.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
-[38.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5615.816 --> 5681.241) of 6886 total.
-[38.33] [fire-mage (#1)] [Target 1] {SpellID: 18809} Hit for 1423.294 damage (SpellSchool: 4). (Threat: 1423.294)
-[38.33] [Target 1] Aura gained: {SpellID: 18809}
-[39.00] [fire-mage (#1)] Completed cast {SpellID: 10207}
-[39.00] [fire-mage (#1)] Spent 150.000 mana from {SpellID: 10207} (5681.241 --> 5531.241) of 6886 total.
-[39.00] [fire-mage (#1)] [Target 1] {SpellID: 10207} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:385.2, AfterAttackerMods:487.3, AfterResistances:243.7, AfterTargetMods:268.0, AfterOutcome:268.0, AfterPostOutcome:268.0
-[39.00] [fire-mage (#1)] [Target 1] {SpellID: 10207} Hit (50% Resist) for 268.032 damage (SpellSchool: 4). (Threat: 268.032)
-[39.00] [fire-mage (#1)] Aura refreshed: {SpellID: 22959}
-[39.00] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[39.33] [Target 1] Aura faded: {SpellID: 412538}
-[39.33] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:287.1, AfterAttackerMods:287.1, AfterResistances:287.1, AfterTargetMods:287.1, AfterOutcome:287.1, AfterPostOutcome:287.1
-[39.33] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 287.113 damage (SpellSchool: 4). (Threat: 287.113)
-[39.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
-[39.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[40.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5531.241 --> 5596.666) of 6886 total.
-[41.33] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:125.0, AfterAttackerMods:158.1, AfterResistances:158.1, AfterTargetMods:173.9, AfterOutcome:173.9, AfterPostOutcome:173.9
-[41.33] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Hit for 173.938 damage (SpellSchool: 4). (Threat: 173.938)
-[41.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
-[41.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[42.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5596.666 --> 5662.091) of 6886 total.
-[42.00] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[42.00] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (5662.091 --> 5252.091) of 6886 total.
-[42.00] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:1016.9, AfterAttackerMods:1286.4, AfterResistances:1286.4, AfterTargetMods:1415.0, AfterOutcome:1415.0, AfterPostOutcome:1415.0
-[42.00] [fire-mage (#1)] Aura gained: {SpellID: 44404}
-[42.00] [fire-mage (#1)] Casting {ItemID: 12662} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[42.00] [fire-mage (#1)] Completed cast {ItemID: 12662}
-[42.00] [fire-mage (#1)] Gained 1200.000 mana from {ItemID: 12662} (5252.091 --> 6452.091) of 6886 total.
-[42.00] [fire-mage (#1)] Major cooldown used: {ItemID: 12662}
-[42.00] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
-[42.00] [fire-mage (#1)] Completed cast {SpellID: 10199}
-[42.00] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (6452.091 --> 6112.091) of 6886 total.
-[42.00] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:691.7, AfterAttackerMods:875.0, AfterResistances:875.0, AfterTargetMods:962.5, AfterOutcome:962.5, AfterPostOutcome:962.5
-[42.00] [fire-mage (#1)] [Target 1] {SpellID: 10199} Hit for 962.534 damage (SpellSchool: 4). (Threat: 962.534)
-[42.01] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (6112.091 --> 6171.091) of 6886 total.
-[42.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1415.007 damage (SpellSchool: 4). (Threat: 1415.007)
-[42.83] [fire-mage (#1)] Aura gained: {SpellID: 12536}
-[42.83] [Target 1] Aura faded: {SpellID: 25306}
-[42.83] [Target 1] Aura gained: {SpellID: 25306}
-[42.84] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (6171.091 --> 6230.091) of 6886 total.
-[43.50] [fire-mage (#1)] Casting {SpellID: 25345} (Cost = 0.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
-[43.50] [fire-mage (#1)] Completed cast {SpellID: 25345}
-[43.50] [Target 1] Aura gained: {SpellID: 25345}
-[43.50] [fire-mage (#1)] Aura faded: {SpellID: 44404}
-[43.50] [fire-mage (#1)] Aura faded: {SpellID: 12536}
-[44.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6230.091 --> 6295.516) of 6886 total.
-[44.00] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[44.00] [fire-mage (#1)] Completed cast {SpellID: 25346}
-[44.00] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:355.7, AfterPostOutcome:355.7
-[44.33] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:125.0, AfterAttackerMods:158.1, AfterResistances:158.1, AfterTargetMods:173.9, AfterOutcome:173.9, AfterPostOutcome:173.9
-[44.33] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Hit for 173.938 damage (SpellSchool: 4). (Threat: 173.938)
-[44.50] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[44.50] [fire-mage (#1)] Completed cast {SpellID: 25346}
-[44.50] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:242.6, AfterTargetMods:266.8, AfterOutcome:0.0, AfterPostOutcome:0.0
-[44.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:14.2, AfterTargetMods:15.7, AfterOutcome:15.7, AfterPostOutcome:15.7
-[44.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit (25% Resist) for 15.654 damage (SpellSchool: 4). (Threat: 15.654)
-[45.00] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit for 355.740 damage (SpellSchool: 64). (Threat: 249.018)
-[45.00] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[45.00] [fire-mage (#1)] Completed cast {SpellID: 25346}
-[45.00] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:355.7, AfterPostOutcome:355.7
-[45.50] [fire-mage (#1)] [Target 1] {SpellID: 25346} Miss (SpellSchool: 64). (Threat: 0.000)
-[45.50] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[45.50] [fire-mage (#1)] Completed cast {SpellID: 25346}
-[45.50] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:355.7, AfterPostOutcome:355.7
-[46.00] [Target 1] Aura faded: {SpellID: 25345}
-[46.00] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[46.00] [fire-mage (#1)] Completed cast {SpellID: 25346}
-[46.00] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:355.7, AfterPostOutcome:355.7
-[46.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6295.516 --> 6360.941) of 6886 total.
-[46.00] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit for 355.740 damage (SpellSchool: 64). (Threat: 249.018)
-[46.00] [fire-mage (#1)] Casting {SpellID: 13021} (Cost = 545.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
-[46.00] [fire-mage (#1)] Completed cast {SpellID: 13021}
-[46.00] [fire-mage (#1)] Spent 545.000 mana from {SpellID: 13021} (6360.941 --> 5815.941) of 6886 total.
-[46.00] [fire-mage (#1)] [Target 1] {SpellID: 13021} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:528.9, AfterAttackerMods:669.0, AfterResistances:669.0, AfterTargetMods:736.0, AfterOutcome:736.0, AfterPostOutcome:736.0
-[46.00] [fire-mage (#1)] [Target 1] {SpellID: 13021} Hit for 735.955 damage (SpellSchool: 4). (Threat: 735.955)
-[46.01] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5815.941 --> 5874.941) of 6886 total.
-[46.50] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit for 355.740 damage (SpellSchool: 64). (Threat: 249.018)
-[46.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
-[46.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[47.00] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit for 355.740 damage (SpellSchool: 64). (Threat: 249.018)
-[47.33] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:125.0, AfterAttackerMods:158.1, AfterResistances:158.1, AfterTargetMods:173.9, AfterOutcome:173.9, AfterPostOutcome:173.9
-[47.33] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Hit for 173.938 damage (SpellSchool: 4). (Threat: 173.938)
-[47.50] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[48.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5874.941 --> 5940.366) of 6886 total.
-[48.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:14.2, AfterTargetMods:15.7, AfterOutcome:15.7, AfterPostOutcome:15.7
-[48.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit (25% Resist) for 15.654 damage (SpellSchool: 4). (Threat: 15.654)
-[50.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5940.366 --> 6005.791) of 6886 total.
-[50.33] [Target 1] Aura faded: {SpellID: 18809}
-[50.33] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:125.0, AfterAttackerMods:158.1, AfterResistances:158.1, AfterTargetMods:173.9, AfterOutcome:173.9, AfterPostOutcome:173.9
-[50.33] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Hit for 173.938 damage (SpellSchool: 4). (Threat: 173.938)
-[50.50] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[50.50] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (6005.791 --> 5595.791) of 6886 total.
-[50.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:962.3, AfterAttackerMods:1217.4, AfterResistances:1217.4, AfterTargetMods:1339.1, AfterOutcome:1339.1, AfterPostOutcome:1339.1
-[50.50] [fire-mage (#1)] Aura gained: {SpellID: 44404}
-[50.50] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
-[50.50] [fire-mage (#1)] Completed cast {SpellID: 10199}
-[50.50] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (5595.791 --> 5255.791) of 6886 total.
-[50.50] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:621.6, AfterAttackerMods:786.3, AfterResistances:786.3, AfterTargetMods:864.9, AfterOutcome:1297.4, AfterPostOutcome:1297.4
-[50.50] [fire-mage (#1)] [Target 1] {SpellID: 10199} Crit for 1297.411 damage (SpellSchool: 4). (Threat: 1297.411)
-[50.50] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[50.50] [fire-mage (#1)] Completed cast {SpellID: 412538}
-[50.50] [Target 1] Aura gained: {SpellID: 412538}
-[50.50] [fire-mage (#1)] Aura gained: {SpellID: 400625}
-[50.50] [fire-mage (#1)] {SpellID: 400625} stacks: 0 --> 1
-[50.50] [fire-mage (#1)] Gained 102.000 mana from {SpellID: 29074} (5255.791 --> 5357.791) of 6886 total.
-[50.83] [Target 1] Aura faded: {SpellID: 25306}
-[50.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
-[50.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[51.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1339.100 damage (SpellSchool: 4). (Threat: 1339.100)
-[51.33] [Target 1] Aura gained: {SpellID: 25306}
-[51.34] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5357.791 --> 5416.791) of 6886 total.
-[52.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5416.791 --> 5482.216) of 6886 total.
-[52.00] [fire-mage (#1)] Casting {SpellID: 25345} (Cost = 0.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
-[52.00] [fire-mage (#1)] Completed cast {SpellID: 25345}
-[52.00] [Target 1] Aura gained: {SpellID: 25345}
-[52.00] [fire-mage (#1)] Aura faded: {SpellID: 44404}
-[52.50] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:259.5, AfterAttackerMods:259.5, AfterResistances:259.5, AfterTargetMods:259.5, AfterOutcome:259.5, AfterPostOutcome:259.5
-[52.50] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 259.482 damage (SpellSchool: 4). (Threat: 259.482)
-[52.50] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[52.50] [fire-mage (#1)] Completed cast {SpellID: 25346}
-[52.50] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:355.7, AfterPostOutcome:355.7
-[53.00] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[53.00] [fire-mage (#1)] Completed cast {SpellID: 25346}
-[53.00] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:355.7, AfterPostOutcome:355.7
-[53.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:31.3, AfterPostOutcome:31.3
-[53.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit for 31.309 damage (SpellSchool: 4). (Threat: 31.309)
-[53.50] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit for 355.740 damage (SpellSchool: 64). (Threat: 249.018)
-[53.50] [fire-mage (#1)] Aura gained: {SpellID: 12536}
-[53.50] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[53.50] [fire-mage (#1)] Completed cast {SpellID: 25346}
-[53.50] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:355.7, AfterPostOutcome:355.7
-[53.51] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5482.216 --> 5541.216) of 6886 total.
-[54.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5541.216 --> 5606.641) of 6886 total.
-[54.00] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit for 355.740 damage (SpellSchool: 64). (Threat: 249.018)
-[54.00] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[54.00] [fire-mage (#1)] Completed cast {SpellID: 25346}
-[54.00] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:355.7, AfterPostOutcome:355.7
-[54.50] [Target 1] Aura faded: {SpellID: 412538}
-[54.50] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:259.5, AfterAttackerMods:259.5, AfterResistances:259.5, AfterTargetMods:259.5, AfterOutcome:259.5, AfterPostOutcome:259.5
-[54.50] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 259.482 damage (SpellSchool: 4). (Threat: 259.482)
-[54.50] [Target 1] Aura faded: {SpellID: 25345}
-[54.50] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[54.50] [fire-mage (#1)] Completed cast {SpellID: 25346}
-[54.50] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:355.7, AfterPostOutcome:355.7
-[54.50] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit for 355.740 damage (SpellSchool: 64). (Threat: 249.018)
-[54.50] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 0.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[55.00] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit for 355.740 damage (SpellSchool: 64). (Threat: 249.018)
-[55.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:31.3, AfterPostOutcome:31.3
-[55.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit for 31.309 damage (SpellSchool: 4). (Threat: 31.309)
-[55.50] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit for 355.740 damage (SpellSchool: 64). (Threat: 249.018)
-[55.50] [fire-mage (#1)] Aura refreshed: {SpellID: 12536}
-[55.51] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5606.641 --> 5665.641) of 6886 total.
-[56.00] [fire-mage (#1)] Gained 100.050 mana from {OtherID: 2, Tag: 2} (5665.641 --> 5765.691) of 6886 total.
-[57.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
-[57.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[57.50] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[57.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:953.3, AfterAttackerMods:1206.0, AfterResistances:1206.0, AfterTargetMods:1326.6, AfterOutcome:1326.6, AfterPostOutcome:1326.6
-[57.50] [fire-mage (#1)] Aura faded: {SpellID: 12536}
-[57.50] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
-[57.50] [fire-mage (#1)] Completed cast {SpellID: 10199}
-[57.50] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (5765.691 --> 5425.691) of 6886 total.
-[57.50] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:682.9, AfterAttackerMods:863.9, AfterResistances:863.9, AfterTargetMods:950.3, AfterOutcome:950.3, AfterPostOutcome:950.3
-[57.50] [fire-mage (#1)] [Target 1] {SpellID: 10199} Hit for 950.271 damage (SpellSchool: 4). (Threat: 950.271)
-[58.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5425.691 --> 5491.116) of 6886 total.
-[58.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1326.552 damage (SpellSchool: 4). (Threat: 1326.552)
-[58.33] [Target 1] Aura faded: {SpellID: 25306}
-[58.33] [Target 1] Aura gained: {SpellID: 25306}
-[58.34] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5491.116 --> 5550.116) of 6886 total.
-[59.00] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[60.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5550.116 --> 5615.541) of 6886 total.
-[60.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
-[60.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[62.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5615.541 --> 5680.966) of 6886 total.
-[62.00] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[62.00] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (5680.966 --> 5270.966) of 6886 total.
-[62.00] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:961.0, AfterAttackerMods:1215.7, AfterResistances:1215.7, AfterTargetMods:1337.3, AfterOutcome:0.0, AfterPostOutcome:0.0
-[62.00] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[32.33] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:125.0, AfterAttackerMods:158.1, AfterResistances:118.6, AfterTargetMods:130.5, AfterOutcome:130.5, AfterPostOutcome:130.5
+[32.33] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Hit (25% Resist) for 130.453 damage (SpellSchool: 4). (Threat: 130.453)
+[33.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[33.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[34.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6246.591 --> 6312.016) of 6886 total.
+[34.00] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[34.00] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (6312.016 --> 5902.016) of 6886 total.
+[34.00] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:978.9, AfterAttackerMods:1238.3, AfterResistances:928.7, AfterTargetMods:1021.6, AfterOutcome:1021.6, AfterPostOutcome:1021.6
+[34.00] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
+[34.00] [fire-mage (#1)] Completed cast {SpellID: 10199}
+[34.00] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (5902.016 --> 5562.016) of 6886 total.
+[34.00] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:686.5, AfterAttackerMods:868.4, AfterResistances:868.4, AfterTargetMods:955.2, AfterOutcome:955.2, AfterPostOutcome:955.2
+[34.00] [fire-mage (#1)] [Target 1] {SpellID: 10199} Hit for 955.217 damage (SpellSchool: 4). (Threat: 955.217)
+[34.00] [fire-mage (#1)] Aura gained: {SpellID: 12536}
+[34.01] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5562.016 --> 5621.016) of 6886 total.
+[34.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit (25% Resist) for 1021.589 damage (SpellSchool: 4). (Threat: 1021.589)
+[34.83] [Target 1] Aura faded: {SpellID: 25306}
+[34.83] [Target 1] Aura gained: {SpellID: 25306}
+[35.50] [fire-mage (#1)] Casting {SpellID: 10207} (Cost = 0.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
+[36.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5621.016 --> 5686.441) of 6886 total.
+[36.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[36.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[37.00] [fire-mage (#1)] Completed cast {SpellID: 10207}
+[37.00] [fire-mage (#1)] [Target 1] {SpellID: 10207} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:390.6, AfterAttackerMods:494.1, AfterResistances:494.1, AfterTargetMods:543.5, AfterOutcome:543.5, AfterPostOutcome:543.5
+[37.00] [fire-mage (#1)] [Target 1] {SpellID: 10207} Hit for 543.483 damage (SpellSchool: 4). (Threat: 543.483)
+[37.00] [fire-mage (#1)] Aura refreshed: {SpellID: 22959}
+[37.00] [fire-mage (#1)] Aura faded: {SpellID: 12536}
+[37.00] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[38.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5686.441 --> 5751.866) of 6886 total.
+[38.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[38.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[40.00] [fire-mage (#1)] Gained 100.050 mana from {OtherID: 2, Tag: 2} (5751.866 --> 5851.916) of 6886 total.
+[40.00] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[40.00] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (5851.916 --> 5441.916) of 6886 total.
+[40.00] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:975.5, AfterAttackerMods:1234.0, AfterResistances:617.0, AfterTargetMods:678.7, AfterOutcome:678.7, AfterPostOutcome:678.7
+[40.00] [fire-mage (#1)] Casting {ItemID: 12662} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[40.00] [fire-mage (#1)] Completed cast {ItemID: 12662}
+[40.00] [fire-mage (#1)] Gained 1200.000 mana from {ItemID: 12662} (5441.916 --> 6641.916) of 6886 total.
+[40.00] [fire-mage (#1)] Major cooldown used: {ItemID: 12662}
+[40.00] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[40.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[40.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[40.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit (50% Resist) for 678.709 damage (SpellSchool: 4). (Threat: 678.709)
+[40.83] [Target 1] Aura faded: {SpellID: 25306}
+[40.83] [Target 1] Aura gained: {SpellID: 25306}
+[40.84] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (6641.916 --> 6700.916) of 6886 total.
+[42.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6700.916 --> 6766.341) of 6886 total.
+[42.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[42.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[43.00] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[43.00] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (6766.341 --> 6356.341) of 6886 total.
+[43.00] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:904.7, AfterAttackerMods:1144.4, AfterResistances:1144.4, AfterTargetMods:1258.9, AfterOutcome:1258.9, AfterPostOutcome:1258.9
+[43.00] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
+[43.00] [fire-mage (#1)] Completed cast {SpellID: 10199}
+[43.00] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (6356.341 --> 6016.341) of 6886 total.
+[43.00] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:626.1, AfterAttackerMods:792.0, AfterResistances:792.0, AfterTargetMods:871.2, AfterOutcome:871.2, AfterPostOutcome:871.2
+[43.00] [fire-mage (#1)] [Target 1] {SpellID: 10199} Hit for 871.158 damage (SpellSchool: 4). (Threat: 871.158)
+[43.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1258.857 damage (SpellSchool: 4). (Threat: 1258.857)
+[43.83] [Target 1] Aura faded: {SpellID: 25306}
+[43.83] [Target 1] Aura gained: {SpellID: 25306}
+[44.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6016.341 --> 6081.766) of 6886 total.
+[44.50] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[45.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:14.2, AfterTargetMods:15.7, AfterOutcome:15.7, AfterPostOutcome:15.7
+[45.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit (25% Resist) for 15.654 damage (SpellSchool: 4). (Threat: 15.654)
+[46.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6081.766 --> 6147.191) of 6886 total.
+[47.33] [fire-mage (#1)] Aura faded: {SpellID: 400625}
+[47.50] [fire-mage (#1)] {SpellID: 400625} stacks: 2 --> 0
+[47.50] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[47.50] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (6147.191 --> 5737.191) of 6886 total.
+[47.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:929.0, AfterAttackerMods:1175.2, AfterResistances:1175.2, AfterTargetMods:1292.7, AfterOutcome:1939.1, AfterPostOutcome:1939.1
+[47.50] [fire-mage (#1)] Casting {SpellID: 13021} (Cost = 545.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
+[47.50] [fire-mage (#1)] Completed cast {SpellID: 13021}
+[47.50] [fire-mage (#1)] Spent 545.000 mana from {SpellID: 13021} (5737.191 --> 5192.191) of 6886 total.
+[47.50] [fire-mage (#1)] [Target 1] {SpellID: 13021} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:534.4, AfterAttackerMods:676.0, AfterResistances:676.0, AfterTargetMods:743.6, AfterOutcome:743.6, AfterPostOutcome:743.6
+[47.50] [fire-mage (#1)] [Target 1] {SpellID: 13021} Hit for 743.619 damage (SpellSchool: 4). (Threat: 743.619)
+[47.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[47.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[48.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5192.191 --> 5257.616) of 6886 total.
+[48.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} Crit for 1939.091 damage (SpellSchool: 4). (Threat: 1939.091)
+[48.33] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[48.33] [fire-mage (#1)] Completed cast {SpellID: 412538}
+[48.33] [Target 1] Aura gained: {SpellID: 412538}
+[48.33] [fire-mage (#1)] Aura gained: {SpellID: 400625}
+[48.33] [fire-mage (#1)] {SpellID: 400625} stacks: 0 --> 1
+[48.33] [fire-mage (#1)] Gained 123.000 mana from {SpellID: 29074} (5257.616 --> 5380.616) of 6886 total.
+[48.33] [Target 1] Aura faded: {SpellID: 25306}
+[48.33] [Target 1] Aura gained: {SpellID: 25306}
+[49.00] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[50.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5380.616 --> 5446.041) of 6886 total.
+[50.33] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:387.8, AfterAttackerMods:387.8, AfterResistances:387.8, AfterTargetMods:387.8, AfterOutcome:387.8, AfterPostOutcome:387.8
+[50.33] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 387.818 damage (SpellSchool: 4). (Threat: 387.818)
+[50.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[50.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[52.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5446.041 --> 5511.466) of 6886 total.
+[52.00] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[52.00] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (5511.466 --> 5101.466) of 6886 total.
+[52.00] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:968.2, AfterAttackerMods:1224.7, AfterResistances:1224.7, AfterTargetMods:1347.2, AfterOutcome:0.0, AfterPostOutcome:0.0
+[52.00] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
+[52.00] [fire-mage (#1)] Completed cast {SpellID: 10199}
+[52.00] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (5101.466 --> 4761.466) of 6886 total.
+[52.00] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:690.4, AfterAttackerMods:873.4, AfterResistances:655.0, AfterTargetMods:720.5, AfterOutcome:720.5, AfterPostOutcome:720.5
+[52.00] [fire-mage (#1)] [Target 1] {SpellID: 10199} Hit (25% Resist) for 720.523 damage (SpellSchool: 4). (Threat: 720.523)
+[52.01] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (4761.466 --> 4820.466) of 6886 total.
+[52.33] [Target 1] Aura faded: {SpellID: 412538}
+[52.33] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:387.8, AfterAttackerMods:387.8, AfterResistances:387.8, AfterTargetMods:387.8, AfterOutcome:387.8, AfterPostOutcome:387.8
+[52.33] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 387.818 damage (SpellSchool: 4). (Threat: 387.818)
+[52.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[52.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[52.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} Miss (SpellSchool: 4). (Threat: 0.000)
+[53.50] [fire-mage (#1)] Casting {ItemID: 13444} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[53.50] [fire-mage (#1)] Completed cast {ItemID: 13444}
+[53.50] [fire-mage (#1)] Gained 1800.000 mana from {ItemID: 13444} (4820.466 --> 6620.466) of 6886 total.
+[53.50] [fire-mage (#1)] Major cooldown used: {ItemID: 13444}
+[53.50] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[54.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6620.466 --> 6685.891) of 6886 total.
+[54.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:4.7, AfterTargetMods:5.2, AfterOutcome:5.2, AfterPostOutcome:5.2
+[54.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit (75% Resist) for 5.218 damage (SpellSchool: 4). (Threat: 5.218)
+[56.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6685.891 --> 6751.316) of 6886 total.
+[56.33] [Target 1] Aura faded: {SpellID: 25306}
+[56.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:9.5, AfterTargetMods:10.4, AfterOutcome:15.7, AfterPostOutcome:15.7
+[56.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit (50% Resist) for 15.654 damage (SpellSchool: 4). (Threat: 15.654)
+[56.50] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[56.50] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (6751.316 --> 6341.316) of 6886 total.
+[56.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:974.4, AfterAttackerMods:1232.7, AfterResistances:1232.7, AfterTargetMods:1355.9, AfterOutcome:1355.9, AfterPostOutcome:1355.9
+[56.50] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[57.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1355.942 damage (SpellSchool: 4). (Threat: 1355.942)
+[57.33] [fire-mage (#1)] Aura gained: {SpellID: 44404}
+[57.33] [Target 1] Aura gained: {SpellID: 25306}
+[58.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6341.316 --> 6406.741) of 6886 total.
+[59.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[59.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[59.50] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[59.50] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (6406.741 --> 5996.741) of 6886 total.
+[59.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:1015.3, AfterAttackerMods:1284.3, AfterResistances:1284.3, AfterTargetMods:1412.8, AfterOutcome:1412.8, AfterPostOutcome:1412.8
+[59.50] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
+[59.50] [fire-mage (#1)] Completed cast {SpellID: 10199}
+[59.50] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (5996.741 --> 5656.741) of 6886 total.
+[59.50] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:636.4, AfterAttackerMods:805.1, AfterResistances:402.5, AfterTargetMods:442.8, AfterOutcome:442.8, AfterPostOutcome:442.8
+[59.50] [fire-mage (#1)] [Target 1] {SpellID: 10199} Hit (50% Resist) for 442.786 damage (SpellSchool: 4). (Threat: 442.786)
+[59.51] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5656.741 --> 5715.741) of 6886 total.
+[60.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5715.741 --> 5781.166) of 6886 total.
+[60.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1412.775 damage (SpellSchool: 4). (Threat: 1412.775)
+[60.33] [Target 1] Aura faded: {SpellID: 25306}
+[60.33] [Target 1] Aura gained: {SpellID: 25306}
+[60.34] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5781.166 --> 5840.166) of 6886 total.
+[61.00] [fire-mage (#1)] Casting {SpellID: 25345} (Cost = 0.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
+[61.00] [fire-mage (#1)] Completed cast {SpellID: 25345}
+[61.00] [Target 1] Aura gained: {SpellID: 25345}
+[61.00] [fire-mage (#1)] Aura faded: {SpellID: 44404}
+[61.50] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[61.50] [fire-mage (#1)] Completed cast {SpellID: 25346}
+[61.50] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:0.0, AfterPostOutcome:0.0
+[62.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5840.166 --> 5905.591) of 6886 total.
+[62.00] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[62.00] [fire-mage (#1)] Completed cast {SpellID: 25346}
+[62.00] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:355.7, AfterPostOutcome:355.7
 [62.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
 [62.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[62.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} Miss (SpellSchool: 4). (Threat: 0.000)
-[64.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5270.966 --> 5336.391) of 6886 total.
-[64.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
-[64.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[65.00] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[65.00] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (5336.391 --> 4926.391) of 6886 total.
-[65.00] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:1019.2, AfterAttackerMods:1289.2, AfterResistances:966.9, AfterTargetMods:1063.6, AfterOutcome:1063.6, AfterPostOutcome:1063.6
-[65.00] [fire-mage (#1)] Casting {SpellID: 10207} (Cost = 150.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
-[65.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit (25% Resist) for 1063.625 damage (SpellSchool: 4). (Threat: 1063.625)
-[65.83] [Target 1] Aura faded: {SpellID: 25306}
-[65.83] [Target 1] Aura gained: {SpellID: 25306}
-[66.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (4926.391 --> 4991.816) of 6886 total.
-[66.50] [fire-mage (#1)] Completed cast {SpellID: 10207}
-[66.50] [fire-mage (#1)] Spent 150.000 mana from {SpellID: 10207} (4991.816 --> 4841.816) of 6886 total.
-[66.50] [fire-mage (#1)] [Target 1] {SpellID: 10207} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:393.1, AfterAttackerMods:497.3, AfterResistances:497.3, AfterTargetMods:547.0, AfterOutcome:547.0, AfterPostOutcome:547.0
-[66.50] [fire-mage (#1)] [Target 1] {SpellID: 10207} Hit for 547.029 damage (SpellSchool: 4). (Threat: 547.029)
-[66.50] [fire-mage (#1)] Aura refreshed: {SpellID: 22959}
-[66.50] [fire-mage (#1)] Casting {ItemID: 13444} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[66.50] [fire-mage (#1)] Completed cast {ItemID: 13444}
-[66.50] [fire-mage (#1)] Gained 1800.000 mana from {ItemID: 13444} (4841.816 --> 6641.816) of 6886 total.
-[66.50] [fire-mage (#1)] Major cooldown used: {ItemID: 13444}
-[66.50] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
-[66.50] [fire-mage (#1)] Completed cast {SpellID: 10199}
-[66.50] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (6641.816 --> 6301.816) of 6886 total.
-[66.50] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:629.2, AfterAttackerMods:795.9, AfterResistances:795.9, AfterTargetMods:875.5, AfterOutcome:875.5, AfterPostOutcome:875.5
-[66.50] [fire-mage (#1)] [Target 1] {SpellID: 10199} Hit for 875.491 damage (SpellSchool: 4). (Threat: 875.491)
-[66.51] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (6301.816 --> 6360.816) of 6886 total.
-[66.51] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (6360.816 --> 6419.816) of 6886 total.
-[67.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
-[67.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[68.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6419.816 --> 6485.241) of 6886 total.
-[68.00] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[69.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
-[69.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[70.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6485.241 --> 6550.666) of 6886 total.
-[70.50] [fire-mage (#1)] Aura faded: {SpellID: 400625}
-[71.00] [fire-mage (#1)] {SpellID: 400625} stacks: 1 --> 0
-[71.00] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[71.00] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (6550.666 --> 6140.666) of 6886 total.
-[71.00] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:906.8, AfterAttackerMods:1147.1, AfterResistances:1147.1, AfterTargetMods:1261.8, AfterOutcome:1261.8, AfterPostOutcome:1261.8
-[71.00] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[71.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:31.3, AfterPostOutcome:31.3
-[71.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit for 31.309 damage (SpellSchool: 4). (Threat: 31.309)
-[71.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1261.831 damage (SpellSchool: 4). (Threat: 1261.831)
-[71.83] [Target 1] Aura faded: {SpellID: 25306}
-[71.83] [Target 1] Aura gained: {SpellID: 25306}
-[71.84] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (6140.666 --> 6199.666) of 6886 total.
-[72.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6199.666 --> 6265.091) of 6886 total.
-[73.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:14.2, AfterTargetMods:15.7, AfterOutcome:15.7, AfterPostOutcome:15.7
-[73.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit (25% Resist) for 15.654 damage (SpellSchool: 4). (Threat: 15.654)
-[74.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6265.091 --> 6330.516) of 6886 total.
-[74.00] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[74.00] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (6330.516 --> 5920.516) of 6886 total.
-[74.00] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:918.2, AfterAttackerMods:1161.6, AfterResistances:290.4, AfterTargetMods:319.4, AfterOutcome:479.2, AfterPostOutcome:479.2
-[74.00] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
-[74.00] [fire-mage (#1)] Completed cast {SpellID: 10199}
-[74.00] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (5920.516 --> 5580.516) of 6886 total.
-[74.00] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:693.4, AfterAttackerMods:877.2, AfterResistances:877.2, AfterTargetMods:964.9, AfterOutcome:964.9, AfterPostOutcome:964.9
-[74.00] [fire-mage (#1)] [Target 1] {SpellID: 10199} Hit for 964.866 damage (SpellSchool: 4). (Threat: 964.866)
-[74.01] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5580.516 --> 5639.516) of 6886 total.
-[74.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} Crit (75% Resist) for 479.150 damage (SpellSchool: 4). (Threat: 479.150)
-[74.83] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[74.83] [fire-mage (#1)] Completed cast {SpellID: 412538}
-[74.83] [Target 1] Aura gained: {SpellID: 412538}
-[74.83] [fire-mage (#1)] Aura gained: {SpellID: 400625}
-[74.83] [fire-mage (#1)] {SpellID: 400625} stacks: 0 --> 1
-[74.83] [fire-mage (#1)] Gained 123.000 mana from {SpellID: 29074} (5639.516 --> 5762.516) of 6886 total.
-[74.83] [Target 1] Aura faded: {SpellID: 25306}
-[74.83] [Target 1] Aura gained: {SpellID: 25306}
-[74.84] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5762.516 --> 5821.516) of 6886 total.
-[75.50] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[76.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5821.516 --> 5886.941) of 6886 total.
-[76.83] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:95.8, AfterAttackerMods:95.8, AfterResistances:95.8, AfterTargetMods:95.8, AfterOutcome:95.8, AfterPostOutcome:95.8
-[76.83] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 95.830 damage (SpellSchool: 4). (Threat: 95.830)
-[76.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
-[76.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[78.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5886.941 --> 5952.366) of 6886 total.
-[78.50] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[78.50] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (5952.366 --> 5542.366) of 6886 total.
-[78.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:938.5, AfterAttackerMods:1187.2, AfterResistances:1187.2, AfterTargetMods:1306.0, AfterOutcome:1959.0, AfterPostOutcome:1959.0
-[78.50] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[78.83] [Target 1] Aura faded: {SpellID: 412538}
-[78.83] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:95.8, AfterAttackerMods:95.8, AfterResistances:95.8, AfterTargetMods:95.8, AfterOutcome:95.8, AfterPostOutcome:95.8
-[78.83] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 95.830 damage (SpellSchool: 4). (Threat: 95.830)
-[78.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
-[78.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[79.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} Crit for 1958.953 damage (SpellSchool: 4). (Threat: 1958.953)
-[79.33] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[79.33] [fire-mage (#1)] Completed cast {SpellID: 412538}
-[79.33] [Target 1] Aura gained: {SpellID: 412538}
-[79.33] [fire-mage (#1)] Aura refreshed: {SpellID: 400625}
-[79.33] [fire-mage (#1)] {SpellID: 400625} stacks: 1 --> 2
-[79.33] [fire-mage (#1)] Gained 123.000 mana from {SpellID: 29074} (5542.366 --> 5665.366) of 6886 total.
-[79.33] [Target 1] Aura faded: {SpellID: 25306}
-[79.33] [Target 1] Aura gained: {SpellID: 25306}
-[80.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5665.366 --> 5730.791) of 6886 total.
-[81.33] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:391.8, AfterAttackerMods:391.8, AfterResistances:391.8, AfterTargetMods:391.8, AfterOutcome:391.8, AfterPostOutcome:391.8
-[81.33] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 391.791 damage (SpellSchool: 4). (Threat: 391.791)
-[81.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:31.3, AfterPostOutcome:31.3
-[81.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit for 31.309 damage (SpellSchool: 4). (Threat: 31.309)
-[81.50] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[81.50] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (5730.791 --> 5320.791) of 6886 total.
-[81.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:944.9, AfterAttackerMods:1195.3, AfterResistances:1195.3, AfterTargetMods:1314.9, AfterOutcome:1314.9, AfterPostOutcome:1314.9
-[81.50] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
-[81.50] [fire-mage (#1)] Completed cast {SpellID: 10199}
-[81.50] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (5320.791 --> 4980.791) of 6886 total.
-[81.50] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:665.2, AfterAttackerMods:841.5, AfterResistances:631.1, AfterTargetMods:694.2, AfterOutcome:694.2, AfterPostOutcome:694.2
-[81.50] [fire-mage (#1)] [Target 1] {SpellID: 10199} Hit (25% Resist) for 694.209 damage (SpellSchool: 4). (Threat: 694.209)
-[81.51] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (4980.791 --> 5039.791) of 6886 total.
-[82.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5039.791 --> 5105.216) of 6886 total.
-[82.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1314.885 damage (SpellSchool: 4). (Threat: 1314.885)
-[82.33] [fire-mage (#1)] Aura gained: {SpellID: 12536}
-[82.33] [Target 1] Aura faded: {SpellID: 25306}
-[82.33] [Target 1] Aura gained: {SpellID: 25306}
-[82.34] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5105.216 --> 5164.216) of 6886 total.
-[83.00] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 0.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[83.33] [Target 1] Aura faded: {SpellID: 412538}
-[83.33] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:391.8, AfterAttackerMods:391.8, AfterResistances:391.8, AfterTargetMods:391.8, AfterOutcome:391.8, AfterPostOutcome:391.8
-[83.33] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 391.791 damage (SpellSchool: 4). (Threat: 391.791)
-[84.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5164.216 --> 5229.641) of 6886 total.
-[84.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
-[84.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[86.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5229.641 --> 5295.066) of 6886 total.
-[86.00] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[86.00] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:924.9, AfterAttackerMods:1170.0, AfterResistances:1170.0, AfterTargetMods:1287.0, AfterOutcome:1287.0, AfterPostOutcome:1287.0
-[86.00] [fire-mage (#1)] Aura faded: {SpellID: 12536}
-[86.00] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[86.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
-[86.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[86.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1287.002 damage (SpellSchool: 4). (Threat: 1287.002)
-[86.83] [Target 1] Aura faded: {SpellID: 25306}
-[86.83] [Target 1] Aura gained: {SpellID: 25306}
-[88.00] [fire-mage (#1)] Gained 100.050 mana from {OtherID: 2, Tag: 2} (5295.066 --> 5395.116) of 6886 total.
-[88.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:9.5, AfterTargetMods:10.4, AfterOutcome:10.4, AfterPostOutcome:10.4
-[88.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit (50% Resist) for 10.436 damage (SpellSchool: 4). (Threat: 10.436)
-[89.00] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[89.00] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (5395.116 --> 4985.116) of 6886 total.
-[89.00] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:924.6, AfterAttackerMods:1169.6, AfterResistances:1169.6, AfterTargetMods:1286.6, AfterOutcome:1286.6, AfterPostOutcome:1286.6
-[89.00] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
-[89.00] [fire-mage (#1)] Completed cast {SpellID: 10199}
-[89.00] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (4985.116 --> 4645.116) of 6886 total.
-[89.00] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:649.1, AfterAttackerMods:821.1, AfterResistances:821.1, AfterTargetMods:903.2, AfterOutcome:903.2, AfterPostOutcome:903.2
-[89.00] [fire-mage (#1)] [Target 1] {SpellID: 10199} Hit for 903.166 damage (SpellSchool: 4). (Threat: 903.166)
-[89.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1286.600 damage (SpellSchool: 4). (Threat: 1286.600)
-[89.83] [Target 1] Aura faded: {SpellID: 25306}
-[89.83] [Target 1] Aura gained: {SpellID: 25306}
-[89.84] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (4645.116 --> 4704.116) of 6886 total.
-[90.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (4704.116 --> 4769.541) of 6886 total.
-[90.50] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[91.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
-[91.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[92.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (4769.541 --> 4834.966) of 6886 total.
-[93.50] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[93.50] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (4834.966 --> 4424.966) of 6886 total.
-[93.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:945.4, AfterAttackerMods:1196.0, AfterResistances:1196.0, AfterTargetMods:1315.6, AfterOutcome:1315.6, AfterPostOutcome:1315.6
-[93.50] [fire-mage (#1)] Aura gained: {SpellID: 44404}
-[93.50] [fire-mage (#1)] Casting {SpellID: 13021} (Cost = 545.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
-[93.50] [fire-mage (#1)] Completed cast {SpellID: 13021}
-[93.50] [fire-mage (#1)] Spent 545.000 mana from {SpellID: 13021} (4424.966 --> 3879.966) of 6886 total.
-[93.50] [fire-mage (#1)] [Target 1] {SpellID: 13021} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:581.1, AfterAttackerMods:735.0, AfterResistances:735.0, AfterTargetMods:808.5, AfterOutcome:1212.8, AfterPostOutcome:1212.8
-[93.50] [fire-mage (#1)] [Target 1] {SpellID: 13021} Crit for 1212.824 damage (SpellSchool: 4). (Threat: 1212.824)
-[93.50] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[93.50] [fire-mage (#1)] Completed cast {SpellID: 412538}
-[93.50] [Target 1] Aura gained: {SpellID: 412538}
-[93.50] [fire-mage (#1)] Gained 163.500 mana from {SpellID: 29074} (3879.966 --> 4043.466) of 6886 total.
-[93.51] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (4043.466 --> 4102.466) of 6886 total.
-[93.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:14.2, AfterTargetMods:15.7, AfterOutcome:15.7, AfterPostOutcome:15.7
-[93.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit (25% Resist) for 15.654 damage (SpellSchool: 4). (Threat: 15.654)
-[94.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (4102.466 --> 4167.891) of 6886 total.
-[94.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1315.559 damage (SpellSchool: 4). (Threat: 1315.559)
-[94.33] [Target 1] Aura faded: {SpellID: 25306}
-[94.33] [Target 1] Aura gained: {SpellID: 25306}
-[94.34] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (4167.891 --> 4226.891) of 6886 total.
-[95.00] [fire-mage (#1)] Casting {SpellID: 10207} (Cost = 150.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
-[95.50] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:242.6, AfterAttackerMods:242.6, AfterResistances:242.6, AfterTargetMods:242.6, AfterOutcome:242.6, AfterPostOutcome:242.6
-[95.50] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 242.565 damage (SpellSchool: 4). (Threat: 242.565)
-[96.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (4226.891 --> 4292.316) of 6886 total.
-[96.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:31.3, AfterPostOutcome:31.3
-[96.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit for 31.309 damage (SpellSchool: 4). (Threat: 31.309)
-[96.50] [fire-mage (#1)] Aura faded: {SpellID: 22959}
-[96.50] [fire-mage (#1)] {SpellID: 22959} stacks: 5 --> 0
-[96.50] [fire-mage (#1)] Completed cast {SpellID: 10207}
-[96.50] [fire-mage (#1)] Spent 150.000 mana from {SpellID: 10207} (4292.316 --> 4142.316) of 6886 total.
-[96.50] [fire-mage (#1)] [Target 1] {SpellID: 10207} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:388.9, AfterAttackerMods:427.8, AfterResistances:320.8, AfterTargetMods:352.9, AfterOutcome:0.0, AfterPostOutcome:0.0
-[96.50] [fire-mage (#1)] [Target 1] {SpellID: 10207} Miss (SpellSchool: 4). (Threat: 0.000)
-[96.50] [fire-mage (#1)] Casting {SpellID: 10207} (Cost = 150.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
-[97.50] [Target 1] Aura faded: {SpellID: 412538}
-[97.50] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:242.6, AfterAttackerMods:242.6, AfterResistances:242.6, AfterTargetMods:242.6, AfterOutcome:242.6, AfterPostOutcome:242.6
-[97.50] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 242.565 damage (SpellSchool: 4). (Threat: 242.565)
-[98.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (4142.316 --> 4207.741) of 6886 total.
-[98.00] [fire-mage (#1)] Completed cast {SpellID: 10207}
-[98.00] [fire-mage (#1)] Spent 150.000 mana from {SpellID: 10207} (4207.741 --> 4057.741) of 6886 total.
-[98.00] [fire-mage (#1)] [Target 1] {SpellID: 10207} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:399.9, AfterAttackerMods:439.9, AfterResistances:439.9, AfterTargetMods:483.8, AfterOutcome:725.8, AfterPostOutcome:725.8
-[98.00] [fire-mage (#1)] [Target 1] {SpellID: 10207} Crit for 725.769 damage (SpellSchool: 4). (Threat: 725.769)
-[98.00] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[98.00] [fire-mage (#1)] Completed cast {SpellID: 412538}
-[98.00] [Target 1] Aura gained: {SpellID: 412538}
-[98.00] [fire-mage (#1)] Aura refreshed: {SpellID: 400625}
-[98.00] [fire-mage (#1)] {SpellID: 400625} stacks: 2 --> 3
-[98.00] [fire-mage (#1)] Gained 45.000 mana from {SpellID: 29074} (4057.741 --> 4102.741) of 6886 total.
-[98.00] [fire-mage (#1)] Aura gained: {SpellID: 22959}
-[98.00] [fire-mage (#1)] {SpellID: 22959} stacks: 0 --> 1
-[98.00] [fire-mage (#1)] Casting {SpellID: 18809} (Cost = 440.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
-[98.01] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (4102.741 --> 4161.741) of 6886 total.
-[98.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:17.0, AfterResistances:12.7, AfterTargetMods:14.0, AfterOutcome:21.0, AfterPostOutcome:21.0
-[98.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit (25% Resist) for 21.031 damage (SpellSchool: 4). (Threat: 21.031)
-[99.50] [fire-mage (#1)] Completed cast {SpellID: 18809}
-[99.50] [fire-mage (#1)] Spent 440.000 mana from {SpellID: 18809} (4161.741 --> 3721.741) of 6886 total.
-[99.50] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:1042.5, AfterAttackerMods:1181.1, AfterResistances:1181.1, AfterTargetMods:1299.2, AfterOutcome:0.0, AfterPostOutcome:0.0
-[99.50] [fire-mage (#1)] Aura faded: {SpellID: 400625}
-[99.50] [fire-mage (#1)] {SpellID: 400625} stacks: 3 --> 0
-[99.50] [fire-mage (#1)] Casting {SpellID: 10207} (Cost = 150.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
-[100.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (3721.741 --> 3787.166) of 6886 total.
-[100.00] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:145.2, AfterAttackerMods:145.2, AfterResistances:145.2, AfterTargetMods:145.2, AfterOutcome:145.2, AfterPostOutcome:145.2
-[100.00] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 145.154 damage (SpellSchool: 4). (Threat: 145.154)
-[100.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:17.0, AfterResistances:17.0, AfterTargetMods:18.7, AfterOutcome:18.7, AfterPostOutcome:18.7
-[100.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 18.695 damage (SpellSchool: 4). (Threat: 18.695)
-[100.33] [fire-mage (#1)] [Target 1] {SpellID: 18809} Miss (SpellSchool: 4). (Threat: 0.000)
-[101.00] [fire-mage (#1)] Completed cast {SpellID: 10207}
-[101.00] [fire-mage (#1)] Spent 150.000 mana from {SpellID: 10207} (3787.166 --> 3637.166) of 6886 total.
-[101.00] [fire-mage (#1)] [Target 1] {SpellID: 10207} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:397.0, AfterAttackerMods:449.8, AfterResistances:449.8, AfterTargetMods:494.7, AfterOutcome:742.1, AfterPostOutcome:742.1
-[101.00] [fire-mage (#1)] [Target 1] {SpellID: 10207} Crit for 742.111 damage (SpellSchool: 4). (Threat: 742.111)
-[101.00] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[101.00] [fire-mage (#1)] Completed cast {SpellID: 412538}
-[101.00] [Target 1] Aura faded: {SpellID: 412538}
-[101.00] [Target 1] Aura gained: {SpellID: 412538}
-[101.00] [fire-mage (#1)] Aura gained: {SpellID: 400625}
-[101.00] [fire-mage (#1)] {SpellID: 400625} stacks: 0 --> 1
-[101.00] [fire-mage (#1)] Gained 45.000 mana from {SpellID: 29074} (3637.166 --> 3682.166) of 6886 total.
-[101.00] [fire-mage (#1)] Aura refreshed: {SpellID: 22959}
-[101.00] [fire-mage (#1)] {SpellID: 22959} stacks: 1 --> 2
-[101.00] [fire-mage (#1)] Casting {SpellID: 10207} (Cost = 150.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
-[101.01] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (3682.166 --> 3741.166) of 6886 total.
-[102.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (3741.166 --> 3806.591) of 6886 total.
-[102.33] [Target 1] Aura faded: {SpellID: 25306}
-[102.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:17.5, AfterResistances:17.5, AfterTargetMods:19.2, AfterOutcome:19.2, AfterPostOutcome:19.2
-[102.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 19.239 damage (SpellSchool: 4). (Threat: 19.239)
-[102.50] [fire-mage (#1)] Completed cast {SpellID: 10207}
-[102.50] [fire-mage (#1)] Spent 150.000 mana from {SpellID: 10207} (3806.591 --> 3656.591) of 6886 total.
-[102.50] [fire-mage (#1)] [Target 1] {SpellID: 10207} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:388.5, AfterAttackerMods:453.0, AfterResistances:453.0, AfterTargetMods:498.3, AfterOutcome:0.0, AfterPostOutcome:0.0
-[102.50] [fire-mage (#1)] [Target 1] {SpellID: 10207} Miss (SpellSchool: 4). (Threat: 0.000)
-[102.50] [fire-mage (#1)] Casting {SpellID: 10207} (Cost = 150.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
-[103.00] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:221.0, AfterAttackerMods:221.0, AfterResistances:221.0, AfterTargetMods:221.0, AfterOutcome:221.0, AfterPostOutcome:221.0
-[103.00] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 220.999 damage (SpellSchool: 4). (Threat: 220.999)
-[104.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (3656.591 --> 3722.016) of 6886 total.
-[104.00] [fire-mage (#1)] Completed cast {SpellID: 10207}
-[104.00] [fire-mage (#1)] Spent 150.000 mana from {SpellID: 10207} (3722.016 --> 3572.016) of 6886 total.
-[104.00] [fire-mage (#1)] [Target 1] {SpellID: 10207} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:386.1, AfterAttackerMods:450.1, AfterResistances:450.1, AfterTargetMods:495.2, AfterOutcome:742.7, AfterPostOutcome:742.7
-[104.00] [fire-mage (#1)] [Target 1] {SpellID: 10207} Crit for 742.726 damage (SpellSchool: 4). (Threat: 742.726)
-[104.00] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[104.00] [fire-mage (#1)] Completed cast {SpellID: 412538}
-[104.00] [Target 1] Aura faded: {SpellID: 412538}
-[104.00] [Target 1] Aura gained: {SpellID: 412538}
-[104.00] [fire-mage (#1)] Aura refreshed: {SpellID: 400625}
-[104.00] [fire-mage (#1)] {SpellID: 400625} stacks: 1 --> 2
-[104.00] [fire-mage (#1)] Gained 45.000 mana from {SpellID: 29074} (3572.016 --> 3617.016) of 6886 total.
-[104.00] [fire-mage (#1)] Aura refreshed: {SpellID: 22959}
-[104.00] [fire-mage (#1)] {SpellID: 22959} stacks: 2 --> 3
-[104.00] [fire-mage (#1)] Casting {SpellID: 10207} (Cost = 150.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
-[104.01] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (3617.016 --> 3676.016) of 6886 total.
-[105.50] [fire-mage (#1)] Completed cast {SpellID: 10207}
-[105.50] [fire-mage (#1)] Spent 150.000 mana from {SpellID: 10207} (3676.016 --> 3526.016) of 6886 total.
-[105.50] [fire-mage (#1)] [Target 1] {SpellID: 10207} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:396.6, AfterAttackerMods:475.5, AfterResistances:475.5, AfterTargetMods:523.0, AfterOutcome:784.5, AfterPostOutcome:784.5
-[105.50] [fire-mage (#1)] [Target 1] {SpellID: 10207} Crit for 784.541 damage (SpellSchool: 4). (Threat: 784.541)
-[105.50] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[105.50] [fire-mage (#1)] Completed cast {SpellID: 412538}
-[105.50] [Target 1] Aura faded: {SpellID: 412538}
-[105.50] [Target 1] Aura gained: {SpellID: 412538}
-[105.50] [fire-mage (#1)] Aura refreshed: {SpellID: 400625}
-[105.50] [fire-mage (#1)] {SpellID: 400625} stacks: 2 --> 3
-[105.50] [fire-mage (#1)] Gained 45.000 mana from {SpellID: 29074} (3526.016 --> 3571.016) of 6886 total.
-[105.50] [fire-mage (#1)] Aura refreshed: {SpellID: 22959}
-[105.50] [fire-mage (#1)] {SpellID: 22959} stacks: 3 --> 4
-[105.50] [fire-mage (#1)] Casting {SpellID: 18809} (Cost = 440.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
-[106.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (3571.016 --> 3636.441) of 6886 total.
-[107.00] [fire-mage (#1)] Completed cast {SpellID: 18809}
-[107.00] [fire-mage (#1)] Spent 440.000 mana from {SpellID: 18809} (3636.441 --> 3196.441) of 6886 total.
-[107.00] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:1117.1, AfterAttackerMods:1376.2, AfterResistances:1376.2, AfterTargetMods:1513.9, AfterOutcome:1513.9, AfterPostOutcome:1513.9
-[107.00] [fire-mage (#1)] Aura faded: {SpellID: 400625}
-[107.00] [fire-mage (#1)] {SpellID: 400625} stacks: 3 --> 0
-[107.00] [fire-mage (#1)] Casting {SpellID: 10207} (Cost = 150.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
-[107.50] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:416.0, AfterAttackerMods:416.0, AfterResistances:416.0, AfterTargetMods:416.0, AfterOutcome:416.0, AfterPostOutcome:416.0
-[107.50] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 415.953 damage (SpellSchool: 4). (Threat: 415.953)
-[107.83] [fire-mage (#1)] [Target 1] {SpellID: 18809} Hit for 1513.859 damage (SpellSchool: 4). (Threat: 1513.859)
-[107.83] [Target 1] Aura gained: {SpellID: 18809}
-[108.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (3196.441 --> 3261.866) of 6886 total.
-[108.50] [fire-mage (#1)] Aura faded: {SpellID: 44404}
-[108.50] [fire-mage (#1)] Completed cast {SpellID: 10207}
-[108.50] [fire-mage (#1)] Spent 150.000 mana from {SpellID: 10207} (3261.866 --> 3111.866) of 6886 total.
-[108.50] [fire-mage (#1)] [Target 1] {SpellID: 10207} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:385.0, AfterAttackerMods:474.4, AfterResistances:474.4, AfterTargetMods:521.8, AfterOutcome:521.8, AfterPostOutcome:521.8
-[108.50] [fire-mage (#1)] [Target 1] {SpellID: 10207} Hit for 521.804 damage (SpellSchool: 4). (Threat: 521.804)
-[108.50] [fire-mage (#1)] Aura refreshed: {SpellID: 22959}
-[108.50] [fire-mage (#1)] {SpellID: 22959} stacks: 4 --> 5
-[108.50] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
-[108.50] [fire-mage (#1)] Completed cast {SpellID: 10199}
-[108.50] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (3111.866 --> 2771.866) of 6886 total.
-[108.50] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:668.6, AfterAttackerMods:845.8, AfterResistances:634.3, AfterTargetMods:697.8, AfterOutcome:1046.7, AfterPostOutcome:1046.7
-[108.50] [fire-mage (#1)] [Target 1] {SpellID: 10199} Crit (25% Resist) for 1046.668 damage (SpellSchool: 4). (Threat: 1046.668)
-[108.50] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[108.50] [fire-mage (#1)] Completed cast {SpellID: 412538}
-[108.50] [Target 1] Aura faded: {SpellID: 412538}
-[108.50] [Target 1] Aura gained: {SpellID: 412538}
-[108.50] [fire-mage (#1)] Aura gained: {SpellID: 400625}
-[108.50] [fire-mage (#1)] {SpellID: 400625} stacks: 0 --> 1
-[108.50] [fire-mage (#1)] Gained 102.000 mana from {SpellID: 29074} (2771.866 --> 2873.866) of 6886 total.
-[110.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (2873.866 --> 2939.291) of 6886 total.
-[110.00] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[110.50] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:417.3, AfterAttackerMods:417.3, AfterResistances:417.3, AfterTargetMods:417.3, AfterOutcome:417.3, AfterPostOutcome:417.3
-[110.50] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 417.310 damage (SpellSchool: 4). (Threat: 417.310)
-[110.83] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:125.0, AfterAttackerMods:158.1, AfterResistances:118.6, AfterTargetMods:130.5, AfterOutcome:195.7, AfterPostOutcome:195.7
-[110.83] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Crit (25% Resist) for 195.680 damage (SpellSchool: 4). (Threat: 195.680)
-[112.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (2939.291 --> 3004.716) of 6886 total.
-[112.50] [Target 1] Aura faded: {SpellID: 412538}
-[112.50] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:417.3, AfterAttackerMods:417.3, AfterResistances:417.3, AfterTargetMods:417.3, AfterOutcome:417.3, AfterPostOutcome:417.3
-[112.50] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 417.310 damage (SpellSchool: 4). (Threat: 417.310)
-[113.00] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[113.00] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (3004.716 --> 2594.716) of 6886 total.
-[113.00] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:949.5, AfterAttackerMods:1201.2, AfterResistances:1201.2, AfterTargetMods:1321.3, AfterOutcome:1321.3, AfterPostOutcome:1321.3
-[113.00] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[113.83] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:125.0, AfterAttackerMods:158.1, AfterResistances:158.1, AfterTargetMods:173.9, AfterOutcome:173.9, AfterPostOutcome:173.9
-[113.83] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Hit for 173.938 damage (SpellSchool: 4). (Threat: 173.938)
-[113.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1321.266 damage (SpellSchool: 4). (Threat: 1321.266)
-[113.83] [Target 1] Aura gained: {SpellID: 25306}
-[113.84] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (2594.716 --> 2653.716) of 6886 total.
-[114.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (2653.716 --> 2719.141) of 6886 total.
-[115.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
-[115.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[116.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (2719.141 --> 2784.566) of 6886 total.
-[116.00] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[116.00] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (2784.566 --> 2374.566) of 6886 total.
-[116.00] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:997.7, AfterAttackerMods:1262.1, AfterResistances:1262.1, AfterTargetMods:1388.4, AfterOutcome:1388.4, AfterPostOutcome:1388.4
-[116.00] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
-[116.00] [fire-mage (#1)] Completed cast {SpellID: 10199}
-[116.00] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (2374.566 --> 2034.566) of 6886 total.
-[116.00] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:672.3, AfterAttackerMods:850.4, AfterResistances:850.4, AfterTargetMods:935.5, AfterOutcome:1403.2, AfterPostOutcome:1403.2
-[116.00] [fire-mage (#1)] [Target 1] {SpellID: 10199} Crit for 1403.206 damage (SpellSchool: 4). (Threat: 1403.206)
-[116.00] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
-[116.00] [fire-mage (#1)] Completed cast {SpellID: 412538}
-[116.00] [Target 1] Aura gained: {SpellID: 412538}
-[116.00] [fire-mage (#1)] Aura refreshed: {SpellID: 400625}
-[116.00] [fire-mage (#1)] {SpellID: 400625} stacks: 1 --> 2
-[116.00] [fire-mage (#1)] Gained 102.000 mana from {SpellID: 29074} (2034.566 --> 2136.566) of 6886 total.
-[116.83] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:125.0, AfterAttackerMods:158.1, AfterResistances:158.1, AfterTargetMods:173.9, AfterOutcome:260.9, AfterPostOutcome:260.9
-[116.83] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Crit for 260.906 damage (SpellSchool: 4). (Threat: 260.906)
-[116.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1388.357 damage (SpellSchool: 4). (Threat: 1388.357)
-[116.83] [Target 1] Aura faded: {SpellID: 25306}
-[116.83] [Target 1] Aura gained: {SpellID: 25306}
-[116.84] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (2136.566 --> 2195.566) of 6886 total.
-[117.50] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[118.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (2195.566 --> 2260.991) of 6886 total.
-[118.00] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:280.6, AfterAttackerMods:280.6, AfterResistances:280.6, AfterTargetMods:280.6, AfterOutcome:280.6, AfterPostOutcome:280.6
-[118.00] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 280.641 damage (SpellSchool: 4). (Threat: 280.641)
-[118.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:14.2, AfterTargetMods:15.7, AfterOutcome:23.5, AfterPostOutcome:23.5
-[118.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit (25% Resist) for 23.482 damage (SpellSchool: 4). (Threat: 23.482)
-[119.83] [Target 1] Aura faded: {SpellID: 18809}
-[119.83] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:125.0, AfterAttackerMods:158.1, AfterResistances:158.1, AfterTargetMods:173.9, AfterOutcome:173.9, AfterPostOutcome:173.9
-[119.83] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Hit for 173.938 damage (SpellSchool: 4). (Threat: 173.938)
-[120.00] [Target 1] Aura faded: {SpellID: 412538}
-[120.00] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:280.6, AfterAttackerMods:280.6, AfterResistances:280.6, AfterTargetMods:280.6, AfterOutcome:280.6, AfterPostOutcome:280.6
-[120.00] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 280.641 damage (SpellSchool: 4). (Threat: 280.641)
-[120.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (2260.991 --> 2326.416) of 6886 total.
-[120.50] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[120.50] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (2326.416 --> 1916.416) of 6886 total.
-[120.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:971.2, AfterAttackerMods:1228.6, AfterResistances:921.4, AfterTargetMods:1013.6, AfterOutcome:1013.6, AfterPostOutcome:1013.6
-[120.50] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[120.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
-[120.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[121.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit (25% Resist) for 1013.580 damage (SpellSchool: 4). (Threat: 1013.580)
-[121.33] [fire-mage (#1)] Aura gained: {SpellID: 12536}
-[121.33] [Target 1] Aura faded: {SpellID: 25306}
-[121.33] [Target 1] Aura gained: {SpellID: 25306}
-[121.34] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (1916.416 --> 1975.416) of 6886 total.
-[122.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (1975.416 --> 2040.841) of 6886 total.
-[123.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
-[123.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[123.50] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[123.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:976.5, AfterAttackerMods:1235.2, AfterResistances:1235.2, AfterTargetMods:1358.7, AfterOutcome:1358.7, AfterPostOutcome:1358.7
-[123.50] [fire-mage (#1)] Aura faded: {SpellID: 12536}
-[123.50] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[124.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (2040.841 --> 2106.266) of 6886 total.
-[124.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1358.743 damage (SpellSchool: 4). (Threat: 1358.743)
-[124.33] [Target 1] Aura faded: {SpellID: 25306}
-[124.33] [Target 1] Aura gained: {SpellID: 25306}
-[124.34] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (2106.266 --> 2165.266) of 6886 total.
-[126.00] [fire-mage (#1)] Gained 100.050 mana from {OtherID: 2, Tag: 2} (2165.266 --> 2265.316) of 6886 total.
-[126.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
-[126.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
-[126.50] [fire-mage (#1)] Completed cast {SpellID: 25306}
-[126.50] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (2265.316 --> 1855.316) of 6886 total.
-[126.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:958.5, AfterAttackerMods:1212.5, AfterResistances:1212.5, AfterTargetMods:1333.8, AfterOutcome:1333.8, AfterPostOutcome:1333.8
-[126.50] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
-[127.25] [fire-mage (#1)] Aura faded: {SpellID: 400625}
-[127.25] [fire-mage (#1)] {SpellID: 400625} stacks: 2 --> 0
+[62.50] [fire-mage (#1)] [Target 1] {SpellID: 25346} Miss (SpellSchool: 64). (Threat: 0.000)
+[62.50] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[62.50] [fire-mage (#1)] Completed cast {SpellID: 25346}
+[62.50] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:533.6, AfterPostOutcome:533.6
+[63.00] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit for 355.740 damage (SpellSchool: 64). (Threat: 249.018)
+[63.00] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[63.00] [fire-mage (#1)] Completed cast {SpellID: 25346}
+[63.00] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:355.7, AfterPostOutcome:355.7
+[63.01] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5905.591 --> 5964.591) of 6886 total.
+[63.50] [Target 1] Aura faded: {SpellID: 25345}
+[63.50] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[63.50] [fire-mage (#1)] Completed cast {SpellID: 25346}
+[63.50] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:355.7, AfterPostOutcome:355.7
+[63.50] [fire-mage (#1)] [Target 1] {SpellID: 25346} Crit for 533.610 damage (SpellSchool: 64). (Threat: 373.527)
+[63.50] [fire-mage (#1)] Casting {SpellID: 10207} (Cost = 150.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
+[63.51] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5964.591 --> 6023.591) of 6886 total.
+[64.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6023.591 --> 6089.016) of 6886 total.
+[64.00] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit for 355.740 damage (SpellSchool: 64). (Threat: 249.018)
+[64.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:31.3, AfterPostOutcome:31.3
+[64.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit for 31.309 damage (SpellSchool: 4). (Threat: 31.309)
+[64.50] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit for 355.740 damage (SpellSchool: 64). (Threat: 249.018)
+[65.00] [fire-mage (#1)] Completed cast {SpellID: 10207}
+[65.00] [fire-mage (#1)] Spent 150.000 mana from {SpellID: 10207} (6089.016 --> 5939.016) of 6886 total.
+[65.00] [fire-mage (#1)] [Target 1] {SpellID: 10207} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:376.6, AfterAttackerMods:476.3, AfterResistances:476.3, AfterTargetMods:524.0, AfterOutcome:524.0, AfterPostOutcome:524.0
+[65.00] [fire-mage (#1)] [Target 1] {SpellID: 10207} Hit for 523.979 damage (SpellSchool: 4). (Threat: 523.979)
+[65.00] [fire-mage (#1)] Aura refreshed: {SpellID: 22959}
+[65.00] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[66.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5939.016 --> 6004.441) of 6886 total.
+[66.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[66.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[68.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (6004.441 --> 6069.866) of 6886 total.
+[68.00] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[68.00] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (6069.866 --> 5659.866) of 6886 total.
+[68.00] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:1016.1, AfterAttackerMods:1285.3, AfterResistances:1285.3, AfterTargetMods:1413.9, AfterOutcome:1413.9, AfterPostOutcome:1413.9
+[68.00] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
+[68.00] [fire-mage (#1)] Completed cast {SpellID: 10199}
+[68.00] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (5659.866 --> 5319.866) of 6886 total.
+[68.00] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:683.4, AfterAttackerMods:864.4, AfterResistances:864.4, AfterTargetMods:950.9, AfterOutcome:950.9, AfterPostOutcome:950.9
+[68.00] [fire-mage (#1)] [Target 1] {SpellID: 10199} Hit for 950.894 damage (SpellSchool: 4). (Threat: 950.894)
+[68.33] [Target 1] Aura faded: {SpellID: 25306}
+[68.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[68.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[68.33] [fire-mage (#1)] Aura faded: {SpellID: 400625}
+[68.33] [fire-mage (#1)] {SpellID: 400625} stacks: 1 --> 0
+[68.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1413.860 damage (SpellSchool: 4). (Threat: 1413.860)
+[68.83] [Target 1] Aura gained: {SpellID: 25306}
+[69.50] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[70.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5319.866 --> 5385.291) of 6886 total.
+[70.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[70.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[72.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5385.291 --> 5450.716) of 6886 total.
+[72.50] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[72.50] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (5450.716 --> 5040.716) of 6886 total.
+[72.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:953.2, AfterAttackerMods:1205.8, AfterResistances:1205.8, AfterTargetMods:1326.3, AfterOutcome:1326.3, AfterPostOutcome:1326.3
+[72.50] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[72.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:14.2, AfterTargetMods:15.7, AfterOutcome:15.7, AfterPostOutcome:15.7
+[72.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit (25% Resist) for 15.654 damage (SpellSchool: 4). (Threat: 15.654)
+[73.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1326.341 damage (SpellSchool: 4). (Threat: 1326.341)
+[73.33] [fire-mage (#1)] Aura gained: {SpellID: 12536}
+[73.33] [Target 1] Aura faded: {SpellID: 25306}
+[73.33] [Target 1] Aura gained: {SpellID: 25306}
+[73.34] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5040.716 --> 5099.716) of 6886 total.
+[74.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5099.716 --> 5165.141) of 6886 total.
+[75.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:31.3, AfterPostOutcome:31.3
+[75.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit for 31.309 damage (SpellSchool: 4). (Threat: 31.309)
+[75.50] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[75.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:1006.3, AfterAttackerMods:1273.0, AfterResistances:1273.0, AfterTargetMods:1400.3, AfterOutcome:2100.5, AfterPostOutcome:2100.5
+[75.50] [fire-mage (#1)] Aura faded: {SpellID: 12536}
+[75.50] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
+[75.50] [fire-mage (#1)] Completed cast {SpellID: 10199}
+[75.50] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (5165.141 --> 4825.141) of 6886 total.
+[75.50] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:668.9, AfterAttackerMods:846.1, AfterResistances:846.1, AfterTargetMods:930.7, AfterOutcome:930.7, AfterPostOutcome:930.7
+[75.50] [fire-mage (#1)] [Target 1] {SpellID: 10199} Hit for 930.720 damage (SpellSchool: 4). (Threat: 930.720)
+[75.51] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (4825.141 --> 4884.141) of 6886 total.
+[76.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (4884.141 --> 4949.566) of 6886 total.
+[76.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} Crit for 2100.479 damage (SpellSchool: 4). (Threat: 2100.479)
+[76.33] [fire-mage (#1)] Aura gained: {SpellID: 44404}
+[76.33] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[76.33] [fire-mage (#1)] Completed cast {SpellID: 412538}
+[76.33] [Target 1] Aura gained: {SpellID: 412538}
+[76.33] [fire-mage (#1)] Aura gained: {SpellID: 400625}
+[76.33] [fire-mage (#1)] {SpellID: 400625} stacks: 0 --> 1
+[76.33] [fire-mage (#1)] Gained 123.000 mana from {SpellID: 29074} (4949.566 --> 5072.566) of 6886 total.
+[76.33] [Target 1] Aura faded: {SpellID: 25306}
+[76.33] [Target 1] Aura gained: {SpellID: 25306}
+[76.34] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5072.566 --> 5131.566) of 6886 total.
+[77.00] [fire-mage (#1)] Casting {SpellID: 25345} (Cost = 0.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
+[77.00] [fire-mage (#1)] Completed cast {SpellID: 25345}
+[77.00] [Target 1] Aura gained: {SpellID: 25345}
+[77.00] [fire-mage (#1)] Aura faded: {SpellID: 44404}
+[77.50] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[77.50] [fire-mage (#1)] Completed cast {SpellID: 25346}
+[77.50] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:533.6, AfterPostOutcome:533.6
+[78.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5131.566 --> 5196.991) of 6886 total.
+[78.00] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[78.00] [fire-mage (#1)] Completed cast {SpellID: 25346}
+[78.00] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:355.7, AfterPostOutcome:355.7
+[78.33] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:420.1, AfterAttackerMods:420.1, AfterResistances:420.1, AfterTargetMods:420.1, AfterOutcome:420.1, AfterPostOutcome:420.1
+[78.33] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 420.096 damage (SpellSchool: 4). (Threat: 420.096)
+[78.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[78.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[78.50] [fire-mage (#1)] [Target 1] {SpellID: 25346} Crit for 533.610 damage (SpellSchool: 64). (Threat: 373.527)
+[78.50] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[78.50] [fire-mage (#1)] Completed cast {SpellID: 25346}
+[78.50] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:355.7, AfterPostOutcome:355.7
+[79.00] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit for 355.740 damage (SpellSchool: 64). (Threat: 249.018)
+[79.00] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[79.00] [fire-mage (#1)] Completed cast {SpellID: 25346}
+[79.00] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:242.6, AfterTargetMods:266.8, AfterOutcome:266.8, AfterPostOutcome:266.8
+[79.50] [Target 1] Aura faded: {SpellID: 25345}
+[79.50] [fire-mage (#1)] Casting {SpellID: 25346} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[79.50] [fire-mage (#1)] Completed cast {SpellID: 25346}
+[79.50] [fire-mage (#1)] [Target 1] {SpellID: 25346} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 400.0, BaseDamage:323.4, AfterAttackerMods:323.4, AfterResistances:323.4, AfterTargetMods:355.7, AfterOutcome:355.7, AfterPostOutcome:355.7
+[79.50] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit for 355.740 damage (SpellSchool: 64). (Threat: 249.018)
+[79.50] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[79.51] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5196.991 --> 5255.991) of 6886 total.
+[80.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (5255.991 --> 5321.416) of 6886 total.
+[80.00] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit (25% Resist) for 266.805 damage (SpellSchool: 64). (Threat: 186.764)
+[80.01] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5321.416 --> 5380.416) of 6886 total.
+[80.33] [Target 1] Aura faded: {SpellID: 412538}
+[80.33] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:420.1, AfterAttackerMods:420.1, AfterResistances:420.1, AfterTargetMods:420.1, AfterOutcome:420.1, AfterPostOutcome:420.1
+[80.33] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 420.096 damage (SpellSchool: 4). (Threat: 420.096)
+[80.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[80.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[80.50] [fire-mage (#1)] [Target 1] {SpellID: 25346} Hit for 355.740 damage (SpellSchool: 64). (Threat: 249.018)
+[80.51] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (5380.416 --> 5439.416) of 6886 total.
+[82.00] [fire-mage (#1)] Gained 100.050 mana from {OtherID: 2, Tag: 2} (5439.416 --> 5539.466) of 6886 total.
+[82.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[82.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[82.50] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[82.50] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (5539.466 --> 5129.466) of 6886 total.
+[82.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:920.5, AfterAttackerMods:1164.5, AfterResistances:1164.5, AfterTargetMods:1280.9, AfterOutcome:0.0, AfterPostOutcome:0.0
+[82.50] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
+[82.50] [fire-mage (#1)] Completed cast {SpellID: 10199}
+[82.50] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (5129.466 --> 4789.466) of 6886 total.
+[82.50] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:664.5, AfterAttackerMods:840.6, AfterResistances:840.6, AfterTargetMods:924.7, AfterOutcome:924.7, AfterPostOutcome:924.7
+[82.50] [fire-mage (#1)] [Target 1] {SpellID: 10199} Hit for 924.664 damage (SpellSchool: 4). (Threat: 924.664)
+[82.50] [fire-mage (#1)] Aura gained: {SpellID: 12536}
+[82.51] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (4789.466 --> 4848.466) of 6886 total.
+[83.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} Miss (SpellSchool: 4). (Threat: 0.000)
+[84.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (4848.466 --> 4913.891) of 6886 total.
+[84.00] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 0.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[84.33] [Target 1] Aura faded: {SpellID: 25306}
+[84.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:14.2, AfterTargetMods:15.7, AfterOutcome:15.7, AfterPostOutcome:15.7
+[84.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit (25% Resist) for 15.654 damage (SpellSchool: 4). (Threat: 15.654)
+[86.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (4913.891 --> 4979.316) of 6886 total.
+[87.00] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[87.00] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:910.0, AfterAttackerMods:1151.2, AfterResistances:1151.2, AfterTargetMods:1266.3, AfterOutcome:1266.3, AfterPostOutcome:1266.3
+[87.00] [fire-mage (#1)] Aura faded: {SpellID: 12536}
+[87.00] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[87.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1266.317 damage (SpellSchool: 4). (Threat: 1266.317)
+[87.83] [Target 1] Aura gained: {SpellID: 25306}
+[87.84] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (4979.316 --> 5038.316) of 6886 total.
+[88.00] [fire-mage (#1)] Gained 100.050 mana from {OtherID: 2, Tag: 2} (5038.316 --> 5138.366) of 6886 total.
+[89.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[89.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[90.00] [fire-mage (#1)] Gained 100.050 mana from {OtherID: 2, Tag: 2} (5138.366 --> 5238.416) of 6886 total.
+[90.00] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[90.00] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (5238.416 --> 4828.416) of 6886 total.
+[90.00] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:1003.3, AfterAttackerMods:1269.1, AfterResistances:1269.1, AfterTargetMods:1396.0, AfterOutcome:1396.0, AfterPostOutcome:1396.0
+[90.00] [fire-mage (#1)] Casting {SpellID: 10207} (Cost = 150.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
+[90.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1396.040 damage (SpellSchool: 4). (Threat: 1396.040)
+[90.83] [fire-mage (#1)] Aura gained: {SpellID: 12536}
+[90.83] [Target 1] Aura faded: {SpellID: 25306}
+[90.83] [Target 1] Aura gained: {SpellID: 25306}
+[90.84] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (4828.416 --> 4887.416) of 6886 total.
+[91.50] [fire-mage (#1)] Completed cast {SpellID: 10207}
+[91.50] [fire-mage (#1)] [Target 1] {SpellID: 10207} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:394.3, AfterAttackerMods:498.8, AfterResistances:374.1, AfterTargetMods:411.5, AfterOutcome:0.0, AfterPostOutcome:0.0
+[91.50] [fire-mage (#1)] [Target 1] {SpellID: 10207} Miss (SpellSchool: 4). (Threat: 0.000)
+[91.50] [fire-mage (#1)] Aura faded: {SpellID: 12536}
+[91.50] [fire-mage (#1)] Casting {SpellID: 10207} (Cost = 150.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
+[92.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (4887.416 --> 4952.841) of 6886 total.
+[92.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[92.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[93.00] [fire-mage (#1)] Completed cast {SpellID: 10207}
+[93.00] [fire-mage (#1)] Spent 150.000 mana from {SpellID: 10207} (4952.841 --> 4802.841) of 6886 total.
+[93.00] [fire-mage (#1)] [Target 1] {SpellID: 10207} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:388.7, AfterAttackerMods:491.7, AfterResistances:491.7, AfterTargetMods:540.8, AfterOutcome:540.8, AfterPostOutcome:540.8
+[93.00] [fire-mage (#1)] [Target 1] {SpellID: 10207} Hit for 540.835 damage (SpellSchool: 4). (Threat: 540.835)
+[93.00] [fire-mage (#1)] Aura refreshed: {SpellID: 22959}
+[93.00] [fire-mage (#1)] Casting {SpellID: 13021} (Cost = 545.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
+[93.00] [fire-mage (#1)] Completed cast {SpellID: 13021}
+[93.00] [fire-mage (#1)] Spent 545.000 mana from {SpellID: 13021} (4802.841 --> 4257.841) of 6886 total.
+[93.00] [fire-mage (#1)] [Target 1] {SpellID: 13021} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:534.6, AfterAttackerMods:676.3, AfterResistances:676.3, AfterTargetMods:744.0, AfterOutcome:744.0, AfterPostOutcome:744.0
+[93.00] [fire-mage (#1)] [Target 1] {SpellID: 13021} Hit for 743.958 damage (SpellSchool: 4). (Threat: 743.958)
+[93.01] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (4257.841 --> 4316.841) of 6886 total.
+[93.01] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (4316.841 --> 4375.841) of 6886 total.
+[94.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (4375.841 --> 4441.266) of 6886 total.
+[94.50] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
+[94.50] [fire-mage (#1)] Completed cast {SpellID: 10199}
+[94.50] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (4441.266 --> 4101.266) of 6886 total.
+[94.50] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:684.0, AfterAttackerMods:865.2, AfterResistances:865.2, AfterTargetMods:951.7, AfterOutcome:951.7, AfterPostOutcome:951.7
+[94.50] [fire-mage (#1)] [Target 1] {SpellID: 10199} Hit for 951.732 damage (SpellSchool: 4). (Threat: 951.732)
+[94.50] [fire-mage (#1)] Aura gained: {SpellID: 12536}
+[94.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:31.3, AfterPostOutcome:31.3
+[94.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit for 31.309 damage (SpellSchool: 4). (Threat: 31.309)
+[96.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (4101.266 --> 4166.691) of 6886 total.
+[96.00] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 0.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[96.33] [fire-mage (#1)] Aura faded: {SpellID: 400625}
+[96.83] [fire-mage (#1)] {SpellID: 400625} stacks: 1 --> 0
+[96.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:31.3, AfterPostOutcome:31.3
+[96.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit for 31.309 damage (SpellSchool: 4). (Threat: 31.309)
+[98.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (4166.691 --> 4232.116) of 6886 total.
+[98.83] [Target 1] Aura faded: {SpellID: 25306}
+[98.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[98.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[99.00] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[99.00] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:918.6, AfterAttackerMods:1162.0, AfterResistances:1162.0, AfterTargetMods:1278.2, AfterOutcome:1278.2, AfterPostOutcome:1278.2
+[99.00] [fire-mage (#1)] Aura faded: {SpellID: 12536}
+[99.00] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[99.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1278.227 damage (SpellSchool: 4). (Threat: 1278.227)
+[99.83] [Target 1] Aura gained: {SpellID: 25306}
+[99.84] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (4232.116 --> 4291.116) of 6886 total.
+[100.00] [fire-mage (#1)] Gained 100.050 mana from {OtherID: 2, Tag: 2} (4291.116 --> 4391.166) of 6886 total.
+[101.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[101.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[102.00] [fire-mage (#1)] Gained 100.050 mana from {OtherID: 2, Tag: 2} (4391.166 --> 4491.216) of 6886 total.
+[102.00] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[102.00] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (4491.216 --> 4081.216) of 6886 total.
+[102.00] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:982.6, AfterAttackerMods:1243.0, AfterResistances:932.2, AfterTargetMods:1025.5, AfterOutcome:1538.2, AfterPostOutcome:1538.2
+[102.00] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
+[102.00] [fire-mage (#1)] Completed cast {SpellID: 10199}
+[102.00] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (4081.216 --> 3741.216) of 6886 total.
+[102.00] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:646.7, AfterAttackerMods:818.1, AfterResistances:818.1, AfterTargetMods:899.9, AfterOutcome:0.0, AfterPostOutcome:0.0
+[102.00] [fire-mage (#1)] [Target 1] {SpellID: 10199} Miss (SpellSchool: 4). (Threat: 0.000)
+[102.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} Crit (25% Resist) for 1538.184 damage (SpellSchool: 4). (Threat: 1538.184)
+[102.83] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[102.83] [fire-mage (#1)] Completed cast {SpellID: 412538}
+[102.83] [Target 1] Aura gained: {SpellID: 412538}
+[102.83] [fire-mage (#1)] Aura gained: {SpellID: 400625}
+[102.83] [fire-mage (#1)] {SpellID: 400625} stacks: 0 --> 1
+[102.83] [fire-mage (#1)] Gained 123.000 mana from {SpellID: 29074} (3741.216 --> 3864.216) of 6886 total.
+[102.83] [Target 1] Aura faded: {SpellID: 25306}
+[102.83] [Target 1] Aura gained: {SpellID: 25306}
+[103.50] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[104.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (3864.216 --> 3929.641) of 6886 total.
+[104.83] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:307.6, AfterAttackerMods:307.6, AfterResistances:307.6, AfterTargetMods:307.6, AfterOutcome:307.6, AfterPostOutcome:307.6
+[104.83] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 307.637 damage (SpellSchool: 4). (Threat: 307.637)
+[104.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[104.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[106.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (3929.641 --> 3995.066) of 6886 total.
+[106.50] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[106.50] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (3995.066 --> 3585.066) of 6886 total.
+[106.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:936.8, AfterAttackerMods:1185.0, AfterResistances:1185.0, AfterTargetMods:1303.5, AfterOutcome:1303.5, AfterPostOutcome:1303.5
+[106.50] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[106.83] [Target 1] Aura faded: {SpellID: 412538}
+[106.83] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:307.6, AfterAttackerMods:307.6, AfterResistances:307.6, AfterTargetMods:307.6, AfterOutcome:307.6, AfterPostOutcome:307.6
+[106.83] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 307.637 damage (SpellSchool: 4). (Threat: 307.637)
+[106.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[106.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[107.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1303.534 damage (SpellSchool: 4). (Threat: 1303.534)
+[107.33] [Target 1] Aura faded: {SpellID: 25306}
+[107.33] [Target 1] Aura gained: {SpellID: 25306}
+[107.34] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (3585.066 --> 3644.066) of 6886 total.
+[108.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (3644.066 --> 3709.491) of 6886 total.
+[109.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[109.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[109.50] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[109.50] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (3709.491 --> 3299.491) of 6886 total.
+[109.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:915.2, AfterAttackerMods:1157.7, AfterResistances:578.9, AfterTargetMods:636.8, AfterOutcome:636.8, AfterPostOutcome:636.8
+[109.50] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
+[109.50] [fire-mage (#1)] Completed cast {SpellID: 10199}
+[109.50] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (3299.491 --> 2959.491) of 6886 total.
+[109.50] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:683.1, AfterAttackerMods:864.2, AfterResistances:864.2, AfterTargetMods:950.6, AfterOutcome:1425.9, AfterPostOutcome:1425.9
+[109.50] [fire-mage (#1)] [Target 1] {SpellID: 10199} Crit for 1425.891 damage (SpellSchool: 4). (Threat: 1425.891)
+[109.50] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[109.50] [fire-mage (#1)] Completed cast {SpellID: 412538}
+[109.50] [Target 1] Aura gained: {SpellID: 412538}
+[109.50] [fire-mage (#1)] Aura refreshed: {SpellID: 400625}
+[109.50] [fire-mage (#1)] {SpellID: 400625} stacks: 1 --> 2
+[109.50] [fire-mage (#1)] Gained 102.000 mana from {SpellID: 29074} (2959.491 --> 3061.491) of 6886 total.
+[110.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (3061.491 --> 3126.916) of 6886 total.
+[110.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit (50% Resist) for 636.759 damage (SpellSchool: 4). (Threat: 636.759)
+[110.33] [Target 1] Aura faded: {SpellID: 25306}
+[110.33] [Target 1] Aura gained: {SpellID: 25306}
+[110.34] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (3126.916 --> 3185.916) of 6886 total.
+[111.00] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[111.50] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:285.2, AfterAttackerMods:285.2, AfterResistances:285.2, AfterTargetMods:285.2, AfterOutcome:285.2, AfterPostOutcome:285.2
+[111.50] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 285.178 damage (SpellSchool: 4). (Threat: 285.178)
+[112.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (3185.916 --> 3251.341) of 6886 total.
+[112.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[112.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[113.50] [Target 1] Aura faded: {SpellID: 412538}
+[113.50] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:285.2, AfterAttackerMods:285.2, AfterResistances:285.2, AfterTargetMods:285.2, AfterOutcome:285.2, AfterPostOutcome:285.2
+[113.50] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 285.178 damage (SpellSchool: 4). (Threat: 285.178)
+[114.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (3251.341 --> 3316.766) of 6886 total.
+[114.00] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[114.00] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (3316.766 --> 2906.766) of 6886 total.
+[114.00] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:1013.9, AfterAttackerMods:1282.5, AfterResistances:1282.5, AfterTargetMods:1410.8, AfterOutcome:1410.8, AfterPostOutcome:1410.8
+[114.00] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[114.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[114.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[114.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1410.776 damage (SpellSchool: 4). (Threat: 1410.776)
+[114.83] [Target 1] Aura faded: {SpellID: 25306}
+[114.83] [Target 1] Aura gained: {SpellID: 25306}
+[114.84] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (2906.766 --> 2965.766) of 6886 total.
+[116.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (2965.766 --> 3031.191) of 6886 total.
+[116.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:31.3, AfterPostOutcome:31.3
+[116.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Crit for 31.309 damage (SpellSchool: 4). (Threat: 31.309)
+[117.00] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[117.00] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (3031.191 --> 2621.191) of 6886 total.
+[117.00] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:958.4, AfterAttackerMods:1212.3, AfterResistances:1212.3, AfterTargetMods:1333.6, AfterOutcome:2000.3, AfterPostOutcome:2000.3
+[117.00] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
+[117.00] [fire-mage (#1)] Completed cast {SpellID: 10199}
+[117.00] [fire-mage (#1)] Spent 340.000 mana from {SpellID: 10199} (2621.191 --> 2281.191) of 6886 total.
+[117.00] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:650.3, AfterAttackerMods:822.6, AfterResistances:822.6, AfterTargetMods:904.8, AfterOutcome:904.8, AfterPostOutcome:904.8
+[117.00] [fire-mage (#1)] [Target 1] {SpellID: 10199} Hit for 904.823 damage (SpellSchool: 4). (Threat: 904.823)
+[117.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} Crit for 2000.341 damage (SpellSchool: 4). (Threat: 2000.341)
+[117.83] [fire-mage (#1)] Casting {SpellID: 412538} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
+[117.83] [fire-mage (#1)] Completed cast {SpellID: 412538}
+[117.83] [Target 1] Aura gained: {SpellID: 412538}
+[117.83] [fire-mage (#1)] Aura refreshed: {SpellID: 400625}
+[117.83] [fire-mage (#1)] {SpellID: 400625} stacks: 2 --> 3
+[117.83] [fire-mage (#1)] Gained 123.000 mana from {SpellID: 29074} (2281.191 --> 2404.191) of 6886 total.
+[117.83] [Target 1] Aura faded: {SpellID: 25306}
+[117.83] [Target 1] Aura gained: {SpellID: 25306}
+[117.84] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (2404.191 --> 2463.191) of 6886 total.
+[118.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (2463.191 --> 2528.616) of 6886 total.
+[118.50] [fire-mage (#1)] Casting {SpellID: 18809} (Cost = 440.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
+[119.83] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:400.1, AfterAttackerMods:400.1, AfterResistances:400.1, AfterTargetMods:400.1, AfterOutcome:400.1, AfterPostOutcome:400.1
+[119.83] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 400.068 damage (SpellSchool: 4). (Threat: 400.068)
+[119.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[119.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[120.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (2528.616 --> 2594.041) of 6886 total.
+[120.00] [fire-mage (#1)] Completed cast {SpellID: 18809}
+[120.00] [fire-mage (#1)] Spent 440.000 mana from {SpellID: 18809} (2594.041 --> 2154.041) of 6886 total.
+[120.00] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:1100.6, AfterAttackerMods:1392.2, AfterResistances:1392.2, AfterTargetMods:1531.4, AfterOutcome:1531.4, AfterPostOutcome:1531.4
+[120.00] [fire-mage (#1)] Aura faded: {SpellID: 400625}
+[120.00] [fire-mage (#1)] {SpellID: 400625} stacks: 3 --> 0
+[120.00] [fire-mage (#1)] Casting {SpellID: 10207} (Cost = 150.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
+[120.83] [fire-mage (#1)] [Target 1] {SpellID: 18809} Hit for 1531.437 damage (SpellSchool: 4). (Threat: 1531.437)
+[120.83] [Target 1] Aura gained: {SpellID: 18809}
+[121.50] [fire-mage (#1)] Completed cast {SpellID: 10207}
+[121.50] [fire-mage (#1)] Spent 150.000 mana from {SpellID: 10207} (2154.041 --> 2004.041) of 6886 total.
+[121.50] [fire-mage (#1)] [Target 1] {SpellID: 10207} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:382.2, AfterAttackerMods:483.4, AfterResistances:483.4, AfterTargetMods:531.8, AfterOutcome:531.8, AfterPostOutcome:531.8
+[121.50] [fire-mage (#1)] [Target 1] {SpellID: 10207} Hit for 531.772 damage (SpellSchool: 4). (Threat: 531.772)
+[121.50] [fire-mage (#1)] Aura refreshed: {SpellID: 22959}
+[121.50] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[121.83] [Target 1] Aura faded: {SpellID: 412538}
+[121.83] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:400.1, AfterAttackerMods:400.1, AfterResistances:400.1, AfterTargetMods:400.1, AfterOutcome:400.1, AfterPostOutcome:400.1
+[121.83] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 400.068 damage (SpellSchool: 4). (Threat: 400.068)
+[121.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:14.2, AfterTargetMods:15.7, AfterOutcome:15.7, AfterPostOutcome:15.7
+[121.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit (25% Resist) for 15.654 damage (SpellSchool: 4). (Threat: 15.654)
+[122.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (2004.041 --> 2069.466) of 6886 total.
+[123.83] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:125.0, AfterAttackerMods:158.1, AfterResistances:158.1, AfterTargetMods:173.9, AfterOutcome:260.9, AfterPostOutcome:260.9
+[123.83] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Crit for 260.906 damage (SpellSchool: 4). (Threat: 260.906)
+[123.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9
+[123.83] [fire-mage (#1)] [Target 1] {SpellID: 25306} tick Hit for 20.872 damage (SpellSchool: 4). (Threat: 20.872)
+[124.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (2069.466 --> 2134.891) of 6886 total.
+[124.50] [fire-mage (#1)] Completed cast {SpellID: 25306}
+[124.50] [fire-mage (#1)] Spent 410.000 mana from {SpellID: 25306} (2134.891 --> 1724.891) of 6886 total.
+[124.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:999.7, AfterAttackerMods:1264.6, AfterResistances:1264.6, AfterTargetMods:1391.1, AfterOutcome:1391.1, AfterPostOutcome:1391.1
+[124.50] [fire-mage (#1)] Casting {SpellID: 25306} (Cost = 410.000, Cast Time = 3s, GCD = 1.5s, Effective Time = 3s)
+[125.33] [fire-mage (#1)] [Target 1] {SpellID: 25306} Hit for 1391.078 damage (SpellSchool: 4). (Threat: 1391.078)
+[125.33] [Target 1] Aura faded: {SpellID: 25306}
+[125.33] [Target 1] Aura gained: {SpellID: 25306}
+[125.34] [fire-mage (#1)] Gained 59.000 mana from {SpellID: 20355} (1724.891 --> 1783.891) of 6886 total.
+[126.00] [fire-mage (#1)] Gained 65.425 mana from {OtherID: 2, Tag: 1} (1783.891 --> 1849.316) of 6886 total.
+[126.83] [fire-mage (#1)] [Target 1] {SpellID: 18809} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 480.0, BaseDamage:125.0, AfterAttackerMods:158.1, AfterResistances:158.1, AfterTargetMods:173.9, AfterOutcome:260.9, AfterPostOutcome:260.9
+[126.83] [fire-mage (#1)] [Target 1] {SpellID: 18809} tick Crit for 260.906 damage (SpellSchool: 4). (Threat: 260.906)
 [127.25] [fire-mage (#1)] Aura faded: {SpellID: 10494, Tag: -1}
 [127.25] [fire-mage (#1)] Aura faded: {SpellID: 24907, Tag: -1}
 [127.25] [fire-mage (#1)] Aura faded: {SpellID: 23028, Tag: -1}
@@ -850,3 +781,4 @@
 [127.25] [Target 1] Aura faded: {SpellID: 20355, Tag: -1}
 [127.25] [Target 1] Aura faded: {SpellID: 1311680, Tag: -1}
 [127.25] [Target 1] Aura faded: {SpellID: 25306}
+[127.25] [Target 1] Aura faded: {SpellID: 18809}

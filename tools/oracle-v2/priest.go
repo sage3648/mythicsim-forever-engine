@@ -392,14 +392,17 @@ func priestEffects(agent core.Agent, character *core.Character) []map[string]any
 			"cancel_spells":    spellsMatching(character, priest.PriestSpellHolyNova),
 		})
 	}
-	// dark_sacrifice.go: each tick pays the client base plus a fifth of Spirit; the cooldown
-	// manager uses it once the whole gain fits in the mana bar.
+	// dark_sacrifice.go: the Undead priest's racial, registered for Undead only. Each tick pays the
+	// client base plus a fifth of Spirit; the cooldown manager uses it once the whole gain fits in
+	// the mana bar.
 	rank := priest.DarkSacrificeRank
-	effects = append(effects, map[string]any{
-		"kind": "dark_sacrifice", "spell_id": rank.ID, "aura": character.GetSpell(core.ActionID{SpellID: rank.ID}).SelfHot().Aura.Label,
-		"tick_base": rank.ProcEnergizeEffect().Average(p.Level), "spirit_divisor": 5.0,
-		"metrics_action_id": actionID(core.ActionID{SpellID: rank.ID}),
-	})
+	if darkSacrifice := character.GetSpell(core.ActionID{SpellID: rank.ID}); darkSacrifice != nil {
+		effects = append(effects, map[string]any{
+			"kind": "dark_sacrifice", "spell_id": rank.ID, "aura": darkSacrifice.SelfHot().Aura.Label,
+			"tick_base": rank.ProcEnergizeEffect().Average(p.Level), "spirit_divisor": 5.0, "no_threat": rank.NoThreat(),
+			"metrics_action_id": actionID(core.ActionID{SpellID: rank.ID}),
+		})
+	}
 	return effects
 }
 

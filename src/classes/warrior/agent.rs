@@ -809,8 +809,10 @@ impl WarriorAgent {
                     speed_multiplier,
                     overshoot,
                     min_range,
+                    no_threat,
                 } => {
                     let metrics = rage_metrics(&mut fight, *spell_id);
+                    fight.resources[metrics].no_threat = *no_threat;
                     fight.agent.charge = Some(Charge {
                         aura: fight.player_aura(aura)?,
                         rage: *rage,
@@ -876,7 +878,6 @@ impl WarriorAgent {
                     spell_id,
                     proc_chance,
                     rage,
-                    two_handed,
                     ..
                 } => {
                     let metrics = rage_metrics(&mut fight, *spell_id);
@@ -884,7 +885,6 @@ impl WarriorAgent {
                         trigger: fight.player_aura(trigger_aura)?,
                         proc_chance: *proc_chance,
                         rage: *rage,
-                        two_handed: *two_handed,
                         metrics,
                     });
                 }
@@ -1290,6 +1290,9 @@ impl Agent for WarriorAgent {
             // retaliation.go and shield_wall.go: manual use only for a DPS warrior.
             WarriorSpell::StanceLocked(StanceLock::Battle | StanceLock::Defensive) => false,
             WarriorSpell::Retaliation => false,
+            // talents_arms.go registerSweepingStrikes: it strikes "an additional nearby opponent",
+            // so with one target it would spend 30 rage for nothing.
+            WarriorSpell::SweepingStrikes => fight.targets.len() >= 2,
             _ => true,
         }
     }

@@ -1,8 +1,9 @@
 //! Deep Wounds (12834, bleed 412609), from Go sim/warrior/talents_arms.go
 //! `registerDeepWounds`: a landed physical crit, other than a proc's or an empty proc mask's,
-//! casts the bleed at once. The cast lands without a hit counter, then the bleed restarts and
-//! carries what the running one still owed plus a share of the main hand's average weapon
-//! damage, spread over its ticks.
+//! casts the bleed at once. The cast lands without a hit counter, then the bleed starts over
+//! from now but keeps its tick timer (patch 89), and carries what the running one still owed
+//! plus a share of the main hand's average weapon damage, spread over the ticks it has left.
+//! Its ticks ignore the warrior's damage modifiers, which the client flags on the tick spell.
 
 use crate::core::fight::{Agent, DotId, Fight, Side, SpellId, SpellResult, OUTCOME_CRIT};
 
@@ -64,11 +65,10 @@ pub(crate) fn apply<A: Agent>(
     } else {
         0.0
     };
-    fight.deactivate_aura(aura);
-    fight.apply_dot(dot);
+    fight.apply_dot_keeping_tick_timer(dot);
     let weapon = &fight.autos.mh.weapon;
     let average = (weapon.base_damage_min + weapon.base_damage_max) / 2.0;
-    let ticks = fight.dots[dot].hasted_tick_count();
+    let ticks = fight.dots[dot].remaining_ticks;
     // The pinned Go engine runs on arm64, where the compiler fuses `owed + average*share`
     // into one multiply-add; the stored amount is read on every tick, so the rounding shows in
     // the log. Two sweep variants without a main hand weapon round differently otherwise.

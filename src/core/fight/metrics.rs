@@ -12,7 +12,7 @@ use crate::{
     core::time::{milliseconds, seconds, NS_PER_SECOND},
 };
 
-use super::{Agent, AuraRef, Fight, Side};
+use super::{Agent, AuraRef, DamageRange, Fight, Side};
 
 /// Go `aggregator`: count, sum and sum of squares.
 #[derive(Clone, Copy, Debug, Default)]
@@ -251,8 +251,44 @@ pub(crate) struct ActionReport {
     pub(crate) crit_healing: f64,
     #[serde(skip_serializing_if = "is_zero_f")]
     pub(crate) cast_time_ms: f64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) hit_range: Option<DamageRangeReport>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) crit_range: Option<DamageRangeReport>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) tick_range: Option<DamageRangeReport>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) crit_tick_range: Option<DamageRangeReport>,
     #[serde(skip)]
     cast_time: i64,
+    #[serde(skip)]
+    pub(crate) ranges: [DamageRange; 4],
+}
+
+/// Go `DamageRange` as protojson writes it: the average is total / count.
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct DamageRangeReport {
+    #[serde(skip_serializing_if = "is_zero_i")]
+    count: i32,
+    #[serde(skip_serializing_if = "is_zero_f")]
+    total: f64,
+    #[serde(skip_serializing_if = "is_zero_f")]
+    min: f64,
+    #[serde(skip_serializing_if = "is_zero_f")]
+    max: f64,
+}
+
+impl DamageRangeReport {
+    /// Go `DamageRange.ToProto`: unset when no event of the kind landed.
+    pub(crate) fn of(range: &DamageRange) -> Option<Self> {
+        (range.count != 0).then_some(DamageRangeReport {
+            count: range.count,
+            total: range.total,
+            min: range.min,
+            max: range.max,
+        })
+    }
 }
 
 impl ActionReport {
@@ -476,6 +512,7 @@ impl<A: Agent> Fight<A> {
             if resource.unit != side
                 || resource.kind != super::ResourceKind::Mana
                 || resource.is_mana_regen
+                || resource.no_threat
                 || resource.id.other_id == "OtherActionManaRegen"
             {
                 continue;
@@ -561,6 +598,10 @@ impl<A: Agent> Fight<A> {
             totals.crushes += metrics.crushes;
             totals.crush_damage += metrics.total_crush_damage;
             totals.threat += metrics.total_threat;
+            totals.ranges[0].merge(&metrics.hit_range);
+            totals.ranges[1].merge(&metrics.crit_range);
+            totals.ranges[2].merge(&metrics.tick_range);
+            totals.ranges[3].merge(&metrics.crit_tick_range);
             totals.healing += metrics.total_healing;
             totals.crit_healing += metrics.total_crit_healing;
             if !passive {
@@ -820,6 +861,10 @@ impl<A: Agent> Fight<A> {
                     let mut target = action.targets[slot].clone();
                     target.unit_index = unit;
                     target.cast_time_ms = milliseconds(target.cast_time) as f64;
+                    target.hit_range = DamageRangeReport::of(&target.ranges[0]);
+                    target.crit_range = DamageRangeReport::of(&target.ranges[1]);
+                    target.tick_range = DamageRangeReport::of(&target.ranges[2]);
+                    target.crit_tick_range = DamageRangeReport::of(&target.ranges[3]);
                     target
                 })
                 .chain(extra_units.iter().map(|&unit| ActionReport::new(unit)))

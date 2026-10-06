@@ -262,6 +262,8 @@ func warriorEffects(agent core.Agent, character *core.Character) []map[string]an
 			"kind": "warrior_charge", "spell_id": charge.ActionID.SpellID, "aura": "Charge",
 			"rage":     warriorCharge.Highest().EnergizeEffect().Tenths() + warriorImprovedCharge.TenthsAt(talents.ImprovedCharge),
 			"vanguard": talents.Vanguard, "speed_multiplier": 3.0, "overshoot": 3.5, "min_range": charge.MinRange,
+			// The client flags every rank No Threat, so the rage adds no threat.
+			"no_threat": warriorCharge.Highest().NoThreat(),
 		})
 	}
 	if talents.DeathWish { // talents_fury.go registerDeathWish
@@ -345,7 +347,6 @@ func warriorEffects(agent core.Agent, character *core.Character) []map[string]an
 			"kind": "unbridled_wrath", "trigger_aura": "Unbridled Wrath", "spell_id": warriorUnbridledWrathTrigger.Highest().ID,
 			"proc_chance": warriorUnbridledWrath.FractionAt(talents.UnbridledWrath),
 			"rage":        warriorUnbridledWrathTrigger.Highest().EnergizeEffect().Tenths(),
-			"two_handed":  war.GetMainHandType() == proto.HandType_HandTypeTwoHand,
 			"delay_ns":    nanos(core.SpellBatchWindow),
 		})
 	}

@@ -115,7 +115,7 @@ func druidFeralEffects(d *druid.Druid, character *core.Character) []map[string]a
 		// forms.go RegisterCatFormAura and registerCatFormSpell, with Furor's carry over.
 		furor := 0.0
 		if talents.Furor > 0 {
-			furor = feralFuror.EffectAt(1).ValueAt(talents.Furor)
+			furor = feralFuror.EffectAt(2).ValueAt(talents.Furor)
 		}
 		breaking := []int{}
 		for i, spell := range character.Spellbook {

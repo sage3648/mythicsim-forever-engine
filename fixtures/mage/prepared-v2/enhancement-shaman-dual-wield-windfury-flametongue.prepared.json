@@ -2,7 +2,7 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "74127c6c8454217e7d6221de5e3274cf22e621bb",
+    "engine_revision": "cd7d44aec711bcc8f20ea12d3ed83cea2126ac66",
     "client_build": "1.60.1.70205",
     "exporter": "tools/oracle-v2"
   },
@@ -1467,23 +1467,6 @@
         "exclusive_effects": 0
       },
       {
-        "label": "Windfury Weapon Attack Power",
-        "action_id": {
-          "spell_id": 16361
-        },
-        "duration_ns": 1500000000,
-        "max_stacks": 3,
-        "active": false,
-        "stacks": 0,
-        "callbacks": [
-          "on_gain",
-          "on_expire",
-          "on_spell_hit_dealt"
-        ],
-        "icd": null,
-        "exclusive_effects": 0
-      },
-      {
         "label": "Windfury Imbue",
         "action_id": null,
         "duration_ns": 9223372036854775807,
@@ -2219,18 +2202,21 @@
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
-        "damage_multiplier": 0.5,
+        "damage_multiplier": 1,
         "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.5709999799728394,
+        "bonus_coefficient": 0.2854999899864197,
         "threat_multiplier": 0,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
-        "damage_effect": null
+        "damage_effect": {
+          "average": 47,
+          "variance": 0.13725490868091583
+        }
       },
       {
         "action_id": {
@@ -2339,18 +2325,21 @@
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
-        "damage_multiplier": 0.5,
+        "damage_multiplier": 1,
         "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.5709999799728394,
+        "bonus_coefficient": 0.2854999899864197,
         "threat_multiplier": 0,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
-        "damage_effect": null
+        "damage_effect": {
+          "average": 54,
+          "variance": 0.12244898080825806
+        }
       },
       {
         "action_id": {
@@ -2459,18 +2448,21 @@
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
-        "damage_multiplier": 0.5,
+        "damage_multiplier": 1,
         "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.5170000195503235,
+        "bonus_coefficient": 0.2854999899864197,
         "threat_multiplier": 0,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
-        "damage_effect": null
+        "damage_effect": {
+          "average": 61,
+          "variance": 0.11500000208616257
+        }
       },
       {
         "action_id": {
@@ -2579,18 +2571,21 @@
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
-        "damage_multiplier": 0.5,
+        "damage_multiplier": 1,
         "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.5709999799728394,
+        "bonus_coefficient": 0.2854999899864197,
         "threat_multiplier": 0,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
-        "damage_effect": null
+        "damage_effect": {
+          "average": 66,
+          "variance": 0.1149425283074379
+        }
       },
       {
         "action_id": {
@@ -2696,18 +2691,21 @@
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
-        "damage_multiplier": 0.5,
+        "damage_multiplier": 1,
         "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.42899999022483826,
+        "bonus_coefficient": 0.21449999511241913,
         "threat_multiplier": 0,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
-        "damage_effect": null
+        "damage_effect": {
+          "average": 8,
+          "variance": 0.14285700023174286
+        }
       },
       {
         "action_id": {
@@ -2813,18 +2811,21 @@
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
-        "damage_multiplier": 0.5,
+        "damage_multiplier": 1,
         "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.5709999799728394,
+        "bonus_coefficient": 0.2854999899864197,
         "threat_multiplier": 0,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
-        "damage_effect": null
+        "damage_effect": {
+          "average": 15,
+          "variance": 0.1428571492433548
+        }
       },
       {
         "action_id": {
@@ -2930,18 +2931,21 @@
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
-        "damage_multiplier": 0.5,
+        "damage_multiplier": 1,
         "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.7139999866485596,
+        "bonus_coefficient": 0.3569999933242798,
         "threat_multiplier": 0,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
-        "damage_effect": null
+        "damage_effect": {
+          "average": 24,
+          "variance": 0.16326500475406647
+        }
       },
       {
         "action_id": {
@@ -3047,18 +3051,21 @@
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
-        "damage_multiplier": 0.5,
+        "damage_multiplier": 1,
         "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.7139999866485596,
+        "bonus_coefficient": 0.3569999933242798,
         "threat_multiplier": 0,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
-        "damage_effect": null
+        "damage_effect": {
+          "average": 29,
+          "variance": 0.1348309963941574
+        }
       },
       {
         "action_id": {
@@ -3164,18 +3171,21 @@
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
-        "damage_multiplier": 0.5,
+        "damage_multiplier": 1,
         "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.7139999866485596,
+        "bonus_coefficient": 0.3569999933242798,
         "threat_multiplier": 0,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
-        "damage_effect": null
+        "damage_effect": {
+          "average": 37,
+          "variance": 0.1343279927968979
+        }
       },
       {
         "action_id": {
@@ -3281,18 +3291,21 @@
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
-        "damage_multiplier": 0.5,
+        "damage_multiplier": 1,
         "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.7139999866485596,
+        "bonus_coefficient": 0.3569999933242798,
         "threat_multiplier": 0,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
-        "damage_effect": null
+        "damage_effect": {
+          "average": 58,
+          "variance": 0.12087912112474442
+        }
       },
       {
         "action_id": {
@@ -3398,18 +3411,21 @@
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
-        "damage_multiplier": 0.5,
+        "damage_multiplier": 1,
         "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.7139999866485596,
+        "bonus_coefficient": 0.3569999933242798,
         "threat_multiplier": 0,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
-        "damage_effect": null
+        "damage_effect": {
+          "average": 76,
+          "variance": 0.125
+        }
       },
       {
         "action_id": {
@@ -3515,18 +3531,21 @@
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
-        "damage_multiplier": 0.5,
+        "damage_multiplier": 1,
         "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.7139999866485596,
+        "bonus_coefficient": 0.3569999933242798,
         "threat_multiplier": 0,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
-        "damage_effect": null
+        "damage_effect": {
+          "average": 83,
+          "variance": 0.11409395933151245
+        }
       },
       {
         "action_id": {
@@ -3632,18 +3651,21 @@
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
-        "damage_multiplier": 0.5,
+        "damage_multiplier": 1,
         "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.7139999866485596,
+        "bonus_coefficient": 0.3569999933242798,
         "threat_multiplier": 0,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
-        "damage_effect": null
+        "damage_effect": {
+          "average": 91,
+          "variance": 0.1195652186870575
+        }
       },
       {
         "action_id": {
@@ -3749,18 +3771,21 @@
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
-        "damage_multiplier": 0.5,
+        "damage_multiplier": 1,
         "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.7139999866485596,
+        "bonus_coefficient": 0.3569999933242798,
         "threat_multiplier": 0,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
         "dot": null,
-        "damage_effect": null
+        "damage_effect": {
+          "average": 100,
+          "variance": 0.11312217265367508
+        }
       },
       {
         "action_id": {
@@ -4159,7 +4184,7 @@
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.10000000149011612,
+        "bonus_coefficient": 0,
         "threat_multiplier": 1,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
@@ -4833,19 +4858,18 @@
       },
       {
         "action_id": {
-          "other_id": "OtherActionAttack",
-          "tag": 16361
+          "spell_id": 439440
         },
         "rank": 0,
         "school": 1,
         "defense_type": "DefenseTypeMelee",
         "proc_mask": [
-          "ProcMaskMeleeMHAuto"
+          "ProcMaskMeleeMHSpecial"
         ],
         "flags": [
-          "SpellFlagIncludeTargetBonusDamage",
           "SpellFlagMeleeMetrics",
-          "SpellFlagNoOnCastComplete"
+          "SpellFlagNoOnCastComplete",
+          "SpellFlagPassiveSpell"
         ],
         "missile_speed": 0,
         "cost": null,
@@ -4877,7 +4901,59 @@
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 1,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 439441
+        },
+        "rank": 0,
+        "school": 1,
+        "defense_type": "DefenseTypeMelee",
+        "proc_mask": [
+          "ProcMaskMeleeOHSpecial"
+        ],
+        "flags": [
+          "SpellFlagMeleeMetrics",
+          "SpellFlagNoOnCastComplete",
+          "SpellFlagPassiveSpell"
+        ],
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "autos_or_procs",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 5,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
         "threat_multiplier": 1,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
@@ -5531,16 +5607,15 @@
           "trigger_aura": "Flametongue Imbue ItemSlotOffHand",
           "trigger_spells": [
             4,
-            59
+            57,
+            60
           ]
         }
       ],
       "kind": "flametongue_weapon"
     },
     {
-      "ap_aura": "Windfury Weapon Attack Power",
-      "ap_expire_log": "Lost {\"AttackPower\": 466.200,} from fading {SpellID: 16361}.",
-      "ap_gain_log": "Gained {\"AttackPower\": 466.200,} from {SpellID: 16361}.",
+      "attack_power": 466.2,
       "blocks_windfury_totem": true,
       "chances": [
         {
@@ -5552,42 +5627,35 @@
           "chance": 0.2
         },
         {
-          "spell": 58,
-          "chance": 0.2
-        },
-        {
-          "spell": 60,
+          "spell": 59,
           "chance": 0.2
         },
         {
           "spell": 61,
           "chance": 0.2
+        },
+        {
+          "spell": 62,
+          "chance": 0.2
         }
       ],
-      "extra_spell": 56,
       "kind": "windfury_weapon",
+      "main_hand_attack": 56,
       "main_hand_spells": [
         3,
         56,
-        58,
-        60,
-        61
-      ],
-      "off_hand_spell": 59,
-      "spend_spells": [
-        56,
-        58,
         59,
-        60,
-        61
+        61,
+        62
       ],
+      "off_hand_attack": 57,
       "trigger_aura": "Windfury Imbue",
       "trigger_spells": [
         3,
         56,
-        58,
-        60,
-        61
+        59,
+        61,
+        62
       ]
     },
     {
@@ -5635,7 +5703,7 @@
       "contested": true,
       "dummy_aura": "Windfury Dummy Aura (self)",
       "duration_ns": 300000000000,
-      "extra_spell": 61,
+      "extra_spell": 62,
       "kind": "windfury_totem_self",
       "period_ns": 5000000000,
       "proc_aura": "Windfury Totem Proc (Self)",
@@ -5643,11 +5711,10 @@
       "proc_gain_log": "Gained {\"AttackPower\": 246.000,} from {SpellID: 10610}.",
       "spell_id": 10614,
       "spend_spells": [
-        56,
-        58,
         59,
         60,
-        61
+        61,
+        62
       ],
       "totem_aura": "Windfury Totem (Self)",
       "tracking_aura": "Windfury Party Weapon Buff Tracking Aura",
@@ -5657,17 +5724,17 @@
         3,
         4,
         56,
-        58,
+        57,
         59,
         60,
-        61
+        61,
+        62
       ],
       "white_spells": [
-        56,
-        58,
         59,
         60,
-        61
+        61,
+        62
       ]
     },
     {
@@ -5695,10 +5762,9 @@
         "Crush"
       ],
       "trigger_spells": [
-        56,
-        58,
-        60,
-        61
+        59,
+        61,
+        62
       ]
     },
     {
@@ -5717,12 +5783,14 @@
     },
     {
       "aura": "Elemental Devastation",
+      "can_proc_from_procs": false,
       "kind": "elemental_devastation",
       "melee_crit": 9,
       "trigger_aura": "Elemental Devastation Trigger"
     },
     {
       "aura": "Flurry",
+      "can_proc_from_procs": false,
       "charge_icd_ns": 500000000,
       "kind": "flurry",
       "max_stacks": 3,
@@ -5753,19 +5821,23 @@
           "chance": 0.43333333333333335
         },
         {
-          "spell": 58,
-          "chance": 0.43333333333333335
-        },
-        {
-          "spell": 59,
+          "spell": 57,
           "chance": 0.4833333333333333
         },
         {
-          "spell": 60,
+          "spell": 59,
           "chance": 0.43333333333333335
         },
         {
+          "spell": 60,
+          "chance": 0.4833333333333333
+        },
+        {
           "spell": 61,
+          "chance": 0.43333333333333335
+        },
+        {
+          "spell": 62,
           "chance": 0.43333333333333335
         }
       ],
@@ -5899,19 +5971,23 @@
           "chance": 0.043333333333333335
         },
         {
-          "spell": 58,
-          "chance": 0.043333333333333335
-        },
-        {
-          "spell": 59,
+          "spell": 57,
           "chance": 0.04833333333333333
         },
         {
-          "spell": 60,
+          "spell": 59,
           "chance": 0.043333333333333335
         },
         {
+          "spell": 60,
+          "chance": 0.04833333333333333
+        },
+        {
           "spell": 61,
+          "chance": 0.043333333333333335
+        },
+        {
+          "spell": 62,
           "chance": 0.043333333333333335
         }
       ],
@@ -5941,14 +6017,15 @@
         3,
         4,
         56,
-        58,
+        57,
         59,
         60,
-        61
+        61,
+        62
       ]
     },
     {
-      "extra_attack_spell": 60,
+      "extra_attack_spell": 61,
       "kind": "windfury_totem",
       "period_ns": 5000000000,
       "proc_aura": "Windfury Totem (External)",
@@ -5961,11 +6038,10 @@
       ],
       "spend_require_damage": true,
       "spend_spells": [
-        56,
-        58,
         59,
         60,
-        61
+        61,
+        62
       ],
       "totem_aura": "Windfury Totem",
       "trigger_aura": "Windfury Totem Trigger",
@@ -5982,10 +6058,11 @@
         3,
         4,
         56,
-        58,
+        57,
         59,
         60,
-        61
+        61,
+        62
       ]
     },
     {
@@ -5998,7 +6075,6 @@
         "Strength Of Earth Totem (Self)",
         "Grace Of Air Totem (Self)",
         "Mana Spring Totem (Self)",
-        "Windfury Weapon Attack Power",
         "Windfury Totem Proc (Self)"
       ],
       "changed": [
@@ -8062,2054 +8138,6 @@
           "SpellDamage": 270.49
         },
         {
-          "AttackPower": 1676.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 1843.8200000000002,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1896.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2085.82,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1896.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2085.82,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2116.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2327.82,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1922.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2114.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2142.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2356.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2142.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2356.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2362.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2598.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1815.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 1996.7200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2035.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2238.7200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2035.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2238.7200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2255.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2480.72,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2061.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2267.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2281.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2509.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2281.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2509.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2501.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2751.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1794.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 1973.6200000000001,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2014.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2215.6200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2014.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2215.6200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2234.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2457.62,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2040.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2244.2200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2260.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2486.22,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2260.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2486.22,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2480.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2728.22,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1933.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2126.5200000000004,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2153.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2368.52,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2153.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2368.52,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2373.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2610.52,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2179.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2397.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2399.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2639.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2399.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2639.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2619.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2881.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1676.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 1843.8200000000002,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1896.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2085.82,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1896.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2085.82,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2116.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2327.82,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1922.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2114.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2142.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2356.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2142.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2356.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2362.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2598.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1815.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 1996.7200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2035.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2238.7200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2035.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2238.7200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2255.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2480.72,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2061.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2267.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2281.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2509.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2281.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2509.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2501.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2751.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1794.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 1973.6200000000001,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2014.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2215.6200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2014.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2215.6200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2234.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2457.62,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2040.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2244.2200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2260.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2486.22,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2260.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2486.22,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2480.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2728.22,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1933.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2126.5200000000004,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2153.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2368.52,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2153.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2368.52,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2373.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2610.52,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2179.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2397.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2399.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2639.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2399.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2639.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2619.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2881.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1676.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 1843.8200000000002,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1896.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2085.82,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1896.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2085.82,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2116.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2327.82,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1922.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2114.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2142.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2356.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2142.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2356.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2362.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2598.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1815.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 1996.7200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2035.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2238.7200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2035.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2238.7200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2255.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2480.72,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2061.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2267.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2281.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2509.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2281.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2509.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2501.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2751.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1794.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 1973.6200000000001,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2014.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2215.6200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2014.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2215.6200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2234.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2457.62,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2040.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2244.2200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2260.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2486.22,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2260.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2486.22,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2480.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2728.22,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1933.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2126.5200000000004,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2153.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2368.52,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2153.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2368.52,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2373.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2610.52,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2179.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2397.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2399.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2639.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2399.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2639.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2619.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2881.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1676.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 1843.8200000000002,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1896.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2085.82,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1896.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2085.82,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2116.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2327.82,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1922.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2114.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2142.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2356.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2142.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2356.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2362.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2598.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1815.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 1996.7200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2035.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2238.7200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2035.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2238.7200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2255.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2480.72,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2061.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2267.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2281.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2509.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2281.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2509.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2501.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2751.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1794.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 1973.6200000000001,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2014.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2215.6200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2014.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2215.6200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2234.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2457.62,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2040.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2244.2200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2260.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2486.22,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2260.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2486.22,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2480.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2728.22,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1933.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2126.5200000000004,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2153.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2368.52,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2153.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2368.52,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2373.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2610.52,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2179.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2397.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2399.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2639.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2399.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2639.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2619.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2881.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
           "AttackPower": 1456,
           "MP5": 77,
           "PhysicalCritPercent": 24.6808,
@@ -12151,2054 +10179,6 @@
         },
         {
           "AttackPower": 2638.9,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1922.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2114.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2142.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2356.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2142.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2356.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2362.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2598.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2168.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2385.02,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2388.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2627.02,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2388.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2627.02,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2608.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2869.02,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2061.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2267.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2281.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2509.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2281.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2509.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2501.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2751.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2307.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2537.92,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2527.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2779.92,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2527.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2779.92,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2747.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 3021.92,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2040.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2244.2200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2260.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2486.22,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2260.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2486.22,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2480.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2728.22,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2286.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2514.82,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2506.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2756.82,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2506.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2756.82,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2726.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2998.82,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2179.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2397.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2399.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2639.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2399.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2639.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2619.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2881.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2425.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2667.72,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2645.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2909.7200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2645.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2909.7200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2865.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 3151.7200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1922.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2114.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2142.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2356.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2142.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2356.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2362.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2598.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2168.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2385.02,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2388.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2627.02,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2388.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2627.02,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2608.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2869.02,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2061.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2267.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2281.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2509.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2281.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2509.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2501.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2751.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2307.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2537.92,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2527.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2779.92,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2527.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2779.92,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2747.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 3021.92,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2040.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2244.2200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2260.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2486.22,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2260.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2486.22,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2480.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2728.22,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2286.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2514.82,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2506.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2756.82,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2506.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2756.82,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2726.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2998.82,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2179.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2397.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2399.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2639.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2399.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2639.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2619.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2881.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2425.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2667.72,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2645.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2909.7200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2645.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2909.7200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2865.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 3151.7200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1922.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2114.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2142.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2356.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2142.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2356.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2362.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2598.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2168.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2385.02,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2388.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2627.02,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2388.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2627.02,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2608.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2869.02,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2061.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2267.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2281.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2509.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2281.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2509.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2501.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2751.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2307.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2537.92,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2527.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2779.92,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2527.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2779.92,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2747.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 3021.92,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2040.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2244.2200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2260.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2486.22,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2260.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2486.22,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2480.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2728.22,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2286.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2514.82,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2506.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2756.82,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2506.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2756.82,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2726.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2998.82,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2179.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2397.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2399.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2639.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2399.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2639.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2619.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2881.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2425.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2667.72,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2645.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2909.7200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2645.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2909.7200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2865.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 3151.7200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 24.6808,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 1922.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2114.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2142.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2356.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2142.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2356.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2362.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2598.42,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2168.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2385.02,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2388.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2627.02,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2388.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2627.02,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2608.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2869.02,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2061.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2267.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2281.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2509.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2281.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2509.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2501.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2751.32,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2307.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2537.92,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2527.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2779.92,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2527.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2779.92,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2747.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 3021.92,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2040.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2244.2200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2260.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2486.22,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2260.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2486.22,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2480.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2728.22,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2286.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2514.82,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2506.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2756.82,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2506.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2756.82,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2726.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2998.82,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2179.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2397.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2399.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2639.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2399.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2639.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2619.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2881.12,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2425.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2667.72,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2645.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2909.7200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2645.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 2909.7200000000003,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 116.60000000000001,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 270.49
-        },
-        {
-          "AttackPower": 2865.2,
-          "MP5": 77,
-          "PhysicalCritPercent": 29.6592,
-          "RangedAttackPower": 106,
-          "SpellCritPercent": 15.230699999999999,
-          "SpellDamage": 245.9
-        },
-        {
-          "AttackPower": 3151.7200000000003,
           "MP5": 77,
           "PhysicalCritPercent": 29.6592,
           "RangedAttackPower": 116.60000000000001,

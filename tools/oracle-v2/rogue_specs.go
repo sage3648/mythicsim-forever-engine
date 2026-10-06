@@ -19,6 +19,7 @@ var (
 	rogueAmbush                = spelldata.Ranked(8676, 8724, 8725, 11267, 11268, 11269)
 	rogueColdBlood             = spelldata.Ranked(14177)
 	rogueGarrote               = spelldata.Ranked(703, 8631, 8632, 8633, 11289, 11290)
+	rogueHemorrhage            = spelldata.Ranked(16511)
 	rogueHackAndSlash          = spelldata.Talent(13960, 5)
 	rogueImprovedPoisonsSpecs  = spelldata.Talent(14113, 5)
 	rogueVenom                 = spelldata.Ranked(1310703)
@@ -93,7 +94,8 @@ func rogueSpecEffects(r *rogue.Rogue, character *core.Character) []map[string]an
 		})
 	}
 	// rupture.go: the tick and its step a combo point, the attack power share a point, a Go
-	// literal, and Hemorrhage's multiplier, a Go literal, while its debuff is up.
+	// literal, and the multiplier Hemorrhage's debuff gives the rogue's Rupture ticks while it is up,
+	// read from the damage taken from caster effect of the client row (talents_subtlety.go).
 	if r.Rupture != nil {
 		row := rogueRupture.Highest()
 		tick := row.PeriodicEffect()
@@ -107,7 +109,7 @@ func rogueSpecEffects(r *rogue.Rogue, character *core.Character) []map[string]an
 			"base_tick_count":        int32(row.Duration() / tick.Period()),
 			"attack_power_shares":    []float64{0, 0.01, 0.02, 0.03, 0.03, 0.03},
 			"tick_can_crit":          row.PeriodicCanCrit(), "magic": row.DefenseTypeCore() == core.DefenseTypeMagic,
-			"hemorrhage_aura": hemorrhage, "hemorrhage_multiplier": rogue.HemorrhageRuptureMultiplier,
+			"hemorrhage_aura": hemorrhage, "hemorrhage_multiplier": 1 + rogueHemorrhage.Highest().Effect(dbcenums.A_MOD_SPELL_DAMAGE_FROM_CASTER, 0).Percent(),
 		})
 	}
 	// talents_assassination.go registerMutilate: two combo points, then the off hand and main
@@ -140,17 +142,18 @@ func rogueSpecEffects(r *rogue.Rogue, character *core.Character) []map[string]an
 			"combo_points": int32(row.EnergizeEffect().Average(core.CharacterLevel)),
 		})
 	}
-	// talents_subtlety.go registerPreparation: the cooldowns it resets, and it fires as a major
-	// cooldown once Vanish is cooling down.
+	// talents_subtlety.go registerPreparation: it finishes the cooldown of every other rogue
+	// spell that has one, in spellbook order, and it fires as a major cooldown once Vanish is
+	// cooling down.
 	if r.Preparation != nil {
-		reset := []int32{}
-		for _, spell := range []*core.Spell{r.ColdBlood, r.Shadowstep, r.Premeditation, r.Vanish} {
-			if spell != nil {
-				reset = append(reset, spell.ActionID.SpellID)
+		reset := []int{}
+		for i, spell := range character.Spellbook {
+			if spell != r.Preparation && spell.ClassSpellMask&rogue.RogueSpellsAll != 0 && spell.CD.Timer != nil {
+				reset = append(reset, i)
 			}
 		}
 		effects = append(effects, map[string]any{
-			"kind": "preparation", "spell_id": r.Preparation.ActionID.SpellID, "reset_spell_ids": reset,
+			"kind": "preparation", "spell_id": r.Preparation.ActionID.SpellID, "reset_spells": reset,
 		})
 	}
 	// talents_assassination.go registerSealFate: a crit from a builder adds a combo point.
@@ -178,7 +181,7 @@ func rogueSpecEffects(r *rogue.Rogue, character *core.Character) []map[string]an
 	// grants an extra main hand attack at once.
 	if mask := r.GetProcMaskForTypes(proto.WeaponType_WeaponTypeAxe, proto.WeaponType_WeaponTypeSword); talents.HackAndSlash > 0 && mask != core.ProcMaskUnknown {
 		trigger := core.ProcTrigger{ProcMask: mask}
-		effect := rogueProc(character, "Hack and Slash", "extra_attack", rogueHackAndSlash.EffectAt(1).ValueAt(talents.HackAndSlash)/100, trigger, "landed", false)
+		effect := rogueProc(character, "Hack and Slash", "extra_attack", rogueHackAndSlash.EffectAt(3).ValueAt(talents.HackAndSlash)/100, trigger, "landed", false)
 		effect["delay_ns"] = int64(0)
 		effects = append(effects, effect)
 	}

@@ -2,7 +2,8 @@
 //! spent. It rolls the special hit table without a crit; a landed hit applies a bleed lasting
 //! a tick more a point, which snapshots its tick and a share of attack power a point, then the
 //! finisher applies. Each tick reads the attack power share again, ignores armor and rolls
-//! the tick outcome the client row states.
+//! the tick outcome the client row states. Hemorrhage raises each tick it is up for, as damage
+//! the target takes from the rogue.
 
 use crate::core::fight::{
     melee::PhysicalOutcome, Agent, AuraRef, DotId, Fight, Outcome, Side, SpellId,
@@ -59,19 +60,32 @@ impl Rupture {
         snapshot
     }
 
-    /// The dot's `OnSnapshot`: Hemorrhage scales the flat damage and the share alike.
+    /// The target debuff's `AttachDDBC` handler while Hemorrhage is up on the target the tick
+    /// lands on: it counts on every tick that lands, not only on a Rupture cast under it.
+    pub(crate) fn caster_multiplier<A: Agent>(
+        &self,
+        fight: &Fight<A>,
+        spell: SpellId,
+        target: Side,
+    ) -> Option<f64> {
+        let debuff = self.hemorrhage?;
+        fight.aura(fight.aura_on(debuff, target)).active.then(|| {
+            if fight.spells[spell].class_spell.as_deref() == Some("rupture") {
+                self.hemorrhage_multiplier
+            } else {
+                1.0
+            }
+        })
+    }
+
+    /// The dot's `OnSnapshot`: the flat damage and the share of attack power a point.
+    /// Hemorrhage is no part of it.
     fn snapshot<A: Agent>(&self, fight: &Fight<A>, points: i32) -> Snapshot {
-        let multiplier = if self.hemorrhage.is_some_and(|aura| fight.aura(aura).active) {
-            self.hemorrhage_multiplier
-        } else {
-            1.0
-        };
-        let share = self.attack_power_shares[points as usize] * multiplier;
+        let share = self.attack_power_shares[points as usize];
         // Go's arm64 build fuses each multiply into its add.
         let flat = self
             .damage_per_combo_point
-            .mul_add(f64::from(points), self.tick_damage)
-            * multiplier;
+            .mul_add(f64::from(points), self.tick_damage);
         let attack_power = fight.melee_attack_power();
         Snapshot {
             base: share.mul_add(attack_power, flat),

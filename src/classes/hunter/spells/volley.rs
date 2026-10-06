@@ -1,9 +1,10 @@
 //! Volley (1510, 14294, 14295), from Go sim/hunter/volley.go: the channel holds the ranged
 //! swing for the rank's duration and applies its area dot on the hunter, which snapshots the
-//! Go literal tick of the rank. Every tick deals the snapshot to each target with
-//! `OutcomeTick`, in unit index order.
+//! Go literal tick of the rank. Every tick is its own ranged damage spell, as the client row
+//! has a ranged defense type and no Cannot Crit, so it rolls the ranged hit and crit tables
+//! on each target, in unit index order, as Multi-Shot does.
 
-use crate::core::fight::{Agent, DotId, Fight, Side, SpellId};
+use crate::core::fight::{melee::PhysicalOutcome, Agent, DotId, Fight, Outcome, Side, SpellId};
 
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct Volley {
@@ -33,7 +34,11 @@ impl Volley {
     pub(crate) fn tick<A: Agent>(&self, fight: &mut Fight<A>, dot: DotId) {
         let spell = fight.dots[dot].spell;
         for position in 0..fight.targets.len() {
-            let result = fight.snapshot_dot_tick_calc_on(dot, Side::target(position));
+            let result = fight.snapshot_dot_tick_calc_with(
+                dot,
+                Side::target(position),
+                Outcome::Table(PhysicalOutcome::RangedHitAndCrit { count: true }),
+            );
             fight.deal_damage(spell, result, true);
         }
     }

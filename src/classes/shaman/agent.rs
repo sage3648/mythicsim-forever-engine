@@ -63,6 +63,10 @@ pub(crate) enum ShamanSpell {
     FrostbrandHit,
     StormstrikeMainHand,
     StormstrikeOffHand,
+    /// Windfury Weapon's special hit of the main hand or the off hand.
+    WindfuryAttack {
+        main_hand: bool,
+    },
     RageOfTheFarseer,
 }
 
@@ -83,7 +87,6 @@ pub(crate) enum ShamanAura {
     FlametongueTotem,
     FlametongueTotemTrigger,
     WindfuryImbue,
-    WindfuryWeaponAttackPower,
     /// The shaman's own Windfury Totem's aura, its dummy aura, its trigger and its charges.
     WindfuryTotem,
     WindfuryTotemDummy,
@@ -202,6 +205,15 @@ impl ShamanAgent {
                     if *spell_id == id.spell_id && id.tag == 0 =>
                 {
                     return Some(ShamanSpell::FrostbrandHit);
+                }
+                Effect::WindfuryWeapon {
+                    main_hand_attack,
+                    off_hand_attack,
+                    ..
+                } if Some(*main_hand_attack) == position || Some(*off_hand_attack) == position => {
+                    return Some(ShamanSpell::WindfuryAttack {
+                        main_hand: Some(*main_hand_attack) == position,
+                    });
                 }
                 _ => {}
             }
@@ -351,14 +363,9 @@ impl ShamanAgent {
                     (aura.clone(), ShamanAura::FlametongueTotem),
                     (trigger_aura.clone(), ShamanAura::FlametongueTotemTrigger),
                 ],
-                Effect::WindfuryWeapon {
-                    trigger_aura,
-                    ap_aura,
-                    ..
-                } => vec![
-                    (trigger_aura.clone(), ShamanAura::WindfuryImbue),
-                    (ap_aura.clone(), ShamanAura::WindfuryWeaponAttackPower),
-                ],
+                Effect::WindfuryWeapon { trigger_aura, .. } => {
+                    vec![(trigger_aura.clone(), ShamanAura::WindfuryImbue)]
+                }
                 Effect::WindfuryTotemSelf {
                     totem_aura,
                     dummy_aura,
@@ -548,6 +555,7 @@ impl ShamanAgent {
                     aura,
                     melee_speed_multiplier,
                     charge_icd_ns,
+                    can_proc_from_procs,
                     ..
                 } => {
                     fight.agent.flurry = Some(flurry::bind(
@@ -556,6 +564,7 @@ impl ShamanAgent {
                         aura,
                         *melee_speed_multiplier,
                         *charge_icd_ns,
+                        *can_proc_from_procs,
                     )?);
                 }
                 Effect::RageOfTheFarseer {
@@ -614,25 +623,19 @@ impl ShamanAgent {
                     trigger_spells,
                     chances,
                     main_hand_spells,
-                    ap_aura,
-                    extra_spell,
-                    off_hand_spell,
-                    spend_spells,
-                    ap_gain_log,
-                    ap_expire_log,
+                    main_hand_attack,
+                    off_hand_attack,
+                    attack_power,
                     blocks_windfury_totem,
                 } => {
                     fight.agent.windfury_weapon = Some(windfury_weapon::bind(
                         &fight,
                         trigger_aura,
-                        ap_aura,
-                        *extra_spell,
-                        *off_hand_spell,
+                        (*main_hand_attack, *off_hand_attack),
+                        *attack_power,
                         trigger_spells,
                         main_hand_spells,
                         chances,
-                        spend_spells,
-                        (ap_gain_log, ap_expire_log),
                         *blocks_windfury_totem,
                     )?);
                 }
@@ -707,6 +710,7 @@ impl ShamanAgent {
                     trigger_aura,
                     aura,
                     melee_crit,
+                    can_proc_from_procs,
                 } => {
                     let melee = (0..fight.spells.len())
                         .filter(|&spell| {
@@ -720,6 +724,7 @@ impl ShamanAgent {
                         aura,
                         *melee_crit,
                         melee,
+                        *can_proc_from_procs,
                     )?);
                 }
                 Effect::ImprovedStormstrike {
@@ -769,7 +774,7 @@ impl ShamanAgent {
         Ok(fight)
     }
 
-    /// Pair each rank with its overload, which rolls its parent's client damage row.
+    /// Pair each rank with its overload, which rolls a client damage row of its own.
     fn bind_overloads(
         fight: &mut Fight<ShamanAgent>,
         cast: ShamanSpell,
@@ -796,9 +801,6 @@ impl ShamanAgent {
                 .collect();
             if copies.is_empty() {
                 return Err(format!("spell {id} has no overload"));
-            }
-            for &copy in &copies {
-                fight.spells[copy].damage_effect = fight.spells[spell].damage_effect;
             }
             fight.agent.overloads[spell] = copies;
         }
@@ -993,6 +995,14 @@ impl Agent for ShamanAgent {
             }
             ShamanSpell::StormstrikeMainHand => stormstrike::strike(fight, spell, target, true),
             ShamanSpell::StormstrikeOffHand => stormstrike::strike(fight, spell, target, false),
+            ShamanSpell::WindfuryAttack { main_hand } => {
+                let state = fight
+                    .agent
+                    .windfury_weapon
+                    .clone()
+                    .expect("Windfury Weapon is bound");
+                state.strike(fight, spell, target, main_hand);
+            }
             ShamanSpell::RageOfTheFarseer => {
                 let aura = fight
                     .agent
@@ -1100,14 +1110,6 @@ impl Agent for ShamanAgent {
                     .expect("Windfury Weapon is bound");
                 state.on_trigger_hit(fight, spell, result);
             }
-            ShamanAura::WindfuryWeaponAttackPower => {
-                let state = fight
-                    .agent
-                    .windfury_weapon
-                    .clone()
-                    .expect("Windfury Weapon is bound");
-                state.on_spend_hit(fight, spell, result);
-            }
             ShamanAura::WindfuryTotemTrigger => {
                 Self::windfury_totem(fight).on_trigger_hit(fight, spell, result);
             }
@@ -1165,14 +1167,6 @@ impl Agent for ShamanAgent {
         result: SpellResult,
     ) {
         match kind {
-            ShamanAura::WindfuryWeaponAttackPower => {
-                let state = fight
-                    .agent
-                    .windfury_weapon
-                    .clone()
-                    .expect("Windfury Weapon is bound");
-                state.spend(fight);
-            }
             ShamanAura::FlurryTrigger => {
                 let state = fight.agent.flurry.expect("Flurry is bound");
                 let white = fight.agent.white[spell];
@@ -1293,14 +1287,6 @@ impl Agent for ShamanAgent {
                     fight.activate_aura(state.trigger);
                 }
             }
-            ShamanAura::WindfuryWeaponAttackPower => {
-                let state = fight
-                    .agent
-                    .windfury_weapon
-                    .clone()
-                    .expect("Windfury Weapon is bound");
-                state.on_ap_gain(fight);
-            }
             ShamanAura::WindfuryTotem => {
                 // Go AttachPeriodicAction with TickImmediately: the first tick is pending now.
                 let now = fight.now;
@@ -1347,14 +1333,6 @@ impl Agent for ShamanAgent {
                 .flurry
                 .expect("Flurry is bound")
                 .on_expire(fight),
-            ShamanAura::WindfuryWeaponAttackPower => {
-                let state = fight
-                    .agent
-                    .windfury_weapon
-                    .clone()
-                    .expect("Windfury Weapon is bound");
-                state.on_ap_expire(fight);
-            }
             ShamanAura::WindfuryTotem => {
                 Self::windfury_totem(fight).on_totem_expire(fight);
                 if let Some(tick) = fight.agent.windfury_totem_tick.take() {

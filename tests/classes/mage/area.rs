@@ -33,14 +33,20 @@ fn first_fight_log(case: &str) -> String {
 
 /// The damage lines of a spell on each target, with their timestamps, in log order.
 fn hits(logs: &str, id: i32, what: &str) -> Vec<(String, usize)> {
+    hits_of(logs, id, &[what])
+}
+
+/// The same for several outcomes at once, still in log order.
+fn hits_of(logs: &str, id: i32, whats: &[&str]) -> Vec<(String, usize)> {
     logs.lines()
         .filter(|line| !line.contains("[DEBUG]"))
         .filter_map(|line| {
             let target = line.find("[Target ")?;
             let rest = &line[target + "[Target ".len()..];
             let number: usize = rest[..rest.find(']')?].parse().ok()?;
-            let marker = format!("{{SpellID: {id}}} {what}");
-            line.contains(&marker)
+            whats
+                .iter()
+                .any(|what| line.contains(&format!("{{SpellID: {id}}} {what}")))
                 .then(|| (line[..line.find(']').unwrap() + 1].to_string(), number))
         })
         .collect()
@@ -84,12 +90,12 @@ fn flamestrike_ticks_on_every_target() {
     assert_eq!(at_first, [1, 2, 3]);
 }
 
-/// Blizzard's tick spell hits every target each period, and Improved Blizzard's chill follows
-/// on each target the tick landed on.
+/// Blizzard's tick spell hits every target each period, and crits like any spell: its tick
+/// rows lack Cannot Crit. Improved Blizzard's chill follows on each target the tick landed on.
 #[test]
 fn blizzard_ticks_hit_every_target_each_period() {
     let logs = first_fight_log("frost-mage-3-targets-blizzard");
-    let ticks = hits(&logs, 1279949, "Hit");
+    let ticks = hits_of(&logs, 1279949, &["Hit", "Crit"]);
     assert!(ticks.len() >= 9, "{logs}");
     for period in ticks[..9].chunks(3) {
         let targets: Vec<usize> = period.iter().map(|(_, target)| *target).collect();
