@@ -150,10 +150,23 @@ pub(crate) enum List {
 
 const LISTS: usize = 9;
 
+/// A Go slice's header as a range loop captures it: which array it reads and how far.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct Snapshot {
+    generation: usize,
+    pub(crate) len: usize,
+}
+
 #[derive(Clone, Debug, Default)]
 pub(crate) struct CallbackList {
+    /// The slice's array, as long as its capacity.
     backing: Vec<usize>,
     len: usize,
+    /// How many times an append has outgrown the array. A range loop that began before one
+    /// keeps reading the array it began with, which later swaps no longer change.
+    generation: usize,
+    /// The arrays an append outgrew, by generation.
+    retired: Vec<Vec<usize>>,
 }
 
 impl CallbackList {
@@ -161,12 +174,18 @@ impl CallbackList {
         self.len = 0;
     }
 
+    /// Go `append` of one element: a full array is replaced by one of twice the capacity (one,
+    /// to begin with) holding a copy of the elements.
     fn push(&mut self, aura: usize) -> usize {
-        if self.len < self.backing.len() {
-            self.backing[self.len] = aura;
-        } else {
-            self.backing.push(aura);
+        if self.len == self.backing.len() {
+            let capacity = (self.backing.len() * 2).max(1);
+            let mut grown = vec![0; capacity];
+            grown[..self.len].copy_from_slice(&self.backing[..self.len]);
+            self.retired
+                .push(std::mem::replace(&mut self.backing, grown));
+            self.generation += 1;
         }
+        self.backing[self.len] = aura;
         self.len += 1;
         self.len - 1
     }
@@ -179,13 +198,20 @@ impl CallbackList {
     }
 
     /// The slice header a Go range loop would capture now.
-    pub(crate) fn snapshot_len(&self) -> usize {
-        self.len
+    pub(crate) fn snapshot(&self) -> Snapshot {
+        Snapshot {
+            generation: self.generation,
+            len: self.len,
+        }
     }
 
     /// What a Go range loop reads at `index`, including stale entries past the length.
-    pub(crate) fn read(&self, index: usize) -> usize {
-        self.backing[index]
+    pub(crate) fn read(&self, snapshot: Snapshot, index: usize) -> usize {
+        if snapshot.generation == self.generation {
+            self.backing[index]
+        } else {
+            self.retired[snapshot.generation][index]
+        }
     }
 
     pub(crate) fn live(&self) -> &[usize] {
@@ -924,9 +950,9 @@ impl<A: Agent> Fight<A> {
     pub(crate) fn on_cast_complete(&mut self, spell: SpellId) {
         let list = List::CastComplete as usize;
         let side = self.spells[spell].caster;
-        let length = self.trackers[side.index()].lists[list].snapshot_len();
-        for position in 0..length {
-            let index = self.trackers[side.index()].lists[list].read(position);
+        let snapshot = self.trackers[side.index()].lists[list].snapshot();
+        for position in 0..snapshot.len {
+            let index = self.trackers[side.index()].lists[list].read(snapshot, position);
             let aura = AuraRef { side, index };
             match self.aura(aura).behavior {
                 AuraBehavior::Class(kind) => A::on_cast_complete(self, aura, kind, spell),
@@ -942,9 +968,9 @@ impl<A: Agent> Fight<A> {
     /// Go `auraTracker.OnApplyEffects` on the caster. No active check, as in Go.
     pub(crate) fn on_apply_effects(&mut self, spell: SpellId, target: Side) {
         let list = List::ApplyEffects as usize;
-        let length = self.trackers[Side::Player.index()].lists[list].snapshot_len();
-        for position in 0..length {
-            let index = self.trackers[Side::Player.index()].lists[list].read(position);
+        let snapshot = self.trackers[Side::Player.index()].lists[list].snapshot();
+        for position in 0..snapshot.len {
+            let index = self.trackers[Side::Player.index()].lists[list].read(snapshot, position);
             let aura = AuraRef {
                 side: Side::Player,
                 index,
@@ -960,9 +986,9 @@ impl<A: Agent> Fight<A> {
     pub(crate) fn on_periodic_damage(&mut self, spell: SpellId, result: &SpellResult) {
         let side = self.spells[spell].caster;
         let list = List::PeriodicDamageDealt as usize;
-        let length = self.trackers[side.index()].lists[list].snapshot_len();
-        for position in 0..length {
-            let index = self.trackers[side.index()].lists[list].read(position);
+        let snapshot = self.trackers[side.index()].lists[list].snapshot();
+        for position in 0..snapshot.len {
+            let index = self.trackers[side.index()].lists[list].read(snapshot, position);
             let aura = AuraRef { side, index };
             if let AuraBehavior::Class(kind) = self.aura(aura).behavior {
                 A::on_periodic_damage_dealt(self, aura, kind, spell, result);
@@ -974,9 +1000,9 @@ impl<A: Agent> Fight<A> {
     pub(crate) fn on_heal_dealt(&mut self, spell: SpellId, result: &SpellResult) {
         let side = self.spells[spell].caster;
         let list = List::HealDealt as usize;
-        let length = self.trackers[side.index()].lists[list].snapshot_len();
-        for position in 0..length {
-            let index = self.trackers[side.index()].lists[list].read(position);
+        let snapshot = self.trackers[side.index()].lists[list].snapshot();
+        for position in 0..snapshot.len {
+            let index = self.trackers[side.index()].lists[list].read(snapshot, position);
             let aura = AuraRef { side, index };
             if !self.aura(aura).active {
                 continue;
@@ -1001,9 +1027,9 @@ impl<A: Agent> Fight<A> {
             // Listeners of the caster's hits, as opposed to the hits its target takes.
             let dealt = list == List::SpellHitDealt;
             let list = list as usize;
-            let length = self.trackers[side.index()].lists[list].snapshot_len();
-            for position in 0..length {
-                let index = self.trackers[side.index()].lists[list].read(position);
+            let snapshot = self.trackers[side.index()].lists[list].snapshot();
+            for position in 0..snapshot.len {
+                let index = self.trackers[side.index()].lists[list].read(snapshot, position);
                 let aura = AuraRef { side, index };
                 if !self.aura(aura).active {
                     continue;
@@ -1425,5 +1451,47 @@ impl<A: Agent> Fight<A> {
             AuraBehavior::Class(kind) => A::on_delayed_proc(self, aura, kind, spell, result),
             _ => {}
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Go's append doubles a full array and copies it, so a range loop that began on the old
+    /// array keeps reading the entries it held, while swaps made afterwards change the new one.
+    #[test]
+    fn a_loop_that_began_before_an_append_outgrew_the_array_keeps_the_old_one() {
+        let mut list = CallbackList::default();
+        for aura in 0..4 {
+            list.push(aura);
+        }
+        let before = list.snapshot();
+        // The array holds four and is full: this append replaces it.
+        list.push(4);
+        // Removing the aura at 1 moves the last into its place in the new array only.
+        assert_eq!(list.swap_remove(1), Some(4));
+        assert_eq!(list.read(before, 1), 1);
+        assert_eq!(list.read(list.snapshot(), 1), 4);
+        // A loop that begins after the append reads the new array.
+        let after = list.snapshot();
+        list.push(5);
+        assert_eq!(list.read(after, 2), 2);
+    }
+
+    /// An append that finds room writes into the array in place, so loops see it.
+    #[test]
+    fn an_append_with_room_writes_in_place() {
+        let mut list = CallbackList::default();
+        for aura in 0..3 {
+            list.push(aura);
+        }
+        // Three entries in an array of four.
+        let before = list.snapshot();
+        assert_eq!(list.swap_remove(0), Some(2));
+        assert_eq!(list.read(before, 0), 2);
+        list.clear();
+        assert_eq!(list.push(9), 0);
+        assert_eq!(list.read(list.snapshot(), 0), 9);
     }
 }

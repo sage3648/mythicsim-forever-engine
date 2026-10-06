@@ -313,9 +313,9 @@ impl<A: Agent> Fight<A> {
     fn on_enemy_hit_taken(&mut self, result: &SpellResult) {
         let side = Side::Player;
         let list = super::aura::List::SpellHitTaken as usize;
-        let length = self.trackers[side.index()].lists[list].snapshot_len();
-        for position in 0..length {
-            let index = self.trackers[side.index()].lists[list].read(position);
+        let snapshot = self.trackers[side.index()].lists[list].snapshot();
+        for position in 0..snapshot.len {
+            let index = self.trackers[side.index()].lists[list].read(snapshot, position);
             let aura = super::AuraRef { side, index };
             if !self.aura(aura).active {
                 continue;
