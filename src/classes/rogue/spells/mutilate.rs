@@ -1,7 +1,8 @@
 //! Mutilate, from Go sim/rogue/talents_assassination.go `registerMutilate`: with two daggers,
 //! the parent rolls the special hit table without a crit. A landed roll gives two combo points,
-//! then casts the off hand hit and the main hand hit; a missed one refunds most of its energy.
-//! The outcome is dealt last. Each hit adds the rank's flat damage to normalized weapon damage
+//! then casts the main hand hit and the off hand hit; a missed one refunds most of its energy.
+//! The outcome is dealt last. The cast deals no damage itself, so nothing that hears a damaging
+//! hit hears it: poisons and on hit effects roll on the two strikes only. Each hit adds the rank's flat damage to normalized weapon damage
 //! on the weapon special table, harder while one of the rogue's lingering poisons is on the
 //! target.
 
@@ -30,8 +31,9 @@ impl Mutilate {
         if result.landed() {
             let metrics = combo_point_metrics(fight, spell);
             fight.add_combo_points(self.combo_points, metrics);
-            fight.cast(self.off_hand, target);
+            // Main hand first, as the client orders the two strikes.
             fight.cast(self.main_hand, target);
+            fight.cast(self.off_hand, target);
         } else {
             fight.issue_refund(spell);
         }

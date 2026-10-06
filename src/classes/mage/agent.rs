@@ -347,9 +347,11 @@ impl MageAgent {
                     spell_id,
                     share,
                     num_ticks,
+                    can_proc_from_procs,
                     ..
                 } => {
-                    let bound = ignite::bind(&fight, *spell_id, *share, *num_ticks)?;
+                    let bound =
+                        ignite::bind(&fight, *spell_id, *share, *num_ticks, *can_proc_from_procs)?;
                     fight.agent.ignite = Some(Rc::new(bound));
                 }
                 Effect::Combustion {
