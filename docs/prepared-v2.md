@@ -310,6 +310,9 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `potion_resource` | sim/core/consumes.go | A potion's instant rage or mana gains, rolled under its name, and its temporary stat aura with the lines it logs |
 | `player_damage_taken` | sim/warrior/talents_fury.go, recklessness.go | The auras that multiply the player's damage taken while up, and each multiplier from client data |
 | `extra_attack_proc` | sim/common/classic/items_weapons.go, common/forever/items_trinkets.go | Ironfoe's and the Hand of Justice's chance on landed melee hits, Go literals, and how many extra main hand attacks each grants |
+| `diamond_flask` | sim/warrior/items.go | The Diamond Flask (item 20130), registered for any class that wears it: a channel with no cast time that is a self hot of five ticks, whose last tick activates a Strength aura for a minute. The effect holds the aura, every stat it changes while active, computed by Go, and its gain and expiry lines; the hot is the spell's own dot. The major cooldown never activates on its own, so a rotation or a prepull casts it, also when the rotation's own cast took it from the major cooldowns |
+| `player_movement` | sim/core/movement.go | Written when the prepull moves: the player's movement speed multiplier after the reset, and every aura that could change it other than the class's dash (the passive and active movement speed categories, Elemental Blessing), which makes the input unsupported |
+| `warrior_charge` | sim/warrior/charge.go | The cast before the pull, in Battle Stance or in Defensive Stance with Vanguard: its rage with Improved Charge, the dash aura that triples the movement speed while it is up, the 3.5 yards of overshoot inside the spell's minimum range and that range; the aura ends with the movement |
 | `warrior_stances` | sim/warrior/stances.go | The starting stance, each stance's cast and aura, and the rage a stance change keeps |
 | `exclusive_category` | sim/core/exclusive_effect.go | A single aura category on a unit, with each member aura's bid and spell in registration order: a stronger or longer-lasting member refuses a newcomer, and a winner deactivates the member it replaces. A stacking member bids its per-stack value times its stacks, set on every stack change; the target's major armor category also carries the target's armor at each stack count of its active member, and a member that does not stack, as the rogue's Expose Armor, whose class sets its bid, takes the bid off the armor with no stacks |
 | `pseudo_stat_auras` | sim/warrior/stances.go, sim/paladin/talents_protection.go | The auras that multiply the player's threat, damage taken or damage dealt while up, and each multiplier from client data; Defiance follows Defensive Stance's own with a shield |
@@ -500,7 +503,8 @@ as the engine consumes more fields.
 
 The rotation subset covers `castSpell`, `castFriendlySpell` at the current target or at the
 player (the first player of the raid, or the unit itself), `autocastOtherCooldowns`, `strictSequence` and
-`sequence` of casts, `channelSpell` with `interruptIf` and `allowRecast`, constant-time prepull casts,
+`sequence` of casts, `channelSpell` with `interruptIf` and `allowRecast`, constant-time prepull casts
+and moves,
 `cmp` with any comparison operator, `and`, `or`, `not`, `const`, `currentMana`,
 `currentManaPercent`, `currentHealthPercent` of the player, `currentEnergy`, `maxEnergy`, `currentComboPoints`,
 `timeToNextEnergyTick`, `currentRage`, `isExecutePhase`, `currentTime`, `remainingTime`, `remainingTimePercent`, `numberTargets`,
@@ -512,7 +516,14 @@ the current target), `dotIsActive`,
 shot's, `spellCanCast`, whose cost check has Go's side effects, `spellCurrentCost`,
 `autoTimeToNext` and `autoSwingTime` for any auto attack kind, and `multidot` of a dot
 spell on the one supported target. A prepull `activateAura` activates a player aura with
-Go's log line and internal cooldown. Action IDs may carry a rank, which Go ignores. A
+Go's log line and internal cooldown. A prepull `move` to a constant range runs as Go's
+`APLActionMove` does before the pull, unchecked: the player runs at seven yards a second times
+its movement speed multiplier, a step of the Movement aura's stacks a yard, its position read
+lazily when the rotation next runs or another move starts, so a cast that checks the range
+before then reads the old one. Its melee swings stop and start with the weapon's range, a cast
+with a cast time fails while the player moves, and the rotation does not wait for the GCD. It
+is supported for a Warrior, whose Charge spends the dash; any other class, a ranged auto swing,
+or an aura that changes the speed is refused. A `move` in the priority list is unsupported. Action IDs may carry a rank, which Go ignores. A
 strict sequence controls the rotation as Go's does, including the sequence flag its
 readiness check leaves set and the hook that advances it when a queued cast fires; a
 sequence runs one step each time it is ready, inside the sequence flag, and stops when
@@ -521,7 +532,8 @@ check of whether the rotation would recast the same channel. `auraIsActive` may 
 `GetSourceUnit` resolves it; the potion action casts the first combat potion, as Go
 `GetAPLSpell` does. The exporter records how
 many prepull actions Go registered; a count that differs
-from the rotation's means a class or item registered its own, which is unsupported. A spell
+from the rotation's means a class or item registered its own, which is unsupported; Go at
+this revision registers none beside the rotation's and an item swap's. A spell
 or dot the character lacks drops its term, as in Go. `math` follows Go's operand types,
 getters and wrapping arithmetic; math Go would read with a getter its operand lacks, and
 so panic on, is unsupported. A priority item whose condition can never hold against the
