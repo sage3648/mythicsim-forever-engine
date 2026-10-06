@@ -28,9 +28,10 @@ impl Rake {
             fight.add_combo_points(1, combo);
             // Go Dot.Apply: the running copy ends, the dot snapshots, then it starts again.
             let dot = fight.spells[spell].dot.expect("Rake has a dot");
+            let dot = fight.dot_on(dot, target);
             let aura = fight.dots[dot].aura;
             fight.deactivate_aura(aura);
-            fight.agent.rake_snapshot = self.tick_base;
+            fight.agent.rake_snapshot.set(dot, self.tick_base);
             let power = self.expected_tick(fight, spell, target, dot);
             if fight.log.is_some() {
                 let line = format!("{} Snapshot Power: {power:.1}", self.short_name);
@@ -63,7 +64,7 @@ impl Rake {
     pub(crate) fn tick(&self, fight: &mut Fight<DruidAgent>, dot: DotId) {
         let state = &fight.dots[dot];
         let (spell, side, multiplier) = (state.spell, state.side, state.periodic_damage_multiplier);
-        let base = fight.agent.rake_snapshot;
+        let base = fight.agent.rake_snapshot.get(dot);
         let attacker = fight.attacker_multiplier(spell, true) * multiplier;
         let result = fight.calc_physical_periodic(spell, side, base, attacker, self.tick_can_crit);
         fight.deal_damage(spell, result, true);

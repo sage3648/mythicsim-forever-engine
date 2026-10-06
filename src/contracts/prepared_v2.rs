@@ -1471,6 +1471,19 @@ pub enum Effect {
         spell: usize,
         flat_damage: f64,
     },
+    /// Swipe: a flat hit plus a share of the attack power on each of the first three targets.
+    Swipe {
+        spell: usize,
+        flat_damage: f64,
+        attack_power_coefficient: f64,
+    },
+    /// Hurricane's channel: each period casts the triggered tick spell, a hit-checked fixed
+    /// amount on every target.
+    Hurricane {
+        spell_id: i32,
+        tick_spell_id: i32,
+        tick_base: f64,
+    },
     /// Barkskin: a cooldown whose aura's physical damage taken cut is a stat aura; cast in a
     /// fight it restarts the main hand swing.
     Barkskin {
@@ -3804,6 +3817,8 @@ impl Effect {
             Effect::Maul { .. } => "maul",
             Effect::Lacerate { .. } => "lacerate",
             Effect::PrimalBite { .. } => "primal_bite",
+            Effect::Swipe { .. } => "swipe",
+            Effect::Hurricane { .. } => "hurricane",
             Effect::NaturalReaction { .. } => "natural_reaction",
             Effect::Barkskin { .. } => "barkskin",
             Effect::NaturesBounty { .. } => "natures_bounty",

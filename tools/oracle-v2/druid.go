@@ -46,6 +46,8 @@ var (
 	wrathLadder         = spelldata.Ranked(5176, 5177, 5178, 5179, 5180, 6780, 8905, 9912)
 	moonfireLadder      = spelldata.Ranked(8921, 8924, 8925, 8926, 8927, 8928, 8929, 9833, 9834, 9835)
 	insectSwarmLadder   = spelldata.Ranked(5570, 24974, 24975, 24976, 24977)
+	hurricaneLadder     = spelldata.Ranked(16914, 17401, 17402)
+	hurricaneTriggered  = spelldata.Ranked(1278965, 1278968, 1278759)
 	innervateLadder     = spelldata.Ranked(29166)
 	moonkinFormLadder   = spelldata.Ranked(24858)
 	omenOfClarity       = spelldata.Ranked(16864)
@@ -244,6 +246,12 @@ func druidEffects(agent core.Agent, character *core.Character) []map[string]any 
 			}
 		}
 		effects = append(effects, map[string]any{"kind": "insect_swarm", "rank": periodicRank(rank), "debuff_aura": debuff})
+	}
+	if d.Hurricane != nil { // hurricane.go: the channel casts the tick spell, a fixed hit on every target
+		effects = append(effects, map[string]any{
+			"kind": "hurricane", "spell_id": hurricaneLadder.Highest().ID, "tick_spell_id": hurricaneTriggered.Highest().ID,
+			"tick_base": hurricaneTriggered.Highest().DamageEffect().Average(core.CharacterLevel),
+		})
 	}
 	// innervate.go and buffs/drivers.go AttachInnervateRegen: Go literals.
 	if aura := unit.GetAura("Innervates (Player)"); aura != nil {

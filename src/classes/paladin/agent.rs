@@ -907,7 +907,7 @@ impl Agent for PaladinAgent {
             PaladinSpell::LightsVigilStrike => holy::vigil_strike(fight, spell, target),
             PaladinSpell::HolyWrath => {
                 let hits = fight.agent.undead_or_demon;
-                strikes::holy_wrath(fight, spell, target, hits);
+                strikes::holy_wrath(fight, spell, hits);
             }
             PaladinSpell::Consecration(_) => strikes::consecration(fight, spell, target),
             PaladinSpell::HolyShock(rank) => {
@@ -1003,10 +1003,10 @@ impl Agent for PaladinAgent {
         twist_of_light::reset(fight);
     }
 
-    fn caster_damage_multiplier(fight: &Fight<Self>, spell: SpellId, _target: Side) -> Option<f64> {
+    fn caster_damage_multiplier(fight: &Fight<Self>, spell: SpellId, target: Side) -> Option<f64> {
         // Consecrated Ground's handler: Holy spells, while the target is marked.
         let (aura, multiplier) = fight.agent.consecrated_ground?;
-        fight.aura(aura).active.then(|| {
+        fight.aura(fight.aura_on(aura, target)).active.then(|| {
             if fight.spells[spell].school & 2 != 0 {
                 multiplier
             } else {

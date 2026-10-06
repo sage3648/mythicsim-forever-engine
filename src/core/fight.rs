@@ -4081,11 +4081,14 @@ impl<A: Agent> Fight<A> {
             self.reset_rage();
         }
         // Go AutoAttacks.reset: an enemy with a melee swing rolls its opening offset. Only the
-        // first target can be tanked; the others never swing, so their rolls go unused.
+        // first target can be tanked; the others never swing, but keep the timer their parry
+        // haste reads.
         if side.is_target() && self.config.target_auto_swing_melee {
             let roll = self.random("Enemy Swing Offset");
-            if side == Side::Target {
-                self.reset_enemy_attack(roll);
+            match side {
+                Side::Target => self.reset_enemy_attack(roll),
+                Side::Extra(extra) => self.reset_extra_enemy_attack(usize::from(extra), roll),
+                _ => {}
             }
         }
         self.rotation_reset(side);

@@ -88,6 +88,9 @@ pub(crate) struct AutoAttacks {
     pub(crate) oh: WeaponAttack,
     pub(crate) ranged: WeaponAttack,
     pub(crate) enemy: WeaponAttack,
+    /// The main hand timers of the targets past the first, which never swing at the player but
+    /// whose parry haste reads and moves them, by position among the copies.
+    pub(crate) extra_enemies: Vec<WeaponAttack>,
     /// Go `sim.weaponAttacks`, in the order swings were added, by unit. The player's copy
     /// holds the simulation's list; a pet's stays empty.
     attacks: WeaponAttackList,
@@ -410,17 +413,7 @@ impl<A: Agent> Fight<A> {
         let Some(enemy) = self.enemy.as_mut() else {
             // An untanked target only keeps the timer, which its parry haste reads.
             if let Some((speed, haste)) = self.untanked_swing {
-                let attack = &mut self.autos.enemy;
-                attack.weapon.swing_speed = speed;
-                attack.enabled = false;
-                attack.update_swing_duration(haste);
-                attack.previous_swing = -attack.cur_swing_duration;
-                attack.swing_at = 0;
-                attack.natural_ready_at = 0;
-                let offset = (roll * attack.cur_swing_duration as f64) as i64;
-                attack.previous_swing += offset;
-                attack.swing_at += offset;
-                attack.natural_ready_at += offset;
+                Self::open_enemy_swing(&mut self.autos.enemy, speed, haste, roll);
             }
             return;
         };
@@ -428,7 +421,25 @@ impl<A: Agent> Fight<A> {
         enemy.melee_speed_multiplier = enemy.values.melee_speed_multiplier.unwrap_or(1.0);
         let speed = enemy.values.swing_speed;
         let haste = self.enemy_melee_haste();
-        let attack = &mut self.autos.enemy;
+        Self::open_enemy_swing(&mut self.autos.enemy, speed, haste, roll);
+    }
+
+    /// The same for a target past the first, which never swings: only its timer, which its
+    /// parry haste reads, from the roll Go draws at its reset.
+    pub(crate) fn reset_extra_enemy_attack(&mut self, extra: usize, roll: f64) {
+        let Some((speed, haste)) = self.untanked_swing else {
+            return;
+        };
+        if self.autos.extra_enemies.len() <= extra {
+            self.autos
+                .extra_enemies
+                .resize_with(extra + 1, WeaponAttack::default);
+        }
+        Self::open_enemy_swing(&mut self.autos.extra_enemies[extra], speed, haste, roll);
+    }
+
+    /// A target's main hand at its reset: disabled, opening at the roll's point of its swing.
+    fn open_enemy_swing(attack: &mut WeaponAttack, speed: f64, haste: f64, roll: f64) {
         attack.weapon.swing_speed = speed;
         attack.enabled = false;
         attack.update_swing_duration(haste);
