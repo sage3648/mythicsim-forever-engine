@@ -119,11 +119,7 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         ],
         Effect::Stormstrike { aura, .. } => vec![("target", aura)],
         Effect::LightningShield { aura, .. } => vec![("player", aura)],
-        Effect::WindfuryWeapon {
-            trigger_aura,
-            ap_aura,
-            ..
-        } => vec![("player", trigger_aura), ("player", ap_aura)],
+        Effect::WindfuryWeapon { trigger_aura, .. } => vec![("player", trigger_aura)],
         Effect::FlametongueTotem {
             aura, trigger_aura, ..
         } => vec![("player", aura), ("player", trigger_aura)],

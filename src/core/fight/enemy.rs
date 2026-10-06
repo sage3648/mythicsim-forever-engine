@@ -220,6 +220,14 @@ impl<A: Agent> Fight<A> {
             metrics.total_crush_damage += result.damage;
         }
         metrics.total_threat += result.threat;
+        // Go `recordDamageRange`: a landed hit that is not blocked or crushed.
+        if result.landed() && result.damage > 0.0 && !blocked {
+            if result.crit() {
+                metrics.crit_range.add(result.damage);
+            } else if result.outcome & OUTCOME_CRUSH == 0 {
+                metrics.hit_range.add(result.damage);
+            }
+        }
         if self.log.is_some() {
             let line = format!(
                 "[{}] {} {} (SpellSchool: {}). (Threat: {:.3})",
@@ -427,6 +435,8 @@ impl<A: Agent> Fight<A> {
         totals.blocked_crit_damage += metrics.total_blocked_crit_damage;
         totals.crush_damage += metrics.total_crush_damage;
         totals.threat += metrics.total_threat;
+        totals.ranges[0].merge(&metrics.hit_range);
+        totals.ranges[1].merge(&metrics.crit_range);
         self.totals.player_dtps.total += metrics.total_damage;
         self.totals.target_dps.total += metrics.total_damage;
         self.totals.target_threat.total += metrics.total_threat;

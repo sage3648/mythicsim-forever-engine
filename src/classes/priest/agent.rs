@@ -438,6 +438,7 @@ impl PriestAgent {
                     tick_base,
                     spirit_divisor,
                     metrics_action_id,
+                    no_threat,
                     ..
                 } => {
                     let spell = find_spell(&fight, *spell_id)
@@ -455,6 +456,7 @@ impl PriestAgent {
                         spirit,
                         *spirit_divisor,
                         metrics_action_id,
+                        *no_threat,
                     )?;
                     fight.agent.dark_sacrifice = Some(Rc::new(bound));
                 }

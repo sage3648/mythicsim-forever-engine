@@ -475,6 +475,7 @@ impl WarlockAgent {
                     base_amount,
                     mana_multiplier,
                     pet_mana_share,
+                    no_threat,
                 } => {
                     let bound = life_tap::bind(
                         &mut fight,
@@ -484,6 +485,7 @@ impl WarlockAgent {
                         spirit,
                         *pet_mana_share,
                         demon_side,
+                        *no_threat,
                     );
                     fight.agent.life_tap = Some(bound);
                 }

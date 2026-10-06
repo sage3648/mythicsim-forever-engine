@@ -1,6 +1,7 @@
 //! Unbridled Wrath (12322, rage from 12964), from Go sim/warrior/talents_fury.go
 //! `registerUnbridledWrath`: a proc trigger on landed white hits that dealt damage, which
-//! grants rage a spell batch window later, doubled for a two-handed weapon.
+//! grants rage a spell batch window later. Every weapon gives the same rage: the client
+//! hotfix 112347 dropped the doubling for a two-handed weapon.
 
 use crate::core::fight::{Agent, AuraRef, Fight, SpellId, SpellResult};
 
@@ -9,7 +10,6 @@ pub(crate) struct UnbridledWrath {
     pub(crate) trigger: AuraRef,
     pub(crate) proc_chance: f64,
     pub(crate) rage: f64,
-    pub(crate) two_handed: bool,
     /// Go `NewRageMetrics(actionID)`.
     pub(crate) metrics: usize,
 }
@@ -33,6 +33,5 @@ pub(crate) fn on_hit<A: Agent>(
 
 /// The delayed handler.
 pub(crate) fn grant<A: Agent>(fight: &mut Fight<A>, params: UnbridledWrath) {
-    let rage = params.rage * if params.two_handed { 2.0 } else { 1.0 };
-    fight.add_rage(rage, params.metrics);
+    fight.add_rage(params.rage, params.metrics);
 }

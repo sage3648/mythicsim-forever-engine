@@ -755,13 +755,12 @@ impl<A: Agent> Fight<A> {
                 label,
                 min,
                 spread,
-                reduction,
                 metrics,
                 ..
             } => {
                 // Go's TernaryFloat64 evaluates both arguments, so the roll always happens.
                 let rolled = self.random(&label) * spread;
-                let gain = min + if spread > 1.0 { rolled } else { spread } - reduction;
+                let gain = min + if spread > 1.0 { rolled } else { spread };
                 // Go ExecuteResourceGain for energy, which gains nothing on a unit without the
                 // bar.
                 if self.energy.is_some() {
@@ -974,6 +973,7 @@ impl<A: Agent> Fight<A> {
             previous_events: 0,
             previous_actual_gain: 0.0,
             is_mana_regen: false,
+            no_threat: false,
         });
         self.resources.len() - 1
     }
@@ -1292,7 +1292,7 @@ impl<A: Agent> Fight<A> {
                 min,
                 spread,
                 selected,
-                reduction,
+                spill,
                 ..
             } => {
                 // Go reads an empty energy bar on a class without one, so it never fires.
@@ -1300,7 +1300,7 @@ impl<A: Agent> Fight<A> {
                     .energy
                     .as_ref()
                     .map_or((0.0, 0.0), |bar| (bar.max, bar.current));
-                max - current >= (min + spread) - reduction && *selected
+                max - current >= (min + spread) - spill && *selected
             }
             SpellBehavior::EnergizeOnUse { whole, .. } => max - mana >= *whole,
             SpellBehavior::PeriodicMana { min_deficit, .. } => max - mana >= *min_deficit,

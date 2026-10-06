@@ -27,16 +27,21 @@ pub(crate) fn bind<A: Agent>(
     spirit: f64,
     pet_mana_share: f64,
     demon: Option<Side>,
+    no_threat: bool,
 ) -> LifeTap {
     let id = ActionId {
         spell_id,
         ..ActionId::default()
     };
     let metrics = fight.new_mana_metrics(id.clone());
+    fight.resources[metrics].no_threat = no_threat;
     // Go registers each demon's metrics with the spell; only the summoned one is simulated.
     let pet = demon
         .filter(|_| pet_mana_share > 0.0)
         .map(|demon| (pet_mana_share, fight.new_mana_metrics_of(demon, id)));
+    if let Some((_, pet_metrics)) = pet {
+        fight.resources[pet_metrics].no_threat = no_threat;
+    }
     LifeTap {
         base_amount,
         mana_multiplier,

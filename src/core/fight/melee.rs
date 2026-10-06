@@ -44,9 +44,6 @@ pub(crate) struct WeaponAttack {
     pub(crate) natural_ready_at: i64,
     /// Go `extraAttacks`: extra attacks still owed after the one pulled to now.
     pub(crate) extra_attacks: i32,
-    /// Go `extraSwings` and `extraSpell`: the next swings are booked to the granting spell.
-    pub(crate) extra_swings: i32,
-    pub(crate) extra_spell: Option<SpellId>,
     /// Go `pendingSwingDelay`: how late the last swing fired against `natural_ready_at`.
     pub(crate) pending_swing_delay: i64,
     cur_swing_speed: f64,
@@ -309,7 +306,6 @@ impl<A: Agent> Fight<A> {
             attack.swing_at = NEVER_EXPIRES;
         }
         autos.mh.extra_attacks = 0;
-        autos.mh.extra_swings = 0;
         if autos.melee {
             autos.mh.update_swing_duration(haste);
             autos.mh.previous_swing = -autos.mh.cur_swing_duration;
@@ -590,14 +586,6 @@ impl<A: Agent> Fight<A> {
             .attack(hand)
             .spell
             .expect("an enabled weapon attack has a spell");
-        // Go: extra swings granted with a spell are booked to it.
-        let attack = self.autos.attack(hand);
-        if attack.extra_swings > 0 {
-            attack.extra_swings -= 1;
-            if let Some(extra) = attack.extra_spell {
-                spell = extra;
-            }
-        }
         // Go: with a replacer set, the rotation runs first, then the class may replace the
         // main hand swing, as Heroic Strike does.
         // Prowl's replacement returns the swing itself, so only the rotation runs.
@@ -716,20 +704,6 @@ impl<A: Agent> Fight<A> {
         // Go ExtraMHAttack.
         self.autos.mh.swing_at = self.now;
         self.autos.min_time = self.autos.min_time.min(self.now);
-    }
-
-    /// Go `AutoAttacks.ExtraMHAttacksFrom`: extra attacks booked to `spell`; attacks granted
-    /// while earlier ones are still owed keep the first grant's spell.
-    pub(crate) fn extra_mh_attacks_from(&mut self, count: i32, spell: SpellId) {
-        if count <= 0 || !self.autos.melee || !self.autos.mh.enabled {
-            return;
-        }
-        self.extra_mh_attacks(count);
-        let mh = &mut self.autos.mh;
-        if mh.extra_swings == 0 {
-            mh.extra_spell = Some(spell);
-        }
-        mh.extra_swings = mh.extra_attacks + 1;
     }
 
     /// Go `Unit.ReactToEvent(sim, false, false)`: the rotation runs, then evaluates again now.

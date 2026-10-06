@@ -375,14 +375,14 @@ pub(crate) enum SpellBehavior<S> {
         selected: bool,
         regen_window: f64,
     },
-    /// Go consumes.go conjured item restoring energy, such as Thistle Tea, less its level
-    /// reduction.
+    /// Go consumes.go conjured item restoring energy, such as Thistle Tea: the cast fires once
+    /// all but `spill` of the gain fits in the bar.
     ConjuredEnergy {
         label: String,
         min: f64,
         spread: f64,
         selected: bool,
-        reduction: f64,
+        spill: f64,
         metrics: usize,
     },
     /// Go consumes.go Goblin Sapper Charge: a Fire hit on the target and one on the player.
@@ -568,6 +568,45 @@ pub(crate) struct Cost {
     pub(crate) additive_percent_modifier: f64,
 }
 
+/// Go `DamageRange` (patch 92): the count, total, smallest and largest of one kind of landed
+/// damage event.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub(crate) struct DamageRange {
+    pub(crate) count: i32,
+    pub(crate) total: f64,
+    pub(crate) min: f64,
+    pub(crate) max: f64,
+}
+
+impl DamageRange {
+    /// Go `DamageRange.add`.
+    pub(crate) fn add(&mut self, damage: f64) {
+        if self.count == 0 || damage < self.min {
+            self.min = damage;
+        }
+        if self.count == 0 || damage > self.max {
+            self.max = damage;
+        }
+        self.count += 1;
+        self.total += damage;
+    }
+
+    /// Go `DamageRange.merge`.
+    pub(crate) fn merge(&mut self, other: &DamageRange) {
+        if other.count == 0 {
+            return;
+        }
+        if self.count == 0 || other.min < self.min {
+            self.min = other.min;
+        }
+        if self.count == 0 || other.max > self.max {
+            self.max = other.max;
+        }
+        self.count += other.count;
+        self.total += other.total;
+    }
+}
+
 /// Go `SpellMetrics` for one target during one iteration.
 #[derive(Clone, Copy, Debug, Default)]
 pub(crate) struct SpellMetrics {
@@ -603,6 +642,11 @@ pub(crate) struct SpellMetrics {
     pub(crate) total_cast_time: i64,
     pub(crate) total_healing: f64,
     pub(crate) total_crit_healing: f64,
+    /// The spread of each kind of landed damage event (patch 92).
+    pub(crate) hit_range: DamageRange,
+    pub(crate) crit_range: DamageRange,
+    pub(crate) tick_range: DamageRange,
+    pub(crate) crit_tick_range: DamageRange,
 }
 
 pub(crate) struct Spell<S> {
@@ -1085,6 +1129,9 @@ pub(crate) struct ResourceMetrics {
     pub(crate) previous_events: i32,
     pub(crate) previous_actual_gain: f64,
     pub(crate) is_mana_regen: bool,
+    /// Go `ResourceMetrics.NoThreat`: a gain from a spell the client flags No Threat adds no
+    /// threat at the end of the iteration.
+    pub(crate) no_threat: bool,
 }
 
 /// A target's stats and pseudo stats that auras can change during a fight, reset to the
@@ -1688,6 +1735,7 @@ impl<A: Agent> Fight<A> {
                 previous_events: 0,
                 previous_actual_gain: 0.0,
                 is_mana_regen: regen,
+                no_threat: false,
             });
             resources.len() - 1
         };
@@ -1812,7 +1860,6 @@ impl<A: Agent> Fight<A> {
                     || id.tag == 2
                     || effects.iter().any(|effect| {
                         matches!(effect, Effect::WindfuryTotem { extra_attack_spell: Some(extra_attack_spell), .. }
-                            | Effect::WindfuryWeapon { extra_spell: extra_attack_spell, .. }
                             | Effect::WindfuryTotemSelf { extra_spell: extra_attack_spell, .. }
                             if *extra_attack_spell == spells.len())
                     }))
@@ -1917,14 +1964,14 @@ impl<A: Agent> Fight<A> {
                             rng_label,
                             gains,
                             selected,
-                            level_reduction,
+                            spill,
                         } if *item_id == item && gains.len() == 1 => {
                             Some(SpellBehavior::ConjuredEnergy {
                                 label: rng_label.clone(),
                                 min: gains[0].min,
                                 spread: gains[0].spread,
                                 selected: *selected,
-                                reduction: *level_reduction,
+                                spill: *spill,
                                 metrics: resource(
                                     Side::Player,
                                     id.clone(),

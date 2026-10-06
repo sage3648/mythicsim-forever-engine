@@ -1280,6 +1280,8 @@ pub enum Effect {
         speed_multiplier: f64,
         overshoot: f64,
         min_range: f64,
+        /// The client flags the cast No Threat: the rage it gives adds no threat.
+        no_threat: bool,
     },
     /// The forms the druid starts in and each druid spell may be cast in.
     DruidForms {
@@ -2112,6 +2114,8 @@ pub enum Effect {
         tick_base: f64,
         spirit_divisor: f64,
         metrics_action_id: ActionId,
+        /// The client flags the cast No Threat: the mana it gives adds no threat.
+        no_threat: bool,
     },
     /// Every Smite rank's cast on its own client row.
     Smite {},
@@ -2558,6 +2562,9 @@ pub enum Effect {
         /// Demonic Energies: the share of the restore the summoned demon gains.
         #[serde(default, skip_serializing_if = "is_zero_f64")]
         pet_mana_share: f64,
+        /// The client flags the cast No Threat: neither the mana nor the demon's share adds
+        /// threat.
+        no_threat: bool,
     },
     /// Conflagrate's hit, which consumes Immolate unless Shadow and Flame spares it.
     Conflagrate {
@@ -2846,20 +2853,19 @@ pub enum Effect {
         /// Whether the party's Flametongue Totem shares the benefit.
         party_totem: bool,
     },
-    /// Windfury Weapon: a weapon proc with its own cooldown that grants charges of attack power
-    /// and two extra attacks of the hand that procced it; landed autos spend the charges.
+    /// Windfury Weapon: a weapon proc with its own cooldown that strikes twice with the hand
+    /// that procced it, as two special weapon hits with the rank's attack power added.
     WindfuryWeapon {
         trigger_aura: String,
         trigger_spells: Vec<usize>,
         chances: Vec<SpellChance>,
-        /// Spells of the main hand, whose procs grant main hand extra attacks.
+        /// Spells of the main hand, whose procs strike with the main hand.
         main_hand_spells: Vec<usize>,
-        ap_aura: String,
-        extra_spell: usize,
-        off_hand_spell: i64,
-        spend_spells: Vec<usize>,
-        ap_gain_log: String,
-        ap_expire_log: String,
+        /// The main hand and off hand strike spells.
+        main_hand_attack: usize,
+        off_hand_attack: usize,
+        /// The attack power each strike adds to the shaman's own.
+        attack_power: f64,
         /// Whether a main hand imbue holds the party Windfury Totem's category.
         blocks_windfury_totem: bool,
     },
@@ -3038,7 +3044,6 @@ pub enum Effect {
         spell_id: i32,
         proc_chance: f64,
         rage: f64,
-        two_handed: bool,
         delay_ns: i64,
     },
     /// The Warrior's Flurry: a melee crit grants melee speed for a few white swings.
@@ -3278,7 +3283,8 @@ pub enum Effect {
         rng_label: String,
         gains: Vec<ManaGain>,
         selected: bool,
-        level_reduction: f64,
+        /// How much of the gain may overflow the bar when the cast fires, a Go literal.
+        spill: f64,
     },
     SinisterStrike {
         spell_id: i32,

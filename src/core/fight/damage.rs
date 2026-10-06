@@ -1001,6 +1001,20 @@ impl<A: Agent> Fight<A> {
                 metrics.total_block_damage += result.damage;
             }
             metrics.total_threat += result.threat;
+            // A landed result with no damage is an application (a dot's or a debuff's), not a
+            // hit. Glancing, blocked and crushing blows have totals of their own.
+            if result.landed() && result.damage > 0.0 {
+                if blocked || result.outcome & (OUTCOME_GLANCE | OUTCOME_CRUSH) != 0 {
+                } else if result.crit() && periodic {
+                    metrics.crit_tick_range.add(result.damage);
+                } else if result.crit() {
+                    metrics.crit_range.add(result.damage);
+                } else if periodic {
+                    metrics.tick_range.add(result.damage);
+                } else {
+                    metrics.hit_range.add(result.damage);
+                }
+            }
         }
         if result.target == Side::Target {
             self.encounter_damage_taken += result.damage;
