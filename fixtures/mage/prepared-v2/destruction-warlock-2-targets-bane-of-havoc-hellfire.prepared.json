@@ -6,8 +6,8 @@
     "client_build": "1.60.1.70205",
     "exporter": "tools/oracle-v2"
   },
-  "request_sha256": "b6b313ff6ef40a520a6bba8494b51c91c44e16cc0971c37018eca874e8bad24b",
-  "scenario_id": "destruction-warlock-3-targets-bane-of-havoc",
+  "request_sha256": "45c01c08a6a46cb494091f8b69f397d0a0c278523d4f1618843bde1f87521c4d",
+  "scenario_id": "destruction-warlock-2-targets-bane-of-havoc-hellfire",
   "sim": {
     "iterations": 3000,
     "seed": 42,
@@ -23,7 +23,7 @@
     "execute_proportion_35": 0.35,
     "execute_proportion_45": 0.45,
     "execute_proportion_90": 0.9,
-    "target_count": 3
+    "target_count": 2
   },
   "target": {
     "index": 0,
@@ -297,7 +297,7 @@
         ]
       },
       {
-        "label": "Bane of Doom-3",
+        "label": "Bane of Doom-2",
         "tag": "Affliction",
         "action_id": {
           "spell_id": 603
@@ -314,7 +314,7 @@
         "exclusive_effects": 0
       },
       {
-        "label": "Bane of Agony-3",
+        "label": "Bane of Agony-2",
         "tag": "Affliction",
         "action_id": {
           "spell_id": 11713
@@ -356,7 +356,7 @@
         ]
       },
       {
-        "label": "Corruption-3",
+        "label": "Corruption-2",
         "tag": "Affliction",
         "action_id": {
           "spell_id": 25311
@@ -373,7 +373,7 @@
         "exclusive_effects": 0
       },
       {
-        "label": "Drain Life-3",
+        "label": "Drain Life-2",
         "action_id": {
           "spell_id": 11700
         },
@@ -389,7 +389,7 @@
         "exclusive_effects": 0
       },
       {
-        "label": "Immolate (DoT)-3",
+        "label": "Immolate (DoT)-2",
         "action_id": {
           "spell_id": 25309,
           "tag": 1
@@ -465,7 +465,7 @@
     ]
   },
   "player": {
-    "index": 3,
+    "index": 2,
     "label": "destruction-warlock (#1)",
     "level": 60,
     "stats": {
@@ -1667,7 +1667,7 @@
         "pushback_resist": 0,
         "dot": {
           "unit": "target",
-          "aura_label": "Bane of Doom-3",
+          "aura_label": "Bane of Doom-2",
           "base_tick_count": 1,
           "base_tick_length_ns": 60000000000,
           "bonus_coefficient": 4,
@@ -1737,7 +1737,7 @@
         "pushback_resist": 0,
         "dot": {
           "unit": "target",
-          "aura_label": "Bane of Agony-3",
+          "aura_label": "Bane of Agony-2",
           "base_tick_count": 12,
           "base_tick_length_ns": 2000000000,
           "bonus_coefficient": 0.13300000131130219,
@@ -1864,7 +1864,7 @@
         "pushback_resist": 0,
         "dot": {
           "unit": "target",
-          "aura_label": "Corruption-3",
+          "aura_label": "Corruption-2",
           "base_tick_count": 6,
           "base_tick_length_ns": 3000000000,
           "bonus_coefficient": 0.20000000298023224,
@@ -2048,7 +2048,7 @@
         "pushback_resist": 0,
         "dot": {
           "unit": "target",
-          "aura_label": "Drain Life-3",
+          "aura_label": "Drain Life-2",
           "base_tick_count": 5,
           "base_tick_length_ns": 1000000000,
           "bonus_coefficient": 0.10000000149011612,
@@ -2245,7 +2245,7 @@
         "pushback_resist": 0,
         "dot": {
           "unit": "target",
-          "aura_label": "Immolate (DoT)-3",
+          "aura_label": "Immolate (DoT)-2",
           "base_tick_count": 5,
           "base_tick_length_ns": 3000000000,
           "bonus_coefficient": 0.12999999523162842,
@@ -3226,9 +3226,45 @@
       "priorityList": [
         {
           "action": {
+            "condition": {
+              "not": {
+                "val": {
+                  "auraIsActive": {
+                    "sourceUnit": {
+                      "type": "CurrentTarget"
+                    },
+                    "auraId": {
+                      "spellId": 1225228
+                    }
+                  }
+                }
+              }
+            },
             "castSpell": {
               "spellId": {
                 "spellId": 1225228
+              }
+            }
+          }
+        },
+        {
+          "action": {
+            "condition": {
+              "cmp": {
+                "op": "OpGe",
+                "lhs": {
+                  "numberTargets": {}
+                },
+                "rhs": {
+                  "const": {
+                    "val": "2"
+                  }
+                }
+              }
+            },
+            "castSpell": {
+              "spellId": {
+                "spellId": 11684
               }
             }
           }

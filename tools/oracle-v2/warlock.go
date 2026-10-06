@@ -191,6 +191,7 @@ func warlockEffects(agent core.Agent, character *core.Character) []map[string]an
 		effects = append(effects, map[string]any{
 			"kind": "bane_of_havoc", "spell_id": wlBaneOfHavoc.Highest().ID,
 			"aura": "Bane of Havoc-" + w.Label, "copy_aura": "Bane of Havoc - Copy",
+			"share": wlBaneOfHavoc.Highest().Effect(dbcenums.A_DUMMY, 0).Percent(),
 		})
 	}
 	// death_coil.go: the effect's average with its coefficient on the spell, landing after travel,

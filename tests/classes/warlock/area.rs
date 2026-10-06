@@ -200,14 +200,56 @@ fn hellfire_calculates_every_target_before_dealing_any() {
     );
 }
 
-/// Bane of Havoc copies damage to other targets onto the baned one, and a multidot casts a
-/// dot on a target past the first; Rust follows neither against several targets.
+/// Bane of Havoc copies 15% of the damage the warlock deals to the other targets onto the
+/// baned one, as a hit of the bane's copy spell right after each such hit; the baned first
+/// target takes no copy of its own damage (Go `applyBaneOfHavoc`).
 #[test]
-fn what_reaches_another_target_stays_refused_by_name() {
-    assert_eq!(
-        reasons(fixture("destruction-warlock-3-targets-bane-of-havoc")),
-        ["rotation reaches spell 1225228, which copies the warlock's damage to other targets onto the baned one in a fight against several targets"]
-    );
+fn bane_of_havoc_copies_the_damage_to_other_targets_onto_the_baned_one() {
+    let logs = first_fight_log(fixture(
+        "destruction-warlock-3-targets-bane-of-havoc-rain-of-fire",
+    ));
+    let lines: Vec<&str> = logs
+        .lines()
+        .filter(|line| !line.contains("[DEBUG]") && line.contains("[Target "))
+        .collect();
+    let damage = |line: &str| -> f64 {
+        let at = line.find(" for ").unwrap() + " for ".len();
+        line[at..line.find(" damage").unwrap()].parse().unwrap()
+    };
+    let mut copies = 0;
+    for (index, line) in lines.iter().enumerate() {
+        let is_tick = line.contains("{SpellID: 1282385}");
+        if !is_tick || line.contains("[Target 1]") || !line.contains(" for ") {
+            continue;
+        }
+        let copy = lines[index + 1];
+        assert!(
+            copy.contains("[Target 1] {SpellID: 1225228, Tag: 1} Hit for"),
+            "{copy}"
+        );
+        assert!(
+            (damage(copy) - damage(line) * 0.15).abs() < 0.001,
+            "{line} {copy}"
+        );
+        copies += 1;
+    }
+    assert!(copies >= 2, "{logs}");
+    // Nothing is copied from the damage the baned target takes itself.
+    for (index, line) in lines.iter().enumerate() {
+        if line.contains("[Target 1] {SpellID: 1282385}") {
+            assert!(
+                !lines[index + 1].contains("Tag: 1}"),
+                "{}",
+                lines[index + 1]
+            );
+        }
+    }
+}
+
+/// A multidot casts a dot on a target past the first, where Rust keeps one curse slot, bane
+/// slot, Bane of Agony ramp and Immolate reader; it stays refused by name.
+#[test]
+fn a_multidot_stays_refused_by_name() {
     assert_eq!(
         reasons(fixture("destruction-warlock-3-targets-multidot")),
         ["the rotation multidots, which casts a warlock dot on a target past the first"]

@@ -97,18 +97,13 @@ fn check_reports_refusal_codes_beside_the_reasons() {
         assert!(result.status.success());
         serde_json::from_slice(&result.stdout).unwrap()
     };
-    let refused = check("production-frost-2-targets");
+    let refused = check("destruction-warlock-3-targets-multidot");
+    let reason = "the rotation multidots, which casts a warlock dot on a target past the first";
     assert_eq!(refused["supported"], false);
-    assert_eq!(
-        refused["reasons"],
-        serde_json::json!(["2 targets: several targets are not supported for ClassMage yet"])
-    );
+    assert_eq!(refused["reasons"], serde_json::json!([reason]));
     assert_eq!(
         refused["refusals"],
-        serde_json::json!([{
-            "code": "several_targets_unsupported",
-            "reason": "2 targets: several targets are not supported for ClassMage yet"
-        }])
+        serde_json::json!([{"code": "several_targets_unsupported", "reason": reason}])
     );
     let supported = check("frost-reference");
     assert_eq!(supported["supported"], true);

@@ -620,10 +620,6 @@ fn refusals_carry_stable_codes() {
             "destruction-warlock-3-targets-multidot",
             "several_targets_unsupported",
         ),
-        (
-            "destruction-warlock-3-targets-bane-of-havoc",
-            "several_targets_unsupported",
-        ),
     ] {
         let path = family().join(format!("{case}.prepared.json"));
         let value: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();

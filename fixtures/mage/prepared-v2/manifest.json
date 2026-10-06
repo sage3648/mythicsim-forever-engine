@@ -4,7 +4,7 @@
   "engine_revision": "6383c15a7b1bfbdbd7c5b4c0c59418c636e52e1a",
   "client_build": "1.60.1.70205",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "1a936e6a45311916260374481721cd674a2e22bae290a9d1da23cb20c4d44360",
+  "exporter_sha256": "ebdc0160c76c5de77cf29f09b267c078dcc5e1a9b87a6508ffdcd9e06078e0f4",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -5939,12 +5939,18 @@
         "path": "fixtures/mage/prepared-v2/destruction-warlock-3-targets-bane-of-havoc.request.json"
       },
       "prepared": "destruction-warlock-3-targets-bane-of-havoc.prepared.json",
-      "prepared_sha256": "5f8c0debcbb393a7c5226058495d2cc6cb52e7f820f0c150eb7a085f6908fc4f",
+      "prepared_sha256": "05b7e71aa66a3fc31b2867ec0d8f627833fe40190c449e376930d650790beb1d",
       "expected_coverage": {
-        "supported": false,
-        "reasons": [
-          "rotation reaches spell 1225228, which copies the warlock's damage to other targets onto the baned one in a fight against several targets"
-        ]
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "destruction-warlock-3-targets-bane-of-havoc.go-result.json",
+        "sha256": "c9b015c0bffa27083ef8ad089bba2ebf61c7df5ea1292a4320f2682caeebab9b"
+      },
+      "go_log": {
+        "file": "destruction-warlock-3-targets-bane-of-havoc.go-log.txt",
+        "sha256": "00d9d1d078aada3e2477e5c04ef038c6256e04e9a50a02f13870fa7b8aa3f72a"
       }
     },
     {
@@ -5966,6 +5972,48 @@
       "go_log": {
         "file": "frostfire-mage-2-targets-multidot.go-log.txt",
         "sha256": "5bc571f50f658c69935ebe207e0a60b3e4f50899c76f62d7ee6f687e00850b9b"
+      }
+    },
+    {
+      "id": "destruction-warlock-3-targets-bane-of-havoc-rain-of-fire",
+      "description": "The Destruction Warlock with Bane of Havoc against three targets, casting Rain of Fire at two or more: the baned first target takes a share of the damage the other two take, as a hit of the bane's copy spell that ignores every modifier.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/destruction-warlock-3-targets-bane-of-havoc-rain-of-fire.request.json"
+      },
+      "prepared": "destruction-warlock-3-targets-bane-of-havoc-rain-of-fire.prepared.json",
+      "prepared_sha256": "6c8ec759ff853365118769ab97fe93cf574cff1c60cf85153d54b4953fb69024",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "destruction-warlock-3-targets-bane-of-havoc-rain-of-fire.go-result.json",
+        "sha256": "0f2d67102f935ad3ce9a350e21f6f258dbe2e167c98a47d1bbf40f9b632f9eb1"
+      },
+      "go_log": {
+        "file": "destruction-warlock-3-targets-bane-of-havoc-rain-of-fire.go-log.txt",
+        "sha256": "a747387bb4b53fe1255c275e433fd2765914f4e1c52b5a1ee48071fcfa40975f"
+      }
+    },
+    {
+      "id": "destruction-warlock-2-targets-bane-of-havoc-hellfire",
+      "description": "The Destruction Warlock with Bane of Havoc against two targets, casting Hellfire at two or more: the second target's tick is dealt after both are calculated, and the baned first target takes the copy of it.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/destruction-warlock-2-targets-bane-of-havoc-hellfire.request.json"
+      },
+      "prepared": "destruction-warlock-2-targets-bane-of-havoc-hellfire.prepared.json",
+      "prepared_sha256": "6e6b58dd3551b31fc15f912380c0e32f29a6c69866aea34bee01f7de9533e135",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "destruction-warlock-2-targets-bane-of-havoc-hellfire.go-result.json",
+        "sha256": "365f3d241f640a22b396ecbc23badf03a1b4e07d85a7660031cf5bffdc19615c"
+      },
+      "go_log": {
+        "file": "destruction-warlock-2-targets-bane-of-havoc-hellfire.go-log.txt",
+        "sha256": "b5687b2a1145baab8928217c4f37202ef9f018020e7369bf2640dc23267f0aab"
       }
     }
   ]

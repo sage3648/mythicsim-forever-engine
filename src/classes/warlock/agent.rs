@@ -6,8 +6,8 @@ use std::rc::Rc;
 use crate::{
     contracts::prepared_v2::{Effect, PreparedV2, Spell as ExportedSpell},
     core::fight::{
-        healing::Healing, school_damage_index, Agent, AoeResults, AuraRef, DotId, Fight, Outcome,
-        Side, SpellBehavior, SpellId, SpellResult, PRIORITY_REGEN,
+        healing::Healing, school_damage_index, Agent, AoeResults, AuraRef, DotId, Fight, Side,
+        SpellBehavior, SpellId, SpellResult, PRIORITY_REGEN,
     },
 };
 
@@ -28,9 +28,10 @@ use super::{
         rain_of_fire::{self, RainOfFire},
         searing_pain, shadow_bolt, shadowburn,
         siphon_life::SiphonLife,
-        soul_fire, take_bane_slot,
+        soul_fire,
     },
     talents::{
+        bane_of_havoc::{self, BaneOfHavoc},
         decimation::{self, Decimation},
         demonic_brand::{self, DemonicBrand},
         improved_shadow_bolt::{self, ImprovedShadowBolt},
@@ -95,6 +96,10 @@ pub(crate) enum WarlockAura {
     DemonicBrandConsumer,
     /// The Voidwalker's sacrifice.
     FelEnergy,
+    /// Bane of Havoc on a target.
+    HavocBane,
+    /// The warlock's permanent listener that copies damage onto the baned target.
+    HavocCopy,
 }
 
 /// [`Agent::on_periodic`] tags of Warlock periodic actions.
@@ -117,8 +122,9 @@ pub(crate) struct WarlockAgent {
     rain_of_fire: Option<RainOfFire>,
     /// Death Coil's base, its healing spell and the warlock's healing modifiers.
     death_coil: Option<(f64, SpellId, Healing)>,
-    /// Bane of Havoc's aura on the one target.
-    bane_of_havoc: Option<AuraRef>,
+    pub(crate) bane_of_havoc: Option<BaneOfHavoc>,
+    /// Go's `havocTarget`: the target that holds Bane of Havoc.
+    pub(crate) havoc_target: Option<Side>,
     /// Incinerate's bonus on a target burning with Immolate.
     incinerate_bonus: f64,
     /// Go `currentActiveBane` on the one target.
@@ -187,6 +193,12 @@ fn class_auras(prepared: &PreparedV2) -> Vec<(&'static str, String, WarlockAura)
             }
             Effect::FelEnergy { aura, .. } => {
                 auras.push(("player", aura.clone(), WarlockAura::FelEnergy))
+            }
+            Effect::BaneOfHavoc {
+                aura, copy_aura, ..
+            } => {
+                auras.push(("target", aura.clone(), WarlockAura::HavocBane));
+                auras.push(("player", copy_aura.clone(), WarlockAura::HavocCopy));
             }
             Effect::Decimation {
                 trigger_aura, aura, ..
@@ -397,14 +409,14 @@ impl WarlockAgent {
                         ));
                     }
                 }
-                Effect::BaneOfHavoc { aura, .. } => {
-                    let index = fight.trackers[Side::Target.index()]
-                        .find(aura)
-                        .ok_or_else(|| format!("target aura {aura} is not registered"))?;
-                    fight.agent.bane_of_havoc = Some(AuraRef {
-                        side: Side::Target,
-                        index,
-                    });
+                Effect::BaneOfHavoc {
+                    spell_id,
+                    aura,
+                    share,
+                    ..
+                } => {
+                    let bound = bane_of_havoc::bind(&fight, *spell_id, aura, *share)?;
+                    fight.agent.bane_of_havoc = Some(bound);
                 }
                 Effect::Incinerate { immolate_bonus } => {
                     fight.agent.incinerate_bonus = *immolate_bonus;
@@ -715,16 +727,7 @@ impl Agent for WarlockAgent {
                 let result = fight.calc_damage(spell, target, base);
                 fight.class_after_travel(spell, result);
             }
-            WarlockSpell::BaneOfHavoc => {
-                // With the one target in scope no other target holds the bane.
-                let result = fight.calc_outcome(spell, target, Outcome::MagicHitNoHitCounter);
-                if result.landed() {
-                    let aura = fight.agent.bane_of_havoc.expect("Bane of Havoc is bound");
-                    take_bane_slot(fight, aura);
-                    fight.activate_aura(aura);
-                }
-                fight.deal_damage(spell, result, false);
-            }
+            WarlockSpell::BaneOfHavoc => bane_of_havoc::apply(fight, spell, target),
             WarlockSpell::Incinerate => {
                 let (immolate, bonus) = (fight.agent.immolate_dot, fight.agent.incinerate_bonus);
                 incinerate::apply(fight, spell, target, immolate, bonus);
@@ -821,9 +824,13 @@ impl Agent for WarlockAgent {
         spell: SpellId,
         result: &SpellResult,
     ) {
-        if kind == WarlockAura::NightfallTrigger {
-            let talent = fight.agent.nightfall.clone().expect("bound");
-            talent.on_periodic_damage_dealt(fight, aura, spell, result);
+        match kind {
+            WarlockAura::NightfallTrigger => {
+                let talent = fight.agent.nightfall.clone().expect("bound");
+                talent.on_periodic_damage_dealt(fight, aura, spell, result);
+            }
+            WarlockAura::HavocCopy => bane_of_havoc::copy_damage(fight, result),
+            _ => {}
         }
     }
 
@@ -921,6 +928,7 @@ impl Agent for WarlockAgent {
                 let talent = fight.agent.decimation.clone().expect("bound");
                 talent.on_gain(fight);
             }
+            WarlockAura::HavocBane => bane_of_havoc::on_gain(fight, aura),
             WarlockAura::FelEnergy => {
                 // Go StartPeriodicAction at the regeneration priority, first tick a period on.
                 let (period, _, _) = fight.agent.fel_energy.expect("bound");
@@ -952,6 +960,7 @@ impl Agent for WarlockAgent {
                 let talent = fight.agent.decimation.clone().expect("bound");
                 talent.on_expire(fight);
             }
+            WarlockAura::HavocBane => bane_of_havoc::on_expire(fight, aura),
             _ => {}
         }
     }
@@ -984,6 +993,7 @@ impl Agent for WarlockAgent {
                 let talent = fight.agent.demonic_brand.clone().expect("bound");
                 talent.on_demon_hit(fight, spell, result);
             }
+            WarlockAura::HavocCopy => bane_of_havoc::copy_damage(fight, result),
             _ => {}
         }
     }

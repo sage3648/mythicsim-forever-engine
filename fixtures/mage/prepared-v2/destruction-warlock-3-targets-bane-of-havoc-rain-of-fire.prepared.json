@@ -6,8 +6,8 @@
     "client_build": "1.60.1.70205",
     "exporter": "tools/oracle-v2"
   },
-  "request_sha256": "b6b313ff6ef40a520a6bba8494b51c91c44e16cc0971c37018eca874e8bad24b",
-  "scenario_id": "destruction-warlock-3-targets-bane-of-havoc",
+  "request_sha256": "65fc01115c06ab8d8be2e46d876ec3090a767525bc3779706d86f0e98e8bab5d",
+  "scenario_id": "destruction-warlock-3-targets-bane-of-havoc-rain-of-fire",
   "sim": {
     "iterations": 3000,
     "seed": 42,
@@ -3226,9 +3226,45 @@
       "priorityList": [
         {
           "action": {
+            "condition": {
+              "not": {
+                "val": {
+                  "auraIsActive": {
+                    "sourceUnit": {
+                      "type": "CurrentTarget"
+                    },
+                    "auraId": {
+                      "spellId": 1225228
+                    }
+                  }
+                }
+              }
+            },
             "castSpell": {
               "spellId": {
                 "spellId": 1225228
+              }
+            }
+          }
+        },
+        {
+          "action": {
+            "condition": {
+              "cmp": {
+                "op": "OpGe",
+                "lhs": {
+                  "numberTargets": {}
+                },
+                "rhs": {
+                  "const": {
+                    "val": "2"
+                  }
+                }
+              }
+            },
+            "castSpell": {
+              "spellId": {
+                "spellId": 11678
               }
             }
           }

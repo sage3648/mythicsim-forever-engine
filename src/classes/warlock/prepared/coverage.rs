@@ -113,9 +113,9 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         Effect::Decimation {
             trigger_aura, aura, ..
         } => vec![("player", trigger_aura), ("player", aura)],
-        // With the one target in scope the bane is always on the hit's target, which the
-        // copy listener skips.
-        Effect::BaneOfHavoc { copy_aura, .. } => vec![("player", copy_aura)],
+        Effect::BaneOfHavoc {
+            aura, copy_aura, ..
+        } => vec![("target", aura), ("player", copy_aura)],
         Effect::DemonicBrand {
             trigger_aura,
             consumer_aura,
@@ -219,20 +219,13 @@ fn limits(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
     reasons
 }
 
-/// The spells that reach a target past the first in Go and not yet in Rust. Rain of Fire and
-/// Hellfire hit every target as in Go. Bane of Havoc copies the warlock's damage to the
-/// targets it does not bane onto the baned one, which Rust does not follow. The rest of the
-/// class acts on the target of its cast, and a rotation reaches another target only through
-/// its multidot, whose per-target curse and bane slots, ramps and Immolate readers Rust
-/// keeps once.
+/// The spells that reach a target past the first in Go and not yet in Rust: none. Rain of
+/// Fire and Hellfire hit every target as in Go, and Bane of Havoc copies the damage to the
+/// other targets onto the baned one. The rest of the class acts on the target of its cast,
+/// and a rotation reaches another target only through its multidot, whose per-target curse
+/// and bane slots, ramps and Immolate readers Rust keeps once, so a multidot is refused.
 fn several_targets(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
-    let mut reasons = crate::engine::coverage::spells_reaching_other_targets(
-        reachable,
-        &[(
-            "bane_of_havoc",
-            "copies the warlock's damage to other targets onto the baned one",
-        )],
-    );
+    let mut reasons = crate::engine::coverage::spells_reaching_other_targets(reachable, &[]);
     if mentions_multidot(&prepared.player.rotation) {
         reasons.push(
             "the rotation multidots, which casts a warlock dot on a target past the first".into(),

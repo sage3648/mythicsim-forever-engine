@@ -2443,11 +2443,13 @@ pub enum Effect {
         tick_can_crit: bool,
     },
     /// Bane of Havoc: the cast takes the bane slot with the target aura; the copy listener
-    /// copies damage to other targets only.
+    /// copies `share` of the warlock's damage to other targets onto the baned one, through the
+    /// spell of the same ID with tag 1.
     BaneOfHavoc {
         spell_id: i32,
         aura: String,
         copy_aura: String,
+        share: f64,
     },
     /// Death Coil: a fixed base, landing after travel, whose damage heals the warlock through
     /// its tagged healing spell with the warlock's healing modifiers.
