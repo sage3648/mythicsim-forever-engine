@@ -13,7 +13,7 @@ pub(crate) const GATE: ClassGate = ClassGate {
     spell: spell_capability,
     claims,
     limits,
-    several_targets: None,
+    several_targets: Some(several_targets),
 };
 
 /// Druid effect kinds implemented in Rust and validated against the pinned Go reference.
@@ -31,6 +31,7 @@ const EFFECTS: &[&str] = &[
     "faerie_fire",
     "ferocious_bite",
     "frenzied_regeneration",
+    "hurricane",
     "innervate",
     "insect_swarm",
     "lacerate",
@@ -48,6 +49,7 @@ const EFFECTS: &[&str] = &[
     "rip",
     "shifting_power",
     "starfire",
+    "swipe",
     "unending_life_refund",
     "wrath",
 ];
@@ -74,6 +76,8 @@ fn spell_capability(spell: &Spell) -> Option<&'static str> {
         "maul" => Some("maul"),
         "lacerate" if spell.dot.is_some() => Some("lacerate"),
         "primal_bite" => Some("primal_bite"),
+        "swipe" => Some("swipe"),
+        "hurricane" => Some("hurricane"),
         "frenzied_regeneration" => Some("frenzied_regeneration"),
         _ => None,
     }
@@ -246,4 +250,12 @@ fn limits(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
         }
     }
     reasons
+}
+
+/// The spells that reach a target past the first in Go and not yet in Rust: none. Swipe on up
+/// to three targets, Hurricane's ticks on every target, Demoralizing Roar's debuff on each and
+/// a Berserk Primal Bite on up to three run as in Go. A tank assignment, which would have
+/// every copy swing at the player, is refused by the exporter.
+fn several_targets(_prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
+    crate::engine::coverage::spells_reaching_other_targets(reachable, &[])
 }

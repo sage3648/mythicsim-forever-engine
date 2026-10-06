@@ -51,19 +51,20 @@ request in Rust, or reports a fallback to Go with each refusal's stable code, or
 Many variants of these builds work too, for example other races, gear, talents,
 buffs, presets, trinkets, pets and tanking.
 
-Hunter, Priest and Rogue builds also work against 2 to 5 copies of the boss, the
-application's Advanced targets setting, with the AoE lines the application adds: each
-target keeps its own auras, dots, debuffs and metrics, and area hits, cleaves and
-multidots reach every target as in Go. Other classes still fall back to Go there.
+Hunter, Priest, Rogue, Paladin and Druid builds also work against 2 to 5 copies of the
+boss, the application's Advanced targets setting, with the AoE lines the application adds:
+each target keeps its own auras, dots, debuffs and metrics, and area hits, cleaves and
+multidots reach every target as in Go. Tank builds and the other classes still fall back
+to Go there, since every copy of the boss would swing at the tank.
 
 ## Evidence
 
-- 278 accepted fixtures, 274 of them with Go results, checked by `cargo test`.
+- 290 accepted prepared v2 fixtures, 288 of them with Go results, checked by `cargo test`.
 - 7,922 production variants (race boards, builder starters, gear, buffs, talents,
   class options and presets) and 3,724 random variants compared with Go. None
   differ. Rust refuses 174 of them, and the pinned Go engine crashes on 2.
-- Against 2 to 5 targets, 32 Hunter, Priest and Rogue reference builds and 190 random
-  variants of them match Go, the area hits, cleaves and multidots included.
+- Against 2 to 5 targets, 88 Hunter, Priest, Rogue, Paladin and Druid reference builds and
+  526 random variants of them match Go, the area hits, cleaves and multidots included.
 - The latest full rerun covered 24,173 inputs in 121 records, with no mismatches.
 - [Shadow sims](docs/shadow-sims.md) compare Rust with Go on real MythicSim traffic,
   without users seeing them.

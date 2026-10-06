@@ -18,7 +18,8 @@ use super::{
         cat_form::{self, CatForm},
         faerie_fire::FaerieFire,
         ferocious_bite::FerociousBite,
-        innervate, insect_swarm, moonfire,
+        hurricane, innervate, insect_swarm, moonfire,
+        per_dot::PerDot,
         prowl::{self, Prowl},
         rake::Rake,
         rip::{self, Rip},
@@ -60,6 +61,11 @@ pub(crate) enum DruidSpell {
     MaulQueue,
     Lacerate,
     PrimalBite,
+    Swipe,
+    /// Hurricane's channel.
+    Hurricane,
+    /// The spell each Hurricane period casts.
+    HurricaneTick,
     Barkskin,
     FrenziedRegeneration,
     /// A survival cooldown Go never casts without a health threshold: only its cast checks run.
@@ -113,10 +119,10 @@ pub(crate) struct DruidAgent {
     pub(crate) prowl: Option<Rc<Prowl>>,
     builders: Option<Rc<CatBuilders>>,
     rip: Option<Rc<Rip>>,
-    pub(crate) rip_snapshot: rip::Snapshot,
+    pub(crate) rip_snapshot: PerDot<rip::Snapshot>,
     rake: Option<Rc<Rake>>,
     /// Rake's stored tick.
-    pub(crate) rake_snapshot: f64,
+    pub(crate) rake_snapshot: PerDot<f64>,
     ferocious_bite: Option<FerociousBite>,
     shifting_power: Option<ShiftingPower>,
     faerie_fire: Option<FaerieFire>,
@@ -130,8 +136,11 @@ pub(crate) struct DruidAgent {
     pub(crate) maul_queued: bool,
     lacerate: Option<Lacerate>,
     /// The bleed's stored tick.
-    pub(crate) lacerate_snapshot: f64,
+    pub(crate) lacerate_snapshot: PerDot<f64>,
     primal_bite: Option<f64>,
+    /// Swipe's flat damage and attack power share.
+    swipe: Option<(f64, f64)>,
+    hurricane: Option<hurricane::Hurricane>,
     natural_reaction: Option<NaturalReaction>,
     pub(crate) frenzied_regeneration: Option<AuraRef>,
     barkskin: Option<Barkskin>,
@@ -159,9 +168,9 @@ impl Default for DruidAgent {
             prowl: None,
             builders: None,
             rip: None,
-            rip_snapshot: rip::Snapshot::default(),
+            rip_snapshot: PerDot::default(),
             rake: None,
-            rake_snapshot: 0.0,
+            rake_snapshot: PerDot::default(),
             ferocious_bite: None,
             shifting_power: None,
             faerie_fire: None,
@@ -173,8 +182,10 @@ impl Default for DruidAgent {
             maul: None,
             maul_queued: false,
             lacerate: None,
-            lacerate_snapshot: 0.0,
+            lacerate_snapshot: PerDot::default(),
             primal_bite: None,
+            swipe: None,
+            hurricane: None,
             natural_reaction: None,
             frenzied_regeneration: None,
             barkskin: None,
@@ -257,6 +268,7 @@ fn effect_spell(prepared: &PreparedV2, position: usize) -> Option<DruidSpell> {
         Effect::Maul { queue_spell, .. } if *queue_spell == position => Some(DruidSpell::MaulQueue),
         Effect::Lacerate { spell, .. } if *spell == position => Some(DruidSpell::Lacerate),
         Effect::PrimalBite { spell, .. } if *spell == position => Some(DruidSpell::PrimalBite),
+        Effect::Swipe { spell, .. } if *spell == position => Some(DruidSpell::Swipe),
         Effect::FrenziedRegeneration { spell, .. } if *spell == position => {
             Some(DruidSpell::FrenziedRegeneration)
         }
@@ -319,6 +331,8 @@ impl DruidAgent {
             "moonfire" if spell.damage_effect.is_some() => Some(DruidSpell::Moonfire),
             "moonfire_dot" if spell.dot.is_some() => Some(DruidSpell::MoonfireDot),
             "insect_swarm" if spell.dot.is_some() => Some(DruidSpell::InsectSwarm),
+            "hurricane" if spell.dot.is_some() => Some(DruidSpell::Hurricane),
+            "hurricane" => Some(DruidSpell::HurricaneTick),
             "innervate" => Some(DruidSpell::Innervate),
             "cat_form" => prepared
                 .effects
@@ -797,6 +811,21 @@ impl DruidAgent {
                         tick_can_crit: *tick_can_crit,
                     });
                 }
+                Effect::Swipe {
+                    flat_damage,
+                    attack_power_coefficient,
+                    ..
+                } => {
+                    fight.agent.swipe = Some((*flat_damage, *attack_power_coefficient));
+                }
+                Effect::Hurricane {
+                    spell_id,
+                    tick_spell_id,
+                    tick_base,
+                } => {
+                    let bound = hurricane::bind(&fight, *spell_id, *tick_spell_id, *tick_base)?;
+                    fight.agent.hurricane = Some(bound);
+                }
                 Effect::PrimalBite { flat_damage, .. } => {
                     fight.agent.primal_bite = Some(*flat_damage);
                 }
@@ -1008,7 +1037,7 @@ impl Agent for DruidAgent {
                     .agent
                     .demoralizing_roar
                     .expect("Demoralizing Roar is bound");
-                bear::demoralizing_roar(fight, spell, target, aura);
+                bear::demoralizing_roar(fight, spell, aura);
             }
             DruidSpell::Maul => {
                 let maul = fight.agent.maul.expect("Maul is bound");
@@ -1022,6 +1051,15 @@ impl Agent for DruidAgent {
             DruidSpell::PrimalBite => {
                 let flat = fight.agent.primal_bite.expect("Primal Bite is bound");
                 bear::primal_bite(fight, spell, target, flat);
+            }
+            DruidSpell::Swipe => {
+                let (flat, coefficient) = fight.agent.swipe.expect("Swipe is bound");
+                bear::swipe(fight, spell, flat, coefficient);
+            }
+            DruidSpell::Hurricane => hurricane::apply_channel(fight, spell),
+            DruidSpell::HurricaneTick => {
+                let state = fight.agent.hurricane.expect("Hurricane is bound");
+                state.apply_tick(fight, spell);
             }
             DruidSpell::Barkskin => fight
                 .agent
@@ -1190,21 +1228,28 @@ impl Agent for DruidAgent {
         }
     }
 
-    fn on_dot_gain(fight: &mut Fight<Self>, _dot: DotId, behavior: DruidSpell) {
+    fn on_dot_gain(fight: &mut Fight<Self>, dot: DotId, behavior: DruidSpell) {
         if behavior == DruidSpell::InsectSwarm {
-            insect_swarm::on_dot_gain(fight, fight.agent.insect_swarm_debuff);
+            let side = fight.dots[dot].side;
+            insect_swarm::on_dot_gain(fight, fight.agent.insect_swarm_debuff, side);
         }
     }
 
-    fn on_dot_expire(fight: &mut Fight<Self>, _dot: DotId, behavior: DruidSpell) {
+    fn on_dot_expire(fight: &mut Fight<Self>, dot: DotId, behavior: DruidSpell) {
         if behavior == DruidSpell::InsectSwarm {
-            insect_swarm::on_dot_expire(fight, fight.agent.insect_swarm_debuff);
+            let side = fight.dots[dot].side;
+            insect_swarm::on_dot_expire(fight, fight.agent.insect_swarm_debuff, side);
         }
     }
 
     fn on_dot_tick(fight: &mut Fight<Self>, dot: DotId, behavior: DruidSpell) {
         match behavior {
             DruidSpell::MoonfireDot | DruidSpell::InsectSwarm => fight.snapshot_dot_tick(dot),
+            DruidSpell::Hurricane => {
+                let state = fight.agent.hurricane.expect("Hurricane is bound");
+                let side = fight.dots[dot].side;
+                state.on_channel_tick(fight, side);
+            }
             DruidSpell::Rip => Self::rip(fight).tick(fight, dot),
             DruidSpell::Rake => {
                 let rake = fight.agent.rake.clone().expect("Rake is bound");
