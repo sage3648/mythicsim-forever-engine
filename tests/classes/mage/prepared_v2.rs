@@ -614,11 +614,9 @@ fn refusals_carry_stable_codes() {
         json!({"auraShouldRefresh": {"auraId": {"spellId": 1}}});
     assert_eq!(codes(refresh), ["aura_condition_unsupported"]);
 
-    for (case, code) in [("fire-mage-goblin-sapper", "class_limit")] {
-        let path = family().join(format!("{case}.prepared.json"));
-        let value: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
-        assert_eq!(codes(value), [code], "{case}");
-    }
+    let path = family().join("fire-mage-goblin-sapper.prepared.json");
+    let sapper: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+    assert_eq!(codes(sapper), ["class_limit"]);
 
     // A fight against several targets is refused for a class that has not been checked
     // against them yet.
