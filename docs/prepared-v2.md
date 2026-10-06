@@ -277,7 +277,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `penance` | sim/priest/penance.go | The bolt's base and crit; a channel that ticks on application and each second |
 | `power_in_light` | sim/priest/talents_discipline.go | The target's damage taken multiplier, the spells it multiplies and the Holy Fire dots it waits for |
 | `searing_light` | sim/priest/talents_holy.go | The resolved trigger on Holy Fire ticks, Holy Purpose's Holy Nova cost modifier and the casts that end it |
-| `pushback_trigger` | sim/core/character.go | A tanking player's "Pushback trigger" aura and the player's pushback chance, which each spell's resist reduces; a damaging hit during a hardcast with the pushback flag pushes the cast back a spell batch window later, by at most half a second and never past the time the cast has run |
+| `pushback_trigger` | sim/core/character.go | A tanking player's "Pushback trigger" aura and the player's pushback chance, which each spell's resist reduces; a damaging hit during a hardcast with the pushback flag, or a channel with a cast time whatever its flag, queues the handler a spell batch window later. The handler leaves a cast that has finished alone, then rolls the chance and pushes a cast back by at most half a second and never past the time it has run, or takes a quarter of a channel's cast time off its end, never before now, logging the quarter either way |
 | `parry_haste` | sim/core/attack.go applyParryHaste | Which unit's Parry Haste acts once the target swings at the player, a parry pulling that unit's next main hand swing in; for a target nobody tanks, its swing speed and melee haste, since its reset still rolls a swing timer that a parry pulls in and logs |
 | `inert_pet` | sim/core/pet.go | A registered pet nothing summons: label, unit index, metrics actions and auras, the permanent auras each reset activates, its dismissed stats line and why it is inert |
 | `sinister_strike`, `backstab` | sim/rogue/sinister_strike.go, backstab.go | The highest rank's base on normalized main hand damage; Backstab's main hand dagger and Puncturing Wounds' combo point chance |
@@ -698,8 +698,21 @@ spell and shift back, `feral-bear-druid-potion-shift-tauren` does so as a Tauren
 caster form the bear never takes. `feral-bear-druid-boomerang-pushback` stands the bear 10
 yards out with Linken's Boomerang, whose half second hardcast the target's swing pushes back,
 and `feral-bear-druid-boomerang-pushback-after-cast` is the seed where the hit lands in the
-batch window before the cast completes: Go pushes the finished cast back all the same and
-completes it twice.
+batch window before the cast completes: since the fork's patch 89 the finished cast is left
+alone and completes once.
+`tank-mage-channel-pushback` has the production Frost Mage tank cast Arcane Missiles with a
+3 second cast time, and `tank-mage-channel-pushback-after-cast` is a short seed where two
+hits land in one cast, the second would move its end before now so it completes as the handler
+runs, and a later swing lands in the batch window before a cast completes and leaves it alone.
+No real build has such a channel: every channel the pinned Go registers has no cast time, and
+the client rows that state both a channel and a cast time (Mind Control, Ritual of Summoning,
+Ritual of Doom, Eyes of the Beast, Far Sight and Longsight) are registered by nothing. The
+cast time comes from `tools/oracle-v2/synthetic.go`, which gives Arcane Missiles one through Go's
+own spell mod for a player named `synthetic-channel-cast`, so the Go result and log are the
+pinned engine's own; the 32 variants of the `2026-10-07-tank-channel-pushback-sweep` record
+match it. Go's channel dot and its ticks are independent of the hardcast: they start when the
+cast completes, so a hit that ends the cast earlier starts the channel earlier and nothing
+else moves.
 `feral-druid-mighty-rage-potion` has the cat drink Mighty Rage Potion, whose Rage goes to the
 cat's rage bar. `feral-druid-threat-enchant` and `feral-bear-druid-subtlety-enchant` wear the
 Threat and Subtlety enchants, whose permanent auras multiply the threat each form starts from.
@@ -827,9 +840,10 @@ cargo run --locked -- check --infile fixtures/mage/prepared-v2/frost-reference.p
   targets. Job
   modes such as stat weights need contract additions.
 - Incoming damage covers the target's main hand swing at the one player tanking it. The
-  gate rejects a dual wielding or ranged target, a healing model, a channel with a cast time
-  or a cast pushed back with a chance that needs a roll that the rotation can reach while
-  tanking, listeners of the
+  gate rejects a dual wielding or ranged target, a healing model, a hardcast or a channel with
+  a cast time that the target's swings push back with a chance that needs a roll, or a channel
+  with a cast time without the pushback trigger, that the rotation can reach while tanking,
+  listeners of the
   swing without an effect that handles them, and any aura something in scope activates that
   would change the swing: an aura counts when an effect claims it or carries its label
   anywhere, since a class may activate an aura its effect carries without claiming it. Stat auras, among them the Paladin's Redoubt, Holy Shield, Iron
