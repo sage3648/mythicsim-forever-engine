@@ -522,39 +522,98 @@ struct GoldenManifest {
     cases: Vec<Golden>,
 }
 
+/// Runs one case and compares it with its Go golden: the result's fields and, when the case
+/// keeps one, the first-fight log. An `Err` names the case and says what differs.
+fn check_golden(case: &Golden, golden: &GoldenFile) -> Result<(), String> {
+    let read = |name: &str| fs::read(family().join(name)).map_err(|err| format!("{name}: {err}"));
+    let prepared: PreparedV2 = serde_json::from_slice(&read(&case.prepared)?)
+        .map_err(|err| format!("{}: {err}", case.prepared))?;
+    let report = forever_engine::simulate_prepared(&prepared)
+        .map_err(|err| format!("{}: simulation failed: {err}", case.id))?;
+    let expected: Value = serde_json::from_slice(&read(&golden.file)?)
+        .map_err(|err| format!("{}: {err}", golden.file))?;
+    let mut found = Vec::new();
+    differences(&expected, &comparable(&report.result), "", &mut found);
+    if !found.is_empty() {
+        return Err(format!("{}:\n{}", case.id, found.join("\n")));
+    }
+    if let Some(log) = &case.go_log {
+        let expected =
+            String::from_utf8(read(&log.file)?).map_err(|err| format!("{}: {err}", log.file))?;
+        let actual = report.result["logs"]
+            .as_str()
+            .ok_or_else(|| format!("{}: the result has no log", case.id))?;
+        for (line, (go, rust)) in expected.lines().zip(actual.lines()).enumerate() {
+            if go != rust {
+                return Err(format!(
+                    "{} log line {}:\n  Go:   {go}\n  Rust: {rust}",
+                    case.id,
+                    line + 1
+                ));
+            }
+        }
+        let (go, rust) = (expected.lines().count(), actual.lines().count());
+        if go != rust {
+            return Err(format!(
+                "{} log length: Go {go} lines, Rust {rust}",
+                case.id
+            ));
+        }
+    }
+    Ok(())
+}
+
+/// Every accepted case with a golden is simulated and compared, spread over the machine's
+/// cores. A case's outcome depends only on its own input, so the order the threads take them
+/// in changes nothing; failures are reported together, in manifest order, each by case id.
 #[test]
 fn supported_cases_match_pinned_go_goldens() {
+    use std::sync::atomic::{AtomicUsize, Ordering};
     let manifest: GoldenManifest =
         serde_json::from_slice(&fs::read(family().join("manifest.json")).unwrap()).unwrap();
-    let mut checked = 0;
-    for case in manifest.cases {
-        let Some(golden) = case.go_result else {
-            continue;
-        };
-        let prepared: PreparedV2 =
-            serde_json::from_slice(&fs::read(family().join(&case.prepared)).unwrap()).unwrap();
-        let report = forever_engine::simulate_prepared(&prepared).unwrap();
-        let expected: Value =
-            serde_json::from_slice(&fs::read(family().join(&golden.file)).unwrap()).unwrap();
-        let mut found = Vec::new();
-        differences(&expected, &comparable(&report.result), "", &mut found);
-        assert!(found.is_empty(), "{}:\n{}", case.id, found.join("\n"));
-        if let Some(log) = case.go_log {
-            let expected = fs::read_to_string(family().join(&log.file)).unwrap();
-            let actual = report.result["logs"].as_str().unwrap();
-            for (line, (go, rust)) in expected.lines().zip(actual.lines()).enumerate() {
-                assert_eq!(go, rust, "{} log line {}", case.id, line + 1);
-            }
-            assert_eq!(
-                expected.lines().count(),
-                actual.lines().count(),
-                "{} log length",
-                case.id
-            );
+    let cases: Vec<(&Golden, &GoldenFile)> = manifest
+        .cases
+        .iter()
+        .filter_map(|case| case.go_result.as_ref().map(|golden| (case, golden)))
+        .collect();
+    assert!(cases.len() >= 5);
+    let workers = std::thread::available_parallelism().map_or(1, |count| count.get());
+    let next = AtomicUsize::new(0);
+    let outcomes: Vec<std::sync::Mutex<Option<Result<(), String>>>> =
+        cases.iter().map(|_| Default::default()).collect();
+    std::thread::scope(|scope| {
+        for _ in 0..workers.min(cases.len()) {
+            scope.spawn(|| loop {
+                let index = next.fetch_add(1, Ordering::Relaxed);
+                let Some(&(case, golden)) = cases.get(index) else {
+                    break;
+                };
+                // A panic in the engine names its case instead of ending the whole run.
+                let outcome = std::panic::catch_unwind(|| check_golden(case, golden))
+                    .unwrap_or_else(|panic| {
+                        let message = panic
+                            .downcast_ref::<String>()
+                            .map(String::as_str)
+                            .or_else(|| panic.downcast_ref::<&str>().copied())
+                            .unwrap_or("no message");
+                        Err(format!("{}: panicked: {message}", case.id))
+                    });
+                *outcomes[index].lock().unwrap() = Some(outcome);
+            });
         }
-        checked += 1;
-    }
-    assert!(checked >= 5);
+    });
+    let failures: Vec<String> = outcomes
+        .into_iter()
+        .map(|outcome| outcome.into_inner().unwrap().expect("every case ran"))
+        .filter_map(Result::err)
+        .collect();
+    assert!(
+        failures.is_empty(),
+        "{} of {} cases differ from their Go goldens:\n{}",
+        failures.len(),
+        cases.len(),
+        failures.join("\n")
+    );
 }
 
 /// A damage on-use item runs only on outcome appliers the runtime knows: Linken's Boomerang's
