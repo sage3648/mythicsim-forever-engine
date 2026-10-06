@@ -403,14 +403,13 @@ fn sweeping_strikes_copies_a_hit_to_the_next_target() {
     assert!(logs.contains("{SpellID: 12723} stacks: 5 --> 4"));
 }
 
-/// With Sweeping Strikes up, Thunder Clap casts the normalized attack on the next target and
-/// spends a charge, which Go does against one target too, where the next target is the first.
-/// The clap's slow of a target that never swings at the player has nothing to scale.
+/// Sweeping Strikes strikes "an additional nearby opponent", so with one target Go does not
+/// let Thunder Clap spend a charge on a normalized attack against the target it already hit
+/// (#667), though a rotation may still cast the aura. The clap still lands.
 #[test]
-fn thunder_clap_spends_a_sweeping_strikes_charge_against_one_target() {
+fn sweeping_strikes_does_nothing_against_one_target() {
     let logs = first_fight_log(warrior_fixture("arms-warrior-thunder-clap-1-target"));
-    let normalized = lines_with(&logs, 1, "12723, Tag: 1}");
-    assert!(!normalized.is_empty(), "{logs}");
+    assert!(lines_with(&logs, 1, "12723, Tag: 1}").is_empty(), "{logs}");
     assert!(logs.contains("[Target 1] Aura gained: {SpellID: 11581}"));
 }
 
