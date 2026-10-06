@@ -1026,13 +1026,17 @@ impl<A: Agent> Fight<A> {
     }
 
     /// The "Pushback trigger" handler, which Go runs a spell batch window after the hit that
-    /// passed its conditions, without looking at the hardcast again: a hardcast that finished in
-    /// between is pushed back all the same. The gate admits only casts that are not channeled.
+    /// passed its conditions. Since the fork's patch 89 it leaves a hardcast that finished in
+    /// between alone, before the pushback roll. The gate admits only casts that are not
+    /// channeled.
     pub(crate) fn pushback_handler(&mut self, chance: f64) {
         let hardcast = self.player.hardcast;
         let Some(spell) = hardcast.spell else {
             return;
         };
+        if hardcast.expires <= self.now {
+            return;
+        }
         let resist = self.spells[spell].pushback_resist;
         if !self.proc(chance - resist, "Pushback") {
             return;

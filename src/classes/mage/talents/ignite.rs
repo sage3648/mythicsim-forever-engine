@@ -59,7 +59,9 @@ impl Ignite {
     }
 
     /// The trigger's OnSpellHitDealt: Go's proc trigger can proc from procs and matches
-    /// `ProcMaskSpellDamage` crits of any Fire spell but Ignite itself.
+    /// `ProcMaskSpellDamage` crits of any Fire spell but Ignite itself on an enemy. The fork's
+    /// patch 88 added the enemy condition, so the Goblin Sapper Charge's crit on the Mage, a
+    /// unit with no Ignite dot, no longer reaches the handler.
     pub(crate) fn on_spell_hit_dealt<A: Agent>(
         &self,
         fight: &mut Fight<A>,
@@ -71,6 +73,7 @@ impl Ignite {
             || !result.crit()
             || state.school & FIRE == 0
             || spell == self.spell
+            || !result.target.is_target()
         {
             return;
         }

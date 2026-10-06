@@ -115,38 +115,12 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
     }
 }
 
-/// The pinned Go engine panics when Ignite hears the Goblin Sapper Charge's crit on the
-/// player, whose Ignite dot does not exist (mage/talents_fire.go:135). With no reference
-/// result, an Ignite build whose rotation reaches the charge is refused. See UPSTREAM.md.
-fn limits(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
-    if !prepared
-        .effects
-        .iter()
-        .any(|effect| matches!(effect, Effect::Ignite { .. }))
-    {
-        return Vec::new();
-    }
-    prepared
-        .effects
-        .iter()
-        .filter_map(|effect| match effect {
-            Effect::GoblinSapper { item_id, .. } => Some(*item_id),
-            _ => None,
-        })
-        .filter(|item| {
-            reachable.iter().any(|spell| {
-                spell
-                    .action_id
-                    .as_ref()
-                    .is_some_and(|id| id.item_id == *item)
-            })
-        })
-        .map(|item| {
-            format!(
-                "Ignite would hear the crit of item {item}'s hit on the player, where the pinned Go engine panics"
-            )
-        })
-        .collect()
+/// No Mage build limits. Before the fork's patch 88 the pinned Go engine panicked when
+/// Ignite heard the Goblin Sapper Charge's crit on the player, and an Ignite build whose
+/// rotation reached the charge was refused here; Ignite now ignores hits on the player in
+/// both engines. See UPSTREAM.md.
+fn limits(_prepared: &PreparedV2, _reachable: &[&Spell]) -> Vec<String> {
+    Vec::new()
 }
 
 /// The spells that reach a target past the first in Go and not yet in Rust: none. Arcane

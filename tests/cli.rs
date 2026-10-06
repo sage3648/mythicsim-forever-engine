@@ -88,24 +88,37 @@ fn prepared_benchmark_repeats_one_result() {
 #[test]
 fn check_reports_refusal_codes_beside_the_reasons() {
     let family = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("fixtures/mage/prepared-v2");
-    let check = |name: &str| -> serde_json::Value {
+    let check = |path: &std::path::Path| -> serde_json::Value {
         let result = Command::new(env!("CARGO_BIN_EXE_forever-engine"))
             .args(["check", "--infile"])
-            .arg(family.join(format!("{name}.prepared.json")))
+            .arg(path)
             .output()
             .unwrap();
         assert!(result.status.success());
         serde_json::from_slice(&result.stdout).unwrap()
     };
-    let refused = check("fire-mage-goblin-sapper");
-    let reason = "Ignite would hear the crit of item 10646's hit on the player, where the pinned Go engine panics";
+    // A Serpent Sting tick outcome the runtime does not implement is a Hunter class limit.
+    let mut hunter: serde_json::Value = serde_json::from_slice(
+        &std::fs::read(family.join("production-marksmanship-hunter.prepared.json")).unwrap(),
+    )
+    .unwrap();
+    for effect in hunter["effects"].as_array_mut().unwrap() {
+        if effect["kind"] == "serpent_sting" {
+            effect["tick_outcome"] = serde_json::json!("magic_hit");
+        }
+    }
+    let path = std::env::temp_dir().join(format!("cli-refusal-{}.json", std::process::id()));
+    std::fs::write(&path, serde_json::to_vec(&hunter).unwrap()).unwrap();
+    let refused = check(&path);
+    std::fs::remove_file(&path).unwrap();
+    let reason = "Serpent Sting ticks with magic_hit";
     assert_eq!(refused["supported"], false);
     assert_eq!(refused["reasons"], serde_json::json!([reason]));
     assert_eq!(
         refused["refusals"],
         serde_json::json!([{"code": "class_limit", "reason": reason}])
     );
-    let supported = check("frost-reference");
+    let supported = check(&family.join("frost-reference.prepared.json"));
     assert_eq!(supported["supported"], true);
     assert_eq!(supported["refusals"], serde_json::json!([]));
 }

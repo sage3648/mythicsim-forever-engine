@@ -61,7 +61,9 @@ copy of the boss would swing at the tank.
 - 322 accepted prepared v2 fixtures, 321 of them with Go results, checked by `cargo test`.
 - 7,922 production variants (race boards, builder starters, gear, buffs, talents,
   class options and presets) and 3,724 random variants compared with Go. None
-  differ. Rust refuses 174 of them, and the pinned Go engine crashes on 2.
+  differ. Rust refuses 174 of them. The 2 that crashed the Go engine before
+  `74127c6c8` now match
+  ([record](validation/2026-10-06-reference-pin-74127c6c8-sweeps.json)).
 - Against 2 to 5 targets, 235 reference builds of every class, 1,955 Mage and Warlock
   census variants and 1,706 random variants match Go, the area hits, cleaves and multidots
   included.
@@ -76,7 +78,7 @@ copy of the boss would swing at the tank.
   [fair comparison](docs/forever-rust-fair-comparison-2026-10-03.md) and the
   [prototype report](docs/forever-rust-prototype-2026-10-03.md).
 
-The reference is Go revision `6383c15a7b1bfbdbd7c5b4c0c59418c636e52e1a`. A match
+The reference is Go revision `74127c6c8454217e7d6221de5e3274cf22e621bb`. A match
 proves the same behavior as that Go engine. It does not prove the live game.
 [UPSTREAM.md](UPSTREAM.md) explains how community fixes are reviewed and ported.
 
