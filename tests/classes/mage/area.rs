@@ -171,3 +171,22 @@ fn dynamic_dot_modifiers_reach_the_dot_on_every_target() {
     assert!(expected.iter().any(|line| line.contains("[Target 2]")));
     assert_eq!(ticks(&first_fight_log(case)), expected);
 }
+
+/// Go drops a multidot line for a spell with an area dot: the dot belongs to the caster, and
+/// `Spell.CurDot`, which `GetAPLMultidotSpell` reads, does not return it. The rotation is the
+/// plain one, which never casts Flamestrike.
+#[test]
+fn a_multidot_line_for_an_area_dot_is_dropped() {
+    let logs = first_fight_log("fire-mage-3-targets-multidot-flamestrike");
+    assert!(!logs.contains("Casting {SpellID: 10216}"), "{logs}");
+    assert!(logs.contains("Casting {SpellID: 25306}"), "{logs}");
+}
+
+/// A rotation condition reads an area dot: `GetAPLDot` returns the caster's `AOEDot` first, so
+/// Blizzard is cast again once its channel is down.
+#[test]
+fn a_condition_reads_an_area_dot() {
+    let logs = first_fight_log("frost-mage-3-targets-blizzard-dot-condition");
+    let casts = logs.matches("Casting {SpellID: 10187}").count();
+    assert!(casts >= 3, "{casts} casts of Blizzard");
+}

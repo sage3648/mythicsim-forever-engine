@@ -6015,6 +6015,48 @@
         "file": "destruction-warlock-2-targets-bane-of-havoc-hellfire.go-log.txt",
         "sha256": "b5687b2a1145baab8928217c4f37202ef9f018020e7369bf2640dc23267f0aab"
       }
+    },
+    {
+      "id": "fire-mage-3-targets-multidot-flamestrike",
+      "description": "The Fire Mage against three targets with a multidot line for Flamestrike, which Go drops: the area dot belongs to the caster and Spell.CurDot does not return it, so the rotation is the plain one.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-mage-3-targets-multidot-flamestrike.request.json"
+      },
+      "prepared": "fire-mage-3-targets-multidot-flamestrike.prepared.json",
+      "prepared_sha256": "8649609396715d4e4a1c36490b17ac73c5a48582b72217af98c6911ad49a72d7",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fire-mage-3-targets-multidot-flamestrike.go-result.json",
+        "sha256": "1eb047ee43f5f8281d0928fe5f683d6378b0e3851f388f422d764534479ba775"
+      },
+      "go_log": {
+        "file": "fire-mage-3-targets-multidot-flamestrike.go-log.txt",
+        "sha256": "4fa52df8387e214f49bcbb907925d055acb73c1b48d240137336b08761fec1bb"
+      }
+    },
+    {
+      "id": "frost-mage-3-targets-blizzard-dot-condition",
+      "description": "The Frost Mage against three targets casting Blizzard when its dot is down or about to end: a rotation condition reads the area dot through Go GetAPLDot, which returns the caster's AOEDot.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/frost-mage-3-targets-blizzard-dot-condition.request.json"
+      },
+      "prepared": "frost-mage-3-targets-blizzard-dot-condition.prepared.json",
+      "prepared_sha256": "710f34cea12867f534220a1a83c53aee0b8fa970b441353d3b35f61ad9c4841d",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frost-mage-3-targets-blizzard-dot-condition.go-result.json",
+        "sha256": "2f1011ef9644af79e058ede4199e943e1a8a525f712865de0cce5b4cb2a5c21f"
+      },
+      "go_log": {
+        "file": "frost-mage-3-targets-blizzard-dot-condition.go-log.txt",
+        "sha256": "d1895c6b65c298f3fdebd7b86b80cdceb08d068090b85036ac3cf7314cc9f4d7"
+      }
     }
   ]
 }
