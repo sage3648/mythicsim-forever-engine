@@ -87,7 +87,9 @@ its patch 92, and 133 changed in nothing else; the other 209 changed in behavior
   flat 100 (#654, #665). Priest: Dark Sacrifice is Undead only and adds no threat (patch 85).
 - Items: Dragon's Call's whelp waits out a 45 second cooldown (patch 86).
 
-Rust matches all of them. [SWEEPS]
+Rust matches all of them, and so does every recorded sweep: 9,052 of the 9,076 variants
+match Go, the other 24 are the multi-target tank builds Rust refuses, and none differ
+([record](validation/2026-10-07-reference-pin-cd7d44aec-sweeps.json)).
 
 ## Ledger
 

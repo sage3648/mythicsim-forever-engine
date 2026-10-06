@@ -64,6 +64,9 @@ copy of the boss would swing at the tank.
   differ. Rust refuses 174 of them. The 2 that crashed the Go engine before
   `74127c6c8` now match
   ([record](validation/2026-10-06-reference-pin-74127c6c8-sweeps.json)).
+- At `cd7d44aec` every recorded sweep ran again, 9,076 variants in 107 records: 9,052 match
+  Go, Rust refuses 24 and none differ
+  ([record](validation/2026-10-07-reference-pin-cd7d44aec-sweeps.json)).
 - Against 2 to 5 targets, 235 reference builds of every class, 1,955 Mage and Warlock
   census variants and 1,706 random variants match Go, the area hits, cleaves and multidots
   included.
