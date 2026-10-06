@@ -33,6 +33,10 @@ pub(crate) struct ClassGate {
     /// a target past the first in Go and not yet in Rust. None for a class not yet checked
     /// against several targets.
     pub(crate) several_targets: Option<Limits>,
+    /// Whether a prepull move of the player has been compared with Go for the class: its
+    /// melee swings stop and start with the range, and nothing else the class does reads the
+    /// player's distance.
+    pub(crate) player_movement: bool,
 }
 
 /// A class check of the input and the spells the rotation can reach: a reason for each
@@ -170,6 +174,7 @@ const COMMON_EFFECTS: &[&str] = &[
     "inert_pet",
     "judgement_of_wisdom",
     "parry_haste",
+    "player_movement",
     "potion_mana",
     "player_damage_taken",
     "potion_resource",
@@ -1111,10 +1116,16 @@ pub(crate) fn prepared_coverage(
         ));
         let mut reachable = Vec::new();
         let mut registered_prepull = 0;
-        // Prepull parsing accepts only casts.
+        let mut prepull_moves = false;
+        // Prepull parsing accepts casts, aura activations and moves.
         for prepull in &rotation.prepull {
             if prepull_pruned(prepared, prepull) {
                 continue;
+            }
+            // Go registers every move: its range is read when it runs.
+            if let Action::Move(_) = &prepull.action {
+                registered_prepull += 1;
+                prepull_moves = true;
             }
             if let Action::CastSpell(id) = &prepull.action {
                 if let Some(spell) = rotation_spell(prepared, id) {
@@ -1188,6 +1199,12 @@ pub(crate) fn prepared_coverage(
                     }
                 }
             }
+        }
+        if prepull_moves {
+            reasons.extend(coded(
+                "prepull_unsupported",
+                player_movement_limits(prepared, gate),
+            ));
         }
         reasons.extend(coded("class_limit", (gate.limits)(prepared, &reachable)));
         reasons.extend(coded(
@@ -1403,6 +1420,32 @@ fn energy_without_bar(prepared: &PreparedV2, rotation: &Rotation) -> Vec<String>
                 item.position
             ));
         }
+    }
+    reasons
+}
+
+/// What a prepull move of the player needs that the runtime does not follow: a class compared
+/// with Go, the speed the exporter read, no aura but the class's dash changing it, and no ranged
+/// swing that the move would stop.
+fn player_movement_limits(prepared: &PreparedV2, gate: &ClassGate) -> Vec<String> {
+    let mut reasons = Vec::new();
+    if !gate.player_movement {
+        reasons.push(format!(
+            "a prepull move is unsupported for {}",
+            prepared.player.class
+        ));
+    }
+    match prepared.effects.iter().find_map(|effect| match effect {
+        Effect::PlayerMovement { speed_auras, .. } => Some(speed_auras),
+        _ => None,
+    }) {
+        None => reasons.push("a prepull move has no exported movement speed".into()),
+        Some(auras) => reasons.extend(auras.iter().map(|aura| {
+            format!("a prepull move with {aura}, which changes the movement speed, is unsupported")
+        })),
+    }
+    if prepared.melee.auto_swing_ranged {
+        reasons.push("a prepull move with a ranged auto swing is unsupported".into());
     }
     reasons
 }

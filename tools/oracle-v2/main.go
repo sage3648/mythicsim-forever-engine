@@ -1044,6 +1044,9 @@ func sunderBlocked(request *proto.RaidSimRequest, label string) bool {
 
 func commonEffects(character *core.Character, target *core.Unit, request *proto.RaidSimRequest, unrepresented *[]string) []map[string]any {
 	effects := auraShouldRefreshEffects(character, target, request.Raid.Parties[0].Players[0].GetRotation())
+	if effect := playerMovementEffect(character, request.Raid.Parties[0].Players[0].GetRotation()); effect != nil {
+		effects = append(effects, effect)
+	}
 	for _, aura := range target.GetAuras() {
 		if aura.Label == "Judgement of Wisdom (External)" { // buffs/paladin.go AttachJudgementOfWisdomMana
 			effects = append(effects, map[string]any{

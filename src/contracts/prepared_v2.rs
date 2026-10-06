@@ -1263,6 +1263,24 @@ pub enum Effect {
         gain_log: String,
         expire_log: String,
     },
+    /// movement.go: a unit that moves in the prepull. `speed_multiplier` is the player's
+    /// `PseudoStats.MovementSpeedMultiplier` after the reset, and `speed_auras` names every aura
+    /// whose gain or fade could change it other than the class's own dash.
+    PlayerMovement {
+        speed_multiplier: f64,
+        speed_auras: Vec<String>,
+    },
+    /// sim/warrior/charge.go: the prepull cast that gives rage, triples the warrior's movement
+    /// speed while its aura is up and moves it `overshoot` yards inside the spell's minimum range.
+    WarriorCharge {
+        spell_id: i32,
+        aura: String,
+        rage: f64,
+        vanguard: bool,
+        speed_multiplier: f64,
+        overshoot: f64,
+        min_range: f64,
+    },
     /// The forms the druid starts in and each druid spell may be cast in.
     DruidForms {
         starting_form: Vec<String>,
@@ -3740,6 +3758,8 @@ impl Effect {
             Effect::TemporaryStats { .. } => "temporary_stats",
             Effect::SpeedOnUse { .. } => "speed_on_use",
             Effect::DiamondFlask { .. } => "diamond_flask",
+            Effect::PlayerMovement { .. } => "player_movement",
+            Effect::WarriorCharge { .. } => "warrior_charge",
             Effect::DruidForms { .. } => "druid_forms",
             Effect::MoonkinForm { .. } => "moonkin_form",
             Effect::Starfire {} => "starfire",

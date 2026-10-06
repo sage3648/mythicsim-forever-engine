@@ -111,6 +111,8 @@ var (
 	warriorEnrage                     = spelldata.Talent(12317, 5)
 	warriorBloodCraze                 = spelldata.Talent(16487, 3)
 	warriorDefiance                   = spelldata.Talent(12792, 3)
+	warriorCharge                     = spelldata.Ranked(11578)
+	warriorImprovedCharge             = spelldata.Talent(12285, 2)
 )
 
 // A client damage row's roll: spelldata Effect.Roll draws between these bounds unless the
@@ -252,6 +254,16 @@ func warriorEffects(agent core.Agent, character *core.Character) []map[string]an
 		"kind": "berserker_rage", "spell_id": berserkerRage.ID, "aura": "Berserker Rage",
 		"rage_gain": warriorImprovedBerserkerRage.EffectAt(1).TenthsAt(talents.ImprovedBerserkerRage),
 	})
+	// charge.go: the cast spends no rage, gives rage, triples the warrior's movement speed through
+	// its dash aura and runs to 3.5 yards inside the spell's minimum range. It casts only before
+	// the pull, in Battle Stance, or in Defensive Stance with Vanguard.
+	if charge := character.GetSpell(core.ActionID{SpellID: warriorCharge.Highest().ID}); charge != nil {
+		effects = append(effects, map[string]any{
+			"kind": "warrior_charge", "spell_id": charge.ActionID.SpellID, "aura": "Charge",
+			"rage":     warriorCharge.Highest().EnergizeEffect().Tenths() + warriorImprovedCharge.TenthsAt(talents.ImprovedCharge),
+			"vanguard": talents.Vanguard, "speed_multiplier": 3.0, "overshoot": 3.5, "min_range": charge.MinRange,
+		})
+	}
 	if talents.DeathWish { // talents_fury.go registerDeathWish
 		row := warriorDeathWish.Highest()
 		effects = append(effects, map[string]any{

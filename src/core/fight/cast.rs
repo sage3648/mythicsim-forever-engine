@@ -239,6 +239,13 @@ impl<A: Agent> Fight<A> {
         if state.flags.swapped {
             return false;
         }
+        // While moving only instant casts are possible.
+        if !state.flags.can_cast_while_moving
+            && state.default_cast.cast_time > 0
+            && self.unit(side).moving
+        {
+            return false;
+        }
         if self.unit(side).hardcast.expires > self.now {
             return false;
         }
@@ -540,6 +547,14 @@ impl<A: Agent> Fight<A> {
                     go_string(hardcast.expires - fight.now),
                     go_string(fight.now)
                 )
+            });
+        }
+        if !self.spells[spell].flags.can_cast_while_moving
+            && self.spells[spell].cur_cast.cast_time > 0
+            && self.unit(side).moving
+        {
+            return self.cast_failure(spell, |_| {
+                "casting/channeling while moving not allowed!".into()
             });
         }
 
