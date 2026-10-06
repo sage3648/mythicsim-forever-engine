@@ -117,9 +117,9 @@ pub(crate) struct Totals {
     pub(crate) player_dtps: Distribution,
     /// Go `UnitMetrics.hps` of the player: its healing on units that are not opponents.
     pub(crate) player_hps: Distribution,
-    /// The target's damage and threat from its swings at the player.
-    pub(crate) target_dps: Distribution,
-    pub(crate) target_threat: Distribution,
+    /// Each target's damage and threat from its swings at the player, by position.
+    pub(crate) target_dps: Vec<Distribution>,
+    pub(crate) target_threat: Vec<Distribution>,
     /// Every distribution Go keeps that stays zero in scope: damage taken by the player, TMI,
     /// and the target's own output.
     pub(crate) zero: Distribution,
@@ -643,8 +643,12 @@ impl<A: Agent> Fight<A> {
         }
         self.totals.player_dtps.done_iteration(duration, seed);
         self.totals.player_hps.done_iteration(duration, seed);
-        self.totals.target_dps.done_iteration(duration, seed);
-        self.totals.target_threat.done_iteration(duration, seed);
+        for dps in &mut self.totals.target_dps {
+            dps.done_iteration(duration, seed);
+        }
+        for threat in &mut self.totals.target_threat {
+            threat.done_iteration(duration, seed);
+        }
         if self.death.died {
             self.death.iterations_dead += 1;
             // Seeds rise with the iteration, so the list only needs a sort when one does not.
@@ -843,28 +847,23 @@ impl<A: Agent> Fight<A> {
             resources,
             pets: self.pet_reports(&action_report, &zero, n),
         };
-        // Only the first target can be tanked, so the others' swings and threat stay zero.
+        // A target's own damage and threat are its swings at a tank; without one they stay zero.
         let targets = self
             .target_sides()
             .enumerate()
             .map(|(position, side)| TargetReport {
                 name: self.label_of(side),
                 unit_index: position as i32,
-                dps: if position == 0 {
-                    self.totals.target_dps.report()
-                } else {
-                    zero.clone()
-                },
-                threat: if position == 0 {
-                    self.totals.target_threat.report()
-                } else {
-                    zero.clone()
-                },
+                dps: self.totals.target_dps[position].report(),
+                threat: self.totals.target_threat[position].report(),
                 dtps: self.totals.target_dtps[position].report(),
                 tmi: zero.clone(),
                 hps: zero.clone(),
                 tto: zero.clone(),
-                actions: self.target_actions.iter().map(action_report).collect(),
+                actions: self.target_actions[position]
+                    .iter()
+                    .map(action_report)
+                    .collect(),
                 auras: self.aura_reports(side),
             })
             .collect();

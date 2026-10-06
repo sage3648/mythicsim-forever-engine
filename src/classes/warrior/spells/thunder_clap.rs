@@ -47,11 +47,11 @@ pub(crate) fn apply<A: Agent>(
 }
 
 /// The bid's OnGain: Go `MultiplyMeleeSpeed` by one less the bid.
-pub(crate) fn on_gain<A: Agent>(fight: &mut Fight<A>, params: ThunderClap) {
-    fight.multiply_enemy_melee_speed(1.0 - params.bid);
+pub(crate) fn on_gain<A: Agent>(fight: &mut Fight<A>, aura: AuraRef, params: ThunderClap) {
+    fight.multiply_enemy_melee_speed(aura.side, 1.0 - params.bid);
 }
 
 /// The bid's OnExpire: the inverse factor.
-pub(crate) fn on_expire<A: Agent>(fight: &mut Fight<A>, params: ThunderClap) {
-    fight.multiply_enemy_melee_speed(1.0 / (1.0 - params.bid));
+pub(crate) fn on_expire<A: Agent>(fight: &mut Fight<A>, aura: AuraRef, params: ThunderClap) {
+    fight.multiply_enemy_melee_speed(aura.side, 1.0 / (1.0 - params.bid));
 }

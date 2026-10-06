@@ -1,9 +1,13 @@
-//! The target swinging at the player when the player tanks it: Go attack.go's enemy auto
+//! The targets swinging at the player when the player tanks them: Go attack.go's enemy auto
 //! attack `ApplyEffects`, `CalcDamage` and spell_outcome.go `outcomeEnemyMeleeWhite`, and
 //! attack.go `applyParryHaste` for both units.
 //!
-//! Every value the swing reads is exported resolved, since the gate rejects anything in scope
-//! that would change one during a fight.
+//! Go sets every target's current target to the tank, so each copy of the boss in a fight
+//! against several swings at the player on its own timer, from its own reset roll, with its
+//! own metrics, melee speed and auras. Go lists the swings in unit index order, the targets
+//! first, and runs the ones that are due at one time in that order. Every value a swing reads
+//! is exported resolved, since the gate rejects anything in scope that would change one during
+//! a fight, and the exporter checks that every copy exports the same values.
 
 use std::rc::Rc;
 
@@ -15,12 +19,11 @@ use super::{
         OUTCOME_PARRY,
     },
     log::action_string,
-    melee::Hand,
     Agent, AuraBehavior, Fight, Side, SpellMetrics, SpellResult,
 };
 use crate::core::time::go_string;
 
-/// The target's main hand swing and its metrics against the player.
+/// One target's main hand swing and its metrics against the player.
 #[derive(Clone, Debug)]
 pub(crate) struct EnemyAttack {
     /// Shared, so each swing reads them without a copy.
@@ -32,33 +35,51 @@ pub(crate) struct EnemyAttack {
     /// reset restores.
     pub(crate) melee_speed_multiplier: f64,
     /// Target auras that change only the swing's attack power, with its attack power and the
-    /// debug line's MAP while active. The gate admits at most one an effect can activate.
+    /// debug line's MAP while active. They are the first target's; a copy reads the aura at the
+    /// same position of its own. The gate admits at most one an effect can activate.
     pub(crate) attack_power_auras: Vec<(super::AuraRef, f64, f64)>,
 }
 
 impl<A: Agent> Fight<A> {
-    /// Go `Spell.Cast` of the target's main hand auto: the cast lines, then `ApplyEffects`.
-    pub(crate) fn enemy_swing(&mut self) {
-        let enemy = self.enemy.as_mut().expect("the target swings");
+    /// Whether the player tanks the targets, so each of them swings at it.
+    pub(crate) fn tanked(&self) -> bool {
+        !self.enemies.is_empty()
+    }
+
+    /// A target's swing at the player.
+    fn enemy_attack(&self, target: Side) -> &EnemyAttack {
+        let position = target.target_position().expect("the unit is a target");
+        &self.enemies[position]
+    }
+
+    fn enemy_attack_mut(&mut self, target: Side) -> &mut EnemyAttack {
+        let position = target.target_position().expect("the unit is a target");
+        &mut self.enemies[position]
+    }
+
+    /// Go `Spell.Cast` of a target's main hand auto: the cast lines, then `ApplyEffects`.
+    pub(crate) fn enemy_swing(&mut self, attacker: Side) {
+        let enemy = self.enemy_attack_mut(attacker);
         enemy.metrics.casts += 1;
         if self.log.is_some() {
-            let action = action_string(&enemy.values.action_id);
+            let action = action_string(&self.enemy_attack(attacker).values.action_id);
             self.unit_log(
-                Side::Target,
+                attacker,
                 &format!(
                     "Casting {action} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)"
                 ),
             );
-            self.unit_log(Side::Target, &format!("Completed cast {action}"));
+            self.unit_log(attacker, &format!("Completed cast {action}"));
         }
-        let enemy = self.enemy.as_ref().expect("the target swings");
+        let enemy = self.enemy_attack(attacker);
         let values = Rc::clone(&enemy.values);
         let (mut attack_power, mut log_attack_power) =
             (values.attack_power, values.log_attack_power);
-        if let Some(&(_, aura_attack_power, aura_log_attack_power)) = enemy
-            .attack_power_auras
-            .iter()
-            .find(|(aura, _, _)| self.aura(*aura).active)
+        if let Some(&(_, aura_attack_power, aura_log_attack_power)) =
+            enemy.attack_power_auras.iter().find(|(aura, _, _)| {
+                let aura = self.aura_on(*aura, attacker);
+                self.aura(aura).active
+            })
         {
             attack_power = aura_attack_power;
             log_attack_power = aura_log_attack_power;
@@ -82,6 +103,7 @@ impl<A: Agent> Fight<A> {
         let mut result = SpellResult {
             armor_multiplier: 0.0,
             target: Side::Player,
+            attacker,
             outcome: 0,
             damage: base * values.attacker_multiplier,
             threat: 0.0,
@@ -113,7 +135,7 @@ impl<A: Agent> Fight<A> {
         };
         result.damage *= target_multiplier;
         let after_target = result.damage;
-        self.enemy_outcome(&rolls, &mut result);
+        self.enemy_outcome(attacker, &rolls, &mut result);
         let after_outcome = result.damage;
         // Go ApplyPostOutcomeDamageModifiers: the player's dynamic damage taken modifiers, as
         // an absorb shield, then the floor.
@@ -136,7 +158,7 @@ impl<A: Agent> Fight<A> {
                 after_outcome,
                 result.damage
             );
-            self.unit_log(Side::Target, &line);
+            self.unit_log(attacker, &line);
         }
         result.threat = if result.landed() {
             result
@@ -146,13 +168,13 @@ impl<A: Agent> Fight<A> {
         } else {
             0.0
         };
-        self.enemy_deal_damage(&values, result);
+        self.enemy_deal_damage(attacker, &values, result);
     }
 
     /// Go `outcomeEnemyMeleeWhite`: one roll against the running sum of the table's steps.
-    fn enemy_outcome(&mut self, values: &EnemyRolls, result: &mut SpellResult) {
+    fn enemy_outcome(&mut self, attacker: Side, values: &EnemyRolls, result: &mut SpellResult) {
         let roll = self.random("Enemy White Hit Table");
-        let metrics = &mut self.enemy.as_mut().expect("the target swings").metrics;
+        let metrics = &mut self.enemy_attack_mut(attacker).metrics;
         let mut chance = values.miss_chance;
         if roll < chance {
             result.outcome = OUTCOME_MISS;
@@ -204,10 +226,10 @@ impl<A: Agent> Fight<A> {
         metrics.hits += 1;
     }
 
-    /// Go `dealDamageInternal` for the target's swing, then the player's `OnSpellHitTaken`.
+    /// Go `dealDamageInternal` for a target's swing, then the player's `OnSpellHitTaken`.
     /// The gate rejects any target listener of the target's own hits.
-    fn enemy_deal_damage(&mut self, values: &Enemy, result: SpellResult) {
-        let metrics = &mut self.enemy.as_mut().expect("the target swings").metrics;
+    fn enemy_deal_damage(&mut self, attacker: Side, values: &Enemy, result: SpellResult) {
+        let metrics = &mut self.enemy_attack_mut(attacker).metrics;
         metrics.total_damage += result.damage;
         let blocked = result.outcome & OUTCOME_BLOCK != 0;
         if blocked && result.crit() {
@@ -229,23 +251,22 @@ impl<A: Agent> Fight<A> {
                 values.school,
                 result.threat
             );
-            self.unit_log(Side::Target, &line);
+            self.unit_log(attacker, &line);
         }
         self.on_enemy_hit_taken(&result);
     }
 
-    /// The player's `BlockDamageReduction`, which the target's rolls carry for the current
-    /// stat aura combination.
+    /// The player's `BlockDamageReduction`, which the targets' rolls carry for the current
+    /// stat aura combination, the same for every copy.
     pub(crate) fn player_block_damage_reduction(&self) -> f64 {
-        let enemy = self.enemy.as_ref().expect("the target swings");
-        let rolls = &enemy.values.rolls;
+        let rolls = &self.enemy_attack(Side::Target).values.rolls;
         rolls[self.stat_mask as usize % rolls.len()].block_reduction
     }
 
-    /// Go `TotalMeleeHasteMultiplier` of the target: its attack speed, its live melee speed
-    /// and its haste rating term, or the value at reset when the factors are not exported.
-    pub(crate) fn enemy_melee_haste(&self) -> f64 {
-        let enemy = self.enemy.as_ref().expect("the target swings");
+    /// Go `TotalMeleeHasteMultiplier` of a target: its attack speed, its live melee speed and
+    /// its haste rating term, or the value at reset when the factors are not exported.
+    pub(crate) fn enemy_melee_haste(&self, target: Side) -> f64 {
+        let enemy = self.enemy_attack(target);
         let values = &enemy.values;
         match (
             values.attack_speed_multiplier,
@@ -256,20 +277,20 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    /// Go `Unit.MultiplyMeleeSpeed` on the target, then its `AutoAttacks.UpdateSwingTimers`:
+    /// Go `Unit.MultiplyMeleeSpeed` on a target, then its `AutoAttacks.UpdateSwingTimers`:
     /// the rest of a pending swing scales with the change in speed.
-    pub(crate) fn multiply_enemy_melee_speed(&mut self, amount: f64) {
+    pub(crate) fn multiply_enemy_melee_speed(&mut self, target: Side, amount: f64) {
         // A target that does not swing at the player has no swing to slow.
-        let Some(enemy) = self.enemy.as_mut() else {
-            return;
-        };
-        enemy.melee_speed_multiplier *= amount;
-        if !self.autos.enemy.enabled {
+        if !self.tanked() {
             return;
         }
-        let haste = self.enemy_melee_haste();
+        self.enemy_attack_mut(target).melee_speed_multiplier *= amount;
+        if !self.autos.enemy_attack(target).enabled {
+            return;
+        }
+        let haste = self.enemy_melee_haste(target);
         let now = self.now;
-        let attack = &mut self.autos.enemy;
+        let attack = self.autos.enemy_attack(target);
         let old = attack.cur_swing_speed();
         attack.set_swing_speed(haste);
         let factor = old / attack.cur_swing_speed();
@@ -281,10 +302,10 @@ impl<A: Agent> Fight<A> {
         self.autos.min_time = self.autos.min_time.min(swing_at);
     }
 
-    /// Go `AutoAttacks.PauseMeleeBy` on the target that swings at the player: no swing lands
-    /// before the pause ends.
+    /// Go `AutoAttacks.PauseMeleeBy` on the first target that swings at the player: no swing
+    /// lands before the pause ends.
     pub(crate) fn pause_enemy_melee_by(&mut self, pause: i64) {
-        if self.enemy.is_none() {
+        if !self.tanked() {
             return;
         }
         let resume = self.now + pause;
@@ -295,10 +316,10 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    /// Go `AutoAttacks.ResumeMeleeAt` on the target: the unused part of a pause is undone, the
-    /// swing moving back to the time it had, never into the past.
+    /// Go `AutoAttacks.ResumeMeleeAt` on the first target: the unused part of a pause is undone,
+    /// the swing moving back to the time it had, never into the past.
     pub(crate) fn resume_enemy_melee_at(&mut self, swing_at: i64) {
-        if self.enemy.is_none() {
+        if !self.tanked() {
             return;
         }
         let resume = self.now.max(swing_at);
@@ -309,7 +330,8 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    /// Go `auraTracker.OnSpellHitTaken` on the player for the target's swing.
+    /// Go `auraTracker.OnSpellHitTaken` on the player for a target's swing, which names the
+    /// copy that swung in `result.attacker`.
     fn on_enemy_hit_taken(&mut self, result: &SpellResult) {
         let side = Side::Player;
         let list = super::aura::List::SpellHitTaken as usize;
@@ -370,15 +392,9 @@ impl<A: Agent> Fight<A> {
         }
         let now = self.now;
         let attack = match side {
-            Side::Player => self.autos.attack(Hand::Main),
-            Side::Target => self.autos.attack(Hand::Enemy),
+            Side::Player => self.autos.attack(super::melee::Hand::Main),
+            Side::Target | Side::Extra(_) => self.autos.enemy_attack(side),
             Side::Pet(_) => unreachable!("the target never swings at a pet in scope"),
-            // A copy keeps the timer its reset opened, though it never swings.
-            Side::Extra(extra) => self
-                .autos
-                .extra_enemies
-                .get_mut(usize::from(extra))
-                .expect("a copy that parries has the swing timer its reset opened"),
         };
         let remaining = attack.swing_at - now;
         let swing_speed = attack.cur_swing_duration;
@@ -404,31 +420,32 @@ impl<A: Agent> Fight<A> {
         self.autos.min_time = self.autos.min_time.min(new_ready_at);
     }
 
-    /// Go `addSpellMetrics` for the target's swing at the end of an iteration.
+    /// Go `addSpellMetrics` for the targets' swings at the end of an iteration, each target in
+    /// unit index order: the player's damage taken adds up in that order.
     pub(crate) fn enemy_done_iteration(&mut self) {
-        let Some(enemy) = self.enemy.as_mut() else {
-            return;
-        };
-        let metrics = std::mem::take(&mut enemy.metrics);
-        let action = enemy.action;
-        let totals = &mut self.target_actions[action].targets[Side::Player.index()];
-        totals.casts += metrics.casts;
-        totals.misses += metrics.misses;
-        totals.dodges += metrics.dodges;
-        totals.parries += metrics.parries;
-        totals.blocks += metrics.blocks;
-        totals.blocked_crits += metrics.blocked_crits;
-        totals.hits += metrics.hits;
-        totals.crits += metrics.crits;
-        totals.crushes += metrics.crushes;
-        totals.damage += metrics.total_damage;
-        totals.crit_damage += metrics.total_crit_damage;
-        totals.block_damage += metrics.total_block_damage;
-        totals.blocked_crit_damage += metrics.total_blocked_crit_damage;
-        totals.crush_damage += metrics.total_crush_damage;
-        totals.threat += metrics.total_threat;
-        self.totals.player_dtps.total += metrics.total_damage;
-        self.totals.target_dps.total += metrics.total_damage;
-        self.totals.target_threat.total += metrics.total_threat;
+        for position in 0..self.enemies.len() {
+            let enemy = &mut self.enemies[position];
+            let metrics = std::mem::take(&mut enemy.metrics);
+            let action = enemy.action;
+            let totals = &mut self.target_actions[position][action].targets[Side::Player.index()];
+            totals.casts += metrics.casts;
+            totals.misses += metrics.misses;
+            totals.dodges += metrics.dodges;
+            totals.parries += metrics.parries;
+            totals.blocks += metrics.blocks;
+            totals.blocked_crits += metrics.blocked_crits;
+            totals.hits += metrics.hits;
+            totals.crits += metrics.crits;
+            totals.crushes += metrics.crushes;
+            totals.damage += metrics.total_damage;
+            totals.crit_damage += metrics.total_crit_damage;
+            totals.block_damage += metrics.total_block_damage;
+            totals.blocked_crit_damage += metrics.total_blocked_crit_damage;
+            totals.crush_damage += metrics.total_crush_damage;
+            totals.threat += metrics.total_threat;
+            self.totals.player_dtps.total += metrics.total_damage;
+            self.totals.target_dps[position].total += metrics.total_damage;
+            self.totals.target_threat[position].total += metrics.total_threat;
+        }
     }
 }

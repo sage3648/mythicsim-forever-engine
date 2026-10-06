@@ -519,3 +519,31 @@ fn multidot_puts_a_rip_on_another_target() {
     assert!(log.contains("[Target 2] {SpellID: 9896} tick"));
     assert!(log.contains("[Target 2] Aura gained: {SpellID: 9896}"));
 }
+
+/// Every copy of the boss swings at the bear, and each swing reads the Demoralizing Roar that
+/// copy holds: its attack power falls with that copy's debuff, as Go reads it from the unit
+/// that swings.
+#[test]
+fn each_copy_swings_with_the_roar_it_holds() {
+    let log = first_fight_log(accepted("production-feral-bear-druid-3-targets"));
+    for target in 1..=3 {
+        let roar = log
+            .find(&format!("[Target {target}] Aura gained: {{SpellID: 9898}}"))
+            .unwrap_or_else(|| panic!("Target {target}: no Roar"));
+        let swing = format!(
+            "[Target {target}] [feral-bear-druid (#1)] {{OtherID: 3, Tag: 1}} [DEBUG] MAP: 600.0"
+        );
+        assert!(
+            log[roar..].contains(&swing),
+            "Target {target}: no swing under the Roar"
+        );
+        assert!(
+            !log[..roar].contains(&swing),
+            "Target {target}: a swing under a Roar it did not hold yet"
+        );
+        assert!(
+            log.contains(&format!("[Target {target}] Casting {{OtherID: 3, Tag: 1}}")),
+            "Target {target}: it does not swing"
+        );
+    }
+}

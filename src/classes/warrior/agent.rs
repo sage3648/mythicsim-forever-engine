@@ -1427,7 +1427,7 @@ impl Agent for WarriorAgent {
         }
     }
 
-    fn on_expire(fight: &mut Fight<Self>, _aura: AuraRef, kind: WarriorAura) {
+    fn on_expire(fight: &mut Fight<Self>, aura: AuraRef, kind: WarriorAura) {
         match kind {
             WarriorAura::LastStand => fight
                 .agent
@@ -1443,7 +1443,7 @@ impl Agent for WarriorAgent {
             WarriorAura::Queue(_) => fight.agent.queue.current = None,
             WarriorAura::ThunderClap => {
                 let params = fight.agent.thunder_clap.expect("Thunder Clap is bound");
-                thunder_clap::on_expire(fight, params);
+                thunder_clap::on_expire(fight, aura, params);
             }
             WarriorAura::Enrage => {
                 let params = fight.agent.enrage.expect("Enrage is bound");
@@ -1453,10 +1453,10 @@ impl Agent for WarriorAgent {
         }
     }
 
-    fn on_exclusive_gain(fight: &mut Fight<Self>, _aura: AuraRef, kind: WarriorAura) {
+    fn on_exclusive_gain(fight: &mut Fight<Self>, aura: AuraRef, kind: WarriorAura) {
         if kind == WarriorAura::ThunderClap {
             let params = fight.agent.thunder_clap.expect("Thunder Clap is bound");
-            thunder_clap::on_gain(fight, params);
+            thunder_clap::on_gain(fight, aura, params);
         }
     }
 

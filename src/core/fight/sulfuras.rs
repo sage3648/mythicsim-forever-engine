@@ -99,14 +99,13 @@ impl<A: Agent> Fight<A> {
         self.schedule_delayed_proc(aura, immolation, *result);
     }
 
-    /// Immolation's delayed handler: the hit on the attacker, the target, the only unit that
-    /// swings at the wearer in scope.
-    pub(crate) fn sulfuras_immolation_hit(&mut self) {
+    /// Immolation's delayed handler: the hit on the attacker, the copy of the boss that swung.
+    pub(crate) fn sulfuras_immolation_hit(&mut self, attacker: Side) {
         let immolation = self
             .sulfuras
             .as_ref()
             .expect("Sulfuras is bound")
             .immolation;
-        self.cast(immolation, Side::Target);
+        self.cast(immolation, attacker);
     }
 }

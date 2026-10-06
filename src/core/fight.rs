@@ -1273,8 +1273,9 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) goblin_sapper: Option<damage_taken::GoblinSapper>,
     /// Go `UnitMetrics.Died` for the player.
     pub(crate) death: damage_taken::Death,
-    /// The target's swings at the player, when the player tanks it.
-    pub(crate) enemy: Option<enemy::EnemyAttack>,
+    /// Each target's swing at the player, by position, when the player tanks them: Go points
+    /// every copy of the boss at the tank. Empty otherwise.
+    pub(crate) enemies: Vec<enemy::EnemyAttack>,
     /// An untanked target's swing speed and melee haste, for the timer its parry haste reads.
     pub(crate) untanked_swing: Option<(f64, f64)>,
     /// Auras Go keeps up through `ApplyFixedUptimeAura`.
@@ -1345,8 +1346,9 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) apl: rotation::AplState,
     pub(crate) resources: Vec<ResourceMetrics>,
     pub(crate) actions: Vec<ActionTotals>,
-    /// The target's registered actions; it never acts, so their metrics stay zero.
-    pub(crate) target_actions: Vec<ActionTotals>,
+    /// Each target's registered actions, by position. An untanked target never acts, so their
+    /// metrics stay zero; a tanked one's swing fills its own.
+    pub(crate) target_actions: Vec<Vec<ActionTotals>>,
     /// The player's weapon attacks.
     pub(crate) autos: melee::AutoAttacks,
     sunder: Option<SunderRamp>,
@@ -2896,7 +2898,7 @@ impl<A: Agent> Fight<A> {
             resetting_auras: false,
             self_target: None,
             goblin_sapper: None,
-            enemy: None,
+            enemies: Vec::new(),
             untanked_swing: None,
             death: damage_taken::Death::default(),
             fixed_uptime: Vec::new(),
@@ -2938,15 +2940,19 @@ impl<A: Agent> Fight<A> {
             apl: rotation::AplState::default(),
             resources,
             actions,
-            target_actions: target
-                .metrics_actions
-                .iter()
-                .map(|action| ActionTotals {
-                    id: action.action_id.clone(),
-                    melee: action.melee_metrics,
-                    passive: false,
-                    school: action.school,
-                    targets: metrics::defender_reports(),
+            target_actions: (0..prepared.encounter.target_count.max(1))
+                .map(|_| {
+                    target
+                        .metrics_actions
+                        .iter()
+                        .map(|action| ActionTotals {
+                            id: action.action_id.clone(),
+                            melee: action.melee_metrics,
+                            passive: false,
+                            school: action.school,
+                            targets: metrics::defender_reports(),
+                        })
+                        .collect()
                 })
                 .collect(),
             mana_regen_casting,
@@ -2985,6 +2991,14 @@ impl<A: Agent> Fight<A> {
             heartbeat_offset: 0,
             totals: metrics::Totals {
                 target_dtps: vec![
+                    metrics::Distribution::default();
+                    prepared.encounter.target_count.max(1) as usize
+                ],
+                target_dps: vec![
+                    metrics::Distribution::default();
+                    prepared.encounter.target_count.max(1) as usize
+                ],
+                target_threat: vec![
                     metrics::Distribution::default();
                     prepared.encounter.target_count.max(1) as usize
                 ],
@@ -3128,8 +3142,7 @@ impl<A: Agent> Fight<A> {
             });
         }
         if let Some(values) = &prepared.enemy {
-            let action = fight
-                .target_actions
+            let action = fight.target_actions[0]
                 .iter()
                 .position(|action| action.id == values.action_id)
                 .ok_or("the target's swing has no target action")?;
@@ -3140,7 +3153,7 @@ impl<A: Agent> Fight<A> {
                     fight.stat_combos.len()
                 ));
             }
-            let attack_power_auras = values
+            let attack_power_auras: Vec<(AuraRef, f64, f64)> = values
                 .attack_power_auras
                 .iter()
                 .map(|entry| {
@@ -3159,13 +3172,18 @@ impl<A: Agent> Fight<A> {
                         .ok_or_else(|| format!("target aura {} is not registered", entry.aura))
                 })
                 .collect::<Result<_, BuildError>>()?;
-            fight.enemy = Some(enemy::EnemyAttack {
-                values: std::rc::Rc::new(values.clone()),
-                action,
-                metrics: SpellMetrics::default(),
-                melee_speed_multiplier: values.melee_speed_multiplier.unwrap_or(1.0),
-                attack_power_auras,
-            });
+            // Every copy of the boss swings the same swing at the tank, each with its own
+            // metrics and melee speed.
+            let shared = std::rc::Rc::new(values.clone());
+            fight.enemies = (0..prepared.encounter.target_count.max(1))
+                .map(|_| enemy::EnemyAttack {
+                    values: std::rc::Rc::clone(&shared),
+                    action,
+                    metrics: SpellMetrics::default(),
+                    melee_speed_multiplier: values.melee_speed_multiplier.unwrap_or(1.0),
+                    attack_power_auras: attack_power_auras.clone(),
+                })
+                .collect();
         }
         for effect in effects {
             if let Effect::PlayerDamageTaken { auras } = effect {
@@ -4151,16 +4169,12 @@ impl<A: Agent> Fight<A> {
             self.reset_energy(prepull_start);
             self.reset_rage();
         }
-        // Go AutoAttacks.reset: an enemy with a melee swing rolls its opening offset. Only the
-        // first target can be tanked; the others never swing, but keep the timer their parry
-        // haste reads.
+        // Go AutoAttacks.reset: an enemy with a melee swing rolls its opening offset, in unit
+        // index order. A tank has every copy swing at it; otherwise they only keep the timer
+        // their parry haste reads.
         if side.is_target() && self.config.target_auto_swing_melee {
             let roll = self.random("Enemy Swing Offset");
-            match side {
-                Side::Target => self.reset_enemy_attack(roll),
-                Side::Extra(extra) => self.reset_extra_enemy_attack(usize::from(extra), roll),
-                _ => {}
-            }
+            self.reset_enemy_attack(side, roll);
         }
         self.rotation_reset(side);
         // Go addTracker: each target's tracker first, then the player's.
@@ -4570,8 +4584,9 @@ impl<A: Agent> Fight<A> {
         for &side in &enabled_pets {
             self.randomize_melee_timing(side);
         }
-        // Go AllUnits lists the target first, so its swing joins the weapon attacks first.
-        self.start_enemy_attack();
+        // Go AllUnits lists the targets first, so their swings join the weapon attacks first,
+        // in unit index order.
+        self.start_enemy_attacks();
         self.start_auto_attacks(Side::Player);
         let ready = self.player.gcd.max(0);
         self.set_gcd_timer(ready);

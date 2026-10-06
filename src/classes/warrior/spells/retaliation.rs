@@ -20,14 +20,15 @@ pub(crate) fn apply<A: Agent>(fight: &mut Fight<A>, params: Retaliation) {
     fight.set_stacks(params.aura, params.charges);
 }
 
-/// The aura's OnSpellHitTaken for the target's melee swing.
+/// The aura's OnSpellHitTaken for a target's melee swing: the strike goes back at the copy that
+/// swung.
 pub(crate) fn on_hit_taken<A: Agent>(
     fight: &mut Fight<A>,
     params: Retaliation,
     result: &SpellResult,
 ) {
     if result.landed() && result.damage > 0.0 {
-        fight.cast(params.hit, Side::Target);
+        fight.cast(params.hit, result.attacker);
         fight.remove_stack(params.aura);
     }
 }

@@ -139,6 +139,7 @@ impl Queue {
         let position = result.target.target_position()?;
         let reset = SpellResult {
             target: result.target,
+            attacker: result.attacker,
             outcome: 0,
             damage: 0.0,
             threat: 0.0,
@@ -237,6 +238,7 @@ mod tests {
     fn hit(position: usize, damage: f64) -> SpellResult {
         SpellResult {
             target: Side::target(position),
+            attacker: Side::Player,
             outcome: 2,
             damage,
             threat: damage,

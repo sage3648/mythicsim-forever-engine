@@ -378,7 +378,7 @@ impl HolyShield {
         if result.outcome & OUTCOME_BLOCK == 0 {
             return;
         }
-        fight.cast(self.proc_spell, Side::Target);
+        fight.cast(self.proc_spell, result.attacker);
         fight.remove_stack(self.aura);
     }
 
