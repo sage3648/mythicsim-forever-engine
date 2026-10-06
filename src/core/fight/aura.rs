@@ -1008,6 +1008,9 @@ impl<A: Agent> Fight<A> {
                 if !self.aura(aura).active {
                     continue;
                 }
+                // Every listener hears the one result object, as it is when its turn comes.
+                let heard = A::dealing_result(self, spell).unwrap_or(*result);
+                let result = &heard;
                 match self.aura(aura).behavior.clone() {
                     AuraBehavior::Class(kind) if dealt => {
                         A::on_spell_hit_dealt(self, aura, kind, spell, result)
@@ -1115,16 +1118,7 @@ impl<A: Agent> Fight<A> {
         if chance != 1.0 && self.random_for_aura(aura) > chance {
             return;
         }
-        let result = *result;
-        self.schedule(
-            self.now + delay,
-            super::PRIORITY_DOT,
-            super::Action::DelayedProc {
-                aura,
-                spell,
-                result,
-            },
-        );
+        self.schedule_delayed_proc_at(self.now + delay, aura, spell, *result);
     }
 
     /// Go `AttachProcTriggerCallback`'s delayed handler: run it a spell batch window from now.
@@ -1134,13 +1128,30 @@ impl<A: Agent> Fight<A> {
         spell: SpellId,
         result: SpellResult,
     ) {
+        self.schedule_delayed_proc_at(self.now + super::SPELL_BATCH_WINDOW, aura, spell, result);
+    }
+
+    /// The same at a given time. Go clones the result the handler will hear, which a class
+    /// that pools its results answers for with [`Agent::clone_result`].
+    pub(crate) fn schedule_delayed_proc_at(
+        &mut self,
+        at: i64,
+        aura: AuraRef,
+        spell: SpellId,
+        result: SpellResult,
+    ) {
+        let (result, token) = match A::clone_result(self, spell, &result) {
+            Some((clone, token)) => (clone, Some(token)),
+            None => (result, None),
+        };
         self.schedule(
-            self.now + super::SPELL_BATCH_WINDOW,
+            at,
             super::PRIORITY_DOT,
             super::Action::DelayedProc {
                 aura,
                 spell,
                 result,
+                token,
             },
         );
     }
@@ -1335,16 +1346,7 @@ impl<A: Agent> Fight<A> {
         if let Some((timer, duration)) = icd {
             self.timers[timer] = self.now + duration;
         }
-        let result = *result;
-        self.schedule(
-            self.now + delay,
-            super::PRIORITY_DOT,
-            super::Action::DelayedProc {
-                aura,
-                spell,
-                result,
-            },
-        );
+        self.schedule_delayed_proc_at(self.now + delay, aura, spell, *result);
     }
 
     /// The delayed half of a proc trigger.

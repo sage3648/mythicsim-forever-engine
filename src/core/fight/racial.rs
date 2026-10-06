@@ -1,8 +1,6 @@
 //! Go racials.go effects with runtime behavior.
 
-use super::{
-    Action, Agent, AuraRef, Fight, ModId, ModKind, Side, SpellId, SpellResult, PRIORITY_DOT,
-};
+use super::{Agent, AuraRef, Fight, ModId, ModKind, Side, SpellId, SpellResult};
 
 /// Go racials.go `applyEureka`: its aura and modifiers, and the casts that spend a stack.
 #[derive(Clone, Debug)]
@@ -41,16 +39,7 @@ impl<A: Agent> Fight<A> {
         if let Some((timer, duration)) = icd {
             self.timers[timer] = self.now + duration;
         }
-        let result = *result;
-        self.schedule(
-            self.now + delay,
-            PRIORITY_DOT,
-            Action::DelayedProc {
-                aura,
-                spell,
-                result,
-            },
-        );
+        self.schedule_delayed_proc_at(self.now + delay, aura, spell, *result);
     }
 
     /// The drain's `ApplyEffects`: a hit-only magic roll on a share of maximum health, and
