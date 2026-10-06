@@ -338,20 +338,13 @@ fn ignite_builds_may_cast_fire_spells() {
     assert!(check_prepared(&parse(value).unwrap()).is_ok());
 }
 
-/// The pinned Go engine panics when Ignite hears the Goblin Sapper Charge's crit on the
-/// player, so an Ignite build is refused while its rotation can reach the charge. See
-/// UPSTREAM.md.
+/// Since the fork's patch 88 Ignite ignores hits on a unit that is not an enemy, so the Goblin
+/// Sapper Charge's crit on the Mage no longer panics in Go, and an Ignite build that throws the
+/// charge is supported; its accepted Go golden checks the result. See UPSTREAM.md.
 #[test]
-fn ignite_builds_refuse_a_reachable_goblin_sapper() {
+fn ignite_builds_with_a_goblin_sapper_are_supported() {
     let path = family().join("fire-mage-goblin-sapper.prepared.json");
-    let mut value: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
-    let reason = "Ignite would hear the crit of item 10646's hit on the player, where the pinned Go engine panics";
-    assert_eq!(reasons(value.clone()), vec![reason.to_string()]);
-    // Without the charge among the autocast cooldowns, nothing reaches it.
-    value["player"]["major_cooldowns"]
-        .as_array_mut()
-        .unwrap()
-        .retain(|cooldown| cooldown["action_id"]["item_id"] != 10646);
+    let value: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
     assert!(check_prepared(&parse(value).unwrap()).is_ok());
 }
 
@@ -673,9 +666,14 @@ fn refusals_carry_stable_codes() {
         json!({"auraShouldRefresh": {"auraId": {"spellId": 1}}});
     assert_eq!(codes(refresh), ["aura_condition_unsupported"]);
 
-    let path = family().join("fire-mage-goblin-sapper.prepared.json");
-    let sapper: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
-    assert_eq!(codes(sapper), ["class_limit"]);
+    let path = family().join("production-marksmanship-hunter.prepared.json");
+    let mut hunter: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+    for effect in hunter["effects"].as_array_mut().unwrap() {
+        if effect["kind"] == "serpent_sting" {
+            effect["tick_outcome"] = json!("magic_hit");
+        }
+    }
+    assert_eq!(codes(hunter), ["class_limit"]);
 
     // A tank's fight against several targets is refused: every copy of the boss would swing
     // at the tank, and Rust keeps one swing.

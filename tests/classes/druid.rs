@@ -371,16 +371,16 @@ fn a_tanking_pushback_hardcast_needs_the_trigger_and_a_certain_chance() {
     assert!(reasons(unrolled).contains(&BOOMERANG_REFUSAL.into()));
 }
 
-/// Go pushes back by the time the cast has run, never more than half a second, and a hit in the
-/// batch window before the cast completes still pushes the finished cast back and completes it
-/// again.
+/// Go pushes back by the time the cast has run, never more than half a second. Since the fork's
+/// patch 89 a hit in the batch window before the cast completes leaves the finished cast alone,
+/// so it completes once.
 #[test]
 fn a_hit_pushes_the_hardcast_back_by_the_time_it_has_run() {
     let log = first_fight_log(accepted("feral-bear-druid-boomerang-pushback"));
     assert!(log.contains("{ItemID: 11905} pushed back 475.418331ms while casting"));
     let log = first_fight_log(accepted("feral-bear-druid-boomerang-pushback-after-cast"));
-    assert!(log.contains("{ItemID: 11905} pushed back 500ms while casting"));
-    assert_eq!(log.matches("Completed cast {ItemID: 11905}").count(), 2);
+    assert!(!log.contains("pushed back"));
+    assert_eq!(log.matches("Completed cast {ItemID: 11905}").count(), 1);
 }
 
 /// The same accepted request against another number of copies of the boss, which Rust builds

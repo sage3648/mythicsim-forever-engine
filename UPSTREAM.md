@@ -4,7 +4,7 @@
 
 | Source | Role | Baseline |
 | --- | --- | --- |
-| [MythicSim Go engine](https://github.com/sage3648/mythicsim-forever-engine-go) | Fixtures and live reference | `6383c15a7b1bfbdbd7c5b4c0c59418c636e52e1a`, on community base `f764984d8b05f0d5ce73aab82185fb6efa40a9a4` |
+| [MythicSim Go engine](https://github.com/sage3648/mythicsim-forever-engine-go) | Fixtures and live reference | `74127c6c8454217e7d6221de5e3274cf22e621bb`, on community base `f764984d8b05f0d5ce73aab82185fb6efa40a9a4` |
 | [Community Forever engine](https://github.com/ElliotWood/Forever) | Changes to review for applicability | Adopted base `f4b776b4f41d5c7799b8141697a2c9e67c89d426`; reviewed through `f764984d8b05f0d5ce73aab82185fb6efa40a9a4` (2026-10-05) |
 
 Go is a reference implementation, not proof of live-game correctness. Forever can
@@ -50,6 +50,14 @@ Hunter goldens with Lacerating Strikes changed and Rust matches them; no other g
 moved, and all 2439 recorded sweep variants match
 ([record](validation/2026-10-06-reference-pin-6383c15a7-sweeps.json)).
 
+The pin moved from `6383c15a7` to `74127c6c8` on 2026-10-06, two commits: the fork's
+patches 88 and 89, which fix the two [reference defects](#reference-defects) below. Ignite
+ignores hits on a unit that is not an enemy, so a Mage with Ignite and a Goblin Sapper Charge
+no longer panics, and a pushback leaves a hardcast that finished during the spell batch
+window alone. The one golden with a late pushback changed and Rust matches it; the Goblin
+Sapper Fire Mage is accepted with Go goldens; no other golden moved
+([record](validation/2026-10-06-reference-pin-74127c6c8-sweeps.json)).
+
 ## Ledger
 
 The [upstream/](upstream/) directory records what has been reviewed and how:
@@ -90,11 +98,12 @@ and `reference-no-missile-barrage` prepared fixtures.
 
 Bugs in the reference. When one blocks a comparison, Rust refuses the affected inputs until
 the reference is fixed, since there is no Go result to match. When Go still gives a result,
-Rust reproduces it, so it matches the engine production runs.
+Rust reproduces it, so it matches the engine production runs. Both defects below are fixed in
+the fork since `74127c6c8` and still open in the community engine.
 
 ### Ignite on the Goblin Sapper Charge's hit on the player
 
-The pinned engine panics with a nil pointer dereference at `sim/mage/talents_fire.go:135`
+The engine panicked with a nil pointer dereference at `sim/mage/talents_fire.go:135`
 when a Mage with Ignite throws a Goblin Sapper Charge and the charge's hit on the Mage
 crits. Community commit `8fb1a2d75a`, in the adopted base, deals that hit through its own
 spell with `ProcMaskSpellDamage` and School Fire. The Mage's `OnSpellHitDealt` hears it,
@@ -103,23 +112,20 @@ and Ignite's trigger (`ProcMaskSpellDamage`, `OutcomeCrit`, Fire) calls
 so `dot.IsActive()` dereferences nil. The handler is unchanged on community `master` at
 `b49be9e13` (2026-10-04).
 
-- Reproduction: run the pinned engine on
+- Reproduction: run the engine before `74127c6c8` on
   `fixtures/mage/prepared-v2/fire-mage-goblin-sapper.request.json`, the production Fire
-  request with `goblinSapper` set. The first charge whose hit on the Mage crits panics,
+  request with `goblinSapper` set. The first charge whose hit on the Mage crit panicked,
   inside `Character.newBasicExplosiveSpellConfig` (`sim/core/consumes.go:650`).
 - Affected records: the Arcane and Fire Mage `goblinSapper` variants in
   `validation/2026-10-04-production-gear-swaps.json`, recorded as `go_error`.
 - Report: [ElliotWood/Forever#699](https://github.com/ElliotWood/Forever/issues/699)
   (2026-10-06), with the reproduction and the trace above.
-- Rust now: the Mage gate refuses an Ignite build whose rotation reaches the charge. This
-  also refuses the Frostfire variant, which matched only because its rotation never
-  reaches the autocast while the global cooldown is busy, the only time Go casts an
-  explosive. Before the guard, Rust rolled the Mage's own crit into an Ignite on the
+- Fixed in the fork's patch 88 (`8979ea9ac0`), in the reference since `74127c6c8`: Ignite's
+  trigger also requires an enemy target. Rust's Ignite ignores hits on the player, the Mage
+  gate no longer refuses an Ignite build that throws the charge, and
+  `fire-mage-goblin-sapper` is accepted with Go goldens. Before the fix the gate refused
+  those builds, and before the guard Rust rolled the Mage's own crit into an Ignite on the
   target.
-- Once Go is fixed and the pin moves: compare the fixed Ignite trigger with Rust. If, as
-  expected, Ignite ignores hits on a unit that is not an enemy, make Rust's Ignite trigger
-  ignore hits on the player, drop the guard, promote `fire-mage-goblin-sapper` with
-  `python3 tools/prepared_v2.py promote` and rerun the affected gear swap variants.
 
 ### A pushback after the hardcast completed
 
@@ -129,22 +135,21 @@ and does not check again. If the hardcast completes inside that 10 ms window, th
 still calls `Hardcast.pushBack` (`sim/core/cast.go`), which extends the finished cast's
 `Expires` by up to 500 ms, and `newHardcastAction` schedules the cast again. The cast
 completes a second time at once and its effect lands twice. Unlike the Ignite crash, this
-does not block a comparison: Rust reproduces it on purpose, in
-`Fight::pushback_handler`.
+did not block a comparison: Rust reproduced it in `Fight::pushback_handler` until the fix.
 
-- Reproduction: run the pinned engine on
+- Reproduction: run the engine before `74127c6c8` on
   `fixtures/mage/prepared-v2/feral-bear-druid-boomerang-pushback-after-cast.request.json`,
   a tanking Feral (bear) Druid that hardcasts Linken's Boomerang for 500 ms. The target's
-  swing lands 10 ms before the cast completes. The Go log golden shows `Completed cast
+  swing lands 10 ms before the cast completes. The Go log showed `Completed cast
   {ItemID: 11905}` at 0.50, then `pushed back 500ms while casting` and a second `Completed
   cast` at the same time, and the Boomerang deals two hits at 1.00.
-- Affected records: the accepted `feral-bear-druid-boomerang-pushback-after-cast` fixture,
-  which keeps Go's double completion as its golden.
 - Report: [ElliotWood/Forever#700](https://github.com/ElliotWood/Forever/issues/700)
   (2026-10-06), proposing to re-check `Hardcast.Expires > sim.CurrentTime` in the handler.
-- Once Go is fixed and the pin moves: the repin lists the fixture's golden as changed.
-  Make `Fight::pushback_handler` return when no hardcast is in progress at the time it
-  runs, and review the changed golden as a reference behavior change.
+- Fixed in the fork's patch 89 (`74127c6c84`), in the reference since `74127c6c8`: the
+  handler returns before the pushback roll when the hardcast has ended. Rust's
+  `Fight::pushback_handler` does the same, and the
+  `feral-bear-druid-boomerang-pushback-after-cast` golden now completes the cast once, with
+  no pushback. A hit in the last batch window of a cast no longer pushes it back at all.
 
 ## Reconcile a fix
 
