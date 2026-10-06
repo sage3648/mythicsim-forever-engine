@@ -32,6 +32,15 @@ Milestones advance on evidence, not promised delivery dates. The
   whole result and the logs the application parses into timelines.
 - Every race that can be a Mage, with its racials, matches Go on all three builds and
   on a randomized race sweep.
+- All 29 production builds, across every class, run in Rust and match Go on about 7,900
+  production variants and 3,700 random ones, with no mismatches. Every class also runs
+  against 2 to 5 targets; tank builds there still fall back to Go.
+- Production routing tools: stable refusal codes, the engine identity in every result,
+  [`tools/route.py`](docs/routing.md) for one request or a whole batch job in one engine,
+  determinism across worker counts and processes, interrupted runs that leave no partial
+  result, and the [release and rollback process](docs/release.md).
+- [Shadow sims](docs/shadow-sims.md) on real MythicSim traffic: no mismatch with the
+  pinned Go engine since they started.
 
 ## Migration sequence
 
@@ -52,13 +61,16 @@ Milestones advance on evidence, not promised delivery dates. The
 2. Completed: [prepared v2 and a release compatibility manifest](docs/prepared-v2.md).
 3. Completed: [the community change ledger and Go-to-Rust mechanics map](UPSTREAM.md#ledger).
 4. Completed: one reference pin and full-result differential diagnostics.
-5. Completed: the Frost, Arcane and Fire reference builds match the pinned Go engine.
-6. Next: worker routing with Go fallback and bounded comparison runs.
+5. Completed: every production build matches the pinned Go engine.
+6. Completed: routing with Go fallback, batch jobs in one engine and shadow comparison runs.
+7. Next: route a small share of Quick Sims to Rust, following the
+   [release stages](docs/release.md#stages), and close the coverage gaps the shadow sims
+   refuse ([the board](https://github.com/sage3648/mythicsim-forever-engine/issues/25)).
 
 The [first usable release](docs/hybrid-migration-plan.md#first-usable-release)
 is one complete Frost build using Go preparation and Rust combat execution, with
 the required production result fields. It does not imply general Mage coverage.
 
 The [first contribution pieces](docs/hybrid-migration-plan.md#first-contribution-sized-pieces)
-provide a reviewable backlog. Production routing, general preparation and upstream
-sync automation are not implemented yet.
+provide a reviewable backlog. Routing in production, general preparation in Rust and
+upstream sync automation are not implemented yet.
