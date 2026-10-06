@@ -1,6 +1,8 @@
 //! Arcane Concentration (talent 11213) and Clearcasting (12536), from Go
 //! sim/mage/talents_arcane.go `registerArcaneConcentration`. A landed damaging Mage
-//! spell can make the next costed Mage cast free, at most once per internal cooldown.
+//! spell can make the next costed Mage cast free, at most once per internal cooldown. The
+//! missiles of Arcane Missiles do not count, and Blizzard rolls on its cast, once for each
+//! enemy it hits, not on its ticks.
 
 use crate::core::fight::{Agent, AuraRef, Fight, SpellId, SpellResult};
 
@@ -59,10 +61,12 @@ impl ArcaneConcentration {
         result: &SpellResult,
     ) {
         let state = &fight.spells[spell];
+        // The proc trigger's mask is every damaging spell but the Arcane Missiles ticks, which
+        // the channel triggers.
         let damaging = state
             .class_spell
             .as_deref()
-            .is_some_and(|class| DAMAGING.contains(&class));
+            .is_some_and(|class| class != "arcane_missiles_tick" && DAMAGING.contains(&class));
         if state.flags.proc || !damaging || !result.landed() {
             return;
         }

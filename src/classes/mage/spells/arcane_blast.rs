@@ -1,8 +1,9 @@
 //! Arcane Blast (1239700) and its Arcane Blast buff (400573), from Go sim/mage/arcane_blast.go
 //! and arcane_charge.go. Each cast stacks the buff up to four times; every stack raises the
 //! damage of the mage's other damaging spells and the cost of Arcane Blast. The next other
-//! damaging cast spends the stacks after its damage is rolled; Arcane Missiles holds them
-//! until its channel ends.
+//! damaging cast spends the stacks after its damage is rolled; Arcane Missiles spends them as
+//! its channel starts. Pyroblast's hit takes the bonus as direct damage, so its dot, which the
+//! client mask leaves out, is not part of the main damage mask.
 
 use crate::{
     classes::mage::masks::{damaging_except, is_class},
@@ -15,6 +16,7 @@ const UNBUFFED: &[&str] = &[
     "arcane_missiles_tick",
     "blizzard",
     "flamestrike",
+    "pyroblast",
 ];
 /// Casts that keep the stacks: Arcane Blast and Arcane Missiles.
 const KEEP: &[&str] = &["arcane_blast", "arcane_missiles_tick"];
@@ -25,6 +27,7 @@ pub(crate) struct ArcaneCharges {
     damage_per_stack: f64,
     cost_per_stack: f64,
     damage_mod: ModId,
+    pyroblast_mod: ModId,
     cost_mod: ModId,
     spenders: Vec<&'static str>,
 }
@@ -39,6 +42,8 @@ pub(crate) fn bind<A: Agent>(
     // Go AddDynamicMod order: damage, then cost.
     let buffed = fight.spells_with_class(&damaging_except(UNBUFFED));
     let damage_mod = fight.register_mod(ModKind::DamageDoneFlat, 0.0, 0, buffed);
+    let pyroblasts = fight.spells_with_class(&["pyroblast"]);
+    let pyroblast_mod = fight.register_mod(ModKind::DirectDamageDoneFlat, 0.0, 0, pyroblasts);
     let blasts = fight.spells_with_class(&["arcane_blast"]);
     let cost_mod = fight.register_mod(ModKind::PowerCostPercentAdd, 0.0, 0, blasts);
     Ok(ArcaneCharges {
@@ -46,6 +51,7 @@ pub(crate) fn bind<A: Agent>(
         damage_per_stack,
         cost_per_stack,
         damage_mod,
+        pyroblast_mod,
         cost_mod,
         spenders: damaging_except(KEEP),
     })
@@ -68,16 +74,22 @@ pub(crate) fn apply<A: Agent>(
 impl ArcaneCharges {
     pub(crate) fn on_gain<A: Agent>(&self, fight: &mut Fight<A>) {
         fight.activate_mod(self.damage_mod);
+        fight.activate_mod(self.pyroblast_mod);
         fight.activate_mod(self.cost_mod);
     }
 
     pub(crate) fn on_expire<A: Agent>(&self, fight: &mut Fight<A>) {
         fight.deactivate_mod(self.damage_mod);
+        fight.deactivate_mod(self.pyroblast_mod);
         fight.deactivate_mod(self.cost_mod);
     }
 
     pub(crate) fn on_stacks_change<A: Agent>(&self, fight: &mut Fight<A>, stacks: i32) {
         fight.update_mod_value(self.damage_mod, self.damage_per_stack * f64::from(stacks));
+        fight.update_mod_value(
+            self.pyroblast_mod,
+            self.damage_per_stack * f64::from(stacks),
+        );
         fight.update_mod_value(self.cost_mod, self.cost_per_stack * f64::from(stacks));
     }
 
@@ -88,8 +100,9 @@ impl ArcaneCharges {
         }
     }
 
-    /// The Arcane Missiles channel aura's OnExpire: the held stacks go.
-    pub(crate) fn on_channel_end<A: Agent>(&self, fight: &mut Fight<A>) {
+    /// Arcane Missiles' `ApplyEffects`: the channel spends the stacks as it starts, before the
+    /// first missile.
+    pub(crate) fn on_channel_start<A: Agent>(&self, fight: &mut Fight<A>) {
         fight.deactivate_aura(self.aura);
     }
 }

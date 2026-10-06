@@ -631,7 +631,12 @@ impl Agent for MageAgent {
                 let multiplier = frozen.then_some(fight.agent.ice_lance_frozen_multiplier);
                 ice_lance::apply(fight, spell, target, multiplier);
             }
-            MageSpell::ArcaneMissiles => arcane_missiles::apply_channel(fight, spell),
+            MageSpell::ArcaneMissiles => {
+                if let Some(charges) = fight.agent.arcane_charges.clone() {
+                    charges.on_channel_start(fight);
+                }
+                arcane_missiles::apply_channel(fight, spell)
+            }
             MageSpell::ArcaneMissile => arcane_missiles::apply_missile(fight, spell, target),
             MageSpell::ColdSnap => cold_snap::apply(fight),
             MageSpell::Evocation => evocation::apply(fight, spell),
@@ -685,12 +690,6 @@ impl Agent for MageAgent {
             MageSpell::Evocation => {
                 let (aura, _) = fight.agent.evocation_regen.expect("Evocation is bound");
                 fight.deactivate_aura(aura);
-            }
-            // The channel aura's own OnExpire runs before the dot's final tick.
-            MageSpell::ArcaneMissiles => {
-                if let Some(charges) = fight.agent.arcane_charges.clone() {
-                    charges.on_channel_end(fight);
-                }
             }
             _ => {}
         }
@@ -816,6 +815,9 @@ impl Agent for MageAgent {
             MageAura::ArcaneConcentrationTrigger => {
                 Self::arcane_concentration(fight).on_spell_hit_dealt(fight, spell, result)
             }
+            MageAura::MissileBarrageTrigger => {
+                Self::missile_barrage(fight).trigger(fight, spell, result)
+            }
             MageAura::IgniteTrigger => Self::ignite(fight).on_spell_hit_dealt(fight, spell, result),
             MageAura::HeatingUpTrigger => {
                 Self::heating_up(fight).on_spell_hit_dealt(fight, spell, result)
@@ -859,7 +861,6 @@ impl Agent for MageAgent {
                 Self::arcane_concentration(fight).on_cast_complete(fight, spell)
             }
             MageAura::MissileBarrage => Self::missile_barrage(fight).on_cast_complete(fight, spell),
-            MageAura::MissileBarrageTrigger => Self::missile_barrage(fight).trigger(fight, spell),
             MageAura::ArcaneCharges => Self::arcane_charges(fight).on_cast_complete(fight, spell),
             MageAura::HeatingUp => Self::heating_up(fight).on_cast_complete(fight, spell),
             MageAura::PresenceOfMind => {
