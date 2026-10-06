@@ -132,13 +132,17 @@ impl<A: Agent> Fight<A> {
         let target_aura = |id: &ActionId| find(Side::Target, id);
         let spell = |id: &ActionId| self.apl_spell(id);
         let dot = |id: &ActionId| {
-            self.apl_spell(id)
-                .and_then(|spell| match self.spells[spell].dot {
+            self.apl_spell(id).and_then(|spell| {
+                match self.spells[spell]
+                    .dot
+                    .filter(|&dot| self.dots[dot].side.is_target())
+                {
                     Some(_) => Some(spell),
                     None => self.spells[spell].related_dot_spell.filter(|&related| {
                         self.spells.get(related).is_some_and(|s| s.dot.is_some())
                     }),
-                })
+                }
+            })
         };
         let pet_aura_known = |pet: usize, id: &ActionId| {
             self.pet_agent_auras
@@ -186,15 +190,20 @@ impl<A: Agent> Fight<A> {
         let aura = |id: &ActionId| find(Side::Player, id);
         let target_aura = |id: &ActionId| find(Side::Target, id);
         let spell = |id: &ActionId| self.apl_spell(id);
-        // Go `GetAPLDot` through `Spell.Dot`: the spell's own dot or its related dot spell's.
+        // Go `GetAPLDot` through `Spell.Dot`: the spell's own dot or its related dot spell's. An
+        // area or self-only dot is the caster's `AOEDot`, which `Spell.Dot` does not return.
         let dot = |id: &ActionId| {
-            self.apl_spell(id)
-                .and_then(|spell| match self.spells[spell].dot {
+            self.apl_spell(id).and_then(|spell| {
+                match self.spells[spell]
+                    .dot
+                    .filter(|&dot| self.dots[dot].side.is_target())
+                {
                     Some(_) => Some(spell),
                     None => self.spells[spell].related_dot_spell.filter(|&related| {
                         self.spells.get(related).is_some_and(|s| s.dot.is_some())
                     }),
-                })
+                }
+            })
         };
         let pet_aura_known = |pet: usize, id: &ActionId| {
             self.pet_agent_auras

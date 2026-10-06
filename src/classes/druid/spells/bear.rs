@@ -217,6 +217,7 @@ pub(crate) struct Lacerate {
 impl Lacerate {
     pub(crate) fn apply(&self, fight: &mut Fight<DruidAgent>, spell: SpellId, target: Side) {
         let dot = fight.spells[spell].dot.expect("Lacerate has a dot");
+        let dot = fight.dot_on(dot, target);
         let aura = fight.dots[dot].aura;
         let stacks = (fight.aura(aura).stacks + 1).min(self.max_stacks);
         let attack_power = fight.melee_attack_power();
@@ -238,7 +239,11 @@ impl Lacerate {
                 fight.set_stacks(aura, 1);
             }
             // Snapshot again once the stacks are in.
-            fight.agent.lacerate_snapshot = self.tick_base * f64::from(fight.aura(aura).stacks);
+            let stacks = f64::from(fight.aura(aura).stacks);
+            fight
+                .agent
+                .lacerate_snapshot
+                .set(dot, self.tick_base * stacks);
         } else {
             fight.issue_refund(spell);
         }
@@ -248,7 +253,7 @@ impl Lacerate {
     pub(crate) fn tick(&self, fight: &mut Fight<DruidAgent>, dot: DotId) {
         let state = &fight.dots[dot];
         let (spell, side, multiplier) = (state.spell, state.side, state.periodic_damage_multiplier);
-        let base = fight.agent.lacerate_snapshot;
+        let base = fight.agent.lacerate_snapshot.get(dot);
         let attacker = fight.attacker_multiplier(spell, true) * multiplier;
         let result = fight.calc_physical_periodic(spell, side, base, attacker, self.tick_can_crit);
         fight.deal_damage(spell, result, true);

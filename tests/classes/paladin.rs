@@ -443,3 +443,14 @@ fn holy_wrath_hits_every_undead_target() {
     assert!(log.contains("Casting {SpellID: 10318}"));
     assert!(!log.contains("] {SpellID: 10318} Hit"));
 }
+
+/// Consecration is the paladin's area dot, which a spell's dot lookup does not return, so a
+/// multidot line for it is dropped as in Go and the fight is the one without the line.
+#[test]
+fn a_multidot_line_for_consecration_is_dropped() {
+    let with_line = first_fight_log(tank_json(
+        "retribution-paladin-multidot-consecration-3-targets",
+    ));
+    let without = first_fight_log(tank_json("retribution-paladin-3-targets"));
+    assert_eq!(with_line, without);
+}

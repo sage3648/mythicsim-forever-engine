@@ -495,3 +495,27 @@ fn a_copy_that_parries_does_not_break_the_fight() {
         .sum();
     assert!(parries > 0.0, "no Primal Bite was parried on a copy");
 }
+
+/// A multidot line casts on the first target whose dot is down, so Moonfire and Insect Swarm
+/// each end up on every target with their own aura, debuff and ticks, as Go does.
+#[test]
+fn multidot_puts_a_balance_dot_on_every_target() {
+    let log = first_fight_log(accepted("balance-druid-multidot-3-targets"));
+    for target in 1..=3 {
+        for spell in ["{SpellID: 9835, Tag: 1}", "{SpellID: 24977}"] {
+            let ticks = log
+                .lines()
+                .filter(|line| line.contains(&format!("[Target {target}] {spell} tick")))
+                .count();
+            assert!(ticks > 0, "Target {target}: no {spell} tick");
+        }
+    }
+}
+
+/// Each Rip keeps the amounts it snapshotted on its own target.
+#[test]
+fn multidot_puts_a_rip_on_another_target() {
+    let log = first_fight_log(accepted("feral-druid-multidot-3-targets"));
+    assert!(log.contains("[Target 2] {SpellID: 9896} tick"));
+    assert!(log.contains("[Target 2] Aura gained: {SpellID: 9896}"));
+}

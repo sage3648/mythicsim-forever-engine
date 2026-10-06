@@ -5847,6 +5847,69 @@
         "file": "retribution-paladin-holy-wrath-3-targets.go-log.txt",
         "sha256": "3fac4da8d7ad5a9c157edea27769661b2ecf925f9200519f9e4a49531e9237ee"
       }
+    },
+    {
+      "id": "balance-druid-multidot-3-targets",
+      "description": "The production Balance Druid reference request against 3 identical copies of the boss with multidot lines for Moonfire and Insect Swarm when there are 2 or more targets: each casts on the first target whose dot is down, and each dot keeps its own aura, debuff and snapshot.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/balance-druid-multidot-3-targets.request.json"
+      },
+      "prepared": "balance-druid-multidot-3-targets.prepared.json",
+      "prepared_sha256": "3a454666398e29ac7151f49d51b184b46380533931e4841b79b4d60e9a818d07",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "balance-druid-multidot-3-targets.go-result.json",
+        "sha256": "5f6de9126c62c507139fb0e2ab5f699b264f959b211def05a247b4a0e9515fd4"
+      },
+      "go_log": {
+        "file": "balance-druid-multidot-3-targets.go-log.txt",
+        "sha256": "8ff937e4a688c5e206f4bd8c58ae04ae9b84af369ccdc75e31088afb72496581"
+      }
+    },
+    {
+      "id": "feral-druid-multidot-3-targets",
+      "description": "The production Feral (cat) Druid reference request against 3 identical copies of the boss with multidot lines for Rake and Rip when there are 2 or more targets: each bleed lands on the first target whose dot is down and snapshots its own tick.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-druid-multidot-3-targets.request.json"
+      },
+      "prepared": "feral-druid-multidot-3-targets.prepared.json",
+      "prepared_sha256": "6c42f3d71337d2e27fc20d14af4dc52859370c8eba721218609b6d7f3ac01eb9",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-druid-multidot-3-targets.go-result.json",
+        "sha256": "68494c484bd3033da9f8d0497955e0eedbbe0eaacfb20510f27c4466e54ad1d9"
+      },
+      "go_log": {
+        "file": "feral-druid-multidot-3-targets.go-log.txt",
+        "sha256": "b2f67beb22ade709ae924d6086f4c8f26355f1c6305d14cd1fed6d61176e2a5a"
+      }
+    },
+    {
+      "id": "retribution-paladin-multidot-consecration-3-targets",
+      "description": "The production Retribution Paladin reference request against 3 identical copies of the boss with a multidot line for Consecration when there are 2 or more targets: Go drops the line, since an area dot is the caster's and not a dot a target holds, and Rust drops it too.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/retribution-paladin-multidot-consecration-3-targets.request.json"
+      },
+      "prepared": "retribution-paladin-multidot-consecration-3-targets.prepared.json",
+      "prepared_sha256": "72d517bbbd4f30d950f483c14c3544ec428bbeae78d0736f7d8e5223c3cc0d4a",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "retribution-paladin-multidot-consecration-3-targets.go-result.json",
+        "sha256": "628f27a6361ceddae3e6a73030065c10cf63091f266e852205054f4378a3c875"
+      },
+      "go_log": {
+        "file": "retribution-paladin-multidot-consecration-3-targets.go-log.txt",
+        "sha256": "9775bbd5ad4eba7cdac64bf91cc5e8276da33e6cf24c697ce7132c2502b7e49c"
+      }
     }
   ]
 }

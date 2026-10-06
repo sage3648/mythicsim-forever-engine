@@ -19,6 +19,7 @@ use super::{
         faerie_fire::FaerieFire,
         ferocious_bite::FerociousBite,
         hurricane, innervate, insect_swarm, moonfire,
+        per_dot::PerDot,
         prowl::{self, Prowl},
         rake::Rake,
         rip::{self, Rip},
@@ -118,10 +119,10 @@ pub(crate) struct DruidAgent {
     pub(crate) prowl: Option<Rc<Prowl>>,
     builders: Option<Rc<CatBuilders>>,
     rip: Option<Rc<Rip>>,
-    pub(crate) rip_snapshot: rip::Snapshot,
+    pub(crate) rip_snapshot: PerDot<rip::Snapshot>,
     rake: Option<Rc<Rake>>,
     /// Rake's stored tick.
-    pub(crate) rake_snapshot: f64,
+    pub(crate) rake_snapshot: PerDot<f64>,
     ferocious_bite: Option<FerociousBite>,
     shifting_power: Option<ShiftingPower>,
     faerie_fire: Option<FaerieFire>,
@@ -135,7 +136,7 @@ pub(crate) struct DruidAgent {
     pub(crate) maul_queued: bool,
     lacerate: Option<Lacerate>,
     /// The bleed's stored tick.
-    pub(crate) lacerate_snapshot: f64,
+    pub(crate) lacerate_snapshot: PerDot<f64>,
     primal_bite: Option<f64>,
     /// Swipe's flat damage and attack power share.
     swipe: Option<(f64, f64)>,
@@ -167,9 +168,9 @@ impl Default for DruidAgent {
             prowl: None,
             builders: None,
             rip: None,
-            rip_snapshot: rip::Snapshot::default(),
+            rip_snapshot: PerDot::default(),
             rake: None,
-            rake_snapshot: 0.0,
+            rake_snapshot: PerDot::default(),
             ferocious_bite: None,
             shifting_power: None,
             faerie_fire: None,
@@ -181,7 +182,7 @@ impl Default for DruidAgent {
             maul: None,
             maul_queued: false,
             lacerate: None,
-            lacerate_snapshot: 0.0,
+            lacerate_snapshot: PerDot::default(),
             primal_bite: None,
             swipe: None,
             hurricane: None,
@@ -1227,15 +1228,17 @@ impl Agent for DruidAgent {
         }
     }
 
-    fn on_dot_gain(fight: &mut Fight<Self>, _dot: DotId, behavior: DruidSpell) {
+    fn on_dot_gain(fight: &mut Fight<Self>, dot: DotId, behavior: DruidSpell) {
         if behavior == DruidSpell::InsectSwarm {
-            insect_swarm::on_dot_gain(fight, fight.agent.insect_swarm_debuff);
+            let side = fight.dots[dot].side;
+            insect_swarm::on_dot_gain(fight, fight.agent.insect_swarm_debuff, side);
         }
     }
 
-    fn on_dot_expire(fight: &mut Fight<Self>, _dot: DotId, behavior: DruidSpell) {
+    fn on_dot_expire(fight: &mut Fight<Self>, dot: DotId, behavior: DruidSpell) {
         if behavior == DruidSpell::InsectSwarm {
-            insect_swarm::on_dot_expire(fight, fight.agent.insect_swarm_debuff);
+            let side = fight.dots[dot].side;
+            insect_swarm::on_dot_expire(fight, fight.agent.insect_swarm_debuff, side);
         }
     }
 

@@ -10,6 +10,7 @@ pub(crate) mod hurricane;
 pub(crate) mod innervate;
 pub(crate) mod insect_swarm;
 pub(crate) mod moonfire;
+pub(crate) mod per_dot;
 pub(crate) mod prowl;
 pub(crate) mod rake;
 pub(crate) mod rip;
