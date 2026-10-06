@@ -403,6 +403,56 @@ fn sweeping_strikes_copies_a_hit_to_the_next_target() {
     assert!(logs.contains("{SpellID: 12723} stacks: 5 --> 4"));
 }
 
+/// With Sweeping Strikes up, Thunder Clap casts the normalized attack on the next target and
+/// spends a charge, which Go does against one target too, where the next target is the first.
+/// The clap's slow of a target that never swings at the player has nothing to scale.
+#[test]
+fn thunder_clap_spends_a_sweeping_strikes_charge_against_one_target() {
+    let logs = first_fight_log(warrior_fixture("arms-warrior-thunder-clap-1-target"));
+    let normalized = lines_with(&logs, 1, "12723, Tag: 1}");
+    assert!(!normalized.is_empty(), "{logs}");
+    assert!(logs.contains("[Target 1] Aura gained: {SpellID: 11581}"));
+}
+
+/// A multidot line puts Rend, and the Deep Wounds a crit of its tick starts, on each target
+/// whose dot is down.
+#[test]
+fn a_multidot_line_puts_rend_on_every_target() {
+    let logs = first_fight_log(warrior_fixture("arms-warrior-multidot-rend-3-targets"));
+    for target in 1..=3 {
+        assert!(
+            !lines_with(&logs, target, "11574} tick").is_empty(),
+            "Target {target}: no Rend tick"
+        );
+    }
+}
+
+/// The shouts that Go casts on every target have no behavior in Rust, and against several
+/// targets the gate says what they would do there.
+#[test]
+fn the_shouts_are_refused_by_name_against_several_targets() {
+    for (spell, what) in [
+        (11556, "debuffs every target"),
+        (1161, "taunts every target"),
+    ] {
+        let mut value = warrior_fixture("production-warrior-2-targets");
+        let rotation = value["player"]["rotation"]["priorityList"]
+            .as_array_mut()
+            .unwrap();
+        rotation[0]["action"] = json!({"castSpell": {"spellId": {"spellId": spell}}});
+        let reasons = reasons(value);
+        assert!(
+            reasons.contains(&format!(
+                "rotation reaches spell {spell}, which {what} in a fight against several targets"
+            )),
+            "{reasons:?}"
+        );
+        assert!(reasons.contains(&format!(
+            "rotation reaches spell {spell} without a known behavior"
+        )));
+    }
+}
+
 /// An extra attack that a landed hit casts at once, replaced by a queued Cleave, starts a
 /// Cleave while another still deals its hits. Go's Cleave shares one slice of results between
 /// its casts, so the first cast then deals the second's last hit again in place of its own,

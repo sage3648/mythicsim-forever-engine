@@ -241,6 +241,18 @@ fn magma_totem_and_fire_nova_reach_every_target() {
     }
 }
 
+/// A multidot line puts Flame Shock's dot on a target whose dot is down besides the first, and
+/// that dot ticks there. The rotation's other lines leave the third target for the shaman's
+/// mana to decide, as in Go.
+#[test]
+fn a_multidot_line_puts_flame_shock_on_another_target() {
+    let logs = first_fight_log(fixture("elemental-shaman-multidot-flame-shock-3-targets"));
+    for target in 1..=2 {
+        let tick = format!("[Target {target}] {{SpellID: 29228, Tag: 1}} tick");
+        assert!(logs.lines().any(|line| line.contains(&tick)), "{tick}");
+    }
+}
+
 /// Stormstrike's debuff sits on the one target it was cast on, so only that target takes the
 /// bonus on the shaman's Chain Lightning, whichever hit of the cast it is.
 #[test]

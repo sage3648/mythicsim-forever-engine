@@ -4,7 +4,7 @@
   "engine_revision": "6383c15a7b1bfbdbd7c5b4c0c59418c636e52e1a",
   "client_build": "1.60.1.70205",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "7db307030c75f7e5b3ce3070c268f2bb67a49d5b40b9c564c946ecc545538165",
+  "exporter_sha256": "d16db41501e8d0022b022208acc78d91a6c41912a0825ee8d901960e37287f8f",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -5888,6 +5888,90 @@
       "go_log": {
         "file": "production-warrior-5-targets.go-log.txt",
         "sha256": "d0f0eb3e259475ac992aa12fec8aa417b79709e465186d211d5e4c6f5034f761"
+      }
+    },
+    {
+      "id": "arms-warrior-thunder-clap-1-target",
+      "description": "Arms Warrior with Thunder Clap and an unconditional Sweeping Strikes against one target: Go spends a charge on a normalized attack there too, and a clap's debuff slows a target that never swings at the player",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/arms-warrior-thunder-clap-1-target.request.json"
+      },
+      "prepared": "arms-warrior-thunder-clap-1-target.prepared.json",
+      "prepared_sha256": "9485002b4fb5608dd69a22eac7a4ee7fcd6619075d66d607024c2c29c2824544",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "arms-warrior-thunder-clap-1-target.go-result.json",
+        "sha256": "0a8b19880c7426f4fd59fa3c241d7f11f5a29e924b1efa85e4feeb663916b854"
+      },
+      "go_log": {
+        "file": "arms-warrior-thunder-clap-1-target.go-log.txt",
+        "sha256": "774f15150bf182934524bd5da3285e4d0352bc8db66f1cab118db67a37805f93"
+      }
+    },
+    {
+      "id": "arms-warrior-in-front-3-targets",
+      "description": "Arms Warrior in front of 3 copies of the boss: a hit on a copy that parries moves the swing timer that copy keeps though it never swings",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/arms-warrior-in-front-3-targets.request.json"
+      },
+      "prepared": "arms-warrior-in-front-3-targets.prepared.json",
+      "prepared_sha256": "39557067342ab19cba697d2adfd1f338d9c2a8baa88ac62699df080f4c269b6a",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "arms-warrior-in-front-3-targets.go-result.json",
+        "sha256": "b29d531345fc5e72ec57ae9d4156893c4a95295e8f95306f39395ead0bed5ed9"
+      },
+      "go_log": {
+        "file": "arms-warrior-in-front-3-targets.go-log.txt",
+        "sha256": "77499be4acdd46aa19936cd486a06af0aa56afac1aadb424941b77f9942109c0"
+      }
+    },
+    {
+      "id": "arms-warrior-multidot-rend-3-targets",
+      "description": "Arms Warrior with a multidot line for Rend against 3 targets: each Rend and Deep Wounds on the target it was cast on, and Bloodthrill reading the dot on the target a hit lands on",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/arms-warrior-multidot-rend-3-targets.request.json"
+      },
+      "prepared": "arms-warrior-multidot-rend-3-targets.prepared.json",
+      "prepared_sha256": "b173e7159905b7094541a4fa90a299c6ed70c0310f06f8a8d4bcefdd1a7f2a92",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "arms-warrior-multidot-rend-3-targets.go-result.json",
+        "sha256": "02afac6fb7265917a3d8ba63d127e3eb52b2446df766e3c67ad8764d69cdb330"
+      },
+      "go_log": {
+        "file": "arms-warrior-multidot-rend-3-targets.go-log.txt",
+        "sha256": "90093b56510c51022769f85aca1e06050bc812fac59d03ff98a81a2848c49217"
+      }
+    },
+    {
+      "id": "elemental-shaman-multidot-flame-shock-3-targets",
+      "description": "Elemental Shaman with a multidot line for Flame Shock against 3 targets: each shock's dot on its own target and Lava Burst's bonus read from the dot on the target it hits",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/elemental-shaman-multidot-flame-shock-3-targets.request.json"
+      },
+      "prepared": "elemental-shaman-multidot-flame-shock-3-targets.prepared.json",
+      "prepared_sha256": "99209187c665bc56797f4bf135e660d4516f1209ac5a90870367b92a31caf13f",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "elemental-shaman-multidot-flame-shock-3-targets.go-result.json",
+        "sha256": "f507bbe7764ab799e7453c16cb67ea652405b2583b9217ab510f2f484eca0da1"
+      },
+      "go_log": {
+        "file": "elemental-shaman-multidot-flame-shock-3-targets.go-log.txt",
+        "sha256": "a190ac02458e20471ccd4616091a15e761d7ae141ab94566270daa79b8ba2cb5"
       }
     }
   ]
