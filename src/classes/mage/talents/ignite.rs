@@ -4,7 +4,7 @@
 //! or dropped. The share comes from a hit already through every multiplier, so the ticks
 //! skip them, never roll a resist and never crit.
 
-use crate::core::fight::{Agent, AuraRef, DotId, Fight, SpellId, SpellResult};
+use crate::core::fight::{Agent, DotId, Fight, Side, SpellId, SpellResult};
 
 /// Go `SpellSchoolFire`.
 const FIRE: u8 = 4;
@@ -40,20 +40,22 @@ pub(crate) fn bind<A: Agent>(
 }
 
 impl Ignite {
-    /// The dot's aura, whose remaining ticks are still owed.
-    fn aura<A: Agent>(&self, fight: &Fight<A>) -> AuraRef {
-        fight.dots[self.dot].aura
+    /// The dot on a target, whose aura holds the ticks still owed there.
+    fn dot_on<A: Agent>(&self, fight: &Fight<A>, target: Side) -> DotId {
+        fight.dot_on(self.dot, target)
     }
 
-    /// Go Ignite `ApplyEffects`.
-    pub(crate) fn apply<A: Agent>(&self, fight: &mut Fight<A>) {
-        fight.apply_dot(self.dot);
+    /// Go Ignite `ApplyEffects`: `Dot(target).Apply`.
+    pub(crate) fn apply<A: Agent>(&self, fight: &mut Fight<A>, target: Side) {
+        let dot = self.dot_on(fight, target);
+        fight.apply_dot(dot);
     }
 
-    /// The tick: the stored amount, as Go `CalcAndDealPeriodicDamage` with `OutcomeTick`.
-    pub(crate) fn tick<A: Agent>(&self, fight: &mut Fight<A>) {
-        let base = fight.dots[self.dot].snapshot_base;
-        fight.periodic_damage_tick(self.dot, base);
+    /// The tick of a target's dot: the stored amount, as Go `CalcAndDealPeriodicDamage` with
+    /// `OutcomeTick`.
+    pub(crate) fn tick<A: Agent>(&self, fight: &mut Fight<A>, dot: DotId) {
+        let base = fight.dots[dot].snapshot_base;
+        fight.periodic_damage_tick(dot, base);
     }
 
     /// The trigger's OnSpellHitDealt: Go's proc trigger can proc from procs and matches
@@ -72,14 +74,15 @@ impl Ignite {
         {
             return;
         }
-        let owed = if fight.aura(self.aura(fight)).active {
-            fight.dots[self.dot].snapshot_base * f64::from(fight.dots[self.dot].remaining_ticks)
+        let dot = self.dot_on(fight, result.target);
+        let owed = if fight.aura(fight.dots[dot].aura).active {
+            fight.dots[dot].snapshot_base * f64::from(fight.dots[dot].remaining_ticks)
         } else {
             0.0
         };
         fight.cast(self.spell, result.target);
         // Go's arm64 build fuses the share's multiply into the owed amount.
-        fight.dots[self.dot].snapshot_base =
+        fight.dots[dot].snapshot_base =
             result.damage.mul_add(self.share, owed) / f64::from(self.num_ticks);
     }
 }

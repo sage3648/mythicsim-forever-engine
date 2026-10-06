@@ -603,11 +603,12 @@ impl Agent for MageAgent {
                 let state = Self::combustion(fight);
                 combustion::apply(fight, &state);
             }
-            MageSpell::Ignite => Self::ignite(fight).apply(fight),
+            MageSpell::Ignite => Self::ignite(fight).apply(fight, target),
             MageSpell::Fireball | MageSpell::FrostfireBolt | MageSpell::Pyroblast => {
                 let base = fight.roll_damage_effect(spell);
                 let result = fight.calc_damage(spell, target, base);
                 let dot = fight.spells[spell].dot.expect("the bolt has a dot");
+                let dot = fight.dot_on(dot, target);
                 fight.deal_damage_after_travel_then_dot(spell, result, dot);
             }
             MageSpell::Scorch => {
@@ -702,7 +703,7 @@ impl Agent for MageAgent {
             return;
         }
         if behavior == MageSpell::Ignite {
-            Self::ignite(fight).tick(fight);
+            Self::ignite(fight).tick(fight, dot);
             return;
         }
         if behavior == MageSpell::Flamestrike {

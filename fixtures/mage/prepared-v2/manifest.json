@@ -5653,10 +5653,16 @@
       "prepared": "production-frost-2-targets.prepared.json",
       "prepared_sha256": "96cdea81d11fcae36efe1269945a1760372391bc851e25a0bb936be8fdbbb6af",
       "expected_coverage": {
-        "supported": false,
-        "reasons": [
-          "2 targets: several targets are not supported for ClassMage yet"
-        ]
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-frost-2-targets.go-result.json",
+        "sha256": "2b259216d64639023b8deac71bdd163c4d70bd4b715859705a03bb4df81650dc"
+      },
+      "go_log": {
+        "file": "production-frost-2-targets.go-log.txt",
+        "sha256": "9f5e036547745a63bbb48734cff799c15791f4a2879d014c2043f48d016324c5"
       }
     },
     {

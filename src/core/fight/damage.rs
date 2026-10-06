@@ -47,6 +47,39 @@ pub(crate) enum Outcome {
 pub(crate) const OUTCOME_LANDED: u16 =
     OUTCOME_HIT | OUTCOME_CRIT | OUTCOME_CRUSH | OUTCOME_GLANCE | OUTCOME_BLOCK;
 
+/// Go `SpellResultSlice` of an area hit: one result per target, in unit index order.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct AoeResults {
+    results: [SpellResult; super::MAX_TARGETS],
+    len: usize,
+}
+
+impl Default for AoeResults {
+    fn default() -> Self {
+        AoeResults {
+            results: [SpellResult {
+                target: Side::Target,
+                outcome: 0,
+                damage: 0.0,
+                threat: 0.0,
+            }; super::MAX_TARGETS],
+            len: 0,
+        }
+    }
+}
+
+impl AoeResults {
+    fn push(&mut self, result: SpellResult) {
+        self.results[self.len] = result;
+        self.len += 1;
+    }
+
+    /// The results, in unit index order.
+    pub(crate) fn as_slice(&self) -> &[SpellResult] {
+        &self.results[..self.len]
+    }
+}
+
 /// Go `SpellResult`, carried by value until its damage is dealt.
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct SpellResult {
@@ -298,6 +331,26 @@ impl<A: Agent> Fight<A> {
                 .mul_add(self.bonus_damage(spell, target), base);
         }
         self.calc_damage_internal(spell, target, base, attacker, Outcome::MagicHit)
+    }
+
+    /// Go `Spell.CalcAndDealAoeDamageWithVariance`: each target in unit index order, its base
+    /// damage rolled, calculated and dealt in turn, so a proc on one hit can change the next
+    /// roll. `calc` is the outcome applier's calculation, such as [`Self::calc_damage`]; a
+    /// fixed amount, as Go `CalcAndDealAoeDamage`, passes a closure that rolls nothing.
+    pub(crate) fn calc_and_deal_aoe_damage_with_variance(
+        &mut self,
+        spell: SpellId,
+        mut base_damage: impl FnMut(&mut Self) -> f64,
+        calc: impl Fn(&mut Self, SpellId, Side, f64) -> SpellResult,
+    ) -> AoeResults {
+        let mut results = AoeResults::default();
+        for position in 0..self.targets.len() {
+            let base = base_damage(self);
+            let result = calc(self, spell, Side::target(position), base);
+            self.deal_damage(spell, result, false);
+            results.push(result);
+        }
+        results
     }
 
     /// Go `Spell.BonusDamage` against a target: physical bonus damage for a physical spell,

@@ -12,7 +12,7 @@ pub(crate) const GATE: ClassGate = ClassGate {
     spell: spell_capability,
     claims,
     limits,
-    several_targets: None,
+    several_targets: Some(several_targets),
 };
 
 /// Mage effect kinds implemented in Rust and validated against the pinned Go reference.
@@ -147,4 +147,11 @@ fn limits(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
             )
         })
         .collect()
+}
+
+/// The spells that reach a target past the first in Go and not yet in Rust: none. Arcane
+/// Explosion, Cone of Cold, Frost Nova, Blast Wave, Flamestrike and Blizzard hit each target
+/// as in Go, and Ignite burns on the target each crit struck.
+fn several_targets(_prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
+    crate::engine::coverage::spells_reaching_other_targets(reachable, &[])
 }
