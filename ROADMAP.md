@@ -63,9 +63,12 @@ Milestones advance on evidence, not promised delivery dates. The
 4. Completed: one reference pin and full-result differential diagnostics.
 5. Completed: every production build matches the pinned Go engine.
 6. Completed: routing with Go fallback, batch jobs in one engine and shadow comparison runs.
-7. Next: route a small share of Quick Sims to Rust, following the
-   [release stages](docs/release.md#stages), and close the coverage gaps the shadow sims
-   refuse ([the board](https://github.com/sage3648/mythicsim-forever-engine/issues/25)).
+7. Next: make preparing a routed job cheaper than the time Rust saves
+   ([#59](https://github.com/sage3648/mythicsim-forever-engine/issues/59); see the
+   [whole-job benchmark](benchmarks/2026-10-06-whole-jobs.json)), then route a small share
+   of Quick Sims to Rust following the [release stages](docs/release.md#stages), and close
+   the coverage gaps the shadow sims refuse
+   ([the board](https://github.com/sage3648/mythicsim-forever-engine/issues/25)).
 
 The [first usable release](docs/hybrid-migration-plan.md#first-usable-release)
 is one complete Frost build using Go preparation and Rust combat execution, with
