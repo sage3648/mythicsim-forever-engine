@@ -1290,6 +1290,9 @@ impl Agent for WarriorAgent {
             // retaliation.go and shield_wall.go: manual use only for a DPS warrior.
             WarriorSpell::StanceLocked(StanceLock::Battle | StanceLock::Defensive) => false,
             WarriorSpell::Retaliation => false,
+            // talents_arms.go registerSweepingStrikes: it strikes "an additional nearby opponent",
+            // so with one target it would spend 30 rage for nothing.
+            WarriorSpell::SweepingStrikes => fight.targets.len() >= 2,
             _ => true,
         }
     }

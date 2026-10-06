@@ -1,6 +1,7 @@
 //! Sweeping Strikes (12723, row 12292), from Go sim/warrior/talents_arms.go
 //! `registerSweepingStrikes` and warrior.go `CastNormalizedSweepingStrikesAttack`: a major
-//! cooldown that needs Battle Stance and activates an aura with the row's charges. While two
+//! cooldown that needs Battle Stance and a second target and activates an aura with the
+//! row's charges. While two
 //! targets are active a landed melee hit that dealt damage casts a copy on the next target and
 //! spends a charge; Whirlwind and Thunder Clap spend one on a normalized main hand attack on
 //! the target after the first landed hit instead.
@@ -23,9 +24,10 @@ pub(crate) fn apply<A: Agent>(fight: &mut Fight<A>, params: SweepingStrikes) {
     fight.set_stacks(params.aura, params.charges);
 }
 
-/// Go `CastNormalizedSweepingStrikesAttack`: with the aura up, the first landed result of a
-/// cleave casts the normalized attack on the next target and spends a charge. Go does not ask
-/// for a second target.
+/// Go `CastNormalizedSweepingStrikesAttack`: with a second target and the aura up, the first
+/// landed result of a cleave casts the normalized attack on the next target and spends a
+/// charge. With one target the "additional nearby opponent" would wrap around to the same one,
+/// so it does nothing.
 pub(crate) fn cast_normalized<A: Agent>(
     fight: &mut Fight<A>,
     params: Option<SweepingStrikes>,
@@ -34,7 +36,7 @@ pub(crate) fn cast_normalized<A: Agent>(
     let Some(params) = params else {
         return;
     };
-    if !fight.aura(params.aura).active {
+    if fight.targets.len() < 2 || !fight.aura(params.aura).active {
         return;
     }
     if let Some(result) = results.iter().find(|result| result.landed()) {
