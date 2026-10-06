@@ -390,6 +390,14 @@ codes in `refusals`, in the same order:
  "refusals": [{"code": "unknown_spell", "reason": "rotation reaches spell 10202 without a known behavior"}]}
 ```
 
+`forever-engine sim --gate --infile PREPARED.json --outfile REPORT.json` gates and
+simulates in one process, which saves a worker a second process start and a second read
+of the input. A supported input runs as under plain `sim`. A refusal is a result, not an
+error: the process prints the same report as `check` on standard output, writes no
+report and exits with status 3. An input that fails validation exits with status 4 and
+its reason on standard error; every other error exits with status 1, as without `--gate`.
+Without `--gate`, a refusal is still an error with status 1.
+
 A code names the kind of refusal and stays the same however the input varies, so a
 worker can count fallbacks by it; the text says what this input lacks. An invalid input
 is an error, never a refusal. `REFUSAL_CODES` in

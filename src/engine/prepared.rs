@@ -304,6 +304,33 @@ pub struct PreparedReport {
 /// Validate, gate and simulate a prepared v2 input.
 pub fn simulate(prepared: &PreparedV2) -> Result<PreparedReport, PreparedError> {
     check(prepared)?;
+    run(prepared)
+}
+
+/// What gating a prepared v2 input and simulating it when supported came to.
+#[derive(Debug)]
+pub enum Gated {
+    /// The gate supports the input and this is its simulation.
+    Simulated(Box<PreparedReport>),
+    /// The gate refuses the input, with each reason and its stable code. Nothing ran.
+    Refused(Vec<Refusal>),
+}
+
+/// Validate an input, gate it once and simulate it when the gate supports it, so a caller
+/// that wants both needs one pass over the input instead of a [`refusals`] call and then a
+/// [`simulate`] call that gates it again. A refusal is a result here, not an error; invalid
+/// input is still [`PreparedError::Invalid`].
+pub fn simulate_gated(prepared: &PreparedV2) -> Result<Gated, PreparedError> {
+    validate(prepared).map_err(PreparedError::Invalid)?;
+    let refusals = refusals(prepared);
+    if !refusals.is_empty() {
+        return Ok(Gated::Refused(refusals));
+    }
+    run(prepared).map(|report| Gated::Simulated(Box::new(report)))
+}
+
+/// Simulate an input that is valid and that the gate supports.
+fn run(prepared: &PreparedV2) -> Result<PreparedReport, PreparedError> {
     let report = classes::run_prepared(prepared).map_err(PreparedError::Invalid)?;
     let elapsed_ns = report.elapsed_ns;
     Ok(PreparedReport {
