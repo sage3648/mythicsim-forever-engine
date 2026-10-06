@@ -109,8 +109,8 @@ so `dot.IsActive()` dereferences nil. The handler is unchanged on community `mas
   inside `Character.newBasicExplosiveSpellConfig` (`sim/core/consumes.go:650`).
 - Affected records: the Arcane and Fire Mage `goblinSapper` variants in
   `validation/2026-10-04-production-gear-swaps.json`, recorded as `go_error`.
-- Report: not filed yet. A report to the community engine should carry the reproduction
-  above and the trace.
+- Report: [ElliotWood/Forever#699](https://github.com/ElliotWood/Forever/issues/699)
+  (2026-10-06), with the reproduction and the trace above.
 - Rust now: the Mage gate refuses an Ignite build whose rotation reaches the charge. This
   also refuses the Frostfire variant, which matched only because its rotation never
   reaches the autocast while the global cooldown is busy, the only time Go casts an
@@ -140,8 +140,8 @@ does not block a comparison: Rust reproduces it on purpose, in
   cast` at the same time, and the Boomerang deals two hits at 1.00.
 - Affected records: the accepted `feral-bear-druid-boomerang-pushback-after-cast` fixture,
   which keeps Go's double completion as its golden.
-- Report: not filed yet. A report to the community engine should carry the reproduction
-  above and propose re-checking `Hardcast.Expires > sim.CurrentTime` in the handler.
+- Report: [ElliotWood/Forever#700](https://github.com/ElliotWood/Forever/issues/700)
+  (2026-10-06), proposing to re-check `Hardcast.Expires > sim.CurrentTime` in the handler.
 - Once Go is fixed and the pin moves: the repin lists the fixture's golden as changed.
   Make `Fight::pushback_handler` return when no hardcast is in progress at the time it
   runs, and review the changed golden as a reference behavior change.
