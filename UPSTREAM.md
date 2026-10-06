@@ -4,8 +4,8 @@
 
 | Source | Role | Baseline |
 | --- | --- | --- |
-| [MythicSim Go engine](https://github.com/sage3648/mythicsim-forever-engine-go) | Fixtures and live reference | `74127c6c8454217e7d6221de5e3274cf22e621bb`, on community base `f764984d8b05f0d5ce73aab82185fb6efa40a9a4` |
-| [Community Forever engine](https://github.com/ElliotWood/Forever) | Changes to review for applicability | Adopted base `f4b776b4f41d5c7799b8141697a2c9e67c89d426`; reviewed through `f764984d8b05f0d5ce73aab82185fb6efa40a9a4` (2026-10-05) |
+| [MythicSim Go engine](https://github.com/sage3648/mythicsim-forever-engine-go) | Fixtures and live reference | `cd7d44aec711bcc8f20ea12d3ed83cea2126ac66`, on community base `67f14b04a54bdac1b8e8f5b8e5398ae412638376` |
+| [Community Forever engine](https://github.com/ElliotWood/Forever) | Changes to review for applicability | Adopted base `f4b776b4f41d5c7799b8141697a2c9e67c89d426`; reviewed through `67f14b04a54bdac1b8e8f5b8e5398ae412638376` (2026-10-07) |
 
 Go is a reference implementation, not proof of live-game correctness. Forever can
 intentionally differ from inherited Classic behavior. Fixture client build:
@@ -58,6 +58,37 @@ window alone. The one golden with a late pushback changed and Rust matches it; t
 Sapper Fire Mage is accepted with Go goldens; no other golden moved
 ([record](validation/2026-10-06-reference-pin-74127c6c8-sweeps.json)).
 
+The pin moved from `74127c6c8` to `cd7d44aec` on 2026-10-07, the fork's merge of community
+#642 to #676 (69 commits, 35 of them changelog, leaderboard or data bookkeeping) and its
+patches 85 to 96. Patches 93 and 94 are the Ignite and pushback fixes Rust already
+followed, which were 88 and 89 at the old pin. 342 of the 343 Go goldens changed. Every
+golden with damage gained the hit, crit, tick and crit tick ranges the fork reports since
+its patch 92, and 133 changed in nothing else; the other 209 changed in behavior:
+
+- Mage: Missile Barrage rolls when a bolt lands, Blizzard's and Flamestrike's ticks crit,
+  Blizzard's cast rolls a hit on every enemy and Arcane Concentration skips the missiles and
+  the ticks, Arcane Missiles spends Arcane Blast's stacks as it starts, Pyroblast's hit takes
+  the bonus as direct damage, Master of Elements reads the base cost, Presence of Mind and
+  Combustion share a cooldown, and Ignite reads Can Proc From Procs from the row (#643, #646,
+  #647, #656, #660, #661).
+- Shaman: Windfury Weapon strikes twice with the special hits 439440 and 439441 and no extra
+  attack, Lightning Overload rolls its own rows, Elemental Devastation and Flurry read Can Proc
+  From Procs, and Rockbiter Weapon is an attack power effect (#644, #646, #659, #673).
+- Warrior: a refreshed Deep Wounds keeps its tick timer (patch 89) and its ticks ignore the
+  warrior's modifiers, Sweeping Strikes needs a second target, Unbridled Wrath gives the same rage
+  for every weapon, and Charge adds no threat (#645, #653, #667).
+- Hunter: trap burns, Scorpid Poison and Volley ticks crit, Volley rolls the ranged tables, a
+  hawk's dive bomb ticks roll the melee special table, and the traps keep their own cooldown
+  categories (#650, #657).
+- Warlock: Rain of Fire's cast rolls a hit on every enemy and its ticks crit, Demonic Brand
+  rolls the pet's crit, and Life Tap adds no threat (#648, #652, #672).
+- Rogue: Mutilate strikes main hand first, Hemorrhage raises each Rupture tick, Preparation
+  finishes every other cooldown, Hack and Slash reads the right effects and Thistle Tea restores a
+  flat 100 (#654, #665). Priest: Dark Sacrifice is Undead only and adds no threat (patch 85).
+- Items: Dragon's Call's whelp waits out a 45 second cooldown (patch 86).
+
+Rust matches all of them. [SWEEPS]
+
 ## Ledger
 
 The [upstream/](upstream/) directory records what has been reviewed and how:
@@ -81,7 +112,9 @@ python3 tools/upstream.py check --community /absolute/path/to/Forever
 The first review covered 53 community commits after the adopted base: 48 irrelevant
 to Frost scope, 4 deferred client data updates and 1 applicable fix. The pin move to
 `20b551c6b` extended it to 55 commits, all now in the reference, and marked the changes
-Rust covers by then as applicable and adopted. The first fix,
+Rust covers by then as applicable and adopted. The move to `cd7d44aec` extended it to 124:
+39 of the new 69 are bookkeeping, evidence notes or UI, 5 the fork already carried as its
+own patches, 1 differs by design and 24 are applicable, each with the golden that regresses it. The first fix,
 [#622](https://github.com/ElliotWood/Forever/pull/622) (`252f57aa8`), changes how a
 rotation reads an aura the character cannot have. The pinned reference drops such a
 condition, so a Frost build without Fingers of Frost casts Ice Lance on every global
@@ -99,7 +132,7 @@ and `reference-no-missile-barrage` prepared fixtures.
 Bugs in the reference. When one blocks a comparison, Rust refuses the affected inputs until
 the reference is fixed, since there is no Go result to match. When Go still gives a result,
 Rust reproduces it, so it matches the engine production runs. Both defects below are fixed in
-the fork since `74127c6c8` and still open in the community engine.
+the fork since `74127c6c8`, as its patches 93 and 94, and still open in the community engine.
 
 ### Ignite on the Goblin Sapper Charge's hit on the player
 
@@ -120,7 +153,8 @@ so `dot.IsActive()` dereferences nil. The handler is unchanged on community `mas
   `validation/2026-10-04-production-gear-swaps.json`, recorded as `go_error`.
 - Report: [ElliotWood/Forever#699](https://github.com/ElliotWood/Forever/issues/699)
   (2026-10-06), with the reproduction and the trace above.
-- Fixed in the fork's patch 88 (`8979ea9ac0`), in the reference since `74127c6c8`: Ignite's
+- Fixed in the fork's patch 93 (`8c34bdf376`, patch 88 and `8979ea9ac0` at the old pin), in the
+  reference since `74127c6c8`: Ignite's
   trigger also requires an enemy target. Rust's Ignite ignores hits on the player, the Mage
   gate no longer refuses an Ignite build that throws the charge, and
   `fire-mage-goblin-sapper` is accepted with Go goldens. Before the fix the gate refused
@@ -145,7 +179,8 @@ did not block a comparison: Rust reproduced it in `Fight::pushback_handler` unti
   cast` at the same time, and the Boomerang deals two hits at 1.00.
 - Report: [ElliotWood/Forever#700](https://github.com/ElliotWood/Forever/issues/700)
   (2026-10-06), proposing to re-check `Hardcast.Expires > sim.CurrentTime` in the handler.
-- Fixed in the fork's patch 89 (`74127c6c84`), in the reference since `74127c6c8`: the
+- Fixed in the fork's patch 94 (`23f4e681e1`, patch 89 and `74127c6c84` at the old pin), in the
+  reference since `74127c6c8`: the
   handler returns before the pushback roll when the hardcast has ended. Rust's
   `Fight::pushback_handler` does the same, and the
   `feral-bear-druid-boomerang-pushback-after-cast` golden now completes the cast once, with
