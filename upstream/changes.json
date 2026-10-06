@@ -748,7 +748,7 @@
       ],
       "adoption": {
         "reference": "adopted",
-        "rust": "pending: the Mage port at the reference pin cd7d44aec"
+        "rust": "adopted with the reference pin cd7d44aec: the Arcane Concentration trigger leaves out the missile ticks and Blizzard's cast rolls a hit on every enemy"
       },
       "regression": [
         "fixtures/mage/prepared-v2/frost-mage-3-targets-blizzard.go-result.json",
@@ -808,7 +808,7 @@
       "reason": "Covered mechanic. Deep Wounds ticks ignore the warrior's damage modifiers, which the client flags on its tick spell.",
       "adoption": {
         "reference": "adopted",
-        "rust": "pending: the Warrior port at the reference pin cd7d44aec"
+        "rust": "adopted with the reference pin cd7d44aec: a refreshed Deep Wounds keeps its tick timer, and its ticks ignore the warrior's modifiers through the exported spell flag"
       },
       "regression": [
         "fixtures/mage/prepared-v2/arms-warrior-own-sunder.go-result.json",
@@ -838,7 +838,7 @@
       "reason": "Covered mechanic. Ignite, Elemental Devastation and Flurry read Can Proc From Procs from the client row, which Forever's ranks lack: a spell flagged Proc no longer triggers them.",
       "adoption": {
         "reference": "adopted",
-        "rust": "pending: the Mage port at the reference pin cd7d44aec, and the Shaman exporter and runtime read the bit from the rows"
+        "rust": "adopted with the reference pin cd7d44aec: the exporter reads the bit from the client rows and Ignite, Elemental Devastation and Flurry hear a spell flagged Proc only where it is set"
       },
       "regression": [
         "fixtures/mage/prepared-v2/fire-ignite.go-result.json",
@@ -867,7 +867,7 @@
       "reason": "Covered mechanic. Blizzard's tick rows are procs, so Winter's Chill no longer stacks off them.",
       "adoption": {
         "reference": "adopted",
-        "rust": "pending: the Mage port at the reference pin cd7d44aec"
+        "rust": "adopted with the reference pin cd7d44aec: the exported tick spell is flagged Proc, which Winter's Chill's trigger already skips"
       },
       "regression": [
         "fixtures/mage/prepared-v2/frost-mage-3-targets-blizzard.go-result.json"
@@ -896,7 +896,7 @@
       "reason": "Covered mechanic. The Succubus' Demonic Brand hit never misses and rolls the pet's spell crit.",
       "adoption": {
         "reference": "adopted",
-        "rust": "pending: the Warlock port at the reference pin cd7d44aec"
+        "rust": "adopted with the reference pin cd7d44aec: the brand hit rolls the pet's spell crit and cannot miss"
       },
       "regression": [
         "fixtures/mage/prepared-v2/demonology-warlock-voidwalker-pact.go-result.json"
@@ -947,7 +947,7 @@
       "reason": "Covered mechanic. Immolation and Explosive Trap ticks, Scorpid Poison and Volley ticks roll crit; Volley's ticks also roll the ranged hit table.",
       "adoption": {
         "reference": "adopted",
-        "rust": "pending: the Hunter port at the reference pin cd7d44aec"
+        "rust": "adopted with the reference pin cd7d44aec: trap and Scorpid Poison ticks roll the crit their rows allow, read by the exporter, and Volley's ticks roll the ranged hit and crit tables"
       },
       "regression": [
         "fixtures/mage/prepared-v2/survival-hunter-no-whelp.go-result.json",
@@ -1125,7 +1125,7 @@
       "reason": "Covered mechanic. Presence of Mind and Combustion share one 3 minute cooldown (client category 1151).",
       "adoption": {
         "reference": "adopted",
-        "rust": "pending: the Mage port at the reference pin cd7d44aec"
+        "rust": "adopted with the reference pin cd7d44aec: the exported cooldown timers are shared"
       },
       "regression": [
         "fixtures/mage/prepared-v2/fire-combustion.go-result.json"
@@ -1154,7 +1154,7 @@
       "reason": "Covered mechanic. Immolation and Explosive Trap share a 30 second cooldown category, Freezing Trap its own, so Freezing Trap no longer locks the fire traps.",
       "adoption": {
         "reference": "adopted",
-        "rust": "pending: the Hunter port at the reference pin cd7d44aec"
+        "rust": "adopted with the reference pin cd7d44aec: the exported cooldown timers follow the categories"
       },
       "regression": [
         "fixtures/mage/prepared-v2/production-survival-hunter.go-result.json"
@@ -1239,7 +1239,7 @@
       ],
       "adoption": {
         "reference": "adopted",
-        "rust": "pending: the Mage port at the reference pin cd7d44aec"
+        "rust": "adopted with the reference pin cd7d44aec: Blizzard and Flamestrike ticks crit, Missile Barrage rolls on a landed hit with the row values, Arcane Blast's bonus reaches Pyroblast's hit as direct damage, Master of Elements reads the base cost"
       },
       "regression": [
         "fixtures/mage/prepared-v2/reference-missile-barrage.go-result.json",
@@ -1279,7 +1279,7 @@
       "reason": "Covered mechanic. Arcane Missiles spends the Arcane Blast stacks as the channel starts, not when it ends.",
       "adoption": {
         "reference": "adopted",
-        "rust": "pending: the Mage port at the reference pin cd7d44aec"
+        "rust": "adopted with the reference pin cd7d44aec: the channel spends the stacks as it starts"
       },
       "regression": [
         "fixtures/mage/prepared-v2/arcane-blast-spenders.go-result.json"
@@ -1368,7 +1368,7 @@
       "reason": "Covered mechanic. The Rogue audit: Mutilate strikes main hand first and its cast no longer fires on hit effects, Thistle Tea restores a flat 100, Preparation finishes every other Rogue cooldown, Hemorrhage's Rupture bonus counts on every tick, Ambush needs to be behind the target.",
       "adoption": {
         "reference": "adopted",
-        "rust": "adopted with the reference pin cd7d44aec for Mutilate, Thistle Tea, Preparation and Hemorrhage; the Ambush position rule is a cast condition Rust does not read, so a tank in front of the target is unchanged"
+        "rust": "adopted with the reference pin cd7d44aec: Mutilate strikes main hand first, Hemorrhage raises each Rupture tick, Preparation finishes every other cooldown, Thistle Tea restores a flat 100 and Ambush needs to be behind the target"
       },
       "regression": [
         "fixtures/mage/prepared-v2/production-assassination-rogue.go-result.json",
@@ -1429,7 +1429,7 @@
       "reason": "Covered mechanic. The Warrior audit: Weaponmaster's crit goes with the weapon of each hand, Sweeping Strikes needs a second target, Unbridled Wrath gives the same rage for every weapon.",
       "adoption": {
         "reference": "adopted",
-        "rust": "pending: the Warrior port at the reference pin cd7d44aec for Weaponmaster and Sweeping Strikes; Unbridled Wrath is adopted"
+        "rust": "adopted with the reference pin cd7d44aec: Weaponmaster's crit reaches Rust through the exported spell crit, Sweeping Strikes needs a second target and Unbridled Wrath gives the same rage for every weapon"
       },
       "regression": [
         "fixtures/mage/prepared-v2/arms-warrior-sweeping-strikes.go-result.json",
@@ -1571,7 +1571,7 @@
       "reason": "Covered mechanic. Rain of Fire's tick rows are procs that crit, and the cast itself hits every enemy in the area.",
       "adoption": {
         "reference": "adopted",
-        "rust": "pending: the Warlock port at the reference pin cd7d44aec"
+        "rust": "adopted with the reference pin cd7d44aec: the cast rolls a hit on every enemy and the ticks, which are procs, roll hit and crit"
       },
       "regression": [
         "fixtures/mage/prepared-v2/destruction-warlock-rain-of-fire.go-result.json",
