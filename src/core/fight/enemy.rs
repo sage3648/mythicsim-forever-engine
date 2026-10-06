@@ -368,14 +368,18 @@ impl<A: Agent> Fight<A> {
         if result.outcome & OUTCOME_PARRY == 0 {
             return;
         }
-        let hand = match side {
-            Side::Player => Hand::Main,
-            Side::Target => Hand::Enemy,
-            Side::Pet(_) => unreachable!("the target never swings at a pet in scope"),
-            Side::Extra(_) => unreachable!("only the first target can be tanked"),
-        };
         let now = self.now;
-        let attack = self.autos.attack(hand);
+        let attack = match side {
+            Side::Player => self.autos.attack(Hand::Main),
+            Side::Target => self.autos.attack(Hand::Enemy),
+            Side::Pet(_) => unreachable!("the target never swings at a pet in scope"),
+            // A copy keeps the timer its reset opened, though it never swings.
+            Side::Extra(extra) => self
+                .autos
+                .extra_enemies
+                .get_mut(usize::from(extra))
+                .expect("a copy that parries has the swing timer its reset opened"),
+        };
         let remaining = attack.swing_at - now;
         let swing_speed = attack.cur_swing_duration;
         let min_remaining = (swing_speed as f64 * 0.2) as i64;
