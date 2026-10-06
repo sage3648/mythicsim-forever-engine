@@ -12,7 +12,7 @@ use crate::{
     core::fight::{AoeResults, DotId, Fight, Outcome, SpellId},
 };
 
-/// Hellfire's tick amount and the results its spell's result slice holds.
+/// Hellfire's tick amount and whether its area hits crit.
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct Hellfire {
     tick_base: f64,
