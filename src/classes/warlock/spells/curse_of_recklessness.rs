@@ -41,17 +41,19 @@ impl CurseOfRecklessness {
     pub(crate) fn apply(&self, fight: &mut Fight<WarlockAgent>, spell: SpellId, target: Side) {
         let result = fight.calc_outcome(spell, target, Outcome::MagicHitNoHitCounter);
         if result.landed() {
-            take_curse_slot(fight, self.aura);
-            fight.activate_aura(self.aura);
+            let aura = fight.aura_on(self.aura, target);
+            take_curse_slot(fight, aura);
+            fight.activate_aura(aura);
         }
         fight.deal_damage(spell, result, false);
     }
 
-    pub(crate) fn on_gain<A: Agent>(&self, fight: &mut Fight<A>) {
-        fight.add_target_armor(Side::Target, self.armor_delta);
+    /// The debuff's gain on its target, the side of the aura.
+    pub(crate) fn on_gain<A: Agent>(&self, fight: &mut Fight<A>, target: Side) {
+        fight.add_target_armor(target, self.armor_delta);
     }
 
-    pub(crate) fn on_expire<A: Agent>(&self, fight: &mut Fight<A>) {
-        fight.add_target_armor(Side::Target, -self.armor_delta);
+    pub(crate) fn on_expire<A: Agent>(&self, fight: &mut Fight<A>, target: Side) {
+        fight.add_target_armor(target, -self.armor_delta);
     }
 }

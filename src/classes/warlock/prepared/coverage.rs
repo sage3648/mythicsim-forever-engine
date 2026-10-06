@@ -12,7 +12,7 @@ pub(crate) const GATE: ClassGate = ClassGate {
     spell: spell_capability,
     claims,
     limits,
-    several_targets: None,
+    several_targets: Some(several_targets),
 };
 
 /// Warlock effect kinds implemented in Rust and validated against the pinned Go reference.
@@ -31,12 +31,14 @@ const EFFECTS: &[&str] = &[
     "demonic_brand",
     "fel_energy",
     "firebolt",
+    "hellfire",
     "immolate",
     "incinerate",
     "improved_shadow_bolt",
     "lash_of_pain",
     "life_tap",
     "nightfall",
+    "rain_of_fire",
     "searing_pain",
     "shadow_and_flame",
     "shadow_bolt",
@@ -61,6 +63,8 @@ fn spell_capability(spell: &Spell) -> Option<&'static str> {
         "drain_life" if dot => Some("drain_life"),
         "incinerate" if damage => Some("incinerate"),
         "wrack" if dot => Some("wrack"),
+        "hellfire" if dot => Some("hellfire"),
+        "rain_of_fire" => Some("rain_of_fire"),
         "death_coil" if !dot => Some("death_coil"),
         "bane_of_havoc" if damage_free(spell) => Some("bane_of_havoc"),
         "curse_of_the_elements" => Some("curse_of_the_elements"),
@@ -109,9 +113,9 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         Effect::Decimation {
             trigger_aura, aura, ..
         } => vec![("player", trigger_aura), ("player", aura)],
-        // With the one target in scope the bane is always on the hit's target, which the
-        // copy listener skips.
-        Effect::BaneOfHavoc { copy_aura, .. } => vec![("player", copy_aura)],
+        Effect::BaneOfHavoc {
+            aura, copy_aura, ..
+        } => vec![("target", aura), ("player", copy_aura)],
         Effect::DemonicBrand {
             trigger_aura,
             consumer_aura,
@@ -129,8 +133,26 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
 
 /// The demon's abilities, which its AI reaches, need a behavior too, and the brand hit reads
 /// the warlock's school power as fixed.
-fn limits(prepared: &PreparedV2, _reachable: &[&Spell]) -> Vec<String> {
+fn limits(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
     let mut reasons = Vec::new();
+    // Hellfire's burn picks Go's outcome without a hit counter when its client row cannot
+    // crit, which Rust does not simulate.
+    let hellfire_cannot_crit = prepared.effects.iter().any(|effect| {
+        matches!(
+            effect,
+            Effect::Hellfire {
+                tick_can_crit: false,
+                ..
+            }
+        )
+    });
+    if hellfire_cannot_crit
+        && reachable
+            .iter()
+            .any(|spell| spell.class_spell.as_deref() == Some("hellfire"))
+    {
+        reasons.push("Hellfire's burn cannot crit, which Rust does not simulate".into());
+    }
     // Curse of Recklessness's attack power reaches a target that swings.
     for effect in &prepared.effects {
         if let Effect::CurseOfRecklessness {
@@ -195,4 +217,12 @@ fn limits(prepared: &PreparedV2, _reachable: &[&Spell]) -> Vec<String> {
         }
     }
     reasons
+}
+
+/// The spells that reach a target past the first in Go and not yet in Rust: none. Rain of
+/// Fire and Hellfire hit every target as in Go, Bane of Havoc copies the damage to the other
+/// targets onto the baned one, and a multidot lands a dot, its curse and bane slot, Agony
+/// ramp, Soul Siphon count and Immolate reader on the target it picks, as in Go.
+fn several_targets(_prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
+    crate::engine::coverage::spells_reaching_other_targets(reachable, &[])
 }

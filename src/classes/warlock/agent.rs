@@ -6,8 +6,8 @@ use std::rc::Rc;
 use crate::{
     contracts::prepared_v2::{Effect, PreparedV2, Spell as ExportedSpell},
     core::fight::{
-        healing::Healing, school_damage_index, Agent, AuraRef, DotId, Fight, Outcome, Side,
-        SpellBehavior, SpellId, SpellResult, PRIORITY_REGEN,
+        healing::Healing, school_damage_index, Agent, AoeResults, AuraRef, DotId, Fight, Side,
+        SpellBehavior, SpellId, SpellResult, MAX_TARGETS, PRIORITY_REGEN,
     },
 };
 
@@ -21,13 +21,17 @@ use super::{
         curse_of_recklessness::{self, CurseOfRecklessness},
         curse_of_the_elements::{self, CurseOfTheElements},
         drain_life::DrainLife,
-        find_spell, immolate, incinerate,
+        find_spell,
+        hellfire::{self, Hellfire},
+        immolate, incinerate,
         life_tap::{self, LifeTap},
+        rain_of_fire::{self, RainOfFire},
         searing_pain, shadow_bolt, shadowburn,
         siphon_life::SiphonLife,
-        soul_fire, take_bane_slot,
+        soul_fire,
     },
     talents::{
+        bane_of_havoc::{self, BaneOfHavoc},
         decimation::{self, Decimation},
         demonic_brand::{self, DemonicBrand},
         improved_shadow_bolt::{self, ImprovedShadowBolt},
@@ -59,6 +63,12 @@ pub(crate) enum WarlockSpell {
     DrainLife,
     Incinerate,
     Wrack,
+    /// Hellfire's channel.
+    Hellfire,
+    /// Rain of Fire's channel.
+    RainOfFire,
+    /// The spell each Rain of Fire period casts.
+    RainOfFireTick,
     BaneOfHavoc,
     DeathCoil,
     /// The Succubus's Lash of Pain.
@@ -86,6 +96,10 @@ pub(crate) enum WarlockAura {
     DemonicBrandConsumer,
     /// The Voidwalker's sacrifice.
     FelEnergy,
+    /// Bane of Havoc on a target.
+    HavocBane,
+    /// The warlock's permanent listener that copies damage onto the baned target.
+    HavocCopy,
 }
 
 /// [`Agent::on_periodic`] tags of Warlock periodic actions.
@@ -102,18 +116,23 @@ pub(crate) struct WarlockAgent {
     bane_of_doom_dot: Option<DotId>,
     drain_life: Option<DrainLife>,
     wrack: Option<Wrack>,
+    pub(crate) hellfire: Option<Hellfire>,
+    /// The results of Hellfire's latest tick calculation, Go's result slice of the spell.
+    pub(crate) hellfire_results: AoeResults,
+    rain_of_fire: Option<RainOfFire>,
     /// Death Coil's base, its healing spell and the warlock's healing modifiers.
     death_coil: Option<(f64, SpellId, Healing)>,
-    /// Bane of Havoc's aura on the one target.
-    bane_of_havoc: Option<AuraRef>,
+    pub(crate) bane_of_havoc: Option<BaneOfHavoc>,
+    /// Go's `havocTarget`: the target that holds Bane of Havoc.
+    pub(crate) havoc_target: Option<Side>,
     /// Incinerate's bonus on a target burning with Immolate.
     incinerate_bonus: f64,
-    /// Go `currentActiveBane` on the one target.
-    pub(crate) bane_slot: Option<AuraRef>,
+    /// Go `currentActiveBane`: the bane each target holds, by position.
+    pub(crate) bane_slot: [Option<AuraRef>; MAX_TARGETS],
     curse_of_the_elements: Option<Rc<CurseOfTheElements>>,
     curse_of_recklessness: Option<CurseOfRecklessness>,
-    /// Go `currentActiveCurse` on the one target.
-    pub(crate) curse_slot: Option<AuraRef>,
+    /// Go `currentActiveCurse`: the curse each target holds, by position.
+    pub(crate) curse_slot: [Option<AuraRef>; MAX_TARGETS],
     life_tap: Option<LifeTap>,
     conflagrate: Option<Rc<Conflagrate>>,
     improved_shadow_bolt: Option<Rc<ImprovedShadowBolt>>,
@@ -175,6 +194,12 @@ fn class_auras(prepared: &PreparedV2) -> Vec<(&'static str, String, WarlockAura)
             Effect::FelEnergy { aura, .. } => {
                 auras.push(("player", aura.clone(), WarlockAura::FelEnergy))
             }
+            Effect::BaneOfHavoc {
+                aura, copy_aura, ..
+            } => {
+                auras.push(("target", aura.clone(), WarlockAura::HavocBane));
+                auras.push(("player", copy_aura.clone(), WarlockAura::HavocCopy));
+            }
             Effect::Decimation {
                 trigger_aura, aura, ..
             } => {
@@ -231,6 +256,9 @@ impl WarlockAgent {
             "drain_life" if dot => Some(WarlockSpell::DrainLife),
             "incinerate" if damage => Some(WarlockSpell::Incinerate),
             "wrack" if dot => Some(WarlockSpell::Wrack),
+            "hellfire" if dot => Some(WarlockSpell::Hellfire),
+            "rain_of_fire" if dot => Some(WarlockSpell::RainOfFire),
+            "rain_of_fire" => Some(WarlockSpell::RainOfFireTick),
             "death_coil" if !dot => Some(WarlockSpell::DeathCoil),
             "bane_of_havoc" if !damage && !dot => Some(WarlockSpell::BaneOfHavoc),
             "succubus_lash_of_pain" => Some(WarlockSpell::LashOfPain),
@@ -326,6 +354,29 @@ impl WarlockAgent {
                     let bound = wrack::bind(&mut fight, dot, *soul_siphon, dot_spells, *dot_bonus);
                     fight.agent.wrack = Some(bound);
                 }
+                Effect::Hellfire {
+                    spell_id,
+                    tick_base,
+                    tick_can_crit,
+                } => {
+                    find_spell(&fight, *spell_id)?;
+                    fight.agent.hellfire = Some(hellfire::bind(*tick_base, *tick_can_crit));
+                }
+                Effect::RainOfFire {
+                    spell_id,
+                    tick_spell_id,
+                    tick_base,
+                    tick_can_crit,
+                } => {
+                    let bound = rain_of_fire::bind(
+                        &fight,
+                        *spell_id,
+                        *tick_spell_id,
+                        *tick_base,
+                        *tick_can_crit,
+                    )?;
+                    fight.agent.rain_of_fire = Some(bound);
+                }
                 Effect::DeathCoil {
                     base_damage,
                     healing_dealt_multiplier,
@@ -358,14 +409,14 @@ impl WarlockAgent {
                         ));
                     }
                 }
-                Effect::BaneOfHavoc { aura, .. } => {
-                    let index = fight.trackers[Side::Target.index()]
-                        .find(aura)
-                        .ok_or_else(|| format!("target aura {aura} is not registered"))?;
-                    fight.agent.bane_of_havoc = Some(AuraRef {
-                        side: Side::Target,
-                        index,
-                    });
+                Effect::BaneOfHavoc {
+                    spell_id,
+                    aura,
+                    share,
+                    ..
+                } => {
+                    let bound = bane_of_havoc::bind(&fight, *spell_id, aura, *share)?;
+                    fight.agent.bane_of_havoc = Some(bound);
                 }
                 Effect::Incinerate { immolate_bonus } => {
                     fight.agent.incinerate_bonus = *immolate_bonus;
@@ -664,22 +715,19 @@ impl Agent for WarlockAgent {
                 let dot = fight.agent.wrack.expect("Wrack is bound").dot;
                 corruption::apply(fight, spell, target, dot);
             }
+            WarlockSpell::Hellfire => hellfire::apply_channel(fight, spell),
+            WarlockSpell::RainOfFire => rain_of_fire::apply_channel(fight, spell),
+            WarlockSpell::RainOfFireTick => {
+                let rain = fight.agent.rain_of_fire.expect("Rain of Fire is bound");
+                rain.apply_tick(fight, spell);
+            }
             WarlockSpell::DeathCoil => {
                 // The hit rolls at the cast and lands after travel.
                 let (base, _, _) = fight.agent.death_coil.expect("Death Coil is bound");
                 let result = fight.calc_damage(spell, target, base);
                 fight.class_after_travel(spell, result);
             }
-            WarlockSpell::BaneOfHavoc => {
-                // With the one target in scope no other target holds the bane.
-                let result = fight.calc_outcome(spell, target, Outcome::MagicHitNoHitCounter);
-                if result.landed() {
-                    let aura = fight.agent.bane_of_havoc.expect("Bane of Havoc is bound");
-                    take_bane_slot(fight, aura);
-                    fight.activate_aura(aura);
-                }
-                fight.deal_damage(spell, result, false);
-            }
+            WarlockSpell::BaneOfHavoc => bane_of_havoc::apply(fight, spell, target),
             WarlockSpell::Incinerate => {
                 let (immolate, bonus) = (fight.agent.immolate_dot, fight.agent.incinerate_bonus);
                 incinerate::apply(fight, spell, target, immolate, bonus);
@@ -776,9 +824,13 @@ impl Agent for WarlockAgent {
         spell: SpellId,
         result: &SpellResult,
     ) {
-        if kind == WarlockAura::NightfallTrigger {
-            let talent = fight.agent.nightfall.clone().expect("bound");
-            talent.on_periodic_damage_dealt(fight, aura, spell, result);
+        match kind {
+            WarlockAura::NightfallTrigger => {
+                let talent = fight.agent.nightfall.clone().expect("bound");
+                talent.on_periodic_damage_dealt(fight, aura, spell, result);
+            }
+            WarlockAura::HavocCopy => bane_of_havoc::copy_damage(fight, result),
+            _ => {}
         }
     }
 
@@ -828,21 +880,27 @@ impl Agent for WarlockAgent {
 
     fn on_dot_tick(fight: &mut Fight<Self>, dot: DotId, behavior: WarlockSpell) {
         match behavior {
-            WarlockSpell::BaneOfAgony => bane_of_agony::tick(fight),
+            WarlockSpell::BaneOfAgony => bane_of_agony::tick(fight, dot),
             WarlockSpell::ImmolateDot | WarlockSpell::Corruption | WarlockSpell::BaneOfDoom => {
                 fight.snapshot_dot_tick(dot)
             }
             WarlockSpell::SiphonLife => {
                 let siphon = fight.agent.siphon_life.expect("Siphon Life is bound");
-                siphon.tick(fight);
+                siphon.tick(fight, dot);
             }
             WarlockSpell::DrainLife => {
                 let drain = fight.agent.drain_life.expect("Drain Life is bound");
-                drain.tick(fight);
+                drain.tick(fight, dot);
             }
             WarlockSpell::Wrack => {
                 let wrack = fight.agent.wrack.expect("Wrack is bound");
-                wrack.tick(fight);
+                wrack.tick(fight, dot);
+            }
+            WarlockSpell::Hellfire => hellfire::tick(fight, dot),
+            WarlockSpell::RainOfFire => {
+                let rain = fight.agent.rain_of_fire.expect("Rain of Fire is bound");
+                let side = fight.dots[dot].side;
+                rain.on_channel_tick(fight, side);
             }
             _ => {}
         }
@@ -852,11 +910,11 @@ impl Agent for WarlockAgent {
         match kind {
             WarlockAura::CurseOfTheElements => {
                 let curse = fight.agent.curse_of_the_elements.clone().expect("bound");
-                curse.on_gain(fight);
+                curse.on_gain(fight, aura.side);
             }
             WarlockAura::CurseOfRecklessness => {
                 let curse = fight.agent.curse_of_recklessness.expect("bound");
-                curse.on_gain(fight);
+                curse.on_gain(fight, aura.side);
             }
             WarlockAura::ShadowAndFlame => {
                 let talent = fight.agent.shadow_and_flame.clone().expect("bound");
@@ -870,6 +928,7 @@ impl Agent for WarlockAgent {
                 let talent = fight.agent.decimation.clone().expect("bound");
                 talent.on_gain(fight);
             }
+            WarlockAura::HavocBane => bane_of_havoc::on_gain(fight, aura),
             WarlockAura::FelEnergy => {
                 // Go StartPeriodicAction at the regeneration priority, first tick a period on.
                 let (period, _, _) = fight.agent.fel_energy.expect("bound");
@@ -883,11 +942,11 @@ impl Agent for WarlockAgent {
         match kind {
             WarlockAura::CurseOfTheElements => {
                 let curse = fight.agent.curse_of_the_elements.clone().expect("bound");
-                curse.on_expire(fight);
+                curse.on_expire(fight, aura.side);
             }
             WarlockAura::CurseOfRecklessness => {
                 let curse = fight.agent.curse_of_recklessness.expect("bound");
-                curse.on_expire(fight);
+                curse.on_expire(fight, aura.side);
             }
             WarlockAura::ShadowAndFlame => {
                 let talent = fight.agent.shadow_and_flame.clone().expect("bound");
@@ -901,6 +960,7 @@ impl Agent for WarlockAgent {
                 let talent = fight.agent.decimation.clone().expect("bound");
                 talent.on_expire(fight);
             }
+            WarlockAura::HavocBane => bane_of_havoc::on_expire(fight, aura),
             _ => {}
         }
     }
@@ -933,6 +993,7 @@ impl Agent for WarlockAgent {
                 let talent = fight.agent.demonic_brand.clone().expect("bound");
                 talent.on_demon_hit(fight, spell, result);
             }
+            WarlockAura::HavocCopy => bane_of_havoc::copy_damage(fight, result),
             _ => {}
         }
     }

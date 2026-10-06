@@ -2,7 +2,8 @@
 //! sim/mage/blizzard.go. The channel is an area dot on the mage whose every tick casts the
 //! triggered tick spell. A tick deals a fixed amount to each target with
 //! `OutcomeMagicHit`, so it never crits, and with Improved Blizzard each landed tick casts
-//! the chill on its target, which Fingers of Frost can roll on. The runtime has one target.
+//! the chill on its target, which Fingers of Frost can roll on. The tick hits each target
+//! in turn, and the chills follow once every target has been hit.
 
 use crate::core::fight::{Agent, Fight, Outcome, Side, SpellId};
 
@@ -52,9 +53,16 @@ impl Blizzard {
     /// The tick spell's `ApplyEffects`: `CalcAndDealAoeDamage` with `OutcomeMagicHit`, then
     /// the chill on each landed target.
     pub(crate) fn apply_tick<A: Agent>(&self, fight: &mut Fight<A>, spell: SpellId) {
-        let result = fight.calc_damage_hit_only(spell, Side::Target, self.tick_base);
-        fight.deal_damage(spell, result, false);
-        if let Some(improved) = self.improved {
+        let tick_base = self.tick_base;
+        let results = fight.calc_and_deal_aoe_damage_with_variance(
+            spell,
+            |_| tick_base,
+            Fight::calc_damage_hit_only,
+        );
+        let Some(improved) = self.improved else {
+            return;
+        };
+        for result in results.as_slice() {
             if result.landed() {
                 fight.cast(improved, result.target);
             }

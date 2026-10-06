@@ -4,7 +4,7 @@
   "engine_revision": "6383c15a7b1bfbdbd7c5b4c0c59418c636e52e1a",
   "client_build": "1.60.1.70205",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "5da215d4b3066a024f06d2adfc38fafacd999b077490e93b0bd4a1a869a670ba",
+  "exporter_sha256": "8502a33c3978c455dc582251aeed78b33e445aef7175824c74363b3aab5b0ca6",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -919,7 +919,7 @@
         "path": "fixtures/mage/prepared-v2/production-destruction-warlock.request.json"
       },
       "prepared": "production-destruction-warlock.prepared.json",
-      "prepared_sha256": "50407cbff8f28b9fc294add62cea9719de768876aeffc757fef598fbef254526",
+      "prepared_sha256": "656d87b97eaf868c5c6b2d9389465578fac100409b08dfb6fd72186d8f88f086",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1394,7 +1394,7 @@
         "path": "fixtures/mage/prepared-v2/production-affliction-warlock.request.json"
       },
       "prepared": "production-affliction-warlock.prepared.json",
-      "prepared_sha256": "1deea2933c2c6dec0689ddcfd8a5c53048ea491ab31e5f464963c0a8da25d507",
+      "prepared_sha256": "5cf8fcb642a7f69bc96225a423b36217d0ddf618c613510d60997ad2e95a49d4",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1415,7 +1415,7 @@
         "path": "fixtures/mage/prepared-v2/production-demonology-warlock.request.json"
       },
       "prepared": "production-demonology-warlock.prepared.json",
-      "prepared_sha256": "d06eda1f4c571302603bbc4992aafd5b893e59a796aa03f590f3be4918bcf3ff",
+      "prepared_sha256": "7e30a3d015a8ea52f19d57d1e165f0e6c9df1a6b41ea6f79b792e3efeb1b64b8",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1436,7 +1436,7 @@
         "path": "fixtures/mage/prepared-v2/demonology-warlock-voidwalker-pact.request.json"
       },
       "prepared": "demonology-warlock-voidwalker-pact.prepared.json",
-      "prepared_sha256": "6e80fcb0e1716a8d1f368373a625b349f286565789c4695c5aa384562b7f17ca",
+      "prepared_sha256": "283a80e5319f15fefab8b0140eda1ab101c1c9827ae4bc772515d380e3bc6e9e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1894,7 +1894,7 @@
         "path": "fixtures/mage/prepared-v2/demonology-warlock-orc.request.json"
       },
       "prepared": "demonology-warlock-orc.prepared.json",
-      "prepared_sha256": "024826c40ccbf954d3b77cd28f890314e01646d9f71bf40c42b5eda6a6fd787b",
+      "prepared_sha256": "c218f00d7e6ec2c5c97624a2ef230fa72a16bb91dfe7d7953e081f305f07e41f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1978,7 +1978,7 @@
         "path": "fixtures/mage/prepared-v2/affliction-warlock-broad.request.json"
       },
       "prepared": "affliction-warlock-broad.prepared.json",
-      "prepared_sha256": "138d059843d172409567344c13db1f8c4dfe34593bbceea4361b43185c37290e",
+      "prepared_sha256": "310f1b78e8f8e72da60fdb545b02531fb67cc6ae2271e7b6623ffc0e5aae0cc9",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1999,7 +1999,7 @@
         "path": "fixtures/mage/prepared-v2/destruction-warlock-broad.request.json"
       },
       "prepared": "destruction-warlock-broad.prepared.json",
-      "prepared_sha256": "15c151c22bff317ef11fc29e6ba347a0a093ab26c50b36c8d27612ca4f461202",
+      "prepared_sha256": "01829118454a84c45b80710e59cfef149581ac80e7d8b33802841f8811508b46",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2020,7 +2020,7 @@
         "path": "fixtures/mage/prepared-v2/affliction-warlock-death-coil.request.json"
       },
       "prepared": "affliction-warlock-death-coil.prepared.json",
-      "prepared_sha256": "21e0d42fe2f02b78c07a8f6c734f073a0ec264a7268d3362f3de1a813bd1bf33",
+      "prepared_sha256": "f97855cd29006f58f0f35681b0fe1e18c0483eed60384056f42d87cde8986af3",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2041,7 +2041,7 @@
         "path": "fixtures/mage/prepared-v2/demonology-warlock-recklessness.request.json"
       },
       "prepared": "demonology-warlock-recklessness.prepared.json",
-      "prepared_sha256": "6d075471af990f9e1aa557af790ea1546d7101505a0a6d47aa7f4dd359745cb1",
+      "prepared_sha256": "2ba4af0c8135935c888390f9c4ea39b9c9f66a938091321d4e91c79964fa15c3",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3450,7 +3450,7 @@
         "path": "fixtures/mage/prepared-v2/affliction-warlock-lash-of-pain-rounding.request.json"
       },
       "prepared": "affliction-warlock-lash-of-pain-rounding.prepared.json",
-      "prepared_sha256": "38c6321fe7b8fbf42b9d88e62b1635e3b3abdeba23d5eb347cdacd249a625be8",
+      "prepared_sha256": "d91ece7d0deb688423b1550bfdb726e701b0599788446e87735244172508d106",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3757,7 +3757,7 @@
         "path": "fixtures/mage/prepared-v2/affliction-warlock-raid-curse-of-elements.request.json"
       },
       "prepared": "affliction-warlock-raid-curse-of-elements.prepared.json",
-      "prepared_sha256": "62d0686c794b1b7e39bb7a4b024475e01a30675de20286d6a1131a7a5a0a94d7",
+      "prepared_sha256": "45ae3e7012ce000ca6ac1bccae6393d0dd44b650d06151a5dc0d14968abdeab8",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4884,7 +4884,7 @@
         "path": "fixtures/mage/prepared-v2/affliction-warlock-golden-banana.request.json"
       },
       "prepared": "affliction-warlock-golden-banana.prepared.json",
-      "prepared_sha256": "4a9ffd870e7fdd17efca890e69f9fae155cbba1e95837c99936eecea80dd9bdb",
+      "prepared_sha256": "8def70ab4e1013df41b15cfe39041d620a67063b2b87e049c0d24b5aa23d983e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5157,7 +5157,7 @@
         "path": "fixtures/mage/prepared-v2/affliction-warlock-pet-dismiss-residue.request.json"
       },
       "prepared": "affliction-warlock-pet-dismiss-residue.prepared.json",
-      "prepared_sha256": "ddeda03ec48d64c1c1b29237965a3f3bbcd47dfec49abfa18e62a84f248253b0",
+      "prepared_sha256": "060ce63cef55abbfade6b63c428d9dcce1e6bc5e51439f310b0b949c761b89d8",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5216,7 +5216,7 @@
         "path": "fixtures/mage/prepared-v2/demonology-warlock-frozen-heart.request.json"
       },
       "prepared": "demonology-warlock-frozen-heart.prepared.json",
-      "prepared_sha256": "70f584a89d08585f592f83bed9bc6fdb149c0e7ca15f3e8841f87bba7721be0f",
+      "prepared_sha256": "95314b7bc5c00d6c8c07f6cc8b3ebebef9bda68fb5f7a8743a918394b9b1802f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5653,10 +5653,16 @@
       "prepared": "production-frost-2-targets.prepared.json",
       "prepared_sha256": "96cdea81d11fcae36efe1269945a1760372391bc851e25a0bb936be8fdbbb6af",
       "expected_coverage": {
-        "supported": false,
-        "reasons": [
-          "2 targets: several targets are not supported for ClassMage yet"
-        ]
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-frost-2-targets.go-result.json",
+        "sha256": "2b259216d64639023b8deac71bdd163c4d70bd4b715859705a03bb4df81650dc"
+      },
+      "go_log": {
+        "file": "production-frost-2-targets.go-log.txt",
+        "sha256": "9f5e036547745a63bbb48734cff799c15791f4a2879d014c2043f48d016324c5"
       }
     },
     {
@@ -5909,6 +5915,405 @@
       "go_log": {
         "file": "retribution-paladin-multidot-consecration-3-targets.go-log.txt",
         "sha256": "9775bbd5ad4eba7cdac64bf91cc5e8276da33e6cf24c697ce7132c2502b7e49c"
+      }
+    },
+    {
+      "id": "destruction-warlock-rain-of-fire",
+      "description": "The production Destruction Warlock casting Rain of Fire first: the channel's tick hits the one target for a fixed amount, rolled to hit and crit.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/destruction-warlock-rain-of-fire.request.json"
+      },
+      "prepared": "destruction-warlock-rain-of-fire.prepared.json",
+      "prepared_sha256": "4458ae7d387ce7fd7f5f9d786404941a218597ab8f085557f2a037eef065eeca",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "destruction-warlock-rain-of-fire.go-result.json",
+        "sha256": "d49130cfd8b36200a5c2ad49a302f271110196a2bb293395d1d717239d3444c3"
+      },
+      "go_log": {
+        "file": "destruction-warlock-rain-of-fire.go-log.txt",
+        "sha256": "d809d3a3e4e7d8110c284d025545ccabdca581dde52df5f17dc11a4f97b2d1aa"
+      }
+    },
+    {
+      "id": "affliction-warlock-hellfire",
+      "description": "The production Affliction Warlock casting Hellfire first: each tick burns the one target and the warlock, until the warlock cannot survive a tick and the stopped channel ticks once more, dealing that tick twice.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/affliction-warlock-hellfire.request.json"
+      },
+      "prepared": "affliction-warlock-hellfire.prepared.json",
+      "prepared_sha256": "3b1cafadf775bb52d746f91be8d4ea250fd6f4d161d9ab26678fbe4fd1429290",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "affliction-warlock-hellfire.go-result.json",
+        "sha256": "a0b86716ffe8767680d80eeca9988286c55e6ab722910aba1b6b56ef0dbcec19"
+      },
+      "go_log": {
+        "file": "affliction-warlock-hellfire.go-log.txt",
+        "sha256": "7f088fbdc83fde73e7892c8251cc464ce9f8aa308cd913a3ed110dee3886cd67"
+      }
+    },
+    {
+      "id": "frost-mage-3-targets-area-lines",
+      "description": "The Frost Mage's production request against three targets, with the application's area lines: Flamestrike, Cone of Cold and Arcane Explosion at three or more targets.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/frost-mage-3-targets-area-lines.request.json"
+      },
+      "prepared": "frost-mage-3-targets-area-lines.prepared.json",
+      "prepared_sha256": "310978c6be8da4bb92d2dbbaa5f6e6e41f570fe894736e04126cc621e7a5c192",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frost-mage-3-targets-area-lines.go-result.json",
+        "sha256": "ca7d0f9e020a7a02ef7cb445dafdbdf25c0e748143622d32e2cc14fa8aa2be3c"
+      },
+      "go_log": {
+        "file": "frost-mage-3-targets-area-lines.go-log.txt",
+        "sha256": "c6ab277a1a9e659769387439b9fc7f0776a5a938c4d5edc3702921dbeb83ad8b"
+      }
+    },
+    {
+      "id": "arcane-mage-4-targets-arcane-explosion",
+      "description": "The Arcane Mage's production request against four targets, casting Arcane Explosion, Cone of Cold and Flamestrike when two or more are in reach.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/arcane-mage-4-targets-arcane-explosion.request.json"
+      },
+      "prepared": "arcane-mage-4-targets-arcane-explosion.prepared.json",
+      "prepared_sha256": "79c9fe6db0a33b7c0f1ddf8356a1b67ad5910fb62309e9e8442b2009f28b1196",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "arcane-mage-4-targets-arcane-explosion.go-result.json",
+        "sha256": "e5721c745955e58d125d8f83295e05bb4b7627148acecf1ab44d6863f3db8778"
+      },
+      "go_log": {
+        "file": "arcane-mage-4-targets-arcane-explosion.go-log.txt",
+        "sha256": "208238b292b0aaaf5179e4b70b9346444d8c5079400694f7196aef8f592e7176"
+      }
+    },
+    {
+      "id": "frost-mage-3-targets-blizzard",
+      "description": "The Frost Mage with Improved Blizzard and Fingers of Frost against three targets, casting Blizzard first: each tick hits every target, then the chill follows on each target it landed on.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/frost-mage-3-targets-blizzard.request.json"
+      },
+      "prepared": "frost-mage-3-targets-blizzard.prepared.json",
+      "prepared_sha256": "f74ccc3c538a7db4f674ccd725b1e38a06ca12a30334c9de92b2194d9e949829",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frost-mage-3-targets-blizzard.go-result.json",
+        "sha256": "236db8d34a713a7e1e1ee9f1329e60b82dee41df680dce572b2d0990d6c00d31"
+      },
+      "go_log": {
+        "file": "frost-mage-3-targets-blizzard.go-log.txt",
+        "sha256": "777ee74abd39c837e459d47f0e2ace95cc3a9d8024edac8f5fdcbe2c6f60cde3"
+      }
+    },
+    {
+      "id": "fire-mage-2-targets-blast-wave",
+      "description": "The Fire Mage with Blast Wave against two targets, casting Blast Wave first: a binary rolled hit on each target, and Ignite burning on each target a crit struck.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-mage-2-targets-blast-wave.request.json"
+      },
+      "prepared": "fire-mage-2-targets-blast-wave.prepared.json",
+      "prepared_sha256": "e194925c6df857caeb49e86630db466b7b8f49dc70a430b2b4d7273cecc9e94e",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fire-mage-2-targets-blast-wave.go-result.json",
+        "sha256": "849b2cebdc5455a84de240b8e7218a743a48bfab9756876427ffad12e79d4050"
+      },
+      "go_log": {
+        "file": "fire-mage-2-targets-blast-wave.go-log.txt",
+        "sha256": "5123c5047c84babc4a637273422ea75680d68d521f687b8879e1abcd40cf3771"
+      }
+    },
+    {
+      "id": "fire-mage-5-targets-flamestrike",
+      "description": "The Fire Mage with Improved Flamestrike against five targets, casting Flamestrike first: a rolled hit on each target, then the area dot ticking on each, with Ignite on every target a crit struck.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-mage-5-targets-flamestrike.request.json"
+      },
+      "prepared": "fire-mage-5-targets-flamestrike.prepared.json",
+      "prepared_sha256": "ab680e4e61dac73b050fdb8878ba25ee6c9f3c9500ce202978a76345adfe328e",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fire-mage-5-targets-flamestrike.go-result.json",
+        "sha256": "a875684ccff90c94ade9ed2269e98178e413b876cbeb1605dab1812d7cf65545"
+      },
+      "go_log": {
+        "file": "fire-mage-5-targets-flamestrike.go-log.txt",
+        "sha256": "802ddd421a1305dd1f461935124f31b5090077a4dd6feb4feaaad7de2b44f7da"
+      }
+    },
+    {
+      "id": "affliction-warlock-3-targets-rain-of-fire",
+      "description": "The Affliction Warlock's production request against three targets, casting Rain of Fire at two or more: each tick hits every target in turn.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/affliction-warlock-3-targets-rain-of-fire.request.json"
+      },
+      "prepared": "affliction-warlock-3-targets-rain-of-fire.prepared.json",
+      "prepared_sha256": "5c3c134060b188ae4cbfa6d5dbc842adf40515df0ddfc641af1a1c38f894475d",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "affliction-warlock-3-targets-rain-of-fire.go-result.json",
+        "sha256": "911862390d17742423737c913b5d9865fca06f85ff833df1a667071d5d0e39f0"
+      },
+      "go_log": {
+        "file": "affliction-warlock-3-targets-rain-of-fire.go-log.txt",
+        "sha256": "4ef255bdcf19c384a840253e5833eda9578d81e38012e2d84654c655bf5d56f9"
+      }
+    },
+    {
+      "id": "destruction-warlock-5-targets-rain-of-fire",
+      "description": "The Destruction Warlock against five targets, casting Rain of Fire first: Improved Shadow Bolt and the curses sit on the first target alone, so the others take the area hit without them.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/destruction-warlock-5-targets-rain-of-fire.request.json"
+      },
+      "prepared": "destruction-warlock-5-targets-rain-of-fire.prepared.json",
+      "prepared_sha256": "279c972480ba5f4eb362ec9b9285121ed19f1930c6388fc57e5150d16e7115ad",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "destruction-warlock-5-targets-rain-of-fire.go-result.json",
+        "sha256": "62bbf4861ff9da0010ca25032b170329b2ea4f11c4ad968fa2f888ce64bfe6ac"
+      },
+      "go_log": {
+        "file": "destruction-warlock-5-targets-rain-of-fire.go-log.txt",
+        "sha256": "1ba1bafb4136dc37a21712cfc2f1b3ca1c8c5d19c822054fe3e1ba3b5c5bc24c"
+      }
+    },
+    {
+      "id": "demonology-warlock-2-targets-hellfire",
+      "description": "The Demonology Warlock against two targets, casting Hellfire first: the fixed tick is calculated on both targets before either is dealt, then burns the warlock.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/demonology-warlock-2-targets-hellfire.request.json"
+      },
+      "prepared": "demonology-warlock-2-targets-hellfire.prepared.json",
+      "prepared_sha256": "3513e0da8cc5e28f92a8581b6a61ca409d88b52895234d418e3215bbb21670c4",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "demonology-warlock-2-targets-hellfire.go-result.json",
+        "sha256": "3d46d3b1dc51342cbbdc8b8e64c2196227078ef97ca67bf91b1b9f5b879b16c3"
+      },
+      "go_log": {
+        "file": "demonology-warlock-2-targets-hellfire.go-log.txt",
+        "sha256": "e9161093139cd74e369cec6c2da82224607dd18480fb24bec35e06225294956e"
+      }
+    },
+    {
+      "id": "destruction-warlock-3-targets-multidot",
+      "description": "The Destruction Warlock against three targets with a multidot of Corruption, which casts the dot on a target past the first, where Rust keeps one curse slot, bane slot and Immolate reader.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/destruction-warlock-3-targets-multidot.request.json"
+      },
+      "prepared": "destruction-warlock-3-targets-multidot.prepared.json",
+      "prepared_sha256": "93c8c018774a4b12b2d27772858228eac9f79eec5f5542f724d03334a6e70b33",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "destruction-warlock-3-targets-multidot.go-result.json",
+        "sha256": "08d6c1dc59935fa3c35cb92cf6d555c74e1c53d7ebe19f0972dda604993b55cb"
+      },
+      "go_log": {
+        "file": "destruction-warlock-3-targets-multidot.go-log.txt",
+        "sha256": "79aef8fc0986505316e31989d019a681af5445f7c3a5c7a14d0682ba6120f568"
+      }
+    },
+    {
+      "id": "destruction-warlock-3-targets-bane-of-havoc",
+      "description": "The Destruction Warlock with Bane of Havoc against three targets: the bane copies the warlock's damage to the other targets onto the baned one, which Rust does not follow.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/destruction-warlock-3-targets-bane-of-havoc.request.json"
+      },
+      "prepared": "destruction-warlock-3-targets-bane-of-havoc.prepared.json",
+      "prepared_sha256": "05b7e71aa66a3fc31b2867ec0d8f627833fe40190c449e376930d650790beb1d",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "destruction-warlock-3-targets-bane-of-havoc.go-result.json",
+        "sha256": "c9b015c0bffa27083ef8ad089bba2ebf61c7df5ea1292a4320f2682caeebab9b"
+      },
+      "go_log": {
+        "file": "destruction-warlock-3-targets-bane-of-havoc.go-log.txt",
+        "sha256": "00d9d1d078aada3e2477e5c04ef038c6256e04e9a50a02f13870fa7b8aa3f72a"
+      }
+    },
+    {
+      "id": "frostfire-mage-2-targets-multidot",
+      "description": "The Gnome Frostfire Mage against two targets with a multidot of Frostfire Bolt: Eureka's damage bonus and the cancel of it on dot ticks reach the dot on each target, not only the first.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/frostfire-mage-2-targets-multidot.request.json"
+      },
+      "prepared": "frostfire-mage-2-targets-multidot.prepared.json",
+      "prepared_sha256": "5986e29c6de73ec92ba8e29d779f05504bb401fcbbda971d356456b4e1ec9ec2",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frostfire-mage-2-targets-multidot.go-result.json",
+        "sha256": "00ad6cdf87cc3dd1f2ea2c98c8ed4a80c517518aa080c8254a99c51a2c6dd41a"
+      },
+      "go_log": {
+        "file": "frostfire-mage-2-targets-multidot.go-log.txt",
+        "sha256": "5bc571f50f658c69935ebe207e0a60b3e4f50899c76f62d7ee6f687e00850b9b"
+      }
+    },
+    {
+      "id": "destruction-warlock-3-targets-bane-of-havoc-rain-of-fire",
+      "description": "The Destruction Warlock with Bane of Havoc against three targets, casting Rain of Fire at two or more: the baned first target takes a share of the damage the other two take, as a hit of the bane's copy spell that ignores every modifier.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/destruction-warlock-3-targets-bane-of-havoc-rain-of-fire.request.json"
+      },
+      "prepared": "destruction-warlock-3-targets-bane-of-havoc-rain-of-fire.prepared.json",
+      "prepared_sha256": "6c8ec759ff853365118769ab97fe93cf574cff1c60cf85153d54b4953fb69024",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "destruction-warlock-3-targets-bane-of-havoc-rain-of-fire.go-result.json",
+        "sha256": "0f2d67102f935ad3ce9a350e21f6f258dbe2e167c98a47d1bbf40f9b632f9eb1"
+      },
+      "go_log": {
+        "file": "destruction-warlock-3-targets-bane-of-havoc-rain-of-fire.go-log.txt",
+        "sha256": "a747387bb4b53fe1255c275e433fd2765914f4e1c52b5a1ee48071fcfa40975f"
+      }
+    },
+    {
+      "id": "destruction-warlock-2-targets-bane-of-havoc-hellfire",
+      "description": "The Destruction Warlock with Bane of Havoc against two targets, casting Hellfire at two or more: the second target's tick is dealt after both are calculated, and the baned first target takes the copy of it.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/destruction-warlock-2-targets-bane-of-havoc-hellfire.request.json"
+      },
+      "prepared": "destruction-warlock-2-targets-bane-of-havoc-hellfire.prepared.json",
+      "prepared_sha256": "6e6b58dd3551b31fc15f912380c0e32f29a6c69866aea34bee01f7de9533e135",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "destruction-warlock-2-targets-bane-of-havoc-hellfire.go-result.json",
+        "sha256": "365f3d241f640a22b396ecbc23badf03a1b4e07d85a7660031cf5bffdc19615c"
+      },
+      "go_log": {
+        "file": "destruction-warlock-2-targets-bane-of-havoc-hellfire.go-log.txt",
+        "sha256": "b5687b2a1145baab8928217c4f37202ef9f018020e7369bf2640dc23267f0aab"
+      }
+    },
+    {
+      "id": "fire-mage-3-targets-multidot-flamestrike",
+      "description": "The Fire Mage against three targets with a multidot line for Flamestrike, which Go drops: the area dot belongs to the caster and Spell.CurDot does not return it, so the rotation is the plain one.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-mage-3-targets-multidot-flamestrike.request.json"
+      },
+      "prepared": "fire-mage-3-targets-multidot-flamestrike.prepared.json",
+      "prepared_sha256": "8649609396715d4e4a1c36490b17ac73c5a48582b72217af98c6911ad49a72d7",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fire-mage-3-targets-multidot-flamestrike.go-result.json",
+        "sha256": "1eb047ee43f5f8281d0928fe5f683d6378b0e3851f388f422d764534479ba775"
+      },
+      "go_log": {
+        "file": "fire-mage-3-targets-multidot-flamestrike.go-log.txt",
+        "sha256": "4fa52df8387e214f49bcbb907925d055acb73c1b48d240137336b08761fec1bb"
+      }
+    },
+    {
+      "id": "frost-mage-3-targets-blizzard-dot-condition",
+      "description": "The Frost Mage against three targets casting Blizzard when its dot is down or about to end: a rotation condition reads the area dot through Go GetAPLDot, which returns the caster's AOEDot.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/frost-mage-3-targets-blizzard-dot-condition.request.json"
+      },
+      "prepared": "frost-mage-3-targets-blizzard-dot-condition.prepared.json",
+      "prepared_sha256": "710f34cea12867f534220a1a83c53aee0b8fa970b441353d3b35f61ad9c4841d",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frost-mage-3-targets-blizzard-dot-condition.go-result.json",
+        "sha256": "2f1011ef9644af79e058ede4199e943e1a8a525f712865de0cce5b4cb2a5c21f"
+      },
+      "go_log": {
+        "file": "frost-mage-3-targets-blizzard-dot-condition.go-log.txt",
+        "sha256": "d1895c6b65c298f3fdebd7b86b80cdceb08d068090b85036ac3cf7314cc9f4d7"
+      }
+    },
+    {
+      "id": "affliction-warlock-3-targets-multidot-dots",
+      "description": "The Affliction Warlock with Siphon Life, Soul Siphon and Wrack against three targets, with multidot lines for Corruption, Bane of Agony, Immolate and Siphon Life: each dot lands on the target the line picks, with its own curse and bane slot, and Bane of Agony's ramp step is the one the latest snapshot stored, as Go keeps it in a closure.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/affliction-warlock-3-targets-multidot-dots.request.json"
+      },
+      "prepared": "affliction-warlock-3-targets-multidot-dots.prepared.json",
+      "prepared_sha256": "bdda42580b1de8b7a029409c49fe51a8b9b446b22e432185bb823b8815bab6d9",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "affliction-warlock-3-targets-multidot-dots.go-result.json",
+        "sha256": "1722fca7fc5cb8401bd5631cda3b5cfc5fd6750b1a7f0eaf8ddaacd45a52560f"
+      },
+      "go_log": {
+        "file": "affliction-warlock-3-targets-multidot-dots.go-log.txt",
+        "sha256": "f36820c0cb6b28d5b81bc9abf245dca92615fd0697e1daad6de20dd6c03c6a83"
+      }
+    },
+    {
+      "id": "destruction-warlock-4-targets-multidot-immolate",
+      "description": "The Destruction Warlock with Conflagrate, Improved Shadow Bolt and Bane of Havoc against four targets and a multidot of Immolate: the dots burn on each target, and Conflagrate and Incinerate read the one on the cast target.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/destruction-warlock-4-targets-multidot-immolate.request.json"
+      },
+      "prepared": "destruction-warlock-4-targets-multidot-immolate.prepared.json",
+      "prepared_sha256": "c0f3b453fb7f3cc9b53e700e5fff3c30f5b941dcbd7366a458181addcb6511ed",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "destruction-warlock-4-targets-multidot-immolate.go-result.json",
+        "sha256": "dee156136c1e2a8efe9b2b29af32f282ad0310d016406fd7fd083ef4f8c36050"
+      },
+      "go_log": {
+        "file": "destruction-warlock-4-targets-multidot-immolate.go-log.txt",
+        "sha256": "02841eab9ce74c3128e37efcc94320f164113ed65e9f76b623ec9187bbb4373e"
       }
     }
   ]

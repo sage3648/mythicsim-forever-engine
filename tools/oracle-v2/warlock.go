@@ -78,6 +78,9 @@ var (
 	wlSoulSiphon           = spelldata.Talent(17804, 3)
 	wlIncinerateLadder     = spelldata.Ranked(412758, 1293812, 1293813)
 	wlWrackLadder          = spelldata.Ranked(1316697)
+	wlHellfireLadder       = spelldata.Ranked(1949, 11683, 11684)
+	wlRainOfFireLadder     = spelldata.Ranked(5740, 6219, 11677, 11678)
+	wlRainOfFireTriggered  = spelldata.Ranked(1282380, 1282383, 1282384, 1282385)
 	wlBaneOfHavoc          = spelldata.Ranked(1225228)
 	wlDeathCoilLadder      = spelldata.Ranked(6789, 17925, 17926)
 	wlCurseOfRecklessness  = spelldata.Ranked(704, 7658, 7659, 11717)
@@ -168,10 +171,27 @@ func warlockEffects(agent core.Agent, character *core.Character) []map[string]an
 		wrack["dot_spells"] = spellsMatching(character, warlock.WarlockSpellCorruption|warlock.WarlockSpellCurseOfAgony)
 		effects = append(effects, wrack)
 	}
+	// hellfire.go: each tick rolls the periodic effect's average on every target, then burns the
+	// warlock; the area hits crit unless the client row of the triggered spell cannot.
+	hellfire := wlHellfireLadder.Highest()
+	effects = append(effects, map[string]any{
+		"kind": "hellfire", "spell_id": hellfire.ID,
+		"tick_base":     hellfire.Effect(dbcenums.A_PERIODIC_DAMAGE, 0).Average(core.CharacterLevel),
+		"tick_can_crit": !hellfire.Effect(dbcenums.A_PERIODIC_TRIGGER_SPELL, 0).Trigger().CannotCrit(),
+	})
+	// rain_of_fire.go: the channel casts the triggered tick of its rank every period, a fixed
+	// hit on each target that crits unless the client row says it cannot.
+	rain := wlRainOfFireLadder.Highest()
+	rainTick := wlRainOfFireTriggered.Rank(rain.RankNumber())
+	effects = append(effects, map[string]any{
+		"kind": "rain_of_fire", "spell_id": rain.ID, "tick_spell_id": rainTick.ID,
+		"tick_base": rainTick.DamageEffect().Average(core.CharacterLevel), "tick_can_crit": !rainTick.CannotCrit(),
+	})
 	if talents.BaneOfHavoc { // talents_destruction.go applyBaneOfHavoc
 		effects = append(effects, map[string]any{
 			"kind": "bane_of_havoc", "spell_id": wlBaneOfHavoc.Highest().ID,
 			"aura": "Bane of Havoc-" + w.Label, "copy_aura": "Bane of Havoc - Copy",
+			"share": wlBaneOfHavoc.Highest().Effect(dbcenums.A_DUMMY, 0).Percent(),
 		})
 	}
 	// death_coil.go: the effect's average with its coefficient on the spell, landing after travel,

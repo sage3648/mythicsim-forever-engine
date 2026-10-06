@@ -70,32 +70,34 @@ impl CurseOfTheElements {
     pub(crate) fn apply(&self, fight: &mut Fight<WarlockAgent>, spell: SpellId, target: Side) {
         let result = fight.calc_outcome(spell, target, Outcome::MagicHitNoHitCounter);
         if result.landed() {
-            take_curse_slot(fight, self.aura);
+            let aura = fight.aura_on(self.aura, target);
+            take_curse_slot(fight, aura);
             if self.blocked {
                 // Go Aura.Activate counts the proc before the exclusive effect blocks it.
-                fight.aura_mut(self.aura).procs += 1;
+                fight.aura_mut(aura).procs += 1;
             } else {
-                fight.activate_aura(self.aura);
+                fight.activate_aura(aura);
             }
         }
         fight.deal_damage(spell, result, false);
     }
 
-    pub(crate) fn on_gain<A: Agent>(&self, fight: &mut Fight<A>) {
+    /// The debuff's gain on its target, the side of the aura.
+    pub(crate) fn on_gain<A: Agent>(&self, fight: &mut Fight<A>, target: Side) {
         for &(index, delta) in &self.resistance {
-            fight.add_target_resistance(Side::Target, index, delta);
+            fight.add_target_resistance(target, index, delta);
         }
         for &(index, factor) in &self.damage_taken {
-            fight.multiply_target_school_damage_taken(Side::Target, index, factor);
+            fight.multiply_target_school_damage_taken(target, index, factor);
         }
     }
 
-    pub(crate) fn on_expire<A: Agent>(&self, fight: &mut Fight<A>) {
+    pub(crate) fn on_expire<A: Agent>(&self, fight: &mut Fight<A>, target: Side) {
         for &(index, delta) in &self.resistance {
-            fight.add_target_resistance(Side::Target, index, -delta);
+            fight.add_target_resistance(target, index, -delta);
         }
         for &(index, factor) in &self.damage_taken {
-            fight.multiply_target_school_damage_taken(Side::Target, index, 1.0 / factor);
+            fight.multiply_target_school_damage_taken(target, index, 1.0 / factor);
         }
     }
 }

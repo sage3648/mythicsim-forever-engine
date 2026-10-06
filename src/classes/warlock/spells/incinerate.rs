@@ -11,7 +11,11 @@ pub(crate) fn apply<A: Agent>(
     immolate_bonus: f64,
 ) {
     let mut base = fight.roll_damage_effect(spell);
-    if immolate.is_some_and(|dot| fight.aura(fight.dots[dot].aura).active) {
+    if immolate.is_some_and(|dot| {
+        fight
+            .aura(fight.dots[fight.dot_on(dot, target)].aura)
+            .active
+    }) {
         base *= immolate_bonus;
     }
     let result = fight.calc_damage(spell, target, base);

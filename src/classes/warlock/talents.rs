@@ -1,5 +1,6 @@
 //! Warlock talents with dynamic behavior. Static talent modifiers arrive prepared.
 
+pub(crate) mod bane_of_havoc;
 pub(crate) mod decimation;
 pub(crate) mod demonic_brand;
 pub(crate) mod improved_shadow_bolt;

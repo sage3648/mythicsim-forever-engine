@@ -7,7 +7,7 @@ pub(crate) fn apply<A: Agent>(fight: &mut Fight<A>, spell: SpellId, target: Side
     let base = fight.roll_damage_effect(spell);
     let result = fight.calc_damage(spell, target, base);
     if result.landed() {
-        fight.apply_dot(dot);
+        fight.apply_dot(fight.dot_on(dot, target));
     }
     fight.deal_damage(spell, result, false);
 }

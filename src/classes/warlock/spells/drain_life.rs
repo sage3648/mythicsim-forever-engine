@@ -29,11 +29,12 @@ impl DrainLife {
         }
     }
 
-    /// `OnTick`: the snapshot damage, Soul Siphon, the tick dealt, then the heal.
-    pub(crate) fn tick<A: Agent>(&self, fight: &mut Fight<A>) {
-        let mut result = fight.snapshot_dot_tick_calc(self.dot);
+    /// `OnTick` of a target's dot: the snapshot damage, Soul Siphon, the tick dealt, then the
+    /// heal.
+    pub(crate) fn tick<A: Agent>(&self, fight: &mut Fight<A>, dot: DotId) {
+        let mut result = fight.snapshot_dot_tick_calc(dot);
         result.damage *= self.soul_siphon;
-        let spell = fight.dots[self.dot].spell;
+        let spell = fight.dots[dot].spell;
         fight.deal_damage(spell, result, true);
         fight.gain_health(
             result.damage * self.self_healing_multiplier,

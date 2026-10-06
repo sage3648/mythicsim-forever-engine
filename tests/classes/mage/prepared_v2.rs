@@ -673,14 +673,16 @@ fn refusals_carry_stable_codes() {
         json!({"auraShouldRefresh": {"auraId": {"spellId": 1}}});
     assert_eq!(codes(refresh), ["aura_condition_unsupported"]);
 
-    for (case, code) in [
-        ("fire-mage-goblin-sapper", "class_limit"),
-        ("production-frost-2-targets", "several_targets_unsupported"),
-    ] {
-        let path = family().join(format!("{case}.prepared.json"));
-        let value: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
-        assert_eq!(codes(value), [code], "{case}");
-    }
+    let path = family().join("fire-mage-goblin-sapper.prepared.json");
+    let sapper: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+    assert_eq!(codes(sapper), ["class_limit"]);
+
+    // A fight against several targets is refused for a class that has not been checked
+    // against them yet.
+    let path = family().join("production-warrior.prepared.json");
+    let mut unchecked: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
+    unchecked["encounter"]["target_count"] = json!(3);
+    assert_eq!(codes(unchecked), ["several_targets_unsupported"]);
 }
 
 /// Every code is listed once, and the contract documentation names each.
