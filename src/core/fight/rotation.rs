@@ -5,7 +5,7 @@ use crate::{
     core::time::NEVER_EXPIRES,
     rotation::{
         compile_bool_value, compile_condition, compile_duration_value, Action as ParsedAction,
-        CompareOp, CompiledCondition, FoundAura, Lookup, MathOp, Rotation, ValueType,
+        CompareOp, CompiledCondition, DotAt, FoundAura, Lookup, MathOp, Rotation, Unit, ValueType,
     },
 };
 
@@ -91,6 +91,32 @@ pub(crate) struct AplState {
 }
 
 impl<A: Agent> Fight<A> {
+    /// Go `GetAuraByID` on a unit, as the rotation reads it. The rotation compiles before the
+    /// targets past the first get their auras, which sit at the same positions as the first's.
+    fn rotation_aura(&self, side: Side, id: &ActionId) -> Option<FoundAura<AuraRef>> {
+        let source = if side.is_target() { Side::Target } else { side };
+        let tracker = &self.trackers[source.index()];
+        tracker.find_by_id(id).map(|index| FoundAura {
+            aura: AuraRef { side, index },
+            max_stacks: tracker.auras[index].max_stacks,
+        })
+    }
+
+    /// Go `GetAPLDot`: the spell's area or self-only dot, the caster's `AOEDot`, which every
+    /// unit shares, or else `Spell.Dot` of the unit: the spell's own dot or its related dot
+    /// spell's, which sits on the targets and not on the player.
+    fn rotation_dot(&self, id: &ActionId, unit: Unit) -> Option<SpellId> {
+        let spell = self.apl_spell(id)?;
+        let holder = match self.spells[spell].dot {
+            Some(_) => spell,
+            None => self.spells[spell]
+                .related_dot_spell
+                .filter(|&related| self.spells.get(related).is_some_and(|s| s.dot.is_some()))?,
+        };
+        let dot = self.spells[holder].dot?;
+        (!self.dots[dot].side.is_target() || matches!(unit, Unit::Target(_))).then_some(holder)
+    }
+
     /// Go `GetAPLSpell`: the first APL-flagged spell with the action ID, otherwise the first
     /// registered one. The potion action names the first combat potion.
     pub(crate) fn apl_spell(&self, id: &ActionId) -> Option<SpellId> {
@@ -121,25 +147,11 @@ impl<A: Agent> Fight<A> {
 
     /// Go's prepull registration: each castable action at its time, in a stable time order.
     pub(crate) fn compile_prepull(&self, rotation: &Rotation) -> Vec<(i64, PrepullAct)> {
-        let find = |side: Side, id: &ActionId| {
-            let tracker = &self.trackers[side.index()];
-            tracker.find_by_id(id).map(|index| FoundAura {
-                aura: AuraRef { side, index },
-                max_stacks: tracker.auras[index].max_stacks,
-            })
-        };
+        let find = |side: Side, id: &ActionId| self.rotation_aura(side, id);
         let aura = |id: &ActionId| find(Side::Player, id);
-        let target_aura = |id: &ActionId| find(Side::Target, id);
+        let target_aura = |position: usize, id: &ActionId| find(Side::target(position), id);
         let spell = |id: &ActionId| self.apl_spell(id);
-        let dot = |id: &ActionId| {
-            self.apl_spell(id)
-                .and_then(|spell| match self.spells[spell].dot {
-                    Some(_) => Some(spell),
-                    None => self.spells[spell].related_dot_spell.filter(|&related| {
-                        self.spells.get(related).is_some_and(|s| s.dot.is_some())
-                    }),
-                })
-        };
+        let dot = |id: &ActionId, unit: Unit| self.rotation_dot(id, unit);
         let pet_aura_known = |pet: usize, id: &ActionId| {
             self.pet_agent_auras
                 .get(pet)
@@ -148,6 +160,7 @@ impl<A: Agent> Fight<A> {
         let lookup = Lookup {
             aura: &aura,
             target_aura: &target_aura,
+            targets: self.targets.len(),
             spell: &spell,
             dot: &dot,
             pet_aura_known: &pet_aura_known,
@@ -161,7 +174,7 @@ impl<A: Agent> Fight<A> {
                 compile_condition(prepull.condition.as_ref(), &lookup) != CompiledCondition::Pruned
             })
             .filter_map(|prepull| match &prepull.action {
-                ParsedAction::CastSpell(id) => self
+                ParsedAction::CastSpell { spell: id, .. } => self
                     .apl_cast_spell(id)
                     .map(|spell| (prepull.do_at_ns, PrepullAct::Cast(spell))),
                 // Go GetAPLAura on the player: an unknown aura drops the action.
@@ -176,27 +189,11 @@ impl<A: Agent> Fight<A> {
 
     /// Go `newAPLRotation` for the supported subset.
     pub(crate) fn compile_rotation(&self, rotation: &Rotation) -> Vec<Item> {
-        let find = |side: Side, id: &ActionId| {
-            let tracker = &self.trackers[side.index()];
-            tracker.find_by_id(id).map(|index| FoundAura {
-                aura: AuraRef { side, index },
-                max_stacks: tracker.auras[index].max_stacks,
-            })
-        };
-        let aura = |id: &ActionId| find(Side::Player, id);
-        let target_aura = |id: &ActionId| find(Side::Target, id);
+        let aura = |id: &ActionId| self.rotation_aura(Side::Player, id);
+        let target_aura =
+            |position: usize, id: &ActionId| self.rotation_aura(Side::target(position), id);
         let spell = |id: &ActionId| self.apl_spell(id);
-        // Go `GetAPLDot`: the spell's area or self-only dot, the caster's `AOEDot`, or else
-        // `Spell.Dot`: its own dot or its related dot spell's.
-        let dot = |id: &ActionId| {
-            self.apl_spell(id)
-                .and_then(|spell| match self.spells[spell].dot {
-                    Some(_) => Some(spell),
-                    None => self.spells[spell].related_dot_spell.filter(|&related| {
-                        self.spells.get(related).is_some_and(|s| s.dot.is_some())
-                    }),
-                })
-        };
+        let dot = |id: &ActionId, unit: Unit| self.rotation_dot(id, unit);
         // Go `GetAPLMultidotSpell` reads `Spell.CurDot`: the spell's own dot on a target or
         // its related dot spell's. An area or self-only dot is the caster's `AOEDot`, which
         // `CurDot` does not return, so a multidot line for such a spell is dropped.
@@ -221,6 +218,7 @@ impl<A: Agent> Fight<A> {
         let lookup = Lookup {
             aura: &aura,
             target_aura: &target_aura,
+            targets: self.targets.len(),
             spell: &spell,
             dot: &dot,
             pet_aura_known: &pet_aura_known,
@@ -228,11 +226,18 @@ impl<A: Agent> Fight<A> {
         let mut items = Vec::new();
         for item in &rotation.priority_list {
             let action = match &item.action {
-                // Go GetAPLCastSpell: an unknown spell drops the action.
-                ParsedAction::CastSpell(id) => match self.apl_cast_spell(id) {
-                    Some(spell) => Act::Cast(spell, Side::Target),
-                    None => continue,
-                },
+                // Go newActionCastSpell: an unknown spell, or a target that is no unit, drops the
+                // action.
+                ParsedAction::CastSpell { spell: id, target } => {
+                    let unit = target.resolve(self.targets.len());
+                    match (self.apl_cast_spell(id), unit) {
+                        (Some(spell), Some(Unit::Player)) => Act::Cast(spell, Side::Player),
+                        (Some(spell), Some(Unit::Target(position))) => {
+                            Act::Cast(spell, Side::target(position))
+                        }
+                        _ => continue,
+                    }
+                }
                 // Go newActionCastFriendlySpell at the player: the same cast on the player.
                 ParsedAction::CastAtPlayer(id) => match self.apl_cast_spell(id) {
                     Some(spell) => Act::Cast(spell, Side::Player),
@@ -336,7 +341,7 @@ impl<A: Agent> Fight<A> {
                 own.iter()
                     .any(|&own| own && (!state.active || remaining <= window))
             }
-            Compiled::DotIsActive(spell) => self.dot_active(*spell),
+            Compiled::DotIsActive(dot) => self.dot_active(*dot),
             // Go `APLValueSpellIsReady`: ready, or ready within the spell queue window.
             Compiled::SpellIsReady(spell) => {
                 self.spell_ready(*spell)
@@ -459,10 +464,9 @@ impl<A: Agent> Fight<A> {
             // Go `Spell.TimeToReady`.
             Compiled::SpellTimeToReady(spell) => self.spell_time_to_ready(*spell),
             // Go `Dot.TimeUntilNextTick`: the next tick time is zero while inactive.
-            Compiled::DotTimeToNextTick(spell) => {
-                let next = if self.dot_active(*spell) {
-                    let dot = self.spells[*spell].dot.expect("compiled dots have a dot");
-                    self.dots[dot].tick_next_at
+            Compiled::DotTimeToNextTick(at) => {
+                let next = if self.dot_active(*at) {
+                    self.dots[self.dot_of(*at)].tick_next_at
                 } else {
                     0
                 };
@@ -484,10 +488,9 @@ impl<A: Agent> Fight<A> {
             Compiled::CurrentTime => self.now,
             Compiled::TimeToNextEnergyTick => self.time_to_next_energy_tick(),
             // Go `APLValueDotRemainingTime`: zero when inactive.
-            Compiled::DotRemainingTime(spell) => {
-                if self.dot_active(*spell) {
-                    let dot = self.spells[*spell].dot.expect("compiled dots have a dot");
-                    let aura = self.aura(self.dots[dot].aura);
+            Compiled::DotRemainingTime(at) => {
+                if self.dot_active(*at) {
+                    let aura = self.aura(self.dots[self.dot_of(*at)].aura);
                     aura.expires - self.now
                 } else {
                     0
@@ -574,10 +577,16 @@ impl<A: Agent> Fight<A> {
         }
     }
 
+    /// The dot a compiled rotation reads: the spell's, on the target it names. An area or
+    /// self-only dot is the same on every target.
+    fn dot_of(&self, at: DotAt) -> DotId {
+        let dot = self.spells[at.spell].dot.expect("compiled dots have a dot");
+        self.dot_on(dot, Side::target(at.target))
+    }
+
     /// Whether the dot of a compiled spell is active on its unit.
-    fn dot_active(&self, spell: SpellId) -> bool {
-        let dot = self.spells[spell].dot.expect("compiled dots have a dot");
-        self.aura(self.dots[dot].aura).active
+    pub(crate) fn dot_active(&self, at: DotAt) -> bool {
+        self.aura(self.dots[self.dot_of(at)].aura).active
     }
 
     /// Go `APLActionCastSpell.IsReady`: castable or queueable, and major cooldowns wait for

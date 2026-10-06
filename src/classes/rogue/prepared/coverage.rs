@@ -13,6 +13,7 @@ pub(crate) const GATE: ClassGate = ClassGate {
     claims,
     limits,
     several_targets: Some(several_targets),
+    other_target_casts: None,
 };
 
 /// Rogue effect kinds implemented in Rust and validated against the pinned Go reference.
