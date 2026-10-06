@@ -58,7 +58,7 @@ copy of the boss swinging at the tank on its own timer; tanks of other classes s
 
 ## Evidence
 
-- 343 accepted prepared v2 fixtures, all with Go results, checked by `cargo test`.
+- 358 accepted prepared v2 fixtures, all with Go results, checked by `cargo test`.
 - 7,922 production variants (race boards, builder starters, gear, buffs, talents,
   class options and presets) and 3,724 random variants compared with Go. None
   differ. Rust refuses 174 of them. The 2 that crashed the Go engine before
