@@ -661,7 +661,15 @@ impl<A: Agent> Fight<A> {
     /// Go `AutoAttacks.EnableMeleeSwing` of an acting unit: each hand resumes no earlier than
     /// now, and a stopped hand in range rejoins the simulation's list.
     pub(crate) fn enable_melee_swing(&mut self, side: Side) {
-        if !self.autos_of(side).melee || self.now < 0 {
+        // Go reads `isInPrepull`, which holds only while the simulation resets and schedules the
+        // prepull; the player's own moves run after it. A pet's enabling at a negative time is
+        // held back, as it always has been.
+        let held_back = if side == Side::Player {
+            self.in_prepull
+        } else {
+            self.now < 0
+        };
+        if !self.autos_of(side).melee || held_back {
             return;
         }
         let now = self.now;

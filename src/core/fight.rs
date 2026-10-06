@@ -222,6 +222,8 @@ pub(crate) trait Agent: Sized {
     fn on_dot_gain(_fight: &mut Fight<Self>, _dot: DotId, _behavior: Self::Spell) {}
     /// The class part of a dot aura's OnExpire, which Go runs before the dot's own.
     fn on_dot_expire(_fight: &mut Fight<Self>, _dot: DotId, _behavior: Self::Spell) {}
+    /// Go `RegisterMovementCallback`: a unit's movement starts, updates its position or ends.
+    fn on_movement(_fight: &mut Fight<Self>, _side: Side, _kind: movement::MovementKind) {}
     /// Go reset effects registered by the class, run before auras reset.
     fn reset(_fight: &mut Fight<Self>) {}
     fn on_gain(_fight: &mut Fight<Self>, _aura: AuraRef, _kind: Self::Aura) {}
@@ -407,6 +409,9 @@ pub(crate) enum SpellBehavior<S> {
         health_fraction: f64,
         metrics: usize,
     },
+    /// Go sim/warrior/items.go Diamond Flask: the cast starts its self hot, whose last tick
+    /// activates the player aura at this index.
+    DiamondFlask(usize),
     /// Go racials.go Eureka!'s cast, which activates its aura.
     Eureka,
     /// A racial whose `ApplyEffects` only activates its player aura.
@@ -1168,6 +1173,8 @@ pub(crate) enum Action {
     Prepull(SpellId),
     /// A rotation prepull action: Go `APLActionActivateAura.Execute`.
     PrepullAura(AuraRef),
+    /// A rotation prepull action: Go `APLActionMove.Execute`.
+    PrepullMove(f64),
     /// A tick of the raid's Sunder Armor ramp on a target, by its position, with the ticks
     /// done so far.
     SunderTick(u8, i32),
@@ -1413,6 +1420,11 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) encounter_damage_taken: f64,
     /// Go `isInPrepull`, which holds through the reset.
     pub(crate) in_prepull: bool,
+    /// Go `StartDistanceFromTarget` of the player, which every reset restores.
+    start_distance: f64,
+    /// Go `PseudoStats.MovementSpeedMultiplier` of the player, and its value after the reset.
+    pub(crate) move_multiplier: f64,
+    initial_move_multiplier: f64,
     /// The player's health when a fight starts, where it differs from the maximum.
     health_at_reset: Option<f64>,
     /// Go `HpPercentForDefensives`, below which survival major cooldowns fire.
@@ -1767,6 +1779,8 @@ impl<A: Agent> Fight<A> {
         let mut activations: Vec<(SpellId, &str)> = Vec::new();
         // Potions with a temporary stat aura, resolved once the auras are registered.
         let mut potion_auras: Vec<(SpellId, &str)> = Vec::new();
+        // Diamond Flasks and the Strength aura their last tick activates.
+        let mut flask_auras: Vec<(SpellId, &str)> = Vec::new();
         // The player's spellbook, then each simulated pet's.
         let unit_spells = player
             .spells
@@ -1810,7 +1824,7 @@ impl<A: Agent> Fight<A> {
                 } else {
                     melee::Hand::Main
                 })
-            } else if caster.is_pet() && id.other_id == "OtherActionMove" {
+            } else if !caster.is_target() && id.other_id == "OtherActionMove" {
                 SpellBehavior::Move
             } else if let Some((min, max)) = caster
                 .is_pet()
@@ -2016,6 +2030,12 @@ impl<A: Agent> Fight<A> {
                         {
                             activations.push((spells.len(), aura));
                             Some(SpellBehavior::None)
+                        }
+                        Effect::DiamondFlask { item_id, aura, .. }
+                            if id.item_id == *item_id && id.tag == 0 =>
+                        {
+                            flask_auras.push((spells.len(), aura));
+                            Some(SpellBehavior::DiamondFlask(0))
                         }
                         Effect::DragonbreathChili {
                             spell_id,
@@ -2411,7 +2431,7 @@ impl<A: Agent> Fight<A> {
                     AuraBehavior::Dot(dot)
                 } else if let Some(kind) = class_aura(unit, &exported.label) {
                     AuraBehavior::Class(kind)
-                } else if side.is_pet()
+                } else if !side.is_target()
                     && exported
                         .action_id
                         .as_ref()
@@ -2575,6 +2595,12 @@ impl<A: Agent> Fight<A> {
                     // log none.
                     let logs = effects.iter().find_map(|effect| match effect {
                         Effect::TemporaryStats {
+                            aura,
+                            gain_log,
+                            expire_log,
+                            ..
+                        }
+                        | Effect::DiamondFlask {
                             aura,
                             gain_log,
                             expire_log,
@@ -2803,6 +2829,12 @@ impl<A: Agent> Fight<A> {
                 *aura = Some(index);
             }
         }
+        for (spell, label) in flask_auras {
+            let index = trackers[Side::Player.index()]
+                .find(label)
+                .ok_or_else(|| format!("aura {label} is not registered"))?;
+            spells[spell].behavior = SpellBehavior::DiamondFlask(index);
+        }
         for (spell, label) in activations {
             let aura = trackers[Side::Player.index()]
                 .find(label)
@@ -2974,6 +3006,9 @@ impl<A: Agent> Fight<A> {
             },
             encounter_damage_taken: 0.0,
             in_prepull: false,
+            start_distance: prepared.player.distance_yards,
+            move_multiplier: 1.0,
+            initial_move_multiplier: 1.0,
             health_at_reset: player.health_at_reset,
             hp_percent_for_defensives: player.hp_percent_for_defensives,
             aura_refresh: Vec::new(),
@@ -3160,6 +3195,13 @@ impl<A: Agent> Fight<A> {
                         PseudoStat::DamageTaken,
                     ));
                 }
+            }
+            if let Effect::PlayerMovement {
+                speed_multiplier, ..
+            } = effect
+            {
+                fight.initial_move_multiplier = *speed_multiplier;
+                fight.move_multiplier = *speed_multiplier;
             }
             if let Effect::PseudoStatAuras { auras } = effect {
                 for entry in auras {
@@ -3635,11 +3677,12 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    /// The configuration of a unit whose distance changes as it moves: only a pet moves.
+    /// The configuration of a unit whose distance changes as it moves: a pet, or the player.
     pub(crate) fn unit_config_mut(&mut self, side: Side) -> &mut Config {
         match side {
             Side::Pet(_) => &mut self.active_pet_mut(side).config,
-            _ => panic!("only a pet moves"),
+            Side::Player => &mut self.config,
+            _ => panic!("a target does not move"),
         }
     }
 
@@ -3950,6 +3993,7 @@ impl<A: Agent> Fight<A> {
             let action = match act {
                 rotation::PrepullAct::Cast(spell) => Action::Prepull(spell),
                 rotation::PrepullAct::ActivateAura(aura) => Action::PrepullAura(aura),
+                rotation::PrepullAct::Move(range) => Action::PrepullMove(range),
             };
             self.schedule(at, PRIORITY_PREPULL + count - index as i32, action);
         }
@@ -4022,6 +4066,11 @@ impl<A: Agent> Fight<A> {
         }
         if side == Side::Player {
             self.timers.fill(STARTING_CD_TIME);
+            // Go Unit.reset: the player starts at its distance and speed, standing still.
+            self.config.distance = self.start_distance;
+            self.move_multiplier = self.initial_move_multiplier;
+            self.player.moving = false;
+            self.player.movement = None;
             // Go UnitMetrics.reset.
             self.death.died = false;
             let player = &mut self.player;
@@ -4323,6 +4372,14 @@ impl<A: Agent> Fight<A> {
             Action::Pushback { chance } => self.pushback_handler(chance),
             Action::Prepull(spell) => self.cast_or_queue(spell, Side::Target),
             Action::PrepullAura(aura) => self.activate_aura_action(aura),
+            Action::PrepullMove(range) => {
+                // Go `APLActionMove.Execute` logs the range even when the unit is already there.
+                if self.log.is_some() {
+                    let line = format!("[DEBUG] Moving to {range:.1} yards");
+                    self.player_log(&line);
+                }
+                self.move_to(Side::Player, range);
+            }
             Action::SunderTick(target, done) => self.sunder_tick(target, done),
             Action::DeathCheck => self.death_check(),
             Action::FixedUptime { index, first } => self.fixed_uptime_roll(index, first),

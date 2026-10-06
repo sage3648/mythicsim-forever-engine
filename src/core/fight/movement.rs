@@ -4,11 +4,20 @@
 //! and a pending action ends it at the time the distance takes at the unit's speed. The
 //! unit's position is read lazily: each rotation evaluation and each new move bring it up to
 //! date, which updates the aura's stacks and starts or stops the unit's swings as it enters or
-//! leaves their range.
+//! leaves their range. A pet moves at the speed the exporter read; the player at seven yards a
+//! second times its movement speed multiplier, which a class's dash aura changes.
 
 use crate::core::{queue::Handle, time::NS_PER_SECOND};
 
 use super::{Action, Agent, AuraRef, Fight, Side, SpellId, PRIORITY_GCD};
+
+/// Go `MovementUpdateType`: when a unit's movement callbacks run.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum MovementKind {
+    Start,
+    Update,
+    End,
+}
 
 /// Go `MovementAction`.
 #[derive(Clone, Copy, Debug)]
@@ -16,6 +25,8 @@ pub(crate) struct Movement {
     src_position: f64,
     move_distance: f64,
     start: i64,
+    /// Go `NextActionAt` of the pending action.
+    end: i64,
     speed: f64,
     pub(crate) action: Handle,
 }
@@ -58,10 +69,41 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    /// Go `GetMovementSpeed` of a pet, the one unit that moves in scope.
+    /// Go `GetMovementSpeed`: a pet's exported speed, or the player's seven yards a second times
+    /// its multiplier.
     fn movement_speed(&self, side: Side) -> f64 {
-        assert!(side.is_pet(), "only a pet moves");
-        self.active_pet(side).movement_speed
+        match side {
+            Side::Player => 7.0 * self.move_multiplier,
+            _ => {
+                assert!(side.is_pet(), "only a pet or the player moves");
+                self.active_pet(side).movement_speed
+            }
+        }
+    }
+
+    /// Go `MultiplyMovementSpeed` of the player: the multiplier changes, and a move in progress
+    /// at a speed is run again to the distance it had covered by its end, as Go does.
+    pub(crate) fn multiply_movement_speed(&mut self, amount: f64) {
+        let old_multiplier = self.move_multiplier;
+        let old_speed = self.movement_speed(Side::Player);
+        self.move_multiplier *= amount;
+        if self.log.is_some() {
+            let line = format!(
+                "[DEBUG] Movement speed changed from {:.2} ({:.2}%) to {:.2} ({:.2}%)",
+                old_speed,
+                (old_multiplier - 1.0) * 100.0,
+                self.movement_speed(Side::Player),
+                (self.move_multiplier - 1.0) * 100.0
+            );
+            self.player_log(&line);
+        }
+        if let Some(movement) = self.player.movement {
+            if movement.speed != 0.0 {
+                let duration = movement.end - movement.start;
+                let destination = movement.speed * duration as f64 / NS_PER_SECOND as f64;
+                self.move_to(Side::Player, destination);
+            }
+        }
     }
 
     /// Go `Unit.MoveTo`.
@@ -89,13 +131,15 @@ impl<A: Agent> Fight<A> {
                 self.cast(spell, Side::Target);
             }
         }
-        let action = self.schedule(end, PRIORITY_GCD, Action::MovementEnd(side));
         let src_position = self.unit_config(side).distance;
+        A::on_movement(self, side, MovementKind::Start);
+        let action = self.schedule(end, PRIORITY_GCD, Action::MovementEnd(side));
         let now = self.now;
         self.unit_mut(side).movement = Some(Movement {
             src_position,
             move_distance: distance,
             start: now,
+            end,
             speed,
             action,
         });
@@ -120,6 +164,7 @@ impl<A: Agent> Fight<A> {
             return;
         }
         self.unit_config_mut(side).distance = new;
+        A::on_movement(self, side, MovementKind::Update);
         let in_range = self.main_hand_in_range(side);
         if self.autos_of(side).mh.enabled != in_range {
             if in_range {
@@ -143,6 +188,7 @@ impl<A: Agent> Fight<A> {
         self.update_position(side, true);
         let (aura, _) = self.movement_parts(side);
         self.deactivate_aura(aura);
+        A::on_movement(self, side, MovementKind::End);
     }
 
     fn main_hand_in_range(&self, side: Side) -> bool {

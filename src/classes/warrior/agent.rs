@@ -3,7 +3,9 @@
 
 use crate::{
     contracts::prepared_v2::{ActionId, DamageRoll, Effect, PreparedV2, Spell as ExportedSpell},
-    core::fight::{Agent, AuraRef, DotId, Fight, ModKind, Side, SpellId, SpellResult},
+    core::fight::{
+        movement::MovementKind, Agent, AuraRef, DotId, Fight, ModKind, Side, SpellId, SpellResult,
+    },
 };
 
 use super::{
@@ -13,6 +15,7 @@ use super::{
         berserker_rage::{self, BerserkerRage},
         bloodrage::{self, Bloodrage},
         bloodthirst::{self, Bloodthirst},
+        charge::{self, Charge},
         death_wish::{self, DeathWish},
         execute::{self, Execute},
         hamstring,
@@ -56,6 +59,8 @@ pub(crate) enum WarriorSpell {
     Hamstring,
     Bloodrage,
     BerserkerRage,
+    /// charge.go: the cast before the pull that runs to the target.
+    Charge,
     DeathWish,
     Recklessness,
     /// The warrior's own Sunder Armor, castable only while no other aura holds its category.
@@ -102,6 +107,8 @@ pub(crate) enum WarriorAura {
     OverpowerTrigger,
     DeathWish,
     BerserkerRage,
+    /// charge.go's dash aura, which triples the movement speed.
+    Dash,
     /// A strike's queue aura, by strike index.
     Queue(usize),
     BloodthrillTrigger,
@@ -138,6 +145,7 @@ pub(crate) struct WarriorAgent {
     improved_hamstring: Option<ImprovedHamstring>,
     bloodrage: Option<Bloodrage>,
     berserker_rage: Option<BerserkerRage>,
+    charge: Option<Charge>,
     death_wish: Option<DeathWish>,
     recklessness: Option<AuraRef>,
     sunder_blocked: bool,
@@ -237,6 +245,7 @@ impl WarriorAgent {
             "execute" if has("execute") => Some(WarriorSpell::Execute),
             "hamstring" if has("hamstring") => Some(WarriorSpell::Hamstring),
             "berserker_rage" if has("berserker_rage") => Some(WarriorSpell::BerserkerRage),
+            "charge" if has("warrior_charge") => Some(WarriorSpell::Charge),
             "death_wish" if has("death_wish") => Some(WarriorSpell::DeathWish),
             "recklessness" if has("recklessness") => Some(WarriorSpell::Recklessness),
             "sunder_armor" if has("sunder_armor") => Some(WarriorSpell::SunderArmor),
@@ -359,6 +368,7 @@ impl WarriorAgent {
                 Effect::BerserkerRage { aura, .. } => {
                     auras.push((aura.clone(), WarriorAura::BerserkerRage))
                 }
+                Effect::WarriorCharge { aura, .. } => auras.push((aura.clone(), WarriorAura::Dash)),
                 Effect::LastStand { aura, .. } => {
                     auras.push((aura.clone(), WarriorAura::LastStand))
                 }
@@ -791,6 +801,26 @@ impl WarriorAgent {
                         metrics,
                     });
                 }
+                Effect::WarriorCharge {
+                    spell_id,
+                    aura,
+                    rage,
+                    vanguard,
+                    speed_multiplier,
+                    overshoot,
+                    min_range,
+                } => {
+                    let metrics = rage_metrics(&mut fight, *spell_id);
+                    fight.agent.charge = Some(Charge {
+                        aura: fight.player_aura(aura)?,
+                        rage: *rage,
+                        vanguard: *vanguard,
+                        speed_multiplier: *speed_multiplier,
+                        overshoot: *overshoot,
+                        min_range: *min_range,
+                        metrics,
+                    });
+                }
                 Effect::DeathWish {
                     aura,
                     physical_multiplier,
@@ -1082,6 +1112,10 @@ impl Agent for WarriorAgent {
                 let params = fight.agent.battle_shout.expect("Battle Shout is bound");
                 battle_shout::apply(fight, spell, target, params);
             }
+            WarriorSpell::Charge => {
+                let params = fight.agent.charge.expect("Charge is bound");
+                charge::apply(fight, spell, params);
+            }
             WarriorSpell::Rend => {
                 let params = fight.agent.rend.expect("Rend is bound");
                 rend::apply(fight, spell, target, params);
@@ -1193,6 +1227,9 @@ impl Agent for WarriorAgent {
             WarriorSpell::Stance(index) => fight.agent.stances[index].stance != stance,
             WarriorSpell::BattleShout => {
                 battle_shout::condition(fight, fight.agent.battle_shout.expect("bound"))
+            }
+            WarriorSpell::Charge => {
+                charge::condition(fight, fight.agent.charge.expect("bound"), stance)
             }
             // rend.go: Battle or Defensive Stance.
             WarriorSpell::Rend => matches!(stance, Stance::Battle | Stance::Defensive),
@@ -1345,6 +1382,12 @@ impl Agent for WarriorAgent {
         }
     }
 
+    fn on_movement(fight: &mut Fight<Self>, side: Side, kind: MovementKind) {
+        if let (Side::Player, Some(params)) = (side, fight.agent.charge) {
+            charge::on_movement(fight, params, kind);
+        }
+    }
+
     fn reset(fight: &mut Fight<Self>) {
         // Go Warrior.Reset: the default stance.
         fight.agent.stance = fight.agent.default_stance;
@@ -1367,6 +1410,7 @@ impl Agent for WarriorAgent {
                 death_wish::on_gain(fight, fight.agent.death_wish.expect("bound"))
             }
             WarriorAura::BerserkerRage => berserker_rage::on_gain(fight),
+            WarriorAura::Dash => charge::on_gain(fight, fight.agent.charge.expect("bound")),
             WarriorAura::Enrage => {
                 let params = fight.agent.enrage.expect("Enrage is bound");
                 fight.activate_mod(params.damage_mod);
@@ -1395,6 +1439,7 @@ impl Agent for WarriorAgent {
                 death_wish::on_expire(fight, fight.agent.death_wish.expect("bound"))
             }
             WarriorAura::BerserkerRage => berserker_rage::on_expire(fight),
+            WarriorAura::Dash => charge::on_expire(fight, fight.agent.charge.expect("bound")),
             WarriorAura::Queue(_) => fight.agent.queue.current = None,
             WarriorAura::ThunderClap => {
                 let params = fight.agent.thunder_clap.expect("Thunder Clap is bound");

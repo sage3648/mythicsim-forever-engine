@@ -4,7 +4,7 @@
   "engine_revision": "74127c6c8454217e7d6221de5e3274cf22e621bb",
   "client_build": "1.60.1.70205",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "4963b60ee06cc49ac37617407ed8429be9fc3c1d88db1b5471db749292937411",
+  "exporter_sha256": "3021905700dcd7a19229c98c6156f924b750cc2b94f122533e6b24b19908bf29",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -1230,7 +1230,7 @@
         "path": "fixtures/mage/prepared-v2/production-warrior.request.json"
       },
       "prepared": "production-warrior.prepared.json",
-      "prepared_sha256": "add6f1d240b2be9f6e3a21cebd97898fed77932d4804ce724ae3a55294b0d648",
+      "prepared_sha256": "75674690b16e71516a4fa6395baf2973999a33316898fed21e07667235b16f25",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1251,7 +1251,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-heroic-strike.request.json"
       },
       "prepared": "warrior-heroic-strike.prepared.json",
-      "prepared_sha256": "d2fb65a9fb7da04a317d6b3b2ccfd8872d135800e2d88c93d70c8e8b3f89e77e",
+      "prepared_sha256": "768c64ac80ddb19dd74a72ebaff0926ee9d4456eb68b13fdd87f2d93e4f3017c",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1272,7 +1272,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-cleave.request.json"
       },
       "prepared": "warrior-cleave.prepared.json",
-      "prepared_sha256": "5dcb30ca82193b49a883cd922409493091f98e95340c4c9a18d9ddde6b92270b",
+      "prepared_sha256": "7b3f4b93b3e7ee9dde6d77fa5c0c98d3bffc98a70e051e4d4533b2a15db4d7a2",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1356,7 +1356,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-orc-shatter-curse.request.json"
       },
       "prepared": "warrior-orc-shatter-curse.prepared.json",
-      "prepared_sha256": "ab5083fea85ac33f772c9b6748115c26388d99bc0e277a1e312607ce3f8460ef",
+      "prepared_sha256": "291a2d87422203ae2a4298f609a37f41fcbb7e9b18ae71b7df9b3c2ef4657eaf",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1373,7 +1373,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-troll-berserking.request.json"
       },
       "prepared": "warrior-troll-berserking.prepared.json",
-      "prepared_sha256": "b3e10c15d388be115dd13d5c13e7dca0016c50e29379dcddf5887d7a318f8a62",
+      "prepared_sha256": "ee1f7178c7c49f3f888b64400fc9e370aacbdcdc14090e38922dac7c14197789",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1747,7 +1747,7 @@
         "path": "fixtures/mage/prepared-v2/production-arms-warrior.request.json"
       },
       "prepared": "production-arms-warrior.prepared.json",
-      "prepared_sha256": "f40041b83d16e20858eba9ab9b34730894039d2d87a15afa9e62c4b9444d9d88",
+      "prepared_sha256": "99893fad4f4ca85f39f7de1cee18094a40b03803ab81a1e922c6414c6c891bc9",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2062,7 +2062,7 @@
         "path": "fixtures/mage/prepared-v2/production-protection-warrior.request.json"
       },
       "prepared": "production-protection-warrior.prepared.json",
-      "prepared_sha256": "0f0c8498559973405ec553673ddcbe69402126f684ad4d6b26ffd36150f3361a",
+      "prepared_sha256": "122c9dbb888663d7228d5a62c77dcf4c008198e29654382ff3dcd9708d20059f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2083,7 +2083,7 @@
         "path": "fixtures/mage/prepared-v2/production-fury-protection-warrior.request.json"
       },
       "prepared": "production-fury-protection-warrior.prepared.json",
-      "prepared_sha256": "1e8342819803239c1d0b157c0590e696ad35d8412d4f03c7ddb38dc43bbc6872",
+      "prepared_sha256": "4849aa8fbec5711ea6e753f8faef1e7041beb9ffd1f491aa2ba05674ef444b04",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2571,7 +2571,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-own-sunder.request.json"
       },
       "prepared": "arms-warrior-own-sunder.prepared.json",
-      "prepared_sha256": "3d506fe7fc0ec9aa30f29dc647e24bf0587e7e492927b32881aa1ae6c1de4f24",
+      "prepared_sha256": "8951bc8cf0fae11f120a6903fe1849fdd9c81dbee53a630fae0d5d6d4f8a19b3",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2592,7 +2592,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-own-sunder.request.json"
       },
       "prepared": "protection-warrior-own-sunder.prepared.json",
-      "prepared_sha256": "25189f6927d85e358e3879253f03dcc8dcac0327327a7c258a6b78a2a6649acc",
+      "prepared_sha256": "1798afc80b9b07fe530be7f570caa4b49186c60539b65b80eb4a4427ff1b1373",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2613,7 +2613,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-no-improved-slam.request.json"
       },
       "prepared": "arms-warrior-no-improved-slam.prepared.json",
-      "prepared_sha256": "8c743b4f2cf00c6a035bdb43926163dd4bfb08e81f8beb2cf3453abb6f10d88a",
+      "prepared_sha256": "3ff4e9a9164e972cb11764f0f077a18320d40ce0d450691e927a27a8778de41b",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3408,7 +3408,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-goblin-sapper.request.json"
       },
       "prepared": "protection-warrior-goblin-sapper.prepared.json",
-      "prepared_sha256": "b0da6eb7c2adc41e0ce997baf8c3bce4339ede132de4a163ef09a6cd5af4ddea",
+      "prepared_sha256": "7a2c0d4abc5d73fa22592fc72223d18cc5a55aa3b3ae5b1fd23a6ace8d8ecc25",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3429,7 +3429,7 @@
         "path": "fixtures/mage/prepared-v2/fury-protection-warrior-winter-night.request.json"
       },
       "prepared": "fury-protection-warrior-winter-night.prepared.json",
-      "prepared_sha256": "e23abe8f5adbec54d49973e296823f1e35248ceb9ef00d5a038cd2cafc3477e8",
+      "prepared_sha256": "c964a59afbfa04eb812f84e600dfc918f96e216f47d0ec37b66cc910229c05fb",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3471,7 +3471,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-bloodthirst-rounding.request.json"
       },
       "prepared": "warrior-bloodthirst-rounding.prepared.json",
-      "prepared_sha256": "bc8034b3fa6ed1473b520ba4dcfd980f28f7cd25213bf2c71e4eb8f11493781a",
+      "prepared_sha256": "1ee629bad68cf48c1b71165f08d792c3872877177a90053948b055d286a5a819",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3513,7 +3513,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-dwarf-stoneform.request.json"
       },
       "prepared": "protection-warrior-dwarf-stoneform.prepared.json",
-      "prepared_sha256": "7da783f4a118338a0481292b7e766535eb3e7d5d60817414d64e14760d502f48",
+      "prepared_sha256": "5eea6752d285f0acfadd3f0f203144537ef4e95cb7c9ceee50df7f298f166ad1",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3534,7 +3534,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-orc-shatter-curse.request.json"
       },
       "prepared": "protection-warrior-orc-shatter-curse.prepared.json",
-      "prepared_sha256": "19a93dffe9a38c930dd334cf409c78e0ac74dafce315dcae5cf126adfc9c0be5",
+      "prepared_sha256": "edbed47d3ae136c0e85c14b5a9f60c39fd1d76eae4c0ca335e619d59b3b4d0e2",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3551,7 +3551,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-sapper-orc-shatter-curse.request.json"
       },
       "prepared": "protection-warrior-sapper-orc-shatter-curse.prepared.json",
-      "prepared_sha256": "c5873ab354256f543fbf11757c486c629f59b75a660bce18ae1718a9ede1d30a",
+      "prepared_sha256": "6ee57bcdb4e1323f6f69929e80371944516610bc08e5922d8456453b319f6b1a",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3568,7 +3568,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-shield-wall.request.json"
       },
       "prepared": "protection-warrior-shield-wall.prepared.json",
-      "prepared_sha256": "e283a696ac855af59f143a5bd989674b960fb98c44d0236d35fc8f23e3028c96",
+      "prepared_sha256": "8495bf11391f46b8d619b957f7a5c07bd48148049dc84f334deacef2e44e5057",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3736,7 +3736,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-party-grace-of-air-and-windfury.request.json"
       },
       "prepared": "warrior-party-grace-of-air-and-windfury.prepared.json",
-      "prepared_sha256": "2a33be942d00cea3a75237983d6166f8a502f1d403788226101989ae92c4fa22",
+      "prepared_sha256": "cf8f4d31f8756aa937b354df15a95a7c2820a377b0f2ddf3894f2f44364ffac4",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3946,7 +3946,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-major-mana-potion.request.json"
       },
       "prepared": "warrior-major-mana-potion.prepared.json",
-      "prepared_sha256": "a0257b312fb82eb30a7f17c0595248ee4eda3edef2425ffab69ac9ed3e090c2a",
+      "prepared_sha256": "93360432a215166b0c5bac804dffc9d580967a95ae897685be158f625e4267ee",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3967,7 +3967,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-last-stand.request.json"
       },
       "prepared": "protection-warrior-last-stand.prepared.json",
-      "prepared_sha256": "888d4f54860c0010f9742a426a8e3ce50988118320f4d0e6619575b122c400ec",
+      "prepared_sha256": "5d796e2c124710d1b8677f29186e01f82ab79f0229fa5d7b52ef20273386a4a3",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3988,7 +3988,7 @@
         "path": "fixtures/mage/prepared-v2/fury-protection-warrior-last-stand.request.json"
       },
       "prepared": "fury-protection-warrior-last-stand.prepared.json",
-      "prepared_sha256": "43fb0fd127edcdf11b9ac5bd4ef2c2162895121e129fbf9ba32947269490ef6c",
+      "prepared_sha256": "72a799d6b1268b091fba1a630dcfe6922c700665e19d28e8844f92232a5e6b50",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4005,7 +4005,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-sapper-last-stand.request.json"
       },
       "prepared": "protection-warrior-sapper-last-stand.prepared.json",
-      "prepared_sha256": "7a650ea7038883ccdf20e04fde1eadbe61b12c0defc6505a0c0fcf4359ec69ae",
+      "prepared_sha256": "61615f968f23d6b723ef2fa9cd508aebf9145674b088a0a43f19aab9a6b03f72",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4043,7 +4043,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-greater-stoneshield.request.json"
       },
       "prepared": "protection-warrior-greater-stoneshield.prepared.json",
-      "prepared_sha256": "666bf975d1c85cf8b0264f85014d3f7e76b5d239aa27da4c421f73a73fd50c20",
+      "prepared_sha256": "018ddfdc690a9a15a798f6c7c2f2cd4a011eb36fff5533e019535973673460fc",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4098,7 +4098,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-enrage-sapper.request.json"
       },
       "prepared": "warrior-enrage-sapper.prepared.json",
-      "prepared_sha256": "04ca416952b5a325197cc856e7dba0faf783b7d197195ee65383c7497bfde94f",
+      "prepared_sha256": "1233c8c202be788304685fc258894373b41924964a8c52683186421be671efe4",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4119,7 +4119,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-blood-craze-sapper.request.json"
       },
       "prepared": "warrior-blood-craze-sapper.prepared.json",
-      "prepared_sha256": "84ef5d5fa8cddd7bbcdcbdb25ae24e039c142439080474e87d712a47d9c2bbb2",
+      "prepared_sha256": "f2df91df2cd6aeb5c4605ac340523aa2fbc2aa7db89531a3e774355af1eb0e2e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4140,7 +4140,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-improved-hamstring.request.json"
       },
       "prepared": "arms-warrior-improved-hamstring.prepared.json",
-      "prepared_sha256": "413d8d91731405ea0ee34b739d8a4084a56eec7f82f62f10421ddee561fe72f6",
+      "prepared_sha256": "d4ddfd47f7be9db1d398fc42687d401ffe199c50fc474c69321e054c2726d7a3",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4476,7 +4476,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-sweeping-strikes.request.json"
       },
       "prepared": "arms-warrior-sweeping-strikes.prepared.json",
-      "prepared_sha256": "c587e1e3f490b07fc0cb3d774544bb075891d1fb42b8fe65f4a62620b111986a",
+      "prepared_sha256": "8a21edf74fedc6c0673583fa810f2b83744b15a2e4028df3543471cf7d127e70",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4497,7 +4497,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-battlegear-of-might.request.json"
       },
       "prepared": "protection-warrior-battlegear-of-might.prepared.json",
-      "prepared_sha256": "9dc4751484338723692bb16286e62ba8d9131f830cedb83cdb9bac8c30cb7205",
+      "prepared_sha256": "15eaa5605f69783d99785b42021b556854befb61b420b36f06db3c3589853f7d",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4518,7 +4518,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-premier-shield-wall.request.json"
       },
       "prepared": "protection-warrior-premier-shield-wall.prepared.json",
-      "prepared_sha256": "f9feb7754825e9ebc0881af092cbbcd219354029512eed65ac9c2a13c05e8fcd",
+      "prepared_sha256": "df8b97642e70e58133db55e188b168cf603c2d2fe28401b66ad9b77484740834",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4539,7 +4539,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-battlegear-of-valor.request.json"
       },
       "prepared": "protection-warrior-battlegear-of-valor.prepared.json",
-      "prepared_sha256": "2d904007abb0b03b6f6934510f569d1bd2686e314010f5c02c87b77590210e21",
+      "prepared_sha256": "f638b8a7e81bbd424f99673cfa8f968e9b374d820b7afffec371e8c84b2dd640",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4560,7 +4560,7 @@
         "path": "fixtures/mage/prepared-v2/fury-warrior-rivenspike.request.json"
       },
       "prepared": "fury-warrior-rivenspike.prepared.json",
-      "prepared_sha256": "a2bd2b4445d0b57d211efda65ce747ddc7f66e934eae4b9da26d45ae6af7e829",
+      "prepared_sha256": "a76acbc6de3e0337c779f6f1fc4c648ddb5badb21905f591a74e7f1a087e102e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4581,7 +4581,7 @@
         "path": "fixtures/mage/prepared-v2/fury-warrior-battlegear-of-might-sapper.request.json"
       },
       "prepared": "fury-warrior-battlegear-of-might-sapper.prepared.json",
-      "prepared_sha256": "9381fc0b96995842096def49d5e645ebd77792f35c0fb797adfd9f63c2bb86a1",
+      "prepared_sha256": "f65135ef2f32c4466bd30d2029c5ba1ebaf18f2520db54ed0d2b18be0c5d9814",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4602,7 +4602,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-blood-craze-ephemeral-power.request.json"
       },
       "prepared": "protection-warrior-blood-craze-ephemeral-power.prepared.json",
-      "prepared_sha256": "7fd3d1e75b948d8bebd2228b4ae56d041d3e71d554c962cb8efa2002bd41cdcf",
+      "prepared_sha256": "c4e66d5d4e6db96d153437147ac0cb1d501b5d330b477596591ff87d67831096",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4623,7 +4623,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-blood-craze-neverending-cup.request.json"
       },
       "prepared": "protection-warrior-blood-craze-neverending-cup.prepared.json",
-      "prepared_sha256": "2dff49c2c638e8cae2f14cdee433da5ae79d638ba62cd1986372e47ddc96eba5",
+      "prepared_sha256": "853b76a53d3bf4335d1eb4f3888fa85687d6227d3231ca3d5223906e3bafd6c3",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4863,7 +4863,7 @@
         "path": "fixtures/mage/prepared-v2/fury-warrior-everlook-pathcarver.request.json"
       },
       "prepared": "fury-warrior-everlook-pathcarver.prepared.json",
-      "prepared_sha256": "bad40134591205a877a8328b76c88ee2cc13eecc5c5d9b1be2edc60df4838e34",
+      "prepared_sha256": "a30c74bd43147e9d46280ffd6e8fab1dc50fc9668548d2dc4cd891b6946be32a",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4926,7 +4926,7 @@
         "path": "fixtures/mage/prepared-v2/fury-warrior-prismcharm.request.json"
       },
       "prepared": "fury-warrior-prismcharm.prepared.json",
-      "prepared_sha256": "ad34db5d6335be060c2bf525b03d38d1ca9b699e2619b922c7382d67635c4f45",
+      "prepared_sha256": "ef6eac96a5f005006249408ddc8db91c4b3f38b1599b1d4fe25b436663707f86",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4989,7 +4989,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-heart-of-wyrmthalak.request.json"
       },
       "prepared": "warrior-heart-of-wyrmthalak.prepared.json",
-      "prepared_sha256": "e3d36ab4d6dadba54d9ae606c739ccbd82566bcc5ea7bc7a323a04f84212832e",
+      "prepared_sha256": "9734d9a61bb5195376e430c5a8522bb47c9c943154b9fd6643de642225430856",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5010,7 +5010,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-recovery.request.json"
       },
       "prepared": "arms-warrior-recovery.prepared.json",
-      "prepared_sha256": "f7f5200171f695a7ca2aed0a244e96aa212f67db7546989fbe9b13825af04f4f",
+      "prepared_sha256": "e9a88ae378b189d4ed15f510ffa0d9589c5c3d2e409a30d231dde2ce16243e39",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5052,7 +5052,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-mark-of-resolution-threshold.request.json"
       },
       "prepared": "protection-warrior-mark-of-resolution-threshold.prepared.json",
-      "prepared_sha256": "36fe585549ed6e3c7bda1bcc4e386f3b2887b2493b92113337d57736bc2c2d43",
+      "prepared_sha256": "926a164e2e7fbbedf20708b587fea8517dcf2f15dac2ee16b1cedd827cb1a5a4",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5115,7 +5115,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-fiery-blaze.request.json"
       },
       "prepared": "arms-warrior-fiery-blaze.prepared.json",
-      "prepared_sha256": "8ee43fef09e4bd9462f8b44862a416aa1643034ae8a035873635c86283b877e3",
+      "prepared_sha256": "e0b1ae99be56c21e70b818f16009b76cc359629b2b3c5a06d1ac3249584a7986",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5678,7 +5678,7 @@
         "path": "fixtures/mage/prepared-v2/fury-warrior-whirlwind-no-raging-blows.request.json"
       },
       "prepared": "fury-warrior-whirlwind-no-raging-blows.prepared.json",
-      "prepared_sha256": "115bb47aa510ce265f3f2497bd1b7fef4142857cce0e9c08fbf128016bcf1dc5",
+      "prepared_sha256": "a0cbb1afe1de81a644ac2dfb77d3cfbf29f7ad15d6437e81a1ee5e7e0d9c5f4e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6329,7 +6329,7 @@
         "path": "fixtures/mage/prepared-v2/production-warrior-2-targets.request.json"
       },
       "prepared": "production-warrior-2-targets.prepared.json",
-      "prepared_sha256": "d86992e14543ed92297ca7c92cfef8ccb6554943ab85a3983ff189565546a74d",
+      "prepared_sha256": "4f54affd748d6204d4079a315fc7dc4fa025d089e1ebb1455d4a9795bed8a9e8",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6350,7 +6350,7 @@
         "path": "fixtures/mage/prepared-v2/production-arms-warrior-2-targets.request.json"
       },
       "prepared": "production-arms-warrior-2-targets.prepared.json",
-      "prepared_sha256": "0696afd2a7b9c712ced838b114d70b7eb47c340ab88c1c271a8486e566e93e3a",
+      "prepared_sha256": "281e6ff8e5a6380d0881e0b7a45294a5495a850190e2c0e129454bc6fd05f481",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6371,7 +6371,7 @@
         "path": "fixtures/mage/prepared-v2/production-arms-warrior-3-targets.request.json"
       },
       "prepared": "production-arms-warrior-3-targets.prepared.json",
-      "prepared_sha256": "3607ea77cd86a314ef921fa20f7445975b9c8cbb43d01e49765952f88e76d8fb",
+      "prepared_sha256": "4d3299f72edf9044f05a1021915ddcd1a2103d131000aa91dd6d7fe20170aba5",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6392,7 +6392,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-whirlwind-5-targets.request.json"
       },
       "prepared": "warrior-whirlwind-5-targets.prepared.json",
-      "prepared_sha256": "d895d43f3de29e2a3de68f23531653062d059f45ecedf71e2b1fa7205d7543d0",
+      "prepared_sha256": "d3150402fcadef5355103bff2d5ff80d8ceee9636142401fe9474ec88d07ec9b",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6413,7 +6413,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-thunder-clap-5-targets.request.json"
       },
       "prepared": "arms-warrior-thunder-clap-5-targets.prepared.json",
-      "prepared_sha256": "cb569b57f72d8e9ef1dad1c15e9fb4414017c36aa6a44737103ef03613fda9ca",
+      "prepared_sha256": "48505723dd4b345287e44070eaa9b7dd1a808f777545a793b7ccfe1cdbecdd53",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6497,7 +6497,7 @@
         "path": "fixtures/mage/prepared-v2/production-warrior-5-targets.request.json"
       },
       "prepared": "production-warrior-5-targets.prepared.json",
-      "prepared_sha256": "ecafd96ffbc0d13319a08cbf47a92a8731a688f76194cecad603b060e38b66a2",
+      "prepared_sha256": "dce029d7db52096060588636792cd3e53f282f191cf2413b732149e164df49bc",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6518,7 +6518,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-thunder-clap-1-target.request.json"
       },
       "prepared": "arms-warrior-thunder-clap-1-target.prepared.json",
-      "prepared_sha256": "3f17198f57c0a8355439b6c8807dadd5c5cd6588918312c3373bb36b2bcba87f",
+      "prepared_sha256": "36735b34bf1bbda5a3c520ab37210baee43d585ffc68706d3f5b6a622528b3ab",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6539,7 +6539,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-in-front-3-targets.request.json"
       },
       "prepared": "arms-warrior-in-front-3-targets.prepared.json",
-      "prepared_sha256": "5255cb5d7f61d9f78869863e9d2c08d50e522d073c476cacf277bc566c1851ef",
+      "prepared_sha256": "746b37378cf4e73193a763db65441bd4ec292dd4ff1ee964dd69be70118ca002",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6560,7 +6560,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-multidot-rend-3-targets.request.json"
       },
       "prepared": "arms-warrior-multidot-rend-3-targets.prepared.json",
-      "prepared_sha256": "23ae85273a4159992fcd53f7fa98c2d7b49361922d72958eb3888ad65ce164ce",
+      "prepared_sha256": "bd2e25bb22071fe03e8c77b5a9889d0d3e30174c2208579562f9e50025e2afb5",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6644,7 +6644,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-3-targets-cast-target.request.json"
       },
       "prepared": "warrior-3-targets-cast-target.prepared.json",
-      "prepared_sha256": "4934a248566887dbf16d4afcf04912d8dc62c4ce92952aab40e8ace597e662be",
+      "prepared_sha256": "af5e4b995e6e4c05696cb6e41ae92902ada720d77d64725007596b207f99e390",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6749,7 +6749,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-dot-target-unit.request.json"
       },
       "prepared": "warrior-dot-target-unit.prepared.json",
-      "prepared_sha256": "488d881ca8c445c14a9d70a7da5c943ec905cc234d292c5a587fdb7ccd4a3622",
+      "prepared_sha256": "b945bd752d6fa92bbdb7f18b982d40c2b7c6d8e189e110621f9979924a467dec",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6761,6 +6761,309 @@
       "go_log": {
         "file": "warrior-dot-target-unit.go-log.txt",
         "sha256": "9a6127a156e67f1d82adb53777c5ef689f126a24305cf50b6fd047cf28690efd"
+      }
+    },
+    {
+      "id": "production-warrior-diamond-flask",
+      "description": "Production Fury Warrior wearing the Diamond Flask, which its prepull casts five seconds before the pull: the channel, its five ticks and the Strength aura the last one activates at the pull",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-warrior-diamond-flask.request.json"
+      },
+      "prepared": "production-warrior-diamond-flask.prepared.json",
+      "prepared_sha256": "af803cb353137552d2089a048dfcd73189612c509ca37bffb60f494e3f9e04d4",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-warrior-diamond-flask.go-result.json",
+        "sha256": "e3ded67bb9d6f57d84c1874a8b5056e7d654b543a2bc7cac55bd3c3c98a7482b"
+      },
+      "go_log": {
+        "file": "production-warrior-diamond-flask.go-log.txt",
+        "sha256": "2c64cdd1969e3940762d81cf419fbaf4ceb49084f4f856ad0c7b889f0424ef5b"
+      }
+    },
+    {
+      "id": "production-protection-warrior-diamond-flask",
+      "description": "Production Protection Warrior wearing the Diamond Flask, cast in its prepull while the target swings at it",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-protection-warrior-diamond-flask.request.json"
+      },
+      "prepared": "production-protection-warrior-diamond-flask.prepared.json",
+      "prepared_sha256": "08ec2280c7635ed1777bec20011adbb28181be2d43b079a10fd5b5359578d3ad",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-protection-warrior-diamond-flask.go-result.json",
+        "sha256": "eec49870668363e5dc96e338adcdd563f72b430e21368405e89e5311af87283c"
+      },
+      "go_log": {
+        "file": "production-protection-warrior-diamond-flask.go-log.txt",
+        "sha256": "565fee685ed62006f86baeb78b985bded0fc15950d6d4bd1cd8cccd5701cda5e"
+      }
+    },
+    {
+      "id": "production-fury-protection-warrior-diamond-flask",
+      "description": "Production Fury Protection Warrior wearing the Diamond Flask, cast in its prepull",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-fury-protection-warrior-diamond-flask.request.json"
+      },
+      "prepared": "production-fury-protection-warrior-diamond-flask.prepared.json",
+      "prepared_sha256": "bb26b8972b483d089ecc5e1d786ba436518a048ee72eaa2486ab9049611f45d6",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-fury-protection-warrior-diamond-flask.go-result.json",
+        "sha256": "40e7b20b8b088ab4c32322e4a1b11d7c3055d5b05f065856dd063dbb94f91fe8"
+      },
+      "go_log": {
+        "file": "production-fury-protection-warrior-diamond-flask.go-log.txt",
+        "sha256": "d30f4392ffd935ce79f95ccc5ab989962a113b92e28506ed8cb5cd7156de9526"
+      }
+    },
+    {
+      "id": "production-warrior-diamond-flask-in-rotation",
+      "description": "Production Fury Warrior wearing the Diamond Flask, which the rotation casts itself ten seconds into the fight, so it is not one of the major cooldowns",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-warrior-diamond-flask-in-rotation.request.json"
+      },
+      "prepared": "production-warrior-diamond-flask-in-rotation.prepared.json",
+      "prepared_sha256": "91a9dedecc3c87080f58befdbff80f3a0c991fdf5cb4fdf94c3e3afcfa975242",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-warrior-diamond-flask-in-rotation.go-result.json",
+        "sha256": "fdbed8162c2fbe8f0bcc7c62600d3d63c0baa9ef6c12508362aacab0ed476a74"
+      },
+      "go_log": {
+        "file": "production-warrior-diamond-flask-in-rotation.go-log.txt",
+        "sha256": "aed43802c47d8fd857b26b047d8b9168752312acbab7e19fa964db41a88f3ef8"
+      }
+    },
+    {
+      "id": "production-warrior-prepull-charge",
+      "description": "Production Fury Warrior that moves to 25 yards six seconds before the pull, changes to Battle Stance and casts Charge: the dash aura triples its speed until the run ends and its swings start in range",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-warrior-prepull-charge.request.json"
+      },
+      "prepared": "production-warrior-prepull-charge.prepared.json",
+      "prepared_sha256": "0f3e9c57b44bf9b1530e309295c05cdf4c70dab9c511a29dd8e6db01971e52f1",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-warrior-prepull-charge.go-result.json",
+        "sha256": "9f369862ec29341a5322384f41e569e644a0d006062572aff331e54571b2e658"
+      },
+      "go_log": {
+        "file": "production-warrior-prepull-charge.go-log.txt",
+        "sha256": "cd3cd8491ffa5a43698ccd55c2b9104fac83a6a275101d430a66e7408ece9bdf"
+      }
+    },
+    {
+      "id": "production-arms-warrior-prepull-charge",
+      "description": "Production Arms Warrior that moves to 25 yards, changes to Battle Stance and casts Charge before the pull, with Slam in its rotation",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-arms-warrior-prepull-charge.request.json"
+      },
+      "prepared": "production-arms-warrior-prepull-charge.prepared.json",
+      "prepared_sha256": "49644a25abaa3e4f9399cbdb3da9cb1a3124214ac0aafb6cb95dc96010459499",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-arms-warrior-prepull-charge.go-result.json",
+        "sha256": "7a8ac1ec31b79aa0324e80f4a6162e7b4cf0cbac60a387c61b50e7576c57d060"
+      },
+      "go_log": {
+        "file": "production-arms-warrior-prepull-charge.go-log.txt",
+        "sha256": "9e3931a29e09cab52f2a00c7bf6362faf08dfba858fa43fe9aec5e584fd564d8"
+      }
+    },
+    {
+      "id": "production-warrior-prepull-charge-late",
+      "description": "Production Fury Warrior whose Charge, 0.2 seconds before the pull, ends its run after the pull has begun",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-warrior-prepull-charge-late.request.json"
+      },
+      "prepared": "production-warrior-prepull-charge-late.prepared.json",
+      "prepared_sha256": "adc2d7c2f646ce41a88f292609e0c6adf5550a86d239eba3750aefdd9aa410f7",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-warrior-prepull-charge-late.go-result.json",
+        "sha256": "c6df8f29796f7aadc6d80719a0098e7f37874daec8c8a0c03465d9a9a287d8b4"
+      },
+      "go_log": {
+        "file": "production-warrior-prepull-charge-late.go-log.txt",
+        "sha256": "8cb39c8db64e654cfef563d19b44ad05354ff5207dbd7bc03ab62c7ad248760d"
+      }
+    },
+    {
+      "id": "production-warrior-prepull-charge-while-moving",
+      "description": "Production Fury Warrior that casts Charge while the first move is still running: the range it checks is the one the move started from, so the cast fails and the warrior stays out of melee range",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-warrior-prepull-charge-while-moving.request.json"
+      },
+      "prepared": "production-warrior-prepull-charge-while-moving.prepared.json",
+      "prepared_sha256": "428edc3d431751b41abd6af4ac14cceefa4ac0c132c279af74ba842b05bc5455",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-warrior-prepull-charge-while-moving.go-result.json",
+        "sha256": "70994b854114f52e47ebaea709622034e3168cad487b5c8f392447fc8122d7ac"
+      },
+      "go_log": {
+        "file": "production-warrior-prepull-charge-while-moving.go-log.txt",
+        "sha256": "f488185fc4218b2cd3ec730bfbb0161e2a9e1c7218b534ce8a7cf51cff0cc044"
+      }
+    },
+    {
+      "id": "production-warrior-prepull-move-cancelled",
+      "description": "Production Fury Warrior whose second prepull move starts before the first has ended and replaces it",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-warrior-prepull-move-cancelled.request.json"
+      },
+      "prepared": "production-warrior-prepull-move-cancelled.prepared.json",
+      "prepared_sha256": "5f09b4472959291f841646165afddc8caf52f44e85627c51e7178a4e7f004ff9",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-warrior-prepull-move-cancelled.go-result.json",
+        "sha256": "ad67cb558e258bfebe5b657088493b0b9466713ebd928b056d7179acb9b7fc4f"
+      },
+      "go_log": {
+        "file": "production-warrior-prepull-move-cancelled.go-log.txt",
+        "sha256": "91af7d96a00e4b9ec8347f2db07b7319d58f3f7f9e8234f2cfdbdf9c6231ac84"
+      }
+    },
+    {
+      "id": "production-warrior-prepull-move-in-range",
+      "description": "Production Fury Warrior that moves to the 5 yards of its melee range three seconds before the pull",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-warrior-prepull-move-in-range.request.json"
+      },
+      "prepared": "production-warrior-prepull-move-in-range.prepared.json",
+      "prepared_sha256": "2d71469a38d53bfb4f5cdaa440fdd7a41ad2b8c130f1728cb05a63a4c7656a1c",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-warrior-prepull-move-in-range.go-result.json",
+        "sha256": "ff76a54f53ac7aadb067c0b12dfc39ff5a143b212bb85a6ee96f40e7265ad6e0"
+      },
+      "go_log": {
+        "file": "production-warrior-prepull-move-in-range.go-log.txt",
+        "sha256": "93290d1cc4235e48757bcb3f337a527b13c9d83abf31fbffbd3fbcc21f579bf2"
+      }
+    },
+    {
+      "id": "production-arms-warrior-prepull-move-at-the-pull",
+      "description": "Production Arms Warrior that starts a 40 yard move one second before the pull: it is moving when the fight starts, so Slam, a cast with a cast time, cannot start and its swings wait for the run to end",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-arms-warrior-prepull-move-at-the-pull.request.json"
+      },
+      "prepared": "production-arms-warrior-prepull-move-at-the-pull.prepared.json",
+      "prepared_sha256": "b35337d8a1386ff64dda209ddb216b66347e068a88e0d1f7a17ec30c5fb8d790",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-arms-warrior-prepull-move-at-the-pull.go-result.json",
+        "sha256": "df6af7c3d4ead41014c413aa42c0c3aa14b0c3de9ca3d6fb9a52537909539acf"
+      },
+      "go_log": {
+        "file": "production-arms-warrior-prepull-move-at-the-pull.go-log.txt",
+        "sha256": "28cc775c344a66a8f1cf713600fd1e8066272a61bc3b14910df7010fcb3745fe"
+      }
+    },
+    {
+      "id": "production-warrior-prepull-move-dropped",
+      "description": "Production Fury Warrior whose prepull moves are one after the pull, one hidden and one with a condition that is always false, all of which Go drops",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-warrior-prepull-move-dropped.request.json"
+      },
+      "prepared": "production-warrior-prepull-move-dropped.prepared.json",
+      "prepared_sha256": "80e1aa22fd32a7519d1edb32c2ddc177234c9da8ab010e6c10d99cdf056076eb",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-warrior-prepull-move-dropped.go-result.json",
+        "sha256": "8b339a56de4c4c7289189ace906198898d0aed89ab4e9577fd68e9ced1c6defb"
+      },
+      "go_log": {
+        "file": "production-warrior-prepull-move-dropped.go-log.txt",
+        "sha256": "9a6127a156e67f1d82adb53777c5ef689f126a24305cf50b6fd047cf28690efd"
+      }
+    },
+    {
+      "id": "production-protection-warrior-prepull-charge",
+      "description": "Production Protection Warrior that moves to 25 yards, changes to Battle Stance and casts Charge before the pull while the target swings at it",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-protection-warrior-prepull-charge.request.json"
+      },
+      "prepared": "production-protection-warrior-prepull-charge.prepared.json",
+      "prepared_sha256": "5ffd1f8d6479aad085aa60767942ee0ea1fe735eb688e28f3785328d0c2457b3",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-protection-warrior-prepull-charge.go-result.json",
+        "sha256": "ec0beb62828afd09757a60b9fe4ce42f8b465bb36723fdba3a81a1c747f7732a"
+      },
+      "go_log": {
+        "file": "production-protection-warrior-prepull-charge.go-log.txt",
+        "sha256": "b81b4e641ca6b33209a7328b8b15769c8cb53597c7d656c10269e67cddc9f055"
+      }
+    },
+    {
+      "id": "production-assassination-rogue-prepull-move",
+      "description": "Production Assassination Rogue with a prepull move, which only a Warrior simulates: refused",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-assassination-rogue-prepull-move.request.json"
+      },
+      "prepared": "production-assassination-rogue-prepull-move.prepared.json",
+      "prepared_sha256": "c4189937ba4025f7cd57465c17717ae07754f63a5cc91cf4763eb26aee53ff2f",
+      "expected_coverage": {
+        "supported": false,
+        "reasons": [
+          "a prepull move is unsupported for ClassRogue"
+        ]
+      }
+    },
+    {
+      "id": "production-arms-warrior-prepull-move-with-unholy-aura",
+      "description": "Production Arms Warrior wielding the Runeblade of Baron Rivendare, whose Unholy Aura changes the movement speed and logs a line at the reset, with a prepull move: refused",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-arms-warrior-prepull-move-with-unholy-aura.request.json"
+      },
+      "prepared": "production-arms-warrior-prepull-move-with-unholy-aura.prepared.json",
+      "prepared_sha256": "cab491e29934c40d938f31555ac7cb0a8732dddb750279ef50df2eb2502d73aa",
+      "expected_coverage": {
+        "supported": false,
+        "reasons": [
+          "a prepull move with Unholy Aura, which changes the movement speed, is unsupported"
+        ]
       }
     },
     {
@@ -6896,7 +7199,7 @@
         "path": "fixtures/mage/prepared-v2/production-protection-warrior-3-targets.request.json"
       },
       "prepared": "production-protection-warrior-3-targets.prepared.json",
-      "prepared_sha256": "fb1df6688decf70e5991863996410daab4245614d4c493091ea6f0c9aab95ee5",
+      "prepared_sha256": "376af630bed050e8f5290261c36ac85e2db39dcf557cdeb05ea83454071cf476",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6917,7 +7220,7 @@
         "path": "fixtures/mage/prepared-v2/production-protection-warrior-5-targets.request.json"
       },
       "prepared": "production-protection-warrior-5-targets.prepared.json",
-      "prepared_sha256": "c391f5a7dc5726575d1b096a75d30249a04d54ddae4d1df94e0c88a3855d25f2",
+      "prepared_sha256": "52219c501b798c591b75074819737ad4536ee128e4e5cd107b5669c6d4b31b9e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6938,7 +7241,7 @@
         "path": "fixtures/mage/prepared-v2/production-fury-protection-warrior-3-targets.request.json"
       },
       "prepared": "production-fury-protection-warrior-3-targets.prepared.json",
-      "prepared_sha256": "ab0d43e89c9108298ee406d218b436bc06d8028ef686273363bb15e4e997633a",
+      "prepared_sha256": "3a6736d457929f7c137b2a969c0d2e33ffab152d93fc26defdcc4663c069319a",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -7001,7 +7304,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-own-sunder-3-targets.request.json"
       },
       "prepared": "protection-warrior-own-sunder-3-targets.prepared.json",
-      "prepared_sha256": "e3b769cd0e769efd3848a59a72a0a7c9dd253032071cb17ea66f50ffe64d06b2",
+      "prepared_sha256": "309dfa520fd286a9525b5ff017f7158815c1a8c66ce99ec4ebeabd564df2fef3",
       "expected_coverage": {
         "supported": true,
         "reasons": []

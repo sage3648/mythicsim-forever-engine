@@ -239,6 +239,13 @@ impl<A: Agent> Fight<A> {
         if state.flags.swapped {
             return false;
         }
+        // While moving only instant casts are possible.
+        if !state.flags.can_cast_while_moving
+            && state.default_cast.cast_time > 0
+            && self.unit(side).moving
+        {
+            return false;
+        }
         if self.unit(side).hardcast.expires > self.now {
             return false;
         }
@@ -542,6 +549,14 @@ impl<A: Agent> Fight<A> {
                 )
             });
         }
+        if !self.spells[spell].flags.can_cast_while_moving
+            && self.spells[spell].cur_cast.cast_time > 0
+            && self.unit(side).moving
+        {
+            return self.cast_failure(spell, |_| {
+                "casting/channeling while moving not allowed!".into()
+            });
+        }
 
         let cur = self.spells[spell].cur_cast;
         let channeled = self.spells[spell].flags.channeled;
@@ -774,6 +789,13 @@ impl<A: Agent> Fight<A> {
                     let metrics = self.item_metrics(spell);
                     self.add_mana(gain, metrics);
                 }
+            }
+            SpellBehavior::DiamondFlask(_) => {
+                // Go `spell.SelfHot().Apply`.
+                let dot = self.spells[spell]
+                    .dot
+                    .expect("the Diamond Flask has its self hot");
+                self.apply_dot(dot);
             }
             SpellBehavior::TouchOfTheGraveDrain {
                 health_fraction,
@@ -1299,7 +1321,9 @@ impl<A: Agent> Fight<A> {
             | SpellBehavior::OnUseDamage(_)
             | SpellBehavior::SelfHeal(_)
             | SpellBehavior::AbsorbOnUse(_) => true,
-            SpellBehavior::TouchOfTheGraveDrain { .. }
+            // The flask's major cooldown never activates.
+            SpellBehavior::DiamondFlask(_)
+            | SpellBehavior::TouchOfTheGraveDrain { .. }
             | SpellBehavior::MeleeAuto(_)
             | SpellBehavior::Move
             | SpellBehavior::RollDamage { .. }

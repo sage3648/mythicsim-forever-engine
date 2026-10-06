@@ -215,6 +215,15 @@ impl<A: Agent> Fight<A> {
                     self.periodic_damage_tick(dot, base);
                 }
             }
+            // Go sim/warrior/items.go Diamond Flask: the last tick activates the Strength aura.
+            SpellBehavior::DiamondFlask(aura) => {
+                if self.dots[dot].remaining_ticks == 0 {
+                    self.activate_aura(AuraRef {
+                        side: Side::Player,
+                        index: aura,
+                    });
+                }
+            }
             // Go spell_data_energize.go: each tick of the self hot rolls the gain.
             SpellBehavior::EnergizeOnUse {
                 average,

@@ -3,6 +3,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/wowsims/forever/sim/core"
@@ -20,6 +21,9 @@ func init() {
 		spells: warriorClassSpells, damageRows: func(map[int32]*spelldata.Spell) {}, effects: warriorEffects,
 		unrepresented: warriorUnrepresented, statAuras: warriorStatAuras,
 	}
+	// sim/warrior/items.go registers the Diamond Flask with core.NewItemEffect, so any class that
+	// wears it gets the use; the hook is keyed by the item.
+	classItemUseEffects[diamondFlaskItem] = diamondFlaskUse
 }
 
 // talents_arms.go registerSweepingStrikes reads the highest rank.
@@ -107,6 +111,8 @@ var (
 	warriorEnrage                     = spelldata.Talent(12317, 5)
 	warriorBloodCraze                 = spelldata.Talent(16487, 3)
 	warriorDefiance                   = spelldata.Talent(12792, 3)
+	warriorCharge                     = spelldata.Ranked(11578)
+	warriorImprovedCharge             = spelldata.Talent(12285, 2)
 )
 
 // A client damage row's roll: spelldata Effect.Roll draws between these bounds unless the
@@ -248,6 +254,16 @@ func warriorEffects(agent core.Agent, character *core.Character) []map[string]an
 		"kind": "berserker_rage", "spell_id": berserkerRage.ID, "aura": "Berserker Rage",
 		"rage_gain": warriorImprovedBerserkerRage.EffectAt(1).TenthsAt(talents.ImprovedBerserkerRage),
 	})
+	// charge.go: the cast spends no rage, gives rage, triples the warrior's movement speed through
+	// its dash aura and runs to 3.5 yards inside the spell's minimum range. It casts only before
+	// the pull, in Battle Stance, or in Defensive Stance with Vanguard.
+	if charge := character.GetSpell(core.ActionID{SpellID: warriorCharge.Highest().ID}); charge != nil {
+		effects = append(effects, map[string]any{
+			"kind": "warrior_charge", "spell_id": charge.ActionID.SpellID, "aura": "Charge",
+			"rage":     warriorCharge.Highest().EnergizeEffect().Tenths() + warriorImprovedCharge.TenthsAt(talents.ImprovedCharge),
+			"vanguard": talents.Vanguard, "speed_multiplier": 3.0, "overshoot": 3.5, "min_range": charge.MinRange,
+		})
+	}
 	if talents.DeathWish { // talents_fury.go registerDeathWish
 		row := warriorDeathWish.Highest()
 		effects = append(effects, map[string]any{
@@ -694,4 +710,28 @@ func healModifiers(character *core.Character, target *core.Unit) map[string]any 
 		"healing_taken_multiplier":          target.PseudoStats.HealingTakenMultiplier,
 		"table_healing_dealt_multiplier":    character.AttackTables[target.UnitIndex].HealingDealtMultiplier,
 		"healing_power":                     character.GetStat(stats.HealingPower) + target.PseudoStats.BonusHealingTaken}
+}
+
+// sim/warrior/items.go Diamond Flask.
+const diamondFlaskItem = 20130
+
+// The Strength the flask's aura grants, a Go literal of the item effect.
+var diamondFlaskStats = stats.Stats{stats.Strength: 20}
+
+// sim/warrior/items.go Diamond Flask: a 5 second channel, a self hot of five ticks a second whose
+// last tick activates the Strength aura. The aura is a temporary stats aura, so the stats it
+// holds while active come from Go with it active and its gain and expiry lines are the helper's.
+// The major cooldown never activates on its own, so the rotation or a prepull casts it.
+func diamondFlaskUse(request *proto.RaidSimRequest, agent core.Agent, spell *core.Spell) map[string]any {
+	character := agent.GetCharacter()
+	aura := character.GetAura("Diamond Flask")
+	if aura == nil || spell.SelfHot() == nil {
+		fail(fmt.Errorf("the Diamond Flask has no aura or self hot"))
+	}
+	return map[string]any{
+		"kind": "diamond_flask", "item_id": spell.ActionID.ItemID, "aura": aura.Label,
+		"active_stats": activeStats(request, aura.Label),
+		"gain_log":     fmt.Sprintf("Gained %s from %s.", diamondFlaskStats.FlatString(), aura.ActionID),
+		"expire_log":   fmt.Sprintf("Lost %s from fading %s.", diamondFlaskStats.FlatString(), aura.ActionID),
+	}
 }
