@@ -43,6 +43,20 @@ pub(crate) enum Outcome {
     Table(super::melee::PhysicalOutcome),
 }
 
+impl Outcome {
+    /// spelldata `Spell.TickOutcomeHitRolled`: the tick of a dot whose hit was rolled when it was
+    /// applied, a crit only where the row states Periodic Can Crit, on the crit of the dot
+    /// spell's defense type. A tick that would roll a magic hit again is unsupported.
+    pub(crate) fn tick_hit_rolled(can_crit: bool, magic: bool) -> Result<Outcome, String> {
+        match (can_crit, magic) {
+            (true, true) => Ok(Outcome::TickMagicCrit),
+            (true, false) => Ok(Outcome::TickPhysicalCrit),
+            (false, false) => Ok(Outcome::Tick),
+            (false, true) => Err("dot ticks that roll a magic hit are unsupported".into()),
+        }
+    }
+}
+
 /// Go `OutcomeLanded`.
 pub(crate) const OUTCOME_LANDED: u16 =
     OUTCOME_HIT | OUTCOME_CRIT | OUTCOME_CRUSH | OUTCOME_GLANCE | OUTCOME_BLOCK;
@@ -897,8 +911,24 @@ impl<A: Agent> Fight<A> {
         dot: super::DotId,
         side: Side,
     ) -> SpellResult {
+        let outcome = if self.dots[dot].tick_can_crit {
+            Outcome::TickMagicCrit
+        } else {
+            Outcome::Tick
+        };
+        self.snapshot_dot_tick_calc_with(dot, side, outcome)
+    }
+
+    /// The same with the outcome applier the dot's spell names, as Volley's ticks roll the
+    /// ranged table.
+    pub(crate) fn snapshot_dot_tick_calc_with(
+        &mut self,
+        dot: super::DotId,
+        side: Side,
+        outcome: Outcome,
+    ) -> SpellResult {
         let state = &self.dots[dot];
-        let (spell, can_crit) = (state.spell, state.tick_can_crit);
+        let spell = state.spell;
         let mut base = state.snapshot_base;
         if state.reads_spell_power {
             // Go currentTickInputs: the share less the snapshot's, fused.
@@ -908,11 +938,6 @@ impl<A: Agent> Fight<A> {
         }
         let attacker =
             self.attacker_multiplier(spell, true) * self.dots[dot].periodic_damage_multiplier;
-        let outcome = if can_crit {
-            Outcome::TickMagicCrit
-        } else {
-            Outcome::Tick
-        };
         self.calc_damage_internal(spell, side, base, attacker, outcome)
     }
 
