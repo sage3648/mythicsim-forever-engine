@@ -10,7 +10,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"slices"
 	"sort"
 	"strings"
 
@@ -120,11 +119,13 @@ func targetCopyNotes(simulation *core.Simulation, character *core.Character, not
 
 // apl_values_aura.go newValueAuraNumStacks reads a stacking aura's stacks through a reset and a
 // stack change callback it adds to the aura on the first target alone, which a rotation
-// condition such as Lacerate's stacks leaves there. The observer only records the stacks for
-// that condition, which Rust reads from the first target as well, so the pair does not make
-// the other copies differ. An aura holding just one of the two keeps it.
+// condition such as Lacerate's or Sunder Armor's stacks leaves there. The observer only records
+// the stacks for that condition, which Rust reads from the first target as well, so the pair
+// does not make the other copies differ. A stacking aura can have a stack change callback of
+// its own, which the copies keep and the first target's observer wraps, so the two are left out
+// of every copy alike: a difference in them that is not the observer's cannot be told from it.
 func withoutStackObserver(aura Aura) []string {
-	if aura.MaxStacks == 0 || !slices.Contains(aura.Callbacks, "on_reset") || !slices.Contains(aura.Callbacks, "on_stacks_change") {
+	if aura.MaxStacks == 0 {
 		return aura.Callbacks
 	}
 	kept := []string{}
