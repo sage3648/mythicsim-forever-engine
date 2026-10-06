@@ -73,6 +73,7 @@ impl Default for AoeResults {
         AoeResults {
             results: [SpellResult {
                 target: Side::Target,
+                attacker: Side::Player,
                 outcome: 0,
                 damage: 0.0,
                 threat: 0.0,
@@ -99,6 +100,10 @@ impl AoeResults {
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct SpellResult {
     pub(crate) target: Side,
+    /// Go `spell.Unit`: the unit whose spell made the hit. A hit-taken listener reads it to
+    /// answer the copy of the boss that swung at the player, as Holy Shield's damage and Eye
+    /// for an Eye's reflection do.
+    pub(crate) attacker: Side,
     pub(crate) outcome: u16,
     pub(crate) damage: f64,
     pub(crate) threat: f64,
@@ -424,6 +429,7 @@ impl<A: Agent> Fight<A> {
         let mut result = SpellResult {
             armor_multiplier: 0.0,
             target,
+            attacker: self.spells[spell].caster,
             outcome: 0,
             damage: base,
             threat: 0.0,
@@ -540,6 +546,7 @@ impl<A: Agent> Fight<A> {
         let mut result = SpellResult {
             armor_multiplier: 0.0,
             target,
+            attacker: self.spells[spell].caster,
             outcome: 0,
             damage: 0.0,
             threat: 0.0,
@@ -761,6 +768,7 @@ impl<A: Agent> Fight<A> {
         let mut result = SpellResult {
             armor_multiplier: 0.0,
             target,
+            attacker: self.spells[spell].caster,
             outcome: 0,
             damage: base * attacker,
             threat: 0.0,

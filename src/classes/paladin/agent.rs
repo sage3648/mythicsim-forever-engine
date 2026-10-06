@@ -1273,7 +1273,7 @@ impl Agent for PaladinAgent {
                 let mut eye = fight.agent.eye_for_an_eye.expect("Eye for an Eye is bound");
                 eye.reflected = (result.damage * eye.share).min(fight.player_max_health() / 2.0);
                 fight.agent.eye_for_an_eye = Some(eye);
-                fight.cast(eye.spell, Side::Target);
+                fight.cast(eye.spell, result.attacker);
             }
             _ => {}
         }

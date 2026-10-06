@@ -33,6 +33,9 @@ pub(crate) struct ClassGate {
     /// a target past the first in Go and not yet in Rust. None for a class not yet checked
     /// against several targets.
     pub(crate) several_targets: Option<Limits>,
+    /// Whether the class's listeners of the hits its player takes answer the copy of the boss
+    /// that swung, so a tank of the class can face several targets, each swinging at it.
+    pub(crate) tanks_several_targets: bool,
     /// Whether a prepull move of the player has been compared with Go for the class: its
     /// melee swings stop and start with the range, and nothing else the class does reads the
     /// player's distance.
@@ -1350,13 +1353,15 @@ fn several_target_limits(
     if count < 2 {
         return Vec::new();
     }
-    // Go has every copy of the boss swing at a tank, each on its own timer, and Rust keeps the
-    // one swing of the first target. The exporter refuses the assignment; an input that has
-    // the swing and several targets anyway is refused here.
+    // Go has every copy of the boss swing at a tank, each on its own timer, and Rust runs each
+    // copy's swing. What the tank's class does when it takes a hit must answer the copy that
+    // swung, which only the classes that have been checked against it do.
     let mut reasons = Vec::new();
-    if prepared.enemy.is_some() {
+    if prepared.enemy.is_some() && !gate.tanks_several_targets {
         reasons.push(format!(
-            "{count} targets: every copy of the boss swings at the tank, which is unsupported"
+            "{count} targets: every copy of the boss swings at the tank, which is unsupported \
+             for {} yet",
+            gate.class
         ));
     }
     match gate.several_targets {

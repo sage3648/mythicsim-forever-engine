@@ -61,7 +61,7 @@ RNG contract and implemented effects. Tests fail if it disagrees with the engine
 | `target` | Level, all stats, pseudo stats, every registered aura and whether it has a melee or ranged swing. In a fight against several targets every target past the first is an identical copy, which the exporter checks, so this one target describes them all |
 | `player` | Identity, talents, stats, pseudo stats, reaction time, distance, cast speed, mana, an energy bar when the player has one, attack table, spells, major cooldowns and rotation |
 | `melee` | The player's weapons and auto attack flags, and the physical attack table against the target with the defender's static chances resolved |
-| `enemy` | Present only when the player tanks the target: the target's main hand swing at the player, every step of its damage and table resolved as Go computes it at reset, its table steps for each stat aura combination, the auras whose activation would change it, and the target auras, such as Vindication's debuff, that change only its attack power, with the attack power while each holds. The target multiplier's school and attack table factors let the runtime apply the player's live damage taken multiplier and live physical school damage taken multiplier, and the target's attack speed, melee speed and haste rating factors its live melee speed; auras that change only one of those, such as Stoneform's physical damage taken, are listed apart from the rest |
+| `enemy` | Present only when the player tanks the target. In a fight against several targets Go has every copy of the boss swing at the tank, so this one swing describes each copy, which the exporter checks, and Rust runs it per copy: the target's main hand swing at the player, every step of its damage and table resolved as Go computes it at reset, its table steps for each stat aura combination, the auras whose activation would change it, and the target auras, such as Vindication's debuff, that change only its attack power, with the attack power while each holds. The target multiplier's school and attack table factors let the runtime apply the player's live damage taken multiplier and live physical school damage taken multiplier, and the target's attack speed, melee speed and haste rating factors its live melee speed; auras that change only one of those, such as Stoneform's physical damage taken, are listed apart from the rest |
 | `effects` | Dynamic behavior and its parameters, one tagged variant per kind |
 | `unrepresented` | Request features the exporter cannot describe |
 
@@ -413,7 +413,7 @@ is an error, never a refusal. `REFUSAL_CODES` in
 | `class_unsupported` | The player's class has no Rust gate |
 | `level_unsupported` | The player is not level 60 or the target not level 60 to 63 |
 | `target_count_invalid` | The target count is neither one nor 2 to 5 |
-| `several_targets_unsupported` | Something reaches a target past the first that Rust does not simulate there |
+| `several_targets_unsupported` | Something reaches a target past the first that Rust does not simulate there, among them a tank of a class whose hit-taken behavior has not been checked against every copy of the boss swinging at it |
 | `aura_listener_unclaimed` | An aura listens to combat events with no effect that handles it |
 | `pet_unsupported` | A pet has no behavior or inherits a stat change Rust does not follow |
 | `tanking_unsupported` | The target swings at the player in a way Rust does not simulate |
@@ -690,6 +690,12 @@ Improved Slam, stopping the swings;
 production tank Warriors, whose Revenge, Retaliation, Enrage and Blood Craze act on the
 target's swings.
 `production-feral-bear-druid` is the production Feral (bear) Druid tank request.
+The six production tank requests against 3 copies of the boss, and the Protection Paladin,
+bear and Protection Warrior ones against 5, have every copy swing at the tank: they are
+`production-NAME-3-targets` and `production-NAME-5-targets`, with
+`protection-eye-for-an-eye-3-targets`, whose reflection lands on the copy that crit,
+`protection-paladin-sulfuras-3-targets`, whose Immolation hits the copy that swung, and
+`protection-warrior-own-sunder-3-targets`, whose Retaliation strikes the copy that swung.
 `production-feral-druid` is the production Feral (cat) Druid request, and
 `feral-druid-faerie-fire-armor` runs it with the raid's Sunder Armor as the only debuff, so
 Faerie Fire's own armor reduction applies beside the Sunder Armor ramp.
@@ -834,14 +840,21 @@ cargo run --locked -- check --infile fixtures/mage/prepared-v2/frost-reference.p
 - The contract describes one player, one to five identical targets and the player's pets,
   any number of them simulated. Rust keeps each target's auras, dots, debuffs, armor,
   resistances and metrics; area hits, cleaves and the rotation's multidot reach every
-  target as in Go. The exporter refuses targets that differ from the first, a tank
-  assignment, since every copy would swing at the tank and Rust models one enemy swing, a target aura with an internal cooldown and the item and pet effects that
-  reach other targets; the gate refuses a tanked fight against several targets too, and
-  each class's spells that reach other targets without a Rust implementation, such as the
-  Warrior's Demoralizing and Challenging Shout. Every class has been checked against several
+  target as in Go. The exporter refuses targets that differ from the first, in the swing
+  at a tank too, a target aura with an internal cooldown and the item and pet effects that
+  reach other targets; the gate refuses each class's spells that reach other targets
+  without a Rust implementation, such as the Warrior's Demoralizing and Challenging Shout,
+  and a tanked fight against several targets for a class whose hit-taken behavior has not
+  been checked against it: only Paladin, Druid and Warrior tanks run, since the others'
+  listeners do not answer the copy that swung. Every class has been checked against several
   targets. Job
   modes such as stat weights need contract additions.
-- Incoming damage covers the target's main hand swing at the one player tanking it. The
+- Incoming damage covers the main hand swing of each target at the one player tanking it.
+  With several targets Go has every copy of the boss swing at the tank, each on its own
+  timer from its own reset roll, in unit index order when several are due at once; Rust
+  keeps each copy's metrics, melee speed, debuffs and parry haste, and its hit reaches the
+  tank's listeners as the swing of that copy, so Holy Shield, Eye for an Eye, Retaliation,
+  an item's struck damage proc and Sulfuras' Immolation answer the copy that swung. The
   gate rejects a dual wielding or ranged target, a healing model, a channel with a cast time
   or a cast pushed back with a chance that needs a roll that the rotation can reach while
   tanking, listeners of the

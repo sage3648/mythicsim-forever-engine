@@ -675,9 +675,9 @@ fn refusals_carry_stable_codes() {
     }
     assert_eq!(codes(hunter), ["class_limit"]);
 
-    // A tank's fight against several targets is refused: every copy of the boss would swing
-    // at the tank, and Rust keeps one swing.
-    let path = family().join("production-protection-warrior.prepared.json");
+    // A tank's fight against several targets is refused for a class whose hit-taken
+    // behavior has not been checked against every copy of the boss swinging at it.
+    let path = family().join("combat-riposte-tank.prepared.json");
     let mut unchecked: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
     unchecked["encounter"]["target_count"] = json!(3);
     assert_eq!(codes(unchecked), ["several_targets_unsupported"]);

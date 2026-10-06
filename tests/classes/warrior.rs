@@ -426,26 +426,74 @@ fn a_multidot_line_puts_rend_on_every_target() {
     }
 }
 
-/// Every copy of the boss swings at a tank in Go, and Rust keeps one swing: the exporter
-/// refuses the assignment, and an input that tanks several targets anyway is refused here.
+/// Every copy of the boss swings at a tank in Go, each on its own timer, and so does each in
+/// Rust: every target casts its auto attack at the player and the player's listeners hear all
+/// of them. Each copy's own Thunder Clap slow moves its own timer.
 #[test]
-fn a_tanked_fight_against_several_targets_is_refused() {
-    let mut value = warrior_fixture("production-protection-warrior");
-    assert!(!reasons_if_any(&value)
-        .iter()
-        .any(|reason| reason.contains("targets")));
-    value["encounter"]["target_count"] = json!(3);
-    assert!(reasons(value).contains(
-        &"3 targets: every copy of the boss swings at the tank, which is unsupported".into()
-    ));
+fn every_copy_of_the_boss_swings_at_the_tank() {
+    let logs = first_fight_log(warrior_fixture("production-protection-warrior-3-targets"));
+    for target in 1..=3 {
+        let swing = format!("[Target {target}] Casting {{OtherID: 3, Tag: 1}}");
+        assert!(
+            logs.matches(&swing).count() > 10,
+            "Target {target}: it does not swing"
+        );
+        let hit = format!("[Target {target}] [protection-warrior (#1)] {{OtherID: 3, Tag: 1}}");
+        assert!(logs.contains(&hit), "Target {target}: it never lands a hit");
+    }
+    // The player's Revenge answers a dodge, parry or block from any of them.
+    assert!(logs.contains("Casting {SpellID: 25288}"));
 }
 
-fn reasons_if_any(value: &Value) -> Vec<String> {
-    let prepared: PreparedV2 = serde_json::from_value(value.clone()).unwrap();
-    match check_prepared(&prepared) {
-        Err(PreparedError::Unsupported(reasons)) => reasons,
-        _ => Vec::new(),
+/// Retaliation's strike goes back at the copy whose melee hit spent the charge.
+#[test]
+fn retaliation_strikes_the_copy_that_hit() {
+    let logs = first_fight_log(warrior_fixture("protection-warrior-own-sunder-3-targets"));
+    for target in 1..=3 {
+        assert!(
+            !lines_with(&logs, target, "20240").is_empty(),
+            "Target {target}: no Retaliation strike"
+        );
     }
+}
+
+/// The times a target's swings at the player start, in seconds.
+fn swing_times(logs: &str, target: u32) -> Vec<f64> {
+    logs.lines()
+        .filter(|line| line.contains(&format!("[Target {target}] Casting {{OtherID: 3, Tag: 1}}")))
+        .map(|line| {
+            line[1..line.find(']').unwrap()]
+                .parse()
+                .expect("a time stamp")
+        })
+        .collect()
+}
+
+/// Thunder Clap slows each target it lands on, up to the row's four: that copy's swings come
+/// a fifth further apart while the debuff holds, and the fifth target keeps its pace, as Go
+/// moves each copy's melee speed on its own.
+#[test]
+fn thunder_clap_slows_only_the_copies_it_lands_on() {
+    let logs = first_fight_log(warrior_fixture("production-protection-warrior-5-targets"));
+    // A parry shortens one interval, so look at the longest the target ever waits.
+    let longest = |target: u32| {
+        let times = swing_times(&logs, target);
+        times
+            .windows(2)
+            .map(|pair| ((pair[1] - pair[0]) * 100.0).round() / 100.0)
+            .fold(0.0, f64::max)
+    };
+    for target in 1..=4 {
+        assert!(
+            logs.contains(&format!(
+                "[Target {target}] Aura gained: {{SpellID: 11581}}"
+            )),
+            "Target {target}: not clapped"
+        );
+        assert_eq!(longest(target), 2.4, "Target {target}: not slowed");
+    }
+    assert!(!logs.contains("[Target 5] Aura gained: {SpellID: 11581}"));
+    assert_eq!(longest(5), 2.0, "Target 5: slowed");
 }
 
 /// The shouts that Go casts on every target have no behavior in Rust, and against several

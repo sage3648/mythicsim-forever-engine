@@ -1292,10 +1292,12 @@ impl<A: Agent> Fight<A> {
         if let Some((timer, duration)) = icd {
             self.timers[timer] = self.now + duration;
         }
-        let target = if result.target == Side::Player {
-            Side::Target
-        } else {
-            result.target
+        // Go procDamageTarget: a proc of a hit taken answers its attacker, which for the
+        // swing of a copy of the boss is that copy.
+        let target = match (result.target == Side::Player, spell) {
+            (true, None) => result.attacker,
+            (true, Some(_)) => Side::Target,
+            (false, _) => result.target,
         };
         self.cast(damage_spell, target);
     }
@@ -1342,6 +1344,7 @@ impl<A: Agent> Fight<A> {
         let result = result.copied().unwrap_or(SpellResult {
             armor_multiplier: 0.0,
             target: Side::Target,
+            attacker: Side::Player,
             outcome: 0,
             damage: 0.0,
             threat: 0.0,
@@ -1426,7 +1429,7 @@ impl<A: Agent> Fight<A> {
                 self.gain_health(heal, heal_metrics);
             }
             AuraBehavior::EmeraldDragonWhelp => self.whelp_summon(),
-            AuraBehavior::SulfurasImmolation => self.sulfuras_immolation_hit(),
+            AuraBehavior::SulfurasImmolation => self.sulfuras_immolation_hit(result.attacker),
             AuraBehavior::StatProc(proc) => {
                 let aura = self.stat_procs[proc].2;
                 self.activate_aura(aura);

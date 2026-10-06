@@ -4,7 +4,7 @@
   "engine_revision": "cd7d44aec711bcc8f20ea12d3ed83cea2126ac66",
   "client_build": "1.60.1.70205",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "69f3d0c50d2fcd219082d790390c728fda1bac826f6f932f4cb135f646507a4a",
+  "exporter_sha256": "8e335929c06a14e71234f57abae43c42895e4deeb4568850bf2d0e78140187e2",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -7064,6 +7064,279 @@
         "reasons": [
           "a prepull move with Unholy Aura, which changes the movement speed, is unsupported"
         ]
+      }
+    },
+    {
+      "id": "production-protection-paladin-3-targets",
+      "description": "Production Protection Paladin tank request against 3 copies of the boss, each swinging at the tank on its own timer: Holy Shield's damage, Reckoning and Eye for an Eye answer the copy that swung",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-protection-paladin-3-targets.request.json"
+      },
+      "prepared": "production-protection-paladin-3-targets.prepared.json",
+      "prepared_sha256": "1e83671f67ffd3477b5262c174a6cf0d11b500e4c7d9ed0ec1f4e0f61ab74947",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-protection-paladin-3-targets.go-result.json",
+        "sha256": "e071cd785b766f7651036d12ef18cf86bb3ad47c33fc9db8f2b1267a91cb86a1"
+      },
+      "go_log": {
+        "file": "production-protection-paladin-3-targets.go-log.txt",
+        "sha256": "dd02a51f7801f9c060650fc39d6b3639b6069daff902a9785919da99ea762b29"
+      }
+    },
+    {
+      "id": "production-protection-paladin-5-targets",
+      "description": "Production Protection Paladin tank request against 5 copies of the boss, each swinging at the tank on its own timer",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-protection-paladin-5-targets.request.json"
+      },
+      "prepared": "production-protection-paladin-5-targets.prepared.json",
+      "prepared_sha256": "606de86932b88a6fc266b6bd6389e8fd507150aa9b4b73082aa8eb6af1d62b22",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-protection-paladin-5-targets.go-result.json",
+        "sha256": "9ea6cfcb5acb77b9d9bbf120e18a6fcc4008c968de271fb98feb5d23fe9bea90"
+      },
+      "go_log": {
+        "file": "production-protection-paladin-5-targets.go-log.txt",
+        "sha256": "20568a0cf069dcc17dd88c3d8157e1a4a211aa0065ef6440aca1cf4f05a476c2"
+      }
+    },
+    {
+      "id": "production-holy-protection-paladin-3-targets",
+      "description": "Production Holy Protection Paladin tank request against 3 copies of the boss, each swinging at the tank on its own timer",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-holy-protection-paladin-3-targets.request.json"
+      },
+      "prepared": "production-holy-protection-paladin-3-targets.prepared.json",
+      "prepared_sha256": "3904f71bb8488eafcef6f27b26133c2c657020e57b99a68a6338ec97eb32be4d",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-holy-protection-paladin-3-targets.go-result.json",
+        "sha256": "9eb81cb27b31eb019220e304469b11aeccb399bb02eda2cbe3e71a5f0509d234"
+      },
+      "go_log": {
+        "file": "production-holy-protection-paladin-3-targets.go-log.txt",
+        "sha256": "3fbfd9410973737613e7ceeb9d71c6ecf6363e1dbca9ffcc1ff37424cc0bd2be"
+      }
+    },
+    {
+      "id": "production-ret-protection-paladin-3-targets",
+      "description": "Production Ret Protection Paladin tank request against 3 copies of the boss, each swinging at the tank on its own timer, with Vindication's attack power debuff on the first target alone, the only one the paladin strikes",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-ret-protection-paladin-3-targets.request.json"
+      },
+      "prepared": "production-ret-protection-paladin-3-targets.prepared.json",
+      "prepared_sha256": "b96c1fbb0cf2a3266d85e4da49d147a575ea08b00db9a3f84187882bc84495b7",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-ret-protection-paladin-3-targets.go-result.json",
+        "sha256": "499726873094ca629c1626cc8c3675b71f55e0198c43404e2e3c34f44f4d1fc0"
+      },
+      "go_log": {
+        "file": "production-ret-protection-paladin-3-targets.go-log.txt",
+        "sha256": "39a4cb2fd3eb41b3702fede8785db6f7aa0014eb063568e253936317b78ad4e6"
+      }
+    },
+    {
+      "id": "production-feral-bear-druid-3-targets",
+      "description": "Production Feral (bear) Druid tank request against 3 copies of the boss, each swinging at the bear with the Demoralizing Roar it holds",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-feral-bear-druid-3-targets.request.json"
+      },
+      "prepared": "production-feral-bear-druid-3-targets.prepared.json",
+      "prepared_sha256": "51e5fa3b7d5e9f5ca412e80c182066f8256438c8b87b82b085adfc78ad6fbee0",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-feral-bear-druid-3-targets.go-result.json",
+        "sha256": "30dea29275bb942173c430bad703c5d59ce9fe2d9884508ef26f12d510c1ce27"
+      },
+      "go_log": {
+        "file": "production-feral-bear-druid-3-targets.go-log.txt",
+        "sha256": "e05f47cc7fae18c18af73941bd8e6cf2b962854dd7348f47ec7a8f2191adac96"
+      }
+    },
+    {
+      "id": "production-feral-bear-druid-5-targets",
+      "description": "Production Feral (bear) Druid tank request against 5 copies of the boss, each swinging at the bear",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-feral-bear-druid-5-targets.request.json"
+      },
+      "prepared": "production-feral-bear-druid-5-targets.prepared.json",
+      "prepared_sha256": "a14915c0594b69de373563d10fa21f22ef5b879d970962b4bb4b8a7a5e1b1e9d",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-feral-bear-druid-5-targets.go-result.json",
+        "sha256": "dfbe7f5aafd24d3eb65d3055d8a75239d2f3a4299dfb720507097f0538f22b0e"
+      },
+      "go_log": {
+        "file": "production-feral-bear-druid-5-targets.go-log.txt",
+        "sha256": "2cccc8dcafa50db0a20bb28448b2320a657234e2f5022e4ce9d0ce51023249ce"
+      }
+    },
+    {
+      "id": "production-protection-warrior-3-targets",
+      "description": "Production Protection Warrior tank request against 3 copies of the boss, each swinging at the tank on its own timer, with Thunder Clap slowing the copies it lands on",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-protection-warrior-3-targets.request.json"
+      },
+      "prepared": "production-protection-warrior-3-targets.prepared.json",
+      "prepared_sha256": "4593e182fcb88158a8115c88307336efb3bd6049686e65b06bbbeceb13fe2c1a",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-protection-warrior-3-targets.go-result.json",
+        "sha256": "5c93bdb4e70be60fdce4cc3427e5b2932e4fb68f6df5670a04a47ff27caa31ee"
+      },
+      "go_log": {
+        "file": "production-protection-warrior-3-targets.go-log.txt",
+        "sha256": "deadf23e3aef78b451a6adc06c91b383ee470a5f9a04178635093bef99788f1e"
+      }
+    },
+    {
+      "id": "production-protection-warrior-5-targets",
+      "description": "Production Protection Warrior tank request against 5 copies of the boss: Thunder Clap slows four of them, and the fifth swings at its own pace",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-protection-warrior-5-targets.request.json"
+      },
+      "prepared": "production-protection-warrior-5-targets.prepared.json",
+      "prepared_sha256": "e50dffc59409d75db0726e9a595ff32a0b7e180ca05885bae6cc604e095f1ad4",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-protection-warrior-5-targets.go-result.json",
+        "sha256": "87e550e2bfd7f4602f2cc5a1ef3cda11346288df1302d00c6b315ab541b23bf1"
+      },
+      "go_log": {
+        "file": "production-protection-warrior-5-targets.go-log.txt",
+        "sha256": "2ceea291bf1463c7d5e5f75d21846dafa12383a2c9f064bb93abcc3b8d4163c4"
+      }
+    },
+    {
+      "id": "production-fury-protection-warrior-3-targets",
+      "description": "Production Fury Protection Warrior tank request against 3 copies of the boss, each swinging at the tank on its own timer",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-fury-protection-warrior-3-targets.request.json"
+      },
+      "prepared": "production-fury-protection-warrior-3-targets.prepared.json",
+      "prepared_sha256": "abbdd9c6c139a8e35ec5001a0801835b7c66e09f7fc15b5369d364370e36e20d",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-fury-protection-warrior-3-targets.go-result.json",
+        "sha256": "22bb690dd0ee9379292f768ee3f9a32c658de37b1dedb6e353daf047ea8c8b0c"
+      },
+      "go_log": {
+        "file": "production-fury-protection-warrior-3-targets.go-log.txt",
+        "sha256": "de5d2ae94d008ed80eecc15dfd58ecb1f883888806f966a7b9424b71719a4af0"
+      }
+    },
+    {
+      "id": "protection-eye-for-an-eye-3-targets",
+      "description": "Protection Paladin with Eye for an Eye against 3 copies of the boss: a crit taken from a copy reflects onto that copy",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-eye-for-an-eye-3-targets.request.json"
+      },
+      "prepared": "protection-eye-for-an-eye-3-targets.prepared.json",
+      "prepared_sha256": "865372b4f0956dbc1f3f4135b49307125194fbc3b7bc695731857b2ac2dd4bb0",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-eye-for-an-eye-3-targets.go-result.json",
+        "sha256": "4ed18a9b56d68defcfe7c4a4c35002195ed6858be5c010e7f91140966417f6ce"
+      },
+      "go_log": {
+        "file": "protection-eye-for-an-eye-3-targets.go-log.txt",
+        "sha256": "31304138d7fcd8ae4f842a3cbb7aae21dec056500f59ca8fe4fb0f594a396e0f"
+      }
+    },
+    {
+      "id": "protection-paladin-sulfuras-3-targets",
+      "description": "Protection Paladin wielding Sulfuras, Hand of Ragnaros against 3 copies of the boss: Immolation hits the copy that landed the melee hit",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-paladin-sulfuras-3-targets.request.json"
+      },
+      "prepared": "protection-paladin-sulfuras-3-targets.prepared.json",
+      "prepared_sha256": "261072589ec331193941790ad9904bd09e9e28f28b6cc04a28015d9b86ad0f2b",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-paladin-sulfuras-3-targets.go-result.json",
+        "sha256": "e240f926fc76dd9b8bfdcead5b1886ebf12d6f42fcfc47e13ab7fd3028a24dfb"
+      },
+      "go_log": {
+        "file": "protection-paladin-sulfuras-3-targets.go-log.txt",
+        "sha256": "57e9cc2eb2eddf56c1f25b50f56bb6d2892545740d812406590aea9b8ee34c64"
+      }
+    },
+    {
+      "id": "protection-warrior-own-sunder-3-targets",
+      "description": "Protection Warrior with Retaliation against 3 copies of the boss: the strike goes back at the copy whose melee hit spent the charge",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-own-sunder-3-targets.request.json"
+      },
+      "prepared": "protection-warrior-own-sunder-3-targets.prepared.json",
+      "prepared_sha256": "3f68d34ca3ae79b78a55780d4a8c1431f1621627ec93955cff04fba9f6fa1351",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-own-sunder-3-targets.go-result.json",
+        "sha256": "9322b55b2ccdb2a72f2a10ce62cfc1eef723b435085038eda4c00febcfdc2057"
+      },
+      "go_log": {
+        "file": "protection-warrior-own-sunder-3-targets.go-log.txt",
+        "sha256": "d733ec2b9f075b3eca86d91cc2b31d1f40508f19e6fa97edbc11b6550a740f40"
+      }
+    },
+    {
+      "id": "protection-eye-for-an-eye-sapper",
+      "description": "Protection Paladin with Eye for an Eye and the Goblin Sapper Charge: a crit of the charge's half on the paladin reflects onto the paladin itself, since Go answers the unit whose spell made the hit",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-eye-for-an-eye-sapper.request.json"
+      },
+      "prepared": "protection-eye-for-an-eye-sapper.prepared.json",
+      "prepared_sha256": "9595ceb13b34874fb06bd70a7524cecd662c7f5a7acdc0afd15dd9fa91150dae",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-eye-for-an-eye-sapper.go-result.json",
+        "sha256": "4e3af1bff46152d1dc87cbc55f48add8953804163b496bc8392c9820fa342513"
+      },
+      "go_log": {
+        "file": "protection-eye-for-an-eye-sapper.go-log.txt",
+        "sha256": "96efbe150fa4e9872158dad9cffc727d5710d91f07307eae68f7bdb2911a519a"
       }
     }
   ]

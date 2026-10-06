@@ -13,6 +13,7 @@ pub(crate) const GATE: ClassGate = ClassGate {
     claims,
     limits,
     several_targets: Some(several_targets),
+    tanks_several_targets: true,
     player_movement: false,
     other_target_casts: None,
 };
@@ -235,8 +236,8 @@ fn crusader_limits(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
 
 /// The spells that reach a target past the first in Go and not yet in Rust: none. Consecration
 /// ticks on each target, with the bonus on the first four and Consecrated Ground marked on
-/// each, and Holy Wrath rolls each Undead or Demon target, as in Go. A tank assignment, which
-/// would have every copy swing at the player, is refused by the exporter.
+/// each, and Holy Wrath rolls each Undead or Demon target, as in Go. A tank has every copy
+/// of the boss swing at it, which the runtime follows.
 fn several_targets(_prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
     crate::engine::coverage::spells_reaching_other_targets(reachable, &[])
 }

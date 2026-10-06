@@ -1085,7 +1085,7 @@ impl<A: Agent> Fight<A> {
     /// Go `Unit.newHardcastAction`.
     fn new_hardcast_action(&mut self, side: Side) {
         // Go: while casting, a tank's dodge, parry and block fall to zero.
-        if side == Side::Player && self.enemy.is_some() {
+        if side == Side::Player && self.tanked() {
             self.player.reduced_avoidance = true;
         }
         if let Some(action) = self.unit_mut(side).hardcast_action.take() {

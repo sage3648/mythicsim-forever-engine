@@ -19,6 +19,7 @@ fight. Ordinary Rust tests use frozen data and need no Go checkout.
 | [boards.py](boards.py) | Write the application's published race board requests, one per spec and race, for a comparison | Python |
 | [sweep_record.py](sweep_record.py) | Write a sweep's validation record from a comparison run | Python |
 | [sweep.py](sweep.py) | Generate seeded randomized variants of one request for a compatibility sweep | Python |
+| [copy_targets.py](copy_targets.py) | Write requests against 2 to 5 copies of the boss from requests against one, as the application's Advanced targets setting does, optionally only the tank builds | Python |
 | [preset_matrix.py](preset_matrix.py) | Cross every class's upstream UI preset rotations, talents and gear sets into requests over the production requests | Python |
 | [upstream.py](upstream.py) | Audit the [upstream ledger](../UPSTREAM.md#ledger), optionally against a community clone | Python; Git for the range check |
 | [oracle-v2/main.go](oracle-v2/main.go) | Export a reset Go simulation as [prepared v2](../docs/prepared-v2.md) and run the full Go engine | Built by prepared_v2.py in isolated scratch |
