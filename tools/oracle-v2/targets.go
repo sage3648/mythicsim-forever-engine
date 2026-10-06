@@ -80,6 +80,18 @@ func targetShape(target *core.Unit, character *core.Character) map[string]string
 	// A label may name its target, as a dot's "Vampiric Embrace - Target 1" does.
 	for i, aura := range exportAuras(target, timers) {
 		aura.Label = strings.ReplaceAll(aura.Label, target.Label, "<target>")
+		// A rotation's "aura stacks" value listens to a stackable aura of the current target, the
+		// first one, with a stacks change and a reset handler (apl_values_aura.go). The listener
+		// only reads, so the copies are still alike without those two.
+		if aura.MaxStacks > 0 {
+			listened := []string{}
+			for _, callback := range aura.Callbacks {
+				if callback != "on_reset" && callback != "on_stacks_change" {
+					listened = append(listened, callback)
+				}
+			}
+			aura.Callbacks = listened
+		}
 		shape[fmt.Sprintf("aura %d (%s)", i+1, aura.Label)] = encode(aura)
 	}
 	shape["aura count"] = encode(len(target.GetAuras()))

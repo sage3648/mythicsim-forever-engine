@@ -12,7 +12,7 @@ pub(crate) const GATE: ClassGate = ClassGate {
     spell: spell_capability,
     claims,
     limits,
-    several_targets: None,
+    several_targets: Some(several_targets),
 };
 
 /// Warrior effect kinds implemented in Rust and validated against the pinned Go reference.
@@ -224,4 +224,65 @@ fn stance_spell(class_spell: &str) -> Option<&'static str> {
         "defensive_stance" => Some("defensive"),
         _ => None,
     }
+}
+
+/// The spells that reach a target past the first in Go and not yet in Rust. Cleave, Whirlwind,
+/// Thunder Clap and Sweeping Strikes run as in Go, and Demoralizing and Challenging Shout have
+/// no behavior to refuse by name. What stays refused is Cleave against three or more targets
+/// when an extra attack can cast it again from inside its own damage loop.
+fn several_targets(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
+    let mut reasons = crate::engine::coverage::spells_reaching_other_targets(reachable, &[]);
+    if prepared.encounter.target_count < 3 {
+        return reasons;
+    }
+    // Go's Cleave deals the slice of results every cast of it shares, and reuses each result
+    // object through a cache per target. An extra attack that a landed hit casts at once, as
+    // the party Windfury Totem and Weaponmaster do, is replaced by a queued Cleave, which then
+    // starts while the first still has hits to deal: it overwrites the results the first has
+    // yet to deal, so the first deals the second's last hit again. With two targets every
+    // object the second takes is a new one, as Rust deals it. With more it takes the cached
+    // object of the target the first deal has finished with, which a delayed proc of that deal
+    // resets as it clones the result it is about to hear again, so the hooks after it hear an
+    // empty hit. Rust does not model that cache.
+    let sweeping_strikes = prepared
+        .effects
+        .iter()
+        .any(|effect| matches!(effect, Effect::SweepingStrikes { .. }));
+    // Weaponmaster's extra attack comes from a sword hit of the main hand, or from the hit
+    // Sweeping Strikes copies, which carries both hands' special masks.
+    let extra_attack = prepared.effects.iter().any(|effect| match effect {
+        Effect::WindfuryTotem { .. } => true,
+        Effect::WeaponmasterSword { sword_hands, .. } => {
+            sweeping_strikes || sword_hands.iter().any(|hand| hand == "main")
+        }
+        _ => false,
+    });
+    if !extra_attack {
+        return reasons;
+    }
+    let cleaves: Vec<i32> = prepared
+        .effects
+        .iter()
+        .filter_map(|effect| match effect {
+            Effect::HeroicStrikeQueue { strikes, .. } => Some(strikes),
+            _ => None,
+        })
+        .flatten()
+        .filter(|strike| strike.cleave)
+        .map(|strike| strike.spell_id)
+        .collect();
+    let mut cast = std::collections::BTreeSet::new();
+    for spell in reachable {
+        let id = spell.action_id.clone().unwrap_or_default();
+        if id.item_id == 0 && cleaves.contains(&id.spell_id) {
+            cast.insert(format!(
+                "rotation reaches {id}, a Cleave that an extra attack can cast again while it \
+                 deals its hits, which Go's shared results and result cache scramble against {} \
+                 targets",
+                prepared.encounter.target_count
+            ));
+        }
+    }
+    reasons.extend(cast);
+    reasons
 }

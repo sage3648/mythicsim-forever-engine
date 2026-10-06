@@ -2910,10 +2910,12 @@ pub enum Effect {
         attack_power_share: f64,
         base_damage: f64,
     },
-    /// Whirlwind: a normalized main hand strike, and the off hand's with an off hand weapon.
+    /// Whirlwind: a normalized main hand strike, and the off hand's with an off hand weapon,
+    /// each hitting up to `max_targets` targets from the cast target on.
     Whirlwind {
         spell_id: i32,
         off_hand: bool,
+        max_targets: i32,
     },
     /// Execute: a base plus damage for each extra rage it spends.
     Execute {

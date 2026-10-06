@@ -25,7 +25,9 @@ pub(crate) fn on_hit<A: Agent>(
     if fight.spells[spell].flags.proc || !main_hand || !result.landed() {
         return;
     }
-    let rend = fight.dots[params.rend_dot].aura;
+    // Go `Rend.Dot(result.Target)`: the dot on the target the hit landed on.
+    let rend_dot = fight.dot_on(params.rend_dot, result.target);
+    let rend = fight.dots[rend_dot].aura;
     if !fight.aura(rend).active {
         return;
     }

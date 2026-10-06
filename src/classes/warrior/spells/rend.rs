@@ -18,7 +18,8 @@ pub(crate) fn apply<A: Agent>(fight: &mut Fight<A>, spell: SpellId, target: Side
     let result = fight.calc_physical_outcome(spell, target, outcome);
     fight.deal_damage(spell, result, false);
     if result.landed() {
-        fight.apply_dot(params.dot);
+        let dot = fight.dot_on(params.dot, target);
+        fight.apply_dot(dot);
     } else {
         fight.issue_refund(spell);
     }

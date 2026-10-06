@@ -3,7 +3,9 @@
 //! swing then casts the strike in its place on the weapon special table, provided it can
 //! still be paid for. The dual wield miss penalty the strike lifts never applies to that table.
 
-use crate::core::fight::{melee::PhysicalOutcome, Agent, AuraRef, Fight, Side, SpellId, TimerId};
+use crate::core::fight::{
+    melee::PhysicalOutcome, Agent, AuraRef, Fight, Side, SpellId, SpellResult, TimerId,
+};
 
 /// One strike: the strike spell and its queue aura.
 #[derive(Clone, Copy, Debug)]
@@ -24,6 +26,10 @@ pub(crate) struct Queue {
     pub(crate) current: Option<usize>,
     /// Go `isQueueQueued`, by strike.
     pub(crate) queued: Vec<bool>,
+    /// The `results` slice of Go's `registerCleave`, which every cast of Cleave shares: a cast
+    /// that begins while another deals its results overwrites the ones that cast has yet to
+    /// deal, as Weaponmaster's extra attack replaced by a queued Cleave does.
+    pub(crate) cleave_results: Vec<SpellResult>,
 }
 
 impl Queue {
@@ -59,14 +65,35 @@ pub(crate) fn queue<A: Agent>(
     Some(fight.now + delay)
 }
 
-/// The strike's `ApplyEffects`. Heroic Strike refunds a miss; Cleave strikes each target, the
-/// one in scope, and refunds nothing.
+/// Go `registerCleave`'s cap on the targets a Cleave hits.
+const CLEAVE_TARGETS: usize = 2;
+
+/// Go `registerCleave`'s `ApplyEffects` up to its deals: a hit on up to two targets from the
+/// cast target on, each rolling its own weapon damage, all calculated before any is dealt.
+/// The caller deals them from [`Queue::cleave_results`], as Go does from its shared slice.
+pub(crate) fn cleave_results<A: Agent>(
+    fight: &mut Fight<A>,
+    spell: SpellId,
+    target: Side,
+    params: Strike,
+) -> Vec<SpellResult> {
+    let outcome = PhysicalOutcome::MeleeWeaponSpecialHitAndCrit { count: true };
+    let mut results = Vec::with_capacity(CLEAVE_TARGETS);
+    for hit in fight.cleave_targets(target, CLEAVE_TARGETS) {
+        let attack_power = fight.melee_attack_power();
+        let base = params.base_damage + fight.mh_weapon_damage(attack_power);
+        results.push(fight.calc_physical_damage(spell, hit, base, outcome));
+    }
+    results
+}
+
+/// Heroic Strike's `ApplyEffects`: it refunds a miss.
 pub(crate) fn strike<A: Agent>(fight: &mut Fight<A>, spell: SpellId, target: Side, params: Strike) {
+    let outcome = PhysicalOutcome::MeleeWeaponSpecialHitAndCrit { count: true };
     let attack_power = fight.melee_attack_power();
     let base = params.base_damage + fight.mh_weapon_damage(attack_power);
-    let outcome = PhysicalOutcome::MeleeWeaponSpecialHitAndCrit { count: true };
     let result = fight.calc_physical_damage(spell, target, base, outcome);
-    if !params.cleave && !result.landed() {
+    if !result.landed() {
         fight.issue_refund(spell);
     }
     fight.deal_damage(spell, result, false);

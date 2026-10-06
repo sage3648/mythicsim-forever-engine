@@ -56,7 +56,7 @@ pub(crate) fn apply<A: Agent>(
         threat,
     };
     fight.deal_damage(spell, result, false);
-    let dot = params.dot;
+    let dot = fight.dot_on(params.dot, target);
     let aura = fight.dots[dot].aura;
     let owed = if fight.aura(aura).active {
         fight.dots[dot].snapshot_base * f64::from(fight.dots[dot].remaining_ticks)
