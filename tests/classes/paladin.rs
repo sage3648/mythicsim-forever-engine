@@ -454,3 +454,69 @@ fn a_multidot_line_for_consecration_is_dropped() {
     let without = first_fight_log(tank_json("retribution-paladin-3-targets"));
     assert_eq!(with_line, without);
 }
+
+/// Every copy of the boss swings at a tank in Go, each on its own timer, and Holy Shield's
+/// damage answers the copy whose swing was blocked: the proc is cast at the spell's unit.
+#[test]
+fn every_copy_swings_at_the_tank_and_holy_shield_answers_the_one_that_swung() {
+    let log = first_fight_log(tank_json("production-protection-paladin-3-targets"));
+    for target in 1..=3 {
+        assert!(
+            log.contains(&format!("[Target {target}] Casting {{OtherID: 3, Tag: 1}}")),
+            "Target {target}: it does not swing"
+        );
+        assert!(
+            log.contains(&format!(
+                "] [Target {target}] {{SpellID: 20928, Tag: 2}} Hit for"
+            )),
+            "Target {target}: Holy Shield's damage never reached it"
+        );
+    }
+}
+
+/// Sulfuras' Immolation hits back whichever copy of the boss landed the melee hit.
+#[test]
+fn immolation_hits_the_copy_that_landed_the_hit() {
+    let log = first_fight_log(tank_json("protection-paladin-sulfuras-3-targets"));
+    for target in 1..=3 {
+        assert!(
+            log.contains(&format!("] [Target {target}] {{SpellID: 21142}} Hit for")),
+            "Target {target}: no Immolation"
+        );
+    }
+}
+
+/// Eye for an Eye answers the unit whose spell made the crit, as Go casts the reflection at
+/// `spell.Unit`: the half of the Goblin Sapper Charge that hits the paladin is the paladin's
+/// own spell, so a crit of it is reflected onto the paladin itself.
+#[test]
+fn eye_for_an_eye_reflects_a_sapper_crit_onto_the_paladin() {
+    let prepared: PreparedV2 =
+        serde_json::from_value(tank_json("protection-eye-for-an-eye-sapper")).unwrap();
+    let report = forever_engine::simulate_prepared(&prepared).unwrap();
+    let paladin = &report.result["raidMetrics"]["parties"][0]["players"][0];
+    let reflection = paladin["actions"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|action| action["id"]["spellId"] == 9799)
+        .expect("Eye for an Eye reflects");
+    // The targets are the boss, then the paladin.
+    assert!(reflection["targets"][0]["hits"].as_f64().unwrap() > 0.0);
+    assert!(
+        reflection["targets"][1]["hits"].as_f64().unwrap() > 0.0,
+        "no reflection landed on the paladin"
+    );
+}
+
+/// Eye for an Eye reflects a share of a crit taken onto the copy that dealt it.
+#[test]
+fn eye_for_an_eye_reflects_onto_the_copy_that_crit() {
+    let log = first_fight_log(tank_json("protection-eye-for-an-eye-3-targets"));
+    for target in 1..=3 {
+        assert!(
+            log.contains(&format!("] [Target {target}] {{SpellID: 9799}} Hit for")),
+            "Target {target}: no reflection"
+        );
+    }
+}

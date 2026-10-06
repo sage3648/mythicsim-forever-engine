@@ -13,6 +13,7 @@ pub(crate) const GATE: ClassGate = ClassGate {
     claims,
     limits,
     several_targets: Some(several_targets),
+    tanks_several_targets: true,
     other_target_casts: Some(crate::engine::coverage::no_limits),
 };
 
