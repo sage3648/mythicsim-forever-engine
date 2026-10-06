@@ -182,6 +182,8 @@ func shamanEffects(agent core.Agent, character *core.Character) []map[string]any
 		effects = append(effects, map[string]any{
 			"kind": "elemental_devastation", "trigger_aura": "Elemental Devastation Trigger", "aura": "Elemental Devastation",
 			"melee_crit": shamanDevastation.Effect(dbcenums.A_DUMMY, 0).ValueAt(talents.ElementalDevastation),
+			// Forever's rank lacks the bit: a crit from a spell flagged Proc, as an overload, does not count.
+			"can_proc_from_procs": shamanDevastation.Highest().CanProcFromProcs(),
 		})
 	}
 	if talents.Flurry > 0 { // talents_enhancement.go applyFlurry: a Go literal 500 ms charge cooldown.
@@ -189,6 +191,8 @@ func shamanEffects(agent core.Agent, character *core.Character) []map[string]any
 			"kind": "flurry", "trigger_aura": "Flurry Trigger", "aura": "Flurry",
 			"melee_speed_multiplier": shamanFlurry.MultiplierAt(talents.Flurry), "charge_icd_ns": nanos(500 * time.Millisecond),
 			"max_stacks": int32(shamanFlurryBuff.Highest().ProcCharges),
+			// Forever's rank 16256 lacks the bit: a hit from a spell flagged Proc does not trigger it.
+			"can_proc_from_procs": shamanFlurry.Highest().CanProcFromProcs(),
 		})
 	}
 	if talents.Stormstrike && talents.ImprovedStormstrike > 0 { // talents_enhancement.go applyImprovedStormstrike

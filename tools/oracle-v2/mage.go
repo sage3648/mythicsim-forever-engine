@@ -249,6 +249,8 @@ func mageEffects(agent core.Agent, character *core.Character) []map[string]any {
 			"kind": "ignite", "trigger_aura": "Ignite Talent", "spell_id": igniteTriggered.Highest().ID,
 			"share":     igniteTalent.FractionAt(talents.Ignite),
 			"num_ticks": int32(igniteTriggered.Highest().Duration() / (2 * time.Second)),
+			// Forever's talent row lacks the bit, so a spell flagged Proc cannot trigger it.
+			"can_proc_from_procs": igniteTalent.Highest().CanProcFromProcs(),
 		})
 	}
 	if talents.ArcanePower { // arcane_power.go

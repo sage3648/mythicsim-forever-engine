@@ -142,17 +142,18 @@ func rogueSpecEffects(r *rogue.Rogue, character *core.Character) []map[string]an
 			"combo_points": int32(row.EnergizeEffect().Average(core.CharacterLevel)),
 		})
 	}
-	// talents_subtlety.go registerPreparation: the cooldowns it resets, and it fires as a major
-	// cooldown once Vanish is cooling down.
+	// talents_subtlety.go registerPreparation: it finishes the cooldown of every other rogue
+	// spell that has one, in spellbook order, and it fires as a major cooldown once Vanish is
+	// cooling down.
 	if r.Preparation != nil {
-		reset := []int32{}
-		for _, spell := range []*core.Spell{r.ColdBlood, r.Shadowstep, r.Premeditation, r.Vanish} {
-			if spell != nil {
-				reset = append(reset, spell.ActionID.SpellID)
+		reset := []int{}
+		for i, spell := range character.Spellbook {
+			if spell != r.Preparation && spell.ClassSpellMask&rogue.RogueSpellsAll != 0 && spell.CD.Timer != nil {
+				reset = append(reset, i)
 			}
 		}
 		effects = append(effects, map[string]any{
-			"kind": "preparation", "spell_id": r.Preparation.ActionID.SpellID, "reset_spell_ids": reset,
+			"kind": "preparation", "spell_id": r.Preparation.ActionID.SpellID, "reset_spells": reset,
 		})
 	}
 	// talents_assassination.go registerSealFate: a crit from a builder adds a combo point.

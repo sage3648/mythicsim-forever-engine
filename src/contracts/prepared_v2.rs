@@ -2284,6 +2284,8 @@ pub enum Effect {
         spell_id: i32,
         share: f64,
         num_ticks: i32,
+        /// Whether a spell flagged Proc can trigger it.
+        can_proc_from_procs: bool,
     },
     /// Arcane Power's major cooldown and aura.
     ArcanePower {
@@ -2761,6 +2763,8 @@ pub enum Effect {
         trigger_aura: String,
         aura: String,
         melee_crit: f64,
+        /// Whether a crit from a spell flagged Proc can trigger it.
+        can_proc_from_procs: bool,
     },
     /// Flurry: melee crits grant charges of melee speed that white hits spend.
     Flurry {
@@ -2769,6 +2773,8 @@ pub enum Effect {
         melee_speed_multiplier: f64,
         charge_icd_ns: i64,
         max_stacks: i32,
+        /// Whether a hit from a spell flagged Proc can trigger it.
+        can_proc_from_procs: bool,
     },
     /// Improved Stormstrike: Stormstrike may raise casting spirit regeneration; its cooldown
     /// reset hears only hits the player takes.
@@ -3390,7 +3396,8 @@ pub enum Effect {
     },
     Preparation {
         spell_id: i32,
-        reset_spell_ids: Vec<i32>,
+        /// Every other Rogue spell with a cooldown, by spellbook position.
+        reset_spells: Vec<usize>,
     },
     /// A Rogue talent proc trigger: the spells it hears, the outcome and chance, and what its
     /// handler does a spell batch window later.
