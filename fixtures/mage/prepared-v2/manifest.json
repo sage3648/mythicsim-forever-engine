@@ -4,7 +4,7 @@
   "engine_revision": "cd7d44aec711bcc8f20ea12d3ed83cea2126ac66",
   "client_build": "1.60.1.70205",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "73f88425d5ed6b1038f58fd935f1f54077063e8682b3cf9855aa0205f11927b7",
+  "exporter_sha256": "69f3d0c50d2fcd219082d790390c728fda1bac826f6f932f4cb135f646507a4a",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -1293,7 +1293,7 @@
         "path": "fixtures/mage/prepared-v2/production-marksmanship-hunter.request.json"
       },
       "prepared": "production-marksmanship-hunter.prepared.json",
-      "prepared_sha256": "928aff70ca6b69c8e58dbe9e51c17e175bc9e8dfd9779850ded26f6c75a0d686",
+      "prepared_sha256": "cb198743902bddcee46b11bac30dcb3f9b8da463d38c9f72d6610a6f91a96a09",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1499,7 +1499,7 @@
         "path": "fixtures/mage/prepared-v2/marksmanship-hunter-thorium-grenade.request.json"
       },
       "prepared": "marksmanship-hunter-thorium-grenade.prepared.json",
-      "prepared_sha256": "b5a185f5fe0fa5a953599219da359b3e138a307e67cbe4d3ce8e5389ae31cf47",
+      "prepared_sha256": "37bf9931144ace80ac9edf24136f527a69cb304e8be5c31051b742a238b7bb26",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1915,7 +1915,7 @@
         "path": "fixtures/mage/prepared-v2/production-beast-mastery-hunter.request.json"
       },
       "prepared": "production-beast-mastery-hunter.prepared.json",
-      "prepared_sha256": "36e2dcbafffd544246839cb5b724b542fc86059f5179112de80d1038001e19e3",
+      "prepared_sha256": "e671c0d69a8b033ed1bf48f33a09d7d9007281318898d9058b44fb3b1faf8b78",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1936,7 +1936,7 @@
         "path": "fixtures/mage/prepared-v2/survival-hunter-no-whelp.request.json"
       },
       "prepared": "survival-hunter-no-whelp.prepared.json",
-      "prepared_sha256": "fafcaae70377c2cb7615075986a429b674e6ca2ddc871fdcd18402b9c65bbdc5",
+      "prepared_sha256": "abc2034ac34b2996edc94db9727b004321b95994e573206f7431ac3614ff7496",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1957,7 +1957,7 @@
         "path": "fixtures/mage/prepared-v2/production-survival-hunter.request.json"
       },
       "prepared": "production-survival-hunter.prepared.json",
-      "prepared_sha256": "f1868dada22eb4126c275bab38ae054b6442cd68f02e0f7cab9aa47d3bc7bfaa",
+      "prepared_sha256": "e73252d65b8ec8e62a8c8e7412d0eafad0c9911d584d83046811ea6bbf659812",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2634,7 +2634,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-pet-uptime-half.request.json"
       },
       "prepared": "beast-mastery-hunter-pet-uptime-half.prepared.json",
-      "prepared_sha256": "f2c9a4dc9555cb8dd876445e49812dcd47c2f1aa42d9028bf4c0fd97eab8957e",
+      "prepared_sha256": "e8ce3941c58a7a744a67ac8a579c2e79f675d9878c040d0149a6ee433f66ad61",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2655,7 +2655,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-wind-serpent.request.json"
       },
       "prepared": "beast-mastery-hunter-wind-serpent.prepared.json",
-      "prepared_sha256": "75b2c7984d2b551d28d102815dd044aca4c4805bb1e54085cceea49cd0d3287a",
+      "prepared_sha256": "7f41e343f43051bdfa0ef0e2ebf3f1bcfdbbf7897714a6ff6f074e54162bc8e6",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2676,7 +2676,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-bat.request.json"
       },
       "prepared": "beast-mastery-hunter-bat.prepared.json",
-      "prepared_sha256": "6f6c2fb271f97bcb22548e0b4d1cbf8f5504604e6fc70b043952f33b6494ebad",
+      "prepared_sha256": "5aedc7a923586aaffc9b835e973a666ce5cde06c0c465c24826483109a42d8c2",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2697,7 +2697,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-gorilla.request.json"
       },
       "prepared": "beast-mastery-hunter-gorilla.prepared.json",
-      "prepared_sha256": "13a6a46f8e502174eaf34c38cad2e74353ce35b98ee75def1bd05b178159c3ae",
+      "prepared_sha256": "094aa8b0a16d0266d0ef2391a5047322ebc9c6665df94da08c07030c880a6323",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2718,7 +2718,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-raptor.request.json"
       },
       "prepared": "beast-mastery-hunter-raptor.prepared.json",
-      "prepared_sha256": "dce9ba0b6c25d524c5d2d790c8d12b64516c5a9dacea44b024f3daeda2839d4f",
+      "prepared_sha256": "044d878bde1d9b81e86568abc54688fccddc86d4aea7559c05b6ae87271da0e0",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2739,7 +2739,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-spider.request.json"
       },
       "prepared": "beast-mastery-hunter-spider.prepared.json",
-      "prepared_sha256": "01e5286283006c138a2787e5825ca8ae6cda179226852cdc2e970ffd7c8814e2",
+      "prepared_sha256": "038c094026aca4fb439d99812f7ceb9cdf9bc33ad71ca844aebc71694a540f9b",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2760,7 +2760,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-bear.request.json"
       },
       "prepared": "beast-mastery-hunter-bear.prepared.json",
-      "prepared_sha256": "b87c398784a83747ad8f63c0d91121d19e96c4a01133a02af52aaa60c4d1b385",
+      "prepared_sha256": "6761406fbe8798aa922df32010872c7178ae8259a8104312f5ae283c31518d4b",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2781,7 +2781,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-scorpid.request.json"
       },
       "prepared": "beast-mastery-hunter-scorpid.prepared.json",
-      "prepared_sha256": "4b0cd59dea16728bacbc742de1df11afc89a2ed98a9677ae39fc77e01d22c196",
+      "prepared_sha256": "c21181c589d468bd83c2681943393cbf237fe448ca8e7a82f309311e1713fa9f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2802,7 +2802,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-tallstrider.request.json"
       },
       "prepared": "beast-mastery-hunter-tallstrider.prepared.json",
-      "prepared_sha256": "08c6d762c5b89cd131b8584102fcb5c12e4b335f6fac32534adc6a1fb9bb0748",
+      "prepared_sha256": "7323da599bc79471a80b9b65a7c424023b31bc313241453c9653c14dc745d08f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2823,7 +2823,7 @@
         "path": "fixtures/mage/prepared-v2/marksmanship-hunter-rapid-recuperation.request.json"
       },
       "prepared": "marksmanship-hunter-rapid-recuperation.prepared.json",
-      "prepared_sha256": "3c5154d4dd467f4b7e57474b3fcbbca17fb3acea588cd549e7fcaeca5d7e9778",
+      "prepared_sha256": "9837dcb1d55833683a0c3dc9d973a92a64485272f77e2e29a533bb79b667d316",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2844,7 +2844,7 @@
         "path": "fixtures/mage/prepared-v2/survival-melee-hunter-cat-heartbeat.request.json"
       },
       "prepared": "survival-melee-hunter-cat-heartbeat.prepared.json",
-      "prepared_sha256": "10ed76fb36af198ec45ead25701763a958eff708d771aa0c7b594eb1167e0814",
+      "prepared_sha256": "8dbd30b436fbe8e1f1967944786c0295588b12ffac1f0d058576d01d3f93385e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2865,7 +2865,7 @@
         "path": "fixtures/mage/prepared-v2/marksmanship-hunter-arcane-shot.request.json"
       },
       "prepared": "marksmanship-hunter-arcane-shot.prepared.json",
-      "prepared_sha256": "782b62cbc8625d504c465dc15bf9fefd1d00a4ec31f2189cacca48217fff73cf",
+      "prepared_sha256": "0cee901051d5876c910101b8ce952add88a84e027677eb0cfc8ab3941f3c0807",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2886,7 +2886,7 @@
         "path": "fixtures/mage/prepared-v2/marksmanship-hunter-predators-armor.request.json"
       },
       "prepared": "marksmanship-hunter-predators-armor.prepared.json",
-      "prepared_sha256": "8b187796f6a3871f257524be232f2342dd28b4e54301e941b161426845421167",
+      "prepared_sha256": "77620bab7374cd663e617f7a336609dc6c35e05a8fe45e80e7ebab82f7337946",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2907,7 +2907,7 @@
         "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-beastmaster-armor.request.json"
       },
       "prepared": "beast-mastery-hunter-beastmaster-armor.prepared.json",
-      "prepared_sha256": "355d1f1e1bb987e37c0f752ff311a8cfd34b0b434b8a7b1a0569a4ef61a461df",
+      "prepared_sha256": "825e258e01a57a8e57521f5386fcf4e9cf1d06c49195684155e9aad8f4277407",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2928,7 +2928,7 @@
         "path": "fixtures/mage/prepared-v2/marksmanship-hunter-cryptstalker-armor.request.json"
       },
       "prepared": "marksmanship-hunter-cryptstalker-armor.prepared.json",
-      "prepared_sha256": "9a5a15798f7fc0f0e9641daadc5e731a37284c580be0d952b4f91be28eba9b24",
+      "prepared_sha256": "08f986e4db48a7d7344c6050328e51ffa7857114483086aaebbbedb90b7bb1d5",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2949,7 +2949,7 @@
         "path": "fixtures/mage/prepared-v2/survival-hunter-beaststalker-armor.request.json"
       },
       "prepared": "survival-hunter-beaststalker-armor.prepared.json",
-      "prepared_sha256": "e31623bb61f24f5b9460f0a4972cf4e622a53e51e136b0fec50435f0ba905158",
+      "prepared_sha256": "f18f869f8dbe44def7fb3c0ff62a23f787e67f527d97b063502a43bd3873f398",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2991,7 +2991,7 @@
         "path": "fixtures/mage/prepared-v2/marksmanship-hunter-hands-of-power.request.json"
       },
       "prepared": "marksmanship-hunter-hands-of-power.prepared.json",
-      "prepared_sha256": "57e0471e1b4fb7251c423782e8bb6960be33e0ed94c56171f80e2f9557b4cf00",
+      "prepared_sha256": "179bcd4f9e3783987093d0573456b88cb6248d0466b99e7a0ea84fe91e16a49b",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3778,7 +3778,7 @@
         "path": "fixtures/mage/prepared-v2/survival-hunter-cat-and-whelp.request.json"
       },
       "prepared": "survival-hunter-cat-and-whelp.prepared.json",
-      "prepared_sha256": "635fafafa417c73619acff663c72a1fc35d0ff22764b27e2f316bb6199606f6e",
+      "prepared_sha256": "ccc0333c8868372fed7c1c4a371ba81a93d10fb1e06b080b5d78db02b6e8cb8d",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5426,7 +5426,7 @@
         "path": "fixtures/mage/prepared-v2/production-survival-hunter-2-targets.request.json"
       },
       "prepared": "production-survival-hunter-2-targets.prepared.json",
-      "prepared_sha256": "2e6a0dc42e196a8217c95fdc1344cbd5a5629829f47a8c32bac7493ec24c0113",
+      "prepared_sha256": "b2da6e2ff1e3f02100050d793c980abf46efff5cdd7bcdd581c9c703d6b61c4a",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5447,7 +5447,7 @@
         "path": "fixtures/mage/prepared-v2/production-survival-hunter-5-targets.request.json"
       },
       "prepared": "production-survival-hunter-5-targets.prepared.json",
-      "prepared_sha256": "5a8fa7f5ba453e42fabc4b3905afde35a47ccf2139ddbdaffe5b2475ac12bb17",
+      "prepared_sha256": "aa7eb3bdebcc424d826722dd5924b9a922a1e245c4cb31b63b7e227f406d0930",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5594,7 +5594,7 @@
         "path": "fixtures/mage/prepared-v2/production-marksmanship-hunter-3-targets.request.json"
       },
       "prepared": "production-marksmanship-hunter-3-targets.prepared.json",
-      "prepared_sha256": "95abb8a0b6b0090ca051e1a4859060a2ec3af8cab48c2b7dff444e24c203c5ee",
+      "prepared_sha256": "ac6ffa17ac8f62f988359de3d6e48318dba0197d91b0f82f8230411c34396841",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5615,7 +5615,7 @@
         "path": "fixtures/mage/prepared-v2/production-beast-mastery-hunter-3-targets.request.json"
       },
       "prepared": "production-beast-mastery-hunter-3-targets.prepared.json",
-      "prepared_sha256": "70e81b8d2becfe8b1da13f677637b5f5eec44a4c575244a11f2cc1627b59ac15",
+      "prepared_sha256": "0b57198e5cd59fab1485df1fe55dce8dea08e2f24701d2dd0ef9a9da36e9f8e1",
       "expected_coverage": {
         "supported": true,
         "reasons": []

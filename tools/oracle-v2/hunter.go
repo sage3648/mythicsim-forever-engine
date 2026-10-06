@@ -78,6 +78,7 @@ var (
 	hunterExplosiveTrap     = spelldata.Ranked(13813, 14316, 14317)
 	hunterExplosiveEffect   = spelldata.Ranked(13812, 14314, 14315)
 	hunterVolley            = spelldata.Ranked(1510, 14294, 14295)
+	hunterScorpidPoisonTick = spelldata.Ranked(24640, 24583, 24586, 24587)
 	hunterExposePrey        = spelldata.Talent(1310532, 2)
 	hunterResourcefulBuff   = spelldata.Ranked(1242688)
 	hunterRapidRecuperation = spelldata.Talent(1223987, 2)
@@ -371,7 +372,12 @@ func hunterPetAbility(spell *core.Spell) map[string]any {
 	// newScorpidPoison: a melee special hit roll, then a dot whose stack Apply resets, so each
 	// landed cast is one stack of the Go literal tick.
 	if id == 24587 {
-		return map[string]any{"kind": "hunter_pet_scorpid_poison", "spell_id": id, "tick_base": 5.0}
+		// 24587 carries Periodic Can Crit: the ticks roll the pet's melee crit (pet_abilities.go
+		// newScorpidPoison, spelldata TickOutcomeHitRolled).
+		return map[string]any{
+			"kind": "hunter_pet_scorpid_poison", "spell_id": id, "tick_base": 5.0,
+			"tick_can_crit": hunterScorpidPoisonTick.Rank(4).PeriodicCanCrit(), "tick_magic": spell.DefenseType == core.DefenseTypeMagic,
+		}
 	}
 	if literal, ok := hunterPetAbilityRolls[id]; ok {
 		return map[string]any{
@@ -572,6 +578,8 @@ func hunterMeleeEffects(h *hunter.Hunter, character *core.Character) []map[strin
 		effects = append(effects, map[string]any{
 			"kind": "immolation_trap", "spell_id": h.ImmolationTrap.ActionID.SpellID,
 			"tick_base": effect.PeriodicEffect().Average(core.CharacterLevel),
+			// spelldata TickOutcomeHitRolled: a crit where the effect row states Periodic Can Crit.
+			"tick_can_crit": effect.PeriodicCanCrit(), "tick_magic": h.ImmolationTrap.DefenseType == core.DefenseTypeMagic,
 		})
 	}
 	// traps.go registerExplosiveTrapSpell: one hit for each active target, from the cast target on,
@@ -587,6 +595,7 @@ func hunterMeleeEffects(h *hunter.Hunter, character *core.Character) []map[strin
 			"hit_min": hitRange[0], "hit_max": hitRange[1], "hits": character.Env.ActiveTargetCount(),
 			"aoe_cap_multiplier": character.Env.Encounter.AOECapMultiplier(),
 			"tick_base":          effect.Effect(dbcenums.A_PERIODIC_DAMAGE, 0).Average(core.CharacterLevel),
+			"tick_can_crit":      effect.PeriodicCanCrit(), "tick_magic": h.ExplosiveTrap.DefenseType == core.DefenseTypeMagic,
 		})
 	}
 	// volley.go: the channel holds the ranged swing for the rank's duration, then the area dot on

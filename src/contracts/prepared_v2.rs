@@ -3541,6 +3541,9 @@ pub enum Effect {
     ImmolationTrap {
         spell_id: i32,
         tick_base: f64,
+        /// Whether the effect row lets a tick crit, and whether the trap is a magic spell.
+        tick_can_crit: bool,
+        tick_magic: bool,
     },
     /// Explosive Trap: `hits` magic hits from the cast target on, each rolled between the
     /// bounds and scaled by the AoE cap, then the area dot on the hunter, which ticks its
@@ -3552,6 +3555,9 @@ pub enum Effect {
         hits: i32,
         aoe_cap_multiplier: f64,
         tick_base: f64,
+        /// Whether the effect row lets a tick crit, and whether the trap is a magic spell.
+        tick_can_crit: bool,
+        tick_magic: bool,
     },
     /// Volley: the channel holds the ranged swing for `ranged_delay_ns`, then the area dot on
     /// the hunter ticks its snapshot of `tick_base` on every target.
@@ -3629,6 +3635,9 @@ pub enum Effect {
     HunterPetScorpidPoison {
         spell_id: i32,
         tick_base: f64,
+        /// Whether the poison's row lets a tick crit, and whether the spell is magic.
+        tick_can_crit: bool,
+        tick_magic: bool,
     },
     /// The Tallstrider's Dust Cloud: a melee special hit roll, then the target aura that
     /// changes its armor by this amount while it holds.
