@@ -57,6 +57,8 @@ pub(crate) enum Act {
 pub(crate) enum PrepullAct {
     Cast(SpellId),
     ActivateAura(AuraRef),
+    /// Go `APLActionMove`: the player runs to the range from the target.
+    Move(f64),
 }
 
 /// A ready action. Go keeps the cooldown found by `IsReady` for `Execute`.
@@ -180,6 +182,7 @@ impl<A: Agent> Fight<A> {
                 // Go GetAPLAura on the player: an unknown aura drops the action.
                 ParsedAction::ActivateAura(id) => find(Side::Player, id)
                     .map(|found| (prepull.do_at_ns, PrepullAct::ActivateAura(found.aura))),
+                ParsedAction::Move(range) => Some((prepull.do_at_ns, PrepullAct::Move(*range))),
                 _ => None,
             })
             .collect();
@@ -306,7 +309,7 @@ impl<A: Agent> Fight<A> {
                     _ => continue,
                 },
                 // Parsed only among the prepull actions.
-                ParsedAction::ActivateAura(_) => continue,
+                ParsedAction::ActivateAura(_) | ParsedAction::Move(_) => continue,
             };
             let condition = match compile_condition(item.condition.as_ref(), &lookup) {
                 // A constant false condition prunes the action; its spells already left
@@ -910,6 +913,8 @@ impl<A: Agent> Fight<A> {
             return;
         }
         self.in_rotation = true;
+        // Go brings the unit's position up to date before the rotation reads it.
+        self.update_position(Side::Player, false);
         let mut executed = 0;
         while let Some(action) = self.next_action() {
             assert!(executed <= 1000, "infinite rotation loop");
@@ -921,7 +926,11 @@ impl<A: Agent> Fight<A> {
             self.player_log("No available actions!");
         }
         if self.player.rotation_timer <= self.now {
-            let next = (self.now + self.config.reaction).max(self.player.gcd);
+            // A moving unit does not wait for its GCD.
+            let mut next = self.now + self.config.reaction;
+            if !self.player.moving {
+                next = next.max(self.player.gcd);
+            }
             self.wait_until(next);
         }
     }

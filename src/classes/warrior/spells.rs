@@ -4,6 +4,7 @@ pub(crate) mod battle_shout;
 pub(crate) mod berserker_rage;
 pub(crate) mod bloodrage;
 pub(crate) mod bloodthirst;
+pub(crate) mod charge;
 pub(crate) mod death_wish;
 pub(crate) mod execute;
 pub(crate) mod hamstring;

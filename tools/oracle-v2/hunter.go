@@ -260,7 +260,7 @@ func hunterSwingReplacementKeepsSwing(agent core.Agent, player *proto.Player) bo
 
 // items.go Renataki's Charm of Beasts: Aimed Shot's, Multi-Shot's and Arcane Shot's cooldowns,
 // as the hunter has them, reset at once; the major cooldown waits for one of them to be cooling.
-func hunterRenatakisCharm(agent core.Agent, spell *core.Spell) map[string]any {
+func hunterRenatakisCharm(_ *proto.RaidSimRequest, agent core.Agent, spell *core.Spell) map[string]any {
 	h := agent.(hunter.HunterAgent).GetHunter()
 	shots := []int32{}
 	for _, shot := range []*core.Spell{h.AimedShot, h.MultiShot, h.ArcaneShot} {

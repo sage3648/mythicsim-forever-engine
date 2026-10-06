@@ -496,3 +496,197 @@ fn a_cleave_cast_again_while_it_deals_deals_the_later_hit_twice() {
         assert!(dealt_twice, "{name}");
     }
 }
+
+/// The lines of a first-fight log at one timestamp.
+fn lines_at<'a>(logs: &'a str, time: &str) -> Vec<&'a str> {
+    let prefix = format!("[{time}] ");
+    logs.lines()
+        .filter(|line| line.starts_with(&prefix))
+        .collect()
+}
+
+fn has_line(logs: &str, time: &str, needle: &str) -> bool {
+    lines_at(logs, time)
+        .iter()
+        .any(|line| line.contains(needle))
+}
+
+/// A prepull move runs unchecked, the Movement aura's stacks count the yards, and Charge
+/// triples the speed until the run ends, which also ends the dash aura, all as Go logs it. The
+/// swings start once the run has put the warrior in range, before the pull.
+#[test]
+fn a_prepull_charge_runs_to_the_target() {
+    let logs = first_fight_log(warrior_fixture("production-warrior-prepull-charge"));
+    assert!(has_line(&logs, "-6.00", "[DEBUG] Moving to 25.0 yards"));
+    assert!(has_line(&logs, "-6.00", "{OtherID: 20} stacks: 0 --> 1"));
+    // 25 yards at 7 yards a second take 3.571 seconds.
+    assert!(has_line(&logs, "-2.43", "{OtherID: 20} stacks: 1 --> 25"));
+    assert!(has_line(&logs, "-2.43", "Aura faded: {OtherID: 20}"));
+    assert!(has_line(&logs, "-1.00", "Casting {SpellID: 11578}"));
+    assert!(has_line(
+        &logs,
+        "-1.00",
+        "[DEBUG] Movement speed changed from 7.00 (0.00%) to 21.00 (200.00%)"
+    ));
+    assert!(has_line(
+        &logs,
+        "-1.00",
+        "Gained 18.000 rage from {SpellID: 11578}"
+    ));
+    // The run to 4.5 yards takes 0.976 seconds at the dash speed, and ends the aura.
+    assert!(has_line(&logs, "-0.02", "{OtherID: 20} stacks: 4 --> 0"));
+    assert!(has_line(&logs, "-0.02", "Aura faded: {SpellID: 11578}"));
+    assert!(has_line(
+        &logs,
+        "-0.02",
+        "[DEBUG] Movement speed changed from 21.00 (200.00%) to 7.00 (0.00%)"
+    ));
+    assert!(has_line(&logs, "0.00", "Casting {OtherID: 3, Tag: 1}"));
+}
+
+/// Go reads a unit's position only when the rotation runs or a move starts, so a Charge cast
+/// while the first move is still running checks the range the move started from and fails
+/// silently. The warrior stays out of melee range and never swings.
+#[test]
+fn charge_cast_while_moving_checks_the_old_range() {
+    let logs = first_fight_log(warrior_fixture(
+        "production-warrior-prepull-charge-while-moving",
+    ));
+    assert!(logs.contains("[DEBUG] Moving to 25.0 yards"));
+    assert!(!logs.contains("Casting {SpellID: 11578}"));
+    assert!(!logs.contains("Movement speed changed"));
+    assert!(!logs.contains("Casting {OtherID: 3"));
+}
+
+/// A second move starts from the position the first has reached and replaces it, without
+/// casting the Movement spell again.
+#[test]
+fn a_second_prepull_move_replaces_the_first() {
+    let logs = first_fight_log(warrior_fixture("production-warrior-prepull-move-cancelled"));
+    assert_eq!(logs.matches("Casting {OtherID: 20}").count(), 1);
+    assert_eq!(logs.matches("[DEBUG] Moving to").count(), 2);
+}
+
+/// A warrior still moving at the pull cannot start a cast with a cast time, and its swings wait
+/// for a range it never reaches.
+#[test]
+fn a_warrior_moving_at_the_pull_cannot_slam() {
+    let logs = first_fight_log(warrior_fixture(
+        "production-arms-warrior-prepull-move-at-the-pull",
+    ));
+    assert!(logs.contains("[DEBUG] Moving to 40.0 yards"));
+    assert!(!logs.contains("Casting {SpellID: 11605"));
+    assert!(!logs.contains("Casting {OtherID: 3"));
+}
+
+/// Go drops a prepull action after the pull, a hidden one and one whose condition is constant
+/// false, so none of the moves runs.
+#[test]
+fn prepull_moves_go_drops_never_run() {
+    let logs = first_fight_log(warrior_fixture("production-warrior-prepull-move-dropped"));
+    assert!(!logs.contains("Moving to"));
+    assert!(!logs.contains("Casting {OtherID: 20}"));
+}
+
+/// Charge needs the movement speed and its own effect.
+#[test]
+fn charge_needs_its_effect_and_the_movement_speed() {
+    let mut value = warrior_fixture("production-warrior-prepull-charge");
+    effect_mut(&mut value, "player_movement")["speed_auras"] = json!(["Unholy Aura"]);
+    assert_eq!(
+        reasons(value.clone()),
+        ["a prepull move with Unholy Aura, which changes the movement speed, is unsupported"]
+    );
+    value["effects"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|effect| effect["kind"] != "player_movement");
+    assert_eq!(
+        reasons(value),
+        ["a prepull move has no exported movement speed"]
+    );
+    let mut value = warrior_fixture("production-warrior-prepull-charge");
+    value["effects"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|effect| effect["kind"] != "warrior_charge");
+    assert_eq!(
+        reasons(value),
+        ["rotation reaches spell 11578 without a known behavior"]
+    );
+}
+
+/// A move that stops a ranged auto swing is not simulated, and the refusals of another class
+/// and of a speed aura are accepted fixtures.
+#[test]
+fn a_prepull_move_is_refused_where_it_is_not_simulated() {
+    let mut value = warrior_fixture("production-warrior-prepull-charge");
+    value["melee"]["auto_swing_ranged"] = json!(true);
+    assert!(reasons(value)
+        .contains(&"a prepull move with a ranged auto swing is unsupported".to_string()));
+    let rogue = warrior_fixture("production-assassination-rogue-prepull-move");
+    assert!(crate::refusal_codes(rogue).contains(&(
+        "prepull_unsupported",
+        "a prepull move is unsupported for ClassRogue".into()
+    )));
+    let unholy = warrior_fixture("production-arms-warrior-prepull-move-with-unholy-aura");
+    assert!(reasons(unholy).contains(
+        &"a prepull move with Unholy Aura, which changes the movement speed, is unsupported".into()
+    ));
+}
+
+/// The Diamond Flask is a five second channel cast before the pull: its self hot ticks each
+/// second and the last tick, at the pull, activates a Strength aura for a minute.
+#[test]
+fn the_diamond_flask_channels_then_grants_strength() {
+    let logs = first_fight_log(warrior_fixture("production-warrior-diamond-flask"));
+    assert!(has_line(&logs, "-5.00", "Casting {ItemID: 20130}"));
+    assert!(has_line(&logs, "-5.00", "Aura gained: {ItemID: 20130}"));
+    assert!(has_line(&logs, "0.00", "Aura faded: {ItemID: 20130}"));
+    assert!(has_line(&logs, "0.00", "Aura gained: {SpellID: 1318070}"));
+    assert!(has_line(
+        &logs,
+        "0.00",
+        "Gained {\"Strength\": 20.000,} from {SpellID: 1318070}."
+    ));
+    assert!(has_line(&logs, "60.00", "Aura faded: {SpellID: 1318070}"));
+}
+
+/// The flask's major cooldown never activates on its own, so without a cast in the rotation or
+/// the prepull the autocast leaves it alone.
+#[test]
+fn the_diamond_flask_is_never_autocast() {
+    let mut value = warrior_fixture("production-warrior-diamond-flask");
+    value["player"]["rotation"]["prepullActions"] = json!([]);
+    value["player"]["prepull_actions"] = json!(0);
+    let logs = first_fight_log(value);
+    assert!(!logs.contains("ItemID: 20130"));
+    assert!(!logs.contains("1318070"));
+}
+
+/// A rotation that casts the flask itself takes it from the major cooldowns, so the exporter
+/// describes it from the spellbook; the cast begins when the rotation reaches it.
+#[test]
+fn a_flask_the_rotation_casts_is_described() {
+    let logs = first_fight_log(warrior_fixture(
+        "production-warrior-diamond-flask-in-rotation",
+    ));
+    let cast = logs
+        .lines()
+        .find(|line| line.contains("Casting {ItemID: 20130}"))
+        .unwrap();
+    let time: f64 = cast[1..cast.find(']').unwrap()].parse().unwrap();
+    assert!(time >= 10.0, "{cast}");
+    assert!(logs.contains("Aura gained: {SpellID: 1318070}"));
+}
+
+/// Without its effect the flask has no behavior, whichever way the rotation reaches it.
+#[test]
+fn the_diamond_flask_needs_its_effect() {
+    let mut value = warrior_fixture("production-warrior-diamond-flask");
+    value["effects"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|effect| effect["kind"] != "diamond_flask");
+    assert!(reasons(value).contains(&"rotation reaches item 20130 without a known behavior".into()));
+}

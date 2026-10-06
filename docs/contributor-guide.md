@@ -33,6 +33,7 @@ Frostbolt kernel remains unchanged beside it.
 | The player taking damage and Chance of Death | [src/core/fight/damage_taken.rs](../src/core/fight/damage_taken.rs) |
 | Hunter runtime hooks and regressions | [src/classes/hunter/agent.rs](../src/classes/hunter/agent.rs), [tests/classes/hunter.rs](../tests/classes/hunter.rs) |
 | Player melee and ranged auto attacks | [src/core/fight/melee.rs](../src/core/fight/melee.rs) |
+| A unit that moves: a prepull move, the Movement aura, the lazy position and Charge | [src/core/fight/movement.rs](../src/core/fight/movement.rs), [src/classes/warrior/spells/charge.rs](../src/classes/warrior/spells/charge.rs), `player_movement` in [src/engine/coverage.rs](../src/engine/coverage.rs), [tools/oracle-v2/movement.go](../tools/oracle-v2/movement.go) |
 | Pets: simulated summons and registered pets nothing summons | [src/core/fight/pet.rs](../src/core/fight/pet.rs) |
 | Warlock demon AI and abilities | [src/classes/warlock/pets.rs](../src/classes/warlock/pets.rs) |
 | Shared build gate and class gates | [src/engine/coverage.rs](../src/engine/coverage.rs), `src/classes/<class>/prepared/coverage.rs` |

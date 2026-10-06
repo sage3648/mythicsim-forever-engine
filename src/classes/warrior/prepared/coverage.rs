@@ -13,6 +13,7 @@ pub(crate) const GATE: ClassGate = ClassGate {
     claims,
     limits,
     several_targets: Some(several_targets),
+    player_movement: true,
     other_target_casts: Some(crate::engine::coverage::no_limits),
 };
 
@@ -51,6 +52,7 @@ const EFFECTS: &[&str] = &[
     "unbridled_wrath",
     "warrior_enrage",
     "improved_hamstring",
+    "warrior_charge",
     "warrior_stances",
     "weaponmaster_sword",
     "whirlwind",
@@ -62,6 +64,7 @@ fn spell_capability(spell: &Spell) -> Option<&'static str> {
     // by their effects' spells.
     match spell.class_spell.as_deref()? {
         "bloodthirst" => Some("bloodthirst"),
+        "charge" => Some("warrior_charge"),
         "whirlwind" | "whirlwind_off_hand" => Some("whirlwind"),
         "execute" => Some("execute"),
         "hamstring" => Some("hamstring"),
@@ -109,6 +112,7 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
             trigger_aura, aura, ..
         } => vec![("player", trigger_aura), ("player", aura)],
         Effect::Retaliation { aura, .. }
+        | Effect::WarriorCharge { aura, .. }
         | Effect::ShieldWall { aura, .. }
         | Effect::LastStand { aura, .. }
         | Effect::SweepingStrikes { aura, .. } => {

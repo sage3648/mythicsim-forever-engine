@@ -13,6 +13,7 @@ pub(crate) const GATE: ClassGate = ClassGate {
     claims,
     limits,
     several_targets: Some(several_targets),
+    player_movement: false,
     other_target_casts: None,
 };
 

@@ -37,7 +37,8 @@ var optionalReadStats = []stats.Stat{stats.Mana, stats.HealingPower, stats.Healt
 // Auras of races, items and raid buffs whose gain and expiry change stats through
 // AddStatsDynamic. A class adds its own through classExport.statAuras.
 var commonStatAuraLabels = []string{"Blood Fury", "Elune's Light", "Holy Strength (MH)", "Holy Strength (OH)",
-	"Windfury Totem (External)", "Battle Shout (External)", "Headmaster's Charge", "Crusader's Wrath"}
+	"Windfury Totem (External)", "Battle Shout (External)", "Headmaster's Charge", "Crusader's Wrath",
+	"Diamond Flask"}
 
 // The stat auras of the character, in the order a combination's bits number them.
 func characterStatAuras(character *core.Character, class classExport, agent core.Agent) []string {
