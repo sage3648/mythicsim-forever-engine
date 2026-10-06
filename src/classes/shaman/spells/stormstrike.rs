@@ -38,32 +38,37 @@ impl Stormstrike {
         )
     }
 
-    /// The debuff's `AttachDDBC` handler while it is active.
+    /// The debuff's `AttachDDBC` handler while it is active on the target the hit lands on.
     pub(crate) fn caster_multiplier<A: Agent>(
         &self,
         fight: &Fight<A>,
         spell: SpellId,
+        target: Side,
     ) -> Option<f64> {
-        fight.aura(self.debuff).active.then(|| {
-            if Self::boosts(fight, spell) {
-                self.damage_multiplier
-            } else {
-                1.0
-            }
-        })
+        fight
+            .aura(fight.aura_on(self.debuff, target))
+            .active
+            .then(|| {
+                if Self::boosts(fight, spell) {
+                    self.damage_multiplier
+                } else {
+                    1.0
+                }
+            })
     }
 
-    /// The debuff's OnSpellHitTaken.
+    /// The OnSpellHitTaken of the debuff on a target, `aura`.
     pub(crate) fn on_spell_hit_taken<A: Agent>(
         &self,
         fight: &mut Fight<A>,
+        aura: AuraRef,
         spell: SpellId,
         result: &SpellResult,
     ) {
         if !Self::boosts(fight, spell) || !result.landed() || result.damage == 0.0 {
             return;
         }
-        fight.remove_stack(self.debuff);
+        fight.remove_stack(aura);
     }
 
     /// The cast's ApplyEffects: an outcome without a hit counter; when it lands, every charge
@@ -82,9 +87,10 @@ impl Stormstrike {
         );
         fight.deal_damage(spell, result, false);
         if result.landed() {
-            fight.activate_aura(self.debuff);
-            let max = fight.aura(self.debuff).max_stacks;
-            fight.set_stacks(self.debuff, max);
+            let debuff = fight.aura_on(self.debuff, target);
+            fight.activate_aura(debuff);
+            let max = fight.aura(debuff).max_stacks;
+            fight.set_stacks(debuff, max);
             if let Some(strike) = main_hand {
                 fight.cast(strike, target);
             }
