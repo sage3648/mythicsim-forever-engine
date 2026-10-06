@@ -427,6 +427,28 @@ fn a_multidot_line_puts_rend_on_every_target() {
     }
 }
 
+/// Every copy of the boss swings at a tank in Go, and Rust keeps one swing: the exporter
+/// refuses the assignment, and an input that tanks several targets anyway is refused here.
+#[test]
+fn a_tanked_fight_against_several_targets_is_refused() {
+    let mut value = warrior_fixture("production-protection-warrior");
+    assert!(!reasons_if_any(&value)
+        .iter()
+        .any(|reason| reason.contains("targets")));
+    value["encounter"]["target_count"] = json!(3);
+    assert!(reasons(value).contains(
+        &"3 targets: every copy of the boss swings at the tank, which is unsupported".into()
+    ));
+}
+
+fn reasons_if_any(value: &Value) -> Vec<String> {
+    let prepared: PreparedV2 = serde_json::from_value(value.clone()).unwrap();
+    match check_prepared(&prepared) {
+        Err(PreparedError::Unsupported(reasons)) => reasons,
+        _ => Vec::new(),
+    }
+}
+
 /// The shouts that Go casts on every target have no behavior in Rust, and against several
 /// targets the gate says what they would do there.
 #[test]
