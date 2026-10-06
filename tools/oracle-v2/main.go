@@ -2158,6 +2158,7 @@ func main() {
 		fail(fmt.Errorf("--infile and --outfile are required"))
 	}
 	request, digest := readRequest(*infile)
+	registerSyntheticItems(request)
 	switch os.Args[1] {
 	case "prepare":
 		if *scenario == "" {
