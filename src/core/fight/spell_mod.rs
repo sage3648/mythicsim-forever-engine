@@ -3,7 +3,7 @@
 //! The value survives deactivation, as in Go, and the float operations happen in Go's
 //! order, which matters because spell fields are not reset between iterations.
 
-use super::{Agent, Fight, SpellId};
+use super::{Agent, DotId, Fight, SpellId};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum ModKind {
@@ -48,6 +48,14 @@ pub(crate) struct SpellMod {
 }
 
 pub(crate) type ModId = usize;
+
+/// A spell's dot and its copies on the targets past the first, which Go registers as dots of
+/// their own that a spell modifier reaches alike.
+fn dots_of(dot: Option<DotId>, copies: &[Vec<DotId>]) -> impl Iterator<Item = DotId> + '_ {
+    dot.into_iter().flat_map(move |dot| {
+        std::iter::once(dot).chain(copies.get(dot).into_iter().flatten().copied())
+    })
+}
 
 impl<A: Agent> Fight<A> {
     /// Go `AddDynamicMod`: inactive until its aura activates it.
@@ -136,7 +144,8 @@ impl<A: Agent> Fight<A> {
                     }
                 }
                 ModKind::DotDamageDonePercent => {
-                    if let Some(dot) = state.dot {
+                    // The spell's dot on every target: each copy is its own dot in Go.
+                    for dot in dots_of(state.dot, &self.dot_copies) {
                         let value = &mut self.dots[dot].periodic_damage_multiplier;
                         if sign > 0.0 {
                             *value *= 1.0 + modifier.float_value;
@@ -174,7 +183,7 @@ impl<A: Agent> Fight<A> {
                     }
                 }
                 ModKind::DotTickLengthFlat => {
-                    if let Some(dot) = state.dot {
+                    for dot in dots_of(state.dot, &self.dot_copies) {
                         if sign > 0.0 {
                             self.dots[dot].base_tick_length += modifier.time_value;
                         } else {
