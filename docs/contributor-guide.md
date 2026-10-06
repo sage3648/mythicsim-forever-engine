@@ -29,6 +29,7 @@ Frostbolt kernel remains unchanged beside it.
 | Priest runtime hooks and regressions | [src/classes/priest/agent.rs](../src/classes/priest/agent.rs), [tests/classes/priest.rs](../tests/classes/priest.rs) |
 | Rogue runtime hooks and regressions | [src/classes/rogue/agent.rs](../src/classes/rogue/agent.rs), [tests/classes/rogue.rs](../tests/classes/rogue.rs) |
 | Fights against several targets: each target's state, area hits, multidot and the gate | `Side::Extra` and `TargetUnit` in [src/core/fight.rs](../src/core/fight.rs), `several_target_limits` in [src/engine/coverage.rs](../src/engine/coverage.rs), [tools/oracle-v2/targets.go](../tools/oracle-v2/targets.go) |
+| The targets swinging at a tank, one swing for each copy of the boss | [src/core/fight/enemy.rs](../src/core/fight/enemy.rs), the weapon attack list in [src/core/fight/melee.rs](../src/core/fight/melee.rs), [tools/oracle-v2/enemy.go](../tools/oracle-v2/enemy.go) |
 | Energy bar, energy ticks and combo points | [src/core/fight/energy.rs](../src/core/fight/energy.rs) |
 | The player taking damage and Chance of Death | [src/core/fight/damage_taken.rs](../src/core/fight/damage_taken.rs) |
 | Hunter runtime hooks and regressions | [src/classes/hunter/agent.rs](../src/classes/hunter/agent.rs), [tests/classes/hunter.rs](../tests/classes/hunter.rs) |
@@ -220,6 +221,16 @@ its area and cleave helpers, its loops over the encounter's targets and the rota
 choices, so `grep` the class's Go package for `ActiveTargetUnits`, `AllTargetUnits`,
 `NextActiveTarget`, `Aoe` and `Cleave` before opening it. Then compare the class at 2 to 5
 targets, for example with requests from `tools/reference-capture/builds -targets N`.
+
+When the player tanks, Go sets every copy's target to the tank, so each copy swings at the
+player on its own timer: `Fight::enemies` holds each target's swing at its position, with its
+own metrics and melee speed, and the weapon attack list runs the swings in unit index order.
+A hit the tank takes names the copy that swung in `SpellResult::attacker`, Go's `spell.Unit`.
+Reactive code answers that unit and never `Side::Target`: Holy Shield's damage, Eye for an
+Eye's reflection, Retaliation's strike, a struck item proc and Sulfuras' Immolation. A class
+opts in through its gate's `tanks_several_targets`, once its listeners of hits taken do that
+and a tank of the class at 2 to 5 targets matches Go; a debuff on a copy, such as Thunder
+Clap's slow or Demoralizing Roar's attack power cut, is read from that copy's aura.
 
 A rotation's `castSpell` may name a target past the first. A class opts in through its gate's
 `other_target_casts` hook, which lists what its spells do not yet land on the target they are

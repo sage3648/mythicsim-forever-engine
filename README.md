@@ -53,20 +53,20 @@ buffs, presets, trinkets, pets and tanking.
 
 Builds of every class also work against 2 to 5 copies of the boss, the application's Advanced targets setting, with the AoE lines the application adds:
 each target keeps its own auras, dots, debuffs and metrics, and area hits, cleaves and
-multidots reach every target as in Go. Tank builds still fall back to Go there, since every
-copy of the boss would swing at the tank.
+multidots reach every target as in Go. Paladin, Druid and Warrior tank builds work there too, with every
+copy of the boss swinging at the tank on its own timer; tanks of other classes still fall back to Go.
 
 ## Evidence
 
-- 322 accepted prepared v2 fixtures, 321 of them with Go results, checked by `cargo test`.
+- 343 accepted prepared v2 fixtures, all with Go results, checked by `cargo test`.
 - 7,922 production variants (race boards, builder starters, gear, buffs, talents,
   class options and presets) and 3,724 random variants compared with Go. None
   differ. Rust refuses 174 of them. The 2 that crashed the Go engine before
   `74127c6c8` now match
   ([record](validation/2026-10-06-reference-pin-74127c6c8-sweeps.json)).
-- Against 2 to 5 targets, 235 reference builds of every class, 1,955 Mage and Warlock
-  census variants and 1,706 random variants match Go, the area hits, cleaves and multidots
-  included.
+- Against 2 to 5 targets, 267 reference builds of every class, 1,955 Mage and Warlock
+  census variants, 272 tank fixture requests and 2,492 random variants match Go, the area
+  hits, cleaves, multidots and every copy of the boss swinging at a tank included.
 - The latest full rerun covered 24,173 inputs in 121 records, with no mismatches.
 - [Shadow sims](docs/shadow-sims.md) compare Rust with Go on real MythicSim traffic,
   without users seeing them.
