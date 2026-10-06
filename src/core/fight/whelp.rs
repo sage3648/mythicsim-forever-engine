@@ -73,17 +73,29 @@ impl<A: Agent> Fight<A> {
         Ok(())
     }
 
-    /// Go `AttachProcTriggerCallback` for Dragon's Call: landed hits roll the spell's chance,
-    /// then the handler waits a spell batch window.
+    /// Go `AttachProcTriggerCallback` for Dragon's Call: landed hits wait out the proc's
+    /// cooldown, roll the spell's chance, then the handler waits a spell batch window.
     pub(crate) fn whelp_callback(&mut self, aura: AuraRef, spell: SpellId, result: &SpellResult) {
         if result.outcome & OUTCOME_LANDED == 0 {
             return;
+        }
+        // The proc's cooldown is the summon spell's client category cooldown, which Forever
+        // retuned to 45 seconds: it outlasts the 15 second summon, so a proc never finds the
+        // whelp out.
+        let icd = self.aura(aura).icd;
+        if let Some((timer, _)) = icd {
+            if self.timers[timer] > self.now {
+                return;
+            }
         }
         let Some(chance) = self.whelp.as_ref().and_then(|whelp| whelp.chances[spell]) else {
             return;
         };
         if !self.proc_for_aura(chance, aura) {
             return;
+        }
+        if let Some((timer, duration)) = icd {
+            self.timers[timer] = self.now + duration;
         }
         self.schedule_delayed_proc(aura, spell, *result);
     }
