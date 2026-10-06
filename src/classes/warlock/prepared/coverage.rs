@@ -12,7 +12,7 @@ pub(crate) const GATE: ClassGate = ClassGate {
     spell: spell_capability,
     claims,
     limits,
-    several_targets: None,
+    several_targets: Some(several_targets),
 };
 
 /// Warlock effect kinds implemented in Rust and validated against the pinned Go reference.
@@ -217,4 +217,37 @@ fn limits(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
         }
     }
     reasons
+}
+
+/// The spells that reach a target past the first in Go and not yet in Rust. Rain of Fire and
+/// Hellfire hit every target as in Go. Bane of Havoc copies the warlock's damage to the
+/// targets it does not bane onto the baned one, which Rust does not follow. The rest of the
+/// class acts on the target of its cast, and a rotation reaches another target only through
+/// its multidot, whose per-target curse and bane slots, ramps and Immolate readers Rust
+/// keeps once.
+fn several_targets(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
+    let mut reasons = crate::engine::coverage::spells_reaching_other_targets(
+        reachable,
+        &[(
+            "bane_of_havoc",
+            "copies the warlock's damage to other targets onto the baned one",
+        )],
+    );
+    if mentions_multidot(&prepared.player.rotation) {
+        reasons.push(
+            "the rotation multidots, which casts a warlock dot on a target past the first".into(),
+        );
+    }
+    reasons
+}
+
+/// Whether an APL, in protojson form, holds a multidot action.
+fn mentions_multidot(value: &serde_json::Value) -> bool {
+    match value {
+        serde_json::Value::Object(map) => {
+            map.contains_key("multidot") || map.values().any(mentions_multidot)
+        }
+        serde_json::Value::Array(items) => items.iter().any(mentions_multidot),
+        _ => false,
+    }
 }
