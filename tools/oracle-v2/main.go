@@ -1649,7 +1649,15 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	effects = append(effects, spellDataStatProcEffects(character, &unrepresented)...)
 	statAuraLabels := []string{}
 	effects = append(effects, energyProcEffects(simulation, character, &unrepresented)...)
-	if statAuras := statAurasEffect(request, character, class, agent); statAuras != nil {
+	// A tank's swing is read under every stat aura combination too, from the same simulations.
+	var enemyReader comboReader
+	var combos *enemyCombos
+	auraLabels := characterStatAuras(character, class, agent)
+	if tanking && len(auraLabels) > 0 {
+		combos = newEnemyCombos(request, auraLabels, character)
+		enemyReader = combos.read
+	}
+	if statAuras := statAurasEffect(request, auraLabels, enemyReader); statAuras != nil {
 		effects = append(effects, statAuras)
 		statAuraLabels = statAuras["auras"].([]string)
 	}
@@ -1800,7 +1808,7 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 				}
 			}
 		}
-		prepared.Enemy = exportEnemy(request, statAuraLabels, tracked, character, target, &prepared.Unrepresented)
+		prepared.Enemy = exportEnemy(request, statAuraLabels, combos, tracked, character, target, &prepared.Unrepresented)
 	}
 	prepared.Pets = exportPets(request, character, target, class, timers, &prepared.Unrepresented)
 	// Last: the teardown changes the simulation.
