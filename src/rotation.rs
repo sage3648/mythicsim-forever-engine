@@ -50,6 +50,67 @@ pub enum Totem {
     Water,
 }
 
+/// Go `UnitReference` as far as a rotation reads it. The player is the one player of the raid,
+/// which `Self` and `Player` index 0 both name. Go's current target never changes without a
+/// change target action, which is unsupported, so it is always the first target.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum UnitRef {
+    Player,
+    CurrentTarget,
+    PreviousTarget,
+    NextTarget,
+    /// `Target` with its index into the encounter's targets.
+    Target(usize),
+}
+
+/// A unit a [`UnitRef`] resolved to: the player, or a target by its position among the
+/// encounter's targets.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Unit {
+    Player,
+    Target(usize),
+}
+
+impl UnitRef {
+    /// Go `Environment.GetUnit` in a fight of `targets` targets, all enabled: the unit, or
+    /// `None` where Go finds no unit. The previous and next targets wrap around the encounter.
+    pub fn resolve(self, targets: usize) -> Option<Unit> {
+        let targets = targets.max(1);
+        match self {
+            UnitRef::Player => Some(Unit::Player),
+            UnitRef::CurrentTarget => Some(Unit::Target(0)),
+            UnitRef::PreviousTarget => Some(Unit::Target(targets - 1)),
+            UnitRef::NextTarget => Some(Unit::Target(1 % targets)),
+            UnitRef::Target(index) => (index < targets).then_some(Unit::Target(index)),
+        }
+    }
+}
+
+/// The dot a dot value reads: Go `NewDotReference` of a spell on a unit. A dot value without
+/// a spell has no value in Go.
+#[derive(Clone, Debug, PartialEq)]
+pub struct DotRef {
+    pub spell: Option<ActionId>,
+    pub target: UnitRef,
+}
+
+/// What an aura value reads of an aura on a unit other than the player.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum AuraRead {
+    IsKnown,
+    IsActive,
+    NumStacks,
+    RemainingTime,
+}
+
+/// A dot as a compiled rotation reads it: the spell holding it, by its position in the
+/// player's spellbook, and the target whose copy of it counts, by position among the targets.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct DotAt {
+    pub spell: usize,
+    pub target: usize,
+}
+
 /// Go `APLValueMath_MathOperator`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MathOp {
@@ -146,21 +207,22 @@ pub enum Value {
         id: ActionId,
     },
     AuraIsActive(ActionId),
-    /// `auraIsActive` with the current target as its source unit.
-    TargetAuraIsActive(ActionId),
     AuraNumStacks(ActionId),
-    /// `auraNumStacks` with the current target as its source unit.
-    TargetAuraNumStacks(ActionId),
     AuraRemainingTime(ActionId),
-    /// `auraRemainingTime` with the current target as its source unit.
-    TargetAuraRemainingTime(ActionId),
-    DotIsActive(ActionId),
-    DotRemainingTime(ActionId),
+    /// `auraIsKnown`, `auraIsActive`, `auraNumStacks` or `auraRemainingTime` with a target as
+    /// its source unit.
+    TargetAura {
+        read: AuraRead,
+        unit: UnitRef,
+        id: ActionId,
+    },
+    DotIsActive(DotRef),
+    DotRemainingTime(DotRef),
     SpellIsKnown(ActionId),
     SpellIsReady(ActionId),
     SpellCastTime(ActionId),
     SpellTimeToReady(ActionId),
-    DotTimeToNextTick(ActionId),
+    DotTimeToNextTick(DotRef),
     GcdIsReady,
     /// Go `APLValueAuraShouldRefresh`: the aura, whether it is on the current target, and the
     /// overlap a refresh allows.
@@ -266,7 +328,6 @@ impl Value {
             | Value::AuraIsKnown(_)
             | Value::PetAuraIsKnown { .. }
             | Value::AuraIsActive(_)
-            | Value::TargetAuraIsActive(_)
             | Value::AuraShouldRefresh { .. }
             | Value::FrontOfTarget
             | Value::DotIsActive(_)
@@ -275,12 +336,22 @@ impl Value {
             | Value::IsExecutePhase(_)
             | Value::SpellCanCast(_)
             | Value::GcdIsReady => ValueType::Bool,
-            Value::AuraNumStacks(_)
-            | Value::TargetAuraNumStacks(_)
-            | Value::NumberTargets
-            | Value::CurrentComboPoints => ValueType::Int,
+            Value::TargetAura {
+                read: AuraRead::IsKnown | AuraRead::IsActive,
+                ..
+            } => ValueType::Bool,
+            Value::TargetAura {
+                read: AuraRead::NumStacks,
+                ..
+            } => ValueType::Int,
+            Value::TargetAura {
+                read: AuraRead::RemainingTime,
+                ..
+            } => ValueType::Duration,
+            Value::AuraNumStacks(_) | Value::NumberTargets | Value::CurrentComboPoints => {
+                ValueType::Int
+            }
             Value::AuraRemainingTime(_)
-            | Value::TargetAuraRemainingTime(_)
             | Value::DotRemainingTime(_)
             | Value::SpellCastTime(_)
             | Value::SpellTimeToReady(_)
@@ -310,7 +381,11 @@ impl Value {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Action {
-    CastSpell(ActionId),
+    /// Go `APLActionCastSpell` on the unit its target names, the current target by default.
+    CastSpell {
+        spell: ActionId,
+        target: UnitRef,
+    },
     /// Go `APLActionCastFriendlySpell` at the player, the one player in scope.
     CastAtPlayer(ActionId),
     AutocastOtherCooldowns,
@@ -340,7 +415,7 @@ impl Action {
     /// The spells the action names, in order, as Go `GetAllActions` visits casts.
     pub fn spells(&self) -> Vec<&ActionId> {
         match self {
-            Action::CastSpell(id) | Action::CastAtPlayer(id) => vec![id],
+            Action::CastSpell { spell: id, .. } | Action::CastAtPlayer(id) => vec![id],
             Action::AutocastOtherCooldowns => Vec::new(),
             Action::StrictSequence(ids) | Action::Sequence(ids) => ids.iter().collect(),
             Action::ChannelSpell { spell, .. } | Action::Multidot { spell, .. } => vec![spell],
@@ -467,7 +542,10 @@ fn parse_prepull(item: &Json, position: usize) -> Result<Option<Prepull>, String
         None => None,
     };
     let action = match single(action, &["uuid", "condition"])? {
-        ("castSpell", config) => Action::CastSpell(parse_cast_spell(config)?),
+        ("castSpell", config) => Action::CastSpell {
+            spell: parse_cast_spell(config, false)?,
+            target: UnitRef::CurrentTarget,
+        },
         ("activateAura", config) => {
             let object = config.as_object().ok_or("activateAura must be an object")?;
             if let Some(key) = object.keys().find(|key| *key != "auraId") {
@@ -537,7 +615,7 @@ fn parse_item(item: &Json, position: usize) -> Result<Option<Item>, Vec<String>>
         None => None,
     };
     let parsed = match single(action, &["condition", "uuid"]) {
-        Ok(("castSpell", config)) => parse_cast_spell(config).map(Action::CastSpell),
+        Ok(("castSpell", config)) => parse_cast_spell_action(config),
         Ok(("castFriendlySpell", config)) => parse_cast_friendly_spell(config),
         Ok(("autocastOtherCooldowns", config)) if is_empty(config) => {
             Ok(Action::AutocastOtherCooldowns)
@@ -584,7 +662,7 @@ fn parse_strict_sequence(config: &Json) -> Result<Action, String> {
             .as_object()
             .ok_or("strictSequence action must be an object")?;
         match single(action, &["uuid"])? {
-            ("castSpell", cast) => spells.push(parse_cast_spell(cast)?),
+            ("castSpell", cast) => spells.push(parse_cast_spell(cast, false)?),
             (name, _) => return Err(format!("strictSequence action {name} is unsupported")),
         }
     }
@@ -611,7 +689,7 @@ fn parse_sequence(config: &Json) -> Result<Action, String> {
             .as_object()
             .ok_or("sequence action must be an object")?;
         match single(action, &["uuid"])? {
-            ("castSpell", cast) => spells.push(parse_cast_spell(cast)?),
+            ("castSpell", cast) => spells.push(parse_cast_spell(cast, false)?),
             (name, _) => return Err(format!("sequence action {name} is unsupported")),
         }
     }
@@ -660,7 +738,10 @@ fn parse_cast_friendly_spell(config: &Json) -> Result<Action, String> {
             .ok_or("castFriendlySpell has no spellId")?,
     )?;
     let Some(target) = object.get("target") else {
-        return Ok(Action::CastSpell(spell));
+        return Ok(Action::CastSpell {
+            spell,
+            target: UnitRef::CurrentTarget,
+        });
     };
     let target = target
         .as_object()
@@ -678,7 +759,10 @@ fn parse_cast_friendly_spell(config: &Json) -> Result<Action, String> {
     };
     match (target.get("type").and_then(Json::as_str), index) {
         (Some("Player"), 0) | (Some("Self"), _) => Ok(Action::CastAtPlayer(spell)),
-        (None | Some("CurrentTarget"), _) => Ok(Action::CastSpell(spell)),
+        (None | Some("CurrentTarget"), _) => Ok(Action::CastSpell {
+            spell,
+            target: UnitRef::CurrentTarget,
+        }),
         (kind, index) => Err(format!(
             "castFriendlySpell target {} {index} is unsupported",
             kind.unwrap_or("Unknown")
@@ -709,15 +793,83 @@ fn parse_multidot(config: &Json) -> Result<Action, String> {
     })
 }
 
-fn parse_cast_spell(config: &Json) -> Result<ActionId, String> {
+/// Go `newActionCastSpell` in a priority list: the spell and the unit it is cast on.
+fn parse_cast_spell_action(config: &Json) -> Result<Action, String> {
     let object = config.as_object().ok_or("castSpell must be an object")?;
-    for key in object.keys() {
-        if key != "spellId" {
-            // A target reference other than the default current target is not modeled.
-            return Err(format!("castSpell field {key} is unsupported"));
+    let target = parse_unit_ref(object.get("target"), UnitRef::CurrentTarget)
+        .map_err(|()| unsupported_unit("castSpell", "target", object.get("target")))?;
+    Ok(Action::CastSpell {
+        spell: parse_cast_spell(config, true)?,
+        target,
+    })
+}
+
+/// A `castSpell` configuration's spell. A target is read only where `with_target` says the
+/// action carries one: a sequence step or a prepull action casts at the current target.
+fn parse_cast_spell(config: &Json, with_target: bool) -> Result<ActionId, String> {
+    let object = config.as_object().ok_or("castSpell must be an object")?;
+    for (key, field) in object {
+        match key.as_str() {
+            "spellId" => {}
+            "target" if with_target => {}
+            "target"
+                if parse_unit_ref(Some(field), UnitRef::CurrentTarget)
+                    == Ok(UnitRef::CurrentTarget) => {}
+            "target" => {
+                return Err(format!(
+                    "castSpell target {field} is unsupported in a sequence or prepull action"
+                ))
+            }
+            other => return Err(format!("castSpell field {other} is unsupported")),
         }
     }
     parse_action_id(object.get("spellId").ok_or("castSpell has no spellId")?)
+}
+
+/// Go `GetTargetUnit` and `GetSourceUnit`: the unit a `UnitReference` names, or `default`
+/// when it is absent or its type is unknown. `Err` for a reference Rust does not resolve:
+/// every player but the first, a pet, and the sets of all players or all targets.
+fn parse_unit_ref(reference: Option<&Json>, default: UnitRef) -> Result<UnitRef, ()> {
+    let Some(reference) = reference else {
+        return Ok(default);
+    };
+    let object = reference.as_object().ok_or(())?;
+    if object.keys().any(|key| key != "type" && key != "index") {
+        return Err(());
+    }
+    let kind = match object.get("type") {
+        None => "Unknown",
+        Some(kind) => kind.as_str().ok_or(())?,
+    };
+    let index = match object.get("index") {
+        None => 0,
+        Some(index) => usize::try_from(index.as_i64().ok_or(())?).map_err(|_| ())?,
+    };
+    let plain = |unit: UnitRef| {
+        if object.contains_key("index") {
+            Err(())
+        } else {
+            Ok(unit)
+        }
+    };
+    match kind {
+        "Unknown" => Ok(default),
+        "Self" => plain(UnitRef::Player),
+        "Player" if index == 0 => Ok(UnitRef::Player),
+        "CurrentTarget" => plain(UnitRef::CurrentTarget),
+        "PreviousTarget" => plain(UnitRef::PreviousTarget),
+        "NextTarget" => plain(UnitRef::NextTarget),
+        "Target" => Ok(UnitRef::Target(index)),
+        _ => Err(()),
+    }
+}
+
+/// The reason a unit reference field is refused.
+fn unsupported_unit(name: &str, field: &str, reference: Option<&Json>) -> String {
+    format!(
+        "{name} {field} {} is unsupported",
+        reference.cloned().unwrap_or_default()
+    )
 }
 
 /// Parse a protojson `ActionID`.
@@ -800,13 +952,6 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
                 .ok_or_else(|| vec!["cmp has no rhs".to_string()]);
             let (lhs, rhs) = (lhs.and_then(parse_value), rhs.and_then(parse_value));
             match (lhs, rhs) {
-                // Go drops such a comparison, which silently removes the condition.
-                (Ok(lhs), Ok(rhs))
-                    if lhs.value_type().max(rhs.value_type()) == ValueType::Bool
-                        && !matches!(op, CompareOp::Eq | CompareOp::Ne) =>
-                {
-                    Err(vec!["ordered comparison of booleans is unsupported".into()])
-                }
                 (Ok(lhs), Ok(rhs)) => Ok(Value::Compare {
                     op,
                     lhs: Box::new(lhs),
@@ -1008,18 +1153,36 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
                 .and_then(|id| parse_action_id(id).map_err(|err| vec![err]))?;
             Ok(Value::SpellCurrentCost(id))
         }
-        "dotIsActive" | "dotRemainingTime" | "dotTimeToNextTick" | "spellIsKnown"
-        | "spellIsReady" | "spellCastTime" | "spellTimeToReady" | "spellCanCast" => {
-            // A target unit other than the current target is not modeled.
+        "dotIsActive" | "dotRemainingTime" | "dotTimeToNextTick" => {
+            // Go `GetTargetUnit`: no unit reference means the current target. A dot without a
+            // spell has no value, which drops the term.
+            only(&["spellId", "targetUnit"])?;
+            let spell = match config.get("spellId") {
+                Some(id) => Some(parse_action_id(id).map_err(|err| vec![err])?),
+                None => None,
+            };
+            let target =
+                parse_unit_ref(config.get("targetUnit"), UnitRef::CurrentTarget).map_err(|()| {
+                    vec![unsupported_unit(
+                        name,
+                        "targetUnit",
+                        config.get("targetUnit"),
+                    )]
+                })?;
+            let dot = DotRef { spell, target };
+            Ok(match name {
+                "dotIsActive" => Value::DotIsActive(dot),
+                "dotRemainingTime" => Value::DotRemainingTime(dot),
+                _ => Value::DotTimeToNextTick(dot),
+            })
+        }
+        "spellIsKnown" | "spellIsReady" | "spellCastTime" | "spellTimeToReady" | "spellCanCast" => {
             only(&["spellId"])?;
             let id = config
                 .get("spellId")
                 .ok_or_else(|| vec![format!("{name} has no spellId")])
                 .and_then(|id| parse_action_id(id).map_err(|err| vec![err]))?;
             Ok(match name {
-                "dotIsActive" => Value::DotIsActive(id),
-                "dotRemainingTime" => Value::DotRemainingTime(id),
-                "dotTimeToNextTick" => Value::DotTimeToNextTick(id),
                 "spellIsKnown" => Value::SpellIsKnown(id),
                 "spellIsReady" => Value::SpellIsReady(id),
                 "spellTimeToReady" => Value::SpellTimeToReady(id),
@@ -1034,35 +1197,13 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
                 .ok_or_else(|| vec!["not has no val".to_string()])?;
             Ok(Value::Not(Box::new(parse_value(value)?)))
         }
-        "auraIsActive" | "auraNumStacks" | "auraRemainingTime"
-            if fields.is_some_and(|fields| fields.contains_key("sourceUnit")) =>
+        "auraIsKnown"
+            if config
+                .get("sourceUnit")
+                .and_then(|unit| unit.get("type"))
+                .is_some_and(|kind| kind == "Pet") =>
         {
-            // Go GetSourceUnit: the player itself, or the current target, of the one in scope.
-            only(&["auraId", "sourceUnit"])?;
-            let id = config
-                .get("auraId")
-                .ok_or_else(|| vec![format!("{name} has no auraId")])
-                .and_then(|id| parse_action_id(id).map_err(|err| vec![err]))?;
-            let source = config.get("sourceUnit").and_then(Json::as_object);
-            let kind = source.and_then(|unit| match unit.keys().find(|key| *key != "type") {
-                Some(_) => None,
-                None => unit.get("type").and_then(Json::as_str),
-            });
-            match (kind, name) {
-                (Some("Self"), "auraIsActive") => Ok(Value::AuraIsActive(id)),
-                (Some("Self"), "auraNumStacks") => Ok(Value::AuraNumStacks(id)),
-                (Some("Self"), _) => Ok(Value::AuraRemainingTime(id)),
-                (Some("CurrentTarget"), "auraIsActive") => Ok(Value::TargetAuraIsActive(id)),
-                (Some("CurrentTarget"), "auraNumStacks") => Ok(Value::TargetAuraNumStacks(id)),
-                (Some("CurrentTarget"), _) => Ok(Value::TargetAuraRemainingTime(id)),
-                _ => Err(vec![format!(
-                    "{name} sourceUnit {} is unsupported",
-                    config.get("sourceUnit").cloned().unwrap_or_default()
-                )]),
-            }
-        }
-        "auraIsKnown" if fields.is_some_and(|fields| fields.contains_key("sourceUnit")) => {
-            // Go GetSourceUnit: the player itself, or a pet of the player by its index.
+            // Go GetSourceUnit: a pet of the player by its index.
             only(&["auraId", "sourceUnit"])?;
             let id = config
                 .get("auraId")
@@ -1090,7 +1231,6 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
                 .keys()
                 .all(|key| ["type", "index", "owner"].contains(&key.as_str()));
             match kind {
-                Some("Self") if source.len() == 1 => Ok(Value::AuraIsKnown(id)),
                 Some("Pet") if owner_is_self && known_keys => {
                     let pet = match source.get("index") {
                         None => 0,
@@ -1147,19 +1287,42 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
             only(&[])?;
             Ok(Value::MaxMana)
         }
-        "auraIsKnown" | "auraIsActive" | "auraNumStacks" | "auraRemainingTime" => {
-            // sourceUnit, except on auraIsActive and auraNumStacks, and includeReactionTime
-            // are not modeled.
-            only(&["auraId"])?;
+        "auraIsKnown" | "auraIsActive" | "auraIsInactive" | "auraNumStacks"
+        | "auraRemainingTime" => {
+            // Go `GetSourceUnit`: no unit reference means the player itself. includeReactionTime
+            // is not modeled.
+            only(&["auraId", "sourceUnit"])?;
             let id = config
                 .get("auraId")
                 .ok_or_else(|| vec![format!("{name} has no auraId")])
                 .and_then(|id| parse_action_id(id).map_err(|err| vec![err]))?;
-            Ok(match name {
-                "auraIsKnown" => Value::AuraIsKnown(id),
-                "auraIsActive" => Value::AuraIsActive(id),
-                "auraNumStacks" => Value::AuraNumStacks(id),
-                _ => Value::AuraRemainingTime(id),
+            let unit = parse_unit_ref(config.get("sourceUnit"), UnitRef::Player).map_err(|()| {
+                vec![unsupported_unit(
+                    name,
+                    "sourceUnit",
+                    config.get("sourceUnit"),
+                )]
+            })?;
+            let read = match name {
+                "auraIsKnown" => AuraRead::IsKnown,
+                "auraIsActive" | "auraIsInactive" => AuraRead::IsActive,
+                "auraNumStacks" => AuraRead::NumStacks,
+                _ => AuraRead::RemainingTime,
+            };
+            let value = match (unit, read) {
+                (UnitRef::Player, AuraRead::IsKnown) => Value::AuraIsKnown(id),
+                (UnitRef::Player, AuraRead::IsActive) => Value::AuraIsActive(id),
+                (UnitRef::Player, AuraRead::NumStacks) => Value::AuraNumStacks(id),
+                (UnitRef::Player, AuraRead::RemainingTime) => Value::AuraRemainingTime(id),
+                (unit, read) => Value::TargetAura { read, unit, id },
+            };
+            // Go `newValueAuraIsInactive` reads `!aura.IsActive()` and, for an aura the unit
+            // lacks, is a constant true, which is what the negation of the missing aura's
+            // constant false folds to.
+            Ok(if name == "auraIsInactive" {
+                Value::Not(Box::new(value))
+            } else {
+                value
             })
         }
         other => Err(vec![format!("value {other} is unsupported")]),
@@ -1414,13 +1577,13 @@ pub enum Compiled<R> {
     AuraIsActive(R),
     AuraNumStacks(R),
     AuraRemainingTime(R),
-    /// A spell by its position in the player's spellbook, with the dot it names.
-    DotIsActive(usize),
-    DotRemainingTime(usize),
+    /// A dot by the spell holding it and the target it is read on.
+    DotIsActive(DotAt),
+    DotRemainingTime(DotAt),
     SpellIsReady(usize),
     SpellCastTime(usize),
     SpellTimeToReady(usize),
-    DotTimeToNextTick(usize),
+    DotTimeToNextTick(DotAt),
     GcdIsReady,
     SpellCanCast(usize),
     AutoTimeToNext(AutoAttackType),
@@ -1607,12 +1770,14 @@ pub struct FoundAura<R> {
 pub struct Lookup<'a, R> {
     /// Go `GetAuraByID`: the aura, or `None` when the character lacks it.
     pub aura: &'a dyn Fn(&ActionId) -> Option<FoundAura<R>>,
-    /// Go `GetAuraByID` on the current target.
-    pub target_aura: &'a dyn Fn(&ActionId) -> Option<FoundAura<R>>,
+    /// Go `GetAuraByID` on a target, by its position among the encounter's targets.
+    pub target_aura: &'a dyn Fn(usize, &ActionId) -> Option<FoundAura<R>>,
+    /// How many targets the encounter has, which resolves a unit reference.
+    pub targets: usize,
     /// Go `GetAPLSpell`: the spellbook position of the spell, or `None` when unknown.
     pub spell: &'a dyn Fn(&ActionId) -> Option<usize>,
-    /// Go `GetAPLDot`: the spellbook position of the spell when it has a dot on the target.
-    pub dot: &'a dyn Fn(&ActionId) -> Option<usize>,
+    /// Go `GetAPLDot`: the spellbook position of the spell when it has a dot on the unit.
+    pub dot: &'a dyn Fn(&ActionId, Unit) -> Option<usize>,
     /// Go `GetAuraByID` on the player's pet at a position among its pets: whether it has the
     /// aura, false when there is no such pet.
     pub pet_aura_known: &'a dyn Fn(usize, &ActionId) -> bool,
@@ -1687,6 +1852,18 @@ fn fold<R>(
     }
 }
 
+/// Go `NewDotReference`: the dot of a spell on the unit a dot value names. No spell, no unit
+/// or no dot on the unit gives no value.
+fn dot_at<R>(dot: &DotRef, lookup: &Lookup<R>) -> Option<DotAt> {
+    let unit = dot.target.resolve(lookup.targets)?;
+    let spell = (lookup.dot)(dot.spell.as_ref()?, unit)?;
+    let target = match unit {
+        Unit::Target(position) => position,
+        Unit::Player => 0,
+    };
+    Some(DotAt { spell, target })
+}
+
 /// Go `newAPLValue` for the supported subset. A spell or dot the character lacks gives no
 /// value, so the term drops out of its parent. An aura the character lacks reads as inactive,
 /// with no stacks and no time left (ElliotWood/Forever#622).
@@ -1711,11 +1888,14 @@ fn compile_value<R>(value: &Value, lookup: &Lookup<R>) -> Option<Compiled<R>> {
             max_overlap,
         } => {
             let found = if *target {
-                (lookup.target_aura)(id)
+                (lookup.target_aura)(0, id)
             } else {
                 aura(id)
             }?;
-            let overlap = compile_value(max_overlap, lookup)?.coerce(ValueType::Duration);
+            // Go gives a missing overlap a constant 0ms.
+            let overlap = compile_value(max_overlap, lookup)
+                .map(|value| value.coerce(ValueType::Duration))
+                .unwrap_or_else(|| Compiled::Const(parse_const("0ms").expect("duration constant")));
             Compiled::AuraShouldRefresh {
                 aura: found.aura,
                 overlap: Box::new(overlap),
@@ -1733,8 +1913,8 @@ fn compile_value<R>(value: &Value, lookup: &Lookup<R>) -> Option<Compiled<R>> {
             totem: (*totem)?,
             include_reaction_time: *include_reaction_time,
         },
-        Value::DotIsActive(id) => Compiled::DotIsActive((lookup.dot)(id)?),
-        Value::DotRemainingTime(id) => Compiled::DotRemainingTime((lookup.dot)(id)?),
+        Value::DotIsActive(dot) => Compiled::DotIsActive(dot_at(dot, lookup)?),
+        Value::DotRemainingTime(dot) => Compiled::DotRemainingTime(dot_at(dot, lookup)?),
         // Go `newValueSpellIsKnown` is a constant.
         Value::SpellIsKnown(id) => bool_const((lookup.spell)(id).is_some()),
         Value::SpellIsReady(id) => Compiled::SpellIsReady((lookup.spell)(id)?),
@@ -1745,7 +1925,7 @@ fn compile_value<R>(value: &Value, lookup: &Lookup<R>) -> Option<Compiled<R>> {
         Value::AutoSwingTime(kind) => Compiled::AutoSwingTime(*kind),
         // Go GetAPLSpell: an unknown spell gives no value.
         Value::SpellCurrentCost(id) => Compiled::SpellCurrentCost((lookup.spell)(id)?),
-        Value::DotTimeToNextTick(id) => Compiled::DotTimeToNextTick((lookup.dot)(id)?),
+        Value::DotTimeToNextTick(dot) => Compiled::DotTimeToNextTick(dot_at(dot, lookup)?),
         Value::GcdIsReady => Compiled::GcdIsReady,
         Value::AuraIsKnown(id) => bool_const(aura(id).is_some()),
         Value::PetAuraIsKnown { pet, id } => bool_const((lookup.pet_aura_known)(*pet, id)),
@@ -1753,15 +1933,30 @@ fn compile_value<R>(value: &Value, lookup: &Lookup<R>) -> Option<Compiled<R>> {
             Some(found) => Compiled::AuraIsActive(found.aura),
             None => bool_const(false),
         },
-        Value::TargetAuraIsActive(id) => match (lookup.target_aura)(id) {
-            Some(found) => Compiled::AuraIsActive(found.aura),
-            None => bool_const(false),
-        },
-        Value::TargetAuraNumStacks(id) => match (lookup.target_aura)(id) {
-            Some(found) if found.max_stacks == 0 => return None,
-            Some(found) => Compiled::AuraNumStacks(found.aura),
-            None => Compiled::Const(parse_const("0").expect("int constant")),
-        },
+        // Go `GetAPLAura` on a unit: one that resolves to no unit, or lacks the aura, reads as
+        // an aura it does not have.
+        Value::TargetAura { read, unit, id } => {
+            let found = match unit.resolve(lookup.targets) {
+                Some(Unit::Target(position)) => (lookup.target_aura)(position, id),
+                Some(Unit::Player) => aura(id),
+                None => None,
+            };
+            match (read, found) {
+                (AuraRead::IsKnown, found) => bool_const(found.is_some()),
+                (AuraRead::IsActive, Some(found)) => Compiled::AuraIsActive(found.aura),
+                (AuraRead::IsActive, None) => bool_const(false),
+                // Go warns that the aura does not stack and drops the value.
+                (AuraRead::NumStacks, Some(found)) if found.max_stacks == 0 => return None,
+                (AuraRead::NumStacks, Some(found)) => Compiled::AuraNumStacks(found.aura),
+                (AuraRead::NumStacks, None) => {
+                    Compiled::Const(parse_const("0").expect("int constant"))
+                }
+                (AuraRead::RemainingTime, Some(found)) => Compiled::AuraRemainingTime(found.aura),
+                (AuraRead::RemainingTime, None) => {
+                    Compiled::Const(parse_const("0ms").expect("duration constant"))
+                }
+            }
+        }
         Value::AuraNumStacks(id) => match aura(id) {
             // Go warns that the aura does not stack and drops the value.
             Some(found) if found.max_stacks == 0 => return None,
@@ -1772,6 +1967,11 @@ fn compile_value<R>(value: &Value, lookup: &Lookup<R>) -> Option<Compiled<R>> {
             let lhs = compile_value(lhs, lookup)?;
             let rhs = compile_value(rhs, lookup)?;
             let to = lhs.value_type().max(rhs.value_type());
+            // Go `newValueCompare` warns that booleans only compare for equality and gives
+            // no value, so the comparison drops out of its parent.
+            if to == ValueType::Bool && !matches!(op, CompareOp::Eq | CompareOp::Ne) {
+                return None;
+            }
             Compiled::Compare {
                 op: *op,
                 lhs: Box::new(lhs.coerce(to)),
@@ -1807,10 +2007,6 @@ fn compile_value<R>(value: &Value, lookup: &Lookup<R>) -> Option<Compiled<R>> {
             }
         }
         Value::AuraRemainingTime(id) => match aura(id) {
-            Some(found) => Compiled::AuraRemainingTime(found.aura),
-            None => Compiled::Const(parse_const("0ms").expect("duration constant")),
-        },
-        Value::TargetAuraRemainingTime(id) => match (lookup.target_aura)(id) {
             Some(found) => Compiled::AuraRemainingTime(found.aura),
             None => Compiled::Const(parse_const("0ms").expect("duration constant")),
         },
@@ -1866,12 +2062,20 @@ mod tests {
         None
     }
 
-    fn only_auras<'a, R>(aura: &'a dyn Fn(&ActionId) -> Option<FoundAura<R>>) -> Lookup<'a, R> {
+    fn no_dot(_: &ActionId, _: Unit) -> Option<usize> {
+        None
+    }
+
+    fn only_auras<'a, R>(
+        aura: &'a dyn Fn(&ActionId) -> Option<FoundAura<R>>,
+        target_aura: &'a dyn Fn(usize, &ActionId) -> Option<FoundAura<R>>,
+    ) -> Lookup<'a, R> {
         Lookup {
             aura,
-            target_aura: aura,
+            target_aura,
+            targets: 1,
             spell: &no_spell,
-            dot: &no_spell,
+            dot: &no_dot,
             pet_aura_known: &|_, _| false,
         }
     }
@@ -1899,7 +2103,7 @@ mod tests {
         let known = |pet: usize, aura: &ActionId| pet == 1 && *aura == id;
         let lookup = Lookup {
             pet_aura_known: &known,
-            ..only_auras(&none)
+            ..only_auras(&none, &|_, _| None)
         };
         assert_eq!(
             compile_condition(Some(&value), &lookup),
@@ -2022,11 +2226,17 @@ mod tests {
         );
         assert_eq!(
             parsed.priority_list[1].condition,
-            Some(Value::TargetAuraIsActive(id))
+            Some(Value::TargetAura {
+                read: AuraRead::IsActive,
+                unit: UnitRef::CurrentTarget,
+                id
+            })
         );
         for source in [
-            serde_json::json!({"type": "Target", "index": 1}),
-            serde_json::json!({"type": "NextTarget"}),
+            serde_json::json!({"type": "AllTargets"}),
+            serde_json::json!({"type": "Player", "index": 1}),
+            serde_json::json!({"type": "Pet", "owner": {"type": "Self"}}),
+            serde_json::json!({"type": "CurrentTarget", "index": 1}),
         ] {
             let rotation =
                 serde_json::json!({"type": "TypeAPL", "priorityList": [item(source.clone())]});
@@ -2107,7 +2317,7 @@ mod tests {
         .unwrap();
         let condition = rotation.priority_list[0].condition.as_ref();
         let lacks = |_: &ActionId| None::<FoundAura<()>>;
-        compile_condition(condition, &only_auras(&lacks))
+        compile_condition(condition, &only_auras(&lacks, &|_, _| None))
     }
 
     #[test]
@@ -2158,7 +2368,7 @@ mod tests {
                     max_stacks,
                 })
             };
-            compile_condition(condition.as_ref(), &only_auras(&find))
+            compile_condition(condition.as_ref(), &only_auras(&find, &|_, id| find(id)))
         };
         let stacks = |id: i32| {
             serde_json::json!({"cmp": {"op": "OpGe",
@@ -2219,7 +2429,7 @@ mod tests {
                     max_stacks: 5,
                 })
             };
-            compile_condition(condition.as_ref(), &only_auras(&find))
+            compile_condition(condition.as_ref(), &only_auras(&find, &|_, id| find(id)))
         };
         let known = |id: i32| serde_json::json!({"auraIsKnown": {"auraId": {"spellId": id}}});
         // Go folds Not of a constant.
@@ -2324,7 +2534,11 @@ mod tests {
         };
         assert_eq!(
             **lhs,
-            Value::TargetAuraRemainingTime(ActionId::spell(11581))
+            Value::TargetAura {
+                read: AuraRead::RemainingTime,
+                unit: UnitRef::CurrentTarget,
+                id: ActionId::spell(11581)
+            }
         );
     }
 
@@ -2356,7 +2570,321 @@ mod tests {
             cast(Some(serde_json::json!({"type": "Self"}))),
             Ok(Action::CastAtPlayer(spell.clone()))
         );
-        assert_eq!(cast(None), Ok(Action::CastSpell(spell)));
+        assert_eq!(
+            cast(None),
+            Ok(Action::CastSpell {
+                spell,
+                target: UnitRef::CurrentTarget
+            })
+        );
         assert!(cast(Some(serde_json::json!({"type": "Player", "index": 1}))).is_err());
+    }
+
+    /// A three target fight whose targets carry aura 2 and whose dot spells sit on the
+    /// targets: spell 7 holds a target dot, spell 8 an area dot. The player has aura 3.
+    fn target_lookup<T>(run: impl FnOnce(&Lookup<usize>) -> T) -> T {
+        let player = |id: &ActionId| {
+            (id.spell_id == 3).then_some(FoundAura {
+                aura: 100,
+                max_stacks: 0,
+            })
+        };
+        let target = |position: usize, id: &ActionId| {
+            (id.spell_id == 2).then_some(FoundAura {
+                aura: position,
+                max_stacks: 5,
+            })
+        };
+        let dot = |id: &ActionId, unit: Unit| match (id.spell_id, unit) {
+            (7, Unit::Target(_)) | (8, _) => Some(id.spell_id as usize),
+            _ => None,
+        };
+        run(&Lookup {
+            aura: &player,
+            target_aura: &target,
+            targets: 3,
+            spell: &no_spell,
+            dot: &dot,
+            pet_aura_known: &|_, _| false,
+        })
+    }
+
+    fn compiled(json: serde_json::Value) -> Option<CompiledCondition<usize>> {
+        let value = parse_value(&json).ok()?;
+        Some(target_lookup(|lookup| {
+            compile_condition(Some(&value), lookup)
+        }))
+    }
+
+    #[test]
+    fn unit_references_resolve_as_go_does() {
+        let parse = |json: serde_json::Value| parse_unit_ref(Some(&json), UnitRef::CurrentTarget);
+        assert_eq!(
+            parse(serde_json::json!({"type": "Self"})),
+            Ok(UnitRef::Player)
+        );
+        assert_eq!(
+            parse(serde_json::json!({"type": "Player", "index": 0})),
+            Ok(UnitRef::Player)
+        );
+        assert_eq!(
+            parse(serde_json::json!({"type": "Target"})),
+            Ok(UnitRef::Target(0))
+        );
+        assert_eq!(
+            parse(serde_json::json!({"type": "Target", "index": 2})),
+            Ok(UnitRef::Target(2))
+        );
+        // No type, or an unknown one, is the default.
+        assert_eq!(parse(serde_json::json!({})), Ok(UnitRef::CurrentTarget));
+        assert_eq!(
+            parse(serde_json::json!({"type": "Unknown", "index": 3})),
+            Ok(UnitRef::CurrentTarget)
+        );
+        for refused in [
+            serde_json::json!({"type": "AllTargets"}),
+            serde_json::json!({"type": "AllPlayers"}),
+            serde_json::json!({"type": "Player", "index": 1}),
+            serde_json::json!({"type": "Pet", "owner": {"type": "Self"}}),
+            serde_json::json!({"type": "Target", "index": -1}),
+            serde_json::json!({"type": "Self", "index": 1}),
+            serde_json::json!({"type": "Target", "owner": {"type": "Self"}}),
+        ] {
+            assert_eq!(parse(refused.clone()), Err(()), "{refused}");
+        }
+        // The current target is the first, the next wraps to the first, and the previous
+        // wraps to the last; an index past the targets is no unit.
+        assert_eq!(UnitRef::CurrentTarget.resolve(3), Some(Unit::Target(0)));
+        assert_eq!(UnitRef::NextTarget.resolve(3), Some(Unit::Target(1)));
+        assert_eq!(UnitRef::NextTarget.resolve(1), Some(Unit::Target(0)));
+        assert_eq!(UnitRef::PreviousTarget.resolve(3), Some(Unit::Target(2)));
+        assert_eq!(UnitRef::PreviousTarget.resolve(1), Some(Unit::Target(0)));
+        assert_eq!(UnitRef::Target(2).resolve(3), Some(Unit::Target(2)));
+        assert_eq!(UnitRef::Target(3).resolve(3), None);
+        assert_eq!(UnitRef::Player.resolve(3), Some(Unit::Player));
+    }
+
+    #[test]
+    fn a_cast_names_its_target() {
+        let cast = |target: serde_json::Value| {
+            parse(
+                &serde_json::json!({"type": "TypeAPL", "priorityList": [{"action": {
+                "castSpell": {"spellId": {"spellId": 25311}, "target": target}}}]}),
+            )
+            .map(|rotation| rotation.priority_list[0].action.clone())
+        };
+        assert_eq!(
+            cast(serde_json::json!({"type": "Target", "index": 1})),
+            Ok(Action::CastSpell {
+                spell: ActionId::spell(25311),
+                target: UnitRef::Target(1)
+            })
+        );
+        assert_eq!(
+            cast(serde_json::json!({"type": "AllTargets"})).unwrap_err(),
+            [r#"rotation item 1: castSpell target {"type":"AllTargets"} is unsupported"#]
+        );
+        // A sequence step or a prepull action casts at the current target only.
+        let step = |target: serde_json::Value| {
+            parse(
+                &serde_json::json!({"type": "TypeAPL", "priorityList": [{"action": {
+                "sequence": {"actions": [{"castSpell": {
+                    "spellId": {"spellId": 1}, "target": target}}]}}}]}),
+            )
+        };
+        assert!(step(serde_json::json!({"type": "CurrentTarget"})).is_ok());
+        assert!(step(serde_json::json!({"type": "Target", "index": 1})).is_err());
+    }
+
+    /// Go gives a dot value with no spell, or with a unit that has no dot, no value, which
+    /// drops the term from its parent.
+    #[test]
+    fn dots_name_a_unit_and_drop_without_a_spell() {
+        let dot = |kind: &str, spell: i32, unit: serde_json::Value| serde_json::json!({kind: {"spellId": {"spellId": spell}, "targetUnit": unit}});
+        let on = |kind: &str, unit: serde_json::Value| compiled(dot(kind, 7, unit)).unwrap();
+        let at = |spell: usize, target: usize| {
+            CompiledCondition::When(Compiled::DotIsActive(DotAt { spell, target }))
+        };
+        assert_eq!(
+            on(
+                "dotIsActive",
+                serde_json::json!({"type": "Target", "index": 2})
+            ),
+            at(7, 2)
+        );
+        assert_eq!(
+            on("dotIsActive", serde_json::json!({"type": "NextTarget"})),
+            at(7, 1)
+        );
+        // No unit is the current target; a target dot has none on the player or past the
+        // targets, while an area dot is the caster's whatever unit names it.
+        let current = serde_json::json!({"dotIsActive": {"spellId": {"spellId": 7}}});
+        assert_eq!(compiled(current), Some(at(7, 0)));
+        for unit in [
+            serde_json::json!({"type": "Self"}),
+            serde_json::json!({"type": "Target", "index": 3}),
+        ] {
+            assert_eq!(on("dotIsActive", unit), CompiledCondition::Always);
+        }
+        assert_eq!(
+            compiled(dot("dotIsActive", 8, serde_json::json!({"type": "Self"}))),
+            Some(at(8, 0))
+        );
+        // No spell, or no dot: the term drops, and the one that remains stands alone.
+        let present = dot(
+            "dotIsActive",
+            7,
+            serde_json::json!({"type": "Target", "index": 1}),
+        );
+        for (name, missing) in [
+            ("no spell", serde_json::json!({"dotIsActive": {}})),
+            (
+                "no dot",
+                dot(
+                    "dotIsActive",
+                    9,
+                    serde_json::json!({"type": "CurrentTarget"}),
+                ),
+            ),
+        ] {
+            assert_eq!(
+                compiled(missing.clone()),
+                Some(CompiledCondition::Always),
+                "{name}"
+            );
+            assert_eq!(
+                compiled(serde_json::json!({"and": {"vals": [missing.clone(), present.clone()]}})),
+                compiled(present.clone()),
+                "{name}"
+            );
+            assert_eq!(
+                compiled(serde_json::json!({"not": {"val": missing.clone()}})),
+                Some(CompiledCondition::Always),
+                "{name}"
+            );
+            let remaining = serde_json::json!({"dotRemainingTime": missing["dotIsActive"].clone()});
+            assert_eq!(
+                compiled(serde_json::json!({"cmp": {"op": "OpLt", "lhs": remaining,
+                    "rhs": {"const": {"val": "3s"}}}})),
+                Some(CompiledCondition::Always),
+                "{name}"
+            );
+        }
+        assert!(parse_value(&dot(
+            "dotIsActive",
+            7,
+            serde_json::json!({"type": "AllTargets"})
+        ))
+        .is_err());
+    }
+
+    /// Go `newValueCompare` gives booleans only equality, and drops any other comparison.
+    #[test]
+    fn ordered_comparisons_of_booleans_drop_out() {
+        let known = serde_json::json!({"spellIsKnown": {"spellId": {"spellId": 7}}});
+        let active = serde_json::json!({"auraIsActive": {"auraId": {"spellId": 2},
+            "sourceUnit": {"type": "Target", "index": 1}}});
+        let present = serde_json::json!({"dotIsActive": {"spellId": {"spellId": 7}}});
+        for op in ["OpLt", "OpLe", "OpGt", "OpGe"] {
+            let ordered =
+                serde_json::json!({"cmp": {"op": op, "lhs": active.clone(), "rhs": known.clone()}});
+            assert_eq!(
+                compiled(ordered.clone()),
+                Some(CompiledCondition::Always),
+                "{op}"
+            );
+            // Against a constant too.
+            let constant = serde_json::json!({"cmp": {"op": op, "lhs": active.clone(),
+                "rhs": {"const": {"val": "true"}}}});
+            assert_eq!(compiled(constant), Some(CompiledCondition::Always), "{op}");
+            let and = serde_json::json!({"and": {"vals": [ordered.clone(), present.clone()]}});
+            assert_eq!(compiled(and), compiled(present.clone()), "{op}");
+            let or = serde_json::json!({"or": {"vals": [present.clone(), ordered.clone()]}});
+            assert_eq!(compiled(or), compiled(present.clone()), "{op}");
+            let not = serde_json::json!({"not": {"val": ordered}});
+            assert_eq!(compiled(not), Some(CompiledCondition::Always), "{op}");
+        }
+        // Equality still compares.
+        let equal = serde_json::json!({"cmp": {"op": "OpEq", "lhs": active, "rhs": present}});
+        assert!(matches!(compiled(equal), Some(CompiledCondition::When(_))));
+    }
+
+    /// Go `newValueAuraIsInactive`: an aura the unit lacks is a constant true, and any other
+    /// is the negation of its activity.
+    #[test]
+    fn aura_is_inactive_negates_the_aura() {
+        let inactive = |id: i32, source: Option<serde_json::Value>| {
+            let mut config = serde_json::json!({"auraId": {"spellId": id}});
+            if let Some(source) = source {
+                config["sourceUnit"] = source;
+            }
+            compiled(serde_json::json!({"auraIsInactive": config})).unwrap()
+        };
+        let on = |aura: usize| {
+            CompiledCondition::When(Compiled::Not(Box::new(Compiled::AuraIsActive(aura))))
+        };
+        assert_eq!(inactive(5, None), CompiledCondition::Always);
+        assert_eq!(inactive(3, None), on(100));
+        assert_eq!(
+            inactive(2, Some(serde_json::json!({"type": "Target", "index": 2}))),
+            on(2)
+        );
+        assert_eq!(
+            inactive(2, Some(serde_json::json!({"type": "NextTarget"}))),
+            on(1)
+        );
+        assert_eq!(
+            inactive(2, Some(serde_json::json!({"type": "PreviousTarget"}))),
+            on(2)
+        );
+        // A target past the fight's, or the player when it lacks the aura, has no such aura.
+        assert_eq!(
+            inactive(2, Some(serde_json::json!({"type": "Target", "index": 3}))),
+            CompiledCondition::Always
+        );
+        assert_eq!(
+            inactive(2, Some(serde_json::json!({"type": "Self"}))),
+            CompiledCondition::Always
+        );
+        assert!(parse_value(&serde_json::json!({"auraIsInactive": {
+            "auraId": {"spellId": 2}, "includeReactionTime": true}}))
+        .is_err());
+    }
+
+    #[test]
+    fn auras_on_a_target_read_that_targets_aura() {
+        let read = |kind: &str, unit: serde_json::Value| {
+            let rhs = if kind == "auraRemainingTime" {
+                "2s"
+            } else {
+                "1"
+            };
+            compiled(serde_json::json!({"cmp": {"op": "OpGe",
+                "lhs": {kind: {"auraId": {"spellId": 2}, "sourceUnit": unit}},
+                "rhs": {"const": {"val": rhs}}}}))
+            .unwrap()
+        };
+        let CompiledCondition::When(Compiled::Compare { lhs, .. }) = read(
+            "auraNumStacks",
+            serde_json::json!({"type": "Target", "index": 1}),
+        ) else {
+            panic!("expected a comparison");
+        };
+        assert_eq!(*lhs, Compiled::AuraNumStacks(1));
+        let CompiledCondition::When(Compiled::Compare { lhs, .. }) = read(
+            "auraRemainingTime",
+            serde_json::json!({"type": "PreviousTarget"}),
+        ) else {
+            panic!("expected a comparison");
+        };
+        assert_eq!(*lhs, Compiled::AuraRemainingTime(2));
+        // The aura of a target that does not exist has no stacks: Go's constant "0".
+        let CompiledCondition::When(Compiled::Compare { lhs, .. }) = read(
+            "auraNumStacks",
+            serde_json::json!({"type": "Target", "index": 9}),
+        ) else {
+            panic!("expected a comparison");
+        };
+        assert_eq!(*lhs, Compiled::Const(parse_const("0").unwrap()));
     }
 }

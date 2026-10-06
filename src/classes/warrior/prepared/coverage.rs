@@ -13,6 +13,7 @@ pub(crate) const GATE: ClassGate = ClassGate {
     claims,
     limits,
     several_targets: Some(several_targets),
+    other_target_casts: Some(crate::engine::coverage::no_limits),
 };
 
 /// Warrior effect kinds implemented in Rust and validated against the pinned Go reference.
@@ -154,12 +155,12 @@ fn limits(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
     let mut cast_by_hand = Vec::new();
     if let Ok(rotation) = crate::rotation::parse(&prepared.player.rotation) {
         for prepull in &rotation.prepull {
-            if let crate::rotation::Action::CastSpell(id) = &prepull.action {
+            if let crate::rotation::Action::CastSpell { spell: id, .. } = &prepull.action {
                 cast_by_hand.push(id.clone());
             }
         }
         for item in &rotation.priority_list {
-            if let crate::rotation::Action::CastSpell(id) = &item.action {
+            if let crate::rotation::Action::CastSpell { spell: id, .. } = &item.action {
                 cast_by_hand.push(id.clone());
             }
         }
