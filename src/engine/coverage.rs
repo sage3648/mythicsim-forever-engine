@@ -155,6 +155,7 @@ const COMMON_EFFECTS: &[&str] = &[
     "conjured_energy",
     "conjured_mana",
     "crusader",
+    "diamond_flask",
     "dragonbreath_chili",
     "energize_on_use",
     "emerald_dragon_whelp",
@@ -269,6 +270,9 @@ fn common_spell_capability(spell: &Spell, prepared: &PreparedV2) -> Option<&'sta
         Effect::SpeedOnUse { item_id, .. } if *item_id == item && id.tag == 0 => {
             Some("speed_on_use")
         }
+        Effect::DiamondFlask { item_id, .. } if *item_id == item && id.tag == 0 => {
+            Some("diamond_flask")
+        }
         Effect::SpellCostAuraOnUse { item_id, .. } if *item_id == item && id.tag == 0 => {
             Some("spell_cost_aura_on_use")
         }
@@ -355,6 +359,7 @@ fn common_claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         | Effect::Stoneform { aura, .. }
         | Effect::ReadLeyLine { aura, .. }
         | Effect::TemporaryStats { aura, .. }
+        | Effect::DiamondFlask { aura, .. }
         | Effect::AbsorbOnUse { aura, .. }
         | Effect::SpeedOnUse { aura, .. } => vec![("player", aura)],
         Effect::JudgementOfWisdom { aura, .. } => vec![("target", aura)],
@@ -514,6 +519,7 @@ fn uninherited_stat_changes(prepared: &PreparedV2) -> Vec<String> {
                 changed.extend(stats.iter().map(String::as_str))
             }
             Effect::BloodFury { active_stats, .. }
+            | Effect::DiamondFlask { active_stats, .. }
             | Effect::TemporaryStats { active_stats, .. } => {
                 changed.extend(active_stats.keys().map(String::as_str))
             }
@@ -563,6 +569,9 @@ fn fixed_stat_changes(prepared: &PreparedV2) -> Vec<String> {
         .iter()
         .filter_map(|effect| match effect {
             Effect::BloodFury {
+                aura, active_stats, ..
+            }
+            | Effect::DiamondFlask {
                 aura, active_stats, ..
             }
             | Effect::TemporaryStats {

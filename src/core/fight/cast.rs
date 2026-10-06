@@ -775,6 +775,13 @@ impl<A: Agent> Fight<A> {
                     self.add_mana(gain, metrics);
                 }
             }
+            SpellBehavior::DiamondFlask(_) => {
+                // Go `spell.SelfHot().Apply`.
+                let dot = self.spells[spell]
+                    .dot
+                    .expect("the Diamond Flask has its self hot");
+                self.apply_dot(dot);
+            }
             SpellBehavior::TouchOfTheGraveDrain {
                 health_fraction,
                 metrics,
@@ -1299,7 +1306,9 @@ impl<A: Agent> Fight<A> {
             | SpellBehavior::OnUseDamage(_)
             | SpellBehavior::SelfHeal(_)
             | SpellBehavior::AbsorbOnUse(_) => true,
-            SpellBehavior::TouchOfTheGraveDrain { .. }
+            // The flask's major cooldown never activates.
+            SpellBehavior::DiamondFlask(_)
+            | SpellBehavior::TouchOfTheGraveDrain { .. }
             | SpellBehavior::MeleeAuto(_)
             | SpellBehavior::Move
             | SpellBehavior::RollDamage { .. }

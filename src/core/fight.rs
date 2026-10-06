@@ -407,6 +407,9 @@ pub(crate) enum SpellBehavior<S> {
         health_fraction: f64,
         metrics: usize,
     },
+    /// Go sim/warrior/items.go Diamond Flask: the cast starts its self hot, whose last tick
+    /// activates the player aura at this index.
+    DiamondFlask(usize),
     /// Go racials.go Eureka!'s cast, which activates its aura.
     Eureka,
     /// A racial whose `ApplyEffects` only activates its player aura.
@@ -1765,6 +1768,8 @@ impl<A: Agent> Fight<A> {
         let mut activations: Vec<(SpellId, &str)> = Vec::new();
         // Potions with a temporary stat aura, resolved once the auras are registered.
         let mut potion_auras: Vec<(SpellId, &str)> = Vec::new();
+        // Diamond Flasks and the Strength aura their last tick activates.
+        let mut flask_auras: Vec<(SpellId, &str)> = Vec::new();
         // The player's spellbook, then each simulated pet's.
         let unit_spells = player
             .spells
@@ -2014,6 +2019,12 @@ impl<A: Agent> Fight<A> {
                         {
                             activations.push((spells.len(), aura));
                             Some(SpellBehavior::None)
+                        }
+                        Effect::DiamondFlask { item_id, aura, .. }
+                            if id.item_id == *item_id && id.tag == 0 =>
+                        {
+                            flask_auras.push((spells.len(), aura));
+                            Some(SpellBehavior::DiamondFlask(0))
                         }
                         Effect::DragonbreathChili {
                             spell_id,
@@ -2577,6 +2588,12 @@ impl<A: Agent> Fight<A> {
                             gain_log,
                             expire_log,
                             ..
+                        }
+                        | Effect::DiamondFlask {
+                            aura,
+                            gain_log,
+                            expire_log,
+                            ..
                         } if *aura == exported.label => Some((gain_log, expire_log)),
                         Effect::PotionResource {
                             aura: Some(aura),
@@ -2800,6 +2817,12 @@ impl<A: Agent> Fight<A> {
             if let SpellBehavior::PotionResource { aura, .. } = &mut spells[spell].behavior {
                 *aura = Some(index);
             }
+        }
+        for (spell, label) in flask_auras {
+            let index = trackers[Side::Player.index()]
+                .find(label)
+                .ok_or_else(|| format!("aura {label} is not registered"))?;
+            spells[spell].behavior = SpellBehavior::DiamondFlask(index);
         }
         for (spell, label) in activations {
             let aura = trackers[Side::Player.index()]

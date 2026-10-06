@@ -1252,6 +1252,17 @@ pub enum Effect {
         ranged_multiplier: f64,
         cast_multiplier: f64,
     },
+    /// The Diamond Flask (sim/warrior/items.go): a channel that is a self hot of five ticks, whose
+    /// last tick activates a Strength aura. `active_stats` holds every stat the aura changes at
+    /// the value Go computes while it is active; `gain_log` and `expire_log` are the lines its
+    /// gain and expiry log.
+    DiamondFlask {
+        item_id: i32,
+        aura: String,
+        active_stats: BTreeMap<String, f64>,
+        gain_log: String,
+        expire_log: String,
+    },
     /// The forms the druid starts in and each druid spell may be cast in.
     DruidForms {
         starting_form: Vec<String>,
@@ -3728,6 +3739,7 @@ impl Effect {
             Effect::BloodFury { .. } => "blood_fury",
             Effect::TemporaryStats { .. } => "temporary_stats",
             Effect::SpeedOnUse { .. } => "speed_on_use",
+            Effect::DiamondFlask { .. } => "diamond_flask",
             Effect::DruidForms { .. } => "druid_forms",
             Effect::MoonkinForm { .. } => "moonkin_form",
             Effect::Starfire {} => "starfire",

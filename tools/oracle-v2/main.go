@@ -1161,8 +1161,8 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 		}
 	}
 	consumes := request.Raid.Parties[0].Players[0].Consumables
-	// Major cooldown items, then the potions and conjured items a rotation casts itself, which
-	// Go removed from the major cooldowns.
+	// Major cooldown items, then the potions, conjured items and Diamond Flasks a rotation casts
+	// itself, which Go removed from the major cooldowns.
 	items := []*core.Spell{}
 	cooldowns := map[*core.Spell]bool{}
 	for _, cd := range character.GetMajorCooldowns() {
@@ -1171,7 +1171,7 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 	}
 	for _, spell := range character.Spellbook {
 		sapper := spell.ActionID == core.GoblinSapperActionID
-		if spell.ActionID.ItemID != 0 && !cooldowns[spell] && (spell.Flags.Matches(core.SpellFlagPotion|core.SpellFlagConjured) || sapper) {
+		if spell.ActionID.ItemID != 0 && !cooldowns[spell] && (spell.Flags.Matches(core.SpellFlagPotion|core.SpellFlagConjured) || sapper || spell.ActionID.ItemID == diamondFlaskItem) {
 			items = append(items, spell)
 		}
 	}
@@ -1285,7 +1285,7 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 				"metrics_spell_id": 15604, "min_deficit": 630.0,
 			})
 		case classItemUseEffects[item] != nil: // a use effect a class file registers itself
-			effects = append(effects, classItemUseEffects[item](character.Env.GetAgentFromUnit(&character.Unit), spell))
+			effects = append(effects, classItemUseEffects[item](request, character.Env.GetAgentFromUnit(&character.Unit), spell))
 		default:
 			// shared.NewSpellDataEnergizeOnUse: an item use spell that restores mana, at once or as a
 			// self hot of the row's ticks; the manager waits until the whole gain fits. It has no
@@ -1367,7 +1367,7 @@ func survivalOnUse(character *core.Character, spell *core.Spell, item int32) map
 
 // Items whose use effect a class package registers with its own NewItemEffect, by item ID, and
 // the effect each exports; a class file adds its own.
-var classItemUseEffects = map[int32]func(agent core.Agent, spell *core.Spell) map[string]any{}
+var classItemUseEffects = map[int32]func(request *proto.RaidSimRequest, agent core.Agent, spell *core.Spell) map[string]any{}
 
 // The item's one use effect, or nil.
 func onlyOnUseEffect(item int32) *proto.ItemEffect {
