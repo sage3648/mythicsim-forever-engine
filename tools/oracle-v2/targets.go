@@ -29,8 +29,9 @@ func targetCount(request *proto.RaidSimRequest) int32 {
 	return 0
 }
 
-// The refusals that need only the request: the supported count, identical copies, every
-// target active from the start and no tank.
+// The refusals that need only the request: the supported count, identical copies and every
+// target active from the start. A tank assignment is not one: with several targets Go has
+// every copy swing at the tank on its own timer, which Rust simulates per copy.
 func targetNotes(request *proto.RaidSimRequest, note func(bool, string)) {
 	targets := request.Encounter.GetTargets()
 	note(len(targets) == 0, "a fight without targets is unsupported")
@@ -41,8 +42,20 @@ func targetNotes(request *proto.RaidSimRequest, note func(bool, string)) {
 			note(!googleProto.Equal(target, targets[0]), fmt.Sprintf("target %d differs from the first target: only identical copies are supported", i+1))
 		}
 	}
-	note(len(targets) > 1 && len(request.Raid.GetTanks()) != 0,
-		"a tank assignment with several targets: every copy would swing at the tank")
+}
+
+// Whom a target swings at, and, when that is the player, every value of the swing.
+func swingShape(simulation *core.Simulation, character *core.Character, target *core.Unit) string {
+	player := &character.Unit
+	shape := []any{target.CurrentTarget == player, target.CurrentTarget == nil, target.SecondaryTarget != nil}
+	if target.CurrentTarget == player && target.AutoAttacks.AutoSwingMelee && target.AutoAttacks.MH().SwingSpeed > 0 {
+		shape = append(shape, encodeEnemy(enemyValues(simulation, character, target)))
+	}
+	encoded, err := json.Marshal(shape)
+	if err != nil {
+		fail(err)
+	}
+	return string(encoded)
 }
 
 // What Rust reads from a target, apart from its index and label, part by part, for comparing
@@ -88,7 +101,8 @@ func targetShape(target *core.Unit, character *core.Character) map[string]string
 }
 
 // The refusals that need the reset simulation: every target past the first must export as the
-// first does, and no target aura may have an internal cooldown, which Go keeps per copy.
+// first does, including the swing at the player when it tanks them, and no target aura may have
+// an internal cooldown, which Go keeps per copy.
 func targetCopyNotes(simulation *core.Simulation, character *core.Character, note func(bool, string)) {
 	targets := simulation.Encounter.AllTargetUnits
 	if len(targets) < 2 {
@@ -111,6 +125,10 @@ func targetCopyNotes(simulation *core.Simulation, character *core.Character, not
 		sort.Strings(differs)
 		note(len(differs) > 0, fmt.Sprintf("target %d is set up unlike the first target in %s: only identical copies are supported",
 			i+2, strings.Join(differs, ", ")))
+		// Whom the copy swings at and what its swing reads: Rust runs every copy's swing from
+		// the first target's values.
+		note(swingShape(simulation, character, target) != swingShape(simulation, character, targets[0]),
+			fmt.Sprintf("target %d swings unlike the first target: only identical copies are supported", i+2))
 	}
 	for _, aura := range targets[0].GetAuras() {
 		note(aura.Icd != nil, fmt.Sprintf("target aura %s has an internal cooldown, which each of several targets keeps apart", aura.Label))
