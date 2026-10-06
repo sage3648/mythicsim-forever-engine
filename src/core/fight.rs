@@ -697,6 +697,9 @@ pub(crate) struct Hardcast {
     pub(crate) cast_time: i64,
     /// Whether the cast carries `SpellFlagPushback`.
     pub(crate) pushback: bool,
+    /// Whether the cast carries `SpellFlagChanneled`, which a hit pushes back whatever its
+    /// pushback flag.
+    pub(crate) channeled: bool,
 }
 
 impl Hardcast {
@@ -708,6 +711,7 @@ impl Hardcast {
             target: Side::Target,
             cast_time: 0,
             pushback: false,
+            channeled: false,
         }
     }
 }

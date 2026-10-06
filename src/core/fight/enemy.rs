@@ -344,14 +344,14 @@ impl<A: Agent> Fight<A> {
     }
 
     /// The "Pushback trigger" proc's `OnSpellHitTaken` for the target's swing: a landed hit that
-    /// deals damage during a hardcast with the pushback flag queues the handler a spell batch
-    /// window later. The swing is neither a channel's hit nor a dot's.
+    /// deals damage during a hardcast that is a channel or carries the pushback flag queues the
+    /// handler a spell batch window later. The swing is not a dot's, which Go leaves out.
     fn pushback_hit_taken(&mut self, chance: f64, result: &SpellResult) {
         let hardcast = self.player.hardcast;
         if !result.landed()
             || result.damage == 0.0
             || hardcast.expires <= self.now
-            || !hardcast.pushback
+            || !(hardcast.channeled || hardcast.pushback)
         {
             return;
         }

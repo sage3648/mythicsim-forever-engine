@@ -1235,33 +1235,39 @@ pub(crate) fn prepared_coverage(
             }
             // Go newHardcastAction: a tank's hardcast drops its avoidance, whose rolls the exporter
             // reads. A channel without a cast time sets no hardcast, so it keeps its avoidance.
-            // Pushback of a channel with a cast time is not modeled. A cast with the pushback
-            // flag is pushed back by every damaging hit, which needs the trigger the exporter
-            // reads and a chance of one or none: no other chance has been compared with Go.
+            // A channel with a cast time and a cast with the pushback flag are pushed back by
+            // every damaging hit (a channel loses a quarter of its cast time, any other cast
+            // up to half a second), which needs the trigger the exporter reads and a chance of
+            // one or none: no other chance has been compared with Go.
             if let Some(enemy) = &prepared.enemy {
                 if spell.default_cast.cast_time_ns > 0 {
                     let pushback_chance = prepared.effects.iter().find_map(|effect| match effect {
                         Effect::PushbackTrigger { chance, .. } => Some(*chance),
                         _ => None,
                     });
-                    let pushes_back = spell.has_flag("SpellFlagPushback");
-                    if spell.has_flag("SpellFlagChanneled")
-                        || enemy.reduced_avoidance_rolls.is_empty()
-                        || (pushes_back && pushback_chance.is_none())
+                    let channeled = spell.has_flag("SpellFlagChanneled");
+                    let pushed = channeled || spell.has_flag("SpellFlagPushback");
+                    let kind = if channeled {
+                        "a channel with a cast time"
+                    } else {
+                        "a hardcast"
+                    };
+                    if enemy.reduced_avoidance_rolls.is_empty()
+                        || (pushed && pushback_chance.is_none())
                     {
                         limited.insert((
                             format!(
-                                "rotation reaches {id}, a hardcast while the target swings at \
-                                 the player"
+                                "rotation reaches {id}, {kind} while the target swings at the \
+                                 player"
                             ),
                             "tanking_unsupported",
                         ));
                     } else if let Some(chance) = pushback_chance {
                         let rolled = chance - spell.pushback_resist;
-                        if pushes_back && rolled > 0.0 && rolled < 1.0 {
+                        if pushed && rolled > 0.0 && rolled < 1.0 {
                             limited.insert((
                                 format!(
-                                    "rotation reaches {id}, a hardcast the target's swings push \
+                                    "rotation reaches {id}, {kind} the target's swings push \
                                      back with a chance that needs a roll"
                                 ),
                                 "tanking_unsupported",

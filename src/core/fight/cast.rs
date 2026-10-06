@@ -565,6 +565,7 @@ impl<A: Agent> Fight<A> {
                 target,
                 cast_time: cur.cast_time,
                 pushback: self.spells[spell].flags.pushback,
+                channeled,
             };
             self.new_hardcast_action(side);
             return true;
@@ -1027,8 +1028,9 @@ impl<A: Agent> Fight<A> {
 
     /// The "Pushback trigger" handler, which Go runs a spell batch window after the hit that
     /// passed its conditions. Since the fork's patch 89 it leaves a hardcast that finished in
-    /// between alone, before the pushback roll. The gate admits only casts that are not
-    /// channeled.
+    /// between alone, before the pushback roll. A channel with a cast time loses a quarter of
+    /// that cast time, its expiry never moving before now, and logs the quarter whether or not
+    /// the expiry moved; any other cast is pushed back by `Hardcast.pushBack`.
     pub(crate) fn pushback_handler(&mut self, chance: f64) {
         let hardcast = self.player.hardcast;
         let Some(spell) = hardcast.spell else {
@@ -1041,16 +1043,24 @@ impl<A: Agent> Fight<A> {
         if !self.proc(chance - resist, "Pushback") {
             return;
         }
-        // Go `Hardcast.pushBack`.
-        let pushback =
-            SPELL_PUSHBACK_DURATION.min(self.now + hardcast.cast_time - hardcast.expires);
-        if pushback <= 0 {
-            return;
-        }
-        self.player.hardcast.expires += pushback;
+        let (pushback, how) = if hardcast.channeled {
+            // Channeled spells lose 25% of their total duration.
+            let pushback = hardcast.cast_time / 4;
+            self.player.hardcast.expires = (hardcast.expires - pushback).max(self.now);
+            (pushback, "channeling")
+        } else {
+            // Go `Hardcast.pushBack`.
+            let pushback =
+                SPELL_PUSHBACK_DURATION.min(self.now + hardcast.cast_time - hardcast.expires);
+            if pushback <= 0 {
+                return;
+            }
+            self.player.hardcast.expires += pushback;
+            (pushback, "casting")
+        };
         if self.log.is_some() {
             let line = format!(
-                "{} pushed back {} while casting",
+                "{} pushed back {} while {how}",
                 action_string(&self.spells[spell].id),
                 go_string(pushback)
             );
