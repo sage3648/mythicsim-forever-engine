@@ -6762,6 +6762,48 @@
         "file": "warrior-dot-target-unit.go-log.txt",
         "sha256": "9a6127a156e67f1d82adb53777c5ef689f126a24305cf50b6fd047cf28690efd"
       }
+    },
+    {
+      "id": "tank-mage-channel-pushback",
+      "description": "A Frost Mage tanking the target with a 3 second cast time on Arcane Missiles (a synthetic channel: the exporter adds it for a player named synthetic-channel-cast, since no real build has one): every hit during the cast takes a quarter of the cast time, never past the moment the handler runs, with the pushed back while channeling line",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/tank-mage-channel-pushback.request.json"
+      },
+      "prepared": "tank-mage-channel-pushback.prepared.json",
+      "prepared_sha256": "327f7984157f804cbe73c3e1cbfb802358bcb57fb7e2800d18b1c38a2cbff78b",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "tank-mage-channel-pushback.go-result.json",
+        "sha256": "6c88909eebc1b70980c02b6faf6912dda1014d52ede449ed18ff4d82d31731b8"
+      },
+      "go_log": {
+        "file": "tank-mage-channel-pushback.go-log.txt",
+        "sha256": "ed086b790fe0402b38fb37f08d816aac3bb490da9b7e33a73dc848c5adb94289"
+      }
+    },
+    {
+      "id": "tank-mage-channel-pushback-after-cast",
+      "description": "The same Mage on a seed where two hits land in one cast and the second would move the end before the handler runs, so the cast completes then, and a later swing lands in the batch window before a cast completes and leaves it alone (the fork's patch 89 check)",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/tank-mage-channel-pushback-after-cast.request.json"
+      },
+      "prepared": "tank-mage-channel-pushback-after-cast.prepared.json",
+      "prepared_sha256": "17f29d684ee9ad8f4bbb92eeeb5248c90f84b08e375f5524209b85bc868de64c",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "tank-mage-channel-pushback-after-cast.go-result.json",
+        "sha256": "38904d3ca15d1015a394ba7d0c485bbbeb62c2e9d18fb6f556267c9012d6b176"
+      },
+      "go_log": {
+        "file": "tank-mage-channel-pushback-after-cast.go-log.txt",
+        "sha256": "dd12b5793c3ddfef99cdae8d7ef586ad387a21332d4803fea7986776b0cc69b9"
+      }
     }
   ]
 }
