@@ -937,6 +937,31 @@ impl WarriorAgent {
 }
 
 impl WarriorAgent {
+    /// Go `registerCleave`'s `ApplyEffects` from `results = results[:0]` on: each hit's result
+    /// object takes its place in the slice every cast of Cleave shares, and the deal loop reads
+    /// the slice's element when its turn comes, so a cast that starts during a deal replaces
+    /// the results this one has yet to deal.
+    fn deal_cleave(fight: &mut Fight<Self>, spell: SpellId, results: Vec<SpellResult>) {
+        for (place, result) in results.iter().enumerate() {
+            let queue = &mut fight.agent.queue;
+            let id = queue.pool.new_result_of(result);
+            match queue.cleave_slice.get_mut(place) {
+                Some(slot) => *slot = id,
+                None => queue.cleave_slice.push(id),
+            }
+        }
+        for place in 0..results.len() {
+            let queue = &mut fight.agent.queue;
+            let id = queue.cleave_slice[place];
+            let result = queue.pool.result(id);
+            queue.dealing.push(id);
+            fight.deal_damage(spell, result, false);
+            let queue = &mut fight.agent.queue;
+            queue.dealing.pop();
+            queue.pool.dispose(id);
+        }
+    }
+
     /// The warrior's listeners of hits it takes. Go's proc triggers skip a spell with the proc
     /// flag; Retaliation, a plain listener, hears only melee hits.
     fn hit_taken(
@@ -1028,20 +1053,8 @@ impl Agent for WarriorAgent {
             WarriorSpell::Strike(index) => {
                 let params = fight.agent.queue.strikes[index];
                 if params.cleave {
-                    // Go ranges over the shared `results` slice, reading each element when its
-                    // turn comes, so a cast during a deal replaces the results still to deal.
                     let results = heroic_strike::cleave_results(fight, spell, target, params);
-                    let shared = &mut fight.agent.queue.cleave_results;
-                    for (position, result) in results.iter().enumerate() {
-                        match shared.get_mut(position) {
-                            Some(slot) => *slot = *result,
-                            None => shared.push(*result),
-                        }
-                    }
-                    for position in 0..results.len() {
-                        let result = fight.agent.queue.cleave_results[position];
-                        fight.deal_damage(spell, result, false);
-                    }
+                    Self::deal_cleave(fight, spell, results);
                 } else {
                     heroic_strike::strike(fight, spell, target, params);
                 }
@@ -1258,6 +1271,22 @@ impl Agent for WarriorAgent {
             return swing;
         }
         strike.spell
+    }
+
+    fn dealing_result(fight: &Fight<Self>, spell: SpellId) -> Option<SpellResult> {
+        fight.agent.queue.dealing_result(spell)
+    }
+
+    fn clone_result(
+        fight: &mut Fight<Self>,
+        spell: SpellId,
+        result: &SpellResult,
+    ) -> Option<(SpellResult, usize)> {
+        fight.agent.queue.clone_result(spell, result)
+    }
+
+    fn dispose_clone(fight: &mut Fight<Self>, token: usize) {
+        fight.agent.queue.dispose_clone(token);
     }
 
     fn on_periodic(fight: &mut Fight<Self>, tag: u32) {

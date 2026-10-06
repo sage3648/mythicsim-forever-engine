@@ -404,32 +404,23 @@ fn sweeping_strikes_copies_a_hit_to_the_next_target() {
 }
 
 /// An extra attack that a landed hit casts at once, replaced by a queued Cleave, starts a
-/// Cleave while another still deals its hits. Go shares the results between casts and reuses a
-/// cached result per target, which Rust models against two targets alone.
+/// Cleave while another still deals its hits. Go's Cleave shares one slice of results between
+/// its casts, so the first cast then deals the second's last hit again in place of its own,
+/// whose result is never dealt.
 #[test]
-fn cleave_with_an_extra_attack_is_refused_against_three_targets() {
-    let reason = |name: &str, targets: u32| {
-        let mut value = warrior_fixture(name);
-        value["encounter"]["target_count"] = json!(targets);
-        crate::refusal_codes(value)
-            .into_iter()
-            .find(|(code, _)| *code == "several_targets_unsupported")
-            .map(|(_, reason)| reason)
-    };
-    let cleave = |targets: u32| {
-        format!(
-            "rotation reaches spell 20569 tag 1, a Cleave that an extra attack can cast again \
-             while it deals its hits, which Go's shared results and result cache scramble \
-             against {targets} targets"
-        )
-    };
-    assert_eq!(reason("production-arms-warrior-2-targets", 2), None);
-    assert_eq!(
-        reason("production-arms-warrior-2-targets", 3),
-        Some(cleave(3))
-    );
-    // The production Fury build has the party Windfury Totem alone.
-    assert_eq!(reason("production-warrior-2-targets", 5), Some(cleave(5)));
-    // Without Cleave in the rotation nothing re-enters.
-    assert_eq!(reason("warrior-whirlwind-5-targets", 5), None);
+fn a_cleave_cast_again_while_it_deals_deals_the_later_hit_twice() {
+    for name in [
+        "production-arms-warrior-3-targets",
+        "production-warrior-5-targets",
+    ] {
+        let logs = first_fight_log(warrior_fixture(name));
+        let lines: Vec<&str> = logs.lines().collect();
+        let dealt_twice = lines.iter().enumerate().any(|(index, line)| {
+            line.contains("{SpellID: 20569} ")
+                && line.contains(" for ")
+                && !line.contains("[DEBUG]")
+                && lines[index.saturating_sub(40)..index].contains(line)
+        });
+        assert!(dealt_twice, "{name}");
+    }
 }

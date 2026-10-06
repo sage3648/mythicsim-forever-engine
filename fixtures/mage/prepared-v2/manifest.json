@@ -5745,17 +5745,23 @@
     },
     {
       "id": "production-arms-warrior-3-targets",
-      "description": "Production Arms Warrior against 3 targets, refused: an extra attack casts the queued Cleave from inside Cleave's own damage loop, which Go's shared results scramble",
+      "description": "Production Arms Warrior reference build against 3 copies of the boss: Sweeping Strikes copies, and the extra attacks of Weaponmaster and the party Windfury Totem replaced by a queued Cleave while another Cleave deals its hits, through Go's shared results and result cache",
       "request": {
         "path": "fixtures/mage/prepared-v2/production-arms-warrior-3-targets.request.json"
       },
       "prepared": "production-arms-warrior-3-targets.prepared.json",
       "prepared_sha256": "9d0514c3081a794f62093513d52fb4a32ba35f5fbb24c40912a4ba553c3743d0",
       "expected_coverage": {
-        "supported": false,
-        "reasons": [
-          "rotation reaches spell 20569 tag 1, a Cleave that an extra attack can cast again while it deals its hits, which Go's shared results and result cache scramble against 3 targets"
-        ]
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-arms-warrior-3-targets.go-result.json",
+        "sha256": "22bfbe05621aa19a10ff8b20a69ce368e4ba46db704a7d763055d5952542ba76"
+      },
+      "go_log": {
+        "file": "production-arms-warrior-3-targets.go-log.txt",
+        "sha256": "2f62c5f5da6889cc71b281491e86bd495ddf71a964644789b2797af98f4cb8fb"
       }
     },
     {
@@ -5861,6 +5867,27 @@
       "go_log": {
         "file": "enhancement-shaman-chain-magma-4-targets.go-log.txt",
         "sha256": "9bce2bb76f67471ac7f16fc94137ba72bf53bb2586a0fa07ab16106bfd7f0dab"
+      }
+    },
+    {
+      "id": "production-warrior-5-targets",
+      "description": "Production Fury Warrior reference build against 5 copies of the boss: Cleave's two targets and Whirlwind's four with the party Windfury Totem's extra attack replacing a swing with a queued Cleave",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-warrior-5-targets.request.json"
+      },
+      "prepared": "production-warrior-5-targets.prepared.json",
+      "prepared_sha256": "39743ca5708bfea49be96bc30bbcf4758102cad73fc7b8d05440fe9cd9c54382",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-warrior-5-targets.go-result.json",
+        "sha256": "a54a4e4d937c49b83e94887a001baff8befab8269dfacf151b1dbf602235eaa7"
+      },
+      "go_log": {
+        "file": "production-warrior-5-targets.go-log.txt",
+        "sha256": "d0f0eb3e259475ac992aa12fec8aa417b79709e465186d211d5e4c6f5034f761"
       }
     }
   ]
