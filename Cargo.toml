@@ -15,3 +15,12 @@ serde_json = "1"
 [profile.release]
 lto = "thin"
 codegen-units = 1
+
+# The accepted fixtures simulate over half a million fights against their Go goldens, which
+# takes about 17 minutes of CPU unoptimized. Light optimization of the test build cuts that
+# eightfold and costs less to compile than opt-level 2 or 3, which barely run faster. It
+# changes how fast the engine runs, never what it computes: Rust does not fuse a multiply and
+# an add unless asked (`mul_add`) at any optimization level, and debug assertions and
+# overflow checks stay on. The release profile and the architecture check do not use it.
+[profile.test]
+opt-level = 1
