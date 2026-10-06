@@ -80,6 +80,7 @@ impl<A: Agent> Fight<A> {
             * (spread + (attack_power * values.attack_power_coefficient).max(0.0));
         let base = weapon + values.bonus_damage;
         let mut result = SpellResult {
+            armor_multiplier: 0.0,
             target: Side::Player,
             outcome: 0,
             damage: base * values.attacker_multiplier,
@@ -258,7 +259,10 @@ impl<A: Agent> Fight<A> {
     /// Go `Unit.MultiplyMeleeSpeed` on the target, then its `AutoAttacks.UpdateSwingTimers`:
     /// the rest of a pending swing scales with the change in speed.
     pub(crate) fn multiply_enemy_melee_speed(&mut self, amount: f64) {
-        let enemy = self.enemy.as_mut().expect("the target swings");
+        // A target that does not swing at the player has no swing to slow.
+        let Some(enemy) = self.enemy.as_mut() else {
+            return;
+        };
         enemy.melee_speed_multiplier *= amount;
         if !self.autos.enemy.enabled {
             return;

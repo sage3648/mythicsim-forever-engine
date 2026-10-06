@@ -735,9 +735,9 @@ impl<A: Agent> Fight<A> {
         self.deal_damage(spell, result, true);
     }
 
-    /// Go `Spell.CalcAndDealPeriodicDamage` for a dot's tick on a base amount against a
-    /// target, with a given outcome applier; an area dot on the caster names its target.
-    pub(crate) fn periodic_damage_tick_with(
+    /// Go `Spell.CalcPeriodicDamage` for a dot's tick on a base amount against a target, with a
+    /// given outcome applier, not yet dealt; an area dot on the caster names its target.
+    pub(crate) fn calc_periodic_damage_with(
         &mut self,
         dot: super::DotId,
         side: Side,
@@ -755,7 +755,20 @@ impl<A: Agent> Fight<A> {
         }
         let attacker =
             self.attacker_multiplier(spell, true) * self.dots[dot].periodic_damage_multiplier;
-        let result = self.calc_damage_internal(spell, side, base, attacker, outcome);
+        self.calc_damage_internal(spell, side, base, attacker, outcome)
+    }
+
+    /// Go `Spell.CalcAndDealPeriodicDamage` for a dot's tick on a base amount against a
+    /// target, with a given outcome applier; an area dot on the caster names its target.
+    pub(crate) fn periodic_damage_tick_with(
+        &mut self,
+        dot: super::DotId,
+        side: Side,
+        base: f64,
+        outcome: Outcome,
+    ) -> SpellResult {
+        let result = self.calc_periodic_damage_with(dot, side, base, outcome);
+        let spell = self.dots[dot].spell;
         self.deal_damage(spell, result, true);
         result
     }

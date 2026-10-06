@@ -13,6 +13,7 @@
 mod absorb;
 mod aura;
 mod cast;
+mod cleave;
 mod damage;
 pub(crate) mod damage_taken;
 mod dot;
