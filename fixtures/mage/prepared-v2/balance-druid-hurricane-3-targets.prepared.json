@@ -6,10 +6,10 @@
     "client_build": "1.60.1.70205",
     "exporter": "tools/oracle-v2"
   },
-  "request_sha256": "6d08fb20e84112645c0bad9b4646be2160e51e0f18d8ff938de479d73d41e955",
-  "scenario_id": "balance-druid-berserk-natural-reaction",
+  "request_sha256": "1849eb27db05e405424516c2d352e5d9ddc5f4b89563970ef2d326bc5b1f0e42",
+  "scenario_id": "balance-druid-hurricane-3-targets",
   "sim": {
-    "iterations": 3000,
+    "iterations": 1000,
     "seed": 42,
     "labeled_rng": false,
     "debug_first_iteration": true,
@@ -22,7 +22,8 @@
     "execute_proportion_25": 0.25,
     "execute_proportion_35": 0.35,
     "execute_proportion_45": 0.45,
-    "execute_proportion_90": 0.9
+    "execute_proportion_90": 0.9,
+    "target_count": 3
   },
   "target": {
     "index": 0,
@@ -230,7 +231,7 @@
         "exclusive_effects": 0
       },
       {
-        "label": "Insect Swarm-1",
+        "label": "Insect Swarm-3",
         "action_id": {
           "spell_id": 24977
         },
@@ -246,7 +247,7 @@
         "exclusive_effects": 0
       },
       {
-        "label": "Moonfire-1",
+        "label": "Moonfire-3",
         "action_id": {
           "spell_id": 9835,
           "tag": 1
@@ -347,7 +348,7 @@
     ]
   },
   "player": {
-    "index": 1,
+    "index": 3,
     "label": "balance-druid (#1)",
     "level": 60,
     "stats": {
@@ -362,8 +363,8 @@
       "BlockValue": 0,
       "BonusArmor": 0,
       "DefenseRating": 0,
-      "DodgePercent": 9.65,
-      "DodgeRating": 115.80000000000001,
+      "DodgePercent": 4.65,
+      "DodgeRating": 55.80000000000001,
       "ExpertisePercent": 0,
       "ExpertiseRating": 0,
       "FeralAttackPower": 0,
@@ -544,7 +545,7 @@
           "on_heal_dealt"
         ],
         "icd": {
-          "timer": "timer-5",
+          "timer": "timer-4",
           "duration_ns": 10000000000
         },
         "exclusive_effects": 0
@@ -610,39 +611,6 @@
         "callbacks": [
           "on_reset",
           "on_cast_complete"
-        ],
-        "icd": null,
-        "exclusive_effects": 0
-      },
-      {
-        "label": "Natural Reaction",
-        "action_id": null,
-        "action_id_for_proc": {
-          "spell_id": 417053
-        },
-        "duration_ns": 9223372036854775807,
-        "max_stacks": 0,
-        "active": true,
-        "stacks": 0,
-        "callbacks": [
-          "on_reset",
-          "on_spell_hit_taken"
-        ],
-        "icd": null,
-        "exclusive_effects": 0
-      },
-      {
-        "label": "Berserk",
-        "action_id": {
-          "spell_id": 417141
-        },
-        "duration_ns": 15000000000,
-        "max_stacks": 0,
-        "active": false,
-        "stacks": 0,
-        "callbacks": [
-          "on_gain",
-          "on_expire"
         ],
         "icd": null,
         "exclusive_effects": 0
@@ -979,9 +947,8 @@
     "professions": [
       "Engineering"
     ],
-    "talents_string": "5532220115501351-00000000000000000501-505",
+    "talents_string": "5532220115501351--505",
     "talents": {
-      "berserk": 1,
       "eclipse": 3,
       "genesis": 5,
       "improved_moonfire": 2,
@@ -991,7 +958,6 @@
       "moonfury": 5,
       "moonglow": 3,
       "moonkin_form": 1,
-      "natural_reaction": 5,
       "naturalist": 5,
       "natures_focus": 5,
       "natures_grace": 1,
@@ -1234,7 +1200,7 @@
         "pushback_resist": 0,
         "dot": {
           "unit": "target",
-          "aura_label": "Insect Swarm-1",
+          "aura_label": "Insect Swarm-3",
           "base_tick_count": 7,
           "base_tick_length_ns": 2000000000,
           "bonus_coefficient": 0.15800000727176666,
@@ -1246,59 +1212,6 @@
           "haste_reduces_duration": false,
           "channeled": false
         },
-        "damage_effect": null
-      },
-      {
-        "action_id": {
-          "spell_id": 417141
-        },
-        "rank": 0,
-        "school": 0,
-        "defense_type": "DefenseTypeNone",
-        "proc_mask": [],
-        "flags": [
-          "SpellFlagNoOnCastComplete",
-          "SpellFlagAPL",
-          "SpellFlagMCD"
-        ],
-        "missile_speed": 0,
-        "cost": null,
-        "default_cast": {
-          "cost": 0,
-          "gcd_ns": 0,
-          "gcd_min_ns": 0,
-          "cast_time_ns": 0,
-          "non_empty": false
-        },
-        "cast_kind": "simple",
-        "ignore_haste": false,
-        "has_extra_cast_condition": true,
-        "has_cast_requirement": false,
-        "min_range": 0,
-        "max_range": 0,
-        "max_charges": 0,
-        "cd": {
-          "timer": "timer-1",
-          "duration_ns": 180000000000
-        },
-        "shared_cd": null,
-        "bonus_hit_percent": 0,
-        "bonus_crit_percent": 0,
-        "bonus_spell_damage": 0,
-        "bonus_expertise_percent": 0,
-        "cast_time_multiplier": 1,
-        "cd_multiplier": 1,
-        "damage_multiplier": 0,
-        "damage_multiplier_additive": 0,
-        "direct_damage_multiplier_additive": 0,
-        "crit_multiplier_pct": 1,
-        "crit_multiplier_additive": 0,
-        "bonus_base_damage": 0,
-        "bonus_coefficient": 0,
-        "threat_multiplier": 0,
-        "flat_threat_bonus": 0,
-        "pushback_resist": 0,
-        "dot": null,
         "damage_effect": null
       },
       {
@@ -1334,11 +1247,11 @@
         "max_range": 0,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-2",
+          "timer": "timer-1",
           "duration_ns": 120000000000
         },
         "shared_cd": {
-          "timer": "timer-3",
+          "timer": "timer-2",
           "duration_ns": 120000000000
         },
         "bonus_hit_percent": 0,
@@ -1397,7 +1310,7 @@
         "max_range": 30,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-4",
+          "timer": "timer-3",
           "duration_ns": 360000000000
         },
         "shared_cd": null,
@@ -2009,7 +1922,7 @@
           "average": 139,
           "variance": 0.15609756112098694
         },
-        "related_dot_spell": 17
+        "related_dot_spell": 16
       },
       {
         "action_id": {
@@ -2062,7 +1975,7 @@
         "pushback_resist": 0,
         "dot": {
           "unit": "target",
-          "aura_label": "Moonfire-1",
+          "aura_label": "Moonfire-3",
           "base_tick_count": 5,
           "base_tick_length_ns": 3000000000,
           "bonus_coefficient": 0.12999999523162842,
@@ -2626,7 +2539,7 @@
           "channeled": true
         },
         "damage_effect": null,
-        "related_dot_spell": 27
+        "related_dot_spell": 26
       },
       {
         "action_id": {
@@ -2798,16 +2711,6 @@
       },
       {
         "action_id": {
-          "spell_id": 417141
-        },
-        "priority": 0,
-        "type": [
-          "dps"
-        ],
-        "timings_ns": []
-      },
-      {
-        "action_id": {
           "item_id": 13444
         },
         "priority": 0,
@@ -2854,6 +2757,29 @@
         {
           "action": {
             "autocastOtherCooldowns": {}
+          }
+        },
+        {
+          "action": {
+            "condition": {
+              "cmp": {
+                "op": "OpGe",
+                "lhs": {
+                  "numberTargets": {}
+                },
+                "rhs": {
+                  "const": {
+                    "val": "2"
+                  }
+                }
+              }
+            },
+            "castSpell": {
+              "spellId": {
+                "spellId": 17402,
+                "rank": 3
+              }
+            }
           }
         },
         {
@@ -3128,22 +3054,22 @@
         },
         {
           "forms": [
-            "bear",
-            "cat"
-          ],
-          "spell": 4
-        },
-        {
-          "forms": [
             "humanoid",
             "moonkin",
             "tree"
           ],
-          "spell": 6
+          "spell": 5
         },
         {
           "forms": [
             "humanoid"
+          ],
+          "spell": 7
+        },
+        {
+          "forms": [
+            "humanoid",
+            "moonkin"
           ],
           "spell": 8
         },
@@ -3201,7 +3127,7 @@
             "humanoid",
             "moonkin"
           ],
-          "spell": 16
+          "spell": 17
         },
         {
           "forms": [
@@ -3262,19 +3188,12 @@
         {
           "forms": [
             "humanoid",
-            "moonkin"
-          ],
-          "spell": 26
-        },
-        {
-          "forms": [
-            "humanoid",
             "bear",
             "cat",
             "moonkin",
             "tree"
           ],
-          "spell": 28
+          "spell": 27
         }
       ],
       "starting_form": [
@@ -3334,6 +3253,7 @@
       "cost_percent_add": -1,
       "cost_spells": [
         3,
+        7,
         8,
         9,
         10,
@@ -3343,9 +3263,8 @@
         14,
         15,
         16,
-        17,
-        26,
-        27
+        25,
+        26
       ],
       "gcd_ns": 1500000000,
       "icd_ns": 10000000000,
@@ -3366,6 +3285,7 @@
       "trigger_immediately": false,
       "trigger_spells": [
         3,
+        8,
         9,
         10,
         11,
@@ -3383,8 +3303,7 @@
         23,
         24,
         25,
-        26,
-        28
+        27
       ]
     },
     {
@@ -3392,6 +3311,7 @@
       "gcd_reduction_ns": -150000000,
       "gcd_spells": [
         3,
+        7,
         8,
         9,
         10,
@@ -3411,14 +3331,14 @@
         24,
         25,
         26,
-        27,
-        28
+        27
       ],
       "haste_multiplier": 1.1,
       "kind": "natures_grace",
       "trigger_aura": "Nature's Grace Trigger",
       "trigger_spells": [
         3,
+        8,
         9,
         10,
         11,
@@ -3435,8 +3355,7 @@
         22,
         23,
         24,
-        25,
-        26
+        25
       ]
     },
     {
@@ -3454,27 +3373,7 @@
       "refresh": [
         "never"
       ],
-      "spell": 28
-    },
-    {
-      "aura": "Berserk",
-      "crit_percent": 100,
-      "crit_spells": [],
-      "kind": "berserk",
-      "spell_id": 417141
-    },
-    {
-      "kind": "natural_reaction",
-      "metrics_action_id": {
-        "spell_id": 417053
-      },
-      "outcome": [
-        "Dodge"
-      ],
-      "proc_chance": 1,
-      "rage": 5,
-      "trigger_aura": "Natural Reaction",
-      "trigger_immediately": false
+      "spell": 27
     },
     {
       "aura": "Judgement of Wisdom (External)",

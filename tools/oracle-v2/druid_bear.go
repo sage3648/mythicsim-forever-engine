@@ -21,6 +21,7 @@ var (
 	bearMaul              = spelldata.Ranked(6807, 6808, 6809, 8972, 9745, 9880, 9881)
 	bearLacerate          = spelldata.Ranked(414644, 1235826, 1235827)
 	bearPrimalBite        = spelldata.Ranked(407995, 1238069, 1238070, 1238073)
+	bearSwipe             = spelldata.Ranked(779, 780, 769, 9754, 9908)
 	bearNaturalReaction   = spelldata.Talent(417051, 5)
 	bearNaturalReactionOn = spelldata.Ranked(417053)
 	bearBarkskin          = spelldata.Ranked(22812)
@@ -167,6 +168,14 @@ func druidBearEffects(d *druid.Druid, character *core.Character) []map[string]an
 			effects = append(effects, map[string]any{
 				"kind": "primal_bite", "spell": spellPosition(character, d.PrimalBite.Spell),
 				"flat_damage": bearPrimalBite.Highest().DamageEffect().Average(core.CharacterLevel),
+			})
+		}
+		if d.Swipe != nil { // swipe.go: up to three targets, each a flat hit and a share of the attack power
+			effects = append(effects, map[string]any{
+				"kind": "swipe", "spell": spellPosition(character, d.Swipe.Spell),
+				"flat_damage": bearSwipe.Highest().DamageEffect().Average(core.CharacterLevel),
+				// swipeAttackPowerCoefficient, a Go literal the client rows do not carry.
+				"attack_power_coefficient": 0.03,
 			})
 		}
 		if d.Barkskin != nil { // barkskin.go: the aura's physical damage taken cut is a stat aura

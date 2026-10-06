@@ -1,5 +1,5 @@
 //! The bear's spells, from Go sim/druid/forms.go, enrage.go, demoralizing_roar.go, maul.go,
-//! lacerate.go and primal_bite.go.
+//! lacerate.go, swipe.go and primal_bite.go.
 //!
 //! Bear Form itself is in `bear_form`.
 
@@ -120,18 +120,18 @@ impl Enrage {
     }
 }
 
-/// Demoralizing Roar (9898): a magic hit roll that activates the target debuff, whose attack
-/// power cut the target's swing reads while it is up.
-pub(crate) fn demoralizing_roar(
-    fight: &mut Fight<DruidAgent>,
-    spell: SpellId,
-    target: Side,
-    aura: AuraRef,
-) {
-    let result = fight.calc_outcome(spell, target, Outcome::MagicHit);
-    fight.deal_damage(spell, result, false);
-    if result.landed() {
-        fight.activate_aura(aura);
+/// Demoralizing Roar (9898): a magic hit roll on every target in unit index order, each landed
+/// one activating that target's debuff, whose attack power cut the target's swing reads while
+/// it is up.
+pub(crate) fn demoralizing_roar(fight: &mut Fight<DruidAgent>, spell: SpellId, aura: AuraRef) {
+    let sides: Vec<Side> = fight.target_sides().collect();
+    for side in sides {
+        let result = fight.calc_outcome(spell, side, Outcome::MagicHit);
+        fight.deal_damage(spell, result, false);
+        if result.landed() {
+            let debuff = fight.aura_on(aura, side);
+            fight.activate_aura(debuff);
+        }
     }
 }
 
@@ -255,27 +255,64 @@ impl Lacerate {
     }
 }
 
-/// Primal Bite (1238073): flat damage plus main hand weapon damage. Berserk lifts its cooldown.
+/// Swipe (9908): a flat hit plus a share of the attack power on each of the first three targets
+/// in unit index order, whichever target the cast named, each hit calculated and dealt in turn.
+pub(crate) fn swipe(
+    fight: &mut Fight<DruidAgent>,
+    spell: SpellId,
+    flat_damage: f64,
+    attack_power_coefficient: f64,
+) {
+    for position in 0..fight.targets.len().min(3) {
+        let attack_power = fight.melee_attack_power();
+        // The arm64 build fuses the share's multiply into the add.
+        let base = attack_power_coefficient.mul_add(attack_power, flat_damage);
+        let result = fight.calc_physical_damage(
+            spell,
+            Side::target(position),
+            base,
+            PhysicalOutcome::MeleeWeaponSpecialHitAndCrit { count: true },
+        );
+        fight.deal_damage(spell, result, false);
+    }
+}
+
+/// Primal Bite (1238073): flat damage plus main hand weapon damage on the target. While Berserk
+/// is up it strikes up to three targets, from the cast target on in unit index order, each hit
+/// calculated and dealt in turn, and lifts the cooldown.
 pub(crate) fn primal_bite(
     fight: &mut Fight<DruidAgent>,
     spell: SpellId,
     target: Side,
     flat_damage: f64,
 ) {
-    let attack_power = fight.melee_attack_power();
-    let base = flat_damage + fight.mh_weapon_damage(attack_power);
-    let result = fight.calc_physical_damage(
-        spell,
-        target,
-        base,
-        PhysicalOutcome::MeleeWeaponSpecialHitAndCrit { count: true },
-    );
-    fight.deal_damage(spell, result, false);
-    if !result.landed() {
-        fight.issue_refund(spell);
-    }
     let berserk = fight.agent.berserk.map(|berserk| berserk.aura);
-    if berserk.is_some_and(|aura| fight.aura(aura).active) {
+    let berserk_up =
+        |fight: &Fight<DruidAgent>| berserk.is_some_and(|aura| fight.aura(aura).active);
+    let hits = if berserk_up(fight) {
+        fight.targets.len().min(3)
+    } else {
+        1
+    };
+    let mut current = target;
+    for hit in 0..hits {
+        let attack_power = fight.melee_attack_power();
+        let base = flat_damage + fight.mh_weapon_damage(attack_power);
+        let result = fight.calc_physical_damage(
+            spell,
+            current,
+            base,
+            PhysicalOutcome::MeleeWeaponSpecialHitAndCrit { count: true },
+        );
+        fight.deal_damage(spell, result, false);
+        if hit == 0 && !result.landed() {
+            fight.issue_refund(spell);
+        }
+        if hits > 1 {
+            current = fight.next_target(current);
+        }
+    }
+    if berserk_up(fight) {
         if let Some((timer, _)) = fight.spells[spell].cd {
             fight.timers[timer] = STARTING_CD_TIME;
         }

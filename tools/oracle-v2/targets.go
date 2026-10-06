@@ -10,6 +10,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 
@@ -80,6 +81,7 @@ func targetShape(target *core.Unit, character *core.Character) map[string]string
 	// A label may name its target, as a dot's "Vampiric Embrace - Target 1" does.
 	for i, aura := range exportAuras(target, timers) {
 		aura.Label = strings.ReplaceAll(aura.Label, target.Label, "<target>")
+		aura.Callbacks = withoutStackObserver(aura)
 		shape[fmt.Sprintf("aura %d (%s)", i+1, aura.Label)] = encode(aura)
 	}
 	shape["aura count"] = encode(len(target.GetAuras()))
@@ -114,4 +116,22 @@ func targetCopyNotes(simulation *core.Simulation, character *core.Character, not
 	for _, aura := range targets[0].GetAuras() {
 		note(aura.Icd != nil, fmt.Sprintf("target aura %s has an internal cooldown, which each of several targets keeps apart", aura.Label))
 	}
+}
+
+// apl_values_aura.go newValueAuraNumStacks reads a stacking aura's stacks through a reset and a
+// stack change callback it adds to the aura on the first target alone, which a rotation
+// condition such as Lacerate's stacks leaves there. The observer only records the stacks for
+// that condition, which Rust reads from the first target as well, so the pair does not make
+// the other copies differ. An aura holding just one of the two keeps it.
+func withoutStackObserver(aura Aura) []string {
+	if aura.MaxStacks == 0 || !slices.Contains(aura.Callbacks, "on_reset") || !slices.Contains(aura.Callbacks, "on_stacks_change") {
+		return aura.Callbacks
+	}
+	kept := []string{}
+	for _, callback := range aura.Callbacks {
+		if callback != "on_reset" && callback != "on_stacks_change" {
+			kept = append(kept, callback)
+		}
+	}
+	return kept
 }

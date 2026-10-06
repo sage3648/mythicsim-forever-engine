@@ -6,6 +6,7 @@ pub(crate) mod cat_builders;
 pub(crate) mod cat_form;
 pub(crate) mod faerie_fire;
 pub(crate) mod ferocious_bite;
+pub(crate) mod hurricane;
 pub(crate) mod innervate;
 pub(crate) mod insect_swarm;
 pub(crate) mod moonfire;

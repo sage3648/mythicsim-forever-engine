@@ -382,3 +382,116 @@ fn a_hit_pushes_the_hardcast_back_by_the_time_it_has_run() {
     assert!(log.contains("{ItemID: 11905} pushed back 500ms while casting"));
     assert_eq!(log.matches("Completed cast {ItemID: 11905}").count(), 2);
 }
+
+/// The same accepted request against another number of copies of the boss, which Rust builds
+/// from the count.
+fn against_targets(case: &str, targets: u64) -> Value {
+    let mut value = accepted(case);
+    value["encounter"]["target_count"] = json!(targets);
+    value
+}
+
+fn hit_lines(log: &str, target: u64, spell: i32) -> usize {
+    let prefix = format!("[Target {target}] {{SpellID: {spell}}}");
+    log.lines()
+        .filter(|line| line.contains(&prefix) && !line.contains("[DEBUG]"))
+        .count()
+}
+
+/// Demoralizing Roar rolls a hit on every target and debuffs each it lands on, and Swipe hits
+/// the first three targets in unit index order, as Go demoralizing_roar.go and swipe.go do.
+#[test]
+fn roar_reaches_every_target_and_swipe_the_first_three() {
+    let log = first_fight_log(against_targets("feral-bear-druid-swipe-3-targets", 5));
+    for target in 1..=5 {
+        assert!(
+            hit_lines(&log, target, 9898) > 0,
+            "Target {target}: no Roar"
+        );
+        assert!(
+            log.contains(&format!("[Target {target}] Aura gained: {{SpellID: 9898}}")),
+            "Target {target}: no Roar debuff"
+        );
+    }
+    for target in 1..=3 {
+        assert!(
+            hit_lines(&log, target, 9908) > 0,
+            "Target {target}: no Swipe"
+        );
+    }
+    for target in 4..=5 {
+        assert_eq!(
+            hit_lines(&log, target, 9908),
+            0,
+            "Target {target}: Swipe reached it"
+        );
+    }
+}
+
+/// A Primal Bite under Berserk strikes up to three targets, calculating and dealing each hit
+/// in turn, and lifts its cooldown, as Go primal_bite.go does.
+#[test]
+fn primal_bite_under_berserk_strikes_three_targets() {
+    let log = first_fight_log(against_targets("feral-bear-druid-primal-bite-3-targets", 5));
+    for target in 1..=3 {
+        assert!(
+            hit_lines(&log, target, 1238073) > 0,
+            "Target {target}: no Primal Bite"
+        );
+    }
+    for target in 4..=5 {
+        assert_eq!(hit_lines(&log, target, 1238073), 0, "Target {target}");
+    }
+}
+
+/// Hurricane's channel casts its tick spell every period, which hits each target in turn.
+#[test]
+fn hurricane_ticks_on_every_target() {
+    let log = first_fight_log(against_targets("balance-druid-hurricane-3-targets", 5));
+    for target in 1..=5 {
+        assert!(
+            hit_lines(&log, target, 1278759) > 0,
+            "Target {target}: no Hurricane tick"
+        );
+    }
+}
+
+/// Hurricane and Swipe run only through their effects.
+#[test]
+fn hurricane_and_swipe_need_their_effects() {
+    for (case, kind, spell) in [
+        ("balance-druid-hurricane-3-targets", "hurricane", 17402),
+        ("feral-bear-druid-swipe-3-targets", "swipe", 9908),
+    ] {
+        let mut value = accepted(case);
+        value["effects"]
+            .as_array_mut()
+            .unwrap()
+            .retain(|effect| effect["kind"] != kind);
+        assert!(
+            reasons(value).contains(&format!(
+                "rotation reaches spell {spell} without a known behavior"
+            )),
+            "{kind}"
+        );
+    }
+}
+
+/// A copy that parries a Primal Bite has the swing timer its reset opened for its parry haste
+/// to read, though it never swings: a few fights parry hundreds of hits on the copies.
+#[test]
+fn a_copy_that_parries_does_not_break_the_fight() {
+    let mut value = accepted("feral-bear-druid-primal-bite-3-targets");
+    value["sim"]["iterations"] = json!(50);
+    let report = simulate_prepared(&parse(value)).unwrap();
+    let parries: f64 = report.result["raidMetrics"]["parties"][0]["players"][0]["actions"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter(|action| action["id"]["spellId"] == 1238073)
+        .flat_map(|action| action["targets"].as_array().unwrap())
+        .filter(|target| target["unitIndex"] == 1 || target["unitIndex"] == 2)
+        .map(|target| target["parries"].as_f64().unwrap_or(0.0))
+        .sum();
+    assert!(parries > 0.0, "no Primal Bite was parried on a copy");
+}
