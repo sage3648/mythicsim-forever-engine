@@ -42,6 +42,18 @@ A request keeps its own seed. One without a seed gets a fresh random one, as Go 
 draw, so results stay as varied as Go's; the decision records it, so the run can be
 repeated exactly.
 
+## Cost of a routed job
+
+A routed job runs more than the simulation: Python, the Go exporter's prepare, the gate's
+check and then Rust, each its own process. The
+[whole-job benchmark](../benchmarks/2026-10-06-whole-jobs.json) measured the production
+requests at 3,000 iterations. Rust's iteration loop is about 1.27 times as fast as Go's
+and its simulation peaks at about 10 MB, but a whole routed job takes about as long as a
+Go job, since the prepare step costs about 0.1 s and 90 MB. Preparing a tank costs far more:
+the exporter exports the target's swing for every stat aura combination, up to 1.5 s and
+600 MB for a Protection Warrior. Routing therefore gains no speed until preparation gets
+cheaper; the gain to expect from it today is the memory of the simulation step.
+
 ## Batch jobs
 
 For Best Gear, stat weights and rankings, run every request of a batch in one engine, so
