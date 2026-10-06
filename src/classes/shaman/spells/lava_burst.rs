@@ -12,7 +12,11 @@ pub(crate) fn apply<A: Agent>(
     flame_shock: Option<DotId>,
     bonus: f64,
 ) {
-    let burning = flame_shock.is_some_and(|dot| fight.aura(fight.dots[dot].aura).active);
+    // Go `FlameShock.Dot(target).IsActive()`: the dot on the target being hit.
+    let burning = flame_shock.is_some_and(|dot| {
+        let on_target = fight.dot_on(dot, target);
+        fight.aura(fight.dots[on_target].aura).active
+    });
     if burning {
         fight.spells[spell].damage_multiplier *= bonus;
     }

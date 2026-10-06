@@ -872,6 +872,7 @@ impl<A: Agent> Fight<A> {
         outcome: PhysicalOutcome,
     ) -> SpellResult {
         let mut result = SpellResult {
+            armor_multiplier: 0.0,
             target,
             outcome: 0,
             damage: 0.0,
@@ -893,6 +894,7 @@ impl<A: Agent> Fight<A> {
         can_crit: bool,
     ) -> SpellResult {
         let mut result = SpellResult {
+            armor_multiplier: 0.0,
             target,
             outcome: 0,
             damage: base * attacker,
@@ -945,6 +947,7 @@ impl<A: Agent> Fight<A> {
         attacker: f64,
     ) -> f64 {
         let mut result = SpellResult {
+            armor_multiplier: 0.0,
             target,
             outcome: 0,
             damage: base * attacker,
@@ -1032,6 +1035,7 @@ impl<A: Agent> Fight<A> {
             base += self.physical_bonus_damage(spell);
         }
         let mut result = SpellResult {
+            armor_multiplier: 0.0,
             target,
             outcome: 0,
             damage: base * attacker,
@@ -1039,8 +1043,10 @@ impl<A: Agent> Fight<A> {
         };
         let after_attacker = result.damage;
         let caster = self.caster(spell);
+        result.armor_multiplier = 1.0;
         if !self.spells[spell].flags.ignore_resists {
-            result.damage *= self.armor_modifier(caster, target);
+            result.armor_multiplier = self.armor_modifier(caster, target);
+            result.damage *= result.armor_multiplier;
         }
         let after_resistances = result.damage;
         if !self.spells[spell].flags.ignore_target_modifiers {
@@ -1089,14 +1095,17 @@ impl<A: Agent> Fight<A> {
             base += coefficient * self.bonus_damage(spell, target);
         }
         let mut result = SpellResult {
+            armor_multiplier: 0.0,
             target,
             outcome: 0,
             damage: base * attacker,
             threat: 0.0,
         };
         let after_attacker = result.damage;
+        result.armor_multiplier = 1.0;
         if !self.spells[spell].flags.ignore_resists && !self.spells[spell].flags.binary {
             let (multiplier, partial) = self.partial_resist(spell, target);
+            result.armor_multiplier = multiplier;
             result.damage *= multiplier;
             result.outcome |= partial;
         }
@@ -1150,6 +1159,7 @@ impl<A: Agent> Fight<A> {
         let attacker =
             self.attacker_multiplier(spell, true) * self.dots[dot].periodic_damage_multiplier;
         let mut result = SpellResult {
+            armor_multiplier: 0.0,
             target,
             outcome: 0,
             damage: base * attacker,

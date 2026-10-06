@@ -29,7 +29,7 @@ use super::{
         sunder_armor::{self, SunderArmor},
         sweeping_strikes::{self, SweepingStrikes},
         thunder_clap::{self, ThunderClap},
-        whirlwind,
+        whirlwind::{self, Whirlwind},
     },
     talents::{
         anger_management::{self, AngerManagement},
@@ -85,6 +85,9 @@ pub(crate) enum WarriorSpell {
     Retaliation,
     RetaliationHit,
     SweepingStrikes,
+    /// Sweeping Strikes' copy of a hit and its normalized main hand attack.
+    SweepingStrikesHit,
+    SweepingStrikesNormalizedHit,
     /// Blood Craze's hot, which only its trigger applies.
     BloodCraze,
 }
@@ -117,6 +120,8 @@ pub(crate) enum WarriorAura {
     ImprovedHamstringTrigger,
     /// Battlegear of Might's 5 piece bonus.
     MightRage,
+    /// Sweeping Strikes' charges, whose trigger copies hits to the next target.
+    SweepingStrikes,
 }
 
 /// The class periodic tag of a strike's queue delay, plus the strike index.
@@ -127,7 +132,7 @@ const QUEUE_TAG: u32 = 16;
 pub(crate) struct WarriorAgent {
     stance: Stance,
     bloodthirst: Option<Bloodthirst>,
-    whirlwind_off_hand: Option<SpellId>,
+    whirlwind: Option<Whirlwind>,
     execute: Option<Execute>,
     hamstring: f64,
     improved_hamstring: Option<ImprovedHamstring>,
@@ -170,6 +175,8 @@ pub(crate) struct WarriorAgent {
     thunder_clap: Option<ThunderClap>,
     retaliation: Option<Retaliation>,
     sweeping_strikes: Option<SweepingStrikes>,
+    /// Go `copyDamage`, which the Sweeping Strikes hit spell deals on its next cast.
+    sweeping_copy: f64,
     might_rage: Option<MightRage>,
     shield_wall: Option<ShieldWall>,
     pub(crate) last_stand: Option<LastStand>,
@@ -251,6 +258,12 @@ impl WarriorAgent {
             "retaliation" if has("retaliation") => Some(WarriorSpell::Retaliation),
             "retaliation_hit" if has("retaliation") => Some(WarriorSpell::RetaliationHit),
             "sweeping_strikes" if has("sweeping_strikes") => Some(WarriorSpell::SweepingStrikes),
+            "sweeping_strikes_hit" if has("sweeping_strikes") => {
+                Some(WarriorSpell::SweepingStrikesHit)
+            }
+            "sweeping_strikes_normalized_hit" if has("sweeping_strikes") => {
+                Some(WarriorSpell::SweepingStrikesNormalizedHit)
+            }
             "retaliation" if has("warrior_stances") => {
                 Some(WarriorSpell::StanceLocked(StanceLock::Battle))
             }
@@ -339,6 +352,9 @@ impl WarriorAgent {
                 }
                 Effect::DeathWish { aura, .. } => {
                     auras.push((aura.clone(), WarriorAura::DeathWish))
+                }
+                Effect::SweepingStrikes { aura, .. } => {
+                    auras.push((aura.clone(), WarriorAura::SweepingStrikes))
                 }
                 Effect::BerserkerRage { aura, .. } => {
                     auras.push((aura.clone(), WarriorAura::BerserkerRage))
@@ -516,6 +532,7 @@ impl WarriorAgent {
                 Effect::ThunderClap {
                     base_damage,
                     attack_power_share,
+                    max_targets,
                     aura,
                     bid,
                     ..
@@ -530,6 +547,7 @@ impl WarriorAgent {
                         },
                         base_damage: *base_damage,
                         attack_power_share: *attack_power_share,
+                        max_targets: *max_targets as usize,
                         bid: *bid,
                     });
                 }
@@ -592,9 +610,18 @@ impl WarriorAgent {
                     })
                 }
                 Effect::SweepingStrikes { aura, charges, .. } => {
+                    let class_spell = |fight: &Fight<WarriorAgent>, name: &str| {
+                        fight
+                            .spells
+                            .iter()
+                            .position(|spell| spell.class_spell.as_deref() == Some(name))
+                            .ok_or_else(|| format!("Sweeping Strikes has no {name} spell"))
+                    };
                     fight.agent.sweeping_strikes = Some(SweepingStrikes {
                         aura: fight.player_aura(aura)?,
                         charges: *charges,
+                        hit: class_spell(&fight, "sweeping_strikes_hit")?,
+                        normalized: class_spell(&fight, "sweeping_strikes_normalized_hit")?,
                     })
                 }
                 Effect::RageOnAvoid {
@@ -706,10 +733,20 @@ impl WarriorAgent {
                         base_damage: *base_damage,
                     })
                 }
-                Effect::Whirlwind { spell_id, off_hand } => {
-                    if *off_hand && prepared.melee.dual_wielding {
-                        fight.agent.whirlwind_off_hand = Some(find(&fight, *spell_id, 2)?);
-                    }
+                Effect::Whirlwind {
+                    spell_id,
+                    off_hand,
+                    max_targets,
+                } => {
+                    let off_hand = if *off_hand && prepared.melee.dual_wielding {
+                        Some(find(&fight, *spell_id, 2)?)
+                    } else {
+                        None
+                    };
+                    fight.agent.whirlwind = Some(Whirlwind {
+                        off_hand,
+                        max_targets: *max_targets as usize,
+                    });
                 }
                 Effect::Execute {
                     base_damage,
@@ -900,6 +937,31 @@ impl WarriorAgent {
 }
 
 impl WarriorAgent {
+    /// Go `registerCleave`'s `ApplyEffects` from `results = results[:0]` on: each hit's result
+    /// object takes its place in the slice every cast of Cleave shares, and the deal loop reads
+    /// the slice's element when its turn comes, so a cast that starts during a deal replaces
+    /// the results this one has yet to deal.
+    fn deal_cleave(fight: &mut Fight<Self>, spell: SpellId, results: Vec<SpellResult>) {
+        for (place, result) in results.iter().enumerate() {
+            let queue = &mut fight.agent.queue;
+            let id = queue.pool.new_result_of(result);
+            match queue.cleave_slice.get_mut(place) {
+                Some(slot) => *slot = id,
+                None => queue.cleave_slice.push(id),
+            }
+        }
+        for place in 0..results.len() {
+            let queue = &mut fight.agent.queue;
+            let id = queue.cleave_slice[place];
+            let result = queue.pool.result(id);
+            queue.dealing.push(id);
+            fight.deal_damage(spell, result, false);
+            let queue = &mut fight.agent.queue;
+            queue.dealing.pop();
+            queue.pool.dispose(id);
+        }
+    }
+
     /// The warrior's listeners of hits it takes. Go's proc triggers skip a spell with the proc
     /// flag; Retaliation, a plain listener, hears only melee hits.
     fn hit_taken(
@@ -952,10 +1014,14 @@ impl Agent for WarriorAgent {
                 bloodthirst::apply(fight, spell, target, params);
             }
             WarriorSpell::Whirlwind => {
-                let off_hand = fight.agent.whirlwind_off_hand;
-                whirlwind::apply(fight, spell, target, off_hand);
+                let params = fight.agent.whirlwind.expect("Whirlwind is bound");
+                let sweeping = fight.agent.sweeping_strikes;
+                whirlwind::apply(fight, spell, target, params, sweeping);
             }
-            WarriorSpell::WhirlwindOffHand => whirlwind::apply_off_hand(fight, spell, target),
+            WarriorSpell::WhirlwindOffHand => {
+                let params = fight.agent.whirlwind.expect("Whirlwind is bound");
+                whirlwind::apply_off_hand(fight, spell, target, params);
+            }
             WarriorSpell::Execute => {
                 let params = fight.agent.execute.expect("Execute is bound");
                 execute::apply(fight, spell, target, params);
@@ -986,7 +1052,12 @@ impl Agent for WarriorAgent {
             }
             WarriorSpell::Strike(index) => {
                 let params = fight.agent.queue.strikes[index];
-                heroic_strike::strike(fight, spell, target, params);
+                if params.cleave {
+                    let results = heroic_strike::cleave_results(fight, spell, target, params);
+                    Self::deal_cleave(fight, spell, results);
+                } else {
+                    heroic_strike::strike(fight, spell, target, params);
+                }
                 if let Some(current) = fight.agent.queue.current {
                     let aura = fight.agent.queue.strikes[current].queue_aura;
                     fight.deactivate_aura(aura);
@@ -1045,7 +1116,8 @@ impl Agent for WarriorAgent {
             }
             WarriorSpell::ThunderClap => {
                 let params = fight.agent.thunder_clap.expect("Thunder Clap is bound");
-                thunder_clap::apply(fight, spell, target, params);
+                let sweeping = fight.agent.sweeping_strikes;
+                thunder_clap::apply(fight, spell, target, params, sweeping);
             }
             WarriorSpell::Retaliation => {
                 let params = fight.agent.retaliation.expect("Retaliation is bound");
@@ -1057,6 +1129,13 @@ impl Agent for WarriorAgent {
                     .sweeping_strikes
                     .expect("Sweeping Strikes is bound");
                 sweeping_strikes::apply(fight, params);
+            }
+            WarriorSpell::SweepingStrikesHit => {
+                let damage = fight.agent.sweeping_copy;
+                sweeping_strikes::apply_hit(fight, spell, target, damage);
+            }
+            WarriorSpell::SweepingStrikesNormalizedHit => {
+                sweeping_strikes::apply_normalized(fight, spell, target);
             }
             WarriorSpell::RetaliationHit => {
                 let params = fight.agent.retaliation.expect("Retaliation is bound");
@@ -1192,6 +1271,22 @@ impl Agent for WarriorAgent {
             return swing;
         }
         strike.spell
+    }
+
+    fn dealing_result(fight: &Fight<Self>, spell: SpellId) -> Option<SpellResult> {
+        fight.agent.queue.dealing_result(spell)
+    }
+
+    fn clone_result(
+        fight: &mut Fight<Self>,
+        spell: SpellId,
+        result: &SpellResult,
+    ) -> Option<(SpellResult, usize)> {
+        fight.agent.queue.clone_result(spell, result)
+    }
+
+    fn dispose_clone(fight: &mut Fight<Self>, token: usize) {
+        fight.agent.queue.dispose_clone(token);
     }
 
     fn on_periodic(fight: &mut Fight<Self>, tag: u32) {
@@ -1391,6 +1486,13 @@ impl Agent for WarriorAgent {
                 let params = fight.agent.weaponmaster.expect("Weaponmaster is bound");
                 let sword = fight.agent.sword_mask[spell];
                 weaponmaster::on_hit(fight, params, spell, sword, result);
+            }
+            WarriorAura::SweepingStrikes => {
+                let params = fight.agent.sweeping_strikes.expect("bound");
+                if let Some(copy) = sweeping_strikes::on_hit(fight, params, spell, result) {
+                    fight.agent.sweeping_copy = copy;
+                    sweeping_strikes::copy(fight, params, result.target);
+                }
             }
             WarriorAura::OverpowerTrigger => {
                 let window = fight.agent.overpower_window.expect("bound");

@@ -4,7 +4,7 @@
   "engine_revision": "6383c15a7b1bfbdbd7c5b4c0c59418c636e52e1a",
   "client_build": "1.60.1.70205",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "8502a33c3978c455dc582251aeed78b33e445aef7175824c74363b3aab5b0ca6",
+  "exporter_sha256": "d496ab7a4e1517a675c21cd0141726687d5f4511649eb18bfb71a6d35963af37",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -1230,7 +1230,7 @@
         "path": "fixtures/mage/prepared-v2/production-warrior.request.json"
       },
       "prepared": "production-warrior.prepared.json",
-      "prepared_sha256": "41061c82b0715a0592ea44006e91602559ad757432831b0ffa4cc32dc5f91852",
+      "prepared_sha256": "1366c8307ead390fca0640eb970fa31924a95d40aa2b0f0045474c869d59b63b",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1251,7 +1251,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-heroic-strike.request.json"
       },
       "prepared": "warrior-heroic-strike.prepared.json",
-      "prepared_sha256": "c7ee2ea312e94b1974e8e4f4d8d5e50ff1c58ebbb48463a585248dce6ba3f8ab",
+      "prepared_sha256": "b40b911b6bc1cb0fcdba3a1175d49a26d1d842d8e8b15314e32c6ec73f39104f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1272,7 +1272,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-cleave.request.json"
       },
       "prepared": "warrior-cleave.prepared.json",
-      "prepared_sha256": "d97168cb1d06e797ac6821d0a6d05c2f8c589f05a294bbb990ce180a09439d26",
+      "prepared_sha256": "978567a2826b721b8c202b3379f9cab5f44b26249ecc9b8374f9d0877c91308d",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1356,7 +1356,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-orc-shatter-curse.request.json"
       },
       "prepared": "warrior-orc-shatter-curse.prepared.json",
-      "prepared_sha256": "fba46b7ac6cfd4011b4d4b954675d46ea963147d23f135e304a455c7bfe8125b",
+      "prepared_sha256": "745725d5134e7cc127fe7501589662d3188f3503920fc94dcfd2a46862431fa4",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1373,7 +1373,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-troll-berserking.request.json"
       },
       "prepared": "warrior-troll-berserking.prepared.json",
-      "prepared_sha256": "a018beedf0fd0096e84f5425dd9e8426d5bfc09a12317074d4d995025197e814",
+      "prepared_sha256": "9b513b0c8187cdfad68766b382eaacebcaf5336fe73e7b4a8cb4bb7b02bba927",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1747,7 +1747,7 @@
         "path": "fixtures/mage/prepared-v2/production-arms-warrior.request.json"
       },
       "prepared": "production-arms-warrior.prepared.json",
-      "prepared_sha256": "d590c79e006bca8aa3f0fdcefbb10d32636a82e8f14c1e8ffa474507434860de",
+      "prepared_sha256": "5892bdd2a777af93dd10be817c265f4bd7bef09f3c285012190ffa523efe38a7",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2062,7 +2062,7 @@
         "path": "fixtures/mage/prepared-v2/production-protection-warrior.request.json"
       },
       "prepared": "production-protection-warrior.prepared.json",
-      "prepared_sha256": "fd59f98cc166ebbf521f095c71c901b83333d5d0df7bb1b7cf8c571b9196f73f",
+      "prepared_sha256": "10e15472ce858c9ed481df98038905423d44f9efc798c710608df2e098bcdc7a",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2083,7 +2083,7 @@
         "path": "fixtures/mage/prepared-v2/production-fury-protection-warrior.request.json"
       },
       "prepared": "production-fury-protection-warrior.prepared.json",
-      "prepared_sha256": "01c93bd5aa4923372570d6117a1f6bee4a0b503fa490a8ab90caf442a687861b",
+      "prepared_sha256": "6f4bc5246d511a3a6163b250618ddd86cae8a59afe085739b7442a34487eb453",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2571,7 +2571,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-own-sunder.request.json"
       },
       "prepared": "arms-warrior-own-sunder.prepared.json",
-      "prepared_sha256": "2e3a71c865ff5a6b895206dc1b61c16af8ce085c047572d3da076f195bf05130",
+      "prepared_sha256": "d5c7f739ea3810783b0c667c38820c72a8b016eb8494bddd5185fe0d760b91f4",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2592,7 +2592,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-own-sunder.request.json"
       },
       "prepared": "protection-warrior-own-sunder.prepared.json",
-      "prepared_sha256": "b140bbb90cb1056f6effc56c961608553d403a65a8dab524e070f904ece42724",
+      "prepared_sha256": "d57a932f2629d61d2ebcca967940fa5bf1129cef73bd1af87aa0cb750c0a2926",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2613,7 +2613,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-no-improved-slam.request.json"
       },
       "prepared": "arms-warrior-no-improved-slam.prepared.json",
-      "prepared_sha256": "3cd02f7e2ddb29472a83c28b6299e1c7bddae0bcb4cc2b5140395784440f7126",
+      "prepared_sha256": "db7343d1d139e1b68ca8dd636abfebb2e2b3da92aad6deb6911d6a21e672ed14",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3408,7 +3408,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-goblin-sapper.request.json"
       },
       "prepared": "protection-warrior-goblin-sapper.prepared.json",
-      "prepared_sha256": "abaa7e7c5740db55bd5434753837d87a6b883361f605679d6d43dff84fcc6ad3",
+      "prepared_sha256": "52c86cd36f2caa8035734dfc2ed5d35432ce39e43e98fa73115bad38bc20be5d",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3429,7 +3429,7 @@
         "path": "fixtures/mage/prepared-v2/fury-protection-warrior-winter-night.request.json"
       },
       "prepared": "fury-protection-warrior-winter-night.prepared.json",
-      "prepared_sha256": "3e05a64165853777920f26f9a45ea697a803665f63ae15e702ea28b6ff600ad6",
+      "prepared_sha256": "6fcda0317d33b43ccc89ba9d38866b8987d1fd6e838287f569c0f4946213a3db",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3471,7 +3471,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-bloodthirst-rounding.request.json"
       },
       "prepared": "warrior-bloodthirst-rounding.prepared.json",
-      "prepared_sha256": "7d45a56bf262cafc935c565a8af33978da110a0246620a1d8ee5ba105b4a7c2e",
+      "prepared_sha256": "279bcacd9d7b471c35b9232ae76860591caa78f05cfd0471f7f8f620bf79c8c0",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3513,7 +3513,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-dwarf-stoneform.request.json"
       },
       "prepared": "protection-warrior-dwarf-stoneform.prepared.json",
-      "prepared_sha256": "0bb3a7a2e36871fc64f7e87f1fbf900870a544750dfd4fd0541bb58bd7171d57",
+      "prepared_sha256": "3cecca7a39301295244fcbdd7ab9abced88edafb81ce7c4d0c86978daa7d5d3e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3534,7 +3534,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-orc-shatter-curse.request.json"
       },
       "prepared": "protection-warrior-orc-shatter-curse.prepared.json",
-      "prepared_sha256": "f32c4b8437555859dce4e08e517c9f8d6c8e8a0721fd6f2d2d51500fd53b15b8",
+      "prepared_sha256": "f3def842e5bbe5b055993a6beb76cc745196c83a62249f5b1cf0394d224884f6",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3551,7 +3551,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-sapper-orc-shatter-curse.request.json"
       },
       "prepared": "protection-warrior-sapper-orc-shatter-curse.prepared.json",
-      "prepared_sha256": "d3ec9f40d9cc33e5080035589847edc070b866d64a10d5e0fd4b2d3220ecb9c1",
+      "prepared_sha256": "2f749b134a9c41dc84786c6e9140d777726ff7aa1395589eab7cf09029a05768",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3568,7 +3568,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-shield-wall.request.json"
       },
       "prepared": "protection-warrior-shield-wall.prepared.json",
-      "prepared_sha256": "c47cb1377bc3992b220fc496d81490ea250500e483eef0d56fec189465c88318",
+      "prepared_sha256": "bf57dbc0c5b7fd879700a9a1d974e080a5362a1a80966287c0ce24a43486fb69",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3736,7 +3736,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-party-grace-of-air-and-windfury.request.json"
       },
       "prepared": "warrior-party-grace-of-air-and-windfury.prepared.json",
-      "prepared_sha256": "4af96cef944db71bd36289d8bc0853a378204eaf8ba4b293fa49f5c9b6bdc633",
+      "prepared_sha256": "b439dc02d7cef79748bd31b27585ce7345da4b1215ee3645fef4937a8736ab1c",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3946,7 +3946,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-major-mana-potion.request.json"
       },
       "prepared": "warrior-major-mana-potion.prepared.json",
-      "prepared_sha256": "890727179bc06594aba4f77ee96e28334638f791a018abe789e4fb91c69ff729",
+      "prepared_sha256": "c8777a53b11074923de5e915e819488adf61af08c764a6375262b835dac76531",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3967,7 +3967,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-last-stand.request.json"
       },
       "prepared": "protection-warrior-last-stand.prepared.json",
-      "prepared_sha256": "7dce4f9a9bc80e19cec707440800225f43c5090d82a5274588ac06a0a9c06cbf",
+      "prepared_sha256": "61fce3a1bcd3b45d4480b133b148e3e1f294f7eb0adfe86e1a24d03c316705a2",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3988,7 +3988,7 @@
         "path": "fixtures/mage/prepared-v2/fury-protection-warrior-last-stand.request.json"
       },
       "prepared": "fury-protection-warrior-last-stand.prepared.json",
-      "prepared_sha256": "0addf11831e978b9b5b5f9c2a77959b84f077ac7a667fde817e09c627c194701",
+      "prepared_sha256": "cee4798bfbd99e8c515d584b1ba7c128ff29249e2084b8df534dcce4f3429072",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4005,7 +4005,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-sapper-last-stand.request.json"
       },
       "prepared": "protection-warrior-sapper-last-stand.prepared.json",
-      "prepared_sha256": "6985e94612bbb1994714cc9ded570fe1ea16229dd7f4e68beb984e1279154473",
+      "prepared_sha256": "ab860b295b58adfc207074ccd9f47d0f903470125c11e34bd55166bdb9b88d48",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4043,7 +4043,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-greater-stoneshield.request.json"
       },
       "prepared": "protection-warrior-greater-stoneshield.prepared.json",
-      "prepared_sha256": "9b21a7adcf3ff384f50fa46b0e1a0f21047cbc2840110c2ff05c3b3b7d174bdd",
+      "prepared_sha256": "311cd1d9ad9183f0796a43d58f6c25d3e8f75ffdf413ef0cbd426fe66b36556d",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4098,7 +4098,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-enrage-sapper.request.json"
       },
       "prepared": "warrior-enrage-sapper.prepared.json",
-      "prepared_sha256": "41134f1b1958bf1aa32345572367d7480de6a7623a2488900e8b6af107be8ab8",
+      "prepared_sha256": "ab40f927681d43e002d5a6c9552c2b9c4d49bc99aba04420dda74044de7a0e0a",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4119,7 +4119,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-blood-craze-sapper.request.json"
       },
       "prepared": "warrior-blood-craze-sapper.prepared.json",
-      "prepared_sha256": "779dc202a9271f479aeb1a57c6d770d3dfa41b03ce3adcb8cb71b5e8fb530d60",
+      "prepared_sha256": "5e01272d50f75a05699ea779b4433e9e803839d2de32b7633babd290e753ffb9",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4140,7 +4140,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-improved-hamstring.request.json"
       },
       "prepared": "arms-warrior-improved-hamstring.prepared.json",
-      "prepared_sha256": "da8235ce810f804d41692e57e6bc1b183c4af145bccb1c99743d0c701834ffa4",
+      "prepared_sha256": "bc744d930b2836c070da8089759327f8500d6b3e67f0b4826651232bb04f9b2e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4476,7 +4476,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-sweeping-strikes.request.json"
       },
       "prepared": "arms-warrior-sweeping-strikes.prepared.json",
-      "prepared_sha256": "73db3c035ddce2c9c4875703601570cf4be9276ab0291317324ce4d9ebff5883",
+      "prepared_sha256": "5d7055e23619121a3cd8bc76c97d1b07d348cdf63cb47f751b61eddbbfd467bf",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4497,7 +4497,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-battlegear-of-might.request.json"
       },
       "prepared": "protection-warrior-battlegear-of-might.prepared.json",
-      "prepared_sha256": "8eb6b7bd7792bfaf1b20a347296b623d67952ad249d42f4b4887620a0a5e9d90",
+      "prepared_sha256": "c5aaf37b968342f5a408bff7856a5e778279cc552b9bcc52b7fe206eee2199a4",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4518,7 +4518,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-premier-shield-wall.request.json"
       },
       "prepared": "protection-warrior-premier-shield-wall.prepared.json",
-      "prepared_sha256": "3a9cce2bb5420e4229d3b192970b3b5232acb16f4c1f7e769d7bda475352376d",
+      "prepared_sha256": "14672353f1655f15e04fa0f0f2d86ccd343e9f721f25e3f1367c44869e490885",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4539,7 +4539,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-battlegear-of-valor.request.json"
       },
       "prepared": "protection-warrior-battlegear-of-valor.prepared.json",
-      "prepared_sha256": "cf597df61d0cf955940f08cd5a2c9324d579042ec9307643be825bb6d64156d0",
+      "prepared_sha256": "61056e522c1e022763ffbe8b61066579c6a90cd0ad159c6adf6a17fbc8d532ea",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4560,7 +4560,7 @@
         "path": "fixtures/mage/prepared-v2/fury-warrior-rivenspike.request.json"
       },
       "prepared": "fury-warrior-rivenspike.prepared.json",
-      "prepared_sha256": "467b6b1d1a1b1ac7d9a1b3f03eda1379df7576104405278e48b0cd34c6c1e7e6",
+      "prepared_sha256": "392a2f375c8ab1327164ab437d799532cff90cbfc7cafda4b8bbf304a16b6969",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4581,7 +4581,7 @@
         "path": "fixtures/mage/prepared-v2/fury-warrior-battlegear-of-might-sapper.request.json"
       },
       "prepared": "fury-warrior-battlegear-of-might-sapper.prepared.json",
-      "prepared_sha256": "718b6280e9fd6d09404130726f3521a8fcfe72e0eb37ada31cb1f49bcf365b1f",
+      "prepared_sha256": "044d37c23b88f594edc773d5cd26d65aa68fd44d82d678da90462b2c870a02fd",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4602,7 +4602,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-blood-craze-ephemeral-power.request.json"
       },
       "prepared": "protection-warrior-blood-craze-ephemeral-power.prepared.json",
-      "prepared_sha256": "9454806a6196daa2eb78a0e7635e935a46f838ce533cd5b270312f277be9c7a7",
+      "prepared_sha256": "eca16e03ac967f7a0328627f3e4874153652844b149c0ad241abe709ae0434ed",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4623,7 +4623,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-blood-craze-neverending-cup.request.json"
       },
       "prepared": "protection-warrior-blood-craze-neverending-cup.prepared.json",
-      "prepared_sha256": "f55c77557179b78218912de9ef6db5ab5f608eac00856ef4b9b0f2dab0013fa3",
+      "prepared_sha256": "7879d088187d822b2515dc697a48c2f210b3e2398981523012738d3432408d0f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4863,7 +4863,7 @@
         "path": "fixtures/mage/prepared-v2/fury-warrior-everlook-pathcarver.request.json"
       },
       "prepared": "fury-warrior-everlook-pathcarver.prepared.json",
-      "prepared_sha256": "248b0c2ae1ad86dc99feb92f8577f0fbecec0f89c143a1a38a0e307a6c474c0c",
+      "prepared_sha256": "68f66f9f36c332b01b2174b2a2d46b344e240a29e2012769ea780af21e8c98f4",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4926,7 +4926,7 @@
         "path": "fixtures/mage/prepared-v2/fury-warrior-prismcharm.request.json"
       },
       "prepared": "fury-warrior-prismcharm.prepared.json",
-      "prepared_sha256": "805386093b400d880046f6ed68c163d3ebf6e7584fe48272a3ddc5b3b143093f",
+      "prepared_sha256": "d1640da68d82a30ea99fe5e27a229bfb157101014b477fd820507eeaee50052d",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4989,7 +4989,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-heart-of-wyrmthalak.request.json"
       },
       "prepared": "warrior-heart-of-wyrmthalak.prepared.json",
-      "prepared_sha256": "0f4ea4d444ce4ce28e876560e95997ead119bc09d0f425edd330de07aa1a384e",
+      "prepared_sha256": "d94a0698df42e8959a8ac4ff15d8afc5b3bdb2f6af035491b66ecd0c431618ab",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5010,7 +5010,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-recovery.request.json"
       },
       "prepared": "arms-warrior-recovery.prepared.json",
-      "prepared_sha256": "25a13f58d9d35432496cb86e879b27d61839f95a22ca8be2ffd15fd576834ba7",
+      "prepared_sha256": "acd50d6ecf71bd1d7db3b412398d153e2a5c014129235e5c5c54adf96586c379",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5052,7 +5052,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-mark-of-resolution-threshold.request.json"
       },
       "prepared": "protection-warrior-mark-of-resolution-threshold.prepared.json",
-      "prepared_sha256": "ad27d1682dd4487d1d903855172c189ef2cd1ba85fe1c1b32e22960165255128",
+      "prepared_sha256": "0bf50fdb741942528511b77e940aa6415be939d33525039266d8c681b298eb74",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5115,7 +5115,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-fiery-blaze.request.json"
       },
       "prepared": "arms-warrior-fiery-blaze.prepared.json",
-      "prepared_sha256": "71c3af0c06497948a6296773ca97042580491ad5314fc8d2332bf07fb4d90895",
+      "prepared_sha256": "e47bba951aa94b0c276d3907e3b146c86ebf4b92441582fb10b26700946399cf",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5672,7 +5672,7 @@
         "path": "fixtures/mage/prepared-v2/fury-warrior-whirlwind-no-raging-blows.request.json"
       },
       "prepared": "fury-warrior-whirlwind-no-raging-blows.prepared.json",
-      "prepared_sha256": "e0820c5b5e1ec92608b2d4533230c3b43375ebda1318668f4c81ea6736adc005",
+      "prepared_sha256": "1be2b7d0acad1fdd56f5362769b63c1912c86e56aca529f6831271375526b8b9",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6314,6 +6314,279 @@
       "go_log": {
         "file": "destruction-warlock-4-targets-multidot-immolate.go-log.txt",
         "sha256": "02841eab9ce74c3128e37efcc94320f164113ed65e9f76b623ec9187bbb4373e"
+      }
+    },
+    {
+      "id": "production-warrior-2-targets",
+      "description": "Production Fury Warrior reference build against 2 copies of the boss: Cleave in place of Heroic Strike and Whirlwind's cleave on two targets",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-warrior-2-targets.request.json"
+      },
+      "prepared": "production-warrior-2-targets.prepared.json",
+      "prepared_sha256": "e90233e2cec6a6394facf0ebeaea66a03c979d84117dcc86220b980b311a7aed",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-warrior-2-targets.go-result.json",
+        "sha256": "cb28d488039bb4fd0d78df9e5b2ec60f68352ee5e15a3a5e9f96d8728475817a"
+      },
+      "go_log": {
+        "file": "production-warrior-2-targets.go-log.txt",
+        "sha256": "eb6331c065793339ed4aaf0462039a6e77be9a10503fbf637018c491be01e09b"
+      }
+    },
+    {
+      "id": "production-arms-warrior-2-targets",
+      "description": "Production Arms Warrior reference build against 2 copies of the boss: Sweeping Strikes copies, Cleave and Weaponmaster's extra attack replaced by a queued Cleave on two targets",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-arms-warrior-2-targets.request.json"
+      },
+      "prepared": "production-arms-warrior-2-targets.prepared.json",
+      "prepared_sha256": "c405b4c42bb0e0383a4b1e58e911089b683dc3ebe301b69820e4e8e4b702d56d",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-arms-warrior-2-targets.go-result.json",
+        "sha256": "34bfb3dd89125626a75eebc3584db3a5e32a9b306f193401f2e05089778ec77b"
+      },
+      "go_log": {
+        "file": "production-arms-warrior-2-targets.go-log.txt",
+        "sha256": "9e4664f66da4493fda05b36a91b71cf8b8251806fbcbfb05984a494611ffd50b"
+      }
+    },
+    {
+      "id": "production-arms-warrior-3-targets",
+      "description": "Production Arms Warrior reference build against 3 copies of the boss: Sweeping Strikes copies, and the extra attacks of Weaponmaster and the party Windfury Totem replaced by a queued Cleave while another Cleave deals its hits, through Go's shared results and result cache",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-arms-warrior-3-targets.request.json"
+      },
+      "prepared": "production-arms-warrior-3-targets.prepared.json",
+      "prepared_sha256": "9d0514c3081a794f62093513d52fb4a32ba35f5fbb24c40912a4ba553c3743d0",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-arms-warrior-3-targets.go-result.json",
+        "sha256": "22bfbe05621aa19a10ff8b20a69ce368e4ba46db704a7d763055d5952542ba76"
+      },
+      "go_log": {
+        "file": "production-arms-warrior-3-targets.go-log.txt",
+        "sha256": "2f62c5f5da6889cc71b281491e86bd495ddf71a964644789b2797af98f4cb8fb"
+      }
+    },
+    {
+      "id": "warrior-whirlwind-5-targets",
+      "description": "Fury Warrior without Cleave against 5 targets: Whirlwind hits four of them, each hand's strike on one weapon roll",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-whirlwind-5-targets.request.json"
+      },
+      "prepared": "warrior-whirlwind-5-targets.prepared.json",
+      "prepared_sha256": "20ea853379be0551baedbc96da1e2732271977b8ca956b6734c0fe4f900a6a5e",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-whirlwind-5-targets.go-result.json",
+        "sha256": "550959ca085f852ea7779243185094b51836133e68096e0f44ef814df0296d50"
+      },
+      "go_log": {
+        "file": "warrior-whirlwind-5-targets.go-log.txt",
+        "sha256": "a58c8fcff111fe7c6a9b157bdb5e76ad766fff98eba5e8c81ad3b31e8acbee7f"
+      }
+    },
+    {
+      "id": "arms-warrior-thunder-clap-5-targets",
+      "description": "Arms Warrior without Cleave and with Thunder Clap from two targets against 5 targets: the clap's debuff on each landed target and Sweeping Strikes' attacks after Thunder Clap",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/arms-warrior-thunder-clap-5-targets.request.json"
+      },
+      "prepared": "arms-warrior-thunder-clap-5-targets.prepared.json",
+      "prepared_sha256": "0d758bdeb987a926614205e3e8abe93a570e70763adc8b2c9488bb13a2a13326",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "arms-warrior-thunder-clap-5-targets.go-result.json",
+        "sha256": "1a21ecd65183cb1fab8bf3cc2528b9541e639fb659d379fb22f323d018c74aa6"
+      },
+      "go_log": {
+        "file": "arms-warrior-thunder-clap-5-targets.go-log.txt",
+        "sha256": "07338c737e5a9a0e16520b3c18611a821b1efab1618fe56b0f1f99390e3084ac"
+      }
+    },
+    {
+      "id": "production-elemental-shaman-5-targets",
+      "description": "Production Elemental Shaman reference build against 5 copies of the boss: Chain Lightning's three hits and their overloads, Magma Totem's pulses and Fire Nova on every target",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-elemental-shaman-5-targets.request.json"
+      },
+      "prepared": "production-elemental-shaman-5-targets.prepared.json",
+      "prepared_sha256": "10c507da816f02adcaabd7ee8fffe510fe019f439589808a45328f34b475d2d8",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-elemental-shaman-5-targets.go-result.json",
+        "sha256": "267952c34c99f048521f85bb2d985c78215ecff1bcc146667db70468c21d690e"
+      },
+      "go_log": {
+        "file": "production-elemental-shaman-5-targets.go-log.txt",
+        "sha256": "9805afdff6feb17565c02db0a1eba806944dc3e9adac8bb53ac903708373558a"
+      }
+    },
+    {
+      "id": "production-enhancement-shaman-3-targets",
+      "description": "Production Enhancement Shaman reference build against 3 copies of the boss: Fire Nova on every target and Stormstrike's debuff on the first alone",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-enhancement-shaman-3-targets.request.json"
+      },
+      "prepared": "production-enhancement-shaman-3-targets.prepared.json",
+      "prepared_sha256": "a1de91920b46667ebf1ce21fba458908445c25053b7f193bc84f2f003af0a6b1",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-enhancement-shaman-3-targets.go-result.json",
+        "sha256": "1f31b5ea6b3a3e414241d3067d14285ba82b4ae35a4e07abf2ff8851bd077faf"
+      },
+      "go_log": {
+        "file": "production-enhancement-shaman-3-targets.go-log.txt",
+        "sha256": "afc5fb41d6f4d3b7b54083af9a5dd60c997793027dbe64efcdf91d2d4897bda6"
+      }
+    },
+    {
+      "id": "enhancement-shaman-chain-magma-4-targets",
+      "description": "Enhancement Shaman with Magma Totem and Chain Lightning against 4 targets: the Stormstrike debuff boosts only the target it is on",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/enhancement-shaman-chain-magma-4-targets.request.json"
+      },
+      "prepared": "enhancement-shaman-chain-magma-4-targets.prepared.json",
+      "prepared_sha256": "b43f1802b52338daabc12ce5155dccb504a7cba7c7d68766d5d9be1005ddd6f4",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "enhancement-shaman-chain-magma-4-targets.go-result.json",
+        "sha256": "069256f205db1d1107904b5977ed93283a5bf31df2cba122afd6e09786c1a3be"
+      },
+      "go_log": {
+        "file": "enhancement-shaman-chain-magma-4-targets.go-log.txt",
+        "sha256": "9bce2bb76f67471ac7f16fc94137ba72bf53bb2586a0fa07ab16106bfd7f0dab"
+      }
+    },
+    {
+      "id": "production-warrior-5-targets",
+      "description": "Production Fury Warrior reference build against 5 copies of the boss: Cleave's two targets and Whirlwind's four with the party Windfury Totem's extra attack replacing a swing with a queued Cleave",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-warrior-5-targets.request.json"
+      },
+      "prepared": "production-warrior-5-targets.prepared.json",
+      "prepared_sha256": "39743ca5708bfea49be96bc30bbcf4758102cad73fc7b8d05440fe9cd9c54382",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-warrior-5-targets.go-result.json",
+        "sha256": "a54a4e4d937c49b83e94887a001baff8befab8269dfacf151b1dbf602235eaa7"
+      },
+      "go_log": {
+        "file": "production-warrior-5-targets.go-log.txt",
+        "sha256": "d0f0eb3e259475ac992aa12fec8aa417b79709e465186d211d5e4c6f5034f761"
+      }
+    },
+    {
+      "id": "arms-warrior-thunder-clap-1-target",
+      "description": "Arms Warrior with Thunder Clap and an unconditional Sweeping Strikes against one target: Go spends a charge on a normalized attack there too, and a clap's debuff slows a target that never swings at the player",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/arms-warrior-thunder-clap-1-target.request.json"
+      },
+      "prepared": "arms-warrior-thunder-clap-1-target.prepared.json",
+      "prepared_sha256": "9485002b4fb5608dd69a22eac7a4ee7fcd6619075d66d607024c2c29c2824544",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "arms-warrior-thunder-clap-1-target.go-result.json",
+        "sha256": "0a8b19880c7426f4fd59fa3c241d7f11f5a29e924b1efa85e4feeb663916b854"
+      },
+      "go_log": {
+        "file": "arms-warrior-thunder-clap-1-target.go-log.txt",
+        "sha256": "774f15150bf182934524bd5da3285e4d0352bc8db66f1cab118db67a37805f93"
+      }
+    },
+    {
+      "id": "arms-warrior-in-front-3-targets",
+      "description": "Arms Warrior in front of 3 copies of the boss: a hit on a copy that parries moves the swing timer that copy keeps though it never swings",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/arms-warrior-in-front-3-targets.request.json"
+      },
+      "prepared": "arms-warrior-in-front-3-targets.prepared.json",
+      "prepared_sha256": "39557067342ab19cba697d2adfd1f338d9c2a8baa88ac62699df080f4c269b6a",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "arms-warrior-in-front-3-targets.go-result.json",
+        "sha256": "b29d531345fc5e72ec57ae9d4156893c4a95295e8f95306f39395ead0bed5ed9"
+      },
+      "go_log": {
+        "file": "arms-warrior-in-front-3-targets.go-log.txt",
+        "sha256": "77499be4acdd46aa19936cd486a06af0aa56afac1aadb424941b77f9942109c0"
+      }
+    },
+    {
+      "id": "arms-warrior-multidot-rend-3-targets",
+      "description": "Arms Warrior with a multidot line for Rend against 3 targets: each Rend and Deep Wounds on the target it was cast on, and Bloodthrill reading the dot on the target a hit lands on",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/arms-warrior-multidot-rend-3-targets.request.json"
+      },
+      "prepared": "arms-warrior-multidot-rend-3-targets.prepared.json",
+      "prepared_sha256": "b173e7159905b7094541a4fa90a299c6ed70c0310f06f8a8d4bcefdd1a7f2a92",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "arms-warrior-multidot-rend-3-targets.go-result.json",
+        "sha256": "02afac6fb7265917a3d8ba63d127e3eb52b2446df766e3c67ad8764d69cdb330"
+      },
+      "go_log": {
+        "file": "arms-warrior-multidot-rend-3-targets.go-log.txt",
+        "sha256": "90093b56510c51022769f85aca1e06050bc812fac59d03ff98a81a2848c49217"
+      }
+    },
+    {
+      "id": "elemental-shaman-multidot-flame-shock-3-targets",
+      "description": "Elemental Shaman with a multidot line for Flame Shock against 3 targets: each shock's dot on its own target and Lava Burst's bonus read from the dot on the target it hits",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/elemental-shaman-multidot-flame-shock-3-targets.request.json"
+      },
+      "prepared": "elemental-shaman-multidot-flame-shock-3-targets.prepared.json",
+      "prepared_sha256": "99209187c665bc56797f4bf135e660d4516f1209ac5a90870367b92a31caf13f",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "elemental-shaman-multidot-flame-shock-3-targets.go-result.json",
+        "sha256": "f507bbe7764ab799e7453c16cb67ea652405b2583b9217ab510f2f484eca0da1"
+      },
+      "go_log": {
+        "file": "elemental-shaman-multidot-flame-shock-3-targets.go-log.txt",
+        "sha256": "a190ac02458e20471ccd4616091a15e761d7ae141ab94566270daa79b8ba2cb5"
       }
     }
   ]

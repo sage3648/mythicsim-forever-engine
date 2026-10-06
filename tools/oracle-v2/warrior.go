@@ -211,9 +211,11 @@ func warriorEffects(agent core.Agent, character *core.Character) []map[string]an
 			"base_damage": row.DamageEffect().Average(core.CharacterLevel),
 		})
 	}
-	// whirlwind.go: a warrior with an off hand weapon strikes with it too (hotfix 112347).
+	// whirlwind.go: a warrior with an off hand weapon strikes with it too (hotfix 112347). Each
+	// strike hits as many targets as the row's cap, from the cast target on.
 	effects = append(effects, map[string]any{
 		"kind": "whirlwind", "spell_id": warriorWhirlwind.Highest().ID, "off_hand": war.HasOHWeapon(),
+		"max_targets": int32(warriorWhirlwind.Highest().MaxTargets),
 	})
 	// execute.go: the dummy effect's base and ten times its chain amplitude per extra rage.
 	executeRow := warriorExecute.Highest()

@@ -326,11 +326,173 @@ fn gear_listeners_of_the_target_swings_need_their_effects() {
     }
 }
 
-/// A class whose spells have not been checked against several targets is refused there.
+fn first_fight_log(mut value: Value) -> String {
+    value["sim"]["iterations"] = json!(1);
+    value["sim"]["debug_first_iteration"] = json!(true);
+    let prepared: PreparedV2 = serde_json::from_value(value).unwrap();
+    let report = forever_engine::simulate_prepared(&prepared).unwrap();
+    report.result["logs"].as_str().unwrap().to_string()
+}
+
+fn lines_with<'a>(logs: &'a str, target: u32, spell: &str) -> Vec<&'a str> {
+    logs.lines()
+        .filter(|line| line.contains(&format!("[Target {target}] {{SpellID: {spell}")))
+        .collect()
+}
+
+/// Whirlwind's cap on the row is four targets, so a fifth is never struck, and each of the
+/// four takes both hands' strikes.
 #[test]
-fn several_targets_are_refused_until_the_class_is_checked() {
-    let mut value = fury_json();
+fn whirlwind_strikes_four_of_five_targets() {
+    let logs = first_fight_log(warrior_fixture("warrior-whirlwind-5-targets"));
+    for target in 1..=4 {
+        let hits = lines_with(&logs, target, "1680");
+        for (tag, hand) in [("Tag: 1", "main"), ("Tag: 2", "off")] {
+            assert!(
+                hits.iter().any(|line| line.contains(tag)),
+                "Target {target}: no {hand} hand strike"
+            );
+        }
+    }
+    assert!(lines_with(&logs, 5, "1680").is_empty());
+}
+
+/// Cleave strikes two targets, the cast target and the next, and calculates both hits before
+/// it deals either: the damage lines of one cast come after both debug lines.
+#[test]
+fn cleave_strikes_two_targets_from_the_cast_target() {
+    let logs = first_fight_log(warrior_fixture("production-warrior-2-targets"));
+    let lines: Vec<&str> = logs.lines().collect();
+    let cast = lines
+        .iter()
+        .position(|line| line.contains("Casting {SpellID: 20569}"))
+        .unwrap();
+    let rest = &lines[cast..];
+    let position = |needle: &str, deal: bool| {
+        rest.iter()
+            .position(|line| line.contains(needle) && line.contains("[DEBUG]") != deal)
+            .unwrap()
+    };
+    let first_debug = position("[Target 1] {SpellID: 20569} ", false);
+    let second_debug = position("[Target 2] {SpellID: 20569} ", false);
+    let first_deal = position("[Target 1] {SpellID: 20569} ", true);
+    let second_deal = position("[Target 2] {SpellID: 20569} ", true);
+    assert!(first_debug < second_debug);
+    assert!(second_debug < first_deal && first_deal < second_deal);
+}
+
+/// Thunder Clap's debuff lands on each target the clap lands on, up to the row's four.
+#[test]
+fn thunder_clap_debuffs_each_target_it_lands_on() {
+    let logs = first_fight_log(warrior_fixture("arms-warrior-thunder-clap-5-targets"));
+    for target in 1..=4 {
+        let gained = format!("[Target {target}] Aura gained: {{SpellID: 11581}}");
+        assert!(logs.lines().any(|line| line.contains(&gained)), "{gained}");
+    }
+    assert!(!logs
+        .lines()
+        .any(|line| line.contains("[Target 5] Aura gained: {SpellID: 11581}")));
+}
+
+/// A landed melee hit while two targets are active casts a copy of its damage on the next
+/// target, and each copy spends a charge.
+#[test]
+fn sweeping_strikes_copies_a_hit_to_the_next_target() {
+    let logs = first_fight_log(warrior_fixture("production-arms-warrior-2-targets"));
+    assert!(lines_with(&logs, 2, "12723}").len() > 3, "{logs}");
+    assert!(logs.contains("{SpellID: 12723} stacks: 5 --> 4"));
+}
+
+/// With Sweeping Strikes up, Thunder Clap casts the normalized attack on the next target and
+/// spends a charge, which Go does against one target too, where the next target is the first.
+/// The clap's slow of a target that never swings at the player has nothing to scale.
+#[test]
+fn thunder_clap_spends_a_sweeping_strikes_charge_against_one_target() {
+    let logs = first_fight_log(warrior_fixture("arms-warrior-thunder-clap-1-target"));
+    let normalized = lines_with(&logs, 1, "12723, Tag: 1}");
+    assert!(!normalized.is_empty(), "{logs}");
+    assert!(logs.contains("[Target 1] Aura gained: {SpellID: 11581}"));
+}
+
+/// A multidot line puts Rend, and the Deep Wounds a crit of its tick starts, on each target
+/// whose dot is down.
+#[test]
+fn a_multidot_line_puts_rend_on_every_target() {
+    let logs = first_fight_log(warrior_fixture("arms-warrior-multidot-rend-3-targets"));
+    for target in 1..=3 {
+        assert!(
+            !lines_with(&logs, target, "11574} tick").is_empty(),
+            "Target {target}: no Rend tick"
+        );
+    }
+}
+
+/// Every copy of the boss swings at a tank in Go, and Rust keeps one swing: the exporter
+/// refuses the assignment, and an input that tanks several targets anyway is refused here.
+#[test]
+fn a_tanked_fight_against_several_targets_is_refused() {
+    let mut value = warrior_fixture("production-protection-warrior");
+    assert!(!reasons_if_any(&value)
+        .iter()
+        .any(|reason| reason.contains("targets")));
     value["encounter"]["target_count"] = json!(3);
-    assert!(reasons(value)
-        .contains(&"3 targets: several targets are not supported for ClassWarrior yet".into()));
+    assert!(reasons(value).contains(
+        &"3 targets: every copy of the boss swings at the tank, which is unsupported".into()
+    ));
+}
+
+fn reasons_if_any(value: &Value) -> Vec<String> {
+    let prepared: PreparedV2 = serde_json::from_value(value.clone()).unwrap();
+    match check_prepared(&prepared) {
+        Err(PreparedError::Unsupported(reasons)) => reasons,
+        _ => Vec::new(),
+    }
+}
+
+/// The shouts that Go casts on every target have no behavior in Rust, and against several
+/// targets the gate says what they would do there.
+#[test]
+fn the_shouts_are_refused_by_name_against_several_targets() {
+    for (spell, what) in [
+        (11556, "debuffs every target"),
+        (1161, "taunts every target"),
+    ] {
+        let mut value = warrior_fixture("production-warrior-2-targets");
+        let rotation = value["player"]["rotation"]["priorityList"]
+            .as_array_mut()
+            .unwrap();
+        rotation[0]["action"] = json!({"castSpell": {"spellId": {"spellId": spell}}});
+        let reasons = reasons(value);
+        assert!(
+            reasons.contains(&format!(
+                "rotation reaches spell {spell}, which {what} in a fight against several targets"
+            )),
+            "{reasons:?}"
+        );
+        assert!(reasons.contains(&format!(
+            "rotation reaches spell {spell} without a known behavior"
+        )));
+    }
+}
+
+/// An extra attack that a landed hit casts at once, replaced by a queued Cleave, starts a
+/// Cleave while another still deals its hits. Go's Cleave shares one slice of results between
+/// its casts, so the first cast then deals the second's last hit again in place of its own,
+/// whose result is never dealt.
+#[test]
+fn a_cleave_cast_again_while_it_deals_deals_the_later_hit_twice() {
+    for name in [
+        "production-arms-warrior-3-targets",
+        "production-warrior-5-targets",
+    ] {
+        let logs = first_fight_log(warrior_fixture(name));
+        let lines: Vec<&str> = logs.lines().collect();
+        let dealt_twice = lines.iter().enumerate().any(|(index, line)| {
+            line.contains("{SpellID: 20569} ")
+                && line.contains(" for ")
+                && !line.contains("[DEBUG]")
+                && lines[index.saturating_sub(40)..index].contains(line)
+        });
+        assert!(dealt_twice, "{name}");
+    }
 }

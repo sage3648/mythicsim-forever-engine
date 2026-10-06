@@ -13,6 +13,7 @@
 mod absorb;
 mod aura;
 mod cast;
+mod cleave;
 mod damage;
 pub(crate) mod damage_taken;
 mod dot;
@@ -298,6 +299,24 @@ pub(crate) trait Agent: Sized {
     /// Go `ExecuteCustomRotation` of a simulated pet the class runs, which its rotation runs
     /// once per timestep. Dragon's Call's whelp runs its own and never reaches this.
     fn pet_rotation(_fight: &mut Fight<Self>, _pet: Side) {}
+    /// The result of the hit of a spell that a class is dealing, as the listeners hear it. Go
+    /// hands every listener the one result object, which an earlier listener's clone of it can
+    /// reset; a class that models its pool of results gives the object's current state.
+    fn dealing_result(_fight: &Fight<Self>, _spell: SpellId) -> Option<SpellResult> {
+        None
+    }
+    /// Go `Spell.CloneResult`, which a proc trigger that waits a batch window takes of the hit
+    /// it heard: the clone the handler will hear and a token for [`Agent::dispose_clone`], for
+    /// a class that models its pool of results.
+    fn clone_result(
+        _fight: &mut Fight<Self>,
+        _spell: SpellId,
+        _result: &SpellResult,
+    ) -> Option<(SpellResult, usize)> {
+        None
+    }
+    /// Go `DisposeResult` of a clone once its handler has run.
+    fn dispose_clone(_fight: &mut Fight<Self>, _token: usize) {}
     /// A proc handler that Go delays by the spell batch window.
     fn on_delayed_proc(
         _fight: &mut Fight<Self>,
@@ -1136,6 +1155,9 @@ pub(crate) enum Action {
         aura: AuraRef,
         spell: SpellId,
         result: SpellResult,
+        /// The class's handle on the result's clone, which it disposes of once the proc has
+        /// run: [`Agent::clone_result`].
+        token: Option<usize>,
     },
     /// The "Pushback trigger" handler, delayed by the spell batch window, with the player's
     /// pushback chance.
@@ -4277,7 +4299,13 @@ impl<A: Agent> Fight<A> {
                 aura,
                 spell,
                 result,
-            } => self.delayed_proc(aura, spell, result),
+                token,
+            } => {
+                self.delayed_proc(aura, spell, result);
+                if let Some(token) = token {
+                    A::dispose_clone(self, token);
+                }
+            }
             Action::Pushback { chance } => self.pushback_handler(chance),
             Action::Prepull(spell) => self.cast_or_queue(spell, Side::Target),
             Action::PrepullAura(aura) => self.activate_aura_action(aura),

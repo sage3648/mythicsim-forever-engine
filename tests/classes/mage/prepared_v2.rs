@@ -677,9 +677,9 @@ fn refusals_carry_stable_codes() {
     let sapper: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
     assert_eq!(codes(sapper), ["class_limit"]);
 
-    // A fight against several targets is refused for a class that has not been checked
-    // against them yet.
-    let path = family().join("production-warrior.prepared.json");
+    // A tank's fight against several targets is refused: every copy of the boss would swing
+    // at the tank, and Rust keeps one swing.
+    let path = family().join("production-protection-warrior.prepared.json");
     let mut unchecked: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
     unchecked["encounter"]["target_count"] = json!(3);
     assert_eq!(codes(unchecked), ["several_targets_unsupported"]);

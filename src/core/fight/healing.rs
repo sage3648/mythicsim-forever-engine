@@ -93,6 +93,7 @@ impl<A: Agent> Fight<A> {
             self.unit_log(caster, &line);
         }
         let mut result = SpellResult {
+            armor_multiplier: 0.0,
             target,
             outcome,
             damage: amount,
@@ -196,6 +197,7 @@ impl<A: Agent> Fight<A> {
             self.player_log(&line);
         }
         let result = SpellResult {
+            armor_multiplier: 0.0,
             target: Side::Player,
             outcome,
             damage: amount,
@@ -312,6 +314,7 @@ impl<A: Agent> Fight<A> {
             self.player_log(&line);
         }
         let mut result = SpellResult {
+            armor_multiplier: 0.0,
             target: Side::Player,
             outcome: OUTCOME_HIT,
             damage: amount,

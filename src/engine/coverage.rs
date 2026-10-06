@@ -1302,13 +1302,23 @@ fn several_target_limits(
     if count < 2 {
         return Vec::new();
     }
+    // Go has every copy of the boss swing at a tank, each on its own timer, and Rust keeps the
+    // one swing of the first target. The exporter refuses the assignment; an input that has
+    // the swing and several targets anyway is refused here.
+    let mut reasons = Vec::new();
+    if prepared.enemy.is_some() {
+        reasons.push(format!(
+            "{count} targets: every copy of the boss swings at the tank, which is unsupported"
+        ));
+    }
     match gate.several_targets {
-        Some(limits) => limits(prepared, reachable),
-        None => vec![format!(
+        Some(limits) => reasons.extend(limits(prepared, reachable)),
+        None => reasons.push(format!(
             "{count} targets: several targets are not supported for {} yet",
             gate.class
-        )],
+        )),
     }
+    reasons
 }
 
 /// The reachable spells of the given class spell names, which reach a target past the first

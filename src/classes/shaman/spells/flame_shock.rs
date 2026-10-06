@@ -18,10 +18,11 @@ pub(crate) fn apply<A: Agent>(
     fight.deal_damage(spell, result, false);
 }
 
-/// The periodic half's ApplyEffects: `Dot.Apply`.
-pub(crate) fn apply_dot<A: Agent>(fight: &mut Fight<A>, dot_spell: SpellId) {
+/// The periodic half's ApplyEffects: `Dot.Apply` of the dot on the cast target.
+pub(crate) fn apply_dot<A: Agent>(fight: &mut Fight<A>, dot_spell: SpellId, target: Side) {
     let dot = fight.spells[dot_spell]
         .dot
         .expect("the periodic half has a dot");
+    let dot = fight.dot_on(dot, target);
     fight.apply_dot(dot);
 }

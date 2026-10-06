@@ -211,7 +211,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `rend_and_tear` | sim/druid/talents_feral_combat.go | The target's damage taken multiplier on the druid's special attacks and the bleeds it waits for |
 | `aura_should_refresh` | sim/core/exclusive_effect.go, apl_values_aura.go | For each aura an auraShouldRefresh value names, how each exclusive effect reads: alone in its category, or held for good by another aura |
 | `lightning_bolt` | sim/shaman/lightning_bolt.go | Damage rolls on every rank, the Lightning Overload chance and the overload tag; the overload rolls when the bolt lands |
-| `chain_lightning` | sim/shaman/chain_lightning.go | Damage rolls on every rank, the overload chance a third of which each hit rolls, and the bounce reduction, a Go literal |
+| `chain_lightning` | sim/shaman/chain_lightning.go | Damage rolls on every rank, the overload chance a third of which each hit rolls, and the bounce reduction, a Go literal. Against several targets it bounces to three in Go's order, and each landed hit rolls its own overload on that hit's target |
 | `flame_shock` | sim/shaman/shocks.go | The hit's damage roll, the dot's tick base and crit rule; a landed hit casts the tagged dot spell |
 | `lava_burst` | sim/shaman/lava_burst.go | The damage roll and the bonus against a target burning with Flame Shock |
 | `fire_nova` | sim/shaman/fire_totems.go | The nova's fixed base from its damage row |
@@ -234,7 +234,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `windfury_weapon` | sim/shaman/weapon_imbues.go | The trigger aura and its cooldown, the proc manager's chance per spell, the attack power charges with their log lines, the extra main hand and off hand attacks, the spenders, and whether a main hand imbue blocks the party Windfury Totem |
 | `weapon_sync` | sim/shaman/enhancement/enhancement.go | The sync type the main hand swing replacement applies and Flurry's charge cooldown, a Go literal |
 | `frost_shock` | sim/shaman/shocks.go | Damage roll on the highest rank; a binary hit |
-| `magma_totem` | sim/shaman/fire_totems.go | The pulse's fixed base and the totem's lifetime; pulses tick as periodic area damage on the one target |
+| `magma_totem` | sim/shaman/fire_totems.go | The pulse's fixed base and the totem's lifetime; each pulse calculates periodic area damage on every target before dealing any |
 | `flametongue_totem` | sim/shaman/fire_totems.go | The totem aura, its trigger and the spells it hears, the attack spell and its base, and whether a party Flametongue Totem shares the benefit |
 | `lightning_shield` | sim/shaman/shields.go | The cast, its aura and charges |
 | `grace_of_air_totem`, `mana_spring_totem` | sim/shaman/totems.go | The cast, its aura, a class stat aura, the totem's lifetime and whether a party air totem holds the slot, which an exported `AirTotem` exclusive category then resolves |
@@ -317,14 +317,14 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `rend`, `overpower`, `mortal_strike`, `slam`, `spearing_strike` | sim/warrior/rend.go, overpower.go, talents_arms.go, slam.go | Rend's tick base and attack power share, a Go literal, with its tick outcome; Overpower's and Mortal Strike's bases on normalized main hand damage; Slam's base on main hand damage, and without Improved Slam a cast that stops the swings until a full swing after it; Spearing Strike's weapon share and mob multiplier |
 | `bloodthrill`, `weaponmaster_sword` | sim/warrior/talents_arms.go | Bloodthrill's chance and the longer Overpower window it opens after a delay; Weaponmaster's chance on a sword hand's hits and the extra attack it grants |
 | `revenge`, `shield_slam` | sim/warrior/revenge.go, talents_protection.go | Revenge's trigger on blocked, dodged and parried hits taken, its roll and attack power share, a Go literal; Shield Slam's roll plus the block value, which the target's rolls carry for each stat aura combination |
-| `thunder_clap` | sim/warrior/thunder_clap.go | The base, the attack power share, a Go literal, on the binary magic table, and the bid by which its debuff slows the target's melee speed while it alone holds the attack speed category |
+| `thunder_clap` | sim/warrior/thunder_clap.go | The base, the attack power share, a Go literal, on the binary magic table, and the bid by which its debuff slows the target's melee speed while it alone holds the attack speed category; against several targets it hits up to four and debuffs each one it lands on |
 | `retaliation` | sim/warrior/retaliation.go | The aura's charges and the strike back at each landed melee hit taken that dealt damage |
-| `sweeping_strikes` | sim/warrior/talents_arms.go | The Battle Stance cooldown's aura and charges; its copies need a second target, so in scope the aura only runs its duration |
+| `sweeping_strikes` | sim/warrior/talents_arms.go | The Battle Stance cooldown's aura and charges. Against several targets each charge copies a hit's damage before armor onto the next target, and Whirlwind, Thunder Clap and Execute cast a normalized attack instead, even against one target as Go does |
 | `battlegear_of_might_rage` | sim/warrior/items.go | The 5 piece bonus: the chance and label of the roll on landed hits taken that dealt damage, and the rage a batch window later, Go literals |
 | `improved_hamstring` | sim/warrior/talents_arms.go | The trigger, the chance a landed Hamstring roots the target and the root aura, a spell batch window later |
 | `rage_on_avoid`, `warrior_enrage`, `blood_craze` | sim/warrior/talents_protection.go, talents_fury.go | Shield Specialization's and Master of Defense's rage on avoided hits taken; Enrage's chance and physical damage done, acting on the target's swings or the Goblin Sapper Charge's hit on the player; Blood Craze's hot of maximum health after a crit or large hit taken or a landed Bloodthirst, with the healing multipliers at reset |
 | `bloodthirst`, `hamstring` | sim/warrior/talents_fury.go, hamstring.go | Bloodthirst's attack power share and base, Hamstring's base, from client data, on the special hit table with a refund on a miss |
-| `whirlwind` | sim/warrior/whirlwind.go | Whether Raging Blows adds the off hand's normalized strike |
+| `whirlwind` | sim/warrior/whirlwind.go | Whether Raging Blows adds the off hand's normalized strike, and `max_targets`, the client row's target cap: each hand rolls its weapon once a target, and every hit is calculated before any is dealt |
 | `execute` | sim/warrior/execute.go | The base and the damage for each extra rage, from the dummy effect's base and chain amplitude |
 | `bloodrage` | sim/warrior/bloodrage.go | Instant and periodic rage with Improved Bloodrage, the ticks and period, the share of base health it costs, and the rage below which it fires as a major cooldown, a Go literal |
 | `berserker_rage`, `death_wish`, `recklessness` | sim/warrior/berserker_rage.go, talents_fury.go, recklessness.go | Improved Berserker Rage's rage; Death Wish's physical damage multiplier and the GCD it waits; Recklessness's crit is a stat aura |
@@ -794,8 +794,10 @@ cargo run --locked -- check --infile fixtures/mage/prepared-v2/frost-reference.p
   resistances and metrics; area hits, cleaves and the rotation's multidot reach every
   target as in Go. The exporter refuses targets that differ from the first, a tank
   assignment, since every copy would swing at the tank and Rust models one enemy swing, a target aura with an internal cooldown and the item and pet effects that
-  reach other targets; the gate refuses a class not yet checked against several targets
-  and each class's spells that reach other targets without a Rust implementation. Job
+  reach other targets; the gate refuses a tanked fight against several targets too, and
+  each class's spells that reach other targets without a Rust implementation, such as the
+  Warrior's Demoralizing and Challenging Shout. Every class has been checked against several
+  targets. Job
   modes such as stat weights need contract additions.
 - Incoming damage covers the target's main hand swing at the one player tanking it. The
   gate rejects a dual wielding or ranged target, a healing model, a channel with a cast time

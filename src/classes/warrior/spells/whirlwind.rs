@@ -1,32 +1,56 @@
 //! Whirlwind (1680), from Go sim/warrior/whirlwind.go: a normalized main hand strike on the
-//! weapon special table against each target, the one in scope, dealt as a batch; with an off
-//! hand weapon the off hand's strike follows as its own cast (hotfix 112347).
+//! weapon special table against each target up to the row's cap, from the cast target on. One
+//! weapon roll serves every target, and the results are dealt together once calculated; with
+//! an off hand weapon the off hand's strike follows as its own cast (hotfix 112347).
 
+use super::sweeping_strikes::{self, SweepingStrikes};
 use crate::core::fight::{melee::PhysicalOutcome, Agent, Fight, Side, SpellId};
 
-/// The main hand strike. `off_hand` is the off hand's spell when the warrior holds an off hand
-/// weapon.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct Whirlwind {
+    /// The off hand's spell when the warrior holds an off hand weapon.
+    pub(crate) off_hand: Option<SpellId>,
+    /// The row's target cap.
+    pub(crate) max_targets: usize,
+}
+
+/// The main hand strike.
 pub(crate) fn apply<A: Agent>(
     fight: &mut Fight<A>,
     spell: SpellId,
     target: Side,
-    off_hand: Option<SpellId>,
+    params: Whirlwind,
+    sweeping: Option<SweepingStrikes>,
 ) {
     let attack_power = fight.melee_attack_power();
     let base = fight.mh_normalized_weapon_damage(attack_power);
     let outcome = PhysicalOutcome::MeleeWeaponSpecialHitAndCrit { count: true };
-    let result = fight.calc_physical_damage(spell, target, base, outcome);
-    fight.deal_damage(spell, result, false);
-    if let Some(off_hand) = off_hand {
+    let results: Vec<_> = fight
+        .cleave_targets(target, params.max_targets)
+        .into_iter()
+        .map(|hit| fight.calc_physical_damage(spell, hit, base, outcome))
+        .collect();
+    sweeping_strikes::cast_normalized(fight, sweeping, &results);
+    fight.deal_batched_aoe_damage(spell, &results, false);
+    if let Some(off_hand) = params.off_hand {
         fight.cast(off_hand, target);
     }
 }
 
 /// The off hand strike, Whirlwind's tagged spell.
-pub(crate) fn apply_off_hand<A: Agent>(fight: &mut Fight<A>, spell: SpellId, target: Side) {
+pub(crate) fn apply_off_hand<A: Agent>(
+    fight: &mut Fight<A>,
+    spell: SpellId,
+    target: Side,
+    params: Whirlwind,
+) {
     let attack_power = fight.melee_attack_power();
     let base = fight.oh_normalized_weapon_damage(attack_power);
     let outcome = PhysicalOutcome::MeleeWeaponSpecialHitAndCrit { count: true };
-    let result = fight.calc_physical_damage(spell, target, base, outcome);
-    fight.deal_damage(spell, result, false);
+    let results: Vec<_> = fight
+        .cleave_targets(target, params.max_targets)
+        .into_iter()
+        .map(|hit| fight.calc_physical_damage(spell, hit, base, outcome))
+        .collect();
+    fight.deal_batched_aoe_damage(spell, &results, false);
 }

@@ -49,13 +49,14 @@ pub(crate) fn apply<A: Agent>(
     let state = &fight.spells[spell];
     let threat = state.flat_threat_bonus * fight.player.threat_multiplier;
     let result = SpellResult {
+        armor_multiplier: 0.0,
         target,
         outcome: OUTCOME_HIT,
         damage: 0.0,
         threat,
     };
     fight.deal_damage(spell, result, false);
-    let dot = params.dot;
+    let dot = fight.dot_on(params.dot, target);
     let aura = fight.dots[dot].aura;
     let owed = if fight.aura(aura).active {
         fight.dots[dot].snapshot_base * f64::from(fight.dots[dot].remaining_ticks)

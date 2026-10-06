@@ -62,16 +62,7 @@ impl<A: Agent> Fight<A> {
         if !self.rng.proc(chance, &self.energize_procs[index].label) {
             return;
         }
-        let result = *result;
-        self.schedule(
-            self.now + delay,
-            super::PRIORITY_DOT,
-            super::Action::DelayedProc {
-                aura,
-                spell,
-                result,
-            },
-        );
+        self.schedule_delayed_proc_at(self.now + delay, aura, spell, *result);
     }
 
     /// The energize proc's handler: energy for a character with an energy bar.

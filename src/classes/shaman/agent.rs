@@ -15,6 +15,7 @@ use super::{
         chain_lightning::{self, ChainLightning},
         earth_shock, fire_nova, flame_shock, lava_burst,
         lightning_bolt::{self, Overload},
+        magma_totem,
         searing_totem::{self, SearingTotem},
         stormstrike::{self, Stormstrike},
         totems::{self, Expirations, StrengthOfEarth},
@@ -99,8 +100,9 @@ pub(crate) enum ShamanAura {
 /// Shaman state that Go keeps in the `Shaman` struct and its closures.
 #[derive(Default)]
 pub(crate) struct ShamanAgent {
-    /// The overload of each Lightning Bolt and Chain Lightning rank, by spellbook position.
-    overloads: Vec<Option<SpellId>>,
+    /// The overloads of each Lightning Bolt and Chain Lightning rank, by spellbook position:
+    /// Lightning Bolt has one, and Chain Lightning one for each target it can hit, in hit order.
+    overloads: Vec<Vec<SpellId>>,
     lightning_bolt: Option<Overload>,
     chain_lightning: Option<ChainLightning>,
     /// Flame Shock's periodic half.
@@ -397,7 +399,7 @@ impl ShamanAgent {
                 .iter()
                 .position(|spell| spell.id.spell_id == spell_id && spell.id.tag == tag)
         };
-        fight.agent.overloads = vec![None; fight.spells.len()];
+        fight.agent.overloads = vec![Vec::new(); fight.spells.len()];
         fight.agent.maelstrom_chances = vec![None; fight.spells.len()];
         fight.agent.frostbrand_chances = vec![None; fight.spells.len()];
         fight.agent.white = prepared
@@ -434,7 +436,7 @@ impl ShamanAgent {
                             ShamanSpell::ChainLightningOverload,
                         ),
                     };
-                    Self::bind_overloads(&mut fight, cast, overload, *overload_tag, find)?;
+                    Self::bind_overloads(&mut fight, cast, overload, *overload_tag)?;
                     match effect {
                         Effect::ChainLightning {
                             bounce_reduction,
@@ -773,7 +775,6 @@ impl ShamanAgent {
         cast: ShamanSpell,
         overload: ShamanSpell,
         tag: i32,
-        find: impl Fn(&Fight<ShamanAgent>, i32, i32) -> Option<SpellId>,
     ) -> Result<(), String> {
         let behavior =
             |fight: &Fight<ShamanAgent>, spell: SpellId| match fight.spells[spell].behavior {
@@ -785,12 +786,21 @@ impl ShamanAgent {
                 continue;
             }
             let id = fight.spells[spell].id.spell_id;
-            let Some(copy) = find(fight, id, tag).filter(|&s| behavior(fight, s) == Some(overload))
-            else {
+            // Go registers an overload for each target the spell can hit, all under one id.
+            let copies: Vec<SpellId> = (0..fight.spells.len())
+                .filter(|&copy| {
+                    fight.spells[copy].id.spell_id == id
+                        && fight.spells[copy].id.tag == tag
+                        && behavior(fight, copy) == Some(overload)
+                })
+                .collect();
+            if copies.is_empty() {
                 return Err(format!("spell {id} has no overload"));
-            };
-            fight.spells[copy].damage_effect = fight.spells[spell].damage_effect;
-            fight.agent.overloads[spell] = Some(copy);
+            }
+            for &copy in &copies {
+                fight.spells[copy].damage_effect = fight.spells[spell].damage_effect;
+            }
+            fight.agent.overloads[spell] = copies;
         }
         Ok(())
     }
@@ -867,15 +877,15 @@ impl Agent for ShamanAgent {
                     .chain_lightning
                     .clone()
                     .expect("Chain Lightning is bound");
-                let overload = (behavior == ShamanSpell::ChainLightning)
-                    .then(|| fight.agent.overloads[spell].expect("every rank has an overload"));
-                chain_lightning::apply(fight, spell, target, &state, overload);
+                let overloads = (behavior == ShamanSpell::ChainLightning)
+                    .then(|| fight.agent.overloads[spell].clone());
+                chain_lightning::apply(fight, spell, target, &state, overloads.as_deref());
             }
             ShamanSpell::FlameShock => {
                 let dot_spell = fight.agent.flame_shock_dot.expect("Flame Shock is bound");
                 flame_shock::apply(fight, spell, target, dot_spell);
             }
-            ShamanSpell::FlameShockDot => flame_shock::apply_dot(fight, spell),
+            ShamanSpell::FlameShockDot => flame_shock::apply_dot(fight, spell, target),
             ShamanSpell::LavaBurst => {
                 let dot = fight
                     .agent
@@ -1056,11 +1066,11 @@ impl Agent for ShamanAgent {
         }
     }
 
-    fn caster_damage_multiplier(fight: &Fight<Self>, spell: SpellId, _target: Side) -> Option<f64> {
+    fn caster_damage_multiplier(fight: &Fight<Self>, spell: SpellId, target: Side) -> Option<f64> {
         fight
             .agent
             .stormstrike
-            .and_then(|state| state.caster_multiplier(fight, spell))
+            .and_then(|state| state.caster_multiplier(fight, spell, target))
     }
 
     fn on_spell_hit_dealt(
@@ -1136,14 +1146,14 @@ impl Agent for ShamanAgent {
 
     fn on_spell_hit_taken(
         fight: &mut Fight<Self>,
-        _aura: AuraRef,
+        aura: AuraRef,
         kind: ShamanAura,
         spell: SpellId,
         result: &SpellResult,
     ) {
         if kind == ShamanAura::Stormstrike {
             let state = fight.agent.stormstrike.expect("Stormstrike is bound");
-            state.on_spell_hit_taken(fight, spell, result);
+            state.on_spell_hit_taken(fight, aura, spell, result);
         }
     }
 
@@ -1215,7 +1225,7 @@ impl Agent for ShamanAgent {
                     .lightning_bolt
                     .clone()
                     .expect("Lightning Bolt is bound");
-                let copy = fight.agent.overloads[spell].expect("every rank has an overload");
+                let copy = fight.agent.overloads[spell][0];
                 Some((copy, roll))
             }
             _ => None,
@@ -1230,15 +1240,10 @@ impl Agent for ShamanAgent {
 
     fn on_dot_tick(fight: &mut Fight<Self>, dot: DotId, behavior: ShamanSpell) {
         match behavior {
-            // Go CalcPeriodicAoeDamage and DealBatchedPeriodicDamage on the one target.
+            // Go CalcPeriodicAoeDamage and DealBatchedPeriodicDamage.
             ShamanSpell::MagmaTotem => {
                 let (base, _) = fight.agent.magma.expect("Magma Totem is bound");
-                fight.periodic_damage_tick_with(
-                    dot,
-                    Side::Target,
-                    base,
-                    crate::core::fight::Outcome::TickMagicHitAndCrit,
-                );
+                magma_totem::tick(fight, dot, base);
             }
             ShamanSpell::FlameShockDot => fight.snapshot_dot_tick(dot),
             ShamanSpell::SearingTotem => {

@@ -64,16 +64,7 @@ impl Proc {
             self.handle(fight);
             return;
         }
-        let result = *result;
-        fight.schedule(
-            fight.now + self.delay,
-            crate::core::fight::PRIORITY_DOT,
-            crate::core::fight::Action::DelayedProc {
-                aura,
-                spell,
-                result,
-            },
-        );
+        fight.schedule_delayed_proc_at(fight.now + self.delay, aura, spell, *result);
     }
 
     /// The handler, a spell batch window after the roll.

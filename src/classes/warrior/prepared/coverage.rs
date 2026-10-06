@@ -12,7 +12,7 @@ pub(crate) const GATE: ClassGate = ClassGate {
     spell: spell_capability,
     claims,
     limits,
-    several_targets: None,
+    several_targets: Some(several_targets),
 };
 
 /// Warrior effect kinds implemented in Rust and validated against the pinned Go reference.
@@ -224,4 +224,17 @@ fn stance_spell(class_spell: &str) -> Option<&'static str> {
         "defensive_stance" => Some("defensive"),
         _ => None,
     }
+}
+
+/// The spells that reach a target past the first in Go and not yet in Rust: the shouts, which
+/// Go loops over every target for and Rust has no behavior for at all. Cleave, Whirlwind,
+/// Thunder Clap and Sweeping Strikes run as in Go.
+fn several_targets(_prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
+    crate::engine::coverage::spells_reaching_other_targets(
+        reachable,
+        &[
+            ("demoralizing_shout", "debuffs every target"),
+            ("challenging_shout", "taunts every target"),
+        ],
+    )
 }

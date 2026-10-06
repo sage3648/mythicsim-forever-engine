@@ -12,7 +12,7 @@ pub(crate) const GATE: ClassGate = ClassGate {
     spell: spell_capability,
     claims,
     limits,
-    several_targets: None,
+    several_targets: Some(several_targets),
 };
 
 /// Shaman effect kinds implemented in Rust and validated against the pinned Go reference.
@@ -205,4 +205,11 @@ fn limits(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
     reasons.sort();
     reasons.dedup();
     reasons
+}
+
+/// The spells that reach a target past the first in Go and not yet in Rust: none. Chain
+/// Lightning, Fire Nova and Magma Totem hit each target as in Go, and Searing Totem and the
+/// shocks stay on the first target.
+fn several_targets(_prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
+    crate::engine::coverage::spells_reaching_other_targets(reachable, &[])
 }
