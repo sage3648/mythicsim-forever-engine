@@ -64,3 +64,32 @@ on, and the decision lists them in `requests`, each with its own status.
 
 Requests without their own seed all get the same seed, `--seed` or one drawn for the batch
 and recorded as `seed`, so the candidates share their random numbers.
+
+## Determinism and interrupted runs
+
+The same input and seed give the same result under every deployment condition. The engine
+runs a request on one thread, with no worker count, environment setting or flag that
+changes the outcome: iteration `i` reseeds the random stream from the seed plus `i`, and
+the only fields that differ between two runs are the wall time ones, `elapsed_ns` and
+`result.elapsedNs`. Where a worker runs requests side by side, each in its own process,
+the processes share nothing. `tests/determinism.rs` runs the same fixtures under several
+worker counts and orders in one process and in many concurrent processes, whose
+environments carry differing pool settings, and requires byte-identical output apart from
+the timing fields.
+
+The engine has no timeout or cancellation of its own. A worker bounds a run by ending its
+process, which `route.py` does when a step outlives `--timeout`. The contract is about what
+the ended process leaves behind:
+
+- `forever-engine sim --outfile PATH` writes the report only after the whole simulation
+  succeeded, to a hidden sibling file that it flushes and renames over `PATH`. A run that is
+  timed out, cancelled or killed leaves `PATH` absent or as it was, never truncated. A
+  killed run can leave only a `.PATH.<pid>.tmp` sibling, which is not a result.
+- `route.py` treats a step that times out, is ended by a signal (the fault names it), exits
+  with an error or prints an incomplete report as a `fault` at that stage. After a fault of the
+  `rust` stage it removes the report and any temporary file, and `result.json` is never
+  written. It writes `result.json` and `decision.json` by rename as well. In a batch, a
+  fault in any request also removes the results of the requests that had already run.
+
+`tests/interruption.rs` and `tools/route_test.py` check this. A worker that finds a
+`result.json` beside a `status` of `rust` can trust that it is complete.
