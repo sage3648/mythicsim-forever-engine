@@ -3,7 +3,13 @@ use forever_engine::{
     validate_prepared, PreparedError, Request, SOURCE_REVISION,
 };
 use serde::Deserialize;
-use std::{env, fs, hint::black_box, process};
+use std::{
+    env, fs,
+    hint::black_box,
+    io::Write,
+    path::{Path, PathBuf},
+    process,
+};
 
 /// Reads only the schema version so each contract keeps its own strict parser.
 #[derive(Deserialize)]
@@ -20,6 +26,35 @@ fn prepared_v2(input: &[u8]) -> Result<Option<PreparedV2>, String> {
     serde_json::from_slice(input)
         .map(Some)
         .map_err(|err| format!("prepared input rejected: {err}"))
+}
+
+/// Writes `contents` to `path` so a reader sees the whole file or none of it.
+///
+/// The bytes go to a hidden sibling file, which is flushed to disk and then renamed over the
+/// destination. A run that is killed or timed out part way, by a signal, a worker's timeout or
+/// a full disk, leaves at most that sibling behind, never a truncated report. The sibling's
+/// name starts with a dot and ends with `.tmp`, so it is never mistaken for a result.
+fn write_atomically(path: &str, contents: &str) -> Result<(), String> {
+    let destination = Path::new(path);
+    let name = destination
+        .file_name()
+        .ok_or_else(|| format!("{path} is not a file path"))?;
+    let mut sibling = std::ffi::OsString::from(".");
+    sibling.push(name);
+    sibling.push(format!(".{}.tmp", process::id()));
+    let temporary: PathBuf = destination.with_file_name(sibling);
+    let written = fs::File::create(&temporary)
+        .and_then(|mut file| {
+            file.write_all(contents.as_bytes())?;
+            file.sync_all()
+        })
+        .and_then(|()| fs::rename(&temporary, destination));
+    if let Err(err) = written {
+        // Best effort: the error being reported is the write's, not the cleanup's.
+        let _ = fs::remove_file(&temporary);
+        return Err(err.to_string());
+    }
+    Ok(())
 }
 
 fn run() -> Result<(), String> {
@@ -136,7 +171,7 @@ fn run() -> Result<(), String> {
         }
         .map_err(|err| err.to_string())?;
         if let Some(path) = outfile {
-            fs::write(path, output + "\n").map_err(|err| err.to_string())?;
+            write_atomically(&path, &(output + "\n"))?;
         } else {
             println!("{output}");
         }
@@ -167,7 +202,7 @@ fn run() -> Result<(), String> {
     }
     .map_err(|err| err.to_string())?;
     if let Some(path) = outfile {
-        fs::write(path, output + "\n").map_err(|err| err.to_string())?;
+        write_atomically(&path, &(output + "\n"))?;
     } else {
         println!("{output}");
     }
@@ -178,5 +213,53 @@ fn main() {
     if let Err(err) = run() {
         eprintln!("{err}");
         process::exit(1);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::write_atomically;
+    use std::fs;
+
+    fn scratch(label: &str) -> std::path::PathBuf {
+        let directory =
+            std::env::temp_dir().join(format!("forever-main-{label}-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&directory);
+        fs::create_dir_all(&directory).unwrap();
+        directory
+    }
+
+    fn names(directory: &std::path::Path) -> Vec<String> {
+        let mut names: Vec<String> = fs::read_dir(directory)
+            .unwrap()
+            .map(|entry| entry.unwrap().file_name().to_string_lossy().into_owned())
+            .collect();
+        names.sort();
+        names
+    }
+
+    #[test]
+    fn a_written_file_is_complete_and_alone() {
+        let directory = scratch("whole");
+        let path = directory.join("result.json");
+        write_atomically(path.to_str().unwrap(), "first\n").unwrap();
+        write_atomically(path.to_str().unwrap(), "second\n").unwrap();
+        assert_eq!(fs::read_to_string(&path).unwrap(), "second\n");
+        assert_eq!(names(&directory), ["result.json"]);
+        fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
+    fn a_failed_write_leaves_the_destination_and_no_temporary_file() {
+        let directory = scratch("failed");
+        // A directory cannot be replaced by a file, so the final rename fails after the
+        // temporary file was written.
+        let path = directory.join("result.json");
+        fs::create_dir(&path).unwrap();
+        fs::write(path.join("kept"), "kept").unwrap();
+        assert!(write_atomically(path.to_str().unwrap(), "new\n").is_err());
+        assert_eq!(names(&directory), ["result.json"]);
+        assert_eq!(fs::read_to_string(path.join("kept")).unwrap(), "kept");
+        fs::remove_dir_all(directory).unwrap();
     }
 }
