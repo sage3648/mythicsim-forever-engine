@@ -5784,6 +5784,69 @@
         "file": "feral-bear-druid-swipe-3-targets.go-log.txt",
         "sha256": "ab40597e4e01da5dbbd9c73525ccbb57653724651d14978be702dbb354099277"
       }
+    },
+    {
+      "id": "retribution-paladin-3-targets",
+      "description": "The production Retribution Paladin reference request against 3 identical copies of the boss: its Consecration ticks on every target, and the first 4 targets take the bonus damage.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/retribution-paladin-3-targets.request.json"
+      },
+      "prepared": "retribution-paladin-3-targets.prepared.json",
+      "prepared_sha256": "ee3445f73e9adb73edaad3c9b9e659da9ba006fba63ea87bc3fd11302604fac2",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "retribution-paladin-3-targets.go-result.json",
+        "sha256": "628f27a6361ceddae3e6a73030065c10cf63091f266e852205054f4378a3c875"
+      },
+      "go_log": {
+        "file": "retribution-paladin-3-targets.go-log.txt",
+        "sha256": "9775bbd5ad4eba7cdac64bf91cc5e8276da33e6cf24c697ce7132c2502b7e49c"
+      }
+    },
+    {
+      "id": "shockadin-paladin-5-targets",
+      "description": "The production Shockadin reference request against 5 identical copies of the boss: Consecration marks Consecrated Ground and adds its bonus on the first 4 targets only, and Holy spells read the mark on the target they hit.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/shockadin-paladin-5-targets.request.json"
+      },
+      "prepared": "shockadin-paladin-5-targets.prepared.json",
+      "prepared_sha256": "0880fbb954d82994023e3f6b1b1e0d18009ca1f53a6ea8348697cd025e55834b",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "shockadin-paladin-5-targets.go-result.json",
+        "sha256": "f1c8b5a6843fbe5ef37e34223b665d2e50b5e442c6622da136710be6814e0afb"
+      },
+      "go_log": {
+        "file": "shockadin-paladin-5-targets.go-log.txt",
+        "sha256": "b16dfeb7b68239d61949d083c4cf98608ff7606aaa367b691215780cc92bf3f4"
+      }
+    },
+    {
+      "id": "retribution-paladin-holy-wrath-3-targets",
+      "description": "The production Retribution Paladin reference request against 3 Undead copies of the boss with a Holy Wrath line when there are 2 or more targets: Holy Wrath rolls each target in turn before any bolt lands, then deals them together when the bolts arrive.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/retribution-paladin-holy-wrath-3-targets.request.json"
+      },
+      "prepared": "retribution-paladin-holy-wrath-3-targets.prepared.json",
+      "prepared_sha256": "84003ded3e947dcd0848614aa829f539cb848601afec8973957c30b1f0c5f9fc",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "retribution-paladin-holy-wrath-3-targets.go-result.json",
+        "sha256": "18f19603b1ed223cba612780204870dddeb3bef46739beae38050a2beb1e1c6f"
+      },
+      "go_log": {
+        "file": "retribution-paladin-holy-wrath-3-targets.go-log.txt",
+        "sha256": "3fac4da8d7ad5a9c157edea27769661b2ecf925f9200519f9e4a49531e9237ee"
+      }
     }
   ]
 }

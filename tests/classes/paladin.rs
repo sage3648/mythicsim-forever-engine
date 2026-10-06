@@ -381,3 +381,65 @@ fn lay_on_hands_needs_its_effect() {
         reasons(value).contains(&"rotation reaches spell 10310 without a known behavior".into())
     );
 }
+
+fn first_fight_log(mut value: Value) -> String {
+    value["sim"]["iterations"] = json!(1);
+    let prepared: PreparedV2 = serde_json::from_value(value).unwrap();
+    let report = forever_engine::simulate_prepared(&prepared).unwrap();
+    report.result["logs"].as_str().unwrap().to_string()
+}
+
+/// The same accepted request against another number of copies of the boss, which Rust builds
+/// from the count.
+fn against_targets(case: &str, targets: u64) -> Value {
+    let mut value = tank_json(case);
+    value["encounter"]["target_count"] = json!(targets);
+    value
+}
+
+fn lines_for(log: &str, target: u64, spell: i32, what: &str) -> usize {
+    let prefix = format!("[Target {target}] {{SpellID: {spell}}} {what}");
+    log.lines().filter(|line| line.contains(&prefix)).count()
+}
+
+/// Consecration ticks on every target in unit index order, and only the first four targets
+/// take its bonus and have Consecrated Ground marked, as Go consecration.go does.
+#[test]
+fn consecration_ticks_every_target_and_marks_the_first_four() {
+    let log = first_fight_log(against_targets("shockadin-paladin-5-targets", 5));
+    for target in 1..=5 {
+        assert!(
+            lines_for(&log, target, 20924, "tick") > 0,
+            "Target {target}: no Consecration tick"
+        );
+    }
+    for target in 1..=4 {
+        assert!(
+            log.contains(&format!(
+                "[Target {target}] Aura gained: {{SpellID: 1310905}}"
+            )),
+            "Target {target}: not marked"
+        );
+    }
+    assert!(!log.contains("[Target 5] Aura gained: {SpellID: 1310905}"));
+}
+
+/// Holy Wrath rolls each Undead or Demon target before any bolt lands, then deals the hits
+/// together; any other target takes nothing, as Go holy_wrath.go does.
+#[test]
+fn holy_wrath_hits_every_undead_target() {
+    let case = "retribution-paladin-holy-wrath-3-targets";
+    let log = first_fight_log(tank_json(case));
+    for target in 1..=3 {
+        let hits = ["Hit", "Crit"]
+            .iter()
+            .map(|what| lines_for(&log, target, 10318, what))
+            .sum::<usize>();
+        assert!(hits > 0, "Target {target}: no Holy Wrath hit");
+    }
+    let mut living = tank_json(case);
+    living["target"]["mob_type"] = Value::Null;
+    let log = first_fight_log(living);
+    assert!(log.contains("Casting {SpellID: 10318}"));
+    assert!(!log.contains("] {SpellID: 10318} Hit"));
+}
