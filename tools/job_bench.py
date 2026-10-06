@@ -2,14 +2,14 @@
 """Measure whole Quick Sim jobs in Go and in Rust: time, CPU, peak memory and process overhead.
 
 The fight benchmarks time the iteration loop only. A routed job also starts processes, parses
-the request, prepares the character with the Go exporter and checks the gate. This tool runs
+the request, prepares the character with the Go exporter and gates the input. This tool runs
 each production request as the worker would, from a bundle that `tools/shadow.py build` made:
 
 go          The pinned Go engine on the RaidSimRequest: one process, `EXPORTER sim`.
-rust        `tools/route.py --request` from the bundle: Python, the exporter's prepare, the
-            gate's check and the Rust simulation, as the worker runs it.
+rust        `tools/route.py --request` from the bundle: Python, the exporter's prepare and one
+            Rust process that gates the prepared input and simulates it, as the worker runs it.
 
-It also runs route.py's three steps on their own, so the record shows where the Rust job's time
+It also runs route.py's two steps on their own, so the record shows where the Rust job's time
 and memory go. Every job of a case has the same request, seed, iteration count and report
 depth. Rounds interleave the engines; each figure is the median over the rounds. Peak memory
 is the largest resident set of the job's processes, from wait4. With --concurrency N, a second
@@ -97,8 +97,8 @@ def rust_steps(bundle, folder):
     return {
         "prepare": measure([exporter, "prepare", "--infile", folder / "request.json", "--outfile",
                             prepared, "--scenario", "route"]),
-        "check": measure([engine, "check", "--infile", prepared]),
-        "sim": measure([engine, "sim", "--infile", prepared, "--outfile", folder / "steps-report.json"]),
+        # The gate and the simulation are one process, as route.py runs them.
+        "sim": measure([engine, "sim", "--gate", "--infile", prepared, "--outfile", folder / "steps-report.json"]),
     }
 
 
@@ -163,7 +163,7 @@ def main():
             row["rust"] = summarize(rust)
             row["rust_steps"] = {step: summarize([sample[step] for sample in steps],
                                                  ("wall_s", "cpu_s", "peak_rss_mb"))
-                                 for step in ("prepare", "check", "sim")}
+                                 for step in ("prepare", "sim")}
             row["same_dps"] = go[-1]["dps"] == rust[-1]["dps"]
             row["go_over_rust_wall"] = round(row["go"]["wall_s"] / row["rust"]["wall_s"], 2)
             # Everything a job spends outside the engine's own iteration loop.
@@ -198,7 +198,7 @@ def main():
                                    for name in ("go", "rust")},
             "rust_step_wall_s_median": {step: round(statistics.median(row["rust_steps"][step]["wall_s"]
                                                                       for row in timed), 4)
-                                        for step in ("prepare", "check", "sim")},
+                                        for step in ("prepare", "sim")},
             "all_same_dps": all(row["same_dps"] for row in timed),
         },
         "rows": rows,

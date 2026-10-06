@@ -139,6 +139,9 @@ func enemyValues(simulation *core.Simulation, character *core.Character, target 
 	if physical {
 		schoolTaken = pseudo.SchoolDamageTakenMultiplier[stats.SchoolIndexPhysical]
 	}
+	// A copy, so the rolls do not keep the simulation's attack table, and with it the whole
+	// simulation, alive for every stat aura combination.
+	tableTaken := table.DamageTakenMultiplier
 	return Enemy{
 		ActionID: actionID(spell.ActionID), School: uint8(spell.SpellSchool),
 		AttackSpeedMultiplier: target.PseudoStats.AttackSpeedMultiplier, MeleeSpeedMultiplier: target.PseudoStats.MeleeSpeedMultiplier,
@@ -149,7 +152,7 @@ func enemyValues(simulation *core.Simulation, character *core.Character, target 
 		BonusDamage: bonus, AttackerMultiplier: spell.AttackerDamageMultiplier(table, false),
 		Rolls: []EnemyRolls{{ArmorMultiplier: armor, BonusDamageTaken: bonusTaken,
 			TargetMultiplier:            spell.TargetDamageMultiplier(simulation, table, false),
-			SchoolDamageTakenMultiplier: &schoolTaken, TableDamageTakenMultiplier: &table.DamageTakenMultiplier,
+			SchoolDamageTakenMultiplier: &schoolTaken, TableDamageTakenMultiplier: &tableTaken,
 			MissChance: max(0, miss), DodgeChance: dodge, ParryChance: parry, BlockChance: block,
 			CritChance: crit, CrushChance: crush, BlockReduction: player.BlockDamageReduction(),
 			BlockValue: player.GetStat(stats.BlockValue), BlockValueMultiplier: pseudo.BlockValueMultiplier}},
@@ -160,7 +163,7 @@ func enemyValues(simulation *core.Simulation, character *core.Character, target 
 	}
 }
 
-func exportEnemy(request *proto.RaidSimRequest, statAuras []string, trackedDamageTaken []string, character *core.Character, target *core.Unit, unrepresented *[]string) *Enemy {
+func exportEnemy(request *proto.RaidSimRequest, statAuras []string, combos *enemyCombos, trackedDamageTaken []string, character *core.Character, target *core.Unit, unrepresented *[]string) *Enemy {
 	note := func(condition bool, reason string) {
 		if condition {
 			*unrepresented = append(*unrepresented, reason)
@@ -184,11 +187,13 @@ func exportEnemy(request *proto.RaidSimRequest, statAuras []string, trackedDamag
 	if acting := actingDamageTakenModifiers(request); acting > 0 {
 		*unrepresented = append(*unrepresented, fmt.Sprintf("%d damage taken modifiers on the player act at reset", acting))
 	}
-	values, changing, damageTaken, speed, attackPower, schoolDamageTaken := enemyAtReset(request, statAuras)
-	values.ChangingAuras = changing
-	values.DamageTakenAuras, values.SpeedAuras = damageTaken, speed
-	values.SchoolDamageTakenAuras = schoolDamageTaken
-	values.AttackPowerAuras = attackPower
+	var values Enemy
+	var beyondRolls string
+	if combos != nil {
+		values, beyondRolls = combos.values, combos.beyondRolls
+	} else {
+		values, beyondRolls = enemyAtResetValues(request, statAuras)
+	}
 	// The runtime computes the target multiplier from the player's live damage taken multiplier.
 	for _, rolls := range values.Rolls {
 		live := character.PseudoStats.DamageTakenMultiplier * *rolls.SchoolDamageTakenMultiplier * *rolls.TableDamageTakenMultiplier
@@ -201,45 +206,33 @@ func exportEnemy(request *proto.RaidSimRequest, statAuras []string, trackedDamag
 	baseDamageTaken := character.PseudoStats.DamageTakenMultiplier
 	note(values.AttackSpeedMultiplier*values.MeleeSpeedMultiplier*values.MeleeHasteRatingMultiplier != values.MeleeHasteMultiplier,
 		"the target's melee haste is beyond its factors")
-	// The rolls under every stat aura combination; nothing else of the swing may change.
-	if len(statAuras) > 0 {
-		values.Rolls = nil
-		for mask := 0; mask < 1<<len(statAuras); mask++ {
-			simulation := core.NewSim(request, simsignals.CreateSignals())
-			simulation.Reset()
-			character := simulation.Raid.Parties[0].Players[0].GetCharacter()
-			setStatAuras(simulation, character, statAuras, mask)
-			for bit, label := range statAuras {
-				if mask == 1<<bit && character.PseudoStats.DamageTakenMultiplier != baseDamageTaken &&
-					!slices.Contains(trackedDamageTaken, label) {
-					live = false
-				}
+	if combos != nil {
+		// The rolls under every stat aura combination, and under each with the hardcast's
+		// reduced avoidance aura, which the stat auras effect read from the same simulations;
+		// nothing else of the swing may change.
+		values.Rolls = combos.rolls
+		for bit, label := range statAuras {
+			if combos.aloneDamageTaken[bit] != baseDamageTaken && !slices.Contains(trackedDamageTaken, label) {
+				live = false
 			}
-			combo := enemyValues(simulation, character, simulation.Encounter.ActiveTargetUnits[0])
-			values.Rolls = append(values.Rolls, combo.Rolls[0])
-			combo.Rolls, combo.ChangingAuras, combo.AttackPowerAuras = values.Rolls, values.ChangingAuras, values.AttackPowerAuras
-			combo.DamageTakenAuras, combo.SpeedAuras = values.DamageTakenAuras, values.SpeedAuras
-			combo.SchoolDamageTakenAuras = values.SchoolDamageTakenAuras
-			note(encodeEnemy(combo) != encodeEnemy(values), "stat auras change the target's swing beyond its rolls")
 		}
-	}
-	// gcd.go newHardcastAction: a tank's hardcast holds the reduced avoidance aura until the cast
-	// completes; read the rolls with it active under every stat aura combination.
-	if character.HardcastAvoidanceAura != nil {
-		for mask := 0; mask < 1<<len(statAuras); mask++ {
-			simulation := core.NewSim(request, simsignals.CreateSignals())
-			simulation.Reset()
-			character := simulation.Raid.Parties[0].Players[0].GetCharacter()
-			setStatAuras(simulation, character, statAuras, mask)
-			character.HardcastAvoidanceAura.Activate(simulation)
-			combo := enemyValues(simulation, character, simulation.Encounter.ActiveTargetUnits[0])
-			values.ReducedAvoidanceRolls = append(values.ReducedAvoidanceRolls, combo.Rolls[0])
-			combo.Rolls, combo.ChangingAuras, combo.ReducedAvoidanceRolls = values.Rolls, values.ChangingAuras, values.ReducedAvoidanceRolls
-			combo.AttackPowerAuras = values.AttackPowerAuras
-			combo.DamageTakenAuras, combo.SpeedAuras = values.DamageTakenAuras, values.SpeedAuras
-			combo.SchoolDamageTakenAuras = values.SchoolDamageTakenAuras
-			note(encodeEnemy(combo) != encodeEnemy(values), "reduced avoidance changes the target's swing beyond its rolls")
+		for range combos.changed {
+			note(true, "stat auras change the target's swing beyond its rolls")
 		}
+		values.ReducedAvoidanceRolls = combos.reducedRolls
+		for range combos.reducedChanged {
+			note(true, "reduced avoidance changes the target's swing beyond its rolls")
+		}
+	} else if character.HardcastAvoidanceAura != nil {
+		// gcd.go newHardcastAction: a tank's hardcast holds the reduced avoidance aura until the cast
+		// completes; read the rolls with it active.
+		simulation := core.NewSim(request, simsignals.CreateSignals())
+		simulation.Reset()
+		character := simulation.Raid.Parties[0].Players[0].GetCharacter()
+		character.HardcastAvoidanceAura.Activate(simulation)
+		combo := enemyValues(simulation, character, simulation.Encounter.ActiveTargetUnits[0])
+		values.ReducedAvoidanceRolls = append(values.ReducedAvoidanceRolls, combo.Rolls[0])
+		note(encodeBeyondRolls(combo) != beyondRolls, "reduced avoidance changes the target's swing beyond its rolls")
 	}
 	if !live {
 		for _, table := range [][]EnemyRolls{values.Rolls, values.ReducedAvoidanceRolls} {
@@ -252,6 +245,73 @@ func exportEnemy(request *proto.RaidSimRequest, statAuras []string, trackedDamag
 		values.DamageTakenAuras, values.SchoolDamageTakenAuras = nil, nil
 	}
 	return &values
+}
+
+// The target's swing at reset with the aura lists enemyAtReset found, and the encoding of
+// everything in it besides the rolls and the aura lists, which every combination must keep.
+func enemyAtResetValues(request *proto.RaidSimRequest, statAuras []string) (Enemy, string) {
+	values, changing, damageTaken, speed, attackPower, schoolDamageTaken := enemyAtReset(request, statAuras)
+	values.ChangingAuras = changing
+	values.DamageTakenAuras, values.SpeedAuras = damageTaken, speed
+	values.SchoolDamageTakenAuras = schoolDamageTaken
+	values.AttackPowerAuras = attackPower
+	return values, encodeBeyondRolls(values)
+}
+
+// What one pass over the stat aura combinations reads of the target's swing. The stat auras
+// effect already builds a reset simulation for each combination; reading the swing from the
+// same simulation instead of building two more per combination, one for the rolls and one for
+// the rolls under a hardcast, gives the same values, since reading them changes nothing.
+type enemyCombos struct {
+	request   *proto.RaidSimRequest
+	statAuras []string
+	hardcast  bool
+	// The swing at reset and the encoding of its values beyond the rolls and aura lists.
+	values      Enemy
+	beyondRolls string
+	// The rolls by combination, and with the reduced avoidance aura, and how many
+	// combinations changed the swing beyond them.
+	rolls, reducedRolls     []EnemyRolls
+	changed, reducedChanged int
+	// The player's damage taken multiplier with only the aura of each bit active.
+	aloneDamageTaken []float64
+}
+
+func newEnemyCombos(request *proto.RaidSimRequest, statAuras []string, character *core.Character) *enemyCombos {
+	values, beyondRolls := enemyAtResetValues(request, statAuras)
+	return &enemyCombos{request: request, statAuras: statAuras, hardcast: character.HardcastAvoidanceAura != nil,
+		values: values, beyondRolls: beyondRolls, aloneDamageTaken: make([]float64, len(statAuras))}
+}
+
+// Reads one combination: the stat auras effect's simulation, or when its own setup left a
+// different state than setStatAuras does, one set up here.
+func (c *enemyCombos) read(mask int, simulation *core.Simulation, player *core.Character, exact bool) {
+	if !exact {
+		simulation = core.NewSim(c.request, simsignals.CreateSignals())
+		simulation.Reset()
+		player = simulation.Raid.Parties[0].Players[0].GetCharacter()
+		setStatAuras(simulation, player, c.statAuras, mask)
+	}
+	for bit := range c.statAuras {
+		if mask == 1<<bit {
+			c.aloneDamageTaken[bit] = player.PseudoStats.DamageTakenMultiplier
+		}
+	}
+	combo := enemyValues(simulation, player, simulation.Encounter.ActiveTargetUnits[0])
+	c.rolls = append(c.rolls, combo.Rolls[0])
+	if encodeBeyondRolls(combo) != c.beyondRolls {
+		c.changed++
+	}
+	// gcd.go newHardcastAction: a tank's hardcast holds the reduced avoidance aura until the cast
+	// completes; read the rolls with it active under every stat aura combination.
+	if c.hardcast {
+		player.HardcastAvoidanceAura.Activate(simulation)
+		combo = enemyValues(simulation, player, simulation.Encounter.ActiveTargetUnits[0])
+		c.reducedRolls = append(c.reducedRolls, combo.Rolls[0])
+		if encodeBeyondRolls(combo) != c.beyondRolls {
+			c.reducedChanged++
+		}
+	}
 }
 
 // The stat auras of a combination, as the stat_auras effect sets them: an aura up from the reset,
@@ -267,6 +327,15 @@ func setStatAuras(simulation *core.Simulation, character *core.Character, statAu
 			character.GetAura(label).Activate(simulation)
 		}
 	}
+}
+
+// The values with the rolls and the aura lists left out: what a stat aura combination or a
+// hardcast must leave unchanged, since the rolls are what they change.
+func encodeBeyondRolls(values Enemy) string {
+	values.Rolls, values.ReducedAvoidanceRolls = nil, nil
+	values.ChangingAuras, values.AttackPowerAuras = nil, nil
+	values.DamageTakenAuras, values.SpeedAuras, values.SchoolDamageTakenAuras = nil, nil, nil
+	return encodeEnemy(values)
 }
 
 func encodeEnemy(values Enemy) string {

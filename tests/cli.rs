@@ -122,3 +122,95 @@ fn check_reports_refusal_codes_beside_the_reasons() {
     assert_eq!(supported["supported"], true);
     assert_eq!(supported["refusals"], serde_json::json!([]));
 }
+
+/// A scratch folder holding the accepted shield wall fixture with `change` applied to it.
+fn changed_prepared(
+    label: &str,
+    change: impl FnOnce(&mut serde_json::Value),
+) -> (std::path::PathBuf, std::path::PathBuf) {
+    let directory =
+        std::env::temp_dir().join(format!("forever-gate-{label}-{}", std::process::id()));
+    let _ = fs::remove_dir_all(&directory);
+    fs::create_dir_all(&directory).unwrap();
+    let source = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("fixtures/mage/prepared-v2/protection-warrior-premier-shield-wall.prepared.json");
+    let mut prepared: serde_json::Value =
+        serde_json::from_slice(&fs::read(source).unwrap()).unwrap();
+    change(&mut prepared);
+    let input = directory.join("input.prepared.json");
+    fs::write(&input, serde_json::to_vec(&prepared).unwrap()).unwrap();
+    (directory, input)
+}
+
+fn sim_gate(input: &std::path::Path, output: &std::path::Path) -> std::process::Output {
+    Command::new(env!("CARGO_BIN_EXE_forever-engine"))
+        .args(["sim", "--gate", "--infile"])
+        .arg(input)
+        .arg("--outfile")
+        .arg(output)
+        .output()
+        .unwrap()
+}
+
+#[test]
+fn sim_with_the_gate_simulates_a_supported_input_in_one_process() {
+    let (directory, input) = changed_prepared("supported", |_| {});
+    let output = directory.join("report.json");
+    let result = sim_gate(&input, &output);
+    let report: serde_json::Value = serde_json::from_slice(&fs::read(&output).unwrap()).unwrap();
+    fs::remove_dir_all(directory).unwrap();
+    assert_eq!(result.status.code(), Some(0));
+    assert!(report["result"]["raidMetrics"].is_object());
+}
+
+#[test]
+fn sim_with_the_gate_reports_a_refusal_as_check_does_and_writes_nothing() {
+    let (directory, input) = changed_prepared("refused", |prepared| {
+        prepared["unrepresented"] = serde_json::json!(["something unmodeled"]);
+    });
+    let output = directory.join("report.json");
+    let result = sim_gate(&input, &output);
+    let checked = Command::new(env!("CARGO_BIN_EXE_forever-engine"))
+        .args(["check", "--infile"])
+        .arg(&input)
+        .output()
+        .unwrap();
+    let written = fs::read_dir(&directory).unwrap().count();
+    fs::remove_dir_all(directory).unwrap();
+    assert_eq!(result.status.code(), Some(3));
+    assert_eq!(result.stdout, checked.stdout);
+    let verdict: serde_json::Value = serde_json::from_slice(&result.stdout).unwrap();
+    assert_eq!(verdict["supported"], false);
+    assert_eq!(verdict["refusals"][0]["code"], "exporter_unrepresented");
+    // Only the input remains: no report and no temporary file.
+    assert_eq!(written, 1);
+}
+
+#[test]
+fn sim_with_the_gate_rejects_an_invalid_input_with_its_own_status() {
+    let (directory, input) = changed_prepared("invalid", |prepared| {
+        prepared["reference"]["engine_revision"] = "0".repeat(40).into();
+    });
+    let output = directory.join("report.json");
+    let result = sim_gate(&input, &output);
+    let report_exists = output.exists();
+    fs::remove_dir_all(directory).unwrap();
+    assert_eq!(result.status.code(), Some(4));
+    assert!(String::from_utf8_lossy(&result.stderr).contains("prepared input rejected"));
+    assert!(!report_exists);
+}
+
+#[test]
+fn sim_without_the_gate_still_fails_a_refusal_as_an_error() {
+    let (directory, input) = changed_prepared("ungated", |prepared| {
+        prepared["unrepresented"] = serde_json::json!(["something unmodeled"]);
+    });
+    let result = Command::new(env!("CARGO_BIN_EXE_forever-engine"))
+        .args(["sim", "--infile"])
+        .arg(&input)
+        .output()
+        .unwrap();
+    fs::remove_dir_all(directory).unwrap();
+    assert_eq!(result.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&result.stderr).contains("prepared input unsupported"));
+}

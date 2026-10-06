@@ -1,6 +1,7 @@
 use forever_engine::{
     contracts::prepared_v2::PreparedV2, prepared_refusals, simulate, simulate_prepared,
-    validate_prepared, PreparedError, Request, SOURCE_REVISION,
+    simulate_prepared_gated, validate_prepared, Gated, PreparedError, Refusal, Request,
+    SOURCE_REVISION,
 };
 use serde::Deserialize;
 use std::{
@@ -57,7 +58,53 @@ fn write_atomically(path: &str, contents: &str) -> Result<(), String> {
     Ok(())
 }
 
-fn run() -> Result<(), String> {
+/// What ended a run without its output, and the exit status that tells a caller which.
+///
+/// Status 1 is any error. With `sim --gate`, the coverage gate's refusal and an input that
+/// fails validation have a status of their own, so a worker that runs the gate and the
+/// simulation as one process can tell a fallback from a fault without reading messages.
+struct Failure {
+    status: i32,
+    message: Option<String>,
+}
+
+/// The exit status of `sim --gate` when the gate refuses a valid input: its report is on
+/// standard output, as `check` prints it, and nothing was simulated.
+const EXIT_REFUSED: i32 = 3;
+/// The exit status of `sim --gate` when the prepared input fails validation.
+const EXIT_REJECTED: i32 = 4;
+
+impl From<String> for Failure {
+    fn from(message: String) -> Self {
+        Failure {
+            status: 1,
+            message: Some(message),
+        }
+    }
+}
+
+impl From<&str> for Failure {
+    fn from(message: &str) -> Self {
+        message.to_string().into()
+    }
+}
+
+/// The gate's verdict as `check` prints it.
+fn coverage_report(prepared: &PreparedV2, refusals: &[Refusal]) -> Result<String, String> {
+    let reasons: Vec<&str> = refusals
+        .iter()
+        .map(|refusal| refusal.reason.as_str())
+        .collect();
+    let report = serde_json::json!({
+        "scenario_id": prepared.scenario_id,
+        "supported": refusals.is_empty(),
+        "reasons": reasons,
+        "refusals": refusals,
+    });
+    serde_json::to_string_pretty(&report).map_err(|err| err.to_string())
+}
+
+fn run() -> Result<(), Failure> {
     let args: Vec<String> = env::args().skip(1).collect();
     if args == ["version"] {
         println!(
@@ -67,7 +114,7 @@ fn run() -> Result<(), String> {
         return Ok(());
     }
     if args.is_empty() || args == ["--help"] {
-        println!("forever-engine sim --infile REQUEST.json [--outfile RESULT.json] [--trace]\nforever-engine bench --infile REQUEST.json|PREPARED_V2.json [--outfile RESULT.json] [--warmups 3] [--samples 7]\nforever-engine check --infile PREPARED_V2.json\nforever-engine version");
+        println!("forever-engine sim --infile REQUEST.json|PREPARED_V2.json [--outfile RESULT.json] [--trace] [--gate]\nforever-engine bench --infile REQUEST.json|PREPARED_V2.json [--outfile RESULT.json] [--warmups 3] [--samples 7]\nforever-engine check --infile PREPARED_V2.json\nforever-engine version");
         return Ok(());
     }
     if args.len() == 3 && args[0] == "check" && args[1] == "--infile" {
@@ -76,20 +123,7 @@ fn run() -> Result<(), String> {
         // An invalid input is an error, never a refusal.
         validate_prepared(&prepared).map_err(|err| PreparedError::Invalid(err).to_string())?;
         let refusals = prepared_refusals(&prepared);
-        let reasons: Vec<&str> = refusals
-            .iter()
-            .map(|refusal| refusal.reason.as_str())
-            .collect();
-        let report = serde_json::json!({
-            "scenario_id": prepared.scenario_id,
-            "supported": refusals.is_empty(),
-            "reasons": reasons,
-            "refusals": refusals,
-        });
-        println!(
-            "{}",
-            serde_json::to_string_pretty(&report).map_err(|err| err.to_string())?
-        );
+        println!("{}", coverage_report(&prepared, &refusals)?);
         return Ok(());
     }
     if args[0] != "sim" && args[0] != "bench" {
@@ -98,6 +132,7 @@ fn run() -> Result<(), String> {
     let mut infile = None;
     let mut outfile = None;
     let mut trace = false;
+    let mut gate = false;
     let mut warmups = 3u32;
     let mut samples = 7u32;
     let mut index = 1;
@@ -115,10 +150,11 @@ fn run() -> Result<(), String> {
                     &mut outfile
                 };
                 if target.replace(value.clone()).is_some() {
-                    return Err(format!("duplicate {flag}"));
+                    return Err(format!("duplicate {flag}").into());
                 }
             }
             "--trace" if !trace => trace = true,
+            "--gate" if args[0] == "sim" && !gate => gate = true,
             "--warmups" | "--samples" if args[0] == "bench" => {
                 let flag = &args[index];
                 index += 1;
@@ -133,7 +169,7 @@ fn run() -> Result<(), String> {
                     samples = value;
                 }
             }
-            unknown => return Err(format!("unsupported argument {unknown}")),
+            unknown => return Err(format!("unsupported argument {unknown}").into()),
         }
         index += 1;
     }
@@ -145,7 +181,24 @@ fn run() -> Result<(), String> {
                     .into(),
             );
         }
-        let report = simulate_prepared(&prepared).map_err(|err| err.to_string())?;
+        let report = if gate {
+            validate_prepared(&prepared).map_err(|err| Failure {
+                status: EXIT_REJECTED,
+                message: Some(PreparedError::Invalid(err).to_string()),
+            })?;
+            match simulate_prepared_gated(&prepared).map_err(|err| err.to_string())? {
+                Gated::Simulated(report) => *report,
+                Gated::Refused(refusals) => {
+                    println!("{}", coverage_report(&prepared, &refusals)?);
+                    return Err(Failure {
+                        status: EXIT_REFUSED,
+                        message: None,
+                    });
+                }
+            }
+        } else {
+            simulate_prepared(&prepared).map_err(|err| err.to_string())?
+        };
         let output = if args[0] == "bench" {
             if warmups > 20 || !(1..=100).contains(&samples) {
                 return Err("bench requires 0 to 20 warmups and 1 to 100 samples".into());
@@ -176,6 +229,9 @@ fn run() -> Result<(), String> {
             println!("{output}");
         }
         return Ok(());
+    }
+    if gate {
+        return Err("--gate requires a prepared v2 input".into());
     }
     let request: Request =
         serde_json::from_slice(&input).map_err(|err| format!("request rejected: {err}"))?;
@@ -210,9 +266,11 @@ fn run() -> Result<(), String> {
 }
 
 fn main() {
-    if let Err(err) = run() {
-        eprintln!("{err}");
-        process::exit(1);
+    if let Err(failure) = run() {
+        if let Some(message) = failure.message {
+            eprintln!("{message}");
+        }
+        process::exit(failure.status);
     }
 }
 
