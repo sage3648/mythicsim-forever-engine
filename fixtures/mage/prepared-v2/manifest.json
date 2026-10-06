@@ -5926,10 +5926,16 @@
       "prepared": "destruction-warlock-3-targets-multidot.prepared.json",
       "prepared_sha256": "93c8c018774a4b12b2d27772858228eac9f79eec5f5542f724d03334a6e70b33",
       "expected_coverage": {
-        "supported": false,
-        "reasons": [
-          "the rotation multidots, which casts a warlock dot on a target past the first"
-        ]
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "destruction-warlock-3-targets-multidot.go-result.json",
+        "sha256": "08d6c1dc59935fa3c35cb92cf6d555c74e1c53d7ebe19f0972dda604993b55cb"
+      },
+      "go_log": {
+        "file": "destruction-warlock-3-targets-multidot.go-log.txt",
+        "sha256": "79aef8fc0986505316e31989d019a681af5445f7c3a5c7a14d0682ba6120f568"
       }
     },
     {
@@ -6056,6 +6062,48 @@
       "go_log": {
         "file": "frost-mage-3-targets-blizzard-dot-condition.go-log.txt",
         "sha256": "d1895c6b65c298f3fdebd7b86b80cdceb08d068090b85036ac3cf7314cc9f4d7"
+      }
+    },
+    {
+      "id": "affliction-warlock-3-targets-multidot-dots",
+      "description": "The Affliction Warlock with Siphon Life, Soul Siphon and Wrack against three targets, with multidot lines for Corruption, Bane of Agony, Immolate and Siphon Life: each dot lands on the target the line picks, with its own curse and bane slot, and Bane of Agony's ramp step is the one the latest snapshot stored, as Go keeps it in a closure.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/affliction-warlock-3-targets-multidot-dots.request.json"
+      },
+      "prepared": "affliction-warlock-3-targets-multidot-dots.prepared.json",
+      "prepared_sha256": "bdda42580b1de8b7a029409c49fe51a8b9b446b22e432185bb823b8815bab6d9",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "affliction-warlock-3-targets-multidot-dots.go-result.json",
+        "sha256": "1722fca7fc5cb8401bd5631cda3b5cfc5fd6750b1a7f0eaf8ddaacd45a52560f"
+      },
+      "go_log": {
+        "file": "affliction-warlock-3-targets-multidot-dots.go-log.txt",
+        "sha256": "f36820c0cb6b28d5b81bc9abf245dca92615fd0697e1daad6de20dd6c03c6a83"
+      }
+    },
+    {
+      "id": "destruction-warlock-4-targets-multidot-immolate",
+      "description": "The Destruction Warlock with Conflagrate, Improved Shadow Bolt and Bane of Havoc against four targets and a multidot of Immolate: the dots burn on each target, and Conflagrate and Incinerate read the one on the cast target.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/destruction-warlock-4-targets-multidot-immolate.request.json"
+      },
+      "prepared": "destruction-warlock-4-targets-multidot-immolate.prepared.json",
+      "prepared_sha256": "c0f3b453fb7f3cc9b53e700e5fff3c30f5b941dcbd7366a458181addcb6511ed",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "destruction-warlock-4-targets-multidot-immolate.go-result.json",
+        "sha256": "dee156136c1e2a8efe9b2b29af32f282ad0310d016406fd7fd083ef4f8c36050"
+      },
+      "go_log": {
+        "file": "destruction-warlock-4-targets-multidot-immolate.go-log.txt",
+        "sha256": "02841eab9ce74c3128e37efcc94320f164113ed65e9f76b623ec9187bbb4373e"
       }
     }
   ]

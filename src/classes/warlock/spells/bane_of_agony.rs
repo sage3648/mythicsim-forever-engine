@@ -44,7 +44,8 @@ pub(crate) fn apply(fight: &mut Fight<WarlockAgent>, spell: SpellId, target: Sid
     let result = fight.calc_outcome(spell, target, Outcome::MagicHitNoHitCounter);
     if result.landed() {
         let mut agony = state(fight);
-        let aura = fight.dots[agony.dot].aura;
+        let dot = fight.dot_on(agony.dot, target);
+        let aura = fight.dots[dot].aura;
         super::take_bane_slot(fight, aura);
         fight.deactivate_aura(aura);
         let mut base = agony.tick_base;
@@ -56,18 +57,18 @@ pub(crate) fn apply(fight: &mut Fight<WarlockAgent>, spell: SpellId, target: Sid
         }
         agony.ramp_step = base * agony.ramp_share;
         fight.agent.bane_of_agony = Some(agony);
-        fight.dots[agony.dot].tick_base = Some(agony.ramp_step);
-        fight.apply_dot(agony.dot);
+        fight.dots[dot].tick_base = Some(agony.ramp_step);
+        fight.apply_dot(dot);
     }
     fight.deal_damage(spell, result, false);
 }
 
 /// `OnTick`: the snapshot tick, then every `ramp_every_ticks` ticks the ramp step is added
 /// to the stored amount.
-pub(crate) fn tick(fight: &mut Fight<WarlockAgent>) {
+pub(crate) fn tick(fight: &mut Fight<WarlockAgent>, dot: DotId) {
     let agony = state(fight);
-    fight.snapshot_dot_tick(agony.dot);
-    if fight.dots[agony.dot].tick_count() % agony.ramp_every_ticks == 0 {
-        fight.dots[agony.dot].snapshot_base += agony.ramp_step;
+    fight.snapshot_dot_tick(dot);
+    if fight.dots[dot].tick_count() % agony.ramp_every_ticks == 0 {
+        fight.dots[dot].snapshot_base += agony.ramp_step;
     }
 }

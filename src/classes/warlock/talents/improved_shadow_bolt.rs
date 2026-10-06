@@ -51,7 +51,8 @@ impl ImprovedShadowBolt {
         result: &SpellResult,
     ) {
         if self.trigger_spells.contains(&spell) && result.crit() {
-            fight.activate_aura(self.debuff);
+            let debuff = fight.aura_on(self.debuff, result.target);
+            fight.activate_aura(debuff);
         }
     }
 }

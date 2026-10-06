@@ -30,7 +30,7 @@ impl Conflagrate {
         let base = fight.roll_damage_effect(spell);
         let result = fight.calc_damage(spell, target, base);
         fight.deal_damage(spell, result, false);
-        let aura = fight.dots[self.immolate].aura;
+        let aura = fight.dots[fight.dot_on(self.immolate, target)].aura;
         if fight.aura(aura).active && !fight.proc(self.keep_immolate_chance, &self.rng_label) {
             fight.deactivate_aura(aura);
         }

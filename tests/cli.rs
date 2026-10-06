@@ -97,13 +97,13 @@ fn check_reports_refusal_codes_beside_the_reasons() {
         assert!(result.status.success());
         serde_json::from_slice(&result.stdout).unwrap()
     };
-    let refused = check("destruction-warlock-3-targets-multidot");
-    let reason = "the rotation multidots, which casts a warlock dot on a target past the first";
+    let refused = check("fire-mage-goblin-sapper");
+    let reason = "Ignite would hear the crit of item 10646's hit on the player, where the pinned Go engine panics";
     assert_eq!(refused["supported"], false);
     assert_eq!(refused["reasons"], serde_json::json!([reason]));
     assert_eq!(
         refused["refusals"],
-        serde_json::json!([{"code": "several_targets_unsupported", "reason": reason}])
+        serde_json::json!([{"code": "class_limit", "reason": reason}])
     );
     let supported = check("frost-reference");
     assert_eq!(supported["supported"], true);

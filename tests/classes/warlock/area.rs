@@ -246,12 +246,39 @@ fn bane_of_havoc_copies_the_damage_to_other_targets_onto_the_baned_one() {
     }
 }
 
-/// A multidot casts a dot on a target past the first, where Rust keeps one curse slot, bane
-/// slot, Bane of Agony ramp and Immolate reader; it stays refused by name.
+/// A multidot line casts each dot on the first target whose dot is down, so Corruption and
+/// Bane of Agony land on the second and third target in turn, each through its own copy of
+/// the dot.
 #[test]
-fn a_multidot_stays_refused_by_name() {
-    assert_eq!(
-        reasons(fixture("destruction-warlock-3-targets-multidot")),
-        ["the rotation multidots, which casts a warlock dot on a target past the first"]
+fn a_multidot_lands_each_dot_on_the_target_it_picks() {
+    let logs = first_fight_log(fixture("affliction-warlock-3-targets-multidot-dots"));
+    for spell in [25311, 11713] {
+        let gained: Vec<&str> = logs
+            .lines()
+            .filter(|line| line.contains(&format!("Aura gained: {{SpellID: {spell}}}")))
+            .map(|line| &line[line.find("[Target ").unwrap()..][..10])
+            .collect();
+        assert_eq!(
+            gained[..3],
+            ["[Target 1]", "[Target 2]", "[Target 3]"],
+            "{spell}"
+        );
+    }
+}
+
+/// Each target holds its own curse and bane: a bane cast on the second target does not fade
+/// the one on the first (Go `currentActiveBane` is an array by unit).
+#[test]
+fn each_target_keeps_its_own_bane() {
+    let logs = first_fight_log(fixture("affliction-warlock-3-targets-multidot-dots"));
+    let first_agony_fade = logs
+        .lines()
+        .position(|line| line.contains("[Target 1] Aura faded: {SpellID: 11713}"));
+    let second_agony_gain = logs
+        .lines()
+        .position(|line| line.contains("[Target 2] Aura gained: {SpellID: 11713}"));
+    assert!(
+        second_agony_gain.unwrap() < first_agony_fade.unwrap(),
+        "{logs}"
     );
 }

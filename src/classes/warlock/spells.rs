@@ -23,24 +23,33 @@ use crate::{
     core::fight::{Agent, AuraRef, DotId, Fight, SpellId},
 };
 
-/// Go `takeCurseSlot` on the one target: a different curse holding it fades first.
+/// Go `takeCurseSlot`: a different curse holding the slot of the aura's target fades first.
 pub(crate) fn take_curse_slot(fight: &mut Fight<WarlockAgent>, aura: AuraRef) {
-    if let Some(active) = fight.agent.curse_slot {
+    let position = slot_of(aura);
+    if let Some(active) = fight.agent.curse_slot[position] {
         if active != aura {
             fight.deactivate_aura(active);
         }
     }
-    fight.agent.curse_slot = Some(aura);
+    fight.agent.curse_slot[position] = Some(aura);
 }
 
-/// Go `takeBaneSlot` on the one target: a different bane holding it fades first.
+/// Go `takeBaneSlot`: a different bane holding the slot of the aura's target fades first.
 pub(crate) fn take_bane_slot(fight: &mut Fight<WarlockAgent>, aura: AuraRef) {
-    if let Some(active) = fight.agent.bane_slot {
+    let position = slot_of(aura);
+    if let Some(active) = fight.agent.bane_slot[position] {
         if active != aura {
             fight.deactivate_aura(active);
         }
     }
-    fight.agent.bane_slot = Some(aura);
+    fight.agent.bane_slot[position] = Some(aura);
+}
+
+/// The slot of the target a curse or bane aura sits on, Go's `slot[target.UnitIndex]`.
+fn slot_of(aura: AuraRef) -> usize {
+    aura.side
+        .target_position()
+        .expect("a curse or bane sits on a target")
 }
 
 /// The untagged spell with an exported spell ID.

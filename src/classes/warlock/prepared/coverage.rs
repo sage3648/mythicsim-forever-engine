@@ -220,27 +220,9 @@ fn limits(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
 }
 
 /// The spells that reach a target past the first in Go and not yet in Rust: none. Rain of
-/// Fire and Hellfire hit every target as in Go, and Bane of Havoc copies the damage to the
-/// other targets onto the baned one. The rest of the class acts on the target of its cast,
-/// and a rotation reaches another target only through its multidot, whose per-target curse
-/// and bane slots, ramps and Immolate readers Rust keeps once, so a multidot is refused.
-fn several_targets(prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
-    let mut reasons = crate::engine::coverage::spells_reaching_other_targets(reachable, &[]);
-    if mentions_multidot(&prepared.player.rotation) {
-        reasons.push(
-            "the rotation multidots, which casts a warlock dot on a target past the first".into(),
-        );
-    }
-    reasons
-}
-
-/// Whether an APL, in protojson form, holds a multidot action.
-fn mentions_multidot(value: &serde_json::Value) -> bool {
-    match value {
-        serde_json::Value::Object(map) => {
-            map.contains_key("multidot") || map.values().any(mentions_multidot)
-        }
-        serde_json::Value::Array(items) => items.iter().any(mentions_multidot),
-        _ => false,
-    }
+/// Fire and Hellfire hit every target as in Go, Bane of Havoc copies the damage to the other
+/// targets onto the baned one, and a multidot lands a dot, its curse and bane slot, Agony
+/// ramp, Soul Siphon count and Immolate reader on the target it picks, as in Go.
+fn several_targets(_prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
+    crate::engine::coverage::spells_reaching_other_targets(reachable, &[])
 }

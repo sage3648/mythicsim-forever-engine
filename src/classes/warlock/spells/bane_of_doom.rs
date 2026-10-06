@@ -11,6 +11,7 @@ use super::take_bane_slot;
 pub(crate) fn apply(fight: &mut Fight<WarlockAgent>, spell: SpellId, target: Side, dot: DotId) {
     let result = fight.calc_outcome(spell, target, Outcome::MagicHitNoHitCounter);
     if result.landed() {
+        let dot = fight.dot_on(dot, target);
         let aura = fight.dots[dot].aura;
         take_bane_slot(fight, aura);
         fight.apply_dot(dot);

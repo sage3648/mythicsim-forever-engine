@@ -7,7 +7,7 @@ use crate::{
     contracts::prepared_v2::{Effect, PreparedV2, Spell as ExportedSpell},
     core::fight::{
         healing::Healing, school_damage_index, Agent, AoeResults, AuraRef, DotId, Fight, Side,
-        SpellBehavior, SpellId, SpellResult, PRIORITY_REGEN,
+        SpellBehavior, SpellId, SpellResult, MAX_TARGETS, PRIORITY_REGEN,
     },
 };
 
@@ -127,12 +127,12 @@ pub(crate) struct WarlockAgent {
     pub(crate) havoc_target: Option<Side>,
     /// Incinerate's bonus on a target burning with Immolate.
     incinerate_bonus: f64,
-    /// Go `currentActiveBane` on the one target.
-    pub(crate) bane_slot: Option<AuraRef>,
+    /// Go `currentActiveBane`: the bane each target holds, by position.
+    pub(crate) bane_slot: [Option<AuraRef>; MAX_TARGETS],
     curse_of_the_elements: Option<Rc<CurseOfTheElements>>,
     curse_of_recklessness: Option<CurseOfRecklessness>,
-    /// Go `currentActiveCurse` on the one target.
-    pub(crate) curse_slot: Option<AuraRef>,
+    /// Go `currentActiveCurse`: the curse each target holds, by position.
+    pub(crate) curse_slot: [Option<AuraRef>; MAX_TARGETS],
     life_tap: Option<LifeTap>,
     conflagrate: Option<Rc<Conflagrate>>,
     improved_shadow_bolt: Option<Rc<ImprovedShadowBolt>>,
@@ -880,21 +880,21 @@ impl Agent for WarlockAgent {
 
     fn on_dot_tick(fight: &mut Fight<Self>, dot: DotId, behavior: WarlockSpell) {
         match behavior {
-            WarlockSpell::BaneOfAgony => bane_of_agony::tick(fight),
+            WarlockSpell::BaneOfAgony => bane_of_agony::tick(fight, dot),
             WarlockSpell::ImmolateDot | WarlockSpell::Corruption | WarlockSpell::BaneOfDoom => {
                 fight.snapshot_dot_tick(dot)
             }
             WarlockSpell::SiphonLife => {
                 let siphon = fight.agent.siphon_life.expect("Siphon Life is bound");
-                siphon.tick(fight);
+                siphon.tick(fight, dot);
             }
             WarlockSpell::DrainLife => {
                 let drain = fight.agent.drain_life.expect("Drain Life is bound");
-                drain.tick(fight);
+                drain.tick(fight, dot);
             }
             WarlockSpell::Wrack => {
                 let wrack = fight.agent.wrack.expect("Wrack is bound");
-                wrack.tick(fight);
+                wrack.tick(fight, dot);
             }
             WarlockSpell::Hellfire => hellfire::tick(fight, dot),
             WarlockSpell::RainOfFire => {
@@ -910,11 +910,11 @@ impl Agent for WarlockAgent {
         match kind {
             WarlockAura::CurseOfTheElements => {
                 let curse = fight.agent.curse_of_the_elements.clone().expect("bound");
-                curse.on_gain(fight);
+                curse.on_gain(fight, aura.side);
             }
             WarlockAura::CurseOfRecklessness => {
                 let curse = fight.agent.curse_of_recklessness.expect("bound");
-                curse.on_gain(fight);
+                curse.on_gain(fight, aura.side);
             }
             WarlockAura::ShadowAndFlame => {
                 let talent = fight.agent.shadow_and_flame.clone().expect("bound");
@@ -942,11 +942,11 @@ impl Agent for WarlockAgent {
         match kind {
             WarlockAura::CurseOfTheElements => {
                 let curse = fight.agent.curse_of_the_elements.clone().expect("bound");
-                curse.on_expire(fight);
+                curse.on_expire(fight, aura.side);
             }
             WarlockAura::CurseOfRecklessness => {
                 let curse = fight.agent.curse_of_recklessness.expect("bound");
-                curse.on_expire(fight);
+                curse.on_expire(fight, aura.side);
             }
             WarlockAura::ShadowAndFlame => {
                 let talent = fight.agent.shadow_and_flame.clone().expect("bound");
