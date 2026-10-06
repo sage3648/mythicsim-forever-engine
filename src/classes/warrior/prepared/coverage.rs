@@ -226,9 +226,15 @@ fn stance_spell(class_spell: &str) -> Option<&'static str> {
     }
 }
 
-/// The spells that reach a target past the first in Go and not yet in Rust: none. Cleave,
-/// Whirlwind, Thunder Clap and Sweeping Strikes run as in Go, and Demoralizing and Challenging
-/// Shout have no behavior to refuse by name.
+/// The spells that reach a target past the first in Go and not yet in Rust: the shouts, which
+/// Go loops over every target for and Rust has no behavior for at all. Cleave, Whirlwind,
+/// Thunder Clap and Sweeping Strikes run as in Go.
 fn several_targets(_prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
-    crate::engine::coverage::spells_reaching_other_targets(reachable, &[])
+    crate::engine::coverage::spells_reaching_other_targets(
+        reachable,
+        &[
+            ("demoralizing_shout", "debuffs every target"),
+            ("challenging_shout", "taunts every target"),
+        ],
+    )
 }
