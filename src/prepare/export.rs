@@ -670,6 +670,14 @@ pub(crate) fn export(
     let player_message = env.sim.character(env.player).player.clone();
     let target = env.encounter.targets[0];
     let player = env.player;
+    // Go `prepare`: stats against a mob type are the fight's, which prepared v2 does not carry.
+    for (mob_type, bonus) in &env.attack_table(player, target).mob_type_bonus_stats {
+        if !bonus.is_zero() {
+            unrepresented.push(format!(
+                "mob type bonus stats for {mob_type} are unsupported"
+            ));
+        }
+    }
 
     let spells: Vec<super::sim::SpellId> = env.sim.unit(player).spellbook.clone();
     let mut exported_spells: Vec<Value> = spells
@@ -731,6 +739,7 @@ pub(crate) fn export(
     // Go then appends the inert pets, the melee, gear, spell data and energy proc effects and
     // the stat auras effect, in that order; Rust refuses pets and ports the rest in
     // src/prepare/export_items.rs.
+    effects.extend(super::stat_auras::stat_auras_effect(env)?);
     effects.extend(tail_effects(env, &mut unrepresented)?);
 
     let professions: Vec<String> = env

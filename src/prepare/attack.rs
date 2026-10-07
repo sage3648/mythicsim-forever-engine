@@ -294,6 +294,9 @@ pub(crate) struct AttackTable {
     pub bonus_spell_crit_percent: f64,
     pub ranged_damage_taken_multiplier: f64,
     pub damage_done_by_caster: bool,
+    /// Go `MobTypeBonusStats`: stats against mobs of a type, by `proto.MobType` name. The
+    /// export does not list them; the fight reads them.
+    pub mob_type_bonus_stats: std::collections::BTreeMap<String, super::stats::Stats>,
 }
 
 /// Go `NewAttackTable`.

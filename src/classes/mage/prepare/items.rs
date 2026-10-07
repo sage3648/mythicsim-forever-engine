@@ -8,7 +8,7 @@ use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use crate::prepare::character::{cooldown_type, MajorCooldown};
 use crate::prepare::env::Environment;
 use crate::prepare::item_sets::ItemSet;
-use crate::prepare::sim::{AuraConfig, AuraId, Cooldown, SECOND};
+use crate::prepare::sim::{AuraConfig, AuraId, Cooldown, Sim, UnitId, SECOND};
 use crate::prepare::spell::{school, CastConfig, ProcMask, SpellConfig, SpellFlag};
 use crate::prepare::spell_mod::{SpellModConfig, SpellModType};
 use crate::prepare::stats::{Stat, Stats};
@@ -137,13 +137,7 @@ fn tempest_regalia_4(env: &mut Environment, aura: AuraId) {
 /// The Go `core.NewItemEffect(19959, ...)`: Hazza'rah's Charm of Magic. Use: increases the
 /// critical hit chance of your Arcane spells by 5%, and the critical hit damage by 50% for
 /// 20 sec (24544). The client's class mask names Arcane Explosion and Arcane Missiles only.
-pub(crate) fn hazzarahs_charm(env: &mut Environment) {
-    // The warlock tests pull the mage package in, and with it this mage-only charm.
-    let unit = env.player;
-    if env.sim.character(unit).class != "ClassMage" {
-        return;
-    }
-    let sim = &mut env.sim;
+pub(crate) fn hazzarahs_charm(sim: &mut Sim, unit: UnitId) {
     let duration = SECOND * 20;
 
     let aura = sim.register_aura(
@@ -212,4 +206,56 @@ pub(crate) fn hazzarahs_charm(env: &mut Environment) {
             timings: Vec::new(),
         },
     );
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::contracts::request::Request;
+    use crate::prepare::character::cooldown_type;
+    use crate::prepare::env::Environment;
+    use crate::prepare::sim::SECOND;
+    use crate::prepare::spell::school;
+
+    const REQUEST: &str =
+        include_str!("../../../../tests/classes/mage/prepare/arcane.request.json");
+
+    fn prepared_with_charm() -> Environment {
+        let mut value: serde_json::Value = serde_json::from_str(REQUEST).expect("a request");
+        let mut items = vec![serde_json::json!({}); 12];
+        items.push(serde_json::json!({"id": 19959}));
+        value["raid"]["parties"][0]["players"][0]["equipment"] =
+            serde_json::json!({ "items": items });
+        let bytes = serde_json::to_vec(&value).expect("json");
+        let request = Request::from_json(&bytes).expect("parsed");
+        Environment::new(request.message(), crate::classes::prepare_agent).expect("prepared")
+    }
+
+    /// Hazza'rah's Charm of Magic (items.go): an Arcane Potency aura with its two spell mods, and
+    /// a use spell on a 3 minute cooldown that shares the 20 second offensive trinket timer.
+    #[test]
+    fn hazzarahs_charm_registers_its_aura_and_use_spell() {
+        let env = prepared_with_charm();
+        let sim = &env.sim;
+        let aura = sim
+            .get_aura(env.player, "Arcane Potency")
+            .map(|id| sim.aura(id))
+            .expect("the charm's aura");
+        assert_eq!(aura.duration, 20 * SECOND);
+        assert_eq!(aura.callback_names(), ["on_gain", "on_expire"]);
+        let spell = sim
+            .unit(env.player)
+            .spellbook
+            .iter()
+            .map(|id| sim.spell(*id))
+            .find(|spell| spell.action_id.item_id == 19959)
+            .expect("the charm's use spell");
+        assert_eq!(spell.cd.duration, 180 * SECOND);
+        assert_eq!(spell.shared_cd.duration, 20 * SECOND);
+        assert_eq!(spell.spell_school, school::ARCANE);
+        let cooldowns = &sim.character(env.player).initial_major_cooldowns;
+        assert!(cooldowns.iter().any(|mcd| {
+            sim.spell(mcd.spell).action_id.item_id == 19959
+                && mcd.cooldown_type == cooldown_type::DPS
+        }));
+    }
 }
