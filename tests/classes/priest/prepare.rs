@@ -163,7 +163,7 @@ fn every_priest_case_prepares_as_go_does() {
             Err(err) => failures.push(format!("{case}: {err}")),
         }
     }
-    assert!(cases >= 13, "the goldens are missing: {cases}");
+    assert!(cases >= 14, "the goldens are missing: {cases}");
     assert!(
         failures.is_empty(),
         "{} of {cases} differ from the Go exporter:\n{}",

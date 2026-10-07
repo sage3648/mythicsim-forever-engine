@@ -2,7 +2,7 @@
 """Write the Priest preparation goldens: stripped requests and the pinned Go exporter's output.
 
 Each case is a Priest fixture request without buffs, debuffs, consumables, professions and gear
-and with one cast action in its rotation, so what it prepares is the Priest's own: spells,
+and with one cast action in its rotation (the fixture's own when a case names none), so what it prepares is the Priest's own: spells,
 talent auras, class effects, the Shadowfiend and stats. The Go exporter prepares it and the
 goldens keep a digest of each part of the answer, never the answer itself, so a failing test
 names the spell, aura or effect that changed and the files stay small.
@@ -62,6 +62,10 @@ CASES = [
      "RaceUndead", {"preShadowform": True}, MIND_BLAST),
     ("mixed-build-three", "shadow-priest-shadowfiend", "301211131013121131-32531001012001411-201321421020311130",
      "RaceTroll", {"useShadowfiend": True, "armor": "InnerFire"}, MIND_BLAST),
+    # The fixture's own rotation, whose strict sequence needs Inner Focus, which this build lacks:
+    # Go builds no sequence then, and with it none of the values of its condition.
+    ("rotation-without-inner-focus", "shadow-priest-shadowfiend",
+     "020130020335121511-30505023230101300-242020520020200201", "RaceUndead", {}, None),
 ]
 
 
@@ -77,8 +81,9 @@ def strip(request, talents, race, options, spell):
         player.pop(key, None)
     player["race"] = race
     player["equipment"] = {"items": []}
-    player["rotation"] = {"type": "TypeAPL",
-                          "priorityList": [{"action": {"castSpell": {"spellId": {"spellId": spell}}}}]}
+    if spell is not None:
+        player["rotation"] = {"type": "TypeAPL",
+                              "priorityList": [{"action": {"castSpell": {"spellId": {"spellId": spell}}}}]}
     player["talentsString"] = talents
     player["dpsPriest"] = {"options": {"classOptions": options}}
     return out

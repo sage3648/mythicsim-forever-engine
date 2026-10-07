@@ -96,12 +96,18 @@ fn has_cur_dot(env: &Environment, spell: SpellId) -> Result<bool, Refusal> {
 struct Built {
     /// Spells a cast action presses, including those of inner actions.
     casts: Vec<SpellId>,
+    /// Whether the implementation is itself a cast action, as the major cooldown removal of a
+    /// pruned action sees it.
+    direct: bool,
 }
 
 struct Builder<'a> {
     env: &'a Environment,
     /// Go `rot.prunedActions`: impls of actions a constant false condition removed.
     pruned_casts: Vec<SpellId>,
+    /// The values Go builds: those of the actions it built, never those of an action whose
+    /// constructor returned nil.
+    values: Vec<Message>,
 }
 
 /// Whether a value is a constant expression Go may fold: no part of it reads the simulation.
@@ -138,6 +144,9 @@ impl Builder<'_> {
         let Some(built) = self.action_impl(config)? else {
             return Ok(None);
         };
+        let mut own = Vec::new();
+        action_values(config, &mut own);
+        self.values.extend(own.into_iter().cloned());
         if let Some(condition) = config.message("condition") {
             if is_constant_expression(condition) {
                 let simple_true = condition
@@ -162,7 +171,10 @@ impl Builder<'_> {
                 .agent
                 .custom_apl_action(&self.env.sim, self.env.player, config)
         {
-            return Ok(built.then(|| Built { casts: Vec::new() }));
+            return Ok(built.then(|| Built {
+                casts: Vec::new(),
+                direct: false,
+            }));
         }
         let Some((kind, Value::Message(action))) = config.oneof("action") else {
             return Err(Refusal::new(
@@ -187,7 +199,10 @@ impl Builder<'_> {
                 if !target_resolves(self.env, action.message("target"))? {
                     return Ok(None);
                 }
-                Ok(Some(Built { casts: vec![spell] }))
+                Ok(Some(Built {
+                    casts: vec![spell],
+                    direct: true,
+                }))
             }
             "channel_spell" => {
                 let Some(id) = action.message("spell_id") else {
@@ -221,16 +236,50 @@ impl Builder<'_> {
                 }
                 Ok(Some(Built {
                     casts: if casts { vec![spell] } else { Vec::new() },
+                    direct: casts,
                 }))
             }
-            "sequence" | "strict_sequence" => {
+            // Go `newActionSequence`: the inner actions that exist, and nothing when none does.
+            "sequence" => {
                 let mut casts = Vec::new();
+                let mut any = false;
                 for inner in action.messages("actions") {
                     if let Some(built) = self.action(Some(inner))? {
+                        any = true;
                         casts.extend(built.casts);
                     }
                 }
-                Ok(Some(Built { casts }))
+                Ok(any.then_some(Built {
+                    casts,
+                    direct: false,
+                }))
+            }
+            // Go `newActionStrictSequence`: every step or no sequence. With a step missing the
+            // steps left are pruned, so their spells still leave the major cooldowns.
+            "strict_sequence" => {
+                let mut steps = Vec::new();
+                let mut missing = false;
+                for inner in action.messages("actions") {
+                    match self.action(Some(inner))? {
+                        Some(built) => steps.push(built),
+                        None => missing = true,
+                    }
+                }
+                if missing {
+                    for step in steps {
+                        if step.direct {
+                            self.pruned_casts.extend(step.casts);
+                        }
+                    }
+                    return Ok(None);
+                }
+                if steps.is_empty() {
+                    return Ok(None);
+                }
+                Ok(Some(Built {
+                    casts: steps.into_iter().flat_map(|step| step.casts).collect(),
+                    direct: false,
+                }))
             }
             // Go `newActionMultidot`: dropped unless the spell has a dot on the current
             // target; it removes no major cooldown.
@@ -244,11 +293,15 @@ impl Builder<'_> {
                 if !has_cur_dot(self.env, spell)? {
                     return Ok(None);
                 }
-                Ok(Some(Built { casts: Vec::new() }))
+                Ok(Some(Built {
+                    casts: Vec::new(),
+                    direct: false,
+                }))
             }
-            "autocast_other_cooldowns" | "wait" | "wait_until" => {
-                Ok(Some(Built { casts: Vec::new() }))
-            }
+            "autocast_other_cooldowns" | "wait" | "wait_until" => Ok(Some(Built {
+                casts: Vec::new(),
+                direct: false,
+            })),
             other => Err(Refusal::new(
                 "rotation",
                 format!("rotation action {other} is not prepared yet"),
@@ -277,13 +330,24 @@ fn values<'a>(message: &'a Message, out: &mut Vec<&'a Message>) {
     }
 }
 
+/// The values an action builds itself: its condition and what its implementation reads, not
+/// those of the inner actions of a sequence, which are built as actions of their own.
+fn action_values<'a>(config: &'a Message, out: &mut Vec<&'a Message>) {
+    if let Some(condition) = config.message("condition") {
+        values(condition, out);
+    }
+    if let Some((kind, Value::Message(action))) = config.oneof("action") {
+        if kind != "sequence" && kind != "strict_sequence" {
+            values(action, out);
+        }
+    }
+}
+
 /// What building the rotation's values registers: apl_values_aura.go `newValueAuraNumStacks`
 /// adds a stack change and a reset callback to the aura it reads, and apl_values_dot.go's base
 /// value reads register an aura, which preparation refuses for now.
-fn register_value_observers(env: &mut Environment, rotation: &Message) -> Result<(), Refusal> {
-    let mut found = Vec::new();
-    values(rotation, &mut found);
-    for value in found {
+fn register_value_observers(env: &mut Environment, built: &[Message]) -> Result<(), Refusal> {
+    for value in built {
         let Some((kind, Value::Message(config))) = value.oneof("value") else {
             continue;
         };
@@ -364,10 +428,12 @@ pub(crate) fn build_rotation(
     let mut prepull = 0;
     let mut casts = Vec::new();
     let pruned;
+    let built_values;
     {
         let mut builder = Builder {
             env,
             pruned_casts: Vec::new(),
+            values: Vec::new(),
         };
         for item in rotation.messages("prepull_actions") {
             if item.bool("hide") {
@@ -401,8 +467,9 @@ pub(crate) fn build_rotation(
             }
         }
         pruned = builder.pruned_casts;
+        built_values = builder.values;
     }
-    register_value_observers(env, rotation)?;
+    register_value_observers(env, &built_values)?;
     env.prepull_actions += prepull;
     let player = env.player;
     for spell in casts.into_iter().chain(pruned) {
