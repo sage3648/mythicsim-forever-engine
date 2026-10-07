@@ -547,8 +547,8 @@ pub(crate) fn player_takes_damage(env: &Environment) -> bool {
 fn tail_effects(
     env: &mut Environment,
     unrepresented: &mut Vec<String>,
+    earlier: &[Value],
 ) -> Result<Vec<Value>, Refusal> {
-    let _ = &unrepresented;
     let mut effects = Vec::new();
     // tools/oracle-v2/targets.go targetCopyNotes: Go keeps an internal cooldown per copy.
     if env.encounter.targets.len() > 1 {
@@ -645,13 +645,99 @@ fn tail_effects(
     if takes_damage && env.sim.get_aura(player, "Chance of Death").is_some() {
         effects.push(json!({"kind": "chance_of_death", "aura": "Chance of Death"}));
     }
+    effects.extend(super::hit_taken::hit_taken_item_listeners(env, tanking)?);
+    // A class's inert listener of hits the player takes acts once anything hits the player: the
+    // target's swings when it tanks the player, or the Goblin Sapper Charge's self hit. Only the
+    // listeners vetted for those hits stay inert: without a tank, the listeners of parried,
+    // dodged or blocked attacks, which the sapper's magic hit never is, the procs on melee hits
+    // taken, which its spell hit is not, and a form's rage bar no spell enters.
     if takes_damage {
-        return Err(Refusal::new(
-            "damage_taken",
-            "a player that takes damage is not described yet".to_string(),
-        ));
+        const SAPPER_ONLY: [&str; 7] = [
+            "Parry Haste",
+            "Riposte Trigger",
+            "Defensive State - Trigger",
+            "Revenge - Trigger",
+            "RageBar",
+            "Freezing Band",
+            "Wildheart Raiment 5P",
+        ];
+        for effect in earlier.iter().chain(effects.iter()) {
+            let label = effect["aura"].as_str().unwrap_or_default();
+            if effect["kind"] != "inert_listener"
+                || effect["unit"] != "player"
+                || (!tanking
+                    && (SAPPER_ONLY.contains(&label)
+                        || effect["reason"] == "hears only melee hits the player takes"))
+            {
+                continue;
+            }
+            let hears_hits_taken = env
+                .sim
+                .get_aura(player, label)
+                .is_some_and(|aura| env.sim.aura(aura).events.on_spell_hit_taken);
+            if hears_hits_taken {
+                unrepresented.push(if tanking {
+                    format!("player aura {label:?} reacts to the target's swings")
+                } else {
+                    format!(
+                        "player aura {label:?} reacts to the Goblin Sapper Charge's hit on the player"
+                    )
+                });
+            }
+        }
     }
     Ok(effects)
+}
+
+/// The refusals of `prepare` that concern a tank assignment: Go's notes on the tank list, on a
+/// tanked target without a melee swing or with a secondary target, and on copies of the target
+/// that do not swing alike.
+fn tank_notes(env: &Environment, tanking: bool, unrepresented: &mut Vec<String>) {
+    // A tank assignment is supported when it is exactly the one player tanking the target.
+    let raid = env.request.message("raid");
+    let tanks = raid.map_or_else(Vec::new, |raid| raid.messages("tanks"));
+    if tanks.len() > 1
+        || (tanks.len() == 1
+            && (tanks[0].enum_name("type") != "Player" || tanks[0].i32("index") != 0))
+    {
+        unrepresented.push(
+            "tank assignments other than the player tanking the target are unsupported".into(),
+        );
+    }
+    let first = env.encounter.targets[0];
+    let unit = env.sim.unit(first);
+    if tanking && !unit.auto_attacks.auto_swing_melee {
+        unrepresented.push("a tanked target without a melee swing is unsupported".into());
+    }
+    if unit.secondary_target.is_some() {
+        unrepresented.push("a target with a secondary target is unsupported".into());
+    }
+    // tools/oracle-v2/targets.go swingShape: Rust runs every copy's swing from the first
+    // target's values, so each copy must swing at the same unit with the same values.
+    if env.encounter.targets.len() > 1 {
+        let shape = |target| {
+            let unit = env.sim.unit(target);
+            let values = (unit.current_target == Some(env.player)
+                && unit.auto_attacks.auto_swing_melee
+                && unit.auto_attacks.mh.swing_speed > 0.0)
+                .then(|| super::enemy::enemy_values(env, target).map(|v| super::enemy::encode(&v)));
+            (
+                unit.current_target == Some(env.player),
+                unit.current_target.is_none(),
+                unit.secondary_target.is_some(),
+                values.map(|values| values.ok()),
+            )
+        };
+        let expected = shape(first);
+        for (i, target) in env.encounter.targets.iter().enumerate().skip(1) {
+            if shape(*target) != expected {
+                unrepresented.push(format!(
+                    "target {} swings unlike the first target: only identical copies are supported",
+                    i + 1
+                ));
+            }
+        }
+    }
 }
 
 /// Builds the prepared v2 document for a reset environment.
@@ -728,7 +814,17 @@ pub(crate) fn export(
     // Go then appends the inert pets, the melee, gear, spell data and energy proc effects and
     // the stat auras effect, in that order; Rust refuses pets and ports the rest in
     // src/prepare/export_items.rs.
-    effects.extend(tail_effects(env, &mut unrepresented)?);
+    // A tank's swing is read under every stat aura combination too, from the same simulations.
+    let tanking = env.tanking();
+    let stat_auras = super::enemy::stat_aura_labels_stub(env);
+    let mut combos = None;
+    if tanking && !stat_auras.is_empty() {
+        let mut found = super::enemy::EnemyCombos::new(env, &stat_auras)?;
+        super::enemy::read_stat_aura_combinations_stub(env, &stat_auras, &mut found)?;
+        combos = Some(found);
+    }
+    let tail = tail_effects(env, &mut unrepresented, &effects)?;
+    effects.extend(tail);
 
     let professions: Vec<String> = env
         .sim
@@ -856,6 +952,27 @@ pub(crate) fn export(
         prepared["player"]["hp_percent_for_defensives"] = json!(hp);
     }
     prepared["melee"] = export_melee(env, &mut unrepresented);
+    tank_notes(env, tanking, &mut unrepresented);
+    if tanking {
+        // The auras whose damage taken multiplier an effect multiplies, which the runtime
+        // tracks live.
+        let mut tracked = Vec::new();
+        for effect in &effects {
+            let Some(auras) = effect["auras"].as_array() else {
+                continue;
+            };
+            for entry in auras.iter().filter(|entry| entry.is_object()) {
+                let tracks = effect["kind"] == "player_damage_taken"
+                    || (effect["kind"] == "pseudo_stat_auras" && entry["stat"] == "damage_taken");
+                if let (true, Some(label)) = (tracks, entry["aura"].as_str()) {
+                    tracked.push(label.to_string());
+                }
+            }
+        }
+        let enemy =
+            super::enemy::export_enemy(env, &stat_auras, combos, &tracked, &mut unrepresented)?;
+        prepared["enemy"] = serde_json::to_value(enemy).expect("the swing serializes");
+    }
     let teardown = teardown_max_mana(env, player, &mut unrepresented);
     prepared["player"]["mana"]["teardown_max"] = json!(teardown);
     if !env.sim.unit(player).mana_bar.enabled {

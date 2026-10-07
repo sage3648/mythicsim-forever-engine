@@ -1058,6 +1058,7 @@ impl Sim {
             Rc::new(move |_: &mut Sim, _| shield_strength.set(0.0)),
         );
         self.add_dynamic_damage_taken_modifier(unit);
+        self.unit_mut(unit).absorption_auras.push(aura);
         absorption
     }
 
