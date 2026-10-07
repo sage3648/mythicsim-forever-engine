@@ -174,6 +174,90 @@ impl Builder<'_> {
     }
 }
 
+/// Every `proto.APLValue` inside a message, depth first.
+fn values<'a>(message: &'a Message, out: &mut Vec<&'a Message>) {
+    if message.type_name() == "proto.APLValue" {
+        out.push(message);
+    }
+    for name in message.set_fields() {
+        match message.get(name) {
+            Some(Value::Message(inner)) => values(inner, out),
+            Some(Value::List(items)) => {
+                for item in items {
+                    if let Value::Message(inner) = item {
+                        values(inner, out);
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+/// What building the rotation's values registers: apl_values_aura.go `newValueAuraNumStacks`
+/// adds a stack change and a reset callback to the aura it reads, and apl_values_dot.go's base
+/// value reads register an aura, which preparation refuses for now.
+fn register_value_observers(env: &mut Environment, rotation: &Message) -> Result<(), Refusal> {
+    let mut found = Vec::new();
+    values(rotation, &mut found);
+    for value in found {
+        let Some((kind, Value::Message(config))) = value.oneof("value") else {
+            continue;
+        };
+        match kind {
+            "aura_num_stacks" => {
+                let Some(id) = config.message("aura_id") else {
+                    continue;
+                };
+                let id = proto_to_action_id(id);
+                let unit = match config.message("source_unit").map(|u| u.enum_name("type")) {
+                    None => env.player,
+                    Some(kind) if kind == "Unknown" || kind == "Self" => env.player,
+                    Some(kind) if kind == "CurrentTarget" => env.encounter.targets[0],
+                    Some(kind) => {
+                        return Err(Refusal::new(
+                            "rotation",
+                            format!("an aura stack read on a {kind} unit is not prepared yet"),
+                        ))
+                    }
+                };
+                let aura = env
+                    .sim
+                    .unit(unit)
+                    .auras
+                    .iter()
+                    .copied()
+                    .find(|aura| env.sim.aura(*aura).action_id.as_ref() == Some(&id));
+                match aura {
+                    None => {
+                        return Err(Refusal::new(
+                            "rotation",
+                            format!("the rotation reads the stacks of {id}, which the unit lacks, as a constant"),
+                        ))
+                    }
+                    Some(aura) if env.sim.aura(aura).max_stacks > 0 => {
+                        env.sim.apply_on_stacks_change(aura, std::rc::Rc::new(|_: &mut super::sim::Sim, _, _, _| {}));
+                        env.sim.apply_on_reset(aura, std::rc::Rc::new(|_: &mut super::sim::Sim, _| {}));
+                    }
+                    Some(_) => {}
+                }
+            }
+            "dot_percent_increase"
+            | "dot_crit_percent_increase"
+            | "dot_tick_rate_percent_increase"
+                if config.bool("use_base_value") =>
+            {
+                return Err(Refusal::new(
+                    "rotation",
+                    "a dot increase read against its base value is not prepared yet".to_string(),
+                ));
+            }
+            _ => {}
+        }
+    }
+    Ok(())
+}
+
 /// Go `newAPLRotation` at finalization.
 pub(crate) fn build_rotation(
     env: &mut Environment,
@@ -235,6 +319,7 @@ pub(crate) fn build_rotation(
         }
         pruned = builder.pruned_casts;
     }
+    register_value_observers(env, rotation)?;
     env.prepull_actions += prepull;
     let player = env.player;
     for spell in casts.into_iter().chain(pruned) {
