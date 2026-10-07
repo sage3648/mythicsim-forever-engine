@@ -7,44 +7,42 @@ use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use crate::prepare::character::{cooldown_type, MajorCooldown};
 use crate::prepare::env::Environment;
-use crate::prepare::sim::{AuraConfig, AuraId, Cooldown, Sim, UnitId, SECOND};
+use crate::prepare::item_sets::ItemSet;
+use crate::prepare::sim::{AuraConfig, AuraId, Cooldown, SECOND};
 use crate::prepare::spell::{school, CastConfig, ProcMask, SpellConfig, SpellFlag};
 use crate::prepare::spell_mod::{SpellModConfig, SpellModType};
 use crate::prepare::stats::{Stat, Stats};
 
 use super::masks;
 
-/// Go `core.ApplySetBonus` for a Mage set: the set bonus aura is the one the bonus attaches to.
-pub(crate) type ApplySetBonus = fn(&mut Sim, UnitId, AuraId);
-
-/// Go `core.ItemSet`, for the fields the bonus lookup reads.
-pub(crate) struct MageItemSet {
-    pub id: i32,
-    pub name: &'static str,
-    /// Set piece requirement and its bonus.
-    pub bonuses: &'static [(i32, ApplySetBonus)],
-}
-
-/// Aldor Regalia (648), Tirisfal Regalia (649) and Tempest Regalia (671).
-pub(crate) static ITEM_SETS: &[MageItemSet] = &[
-    MageItemSet {
+/// Aldor Regalia (648), Tirisfal Regalia (649) and Tempest Regalia (671): Go's
+/// `core.NewItemSet` calls.
+pub(crate) static ITEM_SETS: &[ItemSet] = &[
+    ItemSet {
         id: 648,
         name: "Aldor Regalia",
+        alternative_name: "",
         bonuses: &[(4, aldor_regalia_4)],
+        required_profession: "",
     },
-    MageItemSet {
+    ItemSet {
         id: 649,
         name: "Tirisfal Regalia",
+        alternative_name: "",
         bonuses: &[(2, tirisfal_regalia_2), (4, tirisfal_regalia_4)],
+        required_profession: "",
     },
-    MageItemSet {
+    ItemSet {
         id: 671,
         name: "Tempest Regalia",
+        alternative_name: "",
         bonuses: &[(2, tempest_regalia_2), (4, tempest_regalia_4)],
+        required_profession: "",
     },
 ];
 
-fn aldor_regalia_4(sim: &mut Sim, _unit: UnitId, aura: AuraId) {
+fn aldor_regalia_4(env: &mut Environment, aura: AuraId) {
+    let sim = &mut env.sim;
     for (class_mask, seconds) in [
         (masks::PRESENCE_OF_MIND, -24),
         (masks::BLAST_WAVE, -4),
@@ -62,7 +60,8 @@ fn aldor_regalia_4(sim: &mut Sim, _unit: UnitId, aura: AuraId) {
     }
 }
 
-fn tirisfal_regalia_2(sim: &mut Sim, _unit: UnitId, aura: AuraId) {
+fn tirisfal_regalia_2(env: &mut Environment, aura: AuraId) {
+    let sim = &mut env.sim;
     sim.attach_spell_mod(
         aura,
         SpellModConfig {
@@ -83,7 +82,9 @@ fn tirisfal_regalia_2(sim: &mut Sim, _unit: UnitId, aura: AuraId) {
     );
 }
 
-fn tirisfal_regalia_4(sim: &mut Sim, unit: UnitId, aura: AuraId) {
+fn tirisfal_regalia_4(env: &mut Environment, aura: AuraId) {
+    let unit = env.player;
+    let sim = &mut env.sim;
     // Go's temporary stats aura, which the proc below activates in a fight.
     let _madness = sim.new_temporary_stats_aura(
         unit,
@@ -107,7 +108,8 @@ fn tirisfal_regalia_4(sim: &mut Sim, unit: UnitId, aura: AuraId) {
     );
 }
 
-fn tempest_regalia_2(sim: &mut Sim, _unit: UnitId, aura: AuraId) {
+fn tempest_regalia_2(env: &mut Environment, aura: AuraId) {
+    let sim = &mut env.sim;
     sim.attach_spell_mod(
         aura,
         SpellModConfig {
@@ -119,7 +121,8 @@ fn tempest_regalia_2(sim: &mut Sim, _unit: UnitId, aura: AuraId) {
     );
 }
 
-fn tempest_regalia_4(sim: &mut Sim, _unit: UnitId, aura: AuraId) {
+fn tempest_regalia_4(env: &mut Environment, aura: AuraId) {
+    let sim = &mut env.sim;
     sim.attach_spell_mod(
         aura,
         SpellModConfig {
