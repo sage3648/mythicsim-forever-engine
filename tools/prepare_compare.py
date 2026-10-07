@@ -6,7 +6,7 @@ refused with a code. The report counts the matches, the refusals by code and eve
 its first differing paths, and writes it to --output/report.json. Exit status 1 when any request
 was prepared differently or Rust preparation failed.
 
-usage: python3 tools/prepare_compare.py --output NEW_FOLDER [--engine BIN] [--exporter BIN] REQUESTS_OR_DIRS...
+usage: python3 tools/prepare_compare.py --output NEW_FOLDER [--engine BIN] [--exporter BIN] [--jobs N] REQUESTS_OR_DIRS...
 
 The engine defaults to target/release/forever-engine and the exporter to the one
 tools/prepared_v2.py builds into oracle-cache/. Uses only Python's standard library.
@@ -14,6 +14,7 @@ tools/prepared_v2.py builds into oracle-cache/. Uses only Python's standard libr
 
 import argparse
 from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
 import json
 from pathlib import Path
 import subprocess
@@ -82,18 +83,23 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--engine", type=Path, default=ROOT / "target" / "release" / "forever-engine")
     parser.add_argument("--exporter", type=Path, default=ROOT / "oracle-cache" / "forever-go-oracle-v2")
+    parser.add_argument("--jobs", type=int, default=1, help="requests compared at a time")
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
-    verdicts = {}
-    for index, request in enumerate(requests(args.paths)):
+
+    def one(item):
+        index, request = item
         folder = args.output / f"{index:05d}"
         folder.mkdir()
         verdict = compare(request, args.engine, args.exporter, folder)
-        verdicts[str(request)] = verdict
         if verdict["status"] == "match":
             for name in ("go.json", "rust.json"):
                 (folder / name).unlink(missing_ok=True)
             folder.rmdir()
+        return str(request), verdict
+
+    with ThreadPoolExecutor(max(args.jobs, 1)) as pool:
+        verdicts = dict(pool.map(one, enumerate(requests(args.paths))))
     statuses = Counter(verdict["status"] for verdict in verdicts.values())
     codes = Counter(verdict["code"] for verdict in verdicts.values() if verdict["status"] == "refused")
     report = {"requests": len(verdicts), "statuses": dict(statuses), "refusal_codes": dict(codes), "verdicts": verdicts}
