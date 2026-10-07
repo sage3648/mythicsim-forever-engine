@@ -215,6 +215,11 @@ pub(crate) struct EnergyBar {
     pub max_energy: f64,
     pub current_energy: f64,
     pub energy_regen_multiplier: f64,
+    pub max_combo_points: i32,
+    pub tick_duration: Duration,
+    pub energy_per_tick: f64,
+    /// Go `hasNoRegen`.
+    pub has_no_regen: bool,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -222,6 +227,13 @@ pub(crate) struct RageBar {
     pub enabled: bool,
     /// Go `maxRage`: at least 100 once the class enables the bar.
     pub max_rage: f64,
+    /// Go `startingRage`: clamped to the bar.
+    pub starting_rage: f64,
+    pub current_rage: f64,
+    /// Go `offHandRageMultiplier`.
+    pub off_hand_rage_multiplier: f64,
+    /// The `BaseRageMultiplier` the bar's listener was built with.
+    pub base_rage_multiplier: f64,
 }
 
 #[derive(Clone, Debug, Default)]
