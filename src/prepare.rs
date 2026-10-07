@@ -12,6 +12,7 @@ pub(crate) mod buffs;
 pub(crate) mod character;
 pub(crate) mod common_effects;
 pub(crate) mod consumes;
+pub(crate) mod dbcenums;
 pub(crate) mod debuffs;
 pub(crate) mod env;
 pub(crate) mod export;
@@ -25,6 +26,7 @@ pub(crate) mod rotation;
 pub(crate) mod sim;
 pub(crate) mod spell;
 pub(crate) mod spell_mod;
+pub(crate) mod spelldata;
 pub(crate) mod stats;
 pub(crate) mod target;
 
