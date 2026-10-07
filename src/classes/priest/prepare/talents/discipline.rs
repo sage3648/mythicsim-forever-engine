@@ -9,7 +9,7 @@ use crate::prepare::dbcenums;
 use crate::prepare::sim::{AuraConfig, Cooldown, EventCallbacks, Sim, UnitId, UnitType};
 use crate::prepare::spell::{school, Cast, CastConfig, CostOptions, SpellConfig, SpellFlag};
 use crate::prepare::spell_mod::{SpellModConfig, SpellModType};
-use crate::prepare::stats::{SchoolIndex, Stat};
+use crate::prepare::stats::Stat;
 
 use super::super::masks;
 use super::super::spell_data::spell_data;
@@ -108,21 +108,30 @@ impl Priest {
         );
     }
 
-    /// Holy Precision is new in Forever: +6% Holy hit per point. A school-specific hit bonus
-    /// goes through the pseudo-stat.
+    /// Holy Precision is new in Forever: +6% hit per point. 1309957 is a miss chance mod on a
+    /// class mask, not school hit: Smite, Holy Fire, Holy Nova and the Penance bolts are in,
+    /// Chastise is not. The mask also catches Vampiric Embrace and Shadowfiend, which never roll
+    /// hit here.
     fn apply_holy_precision(&self, sim: &mut Sim, unit: UnitId) {
         let points = self.talents.i32("holy_precision");
         if points == 0 {
             return;
         }
-        sim.unit_mut(unit).pseudo_stats.school_bonus_hit_chance[SchoolIndex::Holy as usize] +=
-            spell_data()
-                .holy_precision
-                .effect(
-                    dbcenums::A_ADD_FLAT_MODIFIER,
-                    dbcenums::SPELLMOD_RESIST_MISS_CHANCE,
-                )
-                .value_at(points);
+        sim.add_static_mod(
+            unit,
+            SpellModConfig {
+                class_mask: masks::HOLY_SPELLS,
+                kind: SpellModType::BonusHitPercent,
+                float_value: spell_data()
+                    .holy_precision
+                    .effect(
+                        dbcenums::A_ADD_FLAT_MODIFIER,
+                        dbcenums::SPELLMOD_RESIST_MISS_CHANCE,
+                    )
+                    .value_at(points),
+                ..SpellModConfig::default()
+            },
+        );
     }
 
     /// Instant spells, and the two cast-time spells the Forever tooltip adds: Smite and Holy
@@ -270,7 +279,9 @@ impl Priest {
         if !self.talents.bool("penance") {
             return;
         }
-        self.register_penance_spell(sim, unit);
+        spell_data().penance.each(|_, rank| {
+            Self::register_penance_spell(sim, unit, rank);
+        });
     }
 
     /// The priest casts Power Infusion on itself, which is the reason the Smite build goes

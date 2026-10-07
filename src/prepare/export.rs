@@ -281,6 +281,9 @@ pub(crate) fn export_spell_of(
         "has_cast_requirement".into(),
         json!(spell.has_cast_requirement),
     );
+    if let Some(auras) = requirement_auras(sim, spell) {
+        out.insert("requirement_auras".into(), json!(auras));
+    }
     out.insert("min_range".into(), json!(spell.min_range));
     out.insert("max_range".into(), json!(spell.max_range));
     out.insert("max_charges".into(), json!(spell.max_charges));
@@ -326,6 +329,37 @@ pub(crate) fn export_spell_of(
         out.insert("metric_splits".into(), json!(spell.metric_splits));
     }
     Value::Object(out)
+}
+
+/// Priest Shadowform's row, the only aura that puts the unit in a form at the pin.
+const SHADOWFORM: i32 = 15473;
+
+/// Go `requirementAuras`, shapeshift.go `castRequirementFailure` as the player auras whose form
+/// the requirement refuses. The unit's form is 0 except while a Shadow priest's Shadowform is up
+/// (the client's form 28); nothing else at the pin sets a form or `AutoUnshift`. A requirement
+/// on caster auras, or one that refuses no form, is not represented.
+fn requirement_auras(sim: &Sim, spell: &super::spell::Spell) -> Option<Vec<String>> {
+    let r = spell.cast_requirement;
+    if !spell.has_cast_requirement
+        || r.caster_aura != 0
+        || r.exclude_caster_aura != 0
+        || !r.allows_form(0)
+    {
+        return None;
+    }
+    let mut auras = Vec::new();
+    if let Some(aura) = sim.get_aura(spell.unit, "Shadowform") {
+        let aura = sim.aura(aura);
+        if aura
+            .action_id
+            .as_ref()
+            .is_some_and(|id| id.spell_id == SHADOWFORM)
+            && !r.allows_form(super::spelldata::must_find(SHADOWFORM).shapeshift_form())
+        {
+            auras.push(aura.label.clone());
+        }
+    }
+    Some(auras)
 }
 
 fn describe_dot(sim: &Sim, dot: super::sim::DotId, unit: &str) -> Value {
@@ -418,6 +452,11 @@ pub(crate) fn export_melee_of(
     }
     let pseudo = &sim.unit(player).pseudo_stats;
     let defender = &sim.unit(target).pseudo_stats;
+    // unit.go TotalRealRangedHasteMultiplier, which a dot hasted by real haste reads, has
+    // RangedHasteMultiplier in it; Rust takes it as 1, as nothing at the pin changes it.
+    if pseudo.ranged_haste_multiplier != 1.0 {
+        unrepresented.push("a ranged haste multiplier is unsupported".to_string());
+    }
     let t = sim.unit(target);
     let mut out = json!({
         "auto_swing_melee": aa.auto_swing_melee,

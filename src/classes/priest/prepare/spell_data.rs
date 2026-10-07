@@ -18,7 +18,6 @@ pub(super) struct SpellData {
     pub starshards: Ladder,
     pub devouring_plague: Ladder,
     pub penance: Ladder,
-    pub penance_triggered: Ladder,
     pub holy_nova: Ladder,
     pub holy_nova_triggered: Ladder,
     pub mind_flay: Ladder,
@@ -67,9 +66,6 @@ pub(super) fn spell_data() -> &'static SpellData {
         starshards: Ladder::ranked(&[10797, 19296, 19299, 19302, 19303, 19304, 19305]),
         devouring_plague: Ladder::ranked(&[2944, 19276, 19277, 19278, 19279, 19280]),
         penance: Ladder::ranked(&[402174, 1240720, 1240721, 1316995]),
-        penance_triggered: Ladder::ranked(&[
-            402261, 402284, 402289, 1240723, 1240724, 1240727, 1240730, 1316991, 1316993,
-        ]),
         holy_nova: Ladder::ranked(&[15237, 15430, 15431, 27799, 27800, 27801]),
         holy_nova_triggered: Ladder::ranked(&[23455, 23458, 23459, 27803, 27804, 27805]),
         mind_flay: Ladder::ranked(&[15407, 17311, 17312, 17313, 17314, 18807]),

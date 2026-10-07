@@ -108,7 +108,9 @@ impl Warlock {
     }
 
     /// Forever moved Malediction off the curse: the beta client's 1225177 is a flat 1% a point
-    /// on the warlock's own periodic damage.
+    /// on the warlock's own periodic damage. The mask names Hellfire, but its area hits are
+    /// Hellfire Effect (11682), a direct School Damage effect, so a dot modifier never reaches
+    /// them; only the self-burn is periodic.
     fn apply_malediction(&self, sim: &mut Sim, unit: UnitId) {
         let points = self.talents.i32("malediction");
         if points == 0 {
@@ -122,7 +124,7 @@ impl Warlock {
                     .malediction
                     .effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_DOT)
                     .fraction_at(points),
-                class_mask: masks::ALL,
+                class_mask: masks::ALL & !masks::HELLFIRE,
                 ..SpellModConfig::default()
             },
         );

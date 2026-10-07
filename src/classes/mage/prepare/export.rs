@@ -188,7 +188,8 @@ pub(super) fn effects(talents: &Message, sim: &Sim, unit: UnitId) -> Vec<Value> 
             .average(CHARACTER_LEVEL)
             / 100.0,
     }));
-    // arcane_missiles.go: channel rank N fires tick rank N.
+    // arcane_missiles.go: channel rank N fires tick rank N. The channel spends Arcane Blast's
+    // stacks as it starts and its missiles keep them, a Go literal share each.
     let mut missiles = Vec::new();
     data.arcane_missiles.each(|rank, row| {
         missiles.push(json!({
@@ -196,7 +197,9 @@ pub(super) fn effects(talents: &Message, sim: &Sim, unit: UnitId) -> Vec<Value> 
             "tick_spell_id": data.arcane_missiles_triggered.rank(rank).id,
         }));
     });
-    effects.push(json!({"kind": "arcane_missiles", "ranks": missiles}));
+    effects.push(json!({
+        "kind": "arcane_missiles", "ranks": missiles, "arcane_blast_bonus_per_stack": 0.15,
+    }));
     // frostbolt.go
     effects.push(json!({"kind": "frostbolt"}));
     // arcane_blast.go and arcane_charge.go

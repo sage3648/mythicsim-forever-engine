@@ -152,7 +152,7 @@ impl Druid {
         let thorns_aura = THORNS.aura(sim, unit, true, 0, 0.0);
         self.register_spell(
             sim,
-            HUMANOID,
+            HUMANOID | MOONKIN | TREE,
             SpellConfig {
                 action_id: ActionId::spell(rank.id),
                 spell_school: rank.spell_school(),

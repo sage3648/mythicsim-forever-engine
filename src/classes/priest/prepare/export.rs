@@ -18,7 +18,7 @@ use crate::prepare::export_items::{callback_names, outcome_names};
 use crate::prepare::pet::apply_dependencies;
 use crate::prepare::sim::{Sim, SpellId};
 use crate::prepare::spell::{school, SpellFlag};
-use crate::prepare::spelldata::{find, Ladder, Spell as Row};
+use crate::prepare::spelldata::{Ladder, Spell as Row};
 use crate::prepare::stats::{Stat, Stats, SCHOOL_LEN};
 
 use super::masks;
@@ -110,18 +110,6 @@ fn mod_spells(
             continue;
         }
         positions.push(position);
-    }
-    positions
-}
-
-/// `priestShadowformCancels`: Shadowform's OnCastComplete ends it on a helpful Holy cast.
-fn shadowform_cancels(sim: &Sim, unit: crate::prepare::sim::UnitId) -> Vec<usize> {
-    let mut positions = Vec::new();
-    for (position, spell) in sim.unit(unit).spellbook.iter().enumerate() {
-        let spell = sim.spell(*spell);
-        if spell.spell_school & school::HOLY != 0 && spell.flags.matches(SpellFlag::HELPFUL) {
-            positions.push(position);
-        }
     }
     positions
 }
@@ -404,7 +392,8 @@ pub(super) fn effects(priest: &Priest, env: &Environment, notes: &mut Vec<String
         effects.push(json!({"kind": "mind_flay", "ranks": dot_ranks(&data.mind_flay)}));
     }
     if let Some(aura) = priest.shadowform_aura {
-        // talents_shadow.go applyShadowform
+        // talents_shadow.go applyShadowform. A helpful Holy cast no longer ends it; its form
+        // refuses Holy Nova and Chastise through their cast requirements.
         let rank = data.shadowform.highest();
         effects.push(json!({
             "kind": "shadowform", "spell_id": rank.id, "aura": sim.aura(aura).label,
@@ -421,7 +410,6 @@ pub(super) fn effects(priest: &Priest, env: &Environment, notes: &mut Vec<String
                     | masks::DEVOURING_PLAGUE | masks::SHADOW_WORD_DEATH,
                 0,
             ),
-            "cancel_spells": shadowform_cancels(sim, player),
         }));
     }
     if let Some(aura) = priest.inner_focus_aura {
@@ -475,14 +463,18 @@ pub(super) fn effects(priest: &Priest, env: &Environment, notes: &mut Vec<String
     effects.push(json!({"kind": "smite"}));
     // holy_fire.go: the hit rolls, a landed hit applies the snapshotting dot, then it is dealt.
     effects.push(json!({"kind": "holy_fire", "ranks": dot_ranks(&data.holy_fire)}));
+    // penance.go: every rank, on the shared category cooldown, fires its own damage bolt, the
+    // first the cast's tooltip names, on application and a channel tick a second.
     if talents.bool("penance") {
-        // penance.go: the bolt on application and a channel tick a second
-        let rank = data.penance.highest();
-        let bolt = find(1316993);
-        effects.push(json!({
-            "kind": "penance", "spell_id": rank.id,
-            "tick_base": bolt.damage_effect().average(CHARACTER_LEVEL), "tick_can_crit": true,
-        }));
+        let mut ranks = Vec::new();
+        data.penance.each(|_, rank| {
+            let bolt = rank.refs()[0];
+            ranks.push(json!({
+                "spell_id": rank.id,
+                "tick_base": bolt.damage_effect().average(CHARACTER_LEVEL), "tick_can_crit": true,
+            }));
+        });
+        effects.push(json!({"kind": "penance", "ranks": ranks}));
     }
     let power_in_light = talents.i32("power_in_light");
     if power_in_light > 0 {

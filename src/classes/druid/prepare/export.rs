@@ -215,7 +215,7 @@ impl Druid {
         // starfire.go and wrath.go: a direct hit, Wrath's after travel.
         effects.push(json!({"kind": "starfire"}));
         effects.push(json!({"kind": "wrath"}));
-        // moonfire.go: the hit casts the tagged dot spell when it lands.
+        // moonfire.go: the hit applies the tagged dot spell's dot when it lands.
         if self.moonfire.is_some() {
             let moonfire = Ladder::ranked(&MOONFIRE_RANKS).highest();
             effects.push(json!({"kind": "moonfire", "rank": periodic_rank(moonfire)}));

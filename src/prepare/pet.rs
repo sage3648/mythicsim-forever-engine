@@ -167,8 +167,8 @@ impl Sim {
             enabled: true,
             max_focus: 100.0,
             current_focus: 0.0,
-            focus_regen_per_tick: 25.0 * focus_regen_multiplier,
-            focus_tick_duration: 5 * super::sim::SECOND,
+            focus_regen_per_tick: 2.5 * focus_regen_multiplier,
+            focus_tick_duration: 250 * super::sim::MILLISECOND,
         };
     }
 
@@ -937,8 +937,11 @@ mod tests {
         sim.enable_focus_bar(pet, 1.2);
         let bar = &sim.unit(pet).focus_bar;
         assert_eq!(bar.max_focus, 100.0);
-        assert_eq!(bar.focus_regen_per_tick, 25.0 * 1.2);
-        assert_eq!(bar.focus_tick_duration, 5 * crate::prepare::sim::SECOND);
+        assert_eq!(bar.focus_regen_per_tick, 2.5 * 1.2);
+        assert_eq!(
+            bar.focus_tick_duration,
+            250 * crate::prepare::sim::MILLISECOND
+        );
         sim.measuring_stats = true;
         sim.enable_pet(pet);
         assert_eq!(sim.unit(pet).focus_bar.current_focus, 100.0);

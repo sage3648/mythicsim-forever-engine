@@ -264,6 +264,7 @@ pub(crate) fn drive_windfury_totem(
         None,
         None,
     );
+    super::flametongue::windfury_totem_disables_flametongue_totem(&mut env.sim, totem_aura);
     env.sim.new_exclusive_effect(
         totem_aura,
         WINDFURY_TOTEM.category,

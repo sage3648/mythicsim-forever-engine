@@ -13,6 +13,7 @@ use crate::prepare::item_sets::ItemSet;
 use crate::prepare::sim::{AuraConfig, AuraId, Cooldown, Sim, UnitId, SECOND};
 use crate::prepare::spell::{school, CastConfig, ProcMask, SpellConfig, SpellFlag};
 use crate::prepare::spell_mod::{SpellModConfig, SpellModType};
+use crate::prepare::spelldata::must_find;
 use crate::prepare::stats::{Stat, Stats};
 
 use super::spells::spell_action;
@@ -238,6 +239,10 @@ pub(crate) fn apply_item_effect(sim: &mut Sim, unit: UnitId, item: i32) -> bool 
             totem_of_the_storm(sim, unit);
             true
         }
+        228176 => {
+            totem_of_thunder(sim, unit);
+            true
+        }
         19956 => {
             wushoolays_charm_of_spirits(sim, unit);
             true
@@ -261,6 +266,32 @@ fn totem_of_the_storm(sim: &mut Sim, unit: UnitId) {
             kind: SpellModType::BaseDamageFlat,
             float_value: 33.0,
             class_mask: masks::LIGHTNING_BOLT | masks::CHAIN_LIGHTNING | masks::OVERLOAD,
+            ..SpellModConfig::default()
+        },
+    );
+    sim.make_permanent(aura);
+}
+
+/// Totem of Thunder: Equip: increases the critical strike chance of Lightning Bolt by 1% (461295:
+/// `A_ADD_FLAT_MODIFIER` misc 7, crit chance, on class mask word 0 bit 0). Every Lightning Bolt
+/// rank carries that bit, and so does each Lightning Overload row, so the overload's second bolt
+/// takes the 1% too. Chain Lightning and its overload do not carry it.
+fn totem_of_thunder(sim: &mut Sim, unit: UnitId) {
+    let row = must_find(461295);
+    let aura = sim.register_aura(
+        unit,
+        AuraConfig {
+            label: "Totem of Thunder".to_string(),
+            action_id: Some(spell_action(row.id)),
+            ..AuraConfig::default()
+        },
+    );
+    sim.attach_spell_mod(
+        aura,
+        SpellModConfig {
+            kind: SpellModType::BonusCritPercent,
+            float_value: row.effect_n(1).base_value(),
+            class_mask: masks::LIGHTNING_BOLT | masks::LIGHTNING_BOLT_OVERLOAD,
             ..SpellModConfig::default()
         },
     );
@@ -357,6 +388,19 @@ mod tests {
         let aura = env
             .sim
             .get_aura(env.player, "Increased Lightning Damage")
+            .map(|id| env.sim.aura(id))
+            .expect("the totem's aura");
+        assert!(aura.active);
+        assert_eq!(aura.duration, NEVER_EXPIRES);
+    }
+
+    /// Totem of Thunder (items.go): a permanent aura carrying the 1% Lightning Bolt crit mod.
+    #[test]
+    fn totem_of_thunder_registers_a_permanent_aura() {
+        let env = prepared_with(&[228176]);
+        let aura = env
+            .sim
+            .get_aura(env.player, "Totem of Thunder")
             .map(|id| env.sim.aura(id))
             .expect("the totem's aura");
         assert!(aura.active);

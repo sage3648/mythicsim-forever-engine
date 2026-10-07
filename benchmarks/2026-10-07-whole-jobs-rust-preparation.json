@@ -1,0 +1,1736 @@
+{
+ "kind": "job_benchmark",
+ "date": "2026-10-07",
+ "scope": "Whole Quick Sim jobs of the 42 single-target production requests (fixtures/mage/prepared-v2/production-*.request.json) at 3000 iterations, the production Quick Sim size, run as the worker would from a bundle once Rust prepares every class: Go as one pinned engine process on the request, Rust as tools/route.py, which now runs one Rust process that prepares the request itself, gates the prepared state and simulates it, and starts the Go exporter only after a preparation refusal.",
+ "method": "tools/job_bench.py interleaves the Go job, the routed Rust job and the steps of a routed job on their own (the Go exporter's prepare, Rust's prepare, and the gate with the simulation), three rounds per request; each figure is the median over the rounds. Wall time is measured around each process; CPU time and peak resident set come from wait4 and include every process a job waits for. Overhead is a job's wall time minus the engine's own iteration loop time. The throughput phase runs every routed request's job three times, four jobs at a time, in each engine.",
+ "command": "python3 tools/job_bench.py --bundle <scratch>/bundle --output <scratch>/report.json --rounds 3 --iterations 3000 --concurrency 4",
+ "source_revision": "a5557db5eccd1dfbd4cf1280c67a451f3ff3c8c4",
+ "bundle": {
+  "schema": 1,
+  "rust_revision": "a5557db5eccd1dfbd4cf1280c67a451f3ff3c8c4",
+  "rust_dirty": true,
+  "engine_version": "forever-rust-prototype-0.1.0 source-cd7d44aec711bcc8f20ea12d3ed83cea2126ac66",
+  "reference_pin": "cd7d44aec711bcc8f20ea12d3ed83cea2126ac66",
+  "client_build": "1.60.1.70205",
+  "exporter_digest": "8e335929c06a14e71234f57abae43c42895e4deeb4568850bf2d0e78140187e2",
+  "platform": "Darwin-arm64"
+ },
+ "go_version": "go version go1.25.6 darwin/arm64",
+ "machine": {
+  "platform": "macOS-26.5-arm64-arm-64bit-Mach-O",
+  "cpu": "arm",
+  "cpus": 12
+ },
+ "limitations": "The machine was heavily shared while this ran (load average between about 15 and 90 on 12 cores, with a virtual machine using about seven cores), so single figures can move by tens of percent; the Go and Rust jobs of a request alternate within a round so they see the same load. Compare the ratios of Go to Rust wall time, the step figures and the peak memory rather than absolute seconds. The bundle was built from a5557db5e with only Markdown changes uncommitted, which its manifest records as dirty. Rust preparation's data row cache and schema lookups (8f8ac98b9) came after this run, so the Rust prepare step of the tank builds here is the slower one.",
+ "findings": [
+  "Every one of the 40 routed requests was prepared by Rust (`prepared_in_rust`), so a routed job no longer starts the Go exporter, and every routed job gave the same DPS as Go.",
+  "A routed job's peak memory fell from the exporter's (median 93.0 MB for the Go job, about the same as the Go-prepared Rust job in the 2026-10-06 records) to 22.7 MB, since the job is one Rust process.",
+  "The median Go to Rust job wall time ratio rose from 0.98 and 1.01 in the 2026-10-06 records to 1.15, and four jobs at a time ran 284 jobs a minute in Rust against 213 in Go, where the 2026-10-06 records had Rust below Go (316 to 390 and 349 to 371).",
+  "Rust's prepare step takes 15 to 50 ms for casters, rogues, hunters and Balance druids against the exporter's 100 to 200 ms. The Warrior, Protection Paladin, Bear and Enhancement Shaman builds take 110 to 360 ms, as long as the exporter, because preparation builds hundreds of reset simulations for their stat aura combinations, as Go does."
+ ],
+ "summary": {
+  "cases": 42,
+  "routed_to_rust": 40,
+  "go_over_rust_wall_median": 1.15,
+  "go_over_rust_wall_min": 0.87,
+  "go_over_rust_wall_max": 1.86,
+  "overhead_s_median": {
+   "go": 0.1154,
+   "rust": 0.1703
+  },
+  "peak_rss_mb_median": {
+   "go": 93.0,
+   "rust": 22.7
+  },
+  "rust_step_wall_s_median": {
+   "go_prepare": 0.1946,
+   "rust_prepare": 0.1142,
+   "sim": 0.5736
+  },
+  "prepared_in_rust": 40,
+  "all_same_dps": true
+ },
+ "throughput": {
+  "concurrency": 4,
+  "cases": [
+   "production-affliction-warlock",
+   "production-arms-warrior",
+   "production-arms-warrior-prepull-charge",
+   "production-arms-warrior-prepull-move-at-the-pull",
+   "production-assassination-rogue",
+   "production-balance-druid",
+   "production-beast-mastery-hunter",
+   "production-combat-rogue",
+   "production-demonology-warlock",
+   "production-destruction-warlock",
+   "production-elemental-shaman",
+   "production-enhancement-shaman",
+   "production-feral-bear-druid",
+   "production-feral-druid",
+   "production-fire",
+   "production-frostfire",
+   "production-fury-protection-warrior",
+   "production-fury-protection-warrior-diamond-flask",
+   "production-holy-protection-paladin",
+   "production-marksmanship-hunter",
+   "production-protection-paladin",
+   "production-protection-warrior",
+   "production-protection-warrior-diamond-flask",
+   "production-protection-warrior-prepull-charge",
+   "production-ret-protection-paladin",
+   "production-retribution-paladin",
+   "production-shadow-priest",
+   "production-shockadin-paladin",
+   "production-smite-priest",
+   "production-subtlety-rogue",
+   "production-survival-hunter",
+   "production-warrior",
+   "production-warrior-diamond-flask",
+   "production-warrior-diamond-flask-in-rotation",
+   "production-warrior-prepull-charge",
+   "production-warrior-prepull-charge-late",
+   "production-warrior-prepull-charge-while-moving",
+   "production-warrior-prepull-move-cancelled",
+   "production-warrior-prepull-move-dropped",
+   "production-warrior-prepull-move-in-range"
+  ],
+  "go": {
+   "jobs": 120,
+   "wall_s": 33.77,
+   "jobs_per_minute": 213.2,
+   "median_job_wall_s": 1.1,
+   "peak_rss_mb": 106.3
+  },
+  "rust": {
+   "jobs": 120,
+   "wall_s": 25.35,
+   "jobs_per_minute": 284.0,
+   "median_job_wall_s": 0.781,
+   "peak_rss_mb": 25.8
+  }
+ },
+ "rows": [
+  {
+   "case": "production-affliction-warlock",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.5485,
+    "cpu_s": 0.6094,
+    "peak_rss_mb": 100.9,
+    "engine_s": 0.4326
+   },
+   "rust": {
+    "wall_s": 0.4279,
+    "cpu_s": 0.419,
+    "peak_rss_mb": 22.5,
+    "engine_s": 0.3494
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.124,
+     "cpu_s": 0.1625,
+     "peak_rss_mb": 89.9
+    },
+    "rust_prepare": {
+     "wall_s": 0.0235,
+     "cpu_s": 0.0175,
+     "peak_rss_mb": 16.0
+    },
+    "sim": {
+     "wall_s": 0.3712,
+     "cpu_s": 0.3586,
+     "peak_rss_mb": 8.3
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.28,
+   "overhead_s": {
+    "go": 0.1159,
+    "rust": 0.0785
+   }
+  },
+  {
+   "case": "production-arms-warrior",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.7764,
+    "cpu_s": 0.8218,
+    "peak_rss_mb": 92.2,
+    "engine_s": 0.6546
+   },
+   "rust": {
+    "wall_s": 0.8077,
+    "cpu_s": 0.7673,
+    "peak_rss_mb": 22.5,
+    "engine_s": 0.5757
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.2278,
+     "cpu_s": 0.3345,
+     "peak_rss_mb": 105.6
+    },
+    "rust_prepare": {
+     "wall_s": 0.1653,
+     "cpu_s": 0.1568,
+     "peak_rss_mb": 16.7
+    },
+    "sim": {
+     "wall_s": 0.5628,
+     "cpu_s": 0.5531,
+     "peak_rss_mb": 8.8
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 0.96,
+   "overhead_s": {
+    "go": 0.1218,
+    "rust": 0.232
+   }
+  },
+  {
+   "case": "production-arms-warrior-prepull-charge",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.7499,
+    "cpu_s": 0.8084,
+    "peak_rss_mb": 94.9,
+    "engine_s": 0.6259
+   },
+   "rust": {
+    "wall_s": 0.7724,
+    "cpu_s": 0.7409,
+    "peak_rss_mb": 22.3,
+    "engine_s": 0.5436
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.1945,
+     "cpu_s": 0.3307,
+     "peak_rss_mb": 103.9
+    },
+    "rust_prepare": {
+     "wall_s": 0.1924,
+     "cpu_s": 0.1781,
+     "peak_rss_mb": 16.8
+    },
+    "sim": {
+     "wall_s": 0.6134,
+     "cpu_s": 0.5764,
+     "peak_rss_mb": 8.7
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 0.97,
+   "overhead_s": {
+    "go": 0.124,
+    "rust": 0.2288
+   }
+  },
+  {
+   "case": "production-arms-warrior-prepull-move-at-the-pull",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 1.3044,
+    "cpu_s": 1.1229,
+    "peak_rss_mb": 72.5,
+    "engine_s": 1.0659
+   },
+   "rust": {
+    "wall_s": 0.9495,
+    "cpu_s": 0.9313,
+    "peak_rss_mb": 22.2,
+    "engine_s": 0.7381
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.1903,
+     "cpu_s": 0.3225,
+     "peak_rss_mb": 103.7
+    },
+    "rust_prepare": {
+     "wall_s": 0.1524,
+     "cpu_s": 0.144,
+     "peak_rss_mb": 16.6
+    },
+    "sim": {
+     "wall_s": 0.7242,
+     "cpu_s": 0.7158,
+     "peak_rss_mb": 8.7
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.37,
+   "overhead_s": {
+    "go": 0.2385,
+    "rust": 0.2114
+   }
+  },
+  {
+   "case": "production-arms-warrior-prepull-move-with-unholy-aura",
+   "decision": "fallback",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 1.2019,
+    "cpu_s": 1.0839,
+    "peak_rss_mb": 75.8,
+    "engine_s": 0.9711
+   }
+  },
+  {
+   "case": "production-assassination-rogue",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 1.0489,
+    "cpu_s": 0.9011,
+    "peak_rss_mb": 85.0,
+    "engine_s": 0.8247
+   },
+   "rust": {
+    "wall_s": 0.747,
+    "cpu_s": 0.6722,
+    "peak_rss_mb": 23.1,
+    "engine_s": 0.6335
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.2044,
+     "cpu_s": 0.1999,
+     "peak_rss_mb": 84.7
+    },
+    "rust_prepare": {
+     "wall_s": 0.0392,
+     "cpu_s": 0.0258,
+     "peak_rss_mb": 14.9
+    },
+    "sim": {
+     "wall_s": 0.7461,
+     "cpu_s": 0.6504,
+     "peak_rss_mb": 8.7
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.4,
+   "overhead_s": {
+    "go": 0.2242,
+    "rust": 0.1135
+   }
+  },
+  {
+   "case": "production-assassination-rogue-prepull-move",
+   "decision": "fallback",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.373,
+    "cpu_s": 0.3877,
+    "peak_rss_mb": 75.7,
+    "engine_s": 0.2533
+   }
+  },
+  {
+   "case": "production-balance-druid",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.3048,
+    "cpu_s": 0.3599,
+    "peak_rss_mb": 94.4,
+    "engine_s": 0.1982
+   },
+   "rust": {
+    "wall_s": 0.2037,
+    "cpu_s": 0.1957,
+    "peak_rss_mb": 22.0,
+    "engine_s": 0.1371
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.1064,
+     "cpu_s": 0.1342,
+     "peak_rss_mb": 70.9
+    },
+    "rust_prepare": {
+     "wall_s": 0.0156,
+     "cpu_s": 0.009,
+     "peak_rss_mb": 14.4
+    },
+    "sim": {
+     "wall_s": 0.1451,
+     "cpu_s": 0.1389,
+     "peak_rss_mb": 6.8
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.5,
+   "overhead_s": {
+    "go": 0.1066,
+    "rust": 0.0666
+   }
+  },
+  {
+   "case": "production-beast-mastery-hunter",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.7047,
+    "cpu_s": 0.8004,
+    "peak_rss_mb": 93.8,
+    "engine_s": 0.5918
+   },
+   "rust": {
+    "wall_s": 0.5571,
+    "cpu_s": 0.5463,
+    "peak_rss_mb": 22.5,
+    "engine_s": 0.4657
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.127,
+     "cpu_s": 0.1929,
+     "peak_rss_mb": 96.2
+    },
+    "rust_prepare": {
+     "wall_s": 0.0379,
+     "cpu_s": 0.0293,
+     "peak_rss_mb": 15.6
+    },
+    "sim": {
+     "wall_s": 0.4762,
+     "cpu_s": 0.4686,
+     "peak_rss_mb": 8.3
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.26,
+   "overhead_s": {
+    "go": 0.1129,
+    "rust": 0.0914
+   }
+  },
+  {
+   "case": "production-combat-rogue",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.692,
+    "cpu_s": 0.7372,
+    "peak_rss_mb": 78.8,
+    "engine_s": 0.5832
+   },
+   "rust": {
+    "wall_s": 0.6012,
+    "cpu_s": 0.5919,
+    "peak_rss_mb": 22.8,
+    "engine_s": 0.519
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.1112,
+     "cpu_s": 0.1603,
+     "peak_rss_mb": 81.9
+    },
+    "rust_prepare": {
+     "wall_s": 0.0298,
+     "cpu_s": 0.0227,
+     "peak_rss_mb": 15.1
+    },
+    "sim": {
+     "wall_s": 0.5327,
+     "cpu_s": 0.5222,
+     "peak_rss_mb": 9.0
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.15,
+   "overhead_s": {
+    "go": 0.1088,
+    "rust": 0.0822
+   }
+  },
+  {
+   "case": "production-demonology-warlock",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.5481,
+    "cpu_s": 0.6107,
+    "peak_rss_mb": 94.3,
+    "engine_s": 0.438
+   },
+   "rust": {
+    "wall_s": 0.4377,
+    "cpu_s": 0.4257,
+    "peak_rss_mb": 22.8,
+    "engine_s": 0.3553
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.1269,
+     "cpu_s": 0.171,
+     "peak_rss_mb": 94.1
+    },
+    "rust_prepare": {
+     "wall_s": 0.0243,
+     "cpu_s": 0.0183,
+     "peak_rss_mb": 16.0
+    },
+    "sim": {
+     "wall_s": 0.3626,
+     "cpu_s": 0.3564,
+     "peak_rss_mb": 9.1
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.25,
+   "overhead_s": {
+    "go": 0.1101,
+    "rust": 0.0824
+   }
+  },
+  {
+   "case": "production-destruction-warlock",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.327,
+    "cpu_s": 0.3963,
+    "peak_rss_mb": 92.6,
+    "engine_s": 0.221
+   },
+   "rust": {
+    "wall_s": 0.2401,
+    "cpu_s": 0.2294,
+    "peak_rss_mb": 22.1,
+    "engine_s": 0.165
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.105,
+     "cpu_s": 0.1355,
+     "peak_rss_mb": 74.7
+    },
+    "rust_prepare": {
+     "wall_s": 0.0196,
+     "cpu_s": 0.0126,
+     "peak_rss_mb": 15.5
+    },
+    "sim": {
+     "wall_s": 0.1747,
+     "cpu_s": 0.1682,
+     "peak_rss_mb": 6.9
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.36,
+   "overhead_s": {
+    "go": 0.106,
+    "rust": 0.0751
+   }
+  },
+  {
+   "case": "production-elemental-shaman",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.3397,
+    "cpu_s": 0.4098,
+    "peak_rss_mb": 96.0,
+    "engine_s": 0.2281
+   },
+   "rust": {
+    "wall_s": 0.2424,
+    "cpu_s": 0.2323,
+    "peak_rss_mb": 22.0,
+    "engine_s": 0.1656
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.1136,
+     "cpu_s": 0.1581,
+     "peak_rss_mb": 80.4
+    },
+    "rust_prepare": {
+     "wall_s": 0.0219,
+     "cpu_s": 0.0161,
+     "peak_rss_mb": 15.3
+    },
+    "sim": {
+     "wall_s": 0.1808,
+     "cpu_s": 0.1734,
+     "peak_rss_mb": 7.1
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.4,
+   "overhead_s": {
+    "go": 0.1116,
+    "rust": 0.0768
+   }
+  },
+  {
+   "case": "production-enhancement-shaman",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.7687,
+    "cpu_s": 0.8051,
+    "peak_rss_mb": 96.7,
+    "engine_s": 0.6498
+   },
+   "rust": {
+    "wall_s": 0.794,
+    "cpu_s": 0.7816,
+    "peak_rss_mb": 22.4,
+    "engine_s": 0.4452
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.2901,
+     "cpu_s": 0.4745,
+     "peak_rss_mb": 107.8
+    },
+    "rust_prepare": {
+     "wall_s": 0.2926,
+     "cpu_s": 0.2836,
+     "peak_rss_mb": 17.2
+    },
+    "sim": {
+     "wall_s": 0.4712,
+     "cpu_s": 0.4594,
+     "peak_rss_mb": 9.2
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 0.97,
+   "overhead_s": {
+    "go": 0.1189,
+    "rust": 0.3488
+   }
+  },
+  {
+   "case": "production-feral-bear-druid",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.8053,
+    "cpu_s": 0.7819,
+    "peak_rss_mb": 92.3,
+    "engine_s": 0.6323
+   },
+   "rust": {
+    "wall_s": 0.6824,
+    "cpu_s": 0.6018,
+    "peak_rss_mb": 22.7,
+    "engine_s": 0.4714
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.2813,
+     "cpu_s": 0.2771,
+     "peak_rss_mb": 104.9
+    },
+    "rust_prepare": {
+     "wall_s": 0.1342,
+     "cpu_s": 0.104,
+     "peak_rss_mb": 15.6
+    },
+    "sim": {
+     "wall_s": 0.5845,
+     "cpu_s": 0.5217,
+     "peak_rss_mb": 9.1
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.18,
+   "overhead_s": {
+    "go": 0.173,
+    "rust": 0.211
+   }
+  },
+  {
+   "case": "production-feral-druid",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.8972,
+    "cpu_s": 0.8966,
+    "peak_rss_mb": 85.4,
+    "engine_s": 0.7319
+   },
+   "rust": {
+    "wall_s": 0.7284,
+    "cpu_s": 0.7073,
+    "peak_rss_mb": 22.5,
+    "engine_s": 0.6269
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.1217,
+     "cpu_s": 0.1608,
+     "peak_rss_mb": 83.2
+    },
+    "rust_prepare": {
+     "wall_s": 0.0379,
+     "cpu_s": 0.0313,
+     "peak_rss_mb": 15.8
+    },
+    "sim": {
+     "wall_s": 0.6425,
+     "cpu_s": 0.628,
+     "peak_rss_mb": 8.5
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.23,
+   "overhead_s": {
+    "go": 0.1653,
+    "rust": 0.1015
+   }
+  },
+  {
+   "case": "production-fire",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.3545,
+    "cpu_s": 0.4082,
+    "peak_rss_mb": 92.7,
+    "engine_s": 0.2445
+   },
+   "rust": {
+    "wall_s": 0.2596,
+    "cpu_s": 0.2488,
+    "peak_rss_mb": 22.0,
+    "engine_s": 0.1888
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.1034,
+     "cpu_s": 0.1243,
+     "peak_rss_mb": 69.5
+    },
+    "rust_prepare": {
+     "wall_s": 0.0148,
+     "cpu_s": 0.0084,
+     "peak_rss_mb": 15.6
+    },
+    "sim": {
+     "wall_s": 0.2001,
+     "cpu_s": 0.1933,
+     "peak_rss_mb": 7.6
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.37,
+   "overhead_s": {
+    "go": 0.11,
+    "rust": 0.0708
+   }
+  },
+  {
+   "case": "production-frostfire",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.2997,
+    "cpu_s": 0.3596,
+    "peak_rss_mb": 93.0,
+    "engine_s": 0.1967
+   },
+   "rust": {
+    "wall_s": 0.2086,
+    "cpu_s": 0.2002,
+    "peak_rss_mb": 21.9,
+    "engine_s": 0.1422
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.1077,
+     "cpu_s": 0.1363,
+     "peak_rss_mb": 69.6
+    },
+    "rust_prepare": {
+     "wall_s": 0.0145,
+     "cpu_s": 0.0084,
+     "peak_rss_mb": 15.3
+    },
+    "sim": {
+     "wall_s": 0.151,
+     "cpu_s": 0.1452,
+     "peak_rss_mb": 7.1
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.44,
+   "overhead_s": {
+    "go": 0.103,
+    "rust": 0.0664
+   }
+  },
+  {
+   "case": "production-fury-protection-warrior",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.8813,
+    "cpu_s": 0.9631,
+    "peak_rss_mb": 97.6,
+    "engine_s": 0.7743
+   },
+   "rust": {
+    "wall_s": 0.9989,
+    "cpu_s": 0.9852,
+    "peak_rss_mb": 25.4,
+    "engine_s": 0.6362
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.2846,
+     "cpu_s": 0.5103,
+     "peak_rss_mb": 105.1
+    },
+    "rust_prepare": {
+     "wall_s": 0.307,
+     "cpu_s": 0.2988,
+     "peak_rss_mb": 19.9
+    },
+    "sim": {
+     "wall_s": 0.6478,
+     "cpu_s": 0.64,
+     "peak_rss_mb": 10.7
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 0.88,
+   "overhead_s": {
+    "go": 0.107,
+    "rust": 0.3627
+   }
+  },
+  {
+   "case": "production-fury-protection-warrior-diamond-flask",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 1.0573,
+    "cpu_s": 1.1508,
+    "peak_rss_mb": 99.2,
+    "engine_s": 0.9367
+   },
+   "rust": {
+    "wall_s": 1.0469,
+    "cpu_s": 1.0229,
+    "peak_rss_mb": 23.5,
+    "engine_s": 0.81
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.2374,
+     "cpu_s": 0.3529,
+     "peak_rss_mb": 107.2
+    },
+    "rust_prepare": {
+     "wall_s": 0.1775,
+     "cpu_s": 0.1689,
+     "peak_rss_mb": 17.8
+    },
+    "sim": {
+     "wall_s": 0.8466,
+     "cpu_s": 0.8177,
+     "peak_rss_mb": 10.6
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.01,
+   "overhead_s": {
+    "go": 0.1206,
+    "rust": 0.2369
+   }
+  },
+  {
+   "case": "production-holy-protection-paladin",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.7656,
+    "cpu_s": 0.8661,
+    "peak_rss_mb": 95.9,
+    "engine_s": 0.6527
+   },
+   "rust": {
+    "wall_s": 0.6686,
+    "cpu_s": 0.6571,
+    "peak_rss_mb": 24.9,
+    "engine_s": 0.5007
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.1915,
+     "cpu_s": 0.2983,
+     "peak_rss_mb": 100.7
+    },
+    "rust_prepare": {
+     "wall_s": 0.115,
+     "cpu_s": 0.1068,
+     "peak_rss_mb": 18.6
+    },
+    "sim": {
+     "wall_s": 0.516,
+     "cpu_s": 0.5086,
+     "peak_rss_mb": 11.7
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.15,
+   "overhead_s": {
+    "go": 0.1129,
+    "rust": 0.1679
+   }
+  },
+  {
+   "case": "production-marksmanship-hunter",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.6274,
+    "cpu_s": 0.6338,
+    "peak_rss_mb": 94.8,
+    "engine_s": 0.4667
+   },
+   "rust": {
+    "wall_s": 0.5317,
+    "cpu_s": 0.4753,
+    "peak_rss_mb": 22.2,
+    "engine_s": 0.4106
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.1533,
+     "cpu_s": 0.1883,
+     "peak_rss_mb": 81.5
+    },
+    "rust_prepare": {
+     "wall_s": 0.0398,
+     "cpu_s": 0.0306,
+     "peak_rss_mb": 15.4
+    },
+    "sim": {
+     "wall_s": 0.3521,
+     "cpu_s": 0.3416,
+     "peak_rss_mb": 7.4
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.18,
+   "overhead_s": {
+    "go": 0.1607,
+    "rust": 0.1211
+   }
+  },
+  {
+   "case": "production-protection-paladin",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.8476,
+    "cpu_s": 0.9449,
+    "peak_rss_mb": 94.2,
+    "engine_s": 0.735
+   },
+   "rust": {
+    "wall_s": 0.7448,
+    "cpu_s": 0.7312,
+    "peak_rss_mb": 24.9,
+    "engine_s": 0.5775
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.1946,
+     "cpu_s": 0.3188,
+     "peak_rss_mb": 103.0
+    },
+    "rust_prepare": {
+     "wall_s": 0.1118,
+     "cpu_s": 0.1037,
+     "peak_rss_mb": 18.5
+    },
+    "sim": {
+     "wall_s": 0.5837,
+     "cpu_s": 0.5724,
+     "peak_rss_mb": 11.0
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.14,
+   "overhead_s": {
+    "go": 0.1126,
+    "rust": 0.1673
+   }
+  },
+  {
+   "case": "production-protection-warrior",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.8347,
+    "cpu_s": 0.9138,
+    "peak_rss_mb": 99.5,
+    "engine_s": 0.7198
+   },
+   "rust": {
+    "wall_s": 0.9449,
+    "cpu_s": 0.9325,
+    "peak_rss_mb": 24.9,
+    "engine_s": 0.5873
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.2821,
+     "cpu_s": 0.5025,
+     "peak_rss_mb": 105.9
+    },
+    "rust_prepare": {
+     "wall_s": 0.305,
+     "cpu_s": 0.2956,
+     "peak_rss_mb": 19.8
+    },
+    "sim": {
+     "wall_s": 0.6159,
+     "cpu_s": 0.6032,
+     "peak_rss_mb": 10.8
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 0.88,
+   "overhead_s": {
+    "go": 0.1149,
+    "rust": 0.3576
+   }
+  },
+  {
+   "case": "production-protection-warrior-diamond-flask",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.9306,
+    "cpu_s": 1.0275,
+    "peak_rss_mb": 100.8,
+    "engine_s": 0.8209
+   },
+   "rust": {
+    "wall_s": 0.8936,
+    "cpu_s": 0.8811,
+    "peak_rss_mb": 23.0,
+    "engine_s": 0.6771
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.2053,
+     "cpu_s": 0.3493,
+     "peak_rss_mb": 101.9
+    },
+    "rust_prepare": {
+     "wall_s": 0.1603,
+     "cpu_s": 0.1521,
+     "peak_rss_mb": 17.7
+    },
+    "sim": {
+     "wall_s": 0.6913,
+     "cpu_s": 0.6826,
+     "peak_rss_mb": 10.8
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.04,
+   "overhead_s": {
+    "go": 0.1097,
+    "rust": 0.2165
+   }
+  },
+  {
+   "case": "production-protection-warrior-prepull-charge",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.8855,
+    "cpu_s": 0.9506,
+    "peak_rss_mb": 94.2,
+    "engine_s": 0.7734
+   },
+   "rust": {
+    "wall_s": 0.9988,
+    "cpu_s": 0.9794,
+    "peak_rss_mb": 25.2,
+    "engine_s": 0.6221
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.2849,
+     "cpu_s": 0.5047,
+     "peak_rss_mb": 105.8
+    },
+    "rust_prepare": {
+     "wall_s": 0.2981,
+     "cpu_s": 0.2901,
+     "peak_rss_mb": 19.8
+    },
+    "sim": {
+     "wall_s": 0.6313,
+     "cpu_s": 0.6201,
+     "peak_rss_mb": 11.5
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 0.89,
+   "overhead_s": {
+    "go": 0.1121,
+    "rust": 0.3767
+   }
+  },
+  {
+   "case": "production-ret-protection-paladin",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.8769,
+    "cpu_s": 0.9817,
+    "peak_rss_mb": 94.7,
+    "engine_s": 0.7604
+   },
+   "rust": {
+    "wall_s": 0.799,
+    "cpu_s": 0.7716,
+    "peak_rss_mb": 25.2,
+    "engine_s": 0.6263
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.2051,
+     "cpu_s": 0.3192,
+     "peak_rss_mb": 104.1
+    },
+    "rust_prepare": {
+     "wall_s": 0.1133,
+     "cpu_s": 0.106,
+     "peak_rss_mb": 18.6
+    },
+    "sim": {
+     "wall_s": 0.6118,
+     "cpu_s": 0.5983,
+     "peak_rss_mb": 11.5
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.1,
+   "overhead_s": {
+    "go": 0.1165,
+    "rust": 0.1727
+   }
+  },
+  {
+   "case": "production-retribution-paladin",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.7847,
+    "cpu_s": 0.8682,
+    "peak_rss_mb": 98.7,
+    "engine_s": 0.6553
+   },
+   "rust": {
+    "wall_s": 0.6811,
+    "cpu_s": 0.6539,
+    "peak_rss_mb": 23.6,
+    "engine_s": 0.5763
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.1515,
+     "cpu_s": 0.186,
+     "peak_rss_mb": 91.8
+    },
+    "rust_prepare": {
+     "wall_s": 0.0437,
+     "cpu_s": 0.036,
+     "peak_rss_mb": 18.5
+    },
+    "sim": {
+     "wall_s": 0.6279,
+     "cpu_s": 0.6021,
+     "peak_rss_mb": 10.8
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.15,
+   "overhead_s": {
+    "go": 0.1294,
+    "rust": 0.1048
+   }
+  },
+  {
+   "case": "production-shadow-priest",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.4591,
+    "cpu_s": 0.4199,
+    "peak_rss_mb": 83.1,
+    "engine_s": 0.2586
+   },
+   "rust": {
+    "wall_s": 0.2471,
+    "cpu_s": 0.2272,
+    "peak_rss_mb": 22.1,
+    "engine_s": 0.1651
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.1691,
+     "cpu_s": 0.164,
+     "peak_rss_mb": 71.2
+    },
+    "rust_prepare": {
+     "wall_s": 0.0214,
+     "cpu_s": 0.0107,
+     "peak_rss_mb": 15.4
+    },
+    "sim": {
+     "wall_s": 0.2041,
+     "cpu_s": 0.1749,
+     "peak_rss_mb": 7.5
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.86,
+   "overhead_s": {
+    "go": 0.2005,
+    "rust": 0.082
+   }
+  },
+  {
+   "case": "production-shockadin-paladin",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.7638,
+    "cpu_s": 0.8542,
+    "peak_rss_mb": 94.7,
+    "engine_s": 0.647
+   },
+   "rust": {
+    "wall_s": 0.5986,
+    "cpu_s": 0.5891,
+    "peak_rss_mb": 23.8,
+    "engine_s": 0.5014
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.1399,
+     "cpu_s": 0.1874,
+     "peak_rss_mb": 95.4
+    },
+    "rust_prepare": {
+     "wall_s": 0.043,
+     "cpu_s": 0.0345,
+     "peak_rss_mb": 18.0
+    },
+    "sim": {
+     "wall_s": 0.5097,
+     "cpu_s": 0.4998,
+     "peak_rss_mb": 10.8
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.28,
+   "overhead_s": {
+    "go": 0.1168,
+    "rust": 0.0972
+   }
+  },
+  {
+   "case": "production-smite-priest",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.3129,
+    "cpu_s": 0.3798,
+    "peak_rss_mb": 92.0,
+    "engine_s": 0.2024
+   },
+   "rust": {
+    "wall_s": 0.21,
+    "cpu_s": 0.202,
+    "peak_rss_mb": 22.0,
+    "engine_s": 0.142
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.1105,
+     "cpu_s": 0.1349,
+     "peak_rss_mb": 71.6
+    },
+    "rust_prepare": {
+     "wall_s": 0.0157,
+     "cpu_s": 0.0089,
+     "peak_rss_mb": 15.3
+    },
+    "sim": {
+     "wall_s": 0.1526,
+     "cpu_s": 0.146,
+     "peak_rss_mb": 7.5
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.49,
+   "overhead_s": {
+    "go": 0.1105,
+    "rust": 0.068
+   }
+  },
+  {
+   "case": "production-subtlety-rogue",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.7793,
+    "cpu_s": 0.8305,
+    "peak_rss_mb": 86.3,
+    "engine_s": 0.6704
+   },
+   "rust": {
+    "wall_s": 0.6931,
+    "cpu_s": 0.683,
+    "peak_rss_mb": 23.0,
+    "engine_s": 0.6075
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.1151,
+     "cpu_s": 0.1611,
+     "peak_rss_mb": 79.2
+    },
+    "rust_prepare": {
+     "wall_s": 0.031,
+     "cpu_s": 0.024,
+     "peak_rss_mb": 15.5
+    },
+    "sim": {
+     "wall_s": 0.6464,
+     "cpu_s": 0.6347,
+     "peak_rss_mb": 8.4
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.12,
+   "overhead_s": {
+    "go": 0.1089,
+    "rust": 0.0856
+   }
+  },
+  {
+   "case": "production-survival-hunter",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.7391,
+    "cpu_s": 0.844,
+    "peak_rss_mb": 94.1,
+    "engine_s": 0.634
+   },
+   "rust": {
+    "wall_s": 0.5822,
+    "cpu_s": 0.5721,
+    "peak_rss_mb": 22.9,
+    "engine_s": 0.4728
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.1369,
+     "cpu_s": 0.2029,
+     "peak_rss_mb": 98.3
+    },
+    "rust_prepare": {
+     "wall_s": 0.0507,
+     "cpu_s": 0.0447,
+     "peak_rss_mb": 15.1
+    },
+    "sim": {
+     "wall_s": 0.4857,
+     "cpu_s": 0.4778,
+     "peak_rss_mb": 9.0
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.27,
+   "overhead_s": {
+    "go": 0.1051,
+    "rust": 0.1094
+   }
+  },
+  {
+   "case": "production-warrior",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 1.0105,
+    "cpu_s": 0.9504,
+    "peak_rss_mb": 91.1,
+    "engine_s": 0.8899
+   },
+   "rust": {
+    "wall_s": 0.7946,
+    "cpu_s": 0.7802,
+    "peak_rss_mb": 22.7,
+    "engine_s": 0.5641
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.2027,
+     "cpu_s": 0.3307,
+     "peak_rss_mb": 104.3
+    },
+    "rust_prepare": {
+     "wall_s": 0.1716,
+     "cpu_s": 0.165,
+     "peak_rss_mb": 17.6
+    },
+    "sim": {
+     "wall_s": 0.5646,
+     "cpu_s": 0.5563,
+     "peak_rss_mb": 9.1
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.27,
+   "overhead_s": {
+    "go": 0.1206,
+    "rust": 0.2305
+   }
+  },
+  {
+   "case": "production-warrior-diamond-flask",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.8114,
+    "cpu_s": 0.8442,
+    "peak_rss_mb": 91.8,
+    "engine_s": 0.6871
+   },
+   "rust": {
+    "wall_s": 0.9299,
+    "cpu_s": 0.9095,
+    "peak_rss_mb": 23.5,
+    "engine_s": 0.5323
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.2804,
+     "cpu_s": 0.5104,
+     "peak_rss_mb": 105.2
+    },
+    "rust_prepare": {
+     "wall_s": 0.3556,
+     "cpu_s": 0.3386,
+     "peak_rss_mb": 18.3
+    },
+    "sim": {
+     "wall_s": 0.5468,
+     "cpu_s": 0.5356,
+     "peak_rss_mb": 9.4
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 0.87,
+   "overhead_s": {
+    "go": 0.1243,
+    "rust": 0.3976
+   }
+  },
+  {
+   "case": "production-warrior-diamond-flask-in-rotation",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.7929,
+    "cpu_s": 0.8426,
+    "peak_rss_mb": 92.1,
+    "engine_s": 0.6744
+   },
+   "rust": {
+    "wall_s": 0.8951,
+    "cpu_s": 0.8846,
+    "peak_rss_mb": 23.2,
+    "engine_s": 0.5216
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.2866,
+     "cpu_s": 0.5163,
+     "peak_rss_mb": 104.6
+    },
+    "rust_prepare": {
+     "wall_s": 0.3191,
+     "cpu_s": 0.3107,
+     "peak_rss_mb": 19.1
+    },
+    "sim": {
+     "wall_s": 0.5568,
+     "cpu_s": 0.5292,
+     "peak_rss_mb": 9.7
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 0.89,
+   "overhead_s": {
+    "go": 0.1185,
+    "rust": 0.3735
+   }
+  },
+  {
+   "case": "production-warrior-prepull-charge",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.8213,
+    "cpu_s": 0.8895,
+    "peak_rss_mb": 93.1,
+    "engine_s": 0.7108
+   },
+   "rust": {
+    "wall_s": 0.8547,
+    "cpu_s": 0.8306,
+    "peak_rss_mb": 23.0,
+    "engine_s": 0.6154
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.2075,
+     "cpu_s": 0.3374,
+     "peak_rss_mb": 102.8
+    },
+    "rust_prepare": {
+     "wall_s": 0.1805,
+     "cpu_s": 0.1732,
+     "peak_rss_mb": 17.7
+    },
+    "sim": {
+     "wall_s": 0.5963,
+     "cpu_s": 0.5876,
+     "peak_rss_mb": 9.2
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 0.96,
+   "overhead_s": {
+    "go": 0.1105,
+    "rust": 0.2393
+   }
+  },
+  {
+   "case": "production-warrior-prepull-charge-late",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.7531,
+    "cpu_s": 0.7956,
+    "peak_rss_mb": 76.5,
+    "engine_s": 0.6385
+   },
+   "rust": {
+    "wall_s": 0.752,
+    "cpu_s": 0.7353,
+    "peak_rss_mb": 22.2,
+    "engine_s": 0.5192
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.3599,
+     "cpu_s": 0.3667,
+     "peak_rss_mb": 108.8
+    },
+    "rust_prepare": {
+     "wall_s": 0.2539,
+     "cpu_s": 0.2238,
+     "peak_rss_mb": 17.7
+    },
+    "sim": {
+     "wall_s": 0.6504,
+     "cpu_s": 0.5876,
+     "peak_rss_mb": 8.6
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.0,
+   "overhead_s": {
+    "go": 0.1146,
+    "rust": 0.2328
+   }
+  },
+  {
+   "case": "production-warrior-prepull-charge-while-moving",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 1.1802,
+    "cpu_s": 1.0437,
+    "peak_rss_mb": 79.9,
+    "engine_s": 0.9702
+   },
+   "rust": {
+    "wall_s": 1.3463,
+    "cpu_s": 0.975,
+    "peak_rss_mb": 21.8,
+    "engine_s": 0.7445
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.3511,
+     "cpu_s": 0.3888,
+     "peak_rss_mb": 110.6
+    },
+    "rust_prepare": {
+     "wall_s": 0.2593,
+     "cpu_s": 0.2194,
+     "peak_rss_mb": 17.6
+    },
+    "sim": {
+     "wall_s": 0.6497,
+     "cpu_s": 0.5855,
+     "peak_rss_mb": 8.8
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 0.88,
+   "overhead_s": {
+    "go": 0.21,
+    "rust": 0.6018
+   }
+  },
+  {
+   "case": "production-warrior-prepull-move-cancelled",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.7805,
+    "cpu_s": 0.7965,
+    "peak_rss_mb": 72.4,
+    "engine_s": 0.6521
+   },
+   "rust": {
+    "wall_s": 0.742,
+    "cpu_s": 0.7238,
+    "peak_rss_mb": 22.4,
+    "engine_s": 0.4987
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.2512,
+     "cpu_s": 0.3443,
+     "peak_rss_mb": 106.6
+    },
+    "rust_prepare": {
+     "wall_s": 0.1805,
+     "cpu_s": 0.1717,
+     "peak_rss_mb": 17.6
+    },
+    "sim": {
+     "wall_s": 0.6838,
+     "cpu_s": 0.5982,
+     "peak_rss_mb": 8.5
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.05,
+   "overhead_s": {
+    "go": 0.1284,
+    "rust": 0.2433
+   }
+  },
+  {
+   "case": "production-warrior-prepull-move-dropped",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.908,
+    "cpu_s": 0.9378,
+    "peak_rss_mb": 92.0,
+    "engine_s": 0.7639
+   },
+   "rust": {
+    "wall_s": 0.8034,
+    "cpu_s": 0.788,
+    "peak_rss_mb": 22.8,
+    "engine_s": 0.56
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.203,
+     "cpu_s": 0.326,
+     "peak_rss_mb": 102.7
+    },
+    "rust_prepare": {
+     "wall_s": 0.1764,
+     "cpu_s": 0.1693,
+     "peak_rss_mb": 17.7
+    },
+    "sim": {
+     "wall_s": 0.5849,
+     "cpu_s": 0.5734,
+     "peak_rss_mb": 9.2
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.13,
+   "overhead_s": {
+    "go": 0.1441,
+    "rust": 0.2434
+   }
+  },
+  {
+   "case": "production-warrior-prepull-move-in-range",
+   "decision": "rust",
+   "preparation": "rust",
+   "go": {
+    "wall_s": 0.8126,
+    "cpu_s": 0.8774,
+    "peak_rss_mb": 92.9,
+    "engine_s": 0.7048
+   },
+   "rust": {
+    "wall_s": 0.7939,
+    "cpu_s": 0.7812,
+    "peak_rss_mb": 22.6,
+    "engine_s": 0.5667
+   },
+   "rust_steps": {
+    "go_prepare": {
+     "wall_s": 0.2019,
+     "cpu_s": 0.329,
+     "peak_rss_mb": 104.2
+    },
+    "rust_prepare": {
+     "wall_s": 0.1707,
+     "cpu_s": 0.1648,
+     "peak_rss_mb": 17.5
+    },
+    "sim": {
+     "wall_s": 0.5827,
+     "cpu_s": 0.5739,
+     "peak_rss_mb": 9.2
+    }
+   },
+   "same_dps": true,
+   "go_over_rust_wall": 1.02,
+   "overhead_s": {
+    "go": 0.1078,
+    "rust": 0.2272
+   }
+  }
+ ]
+}
