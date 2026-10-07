@@ -89,17 +89,15 @@ fn protection_matches_go() {
     check("protection");
 }
 
-/// A Protection warrior tanking the target needs the enemy swing export, which is not ported.
+/// A Protection warrior tanking the target is prepared with the target's swing at it; the
+/// fixture harness compares the tanking fixtures with Go.
 #[test]
-fn a_tanking_warrior_is_refused() {
+fn a_tanking_warrior_is_prepared_with_the_target_swing() {
     let mut request: Value = serde_json::from_slice(&data("protection.request.json")).unwrap();
     request["raid"]["tanks"] = serde_json::json!([{"index": 0, "type": "Player"}]);
-    let error = forever_engine::prepare_json(&serde_json::to_vec(&request).unwrap(), "tank")
-        .expect_err("a tanked target is refused");
-    match error {
-        forever_engine::PrepareError::Refused(refusal) => assert_eq!(refusal.code, "tanking"),
-        other => panic!("{other}"),
-    }
+    let prepared = forever_engine::prepare_json(&serde_json::to_vec(&request).unwrap(), "tank")
+        .expect("a tanking warrior is prepared");
+    assert!(prepared["enemy"].is_object());
 }
 
 /// Stance snapshots change when a stance's effects start, which the export cannot describe.

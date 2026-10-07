@@ -233,6 +233,23 @@ fn source_unit(env: &Environment, reference: Option<&Message>) -> Result<Option<
     match kind.as_str() {
         "Unknown" | "Self" => Ok(Some(env.player)),
         "CurrentTarget" => Ok(env.sim.unit(env.player).current_target),
+        // Go `NextActiveTarget` and `PreviousActiveTarget` of the current target: every target
+        // is enabled while the rotation is built, as preparation refuses one disabled at start.
+        "NextTarget" | "PreviousTarget" => {
+            let targets = &env.encounter.targets;
+            let Some(current) = env.sim.unit(env.player).current_target else {
+                return Err(());
+            };
+            let Some(index) = targets.iter().position(|t| *t == current) else {
+                return Err(());
+            };
+            let next = if kind == "NextTarget" {
+                (index + 1) % targets.len()
+            } else {
+                (index + targets.len() - 1) % targets.len()
+            };
+            Ok(Some(targets[next]))
+        }
         "Target" => {
             let index = reference.map_or(0, |r| r.i32("index"));
             Ok(usize::try_from(index)
@@ -633,15 +650,19 @@ fn register_value_observers(env: &mut Environment, rotation: &Message) -> Result
                     continue;
                 };
                 let id = proto_to_action_id(id);
-                let unit = match config.message("source_unit").map(|u| u.enum_name("type")) {
-                    None => env.player,
-                    Some(kind) if kind == "Unknown" || kind == "Self" => env.player,
-                    Some(kind) if kind == "CurrentTarget" => env.encounter.targets[0],
-                    Some(kind) => {
+                let unit = match source_unit(env, config.message("source_unit")) {
+                    Ok(Some(unit)) => unit,
+                    // Go reads a unit it cannot resolve as the constant 0 and registers nothing.
+                    Ok(None) => continue,
+                    Err(()) => {
+                        let kind = config
+                            .message("source_unit")
+                            .map(|u| u.enum_name("type"))
+                            .unwrap_or_default();
                         return Err(Refusal::new(
                             "rotation",
                             format!("an aura stack read on a {kind} unit is not prepared yet"),
-                        ))
+                        ));
                     }
                 };
                 let aura = env
