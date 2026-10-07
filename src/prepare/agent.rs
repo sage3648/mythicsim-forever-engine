@@ -66,16 +66,6 @@ pub(crate) trait PrepAgent {
     fn effects(&self, _sim: &Sim, _unit: UnitId) -> Vec<serde_json::Value> {
         Vec::new()
     }
-    /// The exporter's class effects for a class whose description reads the whole simulation
-    /// (a separate reset simulation, attack tables), noting what it cannot describe in
-    /// `unrepresented` as the exporter's `classNotes` do. `None` leaves it to `effects`.
-    fn effects_in(
-        &self,
-        _env: &super::env::Environment,
-        _unrepresented: &mut Vec<String>,
-    ) -> Option<Vec<serde_json::Value>> {
-        None
-    }
     /// Stable names for class spells Go registers without a class mask, by action.
     fn unmasked_spell(&self, _id: &ActionId) -> Option<&'static str> {
         None
@@ -138,10 +128,35 @@ pub(crate) trait PrepAgent {
     fn damage_effect(&self, _sim: &Sim, _spell: super::sim::SpellId) -> Option<serde_json::Value> {
         None
     }
+    /// Go `classItemUseEffects`: the exported effect of an item use the class package registers
+    /// itself, keyed by the item. It is the item loop's last case, after the shared ones.
+    fn class_item_use_effect(
+        &self,
+        _env: &super::env::Environment,
+        _spell: super::sim::SpellId,
+        _item: i32,
+    ) -> Option<serde_json::Value> {
+        None
+    }
     /// Go `buffs.SetFlametongueAttackTraits`: what the class's own Flametongue Attack carries,
     /// which the party's Flametongue Totem hit takes. Any other class has none.
     fn flametongue_attack_traits(&self) -> super::buffs::flametongue::FlametongueAttackTraits {
         super::buffs::flametongue::FlametongueAttackTraits::default()
+    }
+    /// The agent as `Any`, for a class's item set bonus that sets state on its own agent (Go
+    /// hands a set bonus the agent). A class that has no such bonus answers `None`.
+    fn as_any_mut(&mut self) -> Option<&mut dyn std::any::Any> {
+        None
+    }
+    /// The exporter's class effects when they need more than the simulation, such as the
+    /// attack tables and the target, and the notes a class effect adds to the unrepresented
+    /// list (`classNotes`). The default is `effects`.
+    fn export_effects(
+        &self,
+        env: &super::env::Environment,
+        _notes: &mut Vec<String>,
+    ) -> Vec<serde_json::Value> {
+        self.effects(&env.sim, env.player)
     }
 }
 

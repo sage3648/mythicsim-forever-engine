@@ -595,12 +595,7 @@ fn tail_effects(
             ));
         }
     }
-    if env.sim.get_aura(env.player, "Eureka!").is_some() {
-        return Err(Refusal::new(
-            "race",
-            "Eureka! is not described yet".to_string(),
-        ));
-    }
+    effects.extend(super::racials::eureka_effect(env));
     let tanking = env.tanking();
     if tanking {
         if let Some(aura) = env.sim.get_aura(env.player, "Pushback trigger") {
@@ -760,10 +755,7 @@ pub(crate) fn export(
         .message("rotation")
         .map_or_else(|| json!({}), |rotation| rotation.to_protojson());
     let talents = talent_values(env.agent.talents());
-    let mut effects: Vec<Value> = match env.agent.effects_in(env, &mut unrepresented) {
-        Some(effects) => effects,
-        None => env.agent.effects(&env.sim, player),
-    };
+    let mut effects: Vec<Value> = env.agent.export_effects(env, &mut unrepresented);
     unrepresented.extend(env.agent.unrepresented(&env.sim, player));
     effects.extend(super::common_effects::common_effects(
         env,
@@ -905,6 +897,19 @@ pub(crate) fn export(
         prepared["player"]["hp_percent_for_defensives"] = json!(hp);
     }
     prepared["melee"] = export_melee(env, &mut unrepresented);
+    // Go `exportEnergy`: the energy bar, when the class has one.
+    let energy = &env.sim.unit(player).energy_bar;
+    if energy.enabled {
+        if energy.has_no_regen {
+            unrepresented.push("an energy bar without regeneration is unsupported".to_string());
+        }
+        prepared["player"]["energy"] = json!({
+            "max_energy": energy.max_energy,
+            "max_combo_points": energy.max_combo_points,
+            "tick_duration_ns": energy.tick_duration,
+            "energy_per_tick": energy.energy_per_tick,
+        });
+    }
     let pets = super::pet::export_pets(env, &mut timers, &mut unrepresented);
     if !pets.is_empty() {
         prepared["pets"] = Value::Array(pets);

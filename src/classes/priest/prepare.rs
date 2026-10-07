@@ -240,12 +240,12 @@ impl PrepAgent for Priest {
         CLASS_SPELLS
     }
 
-    fn effects_in(
+    fn export_effects(
         &self,
         env: &crate::prepare::env::Environment,
         unrepresented: &mut Vec<String>,
-    ) -> Option<Vec<serde_json::Value>> {
-        Some(export::effects(self, env, unrepresented))
+    ) -> Vec<serde_json::Value> {
+        export::effects(self, env, unrepresented)
     }
 
     /// tools/oracle-v2/priest.go `priestSummonedShadowfiend`: the Shadowfiend is summoned during
