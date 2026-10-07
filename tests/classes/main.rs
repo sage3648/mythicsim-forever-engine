@@ -20,3 +20,7 @@ fn refusal_codes(value: serde_json::Value) -> Vec<(&'static str, String)> {
         .map(|refusal| (refusal.code, refusal.reason))
         .collect()
 }
+
+/// SHA-256 for the preparation goldens, the same code the request digest uses.
+#[path = "../../src/contracts/request/sha256.rs"]
+mod sha256;

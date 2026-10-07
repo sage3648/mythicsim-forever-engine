@@ -60,9 +60,7 @@ fn canonical(value: &Value, out: &mut String) {
 }
 
 /// The engine's own SHA-256, which it keeps private to avoid a dependency.
-#[allow(clippy::duplicate_mod)]
-#[path = "../../../src/contracts/request/sha256.rs"]
-mod sha256;
+use crate::sha256;
 
 fn digest(value: &Value) -> String {
     let mut text = String::new();
