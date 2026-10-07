@@ -18,6 +18,7 @@ use super::spelldata::{must_find, Ladder};
 use super::Refusal;
 
 pub(crate) use generated::{apply_generated_buffs, apply_generated_debuffs};
+pub(crate) use generated::{BATTLE_SHOUT, DEMORALIZING_SHOUT, SUNDER_ARMOR, THUNDER_CLAP};
 
 /// Which constructor a generated buff uses.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -306,4 +307,48 @@ pub(crate) fn apply_buff_effects(
 ) -> Result<(), Refusal> {
     let unit = env.player;
     apply_generated_buffs(env, unit, raid_buffs, party_buffs, individual)
+}
+
+impl Meta {
+    /// Go's generated `<Buff>Aura(unit, isPlayer, talentPoints)` constructor for a class that
+    /// builds the aura during its own initialization, with the simulation alone.
+    pub(crate) fn class_aura(
+        &self,
+        sim: &mut Sim,
+        unit: UnitId,
+        is_player: bool,
+        talent_points: i32,
+    ) -> Result<AuraId, Refusal> {
+        match self.kind {
+            MetaKind::Buff => Ok(self.buff(
+                sim,
+                unit,
+                is_player,
+                talent_points,
+                self.options(talent_points),
+            )),
+            MetaKind::Debuff => {
+                let mut options = self.options(talent_points);
+                if !self.category.is_empty() {
+                    if self.per_stat {
+                        options.per_stat_category = Some(self.category.to_string());
+                    } else {
+                        options.exclusive = Some((self.category.to_string(), self.single_aura));
+                    }
+                }
+                Ok(self.parsed_aura(
+                    sim,
+                    unit,
+                    is_player,
+                    talent_points,
+                    BuildPhase::NONE,
+                    options,
+                ))
+            }
+            MetaKind::ItemCountBuff | MetaKind::DamageShield => Err(Refusal::new(
+                "buff",
+                format!("{} is not a buff a class builds", self.label),
+            )),
+        }
+    }
 }

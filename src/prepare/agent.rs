@@ -94,6 +94,27 @@ pub(crate) trait PrepAgent {
     fn damage_effect(&self, _sim: &Sim, _spell: super::sim::SpellId) -> Option<serde_json::Value> {
         None
     }
+    /// The exporter's class effects when they read the environment: the attack tables or a
+    /// separate reset simulation of the request (`Environment::fresh`), as Go's
+    /// `classExport.effects` does with `exportRequest`. `notes` is `classNotes`, the
+    /// unrepresented list. The default is `effects`.
+    fn class_effects(
+        &self,
+        env: &super::env::Environment,
+        _notes: &mut Vec<String>,
+    ) -> Vec<serde_json::Value> {
+        self.effects(&env.sim, env.player)
+    }
+    /// Go `classExport.unrepresented`: class behavior the effects cannot describe, one reason
+    /// each.
+    fn unrepresented(&self, _sim: &Sim, _unit: UnitId) -> Vec<String> {
+        Vec::new()
+    }
+    /// Go `classExport.statAuras`: class auras whose gain and expiry change stats through
+    /// `AddStatsDynamic`, by label.
+    fn stat_auras(&self, _sim: &Sim, _unit: UnitId) -> Vec<String> {
+        Vec::new()
+    }
 }
 
 /// Go `FillTalentsProto`: each digit sets the field numbered by its position, counting each
