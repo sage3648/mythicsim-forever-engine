@@ -368,6 +368,9 @@ pub(crate) fn use_item_effect(
         })]);
     }
     // A use effect a class file registers itself.
+    if let Some(effect) = env.agent.class_item_use_effect(env, spell, item) {
+        return Some(vec![effect]);
+    }
     Some(energize_on_use_effects(env, spell, item, unrepresented))
 }
 

@@ -738,6 +738,7 @@ pub(crate) fn export(
         .map_or_else(|| json!({}), |rotation| rotation.to_protojson());
     let talents = talent_values(env.agent.talents());
     let mut effects: Vec<Value> = env.agent.export_effects(env, &mut unrepresented);
+    unrepresented.extend(env.agent.unrepresented(&env.sim, player));
     effects.extend(super::common_effects::common_effects(
         env,
         &mut unrepresented,
