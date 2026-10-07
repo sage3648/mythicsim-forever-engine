@@ -2,14 +2,14 @@
  "kind": "preparation_comparison",
  "date": "2026-10-07",
  "reference": "cd7d44aec711bcc8f20ea12d3ed83cea2126ac66",
- "source_revision": "ee3235c5604ff46f7a7f5b14b3f6c31fa3c71b28",
+ "source_revision": "79e38f0bb3c5c5d9ece98dd940fc718f482b08ef",
  "scope": "Rust preparation against the pinned Go exporter: every accepted fixture, every request kept under validation/, randomized variants of all 42 production requests and of ten builds across every class, each prepared both ways and compared as whole prepared states with no tolerance.",
  "rerun": "python3 tools/prepare_compare.py --output <scratch> --jobs 6 <requests or folders>",
  "criteria": {
   "comparison": "whole prepared v2 state, every value and list",
   "floats": "exact"
  },
- "matched": 3960,
+ "matched": 4512,
  "rejected": 19,
  "mismatched": 0,
  "cases": [
@@ -46,7 +46,17 @@
    "rejected": 19,
    "mismatched": 0,
    "notes": "The 19 refusals are Night Elf and Dwarf Mages, which have no base stats in the reference's tables (code race). Seed 23 first found one mismatch: Rust registered a stack observer for a rotation condition of an action Go never builds; fixed in this branch before the counts above."
+  },
+  {
+   "set": "production variants at 2d93e423e",
+   "reference": "2d93e423e0303e93dbb16e190d435503248b68f9",
+   "generator": "python3 tools/sweep.py <production request> --seed 78 --count 8 for each of the 42 production-*.request.json fixtures",
+   "requests": 552,
+   "matched": 552,
+   "rejected": 0,
+   "mismatched": 0,
+   "notes": "After the branch moved with main to the 2d93e423e pin, at 79e38f0bb, against the exporter built at that pin."
   }
  ],
- "notes": "Each request is prepared by `forever-engine prepare --request` and by the exporter's `prepare --infile`; a refusal exits with status 5 and its code. The counts are from runs at the commits named in each case's notes, on the branch that ends at the source revision."
+ "notes": "Each request is prepared by `forever-engine prepare --request` and by the exporter's `prepare --infile`; a refusal exits with status 5 and its code. The counts are from runs at the commits named in each case's notes, on the branch that ends at the source revision. The other cases ran at the cd7d44aec pin; at 2d93e423e every accepted fixture (cargo test --test prepare, 360 cases) and the production variants above match."
 }
