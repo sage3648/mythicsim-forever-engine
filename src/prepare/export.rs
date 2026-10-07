@@ -82,7 +82,7 @@ pub(crate) fn stat_values(stats: &Stats) -> Value {
     )
 }
 
-fn export_pseudo(p: &PseudoStats) -> Value {
+pub(crate) fn export_pseudo(p: &PseudoStats) -> Value {
     json!({
         "spell_cost_percent_modifier": p.spell_cost_percent_modifier,
         "cast_speed_multiplier": p.cast_speed_multiplier,
@@ -188,7 +188,7 @@ pub(crate) fn export_auras(sim: &Sim, unit: UnitId, timers: &mut TimerNames) -> 
 }
 
 /// Go `exportSpell`.
-fn export_spell(
+pub(crate) fn export_spell_of(
     env: &Environment,
     spell_id: super::sim::SpellId,
     timers: &mut TimerNames,
@@ -370,10 +370,24 @@ fn export_weapon(weapon: &Weapon) -> Value {
     })
 }
 
-/// Go `exportMelee`.
+/// Go `exportMelee` of the player.
 fn export_melee(env: &Environment, unrepresented: &mut Vec<String>) -> Value {
+    export_melee_of(
+        env,
+        env.player,
+        env.agent.swing_replacement_keeps_swing(),
+        unrepresented,
+    )
+}
+
+/// Go `exportMelee`: the auto attacks of a player or a pet.
+pub(crate) fn export_melee_of(
+    env: &Environment,
+    player: UnitId,
+    keeps_swing: bool,
+    unrepresented: &mut Vec<String>,
+) -> Value {
     let sim = &env.sim;
-    let player = env.player;
     let target = env.encounter.targets[0];
     let table = env.attack_table(player, target);
     let aa = &sim.unit(player).auto_attacks;
@@ -383,11 +397,15 @@ fn export_melee(env: &Environment, unrepresented: &mut Vec<String>) -> Value {
             && (w.max_range == 0.0 || w.max_range >= distance)
     };
     let replaced = aa.auto_swing_melee && aa.replace_mh_swing;
-    let class = &sim.character(player).class;
+    let class = sim
+        .unit(player)
+        .character
+        .as_deref()
+        .map_or("", |character| character.class.as_str());
     let describes = class == "ClassWarrior"
         || class == "ClassHunter"
         || (class == "ClassDruid" && sim.get_aura(player, "Maul Queue Aura").is_some());
-    if replaced && in_range(&aa.mh) && !env.agent.swing_replacement_keeps_swing() && !describes {
+    if replaced && in_range(&aa.mh) && !keeps_swing && !describes {
         unrepresented.push("main hand swings can be replaced".to_string());
     }
     let pseudo = &sim.unit(player).pseudo_stats;
@@ -435,7 +453,7 @@ fn export_melee(env: &Environment, unrepresented: &mut Vec<String>) -> Value {
 }
 
 /// Go `metricsActions`.
-fn metrics_actions(env: &Environment, unit: UnitId) -> Value {
+pub(crate) fn metrics_actions(env: &Environment, unit: UnitId) -> Value {
     let sim = &env.sim;
     let mut seen: Vec<ActionId> = Vec::new();
     let mut out = Vec::new();
@@ -682,7 +700,7 @@ pub(crate) fn export(
     let spells: Vec<super::sim::SpellId> = env.sim.unit(player).spellbook.clone();
     let mut exported_spells: Vec<Value> = spells
         .iter()
-        .map(|spell| export_spell(env, *spell, &mut timers, &mut unrepresented))
+        .map(|spell| export_spell_of(env, *spell, &mut timers, &mut unrepresented))
         .collect();
     for (i, spell) in spells.iter().enumerate() {
         if let Some(effect) = env.agent.damage_effect(&env.sim, *spell) {
@@ -729,14 +747,18 @@ pub(crate) fn export(
         .map_or_else(|| json!({}), |rotation| rotation.to_protojson());
     let talents = talent_values(env.agent.talents());
     let mut effects: Vec<Value> = env.agent.effects(&env.sim, player);
+    unrepresented.extend(env.agent.unrepresented(&env.sim, player));
     effects.extend(super::common_effects::common_effects(
         env,
         &mut unrepresented,
     ));
+    effects.extend(super::pet::inert_pet_effects(env, &mut unrepresented));
+    // Go then appends the melee, gear, spell data and energy proc effects here (the items
+    // port), and the stat auras effect.
+    effects.extend(super::stat_auras::stat_auras_effect(env)?);
     // Go then appends the inert pets, the melee, gear, spell data and energy proc effects and
     // the stat auras effect, in that order; Rust refuses pets and ports the rest in
     // src/prepare/export_items.rs.
-    effects.extend(super::stat_auras::stat_auras_effect(env)?);
     effects.extend(tail_effects(env, &mut unrepresented)?);
 
     let professions: Vec<String> = env
@@ -865,6 +887,10 @@ pub(crate) fn export(
         prepared["player"]["hp_percent_for_defensives"] = json!(hp);
     }
     prepared["melee"] = export_melee(env, &mut unrepresented);
+    let pets = super::pet::export_pets(env, &mut timers, &mut unrepresented);
+    if !pets.is_empty() {
+        prepared["pets"] = Value::Array(pets);
+    }
     let teardown = teardown_max_mana(env, player, &mut unrepresented);
     prepared["player"]["mana"]["teardown_max"] = json!(teardown);
     if !env.sim.unit(player).mana_bar.enabled {

@@ -227,6 +227,11 @@ pub(crate) struct RageBar {
 #[derive(Clone, Debug, Default)]
 pub(crate) struct FocusBar {
     pub enabled: bool,
+    /// Go `focusBar.maxFocus`.
+    pub max_focus: f64,
+    pub current_focus: f64,
+    pub focus_regen_per_tick: f64,
+    pub focus_tick_duration: Duration,
 }
 
 /// One unit: Go's `Unit` with the fields preparation reads.
@@ -286,6 +291,8 @@ pub(crate) struct Unit {
     pub character: Option<Box<super::character::Character>>,
     /// Go `HasHealthBar`.
     pub health_bar: bool,
+    /// The pet half of a pet unit (pet.rs).
+    pub pet: Option<Box<super::pet::Pet>>,
 }
 
 impl Unit {
@@ -341,6 +348,7 @@ impl Unit {
             spell_registration_handlers: Vec::new(),
             character: None,
             health_bar: false,
+            pet: None,
         }
     }
 }

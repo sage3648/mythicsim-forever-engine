@@ -90,9 +90,38 @@ pub(crate) trait PrepAgent {
     fn is_mana_gem(&self, _sim: &Sim, _spell: super::sim::SpellId) -> bool {
         false
     }
+    /// The effects `RegisterPostFinalizeEffect` calls registered while the class applied its
+    /// talents, taken once for the environment to run after finalization.
+    fn take_post_finalize_effects(&mut self) -> Vec<super::env::FinalizeEffect> {
+        Vec::new()
+    }
+    /// Go `PetAgent.Initialize`: the class half of a pet's initialization, run after the
+    /// player's.
+    fn initialize_pet(&mut self, _sim: &mut Sim, _pet: UnitId) {}
+    /// Go `PetAgent.Reset`: run when the pet resets, before the pet is enabled.
+    fn reset_pet(&mut self, _sim: &mut Sim, _pet: UnitId) {}
+    /// The exporter's `resetOnlyPetClasses`: the class's pets are enabled only at reset, never
+    /// summoned, dismissed or expired during a fight.
+    fn reset_only_pets(&self) -> bool {
+        false
+    }
+    /// The exporter's `classSummonedPets`: whether a class effect summons the pet.
+    fn summoned_pet(&self, _sim: &Sim, _pet: UnitId) -> bool {
+        false
+    }
+    /// The exporter's `classExport.inertPet`: why a registered pet never acts in this build, or
+    /// `None` when it may.
+    fn inert_pet(&self, _sim: &Sim, _pet: UnitId) -> Option<&'static str> {
+        None
+    }
     /// The exporter's `classExport.statAuras`: the labels of the class auras whose gain and
     /// expiry change stats through `AddStatsDynamic`.
     fn stat_auras(&self, _sim: &Sim, _unit: UnitId) -> Vec<String> {
+        Vec::new()
+    }
+    /// What the exporter's class effects note as unrepresented while they run
+    /// (`classNotes`), and `classExport.unrepresented`.
+    fn unrepresented(&self, _sim: &Sim, _unit: UnitId) -> Vec<String> {
         Vec::new()
     }
     /// The client damage roll of a spell, `{average, variance}`, for the spells the class names.
