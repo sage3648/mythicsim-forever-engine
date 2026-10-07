@@ -119,11 +119,6 @@ pub(crate) trait PrepAgent {
     ) -> Vec<serde_json::Value> {
         self.effects(&env.sim, env.player)
     }
-    /// The exporter's `classExport.statAuras`: the labels of the class auras that change stats
-    /// through `AddStatsDynamic` when gained or lost.
-    fn stat_auras(&self, _sim: &Sim, _unit: UnitId) -> Vec<String> {
-        Vec::new()
-    }
 }
 
 /// Go `FillTalentsProto`: each digit sets the field numbered by its position, counting each
