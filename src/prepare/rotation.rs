@@ -129,6 +129,14 @@ impl Builder<'_> {
     }
 
     fn action_impl(&mut self, config: &Message) -> Result<Option<Built>, Refusal> {
+        // Go asks the agent first: a class builds its own actions.
+        if let Some(built) =
+            self.env
+                .agent
+                .custom_apl_action(&self.env.sim, self.env.player, config)
+        {
+            return Ok(built.then(|| Built { casts: Vec::new() }));
+        }
         let Some((kind, Value::Message(action))) = config.oneof("action") else {
             return Err(Refusal::new(
                 "rotation",
