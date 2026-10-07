@@ -95,7 +95,7 @@ pub(crate) fn outcome_names(outcome: HitOutcome) -> Vec<&'static str> {
 
 /// melee_procs.go `dpmChances`: the chance a dynamic proc manager rolls for each spell it hears,
 /// taking the first mask entry the spell's proc mask matches.
-fn dpm_chances(
+pub(crate) fn dpm_chances(
     env: &Environment,
     dpm: &DynamicProcManager,
     eligible: impl Fn(&super::spell::Spell) -> bool,
