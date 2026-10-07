@@ -3,7 +3,7 @@
 
 use serde_json::{json, Value};
 
-use crate::prepare::buffs;
+use crate::prepare::buffs::generated;
 use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::common_effects::SPELL_BATCH_WINDOW;
 use crate::prepare::dbcenums;
@@ -418,7 +418,7 @@ impl Warrior {
         // battle_shout.go: the warrior's own shout, which outbids the party's at an equal value.
         let battle_shout = data.battle_shout.highest();
         if let Some(own) = sim.get_spell(unit, &spell_action(battle_shout.id)) {
-            let mut value = buffs::BATTLE_SHOUT.value(0);
+            let mut value = generated::BATTLE_SHOUT.value(0);
             if self.inputs.use_battle_shout && self.has_bs_t2.get() {
                 value += super::shouts::BATTLE_SHOUT_T2_BONUS;
             }

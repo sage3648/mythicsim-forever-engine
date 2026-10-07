@@ -90,6 +90,11 @@ pub(crate) trait PrepAgent {
     fn is_mana_gem(&self, _sim: &Sim, _spell: super::sim::SpellId) -> bool {
         false
     }
+    /// The exporter's `classExport.statAuras`: the labels of the class auras whose gain and
+    /// expiry change stats through `AddStatsDynamic`.
+    fn stat_auras(&self, _sim: &Sim, _unit: UnitId) -> Vec<String> {
+        Vec::new()
+    }
     /// The client damage roll of a spell, `{average, variance}`, for the spells the class names.
     fn damage_effect(&self, _sim: &Sim, _spell: super::sim::SpellId) -> Option<serde_json::Value> {
         None
@@ -125,10 +130,10 @@ pub(crate) trait PrepAgent {
     ) -> Option<serde_json::Value> {
         None
     }
-    /// Go `classExport.statAuras`: class auras whose gain and expiry change stats through
-    /// `AddStatsDynamic`, by label.
-    fn stat_auras(&self, _sim: &Sim, _unit: UnitId) -> Vec<String> {
-        Vec::new()
+    /// Go `buffs.SetFlametongueAttackTraits`: what the class's own Flametongue Attack carries,
+    /// which the party's Flametongue Totem hit takes. Any other class has none.
+    fn flametongue_attack_traits(&self) -> super::buffs::flametongue::FlametongueAttackTraits {
+        super::buffs::flametongue::FlametongueAttackTraits::default()
     }
 }
 

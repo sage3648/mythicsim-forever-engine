@@ -1,7 +1,7 @@
 //! Go sim/warrior's shouts: battle_shout.go, demoralizing_shout.go, challenging_shout.go and
 //! intimidating_shout.go.
 
-use crate::prepare::buffs;
+use crate::prepare::buffs::generated;
 use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::dbcenums;
 use crate::prepare::sim::{AuraId, BuildPhase, Cooldown, Sim, UnitId};
@@ -67,7 +67,7 @@ impl Warrior {
         // isPlayer=false constructor, whose aura is the party's external copy.
         let casts_own_shout = self.inputs.use_battle_shout;
         // Three pieces of Battlegear of Wrath add a flat 30 to the shout this warrior makes.
-        let battle_shout_base = buffs::BATTLE_SHOUT.value(0);
+        let battle_shout_base = generated::BATTLE_SHOUT.value(0);
         let shouts_with_the_set = casts_own_shout && self.inputs.has_bs_t2;
         let external_shout = crate::contracts::prepared_v2::ActionId {
             spell_id: rank.id,
@@ -84,9 +84,8 @@ impl Warrior {
                     .auras
                     .iter()
                     .any(|aura| sim.aura(*aura).action_id.as_ref() == Some(&external_shout));
-            let aura = buffs::BATTLE_SHOUT
-                .class_aura(sim, ally, casts_own_shout, 0)
-                .expect("Battle Shout is a buff");
+            let aura = generated::BATTLE_SHOUT
+                .aura(sim, ally, casts_own_shout, 0, 0.0);
             if shouts_with_the_set {
                 add_generated_flat_bonus(
                     sim,
@@ -131,9 +130,8 @@ impl Warrior {
     pub(super) fn register_demoralizing_shout(&self, sim: &mut Sim, unit: UnitId) {
         let rank = spell_data().demoralizing_shout.highest();
         let auras = new_enemy_aura_array(sim, |sim, target| {
-            buffs::DEMORALIZING_SHOUT
-                .class_aura(sim, target, true, 0)
-                .expect("Demoralizing Shout is a debuff")
+            generated::DEMORALIZING_SHOUT
+                .aura(sim, target, true, 0, 0.0)
         });
         let related = aura_array_to_map(sim, &auras);
         sim.register_spell(

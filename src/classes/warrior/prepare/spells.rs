@@ -6,7 +6,7 @@
 use std::rc::Rc;
 
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
-use crate::prepare::buffs;
+use crate::prepare::buffs::generated;
 use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::character::{cooldown_type, MajorCooldown};
 use crate::prepare::dbcenums;
@@ -415,9 +415,8 @@ impl Warrior {
     pub(super) fn register_sunder_armor(&self, sim: &mut Sim, unit: UnitId) {
         let rank = spell_data().sunder_armor.highest();
         let auras = new_enemy_aura_array(sim, |sim, target| {
-            buffs::SUNDER_ARMOR
-                .class_aura(sim, target, true, 0)
-                .expect("Sunder Armor is a debuff")
+            generated::SUNDER_ARMOR
+                .aura(sim, target, true, 0, 0.0)
         });
         let related = aura_array_to_map(sim, &auras);
         sim.register_spell(
@@ -695,9 +694,8 @@ impl Warrior {
     pub(super) fn register_thunder_clap(&self, sim: &mut Sim, unit: UnitId) {
         let rank = spell_data().thunder_clap.highest();
         let auras = new_enemy_aura_array(sim, |sim, target| {
-            let aura = buffs::THUNDER_CLAP
-                .class_aura(sim, target, true, 0)
-                .expect("Thunder Clap is a debuff");
+            let aura = generated::THUNDER_CLAP
+                .aura(sim, target, true, 0, 0.0);
             // The clap's bid in the attack speed category slows the target: both ends only run
             // in a fight.
             let bid = sim.aura(aura).exclusive_effects[0];
