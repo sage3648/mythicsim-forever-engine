@@ -20,8 +20,9 @@ impl Sim {
         u.energy_bar.max_energy = options.max_energy.max(10.0);
         u.energy_bar.current_energy = 0.0;
         u.energy_bar.max_combo_points = options.max_combo_points;
-        u.energy_bar.tick_duration = 2020 * MILLISECOND;
-        u.energy_bar.energy_per_tick = 20.2;
+        // Energy refills smoothly, 1 every 100 ms, not in Classic's 2020 ms ticks of 20.2.
+        u.energy_bar.tick_duration = 100 * MILLISECOND;
+        u.energy_bar.energy_per_tick = 1.0;
         u.energy_bar.energy_regen_multiplier = 1.0;
         u.energy_bar.has_no_regen = options.has_no_regen;
     }
