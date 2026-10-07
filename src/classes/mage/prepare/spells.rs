@@ -425,7 +425,6 @@ impl Mage {
                 allow_spell_queueing: false,
                 timings: Vec::new(),
             },
-            false,
         );
     }
 
@@ -570,7 +569,6 @@ impl Mage {
                     allow_spell_queueing: false,
                     timings: Vec::new(),
                 },
-                false,
             );
         }
     }
@@ -745,7 +743,6 @@ impl Mage {
                 allow_spell_queueing: false,
                 timings: Vec::new(),
             },
-            false,
         );
     }
 
@@ -829,7 +826,6 @@ impl Mage {
                 allow_spell_queueing: false,
                 timings: Vec::new(),
             },
-            false,
         );
     }
 
@@ -975,7 +971,6 @@ impl Mage {
                 allow_spell_queueing: false,
                 timings: Vec::new(),
             },
-            false,
         );
     }
 
@@ -1011,7 +1006,6 @@ impl Mage {
                 allow_spell_queueing: false,
                 timings: Vec::new(),
             },
-            false,
         );
     }
 }

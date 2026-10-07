@@ -208,6 +208,5 @@ pub(crate) fn hazzarahs_charm(env: &mut Environment) {
             allow_spell_queueing: false,
             timings: Vec::new(),
         },
-        false,
     );
 }

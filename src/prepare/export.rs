@@ -826,6 +826,10 @@ pub(crate) fn export(
         "effects": effects,
         "unrepresented": [],
     });
+    // main.go `targetCount`: only a fight of several targets states it.
+    if env.encounter.targets.len() > 1 {
+        prepared["encounter"]["target_count"] = json!(env.encounter.targets.len());
+    }
     let hp = player_message
         .message("cooldowns")
         .map_or(0.0, |cooldowns| cooldowns.f64("hp_percent_for_defensives"));

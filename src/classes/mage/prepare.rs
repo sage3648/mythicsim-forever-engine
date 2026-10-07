@@ -221,6 +221,31 @@ impl PrepAgent for Mage {
         export::effects(&self.talents, sim, unit)
     }
 
+    /// Go `Mage.EurekaSpells`: the fifteen spells the client's Eureka! rows name for cost and
+    /// damage, and the missile tick on the damage list; no spell is in Tick.
+    fn eureka_spells(&self) -> Option<crate::prepare::racials::EurekaSpells> {
+        let cost = masks::ARCANE_BLAST
+            | masks::ARCANE_EXPLOSION
+            | masks::ARCANE_MISSILES_CAST
+            | masks::BLAST_WAVE
+            | masks::BLIZZARD
+            | masks::CONE_OF_COLD
+            | masks::FIRE_BLAST
+            | masks::FIREBALL
+            | masks::FLAMESTRIKE
+            | masks::FROST_NOVA
+            | masks::FROSTBOLT
+            | masks::FROSTFIRE_BOLT
+            | masks::ICE_LANCE
+            | masks::PYROBLAST
+            | masks::SCORCH;
+        Some(crate::prepare::racials::EurekaSpells {
+            cost,
+            damage: cost | masks::ARCANE_MISSILES_TICK,
+            tick: 0,
+        })
+    }
+
     /// Go `spell.Matches(mage.MageSpellManaGem)`.
     fn is_mana_gem(&self, sim: &Sim, spell: crate::prepare::sim::SpellId) -> bool {
         sim.spell(spell).matches(masks::MANA_GEM)
