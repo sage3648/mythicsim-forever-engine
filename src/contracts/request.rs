@@ -1,0 +1,307 @@
+//! The application's `RaidSimRequest`, read as Go reads it.
+//!
+//! The request arrives as protojson, the JSON the application gives the Go engine. Rust
+//! reads it against the reference's own proto schema (`data/proto-schema.json`, written
+//! from the pinned Go descriptors by `tools/rust-data`), with the rules of Go's
+//! `protojson.Unmarshal`: a field may use its JSON or its proto name, an unknown field or
+//! enum name is an error, `null` leaves a field unset and 64 bit integers may be strings.
+//!
+//! [`Request::sha256`] is the digest prepared v2 records as `request_sha256`: SHA-256 of the
+//! request's deterministic protobuf encoding, as Go's `proto.MarshalOptions{Deterministic:
+//! true}` writes it.
+
+mod json;
+mod schema;
+mod sha256;
+mod wire;
+
+use std::collections::BTreeMap;
+
+pub use schema::{FieldKind, FieldSchema};
+
+/// One field value of a decoded message.
+#[derive(Clone, Debug, PartialEq)]
+pub enum Value {
+    Bool(bool),
+    Int(i64),
+    Uint(u64),
+    Float(f32),
+    Double(f64),
+    String(String),
+    Bytes(Vec<u8>),
+    Enum(i32),
+    Message(Message),
+    List(Vec<Value>),
+    /// Map entries in input order; the encoding sorts them as Go's deterministic marshal does.
+    Map(Vec<(Value, Value)>),
+}
+
+/// A decoded protobuf message: its full type name and the fields set on it, by number.
+///
+/// A proto3 scalar without presence is stored only when it differs from its default, as Go
+/// stores no difference between an absent field and a default one.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Message {
+    type_name: &'static str,
+    fields: BTreeMap<u32, Value>,
+}
+
+/// A parsed `RaidSimRequest`.
+#[derive(Clone, Debug)]
+pub struct Request {
+    message: Message,
+}
+
+impl Request {
+    /// Reads a request from protojson bytes as Go's `protojson.Unmarshal` does.
+    pub fn from_json(bytes: &[u8]) -> Result<Request, String> {
+        let raw = json::parse(bytes)?;
+        let message = Message::from_json("proto.RaidSimRequest", &raw)?;
+        Ok(Request { message })
+    }
+
+    /// The decoded request message.
+    pub fn message(&self) -> &Message {
+        &self.message
+    }
+
+    /// The request's deterministic protobuf encoding.
+    pub fn encode(&self) -> Vec<u8> {
+        self.message.encode()
+    }
+
+    /// Lowercase hex SHA-256 of [`Request::encode`].
+    pub fn sha256(&self) -> String {
+        sha256::hex(&self.encode())
+    }
+}
+
+impl Message {
+    /// Reads a message of `type_name` from parsed protojson.
+    pub(crate) fn from_json(type_name: &str, raw: &json::Json) -> Result<Message, String> {
+        wire::decode_message(schema::message(type_name)?, raw, type_name)
+    }
+
+    /// An empty message of a known type.
+    pub fn empty(type_name: &str) -> Message {
+        let schema = schema::message(type_name)
+            .unwrap_or_else(|err| panic!("unknown message {type_name}: {err}"));
+        Message {
+            type_name: schema.name,
+            fields: BTreeMap::new(),
+        }
+    }
+
+    /// The message's full proto type name, such as `proto.Player`.
+    pub fn type_name(&self) -> &'static str {
+        self.type_name
+    }
+
+    /// The deterministic protobuf encoding of this message.
+    pub fn encode(&self) -> Vec<u8> {
+        let mut out = Vec::new();
+        wire::encode_message(self, &mut out);
+        out
+    }
+
+    fn field(&self, name: &str) -> &'static FieldSchema {
+        schema::message(self.type_name)
+            .expect("a decoded message has a schema")
+            .field(name)
+            .unwrap_or_else(|| panic!("{} has no field {name}", self.type_name))
+    }
+
+    /// The value of a field when it is set.
+    pub fn get(&self, name: &str) -> Option<&Value> {
+        self.fields.get(&self.field(name).number)
+    }
+
+    /// Whether a field is set: a present message, a non-default scalar or a non-empty list.
+    pub fn has(&self, name: &str) -> bool {
+        self.get(name).is_some()
+    }
+
+    /// The names of every field set on the message, in field number order.
+    pub fn set_fields(&self) -> Vec<&'static str> {
+        let schema = schema::message(self.type_name).expect("a decoded message has a schema");
+        self.fields
+            .keys()
+            .map(|number| schema.by_number(*number).expect("set field").name.as_str())
+            .collect()
+    }
+
+    pub fn bool(&self, name: &str) -> bool {
+        match self.get(name) {
+            None => false,
+            Some(Value::Bool(value)) => *value,
+            Some(other) => panic!("{}.{name} is not a bool: {other:?}", self.type_name),
+        }
+    }
+
+    pub fn int(&self, name: &str) -> i64 {
+        match self.get(name) {
+            None => 0,
+            Some(Value::Int(value)) => *value,
+            Some(Value::Uint(value)) => *value as i64,
+            Some(other) => panic!("{}.{name} is not an integer: {other:?}", self.type_name),
+        }
+    }
+
+    pub fn i32(&self, name: &str) -> i32 {
+        i32::try_from(self.int(name)).expect("an int32 field holds an i32")
+    }
+
+    pub fn f64(&self, name: &str) -> f64 {
+        match self.get(name) {
+            None => 0.0,
+            Some(Value::Double(value)) => *value,
+            Some(Value::Float(value)) => f64::from(*value),
+            Some(other) => panic!("{}.{name} is not a float: {other:?}", self.type_name),
+        }
+    }
+
+    pub fn str(&self, name: &str) -> &str {
+        match self.get(name) {
+            None => "",
+            Some(Value::String(value)) => value,
+            Some(other) => panic!("{}.{name} is not a string: {other:?}", self.type_name),
+        }
+    }
+
+    /// An enum field's number; zero when unset.
+    pub fn enum_number(&self, name: &str) -> i32 {
+        match self.get(name) {
+            None => 0,
+            Some(Value::Enum(value)) => *value,
+            Some(other) => panic!("{}.{name} is not an enum: {other:?}", self.type_name),
+        }
+    }
+
+    /// An enum field's value name, or its number when the enum has no such value.
+    pub fn enum_name(&self, name: &str) -> String {
+        let field = self.field(name);
+        let number = self.enum_number(name);
+        schema::enum_value_name(field.type_name.as_deref().expect("enum type"), number)
+            .map(str::to_string)
+            .unwrap_or_else(|| number.to_string())
+    }
+
+    /// A message field when set.
+    pub fn message(&self, name: &str) -> Option<&Message> {
+        match self.get(name) {
+            None => None,
+            Some(Value::Message(value)) => Some(value),
+            Some(other) => panic!("{}.{name} is not a message: {other:?}", self.type_name),
+        }
+    }
+
+    /// A repeated field's elements; empty when unset.
+    pub fn list(&self, name: &str) -> &[Value] {
+        match self.get(name) {
+            None => &[],
+            Some(Value::List(values)) => values,
+            Some(other) => panic!("{}.{name} is not repeated: {other:?}", self.type_name),
+        }
+    }
+
+    /// A repeated message field's elements.
+    pub fn messages(&self, name: &str) -> Vec<&Message> {
+        self.list(name)
+            .iter()
+            .map(|value| match value {
+                Value::Message(message) => message,
+                other => panic!("{}.{name} holds a non-message {other:?}", self.type_name),
+            })
+            .collect()
+    }
+
+    /// A repeated double field's elements.
+    pub fn f64s(&self, name: &str) -> Vec<f64> {
+        self.list(name)
+            .iter()
+            .map(|value| match value {
+                Value::Double(value) => *value,
+                Value::Float(value) => f64::from(*value),
+                other => panic!("{}.{name} holds a non-float {other:?}", self.type_name),
+            })
+            .collect()
+    }
+
+    /// A repeated integer or enum field's elements.
+    pub fn ints(&self, name: &str) -> Vec<i64> {
+        self.list(name)
+            .iter()
+            .map(|value| match value {
+                Value::Int(value) => *value,
+                Value::Uint(value) => *value as i64,
+                Value::Enum(value) => i64::from(*value),
+                other => panic!("{}.{name} holds a non-integer {other:?}", self.type_name),
+            })
+            .collect()
+    }
+
+    /// The set member of a oneof, with its value.
+    pub fn oneof(&self, oneof: &str) -> Option<(&'static str, &Value)> {
+        let schema = schema::message(self.type_name).expect("a decoded message has a schema");
+        self.fields.iter().find_map(|(number, value)| {
+            let field = schema.by_number(*number).expect("set field");
+            (field.oneof.as_deref() == Some(oneof)).then_some((field.name.as_str(), value))
+        })
+    }
+
+    /// The message as protojson, as Go's `protojson.Marshal` writes it with
+    /// `UseProtoNames: false`: JSON names, enum names, 64 bit integers as strings and
+    /// unset fields omitted. Map entries keep their input order here, which Go randomizes.
+    pub fn to_protojson(&self) -> serde_json::Value {
+        wire::to_protojson(self)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn reads_names_defaults_and_strings_as_go_does() {
+        let request = Request::from_json(
+            br#"{"sim_options": {"iterations": 3, "randomSeed": "42", "debug": false},
+                 "encounter": {"duration": 120, "targets": [{"level": 63}]},
+                 "type": "SimTypeIndividual"}"#,
+        )
+        .unwrap();
+        let options = request.message().message("sim_options").unwrap();
+        assert_eq!(options.i32("iterations"), 3);
+        assert_eq!(options.int("random_seed"), 42);
+        // A default scalar is not stored, as Go cannot tell it from an absent one.
+        assert!(!options.has("debug"));
+        let encounter = request.message().message("encounter").unwrap();
+        assert_eq!(encounter.f64("duration"), 120.0);
+        assert_eq!(encounter.messages("targets")[0].i32("level"), 63);
+        assert_eq!(request.message().enum_name("type"), "SimTypeIndividual");
+    }
+
+    #[test]
+    fn rejects_what_go_rejects() {
+        for (input, error) in [
+            (r#"{"nope": 1}"#, "unknown field"),
+            (r#"{"type": "SimTypeNope"}"#, "unknown enum value"),
+            (r#"{"simOptions": {"iterations": 1.5}}"#, "not an integer"),
+            (
+                r#"{"simOptions": {"iterations": 1}, "sim_options": {}}"#,
+                "duplicate field",
+            ),
+            (r#"{"simOptions": {"debug": "true"}}"#, "expected a bool"),
+        ] {
+            let err = Request::from_json(input.as_bytes()).unwrap_err();
+            assert!(err.contains(error), "{input}: {err}");
+        }
+    }
+
+    #[test]
+    fn encodes_the_deterministic_protobuf() {
+        // sim_options (3) { iterations (1) = 3 } then type (4) = 1.
+        let request =
+            Request::from_json(br#"{"type": 1, "simOptions": {"iterations": 3}}"#).unwrap();
+        assert_eq!(request.encode(), vec![0x1a, 0x02, 0x08, 0x03, 0x20, 0x01]);
+    }
+}

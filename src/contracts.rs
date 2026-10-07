@@ -1,8 +1,9 @@
-//! Strict prepared wire types. The v1 types below describe the isolated Frostbolt
-//! kernel; [`prepared_v2`] describes a reset Go simulation. Character preparation
-//! itself stays outside both contracts.
+//! Strict wire types. The v1 types below describe the isolated Frostbolt kernel;
+//! [`prepared_v2`] describes a reset Go simulation and [`request`] reads the application's
+//! `RaidSimRequest` as Go does.
 
 pub mod prepared_v2;
+pub mod request;
 
 use serde::{Deserialize, Serialize};
 
