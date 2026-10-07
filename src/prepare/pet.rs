@@ -391,14 +391,15 @@ fn apply_dependencies(without: Stats, deps: &[(Stat, Stat, f64, f64)]) -> Stats 
         if src == dst {
             s[*dst] *= *amount;
         } else if *step != 0.0 {
-            s[*dst] += (s[*src] / *step).floor() * *step * *amount;
+            // Go's arm64 build fuses each sum into one multiply-add (pets.go 124, 126, 128).
+            s[*dst] = ((s[*src] / *step).floor() * *step).mul_add(*amount, s[*dst]);
         } else if matches!(
             src,
             Stat::Strength | Stat::Agility | Stat::Stamina | Stat::Intellect | Stat::Spirit
         ) {
-            s[*dst] += s[*src].floor() * *amount;
+            s[*dst] = s[*src].floor().mul_add(*amount, s[*dst]);
         } else {
-            s[*dst] += s[*src] * *amount;
+            s[*dst] = s[*src].mul_add(*amount, s[*dst]);
         }
     }
     s.floor_game_stats()
