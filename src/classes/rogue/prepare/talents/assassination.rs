@@ -19,7 +19,7 @@ use super::super::spells::{BUILDER, FINISHER};
 use super::super::util::{
     energy_cost, ignore_haste_cast, longest_cooldown, spell_action, tagged_action,
 };
-use super::super::{rogue_state, Rogue, SLICE_AND_DICE_DURATIONS};
+use super::super::{Rogue, SLICE_AND_DICE_DURATIONS};
 
 impl Rogue {
     /// Go `registerAssassinationTalents`.
@@ -299,7 +299,7 @@ impl Rogue {
         }
         let rank = spell_data().venom.highest();
         let action = spell_action(rank.id);
-        let state = rogue_state(sim);
+        let state = Rc::clone(&self.state);
 
         let damage_bonus = rank
             .effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_DAMAGE)

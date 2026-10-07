@@ -12,7 +12,7 @@ use crate::prepare::export::action_id;
 use super::poisons::{poison_proc_mask, IMBUES};
 use super::spell_data::spell_data;
 use super::util::{has_dagger, Hand};
-use super::{rogue_state, Rogue, CLASS_SPELLS, SLICE_AND_DICE_DURATIONS};
+use super::{Rogue, CLASS_SPELLS, SLICE_AND_DICE_DURATIONS};
 
 /// The stable names of the class spells a mask names, in the exporter's order:
 /// `rogueMaskNames`.
@@ -50,7 +50,7 @@ pub(super) fn class_effects(
 fn rogue_effects(rogue: &Rogue, env: &Environment) -> Vec<Value> {
     let sim = &env.sim;
     let data = spell_data();
-    let state = rogue_state(sim);
+    let state = &rogue.state;
     let mut effects = Vec::new();
 
     // sinister_strike.go: the highest rank's base plus normalized main hand damage.

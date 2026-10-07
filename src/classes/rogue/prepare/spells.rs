@@ -20,7 +20,7 @@ use super::util::{
     aura_array_map, energy_cost, ignore_haste_cast, longest_cooldown, new_enemy_aura_array,
     spell_action,
 };
-use super::{rogue_state, Rogue};
+use super::Rogue;
 
 /// Go `SpellFlagBuilder`.
 pub(super) const BUILDER: SpellFlag = SpellFlag::AGENT_RESERVED2;
@@ -302,7 +302,7 @@ impl Rogue {
     pub(super) fn register_slice_and_dice(&mut self, sim: &mut Sim, unit: UnitId) {
         let rank = spell_data().slice_and_dice.by_id(6774);
         let action = spell_action(rank.id);
-        let state = rogue_state(sim);
+        let state = Rc::clone(&self.state);
 
         // The client states the attack speed bonus as a percentage on the rank's own effect
         // (30).

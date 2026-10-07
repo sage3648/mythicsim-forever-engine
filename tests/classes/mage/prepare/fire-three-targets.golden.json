@@ -1,0 +1,586 @@
+{
+ "case": "fire-three-targets",
+ "request_sha256": "296d7e372161d42e9a9b6417648040cd53be474feac590fc3d1fea9a6106a87c",
+ "sections": {
+  "effects": [
+   [
+    "arcane_concentration",
+    "0fe67e30beccfee364ccae2440ca8261fd9143e81045182a71304de2164db209"
+   ],
+   [
+    "missile_barrage",
+    "0ad046a9fa653d32f209dbcb610ca56fa1b1bc9ceaab6e200f8bda159a45e48a"
+   ],
+   [
+    "evocation",
+    "663c135f87dfaa6bad0065862b0190a1953e3cffd6bffbf9b7f97aeda3367a66"
+   ],
+   [
+    "arcane_missiles",
+    "b9ac046e3b9a417e7e7d41e27185c8b50e72a94e314e0c677349fba73fca1abd"
+   ],
+   [
+    "frostbolt",
+    "a27ea6b0e237d7bf48770070761f869cf73f9b4a529d2784e923493ca40e3b7f"
+   ],
+   [
+    "fire_blast",
+    "3a2f269176e38ad3405fb5d41ca82eecf959324c4cb14340b94ad179900072e9"
+   ],
+   [
+    "fireball",
+    "33a75e5343f47c59968b736564ea80f9a584086e88aa9994b01b13fbb8f59a55"
+   ],
+   [
+    "frostfire_bolt",
+    "09cb47162d5ba1a39f867a4d9efbe82af19215a87b875f2a9186f02c7b23394d"
+   ],
+   [
+    "scorch",
+    "fb6f29a69b2ac641736a13c15933f1594fd5a7fda8a41aeec83aa583eca85d70"
+   ],
+   [
+    "pyroblast",
+    "3ccf3707445e378c301a718cf1c8264ba42db2528bf9ae614471fad3453c7506"
+   ],
+   [
+    "combustion",
+    "397be9eccd9c5d0d80853c72127394cbff1021328d64cea9466dc96add0fd9e6"
+   ],
+   [
+    "heating_up",
+    "f8c5b4a8a09c95d6cd47b8d4fb30e8b43ba3236e2f0b5ba4ccc60eccd867d2f5"
+   ],
+   [
+    "master_of_elements",
+    "d6ae65331b9f0cd45e8df1a89ae12cf0257eeee26be598e44f5ff51bffd5f446"
+   ],
+   [
+    "ignite",
+    "c394b425dfe6a943894bf6d06c1599f9e02ad2ca543dea3140852e9e0e8e38b2"
+   ],
+   [
+    "arcane_explosion",
+    "ae53b74ea0bcb684e6c439544f0de25e47c83743087ee1c147da22727dfc1287"
+   ],
+   [
+    "cone_of_cold",
+    "6349e8633cf33c8146772d95cdba8005a1dd1f4f44dd1f35b9fcdc914c7eb376"
+   ],
+   [
+    "frost_nova",
+    "4bd15369ba47992708d15a4e6aeab8415163810d90a51740a9bf4df1586d0a36"
+   ],
+   [
+    "flamestrike",
+    "b641b1fa454294f72d31f282359fb624f41ce1445da69cd7e39c95dc71756b9e"
+   ],
+   [
+    "blizzard",
+    "c188352062389dfc3d5682bc8bf8899ffefe63ffdfde24757e61ae9196bf9795"
+   ],
+   [
+    "mana_gems",
+    "c5ede0401ac9daea2fc63eb5477528e093f1d5ed01869e6393191ffcc0899a63"
+   ],
+   [
+    "mage_armor",
+    "d24de28ac4957f3803fd713ff92187e91b229e786de761c4e3edc6200de08e77"
+   ],
+   [
+    "inert_listener",
+    "f72fb35c4209bb4ef4355c00adaa2a7dabf800f539122ffe6e3ff85837ca23c5"
+   ],
+   [
+    "parry_haste",
+    "722941b3a50811cb60dbfd575e410f766b07fd32ae37c1dc4b47e2b97143d2f8"
+   ]
+  ],
+  "encounter": "33496e1255dc20ff9099825961f4972939ad26745f01c1fe0d0f75e0e117dfbc",
+  "player.auras": [
+   [
+    "Chance of Death",
+    "d7a42e06cb71727fd78711ab238d7653998c51669f920fbb99c5c04dfe1287af"
+   ],
+   [
+    "Sword Specialization",
+    "2cbec605924bfd169399deb62ea4b0154f48b7ddd83135185ce2a3c3e34ffe88"
+   ],
+   [
+    "Clearcasting",
+    "b08f5bc06b8cb858e6a7aeba8f6bb39a177144fdaa42d922d003d34514038c5c"
+   ],
+   [
+    "Arcane Concentration",
+    "62f60b47e45ca95b644af55d03c270515a625fd16bd4da89f29211113705ff50"
+   ],
+   [
+    "Missile Barrage",
+    "28d28f309baa605d534c2b7737693bd727424c6037c3d455838519328e134089"
+   ],
+   [
+    "Missile Barrage Trigger",
+    "bdc4174e1ec260ad9d947871ff1553d8477e32cc4388ee8860f38abcd4877523"
+   ],
+   [
+    "Ignite Talent",
+    "932921fc5365708a02ed90e5b99f34f2b1b933a8e806bcbb4925310ee6e74678"
+   ],
+   [
+    "Heating Up",
+    "e25ded95ed72eebda3d7b2123a46f88ccdc7812d449be9897ea49ed52df5685a"
+   ],
+   [
+    "Heating Up Trigger",
+    "869b07655fbb71fa9915ad20094dd1deca7dc38a2d27d8c8a9ab4424bc5f0353"
+   ],
+   [
+    "Master of Elements",
+    "cf5f2fba6dede7c2fed1aedf111e68cfffd7afaf976358582ed935631103e91c"
+   ],
+   [
+    "Arcane Brilliance (External)",
+    "3a09dbb9dc1838cfa17830300b57f75b8d3248bf7da15405ea18be00ebf69b36"
+   ],
+   [
+    "Mage Armor",
+    "41c059ba664dcd64259824a67d235e89f7586091df0a9857750b44366fad4b4d"
+   ],
+   [
+    "Blizzard",
+    "e239fdfd9beb4ac363cfa2f7ce115d1f3af6ef27778dd48ea00431669c87e0aa"
+   ],
+   [
+    "Evocation Regen",
+    "a8d888425f039534811cf7107d635986dc4d28da201b91609d0706f204b22b4a"
+   ],
+   [
+    "Evocation",
+    "28297a93408781546bd419fee461774e727ecc4236b46c8797d07e54af9adec6"
+   ],
+   [
+    "Fire Vulnerability",
+    "827eb821bd4ac6c4c9ec127a3569613d7ba9621b9c764b4c6dfb0a3252b50245"
+   ],
+   [
+    "Flamestrikefire-mage (#1) Rank 6",
+    "38899a5a2b37a66ce1a60dc0c5ec7964dd32c539d6e149a04ec6672edca5bc52"
+   ],
+   [
+    "Combustion",
+    "e1cb7a4f2560904d3638b09e348fadd1f1cf8ee25591a22d1a7dea11695a2edc"
+   ],
+   [
+    "Movement",
+    "13ca1fe70ba88f74e2fe90a8ccc46c1931bc211e8e1ecf1ad198a224713fb4c3"
+   ]
+  ],
+  "player.major_cooldowns": [
+   [
+    "{\"spell_id\": 12051}",
+    "9374a30bfc9e593d8c63d96cc94de6817aba52944b0be912d2ad176f502f8774"
+   ],
+   [
+    "{\"item_id\": 5514}",
+    "5bd5954543b540cbb9e821b63556d404a9d078b18f1b9cabd9659eb7d341c7b5"
+   ],
+   [
+    "{\"item_id\": 5513}",
+    "ae793ac96825883978dbdd0b6aee4936b3a7d6a63b1ddd21f1f7fa851e2b8932"
+   ],
+   [
+    "{\"item_id\": 8007}",
+    "dcf7fdba3dc497ba118353e36643d5394bdaeaba718bcee30eee294e65aa5684"
+   ],
+   [
+    "{\"item_id\": 8008}",
+    "133632ed0e7c478992863e9c7301a5a60e5c87b374e90d02d1344b4fa1acd3ed"
+   ],
+   [
+    "{\"spell_id\": 11129}",
+    "07ec4dc33d95c109f7970a0b695e59f369c319fa8747391ddbcf56389d1eb554"
+   ]
+  ],
+  "player.mana": "113fc270b46912599dcd9f1165940d3c571799523a3fc5a4681f60ac5ab11444",
+  "player.pseudo_stats": "b341831eff5b8c0ea22cfa132553849aaf446699ac4e7d512132e76557cc25fd",
+  "player.spells": [
+   [
+    "{\"other_id\": \"OtherActionManaGain\"}",
+    "162525ce50e2c1fdfb133896acf35d224c6c22325cbd6ed1412d0f385d07e743"
+   ],
+   [
+    "{\"spell_id\": 412538}",
+    "9af0f7c3241a42e32f05a4ece94caf8bc21ec76533e59bccd9d84ebd83c8f422"
+   ],
+   [
+    "{\"spell_id\": 10202}",
+    "82a4ed43a3da82ec79466b0de3d44e6d87a9094d29cc63b389657a1f0de4fd7f"
+   ],
+   [
+    "{\"spell_id\": 7268}",
+    "c5ab214b0f24fbc2dd44bb6fb79d97fae52e2bfcd547ee608cb8a2470f1fab59"
+   ],
+   [
+    "{\"spell_id\": 5143}",
+    "e3220e6557919cd5b7f4feb5fbb452d5f6aee818079c35cf80377c231e92c86a"
+   ],
+   [
+    "{\"spell_id\": 7269}",
+    "b9cafff5aed64acf5ba54d5904b7f7fe509d82bbfc91b3eb2e5a87473a764ee8"
+   ],
+   [
+    "{\"spell_id\": 5144}",
+    "6a335f48e4282d4c329421586026d63fe8316a6681d444feac446ed69251a06d"
+   ],
+   [
+    "{\"spell_id\": 7270}",
+    "471091bc7dff1940adb30ebe9b28a1d32f5fe7cdea978b4cf646e99ce8bf6831"
+   ],
+   [
+    "{\"spell_id\": 5145}",
+    "e1ccccf7408841c3669370bb707abb9b128ae27bd81aecbb716cbcfee1898808"
+   ],
+   [
+    "{\"spell_id\": 8419}",
+    "1d62014f62aa6ca371b209d138db3bb7e1e5fc0d58135e9c4ef69b75012421ba"
+   ],
+   [
+    "{\"spell_id\": 8416}",
+    "dd59f1b82c71ae099186e61f055854630fde678978db0e2895205446333f9bfb"
+   ],
+   [
+    "{\"spell_id\": 8418}",
+    "e423fc064e4bea4100f2d03435552c4ec9b8515bc31e59c4524ae5a792ad68ac"
+   ],
+   [
+    "{\"spell_id\": 8417}",
+    "d2cb6bf697750afae3385845739a1df8e15e09a08a82b4686ff0dfacd71b5243"
+   ],
+   [
+    "{\"spell_id\": 10273}",
+    "da1ed91d20cec13cd952f1f443625f8f28920e4a06fb78584cc93f8ac7456ca9"
+   ],
+   [
+    "{\"spell_id\": 10211}",
+    "efb4124fe663d3dc8b8c3e5d5bc5f69982912013e0774f454a70a4f43ec43295"
+   ],
+   [
+    "{\"spell_id\": 10274}",
+    "bc2180e2f30a61e10c358645e53c93bf0665edb8511788180a64f4f6ff652d77"
+   ],
+   [
+    "{\"spell_id\": 10212}",
+    "329f330b2f67f8965846060e9314e87d029ebc497702ea880c3a07e0eb54b7bd"
+   ],
+   [
+    "{\"spell_id\": 25346}",
+    "7a55af4061ac3f1da959c8d0882103111a524812cc184d618b81338b713a3214"
+   ],
+   [
+    "{\"spell_id\": 25345}",
+    "dfcb897903ed828d9918abfe65a57b7c4f0b42e28a1c4405fb32ee74ea38b4e6"
+   ],
+   [
+    "{\"spell_id\": 1279949}",
+    "3481571d79c2ad15a7057ccb2050e0f8dc170c783de6804617b24689220af994"
+   ],
+   [
+    "{\"spell_id\": 10187}",
+    "4bbcb6d16a014f02bd695b173cfeb4ea83cf26ef5cabf99d51d8b4d1f8500ad6"
+   ],
+   [
+    "{\"spell_id\": 10161}",
+    "98dd9484d2d772e489ac092dd668d3bc933c09f5951ed03ac26cb0cf927477fd"
+   ],
+   [
+    "{\"spell_id\": 116}",
+    "fcb6fc671d9a241855aebabfe2680c3d022b998dffe80271db2ace333fb2f348"
+   ],
+   [
+    "{\"spell_id\": 205}",
+    "4907890a3f458c276cbb352a34ee01c678b07fc1d8a0f7f478fb8a46d83c136f"
+   ],
+   [
+    "{\"spell_id\": 837}",
+    "80679e5e9e568272274617ec12d2aa1f0c378c8f5b6ee6b9457e8fe5556aa7cc"
+   ],
+   [
+    "{\"spell_id\": 7322}",
+    "e17889cc56da66d67177b9226a860bc37fd9eaaa22736c22b4225fa5b5774bae"
+   ],
+   [
+    "{\"spell_id\": 8406}",
+    "8c72987273e5a9de9a65abb14fa251c2fd27bc51d824c1142192bfb54e9bab60"
+   ],
+   [
+    "{\"spell_id\": 8407}",
+    "514dd327964b177ff6b7a8dd2f340a258d17a3d65c03cbad02b8c4b43ddff6d6"
+   ],
+   [
+    "{\"spell_id\": 8408}",
+    "e397468efe6b6c1480107d150b8d1739053f85e4e85321337a0b8c1de012c1f8"
+   ],
+   [
+    "{\"spell_id\": 10179}",
+    "420dd8e7445b83c3237cd85b00dfe101dbcd31ef573d244154fdce748b858126"
+   ],
+   [
+    "{\"spell_id\": 10180}",
+    "587ee5102c6df5c4921651add1fbcfc67a02f3a056d07ddd0c20169f5770b4aa"
+   ],
+   [
+    "{\"spell_id\": 10181}",
+    "68b3fc67cd3acf24d2af3a94a582adca581533ddc4a33831f51842427ee52bc5"
+   ],
+   [
+    "{\"spell_id\": 25304}",
+    "ae3bd3792fde6ccf615181eab7a7e743e9e34498ec633d66636d10f635077290"
+   ],
+   [
+    "{\"spell_id\": 401502}",
+    "32b5c722ce561175df6e2873e71b0dc351343c19d19f3be2624e90d0dea79586"
+   ],
+   [
+    "{\"spell_id\": 1237312}",
+    "697b68db132263554fa5ba82ea3bdae914f2783e59df796ed63cf3b4715766b6"
+   ],
+   [
+    "{\"spell_id\": 1237313}",
+    "2b8b02917ee6468a5e5f9f06cb17afefad31d7b7811670ab9ec0df613f9ec3db"
+   ],
+   [
+    "{\"spell_id\": 12051}",
+    "fa81eb428a4781725cb567637702131d724dcaea0ef1d70d519554b7e9272abf"
+   ],
+   [
+    "{\"spell_id\": 133}",
+    "45fdb0b40edc8bf54ffc688ca7122a6dcd9d8894a184c1ce349827b8e0d3f585"
+   ],
+   [
+    "{\"spell_id\": 143}",
+    "cb5268a99ab4561aaefd1016205bb5da25c5ef314e8674119090de8a80f8b307"
+   ],
+   [
+    "{\"spell_id\": 145}",
+    "579159cf5fee428842ec17ab2975cb7b47c2a95f1cded561e1d09625b2a10b20"
+   ],
+   [
+    "{\"spell_id\": 3140}",
+    "9b0f8ece4909c0a3887d7fa769c245f5951139509d0760df6b881a7e48a5008d"
+   ],
+   [
+    "{\"spell_id\": 8400}",
+    "6a53b3a75a7ee66abaec29b1bfdfaa846305545e932375b5dcb3c24d0743db14"
+   ],
+   [
+    "{\"spell_id\": 8401}",
+    "96264d177f1661d5a18a45b2a0c465413e8a737e34efc36624124af3a1fff746"
+   ],
+   [
+    "{\"spell_id\": 8402}",
+    "ec71fbccae82b89be791cf56530d4dbd0310ac1a7b175ca021d16f95e1e50bb9"
+   ],
+   [
+    "{\"spell_id\": 10148}",
+    "8cd20a1c44669187847f1bb1ec6df780878664302499a6c9299fae804a6916c4"
+   ],
+   [
+    "{\"spell_id\": 10149}",
+    "7e12c8ebf85822932be1ecbe1540b19ce5bcc9cb09e6481bcfd80d600bde63e5"
+   ],
+   [
+    "{\"spell_id\": 10150}",
+    "f745877cba7b02e5c2255f8268cddfe9f09fa18f4c63a583e9f49d43438106ef"
+   ],
+   [
+    "{\"spell_id\": 10151}",
+    "17e439c336f5b35ba4094fd21fe7402fc7fbd68fb18ebf241887ddba3d6c87db"
+   ],
+   [
+    "{\"spell_id\": 25306}",
+    "48856994a78bdda33fc7a32823cadaf8cec440865ffbc42b3d05bfe6b2cbdea8"
+   ],
+   [
+    "{\"spell_id\": 10199}",
+    "940a43e64505a10ce39d7612ba9d2e3195d430e50a7a43640717a2e0ccde1b37"
+   ],
+   [
+    "{\"spell_id\": 10230}",
+    "2996d6b1e8274a1c1824a8e072c7ded340e2098a8c7ac81fe87f080439c4f642"
+   ],
+   [
+    "{\"item_id\": 5514}",
+    "ac88d371db6a891b04056f77b761734a8e1e7c190953bc9a7f052c6bd19f9cfa"
+   ],
+   [
+    "{\"item_id\": 5513}",
+    "72e01d05f25bd051a17f131b66b38bab21b90711b63c01804712414c41edf441"
+   ],
+   [
+    "{\"item_id\": 8007}",
+    "0f62a80ad5e5861e921dca5268fdafd067072dbb2711f3c6efc541da0e213432"
+   ],
+   [
+    "{\"item_id\": 8008}",
+    "fd48eae4a11f10c48e76f2ef12adf9427c300269fdc28a0bfb6bd252c7e445e3"
+   ],
+   [
+    "{\"spell_id\": 2948}",
+    "5bcad79ca4d82ffccf21e603c1de8136f2db068c6fe8d985e539210c244c9cdd"
+   ],
+   [
+    "{\"spell_id\": 8444}",
+    "56928aecdbd0063b3dd82c27cb32d56f795e3f9b1e4333808272b17164f13964"
+   ],
+   [
+    "{\"spell_id\": 8445}",
+    "75e0aa8fcd5d481d12a3c268fa9a03e14c953f66685e1866aeeaddf4af81ffad"
+   ],
+   [
+    "{\"spell_id\": 8446}",
+    "447892d3db8aca3ce036c0a7c61ca980e40bf284cb3a6b4757adc932e4b8ce75"
+   ],
+   [
+    "{\"spell_id\": 10205}",
+    "e1409241ffbc35b134d44d2842594382f4bc7ff22fa673032784ac3f33b30f29"
+   ],
+   [
+    "{\"spell_id\": 10206}",
+    "5985f4987b58b663d378de8e3244fb96422e1a43e6d0b3de5b4d932e6fa20db9"
+   ],
+   [
+    "{\"spell_id\": 10207}",
+    "b2c3fe9dcad4a8edb272d5bca0d3cc3fd516a3f358a461c0bee47609776666af"
+   ],
+   [
+    "{\"spell_id\": 10216}",
+    "4acd2aea108aed2b68c712806413a1d403d04157066d4fc03e30b933c2ce515a"
+   ],
+   [
+    "{\"spell_id\": 18809}",
+    "e460ce8127b336be49601cfb1ff55957f53f2ae1bb51ac8fabbeb4c2918bdb33"
+   ],
+   [
+    "{\"spell_id\": 11129}",
+    "e9e7ae9b7c48f843d6f705e4bf65287fd1c537d2264a7b778de44214bee62053"
+   ],
+   [
+    "{\"other_id\": \"OtherActionMove\"}",
+    "08b9f95ec698c9a0ff7453dd8db39f4a9b4593cced26fb980de3087a23b2054f"
+   ]
+  ],
+  "player.stats": "9a446a7aef62f5ac460504e29c5b8ab457578ab976e6b3381d33c147a484fc29",
+  "player.talents": "e40952d69d381fbd9e232ca70678951ecf6c6d06bc770625c3d6d1d7305b2060",
+  "target.auras": [
+   [
+    "Ignite-3",
+    "be6e018978d759905730e7dc7a96762cf9b58eb7a738c5262e5aaaee891b338e"
+   ],
+   [
+    "ArcaneMissiles-1-3",
+    "bff6a9987a1ef1bad19ddf2ea62147be631e7b1891a937ad37be0e2f1b3386a9"
+   ],
+   [
+    "ArcaneMissiles-2-3",
+    "0421cbc500a1180a959d67d12f6f88e0a5ec62ac9027cc19faf442a74f3f5b5f"
+   ],
+   [
+    "ArcaneMissiles-3-3",
+    "2e05028e431e0f03310fb50f82b3cc8fb4346557097ed6dded3a3f0acd972e07"
+   ],
+   [
+    "ArcaneMissiles-4-3",
+    "94ef6896f2590d0fec63a9b5061adcebc01ca7afcc74fa2fc95b73f4adb3ee23"
+   ],
+   [
+    "ArcaneMissiles-5-3",
+    "3c78f4af1684d581178c3972a9061e717034a475101400ae9bbc64c3f4833b46"
+   ],
+   [
+    "ArcaneMissiles-6-3",
+    "17cc2998358ffd990a1f07d52cd1bf04cba0f500ad5f631ad7029017a2fbde4f"
+   ],
+   [
+    "ArcaneMissiles-7-3",
+    "121a571a4f9abf236b065957793f8ca865bc91538cd320068ba203783aab0893"
+   ],
+   [
+    "ArcaneMissiles-8-3",
+    "7fd484412b37018486232df28d3edb4218dcc9fcbde1424dd63ce704cebf39aa"
+   ],
+   [
+    "FrostfireBoltDoT-1-3",
+    "bb2dea099bbd497da793c3eb6208eb1b063d754c48ce651676821eb2487bdba2"
+   ],
+   [
+    "FrostfireBoltDoT-2-3",
+    "c380c4b7e763d4cbddd5fedc66cd12caefa2aa39db4fe3e74adaf9c7ed500226"
+   ],
+   [
+    "FrostfireBoltDoT-3-3",
+    "dd216756d45081b406a1f750fa74cf81c389e318c841388498b9f75fb6040537"
+   ],
+   [
+    "FireballDoT-1-3",
+    "37d335a6dda470aafba8513501ee8d9d351a681471fb507f56d17eed90891218"
+   ],
+   [
+    "FireballDoT-2-3",
+    "9c1388a9675d00354ea64a1decec0d69f5a046c5540b5614424fa46a86e51ccc"
+   ],
+   [
+    "FireballDoT-3-3",
+    "756c3fceeb2f5ef2c525997ad68f5267f06ef46501fefe1a2e53b8d4dd048493"
+   ],
+   [
+    "FireballDoT-4-3",
+    "aebe281585f9edf9741d31d37b1a1789598debd175ad7936229000e39305f726"
+   ],
+   [
+    "FireballDoT-5-3",
+    "e449a38757d6fa7c364907f2f6fc7d475343b7d1c601c9b5b77d34317990239c"
+   ],
+   [
+    "FireballDoT-6-3",
+    "cb491427edea34769df9ebfa2369c04014c7a486442af98926d56be679b82aa9"
+   ],
+   [
+    "FireballDoT-7-3",
+    "c302928e74f553b3d84caed2b4d8df0bc7902a8c49089a63b8b5a05980b807e5"
+   ],
+   [
+    "FireballDoT-8-3",
+    "005b1b4d866cfc7afbf760e27c031dee6b293f663689977986dd24a19e5e1883"
+   ],
+   [
+    "FireballDoT-9-3",
+    "47ed1ab4c1327dee49f6fe723fcfd88ea3c7ac41866e85cacb00931388855c35"
+   ],
+   [
+    "FireballDoT-10-3",
+    "c39815087a7f3e6168f157808400669c9a42aacd9ea7d96232fb88fd3e13d58b"
+   ],
+   [
+    "FireballDoT-11-3",
+    "30f05b39b572987b59c578c92832f83b4d8ed2b428e5dd8b82f2bd5d0afd4e19"
+   ],
+   [
+    "FireballDoT-12-3",
+    "b752b68dc5bf3fcb948aa7790d5d3eda2f3ec102023117d2f28d2318fb0a99fa"
+   ],
+   [
+    "PyroblastDoT-3",
+    "d3cf79a9cc088260ed584d15a4e5fc5825cd6d351c652cedc9a4e7a5d2101e7a"
+   ],
+   [
+    "Parry Haste",
+    "44437011897bce69a898f0e70684c5bf83d8cba224b6ad2e4f89cb84555a0eae"
+   ],
+   [
+    "Movement",
+    "13ca1fe70ba88f74e2fe90a8ccc46c1931bc211e8e1ecf1ad198a224713fb4c3"
+   ]
+  ],
+  "unrepresented": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+ }
+}

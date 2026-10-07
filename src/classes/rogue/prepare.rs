@@ -22,7 +22,7 @@ use crate::prepare::character::constants::DODGE_RATING_PER_DODGE_PERCENT;
 use crate::prepare::energy::EnergyBarOptions;
 use crate::prepare::env::Environment;
 use crate::prepare::racials::EurekaSpells;
-use crate::prepare::sim::{AuraId, Duration, Sim, SpellId, UnitId, SECOND};
+use crate::prepare::sim::{AuraId, Duration, Sim, SpellId, UnitId, UnitType, SECOND};
 use crate::prepare::stats::Stat;
 use crate::prepare::Refusal;
 
@@ -158,8 +158,7 @@ pub(super) const SLICE_AND_DICE_DURATIONS: [Duration; 6] = [
 ];
 
 /// The Rogue fields Go's closures and item sets change while a character is built and reset:
-/// the closures only see the simulation, so the agent shares them through it
-/// (`Sim::class_state`).
+/// the closures only see the simulation, so the agent shares them with each one it builds.
 #[derive(Default)]
 pub(super) struct RogueState {
     /// Go `SliceAndDiceBonusFlat`.
@@ -172,16 +171,6 @@ pub(super) struct RogueState {
     pub has_pvp_energy: Cell<bool>,
     /// Go `additivePoisonBonusChance`.
     pub additive_poison_bonus_chance: Cell<f64>,
-}
-
-/// The state the agent of this simulation shares.
-pub(super) fn rogue_state(sim: &Sim) -> Rc<RogueState> {
-    let state = sim
-        .class_state
-        .as_ref()
-        .expect("a Rogue simulation holds the Rogue state");
-    Rc::downcast::<RogueState>(Rc::clone(state))
-        .unwrap_or_else(|_| panic!("the class state of a Rogue simulation is the Rogue's"))
 }
 
 /// The spells Go keeps on the Rogue, which the exporter and the registrations read.
@@ -228,6 +217,7 @@ pub(super) struct RogueAuras {
 /// Go `Rogue`: the talents, the registered spells and auras, and what the exporter reads.
 pub(crate) struct Rogue {
     talents: Message,
+    state: Rc<RogueState>,
     spells: RogueSpells,
     auras: RogueAuras,
     /// Go `ruthlessnessChance`.
@@ -252,7 +242,6 @@ pub(crate) fn new_rogue(
     )
     .map_err(|err| Refusal::new("talents", err))?;
     let state = Rc::new(RogueState::default());
-    sim.class_state = Some(Rc::clone(&state) as Rc<dyn std::any::Any>);
 
     // Passive rogue threat reduction: https://wotlk.wowhead.com/spell=21184/rogue-passive-dnd
     let pseudo = &mut sim.unit_mut(unit).pseudo_stats;
@@ -299,6 +288,7 @@ pub(crate) fn new_rogue(
 
     Ok(Box::new(Rogue {
         talents,
+        state,
         spells: RogueSpells::default(),
         auras: RogueAuras::default(),
         ruthlessness_chance: 0.0,
@@ -356,17 +346,41 @@ impl PrepAgent for Rogue {
         CLASS_SPELLS
     }
 
+    /// The Rogue's effects read the environment: `export_effects`.
     fn effects(&self, _sim: &Sim, _unit: UnitId) -> Vec<serde_json::Value> {
-        // The Rogue's effects read the environment: class_effects.
         Vec::new()
     }
 
-    fn class_effects(
+    fn export_effects(
         &self,
         env: &Environment,
         unrepresented: &mut Vec<String>,
     ) -> Vec<serde_json::Value> {
         export::class_effects(self, env, unrepresented)
+    }
+
+    /// tools/oracle-v2/rogue.go `rogueStatAuras`: Ghostly Strike's buff adds dodge rating through
+    /// `AttachStatBuff`, which only the swings of a target that tanks the player read.
+    fn stat_auras(&self, sim: &Sim, unit: UnitId) -> Vec<String> {
+        let Some(target) = sim
+            .all_units()
+            .into_iter()
+            .find(|target| sim.unit(*target).unit_type == UnitType::Enemy)
+        else {
+            return Vec::new();
+        };
+        let target = sim.unit(target);
+        if target.current_target != Some(unit) && target.secondary_target != Some(unit) {
+            return Vec::new();
+        }
+        sim.get_aura(unit, "Ghostly Strike Buff")
+            .map(|aura| vec![sim.aura(aura).label.clone()])
+            .unwrap_or_default()
+    }
+
+    /// The item set bonuses change the Rogue's state, as Go's hand them the agent.
+    fn as_any_mut(&mut self) -> Option<&mut dyn std::any::Any> {
+        Some(self)
     }
 
     /// Go `Rogue.EurekaSpells`: a Gnome rogue's Eureka! names the same direct abilities for cost

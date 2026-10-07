@@ -227,6 +227,13 @@ pub(crate) struct RageBar {
     pub enabled: bool,
     /// Go `maxRage`: at least 100 once the class enables the bar.
     pub max_rage: f64,
+    /// Go `startingRage`: clamped to the bar.
+    pub starting_rage: f64,
+    pub current_rage: f64,
+    /// Go `offHandRageMultiplier`.
+    pub off_hand_rage_multiplier: f64,
+    /// The `BaseRageMultiplier` the bar's listener was built with.
+    pub base_rage_multiplier: f64,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -382,9 +389,6 @@ pub(crate) struct Sim {
     /// Go `RegisterPostFinalizeEffect` as a class agent calls it: the agent holds no environment,
     /// so the effects queue here and `Environment` moves them to its own list in order.
     pub pending_post_finalize: Vec<super::env::FinalizeEffect>,
-    /// State a class agent shares with the closures it registers and with its item sets, which
-    /// Go keeps on the agent the closures capture.
-    pub class_state: Option<Rc<dyn std::any::Any>>,
 }
 
 impl Sim {
@@ -404,7 +408,6 @@ impl Sim {
             env_units: Vec::new(),
             damage_done_by_caster: std::collections::BTreeMap::new(),
             pending_post_finalize: Vec::new(),
-            class_state: None,
         }
     }
 

@@ -17,8 +17,8 @@ use crate::prepare::spell_mod::{SpellModConfig, SpellModType};
 use crate::prepare::stats::{Stat, Stats};
 
 use super::masks;
-use super::rogue_state;
 use super::util::spell_action;
+use super::{Rogue, RogueState};
 
 /// The Rogue's `core.NewItemSet` calls. Go keeps only the sets whose items the loaded database
 /// holds, which `data/go-tables.json` lists; the others are here for the day those items return.
@@ -136,6 +136,15 @@ pub(crate) static ITEM_SETS: &[ItemSet] = &[
     },
 ];
 
+/// The Rogue's state: Go hands a set bonus the agent.
+fn rogue_state(env: &mut Environment) -> Rc<RogueState> {
+    env.agent
+        .as_any_mut()
+        .and_then(|agent| agent.downcast_mut::<Rogue>())
+        .map(|rogue| Rc::clone(&rogue.state))
+        .expect("a Rogue's item set bonus runs for a Rogue")
+}
+
 /// A set bonus Go leaves as an empty function, for an effect it does not model.
 fn nothing(_: &mut Environment, _: AuraId) {}
 
@@ -157,7 +166,7 @@ fn attack_power(value: f64) -> Stats {
 
 /// Gladiator's Vestments, 4 pieces: Go sets the flag after the energy bar is built.
 fn pvp_set_4(env: &mut Environment, _: AuraId) {
-    rogue_state(&env.sim).has_pvp_energy.set(true);
+    rogue_state(env).has_pvp_energy.set(true);
 }
 
 /// Assassination Armor, 4 pieces: Eviscerate costs 10 less energy. The 2 piece (Cheap Shot and
@@ -168,7 +177,7 @@ fn dungeon3_4(env: &mut Environment, aura: AuraId) {
 
 /// Netherblade, 2 pieces: Slice and Dice lasts 3 seconds longer.
 fn tier4_2(env: &mut Environment, aura: AuraId) {
-    let state = rogue_state(&env.sim);
+    let state = rogue_state(env);
     let gain = Rc::clone(&state);
     env.sim.apply_on_gain(
         aura,
@@ -204,7 +213,7 @@ fn tier4_4(env: &mut Environment, aura: AuraId) {
 
 /// Deathmantle, 2 pieces: Eviscerate does 40 more damage a combo point.
 fn tier5_2(env: &mut Environment, _: AuraId) {
-    rogue_state(&env.sim).deathmantle_bonus.set(40.0);
+    rogue_state(env).deathmantle_bonus.set(40.0);
 }
 
 /// Deathmantle, 4 pieces: a melee proc makes the next finisher free.
@@ -250,7 +259,7 @@ fn tier5_4(env: &mut Environment, aura: AuraId) {
 
 /// Slayer's Armor, 2 pieces: Slice and Dice gives 5% more attack speed.
 fn tier6_2(env: &mut Environment, aura: AuraId) {
-    let state = rogue_state(&env.sim);
+    let state = rogue_state(env);
     let gain = Rc::clone(&state);
     env.sim.apply_on_gain(
         aura,
@@ -322,7 +331,7 @@ fn nightslayer_8(env: &mut Environment, aura: AuraId) {
 
 /// Bloodfang Armor, 3 pieces: 5% more chance to apply poisons.
 fn bloodfang_3(env: &mut Environment, aura: AuraId) {
-    let state = rogue_state(&env.sim);
+    let state = rogue_state(env);
     let gain = Rc::clone(&state);
     env.sim.apply_on_gain(
         aura,
@@ -331,17 +340,19 @@ fn bloodfang_3(env: &mut Environment, aura: AuraId) {
                 .set(gain.additive_poison_bonus_chance.get() + 0.05);
         }),
     );
+    let expire = Rc::clone(&state);
     env.sim.apply_on_expire(
         aura,
         Rc::new(move |_: &mut Sim, _| {
-            state
+            expire
                 .additive_poison_bonus_chance
-                .set(state.additive_poison_bonus_chance.get() - 0.05);
+                .set(expire.additive_poison_bonus_chance.get() - 0.05);
         }),
     );
     if env.sim.aura(aura).active {
-        let bonus = &rogue_state(&env.sim).additive_poison_bonus_chance;
-        bonus.set(bonus.get() + 0.05);
+        state
+            .additive_poison_bonus_chance
+            .set(state.additive_poison_bonus_chance.get() + 0.05);
     }
 }
 
