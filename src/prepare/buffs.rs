@@ -344,3 +344,6 @@ pub(crate) fn apply_buff_effects(
     let unit = env.player;
     apply_generated_buffs(env, unit, raid_buffs, party_buffs, individual)
 }
+
+#[cfg(test)]
+mod tests;
