@@ -733,6 +733,9 @@ pub(crate) fn export(
         env,
         &mut unrepresented,
     ));
+    // Go's meleeProcEffects ends with the Windfury Totem effect; its item and enchant proc effects
+    // are not ported yet, so it follows the common effects directly. Move it to the end of them.
+    effects.extend(super::buffs::windfury_totem_effect(env, &mut unrepresented));
     // Go then appends the inert pets, the melee, gear, spell data and energy proc effects and
     // the stat auras effect, in that order; Rust refuses pets and ports the rest in
     // src/prepare/export_items.rs.

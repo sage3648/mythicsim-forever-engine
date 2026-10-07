@@ -94,6 +94,11 @@ pub(crate) trait PrepAgent {
     fn damage_effect(&self, _sim: &Sim, _spell: super::sim::SpellId) -> Option<serde_json::Value> {
         None
     }
+    /// Go `buffs.SetFlametongueAttackTraits`: what the class's own Flametongue Attack carries,
+    /// which the party's Flametongue Totem hit takes. Any other class has none.
+    fn flametongue_attack_traits(&self) -> super::buffs::flametongue::FlametongueAttackTraits {
+        super::buffs::flametongue::FlametongueAttackTraits::default()
+    }
 }
 
 /// Go `FillTalentsProto`: each digit sets the field numbered by its position, counting each
