@@ -275,12 +275,12 @@ pub(crate) const DIAMOND_FLASK_ITEM: i32 = 20130;
 /// The consumable cases of the item loop: potions, conjured items, the Goblin Sapper Charge and
 /// the basic explosives. `None` for an item no consumable case claims.
 fn consumable_item_effect(
-    _env: &mut Environment,
-    _spell: SpellId,
-    _item: i32,
-    _unrepresented: &mut Vec<String>,
+    env: &mut Environment,
+    spell: SpellId,
+    item: i32,
+    unrepresented: &mut Vec<String>,
 ) -> Option<Value> {
-    None
+    super::consumable_effects::consumable_item_effect(env, spell, item, unrepresented)
 }
 
 /// The item cases of the item loop: temporary stats, speed, damage, survival and energize on

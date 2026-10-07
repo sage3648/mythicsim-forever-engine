@@ -15,15 +15,14 @@ use crate::data::{proto_row, CONSUMABLES, SPELL_EFFECTS};
 use super::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use super::buffs;
 use super::character::{cooldown_type, MajorCooldown};
+use super::common_effects::GOBLIN_SAPPER_ITEM;
 use super::env::Environment;
 use super::major_cooldown::COOLDOWN_PRIORITY_LOW;
 use super::sim::{
     AuraConfig, AuraId, BuildPhase, Cooldown, Duration, EffectId, Sim, SpellId, TimerId, UnitId,
     UnitType, NEVER_EXPIRES, SECOND,
 };
-use super::spell::{
-    school, Cast, CastConfig, DefenseType, ProcMask, SpellConfig, SpellFlag,
-};
+use super::spell::{school, Cast, CastConfig, DefenseType, ProcMask, SpellConfig, SpellFlag};
 use super::stats::{Stat, Stats};
 use super::Refusal;
 
@@ -61,7 +60,11 @@ pub(crate) fn consumable_by_id(id: i32) -> Consumable {
         cooldown_duration: SECOND * Duration::from(row.i32("cooldown_duration")),
         category_cooldown_duration: SECOND * Duration::from(row.i32("category_cooldown_duration")),
         category_id: row.i32("category_id"),
-        effect_ids: row.ints("effect_ids").into_iter().map(|id| id as i32).collect(),
+        effect_ids: row
+            .ints("effect_ids")
+            .into_iter()
+            .map(|id| id as i32)
+            .collect(),
     }
 }
 
@@ -120,7 +123,10 @@ fn required_spell_effect(consumable: &Consumable, id: i32) -> Result<SpellEffect
     spell_effect_by_id(id).ok_or_else(|| {
         Refusal::new(
             "consumable",
-            format!("consumable {} names the missing spell effect {id}", consumable.id),
+            format!(
+                "consumable {} names the missing spell effect {id}",
+                consumable.id
+            ),
         )
     })
 }
@@ -224,16 +230,17 @@ impl Sim {
 /// exist, as Go's `RegisterPostFinalizeEffect` over `character.AttackTables` does.
 fn add_mob_type_bonus_stats(env: &mut Environment, mob_type: &'static str, bonus: Stats) {
     let unit = env.player;
-    env.post_finalize.push(Rc::new(move |env: &mut Environment| {
-        let index = env.sim.unit(unit).unit_index as usize;
-        for table in &mut env.attack_tables[index] {
-            table
-                .mob_type_bonus_stats
-                .entry(mob_type.to_string())
-                .or_default()
-                .add_inplace(&bonus);
-        }
-    }));
+    env.post_finalize
+        .push(Rc::new(move |env: &mut Environment| {
+            let index = env.sim.unit(unit).unit_index as usize;
+            for table in &mut env.attack_tables[index] {
+                table
+                    .mob_type_bonus_stats
+                    .entry(mob_type.to_string())
+                    .or_default()
+                    .add_inplace(&bonus);
+            }
+        }));
 }
 
 /// Go `applyConsumeEffects`.
@@ -317,14 +324,45 @@ pub(crate) fn apply_consume_effects(
 
     // Scrolls.
     for (field, label, item, stat, amount) in [
-        ("scroll_agi", "Scroll of Agility IV", 10309, Stat::Agility, 17.0),
-        ("scroll_str", "Scroll of Strength IV", 10310, Stat::Strength, 17.0),
-        ("scroll_int", "Scroll of Intellect IV", 10308, Stat::Intellect, 16.0),
-        ("scroll_spi", "Scroll of Spirit IV", 10306, Stat::Spirit, 15.0),
-        ("scroll_arm", "Scroll of Protection IV", 10305, Stat::Armor, 240.0),
+        (
+            "scroll_agi",
+            "Scroll of Agility IV",
+            10309,
+            Stat::Agility,
+            17.0,
+        ),
+        (
+            "scroll_str",
+            "Scroll of Strength IV",
+            10310,
+            Stat::Strength,
+            17.0,
+        ),
+        (
+            "scroll_int",
+            "Scroll of Intellect IV",
+            10308,
+            Stat::Intellect,
+            16.0,
+        ),
+        (
+            "scroll_spi",
+            "Scroll of Spirit IV",
+            10306,
+            Stat::Spirit,
+            15.0,
+        ),
+        (
+            "scroll_arm",
+            "Scroll of Protection IV",
+            10305,
+            Stat::Armor,
+            240.0,
+        ),
     ] {
         if consumables.bool(field) {
-            env.sim.register_scroll_aura(unit, label, item, stat, amount);
+            env.sim
+                .register_scroll_aura(unit, label, item, stat, amount);
         }
     }
 
@@ -585,7 +623,8 @@ fn make_potion_activation_spell_internal(
         }
         if any_stat(&e.stats) {
             aura_stats = aura_stats.add(&e.stats);
-            aura_duration = aura_duration.max(Duration::from(e.duration_ms) * super::sim::MILLISECOND);
+            aura_duration =
+                aura_duration.max(Duration::from(e.duration_ms) * super::sim::MILLISECOND);
             if aura_spell_id == 0 {
                 aura_spell_id = e.spell_id;
             }
@@ -692,8 +731,6 @@ fn make_conjured_activation_spell_internal(
     Ok(mcd)
 }
 
-/// Go `GoblinSapperActionID`.
-pub(crate) const GOBLIN_SAPPER_ITEM: i32 = 10646;
 const EZ_THRO_DYNAMITE_TWO_ITEM: i32 = 18588;
 const CRYSTAL_CHARGE_ITEM: i32 = 11566;
 const THORIUM_GRENADE_ITEM: i32 = 15993;
@@ -743,6 +780,9 @@ const fn bomb(item_id: i32, min: f64, max: f64, speed: f64) -> BasicExplosive {
     }
 }
 
+/// The Goblin Sapper Charge: its damage roll is the exporter's `goblin_sapper` literals.
+const GOBLIN_SAPPER: BasicExplosive = bomb(GOBLIN_SAPPER_ITEM, 450.0, 750.0, 0.0);
+
 /// The named explosives of consumes.go, by item id: the constructors `newEzThroDynamiteTwoSpell`,
 /// `newCrystalChargeSpell`, `newThoriumGrenadeSpell`, `newDenseDynamiteSpell` and
 /// `newCryoblastSpell`, and the Goblin Sapper Charge.
@@ -779,12 +819,17 @@ impl Sim {
         &mut self,
         unit: UnitId,
         shared_timer: TimerId,
-        action_id: ActionId,
-        school: u8,
-        speed: f64,
+        explosive: BasicExplosive,
         cast_time: Duration,
         cooldown: Cooldown,
     ) -> SpellConfig {
+        let BasicExplosive {
+            item_id,
+            school,
+            speed,
+            ..
+        } = explosive;
+        let action_id = ActionId::item(item_id);
         if action_id == ActionId::item(GOBLIN_SAPPER_ITEM) {
             self.new_sapper_self_damage_spell(unit, &action_id, school);
         }
@@ -855,9 +900,7 @@ impl Sim {
         let config = self.new_basic_explosive_spell_config(
             unit,
             shared_timer,
-            ActionId::item(explosive.item_id),
-            explosive.school,
-            explosive.speed,
+            explosive,
             cast_time,
             cooldown,
         );
@@ -878,15 +921,7 @@ fn register_explosives_cd(env: &mut Environment, consumes: &Message, shared_time
             timer: Some(sim.new_timer(unit)),
             duration: 5 * MINUTE,
         };
-        let config = sim.new_basic_explosive_spell_config(
-            unit,
-            shared_timer,
-            ActionId::item(GOBLIN_SAPPER_ITEM),
-            school::FIRE,
-            0.0,
-            0,
-            cd,
-        );
+        let config = sim.new_basic_explosive_spell_config(unit, shared_timer, GOBLIN_SAPPER, 0, cd);
         let spell = sim.get_or_register_spell(unit, config);
         sim.add_major_cooldown(
             unit,
@@ -967,3 +1002,6 @@ fn register_explosives_cd(env: &mut Environment, consumes: &Message, shared_time
         );
     }
 }
+
+#[cfg(test)]
+mod tests;
