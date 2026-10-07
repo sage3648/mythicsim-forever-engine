@@ -32,35 +32,9 @@ pub(crate) fn apply_item_effects(env: &mut Environment) -> Result<(), Refusal> {
                 ));
             }
         }
-        for (kind, id, pseudo) in [
-            ("Item", item.id, &item.pseudo_stats),
-            ("Enchant", enchant, &item.enchant.pseudo_stats),
-        ] {
-            if !item.is_empty() && has_haste(pseudo) {
-                return Err(Refusal::new(
-                    "item_speed",
-                    format!("{kind} {id} changes speed, which is not prepared yet"),
-                ));
-            }
-        }
     }
+    env.sim.register_equip_speed_auras(unit);
     Ok(())
-}
-
-/// enchant_speed.go `hastePercents`: whether any speed pseudo stat is set.
-fn has_haste(pseudo: &[f64]) -> bool {
-    [
-        "PseudoStatMeleeHastePercent",
-        "PseudoStatRangedHastePercent",
-        "PseudoStatSpellHastePercent",
-    ]
-    .iter()
-    .filter_map(|name| crate::contracts::request::enum_number("proto.PseudoStat", name))
-    .any(|index| {
-        pseudo
-            .get(index as usize)
-            .is_some_and(|value| *value != 0.0)
-    })
 }
 
 /// Go `applyItemSetBonusEffects`.
