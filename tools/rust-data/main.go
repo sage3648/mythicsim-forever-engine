@@ -204,6 +204,8 @@ type tables struct {
 	EnchantEffectIDs []int32 `json:"enchant_effect_ids"`
 	// Preset target IDs whose target has an AI.
 	PresetTargetsWithAI []int32 `json:"preset_targets_with_ai"`
+	// The item sets Go registers, in the order its set bonus search reads them.
+	ItemSets []core.RustDataItemSet `json:"item_sets"`
 }
 
 func goTables() tables {
@@ -225,6 +227,7 @@ func goTables() tables {
 	out.ItemEffectIDs = core.RegisteredItemEffectIDs()
 	out.EnchantEffectIDs = core.RegisteredEnchantEffectIDs()
 	out.PresetTargetsWithAI = core.RustDataPresetTargetsWithAI()
+	out.ItemSets = core.RustDataItemSets()
 	return out
 }
 
