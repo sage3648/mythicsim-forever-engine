@@ -259,6 +259,9 @@ pub(crate) struct Unit {
     pub start_distance_from_target: f64,
     pub distance_from_target: f64,
     pub enabled: bool,
+    /// Go `Unit.ShapeshiftForm`: the client form the unit is in, 0 for none. Only a Shadow
+    /// priest's Shadowform sets one at the pin.
+    pub shapeshift_form: super::dbcenums::ShapeshiftForm,
     pub initial_stats: Stats,
     pub initial_stats_without_deps: Stats,
     pub initial_pseudo_stats: PseudoStats,
@@ -326,6 +329,7 @@ impl Unit {
             start_distance_from_target: 0.0,
             distance_from_target: 0.0,
             enabled: false,
+            shapeshift_form: 0,
             initial_stats: Stats::default(),
             initial_stats_without_deps: Stats::default(),
             initial_pseudo_stats: PseudoStats::new(),

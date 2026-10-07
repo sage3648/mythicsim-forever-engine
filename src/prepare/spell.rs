@@ -386,6 +386,37 @@ pub(crate) struct Dot {
     pub is_channeled: bool,
 }
 
+/// Go `CastRequirement`: what the client requires of the caster's form and auras.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub(crate) struct CastRequirement {
+    /// `SpellShapeshift` masks, bit form - 1.
+    pub forms: u64,
+    pub excluded_forms: u64,
+    /// Castable with no form even though `forms` names some.
+    pub caster_form: bool,
+    /// Not castable in a shapeshift (a form that is not a stance).
+    pub not_shapeshifted: bool,
+    pub caster_aura: i32,
+    pub exclude_caster_aura: i32,
+}
+
+impl CastRequirement {
+    /// Go `CastRequirement.allowsForm`.
+    pub(crate) fn allows_form(&self, form: super::dbcenums::ShapeshiftForm) -> bool {
+        let bit = super::dbcenums::form_mask(form);
+        if bit & self.excluded_forms != 0 {
+            return false;
+        }
+        if bit & self.forms != 0 {
+            return true;
+        }
+        if form != 0 && !super::dbcenums::form_is_stance(form) {
+            return !self.not_shapeshifted && self.forms == 0;
+        }
+        self.forms == 0 || self.caster_form
+    }
+}
+
 /// Go `SpellConfig`, without the closures preparation never runs; their presence is kept
 /// where Go's registration or the export reads it.
 #[derive(Clone, Default)]
@@ -403,7 +434,7 @@ pub(crate) struct SpellConfig {
     pub cost: CostOptions,
     pub cast: CastConfig,
     pub has_extra_cast_condition: bool,
-    pub has_cast_requirement: bool,
+    pub cast_requirement: CastRequirement,
     pub min_range: f64,
     pub max_range: f64,
     pub charges: i32,
@@ -451,6 +482,7 @@ pub(crate) struct Spell {
     pub shared_cd: Cooldown,
     pub ignore_haste: bool,
     pub has_extra_cast_condition: bool,
+    pub cast_requirement: CastRequirement,
     pub has_cast_requirement: bool,
     pub min_range: f64,
     pub max_range: f64,
@@ -574,7 +606,8 @@ impl Sim {
             shared_cd: cast.shared_cd,
             ignore_haste: cast.ignore_haste,
             has_extra_cast_condition: config.has_extra_cast_condition,
-            has_cast_requirement: config.has_cast_requirement,
+            cast_requirement: config.cast_requirement,
+            has_cast_requirement: config.cast_requirement != CastRequirement::default(),
             min_range: 0.0,
             max_range: 0.0,
             max_charges: config.charges,
@@ -665,7 +698,7 @@ impl Sim {
             if !config.has_extra_cast_condition
                 && cast.cd.timer.is_none()
                 && cast.shared_cd.timer.is_none()
-                && !config.has_cast_requirement
+                && config.cast_requirement == CastRequirement::default()
             {
                 CastKind::AutosOrProcs
             } else {

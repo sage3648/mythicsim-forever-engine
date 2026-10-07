@@ -10,7 +10,7 @@ use crate::data::spells::Spell;
 
 use super::dbcenums;
 use super::sim::{Cooldown, Sim, UnitId};
-use super::spell::{school, CastConfig, ProcMask, SpellConfig, SpellFlag};
+use super::spell::{school, CastConfig, CastRequirement, ProcMask, SpellConfig, SpellFlag};
 
 /// Go `SpellOpt`: an addition to the resolved config for what the client does not state: the
 /// proc mask, the metrics the sim keeps and the flags a row cannot justify.
@@ -63,7 +63,7 @@ pub(crate) fn spell_config(
         min_range: f64::from(s.min_range),
         max_range: f64::from(s.max_range),
         cast: cast_config(sim, unit, s),
-        has_cast_requirement: has_cast_requirement(s),
+        cast_requirement: cast_requirement(s),
         ..SpellConfig::default()
     };
     apply_cost(&mut config, s);
@@ -112,7 +112,7 @@ pub(crate) fn proc() -> SpellOpt {
         config.flags |= SpellFlag::PASSIVE_SPELL | SpellFlag::NO_ON_CAST_COMPLETE;
         config.flags = SpellFlag(config.flags.0 & !SpellFlag::APL.0);
         config.cast = CastConfig::default();
-        config.has_cast_requirement = false;
+        config.cast_requirement = CastRequirement::default();
         config.cost = Default::default();
     })
 }
@@ -131,15 +131,17 @@ pub(crate) fn tag(tag: i32) -> SpellOpt {
     Rc::new(move |config, _| config.action_id.tag = tag)
 }
 
-/// Go `CastRequirement`'s zero test: whether the row states a form, caster form, shapeshift or
-/// caster aura requirement.
-fn has_cast_requirement(s: &Spell) -> bool {
-    s.stance_mask != 0
-        || s.stance_exclude != 0
-        || s.castable_in_caster_form()
-        || s.not_shapeshifted()
-        || s.caster_aura != 0
-        || s.exclude_caster_aura != 0
+/// Go `Spell.CastRequirement`: the row's form, caster form, shapeshift and caster aura
+/// requirement. A row that states none leaves it zero.
+pub(crate) fn cast_requirement(s: &Spell) -> CastRequirement {
+    CastRequirement {
+        forms: s.stance_mask,
+        excluded_forms: s.stance_exclude,
+        caster_form: s.castable_in_caster_form(),
+        not_shapeshifted: s.not_shapeshifted(),
+        caster_aura: s.caster_aura,
+        exclude_caster_aura: s.exclude_caster_aura,
+    }
 }
 
 fn spell_power_coeff(s: &Spell) -> f64 {
