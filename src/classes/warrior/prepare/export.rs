@@ -348,6 +348,7 @@ impl Warrior {
                 "tick_can_crit": bleed.periodic_can_crit(),
                 "tick_magic": bleed.defense_type_core() == DefenseType::Magic}));
         }
+        // talents_fury.go registerUnbridledWrath: white hits, not melee specials
         if talent("unbridled_wrath") > 0 {
             let trigger = data.unbridled_wrath_triggered.highest();
             effects.push(

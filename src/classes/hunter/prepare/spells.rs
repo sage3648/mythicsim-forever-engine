@@ -80,6 +80,8 @@ pub(super) const ARCANE_SHOT_RAP_COEFFICIENT: f64 = 0.11;
 pub(super) const SERPENT_STING_RAP_PER_TICK: f64 = 0.035;
 /// Summon Hawk's attack power share of the dive bomb.
 pub(super) const SUMMON_HAWK_RAP_SHARE: f64 = 0.05;
+/// Summon Hawk's swing damage as a share of the rank's dive bomb base (`swingDamage`).
+pub(super) const SUMMON_HAWK_SWING_SHARE: f64 = 0.35;
 /// Go `volleyTickDamage`.
 pub(super) const VOLLEY_TICK_DAMAGE: [f64; 4] = [0.0, 70.0, 91.0, 112.0];
 /// Go `explosiveTrapRange`.
@@ -252,7 +254,7 @@ impl Hunter {
         let unit = self.unit;
         let rank = spell_data().summon_hawk.highest();
         let hawk_duration = spell_data().summon_hawk_triggered.by_id(1293248).duration();
-        let swing_interval = 3 * SECOND;
+        let swing_interval = 2500 * MILLISECOND;
         let label = sim.unit(unit).label.clone();
 
         let hawk_count = rank.effect_n(3).base_points as i32;
@@ -279,6 +281,7 @@ impl Hunter {
                         },
                         number_of_ticks: (hawk_duration / swing_interval) as i32,
                         tick_length: swing_interval,
+                        affected_by_real_haste: true,
                         ..DotConfig::default()
                     },
                     ..SpellConfig::default()

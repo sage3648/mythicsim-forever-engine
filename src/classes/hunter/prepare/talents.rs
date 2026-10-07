@@ -199,7 +199,8 @@ impl Hunter {
         );
     }
 
-    /// Bosses are immune to the stun, but the pet's next attack still gets the crit bonus.
+    /// Bosses are immune to the stun; the pet's next attack still gets the crit bonus. Not an
+    /// auto-cast cooldown: Go registers no major cooldown, so it is only cast if a rotation names it.
     fn register_intimidation(&mut self, sim: &mut Sim) {
         let Some(pet) = self.pet else { return };
         if !self.flag("intimidation") {
@@ -232,7 +233,7 @@ impl Hunter {
         );
         let timer = sim.new_timer(unit);
         let mana = rank.mana_cost();
-        let intimidation = sim.register_spell(
+        sim.register_spell(
             unit,
             SpellConfig {
                 action_id,
@@ -256,16 +257,6 @@ impl Hunter {
                     ..CastConfig::default()
                 },
                 ..SpellConfig::default()
-            },
-        );
-        sim.add_major_cooldown(
-            unit,
-            MajorCooldown {
-                spell: intimidation,
-                priority: 0,
-                cooldown_type: cooldown_type::DPS,
-                allow_spell_queueing: false,
-                timings: Vec::new(),
             },
         );
     }

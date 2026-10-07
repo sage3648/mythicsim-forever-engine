@@ -130,7 +130,8 @@ impl Rogue {
             }));
         }
         // talents_assassination.go registerColdBlood: a crit bonus on the masked spells until
-        // one of them hits.
+        // one of them hits, except Mutilate's hand strikes, which take the crit without spending
+        // it.
         if self.spells.cold_blood.is_some() {
             let row = data.cold_blood.highest();
             effects.push(json!({
@@ -139,6 +140,7 @@ impl Rogue {
                     .effect(dbcenums::A_ADD_FLAT_MODIFIER, dbcenums::SPELLMOD_CRITICAL_CHANCE)
                     .average(level),
                 "class_spells": mask_names(masks::COLD_BLOODED),
+                "spend_class_spells": mask_names(masks::COLD_BLOODED & !masks::MUTILATE_HIT),
             }));
         }
         // talents_subtlety.go registerPremeditation: combo points from Stealth.

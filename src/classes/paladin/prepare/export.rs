@@ -26,6 +26,9 @@ use super::Paladin;
 /// Go `core.SpellBatchWindow`.
 const SPELL_BATCH_WINDOW: i64 = 10 * MILLISECOND;
 
+/// Go `sanctifiedJudgementLogScale`: the game returns 10/9 of the stated share of the seal's cost.
+const SANCTIFIED_JUDGEMENT_LOG_SCALE: f64 = 10.0 / 9.0;
+
 /// Go `buffs.JudgementAuraTag`.
 const JUDGEMENT_AURA_TAG: &str = "JudgementAura";
 
@@ -486,11 +489,12 @@ impl Paladin {
         }
         let sanctified = talents.i32("sanctified_judgement");
         if sanctified > 0 {
-            // talents_retribution.go applySanctifiedJudgement
+            // talents_retribution.go applySanctifiedJudgement: the refund is the row's share times
+            // sanctifiedJudgementLogScale, an unexported Go constant of 10/9 fitted to beta logs.
             effects.push(json!({
                 "kind": "sanctified_judgement", "trigger_aura": format!("Sanctified Judgement{label}"),
                 "proc_chance": data.sanctified_judgement.effect_at(1).fraction_at(sanctified),
-                "refund": data.sanctified_judgement.effect_at(2).fraction_at(sanctified),
+                "refund": data.sanctified_judgement.effect_at(2).fraction_at(sanctified) * SANCTIFIED_JUDGEMENT_LOG_SCALE,
                 "metrics_action_id": action_id(Some(&spell_action(data.sanctified_judgement.highest().id))),
             }));
         }

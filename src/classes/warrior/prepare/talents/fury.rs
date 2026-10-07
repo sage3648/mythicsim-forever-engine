@@ -73,6 +73,8 @@ impl Warrior {
             &ProcTrigger {
                 name: "Unbridled Wrath".to_string(),
                 proc_mask: ProcMask::MELEE_WHITE_HIT,
+                // Heroic Strike and Cleave replace a main-hand swing but never proc it.
+                proc_mask_exclude: ProcMask::MELEE_SPECIAL,
                 proc_chance: spell_data().unbridled_wrath.fraction_at(rank),
                 require_damage_dealt: true,
                 outcome: HitOutcome::LANDED,

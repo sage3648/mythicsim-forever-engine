@@ -17,7 +17,7 @@ use crate::prepare::spelldata::{spell::TickOutcomeKind, Ladder, Spell as Row};
 use super::spell_data::spell_data;
 use super::spells::{
     ARCANE_SHOT_RAP_COEFFICIENT, EXPLOSIVE_TRAP_RANGE, SERPENT_STING_RAP_PER_TICK,
-    SUMMON_HAWK_RAP_SHARE, VOLLEY_TICK_DAMAGE,
+    SUMMON_HAWK_RAP_SHARE, SUMMON_HAWK_SWING_SHARE, VOLLEY_TICK_DAMAGE,
 };
 use super::{masks, Hunter};
 
@@ -153,7 +153,8 @@ impl Hunter {
             }));
         }
         // summon_hawk.go: a dive bomb on its rank's base plus a share of ranged attack power,
-        // then a hawk dot in a free slot or the one with the least time left.
+        // then a hawk dot in a free slot or the one with the least time left. The hawk swings
+        // once on arrival and then every tick for a share of the rank's base.
         if self.summon_hawk.is_some() {
             let rank = data.summon_hawk.highest();
             let hawks: Vec<usize> = sim
@@ -171,7 +172,7 @@ impl Hunter {
             effects.push(json!({
                 "kind": "summon_hawk", "spell_id": rank.id,
                 "base_damage": rank.damage_effect().average(CHARACTER_LEVEL),
-                "attack_power_share": SUMMON_HAWK_RAP_SHARE,
+                "attack_power_share": SUMMON_HAWK_RAP_SHARE, "swing_share": SUMMON_HAWK_SWING_SHARE,
                 "always_hits": rank.always_hits(), "hawk_spells": hawks,
                 "hawk_duration_ns": data.summon_hawk_triggered.by_id(1293248).duration(),
             }));
