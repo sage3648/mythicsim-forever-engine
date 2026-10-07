@@ -83,6 +83,7 @@ def rust_job(bundle, request, folder):
                       "--output", folder, "--bundle", bundle])
     decision = json.loads((folder / "decision.json").read_text())
     sample["decision"] = decision["status"]
+    sample["preparation"] = decision.get("preparation", {}).get("provider")
     if decision["status"] == "rust":
         report = json.loads((folder / "rust-report.json").read_text())
         sample["engine_s"] = int(report["elapsed_ns"]) / 1e9
@@ -90,13 +91,20 @@ def rust_job(bundle, request, folder):
     return sample
 
 
+RUST_STEPS = ("go_prepare", "rust_prepare", "sim")
+
+
 def rust_steps(bundle, folder):
-    """route.py's steps on the files it wrote, each as its own process."""
+    """The steps of a routed job on the files route.py wrote, each as its own process: preparing
+    the request with the Go exporter, as route.py does when Rust preparation refuses it, and in
+    Rust, then the gate and the simulation of the prepared state."""
     engine, exporter = bundle / "bin" / ENGINE, bundle / "bin" / EXPORTER
     prepared = folder / "steps-prepared.json"
     return {
-        "prepare": measure([exporter, "prepare", "--infile", folder / "request.json", "--outfile",
-                            prepared, "--scenario", "route"]),
+        "go_prepare": measure([exporter, "prepare", "--infile", folder / "request.json", "--outfile",
+                               prepared, "--scenario", "route"]),
+        "rust_prepare": measure([engine, "prepare", "--request", folder / "request.json", "--outfile",
+                                 folder / "steps-rust-prepared.json", "--scenario", "route"]),
         # The gate and the simulation are one process, as route.py runs them.
         "sim": measure([engine, "sim", "--gate", "--infile", prepared, "--outfile", folder / "steps-report.json"]),
     }
@@ -158,12 +166,13 @@ def main():
             rust.append(rust_job(bundle, requests[case], folder / "rust"))
             if rust[-1]["decision"] == "rust":
                 steps.append(rust_steps(bundle, folder / "rust"))
-        row = {"case": case, "decision": rust[-1]["decision"], "go": summarize(go)}
+        row = {"case": case, "decision": rust[-1]["decision"], "preparation": rust[-1]["preparation"],
+               "go": summarize(go)}
         if row["decision"] == "rust":
             row["rust"] = summarize(rust)
             row["rust_steps"] = {step: summarize([sample[step] for sample in steps],
                                                  ("wall_s", "cpu_s", "peak_rss_mb"))
-                                 for step in ("prepare", "sim")}
+                                 for step in RUST_STEPS}
             row["same_dps"] = go[-1]["dps"] == rust[-1]["dps"]
             row["go_over_rust_wall"] = round(row["go"]["wall_s"] / row["rust"]["wall_s"], 2)
             # Everything a job spends outside the engine's own iteration loop.
@@ -171,7 +180,7 @@ def main():
                                  for name in ("go", "rust")}
             print(f"{case:34} go {row['go']['wall_s']:6.3f}s {row['go']['peak_rss_mb']:6.1f} MB  "
                   f"rust {row['rust']['wall_s']:6.3f}s {row['rust']['peak_rss_mb']:6.1f} MB  "
-                  f"Go/Rust {row['go_over_rust_wall']:.2f}x  overhead go {row['overhead_s']['go']:.3f}s "
+                  f"Go/Rust {row['go_over_rust_wall']:.2f}x  prepared by {row['preparation']}  overhead go {row['overhead_s']['go']:.3f}s "
                   f"rust {row['overhead_s']['rust']:.3f}s{'' if row['same_dps'] else '  DPS DIFFERS'}",
                   flush=True)
         else:
@@ -198,7 +207,8 @@ def main():
                                    for name in ("go", "rust")},
             "rust_step_wall_s_median": {step: round(statistics.median(row["rust_steps"][step]["wall_s"]
                                                                       for row in timed), 4)
-                                        for step in ("prepare", "sim")},
+                                        for step in RUST_STEPS},
+            "prepared_in_rust": sum(row["preparation"] == "rust" for row in timed),
             "all_same_dps": all(row["same_dps"] for row in timed),
         },
         "rows": rows,
