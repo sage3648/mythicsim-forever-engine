@@ -1,4 +1,4 @@
 mod area;
 mod frost;
-mod prepare;
+pub(crate) mod prepare;
 mod prepared_v2;

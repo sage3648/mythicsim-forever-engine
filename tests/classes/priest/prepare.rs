@@ -1,8 +1,8 @@
-//! Rust preparation of a Mage against the pinned Go exporter.
+//! Rust preparation of a Priest against the pinned Go exporter.
 //!
-//! Each case is a Mage fixture request without buffs, debuffs, consumables, professions and gear
-//! (see tools/mage_prepare_goldens.py), so what it prepares is the Mage's own: its spells, talent
-//! auras, class effects and stats. The goldens keep a digest of every spell, aura and effect Go
+//! Each case is a Priest fixture request without buffs, debuffs, consumables, professions and gear
+//! (see tools/priest_prepare_goldens.py), so what it prepares is the Priest's own: its spells,
+//! talent auras, class effects, Shadowfiend and stats. The goldens keep a digest of every spell, aura and effect Go
 //! exported, so a failure names the item that changed. Regenerate them only from the Go exporter.
 
 use serde::Deserialize;
@@ -17,10 +17,10 @@ struct Golden {
 }
 
 fn directory() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/classes/mage/prepare")
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/classes/priest/prepare")
 }
 
-/// The text a digest is taken of: tools/mage_prepare_goldens.py `canonical`.
+/// The text a digest is taken of: tools/priest_prepare_goldens.py `canonical`.
 fn canonical(value: &Value, out: &mut String) {
     match value {
         Value::Null => out.push('z'),
@@ -59,9 +59,8 @@ fn canonical(value: &Value, out: &mut String) {
     }
 }
 
-/// The engine's own SHA-256, which it keeps private to avoid a dependency.
-#[path = "../../../src/contracts/request/sha256.rs"]
-pub(crate) mod sha256;
+/// The engine's own SHA-256, which the Mage goldens load once for every golden test.
+use crate::mage::prepare::sha256;
 
 fn digest(value: &Value) -> String {
     let mut text = String::new();
@@ -73,9 +72,13 @@ fn label(section: &str, item: &Value) -> String {
     match section {
         "player.auras" | "target.auras" => item["label"].as_str().unwrap_or("?").to_string(),
         "effects" => item["kind"].as_str().unwrap_or("?").to_string(),
+        "pets" => item["label"].as_str().unwrap_or("?").to_string(),
         _ => serde_json::to_string(&item["action_id"]).unwrap(),
     }
 }
+
+/// The exporter leaves out the list of a player without simulated pets.
+static NO_PETS: Value = Value::Array(Vec::new());
 
 fn section<'a>(prepared: &'a Value, name: &str) -> &'a Value {
     match name {
@@ -84,6 +87,8 @@ fn section<'a>(prepared: &'a Value, name: &str) -> &'a Value {
         "target.auras" => &prepared["target"]["auras"],
         "effects" => &prepared["effects"],
         "player.major_cooldowns" => &prepared["player"]["major_cooldowns"],
+        "pets" if prepared["pets"].is_null() => &NO_PETS,
+        "pets" => &prepared["pets"],
         "player.stats" => &prepared["player"]["stats"],
         "player.pseudo_stats" => &prepared["player"]["pseudo_stats"],
         "player.mana" => &prepared["player"]["mana"],
@@ -134,7 +139,7 @@ fn differences(golden: &Golden, prepared: &Value) -> Vec<String> {
 }
 
 #[test]
-fn every_mage_case_prepares_as_go_does() {
+fn every_priest_case_prepares_as_go_does() {
     let mut cases = 0;
     let mut failures = Vec::new();
     let mut entries: Vec<_> = fs::read_dir(directory()).unwrap().flatten().collect();
@@ -158,7 +163,7 @@ fn every_mage_case_prepares_as_go_does() {
             Err(err) => failures.push(format!("{case}: {err}")),
         }
     }
-    assert!(cases >= 12, "the goldens are missing: {cases}");
+    assert!(cases >= 13, "the goldens are missing: {cases}");
     assert!(
         failures.is_empty(),
         "{} of {cases} differ from the Go exporter:\n{}",
@@ -167,12 +172,15 @@ fn every_mage_case_prepares_as_go_does() {
     );
 }
 
-/// An unsupported Mage option is refused with a stable code, never approximated.
+/// A priest without a spec's options is refused with a stable code, never approximated.
 #[test]
-fn a_mage_without_class_options_is_refused() {
-    let request = fs::read(directory().join("arcane.request.json")).unwrap();
+fn a_priest_without_a_spec_is_refused() {
+    let request = fs::read(directory().join("smite-holy-nova.request.json")).unwrap();
     let mut value: Value = serde_json::from_slice(&request).unwrap();
-    value["raid"]["parties"][0]["players"][0]["mage"] = serde_json::json!({});
+    value["raid"]["parties"][0]["players"][0]
+        .as_object_mut()
+        .unwrap()
+        .remove("dpsPriest");
     match forever_engine::prepare_json(&serde_json::to_vec(&value).unwrap(), "x") {
         Err(forever_engine::PrepareError::Refused(refusal)) => {
             assert_eq!(refusal.code, "class_option")
