@@ -208,10 +208,11 @@ def translate(source):
         "use super::spell::ProcMask;",
         "",
         "/// `RegisterAllOnUseCds`, then `RegisterAllProcs`.",
+        "#[rustfmt::skip]",
         "pub(crate) const ITEMS: &[Registration] = &[",
     ]
     lines += [f"    {entry}," for entry in items]
-    lines += ["];", "", "/// `RegisterAllEnchants`.", "pub(crate) const ENCHANTS: &[Registration] = &["]
+    lines += ["];", "", "/// `RegisterAllEnchants`.", "#[rustfmt::skip]", "pub(crate) const ENCHANTS: &[Registration] = &["]
     lines += [f"    {entry}," for entry in enchants]
     lines += ["];", ""]
     text = "\n".join(lines)
