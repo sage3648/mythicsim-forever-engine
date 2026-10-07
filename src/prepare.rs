@@ -19,6 +19,7 @@ pub(crate) mod enchant_speed;
 pub(crate) mod env;
 pub(crate) mod export;
 pub(crate) mod export_items;
+pub(crate) mod forever_item_sets;
 pub(crate) mod forever_items;
 pub(crate) mod forever_items_generated;
 pub(crate) mod item_aura;
