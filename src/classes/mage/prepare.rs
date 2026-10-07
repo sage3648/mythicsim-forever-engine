@@ -209,6 +209,17 @@ impl PrepAgent for Mage {
         self.register_spells(sim, unit);
     }
 
+    /// The mage package's `core.NewItemEffect(19959, ...)`: Hazza'rah's Charm of Magic.
+    fn apply_item_effect(&mut self, sim: &mut Sim, unit: UnitId, item: i32) -> bool {
+        match item {
+            19959 => {
+                items::hazzarahs_charm(sim, unit);
+                true
+            }
+            _ => false,
+        }
+    }
+
     fn talents(&self) -> &Message {
         &self.talents
     }
