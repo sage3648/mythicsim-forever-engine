@@ -42,6 +42,8 @@ pub(crate) struct Environment {
     pub pre_finalize: Vec<FinalizeEffect>,
     /// `env.prepullActions`.
     pub prepull_actions: usize,
+    /// The factory that built the agent, for a separate simulation of the same request.
+    pub factory: AgentFactory,
     /// Every attacker's table against every defender, by unit index.
     pub attack_tables: Vec<Vec<AttackTable>>,
 }
@@ -157,6 +159,7 @@ impl Environment {
             pre_finalize: Vec::new(),
             prepull_actions: 0,
             attack_tables: Vec::new(),
+            factory,
         };
         if let Some(debuffs) = raid.message("debuffs") {
             for (index, target) in env.encounter.targets.clone().into_iter().enumerate() {
@@ -180,6 +183,13 @@ impl Environment {
         env.finalize(&player_message)?;
         env.reset();
         Ok(env)
+    }
+
+    /// A separate reset simulation of the same request, as the exporter's `core.NewSim` followed
+    /// by `Reset` for an effect read under other conditions. It cannot be refused: this
+    /// request already prepared once.
+    pub(crate) fn fresh(&self) -> Environment {
+        Environment::new(&self.request, self.factory).expect("the request prepared once already")
     }
 
     fn setup_tank_targets(&mut self, raid: &Message, encounter: &Message) -> Result<(), Refusal> {
