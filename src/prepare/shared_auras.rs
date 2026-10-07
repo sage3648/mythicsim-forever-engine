@@ -127,9 +127,28 @@ pub(crate) fn new_spell_data_auras(
         auras.wearer_stats = parsed.stats;
     }
 
-    // The effects on a pet: a unit with a pet is refused once it is finalized, so no pet aura
-    // is registered.
-    let _ = AURA_ON_PET;
+    // The effects on a pet: an aura on each pet that is not a guardian, carrying the effects
+    // that land on it.
+    let on_pet = super::spelldata::effect::effects_on(row, AURA_ON_PET);
+    if !on_pet.is_empty() {
+        for pet in env.sim.unit(unit).pets.clone() {
+            if env.sim.pet_data(pet).is_guardian {
+                continue;
+            }
+            let aura = env.sim.register_aura(pet, config.clone());
+            parse_effects(
+                &mut env.sim,
+                Some(pet),
+                aura,
+                row,
+                ParseOptions {
+                    only: on_pet.clone(),
+                    ..ParseOptions::default()
+                },
+            );
+            auras.pets.push(aura);
+        }
+    }
 
     let on_enemy = super::spelldata::effect::effects_on(row, AURA_ON_ENEMY);
     if !on_enemy.is_empty() {
