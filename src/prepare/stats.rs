@@ -606,14 +606,16 @@ impl StatDependencyManager {
             if !dep.enabled {
                 continue;
             }
+            // Go's arm64 build fuses each sum into one multiply-add (deps.go 277, 282, 284).
             if dep.src == dep.dst {
                 s[dep.dst] *= dep.amount;
             } else if dep.step != 0.0 {
-                s[dep.dst] += (s[dep.src] / dep.step).floor() * dep.step * dep.amount;
+                let steps = (s[dep.src] / dep.step).floor() * dep.step;
+                s[dep.dst] = steps.mul_add(dep.amount, s[dep.dst]);
             } else if is_floored_game_stat(dep.src) {
-                s[dep.dst] += s[dep.src].floor() * dep.amount;
+                s[dep.dst] = s[dep.src].floor().mul_add(dep.amount, s[dep.dst]);
             } else {
-                s[dep.dst] += s[dep.src] * dep.amount;
+                s[dep.dst] = s[dep.src].mul_add(dep.amount, s[dep.dst]);
             }
         }
         s
@@ -687,7 +689,10 @@ mod tests {
         s[Stat::Intellect] = 100.5;
         let out = sdm.apply_stat_dependencies(s);
         assert_eq!(out[Stat::Intellect], 100.5 * (1.1 * 1.03));
-        assert_eq!(out[Stat::Mana], (100.5f64 * (1.1 * 1.03)).floor() * 15.0);
+        assert_eq!(
+            out[Stat::Mana],
+            (100.5f64 * (1.1 * 1.03)).floor().mul_add(15.0, 0.0)
+        );
         assert!(sdm.enable_dynamic_stat_dep(dynamic));
         assert_eq!(
             sdm.apply_stat_dependencies(s)[Stat::Intellect],

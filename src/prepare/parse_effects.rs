@@ -563,7 +563,8 @@ fn additive(kind: String, value: f64, apply: Rc<dyn Fn(&mut Sim, bool, f64)>) ->
     let current = Rc::new(Cell::new(0.0));
     let mut attachment = Attachment::new(kind, value);
     attachment.set = Some(Rc::new(move |sim: &mut Sim, live, level| {
-        let delta = value * level - current.get();
+        // Go fuses v*level - current into one multiply-subtract (parse_effects_table.go 692).
+        let delta = value.mul_add(level, -current.get());
         if delta == 0.0 {
             return;
         }

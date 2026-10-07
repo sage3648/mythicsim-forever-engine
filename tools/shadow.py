@@ -10,6 +10,11 @@ run    Compare one RaidSimRequest. The pinned exporter prepares it, the Rust gat
        verdict and writes it to --output/verdict.json. The verdict status is match,
        mismatch, refused (the gate's reasons) or error (the failing stage).
 
+       Rust preparation prepares the request too, and `preparation` says whether its
+       prepared state equals the exporter's (`match`, `mismatch` with the differing paths)
+       or Rust refused to prepare it (`refused` with the code and reason). A preparation
+       mismatch makes the whole verdict a mismatch, since routing would run that state.
+
 The status is an exact check against the pinned Go engine. With --production, the
 verdict also summarizes the production result, the Rust result and the pinned Go
 result (DPS and the top abilities per fight), and compares Rust with production
@@ -75,6 +80,52 @@ def compare_results(go_result, rust_result):
     if go_result.get("logs") or rust_result.get("logs"):
         log_difference = prepared_v2.first_log_difference(go_result.get("logs", ""), rust_result.get("logs", ""))
     return differences, log_difference
+
+
+# The exit status of `forever-engine prepare` when Rust preparation does not cover a request.
+NOT_PREPARED = 5
+
+
+def exact_differences(go, rust, path=""):
+    """Every path at which two prepared states differ, with no tolerance: Rust preparation must
+    write exactly the exporter's values."""
+    if isinstance(go, dict) and isinstance(rust, dict):
+        out = []
+        for key in sorted(set(go) | set(rust)):
+            if key not in go or key not in rust:
+                out.append(f"{path}/{key}: only in {'Go' if key in go else 'Rust'}")
+            else:
+                out.extend(exact_differences(go[key], rust[key], f"{path}/{key}"))
+        return out
+    if isinstance(go, list) and isinstance(rust, list):
+        if len(go) != len(rust):
+            return [f"{path}: {len(go)} Go entries, {len(rust)} Rust entries"]
+        return [d for i, (a, b) in enumerate(zip(go, rust)) for d in exact_differences(a, b, f"{path}/{i}")]
+    numbers = (int, float)
+    if isinstance(go, numbers) and isinstance(rust, numbers) and not isinstance(go, bool) and not isinstance(rust, bool):
+        return [] if float(go) == float(rust) else [f"{path}: Go {go!r}, Rust {rust!r}"]
+    return [] if go == rust else [f"{path}: Go {go!r}, Rust {rust!r}"]
+
+
+def compare_preparation(engine, request_file, prepared, output, timeout, verdict):
+    """Prepare the request in Rust and compare it with the exporter's prepared state."""
+    rust_prepared = output / "rust-prepared.json"
+    ms, done = run_stage("rust_prepare", [engine, "prepare", "--request", request_file, "--scenario", "shadow",
+                                           "--outfile", rust_prepared], timeout)
+    verdict["timings_ms"]["rust_prepare"] = round(ms, 1)
+    if done.returncode == NOT_PREPARED:
+        try:
+            refusal = json.loads(done.stdout)["refusal"]
+            return {"status": "refused", "code": refusal["code"], "reason": refusal["reason"]}
+        except (ValueError, KeyError, TypeError) as error:
+            return {"status": "error", "error": f"unreadable refusal: {type(error).__name__}: {error}"}
+    if done.returncode != 0:
+        return {"status": "error", "error": done.stderr.strip()[-2000:] or f"exit status {done.returncode}"}
+    go, rust = json.loads(prepared.read_text()), json.loads(rust_prepared.read_text())
+    differences = exact_differences(go, rust)
+    if not differences:
+        return {"status": "match"}
+    return {"status": "mismatch", "difference_count": len(differences), "differences": differences[:MAX_DIFFERENCES]}
 
 
 def summary(result):
@@ -165,6 +216,7 @@ def shadow(request_path, output, bundle, seed, timeout, production_path=None):
         verdict["timings_ms"]["prepare"] = round(ms, 1)
         if done.returncode != 0:
             raise StageError("prepare", done.stderr.strip()[-2000:])
+        verdict["preparation"] = compare_preparation(engine, request_file, prepared, output, timeout, verdict)
 
         _, done = run_stage("check", [engine, "check", "--infile", prepared], timeout)
         if done.returncode != 0:
@@ -193,8 +245,9 @@ def shadow(request_path, output, bundle, seed, timeout, production_path=None):
         verdict["go"], verdict["rust"] = summary(go_result), summary(rust_result)
         if production is not None:
             verdict["versus_production"] = versus_production(production, verdict["rust"])
+        prepared_differently = verdict["preparation"]["status"] == "mismatch"
         verdict.update(
-            status="match" if not differences and log_difference is None else "mismatch",
+            status="match" if not differences and log_difference is None and not prepared_differently else "mismatch",
             go_dps=prepared_v2.dps(go_result), rust_dps=prepared_v2.dps(rust_result),
             difference_count=len(differences), differences=differences[:MAX_DIFFERENCES],
             first_log_difference=log_difference)
