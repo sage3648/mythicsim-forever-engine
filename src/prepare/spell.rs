@@ -401,7 +401,12 @@ pub(crate) struct SpellConfig {
     pub hot: DotConfig,
     pub related_dot_spell: Option<SpellId>,
     pub related_self_buff: Option<AuraId>,
+    pub related_aura_arrays: LabeledAuraArrays,
 }
+
+/// Go `LabeledAuraArrays`: per label, the aura on each target by unit index. Kept ordered so
+/// iteration is deterministic.
+pub(crate) type LabeledAuraArrays = std::collections::BTreeMap<String, Vec<Option<AuraId>>>;
 
 pub(crate) type SpellRegisteredHandler = Rc<dyn Fn(&mut Sim, SpellId)>;
 
@@ -428,6 +433,8 @@ pub(crate) struct Spell {
     pub min_range: f64,
     pub max_range: f64,
     pub max_charges: i32,
+    /// Go's unexported `charges`: the charges the spell has now.
+    pub charges: i32,
     pub recharge_time: Duration,
     pub cast_kind: CastKind,
     pub metric_splits: usize,
@@ -452,6 +459,7 @@ pub(crate) struct Spell {
     pub aoe_dot: Option<DotId>,
     pub related_dot_spell: Option<SpellId>,
     pub related_self_buff: Option<AuraId>,
+    pub related_aura_arrays: LabeledAuraArrays,
 }
 
 /// How Go casts the spell, chosen at registration.
@@ -548,6 +556,7 @@ impl Sim {
             min_range: 0.0,
             max_range: 0.0,
             max_charges: config.charges,
+            charges: config.charges,
             recharge_time: config.recharge_time,
             cast_kind: CastKind::Full,
             metric_splits: config.metric_splits.max(1),
@@ -571,6 +580,7 @@ impl Sim {
             aoe_dot: None,
             related_dot_spell: config.related_dot_spell,
             related_self_buff: config.related_self_buff,
+            related_aura_arrays: config.related_aura_arrays.clone(),
         };
         let options = config.cost;
         spell.cost = if options.mana_base_cost_percent != 0.0 || options.mana_flat_cost != 0 {

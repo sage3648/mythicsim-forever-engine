@@ -359,6 +359,8 @@ pub(crate) struct Sim {
     pub categories: Vec<ExclusiveCategory>,
     pub spells: Vec<super::spell::Spell>,
     pub dots: Vec<super::spell::Dot>,
+    /// Every spell mod the units built, by `ModId`.
+    pub spell_mods: Vec<super::spell_mod::SpellMod>,
     /// Each timer's owning unit.
     pub timers: Vec<UnitId>,
     /// Go `env.AllUnits`: the targets, then the raid's units, by unit index.
@@ -377,6 +379,7 @@ impl Sim {
             categories: Vec::new(),
             spells: Vec::new(),
             dots: Vec::new(),
+            spell_mods: Vec::new(),
             timers: Vec::new(),
             env_units: Vec::new(),
         }
