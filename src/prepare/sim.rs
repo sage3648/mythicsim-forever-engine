@@ -257,7 +257,7 @@ pub(crate) struct Unit {
     pub categories: Vec<CategoryId>,
     pub spellbook: Vec<SpellId>,
     pub timers: Vec<TimerId>,
-    /// Go `unit.categoryTimers`: one shared timer per spell category.
+    /// Go `unit.categoryTimers`: the timer a spell category shares, by category.
     pub category_timers: std::collections::BTreeMap<i32, TimerId>,
     pub cast_speed: f64,
     pub melee_attack_speed: f64,
@@ -439,7 +439,8 @@ impl Sim {
         id
     }
 
-    /// Go `unit.CategoryTimer`: the timer every spell of a category shares.
+    /// Go `unit.CategoryTimer` and `Character.GetOrInitSpellCategoryTimer`: the timer every
+    /// spell of a client category shares, created on first use.
     pub(crate) fn category_timer(&mut self, unit: UnitId, category: i32) -> TimerId {
         if let Some(timer) = self.unit(unit).category_timers.get(&category) {
             return *timer;

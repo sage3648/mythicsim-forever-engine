@@ -104,6 +104,7 @@ pub(crate) struct Applied {
 }
 
 type SetFn = Rc<dyn Fn(&mut Sim, bool, f64)>;
+type ScaleFn = Rc<dyn Fn(&mut Sim, ModId, f64)>;
 
 /// Go `attachment`. `set(sim, live, level)`: `live` says whether Go's `sim` is non-nil.
 #[derive(Clone)]
@@ -559,7 +560,7 @@ fn bid(
     live
 }
 
-fn additive(kind: String, value: f64, apply: Rc<dyn Fn(&mut Sim, bool, f64)>) -> Attachment {
+fn additive(kind: String, value: f64, apply: SetFn) -> Attachment {
     let current = Rc::new(Cell::new(0.0));
     let mut attachment = Attachment::new(kind, value);
     attachment.set = Some(Rc::new(move |sim: &mut Sim, live, level| {
@@ -574,7 +575,7 @@ fn additive(kind: String, value: f64, apply: Rc<dyn Fn(&mut Sim, bool, f64)>) ->
     attachment
 }
 
-fn multiplier(kind: String, mult: f64, apply: Rc<dyn Fn(&mut Sim, bool, f64)>) -> Attachment {
+fn multiplier(kind: String, mult: f64, apply: SetFn) -> Attachment {
     let active = Rc::new(Cell::new(false));
     let mut attachment = Attachment::new(kind, mult);
     attachment.multiplicative = true;
@@ -1211,7 +1212,7 @@ impl Parser {
         kind: &str,
         config: SpellModConfig,
         value: f64,
-        scale: Rc<dyn Fn(&mut Sim, ModId, f64)>,
+        scale: ScaleFn,
     ) -> Attachment {
         let mut attachment = Attachment::new(kind.to_string(), value);
         if self.dry {
@@ -1308,7 +1309,7 @@ impl Parser {
         Some(attachment)
     }
 
-    fn add_stats(&self, stats: Vec<Stat>) -> Rc<dyn Fn(&mut Sim, bool, f64)> {
+    fn add_stats(&self, stats: Vec<Stat>) -> SetFn {
         let unit = self.unit;
         Rc::new(move |sim: &mut Sim, live, delta| {
             let mut bonus = Stats::default();

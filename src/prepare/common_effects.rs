@@ -68,10 +68,116 @@ fn judgement_of_wisdom_effects(_env: &Environment) -> Vec<Value> {
     Vec::new()
 }
 
-/// Touch of the Grave, Berserking, Blood Fury and Elune's Light.
-fn racial_effects(_env: &mut Environment, _unrepresented: &mut Vec<String>) -> Vec<Value> {
-    Vec::new()
+/// The player stats an aura changes while it is active, read from a separate reset simulation
+/// so the exported one is untouched: tools/oracle-v2 `activeStats`.
+pub(crate) fn active_stats(env: &Environment, label: &str) -> Value {
+    let mut fresh = env.fresh();
+    let player = fresh.player;
+    let before = fresh.sim.stats(player);
+    let aura = fresh
+        .sim
+        .get_aura(player, label)
+        .expect("the aura exists in every reset");
+    fresh.sim.activate(aura);
+    let after = fresh.sim.stats(player);
+    let mut changed = serde_json::Map::new();
+    for stat in super::stats::Stat::ALL {
+        if after[stat] != before[stat] {
+            changed.insert(stat.name().to_string(), json!(after[stat]));
+        }
+    }
+    Value::Object(changed)
 }
+
+/// Go `Stats.FlatString`: every nonzero stat as `"Name": 0.000,` in stat order.
+pub(crate) fn flat_string(stats: &super::stats::Stats) -> String {
+    let mut out = String::from("{");
+    for stat in super::stats::Stat::ALL {
+        let value = stats[stat];
+        if value != 0.0 {
+            out.push_str(&format!("\"{}\": {:.3},", stat.name(), value));
+        }
+    }
+    out.push('}');
+    out
+}
+
+/// Go `ActionID.String`.
+pub(crate) fn action_id_string(id: &crate::contracts::prepared_v2::ActionId) -> String {
+    let mut out = String::from("{");
+    if id.spell_id != 0 {
+        out.push_str(&format!("SpellID: {}", id.spell_id));
+    } else if id.item_id != 0 {
+        out.push_str(&format!("ItemID: {}", id.item_id));
+    } else if !id.other_id.is_empty() {
+        let number =
+            crate::contracts::request::enum_number("proto.OtherAction", &id.other_id).unwrap_or(0);
+        out.push_str(&format!("OtherID: {number}"));
+    }
+    if id.tag != 0 {
+        out.push_str(&format!(", Tag: {}", id.tag));
+    }
+    out.push('}');
+    out
+}
+
+/// Touch of the Grave, Berserking, Blood Fury and Elune's Light.
+fn racial_effects(env: &mut Environment, _unrepresented: &mut Vec<String>) -> Vec<Value> {
+    use super::spell::ProcMask;
+    let player = env.player;
+    let mut effects = Vec::new();
+    if env.sim.get_aura(player, "Touch of the Grave").is_some() {
+        let chance = match env.sim.character(player).class.as_str() {
+            "ClassWarrior" | "ClassPaladin" | "ClassRogue" => 0.05,
+            _ => 0.1,
+        };
+        effects.push(json!({
+            "kind": "touch_of_the_grave", "trigger_aura": "Touch of the Grave", "drain_spell_id": 1260198,
+            "proc_chance": chance,
+            "proc_mask": (ProcMask::MELEE | ProcMask::RANGED | ProcMask::SPELL_DAMAGE).names(),
+            "health_fraction": 0.05, "delay_ns": SPELL_BATCH_WINDOW,
+        }));
+    }
+    if let Some(aura) = env.sim.get_aura(player, "Berserking") {
+        let a = env.sim.aura(aura);
+        effects.push(json!({
+            "kind": "berserking", "spell_id": a.action_id.as_ref().map_or(0, |id| id.spell_id),
+            "aura": a.label, "cast_speed_multiplier": 1.1, "attack_speed_multiplier": 1.1,
+        }));
+    }
+    if let Some(aura) = env.sim.get_aura(player, "Blood Fury") {
+        let (label, spell_id) = {
+            let a = env.sim.aura(aura);
+            (
+                a.label.clone(),
+                a.action_id.as_ref().map_or(0, |id| id.spell_id),
+            )
+        };
+        effects.push(json!({
+            "kind": "blood_fury", "spell_id": spell_id, "aura": label,
+            "active_stats": active_stats(env, &label),
+        }));
+    }
+    if let Some(aura) = env.sim.get_aura(player, "Elune's Light") {
+        let (label, id) = {
+            let a = env.sim.aura(aura);
+            (a.label.clone(), a.action_id.clone().unwrap_or_default())
+        };
+        let mut buffs = super::stats::Stats::default();
+        buffs[super::stats::Stat::PhysicalCritPercent] = 10.0;
+        buffs[super::stats::Stat::SpellCritPercent] = 10.0;
+        effects.push(json!({
+            "kind": "temporary_stats", "spell_id": id.spell_id, "aura": label,
+            "active_stats": active_stats(env, &label),
+            "gain_log": format!("Gained {} from {}.", flat_string(&buffs), action_id_string(&id)),
+            "expire_log": format!("Lost {} from fading {}.", flat_string(&buffs), action_id_string(&id)),
+        }));
+    }
+    effects
+}
+
+/// Go `core.SpellBatchWindow`.
+pub(crate) const SPELL_BATCH_WINDOW: i64 = 10 * super::sim::MILLISECOND;
 
 /// The party's Battle Shout: `fixed_uptime_aura`.
 fn battle_shout_effect(_env: &Environment) -> Option<Value> {
@@ -84,8 +190,34 @@ fn sunder_armor_effect(_env: &mut Environment, _unrepresented: &mut Vec<String>)
 }
 
 /// Shatter Curse, Stoneform and Read Ley Line.
-fn racial_defensive_effects(_env: &Environment) -> Vec<Value> {
-    Vec::new()
+fn racial_defensive_effects(env: &Environment) -> Vec<Value> {
+    let player = env.player;
+    let mut effects = Vec::new();
+    let spell_id = |aura: super::sim::AuraId| {
+        env.sim
+            .aura(aura)
+            .action_id
+            .as_ref()
+            .map_or(0, |id| id.spell_id)
+    };
+    if let Some(aura) = env.sim.get_aura(player, "Shatter Curse") {
+        effects.push(json!({"kind": "shatter_curse", "spell_id": spell_id(aura), "aura": env.sim.aura(aura).label,
+            "school_damage_taken_multiplier": 0.85,
+            "schools": ["arcane", "fire", "frost", "holy", "nature", "shadow"]}));
+    }
+    if let Some(aura) = env.sim.get_aura(player, "Stoneform") {
+        effects.push(json!({"kind": "stoneform", "spell_id": spell_id(aura), "aura": env.sim.aura(aura).label,
+            "school_damage_taken_multiplier": 0.9, "schools": ["physical"]}));
+    }
+    if let Some(aura) = env.sim.get_aura(player, "Energized") {
+        for spell in &env.sim.unit(player).spellbook {
+            if env.sim.spell(*spell).related_self_buff == Some(aura) {
+                effects.push(json!({"kind": "read_ley_line", "spell_id": env.sim.spell(*spell).action_id.spell_id,
+                    "aura": env.sim.aura(aura).label, "regen_multiplier": 2.0}));
+            }
+        }
+    }
+    effects
 }
 
 /// The major cooldown items, then the potions, conjured items and Diamond Flasks a rotation
