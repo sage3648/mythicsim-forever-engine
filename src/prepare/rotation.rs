@@ -162,6 +162,40 @@ impl Builder<'_> {
                 }
                 Ok(Some(Built { casts: vec![spell] }))
             }
+            "channel_spell" => {
+                let Some(id) = action.message("spell_id") else {
+                    return Ok(None);
+                };
+                let id = proto_to_action_id(id);
+                // Go `newActionChannelSpell`: without an interrupt condition it is a cast
+                // action, which removes its spell from the major cooldowns; with one it is a
+                // channel action, which does not.
+                let casts = action.message("interrupt_if").is_none();
+                let spell = if casts {
+                    apl_cast_spell(self.env, &id)
+                } else {
+                    apl_spell(self.env, &id)
+                };
+                let Some(spell) = spell else {
+                    return Ok(None);
+                };
+                if !casts
+                    && !self
+                        .env
+                        .sim
+                        .spell(spell)
+                        .flags
+                        .matches(SpellFlag::CHANNELED)
+                {
+                    return Ok(None);
+                }
+                if !target_resolves(self.env, action.message("target"))? {
+                    return Ok(None);
+                }
+                Ok(Some(Built {
+                    casts: if casts { vec![spell] } else { Vec::new() },
+                }))
+            }
             "sequence" | "strict_sequence" => {
                 let mut casts = Vec::new();
                 for inner in action.messages("actions") {
