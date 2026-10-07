@@ -833,6 +833,19 @@ pub(crate) fn export(
         prepared["player"]["hp_percent_for_defensives"] = json!(hp);
     }
     prepared["melee"] = export_melee(env, &mut unrepresented);
+    // Go `exportEnergy`: the energy bar, when the class has one.
+    let energy = &env.sim.unit(player).energy_bar;
+    if energy.enabled {
+        if energy.has_no_regen {
+            unrepresented.push("an energy bar without regeneration is unsupported".to_string());
+        }
+        prepared["player"]["energy"] = json!({
+            "max_energy": energy.max_energy,
+            "max_combo_points": energy.max_combo_points,
+            "tick_duration_ns": energy.tick_duration,
+            "energy_per_tick": energy.energy_per_tick,
+        });
+    }
     let teardown = teardown_max_mana(env, player, &mut unrepresented);
     prepared["player"]["mana"]["teardown_max"] = json!(teardown);
     if !env.sim.unit(player).mana_bar.enabled {
