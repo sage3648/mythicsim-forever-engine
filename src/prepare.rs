@@ -26,6 +26,7 @@ pub(crate) mod forever_items;
 pub(crate) mod forever_items_generated;
 pub(crate) mod item_aura;
 pub(crate) mod item_effects;
+pub(crate) mod item_proc;
 pub(crate) mod item_sets;
 #[cfg(test)]
 pub(crate) mod item_test_support;
