@@ -22,6 +22,19 @@ flowchart LR
     E -->|gaps| G[Full Go simulation]
 ```
 
+## Coverage
+
+Every class is prepared: Druid, Hunter and its pets, Mage, Paladin, Priest and its
+Shadowfiend, Rogue, Shaman, Warlock and its demons, and Warrior, with tanking, 2 to 5 targets,
+raid buffs and debuffs, consumables, the item and enchant effects and set bonuses Go registers
+in code, racials and the rotation's construction. All 358 accepted fixtures prepare in Rust and
+equal the exporter's state exactly.
+
+What is refused, each with a stable code, is what Go cannot export either (the exporter's
+unrepresented notes, such as a Restoration shaman, mob type bonus stats or an on-use item without
+an exported effect) and a few inputs no fixture or sweep reaches yet, such as a target disabled
+at start, item swaps, rotation groups and variables, or a race without base stats for its class.
+
 ## Commands
 
 ```sh
@@ -102,6 +115,13 @@ a class lists are the combinations the swing is read under.
 `cargo test --test prepare` prepares every accepted fixture's request. Each one Rust prepares
 must equal the exporter's prepared state exactly; each other one must be refused. Set
 `PREPARE_REPORT=1` to list every case. The test also checks every fixture's request digest.
+
+`tools/prepare_compare.py` prepares any set of requests both ways and reports each one as a
+match, a refusal with its code, or a mismatch with the first differing paths:
+
+```sh
+python3 tools/prepare_compare.py --output NEW_FOLDER --jobs 4 REQUESTS_OR_DIRS...
+```
 
 To isolate a mechanic, strip a request down (no buffs, consumables or gear effects), export it
 with the pinned exporter (`tools/prepared_v2.py` builds it into `oracle-cache/`) and compare.
