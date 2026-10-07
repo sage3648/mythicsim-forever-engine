@@ -127,14 +127,14 @@ pub(crate) trait PrepAgent {
     fn damage_taken_modifiers(&self) -> usize {
         0
     }
-    /// The client damage roll of a spell, `{average, variance}`, for the spells the class names.
-    fn damage_effect(&self, _sim: &Sim, _spell: super::sim::SpellId) -> Option<serde_json::Value> {
-        None
-    }
     /// Go `classExport.unrepresented`: class behavior the effects cannot describe, one reason
     /// each.
     fn unrepresented(&self, _sim: &Sim, _unit: UnitId) -> Vec<String> {
         Vec::new()
+    }
+    /// The client damage roll of a spell, `{average, variance}`, for the spells the class names.
+    fn damage_effect(&self, _sim: &Sim, _spell: super::sim::SpellId) -> Option<serde_json::Value> {
+        None
     }
     /// Go `classItemUseEffects`: the exported effect of an item use the class package registers
     /// itself, keyed by the item. It is the item loop's last case, after the shared ones.

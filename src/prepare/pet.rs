@@ -400,7 +400,7 @@ fn nonzero_stats(stats: &Stats) -> Map<String, Value> {
 
 /// Go `applyDependencies`: stat dependencies, then `FloorGameStats`, as `AddStatsDynamic`
 /// recomputes a unit's stats.
-fn apply_dependencies(without: Stats, deps: &[(Stat, Stat, f64, f64)]) -> Stats {
+pub(crate) fn apply_dependencies(without: Stats, deps: &[(Stat, Stat, f64, f64)]) -> Stats {
     let mut s = without;
     for (src, dst, amount, step) in deps {
         if src == dst {

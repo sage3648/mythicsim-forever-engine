@@ -108,8 +108,9 @@ with the pinned exporter (`tools/prepared_v2.py` builds it into `oracle-cache/`)
 `tests/classes/mage/prepare.rs` keeps such stripped Mage requests, each with a digest of every
 spell, aura and effect the exporter wrote (`tools/mage_prepare_goldens.py` writes them from the
 exporter only), so a failure names the item that changed. `tests/classes/warlock/prepare.rs` does the same for
-the Warlock and its demons (`tools/warlock_prepare_goldens.py`), and `tests/classes/rogue/prepare.rs` for the
-Rogue (`tools/rogue_prepare_goldens.py`).
+the Warlock and its demons (`tools/warlock_prepare_goldens.py`), `tests/classes/rogue/prepare.rs` for the
+Rogue (`tools/rogue_prepare_goldens.py`) and `tests/classes/priest/prepare.rs` for the Priest and its
+Shadowfiend (`tools/priest_prepare_goldens.py`).
 
 Item set bonuses are registered in `src/prepare/item_sets.rs`: a module lists its sets as
 `ItemSet` values, and a set Go registers (`item_sets` in `data/go-tables.json`) that no module
