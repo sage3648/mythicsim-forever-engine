@@ -550,6 +550,25 @@ fn tail_effects(
 ) -> Result<Vec<Value>, Refusal> {
     let _ = &unrepresented;
     let mut effects = Vec::new();
+    // tools/oracle-v2/targets.go targetCopyNotes: Go keeps an internal cooldown per copy.
+    if env.encounter.targets.len() > 1 {
+        let first = env.encounter.targets[0];
+        if let Some(aura) = env
+            .sim
+            .unit(first)
+            .auras
+            .iter()
+            .find(|aura| env.sim.aura(**aura).icd.is_some())
+        {
+            return Err(Refusal::new(
+                "targets",
+                format!(
+                    "target aura {} has an internal cooldown",
+                    env.sim.aura(*aura).label
+                ),
+            ));
+        }
+    }
     if env.sim.get_aura(env.player, "Eureka!").is_some() {
         return Err(Refusal::new(
             "race",
@@ -760,6 +779,7 @@ pub(crate) fn export(
         "teardown_max": 0.0,
     });
 
+    let target_count = env.encounter.targets.len();
     let target_unit = env.sim.unit(target);
     let mut prepared = json!({
         "schema_version": SCHEMA_VERSION,
@@ -834,6 +854,9 @@ pub(crate) fn export(
         "effects": effects,
         "unrepresented": [],
     });
+    if target_count > 1 {
+        prepared["encounter"]["target_count"] = json!(target_count);
+    }
     let hp = player_message
         .message("cooldowns")
         .map_or(0.0, |cooldowns| cooldowns.f64("hp_percent_for_defensives"));

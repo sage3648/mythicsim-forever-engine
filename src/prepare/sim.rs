@@ -257,6 +257,8 @@ pub(crate) struct Unit {
     pub categories: Vec<CategoryId>,
     pub spellbook: Vec<SpellId>,
     pub timers: Vec<TimerId>,
+    /// Go `unit.categoryTimers`: the timer a spell category shares, by category.
+    pub category_timers: std::collections::BTreeMap<i32, TimerId>,
     pub cast_speed: f64,
     pub melee_attack_speed: f64,
     pub ranged_attack_speed: f64,
@@ -284,8 +286,6 @@ pub(crate) struct Unit {
     pub character: Option<Box<super::character::Character>>,
     /// Go `HasHealthBar`.
     pub health_bar: bool,
-    /// Go `unit.categoryTimers`: the timer of each spell category, in creation order.
-    pub category_timers: Vec<(i32, TimerId)>,
 }
 
 impl Unit {
@@ -317,6 +317,7 @@ impl Unit {
             categories: Vec::new(),
             spellbook: Vec::new(),
             timers: Vec::new(),
+            category_timers: std::collections::BTreeMap::new(),
             cast_speed: 0.0,
             melee_attack_speed: 0.0,
             ranged_attack_speed: 0.0,
@@ -340,7 +341,6 @@ impl Unit {
             spell_registration_handlers: Vec::new(),
             character: None,
             health_bar: false,
-            category_timers: Vec::new(),
         }
     }
 }
@@ -440,18 +440,13 @@ impl Sim {
     }
 
     /// Go `unit.CategoryTimer` and `Character.GetOrInitSpellCategoryTimer`: the timer every
-    /// spell of the client's spell category shares.
+    /// spell of a client category shares, created on first use.
     pub(crate) fn category_timer(&mut self, unit: UnitId, category: i32) -> TimerId {
-        if let Some((_, timer)) = self
-            .unit(unit)
-            .category_timers
-            .iter()
-            .find(|(id, _)| *id == category)
-        {
+        if let Some(timer) = self.unit(unit).category_timers.get(&category) {
             return *timer;
         }
         let timer = self.new_timer(unit);
-        self.unit_mut(unit).category_timers.push((category, timer));
+        self.unit_mut(unit).category_timers.insert(category, timer);
         timer
     }
 
