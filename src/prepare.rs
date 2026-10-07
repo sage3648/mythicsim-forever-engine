@@ -56,6 +56,8 @@ pub enum PrepareError {
     Invalid(String),
     /// Rust preparation does not cover the request; Go can prepare it.
     Refused(Refusal),
+    /// Preparation failed inside Rust, a defect; Go can prepare the request.
+    Fault(String),
 }
 
 impl std::fmt::Display for PrepareError {
@@ -63,6 +65,7 @@ impl std::fmt::Display for PrepareError {
         match self {
             PrepareError::Invalid(reason) => write!(f, "invalid request: {reason}"),
             PrepareError::Refused(refusal) => write!(f, "preparation refused: {refusal}"),
+            PrepareError::Fault(reason) => write!(f, "preparation failed: {reason}"),
         }
     }
 }

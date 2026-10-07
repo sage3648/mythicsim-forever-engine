@@ -22,15 +22,31 @@ import json, os, signal, sys, time
 from pathlib import Path
 mode = json.loads((Path(__file__).parent / "mode.json").read_text())
 command, args = sys.argv[1], dict(zip(sys.argv[2::2], sys.argv[3::2]))
+rust_prepare = "--request" in args
 step = {"prepare": "prepare", "check": "check", "sim": "rust"}[command]
+if rust_prepare and command == "prepare":
+    step = "rust_prepare"
 gated = command == "sim" and "--gate" in sys.argv
 with (Path(__file__).parent / "calls.log").open("a") as calls:
-    calls.write(command + (" --gate" if gated else "") + "\\n")
+    calls.write(command + (" --request" if rust_prepare else "") + (" --gate" if gated else "") + "\\n")
 if mode.get("hang") == step:
     time.sleep(5)
-infile = json.loads(Path(args["--infile"]).read_text())
-# A batch test gives one request its own behavior.
-mode.update((infile if command == "prepare" else infile["request"]).get("fake", {}))
+if rust_prepare:
+    # The engine prepares the request itself, or refuses with status 5.
+    request = json.loads(Path(args["--request"]).read_text())
+    mode.update(request.get("fake", {}))
+    if mode.get("fail") == "rust_prepare":
+        sys.exit("broken")
+    if not mode.get("rust_prepares"):
+        print(json.dumps({"prepared": False, "refusal": {"code": "class", "reason": "not prepared yet"}}))
+        sys.exit(5)
+    infile = {"request": request}
+    if command == "prepare":
+        command = "exporter_prepare"
+else:
+    infile = json.loads(Path(args["--infile"]).read_text())
+    # A batch test gives one request its own behavior.
+    mode.update((infile if command == "prepare" else infile["request"]).get("fake", {}))
 if gated:
     # sim --gate: a refusal is reported as check reports it, with status 3, and an invalid
     # prepared input has status 4.
@@ -57,6 +73,10 @@ if mode.get("partial_then") and command == "sim":
 if command == "prepare":
     request = infile
     Path(args["--outfile"]).write_text(json.dumps({"request": request}))
+elif command == "exporter_prepare":
+    Path(args["--outfile"]).write_text(json.dumps(infile))
+elif command == "exporter_prepare":
+    Path(args["--outfile"]).write_text(json.dumps(infile))
 elif command == "check":
     if "check_output" in mode:
         print(mode["check_output"])
@@ -108,13 +128,37 @@ class RouteTest(BundleTest):
         self.assertEqual(json.loads(Path(decision["result"]).read_text()), RESULT)
         self.assertEqual(decision["identity"], {"engine": "forever-engine"})
         # The gate runs inside the Rust step, so a supported request has no step of its own for it.
-        self.assertEqual(set(decision["timings_ms"]), {"prepare", "rust"})
+        self.assertEqual(set(decision["timings_ms"]), {"rust_prepare", "prepare", "rust"})
+        self.assertEqual(decision["preparation"], {"provider": "go", "code": "class", "reason": "not prepared yet"})
 
     def calls(self):
         return (self.bundle / "bin" / "calls.log").read_text().split("\n")[:-1]
 
     def test_a_single_request_gates_and_runs_in_one_engine_process(self):
         self.decide()
+        self.assertEqual(self.calls(), ["sim --request --gate", "prepare", "sim --gate"])
+
+    def test_a_request_rust_prepares_runs_in_one_engine_process(self):
+        decision = self.decide(rust_prepares=True)
+        self.assertEqual(decision["status"], "rust")
+        self.assertEqual(decision["preparation"], {"provider": "rust"})
+        self.assertEqual(json.loads(Path(decision["result"]).read_text()), RESULT)
+        self.assertEqual(set(decision["timings_ms"]), {"rust"})
+        self.assertEqual(self.calls(), ["sim --request --gate"])
+
+    def test_a_request_rust_prepares_can_still_fall_back_at_the_gate(self):
+        decision = self.decide(rust_prepares=True, refusals=REFUSALS)
+        self.assertEqual(decision["status"], "fallback")
+        self.assertEqual(decision["codes"], ["class_limit", "unknown_spell"])
+        self.assertEqual(set(decision["timings_ms"]), {"check"})
+        self.assertEqual(self.calls(), ["sim --request --gate"])
+
+    def test_go_prepare_skips_rust_preparation(self):
+        self.output = self.root / "out-go"
+        (self.bundle / "bin" / "mode.json").write_text(json.dumps({"result": RESULT, "rust_prepares": True}))
+        decision = route.route(self.request, self.output, self.bundle, 30, 7, go_prepare=True)
+        self.assertEqual(decision["status"], "rust")
+        self.assertEqual(decision["preparation"], {"provider": "go"})
         self.assertEqual(self.calls(), ["prepare", "sim --gate"])
 
     def test_a_refused_request_falls_back_with_its_codes(self):
@@ -124,8 +168,8 @@ class RouteTest(BundleTest):
         self.assertEqual(decision["codes"], ["class_limit", "unknown_spell"])
         self.assertFalse((self.output / "result.json").exists())
         # The gate ran and nothing else did: its time is the check's.
-        self.assertEqual(set(decision["timings_ms"]), {"prepare", "check"})
-        self.assertEqual(self.calls(), ["prepare", "sim --gate"])
+        self.assertEqual(set(decision["timings_ms"]), {"rust_prepare", "prepare", "check"})
+        self.assertEqual(self.calls(), ["sim --request --gate", "prepare", "sim --gate"])
         self.assertEqual(list(self.output.glob("*rust-report*")), [])
 
     def test_a_crash_at_any_step_is_a_fault(self):
@@ -239,7 +283,15 @@ class BatchTest(BundleTest):
         self.assertEqual(len(self.results()), 3)
         # A batch gates every request with `check` before any runs.
         calls = (self.bundle / "bin" / "calls.log").read_text().split("\n")[:-1]
-        self.assertEqual(calls, ["prepare", "check"] * 3 + ["sim"] * 3)
+        self.assertEqual(calls, ["prepare --request", "prepare", "check"] * 3 + ["sim"] * 3)
+        self.assertEqual({entry["preparation"]["provider"] for entry in decision["requests"]}, {"go"})
+
+    def test_a_batch_rust_prepares_needs_no_exporter(self):
+        decision = self.decide_batch({"rust_prepares": True}, {"rust_prepares": True})
+        self.assertEqual(decision["status"], "rust")
+        calls = (self.bundle / "bin" / "calls.log").read_text().split("\n")[:-1]
+        self.assertEqual(calls, ["prepare --request", "check"] * 2 + ["sim"] * 2)
+        self.assertEqual([entry["preparation"] for entry in decision["requests"]], [{"provider": "rust"}] * 2)
 
     def test_one_refused_candidate_sends_the_whole_batch_to_go(self):
         decision = self.decide_batch({}, {"refusals": REFUSALS}, {})
