@@ -27,6 +27,7 @@ fn factory(sim: &mut Sim, unit: UnitId, _player: &Message) -> Result<Box<dyn Pre
     sim.unit_mut(unit).rage_bar = RageBar {
         enabled: true,
         max_rage: 100.0,
+        ..RageBar::default()
     };
     let weapon = |speed: f64, min: f64, max: f64| Weapon {
         swing_speed: speed,
