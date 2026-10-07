@@ -1190,12 +1190,19 @@ impl Sim {
         self.unit(unit).mana_bar.enabled
     }
 
-    /// Go `healthBar.UpdateMaxHealth`: the max health changes through the dynamic stats. The
-    /// current health Go also moves is not tracked in preparation.
+    /// Go `healthBar.UpdateMaxHealth`: the max health changes through the dynamic stats, and the
+    /// current health gains the bonus or loses what the new maximum cuts, leaving at least 1.
     pub(crate) fn update_max_health(&mut self, unit: UnitId, bonus_health: f64) {
         let mut bonus = Stats::default();
         bonus[Stat::Health] = bonus_health;
         self.add_stats_dynamic(unit, &bonus);
+        let max = self.unit(unit).stats[Stat::Health];
+        let current = self.unit(unit).current_health;
+        self.unit_mut(unit).current_health = if bonus_health >= 0.0 {
+            f64::min(current + bonus_health, max)
+        } else {
+            current - f64::max(0.0, f64::min(-bonus_health, current - 1.0))
+        };
     }
 }
 
