@@ -4,7 +4,6 @@
 use crate::contracts::prepared_v2::ActionId;
 use crate::contracts::request::Message;
 
-use super::env::Environment;
 use super::sim::{Sim, UnitId};
 
 /// Go `ProtoToActionID`.
@@ -70,16 +69,6 @@ pub(crate) trait PrepAgent {
     fn effects(&self, _sim: &Sim, _unit: UnitId) -> Vec<serde_json::Value> {
         Vec::new()
     }
-    /// The exporter's class effects for a class whose description reads more than the unit: the
-    /// environment (separate reset simulations, attack tables) and the list of what it cannot
-    /// describe. When it answers `Some`, it replaces [`PrepAgent::effects`].
-    fn effects_in(
-        &self,
-        _env: &Environment,
-        _unrepresented: &mut Vec<String>,
-    ) -> Option<Vec<serde_json::Value>> {
-        None
-    }
     /// Stable names for class spells Go registers without a class mask, by action.
     fn unmasked_spell(&self, _id: &ActionId) -> Option<&'static str> {
         None
@@ -133,19 +122,49 @@ pub(crate) trait PrepAgent {
     fn stat_auras(&self, _sim: &Sim, _unit: UnitId) -> Vec<String> {
         Vec::new()
     }
-    /// What the exporter's class effects note as unrepresented while they run
-    /// (`classNotes`), and `classExport.unrepresented`.
-    fn unrepresented(&self, _sim: &Sim, _unit: UnitId) -> Vec<String> {
-        Vec::new()
+    /// The exporter's `classExport.damageTakenModifiers`: how many of the target's dynamic
+    /// damage taken modifiers the class effects describe.
+    fn damage_taken_modifiers(&self) -> usize {
+        0
     }
     /// The client damage roll of a spell, `{average, variance}`, for the spells the class names.
     fn damage_effect(&self, _sim: &Sim, _spell: super::sim::SpellId) -> Option<serde_json::Value> {
+        None
+    }
+    /// Go `classExport.unrepresented`: class behavior the effects cannot describe, one reason
+    /// each.
+    fn unrepresented(&self, _sim: &Sim, _unit: UnitId) -> Vec<String> {
+        Vec::new()
+    }
+    /// Go `classItemUseEffects`: the exported effect of an item use the class package registers
+    /// itself, keyed by the item. It is the item loop's last case, after the shared ones.
+    fn class_item_use_effect(
+        &self,
+        _env: &super::env::Environment,
+        _spell: super::sim::SpellId,
+        _item: i32,
+    ) -> Option<serde_json::Value> {
         None
     }
     /// Go `buffs.SetFlametongueAttackTraits`: what the class's own Flametongue Attack carries,
     /// which the party's Flametongue Totem hit takes. Any other class has none.
     fn flametongue_attack_traits(&self) -> super::buffs::flametongue::FlametongueAttackTraits {
         super::buffs::flametongue::FlametongueAttackTraits::default()
+    }
+    /// The agent as `Any`, for a class's item set bonus that sets state on its own agent (Go
+    /// hands a set bonus the agent). A class that has no such bonus answers `None`.
+    fn as_any_mut(&mut self) -> Option<&mut dyn std::any::Any> {
+        None
+    }
+    /// The exporter's class effects when they need more than the simulation, such as the
+    /// attack tables and the target, and the notes a class effect adds to the unrepresented
+    /// list (`classNotes`). The default is `effects`.
+    fn export_effects(
+        &self,
+        env: &super::env::Environment,
+        _notes: &mut Vec<String>,
+    ) -> Vec<serde_json::Value> {
+        self.effects(&env.sim, env.player)
     }
 }
 

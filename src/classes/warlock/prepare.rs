@@ -320,12 +320,8 @@ impl PrepAgent for Warlock {
         CLASS_SPELLS
     }
 
-    fn effects_in(
-        &self,
-        env: &Environment,
-        unrepresented: &mut Vec<String>,
-    ) -> Option<Vec<serde_json::Value>> {
-        Some(self.export_effects(env, unrepresented))
+    fn export_effects(&self, env: &Environment, notes: &mut Vec<String>) -> Vec<serde_json::Value> {
+        self.warlock_effects(env, notes)
     }
 
     fn unmasked_spell(&self, id: &crate::contracts::prepared_v2::ActionId) -> Option<&'static str> {

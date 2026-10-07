@@ -173,7 +173,7 @@ const SCHOOL_INDICES: [SchoolIndex; 8] = [
 
 impl Warlock {
     /// Go `warlockEffects`.
-    pub(super) fn export_effects(
+    pub(super) fn warlock_effects(
         &self,
         env: &Environment,
         unrepresented: &mut Vec<String>,

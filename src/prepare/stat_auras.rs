@@ -57,30 +57,47 @@ const COMMON_STAT_AURA_LABELS: [&str; 9] = [
     "Diamond Flask",
 ];
 
-/// STUB for the consumables port: the stat buff auras of the potions in the spellbook
-/// (consumes.go: a potion's stat buff is a temporary stats aura named for the potion). An
-/// equipped consumable is refused until consumables are prepared, so no potion reaches here
-/// yet; the consumables port fills this in.
-fn potion_stat_auras(_env: &Environment) -> Vec<String> {
-    Vec::new()
+/// consumes.go: a potion's stat buff is a temporary stats aura named for the potion.
+fn potion_stat_auras(env: &Environment) -> Vec<String> {
+    use super::spell::SpellFlag;
+    let mut labels = Vec::new();
+    for spell in &env.sim.unit(env.player).spellbook {
+        let spell = env.sim.spell(*spell);
+        let item = spell.action_id.item_id;
+        if item == 0 || !spell.flags.matches(SpellFlag::POTION) {
+            continue;
+        }
+        let consumable = super::consumes::consumable_by_id(item);
+        if consumable.buff_duration > 0 {
+            labels.push(consumable.name);
+        }
+    }
+    labels
 }
 
-/// STUB for the items port: the auras of `spellDataStatProcAuras`, item procs built from client
-/// spell data whose buff changes stats. An item effect not ported yet is refused, so none reaches
-/// here yet; the items port fills this in.
-fn spell_data_stat_proc_auras(_env: &Environment) -> Vec<String> {
-    Vec::new()
+/// The auras of `spellDataStatProcAuras`: item procs built from client spell data whose buff
+/// changes stats.
+fn spell_data_stat_proc_auras(env: &Environment) -> Vec<String> {
+    super::export_items::spell_data_stat_proc_auras(env)
 }
 
-/// STUB for the items port: `lionHornProcAura`, The Lion Horn of Stormwind's proc aura.
-fn lion_horn_proc_aura(_env: &Environment) -> Vec<String> {
-    Vec::new()
+/// `lionHornProcAura`: The Lion Horn of Stormwind's proc aura.
+fn lion_horn_proc_aura(env: &Environment) -> Vec<String> {
+    super::export_items::lion_horn_proc_aura(env)
 }
 
-/// STUB for the items port: the related self buffs of the spells `simpleStatActive` recognizes,
-/// the on-use stat buffs `shared.NewSimpleStatActive` registers.
-fn simple_stat_active_auras(_env: &Environment) -> Vec<String> {
-    Vec::new()
+/// shared.NewSimpleStatActive: an item's on-use buff is a temporary stats aura, the related self
+/// buff of the spells `simpleStatActive` recognizes.
+fn simple_stat_active_auras(env: &Environment) -> Vec<String> {
+    let mut labels = Vec::new();
+    for spell in env.sim.unit(env.player).spellbook.iter().copied() {
+        if super::export_items::simple_stat_active(env, spell).is_some() {
+            if let Some(aura) = env.sim.spell(spell).related_self_buff {
+                labels.push(env.sim.aura(aura).label.clone());
+            }
+        }
+    }
+    labels
 }
 
 /// Go `characterStatAuras`: the stat auras of the player, in the order a combination's bits

@@ -119,7 +119,7 @@ fn random_suffix(id: i32) -> Option<RandomSuffix> {
 }
 
 /// A database item's scaling option at key 0, which `NewItem` reads.
-fn scaling_option(row: &Message) -> Option<&Message> {
+pub(crate) fn scaling_option(row: &Message) -> Option<&Message> {
     row.get("scaling_options").and_then(|value| match value {
         Value::Map(entries) => entries.iter().find_map(|(key, value)| match (key, value) {
             (Value::Int(0), Value::Message(message)) => Some(message),
@@ -130,7 +130,7 @@ fn scaling_option(row: &Message) -> Option<&Message> {
 }
 
 /// Go `stats.FromProtoMap` over a `map<int32, double>` field.
-fn stats_from_map(message: &Message, field: &str) -> Stats {
+pub(crate) fn stats_from_map(message: &Message, field: &str) -> Stats {
     let mut out = Stats::default();
     if let Some(Value::Map(entries)) = message.get(field) {
         for (key, value) in entries {
@@ -379,4 +379,10 @@ pub(crate) fn equipment_stats(equipment: &Equipment) -> Stats {
         out = out.add(&item_enchant_stats(item));
     }
     unify_gear_hit_and_crit(out)
+}
+
+/// `stats.FromProtoMap(effect.GetScalingOptions()[int32(0)].GetStats())`: the stats an item or
+/// enchant effect carries at the base scaling, zero where the effect names none.
+pub(crate) fn effect_stats(effect: &Message) -> Stats {
+    scaling_option(effect).map_or_else(Stats::default, |option| stats_from_map(option, "stats"))
 }
