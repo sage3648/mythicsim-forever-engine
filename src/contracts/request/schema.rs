@@ -1,6 +1,10 @@
 //! The reference's proto schema, read once from `data/proto-schema.json`.
 
-use std::{collections::HashMap, sync::OnceLock};
+use std::{
+    collections::HashMap,
+    hash::{BuildHasherDefault, Hasher},
+    sync::OnceLock,
+};
 
 use serde::Deserialize;
 
@@ -85,11 +89,37 @@ struct RawSchema {
     enums: HashMap<String, Vec<RawEnumValue>>,
 }
 
+/// FNV-1a: the schema's maps are read for every field access while preparing, and their keys
+/// are the schema's own names, so a fast hash without flooding resistance is enough.
+#[derive(Default)]
+struct Fnv(u64);
+
+impl Hasher for Fnv {
+    fn finish(&self) -> u64 {
+        self.0
+    }
+
+    fn write(&mut self, bytes: &[u8]) {
+        let mut hash = if self.0 == 0 {
+            0xcbf2_9ce4_8422_2325
+        } else {
+            self.0
+        };
+        for byte in bytes {
+            hash ^= u64::from(*byte);
+            hash = hash.wrapping_mul(0x0100_0000_01b3);
+        }
+        self.0 = hash;
+    }
+}
+
+type FastMap<K, V> = HashMap<K, V, BuildHasherDefault<Fnv>>;
+
 pub struct MessageSchema {
     pub name: &'static str,
     pub fields: Vec<FieldSchema>,
-    by_name: HashMap<String, usize>,
-    by_number: HashMap<u32, usize>,
+    by_name: FastMap<String, usize>,
+    by_number: FastMap<u32, usize>,
 }
 
 impl MessageSchema {
@@ -106,13 +136,13 @@ impl MessageSchema {
 }
 
 pub struct EnumSchema {
-    by_name: HashMap<String, i32>,
-    by_number: HashMap<i32, String>,
+    by_name: FastMap<String, i32>,
+    by_number: FastMap<i32, String>,
 }
 
 struct Schema {
-    messages: HashMap<String, MessageSchema>,
-    enums: HashMap<String, EnumSchema>,
+    messages: FastMap<String, MessageSchema>,
+    enums: FastMap<String, EnumSchema>,
 }
 
 fn schema() -> &'static Schema {
@@ -123,8 +153,8 @@ fn schema() -> &'static Schema {
             .messages
             .into_iter()
             .map(|(name, message)| {
-                let mut by_name = HashMap::new();
-                let mut by_number = HashMap::new();
+                let mut by_name = FastMap::default();
+                let mut by_number = FastMap::default();
                 for (index, field) in message.fields.iter().enumerate() {
                     by_name.insert(field.name.clone(), index);
                     by_name.insert(field.json_name.clone(), index);
@@ -149,7 +179,7 @@ fn schema() -> &'static Schema {
             .map(|(name, values)| {
                 let by_name = values.iter().map(|v| (v.name.clone(), v.number)).collect();
                 // An alias keeps the first name, as Go's enum String does.
-                let mut by_number = HashMap::new();
+                let mut by_number = FastMap::default();
                 for value in values {
                     by_number.entry(value.number).or_insert(value.name);
                 }

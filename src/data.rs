@@ -7,6 +7,7 @@
 pub(crate) mod spells;
 pub(crate) mod tables;
 
+use std::collections::HashMap;
 use std::sync::OnceLock;
 
 use crate::contracts::request::Message;
@@ -87,12 +88,32 @@ table!(SPELL_EFFECTS, "spell-effects.jsonl");
 table!(SPELL_ROWS, "spells.jsonl");
 
 /// A database row as its proto message, such as a `proto.SimItem` from [`ITEMS`].
-pub(crate) fn proto_row(table: &Table, type_name: &str, key: i64) -> Option<Message> {
-    let text = table.row(key)?;
-    Some(
-        Message::from_json_text(type_name, text)
-            .unwrap_or_else(|err| panic!("data/{} row {key}: {err}", table.name)),
-    )
+/// The decoded rows read so far, by table, message type and key.
+type RowCache = HashMap<(&'static str, &'static str, i64), Option<std::rc::Rc<Message>>>;
+
+pub(crate) fn proto_row(
+    table: &Table,
+    type_name: &'static str,
+    key: i64,
+) -> Option<std::rc::Rc<Message>> {
+    // Preparation reads the same rows for every reset simulation it builds; each row is read
+    // once per thread.
+    thread_local! {
+        static ROWS: std::cell::RefCell<RowCache> =
+            std::cell::RefCell::new(HashMap::new());
+    }
+    ROWS.with(|rows| {
+        rows.borrow_mut()
+            .entry((table.name, type_name, key))
+            .or_insert_with(|| {
+                let text = table.row(key)?;
+                Some(std::rc::Rc::new(
+                    Message::from_json_text(type_name, text)
+                        .unwrap_or_else(|err| panic!("data/{} row {key}: {err}", table.name)),
+                ))
+            })
+            .clone()
+    })
 }
 
 #[cfg(test)]

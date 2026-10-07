@@ -78,7 +78,7 @@ pub(crate) struct Item {
     pub rand_prop_points: i32,
     pub item_effects: Vec<Message>,
     /// The item's whole database row, for its scaling options and area stats.
-    pub row: Option<Message>,
+    pub row: Option<std::rc::Rc<Message>>,
 }
 
 impl Item {

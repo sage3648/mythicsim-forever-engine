@@ -89,10 +89,7 @@ pub(super) fn decode_message(
         };
         fields.insert(field.number, decoded);
     }
-    Ok(Message {
-        type_name: schema.name,
-        fields,
-    })
+    Ok(Message { schema, fields })
 }
 
 fn is_default(value: &Value) -> bool {
@@ -371,7 +368,7 @@ fn key_order(a: &Value, b: &Value) -> std::cmp::Ordering {
 }
 
 pub(super) fn encode_message(message: &Message, out: &mut Vec<u8>) {
-    let schema = schema::message(message.type_name).expect("a decoded message has a schema");
+    let schema = message.schema;
     // protobuf-go marshals in order.LegacyFieldOrder: fields outside a oneof by number, then
     // oneof members by their oneof's declaration index and then by number.
     let mut ordered: Vec<(&FieldSchema, &Value)> = message
@@ -503,7 +500,7 @@ fn json_value(field: &FieldSchema, value: &Value) -> serde_json::Value {
 }
 
 pub(super) fn to_protojson(message: &Message) -> serde_json::Value {
-    let schema = schema::message(message.type_name).expect("a decoded message has a schema");
+    let schema = message.schema;
     serde_json::Value::Object(
         message
             .fields

@@ -56,10 +56,26 @@ pub enum Value {
 ///
 /// A proto3 scalar without presence is stored only when it differs from its default, as Go
 /// stores no difference between an absent field and a default one.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone)]
 pub struct Message {
-    type_name: &'static str,
+    /// The message's schema, kept so reading a field looks up only the field.
+    schema: &'static schema::MessageSchema,
     fields: BTreeMap<u32, Value>,
+}
+
+impl std::fmt::Debug for Message {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Message")
+            .field("type_name", &self.schema.name)
+            .field("fields", &self.fields)
+            .finish()
+    }
+}
+
+impl PartialEq for Message {
+    fn eq(&self, other: &Message) -> bool {
+        std::ptr::eq(self.schema, other.schema) && self.fields == other.fields
+    }
 }
 
 /// A parsed `RaidSimRequest`.
@@ -108,14 +124,14 @@ impl Message {
         let schema = schema::message(type_name)
             .unwrap_or_else(|err| panic!("unknown message {type_name}: {err}"));
         Message {
-            type_name: schema.name,
+            schema,
             fields: BTreeMap::new(),
         }
     }
 
     /// The message's full proto type name, such as `proto.Player`.
     pub fn type_name(&self) -> &'static str {
-        self.type_name
+        self.schema.name
     }
 
     /// The deterministic protobuf encoding of this message.
@@ -126,10 +142,9 @@ impl Message {
     }
 
     fn field(&self, name: &str) -> &'static FieldSchema {
-        schema::message(self.type_name)
-            .expect("a decoded message has a schema")
+        self.schema
             .field(name)
-            .unwrap_or_else(|| panic!("{} has no field {name}", self.type_name))
+            .unwrap_or_else(|| panic!("{} has no field {name}", self.schema.name))
     }
 
     /// The value of a field when it is set.
@@ -144,7 +159,7 @@ impl Message {
 
     /// The names of every field set on the message, in field number order.
     pub fn set_fields(&self) -> Vec<&'static str> {
-        let schema = schema::message(self.type_name).expect("a decoded message has a schema");
+        let schema = self.schema;
         self.fields
             .keys()
             .map(|number| schema.by_number(*number).expect("set field").name.as_str())
@@ -155,7 +170,7 @@ impl Message {
         match self.get(name) {
             None => false,
             Some(Value::Bool(value)) => *value,
-            Some(other) => panic!("{}.{name} is not a bool: {other:?}", self.type_name),
+            Some(other) => panic!("{}.{name} is not a bool: {other:?}", self.schema.name),
         }
     }
 
@@ -164,7 +179,7 @@ impl Message {
             None => 0,
             Some(Value::Int(value)) => *value,
             Some(Value::Uint(value)) => *value as i64,
-            Some(other) => panic!("{}.{name} is not an integer: {other:?}", self.type_name),
+            Some(other) => panic!("{}.{name} is not an integer: {other:?}", self.schema.name),
         }
     }
 
@@ -177,7 +192,7 @@ impl Message {
             None => 0.0,
             Some(Value::Double(value)) => *value,
             Some(Value::Float(value)) => f64::from(*value),
-            Some(other) => panic!("{}.{name} is not a float: {other:?}", self.type_name),
+            Some(other) => panic!("{}.{name} is not a float: {other:?}", self.schema.name),
         }
     }
 
@@ -185,7 +200,7 @@ impl Message {
         match self.get(name) {
             None => "",
             Some(Value::String(value)) => value,
-            Some(other) => panic!("{}.{name} is not a string: {other:?}", self.type_name),
+            Some(other) => panic!("{}.{name} is not a string: {other:?}", self.schema.name),
         }
     }
 
@@ -194,7 +209,7 @@ impl Message {
         match self.get(name) {
             None => 0,
             Some(Value::Enum(value)) => *value,
-            Some(other) => panic!("{}.{name} is not an enum: {other:?}", self.type_name),
+            Some(other) => panic!("{}.{name} is not an enum: {other:?}", self.schema.name),
         }
     }
 
@@ -217,7 +232,7 @@ impl Message {
                 Value::Enum(number) => schema::enum_value_name(enum_type, *number)
                     .map(str::to_string)
                     .unwrap_or_else(|| number.to_string()),
-                other => panic!("{}.{name} holds a non-enum {other:?}", self.type_name),
+                other => panic!("{}.{name} holds a non-enum {other:?}", self.schema.name),
             })
             .collect()
     }
@@ -227,7 +242,7 @@ impl Message {
         match self.get(name) {
             None => None,
             Some(Value::Message(value)) => Some(value),
-            Some(other) => panic!("{}.{name} is not a message: {other:?}", self.type_name),
+            Some(other) => panic!("{}.{name} is not a message: {other:?}", self.schema.name),
         }
     }
 
@@ -236,7 +251,7 @@ impl Message {
         match self.get(name) {
             None => &[],
             Some(Value::List(values)) => values,
-            Some(other) => panic!("{}.{name} is not repeated: {other:?}", self.type_name),
+            Some(other) => panic!("{}.{name} is not repeated: {other:?}", self.schema.name),
         }
     }
 
@@ -246,7 +261,7 @@ impl Message {
             .iter()
             .map(|value| match value {
                 Value::Message(message) => message,
-                other => panic!("{}.{name} holds a non-message {other:?}", self.type_name),
+                other => panic!("{}.{name} holds a non-message {other:?}", self.schema.name),
             })
             .collect()
     }
@@ -258,7 +273,7 @@ impl Message {
             .map(|value| match value {
                 Value::Double(value) => *value,
                 Value::Float(value) => f64::from(*value),
-                other => panic!("{}.{name} holds a non-float {other:?}", self.type_name),
+                other => panic!("{}.{name} holds a non-float {other:?}", self.schema.name),
             })
             .collect()
     }
@@ -271,14 +286,14 @@ impl Message {
                 Value::Int(value) => *value,
                 Value::Uint(value) => *value as i64,
                 Value::Enum(value) => i64::from(*value),
-                other => panic!("{}.{name} holds a non-integer {other:?}", self.type_name),
+                other => panic!("{}.{name} holds a non-integer {other:?}", self.schema.name),
             })
             .collect()
     }
 
     /// The set member of a oneof, with its value.
     pub fn oneof(&self, oneof: &str) -> Option<(&'static str, &Value)> {
-        let schema = schema::message(self.type_name).expect("a decoded message has a schema");
+        let schema = self.schema;
         self.fields.iter().find_map(|(number, value)| {
             let field = schema.by_number(*number).expect("set field");
             (field.oneof.as_deref() == Some(oneof)).then_some((field.name.as_str(), value))
