@@ -823,6 +823,7 @@ pub(crate) fn export(
         .map_or_else(|| json!({}), |rotation| rotation.to_protojson());
     let talents = talent_values(env.agent.talents());
     let mut effects: Vec<Value> = env.agent.export_effects(env, &mut unrepresented);
+    unrepresented.extend(env.agent.unrepresented(&env.sim, player));
     effects.extend(super::common_effects::common_effects(
         env,
         &mut unrepresented,
@@ -977,6 +978,19 @@ pub(crate) fn export(
         prepared["player"]["hp_percent_for_defensives"] = json!(hp);
     }
     prepared["melee"] = export_melee(env, &mut unrepresented);
+    // Go `exportEnergy`: the energy bar, when the class has one.
+    let energy = &env.sim.unit(player).energy_bar;
+    if energy.enabled {
+        if energy.has_no_regen {
+            unrepresented.push("an energy bar without regeneration is unsupported".to_string());
+        }
+        prepared["player"]["energy"] = json!({
+            "max_energy": energy.max_energy,
+            "max_combo_points": energy.max_combo_points,
+            "tick_duration_ns": energy.tick_duration,
+            "energy_per_tick": energy.energy_per_tick,
+        });
+    }
     tank_notes(env, tanking, &mut unrepresented);
     if tanking {
         // The auras whose damage taken multiplier an effect multiplies, which the runtime

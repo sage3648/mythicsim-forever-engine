@@ -525,6 +525,9 @@ pub(crate) fn reset_unit(sim: &mut Sim, unit: UnitId) {
         bar.current_mana = max;
         bar.mana_regen_multiplier = 1.0;
     }
+    // unit.reset: the energy bar and the rage bar follow the mana bar.
+    sim.reset_energy_bar(unit);
+    sim.reset_rage_bar(unit);
     let _ = CHARACTER_LEVEL;
     let _ = Stat::Mana;
 }

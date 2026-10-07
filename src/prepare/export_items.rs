@@ -21,11 +21,11 @@ use super::dbcenums;
 use super::env::Environment;
 use super::items::{self, effect_stats};
 use super::procs::DynamicProcManager;
-use super::resolve_proc::{chance as stated, item_proc_chance, proc_trigger, row_class_flags};
+use super::resolve_proc::{item_proc_chance, proc_trigger};
 use super::shared_auras::in_area;
 use super::sim::{AuraId, SpellId, UnitId, SECOND};
 use super::spell::{school, DefenseType, ProcMask, SpellFlag};
-use super::spelldata::{effect::AURA_ON_ENEMY, effect::AURA_ON_PET, find, must_find, nil};
+use super::spelldata::{effect::AURA_ON_ENEMY, effect::AURA_ON_PET, find, must_find};
 use super::stats::{Stat, Stats};
 
 // ---------------------------------------------------------------------------------------------
@@ -368,6 +368,9 @@ pub(crate) fn use_item_effect(
         })]);
     }
     // A use effect a class file registers itself.
+    if let Some(effect) = env.agent.class_item_use_effect(env, spell, item) {
+        return Some(vec![effect]);
+    }
     Some(energize_on_use_effects(env, spell, item, unrepresented))
 }
 
@@ -1448,9 +1451,4 @@ pub(crate) fn energy_proc_effects(
         }));
     }
     effects
-}
-
-#[allow(dead_code)]
-fn unused(_: &Spell) {
-    let _ = (nil, row_class_flags, stated);
 }
