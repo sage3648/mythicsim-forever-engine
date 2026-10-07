@@ -26,7 +26,7 @@ pub(crate) use effects::{
     aura_should_refresh_effects, exclusive_refresh, battle_shout_effect, judgement_of_wisdom_effects,
     sunder_armor_effect,
 };
-pub(crate) use generated::{apply_generated_buffs, apply_generated_debuffs};
+pub(crate) use generated::{apply_generated_buffs, apply_generated_debuffs, GIFT_OF_ARTHAS};
 pub(crate) use windfury_effect::windfury_totem_effect;
 
 /// Which constructor a generated buff uses.
@@ -344,3 +344,6 @@ pub(crate) fn apply_buff_effects(
     let unit = env.player;
     apply_generated_buffs(env, unit, raid_buffs, party_buffs, individual)
 }
+
+#[cfg(test)]
+mod tests;
