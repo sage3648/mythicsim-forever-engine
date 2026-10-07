@@ -523,9 +523,16 @@ impl RogueAgent {
                     aura,
                     crit_bonus,
                     class_spells,
+                    spend_class_spells,
                     ..
                 } => {
-                    let bound = cold_blood::bind(&mut fight, aura, *crit_bonus, class_spells)?;
+                    let bound = cold_blood::bind(
+                        &mut fight,
+                        aura,
+                        *crit_bonus,
+                        class_spells,
+                        spend_class_spells,
+                    )?;
                     fight.agent.cold_blood = Some(Rc::new(bound));
                 }
                 Effect::Premeditation { combo_points, .. } => {

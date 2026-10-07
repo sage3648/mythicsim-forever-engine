@@ -635,6 +635,10 @@ pub struct Spell {
     pub ignore_haste: bool,
     pub has_extra_cast_condition: bool,
     pub has_cast_requirement: bool,
+    /// The player auras whose form the cast requirement refuses: Go `castRequirementFailure`
+    /// fails while any is active. Absent when the requirement is not represented.
+    #[serde(default)]
+    pub requirement_auras: Option<Vec<String>>,
     pub min_range: f64,
     pub max_range: f64,
     pub max_charges: i32,
@@ -2082,7 +2086,6 @@ pub enum Effect {
         crit_multiplier: f64,
         school_spells: Vec<usize>,
         crit_spells: Vec<usize>,
-        cancel_spells: Vec<usize>,
     },
     /// Inner Focus: the next priest spell is free and gains crit; the cooldown restarts when
     /// the aura ends.
@@ -2126,10 +2129,9 @@ pub enum Effect {
     },
     /// Penance: a hit roll without a hit count, then a channel that ticks on application and
     /// each second after.
+    /// Penance: every rank, each with its own bolt.
     Penance {
-        spell_id: i32,
-        tick_base: f64,
-        tick_can_crit: bool,
+        ranks: Vec<FireballRank>,
     },
     /// Power in Light: the target's dynamic damage taken modifier multiplies `spells` while any
     /// Holy Fire in `holy_fire_spells` burns it.
@@ -2313,6 +2315,9 @@ pub enum Effect {
     },
     ArcaneMissiles {
         ranks: Vec<MissileRank>,
+        /// The additive damage bonus each Arcane Blast stack the channel spent gives its
+        /// missiles.
+        arcane_blast_bonus_per_stack: f64,
     },
     ColdSnap {
         spell_id: i32,
@@ -3273,11 +3278,13 @@ pub enum Effect {
         haste_multiplier: f64,
     },
     /// Summon Hawk: a dive bomb on a base plus a share of ranged attack power, then a hawk dot
-    /// in a free slot or the one with the least time left.
+    /// in a free slot or the one with the least time left, which swings on arrival and on every
+    /// tick for `swing_share` of the base.
     SummonHawk {
         spell_id: i32,
         base_damage: f64,
         attack_power_share: f64,
+        swing_share: f64,
         always_hits: bool,
         hawk_spells: Vec<usize>,
         hawk_duration_ns: i64,
@@ -3388,6 +3395,8 @@ pub enum Effect {
         aura: String,
         crit_bonus: f64,
         class_spells: Vec<String>,
+        /// The class spells whose hit spends the aura.
+        spend_class_spells: Vec<String>,
     },
     Premeditation {
         spell_id: i32,

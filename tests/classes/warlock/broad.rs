@@ -98,20 +98,16 @@ fn dynamic_pet_refuses_untracked_inherited_changes() {
     );
 }
 
-/// Dots hasted by real haste stay refused; cast speed is supported.
+/// Dots hasted by real haste are supported since a hawk's swings are one (community #703), as
+/// are dots hasted by cast speed.
 #[test]
-fn real_haste_dots_are_refused() {
+fn real_haste_dots_are_accepted() {
     let mut value = fixture("affliction-warlock-broad");
     for spell in value["player"]["spells"].as_array_mut().unwrap() {
         if spell["action_id"]["spell_id"] == 11700 {
             spell["dot"]["affected_by_real_haste"] = json!(true);
         }
     }
-    let reasons = reasons(value);
-    assert!(
-        reasons
-            .iter()
-            .any(|reason| reason.contains("periodic effects hasted by real haste")),
-        "{reasons:?}"
-    );
+    let prepared: PreparedV2 = serde_json::from_value(value).unwrap();
+    assert!(check_prepared(&prepared).is_ok());
 }

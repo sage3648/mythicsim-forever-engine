@@ -96,17 +96,17 @@ fn innervate_clears_the_form_and_cat_spells_then_fail_with_a_log() {
         .expect("the first fight casts Innervate");
     let before = &log[..innervate];
     assert!(before.ends_with(
-        "Movement speed changed from 8.92 (27.50%) to 7.14 (2.00%)\n[103.30] [feral-druid (#1)] "
+        "Movement speed changed from 8.92 (27.50%) to 7.14 (2.00%)\n[103.10] [feral-druid (#1)] "
     ));
-    assert!(log[innervate..].contains("[103.30] Failed cast to spell {SpellID: 9830}, wrong form"));
+    assert!(log[innervate..].contains("[103.10] Failed cast to spell {SpellID: 9830}, wrong form"));
 }
 
 #[test]
 fn threat_follows_the_form() {
     let log = first_fight_log(feral());
-    // Faerie Fire's flat threat in Cat Form, and an auto attack's in caster form.
+    // Faerie Fire's flat threat in Cat Form, and an auto attack's at Cat Form's 0.71.
     assert!(log.contains("{SpellID: 9907} Hit for 0.000 damage (SpellSchool: 8). (Threat: 85.200)"));
-    assert!(log.contains("Crit for 699.996 damage (SpellSchool: 1). (Threat: 699.996)"));
+    assert!(log.contains("Hit for 147.840 damage (SpellSchool: 1). (Threat: 104.967)"));
 }
 
 fn bear() -> Value {
