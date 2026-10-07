@@ -1,90 +1,8 @@
-//! The shared item and enchant effects on a character built the way Go's tests build one: a
-//! warrior with melee and ranged auto attacks, whose swing speeds the proc managers read.
+//! The shared item and enchant effects on a character built the way Go's tests build one.
 
 use super::*;
-use crate::contracts::request::{Message, Request};
-use crate::prepare::agent::{ClassSpellName, PrepAgent};
-use crate::prepare::attack::{AutoAttackOptions, Weapon};
-use crate::prepare::sim::{RageBar, UnitId, NEVER_EXPIRES};
-
-struct FakeAgent {
-    talents: Message,
-}
-
-impl PrepAgent for FakeAgent {
-    fn talents(&self) -> &Message {
-        &self.talents
-    }
-    fn class_spells(&self) -> &'static [ClassSpellName] {
-        &[]
-    }
-}
-
-fn factory(sim: &mut Sim, unit: UnitId, _player: &Message) -> Result<Box<dyn PrepAgent>, Refusal> {
-    sim.unit_mut(unit).rage_bar = RageBar {
-        enabled: true,
-        max_rage: 100.0,
-    };
-    let weapon = |speed: f64, min: f64, max: f64| Weapon {
-        swing_speed: speed,
-        base_damage_min: min,
-        base_damage_max: max,
-        ..Weapon::unarmed()
-    };
-    sim.enable_auto_attacks(
-        unit,
-        AutoAttackOptions {
-            main_hand: weapon(2.6, 100.0, 150.0),
-            off_hand: weapon(0.0, 0.0, 0.0),
-            ranged: weapon(3.0, 10.0, 20.0),
-            auto_swing_melee: true,
-            auto_swing_ranged: true,
-            ..AutoAttackOptions::default()
-        },
-    );
-    Ok(Box::new(FakeAgent {
-        talents: Message::empty("proto.WarriorTalents"),
-    }))
-}
-
-/// A warrior wearing the items, each `(id, enchant)` in the request's order.
-fn environment(items: &[(i32, i32)]) -> Environment {
-    let listing: Vec<String> = items
-        .iter()
-        .map(|(id, enchant)| {
-            if *enchant == 0 {
-                format!(r#"{{"id":{id}}}"#)
-            } else {
-                format!(r#"{{"id":{id},"enchant":{enchant}}}"#)
-            }
-        })
-        .collect();
-    let request = format!(
-        r#"{{"simOptions":{{"iterations":1,"randomSeed":"100"}},
-        "raid":{{"parties":[{{"players":[{{"name":"Warrior","class":"ClassWarrior",
-          "race":"RaceHuman","buffs":{{}},"consumables":{{}},
-          "equipment":{{"items":[{}]}}}}]}}]}},
-        "encounter":{{"duration":180,"targets":[{{"level":63,"mobType":"MobTypeElemental"}}]}}}}"#,
-        listing.join(",")
-    );
-    let request = Request::from_json(request.as_bytes()).expect("a valid request");
-    match Environment::new(request.message(), factory) {
-        Ok(env) => env,
-        Err(refusal) => panic!("{refusal}"),
-    }
-}
-
-fn aura(env: &Environment, label: &str) -> AuraId {
-    env.sim
-        .get_aura(env.player, label)
-        .unwrap_or_else(|| panic!("no aura {label}"))
-}
-
-fn spell(env: &Environment, action: &ActionId) -> SpellId {
-    env.sim
-        .get_spell(env.player, action)
-        .unwrap_or_else(|| panic!("no spell {action}"))
-}
+use crate::prepare::item_test_support::{aura, environment, spell};
+use crate::prepare::sim::NEVER_EXPIRES;
 
 /// The item IDs the generated tables and the hand-written effects register, which are the
 /// forever package's items in `registered_effects.txt`.
@@ -258,4 +176,83 @@ fn an_item_for_another_class_is_not_applied() {
         .sim
         .get_spell(env.player, &ActionId::item(14152))
         .is_none());
+}
+
+mod exports {
+    use super::*;
+    use crate::prepare::export_items::item_proc_effects;
+    use serde_json::json;
+
+    fn effects(env: &Environment) -> (Vec<serde_json::Value>, Vec<String>) {
+        let mut unrepresented = Vec::new();
+        (item_proc_effects(env, &mut unrepresented), unrepresented)
+    }
+
+    /// The spellbook position of the main hand auto attack.
+    fn main_hand_auto(env: &Environment) -> usize {
+        let action = ActionId {
+            other_id: "OtherActionAttack".to_string(),
+            tag: 1,
+            ..ActionId::default()
+        };
+        let spell = spell(env, &action);
+        env.sim
+            .unit(env.player)
+            .spellbook
+            .iter()
+            .position(|registered| *registered == spell)
+            .expect("in the spellbook")
+    }
+
+    #[test]
+    fn hand_of_justice_is_described_as_an_extra_attack_proc() {
+        let env = environment(&[(11815, 0)]);
+        let (effects, unrepresented) = effects(&env);
+        assert!(unrepresented.is_empty());
+        assert_eq!(
+            effects,
+            vec![
+                json!({"kind": "extra_attack_proc", "trigger_aura": "Hand of Justice",
+                        "proc_chance": 0.01, "attacks": 1})
+            ]
+        );
+    }
+
+    #[test]
+    fn puncture_armor_is_read_stack_by_stack_from_a_separate_reset() {
+        let env = environment(&[(13204, 0)]);
+        let (effects, unrepresented) = effects(&env);
+        assert!(unrepresented.is_empty());
+        assert_eq!(effects.len(), 1);
+        let effect = &effects[0];
+        assert_eq!(effect["kind"], "armor_debuff_proc");
+        assert_eq!(effect["trigger_aura"], "Bashguuder Proc");
+        assert_eq!(effect["aura"], "Puncture Armor");
+        assert_eq!(
+            effect["armor_by_stacks"],
+            json!([0.0, -100.0, -200.0, -300.0])
+        );
+        // Two procs a minute of the main hand's 2.6 second swing, heard by its auto attack.
+        assert_eq!(
+            effect["chances"],
+            json!([{"spell": main_hand_auto(&env), "chance": 2.6 * (2.0 / 60.0)}])
+        );
+    }
+
+    #[test]
+    fn a_weapon_enchant_that_casts_damage_rolls_on_the_enchanted_hand() {
+        // Fiery Weapon: six procs a minute of the main hand's swing.
+        let env = environment(&[(25, 803)]);
+        let (effects, unrepresented) = effects(&env);
+        assert!(unrepresented.is_empty(), "{unrepresented:?}");
+        assert_eq!(effects.len(), 1);
+        let effect = &effects[0];
+        assert_eq!(effect["kind"], "spell_data_damage_proc");
+        assert_eq!(effect["trigger_aura"], "Enchant Weapon - Fiery Weapon");
+        assert_eq!(effect["landed_only"], true);
+        assert_eq!(
+            effect["chances"],
+            json!([{"spell": main_hand_auto(&env), "chance": 2.6 * (6.0 / 60.0)}])
+        );
+    }
 }
