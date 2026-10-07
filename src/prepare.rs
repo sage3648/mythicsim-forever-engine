@@ -19,8 +19,11 @@ pub(crate) mod export;
 pub(crate) mod item_effects;
 pub(crate) mod items;
 pub(crate) mod items_registry;
+pub(crate) mod major_cooldown;
 pub(crate) mod parse_effects;
+pub(crate) mod periodic_action;
 pub(crate) mod presets;
+pub(crate) mod procs;
 pub(crate) mod professions;
 pub(crate) mod racials;
 pub(crate) mod rotation;
@@ -84,7 +87,7 @@ pub fn prepare_json(request: &[u8], scenario: &str) -> Result<serde_json::Value,
     let digest = request.sha256();
     let mut env = env::Environment::new(request.message(), crate::classes::prepare_agent)
         .map_err(PrepareError::Refused)?;
-    Ok(export::export(&mut env, &digest, scenario))
+    export::export(&mut env, &digest, scenario).map_err(PrepareError::Refused)
 }
 
 /// Prepares a request into the prepared v2 contract.

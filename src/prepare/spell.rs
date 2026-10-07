@@ -264,9 +264,31 @@ pub(crate) struct Cast {
     pub non_empty: bool,
 }
 
+/// Go `GCDMin` and `GCDDefault`.
+pub(crate) const GCD_MIN: Duration = 1_000_000_000;
+pub(crate) const GCD_DEFAULT: Duration = 1_500_000_000;
+
 impl Cast {
     pub fn is_empty(&self) -> bool {
         *self == Cast::default()
+    }
+
+    /// Go `Cast.GCDTime`: the GCD, raised to the minimum when there is one.
+    pub fn gcd_time(&self) -> Duration {
+        let mut gcd = self.gcd.max(0);
+        if self.gcd > 0 {
+            gcd = if self.gcd_min != 0 {
+                self.gcd_min.max(gcd)
+            } else {
+                GCD_MIN.max(gcd)
+            };
+        }
+        gcd
+    }
+
+    /// Go `Cast.EffectiveTime`: the longer of the GCD and the cast time.
+    pub fn effective_time(&self) -> Duration {
+        self.gcd_time().max(self.cast_time)
     }
 }
 

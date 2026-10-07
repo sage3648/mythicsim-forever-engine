@@ -506,12 +506,7 @@ impl Sim {
     }
 
     /// Go `AddMajorCooldown`.
-    pub(crate) fn add_major_cooldown(
-        &mut self,
-        unit: UnitId,
-        mut mcd: MajorCooldown,
-        reactive_cast: bool,
-    ) {
+    pub(crate) fn add_major_cooldown(&mut self, unit: UnitId, mut mcd: MajorCooldown) {
         assert!(
             !self.is_finalized(),
             "Major cooldowns may not be added once finalized!"
@@ -519,8 +514,7 @@ impl Sim {
         use super::spell::SpellFlag;
         let spell = self.spell_mut(mcd.spell);
         spell.flags |= SpellFlag::APL | SpellFlag::MCD;
-        let effective = spell.default_cast.gcd.max(spell.default_cast.cast_time);
-        let _ = reactive_cast;
+        let effective = spell.default_cast.effective_time();
         if (mcd.cooldown_type & cooldown_type::SURVIVAL != 0 && effective == 0)
             || mcd.allow_spell_queueing
         {
