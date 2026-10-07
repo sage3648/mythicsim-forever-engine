@@ -7,6 +7,8 @@ use forever_engine::{
 use serde_json::Value;
 use std::{fs, path::Path};
 
+mod prepare;
+
 fn combat_json() -> Value {
     let path = Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("fixtures/mage/prepared-v2/production-combat-rogue.prepared.json");
