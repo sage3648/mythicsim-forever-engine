@@ -215,6 +215,11 @@ pub(crate) struct EnergyBar {
     pub max_energy: f64,
     pub current_energy: f64,
     pub energy_regen_multiplier: f64,
+    pub max_combo_points: i32,
+    pub tick_duration: Duration,
+    pub energy_per_tick: f64,
+    /// Go `hasNoRegen`.
+    pub has_no_regen: bool,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -374,6 +379,12 @@ pub(crate) struct Sim {
     /// Go `AttackTable.DamageDoneByCasterExtraMultiplier`: per (attacker, defender), which
     /// handler slots are set. See aura_helpers.rs `attach_ddbc`.
     pub damage_done_by_caster: std::collections::BTreeMap<(UnitId, UnitId), Vec<bool>>,
+    /// Go `RegisterPostFinalizeEffect` as a class agent calls it: the agent holds no environment,
+    /// so the effects queue here and `Environment` moves them to its own list in order.
+    pub pending_post_finalize: Vec<super::env::FinalizeEffect>,
+    /// State a class agent shares with the closures it registers and with its item sets, which
+    /// Go keeps on the agent the closures capture.
+    pub class_state: Option<Rc<dyn std::any::Any>>,
 }
 
 impl Sim {
@@ -392,6 +403,8 @@ impl Sim {
             timers: Vec::new(),
             env_units: Vec::new(),
             damage_done_by_caster: std::collections::BTreeMap::new(),
+            pending_post_finalize: Vec::new(),
+            class_state: None,
         }
     }
 

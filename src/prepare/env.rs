@@ -195,6 +195,7 @@ impl Environment {
         env.apply_character_effects(raid, &player_message)?;
         let player = env.player;
         env.agent.initialize(&mut env.sim, player);
+        env.post_finalize.append(&mut env.sim.pending_post_finalize);
         env.sim.state = EnvState::Initialized;
 
         env.finalize(&player_message)?;
@@ -322,6 +323,8 @@ impl Environment {
         self.sim.apply_build_phase_auras(unit, BuildPhase::GEAR);
 
         self.agent.apply_talents(&mut self.sim, unit);
+        self.post_finalize
+            .append(&mut self.sim.pending_post_finalize);
         self.sim.apply_build_phase_auras(unit, BuildPhase::TALENTS);
 
         super::buffs::apply_buff_effects(self, raid_buffs, party_buffs, individual)?;
@@ -493,6 +496,8 @@ pub(crate) fn reset_unit(sim: &mut Sim, unit: UnitId) {
         bar.current_mana = max;
         bar.mana_regen_multiplier = 1.0;
     }
+    // unit.reset: the energy bar follows the mana bar.
+    sim.reset_energy_bar(unit);
     let _ = CHARACTER_LEVEL;
     let _ = Stat::Mana;
 }

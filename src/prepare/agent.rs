@@ -66,6 +66,17 @@ pub(crate) trait PrepAgent {
     fn effects(&self, _sim: &Sim, _unit: UnitId) -> Vec<serde_json::Value> {
         Vec::new()
     }
+    /// The exporter's class effects for a class whose effects read more than the simulation: the
+    /// request, to prepare a separate simulation of it, and the notes of behavior the effects
+    /// cannot describe (Go's `classNotes` and `classExport.unrepresented`). By default the
+    /// class's [`effects`](PrepAgent::effects).
+    fn class_effects(
+        &self,
+        env: &super::env::Environment,
+        _unrepresented: &mut Vec<String>,
+    ) -> Vec<serde_json::Value> {
+        self.effects(&env.sim, env.player)
+    }
     /// Stable names for class spells Go registers without a class mask, by action.
     fn unmasked_spell(&self, _id: &ActionId) -> Option<&'static str> {
         None
