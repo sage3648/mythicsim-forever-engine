@@ -36,6 +36,7 @@ pub(crate) fn prepare_agent(
 ) -> Result<Box<dyn crate::prepare::agent::PrepAgent>, crate::prepare::Refusal> {
     match player.enum_name("class").as_str() {
         "ClassMage" => mage::prepare::new_mage(sim, unit, player),
+        "ClassWarrior" => warrior::prepare::new_warrior(sim, unit, player),
         other => Err(crate::prepare::Refusal::new(
             "class",
             format!("{other} is not prepared in Rust yet"),
