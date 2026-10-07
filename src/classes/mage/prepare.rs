@@ -221,6 +221,11 @@ impl PrepAgent for Mage {
         export::effects(&self.talents, sim, unit)
     }
 
+    /// Go `spell.Matches(mage.MageSpellManaGem)`.
+    fn is_mana_gem(&self, sim: &Sim, spell: crate::prepare::sim::SpellId) -> bool {
+        sim.spell(spell).matches(masks::MANA_GEM)
+    }
+
     fn damage_effect(
         &self,
         sim: &Sim,
