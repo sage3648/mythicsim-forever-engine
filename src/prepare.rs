@@ -12,6 +12,7 @@ pub(crate) mod buffs;
 pub(crate) mod character;
 pub(crate) mod common_effects;
 pub(crate) mod consumes;
+pub(crate) mod dbcenums;
 pub(crate) mod debuffs;
 pub(crate) mod env;
 pub(crate) mod export;
