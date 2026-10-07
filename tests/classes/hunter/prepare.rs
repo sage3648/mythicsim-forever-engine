@@ -113,7 +113,11 @@ fn differences(golden: &Golden, prepared: &Value) -> Vec<String> {
                 }
             }
             Value::Array(items) => {
-                let actual = actual.as_array().expect("a list section");
+                // A build without a pet has no pets section at all, where the golden has none listed.
+                let actual = match actual {
+                    Value::Null => &[][..],
+                    other => other.as_array().expect("a list section"),
+                };
                 if actual.len() != items.len() {
                     out.push(format!(
                         "{name}: {} items in Go, {} in Rust",
