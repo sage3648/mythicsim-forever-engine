@@ -238,6 +238,10 @@ impl Sim {
             bar.current_mana = max;
             bar.mana_regen_multiplier = 1.0;
         }
+        if self.unit(pet).health_bar {
+            let max = self.unit(pet).stats[Stat::Health];
+            self.unit_mut(pet).current_health = max;
+        }
         self.unit_mut(pet).enabled = true;
         if let Some(on_enable) = self.pet_data(pet).on_pet_enable.clone() {
             on_enable(self, pet);

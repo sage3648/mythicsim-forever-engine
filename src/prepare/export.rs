@@ -901,6 +901,14 @@ pub(crate) fn export(
     if !pets.is_empty() {
         prepared["pets"] = Value::Array(pets);
     }
+    // main.go `healthAtReset`: the health a reset leaves where it differs from the maximum,
+    // which a form the agent enters after the health reset raises.
+    {
+        let unit = env.sim.unit(player);
+        if unit.health_bar && unit.current_health != unit.stats[Stat::Health] {
+            prepared["player"]["health_at_reset"] = json!(unit.current_health);
+        }
+    }
     // Go `exportEnergy`: the energy bar, when the class has one.
     let energy = &env.sim.unit(player).energy_bar;
     if energy.enabled {
