@@ -179,8 +179,11 @@ impl Environment {
             factory,
         };
         if let Some(debuffs) = raid.message("debuffs") {
+            // The agent's constructor may have changed the raid's debuffs.
+            let mut debuffs = debuffs.clone();
+            env.agent.adjust_raid_debuffs(&mut debuffs);
             for (index, target) in env.encounter.targets.clone().into_iter().enumerate() {
-                super::debuffs::apply_debuff_effects(&mut env, target, index, debuffs, raid)?;
+                super::debuffs::apply_debuff_effects(&mut env, target, index, &debuffs, raid)?;
             }
         }
         env.setup_tank_targets(raid, &encounter_options)?;

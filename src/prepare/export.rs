@@ -587,12 +587,7 @@ fn tail_effects(
             ));
         }
     }
-    if env.sim.get_aura(env.player, "Eureka!").is_some() {
-        return Err(Refusal::new(
-            "race",
-            "Eureka! is not described yet".to_string(),
-        ));
-    }
+    effects.extend(super::eureka_effect::eureka_effect(env));
     let tanking = env.tanking();
     if tanking {
         if let Some(aura) = env.sim.get_aura(env.player, "Pushback trigger") {
@@ -746,7 +741,10 @@ pub(crate) fn export(
         .message("rotation")
         .map_or_else(|| json!({}), |rotation| rotation.to_protojson());
     let talents = talent_values(env.agent.talents());
-    let mut effects: Vec<Value> = env.agent.effects(&env.sim, player);
+    let mut effects: Vec<Value> = match env.agent.effects_in(env, &mut unrepresented) {
+        Some(effects) => effects,
+        None => env.agent.effects(&env.sim, player),
+    };
     unrepresented.extend(env.agent.unrepresented(&env.sim, player));
     effects.extend(super::common_effects::common_effects(
         env,

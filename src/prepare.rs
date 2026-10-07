@@ -16,6 +16,7 @@ pub(crate) mod consumes;
 pub(crate) mod dbcenums;
 pub(crate) mod debuffs;
 pub(crate) mod env;
+pub(crate) mod eureka_effect;
 pub(crate) mod export;
 pub(crate) mod item_effects;
 pub(crate) mod item_sets;

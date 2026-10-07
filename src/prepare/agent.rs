@@ -4,6 +4,7 @@
 use crate::contracts::prepared_v2::ActionId;
 use crate::contracts::request::Message;
 
+use super::env::Environment;
 use super::sim::{Sim, UnitId};
 
 /// Go `ProtoToActionID`.
@@ -41,6 +42,9 @@ pub(crate) trait PrepAgent {
     fn add_raid_buffs(&self, _raid_buffs: &mut Message) {}
     /// Go `Agent.AddPartyBuffs`.
     fn add_party_buffs(&self, _party_buffs: &mut Message) {}
+    /// What the agent's constructor does to the raid's debuffs the request carries (Go's
+    /// `NewWarlock` clears the curse the warlock casts itself), before they are applied.
+    fn adjust_raid_debuffs(&self, _debuffs: &mut Message) {}
     /// Go `Agent.ApplyTalents`.
     fn apply_talents(&mut self, _sim: &mut Sim, _unit: UnitId) {}
     /// Go `Agent.Initialize`.
@@ -65,6 +69,16 @@ pub(crate) trait PrepAgent {
     /// The exporter's class effects, in its order.
     fn effects(&self, _sim: &Sim, _unit: UnitId) -> Vec<serde_json::Value> {
         Vec::new()
+    }
+    /// The exporter's class effects for a class whose description reads more than the unit: the
+    /// environment (separate reset simulations, attack tables) and the list of what it cannot
+    /// describe. When it answers `Some`, it replaces [`PrepAgent::effects`].
+    fn effects_in(
+        &self,
+        _env: &Environment,
+        _unrepresented: &mut Vec<String>,
+    ) -> Option<Vec<serde_json::Value>> {
+        None
     }
     /// Stable names for class spells Go registers without a class mask, by action.
     fn unmasked_spell(&self, _id: &ActionId) -> Option<&'static str> {
