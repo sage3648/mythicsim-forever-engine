@@ -338,3 +338,32 @@ fn a_retribution_aura_shield_scales_with_the_spell_power_its_party_states() {
     let again = super::paladin::retribution_aura_buff(&mut sim, unit, false, &rank, 140.0);
     assert_eq!(again, aura);
 }
+
+/// Go reads every field of the four buff messages (the generated tables, the drivers and
+/// `applyDebuffs`), and the class agents write some of them; a field Rust does not read would be
+/// silently dropped, so a field the pinned proto gains must be handled or refused here first.
+#[test]
+fn every_buff_and_debuff_field_is_read_by_a_table_or_a_driver() {
+    let sources = [
+        include_str!("generated.rs"),
+        include_str!("drivers.rs"),
+        include_str!("../debuffs.rs"),
+    ]
+    .join("\n");
+    for message in [
+        "proto.RaidBuffs",
+        "proto.PartyBuffs",
+        "proto.IndividualBuffs",
+        "proto.Debuffs",
+    ] {
+        let mut number = 1;
+        while let Some((name, _)) = crate::contracts::request::field_by_number(message, number) {
+            assert!(
+                sources.contains(&format!("\"{name}\"")),
+                "{message}.{name} is read by no buff table or driver"
+            );
+            number += 1;
+        }
+        assert!(number > 1, "{message} has fields");
+    }
+}
