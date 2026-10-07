@@ -195,6 +195,7 @@ impl Environment {
         env.apply_character_effects(raid, &player_message)?;
         let player = env.player;
         env.agent.initialize(&mut env.sim, player);
+        env.initialize_pets();
         env.sim.state = EnvState::Initialized;
 
         env.finalize(&player_message)?;
@@ -322,6 +323,8 @@ impl Environment {
         self.sim.apply_build_phase_auras(unit, BuildPhase::GEAR);
 
         self.agent.apply_talents(&mut self.sim, unit);
+        let effects = self.agent.take_post_finalize_effects();
+        self.post_finalize.extend(effects);
         self.sim.apply_build_phase_auras(unit, BuildPhase::TALENTS);
 
         super::buffs::apply_buff_effects(self, raid_buffs, party_buffs, individual)?;
@@ -369,12 +372,7 @@ impl Environment {
         }
         self.finalize_unit(unit);
         self.sim.finalize_major_cooldowns(unit);
-        if !self.sim.unit(unit).pets.is_empty() {
-            return Err(Refusal::new(
-                "pets",
-                "pets are not prepared yet".to_string(),
-            ));
-        }
+        self.finalize_pets();
         Ok(())
     }
 
@@ -465,6 +463,7 @@ impl Environment {
         let default = self.sim.unit(unit).default_target;
         self.sim.unit_mut(unit).current_target = default;
         self.agent.reset(&mut self.sim, unit);
+        self.reset_pets();
     }
 }
 
@@ -485,6 +484,11 @@ pub(crate) fn reset_unit(sim: &mut Sim, unit: UnitId) {
     }
     for aura in sim.unit(unit).auras.clone() {
         sim.reset_aura(aura);
+    }
+    // focusBar.reset: a pet's bar fills, its regeneration starts when the pet is enabled.
+    if sim.unit(unit).focus_bar.enabled {
+        let bar = &mut sim.unit_mut(unit).focus_bar;
+        bar.current_focus = bar.max_focus;
     }
     // manaBar.reset runs after the auras reset.
     if sim.unit(unit).mana_bar.enabled {
