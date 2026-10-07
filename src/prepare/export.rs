@@ -577,12 +577,7 @@ fn tail_effects(
             ));
         }
     }
-    if env.sim.get_aura(env.player, "Eureka!").is_some() {
-        return Err(Refusal::new(
-            "race",
-            "Eureka! is not described yet".to_string(),
-        ));
-    }
+    effects.extend(super::racials::eureka_effect(env));
     let tanking = env.tanking();
     if tanking {
         if let Some(aura) = env.sim.get_aura(env.player, "Pushback trigger") {
