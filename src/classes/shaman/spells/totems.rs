@@ -60,9 +60,9 @@ pub(crate) fn strength_of_earth<A: Agent>(fight: &mut Fight<A>, totem: StrengthO
 }
 
 /// Flametongue Totem, from Go sim/shaman/fire_totems.go `registerFlametongueTotemSpell` and
-/// sim/core/buffs/flametongue_totem.go: the totem's aura turns the trigger on unless a main
-/// hand Flametongue Weapon holds the benefit, and the trigger casts the fire hit off landed
-/// main hand autos.
+/// sim/core/buffs/flametongue_totem.go: the totem's aura turns the trigger on while it holds
+/// the Flametongue Totem category, which a Windfury Totem or a main hand Flametongue Weapon
+/// takes from it, and the trigger casts the fire hit off landed main hand autos.
 #[derive(Clone, Debug)]
 pub(crate) struct FlametongueTotem {
     pub(crate) aura: AuraRef,

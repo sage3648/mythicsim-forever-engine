@@ -282,18 +282,24 @@ impl PetAbility {
                 if !result.landed() {
                     return;
                 }
-                // Go Apply: its deactivation drops the stack, so both snapshots, before and
-                // after the stack, see at most one: the base restarts at the tick and the
-                // multiplier is the caster's now.
+                // Go: a landed poison on a poisoned target refreshes it and adds a stack up to
+                // the dot's five, since Apply would drop the stacks (community #694); otherwise
+                // it applies the dot with one. Either way the dot snapshots the tick for every
+                // stack and ticks on the caster's current stats.
                 let dot = fight.spells[spell].dot.expect("Scorpid Poison has a dot");
-                fight.apply_dot(dot);
                 let aura = fight.dots[dot].aura;
-                let state = fight.aura(aura);
-                if state.stacks < state.max_stacks {
-                    fight.add_stack(aura);
+                if fight.aura(aura).active {
+                    fight.refresh_aura(aura);
+                    let state = fight.aura(aura);
+                    if state.stacks < state.max_stacks {
+                        fight.add_stack(aura);
+                    }
+                } else {
+                    fight.apply_dot(dot);
+                    fight.set_stacks(aura, 1);
                 }
-                let multiplier = fight.attacker_multiplier(spell, true);
-                fight.agent.scorpid_snapshot = (tick_base, multiplier);
+                let stacks = fight.aura(aura).stacks;
+                fight.snapshot_dot(dot, tick_base * f64::from(stacks));
             }
             PetAbility::DustCloud => {
                 let table = PhysicalOutcome::MeleeSpecialHit { count: true };
@@ -308,22 +314,8 @@ impl PetAbility {
     }
 }
 
-/// Go `Dot.CalcAndDealPeriodicSnapshotDamage` on a dot that keeps its snapshot, as Scorpid
-/// Poison's does: the stored base and multiplier with the tick outcome its row picks.
-pub(crate) fn snapshot_tick<A: Agent>(
-    fight: &mut Fight<A>,
-    dot: DotId,
-    base: f64,
-    multiplier: f64,
-    outcome: Outcome,
-) {
-    let (spell, side) = (fight.dots[dot].spell, fight.dots[dot].side);
-    let result = fight.calc_tick_damage(spell, side, base, multiplier, outcome);
-    fight.deal_damage(spell, result, true);
-}
-
-/// Go `Dot.CalcAndDealPeriodicSnapshotDamage` for a pet bleed: the snapshot base on the
-/// caster's current multiplier, with the tick outcome its row picks.
+/// Go `Dot.CalcAndDealPeriodicSnapshotDamage` for a pet bleed or Scorpid Poison: the snapshot
+/// base on the caster's current multiplier, with the tick outcome its row picks.
 pub(crate) fn bleed_tick<A: Agent>(fight: &mut Fight<A>, dot: DotId, outcome: Outcome) {
     let state = &fight.dots[dot];
     let (spell, side, base) = (state.spell, state.side, state.snapshot_base);

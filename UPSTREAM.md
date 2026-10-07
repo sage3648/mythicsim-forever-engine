@@ -4,12 +4,12 @@
 
 | Source | Role | Baseline |
 | --- | --- | --- |
-| [MythicSim Go engine](https://github.com/sage3648/mythicsim-forever-engine-go) | Fixtures and live reference | `cd7d44aec711bcc8f20ea12d3ed83cea2126ac66`, on community base `67f14b04a54bdac1b8e8f5b8e5398ae412638376` |
-| [Community Forever engine](https://github.com/ElliotWood/Forever) | Changes to review for applicability | Adopted base `f4b776b4f41d5c7799b8141697a2c9e67c89d426`; reviewed through `67f14b04a54bdac1b8e8f5b8e5398ae412638376` (2026-10-07) |
+| [MythicSim Go engine](https://github.com/sage3648/mythicsim-forever-engine-go) | Fixtures and live reference | `2d93e423e0303e93dbb16e190d435503248b68f9`, on community base `5c115f1725ede7419e4f8582a7d94cdb0247c829` |
+| [Community Forever engine](https://github.com/ElliotWood/Forever) | Changes to review for applicability | Adopted base `f4b776b4f41d5c7799b8141697a2c9e67c89d426`; reviewed through `5c115f1725ede7419e4f8582a7d94cdb0247c829` (2026-10-07) |
 
 Go is a reference implementation, not proof of live-game correctness. Forever can
 intentionally differ from inherited Classic behavior. Fixture client build:
-`1.60.1.70205`.
+`1.60.1.70235`.
 
 The pin is written once, in [upstream/sources.json](upstream/sources.json). The Rust
 build script, the Python tools and the Go helpers they build (through `-ldflags -X`)
@@ -91,6 +91,43 @@ Rust matches all of them, and so does every recorded sweep: 9,052 of the 9,076 v
 match Go, the other 24 are the multi-target tank builds Rust refuses, and none differ
 ([record](validation/2026-10-07-reference-pin-cd7d44aec-sweeps.json)).
 
+The pin moved from `cd7d44aec` to `2d93e423e` on 2026-10-07, the fork's merge of community
+#677 to #719 (76 commits, 35 of them changelog or leaderboard bookkeeping) and its patches 97
+and 98. The fork dropped its patches 3, 76, 91, 93 and 94, which the community now carries:
+the Ignite and pushback fixes Rust already followed are #702 and #701 there. 270 of the 356
+Go goldens changed. 63 changed only in the uptime a Windfury Totem, the party's or cast, now
+reports in the Flametongue Totem category, 18 bear goldens only in the energy regeneration
+metrics and 7 Smite goldens only in the Penance ranks now registered; the other 182 changed in
+behavior:
+
+- Hunter: a hawk swings on arrival and then every 2.5 seconds hasted by real ranged haste, for
+  0.35 of the dive bomb base and without a crit, so dots hasted by real haste are supported;
+  pet focus refills 2.5 every 250 ms; Scorpid Poison stacks to five; Intimidation is no longer
+  a major cooldown (#694, #703, #704, #713).
+- Mage: Arcane Missiles' missiles keep the Arcane Blast stacks the channel spends, 15% each
+  (#715).
+- Druid: Hurricane's ticks crit, Moonfire applies its dot as one hit event and Thorns can be
+  cast in Moonkin form (#688). Energy refills 1 every 100 ms for cats and rogues alike (#709).
+- Rogue and Warrior: Cold Blood is not spent by Mutilate's hand strikes, and Unbridled Wrath
+  procs from white hits only (#690, #692).
+- Priest: Shadowform is a form Holy Nova's and Chastise's cast requirements refuse, and a
+  helpful Holy cast such as Power Infusion no longer ends it; every Penance rank is registered;
+  Holy Precision and Holy Specialization leave Chastise out (#678, #679, #686, #719).
+- Shaman: Searing Totem attacks every 2.43 seconds, Flametongue Totem's hit takes no talent,
+  and a Windfury Totem switches Flametongue Totem off (#677, #682, #697, patch 98).
+- Warlock and Paladin: the Imp waits 0.4 seconds between Firebolts, Malediction leaves
+  Hellfire alone, Demonic Embrace keeps its -1% Spirit, and Sanctified Judgement returns 10/9
+  of its stated share (#680, #687, #698, #705).
+
+Rust matches all of them, and the two fixtures accepted at the pin: a Shadow Priest whose
+Shadowform refuses Holy Nova and survives Power Infusion, and the fork's patch 97, Totem of
+Thunder's 1% crit on Lightning Bolt. The recorded sweeps ran again on the production Mac,
+capped to two engine processes at background priority: 8,120 of the 9,076 variants, all of
+which match Go, the 24 multi-target tank builds Rust refused at `cd7d44aec` among them. The
+other 956 are the Warlock multi-target census past its first 480 variants and the Warlock
+multi-target sweep past the first four variants of each base, generated and not compared
+([record](validation/2026-10-07-reference-pin-2d93e423e-sweeps.json)).
+
 ## Ledger
 
 The [upstream/](upstream/) directory records what has been reviewed and how:
@@ -116,7 +153,11 @@ to Frost scope, 4 deferred client data updates and 1 applicable fix. The pin mov
 `20b551c6b` extended it to 55 commits, all now in the reference, and marked the changes
 Rust covers by then as applicable and adopted. The move to `cd7d44aec` extended it to 124:
 39 of the new 69 are bookkeeping, evidence notes or UI, 5 the fork already carried as its
-own patches, 1 differs by design and 24 are applicable, each with the golden that regresses it. The first fix,
+own patches, 1 differs by design and 24 are applicable, each with the golden that regresses it.
+The move to `2d93e423e` extended it to 200: 46 of the new 76 are bookkeeping, rotation presets,
+evidence notes, comments or gear sets, 2 are fixes Rust already followed as the fork's patches,
+2 restart the swing after a hard cast where the fork keeps its patch 17, and 26 are applicable
+and adopted, 6 of them client data. The first fix,
 [#622](https://github.com/ElliotWood/Forever/pull/622) (`252f57aa8`), changes how a
 rotation reads an aura the character cannot have. The pinned reference drops such a
 condition, so a Frost build without Fingers of Frost casts Ice Lance on every global
@@ -133,8 +174,9 @@ and `reference-no-missile-barrage` prepared fixtures.
 
 Bugs in the reference. When one blocks a comparison, Rust refuses the affected inputs until
 the reference is fixed, since there is no Go result to match. When Go still gives a result,
-Rust reproduces it, so it matches the engine production runs. Both defects below are fixed in
-the fork since `74127c6c8`, as its patches 93 and 94, and still open in the community engine.
+Rust reproduces it, so it matches the engine production runs. Both defects below were fixed in
+the fork at `74127c6c8`, as its patches 93 and 94, and in the community engine by #702 and #701,
+which the fork takes in their place since `2d93e423e`.
 
 ### Ignite on the Goblin Sapper Charge's hit on the player
 

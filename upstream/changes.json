@@ -3,8 +3,8 @@
   "source": "community",
   "range": {
     "from": "f4b776b4f41d5c7799b8141697a2c9e67c89d426",
-    "to": "67f14b04a54bdac1b8e8f5b8e5398ae412638376",
-    "commits": 124
+    "to": "5c115f1725ede7419e4f8582a7d94cdb0247c829",
+    "commits": 200
   },
   "reviewed": "2026-10-07",
   "dispositions": [
@@ -1674,6 +1674,1064 @@
     {
       "commit": "67f14b04a54bdac1b8e8f5b8e5398ae412638376",
       "date": "2026-10-04 23:30:13 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "ffd6793529c69e58c0e452fca211256c17f9f2df",
+      "date": "2026-10-05 00:28:57 +0000",
+      "subject": "shaman: register Flametongue Totem, no stacking with Windfury Totem or Flametongue Weapon (#677)",
+      "pr": 677,
+      "areas": [
+        "sim/core",
+        "sim/shaman",
+        "ui/sim"
+      ],
+      "disposition": "applicable",
+      "reason": "Covered mechanic. Flametongue Totem no longer stacks with Windfury Totem or a main hand Flametongue Weapon. The fork folded it into its own Flametongue Totem (patches 70 to 72) and, as its patch 98, lets a Windfury Totem the character benefits from switch the totem off.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 2d93e423e: Windfury Totem's aura joins the Flametongue Totem category, which Rust enforces through the exported exclusive effects"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/enhancement-shaman-self-totems.go-result.json",
+        "fixtures/mage/prepared-v2/production-enhancement-shaman.go-result.json"
+      ]
+    },
+    {
+      "commit": "7e75a5d9147165e3bd118df0fbbef7a14309d673",
+      "date": "2026-10-05 00:29:22 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "83bd1c37da60139b55f23c6f77d2a7d22be3fd45",
+      "date": "2026-10-05 01:43:22 +0000",
+      "subject": "priest: Smite casts Penance rank 3, whose bolt is larger than rank 4's (#678)",
+      "pr": 678,
+      "areas": [
+        "sim/priest",
+        "ui/sim",
+        "ui/specs"
+      ],
+      "disposition": "applicable",
+      "reason": "Covered mechanic. Every Penance rank is registered on the category cooldown they share, each with its own bolt, so a rotation can cast rank 3, whose bolt is larger than rank 4's.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 2d93e423e: the exporter lists each rank with its bolt and the shared category timer"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/production-smite-priest.go-result.json",
+        "fixtures/mage/prepared-v2/smite-priest-power-infusion.go-result.json"
+      ]
+    },
+    {
+      "commit": "f58b4c7294b8095e62b701622548263e13392eca",
+      "date": "2026-10-05 01:43:48 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "a905060cbc3ecae85bb2441d55a2000bf331cfdd",
+      "date": "2026-10-05 02:24:43 +0000",
+      "subject": "priest: Holy Precision and Holy Specialization leave Chastise out (#679)",
+      "pr": 679,
+      "areas": [
+        "sim/priest"
+      ],
+      "disposition": "applicable",
+      "reason": "Covered mechanic. Holy Precision and Holy Specialization are class mask modifiers that leave Chastise out, instead of a Holy school hit pseudo stat and a school crit modifier.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 2d93e423e: the exported spells carry the hit and crit, and the school hit bonus is gone"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/production-smite-priest.prepared.json",
+        "fixtures/mage/prepared-v2/smite-priest-holy-nova.go-result.json"
+      ]
+    },
+    {
+      "commit": "3a3d0b5e9fa00ab8db91b44e96c02c86de9fbfc0",
+      "date": "2026-10-05 02:25:06 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "9c12337cf9a191dabadbf1a5eb2f2476eb3f8a7d",
+      "date": "2026-10-05 03:21:42 +0000",
+      "subject": "warlock: Malediction no longer raises Hellfire's area hits (#680)",
+      "pr": 680,
+      "areas": [
+        "sim/warlock"
+      ],
+      "disposition": "applicable",
+      "reason": "Covered mechanic. Malediction's periodic damage bonus no longer reaches Hellfire.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 2d93e423e: Hellfire's exported periodic multiplier no longer carries it"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/affliction-warlock-hellfire.go-result.json"
+      ]
+    },
+    {
+      "commit": "18e092691f1ee128ca82e70af094168a1bab8307",
+      "date": "2026-10-05 03:22:04 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "56d1e080f8ed5b970194aa08cc5613c128394ec1",
+      "date": "2026-10-05 04:35:38 +0000",
+      "subject": "shaman: a hard-cast bolt restarts the swing timer when it completes (#681)",
+      "pr": 681,
+      "areas": [
+        "sim/shaman"
+      ],
+      "disposition": "intentionally_different",
+      "reason": "Upstream restarts the swing a full weapon speed after a hard cast. The fork keeps its patch 17 (HoldMeleeForCast), which also lands a swing that came due during the cast as the cast completes, and drops upstream's holdSwingDuringCast; Rust follows the fork."
+    },
+    {
+      "commit": "d5ff7bfc3c338ae950de8030d99293249e22816d",
+      "date": "2026-10-05 04:36:01 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "007fdcccc27f59a6055d3cb71846d39f72c927db",
+      "date": "2026-10-05 05:39:30 +0000",
+      "subject": "shaman: Flametongue Totem's hit has no spell power coefficient and no imbue talents (#682)",
+      "pr": 682,
+      "areas": [
+        "sim/shaman",
+        "ui/sim"
+      ],
+      "disposition": "applicable",
+      "reason": "Covered mechanic. Flametongue Totem's hit takes no spell power and no imbue talent: it lands as Flametongue Attack 16368 with no class mask Elemental Fury or Elemental Weapons names. Replaces the fork's patch 91.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 2d93e423e: the exported totem hit has no class spell, so no talent modifier reaches it"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/enhancement-shaman-self-totems.go-result.json"
+      ]
+    },
+    {
+      "commit": "7c50e3eae73d8cad8dba4e65557e6e92c3b27ad8",
+      "date": "2026-10-05 05:39:51 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "72f0b8fb77f44b1973db9355d010086478101210",
+      "date": "2026-10-05 06:22:43 +0000",
+      "subject": "[DB] Update to 1.60.1.70205 with hotfixes as of 2026-10-05 (#683)",
+      "pr": 683,
+      "areas": [
+        "assets/database",
+        "assets/db_inputs",
+        "sim/common",
+        "sim/core",
+        "ui/sim"
+      ],
+      "disposition": "applicable",
+      "reason": "Client data 70205 with the hotfixes of 2026-10-05.",
+      "mechanics": [
+        "client_data"
+      ],
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 2d93e423e: fixtures re-exported at client build 1.60.1.70235"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/manifest.json"
+      ]
+    },
+    {
+      "commit": "5a868c3c71561ca13744ec64163e20038ff20cf7",
+      "date": "2026-10-05 06:30:42 +0000",
+      "subject": "shaman: a hard-cast Lava Burst restarts the swing timer too (#684)",
+      "pr": 684,
+      "areas": [
+        "sim/shaman"
+      ],
+      "disposition": "intentionally_different",
+      "reason": "Lava Burst restarts the swing as #681 does; the fork keeps its patch 17 for Lava Burst too, and Rust follows the fork."
+    },
+    {
+      "commit": "c72f88334ae1a8892291f89458ee14c62c8a0461",
+      "date": "2026-10-05 06:31:06 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "5693a4620635941a1335ac80a27cb81b2bc5d8aa",
+      "date": "2026-10-05 07:02:29 +0000",
+      "subject": "data: Wowhead Forever data changed (2026-10-05) (#685)",
+      "pr": 685,
+      "areas": [
+        "assets/db_inputs",
+        "docs/data-changes"
+      ],
+      "disposition": "applicable",
+      "reason": "Wowhead Forever data of 2026-10-05: 23 new and 38 changed items.",
+      "mechanics": [
+        "client_data"
+      ],
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 2d93e423e: fixtures re-exported at client build 1.60.1.70235"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/manifest.json"
+      ]
+    },
+    {
+      "commit": "e2bd7e55f940211b42f17bde8b210762e599e34d",
+      "date": "2026-10-05 07:29:02 +0000",
+      "subject": "priest: Shadowform refuses Holy Nova and Chastise, as the client does (#686)",
+      "pr": 686,
+      "areas": [
+        "sim/priest"
+      ],
+      "disposition": "applicable",
+      "reason": "Covered mechanic. Shadowform is the client's form 28, and Holy Nova's and Chastise's cast requirements refuse it.",
+      "mechanics": [
+        "spell_casting"
+      ],
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 2d93e423e: the exporter writes a cast requirement as the player auras whose form it refuses, and Rust fails the cast with \"wrong form\" while one is up"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/shadow-priest-shadowform-holy-nova-power-infusion.go-result.json"
+      ]
+    },
+    {
+      "commit": "50c5e02a4d714cce03876c611a9afa2a5c100dd2",
+      "date": "2026-10-05 07:29:27 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "f460eadbb35f6c9d7207e76b349250d38f3aae37",
+      "date": "2026-10-05 08:29:08 +0000",
+      "subject": "warlock: Demonic Embrace keeps its -1% Spirit, as the client does (#687)",
+      "pr": 687,
+      "areas": [
+        "sim/warlock"
+      ],
+      "disposition": "applicable",
+      "reason": "Covered mechanic. Demonic Embrace keeps its -1% Spirit.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 2d93e423e: the exported Spirit and spirit regeneration carry it"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/production-destruction-warlock.go-result.json"
+      ]
+    },
+    {
+      "commit": "1b5ae247fc9dde7ad0bc5530cf13b41324396e28",
+      "date": "2026-10-05 08:29:35 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "d28b12a380fd35c228a3860db6b7f2840c477e4b",
+      "date": "2026-10-05 09:21:37 +0000",
+      "subject": "balance druid: audit fixes and a better launch rotation (#688)",
+      "pr": 688,
+      "areas": [
+        "sim/druid",
+        "ui/specs"
+      ],
+      "disposition": "applicable",
+      "reason": "Covered mechanic. The balance audit: Hurricane's ticks crit, Moonfire applies its dot directly as one hit event, and Thorns can be cast in Moonkin and Tree of Life form. The rotation change is a preset.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 2d93e423e: Hurricane rolls hit and crit, Moonfire applies its dot without a cast of the dot spell, and the exporter gives Thorns its forms"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/balance-druid-hurricane-3-targets.go-result.json",
+        "fixtures/mage/prepared-v2/production-balance-druid.go-result.json"
+      ]
+    },
+    {
+      "commit": "5201713448ddcbcd0fc614ecfbd0b900c2c0b3e0",
+      "date": "2026-10-05 09:22:07 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "a25fba6b021fd21be2f0c4c3d8e09b761d55374d",
+      "date": "2026-10-05 09:25:07 +0000",
+      "subject": "balance druid: real gear sets (launch 585 -> 606, P1 545 -> 623) (#689)",
+      "pr": 689,
+      "areas": [
+        "sim/core",
+        "tools/launch_gear",
+        "ui/specs"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Balance gear set presets; the Go change renames unifyGearHitAndCrit only."
+    },
+    {
+      "commit": "db4d0f94569276bf6c9efd96679210e78a518030",
+      "date": "2026-10-05 09:25:31 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "d7c1c74aa99ab1a228780b789180f57d18c0de1b",
+      "date": "2026-10-05 20:29:58 +1100",
+      "subject": "chore(arena): rebuild the leaderboard",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "e589f4f46d61410844a6e3a4984a4e4850d353d3",
+      "date": "2026-10-05 09:30:12 +0000",
+      "subject": "rogue: Cold Blood crits both Mutilate hands and isn't spent by them (#690)",
+      "pr": 690,
+      "areas": [
+        "sim/rogue",
+        "ui/sim"
+      ],
+      "disposition": "applicable",
+      "reason": "Covered mechanic. Cold Blood's crit reaches both Mutilate hands, and their hits do not spend it.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 2d93e423e: the exporter lists the class spells that spend the aura apart from those it buffs"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/assassination-kidney-shot.go-result.json",
+        "fixtures/mage/prepared-v2/assassination-venom.go-result.json"
+      ]
+    },
+    {
+      "commit": "adc88f859572f8961b47a5a5846631eef978e440",
+      "date": "2026-10-05 09:30:40 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "5d800e603155f71501b1ef3bfb40f09528029f6b",
+      "date": "2026-10-05 10:25:08 +0000",
+      "subject": "rogue: Assassination casts Cold Blood before a Mutilate, not just before Eviscerate (#691)",
+      "pr": 691,
+      "areas": [
+        "sim/rogue",
+        "ui/specs"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Rotation presets, arena tooling or UI for other specs."
+    },
+    {
+      "commit": "12de31ec1706862f11fdfb8aa214cb2df3d4e5d2",
+      "date": "2026-10-05 10:25:33 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "5fdb9ae036e6107447fdc3dfa4a9e22e5adafa29",
+      "date": "2026-10-05 11:28:30 +0000",
+      "subject": "warrior: Unbridled Wrath procs from white autos only, not Heroic Strike/Cleave (#692)",
+      "pr": 692,
+      "areas": [
+        "sim/warrior",
+        "ui/sim"
+      ],
+      "disposition": "applicable",
+      "reason": "Covered mechanic. Unbridled Wrath procs from white autos only, not from Heroic Strike or Cleave, which carry the melee special mask.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 2d93e423e: the trigger excludes spells with the melee special mask"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/fury-warrior-rivenspike.go-result.json",
+        "fixtures/mage/prepared-v2/production-warrior-2-targets.go-result.json"
+      ]
+    },
+    {
+      "commit": "660176710eb13a85eb5b4c3dd8f7de984883c99b",
+      "date": "2026-10-05 11:28:54 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "df7a2cfd2f7de7325589a567212b39acdd8b0620",
+      "date": "2026-10-05 21:28:17 +0000",
+      "subject": "[DB] Update to 1.60.1.70205 with hotfixes as of 2026-10-05 (#693)",
+      "pr": 693,
+      "areas": [
+        "assets/database"
+      ],
+      "disposition": "applicable",
+      "reason": "Client data 70205 with the hotfixes of 2026-10-05, second update.",
+      "mechanics": [
+        "client_data"
+      ],
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 2d93e423e: fixtures re-exported at client build 1.60.1.70235"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/manifest.json"
+      ]
+    },
+    {
+      "commit": "11475ad1d48d83fab6072fdbc6bd6085d66aa35f",
+      "date": "2026-10-05 23:26:16 +0000",
+      "subject": "hunter: Scorpid pet's poison stacks to 5 (#694)",
+      "pr": 694,
+      "areas": [
+        "sim/hunter",
+        "ui/sim"
+      ],
+      "disposition": "applicable",
+      "reason": "Covered mechanic. A landed Scorpid Poison on a poisoned target refreshes it and adds a stack up to five, each stack a tick of 5, and the ticks read the pet's current stats.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 2d93e423e: the poison refreshes and stacks, and its ticks follow the pet's current multiplier"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/beast-mastery-hunter-scorpid.go-result.json"
+      ]
+    },
+    {
+      "commit": "4c2fb2f490c182915ce0efb3c5c4b5f2e53213f8",
+      "date": "2026-10-05 23:26:19 +0000",
+      "subject": "evidence: Venom note matches the per-tick dot model (#668) (#695)",
+      "pr": 695,
+      "areas": [
+        "ui/sim"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Evidence note for the Venom dot model; no engine change."
+    },
+    {
+      "commit": "75a9b62ac76046e9f97fa6df5a12d7d6320662ae",
+      "date": "2026-10-05 23:26:43 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "64c7d03af36b47cdaf9e5f73df3c5fc11c492ec6",
+      "date": "2026-10-06 01:05:08 +0000",
+      "subject": "data: Forever client build 1.60.1.70235 (#696)",
+      "pr": 696,
+      "areas": [
+        "assets/db_inputs",
+        "docs/data-changes"
+      ],
+      "disposition": "applicable",
+      "reason": "Client build identity 1.60.1.70235, with no changes in the sim's tables.",
+      "mechanics": [
+        "client_data"
+      ],
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 2d93e423e: fixtures re-exported at client build 1.60.1.70235"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/manifest.json"
+      ]
+    },
+    {
+      "commit": "70344beeedb87767d26ef1f98f206d2898cb4c0c",
+      "date": "2026-10-06 01:28:14 +0000",
+      "subject": "shaman: Searing Totem attacks every 2.43 s, not 2.2 s (#697)",
+      "pr": 697,
+      "areas": [
+        "sim/shaman",
+        "ui/sim"
+      ],
+      "disposition": "applicable",
+      "reason": "Covered mechanic. Searing Totem attacks every 2.43 seconds: the pulse's 2.2 second cast plus a 0.23 second pause.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 2d93e423e: the exported totem dot carries the new tick length and count"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/production-elemental-shaman.go-result.json",
+        "fixtures/mage/prepared-v2/enhancement-shaman-self-totems.go-result.json"
+      ]
+    },
+    {
+      "commit": "8061fcc74c9be2726e93f304008900d5a4d9c99c",
+      "date": "2026-10-06 01:28:37 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "f619e5ba537265ae03a9442d9ba8342e1d870e8e",
+      "date": "2026-10-06 01:30:03 +0000",
+      "subject": "warlock: Imp waits ~0.4 s between Firebolts, not 0.2 s (#698)",
+      "pr": 698,
+      "areas": [
+        "sim/warlock",
+        "ui/sim"
+      ],
+      "disposition": "applicable",
+      "reason": "Covered mechanic. The Imp waits 0.4 seconds between Firebolts instead of 0.2.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 2d93e423e: the exported Firebolt cooldown carries it"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/affliction-warlock-broad.go-result.json",
+        "fixtures/mage/prepared-v2/destruction-warlock-broad.go-result.json"
+      ]
+    },
+    {
+      "commit": "b977c45badd8c6e8d39a241ba5713d49870f54c4",
+      "date": "2026-10-06 01:30:29 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "19c1b9369d58d0877b4570cc7ab4322bd8f210a8",
+      "date": "2026-10-06 02:35:37 +0000",
+      "subject": "core: a cast that completed in the batch window isn't pushed back again (#700) (#701)",
+      "pr": 701,
+      "areas": [
+        "sim/core"
+      ],
+      "disposition": "already_covered",
+      "reason": "The fork carried the same check as its patch 94, which Rust follows since the reference pin 74127c6c8; the fork drops its patch for upstream's."
+    },
+    {
+      "commit": "1e899dfea5598cb33033a588497e47209f6269db",
+      "date": "2026-10-06 02:36:02 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "b839a1b8adddf3fd84a5681fab94b76215db0a80",
+      "date": "2026-10-06 02:37:51 +0000",
+      "subject": "mage: Ignite ignores a Goblin Sapper Charge's hit on the Mage (#699) (#702)",
+      "pr": 702,
+      "areas": [
+        "sim/mage"
+      ],
+      "disposition": "already_covered",
+      "reason": "The fork carried the same condition as its patch 93, which Rust follows since the reference pin 74127c6c8; the fork drops its patch for upstream's."
+    },
+    {
+      "commit": "b13662bc0130e9db813b7ec39d202e594320a42d",
+      "date": "2026-10-06 02:38:18 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "e4240d942ca2d3cd266191511dc4b5b34cad5f29",
+      "date": "2026-10-06 03:31:18 +0000",
+      "subject": "hunter: Summon Hawk's hawks swing every 2.5 s (hasted) for ~0.35 of the dive bomb base, no crits (#703)",
+      "pr": 703,
+      "areas": [
+        "sim/hunter",
+        "ui/sim"
+      ],
+      "disposition": "applicable",
+      "reason": "Covered mechanic. A hawk swings on arrival and then every 2.5 seconds hasted by the hunter's real ranged haste, for 0.35 of the dive bomb base, with no crit roll. Replaces the fork's patch 76.",
+      "mechanics": [
+        "channels_and_dots"
+      ],
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 2d93e423e: the exporter gives the swing's share, the dot ticks on real ranged haste, the hawk swings on arrival and its swings roll the melee special hit table without a crit"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/production-beast-mastery-hunter.go-result.json",
+        "fixtures/mage/prepared-v2/beast-mastery-hunter-bat.go-result.json"
+      ]
+    },
+    {
+      "commit": "dbb3f5978524f7a951d32925c0ac0724284def7b",
+      "date": "2026-10-06 03:31:44 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "d9970908d12e847d4eb38e06e1a171068d868a8e",
+      "date": "2026-10-06 04:32:22 +0000",
+      "subject": "core: pet focus regenerates 10 a second, not 25 every 5 s (#704)",
+      "pr": 704,
+      "areas": [
+        "sim/core",
+        "sim/hunter"
+      ],
+      "disposition": "applicable",
+      "reason": "Covered mechanic. Pet focus regenerates smoothly, 2.5 every 250 ms, instead of 25 every 5 seconds.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 2d93e423e: the exported focus bar carries the new tick"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/production-beast-mastery-hunter.go-result.json",
+        "fixtures/mage/prepared-v2/survival-hunter-cat-and-whelp.go-result.json"
+      ]
+    },
+    {
+      "commit": "71a9d32bc13d99b11913f35de2f028c0f519d366",
+      "date": "2026-10-06 04:32:46 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "11534e79659cfb949b1831a078701e23b97ddc5c",
+      "date": "2026-10-06 05:39:37 +0000",
+      "subject": "Sanctified Judgement returns 22/44/67% of the seal's cost (beta logs) (#705)",
+      "pr": 705,
+      "areas": [
+        "sim/paladin",
+        "ui/sim"
+      ],
+      "disposition": "applicable",
+      "reason": "Covered mechanic. Sanctified Judgement returns 10/9 of the stated share of the seal's cost.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 2d93e423e: the exported refund carries the Go constant"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/production-retribution-paladin.go-result.json",
+        "fixtures/mage/prepared-v2/ret-crusader-held.go-result.json"
+      ]
+    },
+    {
+      "commit": "66a75d057abc26734bcadf3c2772050a53c30030",
+      "date": "2026-10-06 05:40:03 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "d86553baabf55fab11a9fcf90361f54cb40f5a96",
+      "date": "2026-10-06 06:17:14 +0000",
+      "subject": "[DB] Update to 1.60.1.70235 with hotfixes as of 2026-10-06 (#706)",
+      "pr": 706,
+      "areas": [
+        "assets/database"
+      ],
+      "disposition": "applicable",
+      "reason": "Client data 1.60.1.70235 with the hotfixes of 2026-10-06.",
+      "mechanics": [
+        "client_data"
+      ],
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 2d93e423e: fixtures re-exported at client build 1.60.1.70235"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/manifest.json"
+      ]
+    },
+    {
+      "commit": "ff5500e86c3ae710c498c76de35a426156eec6fe",
+      "date": "2026-10-06 06:30:18 +0000",
+      "subject": "hunter: Arcane Shot / Serpent Sting attack power shares rechecked at levels 24-30 (beta logs) (#707)",
+      "pr": 707,
+      "areas": [
+        "sim/hunter",
+        "ui/sim"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Comments only: Arcane Shot's and Serpent Sting's attack power shares are rechecked and unchanged."
+    },
+    {
+      "commit": "e51893ba1b435fced6b23f662362cc9c6728e24f",
+      "date": "2026-10-06 06:30:44 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "1585da069ee759b4e33bfca7789d33874f42e5d4",
+      "date": "2026-10-06 06:45:56 +0000",
+      "subject": "data: Wowhead Forever data changed (2026-10-06) (#708)",
+      "pr": 708,
+      "areas": [
+        "assets/db_inputs",
+        "docs/data-changes"
+      ],
+      "disposition": "applicable",
+      "reason": "Wowhead Forever data of 2026-10-06: 29 new and 864 changed items.",
+      "mechanics": [
+        "client_data"
+      ],
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 2d93e423e: fixtures re-exported at client build 1.60.1.70235"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/manifest.json"
+      ]
+    },
+    {
+      "commit": "41769a74a072afff1a159cc417a1658e7c7e3bf3",
+      "date": "2026-10-06 07:28:30 +0000",
+      "subject": "core: energy refills smoothly at 10 a second, not 20 every 2.02 s (#709)",
+      "pr": 709,
+      "areas": [
+        "sim/core",
+        "sim/druid",
+        "sim/rogue"
+      ],
+      "disposition": "applicable",
+      "reason": "Covered mechanic. Energy refills 1 every 100 ms instead of 20.2 every 2.02 seconds.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 2d93e423e: the exported energy bar carries the new tick"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/production-combat-rogue.go-result.json",
+        "fixtures/mage/prepared-v2/production-feral-druid.go-result.json"
+      ]
+    },
+    {
+      "commit": "70859e61a31bfdc3df485d6c18548e1c54fe770a",
+      "date": "2026-10-06 07:28:56 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "69195c5b87bc600202eb1ec539a7dbe582c146dc",
+      "date": "2026-10-06 10:38:40 +0000",
+      "subject": "priest: shadow casts Devouring Plague on its 1 min cooldown, not only with Inner Focus (#710)",
+      "pr": 710,
+      "areas": [
+        "sim/priest",
+        "ui/specs"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Rotation presets, arena tooling or UI for other specs."
+    },
+    {
+      "commit": "1cb753d070b4ac2f7e322e32ba7248d2dd183dbf",
+      "date": "2026-10-06 10:39:07 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "d7616497397cd00420f54df27ecd9d81d00bcf4f",
+      "date": "2026-10-06 10:48:41 +0000",
+      "subject": "druid: cat powershifts only with Wolfshead Helm, Forever's Furor refunds no extra energy (#711)",
+      "pr": 711,
+      "areas": [
+        "sim/druid",
+        "ui/specs"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Rotation presets, arena tooling or UI for other specs."
+    },
+    {
+      "commit": "488845c2514d3c2d2038200249ce09110df49873",
+      "date": "2026-10-06 10:49:05 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "e55285f5a93e0d98518f7992d16c9fde47db7c0c",
+      "date": "2026-10-06 11:27:56 +0000",
+      "subject": "warrior: no Heroic Strike / Cleave queued in execute below 40 rage (#712)",
+      "pr": 712,
+      "areas": [
+        "sim/warrior",
+        "ui/specs"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Rotation presets, arena tooling or UI for other specs."
+    },
+    {
+      "commit": "d32c8a10320439869c42592c1e1a01b9f85ca599",
+      "date": "2026-10-06 11:28:23 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "b7e482867f27863a5dd72f0433ce278b1ce865a1",
+      "date": "2026-10-06 11:31:01 +0000",
+      "subject": "hunter: Intimidation is no longer an auto-cast DPS cooldown (#713)",
+      "pr": 713,
+      "areas": [
+        "sim/hunter"
+      ],
+      "disposition": "applicable",
+      "reason": "Covered mechanic. Intimidation is no longer a major cooldown; it is cast only when a rotation names it.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 2d93e423e: the exported major cooldowns no longer list it"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/production-beast-mastery-hunter.go-result.json"
+      ]
+    },
+    {
+      "commit": "05e220e23b4e11c3d1b56cb7cb2d0bf5dafea744",
+      "date": "2026-10-06 11:31:28 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "6d1664f3e951fb8d3d8f9fa9d595e7974ca8fe80",
+      "date": "2026-10-06 20:22:13 +0000",
+      "subject": "mage: arcane APL falls back to Frostbolt without the Arcane Blast talent (#714)",
+      "pr": 714,
+      "areas": [
+        "sim/mage",
+        "ui/specs"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Rotation presets, arena tooling or UI for other specs."
+    },
+    {
+      "commit": "dcdf053aa9a39ad1edf175bed477a5d3fda606e0",
+      "date": "2026-10-06 20:22:39 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "4a54934d727c4464458bfe0aeac22ef42702d458",
+      "date": "2026-10-06 21:44:12 +0000",
+      "subject": "mage: Arcane Missiles' missiles keep the Arcane Blast stacks, 15% each (#715)",
+      "pr": 715,
+      "areas": [
+        "sim/mage",
+        "ui/sim"
+      ],
+      "disposition": "applicable",
+      "reason": "Covered mechanic. Arcane Missiles' missiles keep the Arcane Blast stacks the channel spends as it starts, 15% each, on the missile's additive damage multiplier.",
+      "mechanics": [
+        "arcane_missiles"
+      ],
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 2d93e423e: the exporter gives the bonus a stack, and each missile adds the channel's bonus to its additive multiplier while it rolls"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/arcane-reference.go-result.json",
+        "fixtures/mage/prepared-v2/arcane-blast-spenders.go-result.json"
+      ]
+    },
+    {
+      "commit": "6e8ea8730253f6056c809f986561ee43a375df14",
+      "date": "2026-10-06 21:44:40 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "eb01a69826af07cdd71d18cb764a1caaa921ac7d",
+      "date": "2026-10-06 22:45:00 +0000",
+      "subject": "warlock: Shadow and Flame build casts Conflagrate (#716)",
+      "pr": 716,
+      "areas": [
+        "sim/warlock",
+        "ui/specs"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Rotation preset: Shadow and Flame casts Conflagrate, which replaces the fork's patch 3, also a rotation."
+    },
+    {
+      "commit": "64dbfcfe0a1c4c942d35e846800c2dd9169621e1",
+      "date": "2026-10-06 22:45:25 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "08887c559e6b4bf4fd7d940cab88367117858433",
+      "date": "2026-10-06 23:05:51 +0000",
+      "subject": "hunter: Marksmanship paces Sniper Shot on mana (#717)",
+      "pr": 717,
+      "areas": [
+        "sim/hunter",
+        "ui/specs"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Rotation presets, arena tooling or UI for other specs."
+    },
+    {
+      "commit": "0f9ee5cb87dcb693c5b83814b9c610a2d15e7619",
+      "date": "2026-10-06 23:06:15 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "b71df43c4c83e499a42cb9964e456baa8fa24de6",
+      "date": "2026-10-07 00:08:35 +0000",
+      "subject": "hunter: Marksmanship holds Arcane Shot when Aimed Shot is under 2 s away (#718)",
+      "pr": 718,
+      "areas": [
+        "sim/hunter",
+        "ui/specs"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Rotation presets, arena tooling or UI for other specs."
+    },
+    {
+      "commit": "072bcc106397db405542be74ac7e8bbfefc1eef3",
+      "date": "2026-10-07 00:09:05 +0000",
+      "subject": "chore(changelog): record merged pull requests",
+      "areas": [
+        "ui/app"
+      ],
+      "disposition": "irrelevant",
+      "reason": "Changelog or leaderboard bookkeeping."
+    },
+    {
+      "commit": "5ec851444b401f0eb688e1036f17ee96085a1090",
+      "date": "2026-10-07 00:25:42 +0000",
+      "subject": "priest: Power Infusion no longer drops Shadowform (#719)",
+      "pr": 719,
+      "areas": [
+        "sim/priest"
+      ],
+      "disposition": "applicable",
+      "reason": "Covered mechanic. Power Infusion, or any helpful Holy cast, no longer ends Shadowform.",
+      "adoption": {
+        "reference": "adopted",
+        "rust": "adopted with the reference pin 2d93e423e: Shadowform no longer ends on a helpful Holy cast"
+      },
+      "regression": [
+        "fixtures/mage/prepared-v2/shadow-priest-shadowform-holy-nova-power-infusion.go-result.json"
+      ]
+    },
+    {
+      "commit": "5c115f1725ede7419e4f8582a7d94cdb0247c829",
+      "date": "2026-10-07 00:26:07 +0000",
       "subject": "chore(changelog): record merged pull requests",
       "areas": [
         "ui/app"

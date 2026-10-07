@@ -342,7 +342,7 @@ func warriorEffects(agent core.Agent, character *core.Character) []map[string]an
 			"tick_can_crit": bleed.PeriodicCanCrit(), "tick_magic": bleed.DefenseTypeCore() == core.DefenseTypeMagic,
 		})
 	}
-	if talents.UnbridledWrath > 0 { // talents_fury.go registerUnbridledWrath
+	if talents.UnbridledWrath > 0 { // talents_fury.go registerUnbridledWrath: white hits, not melee specials
 		effects = append(effects, map[string]any{
 			"kind": "unbridled_wrath", "trigger_aura": "Unbridled Wrath", "spell_id": warriorUnbridledWrathTrigger.Highest().ID,
 			"proc_chance": warriorUnbridledWrath.FractionAt(talents.UnbridledWrath),

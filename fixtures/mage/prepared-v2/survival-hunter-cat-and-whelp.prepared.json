@@ -2,8 +2,8 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "cd7d44aec711bcc8f20ea12d3ed83cea2126ac66",
-    "client_build": "1.60.1.70205",
+    "engine_revision": "2d93e423e0303e93dbb16e190d435503248b68f9",
+    "client_build": "1.60.1.70235",
     "exporter": "tools/oracle-v2"
   },
   "request_sha256": "61a1f8f1e958ee9a93ac424cdaec03c77feaf355daeabf3cc21e40c496f4065d",
@@ -867,12 +867,18 @@
           "on_reset"
         ],
         "icd": null,
-        "exclusive_effects": 2,
+        "exclusive_effects": 3,
         "exclusive_memberships": [
           {
             "category": "AirTotem",
             "single_aura": true,
             "priority": 2,
+            "position": 0
+          },
+          {
+            "category": "FlametongueTotem",
+            "single_aura": false,
+            "priority": 2044.5,
             "position": 0
           },
           {
@@ -3682,8 +3688,8 @@
       "dynamic_stats": true,
       "focus": {
         "max": 100,
-        "regen_per_tick": 25,
-        "tick_duration_ns": 5000000000
+        "regen_per_tick": 2.5,
+        "tick_duration_ns": 250000000
       },
       "stats_without_deps": {
         "Agility": 100,

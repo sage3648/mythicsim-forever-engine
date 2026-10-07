@@ -1,5 +1,5 @@
-//! Holy Fire (14914 to 15261) and Penance (1316995), from Go sim/priest/holy_fire.go and
-//! penance.go. Smite is a plain hit, in `direct`.
+//! Holy Fire (14914 to 15261) and Penance (402174 to 1316995, every rank on one category
+//! cooldown), from Go sim/priest/holy_fire.go and penance.go. Smite is a plain hit, in `direct`.
 
 use crate::core::fight::{Agent, Fight, Outcome, Side, SpellId};
 

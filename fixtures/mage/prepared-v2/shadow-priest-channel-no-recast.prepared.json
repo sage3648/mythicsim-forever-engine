@@ -2,8 +2,8 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "cd7d44aec711bcc8f20ea12d3ed83cea2126ac66",
-    "client_build": "1.60.1.70205",
+    "engine_revision": "2d93e423e0303e93dbb16e190d435503248b68f9",
+    "client_build": "1.60.1.70235",
     "exporter": "tools/oracle-v2"
   },
   "request_sha256": "bc28010ea3df8ca41e9664bbf02114a79f5f07bc305c80c83c5cad9702b76ca2",
@@ -920,8 +920,7 @@
         "callbacks": [
           "on_reset",
           "on_gain",
-          "on_expire",
-          "on_cast_complete"
+          "on_expire"
         ],
         "icd": null,
         "exclusive_effects": 0
@@ -4601,6 +4600,9 @@
         "ignore_haste": false,
         "has_extra_cast_condition": true,
         "has_cast_requirement": true,
+        "requirement_auras": [
+          "Shadowform"
+        ],
         "min_range": 0,
         "max_range": 20,
         "max_charges": 0,
@@ -4662,6 +4664,9 @@
         "ignore_haste": false,
         "has_extra_cast_condition": true,
         "has_cast_requirement": true,
+        "requirement_auras": [
+          "Shadowform"
+        ],
         "min_range": 0,
         "max_range": 20,
         "max_charges": 0,
@@ -4723,6 +4728,9 @@
         "ignore_haste": false,
         "has_extra_cast_condition": true,
         "has_cast_requirement": true,
+        "requirement_auras": [
+          "Shadowform"
+        ],
         "min_range": 0,
         "max_range": 20,
         "max_charges": 0,
@@ -4784,6 +4792,9 @@
         "ignore_haste": false,
         "has_extra_cast_condition": true,
         "has_cast_requirement": true,
+        "requirement_auras": [
+          "Shadowform"
+        ],
         "min_range": 0,
         "max_range": 20,
         "max_charges": 0,
@@ -4845,6 +4856,9 @@
         "ignore_haste": false,
         "has_extra_cast_condition": true,
         "has_cast_requirement": true,
+        "requirement_auras": [
+          "Shadowform"
+        ],
         "min_range": 0,
         "max_range": 20,
         "max_charges": 0,
@@ -5966,7 +5980,6 @@
     },
     {
       "aura": "Shadowform",
-      "cancel_spells": [],
       "cost_percent": -0.5,
       "crit_multiplier": 1,
       "crit_spells": [

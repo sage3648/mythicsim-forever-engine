@@ -100,8 +100,6 @@ pub(crate) struct HunterAgent {
     summon_hawk: Option<Rc<SummonHawk>>,
     /// The pet's damage abilities, by their effect order.
     pet_abilities: Vec<PetAbility>,
-    /// Scorpid Poison's snapshot: its base and attacker multiplier.
-    pub(crate) scorpid_snapshot: (f64, f64),
     /// Dust Cloud's target aura and the armor it changes.
     pub(crate) dust_cloud: Option<(AuraRef, f64)>,
     pet_ai: Option<Rc<PetAi>>,
@@ -619,6 +617,7 @@ impl HunterAgent {
                 Effect::SummonHawk {
                     base_damage,
                     attack_power_share,
+                    swing_share,
                     always_hits,
                     hawk_spells,
                     ..
@@ -627,6 +626,7 @@ impl HunterAgent {
                         &mut fight,
                         *base_damage,
                         *attack_power_share,
+                        *swing_share,
                         *always_hits,
                         hawk_spells,
                     )?;
@@ -881,10 +881,8 @@ impl Agent for HunterAgent {
                 .expect("Volley is bound")
                 .tick(fight, dot),
             HunterSpell::PetAbility(index) => match fight.agent.pet_abilities[index] {
-                PetAbility::Bleed { outcome, .. } => hunter_pet::bleed_tick(fight, dot, outcome),
-                PetAbility::ScorpidPoison { outcome, .. } => {
-                    let (base, multiplier) = fight.agent.scorpid_snapshot;
-                    hunter_pet::snapshot_tick(fight, dot, base, multiplier, outcome);
+                PetAbility::Bleed { outcome, .. } | PetAbility::ScorpidPoison { outcome, .. } => {
+                    hunter_pet::bleed_tick(fight, dot, outcome)
                 }
                 _ => {}
             },

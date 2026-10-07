@@ -2,8 +2,8 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "cd7d44aec711bcc8f20ea12d3ed83cea2126ac66",
-    "client_build": "1.60.1.70205",
+    "engine_revision": "2d93e423e0303e93dbb16e190d435503248b68f9",
+    "client_build": "1.60.1.70235",
     "exporter": "tools/oracle-v2"
   },
   "request_sha256": "a940a67dadef6d09d20e11a625a424764494b5d3229966139d7301cd115cd227",
@@ -211,7 +211,55 @@
         ]
       },
       {
-        "label": "Penance-1",
+        "label": "Penance-1-1",
+        "action_id": {
+          "spell_id": 402174
+        },
+        "duration_ns": 2000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Penance-2-1",
+        "action_id": {
+          "spell_id": 1240720
+        },
+        "duration_ns": 2000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Penance-3-1",
+        "action_id": {
+          "spell_id": 1240721
+        },
+        "duration_ns": 2000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Penance-4-1",
         "action_id": {
           "spell_id": 1316995
         },
@@ -740,7 +788,7 @@
         "arcane": 0,
         "fire": 0,
         "frost": 0,
-        "holy": 18,
+        "holy": 0,
         "nature": 0,
         "none": 0,
         "physical": 0,
@@ -1398,6 +1446,228 @@
       },
       {
         "action_id": {
+          "spell_id": 402174
+        },
+        "rank": 1,
+        "school": 2,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagChanneled",
+          "SpellFlagAPL"
+        ],
+        "class_spell": "penance",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 100,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 100,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": true,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 36,
+        "max_charges": 0,
+        "cd": {
+          "timer": "timer-1",
+          "duration_ns": 12000000000
+        },
+        "shared_cd": null,
+        "bonus_hit_percent": 18,
+        "bonus_crit_percent": 5,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1.05,
+        "damage_multiplier_additive": 1,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "Penance-1-1",
+          "base_tick_count": 2,
+          "base_tick_length_ns": 1000000000,
+          "bonus_coefficient": 0.2849999964237213,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": true
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 1240720
+        },
+        "rank": 2,
+        "school": 2,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagChanneled",
+          "SpellFlagAPL"
+        ],
+        "class_spell": "penance",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 185,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 185,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": true,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 36,
+        "max_charges": 0,
+        "cd": {
+          "timer": "timer-1",
+          "duration_ns": 12000000000
+        },
+        "shared_cd": null,
+        "bonus_hit_percent": 18,
+        "bonus_crit_percent": 5,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1.05,
+        "damage_multiplier_additive": 1,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "Penance-2-1",
+          "base_tick_count": 2,
+          "base_tick_length_ns": 1000000000,
+          "bonus_coefficient": 0.2849999964237213,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": true
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 1240721
+        },
+        "rank": 3,
+        "school": 2,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagChanneled",
+          "SpellFlagAPL"
+        ],
+        "class_spell": "penance",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "mana",
+          "base_cost": 270,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 270,
+          "gcd_ns": 1500000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": false,
+        "has_extra_cast_condition": true,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 36,
+        "max_charges": 0,
+        "cd": {
+          "timer": "timer-1",
+          "duration_ns": 12000000000
+        },
+        "shared_cd": null,
+        "bonus_hit_percent": 18,
+        "bonus_crit_percent": 5,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1.05,
+        "damage_multiplier_additive": 1,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "Penance-3-1",
+          "base_tick_count": 2,
+          "base_tick_length_ns": 1000000000,
+          "bonus_coefficient": 0.2849999964237213,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": true
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
           "spell_id": 1316995
         },
         "rank": 4,
@@ -1438,7 +1708,7 @@
           "duration_ns": 12000000000
         },
         "shared_cd": null,
-        "bonus_hit_percent": 0,
+        "bonus_hit_percent": 18,
         "bonus_crit_percent": 5,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
@@ -1456,7 +1726,7 @@
         "pushback_resist": 0,
         "dot": {
           "unit": "target",
-          "aura_label": "Penance-1",
+          "aura_label": "Penance-4-1",
           "base_tick_count": 2,
           "base_tick_length_ns": 1000000000,
           "bonus_coefficient": 0.2849999964237213,
@@ -1512,7 +1782,7 @@
         },
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 5,
+        "bonus_crit_percent": 0,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
@@ -3063,7 +3333,7 @@
         "max_charges": 0,
         "cd": null,
         "shared_cd": null,
-        "bonus_hit_percent": 0,
+        "bonus_hit_percent": 18,
         "bonus_crit_percent": 5,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
@@ -3123,7 +3393,7 @@
         "max_charges": 0,
         "cd": null,
         "shared_cd": null,
-        "bonus_hit_percent": 0,
+        "bonus_hit_percent": 18,
         "bonus_crit_percent": 5,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
@@ -3183,7 +3453,7 @@
         "max_charges": 0,
         "cd": null,
         "shared_cd": null,
-        "bonus_hit_percent": 0,
+        "bonus_hit_percent": 18,
         "bonus_crit_percent": 5,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
@@ -3243,7 +3513,7 @@
         "max_charges": 0,
         "cd": null,
         "shared_cd": null,
-        "bonus_hit_percent": 0,
+        "bonus_hit_percent": 18,
         "bonus_crit_percent": 5,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
@@ -3303,7 +3573,7 @@
         "max_charges": 0,
         "cd": null,
         "shared_cd": null,
-        "bonus_hit_percent": 0,
+        "bonus_hit_percent": 18,
         "bonus_crit_percent": 5,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
@@ -3363,7 +3633,7 @@
         "max_charges": 0,
         "cd": null,
         "shared_cd": null,
-        "bonus_hit_percent": 0,
+        "bonus_hit_percent": 18,
         "bonus_crit_percent": 5,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
@@ -3423,7 +3693,7 @@
         "max_charges": 0,
         "cd": null,
         "shared_cd": null,
-        "bonus_hit_percent": 0,
+        "bonus_hit_percent": 18,
         "bonus_crit_percent": 5,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
@@ -3483,7 +3753,7 @@
         "max_charges": 0,
         "cd": null,
         "shared_cd": null,
-        "bonus_hit_percent": 0,
+        "bonus_hit_percent": 18,
         "bonus_crit_percent": 5,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
@@ -3543,7 +3813,7 @@
         "max_charges": 0,
         "cd": null,
         "shared_cd": null,
-        "bonus_hit_percent": 0,
+        "bonus_hit_percent": 18,
         "bonus_crit_percent": 5,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
@@ -3616,7 +3886,7 @@
         "max_charges": 0,
         "cd": null,
         "shared_cd": null,
-        "bonus_hit_percent": 0,
+        "bonus_hit_percent": 18,
         "bonus_crit_percent": 5,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
@@ -3689,7 +3959,7 @@
         "max_charges": 0,
         "cd": null,
         "shared_cd": null,
-        "bonus_hit_percent": 0,
+        "bonus_hit_percent": 18,
         "bonus_crit_percent": 5,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
@@ -3762,7 +4032,7 @@
         "max_charges": 0,
         "cd": null,
         "shared_cd": null,
-        "bonus_hit_percent": 0,
+        "bonus_hit_percent": 18,
         "bonus_crit_percent": 5,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
@@ -3835,7 +4105,7 @@
         "max_charges": 0,
         "cd": null,
         "shared_cd": null,
-        "bonus_hit_percent": 0,
+        "bonus_hit_percent": 18,
         "bonus_crit_percent": 5,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
@@ -3908,7 +4178,7 @@
         "max_charges": 0,
         "cd": null,
         "shared_cd": null,
-        "bonus_hit_percent": 0,
+        "bonus_hit_percent": 18,
         "bonus_crit_percent": 5,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
@@ -3981,7 +4251,7 @@
         "max_charges": 0,
         "cd": null,
         "shared_cd": null,
-        "bonus_hit_percent": 0,
+        "bonus_hit_percent": 18,
         "bonus_crit_percent": 5,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
@@ -4054,7 +4324,7 @@
         "max_charges": 0,
         "cd": null,
         "shared_cd": null,
-        "bonus_hit_percent": 0,
+        "bonus_hit_percent": 18,
         "bonus_crit_percent": 5,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
@@ -4123,6 +4393,7 @@
         "ignore_haste": false,
         "has_extra_cast_condition": true,
         "has_cast_requirement": true,
+        "requirement_auras": [],
         "min_range": 0,
         "max_range": 20,
         "max_charges": 0,
@@ -4132,7 +4403,7 @@
         },
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 5,
+        "bonus_crit_percent": 0,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
@@ -4184,6 +4455,7 @@
         "ignore_haste": false,
         "has_extra_cast_condition": true,
         "has_cast_requirement": true,
+        "requirement_auras": [],
         "min_range": 0,
         "max_range": 20,
         "max_charges": 0,
@@ -4193,7 +4465,7 @@
         },
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 5,
+        "bonus_crit_percent": 0,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
@@ -4245,6 +4517,7 @@
         "ignore_haste": false,
         "has_extra_cast_condition": true,
         "has_cast_requirement": true,
+        "requirement_auras": [],
         "min_range": 0,
         "max_range": 20,
         "max_charges": 0,
@@ -4254,7 +4527,7 @@
         },
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 5,
+        "bonus_crit_percent": 0,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
@@ -4306,6 +4579,7 @@
         "ignore_haste": false,
         "has_extra_cast_condition": true,
         "has_cast_requirement": true,
+        "requirement_auras": [],
         "min_range": 0,
         "max_range": 20,
         "max_charges": 0,
@@ -4315,7 +4589,7 @@
         },
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 5,
+        "bonus_crit_percent": 0,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
@@ -4367,6 +4641,7 @@
         "ignore_haste": false,
         "has_extra_cast_condition": true,
         "has_cast_requirement": true,
+        "requirement_auras": [],
         "min_range": 0,
         "max_range": 20,
         "max_charges": 0,
@@ -4376,7 +4651,7 @@
         },
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": 5,
+        "bonus_crit_percent": 0,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
@@ -5358,18 +5633,18 @@
       "crit_spells": [
         3,
         4,
+        5,
+        6,
         7,
-        8,
-        9,
         10,
         11,
         12,
         13,
         14,
         15,
-        28,
-        29,
-        30,
+        16,
+        17,
+        18,
         31,
         32,
         33,
@@ -5387,16 +5662,19 @@
         45,
         46,
         47,
-        48
+        48,
+        49,
+        50,
+        51
       ],
       "kind": "inner_focus",
       "spell_id": 14751,
       "spender_spells": [
         3,
         4,
+        5,
+        6,
         7,
-        8,
-        9,
         10,
         11,
         12,
@@ -5436,12 +5714,15 @@
         46,
         47,
         48,
+        49,
         50,
         51,
-        52,
         53,
         54,
-        55
+        55,
+        56,
+        57,
+        58
       ]
     },
     {
@@ -5494,33 +5775,55 @@
     },
     {
       "kind": "penance",
-      "spell_id": 1316995,
-      "tick_base": 131,
-      "tick_can_crit": true
+      "ranks": [
+        {
+          "spell_id": 402174,
+          "tick_base": 81,
+          "tick_can_crit": true
+        },
+        {
+          "spell_id": 1240720,
+          "tick_base": 113,
+          "tick_can_crit": true
+        },
+        {
+          "spell_id": 1240721,
+          "tick_base": 180,
+          "tick_can_crit": true
+        },
+        {
+          "spell_id": 1316995,
+          "tick_base": 131,
+          "tick_can_crit": true
+        }
+      ]
     },
     {
       "holy_fire_spells": [
-        36,
-        37,
-        38,
         39,
         40,
         41,
         42,
-        43
+        43,
+        44,
+        45,
+        46
       ],
       "kind": "power_in_light",
       "multiplier": 1.1,
       "spells": [
         3,
-        28,
-        29,
-        30,
+        4,
+        5,
+        6,
         31,
         32,
         33,
         34,
-        35
+        35,
+        36,
+        37,
+        38
       ]
     },
     {
@@ -5537,14 +5840,14 @@
       "trigger_aura": "Searing Light Trigger",
       "trigger_immediately": true,
       "trigger_spells": [
-        36,
-        37,
-        38,
         39,
         40,
         41,
         42,
-        43
+        43,
+        44,
+        45,
+        46
       ]
     },
     {

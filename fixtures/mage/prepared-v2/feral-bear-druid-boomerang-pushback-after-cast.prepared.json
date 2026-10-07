@@ -2,8 +2,8 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "cd7d44aec711bcc8f20ea12d3ed83cea2126ac66",
-    "client_build": "1.60.1.70205",
+    "engine_revision": "2d93e423e0303e93dbb16e190d435503248b68f9",
+    "client_build": "1.60.1.70235",
     "exporter": "tools/oracle-v2"
   },
   "request_sha256": "54d14fedacd8712fcf2c31b84a08f94ca0957259e80ce022418916158e8b67e9",
@@ -896,12 +896,18 @@
           "on_reset"
         ],
         "icd": null,
-        "exclusive_effects": 2,
+        "exclusive_effects": 3,
         "exclusive_memberships": [
           {
             "category": "AirTotem",
             "single_aura": true,
             "priority": 2,
+            "position": 0
+          },
+          {
+            "category": "FlametongueTotem",
+            "single_aura": false,
+            "priority": 2044.5,
             "position": 0
           },
           {
@@ -1302,8 +1308,8 @@
     "energy": {
       "max_energy": 100,
       "max_combo_points": 5,
-      "tick_duration_ns": 2020000000,
-      "energy_per_tick": 20.2
+      "tick_duration_ns": 100000000,
+      "energy_per_tick": 1
     },
     "attack_table": {
       "base_spell_miss_chance": 0.17,
@@ -7149,7 +7155,9 @@
         },
         {
           "forms": [
-            "humanoid"
+            "humanoid",
+            "moonkin",
+            "tree"
           ],
           "spell": 9
         },

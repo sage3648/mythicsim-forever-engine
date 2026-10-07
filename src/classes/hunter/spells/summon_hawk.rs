@@ -1,8 +1,9 @@
 //! Summon Hawk (1293241 to 1293527), from Go sim/hunter/summon_hawk.go: a dive bomb on the
 //! rank's base plus a share of ranged attack power, a Go literal, on the melee special table,
 //! which cannot miss when the client marks the rank always-hit. A landed dive bomb leaves a
-//! hawk: a physical dot whose ticks roll the melee special table, in a free slot or else the one
-//! with the least time left.
+//! hawk, in a free slot or else the one with the least time left: a physical dot hasted by the
+//! hunter's real ranged haste, which swings once on arrival and then on every tick for a share
+//! of the rank's base, on the melee special hit table without a crit roll (community #703).
 
 use crate::core::fight::{melee::PhysicalOutcome, Agent, DotId, Fight, Outcome, Side, SpellId};
 
@@ -21,6 +22,7 @@ impl SummonHawk {
         fight: &mut Fight<A>,
         base_damage: f64,
         attack_power_share: f64,
+        swing_share: f64,
         always_hits: bool,
         hawk_spells: &[usize],
     ) -> Result<Self, String> {
@@ -31,8 +33,8 @@ impl SummonHawk {
                 .get(spell)
                 .and_then(|state| state.dot)
                 .ok_or("a hawk spell has no dot")?;
-            // Go OnSnapshot: the rank's base, without a spell power share.
-            fight.dots[dot].tick_base = Some(base_damage);
+            // Go OnSnapshot: the swing's share of the rank's base, without a spell power share.
+            fight.dots[dot].tick_base = Some(base_damage * swing_share);
             hawks.push(dot);
         }
         Ok(SummonHawk {
@@ -72,11 +74,13 @@ impl SummonHawk {
             }
         }
         fight.apply_dot(hawk);
+        // Go TickOnce: the swing on arrival, beside the dot's own ticks.
+        fight.tick_once(hawk);
     }
 
-    /// A hawk's tick: Go `CalcAndDealPeriodicSnapshotDamage` with `OutcomeMeleeSpecialHitAndCrit`,
-    /// the melee special table of beta report 2701: a hawk's attacks can miss, be dodged and be
-    /// parried.
+    /// A hawk's swing: Go `CalcAndDealPeriodicSnapshotDamage` with `OutcomeMeleeSpecialHit`,
+    /// the melee special table of beta reports 2695 and 2701 without a crit roll: a hawk's
+    /// attacks can miss, be dodged and be parried.
     pub(crate) fn tick<A: Agent>(fight: &mut Fight<A>, dot: DotId) {
         let state = &fight.dots[dot];
         let (spell, side) = (state.spell, state.side);
@@ -87,7 +91,7 @@ impl SummonHawk {
         }
         let attacker =
             fight.attacker_multiplier(spell, true) * fight.dots[dot].periodic_damage_multiplier;
-        let outcome = Outcome::Table(PhysicalOutcome::MeleeSpecialHitAndCrit { count: true });
+        let outcome = Outcome::Table(PhysicalOutcome::MeleeSpecialHit { count: true });
         let result = fight.calc_tick_damage(spell, side, base, attacker, outcome);
         fight.deal_damage(spell, result, true);
     }

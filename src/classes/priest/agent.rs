@@ -309,20 +309,9 @@ impl PriestAgent {
                 Effect::ShadowWordPain { ranks }
                 | Effect::MindFlay { ranks }
                 | Effect::Starshards { ranks }
-                | Effect::HolyFire { ranks } => {
+                | Effect::HolyFire { ranks }
+                | Effect::Penance { ranks } => {
                     set_ticks(&mut fight, ranks);
-                }
-                Effect::Penance {
-                    spell_id,
-                    tick_base,
-                    tick_can_crit,
-                } => {
-                    let rank = crate::contracts::prepared_v2::FireballRank {
-                        spell_id: *spell_id,
-                        tick_base: *tick_base,
-                        tick_can_crit: *tick_can_crit,
-                    };
-                    set_ticks(&mut fight, &[rank]);
                 }
                 Effect::PowerInLight {
                     multiplier,
@@ -375,7 +364,6 @@ impl PriestAgent {
                     crit_multiplier,
                     school_spells,
                     crit_spells,
-                    cancel_spells,
                     ..
                 } => {
                     let bound = shadowform::bind(
@@ -386,7 +374,6 @@ impl PriestAgent {
                         *crit_multiplier,
                         school_spells,
                         crit_spells,
-                        cancel_spells,
                     )?;
                     fight.agent.shadowform = Some(Rc::new(bound));
                 }
@@ -659,7 +646,6 @@ impl Agent for PriestAgent {
 
     fn on_cast_complete(fight: &mut Fight<Self>, _aura: AuraRef, kind: PriestAura, spell: SpellId) {
         match kind {
-            PriestAura::Shadowform => Self::shadowform(fight).on_cast_complete(fight, spell),
             PriestAura::InnerFocus => Self::inner_focus(fight).on_cast_complete(fight, spell),
             PriestAura::SearingLight => Self::searing_light(fight).on_cast_complete(fight, spell),
             _ => {}

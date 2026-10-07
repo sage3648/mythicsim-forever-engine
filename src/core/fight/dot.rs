@@ -20,7 +20,7 @@ pub(crate) struct Dot {
     pub(crate) base_duration_multiplier: f64,
     pub(crate) base_duration_flat: i64,
     pub(crate) affected_by_haste: bool,
-    /// Go `affectedByCastSpeed`, which the runtime implements; real haste it does not.
+    /// Go `affectedByCastSpeed`; a hasted dot without it is hasted by real ranged haste.
     pub(crate) affected_by_cast_speed: bool,
     /// Go `hasteReducesDuration`, which picks how `TickCount` counts.
     pub(crate) haste_reduces_duration: bool,
@@ -154,16 +154,18 @@ impl<A: Agent> Fight<A> {
         self.activate_aura(aura);
     }
 
-    /// Go `Dot.CalcTickPeriod`: a dot affected by cast speed ticks faster, rounded to the
-    /// millisecond as in game; a channel also takes the spell's cast time multiplier.
+    /// Go `Dot.CalcTickPeriod`: a dot affected by cast speed or by real haste ticks faster,
+    /// rounded to the millisecond as in game; a channel also takes the spell's cast time
+    /// multiplier.
     pub(crate) fn calc_tick_period(&self, dot: DotId) -> i64 {
         let state = &self.dots[dot];
-        assert!(
-            !state.affected_by_haste || state.affected_by_cast_speed,
-            "dots hasted by real haste are not supported"
-        );
-        if !state.affected_by_cast_speed {
+        if !state.affected_by_haste {
             return state.base_tick_length;
+        }
+        if !state.affected_by_cast_speed {
+            // Go `ApplyRealRangedHaste` on the caster: the base over its real ranged haste.
+            let haste = self.real_ranged_haste_multiplier_of(self.caster(state.spell));
+            return round_to_millisecond((state.base_tick_length as f64 / haste) as i64);
         }
         let hasted = if state.channeled {
             self.apply_cast_speed_for_spell(state.base_tick_length, state.spell)
@@ -235,7 +237,7 @@ impl<A: Agent> Fight<A> {
     }
 
     /// Go `Dot.TickOnce`.
-    fn tick_once(&mut self, dot: DotId) {
+    pub(crate) fn tick_once(&mut self, dot: DotId) {
         let spell = self.dots[dot].spell;
         match self.spells[spell].behavior.clone() {
             SpellBehavior::Class(behavior) => A::on_dot_tick(self, dot, behavior),

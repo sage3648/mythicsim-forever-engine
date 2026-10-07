@@ -163,6 +163,9 @@ pub(crate) trait Agent: Sized {
     }
     /// The exclusive effects of a class aura, which Go activates before it logs the gain.
     fn on_exclusive_gain(_fight: &mut Fight<Self>, _aura: AuraRef, _kind: Self::Aura) {}
+    /// Go `ExclusiveEffect` `OnGain` and `OnExpire` in a category the runtime only tracks: the
+    /// category's active effect changed, as it does while a member's aura activates or fades.
+    fn on_tracked_category_change(_fight: &mut Fight<Self>, _category: usize) {}
     /// Go `RegisterExecutePhaseCallback`'s callbacks, after each execute phase change.
     fn on_execute_phase(_fight: &mut Fight<Self>, _phase: i32) {}
     /// Go `CastConfig.ModifyCast`, run first in a full cast. It may not change the cost.
@@ -673,6 +676,10 @@ pub(crate) struct Spell<S> {
     pub(crate) off_hand_proc: bool,
     /// Go `ProcMaskMeleeWhiteHit`.
     pub(crate) white_hit: bool,
+    /// Go `ProcMaskMeleeSpecial`.
+    pub(crate) melee_special: bool,
+    /// Go `CastRequirement`, as the player auras whose form it refuses.
+    pub(crate) requirement_auras: Vec<AuraRef>,
     pub(crate) class_spell: Option<String>,
     pub(crate) class_spell_mask: bool,
     pub(crate) missile_speed: f64,
@@ -2225,6 +2232,10 @@ impl<A: Agent> Fight<A> {
                     .proc_mask
                     .iter()
                     .any(|mask| mask == "ProcMaskMeleeMHAuto" || mask == "ProcMaskMeleeOHAuto"),
+                melee_special: exported.proc_mask.iter().any(|mask| {
+                    mask == "ProcMaskMeleeMHSpecial" || mask == "ProcMaskMeleeOHSpecial"
+                }),
+                requirement_auras: Vec::new(),
                 off_hand_proc: exported
                     .proc_mask
                     .iter()
@@ -3641,6 +3652,12 @@ impl<A: Agent> Fight<A> {
                     [cost_spells, damage_spells, tick_cancel_spells],
                     spending_spells,
                 )?);
+            }
+        }
+        for (spell, exported) in player.spells.iter().enumerate() {
+            for label in exported.requirement_auras.iter().flatten() {
+                let aura = fight.player_aura(label)?;
+                fight.spells[spell].requirement_auras.push(aura);
             }
         }
         Ok(fight)

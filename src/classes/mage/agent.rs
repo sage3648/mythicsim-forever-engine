@@ -91,8 +91,11 @@ pub(crate) struct MageAgent {
     combustion: Option<Rc<combustion::Combustion>>,
     ignite: Option<Rc<ignite::Ignite>>,
     ice_lance_frozen_multiplier: f64,
-    /// Arcane Missiles channel spell to the missile spell of the same rank.
-    missiles: Vec<(SpellId, SpellId)>,
+    /// Arcane Missiles channel spell to the missile spell of the same rank, and the Arcane
+    /// Blast bonus the rank's last channel spent, which its missiles carry.
+    missiles: Vec<(SpellId, SpellId, f64)>,
+    /// The bonus each spent Arcane Blast stack gives the missiles.
+    missile_bonus_per_stack: f64,
     gems: mana_gems::ManaGems,
     evocation_regen: Option<(AuraRef, f64)>,
     blizzard: Option<blizzard::Blizzard>,
@@ -480,7 +483,11 @@ impl MageAgent {
                     )?;
                     fight.agent.blizzard = Some(bound);
                 }
-                Effect::ArcaneMissiles { ranks } => {
+                Effect::ArcaneMissiles {
+                    ranks,
+                    arcane_blast_bonus_per_stack,
+                } => {
+                    fight.agent.missile_bonus_per_stack = *arcane_blast_bonus_per_stack;
                     for rank in ranks {
                         let find = |id: i32| {
                             fight
@@ -491,7 +498,7 @@ impl MageAgent {
                         if let (Some(channel), Some(missile)) =
                             (find(rank.channel_spell_id), find(rank.tick_spell_id))
                         {
-                            fight.agent.missiles.push((channel, missile));
+                            fight.agent.missiles.push((channel, missile, 0.0));
                         }
                     }
                 }
@@ -632,12 +639,34 @@ impl Agent for MageAgent {
                 ice_lance::apply(fight, spell, target, multiplier);
             }
             MageSpell::ArcaneMissiles => {
-                if let Some(charges) = fight.agent.arcane_charges.clone() {
+                // Go: the channel's missiles keep the Arcane Blast stacks it spends as it starts.
+                let charges = fight.agent.arcane_charges.clone();
+                let stacks = charges
+                    .as_ref()
+                    .map_or(0, |charges| fight.aura(charges.aura).stacks);
+                let bonus = fight.agent.missile_bonus_per_stack * f64::from(stacks);
+                if let Some(rank) = fight
+                    .agent
+                    .missiles
+                    .iter_mut()
+                    .find(|(channel, _, _)| *channel == spell)
+                {
+                    rank.2 = bonus;
+                }
+                if let Some(charges) = charges {
                     charges.on_channel_start(fight);
                 }
                 arcane_missiles::apply_channel(fight, spell)
             }
-            MageSpell::ArcaneMissile => arcane_missiles::apply_missile(fight, spell, target),
+            MageSpell::ArcaneMissile => {
+                let bonus = fight
+                    .agent
+                    .missiles
+                    .iter()
+                    .find(|(_, missile, _)| *missile == spell)
+                    .map_or(0.0, |rank| rank.2);
+                arcane_missiles::apply_missile(fight, spell, target, bonus)
+            }
             MageSpell::ColdSnap => cold_snap::apply(fight),
             MageSpell::Evocation => evocation::apply(fight, spell),
             MageSpell::ManaGem(gem) => {
@@ -728,8 +757,8 @@ impl Agent for MageAgent {
                 .agent
                 .missiles
                 .iter()
-                .find(|(spell, _)| *spell == channel)
-                .map(|(_, missile)| *missile)
+                .find(|(spell, _, _)| *spell == channel)
+                .map(|(_, missile, _)| *missile)
                 .expect("every channel rank has a missile");
             fight.cast(missile, side);
         }

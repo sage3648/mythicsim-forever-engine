@@ -2,8 +2,8 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "cd7d44aec711bcc8f20ea12d3ed83cea2126ac66",
-    "client_build": "1.60.1.70205",
+    "engine_revision": "2d93e423e0303e93dbb16e190d435503248b68f9",
+    "client_build": "1.60.1.70235",
     "exporter": "tools/oracle-v2"
   },
   "request_sha256": "d3cc7efca5bd87c58250db5b4202ce44ccca9eef0fa4ef5a051de24408814c03",
@@ -290,7 +290,7 @@
         "action_id": {
           "spell_id": 10438
         },
-        "duration_ns": 55000000000,
+        "duration_ns": 53460000000,
         "max_stacks": 0,
         "active": false,
         "stacks": 0,
@@ -1295,13 +1295,19 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1,
+        "exclusive_effects": 2,
         "exclusive_memberships": [
           {
             "category": "AirTotem",
             "single_aura": true,
             "priority": 4,
             "position": 0
+          },
+          {
+            "category": "FlametongueTotem",
+            "single_aura": false,
+            "priority": 2044.5,
+            "position": 1
           }
         ]
       },
@@ -4025,8 +4031,8 @@
         "dot": {
           "unit": "target",
           "aura_label": "Searing Totem-1",
-          "base_tick_count": 25,
-          "base_tick_length_ns": 2200000000,
+          "base_tick_count": 22,
+          "base_tick_length_ns": 2430000000,
           "bonus_coefficient": 0,
           "periodic_damage_multiplier": 1,
           "base_duration_multiplier": 1,
@@ -4053,7 +4059,6 @@
           "SpellFlagProc",
           "SpellFlagAgentReserved1"
         ],
-        "class_spell": "flametongue_weapon",
         "missile_speed": 0,
         "cost": null,
         "default_cast": {
@@ -4079,7 +4084,7 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1.15,
+        "damage_multiplier_additive": 1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
