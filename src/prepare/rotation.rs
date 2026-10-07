@@ -114,6 +114,9 @@ struct Builder<'a> {
     env: &'a Environment,
     /// Go `rot.prunedActions`: impls of actions a constant false condition removed.
     pruned_casts: Vec<SpellId>,
+    /// The values Go constructs: those of every action whose impl it builds, and their
+    /// conditions. An action Go drops for its impl never builds its condition.
+    built_values: Vec<Message>,
 }
 
 /// A value's type as far as Go's constructors check it: only a boolean matters, to Go
@@ -511,6 +514,9 @@ impl Builder<'_> {
         let Some(built) = self.action_impl(config)? else {
             return Ok(None);
         };
+        let mut found = Vec::new();
+        values(config, &mut found);
+        self.built_values.extend(found.into_iter().cloned());
         // Go prunes an action whose condition folds to a constant false, and keeps its impl
         // so the spell it casts still leaves the major cooldowns.
         if let Some(condition) = config.message("condition") {
@@ -605,7 +611,11 @@ impl Builder<'_> {
                 }
                 Ok(Some(Built::new(Vec::new())))
             }
-            "autocast_other_cooldowns" | "wait" | "wait_until" => Ok(Some(Built::new(Vec::new()))),
+            // Go builds these without changing the simulation; a move reads its range only
+            // when it runs.
+            "autocast_other_cooldowns" | "wait" | "wait_until" | "move" | "move_duration" => {
+                Ok(Some(Built::new(Vec::new())))
+            }
             other => Err(Refusal::new(
                 "rotation",
                 format!("rotation action {other} is not prepared yet"),
@@ -615,17 +625,24 @@ impl Builder<'_> {
 }
 
 /// Every `proto.APLValue` inside a message, depth first.
+/// Every `proto.APLValue` inside an action, depth first, leaving out its inner actions, which
+/// Go builds, or drops, on their own.
 fn values<'a>(message: &'a Message, out: &mut Vec<&'a Message>) {
     if message.type_name() == "proto.APLValue" {
         out.push(message);
     }
+    let walk = |inner: &'a Message, out: &mut Vec<&'a Message>| {
+        if inner.type_name() != "proto.APLAction" {
+            values(inner, out);
+        }
+    };
     for name in message.set_fields() {
         match message.get(name) {
-            Some(Value::Message(inner)) => values(inner, out),
+            Some(Value::Message(inner)) => walk(inner, out),
             Some(Value::List(items)) => {
                 for item in items {
                     if let Value::Message(inner) = item {
-                        values(inner, out);
+                        walk(inner, out);
                     }
                 }
             }
@@ -637,10 +654,8 @@ fn values<'a>(message: &'a Message, out: &mut Vec<&'a Message>) {
 /// What building the rotation's values registers: apl_values_aura.go `newValueAuraNumStacks`
 /// adds a stack change and a reset callback to the aura it reads, and apl_values_dot.go's base
 /// value reads register an aura, which preparation refuses for now.
-fn register_value_observers(env: &mut Environment, rotation: &Message) -> Result<(), Refusal> {
-    let mut found = Vec::new();
-    values(rotation, &mut found);
-    for value in found {
+fn register_value_observers(env: &mut Environment, built: &[Message]) -> Result<(), Refusal> {
+    for value in built {
         let Some((kind, Value::Message(config))) = value.oneof("value") else {
             continue;
         };
@@ -727,10 +742,12 @@ pub(crate) fn build_rotation(
     let mut prepull = 0;
     let mut casts = Vec::new();
     let pruned;
+    let built_values;
     {
         let mut builder = Builder {
             env,
             pruned_casts: Vec::new(),
+            built_values: Vec::new(),
         };
         for item in rotation.messages("prepull_actions") {
             if item.bool("hide") {
@@ -764,8 +781,9 @@ pub(crate) fn build_rotation(
             }
         }
         pruned = builder.pruned_casts;
+        built_values = builder.built_values;
     }
-    register_value_observers(env, rotation)?;
+    register_value_observers(env, &built_values)?;
     env.prepull_actions += prepull;
     let player = env.player;
     for spell in casts.into_iter().chain(pruned) {

@@ -108,10 +108,11 @@ with the pinned exporter (`tools/prepared_v2.py` builds it into `oracle-cache/`)
 `tests/classes/mage/prepare.rs` keeps such stripped Mage requests, each with a digest of every
 spell, aura and effect the exporter wrote (`tools/mage_prepare_goldens.py` writes them from the
 exporter only), so a failure names the item that changed. `tests/classes/warlock/prepare.rs` does the same for
-the Warlock and its demons (`tools/warlock_prepare_goldens.py`), and `tests/classes/shaman/prepare.rs`
-for the Shaman's spells, totems, imbues and talents (`tools/shaman_prepare_goldens.py`). The pinned
-exporter cannot export a Restoration shaman, which has no auto attacks for Windfury Totem's extra
-attack, so Rust refuses one as unrepresented.
+the Warlock and its demons (`tools/warlock_prepare_goldens.py`), `tests/classes/rogue/prepare.rs` for the
+Rogue (`tools/rogue_prepare_goldens.py`), and `tests/classes/shaman/prepare.rs` for the Shaman's spells,
+totems, imbues and talents (`tools/shaman_prepare_goldens.py`). The pinned exporter cannot export a
+Restoration shaman, which has no auto attacks for Windfury Totem's extra attack, so Rust refuses one as
+unrepresented.
 
 Item set bonuses are registered in `src/prepare/item_sets.rs`: a module lists its sets as
 `ItemSet` values, and a set Go registers (`item_sets` in `data/go-tables.json`) that no module

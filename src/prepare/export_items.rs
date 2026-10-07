@@ -118,7 +118,7 @@ pub(crate) fn dpm_chances(
 
 /// The position of the last spellbook entry with this action: the exporter's loops keep
 /// overwriting the position, and `-1` where there is none.
-fn spell_position(env: &Environment, action: &ActionId) -> Option<usize> {
+pub(crate) fn spell_position(env: &Environment, action: &ActionId) -> Option<usize> {
     let mut found = None;
     for (position, spell) in env.sim.unit(env.player).spellbook.iter().enumerate() {
         if &env.sim.spell(*spell).action_id == action {
@@ -151,7 +151,7 @@ fn chance_or_certain(listener: &ProcTrigger) -> f64 {
     }
 }
 
-fn aura_named(env: &Environment, label: &str) -> Option<AuraId> {
+pub(crate) fn aura_named(env: &Environment, label: &str) -> Option<AuraId> {
     env.sim.get_aura(env.player, label)
 }
 
@@ -1323,6 +1323,7 @@ pub(crate) fn melee_proc_effects(env: &Environment, unrepresented: &mut Vec<Stri
     effects.extend(weapon_enchant_damage_proc_effects(env, unrepresented));
     effects.extend(proc_damage_item_effects(env, unrepresented));
     effects.extend(set_stat_proc_effects(env, unrepresented));
+    super::classic_export::crusader_effect(env, unrepresented, &mut effects);
     // common/classic/items_weapons.go Ironfoe (11684) and common/forever/items_trinkets.go Hand
     // of Justice (11815): proc triggers on landed melee hits, Go literal chances, with the aura's
     // cooldown, whose handlers grant two and one extra main hand attacks at once.
@@ -1337,6 +1338,8 @@ pub(crate) fn melee_proc_effects(env: &Environment, unrepresented: &mut Vec<Stri
             }));
         }
     }
+    super::classic_export::dragons_call_effect(env, unrepresented, &mut effects);
+    super::classic_export::sulfuras_effect(env, unrepresented, &mut effects);
     if let Some(chili) = super::consumable_effects::dragonbreath_chili_effect(env) {
         effects.push(chili);
     }

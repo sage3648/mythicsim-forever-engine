@@ -53,6 +53,10 @@ pub(crate) struct Pet {
     pub enabled_on_start: bool,
     pub on_pet_enable: Option<PetCallback>,
     pub on_pet_disable: Option<PetCallback>,
+    /// `PetAgent.Initialize` of a pet whose agent is not the class's: a pet a gear pet
+    /// constructor adds (Go `RegisterGearPetConstructor`) is its own agent. The class's hooks
+    /// skip it.
+    pub on_initialize: Option<PetCallback>,
     /// Go `statInheritance`.
     pub stat_inheritance: PetStatInheritance,
     /// Whether Go's `dynamicStatInheritance` is set: it is while a dynamic pet is enabled.
@@ -105,6 +109,7 @@ impl Sim {
             enabled_on_start: config.enabled_on_start,
             on_pet_enable: None,
             on_pet_disable: None,
+            on_initialize: None,
             stat_inheritance: config.stat_inheritance,
             dynamic_stat_inheritance: false,
             inherited_stats: Stats::default(),
@@ -324,7 +329,10 @@ impl Environment {
     pub(crate) fn initialize_pets(&mut self) {
         for pet in self.pets() {
             self.sim.initialize_pet(pet);
-            self.agent.initialize_pet(&mut self.sim, pet);
+            match self.sim.pet_data(pet).on_initialize.clone() {
+                Some(initialize) => initialize(&mut self.sim, pet),
+                None => self.agent.initialize_pet(&mut self.sim, pet),
+            }
         }
     }
 
@@ -346,7 +354,10 @@ impl Environment {
             reset_unit(&mut self.sim, pet);
             let default = self.sim.unit(pet).default_target;
             self.sim.unit_mut(pet).current_target = default;
-            self.agent.reset_pet(&mut self.sim, pet);
+            // A gear pet's own reset only disables the pet, which is not enabled yet.
+            if self.sim.pet_data(pet).on_initialize.is_none() {
+                self.agent.reset_pet(&mut self.sim, pet);
+            }
             self.sim.unit_mut(pet).enabled = false;
             if self.sim.pet_data(pet).enabled_on_start {
                 self.sim.enable_pet(pet);
@@ -363,7 +374,7 @@ fn summoned_pet_name(name: &str) -> bool {
 
 /// Go `summonedPet`: a guardian an exported effect summons during a fight, or a pet a class
 /// effect summons.
-fn summoned_pet(env: &Environment, pet: UnitId) -> bool {
+pub(crate) fn summoned_pet(env: &Environment, pet: UnitId) -> bool {
     let data = env.sim.pet_data(pet);
     ((summoned_pet_name(&data.name) && data.is_guardian) || env.agent.summoned_pet(&env.sim, pet))
         && !data.enabled_on_start
