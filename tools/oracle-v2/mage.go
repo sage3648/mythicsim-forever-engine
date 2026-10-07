@@ -170,12 +170,13 @@ func mageEffects(agent core.Agent, character *core.Character) []map[string]any {
 		"kind": "evocation", "spell_id": evocation.ID, "regen_aura": "Evocation Regen", "channel_aura": "Evocation",
 		"regen_multiplier": evocation.Effect(dbcenums.A_MOD_POWER_REGEN_PERCENT, 0).Average(core.CharacterLevel) / 100,
 	})
-	// arcane_missiles.go: channel rank N fires tick rank N.
+	// arcane_missiles.go: channel rank N fires tick rank N. The channel spends Arcane Blast's
+	// stacks as it starts and its missiles keep them, a Go literal share each (community #715).
 	missiles := []map[string]any{}
 	missilesLadder.Each(func(rank int32, row *spelldata.Spell) {
 		missiles = append(missiles, map[string]any{"channel_spell_id": row.ID, "tick_spell_id": missileTicksLadder.Rank(rank).ID})
 	})
-	effects = append(effects, map[string]any{"kind": "arcane_missiles", "ranks": missiles})
+	effects = append(effects, map[string]any{"kind": "arcane_missiles", "ranks": missiles, "arcane_blast_bonus_per_stack": 0.15})
 	// frostbolt.go
 	effects = append(effects, map[string]any{"kind": "frostbolt"})
 	if talents.ArcaneBlast { // arcane_blast.go and arcane_charge.go

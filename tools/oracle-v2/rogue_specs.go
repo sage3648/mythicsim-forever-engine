@@ -125,13 +125,15 @@ func rogueSpecEffects(r *rogue.Rogue, character *core.Character) []map[string]an
 		})
 	}
 	// talents_assassination.go registerColdBlood: a crit bonus on the masked spells until one of
-	// them hits.
+	// them hits, except Mutilate's hand strikes, which take the crit without spending it
+	// (community #690).
 	if r.ColdBlood != nil {
 		row := rogueColdBlood.Highest()
 		effects = append(effects, map[string]any{
 			"kind": "cold_blood", "spell_id": row.ID, "aura": "Cold Blood",
-			"crit_bonus":   row.Effect(dbcenums.A_ADD_FLAT_MODIFIER, int32(dbcenums.SPELLMOD_CRITICAL_CHANCE)).Average(core.CharacterLevel),
-			"class_spells": rogueMaskNames(rogue.RogueSpellColdBlooded),
+			"crit_bonus":         row.Effect(dbcenums.A_ADD_FLAT_MODIFIER, int32(dbcenums.SPELLMOD_CRITICAL_CHANCE)).Average(core.CharacterLevel),
+			"class_spells":       rogueMaskNames(rogue.RogueSpellColdBlooded),
+			"spend_class_spells": rogueMaskNames(rogue.RogueSpellColdBlooded &^ rogue.RogueSpellMutilateHit),
 		})
 	}
 	// talents_subtlety.go registerPremeditation: combo points from Stealth.

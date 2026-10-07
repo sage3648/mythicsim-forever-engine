@@ -385,6 +385,9 @@ type Spell struct {
 	IgnoreHaste                    bool          `json:"ignore_haste"`
 	HasExtraCastCondition          bool          `json:"has_extra_cast_condition"`
 	HasCastRequirement             bool          `json:"has_cast_requirement"`
+	// The player auras whose form the cast requirement refuses, absent when Rust cannot
+	// represent the requirement.
+	RequirementAuras *[]string `json:"requirement_auras,omitempty"`
 	MinRange                       float64       `json:"min_range"`
 	MaxRange                       float64       `json:"max_range"`
 	MaxCharges                     int           `json:"max_charges"`
@@ -812,6 +815,11 @@ func exportMelee(character *core.Character, target *core.Unit, table *core.Attac
 	}
 	pseudo := &character.PseudoStats
 	defender := &target.PseudoStats
+	// unit.go TotalRealRangedHasteMultiplier, which a dot hasted by real haste reads, has
+	// RangedHasteMultiplier in it; Rust takes it as 1, as nothing at the pin changes it.
+	if pseudo.RangedHasteMultiplier != 1 {
+		*unrepresented = append(*unrepresented, "a ranged haste multiplier is unsupported")
+	}
 	var ranged *RangedState
 	if aa.AutoSwingRanged {
 		if len(character.OnRangedAttackSpeedChanged) != 0 {
@@ -940,7 +948,8 @@ func exportSpell(spell *core.Spell, target *core.Unit, class classExport, timers
 		DefaultCast: Cast{Cost: spell.DefaultCast.Cost, GCDNs: nanos(spell.DefaultCast.GCD), GCDMinNs: nanos(spell.DefaultCast.GCDMin),
 			CastTimeNs: nanos(spell.DefaultCast.CastTime), NonEmpty: spell.DefaultCast.NonEmpty},
 		CastKind: castKind, IgnoreHaste: spell.IgnoreHaste, HasExtraCastCondition: spell.ExtraCastCondition != nil,
-		HasCastRequirement: hasRequirement, MinRange: spell.MinRange, MaxRange: spell.MaxRange, MaxCharges: spell.MaxCharges,
+		HasCastRequirement: hasRequirement, RequirementAuras: requirementAuras(spell, hasRequirement),
+		MinRange: spell.MinRange, MaxRange: spell.MaxRange, MaxCharges: spell.MaxCharges,
 		CD: cooldown(spell.CD, timers), SharedCD: cooldown(spell.SharedCD, timers),
 		BonusHitPercent: spell.BonusHitPercent, BonusCritPercent: spell.BonusCritPercent, BonusSpellDamage: spell.BonusSpellDamage,
 		BonusExpertisePercent: spell.BonusExpertisePercent, CastTimeMultiplier: spell.CastTimeMultiplier, CdMultiplier: spell.CdMultiplier,
@@ -950,6 +959,39 @@ func exportSpell(spell *core.Spell, target *core.Unit, class classExport, timers
 		ThreatMultiplier: spell.ThreatMultiplier, FlatThreatBonus: spell.FlatThreatBonus, PushbackResist: spell.PushbackResist, Dot: dot,
 		MetricSplits: map[bool]int{true: spell.GetMetricSplitCount(), false: 0}[spell.GetMetricSplitCount() > 1],
 	}
+}
+
+// shapeshift.go castRequirementFailure, as the player auras whose form the requirement refuses.
+// The unit's form is 0 except while a Shadow priest's Shadowform is up (talents_shadow.go
+// applyShadowform sets the client's form 28; nothing else at the pin sets a form or
+// AutoUnshift). A requirement on caster auras, or one that refuses no form, is not represented.
+func requirementAuras(spell *core.Spell, has bool) *[]string {
+	r := spell.CastRequirement
+	if !has || r.CasterAura != 0 || r.ExcludeCasterAura != 0 || spell.Unit.AutoUnshift != nil || !allowsForm(r, 0) {
+		return nil
+	}
+	auras := []string{}
+	if aura := spell.Unit.GetAura("Shadowform"); aura != nil && aura.ActionID.SpellID == priestShadowform.Highest().ID {
+		if !allowsForm(r, priestShadowform.Highest().ShapeshiftForm()) {
+			auras = append(auras, aura.Label)
+		}
+	}
+	return &auras
+}
+
+// shapeshift.go CastRequirement.allowsForm, unexported.
+func allowsForm(r core.CastRequirement, form dbcenums.ShapeshiftForm) bool {
+	bit := form.Mask()
+	if bit&r.ExcludedForms != 0 {
+		return false
+	}
+	if bit&r.Forms != 0 {
+		return true
+	}
+	if form != 0 && !form.IsStance() {
+		return !r.NotShapeshifted && r.Forms == 0
+	}
+	return r.Forms == 0 || r.CasterForm
 }
 
 // racials.go applyEureka: the class names its spells by masks only Go can read, so the

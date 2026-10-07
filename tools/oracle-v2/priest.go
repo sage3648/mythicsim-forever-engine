@@ -305,7 +305,9 @@ func priestEffects(agent core.Agent, character *core.Character) []map[string]any
 	if talents.MindFlay { // talents_shadow.go registerMindFlaySpell: a binary hit roll, then a channel
 		effects = append(effects, map[string]any{"kind": "mind_flay", "ranks": priestDotRanks(priest.MindFlayRankMap)})
 	}
-	if aura := p.ShadowformAura; aura != nil { // talents_shadow.go applyShadowform
+	// talents_shadow.go applyShadowform. A helpful Holy cast no longer ends it (community #719); its
+	// form refuses Holy Nova and Chastise through their cast requirements (#686).
+	if aura := p.ShadowformAura; aura != nil {
 		rank := priestShadowform.Highest()
 		effects = append(effects, map[string]any{
 			"kind": "shadowform", "spell_id": rank.ID, "aura": aura.Label,
@@ -315,7 +317,6 @@ func priestEffects(agent core.Agent, character *core.Character) []map[string]any
 			"school_spells":   priestModSpells(character, priest.PriestSpellsAll, core.SpellSchoolShadow),
 			"crit_spells": priestModSpells(character, priest.PriestSpellMindBlast|priest.PriestSpellMindFlay|priest.PriestSpellShadowWordPain|
 				priest.PriestSpellDevouringPlague|priest.PriestSpellShadowWordDeath, 0),
-			"cancel_spells": priestShadowformCancels(character),
 		})
 	}
 	if aura := p.InnerFocusAura; aura != nil { // talents_discipline.go applyInnerFocus
@@ -354,12 +355,17 @@ func priestEffects(agent core.Agent, character *core.Character) []map[string]any
 	effects = append(effects, map[string]any{"kind": "smite"})
 	// holy_fire.go: the hit rolls, a landed hit applies the snapshotting dot, then it is dealt.
 	effects = append(effects, map[string]any{"kind": "holy_fire", "ranks": priestDotRanks(priest.HolyFireRankMap)})
-	if talents.Penance { // penance.go: the bolt on application and a channel tick a second
-		rank := priestPenance.Highest()
-		bolt := spelldata.Find(1316993)
-		effects = append(effects, map[string]any{
-			"kind": "penance", "spell_id": rank.ID, "tick_base": bolt.DamageEffect().Average(core.CharacterLevel), "tick_can_crit": true,
+	// penance.go: every rank, on the shared category cooldown (community #678), fires its own
+	// damage bolt, the first the cast's tooltip names, on application and a channel tick a second.
+	if talents.Penance {
+		ranks := []map[string]any{}
+		priestPenance.Each(func(_ int32, rank *spelldata.Spell) {
+			bolt := rank.Refs()[0]
+			ranks = append(ranks, map[string]any{
+				"spell_id": rank.ID, "tick_base": bolt.DamageEffect().Average(core.CharacterLevel), "tick_can_crit": true,
+			})
 		})
+		effects = append(effects, map[string]any{"kind": "penance", "ranks": ranks})
 	}
 	if talents.PowerInLight > 0 { // talents_discipline.go applyPowerInLight
 		holyFire := []int{}
@@ -404,17 +410,6 @@ func priestEffects(agent core.Agent, character *core.Character) []map[string]any
 		})
 	}
 	return effects
-}
-
-// Shadowform's OnCastComplete ends it on a helpful Holy cast.
-func priestShadowformCancels(character *core.Character) []int {
-	positions := []int{}
-	for i, spell := range character.Spellbook {
-		if spell.SpellSchool.Matches(core.SpellSchoolHoly) && spell.Flags.Matches(core.SpellFlagHelpful) {
-			positions = append(positions, i)
-		}
-	}
-	return positions
 }
 
 // shadowfiend_pet.go: every priest registers the Shadowfiend pet, but shadowfiend.go only

@@ -104,7 +104,7 @@ func druidLocalFormMasks(d *druid.Druid, character *core.Character, masks map[*c
 		form druid.DruidForm
 	}{
 		{druid.DruidSpellInnervate, druid.Humanoid | druid.Moonkin | druid.Tree},
-		{druid.DruidSpellThorns, druid.Humanoid},
+		{druid.DruidSpellThorns, druid.Humanoid | druid.Moonkin | druid.Tree},
 		{druid.DruidSpellStarfire, druid.Humanoid | druid.Moonkin},
 		{druid.DruidSpellWrath, druid.Humanoid | druid.Moonkin},
 	}
@@ -230,7 +230,7 @@ func druidEffects(agent core.Agent, character *core.Character) []map[string]any 
 	}
 	// starfire.go and wrath.go: a direct hit, Wrath's after travel.
 	effects = append(effects, map[string]any{"kind": "starfire"}, map[string]any{"kind": "wrath"})
-	// moonfire.go: the hit casts the tagged dot spell when it lands.
+	// moonfire.go: the hit applies the tagged dot spell's dot when it lands.
 	if d.Moonfire != nil {
 		moonfire := moonfireLadder.Highest()
 		effects = append(effects, map[string]any{"kind": "moonfire", "rank": periodicRank(moonfire)})
