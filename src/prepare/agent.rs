@@ -64,6 +64,11 @@ pub(crate) trait PrepAgent {
     fn swing_replacement_keeps_swing(&self) -> bool {
         false
     }
+    /// Go `EurekaAgent.EurekaSpells`: the spell masks the Gnome racial Eureka! names for the
+    /// class. A class that does not implement it leaves the racial on every class spell.
+    fn eureka_spells(&self) -> Option<super::racials::EurekaSpells> {
+        None
+    }
     /// The client damage roll of a spell, `{average, variance}`, for the spells the class names.
     fn damage_effect(&self, _sim: &Sim, _spell: super::sim::SpellId) -> Option<serde_json::Value> {
         None
