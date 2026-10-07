@@ -107,7 +107,8 @@ To isolate a mechanic, strip a request down (no buffs, consumables or gear effec
 with the pinned exporter (`tools/prepared_v2.py` builds it into `oracle-cache/`) and compare.
 `tests/classes/mage/prepare.rs` keeps such stripped Mage requests, each with a digest of every
 spell, aura and effect the exporter wrote (`tools/mage_prepare_goldens.py` writes them from the
-exporter only), so a failure names the item that changed.
+exporter only), so a failure names the item that changed. `tests/classes/warlock/prepare.rs` does the same for
+the Warlock and its demons (`tools/warlock_prepare_goldens.py`).
 
 Item set bonuses are registered in `src/prepare/item_sets.rs`: a module lists its sets as
 `ItemSet` values, and a set Go registers (`item_sets` in `data/go-tables.json`) that no module

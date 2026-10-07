@@ -239,6 +239,25 @@ fn source_unit(env: &Environment, reference: Option<&Message>) -> Result<Option<
                 .ok()
                 .and_then(|i| env.encounter.targets.get(i).copied()))
         }
+        // Go `Environment.GetUnit`: a pet of the owner the reference names, by its index.
+        "Pet" => {
+            let index = reference.map_or(0, |r| r.i32("index"));
+            let owner = reference
+                .and_then(|r| r.message("owner"))
+                .map(|owner| (owner.enum_name("type"), owner.i32("index")));
+            let owner_is_player = match owner {
+                Some((kind, _)) if kind == "Self" => true,
+                Some((kind, index)) if kind == "Player" => index == 0,
+                _ => false,
+            };
+            Ok(owner_is_player
+                .then(|| {
+                    usize::try_from(index)
+                        .ok()
+                        .and_then(|i| env.sim.unit(env.player).pets.get(i).copied())
+                })
+                .flatten())
+        }
         _ => Err(()),
     }
 }
