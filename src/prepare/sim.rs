@@ -301,6 +301,8 @@ pub(crate) struct Unit {
     /// The auras of the unit's damage absorption shields, whose dynamic damage taken modifier
     /// acts only while its aura is active.
     pub absorption_auras: Vec<AuraId>,
+    /// Go `healthBar.currentHealth`.
+    pub current_health: f64,
 }
 
 impl Unit {
@@ -357,6 +359,7 @@ impl Unit {
             character: None,
             health_bar: false,
             absorption_auras: Vec::new(),
+            current_health: 0.0,
         }
     }
 }
