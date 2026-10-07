@@ -562,7 +562,7 @@ impl PrepAgent for Druid {
         CLASS_SPELLS
     }
 
-    fn effects_in(
+    fn export_effects(
         &self,
         env: &crate::prepare::env::Environment,
         notes: &mut Vec<String>,
