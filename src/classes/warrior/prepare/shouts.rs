@@ -84,8 +84,7 @@ impl Warrior {
                     .auras
                     .iter()
                     .any(|aura| sim.aura(*aura).action_id.as_ref() == Some(&external_shout));
-            let aura = generated::BATTLE_SHOUT
-                .aura(sim, ally, casts_own_shout, 0, 0.0);
+            let aura = generated::BATTLE_SHOUT.aura(sim, ally, casts_own_shout, 0, 0.0);
             if shouts_with_the_set {
                 add_generated_flat_bonus(
                     sim,
@@ -130,8 +129,7 @@ impl Warrior {
     pub(super) fn register_demoralizing_shout(&self, sim: &mut Sim, unit: UnitId) {
         let rank = spell_data().demoralizing_shout.highest();
         let auras = new_enemy_aura_array(sim, |sim, target| {
-            generated::DEMORALIZING_SHOUT
-                .aura(sim, target, true, 0, 0.0)
+            generated::DEMORALIZING_SHOUT.aura(sim, target, true, 0, 0.0)
         });
         let related = aura_array_to_map(sim, &auras);
         sim.register_spell(

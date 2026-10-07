@@ -65,15 +65,7 @@ fn check(name: &str) {
     let golden: Value = serde_json::from_slice(&data(&format!("{name}.golden.json"))).unwrap();
     let mut diffs = Vec::new();
     for path in SECTIONS {
-        let mut rust_section = section(&rust, path).clone();
-        if path == "effects" {
-            // The stat auras effect is the shared exporter's; the golden leaves it out.
-            rust_section
-                .as_array_mut()
-                .unwrap()
-                .retain(|effect| effect["kind"] != "stat_auras");
-        }
-        differences(&golden[path], &rust_section, path, &mut diffs);
+        differences(&golden[path], section(&rust, path), path, &mut diffs);
     }
     assert!(
         diffs.is_empty(),
