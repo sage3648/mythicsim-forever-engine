@@ -23,9 +23,8 @@ const FLAMETONGUE_TOTEM_PARTY: i32 = 15036;
 const FLAMETONGUE_TOTEM_PROC: i32 = 16389;
 
 /// Go `FlametongueAttackTraits`: what a class's own Flametongue Attack carries that its talents
-/// and threat modifiers key on. The shaman sets its own (the class mask Flametongue Weapon's hit
-/// has, so Elemental Fury and Elemental Weapons reach the totem's hit as they reach the imbue's,
-/// and its spell flag). Any other class has none, and its totem hit takes no talent.
+/// and threat modifiers key on. The shaman sets its own (its spell flag, so Natural Grace's
+/// threat cut reaches the hit, and no class mask). Any other class has none.
 #[derive(Clone, Copy, Debug, Default)]
 pub(crate) struct FlametongueAttackTraits {
     pub class_spell_mask: i64,
@@ -69,6 +68,21 @@ pub(crate) fn disable_flametongue_totem(sim: &mut Sim, aura: AuraId) {
         FLAMETONGUE_TOTEM.category,
         false,
         2.0 * flametongue_totem_priority(),
+        None,
+        None,
+    );
+}
+
+/// Go `WindfuryTotemDisablesFlametongueTotem`: makes `aura`, a Windfury Totem the character
+/// benefits from (the party's or the shaman's own cast), switch Flametongue Totem's benefit off
+/// while it stands. It bids above the totem and below a main-hand Flametongue Weapon. Grace of
+/// Air is not in the category: it leaves Flametongue Totem alone.
+pub(crate) fn windfury_totem_disables_flametongue_totem(sim: &mut Sim, aura: AuraId) {
+    sim.new_exclusive_effect(
+        aura,
+        FLAMETONGUE_TOTEM.category,
+        false,
+        1.5 * flametongue_totem_priority(),
         None,
         None,
     );
@@ -147,10 +161,11 @@ pub(crate) fn join_flametongue_totem(
     );
 }
 
-/// Go `driveFlametongueTotem`: a Flametongue Totem another shaman keeps down for the party. It is
-/// a fire totem, so it sits in no air slot and does not interact with the party's Windfury Totem
-/// or Grace of Air; the same character's own cast Flametongue Totem and the party's one are the
-/// same effect and the category keeps one of them.
+/// Go `driveFlametongueTotem`: a Flametongue Totem another shaman keeps down for the party. A
+/// Windfury Totem the character benefits from switches it off
+/// (`windfury_totem_disables_flametongue_totem`); Grace of Air does not. The same character's own
+/// cast Flametongue Totem and the party's one are the same effect and the category keeps one of
+/// them.
 pub(crate) fn drive_flametongue_totem(
     sim: &mut Sim,
     unit: UnitId,

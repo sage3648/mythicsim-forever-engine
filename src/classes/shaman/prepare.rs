@@ -480,7 +480,7 @@ impl PrepAgent for Shaman {
 /// What a Shaman's own Flametongue Attack carries (Go `init` in weapon_imbues.go).
 pub(crate) fn flametongue_traits() -> crate::prepare::buffs::flametongue::FlametongueAttackTraits {
     crate::prepare::buffs::flametongue::FlametongueAttackTraits {
-        class_spell_mask: masks::FLAMETONGUE_WEAPON,
+        class_spell_mask: 0,
         flags: flags::SHAMAN_SPELL,
     }
 }

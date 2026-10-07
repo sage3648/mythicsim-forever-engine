@@ -7,7 +7,9 @@ use std::rc::Rc;
 use crate::prepare::buffs::drivers::{
     AIR_TOTEM_CAST_GRACE_OF_AIR, AIR_TOTEM_CAST_WINDFURY, AIR_TOTEM_CATEGORY,
 };
-use crate::prepare::buffs::flametongue::{flametongue_totem_trigger, join_flametongue_totem};
+use crate::prepare::buffs::flametongue::{
+    flametongue_totem_trigger, join_flametongue_totem, windfury_totem_disables_flametongue_totem,
+};
 use crate::prepare::buffs::generated::{
     GRACE_OF_AIR_TOTEM, MANA_SPRING_TOTEM, STRENGTH_OF_EARTH_TOTEM, WINDFURY_TOTEM,
 };
@@ -155,6 +157,7 @@ impl Shaman {
             None,
             None,
         );
+        windfury_totem_disables_flametongue_totem(sim, wf_aura);
         let buff_id = buff.id;
         sim.apply_on_init(
             wf_aura,
