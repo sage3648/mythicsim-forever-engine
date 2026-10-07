@@ -204,12 +204,9 @@ impl Meta {
                     options,
                 ))
             }
-            MetaKind::DamageShield => Ok(self.damage_shield(
-                &mut env.sim,
-                unit,
-                is_player,
-                talent_points,
-            )),
+            MetaKind::DamageShield => {
+                Ok(self.damage_shield(&mut env.sim, unit, is_player, talent_points))
+            }
         }
     }
 
@@ -303,7 +300,6 @@ fn aura_duration(row: &Spell) -> Duration {
         row.duration()
     }
 }
-
 
 /// Go `core.GetTristateValueInt32`.
 pub(crate) fn tristate(effect: i32, regular: i32, improved: i32) -> i32 {

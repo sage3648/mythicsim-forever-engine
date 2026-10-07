@@ -152,11 +152,7 @@ pub(crate) fn new_generated_external_cd(
     // measured; a cooldown is not, so it keeps its effects out of the stats the build phase
     // collects.
     sim.aura_mut(aura).build_phase = BuildPhase::NONE;
-    let action_id = sim
-        .aura(aura)
-        .action_id
-        .clone()
-        .unwrap_or_default();
+    let action_id = sim.aura(aura).action_id.clone().unwrap_or_default();
     let aura_duration = sim.aura(aura).duration;
     register_external_consecutive_cd_approximation(
         sim,

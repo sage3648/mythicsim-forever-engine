@@ -80,11 +80,9 @@ fn collect_aura_should_refresh(
     match node {
         Value::Object(map) => {
             if let Some(config) = map.get("auraShouldRefresh").filter(|v| v.is_object()) {
-                let parsed = Message::from_json_text(
-                    "proto.APLValueAuraShouldRefresh",
-                    &config.to_string(),
-                )
-                .expect("an auraShouldRefresh value parses");
+                let parsed =
+                    Message::from_json_text("proto.APLValueAuraShouldRefresh", &config.to_string())
+                        .expect("an auraShouldRefresh value parses");
                 // apl_helpers.go GetTargetUnit: no unit reference means the current target.
                 let (unit, name) = match parsed.message("source_unit") {
                     // UnitReference_Self.
@@ -95,13 +93,10 @@ fn collect_aura_should_refresh(
                     .message("aura_id")
                     .map(proto_to_action_id)
                     .unwrap_or_default();
-                let aura = env
-                    .sim
-                    .unit(unit)
-                    .auras
-                    .iter()
-                    .copied()
-                    .find(|aura| env.sim.aura(*aura).action_id.clone().unwrap_or_default() == id);
+                let aura =
+                    env.sim.unit(unit).auras.iter().copied().find(|aura| {
+                        env.sim.aura(*aura).action_id.clone().unwrap_or_default() == id
+                    });
                 if let Some(aura) = aura {
                     let label = env.sim.aura(aura).label.clone();
                     found.insert(

@@ -11,9 +11,7 @@ use crate::contracts::prepared_v2::ActionId;
 use super::super::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use super::super::dbcenums;
 use super::super::env::Environment;
-use super::super::sim::{
-    school_array_index, AuraConfig, AuraId, EffectId, Sim, UnitId,
-};
+use super::super::sim::{school_array_index, AuraConfig, AuraId, EffectId, Sim, UnitId};
 use super::super::spell::{school, ProcMask};
 use super::super::spelldata::must_find;
 use super::super::stats::SchoolIndex;
