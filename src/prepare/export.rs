@@ -753,8 +753,11 @@ pub(crate) fn export(
         &mut unrepresented,
     ));
     effects.extend(super::pet::inert_pet_effects(env, &mut unrepresented));
-    // Go then appends the melee, gear, spell data and energy proc effects here (the items
-    // port), and the stat auras effect.
+    // Go's meleeProcEffects ends with the Windfury Totem effect; its item and enchant proc effects
+    // are not ported yet, so it follows the inert pets directly. Move it to the end of them.
+    effects.extend(super::buffs::windfury_totem_effect(env, &mut unrepresented));
+    // Go then appends the gear, spell data and energy proc effects here (the items port), and the
+    // stat auras effect.
     effects.extend(super::stat_auras::stat_auras_effect(env)?);
     // Go then appends the inert pets, the melee, gear, spell data and energy proc effects and
     // the stat auras effect, in that order; Rust refuses pets and ports the rest in
