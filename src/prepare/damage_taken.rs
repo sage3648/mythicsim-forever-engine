@@ -6,13 +6,23 @@ use serde_json::{json, Value};
 
 use super::enemy::acting_damage_taken_modifiers;
 use super::env::Environment;
+use super::sim::UnitId;
+
+/// Whether the attacker's table against the defender carries damage done by caster callbacks:
+/// Go's `DamageDoneByCasterMultiplier != nil || len(DamageDoneByCasterExtraMultiplier) != 0`.
+pub(crate) fn has_caster_callbacks(env: &Environment, attacker: UnitId, defender: UnitId) -> bool {
+    env.attack_table(attacker, defender).damage_done_by_caster
+        || env
+            .sim
+            .damage_done_by_caster
+            .contains_key(&(attacker, defender))
+}
 
 /// `selfAttackTable`: the player's attack table against itself, which a spell that hits the
 /// player (the Goblin Sapper Charge's self hit) rolls on.
-#[allow(dead_code)]
 pub(crate) fn self_attack_table(env: &Environment, unrepresented: &mut Vec<String>) -> Value {
     let table = env.attack_table(env.player, env.player);
-    if table.damage_done_by_caster {
+    if has_caster_callbacks(env, env.player, env.player) {
         unrepresented.push("caster damage callbacks on the player are unsupported".to_string());
     }
     // Absorb shields register a damage taken modifier that acts only while their aura is up;

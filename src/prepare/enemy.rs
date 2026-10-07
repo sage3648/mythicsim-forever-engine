@@ -553,15 +553,21 @@ impl EnemyCombos {
 }
 
 /// How many of the player's dynamic damage taken modifiers change a target melee hit at
-/// reset. The only modifiers a player registers are the absorption shields', which act only
-/// while their aura is active; an absorbing aura that is up at reset acts.
+/// reset. The modifiers a player registers are the absorption shields', which act only while
+/// their aura is active; a shield that is up at reset acts.
 pub(crate) fn acting_damage_taken_modifiers(env: &Environment) -> usize {
     let sim = &env.sim;
-    sim.unit(env.player)
+    let unit = sim.unit(env.player);
+    let shields = unit
         .absorption_auras
         .iter()
         .filter(|aura| sim.aura(**aura).active)
-        .count()
+        .count();
+    // A modifier that is not a shield's is a closure Rust does not run: it counts as acting.
+    let others = unit
+        .dynamic_damage_taken_modifiers
+        .saturating_sub(unit.absorption_auras.len());
+    shields + others
 }
 
 /// Go `exportEnemy`: the target's swings at the player when the player tanks it, with the
@@ -584,7 +590,6 @@ pub(crate) fn export_enemy(
     let sim = &env.sim;
     let player = env.player;
     let target = env.encounter.targets[0];
-    let table = env.attack_table(target, player);
     let aa = &sim.unit(target).auto_attacks;
     let spell = sim.spell(
         aa.mh_spell
@@ -597,7 +602,7 @@ pub(crate) fn export_enemy(
     );
     note(
         unrepresented,
-        table.damage_done_by_caster,
+        super::damage_taken::has_caster_callbacks(env, target, player),
         "caster damage callbacks on the target's attacks are unsupported",
     );
     note(
