@@ -15,11 +15,12 @@ use super::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger, StackingStatAur
 use super::character::{cooldown_type, MajorCooldown};
 use super::env::Environment;
 use super::forever_items_generated::{ENCHANTS, ITEMS};
+use super::itemhelpers::{self, WeaponProcTrigger};
 use super::parse_effects::{parse_effects, ParseOptions};
 use super::periodic_action::PeriodicActionOptions;
 use super::shared_items::{
-    self, dynamic_legacy_proc_for_enchant, dynamic_legacy_proc_for_weapon, expand_variants,
-    spell_data_proc_damage_spell_config, ItemVariant, ProcKind, SpellDataProc,
+    self, dynamic_legacy_proc_for_enchant, expand_variants, spell_data_proc_damage_spell_config,
+    ItemVariant, ProcKind, SpellDataProc,
 };
 use super::shared_on_use::{self, OnUseKind, StackingStatBonusCd};
 use super::sim::{AuraConfig, AuraId, Cooldown, Sim, SpellId, UnitType, SECOND};
@@ -131,8 +132,8 @@ pub(crate) fn registered_ids() -> (Vec<i32>, Vec<i32>) {
 // ---------------------------------------------------------------------------------------------
 
 #[cfg(test)]
-const HAND_WRITTEN_ITEMS: [i32; 10] = [
-    11815, 23570, 23206, 23207, 19324, 17076, 13204, 13286, 871, 6622,
+const HAND_WRITTEN_ITEMS: [i32; 11] = [
+    11815, 23570, 23206, 23207, 19324, 17076, 13204, 13286, 871, 6622, 13246,
 ];
 #[cfg(test)]
 const HAND_WRITTEN_ENCHANTS: [i32; 7] = [30, 32, 33, 663, 664, 803, 1898];
@@ -280,51 +281,37 @@ fn apply_hand_written_item(env: &mut Environment, item: i32) -> Result<bool, Ref
     Ok(true)
 }
 
-/// Go `itemhelpers.CreateWeaponProcTrigger`: a weapon proc whose handler runs on every landed
-/// hit that passes the weapon's PPM roll. `setup` is the call of the config's `Handler`, which
-/// runs once per character and may opt it out.
-pub(crate) fn create_weapon_proc_trigger(
+/// Go `itemhelpers.CreateWeaponProcTrigger` for a "Chance on hit" proc.
+fn create_weapon_proc_trigger(
     env: &mut Environment,
     item_id: i32,
-    name: &str,
+    name: &'static str,
     ppm: f64,
     trigger_immediately: bool,
     setup: impl FnOnce(&mut Environment) -> bool,
 ) {
-    if !setup(env) {
-        return;
-    }
-    let unit = env.player;
-    let dpm = dynamic_legacy_proc_for_weapon(&env.sim, unit, item_id, ppm, 0.0);
-    env.sim.make_proc_trigger_aura(
-        unit,
-        &ProcTrigger {
-            name: format!("{name} Proc"),
-            callback: CallbackMask::ON_SPELL_HIT_DEALT,
-            outcome: HitOutcome::LANDED,
-            dpm: Some(dpm),
-            is_weapon_proc: true,
+    itemhelpers::create_weapon_proc_trigger(
+        env,
+        &WeaponProcTrigger {
+            item_id,
+            name,
+            ppm,
             trigger_immediately,
-            ..ProcTrigger::default()
+            ..WeaponProcTrigger::default()
         },
+        setup,
     );
 }
 
-/// Go `itemhelpers.CreateWeaponProcSpell`: a "Chance on hit" weapon proc that casts a custom
-/// spell on the target that was hit.
-pub(crate) fn create_weapon_proc_spell(
+/// Go `itemhelpers.CreateWeaponProcSpell`.
+fn create_weapon_proc_spell(
     env: &mut Environment,
     item_id: i32,
-    name: &str,
+    name: &'static str,
     ppm: f64,
     spell: impl FnOnce(&mut Environment) -> SpellId,
 ) {
-    create_weapon_proc_trigger(env, item_id, name, ppm, true, |env| {
-        let proc_spell = spell(env);
-        env.sim.spell_mut(proc_spell).flags |=
-            SpellFlag::NO_ON_CAST_COMPLETE | SpellFlag::PASSIVE_SPELL | SpellFlag::PROC;
-        true
-    });
+    itemhelpers::create_weapon_proc_spell(env, item_id, name, ppm, |env| Some(spell(env)));
 }
 
 fn weapon_damage_proc(env: &mut Environment, proc: &WeaponDamageProc) {
@@ -394,7 +381,7 @@ fn bonereavers_edge(env: &mut Environment) {
 
 /// items_weapons.go Bashguuder and Rivenspike: each stack of Puncture Armor on the target
 /// takes 100 armor.
-fn puncture_armor(env: &mut Environment, item_id: i32, name: &str) {
+fn puncture_armor(env: &mut Environment, item_id: i32, name: &'static str) {
     create_weapon_proc_trigger(env, item_id, name, 2.0, false, |env| {
         for target in env.sim.all_units() {
             if env.sim.unit(target).unit_type != UnitType::Enemy {
@@ -423,32 +410,28 @@ fn puncture_armor(env: &mut Environment, item_id: i32, name: &str) {
 
 /// Go `itemhelpers.CreateWeaponProcAura`: a "Chance on hit" weapon proc that activates a
 /// custom aura on the wearer: the row's effects parsed onto it.
-fn weapon_proc_aura(env: &mut Environment, item_id: i32, name: &str, ppm: f64, spell_id: i32) {
-    let unit = env.player;
-    let row = must_find(spell_id);
-    let aura = env.sim.get_or_register_aura(
-        unit,
-        AuraConfig {
-            label: name.to_string(),
-            action_id: Some(ActionId::spell(spell_id)),
-            duration: row.duration(),
-            ..AuraConfig::default()
-        },
-    );
-    parse_effects(&mut env.sim, Some(unit), aura, row, ParseOptions::default());
-
-    let dpm = dynamic_legacy_proc_for_weapon(&env.sim, unit, item_id, ppm, 0.0);
-    env.sim.make_proc_trigger_aura(
-        unit,
-        &ProcTrigger {
-            name: format!("{name} Proc"),
-            callback: CallbackMask::ON_SPELL_HIT_DEALT,
-            outcome: HitOutcome::LANDED,
-            dpm: Some(dpm),
-            is_weapon_proc: true,
-            ..ProcTrigger::default()
-        },
-    );
+fn weapon_proc_aura(
+    env: &mut Environment,
+    item_id: i32,
+    name: &'static str,
+    ppm: f64,
+    spell_id: i32,
+) {
+    itemhelpers::add_weapon_proc_aura(env, item_id, name, ppm, |env| {
+        let unit = env.player;
+        let row = must_find(spell_id);
+        let aura = env.sim.get_or_register_aura(
+            unit,
+            AuraConfig {
+                label: name.to_string(),
+                action_id: Some(ActionId::spell(spell_id)),
+                duration: row.duration(),
+                ..AuraConfig::default()
+            },
+        );
+        parse_effects(&mut env.sim, Some(unit), aura, row, ParseOptions::default());
+        aura
+    });
 }
 
 /// items_trinkets.go Hand of Justice.
@@ -594,3 +577,6 @@ fn apply_hand_written_enchant(env: &mut Environment, enchant: i32) -> bool {
         }
     }
 }
+
+#[cfg(test)]
+mod tests;

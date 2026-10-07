@@ -6,7 +6,7 @@ use serde_json::{json, Value};
 
 use crate::contracts::prepared_v2::ActionId;
 
-use super::classic_items::tagged;
+use super::classic_weapons::tagged;
 use super::common_effects::{action_id_string, flat_string};
 use super::env::Environment;
 use super::export_items::{aura_named, dpm_chances, spell_position};
@@ -31,7 +31,12 @@ pub(crate) fn crusader_effect(
     let buffs = Stats::from_pairs(&[(Stat::Strength, 100.0)]);
     let id = ActionId::spell(20007);
     let stats = flat_string(&buffs);
-    let gained = |tag: i32| format!("Gained {stats} from {}.", action_id_string(&tagged(&id, tag)));
+    let gained = |tag: i32| {
+        format!(
+            "Gained {stats} from {}.",
+            action_id_string(&tagged(&id, tag))
+        )
+    };
     let lost = |tag: i32| {
         format!(
             "Lost {stats} from fading {}.",

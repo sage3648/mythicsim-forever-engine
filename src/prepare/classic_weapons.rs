@@ -13,7 +13,7 @@ use crate::contracts::prepared_v2::ActionId;
 
 use super::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use super::env::Environment;
-use super::forever_items::{create_weapon_proc_spell, create_weapon_proc_trigger};
+use super::itemhelpers::{create_weapon_proc_spell, create_weapon_proc_trigger, WeaponProcTrigger};
 use super::sim::{AuraConfig, AuraId, Cooldown, Sim, UnitId, MILLISECOND, SECOND};
 use super::spell::{school, CastConfig, DefenseType, DotConfig, ProcMask, SpellConfig, SpellFlag};
 use super::stats::{Stat, Stats};
@@ -91,73 +91,85 @@ fn new_passive_movement_speed_aura(
 /// Thunderfury, Blessed Blade of the Windseeker: a weapon proc at 6 PPM that casts a nature hit
 /// that slows the target's attacks and a bounce that lowers its nature resistance.
 fn thunderfury(env: &mut Environment) {
-    create_weapon_proc_trigger(env, 19019, "Thunderfury", 6.0, false, |env| {
-        let unit = env.player;
-        let proc_action = ActionId::spell(21992);
+    create_weapon_proc_trigger(
+        env,
+        &WeaponProcTrigger {
+            item_id: 19019,
+            name: "Thunderfury",
+            ppm: 6.0,
+            ..WeaponProcTrigger::default()
+        },
+        |env| {
+            let unit = env.player;
+            let proc_action = ActionId::spell(21992);
 
-        let attack_speed_debuff = new_enemy_aura_array(&mut env.sim, |sim, target| {
-            let aura = sim.get_or_register_aura(
-                target,
-                AuraConfig {
-                    label: "Cyclone".to_string(),
-                    action_id: Some(ActionId::spell(27648)),
-                    duration: 12 * SECOND,
-                    ..AuraConfig::default()
+            let attack_speed_debuff = new_enemy_aura_array(&mut env.sim, |sim, target| {
+                let aura = sim.get_or_register_aura(
+                    target,
+                    AuraConfig {
+                        label: "Cyclone".to_string(),
+                        action_id: Some(ActionId::spell(27648)),
+                        duration: 12 * SECOND,
+                        ..AuraConfig::default()
+                    },
+                );
+                sim.atk_speed_reduction_effect(
+                    aura,
+                    super::shared_auras::slowed_time_multiplier(-20.0),
+                );
+                aura
+            });
+            // Go keeps the arrays for the handler, which only runs in a fight.
+            let _ = attack_speed_debuff;
+
+            env.sim.register_spell(
+                unit,
+                SpellConfig {
+                    action_id: tagged(&proc_action, 1),
+                    spell_school: school::NATURE,
+                    defense_type: DefenseType::Magic,
+                    proc_mask: ProcMask::SPELL_DAMAGE,
+                    flags: SpellFlag::PROC,
+                    damage_multiplier: 1.0,
+                    threat_multiplier: 0.5,
+                    ..SpellConfig::default()
                 },
             );
-            sim.atk_speed_reduction_effect(aura, super::shared_auras::slowed_time_multiplier(-20.0));
-            aura
-        });
-        // Go keeps the arrays for the handler, which only runs in a fight.
-        let _ = attack_speed_debuff;
 
-        env.sim.register_spell(
-            unit,
-            SpellConfig {
-                action_id: tagged(&proc_action, 1),
-                spell_school: school::NATURE,
-                defense_type: DefenseType::Magic,
-                proc_mask: ProcMask::SPELL_DAMAGE,
-                flags: SpellFlag::PROC,
-                damage_multiplier: 1.0,
-                threat_multiplier: 0.5,
-                ..SpellConfig::default()
-            },
-        );
+            let resistance_debuff = new_enemy_aura_array(&mut env.sim, |sim, target| {
+                sim.get_or_register_aura(
+                    target,
+                    AuraConfig {
+                        label: "Thunderfury".to_string(),
+                        action_id: Some(proc_action.clone()),
+                        duration: 12 * SECOND,
+                        on_gain: Some(Rc::new(move |sim: &mut Sim, _| {
+                            sim.add_stat_dynamic(target, Stat::NatureResistance, -25.0);
+                        })),
+                        on_expire: Some(Rc::new(move |sim: &mut Sim, _| {
+                            sim.add_stat_dynamic(target, Stat::NatureResistance, 25.0);
+                        })),
+                        ..AuraConfig::default()
+                    },
+                )
+            });
+            let _ = resistance_debuff;
 
-        let resistance_debuff = new_enemy_aura_array(&mut env.sim, |sim, target| {
-            sim.get_or_register_aura(
-                target,
-                AuraConfig {
-                    label: "Thunderfury".to_string(),
-                    action_id: Some(proc_action.clone()),
-                    duration: 12 * SECOND,
-                    on_gain: Some(Rc::new(move |sim: &mut Sim, _| {
-                        sim.add_stat_dynamic(target, Stat::NatureResistance, -25.0);
-                    })),
-                    on_expire: Some(Rc::new(move |sim: &mut Sim, _| {
-                        sim.add_stat_dynamic(target, Stat::NatureResistance, 25.0);
-                    })),
-                    ..AuraConfig::default()
+            env.sim.register_spell(
+                unit,
+                SpellConfig {
+                    action_id: tagged(&proc_action, 2),
+                    spell_school: school::NATURE,
+                    defense_type: DefenseType::Magic,
+                    proc_mask: ProcMask::EMPTY,
+                    threat_multiplier: 1.0,
+                    flat_threat_bonus: 63.0,
+                    ..SpellConfig::default()
                 },
-            )
-        });
-        let _ = resistance_debuff;
-
-        env.sim.register_spell(
-            unit,
-            SpellConfig {
-                action_id: tagged(&proc_action, 2),
-                spell_school: school::NATURE,
-                defense_type: DefenseType::Magic,
-                proc_mask: ProcMask::EMPTY,
-                threat_multiplier: 1.0,
-                flat_threat_bonus: 63.0,
-                ..SpellConfig::default()
-            },
-        );
-        true
-    });
+            );
+            true
+        },
+    );
 }
 
 /// An action ID with a tag: Go `ActionID.WithTag`.
@@ -266,7 +278,7 @@ fn ebon_hilt_of_marduk(env: &mut Environment) {
             0.99,
         );
 
-        env.sim.get_or_register_spell(
+        Some(env.sim.get_or_register_spell(
             unit,
             SpellConfig {
                 action_id: ActionId::spell(18656),
@@ -286,7 +298,7 @@ fn ebon_hilt_of_marduk(env: &mut Environment) {
                 },
                 ..SpellConfig::default()
             },
-        )
+        ))
     });
 }
 
@@ -318,7 +330,7 @@ fn sulfuras_hand_of_ragnaros(env: &mut Environment) {
             },
         );
 
-        env.sim.get_or_register_spell(
+        Some(env.sim.get_or_register_spell(
             unit,
             SpellConfig {
                 action_id: ActionId::spell(21162),
@@ -338,6 +350,6 @@ fn sulfuras_hand_of_ragnaros(env: &mut Environment) {
                 },
                 ..SpellConfig::default()
             },
-        )
+        ))
     });
 }

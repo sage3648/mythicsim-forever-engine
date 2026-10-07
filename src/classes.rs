@@ -36,6 +36,7 @@ pub(crate) fn prepare_agent(
 ) -> Result<Box<dyn crate::prepare::agent::PrepAgent>, crate::prepare::Refusal> {
     match player.enum_name("class").as_str() {
         "ClassMage" => mage::prepare::new_mage(sim, unit, player),
+        "ClassWarrior" => warrior::prepare::new_warrior(sim, unit, player),
         "ClassPaladin" => paladin::prepare::new_paladin(sim, unit, player),
         other => Err(crate::prepare::Refusal::new(
             "class",
@@ -48,6 +49,7 @@ pub(crate) fn prepare_agent(
 pub(crate) fn item_sets() -> Vec<&'static crate::prepare::item_sets::ItemSet> {
     let mut sets = Vec::new();
     sets.extend(mage::prepare::items::ITEM_SETS);
+    sets.extend(warrior::prepare::items::sets::ITEM_SETS);
     sets.extend(paladin::prepare::sets::ITEM_SETS);
     sets
 }

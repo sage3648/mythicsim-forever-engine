@@ -5,7 +5,7 @@
 use crate::contracts::prepared_v2::ActionId;
 
 use super::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger, PseudoStatField};
-use super::classic_items::tagged;
+use super::classic_weapons::tagged;
 use super::env::Environment;
 use super::shared_items::dynamic_legacy_proc_for_enchant;
 use super::sim::{AuraConfig, SECOND};
@@ -38,8 +38,11 @@ fn threat_aura(env: &mut Environment, label: &str, multiplier: f64) {
         },
     );
     env.sim.make_permanent(aura);
-    env.sim
-        .attach_multiplicative_pseudo_stat_buff(aura, PseudoStatField::ThreatMultiplier, multiplier);
+    env.sim.attach_multiplicative_pseudo_stat_buff(
+        aura,
+        PseudoStatField::ThreatMultiplier,
+        multiplier,
+    );
 }
 
 /// Crusader (spell 20007): a weapon proc at 1 PPM on landed hits that heals 75 to 125 and gives
