@@ -37,6 +37,7 @@ pub(crate) mod sim;
 pub(crate) mod spell;
 pub(crate) mod spell_mod;
 pub(crate) mod spelldata;
+pub(crate) mod stat_auras;
 pub(crate) mod stats;
 pub(crate) mod target;
 

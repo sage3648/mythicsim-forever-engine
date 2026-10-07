@@ -736,6 +736,7 @@ pub(crate) fn export(
     // Go then appends the inert pets, the melee, gear, spell data and energy proc effects and
     // the stat auras effect, in that order; Rust refuses pets and ports the rest in
     // src/prepare/export_items.rs.
+    effects.extend(super::stat_auras::stat_auras_effect(env)?);
     effects.extend(tail_effects(env, &mut unrepresented)?);
 
     let professions: Vec<String> = env
