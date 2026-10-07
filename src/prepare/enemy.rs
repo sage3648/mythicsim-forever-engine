@@ -761,3 +761,6 @@ pub(crate) fn read_stat_aura_combinations_stub(
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests;
