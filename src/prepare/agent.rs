@@ -64,6 +64,11 @@ pub(crate) trait PrepAgent {
     fn swing_replacement_keeps_swing(&self) -> bool {
         false
     }
+    /// Go `EurekaAgent.EurekaSpells`: the spell masks the Gnome racial Eureka! names for the
+    /// class. A class that does not implement it leaves the racial on every class spell.
+    fn eureka_spells(&self) -> Option<super::racials::EurekaSpells> {
+        None
+    }
     /// Whether a spell is one of the class's mana gems, which the class describes itself:
     /// the item loop skips `spell.Matches(mage.MageSpellManaGem)`.
     fn is_mana_gem(&self, _sim: &Sim, _spell: super::sim::SpellId) -> bool {

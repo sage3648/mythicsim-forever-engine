@@ -1411,7 +1411,7 @@ impl Parser {
             }
             active.set(level > 0.0);
             assert!(
-                !live || sim.unit(unit).on_temporary_stats_changes == 0,
+                !live || sim.unit(unit).on_temporary_stats_changes.is_empty(),
                 "temporary stat listeners are not prepared"
             );
             for part in &parts {

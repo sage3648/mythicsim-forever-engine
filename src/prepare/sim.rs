@@ -11,6 +11,7 @@ use std::rc::Rc;
 
 use crate::contracts::prepared_v2::ActionId;
 
+use super::procs::DynamicProcManager;
 use super::stats::{PseudoStats, SchoolIndex, Stat, StatDependencyManager, Stats, SCHOOL_LEN};
 
 /// `time.Duration` in nanoseconds.
@@ -103,8 +104,8 @@ pub(crate) struct AuraConfig {
     pub on_expire: Option<AuraCallback>,
     pub on_stacks_change: Option<StacksCallback>,
     pub events: EventCallbacks,
-    /// Whether the aura has a dynamic proc manager.
-    pub dpm: bool,
+    /// The aura's dynamic proc manager, if it has one.
+    pub dpm: Option<Rc<DynamicProcManager>>,
 }
 
 pub(crate) struct Aura {
@@ -127,7 +128,7 @@ pub(crate) struct Aura {
     pub on_expire: Option<AuraCallback>,
     pub on_stacks_change: Option<StacksCallback>,
     pub events: EventCallbacks,
-    pub dpm: bool,
+    pub dpm: Option<Rc<DynamicProcManager>>,
     /// The action ID the aura's metrics were registered with.
     pub metrics_id: Option<ActionId>,
     /// Activations this iteration: `metrics.Procs`.
@@ -219,6 +220,8 @@ pub(crate) struct EnergyBar {
 #[derive(Clone, Debug, Default)]
 pub(crate) struct RageBar {
     pub enabled: bool,
+    /// Go `maxRage`: at least 100 once the class enables the bar.
+    pub max_rage: f64,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -271,7 +274,7 @@ pub(crate) struct Unit {
     /// How many dynamic damage taken modifiers the unit registered.
     pub dynamic_damage_taken_modifiers: usize,
     pub on_cast_speed_changed: usize,
-    pub on_temporary_stats_changes: usize,
+    pub on_temporary_stats_changes: Vec<super::aura_helpers::TemporaryStatsListener>,
     /// The owner of a pet.
     pub owner: Option<UnitId>,
     pub pets: Vec<UnitId>,
@@ -328,7 +331,7 @@ impl Unit {
             rotation_timer: None,
             dynamic_damage_taken_modifiers: 0,
             on_cast_speed_changed: 0,
-            on_temporary_stats_changes: 0,
+            on_temporary_stats_changes: Vec::new(),
             owner: None,
             pets: Vec::new(),
             auto_attacks: super::attack::AutoAttacks::default(),
@@ -365,6 +368,9 @@ pub(crate) struct Sim {
     pub timers: Vec<UnitId>,
     /// Go `env.AllUnits`: the targets, then the raid's units, by unit index.
     pub env_units: Vec<UnitId>,
+    /// Go `AttackTable.DamageDoneByCasterExtraMultiplier`: per (attacker, defender), which
+    /// handler slots are set. See aura_helpers.rs `attach_ddbc`.
+    pub damage_done_by_caster: std::collections::BTreeMap<(UnitId, UnitId), Vec<bool>>,
 }
 
 impl Sim {
@@ -382,6 +388,7 @@ impl Sim {
             spell_mods: Vec::new(),
             timers: Vec::new(),
             env_units: Vec::new(),
+            damage_done_by_caster: std::collections::BTreeMap::new(),
         }
     }
 
@@ -925,10 +932,19 @@ impl Sim {
         self.set_stacks(id, stacks);
     }
 
-    /// Go `MakePermanent`: an aura with no expiry that a reset activates.
+    /// Go `MakePermanent`: an aura with no expiry that a reset activates. Its reset callback
+    /// restores the duration, runs the aura's earlier reset callback, then activates it.
     pub(crate) fn make_permanent(&mut self, id: AuraId) -> AuraId {
-        self.aura_mut(id).duration = NEVER_EXPIRES;
-        self.apply_on_reset(id, Rc::new(|sim: &mut Sim, aura| sim.activate(aura)));
+        let aura = self.aura_mut(id);
+        aura.duration = NEVER_EXPIRES;
+        let old = aura.on_reset.take();
+        aura.on_reset = Some(Rc::new(move |sim: &mut Sim, aura: AuraId| {
+            sim.aura_mut(aura).duration = NEVER_EXPIRES;
+            if let Some(old) = &old {
+                old(sim, aura);
+            }
+            sim.activate(aura);
+        }));
         id
     }
 
