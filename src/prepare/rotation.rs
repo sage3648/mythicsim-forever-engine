@@ -58,11 +58,38 @@ fn target_resolves(env: &Environment, target: Option<&Message>) -> Result<bool, 
         "Unknown" | "CurrentTarget" | "Self" => Ok(true),
         "Target" => Ok((target.i32("index") as usize) < env.encounter.targets.len()),
         "Player" => Ok(target.i32("index") == 0),
+        // Go's `NextActiveTargetUnit` and `PreviousActiveTargetUnit` always name a target of
+        // the player's current one.
+        "NextTarget" | "PreviousTarget" => Ok(env
+            .sim
+            .unit(env.player)
+            .current_target
+            .is_some_and(|t| env.encounter.targets.contains(&t))),
         other => Err(Refusal::new(
             "rotation",
             format!("a rotation target of type {other} is not prepared yet"),
         )),
     }
+}
+
+/// Go `spell.CurDot() != nil`: the spell's dot on its caster's current target, or its related
+/// dot spell's.
+fn has_cur_dot(env: &Environment, spell: SpellId) -> Result<bool, Refusal> {
+    let s = env.sim.spell(spell);
+    if s.dots.is_empty() {
+        return match s.related_dot_spell {
+            Some(related) => has_cur_dot(env, related),
+            None => Ok(false),
+        };
+    }
+    let Some(target) = env.sim.unit(s.unit).current_target else {
+        return Err(Refusal::new(
+            "rotation",
+            "a dot read without a current target".to_string(),
+        ));
+    };
+    let index = env.sim.unit(target).unit_index as usize;
+    Ok(s.dots.get(index).copied().flatten().is_some())
 }
 
 /// One built action: Go's `APLAction` reduced to what construction needs.
@@ -170,6 +197,20 @@ impl Builder<'_> {
                     }
                 }
                 Ok(Some(Built { casts }))
+            }
+            // Go `newActionMultidot`: dropped unless the spell has a dot on the current
+            // target; it removes no major cooldown.
+            "multidot" => {
+                let Some(id) = action.message("spell_id") else {
+                    return Ok(None);
+                };
+                let Some(spell) = apl_spell(self.env, &proto_to_action_id(id)) else {
+                    return Ok(None);
+                };
+                if !has_cur_dot(self.env, spell)? {
+                    return Ok(None);
+                }
+                Ok(Some(Built { casts: Vec::new() }))
             }
             "autocast_other_cooldowns" | "wait" | "wait_until" => {
                 Ok(Some(Built { casts: Vec::new() }))
