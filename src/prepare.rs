@@ -18,6 +18,7 @@ pub(crate) mod export;
 pub(crate) mod item_effects;
 pub(crate) mod items;
 pub(crate) mod items_registry;
+pub(crate) mod major_cooldown;
 pub(crate) mod periodic_action;
 pub(crate) mod presets;
 pub(crate) mod procs;
