@@ -320,10 +320,16 @@ impl Sim {
         add_character_universal_stat_dependencies(self, id);
 
         if let Some(bonus) = player.message("bonus_stats") {
-            if bonus.has("stats") || bonus.has("pseudo_stats") {
+            // Go: a stats array makes the bonus FromUnitStatsProto, stats and percent pseudo stats.
+            if bonus.has("stats") {
+                let stats = Stats::from_proto_array(&bonus.f64s("stats"))
+                    .add(&items::stats_from_pseudo_stats(&bonus.f64s("pseudo_stats")));
+                self.character_mut(id).bonus_stats = stats;
+            }
+            if bonus.has("pseudo_stats") {
                 return Err(Refusal::new(
                     "bonus_stats",
-                    "bonus stats are unsupported".to_string(),
+                    "bonus pseudo stats are unsupported".to_string(),
                 ));
             }
         }
