@@ -38,13 +38,16 @@ pub(crate) struct Environment {
     /// The raid units in Go's `Raid.AllUnits` order.
     pub raid_units: Vec<UnitId>,
     /// Effects run after every unit is finalized.
-    pub post_finalize: Vec<Rc<dyn Fn(&mut Environment)>>,
-    pub pre_finalize: Vec<Rc<dyn Fn(&mut Environment)>>,
+    pub post_finalize: Vec<FinalizeEffect>,
+    pub pre_finalize: Vec<FinalizeEffect>,
     /// `env.prepullActions`.
     pub prepull_actions: usize,
     /// Every attacker's table against every defender, by unit index.
     pub attack_tables: Vec<Vec<AttackTable>>,
 }
+
+/// Go `PostFinalizeEffect`: run once every unit is finalized, with the attack tables in place.
+pub(crate) type FinalizeEffect = Rc<dyn Fn(&mut Environment)>;
 
 /// The class agent factory: `classes::prepare_agent`.
 pub(crate) type AgentFactory =
@@ -339,8 +342,7 @@ impl Environment {
         }
         self.finalize_unit(unit);
         self.sim.finalize_major_cooldowns(unit);
-        for pet in self.sim.unit(unit).pets.clone() {
-            let _ = pet;
+        if !self.sim.unit(unit).pets.is_empty() {
             return Err(Refusal::new(
                 "pets",
                 "pets are not prepared yet".to_string(),
