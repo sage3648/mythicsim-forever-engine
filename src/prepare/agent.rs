@@ -99,6 +99,26 @@ pub(crate) trait PrepAgent {
     fn flametongue_attack_traits(&self) -> super::buffs::flametongue::FlametongueAttackTraits {
         super::buffs::flametongue::FlametongueAttackTraits::default()
     }
+    /// The agent as `Any`, for a class's item set bonus that sets state on its own agent (Go
+    /// hands a set bonus the agent). A class that has no such bonus answers `None`.
+    fn as_any_mut(&mut self) -> Option<&mut dyn std::any::Any> {
+        None
+    }
+    /// The exporter's class effects when they need more than the simulation, such as the
+    /// attack tables and the target, and the notes a class effect adds to the unrepresented
+    /// list (`classNotes`). The default is `effects`.
+    fn export_effects(
+        &self,
+        env: &super::env::Environment,
+        _notes: &mut Vec<String>,
+    ) -> Vec<serde_json::Value> {
+        self.effects(&env.sim, env.player)
+    }
+    /// The exporter's `classExport.statAuras`: the labels of the class auras that change stats
+    /// through `AddStatsDynamic` when gained or lost.
+    fn stat_auras(&self, _sim: &Sim, _unit: UnitId) -> Vec<String> {
+        Vec::new()
+    }
 }
 
 /// Go `FillTalentsProto`: each digit sets the field numbered by its position, counting each
