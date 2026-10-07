@@ -1,7 +1,7 @@
 //! Hurricane (17402, tick 1278759), from Go sim/druid/hurricane.go. The channel is an area
 //! dot on the druid whose every tick casts the triggered tick spell. A tick deals a fixed
-//! amount to each target in unit index order with `OutcomeMagicHit`, calculating and dealing
-//! each hit in turn, so it never crits.
+//! amount to each target in unit index order with `OutcomeMagicHitAndCrit`, calculating and
+//! dealing each hit in turn: the tick row has no "can't crit" flag (community #688).
 
 use crate::core::fight::{Fight, Side, SpellId};
 
@@ -49,11 +49,11 @@ impl Hurricane {
         fight.cast(self.tick, dot_side);
     }
 
-    /// The tick spell's `ApplyEffects`: `CalcAndDealAoeDamage` with `OutcomeMagicHit`.
+    /// The tick spell's `ApplyEffects`: `CalcAndDealAoeDamage` with `OutcomeMagicHitAndCrit`.
     pub(crate) fn apply_tick(&self, fight: &mut Fight<DruidAgent>, spell: SpellId) {
         let sides: Vec<Side> = fight.target_sides().collect();
         for side in sides {
-            let result = fight.calc_damage_hit_only(spell, side, self.tick_base);
+            let result = fight.calc_damage(spell, side, self.tick_base);
             fight.deal_damage(spell, result, false);
         }
     }

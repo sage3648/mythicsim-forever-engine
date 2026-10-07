@@ -1,6 +1,7 @@
 //! Cold Blood (14177), from Go sim/rogue/talents_assassination.go `registerColdBlood`: the
 //! cast activates an aura whose attached modifier raises the crit chance of the masked
-//! strikes and finishers, until one of them deals a hit, landed or not.
+//! strikes and finishers, until one of them deals a hit, landed or not. Mutilate's hand
+//! strikes take the crit but do not spend it (community #690).
 
 use crate::core::fight::{Agent, AuraRef, Fight, ModId, ModKind, SpellId};
 
@@ -8,7 +9,7 @@ use crate::core::fight::{Agent, AuraRef, Fight, ModId, ModKind, SpellId};
 pub(crate) struct ColdBlood {
     pub(crate) aura: AuraRef,
     crit_mod: ModId,
-    /// Whether each spell, by spellbook position, carries a masked class spell.
+    /// Whether each spell, by spellbook position, carries a class spell that spends the aura.
     spends: Vec<bool>,
 }
 
@@ -17,6 +18,7 @@ pub(crate) fn bind<A: Agent>(
     aura: &str,
     crit_bonus: f64,
     class_spells: &[String],
+    spend_class_spells: &[String],
 ) -> Result<ColdBlood, String> {
     let aura = fight.player_aura(aura)?;
     let names: Vec<&str> = class_spells.iter().map(String::as_str).collect();
@@ -33,7 +35,7 @@ pub(crate) fn bind<A: Agent>(
             spell
                 .class_spell
                 .as_deref()
-                .is_some_and(|class| names.contains(&class))
+                .is_some_and(|class| spend_class_spells.iter().any(|name| name == class))
         })
         .collect();
     Ok(ColdBlood {

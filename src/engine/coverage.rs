@@ -962,18 +962,11 @@ fn runtime_limits(spell: &Spell, class_spell: bool) -> Vec<&'static str> {
     if spell.max_charges != 0 {
         limits.push("charges");
     }
-    if spell.has_cast_requirement {
+    if spell.has_cast_requirement && spell.requirement_auras.is_none() {
         limits.push("cast requirements");
     }
     if spell.damage_effect.is_some() && spell.school & 1 != 0 && !class_spell {
         limits.push("physical damage");
-    }
-    if spell
-        .dot
-        .as_ref()
-        .is_some_and(|dot| dot.affected_by_real_haste)
-    {
-        limits.push("periodic effects hasted by real haste");
     }
     limits
 }

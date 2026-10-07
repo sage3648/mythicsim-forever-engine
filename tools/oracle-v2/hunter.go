@@ -173,7 +173,9 @@ func hunterEffects(agent core.Agent, character *core.Character) []map[string]any
 		})
 	}
 	// summon_hawk.go: a dive bomb on its rank's base plus a share of ranged attack power, a Go
-	// literal, then a hawk dot in a free slot or the one with the least time left.
+	// literal, then a hawk dot in a free slot or the one with the least time left. The hawk
+	// swings once on arrival and then every tick for a share of the rank's base, another Go
+	// literal, on the melee special hit table without a crit roll.
 	if h.SummonHawk != nil {
 		rank := hunterSummonHawk.Highest()
 		hawks := []int{}
@@ -187,7 +189,7 @@ func hunterEffects(agent core.Agent, character *core.Character) []map[string]any
 		}
 		effects = append(effects, map[string]any{
 			"kind": "summon_hawk", "spell_id": rank.ID, "base_damage": rank.DamageEffect().Average(core.CharacterLevel),
-			"attack_power_share": 0.05, "always_hits": rank.AlwaysHits(), "hawk_spells": hawks,
+			"attack_power_share": 0.05, "swing_share": 0.35, "always_hits": rank.AlwaysHits(), "hawk_spells": hawks,
 			"hawk_duration_ns": nanos(hunterSummonHawkSummon.ByID(1293248).Duration()),
 		})
 	}
@@ -369,8 +371,8 @@ func hunterPetAbility(spell *core.Spell) map[string]any {
 	if spell.ActionID.Tag != 0 {
 		return nil
 	}
-	// newScorpidPoison: a melee special hit roll, then a dot whose stack Apply resets, so each
-	// landed cast is one stack of the Go literal tick.
+	// newScorpidPoison: a melee special hit roll, then a dot a landed cast refreshes and stacks
+	// up to its five, each stack a Go literal tick.
 	if id == 24587 {
 		// 24587 carries Periodic Can Crit: the ticks roll the pet's melee crit (pet_abilities.go
 		// newScorpidPoison, spelldata TickOutcomeHitRolled).

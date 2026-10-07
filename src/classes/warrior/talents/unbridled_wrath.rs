@@ -1,7 +1,9 @@
 //! Unbridled Wrath (12322, rage from 12964), from Go sim/warrior/talents_fury.go
 //! `registerUnbridledWrath`: a proc trigger on landed white hits that dealt damage, which
 //! grants rage a spell batch window later. Every weapon gives the same rage: the client
-//! hotfix 112347 dropped the doubling for a two-handed weapon.
+//! hotfix 112347 dropped the doubling for a two-handed weapon. Heroic Strike and Cleave take a
+//! main hand swing's place but carry the melee special mask, which the trigger excludes
+//! (community #692).
 
 use crate::core::fight::{Agent, AuraRef, Fight, SpellId, SpellResult};
 
@@ -22,7 +24,12 @@ pub(crate) fn on_hit<A: Agent>(
     result: &SpellResult,
 ) {
     let state = &fight.spells[spell];
-    if state.flags.proc || !state.white_hit || !result.landed() || result.damage == 0.0 {
+    if state.flags.proc
+        || !state.white_hit
+        || state.melee_special
+        || !result.landed()
+        || result.damage == 0.0
+    {
         return;
     }
     if params.proc_chance != 1.0 && fight.random_for_aura(params.trigger) > params.proc_chance {

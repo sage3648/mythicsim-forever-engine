@@ -531,7 +531,7 @@ fn the_shouts_are_refused_by_name_against_several_targets() {
 #[test]
 fn a_cleave_cast_again_while_it_deals_deals_the_later_hit_twice() {
     for name in [
-        "production-arms-warrior-3-targets",
+        "production-arms-warrior-2-targets",
         "production-warrior-5-targets",
     ] {
         let logs = first_fight_log(warrior_fixture(name));

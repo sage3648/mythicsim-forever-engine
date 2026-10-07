@@ -339,10 +339,12 @@ func paladinEffects(agent core.Agent, character *core.Character) []map[string]an
 		})
 	}
 	if talents.SanctifiedJudgement > 0 { // talents_retribution.go applySanctifiedJudgement
+		// The refund is the row's share times sanctifiedJudgementLogScale, an unexported Go
+		// constant of 10/9 fitted to beta logs (community #705).
 		effects = append(effects, map[string]any{
 			"kind": "sanctified_judgement", "trigger_aura": "Sanctified Judgement" + p.Label,
 			"proc_chance":       paladinSanctifiedJudgement.EffectAt(1).FractionAt(talents.SanctifiedJudgement),
-			"refund":            paladinSanctifiedJudgement.EffectAt(2).FractionAt(talents.SanctifiedJudgement),
+			"refund":            paladinSanctifiedJudgement.EffectAt(2).FractionAt(talents.SanctifiedJudgement) * (10.0 / 9),
 			"metrics_action_id": actionID(core.ActionID{SpellID: paladinSanctifiedJudgement.Highest().ID}),
 		})
 	}

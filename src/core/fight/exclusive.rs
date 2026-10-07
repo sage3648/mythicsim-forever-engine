@@ -170,6 +170,16 @@ impl<A: Agent> Fight<A> {
         if let Some(new) = new {
             state.members[new].uptime.active_since = now;
         }
+        if tracking {
+            A::on_tracked_category_change(self, category);
+        }
+    }
+
+    /// The name of a tracked category and the aura whose effect holds it, if any.
+    pub(crate) fn tracked_category_holder(&self, category: usize) -> (&str, Option<AuraRef>) {
+        let state = &self.exclusive_tracking[category];
+        let holder = state.active.map(|member| state.members[member].aura);
+        (state.name.as_str(), holder)
     }
 
     /// Go `ExclusiveEffect.Activate` for the aura's tracked effects, which never refuse.

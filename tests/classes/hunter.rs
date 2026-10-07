@@ -283,14 +283,17 @@ fn a_pet_past_its_uptime_is_disabled() {
         .any(|line| line.ends_with("No pet summoned")));
 }
 
-/// Go pet_abilities.go newScorpidPoison: Apply's deactivation drops the stack, so each landed
-/// cast is one stack again, and the Scorpid's rotation never reaches Claw.
+/// Go pet_abilities.go newScorpidPoison (community #694): a landed poison on a poisoned target
+/// refreshes the dot and adds a stack up to five, and once the stacks are full the Scorpid's
+/// rotation spends its focus on Claw. Before, Apply dropped the stack, so each cast was one
+/// stack again and the rotation never reached Claw.
 #[test]
-fn scorpid_poison_is_one_stack_a_cast() {
+fn scorpid_poison_stacks_to_five() {
     let logs = first_fight_log(fixture("beast-mastery-hunter-scorpid"));
     assert!(logs.contains("{SpellID: 24587} stacks: 0 --> 1"), "{logs}");
-    assert!(!logs.contains("{SpellID: 24587} stacks: 1 --> 2"), "{logs}");
-    assert!(!logs.contains("Casting {SpellID: 3009}"), "{logs}");
+    assert!(logs.contains("{SpellID: 24587} stacks: 4 --> 5"), "{logs}");
+    assert!(!logs.contains("{SpellID: 24587} stacks: 5 --> 6"), "{logs}");
+    assert!(logs.contains("Casting {SpellID: 3009}"), "{logs}");
 }
 
 /// Go newDustCloud: the pet casts it only while its target aura is down.

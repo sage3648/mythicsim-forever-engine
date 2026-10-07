@@ -212,8 +212,23 @@ impl<A: Agent> Fight<A> {
         }
     }
 
+    /// Go `castRequirementFailure`: the unit is in a form the requirement refuses, which is
+    /// while one of the spell's requirement auras is active.
+    fn wrong_form(&self, spell: SpellId) -> bool {
+        self.spells[spell]
+            .requirement_auras
+            .iter()
+            .any(|&aura| self.aura(aura).active)
+    }
+
     /// Go `Spell.CanCompleteCast`. Cost checks have side effects, as in Go.
     pub(crate) fn can_complete_cast(&mut self, spell: SpellId, log_failure: bool) -> bool {
+        if self.wrong_form(spell) {
+            if log_failure {
+                self.cast_failure(spell, |_| "wrong form".into());
+            }
+            return false;
+        }
         if !self.extra_cast_condition(spell) {
             if log_failure {
                 self.cast_failure(spell, |_| "extra spell condition".into());
@@ -391,6 +406,9 @@ impl<A: Agent> Fight<A> {
         if self.spells[spell].flags.swapped {
             return self.cast_failure(spell, |_| "spell attached to an un-equipped item".into());
         }
+        if self.wrong_form(spell) {
+            return self.cast_failure(spell, |_| "wrong form".into());
+        }
         if !self.extra_cast_condition(spell) {
             return self.cast_failure(spell, |_| "extra spell condition".into());
         }
@@ -481,6 +499,9 @@ impl<A: Agent> Fight<A> {
         }
         if self.spells[spell].flags.swapped {
             return self.cast_failure(spell, |_| "spell attached to an un-equipped item".into());
+        }
+        if self.wrong_form(spell) {
+            return self.cast_failure(spell, |_| "wrong form".into());
         }
         if !self.extra_cast_condition(spell) {
             return self.cast_failure(spell, |_| "extra spell condition".into());

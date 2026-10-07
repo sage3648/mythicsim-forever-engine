@@ -214,6 +214,16 @@ impl<A: Agent> Fight<A> {
                     / (PHYSICAL_HASTE_RATING_PER_PERCENT * 100.0))
     }
 
+    /// Go `TotalRealRangedHasteMultiplier` of an acting unit: its attack speed and melee haste
+    /// rating with `RangedHasteMultiplier`, which nothing at the pin changes from 1 (the exporter
+    /// refuses a character where it differs).
+    pub(crate) fn real_ranged_haste_multiplier_of(&self, side: Side) -> f64 {
+        self.unit(side).attack_speed_multiplier
+            * (1.0
+                + self.unit_config(side).melee_haste_rating
+                    / (PHYSICAL_HASTE_RATING_PER_PERCENT * 100.0))
+    }
+
     /// Go `Unit.MultiplyMeleeSpeed`.
     #[allow(dead_code)] // Shared with the class domains in progress.
     pub(crate) fn multiply_melee_speed(&mut self, amount: f64) {

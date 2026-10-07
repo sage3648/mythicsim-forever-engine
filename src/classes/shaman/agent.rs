@@ -1249,6 +1249,26 @@ impl Agent for ShamanAgent {
         }
     }
 
+    /// Go buffs/flametongue_totem.go `JoinFlametongueTotem`: the totem's effect turns the trigger
+    /// on while it holds the Flametongue Totem category and off when it loses it, to a Windfury
+    /// Totem (patch 98, community #677) or a main hand Flametongue Weapon, or fades.
+    fn on_tracked_category_change(fight: &mut Fight<Self>, category: usize) {
+        let Some(totem) = fight.agent.flametongue_totem.clone() else {
+            return;
+        };
+        let (name, holder) = fight.tracked_category_holder(category);
+        if name != "FlametongueTotem" {
+            return;
+        }
+        let holds = totem.enabled && holder == Some(totem.aura);
+        let active = fight.aura(totem.trigger).active;
+        if holds && !active {
+            fight.activate_aura(totem.trigger);
+        } else if !holds && active {
+            fight.deactivate_aura(totem.trigger);
+        }
+    }
+
     fn on_exclusive_gain(fight: &mut Fight<Self>, _aura: AuraRef, kind: ShamanAura) {
         if kind == ShamanAura::WindfuryTotemDummy {
             Self::windfury_totem(fight).on_dummy_gain(fight);
@@ -1277,16 +1297,9 @@ impl Agent for ShamanAgent {
                 .expect("Improved Stormstrike is bound")
                 .on_gain(fight),
             ShamanAura::Flurry => fight.agent.flurry.expect("Flurry is bound").on_gain(fight),
-            ShamanAura::FlametongueTotem => {
-                let state = fight
-                    .agent
-                    .flametongue_totem
-                    .clone()
-                    .expect("Flametongue Totem is bound");
-                if state.enabled {
-                    fight.activate_aura(state.trigger);
-                }
-            }
+            // The totem's effect in the Flametongue Totem category turns the trigger on as it
+            // takes the category (`on_tracked_category_change`).
+            ShamanAura::FlametongueTotem => {}
             ShamanAura::WindfuryTotem => {
                 // Go AttachPeriodicAction with TickImmediately: the first tick is pending now.
                 let now = fight.now;
