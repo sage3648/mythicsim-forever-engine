@@ -606,5 +606,66 @@ fn apply_touch_of_the_grave(sim: &mut Sim, unit: UnitId) {
     );
 }
 
+/// tools/oracle-v2 `eurekaEffect`: the class names its spells by masks, which the exporter
+/// resolves, with spell_mod.go `shouldApply`'s rules, into spell positions.
+pub(crate) fn eureka_effect(env: &Environment) -> Option<serde_json::Value> {
+    use super::spell::{ProcMask, Resource, SpellFlag};
+    let player = env.player;
+    let aura = env.sim.aura(env.sim.get_aura(player, "Eureka!")?);
+    let masks = env.agent.eureka_spells().unwrap_or(EurekaSpells {
+        cost: i64::MAX,
+        damage: i64::MAX,
+        tick: 0,
+    });
+    let class = env.sim.character(player).class.as_str();
+    let mut proc_mask = ProcMask::SPECIAL;
+    if class == "ClassPriest" {
+        proc_mask = ProcMask(proc_mask.0 | ProcMask::SPELL_HEALING.0);
+    }
+    let spent = masks.cost | masks.damage | masks.tick;
+    let direct_only = masks.damage & !masks.tick;
+    let modded = |spell: &super::spell::Spell, mask: i64| {
+        mask != 0
+            && !spell.flags.matches(SpellFlag::NO_SPELL_MODS)
+            && spell.matches(mask)
+            && proc_mask.matches(spell.proc_mask)
+    };
+    // The cost modifier names the class's resource: rage for a warrior, energy for a rogue and
+    // mana otherwise, as applyEureka's ResourceType does.
+    let pays_class_resource = |spell: &super::spell::Spell| match spell.cost.as_ref() {
+        Some(cost) => match cost.resource {
+            Resource::Rage => class == "ClassWarrior",
+            Resource::Energy => class == "ClassRogue",
+            Resource::Mana => class != "ClassWarrior" && class != "ClassRogue",
+            Resource::Focus => false,
+        },
+        None => false,
+    };
+    let (mut cost, mut damage, mut ticks, mut spending) = (vec![], vec![], vec![], vec![]);
+    for (i, id) in env.sim.unit(player).spellbook.iter().enumerate() {
+        let spell = env.sim.spell(*id);
+        if pays_class_resource(spell) && modded(spell, masks.cost) {
+            cost.push(i);
+        }
+        if modded(spell, masks.damage | masks.tick) {
+            damage.push(i);
+        }
+        if modded(spell, direct_only) {
+            ticks.push(i);
+        }
+        if spell.matches(spent) && spell.proc_mask.matches(proc_mask) {
+            spending.push(i);
+        }
+    }
+    Some(serde_json::json!({
+        "kind": "eureka", "spell_id": aura.action_id.as_ref().map_or(0, |id| id.spell_id),
+        "aura": aura.label, "cost_percent": -0.1, "damage_percent": 0.1,
+        // Go folds the constant 1/1.1 - 1 exactly: -1/11, rounded once.
+        "tick_cancel_percent": -1.0 / 11.0,
+        "cost_spells": cost, "damage_spells": damage, "tick_cancel_spells": ticks,
+        "spending_spells": spending,
+    }))
+}
+
 #[cfg(test)]
 mod tests;

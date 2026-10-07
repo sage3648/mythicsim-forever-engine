@@ -258,8 +258,8 @@ fn item_use_effects(env: &mut Environment, unrepresented: &mut Vec<String>) -> V
             effects.push(effect);
             continue;
         }
-        if let Some(effect) = use_item_effect(env, spell, item, unrepresented) {
-            effects.push(effect);
+        if let Some(found) = use_item_effect(env, spell, item, unrepresented) {
+            effects.extend(found);
             continue;
         }
         unrepresented.push(format!("major cooldown item {item} has no exported effect"));
@@ -289,8 +289,7 @@ fn use_item_effect(
     env: &mut Environment,
     spell: SpellId,
     item: i32,
-    _unrepresented: &mut Vec<String>,
-) -> Option<Value> {
-    // The class case comes after the shared item cases, which the items port adds above it.
-    env.agent.class_item_use_effect(&env.sim, spell, item)
+    unrepresented: &mut Vec<String>,
+) -> Option<Vec<Value>> {
+    super::export_items::use_item_effect(env, spell, item, unrepresented)
 }

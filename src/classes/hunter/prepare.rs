@@ -13,7 +13,7 @@ mod weapons;
 use crate::contracts::request::Message;
 use crate::prepare::agent::{fill_talents, ClassSpellName, PrepAgent};
 use crate::prepare::attack::AutoAttackOptions;
-use crate::prepare::env::FinalizeEffect;
+use crate::prepare::env::{Environment, FinalizeEffect};
 use crate::prepare::sim::{AuraId, Sim, SpellId, UnitId};
 use crate::prepare::stats::Stat;
 use crate::prepare::Refusal;
@@ -415,11 +415,11 @@ impl PrepAgent for Hunter {
 
     fn class_item_use_effect(
         &self,
-        sim: &Sim,
+        env: &Environment,
         spell: SpellId,
         item: i32,
     ) -> Option<serde_json::Value> {
-        (item == 19953).then(|| self.renatakis_charm_effect(sim, spell))
+        (item == 19953).then(|| self.renatakis_charm_effect(&env.sim, spell))
     }
 
     fn take_post_finalize_effects(&mut self) -> Vec<FinalizeEffect> {

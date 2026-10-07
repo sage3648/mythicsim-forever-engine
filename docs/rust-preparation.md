@@ -50,9 +50,10 @@ differing paths, or `refused` with the code. A preparation mismatch is a shadow 
 | Construction | `src/prepare/env.rs`, `character.rs`, `target.rs`, `attack.rs`, `items.rs` | `environment.go`, `character.go`, `target.go`, `attack.go`, `database.go` |
 | Shared mechanics | `src/prepare/{spell_mod,parse_effects,aura_helpers,racials,buffs,consumes,...}.rs` | `spell_mod.go`, `spelldata`, `aura_helpers.go`, `racials.go`, `buffs`, `consumes.go` |
 | Pets | `src/prepare/pet.rs`, `src/classes/<class>/prepare/pet.rs` | `core/pet.go`, `core/focus.go`, a class's pets and `tools/oracle-v2/pets.go`: a pet is a unit with a pet half, enabled by the owner's reset |
-| Client spell data | `src/prepare/spelldata.rs`, `dbcenums.rs` | `sim/core/spelldata`, `sim/core/dbcenums` |
+| Client spell data | `src/prepare/spelldata.rs`, `dbcenums.rs`, `resolve_{spell,aura,proc}.rs`, `proc_type_mask.rs`, `item_aura.rs` | `sim/core/spelldata`, `sim/core/dbcenums`, `sim/core/proc_types.go` |
+| Item and enchant effects | `src/prepare/{shared_items,shared_on_use,shared_auras,shared_procs,itemhelpers,forever_items,forever_item_sets,classic_items,enchant_speed}.rs` | `sim/common/{shared,itemhelpers,forever,classic}`, `enchant_speed.go` |
 | Classes | `src/classes/<class>/prepare*.rs` | `sim/<class>` construction and initialization |
-| Export | `src/prepare/export.rs`, `common_effects.rs` | `tools/oracle-v2` |
+| Export | `src/prepare/export.rs`, `common_effects.rs`, `export_items.rs` | `tools/oracle-v2` |
 
 Go pointers become arena ids (`UnitId`, `AuraId`, `SpellId`). The lifecycle callbacks a
 reset runs (`OnInit`, `OnReset`, `OnGain`, `OnExpire`, `OnStacksChange`) are Rust closures
@@ -71,7 +72,9 @@ never runs a fight and the prepared contract lists them.
   with a stable code. Every item and enchant effect Go registers in code is listed in
   `data/go-tables.json`; an equipped one Rust does not implement is refused.
 - **Generated Go is translated, not rewritten.** Go's generated raid buffs come from
-  `tools/rust_buffs.py`, which rereads the pinned files.
+  `tools/rust_buffs.py`, and its generated item and enchant registrations from
+  `tools/rust_item_effects.py`, which reread the pinned files (`check` fails when the committed
+  Rust differs).
 
 ## Validation
 
