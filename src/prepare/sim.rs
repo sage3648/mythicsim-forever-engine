@@ -284,6 +284,8 @@ pub(crate) struct Unit {
     pub character: Option<Box<super::character::Character>>,
     /// Go `HasHealthBar`.
     pub health_bar: bool,
+    /// Go `unit.categoryTimers`: the timer of each spell category, in creation order.
+    pub category_timers: Vec<(i32, TimerId)>,
 }
 
 impl Unit {
@@ -338,6 +340,7 @@ impl Unit {
             spell_registration_handlers: Vec::new(),
             character: None,
             health_bar: false,
+            category_timers: Vec::new(),
         }
     }
 }
@@ -434,6 +437,22 @@ impl Sim {
         let id = TimerId(self.timers.len() - 1);
         self.unit_mut(unit).timers.push(id);
         id
+    }
+
+    /// Go `unit.CategoryTimer` and `Character.GetOrInitSpellCategoryTimer`: the timer every
+    /// spell of the client's spell category shares.
+    pub(crate) fn category_timer(&mut self, unit: UnitId, category: i32) -> TimerId {
+        if let Some((_, timer)) = self
+            .unit(unit)
+            .category_timers
+            .iter()
+            .find(|(id, _)| *id == category)
+        {
+            return *timer;
+        }
+        let timer = self.new_timer(unit);
+        self.unit_mut(unit).category_timers.push((category, timer));
+        timer
     }
 
     // Stats.
