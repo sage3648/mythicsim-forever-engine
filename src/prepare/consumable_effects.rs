@@ -278,37 +278,7 @@ fn goblin_sapper_effect(env: &Environment, unrepresented: &mut Vec<String>) -> V
         "kind": "goblin_sapper", "item_id": GOBLIN_SAPPER_ITEM, "self_tag": 1,
         "min_damage": 450.0, "max_damage": 750.0,
         "aoe_cap_multiplier": aoe_cap_multiplier(env),
-        "self_attack_table": self_attack_table(env, unrepresented),
-    })
-}
-
-/// damage_taken.go `selfAttackTable`: the player's attack table against itself, which a spell
-/// that hits the player rolls on.
-fn self_attack_table(env: &Environment, unrepresented: &mut Vec<String>) -> Value {
-    let player = env.player;
-    let table = env.attack_table(player, player);
-    if table.damage_done_by_caster
-        || env
-            .sim
-            .damage_done_by_caster
-            .contains_key(&(player, player))
-    {
-        unrepresented.push("caster damage callbacks on the player are unsupported".to_string());
-    }
-    // Go reads, in a separate reset simulation, which of the player's dynamic damage taken
-    // modifiers change the sapper's hit. The modifiers are closures Rust does not run, so any
-    // of them is unrepresented.
-    if env.sim.unit(player).dynamic_damage_taken_modifiers > 0 {
-        unrepresented
-            .push("dynamic damage taken modifiers on the player are unsupported".to_string());
-    }
-    json!({
-        "base_spell_miss_chance": table.base_spell_miss_chance,
-        "spell_crit_suppression": table.spell_crit_suppression,
-        "bonus_spell_crit_percent": table.bonus_spell_crit_percent,
-        "crit_multiplier": table.crit_multiplier,
-        "damage_dealt_multiplier": table.damage_dealt_multiplier,
-        "damage_taken_multiplier": table.damage_taken_multiplier,
+        "self_attack_table": crate::prepare::damage_taken::self_attack_table(env, unrepresented),
     })
 }
 

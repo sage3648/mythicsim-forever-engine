@@ -239,6 +239,25 @@ fn source_unit(env: &Environment, reference: Option<&Message>) -> Result<Option<
                 .ok()
                 .and_then(|i| env.encounter.targets.get(i).copied()))
         }
+        // Go `Environment.GetUnit`: a pet of the owner the reference names, by its index.
+        "Pet" => {
+            let index = reference.map_or(0, |r| r.i32("index"));
+            let owner = reference
+                .and_then(|r| r.message("owner"))
+                .map(|owner| (owner.enum_name("type"), owner.i32("index")));
+            let owner_is_player = match owner {
+                Some((kind, _)) if kind == "Self" => true,
+                Some((kind, index)) if kind == "Player" => index == 0,
+                _ => false,
+            };
+            Ok(owner_is_player
+                .then(|| {
+                    usize::try_from(index)
+                        .ok()
+                        .and_then(|i| env.sim.unit(env.player).pets.get(i).copied())
+                })
+                .flatten())
+        }
         _ => Err(()),
     }
 }
@@ -255,6 +274,60 @@ fn aura_known(env: &Environment, config: &Message) -> Option<bool> {
             .iter()
             .any(|aura| env.sim.aura(*aura).action_id.as_ref() == Some(&id))
     }))
+}
+
+/// Go `GetAPLAura(...).Get().MaxStacks`: `Some(None)` for an aura the unit lacks, `None` when
+/// preparation does not follow the reference.
+fn aura_stacks(env: &Environment, config: &Message) -> Option<Option<i32>> {
+    let unit = source_unit(env, config.message("source_unit")).ok()?;
+    let id = proto_to_action_id(config.message("aura_id")?);
+    Some(unit.and_then(|unit| {
+        env.sim
+            .unit(unit)
+            .auras
+            .iter()
+            .find(|aura| env.sim.aura(**aura).action_id.as_ref() == Some(&id))
+            .map(|aura| env.sim.aura(*aura).max_stacks)
+    }))
+}
+
+/// Go `spell.Dot(target)`, following the related dot spell.
+fn spell_dot(env: &Environment, spell: SpellId, target: UnitId) -> bool {
+    let s = env.sim.spell(spell);
+    if s.dots.is_empty() {
+        return s
+            .related_dot_spell
+            .is_some_and(|related| spell_dot(env, related, target));
+    }
+    let index = env.sim.unit(target).unit_index as usize;
+    s.dots.get(index).copied().flatten().is_some()
+}
+
+/// Go `NewDotReference(GetTargetUnit(...), id).Get() != nil`, or `None` when preparation does
+/// not follow the reference.
+fn dot_exists(env: &Environment, config: &Message) -> Option<bool> {
+    let Some(id) = config.message("spell_id") else {
+        return Some(false);
+    };
+    let reference = config.message("target_unit");
+    let kind = reference.map_or_else(|| "Unknown".to_string(), |r| r.enum_name("type"));
+    let target = match kind.as_str() {
+        "Unknown" | "CurrentTarget" => env.sim.unit(env.player).current_target,
+        "Target" => {
+            let index = reference.map_or(0, |r| r.i32("index"));
+            usize::try_from(index)
+                .ok()
+                .and_then(|i| env.encounter.targets.get(i).copied())
+        }
+        _ => return None,
+    };
+    let Some(target) = target else {
+        return Some(false);
+    };
+    let Some(spell) = apl_spell(env, &proto_to_action_id(id)) else {
+        return Some(false);
+    };
+    Some(env.sim.spell(spell).aoe_dot.is_some() || spell_dot(env, spell, target))
 }
 
 /// Go's value constructors, as far as constant folding goes: `newAPLValue` for a condition.
@@ -372,9 +445,40 @@ fn fold(env: &Environment, value: &Message) -> Folds {
             if config.message("aura_id").is_none() {
                 return one(Fold::Nil);
             }
-            match aura_known(env, config) {
-                Some(false) => one(Fold::Const(Ty::Other, true)),
-                _ => Folds::from([Fold::Nil, Fold::Dyn(Ty::Other)]),
+            match aura_stacks(env, config) {
+                Some(None) => one(Fold::Const(Ty::Other, true)),
+                Some(Some(0)) => one(Fold::Nil),
+                Some(Some(_)) => one(Fold::Dyn(Ty::Other)),
+                None => Folds::from([
+                    Fold::Const(Ty::Other, true),
+                    Fold::Nil,
+                    Fold::Dyn(Ty::Other),
+                ]),
+            }
+        }
+        // Values Go always builds.
+        "remaining_time"
+        | "remaining_time_percent"
+        | "current_time"
+        | "current_time_percent"
+        | "number_targets" => one(Fold::Dyn(Ty::Other)),
+        // Nil for a unit without mana.
+        "current_mana_percent" => match source_unit(env, config.message("source_unit")) {
+            Ok(Some(unit)) if env.sim.unit(unit).mana_bar.enabled => one(Fold::Dyn(Ty::Other)),
+            Ok(_) => one(Fold::Nil),
+            Err(()) => unknown(),
+        },
+        // Go `NewDotReference`: nil when the spell has no dot on the target.
+        "dot_is_active" | "dot_remaining_time" | "dot_time_to_next_tick" => {
+            let ty = if kind == "dot_is_active" {
+                Ty::Bool
+            } else {
+                Ty::Other
+            };
+            match dot_exists(env, config) {
+                Some(true) => one(Fold::Dyn(ty)),
+                Some(false) => one(Fold::Nil),
+                None => Folds::from([Fold::Nil, Fold::Dyn(ty)]),
             }
         }
         _ => unknown(),

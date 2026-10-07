@@ -5,6 +5,7 @@ use crate::contracts::request::Message;
 
 use super::agent::PrepAgent;
 use super::attack::{new_attack_table, AttackTable};
+use super::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use super::character::constants::CHARACTER_LEVEL;
 use super::sim::{
     AuraConfig, BuildPhase, EnvState, EventCallbacks, Sim, UnitId, UnitType, NEVER_EXPIRES,
@@ -181,8 +182,11 @@ impl Environment {
             factory,
         };
         if let Some(debuffs) = raid.message("debuffs") {
+            // The agent's constructor may have changed the raid's debuffs.
+            let mut debuffs = debuffs.clone();
+            env.agent.adjust_raid_debuffs(&mut debuffs);
             for (index, target) in env.encounter.targets.clone().into_iter().enumerate() {
-                super::debuffs::apply_debuff_effects(&mut env, target, index, debuffs, raid)?;
+                super::debuffs::apply_debuff_effects(&mut env, target, index, &debuffs, raid)?;
             }
         }
         env.setup_tank_targets(raid, &encounter_options)?;
@@ -367,15 +371,46 @@ impl Environment {
         self.sim.unit_mut(unit).pseudo_stats.parry_haste =
             self.sim.unit(unit).pseudo_stats.can_parry;
         if self.tanking() {
-            return Err(Refusal::new(
-                "tanking",
-                "a player tanking a target is not prepared yet".to_string(),
-            ));
+            self.register_tanking_auras();
         }
         self.finalize_unit(unit);
         self.sim.finalize_major_cooldowns(unit);
         self.finalize_pets();
         Ok(())
+    }
+
+    /// The part of Go `Character.Finalize` for a unit a target swings at: the "Reduced
+    /// avoidance" aura a hardcast holds, and the "Pushback trigger" proc trigger that pushes a
+    /// hardcast back when a hit deals damage. The trigger's condition and handler only run in a
+    /// fight; preparation records the aura's callbacks.
+    fn register_tanking_auras(&mut self) {
+        let unit = self.player;
+        let refresh: super::sim::AuraCallback = Rc::new(|sim: &mut Sim, aura| {
+            let unit = sim.aura(aura).unit;
+            sim.refresh_incapacitate_state(unit);
+        });
+        let aura = self.sim.register_aura(
+            unit,
+            AuraConfig {
+                label: "Reduced avoidance".to_string(),
+                tag: super::incapacitate::REDUCED_AVOIDANCE_AURA_TAG.to_string(),
+                duration: NEVER_EXPIRES,
+                on_gain: Some(Rc::clone(&refresh)),
+                on_expire: Some(refresh),
+                ..Default::default()
+            },
+        );
+        self.sim.character_mut(unit).hardcast_avoidance_aura = Some(aura);
+        self.sim.make_proc_trigger_aura(
+            unit,
+            &ProcTrigger {
+                name: "Pushback trigger".to_string(),
+                callback: CallbackMask::ON_SPELL_HIT_TAKEN,
+                outcome: HitOutcome::LANDED,
+                require_damage_dealt: true,
+                ..ProcTrigger::default()
+            },
+        );
     }
 
     /// Go `Unit.finalize`.

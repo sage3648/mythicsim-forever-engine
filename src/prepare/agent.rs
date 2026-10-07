@@ -41,6 +41,9 @@ pub(crate) trait PrepAgent {
     fn add_raid_buffs(&self, _raid_buffs: &mut Message) {}
     /// Go `Agent.AddPartyBuffs`.
     fn add_party_buffs(&self, _party_buffs: &mut Message) {}
+    /// What the agent's constructor does to the raid's debuffs the request carries (Go's
+    /// `NewWarlock` clears the curse the warlock casts itself), before they are applied.
+    fn adjust_raid_debuffs(&self, _debuffs: &mut Message) {}
     /// Go `Agent.ApplyTalents`.
     fn apply_talents(&mut self, _sim: &mut Sim, _unit: UnitId) {}
     /// Go `Agent.Initialize`.
