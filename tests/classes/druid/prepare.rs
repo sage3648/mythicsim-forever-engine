@@ -60,9 +60,7 @@ fn canonical(value: &Value, out: &mut String) {
 }
 
 /// The engine's own SHA-256, which it keeps private to avoid a dependency.
-#[allow(clippy::duplicate_mod)]
-#[path = "../../../src/contracts/request/sha256.rs"]
-mod sha256;
+use crate::sha256;
 
 fn digest(value: &Value) -> String {
     let mut text = String::new();
@@ -185,15 +183,15 @@ fn a_restoration_druid_is_refused() {
     }
 }
 
-/// A player tanking the target needs the target's swing, which is not prepared yet.
+/// A bear tanking the target is prepared with the target's swing at it; the fixture harness
+/// compares the tanking fixtures with Go.
 #[test]
-fn a_tanking_bear_is_refused() {
+fn a_tanking_bear_is_prepared_with_the_target_swing() {
     let request = fs::read(directory().join("bear.request.json")).unwrap();
     let mut value: Value = serde_json::from_slice(&request).unwrap();
     value["raid"]["tanks"] = serde_json::json!([{"type": "Player", "index": 0}]);
     value["encounter"]["targets"][0]["tankIndex"] = serde_json::json!(0);
-    match forever_engine::prepare_json(&serde_json::to_vec(&value).unwrap(), "x") {
-        Err(forever_engine::PrepareError::Refused(refusal)) => assert_eq!(refusal.code, "tanking"),
-        other => panic!("expected a refusal, got {other:?}"),
-    }
+    let prepared = forever_engine::prepare_json(&serde_json::to_vec(&value).unwrap(), "x")
+        .expect("a tanking bear is prepared");
+    assert!(prepared["enemy"].is_object());
 }

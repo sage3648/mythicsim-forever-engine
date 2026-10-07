@@ -61,9 +61,7 @@ fn canonical(value: &Value, out: &mut String) {
 }
 
 /// The engine's own SHA-256, which it keeps private to avoid a dependency.
-#[allow(clippy::duplicate_mod)]
-#[path = "../../../src/contracts/request/sha256.rs"]
-mod sha256;
+use crate::sha256;
 
 fn digest(value: &Value) -> String {
     let mut text = String::new();
@@ -204,11 +202,14 @@ fn the_justice_battlegear_four_piece_is_refused() {
     assert_eq!(refusal_code(&value), "item_set");
 }
 
-/// A player tanking the target needs the enemy swing, which is not prepared yet.
+/// A Paladin tanking the target is prepared with the target's swing at it; the fixture
+/// harness compares the tanking fixtures with Go.
 #[test]
-fn a_paladin_tanking_the_target_is_refused() {
+fn a_paladin_tanking_the_target_is_prepared_with_its_swing() {
     let mut value = request_value("protection");
     value["raid"]["tanks"] = serde_json::json!([{"type": "Player", "index": 0}]);
     value["encounter"]["targets"][0]["tankIndex"] = serde_json::json!(0);
-    assert_eq!(refusal_code(&value), "tanking");
+    let prepared = forever_engine::prepare_json(&serde_json::to_vec(&value).unwrap(), "x")
+        .expect("a tanking Paladin is prepared");
+    assert!(prepared["enemy"].is_object());
 }
