@@ -1,5 +1,5 @@
 //! Go sim/warrior/items.go: the Warrior's item sets. A bonus function receives the permanent
-//! "<set> <n>P" status aura the bonus attaches to.
+//! `"<set> <n>P"` status aura the bonus attaches to.
 
 use std::cell::Cell;
 use std::rc::Rc;

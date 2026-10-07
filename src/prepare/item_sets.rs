@@ -141,7 +141,7 @@ pub(crate) fn apply_item_set_bonus_effects(env: &mut Environment) -> Result<(), 
     Ok(())
 }
 
-/// Go `makeSetBonusStatusAura` for a bonus active at the start: the permanent "<set> <n>P"
+/// Go `makeSetBonusStatusAura` for a bonus active at the start: the permanent `"<set> <n>P"`
 /// aura of the gear build phase.
 fn make_set_bonus_status_aura(sim: &mut Sim, unit: UnitId, set_name: &str, pieces: i32) -> AuraId {
     sim.register_permanent_gear_aura(unit, format!("{set_name} {pieces}P"))

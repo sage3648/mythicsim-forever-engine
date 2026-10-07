@@ -372,7 +372,7 @@ pub(crate) const E_360: SpellEffectType = 360;
 
 // EffectAuraType, Go dbcenums/auras.go
 /// Enum constants defined using the A_ naming convention. Every id is listed: one with no known name
-/// is A_<id>, and one that is neither named nor read is commented out.
+/// is `A_<id>`, and one that is neither named nor read is commented out.
 pub(crate) const A_NONE: EffectAuraType = 0;
 pub(crate) const A_BIND_SIGHT: EffectAuraType = 1;
 pub(crate) const A_MOD_POSSESS: EffectAuraType = 2;
@@ -1199,7 +1199,7 @@ pub(crate) const FORM_SPIRIT_OF_REDEMPTION: ShapeshiftForm = 32;
 
 // Spell attribute bits, Go dbcenums/attributes.go
 /// Spell attribute flags, named after the Attributes column they live in: ATTR_EX_3 is a flag
-/// in Attributes[3]. Read them through the Spell helpers rather than indexing Attributes.
+/// in `Attributes[3]`. Read them through the Spell helpers rather than indexing Attributes.
 /// The spell is never cast: a stance's passive, a talent that only modifies other spells.
 pub(crate) const ATTR_PASSIVE: u32 = 0x40;
 /// The spell cannot be cast while the caster is in any shapeshift form.

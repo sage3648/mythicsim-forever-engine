@@ -482,7 +482,7 @@ fn pvp_stamina(env: &mut Environment, aura: AuraId) {
 }
 
 /// Go `core.NewItemEffect` in sim/rogue's `init`: Renataki's Charm of Trickery
-/// (https://www.wowhead.com/forever/item=19954/renatakis-charm-of-trickery). Use: instantly
+/// (<https://www.wowhead.com/forever/item=19954/renatakis-charm-of-trickery>). Use: instantly
 /// increases your energy by 60 (24532), 3 minute cooldown, 10 seconds on the burst trinket
 /// category. Answers whether the item is one it registers.
 pub(super) fn apply_item_effect(sim: &mut Sim, unit: UnitId, item: i32) -> bool {
