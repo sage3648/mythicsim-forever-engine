@@ -6,9 +6,7 @@ use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger, PseudoStatField};
 use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::dbcenums;
-use crate::prepare::sim::{
-    AuraConfig, AuraId, Cooldown, EventCallbacks, Sim, UnitId, UnitType, NEVER_EXPIRES,
-};
+use crate::prepare::sim::{AuraConfig, AuraId, Cooldown, Sim, UnitId, UnitType, NEVER_EXPIRES};
 use crate::prepare::spell::{
     school, Cast, CastConfig, CostOptions, DefenseType, ProcMask, SpellConfig, SpellFlag,
     GCD_DEFAULT,
@@ -338,6 +336,7 @@ impl Priest {
         let rank = spell_data().shadowform.highest();
 
         let pre_shadowform = self.pre_shadowform;
+        let form = rank.shapeshift_form();
         let aura = sim.register_aura(
             unit,
             AuraConfig {
@@ -349,10 +348,13 @@ impl Priest {
                         sim.activate(aura);
                     }
                 })),
-                events: EventCallbacks {
-                    on_cast_complete: true,
-                    ..EventCallbacks::default()
-                },
+                // The client's form 28, which Holy Nova's and Chastise's rows exclude.
+                on_gain: Some(Rc::new(move |sim: &mut Sim, _| {
+                    sim.unit_mut(unit).shapeshift_form = form;
+                })),
+                on_expire: Some(Rc::new(move |sim: &mut Sim, _| {
+                    sim.unit_mut(unit).shapeshift_form = 0;
+                })),
                 ..AuraConfig::default()
             },
         );

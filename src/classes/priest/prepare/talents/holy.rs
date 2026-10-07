@@ -75,7 +75,8 @@ impl Priest {
         );
     }
 
-    /// Holy Specialization is new in Forever: +1% critical strike per point on Holy spells.
+    /// Holy Specialization is new in Forever: +1% critical strike per point on Smite, Holy Fire,
+    /// Holy Nova and the Penance bolts. The class mask leaves Chastise out.
     fn apply_holy_specialization(&self, sim: &mut Sim, unit: UnitId) {
         let points = self.talents.i32("holy_specialization");
         if points == 0 {
@@ -84,8 +85,7 @@ impl Priest {
         sim.add_static_mod(
             unit,
             SpellModConfig {
-                class_mask: masks::ALL,
-                school: school::HOLY,
+                class_mask: masks::HOLY_SPELLS,
                 float_value: spell_data().holy_specialization.value_at(points),
                 kind: SpellModType::BonusCritPercent,
                 ..SpellModConfig::default()

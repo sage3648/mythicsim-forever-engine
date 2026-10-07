@@ -6,7 +6,7 @@
 use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::character::{cooldown_type, MajorCooldown};
 use crate::prepare::resolve_aura::dot_config;
-use crate::prepare::resolve_spell::{flags, spell_config};
+use crate::prepare::resolve_spell::{cast_requirement, flags, spell_config};
 use crate::prepare::sim::{AuraConfig, Cooldown, Duration, Sim, TimerId, UnitId, SECOND};
 use crate::prepare::spell::{
     school, Cast, CastConfig, CostOptions, DefenseType, DotConfig, ProcMask, SpellConfig,
@@ -344,14 +344,14 @@ impl Priest {
         );
     }
 
-    /// Penance: three Holy bolts over the channel on a 12 second cooldown; only the level 60
-    /// rank is registered. One bolt lands with the cast and two are channel ticks.
-    pub(super) fn register_penance_spell(&mut self, sim: &mut Sim, unit: UnitId) {
-        let data = spell_data();
-        let rank = data.penance.highest();
-        let bolt = data.penance_triggered.by_id(1316993);
+    /// Penance: three Holy bolts over the channel, on a 12 second cooldown the ranks share
+    /// (category 2414). Every rank is registered. One bolt lands with the cast and two are
+    /// channel ticks.
+    pub(super) fn register_penance_spell(sim: &mut Sim, unit: UnitId, rank: &Row) {
+        // The cast's tooltip names its damage bolt first, then the heal bolt.
+        let bolt = rank.refs()[0];
 
-        let timer = sim.new_timer(unit);
+        let timer = sim.category_timer(unit, i32::from(rank.category));
         sim.register_spell(
             unit,
             SpellConfig {
@@ -372,7 +372,7 @@ impl Priest {
                 threat_multiplier: 1.0,
                 dot: DotConfig {
                     aura: AuraConfig {
-                        label: "Penance".to_string(),
+                        label: format!("Penance-{}", rank.rank_number()),
                         ..AuraConfig::default()
                     },
                     number_of_ticks: PENANCE_TICKS - 1,
@@ -414,6 +414,8 @@ impl Priest {
                 cast: default_cast(rank.gcd(), 0),
                 threat_multiplier: 0.0,
                 bonus_coefficient: rank.damage_effect().coeff(),
+                // Not in Shadowform.
+                cast_requirement: cast_requirement(rank),
                 ..rank_config(rank, masks::HOLY_NOVA, SpellFlag::APL)
             },
         );

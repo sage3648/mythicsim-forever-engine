@@ -38,3 +38,6 @@ pub(crate) const SHADOW_SPELLS: i64 = DEVOURING_PLAGUE
     | MIND_BLAST
     | SHADOWFIEND
     | VAMPIRIC_EMBRACE;
+/// `PriestHolySpells`: the spells Holy Precision and Holy Specialization's class masks name.
+/// Chastise is not in it.
+pub(crate) const HOLY_SPELLS: i64 = SMITE | HOLY_FIRE | HOLY_NOVA | PENANCE;
