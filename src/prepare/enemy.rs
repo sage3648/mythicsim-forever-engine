@@ -713,54 +713,5 @@ pub(crate) fn export_enemy(
     Ok(values)
 }
 
-/// Auras of races, items and raid buffs whose gain and expiry change stats through
-/// `AddStatsDynamic`: melee_procs.go `commonStatAuraLabels`.
-const COMMON_STAT_AURA_LABELS: [&str; 9] = [
-    "Blood Fury",
-    "Elune's Light",
-    "Holy Strength (MH)",
-    "Holy Strength (OH)",
-    "Windfury Totem (External)",
-    "Battle Shout (External)",
-    "Headmaster's Charge",
-    "Crusader's Wrath",
-    "Diamond Flask",
-];
-
-/// STUB for melee_procs.go `characterStatAuras` until the Hunter agent's `stat_auras.rs` lands:
-/// the shared labels the character has, in the exporter's order. The potion, class, spell data
-/// proc, Lion Horn and on-use item labels it also lists are not here yet, so a tank with one of
-/// those is described without that stat aura until the real function replaces this one.
-pub(crate) fn stat_aura_labels_stub(env: &Environment) -> Vec<String> {
-    COMMON_STAT_AURA_LABELS
-        .iter()
-        .filter(|label| env.sim.get_aura(env.player, label).is_some())
-        .map(|label| label.to_string())
-        .collect()
-}
-
-/// STUB for the reader half of melee_procs.go `statAurasEffect` until the Hunter agent's
-/// `stat_auras.rs` lands. The real function builds a reset simulation per combination in mask
-/// order, sets the stat auras of the mask up, reads their stats and calls
-/// [`EnemyCombos::read`] with that simulation; this one does the setting up and the reading.
-pub(crate) fn read_stat_aura_combinations_stub(
-    env: &Environment,
-    labels: &[String],
-    combos: &mut EnemyCombos,
-) -> Result<(), Refusal> {
-    if labels.len() > 10 {
-        return Err(refuse(format!(
-            "{} stat auras exceed the combination limit",
-            labels.len()
-        )));
-    }
-    for mask in 0..1usize << labels.len() {
-        let mut fresh = env.fresh();
-        set_stat_auras(&mut fresh, labels, mask);
-        combos.read(mask, &mut fresh, true)?;
-    }
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests;

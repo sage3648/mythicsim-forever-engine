@@ -9,7 +9,8 @@ use crate::contracts::request::Message;
 
 use super::items::{self, Equipment};
 use super::sim::{
-    AuraConfig, AuraId, BuildPhase, Duration, Sim, SpellId, Unit, UnitId, UnitType, MILLISECOND,
+    AuraConfig, AuraId, BuildPhase, Duration, Sim, SpellId, TimerId, Unit, UnitId, UnitType,
+    MILLISECOND,
 };
 use super::stats::{PseudoStats, Stat, Stats};
 use super::Refusal;
@@ -323,10 +324,16 @@ impl Sim {
         add_character_universal_stat_dependencies(self, id);
 
         if let Some(bonus) = player.message("bonus_stats") {
-            if bonus.has("stats") || bonus.has("pseudo_stats") {
+            // Go: a stats array makes the bonus FromUnitStatsProto, stats and percent pseudo stats.
+            if bonus.has("stats") {
+                let stats = Stats::from_proto_array(&bonus.f64s("stats"))
+                    .add(&items::stats_from_pseudo_stats(&bonus.f64s("pseudo_stats")));
+                self.character_mut(id).bonus_stats = stats;
+            }
+            if bonus.has("pseudo_stats") {
                 return Err(Refusal::new(
                     "bonus_stats",
-                    "bonus stats are unsupported".to_string(),
+                    "bonus pseudo stats are unsupported".to_string(),
                 ));
             }
         }
@@ -574,6 +581,21 @@ impl Sim {
             }
         }
         self.character_mut(unit).initial_major_cooldowns = mcds;
+    }
+
+    /// Go `Character.GetOffensiveTrinketCD`.
+    pub(crate) fn get_offensive_trinket_cd(&mut self, unit: UnitId) -> TimerId {
+        self.category_timer(unit, 1141)
+    }
+
+    /// Go `Character.GetConjuredCD`.
+    pub(crate) fn get_conjured_cd(&mut self, unit: UnitId) -> TimerId {
+        self.category_timer(unit, 30)
+    }
+
+    /// Go `Character.GetPotionCD`.
+    pub(crate) fn get_potion_cd(&mut self, unit: UnitId) -> TimerId {
+        self.category_timer(unit, 4)
     }
 
     /// Go `Character.GetMHWeapon` and friends.

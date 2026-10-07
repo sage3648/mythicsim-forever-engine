@@ -11,7 +11,7 @@ use crate::contracts::request::Message;
 use super::attack::Weapon;
 use super::env::Environment;
 use super::sim::{AuraId, Cooldown, Sim, TimerId, UnitId};
-use super::spell::{CastKind, SpellFlag};
+use super::spell::SpellFlag;
 use super::stats::{PseudoStats, Stat, Stats, SCHOOL_LEN};
 use super::Refusal;
 
@@ -258,10 +258,18 @@ fn export_spell(
     );
     out.insert(
         "cast_kind".into(),
-        json!(match spell.cast_kind {
-            CastKind::Full => "full",
-            CastKind::Simple => "simple",
-            CastKind::AutosOrProcs => "autos_or_procs",
+        // Go reads the final state: a range wraps the extra cast condition after the cast
+        // function is chosen, which the exporter's own test then sees.
+        json!(if !spell.default_cast.is_empty() {
+            "full"
+        } else if !spell.has_extra_cast_condition
+            && spell.cd.timer.is_none()
+            && spell.shared_cd.timer.is_none()
+            && !spell.has_cast_requirement
+        {
+            "autos_or_procs"
+        } else {
+            "simple"
         }),
     );
     out.insert("ignore_haste".into(), json!(spell.ignore_haste));
@@ -645,7 +653,12 @@ fn tail_effects(
     if takes_damage && env.sim.get_aura(player, "Chance of Death").is_some() {
         effects.push(json!({"kind": "chance_of_death", "aura": "Chance of Death"}));
     }
-    effects.extend(super::hit_taken::hit_taken_item_listeners(env, tanking)?);
+    effects.extend(super::export_items::melee_item_listeners(env));
+    effects.extend(super::export_items::hit_taken_item_listeners(
+        env,
+        tanking,
+        unrepresented,
+    ));
     // A class's inert listener of hits the player takes acts once anything hits the player: the
     // target's swings when it tanks the player, or the Goblin Sapper Charge's self hit. Only the
     // listeners vetted for those hits stay inert: without a tank, the listeners of parried,
@@ -756,6 +769,14 @@ pub(crate) fn export(
     let player_message = env.sim.character(env.player).player.clone();
     let target = env.encounter.targets[0];
     let player = env.player;
+    // Go `prepare`: stats against a mob type are the fight's, which prepared v2 does not carry.
+    for (mob_type, bonus) in &env.attack_table(player, target).mob_type_bonus_stats {
+        if !bonus.is_zero() {
+            unrepresented.push(format!(
+                "mob type bonus stats for {mob_type} are unsupported"
+            ));
+        }
+    }
 
     let spells: Vec<super::sim::SpellId> = env.sim.unit(player).spellbook.clone();
     let mut exported_spells: Vec<Value> = spells
@@ -814,14 +835,23 @@ pub(crate) fn export(
     // Go then appends the inert pets, the melee, gear, spell data and energy proc effects and
     // the stat auras effect, in that order; Rust refuses pets and ports the rest in
     // src/prepare/export_items.rs.
+    effects.extend(super::export_items::item_proc_effects(
+        env,
+        &mut unrepresented,
+    ));
     // A tank's swing is read under every stat aura combination too, from the same simulations.
     let tanking = env.tanking();
-    let stat_auras = super::enemy::stat_aura_labels_stub(env);
+    let stat_auras = super::stat_auras::character_stat_auras(env);
     let mut combos = None;
     if tanking && !stat_auras.is_empty() {
-        let mut found = super::enemy::EnemyCombos::new(env, &stat_auras)?;
-        super::enemy::read_stat_aura_combinations_stub(env, &stat_auras, &mut found)?;
-        combos = Some(found);
+        combos = Some(super::enemy::EnemyCombos::new(env, &stat_auras)?);
+    }
+    match combos.as_mut() {
+        Some(combos) => effects.extend(super::stat_auras::stat_auras_effect_reading(
+            env,
+            Some(&mut |mask, fresh, exact| combos.read(mask, fresh, exact)),
+        )?),
+        None => effects.extend(super::stat_auras::stat_auras_effect(env)?),
     }
     let tail = tail_effects(env, &mut unrepresented, &effects)?;
     effects.extend(tail);

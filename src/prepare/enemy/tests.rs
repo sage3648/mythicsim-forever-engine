@@ -7,6 +7,7 @@ use crate::prepare::agent::{ClassSpellName, PrepAgent};
 use crate::prepare::attack::{AutoAttackOptions, Weapon};
 use crate::prepare::aura_helpers::AbsorptionAuraConfig;
 use crate::prepare::sim::{AuraConfig, Sim, UnitType, NEVER_EXPIRES};
+use crate::prepare::stat_auras::{character_stat_auras, stat_auras_effect_reading};
 use std::rc::Rc;
 
 struct FakeAgent {
@@ -238,10 +239,12 @@ fn only_the_auras_that_change_the_swing_are_listed_and_by_how() {
 #[test]
 fn a_stat_aura_is_read_with_and_without_it_and_with_a_hardcast() {
     let env = tank("RaceOrc");
-    let labels = stat_aura_labels_stub(&env);
+    let labels = character_stat_auras(&env);
     assert_eq!(labels, ["Blood Fury"]);
     let mut combos = EnemyCombos::new(&env, &labels).expect("a physical swing");
-    read_stat_aura_combinations_stub(&env, &labels, &mut combos).expect("a physical swing");
+    let mut read =
+        |mask: usize, fresh: &mut Environment, exact: bool| combos.read(mask, fresh, exact);
+    stat_auras_effect_reading(&env, Some(&mut read)).expect("a physical swing");
     assert_eq!(combos.rolls.len(), 2);
     assert_eq!(combos.reduced_rolls.len(), 2);
     assert_eq!(combos.changed, 0);

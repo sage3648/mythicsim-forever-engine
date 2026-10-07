@@ -1,6 +1,13 @@
 //! Mage preparation: Go sim/mage's construction and initialization, and the exporter's Mage
 //! description (tools/oracle-v2/mage.go).
 
+mod export;
+pub(crate) mod items;
+pub(crate) mod masks;
+mod spell_data;
+mod spells;
+mod talents;
+
 use crate::contracts::request::Message;
 use crate::prepare::agent::{fill_talents, ClassSpellName, PrepAgent};
 use crate::prepare::sim::{Sim, UnitId};
@@ -9,42 +16,6 @@ use crate::prepare::Refusal;
 
 /// Go mage.TalentTreeSizes.
 const TALENT_TREE_SIZES: [usize; 3] = [18, 17, 19];
-
-/// Go's Mage class mask bits, from mage.go.
-pub(crate) mod masks {
-    pub const ARCANE_BLAST: i64 = 1 << 1;
-    pub const ARCANE_EXPLOSION: i64 = 1 << 2;
-    pub const ARCANE_POWER: i64 = 1 << 3;
-    pub const ARCANE_MISSILES_CAST: i64 = 1 << 4;
-    pub const ARCANE_MISSILES_TICK: i64 = 1 << 5;
-    pub const BLAST_WAVE: i64 = 1 << 6;
-    pub const BLIZZARD: i64 = 1 << 7;
-    pub const COLD_SNAP: i64 = 1 << 8;
-    pub const CONE_OF_COLD: i64 = 1 << 9;
-    pub const EVOCATION: i64 = 1 << 10;
-    pub const FIRE_BLAST: i64 = 1 << 11;
-    pub const FIREBALL: i64 = 1 << 12;
-    pub const FLAMESTRIKE: i64 = 1 << 13;
-    pub const FLAMESTRIKE_DOT: i64 = 1 << 14;
-    pub const FROST_ARMOR: i64 = 1 << 15;
-    pub const FROSTBOLT: i64 = 1 << 16;
-    pub const FROST_NOVA: i64 = 1 << 17;
-    pub const ICE_BARRIER: i64 = 1 << 18;
-    pub const ICE_BLOCK: i64 = 1 << 19;
-    pub const ICE_LANCE: i64 = 1 << 20;
-    pub const IGNITE: i64 = 1 << 21;
-    pub const MAGE_ARMOR: i64 = 1 << 22;
-    pub const MANA_GEMS: i64 = 1 << 23;
-    pub const MOLTEN_ARMOR: i64 = 1 << 24;
-    pub const PRESENCE_OF_MIND: i64 = 1 << 25;
-    pub const PYROBLAST: i64 = 1 << 26;
-    pub const PYROBLAST_DOT: i64 = 1 << 27;
-    pub const SCORCH: i64 = 1 << 28;
-    pub const MANA_GEM: i64 = 1 << 29;
-    pub const COMBUSTION: i64 = 1 << 30;
-    pub const IMPROVED_BLIZZARD: i64 = 1 << 31;
-    pub const FROSTFIRE_BOLT: i64 = 1 << 32;
-}
 
 /// tools/oracle-v2/mage.go `mageClassSpells`.
 static CLASS_SPELLS: &[ClassSpellName] = &[
@@ -178,9 +149,11 @@ static CLASS_SPELLS: &[ClassSpellName] = &[
     },
 ];
 
-/// Go `Mage`.
+/// Go `Mage`: the talents and the class option the registrations read.
 pub(crate) struct Mage {
     talents: Message,
+    /// Go `Options.DefaultMageArmor`, as the enum's name.
+    default_mage_armor: String,
 }
 
 /// Go `NewMage`.
@@ -189,6 +162,18 @@ pub(crate) fn new_mage(
     unit: UnitId,
     player: &Message,
 ) -> Result<Box<dyn PrepAgent>, Refusal> {
+    // Go reads options.GetMage().Options.ClassOptions, and Initialize reads it without a check.
+    let class_options = player
+        .message("mage")
+        .and_then(|mage| mage.message("options"))
+        .and_then(|options| options.message("class_options"))
+        .ok_or_else(|| {
+            Refusal::new(
+                "class_option",
+                "a mage without its class options".to_string(),
+            )
+        })?;
+    let default_mage_armor = class_options.enum_name("default_mage_armor");
     let talents = fill_talents(
         "proto.MageTalents",
         player.str("talents_string"),
@@ -202,7 +187,11 @@ pub(crate) fn new_mage(
         Stat::PhysicalCritPercent,
         crit_per_agi,
     );
-    Ok(Box::new(Mage { talents }))
+    // Forever has no Water Elemental, so no pet is created.
+    Ok(Box::new(Mage {
+        talents,
+        default_mage_armor,
+    }))
 }
 
 impl PrepAgent for Mage {
@@ -210,7 +199,26 @@ impl PrepAgent for Mage {
         raid_buffs.set_bool("arcane_brilliance", true);
     }
 
-    fn initialize(&mut self, _sim: &mut Sim, _unit: UnitId) {}
+    fn apply_talents(&mut self, sim: &mut Sim, unit: UnitId) {
+        self.apply_mage_talents(sim, unit);
+    }
+
+    /// Go `Mage.Initialize`: the passives, then the spells.
+    fn initialize(&mut self, sim: &mut Sim, unit: UnitId) {
+        self.register_arcane_charges(sim, unit);
+        self.register_spells(sim, unit);
+    }
+
+    /// The mage package's `core.NewItemEffect(19959, ...)`: Hazza'rah's Charm of Magic.
+    fn apply_item_effect(&mut self, sim: &mut Sim, unit: UnitId, item: i32) -> bool {
+        match item {
+            19959 => {
+                items::hazzarahs_charm(sim, unit);
+                true
+            }
+            _ => false,
+        }
+    }
 
     fn talents(&self) -> &Message {
         &self.talents
@@ -218,5 +226,47 @@ impl PrepAgent for Mage {
 
     fn class_spells(&self) -> &'static [ClassSpellName] {
         CLASS_SPELLS
+    }
+
+    fn effects(&self, sim: &Sim, unit: UnitId) -> Vec<serde_json::Value> {
+        export::effects(&self.talents, sim, unit)
+    }
+
+    /// Go `Mage.EurekaSpells`: the fifteen spells the client's Eureka! rows name for cost and
+    /// damage, and the missile tick on the damage list; no spell is in Tick.
+    fn eureka_spells(&self) -> Option<crate::prepare::racials::EurekaSpells> {
+        let cost = masks::ARCANE_BLAST
+            | masks::ARCANE_EXPLOSION
+            | masks::ARCANE_MISSILES_CAST
+            | masks::BLAST_WAVE
+            | masks::BLIZZARD
+            | masks::CONE_OF_COLD
+            | masks::FIRE_BLAST
+            | masks::FIREBALL
+            | masks::FLAMESTRIKE
+            | masks::FROST_NOVA
+            | masks::FROSTBOLT
+            | masks::FROSTFIRE_BOLT
+            | masks::ICE_LANCE
+            | masks::PYROBLAST
+            | masks::SCORCH;
+        Some(crate::prepare::racials::EurekaSpells {
+            cost,
+            damage: cost | masks::ARCANE_MISSILES_TICK,
+            tick: 0,
+        })
+    }
+
+    /// Go `spell.Matches(mage.MageSpellManaGem)`.
+    fn is_mana_gem(&self, sim: &Sim, spell: crate::prepare::sim::SpellId) -> bool {
+        sim.spell(spell).matches(masks::MANA_GEM)
+    }
+
+    fn damage_effect(
+        &self,
+        sim: &Sim,
+        spell: crate::prepare::sim::SpellId,
+    ) -> Option<serde_json::Value> {
+        export::damage_effect(sim, spell)
     }
 }
