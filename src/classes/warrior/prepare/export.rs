@@ -8,9 +8,9 @@ use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::common_effects::SPELL_BATCH_WINDOW;
 use crate::prepare::dbcenums;
 use crate::prepare::env::Environment;
-use crate::prepare::sim::{AuraId, CategoryId, Sim, UnitId, NEVER_EXPIRES, SECOND};
+use crate::prepare::sim::{AuraId, Sim, UnitId, NEVER_EXPIRES, SECOND};
 use crate::prepare::spell::{DefenseType, ProcMask};
-use crate::prepare::spelldata::{Ladder, Spell as Row};
+use crate::prepare::spelldata::Spell as Row;
 use crate::prepare::stats::Stat;
 
 use super::helpers::{action_id_string, spell_action};
@@ -69,8 +69,10 @@ pub(super) fn exclusive_category_effect(
                 "spell_id": aura.action_id.as_ref().map_or(0, |id| id.spell_id)})
         })
         .collect();
-    Some(json!({"kind": "exclusive_category", "unit": side, "category": name,
-        "members": members}))
+    Some(
+        json!({"kind": "exclusive_category", "unit": side, "category": name,
+        "members": members}),
+    )
 }
 
 /// The exporter's `blockedForGood`: whether an aura can never activate, as each of its exclusive
@@ -154,11 +156,6 @@ fn heal_modifiers(env: &Environment, notes: &mut Vec<String>) -> Value {
 }
 
 impl Warrior {
-    /// Go `warriorEffects`, without the effects that read the environment.
-    pub(super) fn warrior_effects(&self, _sim: &Sim, _unit: UnitId) -> Vec<Value> {
-        Vec::new()
-    }
-
     /// The spell a ladder's top rank registered, if the warrior has it.
     fn spell_of(sim: &Sim, unit: UnitId, row: &Row) -> Option<crate::prepare::sim::SpellId> {
         sim.get_spell(unit, &spell_action(row.id))
@@ -174,8 +171,10 @@ impl Warrior {
         let mut effects: Vec<Value> = vec![crate::prepare::rage::rage_bar_effect(sim, unit, 1.0)];
 
         // stances.go: the stance the warrior starts in and each stance's cast and aura.
-        let max_retained_rage =
-            data.tactical_mastery.value_at(1) + data.improved_tactical_mastery.value_at(talent("improved_tactical_mastery"));
+        let max_retained_rage = data.tactical_mastery.value_at(1)
+            + data
+                .improved_tactical_mastery
+                .value_at(talent("improved_tactical_mastery"));
         let mut stances = Vec::new();
         for (row, stance) in [
             (data.battle_stance.highest(), "battle"),
@@ -184,8 +183,10 @@ impl Warrior {
         ] {
             let spell = sim.spell(Self::spell_of(sim, unit, row).expect("stances register"));
             let aura = sim.aura(spell.related_self_buff.expect("a stance has its aura"));
-            stances.push(json!({"spell_id": spell.action_id.spell_id, "stance": stance,
-                "aura": aura.label}));
+            stances.push(
+                json!({"spell_id": spell.action_id.spell_id, "stance": stance,
+                "aura": aura.label}),
+            );
         }
         effects.push(json!({"kind": "warrior_stances",
             "default_stance": stance_name(&self.inputs.default_stance), "stances": stances,
@@ -228,29 +229,35 @@ impl Warrior {
             "rage_threshold": 70.0}));
         // berserker_rage.go: Improved Berserker Rage's rage.
         let berserker_rage = data.berserker_rage.highest();
-        effects.push(json!({"kind": "berserker_rage", "spell_id": berserker_rage.id,
+        effects.push(
+            json!({"kind": "berserker_rage", "spell_id": berserker_rage.id,
             "aura": "Berserker Rage",
             "rage_gain": data.improved_berserker_rage.effect_at(1)
-                .tenths_at(talent("improved_berserker_rage"))}));
+                .tenths_at(talent("improved_berserker_rage"))}),
+        );
         // charge.go: the cast spends no rage, gives rage, triples the warrior's movement speed
         // through its dash aura and runs to 3.5 yards inside the spell's minimum range.
         let charge_row = data.charge.by_id(11578);
         if let Some(charge) = Self::spell_of(sim, unit, charge_row) {
             let charge = sim.spell(charge);
-            effects.push(json!({"kind": "warrior_charge", "spell_id": charge.action_id.spell_id,
+            effects.push(
+                json!({"kind": "warrior_charge", "spell_id": charge.action_id.spell_id,
                 "aura": "Charge",
                 "rage": charge_row.energize_effect().tenths()
                     + data.improved_charge.tenths_at(talent("improved_charge")),
                 "vanguard": self.has_talent("vanguard"), "speed_multiplier": 3.0,
                 "overshoot": 3.5, "min_range": charge.min_range,
-                "no_threat": charge_row.no_threat()}));
+                "no_threat": charge_row.no_threat()}),
+            );
         }
         if self.has_talent("death_wish") {
             let row = data.death_wish.highest();
-            effects.push(json!({"kind": "death_wish", "spell_id": row.id, "aura": "Death Wish",
+            effects.push(
+                json!({"kind": "death_wish", "spell_id": row.id, "aura": "Death Wish",
                 "physical_multiplier":
                     1.0 + row.effect(dbcenums::A_MOD_DAMAGE_PERCENT_DONE, 1).percent(),
-                "wait_ns": crate::prepare::spell::GCD_DEFAULT}));
+                "wait_ns": crate::prepare::spell::GCD_DEFAULT}),
+            );
         }
         // items.go Battlegear of Might 5 piece.
         if let Some(aura) = sim.get_aura(unit, "Battlegear of Might 5P") {
@@ -281,8 +288,10 @@ impl Warrior {
         }
         effects.push(json!({"kind": "player_damage_taken", "auras": damage_taken}));
         // recklessness.go
-        effects.push(json!({"kind": "recklessness", "spell_id": data.recklessness.highest().id,
-            "aura": "Recklessness"}));
+        effects.push(
+            json!({"kind": "recklessness", "spell_id": data.recklessness.highest().id,
+            "aura": "Recklessness"}),
+        );
         // sunder_armor.go: the warrior's own stacks, refused while another aura holds the
         // armor category.
         let target = env.encounter.targets[0];
@@ -294,7 +303,12 @@ impl Warrior {
                     .related_aura_arrays
                     .values()
                     .next()
-                    .and_then(|auras| auras.get(sim.unit(target).unit_index as usize).copied().flatten())
+                    .and_then(|auras| {
+                        auras
+                            .get(sim.unit(target).unit_index as usize)
+                            .copied()
+                            .flatten()
+                    })
             });
         if let Some(sunder) = sunder_label {
             let blocked = blocked_for_good(sim, sunder);
@@ -317,8 +331,7 @@ impl Warrior {
                         let member_label = member["aura"].as_str().unwrap_or("").to_string();
                         if let Some(aura) = sim.get_aura(target, &member_label) {
                             if sim.aura(aura).max_stacks > 0 {
-                                member["per_stack"] =
-                                    json!(stack_bid(env, &member_label, &name));
+                                member["per_stack"] = json!(stack_bid(env, &member_label, &name));
                             }
                         }
                     }
@@ -337,18 +350,22 @@ impl Warrior {
         }
         if talent("unbridled_wrath") > 0 {
             let trigger = data.unbridled_wrath_triggered.highest();
-            effects.push(json!({"kind": "unbridled_wrath", "trigger_aura": "Unbridled Wrath",
+            effects.push(
+                json!({"kind": "unbridled_wrath", "trigger_aura": "Unbridled Wrath",
                 "spell_id": trigger.id,
                 "proc_chance": data.unbridled_wrath.fraction_at(talent("unbridled_wrath")),
                 "rage": trigger.energize_effect().tenths(),
-                "delay_ns": SPELL_BATCH_WINDOW}));
+                "delay_ns": SPELL_BATCH_WINDOW}),
+            );
         }
         if talent("flurry") > 0 {
             let buff = data.flurry_triggered.highest();
-            effects.push(json!({"kind": "warrior_flurry", "trigger_aura": "Flurry - Trigger",
+            effects.push(
+                json!({"kind": "warrior_flurry", "trigger_aura": "Flurry - Trigger",
                 "aura": "Flurry",
                 "melee_speed_multiplier": data.flurry.multiplier_at(talent("flurry")),
-                "charges": i32::from(buff.proc_charges)}));
+                "charges": i32::from(buff.proc_charges)}),
+            );
         }
         if self.has_talent("anger_management") {
             let row = data.anger_management.highest();
@@ -402,8 +419,8 @@ impl Warrior {
         let battle_shout = data.battle_shout.highest();
         if let Some(own) = sim.get_spell(unit, &spell_action(battle_shout.id)) {
             let mut value = buffs::BATTLE_SHOUT.value(0);
-            if self.inputs.use_battle_shout && self.inputs.has_bs_t2 {
-                value += 30.0;
+            if self.inputs.use_battle_shout && self.has_bs_t2.get() {
+                value += super::shouts::BATTLE_SHOUT_T2_BONUS;
             }
             for aura in sim.auras_with_tag(unit, "BattleShout") {
                 let aura = sim.aura(aura);
@@ -447,10 +464,12 @@ impl Warrior {
             "base_damage": slam.damage_effect().average(level),
             "stops_swings": talent("improved_slam") == 0}));
         if talent("bloodthrill") > 0 {
-            effects.push(json!({"kind": "bloodthrill", "trigger_aura": "Bloodthrill - Trigger",
+            effects.push(
+                json!({"kind": "bloodthrill", "trigger_aura": "Bloodthrill - Trigger",
                 "proc_chance": data.bloodthrill.fraction_at(talent("bloodthrill")),
                 "window_ns": data.bloodthrill_triggered.by_id(1289681).duration(),
-                "delay_ns": SPELL_BATCH_WINDOW}));
+                "delay_ns": SPELL_BATCH_WINDOW}),
+            );
         }
         if talent("weaponmaster") > 0 && sim.get_aura(unit, "Weaponmaster (Sword)").is_some() {
             let swords = weapon_types_mask(sim, unit, &["WeaponTypeSword"]);
@@ -483,8 +502,10 @@ impl Warrior {
             "queue_delay_ns": i64::from(self.inputs.queue_delay) * crate::prepare::sim::MILLISECOND,
             "strikes": strikes}));
         // overpower.go: a dodge opens the Overpower window.
-        effects.push(json!({"kind": "overpower_window", "trigger_aura": "Overpower - Trigger",
-            "aura": "Overpower Aura"}));
+        effects.push(
+            json!({"kind": "overpower_window", "trigger_aura": "Overpower - Trigger",
+            "aura": "Overpower Aura"}),
+        );
         effects.extend(self.tank_effects(env, notes));
         effects
     }
@@ -503,8 +524,10 @@ impl Warrior {
         let mut effects = Vec::new();
         let inert = |label: &str, effects: &mut Vec<Value>| {
             if sim.get_aura(unit, label).is_some() {
-                effects.push(json!({"kind": "inert_listener", "unit": "player", "aura": label,
-                    "reason": "acts only on hits the player takes"}));
+                effects.push(
+                    json!({"kind": "inert_listener", "unit": "player", "aura": label,
+                    "reason": "acts only on hits the player takes"}),
+                );
             }
         };
         // revenge.go
@@ -528,7 +551,7 @@ impl Warrior {
         let clap_row = data.thunder_clap.highest();
         if let Some(clap) = Self::spell_of(sim, unit, clap_row) {
             let slow = clap_row.effects[1].base_value();
-            let bonus = 0.0_f64;
+            let bonus = self.thunder_clap_effect_bonus.get();
             let aura = sim
                 .spell(clap)
                 .related_aura_arrays
@@ -570,9 +593,11 @@ impl Warrior {
         }
         // shield_wall.go: a survival cooldown a tank autocasts below 40% health.
         if let Some(aura) = sim.get_aura(unit, "Shield Wall") {
-            effects.push(json!({"kind": "shield_wall", "spell_id": data.shield_wall.highest().id,
+            effects.push(
+                json!({"kind": "shield_wall", "spell_id": data.shield_wall.highest().id,
                 "aura": sim.aura(aura).label, "autocast": !self.dps_spec, "health_percent": 0.4,
-                "can_block": sim.unit(unit).pseudo_stats.can_block}));
+                "can_block": sim.unit(unit).pseudo_stats.can_block}),
+            );
         }
         // retaliation.go
         if let Some(aura) = sim.get_aura(unit, "Retaliation") {
@@ -587,11 +612,13 @@ impl Warrior {
         let mut avoid = Vec::new();
         if self.talent("shield_specialization") > 0 {
             let energize = data.shield_specialization_triggered.highest();
-            avoid.push(json!({"aura": "Shield Specialization", "spell_id": energize.id,
+            avoid.push(
+                json!({"aura": "Shield Specialization", "spell_id": energize.id,
                 "rage": energize.energize_effect().tenths(), "outcomes": ["block"],
                 "needs_block": false,
                 "chance": data.shield_specialization.effect_at(2)
-                    .fraction_at(self.talent("shield_specialization"))}));
+                    .fraction_at(self.talent("shield_specialization"))}),
+            );
         }
         if self.talent("master_of_defense") > 0 {
             let energize = data.master_of_defense_triggered.highest();
@@ -685,6 +712,3 @@ pub(super) fn weapon_types_mask(sim: &Sim, unit: UnitId, types: &[&str]) -> Proc
     }
     mask
 }
-
-#[allow(dead_code)]
-fn unused(_: &Ladder, _: CategoryId) {}

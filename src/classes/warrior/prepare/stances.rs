@@ -102,9 +102,7 @@ impl Warrior {
         sim.attach_multiplicative_pseudo_stat_buff(
             aura,
             PseudoStatField::ThreatMultiplier,
-            passive
-                .effect(dbcenums::A_MOD_THREAT, 127)
-                .multiplier_at(1),
+            passive.effect(dbcenums::A_MOD_THREAT, 127).multiplier_at(1),
         );
         sim.attach_multiplicative_pseudo_stat_buff(
             aura,
@@ -176,9 +174,7 @@ impl Warrior {
         sim.attach_multiplicative_pseudo_stat_buff(
             aura,
             PseudoStatField::ThreatMultiplier,
-            passive
-                .effect(dbcenums::A_MOD_THREAT, 127)
-                .multiplier_at(1),
+            passive.effect(dbcenums::A_MOD_THREAT, 127).multiplier_at(1),
         );
         sim.attach_multiplicative_pseudo_stat_buff(
             aura,

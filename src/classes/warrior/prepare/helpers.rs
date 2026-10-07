@@ -47,18 +47,6 @@ pub(super) fn rage_cost_with_refund(row: &Row) -> CostOptions {
     }
 }
 
-/// `core.CastConfig{DefaultCast: core.Cast{GCD: gcd}, IgnoreHaste: true}`.
-pub(super) fn gcd_cast(gcd: Duration) -> CastConfig {
-    CastConfig {
-        default_cast: Cast {
-            gcd,
-            ..Cast::default()
-        },
-        ignore_haste: true,
-        ..CastConfig::default()
-    }
-}
-
 /// `core.CastConfig{DefaultCast: core.Cast{NonEmpty: true}, IgnoreHaste: ...}`.
 pub(super) fn non_empty_cast(ignore_haste: bool) -> CastConfig {
     CastConfig {
@@ -124,14 +112,6 @@ pub(super) fn aura_array_to_map(sim: &Sim, auras: &AuraArray) -> LabeledAuraArra
         map.insert(sim.aura(*first).label.clone(), auras.clone());
     }
     map
-}
-
-/// Go `AuraArray.Get`.
-pub(super) fn aura_of(auras: &AuraArray, sim: &Sim, target: UnitId) -> Option<AuraId> {
-    auras
-        .get(sim.unit(target).unit_index as usize)
-        .copied()
-        .flatten()
 }
 
 /// Go `Aura.AttachFearImmunity`: the aura re-derives the unit's fear immunity when it is gained

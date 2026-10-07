@@ -4,8 +4,9 @@
 use crate::prepare::buffs;
 use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::dbcenums;
-use crate::prepare::sim::{BuildPhase, Cooldown, Sim, UnitId};
+use crate::prepare::sim::{AuraId, BuildPhase, Cooldown, Sim, UnitId};
 use crate::prepare::spell::{school, DefenseType, ProcMask, SpellConfig, SpellFlag};
+use crate::prepare::stats::Stat;
 
 use super::helpers::*;
 use super::masks;
@@ -17,6 +18,47 @@ use super::Warrior;
 pub(super) const SHOUT_EXPIRATION_THRESHOLD: crate::prepare::sim::Duration =
     3 * crate::prepare::sim::SECOND;
 
+/// Go `buffs.BattleShoutT2Bonus`.
+pub(super) const BATTLE_SHOUT_T2_BONUS: f64 = 30.0;
+
+/// Go `core.AddGeneratedFlatBonus`: a buff that bids for its whole category gains a flat bonus
+/// on top of the value it is worth, in both its bid and its stat.
+fn add_generated_flat_bonus(sim: &mut Sim, aura: AuraId, stat: Stat, base: f64, bonus: f64) {
+    assert!(
+        sim.aura(aura).max_stacks == 0,
+        "a stacking aura re-prices its category effect on every stack: {}",
+        sim.aura(aura).label
+    );
+    for effect in sim.aura(aura).exclusive_effects.clone() {
+        let category = sim.effects[effect.0].category;
+        if sim.categories[category.0].name != sim.aura(aura).tag {
+            continue;
+        }
+        assert!(
+            sim.categories[category.0].single_aura,
+            "a category that holds more than one aura cannot tell a flat bonus when to apply: {}",
+            sim.aura(aura).label
+        );
+        let priority = sim.effects[effect.0].priority;
+        if priority == base + bonus {
+            return;
+        }
+        assert!(
+            priority == base,
+            "{} bids {priority}, which is neither the {base} it is worth nor the {} the bonus makes it",
+            sim.aura(aura).label,
+            base + bonus
+        );
+        sim.effects[effect.0].priority = base + bonus;
+        sim.attach_stat_buff(aura, stat, bonus);
+        return;
+    }
+    panic!(
+        "a flat bonus needs a buff that bids for its whole category: {}",
+        sim.aura(aura).label
+    );
+}
+
 impl Warrior {
     /// Go `registerBattleShout`.
     pub(super) fn register_battle_shout(&self, sim: &mut Sim, unit: UnitId) {
@@ -24,6 +66,9 @@ impl Warrior {
         // A warrior that shouts builds a copy of its own; one that shouts nothing gets the
         // isPlayer=false constructor, whose aura is the party's external copy.
         let casts_own_shout = self.inputs.use_battle_shout;
+        // Three pieces of Battlegear of Wrath add a flat 30 to the shout this warrior makes.
+        let battle_shout_base = buffs::BATTLE_SHOUT.value(0);
+        let shouts_with_the_set = casts_own_shout && self.inputs.has_bs_t2;
         let external_shout = crate::contracts::prepared_v2::ActionId {
             spell_id: rank.id,
             tag: -1,
@@ -42,6 +87,15 @@ impl Warrior {
             let aura = buffs::BATTLE_SHOUT
                 .class_aura(sim, ally, casts_own_shout, 0)
                 .expect("Battle Shout is a buff");
+            if shouts_with_the_set {
+                add_generated_flat_bonus(
+                    sim,
+                    aura,
+                    Stat::AttackPower,
+                    battle_shout_base,
+                    BATTLE_SHOUT_T2_BONUS,
+                );
+            }
             if !party_shout {
                 sim.aura_mut(aura).build_phase = if casts_own_shout {
                     BuildPhase::BUFFS

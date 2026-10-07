@@ -6,6 +6,7 @@ use std::sync::OnceLock;
 use crate::prepare::spelldata::Ladder;
 
 /// Go `generatedSpellData`.
+#[allow(dead_code)]
 pub(super) struct SpellData {
     pub anger_management: Ladder,
     pub anticipation: Ladder,
@@ -139,7 +140,7 @@ pub(super) struct SpellData {
 
 /// Go `spellData`.
 pub(super) fn spell_data() -> &'static SpellData {
-    static DATA: OnceLock<SpellData> = OnceLock::new() ;
+    static DATA: OnceLock<SpellData> = OnceLock::new();
     DATA.get_or_init(|| SpellData {
         anger_management: Ladder::ranked(&[12296]),
         anticipation: Ladder::talent(12297, 5),

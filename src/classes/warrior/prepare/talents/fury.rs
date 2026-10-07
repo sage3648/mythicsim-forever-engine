@@ -1,12 +1,11 @@
 //! Go sim/warrior/talents_fury.go.
 
-use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, PseudoStatField, ProcTrigger};
+use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger, PseudoStatField};
 use crate::prepare::character::cooldown_type;
 use crate::prepare::dbcenums;
 use crate::prepare::sim::{AuraConfig, Sim, UnitId};
 use crate::prepare::spell::{
-    school, CastConfig, DefenseType, DotConfig, ProcMask, SpellConfig, SpellFlag as F,
-    GCD_DEFAULT,
+    school, CastConfig, DotConfig, ProcMask, SpellConfig, SpellFlag as F, GCD_DEFAULT,
 };
 use crate::prepare::spell_mod::{SpellModConfig, SpellModType};
 use crate::prepare::stats::Stat;
@@ -361,7 +360,9 @@ impl Warrior {
         );
         sim.attach_multiplicative_pseudo_stat_buff(
             aura,
-            PseudoStatField::SchoolDamageDealtMultiplier(crate::prepare::stats::SchoolIndex::Physical),
+            PseudoStatField::SchoolDamageDealtMultiplier(
+                crate::prepare::stats::SchoolIndex::Physical,
+            ),
             1.0 + rank
                 .effect(dbcenums::A_MOD_DAMAGE_PERCENT_DONE, 1)
                 .percent(),
@@ -410,6 +411,3 @@ impl Warrior {
         );
     }
 }
-
-#[allow(dead_code)]
-fn unused(_: DefenseType) {}

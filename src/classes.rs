@@ -48,5 +48,6 @@ pub(crate) fn prepare_agent(
 pub(crate) fn item_sets() -> Vec<&'static crate::prepare::item_sets::ItemSet> {
     let mut sets = Vec::new();
     sets.extend(mage::prepare::items::ITEM_SETS);
+    sets.extend(warrior::prepare::items::sets::ITEM_SETS);
     sets
 }

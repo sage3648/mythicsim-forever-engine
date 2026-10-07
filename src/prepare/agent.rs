@@ -110,6 +110,21 @@ pub(crate) trait PrepAgent {
     fn unrepresented(&self, _sim: &Sim, _unit: UnitId) -> Vec<String> {
         Vec::new()
     }
+    /// The agent itself, for a set bonus that reads or changes the class's state, as Go's
+    /// `agent.(WarriorAgent).GetWarrior()` does. A class that has such bonuses returns itself.
+    fn as_any(&self) -> Option<&dyn std::any::Any> {
+        None
+    }
+    /// Go `classItemUseEffects`: the exported effect of an item use the class package registers
+    /// itself, keyed by the item. It is the item loop's last case, after the shared ones.
+    fn class_item_use_effect(
+        &self,
+        _env: &super::env::Environment,
+        _spell: super::sim::SpellId,
+        _item: i32,
+    ) -> Option<serde_json::Value> {
+        None
+    }
     /// Go `classExport.statAuras`: class auras whose gain and expiry change stats through
     /// `AddStatsDynamic`, by label.
     fn stat_auras(&self, _sim: &Sim, _unit: UnitId) -> Vec<String> {

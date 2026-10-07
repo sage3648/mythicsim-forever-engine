@@ -1,19 +1,22 @@
 //! Go sim/warrior/items.go: the item effects the Warrior package registers, and the Warrior's
 //! Eureka! spells (eureka.go).
 
+use serde_json::{json, Value};
+
 use crate::contracts::prepared_v2::ActionId;
-use crate::prepare::character::{cooldown_type, MajorCooldown};
-use crate::prepare::dbcenums;
+use crate::prepare::character::cooldown_type;
+use crate::prepare::common_effects::{action_id_string, active_stats, flat_string};
+use crate::prepare::env::Environment;
 use crate::prepare::racials::EurekaSpells;
-use crate::prepare::sim::{AuraConfig, Cooldown, Duration, Sim, UnitId, SECOND};
-use crate::prepare::spell::{
-    school, Cast, CastConfig, DotConfig, ProcMask, SpellConfig, SpellFlag,
-};
+use crate::prepare::sim::{AuraConfig, Cooldown, Duration, Sim, SpellId, UnitId, SECOND};
+use crate::prepare::spell::{school, CastConfig, DotConfig, ProcMask, SpellConfig, SpellFlag};
 use crate::prepare::spell_mod::{SpellModConfig, SpellModType};
 use crate::prepare::stats::{Stat, Stats};
 
 use super::helpers::spell_action;
 use super::masks;
+
+pub(crate) mod sets;
 
 const MINUTE: Duration = 60 * SECOND;
 
@@ -140,11 +143,19 @@ fn diamond_flask(sim: &mut Sim, unit: UnitId) {
     super::spells::add_cooldown(sim, unit, spell, cooldown_type::DPS);
 }
 
-#[allow(dead_code)]
-fn unused(_: &Cast, _: i32) {
-    let _ = dbcenums::A_DUMMY;
+/// The exporter's `diamondFlaskUse`: the aura's stats while active, and its gain and expiry
+/// lines, which are the stats aura helper's.
+pub(super) fn diamond_flask_use(env: &Environment, spell: SpellId) -> Option<Value> {
+    let unit = env.player;
+    let aura = env.sim.get_aura(unit, "Diamond Flask")?;
+    let aura = env.sim.aura(aura);
+    let mut stats = Stats::default();
+    stats[Stat::Strength] = 20.0;
+    let action = aura.action_id.clone().unwrap_or_default();
+    Some(json!({
+        "kind": "diamond_flask", "item_id": env.sim.spell(spell).action_id.item_id,
+        "aura": aura.label, "active_stats": active_stats(env, &aura.label),
+        "gain_log": format!("Gained {} from {}.", flat_string(&stats), action_id_string(&action)),
+        "expire_log": format!("Lost {} from fading {}.", flat_string(&stats), action_id_string(&action)),
+    }))
 }
-
-/// Item sets: the registry takes them from [`ITEM_SETS`] once the shared registry lands.
-#[allow(dead_code)]
-pub(crate) fn no_sets() {}

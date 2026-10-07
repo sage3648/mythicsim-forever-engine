@@ -5,10 +5,11 @@ use std::rc::Rc;
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use crate::prepare::character::cooldown_type;
 use crate::prepare::dbcenums;
-use crate::prepare::sim::{AuraConfig, Duration, Sim, UnitId, NEVER_EXPIRES, SECOND};
-use crate::prepare::spell::{school, DefenseType, ProcMask, SpellConfig, SpellFlag, SpellFlag as F};
+use crate::prepare::sim::{AuraConfig, Sim, UnitId, NEVER_EXPIRES};
+use crate::prepare::spell::{
+    school, DefenseType, ProcMask, SpellConfig, SpellFlag, SpellFlag as F,
+};
 use crate::prepare::spell_mod::{SpellModConfig, SpellModType};
-use crate::prepare::spelldata;
 
 use super::super::helpers::*;
 use super::super::masks;
@@ -315,8 +316,8 @@ impl Warrior {
             mask
         };
         let crit_mask = types_mask(sim, &["WeaponTypeAxe", "WeaponTypePolearm"]);
-        let armor_ignore_on = types_mask(sim, &["WeaponTypeMace", "WeaponTypeStaff"])
-            .matches(ProcMask::MELEE_MH);
+        let armor_ignore_on =
+            types_mask(sim, &["WeaponTypeMace", "WeaponTypeStaff"]).matches(ProcMask::MELEE_MH);
 
         // The crit goes with the weapon: an axe in one hand crits more with that hand only.
         let crit = data.weaponmaster.effect_at(1).value_at(rank);
@@ -518,9 +519,4 @@ impl Warrior {
         );
         add_cooldown(sim, unit, spell, cooldown_type::DPS);
     }
-}
-
-#[allow(dead_code)]
-fn unused(_: Duration, _: i64, _: &spelldata::Spell) {
-    let _ = SECOND;
 }

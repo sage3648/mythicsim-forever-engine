@@ -5,8 +5,8 @@
 
 use std::rc::Rc;
 
-use crate::prepare::buffs;
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
+use crate::prepare::buffs;
 use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::character::{cooldown_type, MajorCooldown};
 use crate::prepare::dbcenums;
@@ -517,10 +517,7 @@ impl Warrior {
         sim.register_aura(
             unit,
             AuraConfig {
-                label: format!(
-                    "HS/Cleave Queue Aura-{}",
-                    action_id_string(&source_action)
-                ),
+                label: format!("HS/Cleave Queue Aura-{}", action_id_string(&source_action)),
                 action_id: Some(queue_action.clone()),
                 duration: NEVER_EXPIRES,
                 on_reset: Some(noop()),

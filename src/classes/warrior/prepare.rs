@@ -4,7 +4,7 @@
 
 mod export;
 mod helpers;
-mod items;
+pub(crate) mod items;
 pub(crate) mod masks;
 mod shouts;
 mod spell_data;
@@ -12,16 +12,21 @@ mod spells;
 mod stances;
 mod talents;
 
+use std::cell::Cell;
+use std::rc::Rc;
+
 use crate::contracts::request::Message;
 use crate::prepare::agent::{fill_talents, ClassSpellName, PrepAgent};
 use crate::prepare::attack::{AutoAttackOptions, Weapon};
-use crate::prepare::character::constants::{DODGE_RATING_PER_DODGE_PERCENT, MAX_MELEE_RANGE};
+use crate::prepare::character::constants::DODGE_RATING_PER_DODGE_PERCENT;
 use crate::prepare::env::Environment;
 use crate::prepare::rage::RageBarOptions;
 use crate::prepare::sim::{Sim, UnitId};
 use crate::prepare::spell::ProcMask;
 use crate::prepare::stats::Stat;
 use crate::prepare::Refusal;
+
+use crate::prepare::common_effects::DIAMOND_FLASK_ITEM;
 
 /// Go warrior.TalentTreeSizes.
 const TALENT_TREE_SIZES: [usize; 3] = [17, 17, 18];
@@ -224,6 +229,10 @@ pub(crate) struct Warrior {
     inputs: Inputs,
     /// Go `Spec == proto.Spec_SpecDpsWarrior`.
     dps_spec: bool,
+    /// Go `HasBsT2`, which Battlegear of Wrath's 3 piece sets when its aura is gained.
+    has_bs_t2: Rc<Cell<bool>>,
+    /// Go `thunderClapEffectBonus`, which Conqueror's Battlegear's 5 piece raises.
+    thunder_clap_effect_bonus: Rc<Cell<f64>>,
 }
 
 impl Warrior {
@@ -288,18 +297,24 @@ pub(crate) fn new_warrior(
         stance_snapshot: class_options.bool("stance_snapshot"),
         has_bs_t2: class_options.bool("has_bs_t2"),
     };
-    if dps_spec == false && player.message("healing_model").is_some() {
-        return Err(Refusal::new(
-            "healing_model",
-            "healing models are unsupported".to_string(),
-        ));
-    }
     let talents = fill_talents(
         "proto.WarriorTalents",
         player.str("talents_string"),
         TALENT_TREE_SIZES,
     )
     .map_err(|err| Refusal::new("talents", err))?;
+    // Weaponmaster's mace and staff armor ignore raises the attack tables' armor ignore, which
+    // Rust keeps outside the simulation.
+    if talents.i32("weaponmaster") > 0
+        && sim.mh_weapon(unit).is_some_and(|item| {
+            item.weapon_type == "WeaponTypeMace" || item.weapon_type == "WeaponTypeStaff"
+        })
+    {
+        return Err(Refusal::new(
+            "weaponmaster",
+            "Weaponmaster's armor ignore with a mace or staff is not prepared yet".to_string(),
+        ));
+    }
 
     sim.enable_rage_bar(
         unit,
@@ -353,8 +368,9 @@ pub(crate) fn new_warrior(
     // warrior.queuedRealismICD's timer.
     sim.new_timer(unit);
 
-    let _ = MAX_MELEE_RANGE;
     Ok(Box::new(Warrior {
+        has_bs_t2: Rc::new(Cell::new(inputs.has_bs_t2)),
+        thunder_clap_effect_bonus: Rc::new(Cell::new(0.0)),
         talents,
         inputs,
         dps_spec,
@@ -413,8 +429,8 @@ impl PrepAgent for Warrior {
         CLASS_SPELLS
     }
 
-    fn swing_replacement_keeps_swing(&self) -> bool {
-        false
+    fn as_any(&self) -> Option<&dyn std::any::Any> {
+        Some(self)
     }
 
     fn class_effects(&self, env: &Environment, notes: &mut Vec<String>) -> Vec<serde_json::Value> {
@@ -431,10 +447,15 @@ impl PrepAgent for Warrior {
 
     /// The Warrior auras whose gain and expiry change stats through `AddStatsDynamic`.
     fn stat_auras(&self, _sim: &Sim, _unit: UnitId) -> Vec<String> {
-        ["Recklessness", "Berserker Stance", "Battle Shout (Player)", "Last Stand"]
-            .iter()
-            .map(|label| label.to_string())
-            .collect()
+        [
+            "Recklessness",
+            "Berserker Stance",
+            "Battle Shout (Player)",
+            "Last Stand",
+        ]
+        .iter()
+        .map(|label| label.to_string())
+        .collect()
     }
 
     fn eureka_spells(&self) -> Option<crate::prepare::racials::EurekaSpells> {
@@ -444,8 +465,17 @@ impl PrepAgent for Warrior {
     fn apply_item_effect(&mut self, sim: &mut Sim, unit: UnitId, item: i32) -> bool {
         items::apply_item_effect(sim, unit, item)
     }
-}
 
-/// Keeps the environment type in this module's imports for the exporter's helpers.
-#[allow(dead_code)]
-type Env = Environment;
+    /// sim/warrior/items.go registers the Diamond Flask's use with the exporter's class item
+    /// hook.
+    fn class_item_use_effect(
+        &self,
+        env: &Environment,
+        spell: crate::prepare::sim::SpellId,
+        item: i32,
+    ) -> Option<serde_json::Value> {
+        (item == DIAMOND_FLASK_ITEM)
+            .then(|| items::diamond_flask_use(env, spell))
+            .flatten()
+    }
+}
