@@ -60,14 +60,23 @@ fn canonical(value: &Value, out: &mut String) {
     }
 }
 
-/// The engine's own SHA-256, which it keeps private to avoid a dependency.
-#[path = "../../../src/contracts/request/sha256.rs"]
-mod sha256;
+/// FNV-1a over the bytes from one offset basis.
+fn fnv1a(bytes: &[u8], basis: u64) -> u64 {
+    bytes.iter().fold(basis, |hash, byte| {
+        (hash ^ u64::from(*byte)).wrapping_mul(0x0100_0000_01b3)
+    })
+}
 
+/// The goldens' digest, tools/hunter_prepare_goldens.py `digest`: two FNV-1a streams, which only
+/// have to notice a change, not resist one.
 fn digest(value: &Value) -> String {
     let mut text = String::new();
     canonical(value, &mut text);
-    sha256::hex(text.as_bytes())
+    format!(
+        "{:016x}{:016x}",
+        fnv1a(text.as_bytes(), 0xcbf2_9ce4_8422_2325),
+        fnv1a(text.as_bytes(), 0x8422_2325_cbf2_9ce4)
+    )
 }
 
 fn label(section: &str, item: &Value) -> String {

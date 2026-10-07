@@ -17,7 +17,6 @@ Rust's `1.0` agree.
 
 import argparse
 import copy
-import hashlib
 import json
 import struct
 import subprocess
@@ -124,8 +123,18 @@ def canonical(value):
     return "{" + ",".join(f"{canonical(key)}:{canonical(value[key])}" for key in sorted(value)) + "}"
 
 
+def fnv1a(data, basis):
+    h = basis
+    for byte in data:
+        h = ((h ^ byte) * 0x100000001B3) & 0xFFFFFFFFFFFFFFFF
+    return h
+
+
 def digest(value):
-    return hashlib.sha256(canonical(value).encode()).hexdigest()
+    """Two FNV-1a streams, which only have to notice a change, not resist one. The same in
+    tests/classes/hunter/prepare.rs."""
+    data = canonical(value).encode()
+    return f"{fnv1a(data, 0xCBF29CE484222325):016x}{fnv1a(data, 0x84222325CBF29CE4):016x}"
 
 
 def label_spell(spell):
