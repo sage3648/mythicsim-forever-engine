@@ -269,6 +269,8 @@ pub(crate) struct Unit {
     pub categories: Vec<CategoryId>,
     pub spellbook: Vec<SpellId>,
     pub timers: Vec<TimerId>,
+    /// Go `unit.categoryTimers`: the timer a spell category shares, by category.
+    pub category_timers: std::collections::BTreeMap<i32, TimerId>,
     pub cast_speed: f64,
     pub melee_attack_speed: f64,
     pub ranged_attack_speed: f64,
@@ -327,6 +329,7 @@ impl Unit {
             categories: Vec::new(),
             spellbook: Vec::new(),
             timers: Vec::new(),
+            category_timers: std::collections::BTreeMap::new(),
             cast_speed: 0.0,
             melee_attack_speed: 0.0,
             ranged_attack_speed: 0.0,
@@ -446,6 +449,17 @@ impl Sim {
         let id = TimerId(self.timers.len() - 1);
         self.unit_mut(unit).timers.push(id);
         id
+    }
+
+    /// Go `unit.CategoryTimer` and `Character.GetOrInitSpellCategoryTimer`: the timer every
+    /// spell of a client category shares, created on first use.
+    pub(crate) fn category_timer(&mut self, unit: UnitId, category: i32) -> TimerId {
+        if let Some(timer) = self.unit(unit).category_timers.get(&category) {
+            return *timer;
+        }
+        let timer = self.new_timer(unit);
+        self.unit_mut(unit).category_timers.insert(category, timer);
+        timer
     }
 
     // Stats.
