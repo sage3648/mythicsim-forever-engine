@@ -54,12 +54,15 @@ impl Weapon {
             _ => (MIN_RANGED_RANGE, 35.0),
         };
         Weapon {
-            base_damage_min: item.weapon_damage_min
-                + item.enchant.weapon_damage
-                + bonus_dps * item.swing_speed,
-            base_damage_max: item.weapon_damage_max
-                + item.enchant.weapon_damage
-                + bonus_dps * item.swing_speed,
+            // Go fuses the bonus into one multiply-add (attack.go 81, 82).
+            base_damage_min: bonus_dps.mul_add(
+                item.swing_speed,
+                item.weapon_damage_min + item.enchant.weapon_damage,
+            ),
+            base_damage_max: bonus_dps.mul_add(
+                item.swing_speed,
+                item.weapon_damage_max + item.enchant.weapon_damage,
+            ),
             swing_speed: item.swing_speed,
             normalized_swing_speed: normalized,
             attack_power_per_dps: DEFAULT_ATTACK_POWER_PER_DPS,
