@@ -1,0 +1,119 @@
+{
+ "encounter": {
+  "duration": 120,
+  "durationVariation": 15,
+  "executeProportion20": 0.2,
+  "executeProportion25": 0.25,
+  "executeProportion35": 0.35,
+  "executeProportion45": 0.45,
+  "executeProportion90": 0.9,
+  "targets": [
+   {
+    "canCrush": true,
+    "damageSpread": 0.3333,
+    "id": 213336,
+    "level": 63,
+    "minBaseDamage": 3000,
+    "name": "Level 60",
+    "parryHaste": true,
+    "stats": [
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     805,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     3731,
+     0,
+     127393,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0,
+     0
+    ],
+    "swingSpeed": 2
+   }
+  ]
+ },
+ "raid": {
+  "parties": [
+   {
+    "players": [
+     {
+      "class": "ClassShaman",
+      "enhancementShaman": {
+       "options": {
+        "classOptions": {
+         "imbueMh": "NoImbue"
+        },
+        "imbueOh": "NoImbue",
+        "syncType": "Auto"
+       }
+      },
+      "equipment": {
+       "items": [
+        {
+         "id": 21242
+        },
+        {
+         "id": 18828
+        }
+       ]
+      },
+      "name": "enhancement-shaman",
+      "race": "RaceOrc",
+      "reactionTimeMs": 100,
+      "rotation": {
+       "priorityList": [
+        {
+         "action": {
+          "castSpell": {
+           "spellId": {
+            "spellId": 15208
+           }
+          }
+         }
+        }
+       ],
+       "type": "TypeAPL"
+      },
+      "talentsString": "450033102-055030031005102251"
+     }
+    ]
+   }
+  ]
+ },
+ "simOptions": {
+  "debugFirstIteration": true,
+  "iterations": 3000,
+  "randomSeed": "42"
+ }
+}
