@@ -24,8 +24,10 @@ the engine.
 
 ## How it works
 
-1. Go prepares the character. The exporter in `tools/oracle-v2` writes the gear,
-   stats, auras, spells and rotation as a [prepared v2](docs/prepared-v2.md) file.
+1. Rust prepares the character from the application's request: the gear, stats, auras,
+   spells and rotation, as the [prepared v2](docs/prepared-v2.md) state the pinned Go
+   exporter in `tools/oracle-v2` writes ([Rust preparation](docs/rust-preparation.md)).
+   A request it does not cover yet is refused with a code, and the Go exporter prepares it.
 2. The Rust coverage gate reads the file. It refuses any input that it cannot
    simulate exactly, and gives the reasons.
 3. Rust runs the fight. Event order, random numbers and float math follow Go, so the
@@ -59,6 +61,8 @@ copy of the boss swinging at the tank on its own timer; tanks of other classes s
 ## Evidence
 
 - 360 accepted prepared v2 fixtures, 358 of them with Go results, checked by `cargo test`.
+  Rust prepares every one of their requests itself, and each prepared state equals the Go
+  exporter's exactly.
 - 7,922 production variants (race boards, builder starters, gear, buffs, talents,
   class options and presets) and 3,724 random variants compared with Go. None
   differ. Rust refuses 174 of them. The 2 that crashed the Go engine before

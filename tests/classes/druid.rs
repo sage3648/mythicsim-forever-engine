@@ -3,6 +3,8 @@
 //! `mage/prepared_v2.rs`; these tests cover what the gate rejects and what the cat's forms
 //! log.
 
+mod prepare;
+
 use forever_engine::{
     check_prepared, contracts::prepared_v2::PreparedV2, simulate_prepared, PreparedError,
 };

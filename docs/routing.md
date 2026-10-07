@@ -1,9 +1,10 @@
 # Routing requests to Rust
 
 The application worker runs engines as subprocesses. `tools/route.py` is the one
-command it calls to run a request in Rust: it takes a `RaidSimRequest`, prepares it
-with the pinned Go exporter, has one Rust process gate the prepared input with the coverage
-gate and run it when it is supported, and otherwise tells the worker to use Go. It runs from a bundle that
+command it calls to run a request in Rust: it takes a `RaidSimRequest`, has one Rust process
+prepare it, gate the prepared state with the coverage gate and run it when it is supported, and
+otherwise tells the worker to use Go. A request Rust preparation does not cover is prepared by
+the pinned Go exporter instead, and the decision's `preparation` names the provider. It runs from a bundle that
 [`tools/shadow.py build`](shadow-sims.md#build-a-bundle) makes, so the worker needs
 neither Go nor Cargo, only Python 3.
 
@@ -45,36 +46,20 @@ repeated exactly.
 
 ## Cost of a routed job
 
-A routed job runs more than the simulation: Python, the Go exporter's prepare and then one
-Rust process that gates the prepared input and simulates it. The
-[whole-job benchmark](../benchmarks/2026-10-06-whole-jobs-after-cheaper-prepare.json)
-measures the production requests at 3,000 iterations. Rust's iteration loop is about 1.27
-times as fast as Go's and a Rust job peaks at about 100 MB, but a whole routed job takes
-about as long as a Go job: median Go over Rust wall time 1.01, with 14 of the 27 requests
-faster in Rust. Four jobs at a time, Go ran 371 jobs a minute and routed Rust 349.
+Rust now prepares the request itself ([Rust preparation](rust-preparation.md)), so a routed
+job is Python and one Rust process that prepares, gates and simulates; the Go exporter runs
+only after a preparation refusal. The
+[whole-job benchmark](../benchmarks/2026-10-07-whole-jobs-rust-preparation.json) measures the
+42 production requests at 3,000 iterations: Rust prepared all 40 it routed, every one gave
+Go's DPS, the median Go over Rust wall time is 1.15 and a routed job peaks at about 23 MB
+instead of the exporter's 93 MB. Four jobs at a time, routed Rust ran 284 jobs a minute and
+Go 213. The machine was heavily shared during that run, so its absolute times are loose.
 
-What a routed job pays that a Go job does not is Python, about 0.05 s of interpreter start
-and file handling, and the exporter's reset simulation for each stat aura combination (a
-median prepare of 0.12 s, of which about 0.1 s is the exporter's process start, which a Go
-job pays too). The loop's gain, about 0.1 s per job at this size, covers little more than
-that.
-
-Preparing a tank used to cost far more. The exporter read the target's swing from three
-reset simulations for every stat aura combination, and kept all of them in memory, which
-took 1.5 s and 610 MB for a Protection Warrior and made its routed job 2.8 times as long as
-a Go job. It now reads the swing from the simulation the stat auras effect builds for the
-combination, which takes 0.28 s and 105 MB. The Warrior tanks' routed jobs reach 0.88 and 0.90 of
-the Go job's speed, the Paladin tanks' and the Bear's 1.02 to 1.06. Every exported value is
-unchanged. The gate runs inside the Rust process (`sim --gate`), so a routed request starts
-no separate `check` process; a [batch](#batch-jobs) still gates every request first.
-
-Two costs remain that this cannot remove. The exporter's process start is Go package
-initialization, mostly loading the item database, in the pinned reference, which the
-exporter cannot make lazy. A reset simulation cannot be reused across combinations: a
-simulation reset after an aura combination read some values, such as an armor multiplier,
-one unit in the last place away from a new simulation's. Only an exporter that stays
-running between jobs, or Phase 6, which removes the Go exporter from the path, saves the
-process start for a routed job.
+Rust's prepare takes 15 to 50 ms for most builds. The Warrior, Protection Paladin, Bear and
+Enhancement Shaman builds still take 0.1 to 0.35 s, because preparation builds a reset
+simulation for every stat aura combination, as Go's exporter does
+([the earlier record](../benchmarks/2026-10-06-whole-jobs-after-cheaper-prepare.json) explains
+why one simulation cannot serve several combinations).
 
 ## Batch jobs
 

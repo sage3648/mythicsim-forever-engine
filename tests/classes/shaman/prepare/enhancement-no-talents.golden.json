@@ -1,0 +1,431 @@
+{
+ "case": "enhancement-no-talents",
+ "request_sha256": "0f9d3e8be01a2ec6880cf32d7d3a7f3be15b1aa834f3efdfcafe8d478da12f0c",
+ "sections": {
+  "effects": [
+   [
+    "lightning_bolt",
+    "6686e203a469c608c0f96bde6e83505c3ff3511213189171fa8f840213d72a90"
+   ],
+   [
+    "chain_lightning",
+    "7d1994cc62717743bc50b0ebd6d8771c1a914bafac3830377baa71a192055f93"
+   ],
+   [
+    "flame_shock",
+    "6a47be6d83569a7bc76dd812be539257254babfa9cef5a2e4aeafac2e740792d"
+   ],
+   [
+    "fire_nova",
+    "e995a5c714a544e216374ca059014abef1c3407a2e151cca7c071ce79b0c3f61"
+   ],
+   [
+    "searing_totem",
+    "34da5bb2cc886af580eee124a07b577fb5012b83e4a246e0affaf71195261d55"
+   ],
+   [
+    "earth_shock",
+    "a603f678401484ddfb3f89027a5d1bb6541d79610043e0031aea85814806e1f6"
+   ],
+   [
+    "frost_shock",
+    "e7f4688fea0fc5185a60ed60c61488d87e49814a7c661568c27c35bf17c9efa6"
+   ],
+   [
+    "flametongue_weapon",
+    "6de0457e53bc1d6a1b185da6ec8931e0dfc5a8d98f1d6061906d9cda00945115"
+   ],
+   [
+    "windfury_weapon",
+    "e23e8fbda682efd1c5188da4fdfe787999a38d625ba6e1be720a1a82a9c872eb"
+   ],
+   [
+    "magma_totem",
+    "188e4dc780c79357086c89d8c35ac5111d5d06a3f33dae35125dddce496cabc0"
+   ],
+   [
+    "lightning_shield",
+    "3b8a08123303cd412db847cc392e418faf946cdc8650cf914a430b7a7384bbda"
+   ],
+   [
+    "grace_of_air_totem",
+    "79d84628ebd51da24efebe26fe1f68afba815a88a89422d6d3ad76922e81593f"
+   ],
+   [
+    "windfury_totem_self",
+    "4fe4e39413484b3170968b323d02fa946bfc38308fb7d6a2d6dfaefa27a815d2"
+   ],
+   [
+    "mana_spring_totem",
+    "93d21b6b198b690fdecdd7ec6ef9a491d531ef6761a949be9e5831fd21c5c4a0"
+   ],
+   [
+    "flametongue_totem",
+    "15bc8cb263f72d41c7d5d71306e829f9b88619b202f75175e652f52964a6ea1b"
+   ],
+   [
+    "strength_of_earth_totem",
+    "799c995980f031f6a7a039318af9b7860966cbf2391b56367625b81506fe79cc"
+   ],
+   [
+    "weapon_sync",
+    "e2e742990856517ea70a6aab1b7eba96d066a2e5b1803b18a3605c1807784190"
+   ],
+   [
+    "blood_fury",
+    "1dbfced26ba45f5266a9791eed2893c89411ebed2da51c997f6ef54d24dd91a0"
+   ],
+   [
+    "shatter_curse",
+    "08631cb0cf27f2298a80ecbd9ad345d17c21cb580c1e53d673b5d62139c25d98"
+   ],
+   [
+    "stat_auras",
+    "38ded47aedf9bcaa0c46be5c43d12a9e9e08619ee7ec969e910e6fd8d85d1d94"
+   ],
+   [
+    "inert_listener",
+    "f72fb35c4209bb4ef4355c00adaa2a7dabf800f539122ffe6e3ff85837ca23c5"
+   ],
+   [
+    "parry_haste",
+    "722941b3a50811cb60dbfd575e410f766b07fd32ae37c1dc4b47e2b97143d2f8"
+   ]
+  ],
+  "encounter": "9ae260208e9b12b375a8beef0e5f712edcc3d89cffcc0a73c67f34f40bd05c3b",
+  "melee": "5db9a2d18713411bea6b3c19f84447ccae39ce2f00160a8f2519b8243d23df23",
+  "player.auras": [
+   [
+    "Chance of Death",
+    "d7a42e06cb71727fd78711ab238d7653998c51669f920fbb99c5c04dfe1287af"
+   ],
+   [
+    "Axe Specialization",
+    "c1def6570db3db6a6755d72ae341eec787b6f46fd7f2fd91bc5c24acbc83305a"
+   ],
+   [
+    "Blood Fury",
+    "24b972014e31958c2b696aa21165037a6e092529f214a78a6a32fc82aab75ef1"
+   ],
+   [
+    "Shatter Curse",
+    "96a04dd2f2698a76c6342fc909ced7a392dc3da2202f398088323458803542aa"
+   ],
+   [
+    "Lightning Shield",
+    "77877b0b68736044c2ac7cd48424748ed7c40f7650ed9081f173bfbf1e34210f"
+   ],
+   [
+    "Magma Totem",
+    "4114908c953554de53d229fb86da36d647c139f618a48941a5fc40921c239fb4"
+   ],
+   [
+    "Flametongue Totem Trigger",
+    "a97e258b88941dc5231ad799d43567b6e91bcf5c3ce8cde842ec64ceee55be77"
+   ],
+   [
+    "Flametongue Totem (Self)",
+    "fdc3dda44ab4b8e0097f0605fa5b52228e0e5366220ca61a8ce45d67fc2b36c7"
+   ],
+   [
+    "Windfury Totem Proc (Self)",
+    "3854ee6b991928a73969d32e623171c10b68e3d50958fe401104109a492847db"
+   ],
+   [
+    "Windfury Totem Trigger (Self)",
+    "ca2b10d94ded5f501de309714fc272330fd7b9d1b36e63ede9bf7cdb58e17d0f"
+   ],
+   [
+    "Windfury Dummy Aura (self)",
+    "e86291168087a7fa1c81eb894eb1285070155ef18761f131dbf8a013aec1763e"
+   ],
+   [
+    "Windfury Party Weapon Buff Tracking Aura",
+    "9e79a493eaa3939c9950802b79fded52cae6251f7b97177e84f23d018ddfd8f3"
+   ],
+   [
+    "Windfury Totem (Self)",
+    "cc487d6dc123c8762a9568d33844bb4aedf93906ae8aff5930df4a396af41c04"
+   ],
+   [
+    "Strength Of Earth Totem (Self)",
+    "70513d8f246a68a6ae070bbe4d30fd7e0af3a7abe42ef1c6869180c10f751650"
+   ],
+   [
+    "Grace Of Air Totem (Self)",
+    "d5b7081933c73f936f992b251461e590e0fbfaa683a4aabcb9f3afbfaad4fbea"
+   ],
+   [
+    "Mana Spring Totem (Self)",
+    "d54c6e1d1a3b2e70d95364a93f7f12e9025d65ae21f54123066c907ff117f2f6"
+   ],
+   [
+    "Flametongue Imbue ItemSlotOffHand",
+    "7942bbb696967478a1f44cfebb9da1e8c4796e78fec8706d96c2d5bef521ee41"
+   ],
+   [
+    "Windfury Imbue",
+    "610b8b0e791e8540ef09969ba8016cb967f64f2a31b2f7efa73e7c90cda6a755"
+   ],
+   [
+    "Movement",
+    "13ca1fe70ba88f74e2fe90a8ccc46c1931bc211e8e1ecf1ad198a224713fb4c3"
+   ]
+  ],
+  "player.major_cooldowns": [
+   [
+    "{\"spell_id\": 20572}",
+    "96bddab944700d6cd36dd9306ca0ae5b862d4ada924474a95f03e2dcb58594eb"
+   ],
+   [
+    "{\"spell_id\": 1299026}",
+    "fa905ca6bc2916e7d8306a0cd68befcbf1f3de7c6f9240dd0c09be556c0624a6"
+   ]
+  ],
+  "player.mana": "1e11401cdfe5e33c934661ebc9f0fefee621f3c398442850abfacfe0119e8d48",
+  "player.pseudo_stats": "bfabb073aef1fd9f3ac5b3c285d02dba8a94437a8e22ee52b736f74a2e65101f",
+  "player.spells": [
+   [
+    "{\"other_id\": \"OtherActionManaGain\"}",
+    "162525ce50e2c1fdfb133896acf35d224c6c22325cbd6ed1412d0f385d07e743"
+   ],
+   [
+    "{\"spell_id\": 20572}",
+    "e9677a18bc436f7e7da79045d681ec6ece6c6e2902ad2a096557efd39b74651c"
+   ],
+   [
+    "{\"spell_id\": 1299026}",
+    "964c04f25a089c5d0f5c45d90733074868ad77f2bd6f7fcba895d72c6698629a"
+   ],
+   [
+    "{\"spell_id\": 421}",
+    "7a2db0e8ed0b6be46520bc131500cb5f573815c9f2c03d549e7bd669fdf877f3"
+   ],
+   [
+    "{\"spell_id\": 421, \"tag\": 6}",
+    "fd5be88ee55f224db23e8a8efbad5f8f5f5c8d606aee029faa6338be9650ae5c"
+   ],
+   [
+    "{\"spell_id\": 930}",
+    "e6566fa893e987c196fa95fcec639e08bbb1a6cb43f4e9de740c54a9354071eb"
+   ],
+   [
+    "{\"spell_id\": 930, \"tag\": 6}",
+    "39ee3612353b0fe4b393334ab5e3a7c781cb3683c00229993439eafa8fa71553"
+   ],
+   [
+    "{\"spell_id\": 2860}",
+    "43a5fe7b1e383f91df0a5153e12fe16e4d7e70b81df9d6e8135f2e311c36d0a0"
+   ],
+   [
+    "{\"spell_id\": 2860, \"tag\": 6}",
+    "269737d104e3f7e25806c988fb9dc0cc1f1ab1e8a6e4c74c54bc816a0cfcfb64"
+   ],
+   [
+    "{\"spell_id\": 10605}",
+    "1a02da9dc18e0ff4c42ccd6feb6dae35dbc732d4c3a493ee565be263d3ed6f73"
+   ],
+   [
+    "{\"spell_id\": 10605, \"tag\": 6}",
+    "eced2c819810cd44dbb5c12cb93bb6fa85fe917b99d76edcd6335ac96420db9e"
+   ],
+   [
+    "{\"spell_id\": 403}",
+    "536bdf1eea8e46167506cae670c824a91b9193bc6b1a105e5f189e4ace72c724"
+   ],
+   [
+    "{\"spell_id\": 403, \"tag\": 6}",
+    "4f9bf919552a62fe667b568fa91897e08cdc1f40f073ce3a45a1a6ff8e868abf"
+   ],
+   [
+    "{\"spell_id\": 529}",
+    "7d541a514f7a9682af1df80e51159cea25be54288285b745915c1be9839395b6"
+   ],
+   [
+    "{\"spell_id\": 529, \"tag\": 6}",
+    "b47c9b4275562668c8a4bd00b735f68a8fa8b4454cbf669f7324b24438cc1467"
+   ],
+   [
+    "{\"spell_id\": 548}",
+    "620d199f071ee531c89a73cbb04cd9186a7917b94be115c42affa95c1f690bf0"
+   ],
+   [
+    "{\"spell_id\": 548, \"tag\": 6}",
+    "011d3c36ce0b7027401246e68d678c553b6c06f2fa82ade47d80ad373de33cb2"
+   ],
+   [
+    "{\"spell_id\": 915}",
+    "93ec8c2ba9a35ebb408d91d037dcd812560db0ae4f9156dbb0d4524ad3a852a8"
+   ],
+   [
+    "{\"spell_id\": 915, \"tag\": 6}",
+    "48d079e3e9e5fbb712e7ee036050c15b730ea6b26128dceedbf80b66f609baa1"
+   ],
+   [
+    "{\"spell_id\": 943}",
+    "863c9beb988630db613342c38a77002a952a31def69622349fd33387fdec924e"
+   ],
+   [
+    "{\"spell_id\": 943, \"tag\": 6}",
+    "d157b564955c0f1c7546f66704222bbc5368c02132c148adca1a5c2698c3a396"
+   ],
+   [
+    "{\"spell_id\": 6041}",
+    "a0feee61ddcc566c11b93e64dd08ea2ad6fef73ba0ab108bde1d9cb8096a0c11"
+   ],
+   [
+    "{\"spell_id\": 6041, \"tag\": 6}",
+    "1ad08d7749daa50be73f9761c691e5d663cf5dabc760f0a4763a8c05e6b8538c"
+   ],
+   [
+    "{\"spell_id\": 10391}",
+    "359599b6d371094c42ebb41d20576cdfb9631382a9ffc86bb753ebad311a3e62"
+   ],
+   [
+    "{\"spell_id\": 10391, \"tag\": 6}",
+    "1601cbacf13c6d4420de69cee38eb65ffd2d31521b54d714df29a5a1c4735df5"
+   ],
+   [
+    "{\"spell_id\": 10392}",
+    "aec034d3e33d669e277749c2af5163912ccdbe088f1fd1e41182bf4f2fc6cccc"
+   ],
+   [
+    "{\"spell_id\": 10392, \"tag\": 6}",
+    "62b6cd131ca17c0f2d9ab9fe372f925e4e7db8a1a65f1f471937c5e32dbd97da"
+   ],
+   [
+    "{\"spell_id\": 15207}",
+    "3b769f4cf729882af8ae6d640fa12716c9d37b70031f4be8b6f40e20c17b133f"
+   ],
+   [
+    "{\"spell_id\": 15207, \"tag\": 6}",
+    "6fe58e8b7f52e5971d3357cf0d1d0548d97ceeac27a566ea10c46418e0a7bb39"
+   ],
+   [
+    "{\"spell_id\": 15208}",
+    "00c5003df29c902c72f481d3b10ac57e5659bd134448ae3ccf04a0f81f01d086"
+   ],
+   [
+    "{\"spell_id\": 15208, \"tag\": 6}",
+    "7190a509b47f1824bae40923173cabf428cf3570242402387051aaa7057290bf"
+   ],
+   [
+    "{\"spell_id\": 26363}",
+    "7347c8748d02638de78ad0291096a57b8503c697943bebb4cd84b0fc8cfd8483"
+   ],
+   [
+    "{\"spell_id\": 10432}",
+    "ae0297f88e9980f3346666b80c26121285108136076270cc6f5957a71436ac8d"
+   ],
+   [
+    "null",
+    "aa719cba14f6f20540e97aef712690f10fe0f3d99bc71bc7d5598ecd836db653"
+   ],
+   [
+    "{\"spell_id\": 10587}",
+    "532b30d518873268a31d2e82c37907240e00e4efebeeccdb442de4952d62d714"
+   ],
+   [
+    "{\"spell_id\": 10436}",
+    "084f095245c79a1f4367331126f2cd984f904687a316c87a6663b9624324e09b"
+   ],
+   [
+    "{\"spell_id\": 10438}",
+    "f9904c533c784997ad07d861d15fbf60b5b36f61c171861d09a09893b266abbe"
+   ],
+   [
+    "{\"spell_id\": 16389}",
+    "697629c0ac5742b0b888177a2e6c5a0c964baf73a55e449e672f264d7b1f2a8f"
+   ],
+   [
+    "{\"spell_id\": 16387}",
+    "67e5ccded67c55b5ecee2d590dfe9ebc2fb4faed7ded3f4adef394529f10dc24"
+   ],
+   [
+    "{\"spell_id\": 408345}",
+    "673903b56cbc2f04cd7da9ab1b051d0d20c0997db9065b100f3ad3ae4380bc77"
+   ],
+   [
+    "{\"spell_id\": 10614}",
+    "75a42fd406a2a9fdd29980651ee8e602defb62210c439335ae2753a2c9880138"
+   ],
+   [
+    "{\"spell_id\": 25361}",
+    "a4d1b665fbaafa5834367204b630e4c6397f4faa32309c811e7c10d7b96fc98e"
+   ],
+   [
+    "{\"spell_id\": 25359}",
+    "3cf454eb62f710d0123937eb7f1dfcda6e616bbf43b057e886fbec203ea0cea6"
+   ],
+   [
+    "{\"spell_id\": 10497}",
+    "ffb884e6a9f6785626178407a6c64fed6ba301dc43f648cc00eae00e086ac749"
+   ],
+   [
+    "{\"spell_id\": 10414}",
+    "6f6984aabfc88a95d225103fbad2a405b39f937ad30cff543fb158ddd26eca60"
+   ],
+   [
+    "{\"spell_id\": 29228}",
+    "b7bf174e9aea66b81fa91c3c7c1b60a7cb56a98277b79d33602976ff9aa08d1c"
+   ],
+   [
+    "{\"spell_id\": 29228, \"tag\": 1}",
+    "dd23d449f46a54fa7c7b3ab080a3c0d187e3bad06316fac6b6455ff19c07a006"
+   ],
+   [
+    "{\"spell_id\": 10473}",
+    "69c08a114e96e5d9e27cc5bc4bedf192a27403c44586f2bc13e086cc2b3ccebf"
+   ],
+   [
+    "{\"spell_id\": 16344}",
+    "18fbb78d7568979c2aed4cca687881ea45dce33a15c067709047e5311827076a"
+   ],
+   [
+    "{\"spell_id\": 439440}",
+    "ef11a47ca0b6db35db7edd08af11201a16637f05f6ccf6c2df633ef7c1a39603"
+   ],
+   [
+    "{\"spell_id\": 439441}",
+    "32984309b2c187a40e0556f4bf10d7678443587647e72ea1a4f4317cb24e89a0"
+   ],
+   [
+    "{\"other_id\": \"OtherActionMove\"}",
+    "08b9f95ec698c9a0ff7453dd8db39f4a9b4593cced26fb980de3087a23b2054f"
+   ],
+   [
+    "{\"other_id\": \"OtherActionAttack\", \"tag\": 1}",
+    "3306e3f65ccc1cacc94335c507f1b3fe46cd886d9ef7befa2c27a5941b84f624"
+   ],
+   [
+    "{\"other_id\": \"OtherActionAttack\", \"tag\": 2}",
+    "d25e15a6e1970eadacc7f3cf825d9f11f96aea5464261aa194d22ce28fa23c94"
+   ],
+   [
+    "{\"other_id\": \"OtherActionAttack\", \"tag\": 10610}",
+    "ffd4bd5734b792621f498569aeed550d25fdf3563c6f030b76d472b9b295fd50"
+   ]
+  ],
+  "player.stats": "e1942dcfcd5d0ea12621edaee62fb15794665cfe8b988f9a42abece39136c41f",
+  "player.talents": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+  "target.auras": [
+   [
+    "Searing Totem-1",
+    "24b5929a87cc791185cc829c9c3591545d50c216f0805c35bddbf15b39def543"
+   ],
+   [
+    "Flame Shock-1",
+    "0c2b8f3bb0900b13cbc540037d71ad4e49cc42b0c74d7fc5daa3e0acd0e6e7fa"
+   ],
+   [
+    "Parry Haste",
+    "44437011897bce69a898f0e70684c5bf83d8cba224b6ad2e4f89cb84555a0eae"
+   ],
+   [
+    "Movement",
+    "13ca1fe70ba88f74e2fe90a8ccc46c1931bc211e8e1ecf1ad198a224713fb4c3"
+   ]
+  ],
+  "unrepresented": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+ }
+}

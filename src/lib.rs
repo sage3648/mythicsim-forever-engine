@@ -11,8 +11,12 @@ pub mod report;
 
 mod classes;
 mod core;
+#[allow(dead_code)]
+mod data;
 mod engine;
 mod mechanics;
+#[allow(dead_code)]
+mod prepare;
 mod rotation;
 
 pub use classes::mage::spells::frostbolt::hit_chance;
@@ -24,6 +28,7 @@ pub use engine::prepared::{
     CLIENT_BUILD, REFUSAL_CODES,
 };
 pub use engine::simulate;
+pub use prepare::{prepare, prepare_json, PrepareError, Refusal as PrepareRefusal};
 
 /// Prepared v2 effect kinds this engine executes. The release manifest must agree.
 pub fn implemented_prepared_effects() -> &'static [&'static str] {

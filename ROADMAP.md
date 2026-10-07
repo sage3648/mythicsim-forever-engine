@@ -39,6 +39,11 @@ Milestones advance on evidence, not promised delivery dates. The
   [`tools/route.py`](docs/routing.md) for one request or a whole batch job in one engine,
   determinism across worker counts and processes, interrupted runs that leave no partial
   result, and the [release and rollback process](docs/release.md).
+- [Rust preparation](docs/rust-preparation.md): the engine builds every class's character
+  from the application's request itself, as the pinned Go engine constructs it, and writes
+  the same prepared state as the exporter. All 360 accepted fixtures prepare in Rust and
+  equal the exporter's state exactly; a request it does not cover is refused with a code and
+  the exporter prepares it, so routed jobs no longer start the Go exporter.
 - [Shadow sims](docs/shadow-sims.md) on real MythicSim traffic: no mismatch with the
   pinned Go engine since they started.
 
@@ -75,5 +80,5 @@ is one complete Frost build using Go preparation and Rust combat execution, with
 the required production result fields. It does not imply general Mage coverage.
 
 The [first contribution pieces](docs/hybrid-migration-plan.md#first-contribution-sized-pieces)
-provide a reviewable backlog. Routing in production, general preparation in Rust and
+provide a reviewable backlog. Routing in production and
 upstream sync automation are not implemented yet.

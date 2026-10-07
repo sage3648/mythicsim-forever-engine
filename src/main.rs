@@ -1,7 +1,7 @@
 use forever_engine::{
-    contracts::prepared_v2::PreparedV2, prepared_refusals, simulate, simulate_prepared,
-    simulate_prepared_gated, validate_prepared, Gated, PreparedError, Refusal, Request,
-    SOURCE_REVISION,
+    contracts::prepared_v2::PreparedV2, prepare_json, prepared_refusals, simulate,
+    simulate_prepared, simulate_prepared_gated, validate_prepared, Gated, PrepareError,
+    PreparedError, Refusal, Request, SOURCE_REVISION,
 };
 use serde::Deserialize;
 use std::{
@@ -73,6 +73,41 @@ struct Failure {
 const EXIT_REFUSED: i32 = 3;
 /// The exit status of `sim --gate` when the prepared input fails validation.
 const EXIT_REJECTED: i32 = 4;
+/// The exit status of `prepare` and `sim --request` when Rust preparation does not cover the
+/// request: the refusal is on standard output and Go can prepare the request instead.
+const EXIT_NOT_PREPARED: i32 = 5;
+
+/// Prepares a request in Rust, or ends with `EXIT_NOT_PREPARED` and the refusal on standard
+/// output. A request Rust cannot read is refused too: Go reads protojson itself and decides.
+///
+/// A panic inside preparation is reported the same way, with the code `prepare_fault`, so a
+/// defect in Rust preparation sends the request to Go rather than failing it.
+fn prepare_request(request: &[u8], scenario: &str) -> Result<serde_json::Value, Failure> {
+    let prepared =
+        std::panic::catch_unwind(|| prepare_json(request, scenario)).unwrap_or_else(|panic| {
+            let reason = panic
+                .downcast_ref::<String>()
+                .cloned()
+                .or_else(|| panic.downcast_ref::<&str>().map(|text| text.to_string()))
+                .unwrap_or_else(|| "preparation panicked".to_string());
+            Err(PrepareError::Fault(reason))
+        });
+    prepared.map_err(|err| {
+        let (code, reason) = match &err {
+            PrepareError::Refused(refusal) => (refusal.code.to_string(), refusal.reason.clone()),
+            PrepareError::Invalid(reason) => ("request".to_string(), reason.clone()),
+            PrepareError::Fault(reason) => ("prepare_fault".to_string(), reason.clone()),
+        };
+        println!(
+            "{}",
+            serde_json::json!({"prepared": false, "refusal": {"code": code, "reason": reason}})
+        );
+        Failure {
+            status: EXIT_NOT_PREPARED,
+            message: None,
+        }
+    })
+}
 
 impl From<String> for Failure {
     fn from(message: String) -> Self {
@@ -114,7 +149,7 @@ fn run() -> Result<(), Failure> {
         return Ok(());
     }
     if args.is_empty() || args == ["--help"] {
-        println!("forever-engine sim --infile REQUEST.json|PREPARED_V2.json [--outfile RESULT.json] [--trace] [--gate]\nforever-engine bench --infile REQUEST.json|PREPARED_V2.json [--outfile RESULT.json] [--warmups 3] [--samples 7]\nforever-engine check --infile PREPARED_V2.json\nforever-engine version");
+        println!("forever-engine sim --infile REQUEST.json|PREPARED_V2.json [--outfile RESULT.json] [--trace] [--gate]\nforever-engine sim --request RAID_SIM_REQUEST.json [--scenario ID] [--outfile RESULT.json] [--gate]\nforever-engine prepare --request RAID_SIM_REQUEST.json [--scenario ID] [--outfile PREPARED_V2.json]\nforever-engine bench --infile REQUEST.json|PREPARED_V2.json [--outfile RESULT.json] [--warmups 3] [--samples 7]\nforever-engine check --infile PREPARED_V2.json\nforever-engine version");
         return Ok(());
     }
     if args.len() == 3 && args[0] == "check" && args[1] == "--infile" {
@@ -126,10 +161,12 @@ fn run() -> Result<(), Failure> {
         println!("{}", coverage_report(&prepared, &refusals)?);
         return Ok(());
     }
-    if args[0] != "sim" && args[0] != "bench" {
-        return Err("expected sim, bench, check or version".into());
+    if args[0] != "sim" && args[0] != "bench" && args[0] != "prepare" {
+        return Err("expected sim, prepare, bench, check or version".into());
     }
     let mut infile = None;
+    let mut request_file = None;
+    let mut scenario = None;
     let mut outfile = None;
     let mut trace = false;
     let mut gate = false;
@@ -138,16 +175,17 @@ fn run() -> Result<(), Failure> {
     let mut index = 1;
     while index < args.len() {
         match args[index].as_str() {
-            "--infile" | "--outfile" => {
+            "--infile" | "--outfile" | "--request" | "--scenario" => {
                 let flag = &args[index];
                 index += 1;
                 let value = args
                     .get(index)
-                    .ok_or_else(|| format!("{flag} requires a path"))?;
-                let target = if flag == "--infile" {
-                    &mut infile
-                } else {
-                    &mut outfile
+                    .ok_or_else(|| format!("{flag} requires a value"))?;
+                let target = match flag.as_str() {
+                    "--infile" => &mut infile,
+                    "--request" => &mut request_file,
+                    "--scenario" => &mut scenario,
+                    _ => &mut outfile,
                 };
                 if target.replace(value.clone()).is_some() {
                     return Err(format!("duplicate {flag}").into());
@@ -173,7 +211,39 @@ fn run() -> Result<(), Failure> {
         }
         index += 1;
     }
-    let input = fs::read(infile.ok_or("--infile is required")?).map_err(|err| err.to_string())?;
+    if args[0] == "prepare" {
+        let request = request_file.ok_or("prepare requires --request")?;
+        if infile.is_some() || trace || gate {
+            return Err("prepare takes only --request, --scenario and --outfile".into());
+        }
+        let input = fs::read(request).map_err(|err| err.to_string())?;
+        let prepared = prepare_request(&input, scenario.as_deref().unwrap_or("rust"))?;
+        let output = serde_json::to_string_pretty(&prepared).map_err(|err| err.to_string())?;
+        if let Some(path) = outfile {
+            write_atomically(&path, &(output + "\n"))?;
+        } else {
+            println!("{output}");
+        }
+        return Ok(());
+    }
+    if scenario.is_some() && request_file.is_none() {
+        return Err("--scenario requires --request".into());
+    }
+    let prepared_from_request = match request_file {
+        Some(request) => {
+            if infile.is_some() || args[0] != "sim" {
+                return Err("--request replaces --infile and is for sim and prepare".into());
+            }
+            let input = fs::read(request).map_err(|err| err.to_string())?;
+            let prepared = prepare_request(&input, scenario.as_deref().unwrap_or("rust"))?;
+            Some(serde_json::to_vec(&prepared).map_err(|err| err.to_string())?)
+        }
+        None => None,
+    };
+    let input = match prepared_from_request {
+        Some(prepared) => prepared,
+        None => fs::read(infile.ok_or("--infile is required")?).map_err(|err| err.to_string())?,
+    };
     if let Some(prepared) = prepared_v2(&input)? {
         if trace {
             return Err(

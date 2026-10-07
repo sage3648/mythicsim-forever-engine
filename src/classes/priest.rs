@@ -2,6 +2,7 @@
 //! in talents.
 
 pub(crate) mod agent;
+pub(crate) mod prepare;
 pub(crate) mod prepared;
 pub(crate) mod spells;
 pub(crate) mod talents;

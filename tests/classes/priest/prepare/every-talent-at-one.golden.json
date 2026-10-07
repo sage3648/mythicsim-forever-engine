@@ -1,0 +1,692 @@
+{
+ "case": "every-talent-at-one",
+ "request_sha256": "c3802aa767cb04073df03d56c445be07697ea1ab6da4da6ccfa7dd1549d48ff0",
+ "sections": {
+  "effects": [
+   [
+    "mind_blast",
+    "3342889802a7a5575b81b72c7c44b442c3f4fa5f27896181d50d4718bbc4b468"
+   ],
+   [
+    "shadow_word_death",
+    "44014eef4fb2198e97697b9edff63776216ee1d40f932650816ba4af4417c8e0"
+   ],
+   [
+    "shadow_word_pain",
+    "d1b204b98711d8b6f00e5a913c2674a189832b92151ae755cde91664cc89f749"
+   ],
+   [
+    "devouring_plague",
+    "6025c3175351e77fc6018a39dd9e8bff25c12f3a5fe40f4f460c2c0f46e593ce"
+   ],
+   [
+    "holy_nova",
+    "f82e7a6bdee1e44d24eb096c178507c719fa22b7cd087badaf4b9871aafeebad"
+   ],
+   [
+    "power_infusion",
+    "df8bc520430fc10d0f562a35c22002c5e5d74bbfb741899f389242f5ff5529f0"
+   ],
+   [
+    "shadowfiend",
+    "81f807caea92b7d075f5bc15b324afd19fe67039cb48648196b3b9a02f3b0259"
+   ],
+   [
+    "starshards",
+    "a07da791c8c8efcfd77191100eb1946dd32fc07ed8e044e0066f510a396df847"
+   ],
+   [
+    "mind_flay",
+    "152ed1651e38d46583baa2ddcefd64a668b0b2ab8d5d93e47f7aa8362e81cea3"
+   ],
+   [
+    "shadowform",
+    "42a50cbb4d753cfedbddef79f1d07c67756f57f519d9230c8747e6f76b4a96be"
+   ],
+   [
+    "inner_focus",
+    "928734e131b76837bd8a74748268e15f26af80c13a1badf5971270d1a4578209"
+   ],
+   [
+    "shadow_weaving",
+    "58413ffa6f29b445809d641b44d134ecf4bd3a43a7249fbf30bf717b9ee75113"
+   ],
+   [
+    "smite",
+    "e787e16f10993b7379cd9fee9270aea815c8fba19a5a93e4ebdfe63ad6ce3514"
+   ],
+   [
+    "holy_fire",
+    "f90e03391941ec55d0c519a564273696868472dd0806ce73462bafa69f18c626"
+   ],
+   [
+    "penance",
+    "15268ef47e71f1b5183166c3245cf1ea696c256238cdc06c9e920290ea069d4b"
+   ],
+   [
+    "power_in_light",
+    "f97c7c75cdcb86addef204b5d06ca46bd666c60c7e333c6c40553d8ab617f41b"
+   ],
+   [
+    "searing_light",
+    "90364c190849816a4c4c49953323ce32d15d597e7151466a2b136f88f4ff4b81"
+   ],
+   [
+    "temporary_stats",
+    "44c11f6de2c18ae8bdd362088eb50d3285535f6d48199b0fb498823b71e0aa70"
+   ],
+   [
+    "stat_auras",
+    "8bf86c824d1dc7f385e329b594059510f08a44b9307b339276d82a62dc103f1f"
+   ],
+   [
+    "inert_listener",
+    "f72fb35c4209bb4ef4355c00adaa2a7dabf800f539122ffe6e3ff85837ca23c5"
+   ],
+   [
+    "parry_haste",
+    "722941b3a50811cb60dbfd575e410f766b07fd32ae37c1dc4b47e2b97143d2f8"
+   ]
+  ],
+  "encounter": "9ae260208e9b12b375a8beef0e5f712edcc3d89cffcc0a73c67f34f40bd05c3b",
+  "pets": [
+   [
+    "shadow-priest (#1) - Shadowfiend",
+    "05e490931b82b216b572ad39ce70fc2f83c5353bd7460c8ff2d95a5b5ce39f64"
+   ]
+  ],
+  "player.auras": [
+   [
+    "Chance of Death",
+    "d7a42e06cb71727fd78711ab238d7653998c51669f920fbb99c5c04dfe1287af"
+   ],
+   [
+    "Elune's Light",
+    "7c6e214c1f6fa16ebbd4eb85293fb3556f5b5d9627fb3ab0cc6402adfc91f5be"
+   ],
+   [
+    "Inner Focus",
+    "010414d68b6f60ef34bd04213e0764d040ccf6f9b1af30f8f14d2fb7e16ea68e"
+   ],
+   [
+    "Power Infusions (Player)",
+    "57cf9f0607b864a3ed02419990c170374050096a133e846fed17ccebe1e72e38"
+   ],
+   [
+    "Searing Light",
+    "7a056c0504764f3ab8d95675a3b6bafaef0ee60d91136e91ed996895030c5345"
+   ],
+   [
+    "Searing Light Trigger",
+    "239b701008ca3bf7ff0054fbce6ec805928f0db0be311420727125efb82e6be5"
+   ],
+   [
+    "Shadow Weaving",
+    "a4618ae45c44cc51854a3b9c156648c39d66be729ee7b933464e667c73231b67"
+   ],
+   [
+    "Shadow Weaving Trigger",
+    "5724316ecd5a84d86100e6e67bc60c299eff212946a00434e30660c3ca817bda"
+   ],
+   [
+    "Shadowform",
+    "32a75fd6bf000aff2a165859a47731a53df528ec313af01e957f27033153a830"
+   ],
+   [
+    "Prayer of Spirit (External)",
+    "de0a2ef88fe87ea112f435e3755f7382f70077a3fe0426d3265cc0c6227d9e1d"
+   ],
+   [
+    "Prayer of Fortitude (External)",
+    "2ec0b859a75d3a996ddf232c75ac6c903efcb3e4ca3755339072007241d22b7b"
+   ],
+   [
+    "Prayer of Shadow Protection (External)",
+    "4e38ef25c221897108a7dfdc420715c92d0d7589afc199d04dcdda8e0f13d6c0"
+   ],
+   [
+    "Shadowfiend",
+    "a4ce4a742d5b26ef9279c221f2ed693452b07d79a2c761295346076838c9d2a6"
+   ],
+   [
+    "Movement",
+    "13ca1fe70ba88f74e2fe90a8ccc46c1931bc211e8e1ecf1ad198a224713fb4c3"
+   ]
+  ],
+  "player.major_cooldowns": [
+   [
+    "{\"spell_id\": 1259799}",
+    "e606bd8681666216d86fd7715a5bc64a68db7e040c31e897ae2bf5d9327eaab9"
+   ],
+   [
+    "{\"spell_id\": 14751}",
+    "861156cd3f10480b8befcf6c1814097372a8098054d0ddb680bb4fa892c79c85"
+   ],
+   [
+    "{\"spell_id\": 10060}",
+    "cab06c1cec2bf8c0c2ede0f072a81795b35ab6eee7d51aafdbfd078af0de6406"
+   ],
+   [
+    "{\"spell_id\": 401977}",
+    "7753f2248337bfe426e2037da4e9e17e8b895f4979bd1dfd2089db2361d1fae4"
+   ]
+  ],
+  "player.mana": "3bc76c9e0eeebf4f760920a127b8321c222185bd0dcae2d851162b8286dfcba6",
+  "player.pseudo_stats": "6429ba6a1494486646e23b15668b5c82d9eaa746debee358234ad8c210f2d6fc",
+  "player.spells": [
+   [
+    "{\"other_id\": \"OtherActionManaGain\"}",
+    "162525ce50e2c1fdfb133896acf35d224c6c22325cbd6ed1412d0f385d07e743"
+   ],
+   [
+    "{\"spell_id\": 1259799}",
+    "72a5d9084387f14e17ac60a743929a6434f1000d3d39626ba72a439177b724ce"
+   ],
+   [
+    "{\"spell_id\": 14751}",
+    "6a93ce341341f517d1d1812f7905f69680c1a2e48885d23d612351e38887d9b5"
+   ],
+   [
+    "{\"spell_id\": 402174}",
+    "faaef8839408effc209ca24d0ad0208f6f2b632b8dc986310002ab3bc6cedbcc"
+   ],
+   [
+    "{\"spell_id\": 1240720}",
+    "96b1c9b57cc2170adbf3296e9fd8a83c9d57c96a5b175991111c2bf3f9bb9e30"
+   ],
+   [
+    "{\"spell_id\": 1240721}",
+    "72de934b26d3bd8184a842ca0f1a6a518ff5c98e2a04dd718352d6686b3488c2"
+   ],
+   [
+    "{\"spell_id\": 1316995}",
+    "03ac5881ca76ecac426037ba068ea46e2b4d14ccbc5c47ed1c576ff12a8628c8"
+   ],
+   [
+    "{\"spell_id\": 10060}",
+    "c8fccc9f1fe457137915db0f7c214319902dd1e182c536e9e8fd5eab7349c062"
+   ],
+   [
+    "{\"spell_id\": 23455}",
+    "eead5b950dce67742d4d9231e98cab6b2e28ab275c9263b220fe6f89b370a235"
+   ],
+   [
+    "{\"spell_id\": 15237}",
+    "8737d66e6857897dcb67bbe51d65417f58ca9395e63368d341682e498ba02f80"
+   ],
+   [
+    "{\"spell_id\": 23458}",
+    "bf23f00d3f0630d751c84850ab7a9b97faec87ae16b498b9b8a3c23b49d9d105"
+   ],
+   [
+    "{\"spell_id\": 15430}",
+    "86dd8ce3b509b4b20044381e225ba88bb2ace246fae5e78af27dc0b6deff4cb7"
+   ],
+   [
+    "{\"spell_id\": 23459}",
+    "2add33e3f6803f840e739d0d5f2215517424d96b7f004c491eeeb1a613afd79d"
+   ],
+   [
+    "{\"spell_id\": 15431}",
+    "02dc06418c9bd1fd27a58ca990439ed88df16d9b777961fcc8f116f05fa6fd5d"
+   ],
+   [
+    "{\"spell_id\": 27803}",
+    "02a6a158fc5f8cb71a31606db0bb6f981c1e07b077903a74cf4d6a5bdd6680a3"
+   ],
+   [
+    "{\"spell_id\": 27799}",
+    "5a1bc2a02d44b8c0325f42bf85cb14fe197f5fa060d33aabb2d335d5bda79fa0"
+   ],
+   [
+    "{\"spell_id\": 27804}",
+    "b97a6117dc0b2b688f1c9602191bb487521f4f8d9366048cee87ea1a68abb47d"
+   ],
+   [
+    "{\"spell_id\": 27800}",
+    "048f5ef677684a22dc3361ff0c479ff81b6a5560e224174bd95373b0b467c7cb"
+   ],
+   [
+    "{\"spell_id\": 27805}",
+    "28df7dc57daf071c079510b7974452f3d35ba83cc90732ccba398e1a2127a067"
+   ],
+   [
+    "{\"spell_id\": 27801}",
+    "f86e4384bd2b9733b6862571db632b8ab33f05ea3d9e09deec3ab5f25b09acb6"
+   ],
+   [
+    "{\"spell_id\": 15407}",
+    "e4075f0da5863ad85fdd2537ea719725813155eb81572ccb86cbb1d10803b329"
+   ],
+   [
+    "{\"spell_id\": 17311}",
+    "a89bb6a8500ec3367dd0a80317b05fde832afc8ea9f54b776ef7316948626bf8"
+   ],
+   [
+    "{\"spell_id\": 17312}",
+    "4a533ed828c0593479cc5f725adfe60364d531f40efa05ff1497b75a58869ed6"
+   ],
+   [
+    "{\"spell_id\": 17313}",
+    "e5de9eb27f8451d07b142465b092aab782cbf336effcdae6d2a303a82f646e20"
+   ],
+   [
+    "{\"spell_id\": 17314}",
+    "773b1a96880cfb181a218301c264f83b22b6599a194506b912afda80cab5f688"
+   ],
+   [
+    "{\"spell_id\": 18807}",
+    "f7a76726fa304248d54c7c444d81bfa51f0b21839199f15721d453aa97838c65"
+   ],
+   [
+    "{\"spell_id\": 15286}",
+    "24ecca3e691edb0e762a9d99c7a1a567cee52a22baa72e371985f9678bfb3338"
+   ],
+   [
+    "{\"spell_id\": 15473}",
+    "ab8afca45106e3d02464a107c7db4cd7b5976f0792ed0785c47b23f333bc1713"
+   ],
+   [
+    "{\"spell_id\": 8092}",
+    "e882083ff07c43500c4e25a1c0d5c4f80ba02a3cf92306c8f4168e439e56ce7a"
+   ],
+   [
+    "{\"spell_id\": 8102}",
+    "a71fa6af3d5a3069ef25eeea11e6180cd23b5e9b5c553ff5474b06bc5a0054bb"
+   ],
+   [
+    "{\"spell_id\": 8103}",
+    "4685483a0c423087abb8c53b8ad959c9747f8ae98d70117bee60d47182397a1a"
+   ],
+   [
+    "{\"spell_id\": 8104}",
+    "d07585b2b875ab15958b1250a5c20786e902fb448fa30fb12f9c061cfff7959b"
+   ],
+   [
+    "{\"spell_id\": 8105}",
+    "b8a7df222fc2fb472548330f9f54d027a18430d410b698d09a2ce4dcbab85189"
+   ],
+   [
+    "{\"spell_id\": 8106}",
+    "228a759a7da60cac3bc243dbecea4bb018373b6403fe34729bb2aa88dc9fe733"
+   ],
+   [
+    "{\"spell_id\": 10945}",
+    "fea40b4ed6a3d19cfaca1b74093dde5d91d95df525602d07e0ddcd9edf46eff2"
+   ],
+   [
+    "{\"spell_id\": 10946}",
+    "6471625ac1117fbc4e4a35324720951c5ffacef1ecf62b7d75fe7f300f9eed45"
+   ],
+   [
+    "{\"spell_id\": 10947}",
+    "c8fb464ac2df2dc845172bf1db6dbb0b96d453f7d428e11862ed824f309777c5"
+   ],
+   [
+    "{\"spell_id\": 589}",
+    "eb74cdf03120d8a9abcbbbf51441ea4e77e0fd439b43ea7144eb0196779b0ed5"
+   ],
+   [
+    "{\"spell_id\": 594}",
+    "00cfb619640f06543a6707184f83a15723527af27d9382a32bbb65d47ac24ea8"
+   ],
+   [
+    "{\"spell_id\": 970}",
+    "b428e1e7eeca3cc1e7cf6b793c7a583df5d4fe54475c2374577be3617fa0d366"
+   ],
+   [
+    "{\"spell_id\": 992}",
+    "5e493d5a9b9abff6248d5ad3b48fd7ec3c762b083930aeb8f3f93bf0eb5b14c9"
+   ],
+   [
+    "{\"spell_id\": 2767}",
+    "5c371975068020a295be716a6f3d8b5369d64648f188d909731ee5e0ec29d0d9"
+   ],
+   [
+    "{\"spell_id\": 10892}",
+    "ad7a82ed656175eaf22f2a0e4fcdf12987543edaf566d82406121e1ce8cd97e0"
+   ],
+   [
+    "{\"spell_id\": 10893}",
+    "261a881346e6775710bf23cae4c332b72953df6c3559aeff76f288a7b0719b1b"
+   ],
+   [
+    "{\"spell_id\": 10894}",
+    "9d5ddfbc4c080acfc88141d2e536e43cf889d299bd5257b7d0dfecd94e819466"
+   ],
+   [
+    "{\"spell_id\": 1309595}",
+    "e46101d2f3f9b60c420e598f48754f5a328006b3456b63029698dffe895ad7bf"
+   ],
+   [
+    "{\"spell_id\": 1309633}",
+    "9885faea116472421f59e704a0407c7ca6f956f6677f1d54e26603ab67280c08"
+   ],
+   [
+    "{\"spell_id\": 1309635}",
+    "433d10e104268a27cddf40eb8e859ef1f8ce7cf6712cccdeb97ca82168d925a6"
+   ],
+   [
+    "{\"spell_id\": 1309636}",
+    "0c3413c535d330012fd153a5c44e93ef9c4f702566d07bff0611e01debaebc61"
+   ],
+   [
+    "{\"spell_id\": 585}",
+    "442d743886323f0ae36b0490d356d59be358a59d6631dcefa8d630f7d9bc7a8d"
+   ],
+   [
+    "{\"spell_id\": 591}",
+    "af2095cfa3320fd0ad7d35aab7e0996b0c0c0fab8ef7eb9bf63b4edbc406267a"
+   ],
+   [
+    "{\"spell_id\": 598}",
+    "b0ccde82db6ab68b5077d040043ff324914b2467511db7fba5e9d6d0fff6748f"
+   ],
+   [
+    "{\"spell_id\": 984}",
+    "43bd32221eac8a4e0df47103d6a5f27b92b7eca7ee24afd3f88cf81f7f0c8333"
+   ],
+   [
+    "{\"spell_id\": 1004}",
+    "37d5abf4acddc1c2b7fa3c4c1e807b57aa617b0c164b9a711fa68c01f948290e"
+   ],
+   [
+    "{\"spell_id\": 6060}",
+    "ed6eb15503e488510e6d55eb28b8db359fe1a34d52bd20d7dd4fb05a44ca4181"
+   ],
+   [
+    "{\"spell_id\": 10933}",
+    "c9c06d5de16c5150f739cfc0c71f5673594966778418b7afe78a92887ca5cce6"
+   ],
+   [
+    "{\"spell_id\": 10934}",
+    "e3ca6945fb67fb40f6c7a971ebf41e701d352f3a4306da22f3591e18d1ad85a0"
+   ],
+   [
+    "{\"spell_id\": 14914}",
+    "7845fc5df57ba968046f1f473c9bcd4f63d273882ccf09926d77d65ca0f13ccb"
+   ],
+   [
+    "{\"spell_id\": 15262}",
+    "51dd0f6941134c52242fbd655208f52c7084a5665103c385d7b0cd5569b1784b"
+   ],
+   [
+    "{\"spell_id\": 15263}",
+    "c21edf0f0f8fa48c0d5e236f38e5659ef76ac0c45c2ba5846341fe73425d9754"
+   ],
+   [
+    "{\"spell_id\": 15264}",
+    "3197b80be009fdb8918e01749340db17781cb74302faf45f6cdc5b41625d7ca8"
+   ],
+   [
+    "{\"spell_id\": 15265}",
+    "62ffdc18efdd9bb13be74d70035d24b94d77a9bdcf829400ab92db23e70e3d3f"
+   ],
+   [
+    "{\"spell_id\": 15266}",
+    "8a0593a0e86908b429c62ca99582e7d4f3707b6097955c927f0f4e3c03bb6ea5"
+   ],
+   [
+    "{\"spell_id\": 15267}",
+    "34b99fd7dc519f275ae2716781bb7725eb73d3a41563f61fdc4b21ec3e7e2342"
+   ],
+   [
+    "{\"spell_id\": 15261}",
+    "5190a5f56426f8ed9b7436d9dbe4ad068942d20bfb082fab89def473624081dd"
+   ],
+   [
+    "{\"spell_id\": 1277331}",
+    "53455709fdc8a348a0e1729a1b75265d5bd4ef08492fc918f891f9519dcf80b6"
+   ],
+   [
+    "{\"spell_id\": 1277332}",
+    "5406b691963012e24f0fe0f30bcb4f701eb0148b96e43b0f022e3e63dba00561"
+   ],
+   [
+    "{\"spell_id\": 1277333}",
+    "1373ac4c6d3cd3dc53c8054aa1bcf5ed9460cf03cd42990582e51025b6d30bd1"
+   ],
+   [
+    "{\"spell_id\": 1277334}",
+    "c53837078a2884cdde873229c4944aab1b81ceda8d0c12985f47b8d431da66c4"
+   ],
+   [
+    "{\"spell_id\": 1277335}",
+    "7f46edbdcb821f58a412f557d69c87eccb3751820766f2cecd1ed1465dabcf5e"
+   ],
+   [
+    "{\"spell_id\": 401977}",
+    "f76ccca04967ecd404fedc13fe5bc2e25fbce00b6dd6b0a5d6f12de6dc45f5cd"
+   ],
+   [
+    "{\"spell_id\": 10797}",
+    "3f8b6caf9f25d47095a9e58854a011d413f452fd86272e0dc8adc9a3496cb86f"
+   ],
+   [
+    "{\"spell_id\": 19296}",
+    "8b9cad84bcc7a1aecb05e62a65528c635831d7e316c2d821fca343ef5fb31587"
+   ],
+   [
+    "{\"spell_id\": 19299}",
+    "81c5ad9908051c4eee2d0ad2279fc6b19415208d884e46cfe189187d01be6a13"
+   ],
+   [
+    "{\"spell_id\": 19302}",
+    "f4f7e32e6e2ceccfa91c0ebf6f6d9757d74f1787274692e057de79022e05a98e"
+   ],
+   [
+    "{\"spell_id\": 19303}",
+    "08f6d6a2ffa5bd6299844e24cd45a8e105600a32b0c2e317fc6a741df011ecdc"
+   ],
+   [
+    "{\"spell_id\": 19304}",
+    "5ee0d0254e2acb5930bc82be8af7c28f92905e90bc0d3f1ca56f5fca31a2104e"
+   ],
+   [
+    "{\"spell_id\": 19305}",
+    "be83ac7773008baa29a84a49560be4329dac6b90d2af4791f4a3cbfa5b8672e8"
+   ],
+   [
+    "{\"spell_id\": 2944}",
+    "ad0b0225fa78331106bfe8987730addc730e79878d8b1b7277d591b2e226c809"
+   ],
+   [
+    "{\"spell_id\": 19276}",
+    "9d1efc56fe3bdf7fae28da9a08a8eec9cd2b0b0918a197c65c01c55ffe49db89"
+   ],
+   [
+    "{\"spell_id\": 19277}",
+    "be445b08e0d264d9db8f3427d76249f9de423a0bfd69a9e937bfb32b7261d412"
+   ],
+   [
+    "{\"spell_id\": 19278}",
+    "167a9dc43eabb93689acd8823c61d0e9b22f6eb12581d872316cfcbf9ce96e24"
+   ],
+   [
+    "{\"spell_id\": 19279}",
+    "0356112b74d382d9e4d09f6570082f0b1abc214142cb57fe88d281d62571ad8a"
+   ],
+   [
+    "{\"spell_id\": 19280}",
+    "a6f90ba4e2570e5fc69e22d2825b6376a077e3f7b247374e9a8912022720c407"
+   ],
+   [
+    "{\"other_id\": \"OtherActionMove\"}",
+    "08b9f95ec698c9a0ff7453dd8db39f4a9b4593cced26fb980de3087a23b2054f"
+   ]
+  ],
+  "player.stats": "1c5fd4b1ff78631cf257f7d73660c2b43f83209c1656846bd47f5a30e5fb13d3",
+  "player.talents": "cf59613baae942a8d98f634816adda25c47ab1b488f52ee192ab434473880689",
+  "target.auras": [
+   [
+    "Penance-1-1",
+    "75dc4689d1fc8815b43c01f98180e1781ebcceef35713b151deacb561a072f94"
+   ],
+   [
+    "Penance-2-1",
+    "c6218f27d7525d198658f20e2ddd260e793da6be353f5c910006213bfd293206"
+   ],
+   [
+    "Penance-3-1",
+    "50b97a66de137f2b3011cb646f5e945da01a99bc358b4dea8bbc93078d7b2510"
+   ],
+   [
+    "Penance-4-1",
+    "a89cd47f308c876c63a8e84ddbc2340cfe29b436d47a086f1b6fd76d6a8df749"
+   ],
+   [
+    "MindFlay-1-1",
+    "1aaac9e18ccec66b94c44a02d6612112ac5ae01ebeb9bcb6fad9431cb426a9bc"
+   ],
+   [
+    "MindFlay-2-1",
+    "c6219b9f2370bb06ddfda5375d16e7003057dc25491d3dca147790768b8eeb55"
+   ],
+   [
+    "MindFlay-3-1",
+    "d2e19177e7de9ffec85f0b6d7e8236bff1326b049525ab5d75e7c4250440403a"
+   ],
+   [
+    "MindFlay-4-1",
+    "3e7fcc2a43d8dfa3a0d40b1cd2d01361d6c481bbf758714c8fbdd6449eae9dcc"
+   ],
+   [
+    "MindFlay-5-1",
+    "e491eaa421a8cd05ab95d00fe0887e972f34e6e6d43a692df3aa8bb4365748a9"
+   ],
+   [
+    "MindFlay-6-1",
+    "4d1d7752803f820ab98340d0053c1ed43891e0ba4883aa23756a92b856a37e9a"
+   ],
+   [
+    "Vampiric Embrace - Target 1",
+    "ceaa46a7a1f416a4cdaa533a882a5d750f0ca179f69e176c2ee9cfc3db1cb00f"
+   ],
+   [
+    "ShadowWordPain-1-1",
+    "c859bf8f2047d791c5886f570252d89c0942cd05f5345c4dd8b13ebf7b3bf20d"
+   ],
+   [
+    "ShadowWordPain-2-1",
+    "577e905f5a975ae66b135e2143a16d7cd077e543f8a3776d4f0979a4fe6f3a92"
+   ],
+   [
+    "ShadowWordPain-3-1",
+    "b3e603387a4f95aac0b3dc9a29647eac2eeccf767f4357b6da6fd8d8f7aa968a"
+   ],
+   [
+    "ShadowWordPain-4-1",
+    "011459d7a082944288d49d12ca58e03c6422c17c46e873f856526e43d4dcb032"
+   ],
+   [
+    "ShadowWordPain-5-1",
+    "4f1356942100700a9c92ab7b81667b3eb6edeb2858b6b8b9cfb1480bbc7c5351"
+   ],
+   [
+    "ShadowWordPain-6-1",
+    "33c9d966be2262185db8b649372e77fae6110b0470c3d23d6f9129f9ed3373e3"
+   ],
+   [
+    "ShadowWordPain-7-1",
+    "33e637866f1ee901339f8f5cd69e90c768bb7554809cc457576853a8dce9441d"
+   ],
+   [
+    "ShadowWordPain-8-1",
+    "fd480088cab68883d3608c7e22845ed6e5c605038dd67f8f639ba49f86bdf494"
+   ],
+   [
+    "HolyFire-1-1",
+    "11974d4c4b2ceb852cb1646186aa99a1c55e47b8de7b1f015857edd9194e7c07"
+   ],
+   [
+    "HolyFire-2-1",
+    "b3be86a0700913381d3a42d7f23d90f91255776459609c549a4a50a0896127d1"
+   ],
+   [
+    "HolyFire-3-1",
+    "54b17587045bebc3ec3de40b862175b08c96b4e2d01ff96117dfd571e6e1ec69"
+   ],
+   [
+    "HolyFire-4-1",
+    "089dcd62f694cbf7fa1ea0a2a00e2915b99d6709a5244cf868944a031306cf6b"
+   ],
+   [
+    "HolyFire-5-1",
+    "19f801ed96121d20527bd1dfb1b17c2f5d613e4b735bae466ae5c5a57aa9546f"
+   ],
+   [
+    "HolyFire-6-1",
+    "1ad4d7db59d85264a6c59ae02a6c75f7fc7a3ac07af32c9c2b8203e1ab05f743"
+   ],
+   [
+    "HolyFire-7-1",
+    "c70baaf81d47333e9e0778ee39c2e4fe56327471645592f702cf8d7de6f6ab5e"
+   ],
+   [
+    "HolyFire-8-1",
+    "0c449141158106e56d61d99f7a680b91989429d49ea5fb03eea22a4cfefc97de"
+   ],
+   [
+    "Starshards-1-1",
+    "e6025811eac304030e96fd440437a0e09113330a6e5d204f24fa5508a3a03a27"
+   ],
+   [
+    "Starshards-2-1",
+    "814a39aa77918f1f674bfec1b0c74411c50c5cde3aae48facc515ce272a72031"
+   ],
+   [
+    "Starshards-3-1",
+    "9d4ed4e362c31d3185dacb51c0a16302a8d3b6d371464077e854e4404a8a369d"
+   ],
+   [
+    "Starshards-4-1",
+    "ec3c53f672d959373cf942effaa7fea89c9dea8ea212d8a4e3fdb122b5ea33d1"
+   ],
+   [
+    "Starshards-5-1",
+    "59267701e4bb6de41ceaaccb40a6e7316090a0cd77307ba2111cdfe7c171bf01"
+   ],
+   [
+    "Starshards-6-1",
+    "568b2c08234f8b6cb09becd464aaf79b0d5c270b963a470a6e282f61095908f8"
+   ],
+   [
+    "Starshards-7-1",
+    "6a297ba151a6dcff9a8cca139ed52abcc5c9a44da0864fece0692752079353f5"
+   ],
+   [
+    "DevouringPlague-1-1",
+    "ca11483d826a8bcc0fe4c406622b217a847f37ccd8a083dcbddfef71eaffa25d"
+   ],
+   [
+    "DevouringPlague-2-1",
+    "72a2c4ce31fde390fbdd844c65e2631bccface9e427516c034460c71eeae782f"
+   ],
+   [
+    "DevouringPlague-3-1",
+    "1b30c1f1db3b078c2a169c5047541ef2f68b99e32c0260384ff041fa250745ad"
+   ],
+   [
+    "DevouringPlague-4-1",
+    "05865368e0fd95f74f2a748e7348b3e97535e12e22f55370e44bdb104517523b"
+   ],
+   [
+    "DevouringPlague-5-1",
+    "2babb31d5a903c4e117afcfec80de1852b1022e19ebcbd10680f7a46ac2a3299"
+   ],
+   [
+    "DevouringPlague-6-1",
+    "08a68815f5ae266651da7fdf800b55e6886867893859f6c5d8b2f47865f2d0dd"
+   ],
+   [
+    "Parry Haste",
+    "44437011897bce69a898f0e70684c5bf83d8cba224b6ad2e4f89cb84555a0eae"
+   ],
+   [
+    "Movement",
+    "13ca1fe70ba88f74e2fe90a8ccc46c1931bc211e8e1ecf1ad198a224713fb4c3"
+   ]
+  ],
+  "unrepresented": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+ }
+}

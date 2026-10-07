@@ -27,3 +27,41 @@ pub(crate) fn run_prepared(
         other => Err(format!("class {other} has no fight agent")),
     }
 }
+
+/// The class agent Rust preparation builds for a player: Go's agent factory.
+pub(crate) fn prepare_agent(
+    sim: &mut crate::prepare::sim::Sim,
+    unit: crate::prepare::sim::UnitId,
+    player: &crate::contracts::request::Message,
+) -> Result<Box<dyn crate::prepare::agent::PrepAgent>, crate::prepare::Refusal> {
+    match player.enum_name("class").as_str() {
+        "ClassMage" => mage::prepare::new_mage(sim, unit, player),
+        "ClassRogue" => rogue::prepare::new_rogue(sim, unit, player),
+        "ClassWarlock" => warlock::prepare::new_warlock(sim, unit, player),
+        "ClassHunter" => hunter::prepare::new_hunter(sim, unit, player),
+        "ClassDruid" => druid::prepare::new_druid(sim, unit, player),
+        "ClassWarrior" => warrior::prepare::new_warrior(sim, unit, player),
+        "ClassPaladin" => paladin::prepare::new_paladin(sim, unit, player),
+        "ClassPriest" => priest::prepare::new_priest(sim, unit, player),
+        "ClassShaman" => shaman::prepare::new_shaman(sim, unit, player),
+        other => Err(crate::prepare::Refusal::new(
+            "class",
+            format!("{other} is not prepared in Rust yet"),
+        )),
+    }
+}
+
+/// The item sets the classes implement: Go's `core.NewItemSet` calls in each class package.
+pub(crate) fn item_sets() -> Vec<&'static crate::prepare::item_sets::ItemSet> {
+    let mut sets = Vec::new();
+    sets.extend(mage::prepare::items::ITEM_SETS);
+    sets.extend(rogue::prepare::items::ITEM_SETS);
+    sets.extend(warlock::prepare::items::ITEM_SETS);
+    sets.extend(hunter::prepare::items::ITEM_SETS);
+    sets.extend(druid::prepare::items::ITEM_SETS);
+    sets.extend(warrior::prepare::items::sets::ITEM_SETS);
+    sets.extend(paladin::prepare::sets::ITEM_SETS);
+    sets.extend(priest::prepare::items::ITEM_SETS);
+    sets.extend(shaman::prepare::items::ITEM_SETS);
+    sets
+}

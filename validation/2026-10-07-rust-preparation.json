@@ -1,0 +1,62 @@
+{
+ "kind": "preparation_comparison",
+ "date": "2026-10-07",
+ "reference": "cd7d44aec711bcc8f20ea12d3ed83cea2126ac66",
+ "source_revision": "79e38f0bb3c5c5d9ece98dd940fc718f482b08ef",
+ "scope": "Rust preparation against the pinned Go exporter: every accepted fixture, every request kept under validation/, randomized variants of all 42 production requests and of ten builds across every class, each prepared both ways and compared as whole prepared states with no tolerance.",
+ "rerun": "python3 tools/prepare_compare.py --output <scratch> --jobs 6 <requests or folders>",
+ "criteria": {
+  "comparison": "whole prepared v2 state, every value and list",
+  "floats": "exact"
+ },
+ "matched": 4512,
+ "rejected": 19,
+ "mismatched": 0,
+ "cases": [
+  {
+   "set": "accepted fixtures",
+   "command": "cargo test --test prepare",
+   "requests": 358,
+   "matched": 358,
+   "rejected": 0,
+   "mismatched": 0
+  },
+  {
+   "set": "requests kept under validation/",
+   "command": "python3 tools/prepare_compare.py --output <scratch> --jobs 6 validation",
+   "requests": 2571,
+   "matched": 2571,
+   "rejected": 0,
+   "mismatched": 0,
+   "notes": "The folder also holds 165 record files that are not requests, which the comparison reads as invalid requests and this record leaves out. At 8f8ac98b9, 2563 matched and 8 were refused: a rotation's activate aura action, Weaponmaster's armor ignore with a mace or staff in four Arms presets and Tenets of the Silver Hand in three Paladin variants. ee3235c56 prepares those, and all 8 match, the Tenets ones also against Undead targets."
+  },
+  {
+   "set": "production variants",
+   "generator": "python3 tools/sweep.py <production request> --seed 77 --count 10 for each of the 42 production-*.request.json fixtures",
+   "requests": 690,
+   "matched": 690,
+   "rejected": 0,
+   "mismatched": 0
+  },
+  {
+   "set": "random variants of ten builds",
+   "generator": "python3 tools/sweep.py with seeds 11 (Frost reference, races drawn), 23 and 41 (Balance and Feral bear Druid, three Warlocks, Protection Warrior, Paladin auto attacks, Marksmanship Hunter, Fire and Arcane Mage)",
+   "requests": 360,
+   "matched": 341,
+   "rejected": 19,
+   "mismatched": 0,
+   "notes": "The 19 refusals are Night Elf and Dwarf Mages, which have no base stats in the reference's tables (code race). Seed 23 first found one mismatch: Rust registered a stack observer for a rotation condition of an action Go never builds; fixed in this branch before the counts above."
+  },
+  {
+   "set": "production variants at 2d93e423e",
+   "reference": "2d93e423e0303e93dbb16e190d435503248b68f9",
+   "generator": "python3 tools/sweep.py <production request> --seed 78 --count 8 for each of the 42 production-*.request.json fixtures",
+   "requests": 552,
+   "matched": 552,
+   "rejected": 0,
+   "mismatched": 0,
+   "notes": "After the branch moved with main to the 2d93e423e pin, at 79e38f0bb, against the exporter built at that pin."
+  }
+ ],
+ "notes": "Each request is prepared by `forever-engine prepare --request` and by the exporter's `prepare --infile`; a refusal exits with status 5 and its code. The counts are from runs at the commits named in each case's notes, on the branch that ends at the source revision. The other cases ran at the cd7d44aec pin; at 2d93e423e every accepted fixture (cargo test --test prepare, 360 cases) and the production variants above match."
+}

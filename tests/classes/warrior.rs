@@ -1,6 +1,8 @@
 //! Warrior tests: the prepared v2 gate on the production Fury Warrior request. Its Go result
 //! and first-fight log are compared with the rest of the fixture family.
 
+mod prepare;
+
 use forever_engine::{
     check_prepared, contracts::prepared_v2::PreparedV2, prepared_coverage, PreparedError,
 };
