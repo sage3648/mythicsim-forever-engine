@@ -18,10 +18,10 @@ use super::super::masks;
 use super::super::Warrior;
 
 /// The Warrior behind an environment's agent: Go's `agent.(WarriorAgent).GetWarrior()`.
-fn warrior(env: &Environment) -> &Warrior {
+fn warrior(env: &mut Environment) -> &mut Warrior {
     env.agent
-        .as_any()
-        .and_then(|agent| agent.downcast_ref::<Warrior>())
+        .as_any_mut()
+        .and_then(|agent| agent.downcast_mut::<Warrior>())
         .expect("a Warrior set bonus applies to a Warrior")
 }
 

@@ -429,11 +429,11 @@ impl PrepAgent for Warrior {
         CLASS_SPELLS
     }
 
-    fn as_any(&self) -> Option<&dyn std::any::Any> {
+    fn as_any_mut(&mut self) -> Option<&mut dyn std::any::Any> {
         Some(self)
     }
 
-    fn class_effects(&self, env: &Environment, notes: &mut Vec<String>) -> Vec<serde_json::Value> {
+    fn export_effects(&self, env: &Environment, notes: &mut Vec<String>) -> Vec<serde_json::Value> {
         self.all_effects(env, notes)
     }
 

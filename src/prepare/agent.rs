@@ -99,26 +99,10 @@ pub(crate) trait PrepAgent {
     fn damage_effect(&self, _sim: &Sim, _spell: super::sim::SpellId) -> Option<serde_json::Value> {
         None
     }
-    /// The exporter's class effects when they read the environment: the attack tables or a
-    /// separate reset simulation of the request (`Environment::fresh`), as Go's
-    /// `classExport.effects` does with `exportRequest`. `notes` is `classNotes`, the
-    /// unrepresented list. The default is `effects`.
-    fn class_effects(
-        &self,
-        env: &super::env::Environment,
-        _notes: &mut Vec<String>,
-    ) -> Vec<serde_json::Value> {
-        self.effects(&env.sim, env.player)
-    }
     /// Go `classExport.unrepresented`: class behavior the effects cannot describe, one reason
     /// each.
     fn unrepresented(&self, _sim: &Sim, _unit: UnitId) -> Vec<String> {
         Vec::new()
-    }
-    /// The agent itself, for a set bonus that reads or changes the class's state, as Go's
-    /// `agent.(WarriorAgent).GetWarrior()` does. A class that has such bonuses returns itself.
-    fn as_any(&self) -> Option<&dyn std::any::Any> {
-        None
     }
     /// Go `classItemUseEffects`: the exported effect of an item use the class package registers
     /// itself, keyed by the item. It is the item loop's last case, after the shared ones.
@@ -134,6 +118,21 @@ pub(crate) trait PrepAgent {
     /// which the party's Flametongue Totem hit takes. Any other class has none.
     fn flametongue_attack_traits(&self) -> super::buffs::flametongue::FlametongueAttackTraits {
         super::buffs::flametongue::FlametongueAttackTraits::default()
+    }
+    /// The agent as `Any`, for a class's item set bonus that sets state on its own agent (Go
+    /// hands a set bonus the agent). A class that has no such bonus answers `None`.
+    fn as_any_mut(&mut self) -> Option<&mut dyn std::any::Any> {
+        None
+    }
+    /// The exporter's class effects when they need more than the simulation, such as the
+    /// attack tables and the target, and the notes a class effect adds to the unrepresented
+    /// list (`classNotes`). The default is `effects`.
+    fn export_effects(
+        &self,
+        env: &super::env::Environment,
+        _notes: &mut Vec<String>,
+    ) -> Vec<serde_json::Value> {
+        self.effects(&env.sim, env.player)
     }
 }
 
