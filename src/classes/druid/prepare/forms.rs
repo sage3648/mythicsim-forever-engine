@@ -118,7 +118,7 @@ pub(crate) fn weapon_from_main_hand(sim: &Sim, unit: UnitId) -> Weapon {
 
 /// Go `imbueFlatWeaponDamage` of the main hand imbue.
 fn mh_imbue_flat_weapon_damage(sim: &Sim, unit: UnitId) -> f64 {
-    match sim.character(unit).consumables.i32("mh_imbue_id") {
+    match sim.character(unit).consumables.i32("mhImbue_id") {
         16138 | 16622 => 8.0,
         _ => 0.0,
     }

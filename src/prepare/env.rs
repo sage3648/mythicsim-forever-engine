@@ -493,6 +493,11 @@ pub(crate) fn reset_unit(sim: &mut Sim, unit: UnitId) {
         bar.current_mana = max;
         bar.mana_regen_multiplier = 1.0;
     }
+    // healthBar.reset: the current health is the maximum the reset's auras left.
+    if sim.unit(unit).health_bar {
+        let max = sim.unit(unit).stats[Stat::Health];
+        sim.unit_mut(unit).current_health = max;
+    }
     // unit.reset: the energy bar and the rage bar follow the mana bar.
     sim.reset_energy_bar(unit);
     sim.reset_rage_bar(unit);
