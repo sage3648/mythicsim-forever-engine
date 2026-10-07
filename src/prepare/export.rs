@@ -11,7 +11,7 @@ use crate::contracts::request::Message;
 use super::attack::Weapon;
 use super::env::Environment;
 use super::sim::{AuraId, Cooldown, Sim, TimerId, UnitId};
-use super::spell::{CastKind, SpellFlag};
+use super::spell::SpellFlag;
 use super::stats::{PseudoStats, Stat, Stats, SCHOOL_LEN};
 use super::Refusal;
 
@@ -258,10 +258,18 @@ fn export_spell(
     );
     out.insert(
         "cast_kind".into(),
-        json!(match spell.cast_kind {
-            CastKind::Full => "full",
-            CastKind::Simple => "simple",
-            CastKind::AutosOrProcs => "autos_or_procs",
+        // Go reads the final state: a range wraps the extra cast condition after the cast
+        // function is chosen, which the exporter's own test then sees.
+        json!(if !spell.default_cast.is_empty() {
+            "full"
+        } else if !spell.has_extra_cast_condition
+            && spell.cd.timer.is_none()
+            && spell.shared_cd.timer.is_none()
+            && !spell.has_cast_requirement
+        {
+            "autos_or_procs"
+        } else {
+            "simple"
         }),
     );
     out.insert("ignore_haste".into(), json!(spell.ignore_haste));
@@ -645,6 +653,12 @@ fn tail_effects(
     if takes_damage && env.sim.get_aura(player, "Chance of Death").is_some() {
         effects.push(json!({"kind": "chance_of_death", "aura": "Chance of Death"}));
     }
+    effects.extend(super::export_items::melee_item_listeners(env));
+    effects.extend(super::export_items::hit_taken_item_listeners(
+        env,
+        tanking,
+        unrepresented,
+    ));
     if takes_damage {
         return Err(Refusal::new(
             "damage_taken",
@@ -736,6 +750,10 @@ pub(crate) fn export(
     // Go then appends the inert pets, the melee, gear, spell data and energy proc effects and
     // the stat auras effect, in that order; Rust refuses pets and ports the rest in
     // src/prepare/export_items.rs.
+    effects.extend(super::export_items::item_proc_effects(
+        env,
+        &mut unrepresented,
+    ));
     effects.extend(tail_effects(env, &mut unrepresented)?);
 
     let professions: Vec<String> = env

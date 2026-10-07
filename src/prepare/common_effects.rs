@@ -258,8 +258,8 @@ fn item_use_effects(env: &mut Environment, unrepresented: &mut Vec<String>) -> V
             effects.push(effect);
             continue;
         }
-        if let Some(effect) = use_item_effect(env, spell, item, unrepresented) {
-            effects.push(effect);
+        if let Some(found) = use_item_effect(env, spell, item, unrepresented) {
+            effects.extend(found);
             continue;
         }
         unrepresented.push(format!("major cooldown item {item} has no exported effect"));
@@ -286,10 +286,10 @@ fn consumable_item_effect(
 /// The item cases of the item loop: temporary stats, speed, damage, survival and energize on
 /// use, Burst of Knowledge, Second Wind and class item uses. `None` for an item none claims.
 fn use_item_effect(
-    _env: &mut Environment,
-    _spell: SpellId,
-    _item: i32,
-    _unrepresented: &mut Vec<String>,
-) -> Option<Value> {
-    None
+    env: &mut Environment,
+    spell: SpellId,
+    item: i32,
+    unrepresented: &mut Vec<String>,
+) -> Option<Vec<Value>> {
+    super::export_items::use_item_effect(env, spell, item, unrepresented)
 }
