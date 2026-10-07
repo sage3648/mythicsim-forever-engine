@@ -16,6 +16,7 @@ pub(crate) mod dbcenums;
 pub(crate) mod debuffs;
 pub(crate) mod env;
 pub(crate) mod export;
+pub(crate) mod incapacitate;
 pub(crate) mod item_effects;
 pub(crate) mod items;
 pub(crate) mod items_registry;

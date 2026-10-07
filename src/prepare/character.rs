@@ -86,6 +86,9 @@ pub(crate) struct Character {
     pub player: Message,
     /// Spells registered through `OnSpellRegistered`.
     pub spell_registration_handlers: Vec<super::spell::SpellRegisteredHandler>,
+    /// Go `HardcastAvoidanceAura`: the tank's "Reduced avoidance" aura, which `Finalize`
+    /// registers for a unit a target swings at.
+    pub hardcast_avoidance_aura: Option<AuraId>,
 }
 
 /// Go `UnitLevelFloat64`.
@@ -298,6 +301,7 @@ impl Sim {
             rotation_transformations: 0,
             player: player.clone(),
             spell_registration_handlers: Vec::new(),
+            hardcast_avoidance_aura: None,
         }));
         let id = self.add_unit(unit);
         if let Some(cooldowns) = player.message("cooldowns") {
