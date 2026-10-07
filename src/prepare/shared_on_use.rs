@@ -20,8 +20,8 @@ use super::resolve_aura::{aura_config, dot_config};
 use super::resolve_spell::{self, spell_config};
 use super::shared_auras::{in_area, spell_data_on_use_aura_spell};
 use super::shared_items::{
-    dpm_for_mask, spell_data_absorb_spell, spell_data_proc_damage_spell, spell_data_proc_heal_spell,
-    EffectSource,
+    dpm_for_mask, spell_data_absorb_spell, spell_data_proc_damage_spell,
+    spell_data_proc_heal_spell, EffectSource,
 };
 use super::sim::{AuraConfig, AuraId, Cooldown, Duration, Sim, UnitId, MILLISECOND, NEVER_EXPIRES};
 use super::spell::{CastConfig, ProcMask, SpellConfig, SpellFlag};
@@ -49,8 +49,8 @@ pub(crate) enum OnUseKind {
 
 /// Go `itemEffectsFor`: the effects an on-use helper works from.
 pub(crate) fn item_effects_for(item_id: i32) -> Vec<Message> {
-    let item = items::database_item(item_id)
-        .unwrap_or_else(|| panic!("No item with ID: {item_id}"));
+    let item =
+        items::database_item(item_id).unwrap_or_else(|| panic!("No item with ID: {item_id}"));
     if item.item_effects.is_empty() {
         panic!("No effects data for item with ID: {item_id}");
     }

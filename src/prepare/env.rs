@@ -89,6 +89,23 @@ fn new_encounter(sim: &mut Sim, options: &Message) -> Result<Encounter, Refusal>
             "an encounter without targets".to_string(),
         ));
     }
+    // tools/oracle-v2/targets.go targetNotes: up to five identical copies of the boss.
+    if targets.len() > 5 {
+        return Err(Refusal::new(
+            "targets",
+            format!("{} targets: at most 5 are supported", targets.len()),
+        ));
+    }
+    if targets
+        .iter()
+        .skip(1)
+        .any(|target| target.encode() != targets[0].encode())
+    {
+        return Err(Refusal::new(
+            "targets",
+            "only identical copies of the first target are supported".to_string(),
+        ));
+    }
     for (index, target) in targets.into_iter().enumerate() {
         let id = super::target::new_target(sim, target, index as i32)?;
         encounter.targets.push(id);
@@ -394,6 +411,7 @@ impl Environment {
         let pseudo = sim.unit(unit).pseudo_stats.clone();
         sim.unit_mut(unit).initial_pseudo_stats = pseudo;
         sim.finalize_auto_attacks(unit);
+        sim.finalize_spells(unit);
     }
 
     /// Go `setupAttackTables`.

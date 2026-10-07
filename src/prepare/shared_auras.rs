@@ -10,9 +10,7 @@ use super::env::Environment;
 use super::item_aura::equip_aura_row;
 use super::parse_effects::{parse_effects, ParseOptions};
 use super::resolve_aura::{aura_config, label};
-use super::shared_items::{
-    has_item_equipped, spell_data_proc_listener, SpellDataProc,
-};
+use super::shared_items::{has_item_equipped, spell_data_proc_listener, SpellDataProc};
 use super::sim::{
     AuraConfig, AuraId, Duration, EffectCallback, Sim, UnitId, UnitType, NEVER_EXPIRES,
 };
@@ -261,7 +259,11 @@ pub(crate) fn apply_spell_data_aura_proc(env: &mut Environment, cfg: &SpellDataP
 }
 
 /// Go `procBuffDuration`.
-fn proc_buff_duration_of(cfg: &SpellDataProc, trigger: &'static Spell, buff: &'static Spell) -> Duration {
+fn proc_buff_duration_of(
+    cfg: &SpellDataProc,
+    trigger: &'static Spell,
+    buff: &'static Spell,
+) -> Duration {
     if buff.duration_ms != 0 {
         return buff.duration();
     }

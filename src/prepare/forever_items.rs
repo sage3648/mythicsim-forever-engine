@@ -11,9 +11,7 @@ use std::rc::Rc;
 
 use crate::contracts::prepared_v2::ActionId;
 
-use super::aura_helpers::{
-    CallbackMask, HitOutcome, ProcTrigger, StackingStatAura,
-};
+use super::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger, StackingStatAura};
 use super::character::{cooldown_type, MajorCooldown};
 use super::env::Environment;
 use super::forever_items_generated::{ENCHANTS, ITEMS};
@@ -24,9 +22,7 @@ use super::shared_items::{
     spell_data_proc_damage_spell_config, ItemVariant, ProcKind, SpellDataProc,
 };
 use super::shared_on_use::{self, OnUseKind, StackingStatBonusCd};
-use super::sim::{
-    AuraConfig, AuraId, Cooldown, Sim, SpellId, UnitType, SECOND,
-};
+use super::sim::{AuraConfig, AuraId, Cooldown, Sim, SpellId, UnitType, SECOND};
 use super::spell::{school, CastConfig, DefenseType, ProcMask, SpellConfig, SpellFlag};
 use super::spelldata::must_find;
 use super::stats::{Stat, Stats};
@@ -151,23 +147,108 @@ struct WeaponDamageProc {
 }
 
 const WEAPON_DAMAGE_PROCS: [WeaponDamageProc; 17] = [
-    WeaponDamageProc { item_id: 272999, name: "Barbaric Crossbow", ppm: 3.2, spell_id: 1291551 },
-    WeaponDamageProc { item_id: 279876, name: "Plaguefang", ppm: 2.4, spell_id: 1309315 },
-    WeaponDamageProc { item_id: 267369, name: "Wolfsbane", ppm: 2.7, spell_id: 1282503 },
-    WeaponDamageProc { item_id: 6469, name: "Venomstrike", ppm: 1.6, spell_id: 29653 },
-    WeaponDamageProc { item_id: 6472, name: "Stinging Viper", ppm: 3.2, spell_id: 1291663 },
-    WeaponDamageProc { item_id: 14555, name: "Alcor's Sunrazor", ppm: 1.0, spell_id: 18833 },
-    WeaponDamageProc { item_id: 11744, name: "Bloodfist", ppm: 4.0, spell_id: 16433 },
-    WeaponDamageProc { item_id: 14487, name: "Bonechill Hammer", ppm: 1.0, spell_id: 18276 },
-    WeaponDamageProc { item_id: 13984, name: "Darrowspike", ppm: 1.0, spell_id: 18276 },
-    WeaponDamageProc { item_id: 10761, name: "Coldrage Dagger", ppm: 2.2, spell_id: 1293790 },
-    WeaponDamageProc { item_id: 19099, name: "Glacial Blade", ppm: 1.4, spell_id: 18398 },
-    WeaponDamageProc { item_id: 11809, name: "Flame Wrath", ppm: 1.0, spell_id: 16559 },
-    WeaponDamageProc { item_id: 12794, name: "Masterwork Stormhammer", ppm: 0.5, spell_id: 16921 },
-    WeaponDamageProc { item_id: 19100, name: "Electrified Dagger", ppm: 1.4, spell_id: 23592 },
-    WeaponDamageProc { item_id: 17074, name: "Shadowstrike", ppm: 2.2, spell_id: 21170 },
-    WeaponDamageProc { item_id: 13401, name: "The Cruel Hand of Timmy", ppm: 0.65, spell_id: 17505 },
-    WeaponDamageProc { item_id: 13361, name: "Skullforge Reaver", ppm: 1.7, spell_id: 17484 },
+    WeaponDamageProc {
+        item_id: 272999,
+        name: "Barbaric Crossbow",
+        ppm: 3.2,
+        spell_id: 1291551,
+    },
+    WeaponDamageProc {
+        item_id: 279876,
+        name: "Plaguefang",
+        ppm: 2.4,
+        spell_id: 1309315,
+    },
+    WeaponDamageProc {
+        item_id: 267369,
+        name: "Wolfsbane",
+        ppm: 2.7,
+        spell_id: 1282503,
+    },
+    WeaponDamageProc {
+        item_id: 6469,
+        name: "Venomstrike",
+        ppm: 1.6,
+        spell_id: 29653,
+    },
+    WeaponDamageProc {
+        item_id: 6472,
+        name: "Stinging Viper",
+        ppm: 3.2,
+        spell_id: 1291663,
+    },
+    WeaponDamageProc {
+        item_id: 14555,
+        name: "Alcor's Sunrazor",
+        ppm: 1.0,
+        spell_id: 18833,
+    },
+    WeaponDamageProc {
+        item_id: 11744,
+        name: "Bloodfist",
+        ppm: 4.0,
+        spell_id: 16433,
+    },
+    WeaponDamageProc {
+        item_id: 14487,
+        name: "Bonechill Hammer",
+        ppm: 1.0,
+        spell_id: 18276,
+    },
+    WeaponDamageProc {
+        item_id: 13984,
+        name: "Darrowspike",
+        ppm: 1.0,
+        spell_id: 18276,
+    },
+    WeaponDamageProc {
+        item_id: 10761,
+        name: "Coldrage Dagger",
+        ppm: 2.2,
+        spell_id: 1293790,
+    },
+    WeaponDamageProc {
+        item_id: 19099,
+        name: "Glacial Blade",
+        ppm: 1.4,
+        spell_id: 18398,
+    },
+    WeaponDamageProc {
+        item_id: 11809,
+        name: "Flame Wrath",
+        ppm: 1.0,
+        spell_id: 16559,
+    },
+    WeaponDamageProc {
+        item_id: 12794,
+        name: "Masterwork Stormhammer",
+        ppm: 0.5,
+        spell_id: 16921,
+    },
+    WeaponDamageProc {
+        item_id: 19100,
+        name: "Electrified Dagger",
+        ppm: 1.4,
+        spell_id: 23592,
+    },
+    WeaponDamageProc {
+        item_id: 17074,
+        name: "Shadowstrike",
+        ppm: 2.2,
+        spell_id: 21170,
+    },
+    WeaponDamageProc {
+        item_id: 13401,
+        name: "The Cruel Hand of Timmy",
+        ppm: 0.65,
+        spell_id: 17505,
+    },
+    WeaponDamageProc {
+        item_id: 13361,
+        name: "Skullforge Reaver",
+        ppm: 1.7,
+        spell_id: 17484,
+    },
 ];
 
 fn apply_hand_written_item(env: &mut Environment, item: i32) -> Result<bool, Refusal> {
@@ -395,10 +476,8 @@ fn jom_gabbar(env: &mut Environment) {
     let unit = env.player;
     let action_id = ActionId::spell(29602);
     let duration = 20 * SECOND;
-    let bonus_per_stack = Stats::from_pairs(&[
-        (Stat::AttackPower, 65.0),
-        (Stat::RangedAttackPower, 65.0),
-    ]);
+    let bonus_per_stack =
+        Stats::from_pairs(&[(Stat::AttackPower, 65.0), (Stat::RangedAttackPower, 65.0)]);
 
     env.sim.get_or_register_aura(
         unit,
@@ -515,4 +594,3 @@ fn apply_hand_written_enchant(env: &mut Environment, enchant: i32) -> bool {
         }
     }
 }
-

@@ -683,7 +683,34 @@ impl Sim {
         for handler in self.spell_registered_handlers(unit) {
             handler(self, id);
         }
+        if self.is_finalized() {
+            self.finalize_spell(id);
+        }
         id
+    }
+
+    /// Go `spell.finalize`: the static default cost, with the modifiers the spell has by now.
+    pub(crate) fn finalize_spell(&mut self, id: SpellId) {
+        let percent = self
+            .unit(self.spell(id).unit)
+            .pseudo_stats
+            .spell_cost_percent_modifier;
+        let spell = self.spell_mut(id);
+        if let Some(cost) = &spell.cost {
+            // Go `SpellCost.ApplyCostModifiers`: int32 steps, then the float modifiers.
+            let flat = cost.base_cost.wrapping_add(cost.flat_modifier).max(0);
+            let scaled = (flat.wrapping_mul(percent) / 100).max(0);
+            spell.default_cast.cost =
+                (f64::from(scaled) * cost.percent_modifier * cost.additive_percent_modifier)
+                    .max(0.0);
+        }
+    }
+
+    /// Go `unit.finalize`'s loop over the spellbook.
+    pub(crate) fn finalize_spells(&mut self, unit: UnitId) {
+        for id in self.unit(unit).spellbook.clone() {
+            self.finalize_spell(id);
+        }
     }
 
     /// Go `unit.GetSpell`: the first registered spell with this action.

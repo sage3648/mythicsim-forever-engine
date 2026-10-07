@@ -37,16 +37,7 @@ pub(crate) fn apply_item_effects(env: &mut Environment) -> Result<(), Refusal> {
     Ok(())
 }
 
-/// Go `applyItemSetBonusEffects`.
+/// Go `applyItemSetBonusEffects`: in item_sets.rs.
 pub(crate) fn apply_item_set_bonus_effects(env: &mut Environment) -> Result<(), Refusal> {
-    let unit = env.player;
-    for item in env.sim.character(unit).equipment.iter() {
-        if item.set_id != 0 || !item.set_name.is_empty() {
-            return Err(Refusal::new(
-                "item_set",
-                format!("set bonuses are not prepared yet (item {})", item.id),
-            ));
-        }
-    }
-    Ok(())
+    super::item_sets::apply_item_set_bonus_effects(env)
 }

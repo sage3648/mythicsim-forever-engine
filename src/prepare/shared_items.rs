@@ -24,9 +24,7 @@ use super::env::Environment;
 use super::items::{self, effect_stats};
 use super::procs::DynamicProcManager;
 use super::resolve_aura::{aura_config, dot_config, label, AuraOpt};
-use super::resolve_proc::{
-    item_proc_chance, proc_trigger, stated_chance, weapon_proc, ProcOpt,
-};
+use super::resolve_proc::{item_proc_chance, proc_trigger, stated_chance, weapon_proc, ProcOpt};
 use super::resolve_spell::{self, spell_config, SpellOpt};
 use super::sim::{AuraConfig, AuraId, Cooldown, Duration, Sim, SpellId, UnitId};
 use super::spell::{school, DefenseType, ProcMask, SpellConfig, SpellFlag};
@@ -327,15 +325,21 @@ pub(crate) fn dpm_for_mask(
         if source.enchant_placement() == EnchantPlacement::OnWeapon {
             // NewDynamicLegacyProcForEnchantWithMask.
             let mask = ProcMask(mask.0 & proc_mask_for_weapon_enchant(sim, unit, source.id).0);
-            return Some(Rc::new(sim.new_dynamic_weapon_proc_manager(unit, ppm, 0.0, mask)));
+            return Some(Rc::new(
+                sim.new_dynamic_weapon_proc_manager(unit, ppm, 0.0, mask),
+            ));
         }
         return Some(Rc::new(sim.new_ppm_manager(unit, ppm, mask)));
     }
     // With no mask of its own the rate has to be read off whatever the effect sits on.
     if source.is_enchant {
-        return Some(dynamic_legacy_proc_for_enchant(sim, unit, source.id, ppm, 0.0));
+        return Some(dynamic_legacy_proc_for_enchant(
+            sim, unit, source.id, ppm, 0.0,
+        ));
     }
-    Some(dynamic_legacy_proc_for_weapon(sim, unit, source.id, ppm, 0.0))
+    Some(dynamic_legacy_proc_for_weapon(
+        sim, unit, source.id, ppm, 0.0,
+    ))
 }
 
 /// Go `damageDefenseType`: the defense type a proc's damage rolls with. A stated one wins;
@@ -590,7 +594,10 @@ pub(crate) fn registers(kind: ProcKind, cfg: &SpellDataProc) -> bool {
     match kind {
         ProcKind::EquipAura => true,
         ProcKind::Proc if row.applies_an_aura_to_an_enemy() => false,
-        _ => cfg.is_weapon_proc || decoded_callback(trigger) != super::aura_helpers::CallbackMask::EMPTY,
+        _ => {
+            cfg.is_weapon_proc
+                || decoded_callback(trigger) != super::aura_helpers::CallbackMask::EMPTY
+        }
     }
 }
 
@@ -619,14 +626,8 @@ fn apply_spell_data_proc(env: &mut Environment, cfg: &SpellDataProc) {
 
     let proc_aura = spell_data_proc_aura(env, cfg, trigger, buff, &effect);
 
-    let mut listener = spell_data_proc_listener(
-        &env.sim,
-        unit,
-        cfg,
-        source,
-        trigger,
-        effect.message("proc"),
-    );
+    let mut listener =
+        spell_data_proc_listener(&env.sim, unit, cfg, source, trigger, effect.message("proc"));
 
     // The same fallback the database layer applies: Bulwark of Azzinoth's armor buff sits in a
     // spell category with a 60s recovery while its trigger states nothing. Only a buff that is
@@ -784,7 +785,10 @@ pub(crate) fn spell_data_proc_heal_spell(
         &mut env.sim,
         unit,
         heal,
-        &[resolve_spell::magic(ProcMask::SPELL_HEALING), cast_by(as_proc)],
+        &[
+            resolve_spell::magic(ProcMask::SPELL_HEALING),
+            cast_by(as_proc),
+        ],
     );
     // A heal crits for the magic multiplier whatever the row files it under: 1248759 states no
     // defense type at all.
@@ -815,10 +819,7 @@ pub(crate) fn spell_data_absorb_spell(
     let shield = env.sim.new_damage_absorption_aura(
         unit,
         super::aura_helpers::AbsorptionAuraConfig {
-            aura: aura_config(
-                absorb,
-                &[label(format!("{} {}", absorb.name, source_id))],
-            ),
+            aura: aura_config(absorb, &[label(format!("{} {}", absorb.name, source_id))]),
             ..Default::default()
         },
     );
