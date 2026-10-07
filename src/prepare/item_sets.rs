@@ -41,7 +41,9 @@ struct SetBonus {
 /// The sets every module implements, searched by name. Classes contribute theirs through
 /// `crate::classes::item_sets`.
 pub(crate) fn implemented_sets() -> Vec<&'static ItemSet> {
-    crate::classes::item_sets()
+    let mut sets = crate::classes::item_sets();
+    sets.extend(super::forever_item_sets::ITEM_SETS.iter());
+    sets
 }
 
 /// Go's search for the set an item belongs to: by its set ID first, so sets with different
