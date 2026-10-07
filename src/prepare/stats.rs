@@ -626,6 +626,15 @@ impl StatDependencyManager {
         self.apply_stat_dependencies(s)
     }
 
+    /// The enabled dependencies as `(src, dst, amount, step)`, in their applied order.
+    pub(crate) fn enabled_dependencies(&self) -> Vec<(Stat, Stat, f64, f64)> {
+        self.deps
+            .iter()
+            .filter(|dep| dep.enabled)
+            .map(|dep| (dep.src, dep.dst, dep.amount, dep.step))
+            .collect()
+    }
+
     pub(crate) fn stat_dependency_coeff(&self, src: Stat, dst: Stat) -> f64 {
         self.deps
             .iter()

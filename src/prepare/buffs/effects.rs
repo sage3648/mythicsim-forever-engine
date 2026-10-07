@@ -25,7 +25,7 @@ const SPELL_BATCH_WINDOW: i64 = 10_000_000;
 /// fight and the effect never takes it, so the aura still activates but its effect never
 /// applies. Anything else is "unknown". A stacking aura weighs its priority by stacks, which
 /// neither reading covers. Go `exclusiveRefresh`.
-fn exclusive_refresh(sim: &Sim, aura: AuraId) -> Vec<&'static str> {
+pub(crate) fn exclusive_refresh(sim: &Sim, aura: AuraId) -> Vec<&'static str> {
     let aura = sim.aura(aura);
     let mut modes = Vec::new();
     for effect in &aura.exclusive_effects {

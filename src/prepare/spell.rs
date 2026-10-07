@@ -678,6 +678,11 @@ impl Sim {
             spell.min_range = config.min_range;
             spell.max_range = config.max_range;
             spell.has_extra_cast_condition = true;
+            // The exporter classifies the cast from the final extra cast condition, which the
+            // range constraints add.
+            if spell.cast_kind == CastKind::AutosOrProcs {
+                spell.cast_kind = CastKind::Simple;
+            }
         }
         self.unit_mut(unit).spellbook.push(id);
         for handler in self.spell_registered_handlers(unit) {

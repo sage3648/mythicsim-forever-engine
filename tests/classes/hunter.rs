@@ -2,6 +2,8 @@
 //! compared with the rest of the fixture family in `mage/prepared_v2.rs`; these tests pin the
 //! ranged auto attack, the ranged cast time, physical ticks, the pets and what the gate rejects.
 
+mod prepare;
+
 use forever_engine::{
     check_prepared, contracts::prepared_v2::PreparedV2, simulate_prepared, PreparedError,
 };
