@@ -80,3 +80,38 @@ impl Sim {
         bar.current_rage = bar.starting_rage;
     }
 }
+
+/// Go `TwoHandNormalizedSwingSpeed`.
+const TWO_HAND_NORMALIZED_SWING_SPEED: f64 = 3.3;
+
+/// tools/oracle-v2/warrior.go `rageBarEffect`: the rage each landed white hit gives, with Go's
+/// operation order: the hit factor, halved for the off hand, raised for a two-handed weapon,
+/// times the swing speed, the bar's base multiplier and the hand's multiplier.
+pub(crate) fn rage_bar_effect(
+    sim: &Sim,
+    unit: UnitId,
+    base_rage_multiplier: f64,
+) -> serde_json::Value {
+    let bar = &sim.unit(unit).rage_bar;
+    let auto_attacks = &sim.unit(unit).auto_attacks;
+    let hit_rage = |weapon: &super::attack::Weapon, off_hand: bool| {
+        let mut hit_factor = BASE_RAGE_HIT_FACTOR;
+        let mut hand_multiplier = 1.0;
+        if off_hand {
+            hit_factor /= 2.0;
+            hand_multiplier = bar.off_hand_rage_multiplier;
+        }
+        if weapon.normalized_swing_speed == TWO_HAND_NORMALIZED_SWING_SPEED {
+            hit_factor *= TWO_HAND_RAGE_MULTIPLIER;
+        }
+        hit_factor * weapon.swing_speed * base_rage_multiplier * hand_multiplier
+    };
+    serde_json::json!({
+        "kind": "rage_bar", "aura": "RageBar", "max_rage": bar.max_rage,
+        "starting_rage": bar.starting_rage,
+        "main_hand_rage": hit_rage(&auto_attacks.mh, false),
+        "off_hand_rage": hit_rage(&auto_attacks.oh, true),
+        "crit_multiplier": CRIT_RAGE_MULTIPLIER,
+        "threat_per_rage": THREAT_PER_RAGE_GAINED,
+    })
+}
