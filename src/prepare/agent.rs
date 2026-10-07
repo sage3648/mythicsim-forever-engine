@@ -47,6 +47,16 @@ pub(crate) trait PrepAgent {
     fn initialize(&mut self, _sim: &mut Sim, _unit: UnitId) {}
     /// Go `Agent.Reset`.
     fn reset(&mut self, _sim: &mut Sim, _unit: UnitId) {}
+    /// A `core.NewItemEffect` the class package registers for an item: applies it and answers
+    /// true, or answers false for an item the class registers no effect for. Called after the
+    /// shared effects (`items_registry`), in Go's equipment order.
+    fn apply_item_effect(&mut self, _sim: &mut Sim, _unit: UnitId, _item: i32) -> bool {
+        false
+    }
+    /// A `core.NewEnchantEffect` the class package registers for an enchant.
+    fn apply_enchant_effect(&mut self, _sim: &mut Sim, _unit: UnitId, _enchant: i32) -> bool {
+        false
+    }
 
     /// The talents proto the class filled from the talent string.
     fn talents(&self) -> &Message;
