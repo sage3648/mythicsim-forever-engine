@@ -3,9 +3,11 @@
 
 pub(crate) mod drivers;
 mod effects;
-mod generated;
+pub(crate) mod flametongue;
+pub(crate) mod generated;
 pub(crate) mod paladin;
 pub(crate) mod support;
+mod windfury_effect;
 
 use crate::contracts::prepared_v2::ActionId;
 use crate::contracts::request::Message;
@@ -25,6 +27,7 @@ pub(crate) use effects::{
     sunder_armor_effect,
 };
 pub(crate) use generated::{apply_generated_buffs, apply_generated_debuffs};
+pub(crate) use windfury_effect::windfury_totem_effect;
 
 /// Which constructor a generated buff uses.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -167,24 +170,24 @@ impl Meta {
     /// constructor of this buff calls it.
     pub(crate) fn aura(
         &self,
-        env: &mut Environment,
+        sim: &mut Sim,
         unit: UnitId,
         is_player: bool,
         talent_points: i32,
         count: f64,
-    ) -> Result<AuraId, Refusal> {
+    ) -> AuraId {
         match self.kind {
-            MetaKind::Buff => Ok(self.buff(
-                &mut env.sim,
+            MetaKind::Buff => self.buff(
+                sim,
                 unit,
                 is_player,
                 talent_points,
                 self.options(talent_points),
-            )),
+            ),
             MetaKind::ItemCountBuff => {
                 let mut options = self.options(0);
                 options.count = count;
-                Ok(self.buff(&mut env.sim, unit, is_player, 0, options))
+                self.buff(sim, unit, is_player, 0, options)
             }
             MetaKind::Debuff => {
                 let mut options = self.options(talent_points);
@@ -195,18 +198,16 @@ impl Meta {
                         options.exclusive = Some((self.category.to_string(), self.single_aura));
                     }
                 }
-                Ok(self.parsed_aura(
-                    &mut env.sim,
+                self.parsed_aura(
+                    sim,
                     unit,
                     is_player,
                     talent_points,
                     BuildPhase::NONE,
                     options,
-                ))
+                )
             }
-            MetaKind::DamageShield => {
-                Ok(self.damage_shield(&mut env.sim, unit, is_player, talent_points))
-            }
+            MetaKind::DamageShield => self.damage_shield(sim, unit, is_player, talent_points),
         }
     }
 
@@ -318,7 +319,7 @@ pub(crate) fn permanent(
     is_player: bool,
     talent_points: i32,
 ) -> Result<AuraId, Refusal> {
-    let aura = meta.aura(env, unit, is_player, talent_points, 0.0)?;
+    let aura = meta.aura(&mut env.sim, unit, is_player, talent_points, 0.0);
     Ok(env.sim.make_permanent(aura))
 }
 
@@ -329,7 +330,7 @@ pub(crate) fn permanent_with_count(
     meta: &Meta,
     count: f64,
 ) -> Result<AuraId, Refusal> {
-    let aura = meta.aura(env, unit, false, 0, count)?;
+    let aura = meta.aura(&mut env.sim, unit, false, 0, count);
     Ok(env.sim.make_permanent(aura))
 }
 

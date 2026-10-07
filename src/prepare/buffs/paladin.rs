@@ -10,12 +10,10 @@ use crate::contracts::prepared_v2::ActionId;
 
 use super::super::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use super::super::dbcenums;
-use super::super::env::Environment;
 use super::super::sim::{school_array_index, AuraConfig, AuraId, EffectId, Sim, UnitId};
 use super::super::spell::{school, ProcMask};
 use super::super::spelldata::must_find;
 use super::super::stats::SchoolIndex;
-use super::super::Refusal;
 use super::generated::{
     CONCENTRATION_AURA, DEVOTION_AURA, FIRE_RESISTANCE_AURA, FROST_RESISTANCE_AURA,
     JUDGEMENT_OF_LIGHT, JUDGEMENT_OF_WISDOM, RETRIBUTION_AURA, SHADOW_RESISTANCE_AURA,
@@ -62,68 +60,68 @@ fn aura_meta(base: &Meta, rank: &PaladinAuraRank) -> Meta {
 }
 
 fn ranked_buff(
-    env: &mut Environment,
+    sim: &mut Sim,
     unit: UnitId,
     base: &Meta,
     is_player: bool,
     rank: &PaladinAuraRank,
-) -> Result<AuraId, Refusal> {
-    aura_meta(base, rank).aura(env, unit, is_player, 0, 0.0)
+) -> AuraId {
+    aura_meta(base, rank).aura(sim, unit, is_player, 0, 0.0)
 }
 
 /// Go `DevotionAuraBuff`.
 #[allow(dead_code)]
 pub(crate) fn devotion_aura_buff(
-    env: &mut Environment,
+    sim: &mut Sim,
     unit: UnitId,
     is_player: bool,
     rank: &PaladinAuraRank,
-) -> Result<AuraId, Refusal> {
-    ranked_buff(env, unit, &DEVOTION_AURA, is_player, rank)
+) -> AuraId {
+    ranked_buff(sim, unit, &DEVOTION_AURA, is_player, rank)
 }
 
 /// Go `ConcentrationAura`.
 #[allow(dead_code)]
 pub(crate) fn concentration_aura(
-    env: &mut Environment,
+    sim: &mut Sim,
     unit: UnitId,
     is_player: bool,
     rank: &PaladinAuraRank,
-) -> Result<AuraId, Refusal> {
-    ranked_buff(env, unit, &CONCENTRATION_AURA, is_player, rank)
+) -> AuraId {
+    ranked_buff(sim, unit, &CONCENTRATION_AURA, is_player, rank)
 }
 
 /// Go `FireResistanceAura`.
 #[allow(dead_code)]
 pub(crate) fn fire_resistance_aura(
-    env: &mut Environment,
+    sim: &mut Sim,
     unit: UnitId,
     is_player: bool,
     rank: &PaladinAuraRank,
-) -> Result<AuraId, Refusal> {
-    ranked_buff(env, unit, &FIRE_RESISTANCE_AURA, is_player, rank)
+) -> AuraId {
+    ranked_buff(sim, unit, &FIRE_RESISTANCE_AURA, is_player, rank)
 }
 
 /// Go `FrostResistanceAura`.
 #[allow(dead_code)]
 pub(crate) fn frost_resistance_aura(
-    env: &mut Environment,
+    sim: &mut Sim,
     unit: UnitId,
     is_player: bool,
     rank: &PaladinAuraRank,
-) -> Result<AuraId, Refusal> {
-    ranked_buff(env, unit, &FROST_RESISTANCE_AURA, is_player, rank)
+) -> AuraId {
+    ranked_buff(sim, unit, &FROST_RESISTANCE_AURA, is_player, rank)
 }
 
 /// Go `ShadowResistanceAura`.
 #[allow(dead_code)]
 pub(crate) fn shadow_resistance_aura(
-    env: &mut Environment,
+    sim: &mut Sim,
     unit: UnitId,
     is_player: bool,
     rank: &PaladinAuraRank,
-) -> Result<AuraId, Refusal> {
-    ranked_buff(env, unit, &SHADOW_RESISTANCE_AURA, is_player, rank)
+) -> AuraId {
+    ranked_buff(sim, unit, &SHADOW_RESISTANCE_AURA, is_player, rank)
 }
 
 /// Go `RetributionAuraSpellPowerCoefficient`: Retribution Aura scales with the casting paladin's
@@ -137,7 +135,7 @@ const RETRIBUTION_AURA_SPELL_POWER_COEFFICIENT: f64 = 19.0 / 140.0;
 /// cannot see the providing paladin, so `external_spell_power` stands in for it and the
 /// recipient's own stats stay out of the damage.
 pub(crate) fn retribution_aura_buff(
-    env: &mut Environment,
+    sim: &mut Sim,
     unit: UnitId,
     is_player: bool,
     rank: &PaladinAuraRank,
@@ -145,7 +143,7 @@ pub(crate) fn retribution_aura_buff(
 ) -> AuraId {
     let meta = aura_meta(&RETRIBUTION_AURA, rank);
     let label = meta.label_for(is_player);
-    if let Some(aura) = env.sim.get_aura(unit, &label) {
+    if let Some(aura) = sim.get_aura(unit, &label) {
         return aura;
     }
     let (damage, coefficient) = if is_player {
@@ -158,7 +156,7 @@ pub(crate) fn retribution_aura_buff(
         )
     };
     let aura = super::support::new_damage_shield(
-        &mut env.sim,
+        sim,
         unit,
         super::support::DamageShield {
             label,
@@ -171,7 +169,7 @@ pub(crate) fn retribution_aura_buff(
             bonus_coefficient: coefficient,
         },
     );
-    super::support::join_shared_category(&mut env.sim, aura, meta.shared_category, is_player);
+    super::support::join_shared_category(sim, aura, meta.shared_category, is_player);
     aura
 }
 

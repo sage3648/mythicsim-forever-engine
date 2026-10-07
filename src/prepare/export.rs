@@ -550,6 +550,25 @@ fn tail_effects(
 ) -> Result<Vec<Value>, Refusal> {
     let _ = &unrepresented;
     let mut effects = Vec::new();
+    // tools/oracle-v2/targets.go targetCopyNotes: Go keeps an internal cooldown per copy.
+    if env.encounter.targets.len() > 1 {
+        let first = env.encounter.targets[0];
+        if let Some(aura) = env
+            .sim
+            .unit(first)
+            .auras
+            .iter()
+            .find(|aura| env.sim.aura(**aura).icd.is_some())
+        {
+            return Err(Refusal::new(
+                "targets",
+                format!(
+                    "target aura {} has an internal cooldown",
+                    env.sim.aura(*aura).label
+                ),
+            ));
+        }
+    }
     if env.sim.get_aura(env.player, "Eureka!").is_some() {
         return Err(Refusal::new(
             "race",
@@ -706,6 +725,9 @@ pub(crate) fn export(
         env,
         &mut unrepresented,
     ));
+    // Go's meleeProcEffects ends with the Windfury Totem effect; its item and enchant proc effects
+    // are not ported yet, so it follows the common effects directly. Move it to the end of them.
+    effects.extend(super::buffs::windfury_totem_effect(env, &mut unrepresented));
     // Go then appends the inert pets, the melee, gear, spell data and energy proc effects and
     // the stat auras effect, in that order; Rust refuses pets and ports the rest in
     // src/prepare/export_items.rs.
@@ -752,6 +774,7 @@ pub(crate) fn export(
         "teardown_max": 0.0,
     });
 
+    let target_count = env.encounter.targets.len();
     let target_unit = env.sim.unit(target);
     let mut prepared = json!({
         "schema_version": SCHEMA_VERSION,
@@ -826,6 +849,9 @@ pub(crate) fn export(
         "effects": effects,
         "unrepresented": [],
     });
+    if target_count > 1 {
+        prepared["encounter"]["target_count"] = json!(target_count);
+    }
     let hp = player_message
         .message("cooldowns")
         .map_or(0.0, |cooldowns| cooldowns.f64("hp_percent_for_defensives"));

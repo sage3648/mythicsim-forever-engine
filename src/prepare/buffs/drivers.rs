@@ -8,19 +8,24 @@
 
 use std::rc::Rc;
 
+use crate::contracts::prepared_v2::ActionId;
 use crate::contracts::request::Message;
 
 use super::super::character::cooldown_type;
 use super::super::env::Environment;
 use super::super::periodic_action::PeriodicActionOptions;
-use super::super::sim::{AuraId, Sim, UnitId, SECOND};
+use super::super::resolve_proc::{chance, proc_trigger};
+use super::super::sim::{
+    AuraConfig, AuraId, BuildPhase, EffectId, Sim, UnitId, NEVER_EXPIRES, SECOND,
+};
 use super::super::spell::GCD_DEFAULT;
+use super::super::spelldata::must_find;
 use super::super::stats::Stat;
 use super::super::Refusal;
 use super::generated::{
     ATIESH_DRUID, ATIESH_MAGE, ATIESH_PRIEST, ATIESH_WARLOCK, BATTLE_SHOUT, GRACE_OF_AIR_TOTEM,
     GREATER_BLESSING_OF_LIGHT, INNERVATES, JUDGEMENT_OF_LIGHT, JUDGEMENT_OF_WISDOM,
-    MANA_TIDE_TOTEMS, POWER_INFUSIONS, SUNDER_ARMOR,
+    MANA_TIDE_TOTEMS, POWER_INFUSIONS, SUNDER_ARMOR, WINDFURY_TOTEM,
 };
 use super::paladin;
 use super::support::{
@@ -47,16 +52,11 @@ pub(crate) const AIR_TOTEM_CATEGORY: &str = "AirTotem";
 /// Go `AirTotemPartyGraceOfAir`, `AirTotemPartyWindfury`, `AirTotemCastGraceOfAir` and
 /// `AirTotemCastWindfury`: what each bids in the category.
 pub(crate) const AIR_TOTEM_PARTY_GRACE_OF_AIR: f64 = 1.0;
-#[allow(dead_code)]
 pub(crate) const AIR_TOTEM_PARTY_WINDFURY: f64 = 2.0;
 #[allow(dead_code)]
 pub(crate) const AIR_TOTEM_CAST_GRACE_OF_AIR: f64 = 3.0;
 #[allow(dead_code)]
 pub(crate) const AIR_TOTEM_CAST_WINDFURY: f64 = 4.0;
-
-fn not_yet(name: &str) -> Result<(), Refusal> {
-    Err(Refusal::new("buff", format!("{name} is not prepared yet")))
-}
 
 /// Go `driveBattleShout`: the party's Battle Shout is the external caster's copy, which chains
 /// behind the player's own shout rather than being up from the start. Its improved state says
@@ -66,7 +66,7 @@ pub(crate) fn drive_battle_shout(
     unit: UnitId,
     party: &Message,
 ) -> Result<(), Refusal> {
-    let aura = BATTLE_SHOUT.aura(env, unit, false, 0, 0.0)?;
+    let aura = BATTLE_SHOUT.aura(&mut env.sim, unit, false, 0, 0.0);
     // TristateEffectImproved.
     if party.enum_number("battle_shout") == 2 {
         add_generated_flat_bonus(
@@ -89,7 +89,7 @@ pub(crate) fn drive_innervates(
     unit: UnitId,
     individual: &Message,
 ) -> Result<(), Refusal> {
-    let aura = INNERVATES.aura(env, unit, false, 0, 0.0)?;
+    let aura = INNERVATES.aura(&mut env.sim, unit, false, 0, 0.0);
     attach_innervate_regen(&mut env.sim, unit, aura);
     // The mana threshold the cooldown waits for is read after finalize and only by a fight.
     new_generated_external_cd(
@@ -133,7 +133,7 @@ pub(crate) fn drive_power_infusions(
     unit: UnitId,
     individual: &Message,
 ) -> Result<(), Refusal> {
-    let aura = POWER_INFUSIONS.aura(env, unit, false, 0, 0.0)?;
+    let aura = POWER_INFUSIONS.aura(&mut env.sim, unit, false, 0, 0.0);
     new_generated_external_cd(
         &mut env.sim,
         unit,
@@ -154,7 +154,7 @@ pub(crate) fn drive_mana_tide_totems(
     party: &Message,
 ) -> Result<(), Refusal> {
     // The initial delay is read after finalize and only by a fight.
-    let aura = MANA_TIDE_TOTEMS.aura(env, unit, false, 0, 0.0)?;
+    let aura = MANA_TIDE_TOTEMS.aura(&mut env.sim, unit, false, 0, 0.0);
     new_generated_external_cd(
         &mut env.sim,
         unit,
@@ -167,13 +167,117 @@ pub(crate) fn drive_mana_tide_totems(
     Ok(())
 }
 
-/// Go `driveWindfuryTotem`: needs `spelldata.ProcTrigger`, which is not ported yet.
+/// The totem's party aura, which states the proc: since build 70009 the totem hands the proc out
+/// as a party aura (10612, an area A_PROC_TRIGGER_SPELL) rather than Era's main-hand enchant 564,
+/// which nothing in the client applies any more; its row states the 20%, the 100 ms internal
+/// cooldown and what hears it: every melee auto and special, off-hand included. The extra attack
+/// 10610 grants is always a main-hand one.
+const WINDFURY_TOTEM_PARTY_AURA: i32 = 10612;
+
+/// Go `driveWindfuryTotem`: the totem's aura is the attack power a windfury proc grants.
 pub(crate) fn drive_windfury_totem(
-    _env: &mut Environment,
-    _unit: UnitId,
+    env: &mut Environment,
+    unit: UnitId,
     _party: &Message,
 ) -> Result<(), Refusal> {
-    not_yet("Windfury Totem")
+    let proc_aura = WINDFURY_TOTEM.aura(&mut env.sim, unit, false, 0, 0.0);
+    // The attack power is only there for a moment after a proc, so it is not part of the stats
+    // the character sheet is measured with.
+    env.sim.aura_mut(proc_aura).build_phase = BuildPhase::NONE;
+
+    // The row's own proc flags say what spends a charge: every auto attack that lands. The
+    // attack power stays until the charges are gone or the row's duration runs out.
+    let row = must_find(WINDFURY_TOTEM.spell);
+    env.sim.aura_mut(proc_aura).max_stacks = i32::from(row.proc_charges);
+    let mut spender = proc_trigger(&env.sim, Some(unit), row, &[chance(1.0)]);
+    spender.name = "Windfury Totem Charges".to_string();
+    spender.trigger_immediately = true;
+    env.sim
+        .attach_proc_trigger_callback(proc_aura, unit, &spender);
+
+    // An auto that procs it has spent the first charge itself, so the extra attack is the only
+    // one buffed; a special hands both charges to the extra attack and the auto after it.
+    let mut trigger = proc_trigger(
+        &env.sim,
+        Some(unit),
+        must_find(WINDFURY_TOTEM_PARTY_AURA),
+        &[],
+    );
+    trigger.name = "Windfury Totem Trigger".to_string();
+    trigger.action_id = ActionId::default();
+    trigger.metrics_action_id = ActionId {
+        spell_id: 25580,
+        tag: -1,
+        ..ActionId::default()
+    };
+    trigger.duration = NEVER_EXPIRES;
+    trigger.trigger_immediately = true;
+    let proc_trigger_aura = env.sim.make_proc_trigger_aura(unit, &trigger);
+
+    // The totem stands for 10 seconds and the shaman drops a new one every 5, so the aura that
+    // holds the category is simply refreshed.
+    let totem_aura = env.sim.get_or_register_aura(
+        unit,
+        AuraConfig {
+            label: "Windfury Totem".to_string(),
+            action_id: Some(ActionId {
+                spell_id: 25587,
+                tag: -1,
+                ..ActionId::default()
+            }),
+            duration: 10 * SECOND,
+            ..AuraConfig::default()
+        },
+    );
+    env.sim.apply_on_init(
+        totem_aura,
+        Rc::new(move |sim: &mut Sim, _| {
+            // The extra attack: a copy of the main hand's swing under its own tag. A caster's
+            // empty configuration registers a spell named by the tag alone.
+            let mut config = sim
+                .unit(unit)
+                .auto_attacks
+                .mh_config
+                .clone()
+                .unwrap_or_default();
+            config.action_id.tag = 25584;
+            sim.get_or_register_spell(unit, config);
+        }),
+    );
+    env.sim.apply_on_reset(
+        totem_aura,
+        Rc::new(|sim: &mut Sim, aura| {
+            sim.activate(aura);
+            sim.start_periodic_action(PeriodicActionOptions {
+                period: 5 * SECOND,
+                ..PeriodicActionOptions::default()
+            });
+        }),
+    );
+
+    // Joined first, so a cast air totem refuses the aura before it arms the proc.
+    env.sim.new_exclusive_effect(
+        totem_aura,
+        AIR_TOTEM_CATEGORY,
+        true,
+        AIR_TOTEM_PARTY_WINDFURY,
+        None,
+        None,
+    );
+    env.sim.new_exclusive_effect(
+        totem_aura,
+        WINDFURY_TOTEM.category,
+        false,
+        WINDFURY_TOTEM.value(0),
+        Some(Rc::new(move |sim: &mut Sim, _: EffectId| {
+            sim.activate(proc_trigger_aura);
+        })),
+        Some(Rc::new(move |sim: &mut Sim, _: EffectId| {
+            sim.deactivate(proc_trigger_aura);
+            sim.deactivate(totem_aura);
+        })),
+    );
+    Ok(())
 }
 
 /// Go `driveGraceOfAirTotem`: a shaman twisting totems keeps Grace of Air up for 9 seconds out of
@@ -184,7 +288,7 @@ pub(crate) fn drive_grace_of_air_totem(
     unit: UnitId,
     party: &Message,
 ) -> Result<(), Refusal> {
-    let aura = GRACE_OF_AIR_TOTEM.aura(env, unit, false, 0, 0.0)?;
+    let aura = GRACE_OF_AIR_TOTEM.aura(&mut env.sim, unit, false, 0, 0.0);
     env.sim.new_exclusive_effect(
         aura,
         AIR_TOTEM_CATEGORY,
@@ -220,7 +324,7 @@ pub(crate) fn drive_retribution_aura(
     party: &Message,
 ) -> Result<(), Refusal> {
     let aura = paladin::retribution_aura_buff(
-        env,
+        &mut env.sim,
         unit,
         false,
         &paladin::retribution_aura_max_rank(),
@@ -286,13 +390,15 @@ pub(crate) fn drive_atiesh_priest(
     Ok(())
 }
 
-/// Go `driveFlametongueTotem`: needs `spelldata.ProcTrigger`, which is not ported yet.
+/// Go `driveFlametongueTotem`.
 pub(crate) fn drive_flametongue_totem(
-    _env: &mut Environment,
-    _unit: UnitId,
+    env: &mut Environment,
+    unit: UnitId,
     _party: &Message,
 ) -> Result<(), Refusal> {
-    not_yet("Flametongue Totem")
+    let traits = env.agent.flametongue_attack_traits();
+    super::flametongue::drive_flametongue_totem(&mut env.sim, unit, traits);
+    Ok(())
 }
 
 /// Go `driveJudgementOfLight`: the judgement the paladin leaves on the target heals whoever
