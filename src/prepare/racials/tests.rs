@@ -25,6 +25,7 @@ fn factory(sim: &mut Sim, unit: UnitId, _player: &Message) -> Result<Box<dyn Pre
     sim.unit_mut(unit).rage_bar = RageBar {
         enabled: true,
         max_rage: 100.0,
+        ..RageBar::default()
     };
     for (id, flags, class_spell_mask) in [(1, SpellFlag::NONE, 1), (2, SpellFlag::APL, 0)] {
         sim.register_spell(

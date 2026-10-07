@@ -99,6 +99,21 @@ pub(crate) trait PrepAgent {
     fn damage_effect(&self, _sim: &Sim, _spell: super::sim::SpellId) -> Option<serde_json::Value> {
         None
     }
+    /// Go `classExport.unrepresented`: class behavior the effects cannot describe, one reason
+    /// each.
+    fn unrepresented(&self, _sim: &Sim, _unit: UnitId) -> Vec<String> {
+        Vec::new()
+    }
+    /// Go `classItemUseEffects`: the exported effect of an item use the class package registers
+    /// itself, keyed by the item. It is the item loop's last case, after the shared ones.
+    fn class_item_use_effect(
+        &self,
+        _env: &super::env::Environment,
+        _spell: super::sim::SpellId,
+        _item: i32,
+    ) -> Option<serde_json::Value> {
+        None
+    }
     /// Go `buffs.SetFlametongueAttackTraits`: what the class's own Flametongue Attack carries,
     /// which the party's Flametongue Totem hit takes. Any other class has none.
     fn flametongue_attack_traits(&self) -> super::buffs::flametongue::FlametongueAttackTraits {
