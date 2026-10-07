@@ -353,3 +353,87 @@ fn sulfuras_hand_of_ragnaros(env: &mut Environment) {
         ))
     });
 }
+
+/// The item IDs this module registers, for the test against Go's registered IDs.
+#[cfg(test)]
+const ITEMS: [i32; 7] = [19019, DRAGONS_CALL, 11684, 13505, 13937, 14576, 17182];
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::prepare::item_test_support::{aura, environment};
+
+    /// The items of a request that wears `item` in the main hand and `enchant` on it.
+    fn main_hand(item: i32, enchant: i32) -> Vec<(i32, i32)> {
+        let mut items = vec![(0, 0); 14];
+        items.push((item, enchant));
+        items
+    }
+
+    #[test]
+    fn every_item_is_one_go_registers() {
+        let tables = crate::data::tables::tables();
+        for item in ITEMS {
+            assert!(
+                tables.item_effect_ids.contains(&item),
+                "item {item} is not registered by Go"
+            );
+        }
+        for enchant in [2613, 2621, super::super::classic_enchants::CRUSADER] {
+            assert!(
+                tables.enchant_effect_ids.contains(&enchant),
+                "enchant {enchant} is not registered by Go"
+            );
+        }
+    }
+
+    #[test]
+    fn ironfoes_fury_of_forgewright_hears_landed_melee_hits_behind_a_100_ms_cooldown() {
+        let env = environment(&main_hand(11684, 0));
+        let aura = env.sim.aura(aura(&env, "Fury of Forgewright"));
+        assert_eq!(aura.action_id_for_proc, Some(ActionId::spell(15494)));
+        assert_eq!(aura.icd.map(|icd| icd.duration), Some(100 * MILLISECOND));
+        assert_eq!(
+            aura.callback_names(),
+            vec!["on_reset", "on_spell_hit_dealt"]
+        );
+    }
+
+    #[test]
+    fn crusader_keeps_a_strength_buff_for_each_hand_and_one_trigger() {
+        let env = environment(&main_hand(35, 1900));
+        for (label, tag) in [("Holy Strength (MH)", 1), ("Holy Strength (OH)", 2)] {
+            let buff = env.sim.aura(aura(&env, label));
+            assert_eq!(buff.action_id, Some(tagged(&ActionId::spell(20007), tag)));
+            assert_eq!(buff.duration, 15 * SECOND);
+        }
+        let trigger = env.sim.aura(aura(&env, "Enchant Weapon - Crusader"));
+        assert_eq!(trigger.action_id_for_proc, Some(ActionId::spell(20007)));
+        let dpm = trigger.dpm.as_ref().expect("a proc manager");
+        assert_eq!(dpm.proc_masks, vec![ProcMask::MELEE_MH]);
+    }
+
+    #[test]
+    fn the_threat_enchants_scale_threat_through_permanent_auras() {
+        let mut items = vec![(0, 0); 15];
+        items[6] = (14615, 2613);
+        items[3] = (13340, 2621);
+        let env = environment(&items);
+        assert!(env.sim.aura(aura(&env, "Increase Threat")).active);
+        assert!(env.sim.aura(aura(&env, "Decrease Threat")).active);
+        let threat = env.sim.unit(env.player).pseudo_stats.threat_multiplier;
+        assert_eq!(threat, 1.0 * 1.02 * 0.98);
+    }
+
+    #[test]
+    fn the_runeblade_raises_movement_speed_by_eight_percent() {
+        let env = environment(&main_hand(13505, 0));
+        assert!(env.sim.aura(aura(&env, "Unholy Aura")).active);
+        let speed = env
+            .sim
+            .unit(env.player)
+            .pseudo_stats
+            .movement_speed_multiplier;
+        assert_eq!(speed, 1.08);
+    }
+}
