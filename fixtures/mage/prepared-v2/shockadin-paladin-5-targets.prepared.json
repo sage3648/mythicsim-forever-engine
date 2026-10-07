@@ -2,8 +2,8 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "cd7d44aec711bcc8f20ea12d3ed83cea2126ac66",
-    "client_build": "1.60.1.70205",
+    "engine_revision": "2d93e423e0303e93dbb16e190d435503248b68f9",
+    "client_build": "1.60.1.70235",
     "exporter": "tools/oracle-v2"
   },
   "request_sha256": "ed81024e6e987b8931024e075cad16651dcca3b61a4f8076a3676254d84e600a",
@@ -1107,12 +1107,18 @@
           "on_reset"
         ],
         "icd": null,
-        "exclusive_effects": 2,
+        "exclusive_effects": 3,
         "exclusive_memberships": [
           {
             "category": "AirTotem",
             "single_aura": true,
             "priority": 2,
+            "position": 0
+          },
+          {
+            "category": "FlametongueTotem",
+            "single_aura": false,
+            "priority": 2044.5,
             "position": 0
           },
           {
@@ -13482,7 +13488,7 @@
         "spell_id": 1311074
       },
       "proc_chance": 1,
-      "refund": 0.6,
+      "refund": 0.6666666666666666,
       "trigger_aura": "Sanctified Judgementshockadin-paladin (#1)"
     },
     {

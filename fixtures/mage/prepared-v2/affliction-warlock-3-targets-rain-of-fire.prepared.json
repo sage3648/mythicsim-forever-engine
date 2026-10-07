@@ -2,8 +2,8 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "cd7d44aec711bcc8f20ea12d3ed83cea2126ac66",
-    "client_build": "1.60.1.70205",
+    "engine_revision": "2d93e423e0303e93dbb16e190d435503248b68f9",
+    "client_build": "1.60.1.70235",
     "exporter": "tools/oracle-v2"
   },
   "request_sha256": "82cb3f5016640bbdfdfa23388f7f39fde81d0bfd75faa2f4f8bc81286d70d158",
@@ -1877,7 +1877,7 @@
           "base_tick_count": 15,
           "base_tick_length_ns": 1000000000,
           "bonus_coefficient": 0.02199999988079071,
-          "periodic_damage_multiplier": 1.05,
+          "periodic_damage_multiplier": 1,
           "base_duration_multiplier": 1,
           "base_duration_flat_ns": 0,
           "affected_by_cast_speed": true,

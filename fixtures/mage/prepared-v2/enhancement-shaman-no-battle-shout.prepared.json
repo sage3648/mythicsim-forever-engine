@@ -2,8 +2,8 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "cd7d44aec711bcc8f20ea12d3ed83cea2126ac66",
-    "client_build": "1.60.1.70205",
+    "engine_revision": "2d93e423e0303e93dbb16e190d435503248b68f9",
+    "client_build": "1.60.1.70235",
     "exporter": "tools/oracle-v2"
   },
   "request_sha256": "250381e84d47a655471504c6aef99ed2ee7a661f94be471baa3ec9ccbd0c7a00",
@@ -290,7 +290,7 @@
         "action_id": {
           "spell_id": 10438
         },
-        "duration_ns": 55000000000,
+        "duration_ns": 53460000000,
         "max_stacks": 0,
         "active": false,
         "stacks": 0,
@@ -923,12 +923,18 @@
           "on_reset"
         ],
         "icd": null,
-        "exclusive_effects": 2,
+        "exclusive_effects": 3,
         "exclusive_memberships": [
           {
             "category": "AirTotem",
             "single_aura": true,
             "priority": 2,
+            "position": 0
+          },
+          {
+            "category": "FlametongueTotem",
+            "single_aura": false,
+            "priority": 2044.5,
             "position": 0
           },
           {
@@ -1258,7 +1264,7 @@
             "category": "FlametongueTotem",
             "single_aura": false,
             "priority": 1363,
-            "position": 0
+            "position": 1
           }
         ]
       },
@@ -1345,13 +1351,19 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 1,
+        "exclusive_effects": 2,
         "exclusive_memberships": [
           {
             "category": "AirTotem",
             "single_aura": true,
             "priority": 4,
             "position": 1
+          },
+          {
+            "category": "FlametongueTotem",
+            "single_aura": false,
+            "priority": 2044.5,
+            "position": 2
           }
         ]
       },
@@ -4075,8 +4087,8 @@
         "dot": {
           "unit": "target",
           "aura_label": "Searing Totem-1",
-          "base_tick_count": 25,
-          "base_tick_length_ns": 2200000000,
+          "base_tick_count": 22,
+          "base_tick_length_ns": 2430000000,
           "bonus_coefficient": 0,
           "periodic_damage_multiplier": 1,
           "base_duration_multiplier": 1,
@@ -4103,7 +4115,6 @@
           "SpellFlagProc",
           "SpellFlagAgentReserved1"
         ],
-        "class_spell": "flametongue_weapon",
         "missile_speed": 0,
         "cost": null,
         "default_cast": {
@@ -4129,7 +4140,7 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1.15,
+        "damage_multiplier_additive": 1,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
