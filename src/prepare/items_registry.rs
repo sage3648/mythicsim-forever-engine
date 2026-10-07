@@ -11,6 +11,9 @@ pub(crate) fn apply_item_effect(env: &mut Environment, item: i32) -> Result<bool
     if super::forever_items::apply_item_effect(env, item)? {
         return Ok(true);
     }
+    if super::classic_items::apply_item_effect(env, item)? {
+        return Ok(true);
+    }
     let unit = env.player;
     Ok(env.agent.apply_item_effect(&mut env.sim, unit, item))
 }
