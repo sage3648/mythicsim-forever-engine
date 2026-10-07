@@ -131,8 +131,8 @@ pub(crate) fn registered_ids() -> (Vec<i32>, Vec<i32>) {
 // ---------------------------------------------------------------------------------------------
 
 #[cfg(test)]
-const HAND_WRITTEN_ITEMS: [i32; 10] = [
-    11815, 23570, 23206, 23207, 19324, 17076, 13204, 13286, 871, 6622,
+const HAND_WRITTEN_ITEMS: [i32; 11] = [
+    11815, 23570, 23206, 23207, 19324, 17076, 13204, 13286, 871, 6622, 13246,
 ];
 #[cfg(test)]
 const HAND_WRITTEN_ENCHANTS: [i32; 7] = [30, 32, 33, 663, 664, 803, 1898];
@@ -594,3 +594,6 @@ fn apply_hand_written_enchant(env: &mut Environment, enchant: i32) -> bool {
         }
     }
 }
+
+#[cfg(test)]
+mod tests;
