@@ -5,9 +5,9 @@ use crate::classes::druid::forms::{ANY, HUMANOID, MOONKIN, TREE};
 use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::buffs::drivers::attach_innervate_regen;
 use crate::prepare::buffs::generated::{FAERIE_FIRE, INNERVATES, THORNS};
+use crate::prepare::character::{cooldown_type, MajorCooldown};
 use crate::prepare::dbcenums;
 use crate::prepare::major_cooldown::COOLDOWN_PRIORITY_DEFAULT;
-use crate::prepare::character::{cooldown_type, MajorCooldown};
 use crate::prepare::resolve_proc::{chance, proc_trigger};
 use crate::prepare::sim::{AuraConfig, AuraId, Cooldown, EventCallbacks, Sim, UnitId};
 use crate::prepare::spell::{
@@ -210,7 +210,8 @@ impl Druid {
                 },
                 threat_multiplier: 1.0,
                 // Two threat a level, the sim's long-standing value; the client states none.
-                flat_threat_bonus: 2.0 * f64::from(crate::prepare::character::constants::CHARACTER_LEVEL),
+                flat_threat_bonus: 2.0
+                    * f64::from(crate::prepare::character::constants::CHARACTER_LEVEL),
                 max_range: f64::from(rank.max_range),
                 related_aura_arrays: aura_array_to_map(sim, &auras),
                 ..SpellConfig::default()

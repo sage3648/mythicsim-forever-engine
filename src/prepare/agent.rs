@@ -105,6 +105,11 @@ pub(crate) trait PrepAgent {
     fn stat_auras(&self, _sim: &Sim, _unit: UnitId) -> Vec<String> {
         Vec::new()
     }
+    /// The exporter's `classExport.damageTakenModifiers`: how many of the target's dynamic
+    /// damage taken modifiers the class effects describe.
+    fn damage_taken_modifiers(&self) -> usize {
+        0
+    }
     /// The client damage roll of a spell, `{average, variance}`, for the spells the class names.
     fn damage_effect(&self, _sim: &Sim, _spell: super::sim::SpellId) -> Option<serde_json::Value> {
         None

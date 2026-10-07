@@ -5,8 +5,8 @@
 use serde_json::{json, Value};
 
 use crate::contracts::prepared_v2::ActionId;
-use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use crate::prepare::attack::Weapon;
+use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use crate::prepare::buffs::exclusive_refresh;
 use crate::prepare::buffs::generated::FAERIE_FIRE;
 use crate::prepare::character::constants::CHARACTER_LEVEL;
@@ -80,12 +80,21 @@ fn callback_names(callback: CallbackMask) -> Vec<&'static str> {
     [
         (CallbackMask::ON_SPELL_HIT_DEALT, "on_spell_hit_dealt"),
         (CallbackMask::ON_SPELL_HIT_TAKEN, "on_spell_hit_taken"),
-        (CallbackMask::ON_PERIODIC_DAMAGE_DEALT, "on_periodic_damage_dealt"),
+        (
+            CallbackMask::ON_PERIODIC_DAMAGE_DEALT,
+            "on_periodic_damage_dealt",
+        ),
         (CallbackMask::ON_HEAL_DEALT, "on_heal_dealt"),
-        (CallbackMask::ON_PERIODIC_HEAL_DEALT, "on_periodic_heal_dealt"),
+        (
+            CallbackMask::ON_PERIODIC_HEAL_DEALT,
+            "on_periodic_heal_dealt",
+        ),
         (CallbackMask::ON_CAST_COMPLETE, "on_cast_complete"),
         (CallbackMask::ON_APPLY_EFFECTS, "on_apply_effects"),
-        (CallbackMask::ON_PERIODIC_DAMAGE_TAKEN, "on_periodic_damage_taken"),
+        (
+            CallbackMask::ON_PERIODIC_DAMAGE_TAKEN,
+            "on_periodic_damage_taken",
+        ),
     ]
     .into_iter()
     .filter(|(flag, _)| callback.matches(*flag))
@@ -214,7 +223,9 @@ impl Druid {
         let target = env.encounter.targets[0];
         if self.tal.insect_swarm {
             let rank = Ladder::ranked(&INSECT_SWARM_RANKS).highest();
-            let insect_swarm = self.insect_swarm.expect("Insect Swarm is registered with its talent");
+            let insect_swarm = self
+                .insect_swarm
+                .expect("Insect Swarm is registered with its talent");
             let dot = sim.spell(insect_swarm).dots[sim.unit(target).unit_index as usize]
                 .expect("Insect Swarm has a dot on the target");
             let dot_label = sim.aura(sim.dots[dot.0].aura).label.clone();
@@ -326,7 +337,10 @@ impl Druid {
     /// back out (`formStartThreat`).
     fn form_start_threat(&self, sim: &Sim, unit: UnitId, label: &str, factor: f64) -> f64 {
         let mut threat = sim.unit(unit).pseudo_stats.threat_multiplier;
-        if sim.get_aura(unit, label).is_some_and(|aura| sim.aura(aura).active) {
+        if sim
+            .get_aura(unit, label)
+            .is_some_and(|aura| sim.aura(aura).active)
+        {
             threat /= factor;
         }
         threat
@@ -340,11 +354,12 @@ impl Druid {
         let target = env.encounter.targets[0];
         let initial = &sim.unit(unit).initial_pseudo_stats;
 
-        if self.cat_form.is_some() && self.cat_form_aura.is_some() {
-            let cat_aura = self.cat_form_aura.expect("checked");
+        if let (Some(_), Some(cat_aura)) = (self.cat_form, self.cat_form_aura) {
             // forms.go RegisterCatFormAura and registerCatFormSpell, with Furor's carry over.
             let furor = if self.tal.furor > 0 {
-                Ladder::talent(17056, 5).effect_at(2).value_at(self.tal.furor)
+                Ladder::talent(17056, 5)
+                    .effect_at(2)
+                    .value_at(self.tal.furor)
             } else {
                 0.0
             };
@@ -412,7 +427,12 @@ impl Druid {
             let rank = Ladder::ranked(&RIP_RANKS).highest();
             // spell_result.go TargetDamageMultiplier: a bleed tick also takes the target's
             // periodic physical multiplier.
-            if sim.unit(target).pseudo_stats.periodic_physical_damage_taken_multiplier != 1.0 {
+            if sim
+                .unit(target)
+                .pseudo_stats
+                .periodic_physical_damage_taken_multiplier
+                != 1.0
+            {
                 notes.push("the target takes a periodic physical damage multiplier".to_string());
             }
             let tick = rank.periodic_effect();
@@ -576,7 +596,7 @@ impl Druid {
                         + self.intensity_enrage_rage_bonus
                         + self.st.wolfshead_enrage_rage.get(),
                     "rage_per_tick": rank.effect(A_PERIODIC_ENERGIZE, 1).base_value() / 10.0,
-                    "ticks": (rank.duration() / SECOND) as i64,
+                    "ticks": rank.duration() / SECOND,
                     "period_ns": nanos(SECOND),
                 }));
             }
@@ -650,15 +670,16 @@ impl Druid {
                     "aura": "Barkskin",
                 }));
             }
-            if let (Some(frenzied), Some(aura)) =
-                (self.frenzied_regeneration, self.st.frenzied_regeneration_aura.get())
-            {
+            if let (Some(frenzied), Some(aura)) = (
+                self.frenzied_regeneration,
+                self.st.frenzied_regeneration_aura.get(),
+            ) {
                 // frenzied_regeneration.go
                 let rank = Ladder::ranked(&[22842]).highest();
                 effects.push(json!({
                     "kind": "frenzied_regeneration",
                     "spell": spell_position(sim, unit, frenzied),
-                    "aura": sim.aura(aura).label, "ticks": (rank.duration() / SECOND) as i64,
+                    "aura": sim.aura(aura).label, "ticks": rank.duration() / SECOND,
                     "period_ns": nanos(SECOND), "max_rage_per_tick": 10.0,
                     "health_share_per_rage": 0.01,
                     "healing_taken_multiplier": sim.unit(unit).pseudo_stats.healing_taken_multiplier,
@@ -775,9 +796,4 @@ impl Druid {
 /// The Wolfshead Helm's extra Shifting Power energy as the druid state holds it.
 fn sim_wolfshead_energy(druid: &Druid) -> f64 {
     druid.st.wolfshead_shifting_power_energy.get()
-}
-
-#[allow(dead_code)]
-fn unused(_: &Row) {
-    let _ = weapon_from_main_hand;
 }

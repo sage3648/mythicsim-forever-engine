@@ -7,14 +7,14 @@ use std::rc::Rc;
 use crate::classes::druid::forms::{ANY, BEAR, CAT, HUMANOID, MOONKIN};
 use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::attack::Weapon;
-use crate::prepare::character::constants::{CHARACTER_LEVEL, DEFAULT_ATTACK_POWER_PER_DPS, MAX_MELEE_RANGE};
+use crate::prepare::character::constants::{
+    CHARACTER_LEVEL, DEFAULT_ATTACK_POWER_PER_DPS, MAX_MELEE_RANGE,
+};
 use crate::prepare::sim::{
     AuraConfig, AuraId, BuildPhase, Duration, PowerBar, Sim, SpellId, UnitId, MILLISECOND,
     NEVER_EXPIRES,
 };
-use crate::prepare::spell::{
-    Cast, CastConfig, CostOptions, SpellConfig, SpellFlag, GCD_DEFAULT,
-};
+use crate::prepare::spell::{Cast, CastConfig, CostOptions, SpellConfig, SpellFlag, GCD_DEFAULT};
 use crate::prepare::spell_mod::{SpellModConfig, SpellModType};
 use crate::prepare::spelldata::Ladder;
 use crate::prepare::stats::{Stat, Stats};
@@ -185,8 +185,8 @@ impl Druid {
     /// Go `druid.formShiftStats`.
     fn form_shift_stats(&self) -> Stats {
         let mut stats = Stats::default();
-        stats[Stat::AttackPower] = predatory_strikes_ap_per_level(self.tal.predatory_strikes)
-            * f64::from(CHARACTER_LEVEL);
+        stats[Stat::AttackPower] =
+            predatory_strikes_ap_per_level(self.tal.predatory_strikes) * f64::from(CHARACTER_LEVEL);
         stats[Stat::PhysicalCritPercent] = sharpened_claws_crit_percent(self.tal.sharpened_claws);
         stats[Stat::SpellCritPercent] = sharpened_claws_crit_percent(self.tal.sharpened_claws);
         stats
@@ -215,7 +215,8 @@ impl Druid {
         stat_bonus = stat_bonus.add(&extra);
 
         // In Cat Form each point of Agility gives 1 AP, and Feral Attack Power converts 1:1.
-        let agi_ap_dep = sim.new_dynamic_stat_dependency(unit, Stat::Agility, Stat::AttackPower, 1.0);
+        let agi_ap_dep =
+            sim.new_dynamic_stat_dependency(unit, Stat::Agility, Stat::AttackPower, 1.0);
         let feral_ap_dep =
             sim.new_dynamic_stat_dependency(unit, Stat::FeralAttackPower, Stat::AttackPower, 1.0);
         let hotw_dep = (self.tal.heart_of_the_wild > 0).then(|| {
@@ -310,7 +311,12 @@ impl Druid {
     }
 
     /// Go `aura.NewPassiveMovementSpeedEffect`.
-    pub(super) fn new_passive_movement_speed_effect(&self, sim: &mut Sim, aura: AuraId, multiplier: f64) {
+    pub(super) fn new_passive_movement_speed_effect(
+        &self,
+        sim: &mut Sim,
+        aura: AuraId,
+        multiplier: f64,
+    ) {
         let unit = self.unit;
         sim.new_exclusive_effect(
             aura,
@@ -396,7 +402,8 @@ impl Druid {
                     gain_state.form.set(BEAR);
                     sim.unit_mut(unit).current_power_bar = PowerBar::Rage;
 
-                    sim.unit_mut(unit).pseudo_stats.threat_multiplier *= BEAR_FORM_THREAT_MULTIPLIER;
+                    sim.unit_mut(unit).pseudo_stats.threat_multiplier *=
+                        BEAR_FORM_THREAT_MULTIPLIER;
                     sim.unit_mut(unit).pseudo_stats.spirit_regen_multiplier *=
                         ANIMAL_SPIRIT_REGEN_SUPPRESSION;
 
@@ -418,7 +425,8 @@ impl Druid {
                 on_expire: Some(Rc::new(move |sim: &mut Sim, _| {
                     expire_state.form.set(HUMANOID);
 
-                    sim.unit_mut(unit).pseudo_stats.threat_multiplier /= BEAR_FORM_THREAT_MULTIPLIER;
+                    sim.unit_mut(unit).pseudo_stats.threat_multiplier /=
+                        BEAR_FORM_THREAT_MULTIPLIER;
                     sim.unit_mut(unit).pseudo_stats.spirit_regen_multiplier /=
                         ANIMAL_SPIRIT_REGEN_SUPPRESSION;
 
@@ -514,7 +522,11 @@ impl Druid {
                         gain_state.clear_form(sim, unit);
                     }
 
-                    sim.apply_dynamic_equip_scaling(unit, Stat::Armor, MOONKIN_FORM_ARMOR_MULTIPLIER);
+                    sim.apply_dynamic_equip_scaling(
+                        unit,
+                        Stat::Armor,
+                        MOONKIN_FORM_ARMOR_MULTIPLIER,
+                    );
 
                     gain_state.form.set(MOONKIN);
                     sim.unit_mut(unit).current_power_bar = PowerBar::Mana;

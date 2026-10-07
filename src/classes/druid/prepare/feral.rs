@@ -5,11 +5,11 @@ use std::rc::Rc;
 
 use crate::classes::druid::forms::{ANY, BEAR, CAT};
 use crate::contracts::prepared_v2::ActionId;
-use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger, PseudoStatField};
+use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use crate::prepare::character::constants::{CHARACTER_LEVEL, MAX_MELEE_RANGE};
 use crate::prepare::character::{cooldown_type, MajorCooldown};
 use crate::prepare::dbcenums::{
-    A_ADD_FLAT_MODIFIER, A_ADD_PCT_MODIFIER, A_MOD_DODGE_PERCENT, A_MOD_DECREASE_SPEED,
+    A_ADD_FLAT_MODIFIER, A_ADD_PCT_MODIFIER, A_MOD_DECREASE_SPEED, A_MOD_DODGE_PERCENT,
     SPELLMOD_COOLDOWN, SPELLMOD_CRIT_DAMAGE_BONUS, SPELLMOD_DAMAGE,
 };
 use crate::prepare::major_cooldown::COOLDOWN_PRIORITY_DEFAULT;
@@ -356,10 +356,11 @@ impl Druid {
             return;
         }
         let mut bonus = Stats::default();
-        bonus[Stat::DodgeRating] = crate::prepare::character::constants::DODGE_RATING_PER_DODGE_PERCENT
-            * Ladder::talent(17002, 2)
-                .effect(A_MOD_DODGE_PERCENT, 0)
-                .value_at(self.tal.feral_swiftness);
+        bonus[Stat::DodgeRating] =
+            crate::prepare::character::constants::DODGE_RATING_PER_DODGE_PERCENT
+                * Ladder::talent(17002, 2)
+                    .effect(A_MOD_DODGE_PERCENT, 0)
+                    .value_at(self.tal.feral_swiftness);
         if let Some(aura) = self.cat_form_aura {
             sim.attach_stats_buff(aura, bonus);
         }
@@ -396,11 +397,7 @@ impl Druid {
         sim.add_static_mod(
             self.unit,
             SpellModConfig {
-                class_mask: masks::CLAW
-                    | masks::RAKE
-                    | masks::SHRED
-                    | masks::MAUL
-                    | masks::SWIPE,
+                class_mask: masks::CLAW | masks::RAKE | masks::SHRED | masks::MAUL | masks::SWIPE,
                 kind: SpellModType::DamageDoneFlat,
                 float_value: Ladder::talent(16998, 2)
                     .effect(A_ADD_PCT_MODIFIER, SPELLMOD_DAMAGE)
@@ -577,7 +574,9 @@ impl Druid {
                 label: "Berserk".to_string(),
                 action_id: Some(action.clone()),
                 duration: 15 * SECOND,
-                on_gain: Some(Rc::new(move |sim: &mut Sim, _| sim.activate_spell_mod(crit_mod))),
+                on_gain: Some(Rc::new(move |sim: &mut Sim, _| {
+                    sim.activate_spell_mod(crit_mod)
+                })),
                 on_expire: Some(Rc::new(move |sim: &mut Sim, _| {
                     sim.deactivate_spell_mod(crit_mod)
                 })),

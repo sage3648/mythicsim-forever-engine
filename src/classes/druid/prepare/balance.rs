@@ -15,7 +15,7 @@ use crate::prepare::dbcenums::{
 };
 use crate::prepare::sim::{AuraConfig, EventCallbacks, Sim, MILLISECOND};
 use crate::prepare::spell::{
-    school, Cast, CastConfig, CostOptions, DotConfig, ProcMask, SpellConfig, SpellFlag,
+    Cast, CastConfig, CostOptions, DotConfig, ProcMask, SpellConfig, SpellFlag,
 };
 use crate::prepare::spell_mod::{SpellModConfig, SpellModType};
 use crate::prepare::spelldata::{Ladder, Spell};
@@ -372,8 +372,11 @@ impl Druid {
         }
         let unit = self.unit;
         let triggered = Ladder::ranked(&[16886]).highest();
-        let haste_multiplier =
-            1.0 + triggered.effect(A_MOD_CASTING_SPEED_NOT_STACK, 0).base_value() / 100.0;
+        let haste_multiplier = 1.0
+            + triggered
+                .effect(A_MOD_CASTING_SPEED_NOT_STACK, 0)
+                .base_value()
+                / 100.0;
 
         // Effect 1 also cuts the global cooldown by 10%, on top of the haste. Every spell in
         // its mask has the default 1.5 sec GCD, so the percentage is taken off that.
@@ -645,6 +648,3 @@ impl Druid {
         sim.make_permanent(trigger);
     }
 }
-
-#[allow(dead_code)]
-const _: u8 = school::NATURE;

@@ -9,12 +9,11 @@ use crate::prepare::aura_helpers::PseudoStatField;
 use crate::prepare::buffs::generated::DEMORALIZING_ROAR;
 use crate::prepare::character::constants::{CHARACTER_LEVEL, MAX_MELEE_RANGE};
 use crate::prepare::character::{cooldown_type, MajorCooldown};
-use crate::prepare::dbcenums::{A_MOD_DAMAGE_PERCENT_TAKEN, A_NONE};
+use crate::prepare::dbcenums::A_MOD_DAMAGE_PERCENT_TAKEN;
 use crate::prepare::major_cooldown::COOLDOWN_PRIORITY_DEFAULT;
-use crate::prepare::sim::{AuraConfig, Cooldown, Duration, EventCallbacks, Sim, MILLISECOND};
+use crate::prepare::sim::{AuraConfig, Cooldown, Duration, Sim, MILLISECOND};
 use crate::prepare::spell::{
-    school, Cast, CastConfig, CostOptions, DefenseType, DotConfig, ProcMask, SpellConfig,
-    SpellFlag,
+    school, Cast, CastConfig, CostOptions, DefenseType, DotConfig, ProcMask, SpellConfig, SpellFlag,
 };
 use crate::prepare::spelldata::{Ladder, Spell};
 use crate::prepare::stats::{SchoolIndex, Stat};
@@ -214,7 +213,6 @@ impl Druid {
                 timings: Vec::new(),
             },
         );
-        let _ = A_NONE;
     }
 
     /// Go `registerFrenziedRegenerationSpell`.
@@ -444,13 +442,4 @@ impl Druid {
         );
         self.swipe = Some(spell);
     }
-
-    /// Whether a spell is the strike Maul's queue fires.
-    #[allow(dead_code)]
-    pub(super) fn is_maul_strike(&self, spell: crate::prepare::sim::SpellId) -> bool {
-        self.maul_strike == Some(spell)
-    }
 }
-
-#[allow(dead_code)]
-fn _unused(_: EventCallbacks) {}

@@ -27,7 +27,7 @@ use crate::prepare::attack::AutoAttackOptions;
 use crate::prepare::energy::EnergyBarOptions;
 use crate::prepare::rage::RageBarOptions;
 use crate::prepare::sim::{AuraId, PowerBar, Sim, SpellId, UnitId};
-use crate::prepare::spell::{ProcMask, SpellConfig};
+use crate::prepare::spell::SpellConfig;
 use crate::prepare::stats::Stat;
 use crate::prepare::Refusal;
 
@@ -46,43 +46,154 @@ pub(crate) enum Spec {
 
 /// tools/oracle-v2/druid.go `druidClassSpells`.
 static CLASS_SPELLS: &[ClassSpellName] = &[
-    ClassSpellName { mask: masks::ENTANGLING_ROOTS, name: "entangling_roots" },
-    ClassSpellName { mask: masks::CLAW, name: "claw" },
-    ClassSpellName { mask: masks::DEMORALIZING_ROAR, name: "demoralizing_roar" },
-    ClassSpellName { mask: masks::FAERIE_FIRE, name: "faerie_fire" },
-    ClassSpellName { mask: masks::FAERIE_FIRE_FERAL, name: "faerie_fire_feral" },
-    ClassSpellName { mask: masks::HURRICANE, name: "hurricane" },
-    ClassSpellName { mask: masks::FEROCIOUS_BITE, name: "ferocious_bite" },
-    ClassSpellName { mask: masks::FRENZIED_REGENERATION, name: "frenzied_regeneration" },
-    ClassSpellName { mask: masks::INNERVATE, name: "innervate" },
-    ClassSpellName { mask: masks::INSECT_SWARM, name: "insect_swarm" },
-    ClassSpellName { mask: masks::LACERATE, name: "lacerate" },
-    ClassSpellName { mask: masks::PRIMAL_BITE, name: "primal_bite" },
-    ClassSpellName { mask: masks::MAUL, name: "maul" },
-    ClassSpellName { mask: masks::MOONFIRE_INITIAL, name: "moonfire" },
-    ClassSpellName { mask: masks::MOONFIRE_DOT, name: "moonfire_dot" },
-    ClassSpellName { mask: masks::RAKE, name: "rake" },
-    ClassSpellName { mask: masks::RAVAGE, name: "ravage" },
-    ClassSpellName { mask: masks::RIP, name: "rip" },
-    ClassSpellName { mask: masks::SHRED, name: "shred" },
-    ClassSpellName { mask: masks::STARFIRE, name: "starfire" },
-    ClassSpellName { mask: masks::SWIPE, name: "swipe" },
-    ClassSpellName { mask: masks::THORNS, name: "thorns" },
-    ClassSpellName { mask: masks::WRATH, name: "wrath" },
-    ClassSpellName { mask: masks::ENRAGE, name: "enrage" },
-    ClassSpellName { mask: masks::SHIFTING_POWER, name: "shifting_power" },
-    ClassSpellName { mask: masks::CAT_FORM, name: "cat_form" },
-    ClassSpellName { mask: masks::BEAR_FORM, name: "bear_form" },
-    ClassSpellName { mask: masks::MOONKIN_FORM, name: "moonkin_form" },
-    ClassSpellName { mask: masks::HEALING_TOUCH, name: "healing_touch" },
-    ClassSpellName { mask: masks::REGROWTH, name: "regrowth" },
-    ClassSpellName { mask: masks::LIFEBLOOM, name: "lifebloom" },
-    ClassSpellName { mask: masks::REJUVENATION, name: "rejuvenation" },
-    ClassSpellName { mask: masks::TRANQUILITY, name: "tranquility" },
-    ClassSpellName { mask: masks::MARK_OF_THE_WILD, name: "mark_of_the_wild" },
-    ClassSpellName { mask: masks::SWIFTMEND, name: "swiftmend" },
-    ClassSpellName { mask: masks::CENARION_WARD, name: "cenarion_ward" },
-    ClassSpellName { mask: masks::REVIVE, name: "revive" },
+    ClassSpellName {
+        mask: masks::ENTANGLING_ROOTS,
+        name: "entangling_roots",
+    },
+    ClassSpellName {
+        mask: masks::CLAW,
+        name: "claw",
+    },
+    ClassSpellName {
+        mask: masks::DEMORALIZING_ROAR,
+        name: "demoralizing_roar",
+    },
+    ClassSpellName {
+        mask: masks::FAERIE_FIRE,
+        name: "faerie_fire",
+    },
+    ClassSpellName {
+        mask: masks::FAERIE_FIRE_FERAL,
+        name: "faerie_fire_feral",
+    },
+    ClassSpellName {
+        mask: masks::HURRICANE,
+        name: "hurricane",
+    },
+    ClassSpellName {
+        mask: masks::FEROCIOUS_BITE,
+        name: "ferocious_bite",
+    },
+    ClassSpellName {
+        mask: masks::FRENZIED_REGENERATION,
+        name: "frenzied_regeneration",
+    },
+    ClassSpellName {
+        mask: masks::INNERVATE,
+        name: "innervate",
+    },
+    ClassSpellName {
+        mask: masks::INSECT_SWARM,
+        name: "insect_swarm",
+    },
+    ClassSpellName {
+        mask: masks::LACERATE,
+        name: "lacerate",
+    },
+    ClassSpellName {
+        mask: masks::PRIMAL_BITE,
+        name: "primal_bite",
+    },
+    ClassSpellName {
+        mask: masks::MAUL,
+        name: "maul",
+    },
+    ClassSpellName {
+        mask: masks::MOONFIRE_INITIAL,
+        name: "moonfire",
+    },
+    ClassSpellName {
+        mask: masks::MOONFIRE_DOT,
+        name: "moonfire_dot",
+    },
+    ClassSpellName {
+        mask: masks::RAKE,
+        name: "rake",
+    },
+    ClassSpellName {
+        mask: masks::RAVAGE,
+        name: "ravage",
+    },
+    ClassSpellName {
+        mask: masks::RIP,
+        name: "rip",
+    },
+    ClassSpellName {
+        mask: masks::SHRED,
+        name: "shred",
+    },
+    ClassSpellName {
+        mask: masks::STARFIRE,
+        name: "starfire",
+    },
+    ClassSpellName {
+        mask: masks::SWIPE,
+        name: "swipe",
+    },
+    ClassSpellName {
+        mask: masks::THORNS,
+        name: "thorns",
+    },
+    ClassSpellName {
+        mask: masks::WRATH,
+        name: "wrath",
+    },
+    ClassSpellName {
+        mask: masks::ENRAGE,
+        name: "enrage",
+    },
+    ClassSpellName {
+        mask: masks::SHIFTING_POWER,
+        name: "shifting_power",
+    },
+    ClassSpellName {
+        mask: masks::CAT_FORM,
+        name: "cat_form",
+    },
+    ClassSpellName {
+        mask: masks::BEAR_FORM,
+        name: "bear_form",
+    },
+    ClassSpellName {
+        mask: masks::MOONKIN_FORM,
+        name: "moonkin_form",
+    },
+    ClassSpellName {
+        mask: masks::HEALING_TOUCH,
+        name: "healing_touch",
+    },
+    ClassSpellName {
+        mask: masks::REGROWTH,
+        name: "regrowth",
+    },
+    ClassSpellName {
+        mask: masks::LIFEBLOOM,
+        name: "lifebloom",
+    },
+    ClassSpellName {
+        mask: masks::REJUVENATION,
+        name: "rejuvenation",
+    },
+    ClassSpellName {
+        mask: masks::TRANQUILITY,
+        name: "tranquility",
+    },
+    ClassSpellName {
+        mask: masks::MARK_OF_THE_WILD,
+        name: "mark_of_the_wild",
+    },
+    ClassSpellName {
+        mask: masks::SWIFTMEND,
+        name: "swiftmend",
+    },
+    ClassSpellName {
+        mask: masks::CENARION_WARD,
+        name: "cenarion_ward",
+    },
+    ClassSpellName {
+        mask: masks::REVIVE,
+        name: "revive",
+    },
 ];
 
 /// Go `Druid`, with the `FeralDruid`, `GuardianDruid` and `BalanceDruid` embedding it.
@@ -187,7 +298,8 @@ pub(crate) fn new_druid(
     {
         // Only an empty reference and the player itself resolve to the druid's own unit.
         let kind = target.enum_name("type");
-        let own = kind == "Unknown" || kind == "Self" || (kind == "Player" && target.i32("index") == 0);
+        let own =
+            kind == "Unknown" || kind == "Self" || (kind == "Player" && target.i32("index") == 0);
         if !own {
             return Err(Refusal::new(
                 "innervate_target",
@@ -196,8 +308,12 @@ pub(crate) fn new_druid(
         }
     }
 
-    let talents = fill_talents("proto.DruidTalents", player.str("talents_string"), TALENT_TREE_SIZES)
-        .map_err(|err| Refusal::new("talents", err))?;
+    let talents = fill_talents(
+        "proto.DruidTalents",
+        player.str("talents_string"),
+        TALENT_TREE_SIZES,
+    )
+    .map_err(|err| Refusal::new("talents", err))?;
     let tal = Talents::from_message(&talents);
 
     // druid.New.
@@ -376,11 +492,6 @@ impl Druid {
         self.register_innervate_cd(sim);
         self.register_thorns_spell(sim);
     }
-
-    /// Go `ProcMask` of the spells a spell registers; kept for readability at call sites.
-    pub(super) fn spell_damage_mask() -> ProcMask {
-        ProcMask::SPELL_DAMAGE
-    }
 }
 
 impl PrepAgent for Druid {
@@ -475,6 +586,33 @@ impl PrepAgent for Druid {
 
     fn swing_replacement_keeps_swing(&self) -> bool {
         false
+    }
+
+    /// tools/oracle-v2/druid_feral.go `druidStatAuras`: Cat Form changes stats through
+    /// AddStatsDynamic and its stat dependencies, and a bear's Enrage cuts its armor. Bear Form
+    /// stays up for the whole fight of a bear, so its stats are the base ones.
+    fn stat_auras(&self, sim: &Sim, unit: UnitId) -> Vec<String> {
+        let mut labels = Vec::new();
+        if self.cat_form.is_some() && sim.get_aura(unit, "Cat Form").is_some() {
+            labels.push("Cat Form".to_string());
+        }
+        if let Some(aura) = self.st.enrage_aura.get() {
+            labels.push(sim.aura(aura).label.clone());
+        }
+        // barkskin.go: the physical damage taken cut changes the target's swings.
+        if self.barkskin.is_some() && sim.get_aura(unit, "Barkskin").is_some() {
+            labels.push("Barkskin".to_string());
+        }
+        // forms.go: Bear Form's stats, armor and health, which the target's swings read.
+        if let (Some(_), Some(aura)) = (self.bear_form, self.bear_form_aura) {
+            labels.push(sim.aura(aura).label.clone());
+        }
+        labels
+    }
+
+    /// Rend and Tear registers one dynamic damage taken modifier on every target.
+    fn damage_taken_modifiers(&self) -> usize {
+        usize::from(self.tal.rend_and_tear > 0)
     }
 }
 

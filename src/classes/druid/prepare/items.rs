@@ -178,8 +178,11 @@ fn feralheart_6(env: &mut Environment, aura: AuraId) {
 }
 
 fn cenarion_5(env: &mut Environment, aura: AuraId) {
-    env.sim
-        .attach_stat_buff(aura, Stat::SpellCritRating, 2.0 * SPELL_CRIT_RATING_PER_CRIT_PERCENT);
+    env.sim.attach_stat_buff(
+        aura,
+        Stat::SpellCritRating,
+        2.0 * SPELL_CRIT_RATING_PER_CRIT_PERCENT,
+    );
 }
 
 fn stormrage_3(env: &mut Environment, aura: AuraId) {

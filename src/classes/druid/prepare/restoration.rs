@@ -1,7 +1,6 @@
 //! Go sim/druid/talents_restoration.go: the Restoration talents the sim models.
 
 use crate::contracts::prepared_v2::ActionId;
-use crate::prepare::aura_helpers::PseudoStatField;
 use crate::prepare::dbcenums::{
     A_ADD_PCT_MODIFIER, A_MOD_DAMAGE_PERCENT_DONE, A_MOD_MANA_REGEN_INTERRUPT, A_MOD_THREAT,
     A_MOD_TOTAL_STAT_PERCENTAGE, SPELLMOD_COST,
@@ -134,7 +133,8 @@ impl Druid {
         let fraction = Ladder::talent(17106, 3)
             .effect(A_MOD_MANA_REGEN_INTERRUPT, 0)
             .fraction_at(self.tal.reflection);
-        sim.unit_mut(self.unit).pseudo_stats.spirit_regen_rate_casting += fraction;
-        let _ = PseudoStatField::SpiritRegenMultiplier;
+        sim.unit_mut(self.unit)
+            .pseudo_stats
+            .spirit_regen_rate_casting += fraction;
     }
 }

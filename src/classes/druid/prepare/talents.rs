@@ -2,7 +2,9 @@
 
 use crate::contracts::request::Message;
 
-/// The talents the Druid package reads, by the proto's field names.
+/// The talents the Druid package reads, by the proto's field names. The ones Go leaves
+/// unmodelled (Improved Entangling Roots, Overgrowth, Brutal Impact, Feral Charge, Nature's
+/// Focus and the healing talents) have no field.
 #[derive(Clone, Debug, Default)]
 pub(crate) struct Talents {
     pub improved_wrath: i32,
@@ -11,12 +13,10 @@ pub(crate) struct Talents {
     pub improved_moonfire: i32,
     pub natures_majesty: i32,
     pub natures_reach: i32,
-    pub improved_entangling_roots: i32,
     pub natures_splendor: bool,
     pub insect_swarm: bool,
     pub vengeance: i32,
     pub improved_starfire: i32,
-    pub overgrowth: i32,
     pub natures_grace: bool,
     pub eclipse: i32,
     pub moonfury: i32,
@@ -25,11 +25,9 @@ pub(crate) struct Talents {
     pub heart_of_the_wild: i32,
     pub feral_swiftness: i32,
     pub feral_instinct: i32,
-    pub brutal_impact: i32,
     pub thick_hide: i32,
     pub shredding_attacks: i32,
     pub savage_fury: i32,
-    pub feral_charge: bool,
     pub sharpened_claws: i32,
     pub shifting_power: bool,
     pub primal_bite: bool,
@@ -41,7 +39,6 @@ pub(crate) struct Talents {
     pub natural_reaction: i32,
     pub rend_and_tear: i32,
     pub berserk: bool,
-    pub natures_focus: i32,
     pub furor: i32,
     pub naturalist: i32,
     pub subtlety: i32,
@@ -59,12 +56,10 @@ impl Talents {
             improved_moonfire: m.i32("improved_moonfire"),
             natures_majesty: m.i32("natures_majesty"),
             natures_reach: m.i32("natures_reach"),
-            improved_entangling_roots: m.i32("improved_entangling_roots"),
             natures_splendor: m.bool("natures_splendor"),
             insect_swarm: m.bool("insect_swarm"),
             vengeance: m.i32("vengeance"),
             improved_starfire: m.i32("improved_starfire"),
-            overgrowth: m.i32("overgrowth"),
             natures_grace: m.bool("natures_grace"),
             eclipse: m.i32("eclipse"),
             moonfury: m.i32("moonfury"),
@@ -73,11 +68,9 @@ impl Talents {
             heart_of_the_wild: m.i32("heart_of_the_wild"),
             feral_swiftness: m.i32("feral_swiftness"),
             feral_instinct: m.i32("feral_instinct"),
-            brutal_impact: m.i32("brutal_impact"),
             thick_hide: m.i32("thick_hide"),
             shredding_attacks: m.i32("shredding_attacks"),
             savage_fury: m.i32("savage_fury"),
-            feral_charge: m.bool("feral_charge"),
             sharpened_claws: m.i32("sharpened_claws"),
             shifting_power: m.bool("shifting_power"),
             primal_bite: m.bool("primal_bite"),
@@ -89,7 +82,6 @@ impl Talents {
             natural_reaction: m.i32("natural_reaction"),
             rend_and_tear: m.i32("rend_and_tear"),
             berserk: m.bool("berserk"),
-            natures_focus: m.i32("natures_focus"),
             furor: m.i32("furor"),
             naturalist: m.i32("naturalist"),
             subtlety: m.i32("subtlety"),
