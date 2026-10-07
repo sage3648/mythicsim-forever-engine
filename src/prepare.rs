@@ -12,6 +12,7 @@ pub(crate) mod buffs;
 pub(crate) mod character;
 pub(crate) mod common_effects;
 pub(crate) mod consumes;
+pub(crate) mod dbcenums;
 pub(crate) mod debuffs;
 pub(crate) mod env;
 pub(crate) mod export;
@@ -19,6 +20,7 @@ pub(crate) mod item_effects;
 pub(crate) mod items;
 pub(crate) mod items_registry;
 pub(crate) mod major_cooldown;
+pub(crate) mod parse_effects;
 pub(crate) mod periodic_action;
 pub(crate) mod presets;
 pub(crate) mod procs;
@@ -28,6 +30,7 @@ pub(crate) mod rotation;
 pub(crate) mod sim;
 pub(crate) mod spell;
 pub(crate) mod spell_mod;
+pub(crate) mod spelldata;
 pub(crate) mod stats;
 pub(crate) mod target;
 
@@ -60,6 +63,8 @@ pub enum PrepareError {
     Invalid(String),
     /// Rust preparation does not cover the request; Go can prepare it.
     Refused(Refusal),
+    /// Preparation failed inside Rust, a defect; Go can prepare the request.
+    Fault(String),
 }
 
 impl std::fmt::Display for PrepareError {
@@ -67,6 +72,7 @@ impl std::fmt::Display for PrepareError {
         match self {
             PrepareError::Invalid(reason) => write!(f, "invalid request: {reason}"),
             PrepareError::Refused(refusal) => write!(f, "preparation refused: {refusal}"),
+            PrepareError::Fault(reason) => write!(f, "preparation failed: {reason}"),
         }
     }
 }

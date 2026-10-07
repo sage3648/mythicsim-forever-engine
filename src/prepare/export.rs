@@ -608,8 +608,11 @@ pub(crate) fn export(env: &mut Environment, digest: &str, scenario: &str) -> Val
     let table = env.attack_table(player, target).clone();
     let character = env.sim.character(player);
     let unit = env.sim.unit(player);
-    let spirit_regen =
-        character.spirit_regen_base + unit.stats[Stat::Spirit] * character.spirit_regen_per_spirit;
+    // mana.go 174 and 201: Go computes the spirit regen once, fused, and fuses the not-casting sum.
+    let spirit_regen = unit.stats[Stat::Spirit].mul_add(
+        character.spirit_regen_per_spirit,
+        character.spirit_regen_base,
+    );
     let mp5 = unit.stats[Stat::MP5] / 5.0;
     let pseudo = &unit.pseudo_stats;
     let casting = {
@@ -624,8 +627,8 @@ pub(crate) fn export(env: &mut Environment, digest: &str, scenario: &str) -> Val
         regen += spirit;
         regen * unit.mana_bar.mana_regen_multiplier
     };
-    let not_casting =
-        (mp5 + spirit_regen * pseudo.spirit_regen_multiplier) * unit.mana_bar.mana_regen_multiplier;
+    let not_casting = spirit_regen.mul_add(pseudo.spirit_regen_multiplier, mp5)
+        * unit.mana_bar.mana_regen_multiplier;
     let mana = json!({
         "max": unit.stats[Stat::Mana],
         "base": unit.mana_bar.base_mana,
@@ -663,7 +666,7 @@ pub(crate) fn export(env: &mut Environment, digest: &str, scenario: &str) -> Val
             "execute_proportion_90": env.encounter.execute_proportion_90,
         },
         "target": {
-            "index": target_unit.index,
+            "index": target_unit.unit_index,
             "label": target_unit.label,
             "level": target_unit.level,
             "mob_type": target_unit.mob_type,
@@ -675,7 +678,7 @@ pub(crate) fn export(env: &mut Environment, digest: &str, scenario: &str) -> Val
             "metrics_actions": metrics_actions(env, target),
         },
         "player": {
-            "index": unit.index,
+            "index": unit.unit_index,
             "label": unit.label,
             "level": unit.level,
             "stats": stat_values(&unit.stats),

@@ -69,6 +69,11 @@ pub(crate) trait PrepAgent {
     fn eureka_spells(&self) -> Option<super::racials::EurekaSpells> {
         None
     }
+    /// Whether a spell is one of the class's mana gems, which the class describes itself:
+    /// the item loop skips `spell.Matches(mage.MageSpellManaGem)`.
+    fn is_mana_gem(&self, _sim: &Sim, _spell: super::sim::SpellId) -> bool {
+        false
+    }
     /// The client damage roll of a spell, `{average, variance}`, for the spells the class names.
     fn damage_effect(&self, _sim: &Sim, _spell: super::sim::SpellId) -> Option<serde_json::Value> {
         None

@@ -38,13 +38,18 @@ pub(crate) struct Environment {
     /// The raid units in Go's `Raid.AllUnits` order.
     pub raid_units: Vec<UnitId>,
     /// Effects run after every unit is finalized.
-    pub post_finalize: Vec<Rc<dyn Fn(&mut Environment)>>,
-    pub pre_finalize: Vec<Rc<dyn Fn(&mut Environment)>>,
+    pub post_finalize: Vec<FinalizeEffect>,
+    pub pre_finalize: Vec<FinalizeEffect>,
     /// `env.prepullActions`.
     pub prepull_actions: usize,
+    /// The factory that built the agent, for a separate simulation of the same request.
+    pub factory: AgentFactory,
     /// Every attacker's table against every defender, by unit index.
     pub attack_tables: Vec<Vec<AttackTable>>,
 }
+
+/// Go `PostFinalizeEffect`: run once every unit is finalized, with the attack tables in place.
+pub(crate) type FinalizeEffect = Rc<dyn Fn(&mut Environment)>;
 
 /// The class agent factory: `classes::prepare_agent`.
 pub(crate) type AgentFactory =
@@ -154,6 +159,7 @@ impl Environment {
             pre_finalize: Vec::new(),
             prepull_actions: 0,
             attack_tables: Vec::new(),
+            factory,
         };
         if let Some(debuffs) = raid.message("debuffs") {
             for (index, target) in env.encounter.targets.clone().into_iter().enumerate() {
@@ -177,6 +183,13 @@ impl Environment {
         env.finalize(&player_message)?;
         env.reset();
         Ok(env)
+    }
+
+    /// A separate reset simulation of the same request, as the exporter's `core.NewSim` followed
+    /// by `Reset` for an effect read under other conditions. It cannot be refused: this
+    /// request already prepared once.
+    pub(crate) fn fresh(&self) -> Environment {
+        Environment::new(&self.request, self.factory).expect("the request prepared once already")
     }
 
     fn setup_tank_targets(&mut self, raid: &Message, encounter: &Message) -> Result<(), Refusal> {
@@ -339,8 +352,7 @@ impl Environment {
         }
         self.finalize_unit(unit);
         self.sim.finalize_major_cooldowns(unit);
-        for pet in self.sim.unit(unit).pets.clone() {
-            let _ = pet;
+        if !self.sim.unit(unit).pets.is_empty() {
             return Err(Refusal::new(
                 "pets",
                 "pets are not prepared yet".to_string(),

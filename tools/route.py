@@ -16,6 +16,11 @@ fault     A step failed: the request could not be read, the exporter, the gate o
           and `error` say where. A fault is never a fallback and never writes a result.
           Exit status 2.
 
+The engine prepares the request itself first, in Rust. When Rust preparation does not cover
+the request, the engine says so and the pinned Go exporter prepares it instead; the decision's
+`preparation` names the `provider` and, for Go, the `code` and `reason` Rust gave. With
+--go-prepare the Go exporter always prepares.
+
 The decision is printed as one JSON line and written to --output/decision.json. A request
 without a random seed gets a fresh one, as Go would draw, recorded as `seed`.
 
@@ -116,9 +121,13 @@ def bundle_manifest(bundle):
     return json.loads(manifest.read_text()) if manifest.exists() else None
 
 
-def prepare(request_path, output, bundle, timeout, seed, decision):
-    """Seed and prepare one request into `decision`. Returns the prepared file. Raises Fault."""
-    exporter = bundle / "bin" / EXPORTER
+# The exit status of `forever-engine prepare` and `sim --request` when Rust preparation does
+# not cover the request; the refusal is on standard output.
+NOT_PREPARED = 5
+
+
+def write_request(request_path, output, seed, decision):
+    """Seed one request into `decision` and write it for the engines. Raises Fault."""
     try:
         request = json.loads(Path(request_path).read_text())
         decision["seed"], decision["seed_source"] = seed_request(request, seed)
@@ -126,9 +135,36 @@ def prepare(request_path, output, bundle, timeout, seed, decision):
         raise Fault("request", f"{type(error).__name__}: {error}")
     request_file = output / "request.json"
     request_file.write_text(json.dumps(request) + "\n")
+    return request_file
+
+
+def not_prepared(stdout, decision):
+    """Record that Rust preparation refused the request, from the engine's report."""
+    try:
+        refusal = json.loads(stdout)["refusal"]
+        code, reason = refusal["code"], refusal["reason"]
+    except (ValueError, KeyError, TypeError) as error:
+        code, reason = "unreadable", f"{type(error).__name__}: {error}"
+    decision["preparation"] = {"provider": "go", "code": code, "reason": reason}
+
+
+def prepare(request_path, output, bundle, timeout, seed, decision, go_prepare=False):
+    """Seed and prepare one request into `decision`: in Rust when it covers the request, else
+    with the Go exporter. Returns the prepared file. Raises Fault."""
+    request_file = write_request(request_path, output, seed, decision)
     prepared = output / "prepared.json"
-    run_step("prepare", [exporter, "prepare", "--infile", request_file, "--outfile", prepared,
-                         "--scenario", "route"], timeout, decision["timings_ms"])
+    timings = decision["timings_ms"]
+    if not go_prepare:
+        done = run_step("rust_prepare", [bundle / "bin" / ENGINE, "prepare", "--request", request_file,
+                                         "--scenario", "route", "--outfile", prepared],
+                        timeout, timings, accept=(0, NOT_PREPARED))
+        if done.returncode == 0:
+            decision["preparation"] = {"provider": "rust"}
+            return prepared
+        not_prepared(done.stdout, decision)
+    run_step("prepare", [bundle / "bin" / EXPORTER, "prepare", "--infile", request_file, "--outfile", prepared,
+                         "--scenario", "route"], timeout, timings)
+    decision.setdefault("preparation", {"provider": "go"})
     return prepared
 
 
@@ -150,22 +186,23 @@ def refuse(coverage_text, decision):
     return True
 
 
-def gate(request_path, output, bundle, timeout, seed, decision):
+def gate(request_path, output, bundle, timeout, seed, decision, go_prepare=False):
     """Prepare and check one request into `decision`, for a batch, whose requests are all gated
     before any runs. Returns the prepared file when the gate supports it; otherwise the decision
     holds a fallback. Raises Fault."""
-    prepared = prepare(request_path, output, bundle, timeout, seed, decision)
+    prepared = prepare(request_path, output, bundle, timeout, seed, decision, go_prepare)
     done = run_step("check", [bundle / "bin" / ENGINE, "check", "--infile", prepared], timeout,
                     decision["timings_ms"])
     return None if refuse(done.stdout, decision) else prepared
 
 
-def run_rust(prepared, output, bundle, timeout, decision, gated=False):
+def run_rust(prepared, output, bundle, timeout, decision, gated=False, request_file=None):
     """Run a supported request in Rust and record its result in `decision`. Raises Fault and
     then leaves no partial output behind. With `gated`, the same process first gates the input,
-    and a refusal is recorded in `decision` as a fallback, with no result."""
+    and a refusal is recorded in `decision` as a fallback, with no result. With `request_file`,
+    the same process also prepares the request, and False means Rust preparation refused it."""
     try:
-        run_rust_step(prepared, output, bundle, timeout, decision, gated)
+        return run_rust_step(prepared, output, bundle, timeout, decision, gated, request_file)
     except Fault:
         discard_partial_output(output)
         raise
@@ -176,12 +213,25 @@ def run_rust(prepared, output, bundle, timeout, decision, gated=False):
 GATE_REFUSED, GATE_REJECTED = 3, 4
 
 
-def run_rust_step(prepared, output, bundle, timeout, decision, gated):
+def run_rust_step(prepared, output, bundle, timeout, decision, gated, request_file=None):
+    """With `request_file`, the engine prepares the request itself and returns False when Rust
+    preparation does not cover it, recorded in `decision`, having run nothing else."""
     report_file = output / "rust-report.json"
-    command = [bundle / "bin" / ENGINE, "sim", "--infile", prepared, "--outfile", report_file]
+    if request_file is None:
+        command = [bundle / "bin" / ENGINE, "sim", "--infile", prepared, "--outfile", report_file]
+    else:
+        command = [bundle / "bin" / ENGINE, "sim", "--request", request_file, "--scenario", "route",
+                   "--outfile", report_file]
     timings = decision["timings_ms"]
     if gated:
-        done = run_step("rust", command + ["--gate"], timeout, timings, accept=(0, GATE_REFUSED, GATE_REJECTED))
+        accept = (0, GATE_REFUSED, GATE_REJECTED) + ((NOT_PREPARED,) if request_file else ())
+        done = run_step("rust", command + ["--gate"], timeout, timings, accept=accept)
+        if done.returncode == NOT_PREPARED:
+            timings["rust_prepare"] = timings.pop("rust")
+            not_prepared(done.stdout, decision)
+            return False
+        if request_file is not None:
+            decision["preparation"] = {"provider": "rust"}
         if done.returncode == GATE_REJECTED:
             # What a separate `check` step reported: an input that is invalid is a fault of the gate.
             timings["check"] = timings.pop("rust")
@@ -191,7 +241,7 @@ def run_rust_step(prepared, output, bundle, timeout, decision, gated):
             timings["check"] = timings.pop("rust")
             if not refuse(done.stdout, decision):
                 raise Fault("check", "the gate refused the input but reported it supported")
-            return
+            return True
     else:
         run_step("rust", command, timeout, timings)
     try:
@@ -205,9 +255,10 @@ def run_rust_step(prepared, output, bundle, timeout, decision, gated):
     write_atomically(result_file, json.dumps(result) + "\n")
     decision.update(status="rust", result=str(result_file), identity=report.get("identity"),
                     request_sha256=report.get("request_sha256"))
+    return True
 
 
-def route(request_path, output, bundle, timeout, seed=None):
+def route(request_path, output, bundle, timeout, seed=None, go_prepare=False):
     """Decide one request and return the decision. Never raises for a failing step."""
     output.mkdir(parents=True, exist_ok=False)
     decision = {"schema": SCHEMA, "timings_ms": {}}
@@ -215,15 +266,23 @@ def route(request_path, output, bundle, timeout, seed=None):
     if manifest is not None:
         decision["bundle"] = manifest
     try:
-        # One engine process gates the prepared input and simulates it when it is supported.
-        prepared = prepare(request_path, output, bundle, timeout, seed, decision)
+        request_file = write_request(request_path, output, seed, decision)
+        # One engine process prepares the request, gates it and simulates it when it is
+        # supported. Only when Rust preparation refuses does the Go exporter prepare it.
+        if not go_prepare and run_rust(None, output, bundle, timeout, decision, gated=True,
+                                       request_file=request_file):
+            return decision
+        prepared = output / "prepared.json"
+        run_step("prepare", [bundle / "bin" / EXPORTER, "prepare", "--infile", request_file,
+                             "--outfile", prepared, "--scenario", "route"], timeout, decision["timings_ms"])
+        decision.setdefault("preparation", {"provider": "go"})
         run_rust(prepared, output, bundle, timeout, decision, gated=True)
     except Fault as fault:
         decision.update(status="fault", stage=fault.stage, error=str(fault))
     return decision
 
 
-def route_batch(request_paths, output, bundle, timeout, seed=None):
+def route_batch(request_paths, output, bundle, timeout, seed=None, go_prepare=False):
     """Decide a batch in one engine and return the decision. Never raises for a failing step."""
     output.mkdir(parents=True, exist_ok=False)
     source = "argument"
@@ -243,7 +302,7 @@ def route_batch(request_paths, output, bundle, timeout, seed=None):
     for entry, folder, request_path in zip(entries, folders, request_paths):
         folder.mkdir()
         try:
-            prepared = gate(request_path, folder, bundle, timeout, seed, entry)
+            prepared = gate(request_path, folder, bundle, timeout, seed, entry, go_prepare)
         except Fault as fault:
             entry.update(status="fault", stage=fault.stage, error=str(fault))
             continue
@@ -285,15 +344,19 @@ def main():
     parser.add_argument("--seed", type=int,
                         help="seed for an unseeded request (default: a fresh one, shared by a batch)")
     parser.add_argument("--timeout", type=int, default=300, help="seconds per step")
+    parser.add_argument("--go-prepare", action="store_true",
+                        help="prepare with the Go exporter even when Rust preparation covers the request")
     args = parser.parse_args()
     if args.seed is not None and not 0 < args.seed <= MAX_SEED:
         parser.error(f"--seed must be from 1 to {MAX_SEED}")
     if args.output.exists():
         parser.error(f"{args.output} exists; each request writes a new folder")
     if args.batch:
-        decision = route_batch(args.batch, args.output, args.bundle.resolve(), args.timeout, args.seed)
+        decision = route_batch(args.batch, args.output, args.bundle.resolve(), args.timeout, args.seed,
+                               args.go_prepare)
     else:
-        decision = route(args.request, args.output, args.bundle.resolve(), args.timeout, args.seed)
+        decision = route(args.request, args.output, args.bundle.resolve(), args.timeout, args.seed,
+                         args.go_prepare)
     write_atomically(args.output / "decision.json", json.dumps(decision, indent=2) + "\n")
     print(json.dumps(decision))
     return 2 if decision["status"] == "fault" else 0

@@ -34,7 +34,16 @@ mode = json.loads((Path(__file__).parent / "mode.json").read_text())
 command, args = sys.argv[1], dict(zip(sys.argv[2::2], sys.argv[3::2]))
 if mode.get("fail") == [Path(__file__).name, command]:
     sys.exit("broken")
-if command == "prepare":
+if command == "prepare" and "--request" in args:
+    # Rust preparation: refuses unless the mode says it prepares, and then writes what the
+    # exporter would, or a different state.
+    if not mode.get("rust_prepares"):
+        print(json.dumps({"prepared": False, "refusal": {"code": "class", "reason": "not prepared yet"}}))
+        sys.exit(5)
+    state = {"request": json.loads(Path(args["--request"]).read_text())}
+    state.update(mode.get("rust_prepared_extra", {}))
+    Path(args["--outfile"]).write_text(json.dumps(state))
+elif command == "prepare":
     Path(args["--outfile"]).write_text(json.dumps({"request": json.loads(Path(args["--infile"]).read_text())}))
 elif command == "check":
     print(json.dumps({"supported": not mode.get("reasons"), "reasons": mode.get("reasons", [])}))
@@ -61,7 +70,7 @@ class ShadowTest(unittest.TestCase):
     def tearDown(self):
         self.temp.cleanup()
 
-    def verdict(self, production=None, **mode):
+    def verdict(self, production=None, out="out", **mode):
         mode.setdefault("go", RESULT)
         mode.setdefault("rust", RESULT)
         (self.bundle / "bin" / "mode.json").write_text(json.dumps(mode))
@@ -69,8 +78,20 @@ class ShadowTest(unittest.TestCase):
         if production is not None:
             production_path = self.root / "production.json"
             production_path.write_text(json.dumps(production))
-        return shadow.shadow(self.request, self.root / "out", self.bundle, seed=7, timeout=30,
+        return shadow.shadow(self.request, self.root / out, self.bundle, seed=7, timeout=30,
                              production_path=production_path)
+
+    def test_rust_preparation_is_compared_with_the_exporter(self):
+        verdict = self.verdict()
+        self.assertEqual(verdict["preparation"], {"status": "refused", "code": "class", "reason": "not prepared yet"})
+        self.assertEqual(verdict["status"], "match")
+        verdict = self.verdict(rust_prepares=True, out="out-rust")
+        self.assertEqual(verdict["preparation"], {"status": "match"})
+        self.assertEqual(verdict["status"], "match")
+        verdict = self.verdict(rust_prepares=True, rust_prepared_extra={"stats": 1}, out="out-diff")
+        self.assertEqual(verdict["preparation"]["status"], "mismatch")
+        self.assertEqual(verdict["preparation"]["differences"], ["/stats: only in Rust"])
+        self.assertEqual(verdict["status"], "mismatch")
 
     def test_a_summary_is_per_average_fight(self):
         brief = shadow.summary(RESULT)
@@ -122,7 +143,7 @@ class ShadowTest(unittest.TestCase):
         self.assertEqual(verdict["status"], "match")
         self.assertEqual(verdict["go_dps"], 500.0)
         self.assertEqual(verdict["iterations"], 10)
-        self.assertEqual(set(verdict["timings_ms"]), {"prepare", "go", "rust"})
+        self.assertEqual(set(verdict["timings_ms"]), {"prepare", "rust_prepare", "go", "rust"})
         self.assertIn("speedup", verdict)
         sent = json.loads((self.root / "out" / "request.json").read_text())
         self.assertEqual(sent["simOptions"]["randomSeed"], "7")

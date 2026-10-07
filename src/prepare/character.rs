@@ -390,7 +390,8 @@ impl Sim {
             .unwrap_or(1.0);
         let new = old * multiplier;
         character.item_stat_multipliers.insert(stat as usize, new);
-        character.cached_equip_stats[stat] * (new - old)
+        // Go fuses newMultiplier - oldMultiplier into old*multiplier - old (character.go 240).
+        character.cached_equip_stats[stat] * old.mul_add(multiplier, -old)
     }
 
     /// Go `ApplyEquipScaling`.
