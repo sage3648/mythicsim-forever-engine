@@ -411,6 +411,7 @@ impl Environment {
         let pseudo = sim.unit(unit).pseudo_stats.clone();
         sim.unit_mut(unit).initial_pseudo_stats = pseudo;
         sim.finalize_auto_attacks(unit);
+        sim.finalize_spells(unit);
     }
 
     /// Go `setupAttackTables`.

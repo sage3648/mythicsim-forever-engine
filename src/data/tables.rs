@@ -17,6 +17,19 @@ pub(crate) struct Tables {
     pub enchant_effect_ids: Vec<i32>,
     /// Preset target IDs whose target has an AI.
     pub preset_targets_with_ai: Vec<i32>,
+    /// The item sets Go registers, in the order its set bonus search reads them.
+    pub item_sets: Vec<ItemSetRow>,
+}
+
+/// A set `core.NewItemSet` registered: the names its items carry and the piece counts at which
+/// it has a bonus.
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(crate) struct ItemSetRow {
+    pub id: i32,
+    pub name: String,
+    pub alternative_name: String,
+    pub bonus_pieces: Vec<i32>,
 }
 
 pub(crate) fn tables() -> &'static Tables {

@@ -18,6 +18,7 @@ pub(crate) mod energy;
 pub(crate) mod env;
 pub(crate) mod export;
 pub(crate) mod item_effects;
+pub(crate) mod item_sets;
 pub(crate) mod items;
 pub(crate) mod items_registry;
 pub(crate) mod major_cooldown;
