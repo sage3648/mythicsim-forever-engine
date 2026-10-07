@@ -60,7 +60,7 @@ fn canonical(value: &Value, out: &mut String) {
 }
 
 /// The engine's own SHA-256, which the Mage goldens load once for every golden test.
-use crate::mage::prepare::sha256;
+use crate::sha256;
 
 fn digest(value: &Value) -> String {
     let mut text = String::new();
