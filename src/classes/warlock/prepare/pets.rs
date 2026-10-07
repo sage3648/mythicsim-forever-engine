@@ -219,8 +219,11 @@ impl Warlock {
     }
 
     /// The generator makes no table for pet spells, so Firebolt carries our client-verified
-    /// beta 1.60.1 values (rank 7). The 200 ms gap stands in for the imp's real cast delay.
-    /// Improved Imp rides on its talent as a SpellMod.
+    /// beta 1.60.1 values (rank 7). Firebolt's cooldown is the Imp's pause between casts: beta
+    /// logs time 281 Firebolts 2.435 sec apart (median, 2.0 sec cast, next one starting 0.43 sec
+    /// after the last lands). The rotation polls every 100 ms, so 400 ms lands the next cast
+    /// 2.4 sec after the last; 430 would round up to 2.5. Improved Imp rides on its talent as a
+    /// SpellMod.
     fn register_firebolt_spell(&mut self, sim: &mut Sim, pet: UnitId) {
         if let Some(state) = self.pets.state_mut(pet) {
             state.min_mana = 115.0;
@@ -246,7 +249,7 @@ impl Warlock {
                     },
                     cd: Cooldown {
                         timer: Some(timer),
-                        duration: 200 * MILLISECOND,
+                        duration: 400 * MILLISECOND,
                     },
                     ..CastConfig::default()
                 },
