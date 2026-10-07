@@ -238,6 +238,10 @@ impl Sim {
             bar.current_mana = max;
             bar.mana_regen_multiplier = 1.0;
         }
+        if self.unit(pet).health_bar {
+            let max = self.unit(pet).stats[Stat::Health];
+            self.unit_mut(pet).current_health = max;
+        }
         self.unit_mut(pet).enabled = true;
         if let Some(on_enable) = self.pet_data(pet).on_pet_enable.clone() {
             on_enable(self, pet);
@@ -391,14 +395,15 @@ pub(crate) fn apply_dependencies(without: Stats, deps: &[(Stat, Stat, f64, f64)]
         if src == dst {
             s[*dst] *= *amount;
         } else if *step != 0.0 {
-            s[*dst] += (s[*src] / *step).floor() * *step * *amount;
+            // Go's arm64 build fuses each sum into one multiply-add (pets.go 124, 126, 128).
+            s[*dst] = ((s[*src] / *step).floor() * *step).mul_add(*amount, s[*dst]);
         } else if matches!(
             src,
             Stat::Strength | Stat::Agility | Stat::Stamina | Stat::Intellect | Stat::Spirit
         ) {
-            s[*dst] += s[*src].floor() * *amount;
+            s[*dst] = s[*src].floor().mul_add(*amount, s[*dst]);
         } else {
-            s[*dst] += s[*src] * *amount;
+            s[*dst] = s[*src].mul_add(*amount, s[*dst]);
         }
     }
     s.floor_game_stats()
@@ -849,4 +854,90 @@ pub(crate) fn inert_pet_effects(env: &Environment, unrepresented: &mut Vec<Strin
         }
     }
     effects
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::prepare::sim::{EnvState, Unit};
+
+    fn owner_with_pet(inherit: PetStatInheritance) -> (Sim, UnitId, UnitId) {
+        let mut sim = Sim::new();
+        let mut unit = Unit::new(UnitType::Player, "owner".to_string());
+        unit.reaction_time = 100_000_000;
+        unit.start_distance_from_target = 12.0;
+        unit.distance_from_target = 12.0;
+        let owner = sim.add_unit(unit);
+        let mut base_stats = Stats::default();
+        base_stats[Stat::Stamina] = 50.0;
+        let pet = sim.new_pet(PetConfig {
+            name: "Wolf".to_string(),
+            owner,
+            base_stats,
+            stat_inheritance: inherit,
+            enabled_on_start: true,
+            is_guardian: false,
+            is_dynamic: true,
+            has_dynamic_melee_speed_inheritance: false,
+            has_dynamic_cast_speed_inheritance: false,
+            has_resource_regen_inheritance: false,
+            starts_at_owner_distance: true,
+        });
+        sim.add_pet(owner, pet);
+        (sim, owner, pet)
+    }
+
+    #[test]
+    fn a_pet_is_labeled_for_its_owner_and_starts_at_the_owners_distance() {
+        let (sim, owner, pet) = owner_with_pet(Rc::new(|_| Stats::default()));
+        assert_eq!(sim.unit(pet).label, "owner - Wolf");
+        assert_eq!(sim.unit(pet).owner, Some(owner));
+        assert_eq!(sim.unit(owner).pets, [pet]);
+        assert_eq!(sim.unit(pet).distance_from_target, 12.0);
+        assert_eq!(sim.unit(pet).reaction_time, 100_000_000);
+        // The first pet takes the first index past the party.
+        assert_eq!(sim.unit(pet).index, 5);
+    }
+
+    #[test]
+    fn enabling_a_pet_adds_the_stats_it_inherits_and_disabling_takes_them_away() {
+        let (mut sim, owner, pet) = owner_with_pet(Rc::new(|owner: &Stats| {
+            let mut inherited = Stats::default();
+            inherited[Stat::Stamina] = owner[Stat::Stamina] * 0.3;
+            inherited
+        }));
+        sim.unit_mut(owner).stats[Stat::Stamina] = 100.0;
+        // Stats change through AddStatsDynamic once the stats are measured.
+        sim.measuring_stats = true;
+        sim.enable_pet(pet);
+        assert!(sim.unit(pet).enabled);
+        assert_eq!(sim.unit(pet).stats[Stat::Stamina], 80.0);
+        assert_eq!(sim.pet_data(pet).inherited_stats[Stat::Stamina], 30.0);
+        sim.disable_pet(pet);
+        assert!(!sim.unit(pet).enabled);
+        assert_eq!(sim.unit(pet).stats[Stat::Stamina], 50.0);
+        assert!(sim.pet_data(pet).inherited_stats.is_zero());
+        assert!(sim.pet_data(pet).dismissed_at_reset);
+    }
+
+    #[test]
+    fn a_focus_bar_fills_when_the_pet_is_enabled() {
+        let (mut sim, _, pet) = owner_with_pet(Rc::new(|_| Stats::default()));
+        sim.enable_focus_bar(pet, 1.2);
+        let bar = &sim.unit(pet).focus_bar;
+        assert_eq!(bar.max_focus, 100.0);
+        assert_eq!(bar.focus_regen_per_tick, 25.0 * 1.2);
+        assert_eq!(bar.focus_tick_duration, 5 * crate::prepare::sim::SECOND);
+        sim.measuring_stats = true;
+        sim.enable_pet(pet);
+        assert_eq!(sim.unit(pet).focus_bar.current_focus, 100.0);
+    }
+
+    #[test]
+    #[should_panic(expected = "Pets must be added during construction")]
+    fn a_pet_cannot_be_added_after_construction() {
+        let (mut sim, owner, pet) = owner_with_pet(Rc::new(|_| Stats::default()));
+        sim.state = EnvState::Constructed;
+        sim.add_pet(owner, pet);
+    }
 }

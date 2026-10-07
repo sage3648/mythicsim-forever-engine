@@ -303,6 +303,11 @@ pub(crate) struct Unit {
     pub character: Option<Box<super::character::Character>>,
     /// Go `HasHealthBar`.
     pub health_bar: bool,
+    /// The auras of the unit's damage absorption shields, whose dynamic damage taken modifier
+    /// acts only while its aura is active.
+    pub absorption_auras: Vec<AuraId>,
+    /// Go `healthBar.currentHealth`.
+    pub current_health: f64,
     /// The pet half of a pet unit (pet.rs).
     pub pet: Option<Box<super::pet::Pet>>,
 }
@@ -360,6 +365,8 @@ impl Unit {
             spell_registration_handlers: Vec::new(),
             character: None,
             health_bar: false,
+            absorption_auras: Vec::new(),
+            current_health: 0.0,
             pet: None,
         }
     }

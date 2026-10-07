@@ -131,6 +131,21 @@ fn stat_map(env: &Environment, unit: UnitId) -> Vec<(&'static str, f64)> {
 /// and an aura active after the reset, as a druid's starting form, is deactivated when its bit is
 /// clear.
 pub(crate) fn stat_auras_effect(env: &Environment) -> Result<Option<Value>, Refusal> {
+    stat_auras_effect_reading(env, None)
+}
+
+/// Go's `comboReader`: reads more of a combination's reset simulation, which the stat auras
+/// effect has already set up. `exact` is false when its own setup left a different simulation
+/// than `enemy::set_stat_auras` does, so the reader must set one up itself.
+pub(crate) type ComboReader<'a> =
+    &'a mut dyn FnMut(usize, &mut Environment, bool) -> Result<(), Refusal>;
+
+/// `statAurasEffect` with its reader: a tank's swing is read under every combination from the
+/// same simulations (`enemy::EnemyCombos::read`).
+pub(crate) fn stat_auras_effect_reading(
+    env: &Environment,
+    mut reader: Option<ComboReader>,
+) -> Result<Option<Value>, Refusal> {
     let labels = character_stat_auras(env);
     if labels.is_empty() {
         return Ok(None);
@@ -156,6 +171,7 @@ pub(crate) fn stat_auras_effect(env: &Environment) -> Result<Option<Value>, Refu
                 fresh.sim.deactivate(aura);
             }
         }
+        let mut exact = true;
         for (bit, label) in labels.iter().enumerate() {
             let aura = fresh.sim.get_aura(player, label).expect("the aura exists");
             let want = mask & (1 << bit) != 0;
@@ -163,6 +179,8 @@ pub(crate) fn stat_auras_effect(env: &Environment) -> Result<Option<Value>, Refu
             if want && !active {
                 fresh.sim.activate(aura);
             } else if !want && active {
+                // An activation switched this aura on again: `set_stat_auras` would leave it up.
+                exact = false;
                 fresh.sim.deactivate(aura);
             }
         }
@@ -200,6 +218,9 @@ pub(crate) fn stat_auras_effect(env: &Environment) -> Result<Option<Value>, Refu
             if value != base_value && !changed.contains(name) {
                 changed.push(name);
             }
+        }
+        if let Some(reader) = reader.as_mut() {
+            reader(mask, &mut fresh, exact)?;
         }
     }
     changed.sort_unstable();

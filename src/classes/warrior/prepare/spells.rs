@@ -693,13 +693,9 @@ impl Warrior {
     pub(super) fn register_thunder_clap(&self, sim: &mut Sim, unit: UnitId) {
         let rank = spell_data().thunder_clap.highest();
         let auras = new_enemy_aura_array(sim, |sim, target| {
-            let aura = generated::THUNDER_CLAP.aura(sim, target, true, 0, 0.0);
-            // The clap's bid in the attack speed category slows the target: both ends only run
-            // in a fight.
-            let bid = sim.aura(aura).exclusive_effects[0];
-            sim.effects[bid.0].on_gain = Some(Rc::new(|_: &mut Sim, _| {}));
-            sim.effects[bid.0].on_expire = Some(Rc::new(|_: &mut Sim, _| {}));
-            aura
+            // The clap's bid in the attack speed category slows the target when the aura is
+            // activated, which the exporter's `enemy` section reads in a reset simulation.
+            generated::THUNDER_CLAP.aura(sim, target, true, 0, 0.0)
         });
         let related = aura_array_to_map(sim, &auras);
         let cd = new_cooldown(sim, unit, cooldown_of(rank));

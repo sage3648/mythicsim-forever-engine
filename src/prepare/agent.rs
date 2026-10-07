@@ -41,6 +41,9 @@ pub(crate) trait PrepAgent {
     fn add_raid_buffs(&self, _raid_buffs: &mut Message) {}
     /// Go `Agent.AddPartyBuffs`.
     fn add_party_buffs(&self, _party_buffs: &mut Message) {}
+    /// What the agent's constructor does to the raid's debuffs the request carries (Go's
+    /// `NewWarlock` clears the curse the warlock casts itself), before they are applied.
+    fn adjust_raid_debuffs(&self, _debuffs: &mut Message) {}
     /// Go `Agent.ApplyTalents`.
     fn apply_talents(&mut self, _sim: &mut Sim, _unit: UnitId) {}
     /// Go `Agent.Initialize`.
@@ -119,8 +122,13 @@ pub(crate) trait PrepAgent {
     fn stat_auras(&self, _sim: &Sim, _unit: UnitId) -> Vec<String> {
         Vec::new()
     }
-    /// What the exporter's class effects note as unrepresented while they run
-    /// (`classNotes`), and `classExport.unrepresented`.
+    /// The exporter's `classExport.damageTakenModifiers`: how many of the target's dynamic
+    /// damage taken modifiers the class effects describe.
+    fn damage_taken_modifiers(&self) -> usize {
+        0
+    }
+    /// Go `classExport.unrepresented`: class behavior the effects cannot describe, one reason
+    /// each.
     fn unrepresented(&self, _sim: &Sim, _unit: UnitId) -> Vec<String> {
         Vec::new()
     }

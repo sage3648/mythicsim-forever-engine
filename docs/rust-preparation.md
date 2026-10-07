@@ -49,10 +49,12 @@ differing paths, or `refused` with the code. A preparation mismatch is a shadow 
 | Simulation objects | `src/prepare/sim.rs`, `spell.rs`, `stats.rs` | `sim/core` units, auras, spells, timers, exclusive effects, stats and stat dependencies |
 | Construction | `src/prepare/env.rs`, `character.rs`, `target.rs`, `attack.rs`, `items.rs` | `environment.go`, `character.go`, `target.go`, `attack.go`, `database.go` |
 | Shared mechanics | `src/prepare/{spell_mod,parse_effects,aura_helpers,racials,buffs,consumes,...}.rs` | `spell_mod.go`, `spelldata`, `aura_helpers.go`, `racials.go`, `buffs`, `consumes.go` |
+| Pets | `src/prepare/pet.rs`, `src/classes/<class>/prepare/pet.rs` | `core/pet.go`, `core/focus.go`, a class's pets and `tools/oracle-v2/pets.go`: a pet is a unit with a pet half, enabled by the owner's reset |
 | Client spell data | `src/prepare/spelldata.rs`, `dbcenums.rs`, `resolve_{spell,aura,proc}.rs`, `proc_type_mask.rs`, `item_aura.rs` | `sim/core/spelldata`, `sim/core/dbcenums`, `sim/core/proc_types.go` |
 | Item and enchant effects | `src/prepare/{shared_items,shared_on_use,shared_auras,shared_procs,itemhelpers,forever_items,forever_item_sets,classic_items,enchant_speed}.rs` | `sim/common/{shared,itemhelpers,forever,classic}`, `enchant_speed.go` |
 | Classes | `src/classes/<class>/prepare*.rs` | `sim/<class>` construction and initialization |
 | Export | `src/prepare/export.rs`, `common_effects.rs`, `export_items.rs` | `tools/oracle-v2` |
+| A tanking player | `src/prepare/{enemy,damage_taken,incapacitate}.rs`, `env.rs` | `character.go` `Finalize`, `health.go`, `enemy.go`, `damage_taken.go` |
 
 Go pointers become arena ids (`UnitId`, `AuraId`, `SpellId`). The lifecycle callbacks a
 reset runs (`OnInit`, `OnReset`, `OnGain`, `OnExpire`, `OnStacksChange`) are Rust closures
@@ -75,6 +77,26 @@ never runs a fight and the prepared contract lists them.
   `tools/rust_item_effects.py`, which reread the pinned files (`check` fails when the committed
   Rust differs).
 
+## A player tanking the target
+
+A player a target swings at (`tankIndex` with `raid.tanks`) gets the "Reduced avoidance" aura a
+hardcast holds and the "Pushback trigger" at finalize, before the unit finalizes, as Go
+registers them. The export then adds the `enemy` section: the target's main hand swing as Go
+resolves it at reset, the rolls under every stat aura combination and with the reduced
+avoidance aura up, and the player and target auras inactive at reset whose activation changes
+a value of the swing, each read in a reset simulation of its own (`Environment::fresh`).
+Every copy of the target swings at the tank, and must swing as the first copy does.
+
+Refused with the code `tanking`: a swing of a school other than Physical (Go rolls a partial
+resist from the random stream), and a tank's hit taken item proc. Refused as unrepresented, as
+the exporter notes them: a tank list other than the one player, a secondary tank, a tanked
+target without a melee swing, a swing's flags or range the runtime does not simulate, and a
+damage absorption shield that is up at reset.
+
+A class hooks in through its effects: `player_damage_taken` and `pseudo_stat_auras` entries
+name the auras whose damage taken multiplier the runtime tracks live, and the stat aura labels
+a class lists are the combinations the swing is read under.
+
 ## Validation
 
 `cargo test --test prepare` prepares every accepted fixture's request. Each one Rust prepares
@@ -85,8 +107,9 @@ To isolate a mechanic, strip a request down (no buffs, consumables or gear effec
 with the pinned exporter (`tools/prepared_v2.py` builds it into `oracle-cache/`) and compare.
 `tests/classes/mage/prepare.rs` keeps such stripped Mage requests, each with a digest of every
 spell, aura and effect the exporter wrote (`tools/mage_prepare_goldens.py` writes them from the
-exporter only), so a failure names the item that changed. `tests/classes/priest/prepare.rs` does
-the same for the Priest, Shadowfiend included (`tools/priest_prepare_goldens.py`).
+exporter only), so a failure names the item that changed. `tests/classes/warlock/prepare.rs` does the same for
+the Warlock and its demons (`tools/warlock_prepare_goldens.py`), and `tests/classes/priest/prepare.rs` for the
+Priest and its Shadowfiend (`tools/priest_prepare_goldens.py`).
 
 Item set bonuses are registered in `src/prepare/item_sets.rs`: a module lists its sets as
 `ItemSet` values, and a set Go registers (`item_sets` in `data/go-tables.json`) that no module
