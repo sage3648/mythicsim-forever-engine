@@ -198,6 +198,12 @@ type tables struct {
 	BaseStats          map[string]map[string]map[string]float64 `json:"base_stats"`
 	CritPerAgiMaxLevel map[string]float64                       `json:"crit_per_agi_max_level"`
 	CritPerIntMaxLevel map[string]float64                       `json:"crit_per_int_max_level"`
+	// Items and enchants whose effects Go registers in code: Rust must implement each one it
+	// meets or refuse the request.
+	ItemEffectIDs    []int32 `json:"item_effect_ids"`
+	EnchantEffectIDs []int32 `json:"enchant_effect_ids"`
+	// Preset target IDs whose target has an AI.
+	PresetTargetsWithAI []int32 `json:"preset_targets_with_ai"`
 }
 
 func goTables() tables {
@@ -216,6 +222,9 @@ func goTables() tables {
 	for class, value := range core.CritPerIntMaxLevel {
 		out.CritPerIntMaxLevel[class.String()] = value
 	}
+	out.ItemEffectIDs = core.RegisteredItemEffectIDs()
+	out.EnchantEffectIDs = core.RegisteredEnchantEffectIDs()
+	out.PresetTargetsWithAI = core.RustDataPresetTargetsWithAI()
 	return out
 }
 

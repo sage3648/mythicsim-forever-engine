@@ -2,6 +2,7 @@
 
 pub(crate) mod agent;
 pub(crate) mod masks;
+pub(crate) mod prepare;
 pub(crate) mod prepared;
 pub(crate) mod specs;
 pub(crate) mod spells;

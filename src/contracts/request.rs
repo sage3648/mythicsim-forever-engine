@@ -19,6 +19,22 @@ use std::collections::BTreeMap;
 
 pub use schema::{FieldKind, FieldSchema};
 
+/// The number of an enum value by name, from the reference's schema.
+pub fn enum_number(enum_type: &str, value: &str) -> Option<i32> {
+    schema::enum_value(enum_type, value)
+}
+
+/// A message field's proto name and whether it is a bool, by field number.
+pub fn field_by_number(type_name: &str, number: u32) -> Option<(String, bool)> {
+    let field = schema::message(type_name).ok()?.by_number(number)?;
+    Some((field.name.clone(), field.kind == FieldKind::Bool))
+}
+
+/// The name of an enum value by number.
+pub fn enum_name(enum_type: &str, number: i32) -> Option<&'static str> {
+    schema::enum_value_name(enum_type, number)
+}
+
 /// One field value of a decoded message.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Value {
@@ -80,6 +96,11 @@ impl Message {
     /// Reads a message of `type_name` from parsed protojson.
     pub(crate) fn from_json(type_name: &str, raw: &json::Json) -> Result<Message, String> {
         wire::decode_message(schema::message(type_name)?, raw, type_name)
+    }
+
+    /// Reads a message of `type_name` from protojson text.
+    pub fn from_json_text(type_name: &str, text: &str) -> Result<Message, String> {
+        Message::from_json(type_name, &json::parse(text.as_bytes())?)
     }
 
     /// An empty message of a known type.
@@ -186,6 +207,21 @@ impl Message {
             .unwrap_or_else(|| number.to_string())
     }
 
+    /// A repeated enum field's value names.
+    pub fn enum_names(&self, name: &str) -> Vec<String> {
+        let field = self.field(name);
+        let enum_type = field.type_name.as_deref().expect("enum type");
+        self.list(name)
+            .iter()
+            .map(|value| match value {
+                Value::Enum(number) => schema::enum_value_name(enum_type, *number)
+                    .map(str::to_string)
+                    .unwrap_or_else(|| number.to_string()),
+                other => panic!("{}.{name} holds a non-enum {other:?}", self.type_name),
+            })
+            .collect()
+    }
+
     /// A message field when set.
     pub fn message(&self, name: &str) -> Option<&Message> {
         match self.get(name) {
@@ -247,6 +283,16 @@ impl Message {
             let field = schema.by_number(*number).expect("set field");
             (field.oneof.as_deref() == Some(oneof)).then_some((field.name.as_str(), value))
         })
+    }
+
+    /// Sets a bool field, as Go's generated setter does: false clears it.
+    pub fn set_bool(&mut self, name: &str, value: bool) {
+        let number = self.field(name).number;
+        if value {
+            self.fields.insert(number, Value::Bool(true));
+        } else {
+            self.fields.remove(&number);
+        }
     }
 
     /// The message as protojson, as Go's `protojson.Marshal` writes it with

@@ -1,0 +1,20 @@
+package core
+
+// Copied into the scratch reference checkout by tools/rust_data.py so tools/rust-data can read
+// registries this package keeps unexported. It changes no behavior.
+
+// The first preset target of each ID has an AI: GetPresetTargetWithID answers the first.
+func RustDataPresetTargetsWithAI() []int32 {
+	seen := map[int32]bool{}
+	out := []int32{}
+	for _, preset := range presetTargets {
+		if seen[preset.Config.Id] {
+			continue
+		}
+		seen[preset.Config.Id] = true
+		if preset.AI != nil {
+			out = append(out, preset.Config.Id)
+		}
+	}
+	return out
+}

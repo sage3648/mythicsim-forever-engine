@@ -102,6 +102,7 @@ def build_tool(cache, source):
     shutil.copy2(TOOL / "main.go", target / "main.go")
     shutil.copy2(TOOL / "spelldata_export.go.in",
                  checkout / "sim" / "core" / "spelldata" / "zz_rust_data_export.go")
+    shutil.copy2(TOOL / "core_export.go.in", checkout / "sim" / "core" / "zz_rust_data_export.go")
     binary = (cache / "rust-data").resolve()
     command(["go", "build", "-trimpath", "--tags=with_db", *go_pin_flags(), "-o", str(binary),
              "./cmd/rust-data"], cwd=checkout)

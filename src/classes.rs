@@ -27,3 +27,18 @@ pub(crate) fn run_prepared(
         other => Err(format!("class {other} has no fight agent")),
     }
 }
+
+/// The class agent Rust preparation builds for a player: Go's agent factory.
+pub(crate) fn prepare_agent(
+    sim: &mut crate::prepare::sim::Sim,
+    unit: crate::prepare::sim::UnitId,
+    player: &crate::contracts::request::Message,
+) -> Result<Box<dyn crate::prepare::agent::PrepAgent>, crate::prepare::Refusal> {
+    match player.enum_name("class").as_str() {
+        "ClassMage" => mage::prepare::new_mage(sim, unit, player),
+        other => Err(crate::prepare::Refusal::new(
+            "class",
+            format!("{other} is not prepared in Rust yet"),
+        )),
+    }
+}
