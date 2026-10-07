@@ -23,8 +23,8 @@ pub(crate) fn common_effects(env: &mut Environment, unrepresented: &mut Vec<Stri
 }
 
 /// tools/oracle-v2/aura_refresh.go `auraShouldRefreshEffects`.
-fn aura_refresh_effects(_env: &mut Environment, _unrepresented: &mut Vec<String>) -> Vec<Value> {
-    Vec::new()
+fn aura_refresh_effects(env: &mut Environment, _unrepresented: &mut Vec<String>) -> Vec<Value> {
+    super::buffs::aura_should_refresh_effects(env)
 }
 
 /// tools/oracle-v2/movement.go `playerMovementEffect`: the movement speed a prepull move runs at.
@@ -64,8 +64,8 @@ fn player_movement_effect(env: &Environment) -> Option<Value> {
 }
 
 /// The `Judgement of Wisdom (External)` loop over the target's auras.
-fn judgement_of_wisdom_effects(_env: &Environment) -> Vec<Value> {
-    Vec::new()
+fn judgement_of_wisdom_effects(env: &Environment) -> Vec<Value> {
+    super::buffs::judgement_of_wisdom_effects(env)
 }
 
 /// Touch of the Grave, Berserking, Blood Fury and Elune's Light.
@@ -74,13 +74,13 @@ fn racial_effects(_env: &mut Environment, _unrepresented: &mut Vec<String>) -> V
 }
 
 /// The party's Battle Shout: `fixed_uptime_aura`.
-fn battle_shout_effect(_env: &Environment) -> Option<Value> {
-    None
+fn battle_shout_effect(env: &Environment) -> Option<Value> {
+    super::buffs::battle_shout_effect(env)
 }
 
 /// The raid's Sunder Armor: `sunder_armor_ramp`.
-fn sunder_armor_effect(_env: &mut Environment, _unrepresented: &mut Vec<String>) -> Option<Value> {
-    None
+fn sunder_armor_effect(env: &mut Environment, unrepresented: &mut Vec<String>) -> Option<Value> {
+    super::buffs::sunder_armor_effect(env, unrepresented)
 }
 
 /// Shatter Curse, Stoneform and Read Ley Line.
