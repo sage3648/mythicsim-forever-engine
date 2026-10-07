@@ -9,7 +9,8 @@ use crate::contracts::request::Message;
 
 use super::items::{self, Equipment};
 use super::sim::{
-    AuraConfig, AuraId, BuildPhase, Duration, Sim, SpellId, Unit, UnitId, UnitType, MILLISECOND,
+    AuraConfig, AuraId, BuildPhase, Duration, Sim, SpellId, TimerId, Unit, UnitId, UnitType,
+    MILLISECOND,
 };
 use super::stats::{PseudoStats, Stat, Stats};
 use super::Refusal;
@@ -570,6 +571,21 @@ impl Sim {
             }
         }
         self.character_mut(unit).initial_major_cooldowns = mcds;
+    }
+
+    /// Go `Character.GetOffensiveTrinketCD`.
+    pub(crate) fn get_offensive_trinket_cd(&mut self, unit: UnitId) -> TimerId {
+        self.category_timer(unit, 1141)
+    }
+
+    /// Go `Character.GetConjuredCD`.
+    pub(crate) fn get_conjured_cd(&mut self, unit: UnitId) -> TimerId {
+        self.category_timer(unit, 30)
+    }
+
+    /// Go `Character.GetPotionCD`.
+    pub(crate) fn get_potion_cd(&mut self, unit: UnitId) -> TimerId {
+        self.category_timer(unit, 4)
     }
 
     /// Go `Character.GetMHWeapon` and friends.
