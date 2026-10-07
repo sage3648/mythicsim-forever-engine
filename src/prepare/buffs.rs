@@ -3,6 +3,7 @@
 
 pub(crate) mod drivers;
 mod effects;
+pub(crate) mod flametongue;
 mod generated;
 pub(crate) mod paladin;
 pub(crate) mod support;
