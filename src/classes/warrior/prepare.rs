@@ -233,6 +233,8 @@ pub(crate) struct Warrior {
     has_bs_t2: Rc<Cell<bool>>,
     /// Go `thunderClapEffectBonus`, which Conqueror's Battlegear's 5 piece raises.
     thunder_clap_effect_bonus: Rc<Cell<f64>>,
+    /// Effects on the attack tables, which exist only once the environment finalizes.
+    post_finalize: std::cell::RefCell<Vec<crate::prepare::env::FinalizeEffect>>,
 }
 
 impl Warrior {
@@ -303,19 +305,6 @@ pub(crate) fn new_warrior(
         TALENT_TREE_SIZES,
     )
     .map_err(|err| Refusal::new("talents", err))?;
-    // Weaponmaster's mace and staff armor ignore raises the attack tables' armor ignore, which
-    // Rust keeps outside the simulation.
-    if talents.i32("weaponmaster") > 0
-        && sim.mh_weapon(unit).is_some_and(|item| {
-            item.weapon_type == "WeaponTypeMace" || item.weapon_type == "WeaponTypeStaff"
-        })
-    {
-        return Err(Refusal::new(
-            "weaponmaster",
-            "Weaponmaster's armor ignore with a mace or staff is not prepared yet".to_string(),
-        ));
-    }
-
     sim.enable_rage_bar(
         unit,
         RageBarOptions {
@@ -371,6 +360,7 @@ pub(crate) fn new_warrior(
     Ok(Box::new(Warrior {
         has_bs_t2: Rc::new(Cell::new(inputs.has_bs_t2)),
         thunder_clap_effect_bonus: Rc::new(Cell::new(0.0)),
+        post_finalize: std::cell::RefCell::default(),
         talents,
         inputs,
         dps_spec,
@@ -378,6 +368,10 @@ pub(crate) fn new_warrior(
 }
 
 impl PrepAgent for Warrior {
+    fn take_post_finalize_effects(&mut self) -> Vec<crate::prepare::env::FinalizeEffect> {
+        self.post_finalize.take()
+    }
+
     fn apply_talents(&mut self, sim: &mut Sim, unit: UnitId) {
         self.register_arms_talents(sim, unit);
         self.register_fury_talents(sim, unit);

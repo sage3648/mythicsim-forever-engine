@@ -239,6 +239,8 @@ pub(crate) struct Paladin {
     forbearance_reduction: Duration,
     /// Timers shared by the ranks of one ability.
     timers: Timers,
+    /// Effects on the attack tables, which exist only once the environment finalizes.
+    post_finalize: Vec<crate::prepare::env::FinalizeEffect>,
 }
 
 /// Go's `judgementTimer` and the other timers the ranks of an ability share.
@@ -343,6 +345,7 @@ pub(crate) fn new_paladin(
         holy_shield_block_value_multiplier: 1.0,
         forbearance_reduction: 0,
         timers: Timers::default(),
+        post_finalize: Vec::new(),
     }))
 }
 
@@ -395,6 +398,10 @@ impl PrepAgent for Paladin {
 
     fn apply_item_effect(&mut self, sim: &mut Sim, unit: UnitId, item: i32) -> bool {
         self.apply_class_item_effect(sim, unit, item)
+    }
+
+    fn take_post_finalize_effects(&mut self) -> Vec<crate::prepare::env::FinalizeEffect> {
+        std::mem::take(&mut self.post_finalize)
     }
 
     fn talents(&self) -> &Message {

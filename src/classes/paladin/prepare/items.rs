@@ -6,6 +6,7 @@
 use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::aura_helpers::{CallbackMask, ProcTrigger};
 use crate::prepare::character::{cooldown_type, MajorCooldown};
+use crate::prepare::env::Environment;
 use crate::prepare::sim::{AuraConfig, Cooldown, Sim, UnitId, MILLISECOND, SECOND};
 use crate::prepare::spell::{Cast, CastConfig, ProcMask, SpellConfig, SpellFlag};
 use crate::prepare::spell_mod::{SpellModConfig, SpellModType};
@@ -176,8 +177,34 @@ impl Paladin {
                     },
                 );
             }
-            // Tenets of the Silver Hand changes the attack tables, which exist only once
-            // the environment is finalized; it is not prepared yet.
+            // Tenets of the Silver Hand: increases your damage against Undead by 1%. The
+            // permanent aura's gain multiplies every attack table the paladin owns against an
+            // Undead defender. Rust keeps the tables in the environment, so the gain is applied
+            // once they exist, after the earlier finalize effects on them, as Go applies it at
+            // the reset that follows.
+            249397 => {
+                let aura = sim.register_aura(
+                    unit,
+                    AuraConfig {
+                        label: "Tenets of the Silver Hand".to_string(),
+                        action_id: Some(spell_action(1302545)),
+                        ..AuraConfig::default()
+                    },
+                );
+                sim.make_permanent(aura);
+                sim.apply_on_gain(aura, std::rc::Rc::new(|_: &mut Sim, _| {}));
+                sim.apply_on_expire(aura, std::rc::Rc::new(|_: &mut Sim, _| {}));
+                self.post_finalize
+                    .push(std::rc::Rc::new(move |env: &mut Environment| {
+                        let attacker = env.sim.unit(unit).unit_index as usize;
+                        for defender in env.sim.all_units() {
+                            if env.sim.unit(defender).mob_type == "MobTypeUndead" {
+                                let index = env.sim.unit(defender).unit_index as usize;
+                                env.attack_tables[attacker][index].damage_dealt_multiplier *= 1.01;
+                            }
+                        }
+                    }));
+            }
             _ => return false,
         }
         true

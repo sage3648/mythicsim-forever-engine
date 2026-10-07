@@ -5,6 +5,7 @@ use std::rc::Rc;
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use crate::prepare::character::cooldown_type;
 use crate::prepare::dbcenums;
+use crate::prepare::env::Environment;
 use crate::prepare::sim::{AuraConfig, Sim, UnitId, NEVER_EXPIRES};
 use crate::prepare::spell::{
     school, DefenseType, ProcMask, SpellConfig, SpellFlag, SpellFlag as F,
@@ -355,6 +356,19 @@ impl Warrior {
         );
         if armor_ignore_on {
             sim.make_permanent(armor_ignore_aura);
+            // The permanent aura's gain adds the armor ignore to every attack table the warrior
+            // owns. Rust keeps the tables in the environment, where nothing else changes a
+            // warrior's armor ignore between finalizing and the reset, so it is added once the
+            // tables exist.
+            let armor_ignore = data.weaponmaster.effect_at(2).fraction_at(rank);
+            self.post_finalize
+                .borrow_mut()
+                .push(std::rc::Rc::new(move |env: &mut Environment| {
+                    let attacker = env.sim.unit(unit).unit_index as usize;
+                    for table in &mut env.attack_tables[attacker] {
+                        table.armor_ignore_factor += armor_ignore;
+                    }
+                }));
         }
 
         let sword_aura = sim.make_proc_trigger_aura(

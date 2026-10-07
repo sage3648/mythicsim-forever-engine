@@ -656,6 +656,42 @@ impl Builder<'_> {
             }
             // Go `newActionMultidot`: dropped unless the spell has a dot on the current
             // target; it removes no major cooldown.
+            // Go `newActionActivateAura`, `newActionCancelAura`, `newActionActivateAuraWithStacks`
+            // and `newActionTriggerICD`: nil for an aura the player lacks; they change nothing
+            // while the rotation is built.
+            "activate_aura" | "cancel_aura" | "activate_aura_with_stacks" | "trigger_icd" => {
+                let Some(id) = action.message("aura_id") else {
+                    return Ok(None);
+                };
+                let id = proto_to_action_id(id);
+                let sim = &self.env.sim;
+                let found = sim.unit(self.env.player).auras.iter().find(|aura| {
+                    let a = sim.aura(**aura);
+                    if kind == "trigger_icd" {
+                        (a.action_id.as_ref() == Some(&id)
+                            || a.action_id_for_proc.as_ref() == Some(&id))
+                            && a.icd.is_some()
+                    } else {
+                        a.action_id.as_ref() == Some(&id)
+                    }
+                });
+                let Some(aura) = found else {
+                    return Ok(None);
+                };
+                if kind == "activate_aura_with_stacks" && sim.aura(*aura).max_stacks == 0 {
+                    return Ok(None);
+                }
+                Ok(Some(Built::new(Vec::new())))
+            }
+            // Go `newActionChangeTarget`: nil when the new target resolves to no unit.
+            "change_target" => match source_unit(self.env, action.message("new_target")) {
+                Ok(Some(_)) => Ok(Some(Built::new(Vec::new()))),
+                Ok(None) => Ok(None),
+                Err(()) => Err(Refusal::new(
+                    "rotation",
+                    "a change of target to this unit is not prepared yet".to_string(),
+                )),
+            },
             "multidot" => {
                 let Some(id) = action.message("spell_id") else {
                     return Ok(None);
