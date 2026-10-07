@@ -23,7 +23,7 @@ use super::spelldata::{must_find, Ladder};
 use super::Refusal;
 
 pub(crate) use effects::{
-    aura_should_refresh_effects, battle_shout_effect, judgement_of_wisdom_effects,
+    aura_should_refresh_effects, exclusive_refresh, battle_shout_effect, judgement_of_wisdom_effects,
     sunder_armor_effect,
 };
 pub(crate) use generated::{apply_generated_buffs, apply_generated_debuffs};
