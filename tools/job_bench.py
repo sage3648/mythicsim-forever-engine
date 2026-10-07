@@ -74,7 +74,7 @@ def go_job(bundle, request, folder):
     sample = measure([bundle / "bin" / EXPORTER, "sim", "--infile", request, "--outfile", result])
     document = json.loads(result.read_text())
     sample["engine_s"] = int(document["elapsedNs"]) / 1e9
-    sample["dps"] = document["raidMetrics"]["dps"]["avg"]
+    sample["dps"] = document["raidMetrics"]["dps"].get("avg", 0.0)
     return sample
 
 
@@ -87,7 +87,7 @@ def rust_job(bundle, request, folder):
     if decision["status"] == "rust":
         report = json.loads((folder / "rust-report.json").read_text())
         sample["engine_s"] = int(report["elapsed_ns"]) / 1e9
-        sample["dps"] = report["result"]["raidMetrics"]["dps"]["avg"]
+        sample["dps"] = report["result"]["raidMetrics"]["dps"].get("avg", 0.0)
     return sample
 
 
