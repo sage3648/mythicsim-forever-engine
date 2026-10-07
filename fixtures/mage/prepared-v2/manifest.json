@@ -7338,6 +7338,48 @@
         "file": "protection-eye-for-an-eye-sapper.go-log.txt",
         "sha256": "96efbe150fa4e9872158dad9cffc727d5710d91f07307eae68f7bdb2911a519a"
       }
+    },
+    {
+      "id": "shadow-priest-shadowform-holy-nova-power-infusion",
+      "description": "Shadow Priest in Shadowform with Holy Nova first in the rotation and Power Infusion talented: Shadowform's form refuses Holy Nova (community #686), and the autocast Power Infusion no longer ends Shadowform (#719)",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/shadow-priest-shadowform-holy-nova-power-infusion.request.json"
+      },
+      "prepared": "shadow-priest-shadowform-holy-nova-power-infusion.prepared.json",
+      "prepared_sha256": "c9e15dee090571f27886f87dd067fb445c63c598392a7b4a421f847f0a2e9979",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "shadow-priest-shadowform-holy-nova-power-infusion.go-result.json",
+        "sha256": "773385d076a1ef540e4b48bcb6891d6764e8aa85ed36b7ef3a901014fbb9fb9f"
+      },
+      "go_log": {
+        "file": "shadow-priest-shadowform-holy-nova-power-infusion.go-log.txt",
+        "sha256": "1f612e9e3e3b585a02ee890222eeba32b01e7e4aeff1625bcedcd6a8e723f6d1"
+      }
+    },
+    {
+      "id": "elemental-shaman-totem-of-thunder",
+      "description": "Production Elemental Shaman with Totem of Thunder (228176), whose equip effect adds 1% crit to Lightning Bolt and its overload rows (fork patch 97)",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/elemental-shaman-totem-of-thunder.request.json"
+      },
+      "prepared": "elemental-shaman-totem-of-thunder.prepared.json",
+      "prepared_sha256": "6cf398ce264b2a63a65d0198975f99ae543703099b149832a8f0cfdce3451105",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "elemental-shaman-totem-of-thunder.go-result.json",
+        "sha256": "ae7d25f43a473821a055284a8fd6b2cbc4815b4a18217f3df3030693ca81252d"
+      },
+      "go_log": {
+        "file": "elemental-shaman-totem-of-thunder.go-log.txt",
+        "sha256": "f9992fa946174044e08491f6bc8a0996f01a6279755e5f99409e79028d496d49"
+      }
     }
   ]
 }
