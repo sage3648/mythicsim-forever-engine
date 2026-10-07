@@ -670,6 +670,14 @@ pub(crate) fn export(
     let player_message = env.sim.character(env.player).player.clone();
     let target = env.encounter.targets[0];
     let player = env.player;
+    // Go `prepare`: stats against a mob type are the fight's, which prepared v2 does not carry.
+    for (mob_type, bonus) in &env.attack_table(player, target).mob_type_bonus_stats {
+        if !bonus.is_zero() {
+            unrepresented.push(format!(
+                "mob type bonus stats for {mob_type} are unsupported"
+            ));
+        }
+    }
 
     let spells: Vec<super::sim::SpellId> = env.sim.unit(player).spellbook.clone();
     let mut exported_spells: Vec<Value> = spells

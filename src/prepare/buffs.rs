@@ -17,7 +17,7 @@ use super::sim::{
 use super::spelldata::{must_find, Ladder};
 use super::Refusal;
 
-pub(crate) use generated::{apply_generated_buffs, apply_generated_debuffs};
+pub(crate) use generated::{apply_generated_buffs, apply_generated_debuffs, GIFT_OF_ARTHAS};
 
 /// Which constructor a generated buff uses.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
