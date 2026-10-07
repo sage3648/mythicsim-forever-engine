@@ -1,0 +1,93 @@
+# Rust preparation
+
+Rust preparation builds a request's simulation in the engine itself, without the Go exporter.
+It reads the application's `RaidSimRequest`, constructs the player, its target and every
+registered spell and aura the way the pinned Go engine does, resets it, and writes the same
+[prepared v2](prepared-v2.md) state that `tools/oracle-v2` writes. The fight then runs in the
+same process.
+
+A request Rust preparation does not cover yet is refused with a stable code, and the Go
+exporter prepares it as before. A request it prepares must give exactly the exporter's
+prepared state: the fixture harness checks every accepted fixture, and every shadow run
+compares the two on real traffic.
+
+```mermaid
+flowchart LR
+    A[RaidSimRequest] --> B[Rust preparation]
+    B -->|covered| C[Prepared v2 state]
+    B -->|refused, with a code| D[Go exporter]
+    D --> C
+    C --> E[Coverage gate]
+    E -->|covered| F[Rust fight]
+    E -->|gaps| G[Full Go simulation]
+```
+
+## Commands
+
+```sh
+cargo run --release -- prepare --request REQUEST.json --scenario ID --outfile PREPARED.json
+cargo run --release -- sim --request REQUEST.json --gate --outfile RESULT.json
+```
+
+`prepare` writes the prepared state; `sim --request` prepares, gates and simulates in one
+process. When Rust preparation refuses, both exit with status 5 and print
+`{"prepared": false, "refusal": {"code": ..., "reason": ...}}`. A request Rust cannot read,
+and a defect inside preparation (code `prepare_fault`), are refused the same way, so they fall
+back to Go rather than fail.
+
+[`tools/route.py`](routing.md) runs `sim --request` first and prepares with the Go exporter only
+after a refusal; its decision names the `preparation` provider. [`tools/shadow.py`](shadow-sims.md)
+prepares every shadow request both ways and reports `preparation`: `match`, `mismatch` with the
+differing paths, or `refused` with the code. A preparation mismatch is a shadow mismatch.
+
+## How it is built
+
+| Part | Rust | Go it mirrors |
+| --- | --- | --- |
+| Request | `src/contracts/request.rs` | protojson against the reference's own proto schema; `request_sha256` is the deterministic protobuf encoding's SHA-256 |
+| Game data | `src/data.rs`, `data/` | the item database, client spell rows and Go tables, imported by `tools/rust_data.py` |
+| Simulation objects | `src/prepare/sim.rs`, `spell.rs`, `stats.rs` | `sim/core` units, auras, spells, timers, exclusive effects, stats and stat dependencies |
+| Construction | `src/prepare/env.rs`, `character.rs`, `target.rs`, `attack.rs`, `items.rs` | `environment.go`, `character.go`, `target.go`, `attack.go`, `database.go` |
+| Shared mechanics | `src/prepare/{spell_mod,parse_effects,aura_helpers,racials,buffs,consumes,...}.rs` | `spell_mod.go`, `spelldata`, `aura_helpers.go`, `racials.go`, `buffs`, `consumes.go` |
+| Client spell data | `src/prepare/spelldata.rs`, `dbcenums.rs` | `sim/core/spelldata`, `sim/core/dbcenums` |
+| Classes | `src/classes/<class>/prepare*.rs` | `sim/<class>` construction and initialization |
+| Export | `src/prepare/export.rs`, `common_effects.rs` | `tools/oracle-v2` |
+
+Go pointers become arena ids (`UnitId`, `AuraId`, `SpellId`). The lifecycle callbacks a
+reset runs (`OnInit`, `OnReset`, `OnGain`, `OnExpire`, `OnStacksChange`) are Rust closures
+over the arena; callbacks that only react to combat are recorded by name, since preparation
+never runs a fight and the prepared contract lists them.
+
+## Porting rules
+
+- **Bit-exact.** Mirror Go's order of float operations, its integer conversions and its
+  map-free iteration orders. A prepared value that differs in the last bit is a bug.
+- **Fused multiply-adds.** The pinned Go binary is arm64, whose compiler fuses `x*y + z`
+  into one instruction that rounds once. Use `f64::mul_add` exactly where Go fused.
+  `python3 tools/fma_scan.py` lists every fused instruction by Go file and line; when the
+  form is unclear, disassemble the function with `go tool objdump -s`.
+- **Refuse, never approximate.** A request feature that is not ported yet is a `Refusal`
+  with a stable code. Every item and enchant effect Go registers in code is listed in
+  `data/go-tables.json`; an equipped one Rust does not implement is refused.
+- **Generated Go is translated, not rewritten.** Go's generated raid buffs come from
+  `tools/rust_buffs.py`, which rereads the pinned files.
+
+## Validation
+
+`cargo test --test prepare` prepares every accepted fixture's request. Each one Rust prepares
+must equal the exporter's prepared state exactly; each other one must be refused. Set
+`PREPARE_REPORT=1` to list every case. The test also checks every fixture's request digest.
+
+To isolate a mechanic, strip a request down (no buffs, consumables or gear effects), export it
+with the pinned exporter (`tools/prepared_v2.py` builds it into `oracle-cache/`) and compare.
+
+## Data import
+
+```sh
+python3 tools/rust_data.py import --source PATH_TO_GO_FORK
+python3 tools/rust_data.py check
+```
+
+`import` builds `tools/rust-data` in the oracle's checkout of the pin and writes `data/` with a
+manifest of digests; `check` audits it offline. Move the data with the pin, in a commit of its
+own.
