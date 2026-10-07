@@ -36,6 +36,7 @@ pub(crate) fn prepare_agent(
 ) -> Result<Box<dyn crate::prepare::agent::PrepAgent>, crate::prepare::Refusal> {
     match player.enum_name("class").as_str() {
         "ClassMage" => mage::prepare::new_mage(sim, unit, player),
+        "ClassWarlock" => warlock::prepare::new_warlock(sim, unit, player),
         other => Err(crate::prepare::Refusal::new(
             "class",
             format!("{other} is not prepared in Rust yet"),
@@ -47,5 +48,6 @@ pub(crate) fn prepare_agent(
 pub(crate) fn item_sets() -> Vec<&'static crate::prepare::item_sets::ItemSet> {
     let mut sets = Vec::new();
     sets.extend(mage::prepare::items::ITEM_SETS);
+    sets.extend(warlock::prepare::items::ITEM_SETS);
     sets
 }
