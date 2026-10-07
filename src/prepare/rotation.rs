@@ -12,7 +12,7 @@ use crate::contracts::request::{Message, Value};
 
 use super::agent::proto_to_action_id;
 use super::env::Environment;
-use super::sim::SpellId;
+use super::sim::{SpellId, UnitId};
 use super::spell::SpellFlag;
 use super::Refusal;
 
@@ -96,6 +96,18 @@ fn has_cur_dot(env: &Environment, spell: SpellId) -> Result<bool, Refusal> {
 struct Built {
     /// Spells a cast action presses, including those of inner actions.
     casts: Vec<SpellId>,
+    /// The spell of a cast action itself: what Go's `removeFromMajorCooldowns` reads of a
+    /// pruned action's impl.
+    direct: Option<SpellId>,
+}
+
+impl Built {
+    fn new(casts: Vec<SpellId>) -> Self {
+        Built {
+            casts,
+            direct: None,
+        }
+    }
 }
 
 struct Builder<'a> {
@@ -104,28 +116,268 @@ struct Builder<'a> {
     pruned_casts: Vec<SpellId>,
 }
 
-/// Whether a value is a constant expression Go may fold: no part of it reads the simulation.
-fn is_constant_expression(value: &Message) -> bool {
-    match value.oneof("value") {
-        None => true,
-        Some((field, Value::Message(inner))) => match field {
-            "const" => true,
-            "and" | "or" => inner
-                .messages("vals")
-                .into_iter()
-                .all(is_constant_expression),
-            "not" => inner.message("val").is_none_or(is_constant_expression),
-            "cmp" | "math" => {
-                inner.message("lhs").is_none_or(is_constant_expression)
-                    && inner.message("rhs").is_none_or(is_constant_expression)
+/// A value's type as far as Go's constructors check it: only a boolean matters, to Go
+/// `newValueCompare`'s check that booleans are only compared for equality.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+enum Ty {
+    Bool,
+    Other,
+    Unknown,
+}
+
+/// What Go's constructor returns for a value: nil, a value read during the fight, or an
+/// `APLValueConst` with its type and `boolVal`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+enum Fold {
+    Nil,
+    Dyn(Ty),
+    Const(Ty, bool),
+}
+
+impl Fold {
+    const FALSE: Fold = Fold::Const(Ty::Bool, false);
+    const TRUE: Fold = Fold::Const(Ty::Bool, true);
+
+    fn ty(self) -> Option<Ty> {
+        match self {
+            Fold::Nil => None,
+            Fold::Dyn(ty) | Fold::Const(ty, _) => Some(ty),
+        }
+    }
+}
+
+/// Every result Go's constructor may give for a value. Preparation does not follow every
+/// value's constructor, so a value it does not follow may be nil or read during the fight;
+/// the set keeps every possibility, and a decision that depends on which one is refused.
+type Folds = std::collections::BTreeSet<Fold>;
+
+fn one(fold: Fold) -> Folds {
+    Folds::from([fold])
+}
+
+/// Go `coerceTo(value, ValueTypeBool)`: a constant keeps its `boolVal` with the new type.
+fn coerce_bool(folds: &Folds) -> Folds {
+    folds
+        .iter()
+        .map(|fold| match *fold {
+            Fold::Nil => Fold::Nil,
+            Fold::Dyn(_) => Fold::Dyn(Ty::Bool),
+            Fold::Const(_, b) => Fold::Const(Ty::Bool, b),
+        })
+        .collect()
+}
+
+/// Go `newValueConst`: `boolVal` is whether the text is empty, unless it says true or false.
+fn const_fold(text: &str) -> Fold {
+    if text.eq_ignore_ascii_case("true") {
+        Fold::TRUE
+    } else if text.eq_ignore_ascii_case("false") {
+        Fold::FALSE
+    } else {
+        Fold::Const(Ty::Other, !text.is_empty())
+    }
+}
+
+/// The non-nil values of a list Go filters, as the possible outcomes of Go `newValueAnd`,
+/// `newValueOr`, `newValueMin` and `newValueMax`: nil for none, the value itself for one, and
+/// for more, whether any of them is the constant `short` (false for And, true for Or).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+enum Gathered {
+    Empty,
+    One(Fold),
+    Many { short: bool },
+}
+
+fn gather(children: &[Folds], short: Option<Fold>) -> std::collections::BTreeSet<Gathered> {
+    let mut states = std::collections::BTreeSet::from([Gathered::Empty]);
+    for child in children {
+        let mut next = std::collections::BTreeSet::new();
+        for state in &states {
+            for fold in child {
+                let is_short = Some(*fold) == short;
+                next.insert(match (*state, *fold) {
+                    (state, Fold::Nil) => state,
+                    (Gathered::Empty, fold) => Gathered::One(fold),
+                    (Gathered::One(first), _) => Gathered::Many {
+                        short: Some(first) == short || is_short,
+                    },
+                    (Gathered::Many { short: any }, _) => Gathered::Many {
+                        short: any || is_short,
+                    },
+                });
             }
-            "min" | "max" => inner
+        }
+        states = next;
+    }
+    states
+}
+
+/// Go `newValueAnd` (short constant false) and `newValueOr` (short constant true).
+fn fold_logic(children: &[Folds], short: Fold) -> Folds {
+    let children: Vec<Folds> = children.iter().map(coerce_bool).collect();
+    gather(&children, Some(short))
+        .into_iter()
+        .map(|state| match state {
+            Gathered::Empty => Fold::Nil,
+            Gathered::One(fold) => fold,
+            Gathered::Many { short: true } => short,
+            Gathered::Many { short: false } => Fold::Dyn(Ty::Bool),
+        })
+        .collect()
+}
+
+/// The unit a value's source unit reference names while the rotation is built: `None` for a
+/// reference Go resolves to no unit, an error for one preparation does not follow.
+fn source_unit(env: &Environment, reference: Option<&Message>) -> Result<Option<UnitId>, ()> {
+    let kind = reference.map_or_else(|| "Unknown".to_string(), |r| r.enum_name("type"));
+    match kind.as_str() {
+        "Unknown" | "Self" => Ok(Some(env.player)),
+        "CurrentTarget" => Ok(env.sim.unit(env.player).current_target),
+        "Target" => {
+            let index = reference.map_or(0, |r| r.i32("index"));
+            Ok(usize::try_from(index)
+                .ok()
+                .and_then(|i| env.encounter.targets.get(i).copied()))
+        }
+        _ => Err(()),
+    }
+}
+
+/// Go `GetAPLAura(GetSourceUnit(...), id).Get()`: whether the aura exists, or `None` when
+/// preparation does not follow the reference.
+fn aura_known(env: &Environment, config: &Message) -> Option<bool> {
+    let unit = source_unit(env, config.message("source_unit")).ok()?;
+    let id = proto_to_action_id(config.message("aura_id")?);
+    Some(unit.is_some_and(|unit| {
+        env.sim
+            .unit(unit)
+            .auras
+            .iter()
+            .any(|aura| env.sim.aura(*aura).action_id.as_ref() == Some(&id))
+    }))
+}
+
+/// Go's value constructors, as far as constant folding goes: `newAPLValue` for a condition.
+fn fold(env: &Environment, value: &Message) -> Folds {
+    let unknown = || Folds::from([Fold::Nil, Fold::Dyn(Ty::Unknown)]);
+    let Some((kind, Value::Message(config))) = value.oneof("value") else {
+        return one(Fold::Nil);
+    };
+    // An aura value: nil without an aura id, `missing` for an aura the unit lacks.
+    let aura_value = |missing: Fold, present: Fold| -> Folds {
+        if config.message("aura_id").is_none() {
+            return one(Fold::Nil);
+        }
+        match aura_known(env, config) {
+            Some(true) => one(present),
+            Some(false) => one(missing),
+            None => Folds::from([missing, present]),
+        }
+    };
+    match kind {
+        "const" => one(const_fold(config.str("val"))),
+        "and" => fold_logic(
+            &config
                 .messages("vals")
                 .into_iter()
-                .all(is_constant_expression),
-            _ => false,
+                .map(|v| fold(env, v))
+                .collect::<Vec<_>>(),
+            Fold::FALSE,
+        ),
+        "or" => fold_logic(
+            &config
+                .messages("vals")
+                .into_iter()
+                .map(|v| fold(env, v))
+                .collect::<Vec<_>>(),
+            Fold::TRUE,
+        ),
+        "not" => {
+            let inner = config
+                .message("val")
+                .map_or_else(|| one(Fold::Nil), |v| fold(env, v));
+            coerce_bool(&inner)
+                .into_iter()
+                .map(|fold| match fold {
+                    Fold::Const(_, b) => Fold::Const(Ty::Bool, !b),
+                    other => other,
+                })
+                .collect()
+        }
+        "min" | "max" => {
+            let children: Vec<Folds> = config
+                .messages("vals")
+                .into_iter()
+                .map(|v| fold(env, v))
+                .collect();
+            // coerceAllToSameType may change a type; a lone value is returned as it is.
+            gather(&children, None)
+                .into_iter()
+                .map(|state| match state {
+                    Gathered::Empty => Fold::Nil,
+                    Gathered::One(Fold::Const(_, b)) => Fold::Const(Ty::Unknown, b),
+                    Gathered::One(_) | Gathered::Many { .. } => Fold::Dyn(Ty::Unknown),
+                })
+                .collect()
+        }
+        "cmp" | "math" => {
+            let side = |name: &str| {
+                config
+                    .message(name)
+                    .map_or_else(|| one(Fold::Nil), |v| fold(env, v))
+            };
+            let (lhs, rhs) = (side("lhs"), side("rhs"));
+            let mut out = Folds::new();
+            for l in &lhs {
+                for r in &rhs {
+                    if *l == Fold::Nil || *r == Fold::Nil {
+                        out.insert(Fold::Nil);
+                        continue;
+                    }
+                    let equality =
+                        kind == "cmp" && matches!(config.enum_name("op").as_str(), "OpEq" | "OpNe");
+                    let checked = [l.ty(), r.ty()].into_iter().all(|ty| ty == Some(Ty::Other));
+                    // Go nils comparisons of booleans other than for equality and math on
+                    // types it rejects; only two other-typed operands of a comparison are
+                    // certain to give a value.
+                    if !(kind == "cmp" && (equality || checked)) {
+                        out.insert(Fold::Nil);
+                    }
+                    out.insert(Fold::Dyn(if kind == "cmp" {
+                        Ty::Bool
+                    } else {
+                        Ty::Unknown
+                    }));
+                }
+            }
+            out
+        }
+        "aura_is_known" => match aura_known(env, config) {
+            Some(known) => one(Fold::Const(Ty::Bool, known)),
+            None => Folds::from([Fold::FALSE, Fold::TRUE]),
         },
-        Some(_) => false,
+        "spell_is_known" => match config.message("spell_id") {
+            Some(id) => one(Fold::Const(
+                Ty::Bool,
+                apl_spell(env, &proto_to_action_id(id)).is_some(),
+            )),
+            None => unknown(),
+        },
+        "aura_is_active" => aura_value(Fold::FALSE, Fold::Dyn(Ty::Bool)),
+        "aura_is_inactive" => aura_value(Fold::TRUE, Fold::Dyn(Ty::Bool)),
+        // Go's constant "0ms": its boolVal is true, as the text is not empty.
+        "aura_remaining_time" => aura_value(Fold::Const(Ty::Other, true), Fold::Dyn(Ty::Other)),
+        // Go's constant "0" for an aura the unit lacks, and nil for one without stacks.
+        "aura_num_stacks" => {
+            if config.message("aura_id").is_none() {
+                return one(Fold::Nil);
+            }
+            match aura_known(env, config) {
+                Some(false) => one(Fold::Const(Ty::Other, true)),
+                _ => Folds::from([Fold::Nil, Fold::Dyn(Ty::Other)]),
+            }
+        }
+        _ => unknown(),
     }
 }
 
@@ -138,18 +390,21 @@ impl Builder<'_> {
         let Some(built) = self.action_impl(config)? else {
             return Ok(None);
         };
+        // Go prunes an action whose condition folds to a constant false, and keeps its impl
+        // so the spell it casts still leaves the major cooldowns.
         if let Some(condition) = config.message("condition") {
-            if is_constant_expression(condition) {
-                let simple_true = condition
-                    .message("const")
-                    .is_some_and(|c| c.str("val").eq_ignore_ascii_case("true"));
-                if !simple_true {
-                    return Err(Refusal::new(
-                        "rotation",
-                        "a rotation condition Go folds to a constant is not prepared yet"
-                            .to_string(),
-                    ));
-                }
+            let folded = coerce_bool(&fold(self.env, condition));
+            let pruned = folded.iter().filter(|f| **f == Fold::FALSE).count();
+            if pruned == folded.len() {
+                self.pruned_casts.extend(built.direct);
+                return Ok(None);
+            }
+            if pruned > 0 {
+                return Err(Refusal::new(
+                    "rotation",
+                    "a rotation condition Go may fold to a constant is not prepared yet"
+                        .to_string(),
+                ));
             }
         }
         Ok(Some(built))
@@ -162,7 +417,7 @@ impl Builder<'_> {
                 .agent
                 .custom_apl_action(&self.env.sim, self.env.player, config)
         {
-            return Ok(built.then(|| Built { casts: Vec::new() }));
+            return Ok(built.then(|| Built::new(Vec::new())));
         }
         let Some((kind, Value::Message(action))) = config.oneof("action") else {
             return Err(Refusal::new(
@@ -187,16 +442,33 @@ impl Builder<'_> {
                 if !target_resolves(self.env, action.message("target"))? {
                     return Ok(None);
                 }
-                Ok(Some(Built { casts: vec![spell] }))
+                Ok(Some(Built {
+                    casts: vec![spell],
+                    direct: Some(spell),
+                }))
             }
+            // Go `newActionSequence` drops the steps that are nil and is nil without any;
+            // `newActionStrictSequence` is nil when any step is, and prunes the others.
             "sequence" | "strict_sequence" => {
-                let mut casts = Vec::new();
+                let mut built = Vec::new();
+                let mut missing = false;
                 for inner in action.messages("actions") {
-                    if let Some(built) = self.action(Some(inner))? {
-                        casts.extend(built.casts);
+                    match self.action(Some(inner))? {
+                        Some(step) => built.push(step),
+                        None => missing = true,
                     }
                 }
-                Ok(Some(Built { casts }))
+                if kind == "strict_sequence" && missing {
+                    self.pruned_casts
+                        .extend(built.iter().filter_map(|step| step.direct));
+                    return Ok(None);
+                }
+                if built.is_empty() {
+                    return Ok(None);
+                }
+                Ok(Some(Built::new(
+                    built.into_iter().flat_map(|step| step.casts).collect(),
+                )))
             }
             // Go `newActionMultidot`: dropped unless the spell has a dot on the current
             // target; it removes no major cooldown.
@@ -210,11 +482,9 @@ impl Builder<'_> {
                 if !has_cur_dot(self.env, spell)? {
                     return Ok(None);
                 }
-                Ok(Some(Built { casts: Vec::new() }))
+                Ok(Some(Built::new(Vec::new())))
             }
-            "autocast_other_cooldowns" | "wait" | "wait_until" => {
-                Ok(Some(Built { casts: Vec::new() }))
-            }
+            "autocast_other_cooldowns" | "wait" | "wait_until" => Ok(Some(Built::new(Vec::new()))),
             other => Err(Refusal::new(
                 "rotation",
                 format!("rotation action {other} is not prepared yet"),
@@ -278,15 +548,17 @@ fn register_value_observers(env: &mut Environment, rotation: &Message) -> Result
                     .copied()
                     .find(|aura| env.sim.aura(*aura).action_id.as_ref() == Some(&id));
                 match aura {
-                    None => {
-                        return Err(Refusal::new(
-                            "rotation",
-                            format!("the rotation reads the stacks of {id}, which the unit lacks, as a constant"),
-                        ))
-                    }
+                    // Go reads an aura the unit lacks as the constant 0 and registers nothing.
+                    None => {}
                     Some(aura) if env.sim.aura(aura).max_stacks > 0 => {
-                        env.sim.apply_on_stacks_change(aura, std::rc::Rc::new(|_: &mut super::sim::Sim, _, _, _| {}));
-                        env.sim.apply_on_reset(aura, std::rc::Rc::new(|_: &mut super::sim::Sim, _| {}));
+                        env.sim.apply_on_stacks_change(
+                            aura,
+                            std::rc::Rc::new(|_: &mut super::sim::Sim, _, _, _| {}),
+                        );
+                        env.sim.apply_on_reset(
+                            aura,
+                            std::rc::Rc::new(|_: &mut super::sim::Sim, _| {}),
+                        );
                     }
                     Some(_) => {}
                 }
