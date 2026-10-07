@@ -24,6 +24,7 @@ pub(crate) mod racials;
 pub(crate) mod rotation;
 pub(crate) mod sim;
 pub(crate) mod spell;
+pub(crate) mod spell_mod;
 pub(crate) mod stats;
 pub(crate) mod target;
 
