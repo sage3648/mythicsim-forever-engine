@@ -21,7 +21,6 @@ use super::super::util::{
     new_enemy_aura_array, spell_action, Hand,
 };
 use super::super::Rogue;
-use super::combat::add_armor_ignore;
 use super::millis;
 
 /// Go `hemorrhageRank`: Hemorrhage has no rank subtext, so the generator gives it one row.
@@ -210,13 +209,13 @@ impl Rogue {
 
     /// Serrated Blades ignores a share of the target's Armor rather than a flat amount, and
     /// raises the rogue's own Rupture.
-    fn register_serrated_blades(&self, sim: &mut Sim, unit: UnitId) {
+    fn register_serrated_blades(&mut self, sim: &mut Sim, unit: UnitId) {
         let rank = self.talents.i32("serrated_blades");
         if rank == 0 {
             return;
         }
         let data = &spell_data().serrated_blades;
-        add_armor_ignore(sim, unit, data.effect_at(1).value_at(rank) / 100.0);
+        self.add_armor_ignore(unit, data.effect_at(1).value_at(rank) / 100.0);
         sim.add_static_mod(
             unit,
             SpellModConfig {

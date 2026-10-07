@@ -20,7 +20,7 @@ use crate::prepare::agent::{fill_talents, ClassSpellName, PrepAgent};
 use crate::prepare::attack::AutoAttackOptions;
 use crate::prepare::character::constants::DODGE_RATING_PER_DODGE_PERCENT;
 use crate::prepare::energy::EnergyBarOptions;
-use crate::prepare::env::Environment;
+use crate::prepare::env::{Environment, FinalizeEffect};
 use crate::prepare::racials::EurekaSpells;
 use crate::prepare::sim::{AuraId, Duration, Sim, SpellId, UnitId, UnitType, SECOND};
 use crate::prepare::stats::Stat;
@@ -222,6 +222,8 @@ pub(crate) struct Rogue {
     auras: RogueAuras,
     /// Go `ruthlessnessChance`.
     ruthlessness_chance: f64,
+    /// The `RegisterPostFinalizeEffect` calls of the talents.
+    post_finalize: Vec<FinalizeEffect>,
 }
 
 /// Go `NewRogue`.
@@ -292,6 +294,7 @@ pub(crate) fn new_rogue(
         spells: RogueSpells::default(),
         auras: RogueAuras::default(),
         ruthlessness_chance: 0.0,
+        post_finalize: Vec::new(),
     }))
 }
 
@@ -332,6 +335,10 @@ impl PrepAgent for Rogue {
     /// additive bonus, which nothing raises.
     fn reset(&mut self, sim: &mut Sim, unit: UnitId) {
         sim.multiply_energy_regen_speed(unit, 1.0);
+    }
+
+    fn take_post_finalize_effects(&mut self) -> Vec<FinalizeEffect> {
+        std::mem::take(&mut self.post_finalize)
     }
 
     fn apply_item_effect(&mut self, sim: &mut Sim, unit: UnitId, item: i32) -> bool {

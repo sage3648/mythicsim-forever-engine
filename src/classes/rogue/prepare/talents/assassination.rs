@@ -87,13 +87,13 @@ impl Rogue {
 
     /// 14158 is MOD_DAMAGE_DONE_VERSUS on creature mask 80, Humanoid and Giant, with no crit
     /// damage part.
-    fn register_murder(&self, sim: &mut Sim, unit: UnitId) {
+    fn register_murder(&mut self, sim: &mut Sim, unit: UnitId) {
         let rank = self.talents.i32("murder");
         if rank == 0 {
             return;
         }
         let multiplier = spell_data().murder.multiplier_at(rank);
-        sim.pending_post_finalize
+        self.post_finalize
             .push(Rc::new(move |env: &mut Environment| {
                 let attacker = env.sim.unit(unit).unit_index as usize;
                 for defender in env.sim.all_units() {

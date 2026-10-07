@@ -87,6 +87,9 @@ pub(crate) struct Character {
     pub player: Message,
     /// Spells registered through `OnSpellRegistered`.
     pub spell_registration_handlers: Vec<super::spell::SpellRegisteredHandler>,
+    /// Go `HardcastAvoidanceAura`: the tank's "Reduced avoidance" aura, which `Finalize`
+    /// registers for a unit a target swings at.
+    pub hardcast_avoidance_aura: Option<AuraId>,
 }
 
 /// Go `UnitLevelFloat64`.
@@ -200,7 +203,7 @@ pub(crate) fn add_rating_conversions(sim: &mut Sim, unit: UnitId) {
 }
 
 /// Go `Character.addUniversalStatDependencies`.
-fn add_character_universal_stat_dependencies(sim: &mut Sim, unit: UnitId) {
+pub(crate) fn add_character_universal_stat_dependencies(sim: &mut Sim, unit: UnitId) {
     add_rating_conversions(sim, unit);
     sim.add_stat(unit, Stat::Health, 20.0 - 10.0 * 20.0);
     let sdm = &mut sim.unit_mut(unit).sdm;
@@ -299,6 +302,7 @@ impl Sim {
             rotation_transformations: 0,
             player: player.clone(),
             spell_registration_handlers: Vec::new(),
+            hardcast_avoidance_aura: None,
         }));
         let id = self.add_unit(unit);
         if let Some(cooldowns) = player.message("cooldowns") {
@@ -459,6 +463,9 @@ impl Sim {
 
     /// Go `Character.EnableManaBar`.
     pub(crate) fn enable_mana_bar(&mut self, unit: UnitId) {
+        if self.unit(unit).unit_type == UnitType::Pet {
+            return self.enable_pet_mana_bar(unit);
+        }
         if self.unit(unit).unit_type == UnitType::Player {
             let class = self.character(unit).class.clone();
             let crit_per_int = crate::data::tables::tables()

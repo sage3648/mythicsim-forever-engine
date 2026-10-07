@@ -5,6 +5,7 @@ use crate::contracts::request::Message;
 
 use super::agent::PrepAgent;
 use super::attack::{new_attack_table, AttackTable};
+use super::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use super::character::constants::CHARACTER_LEVEL;
 use super::sim::{
     AuraConfig, BuildPhase, EnvState, EventCallbacks, Sim, UnitId, UnitType, NEVER_EXPIRES,
@@ -179,8 +180,11 @@ impl Environment {
             factory,
         };
         if let Some(debuffs) = raid.message("debuffs") {
+            // The agent's constructor may have changed the raid's debuffs.
+            let mut debuffs = debuffs.clone();
+            env.agent.adjust_raid_debuffs(&mut debuffs);
             for (index, target) in env.encounter.targets.clone().into_iter().enumerate() {
-                super::debuffs::apply_debuff_effects(&mut env, target, index, debuffs, raid)?;
+                super::debuffs::apply_debuff_effects(&mut env, target, index, &debuffs, raid)?;
             }
         }
         env.setup_tank_targets(raid, &encounter_options)?;
@@ -195,7 +199,7 @@ impl Environment {
         env.apply_character_effects(raid, &player_message)?;
         let player = env.player;
         env.agent.initialize(&mut env.sim, player);
-        env.post_finalize.append(&mut env.sim.pending_post_finalize);
+        env.initialize_pets();
         env.sim.state = EnvState::Initialized;
 
         env.finalize(&player_message)?;
@@ -323,8 +327,8 @@ impl Environment {
         self.sim.apply_build_phase_auras(unit, BuildPhase::GEAR);
 
         self.agent.apply_talents(&mut self.sim, unit);
-        self.post_finalize
-            .append(&mut self.sim.pending_post_finalize);
+        let effects = self.agent.take_post_finalize_effects();
+        self.post_finalize.extend(effects);
         self.sim.apply_build_phase_auras(unit, BuildPhase::TALENTS);
 
         super::buffs::apply_buff_effects(self, raid_buffs, party_buffs, individual)?;
@@ -365,20 +369,46 @@ impl Environment {
         self.sim.unit_mut(unit).pseudo_stats.parry_haste =
             self.sim.unit(unit).pseudo_stats.can_parry;
         if self.tanking() {
-            return Err(Refusal::new(
-                "tanking",
-                "a player tanking a target is not prepared yet".to_string(),
-            ));
+            self.register_tanking_auras();
         }
         self.finalize_unit(unit);
         self.sim.finalize_major_cooldowns(unit);
-        if !self.sim.unit(unit).pets.is_empty() {
-            return Err(Refusal::new(
-                "pets",
-                "pets are not prepared yet".to_string(),
-            ));
-        }
+        self.finalize_pets();
         Ok(())
+    }
+
+    /// The part of Go `Character.Finalize` for a unit a target swings at: the "Reduced
+    /// avoidance" aura a hardcast holds, and the "Pushback trigger" proc trigger that pushes a
+    /// hardcast back when a hit deals damage. The trigger's condition and handler only run in a
+    /// fight; preparation records the aura's callbacks.
+    fn register_tanking_auras(&mut self) {
+        let unit = self.player;
+        let refresh: super::sim::AuraCallback = Rc::new(|sim: &mut Sim, aura| {
+            let unit = sim.aura(aura).unit;
+            sim.refresh_incapacitate_state(unit);
+        });
+        let aura = self.sim.register_aura(
+            unit,
+            AuraConfig {
+                label: "Reduced avoidance".to_string(),
+                tag: super::incapacitate::REDUCED_AVOIDANCE_AURA_TAG.to_string(),
+                duration: NEVER_EXPIRES,
+                on_gain: Some(Rc::clone(&refresh)),
+                on_expire: Some(refresh),
+                ..Default::default()
+            },
+        );
+        self.sim.character_mut(unit).hardcast_avoidance_aura = Some(aura);
+        self.sim.make_proc_trigger_aura(
+            unit,
+            &ProcTrigger {
+                name: "Pushback trigger".to_string(),
+                callback: CallbackMask::ON_SPELL_HIT_TAKEN,
+                outcome: HitOutcome::LANDED,
+                require_damage_dealt: true,
+                ..ProcTrigger::default()
+            },
+        );
     }
 
     /// Go `Unit.finalize`.
@@ -468,6 +498,7 @@ impl Environment {
         let default = self.sim.unit(unit).default_target;
         self.sim.unit_mut(unit).current_target = default;
         self.agent.reset(&mut self.sim, unit);
+        self.reset_pets();
     }
 }
 
@@ -489,12 +520,22 @@ pub(crate) fn reset_unit(sim: &mut Sim, unit: UnitId) {
     for aura in sim.unit(unit).auras.clone() {
         sim.reset_aura(aura);
     }
+    // focusBar.reset: a pet's bar fills, its regeneration starts when the pet is enabled.
+    if sim.unit(unit).focus_bar.enabled {
+        let bar = &mut sim.unit_mut(unit).focus_bar;
+        bar.current_focus = bar.max_focus;
+    }
     // manaBar.reset runs after the auras reset.
     if sim.unit(unit).mana_bar.enabled {
         let max = sim.max_mana(unit);
         let bar = &mut sim.unit_mut(unit).mana_bar;
         bar.current_mana = max;
         bar.mana_regen_multiplier = 1.0;
+    }
+    // healthBar.reset: the current health is the maximum the reset's auras left.
+    if sim.unit(unit).health_bar {
+        let max = sim.unit(unit).stats[Stat::Health];
+        sim.unit_mut(unit).current_health = max;
     }
     // unit.reset: the energy bar and the rage bar follow the mana bar.
     sim.reset_energy_bar(unit);

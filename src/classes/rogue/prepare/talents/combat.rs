@@ -26,19 +26,19 @@ fn add_stat_scaled(sim: &mut Sim, unit: UnitId, stat: Stat, value: f64, factor: 
     stats[stat] = value.mul_add(factor, stats[stat]);
 }
 
-/// Go `addArmorIgnore`: armor ignored as a share of the target's, which lives on the attack
-/// table rather than on a stat, so it has to wait until the tables exist.
-pub(super) fn add_armor_ignore(sim: &mut Sim, unit: UnitId, factor: f64) {
-    sim.pending_post_finalize
-        .push(Rc::new(move |env: &mut Environment| {
-            let attacker = env.sim.unit(unit).unit_index as usize;
-            for table in &mut env.attack_tables[attacker] {
-                table.armor_ignore_factor += factor;
-            }
-        }));
-}
-
 impl Rogue {
+    /// Go `addArmorIgnore`: armor ignored as a share of the target's, which lives on the attack
+    /// table rather than on a stat, so it has to wait until the tables exist.
+    pub(super) fn add_armor_ignore(&mut self, unit: UnitId, factor: f64) {
+        self.post_finalize
+            .push(Rc::new(move |env: &mut Environment| {
+                let attacker = env.sim.unit(unit).unit_index as usize;
+                for table in &mut env.attack_tables[attacker] {
+                    table.armor_ignore_factor += factor;
+                }
+            }));
+    }
+
     /// Go `registerCombatTalents`.
     pub(in super::super) fn register_combat_talents(&mut self, sim: &mut Sim, unit: UnitId) {
         // Tier 1: Improved Gouge models nothing in Go either.
@@ -256,7 +256,7 @@ impl Rogue {
     /// Hack and Slash folds the four Classic weapon specialization talents into one and picks
     /// its effect from the weapons equipped: 1% extra attack per rank on axes and swords, 1%
     /// crit per rank on daggers and fists, 3% of the target's armor ignored per rank on maces.
-    fn register_hack_and_slash(&self, sim: &mut Sim, unit: UnitId) {
+    fn register_hack_and_slash(&mut self, sim: &mut Sim, unit: UnitId) {
         let points = self.talents.i32("hack_and_slash");
         if points == 0 {
             return;
@@ -302,7 +302,7 @@ impl Rogue {
 
         // Maces: a share of the target's armor ignored.
         if proc_mask_for_types(sim, unit, &["WeaponTypeMace"]) != ProcMask::UNKNOWN {
-            add_armor_ignore(sim, unit, armor_ignore);
+            self.add_armor_ignore(unit, armor_ignore);
         }
     }
 

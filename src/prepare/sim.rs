@@ -239,6 +239,11 @@ pub(crate) struct RageBar {
 #[derive(Clone, Debug, Default)]
 pub(crate) struct FocusBar {
     pub enabled: bool,
+    /// Go `focusBar.maxFocus`.
+    pub max_focus: f64,
+    pub current_focus: f64,
+    pub focus_regen_per_tick: f64,
+    pub focus_tick_duration: Duration,
 }
 
 /// One unit: Go's `Unit` with the fields preparation reads.
@@ -298,6 +303,13 @@ pub(crate) struct Unit {
     pub character: Option<Box<super::character::Character>>,
     /// Go `HasHealthBar`.
     pub health_bar: bool,
+    /// The auras of the unit's damage absorption shields, whose dynamic damage taken modifier
+    /// acts only while its aura is active.
+    pub absorption_auras: Vec<AuraId>,
+    /// Go `healthBar.currentHealth`.
+    pub current_health: f64,
+    /// The pet half of a pet unit (pet.rs).
+    pub pet: Option<Box<super::pet::Pet>>,
 }
 
 impl Unit {
@@ -353,6 +365,9 @@ impl Unit {
             spell_registration_handlers: Vec::new(),
             character: None,
             health_bar: false,
+            absorption_auras: Vec::new(),
+            current_health: 0.0,
+            pet: None,
         }
     }
 }
@@ -386,9 +401,6 @@ pub(crate) struct Sim {
     /// Go `AttackTable.DamageDoneByCasterExtraMultiplier`: per (attacker, defender), which
     /// handler slots are set. See aura_helpers.rs `attach_ddbc`.
     pub damage_done_by_caster: std::collections::BTreeMap<(UnitId, UnitId), Vec<bool>>,
-    /// Go `RegisterPostFinalizeEffect` as a class agent calls it: the agent holds no environment,
-    /// so the effects queue here and `Environment` moves them to its own list in order.
-    pub pending_post_finalize: Vec<super::env::FinalizeEffect>,
 }
 
 impl Sim {
@@ -407,7 +419,6 @@ impl Sim {
             timers: Vec::new(),
             env_units: Vec::new(),
             damage_done_by_caster: std::collections::BTreeMap::new(),
-            pending_post_finalize: Vec::new(),
         }
     }
 
