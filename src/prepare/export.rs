@@ -13,6 +13,7 @@ use super::env::Environment;
 use super::sim::{AuraId, Cooldown, Sim, TimerId, UnitId};
 use super::spell::{CastKind, SpellFlag};
 use super::stats::{PseudoStats, Stat, Stats, SCHOOL_LEN};
+use super::Refusal;
 
 const SCHOOL_NAMES: [&str; SCHOOL_LEN] = [
     "none", "physical", "arcane", "fire", "frost", "holy", "nature", "shadow",
@@ -529,8 +530,117 @@ fn talent_values(talents: &Message) -> Value {
     Value::Object(out)
 }
 
+/// Go damage_taken.go `playerTakesDamage`: the Goblin Sapper Charge's hit on the player, or a
+/// target swinging at it.
+pub(crate) fn player_takes_damage(env: &Environment) -> bool {
+    let sapper_self = ActionId {
+        item_id: super::common_effects::GOBLIN_SAPPER_ITEM,
+        tag: 1,
+        ..ActionId::default()
+    };
+    env.sim.get_spell(env.player, &sapper_self).is_some()
+        || env.sim.unit(env.encounter.targets[0]).current_target == Some(env.player)
+}
+
+/// The effects `prepare` appends last: Eureka, the tank's pushback trigger, the listeners that
+/// never act in scope, Chance of Death and the item listeners.
+fn tail_effects(
+    env: &mut Environment,
+    unrepresented: &mut Vec<String>,
+) -> Result<Vec<Value>, Refusal> {
+    let _ = &unrepresented;
+    let mut effects = Vec::new();
+    if env.sim.get_aura(env.player, "Eureka!").is_some() {
+        return Err(Refusal::new(
+            "race",
+            "Eureka! is not described yet".to_string(),
+        ));
+    }
+    let tanking = env.tanking();
+    if tanking {
+        if let Some(aura) = env.sim.get_aura(env.player, "Pushback trigger") {
+            let _ = aura;
+            let chance = env.sim.unit(env.player).pseudo_stats.pushback_chance;
+            effects.push(
+                json!({"kind": "pushback_trigger", "aura": "Pushback trigger", "chance": chance}),
+            );
+        }
+    }
+    let target = env.encounter.targets[0];
+    let player = env.player;
+    let takes_damage = player_takes_damage(env);
+    let inert: [(super::sim::UnitId, &str, &str, &str); 4] = [
+        (
+            player,
+            "player",
+            "Chance of Death",
+            "acts only when the player takes damage",
+        ),
+        (
+            target,
+            "target",
+            "Parry Haste",
+            "acts only on parried attacks",
+        ),
+        (
+            player,
+            "player",
+            "Parry Haste",
+            "acts only on attacks the player parries, and nothing attacks the player",
+        ),
+        (
+            player,
+            "player",
+            "Freezing Band",
+            "acts only on melee hits the player takes",
+        ),
+    ];
+    for (unit, side, label, reason) in inert {
+        if label == "Chance of Death" && takes_damage {
+            continue;
+        }
+        let has = env.sim.get_aura(unit, label).is_some();
+        if label == "Parry Haste" && tanking {
+            if has {
+                effects.push(json!({"kind": "parry_haste", "unit": side, "aura": label}));
+            }
+            continue;
+        }
+        if label == "Parry Haste"
+            && unit == target
+            && env.sim.unit(target).auto_attacks.auto_swing_melee
+        {
+            if has {
+                effects.push(json!({"kind": "parry_haste", "unit": side, "aura": label,
+                    "swing_speed": env.sim.unit(target).auto_attacks.mh.swing_speed,
+                    "melee_haste_multiplier": env.sim.total_melee_haste_multiplier(target)}));
+            }
+            continue;
+        }
+        if has {
+            effects.push(
+                json!({"kind": "inert_listener", "unit": side, "aura": label, "reason": reason}),
+            );
+        }
+    }
+    if takes_damage && env.sim.get_aura(player, "Chance of Death").is_some() {
+        effects.push(json!({"kind": "chance_of_death", "aura": "Chance of Death"}));
+    }
+    if takes_damage {
+        return Err(Refusal::new(
+            "damage_taken",
+            "a player that takes damage is not described yet".to_string(),
+        ));
+    }
+    Ok(effects)
+}
+
 /// Builds the prepared v2 document for a reset environment.
-pub(crate) fn export(env: &mut Environment, digest: &str, scenario: &str) -> Value {
+pub(crate) fn export(
+    env: &mut Environment,
+    digest: &str,
+    scenario: &str,
+) -> Result<Value, Refusal> {
     let mut unrepresented: Vec<String> = Vec::new();
     let mut timers = TimerNames::default();
     let request = env.request.clone();
@@ -596,6 +706,10 @@ pub(crate) fn export(env: &mut Environment, digest: &str, scenario: &str) -> Val
         env,
         &mut unrepresented,
     ));
+    // Go then appends the inert pets, the melee, gear, spell data and energy proc effects and
+    // the stat auras effect, in that order; Rust refuses pets and ports the rest in
+    // src/prepare/export_items.rs.
+    effects.extend(tail_effects(env, &mut unrepresented)?);
 
     let professions: Vec<String> = env
         .sim
@@ -726,6 +840,11 @@ pub(crate) fn export(env: &mut Environment, digest: &str, scenario: &str) -> Val
             "regen_per_second_casting": 0.0, "regen_per_second_not_casting": 0.0, "teardown_max": 0.0});
     }
     unrepresented.sort();
+    if !unrepresented.is_empty() {
+        // The exporter would describe the request as unrepresented, which the gate refuses:
+        // Go prepares it and the gate sends it to Go.
+        return Err(Refusal::new("unrepresented", unrepresented.join("; ")));
+    }
     prepared["unrepresented"] = json!(unrepresented);
-    prepared
+    Ok(prepared)
 }
