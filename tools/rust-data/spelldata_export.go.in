@@ -1,0 +1,8 @@
+package spelldata
+
+// Copied into the scratch reference checkout by tools/rust_data.py so tools/rust-data can read
+// the generated tables this package keeps unexported. It changes no behavior.
+
+func RustDataCurves() map[int32][][]float64 { return curves }
+
+func RustDataHandTriggers() map[int32][]int32 { return handTriggers }

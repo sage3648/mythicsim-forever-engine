@@ -12,11 +12,16 @@ import (
 	"path/filepath"
 	"sort"
 
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
 
+	"github.com/wowsims/forever/assets/database"
 	"github.com/wowsims/forever/sim"
+	"github.com/wowsims/forever/sim/core"
 	"github.com/wowsims/forever/sim/core/proto"
+	"github.com/wowsims/forever/sim/core/spelldata"
+	"github.com/wowsims/forever/sim/core/stats"
 )
 
 func fail(err error) {
@@ -131,6 +136,89 @@ func schema() Schema {
 	return out
 }
 
+// The item database as core/database_load.go builds it from the embedded db.bin and
+// leftover_db.bin, as protojson of proto.SimDatabase.
+func simDatabase() []byte {
+	db := database.Load()
+	simDB := &proto.SimDatabase{}
+	for _, item := range db.Items {
+		simDB.Items = append(simDB.Items, &proto.SimItem{
+			Id: item.Id, Name: item.Name, Type: item.Type, ArmorType: item.ArmorType,
+			WeaponType: item.WeaponType, HandType: item.HandType, RangedWeaponType: item.RangedWeaponType,
+			GemSockets: item.GemSockets, SocketBonus: item.SocketBonus, PseudoStats: item.PseudoStats,
+			WeaponSpeed: item.WeaponSpeed, QualityModifier: item.QualityModifier, Unique: item.Unique,
+			LimitCategory: item.LimitCategory, SetName: item.SetName, SetId: item.SetId,
+			ClassAllowlist: item.ClassAllowlist, ScalingOptions: item.ScalingOptions, ItemEffects: item.ItemEffects,
+		})
+	}
+	for _, suffix := range db.RandomSuffixes {
+		simDB.RandomSuffixes = append(simDB.RandomSuffixes, &proto.ItemRandomSuffix{Id: suffix.Id, Name: suffix.Name, Stats: suffix.Stats})
+	}
+	for _, enchant := range db.Enchants {
+		simDB.Enchants = append(simDB.Enchants, &proto.SimEnchant{
+			EffectId: enchant.EffectId, Stats: enchant.Stats, PseudoStats: enchant.PseudoStats,
+			WeaponDamage: enchant.WeaponDamage, EnchantEffects: enchant.EnchantEffects, Name: enchant.Name,
+			Type: enchant.Type, EnchantType: enchant.EnchantType, ExtraTypes: enchant.ExtraTypes,
+		})
+	}
+	for _, gem := range db.Gems {
+		simDB.Gems = append(simDB.Gems, &proto.SimGem{Id: gem.Id, Name: gem.Name, Color: gem.Color, Stats: gem.Stats})
+	}
+	for _, points := range db.ItemEffectRandPropPoints {
+		simDB.ItemEffectRandPropPoints = append(simDB.ItemEffectRandPropPoints,
+			&proto.ItemEffectRandPropPoints{Ilvl: points.Ilvl, RandPropPoints: points.RandPropPoints})
+	}
+	simDB.Consumables = db.Consumables
+	simDB.SpellEffects = db.SpellEffects
+	data, err := protojson.MarshalOptions{UseProtoNames: true}.Marshal(simDB)
+	fail(err)
+	return data
+}
+
+// The client spell rows the generated spelldata store carries, with its talent curves and the
+// spells server side handlers cast.
+type spellRows struct {
+	Spells       []*spelldata.Spell    `json:"spells"`
+	Curves       map[int32][][]float64 `json:"curves"`
+	HandTriggers map[int32][]int32     `json:"hand_triggers"`
+}
+
+func statsByName(values stats.Stats) map[string]float64 {
+	out := map[string]float64{}
+	for index, value := range values {
+		if value != 0 {
+			out[stats.Stat(index).StatName()] = value
+		}
+	}
+	return out
+}
+
+// Go tables preparation reads, keyed by enum names.
+type tables struct {
+	BaseStats          map[string]map[string]map[string]float64 `json:"base_stats"`
+	CritPerAgiMaxLevel map[string]float64                       `json:"crit_per_agi_max_level"`
+	CritPerIntMaxLevel map[string]float64                       `json:"crit_per_int_max_level"`
+}
+
+func goTables() tables {
+	out := tables{BaseStats: map[string]map[string]map[string]float64{},
+		CritPerAgiMaxLevel: map[string]float64{}, CritPerIntMaxLevel: map[string]float64{}}
+	for key, values := range core.BaseStats {
+		race, class := key.Race.String(), key.Class.String()
+		if out.BaseStats[class] == nil {
+			out.BaseStats[class] = map[string]map[string]float64{}
+		}
+		out.BaseStats[class][race] = statsByName(values)
+	}
+	for class, value := range core.CritPerAgiMaxLevel {
+		out.CritPerAgiMaxLevel[class.String()] = value
+	}
+	for class, value := range core.CritPerIntMaxLevel {
+		out.CritPerIntMaxLevel[class.String()] = value
+	}
+	return out
+}
+
 func main() {
 	sim.RegisterAll()
 	if len(os.Args) != 2 {
@@ -139,4 +227,10 @@ func main() {
 	dir := os.Args[1]
 	fail(os.MkdirAll(dir, 0o755))
 	write(dir, "proto-schema.json", schema())
+	fail(os.WriteFile(filepath.Join(dir, "sim-database.json"), append(simDatabase(), '\n'), 0o644))
+	data, err := json.Marshal(spellRows{Spells: spelldata.All(), Curves: spelldata.RustDataCurves(),
+		HandTriggers: spelldata.RustDataHandTriggers()})
+	fail(err)
+	fail(os.WriteFile(filepath.Join(dir, "spells.json"), append(data, '\n'), 0o644))
+	write(dir, "go-tables.json", goTables())
 }
