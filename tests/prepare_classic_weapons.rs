@@ -161,25 +161,11 @@ fn every_classic_weapon_and_enchant_prepares_as_go_does() {
             Err(err) => failures.push(format!("{case}: {err}")),
         }
     }
-    assert!(cases >= 8, "the goldens are missing: {cases}");
+    assert!(cases >= 9, "the goldens are missing: {cases}");
     assert!(
         failures.is_empty(),
         "{} of {cases} differ from the Go exporter:\n{}",
         failures.len(),
         failures.join("\n")
     );
-}
-
-/// Dragon's Call summons the Emerald Dragon Whelp, a pet preparation does not build yet: a
-/// request that equips it in a hand is refused with a stable code, never approximated.
-#[test]
-fn dragons_call_is_refused_until_the_whelp_is_prepared() {
-    let request = fs::read(directory().join("ironfoe.request.json")).unwrap();
-    let mut value: Value = serde_json::from_slice(&request).unwrap();
-    value["raid"]["parties"][0]["players"][0]["equipment"]["items"][14] =
-        serde_json::json!({ "id": 10847 });
-    match forever_engine::prepare_json(&serde_json::to_vec(&value).unwrap(), "x") {
-        Err(forever_engine::PrepareError::Refused(refusal)) => assert_eq!(refusal.code, "pets"),
-        other => panic!("expected a refusal, got {other:?}"),
-    }
 }

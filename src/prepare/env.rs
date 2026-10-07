@@ -153,6 +153,8 @@ impl Environment {
         let player_message = players[0].clone();
         let player = sim.new_character(0, 0, &player_message, &encounter.area_types)?;
         let agent = factory(&mut sim, player, &player_message)?;
+        // Go `NewAgent` then runs the gear pet constructors.
+        super::classic_whelp::construct_gear_pets(&mut sim, player);
         // updatePlayersAndPets: the player, then its pets by index.
         let mut raid_units = vec![player];
         raid_units.extend(sim.unit(player).pets.clone());

@@ -14,6 +14,7 @@ pub(crate) mod classic_enchants;
 pub(crate) mod classic_export;
 pub(crate) mod classic_items;
 pub(crate) mod classic_weapons;
+pub(crate) mod classic_whelp;
 pub(crate) mod common_effects;
 pub(crate) mod consumable_effects;
 pub(crate) mod consumes;

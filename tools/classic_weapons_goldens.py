@@ -36,6 +36,7 @@ PLAIN_GLOVES, PLAIN_CLOAK, PLAIN_TWO_HAND = 14615, 13340, 35
 CASES = [
     ("crusader", {MAIN_HAND: (PLAIN_TWO_HAND, 1900)}),
     ("threat-enchants", {HANDS: (PLAIN_GLOVES, 2613), BACK: (PLAIN_CLOAK, 2621), MAIN_HAND: (PLAIN_TWO_HAND, 0)}),
+    ("dragons-call", {MAIN_HAND: (10847, 0)}),
     ("ironfoe", {MAIN_HAND: (11684, 0)}),
     ("sulfuras", {MAIN_HAND: (17182, 0)}),
     ("ebon-hilt-of-marduk", {MAIN_HAND: (14576, 0)}),

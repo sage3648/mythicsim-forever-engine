@@ -1338,6 +1338,7 @@ pub(crate) fn melee_proc_effects(env: &Environment, unrepresented: &mut Vec<Stri
             }));
         }
     }
+    super::classic_export::dragons_call_effect(env, unrepresented, &mut effects);
     super::classic_export::sulfuras_effect(env, unrepresented, &mut effects);
     if let Some(chili) = super::consumable_effects::dragonbreath_chili_effect(env) {
         effects.push(chili);

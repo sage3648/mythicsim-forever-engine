@@ -27,7 +27,7 @@ pub(crate) const DRAGONS_CALL: i32 = 10847;
 pub(crate) fn apply_item_effect(env: &mut Environment, item: i32) -> Result<bool, Refusal> {
     match item {
         19019 => thunderfury(env),
-        DRAGONS_CALL => dragons_call(env)?,
+        DRAGONS_CALL => dragons_call(env),
         11684 => ironfoe(env),
         13505 => runeblade_of_baron_rivendare(env),
         13937 => headmasters_charge(env),
@@ -180,21 +180,21 @@ pub(crate) fn tagged(id: &ActionId, tag: i32) -> ActionId {
 }
 
 /// Dragon's Call: a weapon proc at 1 PPM, behind the cooldown of the summon's category, that
-/// summons the Emerald Dragon Whelp. The whelp is a pet only a Dragon's Call equipped in a hand
-/// at the start gets (`RegisterGearPetConstructor`), and a character without one opts out of the
-/// proc. Preparation does not build pets yet, so a whelp refuses.
-fn dragons_call(env: &mut Environment) -> Result<(), Refusal> {
-    let equipment = &env.sim.character(env.player).equipment;
-    let has_whelp = equipment[super::items::slot::MAIN_HAND].id == DRAGONS_CALL
-        || equipment[super::items::slot::OFF_HAND].id == DRAGONS_CALL;
-    if !has_whelp {
-        return Ok(());
-    }
-    Err(Refusal::new(
-        "pets",
-        "Dragon's Call summons the Emerald Dragon Whelp, a pet preparation does not build yet"
-            .to_string(),
-    ))
+/// summons the Emerald Dragon Whelp. A character without the whelp (the pet exists only for a
+/// Dragon's Call equipped in a hand at the start) opts out of the proc.
+fn dragons_call(env: &mut Environment) {
+    let icd = super::spelldata::must_find(13049).category_cooldown();
+    create_weapon_proc_trigger(
+        env,
+        &WeaponProcTrigger {
+            item_id: DRAGONS_CALL,
+            name: "Emerald Dragon Whelp",
+            ppm: 1.0,
+            icd,
+            ..WeaponProcTrigger::default()
+        },
+        |env| super::classic_whelp::has_whelp(&env.sim, env.player),
+    );
 }
 
 /// Ironfoe: the equip Fury of Forgewright, a 6% chance on a landed melee hit, behind a 100 ms

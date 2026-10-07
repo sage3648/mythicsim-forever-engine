@@ -7,9 +7,12 @@ use serde_json::{json, Value};
 use crate::contracts::prepared_v2::ActionId;
 
 use super::classic_weapons::tagged;
-use super::common_effects::{action_id_string, flat_string};
+use super::classic_whelp::WHELP_NAME;
+use super::common_effects::{action_id_string, flat_string, SPELL_BATCH_WINDOW};
 use super::env::Environment;
 use super::export_items::{aura_named, dpm_chances, spell_position};
+use super::pet::summoned_pet;
+use super::sim::SECOND;
 use super::spell::SpellFlag;
 use super::stats::{Stat, Stats};
 
@@ -52,6 +55,38 @@ pub(crate) fn crusader_effect(
         "heal_min": 75.0, "heal_max": 125.0, "heal_metrics_action_id": json!({"spell_id": 20007}),
         "mh_gain_log": gained(1), "mh_expire_log": lost(1),
         "oh_gain_log": gained(2), "oh_expire_log": lost(2),
+    }));
+}
+
+/// melee_procs.go: Dragon's Call, a weapon proc on landed hits, at one proc a minute of the
+/// weapon's speed, whose handler summons the Emerald Dragon Whelp for 15 seconds a spell batch
+/// window later (emerald_dragon_whelp.go); its rotation spits half the time.
+pub(crate) fn dragons_call_effect(
+    env: &Environment,
+    unrepresented: &mut Vec<String>,
+    effects: &mut Vec<Value>,
+) {
+    let Some(aura) = aura_named(env, "Emerald Dragon Whelp Proc") else {
+        return;
+    };
+    let whelp = env
+        .pets()
+        .into_iter()
+        .rfind(|pet| summoned_pet(env, *pet) && env.sim.pet_data(*pet).name == WHELP_NAME);
+    let aura = env.sim.aura(aura);
+    let (Some(dpm), Some(whelp)) = (aura.dpm.as_ref(), whelp) else {
+        unrepresented.push("Dragon's Call has no proc manager or whelp".to_string());
+        return;
+    };
+    effects.push(json!({
+        "kind": "emerald_dragon_whelp", "trigger_aura": aura.label,
+        "pet": env.sim.unit(whelp).label,
+        "chances": dpm_chances(env, dpm, |spell| {
+            !spell.flags.matches(SpellFlag::SUPPRESS_WEAPON_PROCS)
+        }),
+        "delay_ns": SPELL_BATCH_WINDOW, "duration_ns": 15 * SECOND,
+        "acid_spit_spell_id": 9591, "acid_spit_min": 374.0, "acid_spit_max": 503.0,
+        "spit_chance": 0.5,
     }));
 }
 
