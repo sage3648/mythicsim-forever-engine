@@ -19,6 +19,7 @@ pub(crate) mod export;
 pub(crate) mod item_effects;
 pub(crate) mod items;
 pub(crate) mod items_registry;
+pub(crate) mod parse_effects;
 pub(crate) mod presets;
 pub(crate) mod professions;
 pub(crate) mod racials;

@@ -1099,6 +1099,37 @@ impl Sim {
         }
     }
 
+    /// Go `ExclusiveEffect.SetPriority`.
+    pub(crate) fn set_effect_priority(&mut self, effect: EffectId, priority: f64) {
+        if !self.effects[effect.0].is_enabled {
+            self.effects[effect.0].priority = priority;
+            return;
+        }
+        let category = self.effects[effect.0].category;
+        let current = self.categories[category.0].active_effect;
+        let old = self.effects[effect.0].priority;
+        self.effects[effect.0].priority = priority;
+        let next = self.highest_priority_enabled(category);
+        self.effects[effect.0].priority = old;
+        if current == Some(effect) && next == Some(effect) {
+            if let Some(on_expire) = self.effects[effect.0].on_expire.clone() {
+                on_expire(self, effect);
+            }
+            self.effects[effect.0].priority = priority;
+            if let Some(on_gain) = self.effects[effect.0].on_gain.clone() {
+                on_gain(self, effect);
+            }
+        } else if current != Some(effect) && next != Some(effect) {
+            self.effects[effect.0].priority = priority;
+        } else if current == Some(effect) {
+            self.set_active_effect(category, next);
+            self.effects[effect.0].priority = priority;
+        } else {
+            self.effects[effect.0].priority = priority;
+            self.set_active_effect(category, next);
+        }
+    }
+
     /// Go `ExclusiveEffect.IsActive`.
     pub(crate) fn effect_is_active(&self, effect: EffectId) -> bool {
         let category = self.effects[effect.0].category;
