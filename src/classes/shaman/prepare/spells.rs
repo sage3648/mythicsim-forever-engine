@@ -7,7 +7,9 @@
 use std::sync::OnceLock;
 
 use crate::contracts::prepared_v2::ActionId;
-use crate::prepare::sim::{AuraConfig, Cooldown, Duration, EventCallbacks, Sim, UnitId, UnitType};
+use crate::prepare::sim::{
+    AuraConfig, Cooldown, Duration, EventCallbacks, Sim, UnitId, UnitType, MILLISECOND,
+};
 use crate::prepare::spell::{
     school, Cast, CastConfig, CostOptions, DefenseType, DotConfig, ProcMask, SpellConfig,
     SpellFlag, GCD_DEFAULT,
@@ -367,8 +369,9 @@ impl Shaman {
             },
         );
 
-        // The pulse's own cast time is the interval between pulses.
-        let tick_length = attack.cast_time();
+        // The totem hard casts the pulse (2.2 sec), then waits about 0.23 sec before starting the
+        // next one: beta logs time 1,267 attacks 2.435 sec apart (median, ranks 1-2).
+        let tick_length = attack.cast_time() + 230 * MILLISECOND;
         let duration = rank.duration();
 
         sim.register_spell(
