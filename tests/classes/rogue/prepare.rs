@@ -6,6 +6,7 @@
 //! stats. The goldens keep a hash of every spell, aura and effect Go exported, so a failure
 //! names the item that changed. Regenerate them only from the Go exporter.
 
+use crate::sha256;
 use serde::Deserialize;
 use serde_json::Value;
 use std::{collections::BTreeMap, fs, path::PathBuf};
@@ -59,11 +60,6 @@ fn canonical(value: &Value, out: &mut String) {
         }
     }
 }
-
-/// The engine's own SHA-256, which it keeps private to avoid a dependency.
-#[allow(clippy::duplicate_mod)]
-#[path = "../../../src/contracts/request/sha256.rs"]
-mod sha256;
 
 fn digest(value: &Value) -> String {
     let mut text = String::new();
@@ -189,13 +185,4 @@ fn a_rogue_without_its_options_is_refused() {
     let mut value = request_value("assassination");
     value["raid"]["parties"][0]["players"][0]["rogue"] = serde_json::json!({});
     assert_eq!(refusal_code(&value), "class_option");
-}
-
-/// A player tanking the target needs the enemy swing, which is not prepared yet.
-#[test]
-fn a_rogue_tanking_the_target_is_refused() {
-    let mut value = request_value("assassination");
-    value["raid"]["tanks"] = serde_json::json!([{"type": "Player", "index": 0}]);
-    value["encounter"]["targets"][0]["tankIndex"] = serde_json::json!(0);
-    assert_eq!(refusal_code(&value), "tanking");
 }

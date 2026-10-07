@@ -31,7 +31,7 @@ impl Rogue {
 
         // Tier 2
         // Ruthlessness is implemented in ApplyFinisher.
-        self.register_murder(sim, unit);
+        self.register_murder(unit);
         self.register_puncturing_wounds(sim, unit);
 
         // Tier 3
@@ -87,7 +87,7 @@ impl Rogue {
 
     /// 14158 is MOD_DAMAGE_DONE_VERSUS on creature mask 80, Humanoid and Giant, with no crit
     /// damage part.
-    fn register_murder(&mut self, sim: &mut Sim, unit: UnitId) {
+    fn register_murder(&mut self, unit: UnitId) {
         let rank = self.talents.i32("murder");
         if rank == 0 {
             return;
