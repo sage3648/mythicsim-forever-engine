@@ -295,6 +295,16 @@ impl Message {
         }
     }
 
+    /// Sets a 32 bit integer field, as Go's generated setter does: zero clears it.
+    pub fn set_i32(&mut self, name: &str, value: i32) {
+        let number = self.field(name).number;
+        if value != 0 {
+            self.fields.insert(number, Value::Int(i64::from(value)));
+        } else {
+            self.fields.remove(&number);
+        }
+    }
+
     /// The message as protojson, as Go's `protojson.Marshal` writes it with
     /// `UseProtoNames: false`: JSON names, enum names, 64 bit integers as strings and
     /// unset fields omitted. Map entries keep their input order here, which Go randomizes.

@@ -43,6 +43,7 @@ pub(crate) fn prepare_agent(
         "ClassWarrior" => warrior::prepare::new_warrior(sim, unit, player),
         "ClassPaladin" => paladin::prepare::new_paladin(sim, unit, player),
         "ClassPriest" => priest::prepare::new_priest(sim, unit, player),
+        "ClassShaman" => shaman::prepare::new_shaman(sim, unit, player),
         other => Err(crate::prepare::Refusal::new(
             "class",
             format!("{other} is not prepared in Rust yet"),
@@ -61,5 +62,6 @@ pub(crate) fn item_sets() -> Vec<&'static crate::prepare::item_sets::ItemSet> {
     sets.extend(warrior::prepare::items::sets::ITEM_SETS);
     sets.extend(paladin::prepare::sets::ITEM_SETS);
     sets.extend(priest::prepare::items::ITEM_SETS);
+    sets.extend(shaman::prepare::items::ITEM_SETS);
     sets
 }
