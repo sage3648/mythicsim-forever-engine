@@ -283,7 +283,7 @@ fn apply_hand_written_item(env: &mut Environment, item: i32) -> Result<bool, Ref
 /// Go `itemhelpers.CreateWeaponProcTrigger`: a weapon proc whose handler runs on every landed
 /// hit that passes the weapon's PPM roll. `setup` is the call of the config's `Handler`, which
 /// runs once per character and may opt it out.
-fn create_weapon_proc_trigger(
+pub(crate) fn create_weapon_proc_trigger(
     env: &mut Environment,
     item_id: i32,
     name: &str,
@@ -312,7 +312,7 @@ fn create_weapon_proc_trigger(
 
 /// Go `itemhelpers.CreateWeaponProcSpell`: a "Chance on hit" weapon proc that casts a custom
 /// spell on the target that was hit.
-fn create_weapon_proc_spell(
+pub(crate) fn create_weapon_proc_spell(
     env: &mut Environment,
     item_id: i32,
     name: &str,
