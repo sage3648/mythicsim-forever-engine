@@ -18,8 +18,8 @@ use super::super::resolve_proc::{chance, proc_trigger};
 use super::super::sim::{
     AuraConfig, AuraId, BuildPhase, EffectId, Sim, UnitId, NEVER_EXPIRES, SECOND,
 };
-use super::super::spelldata::must_find;
 use super::super::spell::GCD_DEFAULT;
+use super::super::spelldata::must_find;
 use super::super::stats::Stat;
 use super::super::Refusal;
 use super::generated::{
@@ -66,7 +66,7 @@ pub(crate) fn drive_battle_shout(
     unit: UnitId,
     party: &Message,
 ) -> Result<(), Refusal> {
-    let aura = BATTLE_SHOUT.aura(env, unit, false, 0, 0.0)?;
+    let aura = BATTLE_SHOUT.aura(&mut env.sim, unit, false, 0, 0.0);
     // TristateEffectImproved.
     if party.enum_number("battle_shout") == 2 {
         add_generated_flat_bonus(
@@ -89,7 +89,7 @@ pub(crate) fn drive_innervates(
     unit: UnitId,
     individual: &Message,
 ) -> Result<(), Refusal> {
-    let aura = INNERVATES.aura(env, unit, false, 0, 0.0)?;
+    let aura = INNERVATES.aura(&mut env.sim, unit, false, 0, 0.0);
     attach_innervate_regen(&mut env.sim, unit, aura);
     // The mana threshold the cooldown waits for is read after finalize and only by a fight.
     new_generated_external_cd(
@@ -133,7 +133,7 @@ pub(crate) fn drive_power_infusions(
     unit: UnitId,
     individual: &Message,
 ) -> Result<(), Refusal> {
-    let aura = POWER_INFUSIONS.aura(env, unit, false, 0, 0.0)?;
+    let aura = POWER_INFUSIONS.aura(&mut env.sim, unit, false, 0, 0.0);
     new_generated_external_cd(
         &mut env.sim,
         unit,
@@ -154,7 +154,7 @@ pub(crate) fn drive_mana_tide_totems(
     party: &Message,
 ) -> Result<(), Refusal> {
     // The initial delay is read after finalize and only by a fight.
-    let aura = MANA_TIDE_TOTEMS.aura(env, unit, false, 0, 0.0)?;
+    let aura = MANA_TIDE_TOTEMS.aura(&mut env.sim, unit, false, 0, 0.0);
     new_generated_external_cd(
         &mut env.sim,
         unit,
@@ -180,7 +180,7 @@ pub(crate) fn drive_windfury_totem(
     unit: UnitId,
     _party: &Message,
 ) -> Result<(), Refusal> {
-    let proc_aura = WINDFURY_TOTEM.aura(env, unit, false, 0, 0.0)?;
+    let proc_aura = WINDFURY_TOTEM.aura(&mut env.sim, unit, false, 0, 0.0);
     // The attack power is only there for a moment after a proc, so it is not part of the stats
     // the character sheet is measured with.
     env.sim.aura_mut(proc_aura).build_phase = BuildPhase::NONE;
@@ -288,7 +288,7 @@ pub(crate) fn drive_grace_of_air_totem(
     unit: UnitId,
     party: &Message,
 ) -> Result<(), Refusal> {
-    let aura = GRACE_OF_AIR_TOTEM.aura(env, unit, false, 0, 0.0)?;
+    let aura = GRACE_OF_AIR_TOTEM.aura(&mut env.sim, unit, false, 0, 0.0);
     env.sim.new_exclusive_effect(
         aura,
         AIR_TOTEM_CATEGORY,
@@ -324,7 +324,7 @@ pub(crate) fn drive_retribution_aura(
     party: &Message,
 ) -> Result<(), Refusal> {
     let aura = paladin::retribution_aura_buff(
-        env,
+        &mut env.sim,
         unit,
         false,
         &paladin::retribution_aura_max_rank(),
@@ -396,7 +396,8 @@ pub(crate) fn drive_flametongue_totem(
     unit: UnitId,
     _party: &Message,
 ) -> Result<(), Refusal> {
-    super::flametongue::drive_flametongue_totem(env, unit);
+    let traits = env.agent.flametongue_attack_traits();
+    super::flametongue::drive_flametongue_totem(&mut env.sim, unit, traits);
     Ok(())
 }
 

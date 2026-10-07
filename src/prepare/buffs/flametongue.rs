@@ -11,11 +11,8 @@ use std::rc::Rc;
 
 use crate::contracts::prepared_v2::ActionId;
 
-use super::super::env::Environment;
 use super::super::resolve_proc::proc_trigger;
-use super::super::sim::{
-    AuraConfig, AuraId, EffectId, Sim, SpellId, UnitId, NEVER_EXPIRES,
-};
+use super::super::sim::{AuraConfig, AuraId, EffectId, Sim, SpellId, UnitId, NEVER_EXPIRES};
 use super::super::spell::{school, DefenseType, ProcMask, SpellConfig, SpellFlag};
 use super::super::spelldata::must_find;
 use super::generated::FLAMETONGUE_TOTEM;
@@ -107,28 +104,36 @@ pub(crate) fn flametongue_totem_attack(
 /// (`join_flametongue_totem`), so that a main-hand Flametongue Weapon can turn it off. The row's
 /// own proc flags say what it hears, a landed melee auto attack, narrowed to the main hand as the
 /// tooltip says: an off-hand swing does not add the damage.
-pub(crate) fn flametongue_totem_trigger(env: &mut Environment, unit: UnitId) -> AuraId {
-    if let Some(aura) = env.sim.get_aura(unit, FLAMETONGUE_TOTEM_TRIGGER_LABEL) {
+pub(crate) fn flametongue_totem_trigger(
+    sim: &mut Sim,
+    unit: UnitId,
+    traits: FlametongueAttackTraits,
+) -> AuraId {
+    if let Some(aura) = sim.get_aura(unit, FLAMETONGUE_TOTEM_TRIGGER_LABEL) {
         return aura;
     }
-    let traits = env.agent.flametongue_attack_traits();
-    flametongue_totem_attack(&mut env.sim, unit, traits);
-    let mut trigger = proc_trigger(&env.sim, Some(unit), must_find(FLAMETONGUE_TOTEM_PARTY), &[]);
+    flametongue_totem_attack(sim, unit, traits);
+    let mut trigger = proc_trigger(sim, Some(unit), must_find(FLAMETONGUE_TOTEM_PARTY), &[]);
     trigger.name = FLAMETONGUE_TOTEM_TRIGGER_LABEL.to_string();
     trigger.action_id = ActionId::default();
     trigger.proc_mask = ProcMask(trigger.proc_mask.0 & ProcMask::MELEE_MH.0);
     trigger.duration = NEVER_EXPIRES;
     trigger.trigger_immediately = true;
-    env.sim.make_proc_trigger_aura(unit, &trigger)
+    sim.make_proc_trigger_aura(unit, &trigger)
 }
 
 /// Go `JoinFlametongueTotem`: makes `aura` a Flametongue Totem the character benefits from: while
 /// it is up and no main-hand Flametongue Weapon disables it, the trigger is on. The party's totem
 /// and the shaman's own cast share the category and the trigger, so a totem from both sources
 /// adds one hit.
-pub(crate) fn join_flametongue_totem(env: &mut Environment, unit: UnitId, aura: AuraId) {
-    let trigger = flametongue_totem_trigger(env, unit);
-    env.sim.new_exclusive_effect(
+pub(crate) fn join_flametongue_totem(
+    sim: &mut Sim,
+    unit: UnitId,
+    aura: AuraId,
+    traits: FlametongueAttackTraits,
+) {
+    let trigger = flametongue_totem_trigger(sim, unit, traits);
+    sim.new_exclusive_effect(
         aura,
         FLAMETONGUE_TOTEM.category,
         false,
@@ -146,11 +151,15 @@ pub(crate) fn join_flametongue_totem(env: &mut Environment, unit: UnitId, aura: 
 /// a fire totem, so it sits in no air slot and does not interact with the party's Windfury Totem
 /// or Grace of Air; the same character's own cast Flametongue Totem and the party's one are the
 /// same effect and the category keeps one of them.
-pub(crate) fn drive_flametongue_totem(env: &mut Environment, unit: UnitId) {
+pub(crate) fn drive_flametongue_totem(
+    sim: &mut Sim,
+    unit: UnitId,
+    traits: FlametongueAttackTraits,
+) {
     // The trigger is registered before the permanent aura that switches it on, so that it is
     // reset first.
-    flametongue_totem_trigger(env, unit);
-    let aura = env.sim.get_or_register_aura(
+    flametongue_totem_trigger(sim, unit, traits);
+    let aura = sim.get_or_register_aura(
         unit,
         AuraConfig {
             label: "Flametongue Totem".to_string(),
@@ -163,6 +172,6 @@ pub(crate) fn drive_flametongue_totem(env: &mut Environment, unit: UnitId) {
             ..AuraConfig::default()
         },
     );
-    join_flametongue_totem(env, unit, aura);
-    env.sim.make_permanent(aura);
+    join_flametongue_totem(sim, unit, aura, traits);
+    sim.make_permanent(aura);
 }
