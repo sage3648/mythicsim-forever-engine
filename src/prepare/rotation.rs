@@ -229,6 +229,22 @@ fn fold_logic(children: &[Folds], short: Fold) -> Folds {
         .collect()
 }
 
+/// Go `NextActiveTargetUnit` and `PreviousActiveTargetUnit` of the player's current target:
+/// every target is active, and the targets go round.
+fn neighbour_target(env: &Environment, next: bool) -> Option<UnitId> {
+    let targets = &env.encounter.targets;
+    let current = env.sim.unit(env.player).current_target?;
+    let index = targets.iter().position(|target| *target == current)?;
+    let count = targets.len();
+    Some(
+        targets[if next {
+            (index + 1) % count
+        } else {
+            (index + count - 1) % count
+        }],
+    )
+}
+
 /// The unit a value's source unit reference names while the rotation is built: `None` for a
 /// reference Go resolves to no unit, an error for one preparation does not follow.
 fn source_unit(env: &Environment, reference: Option<&Message>) -> Result<Option<UnitId>, ()> {
@@ -236,6 +252,8 @@ fn source_unit(env: &Environment, reference: Option<&Message>) -> Result<Option<
     match kind.as_str() {
         "Unknown" | "Self" => Ok(Some(env.player)),
         "CurrentTarget" => Ok(env.sim.unit(env.player).current_target),
+        "NextTarget" => Ok(neighbour_target(env, true)),
+        "PreviousTarget" => Ok(neighbour_target(env, false)),
         "Target" => {
             let index = reference.map_or(0, |r| r.i32("index"));
             Ok(usize::try_from(index)
@@ -316,6 +334,8 @@ fn dot_exists(env: &Environment, config: &Message) -> Option<bool> {
     let kind = reference.map_or_else(|| "Unknown".to_string(), |r| r.enum_name("type"));
     let target = match kind.as_str() {
         "Unknown" | "CurrentTarget" => env.sim.unit(env.player).current_target,
+        "NextTarget" => neighbour_target(env, true),
+        "PreviousTarget" => neighbour_target(env, false),
         "Target" => {
             let index = reference.map_or(0, |r| r.i32("index"));
             usize::try_from(index)
