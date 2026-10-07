@@ -229,9 +229,6 @@ pub(crate) struct Hunter {
     pub quiver_bonus_aura: Option<AuraId>,
     /// Mongoose Bite is only castable in the window a dodge opens.
     pub defensive_state: Option<AuraId>,
-    /// The ranks the exporter reads, remembered when the spell registers.
-    pub aimed_shot_flat_bonus: f64,
-    pub windfury_enabled: bool,
     /// The player's rotation, which decides whether swings are replaced.
     pub rotation: Option<Message>,
     /// Go `Raptor Strike`'s spell ID, once registered.
@@ -309,8 +306,6 @@ pub(crate) fn new_hunter(
         talon_of_alar_aura: None,
         quiver_bonus_aura: None,
         defensive_state: None,
-        aimed_shot_flat_bonus: 0.0,
-        windfury_enabled: false,
         rotation: player.message("rotation").cloned(),
         raptor_strike_id: None,
         post_finalize_effects: Vec::new(),
@@ -412,6 +407,19 @@ impl PrepAgent for Hunter {
 
     fn initialize(&mut self, sim: &mut Sim, _unit: UnitId) {
         self.initialize_class(sim);
+    }
+
+    fn apply_item_effect(&mut self, sim: &mut Sim, unit: UnitId, item: i32) -> bool {
+        self.apply_hunter_item_effect(sim, unit, item)
+    }
+
+    fn class_item_use_effect(
+        &self,
+        sim: &Sim,
+        spell: SpellId,
+        item: i32,
+    ) -> Option<serde_json::Value> {
+        (item == 19953).then(|| self.renatakis_charm_effect(sim, spell))
     }
 
     fn take_post_finalize_effects(&mut self) -> Vec<FinalizeEffect> {

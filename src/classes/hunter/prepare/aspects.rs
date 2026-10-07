@@ -93,7 +93,6 @@ impl Hunter {
 
         // Every rank of Deadly Aspects triggers the same Quick Shots (6150): 30% ranged haste for
         // 12 sec. The points buy only the proc chance, 2% a rank.
-        let mut quick_shots: Option<AuraId> = None;
         if deadly_aspects > 0 {
             let rank = data.aspect_of_the_hawk_triggered.highest();
             let haste_multiplier = 1.0
@@ -101,7 +100,7 @@ impl Hunter {
                     .effect(dbcenums::A_MOD_RANGED_HASTE, 0)
                     .average(crate::prepare::character::constants::CHARACTER_LEVEL)
                     / 100.0;
-            quick_shots = Some(sim.get_or_register_aura(
+            sim.get_or_register_aura(
                 unit,
                 AuraConfig {
                     label: "Quick Shots".to_string(),
@@ -117,7 +116,7 @@ impl Hunter {
                     })),
                     ..AuraConfig::default()
                 },
-            ));
+            );
         }
 
         let rap = hawk_rank
@@ -145,7 +144,6 @@ impl Hunter {
                 ..AuraConfig::default()
             },
         );
-        let _ = quick_shots;
         sim.new_exclusive_effect(aura, "Aspect", true, 0.0, None, None);
         self.aspect_of_the_hawk_aura = Some(aura);
 

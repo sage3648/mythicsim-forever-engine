@@ -58,6 +58,17 @@ pub(crate) trait PrepAgent {
         false
     }
 
+    /// The exporter's `classItemUseEffects`: the effect of an item use a class package registers
+    /// itself, by item.
+    fn class_item_use_effect(
+        &self,
+        _sim: &Sim,
+        _spell: super::sim::SpellId,
+        _item: i32,
+    ) -> Option<serde_json::Value> {
+        None
+    }
+
     /// The talents proto the class filled from the talent string.
     fn talents(&self) -> &Message;
     /// Stable names for the class's spell mask bits.

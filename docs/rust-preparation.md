@@ -49,6 +49,7 @@ differing paths, or `refused` with the code. A preparation mismatch is a shadow 
 | Simulation objects | `src/prepare/sim.rs`, `spell.rs`, `stats.rs` | `sim/core` units, auras, spells, timers, exclusive effects, stats and stat dependencies |
 | Construction | `src/prepare/env.rs`, `character.rs`, `target.rs`, `attack.rs`, `items.rs` | `environment.go`, `character.go`, `target.go`, `attack.go`, `database.go` |
 | Shared mechanics | `src/prepare/{spell_mod,parse_effects,aura_helpers,racials,buffs,consumes,...}.rs` | `spell_mod.go`, `spelldata`, `aura_helpers.go`, `racials.go`, `buffs`, `consumes.go` |
+| Pets | `src/prepare/pet.rs`, `src/classes/<class>/prepare/pet.rs` | `core/pet.go`, `core/focus.go`, a class's pets and `tools/oracle-v2/pets.go`: a pet is a unit with a pet half, enabled by the owner's reset |
 | Client spell data | `src/prepare/spelldata.rs`, `dbcenums.rs` | `sim/core/spelldata`, `sim/core/dbcenums` |
 | Classes | `src/classes/<class>/prepare*.rs` | `sim/<class>` construction and initialization |
 | Export | `src/prepare/export.rs`, `common_effects.rs` | `tools/oracle-v2` |

@@ -286,10 +286,11 @@ fn consumable_item_effect(
 /// The item cases of the item loop: temporary stats, speed, damage, survival and energize on
 /// use, Burst of Knowledge, Second Wind and class item uses. `None` for an item none claims.
 fn use_item_effect(
-    _env: &mut Environment,
-    _spell: SpellId,
-    _item: i32,
+    env: &mut Environment,
+    spell: SpellId,
+    item: i32,
     _unrepresented: &mut Vec<String>,
 ) -> Option<Value> {
-    None
+    // The class case comes after the shared item cases, which the items port adds above it.
+    env.agent.class_item_use_effect(&env.sim, spell, item)
 }

@@ -120,7 +120,6 @@ impl Hunter {
     /// hunter with a 2 sec cast, and Forever puts its cooldown on the Multi-Shot timer.
     fn register_aimed_shot_spell(&mut self, sim: &mut Sim, timer: crate::prepare::sim::TimerId) {
         let rank = spell_data().aimed_shot.highest();
-        self.aimed_shot_flat_bonus = rank.damage_effect().average(CHARACTER_LEVEL);
         self.aimed_shot = Some(sim.register_spell(
             self.unit,
             ranged_config(SpellConfig {
