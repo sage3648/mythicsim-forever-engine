@@ -387,7 +387,7 @@ fn register_gift_of_arthas(env: &mut Environment) -> Result<(), Refusal> {
     // Go `NewEnemyAuraArray`: one debuff for each enemy, in unit order.
     for target in env.sim.env_units.clone() {
         if env.sim.unit(target).unit_type == UnitType::Enemy {
-            buffs::GIFT_OF_ARTHAS.aura(env, target, true, 0, 0.0)?;
+            buffs::GIFT_OF_ARTHAS.aura(&mut env.sim, target, true, 0, 0.0);
         }
     }
     env.sim.register_spell(

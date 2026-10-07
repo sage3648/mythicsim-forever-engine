@@ -1,8 +1,13 @@
 //! Go sim/core/buffs (meta.go, amounts.go, drivers.go and the generated tables) and
 //! sim/core/buffs.go: the raid, party and individual buffs and the raid's debuffs.
 
-mod drivers;
-mod generated;
+pub(crate) mod drivers;
+mod effects;
+pub(crate) mod flametongue;
+pub(crate) mod generated;
+pub(crate) mod paladin;
+pub(crate) mod support;
+mod windfury_effect;
 
 use crate::contracts::prepared_v2::ActionId;
 use crate::contracts::request::Message;
@@ -17,7 +22,12 @@ use super::sim::{
 use super::spelldata::{must_find, Ladder};
 use super::Refusal;
 
+pub(crate) use effects::{
+    aura_should_refresh_effects, battle_shout_effect, judgement_of_wisdom_effects,
+    sunder_armor_effect,
+};
 pub(crate) use generated::{apply_generated_buffs, apply_generated_debuffs, GIFT_OF_ARTHAS};
+pub(crate) use windfury_effect::windfury_totem_effect;
 
 /// Which constructor a generated buff uses.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -33,6 +43,8 @@ pub(crate) enum MetaKind {
 pub(crate) struct Meta {
     pub kind: MetaKind,
     pub label: &'static str,
+    /// The paladin rank the label names (Go `paladinRankName`); 0 names none.
+    pub rank: i32,
     pub spell: i32,
     pub cast: Option<i32>,
     pub category: &'static str,
@@ -51,6 +63,7 @@ impl Meta {
     pub(crate) const DEFAULT: Meta = Meta {
         kind: MetaKind::Buff,
         label: "",
+        rank: 0,
         spell: 0,
         cast: None,
         category: "",
@@ -136,10 +149,11 @@ impl Meta {
         row.cooldown().max(row.category_cooldown())
     }
 
+    /// Go `Meta.label`: the label, with the rank a paladin cast it at, and who cast it.
     fn label_for(&self, is_player: bool) -> String {
         format!(
             "{} ({})",
-            self.label,
+            paladin::rank_name(self.label, self.rank),
             if is_player { "Player" } else { "External" }
         )
     }
@@ -156,24 +170,24 @@ impl Meta {
     /// constructor of this buff calls it.
     pub(crate) fn aura(
         &self,
-        env: &mut Environment,
+        sim: &mut Sim,
         unit: UnitId,
         is_player: bool,
         talent_points: i32,
         count: f64,
-    ) -> Result<AuraId, Refusal> {
+    ) -> AuraId {
         match self.kind {
-            MetaKind::Buff => Ok(self.buff(
-                &mut env.sim,
+            MetaKind::Buff => self.buff(
+                sim,
                 unit,
                 is_player,
                 talent_points,
                 self.options(talent_points),
-            )),
+            ),
             MetaKind::ItemCountBuff => {
                 let mut options = self.options(0);
                 options.count = count;
-                Ok(self.buff(&mut env.sim, unit, is_player, 0, options))
+                self.buff(sim, unit, is_player, 0, options)
             }
             MetaKind::Debuff => {
                 let mut options = self.options(talent_points);
@@ -184,23 +198,43 @@ impl Meta {
                         options.exclusive = Some((self.category.to_string(), self.single_aura));
                     }
                 }
-                Ok(self.parsed_aura(
-                    &mut env.sim,
+                self.parsed_aura(
+                    sim,
                     unit,
                     is_player,
                     talent_points,
                     BuildPhase::NONE,
                     options,
-                ))
+                )
             }
-            MetaKind::DamageShield => Err(Refusal::new(
-                "buff",
-                format!(
-                    "{} is a damage shield, which is not prepared yet",
-                    self.label
-                ),
-            )),
+            MetaKind::DamageShield => self.damage_shield(sim, unit, is_player, talent_points),
         }
+    }
+
+    /// Go `newDamageShield`: `NewDamageShield` with the spell's school and `Value` as its damage.
+    fn damage_shield(
+        &self,
+        sim: &mut Sim,
+        unit: UnitId,
+        is_player: bool,
+        talent_points: i32,
+    ) -> AuraId {
+        let aura = support::new_damage_shield(
+            sim,
+            unit,
+            support::DamageShield {
+                label: self.label_for(is_player),
+                action_id: self.action_id(is_player),
+                duration: self.duration(talent_points),
+                category: self.category,
+                single_aura: self.single_aura,
+                school: self.row().spell_school(),
+                damage: self.value(talent_points),
+                bonus_coefficient: 0.0,
+            },
+        );
+        support::join_shared_category(sim, aura, self.shared_category, is_player);
+        aura
     }
 
     fn buff(
@@ -249,7 +283,7 @@ impl Meta {
             },
         );
         parse_effects(sim, None, aura, self.row(), options);
-        join_shared_category(sim, aura, self.shared_category, is_player);
+        support::join_shared_category(sim, aura, self.shared_category, is_player);
         aura
     }
 }
@@ -266,14 +300,6 @@ fn aura_duration(row: &Spell) -> Duration {
     } else {
         row.duration()
     }
-}
-
-/// Go `core.JoinSharedCategory`.
-fn join_shared_category(sim: &mut Sim, aura: AuraId, shared: &str, is_player: bool) {
-    if shared.is_empty() || !is_player {
-        return;
-    }
-    sim.new_exclusive_effect(aura, shared, true, 0.0, None, None);
 }
 
 /// Go `core.GetTristateValueInt32`.
@@ -293,7 +319,18 @@ pub(crate) fn permanent(
     is_player: bool,
     talent_points: i32,
 ) -> Result<AuraId, Refusal> {
-    let aura = meta.aura(env, unit, is_player, talent_points, 0.0)?;
+    let aura = meta.aura(&mut env.sim, unit, is_player, talent_points, 0.0);
+    Ok(env.sim.make_permanent(aura))
+}
+
+/// `core.MakePermanent` of a buff worth its amounts once per item in the party, such as Atiesh.
+pub(crate) fn permanent_with_count(
+    env: &mut Environment,
+    unit: UnitId,
+    meta: &Meta,
+    count: f64,
+) -> Result<AuraId, Refusal> {
+    let aura = meta.aura(&mut env.sim, unit, false, 0, count);
     Ok(env.sim.make_permanent(aura))
 }
 
@@ -307,3 +344,6 @@ pub(crate) fn apply_buff_effects(
     let unit = env.player;
     apply_generated_buffs(env, unit, raid_buffs, party_buffs, individual)
 }
+
+#[cfg(test)]
+mod tests;

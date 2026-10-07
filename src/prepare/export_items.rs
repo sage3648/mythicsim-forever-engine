@@ -1337,6 +1337,7 @@ pub(crate) fn melee_proc_effects(env: &Environment, unrepresented: &mut Vec<Stri
     if let Some(chili) = super::consumable_effects::dragonbreath_chili_effect(env) {
         effects.push(chili);
     }
+    effects.extend(super::buffs::windfury_totem_effect(env, unrepresented));
     effects
 }
 

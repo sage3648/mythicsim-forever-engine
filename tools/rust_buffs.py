@@ -14,6 +14,7 @@ check   Translate again and fail when the committed file differs.
 import argparse
 from pathlib import Path
 import re
+import subprocess
 import sys
 
 from compare import ROOT, PIN
@@ -151,7 +152,14 @@ def translate(source):
         out.append("    Ok(())")
         out.append("}")
         out.append("")
-    return "\n".join(out).rstrip() + "\n"
+    return rustfmt("\n".join(out).rstrip() + "\n")
+
+
+def rustfmt(text):
+    """The file is committed formatted, as `cargo fmt` leaves it, so check compares formatted text."""
+    result = subprocess.run(["rustfmt", "--edition", "2021", "--emit", "stdout"], input=text,
+                            capture_output=True, text=True, check=True)
+    return result.stdout
 
 
 def main():

@@ -754,6 +754,7 @@ pub(crate) fn export(
         env,
         &mut unrepresented,
     ));
+    effects.extend(super::stat_auras::stat_auras_effect(env)?);
     effects.extend(tail_effects(env, &mut unrepresented)?);
 
     let professions: Vec<String> = env
