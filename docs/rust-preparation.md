@@ -27,7 +27,7 @@ flowchart LR
 Every class is prepared: Druid, Hunter and its pets, Mage, Paladin, Priest and its
 Shadowfiend, Rogue, Shaman, Warlock and its demons, and Warrior, with tanking, 2 to 5 targets,
 raid buffs and debuffs, consumables, the item and enchant effects and set bonuses Go registers
-in code, racials and the rotation's construction. All 469 accepted fixtures prepare in Rust and
+in code, racials and the rotation's construction. All 515 accepted fixtures prepare in Rust and
 equal the exporter's state exactly.
 
 What is refused, each with a stable code, is what Go cannot export either (the exporter's
