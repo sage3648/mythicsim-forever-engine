@@ -1272,6 +1272,22 @@ impl<A: Agent> Fight<A> {
         }
     }
 
+    /// Go `AddSpiritRegenMultiplier`.
+    pub(crate) fn add_spirit_regen_multiplier(&mut self, amount: f64) {
+        self.player.spirit_regen_multiplier += amount;
+        if let Some(source) = self.player.spirit_attribution.as_mut() {
+            source.multiplier += amount;
+        }
+    }
+
+    /// Go `SetForceFullSpiritRegen`.
+    pub(crate) fn set_force_full_spirit_regen(&mut self, full: bool) {
+        self.player.force_full_spirit_regen = full;
+        if let Some(source) = self.player.spirit_attribution.as_mut() {
+            source.force_full = full;
+        }
+    }
+
     /// Go `majorCooldownManager.reset`: copies in initial order, then a stable sort.
     pub(crate) fn reset_cooldown_manager(&mut self) {
         for cooldown in &mut self.major_cooldowns {
