@@ -1387,6 +1387,11 @@ pub(crate) fn prepared_coverage(
                         reachable.extend(cooldown_spell(prepared, cooldown));
                     }
                 }
+                // Go builds no cast for a target that names no unit, so it reaches no spell.
+                Action::CastSpell { target, .. } | Action::ChannelSpell { target, .. }
+                    if target
+                        .resolve(prepared.encounter.target_count.max(1) as usize)
+                        .is_none() => {}
                 action => {
                     for id in action.spells() {
                         reachable.extend(rotation_spell(prepared, id));
@@ -1568,6 +1573,22 @@ fn other_target_casts(
     let mut reasons = BTreeSet::new();
     let mut spells = Vec::new();
     for item in &rotation.priority_list {
+        // A channel runs on the current target only.
+        if let Action::ChannelSpell { spell: id, target, .. } = &item.action {
+            if !matches!(
+                target.resolve(targets),
+                None | Some(Unit::Target(0))
+            ) && rotation_spell(prepared, id).is_some()
+                && !unreachable.contains(&item.position)
+            {
+                reasons.insert(format!(
+                    "rotation item {}: channelSpell of {id} on a unit other than the current \
+                     target is unsupported",
+                    item.position
+                ));
+            }
+            continue;
+        }
         let Action::CastSpell { spell: id, target } = &item.action else {
             continue;
         };

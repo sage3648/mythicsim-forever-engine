@@ -296,16 +296,25 @@ impl<A: Agent> Fight<A> {
                 }
                 // Go newActionChannelSpell: without an interrupt condition it is a cast;
                 // otherwise the spell must be a channel.
+                // A target that names no unit drops the action.
                 ParsedAction::ChannelSpell {
                     spell,
+                    target,
                     interrupt_if,
                     allow_recast,
-                } => match compile_bool_value(interrupt_if.as_ref(), &lookup) {
-                    None => match self.apl_cast_spell(spell) {
-                        Some(spell) => Act::Cast(spell, Side::Target),
+                } => match (
+                    compile_bool_value(interrupt_if.as_ref(), &lookup),
+                    target.resolve(self.targets.len()),
+                ) {
+                    (None, Some(Unit::Target(position))) => match self.apl_cast_spell(spell) {
+                        Some(spell) => Act::Cast(spell, Side::target(position)),
                         None => continue,
                     },
-                    Some(interrupt) => match self.apl_spell(spell) {
+                    (None, Some(Unit::Player)) => match self.apl_cast_spell(spell) {
+                        Some(spell) => Act::Cast(spell, Side::Player),
+                        None => continue,
+                    },
+                    (Some(interrupt), Some(_)) => match self.apl_spell(spell) {
                         Some(spell) if self.spells[spell].flags.channeled => Act::Channel {
                             spell,
                             interrupt: Rc::new(interrupt),
@@ -313,6 +322,7 @@ impl<A: Agent> Fight<A> {
                         },
                         _ => continue,
                     },
+                    (_, None) => continue,
                 },
                 // Go GetAPLMultidotSpell: an unknown spell or one without a dot drops the
                 // action; the encounter's one target caps the dot count.
@@ -432,6 +442,17 @@ impl<A: Agent> Fight<A> {
         match value {
             Compiled::Const(constant) => constant.int,
             Compiled::AuraNumStacks(aura) => self.aura(*aura).stacks,
+            // Go `APLValueAuraNumStacks` with `includeReactionTime`: the stacks of a reaction
+            // time ago, which its stack change handler kept. The wrapping difference is Go's
+            // for a handler that has not run since the reset.
+            Compiled::AuraNumStacksAfterReaction(aura) => {
+                let state = self.aura(*aura);
+                if self.now.wrapping_sub(state.stack_update) >= self.config.reaction {
+                    state.stacks
+                } else {
+                    state.previous_stacks
+                }
+            }
             Compiled::CurrentComboPoints => self.energy_bar().combo_points,
             // Go `ActiveTargetCount`: every target is active throughout.
             Compiled::NumberTargets => self.targets.len() as i32,

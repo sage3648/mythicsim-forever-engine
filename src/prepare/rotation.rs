@@ -48,26 +48,23 @@ fn apl_cast_spell(env: &Environment, id: &ActionId) -> Option<SpellId> {
     apl_spell(env, id)
 }
 
-/// Whether an action's target reference resolves: Go `GetTargetUnit(...).Get() != nil`.
+/// Whether an action's target reference resolves: Go `GetTargetUnit(...).Get() != nil`. No
+/// reference, or one of an unknown type, is the current target.
 fn target_resolves(env: &Environment, target: Option<&Message>) -> Result<bool, Refusal> {
     let Some(target) = target else {
         return Ok(true);
     };
-    let kind = target.enum_name("type");
-    match kind.as_str() {
-        "Unknown" | "CurrentTarget" | "Self" => Ok(true),
-        "Target" => Ok((target.i32("index") as usize) < env.encounter.targets.len()),
-        "Player" => Ok(target.i32("index") == 0),
-        // Go's `NextActiveTargetUnit` and `PreviousActiveTargetUnit` always name a target of
-        // the player's current one.
-        "NextTarget" | "PreviousTarget" => Ok(env
-            .sim
-            .unit(env.player)
-            .current_target
-            .is_some_and(|t| env.encounter.targets.contains(&t))),
-        other => Err(Refusal::new(
+    if target.enum_name("type") == "Unknown" {
+        return Ok(true);
+    }
+    match source_unit(env, Some(target)) {
+        Ok(unit) => Ok(unit.is_some()),
+        Err(()) => Err(Refusal::new(
             "rotation",
-            format!("a rotation target of type {other} is not prepared yet"),
+            format!(
+                "a rotation target of type {} is not prepared yet",
+                target.enum_name("type")
+            ),
         )),
     }
 }
@@ -251,6 +248,8 @@ fn source_unit(env: &Environment, reference: Option<&Message>) -> Result<Option<
     let kind = reference.map_or_else(|| "Unknown".to_string(), |r| r.enum_name("type"));
     match kind.as_str() {
         "Unknown" | "Self" => Ok(Some(env.player)),
+        // The raid holds one player, at index 0.
+        "Player" => Ok((reference.map_or(0, |r| r.i32("index")) == 0).then_some(env.player)),
         // Go `Environment.GetUnit` names no unit for the sets of all players and all targets.
         "AllPlayers" | "AllTargets" => Ok(None),
         "CurrentTarget" => Ok(env.sim.unit(env.player).current_target),

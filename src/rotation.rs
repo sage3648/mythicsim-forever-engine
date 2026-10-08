@@ -98,13 +98,20 @@ pub struct DotRef {
     pub target: UnitRef,
 }
 
-/// What an aura value reads of an aura on a unit other than the player.
+/// What an aura value reads of an aura on a unit other than the player, or with
+/// `includeReactionTime`, of any unit's.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum AuraRead {
     IsKnown,
     IsActive,
     NumStacks,
     RemainingTime,
+    /// `auraIsActive` that holds once the aura has been up for the player's reaction time.
+    IsActiveAfterReaction,
+    /// `auraIsInactive` that holds once the aura has been down for the player's reaction time.
+    IsInactiveAfterReaction,
+    /// `auraNumStacks` as it stood a reaction time ago.
+    NumStacksAfterReaction,
 }
 
 /// A dot as a compiled rotation reads it: the spell holding it, by its position in the
@@ -211,16 +218,10 @@ pub enum Value {
         id: ActionId,
     },
     AuraIsActive(ActionId),
-    /// `auraIsActive` with `includeReactionTime`: Go `APLValueAuraIsActive` of an aura that has
-    /// been up for the player's reaction time.
-    AuraIsActiveAfterReaction(ActionId),
-    /// `auraIsInactive` with `includeReactionTime`: Go `APLValueAuraIsInactive` of an aura that
-    /// has been down for the player's reaction time.
-    AuraIsInactiveAfterReaction(ActionId),
     AuraNumStacks(ActionId),
     AuraRemainingTime(ActionId),
-    /// `auraIsKnown`, `auraIsActive`, `auraNumStacks` or `auraRemainingTime` with a target as
-    /// its source unit.
+    /// An aura value with a unit other than the player as its source unit, or with
+    /// `includeReactionTime`, which Go's values of an aura on any unit read.
     TargetAura {
         read: AuraRead,
         unit: UnitRef,
@@ -341,8 +342,6 @@ impl Value {
             | Value::AuraIsKnown(_)
             | Value::PetAuraIsKnown { .. }
             | Value::AuraIsActive(_)
-            | Value::AuraIsActiveAfterReaction(_)
-            | Value::AuraIsInactiveAfterReaction(_)
             | Value::AuraShouldRefresh { .. }
             | Value::FrontOfTarget
             | Value::DotIsActive(_)
@@ -352,11 +351,15 @@ impl Value {
             | Value::SpellCanCast(_)
             | Value::GcdIsReady => ValueType::Bool,
             Value::TargetAura {
-                read: AuraRead::IsKnown | AuraRead::IsActive,
+                read:
+                    AuraRead::IsKnown
+                    | AuraRead::IsActive
+                    | AuraRead::IsActiveAfterReaction
+                    | AuraRead::IsInactiveAfterReaction,
                 ..
             } => ValueType::Bool,
             Value::TargetAura {
-                read: AuraRead::NumStacks,
+                read: AuraRead::NumStacks | AuraRead::NumStacksAfterReaction,
                 ..
             } => ValueType::Int,
             Value::TargetAura {
@@ -413,6 +416,9 @@ pub enum Action {
     /// Go `APLActionChannelSpell`: a channel the rotation may interrupt.
     ChannelSpell {
         spell: ActionId,
+        /// The unit the channel is cast on, the current target by default. Go builds no action
+        /// for a target that names no unit.
+        target: UnitRef,
         interrupt_if: Option<Value>,
         allow_recast: bool,
     },
@@ -732,14 +738,16 @@ fn parse_sequence(config: &Json) -> Result<Action, String> {
     Ok(Action::Sequence(spells))
 }
 
-/// Go `newActionChannelSpell` for the current target.
+/// Go `newActionChannelSpell`: the channel, the unit it is cast on and its interrupt condition.
 fn parse_channel_spell(config: &Json) -> Result<Action, String> {
     let object = config.as_object().ok_or("channelSpell must be an object")?;
     let mut interrupt_if = None;
     let mut allow_recast = false;
+    let target = parse_unit_ref(object.get("target"), UnitRef::CurrentTarget)
+        .map_err(|()| unsupported_unit("channelSpell", "target", object.get("target")))?;
     for (key, value) in object {
         match key.as_str() {
-            "spellId" => {}
+            "spellId" | "target" => {}
             "interruptIf" => {
                 interrupt_if = Some(parse_value(value).map_err(|reasons| reasons.join("; "))?)
             }
@@ -752,6 +760,7 @@ fn parse_channel_spell(config: &Json) -> Result<Action, String> {
     let spell = parse_action_id(object.get("spellId").ok_or("channelSpell has no spellId")?)?;
     Ok(Action::ChannelSpell {
         spell,
+        target,
         interrupt_if,
         allow_recast,
     })
@@ -773,37 +782,12 @@ fn parse_cast_friendly_spell(config: &Json) -> Result<Action, String> {
             .get("spellId")
             .ok_or("castFriendlySpell has no spellId")?,
     )?;
-    let Some(target) = object.get("target") else {
-        return Ok(Action::CastSpell {
-            spell,
-            target: UnitRef::CurrentTarget,
-        });
-    };
-    let target = target
-        .as_object()
-        .ok_or("castFriendlySpell target must be an object")?;
-    for key in target.keys() {
-        if key != "type" && key != "index" {
-            return Err(format!(
-                "castFriendlySpell target field {key} is unsupported"
-            ));
-        }
-    }
-    let index = match target.get("index") {
-        Some(index) => json_i32(index)?,
-        None => 0,
-    };
-    match (target.get("type").and_then(Json::as_str), index) {
-        (Some("Player"), 0) | (Some("Self"), _) => Ok(Action::CastAtPlayer(spell)),
-        (None | Some("CurrentTarget"), _) => Ok(Action::CastSpell {
-            spell,
-            target: UnitRef::CurrentTarget,
-        }),
-        (kind, index) => Err(format!(
-            "castFriendlySpell target {} {index} is unsupported",
-            kind.unwrap_or("Unknown")
-        )),
-    }
+    let target = parse_unit_ref(object.get("target"), UnitRef::CurrentTarget)
+        .map_err(|()| unsupported_unit("castFriendlySpell", "target", object.get("target")))?;
+    Ok(match target {
+        UnitRef::Player => Action::CastAtPlayer(spell),
+        target => Action::CastSpell { spell, target },
+    })
 }
 
 /// Go `newActionMultidot`: its spell, dot count and overlap.
@@ -841,36 +825,57 @@ fn parse_cast_spell_action(config: &Json) -> Result<Action, String> {
 }
 
 /// A `castSpell` configuration's spell. A target is read only where `with_target` says the
-/// action carries one: a sequence step or a prepull action casts at the current target.
+/// action carries one: a sequence step or a prepull action casts at the current target, or at
+/// no unit. Go builds no action for a target that names no unit, which is what a spell nobody
+/// knows does, so such a step has the action ID no spell has.
 fn parse_cast_spell(config: &Json, with_target: bool) -> Result<ActionId, String> {
     let object = config.as_object().ok_or("castSpell must be an object")?;
+    let mut unit_less = false;
     for (key, field) in object {
         match key.as_str() {
             "spellId" => {}
             "target" if with_target => {}
-            "target"
-                if parse_unit_ref(Some(field), UnitRef::CurrentTarget)
-                    == Ok(UnitRef::CurrentTarget) => {}
-            "target" => {
-                return Err(format!(
-                    "castSpell target {field} is unsupported in a sequence or prepull action"
-                ))
-            }
+            "target" => match parse_unit_ref(Some(field), UnitRef::CurrentTarget) {
+                Ok(UnitRef::CurrentTarget | UnitRef::Target(0)) => {}
+                Ok(UnitRef::Nobody) => unit_less = true,
+                _ => {
+                    return Err(format!(
+                        "castSpell target {field} is unsupported in a sequence or prepull action"
+                    ))
+                }
+            },
             other => return Err(format!("castSpell field {other} is unsupported")),
         }
     }
-    parse_action_id(object.get("spellId").ok_or("castSpell has no spellId")?)
+    let spell = parse_action_id(object.get("spellId").ok_or("castSpell has no spellId")?)?;
+    Ok(if unit_less { no_such_spell() } else { spell })
+}
+
+/// The action ID of a step no spell answers to, which `parse_cast_spell` gives a cast whose
+/// target names no unit. Go builds no action for it.
+fn no_such_spell() -> ActionId {
+    ActionId {
+        other_id: "NoUnit".to_string(),
+        ..ActionId::default()
+    }
 }
 
 /// Go `GetTargetUnit` and `GetSourceUnit`: the unit a `UnitReference` names, or `default`
-/// when it is absent or its type is unknown. `Err` for a reference Rust does not resolve:
-/// every player but the first, a pet, and the sets of all players or all targets.
+/// when it is absent or its type is unknown. Go's `Environment.GetUnit` reads only the fields
+/// its type uses: `Self`, `CurrentTarget`, `PreviousTarget` and `NextTarget` ignore an index
+/// and an owner; a player is the raid's index, a target the encounter's; the sets of all
+/// players and all targets, and a player past the one in the raid, name no unit, which a cast
+/// drops and a dot or aura read treats as one nobody has. `Err` for a reference Rust does not
+/// resolve: a pet, a negative target index (Go reads past its list) and fields no reference has.
 fn parse_unit_ref(reference: Option<&Json>, default: UnitRef) -> Result<UnitRef, ()> {
     let Some(reference) = reference else {
         return Ok(default);
     };
     let object = reference.as_object().ok_or(())?;
-    if object.keys().any(|key| key != "type" && key != "index") {
+    if object
+        .keys()
+        .any(|key| !matches!(key.as_str(), "type" | "index" | "owner"))
+    {
         return Err(());
     }
     let kind = match object.get("type") {
@@ -879,41 +884,24 @@ fn parse_unit_ref(reference: Option<&Json>, default: UnitRef) -> Result<UnitRef,
     };
     let index = match object.get("index") {
         None => 0,
-        Some(index) => usize::try_from(index.as_i64().ok_or(())?).map_err(|_| ())?,
-    };
-    let plain = |unit: UnitRef| {
-        if object.contains_key("index") {
-            Err(())
-        } else {
-            Ok(unit)
-        }
+        Some(index) => i32::try_from(index.as_i64().ok_or(())?).map_err(|_| ())?,
     };
     match kind {
         "Unknown" => Ok(default),
-        "Self" => plain(UnitRef::Player),
+        "Self" => Ok(UnitRef::Player),
+        // The raid holds one player, at index 0.
         "Player" if index == 0 => Ok(UnitRef::Player),
-        "CurrentTarget" => plain(UnitRef::CurrentTarget),
-        "PreviousTarget" => plain(UnitRef::PreviousTarget),
-        "NextTarget" => plain(UnitRef::NextTarget),
-        "Target" => Ok(UnitRef::Target(index)),
+        "Player" | "AllPlayers" | "AllTargets" => Ok(UnitRef::Nobody),
+        "CurrentTarget" => Ok(UnitRef::CurrentTarget),
+        "PreviousTarget" => Ok(UnitRef::PreviousTarget),
+        "NextTarget" => Ok(UnitRef::NextTarget),
+        "Target" => Ok(UnitRef::Target(usize::try_from(index).map_err(|_| ())?)),
         _ => Err(()),
     }
 }
 
-/// [`parse_unit_ref`] for a value that reads a dot or an aura on a unit. Go `GetUnit` gives the
-/// sets `AllPlayers` and `AllTargets` no unit, and a dot or aura reference without a unit reads
-/// as one that does not exist, which the compiled value handles as it does a missing unit.
+/// [`parse_unit_ref`] for a value that reads a dot or an aura on a unit.
 fn parse_value_unit_ref(reference: Option<&Json>, default: UnitRef) -> Result<UnitRef, ()> {
-    let kind = reference
-        .and_then(|reference| reference.get("type"))
-        .and_then(Json::as_str);
-    if matches!(kind, Some("AllPlayers" | "AllTargets")) {
-        let object = reference.and_then(Json::as_object).ok_or(())?;
-        if object.keys().any(|key| key != "type" && key != "index") {
-            return Err(());
-        }
-        return Ok(UnitRef::Nobody);
-    }
     parse_unit_ref(reference, default)
 }
 
@@ -1351,8 +1339,9 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
         }
         "auraIsKnown" | "auraIsActive" | "auraIsInactive" | "auraNumStacks"
         | "auraRemainingTime" => {
-            // Go `GetSourceUnit`: no unit reference means the player itself. includeReactionTime
-            // is modeled for whether the player's own aura is up or down.
+            // Go `GetSourceUnit`: no unit reference means the player itself. Only the activity
+            // and stacks of an aura have `includeReactionTime`; Go's request reader rejects the
+            // field on the others.
             only(&["auraId", "sourceUnit", "includeReactionTime"])?;
             let id = config
                 .get("auraId")
@@ -1372,19 +1361,18 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
                     .as_bool()
                     .ok_or_else(|| vec!["includeReactionTime must be a boolean".to_string()])?,
             };
-            let activity = matches!(name, "auraIsActive" | "auraIsInactive");
-            if after_reaction && !(activity && unit == UnitRef::Player) {
-                return Err(vec![format!(
-                    "{name} field includeReactionTime is unsupported{}",
-                    if activity { " on another unit" } else { "" }
-                )]);
-            }
             if after_reaction {
-                return Ok(if name == "auraIsActive" {
-                    Value::AuraIsActiveAfterReaction(id)
-                } else {
-                    Value::AuraIsInactiveAfterReaction(id)
-                });
+                let read = match name {
+                    "auraIsActive" => AuraRead::IsActiveAfterReaction,
+                    "auraIsInactive" => AuraRead::IsInactiveAfterReaction,
+                    "auraNumStacks" => AuraRead::NumStacksAfterReaction,
+                    _ => {
+                        return Err(vec![format!(
+                            "{name} field includeReactionTime is unsupported"
+                        )])
+                    }
+                };
+                return Ok(Value::TargetAura { read, unit, id });
             }
             let read = match name {
                 "auraIsKnown" => AuraRead::IsKnown,
@@ -1660,6 +1648,8 @@ pub enum Compiled<R> {
     AuraIsActive(R),
     /// Go `APLValueAuraIsActive` with `includeReactionTime`.
     AuraIsActiveAfterReaction(R),
+    /// Go `APLValueAuraNumStacks` with `includeReactionTime`.
+    AuraNumStacksAfterReaction(R),
     /// Go `APLValueAuraIsInactive` with `includeReactionTime`.
     AuraIsInactiveAfterReaction(R),
     AuraNumStacks(R),
@@ -1701,9 +1691,10 @@ impl<R> Compiled<R> {
             | Compiled::IsExecutePhase(_)
             | Compiled::SpellCanCast(_)
             | Compiled::GcdIsReady => ValueType::Bool,
-            Compiled::AuraNumStacks(_) | Compiled::NumberTargets | Compiled::CurrentComboPoints => {
-                ValueType::Int
-            }
+            Compiled::AuraNumStacks(_)
+            | Compiled::AuraNumStacksAfterReaction(_)
+            | Compiled::NumberTargets
+            | Compiled::CurrentComboPoints => ValueType::Int,
             Compiled::AuraRemainingTime(_)
             | Compiled::AutoTimeToNext(_)
             | Compiled::AutoSwingTime(_)
@@ -2031,18 +2022,9 @@ fn compile_value<R>(value: &Value, lookup: &Lookup<R>) -> Option<Compiled<R>> {
             Some(found) => Compiled::AuraIsActive(found.aura),
             None => bool_const(false),
         },
-        // Go `newValueAuraIsActive` and `newValueAuraIsInactive`: an aura the player lacks is a
-        // constant, whatever the reaction time.
-        Value::AuraIsActiveAfterReaction(id) => match aura(id) {
-            Some(found) => Compiled::AuraIsActiveAfterReaction(found.aura),
-            None => bool_const(false),
-        },
-        Value::AuraIsInactiveAfterReaction(id) => match aura(id) {
-            Some(found) => Compiled::AuraIsInactiveAfterReaction(found.aura),
-            None => bool_const(true),
-        },
         // Go `GetAPLAura` on a unit: one that resolves to no unit, or lacks the aura, reads as
-        // an aura it does not have.
+        // an aura it does not have. Go's `newValueAuraIsActive` and `newValueAuraIsInactive`
+        // make a constant of such an aura, whatever the reaction time.
         Value::TargetAura { read, unit, id } => {
             let found = match unit.resolve(lookup.targets) {
                 Some(Unit::Target(position)) => (lookup.target_aura)(position, id),
@@ -2053,6 +2035,25 @@ fn compile_value<R>(value: &Value, lookup: &Lookup<R>) -> Option<Compiled<R>> {
                 (AuraRead::IsKnown, found) => bool_const(found.is_some()),
                 (AuraRead::IsActive, Some(found)) => Compiled::AuraIsActive(found.aura),
                 (AuraRead::IsActive, None) => bool_const(false),
+                (AuraRead::IsActiveAfterReaction, Some(found)) => {
+                    Compiled::AuraIsActiveAfterReaction(found.aura)
+                }
+                (AuraRead::IsActiveAfterReaction, None) => bool_const(false),
+                (AuraRead::IsInactiveAfterReaction, Some(found)) => {
+                    Compiled::AuraIsInactiveAfterReaction(found.aura)
+                }
+                (AuraRead::IsInactiveAfterReaction, None) => bool_const(true),
+                // Go `newValueAuraNumStacks` warns that the aura does not stack and drops the
+                // value, with or without the reaction time.
+                (AuraRead::NumStacksAfterReaction, Some(found)) if found.max_stacks == 0 => {
+                    return None
+                }
+                (AuraRead::NumStacksAfterReaction, Some(found)) => {
+                    Compiled::AuraNumStacksAfterReaction(found.aura)
+                }
+                (AuraRead::NumStacksAfterReaction, None) => {
+                    Compiled::Const(parse_const("0").expect("int constant"))
+                }
                 // Go warns that the aura does not stack and drops the value.
                 (AuraRead::NumStacks, Some(found)) if found.max_stacks == 0 => return None,
                 (AuraRead::NumStacks, Some(found)) => Compiled::AuraNumStacks(found.aura),
@@ -2377,20 +2378,34 @@ mod tests {
                 id
             })
         );
-        for source in [
-            serde_json::json!({"type": "Player", "index": 1}),
-            serde_json::json!({"type": "Pet", "owner": {"type": "Self"}}),
-            serde_json::json!({"type": "CurrentTarget", "index": 1}),
+        // A player past the raid's one is no unit, and a reference to a unit Go ignores the
+        // index of is that unit.
+        for (source, unit) in [
+            (
+                serde_json::json!({"type": "Player", "index": 1}),
+                UnitRef::Nobody,
+            ),
+            (
+                serde_json::json!({"type": "CurrentTarget", "index": 1}),
+                UnitRef::CurrentTarget,
+            ),
         ] {
             let rotation =
                 serde_json::json!({"type": "TypeAPL", "priorityList": [item(source.clone())]});
-            assert_eq!(
-                parse(&rotation).unwrap_err(),
-                [format!(
-                    "rotation item 1: auraIsActive sourceUnit {source} is unsupported"
-                )]
-            );
+            assert!(matches!(
+                parse(&rotation).unwrap().priority_list[0].condition,
+                Some(Value::TargetAura { unit: found, .. }) if found == unit
+            ));
         }
+        let source = serde_json::json!({"type": "Pet", "owner": {"type": "Self"}});
+        let rotation =
+            serde_json::json!({"type": "TypeAPL", "priorityList": [item(source.clone())]});
+        assert_eq!(
+            parse(&rotation).unwrap_err(),
+            [format!(
+                "rotation item 1: auraIsActive sourceUnit {source} is unsupported"
+            )]
+        );
     }
 
     #[test]
@@ -2629,6 +2644,7 @@ mod tests {
         );
         let Action::ChannelSpell {
             spell,
+            target: UnitRef::CurrentTarget,
             interrupt_if: Some(Value::And(terms)),
             allow_recast: true,
         } = &rotation.priority_list[1].action
@@ -2721,7 +2737,29 @@ mod tests {
                 target: UnitRef::CurrentTarget
             })
         );
-        assert!(cast(Some(serde_json::json!({"type": "Player", "index": 1}))).is_err());
+        // A player past the raid's one, and the sets of players and targets, name no unit.
+        for unit in [
+            serde_json::json!({"type": "Player", "index": 1}),
+            serde_json::json!({"type": "AllPlayers"}),
+            serde_json::json!({"type": "AllTargets"}),
+        ] {
+            assert_eq!(
+                cast(Some(unit.clone())),
+                Ok(Action::CastSpell {
+                    spell: ActionId::spell(25292),
+                    target: UnitRef::Nobody
+                }),
+                "{unit}"
+            );
+        }
+        // A target of the encounter is cast at like any other.
+        assert_eq!(
+            cast(Some(serde_json::json!({"type": "Target", "index": 1}))),
+            Ok(Action::CastSpell {
+                spell: ActionId::spell(25292),
+                target: UnitRef::Target(1)
+            })
+        );
     }
 
     /// A three target fight whose targets carry aura 2 and whose dot spells sit on the
@@ -2786,14 +2824,35 @@ mod tests {
             parse(serde_json::json!({"type": "Unknown", "index": 3})),
             Ok(UnitRef::CurrentTarget)
         );
-        for refused in [
+        // Go finds no unit for the sets, or a player past the raid's one.
+        for nobody in [
             serde_json::json!({"type": "AllTargets"}),
             serde_json::json!({"type": "AllPlayers"}),
             serde_json::json!({"type": "Player", "index": 1}),
+            serde_json::json!({"type": "Player", "index": -2}),
+            serde_json::json!({"type": "AllTargets", "owner": {"type": "Self"}}),
+        ] {
+            assert_eq!(parse(nobody.clone()), Ok(UnitRef::Nobody), "{nobody}");
+        }
+        // Go reads only the fields a type uses, so the others change nothing.
+        assert_eq!(
+            parse(serde_json::json!({"type": "Self", "index": 1})),
+            Ok(UnitRef::Player)
+        );
+        assert_eq!(
+            parse(serde_json::json!({"type": "NextTarget", "index": 3, "owner": {"type": "Self"}})),
+            Ok(UnitRef::NextTarget)
+        );
+        assert_eq!(
+            parse(serde_json::json!({"type": "Target", "owner": {"type": "Self"}})),
+            Ok(UnitRef::Target(0))
+        );
+        // A pet, a negative target index (Go reads before its list) and an unknown field stay
+        // unsupported.
+        for refused in [
             serde_json::json!({"type": "Pet", "owner": {"type": "Self"}}),
             serde_json::json!({"type": "Target", "index": -1}),
-            serde_json::json!({"type": "Self", "index": 1}),
-            serde_json::json!({"type": "Target", "owner": {"type": "Self"}}),
+            serde_json::json!({"type": "Self", "name": "x"}),
         ] {
             assert_eq!(parse(refused.clone()), Err(()), "{refused}");
         }
@@ -2825,11 +2884,17 @@ mod tests {
                 target: UnitRef::Target(1)
             })
         );
-        assert_eq!(
-            cast(serde_json::json!({"type": "AllTargets"})).unwrap_err(),
-            [r#"rotation item 1: castSpell target {"type":"AllTargets"} is unsupported"#]
-        );
-        // A sequence step or a prepull action casts at the current target only.
+        // A set names no unit, so Go builds no action.
+        for set in ["AllTargets", "AllPlayers"] {
+            assert_eq!(
+                cast(serde_json::json!({"type": set})),
+                Ok(Action::CastSpell {
+                    spell: ActionId::spell(25311),
+                    target: UnitRef::Nobody
+                })
+            );
+        }
+        // A sequence step or a prepull action casts at the current target, or at no unit.
         let step = |target: serde_json::Value| {
             parse(
                 &serde_json::json!({"type": "TypeAPL", "priorityList": [{"action": {
@@ -2839,6 +2904,14 @@ mod tests {
         };
         assert!(step(serde_json::json!({"type": "CurrentTarget"})).is_ok());
         assert!(step(serde_json::json!({"type": "Target", "index": 1})).is_err());
+        assert_eq!(
+            step(serde_json::json!({"type": "AllTargets"}))
+                .unwrap()
+                .priority_list[0]
+                .action
+                .spells(),
+            [&no_such_spell()]
+        );
     }
 
     /// Go gives a dot value with no spell, or with a unit that has no dot, no value, which
@@ -3045,16 +3118,62 @@ mod tests {
             read("auraIsInactive", 3, serde_json::json!(false), none.clone()),
             read("auraIsInactive", 3, none.clone(), none.clone())
         );
-        // Another unit's aura, and the reads of stacks and time left, are not modeled.
-        for (kind, source) in [
-            ("auraIsActive", serde_json::json!({"type": "CurrentTarget"})),
-            ("auraNumStacks", none.clone()),
-            ("auraRemainingTime", none.clone()),
-            ("auraIsKnown", none.clone()),
-        ] {
+        // Any unit's aura has the reaction time: a target's, one past the fight's targets (an
+        // aura nobody has) and a set of units, which is no unit at all.
+        let target = serde_json::json!({"type": "Target", "index": 1});
+        assert_eq!(
+            read("auraIsActive", 2, yes.clone(), target.clone()),
+            Some(CompiledCondition::When(
+                Compiled::AuraIsActiveAfterReaction(1)
+            ))
+        );
+        assert_eq!(
+            read("auraIsInactive", 2, yes.clone(), target.clone()),
+            Some(CompiledCondition::When(
+                Compiled::AuraIsInactiveAfterReaction(1)
+            ))
+        );
+        let past = serde_json::json!({"type": "Target", "index": 3});
+        let all = serde_json::json!({"type": "AllTargets"});
+        for source in [past, all] {
+            assert_eq!(
+                read("auraIsActive", 2, yes.clone(), source.clone()),
+                Some(CompiledCondition::Pruned)
+            );
+            assert_eq!(
+                read("auraIsInactive", 2, yes.clone(), source),
+                Some(CompiledCondition::Always)
+            );
+        }
+        // The stacks of a stacking aura read a reaction time ago; a missing aura has none, and
+        // an aura that does not stack has no value.
+        let stacks = |id: i32, source: serde_json::Value| {
+            let mut read = serde_json::json!({"auraId": {"spellId": id},
+                "includeReactionTime": true});
+            if !source.is_null() {
+                read["sourceUnit"] = source;
+            }
+            compiled(serde_json::json!({"cmp": {"op": "OpGe",
+                "lhs": {"auraNumStacks": read}, "rhs": {"const": {"val": "2"}}}}))
+        };
+        let Some(CompiledCondition::When(Compiled::Compare { lhs, .. })) =
+            stacks(2, target.clone())
+        else {
+            panic!("a comparison of the stacks");
+        };
+        assert_eq!(*lhs, Compiled::AuraNumStacksAfterReaction(1));
+        let Some(CompiledCondition::When(Compiled::Compare { lhs, .. })) =
+            stacks(7, target.clone())
+        else {
+            panic!("a comparison of the constant 0");
+        };
+        assert!(matches!(*lhs, Compiled::Const(_)));
+        // Aura 3 does not stack: the read has no value and neither has the comparison.
+        assert_eq!(stacks(3, none.clone()), Some(CompiledCondition::Always));
+        // The reads that have no reaction time are not Go requests.
+        for kind in ["auraRemainingTime", "auraIsKnown"] {
             let parsed = parse_value(&serde_json::json!({kind: {
-                "auraId": {"spellId": 2}, "includeReactionTime": true,
-                "sourceUnit": source}}));
+                "auraId": {"spellId": 2}, "includeReactionTime": true}}));
             assert!(parsed.is_err(), "{kind}");
         }
         assert!(parse_value(&serde_json::json!({"auraIsActive": {
@@ -3109,10 +3228,14 @@ mod tests {
         assert_eq!(aura("auraIsKnown"), Some(CompiledCondition::Pruned));
         assert_eq!(aura("auraIsActive"), Some(CompiledCondition::Pruned));
         assert_eq!(aura("auraIsInactive"), Some(CompiledCondition::Always));
-        // Any other field of the reference still refuses.
+        // Go reads no other field of a set, and a field no reference has still refuses.
         assert!(parse_value(&serde_json::json!({"dotIsActive": {
             "spellId": {"spellId": 7},
             "targetUnit": {"type": "AllTargets", "owner": {"type": "Self"}}}}))
+        .is_ok());
+        assert!(parse_value(&serde_json::json!({"dotIsActive": {
+            "spellId": {"spellId": 7},
+            "targetUnit": {"type": "AllTargets", "name": "x"}}}))
         .is_err());
     }
 
