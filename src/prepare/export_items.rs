@@ -1330,6 +1330,231 @@ fn proc_damage_item_effects(env: &Environment, unrepresented: &mut Vec<String>) 
     effects
 }
 
+/// weapon_procs.go `weaponDamageProcs`: common/forever/items_weapons.go weapons whose chance on
+/// hit casts a spell of the client's rows, registered through itemhelpers.CreateWeaponProcSpell
+/// over shared.SpellDataProcDamageSpell. The trigger aura is the weapon's name and " Proc".
+const WEAPON_DAMAGE_PROCS: [(&str, i32); 17] = [
+    ("Barbaric Crossbow", 1291551),
+    ("Plaguefang", 1309315),
+    ("Wolfsbane", 1282503),
+    ("Venomstrike", 29653),
+    ("Stinging Viper", 1291663),
+    ("Alcor's Sunrazor", 18833),
+    ("Bloodfist", 16433),
+    ("Bonechill Hammer", 18276),
+    ("Darrowspike", 18276),
+    ("Coldrage Dagger", 1293790),
+    ("Glacial Blade", 18398),
+    ("Flame Wrath", 16559),
+    ("Masterwork Stormhammer", 16921),
+    ("Electrified Dagger", 23592),
+    ("Shadowstrike", 21170),
+    ("The Cruel Hand of Timmy", 17505),
+    ("Skullforge Reaver", 17484),
+];
+
+/// weapon_procs.go `procHitOutcome`: shared_utils.go `damageOutcome` by the runtime's name for a
+/// hit of the spell's defense type. A magic hit has no name: the effect's `can_crit` picks
+/// between the two magic appliers, as it does for every spell data damage proc.
+fn proc_hit_outcome(defense: DefenseType, cannot_crit: bool) -> Option<&'static str> {
+    match (defense, cannot_crit) {
+        (DefenseType::Melee, true) => Some("melee_special_hit"),
+        (DefenseType::Melee, false) => Some("melee_special_hit_and_crit"),
+        (DefenseType::Ranged, true) => Some("ranged_hit"),
+        (DefenseType::Ranged, false) => Some("ranged_hit_and_crit"),
+        _ => None,
+    }
+}
+
+/// weapon_procs.go `procTickOutcome`: spelldata `Spell.TickOutcome` by the runtime's name.
+fn proc_tick_outcome(row: &Spell) -> &'static str {
+    let magic = row.defense_type_core() == DefenseType::Magic;
+    match (row.periodic_can_crit(), magic) {
+        (true, true) => "tick_magic_hit_and_crit",
+        (true, false) => "tick_physical_crit",
+        (false, true) => "tick_magic_hit",
+        (false, false) => "tick",
+    }
+}
+
+/// weapon_procs.go `weaponDamageProcEffects`: the spell shared_utils.go
+/// `spellDataProcDamageSpell` builds, cast at once by the handler on the unit hit: the row's direct
+/// hit rolled once, or for a chain once a target on the amount the previous jump keeps, on the
+/// table the spell's defense type names, then the damage over time the row carries on the targets
+/// it landed on. An area hit is calculated on every target, or on the row's cap of them from the
+/// target out, and a split one shares one roll. A hit with a missile speed is dealt after its
+/// travel. A row that also puts a debuff on the target is not described.
+fn weapon_damage_proc_effects(env: &Environment, unrepresented: &mut Vec<String>) -> Vec<Value> {
+    let mut effects = Vec::new();
+    let level = env.sim.unit(env.player).level;
+    for (label, damage_id) in WEAPON_DAMAGE_PROCS {
+        let Some(aura) = aura_named(env, &format!("{label} Proc")) else {
+            continue;
+        };
+        let damage = must_find(damage_id);
+        let position = spell_position(env, &ActionId::spell(damage.id));
+        let (direct, periodic) = (damage.damage_effect(), damage.periodic_damage_effect());
+        let a = env.sim.aura(aura);
+        let (Some(position), Some(dpm), false) = (position, a.dpm.as_ref(), a.icd.is_some()) else {
+            unrepresented.push(format!("{label}'s proc has no proc manager or spell"));
+            continue;
+        };
+        let defense = env.sim.spell(spell_at(env, position)).defense_type;
+        let outcome = proc_hit_outcome(defense, damage.cannot_crit());
+        let refusal = if direct.is_nil() && periodic.is_nil() {
+            Some("deals no damage")
+        } else if damage.debuffs_the_target() {
+            Some("debuffs the target")
+        } else if !periodic.is_nil() && (direct.hits_an_area() || direct.chain_targets > 1) {
+            Some("spreads and leaves a damage over time")
+        } else if !periodic.is_nil() && direct.is_nil() && damage.speed != 0.0 {
+            Some("is a missile that carries only a damage over time")
+        } else if !periodic.is_nil() && proc_tick_outcome(damage) == "tick_magic_hit" {
+            Some("has ticks that roll a magic hit without a crit")
+        } else if !matches!(
+            defense,
+            DefenseType::Magic | DefenseType::Melee | DefenseType::Ranged
+        ) {
+            Some("rolls no known hit table")
+        } else {
+            None
+        };
+        if let Some(refusal) = refusal {
+            unrepresented.push(format!("{label}'s proc {refusal}"));
+            continue;
+        }
+        let chances = dpm_chances(env, dpm, |spell| {
+            !spell.flags.matches(SpellFlag::SUPPRESS_WEAPON_PROCS)
+        });
+        let triggers: Vec<Value> = chances
+            .iter()
+            .map(|chance| chance["spell"].clone())
+            .collect();
+        let mut effect = json!({
+            "kind": "spell_data_damage_proc", "trigger_aura": a.label, "trigger_spells": triggers,
+            "landed_only": true, "require_damage": false, "proc_chance": 1.0, "chances": chances,
+            "spell": position, "average": 0.0, "variance": 0.0, "can_crit": !damage.cannot_crit(),
+        });
+        if !direct.is_nil() {
+            effect["average"] = json!(direct.average(level));
+            effect["variance"] = json!(direct.variance);
+            if let Some(outcome) = outcome {
+                effect["outcome"] = json!(outcome);
+            }
+            if direct.hits_an_area() {
+                effect["area"] = json!({
+                    "max_targets": i32::from(damage.max_targets), "splits": damage.splits_damage,
+                    "aoe_cap_multiplier": aoe_cap_multiplier(env),
+                });
+            } else if direct.chain_targets > 1 {
+                effect["chain"] = json!({
+                    "targets": i32::from(direct.chain_targets),
+                    "amp": f64::from(direct.chain_amp),
+                });
+            }
+        }
+        if !periodic.is_nil() {
+            effect["periodic"] = json!({
+                "tick_base": periodic.average(level), "tick_outcome": proc_tick_outcome(damage),
+                "with_direct": !direct.is_nil(),
+            });
+        }
+        effects.push(effect);
+    }
+    effects
+}
+
+/// weapon_procs.go `flurryAxeEffects`: common/forever/items_weapons.go Flurry Axe: a weapon proc
+/// on landed hits, at the weapon's proc manager, that casts a spell whose effect is one extra main
+/// hand attack at once (`AutoAttacks.ExtraMHAttack`). The spell deals nothing of its own.
+fn flurry_axe_effects(env: &Environment, unrepresented: &mut Vec<String>) -> Vec<Value> {
+    let Some(aura) = aura_named(env, "Flurry Axe Proc") else {
+        return Vec::new();
+    };
+    let position = spell_position(env, &ActionId::spell(18797));
+    let a = env.sim.aura(aura);
+    let (Some(position), Some(dpm), false) = (position, a.dpm.as_ref(), a.icd.is_some()) else {
+        unrepresented.push("Flurry Axe's proc has no proc manager or spell".to_string());
+        return Vec::new();
+    };
+    let chances = dpm_chances(env, dpm, |spell| {
+        !spell.flags.matches(SpellFlag::SUPPRESS_WEAPON_PROCS)
+    });
+    vec![json!({
+        "kind": "extra_attack_proc", "trigger_aura": a.label, "proc_chance": 1.0, "attacks": 1,
+        "chances": chances, "spell": position,
+    })]
+}
+
+/// weapon_procs.go `weaponAuraProcAuras`: common/forever/items_weapons.go Sword of Zeal and
+/// Argent Avenger, weapons whose chance on hit activates an aura of the row on the wearer,
+/// registered through itemhelpers.CreateWeaponProcAura. The aura is the row's effects parsed
+/// (`parse_effects`), the trigger the weapon's name and " Proc".
+pub(crate) const WEAPON_AURA_PROC_AURAS: [&str; 2] = ["Sword of Zeal", "Argent Avenger"];
+
+/// weapon_procs.go `weaponAuraProcEffects`: a weapon proc on landed hits at the weapon's proc
+/// manager whose handler, a spell batch window later, activates the aura. Only an aura without
+/// stacks is described. The parsed aura logs nothing, and its stat changes are read as stat auras.
+fn weapon_aura_proc_effects(env: &Environment, unrepresented: &mut Vec<String>) -> Vec<Value> {
+    let mut effects = Vec::new();
+    for name in WEAPON_AURA_PROC_AURAS {
+        let Some(trigger) = aura_named(env, &format!("{name} Proc")) else {
+            continue;
+        };
+        let trigger = env.sim.aura(trigger);
+        let aura = aura_named(env, name).map(|aura| env.sim.aura(aura));
+        let (Some(dpm), None, Some(aura)) = (trigger.dpm.as_ref(), trigger.icd, aura) else {
+            unrepresented.push(format!(
+                "{name}'s proc is not a chance on hit for an aura without stacks"
+            ));
+            continue;
+        };
+        if aura.max_stacks > 0 {
+            unrepresented.push(format!(
+                "{name}'s proc is not a chance on hit for an aura without stacks"
+            ));
+            continue;
+        }
+        effects.push(json!({
+            "kind": "stat_proc", "trigger_aura": trigger.label, "rng_label": trigger.label,
+            "aura": aura.label,
+            "chances": dpm_chances(env, dpm, |spell| {
+                !spell.flags.matches(SpellFlag::SUPPRESS_WEAPON_PROCS)
+            }),
+        }));
+    }
+    effects
+}
+
+/// weapon_procs.go `lobotomizerEffects`: common/forever/items_weapons.go The Lobotomizer: a weapon
+/// proc on landed hits, at the weapon's proc manager, that casts Brain Damage (1290950), a
+/// physical spell of the melee defense type that rolls 200 to 300 on the magic hit table with a
+/// crit, at once on the unit hit.
+fn lobotomizer_effects(env: &Environment, unrepresented: &mut Vec<String>) -> Vec<Value> {
+    let Some(aura) = aura_named(env, "The Lobotomizer Proc") else {
+        return Vec::new();
+    };
+    let position = spell_position(env, &ActionId::spell(1290950));
+    let a = env.sim.aura(aura);
+    let (Some(position), Some(dpm), false) = (position, a.dpm.as_ref(), a.icd.is_some()) else {
+        unrepresented.push("The Lobotomizer's proc has no proc manager or spell".to_string());
+        return Vec::new();
+    };
+    let chances = dpm_chances(env, dpm, |spell| {
+        !spell.flags.matches(SpellFlag::SUPPRESS_WEAPON_PROCS)
+    });
+    let triggers: Vec<Value> = chances
+        .iter()
+        .map(|chance| chance["spell"].clone())
+        .collect();
+    vec![json!({
+        "kind": "spell_data_damage_proc", "trigger_aura": a.label, "trigger_spells": triggers,
+        "landed_only": true, "require_damage": false, "proc_chance": 1.0, "chances": chances,
+        "spell": position, "average": 0.0, "variance": 0.0, "roll": [200.0, 300.0],
+        "can_crit": true,
+    })]
+}
+
 /// melee_procs.go `setStatProcs`: set bonuses common/forever/item_sets_classic.go `setStatProc`
 /// builds: a proc trigger on the set bonus aura, rolling its proc manager on the hits it hears,
 /// that activates a temporary stats aura a batch window later.
@@ -1375,6 +1600,8 @@ pub(crate) fn melee_proc_effects(env: &Environment, unrepresented: &mut Vec<Stri
     effects.extend(spell_data_heal_proc_effects(env, unrepresented));
     effects.extend(weapon_enchant_damage_proc_effects(env, unrepresented));
     effects.extend(proc_damage_item_effects(env, unrepresented));
+    effects.extend(weapon_damage_proc_effects(env, unrepresented));
+    effects.extend(lobotomizer_effects(env, unrepresented));
     effects.extend(set_stat_proc_effects(env, unrepresented));
     super::classic_export::crusader_effect(env, unrepresented, &mut effects);
     // common/classic/items_weapons.go Ironfoe (11684) and common/forever/items_trinkets.go Hand
@@ -1391,6 +1618,8 @@ pub(crate) fn melee_proc_effects(env: &Environment, unrepresented: &mut Vec<Stri
             }));
         }
     }
+    effects.extend(flurry_axe_effects(env, unrepresented));
+    effects.extend(weapon_aura_proc_effects(env, unrepresented));
     super::classic_export::dragons_call_effect(env, unrepresented, &mut effects);
     super::classic_export::sulfuras_effect(env, unrepresented, &mut effects);
     if let Some(chili) = super::consumable_effects::dragonbreath_chili_effect(env) {
@@ -1446,9 +1675,15 @@ pub(crate) fn gear_proc_effects(env: &Environment, unrepresented: &mut Vec<Strin
     // weapon's speed on landed hits; a batch window later the handler activates the target's
     // Puncture Armor and adds a stack, and each stack change moves the target's armor through
     // AddStatDynamic. The armor at each stack count is read from a separate reset simulation.
-    for name in ["Bashguuder", "Rivenspike"] {
-        let label = format!("{name} Proc");
-        let Some(trigger) = aura_named(env, &label) else {
+    // stat_bonus_procs_auto_gen.go Annihilator is the same through
+    // shared.NewSpellDataDebuffProc: the trigger carries the item's name, the row's Armor Shatter
+    // takes 165 armor a stack, and the handler applies it at once to the unit hit.
+    for (label, debuff_label, immediate) in [
+        ("Bashguuder Proc", "Puncture Armor", false),
+        ("Rivenspike Proc", "Puncture Armor", false),
+        ("Annihilator", "Armor Shatter 16928", true),
+    ] {
+        let Some(trigger) = aura_named(env, label) else {
             continue;
         };
         let Some(dpm) = env.sim.aura(trigger).dpm.clone() else {
@@ -1460,8 +1695,8 @@ pub(crate) fn gear_proc_effects(env: &Environment, unrepresented: &mut Vec<Strin
         };
         let mut scratch = env.fresh();
         let target = scratch.encounter.targets[0];
-        let Some(debuff) = scratch.sim.get_aura(target, "Puncture Armor") else {
-            unrepresented.push(format!("{label} has no Puncture Armor aura"));
+        let Some(debuff) = scratch.sim.get_aura(target, debuff_label) else {
+            unrepresented.push(format!("{label} has no {debuff_label} aura"));
             continue;
         };
         let mut armor = vec![0.0];
@@ -1471,13 +1706,17 @@ pub(crate) fn gear_proc_effects(env: &Environment, unrepresented: &mut Vec<Strin
             scratch.sim.set_stacks(debuff, stacks);
             armor.push(scratch.sim.stat(target, Stat::Armor) - base);
         }
-        effects.push(json!({
+        let mut effect = json!({
             "kind": "armor_debuff_proc", "trigger_aura": label, "rng_label": label,
             "chances": dpm_chances(env, &dpm, |spell| {
                 !spell.flags.matches(SpellFlag::SUPPRESS_WEAPON_PROCS)
             }),
             "aura": scratch.sim.aura(debuff).label, "armor_by_stacks": armor,
-        }));
+        });
+        if immediate {
+            effect["immediate"] = json!(true);
+        }
+        effects.push(effect);
     }
     effects
 }
