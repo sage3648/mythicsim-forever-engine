@@ -1358,10 +1358,10 @@ impl<A: Agent> Fight<A> {
                 *kind != ResourceKind::Mana
                     || max - casting_regen().mul_add(5.0, mana) >= (min + spread) * stone_multiplier
             }),
+            SpellBehavior::ExternalCooldown => self.external_cooldown_should_activate(spell),
             // Go's default ShouldActivate.
             SpellBehavior::Eureka
             | SpellBehavior::ActivateAura(_)
-            | SpellBehavior::ExternalCooldown
             | SpellBehavior::GoblinSapper
             | SpellBehavior::BasicExplosive { .. }
             | SpellBehavior::OnUseDamage(_)

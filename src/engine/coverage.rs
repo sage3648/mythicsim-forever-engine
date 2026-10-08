@@ -195,6 +195,7 @@ const COMMON_EFFECTS: &[&str] = &[
     "goblin_sapper",
     "inert_listener",
     "inert_pet",
+    "innervate_regen",
     "judgement_of_wisdom",
     "parry_haste",
     "player_movement",
@@ -400,6 +401,7 @@ fn common_claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         | Effect::AbsorbOnUse { aura, .. }
         | Effect::SpeedOnUse { aura, .. }
         | Effect::PowerInfusion { aura, .. }
+        | Effect::InnervateRegen { aura, .. }
         | Effect::ExternalCooldown { aura, .. } => vec![("player", aura)],
         Effect::JudgementOfWisdom { aura, .. } => vec![("target", aura)],
         Effect::RageBar { aura, .. } => vec![("player", aura)],

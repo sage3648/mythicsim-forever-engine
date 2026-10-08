@@ -23,6 +23,7 @@ pub(crate) mod exclusive;
 mod external_cooldown;
 mod focus;
 mod gear_procs;
+mod innervate;
 mod on_use_damage;
 pub(crate) mod proc_damage;
 pub(crate) use on_use_damage::known as on_use_damage_known;
@@ -1477,6 +1478,8 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) windfury: Option<Windfury>,
     /// The generated buffs other players cast on the player on cooldown.
     pub(crate) external_cooldowns: Vec<external_cooldown::ExternalCooldown>,
+    /// The auras other than the druid's own that carry Innervate's regeneration.
+    innervate_regens: Vec<innervate::InnervateRegen>,
     /// What Power Infusion multiplies, when the player has a copy of its aura.
     power_infusion: Option<power_infusion::PowerInfusion>,
     /// The player's healing dealt multiplier relative to its exported value, which Power
@@ -2740,6 +2743,18 @@ impl<A: Agent> Fight<A> {
                     _ => None,
                 }) {
                     AuraBehavior::MultiplyManaRegenSpeed(multiplier)
+                } else if let Some(index) = (side == Side::Player)
+                    .then(|| {
+                        effects
+                            .iter()
+                            .filter(|effect| matches!(effect, Effect::InnervateRegen { .. }))
+                            .position(|effect| {
+                                matches!(effect, Effect::InnervateRegen { aura, .. } if *aura == exported.label)
+                            })
+                    })
+                    .flatten()
+                {
+                    AuraBehavior::InnervateRegen(index)
                 } else if let Some(kind) = effects.iter().find_map(|effect| match effect {
                     Effect::WindfuryTotem {
                         totem_aura,
@@ -3149,6 +3164,7 @@ impl<A: Agent> Fight<A> {
             sulfuras: None,
             windfury: None,
             external_cooldowns: Vec::new(),
+            innervate_regens: Vec::new(),
             power_infusion: None,
             healing_dealt_factor: 1.0,
             chili: None,
@@ -3602,6 +3618,7 @@ impl<A: Agent> Fight<A> {
         }
         fight.bind_heal_procs(effects)?;
         fight.bind_power_infusion(effects)?;
+        fight.bind_innervate_regens(effects);
         fight.bind_external_cooldowns(effects, &player.auras)?;
         for effect in effects {
             if let Effect::AbsorbOnUse {

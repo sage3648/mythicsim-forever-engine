@@ -73,6 +73,9 @@ pub(crate) enum AuraBehavior<K> {
     /// Go `MultiplyManaRegenSpeed` on gain and its reciprocal on expire, as racials.go
     /// Energized does with 2 and 0.5.
     MultiplyManaRegenSpeed(f64),
+    /// Go `AttachInnervateRegen` on an aura that is not the druid's own, by its position in
+    /// `Fight::innervate_regens`.
+    InnervateRegen(usize),
     /// Go `NewTemporaryStatMultiplierAura`: the stats while active. Go recomputes every stat
     /// from the same inputs on each change, so expiry restores the prepared values exactly.
     TemporaryStats {
@@ -221,6 +224,8 @@ impl CallbackList {
 
 pub(crate) struct Aura<K> {
     pub(crate) label: String,
+    /// Go `Aura.Tag`, which `HasActiveAuraWithTag` matches.
+    pub(crate) tag: Option<String>,
     pub(crate) action_id: Option<ActionId>,
     /// Go `AuraMetrics.ID`, fixed at registration; a metric split retags `action_id` alone.
     pub(crate) metrics_id: Option<ActionId>,
@@ -298,6 +303,7 @@ impl<K> Tracker<K> {
         }
         self.auras.push(Aura {
             label: exported.label.clone(),
+            tag: exported.tag.clone(),
             action_id: exported.action_id.clone(),
             metrics_id: exported
                 .action_id
@@ -336,6 +342,7 @@ impl<K> Tracker<K> {
             .iter()
             .map(|aura| Aura {
                 label: aura.label.clone(),
+                tag: aura.tag.clone(),
                 action_id: aura.action_id.clone(),
                 metrics_id: aura.metrics_id.clone(),
                 duration: aura.duration,
@@ -410,6 +417,14 @@ impl<A: Agent> Fight<A> {
                 index,
             })
             .ok_or_else(|| format!("player aura {label} is not registered"))
+    }
+
+    /// Go `HasActiveAuraWithTag` on the player.
+    pub(crate) fn player_has_active_aura_with_tag(&self, tag: &str) -> bool {
+        self.trackers[Side::Player.index()]
+            .auras
+            .iter()
+            .any(|aura| aura.active && aura.tag.as_deref() == Some(tag))
     }
 
     pub(crate) fn aura_mut(&mut self, aura: AuraRef) -> &mut Aura<A::Aura> {
@@ -663,6 +678,7 @@ impl<A: Agent> Fight<A> {
             AuraBehavior::MultiplyManaRegenSpeed(multiplier) => {
                 self.multiply_mana_regen_speed(multiplier)
             }
+            AuraBehavior::InnervateRegen(index) => self.innervate_regen_gained(index),
             AuraBehavior::WindfuryProc { bit } => self.set_stat_mask(self.stat_mask | bit),
             AuraBehavior::SpellMods(index) => {
                 for position in 0..self.aura_mods[index].len() {
@@ -726,6 +742,7 @@ impl<A: Agent> Fight<A> {
             AuraBehavior::MultiplyManaRegenSpeed(multiplier) => {
                 self.multiply_mana_regen_speed(1.0 / multiplier)
             }
+            AuraBehavior::InnervateRegen(index) => self.innervate_regen_expired(index),
             AuraBehavior::Class(kind) => A::on_expire(self, aura, kind),
             _ => {}
         }
