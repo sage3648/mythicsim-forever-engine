@@ -7380,6 +7380,132 @@
         "file": "elemental-shaman-totem-of-thunder.go-log.txt",
         "sha256": "f9992fa946174044e08491f6bc8a0996f01a6279755e5f99409e79028d496d49"
       }
+    },
+    {
+      "id": "survival-hunter-iceblade-hacker",
+      "description": "Production Survival Hunter with Iceblade Hacker (13952) in the main hand and a weapon in the off hand, whose Frost hit of the melee defense type rolls the melee special table on the main hand's melee hits (NewProcDamageEffect)",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/survival-hunter-iceblade-hacker.request.json"
+      },
+      "prepared": "survival-hunter-iceblade-hacker.prepared.json",
+      "prepared_sha256": "3ddb09abd4a1da531b5482842ac7230fa5d0e1356cccedf3fcd7867517c1077b",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "survival-hunter-iceblade-hacker.go-result.json",
+        "sha256": "649e3fa8444b8b9d389555660dba784ed914c591312098a2ad61386b8b2ef9eb"
+      },
+      "go_log": {
+        "file": "survival-hunter-iceblade-hacker.go-log.txt",
+        "sha256": "b956ecb923f948910f57c88b99b42f00aebbb7c045e3283a9008d104783ee04c"
+      }
+    },
+    {
+      "id": "warrior-iceblade-hacker",
+      "description": "Production Warrior with Iceblade Hacker (13952) in the main hand and Cho'Rush in the off hand: only the main hand's hits proc the Frost hit",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-iceblade-hacker.request.json"
+      },
+      "prepared": "warrior-iceblade-hacker.prepared.json",
+      "prepared_sha256": "6cd07973e26a1156e6e05e494dba873d998b30bc9ed33c7cac66305ef277d97d",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-iceblade-hacker.go-result.json",
+        "sha256": "14dd319871ee4fe7ceecb8b6c3cc68af356a5a4840df38f727bebae6751489f3"
+      },
+      "go_log": {
+        "file": "warrior-iceblade-hacker.go-log.txt",
+        "sha256": "90a3e9d055d1c928abdc3fa198ed9fb68b3f9bbaa0ad15a29f538118c137a9b6"
+      }
+    },
+    {
+      "id": "arms-warrior-warblade-of-caer-darrow",
+      "description": "Production Arms Warrior with Warblade of Caer Darrow (13982), a two-hander, whose 28 Frost hit rolls the melee special table like Iceblade Hacker's",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/arms-warrior-warblade-of-caer-darrow.request.json"
+      },
+      "prepared": "arms-warrior-warblade-of-caer-darrow.prepared.json",
+      "prepared_sha256": "a011b0f75efbf84b6c283107eee4724ee50782f08f3d1a14e62a827eddd57e3f",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "arms-warrior-warblade-of-caer-darrow.go-result.json",
+        "sha256": "c8a6f7bf534522ac02eee9f929a1ce521e7fcf0000f6022905e20ecd36a72913"
+      },
+      "go_log": {
+        "file": "arms-warrior-warblade-of-caer-darrow.go-log.txt",
+        "sha256": "a3dbffa2051b207b64e3a7a2859c4bb5c680938c3e347bdcc5e032314dd0b77e"
+      }
+    },
+    {
+      "id": "warrior-warblade-of-caer-darrow-off-hand",
+      "description": "Production Warrior dual wielding with Warblade of Caer Darrow (13982) in the off hand, a placement the client never allows a two-hander but Go slots when the main hand is taken: only the off hand's hits proc the Frost hit",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-warblade-of-caer-darrow-off-hand.request.json"
+      },
+      "prepared": "warrior-warblade-of-caer-darrow-off-hand.prepared.json",
+      "prepared_sha256": "9af9d962003bda1dcea57bfda5120efe65325819bef73b5dac0f072d3bc02e33",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-warblade-of-caer-darrow-off-hand.go-result.json",
+        "sha256": "8a05232459a5d99349626bcfc5ed37070ff9724ba99ebcc3e71aaa444a844518"
+      },
+      "go_log": {
+        "file": "warrior-warblade-of-caer-darrow-off-hand.go-log.txt",
+        "sha256": "38724f871014a010a2ea1f3211b12d663110e07e4351aa8c3892f8cce6f02a6d"
+      }
+    },
+    {
+      "id": "warrior-warblade-of-caer-darrow-both-hands",
+      "description": "Production Warrior dual wielding two Warblades of Caer Darrow (13982), a placement the client never allows: both hands' hits proc the Frost hit, each at the chance of its own hand",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-warblade-of-caer-darrow-both-hands.request.json"
+      },
+      "prepared": "warrior-warblade-of-caer-darrow-both-hands.prepared.json",
+      "prepared_sha256": "4204a8898690176ad7cd6aa7f83928815304f2b9cb714d4bbf59547ef2692504",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-warblade-of-caer-darrow-both-hands.go-result.json",
+        "sha256": "cb9bb884dae090a8582d4e82ea3fe183fcb0e2e4f388fdf39cfa26e1c8fda5a7"
+      },
+      "go_log": {
+        "file": "warrior-warblade-of-caer-darrow-both-hands.go-log.txt",
+        "sha256": "d1101240646c9f2e2ae1a21d6b1955b76b968f421ca4396ba1123eb0ab8afc50"
+      }
+    },
+    {
+      "id": "enhancement-shaman-iceblade-hacker",
+      "description": "Enhancement Shaman dual wielding with Iceblade Hacker (13952) in the main hand under Windfury Totem and Crusader: Windfury's extra attack and the weapon enchants' hits are melee hits too",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/enhancement-shaman-iceblade-hacker.request.json"
+      },
+      "prepared": "enhancement-shaman-iceblade-hacker.prepared.json",
+      "prepared_sha256": "339a4977f7500abf0ce104e2189870ac805aa5c43f9a4cf55b600c5c6e2b01a2",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "enhancement-shaman-iceblade-hacker.go-result.json",
+        "sha256": "29d2a90ce8df22917dbb3c66bbd89199148fd5d155564193a135504f038e8041"
+      },
+      "go_log": {
+        "file": "enhancement-shaman-iceblade-hacker.go-log.txt",
+        "sha256": "553602644ae836c471cbe7ea877b23ccccf30567eb9bf70bb114fbca4130f76d"
+      }
     }
   ]
 }
