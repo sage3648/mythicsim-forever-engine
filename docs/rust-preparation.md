@@ -27,13 +27,13 @@ flowchart LR
 Every class is prepared: Druid, Hunter and its pets, Mage, Paladin, Priest and its
 Shadowfiend, Rogue, Shaman, Warlock and its demons, and Warrior, with tanking, 2 to 5 targets,
 raid buffs and debuffs, consumables, the item and enchant effects and set bonuses Go registers
-in code, racials and the rotation's construction. All 538 accepted fixtures prepare in Rust and
+in code, racials and the rotation's construction. All 584 accepted fixtures prepare in Rust and
 equal the exporter's state exactly.
 
 What is refused, each with a stable code, is what Go cannot export either (the exporter's
 unrepresented notes, such as a Restoration shaman, mob type bonus stats or an on-use item without
 an exported effect) and a few inputs no fixture or sweep reaches yet, such as a target disabled
-at start, item swaps, rotation groups and variables, or a race without base stats for its class.
+at start, item swaps, or a race without base stats for its class.
 
 ## Commands
 

@@ -97,11 +97,25 @@ fn unsupported_sequence_steps_and_channel_targets_are_named() {
     let mut value = production();
     let sequence = &mut item(&mut value, "strictSequence")["action"]["strictSequence"];
     sequence["actions"][0] = json!({"wait": {"duration": {"const": {"val": "1s"}}}});
+    assert!(reasons(value)
+        .contains(&"rotation item 6: strictSequence action wait is unsupported".into()));
+
+    // A channel is cast on the current target; a target that names no unit drops it.
+    let mut value = production();
     let channel = &mut item(&mut value, "channelSpell")["action"]["channelSpell"];
     channel["target"] = json!({"type": "Self"});
-    let reasons = reasons(value);
-    assert!(reasons.contains(&"rotation item 6: strictSequence action wait is unsupported".into()));
-    assert!(reasons.contains(&"rotation item 9: channelSpell field target is unsupported".into()));
+    let refused = reasons(value);
+    assert!(
+        refused.iter().any(
+            |reason| reason.starts_with("rotation item 9: channelSpell of spell")
+                && reason.ends_with("on a unit other than the current target is unsupported")
+        ),
+        "{refused:?}"
+    );
+    let mut value = production();
+    let channel = &mut item(&mut value, "channelSpell")["action"]["channelSpell"];
+    channel["target"] = json!({"type": "AllTargets"});
+    assert!(check_prepared(&parse(value)).is_ok());
 }
 
 #[test]

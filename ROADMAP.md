@@ -41,7 +41,7 @@ Milestones advance on evidence, not promised delivery dates. The
   result, and the [release and rollback process](docs/release.md).
 - [Rust preparation](docs/rust-preparation.md): the engine builds every class's character
   from the application's request itself, as the pinned Go engine constructs it, and writes
-  the same prepared state as the exporter. All 538 accepted fixtures prepare in Rust and
+  the same prepared state as the exporter. All 584 accepted fixtures prepare in Rust and
   equal the exporter's state exactly; a request it does not cover is refused with a code and
   the exporter prepares it, so routed jobs no longer start the Go exporter.
 - [Shadow sims](docs/shadow-sims.md) on real MythicSim traffic: no mismatch with the

@@ -104,7 +104,6 @@ pub(crate) enum PaladinAura {
     HolyLightHasteAura(usize),
     Illumination,
     EyeForAnEye,
-    PursuitOfJustice,
 }
 
 /// Paladin state that Go keeps in the `Paladin` struct and its closures.
@@ -148,8 +147,6 @@ pub(crate) struct PaladinAgent {
     lay_on_hands: Vec<(f64, usize)>,
     illumination: Option<Illumination>,
     eye_for_an_eye: Option<EyeForAnEye>,
-    /// Pursuit of Justice's movement speed multiplier before its gain, and its bonus.
-    pursuit_of_justice: Option<(f64, f64)>,
     forbearance: Option<AuraRef>,
     pub(crate) templars_bulwark: Option<TemplarsBulwark>,
 }
@@ -404,9 +401,6 @@ impl PaladinAgent {
                 }
                 Effect::EyeForAnEye { trigger_aura, .. } => {
                     auras.push((trigger_aura.clone(), PaladinAura::EyeForAnEye))
-                }
-                Effect::PursuitOfJustice { aura, .. } => {
-                    auras.push((aura.clone(), PaladinAura::PursuitOfJustice))
                 }
                 _ => {}
             }
@@ -782,13 +776,6 @@ impl PaladinAgent {
                         reflected: 0.0,
                     });
                 }
-                Effect::PursuitOfJustice {
-                    initial_multiplier,
-                    bonus,
-                    ..
-                } => {
-                    fight.agent.pursuit_of_justice = Some((*initial_multiplier, *bonus));
-                }
                 _ => {}
             }
         }
@@ -1015,16 +1002,6 @@ impl Agent for PaladinAgent {
         })
     }
 
-    fn on_exclusive_gain(fight: &mut Fight<Self>, _aura: AuraRef, kind: PaladinAura) {
-        if kind == PaladinAura::PursuitOfJustice {
-            let (initial, bonus) = fight
-                .agent
-                .pursuit_of_justice
-                .expect("Pursuit of Justice is bound");
-            retribution::log_movement_speed(fight, initial, initial * (1.0 + bonus));
-        }
-    }
-
     fn on_gain(fight: &mut Fight<Self>, _aura: AuraRef, kind: PaladinAura) {
         Self::protection_toggle(fight, kind, true);
         match kind {
@@ -1055,13 +1032,6 @@ impl Agent for PaladinAgent {
                 fight.agent.holy_light_haste[position].toggle(fight, false)
             }
             PaladinAura::CrusaderJudgement(member) => crusader::toggle(fight, member, false),
-            PaladinAura::PursuitOfJustice => {
-                let (initial, bonus) = fight
-                    .agent
-                    .pursuit_of_justice
-                    .expect("Pursuit of Justice is bound");
-                retribution::log_movement_speed(fight, initial * (1.0 + bonus), initial);
-            }
             _ => {}
         }
         if kind == PaladinAura::DivineFavor {

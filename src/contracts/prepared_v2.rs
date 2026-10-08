@@ -1368,11 +1368,16 @@ pub enum Effect {
         gain_log: String,
         expire_log: String,
     },
-    /// movement.go: a unit that moves in the prepull. `speed_multiplier` is the player's
-    /// `PseudoStats.MovementSpeedMultiplier` after the reset, and `speed_auras` names every aura
-    /// whose gain or fade could change it other than the class's own dash.
+    /// movement.go: a player that moves, or whose movement speed an aura changes.
+    /// `speed_multiplier` is the player's `PseudoStats.MovementSpeedMultiplier` after the reset,
+    /// and `initial_speed_multiplier` what every reset restores before the permanent auras
+    /// change it (the value after the reset where absent). `speed_auras` names every aura whose
+    /// gain or fade changes it in the passive and active movement speed categories, which the
+    /// runtime enforces and follows, and Elemental Blessing, which multiplies it directly.
     PlayerMovement {
         speed_multiplier: f64,
+        #[serde(default)]
+        initial_speed_multiplier: Option<f64>,
         speed_auras: Vec<String>,
     },
     /// sim/warrior/charge.go: the prepull cast that gives rage, triples the warrior's movement

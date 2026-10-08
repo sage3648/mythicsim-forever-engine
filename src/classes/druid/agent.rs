@@ -110,8 +110,6 @@ pub(crate) struct DruidAgent {
     forms: Option<Rc<Forms>>,
     /// Go `Druid.form`.
     pub(crate) form: u8,
-    /// Go `PseudoStats.MovementSpeedMultiplier`, which only logs in scope.
-    pub(crate) movement_speed: f64,
     /// Go `lastCatFormEnergy` and `lastCatFormExitAt`, which no reset clears.
     pub(crate) last_cat_form_energy: f64,
     pub(crate) last_cat_form_exit: i64,
@@ -161,7 +159,6 @@ impl Default for DruidAgent {
             eclipse: None,
             forms: None,
             form: forms::HUMANOID,
-            movement_speed: 1.0,
             last_cat_form_energy: 0.0,
             last_cat_form_exit: 0,
             cat_form: None,
@@ -544,8 +541,6 @@ impl DruidAgent {
                     threat_multiplier,
                     initial_spirit_regen_multiplier,
                     spirit_regen_multiplier,
-                    initial_movement_speed_multiplier,
-                    movement_speed_bonus,
                     furor_max,
                     cost_spells,
                     gcd_spells,
@@ -553,6 +548,7 @@ impl DruidAgent {
                     form_breaking_spells,
                     main_hand,
                     cat_weapon,
+                    ..
                 } => {
                     let spell = find_spell(&fight, *spell_id, 0)
                         .ok_or("Cat Form's spell is not registered")?;
@@ -568,8 +564,6 @@ impl DruidAgent {
                             threat_multiplier: *threat_multiplier,
                             initial_spirit_regen_multiplier: *initial_spirit_regen_multiplier,
                             spirit_regen_multiplier: *spirit_regen_multiplier,
-                            initial_movement_speed_multiplier: *initial_movement_speed_multiplier,
-                            movement_speed_bonus: *movement_speed_bonus,
                             furor_max: *furor_max,
                             cost_spells,
                             gcd_spells,
@@ -1159,7 +1153,6 @@ impl Agent for DruidAgent {
         if let Some(cat) = fight.agent.cat_form.clone() {
             fight.player.threat_multiplier = cat.initial_threat_multiplier;
             fight.player.spirit_regen_multiplier = cat.initial_spirit_regen_multiplier;
-            fight.agent.movement_speed = cat.initial_movement_speed_multiplier;
             fight.player.powers = fight.stat_combos[0];
         }
         if let Some(bear) = fight.agent.bear_form.clone() {
@@ -1265,13 +1258,9 @@ impl Agent for DruidAgent {
     }
 
     fn on_exclusive_gain(fight: &mut Fight<Self>, _aura: AuraRef, kind: DruidAura) {
-        match kind {
-            DruidAura::CatForm => Self::cat_form(fight).on_exclusive_gain(fight),
-            DruidAura::FaerieFire => {
-                let faerie_fire = fight.agent.faerie_fire.expect("Faerie Fire is bound");
-                faerie_fire.on_exclusive_gain(fight);
-            }
-            _ => {}
+        if kind == DruidAura::FaerieFire {
+            let faerie_fire = fight.agent.faerie_fire.expect("Faerie Fire is bound");
+            faerie_fire.on_exclusive_gain(fight);
         }
     }
 

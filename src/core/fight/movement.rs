@@ -31,6 +31,13 @@ pub(crate) struct Movement {
     pub(crate) action: Handle,
 }
 
+impl Movement {
+    /// Go `MovementAction.NextActionAt`: when the move ends.
+    pub(crate) fn end(&self) -> i64 {
+        self.end
+    }
+}
+
 impl<A: Agent> Fight<A> {
     /// The unit's Movement aura and spell, by Go's `OtherActionMove`.
     fn movement_parts(&self, side: Side) -> (AuraRef, SpellId) {
@@ -118,6 +125,15 @@ impl<A: Agent> Fight<A> {
         let time = (distance.abs() / speed * 1000.0) as i64 * crate::core::time::NS_PER_MILLISECOND;
         let signed = if distance < 0.0 { -speed } else { speed };
         self.register_movement(side, signed, self.now + time, distance);
+    }
+
+    /// Go `Unit.MoveDuration`: a move that covers no distance and lasts the duration.
+    pub(crate) fn move_duration(&mut self, side: Side, duration: i64) {
+        if duration == 0 {
+            return;
+        }
+        self.update_position(side, false);
+        self.register_movement(side, 0.0, self.now + duration, 0.0);
     }
 
     /// Go `registerMovementAction`.

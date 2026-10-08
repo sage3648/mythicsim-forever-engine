@@ -14,9 +14,6 @@ pub(crate) const GATE: ClassGate = ClassGate {
     limits,
     several_targets: Some(crate::engine::coverage::no_limits),
     tanks_several_targets: true,
-    player_movement: true,
-    rotation_movement: false,
-    ranged_movement: false,
     other_target_casts: Some(crate::engine::coverage::no_limits),
 };
 

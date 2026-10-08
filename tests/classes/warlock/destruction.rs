@@ -78,7 +78,7 @@ fn curse_of_the_elements_needs_its_effect() {
 }
 
 /// The player and the targets are units in scope for a source unit, and the sets of all targets
-/// and of all players name no unit, as in Go; other players and pets are not.
+/// and of all players, and other players of the raid, name no unit, as in Go; pets are not.
 #[test]
 fn aura_source_units_outside_scope_are_unsupported() {
     for source in [
@@ -86,6 +86,7 @@ fn aura_source_units_outside_scope_are_unsupported() {
         json!({"type": "PreviousTarget"}),
         json!({"type": "AllTargets"}),
         json!({"type": "AllPlayers"}),
+        json!({"type": "Player", "index": 1}),
     ] {
         let mut value = production();
         let condition =
@@ -97,7 +98,8 @@ fn aura_source_units_outside_scope_are_unsupported() {
     let mut value = production();
     let condition =
         &mut value["player"]["rotation"]["priorityList"][CURSE_ITEM]["action"]["condition"];
-    condition["not"]["val"]["auraIsActive"]["sourceUnit"] = json!({"type": "Player", "index": 1});
+    condition["not"]["val"]["auraIsActive"]["sourceUnit"] =
+        json!({"type": "Pet", "owner": {"type": "Self"}});
     let reasons = reasons(value);
     assert!(
         reasons.iter().any(|reason| reason.starts_with(&format!(

@@ -36,16 +36,6 @@ pub(crate) struct ClassGate {
     /// Whether the class's listeners of the hits its player takes answer the copy of the boss
     /// that swung, so a tank of the class can face several targets, each swinging at it.
     pub(crate) tanks_several_targets: bool,
-    /// Whether a prepull move of the player has been compared with Go for the class: its
-    /// melee swings stop and start with the range, and nothing else the class does reads the
-    /// player's distance.
-    pub(crate) player_movement: bool,
-    /// Whether the rotation's moves, which the player runs once ready, have been compared with
-    /// Go for the class.
-    pub(crate) rotation_movement: bool,
-    /// Whether the player's moves have been compared with Go for the class with a ranged auto
-    /// swing, which cannot fire while the player moves and stops and starts with the range.
-    pub(crate) ranged_movement: bool,
     /// The class's limits on a rotation cast aimed at a target past the first: the spells it
     /// casts there, whose effects and debuffs must land on that target as in Go. None for a
     /// class whose spells have not been checked against it.
@@ -132,7 +122,7 @@ pub const REFUSAL_CODES: &[(&str, &str)] = &[
     ),
     (
         "movement_unsupported",
-        "a move of the player in the rotation that Rust does not simulate for the class",
+        "a move of the player in the rotation that Rust cannot simulate: no movement speed exported, or a value Go would panic on",
     ),
     (
         "cooldown_unsupported",
@@ -552,6 +542,22 @@ fn undirected_procs(prepared: &PreparedV2) -> Vec<String> {
         .collect()
 }
 
+/// Runeblade of Baron Rivendare's Unholy Aura starts a periodic action as it gains, which gives
+/// the wearer 60 health every five seconds; the runtime runs no such action.
+fn unholy_aura_regeneration(prepared: &PreparedV2) -> Vec<String> {
+    prepared
+        .player
+        .auras
+        .iter()
+        .filter(|aura| aura.label == "Unholy Aura")
+        .map(|_| {
+            "player aura \"Unholy Aura\" regenerates health every five seconds, which the \
+             runtime does not run"
+                .to_string()
+        })
+        .collect()
+}
+
 /// Dots of two spells that share one aura on the target. Go registers an aura once per label, so
 /// two spells of the same name, as Plaguefang's and Stinging Viper's Poison, put their dots on one
 /// aura, whose gain and expiry run both dots' callbacks. The runtime follows that for the dots of
@@ -879,7 +885,14 @@ fn tank_limits(
             named.insert(format!("{unit}:{label}"));
         }
         // A class may activate any aura its effect carries without claiming it, so every label
-        // an effect names on either unit counts.
+        // an effect names on either unit counts. The movement effect only lists the auras whose
+        // effects change the speed, and a refresh effect only the auras a rotation reads.
+        if matches!(
+            effect,
+            Effect::PlayerMovement { .. } | Effect::AuraShouldRefresh { .. }
+        ) {
+            continue;
+        }
         if let Ok(value) = serde_json::to_value(effect) {
             let mut strings = Vec::new();
             collect_strings(&value, &mut strings);
@@ -1343,6 +1356,18 @@ pub(crate) fn prepared_coverage(
     }
 
     if let Some(rotation) = rotation {
+        // The groups' actions the references run are read as items of the priority list.
+        let flattened = match flatten_groups(prepared, rotation) {
+            Ok(flattened) => flattened,
+            Err(reason) => {
+                reasons.push(Refusal::new("rotation_unsupported", reason));
+                Rotation {
+                    groups: Vec::new(),
+                    ..rotation.clone()
+                }
+            }
+        };
+        let rotation = &flattened;
         reasons.extend(coded(
             "aura_condition_unsupported",
             aura_refresh_conditions(prepared, rotation),
@@ -1384,14 +1409,31 @@ pub(crate) fn prepared_coverage(
                 continue;
             }
             // Go registers every move: its range is read when it runs.
-            if let Action::Move(_) = &prepull.action {
+            if let Action::Move(_) | Action::MoveDuration(_) = &prepull.action {
                 registered_prepull += 1;
                 prepull_moves = true;
             }
-            if let Action::CastSpell { spell: id, .. } = &prepull.action {
-                if let Some(spell) = rotation_spell(prepared, id) {
-                    registered_prepull += 1;
-                    reachable.push(spell);
+            // Go newActionCastSpell: a target that names no unit builds no action. The runtime
+            // casts a prepull action on the first target.
+            if let Action::CastSpell { spell: id, target } = &prepull.action {
+                match target.resolve(prepared.encounter.target_count.max(1) as usize) {
+                    None => {}
+                    Some(unit) => {
+                        if let Some(spell) = rotation_spell(prepared, id) {
+                            registered_prepull += 1;
+                            reachable.push(spell);
+                            if unit != Unit::Target(0) {
+                                reasons.push(Refusal::new(
+                                    "several_targets_unsupported",
+                                    format!(
+                                        "prepull action {}: castSpell of {id} at a unit other \
+                                         than the first target is unsupported",
+                                        prepull.position
+                                    ),
+                                ));
+                            }
+                        }
+                    }
                 }
             }
             // Go GetAPLAura on the player: a known aura registers the action.
@@ -1422,7 +1464,7 @@ pub(crate) fn prepared_coverage(
             }
             match &item.action {
                 // Go registers every move: its range is read when it runs.
-                Action::Move(_) => rotation_moves = true,
+                Action::Move(_) | Action::MoveDuration(_) => rotation_moves = true,
                 Action::AutocastOtherCooldowns => {
                     for cooldown in &player.major_cooldowns {
                         // A survival cooldown without timings waits for a health threshold Go
@@ -1456,8 +1498,15 @@ pub(crate) fn prepared_coverage(
                         reachable.extend(cooldown_spell(prepared, cooldown));
                     }
                 }
+                // Go builds no cast for a target that names no unit, so it reaches no spell.
+                Action::CastSpell { target, .. } | Action::ChannelSpell { target, .. }
+                    if target
+                        .resolve(prepared.encounter.target_count.max(1) as usize)
+                        .is_none() => {}
                 action => {
-                    for id in action.spells() {
+                    for id in
+                        action.reachable_spells(prepared.encounter.target_count.max(1) as usize)
+                    {
                         reachable.extend(rotation_spell(prepared, id));
                     }
                 }
@@ -1466,13 +1515,17 @@ pub(crate) fn prepared_coverage(
         if prepull_moves {
             reasons.extend(coded(
                 "prepull_unsupported",
-                player_movement_limits(prepared, gate, true),
+                player_movement_limits(prepared, true),
             ));
         }
         if rotation_moves {
             reasons.extend(coded(
                 "movement_unsupported",
-                player_movement_limits(prepared, gate, false),
+                player_movement_limits(prepared, false),
+            ));
+            reasons.extend(coded(
+                "movement_unsupported",
+                moves_without_values(prepared, rotation),
             ));
         }
         reasons.extend(coded("class_limit", (gate.limits)(prepared, &reachable)));
@@ -1486,6 +1539,10 @@ pub(crate) fn prepared_coverage(
         ));
         reasons.extend(coded("proc_unsupported", undirected_procs(prepared)));
         reasons.extend(coded("effect_unimplemented", shared_dot_auras(prepared)));
+        reasons.extend(coded(
+            "effect_unimplemented",
+            unholy_aura_regeneration(prepared),
+        ));
         reasons.extend(coded(
             "stat_change_unsupported",
             fixed_stat_changes(prepared),
@@ -1637,6 +1694,39 @@ fn other_target_casts(
     let mut reasons = BTreeSet::new();
     let mut spells = Vec::new();
     for item in &rotation.priority_list {
+        // The runtime casts a step of a sequence on the first target.
+        if let Action::Sequence(steps) | Action::StrictSequence(steps) = &item.action {
+            for step in steps {
+                if !matches!(step.target.resolve(targets), None | Some(Unit::Target(0)))
+                    && rotation_spell(prepared, &step.spell).is_some()
+                    && !unreachable.contains(&item.position)
+                {
+                    reasons.insert(format!(
+                        "rotation item {}: a step of a sequence casting {} at a unit other than \
+                         the first target is unsupported",
+                        item.position, step.spell
+                    ));
+                }
+            }
+            continue;
+        }
+        // A channel runs on the current target only.
+        if let Action::ChannelSpell {
+            spell: id, target, ..
+        } = &item.action
+        {
+            if !matches!(target.resolve(targets), None | Some(Unit::Target(0)))
+                && rotation_spell(prepared, id).is_some()
+                && !unreachable.contains(&item.position)
+            {
+                reasons.insert(format!(
+                    "rotation item {}: channelSpell of {id} on a unit other than the current \
+                     target is unsupported",
+                    item.position
+                ));
+            }
+            continue;
+        }
         let Action::CastSpell { spell: id, target } = &item.action else {
             continue;
         };
@@ -1660,10 +1750,15 @@ fn other_target_casts(
             format!("target {}", position + 1)
         };
         if unit == Unit::Player {
-            reasons.insert(format!(
-                "rotation item {}: castSpell of {id} on the player is unsupported",
-                item.position
-            ));
+            // A helpful spell is cast on the player as `castFriendlySpell` casts it, which the
+            // class checks with the rest of its spells. Any other spell on the player is
+            // unsupported.
+            if !spell.has_flag("SpellFlagHelpful") {
+                reasons.insert(format!(
+                    "rotation item {}: castSpell of {id} on the player is unsupported",
+                    item.position
+                ));
+            }
         } else if spell.has_flag("SpellFlagChanneled")
             && spell.dot.as_ref().is_some_and(|dot| dot.unit != "self")
         {
@@ -1767,35 +1862,144 @@ fn energy_without_bar(prepared: &PreparedV2, rotation: &Rotation) -> Vec<String>
     reasons
 }
 
-/// What a prepull move of the player needs that the runtime does not follow: a class compared
-/// with Go, the speed the exporter read, no aura but the class's dash changing it, and no ranged
-/// swing that the move would stop.
-fn player_movement_limits(prepared: &PreparedV2, gate: &ClassGate, prepull: bool) -> Vec<String> {
+/// What a move of the player needs that the runtime does not follow: the speed the exporter
+/// read, which the auras that change it then multiply as Go does.
+fn player_movement_limits(prepared: &PreparedV2, prepull: bool) -> Vec<String> {
     let kind = if prepull { "a prepull move" } else { "a move" };
-    let mut reasons = Vec::new();
-    if !(if prepull {
-        gate.player_movement
+    let described = prepared
+        .effects
+        .iter()
+        .any(|effect| matches!(effect, Effect::PlayerMovement { .. }));
+    if described {
+        Vec::new()
     } else {
-        gate.rotation_movement
-    }) {
-        reasons.push(format!(
-            "{kind} is unsupported for {}",
-            prepared.player.class
-        ));
+        vec![format!("{kind} has no exported movement speed")]
     }
-    match prepared.effects.iter().find_map(|effect| match effect {
-        Effect::PlayerMovement { speed_auras, .. } => Some(speed_auras),
-        _ => None,
-    }) {
-        None => reasons.push(format!("{kind} has no exported movement speed")),
-        Some(auras) => reasons.extend(auras.iter().map(|aura| {
-            format!("{kind} with {aura}, which changes the movement speed, is unsupported")
-        })),
+}
+
+/// The rotation as the rest of the gate reads it: the groups bound, and the actions of each
+/// group a reference runs following the priority list as items of their own, each under the
+/// condition of the reference that runs it. The items of the groups nothing references never
+/// run, so they follow nothing. Go's references are bound as the rotation compiles, from the
+/// same conditions.
+fn flatten_groups(prepared: &PreparedV2, rotation: &Rotation) -> Result<Rotation, String> {
+    let aura = |id: &ActionId| find_aura(prepared, id);
+    let target_aura = |_: usize, id: &ActionId| find_unit_aura(&prepared.target.auras, id);
+    let spell = |id: &ActionId| rotation_spell_index(prepared, id);
+    let dot = |id: &ActionId, unit: Unit| rotation_dot(prepared, id, unit);
+    let dot_base_duration = |id: &ActionId| rotation_dot_base_duration(prepared, id);
+    let pet_auras = crate::core::fight::pet::pet_agent_auras(prepared);
+    let pet_aura_known =
+        |pet: usize, id: &ActionId| pet_auras.get(pet).is_some_and(|auras| auras.contains(id));
+    let lookup = Lookup {
+        aura: &aura,
+        target_aura: &target_aura,
+        targets: prepared.encounter.target_count.max(1) as usize,
+        spell: &spell,
+        dot: &dot,
+        dot_base_duration: &dot_base_duration,
+        pet_aura_known: &pet_aura_known,
+    };
+    let live = |index: usize| {
+        compile_condition(rotation.priority_list[index].condition.as_ref(), &lookup)
+            != crate::rotation::CompiledCondition::Pruned
+    };
+    let (settled, binding) = crate::rotation::bind(rotation, &live)?;
+    let mut flat = Rotation {
+        groups: Vec::new(),
+        ..settled
+    };
+    let mut position = flat
+        .priority_list
+        .iter()
+        .map(|item| item.position)
+        .max()
+        .unwrap_or(0);
+    // The items of the instance a reference runs, and of the instances their own references
+    // run.
+    fn append(
+        binding: &crate::rotation::Binding,
+        instance: usize,
+        condition: Option<Value>,
+        depth: usize,
+        position: &mut usize,
+        flat: &mut Vec<crate::rotation::Item>,
+    ) -> Result<(), String> {
+        if depth > 32 {
+            return Err("a group holds a reference to itself".into());
+        }
+        for (index, item) in binding.instances[instance].items.iter().enumerate() {
+            let own = match (&condition, &item.condition) {
+                (Some(outer), Some(inner)) => Some(Value::And(vec![outer.clone(), inner.clone()])),
+                (Some(only), None) | (None, Some(only)) => Some(only.clone()),
+                (None, None) => None,
+            };
+            *position += 1;
+            flat.push(crate::rotation::Item {
+                position: *position,
+                condition: own.clone(),
+                action: item.action.clone(),
+            });
+            let reference = crate::rotation::Reference::Nested {
+                instance,
+                item: index,
+            };
+            if let Some(nested) = binding.instance(reference) {
+                append(binding, nested, own, depth + 1, position, flat)?;
+            }
+        }
+        Ok(())
     }
-    if prepared.melee.auto_swing_ranged && !gate.ranged_movement {
-        reasons.push(format!("{kind} with a ranged auto swing is unsupported"));
+    for (index, item) in rotation.priority_list.iter().enumerate() {
+        if let Some(instance) = binding.instance(crate::rotation::Reference::Top(index)) {
+            append(
+                &binding,
+                instance,
+                item.condition.clone(),
+                0,
+                &mut position,
+                &mut flat.priority_list,
+            )?;
+        }
     }
-    reasons
+    Ok(flat)
+}
+
+/// Go builds a move without a value when the value it names gives none, and panics where it
+/// reads the range or the duration, which Rust cannot reproduce.
+fn moves_without_values(prepared: &PreparedV2, rotation: &Rotation) -> Vec<String> {
+    let aura = |id: &ActionId| find_aura(prepared, id);
+    let target_aura = |_: usize, id: &ActionId| find_unit_aura(&prepared.target.auras, id);
+    let spell = |id: &ActionId| rotation_spell_index(prepared, id);
+    let dot = |id: &ActionId, unit: Unit| rotation_dot(prepared, id, unit);
+    let dot_base_duration = |id: &ActionId| rotation_dot_base_duration(prepared, id);
+    let pet_auras = crate::core::fight::pet::pet_agent_auras(prepared);
+    let pet_aura_known =
+        |pet: usize, id: &ActionId| pet_auras.get(pet).is_some_and(|auras| auras.contains(id));
+    let lookup = Lookup {
+        aura: &aura,
+        target_aura: &target_aura,
+        targets: prepared.encounter.target_count.max(1) as usize,
+        spell: &spell,
+        dot: &dot,
+        dot_base_duration: &dot_base_duration,
+        pet_aura_known: &pet_aura_known,
+    };
+    rotation
+        .priority_list
+        .iter()
+        .filter_map(|item| match &item.action {
+            Action::Move(value) | Action::MoveDuration(value)
+                if crate::rotation::compile_raw_value(value, &lookup).is_none() =>
+            {
+                Some(format!(
+                    "rotation item {}: a move whose value gives none panics in Go",
+                    item.position
+                ))
+            }
+            _ => None,
+        })
+        .collect()
 }
 
 /// Whether Go prunes a prepull action for a constant false condition, which is the only use
@@ -1822,37 +2026,63 @@ fn prepull_pruned(prepared: &PreparedV2, prepull: &crate::rotation::Prepull) -> 
         == crate::rotation::CompiledCondition::Pruned
 }
 
-/// Whether the aura's exclusive effect at a position is one the runtime enforces: its category
-/// is a single aura category an `exclusive_category` effect of the unit describes, with the aura
-/// among its members, so the runtime reads Go's active effect, bids and remaining durations. An
-/// aura that stacks weighs its bid by its stacks, which no reading covers.
-fn described_category(
+/// Categories whose members change their bid while the fight runs without a stack count, such
+/// as Thunder Clap's on every cast, which the exported bid does not follow.
+const MOVING_BID_CATEGORIES: &[&str] = &["AtkSpdReduction"];
+
+/// Whether the runtime reads the aura's exclusive effect at a position as Go does. A single aura
+/// category an `exclusive_category` effect of the unit describes is enforced with its members'
+/// live bids, stacking ones included; any other single aura category is enforced from the
+/// exported memberships, which holds while no member's bid follows its stacks; a category that
+/// holds several auras refuses nothing, so the runtime tracks it, which holds while no member's
+/// bid follows its stacks or moves some other way.
+fn live_category(
     prepared: &PreparedV2,
     unit: &str,
     aura: &crate::contracts::prepared_v2::Aura,
     position: usize,
 ) -> bool {
-    if aura.max_stacks != 0 || aura.exclusive_memberships.len() != aura.exclusive_effects as usize {
+    if aura.exclusive_memberships.len() != aura.exclusive_effects as usize {
         return false;
     }
     let Some(membership) = aura.exclusive_memberships.get(position) else {
         return false;
     };
-    membership.single_aura
-        && prepared.effects.iter().any(|effect| {
-            matches!(effect, Effect::ExclusiveCategory { unit: u, category, members, .. }
-                if u == unit
-                    && *category == membership.category
-                    && members.iter().any(|member| member.aura == aura.label))
-        })
+    let described = prepared.effects.iter().any(|effect| {
+        matches!(effect, Effect::ExclusiveCategory { unit: u, category, members, .. }
+            if u == unit
+                && *category == membership.category
+                && members.iter().any(|member| member.aura == aura.label))
+    });
+    if described {
+        return true;
+    }
+    let auras = if unit == "target" {
+        &prepared.target.auras
+    } else {
+        &prepared.player.auras
+    };
+    // A stacking aura that bids nothing before its first stack is one whose bid follows its
+    // stacks, as spelldata's debuffs do, which only a category a class describes carries.
+    let stacking_bid = auras.iter().any(|member| {
+        member.max_stacks != 0
+            && member
+                .exclusive_memberships
+                .iter()
+                .any(|other| other.category == membership.category && other.priority == 0.0)
+    });
+    !stacking_bid
+        && (membership.single_aura
+            || !MOVING_BID_CATEGORIES.contains(&membership.category.as_str()))
 }
 
 /// Go `ShouldRefreshExclusiveEffects` depends on the other effects of each exclusive category,
-/// which Rust reads from an exported reading: an aura holding its category alone, one another
-/// aura holds for good, or one in a single aura category the export describes and the runtime
-/// enforces. Any other reading, or an aura the unit lacks, is unsupported.
+/// which Rust reads from the runtime's categories, or from an exported reading: an aura holding
+/// its category alone, or one another aura holds for good. Any other reading is unsupported. An
+/// aura the unit lacks gives no value in Go, and a unit that does not exist no aura.
 fn aura_refresh_conditions(prepared: &PreparedV2, rotation: &Rotation) -> Vec<String> {
     let mut reasons = Vec::new();
+    let targets = prepared.encounter.target_count.max(1) as usize;
     // Go `newAPLAction` builds an action before its condition, and a cast of a spell the player
     // lacks builds nothing, so the condition of such an item is never read.
     let kept = rotation.priority_list.iter().filter(|item| {
@@ -1868,16 +2098,18 @@ fn aura_refresh_conditions(prepared: &PreparedV2, rotation: &Rotation) -> Vec<St
     });
     for condition in conditions {
         condition.visit(&mut |value| {
-            let Value::AuraShouldRefresh { id, target, .. } = value else {
+            let Value::AuraShouldRefresh {
+                id, unit: reference, ..
+            } = value
+            else {
                 return;
             };
-            let (unit, auras) = if *target {
-                ("target", &prepared.target.auras)
-            } else {
-                ("player", &prepared.player.auras)
+            let (unit, auras) = match reference.resolve(targets) {
+                Some(Unit::Player) => ("player", &prepared.player.auras),
+                Some(Unit::Target(_)) => ("target", &prepared.target.auras),
+                None => return,
             };
             let Some(aura) = auras.iter().find(|aura| aura.action_id.as_ref() == Some(id)) else {
-                reasons.push(format!("auraShouldRefresh names {id}, which the {unit} lacks"));
                 return;
             };
             let read = prepared.effects.iter().any(|effect| {
@@ -1886,7 +2118,7 @@ fn aura_refresh_conditions(prepared: &PreparedV2, rotation: &Rotation) -> Vec<St
                         && modes.iter().enumerate().all(|(position, mode)| {
                             mode == "own"
                                 || mode == "never"
-                                || described_category(prepared, unit, aura, position)
+                                || live_category(prepared, unit, aura, position)
                         }))
             });
             if !read {

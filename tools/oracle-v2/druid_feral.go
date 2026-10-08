@@ -126,12 +126,7 @@ func druidFeralEffects(d *druid.Druid, character *core.Character) []map[string]a
 		mainHand := d.WeaponFromMainHand()
 		cat := d.GetCatWeapon()
 		// movement.go NewPassiveMovementSpeedEffect: the form's speed applies when its effect holds
-		// the category, which no other passive speed effect shares here.
-		for _, ee := range d.CatFormAura.ExclusiveEffects {
-			if privateField(ee.Category, "effects").Len() != 1 {
-				*classNotes = append(*classNotes, "Cat Form's movement speed shares its category")
-			}
-		}
+		// the category, which the player_movement effect describes with the aura.
 		effects = append(effects, map[string]any{
 			"kind": "cat_form", "spell_id": feralCatForm.Highest().ID, "aura": d.CatFormAura.Label,
 			"initial_threat_multiplier":       formStartThreat(d.CatFormAura.Label, druid.CatFormThreatMultiplier),

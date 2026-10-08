@@ -48,26 +48,23 @@ fn apl_cast_spell(env: &Environment, id: &ActionId) -> Option<SpellId> {
     apl_spell(env, id)
 }
 
-/// Whether an action's target reference resolves: Go `GetTargetUnit(...).Get() != nil`.
+/// Whether an action's target reference resolves: Go `GetTargetUnit(...).Get() != nil`. No
+/// reference, or one of an unknown type, is the current target.
 fn target_resolves(env: &Environment, target: Option<&Message>) -> Result<bool, Refusal> {
     let Some(target) = target else {
         return Ok(true);
     };
-    let kind = target.enum_name("type");
-    match kind.as_str() {
-        "Unknown" | "CurrentTarget" | "Self" => Ok(true),
-        "Target" => Ok((target.i32("index") as usize) < env.encounter.targets.len()),
-        "Player" => Ok(target.i32("index") == 0),
-        // Go's `NextActiveTargetUnit` and `PreviousActiveTargetUnit` always name a target of
-        // the player's current one.
-        "NextTarget" | "PreviousTarget" => Ok(env
-            .sim
-            .unit(env.player)
-            .current_target
-            .is_some_and(|t| env.encounter.targets.contains(&t))),
-        other => Err(Refusal::new(
+    if target.enum_name("type") == "Unknown" {
+        return Ok(true);
+    }
+    match source_unit(env, Some(target)) {
+        Ok(unit) => Ok(unit.is_some()),
+        Err(()) => Err(Refusal::new(
             "rotation",
-            format!("a rotation target of type {other} is not prepared yet"),
+            format!(
+                "a rotation target of type {} is not prepared yet",
+                target.enum_name("type")
+            ),
         )),
     }
 }
@@ -112,6 +109,8 @@ impl Built {
 
 struct Builder<'a> {
     env: &'a Environment,
+    /// Go `rot.valueVariables`: each variable's name and value.
+    variables: Vec<(String, Message)>,
     /// Go `rot.prunedActions`: impls of actions a constant false condition removed.
     pruned_casts: Vec<SpellId>,
     /// The values Go constructs: those of every action whose impl it builds, and their
@@ -251,6 +250,8 @@ fn source_unit(env: &Environment, reference: Option<&Message>) -> Result<Option<
     let kind = reference.map_or_else(|| "Unknown".to_string(), |r| r.enum_name("type"));
     match kind.as_str() {
         "Unknown" | "Self" => Ok(Some(env.player)),
+        // The raid holds one player, at index 0.
+        "Player" => Ok((reference.map_or(0, |r| r.i32("index")) == 0).then_some(env.player)),
         // Go `Environment.GetUnit` names no unit for the sets of all players and all targets.
         "AllPlayers" | "AllTargets" => Ok(None),
         "CurrentTarget" => Ok(env.sim.unit(env.player).current_target),
@@ -528,6 +529,27 @@ fn fold(env: &Environment, value: &Message) -> Folds {
 }
 
 impl Builder<'_> {
+    /// Go `newValueVariableRef` builds the value the variable names where it is read, and that
+    /// value can read variables too.
+    fn expand_variable_references(&self, built: &mut Vec<Message>) {
+        let mut next = 0;
+        while next < built.len() && built.len() < 4096 {
+            let value = built[next].clone();
+            next += 1;
+            let Some(("variable_ref", Value::Message(reference))) = value.oneof("value") else {
+                continue;
+            };
+            let name = reference.str("name");
+            let Some((_, resolved)) = self.variables.iter().find(|(variable, _)| variable == name)
+            else {
+                continue;
+            };
+            let mut inner = Vec::new();
+            values(resolved, &mut inner);
+            built.extend(inner.into_iter().cloned());
+        }
+    }
+
     /// Go `newAPLAction`: `None` for an action Go's constructor returns nil for or prunes.
     fn action(&mut self, config: Option<&Message>) -> Result<Option<Built>, Refusal> {
         let Some(config) = config else {
@@ -538,7 +560,9 @@ impl Builder<'_> {
         };
         let mut found = Vec::new();
         values(config, &mut found);
-        self.built_values.extend(found.into_iter().cloned());
+        let mut messages: Vec<Message> = found.into_iter().cloned().collect();
+        self.expand_variable_references(&mut messages);
+        self.built_values.extend(messages);
         // Go prunes an action whose condition folds to a constant false, and keeps its impl
         // so the spell it casts still leaves the major cooldowns.
         if let Some(condition) = config.message("condition") {
@@ -713,6 +737,14 @@ impl Builder<'_> {
             "autocast_other_cooldowns" | "wait" | "wait_until" | "move" | "move_duration" => {
                 Ok(Some(Built::new(Vec::new())))
             }
+            // Go `newActionGroupReference`: no action without a group name. The group's own
+            // actions are built with the groups.
+            "group_reference" => {
+                if action.str("group_name").is_empty() {
+                    return Ok(None);
+                }
+                Ok(Some(Built::new(Vec::new())))
+            }
             other => Err(Refusal::new(
                 "rotation",
                 format!("rotation action {other} is not prepared yet"),
@@ -747,6 +779,27 @@ fn values<'a>(message: &'a Message, out: &mut Vec<&'a Message>) {
     }
 }
 
+/// apl_values_aura.go `newValueAuraNumStacks`: a stack change and a reset callback on the aura
+/// the value reads. Go reads an aura the unit lacks as the constant 0 and registers nothing,
+/// and drops the value of an aura that does not stack.
+fn observe_stacks(env: &mut Environment, unit: UnitId, id: &ActionId) {
+    let aura = env
+        .sim
+        .unit(unit)
+        .auras
+        .iter()
+        .copied()
+        .find(|aura| env.sim.aura(*aura).action_id.as_ref() == Some(id));
+    if let Some(aura) = aura.filter(|aura| env.sim.aura(*aura).max_stacks > 0) {
+        env.sim.apply_on_stacks_change(
+            aura,
+            std::rc::Rc::new(|_: &mut super::sim::Sim, _, _, _| {}),
+        );
+        env.sim
+            .apply_on_reset(aura, std::rc::Rc::new(|_: &mut super::sim::Sim, _| {}));
+    }
+}
+
 /// What building the rotation's values registers: apl_values_aura.go `newValueAuraNumStacks`
 /// adds a stack change and a reset callback to the aura it reads, and apl_values_dot.go's base
 /// value reads register an aura, which preparation refuses for now.
@@ -776,28 +829,7 @@ fn register_value_observers(env: &mut Environment, built: &[Message]) -> Result<
                         ));
                     }
                 };
-                let aura = env
-                    .sim
-                    .unit(unit)
-                    .auras
-                    .iter()
-                    .copied()
-                    .find(|aura| env.sim.aura(*aura).action_id.as_ref() == Some(&id));
-                match aura {
-                    // Go reads an aura the unit lacks as the constant 0 and registers nothing.
-                    None => {}
-                    Some(aura) if env.sim.aura(aura).max_stacks > 0 => {
-                        env.sim.apply_on_stacks_change(
-                            aura,
-                            std::rc::Rc::new(|_: &mut super::sim::Sim, _, _, _| {}),
-                        );
-                        env.sim.apply_on_reset(
-                            aura,
-                            std::rc::Rc::new(|_: &mut super::sim::Sim, _| {}),
-                        );
-                    }
-                    Some(_) => {}
-                }
+                observe_stacks(env, unit, &id);
             }
             "dot_percent_increase"
             | "dot_crit_percent_increase"
@@ -889,6 +921,128 @@ fn spell_dot_of(env: &Environment, spell: SpellId, target: UnitId) -> Option<sup
     s.dots.get(index).copied().flatten()
 }
 
+/// The unit a parsed reference names as the rotation is built, `None` where Go finds none.
+fn unit_of(env: &Environment, reference: crate::rotation::UnitRef) -> Option<UnitId> {
+    use crate::rotation::{Unit as Resolved, UnitRef};
+    let targets = &env.encounter.targets;
+    match reference.resolve(targets.len())? {
+        Resolved::Player => Some(env.player),
+        Resolved::Target(position) => match reference {
+            UnitRef::CurrentTarget => env.sim.unit(env.player).current_target,
+            UnitRef::NextTarget => neighbour_target(env, true),
+            UnitRef::PreviousTarget => neighbour_target(env, false),
+            _ => targets.get(position).copied(),
+        },
+    }
+}
+
+/// The spells a group's action removes from the major cooldowns because it casts them, and the
+/// ones of a strict sequence Go drops for a missing step, which it still removes.
+fn group_casts(
+    env: &Environment,
+    action: &crate::rotation::Action,
+    casts: &mut Vec<SpellId>,
+    pruned: &mut Vec<SpellId>,
+) {
+    use crate::rotation::Action;
+    let targets = env.encounter.targets.len();
+    match action {
+        Action::CastSpell { spell, target } if target.resolve(targets).is_some() => {
+            casts.extend(apl_cast_spell(env, spell));
+        }
+        Action::CastAtPlayer(spell) => casts.extend(apl_cast_spell(env, spell)),
+        Action::ChannelSpell {
+            spell,
+            target,
+            interrupt_if: None,
+            ..
+        } if target.resolve(targets).is_some() => casts.extend(apl_cast_spell(env, spell)),
+        Action::Sequence(steps) => casts.extend(steps.iter().filter_map(|step| {
+            step.target
+                .resolve(targets)
+                .and_then(|_| apl_cast_spell(env, &step.spell))
+        })),
+        Action::StrictSequence(steps) => {
+            let found: Vec<Option<SpellId>> = steps
+                .iter()
+                .map(|step| {
+                    step.target
+                        .resolve(targets)
+                        .and_then(|_| apl_cast_spell(env, &step.spell))
+                })
+                .collect();
+            if found.iter().all(Option::is_some) {
+                casts.extend(found.into_iter().flatten());
+            } else {
+                pruned.extend(found.into_iter().flatten());
+            }
+        }
+        _ => {}
+    }
+}
+
+/// What building the groups and the variables they read adds, from the rotation parsed and its
+/// references bound: the casts removed from the major cooldowns, and the stack reads' callbacks
+/// on the auras. Go builds every group, referenced or not, and a variable's value where it is
+/// read, in a group's condition before the group's own value replaces it.
+fn build_groups(
+    env: &mut Environment,
+    rotation: &Message,
+    live: &[bool],
+) -> Result<(Vec<SpellId>, Vec<SpellId>), Refusal> {
+    let refuse = |reason: String| Refusal::new("rotation", reason);
+    let parsed = crate::rotation::parse(&rotation.to_protojson()).map_err(|reasons| {
+        refuse(format!(
+            "rotation groups and variables with {} are not prepared yet",
+            reasons.join("; ")
+        ))
+    })?;
+    let (_, binding) =
+        crate::rotation::bind(&parsed, &|index| live.get(index).copied() == Some(true))
+            .map_err(refuse)?;
+    let mut casts = Vec::new();
+    let mut pruned = Vec::new();
+    let mut reads = Vec::new();
+    // Each group as written, whose conditions Go builds with the rotation's own variables, and
+    // each instance after its reference filled it.
+    let written = parsed.groups.iter().flat_map(|group| group.items.iter());
+    let bound = binding
+        .instances
+        .iter()
+        .flat_map(|instance| instance.items.iter());
+    for item in written.chain(bound) {
+        let mut visit = |value: &crate::rotation::Value| {
+            use crate::rotation::{AuraRead, Value as V};
+            match value {
+                V::AuraNumStacks(id) => reads.push((crate::rotation::UnitRef::Player, id.clone())),
+                V::TargetAura {
+                    read: AuraRead::NumStacks | AuraRead::NumStacksAfterReaction,
+                    unit,
+                    id,
+                } => reads.push((*unit, id.clone())),
+                _ => {}
+            }
+        };
+        if let Some(condition) = &item.condition {
+            condition.visit(&mut visit);
+        }
+        for value in item.action.values() {
+            value.visit(&mut visit);
+        }
+    }
+    for instance in &binding.instances {
+        for item in &instance.items {
+            group_casts(env, &item.action, &mut casts, &mut pruned);
+        }
+    }
+    for (reference, id) in reads {
+        if let Some(unit) = unit_of(env, reference) {
+            observe_stacks(env, unit, &id);
+        }
+    }
+    Ok((casts, pruned))
+}
+
 /// Go `newAPLRotation` at finalization.
 pub(crate) fn build_rotation(
     env: &mut Environment,
@@ -903,19 +1057,24 @@ pub(crate) fn build_rotation(
             "only APL rotations are prepared".to_string(),
         ));
     }
-    if !rotation.messages("groups").is_empty() || !rotation.messages("value_variables").is_empty() {
-        return Err(Refusal::new(
-            "rotation",
-            "rotation groups and variables are not prepared yet".to_string(),
-        ));
-    }
     let mut prepull = 0;
     let mut casts = Vec::new();
-    let pruned;
+    let mut live = Vec::new();
+    let mut pruned;
     let built_values;
     {
         let mut builder = Builder {
             env,
+            variables: rotation
+                .messages("value_variables")
+                .into_iter()
+                .filter_map(|variable| {
+                    Some((
+                        variable.str("name").to_string(),
+                        variable.message("value")?.clone(),
+                    ))
+                })
+                .collect(),
             pruned_casts: Vec::new(),
             built_values: Vec::new(),
         };
@@ -946,7 +1105,9 @@ pub(crate) fn build_rotation(
             if item.bool("hide") {
                 continue;
             }
-            if let Some(built) = builder.action(item.message("action"))? {
+            let built = builder.action(item.message("action"))?;
+            live.push(built.is_some());
+            if let Some(built) = built {
                 casts.extend(built.casts);
             }
         }
@@ -954,6 +1115,11 @@ pub(crate) fn build_rotation(
         built_values = builder.built_values;
     }
     register_value_observers(env, &built_values)?;
+    if !rotation.messages("groups").is_empty() || !rotation.messages("value_variables").is_empty() {
+        let (group_casts, group_pruned) = build_groups(env, rotation, &live)?;
+        casts.extend(group_casts);
+        pruned.extend(group_pruned);
+    }
     env.rotation_dot_base_durations = rotation_dot_base_durations(env, rotation);
     env.prepull_actions += prepull;
     let player = env.player;

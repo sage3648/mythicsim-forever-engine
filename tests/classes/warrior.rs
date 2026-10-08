@@ -737,11 +737,6 @@ fn prepull_moves_go_drops_never_run() {
 #[test]
 fn charge_needs_its_effect_and_the_movement_speed() {
     let mut value = warrior_fixture("production-warrior-prepull-charge");
-    effect_mut(&mut value, "player_movement")["speed_auras"] = json!(["Unholy Aura"]);
-    assert_eq!(
-        reasons(value.clone()),
-        ["a prepull move with Unholy Aura, which changes the movement speed, is unsupported"]
-    );
     value["effects"]
         .as_array_mut()
         .unwrap()
@@ -761,22 +756,14 @@ fn charge_needs_its_effect_and_the_movement_speed() {
     );
 }
 
-/// A move that stops a ranged auto swing is not simulated, and the refusals of another class
-/// and of a speed aura are accepted fixtures.
+/// Runeblade of Baron Rivendare's Unholy Aura gives 60 health every five seconds, which the
+/// runtime does not run: a request with it is refused, with a move or without.
 #[test]
-fn a_prepull_move_is_refused_where_it_is_not_simulated() {
-    let mut value = warrior_fixture("production-warrior-prepull-charge");
-    value["melee"]["auto_swing_ranged"] = json!(true);
-    assert!(reasons(value)
-        .contains(&"a prepull move with a ranged auto swing is unsupported".to_string()));
-    let rogue = warrior_fixture("production-assassination-rogue-prepull-move");
-    assert!(crate::refusal_codes(rogue).contains(&(
-        "prepull_unsupported",
-        "a prepull move is unsupported for ClassRogue".into()
-    )));
+fn the_unholy_auras_regeneration_is_refused() {
     let unholy = warrior_fixture("production-arms-warrior-prepull-move-with-unholy-aura");
     assert!(reasons(unholy).contains(
-        &"a prepull move with Unholy Aura, which changes the movement speed, is unsupported".into()
+        &"player aura \"Unholy Aura\" regenerates health every five seconds, which the runtime does not run"
+            .into()
     ));
 }
 

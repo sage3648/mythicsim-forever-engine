@@ -274,6 +274,12 @@ pub(crate) struct Aura<K> {
     pub(crate) icd: Option<(TimerId, i64)>,
     pub(crate) active: bool,
     pub(crate) stacks: i32,
+    /// When the stacks last changed and what they were before the change a reaction time
+    /// older than this one: what `auraNumStacks` with `includeReactionTime` reads. Go keeps
+    /// them in each such value's stack change handler, which every one of an aura's values
+    /// runs alike, so the aura holds them.
+    pub(crate) stack_update: i64,
+    pub(crate) previous_stacks: i32,
     pub(crate) start: i64,
     pub(crate) expires: i64,
     pub(crate) fade_time: i64,
@@ -354,6 +360,8 @@ impl<K> Tracker<K> {
             icd,
             active: false,
             stacks: 0,
+            stack_update: NEVER_EXPIRES,
+            previous_stacks: 0,
             start: 0,
             expires: 0,
             fade_time: -NEVER_EXPIRES,
@@ -388,6 +396,8 @@ impl<K> Tracker<K> {
                 icd: aura.icd,
                 active: false,
                 stacks: 0,
+                stack_update: NEVER_EXPIRES,
+                previous_stacks: 0,
                 start: 0,
                 expires: 0,
                 fade_time: -NEVER_EXPIRES,
@@ -654,7 +664,17 @@ impl<A: Agent> Fight<A> {
             let line = format!("{} stacks: {old} --> {new}", action_string(&id));
             self.unit_log(aura.side, &line);
         }
-        self.aura_mut(aura).stacks = new;
+        {
+            // Go `APLValueAuraNumStacks`'s stack change handler: the stacks before a change a
+            // reaction time after the last one are the ones a reaction-time read falls back to.
+            let (now, reaction) = (self.now, self.config.reaction);
+            let state = self.aura_mut(aura);
+            if now.wrapping_sub(state.stack_update) >= reaction {
+                state.previous_stacks = old;
+            }
+            state.stack_update = now;
+            state.stacks = new;
+        }
         match self.aura(aura).behavior {
             AuraBehavior::Class(kind) => A::on_stacks_change(self, aura, kind, old, new),
             AuraBehavior::ArmorDebuff(proc) => {
@@ -903,8 +923,10 @@ impl<A: Agent> Fight<A> {
             state.uptime = 0;
             state.procs = 0;
             state.fade_time = -NEVER_EXPIRES;
+            // Go's `OnReset` of a stack read: the stacks are zero, and no change has been seen.
+            state.stack_update = NEVER_EXPIRES;
+            state.previous_stacks = 0;
             if state.permanent {
-                state.duration = NEVER_EXPIRES;
                 // Go ExclusiveEffect.Activate: a stronger later member of the category
                 // deactivates the earlier one before it activates.
                 if displacing {

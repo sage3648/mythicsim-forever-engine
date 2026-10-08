@@ -7,9 +7,6 @@ use crate::core::fight::{
     OUTCOME_LANDED,
 };
 
-/// Go `Unit.GetMovementSpeed` at a multiplier: the base run speed in yards a second.
-const RUN_SPEED: f64 = 7.0;
-
 use super::super::{agent::PaladinAgent, spells::seals};
 
 /// Vengeance: non-periodic crits stack a damage done mod on Holy and Physical spells.
@@ -177,20 +174,5 @@ impl EyeForAnEye {
     pub(crate) fn reflect(self, fight: &mut Fight<PaladinAgent>, spell: SpellId, target: Side) {
         let result = fight.calc_damage_with(spell, target, self.reflected, Outcome::AlwaysHit);
         fight.deal_damage(spell, result, false);
-    }
-}
-
-/// Go `Unit.MultiplyMovementSpeed`, which only logs in scope: Pursuit of Justice's passive
-/// movement speed effect as it gains and fades.
-pub(crate) fn log_movement_speed(fight: &mut Fight<PaladinAgent>, old: f64, new: f64) {
-    if fight.log.is_some() {
-        let line = format!(
-            "[DEBUG] Movement speed changed from {:.2} ({:.2}%) to {:.2} ({:.2}%)",
-            RUN_SPEED * old,
-            (old - 1.0) * 100.0,
-            RUN_SPEED * new,
-            (new - 1.0) * 100.0
-        );
-        fight.player_log(&line);
     }
 }

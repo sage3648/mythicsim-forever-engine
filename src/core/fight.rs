@@ -1324,6 +1324,8 @@ pub(crate) enum Action {
     PrepullAura(AuraRef),
     /// A rotation prepull action: Go `APLActionMove.Execute`.
     PrepullMove(f64),
+    /// A rotation prepull action: Go `APLActionMoveDuration.Execute`.
+    PrepullMoveDuration(i64),
     /// A tick of the raid's Sunder Armor ramp on a target, by its position, with the ticks
     /// done so far.
     SunderTick(u8, i32),
@@ -1500,6 +1502,10 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) cooldown_order: Vec<usize>,
     cooldown_min_ready: i64,
     pub(crate) rotation: Vec<rotation::Item>,
+    /// How many of the items are the priority list's; the rest are the group instances'.
+    pub(crate) priority_len: usize,
+    /// Where each group instance's items are.
+    pub(crate) group_ranges: Vec<std::ops::Range<usize>>,
     /// Prepull casts by time, in Go's stable time order.
     prepull: Vec<(i64, rotation::PrepullAct)>,
     /// The dot base durations the rotation's `dotBaseDuration` values captured, by spell.
@@ -1603,13 +1609,28 @@ pub(crate) struct Fight<A: Agent> {
     /// Go `PseudoStats.MovementSpeedMultiplier` of the player, and its value after the reset.
     pub(crate) move_multiplier: f64,
     initial_move_multiplier: f64,
+    /// The multiplier the exporter read after the reset, which the permanent auras' effects must
+    /// leave it at.
+    reset_move_multiplier: f64,
+    /// The movement speed categories the player holds auras of, by name, and once built the
+    /// enforced categories of them whose active effect multiplies the speed.
+    movement_category_names: Vec<&'static str>,
+    pub(crate) movement_categories: Vec<usize>,
     /// The player's health when a fight starts, where it differs from the maximum.
     health_at_reset: Option<f64>,
     /// Go `HpPercentForDefensives`, below which survival major cooldowns fire.
     pub(crate) hp_percent_for_defensives: f64,
     /// How each exclusive effect of an aura a rotation asks about reads.
     pub(crate) aura_refresh: Vec<(AuraRef, Vec<exclusive::RefreshReading>)>,
+    /// Single aura categories that a rotation's `auraShouldRefresh` reads and no class
+    /// describes, as (unit, name): the runtime enforces them from the exported memberships.
+    derived_categories: Vec<(Side, String)>,
 }
+
+/// Go movement.go's exclusive categories of movement speed effects: `NewPassiveMovementSpeedEffect`
+/// and `NewActiveMovementSpeedEffect` bid their bonus in single aura categories, and the active
+/// effect multiplies the unit's speed.
+const MOVEMENT_CATEGORIES: [&str; 2] = ["PassiveMovementSpeed", "ActiveMovementSpeed"];
 
 /// Errors that make a prepared input impossible to run despite passing coverage.
 pub(crate) type BuildError = String;
@@ -3334,6 +3355,8 @@ impl<A: Agent> Fight<A> {
             major_cooldowns,
             cooldown_min_ready: NEVER_EXPIRES,
             rotation: Vec::new(),
+            priority_len: 0,
+            group_ranges: Vec::new(),
             prepull: Vec::new(),
             dot_base_durations: Vec::new(),
             in_rotation: false,
@@ -3416,9 +3439,13 @@ impl<A: Agent> Fight<A> {
             start_distance: prepared.player.distance_yards,
             move_multiplier: 1.0,
             initial_move_multiplier: 1.0,
+            reset_move_multiplier: 1.0,
+            movement_category_names: Vec::new(),
+            movement_categories: Vec::new(),
             health_at_reset: player.health_at_reset,
             hp_percent_for_defensives: player.hp_percent_for_defensives,
             aura_refresh: Vec::new(),
+            derived_categories: Vec::new(),
         };
         for (((exported, regen), mana_gain_spell), actions) in prepared
             .pets
@@ -3591,11 +3618,34 @@ impl<A: Agent> Fight<A> {
                 }
             }
             if let Effect::PlayerMovement {
-                speed_multiplier, ..
+                speed_multiplier,
+                initial_speed_multiplier,
+                ..
             } = effect
             {
-                fight.initial_move_multiplier = *speed_multiplier;
-                fight.move_multiplier = *speed_multiplier;
+                // Every reset restores the multiplier before the permanent auras change it, and
+                // the passive and active speed categories apply their effects as they take hold.
+                fight.initial_move_multiplier =
+                    initial_speed_multiplier.unwrap_or(*speed_multiplier);
+                fight.reset_move_multiplier = *speed_multiplier;
+                fight.move_multiplier = fight.initial_move_multiplier;
+                for name in MOVEMENT_CATEGORIES {
+                    let held = fight
+                        .exported_memberships
+                        .iter()
+                        .any(|(aura, memberships)| {
+                            aura.side == Side::Player
+                                && memberships.iter().any(|membership| {
+                                    membership.category == name && membership.single_aura
+                                })
+                        });
+                    if held {
+                        fight
+                            .derived_categories
+                            .push((Side::Player, name.to_string()));
+                        fight.movement_category_names.push(name);
+                    }
+                }
             }
             if let Effect::PseudoStatAuras { auras } = effect {
                 for entry in auras {
@@ -3672,7 +3722,26 @@ impl<A: Agent> Fight<A> {
                     readings.push(match mode.as_str() {
                         "own" => exclusive::RefreshReading::Own,
                         "never" => exclusive::RefreshReading::Never,
-                        _ => fight.enforced_refresh_reading(aura_ref, memberships.get(position))?,
+                        _ => {
+                            let membership = memberships
+                                .get(position)
+                                .ok_or("an exclusive effect of the aura is not exported")?;
+                            // A single aura category no class describes is enforced from the
+                            // exported memberships; any other is only tracked, which is how
+                            // Go reads a category that refuses nothing.
+                            let described = fight
+                                .enforced_category(side, &membership.category)
+                                .is_some();
+                            let derived = fight
+                                .derived_categories
+                                .contains(&(side, membership.category.clone()));
+                            if membership.single_aura && !described && !derived {
+                                fight
+                                    .derived_categories
+                                    .push((side, membership.category.clone()));
+                            }
+                            exclusive::RefreshReading::Live
+                        }
                     });
                 }
                 fight.aura_refresh.push((aura_ref, readings));
@@ -3690,7 +3759,10 @@ impl<A: Agent> Fight<A> {
             .iter()
             .map(|entry| (entry.spell.clone(), entry.base_duration_ns))
             .collect();
-        fight.rotation = fight.compile_rotation(&parsed);
+        let compilation = fight.compile_rotation(&parsed)?;
+        fight.rotation = compilation.items;
+        fight.priority_len = compilation.priority;
+        fight.group_ranges = compilation.groups;
         fight.prepull = fight.compile_prepull(&parsed);
         for effect in effects {
             if let Effect::SunderArmorRamp {
@@ -4498,6 +4570,9 @@ impl<A: Agent> Fight<A> {
                 rotation::PrepullAct::Cast(spell) => Action::Prepull(spell),
                 rotation::PrepullAct::ActivateAura(aura) => Action::PrepullAura(aura),
                 rotation::PrepullAct::Move(range) => Action::PrepullMove(range),
+                rotation::PrepullAct::MoveDuration(duration) => {
+                    Action::PrepullMoveDuration(duration)
+                }
             };
             self.schedule(at, PRIORITY_PREPULL + count - index as i32, action);
         }
@@ -4540,6 +4615,9 @@ impl<A: Agent> Fight<A> {
         self.reset_unit(Side::Player);
         self.reset_cooldown_manager();
         A::agent_reset(self);
+        // The auras the reset and the agent activated have run their movement speed effects;
+        // the exporter read where they leave the multiplier.
+        self.move_multiplier = self.reset_move_multiplier;
         // Go Character.reset resets the pets after the owner's agent.
         self.reset_pets();
         // Go initManaTickAction, after the environment reset: two seconds after the prepull
@@ -4888,6 +4966,7 @@ impl<A: Agent> Fight<A> {
                 }
                 self.move_to(Side::Player, range);
             }
+            Action::PrepullMoveDuration(duration) => self.move_duration(Side::Player, duration),
             Action::SunderTick(target, done) => self.sunder_tick(target, done),
             Action::DeathCheck => self.death_check(),
             Action::FixedUptime { index, first } => self.fixed_uptime_roll(index, first),

@@ -4,8 +4,9 @@ use crate::{
     contracts::prepared_v2::ActionId,
     core::time::NEVER_EXPIRES,
     rotation::{
-        compile_bool_value, compile_condition, compile_duration_value, Action as ParsedAction,
-        CompareOp, CompiledCondition, DotAt, FoundAura, Lookup, MathOp, Rotation, Unit, ValueType,
+        bind, compile_bool_value, compile_condition, compile_duration_value, compile_raw_value,
+        Action as ParsedAction, CompareOp, CompiledCondition, DotAt, FoundAura, Lookup, MathOp,
+        Reference, Rotation, Step, Unit, Value, ValueType,
     },
 };
 
@@ -14,7 +15,7 @@ use super::{
     SpellId,
 };
 
-use std::rc::Rc;
+use std::{ops::Range, rc::Rc};
 
 mod lowered;
 
@@ -44,8 +45,15 @@ pub(crate) enum Act {
         interrupt: Rc<Compiled>,
         allow_recast: bool,
     },
-    /// Go `APLActionMove`: the range from the target the player runs to.
-    Move(f64),
+    /// Go `APLActionMove`: the range from the target the player runs to, read as a float.
+    Move(Rc<Compiled>),
+    /// Go `APLActionMoveDuration`: the duration of the move, read as a duration.
+    MoveDuration(Rc<Compiled>),
+    /// Go `APLActionGroupReference`: the first of an instance's actions that is ready runs. A
+    /// reference that bound no instance is never ready.
+    Group {
+        instance: Option<usize>,
+    },
     /// Go `APLActionMultidot`: its dot count after the encounter's target count capped it,
     /// and its overlap.
     Multidot {
@@ -57,6 +65,16 @@ pub(crate) enum Act {
     },
 }
 
+/// The compiled rotation: the priority list's items first, then those of each group instance.
+#[derive(Debug)]
+pub(crate) struct Compilation {
+    pub(crate) items: Vec<Item>,
+    /// How many of the items are the priority list's.
+    pub(crate) priority: usize,
+    /// Where each group instance's items are.
+    pub(crate) groups: Vec<Range<usize>>,
+}
+
 /// A prepull action: a cast, or Go `APLActionActivateAura`.
 #[derive(Clone, Copy, Debug)]
 pub(crate) enum PrepullAct {
@@ -64,6 +82,8 @@ pub(crate) enum PrepullAct {
     ActivateAura(AuraRef),
     /// Go `APLActionMove`: the player runs to the range from the target.
     Move(f64),
+    /// Go `APLActionMoveDuration`: the player moves for the duration.
+    MoveDuration(i64),
 }
 
 /// A ready action. Go keeps the cooldown found by `IsReady` for `Execute`.
@@ -76,8 +96,12 @@ enum Ready {
     SequenceStep(usize),
     /// A channel and the item whose interrupt condition it carries.
     Channel(usize, SpellId),
-    /// A move to a range from the target.
-    Move(f64),
+    /// A move to the range of the item's value from the target.
+    Move(usize),
+    /// A move for the duration of the item's value.
+    MoveDuration(usize),
+    /// A group reference and the item of its instance that runs.
+    Group(usize),
 }
 
 #[derive(Clone, Debug)]
@@ -190,13 +214,23 @@ impl<A: Agent> Fight<A> {
                 compile_condition(prepull.condition.as_ref(), &lookup) != CompiledCondition::Pruned
             })
             .filter_map(|prepull| match &prepull.action {
-                ParsedAction::CastSpell { spell: id, .. } => self
-                    .apl_cast_spell(id)
+                // Go newActionCastSpell: a target that names no unit drops the action. The runtime
+                // casts a prepull action on the first target, which the gate checks.
+                ParsedAction::CastSpell { spell: id, target } => target
+                    .resolve(self.targets.len())
+                    .and_then(|_| self.apl_cast_spell(id))
                     .map(|spell| (prepull.do_at_ns, PrepullAct::Cast(spell))),
                 // Go GetAPLAura on the player: an unknown aura drops the action.
                 ParsedAction::ActivateAura(id) => find(Side::Player, id)
                     .map(|found| (prepull.do_at_ns, PrepullAct::ActivateAura(found.aura))),
-                ParsedAction::Move(range) => Some((prepull.do_at_ns, PrepullAct::Move(*range))),
+                // The parser reads a constant range or duration in a prepull action.
+                ParsedAction::Move(Value::Const(range)) => {
+                    Some((prepull.do_at_ns, PrepullAct::Move(range.float)))
+                }
+                ParsedAction::MoveDuration(Value::Const(duration)) => Some((
+                    prepull.do_at_ns,
+                    PrepullAct::MoveDuration(duration.duration_ns),
+                )),
                 _ => None,
             })
             .collect();
@@ -204,29 +238,14 @@ impl<A: Agent> Fight<A> {
         prepull
     }
 
-    /// Go `newAPLRotation` for the supported subset.
-    pub(crate) fn compile_rotation(&self, rotation: &Rotation) -> Vec<Item> {
+    /// Go `newAPLRotation` for the supported subset: the items of the priority list, then the
+    /// items of each instance of a group, and where each instance's items are.
+    pub(crate) fn compile_rotation(&self, rotation: &Rotation) -> Result<Compilation, String> {
         let aura = |id: &ActionId| self.rotation_aura(Side::Player, id);
         let target_aura =
             |position: usize, id: &ActionId| self.rotation_aura(Side::target(position), id);
         let spell = |id: &ActionId| self.apl_spell(id);
         let dot = |id: &ActionId, unit: Unit| self.rotation_dot(id, unit);
-        // Go `GetAPLMultidotSpell` reads `Spell.CurDot`: the spell's own dot on a target or
-        // its related dot spell's. An area or self-only dot is the caster's `AOEDot`, which
-        // `CurDot` does not return, so a multidot line for such a spell is dropped.
-        let multidot_dot = |id: &ActionId| {
-            self.apl_spell(id).and_then(|spell| {
-                match self.spells[spell]
-                    .dot
-                    .filter(|&dot| self.dots[dot].side.is_target())
-                {
-                    Some(_) => Some(spell),
-                    None => self.spells[spell].related_dot_spell.filter(|&related| {
-                        self.spells.get(related).is_some_and(|s| s.dot.is_some())
-                    }),
-                }
-            })
-        };
         let dot_base_duration = |id: &ActionId| {
             self.dot_base_durations
                 .iter()
@@ -247,92 +266,21 @@ impl<A: Agent> Fight<A> {
             dot_base_duration: &dot_base_duration,
             pet_aura_known: &pet_aura_known,
         };
+        // A reference whose condition is a constant false is pruned, and takes no part in
+        // binding the groups.
+        let live = |index: usize| {
+            compile_condition(rotation.priority_list[index].condition.as_ref(), &lookup)
+                != CompiledCondition::Pruned
+        };
+        let (rotation, binding) = bind(rotation, &live)?;
         let mut items = Vec::new();
-        for item in &rotation.priority_list {
-            let action = match &item.action {
-                // Go newActionCastSpell: an unknown spell, or a target that is no unit, drops the
-                // action.
-                ParsedAction::CastSpell { spell: id, target } => {
-                    let unit = target.resolve(self.targets.len());
-                    match (self.apl_cast_spell(id), unit) {
-                        (Some(spell), Some(Unit::Player)) => Act::Cast(spell, Side::Player),
-                        (Some(spell), Some(Unit::Target(position))) => {
-                            Act::Cast(spell, Side::target(position))
-                        }
-                        _ => continue,
-                    }
-                }
-                // Go newActionCastFriendlySpell at the player: the same cast on the player.
-                ParsedAction::CastAtPlayer(id) => match self.apl_cast_spell(id) {
-                    Some(spell) => Act::Cast(spell, Side::Player),
-                    None => continue,
-                },
-                ParsedAction::AutocastOtherCooldowns => Act::Autocast,
-                // Go newActionStrictSequence runs every step or none: a step the character
-                // lacks drops the whole action (ElliotWood/Forever#625).
-                ParsedAction::StrictSequence(ids) => {
-                    let Some(spells) = ids
-                        .iter()
-                        .map(|id| self.apl_cast_spell(id))
-                        .collect::<Option<Vec<SpellId>>>()
-                    else {
-                        continue;
-                    };
-                    if spells.is_empty() {
-                        continue;
-                    }
-                    Act::StrictSequence { spells, next: 0 }
-                }
-                // Go newActionSequence drops unknown casts, and the action when none remain.
-                ParsedAction::Sequence(ids) => {
-                    let spells: Vec<SpellId> = ids
-                        .iter()
-                        .filter_map(|id| self.apl_cast_spell(id))
-                        .collect();
-                    if spells.is_empty() {
-                        continue;
-                    }
-                    Act::Sequence { spells, next: 0 }
-                }
-                // Go newActionChannelSpell: without an interrupt condition it is a cast;
-                // otherwise the spell must be a channel.
-                ParsedAction::ChannelSpell {
-                    spell,
-                    interrupt_if,
-                    allow_recast,
-                } => match compile_bool_value(interrupt_if.as_ref(), &lookup) {
-                    None => match self.apl_cast_spell(spell) {
-                        Some(spell) => Act::Cast(spell, Side::Target),
-                        None => continue,
-                    },
-                    Some(interrupt) => match self.apl_spell(spell) {
-                        Some(spell) if self.spells[spell].flags.channeled => Act::Channel {
-                            spell,
-                            interrupt: Rc::new(interrupt),
-                            allow_recast: *allow_recast,
-                        },
-                        _ => continue,
-                    },
-                },
-                // Go GetAPLMultidotSpell: an unknown spell or one without a dot drops the
-                // action; the encounter's one target caps the dot count.
-                ParsedAction::Multidot {
-                    spell,
-                    max_dots,
-                    max_overlap,
-                } => match self.apl_spell(spell).zip(multidot_dot(spell)) {
-                    Some((spell, dot_spell)) => Act::Multidot {
-                        spell,
-                        dot_spell,
-                        max_dots: (*max_dots).min(self.targets.len() as i32),
-                        overlap: compile_duration_value(max_overlap.as_ref(), &lookup).map(Rc::new),
-                    },
-                    _ => continue,
-                },
-                // Go `newActionMove` always builds the action.
-                ParsedAction::Move(range) => Act::Move(*range),
-                // Parsed only among the prepull actions.
-                ParsedAction::ActivateAura(_) => continue,
+        for (index, item) in rotation.priority_list.iter().enumerate() {
+            let Some(action) = self.compile_action(
+                &item.action,
+                &lookup,
+                binding.instance(Reference::Top(index)),
+            ) else {
+                continue;
             };
             let condition = match compile_condition(item.condition.as_ref(), &lookup) {
                 // A constant false condition prunes the action; its spells already left
@@ -343,12 +291,170 @@ impl<A: Agent> Fight<A> {
             };
             items.push(Item { condition, action });
         }
-        items
+        let priority = items.len();
+        let mut groups = Vec::new();
+        for (instance, group) in binding.instances.iter().enumerate() {
+            let start = items.len();
+            for (index, item) in group.items.iter().enumerate() {
+                let reference = Reference::Nested {
+                    instance,
+                    item: index,
+                };
+                let Some(action) =
+                    self.compile_action(&item.action, &lookup, binding.instance(reference))
+                else {
+                    continue;
+                };
+                // Go `newAPLActionWithGroupVars` builds the condition and keeps a constant
+                // whatever it holds.
+                let condition = compile_bool_value(item.condition.as_ref(), &lookup)
+                    .map(|condition| Rc::new(Cond::lower(&condition)));
+                items.push(Item { condition, action });
+            }
+            groups.push(start..items.len());
+        }
+        Ok(Compilation {
+            items,
+            priority,
+            groups,
+        })
+    }
+
+    /// Go `newActionCastSpell` of a sequence's step: the spell the step casts, none for an
+    /// unknown spell or a target that names no unit. The runtime casts a step on the first
+    /// target, which the gate checks.
+    fn step_spell(&self, step: &Step) -> Option<SpellId> {
+        step.target.resolve(self.targets.len())?;
+        self.apl_cast_spell(&step.spell)
+    }
+
+    /// Go's action constructors: the action a parsed one builds, or `None` where Go builds none.
+    /// A reference runs the instance it is bound to.
+    fn compile_action(
+        &self,
+        action: &ParsedAction,
+        lookup: &Lookup<AuraRef>,
+        instance: Option<usize>,
+    ) -> Option<Act> {
+        // Go `GetAPLMultidotSpell` reads `Spell.CurDot`: the spell's own dot on a target or
+        // its related dot spell's. An area or self-only dot is the caster's `AOEDot`, which
+        // `CurDot` does not return, so a multidot line for such a spell is dropped.
+        let multidot_dot = |id: &ActionId| {
+            self.apl_spell(id).and_then(|spell| {
+                match self.spells[spell]
+                    .dot
+                    .filter(|&dot| self.dots[dot].side.is_target())
+                {
+                    Some(_) => Some(spell),
+                    None => self.spells[spell].related_dot_spell.filter(|&related| {
+                        self.spells.get(related).is_some_and(|s| s.dot.is_some())
+                    }),
+                }
+            })
+        };
+        Some(match action {
+            // Go newActionCastSpell: an unknown spell, or a target that is no unit, drops the
+            // action.
+            ParsedAction::CastSpell { spell: id, target } => {
+                let unit = target.resolve(self.targets.len());
+                match (self.apl_cast_spell(id), unit) {
+                    (Some(spell), Some(Unit::Player)) => Act::Cast(spell, Side::Player),
+                    (Some(spell), Some(Unit::Target(position))) => {
+                        Act::Cast(spell, Side::target(position))
+                    }
+                    _ => return None,
+                }
+            }
+            // Go newActionCastFriendlySpell at the player: the same cast on the player.
+            ParsedAction::CastAtPlayer(id) => Act::Cast(self.apl_cast_spell(id)?, Side::Player),
+            ParsedAction::AutocastOtherCooldowns => Act::Autocast,
+            // Go newActionStrictSequence runs every step or none: a step the character
+            // lacks drops the whole action (ElliotWood/Forever#625).
+            ParsedAction::StrictSequence(steps) => {
+                let spells = steps
+                    .iter()
+                    .map(|step| self.step_spell(step))
+                    .collect::<Option<Vec<SpellId>>>()?;
+                if spells.is_empty() {
+                    return None;
+                }
+                Act::StrictSequence { spells, next: 0 }
+            }
+            // Go newActionSequence drops unknown casts, and the action when none remain.
+            ParsedAction::Sequence(steps) => {
+                let spells: Vec<SpellId> = steps
+                    .iter()
+                    .filter_map(|step| self.step_spell(step))
+                    .collect();
+                if spells.is_empty() {
+                    return None;
+                }
+                Act::Sequence { spells, next: 0 }
+            }
+            // Go newActionChannelSpell: without an interrupt condition it is a cast;
+            // otherwise the spell must be a channel. A target that names no unit drops the
+            // action.
+            ParsedAction::ChannelSpell {
+                spell,
+                target,
+                interrupt_if,
+                allow_recast,
+            } => match (
+                compile_bool_value(interrupt_if.as_ref(), lookup),
+                target.resolve(self.targets.len()),
+            ) {
+                (None, Some(Unit::Target(position))) => {
+                    Act::Cast(self.apl_cast_spell(spell)?, Side::target(position))
+                }
+                (None, Some(Unit::Player)) => Act::Cast(self.apl_cast_spell(spell)?, Side::Player),
+                (Some(interrupt), Some(_)) => match self.apl_spell(spell) {
+                    Some(spell) if self.spells[spell].flags.channeled => Act::Channel {
+                        spell,
+                        interrupt: Rc::new(interrupt),
+                        allow_recast: *allow_recast,
+                    },
+                    _ => return None,
+                },
+                (_, None) => return None,
+            },
+            // Go GetAPLMultidotSpell: an unknown spell or one without a dot drops the
+            // action; the encounter's one target caps the dot count.
+            ParsedAction::Multidot {
+                spell,
+                max_dots,
+                max_overlap,
+            } => {
+                let (spell, dot_spell) = self.apl_spell(spell).zip(multidot_dot(spell))?;
+                Act::Multidot {
+                    spell,
+                    dot_spell,
+                    max_dots: (*max_dots).min(self.targets.len() as i32),
+                    overlap: compile_duration_value(max_overlap.as_ref(), lookup).map(Rc::new),
+                }
+            }
+            // Go `newActionMove` and `newActionMoveDuration` always build the action. A value
+            // that gives none panics where Go reads it, which the gate refuses.
+            ParsedAction::Move(range) => Act::Move(Rc::new(compile_raw_value(range, lookup)?)),
+            ParsedAction::MoveDuration(duration) => {
+                Act::MoveDuration(Rc::new(compile_raw_value(duration, lookup)?))
+            }
+            // Go `newActionGroupReference`: no action without a group name; a reference that
+            // binds no group is never ready.
+            ParsedAction::GroupReference { name, .. } => {
+                if name.is_empty() {
+                    return None;
+                }
+                Act::Group { instance }
+            }
+            // Parsed only among the prepull actions.
+            ParsedAction::ActivateAura(_) => return None,
+        })
     }
 
     fn get_bool(&mut self, value: &Compiled) -> bool {
         match value {
             Compiled::Const(constant) => constant.boolean,
+            Compiled::GroupUsed(used) => *used,
             Compiled::AuraIsActive(aura) => self.aura(*aura).active,
             // Go `APLValueAuraIsActive` with `includeReactionTime`: `Aura.TimeActive` is zero
             // while inactive and the time since the aura started otherwise.
@@ -372,22 +478,34 @@ impl<A: Agent> Fight<A> {
             // Go `ShouldRefreshExclusiveEffects`: any of the aura's effects asking for a refresh.
             Compiled::AuraShouldRefresh { aura, overlap } => {
                 let window = self.get_duration(overlap);
+                // The exporter reads the first target's aura, which its copies share.
+                let first = AuraRef {
+                    side: if aura.side.is_target() {
+                        Side::Target
+                    } else {
+                        aura.side
+                    },
+                    index: aura.index,
+                };
                 let (_, readings) = self
                     .aura_refresh
                     .iter()
-                    .find(|(refreshed, _)| refreshed == aura)
+                    .find(|(refreshed, _)| *refreshed == first)
                     .expect("the gate requires a refresh reading");
                 let state = self.aura(*aura);
                 let remaining = state.remaining(self.now);
-                readings.iter().any(|reading| match *reading {
-                    // Alone in its category: refreshed once inactive or within the overlap.
-                    RefreshReading::Own => !state.active || remaining <= window,
-                    // A permanent aura of another effect holds the category for good.
-                    RefreshReading::Never => false,
-                    RefreshReading::Category { category, member } => {
-                        self.exclusive_should_refresh(category, member, window)
-                    }
-                })
+                readings
+                    .iter()
+                    .enumerate()
+                    .any(|(position, reading)| match reading {
+                        // Alone in its category: refreshed once inactive or within the overlap.
+                        RefreshReading::Own => !state.active || remaining <= window,
+                        // A permanent aura of another effect holds the category for good.
+                        RefreshReading::Never => false,
+                        RefreshReading::Live => {
+                            self.exclusive_should_refresh(*aura, position, window)
+                        }
+                    })
             }
             Compiled::DotIsActive(dot) => self.dot_active(*dot),
             // Go `APLValueSpellIsReady`: ready, or ready within the spell queue window.
@@ -432,6 +550,17 @@ impl<A: Agent> Fight<A> {
         match value {
             Compiled::Const(constant) => constant.int,
             Compiled::AuraNumStacks(aura) => self.aura(*aura).stacks,
+            // Go `APLValueAuraNumStacks` with `includeReactionTime`: the stacks of a reaction
+            // time ago, which its stack change handler kept. The wrapping difference is Go's
+            // for a handler that has not run since the reset.
+            Compiled::AuraNumStacksAfterReaction(aura) => {
+                let state = self.aura(*aura);
+                if self.now.wrapping_sub(state.stack_update) >= self.config.reaction {
+                    state.stacks
+                } else {
+                    state.previous_stacks
+                }
+            }
             Compiled::CurrentComboPoints => self.energy_bar().combo_points,
             // Go `ActiveTargetCount`: every target is active throughout.
             Compiled::NumberTargets => self.targets.len() as i32,
@@ -691,7 +820,17 @@ impl<A: Agent> Fight<A> {
                 .then_some(Ready::Channel(item, spell)),
             // Go `APLActionMove.IsReady`: not already moving, a different range or the prepull,
             // and no cast or channel in progress.
-            Act::Move(range) => self.move_ready(range).then_some(Ready::Move(range)),
+            Act::Move(ref range) => {
+                let range = Rc::clone(range);
+                self.move_ready(&range).then_some(Ready::Move(item))
+            }
+            Act::MoveDuration(ref duration) => {
+                let duration = Rc::clone(duration);
+                self.move_duration_ready(&duration)
+                    .then_some(Ready::MoveDuration(item))
+            }
+            // Go APLActionGroupReference.IsReady: any action of the group is ready.
+            Act::Group { instance } => self.group_ready(instance).map(|_| Ready::Group(item)),
             // Go APLActionMultidot.IsReady: the overlap, then the target whose dot is down or
             // ends within it and which the spell can be cast or queued on.
             Act::Multidot { spell, .. } => self
@@ -700,11 +839,39 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    /// Go `APLActionMove.IsReady`.
-    fn move_ready(&self, range: f64) -> bool {
+    /// The first action of a group instance that is ready, Go `APLActionGroupReference.IsReady`
+    /// and `Execute` both look for.
+    fn group_ready(&mut self, instance: Option<usize>) -> Option<Ready> {
+        let range = instance.and_then(|instance| self.group_ranges.get(instance).cloned())?;
+        range.into_iter().find_map(|item| self.item_ready(item))
+    }
+
+    /// Go `APLActionMove.IsReady`: not already moving, a different range or the prepull, and no
+    /// cast in progress.
+    fn move_ready(&mut self, range: &Compiled) -> bool {
         !self.player.moving
-            && (range != self.config.distance || self.now < 0)
+            && (self.get_float(range) != self.config.distance || self.now < 0)
             && self.player.hardcast.expires < self.now
+    }
+
+    /// Go `APLActionMoveDuration.IsReady`: not moving, or the move ends this step, for a
+    /// duration that is not zero, with no channel and no cast in progress, unless the cast
+    /// allows moving.
+    fn move_duration_ready(&mut self, duration: &Compiled) -> bool {
+        if self.player.moving {
+            let ends = self.player.movement.map(|movement| movement.end());
+            if ends != Some(self.now) {
+                return false;
+            }
+        }
+        if self.get_duration(duration) == 0 {
+            return false;
+        }
+        let hardcast = self.player.hardcast;
+        let can_move = hardcast
+            .spell
+            .is_some_and(|spell| self.spells[spell].flags.can_cast_while_moving);
+        (hardcast.expires < self.now || can_move) && self.player.channeled_dot.is_none()
     }
 
     /// Go `APLActionMultidot.IsReady`: the overlap, then the first target in unit index order
@@ -741,7 +908,7 @@ impl<A: Agent> Fight<A> {
         if let Some(item) = self.apl.controlling {
             return self.sequence_next_action(item);
         }
-        (0..self.rotation.len()).find_map(|item| self.item_ready(item))
+        (0..self.priority_len).find_map(|item| self.item_ready(item))
     }
 
     /// Go `APLActionStrictSequence.GetNextAction`.
@@ -836,13 +1003,36 @@ impl<A: Agent> Fight<A> {
                 }
                 self.apl.in_sequence = false;
             }
-            // Go `APLActionMove.Execute`.
-            Ready::Move(range) => {
+            // Go `APLActionMove.Execute`: the value is read again.
+            Ready::Move(item) => {
+                let Act::Move(ref range) = self.rotation[item].action else {
+                    unreachable!("item is a move");
+                };
+                let range = Rc::clone(range);
+                let range = self.get_float(&range);
                 if self.log.is_some() {
                     let line = format!("[DEBUG] Moving to {range:.1} yards");
                     self.player_log(&line);
                 }
                 self.move_to(Side::Player, range);
+            }
+            // Go `APLActionGroupReference.Execute`: the first action that is ready, found again.
+            Ready::Group(item) => {
+                let Act::Group { instance } = self.rotation[item].action else {
+                    unreachable!("item is a group reference");
+                };
+                if let Some(ready) = self.group_ready(instance) {
+                    self.execute(ready);
+                }
+            }
+            // Go `APLActionMoveDuration.Execute`.
+            Ready::MoveDuration(item) => {
+                let Act::MoveDuration(ref duration) = self.rotation[item].action else {
+                    unreachable!("item is a move for a duration");
+                };
+                let duration = Rc::clone(duration);
+                let duration = self.get_duration(&duration);
+                self.move_duration(Side::Player, duration);
             }
             Ready::Channel(item, spell) => {
                 self.cast_or_queue(spell, Side::Target);
@@ -885,7 +1075,7 @@ impl<A: Agent> Fight<A> {
     fn next_action_would_recast_channel(&mut self, dot: DotId) -> bool {
         let channeled = self.dots[dot].spell;
         self.player.channeled_dot = None;
-        for item in 0..self.rotation.len() {
+        for item in 0..self.priority_len {
             if let Some(condition) = self.rotation[item].condition.clone() {
                 if !self.condition(&condition) {
                     continue;
@@ -895,8 +1085,23 @@ impl<A: Agent> Fight<A> {
                 Act::Cast(spell, _) | Act::Channel { spell, .. } => spell,
                 Act::Autocast | Act::Sequence { .. } => continue,
                 // Go: a different action that is fully ready would be cast first.
-                Act::Move(range) => {
-                    if self.move_ready(range) {
+                Act::Move(ref range) => {
+                    let range = Rc::clone(range);
+                    if self.move_ready(&range) {
+                        return false;
+                    }
+                    continue;
+                }
+                Act::MoveDuration(ref duration) => {
+                    let duration = Rc::clone(duration);
+                    if self.move_duration_ready(&duration) {
+                        return false;
+                    }
+                    continue;
+                }
+                // Go: a different action that is fully ready would be cast first.
+                Act::Group { instance } => {
+                    if self.group_ready(instance).is_some() {
                         return false;
                     }
                     continue;
