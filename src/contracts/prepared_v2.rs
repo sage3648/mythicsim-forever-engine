@@ -1679,11 +1679,16 @@ pub enum Effect {
     },
     /// Auras whose gain and expiry change stats through Go's AddStatsDynamic, and the player's
     /// stats Rust reads for every combination of them: entry i has aura j active when bit j
-    /// of i is set. `changed` names every stat any combination changes.
+    /// of i is set. `changed` names every stat any combination changes. `raw_mp5` holds the
+    /// exact MP5 bonus of each aura whose bonus is not added and taken away exactly: Go adds a bonus to the raw
+    /// stats and takes it away again, which leaves a fraction a few ulps off, so the runtime does
+    /// the same instead of reading the combination.
     StatAuras {
         auras: Vec<String>,
         combos: Vec<BTreeMap<String, f64>>,
         changed: Vec<String>,
+        #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+        raw_mp5: BTreeMap<String, f64>,
     },
     /// The Crusader weapon enchant: a weapon proc at a per-spell chance that activates the
     /// hand's Holy Strength and heals.

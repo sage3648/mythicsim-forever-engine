@@ -22,6 +22,9 @@ import (
 	"github.com/wowsims/forever/sim/core/stats"
 )
 
+// The label buffs.ManaTideTotemsAura gives the external caster's copy.
+const externalManaTideLabel = "Mana Tide Totem (External)"
+
 // buffs/drivers.go innervateSpiritRegenMultiplier and innervateRegenTag: Go literals.
 const (
 	innervateSpiritRegenMultiplier = 5.0
@@ -49,7 +52,7 @@ func externalCooldowns(character *core.Character, request *proto.RaidSimRequest)
 	// The party buffs the drivers read hold what the agents add, such as a talented shaman's totem.
 	party := character.Env.Raid.Parties[0].GetPartyBuffs(request.Raid.Parties[0].Buffs)
 	return []externalCooldown{
-		{"Mana Tide Totem (External)", party.GetManaTideTotems(), buffs.ManaTideTotemsCooldown(),
+		{externalManaTideLabel, party.GetManaTideTotems(), buffs.ManaTideTotemsCooldown(),
 			manaTideActivation, manaTideAuraEffects},
 		{"Innervates (External)", player.Buffs.GetInnervates(), buffs.InnervatesCooldown(),
 			innervateActivation, innervateAuraEffects},

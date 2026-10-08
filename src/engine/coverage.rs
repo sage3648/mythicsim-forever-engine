@@ -1022,8 +1022,14 @@ fn tank_limits(
             auras,
             combos,
             changed,
+            raw_mp5,
         } = effect
         {
+            for label in raw_mp5.keys().filter(|label| !auras.contains(label)) {
+                reasons.push(format!(
+                    "stat auras {auras:?} give a raw MP5 bonus to {label:?}, which is not one of them"
+                ));
+            }
             // Stamina moves only the maximum health the combinations carry.
             let health_tracked = combos.iter().all(|combo| combo.contains_key("Health"));
             for stat in changed {
