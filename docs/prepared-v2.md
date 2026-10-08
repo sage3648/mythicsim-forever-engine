@@ -59,7 +59,7 @@ RNG contract and implemented effects. Tests fail if it disagrees with the engine
 | `sim` | Iterations, seed, `labeled_rng`, first-iteration debug and `debug`, which logs every fight as the application's averaged timeline requests |
 | `encounter` | Base duration, variation and execute proportions, in nanoseconds, and `target_count`, written only for a fight against 2 to 5 targets |
 | `target` | Level, all stats, pseudo stats, every registered aura and whether it has a melee or ranged swing. In a fight against several targets every target past the first is an identical copy, which the exporter checks, so this one target describes them all |
-| `player` | Identity, talents, stats, pseudo stats, reaction time, distance, cast speed, mana, an energy bar when the player has one, attack table, spells, major cooldowns and rotation |
+| `player` | Identity, talents, stats, pseudo stats, reaction time, distance, cast speed, mana, an energy bar when the player has one, attack table, spells, major cooldowns, rotation and the dot base durations its `dotBaseDuration` values captured |
 | `melee` | The player's weapons and auto attack flags, and the physical attack table against the target with the defender's static chances resolved |
 | `enemy` | Present only when the player tanks the target. In a fight against several targets Go has every copy of the boss swing at the tank, so this one swing describes each copy, which the exporter checks, and Rust runs it per copy: the target's main hand swing at the player, every step of its damage and table resolved as Go computes it at reset, its table steps for each stat aura combination, the auras whose activation would change it, and the target auras, such as Vindication's debuff, that change only its attack power, with the attack power while each holds. The target multiplier's school and attack table factors let the runtime apply the player's live damage taken multiplier and live physical school damage taken multiplier, and the target's attack speed, melee speed and haste rating factors its live melee speed; auras that change only one of those, such as Stoneform's physical damage taken, are listed apart from the rest |
 | `effects` | Dynamic behavior and its parameters, one tagged variant per kind |
@@ -520,14 +520,14 @@ The rotation subset covers `castSpell` at the current target or, with a `target`
 target by `Target` index, the `NextTarget` or the `PreviousTarget`, `castFriendlySpell` at the current target or at the
 player (the first player of the raid, or the unit itself), `autocastOtherCooldowns`, `strictSequence` and
 `sequence` of casts, `channelSpell` with `interruptIf` and `allowRecast`, constant-time prepull casts
-and moves,
+and moves, and a Hunter's moves in the priority list,
 `cmp` with any comparison operator, `and`, `or`, `not`, `const`, `currentMana`,
 `currentManaPercent`, `currentHealthPercent` of the player, `currentEnergy`, `maxEnergy`, `currentComboPoints`,
 `timeToNextEnergyTick`, `currentRage`, `isExecutePhase`, `currentTime`, `remainingTime`, `remainingTimePercent`, `numberTargets`,
 `math`, `totemRemainingTime` (a Shaman's), `gcdIsReady`,
 `auraIsKnown`, `auraIsActive`, `auraIsInactive`, `auraNumStacks` and `auraRemainingTime` (on the player
-or on a target), `dotIsActive`,
-`dotRemainingTime`, `dotTimeToNextTick` (on a target), `spellIsKnown`, `spellIsReady`,
+or on a target), with `includeReactionTime` on the player's `auraIsActive` and `auraIsInactive`, `dotIsActive`,
+`dotRemainingTime`, `dotTimeToNextTick` (on a target), `dotBaseDuration`, `spellIsKnown`, `spellIsReady`,
 `spellTimeToReady`, `spellCastTime`, which reads a class's own cast time such as a Hunter
 shot's, `spellCanCast`, whose cost check has Go's side effects, `spellCurrentCost`,
 `autoTimeToNext` and `autoSwingTime` for any auto attack kind, and `multidot` of a dot
@@ -538,8 +538,16 @@ its movement speed multiplier, a step of the Movement aura's stacks a yard, its 
 lazily when the rotation next runs or another move starts, so a cast that checks the range
 before then reads the old one. Its melee swings stop and start with the weapon's range, a cast
 with a cast time fails while the player moves, and the rotation does not wait for the GCD. It
-is supported for a Warrior, whose Charge spends the dash; any other class, a ranged auto swing,
-or an aura that changes the speed is refused. A `move` in the priority list is unsupported. Action IDs may carry a rank, which Go ignores. A
+is supported for a Warrior, whose Charge spends the dash, and for a Hunter; any other class, a
+ranged auto swing of any other class, or an aura that changes the speed is refused. A `move` in
+the priority list runs as Go's `APLActionMove` does once it is ready, when the player is not moving,
+not at the range and not casting or channeling, and is supported for a Hunter only, with code
+`movement_unsupported` for any other class. A unit that moves runs the weaving Go's attack code adds:
+a ranged auto swing cannot fire while it moves and looks again every 500ms, a position update that
+crosses the weapon's range stops or starts the swing as the main hand's, a main hand swing that
+leaves range wakes the rotation when it comes ready, a hardcast that completes does the same, and a
+swing that is due as the unit steps into melee range waits a nanosecond for the rotation to act
+first when the main hand swing can be replaced. Action IDs may carry a rank, which Go ignores. A
 strict sequence controls the rotation as Go's does, including the sequence flag its
 readiness check leaves set and the hook that advances it when a queued cast fires; a
 sequence runs one step each time it is ready, inside the sequence flag, and stops when
@@ -556,11 +564,21 @@ without a dot on that unit (a dot on the targets is none on the player; an area 
 self-only dot is the same on every unit), has no value in Go and drops out of its
 condition. `auraIsInactive` is `!aura.IsActive()`, and constant true for an aura the unit
 lacks. Go drops a comparison of booleans other than equality, which leaves its
-parent without the term. `AllPlayers`, `AllTargets`, every `Pet` but the one `auraIsKnown`
+parent without the term. `AllPlayers` and `AllTargets` name sets, which Go's `GetUnit` gives no
+unit: in a dot or aura value they are a unit that is none, so the dot value has no value and drops out
+of its condition and the aura reads as one nobody has. Every `Pet` but the one `auraIsKnown`
 reads, any player but the first and a reference with other fields are unsupported, as are a
-`target` on a step of a sequence or on a prepull action unless it names the current target,
-`includeReactionTime`, and an `auraShouldRefresh` on a unit but the player and the current
-target. A cast at a target past the first needs its spell's effects, debuffs and dots to land
+`target` on a step of a sequence or on a prepull action, and one on a `castSpell` of a set, unless it
+names the current target, `includeReactionTime` on anything but the player's `auraIsActive` and
+`auraIsInactive`, and an `auraShouldRefresh` on a unit but the player and the current
+target. With `includeReactionTime`, `auraIsActive` also needs the aura to have been up for the
+player's reaction time and `auraIsInactive` to have been down for it (`TimeActive` and
+`TimeInactive`, which count from the aura's gain and fade, and an aura that never faded has been
+down for ever); the activity is not the negation of the other. `dotBaseDuration` is the dot's
+`BaseDuration` on the first target (the spell's area dot, else its dot on the target) as Go captures
+it when it builds the rotation, before the reset activates any aura's spell mods, so a set bonus's
+extra tick is not in it; the exporter and Rust preparation record it in
+`player.rotation_dot_base_durations` and the value is the recorded duration. A cast at a target past the first needs its spell's effects, debuffs and dots to land
 on that target: the gate refuses it for a class not checked there (Druid, Hunter, Paladin and
 Rogue), for a channel with a dot on its target, for Demonology's Demonic Brand and for a cast on the
 player, with code `several_targets_unsupported`. The potion action casts the first combat potion, as Go
