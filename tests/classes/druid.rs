@@ -228,6 +228,26 @@ fn the_roars_refresh_needs_its_category() {
     );
 }
 
+/// Go's rule reads the bids: a permanent debuff that bids less than the roar leaves the
+/// category to the roar, which is then cast. No Go golden holds this, since every raid debuff
+/// bids the roar's own cut; it checks the rule the runtime reads the category with.
+#[test]
+fn a_weaker_permanent_debuff_leaves_the_roar_to_be_cast() {
+    let mut value = accepted("feral-bear-druid-demoralizing-roar-over-shout-debuff");
+    for effect in value["effects"].as_array_mut().unwrap() {
+        if effect["kind"] == "exclusive_category" {
+            effect["members"][0]["priority"] = json!(100.0);
+        }
+    }
+    for aura in value["target"]["auras"].as_array_mut().unwrap() {
+        if aura["label"] == "Demoralizing Shout (External)" {
+            aura["exclusive_memberships"][0]["priority"] = json!(100.0);
+        }
+    }
+    let log = first_fight_log(value);
+    assert!(log.contains("Casting {SpellID: 9898}"), "the bear did not roar");
+}
+
 /// An aura that stacks weighs its bid by its stacks, which the category reading does not cover.
 #[test]
 fn the_roars_refresh_reads_only_a_non_stacking_aura() {
