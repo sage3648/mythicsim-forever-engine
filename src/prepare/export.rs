@@ -894,17 +894,21 @@ pub(crate) fn export(
     ));
     // A tank's swing is read under every stat aura combination too, from the same simulations.
     let tanking = env.tanking();
-    let stat_auras = super::stat_auras::character_stat_auras(env);
+    let layout = super::stat_auras::stat_layout(env);
+    let stat_auras = layout.labels.clone();
     let mut combos = None;
     if tanking && !stat_auras.is_empty() {
-        combos = Some(super::enemy::EnemyCombos::new(env, &stat_auras)?);
+        combos = Some(super::enemy::EnemyCombos::new(env, &layout)?);
     }
     match combos.as_mut() {
         Some(combos) => effects.extend(super::stat_auras::stat_auras_effect_reading(
             env,
+            &layout,
             Some(&mut |mask, fresh, exact| combos.read(mask, fresh, exact)),
         )?),
-        None => effects.extend(super::stat_auras::stat_auras_effect(env)?),
+        None => effects.extend(super::stat_auras::stat_auras_effect_reading(
+            env, &layout, None,
+        )?),
     }
     let tail = tail_effects(env, &mut unrepresented, &effects)?;
     effects.extend(tail);

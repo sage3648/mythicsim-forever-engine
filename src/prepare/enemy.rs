@@ -14,6 +14,7 @@ use crate::contracts::prepared_v2::{Enemy, EnemyAttackPowerAura, EnemyRolls};
 use super::env::Environment;
 use super::sim::{school_array_index, UnitId, PHYSICAL_HASTE_RATING_PER_HASTE_PERCENT};
 use super::spell::{school, Spell, SpellFlag};
+use super::stat_auras::{apply_level, StatLayout};
 use super::stats::{Stat, SCHOOL_LEN};
 use super::Refusal;
 
@@ -274,11 +275,12 @@ fn without_school_damage_taken(values: &Enemy) -> Enemy {
     values
 }
 
-/// The values with the target's melee speed, which a slow changes, left out.
+/// The values with the target's melee and attack speed, which a slow changes, left out.
 fn without_melee_speed(values: &Enemy) -> Enemy {
     let mut values = values.clone();
     values.melee_haste_multiplier = 0.0;
     values.melee_speed_multiplier = Some(0.0);
+    values.attack_speed_multiplier = Some(0.0);
     values
 }
 
@@ -440,20 +442,21 @@ pub(crate) fn enemy_at_reset_values(
 }
 
 /// The stat auras of a combination, as the stat_auras effect sets them: an aura up from the
-/// reset, such as Bear Form, is down where its bit is clear.
-pub(crate) fn set_stat_auras(env: &mut Environment, stat_auras: &[String], mask: usize) {
+/// reset, such as Bear Form, is down at level zero.
+pub(crate) fn set_stat_auras(env: &mut Environment, layout: &StatLayout, mask: usize) {
     let player = env.player;
-    for (bit, label) in stat_auras.iter().enumerate() {
+    for (j, label) in layout.labels.iter().enumerate() {
         if let Some(aura) = env.sim.get_aura(player, label) {
-            if mask & (1 << bit) == 0 && env.sim.aura(aura).active {
+            if layout.level(mask, j) == 0 && env.sim.aura(aura).active {
                 env.sim.deactivate(aura);
             }
         }
     }
-    for (bit, label) in stat_auras.iter().enumerate() {
+    for (j, label) in layout.labels.iter().enumerate() {
         if let Some(aura) = env.sim.get_aura(player, label) {
-            if mask & (1 << bit) != 0 && !env.sim.aura(aura).active {
-                env.sim.activate(aura);
+            let level = layout.level(mask, j);
+            if level > 0 {
+                apply_level(env, aura, level, layout.stacks[j] > 0);
             }
         }
     }
@@ -469,7 +472,7 @@ pub(crate) fn set_stat_auras(env: &mut Environment, stat_auras: &[String], mask:
 pub(crate) struct EnemyCombos {
     request: crate::contracts::request::Message,
     factory: super::env::AgentFactory,
-    stat_auras: Vec<String>,
+    layout: StatLayout,
     hardcast: bool,
     /// The swing at reset and the encoding of its values beyond the rolls and aura lists.
     pub values: Enemy,
@@ -480,17 +483,18 @@ pub(crate) struct EnemyCombos {
     pub reduced_rolls: Vec<EnemyRolls>,
     pub changed: usize,
     pub reduced_changed: usize,
-    /// The player's damage taken multiplier with only the aura of each bit active.
+    /// The player's damage taken multiplier with only each aura active, at one stack if it
+    /// stacks.
     pub alone_damage_taken: Vec<f64>,
 }
 
 impl EnemyCombos {
-    pub(crate) fn new(env: &Environment, stat_auras: &[String]) -> Result<EnemyCombos, Refusal> {
-        let (values, beyond_rolls) = enemy_at_reset_values(env, stat_auras)?;
+    pub(crate) fn new(env: &Environment, layout: &StatLayout) -> Result<EnemyCombos, Refusal> {
+        let (values, beyond_rolls) = enemy_at_reset_values(env, &layout.labels)?;
         Ok(EnemyCombos {
             request: env.request.clone(),
             factory: env.factory,
-            stat_auras: stat_auras.to_vec(),
+            layout: layout.clone(),
             hardcast: env
                 .sim
                 .character(env.player)
@@ -502,7 +506,7 @@ impl EnemyCombos {
             reduced_rolls: Vec::new(),
             changed: 0,
             reduced_changed: 0,
-            alone_damage_taken: vec![0.0; stat_auras.len()],
+            alone_damage_taken: vec![0.0; layout.labels.len()],
         })
     }
 
@@ -517,13 +521,13 @@ impl EnemyCombos {
         let mut own: Option<Environment> = None;
         if !exact {
             let mut fresh = Environment::new(&self.request, self.factory)?;
-            set_stat_auras(&mut fresh, &self.stat_auras, mask);
+            set_stat_auras(&mut fresh, &self.layout, mask);
             own = Some(fresh);
         }
         let env = own.as_mut().unwrap_or(env);
-        for bit in 0..self.stat_auras.len() {
-            if mask == 1 << bit {
-                self.alone_damage_taken[bit] = env
+        for j in 0..self.layout.labels.len() {
+            if mask == 1 << self.layout.offsets[j] {
+                self.alone_damage_taken[j] = env
                     .sim
                     .unit(env.player)
                     .pseudo_stats

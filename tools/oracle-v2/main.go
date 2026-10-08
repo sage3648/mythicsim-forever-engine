@@ -1713,12 +1713,12 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	// A tank's swing is read under every stat aura combination too, from the same simulations.
 	var enemyReader comboReader
 	var combos *enemyCombos
-	auraLabels := characterStatAuras(character, class, agent)
-	if tanking && len(auraLabels) > 0 {
-		combos = newEnemyCombos(request, auraLabels, character)
+	layout := newStatLayout(request, characterStatAuras(character, class, agent))
+	if tanking && len(layout.labels) > 0 {
+		combos = newEnemyCombos(request, layout, character)
 		enemyReader = combos.read
 	}
-	if statAuras := statAurasEffect(request, auraLabels, enemyReader); statAuras != nil {
+	if statAuras := statAurasEffect(request, layout, enemyReader); statAuras != nil {
 		effects = append(effects, statAuras)
 		statAuraLabels = statAuras["auras"].([]string)
 	}

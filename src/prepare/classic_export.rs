@@ -1,5 +1,6 @@
 //! The exporter's descriptions of the effects sim/common/classic registers: tools/oracle-v2
-//! `melee_procs.go` Crusader (enchants.go) and Sulfuras, Hand of Ragnaros (items_weapons.go).
+//! `melee_procs.go` Crusader (enchants.go), Sulfuras, Hand of Ragnaros and Thunderfury
+//! (items_weapons.go).
 //! Ironfoe's Fury of Forgewright is described with the extra attack procs in `export_items.rs`.
 
 use serde_json::{json, Value};
@@ -120,5 +121,51 @@ pub(crate) fn sulfuras_effect(
         "fireball_spell": fireball, "roll_min": 273.0, "roll_max": 333.0, "dot_base": 15.0,
         "immolation_aura": env.sim.aura(immolation).label, "immolation_spell": burn,
         "immolation_damage": 5.0,
+    }));
+}
+
+/// weapon_procs.go `thunderfuryEffects`: common/classic/items_weapons.go Thunderfury, Blessed
+/// Blade of the Windseeker: a weapon proc on landed hits, at the weapon's proc manager, whose
+/// handler a spell batch window later casts two spells on the unit hit. The first (tag 1) is a
+/// nature hit of 300 on the magic table with a crit, whose landing puts Cyclone on the target: a
+/// slow of 20% through `AtkSpeedReductionEffect`, an exclusive effect of the attack speed
+/// category Thunder Clap shares. The second (tag 2) deals no damage on the magic hit table to up
+/// to five targets from the unit hit, and each it lands on takes the Thunderfury aura: 25 less
+/// nature resistance while it lasts. Both auras last 12 seconds. Every number is a Go literal of
+/// the item.
+pub(crate) fn thunderfury_effect(
+    env: &Environment,
+    unrepresented: &mut Vec<String>,
+    effects: &mut Vec<Value>,
+) {
+    let Some(trigger) = aura_named(env, "Thunderfury Proc") else {
+        return;
+    };
+    let strike = spell_position(env, &tagged(&ActionId::spell(21992), 1));
+    let bounce = spell_position(env, &tagged(&ActionId::spell(21992), 2));
+    let target = env.encounter.targets[0];
+    let slow = env.sim.get_aura(target, "Cyclone");
+    let resistance = env.sim.get_aura(target, "Thunderfury");
+    let trigger = env.sim.aura(trigger);
+    let (Some(dpm), None, Some(strike), Some(bounce), Some(slow), Some(resistance)) = (
+        trigger.dpm.as_ref(),
+        trigger.icd,
+        strike,
+        bounce,
+        slow,
+        resistance,
+    ) else {
+        unrepresented.push("Thunderfury's proc has no proc manager, spells or auras".to_string());
+        return;
+    };
+    effects.push(json!({
+        "kind": "thunderfury", "trigger_aura": trigger.label,
+        "chances": dpm_chances(env, dpm, |spell| {
+            !spell.flags.matches(SpellFlag::SUPPRESS_WEAPON_PROCS)
+        }),
+        "strike_spell": strike, "bounce_spell": bounce, "strike_damage": 300.0,
+        "bounce_targets": 5, "slow_aura": env.sim.aura(slow).label,
+        "slow_multiplier": super::shared_auras::slowed_time_multiplier(-20.0),
+        "resistance_aura": env.sim.aura(resistance).label, "nature_resistance": -25.0,
     }));
 }

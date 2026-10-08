@@ -1489,12 +1489,20 @@ fn flurry_axe_effects(env: &Environment, unrepresented: &mut Vec<String>) -> Vec
 /// weapon_procs.go `weaponAuraProcAuras`: common/forever/items_weapons.go Sword of Zeal and
 /// Argent Avenger, weapons whose chance on hit activates an aura of the row on the wearer,
 /// registered through itemhelpers.CreateWeaponProcAura. The aura is the row's effects parsed
-/// (`parse_effects`), the trigger the weapon's name and " Proc".
-pub(crate) const WEAPON_AURA_PROC_AURAS: [&str; 2] = ["Sword of Zeal", "Argent Avenger"];
+/// (`parse_effects`), the trigger the weapon's name and " Proc". Bonereaver's Edge is the same
+/// through itemhelpers.CreateWeaponProcTrigger, whose handler activates the stacking aura
+/// `MakeStackingAura` builds and adds a stack.
+pub(crate) const WEAPON_AURA_PROC_AURAS: [&str; 3] =
+    ["Sword of Zeal", "Argent Avenger", "Bonereaver's Edge"];
+
+/// weapon_procs.go `weaponAuraProcStacks`: the weapon procs above whose handler also adds a stack
+/// of the aura.
+const WEAPON_AURA_PROC_STACKS: [&str; 1] = ["Bonereaver's Edge"];
 
 /// weapon_procs.go `weaponAuraProcEffects`: a weapon proc on landed hits at the weapon's proc
-/// manager whose handler, a spell batch window later, activates the aura. Only an aura without
-/// stacks is described. The parsed aura logs nothing, and its stat changes are read as stat auras.
+/// manager whose handler, a spell batch window later, activates the aura and, for a weapon that
+/// stacks it, adds a stack. The aura logs nothing but the generic lines, and its stat changes are
+/// read as stat auras, by stack where the stats follow them.
 fn weapon_aura_proc_effects(env: &Environment, unrepresented: &mut Vec<String>) -> Vec<Value> {
     let mut effects = Vec::new();
     for name in WEAPON_AURA_PROC_AURAS {
@@ -1503,25 +1511,26 @@ fn weapon_aura_proc_effects(env: &Environment, unrepresented: &mut Vec<String>) 
         };
         let trigger = env.sim.aura(trigger);
         let aura = aura_named(env, name).map(|aura| env.sim.aura(aura));
+        let stacks = WEAPON_AURA_PROC_STACKS.contains(&name);
         let (Some(dpm), None, Some(aura)) = (trigger.dpm.as_ref(), trigger.icd, aura) else {
-            unrepresented.push(format!(
-                "{name}'s proc is not a chance on hit for an aura without stacks"
-            ));
+            unrepresented.push(format!("{name}'s proc is not a chance on hit for its aura"));
             continue;
         };
-        if aura.max_stacks > 0 {
-            unrepresented.push(format!(
-                "{name}'s proc is not a chance on hit for an aura without stacks"
-            ));
+        if (aura.max_stacks > 0) != stacks {
+            unrepresented.push(format!("{name}'s proc is not a chance on hit for its aura"));
             continue;
         }
-        effects.push(json!({
+        let mut effect = json!({
             "kind": "stat_proc", "trigger_aura": trigger.label, "rng_label": trigger.label,
             "aura": aura.label,
             "chances": dpm_chances(env, dpm, |spell| {
                 !spell.flags.matches(SpellFlag::SUPPRESS_WEAPON_PROCS)
             }),
-        }));
+        });
+        if stacks {
+            effect["add_stack"] = json!(true);
+        }
+        effects.push(effect);
     }
     effects
 }
@@ -1660,6 +1669,7 @@ pub(crate) fn melee_proc_effects(env: &Environment, unrepresented: &mut Vec<Stri
     }
     effects.extend(flurry_axe_effects(env, unrepresented));
     effects.extend(weapon_aura_proc_effects(env, unrepresented));
+    super::classic_export::thunderfury_effect(env, unrepresented, &mut effects);
     super::classic_export::dragons_call_effect(env, unrepresented, &mut effects);
     super::classic_export::sulfuras_effect(env, unrepresented, &mut effects);
     if let Some(chili) = super::consumable_effects::dragonbreath_chili_effect(env) {

@@ -39,6 +39,7 @@ pub(crate) mod rage;
 mod rotation;
 mod spell_mod;
 mod sulfuras;
+mod thunderfury;
 mod whelp;
 
 use std::collections::{BTreeMap, HashMap};
@@ -49,6 +50,7 @@ pub(crate) use damage::{
     OUTCOME_PARRY,
 };
 pub(crate) use dot::Dot;
+pub(crate) use enemy::EnemySlow;
 pub(crate) use log::action_string;
 pub(crate) use metrics::{ActionTotals, FightReport};
 pub(crate) use spell_mod::{ModId, ModKind};
@@ -455,6 +457,12 @@ pub(crate) enum SpellBehavior<S> {
     },
     /// A fixed hit that always lands, as Sulfuras's Immolation casts.
     FixedHit(f64),
+    /// Thunderfury's strike: a hit of a literal on the magic table with a crit, whose landing
+    /// puts the slow on its target.
+    ThunderfuryStrike(f64),
+    /// Thunderfury's bounce: a hit of nothing on the magic table to several targets, each it
+    /// lands on taking the resistance aura.
+    ThunderfuryBounce,
     /// A magic hit on a client damage effect's roll, which draws only with a variance, as an
     /// item proc built from client rows casts.
     EffectRoll {
@@ -818,6 +826,9 @@ pub(crate) struct Powers {
     /// Go `stats.PhysicalDamage`, which `Spell.BonusDamage` adds to a physical spell and a stat
     /// aura, as Sword of Zeal's, can change.
     pub(crate) physical_damage: f64,
+    /// Go `stats.ArmorPenetration`, which `GetArmorDamageModifier` takes off the target's armor
+    /// and a stacking aura, as Bonereaver's Edge's, can change.
+    pub(crate) armor_penetration: f64,
 }
 
 /// Mutable player state, reset to the prepared values each iteration.
@@ -987,6 +998,19 @@ pub(crate) struct DamageProc {
     pub(crate) spell: SpellId,
 }
 
+/// A proc whose manager rolls on landed hits and whose handler a spell batch window later
+/// activates a stat aura: a set bonus's or a weapon's.
+#[derive(Clone, Debug)]
+pub(crate) struct StatProc {
+    /// Each spell's chance.
+    pub(crate) chances: Vec<Option<f64>>,
+    /// The label of the roll.
+    pub(crate) rng_label: String,
+    pub(crate) aura: AuraRef,
+    /// The handler also adds a stack of the aura.
+    pub(crate) add_stack: bool,
+}
+
 /// Go common/shared/shared_utils.go `applySpellDataProc`: a stat proc on the spells, heals and
 /// casts its listener hears.
 #[derive(Clone, Debug)]
@@ -1099,7 +1123,6 @@ pub(crate) struct Config {
     pub(crate) melee_haste_rating: f64,
     pub(crate) physical_hit_percent: f64,
     pub(crate) expertise_percent: f64,
-    pub(crate) armor_penetration: f64,
     /// A pet's mana regeneration per second while casting and not, as Go computes it.
     pub(crate) fixed_regen: Option<(f64, f64)>,
     /// Go `RangedHitPercent` and `RangedCritPercent`, which ranged attacks add.
@@ -1413,6 +1436,9 @@ pub(crate) struct Fight<A: Agent> {
     /// Each dot's copies on the targets past the first, in target order; a dot on the caster
     /// has none.
     pub(crate) dot_copies: Vec<Vec<DotId>>,
+    /// By the first dot of an aura, the later dots that share it: Go registers an aura once for
+    /// each label.
+    pub(crate) dot_siblings: Vec<Vec<DotId>>,
     /// The results of casts in flight to several targets, for [`Action::TravelBatch`], and the
     /// places free for reuse.
     pub(crate) travel_batches: Vec<Vec<(SpellId, SpellResult)>>,
@@ -1473,6 +1499,10 @@ pub(crate) struct Fight<A: Agent> {
     /// Dragon's Call and the Emerald Dragon Whelp it summons.
     pub(crate) whelp: Option<whelp::Whelp>,
     pub(crate) sulfuras: Option<sulfuras::Sulfuras>,
+    /// The slows of the attack speed category, by the position of their aura on the target.
+    pub(crate) enemy_slows: Vec<(usize, enemy::EnemySlow)>,
+    /// Thunderfury's proc, when worn.
+    pub(crate) thunderfury: Option<thunderfury::Thunderfury>,
     /// The party Windfury Totem.
     pub(crate) windfury: Option<Windfury>,
     /// The generated buffs other players cast on the player on cooldown.
@@ -1494,7 +1524,7 @@ pub(crate) struct Fight<A: Agent> {
     /// Absorb procs on the melee hits the player takes, by their position among the effects.
     pub(crate) absorb_procs: Vec<absorb::AbsorbProc>,
     /// Set bonus stat procs: each spell's chance, the roll's label and the aura activated.
-    pub(crate) stat_procs: Vec<(Vec<Option<f64>>, String, AuraRef)>,
+    pub(crate) stat_procs: Vec<StatProc>,
     /// Gear procs that heal and give rage, by their aura's position.
     pub(crate) health_rage_procs: Vec<gear_procs::HealthRageProc>,
     /// Gear procs that stack an armor debuff on the target, by their aura's position.
@@ -1671,6 +1701,7 @@ pub(crate) fn unit_config(prepared: &PreparedV2, unit: &UnitSource) -> Result<Co
             healing_power: unit.stats.get("HealingPower").copied().unwrap_or(0.0),
             spirit_regen_per_second: unit.spirit_regen_per_second,
             physical_damage: stat(unit.stats, "PhysicalDamage")?,
+            armor_penetration: stat(unit.stats, "ArmorPenetration")?,
         },
         school_damage: [
             0.0,
@@ -1719,7 +1750,6 @@ pub(crate) fn unit_config(prepared: &PreparedV2, unit: &UnitSource) -> Result<Co
         melee_haste_rating: stat(unit.stats, "MeleeHasteRating")?,
         physical_hit_percent: stat(unit.stats, "PhysicalHitPercent")?,
         expertise_percent: stat(unit.stats, "ExpertisePercent")?,
-        armor_penetration: stat(unit.stats, "ArmorPenetration")?,
         fixed_regen: unit.fixed_regen,
         ranged_hit_percent: stat(unit.stats, "RangedHitPercent")?,
         ranged_crit_percent: stat(unit.stats, "RangedCritPercent")?,
@@ -2285,6 +2315,18 @@ impl<A: Agent> Fight<A> {
                         } if *immolation_spell == spells.len() => {
                             Some(SpellBehavior::FixedHit(*immolation_damage))
                         }
+                        Effect::Thunderfury {
+                            strike_spell,
+                            strike_damage,
+                            ..
+                        } if *strike_spell == spells.len() => {
+                            Some(SpellBehavior::ThunderfuryStrike(*strike_damage))
+                        }
+                        Effect::Thunderfury { bounce_spell, .. }
+                            if *bounce_spell == spells.len() =>
+                        {
+                            Some(SpellBehavior::ThunderfuryBounce)
+                        }
                         _ => None,
                     })
                     .unwrap_or(SpellBehavior::None)
@@ -2491,10 +2533,26 @@ impl<A: Agent> Fight<A> {
 
         let mut aura_logs: Vec<String> = Vec::new();
         // Go AddStatsDynamic: the player's stats for each combination of active stat auras.
-        let (stat_aura_labels, stat_combos) = effects
+        let (stat_aura_labels, stat_combos, stat_places) = effects
             .iter()
             .find_map(|effect| match effect {
-                Effect::StatAuras { auras, combos, .. } => Some((auras.clone(), combos.clone())),
+                Effect::StatAuras {
+                    auras,
+                    combos,
+                    stacks,
+                    ..
+                } => Some((
+                    auras.clone(),
+                    combos.clone(),
+                    aura::stat_aura_places(stacks, auras.len()),
+                )),
+                _ => None,
+            })
+            .unwrap_or_default();
+        let stat_stacks: Vec<i32> = effects
+            .iter()
+            .find_map(|effect| match effect {
+                Effect::StatAuras { stacks, .. } => Some(stacks.clone()),
                 _ => None,
             })
             .unwrap_or_default();
@@ -2571,6 +2629,11 @@ impl<A: Agent> Fight<A> {
                         .get("PhysicalDamage")
                         .copied()
                         .unwrap_or(config.powers.physical_damage),
+                    // Written only when a combination changes it.
+                    armor_penetration: combo
+                        .get("ArmorPenetration")
+                        .copied()
+                        .unwrap_or(config.powers.armor_penetration),
                 })
             })
             .collect::<Result<_, BuildError>>()?;
@@ -2753,7 +2816,9 @@ impl<A: Agent> Fight<A> {
                             Some(AuraBehavior::WindfuryTrigger)
                         } else if *proc_aura == exported.label {
                             let bit = stat_aura_labels.iter().position(|label| label == proc_aura)?;
-                            Some(AuraBehavior::WindfuryProc { bit: 1 << bit })
+                            Some(AuraBehavior::WindfuryProc {
+                                bit: 1 << stat_places[bit].0,
+                            })
                         } else {
                             None
                         }
@@ -2820,10 +2885,15 @@ impl<A: Agent> Fight<A> {
                         Some((gain, expire)) => (Some(logged(gain)), Some(logged(expire))),
                         None => (None, None),
                     };
-                    AuraBehavior::TemporaryStats {
-                        bit: 1 << bit,
-                        gain_log,
-                        expire_log,
+                    let (offset, width) = stat_places[bit];
+                    if stat_stacks.get(bit).copied().unwrap_or(0) > 0 {
+                        AuraBehavior::StackingStats { offset, width }
+                    } else {
+                        AuraBehavior::TemporaryStats {
+                            bit: 1 << offset,
+                            gain_log,
+                            expire_log,
+                        }
                     }
                 } else if side == Side::Player
                     && effects.iter().any(|effect| {
@@ -2889,6 +2959,27 @@ impl<A: Agent> Fight<A> {
                     })
                 {
                     AuraBehavior::SulfurasImmolation
+                } else if side == Side::Player
+                    && effects.iter().any(|effect| {
+                        matches!(effect, Effect::Thunderfury { trigger_aura, .. } if *trigger_aura == exported.label)
+                    })
+                {
+                    AuraBehavior::Thunderfury
+                } else if let Some(delta) = side
+                    .is_target()
+                    .then(|| {
+                        effects.iter().find_map(|effect| match effect {
+                            Effect::Thunderfury {
+                                resistance_aura,
+                                nature_resistance,
+                                ..
+                            } if *resistance_aura == exported.label => Some(*nature_resistance),
+                            _ => None,
+                        })
+                    })
+                    .flatten()
+                {
+                    AuraBehavior::ThunderfuryResistance(delta)
                 } else if side == Side::Player
                     && effects.iter().any(|effect| {
                         matches!(effect, Effect::RageBar { aura, .. } if *aura == exported.label)
@@ -3025,6 +3116,17 @@ impl<A: Agent> Fight<A> {
                 .ok_or_else(|| format!("dot aura {} is not registered", dot.aura_label))?;
         }
 
+        // Go registers a dot's aura by label, so two spells whose dots share a label put them on
+        // one aura, which runs the callbacks of every dot.
+        let mut dot_siblings: Vec<Vec<DotId>> = vec![Vec::new(); dots.len()];
+        for first in 0..dots.len() {
+            if dots.iter().position(|dot| dot.aura == dots[first].aura) == Some(first) {
+                dot_siblings[first] = (first + 1..dots.len())
+                    .filter(|&later| dots[later].aura == dots[first].aura)
+                    .collect();
+            }
+        }
+
         let mut major_cooldowns = Vec::new();
         for cooldown in &player.major_cooldowns {
             let spell = cooldown
@@ -3094,6 +3196,7 @@ impl<A: Agent> Fight<A> {
             ],
             extra_targets_built: false,
             dot_copies: Vec::new(),
+            dot_siblings,
             travel_batches: Vec::new(),
             free_travel_batches: Vec::new(),
             damage_taken_modifiers: Vec::new(),
@@ -3147,6 +3250,8 @@ impl<A: Agent> Fight<A> {
             crusader: None,
             whelp: None,
             sulfuras: None,
+            thunderfury: None,
+            enemy_slows: Vec::new(),
             windfury: None,
             external_cooldowns: Vec::new(),
             power_infusion: None,
@@ -3345,6 +3450,7 @@ impl<A: Agent> Fight<A> {
                     action,
                     metrics: SpellMetrics::default(),
                     melee_speed_multiplier: values.melee_speed_multiplier.unwrap_or(1.0),
+                    attack_speed_multiplier: values.attack_speed_multiplier.unwrap_or(1.0),
                     attack_power_auras: attack_power_auras.clone(),
                 })
                 .collect();
@@ -3543,6 +3649,7 @@ impl<A: Agent> Fight<A> {
                 }
                 Effect::EmeraldDragonWhelp { .. } => fight.bind_whelp(effect)?,
                 Effect::SulfurasHandOfRagnaros { .. } => fight.bind_sulfuras(effect)?,
+                Effect::Thunderfury { .. } => fight.bind_thunderfury(effect)?,
                 _ => {}
             }
         }
@@ -3759,6 +3866,7 @@ impl<A: Agent> Fight<A> {
                 rng_label,
                 aura,
                 chances,
+                add_stack,
                 ..
             } = effect
             {
@@ -3769,7 +3877,12 @@ impl<A: Agent> Fight<A> {
                     }
                 }
                 let aura = fight.player_aura(aura)?;
-                fight.stat_procs.push((by_spell, rng_label.clone(), aura));
+                fight.stat_procs.push(StatProc {
+                    chances: by_spell,
+                    rng_label: rng_label.clone(),
+                    aura,
+                    add_stack: *add_stack,
+                });
             }
         }
         fight.bind_gear_procs(effects)?;
@@ -4071,6 +4184,16 @@ impl<A: Agent> Fight<A> {
                 self.dots.push(copy);
                 self.dot_copies[dot].push(self.dots.len() - 1);
             }
+            self.dot_siblings.resize(self.dots.len(), Vec::new());
+            for dot in 0..self.dot_copies.len() {
+                let siblings: Vec<DotId> = self.dot_siblings[dot]
+                    .iter()
+                    .filter_map(|&sibling| self.dot_copies[sibling].get(extra).copied())
+                    .collect();
+                if let Some(&copy) = self.dot_copies[dot].get(extra) {
+                    self.dot_siblings[copy] = siblings;
+                }
+            }
             let auras = self.trackers[Side::Target.index()].copy_auras(|behavior| match behavior {
                 AuraBehavior::Dot(dot) => AuraBehavior::Dot(self.dot_copies[*dot][extra]),
                 other => other.clone(),
@@ -4190,6 +4313,7 @@ impl<A: Agent> Fight<A> {
         if !self.extra_targets_built {
             self.build_extra_targets();
             self.build_exclusive_tracking();
+            self.apply_enemy_slow_priorities();
         }
         let started = std::time::Instant::now();
         let iterations = self.config.iterations;

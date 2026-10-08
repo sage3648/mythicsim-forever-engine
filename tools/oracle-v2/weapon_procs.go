@@ -166,13 +166,17 @@ func flurryAxeEffects(simulation *core.Simulation, character *core.Character, un
 // common/forever/items_weapons.go Sword of Zeal and Argent Avenger: weapons whose chance on hit
 // activates an aura of the row on the wearer, registered through itemhelpers.CreateWeaponProcAura.
 // The aura is the row's effects parsed (spelldata.ParseEffects), the trigger the weapon's name and
-// " Proc".
-var weaponAuraProcAuras = []string{"Sword of Zeal", "Argent Avenger"}
+// " Proc". Bonereaver's Edge is the same through itemhelpers.CreateWeaponProcTrigger, whose
+// handler activates the stacking aura core.MakeStackingAura builds and adds a stack.
+var weaponAuraProcAuras = []string{"Sword of Zeal", "Argent Avenger", "Bonereaver's Edge"}
+
+// The weapon procs above whose handler also adds a stack of the aura.
+var weaponAuraProcStacks = map[string]bool{"Bonereaver's Edge": true}
 
 // weaponAuraProcEffects describes those weapon procs: a weapon proc on landed hits at the weapon's
-// proc manager whose handler, a spell batch window later, activates the aura. Only an aura
-// without stacks is described. The parsed aura logs nothing, and its stat changes are read as stat
-// auras.
+// proc manager whose handler, a spell batch window later, activates the aura and, for a weapon
+// that stacks it, adds a stack. The aura logs nothing but the generic lines, and its stat changes
+// are read as stat auras, by stack where the stats follow them.
 func weaponAuraProcEffects(simulation *core.Simulation, character *core.Character, unrepresented *[]string) []map[string]any {
 	effects := []map[string]any{}
 	for _, name := range weaponAuraProcAuras {
@@ -181,16 +185,21 @@ func weaponAuraProcEffects(simulation *core.Simulation, character *core.Characte
 			continue
 		}
 		aura := character.GetAura(name)
-		if trigger.Dpm == nil || trigger.Icd != nil || aura == nil || aura.MaxStacks > 0 {
-			*unrepresented = append(*unrepresented, fmt.Sprintf("%s's proc is not a chance on hit for an aura without stacks", name))
+		stacks := weaponAuraProcStacks[name]
+		if trigger.Dpm == nil || trigger.Icd != nil || aura == nil || (aura.MaxStacks > 0) != stacks {
+			*unrepresented = append(*unrepresented, fmt.Sprintf("%s's proc is not a chance on hit for its aura", name))
 			continue
 		}
-		effects = append(effects, map[string]any{
+		effect := map[string]any{
 			"kind": "stat_proc", "trigger_aura": trigger.Label, "rng_label": trigger.Label, "aura": aura.Label,
 			"chances": dpmChances(character, trigger.Dpm, simulation, func(spell *core.Spell) bool {
 				return !spell.Flags.Matches(core.SpellFlagSuppressWeaponProcs)
 			}),
-		})
+		}
+		if stacks {
+			effect["add_stack"] = true
+		}
+		effects = append(effects, effect)
 	}
 	return effects
 }
@@ -261,5 +270,44 @@ func ebonHiltEffects(simulation *core.Simulation, character *core.Character, unr
 		"spell": spell, "average": 0.0, "variance": 0.0, "can_crit": false,
 		"periodic": map[string]any{"tick_base": 28.0, "tick_outcome": "tick", "with_direct": false,
 			"application": "magic_hit"},
+	}}
+}
+
+// common/classic/items_weapons.go Thunderfury, Blessed Blade of the Windseeker: a weapon proc on
+// landed hits, at the weapon's proc manager, whose handler a spell batch window later casts two
+// spells on the unit hit. The first (tag 1) is a nature hit of 300 on the magic table with a crit,
+// whose landing puts Cyclone on the target: a slow of 20% through core.AtkSpeedReductionEffect, an
+// exclusive effect of the attack speed category Thunder Clap shares. The second (tag 2) deals no
+// damage on the magic hit table to up to five targets from the unit hit, and each it lands on
+// takes the Thunderfury aura: 25 less nature resistance while it lasts. Both auras last 12
+// seconds. Every number is a Go literal of the item.
+func thunderfuryEffects(simulation *core.Simulation, character *core.Character, unrepresented *[]string) []map[string]any {
+	trigger := character.GetAura("Thunderfury Proc")
+	if trigger == nil {
+		return nil
+	}
+	strike, bounce := -1, -1
+	for i, registered := range character.Spellbook {
+		switch registered.ActionID {
+		case core.ActionID{SpellID: 21992, Tag: 1}:
+			strike = i
+		case core.ActionID{SpellID: 21992, Tag: 2}:
+			bounce = i
+		}
+	}
+	target := character.Env.Encounter.ActiveTargetUnits[0]
+	slow, resistance := target.GetAura("Cyclone"), target.GetAura("Thunderfury")
+	if trigger.Dpm == nil || trigger.Icd != nil || strike < 0 || bounce < 0 || slow == nil || resistance == nil {
+		*unrepresented = append(*unrepresented, "Thunderfury's proc has no proc manager, spells or auras")
+		return nil
+	}
+	return []map[string]any{{
+		"kind": "thunderfury", "trigger_aura": trigger.Label,
+		"chances": dpmChances(character, trigger.Dpm, simulation, func(spell *core.Spell) bool {
+			return !spell.Flags.Matches(core.SpellFlagSuppressWeaponProcs)
+		}),
+		"strike_spell": strike, "bounce_spell": bounce, "strike_damage": 300.0, "bounce_targets": int32(5),
+		"slow_aura": slow.Label, "slow_multiplier": core.SlowedTimeMultiplier(-20),
+		"resistance_aura": resistance.Label, "nature_resistance": -25.0,
 	}}
 }

@@ -5,6 +5,7 @@ package main
 
 import (
 	"fmt"
+	"math/bits"
 	"reflect"
 	"sort"
 	"time"
@@ -28,12 +29,13 @@ var dynamicReadStats = []stats.Stat{stats.SpellDamage, stats.AttackPower, stats.
 // Stats the Rust runtime reads during a fight that a combination carries only when one changes
 // them: maximum mana, healing power and health, Spirit, which Life Tap and Dark Sacrifice read,
 // the school spell damage stats spell.go SpellSchoolBonusDamage reads, the resistances a spell
-// that hits the player rolls against and the physical damage spell.go BonusDamage adds to a
-// physical spell.
+// that hits the player rolls against, the physical damage spell.go BonusDamage adds to a
+// physical spell and the armor penetration spell_resistances.go GetArmorDamageModifier takes off
+// the target's armor.
 var optionalReadStats = []stats.Stat{stats.Mana, stats.HealingPower, stats.Health, stats.Spirit,
 	stats.ArcaneDamage, stats.FireDamage, stats.FrostDamage, stats.HolyDamage, stats.NatureDamage,
 	stats.ShadowDamage, stats.ArcaneResistance, stats.FireResistance, stats.FrostResistance,
-	stats.NatureResistance, stats.ShadowResistance, stats.PhysicalDamage}
+	stats.NatureResistance, stats.ShadowResistance, stats.PhysicalDamage, stats.ArmorPenetration}
 
 // Auras of races, items and raid buffs whose gain and expiry change stats through
 // AddStatsDynamic. A class adds its own through classExport.statAuras.
@@ -77,39 +79,116 @@ func characterStatAuras(character *core.Character, class classExport, agent core
 // simulation than setStatAuras does, so the reader must set one up itself.
 type comboReader func(mask int, simulation *core.Simulation, player *core.Character, exact bool)
 
+// The place of each stat aura in a combination's number. An aura read as active or not takes one
+// bit; an aura whose stats follow its stacks takes the bits that count from none to its maximum
+// stacks, and a count past the maximum reads as the maximum, as SetStacks clamps it. A
+// combination of auras without stacks is the mask of its active auras.
+type statLayout struct {
+	labels []string
+	// The maximum stacks of an aura whose stats follow them, else 0.
+	stacks []int32
+	// The first bit of each aura, and the bits all of them take.
+	offsets []int
+	bits    int
+}
+
+// Finds the stat auras whose stats follow their stacks (core.MakeStackingAura: each stack adds
+// the same bonus) by activating each at every stack count in a reset simulation of its own. An
+// aura with stacks whose stats do not change with them, as one that counts charges, is read as
+// active or not.
+func newStatLayout(request *proto.RaidSimRequest, labels []string) statLayout {
+	layout := statLayout{labels: labels}
+	probe := core.NewSim(request, simsignals.CreateSignals())
+	probe.Reset()
+	for _, label := range labels {
+		stacks := int32(0)
+		if most := probe.Raid.Parties[0].Players[0].GetCharacter().GetAura(label).MaxStacks; most > 0 {
+			var first map[string]float64
+			for level := int32(1); level <= most; level++ {
+				simulation := core.NewSim(request, simsignals.CreateSignals())
+				simulation.Reset()
+				player := simulation.Raid.Parties[0].Players[0].GetCharacter()
+				applyStatLevel(simulation, player.GetAura(label), level, true)
+				values := statValues(player.GetStats())
+				if first == nil {
+					first = values
+				} else if !reflect.DeepEqual(first, values) {
+					stacks = most
+				}
+			}
+		}
+		layout.stacks = append(layout.stacks, stacks)
+		layout.offsets = append(layout.offsets, layout.bits)
+		layout.bits += layout.width(len(layout.stacks) - 1)
+	}
+	return layout
+}
+
+// The bits aura j takes in a combination's number.
+func (layout statLayout) width(j int) int {
+	if layout.stacks[j] > 0 {
+		return bits.Len(uint(layout.stacks[j]))
+	}
+	return 1
+}
+
+// The level combination mask gives aura j: 1 for an active aura without stacks, else its stacks.
+func (layout statLayout) level(mask, j int) int32 {
+	digit := int32(mask >> layout.offsets[j] & (1<<layout.width(j) - 1))
+	if layout.stacks[j] > 0 {
+		return min(digit, layout.stacks[j])
+	}
+	return digit
+}
+
+// Activates a stat aura and, for one that stacks, adds a stack at a time up to the level, as the
+// procs that stack it do.
+func applyStatLevel(simulation *core.Simulation, aura *core.Aura, level int32, stacking bool) {
+	if !aura.IsActive() {
+		aura.Activate(simulation)
+	}
+	if stacking {
+		for aura.GetStacks() < level {
+			aura.AddStack(simulation)
+		}
+	}
+}
+
 // unit.go AddStatsDynamic recomputes every stat from the active flat bonuses, so stats are a
-// function of which stat auras are active. Each combination is read from a separate reset
-// simulation with exactly those auras active: combination i has aura j active when bit j is
-// set, and an aura active after the reset, as a druid's starting form, is deactivated when
-// its bit is clear. Maximum mana and healing power are read too when some combination changes
-// them. The reader, when there is one, reads the same simulations for the target's swing.
-func statAurasEffect(request *proto.RaidSimRequest, labels []string, reader comboReader) map[string]any {
+// function of which stat auras are active, and of the stacks of those that stack. Each
+// combination is read from a separate reset simulation with exactly those auras active:
+// combination i has aura j at the level the layout reads from i, and an aura active after the
+// reset, as a druid's starting form, is deactivated at level zero. Maximum mana and healing
+// power are read too when some combination changes them. The reader, when there is one, reads
+// the same simulations for the target's swing.
+func statAurasEffect(request *proto.RaidSimRequest, layout statLayout, reader comboReader) map[string]any {
+	labels := layout.labels
 	if len(labels) == 0 {
 		return nil
 	}
-	if len(labels) > 10 {
+	if layout.bits > 10 {
 		fail(fmt.Errorf("%d stat auras exceed the combination limit", len(labels)))
 	}
 	combos := []map[string]float64{}
 	changedSpiritRegen := false
 	changed := map[string]bool{}
 	var base map[string]float64
-	for mask := 0; mask < 1<<len(labels); mask++ {
+	for mask := 0; mask < 1<<layout.bits; mask++ {
 		simulation := core.NewSim(request, simsignals.CreateSignals())
 		simulation.Reset()
 		player := simulation.Raid.Parties[0].Players[0].GetCharacter()
-		// An aura up from the reset, such as the default stance, is down where its bit is clear.
-		for bit, label := range labels {
-			if aura := player.GetAura(label); mask&(1<<bit) == 0 && aura.IsActive() {
+		// An aura up from the reset, such as the default stance, is down at level zero.
+		for j, label := range labels {
+			if aura := player.GetAura(label); layout.level(mask, j) == 0 && aura.IsActive() {
 				aura.Deactivate(simulation)
 			}
 		}
 		exact := true
-		for bit, label := range labels {
+		for j, label := range labels {
 			aura := player.GetAura(label)
-			if want := mask&(1<<bit) != 0; want && !aura.IsActive() {
-				aura.Activate(simulation)
-			} else if !want && aura.IsActive() {
+			if level := layout.level(mask, j); level > 0 {
+				applyStatLevel(simulation, aura, level, layout.stacks[j] > 0)
+			} else if aura.IsActive() {
 				// An activation switched this aura on again: setStatAuras would leave it up.
 				exact = false
 				aura.Deactivate(simulation)
@@ -161,7 +240,13 @@ func statAurasEffect(request *proto.RaidSimRequest, labels []string, reader comb
 			delete(combo, spiritRegenKey)
 		}
 	}
-	return map[string]any{"kind": "stat_auras", "auras": labels, "combos": combos, "changed": names}
+	effect := map[string]any{"kind": "stat_auras", "auras": labels, "combos": combos, "changed": names}
+	for _, stacks := range layout.stacks {
+		if stacks > 0 {
+			effect["stacks"] = layout.stacks
+		}
+	}
+	return effect
 }
 
 type spellChance struct {
@@ -532,6 +617,7 @@ func meleeProcEffects(simulation *core.Simulation, character *core.Character, un
 	}
 	effects = append(effects, flurryAxeEffects(simulation, character, unrepresented)...)
 	effects = append(effects, weaponAuraProcEffects(simulation, character, unrepresented)...)
+	effects = append(effects, thunderfuryEffects(simulation, character, unrepresented)...)
 	// common/classic/items_weapons.go Dragon's Call: a weapon proc on landed hits, at one proc a
 	// minute of the weapon's speed, whose handler summons the Emerald Dragon Whelp for 15 seconds
 	// a spell batch window later (emerald_dragon_whelp.go); its rotation spits half the time.

@@ -456,6 +456,7 @@ impl<A: Agent> Fight<A> {
         };
         // Go Unit.reset restores the target's pseudo stats first.
         enemy.melee_speed_multiplier = enemy.values.melee_speed_multiplier.unwrap_or(1.0);
+        enemy.attack_speed_multiplier = enemy.values.attack_speed_multiplier.unwrap_or(1.0);
         let speed = enemy.values.swing_speed;
         let haste = self.enemy_melee_haste(target);
         Self::open_enemy_swing(self.autos.enemy_attack(target), speed, haste, roll);
@@ -1108,7 +1109,7 @@ impl<A: Agent> Fight<A> {
         // The arm64 build fuses the ignored share into the subtraction.
         let target_armor = self.target_unit(target).armor;
         let armor = (-target_armor).mul_add(ignore, target_armor);
-        let armor = (armor - config.armor_penetration).max(0.0);
+        let armor = (armor - self.unit(side).powers.armor_penetration).max(0.0);
         (1.0 - armor / (armor + constant)).max(0.25)
     }
 

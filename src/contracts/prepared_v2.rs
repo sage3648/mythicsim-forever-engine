@@ -1646,11 +1646,17 @@ pub enum Effect {
     },
     /// Auras whose gain and expiry change stats through Go's AddStatsDynamic, and the player's
     /// stats Rust reads for every combination of them: entry i has aura j active when bit j
-    /// of i is set. `changed` names every stat any combination changes.
+    /// of i is set. `changed` names every stat any combination changes. An aura whose stats
+    /// follow its stacks (Go `core.MakeStackingAura`) takes the bits that count its stacks, so
+    /// `stacks` lists its maximum stacks, or 0 for an aura read as active or not, and aura j's
+    /// bits start where the bits of the auras before it end; a count past the maximum reads as
+    /// the maximum. It is absent when no aura stacks.
     StatAuras {
         auras: Vec<String>,
         combos: Vec<BTreeMap<String, f64>>,
         changed: Vec<String>,
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        stacks: Vec<i32>,
     },
     /// The Crusader weapon enchant: a weapon proc at a per-spell chance that activates the
     /// hand's Holy Strength and heals.
@@ -1680,6 +1686,10 @@ pub enum Effect {
         gain_log: Option<String>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         expire_log: Option<String>,
+        /// The handler also adds a stack of the aura after it activates it, as Bonereaver's Edge
+        /// does.
+        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+        add_stack: bool,
     },
     /// Paladin talents_holy.go Illumination: a heal crit's chance to return a share of the
     /// heal's base cost, a batch window later.
@@ -3800,6 +3810,25 @@ pub enum Effect {
         immolation_spell: usize,
         immolation_damage: f64,
     },
+    /// Thunderfury, Blessed Blade of the Windseeker: a weapon proc on landed hits whose handler
+    /// a spell batch window later casts two spells on the unit hit. The strike is a hit of a Go
+    /// literal on the magic table with a crit, whose landing puts the slow on the target: Cyclone,
+    /// an exclusive effect in the attack speed category Thunder Clap shares, that multiplies the
+    /// target's attack speed by one over `slow_multiplier`. The bounce deals nothing on the magic
+    /// table to up to `bounce_targets` targets from the unit hit, and each it lands on takes the
+    /// resistance aura, which adds `nature_resistance` to the target's nature resistance.
+    Thunderfury {
+        trigger_aura: String,
+        chances: Vec<SpellChance>,
+        strike_spell: usize,
+        bounce_spell: usize,
+        strike_damage: f64,
+        bounce_targets: i32,
+        slow_aura: String,
+        slow_multiplier: f64,
+        resistance_aura: String,
+        nature_resistance: f64,
+    },
     /// Dragon's Call: a weapon proc whose handler summons the Emerald Dragon Whelp, a guardian
     /// whose rotation spits Acid Spit half the time.
     EmeraldDragonWhelp {
@@ -4166,6 +4195,7 @@ impl Effect {
             Effect::Riposte { .. } => "riposte",
             Effect::BasicExplosive { .. } => "basic_explosive",
             Effect::EmeraldDragonWhelp { .. } => "emerald_dragon_whelp",
+            Effect::Thunderfury { .. } => "thunderfury",
             Effect::SulfurasHandOfRagnaros { .. } => "sulfuras_hand_of_ragnaros",
             Effect::HunterPet { .. } => "hunter_pet",
             Effect::AspectOfTheBeast { .. } => "aspect_of_the_beast",

@@ -558,7 +558,9 @@ impl Warrior {
                 "can_block": sim.unit(unit).pseudo_stats.can_block}));
         }
         // thunder_clap.go: the row's average plus a share of attack power; a landed clap slows
-        // the target by its bid in the attack speed category, which holds only the clap.
+        // the target by its bid in the attack speed category, which holds only the clap, or the
+        // clap and Thunderfury's Cyclone, whose gains and expiries the runtime follows with the
+        // category's active effect.
         let clap_row = data.thunder_clap.highest();
         if let Some(clap) = Self::spell_of(sim, unit, clap_row) {
             let slow = clap_row.effects[1].base_value();
@@ -574,14 +576,21 @@ impl Warrior {
                         .copied()
                         .flatten()
                 });
-            let members = aura.and_then(|aura| {
+            let others = aura.and_then(|aura| {
                 (sim.aura(aura).exclusive_effects.len() == 1).then(|| {
                     let category = sim.effects[sim.aura(aura).exclusive_effects[0].0].category;
-                    sim.categories[category.0].effects.len()
+                    sim.categories[category.0]
+                        .effects
+                        .iter()
+                        .filter(|member| {
+                            let member = sim.effects[member.0].aura;
+                            member != aura && sim.aura(member).label != "Cyclone"
+                        })
+                        .count()
                 })
             });
-            match (aura, members) {
-                (Some(aura), Some(1)) => {
+            match (aura, others) {
+                (Some(aura), Some(0)) => {
                     let multiplier = 1.0 - (slow * (1.0 + bonus)) / 100.0;
                     effects.push(json!({"kind": "thunder_clap", "spell_id": clap_row.id,
                         "base_damage": clap_row.damage_effect().average(level),

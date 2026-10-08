@@ -185,6 +185,7 @@ const COMMON_EFFECTS: &[&str] = &[
     "dragonbreath_chili",
     "energize_on_use",
     "emerald_dragon_whelp",
+    "thunderfury",
     "sulfuras_hand_of_ragnaros",
     "energize_proc",
     "eureka",
@@ -419,6 +420,16 @@ fn common_claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         Effect::EmeraldDragonWhelp {
             trigger_aura, pet, ..
         } => vec![("player", trigger_aura), ("pet unit", pet)],
+        Effect::Thunderfury {
+            trigger_aura,
+            slow_aura,
+            resistance_aura,
+            ..
+        } => vec![
+            ("player", trigger_aura),
+            ("target", slow_aura),
+            ("target", resistance_aura),
+        ],
         Effect::SulfurasHandOfRagnaros {
             trigger_aura,
             immolation_aura,
@@ -532,19 +543,27 @@ fn undirected_procs(prepared: &PreparedV2) -> Vec<String> {
 
 /// Dots of two spells that share one aura on the target. Go registers an aura once per label, so
 /// two spells of the same name, as Plaguefang's and Stinging Viper's Poison, put their dots on one
-/// aura; the runtime binds an aura to a single dot, and the other would never tick.
+/// aura, whose gain and expiry run both dots' callbacks. The runtime follows that for the dots of
+/// weapon procs, which tick a flat amount on current stats and hold no class behavior.
 fn shared_dot_auras(prepared: &PreparedV2) -> Vec<String> {
     let spells = &prepared.player.spells;
+    let proc_dot = |index: usize| {
+        prepared.effects.iter().any(|effect| {
+            matches!(effect, Effect::SpellDataDamageProc { spell, periodic: Some(_), .. }
+                if *spell == index)
+        })
+    };
     let mut reasons = Vec::new();
     for (index, spell) in spells.iter().enumerate() {
         let Some(dot) = spell.dot.as_ref() else {
             continue;
         };
-        for other in &spells[..index] {
+        for (earlier, other) in spells[..index].iter().enumerate() {
             if other
                 .dot
                 .as_ref()
                 .is_some_and(|other| other.aura_label == dot.aura_label && other.unit == dot.unit)
+                && !(proc_dot(earlier) && proc_dot(index))
             {
                 reasons.push(format!(
                     "the dots of {} and {} share the aura {}",
@@ -610,6 +629,9 @@ const DYNAMIC_STATS: &[&str] = &[
     // Physical damage, which a physical spell adds to its base damage: the combinations carry
     // it when one changes it.
     "PhysicalDamage",
+    // Armor penetration, which the armor of a hit's target is reduced by: the combinations
+    // carry it when one changes it.
+    "ArmorPenetration",
     // Spirit, which spirit regeneration, Life Tap and Dark Sacrifice read live.
     "Spirit",
     // Spell power by school, which spell power reads, and the resistances spells that hit
@@ -784,7 +806,7 @@ const HIT_TAKEN_EFFECTS: &[&str] = &[
 
 /// Effects that slow the target's melee speed through its live multiplier, with the target
 /// auras they claim.
-const ENEMY_SPEED_EFFECTS: &[&str] = &["thunder_clap"];
+const ENEMY_SPEED_EFFECTS: &[&str] = &["thunder_clap", "thunderfury"];
 
 /// Callbacks the target's own swings fire on the target.
 const TARGET_CASTER_CALLBACKS: &[&str] = &[
@@ -1020,6 +1042,7 @@ fn tank_limits(
             auras,
             combos,
             changed,
+            ..
         } = effect
         {
             // Stamina moves only the maximum health the combinations carry.
