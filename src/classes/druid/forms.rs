@@ -21,9 +21,6 @@ pub(crate) const TREE: u8 = 1 << 4;
 /// Go `Any`.
 pub(crate) const ANY: u8 = HUMANOID | BEAR | CAT | MOONKIN | TREE;
 
-/// Go `GetMovementSpeed` for a player: seven yards a second.
-const PLAYER_SPEED: f64 = 7.0;
-
 /// Form bits from exported form names.
 pub(crate) fn parse(names: &[String]) -> u8 {
     names.iter().fold(0, |mask, name| {
@@ -73,19 +70,7 @@ impl Forms {
     }
 }
 
-/// Go `Unit.MultiplyMovementSpeed`, which only logs in scope.
+/// Go `Unit.MultiplyMovementSpeed`, of Prowl's aura.
 pub(crate) fn multiply_movement_speed(fight: &mut Fight<DruidAgent>, amount: f64) {
-    let old = fight.agent.movement_speed;
-    fight.agent.movement_speed *= amount;
-    if fight.log.is_some() {
-        let new = fight.agent.movement_speed;
-        let line = format!(
-            "[DEBUG] Movement speed changed from {:.2} ({:.2}%) to {:.2} ({:.2}%)",
-            PLAYER_SPEED * old,
-            (old - 1.0) * 100.0,
-            PLAYER_SPEED * new,
-            (new - 1.0) * 100.0
-        );
-        fight.player_log(&line);
-    }
+    fight.multiply_movement_speed(amount);
 }

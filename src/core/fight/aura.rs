@@ -829,7 +829,6 @@ impl<A: Agent> Fight<A> {
             state.stack_update = NEVER_EXPIRES;
             state.previous_stacks = 0;
             if state.permanent {
-                state.duration = NEVER_EXPIRES;
                 // Go ExclusiveEffect.Activate: a stronger later member of the category
                 // deactivates the earlier one before it activates.
                 if displacing {

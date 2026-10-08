@@ -119,53 +119,92 @@ pub(crate) enum RefreshReading {
     Own,
     /// Another aura holds the category for good and outranks the effect: Go never refreshes.
     Never,
-    /// A category the runtime enforces: Go's rule against the active effect, by category and
-    /// member.
-    Category { category: usize, member: usize },
+    /// Go's rule against the category's active effect, read from the category the runtime
+    /// keeps for the effect: one it enforces or one it tracks.
+    Live,
 }
 
 impl<A: Agent> Fight<A> {
-    /// The reading of an aura's effect in a category the runtime enforces, from the effect's
-    /// exported membership. An effect in any other category is an error.
-    pub(crate) fn enforced_refresh_reading(
-        &self,
-        aura: AuraRef,
-        membership: Option<&crate::contracts::prepared_v2::ExclusiveMembership>,
-    ) -> Result<RefreshReading, String> {
-        let membership = membership.ok_or("an exclusive effect of the aura is not exported")?;
-        let category = self
-            .enforced_category(aura.side, &membership.category)
-            .ok_or_else(|| format!("category {} is not enforced", membership.category))?;
-        let member = self.exclusive[category]
-            .members
-            .iter()
-            .position(|member| member.aura == aura)
-            .ok_or_else(|| format!("the aura is not a member of {}", membership.category))?;
-        Ok(RefreshReading::Category { category, member })
-    }
-
-    /// Go `Aura.ShouldRefreshExclusiveEffects` for one non stacking effect of an aura in an
-    /// enforced category: true when nothing holds the category or the effect outbids what does,
-    /// and, on an equal bid, when no effect of that bid has more than the overlap left.
+    /// Go `Aura.ShouldRefreshExclusiveEffects` for the aura's effect at a position: true when
+    /// nothing holds the category or the effect outbids what does, when the aura stacks and
+    /// its bid at full stacks would outbid it, and, on an equal bid, when no effect of that bid
+    /// has more than the overlap left. An aura without that effect has nothing to refresh.
     pub(crate) fn exclusive_should_refresh(
         &self,
-        category: usize,
-        member: usize,
+        aura: AuraRef,
+        position: usize,
         overlap: i64,
     ) -> bool {
-        let state = &self.exclusive[category];
+        let Some(effect) = self.aura_effects.get(&aura).and_then(|e| e.get(position)) else {
+            return false;
+        };
+        let state = if effect.tracking {
+            &self.exclusive_tracking[effect.category]
+        } else {
+            &self.exclusive[effect.category]
+        };
         let Some(active) = state.active else {
             return true;
         };
-        let bid = state.members[member].priority;
+        let bid = state.members[effect.member].priority;
         let held = state.members[active].priority;
         if bid > held {
             return true;
+        }
+        let aura_state = self.aura(aura);
+        if aura_state.max_stacks > 0 {
+            // Go divides by the stacks: none gives infinity, or not a number for a bid of zero.
+            let at_full = bid / f64::from(aura_state.stacks) * f64::from(aura_state.max_stacks);
+            if at_full > held {
+                return true;
+            }
         }
         bid == held
             && !state.members.iter().any(|other| {
                 other.priority == bid && self.remaining_for_exclusive(other.aura) > overlap
             })
+    }
+
+    /// The enforced category of a single aura category the runtime derives from the exported
+    /// memberships, for an aura an `auraShouldRefresh` reads whose category no class describes.
+    /// Its members are the unit's auras that belong to it, in the category's order, bidding
+    /// what Go registered them with.
+    fn derive_enforced_category(
+        &mut self,
+        exported: &[(
+            AuraRef,
+            Vec<crate::contracts::prepared_v2::ExclusiveMembership>,
+        )],
+        side: Side,
+        name: &str,
+    ) {
+        if self.enforced_category(side, name).is_some() {
+            return;
+        }
+        let mut members: Vec<(u32, Member)> = Vec::new();
+        for (aura, memberships) in exported {
+            if aura.side != side {
+                continue;
+            }
+            for membership in memberships.iter().filter(|m| m.category == name) {
+                let spell_id = self
+                    .aura(*aura)
+                    .action_id
+                    .as_ref()
+                    .map_or(0, |id| id.spell_id);
+                members.push((
+                    membership.position,
+                    Member::new(*aura, membership.priority, spell_id, None),
+                ));
+            }
+        }
+        if members.is_empty() {
+            return;
+        }
+        members.sort_by_key(|(position, _)| *position);
+        let mut category = Category::new(members.into_iter().map(|(_, member)| member).collect());
+        category.name = name.to_string();
+        self.exclusive.push(category);
     }
 
     /// Go `RemainingDuration`.
@@ -210,6 +249,9 @@ impl<A: Agent> Fight<A> {
         if old == new {
             return;
         }
+        // A movement speed effect multiplies the player's speed as it takes hold and gives it
+        // back as it lets go, at the bid it holds the category with.
+        let moves = !tracking && self.movement_categories.contains(&category);
         if let Some(old) = old {
             let aura = self.category_mut(tracking, category).members[old].aura;
             let state = self.aura(aura);
@@ -220,11 +262,19 @@ impl<A: Agent> Fight<A> {
             };
             let uptime = &mut self.category_mut(tracking, category).members[old].uptime;
             uptime.this_fight += (end - uptime.active_since.max(0)).max(0);
+            if moves {
+                let bonus = self.exclusive[category].members[old].priority;
+                self.multiply_movement_speed(1.0 / (1.0 + bonus));
+            }
         }
         let state = self.category_mut(tracking, category);
         state.active = new;
         if let Some(new) = new {
             state.members[new].uptime.active_since = now;
+            if moves {
+                let bonus = self.exclusive[category].members[new].priority;
+                self.multiply_movement_speed(1.0 + bonus);
+            }
         }
         if tracking {
             let holder = |state: &Category, member: Option<usize>| {
@@ -365,6 +415,21 @@ impl<A: Agent> Fight<A> {
                 .map(|(aura, memberships)| (self.aura_on(*aura, side), memberships.clone()))
                 .collect();
             exported.extend(copies);
+        }
+        // A single aura category an `auraShouldRefresh` reads, or the player's movement speed
+        // effects bid in, and no class describes is enforced from what the auras export, on
+        // every target that holds a copy.
+        for (side, name) in std::mem::take(&mut self.derived_categories) {
+            self.derive_enforced_category(&exported, side, &name);
+            if side == Side::Target {
+                for extra in 0..self.targets.len().saturating_sub(1) {
+                    self.derive_enforced_category(&exported, Side::Extra(extra as u8), &name);
+                }
+            }
+        }
+        for name in self.movement_category_names.clone() {
+            self.movement_categories
+                .extend(self.enforced_category(Side::Player, name));
         }
         // The tracked categories by unit and name, in the order first seen, each with its
         // members by position.

@@ -12,7 +12,7 @@ use crate::{
 
 use super::super::{
     agent::DruidAgent,
-    forms::{self, BEAR, CAT, HUMANOID},
+    forms::{BEAR, CAT, HUMANOID},
 };
 
 #[derive(Clone, Debug)]
@@ -23,8 +23,6 @@ pub(crate) struct CatForm {
     threat_multiplier: f64,
     pub(crate) initial_spirit_regen_multiplier: f64,
     spirit_regen_multiplier: f64,
-    pub(crate) initial_movement_speed_multiplier: f64,
-    movement_speed_bonus: f64,
     furor_max: f64,
     energy_metrics: usize,
     mods: [ModId; 2],
@@ -43,8 +41,6 @@ pub(crate) struct Params<'a> {
     pub(crate) threat_multiplier: f64,
     pub(crate) initial_spirit_regen_multiplier: f64,
     pub(crate) spirit_regen_multiplier: f64,
-    pub(crate) initial_movement_speed_multiplier: f64,
-    pub(crate) movement_speed_bonus: f64,
     pub(crate) furor_max: f64,
     pub(crate) cost_spells: &'a [usize],
     pub(crate) gcd_spells: &'a [usize],
@@ -103,8 +99,6 @@ pub(crate) fn bind(fight: &mut Fight<DruidAgent>, params: Params) -> Result<CatF
         threat_multiplier: params.threat_multiplier,
         initial_spirit_regen_multiplier: params.initial_spirit_regen_multiplier,
         spirit_regen_multiplier: params.spirit_regen_multiplier,
-        initial_movement_speed_multiplier: params.initial_movement_speed_multiplier,
-        movement_speed_bonus: params.movement_speed_bonus,
         furor_max: params.furor_max,
         energy_metrics,
         mods: [cost_mod, gcd_mod],
@@ -115,11 +109,6 @@ pub(crate) fn bind(fight: &mut Fight<DruidAgent>, params: Params) -> Result<CatF
 }
 
 impl CatForm {
-    /// The passive movement speed effect, which Go activates before the gain.
-    pub(crate) fn on_exclusive_gain(&self, fight: &mut Fight<DruidAgent>) {
-        forms::multiply_movement_speed(fight, 1.0 + self.movement_speed_bonus);
-    }
-
     /// `OnGain`, then the attached Faerie Fire modifiers.
     pub(crate) fn on_gain(&self, fight: &mut Fight<DruidAgent>) {
         fight.agent.form = CAT;
@@ -136,10 +125,9 @@ impl CatForm {
         }
     }
 
-    /// The movement speed effect ends first, then `OnExpire`, the attached modifiers and
-    /// Prowl's expiry hook.
+    /// `OnExpire`, the attached modifiers and Prowl's expiry hook. The passive movement speed
+    /// effect has ended before, with the category.
     pub(crate) fn on_expire(&self, fight: &mut Fight<DruidAgent>) {
-        forms::multiply_movement_speed(fight, 1.0 / (1.0 + self.movement_speed_bonus));
         fight.agent.form = HUMANOID;
         fight.player.threat_multiplier /= self.threat_multiplier;
         fight.divide_spirit_regen_multiplier(self.spirit_regen_multiplier);

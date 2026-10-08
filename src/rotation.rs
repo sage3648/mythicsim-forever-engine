@@ -9,6 +9,10 @@ use serde_json::{Map, Value as Json};
 
 use crate::contracts::prepared_v2::ActionId;
 
+mod groups;
+
+pub use groups::{bind, Binding, Reference};
+
 /// Go `APLValueType`, in coercion priority order.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ValueType {
@@ -238,15 +242,30 @@ pub enum Value {
     /// rotation is built.
     DotBaseDuration(Option<ActionId>),
     GcdIsReady,
-    /// Go `APLValueAuraShouldRefresh`: the aura, whether it is on the current target, and the
-    /// overlap a refresh allows.
+    /// Go `APLValueAuraShouldRefresh`: the aura, the unit it is on (the current target by
+    /// default) and the overlap a refresh allows.
     AuraShouldRefresh {
         id: ActionId,
-        target: bool,
+        unit: UnitRef,
         max_overlap: Box<Value>,
     },
     /// Go `APLValueFrontOfTarget`.
     FrontOfTarget,
+    /// Go `APLValueVariableRef`: a named variable and the value it resolved to as the rotation
+    /// was built, which a group's variable of the same name replaces in the group's conditions.
+    Variable {
+        name: String,
+        resolved: Box<Value>,
+    },
+    /// Go `APLValueVariablePlaceholder`: a value the reference to a group fills in. The type it
+    /// reads as is that of the value that fills it.
+    Placeholder(String),
+    /// Go `APLValueActionGroupUsed`: whether a reference binds a group of the name, which
+    /// binding the groups settles.
+    ActionGroupUsed {
+        name: String,
+        used: bool,
+    },
     /// Go `APLValueMaxMana`.
     MaxMana,
     /// Go `APLValueSpellCanCast`: `CanCastOrQueue` on the current target.
@@ -292,6 +311,7 @@ impl Value {
             }
             Value::Not(value) => value.visit(f),
             Value::AuraShouldRefresh { max_overlap, .. } => max_overlap.visit(f),
+            Value::Variable { resolved, .. } => resolved.visit(f),
             _ => {}
         }
     }
@@ -327,6 +347,10 @@ impl Value {
                     .collect(),
             ),
             Value::Not(value) => Value::Not(map(value)),
+            Value::Variable { name, resolved } => Value::Variable {
+                name: name.clone(),
+                resolved: map(resolved),
+            },
             other => other.clone(),
         }
     }
@@ -343,6 +367,7 @@ impl Value {
             | Value::PetAuraIsKnown { .. }
             | Value::AuraIsActive(_)
             | Value::AuraShouldRefresh { .. }
+            | Value::ActionGroupUsed { .. }
             | Value::FrontOfTarget
             | Value::DotIsActive(_)
             | Value::SpellIsKnown(_)
@@ -394,6 +419,10 @@ impl Value {
                 let (lhs, rhs) = math_operand_types(*op, lhs.value_type(), rhs.value_type());
                 op.result_type(lhs, rhs)
             }
+            Value::Variable { resolved, .. } => resolved.value_type(),
+            // Unknown until a group's reference fills it; the checks that read the type of an
+            // operand run again once it has.
+            Value::Placeholder(_) => ValueType::Int,
         }
     }
 }
@@ -409,10 +438,10 @@ pub enum Action {
     CastAtPlayer(ActionId),
     AutocastOtherCooldowns,
     /// Go `APLActionStrictSequence`: casts that run in order once the first is ready.
-    StrictSequence(Vec<ActionId>),
+    StrictSequence(Vec<Step>),
     /// Go `APLActionSequence`: casts that run one step at a time, each when it is ready, and
     /// never again once done.
-    Sequence(Vec<ActionId>),
+    Sequence(Vec<Step>),
     /// Go `APLActionChannelSpell`: a channel the rotation may interrupt.
     ChannelSpell {
         spell: ActionId,
@@ -424,9 +453,17 @@ pub enum Action {
     },
     /// Go `APLActionActivateAura` on one of the player's auras, parsed only as a prepull action.
     ActivateAura(ActionId),
-    /// Go `APLActionMove`: the range from the target to move to, which Go reads as the
-    /// constant's float value.
-    Move(f64),
+    /// Go `APLActionMove`: the range from the target to move to, which Go reads as the float
+    /// value of the value it names.
+    Move(Value),
+    /// Go `APLActionMoveDuration`: a move that lasts as long as the duration value it names.
+    MoveDuration(Value),
+    /// Go `APLActionGroupReference`: the actions of a group, the first that is ready runs. The
+    /// variables fill the placeholders of the group's conditions. An empty name builds no action.
+    GroupReference {
+        name: String,
+        variables: Vec<(String, Value)>,
+    },
     /// Go `APLActionMultidot`: the spell on the first of up to `max_dots` targets whose dot
     /// is down or runs out within `max_overlap`.
     Multidot {
@@ -436,15 +473,61 @@ pub enum Action {
     },
 }
 
+/// A cast that is a step of a sequence: the spell and the unit Go casts it on, which Go builds no
+/// action for when it names none.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Step {
+    pub spell: ActionId,
+    pub target: UnitRef,
+}
+
 impl Action {
+    /// The values an action reads in its own fields, which a group's variables do not reach.
+    pub fn values(&self) -> Vec<&Value> {
+        match self {
+            Action::ChannelSpell { interrupt_if, .. } => interrupt_if.iter().collect(),
+            Action::Multidot { max_overlap, .. } => max_overlap.iter().collect(),
+            Action::Move(value) | Action::MoveDuration(value) => vec![value],
+            Action::GroupReference { variables, .. } => {
+                variables.iter().map(|(_, value)| value).collect()
+            }
+            _ => Vec::new(),
+        }
+    }
+
+    /// The spells of the action that Go builds, in a fight of `targets` targets: a step whose
+    /// target names no unit builds no action, and takes the whole of a strict sequence with it.
+    pub fn reachable_spells(&self, targets: usize) -> Vec<&ActionId> {
+        match self {
+            Action::Sequence(steps) => steps
+                .iter()
+                .filter(|step| step.target.resolve(targets).is_some())
+                .map(|step| &step.spell)
+                .collect(),
+            Action::StrictSequence(steps)
+                if steps
+                    .iter()
+                    .any(|step| step.target.resolve(targets).is_none()) =>
+            {
+                Vec::new()
+            }
+            other => other.spells(),
+        }
+    }
+
     /// The spells the action names, in order, as Go `GetAllActions` visits casts.
     pub fn spells(&self) -> Vec<&ActionId> {
         match self {
             Action::CastSpell { spell: id, .. } | Action::CastAtPlayer(id) => vec![id],
             Action::AutocastOtherCooldowns => Vec::new(),
-            Action::StrictSequence(ids) | Action::Sequence(ids) => ids.iter().collect(),
+            Action::StrictSequence(steps) | Action::Sequence(steps) => {
+                steps.iter().map(|step| &step.spell).collect()
+            }
             Action::ChannelSpell { spell, .. } | Action::Multidot { spell, .. } => vec![spell],
-            Action::ActivateAura(_) | Action::Move(_) => Vec::new(),
+            Action::ActivateAura(_)
+            | Action::Move(_)
+            | Action::MoveDuration(_)
+            | Action::GroupReference { .. } => Vec::new(),
         }
     }
 }
@@ -470,10 +553,63 @@ pub struct Prepull {
     pub condition: Option<Value>,
 }
 
+/// Go `APLGroup`: a named list of actions that a reference runs, with variables that stand for
+/// the rotation's own of the same name inside its conditions.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Group {
+    pub name: String,
+    pub variables: Vec<(String, Value)>,
+    /// The group's actions. Their positions continue the priority list's.
+    pub items: Vec<Item>,
+}
+
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Rotation {
     pub priority_list: Vec<Item>,
     pub prepull: Vec<Prepull>,
+    pub groups: Vec<Group>,
+}
+
+thread_local! {
+    /// Go `APLRotation.valueVariables` while the rotation is parsed: each variable's name and
+    /// its value as written.
+    static VARIABLES: std::cell::RefCell<Vec<(String, Json)>> = const { std::cell::RefCell::new(Vec::new()) };
+    /// The variables being resolved, which a variable that names itself would never finish.
+    static RESOLVING: std::cell::RefCell<Vec<String>> = const { std::cell::RefCell::new(Vec::new()) };
+}
+
+/// Go `valueVariables`: the list of a rotation or a group, each a name and a value.
+fn parse_variables(list: Option<&Json>) -> Result<Vec<(String, Json)>, Vec<String>> {
+    let Some(list) = list else {
+        return Ok(Vec::new());
+    };
+    let items = list
+        .as_array()
+        .ok_or_else(|| vec!["variables must be a list".to_string()])?;
+    let mut variables = Vec::new();
+    for item in items {
+        let object = item
+            .as_object()
+            .ok_or_else(|| vec!["a variable must be an object".to_string()])?;
+        if let Some(key) = object.keys().find(|key| *key != "name" && *key != "value") {
+            return Err(vec![format!("variable field {key} is unsupported")]);
+        }
+        let name = object
+            .get("name")
+            .and_then(Json::as_str)
+            .unwrap_or_default();
+        let value = object.get("value").cloned().unwrap_or(Json::Null);
+        variables.push((name.to_string(), value));
+    }
+    Ok(variables)
+}
+
+/// A variable's value parsed as `newAPLValue` builds it, which can give none.
+fn parse_variable_value(value: &Json) -> Result<Value, Vec<String>> {
+    if value.is_null() {
+        return Err(vec!["a variable without a value is unsupported".to_string()]);
+    }
+    parse_value(value)
 }
 
 /// Parse a protojson `APLRotation`. Returns every unsupported construct, not only the first.
@@ -487,14 +623,20 @@ pub fn parse(rotation: &Json) -> Result<Rotation, Vec<String>> {
         match key.as_str() {
             "type" if value == "TypeAPL" => {}
             "type" => reasons.push(format!("rotation type {value} is unsupported")),
-            "priorityList" | "prepullActions" => {}
-            "groups" | "valueVariables" if is_empty(value) => {}
+            "priorityList" | "prepullActions" | "groups" | "valueVariables" => {}
             other => reasons.push(format!("rotation field {other} is unsupported")),
         }
     }
     if object.get("type").is_none() {
         reasons.push("rotation type is missing".into());
     }
+    // Go parses the value variables first; a reference builds the value it names when it is
+    // read.
+    match parse_variables(object.get("valueVariables")) {
+        Ok(variables) => VARIABLES.with(|scope| *scope.borrow_mut() = variables),
+        Err(variable_reasons) => reasons.extend(variable_reasons),
+    }
+    RESOLVING.with(|stack| stack.borrow_mut().clear());
     for (index, item) in object
         .get("priorityList")
         .and_then(Json::as_array)
@@ -526,8 +668,90 @@ pub fn parse(rotation: &Json) -> Result<Rotation, Vec<String>> {
             Err(reason) => reasons.push(format!("prepull action {}: {reason}", index + 1)),
         }
     }
+    let mut next_position = object
+        .get("priorityList")
+        .and_then(Json::as_array)
+        .map_or(0, Vec::len)
+        + 1;
+    for (index, group) in object
+        .get("groups")
+        .and_then(Json::as_array)
+        .into_iter()
+        .flatten()
+        .enumerate()
+    {
+        match parse_group(group, &mut next_position) {
+            Ok(group) => parsed.groups.push(group),
+            Err(group_reasons) => reasons.extend(
+                group_reasons
+                    .into_iter()
+                    .map(|reason| format!("group {}: {reason}", index + 1)),
+            ),
+        }
+    }
+    VARIABLES.with(|scope| scope.borrow_mut().clear());
     if reasons.is_empty() {
         Ok(parsed)
+    } else {
+        Err(reasons)
+    }
+}
+
+/// Go `newAPLRotation`'s group parsing: the group's variables and its actions, which are numbered
+/// from `next_position`, continuing the priority list.
+fn parse_group(group: &Json, next_position: &mut usize) -> Result<Group, Vec<String>> {
+    let object = group
+        .as_object()
+        .ok_or_else(|| vec!["a group must be an object".to_string()])?;
+    if let Some(key) = object
+        .keys()
+        .find(|key| !matches!(key.as_str(), "name" | "actions" | "variables"))
+    {
+        return Err(vec![format!("group field {key} is unsupported")]);
+    }
+    let name = object
+        .get("name")
+        .and_then(Json::as_str)
+        .unwrap_or_default()
+        .to_string();
+    let mut reasons = Vec::new();
+    let mut variables = Vec::new();
+    match parse_variables(object.get("variables")) {
+        Ok(list) => {
+            for (variable, value) in list {
+                match parse_variable_value(&value) {
+                    Ok(value) => variables.push((variable, value)),
+                    Err(variable_reasons) => reasons.extend(variable_reasons),
+                }
+            }
+        }
+        Err(variable_reasons) => reasons.extend(variable_reasons),
+    }
+    let mut items = Vec::new();
+    for item in object
+        .get("actions")
+        .and_then(Json::as_array)
+        .into_iter()
+        .flatten()
+    {
+        let position = *next_position;
+        *next_position += 1;
+        match parse_item(item, position) {
+            Ok(Some(item)) => items.push(item),
+            Ok(None) => {}
+            Err(item_reasons) => reasons.extend(
+                item_reasons
+                    .into_iter()
+                    .map(|reason| format!("item {position}: {reason}")),
+            ),
+        }
+    }
+    if reasons.is_empty() {
+        Ok(Group {
+            name,
+            variables,
+            items,
+        })
     } else {
         Err(reasons)
     }
@@ -567,10 +791,13 @@ fn parse_prepull(item: &Json, position: usize) -> Result<Option<Prepull>, String
         None => None,
     };
     let action = match single(action, &["uuid", "condition"])? {
-        ("castSpell", config) => Action::CastSpell {
-            spell: parse_cast_spell(config, false)?,
-            target: UnitRef::CurrentTarget,
-        },
+        ("castSpell", config) => {
+            let step = parse_step(config)?;
+            Action::CastSpell {
+                spell: step.spell,
+                target: step.target,
+            }
+        }
         ("activateAura", config) => {
             let object = config.as_object().ok_or("activateAura must be an object")?;
             if let Some(key) = object.keys().find(|key| *key != "auraId") {
@@ -581,8 +808,15 @@ fn parse_prepull(item: &Json, position: usize) -> Result<Option<Prepull>, String
             )?)
         }
         ("move", config) => parse_move(config)?,
+        ("moveDuration", config) => parse_move_duration(config)?,
         (name, _) => return Err(format!("action {name} is unsupported")),
     };
+    // A prepull action runs at a fixed time before the pull, where only a constant is read.
+    if let Action::Move(value) | Action::MoveDuration(value) = &action {
+        if !matches!(value, Value::Const(_)) {
+            return Err("a prepull move other than to a constant is unsupported".into());
+        }
+    }
     Ok(Some(Prepull {
         position,
         do_at_ns,
@@ -592,18 +826,41 @@ fn parse_prepull(item: &Json, position: usize) -> Result<Option<Prepull>, String
 }
 
 /// Go `newActionMove`: the range from the target to move to, which Go reads as the float value
-/// of the value it names. A range that is not a constant is unsupported.
+/// of the value it names. A value without a float getter panics where Go reads it, and so does
+/// a missing one, which Rust cannot reproduce.
 fn parse_move(config: &Json) -> Result<Action, String> {
     let object = config.as_object().ok_or("move must be an object")?;
     if let Some(key) = object.keys().find(|key| *key != "rangeFromTarget") {
         return Err(format!("move field {key} is unsupported"));
     }
     let range = object.get("rangeFromTarget").ok_or("move has no range")?;
-    match parse_value(range) {
-        Ok(Value::Const(constant)) => Ok(Action::Move(constant.float)),
-        Ok(_) => Err("a move range other than a constant is unsupported".into()),
-        Err(reasons) => Err(reasons.join("; ")),
+    let value = parse_value(range).map_err(|reasons| reasons.join("; "))?;
+    if !reads_as(&value, ValueType::Float) {
+        return Err("a move range Go cannot read as a float is unsupported".into());
     }
+    Ok(Action::Move(value))
+}
+
+/// Go `newActionMoveDuration`: the duration of the move, read with the duration getter.
+fn parse_move_duration(config: &Json) -> Result<Action, String> {
+    let object = config.as_object().ok_or("moveDuration must be an object")?;
+    if let Some(key) = object.keys().find(|key| *key != "duration") {
+        return Err(format!("moveDuration field {key} is unsupported"));
+    }
+    let duration = object
+        .get("duration")
+        .ok_or("moveDuration has no duration")?;
+    let value = parse_value(duration).map_err(|reasons| reasons.join("; "))?;
+    if !reads_as(&value, ValueType::Duration) {
+        return Err("a move duration Go cannot read as a duration is unsupported".into());
+    }
+    Ok(Action::MoveDuration(value))
+}
+
+/// Whether Go's value answers the getter of a type: a constant answers every getter, and any
+/// other value only its own type's.
+fn reads_as(value: &Value, getter: ValueType) -> bool {
+    matches!(value, Value::Const(_)) || value.value_type() == getter
 }
 
 fn is_empty(value: &Json) -> bool {
@@ -633,7 +890,8 @@ fn parse_item(item: &Json, position: usize) -> Result<Option<Item>, Vec<String>>
         .as_object()
         .ok_or_else(|| vec!["item must be an object".to_string()])?;
     for key in object.keys() {
-        if key != "action" && key != "hide" {
+        // The notes are comments for the reader.
+        if key != "action" && key != "hide" && key != "notes" {
             return Err(vec![format!("item field {key} is unsupported")]);
         }
     }
@@ -666,6 +924,8 @@ fn parse_item(item: &Json, position: usize) -> Result<Option<Item>, Vec<String>>
         Ok(("channelSpell", config)) => parse_channel_spell(config),
         Ok(("multidot", config)) => parse_multidot(config),
         Ok(("move", config)) => parse_move(config),
+        Ok(("moveDuration", config)) => parse_move_duration(config),
+        Ok(("groupReference", config)) => parse_group_reference(config),
         Ok((name, _)) => Err(format!("action {name} is unsupported")),
         Err(err) => Err(err),
     };
@@ -681,6 +941,30 @@ fn parse_item(item: &Json, position: usize) -> Result<Option<Item>, Vec<String>>
             Err(reasons)
         }
     }
+}
+
+/// Go `newActionGroupReference`: the group's name and the variables that fill its placeholders.
+fn parse_group_reference(config: &Json) -> Result<Action, String> {
+    let object = config
+        .as_object()
+        .ok_or("groupReference must be an object")?;
+    if let Some(key) = object
+        .keys()
+        .find(|key| !matches!(key.as_str(), "groupName" | "variables"))
+    {
+        return Err(format!("groupReference field {key} is unsupported"));
+    }
+    let name = object
+        .get("groupName")
+        .and_then(Json::as_str)
+        .unwrap_or_default()
+        .to_string();
+    let mut variables = Vec::new();
+    for (variable, value) in parse_variables(object.get("variables")).map_err(|r| r.join("; "))? {
+        let value = parse_variable_value(&value).map_err(|reasons| reasons.join("; "))?;
+        variables.push((variable, value));
+    }
+    Ok(Action::GroupReference { name, variables })
 }
 
 /// Go `newActionStrictSequence` for sequences of unconditional casts.
@@ -704,7 +988,7 @@ fn parse_strict_sequence(config: &Json) -> Result<Action, String> {
             .as_object()
             .ok_or("strictSequence action must be an object")?;
         match single(action, &["uuid"])? {
-            ("castSpell", cast) => spells.push(parse_cast_spell(cast, false)?),
+            ("castSpell", cast) => spells.push(parse_step(cast)?),
             (name, _) => return Err(format!("strictSequence action {name} is unsupported")),
         }
     }
@@ -731,7 +1015,7 @@ fn parse_sequence(config: &Json) -> Result<Action, String> {
             .as_object()
             .ok_or("sequence action must be an object")?;
         match single(action, &["uuid"])? {
-            ("castSpell", cast) => spells.push(parse_cast_spell(cast, false)?),
+            ("castSpell", cast) => spells.push(parse_step(cast)?),
             (name, _) => return Err(format!("sequence action {name} is unsupported")),
         }
     }
@@ -815,49 +1099,25 @@ fn parse_multidot(config: &Json) -> Result<Action, String> {
 
 /// Go `newActionCastSpell` in a priority list: the spell and the unit it is cast on.
 fn parse_cast_spell_action(config: &Json) -> Result<Action, String> {
-    let object = config.as_object().ok_or("castSpell must be an object")?;
-    let target = parse_unit_ref(object.get("target"), UnitRef::CurrentTarget)
-        .map_err(|()| unsupported_unit("castSpell", "target", object.get("target")))?;
+    let step = parse_step(config)?;
     Ok(Action::CastSpell {
-        spell: parse_cast_spell(config, true)?,
-        target,
+        spell: step.spell,
+        target: step.target,
     })
 }
 
-/// A `castSpell` configuration's spell. A target is read only where `with_target` says the
-/// action carries one: a sequence step or a prepull action casts at the current target, or at
-/// no unit. Go builds no action for a target that names no unit, which is what a spell nobody
-/// knows does, so such a step has the action ID no spell has.
-fn parse_cast_spell(config: &Json, with_target: bool) -> Result<ActionId, String> {
+/// A `castSpell` configuration's spell and the unit it is cast on, the current target by default.
+fn parse_step(config: &Json) -> Result<Step, String> {
     let object = config.as_object().ok_or("castSpell must be an object")?;
-    let mut unit_less = false;
-    for (key, field) in object {
-        match key.as_str() {
-            "spellId" => {}
-            "target" if with_target => {}
-            "target" => match parse_unit_ref(Some(field), UnitRef::CurrentTarget) {
-                Ok(UnitRef::CurrentTarget | UnitRef::Target(0)) => {}
-                Ok(UnitRef::Nobody) => unit_less = true,
-                _ => {
-                    return Err(format!(
-                        "castSpell target {field} is unsupported in a sequence or prepull action"
-                    ))
-                }
-            },
-            other => return Err(format!("castSpell field {other} is unsupported")),
+    let target = parse_unit_ref(object.get("target"), UnitRef::CurrentTarget)
+        .map_err(|()| unsupported_unit("castSpell", "target", object.get("target")))?;
+    for key in object.keys() {
+        if key != "spellId" && key != "target" {
+            return Err(format!("castSpell field {key} is unsupported"));
         }
     }
     let spell = parse_action_id(object.get("spellId").ok_or("castSpell has no spellId")?)?;
-    Ok(if unit_less { no_such_spell() } else { spell })
-}
-
-/// The action ID of a step no spell answers to, which `parse_cast_spell` gives a cast whose
-/// target names no unit. Go builds no action for it.
-fn no_such_spell() -> ActionId {
-    ActionId {
-        other_id: "NoUnit".to_string(),
-        ..ActionId::default()
-    }
+    Ok(Step { spell, target })
 }
 
 /// Go `GetTargetUnit` and `GetSourceUnit`: the unit a `UnitReference` names, or `default`
@@ -1301,23 +1561,14 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
                 .ok_or_else(|| vec![format!("{name} has no auraId")])
                 .and_then(|id| parse_action_id(id).map_err(|err| vec![err]))?;
             // Go `GetTargetUnit`: no unit reference means the current target.
-            let target = match config.get("sourceUnit") {
-                None => true,
-                Some(source) => match source.as_object() {
-                    Some(unit) if unit.keys().all(|key| key == "type") => {
-                        match unit.get("type").and_then(Json::as_str) {
-                            Some("Self") => false,
-                            Some("CurrentTarget") => true,
-                            _ => {
-                                return Err(vec![format!(
-                                    "{name} sourceUnit {source} is unsupported"
-                                )])
-                            }
-                        }
-                    }
-                    _ => return Err(vec![format!("{name} sourceUnit {source} is unsupported")]),
-                },
-            };
+            let unit =
+                parse_unit_ref(config.get("sourceUnit"), UnitRef::CurrentTarget).map_err(|()| {
+                    vec![unsupported_unit(
+                        name,
+                        "sourceUnit",
+                        config.get("sourceUnit"),
+                    )]
+                })?;
             let max_overlap = match config.get("maxOverlap") {
                 Some(value) => parse_value(value)?,
                 // Go defaults a missing overlap to a constant 0ms.
@@ -1325,13 +1576,64 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
             };
             Ok(Value::AuraShouldRefresh {
                 id,
-                target,
+                unit,
                 max_overlap: Box::new(max_overlap),
             })
         }
         "frontOfTarget" => {
             only(&[])?;
             Ok(Value::FrontOfTarget)
+        }
+        // Go `newValueVariableRef`: the first variable of the name, whose value is built where
+        // it is read. A name no variable has gives no value, and a variable that names itself
+        // never finishes building in Go.
+        "variableRef" => {
+            only(&["name"])?;
+            let name = config
+                .get("name")
+                .and_then(Json::as_str)
+                .unwrap_or_default();
+            let found = VARIABLES.with(|scope| {
+                scope
+                    .borrow()
+                    .iter()
+                    .find(|(variable, _)| variable == name)
+                    .map(|(_, value)| value.clone())
+            });
+            let Some(value) = found else {
+                return Err(vec![format!("value variable {name:?} is not found")]);
+            };
+            if RESOLVING.with(|stack| stack.borrow().iter().any(|open| open == name)) {
+                return Err(vec![format!("value variable {name:?} refers to itself")]);
+            }
+            RESOLVING.with(|stack| stack.borrow_mut().push(name.to_string()));
+            let resolved = parse_variable_value(&value);
+            RESOLVING.with(|stack| stack.borrow_mut().pop());
+            Ok(Value::Variable {
+                name: name.to_string(),
+                resolved: Box::new(resolved?),
+            })
+        }
+        // Go `newValueVariablePlaceholder`: no value without a name.
+        "variablePlaceholder" => {
+            only(&["name"])?;
+            match config.get("name").and_then(Json::as_str) {
+                Some(name) if !name.is_empty() => Ok(Value::Placeholder(name.to_string())),
+                _ => Err(vec![
+                    "a variable placeholder without a name is unsupported".into()
+                ]),
+            }
+        }
+        "actionGroupUsed" => {
+            only(&["name"])?;
+            Ok(Value::ActionGroupUsed {
+                name: config
+                    .get("name")
+                    .and_then(Json::as_str)
+                    .unwrap_or_default()
+                    .to_string(),
+                used: false,
+            })
         }
         "maxMana" => {
             only(&[])?;
@@ -1650,6 +1952,8 @@ pub enum Compiled<R> {
     AuraIsActiveAfterReaction(R),
     /// Go `APLValueAuraNumStacks` with `includeReactionTime`.
     AuraNumStacksAfterReaction(R),
+    /// Go `APLValueActionGroupUsed`, settled when the groups were bound.
+    GroupUsed(bool),
     /// Go `APLValueAuraIsInactive` with `includeReactionTime`.
     AuraIsInactiveAfterReaction(R),
     AuraNumStacks(R),
@@ -1690,6 +1994,7 @@ impl<R> Compiled<R> {
             | Compiled::SpellIsReady(_)
             | Compiled::IsExecutePhase(_)
             | Compiled::SpellCanCast(_)
+            | Compiled::GroupUsed(_)
             | Compiled::GcdIsReady => ValueType::Bool,
             Compiled::AuraNumStacks(_)
             | Compiled::AuraNumStacksAfterReaction(_)
@@ -1970,13 +2275,12 @@ fn compile_value<R>(value: &Value, lookup: &Lookup<R>) -> Option<Compiled<R>> {
         // Go `newValueAuraShouldRefresh`: no value without the aura.
         Value::AuraShouldRefresh {
             id,
-            target,
+            unit,
             max_overlap,
         } => {
-            let found = if *target {
-                (lookup.target_aura)(0, id)
-            } else {
-                aura(id)
+            let found = match unit.resolve(lookup.targets)? {
+                Unit::Target(position) => (lookup.target_aura)(position, id),
+                Unit::Player => aura(id),
             }?;
             // Go gives a missing overlap a constant 0ms.
             let overlap = compile_value(max_overlap, lookup)
@@ -2016,6 +2320,12 @@ fn compile_value<R>(value: &Value, lookup: &Lookup<R>) -> Option<Compiled<R>> {
             Compiled::DotBaseDuration((lookup.dot_base_duration)(id.as_ref()?)?)
         }
         Value::GcdIsReady => Compiled::GcdIsReady,
+        // Go `APLValueVariableRef`: the value the variable resolved to. A variable whose value
+        // gives none has an unknown type, which the parser does not reach.
+        Value::Variable { resolved, .. } => compile_value(resolved, lookup)?,
+        // A placeholder no reference filled is refused before the rotation compiles.
+        Value::Placeholder(_) => return None,
+        Value::ActionGroupUsed { used, .. } => Compiled::GroupUsed(*used),
         Value::AuraIsKnown(id) => bool_const(aura(id).is_some()),
         Value::PetAuraIsKnown { pet, id } => bool_const((lookup.pet_aura_known)(*pet, id)),
         Value::AuraIsActive(id) => match aura(id) {
@@ -2130,6 +2440,12 @@ fn compile_value<R>(value: &Value, lookup: &Lookup<R>) -> Option<Compiled<R>> {
         Value::And(values) => return fold(values, lookup, false, Compiled::And),
         Value::Or(values) => return fold(values, lookup, true, Compiled::Or),
     })
+}
+
+/// Go `newAPLValue` without a coercion, as `newActionMove` and `newActionMoveDuration` read
+/// their values: `None` when the value gives none.
+pub fn compile_raw_value<R>(value: &Value, lookup: &Lookup<R>) -> Option<Compiled<R>> {
+    compile_value(value, lookup)
 }
 
 /// Go `coerceTo(newAPLValue(value), Bool)`, as `newActionChannelSpell` compiles its
@@ -2282,11 +2598,11 @@ mod tests {
         assert!(parse_item(&item, 1).is_err());
     }
 
-    /// Go `APLActionMove` is read among the prepull actions only, with the range as the float
-    /// the constant holds: a duration constant holds none, so it moves to zero yards. A range
-    /// that is not a constant stays unsupported, and so does a move in the priority list.
+    /// Go `APLActionMove` reads its range as the float of the value: a constant holds one, and
+    /// a duration constant holds none, so it moves to zero yards. A value with no float getter
+    /// panics in Go and is unsupported.
     #[test]
-    fn prepull_move_parses_its_constant_range() {
+    fn a_move_parses_its_range_value() {
         let prepull = |range: serde_json::Value| {
             serde_json::json!({
                 "type": "TypeAPL",
@@ -2296,26 +2612,55 @@ mod tests {
         };
         for (range, yards) in [("25", 25.0), ("7.5", 7.5), ("30s", 0.0), ("true", 0.0)] {
             let parsed = parse(&prepull(serde_json::json!({"const": {"val": range}}))).unwrap();
-            assert_eq!(parsed.prepull[0].action, Action::Move(yards), "{range}");
+            let Action::Move(Value::Const(constant)) = &parsed.prepull[0].action else {
+                panic!("a constant range");
+            };
+            assert_eq!(constant.float, yards, "{range}");
             assert_eq!(parsed.prepull[0].do_at_ns, -5_000_000_000);
             assert!(parsed.prepull[0].action.spells().is_empty());
         }
+        // A prepull move reads a constant only, and a value with no float getter is no range.
         let variable = prepull(serde_json::json!({"currentRage": {}}));
         assert_eq!(
             parse(&variable).unwrap_err(),
-            ["prepull action 1: a move range other than a constant is unsupported"]
+            ["prepull action 1: a prepull move other than to a constant is unsupported"]
         );
+        let stacks = prepull(serde_json::json!({"auraNumStacks": {"auraId": {"spellId": 7}}}));
+        assert_eq!(
+            parse(&stacks).unwrap_err(),
+            ["prepull action 1: a move range Go cannot read as a float is unsupported"]
+        );
+        let item = serde_json::json!({"action": {"moveDuration": {
+            "duration": {"const": {"val": "2s"}}}}, "doAtValue": {"const": {"val": "-3s"}}});
+        let parsed = parse(&serde_json::json!({"type": "TypeAPL", "prepullActions": [item]}));
+        assert!(matches!(
+            parsed.unwrap().prepull[0].action,
+            Action::MoveDuration(Value::Const(_))
+        ));
         // The priority list holds moves too, which run once ready.
         let item =
             serde_json::json!({"action": {"move": {"rangeFromTarget": {"const": {"val": "5"}}}}});
         let parsed = parse_item(&item, 1).unwrap().unwrap();
-        assert_eq!(parsed.action, Action::Move(5.0));
+        assert!(matches!(parsed.action, Action::Move(Value::Const(_))));
         let variable = serde_json::json!({"action": {"move": {
-            "rangeFromTarget": {"currentRage": {}}}}});
+            "rangeFromTarget": {"remainingTime": {}}}}});
         assert_eq!(
             parse_item(&variable, 1).unwrap_err(),
-            ["a move range other than a constant is unsupported"]
+            ["a move range Go cannot read as a float is unsupported"]
         );
+        // A move for a duration reads a duration.
+        let item = |duration: serde_json::Value| serde_json::json!({"action": {"moveDuration": {"duration": duration}}});
+        let parsed = parse_item(&item(serde_json::json!({"const": {"val": "2s"}})), 1);
+        assert!(matches!(
+            parsed.unwrap().unwrap().action,
+            Action::MoveDuration(Value::Const(_))
+        ));
+        let parsed = parse_item(&item(serde_json::json!({"remainingTime": {}})), 1);
+        assert!(matches!(
+            parsed.unwrap().unwrap().action,
+            Action::MoveDuration(Value::RemainingTime)
+        ));
+        assert!(parse_item(&item(serde_json::json!({"currentRage": {}})), 1).is_err());
     }
 
     #[test]
@@ -2640,7 +2985,16 @@ mod tests {
         .unwrap();
         assert_eq!(
             rotation.priority_list[0].action,
-            Action::StrictSequence(vec![ActionId::spell(14751), ActionId::spell(10947)])
+            Action::StrictSequence(vec![
+                Step {
+                    spell: ActionId::spell(14751),
+                    target: UnitRef::CurrentTarget
+                },
+                Step {
+                    spell: ActionId::spell(10947),
+                    target: UnitRef::CurrentTarget
+                }
+            ])
         );
         let Action::ChannelSpell {
             spell,
@@ -2687,7 +3041,16 @@ mod tests {
         let item = &rotation.priority_list[0];
         assert_eq!(
             item.action,
-            Action::Sequence(vec![ActionId::spell(2458), ActionId::spell(1719)])
+            Action::Sequence(vec![
+                Step {
+                    spell: ActionId::spell(2458),
+                    target: UnitRef::CurrentTarget
+                },
+                Step {
+                    spell: ActionId::spell(1719),
+                    target: UnitRef::CurrentTarget
+                }
+            ])
         );
         let Some(Value::Compare { lhs, .. }) = &item.condition else {
             panic!("expected a comparison");
@@ -2894,23 +3257,45 @@ mod tests {
                 })
             );
         }
-        // A sequence step or a prepull action casts at the current target, or at no unit.
+        // A sequence step or a prepull action names its unit like any cast.
         let step = |target: serde_json::Value| {
             parse(
                 &serde_json::json!({"type": "TypeAPL", "priorityList": [{"action": {
                 "sequence": {"actions": [{"castSpell": {
                     "spellId": {"spellId": 1}, "target": target}}]}}}]}),
             )
+            .map(|rotation| rotation.priority_list[0].action.clone())
         };
-        assert!(step(serde_json::json!({"type": "CurrentTarget"})).is_ok());
-        assert!(step(serde_json::json!({"type": "Target", "index": 1})).is_err());
+        for (target, unit) in [
+            (
+                serde_json::json!({"type": "CurrentTarget"}),
+                UnitRef::CurrentTarget,
+            ),
+            (
+                serde_json::json!({"type": "Target", "index": 1}),
+                UnitRef::Target(1),
+            ),
+            (serde_json::json!({"type": "AllTargets"}), UnitRef::Nobody),
+        ] {
+            assert_eq!(
+                step(target),
+                Ok(Action::Sequence(vec![Step {
+                    spell: ActionId::spell(1),
+                    target: unit
+                }]))
+            );
+        }
+        let prepull = parse(&serde_json::json!({"type": "TypeAPL", "prepullActions": [{
+            "action": {"castSpell": {"spellId": {"spellId": 1},
+                "target": {"type": "Player", "index": 2}}},
+            "doAtValue": {"const": {"val": "-1s"}}}]}))
+        .unwrap();
         assert_eq!(
-            step(serde_json::json!({"type": "AllTargets"}))
-                .unwrap()
-                .priority_list[0]
-                .action
-                .spells(),
-            [&no_such_spell()]
+            prepull.prepull[0].action,
+            Action::CastSpell {
+                spell: ActionId::spell(1),
+                target: UnitRef::Nobody
+            }
         );
     }
 
