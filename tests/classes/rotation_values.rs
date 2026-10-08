@@ -4,9 +4,7 @@
 //! case in `mage/prepared_v2.rs`; the variants compared with the pinned Go engine are in
 //! validation/2026-10-08-live-rotation-gaps-sweep.
 
-use forever_engine::{
-    check_prepared, contracts::prepared_v2::PreparedV2, simulate_prepared, PreparedError,
-};
+use forever_engine::{check_prepared, contracts::prepared_v2::PreparedV2, simulate_prepared};
 use serde_json::{json, Value};
 use std::{fs, path::Path};
 
@@ -172,21 +170,18 @@ fn a_dot_read_on_all_targets_drops_out_of_its_condition() {
     assert!(casts(&logs, 10894) > 3, "{logs}");
 }
 
-/// A reaction time on another unit's aura, or on a stack or time left read, is not modeled.
+/// A reaction time on the stacks of an aura, or on another unit's aura, is read as Go does.
 #[test]
-fn reaction_time_on_other_reads_is_refused() {
-    let mut value = fixture("arcane-mage-aura-is-inactive-reaction-time");
-    value["player"]["rotation"]["priorityList"][1]["action"]["condition"] = json!({
-        "auraNumStacks": {"auraId": {"spellId": 400573}, "includeReactionTime": true}
-    });
-    match check_prepared(&parse(value)) {
-        Err(PreparedError::Unsupported(reasons)) => {
-            assert!(
-                reasons.iter().any(|reason| reason
-                    .contains("auraNumStacks field includeReactionTime is unsupported")),
-                "{reasons:?}"
-            )
-        }
-        other => panic!("expected unsupported, got {other:?}"),
+fn reaction_time_on_any_stack_or_activity_read_is_supported() {
+    for read in [
+        json!({"auraNumStacks": {"auraId": {"spellId": 400573}, "includeReactionTime": true}}),
+        json!({"auraIsActive": {"auraId": {"spellId": 400573}, "includeReactionTime": true,
+            "sourceUnit": {"type": "CurrentTarget"}}}),
+        json!({"auraIsInactive": {"auraId": {"spellId": 400573}, "includeReactionTime": true,
+            "sourceUnit": {"type": "Target", "index": 0}}}),
+    ] {
+        let mut value = fixture("arcane-mage-aura-is-inactive-reaction-time");
+        value["player"]["rotation"]["priorityList"][1]["action"]["condition"] = read;
+        assert_eq!(check_prepared(&parse(value)), Ok(()));
     }
 }

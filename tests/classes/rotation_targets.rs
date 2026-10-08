@@ -140,30 +140,41 @@ fn a_cast_on_the_player_is_refused() {
 
 #[test]
 fn units_outside_scope_are_refused_with_the_rotation_code() {
-    for (item, reason) in [
-        (
-            cast_at(25311, json!({"type": "AllTargets"})),
-            r#"rotation item 1: castSpell target {"type":"AllTargets"} is unsupported"#,
-        ),
-        (
-            json!({"action": {"castSpell": {"spellId": {"spellId": 25307}},
-                "condition": {"dotIsActive": {"spellId": {"spellId": 25311},
-                    "targetUnit": {"type": "Pet", "owner": {"type": "Self"}}}}}}),
-            r#"rotation item 1: dotIsActive targetUnit {"owner":{"type":"Self"},"type":"Pet"} is unsupported"#,
-        ),
-        (
-            json!({"action": {"castSpell": {"spellId": {"spellId": 25307}},
-                "condition": {"auraIsActive": {"auraId": {"spellId": 1311680},
-                    "sourceUnit": {"type": "Player", "index": 2}}}}}),
-            r#"rotation item 1: auraIsActive sourceUnit {"index":2,"type":"Player"} is unsupported"#,
-        ),
+    let item = json!({"action": {"castSpell": {"spellId": {"spellId": 25307}},
+        "condition": {"dotIsActive": {"spellId": {"spellId": 25311},
+            "targetUnit": {"type": "Pet", "owner": {"type": "Self"}}}}}});
+    let reason = r#"rotation item 1: dotIsActive targetUnit {"owner":{"type":"Self"},"type":"Pet"} is unsupported"#;
+    let refusals = refusal_codes(with_items("production-affliction-warlock", 3, vec![item]));
+    assert!(
+        refusals.contains(&("rotation_unsupported", reason.into())),
+        "{refusals:?}"
+    );
+}
+
+/// Go builds no action for a cast whose target names no unit, and a read of an aura on such a
+/// unit reads an aura nobody has: the sets of all targets and all players and a player past the
+/// raid's one. Go reads no index or owner of a reference whose type has none.
+#[test]
+fn units_that_name_no_unit_are_supported() {
+    for unit in [
+        json!({"type": "AllTargets"}),
+        json!({"type": "AllPlayers"}),
+        json!({"type": "Player", "index": 3}),
+        json!({"type": "AllTargets", "owner": {"type": "Self"}}),
     ] {
-        let refusals = refusal_codes(with_items("production-affliction-warlock", 3, vec![item]));
-        assert!(
-            refusals.contains(&("rotation_unsupported", reason.into())),
-            "{refusals:?}"
-        );
+        for kind in ["castSpell", "castFriendlySpell"] {
+            let mut item = cast_at(25311, unit.clone());
+            let body = item["action"]["castSpell"].take();
+            item["action"] = json!({ kind: body });
+            assert_supported(with_items("production-affliction-warlock", 3, vec![item]));
+        }
+        let aura = json!({"action": {"castSpell": {"spellId": {"spellId": 25307}},
+            "condition": {"auraIsActive": {"auraId": {"spellId": 1311680},
+                "sourceUnit": unit.clone()}}}});
+        assert_supported(with_items("production-affliction-warlock", 3, vec![aura]));
     }
+    let item = cast_at(25311, json!({"type": "CurrentTarget", "index": 2}));
+    assert_supported(with_items("production-affliction-warlock", 3, vec![item]));
 }
 
 /// The three forms the shadow sims refused with no target involved.

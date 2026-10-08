@@ -567,10 +567,10 @@ fn the_ranged_auto_waits_for_a_move_to_end() {
     }
 }
 
-/// A move in the priority list is supported for a Hunter only: the gate refuses it for any
-/// class whose moves have not been compared with Go.
+/// A move in the priority list is supported for every class, and needs the speed the exporter
+/// read.
 #[test]
-fn a_rotation_move_is_refused_for_a_class_not_compared() {
+fn a_rotation_move_needs_the_exported_speed() {
     let mut value: Value = serde_json::from_slice(
         &fs::read(
             Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -586,24 +586,25 @@ fn a_rotation_move_is_refused_for_a_class_not_compared() {
             0,
             json!({"action": {"move": {"rangeFromTarget": {"const": {"val": "5"}}}}}),
         );
+    let refusals = super::refusal_codes(value.clone());
+    assert!(
+        refusals.contains(&(
+            "movement_unsupported",
+            "a move has no exported movement speed".to_string()
+        )),
+        "{refusals:?}"
+    );
     // The exporter writes the effect when the rotation moves.
     value["effects"].as_array_mut().unwrap().push(json!({
         "kind": "player_movement", "speed_multiplier": 1.0, "speed_auras": []
     }));
-    let refusals = super::refusal_codes(value);
-    assert!(
-        refusals.contains(&(
-            "movement_unsupported",
-            "a move is unsupported for ClassWarrior".to_string()
-        )),
-        "{refusals:?}"
-    );
+    assert!(super::refusal_codes(value).is_empty());
 }
 
-/// An aura that changes the movement speed is not followed, for a prepull move or a move of
-/// the rotation.
+/// The auras that change the movement speed are followed through their categories, so a move
+/// with one is supported.
 #[test]
-fn a_move_with_a_speed_aura_is_refused() {
+fn a_move_with_a_speed_aura_is_supported() {
     let mut value = fixture("survival-hunter-weaving-moves");
     let effect = value["effects"]
         .as_array_mut()
@@ -612,12 +613,5 @@ fn a_move_with_a_speed_aura_is_refused() {
         .find(|effect| effect["kind"] == "player_movement")
         .expect("the exporter wrote the movement effect");
     effect["speed_auras"] = json!(["Aspect of the Cheetah"]);
-    let refusals = super::refusal_codes(value);
-    for code in ["prepull_unsupported", "movement_unsupported"] {
-        assert!(
-            refusals.iter().any(|(found, reason)| *found == code
-                && reason.contains("Aspect of the Cheetah, which changes the movement speed")),
-            "{code}: {refusals:?}"
-        );
-    }
+    assert!(super::refusal_codes(value).is_empty());
 }

@@ -71,8 +71,19 @@ fn faerie_fire_readings_beyond_own_and_never_are_rejected() {
 
 #[test]
 fn aura_should_refresh_needs_a_supported_reading() {
+    // A reading from the category the runtime keeps holds for an aura with a fixed bid.
     let mut value = feral();
     effect(&mut value, "aura_should_refresh")["modes"] = json!(["unknown"]);
+    assert!(check_prepared(&parse(value)).is_ok());
+    // An aura whose bid follows its stacks needs a class to describe the category.
+    let mut value = feral();
+    effect(&mut value, "aura_should_refresh")["modes"] = json!(["unknown"]);
+    for aura in value["target"]["auras"].as_array_mut().unwrap() {
+        if aura["label"] == "Faerie Fire (Player)" {
+            aura["max_stacks"] = json!(2);
+            aura["exclusive_memberships"][0]["priority"] = json!(0.0);
+        }
+    }
     let reasons = reasons(value);
     assert!(
         reasons.contains(
@@ -213,11 +224,27 @@ fn a_permanent_debuff_keeps_the_bear_from_roaring() {
 fn the_roars_refresh_needs_its_category() {
     let case = "feral-bear-druid-demoralizing-roar-over-shout-debuff";
     assert!(check_prepared(&parse(accepted(case))).is_ok());
+    // Without the description the runtime derives the single aura category from what the
+    // auras export, and plays the same fight.
     let mut value = accepted(case);
     value["effects"]
         .as_array_mut()
         .unwrap()
         .retain(|effect| effect["kind"] != "exclusive_category");
+    assert!(check_prepared(&parse(value.clone())).is_ok());
+    assert_eq!(first_fight_log(value), first_fight_log(accepted(case)));
+    // A roar whose bid follows its stacks needs the description.
+    let mut value = accepted(case);
+    value["effects"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|effect| effect["kind"] != "exclusive_category");
+    for aura in value["target"]["auras"].as_array_mut().unwrap() {
+        if aura["label"] == "Demoralizing Roar (Player)" {
+            aura["max_stacks"] = json!(3);
+            aura["exclusive_memberships"][0]["priority"] = json!(0.0);
+        }
+    }
     let reasons = reasons(value);
     assert!(
         reasons.contains(
@@ -251,9 +278,10 @@ fn a_weaker_permanent_debuff_leaves_the_roar_to_be_cast() {
     );
 }
 
-/// An aura that stacks weighs its bid by its stacks, which the category reading does not cover.
+/// An aura that stacks weighs its bid by its stacks: in a category the export describes, the
+/// runtime reads the live bid, as Go's rule does for Go's full stacks.
 #[test]
-fn the_roars_refresh_reads_only_a_non_stacking_aura() {
+fn the_roars_refresh_reads_a_stacking_aura_in_a_described_category() {
     let case = "feral-bear-druid-demoralizing-roar-over-roar-debuff";
     let mut value = accepted(case);
     for aura in value["target"]["auras"].as_array_mut().unwrap() {
@@ -261,9 +289,7 @@ fn the_roars_refresh_reads_only_a_non_stacking_aura() {
             aura["max_stacks"] = json!(3);
         }
     }
-    assert!(reasons(value)
-        .iter()
-        .any(|reason| reason.contains("has no supported exclusive effect reading")));
+    assert!(check_prepared(&parse(value)).is_ok());
 }
 
 /// A cat never learns Demoralizing Roar. Go drops a cast of a spell the player lacks before it

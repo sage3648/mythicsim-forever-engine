@@ -661,11 +661,6 @@ fn refusals_carry_stable_codes() {
         .retain(|effect| effect["kind"] != "arcane_explosion");
     assert_eq!(codes(spell), ["unknown_spell"]);
 
-    let mut refresh = reference_json();
-    refresh["player"]["rotation"]["priorityList"][3]["action"]["condition"] =
-        json!({"auraShouldRefresh": {"auraId": {"spellId": 1}}});
-    assert_eq!(codes(refresh), ["aura_condition_unsupported"]);
-
     let path = family().join("production-marksmanship-hunter.prepared.json");
     let mut hunter: Value = serde_json::from_slice(&fs::read(path).unwrap()).unwrap();
     for effect in hunter["effects"].as_array_mut().unwrap() {
