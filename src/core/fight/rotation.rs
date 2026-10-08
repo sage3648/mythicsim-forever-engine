@@ -154,6 +154,12 @@ impl<A: Agent> Fight<A> {
         let target_aura = |position: usize, id: &ActionId| find(Side::target(position), id);
         let spell = |id: &ActionId| self.apl_spell(id);
         let dot = |id: &ActionId, unit: Unit| self.rotation_dot(id, unit);
+        let dot_base_duration = |id: &ActionId| {
+            self.dot_base_durations
+                .iter()
+                .find(|(spell, _)| spell == id)
+                .map(|(_, duration)| *duration)
+        };
         let pet_aura_known = |pet: usize, id: &ActionId| {
             self.pet_agent_auras
                 .get(pet)
@@ -165,6 +171,7 @@ impl<A: Agent> Fight<A> {
             targets: self.targets.len(),
             spell: &spell,
             dot: &dot,
+            dot_base_duration: &dot_base_duration,
             pet_aura_known: &pet_aura_known,
         };
         let mut prepull: Vec<(i64, PrepullAct)> = rotation
@@ -213,6 +220,12 @@ impl<A: Agent> Fight<A> {
                 }
             })
         };
+        let dot_base_duration = |id: &ActionId| {
+            self.dot_base_durations
+                .iter()
+                .find(|(spell, _)| spell == id)
+                .map(|(_, duration)| *duration)
+        };
         let pet_aura_known = |pet: usize, id: &ActionId| {
             self.pet_agent_auras
                 .get(pet)
@@ -224,6 +237,7 @@ impl<A: Agent> Fight<A> {
             targets: self.targets.len(),
             spell: &spell,
             dot: &dot,
+            dot_base_duration: &dot_base_duration,
             pet_aura_known: &pet_aura_known,
         };
         let mut items = Vec::new();
@@ -327,6 +341,23 @@ impl<A: Agent> Fight<A> {
         match value {
             Compiled::Const(constant) => constant.boolean,
             Compiled::AuraIsActive(aura) => self.aura(*aura).active,
+            // Go `APLValueAuraIsActive` with `includeReactionTime`: `Aura.TimeActive` is zero
+            // while inactive and the time since the aura started otherwise.
+            Compiled::AuraIsActiveAfterReaction(aura) => {
+                let state = self.aura(*aura);
+                state.active && self.now - state.start >= self.config.reaction
+            }
+            // Go `APLValueAuraIsInactive` with `includeReactionTime`: `Aura.TimeInactive` is
+            // never-expiring for an aura that has not faded, the time since it faded otherwise.
+            Compiled::AuraIsInactiveAfterReaction(aura) => {
+                let state = self.aura(*aura);
+                let inactive_for = if state.fade_time < 0 {
+                    NEVER_EXPIRES
+                } else {
+                    self.now - state.fade_time
+                };
+                !state.active && inactive_for >= self.config.reaction
+            }
             // Go `APLValueFrontOfTarget`.
             Compiled::FrontOfTarget => self.config.melee.in_front_of_target,
             // Go `ShouldRefreshExclusiveEffects`: an effect holding its category alone refreshes
@@ -476,6 +507,8 @@ impl<A: Agent> Fight<A> {
                 next - self.now
             }
             Compiled::Math { op, lhs, rhs } => self.math_duration(*op, lhs, rhs),
+            // Go `APLValueDotBaseDuration`: what the rotation captured when it was built.
+            Compiled::DotBaseDuration(duration) => *duration,
             Compiled::TotemRemainingTime {
                 totem,
                 include_reaction_time,

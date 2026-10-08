@@ -251,6 +251,8 @@ fn source_unit(env: &Environment, reference: Option<&Message>) -> Result<Option<
     let kind = reference.map_or_else(|| "Unknown".to_string(), |r| r.enum_name("type"));
     match kind.as_str() {
         "Unknown" | "Self" => Ok(Some(env.player)),
+        // Go `Environment.GetUnit` names no unit for the sets of all players and all targets.
+        "AllPlayers" | "AllTargets" => Ok(None),
         "CurrentTarget" => Ok(env.sim.unit(env.player).current_target),
         // Go `NextActiveTarget` and `PreviousActiveTarget` of the current target: every target
         // is enabled while the rotation is built, as preparation refuses one disabled at start.
@@ -357,6 +359,8 @@ fn dot_exists(env: &Environment, config: &Message) -> Option<bool> {
                 .ok()
                 .and_then(|i| env.encounter.targets.get(i).copied())
         }
+        // Go `GetUnit` names no unit for the sets, so the dot reference is empty.
+        "AllPlayers" | "AllTargets" => None,
         _ => return None,
     };
     let Some(target) = target else {

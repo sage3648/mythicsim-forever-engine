@@ -1077,6 +1077,16 @@ pub(crate) fn rotation_dot(prepared: &PreparedV2, id: &ActionId, unit: Unit) -> 
     (dot.unit == "self" || matches!(unit, Unit::Target(_))).then_some(owner)
 }
 
+/// The base duration a `dotBaseDuration` value of the spell captured when Go built the rotation.
+pub(crate) fn rotation_dot_base_duration(prepared: &PreparedV2, id: &ActionId) -> Option<i64> {
+    prepared
+        .player
+        .rotation_dot_base_durations
+        .iter()
+        .find(|entry| &entry.spell == id)
+        .map(|entry| entry.base_duration_ns)
+}
+
 /// [`rotation_spell_index`] as the exported spell.
 pub(crate) fn rotation_spell<'a>(prepared: &'a PreparedV2, id: &ActionId) -> Option<&'a Spell> {
     rotation_spell_index(prepared, id).map(|index| &prepared.player.spells[index])
@@ -1702,6 +1712,7 @@ fn prepull_pruned(prepared: &PreparedV2, prepull: &crate::rotation::Prepull) -> 
     let target_aura = |_: usize, id: &ActionId| find_unit_aura(&prepared.target.auras, id);
     let spell = |id: &ActionId| rotation_spell_index(prepared, id);
     let dot = |id: &ActionId, unit: Unit| rotation_dot(prepared, id, unit);
+    let dot_base_duration = |id: &ActionId| rotation_dot_base_duration(prepared, id);
     let pet_auras = crate::core::fight::pet::pet_agent_auras(prepared);
     let pet_aura_known =
         |pet: usize, id: &ActionId| pet_auras.get(pet).is_some_and(|auras| auras.contains(id));
@@ -1711,6 +1722,7 @@ fn prepull_pruned(prepared: &PreparedV2, prepull: &crate::rotation::Prepull) -> 
         targets: prepared.encounter.target_count.max(1) as usize,
         spell: &spell,
         dot: &dot,
+        dot_base_duration: &dot_base_duration,
         pet_aura_known: &pet_aura_known,
     };
     compile_condition(prepull.condition.as_ref(), &lookup)
@@ -1786,6 +1798,7 @@ fn unreachable_items(prepared: &PreparedV2, rotation: &Rotation) -> BTreeSet<usi
     let target_aura = |_: usize, id: &ActionId| find_unit_aura(&prepared.target.auras, id);
     let spell = |id: &ActionId| rotation_spell_index(prepared, id);
     let dot = |id: &ActionId, unit: Unit| rotation_dot(prepared, id, unit);
+    let dot_base_duration = |id: &ActionId| rotation_dot_base_duration(prepared, id);
     let pet_auras = crate::core::fight::pet::pet_agent_auras(prepared);
     let pet_aura_known =
         |pet: usize, id: &ActionId| pet_auras.get(pet).is_some_and(|auras| auras.contains(id));
@@ -1795,6 +1808,7 @@ fn unreachable_items(prepared: &PreparedV2, rotation: &Rotation) -> BTreeSet<usi
         targets: prepared.encounter.target_count.max(1) as usize,
         spell: &spell,
         dot: &dot,
+        dot_base_duration: &dot_base_duration,
         pet_aura_known: &pet_aura_known,
     };
     rotation
