@@ -100,6 +100,8 @@ pub(crate) struct ProcDamage {
     chain: Option<(usize, f64)>,
     area: Option<Area>,
     periodic: Option<Periodic>,
+    /// The hit roll a damage over time without a direct hit makes when it is applied.
+    application: Option<Outcome>,
 }
 
 impl ProcDamage {
@@ -152,6 +154,11 @@ impl ProcDamage {
                     .ok_or_else(|| format!("a chain of {} targets", chain.targets))
             })
             .transpose()?;
+        let application = match periodic.and_then(|periodic| periodic.application.as_deref()) {
+            None => None,
+            Some("magic_hit") if direct.is_none() => Some(Outcome::MagicHit),
+            Some(other) => return Err(format!("unknown damage proc application {other}")),
+        };
         let periodic = periodic
             .map(|periodic| {
                 Ok::<_, String>(Periodic {
@@ -165,6 +172,7 @@ impl ProcDamage {
             chain,
             area,
             periodic,
+            application,
         })
     }
 }
@@ -226,9 +234,19 @@ impl<A: Agent> Fight<A> {
             .and(self.spells[spell].dot)
             .map(|dot| self.dot_on(dot, target));
         let Some(direct) = params.direct else {
-            // `dealOnArrival(..., nil, applyDotIfLanded)`: no result, so the dot goes on.
-            if let Some(dot) = dot {
-                self.apply_dot(dot);
+            // `dealOnArrival(..., nil, applyDotIfLanded)`: no result, so the dot goes on. A dot
+            // that rolls its application, as Ebon Hilt's Corruption does, goes on if it landed
+            // and deals the roll's result, which has no damage.
+            let Some(dot) = dot else { return };
+            match params.application {
+                Some(outcome) => {
+                    let result = self.calc_outcome(spell, target, outcome);
+                    if result.landed() {
+                        self.apply_dot(dot);
+                    }
+                    self.deal_damage(spell, result, false);
+                }
+                None => self.apply_dot(dot),
             }
             return;
         };

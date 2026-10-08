@@ -1099,13 +1099,17 @@ pub struct ProcArea {
 /// shared_utils.go `spellDataProcDamageSpell` for a row with a periodic damage effect: the tick's
 /// amount and the outcome applier each tick rolls (spelldata `Spell.TickOutcome`) by name:
 /// `tick_magic_hit_and_crit`, `tick_physical_crit` or `tick`. Where the row also deals a direct
-/// hit the dot lands with it; alone it goes on unrolled.
+/// hit the dot lands with it; alone it goes on unrolled, or on the hit roll `application` names.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct ProcPeriodic {
     pub tick_base: f64,
     pub tick_outcome: String,
     pub with_direct: bool,
+    /// The outcome applier a dot without a direct hit rolls when it is applied, by name:
+    /// `magic_hit`, as Ebon Hilt of Marduk's Corruption does. Absent, the dot goes on unrolled.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub application: Option<String>,
 }
 
 /// A spell a dynamic proc manager hears, by spellbook position, with the chance it rolls.

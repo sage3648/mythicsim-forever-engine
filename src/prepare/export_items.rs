@@ -1555,6 +1555,45 @@ fn lobotomizer_effects(env: &Environment, unrepresented: &mut Vec<String>) -> Ve
     })]
 }
 
+/// weapon_procs.go `ebonHiltEffects`: common/classic/items_weapons.go Ebon Hilt of Marduk: a weapon
+/// proc on landed hits, at the weapon's proc manager, that casts Corruption (18656): a magic hit
+/// roll without damage whose landing starts a damage over time of 28 every 3 seconds for 3 ticks
+/// (`Dot.Snapshot` of a flat amount, ticking `OutcomeTick` on current stats, which a spell without
+/// a spell power share deals as it would any periodic amount). The item also holds a permanent
+/// aura that lowers the wearer's threat by 1%, which the player's threat multiplier already
+/// carries.
+fn ebon_hilt_effects(env: &Environment, unrepresented: &mut Vec<String>) -> Vec<Value> {
+    let Some(aura) = aura_named(env, "Ebon Hilt of Marduk Proc") else {
+        return Vec::new();
+    };
+    let position = spell_position(env, &ActionId::spell(18656));
+    let a = env.sim.aura(aura);
+    let (Some(position), Some(dpm), false) = (position, a.dpm.as_ref(), a.icd.is_some()) else {
+        unrepresented.push("Ebon Hilt of Marduk's proc has no proc manager or spell".to_string());
+        return Vec::new();
+    };
+    if env.sim.spell(spell_at(env, position)).defense_type != DefenseType::Magic {
+        unrepresented.push("Ebon Hilt of Marduk's proc has no proc manager or spell".to_string());
+        return Vec::new();
+    }
+    let chances = dpm_chances(env, dpm, |spell| {
+        !spell.flags.matches(SpellFlag::SUPPRESS_WEAPON_PROCS)
+    });
+    let triggers: Vec<Value> = chances
+        .iter()
+        .map(|chance| chance["spell"].clone())
+        .collect();
+    vec![json!({
+        "kind": "spell_data_damage_proc", "trigger_aura": a.label, "trigger_spells": triggers,
+        "landed_only": true, "require_damage": false, "proc_chance": 1.0, "chances": chances,
+        "spell": position, "average": 0.0, "variance": 0.0, "can_crit": false,
+        "periodic": {
+            "tick_base": 28.0, "tick_outcome": "tick", "with_direct": false,
+            "application": "magic_hit",
+        },
+    })]
+}
+
 /// melee_procs.go `setStatProcs`: set bonuses common/forever/item_sets_classic.go `setStatProc`
 /// builds: a proc trigger on the set bonus aura, rolling its proc manager on the hits it hears,
 /// that activates a temporary stats aura a batch window later.
@@ -1602,6 +1641,7 @@ pub(crate) fn melee_proc_effects(env: &Environment, unrepresented: &mut Vec<Stri
     effects.extend(proc_damage_item_effects(env, unrepresented));
     effects.extend(weapon_damage_proc_effects(env, unrepresented));
     effects.extend(lobotomizer_effects(env, unrepresented));
+    effects.extend(ebon_hilt_effects(env, unrepresented));
     effects.extend(set_stat_proc_effects(env, unrepresented));
     super::classic_export::crusader_effect(env, unrepresented, &mut effects);
     // common/classic/items_weapons.go Ironfoe (11684) and common/forever/items_trinkets.go Hand

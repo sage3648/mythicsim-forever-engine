@@ -226,3 +226,40 @@ func lobotomizerEffects(simulation *core.Simulation, character *core.Character, 
 		"spell": spell, "average": 0.0, "variance": 0.0, "roll": []float64{200, 300}, "can_crit": true,
 	}}
 }
+
+// common/classic/items_weapons.go Ebon Hilt of Marduk: a weapon proc on landed hits, at the weapon's
+// proc manager, that casts Corruption (18656): a magic hit roll without damage whose landing starts
+// a damage over time of 28 every 3 seconds for 3 ticks (Dot.Snapshot of a flat amount, ticking
+// OutcomeTick on current stats, which a spell without a spell power share deals as it would any
+// periodic amount). The item also holds a permanent aura that lowers the wearer's threat by 1%,
+// which the player's threat multiplier already carries.
+func ebonHiltEffects(simulation *core.Simulation, character *core.Character, unrepresented *[]string) []map[string]any {
+	aura := character.GetAura("Ebon Hilt of Marduk Proc")
+	if aura == nil {
+		return nil
+	}
+	spell := -1
+	for i, registered := range character.Spellbook {
+		if registered.ActionID == (core.ActionID{SpellID: 18656}) {
+			spell = i
+		}
+	}
+	if aura.Dpm == nil || aura.Icd != nil || spell < 0 || character.Spellbook[spell].DefenseType != core.DefenseTypeMagic {
+		*unrepresented = append(*unrepresented, "Ebon Hilt of Marduk's proc has no proc manager or spell")
+		return nil
+	}
+	chances := dpmChances(character, aura.Dpm, simulation, func(spell *core.Spell) bool {
+		return !spell.Flags.Matches(core.SpellFlagSuppressWeaponProcs)
+	})
+	triggers := []int{}
+	for _, chance := range chances {
+		triggers = append(triggers, chance.Spell)
+	}
+	return []map[string]any{{
+		"kind": "spell_data_damage_proc", "trigger_aura": aura.Label, "trigger_spells": triggers,
+		"landed_only": true, "require_damage": false, "proc_chance": 1.0, "chances": chances,
+		"spell": spell, "average": 0.0, "variance": 0.0, "can_crit": false,
+		"periodic": map[string]any{"tick_base": 28.0, "tick_outcome": "tick", "with_direct": false,
+			"application": "magic_hit"},
+	}}
+}

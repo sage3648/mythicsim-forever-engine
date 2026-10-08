@@ -493,6 +493,7 @@ func meleeProcEffects(simulation *core.Simulation, character *core.Character, un
 	effects = append(effects, procDamageItemEffects(simulation, character, unrepresented)...)
 	effects = append(effects, weaponDamageProcEffects(simulation, character, unrepresented)...)
 	effects = append(effects, lobotomizerEffects(simulation, character, unrepresented)...)
+	effects = append(effects, ebonHiltEffects(simulation, character, unrepresented)...)
 	effects = append(effects, setStatProcEffects(simulation, character, unrepresented)...)
 	// common/classic/enchants.go Crusader (1900): a weapon proc on landed hits, at one proc a
 	// minute of each hand's speed, that activates that hand's Holy Strength and heals.
