@@ -19,6 +19,10 @@ pub(crate) fn common_effects(env: &mut Environment, unrepresented: &mut Vec<Stri
     effects.extend(sunder_armor_effect(env, unrepresented));
     effects.extend(racial_defensive_effects(env));
     effects.extend(item_use_effects(env, unrepresented));
+    effects.extend(super::power_infusion::external_power_infusion_effects(
+        env,
+        unrepresented,
+    ));
     effects
 }
 

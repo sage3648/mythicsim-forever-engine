@@ -26,49 +26,15 @@ func init() {
 
 // talents_discipline.go applyPowerInfusion: the priest's own Power Infusion, a cooldown that
 // activates the client-parsed Power Infusions aura, which multiplies the damage of the schools its
-// mask names and healing dealt. The multipliers come from client data; a separate reset
-// simulation checks they are all the aura changes, and that nothing else holds its category.
+// mask names and healing dealt. The aura is the one buffs.PowerInfusionsAura builds, so the effect
+// is power_infusion.go's.
 func priestPowerInfusionEffect(character *core.Character) map[string]any {
-	note := func(condition bool, message string) {
-		if condition {
-			*classNotes = append(*classNotes, message)
-		}
-	}
-	rank := priestPowerInfusion.Highest()
-	damage := 1 + rank.Effect(dbcenums.A_MOD_DAMAGE_PERCENT_DONE, 126).Percent()
-	healing := 1 + rank.Effect(dbcenums.A_MOD_HEALING_DONE_PERCENT, 126).Percent()
-	aura := character.GetAuraByID(core.ActionID{SpellID: rank.ID})
-	if aura == nil {
-		note(true, "Power Infusion has no aura")
-		return nil
-	}
-	for _, ee := range aura.ExclusiveEffects {
-		note(privateField(ee.Category, "effects").Len() != 1, "Power Infusion shares its category")
-	}
-	simulation := core.NewSim(exportRequest, simsignals.CreateSignals())
-	simulation.Reset()
-	player := simulation.Raid.Parties[0].Players[0].GetCharacter()
-	before := player.PseudoStats
-	beforeStats := player.GetStats()
-	player.GetAuraByID(core.ActionID{SpellID: rank.ID}).Activate(simulation)
-	after := player.PseudoStats
-	schools := []int{}
-	for school := range before.SchoolDamageDealtMultiplier {
-		if after.SchoolDamageDealtMultiplier[school] != before.SchoolDamageDealtMultiplier[school] {
-			schools = append(schools, school)
-			note(after.SchoolDamageDealtMultiplier[school] != before.SchoolDamageDealtMultiplier[school]*damage,
-				"Power Infusion's school damage is not its client multiplier")
-		}
-	}
-	note(after.HealingDealtMultiplier != before.HealingDealtMultiplier*healing,
-		"Power Infusion's healing is not its client multiplier")
-	after.SchoolDamageDealtMultiplier = before.SchoolDamageDealtMultiplier
-	after.HealingDealtMultiplier = before.HealingDealtMultiplier
-	note(after != before || player.GetStats() != beforeStats, "Power Infusion changes more than school damage and healing")
-	return map[string]any{
-		"kind": "power_infusion", "spell_id": rank.ID, "aura": aura.Label,
-		"damage_multiplier": damage, "schools": schools, "healing_multiplier": healing,
-	}
+	return powerInfusionEffect(character, exportRequest, core.ActionID{SpellID: priestPowerInfusion.Highest().ID},
+		func(condition bool, message string) {
+			if condition {
+				*classNotes = append(*classNotes, message)
+			}
+		})
 }
 
 // shadowfiend.go: the Shadowfiend is summoned during a fight when the summon spell exists.
