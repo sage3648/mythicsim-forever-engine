@@ -43,6 +43,30 @@ func exclusiveRefresh(aura *core.Aura) []string {
 	return modes
 }
 
+// The unit an auraShouldRefresh names and its export name, by environment.go GetUnit with
+// apl_helpers.go GetTargetUnit's default of the current target: the player for Self and for
+// the raid's one player, the first target for any target of the encounter, and no unit for the
+// sets, a player past the first, a target past the encounter's and a pet, which Rust does not
+// follow.
+func refreshUnit(character *core.Character, target *core.Unit, reference *proto.UnitReference) (*core.Unit, string) {
+	switch reference.GetType() {
+	case proto.UnitReference_Unknown, proto.UnitReference_CurrentTarget,
+		proto.UnitReference_NextTarget, proto.UnitReference_PreviousTarget:
+		return target, "target"
+	case proto.UnitReference_Self:
+		return &character.Unit, "player"
+	case proto.UnitReference_Player:
+		if reference.GetIndex() == 0 {
+			return &character.Unit, "player"
+		}
+	case proto.UnitReference_Target:
+		if index := reference.GetIndex(); index >= 0 && int(index) < len(character.Env.Encounter.AllTargetUnits) {
+			return target, "target"
+		}
+	}
+	return nil, ""
+}
+
 // apl_values_aura.go newValueAuraShouldRefresh: every aura an auraShouldRefresh value names,
 // on the player or its current target (the default), with how its exclusive effects read. A value naming an
 // aura the unit lacks has no aura and exports nothing.
@@ -61,14 +85,13 @@ func auraShouldRefreshEffects(character *core.Character, target *core.Unit, rota
 				fail(err)
 				parsed := &proto.APLValueAuraShouldRefresh{}
 				fail(protojson.Unmarshal(raw, parsed))
-				// apl_helpers.go GetTargetUnit: no unit reference means the current target.
-				unit, name := target, "target"
-				if parsed.GetSourceUnit().GetType() == proto.UnitReference_Self {
-					unit, name = &character.Unit, "player"
-				}
-				if aura := unit.GetAuraByID(core.ProtoToActionID(parsed.GetAuraId())); aura != nil {
-					found[name+"\x00"+aura.Label] = map[string]any{
-						"kind": "aura_should_refresh", "unit": name, "aura": aura.Label, "modes": exclusiveRefresh(aura),
+				// apl_helpers.go GetTargetUnit: no unit reference means the current target. The
+				// targets are identical copies, so the first stands for any of them.
+				if unit, name := refreshUnit(character, target, parsed.GetSourceUnit()); unit != nil {
+					if aura := unit.GetAuraByID(core.ProtoToActionID(parsed.GetAuraId())); aura != nil {
+						found[name+"\x00"+aura.Label] = map[string]any{
+							"kind": "aura_should_refresh", "unit": name, "aura": aura.Label, "modes": exclusiveRefresh(aura),
+						}
 					}
 				}
 			}

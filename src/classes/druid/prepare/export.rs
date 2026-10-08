@@ -367,13 +367,8 @@ impl Druid {
             let main_hand = weapon_from_main_hand(sim, unit);
             let cat = cat_weapon(sim, unit);
             // movement.go NewPassiveMovementSpeedEffect: the form's speed applies when its
-            // effect holds the category, which no other passive speed effect shares here.
-            for effect in &sim.aura(cat_aura).exclusive_effects {
-                let category = sim.effects[effect.0].category;
-                if sim.categories[category.0].effects.len() != 1 {
-                    notes.push("Cat Form's movement speed shares its category".to_string());
-                }
-            }
+            // effect holds the category, which the player_movement effect describes with the
+            // aura.
             effects.push(json!({
                 "kind": "cat_form", "spell_id": Ladder::ranked(&CAT_FORM_RANK).highest().id,
                 "aura": sim.aura(cat_aura).label,

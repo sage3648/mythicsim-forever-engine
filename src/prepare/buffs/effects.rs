@@ -83,20 +83,34 @@ fn collect_aura_should_refresh(
                 let parsed =
                     Message::from_json_text("proto.APLValueAuraShouldRefresh", &config.to_string())
                         .expect("an auraShouldRefresh value parses");
-                // apl_helpers.go GetTargetUnit: no unit reference means the current target.
-                let (unit, name) = match parsed.message("source_unit") {
-                    // UnitReference_Self.
-                    Some(source) if source.enum_number("type") == 4 => (env.player, "player"),
-                    _ => (target, "target"),
+                // apl_helpers.go GetTargetUnit: no unit reference means the current target. The
+                // targets are identical copies, so the first stands for any of them.
+                let reference = parsed.message("source_unit");
+                let index = reference.map_or(0, |source| source.i32("index"));
+                let unit = match reference.map_or(0, |source| source.enum_number("type")) {
+                    // Unknown, CurrentTarget, PreviousTarget and NextTarget.
+                    0 | 5 | 8 | 9 => Some((target, "target")),
+                    // Self, and the raid's one player.
+                    4 => Some((env.player, "player")),
+                    1 if index == 0 => Some((env.player, "player")),
+                    // A target of the encounter.
+                    2 if usize::try_from(index).is_ok_and(|i| i < env.encounter.targets.len()) => {
+                        Some((target, "target"))
+                    }
+                    // The sets, a player past the first, a target past the encounter's and a
+                    // pet, which Rust does not follow.
+                    _ => None,
                 };
                 let id = parsed
                     .message("aura_id")
                     .map(proto_to_action_id)
                     .unwrap_or_default();
-                let aura =
+                let aura = unit.and_then(|(unit, _)| {
                     env.sim.unit(unit).auras.iter().copied().find(|aura| {
                         env.sim.aura(*aura).action_id.clone().unwrap_or_default() == id
-                    });
+                    })
+                });
+                let name = unit.map_or("", |(_, name)| name);
                 if let Some(aura) = aura {
                     let label = env.sim.aura(aura).label.clone();
                     found.insert(

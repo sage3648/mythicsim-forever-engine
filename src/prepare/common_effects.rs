@@ -68,26 +68,28 @@ fn aura_refresh_effects(env: &mut Environment, _unrepresented: &mut Vec<String>)
     super::buffs::aura_should_refresh_effects(env)
 }
 
-/// tools/oracle-v2/movement.go `playerMovementEffect`: the movement speed a move runs at.
+/// tools/oracle-v2/movement.go `playerMovementEffect`: the movement speed a move runs at, and
+/// the auras that change it.
 fn player_movement_effect(env: &Environment) -> Option<Value> {
     let player = env.player;
-    let rotation = env
+    // A move anywhere in the rotation: its prepull, priority list, groups and sequences.
+    fn moves(node: &Value) -> bool {
+        match node {
+            Value::Object(map) => {
+                map.contains_key("move")
+                    || map.contains_key("moveDuration")
+                    || map.values().any(moves)
+            }
+            Value::Array(items) => items.iter().any(moves),
+            _ => false,
+        }
+    }
+    let moves = env
         .sim
         .character(player)
         .player
-        .message("rotation")?
-        .clone();
-    let moves = rotation
-        .messages("prepull_actions")
-        .into_iter()
-        .chain(rotation.messages("priority_list"))
-        .any(|item| {
-            item.message("action")
-                .is_some_and(|action| action.message("move").is_some())
-        });
-    if !moves {
-        return None;
-    }
+        .message("rotation")
+        .is_some_and(|rotation| moves(&rotation.to_protojson()));
     let mut speed_auras = Vec::new();
     for aura in &env.sim.unit(player).auras {
         let a = env.sim.aura(*aura);
@@ -100,9 +102,14 @@ fn player_movement_effect(env: &Environment) -> Option<Value> {
             speed_auras.push(a.label.clone());
         }
     }
+    if !moves && speed_auras.is_empty() {
+        return None;
+    }
     Some(json!({
         "kind": "player_movement",
         "speed_multiplier": env.sim.unit(player).pseudo_stats.movement_speed_multiplier,
+        "initial_speed_multiplier":
+            env.sim.unit(player).initial_pseudo_stats.movement_speed_multiplier,
         "speed_auras": speed_auras,
     }))
 }

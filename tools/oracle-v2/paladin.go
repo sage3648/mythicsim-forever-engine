@@ -410,16 +410,8 @@ func paladinEffects(agent core.Agent, character *core.Character) []map[string]an
 	if talents.PursuitOfJustice > 0 { // talents_retribution.go applyPursuitOfJustice
 		bonus := paladinPursuitOfJustice.Effect(dbcenums.A_MOD_INCREASE_SPEED, 0).FractionAt(talents.PursuitOfJustice)
 		aura := character.GetAura("Pursuit of Justice")
-		// movement.go NewPassiveMovementSpeedEffect: the bonus holds while no stronger passive
-		// speed effect shares the category, and the reset already applied it.
-		for _, ee := range aura.ExclusiveEffects {
-			if privateField(ee.Category, "effects").Len() != 1 {
-				*classNotes = append(*classNotes, "Pursuit of Justice's movement speed shares its category")
-			}
-		}
-		if !aura.IsActive() {
-			*classNotes = append(*classNotes, "Pursuit of Justice is not active after the reset")
-		}
+		// movement.go NewPassiveMovementSpeedEffect: the bonus holds while the aura's effect holds
+		// the category, which the player_movement effect describes with the aura.
 		effects = append(effects, map[string]any{
 			"kind": "pursuit_of_justice", "aura": aura.Label, "bonus": bonus,
 			"initial_multiplier": character.PseudoStats.MovementSpeedMultiplier / (1 + bonus),

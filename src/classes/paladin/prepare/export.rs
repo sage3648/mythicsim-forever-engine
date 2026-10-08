@@ -582,20 +582,9 @@ impl Paladin {
                 .effect(dbcenums::A_MOD_INCREASE_SPEED, 0)
                 .fraction_at(pursuit);
             if let Some(aura) = sim.get_aura(unit, "Pursuit of Justice") {
-                // movement.go NewPassiveMovementSpeedEffect: the bonus holds while no
-                // stronger passive speed effect shares the category, and the reset already
-                // applied it.
-                for effect in &sim.aura(aura).exclusive_effects {
-                    let category = &sim.categories[sim.effects[effect.0].category.0];
-                    if category.effects.len() != 1 {
-                        notes.push(
-                            "Pursuit of Justice's movement speed shares its category".to_string(),
-                        );
-                    }
-                }
-                if !sim.aura(aura).active {
-                    notes.push("Pursuit of Justice is not active after the reset".to_string());
-                }
+                // movement.go NewPassiveMovementSpeedEffect: the bonus holds while the aura's
+                // effect holds the category, which the player_movement effect describes with
+                // the aura.
                 effects.push(json!({
                     "kind": "pursuit_of_justice", "aura": sim.aura(aura).label, "bonus": bonus,
                     "initial_multiplier":
