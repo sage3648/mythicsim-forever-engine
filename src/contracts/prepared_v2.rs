@@ -732,6 +732,19 @@ pub struct Player {
     pub hp_percent_for_defensives: f64,
     /// Every prepull action Go registered: the rotation's, and any a class or item adds.
     pub prepull_actions: usize,
+    /// The dot base durations the rotation's `dotBaseDuration` values captured when Go built
+    /// the rotation, by spell.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub rotation_dot_base_durations: Vec<RotationDotBaseDuration>,
+}
+
+/// What `APLValueDotBaseDuration` captured for a spell: the dot's `BaseDuration` on the first
+/// target when Go built the rotation, before the reset activated any aura's spell mods.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct RotationDotBaseDuration {
+    pub spell: ActionId,
+    pub base_duration_ns: i64,
 }
 
 /// A pet Go enables at each reset, as core/pet.go builds it.

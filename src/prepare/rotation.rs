@@ -811,6 +811,80 @@ fn register_value_observers(env: &mut Environment, built: &[Message]) -> Result<
     Ok(())
 }
 
+/// Every `dotBaseDuration` value anywhere in the rotation, as the exporter finds them.
+fn dot_base_duration_values<'a>(message: &'a Message, out: &mut Vec<&'a Message>) {
+    if message.type_name() == "proto.APLValueDotBaseDuration" {
+        out.push(message);
+        return;
+    }
+    for name in message.set_fields() {
+        match message.get(name) {
+            Some(Value::Message(inner)) => dot_base_duration_values(inner, out),
+            Some(Value::List(items)) => {
+                for item in items {
+                    if let Value::Message(inner) = item {
+                        dot_base_duration_values(inner, out);
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+/// Go `APLValueDotBaseDuration`'s `baseDuration`, which `newValueDotBaseDuration` reads from
+/// `GetAPLDot` on the first target as the rotation is built: the spell's area dot, else its
+/// dot on the target. A spell with no such dot gives no value and is left out.
+fn rotation_dot_base_durations(
+    env: &Environment,
+    rotation: &Message,
+) -> Vec<crate::contracts::prepared_v2::RotationDotBaseDuration> {
+    let mut values = Vec::new();
+    dot_base_duration_values(rotation, &mut values);
+    let mut durations: Vec<crate::contracts::prepared_v2::RotationDotBaseDuration> = Vec::new();
+    for value in values {
+        let Some(id) = value.message("spell_id") else {
+            continue;
+        };
+        let id = proto_to_action_id(id);
+        if durations.iter().any(|known| known.spell == id) {
+            continue;
+        }
+        let Some(spell) = apl_spell(env, &id) else {
+            continue;
+        };
+        let dot = env.sim.spell(spell).aoe_dot.or_else(|| {
+            let target = *env.encounter.targets.first()?;
+            spell_dot_of(env, spell, target)
+        });
+        let Some(dot) = dot else {
+            continue;
+        };
+        let dot = &env.sim.dots[dot.0];
+        // Go `Dot.BaseDuration`.
+        let base_duration = (f64::from(dot.base_tick_count)
+            * dot.base_tick_length as f64
+            * dot.base_duration_multiplier) as i64
+            + dot.base_duration_flat;
+        durations.push(crate::contracts::prepared_v2::RotationDotBaseDuration {
+            spell: id,
+            base_duration_ns: base_duration,
+        });
+    }
+    durations.sort_by(|a, b| a.spell.cmp(&b.spell));
+    durations
+}
+
+/// Go `spell.Dot(target)`, following the related dot spell.
+fn spell_dot_of(env: &Environment, spell: SpellId, target: UnitId) -> Option<super::sim::DotId> {
+    let s = env.sim.spell(spell);
+    if s.dots.is_empty() {
+        return spell_dot_of(env, s.related_dot_spell?, target);
+    }
+    let index = env.sim.unit(target).unit_index as usize;
+    s.dots.get(index).copied().flatten()
+}
+
 /// Go `newAPLRotation` at finalization.
 pub(crate) fn build_rotation(
     env: &mut Environment,
@@ -876,6 +950,7 @@ pub(crate) fn build_rotation(
         built_values = builder.built_values;
     }
     register_value_observers(env, &built_values)?;
+    env.rotation_dot_base_durations = rotation_dot_base_durations(env, rotation);
     env.prepull_actions += prepull;
     let player = env.player;
     for spell in casts.into_iter().chain(pruned) {

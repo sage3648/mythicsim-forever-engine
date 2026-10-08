@@ -1,4 +1,4 @@
-// Player movement export: the movement speed a prepull move runs at.
+// Player movement export: the movement speed a move runs at.
 package main
 
 import (
@@ -6,10 +6,16 @@ import (
 	"github.com/wowsims/forever/sim/core/proto"
 )
 
-// Whether the rotation moves in its prepull: an APLActionMove, which runs unchecked before the pull.
-func prepullMoves(rotation *proto.APLRotation) bool {
+// Whether the rotation moves: an APLActionMove in its prepull, which runs unchecked before the pull,
+// or in its priority list.
+func rotationMoves(rotation *proto.APLRotation) bool {
 	for _, prepull := range rotation.GetPrepullActions() {
 		if prepull.GetAction().GetMove() != nil {
+			return true
+		}
+	}
+	for _, item := range rotation.GetPriorityList() {
+		if item.GetAction().GetMove() != nil {
 			return true
 		}
 	}
@@ -23,7 +29,7 @@ func prepullMoves(rotation *proto.APLRotation) bool {
 // a line, and Elemental Blessing, which multiplies it directly. Rust follows only the multiplier
 // and the class's dash.
 func playerMovementEffect(character *core.Character, rotation *proto.APLRotation) map[string]any {
-	if !prepullMoves(rotation) {
+	if !rotationMoves(rotation) {
 		return nil
 	}
 	speedAuras := []string{}

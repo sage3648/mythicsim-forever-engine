@@ -1034,6 +1034,9 @@ pub(crate) fn export(
     if hp != 0.0 {
         prepared["player"]["hp_percent_for_defensives"] = json!(hp);
     }
+    if !env.rotation_dot_base_durations.is_empty() {
+        prepared["player"]["rotation_dot_base_durations"] = json!(env.rotation_dot_base_durations);
+    }
     prepared["melee"] = export_melee(env, &mut unrepresented);
     let pets = super::pet::export_pets(env, &mut timers, &mut unrepresented);
     if !pets.is_empty() {

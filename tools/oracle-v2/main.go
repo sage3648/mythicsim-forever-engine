@@ -687,6 +687,8 @@ type Player struct {
 	Rotation           json.RawMessage  `json:"rotation"`
 	// Every prepull action Go registered, the rotation's and any a class or item adds.
 	PrepullActions int `json:"prepull_actions"`
+	// The dot base durations the rotation captured when it was built.
+	RotationDotBaseDurations []RotationDotBaseDuration `json:"rotation_dot_base_durations,omitempty"`
 	// The health a fight starts with, where it differs from the maximum: health.go resets to the
 	// maximum before the agent's reset, and a form the agent then enters raises the maximum.
 	HealthAtReset *float64 `json:"health_at_reset,omitempty"`
@@ -1842,6 +1844,7 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 				DamageDealtMultiplier: table.DamageDealtMultiplier, DamageTakenMultiplier: table.DamageTakenMultiplier},
 			Spells: spells, MajorCooldowns: mcds, Rotation: rotation,
 			PrepullActions:         privateField(simulation.Environment, "prepullActions").Len(),
+			RotationDotBaseDurations: rotationDotBaseDurations(request),
 			HealthAtReset:          healthAtReset(request),
 			HpPercentForDefensives: request.Raid.Parties[0].Players[0].GetCooldowns().GetHpPercentForDefensives(),
 		},

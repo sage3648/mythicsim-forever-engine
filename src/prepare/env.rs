@@ -43,6 +43,8 @@ pub(crate) struct Environment {
     pub pre_finalize: Vec<FinalizeEffect>,
     /// `env.prepullActions`.
     pub prepull_actions: usize,
+    /// The dot base durations the rotation's `dotBaseDuration` values captured as it was built.
+    pub rotation_dot_base_durations: Vec<crate::contracts::prepared_v2::RotationDotBaseDuration>,
     /// The factory that built the agent, for a separate simulation of the same request.
     pub factory: AgentFactory,
     /// Every attacker's table against every defender, by unit index.
@@ -178,6 +180,7 @@ impl Environment {
             post_finalize: Vec::new(),
             pre_finalize: Vec::new(),
             prepull_actions: 0,
+            rotation_dot_base_durations: Vec::new(),
             attack_tables: Vec::new(),
             factory,
         };
