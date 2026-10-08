@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Write the variants of the weapon proc sweep: every weapon whose proc Go registers through
 sim/common/itemhelpers/weaponprocs.go (and Annihilator's debuff proc), worn by the classes that
-wield it, plus the accepted weapon proc fixtures themselves.
+wield it, casters and druids included, plus the accepted weapon proc fixtures themselves.
 
     python3 tools/weapon_proc_sweep.py --output <scratch>
 
@@ -46,6 +46,10 @@ ROGUE_RACES = ("RaceHuman", "RaceDwarf", "RaceNightElf", "RaceOrc", "RaceUndead"
 PALADIN_RACES = ("RaceHuman", "RaceDwarf")
 SHAMAN_RACES = ("RaceOrc", "RaceTauren", "RaceTroll")
 HUNTER_RACES = ("RaceDwarf", "RaceNightElf", "RaceOrc", "RaceTauren", "RaceTroll")
+DRUID_RACES = ("RaceNightElf", "RaceTauren")
+PRIEST_RACES = ("RaceHuman", "RaceDwarf", "RaceNightElf", "RaceUndead", "RaceTroll")
+MAGE_RACES = ("RaceHuman", "RaceGnome", "RaceUndead", "RaceTroll")
+WARLOCK_RACES = ("RaceHuman", "RaceGnome", "RaceOrc", "RaceUndead")
 
 # (label, base request, weapon table, slot, count, races, ranged hit within melee range only)
 WEAPON_ROWS = [
@@ -66,6 +70,26 @@ WEAPON_ROWS = [
     ("retribution-paladin", "production-retribution-paladin", {**POLEARMS, "wolfsbane": 267369}, MAIN_HAND, 6,
      PALADIN_RACES),
     ("marksmanship-hunter", "production-marksmanship-hunter", RANGED, 13, 6, HUNTER_RACES),
+]
+
+# Builds that cast or shapeshift, which wield a weapon whose proc hears nothing they do, or hears
+# their melee: label, accepted request, weapons, slot, variants of each, the races to draw. They
+# stand at any distance.
+CASTER_ROWS = [
+    ("feral-druid", "production-feral-druid", {**MACES, **FISTS, "glacial-blade": 19099}, MAIN_HAND, 3,
+     DRUID_RACES),
+    ("feral-bear-druid", "production-feral-bear-druid", {**MACES, **FISTS}, MAIN_HAND, 3, DRUID_RACES),
+    ("balance-druid", "production-balance-druid",
+     {"masterwork-stormhammer": 12794, "stinging-viper": 6472, "glacial-blade": 19099}, MAIN_HAND, 3,
+     DRUID_RACES),
+    ("elemental-shaman", "production-elemental-shaman",
+     {"masterwork-stormhammer": 12794, "alcors-sunrazor": 14555}, MAIN_HAND, 3, SHAMAN_RACES),
+    ("shadow-priest", "production-shadow-priest", {**MACES, "alcors-sunrazor": 14555, "the-lobotomizer": 19324},
+     MAIN_HAND, 3, PRIEST_RACES),
+    ("frost-mage", "production-frost-2-targets",
+     {**DAGGERS, "skullforge-reaver": 13361, "plaguefang": 279876}, MAIN_HAND, 3, MAGE_RACES),
+    ("destruction-warlock", "production-destruction-warlock",
+     {**DAGGERS, "skullforge-reaver": 13361, "ebon-hilt-of-marduk": 14576}, MAIN_HAND, 3, WARLOCK_RACES),
 ]
 
 # Weapons whose proc reaches a target past the first or leaves a damage over time, against 2 to 5
@@ -102,7 +126,7 @@ FIXTURE_COUNT = 8
 
 SEED = 20261008
 ITERATIONS = 200
-# A melee build stays in range; a ranged one draws any distance.
+# A melee build stays in range; a ranged one or a caster draws any distance.
 MELEE_DISTANCE = 5
 
 
@@ -120,10 +144,11 @@ def equipped(base, slot, item):
 def rows():
     """Every row: (name, base request, count, races, max distance), in a fixed order."""
     out = []
-    for table in (WEAPON_ROWS, SEVERAL_TARGET_ROWS):
+    for table in (WEAPON_ROWS, CASTER_ROWS, SEVERAL_TARGET_ROWS):
         for label, base_name, weapons, slot, count, races in table:
             base = request_of(base_name)
-            ranged = base["raid"]["parties"][0]["players"][0]["class"] in ("ClassHunter",) and slot == 13
+            ranged = table is CASTER_ROWS or (
+                base["raid"]["parties"][0]["players"][0]["class"] == "ClassHunter" and slot == 13)
             for weapon, item in weapons.items():
                 out.append((f"{label}-{weapon}", equipped(base, slot, item), count, races,
                             None if ranged else MELEE_DISTANCE))
