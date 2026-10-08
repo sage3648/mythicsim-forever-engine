@@ -108,7 +108,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `blizzard` | sim/mage/blizzard.go | The channel, its triggered tick spell and fixed tick amount, and Improved Blizzard's chill spell when talented; ticks roll to hit and never crit, and each landed tick casts the chill |
 | `arcane_missiles` | sim/mage/arcane_missiles.go | Channel rank to tick spell pairing, and the additive damage bonus, a Go literal, each Arcane Blast stack the channel spends gives its missiles |
 | `cold_snap` | sim/mage/cold_snap.go | Spell ID |
-| `evocation` | sim/mage/evocation.go | Regen multiplier from client data, aura labels |
+| `evocation` | sim/mage/evocation.go | Regen multiplier from client data, aura labels; the regeneration aura adds the multiplier and forces full regeneration through `AddSpiritRegenMultiplier` and `SetForceFullSpiritRegen`, which also move the baseline an Innervate's bonus mana is credited against while one is up |
 | `mana_gems` | sim/mage/mana_gems.go | Gem mana from client data, use order |
 | `mage_armor` | sim/mage/armors.go | Aura label; regeneration already in pseudo stats |
 | `arcane_concentration` | sim/mage/talents_arcane.go | Proc chance, ICD, Clearcasting duration |
@@ -137,7 +137,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `shatter_curse` | sim/core/racials.go | Orc survival cooldown: the player's live damage taken multiplier on each magic school, a Go literal, which spells that hit the player read; it fires from timings or below the defensive health threshold |
 | `read_ley_line` | sim/core/racials.go | High Order Skyborne: the cast and Energized's regeneration multiplier |
 | `temporary_stats` | sim/core/major_cooldown.go, sim/common/shared/shared_utils.go | Night Elf Elune's Light and on-use items, Go literal ones and shared.NewSimpleStatActive's database buffs such as Talisman of Ephemeral Power: every stat its aura changes, computed by Go with it active, and its gain and fade log lines |
-| `stat_auras` | sim/core/unit.go AddStatsDynamic | The auras that change stats during a fight and the player's stats for every combination of them, each read from a separate Go simulation, since Go recomputes stats from the active bonuses. Maximum mana, healing power, health, Spirit, the school spell damage stats, the resistances and the physical damage a physical spell adds, which Sword of Zeal changes, appear only when a combination changes them |
+| `stat_auras` | sim/core/unit.go AddStatsDynamic | The auras that change stats during a fight and the player's stats for every combination of them, each read from a separate Go simulation, since Go recomputes stats from the active bonuses. Maximum mana, healing power, health, Spirit, the school spell damage stats, the resistances and the physical damage a physical spell adds, which Sword of Zeal changes, appear only when a combination changes them. `raw_mp5` gives the exact MP5 bonus of an aura whose bonus Go does not add and take away exactly, which only Mana Tide Totem's is (a multiple of 2^-10, such as a whole number or Mana Spring Totem's 31.25, is exact): Go adds each bonus to its raw stats and takes it away again, so once the totem expires the MP5 is a few ulps off its start (77 plus 483.33 and minus it again is 76.99999999999994), enough to decide whether a cost just fits, and the runtime keeps the raw MP5 and does the same instead of reading the combination. The exporter refuses any other aura with an inexact MP5 bonus |
 | `crusader` | sim/common/classic/enchants.go | Each spell's chance from the enchant's proc manager, the Holy Strength auras and their log lines, and the heal roll |
 | `windfury_totem` | sim/core/buffs/drivers.go | The totem's refresh period, the trigger and charge spenders resolved from client rows, whether each needs damage dealt, the charge aura and the extra main hand attack spell, absent without melee autos when no spell can trigger the totem |
 | `dragonbreath_chili` | sim/core/consumes.go | The 5% chance and listened spells, the rolled Fire hit on every target, each on its own roll and dealt in turn, and the spell batch delay, Go literals |
@@ -679,7 +679,10 @@ cases give a cat the roar it never learns, which Go drops along with its conditi
 consumables, Wisdom or Mana Spring Totem so that druids in the raid innervate the player: the
 cooldown manager casts Innervate once the mana falls to the threshold, and two sources take turns.
 `balance-druid-own-and-external-innervate` has the druid cast its own Innervate below 30% mana
-too, which holds back while either aura is up. `fire-mage`, `destruction-warlock` and
+too, which holds back while either aura is up, and `fire-mage-evocation-over-external-innervate`
+channels Evocation under the Innervate. `enhancement-shaman-external-mana-tide-mp5-drift` is one
+fixed-seed iteration in which Mana Tide Totem's expiry leaves the shaman's MP5 a few ulps short of
+its start, so Flame Shock just does not fit in the mana, as Go has it. `fire-mage`, `destruction-warlock` and
 `retribution-paladin` `-external-mana-tide`, with `-2-sources`, `-short-fight` and
 `-2-sources-short-fight`, have shamans drop Mana Tide Totem 40 seconds into a six minute fight
 and again after its five minute cooldown, or halfway through a 45 second fight.
