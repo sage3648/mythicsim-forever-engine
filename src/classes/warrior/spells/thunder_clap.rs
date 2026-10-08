@@ -2,10 +2,10 @@
 //! of attack power, a Go literal, on the magic hit and crit table, against each target up to
 //! the row's cap from the cast target on. A landed clap activates its debuff on its target,
 //! whose exclusive effect slows the target's melee speed by the clap's bid while it holds the
-//! attack speed category, which holds only the clap.
+//! attack speed category it shares with other slows.
 
 use super::sweeping_strikes::{self, SweepingStrikes};
-use crate::core::fight::{Agent, AuraRef, Fight, Outcome, Side, SpellId};
+use crate::core::fight::{Agent, AuraRef, EnemySlow, Fight, Outcome, Side, SpellId};
 
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct ThunderClap {
@@ -14,8 +14,6 @@ pub(crate) struct ThunderClap {
     pub(crate) attack_power_share: f64,
     /// The row's target cap.
     pub(crate) max_targets: usize,
-    /// The clap's bid in the attack speed category: how far from 1 its speed factor is.
-    pub(crate) bid: f64,
 }
 
 /// The clap's `ApplyEffects`: Go `CalcCleaveDamage`, a Sweeping Strikes attack, then for each
@@ -46,12 +44,14 @@ pub(crate) fn apply<A: Agent>(
     }
 }
 
-/// The bid's OnGain: Go `MultiplyMeleeSpeed` by one less the bid.
-pub(crate) fn on_gain<A: Agent>(fight: &mut Fight<A>, aura: AuraRef, params: ThunderClap) {
-    fight.multiply_enemy_melee_speed(aura.side, 1.0 - params.bid);
-}
-
-/// The bid's OnExpire: the inverse factor.
-pub(crate) fn on_expire<A: Agent>(fight: &mut Fight<A>, aura: AuraRef, params: ThunderClap) {
-    fight.multiply_enemy_melee_speed(aura.side, 1.0 / (1.0 - params.bid));
+/// The clap's slow of the attack speed category, which applies while the clap holds it: Go
+/// `MultiplyMeleeSpeed` by one less the bid on gain, and by the reciprocal on expiry.
+pub(crate) fn slow(bid: f64) -> EnemySlow {
+    let speed = 1.0 - bid;
+    EnemySlow {
+        melee: true,
+        gain: speed,
+        expire: 1.0 / speed,
+        priority: Some(bid),
+    }
 }

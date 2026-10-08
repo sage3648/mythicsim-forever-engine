@@ -14,7 +14,6 @@ use crate::contracts::request::Message;
 use crate::data::spells::Spell;
 
 use super::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
-use super::character::constants::CHARACTER_LEVEL;
 use super::common_effects::{action_id_string, active_stats, flat_string, SPELL_BATCH_WINDOW};
 use super::consumable_effects::proc_trigger_spells;
 use super::dbcenums;
@@ -157,6 +156,58 @@ pub(crate) fn aura_named(env: &Environment, label: &str) -> Option<AuraId> {
 
 /// A proc mask is a melee hit taken or dealt.
 const STRUCK_PROC_MASK: ProcMask = ProcMask::MELEE_OR_RANGED;
+
+/// The Goblin Sapper Charge's hit on its thrower, when the wearer throws one: the one spell that
+/// damages the player.
+fn sapper_self_hit(env: &Environment) -> Option<SpellId> {
+    env.sim
+        .unit(env.player)
+        .spellbook
+        .iter()
+        .find(|spell| {
+            let id = &env.sim.spell(**spell).action_id;
+            id.item_id == super::common_effects::GOBLIN_SAPPER_ITEM && id.tag == 1
+        })
+        .copied()
+}
+
+/// melee_procs.go `hearsHitsTaken`: whether a listener is shaped to hear the melee hits the wearer
+/// takes, which the target's swings are: its mask names melee and ranged hits and may name spell
+/// damage.
+fn hears_hits_taken(listener: &ProcTrigger) -> bool {
+    let mask = STRUCK_PROC_MASK.0 | ProcMask::SPELL_DAMAGE.0;
+    callback_names(listener.callback) == ["on_spell_hit_taken"]
+        && listener.proc_mask.0 & !mask == 0
+        && listener.proc_mask.matches(ProcMask::MELEE_MH_AUTO)
+        && !listener.can_proc_from_procs
+        && !listener.is_weapon_proc
+        && listener.class_spell_mask == 0
+        && listener.spell_flags == SpellFlag::NONE
+        && listener.proc_mask_exclude == ProcMask::UNKNOWN
+}
+
+/// melee_procs.go `hearsTheSappersHit`: the spellbook position of the Goblin Sapper Charge's hit
+/// on its thrower when a listener of hits taken hears it, its mask and flags matching the spell.
+fn hears_the_sappers_hit(env: &Environment, listener: &ProcTrigger) -> Option<usize> {
+    let spell = sapper_self_hit(env)?;
+    if callback_names(listener.callback) != ["on_spell_hit_taken"] {
+        return None;
+    }
+    proc_trigger_spells(env, listener)
+        .into_iter()
+        .find(|position| env.sim.unit(env.player).spellbook[*position] == spell)
+}
+
+/// melee_procs.go `hearsTheTargetsSwings`: whether a listener hears the melee hits the wearer
+/// takes, which the target's swings are, and no others. Its mask may name spell damage only when
+/// the wearer throws no Goblin Sapper Charge, whose hit on the thrower is the one spell that
+/// damages the player.
+fn hears_the_targets_swings(env: &Environment, listener: &ProcTrigger) -> bool {
+    if sapper_self_hit(env).is_some() && listener.proc_mask.matches(ProcMask::SPELL_DAMAGE) {
+        return false;
+    }
+    hears_hits_taken(listener)
+}
 
 /// Go `Encounter.ActiveTargetCount` with every target active.
 fn active_target_count(env: &Environment) -> usize {
@@ -536,11 +587,13 @@ fn damage_on_use_effect(
         unrepresented.push(format!("damage on-use item {item} has no dot"));
         return Value::Null;
     }
-    if !direct.is_nil()
+    let several = !direct.is_nil()
         && (direct.hits_an_area() || direct.chain_targets > 1)
-        && active_target_count(env) > 1
-    {
-        unrepresented.push(format!("damage on-use item {item} hits several targets"));
+        && active_target_count(env) > 1;
+    if several && !periodic.is_nil() {
+        unrepresented.push(format!(
+            "damage on-use item {item} hits several targets and leaves a damage over time"
+        ));
         return Value::Null;
     }
     let mut effect = json!({"kind": "damage_on_use", "item_id": item, "spell": position});
@@ -549,10 +602,24 @@ fn damage_on_use_effect(
         if direct.hits_an_area() && row.max_targets == 0 && !row.splits_damage {
             scale = aoe_cap_multiplier(env);
         }
-        effect["direct"] = json!({
+        let mut shape = json!({
             "average": direct.average(level), "variance": direct.variance,
             "scale": scale, "outcome": outcome,
         });
+        // Past one target the spell is the proc spell of `proc_damage_shape`: an area calculated
+        // on every target or the row's cap of them, or a chain, every hit before any is dealt.
+        if several && direct.hits_an_area() {
+            shape["area"] = json!({
+                "max_targets": i32::from(row.max_targets), "splits": row.splits_damage,
+                "aoe_cap_multiplier": aoe_cap_multiplier(env),
+            });
+        } else if several {
+            shape["chain"] = json!({
+                "targets": i32::from(direct.chain_targets),
+                "amp": f64::from(direct.chain_amp),
+            });
+        }
+        effect["direct"] = shape;
     }
     if !periodic.is_nil() {
         let mut ticks = json!({
@@ -583,12 +650,52 @@ struct SpellDataStatProc {
     parsed: bool,
 }
 
-const SPELL_DATA_STAT_PROCS: [SpellDataStatProc; 4] = [
+const SPELL_DATA_STAT_PROCS: [SpellDataStatProc; 9] = [
     SpellDataStatProc {
         label: "Draconic Infused Emblem",
         trigger: 1318931,
         buff: 1318930,
         item: 22268,
+        enchant: 0,
+        parsed: false,
+    },
+    SpellDataStatProc {
+        label: "The Green Tower",
+        trigger: 18097,
+        buff: 17154,
+        item: 1204,
+        enchant: 0,
+        parsed: false,
+    },
+    SpellDataStatProc {
+        label: "Wall of the Dead",
+        trigger: 19409,
+        buff: 18828,
+        item: 1979,
+        enchant: 0,
+        parsed: false,
+    },
+    SpellDataStatProc {
+        label: "Darkmoon Card: Blue Dragon",
+        trigger: 23688,
+        buff: 23684,
+        item: 19288,
+        enchant: 0,
+        parsed: false,
+    },
+    SpellDataStatProc {
+        label: "Wrath of Cenarius",
+        trigger: 25906,
+        buff: 25907,
+        item: 21190,
+        enchant: 0,
+        parsed: false,
+    },
+    SpellDataStatProc {
+        label: "Painwalker Buckler",
+        trigger: 1293701,
+        buff: 1293700,
+        item: 274290,
         enchant: 0,
         parsed: false,
     },
@@ -624,12 +731,27 @@ fn spell_data_stat_proc_aura(label: &str) -> String {
 }
 
 /// The stat auras of the spell data procs the character wears, which `statAurasEffect` combines.
+/// A proc of the hits the wearer takes joins them only when the wearer tanks the target, since
+/// nothing else hits it.
 pub(crate) fn spell_data_stat_proc_auras(env: &Environment) -> Vec<String> {
     SPELL_DATA_STAT_PROCS
         .iter()
         .filter(|proc| aura_named(env, proc.label).is_some())
+        .filter(|proc| {
+            let trigger = must_find(proc.trigger);
+            let listener = trigger_for(env, trigger, true);
+            listener.callback != CallbackMask::ON_SPELL_HIT_TAKEN
+                || tanks_the_target(env)
+                || hears_the_sappers_hit(env, &listener).is_some()
+        })
         .map(|proc| spell_data_stat_proc_aura(proc.label))
         .collect()
+}
+
+/// main.go `tanksTheTarget`: whether the target swings at the wearer.
+fn tanks_the_target(env: &Environment) -> bool {
+    let target = env.encounter.targets[0];
+    env.sim.unit(target).current_target == Some(env.player)
 }
 
 /// item_procs.go `spellDataStatProcEffects`: the listener its trigger row decodes to rolls the
@@ -671,13 +793,27 @@ pub(crate) fn spell_data_stat_proc_effects(
         }
         let listener = trigger_for(env, trigger, true);
         let names = callback_names(listener.callback);
-        let heard = !names.is_empty()
+        // A listener of hits taken hears the target's swings at a tank, and the Goblin Sapper
+        // Charge's hit on its thrower when its mask and flags match that spell.
+        let struck = hears_hits_taken(&listener);
+        let sapper_hit = hears_the_sappers_hit(env, &listener);
+        let heard = (!names.is_empty()
             && names.iter().all(|name| {
                 matches!(
                     *name,
                     "on_spell_hit_dealt" | "on_heal_dealt" | "on_cast_complete"
                 )
-            });
+            }))
+            || struck
+            || sapper_hit.is_some();
+        if struck && !tanks_the_target(env) && sapper_hit.is_none() {
+            effects.push(json!({
+                "kind": "inert_listener", "unit": "player",
+                "aura": env.sim.aura(trigger_aura).label,
+                "reason": "hears only melee hits the player takes",
+            }));
+            continue;
+        }
         let unsupported = match (&entry, proc_aura) {
             (Some(entry), Some(_)) => {
                 entry.has("stacking_aura")
@@ -706,11 +842,19 @@ pub(crate) fn spell_data_stat_proc_effects(
         let mut effect = json!({
             "kind": "spell_data_stat_proc", "trigger_aura": env.sim.aura(trigger_aura).label,
             "aura": env.sim.aura(proc_aura).label,
-            "trigger_spells": proc_trigger_spells(env, &listener), "callbacks": names,
+            "trigger_spells": match sapper_hit {
+                Some(position) => vec![position],
+                None if struck => Vec::new(),
+                None => proc_trigger_spells(env, &listener),
+            },
+            "callbacks": names,
             "landed_only": listener.outcome == HitOutcome::LANDED,
             "require_damage": listener.require_damage_dealt,
             "proc_chance": chance_or_certain(&listener),
         });
+        if struck {
+            effect["struck"] = json!(true);
+        }
         if !proc.parsed {
             let bonus = effect_stats(&entry);
             let id = env
@@ -871,12 +1015,9 @@ fn spell_data_absorb_proc(
     }))
 }
 
-/// main.go `meleeItemProcs`: item procs whose listener, decoded by spelldata's `ProcTrigger` from
-/// the trigger row, hears only melee hits. Melee autos need auto attacks, which are
-/// unrepresented, so the listener never acts unless a spell with a melee special mask exists.
-const MELEE_ITEM_PROCS: [(&str, i32); 2] = [("Storm Gauntlets", 16615), ("Orb of Fire", 16982)];
-
-/// main.go `meleeItemListeners`.
+/// main.go `meleeItemListeners`: the item procs of `SPELL_DATA_DAMAGE_PROCS` whose listener,
+/// decoded by spelldata's `ProcTrigger` from the trigger row, hears only melee hits it deals. The
+/// listener never acts unless a spell with a melee special mask exists.
 pub(crate) fn melee_item_listeners(env: &Environment) -> Vec<Value> {
     let book = &env.sim.unit(env.player).spellbook;
     if book.iter().any(|spell| {
@@ -888,12 +1029,14 @@ pub(crate) fn melee_item_listeners(env: &Environment) -> Vec<Value> {
         return Vec::new();
     }
     let mut effects = Vec::new();
-    for (label, trigger) in MELEE_ITEM_PROCS {
+    for (label, trigger, _) in SPELL_DATA_DAMAGE_PROCS {
         if aura_named(env, label).is_none() {
             continue;
         }
-        let listener = trigger_for(env, find(trigger), false);
-        if listener.proc_mask == ProcMask::UNKNOWN || listener.proc_mask.0 & !ProcMask::MELEE.0 != 0
+        let listener = trigger_for(env, find(trigger), true);
+        if listener.callback == CallbackMask::ON_SPELL_HIT_TAKEN
+            || listener.proc_mask == ProcMask::UNKNOWN
+            || listener.proc_mask.0 & !ProcMask::MELEE.0 != 0
         {
             continue;
         }
@@ -909,14 +1052,48 @@ pub(crate) fn melee_item_listeners(env: &Environment) -> Vec<Value> {
 /// takes: Go literal triggers in classic items (Essence of the Pure Flame's damage shield, The
 /// Lion Horn of Stormwind), and Uther's Strength and the chest absorption enchants, whose trigger
 /// rows spelldata decodes.
-const HIT_TAKEN_ITEM_PROCS: [(&str, i32, i32); 6] = [
+const HIT_TAKEN_ITEM_PROCS: [(&str, i32, i32); 10] = [
     ("Essence of the Pure Flame", 0, 0),
+    ("Force Reactive Disk", 0, 0),
+    ("Naglering", 0, 0),
+    ("Drillborer Disk", 0, 0),
+    ("Razor Gauntlets", 0, 0),
     (LION_HORN, 0, 0),
     ("Uther's Strength", 8397, 10368),
     ("Enchant Chest - Minor Absorption", 7445, 7423),
     ("Enchant Chest - Lesser Absorption", 7446, 7447),
     ("Enchant Chest - Absorption", 1249072, 1249073),
 ];
+
+/// main.go `damageShieldItems`: the damage shields of common/classic/items_trinkets.go and
+/// items_armor.go (`newDamageShieldEffect`): the spell each casts on its attacker and the amount,
+/// which neither crits nor partially resists.
+const DAMAGE_SHIELD_ITEMS: [(&str, i32, f64); 4] = [
+    ("Essence of the Pure Flame", 23266, 13.0),
+    ("Naglering", 15438, 3.0),
+    ("Drillborer Disk", 15438, 3.0),
+    ("Razor Gauntlets", 1302193, 7.0),
+];
+
+/// main.go `forceReactiveDiskProc`: classic items_armor.go Force Reactive Disk: a listener on the
+/// melee hits the wearer takes that it blocks, behind a one second cooldown, whose handler a spell
+/// batch window later casts a nature spell on the wearer that deals 25 to every target on the
+/// magic table with a crit. Only that shape is described, or `None`.
+fn force_reactive_disk_proc(env: &Environment, aura: AuraId) -> Option<Value> {
+    let position = spell_position(env, &ActionId::item(18168))?;
+    let a = env.sim.aura(aura);
+    if a.dpm.is_some()
+        || a.icd.is_none_or(|icd| icd.duration != SECOND)
+        || !a.events.on_spell_hit_taken
+        || a.events.on_spell_hit_dealt
+        || env.sim.spell(spell_at(env, position)).defense_type != DefenseType::Magic
+    {
+        return None;
+    }
+    Some(json!({
+        "kind": "force_reactive_disk", "trigger_aura": a.label, "spell": position, "damage": 25.0,
+    }))
+}
 
 /// main.go `hitTakenItemListeners`.
 pub(crate) fn hit_taken_item_listeners(
@@ -950,10 +1127,22 @@ pub(crate) fn hit_taken_item_listeners(
                 && listener.proc_mask != ProcMask::UNKNOWN
                 && listener.proc_mask.0 & !ProcMask::MELEE.0 == 0;
         }
-        if heard && tanking && label == "Essence of the Pure Flame" {
-            match damage_shield_proc(env, aura, 23266, 13.0) {
+        if let (true, Some(&(_, spell, damage))) = (
+            heard && tanking,
+            DAMAGE_SHIELD_ITEMS
+                .iter()
+                .find(|(item, _, _)| *item == label),
+        ) {
+            match damage_shield_proc(env, aura, spell, damage) {
                 Some(effect) => effects.push(effect),
                 None => unrepresented.push(format!("{label}'s proc is not a damage shield")),
+            }
+            continue;
+        }
+        if heard && tanking && label == "Force Reactive Disk" {
+            match force_reactive_disk_proc(env, aura) {
+                Some(effect) => effects.push(effect),
+                None => unrepresented.push(format!("{label}'s proc is not a block shield")),
             }
             continue;
         }
@@ -980,7 +1169,38 @@ pub(crate) fn hit_taken_item_listeners(
             }));
         }
     }
+    if let (Some(aura), true) = (aura_named(env, "Freezing Band"), tanking) {
+        match freezing_band_proc(env, aura) {
+            Some(effect) => effects.push(effect),
+            None => unrepresented
+                .push("Freezing Band's proc is not a rolled magic hit on the attacker".to_string()),
+        }
+    }
     effects
+}
+
+/// main.go `freezingBandProc`: classic items_store_gaps.go Freezing Band, through
+/// shared.NewProcDamageEffect: a listener on the landed melee hits the wearer takes that dealt
+/// damage, at 1%, that casts a magic hit of Frost rolled between 50 and 50 on the attacker at
+/// once, which can crit. Only that shape is described.
+fn freezing_band_proc(env: &Environment, aura: AuraId) -> Option<Value> {
+    let position = spell_position(env, &ActionId::spell(18798))?;
+    let a = env.sim.aura(aura);
+    if a.dpm.is_some()
+        || a.icd.is_some()
+        || env.sim.spell(spell_at(env, position)).defense_type != DefenseType::Magic
+        || a.events.on_spell_hit_dealt
+        || !a.events.on_spell_hit_taken
+        || a.events.on_periodic_damage_dealt
+    {
+        return None;
+    }
+    Some(json!({
+        "kind": "spell_data_damage_proc", "trigger_aura": a.label, "trigger_spells": Vec::<usize>::new(),
+        "struck": true, "landed_only": true, "require_damage": true, "proc_chance": 0.01,
+        "spell": position, "average": 0.0, "variance": 0.0, "roll": [50.0, 50.0],
+        "can_crit": true,
+    }))
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -998,18 +1218,42 @@ fn not_single_target_hit(label: &str, hit: &str) -> String {
 }
 
 /// melee_procs.go `spellDataDamageProcs`: item procs common/shared/shared_utils.go
-/// applySpellDataDamageProc builds from client rows: the item's trigger aura, its trigger row and
-/// the damage row the proc casts.
-const SPELL_DATA_DAMAGE_PROCS: [(&str, i32, i32); 4] = [
+/// applySpellDataDamageProc builds from client rows, which
+/// common/forever/stat_bonus_procs_auto_gen.go registers with shared.NewSpellDataDamageProc: the
+/// item's trigger aura, its trigger row and the damage row the proc casts.
+const SPELL_DATA_DAMAGE_PROCS: [(&str, i32, i32); 27] = [
+    ("Totem of Infliction", 7617, 16783),
+    ("Skullflame Shield -  - ", 18815, 18817),
+    ("Hurricane", 1316319, 29502),
+    ("Red Whelp Gloves", 9233, 9057),
+    ("Vile Protector", 7619, 1293421),
+    ("Thermaplugg's Central Core", 1292880, 1292879),
+    ("Swine Fists", 1293783, 1293782),
+    ("Girdle of Reprisal", 7617, 16783),
+    ("Fiery Plate Gauntlets", 7721, 7714),
     ("Storm Gauntlets", 16615, 16614),
     ("Orb of Fire", 16982, 13441),
+    ("Blazefury Medallion", 7711, 7712),
+    ("Force Imbued Gauntlets", 1302248, 1302247),
+    ("Grand Marshal's Aegis - ", 13959, 16782),
+    ("High Warlord's Shield Wall - ", 13959, 16782),
+    ("High Warlord's Shield Wall -  - ", 1216968, 16782),
+    ("Grand Marshal's Aegis -  - ", 1216968, 16782),
     ("Premier High Warlord's Shield Wall", 13959, 16782),
     ("Premier Grand Marshal's Aegis", 13959, 16782),
+    ("Searing Dagger", 1291568, 1291570),
+    ("Cursed Murloc Eye", 1292674, 1292675),
+    ("Thorncursed Grips", 1293331, 1293333),
+    ("Coldflame Saber", 1300128, 1300130),
+    ("Satchel of Copper Bombs", 1318034, 1318031),
+    ("Satchel of Bronze Bombs", 1318062, 1318061),
+    ("Satchel of Iron Bombs", 1318069, 1318068),
+    ("Satchel of Dark Iron Bombs", 1318123, 1318121),
 ];
 
 /// melee_procs.go `spellDataDamageProcEffects`: a listener resolved from the trigger row that
-/// casts the damage spell at once on the unit hit, or, for a hit taken, on the attacker. Only a
-/// single target magic hit is described: dealt where it lands, or struck by a melee or ranged
+/// casts the damage spell at once on the unit hit, or, for a hit taken, on the attacker. The hit
+/// is described as `proc_damage_shape` does: dealt where it lands, or struck by a melee or ranged
 /// hit.
 fn spell_data_damage_proc_effects(
     env: &Environment,
@@ -1030,52 +1274,37 @@ fn spell_data_damage_proc_effects(
         let damage = must_find(damage_id);
         let listener = trigger_for(env, trigger, true);
         let struck = listener.callback == CallbackMask::ON_SPELL_HIT_TAKEN;
-        // Without a melee special, meleeItemListeners describes a dealt listener as inert.
-        if !struck && !melee {
+        // Without a melee special, meleeItemListeners describes a listener of melee hits dealt as
+        // inert.
+        if !struck
+            && !melee
+            && listener.proc_mask != ProcMask::UNKNOWN
+            && listener.proc_mask.0 & !ProcMask::MELEE.0 == 0
+        {
             continue;
         }
         let position = spell_position(env, &ActionId::spell(damage.id));
-        let effect = damage.damage_effect();
-        // shared_utils.go damageDefenseType: a stated defense type, else the school's.
-        let mut defense = damage.defense_type_core();
-        if defense == DefenseType::None {
-            defense = if damage.spell_school() & school::PHYSICAL != 0 {
-                DefenseType::Melee
-            } else {
-                DefenseType::Magic
-            };
-        }
         let names = callback_names(listener.callback);
         let outcome_ok =
             listener.outcome == HitOutcome::EMPTY || listener.outcome == HitOutcome::LANDED;
-        let struck_ok = !struck
-            || (listener.proc_mask == STRUCK_PROC_MASK
-                && !listener.can_proc_from_procs
-                && !listener.is_weapon_proc
-                && listener.class_spell_mask == 0
-                && listener.spell_flags == SpellFlag::NONE
-                && listener.proc_mask_exclude == ProcMask::UNKNOWN);
-        let Some(position) = position else {
+        let struck_ok = !struck || hears_the_targets_swings(env, &listener);
+        let shape = position.and_then(|position| proc_damage_shape(env, damage, position).ok());
+        let (Some(_), Some(shape)) = (position, shape) else {
             unrepresented.push(not_single_target_magic_hit(label));
             continue;
         };
-        if effect.is_nil()
-            || !damage.periodic_damage_effect().is_nil()
-            || effect.hits_an_area()
-            || effect.chain_targets > 1
-            || damage.applies_an_aura_to_an_enemy()
-            || damage.speed != 0.0
-            || defense != DefenseType::Magic
-            || trigger.rppm != 0.0
+        if trigger.rppm != 0.0
             || listener.dpm.is_some()
             || names.len() != 1
-            || (names[0] != "on_spell_hit_dealt" && !struck)
+            || (names[0] != "on_spell_hit_dealt" && names[0] != "on_cast_complete" && !struck)
             || !outcome_ok
             || !struck_ok
         {
             unrepresented.push(not_single_target_magic_hit(label));
             continue;
         }
+        // A cast carries no result: AttachProcTriggerCallback checks no outcome and no damage for it.
+        let casts = names[0] == "on_cast_complete";
         // A struck proc hears the attacker's hits, which the Rust runtime tells by their masks.
         let trigger_spells = if struck {
             Vec::new()
@@ -1084,12 +1313,16 @@ fn spell_data_damage_proc_effects(
         };
         let mut exported = json!({
             "kind": "spell_data_damage_proc", "trigger_aura": label, "trigger_spells": trigger_spells,
-            "landed_only": listener.outcome == HitOutcome::LANDED,
-            "require_damage": listener.require_damage_dealt,
-            "proc_chance": chance_or_certain(&listener), "spell": position,
-            "average": effect.average(CHARACTER_LEVEL), "variance": effect.variance,
-            "can_crit": !damage.cannot_crit(),
+            "landed_only": listener.outcome == HitOutcome::LANDED && !casts,
+            "require_damage": listener.require_damage_dealt && !casts,
+            "proc_chance": chance_or_certain(&listener),
         });
+        for (key, value) in shape {
+            exported[key] = value;
+        }
+        if casts {
+            exported["casts"] = json!(true);
+        }
         if struck {
             exported["struck"] = json!(true);
         }
@@ -1100,8 +1333,10 @@ fn spell_data_damage_proc_effects(
 
 /// melee_procs.go `spellDataHealProcs`: enchants common/shared/shared_utils.go
 /// NewSpellDataHealProc builds from client rows: Recovery.
-const SPELL_DATA_HEAL_PROCS: [(&str, i32, i32); 1] =
-    [("Enchant Weapon - Recovery", 1248761, 1248759)];
+const SPELL_DATA_HEAL_PROCS: [(&str, i32, i32); 2] = [
+    ("Enchant Weapon - Recovery", 1248761, 1248759),
+    ("Truesilver Breastplate", 9778, 9777),
+];
 
 /// melee_procs.go `spellDataHealProcEffects`: a listener resolved from the trigger row that casts
 /// the heal row on the wearer at once. Only a direct heal, a share of maximum health or a rolled
@@ -1118,6 +1353,7 @@ fn spell_data_heal_proc_effects(env: &Environment, unrepresented: &mut Vec<Strin
         let position = spell_position(env, &ActionId::spell(heal.id));
         let effect = heal.proc_heal_effect();
         let names = callback_names(listener.callback);
+        let struck = hears_the_targets_swings(env, &listener);
         let a = env.sim.aura(aura);
         let icd = a.icd.is_some_and(|icd| icd.duration != listener.icd);
         let bonus_coefficient =
@@ -1133,7 +1369,7 @@ fn spell_data_heal_proc_effects(env: &Environment, unrepresented: &mut Vec<Strin
             || listener.dpm.is_some()
             || trigger.rppm != 0.0
             || names.len() != 1
-            || names[0] != "on_spell_hit_dealt"
+            || (names[0] != "on_spell_hit_dealt" && !struck)
             || icd
             || (listener.icd != 0) != a.icd.is_some()
             || bonus_coefficient != 0.0
@@ -1156,6 +1392,10 @@ fn spell_data_heal_proc_effects(env: &Environment, unrepresented: &mut Vec<Strin
             "table_healing_dealt_multiplier": env.attack_table(player, player).healing_dealt_multiplier,
             "bonus_healing_taken": pseudo.bonus_healing_taken,
         });
+        if struck {
+            exported["struck"] = json!(true);
+            exported["trigger_spells"] = json!(Vec::<usize>::new());
+        }
         if effect.effect_type == dbcenums::E_HEAL_PCT {
             exported["max_health_share"] = json!(effect.percent());
         } else {
@@ -1204,14 +1444,19 @@ fn weapon_enchant_damage_proc_effects(
             unrepresented.push(not_single_target_magic_hit(label));
             continue;
         };
-        if a.icd.is_some()
-            || effect.is_nil()
-            || !damage.periodic_damage_effect().is_nil()
-            || !single_target_multi_hit(env, effect)
-            || damage.applies_an_aura_to_an_enemy()
-            || damage.speed != 0.0
-            || env.sim.spell(spell_at(env, position)).defense_type != DefenseType::Magic
-        {
+        let magic = !effect.is_nil()
+            && damage.periodic_damage_effect().is_nil()
+            && !damage.applies_an_aura_to_an_enemy()
+            && env.sim.spell(spell_at(env, position)).defense_type == DefenseType::Magic;
+        let single = magic && damage.speed == 0.0 && single_target_multi_hit(env, effect);
+        // Past one target an area or a chain, or a hit that flies, is the proc spell of
+        // `proc_damage_shape`.
+        let shape = if magic && !single {
+            proc_damage_shape(env, damage, position).ok()
+        } else {
+            None
+        };
+        if a.icd.is_some() || (!single && shape.is_none()) {
             unrepresented.push(not_single_target_magic_hit(label));
             continue;
         }
@@ -1222,12 +1467,24 @@ fn weapon_enchant_damage_proc_effects(
             .iter()
             .map(|chance| chance["spell"].clone())
             .collect();
-        effects.push(json!({
+        let mut exported = json!({
             "kind": "spell_data_damage_proc", "trigger_aura": a.label, "trigger_spells": triggers,
             "landed_only": true, "require_damage": false, "proc_chance": 1.0, "chances": chances,
-            "spell": position, "average": effect.average(env.sim.unit(env.player).level),
-            "variance": effect.variance, "can_crit": !damage.cannot_crit(),
-        }));
+        });
+        match shape {
+            Some(shape) => {
+                for (key, value) in shape {
+                    exported[key] = value;
+                }
+            }
+            None => {
+                exported["spell"] = json!(position);
+                exported["average"] = json!(effect.average(env.sim.unit(env.player).level));
+                exported["variance"] = json!(effect.variance);
+                exported["can_crit"] = json!(!damage.cannot_crit());
+            }
+        }
+        effects.push(exported);
     }
     effects
 }
@@ -1250,7 +1507,7 @@ struct ProcDamageItem {
 /// of the melee defense type on the landed melee hits that dealt damage, at a fixed chance of 1 on
 /// the hand holding the weapon: `damageOutcome` gives them the melee special hit table with a
 /// crit, where a magic hit rolls the magic one.
-const PROC_DAMAGE_ITEMS: [ProcDamageItem; 3] = [
+const PROC_DAMAGE_ITEMS: [ProcDamageItem; 4] = [
     ProcDamageItem {
         label: "Heart of Wyrmthalak",
         spell_id: 27655,
@@ -1276,6 +1533,15 @@ const PROC_DAMAGE_ITEMS: [ProcDamageItem; 3] = [
         max: 27.719999313354492,
         defense: DefenseType::Melee,
         require_damage: true,
+        mask: ProcMask::MELEE,
+    },
+    ProcDamageItem {
+        label: "Darkmoon Card: Maelstrom",
+        spell_id: 23687,
+        min: 200.0,
+        max: 300.0,
+        defense: DefenseType::Magic,
+        require_damage: false,
         mask: ProcMask::MELEE,
     },
 ];
@@ -1377,6 +1643,77 @@ fn proc_tick_outcome(row: &Spell) -> &'static str {
     }
 }
 
+/// weapon_procs.go `procDamageShape`: the fields of a spell_data_damage_proc effect that the
+/// damage row and the spell registered for it decide, whoever listens: the spell, the row's
+/// direct hit and the table it rolls, the targets of an area or chain, and the damage over time
+/// the row carries. The reason the runtime cannot run the row, phrased for "the item's proc ...",
+/// is returned instead where there is one.
+fn proc_damage_shape(
+    env: &Environment,
+    damage: &'static Spell,
+    position: usize,
+) -> Result<serde_json::Map<String, Value>, &'static str> {
+    let level = env.sim.unit(env.player).level;
+    let (direct, periodic) = (damage.damage_effect(), damage.periodic_damage_effect());
+    let defense = env.sim.spell(spell_at(env, position)).defense_type;
+    let outcome = proc_hit_outcome(defense, damage.cannot_crit());
+    if direct.is_nil() && periodic.is_nil() {
+        return Err("deals no damage");
+    } else if damage.debuffs_the_target() {
+        return Err("debuffs the target");
+    } else if !periodic.is_nil() && (direct.hits_an_area() || direct.chain_targets > 1) {
+        return Err("spreads and leaves a damage over time");
+    } else if !periodic.is_nil() && direct.is_nil() && damage.speed != 0.0 {
+        return Err("missile carries only a damage over time");
+    } else if !periodic.is_nil() && proc_tick_outcome(damage) == "tick_magic_hit" {
+        return Err("ticks roll a magic hit without a crit");
+    } else if !matches!(
+        defense,
+        DefenseType::Magic | DefenseType::Melee | DefenseType::Ranged
+    ) {
+        return Err("rolls no known hit table");
+    }
+    let mut shape = serde_json::Map::new();
+    shape.insert("spell".to_string(), json!(position));
+    shape.insert("average".to_string(), json!(0.0));
+    shape.insert("variance".to_string(), json!(0.0));
+    shape.insert("can_crit".to_string(), json!(!damage.cannot_crit()));
+    if !direct.is_nil() {
+        shape.insert("average".to_string(), json!(direct.average(level)));
+        shape.insert("variance".to_string(), json!(direct.variance));
+        if let Some(outcome) = outcome {
+            shape.insert("outcome".to_string(), json!(outcome));
+        }
+        if direct.hits_an_area() {
+            shape.insert(
+                "area".to_string(),
+                json!({
+                    "max_targets": i32::from(damage.max_targets), "splits": damage.splits_damage,
+                    "aoe_cap_multiplier": aoe_cap_multiplier(env),
+                }),
+            );
+        } else if direct.chain_targets > 1 {
+            shape.insert(
+                "chain".to_string(),
+                json!({
+                    "targets": i32::from(direct.chain_targets),
+                    "amp": f64::from(direct.chain_amp),
+                }),
+            );
+        }
+    }
+    if !periodic.is_nil() {
+        shape.insert(
+            "periodic".to_string(),
+            json!({
+                "tick_base": periodic.average(level), "tick_outcome": proc_tick_outcome(damage),
+                "with_direct": !direct.is_nil(),
+            }),
+        );
+    }
+    Ok(shape)
+}
+
 /// weapon_procs.go `weaponDamageProcEffects`: the spell shared_utils.go
 /// `spellDataProcDamageSpell` builds, cast at once by the handler on the unit hit: the row's direct
 /// hit rolled once, or for a chain once a target on the amount the previous jump keeps, on the
@@ -1386,43 +1723,24 @@ fn proc_tick_outcome(row: &Spell) -> &'static str {
 /// travel. A row that also puts a debuff on the target is not described.
 fn weapon_damage_proc_effects(env: &Environment, unrepresented: &mut Vec<String>) -> Vec<Value> {
     let mut effects = Vec::new();
-    let level = env.sim.unit(env.player).level;
     for (label, damage_id) in WEAPON_DAMAGE_PROCS {
         let Some(aura) = aura_named(env, &format!("{label} Proc")) else {
             continue;
         };
         let damage = must_find(damage_id);
         let position = spell_position(env, &ActionId::spell(damage.id));
-        let (direct, periodic) = (damage.damage_effect(), damage.periodic_damage_effect());
         let a = env.sim.aura(aura);
         let (Some(position), Some(dpm), false) = (position, a.dpm.as_ref(), a.icd.is_some()) else {
             unrepresented.push(format!("{label}'s proc has no proc manager or spell"));
             continue;
         };
-        let defense = env.sim.spell(spell_at(env, position)).defense_type;
-        let outcome = proc_hit_outcome(defense, damage.cannot_crit());
-        let refusal = if direct.is_nil() && periodic.is_nil() {
-            Some("deals no damage")
-        } else if damage.debuffs_the_target() {
-            Some("debuffs the target")
-        } else if !periodic.is_nil() && (direct.hits_an_area() || direct.chain_targets > 1) {
-            Some("spreads and leaves a damage over time")
-        } else if !periodic.is_nil() && direct.is_nil() && damage.speed != 0.0 {
-            Some("is a missile that carries only a damage over time")
-        } else if !periodic.is_nil() && proc_tick_outcome(damage) == "tick_magic_hit" {
-            Some("has ticks that roll a magic hit without a crit")
-        } else if !matches!(
-            defense,
-            DefenseType::Magic | DefenseType::Melee | DefenseType::Ranged
-        ) {
-            Some("rolls no known hit table")
-        } else {
-            None
+        let shape = match proc_damage_shape(env, damage, position) {
+            Ok(shape) => shape,
+            Err(refusal) => {
+                unrepresented.push(format!("{label}'s proc {refusal}"));
+                continue;
+            }
         };
-        if let Some(refusal) = refusal {
-            unrepresented.push(format!("{label}'s proc {refusal}"));
-            continue;
-        }
         let chances = dpm_chances(env, dpm, |spell| {
             !spell.flags.matches(SpellFlag::SUPPRESS_WEAPON_PROCS)
         });
@@ -1433,31 +1751,9 @@ fn weapon_damage_proc_effects(env: &Environment, unrepresented: &mut Vec<String>
         let mut effect = json!({
             "kind": "spell_data_damage_proc", "trigger_aura": a.label, "trigger_spells": triggers,
             "landed_only": true, "require_damage": false, "proc_chance": 1.0, "chances": chances,
-            "spell": position, "average": 0.0, "variance": 0.0, "can_crit": !damage.cannot_crit(),
         });
-        if !direct.is_nil() {
-            effect["average"] = json!(direct.average(level));
-            effect["variance"] = json!(direct.variance);
-            if let Some(outcome) = outcome {
-                effect["outcome"] = json!(outcome);
-            }
-            if direct.hits_an_area() {
-                effect["area"] = json!({
-                    "max_targets": i32::from(damage.max_targets), "splits": damage.splits_damage,
-                    "aoe_cap_multiplier": aoe_cap_multiplier(env),
-                });
-            } else if direct.chain_targets > 1 {
-                effect["chain"] = json!({
-                    "targets": i32::from(direct.chain_targets),
-                    "amp": f64::from(direct.chain_amp),
-                });
-            }
-        }
-        if !periodic.is_nil() {
-            effect["periodic"] = json!({
-                "tick_base": periodic.average(level), "tick_outcome": proc_tick_outcome(damage),
-                "with_direct": !direct.is_nil(),
-            });
+        for (key, value) in shape {
+            effect[key] = value;
         }
         effects.push(effect);
     }
@@ -1489,12 +1785,20 @@ fn flurry_axe_effects(env: &Environment, unrepresented: &mut Vec<String>) -> Vec
 /// weapon_procs.go `weaponAuraProcAuras`: common/forever/items_weapons.go Sword of Zeal and
 /// Argent Avenger, weapons whose chance on hit activates an aura of the row on the wearer,
 /// registered through itemhelpers.CreateWeaponProcAura. The aura is the row's effects parsed
-/// (`parse_effects`), the trigger the weapon's name and " Proc".
-pub(crate) const WEAPON_AURA_PROC_AURAS: [&str; 2] = ["Sword of Zeal", "Argent Avenger"];
+/// (`parse_effects`), the trigger the weapon's name and " Proc". Bonereaver's Edge is the same
+/// through itemhelpers.CreateWeaponProcTrigger, whose handler activates the stacking aura
+/// `MakeStackingAura` builds and adds a stack.
+pub(crate) const WEAPON_AURA_PROC_AURAS: [&str; 3] =
+    ["Sword of Zeal", "Argent Avenger", "Bonereaver's Edge"];
+
+/// weapon_procs.go `weaponAuraProcStacks`: the weapon procs above whose handler also adds a stack
+/// of the aura.
+const WEAPON_AURA_PROC_STACKS: [&str; 1] = ["Bonereaver's Edge"];
 
 /// weapon_procs.go `weaponAuraProcEffects`: a weapon proc on landed hits at the weapon's proc
-/// manager whose handler, a spell batch window later, activates the aura. Only an aura without
-/// stacks is described. The parsed aura logs nothing, and its stat changes are read as stat auras.
+/// manager whose handler, a spell batch window later, activates the aura and, for a weapon that
+/// stacks it, adds a stack. The aura logs nothing but the generic lines, and its stat changes are
+/// read as stat auras, by stack where the stats follow them.
 fn weapon_aura_proc_effects(env: &Environment, unrepresented: &mut Vec<String>) -> Vec<Value> {
     let mut effects = Vec::new();
     for name in WEAPON_AURA_PROC_AURAS {
@@ -1503,25 +1807,26 @@ fn weapon_aura_proc_effects(env: &Environment, unrepresented: &mut Vec<String>) 
         };
         let trigger = env.sim.aura(trigger);
         let aura = aura_named(env, name).map(|aura| env.sim.aura(aura));
+        let stacks = WEAPON_AURA_PROC_STACKS.contains(&name);
         let (Some(dpm), None, Some(aura)) = (trigger.dpm.as_ref(), trigger.icd, aura) else {
-            unrepresented.push(format!(
-                "{name}'s proc is not a chance on hit for an aura without stacks"
-            ));
+            unrepresented.push(format!("{name}'s proc is not a chance on hit for its aura"));
             continue;
         };
-        if aura.max_stacks > 0 {
-            unrepresented.push(format!(
-                "{name}'s proc is not a chance on hit for an aura without stacks"
-            ));
+        if (aura.max_stacks > 0) != stacks {
+            unrepresented.push(format!("{name}'s proc is not a chance on hit for its aura"));
             continue;
         }
-        effects.push(json!({
+        let mut effect = json!({
             "kind": "stat_proc", "trigger_aura": trigger.label, "rng_label": trigger.label,
             "aura": aura.label,
             "chances": dpm_chances(env, dpm, |spell| {
                 !spell.flags.matches(SpellFlag::SUPPRESS_WEAPON_PROCS)
             }),
-        }));
+        });
+        if stacks {
+            effect["add_stack"] = json!(true);
+        }
+        effects.push(effect);
     }
     effects
 }
@@ -1660,6 +1965,7 @@ pub(crate) fn melee_proc_effects(env: &Environment, unrepresented: &mut Vec<Stri
     }
     effects.extend(flurry_axe_effects(env, unrepresented));
     effects.extend(weapon_aura_proc_effects(env, unrepresented));
+    super::classic_export::thunderfury_effect(env, unrepresented, &mut effects);
     super::classic_export::dragons_call_effect(env, unrepresented, &mut effects);
     super::classic_export::sulfuras_effect(env, unrepresented, &mut effects);
     if let Some(chili) = super::consumable_effects::dragonbreath_chili_effect(env) {
@@ -1709,6 +2015,23 @@ pub(crate) fn gear_proc_effects(env: &Environment, unrepresented: &mut Vec<Strin
                     "metrics_action_id": json!({"spell_id": 450589}),
                 }));
             }
+        }
+    }
+    // classic items_trinkets.go Darkmoon Card: Heroism: landed melee hits roll a legacy two procs a
+    // minute manager under the trigger's name; a batch window later the handler heals
+    // Roll(120, 180), a Go literal, and gives no rage.
+    if let Some(aura) = aura_named(env, "Darkmoon Card: Heroism") {
+        let a = env.sim.aura(aura);
+        match (a.dpm.as_ref(), a.icd) {
+            (Some(dpm), None) => effects.push(json!({
+                "kind": "health_rage_proc", "trigger_aura": a.label, "rng_label": a.label,
+                "chances": dpm_chances(env, dpm, |spell| {
+                    spell.proc_mask.matches(ProcMask::MELEE) && !spell.flags.matches(SpellFlag::PROC)
+                }),
+                "heal_min": 120.0, "heal_max": 180.0, "rage": 0.0,
+                "metrics_action_id": json!({"spell_id": 23682}),
+            })),
+            _ => unrepresented.push("Darkmoon Card: Heroism has no proc manager".to_string()),
         }
     }
     // items_weapons.go Bashguuder and Rivenspike: a weapon proc at two procs a minute of the

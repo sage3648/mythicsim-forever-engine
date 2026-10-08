@@ -99,6 +99,16 @@ impl Category {
         }
     }
 
+    /// Set the bid of the member whose aura is at this position, before the fight: a disabled
+    /// member only takes the bid.
+    pub(crate) fn set_disabled_priority(&mut self, aura_index: usize, priority: f64) {
+        for member in &mut self.members {
+            if member.aura.index == aura_index && !member.enabled {
+                member.priority = priority;
+            }
+        }
+    }
+
     /// Go `GetHighestPrioActiveEffect`: the first enabled member of the highest priority.
     fn highest_enabled(&self) -> Option<usize> {
         let mut best: Option<usize> = None;
@@ -283,6 +293,7 @@ impl<A: Agent> Fight<A> {
             let state = &self.exclusive_tracking[category];
             let (old, new) = (holder(state, old), holder(state, new));
             self.power_infusion_category_change(category, old, new);
+            self.enemy_slow_category_change(category, old, new);
             A::on_tracked_category_change(self, category);
         }
     }

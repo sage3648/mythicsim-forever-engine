@@ -263,9 +263,9 @@ func enemyAtResetValues(request *proto.RaidSimRequest, statAuras []string) (Enem
 // same simulation instead of building two more per combination, one for the rolls and one for
 // the rolls under a hardcast, gives the same values, since reading them changes nothing.
 type enemyCombos struct {
-	request   *proto.RaidSimRequest
-	statAuras []string
-	hardcast  bool
+	request  *proto.RaidSimRequest
+	layout   statLayout
+	hardcast bool
 	// The swing at reset and the encoding of its values beyond the rolls and aura lists.
 	values      Enemy
 	beyondRolls string
@@ -273,14 +273,14 @@ type enemyCombos struct {
 	// combinations changed the swing beyond them.
 	rolls, reducedRolls     []EnemyRolls
 	changed, reducedChanged int
-	// The player's damage taken multiplier with only the aura of each bit active.
+	// The player's damage taken multiplier with only each aura active, at one stack if it stacks.
 	aloneDamageTaken []float64
 }
 
-func newEnemyCombos(request *proto.RaidSimRequest, statAuras []string, character *core.Character) *enemyCombos {
-	values, beyondRolls := enemyAtResetValues(request, statAuras)
-	return &enemyCombos{request: request, statAuras: statAuras, hardcast: character.HardcastAvoidanceAura != nil,
-		values: values, beyondRolls: beyondRolls, aloneDamageTaken: make([]float64, len(statAuras))}
+func newEnemyCombos(request *proto.RaidSimRequest, layout statLayout, character *core.Character) *enemyCombos {
+	values, beyondRolls := enemyAtResetValues(request, layout.labels)
+	return &enemyCombos{request: request, layout: layout, hardcast: character.HardcastAvoidanceAura != nil,
+		values: values, beyondRolls: beyondRolls, aloneDamageTaken: make([]float64, len(layout.labels))}
 }
 
 // Reads one combination: the stat auras effect's simulation, or when its own setup left a
@@ -290,11 +290,11 @@ func (c *enemyCombos) read(mask int, simulation *core.Simulation, player *core.C
 		simulation = core.NewSim(c.request, simsignals.CreateSignals())
 		simulation.Reset()
 		player = simulation.Raid.Parties[0].Players[0].GetCharacter()
-		setStatAuras(simulation, player, c.statAuras, mask)
+		setStatAuras(simulation, player, c.layout, mask)
 	}
-	for bit := range c.statAuras {
-		if mask == 1<<bit {
-			c.aloneDamageTaken[bit] = player.PseudoStats.DamageTakenMultiplier
+	for j := range c.layout.labels {
+		if mask == 1<<c.layout.offsets[j] {
+			c.aloneDamageTaken[j] = player.PseudoStats.DamageTakenMultiplier
 		}
 	}
 	combo := enemyValues(simulation, player, simulation.Encounter.ActiveTargetUnits[0])
@@ -315,16 +315,16 @@ func (c *enemyCombos) read(mask int, simulation *core.Simulation, player *core.C
 }
 
 // The stat auras of a combination, as the stat_auras effect sets them: an aura up from the reset,
-// such as Bear Form, is down where its bit is clear.
-func setStatAuras(simulation *core.Simulation, character *core.Character, statAuras []string, mask int) {
-	for bit, label := range statAuras {
-		if aura := character.GetAura(label); mask&(1<<bit) == 0 && aura.IsActive() {
+// such as Bear Form, is down at level zero.
+func setStatAuras(simulation *core.Simulation, character *core.Character, layout statLayout, mask int) {
+	for j, label := range layout.labels {
+		if aura := character.GetAura(label); layout.level(mask, j) == 0 && aura.IsActive() {
 			aura.Deactivate(simulation)
 		}
 	}
-	for bit, label := range statAuras {
-		if mask&(1<<bit) != 0 && !character.GetAura(label).IsActive() {
-			character.GetAura(label).Activate(simulation)
+	for j, label := range layout.labels {
+		if level := layout.level(mask, j); level > 0 {
+			applyStatLevel(simulation, character.GetAura(label), level, layout.stacks[j] > 0)
 		}
 	}
 }
@@ -367,9 +367,9 @@ func withoutSchoolDamageTaken(values Enemy) Enemy {
 	return values
 }
 
-// The values with the target's melee speed, which a slow changes, left out.
+// The values with the target's melee and attack speed, which a slow changes, left out.
 func withoutMeleeSpeed(values Enemy) Enemy {
-	values.MeleeHasteMultiplier, values.MeleeSpeedMultiplier = 0, 0
+	values.MeleeHasteMultiplier, values.MeleeSpeedMultiplier, values.AttackSpeedMultiplier = 0, 0, 0
 	return values
 }
 

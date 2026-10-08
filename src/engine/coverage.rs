@@ -175,6 +175,9 @@ const COMMON_EFFECTS: &[&str] = &[
     "dragonbreath_chili",
     "energize_on_use",
     "emerald_dragon_whelp",
+    "thunderfury",
+    "force_reactive_disk",
+    "stacking_on_use",
     "sulfuras_hand_of_ragnaros",
     "energize_proc",
     "eureka",
@@ -339,6 +342,11 @@ fn common_spell_capability(spell: &Spell, prepared: &PreparedV2) -> Option<&'sta
         } if *spell_id == id.spell_id && *item_id == id.item_id && id.tag == 0 => {
             Some("temporary_stats")
         }
+        Effect::StackingOnUse { spell_id, .. }
+            if *spell_id == id.spell_id && id.item_id == 0 && id.tag == 0 =>
+        {
+            Some("stacking_on_use")
+        }
         // Class spells Go registers without a class mask, named by their effect.
         Effect::Prowl { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => Some("prowl"),
         Effect::Berserk { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
@@ -411,6 +419,18 @@ fn common_claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         Effect::EmeraldDragonWhelp {
             trigger_aura, pet, ..
         } => vec![("player", trigger_aura), ("pet unit", pet)],
+        Effect::ForceReactiveDisk { trigger_aura, .. } => vec![("player", trigger_aura)],
+        Effect::StackingOnUse { aura, .. } => vec![("player", aura)],
+        Effect::Thunderfury {
+            trigger_aura,
+            slow_aura,
+            resistance_aura,
+            ..
+        } => vec![
+            ("player", trigger_aura),
+            ("target", slow_aura),
+            ("target", resistance_aura),
+        ],
         Effect::SulfurasHandOfRagnaros {
             trigger_aura,
             immolation_aura,
@@ -540,19 +560,27 @@ fn unholy_aura_regeneration(prepared: &PreparedV2) -> Vec<String> {
 
 /// Dots of two spells that share one aura on the target. Go registers an aura once per label, so
 /// two spells of the same name, as Plaguefang's and Stinging Viper's Poison, put their dots on one
-/// aura; the runtime binds an aura to a single dot, and the other would never tick.
+/// aura, whose gain and expiry run both dots' callbacks. The runtime follows that for the dots of
+/// weapon procs, which tick a flat amount on current stats and hold no class behavior.
 fn shared_dot_auras(prepared: &PreparedV2) -> Vec<String> {
     let spells = &prepared.player.spells;
+    let proc_dot = |index: usize| {
+        prepared.effects.iter().any(|effect| {
+            matches!(effect, Effect::SpellDataDamageProc { spell, periodic: Some(_), .. }
+                if *spell == index)
+        })
+    };
     let mut reasons = Vec::new();
     for (index, spell) in spells.iter().enumerate() {
         let Some(dot) = spell.dot.as_ref() else {
             continue;
         };
-        for other in &spells[..index] {
+        for (earlier, other) in spells[..index].iter().enumerate() {
             if other
                 .dot
                 .as_ref()
                 .is_some_and(|other| other.aura_label == dot.aura_label && other.unit == dot.unit)
+                && !(proc_dot(earlier) && proc_dot(index))
             {
                 reasons.push(format!(
                     "the dots of {} and {} share the aura {}",
@@ -618,6 +646,11 @@ const DYNAMIC_STATS: &[&str] = &[
     // Physical damage, which a physical spell adds to its base damage: the combinations carry
     // it when one changes it.
     "PhysicalDamage",
+    // Armor penetration, which the armor of a hit's target is reduced by: the combinations
+    // carry it when one changes it.
+    "ArmorPenetration",
+    // Spell piercing, which a partial resist takes off the target's resistance.
+    "SpellPiercing",
     // Spirit, which spirit regeneration, Life Tap and Dark Sacrifice read live.
     "Spirit",
     // Spell power by school, which spell power reads, and the resistances spells that hit
@@ -652,6 +685,8 @@ const INERT_STATS: &[&str] = &[
     "Strength",
     "Agility",
     "Stamina",
+    // Spell crit rating, whose percent the combinations carry.
+    "SpellCritRating",
     "Health",
     "Armor",
     "BonusArmor",
@@ -786,13 +821,15 @@ const HIT_TAKEN_EFFECTS: &[&str] = &[
     "riposte",
     "spell_data_damage_proc",
     "spell_data_absorb_proc",
+    "force_reactive_disk",
+    "spell_data_heal_proc",
     "spell_data_stat_proc",
     "battlegear_of_might_rage",
 ];
 
 /// Effects that slow the target's melee speed through its live multiplier, with the target
 /// auras they claim.
-const ENEMY_SPEED_EFFECTS: &[&str] = &["thunder_clap"];
+const ENEMY_SPEED_EFFECTS: &[&str] = &["thunder_clap", "thunderfury"];
 
 /// Callbacks the target's own swings fire on the target.
 const TARGET_CASTER_CALLBACKS: &[&str] = &[
@@ -1036,6 +1073,7 @@ fn tank_limits(
             combos,
             changed,
             raw_mp5,
+            ..
         } = effect
         {
             for label in raw_mp5.keys().filter(|label| !auras.contains(label)) {

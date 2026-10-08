@@ -168,7 +168,7 @@ impl<A: Agent> Fight<A> {
             let roll = self.random("Partial Resist");
             let coefficient = resist_coefficient(
                 resistance,
-                self.config.spell_piercing,
+                self.player.powers.spell_piercing,
                 self.config.player_level,
                 self.config.player_level,
                 false,
@@ -256,7 +256,7 @@ impl<A: Agent> Fight<A> {
             let resistance = self.player_resistance(&defender.resistance)[state.school_index];
             let coefficient = resist_coefficient(
                 resistance,
-                self.config.spell_piercing,
+                self.player.powers.spell_piercing,
                 self.config.player_level,
                 self.config.player_level,
                 true,

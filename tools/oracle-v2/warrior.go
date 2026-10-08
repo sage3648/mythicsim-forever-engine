@@ -573,11 +573,19 @@ func warriorTankEffects(war *warrior.Warrior, character *core.Character, target 
 		for _, array := range clap.RelatedAuraArrays {
 			aura = array.Get(target)
 		}
-		members := 0
+		// The category holds only the clap, or the clap and Thunderfury's Cyclone (thunderfuryEffects),
+		// whose gains and expiries the runtime follows with the category's active effect.
+		others := 0
 		if aura != nil && len(aura.ExclusiveEffects) == 1 {
-			members = privateField(aura.ExclusiveEffects[0].Category, "effects").Len()
+			effects := privateField(aura.ExclusiveEffects[0].Category, "effects")
+			for i := 0; i < effects.Len(); i++ {
+				member := (*core.ExclusiveEffect)(effects.Index(i).UnsafePointer())
+				if member.Aura != aura && member.Aura.Label != "Cyclone" {
+					others++
+				}
+			}
 		}
-		if aura != nil && members == 1 {
+		if aura != nil && len(aura.ExclusiveEffects) == 1 && others == 0 {
 			effects = append(effects, map[string]any{"kind": "thunder_clap", "spell_id": clapRow.ID,
 				"base_damage": clapRow.DamageEffect().Average(core.CharacterLevel), "attack_power_share": 0.0255,
 				"max_targets": int32(clapRow.MaxTargets), "aura": aura.Label,

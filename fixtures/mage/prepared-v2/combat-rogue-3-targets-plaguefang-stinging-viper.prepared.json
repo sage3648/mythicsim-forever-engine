@@ -1,0 +1,3607 @@
+{
+  "schema_version": 2,
+  "contract": "forever-prepared",
+  "reference": {
+    "engine_revision": "2d93e423e0303e93dbb16e190d435503248b68f9",
+    "client_build": "1.60.1.70235",
+    "exporter": "tools/oracle-v2"
+  },
+  "request_sha256": "54721e3e66bef4b089e82f9f0ee0dd1c9c3b6a039fdbb12e9a51497981dcdf1e",
+  "scenario_id": "combat-rogue-3-targets-plaguefang-stinging-viper",
+  "sim": {
+    "iterations": 3000,
+    "seed": 42,
+    "labeled_rng": false,
+    "debug_first_iteration": true,
+    "debug": false
+  },
+  "encounter": {
+    "duration_ns": 120000000000,
+    "duration_variation_ns": 15000000000,
+    "execute_proportion_20": 0.2,
+    "execute_proportion_25": 0.25,
+    "execute_proportion_35": 0.35,
+    "execute_proportion_45": 0.45,
+    "execute_proportion_90": 0.9,
+    "target_count": 3
+  },
+  "target": {
+    "index": 0,
+    "label": "Target 1",
+    "level": 63,
+    "mob_type": "MobTypeUnknown",
+    "stats": {
+      "Agility": 0,
+      "ArcaneDamage": 0,
+      "ArcaneResistance": 0,
+      "Armor": 3226,
+      "ArmorPenetration": 0,
+      "AttackPower": 805,
+      "BlockPercent": 0,
+      "BlockRating": 0,
+      "BlockValue": 54,
+      "BonusArmor": 0,
+      "DefenseRating": 0,
+      "DodgePercent": 0,
+      "DodgeRating": 0,
+      "ExpertisePercent": 0,
+      "ExpertiseRating": 0,
+      "FeralAttackPower": 0,
+      "FireDamage": 0,
+      "FireResistance": 0,
+      "FrostDamage": 0,
+      "FrostResistance": 0,
+      "HealingPower": 0,
+      "Health": 127393,
+      "HolyDamage": 0,
+      "Intellect": 0,
+      "MP5": 0,
+      "Mana": 0,
+      "MeleeCritRating": 0,
+      "MeleeHasteRating": 0,
+      "MeleeHitRating": 0,
+      "NatureDamage": 0,
+      "NatureResistance": 0,
+      "ParryPercent": 0,
+      "ParryRating": 0,
+      "PhysicalCritPercent": 5.6,
+      "PhysicalDamage": 0,
+      "PhysicalHitPercent": 0,
+      "RangedAttackPower": 0,
+      "RangedCritPercent": 0,
+      "RangedHitPercent": 0,
+      "ReducedCritTakenPercent": 0,
+      "ShadowDamage": 0,
+      "ShadowResistance": 0,
+      "SpellCritPercent": 0,
+      "SpellCritRating": 0,
+      "SpellDamage": 0,
+      "SpellHasteRating": 0,
+      "SpellHitPercent": 0,
+      "SpellHitRating": 0,
+      "SpellPiercing": 0,
+      "Spirit": 0,
+      "Stamina": 0,
+      "Strength": 0
+    },
+    "pseudo_stats": {
+      "spell_cost_percent_modifier": 100,
+      "cast_speed_multiplier": 1,
+      "spirit_regen_rate_casting": 0,
+      "force_full_spirit_regen": false,
+      "spirit_regen_multiplier": 1,
+      "threat_multiplier": 1,
+      "damage_dealt_multiplier": 1,
+      "school_damage_dealt_multiplier": {
+        "arcane": 1,
+        "fire": 1,
+        "frost": 1,
+        "holy": 1,
+        "nature": 1,
+        "none": 1,
+        "physical": 1,
+        "shadow": 1
+      },
+      "dot_damage_multiplier_additive": 1,
+      "crit_damage_multiplier": 1,
+      "damage_taken_multiplier": 1,
+      "school_damage_taken_multiplier": {
+        "arcane": 1,
+        "fire": 1,
+        "frost": 1,
+        "holy": 1,
+        "nature": 1,
+        "none": 1,
+        "physical": 1,
+        "shadow": 1
+      },
+      "school_bonus_spell_damage": {
+        "arcane": 0,
+        "fire": 0,
+        "frost": 0,
+        "holy": 0,
+        "nature": 0,
+        "none": 0,
+        "physical": 0,
+        "shadow": 0
+      },
+      "school_bonus_hit_chance": {
+        "arcane": 0,
+        "fire": 0,
+        "frost": 0,
+        "holy": 0,
+        "nature": 0,
+        "none": 0,
+        "physical": 0,
+        "shadow": 0
+      },
+      "bonus_spell_damage_taken": 0,
+      "bonus_spell_crit_percent_taken": 0,
+      "reduced_crit_taken_percent": 0,
+      "incapacitated": false
+    },
+    "auras": [
+      {
+        "label": "Curse of Recklessness (External)",
+        "tag": "MinorArmorReduction",
+        "action_id": {
+          "spell_id": 11717,
+          "tag": -1
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "MinorArmorReductionArmorAdd",
+            "single_aura": false,
+            "priority": -505,
+            "position": 0
+          }
+        ]
+      },
+      {
+        "label": "Faerie Fire (External)",
+        "tag": "MinorArmorReduction",
+        "action_id": {
+          "spell_id": 9907,
+          "tag": -1
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "MinorArmorReductionArmorAdd",
+            "single_aura": false,
+            "priority": -505,
+            "position": 1
+          }
+        ]
+      },
+      {
+        "label": "Sunder Armor (External)",
+        "tag": "MajorArmorReduction",
+        "action_id": {
+          "spell_id": 11597,
+          "tag": -1
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 5,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire",
+          "on_stacks_change"
+        ],
+        "icd": null,
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "MajorArmorReduction",
+            "single_aura": true,
+            "priority": 0,
+            "position": 0
+          }
+        ]
+      },
+      {
+        "label": "Poison-3",
+        "action_id": {
+          "spell_id": 1309315
+        },
+        "duration_ns": 12000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Expose Armor (Player)",
+        "tag": "MajorArmorReduction",
+        "action_id": {
+          "spell_id": 11198
+        },
+        "duration_ns": 30000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain"
+        ],
+        "icd": null,
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "MajorArmorReduction",
+            "single_aura": true,
+            "priority": 0,
+            "position": 1
+          }
+        ]
+      },
+      {
+        "label": "Kidney Shot - combat-rogue (#1)",
+        "tag": "Stun",
+        "action_id": {
+          "spell_id": 8643
+        },
+        "duration_ns": 1000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Garrote-3",
+        "tag": "RogueBleed",
+        "action_id": {
+          "spell_id": 11290
+        },
+        "duration_ns": 18000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Deadly Poison-3",
+        "action_id": {
+          "spell_id": 25347,
+          "tag": 100
+        },
+        "duration_ns": 12000000000,
+        "max_stacks": 5,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Rupture-3",
+        "tag": "RogueBleed",
+        "action_id": {
+          "spell_id": 11275
+        },
+        "duration_ns": 0,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Parry Haste",
+        "action_id": null,
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_spell_hit_taken"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Movement",
+        "action_id": {
+          "other_id": "OtherActionMove"
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 100,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      }
+    ],
+    "auto_swing_melee": true,
+    "auto_swing_ranged": false,
+    "metrics_actions": [
+      {
+        "action_id": {
+          "other_id": "OtherActionMove"
+        },
+        "melee_metrics": true,
+        "school": 0
+      },
+      {
+        "action_id": {
+          "other_id": "OtherActionAttack",
+          "tag": 1
+        },
+        "melee_metrics": true,
+        "school": 1
+      },
+      {
+        "action_id": {
+          "other_id": "OtherActionAttack",
+          "tag": 2
+        },
+        "melee_metrics": true,
+        "school": 1
+      }
+    ]
+  },
+  "player": {
+    "index": 3,
+    "label": "combat-rogue (#1)",
+    "level": 60,
+    "stats": {
+      "Agility": 412,
+      "ArcaneDamage": 0,
+      "ArcaneResistance": 35,
+      "Armor": 2230,
+      "ArmorPenetration": 0,
+      "AttackPower": 1079,
+      "BlockPercent": 0.28,
+      "BlockRating": 0,
+      "BlockValue": 0,
+      "BonusArmor": 0,
+      "DefenseRating": 7,
+      "DodgePercent": 28.708000000000002,
+      "DodgeRating": 341.136,
+      "ExpertisePercent": 2,
+      "ExpertiseRating": 0,
+      "FeralAttackPower": 0,
+      "FireDamage": 0,
+      "FireResistance": 68,
+      "FrostDamage": 0,
+      "FrostResistance": 35,
+      "HealingPower": 0,
+      "Health": 3343,
+      "HolyDamage": 0,
+      "Intellect": 58,
+      "MP5": 0,
+      "Mana": 0,
+      "MeleeCritRating": 70,
+      "MeleeHasteRating": 0,
+      "MeleeHitRating": 61,
+      "NatureDamage": 0,
+      "NatureResistance": 35,
+      "ParryPercent": 0.28,
+      "ParryRating": 0,
+      "PhysicalCritPercent": 27.214000000000002,
+      "PhysicalDamage": 0,
+      "PhysicalHitPercent": 11.1,
+      "RangedAttackPower": 169,
+      "RangedCritPercent": 0,
+      "RangedHitPercent": 0,
+      "ReducedCritTakenPercent": 0.28,
+      "ShadowDamage": 0,
+      "ShadowResistance": 35,
+      "SpellCritPercent": 10,
+      "SpellCritRating": 28,
+      "SpellDamage": 185,
+      "SpellHasteRating": 0,
+      "SpellHitPercent": 11.1,
+      "SpellHitRating": 61,
+      "SpellPiercing": 0,
+      "Spirit": 122,
+      "Stamina": 200,
+      "Strength": 226
+    },
+    "pseudo_stats": {
+      "spell_cost_percent_modifier": 100,
+      "cast_speed_multiplier": 1,
+      "spirit_regen_rate_casting": 0,
+      "force_full_spirit_regen": false,
+      "spirit_regen_multiplier": 1,
+      "threat_multiplier": 0.71,
+      "damage_dealt_multiplier": 1,
+      "school_damage_dealt_multiplier": {
+        "arcane": 1,
+        "fire": 1,
+        "frost": 1,
+        "holy": 1,
+        "nature": 1,
+        "none": 1,
+        "physical": 1,
+        "shadow": 1
+      },
+      "dot_damage_multiplier_additive": 1,
+      "crit_damage_multiplier": 1,
+      "damage_taken_multiplier": 1,
+      "school_damage_taken_multiplier": {
+        "arcane": 1,
+        "fire": 1,
+        "frost": 1,
+        "holy": 1,
+        "nature": 1,
+        "none": 1,
+        "physical": 1,
+        "shadow": 1
+      },
+      "school_bonus_spell_damage": {
+        "arcane": 0,
+        "fire": 0,
+        "frost": 0,
+        "holy": 0,
+        "nature": 0,
+        "none": 0,
+        "physical": 0,
+        "shadow": 0
+      },
+      "school_bonus_hit_chance": {
+        "arcane": 0,
+        "fire": 0,
+        "frost": 0,
+        "holy": 0,
+        "nature": 0,
+        "none": 0,
+        "physical": 0,
+        "shadow": 0
+      },
+      "bonus_spell_damage_taken": 0,
+      "bonus_spell_crit_percent_taken": 0,
+      "reduced_crit_taken_percent": 0.0028000000000000004,
+      "incapacitated": false
+    },
+    "auras": [
+      {
+        "label": "Deadly Poison",
+        "action_id": null,
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_spell_hit_dealt"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Instant Poison",
+        "action_id": null,
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_spell_hit_dealt"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Chance of Death",
+        "action_id": null,
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_spell_hit_taken",
+          "on_periodic_damage_taken"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Touch of the Grave",
+        "action_id": null,
+        "action_id_for_proc": {
+          "spell_id": 1260189
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_spell_hit_dealt"
+        ],
+        "icd": {
+          "timer": "timer-9",
+          "duration_ns": 1000000000
+        },
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Plaguefang Proc",
+        "action_id": null,
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_spell_hit_dealt"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Stinging Viper Proc",
+        "action_id": null,
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_spell_hit_dealt"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Shadowcraft Armor 2P",
+        "action_id": null,
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Shadowcraft Armor 3P",
+        "action_id": null,
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Shadowcraft Armor 4P",
+        "action_id": null,
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Devilsaur Armor 2P",
+        "action_id": null,
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Shadowcraft Armor 5P",
+        "action_id": null,
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_spell_hit_dealt"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Blade Flurry",
+        "action_id": {
+          "spell_id": 13877
+        },
+        "duration_ns": 15000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire",
+          "on_spell_hit_dealt"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Hack and Slash",
+        "action_id": null,
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_spell_hit_dealt"
+        ],
+        "icd": {
+          "timer": "timer-10",
+          "duration_ns": 200000000
+        },
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Adrenaline Rush",
+        "action_id": {
+          "spell_id": 13750
+        },
+        "duration_ns": 15000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Battle Shout (External)",
+        "tag": "BattleShout",
+        "action_id": {
+          "spell_id": 25289,
+          "tag": -1
+        },
+        "duration_ns": 180000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_init",
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "BattleShout",
+            "single_aura": true,
+            "priority": 139,
+            "position": 0
+          }
+        ]
+      },
+      {
+        "label": "Leader of the Pack (External)",
+        "tag": "DruidCritAura",
+        "action_id": {
+          "spell_id": 24932,
+          "tag": -1
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "DruidCritAura",
+            "single_aura": true,
+            "priority": 3,
+            "position": 0
+          }
+        ]
+      },
+      {
+        "label": "Trueshot Aura (External)",
+        "action_id": {
+          "spell_id": 20905,
+          "tag": -1
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Strength of Earth Totem (External)",
+        "tag": "StrengthOfEarthTotem",
+        "action_id": {
+          "spell_id": 25362,
+          "tag": -1
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "StrengthOfEarthTotemStrengthAdd",
+            "single_aura": false,
+            "priority": 53,
+            "position": 0
+          }
+        ]
+      },
+      {
+        "label": "Windfury Totem (External)",
+        "tag": "WindfuryTotem",
+        "action_id": {
+          "spell_id": 10610,
+          "tag": -1
+        },
+        "duration_ns": 1000000000,
+        "max_stacks": 2,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire",
+          "on_spell_hit_dealt"
+        ],
+        "icd": null,
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "WindfuryTotemAttackPowerAdd",
+            "single_aura": false,
+            "priority": 246,
+            "position": 0
+          }
+        ]
+      },
+      {
+        "label": "Windfury Totem Trigger",
+        "action_id": {
+          "spell_id": 25580,
+          "tag": -1
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_spell_hit_dealt"
+        ],
+        "icd": {
+          "timer": "timer-11",
+          "duration_ns": 100000000
+        },
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Windfury Totem",
+        "action_id": {
+          "spell_id": 25587,
+          "tag": -1
+        },
+        "duration_ns": 10000000000,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_init",
+          "on_reset"
+        ],
+        "icd": null,
+        "exclusive_effects": 3,
+        "exclusive_memberships": [
+          {
+            "category": "AirTotem",
+            "single_aura": true,
+            "priority": 2,
+            "position": 0
+          },
+          {
+            "category": "FlametongueTotem",
+            "single_aura": false,
+            "priority": 2044.5,
+            "position": 0
+          },
+          {
+            "category": "WindfuryTotem",
+            "single_aura": false,
+            "priority": 246,
+            "position": 0
+          }
+        ]
+      },
+      {
+        "label": "Gift of the Wild (External)",
+        "action_id": {
+          "spell_id": 21850,
+          "tag": -1
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 5,
+        "exclusive_memberships": [
+          {
+            "category": "ResistanceFireFireResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          },
+          {
+            "category": "ResistanceNatureNatureResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          },
+          {
+            "category": "ResistanceFrostFrostResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          },
+          {
+            "category": "ResistanceShadowShadowResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          },
+          {
+            "category": "ResistanceArcaneArcaneResistanceAdd",
+            "single_aura": false,
+            "priority": 27,
+            "position": 0
+          }
+        ]
+      },
+      {
+        "label": "Fire Resistance Aura (External)",
+        "tag": "FireResistanceAura",
+        "action_id": {
+          "spell_id": 19900,
+          "tag": -1
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 2,
+        "exclusive_memberships": [
+          {
+            "category": "ResistanceFireFireResistanceAdd",
+            "single_aura": false,
+            "priority": 60,
+            "position": 1
+          },
+          {
+            "category": "FireResistanceAura",
+            "single_aura": true,
+            "priority": 60,
+            "position": 0
+          }
+        ]
+      },
+      {
+        "label": "Fire Resistance Totem (External)",
+        "action_id": {
+          "spell_id": 10535,
+          "tag": -1
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 1,
+        "exclusive_memberships": [
+          {
+            "category": "ResistanceFireFireResistanceAdd",
+            "single_aura": false,
+            "priority": 60,
+            "position": 2
+          }
+        ]
+      },
+      {
+        "label": "Greater Blessing of Kings (External)",
+        "action_id": {
+          "spell_id": 25898,
+          "tag": -1
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Greater Blessing of Might (External)",
+        "action_id": {
+          "spell_id": 25916,
+          "tag": -1
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Dragonbreath Chili",
+        "action_id": null,
+        "action_id_for_proc": {
+          "spell_id": 15852
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_spell_hit_dealt"
+        ],
+        "icd": {
+          "timer": "timer-12",
+          "duration_ns": 10000000000
+        },
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Slice and Dice",
+        "action_id": {
+          "spell_id": 6774
+        },
+        "duration_ns": 21000000000,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Stealth",
+        "action_id": {
+          "spell_id": 1784
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Parry Haste",
+        "action_id": null,
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 0,
+        "active": true,
+        "stacks": 0,
+        "callbacks": [
+          "on_reset",
+          "on_spell_hit_taken"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      },
+      {
+        "label": "Movement",
+        "action_id": {
+          "other_id": "OtherActionMove"
+        },
+        "duration_ns": 9223372036854775807,
+        "max_stacks": 100,
+        "active": false,
+        "stacks": 0,
+        "callbacks": [
+          "on_gain",
+          "on_expire"
+        ],
+        "icd": null,
+        "exclusive_effects": 0
+      }
+    ],
+    "name": "combat-rogue",
+    "class": "ClassRogue",
+    "race": "RaceUndead",
+    "professions": [
+      "Engineering"
+    ],
+    "talents_string": "005303105-32030320201515221-002",
+    "talents": {
+      "adrenaline_rush": 1,
+      "aggression": 2,
+      "blade_flurry": 1,
+      "dual_wield_specialization": 5,
+      "endurance": 2,
+      "flawless_execution": 1,
+      "hack_and_slash": 5,
+      "improved_eviscerate": 3,
+      "improved_sinister_strike": 2,
+      "improved_slice_and_dice": 3,
+      "improved_sprint": 2,
+      "lethality": 5,
+      "malice": 5,
+      "opportunity": 2,
+      "precision": 3,
+      "puncturing_wounds": 3,
+      "relentless_strikes": 1,
+      "ruthlessness": 3,
+      "weapon_expertise": 2
+    },
+    "class_options": {},
+    "reaction_ns": 100000000,
+    "channel_clip_delay_ns": 0,
+    "distance_yards": 0,
+    "cast_speed": 1,
+    "mana": {
+      "max": 0,
+      "base": 0,
+      "spirit_regen_per_second": 0,
+      "regen_per_second_casting": 0,
+      "regen_per_second_not_casting": 0,
+      "teardown_max": 0
+    },
+    "energy": {
+      "max_energy": 100,
+      "max_combo_points": 5,
+      "tick_duration_ns": 100000000,
+      "energy_per_tick": 1
+    },
+    "attack_table": {
+      "base_spell_miss_chance": 0.17,
+      "spell_crit_suppression": 0,
+      "bonus_spell_crit_percent": 0,
+      "crit_multiplier": 1,
+      "damage_dealt_multiplier": 1,
+      "damage_taken_multiplier": 1
+    },
+    "spells": [
+      {
+        "action_id": {
+          "spell_id": 1260198
+        },
+        "rank": 0,
+        "school": 32,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskEmpty"
+        ],
+        "flags": [
+          "SpellFlagIgnoreAttackerModifiers",
+          "SpellFlagNoSpellMods",
+          "SpellFlagPassiveSpell",
+          "SpellFlagProc"
+        ],
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "autos_or_procs",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 1309315
+        },
+        "rank": 0,
+        "school": 8,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskEmpty"
+        ],
+        "flags": [
+          "SpellFlagNoOnCastComplete",
+          "SpellFlagNoOnDamageDealt",
+          "SpellFlagPassiveSpell",
+          "SpellFlagProc"
+        ],
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "simple",
+        "ignore_haste": false,
+        "has_extra_cast_condition": true,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 50000,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "Poison-3",
+          "base_tick_count": 10,
+          "base_tick_length_ns": 1000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": false
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 1291663
+        },
+        "rank": 0,
+        "school": 8,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskEmpty"
+        ],
+        "flags": [
+          "SpellFlagNoOnCastComplete",
+          "SpellFlagNoOnDamageDealt",
+          "SpellFlagPassiveSpell",
+          "SpellFlagProc"
+        ],
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "simple",
+        "ignore_haste": false,
+        "has_extra_cast_condition": true,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 5,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "Poison-3",
+          "base_tick_count": 4,
+          "base_tick_length_ns": 3000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": false
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 22482
+        },
+        "rank": 0,
+        "school": 1,
+        "defense_type": "DefenseTypeNone",
+        "proc_mask": [
+          "ProcMaskEmpty"
+        ],
+        "flags": [
+          "SpellFlagIgnoreResists",
+          "SpellFlagIgnoreTargetModifiers",
+          "SpellFlagIgnoreAttackerModifiers",
+          "SpellFlagMeleeMetrics",
+          "SpellFlagNoOnCastComplete",
+          "SpellFlagPassiveSpell"
+        ],
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "autos_or_procs",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 13877
+        },
+        "rank": 0,
+        "school": 0,
+        "defense_type": "DefenseTypeNone",
+        "proc_mask": [],
+        "flags": [
+          "SpellFlagAPL",
+          "SpellFlagMCD"
+        ],
+        "class_spell": "blade_flurry",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "energy",
+          "base_cost": 25,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 25,
+          "gcd_ns": 1000000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": true,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": {
+          "timer": "timer-0",
+          "duration_ns": 120000000000
+        },
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 13750
+        },
+        "rank": 0,
+        "school": 0,
+        "defense_type": "DefenseTypeNone",
+        "proc_mask": [],
+        "flags": [
+          "SpellFlagAPL",
+          "SpellFlagMCD"
+        ],
+        "class_spell": "adrenaline_rush",
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 1000000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": true,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": {
+          "timer": "timer-1",
+          "duration_ns": 300000000000
+        },
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 15851
+        },
+        "rank": 0,
+        "school": 4,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamageProc"
+        ],
+        "flags": [
+          "SpellFlagNoOnCastComplete",
+          "SpellFlagPassiveSpell"
+        ],
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "autos_or_procs",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 1,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "item_id": 7676
+        },
+        "rank": 0,
+        "school": 0,
+        "defense_type": "DefenseTypeNone",
+        "proc_mask": [],
+        "flags": [
+          "SpellFlagNoOnCastComplete",
+          "SpellFlagAPL",
+          "SpellFlagMCD",
+          "SpellFlagConjured"
+        ],
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "simple",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": {
+          "timer": "timer-2",
+          "duration_ns": 300000000000
+        },
+        "shared_cd": {
+          "timer": "timer-3",
+          "duration_ns": 120000000000
+        },
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "item_id": 10646,
+          "tag": 1
+        },
+        "rank": 0,
+        "school": 4,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamage"
+        ],
+        "flags": [
+          "SpellFlagExplosive"
+        ],
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "autos_or_procs",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 100,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "item_id": 10646
+        },
+        "rank": 0,
+        "school": 4,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskEmpty"
+        ],
+        "flags": [
+          "SpellFlagAPL",
+          "SpellFlagMCD",
+          "SpellFlagExplosive"
+        ],
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "simple",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": {
+          "timer": "timer-4",
+          "duration_ns": 300000000000
+        },
+        "shared_cd": {
+          "timer": "timer-5",
+          "duration_ns": 60000000000
+        },
+        "bonus_hit_percent": 100,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 11269
+        },
+        "rank": 0,
+        "school": 1,
+        "defense_type": "DefenseTypeMelee",
+        "proc_mask": [
+          "ProcMaskMeleeMHSpecial"
+        ],
+        "flags": [
+          "SpellFlagMeleeMetrics",
+          "SpellFlagAPL",
+          "SpellFlagAgentReserved2"
+        ],
+        "class_spell": "ambush",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "energy",
+          "base_cost": 60,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1,
+          "refund": 0.8
+        },
+        "default_cast": {
+          "cost": 60,
+          "gcd_ns": 1000000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": true,
+        "has_extra_cast_condition": true,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 5,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 2.5,
+        "damage_multiplier_additive": 1.1,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 1,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 25300
+        },
+        "rank": 0,
+        "school": 1,
+        "defense_type": "DefenseTypeMelee",
+        "proc_mask": [
+          "ProcMaskMeleeMHSpecial"
+        ],
+        "flags": [
+          "SpellFlagMeleeMetrics",
+          "SpellFlagAPL",
+          "SpellFlagAgentReserved2"
+        ],
+        "class_spell": "backstab",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "energy",
+          "base_cost": 60,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1,
+          "refund": 0.8
+        },
+        "default_cast": {
+          "cost": 60,
+          "gcd_ns": 1000000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": true,
+        "has_extra_cast_condition": true,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 5,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 30,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1.5,
+        "damage_multiplier_additive": 1.14,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0.2,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 1,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 31016
+        },
+        "rank": 0,
+        "school": 1,
+        "defense_type": "DefenseTypeMelee",
+        "proc_mask": [
+          "ProcMaskMeleeMHSpecial"
+        ],
+        "flags": [
+          "SpellFlagMeleeMetrics",
+          "SpellFlagAPL",
+          "SpellFlagAgentReserved3"
+        ],
+        "class_spell": "eviscerate",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "energy",
+          "base_cost": 35,
+          "flat_modifier": -10,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1,
+          "refund": 0.8
+        },
+        "default_cast": {
+          "cost": 25,
+          "gcd_ns": 1000000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": true,
+        "has_extra_cast_condition": true,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 5,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.24,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 1,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null,
+        "metric_splits": 6
+      },
+      {
+        "action_id": {
+          "spell_id": 11198
+        },
+        "rank": 0,
+        "school": 1,
+        "defense_type": "DefenseTypeMelee",
+        "proc_mask": [
+          "ProcMaskMeleeMHSpecial"
+        ],
+        "flags": [
+          "SpellFlagMeleeMetrics",
+          "SpellFlagAPL",
+          "SpellFlagAgentReserved3"
+        ],
+        "class_spell": "expose_armor",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "energy",
+          "base_cost": 25,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1,
+          "refund": 0.8
+        },
+        "default_cast": {
+          "cost": 25,
+          "gcd_ns": 1000000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": true,
+        "has_extra_cast_condition": true,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 5,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null,
+        "metric_splits": 6
+      },
+      {
+        "action_id": {
+          "spell_id": 8643
+        },
+        "rank": 0,
+        "school": 1,
+        "defense_type": "DefenseTypeMelee",
+        "proc_mask": [
+          "ProcMaskMeleeMHSpecial"
+        ],
+        "flags": [
+          "SpellFlagMeleeMetrics",
+          "SpellFlagAPL",
+          "SpellFlagAgentReserved3"
+        ],
+        "class_spell": "kidney_shot",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "energy",
+          "base_cost": 25,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1,
+          "refund": 0.8
+        },
+        "default_cast": {
+          "cost": 25,
+          "gcd_ns": 1000000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": true,
+        "has_extra_cast_condition": true,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 5,
+        "max_charges": 0,
+        "cd": {
+          "timer": "timer-6",
+          "duration_ns": 20000000000
+        },
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null,
+        "metric_splits": 6
+      },
+      {
+        "action_id": {
+          "spell_id": 11290
+        },
+        "rank": 0,
+        "school": 1,
+        "defense_type": "DefenseTypeMelee",
+        "proc_mask": [
+          "ProcMaskMeleeMHSpecial"
+        ],
+        "flags": [
+          "SpellFlagMeleeMetrics",
+          "SpellFlagAPL",
+          "SpellFlagAgentReserved2"
+        ],
+        "class_spell": "garrote",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "energy",
+          "base_cost": 50,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1,
+          "refund": 0.8
+        },
+        "default_cast": {
+          "cost": 50,
+          "gcd_ns": 1000000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": true,
+        "has_extra_cast_condition": true,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 5,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.1,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "Garrote-3",
+          "base_tick_count": 6,
+          "base_tick_length_ns": 3000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": false
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 25347,
+          "tag": 100
+        },
+        "rank": 0,
+        "school": 8,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamageProc"
+        ],
+        "flags": [
+          "SpellFlagPoison",
+          "SpellFlagPassiveSpell",
+          "SpellFlagProc"
+        ],
+        "class_spell": "deadly_poison",
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "autos_or_procs",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "Deadly Poison-3",
+          "base_tick_count": 4,
+          "base_tick_length_ns": 3000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": false
+        },
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 11340
+        },
+        "rank": 0,
+        "school": 8,
+        "defense_type": "DefenseTypeMagic",
+        "proc_mask": [
+          "ProcMaskSpellDamageProc"
+        ],
+        "flags": [
+          "SpellFlagPoison",
+          "SpellFlagPassiveSpell",
+          "SpellFlagProc"
+        ],
+        "class_spell": "instant_poison",
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "autos_or_procs",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 11275
+        },
+        "rank": 0,
+        "school": 1,
+        "defense_type": "DefenseTypeMelee",
+        "proc_mask": [
+          "ProcMaskMeleeMHSpecial"
+        ],
+        "flags": [
+          "SpellFlagMeleeMetrics",
+          "SpellFlagAPL",
+          "SpellFlagAgentReserved3"
+        ],
+        "class_spell": "rupture",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "energy",
+          "base_cost": 25,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1,
+          "refund": 0.8
+        },
+        "default_cast": {
+          "cost": 25,
+          "gcd_ns": 1000000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": true,
+        "has_extra_cast_condition": true,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 5,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": {
+          "unit": "target",
+          "aura_label": "Rupture-3",
+          "base_tick_count": 0,
+          "base_tick_length_ns": 2000000000,
+          "bonus_coefficient": 0,
+          "periodic_damage_multiplier": 1,
+          "base_duration_multiplier": 1,
+          "base_duration_flat_ns": 0,
+          "affected_by_cast_speed": false,
+          "affected_by_real_haste": false,
+          "haste_reduces_duration": false,
+          "channeled": false
+        },
+        "damage_effect": null,
+        "metric_splits": 6
+      },
+      {
+        "action_id": {
+          "spell_id": 11294
+        },
+        "rank": 0,
+        "school": 1,
+        "defense_type": "DefenseTypeMelee",
+        "proc_mask": [
+          "ProcMaskMeleeMHSpecial"
+        ],
+        "flags": [
+          "SpellFlagMeleeMetrics",
+          "SpellFlagAPL",
+          "SpellFlagAgentReserved2"
+        ],
+        "class_spell": "sinister_strike",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "energy",
+          "base_cost": 45,
+          "flat_modifier": -5,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1,
+          "refund": 0.8
+        },
+        "default_cast": {
+          "cost": 40,
+          "gcd_ns": 1000000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": true,
+        "has_extra_cast_condition": true,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 5,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.04,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0.2,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 1,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 6774
+        },
+        "rank": 0,
+        "school": 0,
+        "defense_type": "DefenseTypeNone",
+        "proc_mask": [],
+        "flags": [
+          "SpellFlagAPL",
+          "SpellFlagAgentReserved3"
+        ],
+        "class_spell": "slice_and_dice",
+        "missile_speed": 0,
+        "cost": {
+          "resource": "energy",
+          "base_cost": 25,
+          "flat_modifier": 0,
+          "percent_modifier": 1,
+          "additive_percent_modifier": 1
+        },
+        "default_cast": {
+          "cost": 25,
+          "gcd_ns": 1000000000,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "full",
+        "ignore_haste": true,
+        "has_extra_cast_condition": true,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null,
+        "metric_splits": 6
+      },
+      {
+        "action_id": {
+          "spell_id": 1856
+        },
+        "rank": 0,
+        "school": 1,
+        "defense_type": "DefenseTypeNone",
+        "proc_mask": [],
+        "flags": [
+          "SpellFlagAPL"
+        ],
+        "class_spell": "vanish",
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "simple",
+        "ignore_haste": true,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": {
+          "timer": "timer-7",
+          "duration_ns": 300000000000
+        },
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "spell_id": 1784
+        },
+        "rank": 0,
+        "school": 1,
+        "defense_type": "DefenseTypeNone",
+        "proc_mask": [],
+        "flags": [
+          "SpellFlagAPL"
+        ],
+        "class_spell": "stealth",
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "simple",
+        "ignore_haste": false,
+        "has_extra_cast_condition": true,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": {
+          "timer": "timer-8",
+          "duration_ns": 10000000000
+        },
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "other_id": "OtherActionMove"
+        },
+        "rank": 0,
+        "school": 0,
+        "defense_type": "DefenseTypeNone",
+        "proc_mask": [],
+        "flags": [
+          "SpellFlagMeleeMetrics"
+        ],
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "autos_or_procs",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 0,
+        "damage_multiplier_additive": 0,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 0,
+        "threat_multiplier": 0,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "other_id": "OtherActionAttack",
+          "tag": 1
+        },
+        "rank": 0,
+        "school": 1,
+        "defense_type": "DefenseTypeMelee",
+        "proc_mask": [
+          "ProcMaskMeleeMHAuto"
+        ],
+        "flags": [
+          "SpellFlagIncludeTargetBonusDamage",
+          "SpellFlagMeleeMetrics",
+          "SpellFlagNoOnCastComplete"
+        ],
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "autos_or_procs",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 1,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "other_id": "OtherActionAttack",
+          "tag": 2
+        },
+        "rank": 0,
+        "school": 1,
+        "defense_type": "DefenseTypeMelee",
+        "proc_mask": [
+          "ProcMaskMeleeOHAuto"
+        ],
+        "flags": [
+          "SpellFlagIncludeTargetBonusDamage",
+          "SpellFlagMeleeMetrics",
+          "SpellFlagNoOnCastComplete"
+        ],
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "autos_or_procs",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1.25,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 1,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      },
+      {
+        "action_id": {
+          "other_id": "OtherActionAttack",
+          "tag": 25584
+        },
+        "rank": 0,
+        "school": 1,
+        "defense_type": "DefenseTypeMelee",
+        "proc_mask": [
+          "ProcMaskMeleeMHAuto"
+        ],
+        "flags": [
+          "SpellFlagIncludeTargetBonusDamage",
+          "SpellFlagMeleeMetrics",
+          "SpellFlagNoOnCastComplete"
+        ],
+        "missile_speed": 0,
+        "cost": null,
+        "default_cast": {
+          "cost": 0,
+          "gcd_ns": 0,
+          "gcd_min_ns": 0,
+          "cast_time_ns": 0,
+          "non_empty": false
+        },
+        "cast_kind": "autos_or_procs",
+        "ignore_haste": false,
+        "has_extra_cast_condition": false,
+        "has_cast_requirement": false,
+        "min_range": 0,
+        "max_range": 0,
+        "max_charges": 0,
+        "cd": null,
+        "shared_cd": null,
+        "bonus_hit_percent": 0,
+        "bonus_crit_percent": 0,
+        "bonus_spell_damage": 0,
+        "bonus_expertise_percent": 0,
+        "cast_time_multiplier": 1,
+        "cd_multiplier": 1,
+        "damage_multiplier": 1,
+        "damage_multiplier_additive": 1,
+        "direct_damage_multiplier_additive": 0,
+        "crit_multiplier_pct": 1,
+        "crit_multiplier_additive": 0,
+        "bonus_base_damage": 0,
+        "bonus_coefficient": 1,
+        "threat_multiplier": 1,
+        "flat_threat_bonus": 0,
+        "pushback_resist": 0,
+        "dot": null,
+        "damage_effect": null
+      }
+    ],
+    "major_cooldowns": [
+      {
+        "action_id": {
+          "spell_id": 13877
+        },
+        "priority": 0,
+        "type": [
+          "dps"
+        ],
+        "timings_ns": []
+      },
+      {
+        "action_id": {
+          "item_id": 7676
+        },
+        "priority": 0,
+        "type": [
+          "dps"
+        ],
+        "timings_ns": []
+      },
+      {
+        "action_id": {
+          "item_id": 10646
+        },
+        "priority": -980,
+        "type": [
+          "dps",
+          "explosive"
+        ],
+        "timings_ns": []
+      }
+    ],
+    "rotation": {
+      "type": "TypeAPL",
+      "priorityList": [
+        {
+          "action": {
+            "condition": {
+              "or": {
+                "vals": [
+                  {
+                    "and": {
+                      "vals": [
+                        {
+                          "cmp": {
+                            "op": "OpGe",
+                            "lhs": {
+                              "currentComboPoints": {}
+                            },
+                            "rhs": {
+                              "const": {
+                                "val": "1"
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "not": {
+                            "val": {
+                              "auraIsActive": {
+                                "auraId": {
+                                  "spellId": 6774,
+                                  "rank": 2
+                                }
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "cmp": {
+                            "op": "OpGe",
+                            "lhs": {
+                              "remainingTime": {}
+                            },
+                            "rhs": {
+                              "const": {
+                                "val": "6"
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "and": {
+                      "vals": [
+                        {
+                          "cmp": {
+                            "op": "OpGe",
+                            "lhs": {
+                              "currentComboPoints": {}
+                            },
+                            "rhs": {
+                              "const": {
+                                "val": "5"
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "cmp": {
+                            "op": "OpLt",
+                            "lhs": {
+                              "auraRemainingTime": {
+                                "auraId": {
+                                  "spellId": 6774,
+                                  "rank": 2
+                                }
+                              }
+                            },
+                            "rhs": {
+                              "const": {
+                                "val": "3"
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "cmp": {
+                            "op": "OpGt",
+                            "lhs": {
+                              "remainingTime": {}
+                            },
+                            "rhs": {
+                              "const": {
+                                "val": "9"
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            "castSpell": {
+              "spellId": {
+                "spellId": 6774,
+                "rank": 2
+              }
+            }
+          }
+        },
+        {
+          "action": {
+            "condition": {
+              "and": {
+                "vals": [
+                  {
+                    "cmp": {
+                      "op": "OpLt",
+                      "lhs": {
+                        "currentEnergy": {}
+                      },
+                      "rhs": {
+                        "const": {
+                          "val": "59"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "cmp": {
+                      "op": "OpLt",
+                      "lhs": {
+                        "timeToNextEnergyTick": {}
+                      },
+                      "rhs": {
+                        "const": {
+                          "val": "1"
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            "castSpell": {
+              "spellId": {
+                "spellId": 13750
+              }
+            }
+          }
+        },
+        {
+          "action": {
+            "condition": {
+              "auraIsActive": {
+                "auraId": {
+                  "spellId": 6774,
+                  "rank": 2
+                }
+              }
+            },
+            "autocastOtherCooldowns": {}
+          }
+        },
+        {
+          "action": {
+            "condition": {
+              "and": {
+                "vals": [
+                  {
+                    "cmp": {
+                      "op": "OpGe",
+                      "lhs": {
+                        "currentComboPoints": {}
+                      },
+                      "rhs": {
+                        "const": {
+                          "val": "5"
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "or": {
+                      "vals": [
+                        {
+                          "auraIsActive": {
+                            "auraId": {
+                              "spellId": 6774,
+                              "rank": 2
+                            }
+                          }
+                        },
+                        {
+                          "cmp": {
+                            "op": "OpGe",
+                            "lhs": {
+                              "currentEnergy": {}
+                            },
+                            "rhs": {
+                              "const": {
+                                "val": "79"
+                              }
+                            }
+                          }
+                        },
+                        {
+                          "cmp": {
+                            "op": "OpLt",
+                            "lhs": {
+                              "remainingTime": {}
+                            },
+                            "rhs": {
+                              "const": {
+                                "val": "6"
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            },
+            "castSpell": {
+              "spellId": {
+                "spellId": 31016
+              }
+            }
+          }
+        },
+        {
+          "action": {
+            "castSpell": {
+              "spellId": {
+                "spellId": 25300
+              }
+            }
+          }
+        }
+      ]
+    },
+    "prepull_actions": 0
+  },
+  "melee": {
+    "auto_swing_melee": true,
+    "auto_swing_ranged": false,
+    "dual_wielding": true,
+    "main_hand": {
+      "base_damage_min": 18,
+      "base_damage_max": 34,
+      "attack_power_per_dps": 14,
+      "swing_speed": 2.1,
+      "normalized_swing_speed": 2.4,
+      "school": 0,
+      "min_range": 0,
+      "max_range": 5
+    },
+    "off_hand": {
+      "base_damage_min": 30,
+      "base_damage_max": 57,
+      "attack_power_per_dps": 14,
+      "swing_speed": 2.8,
+      "normalized_swing_speed": 2.4,
+      "school": 0,
+      "min_range": 0,
+      "max_range": 5
+    },
+    "ranged": {
+      "base_damage_min": 0,
+      "base_damage_max": 0,
+      "attack_power_per_dps": 0,
+      "swing_speed": 0,
+      "normalized_swing_speed": 0,
+      "school": 0,
+      "min_range": 0,
+      "max_range": 0
+    },
+    "base_miss_chance": 0.08,
+    "base_glance_chance": 0.4,
+    "glance_multiplier": 0.65,
+    "glance_spread": 0.1,
+    "hit_suppression": 0.01,
+    "melee_crit_suppression": 0.048,
+    "ignore_armor": false,
+    "armor_ignore_factor": 0.15,
+    "in_front_of_target": false,
+    "attack_speed_multiplier": 1,
+    "melee_speed_multiplier": 1,
+    "dodge_reduction": 0,
+    "disable_dw_miss_penalty": false,
+    "defender_dodge": 0.065,
+    "defender_parry": 0.14,
+    "defender_block": 0.05,
+    "defender_armor": 3226,
+    "defender_block_reduction": 54,
+    "defender_bonus_attack_power": 0,
+    "defender_bonus_physical_damage_taken": 0,
+    "defender_reduced_physical_hit_taken": 0
+  },
+  "effects": [
+    {
+      "base_damage": 68,
+      "kind": "sinister_strike",
+      "spell_id": 11294
+    },
+    {
+      "base_damage": 150,
+      "extra_combo_point_action": {
+        "spell_id": 1310710
+      },
+      "extra_combo_point_chance": 0.45,
+      "kind": "backstab",
+      "main_hand_dagger": false,
+      "spell_id": 25300
+    },
+    {
+      "attack_power_per_combo_point": 0.03,
+      "combo_point_damage": 170,
+      "damage_average": 108,
+      "damage_variance": 1,
+      "kind": "eviscerate",
+      "spell_id": 31016
+    },
+    {
+      "aura": "Slice and Dice",
+      "durations_ns": [
+        0,
+        13050000000,
+        17400000000,
+        21750000000,
+        26100000000,
+        30450000000
+      ],
+      "kind": "slice_and_dice",
+      "melee_speed_multiplier": 1.3,
+      "spell_id": 6774
+    },
+    {
+      "attack_speed_multiplier": 1.2,
+      "aura": "Blade Flurry",
+      "hit_spell_id": 22482,
+      "kind": "blade_flurry",
+      "spell_id": 13877
+    },
+    {
+      "aura": "Adrenaline Rush",
+      "energy_threshold": 45,
+      "kind": "adrenaline_rush",
+      "regen_multiplier": 2,
+      "spell_id": 13750
+    },
+    {
+      "kind": "rogue_finisher",
+      "relentless_strikes": true,
+      "relentless_strikes_action": {
+        "spell_id": 14179
+      },
+      "relentless_strikes_chance_per_point": 0.2,
+      "relentless_strikes_energy": 25,
+      "ruthlessness_action": {
+        "spell_id": 14161
+      },
+      "ruthlessness_chance": 0.6
+    },
+    {
+      "kind": "instant_poison",
+      "max_damage": 100,
+      "min_damage": 76,
+      "proc_chance": 0.2,
+      "proc_mask": [
+        "ProcMaskMeleeMHAuto",
+        "ProcMaskMeleeMHSpecial"
+      ],
+      "spell_id": 11340,
+      "trigger_aura": "Instant Poison"
+    },
+    {
+      "kind": "deadly_poison",
+      "proc_chance": 0.3,
+      "proc_mask": [
+        "ProcMaskMeleeOHAuto",
+        "ProcMaskMeleeOHSpecial"
+      ],
+      "spell_id": 25347,
+      "tag": 100,
+      "tick_damage": 23,
+      "trigger_aura": "Deadly Poison"
+    },
+    {
+      "aura": "Stealth",
+      "kind": "stealth",
+      "spell_id": 1784,
+      "vanish_spell_id": 1856
+    },
+    {
+      "base_damage": 116,
+      "cutthroat_aura": "",
+      "kind": "ambush",
+      "main_hand_dagger": false,
+      "spell_id": 11269
+    },
+    {
+      "attack_power_shares": [
+        0,
+        0.01,
+        0.02,
+        0.03,
+        0.03,
+        0.03
+      ],
+      "base_tick_count": 3,
+      "damage_per_combo_point": 4.730000019073486,
+      "hemorrhage_aura": "",
+      "hemorrhage_multiplier": 1.15,
+      "kind": "rupture",
+      "magic": false,
+      "spell_id": 11275,
+      "tick_can_crit": true,
+      "tick_damage": 35
+    },
+    {
+      "delay_ns": 0,
+      "handler": "extra_attack",
+      "kind": "rogue_proc",
+      "outcome": "landed",
+      "periodic": false,
+      "proc_chance": 0.05,
+      "spells": [
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        18,
+        19,
+        24,
+        26
+      ],
+      "trigger_aura": "Hack and Slash"
+    },
+    {
+      "attack_power_share": 0.03,
+      "dirty_deeds": false,
+      "kind": "garrote",
+      "magic": false,
+      "spell_id": 11290,
+      "tick_can_crit": true,
+      "tick_damage": 92
+    },
+    {
+      "base_duration_ns": 1000000000,
+      "damage_taken_multiplier": 1,
+      "duration_per_combo_point_ns": 1000000000,
+      "kind": "kidney_shot",
+      "spell_id": 8643,
+      "stun_aura": "Kidney Shot - combat-rogue (#1)",
+      "stun_duration_multiplier": 1,
+      "target_stun_immune": false,
+      "target_tanks_player": false
+    },
+    {
+      "armor_per_combo_point": 450,
+      "aura": "Expose Armor (Player)",
+      "kind": "expose_armor",
+      "points_back": 0,
+      "points_back_action": {
+        "spell_id": 14169
+      },
+      "spell_id": 11198
+    },
+    {
+      "armor_by_stacks": [
+        3226,
+        2776,
+        2326,
+        1876,
+        1426,
+        976
+      ],
+      "category": "MajorArmorReduction",
+      "kind": "exclusive_category",
+      "members": [
+        {
+          "aura": "Sunder Armor (External)",
+          "per_stack": 450,
+          "priority": 0,
+          "spell_id": 11597
+        },
+        {
+          "aura": "Expose Armor (Player)",
+          "priority": 0,
+          "spell_id": 11198
+        }
+      ],
+      "unit": "target"
+    },
+    {
+      "delay_ns": 10000000,
+      "drain_spell_id": 1260198,
+      "health_fraction": 0.05,
+      "kind": "touch_of_the_grave",
+      "proc_chance": 0.05,
+      "proc_mask": [
+        "ProcMaskMeleeMHAuto",
+        "ProcMaskMeleeOHAuto",
+        "ProcMaskMeleeMHSpecial",
+        "ProcMaskMeleeOHSpecial",
+        "ProcMaskRangedAuto",
+        "ProcMaskRangedSpecial",
+        "ProcMaskSpellDamage"
+      ],
+      "trigger_aura": "Touch of the Grave"
+    },
+    {
+      "aura": "Battle Shout (External)",
+      "kind": "fixed_uptime_aura",
+      "start_time_ns": -1,
+      "tick_length_ns": 180000000001,
+      "uptime": 1
+    },
+    {
+      "armor_by_stacks": [
+        3226,
+        2776,
+        2326,
+        1876,
+        1426,
+        976
+      ],
+      "aura": "Sunder Armor (External)",
+      "kind": "sunder_armor_ramp",
+      "period_ns": 1500000000,
+      "ticks": 5
+    },
+    {
+      "gains": [
+        {
+          "min": 100,
+          "spread": 0
+        }
+      ],
+      "item_id": 7676,
+      "kind": "conjured_energy",
+      "rng_label": "Thistle Tea",
+      "selected": true,
+      "spill": 10
+    },
+    {
+      "aoe_cap_multiplier": 1,
+      "item_id": 10646,
+      "kind": "goblin_sapper",
+      "max_damage": 750,
+      "min_damage": 450,
+      "self_attack_table": {
+        "base_spell_miss_chance": 0.05,
+        "spell_crit_suppression": 0,
+        "bonus_spell_crit_percent": 0,
+        "crit_multiplier": 1,
+        "damage_dealt_multiplier": 1,
+        "damage_taken_multiplier": 1
+      },
+      "self_tag": 1
+    },
+    {
+      "average": 0,
+      "can_crit": true,
+      "chances": [
+        {
+          "spell": 10,
+          "chance": 0.084
+        },
+        {
+          "spell": 11,
+          "chance": 0.084
+        },
+        {
+          "spell": 12,
+          "chance": 0.084
+        },
+        {
+          "spell": 13,
+          "chance": 0.084
+        },
+        {
+          "spell": 14,
+          "chance": 0.084
+        },
+        {
+          "spell": 15,
+          "chance": 0.084
+        },
+        {
+          "spell": 18,
+          "chance": 0.084
+        },
+        {
+          "spell": 19,
+          "chance": 0.084
+        },
+        {
+          "spell": 24,
+          "chance": 0.084
+        },
+        {
+          "spell": 26,
+          "chance": 0.084
+        }
+      ],
+      "kind": "spell_data_damage_proc",
+      "landed_only": true,
+      "periodic": {
+        "tick_base": 2,
+        "tick_outcome": "tick_magic_hit_and_crit",
+        "with_direct": false
+      },
+      "proc_chance": 1,
+      "require_damage": false,
+      "spell": 1,
+      "trigger_aura": "Plaguefang Proc",
+      "trigger_spells": [
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        18,
+        19,
+        24,
+        26
+      ],
+      "variance": 0
+    },
+    {
+      "average": 0,
+      "can_crit": true,
+      "chances": [
+        {
+          "spell": 25,
+          "chance": 0.14933333333333335
+        }
+      ],
+      "kind": "spell_data_damage_proc",
+      "landed_only": true,
+      "periodic": {
+        "tick_base": 7,
+        "tick_outcome": "tick_magic_hit_and_crit",
+        "with_direct": false
+      },
+      "proc_chance": 1,
+      "require_damage": false,
+      "spell": 2,
+      "trigger_aura": "Stinging Viper Proc",
+      "trigger_spells": [
+        25
+      ],
+      "variance": 0
+    },
+    {
+      "delay_ns": 10000000,
+      "kind": "dragonbreath_chili",
+      "proc_chance": 0.05,
+      "roll_max": 73,
+      "roll_min": 57,
+      "spell_id": 15851,
+      "trigger_aura": "Dragonbreath Chili",
+      "trigger_spells": [
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        18,
+        19,
+        24,
+        25,
+        26
+      ]
+    },
+    {
+      "extra_attack_spell": 26,
+      "kind": "windfury_totem",
+      "period_ns": 5000000000,
+      "proc_aura": "Windfury Totem (External)",
+      "spend_outcome": [
+        "Hit",
+        "Glance",
+        "Block",
+        "Crit",
+        "Crush"
+      ],
+      "spend_require_damage": true,
+      "spend_spells": [
+        24,
+        25,
+        26
+      ],
+      "totem_aura": "Windfury Totem",
+      "trigger_aura": "Windfury Totem Trigger",
+      "trigger_outcome": [
+        "Hit",
+        "Glance",
+        "Block",
+        "Crit",
+        "Crush"
+      ],
+      "trigger_proc_chance": 0.2,
+      "trigger_require_damage": true,
+      "trigger_spells": [
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        18,
+        19,
+        24,
+        25,
+        26
+      ]
+    },
+    {
+      "chances": [
+        {
+          "spell": 24,
+          "chance": 0.035
+        },
+        {
+          "spell": 25,
+          "chance": 0.04666666666666666
+        },
+        {
+          "spell": 26,
+          "chance": 0.035
+        }
+      ],
+      "delay_ns": 10000000,
+      "energy": 20,
+      "kind": "energize_proc",
+      "metrics_action_id": {
+        "spell_id": 27787
+      },
+      "rng_label": "Rogue Armor Energize",
+      "trigger_aura": "Shadowcraft Armor 5P"
+    },
+    {
+      "auras": [
+        "Windfury Totem (External)",
+        "Battle Shout (External)"
+      ],
+      "changed": [
+        "AttackPower"
+      ],
+      "combos": [
+        {
+          "AttackPower": 1079,
+          "MP5": 0,
+          "PhysicalCritPercent": 27.214000000000002,
+          "RangedAttackPower": 169,
+          "SpellCritPercent": 10,
+          "SpellDamage": 185
+        },
+        {
+          "AttackPower": 1325,
+          "MP5": 0,
+          "PhysicalCritPercent": 27.214000000000002,
+          "RangedAttackPower": 169,
+          "SpellCritPercent": 10,
+          "SpellDamage": 185
+        },
+        {
+          "AttackPower": 1218,
+          "MP5": 0,
+          "PhysicalCritPercent": 27.214000000000002,
+          "RangedAttackPower": 169,
+          "SpellCritPercent": 10,
+          "SpellDamage": 185
+        },
+        {
+          "AttackPower": 1464,
+          "MP5": 0,
+          "PhysicalCritPercent": 27.214000000000002,
+          "RangedAttackPower": 169,
+          "SpellCritPercent": 10,
+          "SpellDamage": 185
+        }
+      ],
+      "kind": "stat_auras"
+    },
+    {
+      "aura": "Parry Haste",
+      "kind": "parry_haste",
+      "melee_haste_multiplier": 1,
+      "swing_speed": 2,
+      "unit": "target"
+    },
+    {
+      "aura": "Parry Haste",
+      "kind": "inert_listener",
+      "reason": "acts only on attacks the player parries, and nothing attacks the player",
+      "unit": "player"
+    },
+    {
+      "aura": "Chance of Death",
+      "kind": "chance_of_death"
+    }
+  ],
+  "unrepresented": []
+}

@@ -21,6 +21,23 @@ pub(crate) struct AuraRef {
     pub(crate) index: usize,
 }
 
+/// The place of each stat aura in the stat mask, as the `stat_auras` effect numbers its
+/// combinations: the first bit and the number of bits. An aura read as active or not takes one
+/// bit; one whose stats follow its stacks takes the bits that count to its maximum stacks.
+pub(crate) fn stat_aura_places(stacks: &[i32], auras: usize) -> Vec<(u32, u32)> {
+    let mut offset = 0;
+    (0..auras)
+        .map(|index| {
+            let width = match stacks.get(index).copied().unwrap_or(0) {
+                most if most > 0 => u32::BITS - (most as u32).leading_zeros(),
+                _ => 1,
+            };
+            offset += width;
+            (offset - width, width)
+        })
+        .collect()
+}
+
 #[derive(Clone, Debug)]
 pub(crate) enum AuraBehavior<K> {
     /// Stat or regeneration effects that the prepared values already include.
@@ -85,10 +102,26 @@ pub(crate) enum AuraBehavior<K> {
         gain_log: Option<usize>,
         expire_log: Option<usize>,
     },
+    /// Go `core.MakeStackingAura`: each stack adds the same stats, so the stat combination
+    /// follows the aura's stacks, in the `width` bits of `Fight::stat_mask` from `offset`.
+    StackingStats {
+        offset: u32,
+        width: u32,
+        /// A stack added at once on gain and every period after it, for the ticks in all:
+        /// Go `StartPeriodicAction` with `TickImmediately`.
+        periodic: Option<(i64, i32)>,
+    },
     /// The Crusader enchant's trigger.
     Crusader,
     /// Dragon's Call's trigger, which summons the Emerald Dragon Whelp.
     EmeraldDragonWhelp,
+    /// Force Reactive Disk's trigger, with the spell it casts.
+    ForceReactiveDisk(SpellId),
+    /// Thunderfury's weapon proc trigger.
+    Thunderfury,
+    /// Thunderfury's resistance aura on a target: its nature resistance changes by the amount
+    /// while it is up.
+    ThunderfuryResistance(f64),
     /// Sulfuras, Hand of Ragnaros's weapon proc trigger and its Immolation.
     SulfurasProc,
     SulfurasImmolation,
@@ -600,6 +633,23 @@ impl<A: Agent> Fight<A> {
         self.on_expire(aura);
     }
 
+    /// A tick of a periodic stack adder: one more stack, and the next tick a period away while
+    /// ticks are left.
+    pub(crate) fn stack_tick(&mut self, aura: AuraRef, period: i64, ticks_left: i32) {
+        self.add_stack(aura);
+        if ticks_left > 1 {
+            self.schedule(
+                self.now + period,
+                super::PRIORITY_AUTO,
+                super::Action::StackTick {
+                    aura,
+                    period,
+                    ticks_left: ticks_left - 1,
+                },
+            );
+        }
+    }
+
     /// Go `Aura.SetStacks`.
     pub(crate) fn set_stacks(&mut self, aura: AuraRef, stacks: i32) {
         let state = self.aura(aura);
@@ -630,6 +680,11 @@ impl<A: Agent> Fight<A> {
             AuraBehavior::ArmorDebuff(proc) => {
                 self.armor_debuff_stacks_changed(proc, aura.side, old, new)
             }
+            // Go `MakeStackingAura`'s OnStacksChange adds the stats of the stacks gained.
+            AuraBehavior::StackingStats { offset, width, .. } => {
+                let field = ((1u32 << width) - 1) << offset;
+                self.set_stat_mask((self.stat_mask & !field) | ((new as u32) << offset));
+            }
             _ => {}
         }
         self.exclusive_stacks_changed(aura, new);
@@ -659,16 +714,16 @@ impl<A: Agent> Fight<A> {
         self.set_stat_mask(mask);
     }
 
-    /// A stat aura's bit in the active stat mask, by label.
+    /// A stat aura's bit in the active stat mask, by label: the first bit of its place.
     pub(crate) fn stat_aura_bit(
         effects: &[crate::contracts::prepared_v2::Effect],
         label: &str,
     ) -> Option<u32> {
         effects.iter().find_map(|effect| match effect {
-            crate::contracts::prepared_v2::Effect::StatAuras { auras, .. } => auras
-                .iter()
-                .position(|aura| aura == label)
-                .map(|bit| 1 << bit),
+            crate::contracts::prepared_v2::Effect::StatAuras { auras, stacks, .. } => {
+                let position = auras.iter().position(|aura| aura == label)?;
+                Some(1 << stat_aura_places(stacks, auras.len())[position].0)
+            }
             _ => None,
         })
     }
@@ -700,6 +755,29 @@ impl<A: Agent> Fight<A> {
             }
             AuraBehavior::InnervateRegen(index) => self.innervate_regen_gained(index),
             AuraBehavior::WindfuryProc { bit } => self.set_stat_mask(self.stat_mask | bit),
+            AuraBehavior::StackingStats {
+                periodic: Some((period, ticks)),
+                ..
+            } => {
+                // Go `NewPeriodicAction`: at time zero, which may be the reset, the first tick
+                // waits in the queue; otherwise it runs inside the gain.
+                if self.now == 0 {
+                    self.schedule(
+                        0,
+                        super::PRIORITY_AUTO,
+                        super::Action::StackTick {
+                            aura,
+                            period,
+                            ticks_left: ticks,
+                        },
+                    );
+                } else {
+                    self.stack_tick(aura, period, ticks);
+                }
+            }
+            AuraBehavior::ThunderfuryResistance(delta) => {
+                self.thunderfury_resistance(aura.side, delta)
+            }
             AuraBehavior::SpellMods(index) => {
                 for position in 0..self.aura_mods[index].len() {
                     self.activate_mod(self.aura_mods[index][position]);
@@ -737,6 +815,9 @@ impl<A: Agent> Fight<A> {
                 schools,
             } => self.multiply_self_damage_taken(multiplier, schools, true),
             AuraBehavior::WindfuryProc { bit } => self.set_stat_mask(self.stat_mask & !bit),
+            AuraBehavior::ThunderfuryResistance(delta) => {
+                self.thunderfury_resistance(aura.side, -delta)
+            }
             AuraBehavior::SpellMods(index) => {
                 for position in 0..self.aura_mods[index].len() {
                     self.deactivate_mod(self.aura_mods[index][position]);
@@ -999,6 +1080,18 @@ impl<A: Agent> Fight<A> {
                 AuraBehavior::SpellDataStatProc(proc) if self.spell_stat_procs[proc].casts => {
                     self.spell_stat_proc_callback(aura, proc, Some(spell), None)
                 }
+                AuraBehavior::SpellDataDamageProc(proc) if self.damage_procs[proc].casts => {
+                    // A cast carries no result: the proc answers the current target.
+                    let result = SpellResult {
+                        armor_multiplier: 0.0,
+                        target: Side::Target,
+                        attacker: Side::Player,
+                        outcome: 0,
+                        damage: 0.0,
+                        threat: 0.0,
+                    };
+                    self.damage_proc_callback(aura, proc, Some(spell), &result)
+                }
                 _ => {}
             }
         }
@@ -1116,17 +1209,21 @@ impl<A: Agent> Fight<A> {
                     AuraBehavior::SulfurasProc if dealt => {
                         self.sulfuras_callback(aura, spell, result)
                     }
+                    AuraBehavior::Thunderfury if dealt => {
+                        self.thunderfury_callback(aura, spell, result)
+                    }
 
                     AuraBehavior::DragonbreathChili if dealt => {
                         self.chili_callback(aura, spell, result)
                     }
                     AuraBehavior::SpellDataDamageProc(proc)
-                        if dealt != self.damage_procs[proc].struck =>
+                        if dealt != self.damage_procs[proc].struck
+                            && !self.damage_procs[proc].casts =>
                     {
                         self.damage_proc_callback(aura, proc, Some(spell), result)
                     }
                     AuraBehavior::HealProc(proc) if dealt => {
-                        self.heal_proc_callback(aura, proc, spell, result)
+                        self.heal_proc_callback(aura, proc, Some(spell), result)
                     }
                     AuraBehavior::HealthRageProc(proc) if dealt => {
                         self.health_rage_proc_callback(aura, proc, spell, result)
@@ -1139,17 +1236,23 @@ impl<A: Agent> Fight<A> {
                     {
                         self.spell_stat_proc_callback(aura, proc, Some(spell), Some(result))
                     }
+                    // The Goblin Sapper Charge's hit on its thrower, heard as a hit taken.
+                    AuraBehavior::SpellDataStatProc(proc)
+                        if !dealt && self.spell_stat_procs[proc].taken =>
+                    {
+                        self.spell_stat_proc_callback(aura, proc, Some(spell), Some(result))
+                    }
                     AuraBehavior::StatProc(proc) if dealt => {
                         // Go AttachProcTriggerCallback: landed hits the manager hears, its roll
                         // under the trigger's name, then the handler a batch window later.
                         if result.outcome & super::OUTCOME_LANDED == 0 {
                             continue;
                         }
-                        let Some(chance) = self.stat_procs[proc].0[spell] else {
+                        let Some(chance) = self.stat_procs[proc].chances[spell] else {
                             continue;
                         };
                         // Go `Proc(chance, label)`, reading the label in place.
-                        if self.rng.proc(chance, &self.stat_procs[proc].1) {
+                        if self.rng.proc(chance, &self.stat_procs[proc].rng_label) {
                             self.schedule_delayed_proc(aura, spell, *result);
                         }
                     }
@@ -1300,8 +1403,9 @@ impl<A: Agent> Fight<A> {
             Some(spell) => state.trigger_spells[spell],
         };
         if !heard
-            || (state.landed_only && result.outcome & super::OUTCOME_LANDED == 0)
-            || (state.require_damage && result.damage == 0.0)
+            || (!state.casts
+                && ((state.landed_only && result.outcome & super::OUTCOME_LANDED == 0)
+                    || (state.require_damage && result.damage == 0.0)))
         {
             return;
         }
@@ -1469,9 +1573,17 @@ impl<A: Agent> Fight<A> {
             }
             AuraBehavior::EmeraldDragonWhelp => self.whelp_summon(),
             AuraBehavior::SulfurasImmolation => self.sulfuras_immolation_hit(result.attacker),
+            AuraBehavior::Thunderfury => self.thunderfury_handler(result.target),
+            AuraBehavior::ForceReactiveDisk(disk) => {
+                self.cast(disk, Side::Player);
+            }
             AuraBehavior::StatProc(proc) => {
-                let aura = self.stat_procs[proc].2;
+                let (aura, add_stack) =
+                    (self.stat_procs[proc].aura, self.stat_procs[proc].add_stack);
                 self.activate_aura(aura);
+                if add_stack {
+                    self.add_stack(aura);
+                }
             }
             AuraBehavior::HealthRageProc(proc) => self.health_rage_proc_handler(proc),
             AuraBehavior::ArmorDebuffTrigger(proc) => {

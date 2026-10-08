@@ -1,0 +1,333 @@
+{
+  "kind": "item_refusal_survey",
+  "date": "2026-10-08",
+  "scope": "Every item and enchant effect Go registers in code (item_effect_ids and enchant_effect_ids of data/go-tables.json), each worn in its real slot of one production request for each of nine classes, prepared in Rust and run through the coverage gate: which pairs the gate admits and which it refuses, with the code and reason.",
+  "generator": "python3 tools/item_effect_sweep.py survey --output validation/2026-10-08-items-remaining-survey.json",
+  "source_revision": "2d93e423e0303e93dbb16e190d435503248b68f9",
+  "outcomes": {
+    "ran": 1917,
+    "refused": 94
+  },
+  "pairs": 2011,
+  "refused": [
+    {
+      "kind": "item",
+      "id": 4264,
+      "name": "Barbaric Belt",
+      "refusals": {
+        "unrepresented: major cooldown item 4264 has no exported effect": [
+          "warrior",
+          "druid"
+        ]
+      }
+    },
+    {
+      "kind": "item",
+      "id": 6898,
+      "name": "Orb of Soran'ruk",
+      "refusals": {
+        "unrepresented: major cooldown item 6898 has no exported effect": [
+          "warlock"
+        ]
+      }
+    },
+    {
+      "kind": "item",
+      "id": 6972,
+      "name": "Fire Hardened Hauberk",
+      "refusals": {
+        "unrepresented: major cooldown item 6972 has no exported effect": [
+          "warrior"
+        ]
+      }
+    },
+    {
+      "kind": "item",
+      "id": 7133,
+      "name": "Brutal Hauberk",
+      "refusals": {
+        "unrepresented: major cooldown item 7133 has no exported effect": [
+          "warrior"
+        ]
+      }
+    },
+    {
+      "kind": "item",
+      "id": 9449,
+      "name": "Manual Crowd Pummeler",
+      "refusals": {
+        "prepare_fault: Aura Haste already registered!": [
+          "hunter"
+        ]
+      }
+    },
+    {
+      "kind": "item",
+      "id": 13505,
+      "name": "Runeblade of Baron Rivendare",
+      "refusals": {
+        "unrepresented: Cat Form's movement speed shares its category": [
+          "druid"
+        ]
+      }
+    },
+    {
+      "kind": "item",
+      "id": 15107,
+      "name": "Orb of Noh'Orahil",
+      "refusals": {
+        "unrepresented: major cooldown item 15107 has no exported effect": [
+          "warlock"
+        ]
+      }
+    },
+    {
+      "kind": "item",
+      "id": 15108,
+      "name": "Orb of Dar'Orahil",
+      "refusals": {
+        "unrepresented: major cooldown item 15108 has no exported effect": [
+          "warlock"
+        ]
+      }
+    },
+    {
+      "kind": "item",
+      "id": 16768,
+      "name": "Furbolg Medicine Pouch",
+      "refusals": {
+        "unrepresented: major cooldown item 16768 has no exported effect": [
+          "warrior",
+          "mage",
+          "rogue",
+          "hunter",
+          "priest",
+          "paladin",
+          "druid",
+          "shaman",
+          "warlock"
+        ]
+      }
+    },
+    {
+      "kind": "item",
+      "id": 19337,
+      "name": "The Black Book",
+      "refusals": {
+        "unrepresented: major cooldown item 19337 has no exported effect": [
+          "warlock"
+        ]
+      }
+    },
+    {
+      "kind": "item",
+      "id": 19344,
+      "name": "Natural Alignment Crystal",
+      "refusals": {
+        "unrepresented: major cooldown item 19344 has no exported effect": [
+          "shaman"
+        ]
+      }
+    },
+    {
+      "kind": "item",
+      "id": 19951,
+      "name": "Gri'lek's Charm of Might",
+      "refusals": {
+        "unrepresented: major cooldown item 19951 has no exported effect": [
+          "warrior"
+        ]
+      }
+    },
+    {
+      "kind": "item",
+      "id": 19954,
+      "name": "Renataki's Charm of Trickery",
+      "refusals": {
+        "unrepresented: major cooldown item 19954 has no exported effect": [
+          "rogue"
+        ]
+      }
+    },
+    {
+      "kind": "item",
+      "id": 19956,
+      "name": "Wushoolay's Charm of Spirits",
+      "refusals": {
+        "unrepresented: major cooldown item 19956 has no exported effect": [
+          "shaman"
+        ]
+      }
+    },
+    {
+      "kind": "item",
+      "id": 19957,
+      "name": "Hazza'rah's Charm of Destruction",
+      "refusals": {
+        "unrepresented: major cooldown item 19957 has no exported effect": [
+          "warlock"
+        ]
+      }
+    },
+    {
+      "kind": "item",
+      "id": 19959,
+      "name": "Hazza'rah's Charm of Magic",
+      "refusals": {
+        "unrepresented: major cooldown item 19959 has no exported effect": [
+          "mage"
+        ]
+      }
+    },
+    {
+      "kind": "item",
+      "id": 21670,
+      "name": "Badge of the Swarmguard",
+      "refusals": {
+        "unrepresented: major cooldown item 21670 has no exported effect": [
+          "warrior",
+          "mage",
+          "rogue",
+          "hunter",
+          "priest",
+          "paladin",
+          "druid",
+          "shaman",
+          "warlock"
+        ]
+      }
+    },
+    {
+      "kind": "item",
+      "id": 22678,
+      "name": "Talisman of Ascendance",
+      "refusals": {
+        "unrepresented: major cooldown item 22678 has no exported effect": [
+          "warrior",
+          "mage",
+          "rogue",
+          "hunter",
+          "priest",
+          "paladin",
+          "druid",
+          "shaman",
+          "warlock"
+        ]
+      }
+    },
+    {
+      "kind": "item",
+      "id": 23006,
+      "name": "Libram of Light",
+      "refusals": {
+        "item_effect: item 23006 has an effect not prepared yet": [
+          "warrior",
+          "mage",
+          "rogue",
+          "hunter",
+          "priest",
+          "druid",
+          "shaman",
+          "warlock"
+        ]
+      }
+    },
+    {
+      "kind": "item",
+      "id": 23203,
+      "name": "Libram of Fervor",
+      "refusals": {
+        "item_effect: item 23203 has an effect not prepared yet": [
+          "warrior",
+          "mage",
+          "rogue",
+          "hunter",
+          "priest",
+          "druid",
+          "shaman",
+          "warlock"
+        ]
+      }
+    },
+    {
+      "kind": "item",
+      "id": 23206,
+      "name": "Mark of the Champion",
+      "refusals": {
+        "item_effect: item 23206 adds mob type bonus stats, which are not prepared": [
+          "warrior",
+          "mage",
+          "rogue",
+          "hunter",
+          "priest",
+          "paladin",
+          "druid",
+          "shaman",
+          "warlock"
+        ]
+      }
+    },
+    {
+      "kind": "item",
+      "id": 23207,
+      "name": "Mark of the Champion",
+      "refusals": {
+        "item_effect: item 23207 adds mob type bonus stats, which are not prepared": [
+          "warrior",
+          "mage",
+          "rogue",
+          "hunter",
+          "priest",
+          "paladin",
+          "druid",
+          "shaman",
+          "warlock"
+        ]
+      }
+    },
+    {
+      "kind": "item",
+      "id": 23570,
+      "name": "Jom Gabbar",
+      "refusals": {
+        "stat_auras: 10 stat auras exceed the combination limit": [
+          "shaman"
+        ]
+      }
+    },
+    {
+      "kind": "item",
+      "id": 228175,
+      "name": "Libram of Holy Alacrity",
+      "refusals": {
+        "item_effect: item 228175 has an effect not prepared yet": [
+          "warrior",
+          "mage",
+          "rogue",
+          "hunter",
+          "priest",
+          "druid",
+          "shaman",
+          "warlock"
+        ]
+      }
+    },
+    {
+      "kind": "item",
+      "id": 279247,
+      "name": "Steadfast Libram",
+      "refusals": {
+        "item_effect: item 279247 has an effect not prepared yet": [
+          "warrior",
+          "mage",
+          "rogue",
+          "hunter",
+          "priest",
+          "druid",
+          "shaman",
+          "warlock"
+        ]
+      }
+    }
+  ]
+}
