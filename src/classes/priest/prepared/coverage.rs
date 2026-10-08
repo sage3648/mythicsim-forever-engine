@@ -154,10 +154,8 @@ fn limits(prepared: &PreparedV2, _reachable: &[&Spell]) -> Vec<String> {
     reasons
 }
 
-/// The spells that reach a target past the first in Go and not yet in Rust.
+/// The spells that reach a target past the first in Go and not yet in Rust: none. Holy Nova
+/// hits each target in unit index order, as Go's area helper does.
 fn several_targets(_prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
-    crate::engine::coverage::spells_reaching_other_targets(
-        reachable,
-        &[("holy_nova", "hits every target")],
-    )
+    crate::engine::coverage::spells_reaching_other_targets(reachable, &[])
 }
