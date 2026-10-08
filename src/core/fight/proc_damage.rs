@@ -125,6 +125,9 @@ impl ProcDamage {
                 table: HitTable::of(outcome, can_crit)?,
             }),
         };
+        if direct.is_some_and(|direct| direct.average == 0.0 && direct.variance == 0.0) {
+            return Err("a client effect that deals nothing".to_string());
+        }
         if direct.is_none() && (chain.is_some() || area.is_some() || outcome.is_some()) {
             return Err("a damage over time alone has no hit to spread or roll".to_string());
         }
