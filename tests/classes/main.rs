@@ -8,6 +8,7 @@ mod paladin;
 mod priest;
 mod rogue;
 mod rotation_targets;
+mod rotation_values;
 mod shaman;
 mod warlock;
 mod warrior;

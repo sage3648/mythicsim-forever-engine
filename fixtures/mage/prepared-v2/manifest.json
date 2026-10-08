@@ -8220,6 +8220,153 @@
         "file": "protection-warrior-3-targets-masterwork-stormhammer.go-log.txt",
         "sha256": "720d9463305c9b1c22f75e90835ee40e710f49f8d055cd463b218545f106d93e"
       }
+    },
+    {
+      "id": "arcane-mage-aura-is-inactive-reaction-time",
+      "description": "Arcane Mage that casts Arcane Blast while its stacking aura has been down for the reaction time, and a Frostfire Bolt while it has been up that long with four stacks: includeReactionTime reads the aura's active and inactive time",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/arcane-mage-aura-is-inactive-reaction-time.request.json"
+      },
+      "prepared": "arcane-mage-aura-is-inactive-reaction-time.prepared.json",
+      "prepared_sha256": "a18bfe369736247260186bc1c59151afbff907f7aa65078abc8a7f5363722371",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "arcane-mage-aura-is-inactive-reaction-time.go-result.json",
+        "sha256": "164b80c94f2044a020c2e9a3fe11a99e10fe25959038883011f48ec181ba3196"
+      },
+      "go_log": {
+        "file": "arcane-mage-aura-is-inactive-reaction-time.go-log.txt",
+        "sha256": "d821b55bb1db2186b0e6a832a0db244174bbb45829e6645b90b377797cb44afd"
+      }
+    },
+    {
+      "id": "arcane-mage-aura-reaction-time-400ms",
+      "description": "Arcane Mage with a 400ms reaction time whose Arcane Missiles wait for Missile Barrage to have been up that long, and whose Frostfire Bolt waits for it to have been down that long: a proc that gains and fades between rotation looks",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/arcane-mage-aura-reaction-time-400ms.request.json"
+      },
+      "prepared": "arcane-mage-aura-reaction-time-400ms.prepared.json",
+      "prepared_sha256": "2de3ff1ef71f33358e8f358343e34b9d5e77da2983eaa289ff9ea321b6dcb664",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "arcane-mage-aura-reaction-time-400ms.go-result.json",
+        "sha256": "c79798753c277e7f6ca2238f029eae29a536a3c7aee0ed5d62b513f1fe574bd2"
+      },
+      "go_log": {
+        "file": "arcane-mage-aura-reaction-time-400ms.go-log.txt",
+        "sha256": "90634c9754a184581bb30a3bef365e5e5dcdaba36dea9b394f3d471ef02a0440"
+      }
+    },
+    {
+      "id": "affliction-warlock-dot-base-duration",
+      "description": "Affliction Warlock whose Bane of Agony, Corruption and Immolate wait for the fight to outlast the dot's base duration, which Go reads when it builds the rotation",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/affliction-warlock-dot-base-duration.request.json"
+      },
+      "prepared": "affliction-warlock-dot-base-duration.prepared.json",
+      "prepared_sha256": "3b3123f34ba87758a90a21f282404b3635a6d71903413244954d7ea23dbcc862",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "affliction-warlock-dot-base-duration.go-result.json",
+        "sha256": "ec40b5755771cf10e440726d159330996005895b323b3ea0d457865551bc2ab1"
+      },
+      "go_log": {
+        "file": "affliction-warlock-dot-base-duration.go-log.txt",
+        "sha256": "682c774ed850ca570379e989d4dfa5e06ad35ca36dcf91df8bc5a2533e739917"
+      }
+    },
+    {
+      "id": "marksmanship-hunter-predators-armor-dot-base-duration",
+      "description": "Marksmanship Hunter in Predator's Armor whose Serpent Sting waits for the fight to outlast its base duration: Go reads 15 seconds as it builds the rotation, before the five piece bonus adds a tick as the reset activates it",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/marksmanship-hunter-predators-armor-dot-base-duration.request.json"
+      },
+      "prepared": "marksmanship-hunter-predators-armor-dot-base-duration.prepared.json",
+      "prepared_sha256": "e09b53b4384bd0e775cbbc5ac3245a633df22206c08c46281e9eda83e141e680",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "marksmanship-hunter-predators-armor-dot-base-duration.go-result.json",
+        "sha256": "a2d83c23776b1366bfd29baecfc4d371354389c612930d32812409fbab1488fe"
+      },
+      "go_log": {
+        "file": "marksmanship-hunter-predators-armor-dot-base-duration.go-log.txt",
+        "sha256": "9a99fe4fd834d6b11c68dacc3796788d74e81c7152371930d5c21698955ac386"
+      }
+    },
+    {
+      "id": "shadow-priest-3-targets-all-targets-dot",
+      "description": "Shadow Priest against three targets whose dot and aura reads name AllTargets or AllPlayers: Go finds no unit, so the dot values have no value and drop out of their conditions and the aura reads as one nobody has",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/shadow-priest-3-targets-all-targets-dot.request.json"
+      },
+      "prepared": "shadow-priest-3-targets-all-targets-dot.prepared.json",
+      "prepared_sha256": "113aff85b70c65dfbf432e42bf5c23432bf1fcae2813e89f22681edd9aaa8ebb",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "shadow-priest-3-targets-all-targets-dot.go-result.json",
+        "sha256": "9c750bfb291639a21a2d4774c5ff2a01996a67dc7e8c00160969952c4a8bb10d"
+      },
+      "go_log": {
+        "file": "shadow-priest-3-targets-all-targets-dot.go-log.txt",
+        "sha256": "affd73d2260521c5e600b148384953a897ae878139d1bf22c69856d80ecc0fc5"
+      }
+    },
+    {
+      "id": "survival-hunter-weaving-moves",
+      "description": "Survival Hunter that weaves: a prepull move to 20 yards, then moves to 5 yards for Raptor Strike, Mongoose Bite and Strider Kick and back to 12 yards for its shots; the ranged auto stops while it runs and the first melee swing waits for the rotation",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/survival-hunter-weaving-moves.request.json"
+      },
+      "prepared": "survival-hunter-weaving-moves.prepared.json",
+      "prepared_sha256": "b482185924dfd1625f208556fac0f8d1b79d642b58307fe97c1963cab7e8c376",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "survival-hunter-weaving-moves.go-result.json",
+        "sha256": "d8dd5e7bf9e2ef1294edf7345cf166073b09dedbbf162500cdde47fc2b6be555"
+      },
+      "go_log": {
+        "file": "survival-hunter-weaving-moves.go-log.txt",
+        "sha256": "13a95c487bb59e001fd18129817592412129ce49793713f51ebba16a4886e3c2"
+      }
+    },
+    {
+      "id": "marksmanship-hunter-moves",
+      "description": "Marksmanship Hunter that runs out to 30 yards, in to 10 and out to 20 as the fight goes on: its Auto Shot cannot fire while it moves, retries every 500ms and fires at the first look after the move ends, and its Aimed Shot cannot be cast while it runs",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/marksmanship-hunter-moves.request.json"
+      },
+      "prepared": "marksmanship-hunter-moves.prepared.json",
+      "prepared_sha256": "7e3b686a7d0e125517063415c370fb14be158b33721408a35aa2893e3577cd70",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "marksmanship-hunter-moves.go-result.json",
+        "sha256": "e27ca0bf19f9718710eab6c4ff5a898ea8fbe1c423571acb74dedf81045cc607"
+      },
+      "go_log": {
+        "file": "marksmanship-hunter-moves.go-log.txt",
+        "sha256": "23fcb70da7a9b007cc282be32e15ab9954e6c6e3e2350908d25d5b5cb6d8bae4"
+      }
     }
   ]
 }
