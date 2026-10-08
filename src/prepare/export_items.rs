@@ -1646,7 +1646,7 @@ fn proc_tick_outcome(row: &Spell) -> &'static str {
 /// weapon_procs.go `procDamageShape`: the fields of a spell_data_damage_proc effect that the
 /// damage row and the spell registered for it decide, whoever listens: the spell, the row's
 /// direct hit and the table it rolls, the targets of an area or chain, and the damage over time
-/// the row carries. The reason the runtime cannot run the row, phrased for "<item>'s proc ...",
+/// the row carries. The reason the runtime cannot run the row, phrased for "the item's proc ...",
 /// is returned instead where there is one.
 fn proc_damage_shape(
     env: &Environment,

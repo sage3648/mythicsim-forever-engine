@@ -298,7 +298,7 @@ def survey(engine, jobs):
             return list(pool.map(one, pairs))
 
 
-def survey_record(results, revision):
+def survey_record(results, revision, output):
     """The record of a survey: the counts, and each item or enchant with the codes and reasons it is
     refused on, by class."""
     outcomes = Counter("ran" if code == "ran" else "refused" for *_, code, _ in results)
@@ -315,7 +315,7 @@ def survey_record(results, revision):
                  "data/go-tables.json), each worn in its real slot of one production request for each of nine "
                  "classes, prepared in Rust and run through the coverage gate: which pairs the gate admits and "
                  "which it refuses, with the code and reason.",
-        "generator": "python3 tools/item_effect_sweep.py survey --output validation/RECORD.json",
+        "generator": f"python3 tools/item_effect_sweep.py survey --output {output}",
         "source_revision": revision,
         "outcomes": dict(sorted(outcomes.items())),
         "pairs": len(results),
@@ -338,7 +338,7 @@ def main():
         print(f"Wrote {len(written)} variants of {len(rows())} requests to {args.output}")
         return
     results = survey(args.engine, args.jobs)
-    record = survey_record(results, PIN)
+    record = survey_record(results, PIN, args.output)
     args.output.write_text(json.dumps(record, indent=2) + "\n")
     print(f"{record['outcomes']} of {record['pairs']} pairs; {len(record['refused'])} items and enchants refused")
 

@@ -460,7 +460,7 @@ melee hits the player takes and nothing attacks the player, unless the player ta
 packages whose effect reads nothing of their class (Idol of the Moon, Ferocity and Brutality, the librams of Hope,
 Invocation, Infusion, Law, Economy and Sentinel's, and the totems of the Storm and of Thunder): their spell mods
 find spells by class mask alone. Those that read the class agent, Wolfshead Helm, Libram of Light, Libram of
-Fervor, Libram of Holy Alacrity and Steadfast Libram, panic in Go for another class and stay refused. A class replace function on the main hand is supported
+Fervor, Libram of Holy Alacrity and Steadfast Libram, panic in Go for another class and stay refused, as do Manual Crowd Pummeler on a Hunter with a quiver bonus, which panics in Go, and the items Go registers for a mob type bonus or an on-use spell the exporter has no effect for. Jom Gabbar on a build with ten or more stat auras needs more than the 12 bits of combinations, and Runeblade of Baron Rivendare on a Druid shares Cat Form's movement speed category, whose single aura rule takes the item's Unholy Aura down. [The item and enchant survey](../validation/2026-10-08-items-remaining-survey.json) lists every pair that is still refused. A class replace function on the main hand is supported
 only when its class implements it, as Enhancement's weapon sync does; `melee.replace_main_hand_swing`
 then makes Rust react before each main hand swing as Go does, and the class may move the off
 hand swing before returning the swing. With ranged auto attacks the `melee` section adds
