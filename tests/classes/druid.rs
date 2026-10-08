@@ -245,7 +245,10 @@ fn a_weaker_permanent_debuff_leaves_the_roar_to_be_cast() {
         }
     }
     let log = first_fight_log(value);
-    assert!(log.contains("Casting {SpellID: 9898}"), "the bear did not roar");
+    assert!(
+        log.contains("Casting {SpellID: 9898}"),
+        "the bear did not roar"
+    );
 }
 
 /// An aura that stacks weighs its bid by its stacks, which the category reading does not cover.
