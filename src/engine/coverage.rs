@@ -1059,6 +1059,27 @@ pub(crate) fn prepared_coverage(
         }
     }
 
+    // Go applies Power Infusion's multipliers through its aura's exclusive effects, which only
+    // the `power_infusion` effect of each copy of the aura lets the runtime follow.
+    for aura in &player.auras {
+        let bids = aura
+            .exclusive_memberships
+            .iter()
+            .any(|membership| membership.category.starts_with("PowerInfusion"));
+        let described = prepared.effects.iter().any(
+            |effect| matches!(effect, Effect::PowerInfusion { aura: label, .. } if *label == aura.label),
+        );
+        if bids && !described {
+            reasons.push(Refusal::new(
+                "aura_listener_unclaimed",
+                format!(
+                    "player aura {:?} bids in Power Infusion's categories without an effect",
+                    aura.label
+                ),
+            ));
+        }
+    }
+
     // A simulated pet needs a class effect that runs it, which claims the pet by its label.
     for pet in &prepared.pets {
         let claimant = prepared.effects.iter().find(|effect| {
