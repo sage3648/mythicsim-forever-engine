@@ -6,7 +6,7 @@ use serde_json::{json, Map, Value};
 
 use super::buffs::generated::MANA_TIDE_TOTEMS;
 use super::env::Environment;
-use super::sim::UnitId;
+use super::sim::{AuraId, UnitId};
 use super::stats::Stat;
 use super::Refusal;
 
@@ -25,9 +25,10 @@ const DYNAMIC_READ_STATS: [Stat; 6] = [
 
 /// Stats the Rust runtime reads during a fight that a combination carries only when one changes
 /// them: maximum mana, healing power and health, Spirit, the school spell damage stats, the
-/// resistances a spell that hits the player rolls against and the physical damage a physical
-/// spell adds.
-const OPTIONAL_READ_STATS: [Stat; 16] = [
+/// resistances a spell that hits the player rolls against, the physical damage a physical
+/// spell adds, the armor penetration taken off the target's armor and the spell piercing taken
+/// off its resistance.
+const OPTIONAL_READ_STATS: [Stat; 18] = [
     Stat::Mana,
     Stat::HealingPower,
     Stat::Health,
@@ -44,6 +45,8 @@ const OPTIONAL_READ_STATS: [Stat; 16] = [
     Stat::NatureResistance,
     Stat::ShadowResistance,
     Stat::PhysicalDamage,
+    Stat::ArmorPenetration,
+    Stat::SpellPiercing,
 ];
 
 /// Auras of races, items and raid buffs whose gain and expiry change stats through
@@ -121,6 +124,8 @@ pub(crate) fn character_stat_auras(env: &Environment) -> Vec<String> {
             .iter()
             .map(|label| label.to_string()),
     );
+    // classic items_trinkets.go Jom Gabbar's stacking aura.
+    candidates.push("Jom Gabbar".to_string());
     candidates
         .into_iter()
         .filter(|label| env.sim.get_aura(env.player, label).is_some())
@@ -135,12 +140,110 @@ fn stat_map(env: &Environment, unit: UnitId) -> Vec<(&'static str, f64)> {
         .collect()
 }
 
+/// Go `statLayout`: the place of each stat aura in a combination's number. An aura read as
+/// active or not takes one bit; an aura whose stats follow its stacks takes the bits that count
+/// from none to its maximum stacks, and a count past the maximum reads as the maximum, as
+/// `set_stacks` clamps it. A combination of auras without stacks is the mask of its active
+/// auras.
+#[derive(Clone, Debug)]
+pub(crate) struct StatLayout {
+    pub(crate) labels: Vec<String>,
+    /// The maximum stacks of an aura whose stats follow them, else 0.
+    pub(crate) stacks: Vec<i32>,
+    /// The first bit of each aura.
+    pub(crate) offsets: Vec<usize>,
+    /// The bits all the auras take.
+    pub(crate) bits: usize,
+}
+
+impl StatLayout {
+    /// Go `newStatLayout`: finds the stat auras whose stats follow their stacks
+    /// (`MakeStackingAura`: each stack adds the same bonus) by activating each at every stack
+    /// count in a reset simulation of its own. An aura with stacks whose stats do not change with
+    /// them, as one that counts charges, is read as active or not.
+    pub(crate) fn new(env: &Environment, labels: Vec<String>) -> StatLayout {
+        let mut layout = StatLayout {
+            labels,
+            stacks: Vec::new(),
+            offsets: Vec::new(),
+            bits: 0,
+        };
+        let probe = env.fresh();
+        for label in layout.labels.clone() {
+            let most = probe
+                .sim
+                .get_aura(probe.player, &label)
+                .map_or(0, |aura| probe.sim.aura(aura).max_stacks);
+            let mut stacks = 0;
+            if most > 0 {
+                let mut first: Option<Vec<(&'static str, f64)>> = None;
+                for level in 1..=most {
+                    let mut fresh = env.fresh();
+                    let aura = fresh
+                        .sim
+                        .get_aura(fresh.player, &label)
+                        .expect("the aura exists");
+                    apply_level(&mut fresh, aura, level, true);
+                    let values = stat_map(&fresh, fresh.player);
+                    match &first {
+                        None => first = Some(values),
+                        Some(first) if *first != values => stacks = most,
+                        Some(_) => {}
+                    }
+                }
+            }
+            layout.stacks.push(stacks);
+            layout.offsets.push(layout.bits);
+            layout.bits += layout.width(layout.stacks.len() - 1);
+        }
+        layout
+    }
+
+    /// The bits aura j takes in a combination's number.
+    fn width(&self, j: usize) -> usize {
+        if self.stacks[j] > 0 {
+            (i32::BITS - self.stacks[j].leading_zeros()) as usize
+        } else {
+            1
+        }
+    }
+
+    /// The level combination `mask` gives aura j: 1 for an active aura without stacks, else its
+    /// stacks.
+    pub(crate) fn level(&self, mask: usize, j: usize) -> i32 {
+        let digit = (mask >> self.offsets[j] & ((1 << self.width(j)) - 1)) as i32;
+        if self.stacks[j] > 0 {
+            digit.min(self.stacks[j])
+        } else {
+            digit
+        }
+    }
+}
+
+/// Go `applyStatLevel`: activates a stat aura and, for one that stacks, adds a stack at a time up
+/// to the level, as the procs that stack it do.
+pub(crate) fn apply_level(env: &mut Environment, aura: AuraId, level: i32, stacking: bool) {
+    if !env.sim.aura(aura).active {
+        env.sim.activate(aura);
+    }
+    if stacking {
+        while env.sim.aura(aura).stacks < level {
+            env.sim.add_stack(aura);
+        }
+    }
+}
+
+/// The layout of the player's stat auras.
+pub(crate) fn stat_layout(env: &Environment) -> StatLayout {
+    StatLayout::new(env, character_stat_auras(env))
+}
+
 /// Go `statAurasEffect`: each combination of the labels' auras is read from a separate reset
-/// simulation with exactly those auras active: combination i has aura j active when bit j is set,
-/// and an aura active after the reset, as a druid's starting form, is deactivated when its bit is
-/// clear.
+/// simulation with exactly those auras active: combination i has aura j at the level the layout
+/// reads from i, and an aura active after the reset, as a druid's starting form, is deactivated
+/// at level zero.
 pub(crate) fn stat_auras_effect(env: &Environment) -> Result<Option<Value>, Refusal> {
-    stat_auras_effect_reading(env, None)
+    stat_auras_effect_reading(env, &stat_layout(env), None)
 }
 
 /// Go's `comboReader`: reads more of a combination's reset simulation, which the stat auras
@@ -153,13 +256,14 @@ pub(crate) type ComboReader<'a> =
 /// same simulations (`enemy::EnemyCombos::read`).
 pub(crate) fn stat_auras_effect_reading(
     env: &Environment,
+    layout: &StatLayout,
     mut reader: Option<ComboReader>,
 ) -> Result<Option<Value>, Refusal> {
-    let labels = character_stat_auras(env);
+    let labels = &layout.labels;
     if labels.is_empty() {
         return Ok(None);
     }
-    if labels.len() > 10 {
+    if layout.bits > 12 {
         return Err(Refusal::new(
             "stat_auras",
             format!("{} stat auras exceed the combination limit", labels.len()),
@@ -172,24 +276,24 @@ pub(crate) fn stat_auras_effect_reading(
     let mut changed_spirit_regen = false;
     let mut changed: Vec<&'static str> = Vec::new();
     let mut base: Vec<(&'static str, f64)> = Vec::new();
-    for mask in 0..(1usize << labels.len()) {
+    for mask in 0..(1usize << layout.bits) {
         let mut fresh = env.fresh();
         let player = fresh.player;
-        // An aura up from the reset, such as the default stance, is down where its bit is clear.
-        for (bit, label) in labels.iter().enumerate() {
+        // An aura up from the reset, such as the default stance, is down at level zero.
+        for (j, label) in labels.iter().enumerate() {
             let aura = fresh.sim.get_aura(player, label).expect("the aura exists");
-            if mask & (1 << bit) == 0 && fresh.sim.aura(aura).active {
+            if layout.level(mask, j) == 0 && fresh.sim.aura(aura).active {
                 fresh.sim.deactivate(aura);
             }
         }
         let mut exact = true;
-        for (bit, label) in labels.iter().enumerate() {
+        for (j, label) in labels.iter().enumerate() {
             let aura = fresh.sim.get_aura(player, label).expect("the aura exists");
-            let want = mask & (1 << bit) != 0;
+            let level = layout.level(mask, j);
             let active = fresh.sim.aura(aura).active;
-            if want && !active {
-                fresh.sim.activate(aura);
-            } else if !want && active {
+            if level > 0 {
+                apply_level(&mut fresh, aura, level, layout.stacks[j] > 0);
+            } else if active {
                 // An activation switched this aura on again: `set_stat_auras` would leave it up.
                 exact = false;
                 fresh.sim.deactivate(aura);
@@ -252,7 +356,10 @@ pub(crate) fn stat_auras_effect_reading(
     }
     let mut effect = json!({"kind": "stat_auras", "auras": labels,
         "combos": combos, "changed": changed});
-    let raw = raw_mp5_bonuses(&labels, &raw_mp5)?;
+    if layout.stacks.iter().any(|&stacks| stacks > 0) {
+        effect["stacks"] = json!(layout.stacks);
+    }
+    let raw = raw_mp5_bonuses(layout, &raw_mp5)?;
     if !raw.is_empty() {
         effect["raw_mp5"] = json!(raw);
     }
@@ -271,19 +378,20 @@ const EXTERNAL_MANA_TIDE_LABEL: &str = "Mana Tide Totem (External)";
 /// simulation checks that its aura adds exactly its value; any other inexact MP5 bonus is
 /// refused.
 fn raw_mp5_bonuses(
-    labels: &[String],
+    layout: &StatLayout,
     raw: &[f64],
 ) -> Result<std::collections::BTreeMap<String, f64>, Refusal> {
     let mut bonuses = std::collections::BTreeMap::new();
-    for (bit, label) in labels.iter().enumerate() {
-        let delta = raw[1 << bit] - raw[0];
+    for (j, label) in layout.labels.iter().enumerate() {
+        let first = raw[1 << layout.offsets[j]];
+        let delta = first - raw[0];
         if delta == 0.0
             || (delta * 1024.0 == (delta * 1024.0).trunc() && (raw[0] + delta) - delta == raw[0])
         {
             continue;
         }
         let value = MANA_TIDE_TOTEMS.value(0);
-        if label == EXTERNAL_MANA_TIDE_LABEL && raw[0] + value == raw[1 << bit] {
+        if label == EXTERNAL_MANA_TIDE_LABEL && raw[0] + value == first {
             bonuses.insert(label.clone(), value);
             continue;
         }

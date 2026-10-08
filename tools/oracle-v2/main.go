@@ -1224,6 +1224,15 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 			}
 		}
 	}
+	// classic items_trinkets.go Jom Gabbar: its spell (29602) activates an aura of up to ten stacks, each
+	// 65 attack power and ranged attack power. Gaining the aura adds a stack at once and another every
+	// two seconds, ten in all (core.StartPeriodicAction with TickImmediately), Go literals.
+	if aura := character.GetAura("Jom Gabbar"); aura != nil {
+		effects = append(effects, map[string]any{
+			"kind": "stacking_on_use", "spell_id": aura.ActionID.SpellID, "aura": aura.Label,
+			"period_ns": nanos(2 * time.Second), "ticks": int32(10),
+		})
+	}
 	consumes := request.Raid.Parties[0].Players[0].Consumables
 	// Major cooldown items, then the potions, conjured items and Diamond Flasks a rotation casts
 	// itself, which Go removed from the major cooldowns.
@@ -1235,7 +1244,9 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 	}
 	for _, spell := range character.Spellbook {
 		sapper := spell.ActionID == core.GoblinSapperActionID
-		if spell.ActionID.ItemID != 0 && !cooldowns[spell] && (spell.Flags.Matches(core.SpellFlagPotion|core.SpellFlagConjured) || sapper || spell.ActionID.ItemID == diamondFlaskItem) {
+		// An on-use item the rotation names is no major cooldown either: Go removes it from them, and
+		// its spell keeps the flag.
+		if spell.ActionID.ItemID != 0 && !cooldowns[spell] && (spell.Flags.Matches(core.SpellFlagPotion|core.SpellFlagConjured|core.SpellFlagMCD) || sapper || spell.ActionID.ItemID == diamondFlaskItem) {
 			items = append(items, spell)
 		}
 	}
@@ -1719,12 +1730,12 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	// A tank's swing is read under every stat aura combination too, from the same simulations.
 	var enemyReader comboReader
 	var combos *enemyCombos
-	auraLabels := characterStatAuras(character, class, agent)
-	if tanking && len(auraLabels) > 0 {
-		combos = newEnemyCombos(request, auraLabels, character)
+	layout := newStatLayout(request, characterStatAuras(character, class, agent))
+	if tanking && len(layout.labels) > 0 {
+		combos = newEnemyCombos(request, layout, character)
 		enemyReader = combos.read
 	}
-	if statAuras := statAurasEffect(request, auraLabels, enemyReader); statAuras != nil {
+	if statAuras := statAurasEffect(request, layout, enemyReader); statAuras != nil {
 		effects = append(effects, statAuras)
 		statAuraLabels = statAuras["auras"].([]string)
 	}
@@ -1757,6 +1768,10 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 		{&character.Unit, "player", "Freezing Band", "acts only on melee hits the player takes"},
 	} {
 		if inert.label == core.ChanceOfDeathAuraLabel && playerTakesDamage(character, target) {
+			continue
+		}
+		// A tank's Freezing Band is a proc of the hits it takes (hitTakenItemListeners).
+		if inert.label == "Freezing Band" && tanking {
 			continue
 		}
 		// attack.go applyParryHaste: a parry pulls the parrying unit's next swing in, which
@@ -1940,14 +1955,9 @@ func dismissedAtReset(request *proto.RaidSimRequest, label string) bool {
 	return strings.Contains(logs.String(), "["+label+"] Pet dismissed")
 }
 
-// Item procs (common/forever/stat_bonus_procs_auto_gen.go) whose listener, decoded by spelldata's
-// ProcTrigger from the trigger row, hears only melee hits. Melee autos need auto attacks, which are
-// unrepresented, so the listener never acts unless a spell with a melee special mask exists.
-var meleeItemProcs = []struct {
-	label   string
-	trigger int32
-}{{"Storm Gauntlets", 16615}, {"Orb of Fire", 16982}}
-
+// Item procs (common/forever/stat_bonus_procs_auto_gen.go, spellDataDamageProcs) whose listener,
+// decoded by spelldata's ProcTrigger from the trigger row, hears only melee hits it deals. The
+// listener never acts unless a spell with a melee special mask exists.
 func meleeItemListeners(character *core.Character) []map[string]any {
 	for _, spell := range character.Spellbook {
 		if spell.ProcMask.Matches(core.ProcMaskMeleeSpecial) {
@@ -1955,12 +1965,14 @@ func meleeItemListeners(character *core.Character) []map[string]any {
 		}
 	}
 	effects := []map[string]any{}
-	for _, item := range meleeItemProcs {
+	for _, item := range spellDataDamageProcs {
 		if character.GetAura(item.label) == nil {
 			continue
 		}
-		listener := spelldata.ProcTrigger(character, spelldata.Find(item.trigger), nil)
-		if listener.ProcMask == core.ProcMaskUnknown || listener.ProcMask&^core.ProcMaskMelee != 0 {
+		trigger := spelldata.Find(item.trigger)
+		listener := spelldata.ProcTrigger(character, trigger, nil, spelldata.ItemProcChance(trigger))
+		if listener.Callback == core.CallbackOnSpellHitTaken || listener.ProcMask == core.ProcMaskUnknown ||
+			listener.ProcMask&^core.ProcMaskMelee != 0 {
 			continue
 		}
 		effects = append(effects, map[string]any{
@@ -1980,9 +1992,18 @@ func meleeItemListeners(character *core.Character) []map[string]any {
 var hitTakenItemProcs = []struct {
 	label           string
 	trigger, absorb int32
-}{{"Essence of the Pure Flame", 0, 0}, {"The Lion Horn of Stormwind", 0, 0}, {"Uther's Strength", 8397, 10368},
+}{{"Essence of the Pure Flame", 0, 0}, {"Force Reactive Disk", 0, 0}, {"Naglering", 0, 0}, {"Drillborer Disk", 0, 0}, {"Razor Gauntlets", 0, 0},
+	{"The Lion Horn of Stormwind", 0, 0}, {"Uther's Strength", 8397, 10368},
 	{"Enchant Chest - Minor Absorption", 7445, 7423}, {"Enchant Chest - Lesser Absorption", 7446, 7447},
 	{"Enchant Chest - Absorption", 1249072, 1249073}}
+
+// The damage shields of common/classic/items_trinkets.go and items_armor.go (newDamageShieldEffect):
+// the spell each casts on its attacker and the amount, which neither crits nor partially resists.
+var damageShieldItems = map[string]struct {
+	spell  int32
+	damage float64
+}{"Essence of the Pure Flame": {23266, 13}, "Naglering": {15438, 3}, "Drillborer Disk": {15438, 3},
+	"Razor Gauntlets": {1302193, 7}}
 
 func hitTakenItemListeners(character *core.Character, tanking bool, unrepresented *[]string) []map[string]any {
 	lifecycle := map[string]bool{"on_init": true, "on_reset": true, "on_done_iteration": true, "on_gain": true,
@@ -2003,11 +2024,19 @@ func hitTakenItemListeners(character *core.Character, tanking bool, unrepresente
 			heard = heard && len(names) == 1 && names[0] == "on_spell_hit_taken" &&
 				listener.ProcMask != core.ProcMaskUnknown && listener.ProcMask&^core.ProcMaskMelee == 0
 		}
-		if heard && tanking && item.label == "Essence of the Pure Flame" {
-			if effect := damageShieldProc(character, aura, 23266, 13); effect != nil {
+		if shield, ok := damageShieldItems[item.label]; heard && tanking && ok {
+			if effect := damageShieldProc(character, aura, shield.spell, shield.damage); effect != nil {
 				effects = append(effects, effect)
 			} else {
 				*unrepresented = append(*unrepresented, fmt.Sprintf("%s's proc is not a damage shield", item.label))
+			}
+			continue
+		}
+		if heard && tanking && item.label == "Force Reactive Disk" {
+			if effect := forceReactiveDiskProc(character, aura); effect != nil {
+				effects = append(effects, effect)
+			} else {
+				*unrepresented = append(*unrepresented, fmt.Sprintf("%s's proc is not a block shield", item.label))
 			}
 			continue
 		}
@@ -2033,7 +2062,54 @@ func hitTakenItemListeners(character *core.Character, tanking bool, unrepresente
 			})
 		}
 	}
+	if aura := character.GetAura("Freezing Band"); aura != nil && tanking {
+		if effect := freezingBandProc(character, aura); effect != nil {
+			effects = append(effects, effect)
+		} else {
+			*unrepresented = append(*unrepresented, "Freezing Band's proc is not a rolled magic hit on the attacker")
+		}
+	}
 	return effects
+}
+
+// classic items_store_gaps.go Freezing Band, through shared.NewProcDamageEffect: a listener on the
+// landed melee hits the wearer takes that dealt damage, at 1%, that casts a magic hit of Frost
+// rolled between 50 and 50 on the attacker at once (procDamageHandler), which can crit. Only that
+// shape is described, or nil.
+func freezingBandProc(character *core.Character, aura *core.Aura) map[string]any {
+	spell := -1
+	for i, registered := range character.Spellbook {
+		if registered.ActionID == (core.ActionID{SpellID: 18798}) {
+			spell = i
+		}
+	}
+	if spell < 0 || aura.Dpm != nil || aura.Icd != nil || character.Spellbook[spell].DefenseType != core.DefenseTypeMagic ||
+		aura.OnSpellHitDealt != nil || aura.OnSpellHitTaken == nil || aura.OnPeriodicDamageDealt != nil {
+		return nil
+	}
+	return map[string]any{
+		"kind": "spell_data_damage_proc", "trigger_aura": aura.Label, "trigger_spells": []int{}, "struck": true,
+		"landed_only": true, "require_damage": true, "proc_chance": 0.01, "spell": spell,
+		"average": 0.0, "variance": 0.0, "roll": []float64{50, 50}, "can_crit": true,
+	}
+}
+
+// classic items_armor.go Force Reactive Disk: a listener on the melee hits the wearer takes that it
+// blocks, behind a one second cooldown, whose handler a spell batch window later casts a nature spell
+// on the wearer that deals 25 to every target on the magic table with a crit. Only that shape is
+// described, or nil.
+func forceReactiveDiskProc(character *core.Character, aura *core.Aura) map[string]any {
+	spell := -1
+	for i, registered := range character.Spellbook {
+		if registered.ActionID == (core.ActionID{ItemID: 18168}) {
+			spell = i
+		}
+	}
+	if spell < 0 || aura.Dpm != nil || aura.Icd == nil || aura.Icd.Duration != time.Second ||
+		aura.OnSpellHitTaken == nil || aura.OnSpellHitDealt != nil || character.Spellbook[spell].DefenseType != core.DefenseTypeMagic {
+		return nil
+	}
+	return map[string]any{"kind": "force_reactive_disk", "trigger_aura": aura.Label, "spell": spell, "damage": 25.0}
 }
 
 // classic items_store_gaps.go The Lion Horn of Stormwind, through shared.NewProcStatBonusEffect:

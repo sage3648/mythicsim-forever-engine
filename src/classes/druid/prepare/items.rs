@@ -15,59 +15,72 @@ use crate::prepare::stats::{Stat, Stats};
 
 use super::{masks, Druid};
 
+/// The idols the druid package registers whose effect needs nothing of a druid (Go
+/// `core.NewItemEffect` over `agent.GetCharacter()`): Idol of the Moon (23197), Idol of Ferocity
+/// (22397) and Idol of Brutality (23198). A character of another class wears them as well, and
+/// their spell mods find spells by class mask alone. Answers whether the item is one of them.
+pub(crate) fn apply_agentless_idol_effect(sim: &mut Sim, unit: UnitId, item: i32) -> bool {
+    match item {
+        23197 => {
+            // Idol of the Moon.
+            let aura = sim.register_aura(
+                unit,
+                AuraConfig {
+                    label: "Improved Moonfire".to_string(),
+                    ..AuraConfig::default()
+                },
+            );
+            sim.attach_spell_mod(
+                aura,
+                SpellModConfig {
+                    class_mask: masks::MOONFIRE,
+                    kind: SpellModType::BaseDamageFlat,
+                    float_value: 33.0,
+                    ..SpellModConfig::default()
+                },
+            );
+            sim.make_permanent(aura);
+            true
+        }
+        22397 => {
+            // Idol of Ferocity: reduces the energy cost of Claw and Rake by 2.
+            sim.add_static_mod(
+                unit,
+                SpellModConfig {
+                    class_mask: masks::CLAW | masks::RAKE,
+                    kind: SpellModType::PowerCostFlat,
+                    int_value: -2,
+                    ..SpellModConfig::default()
+                },
+            );
+            true
+        }
+        23198 => {
+            // Idol of Brutality: reduces the rage cost of Maul, Swipe and Primal Bite by 2.
+            sim.add_static_mod(
+                unit,
+                SpellModConfig {
+                    class_mask: masks::MAUL | masks::SWIPE | masks::PRIMAL_BITE,
+                    kind: SpellModType::PowerCostFlat,
+                    int_value: -2,
+                    ..SpellModConfig::default()
+                },
+            );
+            true
+        }
+        _ => false,
+    }
+}
+
 impl Druid {
-    /// The `core.NewItemEffect` registrations of Go's druid package: Idol of the Moon (23197),
-    /// Idol of Ferocity (22397), Idol of Brutality (23198) and Wolfshead Helm (8345). Answers
-    /// whether the class registers an effect for the item.
+    /// The `core.NewItemEffect` registrations of Go's druid package: the idols above and Wolfshead
+    /// Helm (8345), which reads the druid agent. Answers whether the class registers an effect for
+    /// the item.
     pub(super) fn apply_idol_effect(&mut self, sim: &mut Sim, unit: UnitId, item: i32) -> bool {
+        if apply_agentless_idol_effect(sim, unit, item) {
+            return true;
+        }
         match item {
-            23197 => {
-                // Idol of the Moon.
-                let aura = sim.register_aura(
-                    unit,
-                    AuraConfig {
-                        label: "Improved Moonfire".to_string(),
-                        ..AuraConfig::default()
-                    },
-                );
-                sim.attach_spell_mod(
-                    aura,
-                    SpellModConfig {
-                        class_mask: masks::MOONFIRE,
-                        kind: SpellModType::BaseDamageFlat,
-                        float_value: 33.0,
-                        ..SpellModConfig::default()
-                    },
-                );
-                sim.make_permanent(aura);
-                true
-            }
-            22397 => {
-                // Idol of Ferocity: reduces the energy cost of Claw and Rake by 2.
-                sim.add_static_mod(
-                    unit,
-                    SpellModConfig {
-                        class_mask: masks::CLAW | masks::RAKE,
-                        kind: SpellModType::PowerCostFlat,
-                        int_value: -2,
-                        ..SpellModConfig::default()
-                    },
-                );
-                true
-            }
-            23198 => {
-                // Idol of Brutality: reduces the rage cost of Maul, Swipe and Primal Bite by 2.
-                sim.add_static_mod(
-                    unit,
-                    SpellModConfig {
-                        class_mask: masks::MAUL | masks::SWIPE | masks::PRIMAL_BITE,
-                        kind: SpellModType::PowerCostFlat,
-                        int_value: -2,
-                        ..SpellModConfig::default()
-                    },
-                );
-                true
-            }
             8345 => {
                 // Wolfshead Helm: the bonus belongs to Shifting Power and Enrage.
                 let gain = Rc::clone(&self.st);

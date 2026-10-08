@@ -7,8 +7,8 @@ use crate::contracts::prepared_v2::Effect;
 
 use super::{
     damage::{
-        OUTCOME_BLOCK, OUTCOME_CRIT, OUTCOME_DODGE, OUTCOME_GLANCE, OUTCOME_HIT, OUTCOME_MISS,
-        OUTCOME_PARRY,
+        OUTCOME_BLOCK, OUTCOME_CRIT, OUTCOME_CRUSH, OUTCOME_DODGE, OUTCOME_GLANCE, OUTCOME_HIT,
+        OUTCOME_MISS, OUTCOME_PARRY,
     },
     healing::Healing,
     Agent, AuraRef, BuildError, Fight, Side, SpellId, SpellResult,
@@ -18,6 +18,8 @@ use super::{
 #[derive(Clone, Debug)]
 pub(crate) struct HealProc {
     trigger_spells: Vec<bool>,
+    /// A "when struck" proc, on the melee hits the player takes.
+    pub(crate) struck: bool,
     /// Go `ProcTrigger.Outcome`; zero hears every outcome.
     outcome: u16,
     require_damage: bool,
@@ -46,6 +48,7 @@ fn outcome_bit(name: &str) -> Result<u16, BuildError> {
         "Parry" => OUTCOME_PARRY,
         "Block" => OUTCOME_BLOCK,
         "Glance" => OUTCOME_GLANCE,
+        "Crush" => OUTCOME_CRUSH,
         other => return Err(format!("heal proc outcome {other} is unsupported")),
     })
 }
@@ -117,6 +120,7 @@ impl<A: Agent> Fight<A> {
         for effect in effects {
             if let Effect::SpellDataHealProc {
                 trigger_spells,
+                struck,
                 outcome,
                 require_damage,
                 proc_chance,
@@ -136,6 +140,7 @@ impl<A: Agent> Fight<A> {
                 }
                 self.heal_procs.push(HealProc {
                     trigger_spells: mask,
+                    struck: *struck,
                     outcome: bits,
                     require_damage: *require_damage,
                     chance: *proc_chance,
@@ -152,11 +157,16 @@ impl<A: Agent> Fight<A> {
         &mut self,
         aura: AuraRef,
         proc: usize,
-        spell: SpellId,
+        spell: Option<SpellId>,
         result: &SpellResult,
     ) {
         let state = &self.heal_procs[proc];
-        if !state.trigger_spells[spell]
+        // A struck proc hears the target's swing, which is no spell of the player's.
+        let heard = match spell {
+            Some(spell) => state.trigger_spells[spell],
+            None => state.struck,
+        };
+        if !heard
             || (state.outcome != 0 && result.outcome & state.outcome == 0)
             || (state.require_damage && result.damage == 0.0)
         {

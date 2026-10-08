@@ -193,8 +193,30 @@ impl<A: Agent> Fight<A> {
         state.snapshot_base = snapshot;
     }
 
-    /// Go `newDot` OnGain: the first tick is one period away.
+    /// The dots that share an aura with this one, which Go registers once for each label: the
+    /// aura's gain and expiry run every dot's callbacks, in the order the dots were created.
+    fn dot_siblings(&self, dot: DotId) -> Vec<DotId> {
+        self.dot_siblings.get(dot).cloned().unwrap_or_default()
+    }
+
+    /// Go `newDot` OnGain, for the dot and each dot sharing its aura.
     pub(crate) fn dot_on_gain(&mut self, dot: DotId) {
+        self.dot_gain(dot);
+        for sibling in self.dot_siblings(dot) {
+            self.dot_gain(sibling);
+        }
+    }
+
+    /// Go `newDot` OnExpire, for the dot and each dot sharing its aura.
+    pub(crate) fn dot_on_expire(&mut self, dot: DotId) {
+        self.dot_expire(dot);
+        for sibling in self.dot_siblings(dot) {
+            self.dot_expire(sibling);
+        }
+    }
+
+    /// One dot's `newDot` OnGain: the first tick is one period away.
+    fn dot_gain(&mut self, dot: DotId) {
         if let SpellBehavior::Class(behavior) = self.spells[self.dots[dot].spell].behavior {
             A::on_dot_gain(self, dot, behavior);
         }
@@ -208,8 +230,8 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    /// Go `newDot` OnExpire: a tick due now runs first, then the channel ends.
-    pub(crate) fn dot_on_expire(&mut self, dot: DotId) {
+    /// One dot's `newDot` OnExpire: a tick due now runs first, then the channel ends.
+    fn dot_expire(&mut self, dot: DotId) {
         if let SpellBehavior::Class(behavior) = self.spells[self.dots[dot].spell].behavior {
             A::on_dot_expire(self, dot, behavior);
         }

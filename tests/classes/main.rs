@@ -3,6 +3,7 @@
 mod druid;
 mod external_cooldown;
 mod hunter;
+mod item_effects;
 mod mage;
 mod paladin;
 mod priest;

@@ -571,16 +571,17 @@ impl WarriorAgent {
                     let index = fight.trackers[Side::Target.index()]
                         .find(aura)
                         .ok_or_else(|| format!("target aura {aura} is not registered"))?;
+                    let aura = AuraRef {
+                        side: Side::Target,
+                        index,
+                    };
                     fight.agent.thunder_clap = Some(ThunderClap {
-                        aura: AuraRef {
-                            side: Side::Target,
-                            index,
-                        },
+                        aura,
                         base_damage: *base_damage,
                         attack_power_share: *attack_power_share,
                         max_targets: *max_targets as usize,
-                        bid: *bid,
                     });
+                    fight.register_enemy_slow(aura, thunder_clap::slow(*bid));
                 }
                 Effect::DemoralizingShout { aura, .. } => {
                     let index = fight.trackers[Side::Target.index()]
@@ -1472,7 +1473,7 @@ impl Agent for WarriorAgent {
         }
     }
 
-    fn on_expire(fight: &mut Fight<Self>, aura: AuraRef, kind: WarriorAura) {
+    fn on_expire(fight: &mut Fight<Self>, _aura: AuraRef, kind: WarriorAura) {
         match kind {
             WarriorAura::LastStand => fight
                 .agent
@@ -1486,22 +1487,11 @@ impl Agent for WarriorAgent {
             WarriorAura::BerserkerRage => berserker_rage::on_expire(fight),
             WarriorAura::Dash => charge::on_expire(fight, fight.agent.charge.expect("bound")),
             WarriorAura::Queue(_) => fight.agent.queue.current = None,
-            WarriorAura::ThunderClap => {
-                let params = fight.agent.thunder_clap.expect("Thunder Clap is bound");
-                thunder_clap::on_expire(fight, aura, params);
-            }
             WarriorAura::Enrage => {
                 let params = fight.agent.enrage.expect("Enrage is bound");
                 fight.deactivate_mod(params.damage_mod);
             }
             _ => {}
-        }
-    }
-
-    fn on_exclusive_gain(fight: &mut Fight<Self>, aura: AuraRef, kind: WarriorAura) {
-        if kind == WarriorAura::ThunderClap {
-            let params = fight.agent.thunder_clap.expect("Thunder Clap is bound");
-            thunder_clap::on_gain(fight, aura, params);
         }
     }
 

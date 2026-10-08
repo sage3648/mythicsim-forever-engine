@@ -4,7 +4,7 @@
   "engine_revision": "2d93e423e0303e93dbb16e190d435503248b68f9",
   "client_build": "1.60.1.70235",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "7491a80d9f4326601df15f440ea82197a324ab85ebef89d6975a30e770cad343",
+  "exporter_sha256": "6cf1574813f060a5aadff4c2a686ff6982c4ac882112457a96ff8f9ff1a1777a",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -9038,6 +9038,1455 @@
       "go_log": {
         "file": "feral-druid-demoralizing-roar-5-targets-over-roar-debuff.go-log.txt",
         "sha256": "cd7d8bfff8f11943dd7fdf9d1ba96327e2b8e9b8a6ea751facf612115e6ee4d2"
+      }
+    },
+    {
+      "id": "warrior-bonereavers-edge",
+      "description": "Production Fury Warrior with Bonereaver's Edge (17076) in the main hand in place of Ironfoe: two procs a minute of the main hand's speed activate its armor penetration aura and add a stack, up to 3 stacks of 700 each, so the stat auras number the player's armor penetration by stack (CreateWeaponProcTrigger over MakeStackingAura)",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-bonereavers-edge.request.json"
+      },
+      "prepared": "warrior-bonereavers-edge.prepared.json",
+      "prepared_sha256": "21c638f542bd6eb950023a88e86cf053b01d89a233077711b91c6fc3ee22d93a",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-bonereavers-edge.go-result.json",
+        "sha256": "fc40712a87c4cc333dbc2c2fbd6609ce4f578c91c97da1c6e674c6b6a694f342"
+      },
+      "go_log": {
+        "file": "warrior-bonereavers-edge.go-log.txt",
+        "sha256": "aaf003a763cdd68ed354339f18fc5b295027aebb440a5dbd0c92b71f6039fd6f"
+      }
+    },
+    {
+      "id": "protection-paladin-bonereavers-edge",
+      "description": "Production Protection Paladin tanking with Bonereaver's Edge (17076) in the main hand: the stacking armor penetration aura, read by stack among the stat auras the target's swings are rolled under",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-paladin-bonereavers-edge.request.json"
+      },
+      "prepared": "protection-paladin-bonereavers-edge.prepared.json",
+      "prepared_sha256": "ab63695e7c22059110ff83d083d79dd940d79845111b38c71f5092ba3da25a88",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-paladin-bonereavers-edge.go-result.json",
+        "sha256": "1d79298950a0585a91d8ebe7988c299d95477239b79667452723578ca13a7361"
+      },
+      "go_log": {
+        "file": "protection-paladin-bonereavers-edge.go-log.txt",
+        "sha256": "f1ff7ff1fd11541e9eaabc5f72dd88cf5e4fb53677d1ebbe7e7773bf09730334"
+      }
+    },
+    {
+      "id": "survival-hunter-bonereavers-edge",
+      "description": "Production Survival Hunter with Bonereaver's Edge (17076) in the main hand: the stacking armor penetration aura on the hunter, whose pet keeps its own",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/survival-hunter-bonereavers-edge.request.json"
+      },
+      "prepared": "survival-hunter-bonereavers-edge.prepared.json",
+      "prepared_sha256": "e2e6b2ea33ff0f7e6eb7abc613351d2407be4df4a1987a347c4225395253cbb6",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "survival-hunter-bonereavers-edge.go-result.json",
+        "sha256": "c4ec454c95e9f0bfb4ad4a0fa5f850c7299b2c2e2488df7e053e68caf939ff9f"
+      },
+      "go_log": {
+        "file": "survival-hunter-bonereavers-edge.go-log.txt",
+        "sha256": "66a033cfccd0a713c2451ac9ae7c5c37e4af4abffcd829d40471415c1639f061"
+      }
+    },
+    {
+      "id": "combat-rogue-3-targets-bonereavers-edge",
+      "description": "Production Combat Rogue against 3 targets with Bonereaver's Edge (17076) in the main hand: the stacking armor penetration aura beside the off hand's own weapon procs",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/combat-rogue-3-targets-bonereavers-edge.request.json"
+      },
+      "prepared": "combat-rogue-3-targets-bonereavers-edge.prepared.json",
+      "prepared_sha256": "48580c0b6c904fb0a16bf1890569d285d6c4ed1d8a18fc8e54de3fb843c39146",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "combat-rogue-3-targets-bonereavers-edge.go-result.json",
+        "sha256": "0d52d07ba801e9fda55aa9e25e7dcb7e425e59ba5fa42c7a887576a077570a93"
+      },
+      "go_log": {
+        "file": "combat-rogue-3-targets-bonereavers-edge.go-log.txt",
+        "sha256": "f1bbfd0ea956bb9b6a421bcd4935fd74b7220d8cb3d4e2430effa1907b79a254"
+      }
+    },
+    {
+      "id": "warrior-thunderfury",
+      "description": "Production Fury Warrior with Thunderfury, Blessed Blade of the Windseeker (19019) in the main hand: 6 procs a minute cast a nature hit of 300 that slows the target with Cyclone and a bounce that lowers the nature resistance of up to five targets by 25, a spell batch window later",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-thunderfury.request.json"
+      },
+      "prepared": "warrior-thunderfury.prepared.json",
+      "prepared_sha256": "9e2d0027d27e2fc5782dfedb0b7f327c12c9d6cd2dfc90b608261052bc7a5b21",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-thunderfury.go-result.json",
+        "sha256": "d823a4973507f4c1cbc98b58168cacbc2dbba6bbc7adca51326ee2d77e85cdb3"
+      },
+      "go_log": {
+        "file": "warrior-thunderfury.go-log.txt",
+        "sha256": "8a700ac06193ecd8e1a4711f913562648d5d71d109ef7df00ee6ec1d2c4460e1"
+      }
+    },
+    {
+      "id": "protection-warrior-3-targets-thunderfury",
+      "description": "Production Protection Warrior tanking 3 targets with Thunderfury (19019) in the main hand: Cyclone shares the attack speed category with the warrior's own Thunder Clap, which bids the same slow, so the target is slowed by whichever holds the category as each lands and fades",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-3-targets-thunderfury.request.json"
+      },
+      "prepared": "protection-warrior-3-targets-thunderfury.prepared.json",
+      "prepared_sha256": "3607ba4bc3e68211822bdb1a7d3b4a3c934aef55dba9f513bde31bfe2b0c6bd8",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-3-targets-thunderfury.go-result.json",
+        "sha256": "5d6f4639dd1e49b49aa03c2e2919375cf8a692866b846678c56fc812436f3fd0"
+      },
+      "go_log": {
+        "file": "protection-warrior-3-targets-thunderfury.go-log.txt",
+        "sha256": "8095988e50dabf66cd0b21171706eef723bddf2ff72a69507f5a3123a0c1b03a"
+      }
+    },
+    {
+      "id": "protection-paladin-thunderfury",
+      "description": "Production Protection Paladin tanking with Thunderfury (19019) in the main hand: Cyclone is the only slow of the attack speed category, which multiplies the target's attack speed while it holds",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-paladin-thunderfury.request.json"
+      },
+      "prepared": "protection-paladin-thunderfury.prepared.json",
+      "prepared_sha256": "b25abd1439ff8d726a79d8ea6cabb907689f47a73b9eb037b8f107cea01365de",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-paladin-thunderfury.go-result.json",
+        "sha256": "8a91b2f40afc212f6a9117b33a2420c4107de5521532b901364d152de3252139"
+      },
+      "go_log": {
+        "file": "protection-paladin-thunderfury.go-log.txt",
+        "sha256": "e7bfdda92de1cf13ad6c253f9fa34875c183a332cffe86dac9223d936bea5271"
+      }
+    },
+    {
+      "id": "protection-paladin-thunderfury-thunder-clap-debuff",
+      "description": "Production Protection Paladin tanking with Thunderfury (19019) in the main hand under the raid's permanent Thunder Clap debuff, which bids as much, outlasts Cyclone and keeps the attack speed category, so Cyclone slows nothing",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-paladin-thunderfury-thunder-clap-debuff.request.json"
+      },
+      "prepared": "protection-paladin-thunderfury-thunder-clap-debuff.prepared.json",
+      "prepared_sha256": "c303f037ba01c081caf7ec30abf04e900c88979f9d611df59ad2b901b2ad0b65",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-paladin-thunderfury-thunder-clap-debuff.go-result.json",
+        "sha256": "c88a14074484fd9b39c43de01f5c892158376940c041ff10081f813eb119b728"
+      },
+      "go_log": {
+        "file": "protection-paladin-thunderfury-thunder-clap-debuff.go-log.txt",
+        "sha256": "bee00db188acba6f862653ef8e7a64b2657cb922fb2301ef823089ec454ba028"
+      }
+    },
+    {
+      "id": "warrior-plaguefang-stinging-viper",
+      "description": "Production Fury Warrior with Plaguefang (279876) in the main hand and Stinging Viper (6472) in the off hand: their Poison spells share a name, so Go puts both dots on one aura, whose gain and expiry run both dots' callbacks and tick both",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-plaguefang-stinging-viper.request.json"
+      },
+      "prepared": "warrior-plaguefang-stinging-viper.prepared.json",
+      "prepared_sha256": "0248d721b9c61fcbe7617594a31b5cec1b3cc0bf44032a4192ea804332fff14f",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-plaguefang-stinging-viper.go-result.json",
+        "sha256": "ec81b78247cb5e2844524d0d48ac0401fe0c5871c72f9a3c36dfa00e2d52cdfd"
+      },
+      "go_log": {
+        "file": "warrior-plaguefang-stinging-viper.go-log.txt",
+        "sha256": "a8d52218904715ae5f658cb18f30e46b6fc2963adbce1db9377042f3abc4b6ac"
+      }
+    },
+    {
+      "id": "warrior-stinging-viper-plaguefang",
+      "description": "Production Fury Warrior with Stinging Viper (6472) in the main hand and Plaguefang (279876) in the off hand: the Poison dots share one aura, registered by the other spell first",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-stinging-viper-plaguefang.request.json"
+      },
+      "prepared": "warrior-stinging-viper-plaguefang.prepared.json",
+      "prepared_sha256": "6d1e38e99b01b45eb3e79062cd256b8be3ad511e5b7a0e8801abcfadf1fde920",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-stinging-viper-plaguefang.go-result.json",
+        "sha256": "31d990888db38a3f31293d5e4f2df841a3e119f72a6beb5693cd452aabdcfbb1"
+      },
+      "go_log": {
+        "file": "warrior-stinging-viper-plaguefang.go-log.txt",
+        "sha256": "d1a196f378ecda3728c8a55566a2877e553b3d4790069735688f69bfdb2fb656"
+      }
+    },
+    {
+      "id": "warrior-2-targets-plaguefang-stinging-viper",
+      "description": "Production Fury Warrior against 2 targets with Plaguefang (279876) and Stinging Viper (6472): each target holds its own shared Poison aura",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-2-targets-plaguefang-stinging-viper.request.json"
+      },
+      "prepared": "warrior-2-targets-plaguefang-stinging-viper.prepared.json",
+      "prepared_sha256": "591fdaefce33a2aed46bf4aefe12fbe0020bed7b79ad451589cdeea7dc4fc974",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-2-targets-plaguefang-stinging-viper.go-result.json",
+        "sha256": "2c0e82cc6852d49fa7de54c7abf2969ec4c712062ca3f76c6fc6bccd1ef017fc"
+      },
+      "go_log": {
+        "file": "warrior-2-targets-plaguefang-stinging-viper.go-log.txt",
+        "sha256": "1f365feec8b374bdd2570f428d3fbdc69a501bfdd5e7a20b0baf4be5ab7e222c"
+      }
+    },
+    {
+      "id": "combat-rogue-3-targets-plaguefang-stinging-viper",
+      "description": "Production Combat Rogue against 3 targets with Plaguefang (279876) in the main hand and Stinging Viper (6472) in the off hand: the shared Poison aura on every target",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/combat-rogue-3-targets-plaguefang-stinging-viper.request.json"
+      },
+      "prepared": "combat-rogue-3-targets-plaguefang-stinging-viper.prepared.json",
+      "prepared_sha256": "af60f3b38fe838024de4294189f646094362baab0d614b3d451e2f567a10e9ef",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "combat-rogue-3-targets-plaguefang-stinging-viper.go-result.json",
+        "sha256": "a483dcf5f146f93d3f2397632b46fc983e5962d690515d14167ff76332faf4f6"
+      },
+      "go_log": {
+        "file": "combat-rogue-3-targets-plaguefang-stinging-viper.go-log.txt",
+        "sha256": "9a81731a44648ae24ec20faae715418486eed8e23c90e8c941d874d8e39522c5"
+      }
+    },
+    {
+      "id": "protection-warrior-3-targets-plaguefang-stinging-viper",
+      "description": "Production Protection Warrior tanking 3 targets with Plaguefang (279876) and Stinging Viper (6472) in place of its weapon and shield: the shared Poison aura beside the target's swings",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-3-targets-plaguefang-stinging-viper.request.json"
+      },
+      "prepared": "protection-warrior-3-targets-plaguefang-stinging-viper.prepared.json",
+      "prepared_sha256": "aef5bb9050e3f762ee7822e466c2961c54d451598e5bba2014d9265a260f092a",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-3-targets-plaguefang-stinging-viper.go-result.json",
+        "sha256": "3fbab10521dd9a2ecc5a3579db5d1670a0aa1290724665f94e6fad6967752768"
+      },
+      "go_log": {
+        "file": "protection-warrior-3-targets-plaguefang-stinging-viper.go-log.txt",
+        "sha256": "7105356f71042256745935912739fe4ebbfec3a25622330346e5fd4e790bedb6"
+      }
+    },
+    {
+      "id": "protection-warrior-3-targets-totem-of-infliction",
+      "description": "Production Protection Warrior tanking 3 targets with Totem of Infliction (1131) in the off hand: its proc is rolled when the target's swings land on the wearer and casts its damage spell on the attacker (a spell data damage proc of a hit taken)",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-3-targets-totem-of-infliction.request.json"
+      },
+      "prepared": "protection-warrior-3-targets-totem-of-infliction.prepared.json",
+      "prepared_sha256": "d11eef9a0ac167595d60fbf1f80849ec57a365210ef6de87272a6f6d7f2ae4ef",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-3-targets-totem-of-infliction.go-result.json",
+        "sha256": "ab93ce16685c0771c46fe49ca378c7a3e2001039ca681ecdb2e1c48061f4f960"
+      },
+      "go_log": {
+        "file": "protection-warrior-3-targets-totem-of-infliction.go-log.txt",
+        "sha256": "435b4418eaaa0675fe1f0e08c9224d043e6c77710c809b829debb0c28fc76f5e"
+      }
+    },
+    {
+      "id": "protection-paladin-skullflame-shield",
+      "description": "Production Protection Paladin tanking with Skullflame Shield (1168) in the shield: its proc is rolled when the target's swings land on the wearer and casts its damage spell on the attacker (a spell data damage proc of a hit taken)",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-paladin-skullflame-shield.request.json"
+      },
+      "prepared": "protection-paladin-skullflame-shield.prepared.json",
+      "prepared_sha256": "7c860d5f4d3dd9c2bb45647751cacdadd41441117cacae2a5c2e94fb29dd2b39",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-paladin-skullflame-shield.go-result.json",
+        "sha256": "8b4d129c6361fa1fe5f0ef0bb46f0a4eae1313010d1a921b47554d0c23e325ce"
+      },
+      "go_log": {
+        "file": "protection-paladin-skullflame-shield.go-log.txt",
+        "sha256": "97453b8a2c9d08de14052909f8b3fb63a1208e80e8cb8a873ccbe43a94012558"
+      }
+    },
+    {
+      "id": "protection-warrior-3-targets-vile-protector",
+      "description": "Production Protection Warrior tanking 3 targets with Vile Protector (7747) in the off hand: its proc is rolled when the target's swings land on the wearer and casts its damage spell on the attacker (a spell data damage proc of a hit taken)",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-3-targets-vile-protector.request.json"
+      },
+      "prepared": "protection-warrior-3-targets-vile-protector.prepared.json",
+      "prepared_sha256": "b605231efd3e8736a95de4064bda6573a75c52c96dacd1eafe620152968640f4",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-3-targets-vile-protector.go-result.json",
+        "sha256": "f9fd72ab006e4c787d0ab0c16edb1dc7e17b838bc5bf3779fb31f540d65094f9"
+      },
+      "go_log": {
+        "file": "protection-warrior-3-targets-vile-protector.go-log.txt",
+        "sha256": "57ac7bdb851192d2c132ccdf38a8a00e40760e161f9bf8b247ea044fcb2c424a"
+      }
+    },
+    {
+      "id": "protection-warrior-3-targets-thermaplugg",
+      "description": "Production Protection Warrior tanking 3 targets with Thermaplugg's Central Core (9458) in the off hand: its proc is rolled when the target's swings land on the wearer and casts its damage spell on the attacker (a spell data damage proc of a hit taken)",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-3-targets-thermaplugg.request.json"
+      },
+      "prepared": "protection-warrior-3-targets-thermaplugg.prepared.json",
+      "prepared_sha256": "448a7ad09268f17f6ba0048af6f1fa67b99b3d3ba49e479e10473681aa612955",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-3-targets-thermaplugg.go-result.json",
+        "sha256": "33b4ea144971aa1bdf615919e8034e1528ab5c7bd718dc05d2c367713cba77ed"
+      },
+      "go_log": {
+        "file": "protection-warrior-3-targets-thermaplugg.go-log.txt",
+        "sha256": "eab64603e5368982ab9dbc79803231dc53d4c5064420c5ffe3e041af116b1b6b"
+      }
+    },
+    {
+      "id": "feral-bear-druid-girdle-of-reprisal",
+      "description": "Production Feral Bear Druid tanking with Girdle of Reprisal (11861) in the belt: its proc is rolled when the target's swings land on the wearer and casts its damage spell on the attacker (a spell data damage proc of a hit taken)",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-bear-druid-girdle-of-reprisal.request.json"
+      },
+      "prepared": "feral-bear-druid-girdle-of-reprisal.prepared.json",
+      "prepared_sha256": "5565b1aa31049f9d7f5bbfb30df6d1731fc78c4a5bdeb5ebc959153037561145",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-bear-druid-girdle-of-reprisal.go-result.json",
+        "sha256": "5d74fec6a33b55dd2e4cdad7fdd07cf8b6cffed3db882392404a5d0227d7d14f"
+      },
+      "go_log": {
+        "file": "feral-bear-druid-girdle-of-reprisal.go-log.txt",
+        "sha256": "6657c39eb8472aeb3a5bcd5f927ee08b21b669d217cd0a5ce818f96a9aa95819"
+      }
+    },
+    {
+      "id": "protection-paladin-grand-marshals-aegis",
+      "description": "Production Protection Paladin tanking with Grand Marshal's Aegis (18825) in the shield: its proc is rolled when the target's swings land on the wearer and casts its damage spell on the attacker (a spell data damage proc of a hit taken)",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-paladin-grand-marshals-aegis.request.json"
+      },
+      "prepared": "protection-paladin-grand-marshals-aegis.prepared.json",
+      "prepared_sha256": "a3e9309d9b4d529a9e10be0bc6db8308982090d93d3baae4435eba28f1046d22",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-paladin-grand-marshals-aegis.go-result.json",
+        "sha256": "64a639782bb1f5aaeaadc355e6a562a8580c9f8579076fd5ecc8209520ff171f"
+      },
+      "go_log": {
+        "file": "protection-paladin-grand-marshals-aegis.go-log.txt",
+        "sha256": "5d2419e1d5818b0e89b3475df6f56696e3134c42bd2e9e1e3a202ab2702e4aa0"
+      }
+    },
+    {
+      "id": "protection-warrior-3-targets-high-warlords-shield-wall",
+      "description": "Production Protection Warrior tanking 3 targets with High Warlord's Shield Wall (18826) in the shield: its proc is rolled when the target's swings land on the wearer and casts its damage spell on the attacker (a spell data damage proc of a hit taken)",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-3-targets-high-warlords-shield-wall.request.json"
+      },
+      "prepared": "protection-warrior-3-targets-high-warlords-shield-wall.prepared.json",
+      "prepared_sha256": "d0f433ecb1db656a590694004dd173512ca4c54e6b5cde2267e962107f6694b2",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-3-targets-high-warlords-shield-wall.go-result.json",
+        "sha256": "417032dee21a72630860a0f510e74e99b8125f610923138bb23b6ad67f3ff7e1"
+      },
+      "go_log": {
+        "file": "protection-warrior-3-targets-high-warlords-shield-wall.go-log.txt",
+        "sha256": "6fa5753baf453577e44608e4cb95145da7398eaa910ed410bbe530cb862bd196"
+      }
+    },
+    {
+      "id": "protection-warrior-3-targets-premier-grand-marshals-aegis",
+      "description": "Production Protection Warrior tanking 3 targets with Premier Grand Marshal's Aegis (272838) in the shield: its proc is rolled when the target's swings land on the wearer and casts its damage spell on the attacker (a spell data damage proc of a hit taken)",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-3-targets-premier-grand-marshals-aegis.request.json"
+      },
+      "prepared": "protection-warrior-3-targets-premier-grand-marshals-aegis.prepared.json",
+      "prepared_sha256": "ee8e9056f62d7f6385cf032edb2e41e5d5b6ffa1b2978dc89ccd9e44a0c057b3",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-3-targets-premier-grand-marshals-aegis.go-result.json",
+        "sha256": "0730c899e4304cce81d279553e89818ccde7b3a1ec126d57e421ed1f1e0fa7b8"
+      },
+      "go_log": {
+        "file": "protection-warrior-3-targets-premier-grand-marshals-aegis.go-log.txt",
+        "sha256": "dc0407bae41723395bc6ec480b69b07dce9da5905c24600318d5c13f964da5ad"
+      }
+    },
+    {
+      "id": "warrior-red-whelp-gloves",
+      "description": "Production Fury Warrior with Red Whelp Gloves (7284) in the gloves: its proc is rolled on the wearer's melee hits and casts its damage spell on the target",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-red-whelp-gloves.request.json"
+      },
+      "prepared": "warrior-red-whelp-gloves.prepared.json",
+      "prepared_sha256": "2a88d9438d357a797131e6800b95d03b4799d22fe13b8e40466edc886e964fc2",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-red-whelp-gloves.go-result.json",
+        "sha256": "34435cf5987e7d5253350c6eb679a4d825be34c35bb1189215e4fa5db448f29a"
+      },
+      "go_log": {
+        "file": "warrior-red-whelp-gloves.go-log.txt",
+        "sha256": "5f2d05d3f53a9595a0bdf6cc7fce723dffd1030e3aeaf0e6e3bd260a573aa72f"
+      }
+    },
+    {
+      "id": "warrior-fiery-plate-gauntlets",
+      "description": "Production Fury Warrior with Fiery Plate Gauntlets (12631) in the gloves: its proc is rolled on the wearer's melee hits and casts its damage spell on the target",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-fiery-plate-gauntlets.request.json"
+      },
+      "prepared": "warrior-fiery-plate-gauntlets.prepared.json",
+      "prepared_sha256": "54d4717e3a71a54d079df701a05b6d9abd565e769ce647c66e22ece51a5347fe",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-fiery-plate-gauntlets.go-result.json",
+        "sha256": "17ccdf833a0049ab691f39c77a728d364aafe1d3f7c2b56fbde8ae5504bb4e63"
+      },
+      "go_log": {
+        "file": "warrior-fiery-plate-gauntlets.go-log.txt",
+        "sha256": "14e19b9375abeddc6789c090e7da31b355bfda16a9ea0d461a21b701da0a2c2c"
+      }
+    },
+    {
+      "id": "combat-rogue-3-targets-blazefury-medallion",
+      "description": "Production Combat Rogue against 3 targets with Blazefury Medallion (17111) in the neck: its proc is rolled on the wearer's melee hits and casts its damage spell on the target",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/combat-rogue-3-targets-blazefury-medallion.request.json"
+      },
+      "prepared": "combat-rogue-3-targets-blazefury-medallion.prepared.json",
+      "prepared_sha256": "8410015e78ebc2a46cd392656300cafb36b6c6aeceaefd36fbd1a6c24d042408",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "combat-rogue-3-targets-blazefury-medallion.go-result.json",
+        "sha256": "187fc7ac06d565381e180cd26bdbeb69d3cbe935d396d11b0120ddab54eab085"
+      },
+      "go_log": {
+        "file": "combat-rogue-3-targets-blazefury-medallion.go-log.txt",
+        "sha256": "4aaecc0ea9a3e32bfe5df176bb89a4f95fe03b9b49f2ac75053010e9e66e1025"
+      }
+    },
+    {
+      "id": "warrior-force-imbued-gauntlets",
+      "description": "Production Fury Warrior with Force Imbued Gauntlets (18383) in the gloves: its proc is rolled on the wearer's melee hits and casts its damage spell on the target",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-force-imbued-gauntlets.request.json"
+      },
+      "prepared": "warrior-force-imbued-gauntlets.prepared.json",
+      "prepared_sha256": "7a3ecc0aebf439e31d90374a08ac78702c9d18bfe3d557fe7f4a3a75b2f4e44a",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-force-imbued-gauntlets.go-result.json",
+        "sha256": "912b2bd3678e931c09dc78d2a0d45ec801ac46f81334dfefe867ddb0550c4c8a"
+      },
+      "go_log": {
+        "file": "warrior-force-imbued-gauntlets.go-log.txt",
+        "sha256": "118c1e5dde1559606ed8237eebb52442c356cdbb9d045a54231152ca2b257b89"
+      }
+    },
+    {
+      "id": "warrior-thorncursed-grips",
+      "description": "Production Fury Warrior with Thorncursed Grips (274159) in the gloves: its proc is rolled on the wearer's melee hits and casts its damage spell on the target",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-thorncursed-grips.request.json"
+      },
+      "prepared": "warrior-thorncursed-grips.prepared.json",
+      "prepared_sha256": "6ad0870eb1b43c515a5a8815d55dd165fc9819464459188b41d9314167374359",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-thorncursed-grips.go-result.json",
+        "sha256": "1d920c0e72cbd835ad9ea49f15aa8ff642a1754cf5053d144f70cb49eaf7a7d4"
+      },
+      "go_log": {
+        "file": "warrior-thorncursed-grips.go-log.txt",
+        "sha256": "b50af038e061bdcfc65bd3b15a03caa6ab156f4fbca49ef9caf6abf9acffc21e"
+      }
+    },
+    {
+      "id": "retribution-paladin-coldflame-saber",
+      "description": "Production Retribution Paladin with Coldflame Saber (276631) in the main hand: its proc is rolled on the wearer's melee hits and casts its damage spell on the target",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/retribution-paladin-coldflame-saber.request.json"
+      },
+      "prepared": "retribution-paladin-coldflame-saber.prepared.json",
+      "prepared_sha256": "9c75ae4c97d1c627832c7210baee619604bb2cd8e7ee9231bdff1c64d7ad2cf8",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "retribution-paladin-coldflame-saber.go-result.json",
+        "sha256": "1a31a2ca50e0a4f5fcaba6af3bf16ba36314bcc449f23903ccfd4743598b46af"
+      },
+      "go_log": {
+        "file": "retribution-paladin-coldflame-saber.go-log.txt",
+        "sha256": "ce82ca4ee0bf32c462e8f6d6da4404aeffc529fad6c205c16bc9c748772fa77e"
+      }
+    },
+    {
+      "id": "marksmanship-hunter-hurricane",
+      "description": "Production Marksmanship Hunter with Hurricane (2824) in the ranged slot: its proc is rolled on the hunter's ranged hits and casts its damage spell on the target",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/marksmanship-hunter-hurricane.request.json"
+      },
+      "prepared": "marksmanship-hunter-hurricane.prepared.json",
+      "prepared_sha256": "15de1195f7d244e11af1ef059a70ec46820e71fc57262461e46910d7e796fe0d",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "marksmanship-hunter-hurricane.go-result.json",
+        "sha256": "97cebf8cf1144b2ab5c387da4ec29848226eb4119a04f75f470d998a0652b61e"
+      },
+      "go_log": {
+        "file": "marksmanship-hunter-hurricane.go-log.txt",
+        "sha256": "7302ead90d142baf6e36fd0cccb150b1113b007f857cde6db0a32151402bd99b"
+      }
+    },
+    {
+      "id": "marksmanship-hunter-satchel-of-dark-iron-bombs",
+      "description": "Production Marksmanship Hunter with Satchel of Dark Iron Bombs (285278) in the ranged slot: its proc is rolled on the hunter's ranged hits and casts its damage spell on the target",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/marksmanship-hunter-satchel-of-dark-iron-bombs.request.json"
+      },
+      "prepared": "marksmanship-hunter-satchel-of-dark-iron-bombs.prepared.json",
+      "prepared_sha256": "b0b70620e3f30b15f112c5c4b360e004892caa64d9cf7ee7d01d955eeded8935",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "marksmanship-hunter-satchel-of-dark-iron-bombs.go-result.json",
+        "sha256": "5caa128638ec784c5327c15cf9660992a475efacfe0d7457f63a771e6c2add30"
+      },
+      "go_log": {
+        "file": "marksmanship-hunter-satchel-of-dark-iron-bombs.go-log.txt",
+        "sha256": "1294cf33f41d89d9014e7478d6efd6b041678718bcc1eed4be53669f6455ba49"
+      }
+    },
+    {
+      "id": "frost-2-targets-searing-dagger",
+      "description": "Production Frost Mage against 2 targets with Searing Dagger (273003) in the main hand: its proc is rolled when a cast completes and casts its damage spell on the target",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/frost-2-targets-searing-dagger.request.json"
+      },
+      "prepared": "frost-2-targets-searing-dagger.prepared.json",
+      "prepared_sha256": "63b7ad6062b34302ceeb0972793401d122a553318fbc0d3b56bf2d507ca2ce9e",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frost-2-targets-searing-dagger.go-result.json",
+        "sha256": "6329652e14024e22da3fc1e308f9e0977375e163b84b02eac9ad8ca35c96ad3b"
+      },
+      "go_log": {
+        "file": "frost-2-targets-searing-dagger.go-log.txt",
+        "sha256": "3d6afc31da192384a7049cac170c72002d2104a09a50ffc9354111e6c3aa6ebb"
+      }
+    },
+    {
+      "id": "shadow-priest-cursed-murloc-eye",
+      "description": "Production Shadow Priest with Cursed Murloc Eye (273840) in the trinket slot: its proc casts its damage spell on the target",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/shadow-priest-cursed-murloc-eye.request.json"
+      },
+      "prepared": "shadow-priest-cursed-murloc-eye.prepared.json",
+      "prepared_sha256": "5160fd0f57744bc13deb2b0163298845d240cb4e902d42895e221a32b24855f1",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "shadow-priest-cursed-murloc-eye.go-result.json",
+        "sha256": "fccd6ed4ac6a3a25e3e543c8b2e9c9a06a5eb3c398a1f76c977bdce179751735"
+      },
+      "go_log": {
+        "file": "shadow-priest-cursed-murloc-eye.go-log.txt",
+        "sha256": "252773feed6770499cf78cc9e1a49bbd247290b9446fa28491983388588e9b26"
+      }
+    },
+    {
+      "id": "destruction-warlock-swine-fists",
+      "description": "Production Destruction Warlock with Swine Fists (10760) in the gloves: its proc casts its damage spell on the target",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/destruction-warlock-swine-fists.request.json"
+      },
+      "prepared": "destruction-warlock-swine-fists.prepared.json",
+      "prepared_sha256": "d068430fd973381917688f22bfd78b32a81c14c4b9ce37af7747605b27905a7c",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "destruction-warlock-swine-fists.go-result.json",
+        "sha256": "e57ab1d1b2bb0c2e690c06515eafe809150146fa525899437bb12ac030a0df3a"
+      },
+      "go_log": {
+        "file": "destruction-warlock-swine-fists.go-log.txt",
+        "sha256": "7d0f860c047979a617d907c12f4c46c3f79e5a75bb1f3b1d5962b9c173e94eb3"
+      }
+    },
+    {
+      "id": "protection-warrior-3-targets-the-green-tower",
+      "description": "Production Protection Warrior tanking 3 targets with The Green Tower (1204) in the shield: its proc is rolled when the target's swings land on the wearer and applies its stat aura (a spell data stat proc of a hit taken)",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-3-targets-the-green-tower.request.json"
+      },
+      "prepared": "protection-warrior-3-targets-the-green-tower.prepared.json",
+      "prepared_sha256": "e27322cada1a5965a553897420583b75a33d031c3480ce5d86f999989aa91f98",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-3-targets-the-green-tower.go-result.json",
+        "sha256": "16819c656c0d760e3f32338dac389710162f88572ffd890f5fec32b1f9b89dc2"
+      },
+      "go_log": {
+        "file": "protection-warrior-3-targets-the-green-tower.go-log.txt",
+        "sha256": "dc7ab65a0043417ad906f07c20fbcbd3e51aaada5a5281a64210727575870439"
+      }
+    },
+    {
+      "id": "protection-paladin-wall-of-the-dead",
+      "description": "Production Protection Paladin tanking with Wall of the Dead (1979) in the shield: its proc is rolled when the target's swings land on the wearer and applies its stat aura (a spell data stat proc of a hit taken)",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-paladin-wall-of-the-dead.request.json"
+      },
+      "prepared": "protection-paladin-wall-of-the-dead.prepared.json",
+      "prepared_sha256": "a933a8a23dbb23e472c6aab70897c5b3c9397f4a735f594e5bc79c3d9c6150d5",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-paladin-wall-of-the-dead.go-result.json",
+        "sha256": "7d5dfd6da482370503b21d9dbd67fda249a279d863d272444db673299239273e"
+      },
+      "go_log": {
+        "file": "protection-paladin-wall-of-the-dead.go-log.txt",
+        "sha256": "01a5e0e7604d24de34c7079d4cc269bbab6d9592bcfac84f2e40af6a164c0fe4"
+      }
+    },
+    {
+      "id": "protection-paladin-painwalker-buckler",
+      "description": "Production Protection Paladin tanking with Painwalker Buckler (274290) in the shield: its proc is rolled when the target's swings land on the wearer and applies its stat aura (a spell data stat proc of a hit taken)",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-paladin-painwalker-buckler.request.json"
+      },
+      "prepared": "protection-paladin-painwalker-buckler.prepared.json",
+      "prepared_sha256": "d6d30af90d0e1c986fc252530b864fc43fdd854896ad118a35642c7d224c88eb",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-paladin-painwalker-buckler.go-result.json",
+        "sha256": "92f77d505eaa8f26d8d8cf247c6713311a764da6ebeafeaa7ff1f3c5f3649b8f"
+      },
+      "go_log": {
+        "file": "protection-paladin-painwalker-buckler.go-log.txt",
+        "sha256": "ff70f8892071b0fcd1308d4f06cbc35b8d51ed391eaccee4ef45dcbf245d3ddf"
+      }
+    },
+    {
+      "id": "feral-bear-druid-truesilver-breastplate",
+      "description": "Production Feral Bear Druid tanking with Truesilver Breastplate (7939) in the chest: its proc is rolled when the target's swings land on the wearer and heals the wearer (a spell data heal proc of a hit taken)",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-bear-druid-truesilver-breastplate.request.json"
+      },
+      "prepared": "feral-bear-druid-truesilver-breastplate.prepared.json",
+      "prepared_sha256": "ffaa9b481fb4eaab0e5343e2a85cc950b359c8a103e034cac042b45396cad0ee",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-bear-druid-truesilver-breastplate.go-result.json",
+        "sha256": "264a9a14e70ba7bf19ed7f4258643186663f9987c42d108da4b2d048d49c33ea"
+      },
+      "go_log": {
+        "file": "feral-bear-druid-truesilver-breastplate.go-log.txt",
+        "sha256": "ed9ec28832a7847d7aa977c6fdfefe69efa9f68c23974097b714df1a5bf0e907"
+      }
+    },
+    {
+      "id": "shadow-priest-darkmoon-card-blue-dragon",
+      "description": "Production Shadow Priest with Darkmoon Card: Blue Dragon (19288) in the trinket slot: its proc is rolled on each spell cast and applies its aura (a spell data stat proc)",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/shadow-priest-darkmoon-card-blue-dragon.request.json"
+      },
+      "prepared": "shadow-priest-darkmoon-card-blue-dragon.prepared.json",
+      "prepared_sha256": "ee78cedaebef0aa7c6733c84d3d19bce3019432f1a8e0c1da38bbc6db0698dd5",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "shadow-priest-darkmoon-card-blue-dragon.go-result.json",
+        "sha256": "468a31537c1124084ec97729d6c336ea6204bfd7fadad287de00df17775e6219"
+      },
+      "go_log": {
+        "file": "shadow-priest-darkmoon-card-blue-dragon.go-log.txt",
+        "sha256": "cbc3513de2d2635ba72c99b2e123f99dc1d9213e2c72c5053546a917ff45f962"
+      }
+    },
+    {
+      "id": "destruction-warlock-wrath-of-cenarius",
+      "description": "Production Destruction Warlock with Wrath of Cenarius (21190) in the ring slot: its proc is rolled on each spell hit and applies its aura (a spell data stat proc)",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/destruction-warlock-wrath-of-cenarius.request.json"
+      },
+      "prepared": "destruction-warlock-wrath-of-cenarius.prepared.json",
+      "prepared_sha256": "5d87239374c9149bd050b3999a6aea494adb6dcdb4949df850012ec57909685d",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "destruction-warlock-wrath-of-cenarius.go-result.json",
+        "sha256": "a9eeae9de9a4c8aa9c53e6b93920cc99b21c4c3778ce5623e598ed9ba7a1630c"
+      },
+      "go_log": {
+        "file": "destruction-warlock-wrath-of-cenarius.go-log.txt",
+        "sha256": "7d58fe60d1dd3795d00221bdaec63b5221f37b12057097045dddf8a25f4b970a"
+      }
+    },
+    {
+      "id": "protection-warrior-3-targets-naglering",
+      "description": "Production Protection Warrior tanking 3 targets with Naglering (11669) in the ring slot: it damages the attacker of each melee hit the wearer takes, a damage shield the exporter describes as a hit taken effect",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-3-targets-naglering.request.json"
+      },
+      "prepared": "protection-warrior-3-targets-naglering.prepared.json",
+      "prepared_sha256": "a195ec3225aeb7a5ee654e798a7ec71fff9a16734f6672e3aad085134849b5c2",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-3-targets-naglering.go-result.json",
+        "sha256": "9b1cd57af20f87d9167cdd3777817c476ec24f062822d07c9fe383b0195233e9"
+      },
+      "go_log": {
+        "file": "protection-warrior-3-targets-naglering.go-log.txt",
+        "sha256": "a6d2706f4a00f430680d000186a7945bcbd751caf81d371ca9b9f57cedcaf13e"
+      }
+    },
+    {
+      "id": "protection-paladin-drillborer-disk",
+      "description": "Production Protection Paladin tanking with Drillborer Disk (17066) in the shield: it damages the attacker of each melee hit the wearer takes, a damage shield the exporter describes as a hit taken effect",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-paladin-drillborer-disk.request.json"
+      },
+      "prepared": "protection-paladin-drillborer-disk.prepared.json",
+      "prepared_sha256": "678b93aea6386c4a100020c1986f574b1d3e86a19bd26885580a3862fe4cb625",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-paladin-drillborer-disk.go-result.json",
+        "sha256": "0d644a49b9128a7b915906754a3227b95c5ae43587720d6b921058e789555bf3"
+      },
+      "go_log": {
+        "file": "protection-paladin-drillborer-disk.go-log.txt",
+        "sha256": "e857bbe7b8df6ce84a38204e4a4469db37ab178dbfd70d5cf1ff703585b61fac"
+      }
+    },
+    {
+      "id": "protection-warrior-3-targets-razor-gauntlets",
+      "description": "Production Protection Warrior tanking 3 targets with Razor Gauntlets (18326) in the gloves: it damages the attacker of each melee hit the wearer takes, a damage shield the exporter describes as a hit taken effect",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-3-targets-razor-gauntlets.request.json"
+      },
+      "prepared": "protection-warrior-3-targets-razor-gauntlets.prepared.json",
+      "prepared_sha256": "150e74aba5c00d7b90bbd0adcfce9796f39bf419fd0bc46f90120603f1d3c7b6",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-3-targets-razor-gauntlets.go-result.json",
+        "sha256": "7c11414fa9467f4c239ddb8cfbd5f02352ded584b35548cb9666bd31f6a44e59"
+      },
+      "go_log": {
+        "file": "protection-warrior-3-targets-razor-gauntlets.go-log.txt",
+        "sha256": "4bd9f48206e205ec245d1af1169335cb5cddaff5d50f41bd53b8bbe0c55ebbe3"
+      }
+    },
+    {
+      "id": "protection-paladin-essence-of-the-pure-flame",
+      "description": "Production Protection Paladin tanking with Essence of the Pure Flame (18815) in the trinket slot: it damages the attacker of each melee hit the wearer takes, a damage shield the exporter describes as a hit taken effect",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-paladin-essence-of-the-pure-flame.request.json"
+      },
+      "prepared": "protection-paladin-essence-of-the-pure-flame.prepared.json",
+      "prepared_sha256": "38cb49745833737b9d12dab24bc393bb4286fa8f6a4fde7ffb379b3cc2387a85",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-paladin-essence-of-the-pure-flame.go-result.json",
+        "sha256": "d25d4a7f9cc50a6ff2277cedfce9bcedba9a0e14a997eb3b629937a5f2afc95e"
+      },
+      "go_log": {
+        "file": "protection-paladin-essence-of-the-pure-flame.go-log.txt",
+        "sha256": "4f6693c337bc03d9903e3334af2e600b9813dc71d4261f0c31f2eaac01ded26c"
+      }
+    },
+    {
+      "id": "protection-paladin-force-reactive-disk",
+      "description": "Production Protection Paladin tanking with Force Reactive Disk (18168) in the shield: each hit taken may reflect damage from the disk's aura, which the fight keeps by the damage the wearer takes (force_reactive_disk)",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-paladin-force-reactive-disk.request.json"
+      },
+      "prepared": "protection-paladin-force-reactive-disk.prepared.json",
+      "prepared_sha256": "b24b80d19588129250c5a1f05f94048c5a3cf95273676c2f031691b8ab89f894",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-paladin-force-reactive-disk.go-result.json",
+        "sha256": "aa8e388b7065213709739d115220ad6643cd882d44b462da43a750c08dd49c46"
+      },
+      "go_log": {
+        "file": "protection-paladin-force-reactive-disk.go-log.txt",
+        "sha256": "0063e95c507ac99fd3357fd435467f9afd6e142a8a8377970d2321add1887ab7"
+      }
+    },
+    {
+      "id": "protection-paladin-freezing-band",
+      "description": "Production Protection Paladin tanking with Freezing Band (942) in the ring slot: its proc is rolled when the target's swings land on the wearer; a tank takes the hit-taken form of the proc, where a non-tank would have it inert",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-paladin-freezing-band.request.json"
+      },
+      "prepared": "protection-paladin-freezing-band.prepared.json",
+      "prepared_sha256": "5bd323b98dc0ec35145c2f5c5207ae45892bfb61abf41f42f8e5289210e121fa",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-paladin-freezing-band.go-result.json",
+        "sha256": "2e749b8aea0ed66190d33c6378281f48718dd1e832bc93776b396f136fb43d3f"
+      },
+      "go_log": {
+        "file": "protection-paladin-freezing-band.go-log.txt",
+        "sha256": "275750b1e62ccbea7ddba3f93be4c715a2b30e67170a230c8a49137c95a4bcef"
+      }
+    },
+    {
+      "id": "warrior-darkmoon-card-heroism",
+      "description": "Production Fury Warrior with Darkmoon Card: Heroism (19287) in the trinket slot: its proc heals the wearer when the wearer damages an enemy in melee (a health rage proc with no rage)",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-darkmoon-card-heroism.request.json"
+      },
+      "prepared": "warrior-darkmoon-card-heroism.prepared.json",
+      "prepared_sha256": "4f8dc5d45130984487e2a3ed3d8119a13bafee043585b37debbb5ddcbff0cda7",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-darkmoon-card-heroism.go-result.json",
+        "sha256": "1496235553952e85467919edef36586e2101d23b4459c07576e891ad8f3f471b"
+      },
+      "go_log": {
+        "file": "warrior-darkmoon-card-heroism.go-log.txt",
+        "sha256": "08fd94ea25146cbe1c8153abc8bba970fdf5f96d749fd9008036c8454f15b9f2"
+      }
+    },
+    {
+      "id": "warrior-darkmoon-card-maelstrom",
+      "description": "Production Fury Warrior with Darkmoon Card: Maelstrom (19289) in the trinket slot: its proc is rolled on the wearer's melee hits and strikes the target with a nature hit of 200 to 300",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-darkmoon-card-maelstrom.request.json"
+      },
+      "prepared": "warrior-darkmoon-card-maelstrom.prepared.json",
+      "prepared_sha256": "6676a4cd715b9a27bb1f1de5366a9f3e8232db87d331879f5cea59d50f9da675",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-darkmoon-card-maelstrom.go-result.json",
+        "sha256": "d2d3ca02593bca4aaadf3ee05f055b6e0f3dd30e0350771628d6a0078d0568d1"
+      },
+      "go_log": {
+        "file": "warrior-darkmoon-card-maelstrom.go-log.txt",
+        "sha256": "fce5d60398189f8cdc391f049efb3758e33ca3613ad39a1655abd9d56d3b0f9b"
+      }
+    },
+    {
+      "id": "warrior-earthstrike",
+      "description": "Production Fury Warrior with Earthstrike (21180) in the trinket slot: its use applies its stat aura for the length of the item's effect (a simple stat active)",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-earthstrike.request.json"
+      },
+      "prepared": "warrior-earthstrike.prepared.json",
+      "prepared_sha256": "97e3e6e5b51d2f18e2f764d3e57181af351114645fbbc76c66a8dbe283d3445b",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-earthstrike.go-result.json",
+        "sha256": "7bd751feb1acd49f85f499700de42610b812fec60c7361bb5808afddc45f04a8"
+      },
+      "go_log": {
+        "file": "warrior-earthstrike.go-log.txt",
+        "sha256": "8f67acbfa3cf5f99cb863fb4153409b2f45c2ed1400165aad3c98ace3eb23381"
+      }
+    },
+    {
+      "id": "warrior-slayers-crest",
+      "description": "Production Fury Warrior with Slayer's Crest (23041) in the trinket slot: its use applies its stat aura for the length of the item's effect (a simple stat active)",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-slayers-crest.request.json"
+      },
+      "prepared": "warrior-slayers-crest.prepared.json",
+      "prepared_sha256": "43ef5fc22d40250ad7f9ebbddd47090714e7b6b12f7c1c8c364cb82ccde03b74",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-slayers-crest.go-result.json",
+        "sha256": "f97dd906ec6e2c7285b21b156411a6d4c1050db772fed44c8188b12a3357ea5c"
+      },
+      "go_log": {
+        "file": "warrior-slayers-crest.go-log.txt",
+        "sha256": "6c40f2d4d29358c4efb19ab90983fd373e46304a032ee511a70101d82f61511b"
+      }
+    },
+    {
+      "id": "frost-2-targets-eye-of-moam",
+      "description": "Production Frost Mage against 2 targets with Eye of Moam (21473) in the trinket slot: its use applies its spell damage and spell piercing aura (a simple stat active)",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/frost-2-targets-eye-of-moam.request.json"
+      },
+      "prepared": "frost-2-targets-eye-of-moam.prepared.json",
+      "prepared_sha256": "e4e42cd7ba91b1faa4168b85a9910f8548201ffa41b7315d7e112db90a750ddf",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frost-2-targets-eye-of-moam.go-result.json",
+        "sha256": "19945c20e7a3d8fd8cb9b2c2d57224b99e71fe089fe1a7dcaf140d26aa703dca"
+      },
+      "go_log": {
+        "file": "frost-2-targets-eye-of-moam.go-log.txt",
+        "sha256": "a20e545f82cb0b310818186a24891e47d5332df7fc2660491c0c8d2b6c5b9dd1"
+      }
+    },
+    {
+      "id": "retribution-paladin-grileks-charm-of-valor",
+      "description": "Production Retribution Paladin with Gri'lek's Charm of Valor (19952) in the trinket slot: its use applies its stat aura (a simple stat active)",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/retribution-paladin-grileks-charm-of-valor.request.json"
+      },
+      "prepared": "retribution-paladin-grileks-charm-of-valor.prepared.json",
+      "prepared_sha256": "83097619f4a787a3355853054fdedc91eaa661bf8d83f1efe40d1818b2a6d1f6",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "retribution-paladin-grileks-charm-of-valor.go-result.json",
+        "sha256": "494bda03bf7ad81cc46ee900f1b854a14f32065f2967ba0a2fb6ef0689e5cec0"
+      },
+      "go_log": {
+        "file": "retribution-paladin-grileks-charm-of-valor.go-log.txt",
+        "sha256": "5b91cfc851afeaf152b540ce9d81d0fc1851385a0e23727163966d66027b8d18"
+      }
+    },
+    {
+      "id": "warrior-jom-gabbar",
+      "description": "Production Fury Warrior with Jom Gabbar (23570) in the trinket slot: its use applies an attack power aura that gains a stack every two seconds (stacking_on_use)",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-jom-gabbar.request.json"
+      },
+      "prepared": "warrior-jom-gabbar.prepared.json",
+      "prepared_sha256": "350431923f6e9019bf1b7b8805887d8e2989c684a21f4bd5d16563a996ee88b9",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-jom-gabbar.go-result.json",
+        "sha256": "61347dddf020957189d7f1ab13e4baf5606ae3708adb81c9b5eab6955825f33b"
+      },
+      "go_log": {
+        "file": "warrior-jom-gabbar.go-log.txt",
+        "sha256": "17d652e8fc7218969556f16948f3011f05fb34d8c40c0d78d3b4458518de7fa4"
+      }
+    },
+    {
+      "id": "combat-rogue-3-targets-jom-gabbar",
+      "description": "Production Combat Rogue against 3 targets with Jom Gabbar (23570) in the trinket slot: its use applies an attack power aura that gains a stack every two seconds (stacking_on_use)",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/combat-rogue-3-targets-jom-gabbar.request.json"
+      },
+      "prepared": "combat-rogue-3-targets-jom-gabbar.prepared.json",
+      "prepared_sha256": "d3a264c13c9180bc903ecfb00cf482f1bd7f797a518aef2fd49655016366351a",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "combat-rogue-3-targets-jom-gabbar.go-result.json",
+        "sha256": "211036204283156d857f216839ab2fdf77036f6d1a070708562dae01b6a152c9"
+      },
+      "go_log": {
+        "file": "combat-rogue-3-targets-jom-gabbar.go-log.txt",
+        "sha256": "8a14b439da7846473d5d99d2ea5b55c5d682cbcc80858f92a7c7f7a5eaffc046"
+      }
+    },
+    {
+      "id": "frost-2-targets-totem-of-the-storm",
+      "description": "Production Frost Mage against 2 targets with Totem of the Storm (23199) in the ranged slot: a spell mod Go registers against the item with no regard to class, so this class wears it and the mod finds spells by class mask alone",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/frost-2-targets-totem-of-the-storm.request.json"
+      },
+      "prepared": "frost-2-targets-totem-of-the-storm.prepared.json",
+      "prepared_sha256": "5307294819b5733fc8b824b571aec3ba1f0f108d5d9a0078898605f52985ee1e",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frost-2-targets-totem-of-the-storm.go-result.json",
+        "sha256": "159ad8d697c29f137fb84afda3b8adb079d0a0448b3127022e3d8b511d60886d"
+      },
+      "go_log": {
+        "file": "frost-2-targets-totem-of-the-storm.go-log.txt",
+        "sha256": "2ceb53bd8e3790f25658149eda5eb25fcca62e31404ef24464f78cb7494b54d9"
+      }
+    },
+    {
+      "id": "warrior-libram-of-hope",
+      "description": "Production Fury Warrior with Libram of Hope (22401) in the ranged slot: a spell mod Go registers against the item with no regard to class, so this class wears it and the mod finds spells by class mask alone",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-libram-of-hope.request.json"
+      },
+      "prepared": "warrior-libram-of-hope.prepared.json",
+      "prepared_sha256": "41c251ba56cb653288bbaf6c8639d141def64532f3c965e84bab7481d90b9628",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-libram-of-hope.go-result.json",
+        "sha256": "4f1e77985a60ef1fd0f94047b3385aea28a6c9717b5b3f87cd8cf1b414d76b5c"
+      },
+      "go_log": {
+        "file": "warrior-libram-of-hope.go-log.txt",
+        "sha256": "dc9549522969b55cf75903b12bcda0afb6642698f20a011b6168b73dacf37d39"
+      }
+    },
+    {
+      "id": "combat-rogue-3-targets-idol-of-brutality",
+      "description": "Production Combat Rogue against 3 targets with Idol of Brutality (23198) in the ranged slot: a spell mod Go registers against the item with no regard to class, so this class wears it and the mod finds spells by class mask alone",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/combat-rogue-3-targets-idol-of-brutality.request.json"
+      },
+      "prepared": "combat-rogue-3-targets-idol-of-brutality.prepared.json",
+      "prepared_sha256": "aea24b4c23f53af361caea9e31d1518a6ecb0c9214808f131be812774f79b4ee",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "combat-rogue-3-targets-idol-of-brutality.go-result.json",
+        "sha256": "d66ccdd21bc877d6697b932cf46da67de769e2dc4f8daed25bfe649324d74f11"
+      },
+      "go_log": {
+        "file": "combat-rogue-3-targets-idol-of-brutality.go-log.txt",
+        "sha256": "2637a04e732850dbe4f6329f22a42dadb1e9b27873a4f5ca316a0bb663e81e7f"
+      }
+    },
+    {
+      "id": "shadow-priest-idol-of-the-moon",
+      "description": "Production Shadow Priest with Idol of the Moon (23197) in the ranged slot: a spell mod Go registers against the item with no regard to class, so this class wears it and the mod finds spells by class mask alone",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/shadow-priest-idol-of-the-moon.request.json"
+      },
+      "prepared": "shadow-priest-idol-of-the-moon.prepared.json",
+      "prepared_sha256": "605137ab3bde0d52097d2dc34ef71e898e02703db8be479aa043d408350e8c56",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "shadow-priest-idol-of-the-moon.go-result.json",
+        "sha256": "5c572ad2e0aa04ca304feb1a76445741be33d98212ecd63c371578bc70e76ce6"
+      },
+      "go_log": {
+        "file": "shadow-priest-idol-of-the-moon.go-log.txt",
+        "sha256": "32828412e48f8986199e8e14427d8c533c739cd637ad1c839bd15cb8443e3de1"
+      }
+    },
+    {
+      "id": "elemental-shaman-idol-of-ferocity",
+      "description": "Production Elemental Shaman with Idol of Ferocity (22397) in the ranged slot: a spell mod Go registers against the item with no regard to class, so this class wears it and the mod finds spells by class mask alone",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/elemental-shaman-idol-of-ferocity.request.json"
+      },
+      "prepared": "elemental-shaman-idol-of-ferocity.prepared.json",
+      "prepared_sha256": "e2115f4719e7fd09360b00c3120ab0693d13aa880a1b158259d059a704d25baa",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "elemental-shaman-idol-of-ferocity.go-result.json",
+        "sha256": "52a3e95170f65d8a349aa52510335d9d07ca9456925d703e4ca706dc4269d972"
+      },
+      "go_log": {
+        "file": "elemental-shaman-idol-of-ferocity.go-log.txt",
+        "sha256": "d938a18967fdb7bf39b9ad0d27dcba126cefb705a309d0598f293652bdd47afc"
+      }
+    },
+    {
+      "id": "balance-druid-libram-of-infusion",
+      "description": "Production Balance Druid with Libram of Infusion (279248) in the ranged slot: a spell mod Go registers against the item with no regard to class, so this class wears it and the mod finds spells by class mask alone",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/balance-druid-libram-of-infusion.request.json"
+      },
+      "prepared": "balance-druid-libram-of-infusion.prepared.json",
+      "prepared_sha256": "13b659b59e0023b3fbeb295742ccb96b27fe72655d04e2aaf943ce926d9eba4b",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "balance-druid-libram-of-infusion.go-result.json",
+        "sha256": "2ae6a2dec8b12d5f8414a0487b540b8bebc6afc9218b63daf0c857017a5b2834"
+      },
+      "go_log": {
+        "file": "balance-druid-libram-of-infusion.go-log.txt",
+        "sha256": "5a98be8876ec3dd01cc3b9eb7bdd2771a1f7482e862569a2088fe701e2b5c8ba"
+      }
+    },
+    {
+      "id": "destruction-warlock-totem-of-thunder",
+      "description": "Production Destruction Warlock with Totem of Thunder (228176) in the ranged slot: a spell mod Go registers against the item with no regard to class, so this class wears it and the mod finds spells by class mask alone",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/destruction-warlock-totem-of-thunder.request.json"
+      },
+      "prepared": "destruction-warlock-totem-of-thunder.prepared.json",
+      "prepared_sha256": "cf14db415384a7f28731e92f57531ad946876c26300a80f157bbfc7ef2190b09",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "destruction-warlock-totem-of-thunder.go-result.json",
+        "sha256": "40189b3aeaa87a6b28fc57e1d1050404e71887f3a2a6ce003b1e5fc7c9ee6215"
+      },
+      "go_log": {
+        "file": "destruction-warlock-totem-of-thunder.go-log.txt",
+        "sha256": "61a0d001e1faeb3a84f615dc1884ee50c1ed5d37ec33a28235a2bf065c05de62"
+      }
+    },
+    {
+      "id": "warrior-painwalker-buckler",
+      "description": "Production Fury Warrior with Painwalker Buckler (274290) in the off hand: its proc is rolled on the hits the wearer takes, which for a wearer that throws a Goblin Sapper Charge include the sapper's hit on the thrower, a spell the proc's mask names",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-painwalker-buckler.request.json"
+      },
+      "prepared": "warrior-painwalker-buckler.prepared.json",
+      "prepared_sha256": "e4861d208d9f26cda5ec5354f49924c634a31176a9dab6d36d948e585ea087e1",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-painwalker-buckler.go-result.json",
+        "sha256": "462d6b00f56741a42dae7ef65827d40f5ef8186a76ed446fb017c3caeab5349a"
+      },
+      "go_log": {
+        "file": "warrior-painwalker-buckler.go-log.txt",
+        "sha256": "65710c5446cd5328cf6e632652aee86d22bc2222fe8ba7bb2622fc5c89c615c7"
+      }
+    },
+    {
+      "id": "combat-rogue-3-targets-painwalker-buckler",
+      "description": "Production Combat Rogue against 3 targets with Painwalker Buckler (274290) in the off hand: its proc is rolled on the hits the wearer takes, which for a wearer that throws a Goblin Sapper Charge include the sapper's hit on the thrower, a spell the proc's mask names",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/combat-rogue-3-targets-painwalker-buckler.request.json"
+      },
+      "prepared": "combat-rogue-3-targets-painwalker-buckler.prepared.json",
+      "prepared_sha256": "0e596234862e966c8906b67cae1f518148f406eaa3581f74c0c1c8a04c2fcd40",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "combat-rogue-3-targets-painwalker-buckler.go-result.json",
+        "sha256": "c7a68fe13236d3667cecf963c4739e44599a73d9457f5ddf5fd3d21e37fee2f5"
+      },
+      "go_log": {
+        "file": "combat-rogue-3-targets-painwalker-buckler.go-log.txt",
+        "sha256": "4d772feeb658a71b0da47d7a01f51e319148e6c73649329a64532bb0f3036bca"
+      }
+    },
+    {
+      "id": "feral-druid-painwalker-buckler",
+      "description": "Production Feral Druid with Painwalker Buckler (274290) in the off hand: its proc is rolled on the hits the wearer takes, which for a wearer that throws a Goblin Sapper Charge include the sapper's hit on the thrower, a spell the proc's mask names",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-druid-painwalker-buckler.request.json"
+      },
+      "prepared": "feral-druid-painwalker-buckler.prepared.json",
+      "prepared_sha256": "c0dfbff6c23ffb7c47012f55dcb05d73f19dd6d1c1e4bcc01b3ca085434e6696",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-druid-painwalker-buckler.go-result.json",
+        "sha256": "2cf7fed5b1139bd665d8e322789acec04dff48ba6a958723b78741435479db73"
+      },
+      "go_log": {
+        "file": "feral-druid-painwalker-buckler.go-log.txt",
+        "sha256": "9f6a331f62d5fbdf89538d761770a3450b026273485dba4c0457ede67d6767b7"
+      }
+    },
+    {
+      "id": "protection-warrior-3-targets-painwalker-buckler",
+      "description": "Production Protection Warrior tanking 3 targets with Painwalker Buckler (274290) in the off hand: its proc is rolled on the hits the wearer takes, which for a tank are the target's swings",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-3-targets-painwalker-buckler.request.json"
+      },
+      "prepared": "protection-warrior-3-targets-painwalker-buckler.prepared.json",
+      "prepared_sha256": "b4fc4353cff6c539fb55b6d40d6b5b657994d35011b4f1a395395b2cfe4a0a10",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-3-targets-painwalker-buckler.go-result.json",
+        "sha256": "82942356caf7164a591482e4b244f40405355e31288140348307d70aed9a9721"
+      },
+      "go_log": {
+        "file": "protection-warrior-3-targets-painwalker-buckler.go-log.txt",
+        "sha256": "df7762e6d03384e3178e190cb6c9a50613966e5bffb507686c7b169efcd02f45"
+      }
+    },
+    {
+      "id": "frost-2-targets-smokeys-lighter",
+      "description": "Production Frost Mage against 2 targets with Smokey's Lighter (13171) in the trinket slot: its spell is the damage proc spell, which against several targets is calculated on each of them or on the row's cap of them before any hit is dealt",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/frost-2-targets-smokeys-lighter.request.json"
+      },
+      "prepared": "frost-2-targets-smokeys-lighter.prepared.json",
+      "prepared_sha256": "e3007cf25bb1b951ae7c2488c169ddba29f8d9423d32f26cf93e13502d26fd71",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frost-2-targets-smokeys-lighter.go-result.json",
+        "sha256": "a7f3c59121b96e4390ed165b14e8c2c0f46023f3b5c1ad50d9b46302230ece1a"
+      },
+      "go_log": {
+        "file": "frost-2-targets-smokeys-lighter.go-log.txt",
+        "sha256": "8be68c0641a271b86e63f793b9c3e538b9f960d4f793669e307f99cf3c2d53c8"
+      }
+    },
+    {
+      "id": "warrior-2-targets-shard-of-the-fallen-star",
+      "description": "Production Fury Warrior against 2 targets with Shard of the Fallen Star (21891) in the trinket slot: its spell is the damage proc spell, which against several targets is calculated on each of them or on the row's cap of them before any hit is dealt",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-2-targets-shard-of-the-fallen-star.request.json"
+      },
+      "prepared": "warrior-2-targets-shard-of-the-fallen-star.prepared.json",
+      "prepared_sha256": "28d9cf1119b4b6eebe24b46bcc8265969d4f621c0354740d68890163b879bdb2",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-2-targets-shard-of-the-fallen-star.go-result.json",
+        "sha256": "601b263302870d4c49969daf251982863618f5732d1a11d6cb994e6f4b4c367e"
+      },
+      "go_log": {
+        "file": "warrior-2-targets-shard-of-the-fallen-star.go-log.txt",
+        "sha256": "d48eec1e88b86793edba5e8a754df4788a99ff6a8f689a1777484054d11441b8"
+      }
+    },
+    {
+      "id": "combat-rogue-3-targets-everlook-pathcarver",
+      "description": "Production Combat Rogue against 3 targets with Everlook Pathcarver (274759) in the trinket slot: its spell is the damage proc spell, which against several targets is calculated on each of them or on the row's cap of them before any hit is dealt",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/combat-rogue-3-targets-everlook-pathcarver.request.json"
+      },
+      "prepared": "combat-rogue-3-targets-everlook-pathcarver.prepared.json",
+      "prepared_sha256": "c78eeca0e305e3f8d790ff56e4b17e9e93a0845e151b3b2a5b65efb575e9ee02",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "combat-rogue-3-targets-everlook-pathcarver.go-result.json",
+        "sha256": "0846604168a599bb92eba1c72e8c955fa0d0cb4f3529a7a4d0879d7628b0c537"
+      },
+      "go_log": {
+        "file": "combat-rogue-3-targets-everlook-pathcarver.go-log.txt",
+        "sha256": "6654a1967ea3766d513fe23f04e5020a705bb4de309c75b4fb1406285c8fa07c"
+      }
+    },
+    {
+      "id": "survival-hunter-5-targets-helm-of-fire",
+      "description": "Production Survival Hunter against 5 targets with Helm of Fire (8348) in the head slot: its spell is the damage proc spell, which against several targets is calculated on each of them or on the row's cap of them before any hit is dealt",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/survival-hunter-5-targets-helm-of-fire.request.json"
+      },
+      "prepared": "survival-hunter-5-targets-helm-of-fire.prepared.json",
+      "prepared_sha256": "a60073cd013f19c66263d4b77ad8deba9727d05e6755013ccad7cabcd2b708d9",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "survival-hunter-5-targets-helm-of-fire.go-result.json",
+        "sha256": "44e31aa6afe529d0c2d0d32caeeb0d2cc8ad4effcb1354df25029828bf42fa8b"
+      },
+      "go_log": {
+        "file": "survival-hunter-5-targets-helm-of-fire.go-log.txt",
+        "sha256": "4d978dfe9deffdc17ef9439538254308f449fef7f5bfbca6ba7ab2094bf89200"
+      }
+    },
+    {
+      "id": "frost-2-targets-fiery-blaze",
+      "description": "Production Frost Mage against 2 targets with Enchant: Fiery Blaze (36) on the first weapon: the enchant's proc casts its area hit, which against several targets is calculated on each of them before any hit is dealt",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/frost-2-targets-fiery-blaze.request.json"
+      },
+      "prepared": "frost-2-targets-fiery-blaze.prepared.json",
+      "prepared_sha256": "31d83d65b070afd8dae7843193a8f786fe0c1058c95094ef2a7c3263c05982c8",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frost-2-targets-fiery-blaze.go-result.json",
+        "sha256": "5fde19c992a7fc287995e4eab3ec034a68c1c7562b34830cfae46d5a3bacee3c"
+      },
+      "go_log": {
+        "file": "frost-2-targets-fiery-blaze.go-log.txt",
+        "sha256": "79b356cd100d7f0cde34f681dc763a69f05fbdb0ea9e24848ce99c8c38438e98"
+      }
+    },
+    {
+      "id": "warrior-2-targets-fiery-blaze",
+      "description": "Production Fury Warrior against 2 targets with Enchant: Fiery Blaze (36) on the first weapon: the enchant's proc casts its area hit, which against several targets is calculated on each of them before any hit is dealt",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-2-targets-fiery-blaze.request.json"
+      },
+      "prepared": "warrior-2-targets-fiery-blaze.prepared.json",
+      "prepared_sha256": "4d80115cd1769b266c5bd75576717bc90462b4d012edfdf94acb67f5509e49ff",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-2-targets-fiery-blaze.go-result.json",
+        "sha256": "c7209d1853e1c8b85b8bdc65f66bf7799112233ea5577e3af80c8cc048dcce51"
+      },
+      "go_log": {
+        "file": "warrior-2-targets-fiery-blaze.go-log.txt",
+        "sha256": "72e33a8ca83f0a9073cb6acea1c044a75bde9d91b04a46da007967e320bb9ecf"
       }
     },
     {

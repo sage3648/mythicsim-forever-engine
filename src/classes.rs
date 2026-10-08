@@ -65,3 +65,17 @@ pub(crate) fn item_sets() -> Vec<&'static crate::prepare::item_sets::ItemSet> {
     sets.extend(shaman::prepare::items::ITEM_SETS);
     sets
 }
+
+/// The item effects of a class package that a character of any class wears, since Go registers
+/// them against the item and they read nothing of their own class's agent: the idols, librams and
+/// totems that add a spell mod by class mask. The effects that read the agent (Wolfshead Helm,
+/// Libram of Light) panic for another class in Go, and are not here.
+pub(crate) fn agentless_item_effect(
+    sim: &mut crate::prepare::sim::Sim,
+    unit: crate::prepare::sim::UnitId,
+    item: i32,
+) -> bool {
+    druid::prepare::items::apply_agentless_idol_effect(sim, unit, item)
+        || paladin::prepare::items::apply_agentless_libram_effect(sim, unit, item)
+        || shaman::prepare::items::apply_agentless_totem_effect(sim, unit, item)
+}

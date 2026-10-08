@@ -5,7 +5,7 @@
 use serde_json::{json, Value};
 
 use super::env::Environment;
-use super::sim::{Sim, SpellId, UnitId};
+use super::sim::{Sim, SpellId, UnitId, SECOND};
 use super::spell::SpellFlag;
 
 /// Go `commonEffects`.
@@ -283,7 +283,9 @@ fn item_use_effects(env: &mut Environment, unrepresented: &mut Vec<String>) -> V
         let sapper = s.action_id.item_id == GOBLIN_SAPPER_ITEM && s.action_id.tag == 0;
         if item != 0
             && !cooldowns.contains(&spell)
-            && (s.flags.matches(SpellFlag::POTION | SpellFlag::CONJURED)
+            && (s
+                .flags
+                .matches(SpellFlag::POTION | SpellFlag::CONJURED | SpellFlag::MCD)
                 || sapper
                 || item == DIAMOND_FLASK_ITEM)
         {
@@ -291,6 +293,16 @@ fn item_use_effects(env: &mut Environment, unrepresented: &mut Vec<String>) -> V
         }
     }
     let mut effects = Vec::new();
+    // classic items_trinkets.go Jom Gabbar: its spell (29602) activates an aura of up to ten
+    // stacks, each 65 attack power and ranged attack power. Gaining the aura adds a stack at once
+    // and another every two seconds, ten in all, Go literals.
+    if let Some(aura) = env.sim.get_aura(player, "Jom Gabbar") {
+        let aura = env.sim.aura(aura);
+        effects.push(json!({
+            "kind": "stacking_on_use", "spell_id": aura.action_id.as_ref().map_or(0, |id| id.spell_id),
+            "aura": aura.label, "period_ns": 2 * SECOND, "ticks": 10,
+        }));
+    }
     for spell in items {
         let s = env.sim.spell(spell);
         let item = s.action_id.item_id;

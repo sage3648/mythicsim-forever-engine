@@ -19,9 +19,28 @@ use super::{
         OUTCOME_PARRY,
     },
     log::action_string,
-    Agent, AuraBehavior, Fight, Side, SpellMetrics, SpellResult,
+    Agent, AuraBehavior, AuraRef, Fight, Side, SpellMetrics, SpellResult,
 };
 use crate::core::time::go_string;
+
+/// The name of the exclusive category slows of a target's attack speed bid in, which Thunder
+/// Clap, Thunderfury's Cyclone and the other slows of that kind share.
+pub(crate) const ATTACK_SPEED_CATEGORY: &str = "AtkSpdReduction";
+
+/// How a member of the attack speed category changes the speed of its target's swing: Go runs
+/// the effect's `OnGain` when it becomes the category's active effect and its `OnExpire` when it
+/// stops being it, so the target takes only the strongest slow.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct EnemySlow {
+    /// Whether the target's melee speed multiplier changes, else its attack speed multiplier.
+    pub(crate) melee: bool,
+    /// The factor on gain and the factor on expiry.
+    pub(crate) gain: f64,
+    pub(crate) expire: f64,
+    /// The effect's bid when the class sets it after the reset, as the warrior's Thunder Clap
+    /// does when it lands: the exported bid is the one at reset.
+    pub(crate) priority: Option<f64>,
+}
 
 /// One target's main hand swing and its metrics against the player.
 #[derive(Clone, Debug)]
@@ -34,6 +53,9 @@ pub(crate) struct EnemyAttack {
     /// Go `PseudoStats.MeleeSpeedMultiplier` of the target, which a slow multiplies and each
     /// reset restores.
     pub(crate) melee_speed_multiplier: f64,
+    /// Go `PseudoStats.AttackSpeedMultiplier` of the target, which a slow of the attack speed
+    /// category multiplies and each reset restores.
+    pub(crate) attack_speed_multiplier: f64,
     /// Target auras that change only the swing's attack power, with its attack power and the
     /// debug line's MAP while active. They are the first target's; a copy reads the aura at the
     /// same position of its own. The gate admits at most one an effect can activate.
@@ -280,19 +302,76 @@ impl<A: Agent> Fight<A> {
             values.attack_speed_multiplier,
             values.melee_haste_rating_multiplier,
         ) {
-            (Some(attack), Some(rating)) => attack * enemy.melee_speed_multiplier * rating,
+            (Some(_), Some(rating)) => {
+                enemy.attack_speed_multiplier * enemy.melee_speed_multiplier * rating
+            }
             _ => values.melee_haste_multiplier,
         }
     }
 
-    /// Go `Unit.MultiplyMeleeSpeed` on a target, then its `AutoAttacks.UpdateSwingTimers`:
-    /// the rest of a pending swing scales with the change in speed.
-    pub(crate) fn multiply_enemy_melee_speed(&mut self, target: Side, amount: f64) {
+    /// Register the slow a member of the attack speed category applies when it holds the
+    /// category, by the aura on the first target; the other targets' copies share its position.
+    pub(crate) fn register_enemy_slow(&mut self, aura: AuraRef, slow: EnemySlow) {
+        self.enemy_slows.push((aura.index, slow));
+    }
+
+    /// The bids a class sets after the reset, in the categories built from the export.
+    pub(crate) fn apply_enemy_slow_priorities(&mut self) {
+        for (index, slow) in self.enemy_slows.clone() {
+            let Some(priority) = slow.priority else {
+                continue;
+            };
+            for category in &mut self.exclusive_tracking {
+                if category.name == ATTACK_SPEED_CATEGORY {
+                    category.set_disabled_priority(index, priority);
+                }
+            }
+        }
+    }
+
+    /// The effects of the attack speed category when its active effect changes, in Go's order:
+    /// the old one's `OnExpire`, then the new one's `OnGain`.
+    pub(crate) fn enemy_slow_category_change(
+        &mut self,
+        category: usize,
+        old: Option<AuraRef>,
+        new: Option<AuraRef>,
+    ) {
+        if self.enemy_slows.is_empty()
+            || self.exclusive_tracking[category].name != ATTACK_SPEED_CATEGORY
+        {
+            return;
+        }
+        for (holder, gaining) in [(old, false), (new, true)] {
+            let Some(holder) = holder.filter(|holder| holder.side.is_target()) else {
+                continue;
+            };
+            let Some(&(_, slow)) = self
+                .enemy_slows
+                .iter()
+                .find(|(index, _)| *index == holder.index)
+            else {
+                continue;
+            };
+            let factor = if gaining { slow.gain } else { slow.expire };
+            self.multiply_enemy_speed(holder.side, slow.melee, factor);
+        }
+    }
+
+    /// Go `Unit.MultiplyMeleeSpeed` or `MultiplyAttackSpeed` on a target, which swings at the
+    /// product of its attack and melee speeds, then its `AutoAttacks.UpdateSwingTimers`: the
+    /// rest of a pending swing scales with the change in speed.
+    fn multiply_enemy_speed(&mut self, target: Side, melee: bool, amount: f64) {
         // A target that does not swing at the player has no swing to slow.
         if !self.tanked() {
             return;
         }
-        self.enemy_attack_mut(target).melee_speed_multiplier *= amount;
+        let enemy = self.enemy_attack_mut(target);
+        if melee {
+            enemy.melee_speed_multiplier *= amount;
+        } else {
+            enemy.attack_speed_multiplier *= amount;
+        }
         if !self.autos.enemy_attack(target).enabled {
             return;
         }
@@ -363,8 +442,14 @@ impl<A: Agent> Fight<A> {
                 AuraBehavior::SpellDataDamageProc(proc) if self.damage_procs[proc].struck => {
                     self.damage_proc_callback(aura, proc, None, result)
                 }
+                AuraBehavior::HealProc(proc) if self.heal_procs[proc].struck => {
+                    self.heal_proc_callback(aura, proc, None, result)
+                }
                 AuraBehavior::SpellDataStatProc(proc) if self.spell_stat_procs[proc].struck => {
                     self.spell_stat_proc_callback(aura, proc, None, Some(result))
+                }
+                AuraBehavior::ForceReactiveDisk(_) => {
+                    self.force_reactive_disk_callback(aura, result)
                 }
                 // And a melee auto attack, which an absorb proc's melee mask hears.
                 AuraBehavior::AbsorbProc(proc) => self.absorb_proc_callback(aura, proc, result),
@@ -457,5 +542,22 @@ impl<A: Agent> Fight<A> {
             self.totals.target_dps[position].total += metrics.total_damage;
             self.totals.target_threat[position].total += metrics.total_threat;
         }
+    }
+}
+
+impl<A: Agent> Fight<A> {
+    /// Go `AttachProcTriggerCallback` for Force Reactive Disk: a melee hit taken that the wearer
+    /// blocks, behind the aura's cooldown, then the handler a spell batch window later.
+    fn force_reactive_disk_callback(&mut self, aura: super::AuraRef, result: &SpellResult) {
+        if result.outcome & OUTCOME_BLOCK == 0 {
+            return;
+        }
+        if let Some((timer, duration)) = self.aura(aura).icd {
+            if self.timers[timer] > self.now {
+                return;
+            }
+            self.timers[timer] = self.now + duration;
+        }
+        self.schedule_delayed_proc(aura, 0, *result);
     }
 }
