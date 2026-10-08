@@ -11,6 +11,7 @@ mod rotation_targets;
 mod shaman;
 mod warlock;
 mod warrior;
+mod weapon_procs;
 
 /// Each refusal of a valid prepared input: its stable code and its reason.
 fn refusal_codes(value: serde_json::Value) -> Vec<(&'static str, String)> {

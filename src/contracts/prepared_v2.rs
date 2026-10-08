@@ -1076,6 +1076,42 @@ pub struct CostChange {
     pub flat: i32,
 }
 
+/// shared_utils.go `calcMultiTargetDamage` for a chain: the targets it reaches and the share of
+/// the damage each jump keeps, the row's `ChainAmp` as the float32 the client states.
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct ProcChain {
+    pub targets: i32,
+    pub amp: f64,
+}
+
+/// shared_utils.go `calcMultiTargetDamage` for an area: the row's cap on the targets it hits (zero
+/// for all of them), whether the roll is split evenly among them and the encounter's AoE cap
+/// multiplier an uncapped area takes.
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct ProcArea {
+    pub max_targets: i32,
+    pub splits: bool,
+    pub aoe_cap_multiplier: f64,
+}
+
+/// shared_utils.go `spellDataProcDamageSpell` for a row with a periodic damage effect: the tick's
+/// amount and the outcome applier each tick rolls (spelldata `Spell.TickOutcome`) by name:
+/// `tick_magic_hit_and_crit`, `tick_physical_crit` or `tick`. Where the row also deals a direct
+/// hit the dot lands with it; alone it goes on unrolled, or on the hit roll `application` names.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct ProcPeriodic {
+    pub tick_base: f64,
+    pub tick_outcome: String,
+    pub with_direct: bool,
+    /// The outcome applier a dot without a direct hit rolls when it is applied, by name:
+    /// `magic_hit`, as Ebon Hilt of Marduk's Corruption does. Absent, the dot goes on unrolled.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub application: Option<String>,
+}
+
 /// A spell a dynamic proc manager hears, by spellbook position, with the chance it rolls.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -1626,8 +1662,11 @@ pub enum Effect {
         rng_label: String,
         aura: String,
         chances: Vec<SpellChance>,
-        gain_log: String,
-        expire_log: String,
+        /// Absent for a parsed aura, as a weapon proc's: it logs neither.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        gain_log: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        expire_log: Option<String>,
     },
     /// Paladin talents_holy.go Illumination: a heal crit's chance to return a share of the
     /// heal's base cost, a batch window later.
@@ -1893,8 +1932,23 @@ pub enum Effect {
         /// it from the spell's defense type: `melee_special_hit_and_crit` for a hit of the melee
         /// defense type, as Iceblade Hacker's, or `melee_special_hit` when it cannot crit.
         /// Absent, the hit rolls the magic hit table, with a crit when `can_crit`.
+        ///
+        /// A weapon proc built from a client row (`CreateWeaponProcSpell` over
+        /// `SpellDataProcDamageSpell`) names it without a `roll` as well: the row's effect
+        /// rolled on the melee or ranged table of the spell's defense type.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         outcome: Option<String>,
+        /// A chain the row's effect makes: the hit rolls once for each target it reaches, from
+        /// the unit hit on, keeping `amp` of the damage at each jump.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        chain: Option<ProcChain>,
+        /// An area the row's effect hits instead: every target, or the row's cap of them from
+        /// the unit hit on.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        area: Option<ProcArea>,
+        /// The damage over time the row carries, on the targets the proc landed on.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        periodic: Option<ProcPeriodic>,
     },
     /// common/shared/shared_utils.go NewSpellDataAbsorbOnUse: the item use's aura shields the
     /// wearer for the absorb effect's roll against the schools its bits name.
@@ -2000,6 +2054,10 @@ pub enum Effect {
         chances: Vec<SpellChance>,
         aura: String,
         armor_by_stacks: Vec<f64>,
+        /// The handler runs at once on the hit, as Annihilator's does, rather than a batch
+        /// window later.
+        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+        immediate: bool,
     },
     /// Paladin talents_retribution.go Vengeance: crits stack a Holy and Physical damage mod.
     Vengeance {
@@ -2982,6 +3040,13 @@ pub enum Effect {
         trigger_aura: String,
         proc_chance: f64,
         attacks: i32,
+        /// A weapon proc, as Flurry Axe's: each spell its proc manager hears with the chance it
+        /// rolls for the landed hit, in place of `proc_chance`.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        chances: Option<Vec<SpellChance>>,
+        /// The spell the weapon proc casts, whose effect grants the attacks.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        spell: Option<usize>,
     },
     /// A potion that restores rage or mana and may carry a temporary stat aura.
     PotionResource {

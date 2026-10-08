@@ -889,14 +889,17 @@ fn a_melee_weapon_damage_proc_names_a_table_the_runtime_rolls() {
     value["effects"][index]["can_crit"] = json!(false);
     assert!(refused(value).is_empty());
 
-    // A client effect roll has no literal range to roll on a table.
+    // Without its literal range the hit rolls the client effect, which here deals nothing.
     let mut value = original.clone();
     let index = position(&value);
     value["effects"][index]
         .as_object_mut()
         .unwrap()
         .remove("roll");
-    assert_eq!(refused(value), [hit("melee_special_hit_and_crit")]);
+    assert_eq!(
+        refused(value),
+        ["Iceblade Hacker's hit is not rolled: a client effect that deals nothing"]
+    );
 
     // A spell of another defense type would take the wrong critical strike multiplier.
     let mut value = original;

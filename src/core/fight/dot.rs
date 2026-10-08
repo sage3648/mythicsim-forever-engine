@@ -249,6 +249,8 @@ impl<A: Agent> Fight<A> {
                     self.periodic_damage_tick(dot, base);
                 }
             }
+            // Go spelldata `PeriodicDamageTick` on the outcome applier the row names.
+            SpellBehavior::ProcDamage(params) => self.proc_damage_tick(dot, params),
             // Go sim/warrior/items.go Diamond Flask: the last tick activates the Strength aura.
             SpellBehavior::DiamondFlask(aura) => {
                 if self.dots[dot].remaining_ticks == 0 {

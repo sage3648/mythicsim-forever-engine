@@ -11,8 +11,8 @@ use std::{collections::BTreeSet, sync::OnceLock};
 
 use crate::{
     classes,
-    contracts::prepared_v2::{ActionId, Effect, MajorCooldown, PreparedV2, Spell},
-    core::fight::DIRECT_PROC_MASKS,
+    contracts::prepared_v2::{ActionId, Effect, MajorCooldown, PreparedV2, ProcPeriodic, Spell},
+    core::fight::{proc_damage::ProcDamage, DIRECT_PROC_MASKS},
     rotation::{compile_condition, Action, FoundAura, Lookup, Rotation, Unit, Value},
 };
 
@@ -466,6 +466,35 @@ fn undirected_procs(prepared: &PreparedV2) -> Vec<String> {
             Effect::SpellDataDamageProc {
                 trigger_aura,
                 spell,
+                average,
+                variance,
+                roll: None,
+                can_crit,
+                outcome,
+                chain,
+                area,
+                periodic,
+                ..
+            } if outcome.is_some() || chain.is_some() || area.is_some() || periodic.is_some() => {
+                let problem = ProcDamage::new(
+                    *average,
+                    *variance,
+                    *can_crit,
+                    outcome.as_deref(),
+                    chain.as_ref(),
+                    area.as_ref(),
+                    periodic.as_ref(),
+                )
+                .err()
+                .or_else(|| {
+                    let spell = prepared.player.spells.get(*spell)?;
+                    proc_damage_mismatch(spell, outcome.as_deref(), *can_crit, periodic.as_ref())
+                });
+                problem.map(|problem| format!("{trigger_aura}'s hit is not rolled: {problem}"))
+            }
+            Effect::SpellDataDamageProc {
+                trigger_aura,
+                spell,
                 roll,
                 can_crit,
                 outcome: Some(outcome),
@@ -491,6 +520,72 @@ fn undirected_procs(prepared: &PreparedV2) -> Vec<String> {
         .collect()
 }
 
+/// Dots of two spells that share one aura on the target. Go registers an aura once per label, so
+/// two spells of the same name, as Plaguefang's and Stinging Viper's Poison, put their dots on one
+/// aura; the runtime binds an aura to a single dot, and the other would never tick.
+fn shared_dot_auras(prepared: &PreparedV2) -> Vec<String> {
+    let spells = &prepared.player.spells;
+    let mut reasons = Vec::new();
+    for (index, spell) in spells.iter().enumerate() {
+        let Some(dot) = spell.dot.as_ref() else {
+            continue;
+        };
+        for other in &spells[..index] {
+            if other
+                .dot
+                .as_ref()
+                .is_some_and(|other| other.aura_label == dot.aura_label && other.unit == dot.unit)
+            {
+                reasons.push(format!(
+                    "the dots of {} and {} share the aura {}",
+                    other.action_id.clone().unwrap_or_default(),
+                    spell.action_id.clone().unwrap_or_default(),
+                    dot.aura_label
+                ));
+            }
+        }
+    }
+    reasons
+}
+
+/// Where a weapon proc's exported shape disagrees with the spell it casts: the attack table must
+/// be the one the spell's defense type names with the crit the client allows, a damage over time
+/// needs the dot the spell carries, and a missile cannot carry only a dot.
+fn proc_damage_mismatch(
+    spell: &Spell,
+    outcome: Option<&str>,
+    can_crit: bool,
+    periodic: Option<&ProcPeriodic>,
+) -> Option<String> {
+    let (table, crit) = match outcome {
+        Some(name) => (
+            if name.starts_with("melee_") {
+                "DefenseTypeMelee"
+            } else {
+                "DefenseTypeRanged"
+            },
+            name.ends_with("_and_crit"),
+        ),
+        None => ("DefenseTypeMagic", can_crit),
+    };
+    if periodic.is_some_and(|periodic| !periodic.with_direct) {
+        if spell.dot.is_none() || spell.missile_speed != 0.0 {
+            return Some("a damage over time alone needs its dot and no missile".to_string());
+        }
+        return None;
+    }
+    if spell.defense_type != table || crit != can_crit {
+        return Some(format!(
+            "the {outcome:?} table disagrees with the spell's {} and crit",
+            spell.defense_type
+        ));
+    }
+    if periodic.is_some() && spell.dot.is_none() {
+        return Some("a damage over time needs the dot the spell carries".to_string());
+    }
+    None
+}
+
 /// Stats a temporary stat change may set: the runtime reads spell damage, attack powers, crit
 /// and maximum mana during a fight, and nothing in scope reads healing power.
 const DYNAMIC_STATS: &[&str] = &[
@@ -502,6 +597,9 @@ const DYNAMIC_STATS: &[&str] = &[
     "PhysicalCritPercent",
     "MP5",
     "Mana",
+    // Physical damage, which a physical spell adds to its base damage: the combinations carry
+    // it when one changes it.
+    "PhysicalDamage",
     // Spirit, which spirit regeneration, Life Tap and Dark Sacrifice read live.
     "Spirit",
     // Spell power by school, which spell power reads, and the resistances spells that hit
@@ -1289,6 +1387,7 @@ pub(crate) fn prepared_coverage(
             several_target_limits(prepared, gate, &reachable),
         ));
         reasons.extend(coded("proc_unsupported", undirected_procs(prepared)));
+        reasons.extend(coded("effect_unimplemented", shared_dot_auras(prepared)));
         reasons.extend(coded(
             "stat_change_unsupported",
             fixed_stat_changes(prepared),

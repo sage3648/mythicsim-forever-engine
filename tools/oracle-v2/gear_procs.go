@@ -38,8 +38,15 @@ func gearProcEffects(request *proto.RaidSimRequest, simulation *core.Simulation,
 	// weapon's speed on landed hits; a batch window later the handler activates the target's
 	// Puncture Armor and adds a stack, and each stack change moves the target's armor through
 	// AddStatDynamic. The armor at each stack count is read from a separate reset simulation.
-	for _, name := range []string{"Bashguuder", "Rivenspike"} {
-		trigger := character.GetAura(name + " Proc")
+	// stat_bonus_procs_auto_gen.go Annihilator is the same through shared.NewSpellDataDebuffProc:
+	// the trigger carries the item's name, the row's Armor Shatter takes 165 armor a stack, and the
+	// handler applies it at once (TriggerImmediately) to the unit hit.
+	for _, weapon := range []struct {
+		trigger, debuff string
+		immediate       bool
+	}{{"Bashguuder Proc", "Puncture Armor", false}, {"Rivenspike Proc", "Puncture Armor", false},
+		{"Annihilator", "Armor Shatter 16928", true}} {
+		trigger := character.GetAura(weapon.trigger)
 		if trigger == nil {
 			continue
 		}
@@ -50,9 +57,9 @@ func gearProcEffects(request *proto.RaidSimRequest, simulation *core.Simulation,
 		scratch := core.NewSim(request, simsignals.CreateSignals())
 		scratch.Reset()
 		target := &scratch.Encounter.AllTargets[0].Unit
-		debuff := target.GetAura("Puncture Armor")
+		debuff := target.GetAura(weapon.debuff)
 		if debuff == nil {
-			*unrepresented = append(*unrepresented, fmt.Sprintf("%s has no Puncture Armor aura", trigger.Label))
+			*unrepresented = append(*unrepresented, fmt.Sprintf("%s has no %s aura", trigger.Label, weapon.debuff))
 			continue
 		}
 		armor := []float64{0}
@@ -62,13 +69,17 @@ func gearProcEffects(request *proto.RaidSimRequest, simulation *core.Simulation,
 			debuff.SetStacks(scratch, stacks)
 			armor = append(armor, target.GetStat(stats.Armor)-base)
 		}
-		effects = append(effects, map[string]any{
+		effect := map[string]any{
 			"kind": "armor_debuff_proc", "trigger_aura": trigger.Label, "rng_label": trigger.Label,
 			"chances": dpmChances(character, trigger.Dpm, simulation, func(spell *core.Spell) bool {
 				return !spell.Flags.Matches(core.SpellFlagSuppressWeaponProcs)
 			}),
 			"aura": debuff.Label, "armor_by_stacks": armor,
-		})
+		}
+		if weapon.immediate {
+			effect["immediate"] = true
+		}
+		effects = append(effects, effect)
 	}
 	return effects
 }

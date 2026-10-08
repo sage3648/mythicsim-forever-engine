@@ -23,9 +23,10 @@ const DYNAMIC_READ_STATS: [Stat; 6] = [
 ];
 
 /// Stats the Rust runtime reads during a fight that a combination carries only when one changes
-/// them: maximum mana, healing power and health, Spirit, the school spell damage stats and the
-/// resistances a spell that hits the player rolls against.
-const OPTIONAL_READ_STATS: [Stat; 15] = [
+/// them: maximum mana, healing power and health, Spirit, the school spell damage stats, the
+/// resistances a spell that hits the player rolls against and the physical damage a physical
+/// spell adds.
+const OPTIONAL_READ_STATS: [Stat; 16] = [
     Stat::Mana,
     Stat::HealingPower,
     Stat::Health,
@@ -41,6 +42,7 @@ const OPTIONAL_READ_STATS: [Stat; 15] = [
     Stat::FrostResistance,
     Stat::NatureResistance,
     Stat::ShadowResistance,
+    Stat::PhysicalDamage,
 ];
 
 /// Auras of races, items and raid buffs whose gain and expiry change stats through
@@ -112,6 +114,11 @@ pub(crate) fn character_stat_auras(env: &Environment) -> Vec<String> {
     candidates.extend(spell_data_stat_proc_auras(env));
     candidates.extend(lion_horn_proc_aura(env));
     candidates.extend(simple_stat_active_auras(env));
+    candidates.extend(
+        super::export_items::WEAPON_AURA_PROC_AURAS
+            .iter()
+            .map(|label| label.to_string()),
+    );
     candidates
         .into_iter()
         .filter(|label| env.sim.get_aura(env.player, label).is_some())

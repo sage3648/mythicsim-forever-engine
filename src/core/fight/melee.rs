@@ -1208,7 +1208,7 @@ impl<A: Agent> Fight<A> {
 
     /// Go `Spell.BonusDamage` for a physical spell.
     fn physical_bonus_damage(&self, spell: SpellId) -> f64 {
-        self.spells[spell].bonus_base_damage + self.unit_config(self.caster(spell)).physical_damage
+        self.spells[spell].bonus_base_damage + self.unit(self.caster(spell)).powers.physical_damage
     }
 
     /// Go `PhysicalHitChance`: ranged attacks add ranged hit.

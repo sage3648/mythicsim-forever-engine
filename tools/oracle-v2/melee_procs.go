@@ -27,12 +27,13 @@ var dynamicReadStats = []stats.Stat{stats.SpellDamage, stats.AttackPower, stats.
 
 // Stats the Rust runtime reads during a fight that a combination carries only when one changes
 // them: maximum mana, healing power and health, Spirit, which Life Tap and Dark Sacrifice read,
-// the school spell damage stats spell.go SpellSchoolBonusDamage reads, and the resistances a
-// spell that hits the player rolls against.
+// the school spell damage stats spell.go SpellSchoolBonusDamage reads, the resistances a spell
+// that hits the player rolls against and the physical damage spell.go BonusDamage adds to a
+// physical spell.
 var optionalReadStats = []stats.Stat{stats.Mana, stats.HealingPower, stats.Health, stats.Spirit,
 	stats.ArcaneDamage, stats.FireDamage, stats.FrostDamage, stats.HolyDamage, stats.NatureDamage,
 	stats.ShadowDamage, stats.ArcaneResistance, stats.FireResistance, stats.FrostResistance,
-	stats.NatureResistance, stats.ShadowResistance}
+	stats.NatureResistance, stats.ShadowResistance, stats.PhysicalDamage}
 
 // Auras of races, items and raid buffs whose gain and expiry change stats through
 // AddStatsDynamic. A class adds its own through classExport.statAuras.
@@ -62,6 +63,7 @@ func characterStatAuras(character *core.Character, class classExport, agent core
 			candidates = append(candidates, spell.RelatedSelfBuff.Label)
 		}
 	}
+	candidates = append(candidates, weaponAuraProcAuras...)
 	for _, label := range candidates {
 		if character.GetAura(label) != nil {
 			labels = append(labels, label)
@@ -489,6 +491,9 @@ func meleeProcEffects(simulation *core.Simulation, character *core.Character, un
 	effects = append(effects, spellDataHealProcEffects(character, unrepresented)...)
 	effects = append(effects, weaponEnchantDamageProcEffects(simulation, character, unrepresented)...)
 	effects = append(effects, procDamageItemEffects(simulation, character, unrepresented)...)
+	effects = append(effects, weaponDamageProcEffects(simulation, character, unrepresented)...)
+	effects = append(effects, lobotomizerEffects(simulation, character, unrepresented)...)
+	effects = append(effects, ebonHiltEffects(simulation, character, unrepresented)...)
 	effects = append(effects, setStatProcEffects(simulation, character, unrepresented)...)
 	// common/classic/enchants.go Crusader (1900): a weapon proc on landed hits, at one proc a
 	// minute of each hand's speed, that activates that hand's Holy Strength and heals.
@@ -525,6 +530,8 @@ func meleeProcEffects(simulation *core.Simulation, character *core.Character, un
 			})
 		}
 	}
+	effects = append(effects, flurryAxeEffects(simulation, character, unrepresented)...)
+	effects = append(effects, weaponAuraProcEffects(simulation, character, unrepresented)...)
 	// common/classic/items_weapons.go Dragon's Call: a weapon proc on landed hits, at one proc a
 	// minute of the weapon's speed, whose handler summons the Emerald Dragon Whelp for 15 seconds
 	// a spell batch window later (emerald_dragon_whelp.go); its rotation spits half the time.

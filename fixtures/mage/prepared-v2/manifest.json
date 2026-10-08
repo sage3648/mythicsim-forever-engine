@@ -4,7 +4,7 @@
   "engine_revision": "2d93e423e0303e93dbb16e190d435503248b68f9",
   "client_build": "1.60.1.70235",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "c016efbf516765519865db3a3f73e0fabcf32206de00da30137a40b7235a67d0",
+  "exporter_sha256": "ccfc655ecb3d05ae7ef0d5a7effb2dad4beb6b23e5d10df0f071f3a687ca9b08",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -7841,6 +7841,384 @@
       "go_log": {
         "file": "smite-priest-holy-nova-own-and-external-power-infusion-12-sources.go-log.txt",
         "sha256": "bf6a312a950b9b1666c3be47116eb3907498fc7537c014bd78f0896dbcf0d48c"
+      }
+    },
+    {
+      "id": "production-warrior-masterwork-stormhammer",
+      "description": "Production Fury Warrior with Masterwork Stormhammer (12794) in the main hand in place of Ironfoe: its Chain Lightning hits up to 3 targets, keeping 70% of the damage at each jump, flies to the target and is dealt after its travel, at 0.5 procs a minute of the main hand's speed (CreateWeaponProcSpell over SpellDataProcDamageSpell)",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/production-warrior-masterwork-stormhammer.request.json"
+      },
+      "prepared": "production-warrior-masterwork-stormhammer.prepared.json",
+      "prepared_sha256": "b72f7ce4cf53287b88bc56fe96c73f7dd6c420cca05354bfb2162cb80ef4984b",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "production-warrior-masterwork-stormhammer.go-result.json",
+        "sha256": "19a1ed6fd3ca545118d38c35edaa19eb05bf70514707c4ea0bff7d9774698e46"
+      },
+      "go_log": {
+        "file": "production-warrior-masterwork-stormhammer.go-log.txt",
+        "sha256": "7909f149594dc0c7dc7d122440b3562100b0ee5f70024cd95411275c76868661"
+      }
+    },
+    {
+      "id": "warrior-3-targets-masterwork-stormhammer",
+      "description": "Production Fury Warrior against 3 targets with Masterwork Stormhammer (12794) in the main hand: the Chain Lightning chains over all 3 targets from the one hit, keeping 70% of the damage at each jump, every hit calculated before any is dealt after the travel",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-3-targets-masterwork-stormhammer.request.json"
+      },
+      "prepared": "warrior-3-targets-masterwork-stormhammer.prepared.json",
+      "prepared_sha256": "bb0d5e5f97b43383fce363711b554f269b1ffc36b04add40f44f95b7d596494c",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-3-targets-masterwork-stormhammer.go-result.json",
+        "sha256": "437ed1aad7c4c9dc9e93aec29fd6b8078df6746c615c431c061289e480eccf46"
+      },
+      "go_log": {
+        "file": "warrior-3-targets-masterwork-stormhammer.go-log.txt",
+        "sha256": "44148381da1cdce24c7c3b32ea63d9995b64da1cdc34e54680b2db0630f42133"
+      }
+    },
+    {
+      "id": "warrior-bloodfist",
+      "description": "Production Fury Warrior with Bloodfist (11744) in the main hand: its Wound (16433) is a physical hit of the melee defense type, so it rolls the melee special table with a crit and the target's armor, at 4 procs a minute of the main hand's speed",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-bloodfist.request.json"
+      },
+      "prepared": "warrior-bloodfist.prepared.json",
+      "prepared_sha256": "bd6cfc2b5dd481475c5be63e33c30f72c28cbdc91b81a2fa9bbfbfe73249702e",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-bloodfist.go-result.json",
+        "sha256": "f27ac69b5d2495b902ec6158cec1ced5de54e7dec3f232843306730a92ffd298"
+      },
+      "go_log": {
+        "file": "warrior-bloodfist.go-log.txt",
+        "sha256": "79890e5cbe97beac6e7c78583f95fc1f96d6cf9fc4fae6c4423415c752646385"
+      }
+    },
+    {
+      "id": "warrior-alcors-sunrazor",
+      "description": "Production Fury Warrior with Alcor's Sunrazor (14555) in the main hand: its Firebolt (18833) is a single target magic hit on the client effect's roll, 90 with a third of variance, at 1 proc a minute of the main hand's speed",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-alcors-sunrazor.request.json"
+      },
+      "prepared": "warrior-alcors-sunrazor.prepared.json",
+      "prepared_sha256": "a5231b275a8650301a6160b971044cbdc5f5c185de0afcb301ea7cd7918db2a0",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-alcors-sunrazor.go-result.json",
+        "sha256": "ad883c0d684e7ae7c4976c22994b2b4c65fbb2ffdd4f6fb31916e79e7fcc7ed7"
+      },
+      "go_log": {
+        "file": "warrior-alcors-sunrazor.go-log.txt",
+        "sha256": "b7cb89e1522980b39ada18d91c0ec8809412e0b2e45d20e161e2e35cf2b1e871"
+      }
+    },
+    {
+      "id": "warrior-bonechill-hammer",
+      "description": "Production Fury Warrior with Bonechill Hammer (14487) in the main hand: its Frost Blast (18276) flies to the target at a missile speed of 20 and is dealt after its travel, so the next action at the same moment runs before it lands",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-bonechill-hammer.request.json"
+      },
+      "prepared": "warrior-bonechill-hammer.prepared.json",
+      "prepared_sha256": "2495974c708dc56fa01fa1fdb7a035b6915ad2dbc12d235a559188910cc5f61e",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-bonechill-hammer.go-result.json",
+        "sha256": "96bb8bfddc2404ff21f1e4c2d99cd9fa4ff6ec82b4122f8aa85521e0f22f9a38"
+      },
+      "go_log": {
+        "file": "warrior-bonechill-hammer.go-log.txt",
+        "sha256": "557310e6164662b65848483e2b2fe19db17a6d45f9d47f6d44f011e9ad94b3d3"
+      }
+    },
+    {
+      "id": "warrior-plaguefang",
+      "description": "Production Fury Warrior with Plaguefang (279876) in the main hand: its Poison (1309315) is a damage over time of 2 Nature a second for 10 seconds with no direct hit, applied unrolled and ticking on the magic hit table with a crit",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-plaguefang.request.json"
+      },
+      "prepared": "warrior-plaguefang.prepared.json",
+      "prepared_sha256": "ffb74dc07cac9340e0d0e3f6e7013e0197e9a7e688a7fc404023fb725b94441f",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-plaguefang.go-result.json",
+        "sha256": "e243f2f7bc5f6ed2f03f62745bc3547fd48bea33ceb8b7cc47160c966f46ea28"
+      },
+      "go_log": {
+        "file": "warrior-plaguefang.go-log.txt",
+        "sha256": "d620e7cc4d998b224f7da4d5c2ef75fe6a5b0d338945beb13c37e3bb302b80e6"
+      }
+    },
+    {
+      "id": "warrior-3-targets-stinging-viper",
+      "description": "Production Fury Warrior against 3 targets with Stinging Viper (6472) in the main hand: its Poison (1291663) goes on the target the proc hit, with a dot of its own on each target",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-3-targets-stinging-viper.request.json"
+      },
+      "prepared": "warrior-3-targets-stinging-viper.prepared.json",
+      "prepared_sha256": "dfdf0e6acc9f6edc705d28ef201bce73b2a5f25b3c9d52773d2deea68e928383",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-3-targets-stinging-viper.go-result.json",
+        "sha256": "a9d2fdad4841e8d33eeaa842286cbda7aea2769e685c1725b886c0db38a035ef"
+      },
+      "go_log": {
+        "file": "warrior-3-targets-stinging-viper.go-log.txt",
+        "sha256": "10cb9c0b68464fe5676d35aaba8cec32c59054dd081f36c74635a4d43fc0eb92"
+      }
+    },
+    {
+      "id": "warrior-flurry-axe",
+      "description": "Production Fury Warrior with Flurry Axe (871) in the main hand: its chance on hit casts a spell that grants one extra main hand attack at once, at 1.9 procs a minute of the main hand's speed",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-flurry-axe.request.json"
+      },
+      "prepared": "warrior-flurry-axe.prepared.json",
+      "prepared_sha256": "37833cf68b59a581d7c0cdffe6e2308c1b401ff38601ed0be5b833f0c699c9b6",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-flurry-axe.go-result.json",
+        "sha256": "9d605368dffd6f0321a3967b26aec4b612322e6bc9e3247fba8339f3a7260e1c"
+      },
+      "go_log": {
+        "file": "warrior-flurry-axe.go-log.txt",
+        "sha256": "07ba736a1bad40e0821ce89b41024935618247afbd0996c1084196b69629274b"
+      }
+    },
+    {
+      "id": "warrior-3-targets-annihilator",
+      "description": "Production Fury Warrior against 3 targets with Annihilator (12798) in the main hand: its Armor Shatter takes 165 armor a stack from the target the proc hit, up to 3 stacks for 45 seconds, applied at once",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-3-targets-annihilator.request.json"
+      },
+      "prepared": "warrior-3-targets-annihilator.prepared.json",
+      "prepared_sha256": "a27339b9ca7ef623cbf10af5278d239cfa0bad52ebf64db4ce955981873d8eb6",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-3-targets-annihilator.go-result.json",
+        "sha256": "bf4d313fad39482af433c1b95773b3f2d9ac1a76a84cb9d6cd08fc2341a4d4f3"
+      },
+      "go_log": {
+        "file": "warrior-3-targets-annihilator.go-log.txt",
+        "sha256": "659080cfb0af97e2e5e953be93b3c84339e288467649977fb3e26d9ea801cc2a"
+      }
+    },
+    {
+      "id": "warrior-sword-of-zeal-bloodfist-off-hand",
+      "description": "Production Fury Warrior with Sword of Zeal (6622) in the main hand and Bloodfist (11744) in the off hand: each weapon rolls its proc on its own hand's hits, Zeal's aura adds 10 physical damage and 150 armor, and Bloodfist's Wound takes the physical damage while it is up",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-sword-of-zeal-bloodfist-off-hand.request.json"
+      },
+      "prepared": "warrior-sword-of-zeal-bloodfist-off-hand.prepared.json",
+      "prepared_sha256": "43210f3552b70ab994e14112b3bc6242c60bdc565d580b1e9d626c9a10e77964",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-sword-of-zeal-bloodfist-off-hand.go-result.json",
+        "sha256": "b9be88dfd1ad66bbd85256025dd51235148c0288a5c4a74bc83e15ac4bb2a0ca"
+      },
+      "go_log": {
+        "file": "warrior-sword-of-zeal-bloodfist-off-hand.go-log.txt",
+        "sha256": "28b563317117f7eaa3f6ddea3bbea8ff5f7403496177bc152e6155b5c8e294c3"
+      }
+    },
+    {
+      "id": "warrior-lobotomizer",
+      "description": "Production Fury Warrior with The Lobotomizer (19324) in the main hand: its Brain Damage is a physical spell of the melee defense type that rolls 200 to 300 on the magic hit table with a crit",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-lobotomizer.request.json"
+      },
+      "prepared": "warrior-lobotomizer.prepared.json",
+      "prepared_sha256": "a95de55ee7d4ae6863a642d42248d8bfa33ad0e065882a9e34a46c87381f1e83",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-lobotomizer.go-result.json",
+        "sha256": "8af88cd139bb49b38be8a2c2eda2db58355a4889447098ffe5efef5f67cb774e"
+      },
+      "go_log": {
+        "file": "warrior-lobotomizer.go-log.txt",
+        "sha256": "0e6f80565089be05dba9be55b2481f0ad0ecd39ebebf7b2f7eba566654456b10"
+      }
+    },
+    {
+      "id": "warrior-ebon-hilt-of-marduk",
+      "description": "Production Fury Warrior with Ebon Hilt of Marduk (14576) in the main hand: its Corruption rolls the magic hit and, landed, ticks 28 Shadow every 3 seconds for 3 ticks, and a permanent aura lowers the warrior's threat by 1%",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-ebon-hilt-of-marduk.request.json"
+      },
+      "prepared": "warrior-ebon-hilt-of-marduk.prepared.json",
+      "prepared_sha256": "9e080ac641a37defa809065e6ceaeacfa057d291fc71337499c10d69ce821b0f",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-ebon-hilt-of-marduk.go-result.json",
+        "sha256": "fb6b07dd4295e248befbf639bf56fcc35c8a4eed792d1f5fca83d268cf6787e8"
+      },
+      "go_log": {
+        "file": "warrior-ebon-hilt-of-marduk.go-log.txt",
+        "sha256": "0e7c3225e0e66f746e5d32a3c3c7a496d86a82693028896dafea8efbd1905484"
+      }
+    },
+    {
+      "id": "arms-warrior-3-targets-flame-wrath",
+      "description": "Production Arms Warrior against 3 targets with Flame Wrath (11809) in the main hand: its Fire hit is an area hit calculated on each of the 3 targets with a roll of its own before any is dealt",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/arms-warrior-3-targets-flame-wrath.request.json"
+      },
+      "prepared": "arms-warrior-3-targets-flame-wrath.prepared.json",
+      "prepared_sha256": "fd77645cd0260d6965b63e2389adeabb3a25173a5206c146be4ef958e4c86ae1",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "arms-warrior-3-targets-flame-wrath.go-result.json",
+        "sha256": "b9bb22816720d963445cbbb1b7d9eda89567162cc05fad5d4220c19135920e97"
+      },
+      "go_log": {
+        "file": "arms-warrior-3-targets-flame-wrath.go-log.txt",
+        "sha256": "fe5365a88d6505414038a39a67a8d23ffd035b9a490c2d2337cddc126fff6d09"
+      }
+    },
+    {
+      "id": "marksmanship-hunter-barbaric-crossbow",
+      "description": "Production Marksmanship Hunter with Barbaric Crossbow (272999) in the ranged slot: its Wound (1291551) is a physical hit of the ranged defense type, so it rolls the ranged table with a crit, on the landed hits of the ranged weapon",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/marksmanship-hunter-barbaric-crossbow.request.json"
+      },
+      "prepared": "marksmanship-hunter-barbaric-crossbow.prepared.json",
+      "prepared_sha256": "51b6513059bb2a17dedddfce159a5a648d43cb94508f40772e20aeebfea7ddba",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "marksmanship-hunter-barbaric-crossbow.go-result.json",
+        "sha256": "fefcf3f49ea620ba4fc99ff8b66f2140e6bddce7241d0feb5a5154a8e386d28e"
+      },
+      "go_log": {
+        "file": "marksmanship-hunter-barbaric-crossbow.go-log.txt",
+        "sha256": "7960558ec8856121249cbb74662b73fdd61bdf80ee59ed062a927532ec35dfd8"
+      }
+    },
+    {
+      "id": "marksmanship-hunter-venomstrike",
+      "description": "Production Marksmanship Hunter with Venomstrike (6469) in the ranged slot: its Venom Shot (29653) is a Nature hit of the ranged defense type that flies to the target and rolls the ranged table with a crit",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/marksmanship-hunter-venomstrike.request.json"
+      },
+      "prepared": "marksmanship-hunter-venomstrike.prepared.json",
+      "prepared_sha256": "add3a59a67a8e202cda4f86f848a6dffba24882daee91dbaaa7b437d41b09680",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "marksmanship-hunter-venomstrike.go-result.json",
+        "sha256": "86976359bf4e16166e7948ce20c39fe99027f00ec853610fbe34cd21cecd4a17"
+      },
+      "go_log": {
+        "file": "marksmanship-hunter-venomstrike.go-log.txt",
+        "sha256": "be6ec5606da1c1fdee468ca77787b2869020b03c285cb59fba61e9b0be67ff4a"
+      }
+    },
+    {
+      "id": "retribution-paladin-wolfsbane",
+      "description": "Production Retribution Paladin with Wolfsbane (267369) in the main hand: its Blazewind Blast (1282503) is a Holystorm hit, rolled on the magic table with the partial resist of both schools, at 2.7 procs a minute of the two hander's speed",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/retribution-paladin-wolfsbane.request.json"
+      },
+      "prepared": "retribution-paladin-wolfsbane.prepared.json",
+      "prepared_sha256": "f34b2c70d8ab19466e0935f8be8bf2f0478481902af912748ef50f26baeef0dd",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "retribution-paladin-wolfsbane.go-result.json",
+        "sha256": "978dc5b6b7ed5226d464a688390025b64ca4235d9423335474b98afd942b53b2"
+      },
+      "go_log": {
+        "file": "retribution-paladin-wolfsbane.go-log.txt",
+        "sha256": "0efd834eacf9f64ad34e0bfc3ae93a3f987c3ab4e06d9c440c0a2c2c258dc71b"
+      }
+    },
+    {
+      "id": "combat-rogue-glacial-blade-electrified-dagger",
+      "description": "Production Combat Rogue dual wielding Glacial Blade (19099) in the main hand and Electrified Dagger (19100) in the off hand: each dagger rolls its own proc rate on its own hand's hits and casts a magic bolt of 45",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/combat-rogue-glacial-blade-electrified-dagger.request.json"
+      },
+      "prepared": "combat-rogue-glacial-blade-electrified-dagger.prepared.json",
+      "prepared_sha256": "e150869f3642d532f28e399cf3977e5f740b8fcfab5230c96cbcff26f43e2656",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "combat-rogue-glacial-blade-electrified-dagger.go-result.json",
+        "sha256": "778bd30b8cc5f3a937d3044116a7e73e97ec0f91652e1c7fbe24e27fafdccede"
+      },
+      "go_log": {
+        "file": "combat-rogue-glacial-blade-electrified-dagger.go-log.txt",
+        "sha256": "1072d84598de46abed2be2c56df10a3183353a86106adb88fa2f71bf148de0b1"
+      }
+    },
+    {
+      "id": "protection-warrior-3-targets-masterwork-stormhammer",
+      "description": "Production Protection Warrior tanking 3 targets with Masterwork Stormhammer (12794) in the main hand: the Chain Lightning chains over the 3 targets that swing at the warrior",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-3-targets-masterwork-stormhammer.request.json"
+      },
+      "prepared": "protection-warrior-3-targets-masterwork-stormhammer.prepared.json",
+      "prepared_sha256": "994ec27b59fe9f4a9d65a007106da3520de35153b994445fa445c03ccac52496",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-3-targets-masterwork-stormhammer.go-result.json",
+        "sha256": "ed1eb14f16841918a40cbe6ef62c579bf8f9eabb40f64637b701a26d184287b2"
+      },
+      "go_log": {
+        "file": "protection-warrior-3-targets-masterwork-stormhammer.go-log.txt",
+        "sha256": "720d9463305c9b1c22f75e90835ee40e710f49f8d055cd463b218545f106d93e"
       }
     }
   ]
