@@ -369,15 +369,23 @@ func weaponEnchantDamageProcEffects(simulation *core.Simulation, character *core
 	return effects
 }
 
-// Items common/shared/shared_utils.go NewProcDamageEffect builds by hand: a listener on landed
-// melee and ranged hits at a legacy proc manager's rate that casts a magic hit of a Go literal range
-// at once on the unit hit. common/classic/items_trinkets.go Heart of Wyrmthalak.
+// Items common/shared/shared_utils.go NewProcDamageEffect builds by hand: a listener on landed hits
+// at a legacy proc manager's rate that casts a hit of a Go literal range at once on the unit hit.
+// common/classic/items_trinkets.go Heart of Wyrmthalak is a magic hit on melee and ranged hits.
+// common/classic/items_store_gaps.go Iceblade Hacker and Warblade of Caer Darrow are Frost hits of
+// the melee defense type on the landed melee hits that dealt damage, at a fixed chance of 1 on the
+// hand holding the weapon: damageOutcome gives them the melee special hit table with a crit, where
+// a magic hit rolls the magic one.
 var procDamageItems = []struct {
 	label                string
 	spellID              int32
 	minDamage, maxDamage float64
+	defense              core.DefenseType
+	requireDamage        bool
 	procMask             core.ProcMask
-}{{"Heart of Wyrmthalak", 27655, 112, 168, core.ProcMaskMeleeOrRanged}}
+}{{"Heart of Wyrmthalak", 27655, 112, 168, core.DefenseTypeMagic, false, core.ProcMaskMeleeOrRanged},
+	{"Iceblade Hacker", 1298414, 40.70000076293945, 40.70000076293945, core.DefenseTypeMelee, true, core.ProcMaskMelee},
+	{"Warblade of Caer Darrow", 1298499, 27.719999313354492, 27.719999313354492, core.DefenseTypeMelee, true, core.ProcMaskMelee}}
 
 func procDamageItemEffects(simulation *core.Simulation, character *core.Character, unrepresented *[]string) []map[string]any {
 	effects := []map[string]any{}
@@ -392,20 +400,28 @@ func procDamageItemEffects(simulation *core.Simulation, character *core.Characte
 				spell = i
 			}
 		}
-		if aura.Dpm == nil || aura.Icd != nil || spell < 0 || character.Spellbook[spell].DefenseType != core.DefenseTypeMagic ||
+		hit := "magic"
+		if item.defense == core.DefenseTypeMelee {
+			hit = "melee"
+		}
+		if aura.Dpm == nil || aura.Icd != nil || spell < 0 || character.Spellbook[spell].DefenseType != item.defense ||
 			aura.OnSpellHitDealt == nil || aura.OnSpellHitTaken != nil || aura.OnPeriodicDamageDealt != nil {
-			*unrepresented = append(*unrepresented, fmt.Sprintf("%s's proc is not a single target magic hit", item.label))
+			*unrepresented = append(*unrepresented, fmt.Sprintf("%s's proc is not a single target %s hit", item.label, hit))
 			continue
 		}
 		listener := core.ProcTrigger{ProcMask: item.procMask, Outcome: core.OutcomeLanded}
-		effects = append(effects, map[string]any{
+		effect := map[string]any{
 			"kind": "spell_data_damage_proc", "trigger_aura": item.label, "trigger_spells": procTriggerSpells(character, listener),
-			"landed_only": true, "require_damage": false, "proc_chance": 1.0, "spell": spell,
+			"landed_only": true, "require_damage": item.requireDamage, "proc_chance": 1.0, "spell": spell,
 			"average": 0.0, "variance": 0.0, "roll": []float64{item.minDamage, item.maxDamage}, "can_crit": true,
 			"chances": dpmChances(character, aura.Dpm, simulation, func(spell *core.Spell) bool {
 				return spell.ProcMask.Matches(item.procMask) && !spell.Flags.Matches(core.SpellFlagProc)
 			}),
-		})
+		}
+		if item.defense == core.DefenseTypeMelee {
+			effect["outcome"] = "melee_special_hit_and_crit"
+		}
+		effects = append(effects, effect)
 	}
 	return effects
 }
