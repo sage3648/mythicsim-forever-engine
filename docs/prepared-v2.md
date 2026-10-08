@@ -690,6 +690,8 @@ and again after its five minute cooldown, or halfway through a 45 second fight.
 with `-3-targets`, cast Taunt on its 8 second cooldown, and `protection-warrior-intimidating-shout`
 and `arms-warrior-intimidating-shout`, with `-3-targets`, cast Intimidating Shout on its 3 minute
 cooldown in a five minute fight: each an always hit for no damage, on the first target only.
+`protection-warrior-intimidating-shout-vindicators` wears three pieces of the Vindicator's
+Battlegear, whose bonus takes 15 seconds off the shout's cooldown.
 `production-assassination-rogue` and `production-subtlety-rogue` are the production
 Assassination and Subtlety Rogue requests. `combat-swords`, `combat-riposte`,
 `combat-wound-poison`, `combat-kidney-shot`, `assassination-venom`,

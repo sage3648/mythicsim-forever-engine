@@ -1127,3 +1127,24 @@ fn taunt_and_intimidating_shout_need_their_effects() {
         );
     }
 }
+
+/// The Vindicator's Battlegear 3 piece bonus takes 15 seconds off the shout's cooldown, a spell
+/// mod of the common cast.
+#[test]
+fn intimidating_shouts_cooldown_follows_the_vindicators_set_bonus() {
+    let logs = first_fight_log(warrior_fixture(
+        "protection-warrior-intimidating-shout-vindicators",
+    ));
+    let casts: Vec<f64> = logs
+        .lines()
+        .filter(|line| line.contains("Casting {SpellID: 5246}"))
+        .map(|line| line[1..line.find(']').unwrap()].parse().unwrap())
+        .collect();
+    assert_eq!(casts.len(), 3, "{casts:?}");
+    for pair in casts.windows(2) {
+        assert!(
+            pair[1] - pair[0] >= 165.0 && pair[1] - pair[0] < 170.0,
+            "{casts:?}"
+        );
+    }
+}

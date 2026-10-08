@@ -9648,6 +9648,27 @@
         "file": "fire-mage-evocation-over-external-innervate.go-log.txt",
         "sha256": "df1be74d2efa2283bf922fc847c17d1d7da18d867dd48eff4c5ee144585d6753"
       }
+    },
+    {
+      "id": "protection-warrior-intimidating-shout-vindicators",
+      "description": "A Protection Warrior in the Vindicator's Battlegear chest, belt and bracers casts Intimidating Shout in a 400 second fight: the set's 3 piece bonus takes 15 seconds off the shout's 3 minute cooldown, so it comes back after 165 seconds, as the cooldown mod of the common cast has it",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-intimidating-shout-vindicators.request.json"
+      },
+      "prepared": "protection-warrior-intimidating-shout-vindicators.prepared.json",
+      "prepared_sha256": "27eed8e1645a354e3d5610a144295cba29474ed646a6c33b76b73a5f79fa7e9b",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-intimidating-shout-vindicators.go-result.json",
+        "sha256": "6daf13667f1ee002b02274a56221925d4b8a470567d517ece5896c7941738f67"
+      },
+      "go_log": {
+        "file": "protection-warrior-intimidating-shout-vindicators.go-log.txt",
+        "sha256": "a354aa33575a7eaa52d5c51dc2316601a8d0fe3f50cc4602323f255bf601e667"
+      }
     }
   ]
 }
