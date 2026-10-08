@@ -232,8 +232,11 @@ fn pvp_stamina(env: &mut Environment, aura: AuraId) {
     env.sim.attach_stat_buff(aura, Stat::Stamina, 20.0);
 }
 
-/// The shaman package's `core.NewItemEffect` calls.
-pub(crate) fn apply_item_effect(sim: &mut Sim, unit: UnitId, item: i32) -> bool {
+/// The totems the shaman package registers whose effect needs nothing of a shaman (Go
+/// `core.NewItemEffect` over `agent.GetCharacter()`): Totem of the Storm (23199) and Totem of
+/// Thunder (228176). A character of another class wears them as well, and their spell mods find
+/// spells by class mask alone. Answers whether the item is one of them.
+pub(crate) fn apply_agentless_totem_effect(sim: &mut Sim, unit: UnitId, item: i32) -> bool {
     match item {
         23199 => {
             totem_of_the_storm(sim, unit);
@@ -243,6 +246,16 @@ pub(crate) fn apply_item_effect(sim: &mut Sim, unit: UnitId, item: i32) -> bool 
             totem_of_thunder(sim, unit);
             true
         }
+        _ => false,
+    }
+}
+
+/// The shaman package's `core.NewItemEffect` calls.
+pub(crate) fn apply_item_effect(sim: &mut Sim, unit: UnitId, item: i32) -> bool {
+    if apply_agentless_totem_effect(sim, unit, item) {
+        return true;
+    }
+    match item {
         19956 => {
             wushoolays_charm_of_spirits(sim, unit);
             true

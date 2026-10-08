@@ -15,6 +15,78 @@ use super::masks;
 use super::util::spell_action;
 use super::Paladin;
 
+/// The librams the paladin package registers whose effect needs nothing of a paladin (Go
+/// `core.NewItemEffect` over `agent.GetCharacter().AddStaticMod`). A character of another class
+/// wears them as well, and their spell mods find spells by class mask alone. Answers whether the
+/// item is one of them.
+pub(crate) fn apply_agentless_libram_effect(sim: &mut Sim, unit: UnitId, item: i32) -> bool {
+    match item {
+        // Libram of Hope: increases the duration of your Seal spells by 4 sec.
+        22401 => sim.add_static_mod(
+            unit,
+            SpellModConfig {
+                class_mask: masks::ALL_SEALS,
+                kind: SpellModType::BuffDurationFlat,
+                time_value: 4 * SECOND,
+                ..SpellModConfig::default()
+            },
+        ),
+        // Libram of Invocation: reduces the mana cost of your Seal spells by 5%.
+        249442 => sim.add_static_mod(
+            unit,
+            SpellModConfig {
+                class_mask: masks::ALL_SEALS,
+                kind: SpellModType::PowerCostPct,
+                float_value: -0.05,
+                ..SpellModConfig::default()
+            },
+        ),
+        // Sentinel's Libram: reduces the cooldown of your Swift Judgement talent by 10 sec.
+        272434 => sim.add_static_mod(
+            unit,
+            SpellModConfig {
+                class_mask: masks::SWIFT_JUDGEMENT,
+                kind: SpellModType::CooldownFlat,
+                time_value: -10 * SECOND,
+                ..SpellModConfig::default()
+            },
+        ),
+        // Libram of Law: increases the damage of your Judgement ability by 4%.
+        272435 => sim.add_static_mod(
+            unit,
+            SpellModConfig {
+                class_mask: masks::JUDGEMENT_OF_RIGHTEOUSNESS | masks::JUDGEMENT_OF_FURY,
+                kind: SpellModType::DamageDonePct,
+                float_value: 0.04,
+                ..SpellModConfig::default()
+            },
+        ),
+        // Libram of Economy: reduces the Mana cost of your Holy Light ability by 5%.
+        272436 => sim.add_static_mod(
+            unit,
+            SpellModConfig {
+                class_mask: masks::HOLY_LIGHT,
+                kind: SpellModType::PowerCostPct,
+                float_value: -0.05,
+                ..SpellModConfig::default()
+            },
+        ),
+        // Libram of Infusion: increases the critical strike chance of your Holy Shock
+        // spell by 6%.
+        279248 => sim.add_static_mod(
+            unit,
+            SpellModConfig {
+                class_mask: masks::HOLY_SHOCK | masks::HOLY_SHOCK_HEAL,
+                kind: SpellModType::BonusCritPercent,
+                float_value: 6.0,
+                ..SpellModConfig::default()
+            },
+        ),
+        _ => return false,
+    }
+    true
+}
+
 impl Paladin {
     /// The effects of the Paladin package's `core.NewItemEffect` registrations: applies the
     /// effect and answers true, or answers false for an item the package registers none for.
@@ -24,6 +96,9 @@ impl Paladin {
         unit: UnitId,
         item: i32,
     ) -> bool {
+        if apply_agentless_libram_effect(sim, unit, item) {
+            return true;
+        }
         match item {
             // Libram of Fervor: increases the melee attack power bonus of your Seal of the
             // Crusader by 48 and the Holy damage increase of your Judgement of the Crusader
@@ -32,16 +107,6 @@ impl Paladin {
                 self.seal_of_the_crusader_bonus_attack_power += 48.0;
                 self.judgement_of_the_crusader_bonus += 33.0;
             }
-            // Libram of Hope: increases the duration of your Seal spells by 4 sec.
-            22401 => sim.add_static_mod(
-                unit,
-                SpellModConfig {
-                    class_mask: masks::ALL_SEALS,
-                    kind: SpellModType::BuffDurationFlat,
-                    time_value: 4 * SECOND,
-                    ..SpellModConfig::default()
-                },
-            ),
             // Libram of Light: increases healing done by Flash of Light by up to 83.
             23006 => self.flash_of_light_bonus_healing += 83.0,
             // Libram of Holy Alacrity: causes Holy Shock to reduce the cast time of your next
@@ -87,60 +152,9 @@ impl Paladin {
                     },
                 );
             }
-            // Libram of Invocation: reduces the mana cost of your Seal spells by 5%.
-            249442 => sim.add_static_mod(
-                unit,
-                SpellModConfig {
-                    class_mask: masks::ALL_SEALS,
-                    kind: SpellModType::PowerCostPct,
-                    float_value: -0.05,
-                    ..SpellModConfig::default()
-                },
-            ),
-            // Sentinel's Libram: reduces the cooldown of your Swift Judgement talent by 10 sec.
-            272434 => sim.add_static_mod(
-                unit,
-                SpellModConfig {
-                    class_mask: masks::SWIFT_JUDGEMENT,
-                    kind: SpellModType::CooldownFlat,
-                    time_value: -10 * SECOND,
-                    ..SpellModConfig::default()
-                },
-            ),
-            // Libram of Law: increases the damage of your Judgement ability by 4%.
-            272435 => sim.add_static_mod(
-                unit,
-                SpellModConfig {
-                    class_mask: masks::JUDGEMENT_OF_RIGHTEOUSNESS | masks::JUDGEMENT_OF_FURY,
-                    kind: SpellModType::DamageDonePct,
-                    float_value: 0.04,
-                    ..SpellModConfig::default()
-                },
-            ),
-            // Libram of Economy: reduces the Mana cost of your Holy Light ability by 5%.
-            272436 => sim.add_static_mod(
-                unit,
-                SpellModConfig {
-                    class_mask: masks::HOLY_LIGHT,
-                    kind: SpellModType::PowerCostPct,
-                    float_value: -0.05,
-                    ..SpellModConfig::default()
-                },
-            ),
             // Steadfast Libram: increases the Block Value of your shield by 30% while Holy
             // Shield is active.
             279247 => self.holy_shield_block_value_multiplier *= 1.3,
-            // Libram of Infusion: increases the critical strike chance of your Holy Shock
-            // spell by 6%.
-            279248 => sim.add_static_mod(
-                unit,
-                SpellModConfig {
-                    class_mask: masks::HOLY_SHOCK | masks::HOLY_SHOCK_HEAL,
-                    kind: SpellModType::BonusCritPercent,
-                    float_value: 6.0,
-                    ..SpellModConfig::default()
-                },
-            ),
             // Sanctified Orb: use to restore 340 Mana, with a 5 min cooldown.
             20512 => {
                 let action_id = ActionId {
