@@ -426,6 +426,7 @@ is an error, never a refusal. `REFUSAL_CODES` in
 | `aura_condition_unsupported` | A rotation condition reads an aura as Rust does not |
 | `resource_unsupported` | The rotation or a spell reads a resource the player lacks |
 | `prepull_unsupported` | A prepull action Rust cannot reproduce |
+| `movement_unsupported` | A move of the player in the rotation that Rust does not simulate for the class |
 | `cooldown_unsupported` | A survival cooldown fires at a health threshold Rust does not simulate |
 | `class_limit` | A class gate rejects the input or a spell the rotation reaches |
 | `proc_unsupported` | A proc listens to hits Rust does not deliver to it |

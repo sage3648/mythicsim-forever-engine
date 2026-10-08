@@ -418,8 +418,8 @@ pub enum Action {
     },
     /// Go `APLActionActivateAura` on one of the player's auras, parsed only as a prepull action.
     ActivateAura(ActionId),
-    /// Go `APLActionMove`, parsed only as a prepull action: the range from the target to move
-    /// to, which Go reads as the constant's float value.
+    /// Go `APLActionMove`: the range from the target to move to, which Go reads as the
+    /// constant's float value.
     Move(f64),
     /// Go `APLActionMultidot`: the spell on the first of up to `max_dots` targets whose dot
     /// is down or runs out within `max_overlap`.
@@ -574,18 +574,7 @@ fn parse_prepull(item: &Json, position: usize) -> Result<Option<Prepull>, String
                 object.get("auraId").ok_or("activateAura has no auraId")?,
             )?)
         }
-        ("move", config) => {
-            let object = config.as_object().ok_or("move must be an object")?;
-            if let Some(key) = object.keys().find(|key| *key != "rangeFromTarget") {
-                return Err(format!("move field {key} is unsupported"));
-            }
-            let range = object.get("rangeFromTarget").ok_or("move has no range")?;
-            match parse_value(range) {
-                Ok(Value::Const(constant)) => Action::Move(constant.float),
-                Ok(_) => return Err("a move range other than a constant is unsupported".into()),
-                Err(reasons) => return Err(reasons.join("; ")),
-            }
-        }
+        ("move", config) => parse_move(config)?,
         (name, _) => return Err(format!("action {name} is unsupported")),
     };
     Ok(Some(Prepull {
@@ -594,6 +583,21 @@ fn parse_prepull(item: &Json, position: usize) -> Result<Option<Prepull>, String
         action,
         condition,
     }))
+}
+
+/// Go `newActionMove`: the range from the target to move to, which Go reads as the float value
+/// of the value it names. A range that is not a constant is unsupported.
+fn parse_move(config: &Json) -> Result<Action, String> {
+    let object = config.as_object().ok_or("move must be an object")?;
+    if let Some(key) = object.keys().find(|key| *key != "rangeFromTarget") {
+        return Err(format!("move field {key} is unsupported"));
+    }
+    let range = object.get("rangeFromTarget").ok_or("move has no range")?;
+    match parse_value(range) {
+        Ok(Value::Const(constant)) => Ok(Action::Move(constant.float)),
+        Ok(_) => Err("a move range other than a constant is unsupported".into()),
+        Err(reasons) => Err(reasons.join("; ")),
+    }
 }
 
 fn is_empty(value: &Json) -> bool {
@@ -655,6 +659,7 @@ fn parse_item(item: &Json, position: usize) -> Result<Option<Item>, Vec<String>>
         Ok(("sequence", config)) => parse_sequence(config),
         Ok(("channelSpell", config)) => parse_channel_spell(config),
         Ok(("multidot", config)) => parse_multidot(config),
+        Ok(("move", config)) => parse_move(config),
         Ok((name, _)) => Err(format!("action {name} is unsupported")),
         Err(err) => Err(err),
     };
@@ -2299,9 +2304,17 @@ mod tests {
             parse(&variable).unwrap_err(),
             ["prepull action 1: a move range other than a constant is unsupported"]
         );
+        // The priority list holds moves too, which run once ready.
         let item =
             serde_json::json!({"action": {"move": {"rangeFromTarget": {"const": {"val": "5"}}}}});
-        assert!(parse_item(&item, 1).is_err());
+        let parsed = parse_item(&item, 1).unwrap().unwrap();
+        assert_eq!(parsed.action, Action::Move(5.0));
+        let variable = serde_json::json!({"action": {"move": {
+            "rangeFromTarget": {"currentRage": {}}}}});
+        assert_eq!(
+            parse_item(&variable, 1).unwrap_err(),
+            ["a move range other than a constant is unsupported"]
+        );
     }
 
     #[test]

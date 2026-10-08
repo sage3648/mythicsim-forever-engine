@@ -7,18 +7,26 @@
 //! [`Fight::due_weapon_attack`].
 
 use crate::contracts::prepared_v2::Weapon;
+use crate::core::queue::Handle;
 
 use super::{
     damage::{
         OUTCOME_BLOCK, OUTCOME_CRIT, OUTCOME_DODGE, OUTCOME_GLANCE, OUTCOME_HIT, OUTCOME_MISS,
         OUTCOME_PARRY, OUTCOME_PARTIAL,
     },
-    Agent, Fight, Side, SpellId, SpellResult,
+    Action, Agent, Fight, Side, SpellId, SpellResult, PRIORITY_AUTO,
 };
 use crate::core::time::NEVER_EXPIRES;
 
 /// Go `MaxMeleeRange`.
 const MAX_MELEE_RANGE: f64 = 5.0;
+
+/// Go `RangedAutoRetryInterval`: how often a ranged auto that cannot fire while its unit moves
+/// looks again.
+const RANGED_AUTO_RETRY_INTERVAL: i64 = 500 * crate::core::time::NS_PER_MILLISECOND;
+
+/// Go `heldSwingLag`: a held swing lands this long after the moment it waits for.
+const HELD_SWING_LAG: i64 = 1;
 
 /// Go `PhysicalHasteRatingPerHastePercent`.
 const PHYSICAL_HASTE_RATING_PER_PERCENT: f64 = 10.0;
@@ -97,6 +105,9 @@ pub(crate) struct AutoAttacks {
     /// Go `WeaponAttack.replaceSwing` on the main hand for a replacement that returns the swing
     /// itself, as Prowl's does: the rotation acts before each main hand swing.
     pub(crate) react_before_mh_swing: bool,
+    /// Go `meleeWeaveWakeup`: the action that wakes a weaver's rotation when its out-of-range
+    /// main hand swing comes ready. Go keeps it after it ran, until the next one replaces it.
+    weave_wakeup: Option<Handle>,
 }
 
 impl AutoAttacks {
@@ -325,6 +336,7 @@ impl<A: Agent> Fight<A> {
         let haste = self.melee_haste_multiplier_of(side);
         let ranged_haste = self.ranged_haste_multiplier();
         let autos = self.autos_of_mut(side);
+        autos.weave_wakeup = None;
         for attack in [&mut autos.mh, &mut autos.oh, &mut autos.ranged] {
             attack.enabled = false;
         }
@@ -590,6 +602,13 @@ impl<A: Agent> Fight<A> {
         if hand != Hand::Enemy && now < self.autos_of_mut(side).attack(hand).swing_at {
             return self.autos_of_mut(side).attack(hand).swing_at;
         }
+        // A ranged auto cannot fire while moving. The hidden retry timer looks again every
+        // 500ms, and the shot goes off at the first look after the move ends.
+        if hand == Hand::Ranged && self.unit(side).moving {
+            let attack = self.autos_of_mut(side).attack(hand);
+            attack.swing_at = now + RANGED_AUTO_RETRY_INTERVAL;
+            return attack.swing_at;
+        }
         if hand == Hand::Enemy {
             let attack = self.autos.enemy_attack(side);
             attack.previous_swing = attack.swing_at;
@@ -654,6 +673,86 @@ impl<A: Agent> Fight<A> {
         for entry in removed {
             self.autos.attacks.remove(entry);
         }
+    }
+
+    /// Go `AutoAttacks.CancelRangedSwing` of an acting unit.
+    pub(crate) fn cancel_ranged_swing(&mut self, side: Side) {
+        let autos = self.autos_of_mut(side);
+        if !autos.ranged_auto || !autos.ranged.enabled {
+            return;
+        }
+        autos.ranged.enabled = false;
+        self.autos.attacks.remove((side, Hand::Ranged));
+    }
+
+    /// Go `AutoAttacks.EnableRangedSwing` of an acting unit: the shot resumes no earlier than
+    /// now, and rejoins the simulation's list when in range.
+    pub(crate) fn enable_ranged_swing(&mut self, side: Side) {
+        let held_back = if side == Side::Player {
+            self.in_prepull
+        } else {
+            self.now < 0
+        };
+        let autos = self.autos_of(side);
+        if !autos.ranged_auto || autos.ranged.enabled || held_back {
+            return;
+        }
+        let now = self.now;
+        let in_range = self.ranged_in_range(side);
+        let haste = self.ranged_haste_multiplier();
+        let ranged = &mut self.autos_of_mut(side).ranged;
+        ranged.swing_at = ranged.swing_at.max(now).max(0);
+        ranged.natural_ready_at = ranged.swing_at;
+        if in_range {
+            ranged.enabled = true;
+            self.add_weapon_attack(side, Hand::Ranged, haste);
+        }
+    }
+
+    /// Go `AutoAttacks.scheduleMeleeWeaveWakeup`: wake the rotation when the out-of-range main
+    /// hand swing comes ready, so a weaver parked behind its GCD can move back into melee.
+    pub(crate) fn schedule_melee_weave_wakeup(&mut self, side: Side) {
+        let autos = self.autos_of(side);
+        if !autos.melee || !autos.ranged_auto {
+            return;
+        }
+        self.cancel_melee_weave_wakeup(side);
+        let at = self.autos_of(side).mh.swing_at.max(self.now);
+        let handle = self.schedule(at, PRIORITY_AUTO, Action::MeleeWeaveWakeup(side));
+        self.autos_of_mut(side).weave_wakeup = Some(handle);
+    }
+
+    /// Go `AutoAttacks.cancelMeleeWeaveWakeup`: a wakeup that already ran stays recorded.
+    pub(crate) fn cancel_melee_weave_wakeup(&mut self, side: Side) {
+        if let Some(handle) = self.autos_of_mut(side).weave_wakeup.take() {
+            self.queue.cancel(handle);
+        }
+    }
+
+    /// Go `AutoAttacks.weaveWakeupAfterCast`: a hardcast shorter than the GCD leaves a weaver
+    /// free to move before the GCD frees, so the rotation wakes to land a pending swing.
+    pub(crate) fn weave_wakeup_after_cast(&mut self, side: Side) {
+        let autos = self.autos_of(side);
+        if autos.weave_wakeup.is_some() && autos.mh.swing_at <= self.now {
+            self.react_to_event(side);
+        }
+    }
+
+    /// Go `AutoAttacks.holdArrivalSwingForRotation`: the rotation acts before the swing that
+    /// lands the moment a weaver steps into melee range, so an on-next-swing ability pressed
+    /// on arrival replaces that first swing instead of waiting behind a white hit. Only the
+    /// player's rotation can be held here; a Wait, which would block it, is unsupported.
+    pub(crate) fn hold_arrival_swing_for_rotation(&mut self, side: Side) {
+        let autos = self.autos_of(side);
+        let replaces = side == Side::Player
+            && (self.config.melee.replace_main_hand_swing || autos.react_before_mh_swing);
+        if !autos.ranged_auto || !replaces || !autos.mh.enabled || autos.mh.swing_at > self.now {
+            return;
+        }
+        let swing_at = self.now + HELD_SWING_LAG;
+        self.autos.mh.swing_at = swing_at;
+        self.autos.min_time = self.autos.min_time.min(swing_at);
+        self.react_to_event_now();
     }
 
     /// Go `AutoAttacks.EnableMeleeSwing` of an acting unit: each hand resumes no earlier than
@@ -735,8 +834,6 @@ impl<A: Agent> Fight<A> {
     /// Go `AutoAttacks.HoldMeleeForCast`: a swing due before the cast ends waits for it; a
     /// later one restarts its timer from the cast's end.
     pub(crate) fn hold_melee_for_cast(&mut self, cast_end: i64) {
-        // Go heldSwingLag.
-        const HELD_SWING_LAG: i64 = 1;
         if !self.autos.melee {
             return;
         }

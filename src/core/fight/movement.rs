@@ -168,9 +168,20 @@ impl<A: Agent> Fight<A> {
         let in_range = self.main_hand_in_range(side);
         if self.autos_of(side).mh.enabled != in_range {
             if in_range {
+                self.cancel_melee_weave_wakeup(side);
                 self.enable_melee_swing(side);
+                self.hold_arrival_swing_for_rotation(side);
             } else {
                 self.cancel_melee_swing(side);
+                self.schedule_melee_weave_wakeup(side);
+            }
+        }
+        let in_range = self.ranged_in_range(side);
+        if self.autos_of(side).ranged.enabled != in_range {
+            if in_range {
+                self.enable_ranged_swing(side);
+            } else {
+                self.cancel_ranged_swing(side);
             }
         }
         let yards = (new as i32).max(1);
@@ -191,8 +202,16 @@ impl<A: Agent> Fight<A> {
         A::on_movement(self, side, MovementKind::End);
     }
 
-    fn main_hand_in_range(&self, side: Side) -> bool {
+    pub(crate) fn main_hand_in_range(&self, side: Side) -> bool {
         let weapon = &self.autos_of(side).mh.weapon;
+        let distance = self.unit_config(side).distance;
+        (weapon.min_range == 0.0 || weapon.min_range < distance)
+            && (weapon.max_range == 0.0 || weapon.max_range >= distance)
+    }
+
+    /// Go `WeaponAttack.IsInRange` of the ranged slot.
+    pub(crate) fn ranged_in_range(&self, side: Side) -> bool {
+        let weapon = &self.autos_of(side).ranged.weapon;
         let distance = self.unit_config(side).distance;
         (weapon.min_range == 0.0 || weapon.min_range < distance)
             && (weapon.max_range == 0.0 || weapon.max_range >= distance)

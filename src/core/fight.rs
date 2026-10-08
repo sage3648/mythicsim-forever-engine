@@ -1279,6 +1279,9 @@ pub(crate) enum Action {
     WindfuryRefresh,
     /// The end of a unit's movement: Go `MovementAction.OnAction`.
     MovementEnd(Side),
+    /// Go `scheduleMeleeWeaveWakeup`'s action: wake a weaver's rotation when its out-of-range
+    /// main hand swing comes ready.
+    MeleeWeaveWakeup(Side),
     /// buffs.go ApplyFixedShoutAura's chain behind the player's own shout: the comeback a
     /// reaction time after the own aura runs out, then its one periodic tick.
     FixedShoutChain {
@@ -4606,6 +4609,11 @@ impl<A: Agent> Fight<A> {
                     .is_some_and(|movement| movement.action == handle)
                 {
                     self.finalize_movement(side);
+                }
+            }
+            Action::MeleeWeaveWakeup(side) => {
+                if !self.main_hand_in_range(side) {
+                    self.react_to_event(side);
                 }
             }
             Action::FixedShoutChain { index, periodic } => {

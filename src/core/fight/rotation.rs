@@ -41,6 +41,8 @@ pub(crate) enum Act {
         interrupt: Rc<Compiled>,
         allow_recast: bool,
     },
+    /// Go `APLActionMove`: the range from the target the player runs to.
+    Move(f64),
     /// Go `APLActionMultidot`: its dot count after the encounter's target count capped it,
     /// and its overlap.
     Multidot {
@@ -71,6 +73,8 @@ enum Ready {
     SequenceStep(usize),
     /// A channel and the item whose interrupt condition it carries.
     Channel(usize, SpellId),
+    /// A move to a range from the target.
+    Move(f64),
 }
 
 #[derive(Clone, Debug)]
@@ -322,8 +326,10 @@ impl<A: Agent> Fight<A> {
                     },
                     _ => continue,
                 },
+                // Go `newActionMove` always builds the action.
+                ParsedAction::Move(range) => Act::Move(*range),
                 // Parsed only among the prepull actions.
-                ParsedAction::ActivateAura(_) | ParsedAction::Move(_) => continue,
+                ParsedAction::ActivateAura(_) => continue,
             };
             let condition = match compile_condition(item.condition.as_ref(), &lookup) {
                 // A constant false condition prunes the action; its spells already left
@@ -675,12 +681,22 @@ impl<A: Agent> Fight<A> {
             Act::Channel { spell, .. } => self
                 .can_cast_or_queue(spell)
                 .then_some(Ready::Channel(item, spell)),
+            // Go `APLActionMove.IsReady`: not already moving, a different range or the prepull,
+            // and no cast or channel in progress.
+            Act::Move(range) => self.move_ready(range).then_some(Ready::Move(range)),
             // Go APLActionMultidot.IsReady: the overlap, then the target whose dot is down or
             // ends within it and which the spell can be cast or queued on.
             Act::Multidot { spell, .. } => self
                 .multidot_ready(item)
                 .map(|target| Ready::Cast(spell, target)),
         }
+    }
+
+    /// Go `APLActionMove.IsReady`.
+    fn move_ready(&self, range: f64) -> bool {
+        !self.player.moving
+            && (range != self.config.distance || self.now < 0)
+            && self.player.hardcast.expires < self.now
     }
 
     /// Go `APLActionMultidot.IsReady`: the overlap, then the first target in unit index order
@@ -812,6 +828,14 @@ impl<A: Agent> Fight<A> {
                 }
                 self.apl.in_sequence = false;
             }
+            // Go `APLActionMove.Execute`.
+            Ready::Move(range) => {
+                if self.log.is_some() {
+                    let line = format!("[DEBUG] Moving to {range:.1} yards");
+                    self.player_log(&line);
+                }
+                self.move_to(Side::Player, range);
+            }
             Ready::Channel(item, spell) => {
                 self.cast_or_queue(spell, Side::Target);
                 let Act::Channel { allow_recast, .. } = self.rotation[item].action else {
@@ -862,6 +886,13 @@ impl<A: Agent> Fight<A> {
             let spell = match self.rotation[item].action {
                 Act::Cast(spell, _) | Act::Channel { spell, .. } => spell,
                 Act::Autocast | Act::Sequence { .. } => continue,
+                // Go: a different action that is fully ready would be cast first.
+                Act::Move(range) => {
+                    if self.move_ready(range) {
+                        return false;
+                    }
+                    continue;
+                }
                 // Go: a different action that is fully ready would be cast first.
                 Act::Multidot { .. } => {
                     if self.multidot_ready(item).is_some() {
