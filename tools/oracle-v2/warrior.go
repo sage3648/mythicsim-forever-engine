@@ -468,6 +468,20 @@ func warriorEffects(agent core.Agent, character *core.Character) []map[string]an
 			"kind": "challenging_shout", "spell": spellPosition(character, war.ChallengingShout),
 		})
 	}
+	// taunt.go and intimidating_shout.go: an always hit outcome with no damage on the target, with
+	// the rage, global cooldown and cooldown the shared cast applies (Taunt needs Defensive
+	// Stance). The fork has no taunt and no fear, so neither changes a target's aim, swing or
+	// threat, and the shout does not reach the other targets.
+	if war.Taunt != nil {
+		effects = append(effects, map[string]any{
+			"kind": "taunt", "spell": spellPosition(character, war.Taunt),
+		})
+	}
+	if war.IntimidatingShout != nil {
+		effects = append(effects, map[string]any{
+			"kind": "intimidating_shout", "spell": spellPosition(character, war.IntimidatingShout),
+		})
+	}
 	if talents.Bloodthrill > 0 { // talents_arms.go registerBloodthrill
 		effects = append(effects, map[string]any{
 			"kind": "bloodthrill", "trigger_aura": "Bloodthrill - Trigger",

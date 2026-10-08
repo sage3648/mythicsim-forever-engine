@@ -22,7 +22,7 @@ use super::{
         execute::{self, Execute},
         hamstring,
         heroic_strike::{self, Queue, Strike},
-        mortal_strike, overpower,
+        intimidating_shout, mortal_strike, overpower,
         rend::{self, Rend},
         retaliation::{self, Retaliation},
         revenge::{self, Revenge},
@@ -33,6 +33,7 @@ use super::{
         stances::{self, Stance, StanceCast, StanceLock},
         sunder_armor::{self, SunderArmor},
         sweeping_strikes::{self, SweepingStrikes},
+        taunt,
         thunder_clap::{self, ThunderClap},
         whirlwind::{self, Whirlwind},
     },
@@ -93,6 +94,10 @@ pub(crate) enum WarriorSpell {
     DemoralizingShout,
     /// challenging_shout.go: an always hit with no damage on each target.
     ChallengingShout,
+    /// taunt.go: an always hit with no damage on the target, in Defensive Stance.
+    Taunt,
+    /// intimidating_shout.go: an always hit with no damage on the target.
+    IntimidatingShout,
     Retaliation,
     RetaliationHit,
     SweepingStrikes,
@@ -276,6 +281,10 @@ impl WarriorAgent {
                 Some(WarriorSpell::DemoralizingShout)
             }
             "challenging_shout" if has("challenging_shout") => Some(WarriorSpell::ChallengingShout),
+            "taunt" if has("taunt") => Some(WarriorSpell::Taunt),
+            "intimidating_shout" if has("intimidating_shout") => {
+                Some(WarriorSpell::IntimidatingShout)
+            }
             "retaliation" if has("retaliation") => Some(WarriorSpell::Retaliation),
             "retaliation_hit" if has("retaliation") => Some(WarriorSpell::RetaliationHit),
             "sweeping_strikes" if has("sweeping_strikes") => Some(WarriorSpell::SweepingStrikes),
@@ -1183,6 +1192,8 @@ impl Agent for WarriorAgent {
                 demoralizing_shout::apply(fight, spell, aura);
             }
             WarriorSpell::ChallengingShout => challenging_shout::apply(fight, spell),
+            WarriorSpell::Taunt => taunt::apply(fight, spell, target),
+            WarriorSpell::IntimidatingShout => intimidating_shout::apply(fight, spell, target),
             WarriorSpell::Retaliation => {
                 let params = fight.agent.retaliation.expect("Retaliation is bound");
                 retaliation::apply(fight, params);
@@ -1285,6 +1296,8 @@ impl Agent for WarriorAgent {
             WarriorSpell::ShieldSlam => fight.agent.can_block,
             // thunder_clap.go: Battle or Defensive Stance.
             WarriorSpell::ThunderClap => matches!(stance, Stance::Battle | Stance::Defensive),
+            // taunt.go: Defensive Stance.
+            WarriorSpell::Taunt => stance == Stance::Defensive,
             // retaliation.go: Battle Stance.
             WarriorSpell::Retaliation => stance == Stance::Battle,
             // talents_arms.go: Sweeping Strikes requires Battle Stance.

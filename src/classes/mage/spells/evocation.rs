@@ -11,15 +11,16 @@ pub(crate) fn apply<A: Agent>(fight: &mut Fight<A>, spell: SpellId) {
 }
 
 /// Evocation Regen OnGain: Go `AddSpiritRegenMultiplier`, `SetForceFullSpiritRegen` and
-/// `UpdateManaRegenRates`.
+/// `UpdateManaRegenRates`. Both helpers move the baseline an Innervate's regeneration is
+/// credited against as well, when one is up.
 pub(crate) fn regen_gain<A: Agent>(fight: &mut Fight<A>, multiplier: f64) {
-    fight.player.spirit_regen_multiplier += multiplier;
-    fight.player.force_full_spirit_regen = true;
+    fight.add_spirit_regen_multiplier(multiplier);
+    fight.set_force_full_spirit_regen(true);
     fight.update_mana_regen_rates();
 }
 
 pub(crate) fn regen_expire<A: Agent>(fight: &mut Fight<A>, multiplier: f64) {
-    fight.player.spirit_regen_multiplier -= multiplier;
-    fight.player.force_full_spirit_regen = false;
+    fight.add_spirit_regen_multiplier(-multiplier);
+    fight.set_force_full_spirit_regen(false);
     fight.update_mana_regen_rates();
 }
