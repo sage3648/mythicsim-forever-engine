@@ -171,6 +171,12 @@ impl<A: Agent> Fight<A> {
             state.members[new].uptime.active_since = now;
         }
         if tracking {
+            let holder = |state: &Category, member: Option<usize>| {
+                member.map(|member| state.members[member].aura)
+            };
+            let state = &self.exclusive_tracking[category];
+            let (old, new) = (holder(state, old), holder(state, new));
+            self.power_infusion_category_change(category, old, new);
             A::on_tracked_category_change(self, category);
         }
     }

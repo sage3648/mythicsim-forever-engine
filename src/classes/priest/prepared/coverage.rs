@@ -30,7 +30,6 @@ const EFFECTS: &[&str] = &[
     "starshards",
     "holy_nova",
     "shadowfiend",
-    "power_infusion",
     "penance",
     "power_in_light",
     "searing_light",
@@ -99,7 +98,6 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
             ("pet", mana_restore_aura),
         ],
         Effect::Shadowform { aura, .. }
-        | Effect::PowerInfusion { aura, .. }
         | Effect::InnerFocus { aura, .. }
         | Effect::DarkSacrifice { aura, .. } => vec![("player", aura)],
         _ => Vec::new(),

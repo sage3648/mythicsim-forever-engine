@@ -180,6 +180,7 @@ const COMMON_EFFECTS: &[&str] = &[
     "eureka",
     "exclusive_category",
     "extra_attack_proc",
+    "external_cooldown",
     "fixed_uptime_aura",
     "goblin_sapper",
     "inert_listener",
@@ -190,6 +191,7 @@ const COMMON_EFFECTS: &[&str] = &[
     "potion_mana",
     "player_damage_taken",
     "potion_resource",
+    "power_infusion",
     "pseudo_stat_auras",
     "pushback_trigger",
     "rage_bar",
@@ -314,6 +316,14 @@ fn common_spell_capability(spell: &Spell, prepared: &PreparedV2) -> Option<&'sta
         Effect::BloodFury { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
             Some("blood_fury")
         }
+        // Spells Go registers for the buffs other players cast on the player on cooldown.
+        Effect::ExternalCooldown {
+            spell_id,
+            spell_tag,
+            ..
+        } if *spell_id == id.spell_id && *spell_tag == id.tag && id.item_id == 0 => {
+            Some("external_cooldown")
+        }
         Effect::ShatterCurse { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
             Some("shatter_curse")
         }
@@ -378,7 +388,9 @@ fn common_claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         | Effect::TemporaryStats { aura, .. }
         | Effect::DiamondFlask { aura, .. }
         | Effect::AbsorbOnUse { aura, .. }
-        | Effect::SpeedOnUse { aura, .. } => vec![("player", aura)],
+        | Effect::SpeedOnUse { aura, .. }
+        | Effect::PowerInfusion { aura, .. }
+        | Effect::ExternalCooldown { aura, .. } => vec![("player", aura)],
         Effect::JudgementOfWisdom { aura, .. } => vec![("target", aura)],
         Effect::RageBar { aura, .. } => vec![("player", aura)],
         Effect::ExtraAttackProc { trigger_aura, .. } => vec![("player", trigger_aura)],
