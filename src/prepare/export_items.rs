@@ -989,7 +989,12 @@ pub(crate) fn hit_taken_item_listeners(
 
 /// A shape `meleeProcEffects` cannot describe, in Go's words.
 fn not_single_target_magic_hit(label: &str) -> String {
-    format!("{label}'s proc is not a single target magic hit")
+    not_single_target_hit(label, "magic")
+}
+
+/// [`not_single_target_magic_hit`] for a hit of the named kind.
+fn not_single_target_hit(label: &str, hit: &str) -> String {
+    format!("{label}'s proc is not a single target {hit} hit")
 }
 
 /// melee_procs.go `spellDataDamageProcs`: item procs common/shared/shared_utils.go
@@ -1227,36 +1232,79 @@ fn weapon_enchant_damage_proc_effects(
     effects
 }
 
-/// melee_procs.go `procDamageItems`: items common/shared/shared_utils.go NewProcDamageEffect
-/// builds by hand: a listener on landed melee and ranged hits at a legacy proc manager's rate
-/// that casts a magic hit of a Go literal range at once on the unit hit. Heart of Wyrmthalak.
-const PROC_DAMAGE_ITEMS: [(&str, i32, f64, f64, ProcMask); 1] = [(
-    "Heart of Wyrmthalak",
-    27655,
-    112.0,
-    168.0,
-    ProcMask::MELEE_OR_RANGED,
-)];
+/// An item common/shared/shared_utils.go NewProcDamageEffect builds by hand, as
+/// melee_procs.go `procDamageItems` lists it.
+struct ProcDamageItem {
+    label: &'static str,
+    spell_id: i32,
+    min: f64,
+    max: f64,
+    defense: DefenseType,
+    require_damage: bool,
+    mask: ProcMask,
+}
+
+/// melee_procs.go `procDamageItems`: a listener on landed hits at a legacy proc manager's rate
+/// that casts a hit of a Go literal range at once on the unit hit. Heart of Wyrmthalak is a
+/// magic hit on melee and ranged hits. Iceblade Hacker and Warblade of Caer Darrow are Frost hits
+/// of the melee defense type on the landed melee hits that dealt damage, at a fixed chance of 1 on
+/// the hand holding the weapon: `damageOutcome` gives them the melee special hit table with a
+/// crit, where a magic hit rolls the magic one.
+const PROC_DAMAGE_ITEMS: [ProcDamageItem; 3] = [
+    ProcDamageItem {
+        label: "Heart of Wyrmthalak",
+        spell_id: 27655,
+        min: 112.0,
+        max: 168.0,
+        defense: DefenseType::Magic,
+        require_damage: false,
+        mask: ProcMask::MELEE_OR_RANGED,
+    },
+    ProcDamageItem {
+        label: "Iceblade Hacker",
+        spell_id: 1298414,
+        min: 40.70000076293945,
+        max: 40.70000076293945,
+        defense: DefenseType::Melee,
+        require_damage: true,
+        mask: ProcMask::MELEE,
+    },
+    ProcDamageItem {
+        label: "Warblade of Caer Darrow",
+        spell_id: 1298499,
+        min: 27.719999313354492,
+        max: 27.719999313354492,
+        defense: DefenseType::Melee,
+        require_damage: true,
+        mask: ProcMask::MELEE,
+    },
+];
 
 fn proc_damage_item_effects(env: &Environment, unrepresented: &mut Vec<String>) -> Vec<Value> {
     let mut effects = Vec::new();
-    for (label, spell_id, min, max, mask) in PROC_DAMAGE_ITEMS {
+    for item in PROC_DAMAGE_ITEMS {
+        let (label, mask) = (item.label, item.mask);
         let Some(aura) = aura_named(env, label) else {
             continue;
         };
-        let position = spell_position(env, &ActionId::spell(spell_id));
+        let hit = if item.defense == DefenseType::Melee {
+            "melee"
+        } else {
+            "magic"
+        };
+        let position = spell_position(env, &ActionId::spell(item.spell_id));
         let a = env.sim.aura(aura);
         let (Some(position), Some(dpm)) = (position, a.dpm.as_ref()) else {
-            unrepresented.push(not_single_target_magic_hit(label));
+            unrepresented.push(not_single_target_hit(label, hit));
             continue;
         };
         if a.icd.is_some()
-            || env.sim.spell(spell_at(env, position)).defense_type != DefenseType::Magic
+            || env.sim.spell(spell_at(env, position)).defense_type != item.defense
             || !a.events.on_spell_hit_dealt
             || a.events.on_spell_hit_taken
             || a.events.on_periodic_damage_dealt
         {
-            unrepresented.push(not_single_target_magic_hit(label));
+            unrepresented.push(not_single_target_hit(label, hit));
             continue;
         }
         let listener = ProcTrigger {
@@ -1264,15 +1312,20 @@ fn proc_damage_item_effects(env: &Environment, unrepresented: &mut Vec<String>) 
             outcome: HitOutcome::LANDED,
             ..ProcTrigger::default()
         };
-        effects.push(json!({
+        let mut effect = json!({
             "kind": "spell_data_damage_proc", "trigger_aura": label,
             "trigger_spells": proc_trigger_spells(env, &listener),
-            "landed_only": true, "require_damage": false, "proc_chance": 1.0, "spell": position,
-            "average": 0.0, "variance": 0.0, "roll": [min, max], "can_crit": true,
+            "landed_only": true, "require_damage": item.require_damage, "proc_chance": 1.0,
+            "spell": position, "average": 0.0, "variance": 0.0, "roll": [item.min, item.max],
+            "can_crit": true,
             "chances": dpm_chances(env, dpm, |spell| {
                 spell.proc_mask.matches(mask) && !spell.flags.matches(SpellFlag::PROC)
             }),
-        }));
+        });
+        if item.defense == DefenseType::Melee {
+            effect["outcome"] = json!("melee_special_hit_and_crit");
+        }
+        effects.push(effect);
     }
     effects
 }

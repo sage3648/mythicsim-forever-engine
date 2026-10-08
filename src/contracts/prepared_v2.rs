@@ -1875,6 +1875,12 @@ pub enum Effect {
         /// the client effect's average and variance.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         roll: Option<[f64; 2]>,
+        /// The outcome applier of a `roll` hit by name, as shared_utils.go `damageOutcome` picks
+        /// it from the spell's defense type: `melee_special_hit_and_crit` for a hit of the melee
+        /// defense type, as Iceblade Hacker's, or `melee_special_hit` when it cannot crit.
+        /// Absent, the hit rolls the magic hit table, with a crit when `can_crit`.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        outcome: Option<String>,
     },
     /// common/shared/shared_utils.go NewSpellDataAbsorbOnUse: the item use's aura shields the
     /// wearer for the absorb effect's roll against the schools its bits name.

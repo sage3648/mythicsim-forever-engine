@@ -739,3 +739,188 @@ fn the_diamond_flask_needs_its_effect() {
         .retain(|effect| effect["kind"] != "diamond_flask");
     assert!(reasons(value).contains(&"rotation reaches item 20130 without a known behavior".into()));
 }
+
+/// The Frost hit of Iceblade Hacker and Warblade of Caer Darrow (shared.NewProcDamageEffect with
+/// the melee defense type): the effect hears the melee hits of the hand holding the weapon, at a
+/// fixed chance of 1, and its spell is of the melee defense type.
+#[test]
+fn a_melee_weapon_damage_proc_hears_the_hits_of_its_own_hand() {
+    let main = &["ProcMaskMeleeMHAuto", "ProcMaskMeleeMHSpecial"][..];
+    let off = &["ProcMaskMeleeOHAuto", "ProcMaskMeleeOHSpecial"][..];
+    let both = &[
+        "ProcMaskMeleeMHAuto",
+        "ProcMaskMeleeMHSpecial",
+        "ProcMaskMeleeOHAuto",
+        "ProcMaskMeleeOHSpecial",
+    ][..];
+    for (name, aura, hands) in [
+        ("warrior-iceblade-hacker", "Iceblade Hacker", main),
+        (
+            "arms-warrior-warblade-of-caer-darrow",
+            "Warblade of Caer Darrow",
+            main,
+        ),
+        (
+            "warrior-warblade-of-caer-darrow-off-hand",
+            "Warblade of Caer Darrow",
+            off,
+        ),
+        (
+            "warrior-warblade-of-caer-darrow-both-hands",
+            "Warblade of Caer Darrow",
+            both,
+        ),
+    ] {
+        let value = warrior_fixture(name);
+        let prepared: PreparedV2 = serde_json::from_value(value.clone()).unwrap();
+        assert_eq!(prepared_coverage(&prepared), Vec::<String>::new(), "{name}");
+        let effect = value["effects"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|effect| effect["trigger_aura"] == aura)
+            .unwrap();
+        assert_eq!(effect["outcome"], "melee_special_hit_and_crit", "{name}");
+        let spells = value["player"]["spells"].as_array().unwrap();
+        let masks_of = |position: &Value| -> Vec<&str> {
+            spells[position.as_u64().unwrap() as usize]["proc_mask"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|mask| mask.as_str().unwrap())
+                .collect()
+        };
+        assert_eq!(
+            spells[effect["spell"].as_u64().unwrap() as usize]["defense_type"],
+            "DefenseTypeMelee",
+            "{name}"
+        );
+        // Every spell the manager rolls for carries a mask of a wielding hand, as a Whirlwind
+        // that swings both hands does; the other hand's spells are not rolled for.
+        let chances = effect["chances"].as_array().unwrap();
+        assert!(!chances.is_empty(), "{name}");
+        for chance in chances {
+            assert_eq!(chance["chance"], 1.0, "{name}");
+            let masks = masks_of(&chance["spell"]);
+            assert!(
+                masks.iter().any(|mask| hands.contains(mask)),
+                "{name}: {masks:?}"
+            );
+        }
+        // Each hand holding the weapon has a spell the manager rolls for.
+        for hand in hands {
+            assert!(
+                chances
+                    .iter()
+                    .any(|chance| masks_of(&chance["spell"]).contains(hand)),
+                "{name}: {hand}"
+            );
+        }
+        // A spell the trigger hears that the manager does not roll for swings only the other hand.
+        let rolled: Vec<u64> = chances
+            .iter()
+            .map(|chance| chance["spell"].as_u64().unwrap())
+            .collect();
+        for heard in effect["trigger_spells"].as_array().unwrap() {
+            if !rolled.contains(&heard.as_u64().unwrap()) {
+                let masks = masks_of(heard);
+                assert!(
+                    !masks.iter().any(|mask| hands.contains(mask)),
+                    "{name}: {masks:?}"
+                );
+            }
+        }
+    }
+}
+
+/// Without its effect the aura listens to hits with nothing that handles them.
+#[test]
+fn a_melee_weapon_damage_proc_needs_its_effect() {
+    let mut value = warrior_fixture("warrior-iceblade-hacker");
+    value["effects"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|effect| effect["trigger_aura"] != "Iceblade Hacker");
+    assert!(reasons(value).contains(
+        &"player aura \"Iceblade Hacker\" listens to combat events without an effect".into()
+    ));
+}
+
+/// The runtime rolls the melee special table, with or without the crit, for a literal range of
+/// a melee spell, and nothing else.
+#[test]
+fn a_melee_weapon_damage_proc_names_a_table_the_runtime_rolls() {
+    let refused = |value: Value| {
+        crate::refusal_codes(value)
+            .into_iter()
+            .filter(|(code, _)| *code == "proc_unsupported")
+            .map(|(_, reason)| reason)
+            .collect::<Vec<_>>()
+    };
+    let hit = |outcome: &str| {
+        format!(
+            "Iceblade Hacker's hit rolls the {outcome} table, which the runtime rolls only for a \
+             melee spell's literal range"
+        )
+    };
+    let position = |value: &Value| -> usize {
+        value["effects"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .position(|effect| effect["trigger_aura"] == "Iceblade Hacker")
+            .unwrap()
+    };
+    let original = warrior_fixture("warrior-iceblade-hacker");
+    assert!(refused(original.clone()).is_empty());
+
+    // A table the runtime does not know.
+    let mut value = original.clone();
+    let index = position(&value);
+    value["effects"][index]["outcome"] = json!("melee_special_block_and_crit");
+    assert_eq!(refused(value), [hit("melee_special_block_and_crit")]);
+
+    // A table that disagrees with the spell's crit: Go picks the no crit table only for a spell
+    // the client bars from critting.
+    let mut value = original.clone();
+    let index = position(&value);
+    value["effects"][index]["outcome"] = json!("melee_special_hit");
+    assert_eq!(refused(value.clone()), [hit("melee_special_hit")]);
+    value["effects"][index]["can_crit"] = json!(false);
+    assert!(refused(value).is_empty());
+
+    // A client effect roll has no literal range to roll on a table.
+    let mut value = original.clone();
+    let index = position(&value);
+    value["effects"][index]
+        .as_object_mut()
+        .unwrap()
+        .remove("roll");
+    assert_eq!(refused(value), [hit("melee_special_hit_and_crit")]);
+
+    // A spell of another defense type would take the wrong critical strike multiplier.
+    let mut value = original;
+    let index = position(&value);
+    let spell = value["effects"][index]["spell"].as_u64().unwrap() as usize;
+    value["player"]["spells"][spell]["defense_type"] = json!("DefenseTypeMagic");
+    assert_eq!(refused(value), [hit("melee_special_hit_and_crit")]);
+}
+
+/// The hit takes the melee table where a magic hit never dodges: it dodges, crits for twice its
+/// base damage, and a Frost hit still takes the partial resist roll.
+#[test]
+fn a_melee_weapon_damage_proc_rolls_the_melee_table_in_a_fight() {
+    let logs = first_fight_log(warrior_fixture("warrior-iceblade-hacker"));
+    let lines = lines_with(&logs, 1, "1298414");
+    for expected in [
+        "} Dodge (",
+        "} Crit for 81.400 damage",
+        "} Hit for 40.700 damage",
+        "} Crit (25% Resist) for 61.050 damage",
+    ] {
+        assert!(
+            lines.iter().any(|line| line.contains(expected)),
+            "{expected}"
+        );
+    }
+}
