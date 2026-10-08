@@ -195,6 +195,7 @@ const COMMON_EFFECTS: &[&str] = &[
     "goblin_sapper",
     "inert_listener",
     "inert_pet",
+    "innervate_regen",
     "judgement_of_wisdom",
     "parry_haste",
     "player_movement",
@@ -400,6 +401,7 @@ fn common_claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         | Effect::AbsorbOnUse { aura, .. }
         | Effect::SpeedOnUse { aura, .. }
         | Effect::PowerInfusion { aura, .. }
+        | Effect::InnervateRegen { aura, .. }
         | Effect::ExternalCooldown { aura, .. } => vec![("player", aura)],
         Effect::JudgementOfWisdom { aura, .. } => vec![("target", aura)],
         Effect::RageBar { aura, .. } => vec![("player", aura)],
@@ -1020,8 +1022,14 @@ fn tank_limits(
             auras,
             combos,
             changed,
+            raw_mp5,
         } = effect
         {
+            for label in raw_mp5.keys().filter(|label| !auras.contains(label)) {
+                reasons.push(format!(
+                    "stat auras {auras:?} give a raw MP5 bonus to {label:?}, which is not one of them"
+                ));
+            }
             // Stamina moves only the maximum health the combinations carry.
             let health_tracked = combos.iter().all(|combo| combo.contains_key("Health"));
             for stat in changed {
@@ -1220,6 +1228,29 @@ pub(crate) fn prepared_coverage(
                     "player aura {:?} bids in Power Infusion's categories without an effect",
                     aura.label
                 ),
+            ));
+        }
+    }
+
+    // The aura an external cooldown casts changes the player through an effect of its own:
+    // Power Infusion's multipliers, Innervate's spirit regeneration or, for Mana Tide Totem, the
+    // mana per 5 seconds of a stat aura. An aura none of them describes would change nothing in
+    // the runtime.
+    for effect in &prepared.effects {
+        let Effect::ExternalCooldown { aura: label, .. } = effect else {
+            continue;
+        };
+        let described = prepared.effects.iter().any(|other| match other {
+            Effect::PowerInfusion { aura, .. } | Effect::InnervateRegen { aura, .. } => {
+                aura == label
+            }
+            Effect::StatAuras { auras, .. } => auras.contains(label),
+            _ => false,
+        });
+        if !described {
+            reasons.push(Refusal::new(
+                "aura_listener_unclaimed",
+                format!("player aura {label:?} is cast by an external cooldown without an effect"),
             ));
         }
     }

@@ -232,6 +232,10 @@ var (
 	classNotes    *[]string
 )
 
+// The character's maximum mana when the environment finalized, which buffs/drivers.go
+// innervateManaThreshold reads.
+var maxManaAtFinalize float64
+
 func classSpell(class classExport, mask int64, unrepresented *[]string, id core.ActionID) string {
 	if mask == 0 {
 		return class.unmaskedSpells[id]
@@ -1382,8 +1386,8 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 			}
 		}
 	}
-	// buffs/drivers.go drivePowerInfusions: priests in the raid cast Power Infusion on the player.
-	for _, effect := range externalPowerInfusionEffects(character, request, unrepresented) {
+	// buffs/drivers.go: Mana Tide Totem, Innervate and Power Infusion other players cast on the player.
+	for _, effect := range externalCooldownEffects(character, request, unrepresented) {
 		effects = append(effects, effect)
 	}
 	return effects
@@ -1571,6 +1575,8 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 		"tank assignments other than the player tanking the target are unsupported")
 
 	simulation := core.NewSim(request, simsignals.CreateSignals())
+	// buffs/drivers.go reads the character's maximum mana in a post finalize effect, before any reset.
+	maxManaAtFinalize = simulation.Raid.Parties[0].Players[0].GetCharacter().MaxMana()
 	simulation.Reset()
 	agent := simulation.Raid.Parties[0].Players[0]
 	character := agent.GetCharacter()

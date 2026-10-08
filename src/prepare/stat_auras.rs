@@ -4,6 +4,7 @@
 
 use serde_json::{json, Map, Value};
 
+use super::buffs::generated::MANA_TIDE_TOTEMS;
 use super::env::Environment;
 use super::sim::UnitId;
 use super::stats::Stat;
@@ -47,7 +48,7 @@ const OPTIONAL_READ_STATS: [Stat; 16] = [
 
 /// Auras of races, items and raid buffs whose gain and expiry change stats through
 /// `AddStatsDynamic`. A class adds its own through `PrepAgent::stat_auras`.
-const COMMON_STAT_AURA_LABELS: [&str; 9] = [
+const COMMON_STAT_AURA_LABELS: [&str; 10] = [
     "Blood Fury",
     "Elune's Light",
     "Holy Strength (MH)",
@@ -57,6 +58,7 @@ const COMMON_STAT_AURA_LABELS: [&str; 9] = [
     "Headmaster's Charge",
     "Crusader's Wrath",
     "Diamond Flask",
+    "Mana Tide Totem (External)",
 ];
 
 /// consumes.go: a potion's stat buff is a temporary stats aura named for the potion.
@@ -164,6 +166,8 @@ pub(crate) fn stat_auras_effect_reading(
         ));
     }
     let mut combos: Vec<Map<String, Value>> = Vec::new();
+    // The MP5 of the raw stats, which `add_stats_dynamic` adds each bonus to and takes it from.
+    let mut raw_mp5: Vec<f64> = Vec::new();
     let mut spirit_regens: Vec<f64> = Vec::new();
     let mut changed_spirit_regen = false;
     let mut changed: Vec<&'static str> = Vec::new();
@@ -192,6 +196,7 @@ pub(crate) fn stat_auras_effect_reading(
             }
         }
         let values = stat_map(&fresh, player);
+        raw_mp5.push(fresh.sim.unit(player).stats_without_deps[Stat::MP5]);
         if mask == 0 {
             base = values.clone();
         }
@@ -245,6 +250,47 @@ pub(crate) fn stat_auras_effect_reading(
             combo.remove(SPIRIT_REGEN_KEY);
         }
     }
-    Ok(Some(json!({"kind": "stat_auras", "auras": labels,
-        "combos": combos, "changed": changed})))
+    let mut effect = json!({"kind": "stat_auras", "auras": labels,
+        "combos": combos, "changed": changed});
+    let raw = raw_mp5_bonuses(&labels, &raw_mp5)?;
+    if !raw.is_empty() {
+        effect["raw_mp5"] = json!(raw);
+    }
+    Ok(Some(effect))
+}
+
+/// The label `buffs.ManaTideTotemsAura` gives the external caster's copy.
+const EXTERNAL_MANA_TIDE_LABEL: &str = "Mana Tide Totem (External)";
+
+/// `rawMP5Bonuses`: `AddStatsDynamic` adds each bonus to the raw stats and takes it away again,
+/// so a bonus that is not a whole number leaves the sum a few ulps off its start once the aura
+/// expires (77 plus Mana Tide Totem's 483.33 and minus it again is 76.99999999999994), where the
+/// combination reads the start. The raw MP5 bonus of such an aura lets the runtime add and take
+/// it as Go does. A bonus that is a multiple of 2^-10 (a whole number, or the 31.25 of Mana
+/// Spring Totem) is added and taken away exactly. Only Mana Tide Totem's is not, and a reset
+/// simulation checks that its aura adds exactly its value; any other inexact MP5 bonus is
+/// refused.
+fn raw_mp5_bonuses(
+    labels: &[String],
+    raw: &[f64],
+) -> Result<std::collections::BTreeMap<String, f64>, Refusal> {
+    let mut bonuses = std::collections::BTreeMap::new();
+    for (bit, label) in labels.iter().enumerate() {
+        let delta = raw[1 << bit] - raw[0];
+        if delta == 0.0
+            || (delta * 1024.0 == (delta * 1024.0).trunc() && (raw[0] + delta) - delta == raw[0])
+        {
+            continue;
+        }
+        let value = MANA_TIDE_TOTEMS.value(0);
+        if label == EXTERNAL_MANA_TIDE_LABEL && raw[0] + value == raw[1 << bit] {
+            bonuses.insert(label.clone(), value);
+            continue;
+        }
+        return Err(Refusal::new(
+            "stat_auras",
+            format!("{label} adds {delta} MP5, which is not added and taken away exactly"),
+        ));
+    }
+    Ok(bonuses)
 }

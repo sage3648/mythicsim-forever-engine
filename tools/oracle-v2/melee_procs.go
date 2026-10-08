@@ -5,12 +5,14 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"reflect"
 	"sort"
 	"time"
 	"unsafe"
 
 	"github.com/wowsims/forever/sim/core"
+	"github.com/wowsims/forever/sim/core/buffs"
 	"github.com/wowsims/forever/sim/core/dbcenums"
 	"github.com/wowsims/forever/sim/core/proto"
 	"github.com/wowsims/forever/sim/core/simsignals"
@@ -39,7 +41,7 @@ var optionalReadStats = []stats.Stat{stats.Mana, stats.HealingPower, stats.Healt
 // AddStatsDynamic. A class adds its own through classExport.statAuras.
 var commonStatAuraLabels = []string{"Blood Fury", "Elune's Light", "Holy Strength (MH)", "Holy Strength (OH)",
 	"Windfury Totem (External)", "Battle Shout (External)", "Headmaster's Charge", "Crusader's Wrath",
-	"Diamond Flask"}
+	"Diamond Flask", "Mana Tide Totem (External)"}
 
 // The stat auras of the character, in the order a combination's bits number them.
 func characterStatAuras(character *core.Character, class classExport, agent core.Agent) []string {
@@ -91,6 +93,8 @@ func statAurasEffect(request *proto.RaidSimRequest, labels []string, reader comb
 		fail(fmt.Errorf("%d stat auras exceed the combination limit", len(labels)))
 	}
 	combos := []map[string]float64{}
+	// The MP5 of the raw stats, which AddStatsDynamic adds each bonus to and takes it from again.
+	rawMP5 := []float64{}
 	changedSpiritRegen := false
 	changed := map[string]bool{}
 	var base map[string]float64
@@ -116,6 +120,7 @@ func statAurasEffect(request *proto.RaidSimRequest, labels []string, reader comb
 			}
 		}
 		values := statValues(player.GetStats())
+		rawMP5 = append(rawMP5, player.GetStatsWithoutDeps()[stats.MP5])
 		if mask == 0 {
 			base = values
 		}
@@ -161,7 +166,34 @@ func statAurasEffect(request *proto.RaidSimRequest, labels []string, reader comb
 			delete(combo, spiritRegenKey)
 		}
 	}
-	return map[string]any{"kind": "stat_auras", "auras": labels, "combos": combos, "changed": names}
+	effect := map[string]any{"kind": "stat_auras", "auras": labels, "combos": combos, "changed": names}
+	if raw := rawMP5Bonuses(labels, rawMP5); len(raw) != 0 {
+		effect["raw_mp5"] = raw
+	}
+	return effect
+}
+
+// unit.go AddStatsDynamic adds each bonus to the raw stats and takes it away again, so a bonus
+// that is not a whole number leaves the sum a few ulps off its start once the aura expires (77
+// plus Mana Tide Totem's 483.33 and minus it again is 76.99999999999994), where the combination
+// reads the start. The raw MP5 bonus of such an aura lets the runtime add and take it as Go does.
+// A bonus that is a multiple of 2^-10 (a whole number, or the 31.25 of Mana Spring Totem) is added
+// and taken away exactly. Only Mana Tide Totem's is not, and a reset simulation checks that its
+// aura adds exactly its value; any other inexact MP5 bonus is unrepresented.
+func rawMP5Bonuses(labels []string, raw []float64) map[string]float64 {
+	bonuses := map[string]float64{}
+	for bit, label := range labels {
+		delta := raw[1<<bit] - raw[0]
+		if delta == 0 || (delta*1024 == math.Trunc(delta*1024) && (raw[0]+delta)-delta == raw[0]) {
+			continue
+		}
+		if label == externalManaTideLabel && raw[0]+buffs.ManaTideTotemsValue(0) == raw[1<<bit] {
+			bonuses[label] = buffs.ManaTideTotemsValue(0)
+			continue
+		}
+		fail(fmt.Errorf("%s adds %v MP5, which is not added and taken away exactly", label, delta))
+	}
+	return bonuses
 }
 
 type spellChance struct {

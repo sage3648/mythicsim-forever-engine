@@ -5,7 +5,7 @@
 //! ready and no active aura with the buff's tag, then activates the aura, puts that source on
 //! cooldown and holds the player's timer until the next source is ready.
 
-use crate::contracts::prepared_v2::{Aura, Effect};
+use crate::contracts::prepared_v2::{Aura, Effect, ExternalActivation};
 
 use super::{Agent, AuraRef, Fight, SpellBehavior, SpellId};
 
@@ -22,6 +22,8 @@ pub(crate) struct ExternalCooldown {
     shared: usize,
     cooldown: i64,
     duration: i64,
+    /// Go `GeneratedExternalCD.ShouldActivate`.
+    activation: ExternalActivation,
     /// Go `nextExternalIndex`, a variable of the closure that no reset touches: the source that
     /// casts next carries over from one fight to the next.
     next: usize,
@@ -44,6 +46,7 @@ impl<A: Agent> Fight<A> {
                 sources,
                 cooldown_ns,
                 duration_ns,
+                activation,
             } = effect
             else {
                 continue;
@@ -89,6 +92,7 @@ impl<A: Agent> Fight<A> {
                 shared,
                 cooldown: *cooldown_ns,
                 duration: *duration_ns,
+                activation: *activation,
                 next: 0,
             });
         }
@@ -108,6 +112,18 @@ impl<A: Agent> Fight<A> {
         let external = &self.external_cooldowns[self.external_cooldown_of(spell)];
         self.timers[external.timers[external.next]] <= self.now
             && !external.tagged.iter().any(|&aura| self.aura(aura).active)
+    }
+
+    /// Go `MajorCooldown.ShouldActivate` of the external cooldown the driver wrote: Innervate
+    /// waits for the player's mana to fall to its threshold and Mana Tide Totem for the time its
+    /// driver computed at finalize; the others have no condition.
+    pub(crate) fn external_cooldown_should_activate(&self, spell: SpellId) -> bool {
+        let external = &self.external_cooldowns[self.external_cooldown_of(spell)];
+        match external.activation {
+            ExternalActivation::Always => true,
+            ExternalActivation::ManaAtMost { threshold } => self.player.mana <= threshold,
+            ExternalActivation::NotBefore { time_ns } => self.now >= time_ns,
+        }
     }
 
     /// Go's `ApplyEffects`: the aura activates, the source that cast goes on cooldown and the

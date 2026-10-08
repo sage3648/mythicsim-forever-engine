@@ -58,15 +58,24 @@ fn the_gate_needs_the_cooldown_and_the_aura_effects() {
             "rotation reaches spell 10060 tag -1 without a known behavior".to_string()
         )]
     );
-    // The multipliers are the aura's exclusive effects, which only its effect describes.
+    // The multipliers are the aura's exclusive effects, which only its effect describes, and an
+    // external cooldown whose aura no effect describes would change nothing.
     assert_eq!(
         refusal_codes(without_effect(value, "power_infusion")),
-        [(
-            "aura_listener_unclaimed",
-            "player aura \"Power Infusions (External)\" bids in Power Infusion's categories \
-             without an effect"
-                .to_string()
-        )]
+        [
+            (
+                "aura_listener_unclaimed",
+                "player aura \"Power Infusions (External)\" bids in Power Infusion's categories \
+                 without an effect"
+                    .to_string()
+            ),
+            (
+                "aura_listener_unclaimed",
+                "player aura \"Power Infusions (External)\" is cast by an external cooldown \
+                 without an effect"
+                    .to_string()
+            )
+        ]
     );
 }
 
@@ -91,4 +100,124 @@ fn a_source_returns_when_its_cooldown_ends() {
     for (earlier, later) in times.iter().zip(&times[2..]) {
         assert!(later - earlier >= 180.0, "{times:?}");
     }
+}
+
+/// The seconds into the first fight at which the cooldown manager cast the external buff with the
+/// spell on the player, after the prepared input has been changed.
+fn cast_times(mut value: Value, spell: u32) -> Vec<f64> {
+    value["sim"]["iterations"] = json!(1);
+    let prepared: PreparedV2 = serde_json::from_value(value).unwrap();
+    let report = simulate_prepared(&prepared).unwrap();
+    let suffix = format!("Major cooldown used: {{SpellID: {spell}, Tag: -1}}");
+    report.result["logs"]
+        .as_str()
+        .unwrap()
+        .lines()
+        .filter(|line| line.ends_with(&suffix))
+        .map(|line| {
+            let end = line.find(']').unwrap();
+            line[1..end].parse().unwrap()
+        })
+        .collect()
+}
+
+/// Sets the activation of the external cooldown.
+fn with_activation(mut value: Value, activation: Value) -> Value {
+    for effect in value["effects"].as_array_mut().unwrap() {
+        if effect["kind"] == "external_cooldown" {
+            effect["activation"] = activation.clone();
+        }
+    }
+    value
+}
+
+#[test]
+fn innervate_waits_for_the_mana_threshold() {
+    let value = fixture("shadow-priest-external-innervate");
+    // Without mana consumables the priest is innervated a while into the fight, at 1000 mana.
+    let times = cast_times(value.clone(), 29166);
+    assert!(!times.is_empty() && times[0] > 20.0, "{times:?}");
+    // With a threshold above any mana the cooldown manager casts it as soon as it looks.
+    let times = cast_times(
+        with_activation(
+            value.clone(),
+            json!({"kind": "mana_at_most", "threshold": 1e9}),
+        ),
+        29166,
+    );
+    assert!(times[0] < 5.0, "{times:?}");
+    // And with one below any it never does.
+    let times = cast_times(
+        with_activation(value, json!({"kind": "mana_at_most", "threshold": -1.0})),
+        29166,
+    );
+    assert!(times.is_empty(), "{times:?}");
+}
+
+#[test]
+fn mana_tide_totem_waits_for_its_initial_delay() {
+    // 40 seconds into a long fight, and halfway through a short one.
+    let times = cast_times(fixture("fire-mage-external-mana-tide"), 17360);
+    assert!(times[0] >= 40.0 && times[0] < 45.0, "{times:?}");
+    let times = cast_times(fixture("fire-mage-external-mana-tide-short-fight"), 17360);
+    assert!(times[0] >= 22.5 && times[0] < 27.0, "{times:?}");
+    // The delay is the activation's: earlier for a smaller one.
+    let times = cast_times(
+        with_activation(
+            fixture("fire-mage-external-mana-tide"),
+            json!({"kind": "not_before", "time_ns": 5_000_000_000_i64}),
+        ),
+        17360,
+    );
+    assert!(times[0] >= 5.0 && times[0] < 10.0, "{times:?}");
+}
+
+#[test]
+fn the_sources_of_mana_tide_and_innervate_take_turns() {
+    for (case, spell, cooldown, aura) in [
+        (
+            "destruction-warlock-external-mana-tide-2-sources",
+            17360,
+            300.0,
+            13.0,
+        ),
+        ("fire-mage-external-innervate-2-sources", 29166, 360.0, 20.0),
+    ] {
+        let times = cast_times(fixture(case), spell);
+        // The second source waits for the aura of the first to end, and each returns after its
+        // cooldown: no cast lands inside the aura of the one before.
+        assert!(times.len() >= 2, "{case}: {times:?}");
+        assert!(times[1] - times[0] >= aura, "{case}: {times:?}");
+        if let Some(third) = times.get(2) {
+            assert!(third - times[0] >= cooldown, "{case}: {times:?}");
+        }
+    }
+}
+
+/// An external cooldown whose aura no effect describes is refused, as is one Innervate's
+/// regeneration or Mana Tide Totem's stat aura does not describe.
+#[test]
+fn the_gate_needs_the_aura_effects_of_innervate_and_mana_tide() {
+    let value = fixture("fire-mage-external-innervate");
+    assert_eq!(refusal_codes(value.clone()), []);
+    assert_eq!(
+        refusal_codes(without_effect(value, "innervate_regen")),
+        [(
+            "aura_listener_unclaimed",
+            "player aura \"Innervates (External)\" is cast by an external cooldown \
+             without an effect"
+                .to_string()
+        )]
+    );
+    let value = fixture("fire-mage-external-mana-tide");
+    assert_eq!(refusal_codes(value.clone()), []);
+    assert_eq!(
+        refusal_codes(without_effect(value, "stat_auras")),
+        [(
+            "aura_listener_unclaimed",
+            "player aura \"Mana Tide Totem (External)\" is cast by an external cooldown \
+             without an effect"
+                .to_string()
+        )]
+    );
 }

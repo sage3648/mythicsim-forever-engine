@@ -49,6 +49,14 @@ pub(crate) struct Environment {
     pub factory: AgentFactory,
     /// Every attacker's table against every defender, by unit index.
     pub attack_tables: Vec<Vec<AttackTable>>,
+    /// The party buffs the drivers read: the request's with what the agent adds.
+    pub party_buffs: Message,
+    /// What each external cooldown's driver computed once the environment finalized, by the
+    /// aura it casts.
+    pub external_activations: Vec<(
+        super::sim::AuraId,
+        crate::contracts::prepared_v2::ExternalActivation,
+    )>,
 }
 
 /// Go `PostFinalizeEffect`: run once every unit is finalized, with the attack tables in place.
@@ -182,6 +190,8 @@ impl Environment {
             prepull_actions: 0,
             rotation_dot_base_durations: Vec::new(),
             attack_tables: Vec::new(),
+            party_buffs: Message::empty("proto.PartyBuffs"),
+            external_activations: Vec::new(),
             factory,
         };
         if let Some(debuffs) = raid.message("debuffs") {
@@ -277,6 +287,7 @@ impl Environment {
             .cloned()
             .unwrap_or_else(|| Message::empty("proto.PartyBuffs"));
         self.agent.add_party_buffs(&mut party_buffs);
+        self.party_buffs = party_buffs.clone();
         let individual = player
             .message("buffs")
             .cloned()
