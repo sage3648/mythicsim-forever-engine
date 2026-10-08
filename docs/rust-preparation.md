@@ -33,7 +33,7 @@ equal the exporter's state exactly.
 What is refused, each with a stable code, is what Go cannot export either (the exporter's
 unrepresented notes, such as a Restoration shaman, mob type bonus stats or an on-use item without
 an exported effect) and a few inputs no fixture or sweep reaches yet, such as a target disabled
-at start, item swaps, rotation groups and variables, or a race without base stats for its class.
+at start, item swaps, or a race without base stats for its class.
 
 ## Commands
 

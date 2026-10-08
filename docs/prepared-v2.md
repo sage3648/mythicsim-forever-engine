@@ -181,7 +181,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `sacred_arbiter` | sim/paladin/talents_retribution.go | The target's judgement auras a landed Holy Strike refreshes |
 | `twist_of_light` | sim/paladin/talents_retribution.go | The Echo auras in Go's fixed order and the seal each replays |
 | `eye_for_an_eye` | sim/paladin/talents_retribution.go | A listener of the target's swings: a crit taken that dealt damage reflects the talent's share of it a batch window later, at most half of maximum health, as Holy damage that ignores modifiers and always hits |
-| `pursuit_of_justice` | sim/paladin/talents_retribution.go, core/movement.go | The permanent aura's passive movement speed bonus and the multiplier before it, which only log in scope; a category shared with another passive speed effect is unsupported |
+| `pursuit_of_justice` | sim/paladin/talents_retribution.go, core/movement.go | The permanent aura and its passive movement speed bonus, which the `player_movement` effect's categories apply with any other passive speed effect |
 | `druid_forms` | sim/druid/druid.go, forms.go | The starting form and the forms each druid spell may be cast in |
 | `moonkin_form` | sim/druid/forms.go | The cast and its aura |
 | `starfire`, `wrath` | sim/druid/starfire.go, wrath.go | Damage rolls on the spells; Wrath lands after travel |
@@ -317,7 +317,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `player_damage_taken` | sim/warrior/talents_fury.go, recklessness.go | The auras that multiply the player's damage taken while up, and each multiplier from client data |
 | `extra_attack_proc` | sim/common/classic/items_weapons.go, common/forever/items_trinkets.go | Ironfoe's and the Hand of Justice's chance on landed melee hits, Go literals, and how many extra main hand attacks each grants. Flurry Axe is a weapon proc: `chances` are the weapon's proc manager's per spell, and `spell` is the spell it casts, whose effect grants the extra main hand attack at once |
 | `diamond_flask` | sim/warrior/items.go | The Diamond Flask (item 20130), registered for any class that wears it: a channel with no cast time that is a self hot of five ticks, whose last tick activates a Strength aura for a minute. The effect holds the aura, every stat it changes while active, computed by Go, and its gain and expiry lines; the hot is the spell's own dot. The major cooldown never activates on its own, so a rotation or a prepull casts it, also when the rotation's own cast took it from the major cooldowns |
-| `player_movement` | sim/core/movement.go | Written when the prepull moves: the player's movement speed multiplier after the reset, and every aura that could change it other than the class's dash (the passive and active movement speed categories, Elemental Blessing), which makes the input unsupported |
+| `player_movement` | sim/core/movement.go | Written when the rotation moves anywhere (its prepull, priority list, groups and sequences) or an aura can change the movement speed: the player's movement speed multiplier after the reset and the one every reset restores before the permanent auras change it, and every aura that can change it other than the class's dash and Prowl: the passive and active movement speed categories' members, whose effect multiplies the speed as it takes hold, and Elemental Blessing, which multiplies it directly and is only reached by the Skysight spell the runtime does not know |
 | `warrior_charge` | sim/warrior/charge.go | The cast before the pull, in Battle Stance or in Defensive Stance with Vanguard: its rage with Improved Charge, the dash aura that triples the movement speed while it is up, the 3.5 yards of overshoot inside the spell's minimum range and that range, and whether the rage adds no threat; the aura ends with the movement |
 | `warrior_stances` | sim/warrior/stances.go | The starting stance, each stance's cast and aura, and the rage a stance change keeps |
 | `exclusive_category` | sim/core/exclusive_effect.go | A single aura category on a unit, with each member aura's bid and spell in registration order: a stronger or longer-lasting member refuses a newcomer, and a winner deactivates the member it replaces. A stacking member bids its per-stack value times its stacks, set on every stack change; the target's major armor category also carries the target's armor at each stack count of its active member, and a member that does not stack, as the rogue's Expose Armor, whose class sets its bid, takes the bid off the armor with no stacks |
@@ -428,7 +428,7 @@ is an error, never a refusal. `REFUSAL_CODES` in
 | `aura_condition_unsupported` | A rotation condition reads an aura as Rust does not |
 | `resource_unsupported` | The rotation or a spell reads a resource the player lacks |
 | `prepull_unsupported` | A prepull action Rust cannot reproduce |
-| `movement_unsupported` | A move of the player in the rotation that Rust does not simulate for the class |
+| `movement_unsupported` | A move of the player in the rotation that Rust cannot simulate: no movement speed exported, or a value Go would panic on |
 | `cooldown_unsupported` | A survival cooldown fires at a health threshold Rust does not simulate |
 | `class_limit` | A class gate rejects the input or a spell the rotation reaches |
 | `proc_unsupported` | A proc listens to hits Rust does not deliver to it |
@@ -521,14 +521,16 @@ as the engine consumes more fields.
 The rotation subset covers `castSpell` at the current target or, with a `target`, at a
 target by `Target` index, the `NextTarget` or the `PreviousTarget`, `castFriendlySpell` at the current target or at the
 player (the first player of the raid, or the unit itself), `autocastOtherCooldowns`, `strictSequence` and
-`sequence` of casts, `channelSpell` with `interruptIf` and `allowRecast`, constant-time prepull casts
-and moves, and a Hunter's moves in the priority list,
+`sequence` of casts, `channelSpell` with `interruptIf`, `allowRecast` and a `target`, constant-time
+prepull casts, moves and moves for a duration, `move` and `moveDuration` in the priority list,
+`groupReference` of the rotation's `groups` with its `valueVariables`,
 `cmp` with any comparison operator, `and`, `or`, `not`, `const`, `currentMana`,
 `currentManaPercent`, `currentHealthPercent` of the player, `currentEnergy`, `maxEnergy`, `currentComboPoints`,
 `timeToNextEnergyTick`, `currentRage`, `isExecutePhase`, `currentTime`, `remainingTime`, `remainingTimePercent`, `numberTargets`,
 `math`, `totemRemainingTime` (a Shaman's), `gcdIsReady`,
 `auraIsKnown`, `auraIsActive`, `auraIsInactive`, `auraNumStacks` and `auraRemainingTime` (on the player
-or on a target), with `includeReactionTime` on the player's `auraIsActive` and `auraIsInactive`, `dotIsActive`,
+or on a target), with `includeReactionTime` on the activity and the stacks of any unit's aura,
+`auraShouldRefresh`, `variableRef`, `variablePlaceholder`, `actionGroupUsed`, `dotIsActive`,
 `dotRemainingTime`, `dotTimeToNextTick` (on a target), `dotBaseDuration`, `spellIsKnown`, `spellIsReady`,
 `spellTimeToReady`, `spellCastTime`, which reads a class's own cast time such as a Hunter
 shot's, `spellCanCast`, whose cost check has Go's side effects, `spellCurrentCost`,
@@ -539,12 +541,23 @@ Go's log line and internal cooldown. A prepull `move` to a constant range runs a
 its movement speed multiplier, a step of the Movement aura's stacks a yard, its position read
 lazily when the rotation next runs or another move starts, so a cast that checks the range
 before then reads the old one. Its melee swings stop and start with the weapon's range, a cast
-with a cast time fails while the player moves, and the rotation does not wait for the GCD. It
-is supported for a Warrior, whose Charge spends the dash, and for a Hunter; any other class, a
-ranged auto swing of any other class, or an aura that changes the speed is refused. A `move` in
-the priority list runs as Go's `APLActionMove` does once it is ready, when the player is not moving,
-not at the range and not casting or channeling, and is supported for a Hunter only, with code
-`movement_unsupported` for any other class. A unit that moves runs the weaving Go's attack code adds:
+with a cast time fails while the player moves, and the rotation does not wait for the GCD. A
+prepull `moveDuration` of a constant time moves no distance for that long. Every class moves,
+with a ranged auto swing or without, when the exporter wrote the `player_movement` effect. A
+`move` in the priority list runs as Go's `APLActionMove` does once it is ready, when the player
+is not moving, not at the range (or before the pull) and not casting, and its range is any value
+Go reads as a float; a `moveDuration` runs as Go's `APLActionMoveDuration` does, when the player
+is not moving or the move ends this step, the duration the value gives is not zero, and nothing
+is cast or channeled but a spell that can be cast while moving. A value Go cannot read that way,
+or one that gives none, panics in Go and is refused. The auras that change the movement speed are
+followed as Go follows them: the passive and active movement speed categories (a Druid's Cat
+Form, a Paladin's Pursuit of Justice, a weapon's Unholy Aura, the boots' speed enchant) are single
+aura categories whose effect multiplies the speed as it takes hold, and gives it back as it lets
+go, so a weaker effect never applies beside a stronger, and a stronger one displaces a weaker
+that is up; the runtime enforces them from the auras' memberships and applies them in the order
+`ExclusiveCategory.SetActive` does, logging each change. Prowl's aura and the Warrior's Charge
+multiply the speed directly. A move in progress at a speed is run again to the distance it had
+covered by its end when the speed changes. A unit that moves runs the weaving Go's attack code adds:
 a ranged auto swing cannot fire while it moves and looks again every 500ms, a position update that
 crosses the weapon's range stops or starts the swing as the main hand's, a main hand swing that
 leaves range wakes the rotation when it comes ready, a hardcast that completes does the same, and a
@@ -559,9 +572,12 @@ check of whether the rotation would recast the same channel. An aura value's `so
 targets: `Self` and `Player` index 0 are the player; `CurrentTarget` is the first target, since no
 change target action is supported; `NextTarget` and `PreviousTarget` wrap around the
 targets; `Target` with an index is that target, and past the fight's targets it is no unit.
-No reference means the player for an aura value and the current target otherwise. A unit
-that is none gives an aura the unit lacks, which reads as in the next paragraph, a dot
-value without a value, and an action Go drops. A dot value without a spell, or for a spell
+Go reads only the fields a type uses: `Self`, `CurrentTarget`, `NextTarget` and `PreviousTarget`
+ignore an index and an owner, and the one player of the raid is index 0, so any other `Player`
+names no unit either. No reference means the player for an aura value and the current target
+otherwise. A unit that is none gives an aura the unit lacks, which reads as in the next paragraph,
+a dot value without a value, and a cast, friendly cast, channel, sequence step or prepull cast
+that Go builds no action for, whose spell then stays among the major cooldowns the autocast casts. A dot value without a spell, or for a spell
 without a dot on that unit (a dot on the targets is none on the player; an area or
 self-only dot is the same on every unit), has no value in Go and drops out of its
 condition. `auraIsInactive` is `!aura.IsActive()`, and constant true for an aura the unit
@@ -569,14 +585,27 @@ lacks. Go drops a comparison of booleans other than equality, which leaves its
 parent without the term. `AllPlayers` and `AllTargets` name sets, which Go's `GetUnit` gives no
 unit: in a dot or aura value they are a unit that is none, so the dot value has no value and drops out
 of its condition and the aura reads as one nobody has. Every `Pet` but the one `auraIsKnown`
-reads, any player but the first and a reference with other fields are unsupported, as are a
-`target` on a step of a sequence or on a prepull action, and one on a `castSpell` of a set, unless it
-names the current target, `includeReactionTime` on anything but the player's `auraIsActive` and
-`auraIsInactive`, and an `auraShouldRefresh` on a unit but the player and the current
-target. With `includeReactionTime`, `auraIsActive` also needs the aura to have been up for the
-player's reaction time and `auraIsInactive` to have been down for it (`TimeActive` and
-`TimeInactive`, which count from the aura's gain and fade, and an aura that never faded has been
-down for ever); the activity is not the negation of the other. `dotBaseDuration` is the dot's
+reads, a reference with fields no reference has, a negative `Target` index (Go reads before its
+list), a `target` on a step of a sequence or on a prepull action but the current target or none,
+a `castSpell` at the player (which only `castFriendlySpell` may do), a `channelSpell` with an
+interrupt condition at any unit but the current target, and `includeReactionTime` on a read
+without it (Go rejects the field) are unsupported. With `includeReactionTime`, `auraIsActive`
+also needs the aura to have been up for the player's reaction time and `auraIsInactive` to have
+been down for it (`TimeActive` and `TimeInactive`, which count from the aura's gain and fade,
+and an aura that never faded has been down for ever); the activity is not the negation of the
+other. `auraNumStacks` reads the stacks as they stood a reaction time ago: the aura keeps the
+time of its last stack change and the stacks before the change a reaction time older than it,
+as each such value's stack change handler does in Go, with Go's wrapping difference before the
+first change. `auraShouldRefresh` reads the aura's exclusive effects as Go's
+`ShouldRefreshExclusiveEffects` does, against the active effect of each category: nothing
+active, a higher bid, a stacking aura's bid at its full stacks, or an equal bid that no effect
+of that bid holds longer than the overlap. The runtime keeps the category of every aura it
+reads: one a class describes (an `exclusive_category` effect, stacking members included), a
+single aura category it derives from the auras' exported memberships, and a category that holds
+several auras, which refuses nothing and is tracked. An aura whose bid follows its stacks
+(spelldata's debuffs bid nothing before their first stack) in a category no class describes, and
+a category whose members move their bids as Thunder Clap's does, are unsupported. The aura on a
+unit that is none, or that the unit lacks, gives no value. `dotBaseDuration` is the dot's
 `BaseDuration` on the first target (the spell's area dot, else its dot on the target) as Go captures
 it when it builds the rotation, before the reset activates any aura's spell mods, so a set bonus's
 extra tick is not in it; the exporter and Rust preparation record it in
@@ -601,6 +630,32 @@ the character lacks reads it as inactive, with no stacks and no time left, as co
 fix #622 does in the reference (see [UPSTREAM.md](../UPSTREAM.md#ledger)). A
 `strictSequence` with a step the character lacks is dropped whole, as community #625
 does.
+
+A rotation's `groups` and `valueVariables` are read as Go's `newAPLRotation` builds them. A
+`variableRef` is the value of the first variable of its name, built where it is read (the same
+value as the variable's own, so a variable is the value it names; a name no variable has gives
+no value in Go, and a variable that names itself never finishes, which are refused). A group is
+a list of actions that a `groupReference` runs: the reference is ready when any action of the
+group is ready, and runs the first that is, reading the conditions again as Go does. A group's
+conditions keep a constant as they are written, and are not pruned. Go builds an instance of a
+group for each reference to it: a group that two references name is built again for the second,
+and so is a group that a reference inside a group names, and the instances are bound to the
+references in the order Go finalizes them, a reference binding the first instance of its name
+that nothing else is bound to, depth first through the groups its group references. A
+reference whose condition is a constant false is pruned and binds nothing; one that finds no
+group is never ready; a group nothing references is built and its casts leave the major
+cooldowns, but it never runs. Binding fills the placeholders of the instance's conditions with
+the reference's variables, and gives the variable references of the conditions the value of the
+group's variable of their name, the reference's variables added to the group's; the values of an
+action's own fields (a channel's interrupt condition, a move's range) keep their placeholders
+and the rotation's variables. Go does not check an operand that fills a placeholder in a
+comparison, math, `and`, `or` or `not` as it checks one it builds, so a replacement that its
+checks would drop, or a logical operand that is not a boolean, is refused, as is a placeholder
+the reference leaves unfilled or that survives the replacement. `actionGroupUsed` is whether a
+reference is bound to a group of its name. A group reference in the prepull is unsupported.
+Preparation builds every group and the variables each condition reads, so a stack read in a
+group registers its callbacks on the aura, and the casts of every group, referenced or not, leave
+the major cooldowns.
 
 ## Examples
 
