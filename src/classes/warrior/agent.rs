@@ -17,6 +17,7 @@ use super::{
         bloodthirst::{self, Bloodthirst},
         charge::{self, Charge},
         death_wish::{self, DeathWish},
+        demoralizing_shout,
         execute::{self, Execute},
         hamstring,
         heroic_strike::{self, Queue, Strike},
@@ -87,6 +88,8 @@ pub(crate) enum WarriorSpell {
     Revenge,
     ShieldSlam,
     ThunderClap,
+    /// demoralizing_shout.go: the shout and its debuff on each target it lands on.
+    DemoralizingShout,
     Retaliation,
     RetaliationHit,
     SweepingStrikes,
@@ -181,6 +184,8 @@ pub(crate) struct WarriorAgent {
     shield_slam: Option<DamageRoll>,
     can_block: bool,
     thunder_clap: Option<ThunderClap>,
+    /// Demoralizing Shout's debuff on the first target.
+    demoralizing_shout: Option<AuraRef>,
     retaliation: Option<Retaliation>,
     sweeping_strikes: Option<SweepingStrikes>,
     /// Go `copyDamage`, which the Sweeping Strikes hit spell deals on its next cast.
@@ -264,6 +269,9 @@ impl WarriorAgent {
             "revenge" if has("revenge") => Some(WarriorSpell::Revenge),
             "shield_slam" if has("shield_slam") => Some(WarriorSpell::ShieldSlam),
             "thunder_clap" if has("thunder_clap") => Some(WarriorSpell::ThunderClap),
+            "demoralizing_shout" if has("demoralizing_shout") => {
+                Some(WarriorSpell::DemoralizingShout)
+            }
             "retaliation" if has("retaliation") => Some(WarriorSpell::Retaliation),
             "retaliation_hit" if has("retaliation") => Some(WarriorSpell::RetaliationHit),
             "sweeping_strikes" if has("sweeping_strikes") => Some(WarriorSpell::SweepingStrikes),
@@ -559,6 +567,15 @@ impl WarriorAgent {
                         attack_power_share: *attack_power_share,
                         max_targets: *max_targets as usize,
                         bid: *bid,
+                    });
+                }
+                Effect::DemoralizingShout { aura, .. } => {
+                    let index = fight.trackers[Side::Target.index()]
+                        .find(aura)
+                        .ok_or_else(|| format!("target aura {aura} is not registered"))?;
+                    fight.agent.demoralizing_shout = Some(AuraRef {
+                        side: Side::Target,
+                        index,
                     });
                 }
                 Effect::LastStand {
@@ -1152,6 +1169,13 @@ impl Agent for WarriorAgent {
                 let params = fight.agent.thunder_clap.expect("Thunder Clap is bound");
                 let sweeping = fight.agent.sweeping_strikes;
                 thunder_clap::apply(fight, spell, target, params, sweeping);
+            }
+            WarriorSpell::DemoralizingShout => {
+                let aura = fight
+                    .agent
+                    .demoralizing_shout
+                    .expect("Demoralizing Shout is bound");
+                demoralizing_shout::apply(fight, spell, aura);
             }
             WarriorSpell::Retaliation => {
                 let params = fight.agent.retaliation.expect("Retaliation is bound");

@@ -192,6 +192,48 @@ fn holy_nova_reads_the_live_healing_power() {
     assert!(powers.len() > 1, "{powers:?}");
 }
 
+/// Holy Nova rolls, resolves and deals a hit on every target in unit index order, then casts
+/// its heal once on the priest, as Go `CalcAndDealAoeDamageWithVariance` does.
+#[test]
+fn holy_nova_hits_every_target_then_heals_once() {
+    for case in [
+        "shadow-priest-holy-nova-5-targets",
+        "smite-priest-holy-nova-5-targets",
+    ] {
+        let mut value = accepted(case);
+        value["sim"]["iterations"] = json!(1);
+        let report = simulate_prepared(&parse(value)).unwrap();
+        let logs = report.result["logs"].as_str().unwrap();
+        let casts = logs.matches("Completed cast {SpellID: 27801}").count();
+        assert!(casts > 1, "{case}: {casts} casts");
+        assert_eq!(
+            logs.matches("Completed cast {SpellID: 27805}").count(),
+            casts
+        );
+        for target in 1..=5 {
+            // One outcome line for each cast, whether it hit, crit or missed.
+            let prefix = format!("[Target {target}] {{SpellID: 27801}} ");
+            let outcomes = logs
+                .lines()
+                .filter(|line| line.contains(&prefix) && !line.contains("[DEBUG]"))
+                .count();
+            assert_eq!(outcomes, casts, "{case}: Target {target}");
+        }
+        // The hits come in unit index order, ahead of the heal.
+        let first = logs.find("Completed cast {SpellID: 27801}").unwrap();
+        let after = &logs[first..];
+        let order: Vec<usize> = (1..=5)
+            .map(|target| {
+                after
+                    .find(&format!("[Target {target}] {{SpellID: 27801}} [DEBUG]"))
+                    .unwrap()
+            })
+            .collect();
+        assert!(order.windows(2).all(|pair| pair[0] < pair[1]), "{order:?}");
+        assert!(order[4] < after.find("Completed cast {SpellID: 27805}").unwrap());
+    }
+}
+
 #[test]
 fn shadowfiend_inherits_attack_power_and_restores_mana() {
     let mut value = accepted("shadow-priest-shadowfiend");

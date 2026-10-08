@@ -498,30 +498,87 @@ fn thunder_clap_slows_only_the_copies_it_lands_on() {
     assert_eq!(longest(5), 2.0, "Target 5: slowed");
 }
 
-/// The shouts that Go casts on every target have no behavior in Rust, and against several
-/// targets the gate says what they would do there.
+/// Challenging Shout, which Go casts on every target, has no behavior in Rust, and against
+/// several targets the gate says what it would do there. Demoralizing Shout runs.
 #[test]
-fn the_shouts_are_refused_by_name_against_several_targets() {
-    for (spell, what) in [
-        (11556, "debuffs every target"),
-        (1161, "taunts every target"),
-    ] {
-        let mut value = warrior_fixture("production-warrior-2-targets");
-        let rotation = value["player"]["rotation"]["priorityList"]
-            .as_array_mut()
-            .unwrap();
-        rotation[0]["action"] = json!({"castSpell": {"spellId": {"spellId": spell}}});
-        let reasons = reasons(value);
-        assert!(
-            reasons.contains(&format!(
-                "rotation reaches spell {spell}, which {what} in a fight against several targets"
-            )),
-            "{reasons:?}"
+fn challenging_shout_is_refused_by_name_against_several_targets() {
+    let mut value = warrior_fixture("production-warrior-2-targets");
+    let rotation = value["player"]["rotation"]["priorityList"]
+        .as_array_mut()
+        .unwrap();
+    rotation[0]["action"] = json!({"castSpell": {"spellId": {"spellId": 1161}}});
+    let reasons = reasons(value);
+    assert!(
+        reasons.contains(
+            &"rotation reaches spell 1161, which taunts every target in a fight against several targets"
+                .to_string()
+        ),
+        "{reasons:?}"
+    );
+    assert!(reasons.contains(&"rotation reaches spell 1161 without a known behavior".to_string()));
+}
+
+/// Demoralizing Shout rolls a magic hit on every target in unit index order and debuffs each
+/// it lands on, and each copy of the boss swings at the tank with the attack power its own
+/// debuff leaves it, as Go reads it from the unit that swings.
+#[test]
+fn demoralizing_shout_debuffs_every_target_and_cuts_each_swing() {
+    let logs = first_fight_log(warrior_fixture(
+        "protection-warrior-demoralizing-shout-5-targets",
+    ));
+    for target in 1..=5 {
+        let cast = lines_with(&logs, target, "11556");
+        assert!(!cast.is_empty(), "Target {target}: no shout");
+        let gained = logs
+            .find(&format!(
+                "[Target {target}] Aura gained: {{SpellID: 11556}}"
+            ))
+            .unwrap_or_else(|| panic!("Target {target}: no debuff"));
+        let swing = format!(
+            "[Target {target}] [protection-warrior (#1)] {{OtherID: 3, Tag: 1}} [DEBUG] MAP: 600.0"
         );
-        assert!(reasons.contains(&format!(
-            "rotation reaches spell {spell} without a known behavior"
-        )));
+        assert!(
+            logs[gained..].contains(&swing),
+            "Target {target}: no swing under the debuff"
+        );
+        assert!(
+            !logs[..gained].contains(&swing),
+            "Target {target}: a swing under a debuff it did not hold yet"
+        );
     }
+}
+
+/// A raid's permanent debuff in the Demoralizing category bids as much as the shout and
+/// outlasts it, so the category holds the player's shout off: it is cast and rolled, and its
+/// aura is never gained.
+#[test]
+fn a_permanent_debuff_holds_the_shout_off() {
+    for case in [
+        "protection-warrior-demoralizing-shout-over-roar-debuff",
+        "protection-warrior-demoralizing-shout-over-shout-debuff",
+    ] {
+        let logs = first_fight_log(warrior_fixture(case));
+        assert!(
+            !lines_with(&logs, 1, "11556").is_empty(),
+            "{case}: no shout"
+        );
+        assert!(
+            !logs.contains("Aura gained: {SpellID: 11556}"),
+            "{case}: the shout's aura was gained"
+        );
+    }
+}
+
+/// The shout runs only with its effect.
+#[test]
+fn demoralizing_shout_needs_its_effect() {
+    let mut value = warrior_fixture("fury-warrior-demoralizing-shout");
+    value["effects"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|effect| effect["kind"] != "demoralizing_shout");
+    assert!(reasons(value)
+        .contains(&"rotation reaches spell 11556 without a known behavior".to_string()));
 }
 
 /// An extra attack that a landed hit casts at once, replaced by a queued Cleave, starts a

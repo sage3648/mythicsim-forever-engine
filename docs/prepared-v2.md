@@ -276,7 +276,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `shadow_weaving` | sim/priest/talents_shadow.go | The resolved proc trigger, its spells and the damage per stack |
 | `dark_sacrifice` | sim/priest/dark_sacrifice.go | Tick base from client data plus Spirit over a divisor, and whether the cast adds no threat; used once the whole gain fits. The spell is the Undead priest's racial: it is exported for Undead only |
 | `starshards` | sim/priest/starshards.go | Each rank's dot base and Periodic Can Crit; a hit roll, then a snapshotting channel |
-| `holy_nova` | sim/priest/talents_holy.go | Each rank's triggered heal and its base; the caster and target healing multipliers and the healing power, which the gate holds fixed; the heal rolls its own crit on spell crit |
+| `holy_nova` | sim/priest/talents_holy.go | Each rank's triggered heal and its base; the caster and target healing multipliers and the healing power, which the gate holds fixed; the heal rolls its own crit on spell crit. Against several targets the damage rolls, resolves and deals a hit on each target in unit index order before the heal is cast once |
 | `power_infusion` | sim/core/buffs/buffs_auto_gen.go, sim/priest/talents_discipline.go | A copy of the generated Power Infusions aura, the priest's own or the external caster's (one effect each), its damage multiplier and the school indexes it applies to, and its healing multiplier, all from client data and checked against Go as everything the aura changes. The copies bid in the same exclusive categories, one for the healing and one for the damage multiplier, and the runtime applies a multiplier while the effect holds its category: a copy that takes over from another divides the old multiplier out before it multiplies. The exporter refuses an external copy on a healing dealt multiplier other than 1, since the runtime rolls it back by division |
 | `shadowfiend` | sim/priest/shadowfiend.go, shadowfiend_pet.go | The summon's timeline aura and duration, the pet, its attack power from spell and shadow damage at each summon with the dependency terms and the stats its lines print, and its mana restore aura's share of maximum mana, a Go literal |
 | `smite`, `holy_fire` | sim/priest/smite.go, holy_fire.go | Damage rolls on every rank; Holy Fire's dot base and Periodic Can Crit, the dot applied before the hit is dealt |
@@ -327,6 +327,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `bloodthrill`, `weaponmaster_sword` | sim/warrior/talents_arms.go | Bloodthrill's chance and the longer Overpower window it opens after a delay; Weaponmaster's chance on a sword hand's hits and the extra attack it grants |
 | `revenge`, `shield_slam` | sim/warrior/revenge.go, talents_protection.go | Revenge's trigger on blocked, dodged and parried hits taken, its roll and attack power share, a Go literal; Shield Slam's roll plus the block value, which the target's rolls carry for each stat aura combination |
 | `thunder_clap` | sim/warrior/thunder_clap.go | The base, the attack power share, a Go literal, on the binary magic table, and the bid by which its debuff slows the target's melee speed while it alone holds the attack speed category; against several targets it hits up to four and debuffs each one it lands on |
+| `demoralizing_shout` | sim/warrior/demoralizing_shout.go | The spell and the target debuff, whose attack power cut the target's swing reads while it is up; the shout rolls a magic hit on every target in unit index order and debuffs each one it lands on |
 | `retaliation` | sim/warrior/retaliation.go | The aura's charges and the strike back at each landed melee hit taken that dealt damage |
 | `sweeping_strikes` | sim/warrior/talents_arms.go | The Battle Stance cooldown's aura and charges. Against several targets each charge copies a hit's damage before armor onto the next target, and Whirlwind, Thunder Clap and Execute cast a normalized attack instead, even against one target as Go does |
 | `battlegear_of_might_rage` | sim/warrior/items.go | The 5 piece bonus: the chance and label of the roll on landed hits taken that dealt damage, and the rage a batch window later, Go literals |
@@ -653,7 +654,14 @@ option, the latter in a 420 second fight that summons it twice. `smite-priest-po
 runs the Smite request on the Smite 31/17/3 talents, whose cooldown autocast casts Power
 Infusion, and `smite-priest-holy-nova-power-infusion` heals with Holy Nova while it is up.
 `smite-priest-holy-nova-ephemeral-power` heals with Holy Nova while Talisman of Ephemeral
-Power raises healing power, which the heal reads live.
+Power raises healing power, which the heal reads live. `smite-priest-holy-nova-3-targets` and
+`-5-targets` and the `shadow-priest-holy-nova` cases (a Shadow Priest that never enters
+Shadowform, which would refuse Holy Nova through its cast requirement) against 1, 3 and 5
+targets hit every target with the nova and heal once.
+`protection-warrior-demoralizing-shout` and `fury-warrior-demoralizing-shout` cast Demoralizing
+Shout against 1 target, `-3-targets` and `-5-targets` against several, and the two
+`protection-warrior-demoralizing-shout-over-*-debuff` cases run it under the raid's permanent
+Demoralizing Roar or Shout debuff, which holds the player's shout off.
 `production-assassination-rogue` and `production-subtlety-rogue` are the production
 Assassination and Subtlety Rogue requests. `combat-swords`, `combat-riposte`,
 `combat-wound-poison`, `combat-kidney-shot`, `assassination-venom`,

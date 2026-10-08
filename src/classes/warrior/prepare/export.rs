@@ -464,6 +464,41 @@ impl Warrior {
         effects.push(json!({"kind": "slam", "spell_id": slam.id,
             "base_damage": slam.damage_effect().average(level),
             "stops_swings": talent("improved_slam") == 0}));
+        // demoralizing_shout.go: a magic hit roll on each target in unit index order, each
+        // landed one activating that target's debuff.
+        if let Some(shout) = Self::spell_of(sim, unit, data.demoralizing_shout.highest()) {
+            let position = sim
+                .unit(unit)
+                .spellbook
+                .iter()
+                .position(|candidate| *candidate == shout);
+            let aura = sim
+                .spell(shout)
+                .related_aura_arrays
+                .values()
+                .last()
+                .and_then(|auras| {
+                    auras
+                        .get(sim.unit(env.encounter.targets[0]).unit_index as usize)
+                        .copied()
+                        .flatten()
+                });
+            if let (Some(position), Some(aura)) = (position, aura) {
+                effects.push(json!({"kind": "demoralizing_shout", "spell": position,
+                    "aura": sim.aura(aura).label}));
+                // buffs.DemoralizingShoutAura and the raid's Demoralizing Roar and Shout
+                // debuffs share one single aura category, each bidding its attack power cut.
+                if let Some(category) = exclusive_category_effect(
+                    sim,
+                    env.encounter.targets[0],
+                    "target",
+                    generated::DEMORALIZING_SHOUT.category,
+                    notes,
+                ) {
+                    effects.push(category);
+                }
+            }
+        }
         if talent("bloodthrill") > 0 {
             effects.push(
                 json!({"kind": "bloodthrill", "trigger_aura": "Bloodthrill - Trigger",

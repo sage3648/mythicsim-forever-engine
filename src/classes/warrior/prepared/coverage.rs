@@ -32,6 +32,7 @@ const EFFECTS: &[&str] = &[
     "bloodthirst",
     "death_wish",
     "deep_wounds",
+    "demoralizing_shout",
     "execute",
     "warrior_flurry",
     "hamstring",
@@ -86,6 +87,7 @@ fn spell_capability(spell: &Spell) -> Option<&'static str> {
         "revenge" => Some("revenge"),
         "shield_slam" => Some("shield_slam"),
         "thunder_clap" => Some("thunder_clap"),
+        "demoralizing_shout" => Some("demoralizing_shout"),
         "retaliation" | "retaliation_hit" => Some("retaliation"),
         "sweeping_strikes" => Some("sweeping_strikes"),
         "battle_stance" | "berserker_stance" | "defensive_stance" => Some("warrior_stances"),
@@ -121,7 +123,9 @@ fn claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         | Effect::SweepingStrikes { aura, .. } => {
             vec![("player", aura)]
         }
-        Effect::ThunderClap { aura, .. } => vec![("target", aura)],
+        Effect::ThunderClap { aura, .. } | Effect::DemoralizingShout { aura, .. } => {
+            vec![("target", aura)]
+        }
         Effect::RageOnAvoid { triggers, .. } => triggers
             .iter()
             .map(|trigger| ("player", trigger.aura.as_str()))
@@ -234,15 +238,12 @@ fn stance_spell(class_spell: &str) -> Option<&'static str> {
     }
 }
 
-/// The spells that reach a target past the first in Go and not yet in Rust: the shouts, which
-/// Go loops over every target for and Rust has no behavior for at all. Cleave, Whirlwind,
-/// Thunder Clap and Sweeping Strikes run as in Go.
+/// The spells that reach a target past the first in Go and not yet in Rust: Challenging Shout,
+/// which taunts every target and which Rust has no behavior for at all. Cleave, Whirlwind,
+/// Thunder Clap, Sweeping Strikes and Demoralizing Shout run as in Go.
 fn several_targets(_prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
     crate::engine::coverage::spells_reaching_other_targets(
         reachable,
-        &[
-            ("demoralizing_shout", "debuffs every target"),
-            ("challenging_shout", "taunts every target"),
-        ],
+        &[("challenging_shout", "taunts every target")],
     )
 }

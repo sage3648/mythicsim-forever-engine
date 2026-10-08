@@ -5391,6 +5391,23 @@
       "stops_swings": true
     },
     {
+      "aura": "Demoralizing Shout (Player)",
+      "kind": "demoralizing_shout",
+      "spell": 42
+    },
+    {
+      "category": "Demoralizing",
+      "kind": "exclusive_category",
+      "members": [
+        {
+          "aura": "Demoralizing Shout (Player)",
+          "priority": 205,
+          "spell_id": 11556
+        }
+      ],
+      "unit": "target"
+    },
+    {
       "kind": "heroic_strike_queue",
       "queue_delay_ns": 250000000,
       "strikes": [
