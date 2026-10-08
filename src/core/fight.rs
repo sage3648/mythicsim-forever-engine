@@ -1531,9 +1531,8 @@ pub(crate) struct Fight<A: Agent> {
     health_at_reset: Option<f64>,
     /// Go `HpPercentForDefensives`, below which survival major cooldowns fire.
     pub(crate) hp_percent_for_defensives: f64,
-    /// How each exclusive effect of an aura a rotation asks about reads: true when the aura
-    /// holds its category alone, false when another aura holds it for good.
-    pub(crate) aura_refresh: Vec<(AuraRef, Vec<bool>)>,
+    /// How each exclusive effect of an aura a rotation asks about reads.
+    pub(crate) aura_refresh: Vec<(AuraRef, Vec<exclusive::RefreshReading>)>,
 }
 
 /// Errors that make a prepared input impossible to run despite passing coverage.
@@ -3211,20 +3210,6 @@ impl<A: Agent> Fight<A> {
             fight.enable_energy_bar(energy);
         }
         for effect in effects {
-            if let Effect::AuraShouldRefresh { unit, aura, modes } = effect {
-                let side = if unit == "target" {
-                    Side::Target
-                } else {
-                    Side::Player
-                };
-                let index = fight.trackers[side.index()]
-                    .find(aura)
-                    .ok_or_else(|| format!("{unit} aura {aura} is not registered"))?;
-                let own = modes.iter().map(|mode| mode == "own").collect();
-                fight.aura_refresh.push((AuraRef { side, index }, own));
-            }
-        }
-        for effect in effects {
             if let Effect::EnergizeProc {
                 rng_label,
                 chances,
@@ -3429,6 +3414,38 @@ impl<A: Agent> Fight<A> {
                     fight.armor_category =
                         Some((fight.exclusive.len() - 1, armor_by_stacks.clone()));
                 }
+            }
+        }
+        for effect in effects {
+            if let Effect::AuraShouldRefresh { unit, aura, modes } = effect {
+                let side = if unit == "target" {
+                    Side::Target
+                } else {
+                    Side::Player
+                };
+                let index = fight.trackers[side.index()]
+                    .find(aura)
+                    .ok_or_else(|| format!("{unit} aura {aura} is not registered"))?;
+                let exported = if side == Side::Target {
+                    &prepared.target.auras
+                } else {
+                    &prepared.player.auras
+                };
+                let memberships = exported
+                    .iter()
+                    .find(|candidate| candidate.label == *aura)
+                    .map(|candidate| candidate.exclusive_memberships.as_slice())
+                    .unwrap_or_default();
+                let aura_ref = AuraRef { side, index };
+                let mut readings = Vec::new();
+                for (position, mode) in modes.iter().enumerate() {
+                    readings.push(match mode.as_str() {
+                        "own" => exclusive::RefreshReading::Own,
+                        "never" => exclusive::RefreshReading::Never,
+                        _ => fight.enforced_refresh_reading(aura_ref, memberships.get(position))?,
+                    });
+                }
+                fight.aura_refresh.push((aura_ref, readings));
             }
         }
         if let Some(bar) = fight.rage.as_mut() {

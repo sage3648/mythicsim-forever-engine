@@ -9,7 +9,10 @@ use crate::{
     },
 };
 
-use super::{cast::MAX_SPELL_QUEUE_WINDOW, Agent, AuraRef, DotId, Fight, Side, SpellId};
+use super::{
+    cast::MAX_SPELL_QUEUE_WINDOW, exclusive::RefreshReading, Agent, AuraRef, DotId, Fight, Side,
+    SpellId,
+};
 
 use std::rc::Rc;
 
@@ -366,20 +369,25 @@ impl<A: Agent> Fight<A> {
             }
             // Go `APLValueFrontOfTarget`.
             Compiled::FrontOfTarget => self.config.melee.in_front_of_target,
-            // Go `ShouldRefreshExclusiveEffects`: an effect holding its category alone refreshes
-            // once inactive or within the overlap of expiring; one another aura holds for good
-            // never does.
+            // Go `ShouldRefreshExclusiveEffects`: any of the aura's effects asking for a refresh.
             Compiled::AuraShouldRefresh { aura, overlap } => {
                 let window = self.get_duration(overlap);
-                let (_, own) = self
+                let (_, readings) = self
                     .aura_refresh
                     .iter()
                     .find(|(refreshed, _)| refreshed == aura)
                     .expect("the gate requires a refresh reading");
                 let state = self.aura(*aura);
                 let remaining = state.remaining(self.now);
-                own.iter()
-                    .any(|&own| own && (!state.active || remaining <= window))
+                readings.iter().any(|reading| match *reading {
+                    // Alone in its category: refreshed once inactive or within the overlap.
+                    RefreshReading::Own => !state.active || remaining <= window,
+                    // A permanent aura of another effect holds the category for good.
+                    RefreshReading::Never => false,
+                    RefreshReading::Category { category, member } => {
+                        self.exclusive_should_refresh(category, member, window)
+                    }
+                })
             }
             Compiled::DotIsActive(dot) => self.dot_active(*dot),
             // Go `APLValueSpellIsReady`: ready, or ready within the spell queue window.

@@ -111,7 +111,63 @@ impl Category {
     }
 }
 
+/// How one exclusive effect of an aura an `auraShouldRefresh` asks about reads in a fight.
+#[derive(Clone, Copy, Debug)]
+pub(crate) enum RefreshReading {
+    /// The aura holds its category alone: Go refreshes it once inactive or within the overlap
+    /// of expiring.
+    Own,
+    /// Another aura holds the category for good and outranks the effect: Go never refreshes.
+    Never,
+    /// A category the runtime enforces: Go's rule against the active effect, by category and
+    /// member.
+    Category { category: usize, member: usize },
+}
+
 impl<A: Agent> Fight<A> {
+    /// The reading of an aura's effect in a category the runtime enforces, from the effect's
+    /// exported membership. An effect in any other category is an error.
+    pub(crate) fn enforced_refresh_reading(
+        &self,
+        aura: AuraRef,
+        membership: Option<&crate::contracts::prepared_v2::ExclusiveMembership>,
+    ) -> Result<RefreshReading, String> {
+        let membership = membership.ok_or("an exclusive effect of the aura is not exported")?;
+        let category = self
+            .enforced_category(aura.side, &membership.category)
+            .ok_or_else(|| format!("category {} is not enforced", membership.category))?;
+        let member = self.exclusive[category]
+            .members
+            .iter()
+            .position(|member| member.aura == aura)
+            .ok_or_else(|| format!("the aura is not a member of {}", membership.category))?;
+        Ok(RefreshReading::Category { category, member })
+    }
+
+    /// Go `Aura.ShouldRefreshExclusiveEffects` for one non stacking effect of an aura in an
+    /// enforced category: true when nothing holds the category or the effect outbids what does,
+    /// and, on an equal bid, when no effect of that bid has more than the overlap left.
+    pub(crate) fn exclusive_should_refresh(
+        &self,
+        category: usize,
+        member: usize,
+        overlap: i64,
+    ) -> bool {
+        let state = &self.exclusive[category];
+        let Some(active) = state.active else {
+            return true;
+        };
+        let bid = state.members[member].priority;
+        let held = state.members[active].priority;
+        if bid > held {
+            return true;
+        }
+        bid == held
+            && !state.members.iter().any(|other| {
+                other.priority == bid && self.remaining_for_exclusive(other.aura) > overlap
+            })
+    }
+
     /// Go `RemainingDuration`.
     fn remaining_for_exclusive(&self, aura: AuraRef) -> i64 {
         self.aura(aura).remaining(self.now)
@@ -384,7 +440,7 @@ impl<A: Agent> Fight<A> {
     }
 
     /// The enforced category of a unit by name.
-    fn enforced_category(&self, side: Side, name: &str) -> Option<usize> {
+    pub(crate) fn enforced_category(&self, side: Side, name: &str) -> Option<usize> {
         self.exclusive.iter().position(|category| {
             category.name == name
                 && category

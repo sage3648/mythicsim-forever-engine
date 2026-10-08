@@ -8,8 +8,9 @@ use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::attack::Weapon;
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
 use crate::prepare::buffs::exclusive_refresh;
-use crate::prepare::buffs::generated::FAERIE_FIRE;
+use crate::prepare::buffs::generated::{DEMORALIZING_ROAR, FAERIE_FIRE};
 use crate::prepare::character::constants::CHARACTER_LEVEL;
+use crate::prepare::common_effects::exclusive_category_effect;
 use crate::prepare::dbcenums::{
     A_ADD_PCT_MODIFIER, A_MOD_CASTING_SPEED_NOT_STACK, A_MOD_DECREASE_SPEED, A_NONE,
     A_PERIODIC_ENERGIZE, SPELLMOD_CHANCE_OF_SUCCESS, SPELLMOD_COST, SPELLMOD_GLOBAL_COOLDOWN,
@@ -610,6 +611,17 @@ impl Druid {
                         "kind": "demoralizing_roar", "spell": spell_position(sim, unit, roar),
                         "aura": sim.aura(aura).label,
                     }));
+                    // buffs.DemoralizingRoarAura and the raid's Demoralizing Roar and Shout
+                    // debuffs share one single aura category, each bidding its attack power cut.
+                    if let Some(category) = exclusive_category_effect(
+                        sim,
+                        target,
+                        "target",
+                        DEMORALIZING_ROAR.category,
+                        notes,
+                    ) {
+                        effects.push(category);
+                    }
                 }
             }
             if let Some(maul) = self.maul {
