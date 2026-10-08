@@ -520,6 +520,34 @@ fn undirected_procs(prepared: &PreparedV2) -> Vec<String> {
         .collect()
 }
 
+/// Dots of two spells that share one aura on the target. Go registers an aura once per label, so
+/// two spells of the same name, as Plaguefang's and Stinging Viper's Poison, put their dots on one
+/// aura; the runtime binds an aura to a single dot, and the other would never tick.
+fn shared_dot_auras(prepared: &PreparedV2) -> Vec<String> {
+    let spells = &prepared.player.spells;
+    let mut reasons = Vec::new();
+    for (index, spell) in spells.iter().enumerate() {
+        let Some(dot) = spell.dot.as_ref() else {
+            continue;
+        };
+        for other in &spells[..index] {
+            if other
+                .dot
+                .as_ref()
+                .is_some_and(|other| other.aura_label == dot.aura_label && other.unit == dot.unit)
+            {
+                reasons.push(format!(
+                    "the dots of {} and {} share the aura {}",
+                    other.action_id.clone().unwrap_or_default(),
+                    spell.action_id.clone().unwrap_or_default(),
+                    dot.aura_label
+                ));
+            }
+        }
+    }
+    reasons
+}
+
 /// Where a weapon proc's exported shape disagrees with the spell it casts: the attack table must
 /// be the one the spell's defense type names with the crit the client allows, a damage over time
 /// needs the dot the spell carries, and a missile cannot carry only a dot.
@@ -1359,6 +1387,7 @@ pub(crate) fn prepared_coverage(
             several_target_limits(prepared, gate, &reachable),
         ));
         reasons.extend(coded("proc_unsupported", undirected_procs(prepared)));
+        reasons.extend(coded("effect_unimplemented", shared_dot_auras(prepared)));
         reasons.extend(coded(
             "stat_change_unsupported",
             fixed_stat_changes(prepared),

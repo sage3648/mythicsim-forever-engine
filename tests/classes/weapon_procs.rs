@@ -493,3 +493,27 @@ fn a_dot_that_rolls_its_application_ticks_after_it_landed() {
         "Ebon Hilt of Marduk Proc's hit is not rolled: unknown damage proc application"
     )));
 }
+
+/// Two spells of one name put their dots on one aura in Go, as Plaguefang's and Stinging Viper's
+/// Poison do when both are worn; the runtime binds an aura to one dot, so it refuses them.
+#[test]
+fn two_dots_that_share_an_aura_are_refused() {
+    let original = fixture("warrior-plaguefang");
+    assert!(!refusals(original.clone())
+        .iter()
+        .any(|reason| reason.contains("share the aura")));
+    let mut value = original;
+    let spells = value["player"]["spells"].as_array_mut().unwrap();
+    let poison = spells
+        .iter()
+        .find(|spell| spell["action_id"]["spell_id"] == 1309315)
+        .unwrap()
+        .clone();
+    let mut second = poison.clone();
+    second["action_id"]["spell_id"] = json!(1291663);
+    spells.push(second);
+    let aura = poison["dot"]["aura_label"].as_str().unwrap();
+    assert!(refusals(value).contains(&format!(
+        "effect_unimplemented: the dots of spell 1309315 and spell 1291663 share the aura {aura}"
+    )));
+}

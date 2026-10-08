@@ -870,5 +870,15 @@ cargo run --locked -- check --infile fixtures/mage/prepared-v2/frost-reference.p
   Creed and Improved Righteous Fury, change only the table steps, which are exported for
   each combination, with and without the reduced avoidance a hardcast holds; a channel
   without a cast time sets no hardcast and keeps the avoidance.
+- Two weapon procs of itemhelpers.CreateWeaponProcTrigger stay with the Go engine, since their
+  handlers change what the contract does not describe: Bonereaver's Edge stacks a stat aura of
+  armor penetration, and the stat auras are read as active or not, not by stack; Thunderfury
+  slows the target and lowers its nature resistance through exclusive effects, whose bids the
+  contract describes only for Thunder Clap. Their trigger aura listens to hits without an
+  effect, so the gate refuses the request as `aura_listener_unclaimed`, and a Warrior's
+  Thunderfury is unrepresented first, since Cyclone shares Thunder Clap's category.
+- Go registers an aura once for each label, so two weapons whose spells share a name, such as
+  Plaguefang's and Stinging Viper's Poison, put their dots on one aura. The runtime binds an
+  aura to one dot, and the gate refuses such a request as `effect_unimplemented`.
 - Accepting an input does not validate gameplay. Parity with Go is established per
   mechanic by the comparisons that accompany each implementation.
