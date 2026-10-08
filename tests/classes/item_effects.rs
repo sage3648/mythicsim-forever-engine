@@ -1,5 +1,6 @@
 //! Item effects Go registers in code that need a shared mechanic: stat auras that stack,
-//! Thunderfury's slow in the attack speed category and dots that share an aura. Their Go results
+//! Thunderfury's slow in the attack speed category, dots that share an aura, procs of hits taken,
+//! Jom Gabbar's stacks and another class's totem. Their Go results
 //! and first-fight logs are compared with the rest of the fixture family; these tests keep what
 //! each mechanism has to do in a fight, and what the gate refuses.
 
@@ -346,4 +347,89 @@ fn only_weapon_proc_dots_share_an_aura() {
         )),
         "{reasons:?}"
     );
+}
+
+/// The times a spell is cast at in a log.
+fn casts_of(logs: &str, spell: i64) -> Vec<&str> {
+    let needle = format!("Casting {{SpellID: {spell}}}");
+    logs.lines()
+        .filter(|line| line.contains(&needle))
+        .map(|line| line.split(']').next().unwrap())
+        .collect()
+}
+
+/// A damage proc of a hit taken is rolled on the target's swings at the wearer, so it is cast at
+/// the time of one, and never between them.
+#[test]
+fn a_struck_damage_proc_is_cast_when_the_target_swings() {
+    let logs = first_fight_log(fixture("protection-warrior-3-targets-totem-of-infliction"));
+    let times = casts_of(&logs, 16783);
+    assert!(!times.is_empty(), "the proc never fired");
+    for time in times {
+        let swung = logs.lines().any(|line| {
+            line.starts_with(time)
+                && line.contains("] [Target ")
+                && line.contains("Casting {OtherID: 3, Tag: 1}")
+        });
+        assert!(swung, "{time} is not the time of a swing at the tank");
+    }
+}
+
+/// The listener of the proc is claimed by its effect: without the effect the gate refuses it.
+#[test]
+fn a_struck_damage_proc_needs_its_effect() {
+    let mut value = fixture("protection-warrior-3-targets-totem-of-infliction");
+    let index = value["effects"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .position(|effect| effect["kind"] == "spell_data_damage_proc")
+        .unwrap();
+    value["effects"].as_array_mut().unwrap().remove(index);
+    let reasons = refusals(value);
+    assert!(
+        reasons
+            .iter()
+            .any(|reason| reason.starts_with("aura_listener_unclaimed: player aura")),
+        "{reasons:?}"
+    );
+}
+
+/// Jom Gabbar gains a stack every two seconds up to ten, which fall off with the aura.
+#[test]
+fn jom_gabbar_gains_a_stack_every_two_seconds() {
+    let logs = first_fight_log(fixture("warrior-jom-gabbar"));
+    let stacks: Vec<&str> = logs
+        .lines()
+        .filter(|line| line.contains("{SpellID: 29602} stacks: "))
+        .collect();
+    assert_eq!(stacks.len(), 11, "{stacks:#?}");
+    assert!(stacks[0].contains("stacks: 0 --> 1"));
+    assert!(stacks[9].contains("stacks: 9 --> 10"));
+    assert!(stacks[10].contains("stacks: 10 --> 0"));
+    let seconds: Vec<f64> = stacks
+        .iter()
+        .map(|line| {
+            line.trim_start_matches('[')
+                .split(']')
+                .next()
+                .unwrap()
+                .parse()
+                .unwrap()
+        })
+        .collect();
+    for pair in seconds[..10].windows(2) {
+        assert!((pair[1] - pair[0] - 2.0).abs() < 1e-9, "{seconds:?}");
+    }
+    assert!(logs.contains("Aura faded: {SpellID: 29602}"));
+}
+
+/// A character wears another class's idol, libram or totem as Go does: a mage in Totem of the
+/// Storm prepares, passes the gate and runs.
+#[test]
+fn another_classs_totem_is_worn_and_run() {
+    let value = fixture("frost-2-targets-totem-of-the-storm");
+    let prepared: PreparedV2 = serde_json::from_value(value).unwrap();
+    assert_eq!(prepared_coverage(&prepared), Vec::<String>::new());
+    forever_engine::simulate_prepared(&prepared).unwrap();
 }
