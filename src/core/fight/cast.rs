@@ -654,6 +654,9 @@ impl<A: Agent> Fight<A> {
         if !self.spells[spell].flags.no_on_cast_complete {
             self.on_cast_complete(spell);
         }
+        // A hardcast shorter than the GCD leaves a weaver free to move before the GCD frees.
+        let caster = self.caster(spell);
+        self.weave_wakeup_after_cast(caster);
     }
 
     /// Run an acting unit's due hardcast completion, as both its rotation and hardcast

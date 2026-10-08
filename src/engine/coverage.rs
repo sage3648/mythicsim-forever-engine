@@ -40,6 +40,12 @@ pub(crate) struct ClassGate {
     /// melee swings stop and start with the range, and nothing else the class does reads the
     /// player's distance.
     pub(crate) player_movement: bool,
+    /// Whether the rotation's moves, which the player runs once ready, have been compared with
+    /// Go for the class.
+    pub(crate) rotation_movement: bool,
+    /// Whether the player's moves have been compared with Go for the class with a ranged auto
+    /// swing, which cannot fire while the player moves and stops and starts with the range.
+    pub(crate) ranged_movement: bool,
     /// The class's limits on a rotation cast aimed at a target past the first: the spells it
     /// casts there, whose effects and debuffs must land on that target as in Go. None for a
     /// class whose spells have not been checked against it.
@@ -123,6 +129,10 @@ pub const REFUSAL_CODES: &[(&str, &str)] = &[
     (
         "prepull_unsupported",
         "a prepull action Rust cannot reproduce",
+    ),
+    (
+        "movement_unsupported",
+        "a move of the player in the rotation that Rust does not simulate for the class",
     ),
     (
         "cooldown_unsupported",
@@ -1077,6 +1087,16 @@ pub(crate) fn rotation_dot(prepared: &PreparedV2, id: &ActionId, unit: Unit) -> 
     (dot.unit == "self" || matches!(unit, Unit::Target(_))).then_some(owner)
 }
 
+/// The base duration a `dotBaseDuration` value of the spell captured when Go built the rotation.
+pub(crate) fn rotation_dot_base_duration(prepared: &PreparedV2, id: &ActionId) -> Option<i64> {
+    prepared
+        .player
+        .rotation_dot_base_durations
+        .iter()
+        .find(|entry| &entry.spell == id)
+        .map(|entry| entry.base_duration_ns)
+}
+
 /// [`rotation_spell_index`] as the exported spell.
 pub(crate) fn rotation_spell<'a>(prepared: &'a PreparedV2, id: &ActionId) -> Option<&'a Spell> {
     rotation_spell_index(prepared, id).map(|index| &prepared.player.spells[index])
@@ -1288,6 +1308,7 @@ pub(crate) fn prepared_coverage(
         let mut reachable = Vec::new();
         let mut registered_prepull = 0;
         let mut prepull_moves = false;
+        let mut rotation_moves = false;
         // Prepull parsing accepts casts, aura activations and moves.
         for prepull in &rotation.prepull {
             if prepull_pruned(prepared, prepull) {
@@ -1331,6 +1352,8 @@ pub(crate) fn prepared_coverage(
                 continue;
             }
             match &item.action {
+                // Go registers every move: its range is read when it runs.
+                Action::Move(_) => rotation_moves = true,
                 Action::AutocastOtherCooldowns => {
                     for cooldown in &player.major_cooldowns {
                         // A survival cooldown without timings waits for a health threshold Go
@@ -1374,7 +1397,13 @@ pub(crate) fn prepared_coverage(
         if prepull_moves {
             reasons.extend(coded(
                 "prepull_unsupported",
-                player_movement_limits(prepared, gate),
+                player_movement_limits(prepared, gate, true),
+            ));
+        }
+        if rotation_moves {
+            reasons.extend(coded(
+                "movement_unsupported",
+                player_movement_limits(prepared, gate, false),
             ));
         }
         reasons.extend(coded("class_limit", (gate.limits)(prepared, &reachable)));
@@ -1672,11 +1701,16 @@ fn energy_without_bar(prepared: &PreparedV2, rotation: &Rotation) -> Vec<String>
 /// What a prepull move of the player needs that the runtime does not follow: a class compared
 /// with Go, the speed the exporter read, no aura but the class's dash changing it, and no ranged
 /// swing that the move would stop.
-fn player_movement_limits(prepared: &PreparedV2, gate: &ClassGate) -> Vec<String> {
+fn player_movement_limits(prepared: &PreparedV2, gate: &ClassGate, prepull: bool) -> Vec<String> {
+    let kind = if prepull { "a prepull move" } else { "a move" };
     let mut reasons = Vec::new();
-    if !gate.player_movement {
+    if !(if prepull {
+        gate.player_movement
+    } else {
+        gate.rotation_movement
+    }) {
         reasons.push(format!(
-            "a prepull move is unsupported for {}",
+            "{kind} is unsupported for {}",
             prepared.player.class
         ));
     }
@@ -1684,13 +1718,13 @@ fn player_movement_limits(prepared: &PreparedV2, gate: &ClassGate) -> Vec<String
         Effect::PlayerMovement { speed_auras, .. } => Some(speed_auras),
         _ => None,
     }) {
-        None => reasons.push("a prepull move has no exported movement speed".into()),
+        None => reasons.push(format!("{kind} has no exported movement speed")),
         Some(auras) => reasons.extend(auras.iter().map(|aura| {
-            format!("a prepull move with {aura}, which changes the movement speed, is unsupported")
+            format!("{kind} with {aura}, which changes the movement speed, is unsupported")
         })),
     }
-    if prepared.melee.auto_swing_ranged {
-        reasons.push("a prepull move with a ranged auto swing is unsupported".into());
+    if prepared.melee.auto_swing_ranged && !gate.ranged_movement {
+        reasons.push(format!("{kind} with a ranged auto swing is unsupported"));
     }
     reasons
 }
@@ -1702,6 +1736,7 @@ fn prepull_pruned(prepared: &PreparedV2, prepull: &crate::rotation::Prepull) -> 
     let target_aura = |_: usize, id: &ActionId| find_unit_aura(&prepared.target.auras, id);
     let spell = |id: &ActionId| rotation_spell_index(prepared, id);
     let dot = |id: &ActionId, unit: Unit| rotation_dot(prepared, id, unit);
+    let dot_base_duration = |id: &ActionId| rotation_dot_base_duration(prepared, id);
     let pet_auras = crate::core::fight::pet::pet_agent_auras(prepared);
     let pet_aura_known =
         |pet: usize, id: &ActionId| pet_auras.get(pet).is_some_and(|auras| auras.contains(id));
@@ -1711,6 +1746,7 @@ fn prepull_pruned(prepared: &PreparedV2, prepull: &crate::rotation::Prepull) -> 
         targets: prepared.encounter.target_count.max(1) as usize,
         spell: &spell,
         dot: &dot,
+        dot_base_duration: &dot_base_duration,
         pet_aura_known: &pet_aura_known,
     };
     compile_condition(prepull.condition.as_ref(), &lookup)
@@ -1786,6 +1822,7 @@ fn unreachable_items(prepared: &PreparedV2, rotation: &Rotation) -> BTreeSet<usi
     let target_aura = |_: usize, id: &ActionId| find_unit_aura(&prepared.target.auras, id);
     let spell = |id: &ActionId| rotation_spell_index(prepared, id);
     let dot = |id: &ActionId, unit: Unit| rotation_dot(prepared, id, unit);
+    let dot_base_duration = |id: &ActionId| rotation_dot_base_duration(prepared, id);
     let pet_auras = crate::core::fight::pet::pet_agent_auras(prepared);
     let pet_aura_known =
         |pet: usize, id: &ActionId| pet_auras.get(pet).is_some_and(|auras| auras.contains(id));
@@ -1795,6 +1832,7 @@ fn unreachable_items(prepared: &PreparedV2, rotation: &Rotation) -> BTreeSet<usi
         targets: prepared.encounter.target_count.max(1) as usize,
         spell: &spell,
         dot: &dot,
+        dot_base_duration: &dot_base_duration,
         pet_aura_known: &pet_aura_known,
     };
     rotation

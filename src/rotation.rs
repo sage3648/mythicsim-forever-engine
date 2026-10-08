@@ -61,6 +61,9 @@ pub enum UnitRef {
     NextTarget,
     /// `Target` with its index into the encounter's targets.
     Target(usize),
+    /// A reference Go's `Environment.GetUnit` resolves to no unit: `AllPlayers` and
+    /// `AllTargets` name sets, which only multi-unit actions read.
+    Nobody,
 }
 
 /// A unit a [`UnitRef`] resolved to: the player, or a target by its position among the
@@ -82,6 +85,7 @@ impl UnitRef {
             UnitRef::PreviousTarget => Some(Unit::Target(targets - 1)),
             UnitRef::NextTarget => Some(Unit::Target(1 % targets)),
             UnitRef::Target(index) => (index < targets).then_some(Unit::Target(index)),
+            UnitRef::Nobody => None,
         }
     }
 }
@@ -207,6 +211,12 @@ pub enum Value {
         id: ActionId,
     },
     AuraIsActive(ActionId),
+    /// `auraIsActive` with `includeReactionTime`: Go `APLValueAuraIsActive` of an aura that has
+    /// been up for the player's reaction time.
+    AuraIsActiveAfterReaction(ActionId),
+    /// `auraIsInactive` with `includeReactionTime`: Go `APLValueAuraIsInactive` of an aura that
+    /// has been down for the player's reaction time.
+    AuraIsInactiveAfterReaction(ActionId),
     AuraNumStacks(ActionId),
     AuraRemainingTime(ActionId),
     /// `auraIsKnown`, `auraIsActive`, `auraNumStacks` or `auraRemainingTime` with a target as
@@ -223,6 +233,9 @@ pub enum Value {
     SpellCastTime(ActionId),
     SpellTimeToReady(ActionId),
     DotTimeToNextTick(DotRef),
+    /// Go `APLValueDotBaseDuration`: the dot's base duration on the first target, read when the
+    /// rotation is built.
+    DotBaseDuration(Option<ActionId>),
     GcdIsReady,
     /// Go `APLValueAuraShouldRefresh`: the aura, whether it is on the current target, and the
     /// overlap a refresh allows.
@@ -328,6 +341,8 @@ impl Value {
             | Value::AuraIsKnown(_)
             | Value::PetAuraIsKnown { .. }
             | Value::AuraIsActive(_)
+            | Value::AuraIsActiveAfterReaction(_)
+            | Value::AuraIsInactiveAfterReaction(_)
             | Value::AuraShouldRefresh { .. }
             | Value::FrontOfTarget
             | Value::DotIsActive(_)
@@ -358,6 +373,7 @@ impl Value {
             | Value::DotTimeToNextTick(_)
             | Value::AutoTimeToNext(_)
             | Value::AutoSwingTime(_)
+            | Value::DotBaseDuration(_)
             | Value::RemainingTime
             | Value::TotemRemainingTime { .. }
             | Value::CurrentTime
@@ -402,8 +418,8 @@ pub enum Action {
     },
     /// Go `APLActionActivateAura` on one of the player's auras, parsed only as a prepull action.
     ActivateAura(ActionId),
-    /// Go `APLActionMove`, parsed only as a prepull action: the range from the target to move
-    /// to, which Go reads as the constant's float value.
+    /// Go `APLActionMove`: the range from the target to move to, which Go reads as the
+    /// constant's float value.
     Move(f64),
     /// Go `APLActionMultidot`: the spell on the first of up to `max_dots` targets whose dot
     /// is down or runs out within `max_overlap`.
@@ -558,18 +574,7 @@ fn parse_prepull(item: &Json, position: usize) -> Result<Option<Prepull>, String
                 object.get("auraId").ok_or("activateAura has no auraId")?,
             )?)
         }
-        ("move", config) => {
-            let object = config.as_object().ok_or("move must be an object")?;
-            if let Some(key) = object.keys().find(|key| *key != "rangeFromTarget") {
-                return Err(format!("move field {key} is unsupported"));
-            }
-            let range = object.get("rangeFromTarget").ok_or("move has no range")?;
-            match parse_value(range) {
-                Ok(Value::Const(constant)) => Action::Move(constant.float),
-                Ok(_) => return Err("a move range other than a constant is unsupported".into()),
-                Err(reasons) => return Err(reasons.join("; ")),
-            }
-        }
+        ("move", config) => parse_move(config)?,
         (name, _) => return Err(format!("action {name} is unsupported")),
     };
     Ok(Some(Prepull {
@@ -578,6 +583,21 @@ fn parse_prepull(item: &Json, position: usize) -> Result<Option<Prepull>, String
         action,
         condition,
     }))
+}
+
+/// Go `newActionMove`: the range from the target to move to, which Go reads as the float value
+/// of the value it names. A range that is not a constant is unsupported.
+fn parse_move(config: &Json) -> Result<Action, String> {
+    let object = config.as_object().ok_or("move must be an object")?;
+    if let Some(key) = object.keys().find(|key| *key != "rangeFromTarget") {
+        return Err(format!("move field {key} is unsupported"));
+    }
+    let range = object.get("rangeFromTarget").ok_or("move has no range")?;
+    match parse_value(range) {
+        Ok(Value::Const(constant)) => Ok(Action::Move(constant.float)),
+        Ok(_) => Err("a move range other than a constant is unsupported".into()),
+        Err(reasons) => Err(reasons.join("; ")),
+    }
 }
 
 fn is_empty(value: &Json) -> bool {
@@ -639,6 +659,7 @@ fn parse_item(item: &Json, position: usize) -> Result<Option<Item>, Vec<String>>
         Ok(("sequence", config)) => parse_sequence(config),
         Ok(("channelSpell", config)) => parse_channel_spell(config),
         Ok(("multidot", config)) => parse_multidot(config),
+        Ok(("move", config)) => parse_move(config),
         Ok((name, _)) => Err(format!("action {name} is unsupported")),
         Err(err) => Err(err),
     };
@@ -877,6 +898,23 @@ fn parse_unit_ref(reference: Option<&Json>, default: UnitRef) -> Result<UnitRef,
         "Target" => Ok(UnitRef::Target(index)),
         _ => Err(()),
     }
+}
+
+/// [`parse_unit_ref`] for a value that reads a dot or an aura on a unit. Go `GetUnit` gives the
+/// sets `AllPlayers` and `AllTargets` no unit, and a dot or aura reference without a unit reads
+/// as one that does not exist, which the compiled value handles as it does a missing unit.
+fn parse_value_unit_ref(reference: Option<&Json>, default: UnitRef) -> Result<UnitRef, ()> {
+    let kind = reference
+        .and_then(|reference| reference.get("type"))
+        .and_then(Json::as_str);
+    if matches!(kind, Some("AllPlayers" | "AllTargets")) {
+        let object = reference.and_then(Json::as_object).ok_or(())?;
+        if object.keys().any(|key| key != "type" && key != "index") {
+            return Err(());
+        }
+        return Ok(UnitRef::Nobody);
+    }
+    parse_unit_ref(reference, default)
 }
 
 /// The reason a unit reference field is refused.
@@ -1176,8 +1214,8 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
                 Some(id) => Some(parse_action_id(id).map_err(|err| vec![err])?),
                 None => None,
             };
-            let target =
-                parse_unit_ref(config.get("targetUnit"), UnitRef::CurrentTarget).map_err(|()| {
+            let target = parse_value_unit_ref(config.get("targetUnit"), UnitRef::CurrentTarget)
+                .map_err(|()| {
                     vec![unsupported_unit(
                         name,
                         "targetUnit",
@@ -1190,6 +1228,15 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
                 "dotRemainingTime" => Value::DotRemainingTime(dot),
                 _ => Value::DotTimeToNextTick(dot),
             })
+        }
+        "dotBaseDuration" => {
+            only(&["spellId"])?;
+            // Go `GetAPLDot`: a dot value without a spell has no value.
+            let id = match config.get("spellId") {
+                Some(id) => Some(parse_action_id(id).map_err(|err| vec![err])?),
+                None => None,
+            };
+            Ok(Value::DotBaseDuration(id))
         }
         "spellIsKnown" | "spellIsReady" | "spellCastTime" | "spellTimeToReady" | "spellCanCast" => {
             only(&["spellId"])?;
@@ -1305,19 +1352,40 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
         "auraIsKnown" | "auraIsActive" | "auraIsInactive" | "auraNumStacks"
         | "auraRemainingTime" => {
             // Go `GetSourceUnit`: no unit reference means the player itself. includeReactionTime
-            // is not modeled.
-            only(&["auraId", "sourceUnit"])?;
+            // is modeled for whether the player's own aura is up or down.
+            only(&["auraId", "sourceUnit", "includeReactionTime"])?;
             let id = config
                 .get("auraId")
                 .ok_or_else(|| vec![format!("{name} has no auraId")])
                 .and_then(|id| parse_action_id(id).map_err(|err| vec![err]))?;
-            let unit = parse_unit_ref(config.get("sourceUnit"), UnitRef::Player).map_err(|()| {
-                vec![unsupported_unit(
-                    name,
-                    "sourceUnit",
-                    config.get("sourceUnit"),
-                )]
-            })?;
+            let unit =
+                parse_value_unit_ref(config.get("sourceUnit"), UnitRef::Player).map_err(|()| {
+                    vec![unsupported_unit(
+                        name,
+                        "sourceUnit",
+                        config.get("sourceUnit"),
+                    )]
+                })?;
+            let after_reaction = match config.get("includeReactionTime") {
+                None => false,
+                Some(value) => value
+                    .as_bool()
+                    .ok_or_else(|| vec!["includeReactionTime must be a boolean".to_string()])?,
+            };
+            let activity = matches!(name, "auraIsActive" | "auraIsInactive");
+            if after_reaction && !(activity && unit == UnitRef::Player) {
+                return Err(vec![format!(
+                    "{name} field includeReactionTime is unsupported{}",
+                    if activity { " on another unit" } else { "" }
+                )]);
+            }
+            if after_reaction {
+                return Ok(if name == "auraIsActive" {
+                    Value::AuraIsActiveAfterReaction(id)
+                } else {
+                    Value::AuraIsInactiveAfterReaction(id)
+                });
+            }
             let read = match name {
                 "auraIsKnown" => AuraRead::IsKnown,
                 "auraIsActive" | "auraIsInactive" => AuraRead::IsActive,
@@ -1590,6 +1658,10 @@ pub enum Compiled<R> {
     CurrentTime,
     NumberTargets,
     AuraIsActive(R),
+    /// Go `APLValueAuraIsActive` with `includeReactionTime`.
+    AuraIsActiveAfterReaction(R),
+    /// Go `APLValueAuraIsInactive` with `includeReactionTime`.
+    AuraIsInactiveAfterReaction(R),
     AuraNumStacks(R),
     AuraRemainingTime(R),
     /// A dot by the spell holding it and the target it is read on.
@@ -1599,6 +1671,8 @@ pub enum Compiled<R> {
     SpellCastTime(usize),
     SpellTimeToReady(usize),
     DotTimeToNextTick(DotAt),
+    /// Go `APLValueDotBaseDuration` with the base duration it captured.
+    DotBaseDuration(i64),
     GcdIsReady,
     SpellCanCast(usize),
     AutoTimeToNext(AutoAttackType),
@@ -1620,6 +1694,8 @@ impl<R> Compiled<R> {
             | Compiled::Or(_)
             | Compiled::Not(_)
             | Compiled::AuraIsActive(_)
+            | Compiled::AuraIsActiveAfterReaction(_)
+            | Compiled::AuraIsInactiveAfterReaction(_)
             | Compiled::DotIsActive(_)
             | Compiled::SpellIsReady(_)
             | Compiled::IsExecutePhase(_)
@@ -1635,6 +1711,7 @@ impl<R> Compiled<R> {
             | Compiled::SpellCastTime(_)
             | Compiled::SpellTimeToReady(_)
             | Compiled::DotTimeToNextTick(_)
+            | Compiled::DotBaseDuration(_)
             | Compiled::RemainingTime
             | Compiled::TotemRemainingTime { .. }
             | Compiled::CurrentTime
@@ -1793,6 +1870,9 @@ pub struct Lookup<'a, R> {
     pub spell: &'a dyn Fn(&ActionId) -> Option<usize>,
     /// Go `GetAPLDot`: the spellbook position of the spell when it has a dot on the unit.
     pub dot: &'a dyn Fn(&ActionId, Unit) -> Option<usize>,
+    /// Go `GetAPLDot` on the first target and `Dot.BaseDuration`, as the rotation was built: the
+    /// base duration in nanoseconds, or `None` when the spell has no such dot.
+    pub dot_base_duration: &'a dyn Fn(&ActionId) -> Option<i64>,
     /// Go `GetAuraByID` on the player's pet at a position among its pets: whether it has the
     /// aura, false when there is no such pet.
     pub pet_aura_known: &'a dyn Fn(usize, &ActionId) -> bool,
@@ -1941,12 +2021,25 @@ fn compile_value<R>(value: &Value, lookup: &Lookup<R>) -> Option<Compiled<R>> {
         // Go GetAPLSpell: an unknown spell gives no value.
         Value::SpellCurrentCost(id) => Compiled::SpellCurrentCost((lookup.spell)(id)?),
         Value::DotTimeToNextTick(dot) => Compiled::DotTimeToNextTick(dot_at(dot, lookup)?),
+        Value::DotBaseDuration(id) => {
+            Compiled::DotBaseDuration((lookup.dot_base_duration)(id.as_ref()?)?)
+        }
         Value::GcdIsReady => Compiled::GcdIsReady,
         Value::AuraIsKnown(id) => bool_const(aura(id).is_some()),
         Value::PetAuraIsKnown { pet, id } => bool_const((lookup.pet_aura_known)(*pet, id)),
         Value::AuraIsActive(id) => match aura(id) {
             Some(found) => Compiled::AuraIsActive(found.aura),
             None => bool_const(false),
+        },
+        // Go `newValueAuraIsActive` and `newValueAuraIsInactive`: an aura the player lacks is a
+        // constant, whatever the reaction time.
+        Value::AuraIsActiveAfterReaction(id) => match aura(id) {
+            Some(found) => Compiled::AuraIsActiveAfterReaction(found.aura),
+            None => bool_const(false),
+        },
+        Value::AuraIsInactiveAfterReaction(id) => match aura(id) {
+            Some(found) => Compiled::AuraIsInactiveAfterReaction(found.aura),
+            None => bool_const(true),
         },
         // Go `GetAPLAura` on a unit: one that resolves to no unit, or lacks the aura, reads as
         // an aura it does not have.
@@ -2091,6 +2184,7 @@ mod tests {
             targets: 1,
             spell: &no_spell,
             dot: &no_dot,
+            dot_base_duration: &|_| None,
             pet_aura_known: &|_, _| false,
         }
     }
@@ -2210,9 +2304,17 @@ mod tests {
             parse(&variable).unwrap_err(),
             ["prepull action 1: a move range other than a constant is unsupported"]
         );
+        // The priority list holds moves too, which run once ready.
         let item =
             serde_json::json!({"action": {"move": {"rangeFromTarget": {"const": {"val": "5"}}}}});
-        assert!(parse_item(&item, 1).is_err());
+        let parsed = parse_item(&item, 1).unwrap().unwrap();
+        assert_eq!(parsed.action, Action::Move(5.0));
+        let variable = serde_json::json!({"action": {"move": {
+            "rangeFromTarget": {"currentRage": {}}}}});
+        assert_eq!(
+            parse_item(&variable, 1).unwrap_err(),
+            ["a move range other than a constant is unsupported"]
+        );
     }
 
     #[test]
@@ -2276,7 +2378,6 @@ mod tests {
             })
         );
         for source in [
-            serde_json::json!({"type": "AllTargets"}),
             serde_json::json!({"type": "Player", "index": 1}),
             serde_json::json!({"type": "Pet", "owner": {"type": "Self"}}),
             serde_json::json!({"type": "CurrentTarget", "index": 1}),
@@ -2648,6 +2749,7 @@ mod tests {
             targets: 3,
             spell: &no_spell,
             dot: &dot,
+            dot_base_duration: &|_| None,
             pet_aura_known: &|_, _| false,
         })
     }
@@ -2813,12 +2915,21 @@ mod tests {
                 "{name}"
             );
         }
+        // The sets of all targets and all players name no unit: the dot reference is empty.
         assert!(parse_value(&dot(
             "dotIsActive",
             7,
             serde_json::json!({"type": "AllTargets"})
         ))
-        .is_err());
+        .is_ok());
+        assert_eq!(
+            compiled(dot(
+                "dotIsActive",
+                7,
+                serde_json::json!({"type": "AllTargets"})
+            )),
+            Some(CompiledCondition::Always)
+        );
     }
 
     /// Go `newValueCompare` gives booleans only equality, and drops any other comparison.
@@ -2889,9 +3000,161 @@ mod tests {
             inactive(2, Some(serde_json::json!({"type": "Self"}))),
             CompiledCondition::Always
         );
-        assert!(parse_value(&serde_json::json!({"auraIsInactive": {
-            "auraId": {"spellId": 2}, "includeReactionTime": true}}))
+    }
+
+    /// Go `APLValueAuraIsActive` and `APLValueAuraIsInactive` with `includeReactionTime`: the
+    /// aura must have been up or down for the player's reaction time, and an aura the player
+    /// lacks is still a constant.
+    #[test]
+    fn aura_activity_can_include_the_reaction_time() {
+        let read = |kind: &str, id: i32, field: serde_json::Value, source: serde_json::Value| {
+            let mut config = serde_json::json!({"auraId": {"spellId": id}});
+            if !field.is_null() {
+                config["includeReactionTime"] = field;
+            }
+            if !source.is_null() {
+                config["sourceUnit"] = source;
+            }
+            compiled(serde_json::json!({kind: config}))
+        };
+        let none = serde_json::Value::Null;
+        let yes = serde_json::json!(true);
+        assert_eq!(
+            read("auraIsActive", 3, yes.clone(), none.clone()),
+            Some(CompiledCondition::When(
+                Compiled::AuraIsActiveAfterReaction(100)
+            ))
+        );
+        // Not a negation of the active read: the inactive time starts when the aura fades.
+        assert_eq!(
+            read("auraIsInactive", 3, yes.clone(), none.clone()),
+            Some(CompiledCondition::When(
+                Compiled::AuraIsInactiveAfterReaction(100)
+            ))
+        );
+        assert_eq!(
+            read("auraIsActive", 5, yes.clone(), none.clone()),
+            Some(CompiledCondition::Pruned)
+        );
+        assert_eq!(
+            read("auraIsInactive", 5, yes.clone(), none.clone()),
+            Some(CompiledCondition::Always)
+        );
+        // False is the plain read.
+        assert_eq!(
+            read("auraIsInactive", 3, serde_json::json!(false), none.clone()),
+            read("auraIsInactive", 3, none.clone(), none.clone())
+        );
+        // Another unit's aura, and the reads of stacks and time left, are not modeled.
+        for (kind, source) in [
+            ("auraIsActive", serde_json::json!({"type": "CurrentTarget"})),
+            ("auraNumStacks", none.clone()),
+            ("auraRemainingTime", none.clone()),
+            ("auraIsKnown", none.clone()),
+        ] {
+            let parsed = parse_value(&serde_json::json!({kind: {
+                "auraId": {"spellId": 2}, "includeReactionTime": true,
+                "sourceUnit": source}}));
+            assert!(parsed.is_err(), "{kind}");
+        }
+        assert!(parse_value(&serde_json::json!({"auraIsActive": {
+            "auraId": {"spellId": 2}, "includeReactionTime": "yes"}}))
         .is_err());
+    }
+
+    /// Go `GetUnit` names no unit for the sets `AllPlayers` and `AllTargets`, so a dot or an
+    /// aura read on them is a reference that does not exist: the dot value has no value and
+    /// drops out of its parent, and the aura reads as one the unit lacks.
+    #[test]
+    fn sets_of_units_name_no_unit_in_dot_and_aura_values() {
+        let all = serde_json::json!({"type": "AllTargets"});
+        let dot = |kind: &str| serde_json::json!({kind: {"spellId": {"spellId": 7}, "targetUnit": all.clone()}});
+        for kind in ["dotIsActive", "dotRemainingTime", "dotTimeToNextTick"] {
+            let parsed = parse_value(&dot(kind)).unwrap();
+            assert!(matches!(
+                parsed,
+                Value::DotIsActive(DotRef {
+                    target: UnitRef::Nobody,
+                    ..
+                }) | Value::DotRemainingTime(DotRef {
+                    target: UnitRef::Nobody,
+                    ..
+                }) | Value::DotTimeToNextTick(DotRef {
+                    target: UnitRef::Nobody,
+                    ..
+                })
+            ));
+        }
+        // A dot term that drops out leaves the rest of the condition.
+        let rest = serde_json::json!({"cmp": {"op": "OpGe", "lhs": {"remainingTime": {}},
+            "rhs": {"const": {"val": "6"}}}});
+        let with = |term: serde_json::Value| {
+            compiled(serde_json::json!({"and": {"vals": [term, rest.clone()]}}))
+        };
+        assert_eq!(
+            with(serde_json::json!({"not": {"val": dot("dotIsActive")}})),
+            compiled(rest.clone())
+        );
+        assert_eq!(with(dot("dotIsActive")), compiled(rest.clone()));
+        // A dot on a unit that does exist still counts.
+        assert_ne!(
+            with(serde_json::json!({"dotIsActive": {"spellId": {"spellId": 8}}})),
+            compiled(rest.clone())
+        );
+        // The aura of a set is an aura nobody has.
+        let aura = |kind: &str| {
+            compiled(serde_json::json!({kind: {
+                "auraId": {"spellId": 2}, "sourceUnit": {"type": "AllPlayers"}}}))
+        };
+        assert_eq!(aura("auraIsKnown"), Some(CompiledCondition::Pruned));
+        assert_eq!(aura("auraIsActive"), Some(CompiledCondition::Pruned));
+        assert_eq!(aura("auraIsInactive"), Some(CompiledCondition::Always));
+        // Any other field of the reference still refuses.
+        assert!(parse_value(&serde_json::json!({"dotIsActive": {
+            "spellId": {"spellId": 7},
+            "targetUnit": {"type": "AllTargets", "owner": {"type": "Self"}}}}))
+        .is_err());
+    }
+
+    /// Go `newValueDotBaseDuration` captures the dot's base duration when the rotation is
+    /// built, so the value is a duration the compiled rotation holds; a spell without that dot
+    /// has no value.
+    #[test]
+    fn dot_base_duration_is_captured_when_the_rotation_is_built() {
+        let parsed = parse_value(&serde_json::json!({"dotBaseDuration": {
+            "spellId": {"spellId": 7}}}))
+        .unwrap();
+        assert_eq!(parsed.value_type(), ValueType::Duration);
+        let player = |_: &ActionId| None::<FoundAura<()>>;
+        let target = |_: usize, _: &ActionId| None::<FoundAura<()>>;
+        let lookup = Lookup {
+            aura: &player,
+            target_aura: &target,
+            targets: 1,
+            spell: &no_spell,
+            dot: &no_dot,
+            dot_base_duration: &|id| (id.spell_id == 7).then_some(18_000_000_000),
+            pet_aura_known: &|_, _| false,
+        };
+        let compare = |spell: i32| {
+            let value = parse_value(&serde_json::json!({"cmp": {"op": "OpGt",
+                "lhs": {"remainingTime": {}},
+                "rhs": {"dotBaseDuration": {"spellId": {"spellId": spell}}}}}))
+            .unwrap();
+            compile_condition(Some(&value), &lookup)
+        };
+        assert_eq!(
+            compare(7),
+            CompiledCondition::When(Compiled::Compare {
+                op: CompareOp::Gt,
+                lhs: Box::new(Compiled::RemainingTime),
+                rhs: Box::new(Compiled::DotBaseDuration(18_000_000_000)),
+            })
+        );
+        // The comparison has no value without the dot, and a condition with none always holds.
+        assert_eq!(compare(8), CompiledCondition::Always);
+        let no_spell_id = parse_value(&serde_json::json!({"dotBaseDuration": {}})).unwrap();
+        assert!(compile_value(&no_spell_id, &lookup).is_none());
     }
 
     #[test]

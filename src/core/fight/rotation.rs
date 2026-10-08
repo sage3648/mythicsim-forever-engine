@@ -41,6 +41,8 @@ pub(crate) enum Act {
         interrupt: Rc<Compiled>,
         allow_recast: bool,
     },
+    /// Go `APLActionMove`: the range from the target the player runs to.
+    Move(f64),
     /// Go `APLActionMultidot`: its dot count after the encounter's target count capped it,
     /// and its overlap.
     Multidot {
@@ -71,6 +73,8 @@ enum Ready {
     SequenceStep(usize),
     /// A channel and the item whose interrupt condition it carries.
     Channel(usize, SpellId),
+    /// A move to a range from the target.
+    Move(f64),
 }
 
 #[derive(Clone, Debug)]
@@ -154,6 +158,12 @@ impl<A: Agent> Fight<A> {
         let target_aura = |position: usize, id: &ActionId| find(Side::target(position), id);
         let spell = |id: &ActionId| self.apl_spell(id);
         let dot = |id: &ActionId, unit: Unit| self.rotation_dot(id, unit);
+        let dot_base_duration = |id: &ActionId| {
+            self.dot_base_durations
+                .iter()
+                .find(|(spell, _)| spell == id)
+                .map(|(_, duration)| *duration)
+        };
         let pet_aura_known = |pet: usize, id: &ActionId| {
             self.pet_agent_auras
                 .get(pet)
@@ -165,6 +175,7 @@ impl<A: Agent> Fight<A> {
             targets: self.targets.len(),
             spell: &spell,
             dot: &dot,
+            dot_base_duration: &dot_base_duration,
             pet_aura_known: &pet_aura_known,
         };
         let mut prepull: Vec<(i64, PrepullAct)> = rotation
@@ -213,6 +224,12 @@ impl<A: Agent> Fight<A> {
                 }
             })
         };
+        let dot_base_duration = |id: &ActionId| {
+            self.dot_base_durations
+                .iter()
+                .find(|(spell, _)| spell == id)
+                .map(|(_, duration)| *duration)
+        };
         let pet_aura_known = |pet: usize, id: &ActionId| {
             self.pet_agent_auras
                 .get(pet)
@@ -224,6 +241,7 @@ impl<A: Agent> Fight<A> {
             targets: self.targets.len(),
             spell: &spell,
             dot: &dot,
+            dot_base_duration: &dot_base_duration,
             pet_aura_known: &pet_aura_known,
         };
         let mut items = Vec::new();
@@ -308,8 +326,10 @@ impl<A: Agent> Fight<A> {
                     },
                     _ => continue,
                 },
+                // Go `newActionMove` always builds the action.
+                ParsedAction::Move(range) => Act::Move(*range),
                 // Parsed only among the prepull actions.
-                ParsedAction::ActivateAura(_) | ParsedAction::Move(_) => continue,
+                ParsedAction::ActivateAura(_) => continue,
             };
             let condition = match compile_condition(item.condition.as_ref(), &lookup) {
                 // A constant false condition prunes the action; its spells already left
@@ -327,6 +347,23 @@ impl<A: Agent> Fight<A> {
         match value {
             Compiled::Const(constant) => constant.boolean,
             Compiled::AuraIsActive(aura) => self.aura(*aura).active,
+            // Go `APLValueAuraIsActive` with `includeReactionTime`: `Aura.TimeActive` is zero
+            // while inactive and the time since the aura started otherwise.
+            Compiled::AuraIsActiveAfterReaction(aura) => {
+                let state = self.aura(*aura);
+                state.active && self.now - state.start >= self.config.reaction
+            }
+            // Go `APLValueAuraIsInactive` with `includeReactionTime`: `Aura.TimeInactive` is
+            // never-expiring for an aura that has not faded, the time since it faded otherwise.
+            Compiled::AuraIsInactiveAfterReaction(aura) => {
+                let state = self.aura(*aura);
+                let inactive_for = if state.fade_time < 0 {
+                    NEVER_EXPIRES
+                } else {
+                    self.now - state.fade_time
+                };
+                !state.active && inactive_for >= self.config.reaction
+            }
             // Go `APLValueFrontOfTarget`.
             Compiled::FrontOfTarget => self.config.melee.in_front_of_target,
             // Go `ShouldRefreshExclusiveEffects`: an effect holding its category alone refreshes
@@ -476,6 +513,8 @@ impl<A: Agent> Fight<A> {
                 next - self.now
             }
             Compiled::Math { op, lhs, rhs } => self.math_duration(*op, lhs, rhs),
+            // Go `APLValueDotBaseDuration`: what the rotation captured when it was built.
+            Compiled::DotBaseDuration(duration) => *duration,
             Compiled::TotemRemainingTime {
                 totem,
                 include_reaction_time,
@@ -642,12 +681,22 @@ impl<A: Agent> Fight<A> {
             Act::Channel { spell, .. } => self
                 .can_cast_or_queue(spell)
                 .then_some(Ready::Channel(item, spell)),
+            // Go `APLActionMove.IsReady`: not already moving, a different range or the prepull,
+            // and no cast or channel in progress.
+            Act::Move(range) => self.move_ready(range).then_some(Ready::Move(range)),
             // Go APLActionMultidot.IsReady: the overlap, then the target whose dot is down or
             // ends within it and which the spell can be cast or queued on.
             Act::Multidot { spell, .. } => self
                 .multidot_ready(item)
                 .map(|target| Ready::Cast(spell, target)),
         }
+    }
+
+    /// Go `APLActionMove.IsReady`.
+    fn move_ready(&self, range: f64) -> bool {
+        !self.player.moving
+            && (range != self.config.distance || self.now < 0)
+            && self.player.hardcast.expires < self.now
     }
 
     /// Go `APLActionMultidot.IsReady`: the overlap, then the first target in unit index order
@@ -779,6 +828,14 @@ impl<A: Agent> Fight<A> {
                 }
                 self.apl.in_sequence = false;
             }
+            // Go `APLActionMove.Execute`.
+            Ready::Move(range) => {
+                if self.log.is_some() {
+                    let line = format!("[DEBUG] Moving to {range:.1} yards");
+                    self.player_log(&line);
+                }
+                self.move_to(Side::Player, range);
+            }
             Ready::Channel(item, spell) => {
                 self.cast_or_queue(spell, Side::Target);
                 let Act::Channel { allow_recast, .. } = self.rotation[item].action else {
@@ -829,6 +886,13 @@ impl<A: Agent> Fight<A> {
             let spell = match self.rotation[item].action {
                 Act::Cast(spell, _) | Act::Channel { spell, .. } => spell,
                 Act::Autocast | Act::Sequence { .. } => continue,
+                // Go: a different action that is fully ready would be cast first.
+                Act::Move(range) => {
+                    if self.move_ready(range) {
+                        return false;
+                    }
+                    continue;
+                }
                 // Go: a different action that is fully ready would be cast first.
                 Act::Multidot { .. } => {
                     if self.multidot_ready(item).is_some() {

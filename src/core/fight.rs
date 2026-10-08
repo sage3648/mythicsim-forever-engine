@@ -1279,6 +1279,9 @@ pub(crate) enum Action {
     WindfuryRefresh,
     /// The end of a unit's movement: Go `MovementAction.OnAction`.
     MovementEnd(Side),
+    /// Go `scheduleMeleeWeaveWakeup`'s action: wake a weaver's rotation when its out-of-range
+    /// main hand swing comes ready.
+    MeleeWeaveWakeup(Side),
     /// buffs.go ApplyFixedShoutAura's chain behind the player's own shout: the comeback a
     /// reaction time after the own aura runs out, then its one periodic tick.
     FixedShoutChain {
@@ -1431,6 +1434,8 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) rotation: Vec<rotation::Item>,
     /// Prepull casts by time, in Go's stable time order.
     prepull: Vec<(i64, rotation::PrepullAct)>,
+    /// The dot base durations the rotation's `dotBaseDuration` values captured, by spell.
+    dot_base_durations: Vec<(ActionId, i64)>,
     in_rotation: bool,
     /// Go `APLRotation` state for sequences and channels.
     pub(crate) apl: rotation::AplState,
@@ -3106,6 +3111,7 @@ impl<A: Agent> Fight<A> {
             cooldown_min_ready: NEVER_EXPIRES,
             rotation: Vec::new(),
             prepull: Vec::new(),
+            dot_base_durations: Vec::new(),
             in_rotation: false,
             apl: rotation::AplState::default(),
             resources,
@@ -3431,6 +3437,12 @@ impl<A: Agent> Fight<A> {
                 .iter()
                 .position(|spell| spell.id.other_id == "OtherActionRageGain");
         }
+        fight.dot_base_durations = prepared
+            .player
+            .rotation_dot_base_durations
+            .iter()
+            .map(|entry| (entry.spell.clone(), entry.base_duration_ns))
+            .collect();
         fight.rotation = fight.compile_rotation(&parsed);
         fight.prepull = fight.compile_prepull(&parsed);
         for effect in effects {
@@ -4597,6 +4609,11 @@ impl<A: Agent> Fight<A> {
                     .is_some_and(|movement| movement.action == handle)
                 {
                     self.finalize_movement(side);
+                }
+            }
+            Action::MeleeWeaveWakeup(side) => {
+                if !self.main_hand_in_range(side) {
+                    self.react_to_event(side);
                 }
             }
             Action::FixedShoutChain { index, periodic } => {

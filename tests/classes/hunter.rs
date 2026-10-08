@@ -502,3 +502,122 @@ fn a_refreshed_lacerating_strikes_bleed_keeps_its_damage() {
     assert!(ticks.iter().all(|&damage| damage > 0.0), "{ticks:?}");
     assert!(!logs.contains("{SpellID: 14271, Tag: 1}"), "{logs}");
 }
+
+/// The seconds of the first fight at which the player's Movement aura (Go `OtherActionMove`)
+/// gains and fades, in order, with the player's label.
+fn movement_windows(logs: &str, player: &str) -> Vec<(f64, f64)> {
+    let tag = format!("[{player}]");
+    let mut windows = Vec::new();
+    let mut start = None;
+    for line in logs.lines().filter(|line| line.contains(&tag)) {
+        if line.contains("Aura gained: {OtherID: 20}") {
+            start = Some(at(line));
+        } else if line.contains("Aura faded: {OtherID: 20}") {
+            windows.push((start.take().expect("a gain before the fade"), at(line)));
+        }
+    }
+    windows
+}
+
+#[test]
+fn a_hunter_that_moves_in_its_rotation_is_supported() {
+    for name in ["survival-hunter-weaving-moves", "marksmanship-hunter-moves"] {
+        assert!(check_prepared(&parse(fixture(name))).is_ok(), "{name}");
+    }
+}
+
+/// Go movement.go: the player runs at seven yards a second, so the prepull run from 5 yards
+/// out to 20 takes 15 / 7 seconds, and the rotation's moves in the fight take the distance
+/// they cover at that speed.
+#[test]
+fn a_move_takes_the_distance_at_seven_yards_a_second() {
+    let logs = first_fight_log(fixture("survival-hunter-weaving-moves"));
+    let windows = movement_windows(&logs, "survival-hunter (#1)");
+    let (start, end) = windows[0];
+    assert!(start < 0.0, "{windows:?}");
+    assert!((end - start - 15.0 / 7.0).abs() < 0.011, "{windows:?}");
+    let in_fight: Vec<_> = windows.iter().filter(|(start, _)| *start >= 0.0).collect();
+    assert!(!in_fight.is_empty(), "{windows:?}");
+    assert!(
+        in_fight
+            .iter()
+            .all(|(start, end)| end - start > 0.9 && end - start < 2.2),
+        "{windows:?}"
+    );
+    assert!(logs.contains("[DEBUG] Moving to 5.0 yards"), "{logs}");
+    assert!(logs.contains("[DEBUG] Moving to 12.0 yards"), "{logs}");
+}
+
+/// Go attack.go `swing`: a ranged auto cannot fire while its unit moves. It looks again every
+/// 500ms, so none fires inside a run, and neither does a cast with a cast time.
+#[test]
+fn the_ranged_auto_waits_for_a_move_to_end() {
+    let logs = first_fight_log(fixture("marksmanship-hunter-moves"));
+    let windows = movement_windows(&logs, "marksmanship-hunter (#1)");
+    assert!(windows.len() >= 3, "{windows:?}");
+    for (start, end) in windows {
+        for line in logs.lines().filter(|line| {
+            line.contains("[marksmanship-hunter (#1)]")
+                && (line.contains("Casting {OtherID: 4}")
+                    || line.contains("Casting {SpellID: 20904}"))
+        }) {
+            let when = at(line);
+            assert!(when <= start || when >= end, "{line} inside {start}..{end}");
+        }
+    }
+}
+
+/// A move in the priority list is supported for a Hunter only: the gate refuses it for any
+/// class whose moves have not been compared with Go.
+#[test]
+fn a_rotation_move_is_refused_for_a_class_not_compared() {
+    let mut value: Value = serde_json::from_slice(
+        &fs::read(
+            Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("fixtures/mage/prepared-v2/production-warrior.prepared.json"),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    value["player"]["rotation"]["priorityList"]
+        .as_array_mut()
+        .unwrap()
+        .insert(
+            0,
+            json!({"action": {"move": {"rangeFromTarget": {"const": {"val": "5"}}}}}),
+        );
+    // The exporter writes the effect when the rotation moves.
+    value["effects"].as_array_mut().unwrap().push(json!({
+        "kind": "player_movement", "speed_multiplier": 1.0, "speed_auras": []
+    }));
+    let refusals = super::refusal_codes(value);
+    assert!(
+        refusals.contains(&(
+            "movement_unsupported",
+            "a move is unsupported for ClassWarrior".to_string()
+        )),
+        "{refusals:?}"
+    );
+}
+
+/// An aura that changes the movement speed is not followed, for a prepull move or a move of
+/// the rotation.
+#[test]
+fn a_move_with_a_speed_aura_is_refused() {
+    let mut value = fixture("survival-hunter-weaving-moves");
+    let effect = value["effects"]
+        .as_array_mut()
+        .unwrap()
+        .iter_mut()
+        .find(|effect| effect["kind"] == "player_movement")
+        .expect("the exporter wrote the movement effect");
+    effect["speed_auras"] = json!(["Aspect of the Cheetah"]);
+    let refusals = super::refusal_codes(value);
+    for code in ["prepull_unsupported", "movement_unsupported"] {
+        assert!(
+            refusals.iter().any(|(found, reason)| *found == code
+                && reason.contains("Aspect of the Cheetah, which changes the movement speed")),
+            "{code}: {refusals:?}"
+        );
+    }
+}

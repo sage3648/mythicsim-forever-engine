@@ -31,7 +31,7 @@ fn aura_refresh_effects(env: &mut Environment, _unrepresented: &mut Vec<String>)
     super::buffs::aura_should_refresh_effects(env)
 }
 
-/// tools/oracle-v2/movement.go `playerMovementEffect`: the movement speed a prepull move runs at.
+/// tools/oracle-v2/movement.go `playerMovementEffect`: the movement speed a move runs at.
 fn player_movement_effect(env: &Environment) -> Option<Value> {
     let player = env.player;
     let rotation = env
@@ -40,11 +40,14 @@ fn player_movement_effect(env: &Environment) -> Option<Value> {
         .player
         .message("rotation")?
         .clone();
-    let moves = rotation.messages("prepull_actions").iter().any(|prepull| {
-        prepull
-            .message("action")
-            .is_some_and(|action| action.message("move").is_some())
-    });
+    let moves = rotation
+        .messages("prepull_actions")
+        .into_iter()
+        .chain(rotation.messages("priority_list"))
+        .any(|item| {
+            item.message("action")
+                .is_some_and(|action| action.message("move").is_some())
+        });
     if !moves {
         return None;
     }
