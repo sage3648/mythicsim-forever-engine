@@ -5,7 +5,7 @@ use serde_json::{json, Value};
 
 use crate::prepare::buffs::generated;
 use crate::prepare::character::constants::CHARACTER_LEVEL;
-use crate::prepare::common_effects::SPELL_BATCH_WINDOW;
+use crate::prepare::common_effects::{exclusive_category_effect, SPELL_BATCH_WINDOW};
 use crate::prepare::dbcenums;
 use crate::prepare::env::Environment;
 use crate::prepare::sim::{AuraId, Sim, UnitId, NEVER_EXPIRES, SECOND};
@@ -36,43 +36,6 @@ fn damage_roll(row: &Row) -> Value {
     json!({"average": average, "min": average * (1.0 - effect.variance / 2.0),
         "max": average * (1.0 + effect.variance / 2.0), "rolls": effect.variance != 0.0,
         "variance": effect.variance})
-}
-
-/// The exporter's `exclusiveCategoryEffect`: a single aura category of the unit, with each
-/// member's aura, bid and spell in registration order. `None` when the category does not
-/// exist.
-pub(super) fn exclusive_category_effect(
-    sim: &Sim,
-    unit: UnitId,
-    side: &str,
-    name: &str,
-    notes: &mut Vec<String>,
-) -> Option<Value> {
-    let category = sim
-        .unit(unit)
-        .categories
-        .iter()
-        .copied()
-        .find(|id| sim.categories[id.0].name == name)?;
-    let category = &sim.categories[category.0];
-    if !category.single_aura {
-        notes.push(format!("exclusive category {name} holds several auras"));
-        return None;
-    }
-    let members: Vec<Value> = category
-        .effects
-        .iter()
-        .map(|effect| {
-            let effect = &sim.effects[effect.0];
-            let aura = sim.aura(effect.aura);
-            json!({"aura": aura.label, "priority": effect.priority,
-                "spell_id": aura.action_id.as_ref().map_or(0, |id| id.spell_id)})
-        })
-        .collect();
-    Some(
-        json!({"kind": "exclusive_category", "unit": side, "category": name,
-        "members": members}),
-    )
 }
 
 /// The exporter's `blockedForGood`: whether an aura can never activate, as each of its exclusive

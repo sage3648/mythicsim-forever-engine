@@ -5,7 +5,7 @@
 use serde_json::{json, Value};
 
 use super::env::Environment;
-use super::sim::SpellId;
+use super::sim::{Sim, SpellId, UnitId};
 use super::spell::SpellFlag;
 
 /// Go `commonEffects`.
@@ -24,6 +24,43 @@ pub(crate) fn common_effects(env: &mut Environment, unrepresented: &mut Vec<Stri
         unrepresented,
     ));
     effects
+}
+
+/// The exporter's `exclusiveCategoryEffect`: a single aura category of the unit, with each
+/// member's aura, bid and spell in registration order. `None` when the category does not
+/// exist.
+pub(crate) fn exclusive_category_effect(
+    sim: &Sim,
+    unit: UnitId,
+    side: &str,
+    name: &str,
+    notes: &mut Vec<String>,
+) -> Option<Value> {
+    let category = sim
+        .unit(unit)
+        .categories
+        .iter()
+        .copied()
+        .find(|id| sim.categories[id.0].name == name)?;
+    let category = &sim.categories[category.0];
+    if !category.single_aura {
+        notes.push(format!("exclusive category {name} holds several auras"));
+        return None;
+    }
+    let members: Vec<Value> = category
+        .effects
+        .iter()
+        .map(|effect| {
+            let effect = &sim.effects[effect.0];
+            let aura = sim.aura(effect.aura);
+            json!({"aura": aura.label, "priority": effect.priority,
+                "spell_id": aura.action_id.as_ref().map_or(0, |id| id.spell_id)})
+        })
+        .collect();
+    Some(
+        json!({"kind": "exclusive_category", "unit": side, "category": name,
+        "members": members}),
+    )
 }
 
 /// tools/oracle-v2/aura_refresh.go `auraShouldRefreshEffects`.
