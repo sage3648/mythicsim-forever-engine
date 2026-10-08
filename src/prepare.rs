@@ -44,6 +44,7 @@ pub(crate) mod major_cooldown;
 pub(crate) mod parse_effects;
 pub(crate) mod periodic_action;
 pub(crate) mod pet;
+pub(crate) mod power_infusion;
 pub(crate) mod presets;
 pub(crate) mod proc_type_mask;
 pub(crate) mod procs;

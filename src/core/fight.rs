@@ -20,6 +20,7 @@ mod dot;
 mod enemy;
 pub(crate) mod energy;
 pub(crate) mod exclusive;
+mod external_cooldown;
 mod focus;
 mod gear_procs;
 mod on_use_damage;
@@ -31,6 +32,7 @@ pub(crate) mod melee;
 pub(crate) mod metrics;
 pub(crate) mod movement;
 pub(crate) mod pet;
+mod power_infusion;
 mod racial;
 pub(crate) mod rage;
 mod rotation;
@@ -419,6 +421,9 @@ pub(crate) enum SpellBehavior<S> {
     Eureka,
     /// A racial whose `ApplyEffects` only activates its player aura.
     ActivateAura(usize),
+    /// Go core/buffs.go `registerExternalConsecutiveCDApproximation`'s cast, bound by
+    /// [`Fight::bind_external_cooldowns`].
+    ExternalCooldown,
     /// Go attack.go's main or off hand auto attack.
     MeleeAuto(melee::Hand),
     /// Go core/consumes.go Dragonbreath Chili's proc: on every target in unit index order, a
@@ -1442,6 +1447,13 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) sulfuras: Option<sulfuras::Sulfuras>,
     /// The party Windfury Totem.
     pub(crate) windfury: Option<Windfury>,
+    /// The generated buffs other players cast on the player on cooldown.
+    pub(crate) external_cooldowns: Vec<external_cooldown::ExternalCooldown>,
+    /// What Power Infusion multiplies, when the player has a copy of its aura.
+    power_infusion: Option<power_infusion::PowerInfusion>,
+    /// The player's healing dealt multiplier relative to its exported value, which Power
+    /// Infusion moves while a copy of the aura holds the category.
+    pub(crate) healing_dealt_factor: f64,
     /// Dragonbreath Chili, when the character ate it.
     pub(crate) chili: Option<DragonbreathChili>,
     /// Item damage procs built from client rows, by their aura's position.
@@ -2067,6 +2079,16 @@ impl<A: Agent> Fight<A> {
                             if id.spell_id == *spell_id && id.tag == 0 =>
                         {
                             Some(SpellBehavior::Eureka)
+                        }
+                        Effect::ExternalCooldown {
+                            spell_id,
+                            spell_tag,
+                            ..
+                        } if id.spell_id == *spell_id
+                            && id.tag == *spell_tag
+                            && id.item_id == 0 =>
+                        {
+                            Some(SpellBehavior::ExternalCooldown)
                         }
                         Effect::Berserking { spell_id, aura, .. }
                         | Effect::BloodFury { spell_id, aura, .. }
@@ -3054,6 +3076,9 @@ impl<A: Agent> Fight<A> {
             whelp: None,
             sulfuras: None,
             windfury: None,
+            external_cooldowns: Vec::new(),
+            power_infusion: None,
+            healing_dealt_factor: 1.0,
             chili: None,
             damage_procs: Vec::new(),
             spell_stat_procs: Vec::new(),
@@ -3480,6 +3505,8 @@ impl<A: Agent> Fight<A> {
             }
         }
         fight.bind_heal_procs(effects)?;
+        fight.bind_power_infusion(effects)?;
+        fight.bind_external_cooldowns(effects, &player.auras)?;
         for effect in effects {
             if let Effect::AbsorbOnUse {
                 aura,
@@ -4182,6 +4209,7 @@ impl<A: Agent> Fight<A> {
             player.spell_cost_percent_modifier = initial.spell_cost_percent_modifier;
             player.threat_multiplier = self.config.threat_multiplier;
             player.school_damage_dealt_multiplier = self.config.school_damage_dealt_multiplier;
+            self.healing_dealt_factor = 1.0;
             player.disable_dw_miss_penalty = self.config.melee.disable_dw_miss_penalty;
             player.damage_taken_multiplier = self.config.damage_taken_multiplier;
             player.school_damage_taken_multiplier = self.config.school_damage_taken_multiplier;

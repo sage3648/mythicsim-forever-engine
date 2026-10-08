@@ -1380,6 +1380,10 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 			}
 		}
 	}
+	// buffs/drivers.go drivePowerInfusions: priests in the raid cast Power Infusion on the player.
+	for _, effect := range externalPowerInfusionEffects(character, request, unrepresented) {
+		effects = append(effects, effect)
+	}
 	return effects
 }
 

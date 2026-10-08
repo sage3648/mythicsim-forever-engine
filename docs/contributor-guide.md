@@ -36,6 +36,7 @@ Frostbolt kernel remains unchanged beside it.
 | Player melee and ranged auto attacks | [src/core/fight/melee.rs](../src/core/fight/melee.rs) |
 | A unit that moves: a prepull move, the Movement aura, the lazy position and Charge | [src/core/fight/movement.rs](../src/core/fight/movement.rs), [src/classes/warrior/spells/charge.rs](../src/classes/warrior/spells/charge.rs), `player_movement` in [src/engine/coverage.rs](../src/engine/coverage.rs), [tools/oracle-v2/movement.go](../tools/oracle-v2/movement.go) |
 | Pets: simulated summons and registered pets nothing summons | [src/core/fight/pet.rs](../src/core/fight/pet.rs) |
+| Buffs other players cast on the player on cooldown (the external Power Infusion) and Power Infusion's multipliers | [src/core/fight/external_cooldown.rs](../src/core/fight/external_cooldown.rs), [src/core/fight/power_infusion.rs](../src/core/fight/power_infusion.rs), [src/prepare/power_infusion.rs](../src/prepare/power_infusion.rs), [tools/oracle-v2/power_infusion.go](../tools/oracle-v2/power_infusion.go) |
 | Warlock demon AI and abilities | [src/classes/warlock/pets.rs](../src/classes/warlock/pets.rs) |
 | Shared build gate and class gates | [src/engine/coverage.rs](../src/engine/coverage.rs), `src/classes/<class>/prepared/coverage.rs` |
 | Event ordering (prepared v1 kernel) | [src/core/events.rs](../src/core/events.rs) |

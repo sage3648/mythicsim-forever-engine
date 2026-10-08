@@ -48,7 +48,9 @@ impl<A: Agent> Fight<A> {
         let multiplier = if state.flags.ignore_attacker_modifiers {
             1.0
         } else {
-            state.damage_multiplier * state.damage_multiplier_additive * healing.dealt_multiplier
+            state.damage_multiplier
+                * state.damage_multiplier_additive
+                * (healing.dealt_multiplier * self.healing_dealt_factor)
         };
         let mut amount = base * multiplier;
         let after_caster = amount;
@@ -155,7 +157,9 @@ impl<A: Agent> Fight<A> {
         let caster = if state.flags.ignore_attacker_modifiers {
             1.0
         } else {
-            state.damage_multiplier * state.damage_multiplier_additive * healing.dealt_multiplier
+            state.damage_multiplier
+                * state.damage_multiplier_additive
+                * (healing.dealt_multiplier * self.healing_dealt_factor)
         };
         let mut amount = base * caster;
         let after_caster = amount;
@@ -280,7 +284,7 @@ impl<A: Agent> Fight<A> {
         } else {
             let multiplier = state.damage_multiplier
                 * state.damage_multiplier_additive
-                * healing.dealt_multiplier;
+                * (healing.dealt_multiplier * self.healing_dealt_factor);
             match periodic {
                 Some(periodic) => multiplier * periodic,
                 None => multiplier,

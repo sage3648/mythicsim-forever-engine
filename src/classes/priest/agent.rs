@@ -44,7 +44,6 @@ pub(crate) enum PriestAura {
     SearingLight,
     SearingLightTrigger,
     ShadowfiendManaRestore,
-    PowerInfusion,
 }
 
 /// Priest state that Go keeps in the `Priest` struct and its closures.
@@ -61,9 +60,6 @@ pub(crate) struct PriestAgent {
     /// Holy Nova's heal spell and base by damage spell, and the healing modifiers.
     holy_nova: Option<Rc<HolyNova>>,
     power_infusion: Option<Rc<power_infusion::PowerInfusion>>,
-    /// Go `PseudoStats.HealingDealtMultiplier` relative to the exported one, which Power
-    /// Infusion multiplies while up.
-    pub(crate) healing_dealt_multiplier: f64,
     shadowfiend: Option<Rc<shadowfiend::Shadowfiend>>,
 }
 
@@ -101,9 +97,6 @@ fn player_auras(prepared: &PreparedV2) -> Vec<(String, PriestAura)> {
     for effect in &prepared.effects {
         match effect {
             Effect::Shadowform { aura, .. } => auras.push((aura.clone(), PriestAura::Shadowform)),
-            Effect::PowerInfusion { aura, .. } => {
-                auras.push((aura.clone(), PriestAura::PowerInfusion))
-            }
             Effect::InnerFocus { aura, .. } => auras.push((aura.clone(), PriestAura::InnerFocus)),
             Effect::ShadowWeaving {
                 aura, trigger_aura, ..
@@ -287,20 +280,14 @@ impl PriestAgent {
                     )?;
                     fight.agent.shadowfiend = Some(Rc::new(bound));
                 }
-                Effect::PowerInfusion {
-                    aura,
-                    damage_multiplier,
-                    schools,
-                    healing_multiplier,
-                    ..
-                } => {
-                    let bound = power_infusion::bind(
-                        &mut fight,
-                        aura,
-                        *damage_multiplier,
-                        schools,
-                        *healing_multiplier,
-                    )?;
+                // The priest's own copy of the aura; the external caster's belongs to the
+                // external cooldown.
+                Effect::PowerInfusion { aura, .. }
+                    if !prepared.effects.iter().any(|other| {
+                        matches!(other, Effect::ExternalCooldown { aura: external, .. } if external == aura)
+                    }) =>
+                {
+                    let bound = power_infusion::bind(&mut fight, aura)?;
                     fight.agent.power_infusion = Some(Rc::new(bound));
                 }
                 Effect::ShadowWordDeath { early_demise_crit } => {
@@ -494,11 +481,6 @@ impl Agent for PriestAgent {
     type Spell = PriestSpell;
     type Aura = PriestAura;
 
-    /// Go restores the initial pseudo stats at each reset.
-    fn reset(fight: &mut Fight<Self>) {
-        fight.agent.healing_dealt_multiplier = 1.0;
-    }
-
     fn apply_effects(fight: &mut Fight<Self>, spell: SpellId, target: Side, behavior: PriestSpell) {
         match behavior {
             PriestSpell::MindBlast | PriestSpell::Smite => direct::apply(fight, spell, target),
@@ -536,11 +518,11 @@ impl Agent for PriestAgent {
                     .iter()
                     .find(|(_, heal, _)| *heal == spell)
                     .expect("the heal has a rank");
-                // Go reads the healing dealt multiplier live, which Power Infusion moves, and
-                // the live healing power, which a stat aura such as an on-use trinket's
-                // changes, plus the bonus healing taken the export folds into the reset value.
+                // Go reads the live healing power, which a stat aura such as an on-use
+                // trinket's changes, plus the bonus healing taken the export folds into the
+                // reset value. The healing dealt multiplier Power Infusion moves is the
+                // fight's.
                 let mut healing = nova.healing;
-                healing.dealt_multiplier *= fight.agent.healing_dealt_multiplier;
                 let bonus_healing_taken = healing.healing_power - fight.config.powers.healing_power;
                 healing.healing_power =
                     fight.unit(Side::Player).powers.healing_power + bonus_healing_taken;
@@ -606,10 +588,6 @@ impl Agent for PriestAgent {
             PriestAura::InnerFocus => Self::inner_focus(fight).on_gain(fight),
             PriestAura::ShadowWeaving => Self::shadow_weaving(fight).on_gain(fight),
             PriestAura::SearingLight => Self::searing_light(fight).on_gain(fight),
-            PriestAura::PowerInfusion => {
-                let bound = fight.agent.power_infusion.clone().expect("bound");
-                bound.on_gain(fight);
-            }
             PriestAura::ShadowWeavingTrigger
             | PriestAura::SearingLightTrigger
             | PriestAura::ShadowfiendManaRestore => {}
@@ -622,10 +600,6 @@ impl Agent for PriestAgent {
             PriestAura::InnerFocus => Self::inner_focus(fight).on_expire(fight),
             PriestAura::ShadowWeaving => Self::shadow_weaving(fight).on_expire(fight),
             PriestAura::SearingLight => Self::searing_light(fight).on_expire(fight),
-            PriestAura::PowerInfusion => {
-                let bound = fight.agent.power_infusion.clone().expect("bound");
-                bound.on_expire(fight);
-            }
             PriestAura::ShadowWeavingTrigger
             | PriestAura::SearingLightTrigger
             | PriestAura::ShadowfiendManaRestore => {}

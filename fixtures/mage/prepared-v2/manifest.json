@@ -4,7 +4,7 @@
   "engine_revision": "2d93e423e0303e93dbb16e190d435503248b68f9",
   "client_build": "1.60.1.70235",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "d14c5130ecfda3bcc26d8f0c9ccd402077a12a63dd6185790459f0ce8a323be3",
+  "exporter_sha256": "c016efbf516765519865db3a3f73e0fabcf32206de00da30137a40b7235a67d0",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -7505,6 +7505,342 @@
       "go_log": {
         "file": "enhancement-shaman-iceblade-hacker.go-log.txt",
         "sha256": "553602644ae836c471cbe7ea877b23ccccf30567eb9bf70bb114fbca4130f76d"
+      }
+    },
+    {
+      "id": "fire-mage-external-power-infusion",
+      "description": "Fire Mage on the production Fire Missile Barrage reference build with one priest casting Power Infusion on it (individualBuffs.powerInfusions), a generated external cooldown the major cooldown manager casts on cooldown",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-mage-external-power-infusion.request.json"
+      },
+      "prepared": "fire-mage-external-power-infusion.prepared.json",
+      "prepared_sha256": "9cc7ddc65d837683e441793b877c2d0a761f37bc8e25b47153c5213cca740133",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fire-mage-external-power-infusion.go-result.json",
+        "sha256": "8cb431925c63868734f35a64cb297ff0af843d86227f0ee5155f01e648dc86ba"
+      },
+      "go_log": {
+        "file": "fire-mage-external-power-infusion.go-log.txt",
+        "sha256": "2b0ca36ccb09e098db9d4479919de6a1dbb4af13769307ca9058a6829c293590"
+      }
+    },
+    {
+      "id": "fire-mage-external-power-infusion-2-sources",
+      "description": "Fire Mage with two priests casting Power Infusion on it, which take turns: the second casts when the first one's aura ends",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-mage-external-power-infusion-2-sources.request.json"
+      },
+      "prepared": "fire-mage-external-power-infusion-2-sources.prepared.json",
+      "prepared_sha256": "b3f6a68e686a3aa6d6a232f549912d1f82da79f668870127e09dd503cdb3938d",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fire-mage-external-power-infusion-2-sources.go-result.json",
+        "sha256": "6dabf5bf7071c2ba6b3fa8871e0c8ec0280d661aba916c77fe162e6386056cfa"
+      },
+      "go_log": {
+        "file": "fire-mage-external-power-infusion-2-sources.go-log.txt",
+        "sha256": "fddd0ec5903fc1da9d91022653d35066127e28fe72f72be17e3b0267dddd7ee6"
+      }
+    },
+    {
+      "id": "fire-mage-external-power-infusion-3-sources",
+      "description": "Fire Mage with three priests casting Power Infusion on it, three casts in a row before every source is on cooldown",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-mage-external-power-infusion-3-sources.request.json"
+      },
+      "prepared": "fire-mage-external-power-infusion-3-sources.prepared.json",
+      "prepared_sha256": "b071d82bb925b31c5e6abc5b51bfdce5a9ff0a34d0c59f77d62cb284649a765b",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fire-mage-external-power-infusion-3-sources.go-result.json",
+        "sha256": "609ceb252f2f3d45f404812979874f20e7ca57f908eb6d22ee038356e49066e9"
+      },
+      "go_log": {
+        "file": "fire-mage-external-power-infusion-3-sources.go-log.txt",
+        "sha256": "62d33c3974ede6549d785b826129fa377c4c70f35ca1d7735cebe896687d200a"
+      }
+    },
+    {
+      "id": "fire-mage-external-power-infusion-long-fight",
+      "description": "Fire Mage with two priests casting Power Infusion on it in a ten minute fight, which brings the first source back after its three minute cooldown",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-mage-external-power-infusion-long-fight.request.json"
+      },
+      "prepared": "fire-mage-external-power-infusion-long-fight.prepared.json",
+      "prepared_sha256": "d7f1bd27d2ff888b9264f064e9a02d87e2fe7f105f52591d7b2dddc5e67c4035",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fire-mage-external-power-infusion-long-fight.go-result.json",
+        "sha256": "d4c1c82a466be98fe35d263510549159a9dfd4344e9aaae33a03cc4b85443bd0"
+      },
+      "go_log": {
+        "file": "fire-mage-external-power-infusion-long-fight.go-log.txt",
+        "sha256": "0dd363b3a6def6b36ce62e1e00d2899d3b60911c800556a7414dd18acf83fb63"
+      }
+    },
+    {
+      "id": "destruction-warlock-external-power-infusion",
+      "description": "Destruction Warlock with one priest casting Power Infusion on it, whose aura multiplies its Shadow and Fire damage",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/destruction-warlock-external-power-infusion.request.json"
+      },
+      "prepared": "destruction-warlock-external-power-infusion.prepared.json",
+      "prepared_sha256": "99e929a6b139bdd0de869fba432db840e34d68f54884d0cadbcd1d178c71e11f",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "destruction-warlock-external-power-infusion.go-result.json",
+        "sha256": "74765327a561dd0f3f55833644cd935384d82965b45a35713c09dc3a9c715ebe"
+      },
+      "go_log": {
+        "file": "destruction-warlock-external-power-infusion.go-log.txt",
+        "sha256": "73176c5756abd80c37052078ab02955c868515c9a210419b34e06eb80966a8e4"
+      }
+    },
+    {
+      "id": "affliction-warlock-death-coil-external-power-infusion-2-sources",
+      "description": "Affliction Warlock casting Death Coil with two priests casting Power Infusion on it, so the heal reads the healing dealt multiplier the aura raises",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/affliction-warlock-death-coil-external-power-infusion-2-sources.request.json"
+      },
+      "prepared": "affliction-warlock-death-coil-external-power-infusion-2-sources.prepared.json",
+      "prepared_sha256": "c1a7c67dde69e771cce0531d5184aa7cc19e27ec3e9ac48874b3c8f367a0e400",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "affliction-warlock-death-coil-external-power-infusion-2-sources.go-result.json",
+        "sha256": "9ae2077c11041fa7565f2d8ad7b495270e278d2f89d56c1af567930e6d579471"
+      },
+      "go_log": {
+        "file": "affliction-warlock-death-coil-external-power-infusion-2-sources.go-log.txt",
+        "sha256": "9acc09b01564d1bee605a77521c09579ece40d9f27c466fa375378d1bd94bfca"
+      }
+    },
+    {
+      "id": "shadow-priest-own-and-external-power-infusion",
+      "description": "Shadow Priest with its own Power Infusion talented and one priest casting it on it too: the external cast waits while the priest's own aura is up, and a copy that takes over divides the other's multipliers out first",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/shadow-priest-own-and-external-power-infusion.request.json"
+      },
+      "prepared": "shadow-priest-own-and-external-power-infusion.prepared.json",
+      "prepared_sha256": "10e0279aefc8f745be5ebff7f352347e6b6dde12e0cd6d6522f23c9f28fb3543",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "shadow-priest-own-and-external-power-infusion.go-result.json",
+        "sha256": "9b92a0a6342497142d64510411385dcf789cc021db39cca63b3a707d69f5a2b3"
+      },
+      "go_log": {
+        "file": "shadow-priest-own-and-external-power-infusion.go-log.txt",
+        "sha256": "223dbdf87cc4ad31aa2e3df1e2217d2b514f650ab539159a78d0671a49867687"
+      }
+    },
+    {
+      "id": "shadow-priest-own-and-external-power-infusion-3-sources",
+      "description": "Shadow Priest with its own Power Infusion talented and three priests casting it on it",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/shadow-priest-own-and-external-power-infusion-3-sources.request.json"
+      },
+      "prepared": "shadow-priest-own-and-external-power-infusion-3-sources.prepared.json",
+      "prepared_sha256": "aa353e41a06b3aaf229bcc0df6c0e84490cbb4e9a12fd81906723fb6b02aac47",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "shadow-priest-own-and-external-power-infusion-3-sources.go-result.json",
+        "sha256": "233f337710db9d52c8834870a08613f1f66332c558ce7318c67b08c424292739"
+      },
+      "go_log": {
+        "file": "shadow-priest-own-and-external-power-infusion-3-sources.go-log.txt",
+        "sha256": "5c46abc4e0dd0d88cba8d0796392c86a27186d82f3ab659f0d1fa27a1600fe1d"
+      }
+    },
+    {
+      "id": "smite-priest-holy-nova-own-and-external-power-infusion-2-sources",
+      "description": "Smite Priest casting Holy Nova with its own Power Infusion talented and two priests casting it on it, whose healing multiplier the heal reads",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/smite-priest-holy-nova-own-and-external-power-infusion-2-sources.request.json"
+      },
+      "prepared": "smite-priest-holy-nova-own-and-external-power-infusion-2-sources.prepared.json",
+      "prepared_sha256": "9a1fdc76142735b846551759eefa2166e81bddd594e321df974c1bd31616d86a",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "smite-priest-holy-nova-own-and-external-power-infusion-2-sources.go-result.json",
+        "sha256": "9e47d0be2038cd231b79e9480c80c5f816151b8e23bc110089c9ff5618e06bea"
+      },
+      "go_log": {
+        "file": "smite-priest-holy-nova-own-and-external-power-infusion-2-sources.go-log.txt",
+        "sha256": "780e93e1a9fd682a2dc606eb28448b9f8f1228f75c641aad4c37779814b349f3"
+      }
+    },
+    {
+      "id": "smite-priest-holy-nova-external-power-infusion",
+      "description": "Smite Priest casting Holy Nova without Power Infusion and one priest casting it on it, so the external aura is the only copy",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/smite-priest-holy-nova-external-power-infusion.request.json"
+      },
+      "prepared": "smite-priest-holy-nova-external-power-infusion.prepared.json",
+      "prepared_sha256": "cdb0b215136101b5286bf2dbd02dfc4c5090e9a744c632845b30bcb1c32d4c30",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "smite-priest-holy-nova-external-power-infusion.go-result.json",
+        "sha256": "389b5e778813b06bde3f798b2d2d6c12b2d308578edb81eabc1d3eb49294d00b"
+      },
+      "go_log": {
+        "file": "smite-priest-holy-nova-external-power-infusion.go-log.txt",
+        "sha256": "48bf268bfe42341c3c445ce80f57382ee4e0b158c764872b1bc5dca5a52066f9"
+      }
+    },
+    {
+      "id": "retribution-paladin-external-power-infusion-2-sources",
+      "description": "Retribution Paladin with two priests casting Power Infusion on it",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/retribution-paladin-external-power-infusion-2-sources.request.json"
+      },
+      "prepared": "retribution-paladin-external-power-infusion-2-sources.prepared.json",
+      "prepared_sha256": "13a6880be6516a804717a9c6f2ba76b6ce1c86efa51f7c7b4a507abcc22ff4bc",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "retribution-paladin-external-power-infusion-2-sources.go-result.json",
+        "sha256": "b25921beb30fddd58d7cf9a93b30f14cff38b6dea3df8aeba6f968babefef8e1"
+      },
+      "go_log": {
+        "file": "retribution-paladin-external-power-infusion-2-sources.go-log.txt",
+        "sha256": "46109c107ecb2ff9aed2f269ff4b8d67dc93fb14f7ea732a7e8343dcad631cea"
+      }
+    },
+    {
+      "id": "protection-warrior-external-power-infusion",
+      "description": "Protection Warrior tanking the target with one priest casting Power Infusion on it",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-external-power-infusion.request.json"
+      },
+      "prepared": "protection-warrior-external-power-infusion.prepared.json",
+      "prepared_sha256": "5f224ce238a141eb21d4920f39a1df392a2d2de4df07c5cd39e32dfd34f19f05",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-external-power-infusion.go-result.json",
+        "sha256": "7d394e6174269711ad617b056ff3a03f74472d0b6c666eaa83dfe67bf4415091"
+      },
+      "go_log": {
+        "file": "protection-warrior-external-power-infusion.go-log.txt",
+        "sha256": "3b433702670d42eef351694cceabfc2f9dac14d09eb3ae87271170d6493ab0b8"
+      }
+    },
+    {
+      "id": "beast-mastery-hunter-external-power-infusion-2-sources",
+      "description": "Beast Mastery Hunter with two priests casting Power Infusion on it, which leaves its pet's damage alone",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-external-power-infusion-2-sources.request.json"
+      },
+      "prepared": "beast-mastery-hunter-external-power-infusion-2-sources.prepared.json",
+      "prepared_sha256": "f1dabb4fe29907dfd5570073124bf240af20fe1e214658a7d36b1aa7d31aa2b6",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "beast-mastery-hunter-external-power-infusion-2-sources.go-result.json",
+        "sha256": "0cf067e7ab70b0f0604f681ec2d9a26cb341394cc2314f4cbe57c6c41b1c6844"
+      },
+      "go_log": {
+        "file": "beast-mastery-hunter-external-power-infusion-2-sources.go-log.txt",
+        "sha256": "f16e9c69a4bd627e452afd106932050d29bc0ecb54574bf02da998c6b64c3d94"
+      }
+    },
+    {
+      "id": "frost-mage-2-targets-external-power-infusion",
+      "description": "Frost Mage against two targets with two priests casting Power Infusion on it",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/frost-mage-2-targets-external-power-infusion.request.json"
+      },
+      "prepared": "frost-mage-2-targets-external-power-infusion.prepared.json",
+      "prepared_sha256": "e9c8176f908fd8b9ec4d75ae3f76de4fe5dd6104153cac76a4ad5f71d5a032c4",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frost-mage-2-targets-external-power-infusion.go-result.json",
+        "sha256": "b522eca11a83054ef20454ee9fddead892064b9cead612e748f076999aaf6c1c"
+      },
+      "go_log": {
+        "file": "frost-mage-2-targets-external-power-infusion.go-log.txt",
+        "sha256": "736df4e86008fc7ee62e13141b514dbfc0a489bed233a2cf1bbac11af8cc40dd"
+      }
+    },
+    {
+      "id": "shadow-priest-own-and-external-power-infusion-12-sources",
+      "description": "Shadow Priest with its own Power Infusion talented and twelve priests casting it on it in turn, which keeps an external copy up when the priest's own comes off cooldown: the copy that takes the aura's categories divides the other's multipliers out before it multiplies, and a copy that fades hands them to the other if it is still up",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/shadow-priest-own-and-external-power-infusion-12-sources.request.json"
+      },
+      "prepared": "shadow-priest-own-and-external-power-infusion-12-sources.prepared.json",
+      "prepared_sha256": "4f65dbd4b552d300a0c00ca09502a996ebeb2ce3bceb589ca40426e4ba489263",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "shadow-priest-own-and-external-power-infusion-12-sources.go-result.json",
+        "sha256": "b844c9ecc33663eb1c419fcecc2839b77bf64957ca8e191a2114dd3777b7e700"
+      },
+      "go_log": {
+        "file": "shadow-priest-own-and-external-power-infusion-12-sources.go-log.txt",
+        "sha256": "64cc61647c43823736e630af6bbb1738f07fec39df5bde6d58d5fd5eee04e330"
+      }
+    },
+    {
+      "id": "smite-priest-holy-nova-own-and-external-power-infusion-12-sources",
+      "description": "Smite Priest casting Holy Nova with its own Power Infusion talented and twelve priests casting it on it in turn, so the priest's own copy is cast while an external one is up and the heal reads the healing multiplier through the change",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/smite-priest-holy-nova-own-and-external-power-infusion-12-sources.request.json"
+      },
+      "prepared": "smite-priest-holy-nova-own-and-external-power-infusion-12-sources.prepared.json",
+      "prepared_sha256": "7b1bdbe638a4571753906934fcfcd81494b8d5c0d621c6ac0e48729dbc9c7b86",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "smite-priest-holy-nova-own-and-external-power-infusion-12-sources.go-result.json",
+        "sha256": "06a5a7dd8202af9a079b6096b72852d98bfb09be0e17ed115a077d2bf47ef6eb"
+      },
+      "go_log": {
+        "file": "smite-priest-holy-nova-own-and-external-power-infusion-12-sources.go-log.txt",
+        "sha256": "bf6a312a950b9b1666c3be47116eb3907498fc7537c014bd78f0896dbcf0d48c"
       }
     }
   ]

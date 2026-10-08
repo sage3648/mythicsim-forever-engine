@@ -124,6 +124,7 @@ impl<A: Agent> Fight<A> {
             SpellBehavior::Class(behavior) if self.spells[spell].has_extra_cast_condition => {
                 A::extra_cast_condition_logged(self, spell, behavior)
             }
+            SpellBehavior::ExternalCooldown => self.external_cooldown_castable(spell),
             _ => true,
         }
     }
@@ -907,6 +908,7 @@ impl<A: Agent> Fight<A> {
                 self.deal_damage(spell, result, false);
             }
             SpellBehavior::OnUseDamage(params) => self.apply_on_use_damage(spell, target, params),
+            SpellBehavior::ExternalCooldown => self.external_cooldown_cast(spell),
             SpellBehavior::None => panic!("spell {} has no behavior", self.spells[spell].id),
         }
         A::after_apply_effects(self, spell);
@@ -1344,6 +1346,7 @@ impl<A: Agent> Fight<A> {
             // Go's default ShouldActivate.
             SpellBehavior::Eureka
             | SpellBehavior::ActivateAura(_)
+            | SpellBehavior::ExternalCooldown
             | SpellBehavior::GoblinSapper
             | SpellBehavior::BasicExplosive { .. }
             | SpellBehavior::OnUseDamage(_)

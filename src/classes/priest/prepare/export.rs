@@ -19,7 +19,7 @@ use crate::prepare::pet::apply_dependencies;
 use crate::prepare::sim::{Sim, SpellId};
 use crate::prepare::spell::{school, SpellFlag};
 use crate::prepare::spelldata::{Ladder, Spell as Row};
-use crate::prepare::stats::{Stat, Stats, SCHOOL_LEN};
+use crate::prepare::stats::{Stat, Stats};
 
 use super::masks;
 use super::spell_data::spell_data;
@@ -115,94 +115,10 @@ fn mod_spells(
 }
 
 /// `priestPowerInfusionEffect`: the priest's own Power Infusion, a cooldown that activates the
-/// client-parsed Power Infusions aura, which multiplies the damage of the schools its mask
-/// names and healing dealt. A separate reset simulation checks the multipliers are all the
-/// aura changes.
+/// client-parsed Power Infusions aura, which the shared `power_infusion_effect` describes.
 fn power_infusion_effect(env: &Environment, notes: &mut Vec<String>) -> Option<Value> {
-    let mut note = |condition: bool, message: &str| {
-        if condition {
-            notes.push(message.to_string());
-        }
-    };
-    let player = env.player;
     let rank = spell_data().power_infusion.highest();
-    let damage = 1.0
-        + rank
-            .effect(dbcenums::A_MOD_DAMAGE_PERCENT_DONE, 126)
-            .percent();
-    let healing = 1.0
-        + rank
-            .effect(dbcenums::A_MOD_HEALING_DONE_PERCENT, 126)
-            .percent();
-    let action = ActionId::spell(rank.id);
-    let find_aura = |sim: &Sim| {
-        sim.unit(player).auras.iter().copied().find(|aura| {
-            sim.aura(*aura)
-                .action_id
-                .as_ref()
-                .is_some_and(|id| id.same_action_ignore_tag(&action))
-        })
-    };
-    let Some(aura) = find_aura(&env.sim) else {
-        note(true, "Power Infusion has no aura");
-        return None;
-    };
-    for effect in &env.sim.aura(aura).exclusive_effects {
-        let category = env.sim.effects[effect.0].category;
-        note(
-            env.sim.categories[category.0].effects.len() != 1,
-            "Power Infusion shares its category",
-        );
-    }
-    let label = env.sim.aura(aura).label.clone();
-    let mut fresh = env.fresh();
-    let player = fresh.player;
-    let before = fresh.sim.unit(player).pseudo_stats.clone();
-    let before_stats = fresh.sim.unit(player).stats;
-    let fresh_aura =
-        find_aura_in(&fresh.sim, player, &action).expect("the fresh simulation has the same auras");
-    fresh.sim.activate(fresh_aura);
-    let mut after = fresh.sim.unit(player).pseudo_stats.clone();
-    let mut schools = Vec::new();
-    for school in 0..SCHOOL_LEN {
-        if after.school_damage_dealt_multiplier[school]
-            != before.school_damage_dealt_multiplier[school]
-        {
-            schools.push(school);
-            note(
-                after.school_damage_dealt_multiplier[school]
-                    != before.school_damage_dealt_multiplier[school] * damage,
-                "Power Infusion's school damage is not its client multiplier",
-            );
-        }
-    }
-    note(
-        after.healing_dealt_multiplier != before.healing_dealt_multiplier * healing,
-        "Power Infusion's healing is not its client multiplier",
-    );
-    after.school_damage_dealt_multiplier = before.school_damage_dealt_multiplier;
-    after.healing_dealt_multiplier = before.healing_dealt_multiplier;
-    note(
-        after != before || fresh.sim.unit(player).stats != before_stats,
-        "Power Infusion changes more than school damage and healing",
-    );
-    Some(json!({
-        "kind": "power_infusion", "spell_id": rank.id, "aura": label,
-        "damage_multiplier": damage, "schools": schools, "healing_multiplier": healing,
-    }))
-}
-
-fn find_aura_in(
-    sim: &Sim,
-    unit: crate::prepare::sim::UnitId,
-    action: &ActionId,
-) -> Option<crate::prepare::sim::AuraId> {
-    sim.unit(unit).auras.iter().copied().find(|aura| {
-        sim.aura(*aura)
-            .action_id
-            .as_ref()
-            .is_some_and(|id| id.same_action_ignore_tag(action))
-    })
+    crate::prepare::power_infusion::power_infusion_effect(env, &ActionId::spell(rank.id), notes)
 }
 
 /// `priestShadowfiendEffect`: the summon enables the pet for its timeline aura's duration, and

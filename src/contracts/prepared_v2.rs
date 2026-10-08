@@ -1225,6 +1225,20 @@ pub enum Effect {
         attack_speed_multiplier: f64,
         cast_speed_multiplier: f64,
     },
+    /// Go `NewGeneratedExternalCD`: other players cast a buff on the player on cooldown,
+    /// `sources` of them taking turns (Go `registerExternalConsecutiveCDApproximation`). The
+    /// cast is a simple spell with no cost, metrics or log whose own timer is the one it exports;
+    /// each source also has a timer that the cast sets to `cooldown_ns`. The cast needs the next
+    /// source's timer ready and no active aura with `aura_tag`, then activates `aura`.
+    ExternalCooldown {
+        spell_id: i32,
+        spell_tag: i32,
+        aura: String,
+        aura_tag: String,
+        sources: i32,
+        cooldown_ns: i64,
+        duration_ns: i64,
+    },
     /// The Orc racial Blood Fury: a major cooldown whose aura multiplies stats through Go's
     /// dynamic stat dependencies. `active_stats` holds every stat the aura changes, at the
     /// value Go computes while it is active.
@@ -2069,8 +2083,9 @@ pub enum Effect {
         mana_restore_fraction: f64,
         mana_restore_action_id: i32,
     },
-    /// Power Infusion: the cast activates the aura, whose multipliers apply to the damage of
-    /// the named school indexes and to healing dealt while it is up.
+    /// A copy of the Power Infusion aura, the priest's own or the external caster's (one effect
+    /// each): its multipliers apply to the damage of the named school indexes and to healing
+    /// dealt while the copy holds the aura's exclusive categories.
     PowerInfusion {
         spell_id: i32,
         aura: String,
@@ -3791,6 +3806,7 @@ impl Effect {
             Effect::Eureka { .. } => "eureka",
             Effect::Berserking { .. } => "berserking",
             Effect::BloodFury { .. } => "blood_fury",
+            Effect::ExternalCooldown { .. } => "external_cooldown",
             Effect::TemporaryStats { .. } => "temporary_stats",
             Effect::SpeedOnUse { .. } => "speed_on_use",
             Effect::DiamondFlask { .. } => "diamond_flask",

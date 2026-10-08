@@ -1,6 +1,7 @@
 //! Class and spec integration tests.
 
 mod druid;
+mod external_cooldown;
 mod hunter;
 mod mage;
 mod paladin;
