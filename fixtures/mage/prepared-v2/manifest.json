@@ -4,7 +4,7 @@
   "engine_revision": "2d93e423e0303e93dbb16e190d435503248b68f9",
   "client_build": "1.60.1.70235",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "f885d65ce8d110ce2be3d5e8cf482e76865c5f76f21293ed2c1f2b2bb16f042c",
+  "exporter_sha256": "c2dcbada3b4a5be8883a6daf70bcd2abf2b36470c2c598c37362bd6b61fa7856",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -1230,7 +1230,7 @@
         "path": "fixtures/mage/prepared-v2/production-warrior.request.json"
       },
       "prepared": "production-warrior.prepared.json",
-      "prepared_sha256": "37876aa6cd8094d351acaa7bf0f838926fddac5f267343d3fe4af59d05bcba78",
+      "prepared_sha256": "86b86dc4c8d21b5f797a60957ed8c244806df94949eb584ccd82c7e9d505dc70",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1251,7 +1251,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-heroic-strike.request.json"
       },
       "prepared": "warrior-heroic-strike.prepared.json",
-      "prepared_sha256": "95912b8551c4ef4cb4a8d3f2f0f168cba3ab2307bfb7012e5bae8cceba15c973",
+      "prepared_sha256": "169a97b9528c72c00f967b05fd908d0904a42775f708755dcc7819ff106aaede",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1272,7 +1272,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-cleave.request.json"
       },
       "prepared": "warrior-cleave.prepared.json",
-      "prepared_sha256": "319a671823c753aa1470770e102d3d64ccac301b1b64e6a3f33bf9264c539460",
+      "prepared_sha256": "427c218ce1c83b571456a8282c832517bd2d573237bb91d2bcbae9a26e23c5db",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1356,7 +1356,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-orc-shatter-curse.request.json"
       },
       "prepared": "warrior-orc-shatter-curse.prepared.json",
-      "prepared_sha256": "ef68be665143aab95e692f1e54068dc46e29cdc681964e8a478f7a7d4310ec86",
+      "prepared_sha256": "5ed695cd89d2ecd0604a12888ae083321c2916184fecf6b23a61b19a9fd789be",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1373,7 +1373,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-troll-berserking.request.json"
       },
       "prepared": "warrior-troll-berserking.prepared.json",
-      "prepared_sha256": "0ae8fc37642152718b93932abd88cc5b191556d15ae3caa3657466bb5b210cc4",
+      "prepared_sha256": "6a979ff17b8b4615670715c143c28adcd6db69285ada9c8b473cd4de58f8bad6",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1621,7 +1621,7 @@
         "path": "fixtures/mage/prepared-v2/production-feral-bear-druid.request.json"
       },
       "prepared": "production-feral-bear-druid.prepared.json",
-      "prepared_sha256": "dbb8b4378b0ec79f9935ab102698e5187671ce62d62c438d96b886e26dea94ef",
+      "prepared_sha256": "6929b2c72872c4f62cc401cf9c29dfe180b71cfaa8a411643ad980269f5ccf07",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -1747,7 +1747,7 @@
         "path": "fixtures/mage/prepared-v2/production-arms-warrior.request.json"
       },
       "prepared": "production-arms-warrior.prepared.json",
-      "prepared_sha256": "9f2dbbd70481823a15c5cc552f59d0325b08d58ad109d24ccd53f74d5afda898",
+      "prepared_sha256": "5a7e9b4164a16bdd569495cf193eb69c34537cff61be20a46d473f79015a8a96",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2062,7 +2062,7 @@
         "path": "fixtures/mage/prepared-v2/production-protection-warrior.request.json"
       },
       "prepared": "production-protection-warrior.prepared.json",
-      "prepared_sha256": "60641bced0e25bc6d22ff9d8fadb9d7f68583d25828d38dfbe4ba2a09c5884bb",
+      "prepared_sha256": "b4e76fe88ccebae3bf9f97d87df4999df8c3668884b88f3e9672bc0d327a6f86",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2083,7 +2083,7 @@
         "path": "fixtures/mage/prepared-v2/production-fury-protection-warrior.request.json"
       },
       "prepared": "production-fury-protection-warrior.prepared.json",
-      "prepared_sha256": "16d5da032581d3b57bb87821fea9ea24c0ab607b35cc6d9a51f829a7a9256d2b",
+      "prepared_sha256": "aed97237d4fa73e7810ffda06261618624b7b53ea98a0f7a2c0ab972a3967d34",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2340,7 +2340,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-defensives.request.json"
       },
       "prepared": "feral-bear-druid-defensives.prepared.json",
-      "prepared_sha256": "42642bd399314b5dfac0c0a55d13ce77ce00685bb2dc98e6f0af8868adaefeb8",
+      "prepared_sha256": "533ba70b0bacd5d3430e673003fa22bc495b251fffc5c32df508d1941cd29e56",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2403,7 +2403,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-feralheart.request.json"
       },
       "prepared": "feral-bear-druid-feralheart.prepared.json",
-      "prepared_sha256": "58b4cd9076d92a76686196dd7f3fcfa30e2b8d0d064e62118bef1e5df5cad645",
+      "prepared_sha256": "741615470d87405f87601a002dcfca9ac4d159272ef70c4c63a2ae262eb2e1cf",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2529,7 +2529,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-crusader.request.json"
       },
       "prepared": "feral-bear-druid-crusader.prepared.json",
-      "prepared_sha256": "6e52c942202d044b5e0813877833c06e0526d48ea9d337b8b673f88275b7703c",
+      "prepared_sha256": "84bd5eeaf808540b3b120f4b77f11781f68d2c200812aa53ff5f83e3163ba798",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2550,7 +2550,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-survives.request.json"
       },
       "prepared": "feral-bear-druid-survives.prepared.json",
-      "prepared_sha256": "79f303ecac83243940d8c877096b90db88751b2e59e7522469fa5a19d6a396a6",
+      "prepared_sha256": "d69cd0f78788d438c9e509a9cd3f7c98257f6b40ecb27a27f4e30af3c3673021",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2571,7 +2571,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-own-sunder.request.json"
       },
       "prepared": "arms-warrior-own-sunder.prepared.json",
-      "prepared_sha256": "3b3a0cb5d71accb779fbc567d7c8170bb7f74518b6c6ab6eb794bed069f77e2a",
+      "prepared_sha256": "a2f5955c627a8eb2caf85f34cd399f94653af6ec9b9946d235fc00015a08629d",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2592,7 +2592,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-own-sunder.request.json"
       },
       "prepared": "protection-warrior-own-sunder.prepared.json",
-      "prepared_sha256": "d9c3a474dcc476e92b723c103a290804f8d50b5788e99a406804feaa22f21a64",
+      "prepared_sha256": "80142fdc1fe59948375c46fa6db5f5b9b38d68ef21ddd5ce33d33fbf1322b2d3",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -2613,7 +2613,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-no-improved-slam.request.json"
       },
       "prepared": "arms-warrior-no-improved-slam.prepared.json",
-      "prepared_sha256": "8f6978df81e6bc445dbb9623a876261b18ba832118e770531c4f97d5fe67ff1b",
+      "prepared_sha256": "8175065518ba74bc750e57065f024873eb7e2fa660fd55853fbc143398e8762d",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3408,7 +3408,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-goblin-sapper.request.json"
       },
       "prepared": "protection-warrior-goblin-sapper.prepared.json",
-      "prepared_sha256": "e954e460c04b651ee668161d803f92b168d79837991bdf98c4069c02a3c3c894",
+      "prepared_sha256": "cbd6980df3aa19456f143e31db56ade41556ae502e189d63c9b66e974ffb4557",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3429,7 +3429,7 @@
         "path": "fixtures/mage/prepared-v2/fury-protection-warrior-winter-night.request.json"
       },
       "prepared": "fury-protection-warrior-winter-night.prepared.json",
-      "prepared_sha256": "36b80aef7e0fcf892c08ee368fbad38b219d89984f20df50ed53afd90a3c34a8",
+      "prepared_sha256": "b540de7dd72a37732a11ac4be11e95865b79f1efdac919b119b72a9e19a65d0a",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3471,7 +3471,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-bloodthirst-rounding.request.json"
       },
       "prepared": "warrior-bloodthirst-rounding.prepared.json",
-      "prepared_sha256": "dae0667dc71e0d65d58ad5f2a270fbd31e7978c9398793fb5004e3038ea2054b",
+      "prepared_sha256": "88fb6848468eb573bffcd5e9feaeea025e5481259fd16bf3e75c7d14306900b0",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3513,7 +3513,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-dwarf-stoneform.request.json"
       },
       "prepared": "protection-warrior-dwarf-stoneform.prepared.json",
-      "prepared_sha256": "08d78e766fff23c81a975a2304117dd0e4e7fd1a8868888ffb83e5156fbb18db",
+      "prepared_sha256": "ce01cd1d24f57774d061b1822de835fc3f54de5f0d1371699f3d30c7f85336cf",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3534,7 +3534,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-orc-shatter-curse.request.json"
       },
       "prepared": "protection-warrior-orc-shatter-curse.prepared.json",
-      "prepared_sha256": "4a45985d846ae679f454d435ef4dc2aefbfdd4421c96b51a187b7c50ebe82252",
+      "prepared_sha256": "f2a37861e2b8b10395327de35ff303d2d5b75e05a3fc5078da4ecf873fea3fb6",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3551,7 +3551,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-sapper-orc-shatter-curse.request.json"
       },
       "prepared": "protection-warrior-sapper-orc-shatter-curse.prepared.json",
-      "prepared_sha256": "73168a49f40bfbcb7e905e6f6e13f719216ae92b072b9e8dc602a361ddd2e153",
+      "prepared_sha256": "e25049c3ea21480df721d7ff584f0307cbb9dab8cb0d05fb5b41a0778072398c",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3568,7 +3568,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-shield-wall.request.json"
       },
       "prepared": "protection-warrior-shield-wall.prepared.json",
-      "prepared_sha256": "96c80d1842e3969f4a808eb51c22140c5bc42b487dd7f6be6e64a2fe05cb6510",
+      "prepared_sha256": "88ade0245700ea907ef05210d1b14542e6ab7e2e9ec09b6defa2b524132944bc",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3589,7 +3589,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-thistle-tea-shift.request.json"
       },
       "prepared": "feral-bear-druid-thistle-tea-shift.prepared.json",
-      "prepared_sha256": "348bc6a4190312fe0c142de3841311a1664d5feb4da685c17f154b1bcc945306",
+      "prepared_sha256": "95fbf9c3f6a2f7998c6b4d0d30d406d035aab768fb79a0a5b808f4cced0f2a5f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3610,7 +3610,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-potion-shift.request.json"
       },
       "prepared": "feral-bear-druid-potion-shift.prepared.json",
-      "prepared_sha256": "47d7f5b95e05e690217eeec4fa70c9c1eb2052f7796dfa0433a8e3537dc68e70",
+      "prepared_sha256": "afc3eaac06380eb45092134c32e9ebf896a87abd302d23438bb17ab46119b5cd",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3631,7 +3631,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-innervate-shift.request.json"
       },
       "prepared": "feral-bear-druid-innervate-shift.prepared.json",
-      "prepared_sha256": "9dde10084094c8e6dbf4c0b79822f02cdd99dff0ff8704b9e95317de3d02ca6c",
+      "prepared_sha256": "ef017d2f79ec9c655011d556758c0e5394227440dba450b9cda0aa105946dfba",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3652,7 +3652,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-caster-interval.request.json"
       },
       "prepared": "feral-bear-druid-caster-interval.prepared.json",
-      "prepared_sha256": "0b7130bf3b555f0911b04c986220affc5101e14a65b15e629cf65f824a92dac5",
+      "prepared_sha256": "ffd0d58c78e4049f28c75b860420fed463e57a124f29b6b5e7f9f009bc31d4a2",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3673,7 +3673,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-potion-shift-tauren.request.json"
       },
       "prepared": "feral-bear-druid-potion-shift-tauren.prepared.json",
-      "prepared_sha256": "34d0489f57fcb26cf26e47dd744284fd061f0d57d35213c957cea0f5e0668839",
+      "prepared_sha256": "41c3d7a30e95e5af0c20057bd96949f31584056745839bf0c868874234c5173b",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3694,7 +3694,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-demonic-rune-autocast.request.json"
       },
       "prepared": "feral-bear-druid-demonic-rune-autocast.prepared.json",
-      "prepared_sha256": "ca6bf09b8415441619ab7d7dd41dd8cee0b7ea0658703d33964cc757e2f81047",
+      "prepared_sha256": "e04f22fd6d7e340ab5843688801cb06f7474bd0e3cd5f3b6848f5800eb6c193e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3736,7 +3736,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-party-grace-of-air-and-windfury.request.json"
       },
       "prepared": "warrior-party-grace-of-air-and-windfury.prepared.json",
-      "prepared_sha256": "007ebc0fb3f5ade7fe60031b1bdf2522fe38d69e35efeb6eb403cb709450f4a0",
+      "prepared_sha256": "e8cf54a1b70a6a0f3870bcc7c159903f538107d5dd4b1b822ae2fe3fdc116eb6",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3946,7 +3946,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-major-mana-potion.request.json"
       },
       "prepared": "warrior-major-mana-potion.prepared.json",
-      "prepared_sha256": "893d447e787d230b85c0bf90d963a2be4ca827f8b8939df9065eba1b632faeed",
+      "prepared_sha256": "5ad94efa7b88aac68730b04a14b060c0b9d265d068158058ea731b4b311afa26",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3967,7 +3967,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-last-stand.request.json"
       },
       "prepared": "protection-warrior-last-stand.prepared.json",
-      "prepared_sha256": "0954df97359fc8fb31cdefafed1f998097bffd1ab0946cb04e459f6761cb2790",
+      "prepared_sha256": "c02e49aa91c88e9fbfb8dc7f5db3c9e7491edc37ddcc5c368fec403aa1d7663f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -3988,7 +3988,7 @@
         "path": "fixtures/mage/prepared-v2/fury-protection-warrior-last-stand.request.json"
       },
       "prepared": "fury-protection-warrior-last-stand.prepared.json",
-      "prepared_sha256": "2bc8cf49d0eda11d9813ab3eef8c37434bdf9b325cb6b4b83f268a06c80f64c0",
+      "prepared_sha256": "2c6f9744784b8fe311e456db447e66cb49d9110d01b033a005f174c50770d3d3",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4005,7 +4005,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-sapper-last-stand.request.json"
       },
       "prepared": "protection-warrior-sapper-last-stand.prepared.json",
-      "prepared_sha256": "483e33992f733d2165d08d6f96bcb9e98d129549ded5c4679325785f97277b18",
+      "prepared_sha256": "1a0908d82a8c4150f6d946984957d0e2d9e7b101573113790fa796c9507cd5ac",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4022,7 +4022,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-threshold.request.json"
       },
       "prepared": "feral-bear-druid-threshold.prepared.json",
-      "prepared_sha256": "48074ba3328b9b63d46a59f56d40c7d6ec92829709b44354d1d5c653637c7246",
+      "prepared_sha256": "efa88b3532845eb5074e7d51b2da8e258fc35d02e941460a88d3cd9aef19c70c",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4043,7 +4043,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-greater-stoneshield.request.json"
       },
       "prepared": "protection-warrior-greater-stoneshield.prepared.json",
-      "prepared_sha256": "ccb11aa306a617f93091c0af39b0a8245ab25aef81668228062a34b3d79b2845",
+      "prepared_sha256": "53ac0c6930bd203d1cc9a7e514058f33abd76f11c12e6da221c06bac0bac5154",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4098,7 +4098,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-enrage-sapper.request.json"
       },
       "prepared": "warrior-enrage-sapper.prepared.json",
-      "prepared_sha256": "b6a41578422dabd5f879c6ad984e0bdf00463bd78496a09232cebf24e8c4dc28",
+      "prepared_sha256": "3c3d1696e5dc66efafdd7645530fdabab9495e47654a0595a5e008b39e2c7fab",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4119,7 +4119,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-blood-craze-sapper.request.json"
       },
       "prepared": "warrior-blood-craze-sapper.prepared.json",
-      "prepared_sha256": "e34e5cff6a2f3fc39cd405891109511f34e4521505e1c3de25f45e4e5936eb6f",
+      "prepared_sha256": "103fc254374cf9b8dafc6ca578cca497db9b433a4f2d35c19531aa15115643b1",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4140,7 +4140,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-improved-hamstring.request.json"
       },
       "prepared": "arms-warrior-improved-hamstring.prepared.json",
-      "prepared_sha256": "a816025a33ca26bbdd11cc8a0326982b77ef3a8805ba02ef60dd3cf9de170cc9",
+      "prepared_sha256": "b7d06f2cac03b40ba1c8709164d7f38fe3f546d026891bb11e9c2ada904d6c6b",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4392,7 +4392,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-subtlety-enchant.request.json"
       },
       "prepared": "feral-bear-druid-subtlety-enchant.prepared.json",
-      "prepared_sha256": "27431e8cf7d804e81fcf317ecfc841282cf47860272d782be691f1329fe298fd",
+      "prepared_sha256": "d1c7948c57f4a75013162af5a4952fb767efd3e52513e1f8bcc2972532f200a9",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4476,7 +4476,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-sweeping-strikes.request.json"
       },
       "prepared": "arms-warrior-sweeping-strikes.prepared.json",
-      "prepared_sha256": "bdfaf186ffcc68f5477849fee905e760e863c622e27a5dcf70ef9aca81cb3bf3",
+      "prepared_sha256": "3b071de5c97867d1b727cbc71b45b48609cd06e4a2618f365a3fd018ee8539c1",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4497,7 +4497,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-battlegear-of-might.request.json"
       },
       "prepared": "protection-warrior-battlegear-of-might.prepared.json",
-      "prepared_sha256": "7fa9d1ab44d33c6f3f7cd967d5ff3e599de0375168a983968d6d283ecbabf22e",
+      "prepared_sha256": "e18093a3a032f16c097dee81ba0e9c8ce5114573759818b719cecb135c87621b",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4518,7 +4518,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-premier-shield-wall.request.json"
       },
       "prepared": "protection-warrior-premier-shield-wall.prepared.json",
-      "prepared_sha256": "9363adb269bc622289d3157afebd1d9ebd5404a07f0a6e600d6bbedba9aee985",
+      "prepared_sha256": "ae016c3fe5acc93947ebafb3b3f6f6a54c805c94351e012283bcb5c9ad5760b4",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4539,7 +4539,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-battlegear-of-valor.request.json"
       },
       "prepared": "protection-warrior-battlegear-of-valor.prepared.json",
-      "prepared_sha256": "01c3345af19bf814c220bf553bd36f3cdc113ca02497b46860eac630ffe82351",
+      "prepared_sha256": "3f8d81f03f6a9237ee6373ccbd419f9b362e869bc17e98823e0c951e5e134466",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4560,7 +4560,7 @@
         "path": "fixtures/mage/prepared-v2/fury-warrior-rivenspike.request.json"
       },
       "prepared": "fury-warrior-rivenspike.prepared.json",
-      "prepared_sha256": "0623bf9090f76cccb8050c148c74ff3331bfe5c49f5a841070a25f6cec414463",
+      "prepared_sha256": "cc4e2e2cadcc5320e07d391bda8a260e4a79dad0e3b7bd3df9c3405496e535bf",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4581,7 +4581,7 @@
         "path": "fixtures/mage/prepared-v2/fury-warrior-battlegear-of-might-sapper.request.json"
       },
       "prepared": "fury-warrior-battlegear-of-might-sapper.prepared.json",
-      "prepared_sha256": "08e0a4851dd375c1f493ddfb91722d169ab84ea149264c27f958e899e5ada719",
+      "prepared_sha256": "b682f22764c7ceea251ad54ece37b7a60c254023f3ea2305e35e5dd2ff4a9939",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4602,7 +4602,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-blood-craze-ephemeral-power.request.json"
       },
       "prepared": "protection-warrior-blood-craze-ephemeral-power.prepared.json",
-      "prepared_sha256": "ba3d4e75081b8d7d6755a064dca5b1b6ef6d678343d6ea47f991635eaf9a6c7f",
+      "prepared_sha256": "ad9badea8b5a8f93f50e4c2bbbd368d1643448123993c8bec48852885437d87c",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4623,7 +4623,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-blood-craze-neverending-cup.request.json"
       },
       "prepared": "protection-warrior-blood-craze-neverending-cup.prepared.json",
-      "prepared_sha256": "fae9ace2f824113abc13f9ac0b61e56e1861d323fb9419360790c7da503a6463",
+      "prepared_sha256": "6fb7e5ed1fb4c91cf07c23a9438af47c6d052f4aa8c278cb61007bc12b309d9c",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4863,7 +4863,7 @@
         "path": "fixtures/mage/prepared-v2/fury-warrior-everlook-pathcarver.request.json"
       },
       "prepared": "fury-warrior-everlook-pathcarver.prepared.json",
-      "prepared_sha256": "6981ca6e91ad0dfd2ce9faff55f3e455fc91cb0dde967a72d29845626b178b0e",
+      "prepared_sha256": "f64e78fedc279673f12c874f31e8ef3bc291e32d15e014b661d0f09c826f55d8",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4926,7 +4926,7 @@
         "path": "fixtures/mage/prepared-v2/fury-warrior-prismcharm.request.json"
       },
       "prepared": "fury-warrior-prismcharm.prepared.json",
-      "prepared_sha256": "517397507ee82eddbb0d5fbb1ab8303090a215a3b32c0b925aa906ae92b5f9d5",
+      "prepared_sha256": "07fd24391e86ecf33d35f42ca1b26d5dbb0232caf09850db1455a44bd65a94e8",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -4989,7 +4989,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-heart-of-wyrmthalak.request.json"
       },
       "prepared": "warrior-heart-of-wyrmthalak.prepared.json",
-      "prepared_sha256": "b879e9a9c934bc5473dbbba95af8b06c39add317f0bbab764952085db961c893",
+      "prepared_sha256": "930fefec8c44668148d5cb736c86fd22d1aa45b8e30af5eeb69d39afa49a10f7",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5010,7 +5010,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-recovery.request.json"
       },
       "prepared": "arms-warrior-recovery.prepared.json",
-      "prepared_sha256": "3ad6b866789c9abb643bff60371f2c15bcc566146b90553755d64b60c6e02629",
+      "prepared_sha256": "8b7dff2b8877b9af44bfdeca853d488a5b229723ace9a4851a19855e391ae3af",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5052,7 +5052,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-mark-of-resolution-threshold.request.json"
       },
       "prepared": "protection-warrior-mark-of-resolution-threshold.prepared.json",
-      "prepared_sha256": "354b83fbd87fe99a8cbbe36dcc403121c45d52478bb43c5716ebc38bcf3533cd",
+      "prepared_sha256": "9631c561dbb6c41e4ed94fa83c53a0e5602f36ee5302fee6837bcc76772bcc75",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5094,7 +5094,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-lifestone-threshold.request.json"
       },
       "prepared": "feral-bear-druid-lifestone-threshold.prepared.json",
-      "prepared_sha256": "9cccc3063759008bd96134c0f2e97e1ea919f5faffadcbea65bfa1807abdb53e",
+      "prepared_sha256": "013d58c74af53633f50407983c9a158c49f1740c47976ebfa6b903dac64aeed1",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5115,7 +5115,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-fiery-blaze.request.json"
       },
       "prepared": "arms-warrior-fiery-blaze.prepared.json",
-      "prepared_sha256": "06e80f6d977036974a089ef14d602ef601d4133ce8a170ace334caa71c96de35",
+      "prepared_sha256": "2634bf4c44ab548bcb4e90753e3bcd678e9c974346a53fde8268a48d7707ca2f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5258,7 +5258,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-uthers-strength.request.json"
       },
       "prepared": "feral-bear-druid-uthers-strength.prepared.json",
-      "prepared_sha256": "7fa0e6500d39b95d9f27461568e598ca654259a628485d2b77636d7cdfbf1307",
+      "prepared_sha256": "38792cd95f259b41bc94b9cb45091abf5c904a05adf45f83539aac4366184bb9",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5279,7 +5279,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-minor-absorption.request.json"
       },
       "prepared": "feral-bear-druid-minor-absorption.prepared.json",
-      "prepared_sha256": "719f3f254449e66c8e36d0701e56ba1890fbb49387a742fc33f939bd40ba7f24",
+      "prepared_sha256": "66ba3613aa6ef2c558f878c1f61d7396c8c096e6684beca3ed6c4863ce32c41c",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5300,7 +5300,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-lesser-absorption.request.json"
       },
       "prepared": "feral-bear-druid-lesser-absorption.prepared.json",
-      "prepared_sha256": "0d507a8b5847be845b722f173165c63b4a58154b7503c252b672f331211439a6",
+      "prepared_sha256": "0b390c9ff49ab8e9ce215e49ce2a4b70abfb81db4a35a1880d3fbda1f0791426",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5321,7 +5321,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-absorption.request.json"
       },
       "prepared": "feral-bear-druid-absorption.prepared.json",
-      "prepared_sha256": "91e53b15deb6f22af050ae434f2d338f55903fb48a667808ef818575323e38e1",
+      "prepared_sha256": "fb90082e702b1c7f3acf1b48683b83b6c0ef3846bd5746d7597b1853666fb537",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5342,7 +5342,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-essence-of-the-pure-flame.request.json"
       },
       "prepared": "feral-bear-druid-essence-of-the-pure-flame.prepared.json",
-      "prepared_sha256": "522a645c39470fecdf123ad4937d3d06166886e4fd1d33390b7b8998f6ee369b",
+      "prepared_sha256": "536fdb08572fc8d91d822c1ae2b640fc0e4696801de5b4f9f110e716f064ce31",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5363,7 +5363,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-lion-horn.request.json"
       },
       "prepared": "feral-bear-druid-lion-horn.prepared.json",
-      "prepared_sha256": "709c4a44ae6fa52dd3484fc85c73acc090c6ef89e41ac7d5fa73d50e66afa58b",
+      "prepared_sha256": "568841286ed8e059e9194a2e9ba82ba1ebbc24d812ee80fcd33d7886157f04c2",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5384,7 +5384,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-boomerang-pushback.request.json"
       },
       "prepared": "feral-bear-druid-boomerang-pushback.prepared.json",
-      "prepared_sha256": "e93c688d14fef36f207f21fd40decc374659e4d4566196b638829a41164e7d0e",
+      "prepared_sha256": "6248470538fb1f6441f52f8bc72a779f5ea7547b58f07efdfda51c5aa49aaac5",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5405,7 +5405,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-boomerang-pushback-after-cast.request.json"
       },
       "prepared": "feral-bear-druid-boomerang-pushback-after-cast.prepared.json",
-      "prepared_sha256": "9b2b0be342f47c34d2b2c9773cf9fd5b9e9bc6e64d96107698402eb3596aa4ca",
+      "prepared_sha256": "7dd5973c9f5446aa61d1bf78096a46898a3ce5161e5c53e8f249e2efd93a80ee",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5678,7 +5678,7 @@
         "path": "fixtures/mage/prepared-v2/fury-warrior-whirlwind-no-raging-blows.request.json"
       },
       "prepared": "fury-warrior-whirlwind-no-raging-blows.prepared.json",
-      "prepared_sha256": "34f425ec56c9b39d1a1e6298d696244ef0183cd5f3e661aeb7722a457e6b2f72",
+      "prepared_sha256": "63993aa90144b961cefa165cee5cd1d18da8a5552709d1b9bb49a20dea5066e4",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5762,7 +5762,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-primal-bite-3-targets.request.json"
       },
       "prepared": "feral-bear-druid-primal-bite-3-targets.prepared.json",
-      "prepared_sha256": "e89812f2560f35032410cb5a0899b28c7a408323b4bbc2a91fc54bc9574e538b",
+      "prepared_sha256": "c5f8cd76115945c1329200399a917f60da6e26136d0697d96812dd9f2f827ea4",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -5783,7 +5783,7 @@
         "path": "fixtures/mage/prepared-v2/feral-bear-druid-swipe-3-targets.request.json"
       },
       "prepared": "feral-bear-druid-swipe-3-targets.prepared.json",
-      "prepared_sha256": "c87d0047e3a06bf3c96a2e45dd170ac4c993dd7e244099c2e81d968422a6ed28",
+      "prepared_sha256": "888ccfdda3d6039e551063aeeefaf1b13f0776bceea7a86b057cd09060d27a46",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6329,7 +6329,7 @@
         "path": "fixtures/mage/prepared-v2/production-warrior-2-targets.request.json"
       },
       "prepared": "production-warrior-2-targets.prepared.json",
-      "prepared_sha256": "b1f36f7d3df0fe8aea52cf55c49333ad7f6da6ef3da04d16c46d6bb084e27093",
+      "prepared_sha256": "8674ddde63e904b06b6dc87b5f60f9f29079be55bb2c97292ba0e61d3dc6b6a2",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6350,7 +6350,7 @@
         "path": "fixtures/mage/prepared-v2/production-arms-warrior-2-targets.request.json"
       },
       "prepared": "production-arms-warrior-2-targets.prepared.json",
-      "prepared_sha256": "e75e13f992d862aa2e36a70401a22987804a7c4004d9786d2bdde2c7e32755f3",
+      "prepared_sha256": "5874f2cb2a4f84c93551dd95739b4fa1972fa334007a99a05e8545cc10f7bab5",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6371,7 +6371,7 @@
         "path": "fixtures/mage/prepared-v2/production-arms-warrior-3-targets.request.json"
       },
       "prepared": "production-arms-warrior-3-targets.prepared.json",
-      "prepared_sha256": "424f6ac62a3f54fcc6e0456c6818c3eb920a7fcb02660d1fd1b5591a72509bf0",
+      "prepared_sha256": "d894aea22fa4718fc0a5b6f3998652886af024ec0310dbb86401b3792eb84652",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6392,7 +6392,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-whirlwind-5-targets.request.json"
       },
       "prepared": "warrior-whirlwind-5-targets.prepared.json",
-      "prepared_sha256": "54c6159df2547cd748bf3e24d86e37ac0239f7e034b8fed767c866a50c831047",
+      "prepared_sha256": "c4083af59119449d8d072662feb9397f5cd04d835ba6f4a16c0752eebb3e4048",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6413,7 +6413,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-thunder-clap-5-targets.request.json"
       },
       "prepared": "arms-warrior-thunder-clap-5-targets.prepared.json",
-      "prepared_sha256": "bb58c715073fb430c350cfc64a2631e6f48088f964474c3955f441fedf98ee6d",
+      "prepared_sha256": "cd12a9807173601478e91d3e7b55f7bacacc5f429098d01da0a9b7485f1b7ded",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6497,7 +6497,7 @@
         "path": "fixtures/mage/prepared-v2/production-warrior-5-targets.request.json"
       },
       "prepared": "production-warrior-5-targets.prepared.json",
-      "prepared_sha256": "d2a660369d6250f89f5e1810770cf67d91731abcc509d754e8fe4c2c469a3ff0",
+      "prepared_sha256": "f1ba0f7617159accdc3e572213d58dc877a46f947355a783f2d312641dd14702",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6518,7 +6518,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-thunder-clap-1-target.request.json"
       },
       "prepared": "arms-warrior-thunder-clap-1-target.prepared.json",
-      "prepared_sha256": "f4ecfabcab04969092ea964b41efb0ed295f81f43e20b8756e6964732f35092b",
+      "prepared_sha256": "85f9afa6a78df2ca8ede2a040c7ff06e711083a8e83e73a63c7518ca210fbba1",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6539,7 +6539,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-in-front-3-targets.request.json"
       },
       "prepared": "arms-warrior-in-front-3-targets.prepared.json",
-      "prepared_sha256": "6b3d67d4c2814284629ec8a5ae645eb74b82270ff4cb651b454ad7d886e7468b",
+      "prepared_sha256": "b3ffe146909501c8ba61e1e97e6aca98570eaf70b43599c0bd7609d87b1d6646",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6560,7 +6560,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-multidot-rend-3-targets.request.json"
       },
       "prepared": "arms-warrior-multidot-rend-3-targets.prepared.json",
-      "prepared_sha256": "4b07630d3449000de77662d7980d3a597852e8a27b5457601a2c2b187ce29d3b",
+      "prepared_sha256": "411789a6d3a82cd26fc80cd99fcfcff22ae03ae1a6d84174f73662701f8c67a8",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6644,7 +6644,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-3-targets-cast-target.request.json"
       },
       "prepared": "warrior-3-targets-cast-target.prepared.json",
-      "prepared_sha256": "9fc9f029e598a2310d58d96fd56130771a2750cd98e06fc92ddc862fb6673072",
+      "prepared_sha256": "b32a39f01a815ac9635fec985327fd7727c1cd0a5f0c6f3516306ab1fcec08e9",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6749,7 +6749,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-dot-target-unit.request.json"
       },
       "prepared": "warrior-dot-target-unit.prepared.json",
-      "prepared_sha256": "07eb06a586e53d8d5399b6ae66656b4105699ac6adf86818f086b27172e621ee",
+      "prepared_sha256": "40c4772ee1c7f01a060fd54a1103c47cf0d09aaad67e70bfb0d01381f71714da",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6770,7 +6770,7 @@
         "path": "fixtures/mage/prepared-v2/production-warrior-diamond-flask.request.json"
       },
       "prepared": "production-warrior-diamond-flask.prepared.json",
-      "prepared_sha256": "b0361fd15e988bba821e9cc0d88f975499859226743361c35ac3df3afcedc952",
+      "prepared_sha256": "e76a935bb95bf78d4759f313e787dc917543c8061457f568dfeda48b3505bb6f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6791,7 +6791,7 @@
         "path": "fixtures/mage/prepared-v2/production-protection-warrior-diamond-flask.request.json"
       },
       "prepared": "production-protection-warrior-diamond-flask.prepared.json",
-      "prepared_sha256": "aa3677717b7eacaafa9d02887865070b51c1a65892166d3ff52058e6a4befa43",
+      "prepared_sha256": "c2bdb61e49378df84ff1a47adaaf883a64043e14b02b2eca130e2f29dafed1bd",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6812,7 +6812,7 @@
         "path": "fixtures/mage/prepared-v2/production-fury-protection-warrior-diamond-flask.request.json"
       },
       "prepared": "production-fury-protection-warrior-diamond-flask.prepared.json",
-      "prepared_sha256": "e108694902f8244988184a79fc38a1d16a28a33f5e5931c58d6a0c68999efb36",
+      "prepared_sha256": "61d14bd4538f2db6c19bc9c2da41a7c70a03fc80923a08a66e0c01360c582a61",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6833,7 +6833,7 @@
         "path": "fixtures/mage/prepared-v2/production-warrior-diamond-flask-in-rotation.request.json"
       },
       "prepared": "production-warrior-diamond-flask-in-rotation.prepared.json",
-      "prepared_sha256": "a5ed5e9efdee63349be7ea8b00ddda0d00f8872b64e02333f156649389b5e5fb",
+      "prepared_sha256": "ced898aa33d0710dc8a14b04dc152ba4cafe1c6af56a053bd8abaf8d816a2a13",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6854,7 +6854,7 @@
         "path": "fixtures/mage/prepared-v2/production-warrior-prepull-charge.request.json"
       },
       "prepared": "production-warrior-prepull-charge.prepared.json",
-      "prepared_sha256": "4780b20019a66a98e5984ac5582c55a818842f0d7dba21f40f13af8c441ba21c",
+      "prepared_sha256": "48aa312b257330f3df53c4d40060f7152dc2ae05671919a4759ec4bccb1cb277",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6875,7 +6875,7 @@
         "path": "fixtures/mage/prepared-v2/production-arms-warrior-prepull-charge.request.json"
       },
       "prepared": "production-arms-warrior-prepull-charge.prepared.json",
-      "prepared_sha256": "ff7fb0161010797cbc4ad49629fe75b6b2a7bdb3ee3077fc000be9426d343cf3",
+      "prepared_sha256": "baabc2d786277b1f7e797c1112df329571f46269350e8d7050d6014f3b7fa294",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6896,7 +6896,7 @@
         "path": "fixtures/mage/prepared-v2/production-warrior-prepull-charge-late.request.json"
       },
       "prepared": "production-warrior-prepull-charge-late.prepared.json",
-      "prepared_sha256": "b8fe828a402aa6d753603fd89382f019a248a450c1206a4e04002903275d3663",
+      "prepared_sha256": "b4fe52e7ae9d8d42eda71644aabd8373ab24cebc1b486f4bda26d93a954e840e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6917,7 +6917,7 @@
         "path": "fixtures/mage/prepared-v2/production-warrior-prepull-charge-while-moving.request.json"
       },
       "prepared": "production-warrior-prepull-charge-while-moving.prepared.json",
-      "prepared_sha256": "573651ee2fc4d140b61e83e9c6db00e9e158fcecbdf048a03a1961f5942917d5",
+      "prepared_sha256": "19455c3a52ee04a0e903b977a34b3466ddc7dc37e3d8261cf2a58fcea65ae0c5",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6938,7 +6938,7 @@
         "path": "fixtures/mage/prepared-v2/production-warrior-prepull-move-cancelled.request.json"
       },
       "prepared": "production-warrior-prepull-move-cancelled.prepared.json",
-      "prepared_sha256": "c76a4195e9360ac0f1e3bc92b0e0e91a087223100cc96acab7ba7ebe70b67e22",
+      "prepared_sha256": "87caca198a11bdda2ef59db07151d4fa3584f373bab1c0a8acfa88cd876bc344",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6959,7 +6959,7 @@
         "path": "fixtures/mage/prepared-v2/production-warrior-prepull-move-in-range.request.json"
       },
       "prepared": "production-warrior-prepull-move-in-range.prepared.json",
-      "prepared_sha256": "1d8db64e3183687a909d44029e0f0c3c02153d1416c42647f616630a8e3594b1",
+      "prepared_sha256": "12df6217a9160a3c8c7aedba97ea0b7e7ee3d0607fddfdb26263d20b0fa248fe",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -6980,7 +6980,7 @@
         "path": "fixtures/mage/prepared-v2/production-arms-warrior-prepull-move-at-the-pull.request.json"
       },
       "prepared": "production-arms-warrior-prepull-move-at-the-pull.prepared.json",
-      "prepared_sha256": "31988302138bcb1954812eefc25424f515b0f8afda8d8efd86a513498287d4fa",
+      "prepared_sha256": "57c8cc26778ffd1a06b6b30e544de8572756b508c4c41bfe580995f56298da3c",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -7001,7 +7001,7 @@
         "path": "fixtures/mage/prepared-v2/production-warrior-prepull-move-dropped.request.json"
       },
       "prepared": "production-warrior-prepull-move-dropped.prepared.json",
-      "prepared_sha256": "a9800ae49e033bad2590a7cd4b3d0e54468fc0d19c3e9aa44137141b98fd670e",
+      "prepared_sha256": "76e151b7b6704208b260b6fd56ca30493c55cae1efcc923a132a1668f5a12e85",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -7022,7 +7022,7 @@
         "path": "fixtures/mage/prepared-v2/production-protection-warrior-prepull-charge.request.json"
       },
       "prepared": "production-protection-warrior-prepull-charge.prepared.json",
-      "prepared_sha256": "805f1760542c431a005ec2932b3bef2da356f160563442b9332b1d93b9f130bd",
+      "prepared_sha256": "ec186bacf0692b622116eb988ac1d9c9ba578679d503f2a9d8839c301b1e7d6a",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -7058,7 +7058,7 @@
         "path": "fixtures/mage/prepared-v2/production-arms-warrior-prepull-move-with-unholy-aura.request.json"
       },
       "prepared": "production-arms-warrior-prepull-move-with-unholy-aura.prepared.json",
-      "prepared_sha256": "39c719fa1ff2471472481668118d6162611aba17e1ca1b152892d23e11bae55b",
+      "prepared_sha256": "7facfe9ca676db037a15ee8c86453094aeda1d470089e94cd20e60242626613b",
       "expected_coverage": {
         "supported": false,
         "reasons": [
@@ -7157,7 +7157,7 @@
         "path": "fixtures/mage/prepared-v2/production-feral-bear-druid-3-targets.request.json"
       },
       "prepared": "production-feral-bear-druid-3-targets.prepared.json",
-      "prepared_sha256": "8b344500cad1c81f738c016e980325f96b2a973d56d5b2503ada18fd245ef11c",
+      "prepared_sha256": "6f698004a394c675ed2134397c971441529b0db4d4e285ab3755f51e86caf90e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -7178,7 +7178,7 @@
         "path": "fixtures/mage/prepared-v2/production-feral-bear-druid-5-targets.request.json"
       },
       "prepared": "production-feral-bear-druid-5-targets.prepared.json",
-      "prepared_sha256": "72b1284df472c7f7495ecca4d1096d1cb41f5b2d60217de86067ddf4d4f61019",
+      "prepared_sha256": "822b5c17b8ea3458cdc13af960acd5539aab3dba8aa5855d732bdab015284e5f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -7199,7 +7199,7 @@
         "path": "fixtures/mage/prepared-v2/production-protection-warrior-3-targets.request.json"
       },
       "prepared": "production-protection-warrior-3-targets.prepared.json",
-      "prepared_sha256": "6e9a35675164215023e60f34d903a90b6e069fbbc2fd36aecdad75163cd00d7d",
+      "prepared_sha256": "d139252d27f0e5d5ce460a9da968d957edbdaec16f219959eb727bced9b41ce8",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -7220,7 +7220,7 @@
         "path": "fixtures/mage/prepared-v2/production-protection-warrior-5-targets.request.json"
       },
       "prepared": "production-protection-warrior-5-targets.prepared.json",
-      "prepared_sha256": "17e016d6e90fa992fb6d043fe369ea3878a92e2539c6822ed488c8ff8b2b5acf",
+      "prepared_sha256": "3a0cdd4f23731cf036a1950753448c237520be9a7478c24ed3c9e091db1c188e",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -7241,7 +7241,7 @@
         "path": "fixtures/mage/prepared-v2/production-fury-protection-warrior-3-targets.request.json"
       },
       "prepared": "production-fury-protection-warrior-3-targets.prepared.json",
-      "prepared_sha256": "aaf78cfb88f2d213332ef191d2adeab41997d3dbc0ed473e1a8c7babc0ef6675",
+      "prepared_sha256": "0d979f3da09dd50ce94f983d4da53bb8ae0c4c0f33bff6f20e073cc8bda907ab",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -7304,7 +7304,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-own-sunder-3-targets.request.json"
       },
       "prepared": "protection-warrior-own-sunder-3-targets.prepared.json",
-      "prepared_sha256": "9c3e91165fa3bd4e98658a0b1dbbc4b37af0b756a764ef87a87d1e2d3d937f94",
+      "prepared_sha256": "b8158ebc6b5b999aef494107f6a02d3f099b022a052946704a6b22ba30782b20",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -7409,7 +7409,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-iceblade-hacker.request.json"
       },
       "prepared": "warrior-iceblade-hacker.prepared.json",
-      "prepared_sha256": "dd64ff01cbc45be02a79d78f49388f792cb80331250766e7e588504bbcc2e713",
+      "prepared_sha256": "e5ebb9be0d3724596eb63b3b562ceb8f2b37ef33f6af1992978ee99db1405e63",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -7430,7 +7430,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-warblade-of-caer-darrow.request.json"
       },
       "prepared": "arms-warrior-warblade-of-caer-darrow.prepared.json",
-      "prepared_sha256": "46f3c7a0856de81c4401526c2718e150c2a87da7f4ba068c21ebc7ff596145c6",
+      "prepared_sha256": "5f5bed614df17ff6e82eb799b3a138f6963e99cf77139bf3ffe4b427c509d01d",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -7451,7 +7451,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-warblade-of-caer-darrow-off-hand.request.json"
       },
       "prepared": "warrior-warblade-of-caer-darrow-off-hand.prepared.json",
-      "prepared_sha256": "d3f55f03357a53ceba8beea19420fdc497ef5e432f062a7fe1b57bee6edd777f",
+      "prepared_sha256": "e6b52952fecab460706fce180aceb5026093b5cab2100f4bd365e6e2100ecf8f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -7472,7 +7472,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-warblade-of-caer-darrow-both-hands.request.json"
       },
       "prepared": "warrior-warblade-of-caer-darrow-both-hands.prepared.json",
-      "prepared_sha256": "b56f449ac621ac455505ce879083e55b689fb9f025e8470b3f7b4d24ba5fa765",
+      "prepared_sha256": "d8d9ee80e6d47fdc1f1fcd9e074bcf381394e1a5c7f9b695f6468325be171663",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -7745,7 +7745,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-external-power-infusion.request.json"
       },
       "prepared": "protection-warrior-external-power-infusion.prepared.json",
-      "prepared_sha256": "bb98c50367da11e40b1d6244213310c8cc7c377a3f26b0c87071e6dc9d6d6278",
+      "prepared_sha256": "2f527f2ddaa54fbba8c951baeffa65e3e052e8255eae9f476ab97a3f5bb507e4",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -7850,7 +7850,7 @@
         "path": "fixtures/mage/prepared-v2/production-warrior-masterwork-stormhammer.request.json"
       },
       "prepared": "production-warrior-masterwork-stormhammer.prepared.json",
-      "prepared_sha256": "81d88c9ebc36592796a535057e30bdca32a2140c71a2cd876c672e5eac4e27c4",
+      "prepared_sha256": "0620a79981a3a9cbba4099066fb6006944f5b2817974ae1735da20b7f1a2ed55",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -7871,7 +7871,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-3-targets-masterwork-stormhammer.request.json"
       },
       "prepared": "warrior-3-targets-masterwork-stormhammer.prepared.json",
-      "prepared_sha256": "5af0b89945db1da9950cd5ff07ab7409773c805c570f925488550336b7ab4347",
+      "prepared_sha256": "717bec397610db4e45c322d7a1e0690cb97ffd6232bd67bc1b39f18fe010edb8",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -7892,7 +7892,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-bloodfist.request.json"
       },
       "prepared": "warrior-bloodfist.prepared.json",
-      "prepared_sha256": "02ce6798876af3b8d964bb231373af3f6cc37d98e18e3ac9d2f339107c639f84",
+      "prepared_sha256": "bd11875c6143316473664888c36619a0b8ac84777f45fdbc5070cd0dba75cc2b",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -7913,7 +7913,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-alcors-sunrazor.request.json"
       },
       "prepared": "warrior-alcors-sunrazor.prepared.json",
-      "prepared_sha256": "7871611b8cb2c0223f64b5416e2c5c9728351a799f3ce66adab4b079c7f1673b",
+      "prepared_sha256": "9351c0d287272741d31abf8b39d598e0618c6621056e2d88182e98bc1351dab1",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -7934,7 +7934,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-bonechill-hammer.request.json"
       },
       "prepared": "warrior-bonechill-hammer.prepared.json",
-      "prepared_sha256": "d50d2373bf5dd49efc208d09ce6f5a49bc1b135c85acc02ee55736c7d934fe60",
+      "prepared_sha256": "b9e148c230ff29e5269815c5eab96644a5ded8ae5c0935b600ff22aea8a29489",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -7955,7 +7955,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-plaguefang.request.json"
       },
       "prepared": "warrior-plaguefang.prepared.json",
-      "prepared_sha256": "75606a6556f84c57b636cac670541b45d114c2144b6adc3109d47e7b818af4e1",
+      "prepared_sha256": "d6e3ec15e69e2af8b1f279dafb208bb5608f2c08721e642f40841e6e361a5ac7",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -7976,7 +7976,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-3-targets-stinging-viper.request.json"
       },
       "prepared": "warrior-3-targets-stinging-viper.prepared.json",
-      "prepared_sha256": "558ea946b5370a3ae38449f0839cd476fbc93e5201a1283491d13aa9fcd69e31",
+      "prepared_sha256": "26eb0568d4727e675ec8c0399513a52123dd41236d6b365a81971f8c6d8d43e4",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -7997,7 +7997,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-flurry-axe.request.json"
       },
       "prepared": "warrior-flurry-axe.prepared.json",
-      "prepared_sha256": "a40920f495f863b89024fa09d852edb3c502b86b6d7accbf3dfb794370be1f42",
+      "prepared_sha256": "8f7e0d7e021152cb191bf4e5aa47317e641a9dc07d975909db693c6595bc4bf7",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -8018,7 +8018,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-3-targets-annihilator.request.json"
       },
       "prepared": "warrior-3-targets-annihilator.prepared.json",
-      "prepared_sha256": "36fdca8d157dec429d744c2539e3014f86d7f66c4123798d8ab868619cb806aa",
+      "prepared_sha256": "6e685f3ac552507487e1bf91daac60ccd550728c97f8230b37b1af4bc57d8906",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -8039,7 +8039,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-sword-of-zeal-bloodfist-off-hand.request.json"
       },
       "prepared": "warrior-sword-of-zeal-bloodfist-off-hand.prepared.json",
-      "prepared_sha256": "7012cd417f183321a73cfc488d6f33fb56779a70876960f84e603257af3f7512",
+      "prepared_sha256": "120bce14ee91630c22131bb4a5d54a04cfe928bda75f9a4eaa80bdf1cb58a93b",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -8060,7 +8060,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-lobotomizer.request.json"
       },
       "prepared": "warrior-lobotomizer.prepared.json",
-      "prepared_sha256": "f3915089809e8de67df580ae0fd994655ee5f82e176d3c454d83d0dafc03af79",
+      "prepared_sha256": "076bb9998debe654177923d7a27163d7e83cbd24c257cf1f11f6b31c0bd68719",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -8081,7 +8081,7 @@
         "path": "fixtures/mage/prepared-v2/warrior-ebon-hilt-of-marduk.request.json"
       },
       "prepared": "warrior-ebon-hilt-of-marduk.prepared.json",
-      "prepared_sha256": "2e7e471f6e218515df3ae1d81309fd0701dd0fd1bdf7be5e23942e98efe34e81",
+      "prepared_sha256": "3681607747d9971bf6a6137cc866571a7bc5e76f5e420e207ed98ca6e8486f15",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -8102,7 +8102,7 @@
         "path": "fixtures/mage/prepared-v2/arms-warrior-3-targets-flame-wrath.request.json"
       },
       "prepared": "arms-warrior-3-targets-flame-wrath.prepared.json",
-      "prepared_sha256": "412be34d7a242a4a32ced92a25e20dcd9def7c5748bb2cd9a4f7080bf4b79b39",
+      "prepared_sha256": "a1e306c0e4dfa4509e01eee16effde1f3c5f7110f9df4c73b90a033fec7d60fe",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -8207,7 +8207,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-3-targets-masterwork-stormhammer.request.json"
       },
       "prepared": "protection-warrior-3-targets-masterwork-stormhammer.prepared.json",
-      "prepared_sha256": "ee0ad75961fcf91da67ef78cc16a7f60cec22d8d8a1738b3a851276e4568d656",
+      "prepared_sha256": "18320f6fc2c388ae3d199a10b481d01a0ce1d0a368ff54f3c9e03a9c39d2606c",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -8333,7 +8333,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-demoralizing-shout.request.json"
       },
       "prepared": "protection-warrior-demoralizing-shout.prepared.json",
-      "prepared_sha256": "e444b5e1aa2249e055317b80707c1271c283e7b3cc33e09e1e23b6a2a3b725f9",
+      "prepared_sha256": "87736d25eeb3eccb2dfecf2c1e4d510bdee17c699d1d2b64c3ad3c354366b09f",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -8354,7 +8354,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-demoralizing-shout-3-targets.request.json"
       },
       "prepared": "protection-warrior-demoralizing-shout-3-targets.prepared.json",
-      "prepared_sha256": "30f2e538df88f0134a8b94e3d3f8f422d7df591e88756c8170e59b1e8e654662",
+      "prepared_sha256": "c8ca39418d58bd9c7cbb1ae54dddc0f55c2899ffe0e7ebb57a23145704bdf515",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -8375,7 +8375,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-demoralizing-shout-5-targets.request.json"
       },
       "prepared": "protection-warrior-demoralizing-shout-5-targets.prepared.json",
-      "prepared_sha256": "b7da33bbc7b439ee9ab176f4ba364fc862c876691eae0197177ad0bc95a38cfc",
+      "prepared_sha256": "40bca5b86960804721f7c8ac35588c29449af95200d4e51b4bde96ff7b5651ba",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -8396,7 +8396,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-demoralizing-shout-over-roar-debuff.request.json"
       },
       "prepared": "protection-warrior-demoralizing-shout-over-roar-debuff.prepared.json",
-      "prepared_sha256": "6bcccd7b1121ae740ac7a878784ffe1686543176532551ee109772e65afdf288",
+      "prepared_sha256": "2301e68beeb4de12b26fd4cd4af55a774e3dc416a97e70ae7a9b1ec545f7d905",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -8417,7 +8417,7 @@
         "path": "fixtures/mage/prepared-v2/protection-warrior-demoralizing-shout-over-shout-debuff.request.json"
       },
       "prepared": "protection-warrior-demoralizing-shout-over-shout-debuff.prepared.json",
-      "prepared_sha256": "87b67f43df26338ac63fc55f7b257f405d92d9efdfb20354125d4357f507f3b8",
+      "prepared_sha256": "44699718d696d031ba6be60a4ebfa84cdb9f9ca32f650ed6968f4a802a7fe86d",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -8438,7 +8438,7 @@
         "path": "fixtures/mage/prepared-v2/fury-warrior-demoralizing-shout.request.json"
       },
       "prepared": "fury-warrior-demoralizing-shout.prepared.json",
-      "prepared_sha256": "f6d01f29bb8e014ec1a2f0e04a77bbc0b287a89aec4f3363592a25d30a09cc54",
+      "prepared_sha256": "e2a263281ff8d4b048dcbdc52e3591a267a801b7cbb6a208fc5749ef7eff835b",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -8459,7 +8459,7 @@
         "path": "fixtures/mage/prepared-v2/fury-warrior-demoralizing-shout-3-targets.request.json"
       },
       "prepared": "fury-warrior-demoralizing-shout-3-targets.prepared.json",
-      "prepared_sha256": "e1114c6d4a9c3167c2ab49a09db1e5209b91a6add2dfdc72c894024d31f46123",
+      "prepared_sha256": "d900a7b0b1ccced287512b914a5484fc6aa97df9d12adfdac9644f87b91db14a",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -8480,7 +8480,7 @@
         "path": "fixtures/mage/prepared-v2/fury-warrior-demoralizing-shout-5-targets.request.json"
       },
       "prepared": "fury-warrior-demoralizing-shout-5-targets.prepared.json",
-      "prepared_sha256": "08a8ca8dc9f39f2dd517c7b6c651dc22ac1f46ab8af10a02b4c67b72937f47e3",
+      "prepared_sha256": "02d0e8c07fff422e4d2a7fdb98e0ce6cd89605a830fa9c4e49d585e747c0f34a",
       "expected_coverage": {
         "supported": true,
         "reasons": []
@@ -8639,6 +8639,405 @@
       "go_log": {
         "file": "marksmanship-hunter-moves.go-log.txt",
         "sha256": "23fcb70da7a9b007cc282be32e15ab9954e6c6e3e2350908d25d5b5cb6d8bae4"
+      }
+    },
+    {
+      "id": "protection-warrior-challenging-shout",
+      "description": "Production Protection Warrior tanking 1 target casting Challenging Shout (1161) first: an always hit for no damage and no threat on the target, cast once for its cooldown, with no taunt, so the targets keep swinging at the warrior",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-challenging-shout.request.json"
+      },
+      "prepared": "protection-warrior-challenging-shout.prepared.json",
+      "prepared_sha256": "de6284de6c07c5cc15bf269038f544ae119082369acc5bb70f031f4eca2ab99b",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-challenging-shout.go-result.json",
+        "sha256": "42e5f62d3a3ab8bd8de2bf1a73ae8dee03a46ba5fe99604960c4a88257fd252d"
+      },
+      "go_log": {
+        "file": "protection-warrior-challenging-shout.go-log.txt",
+        "sha256": "6a2d6bb452d91d9851526a268cbec215ff1385e85cfc4c155e22cfaccb9b3507"
+      }
+    },
+    {
+      "id": "arms-warrior-challenging-shout",
+      "description": "Production Arms Warrior (not tanking) casting Challenging Shout (1161) first: an always hit for no damage and no threat on the target, cast once for its cooldown, with no taunt, so no target changes its aim against 1 target",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/arms-warrior-challenging-shout.request.json"
+      },
+      "prepared": "arms-warrior-challenging-shout.prepared.json",
+      "prepared_sha256": "cede252db70ca28047a9aed2912514f91255eb6dc8107b92f8ec143408e87c03",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "arms-warrior-challenging-shout.go-result.json",
+        "sha256": "1edc6691f92a76cbb6eaf5e57db228393a92fb787ca2b31485ffd3807f409e3b"
+      },
+      "go_log": {
+        "file": "arms-warrior-challenging-shout.go-log.txt",
+        "sha256": "6aa8e694214e7782f73e1bfa87af8d5ef9f51be28696c2f7c2ef2bcc8927cd25"
+      }
+    },
+    {
+      "id": "protection-warrior-challenging-shout-3-targets",
+      "description": "Production Protection Warrior tanking 3 targets casting Challenging Shout (1161) first: an always hit for no damage and no threat on each target in unit index order, cast once for its cooldown, with no taunt, so the targets keep swinging at the warrior",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-challenging-shout-3-targets.request.json"
+      },
+      "prepared": "protection-warrior-challenging-shout-3-targets.prepared.json",
+      "prepared_sha256": "f8ae0f7dad3c1289174a03478db95c1cfa6c98123ff921a04693dbe8ff95f668",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-challenging-shout-3-targets.go-result.json",
+        "sha256": "53590748b3e6037ebdc72daf06e2d326bf92c9ac128a92db8f15f61c0fd04dfa"
+      },
+      "go_log": {
+        "file": "protection-warrior-challenging-shout-3-targets.go-log.txt",
+        "sha256": "9464f1bf62fe7cf25f744b751f06540e6f73c193b3f8bfe6b3eb82427d54c15e"
+      }
+    },
+    {
+      "id": "arms-warrior-challenging-shout-3-targets",
+      "description": "Production Arms Warrior (not tanking) casting Challenging Shout (1161) first: an always hit for no damage and no threat on each target in unit index order, cast once for its cooldown, with no taunt, so no target changes its aim against 3 targets",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/arms-warrior-challenging-shout-3-targets.request.json"
+      },
+      "prepared": "arms-warrior-challenging-shout-3-targets.prepared.json",
+      "prepared_sha256": "12aaf7ed7223a327121adcda8948f792ed048a403c50c4c642f99f37b08b4b91",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "arms-warrior-challenging-shout-3-targets.go-result.json",
+        "sha256": "2d41f0b62e3070a69ae390bd86bf7a48edfbe89fd68ed2397e1b19553a39a575"
+      },
+      "go_log": {
+        "file": "arms-warrior-challenging-shout-3-targets.go-log.txt",
+        "sha256": "df4033c22397e2af008e031951795dadae2882a0c81c91d48a233d4cd17ee6ee"
+      }
+    },
+    {
+      "id": "feral-druid-demoralizing-roar",
+      "description": "Production Feral Druid in Cat Form against 1 target whose rotation names Demoralizing Roar (9898), which a cat never learns (with no raid debuff in the Demoralizing category): Go drops the cast and its condition, and the cat plays on",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-druid-demoralizing-roar.request.json"
+      },
+      "prepared": "feral-druid-demoralizing-roar.prepared.json",
+      "prepared_sha256": "8034a6088144293ccb31a1c943399853171e27ea17b03d5de0aa64ab462d34e4",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-druid-demoralizing-roar.go-result.json",
+        "sha256": "b2dd81695153f6dcf8ba84197b763c98125ff219586aba170cf4079ad7bbcaf3"
+      },
+      "go_log": {
+        "file": "feral-druid-demoralizing-roar.go-log.txt",
+        "sha256": "79f359a0f11f36726da0dc3faf8658004bc8c0f1eb414dcbd48f3730a495dde9"
+      }
+    },
+    {
+      "id": "feral-bear-druid-demoralizing-roar-over-shout-debuff",
+      "description": "Production Feral Druid in Bear Form tanking 1 target and casting Demoralizing Roar (9898) when auraShouldRefresh asks, under the raid's permanent Demoralizing Shout debuff, which bids as much, outlasts the roar and holds it off in the Demoralizing category: the rotation reads the category as Go does",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-bear-druid-demoralizing-roar-over-shout-debuff.request.json"
+      },
+      "prepared": "feral-bear-druid-demoralizing-roar-over-shout-debuff.prepared.json",
+      "prepared_sha256": "e6ec32c88b8a8fed23c8986f6ff6c61d96b0bfb9e318d6b24c7c8ddc639ed2d7",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-bear-druid-demoralizing-roar-over-shout-debuff.go-result.json",
+        "sha256": "adba3608fb2340d5e16441963e04e3560f745719f9d97f910b3cccd0060d9036"
+      },
+      "go_log": {
+        "file": "feral-bear-druid-demoralizing-roar-over-shout-debuff.go-log.txt",
+        "sha256": "49dec3e09828f15f6b81f62802723f44cbf3d2f015da242a5736dcd98a2182da"
+      }
+    },
+    {
+      "id": "feral-druid-demoralizing-roar-over-shout-debuff",
+      "description": "Production Feral Druid in Cat Form against 1 target whose rotation names Demoralizing Roar (9898), which a cat never learns (under the raid's permanent Demoralizing Shout debuff, which bids as much, outlasts the roar and holds it off in the Demoralizing category): Go drops the cast and its condition, and the cat plays on",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-druid-demoralizing-roar-over-shout-debuff.request.json"
+      },
+      "prepared": "feral-druid-demoralizing-roar-over-shout-debuff.prepared.json",
+      "prepared_sha256": "4669e595c5b82d2805ea67882b5b077c1d5ee1e70229650befbd92a6c022e85b",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-druid-demoralizing-roar-over-shout-debuff.go-result.json",
+        "sha256": "a14409aad441f1ec5240f30c5537615c843c0c07134e13c74b479614b2954395"
+      },
+      "go_log": {
+        "file": "feral-druid-demoralizing-roar-over-shout-debuff.go-log.txt",
+        "sha256": "cac3324da832e2b45eaf7744f21b5849529ea557d9d72f3984441e034a4bd003"
+      }
+    },
+    {
+      "id": "feral-bear-druid-demoralizing-roar-over-roar-debuff",
+      "description": "Production Feral Druid in Bear Form tanking 1 target and casting Demoralizing Roar (9898) when auraShouldRefresh asks, under the raid's permanent Demoralizing Roar debuff, which bids as much, outlasts the roar and holds it off in the Demoralizing category: the rotation reads the category as Go does",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-bear-druid-demoralizing-roar-over-roar-debuff.request.json"
+      },
+      "prepared": "feral-bear-druid-demoralizing-roar-over-roar-debuff.prepared.json",
+      "prepared_sha256": "2a5f31574fd2e770fdfc00704ad57e0fb9a5eb222a5fd52f8e4728afb16d73cc",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-bear-druid-demoralizing-roar-over-roar-debuff.go-result.json",
+        "sha256": "123c820efa214708a7795feae1809c4d372bfa616669eb43232a29b0a6f4f1c2"
+      },
+      "go_log": {
+        "file": "feral-bear-druid-demoralizing-roar-over-roar-debuff.go-log.txt",
+        "sha256": "b26bfde0caf76352d97e487039614bf5fafc2a07d07da981f3756d5c7263c9c8"
+      }
+    },
+    {
+      "id": "feral-druid-demoralizing-roar-over-roar-debuff",
+      "description": "Production Feral Druid in Cat Form against 1 target whose rotation names Demoralizing Roar (9898), which a cat never learns (under the raid's permanent Demoralizing Roar debuff, which bids as much, outlasts the roar and holds it off in the Demoralizing category): Go drops the cast and its condition, and the cat plays on",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-druid-demoralizing-roar-over-roar-debuff.request.json"
+      },
+      "prepared": "feral-druid-demoralizing-roar-over-roar-debuff.prepared.json",
+      "prepared_sha256": "2bfaba13aea6548d42cc094ac6f540da13f39546475304e3f92197f77c88334c",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-druid-demoralizing-roar-over-roar-debuff.go-result.json",
+        "sha256": "27ade08df1e80e7ccfafbd60f6b015dbd5439abd7d8253db60a07d62699cb86e"
+      },
+      "go_log": {
+        "file": "feral-druid-demoralizing-roar-over-roar-debuff.go-log.txt",
+        "sha256": "e8cfcd5484f93a6199f8637c45f1d41b32c0f1a084f5d9ce8dbbfc9200942057"
+      }
+    },
+    {
+      "id": "feral-druid-demoralizing-roar-3-targets",
+      "description": "Production Feral Druid in Cat Form against 3 targets whose rotation names Demoralizing Roar (9898), which a cat never learns (with no raid debuff in the Demoralizing category): Go drops the cast and its condition, and the cat plays on",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-druid-demoralizing-roar-3-targets.request.json"
+      },
+      "prepared": "feral-druid-demoralizing-roar-3-targets.prepared.json",
+      "prepared_sha256": "25941dbb3ba21ac9cc72fb88b833030d52e0a2fe158d17904e752dcc1401680b",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-druid-demoralizing-roar-3-targets.go-result.json",
+        "sha256": "cd38be80f3d1eea489b3b9681e535a7562c9241a5aada59819d3c15b8c8e0b67"
+      },
+      "go_log": {
+        "file": "feral-druid-demoralizing-roar-3-targets.go-log.txt",
+        "sha256": "3449efd3a6ced350b21176e3a8f2e0094c1343ddc94c888ead6a1ea1875c2d9f"
+      }
+    },
+    {
+      "id": "feral-bear-druid-demoralizing-roar-3-targets-over-shout-debuff",
+      "description": "Production Feral Druid in Bear Form tanking 3 targets and casting Demoralizing Roar (9898) when auraShouldRefresh asks, under the raid's permanent Demoralizing Shout debuff, which bids as much, outlasts the roar and holds it off in the Demoralizing category: the rotation reads the category as Go does",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-bear-druid-demoralizing-roar-3-targets-over-shout-debuff.request.json"
+      },
+      "prepared": "feral-bear-druid-demoralizing-roar-3-targets-over-shout-debuff.prepared.json",
+      "prepared_sha256": "8cd412897d38d9d488eaa52cdf057b8b3c4b82891fb8cc51c8fdf3f051bb0540",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-bear-druid-demoralizing-roar-3-targets-over-shout-debuff.go-result.json",
+        "sha256": "77ca4025dcffd181127ac4aa665940481363bb8b4ae7877a5f4ba5f25e679461"
+      },
+      "go_log": {
+        "file": "feral-bear-druid-demoralizing-roar-3-targets-over-shout-debuff.go-log.txt",
+        "sha256": "8c2c8426b864872dcea140e3a80f44997054eb86401632ce0b85300f85276b21"
+      }
+    },
+    {
+      "id": "feral-druid-demoralizing-roar-3-targets-over-shout-debuff",
+      "description": "Production Feral Druid in Cat Form against 3 targets whose rotation names Demoralizing Roar (9898), which a cat never learns (under the raid's permanent Demoralizing Shout debuff, which bids as much, outlasts the roar and holds it off in the Demoralizing category): Go drops the cast and its condition, and the cat plays on",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-druid-demoralizing-roar-3-targets-over-shout-debuff.request.json"
+      },
+      "prepared": "feral-druid-demoralizing-roar-3-targets-over-shout-debuff.prepared.json",
+      "prepared_sha256": "7f7ff08c1a86814b477559593ec03b722a0ae9fd7622bd6aa317abc32e32daaa",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-druid-demoralizing-roar-3-targets-over-shout-debuff.go-result.json",
+        "sha256": "131c8f17c3cd5c1cfa41d6f88ff71b55ad46ce80ab42fd0a5c10c015c3dd16af"
+      },
+      "go_log": {
+        "file": "feral-druid-demoralizing-roar-3-targets-over-shout-debuff.go-log.txt",
+        "sha256": "b0bad2b7dfd453087ca75f228aa629adba555187d0cad42d9e5eeb90ee853393"
+      }
+    },
+    {
+      "id": "feral-bear-druid-demoralizing-roar-3-targets-over-roar-debuff",
+      "description": "Production Feral Druid in Bear Form tanking 3 targets and casting Demoralizing Roar (9898) when auraShouldRefresh asks, under the raid's permanent Demoralizing Roar debuff, which bids as much, outlasts the roar and holds it off in the Demoralizing category: the rotation reads the category as Go does",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-bear-druid-demoralizing-roar-3-targets-over-roar-debuff.request.json"
+      },
+      "prepared": "feral-bear-druid-demoralizing-roar-3-targets-over-roar-debuff.prepared.json",
+      "prepared_sha256": "705337cbc29076b9a3fce8475f52a52e4775e1295c43c16fc79a47cc768ecae1",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-bear-druid-demoralizing-roar-3-targets-over-roar-debuff.go-result.json",
+        "sha256": "8e4af04f624769603fb616101989fcd435247f44942eb55c44ab4f5f56c4d8ff"
+      },
+      "go_log": {
+        "file": "feral-bear-druid-demoralizing-roar-3-targets-over-roar-debuff.go-log.txt",
+        "sha256": "3877abaa12c148afb13e2c1c88b8ba5b9862fc02f703a944437985ab5c76ec2c"
+      }
+    },
+    {
+      "id": "feral-druid-demoralizing-roar-3-targets-over-roar-debuff",
+      "description": "Production Feral Druid in Cat Form against 3 targets whose rotation names Demoralizing Roar (9898), which a cat never learns (under the raid's permanent Demoralizing Roar debuff, which bids as much, outlasts the roar and holds it off in the Demoralizing category): Go drops the cast and its condition, and the cat plays on",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-druid-demoralizing-roar-3-targets-over-roar-debuff.request.json"
+      },
+      "prepared": "feral-druid-demoralizing-roar-3-targets-over-roar-debuff.prepared.json",
+      "prepared_sha256": "8dd0f70427bb5f9f78706c01ba9e19fc8a9ccdfacbece282728d5950d0f58ae2",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-druid-demoralizing-roar-3-targets-over-roar-debuff.go-result.json",
+        "sha256": "037390bc2780f5af50252fa82c27321b19da90a9f664ed935707232e541b66f9"
+      },
+      "go_log": {
+        "file": "feral-druid-demoralizing-roar-3-targets-over-roar-debuff.go-log.txt",
+        "sha256": "40f0ea185dffcb9639069939d3a76d6cbe9f628357927a764f98c3157244d3f7"
+      }
+    },
+    {
+      "id": "feral-druid-demoralizing-roar-5-targets",
+      "description": "Production Feral Druid in Cat Form against 5 targets whose rotation names Demoralizing Roar (9898), which a cat never learns (with no raid debuff in the Demoralizing category): Go drops the cast and its condition, and the cat plays on",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-druid-demoralizing-roar-5-targets.request.json"
+      },
+      "prepared": "feral-druid-demoralizing-roar-5-targets.prepared.json",
+      "prepared_sha256": "e5a78ba33649b2a66d3a23bba5a3ee8f584186dc25d311e6f07681d8bf03808a",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-druid-demoralizing-roar-5-targets.go-result.json",
+        "sha256": "2e0b39f9073ed82e0dfcbcf3d4950a9aa3ee4d0d4cfd225421ef69d8e59e794c"
+      },
+      "go_log": {
+        "file": "feral-druid-demoralizing-roar-5-targets.go-log.txt",
+        "sha256": "68e583494b8cbbed7e6536c5f3f02fa12b21c252053b2c1e8c580a27a413033b"
+      }
+    },
+    {
+      "id": "feral-bear-druid-demoralizing-roar-5-targets-over-shout-debuff",
+      "description": "Production Feral Druid in Bear Form tanking 5 targets and casting Demoralizing Roar (9898) when auraShouldRefresh asks, under the raid's permanent Demoralizing Shout debuff, which bids as much, outlasts the roar and holds it off in the Demoralizing category: the rotation reads the category as Go does",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-bear-druid-demoralizing-roar-5-targets-over-shout-debuff.request.json"
+      },
+      "prepared": "feral-bear-druid-demoralizing-roar-5-targets-over-shout-debuff.prepared.json",
+      "prepared_sha256": "181c0068637ffecfb9185ec033bec53a1cf66cd04a14b2117a1c94a897d8e36b",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-bear-druid-demoralizing-roar-5-targets-over-shout-debuff.go-result.json",
+        "sha256": "93d445431880cc9aea1dacaca3483eeab1effd0a026c46a4d7a2dc3bc0885997"
+      },
+      "go_log": {
+        "file": "feral-bear-druid-demoralizing-roar-5-targets-over-shout-debuff.go-log.txt",
+        "sha256": "a5a056df6eea79f4182ca6f2b09cb40c15e0812abcac2bd90ef32973003437b2"
+      }
+    },
+    {
+      "id": "feral-druid-demoralizing-roar-5-targets-over-shout-debuff",
+      "description": "Production Feral Druid in Cat Form against 5 targets whose rotation names Demoralizing Roar (9898), which a cat never learns (under the raid's permanent Demoralizing Shout debuff, which bids as much, outlasts the roar and holds it off in the Demoralizing category): Go drops the cast and its condition, and the cat plays on",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-druid-demoralizing-roar-5-targets-over-shout-debuff.request.json"
+      },
+      "prepared": "feral-druid-demoralizing-roar-5-targets-over-shout-debuff.prepared.json",
+      "prepared_sha256": "9585794233bf2253d6de41d59536a058bff7ab5d0ca568a5fc68c671376d7d71",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-druid-demoralizing-roar-5-targets-over-shout-debuff.go-result.json",
+        "sha256": "65b719d59beff9e6af89fc918690f2d9de693e037c2c6d0b89b1878eba26907e"
+      },
+      "go_log": {
+        "file": "feral-druid-demoralizing-roar-5-targets-over-shout-debuff.go-log.txt",
+        "sha256": "e3007d5c0e1ca1b05d1fbdcc629873f9907a40a73c1c77d5b771798401116374"
+      }
+    },
+    {
+      "id": "feral-bear-druid-demoralizing-roar-5-targets-over-roar-debuff",
+      "description": "Production Feral Druid in Bear Form tanking 5 targets and casting Demoralizing Roar (9898) when auraShouldRefresh asks, under the raid's permanent Demoralizing Roar debuff, which bids as much, outlasts the roar and holds it off in the Demoralizing category: the rotation reads the category as Go does",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-bear-druid-demoralizing-roar-5-targets-over-roar-debuff.request.json"
+      },
+      "prepared": "feral-bear-druid-demoralizing-roar-5-targets-over-roar-debuff.prepared.json",
+      "prepared_sha256": "fb7ef3c4c39f305e61dbb17c549227bcedfbb3c7c5990f8d0edab9118fa0018f",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-bear-druid-demoralizing-roar-5-targets-over-roar-debuff.go-result.json",
+        "sha256": "5942db1904646bb0c6c63d258796e52ceb75cbe625a19d7242f8533968a550d7"
+      },
+      "go_log": {
+        "file": "feral-bear-druid-demoralizing-roar-5-targets-over-roar-debuff.go-log.txt",
+        "sha256": "a2105003c0affecc4fb4a1ca865ce06470dbeb88d9a5f42b326684d0712925db"
+      }
+    },
+    {
+      "id": "feral-druid-demoralizing-roar-5-targets-over-roar-debuff",
+      "description": "Production Feral Druid in Cat Form against 5 targets whose rotation names Demoralizing Roar (9898), which a cat never learns (under the raid's permanent Demoralizing Roar debuff, which bids as much, outlasts the roar and holds it off in the Demoralizing category): Go drops the cast and its condition, and the cat plays on",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-druid-demoralizing-roar-5-targets-over-roar-debuff.request.json"
+      },
+      "prepared": "feral-druid-demoralizing-roar-5-targets-over-roar-debuff.prepared.json",
+      "prepared_sha256": "80a7907a9f00b1758eb575e4016293007d8970e91e13320888fd49063666a6d2",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-druid-demoralizing-roar-5-targets-over-roar-debuff.go-result.json",
+        "sha256": "35655909c6e4c6b2dc115524faa533ba947b6c429532fc830b2bd7fa345ff580"
+      },
+      "go_log": {
+        "file": "feral-druid-demoralizing-roar-5-targets-over-roar-debuff.go-log.txt",
+        "sha256": "cd7d8bfff8f11943dd7fdf9d1ba96327e2b8e9b8a6ea751facf612115e6ee4d2"
       }
     }
   ]

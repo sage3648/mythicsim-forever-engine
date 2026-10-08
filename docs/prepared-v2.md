@@ -203,7 +203,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `blood_frenzy` | sim/druid/talents_feral_combat.go | The cat trigger's chance, builders and crit outcome, its combo point metrics, and the bear trigger's melee spells and Rage |
 | `bear_form` | sim/druid/forms.go, feralbear | The aura a bear enters at each reset, a stat aura whose bit carries the form's stats, armor and maximum health, which the target's swings read; its threat and spirit regeneration with the unit's values before any aura, the threat with every permanent aura the reset activates, the paw and the equipped weapon, Faerie Fire's free cast and the form-breaking consumables; the health its stat bonus adds, so a shift keeps the health fraction; the cast, which spends all Rage and rolls Furor's chance, a Go literal, of 10. The player's `health_at_reset` is the health before the form raised the maximum |
 | `enrage` | sim/druid/enrage.go | Instant Rage and Rage a second from client data, Intensity's and Wolfshead's bonus, the tick count; the aura's armor cut is a stat aura |
-| `demoralizing_roar` | sim/druid/demoralizing_roar.go | The spell and the target debuff, whose attack power cut the target's swing reads while it is up |
+| `demoralizing_roar` | sim/druid/demoralizing_roar.go | The spell and the target debuff, whose attack power cut the target's swing reads while it is up; the roar rolls a magic hit on every target in unit index order and debuffs each one it lands on, and an `exclusive_category` holds the Demoralizing category the debuff shares with the raid's Roar and Shout debuffs, so a permanent debuff holds the player's roar off and `auraShouldRefresh` reads it |
 | `maul` | sim/druid/maul.go | The strike and its flat damage, the queue spell and aura and the realism delay, a Go literal |
 | `lacerate` | sim/druid/lacerate.go | The tick a stack, the weapon share a stack from client data, the stack cap and tick crit |
 | `primal_bite` | sim/druid/primal_bite.go | The flat damage; Berserk lifts the cooldown, a Go literal. Against several targets, up to three strikes from the cast target onward, and only the first refunds on a miss |
@@ -215,7 +215,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `unending_life_refund` | sim/druid/item_sets.go | The energy Ferocious Bite or Rip refunds when it misses, is dodged, blocked or parried, and its metrics action |
 | `natural_reaction` | sim/druid/talents_feral_combat.go | The dodge trigger's chance and Rage from client data, and its metrics |
 | `rend_and_tear` | sim/druid/talents_feral_combat.go | The target's damage taken multiplier on the druid's special attacks and the bleeds it waits for |
-| `aura_should_refresh` | sim/core/exclusive_effect.go, apl_values_aura.go | For each aura an auraShouldRefresh value names, how each exclusive effect reads: alone in its category, or held for good by another aura |
+| `aura_should_refresh` | sim/core/exclusive_effect.go, apl_values_aura.go | For each aura an auraShouldRefresh value names, how each exclusive effect reads: alone in its category, held for good by another aura, or neither, which Rust reads live from a single aura category an `exclusive_category` describes and the runtime enforces (the active effect, the bids and the remaining durations, as `ShouldRefreshExclusiveEffects` does) when the aura does not stack |
 | `lightning_bolt` | sim/shaman/lightning_bolt.go | Damage rolls on every rank, the Lightning Overload chance and the overload tag; the overload rolls when the bolt lands |
 | `chain_lightning` | sim/shaman/chain_lightning.go | Damage rolls on every rank, the overload chance a third of which each hit rolls, and the bounce reduction, a Go literal. Against several targets it bounces to three in Go's order, and each landed hit rolls its own overload on that hit's target |
 | `flame_shock` | sim/shaman/shocks.go | The hit's damage roll, the dot's tick base and crit rule; a landed hit casts the tagged dot spell |
@@ -327,6 +327,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `bloodthrill`, `weaponmaster_sword` | sim/warrior/talents_arms.go | Bloodthrill's chance and the longer Overpower window it opens after a delay; Weaponmaster's chance on a sword hand's hits and the extra attack it grants |
 | `revenge`, `shield_slam` | sim/warrior/revenge.go, talents_protection.go | Revenge's trigger on blocked, dodged and parried hits taken, its roll and attack power share, a Go literal; Shield Slam's roll plus the block value, which the target's rolls carry for each stat aura combination |
 | `thunder_clap` | sim/warrior/thunder_clap.go | The base, the attack power share, a Go literal, on the binary magic table, and the bid by which its debuff slows the target's melee speed while it alone holds the attack speed category; against several targets it hits up to four and debuffs each one it lands on |
+| `challenging_shout` | sim/warrior/challenging_shout.go | The spell: an always hit with no damage on every active target in unit index order, with no taunt, as the fork's shout is. The rage cost, global cooldown, cooldown and a threat of none are the common cast's; its hit chance bonuses change nothing |
 | `demoralizing_shout` | sim/warrior/demoralizing_shout.go | The spell and the target debuff, whose attack power cut the target's swing reads while it is up; the shout rolls a magic hit on every target in unit index order and debuffs each one it lands on |
 | `retaliation` | sim/warrior/retaliation.go | The aura's charges and the strike back at each landed melee hit taken that dealt damage |
 | `sweeping_strikes` | sim/warrior/talents_arms.go | The Battle Stance cooldown's aura and charges. Against several targets each charge copies a hit's damage before armor onto the next target, and Whirlwind, Thunder Clap and Execute cast a normalized attack instead, even against one target as Go does |
@@ -662,6 +663,14 @@ targets hit every target with the nova and heal once.
 Shout against 1 target, `-3-targets` and `-5-targets` against several, and the two
 `protection-warrior-demoralizing-shout-over-*-debuff` cases run it under the raid's permanent
 Demoralizing Roar or Shout debuff, which holds the player's shout off.
+`protection-warrior-challenging-shout` and `arms-warrior-challenging-shout`, with
+`-3-targets`, cast Challenging Shout first: an always hit for no damage on each target, once
+for its 10 minute cooldown, with no taunt. `feral-bear-druid-demoralizing-roar` and
+`-3-targets` and `-5-targets` cases under the raid's permanent Demoralizing Shout
+(`-over-shout-debuff`) or Roar (`-over-roar-debuff`) debuff keep the bear from roaring, since
+its rotation asks `auraShouldRefresh` and the permanent debuff holds the category; the
+production bear requests are the same fights with no debuff. `feral-druid-demoralizing-roar`
+cases give a cat the roar it never learns, which Go drops along with its condition.
 `production-assassination-rogue` and `production-subtlety-rogue` are the production
 Assassination and Subtlety Rogue requests. `combat-swords`, `combat-riposte`,
 `combat-wound-poison`, `combat-kidney-shot`, `assassination-venom`,
@@ -876,12 +885,11 @@ cargo run --locked -- check --infile fixtures/mage/prepared-v2/frost-reference.p
   target as in Go. The exporter refuses targets that differ from the first, in the swing
   at a tank too, a target aura with an internal cooldown and the item and pet effects that
   reach other targets; the gate refuses each class's spells that reach other targets
-  without a Rust implementation, such as the Warrior's Demoralizing and Challenging Shout,
-  and a tanked fight against several targets for a class whose hit-taken behavior has not
-  been checked against it: only Paladin, Druid and Warrior tanks run, since the others'
-  listeners do not answer the copy that swung. Every class has been checked against several
-  targets. Job
-  modes such as stat weights need contract additions.
+  without a Rust implementation, and a tanked fight against several targets for a class
+  whose hit-taken behavior has not been checked against it: only Paladin, Druid and Warrior
+  tanks run, since the others' listeners do not answer the copy that swung. Every class has
+  been checked against several targets. Job modes such as stat weights need contract
+  additions.
 - Incoming damage covers the main hand swing of each target at the one player tanking it.
   With several targets Go has every copy of the boss swing at the tank, each on its own
   timer from its own reset roll, in unit index order when several are due at once; Rust

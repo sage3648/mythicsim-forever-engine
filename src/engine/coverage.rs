@@ -1753,12 +1753,44 @@ fn prepull_pruned(prepared: &PreparedV2, prepull: &crate::rotation::Prepull) -> 
         == crate::rotation::CompiledCondition::Pruned
 }
 
+/// Whether the aura's exclusive effect at a position is one the runtime enforces: its category
+/// is a single aura category an `exclusive_category` effect of the unit describes, with the aura
+/// among its members, so the runtime reads Go's active effect, bids and remaining durations. An
+/// aura that stacks weighs its bid by its stacks, which no reading covers.
+fn described_category(
+    prepared: &PreparedV2,
+    unit: &str,
+    aura: &crate::contracts::prepared_v2::Aura,
+    position: usize,
+) -> bool {
+    if aura.max_stacks != 0 || aura.exclusive_memberships.len() != aura.exclusive_effects as usize {
+        return false;
+    }
+    let Some(membership) = aura.exclusive_memberships.get(position) else {
+        return false;
+    };
+    membership.single_aura
+        && prepared.effects.iter().any(|effect| {
+            matches!(effect, Effect::ExclusiveCategory { unit: u, category, members, .. }
+                if u == unit
+                    && *category == membership.category
+                    && members.iter().any(|member| member.aura == aura.label))
+        })
+}
+
 /// Go `ShouldRefreshExclusiveEffects` depends on the other effects of each exclusive category,
-/// which Rust reads only from an exported reading: an aura holding its category alone, or one
-/// another aura holds for good. Any other reading, or an aura the unit lacks, is unsupported.
+/// which Rust reads from an exported reading: an aura holding its category alone, one another
+/// aura holds for good, or one in a single aura category the export describes and the runtime
+/// enforces. Any other reading, or an aura the unit lacks, is unsupported.
 fn aura_refresh_conditions(prepared: &PreparedV2, rotation: &Rotation) -> Vec<String> {
     let mut reasons = Vec::new();
-    let conditions = rotation.priority_list.iter().flat_map(|item| {
+    // Go `newAPLAction` builds an action before its condition, and a cast of a spell the player
+    // lacks builds nothing, so the condition of such an item is never read.
+    let kept = rotation.priority_list.iter().filter(|item| {
+        !matches!(&item.action, Action::CastSpell { spell, .. }
+            if rotation_spell_index(prepared, spell).is_none())
+    });
+    let conditions = kept.flat_map(|item| {
         let interrupt = match &item.action {
             Action::ChannelSpell { interrupt_if, .. } => interrupt_if.as_ref(),
             _ => None,
@@ -1782,7 +1814,11 @@ fn aura_refresh_conditions(prepared: &PreparedV2, rotation: &Rotation) -> Vec<St
             let read = prepared.effects.iter().any(|effect| {
                 matches!(effect, Effect::AuraShouldRefresh { unit: u, aura: label, modes }
                     if u == unit && *label == aura.label
-                        && modes.iter().all(|mode| mode == "own" || mode == "never"))
+                        && modes.iter().enumerate().all(|(position, mode)| {
+                            mode == "own"
+                                || mode == "never"
+                                || described_category(prepared, unit, aura, position)
+                        }))
             });
             if !read {
                 reasons.push(format!(

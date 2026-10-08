@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/wowsims/forever/sim/core"
+	"github.com/wowsims/forever/sim/core/buffs"
 	"github.com/wowsims/forever/sim/core/dbcenums"
 	"github.com/wowsims/forever/sim/core/simsignals"
 	"github.com/wowsims/forever/sim/core/spelldata"
@@ -132,6 +133,11 @@ func druidBearEffects(d *druid.Druid, character *core.Character) []map[string]an
 				"kind": "demoralizing_roar", "spell": spellPosition(character, d.DemoralizingRoar.Spell),
 				"aura": d.DemoralizingRoarAuras.Get(target).Label,
 			})
+			// buffs.DemoralizingRoarAura and the raid's Demoralizing Roar and Shout debuffs share
+			// one single aura category, each bidding its attack power cut.
+			if category := exclusiveCategoryEffect(target, "target", buffs.DemoralizingRoarCategory); category != nil {
+				effects = append(effects, category)
+			}
 		}
 		if d.Maul != nil { // maul.go: the queue spell, its aura and realism cooldown, and the strike
 			strike := -1

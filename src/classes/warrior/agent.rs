@@ -15,6 +15,7 @@ use super::{
         berserker_rage::{self, BerserkerRage},
         bloodrage::{self, Bloodrage},
         bloodthirst::{self, Bloodthirst},
+        challenging_shout,
         charge::{self, Charge},
         death_wish::{self, DeathWish},
         demoralizing_shout,
@@ -90,6 +91,8 @@ pub(crate) enum WarriorSpell {
     ThunderClap,
     /// demoralizing_shout.go: the shout and its debuff on each target it lands on.
     DemoralizingShout,
+    /// challenging_shout.go: an always hit with no damage on each target.
+    ChallengingShout,
     Retaliation,
     RetaliationHit,
     SweepingStrikes,
@@ -272,6 +275,7 @@ impl WarriorAgent {
             "demoralizing_shout" if has("demoralizing_shout") => {
                 Some(WarriorSpell::DemoralizingShout)
             }
+            "challenging_shout" if has("challenging_shout") => Some(WarriorSpell::ChallengingShout),
             "retaliation" if has("retaliation") => Some(WarriorSpell::Retaliation),
             "retaliation_hit" if has("retaliation") => Some(WarriorSpell::RetaliationHit),
             "sweeping_strikes" if has("sweeping_strikes") => Some(WarriorSpell::SweepingStrikes),
@@ -1177,6 +1181,7 @@ impl Agent for WarriorAgent {
                     .expect("Demoralizing Shout is bound");
                 demoralizing_shout::apply(fight, spell, aura);
             }
+            WarriorSpell::ChallengingShout => challenging_shout::apply(fight, spell),
             WarriorSpell::Retaliation => {
                 let params = fight.agent.retaliation.expect("Retaliation is bound");
                 retaliation::apply(fight, params);

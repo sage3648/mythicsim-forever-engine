@@ -3218,6 +3218,11 @@ pub enum Effect {
         spell: usize,
         aura: String,
     },
+    /// Challenging Shout: an always hit outcome with no damage on every active target, as Go's
+    /// fork casts it, with no taunt.
+    ChallengingShout {
+        spell: usize,
+    },
     /// Bloodthrill: main hand hits on a bleeding target may open the Overpower window longer.
     Bloodthrill {
         trigger_aura: String,
@@ -4107,6 +4112,7 @@ impl Effect {
             Effect::SpearingStrike { .. } => "spearing_strike",
             Effect::Slam { .. } => "slam",
             Effect::DemoralizingShout { .. } => "demoralizing_shout",
+            Effect::ChallengingShout { .. } => "challenging_shout",
             Effect::Bloodthrill { .. } => "bloodthrill",
             Effect::WeaponmasterSword { .. } => "weaponmaster_sword",
             Effect::Revenge { .. } => "revenge",
