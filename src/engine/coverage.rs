@@ -1784,7 +1784,13 @@ fn described_category(
 /// enforces. Any other reading, or an aura the unit lacks, is unsupported.
 fn aura_refresh_conditions(prepared: &PreparedV2, rotation: &Rotation) -> Vec<String> {
     let mut reasons = Vec::new();
-    let conditions = rotation.priority_list.iter().flat_map(|item| {
+    // Go `newAPLAction` builds an action before its condition, and a cast of a spell the player
+    // lacks builds nothing, so the condition of such an item is never read.
+    let kept = rotation.priority_list.iter().filter(|item| {
+        !matches!(&item.action, Action::CastSpell { spell, .. }
+            if rotation_spell_index(prepared, spell).is_none())
+    });
+    let conditions = kept.flat_map(|item| {
         let interrupt = match &item.action {
             Action::ChannelSpell { interrupt_if, .. } => interrupt_if.as_ref(),
             _ => None,
