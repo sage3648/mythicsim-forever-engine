@@ -27,6 +27,7 @@ pub(crate) mod energy;
 pub(crate) mod env;
 pub(crate) mod export;
 pub(crate) mod export_items;
+pub(crate) mod external_cooldowns;
 pub(crate) mod forever_item_sets;
 pub(crate) mod forever_items;
 pub(crate) mod forever_items_generated;

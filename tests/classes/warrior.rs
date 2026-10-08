@@ -1010,3 +1010,128 @@ fn a_melee_weapon_damage_proc_rolls_the_melee_table_in_a_fight() {
         );
     }
 }
+
+/// Taunt and Intimidating Shout are an always hit for no damage on the target they are cast at
+/// alone, one roll-free outcome each cast, with no threat: the fork has no taunt and no fear.
+#[test]
+fn taunt_and_intimidating_shout_hit_the_first_target_for_nothing() {
+    for (case, spell, casts) in [
+        ("protection-warrior-taunt-3-targets", "355", None),
+        ("arms-warrior-taunt-3-targets", "355", None),
+        (
+            "protection-warrior-intimidating-shout-3-targets",
+            "5246",
+            Some(2),
+        ),
+        ("arms-warrior-intimidating-shout-3-targets", "5246", Some(2)),
+    ] {
+        let logs = first_fight_log(warrior_fixture(case));
+        let cast = logs
+            .matches(&format!("Casting {{SpellID: {spell}}}"))
+            .count();
+        let hits = lines_with(&logs, 1, spell);
+        // A queued Taunt shows as a line of its own, so only the hits are compared with the casts.
+        let hits: Vec<_> = hits.iter().filter(|line| line.contains(" Hit ")).collect();
+        assert_eq!(hits.len(), cast, "{case}: a hit for each cast");
+        assert!(cast >= 2, "{case}: cast {cast} times");
+        if let Some(expected) = casts {
+            assert_eq!(cast, expected, "{case}");
+        }
+        for line in hits {
+            assert!(
+                line.ends_with("Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)"),
+                "{case}: {line}"
+            );
+        }
+        for target in 2..=3 {
+            assert!(lines_with(&logs, target, spell).is_empty(), "{case}");
+        }
+    }
+}
+
+/// The shout goes on its own cooldown, three minutes in the pinned data, and spends rage; Taunt
+/// spends none and is ready again after eight seconds.
+#[test]
+fn taunt_and_intimidating_shout_keep_their_cooldowns() {
+    let seconds = |logs: &str, spell: &str| -> Vec<f64> {
+        logs.lines()
+            .filter(|line| line.contains(&format!("Casting {{SpellID: {spell}}}")))
+            .map(|line| line[1..line.find(']').unwrap()].parse().unwrap())
+            .collect()
+    };
+    let logs = first_fight_log(warrior_fixture("protection-warrior-intimidating-shout"));
+    let shout = seconds(&logs, "5246");
+    assert_eq!(shout.len(), 2, "{shout:?}");
+    assert!(shout[1] - shout[0] >= 180.0, "{shout:?}");
+    assert!(logs.contains("Spent 23.000 rage from {SpellID: 5246}"));
+    let logs = first_fight_log(warrior_fixture("protection-warrior-taunt"));
+    let taunt = seconds(&logs, "355");
+    for pair in taunt.windows(2) {
+        assert!(pair[1] - pair[0] >= 8.0, "{taunt:?}");
+    }
+    assert!(!logs.contains("rage from {SpellID: 355}"));
+}
+
+/// Taunt needs Defensive Stance: the Arms warrior's Battle Stance never casts it, and it casts
+/// it once its rotation has changed stance.
+#[test]
+fn taunt_needs_defensive_stance() {
+    let casts = |value: Value| {
+        first_fight_log(value)
+            .matches("Casting {SpellID: 355}")
+            .count()
+    };
+    assert!(casts(warrior_fixture("arms-warrior-taunt")) > 0);
+    let mut value = warrior_fixture("arms-warrior-intimidating-shout");
+    let rotation = serde_json::to_string(&value["player"]["rotation"])
+        .unwrap()
+        .replace("\"spellId\":5246", "\"spellId\":355");
+    value["player"]["rotation"] = serde_json::from_str(&rotation).unwrap();
+    assert_eq!(casts(value), 0);
+}
+
+/// Each spell runs only with its effect.
+#[test]
+fn taunt_and_intimidating_shout_need_their_effects() {
+    for (case, kind, spell) in [
+        ("arms-warrior-taunt", "taunt", "355"),
+        (
+            "arms-warrior-intimidating-shout",
+            "intimidating_shout",
+            "5246",
+        ),
+    ] {
+        let mut value = warrior_fixture(case);
+        value["effects"]
+            .as_array_mut()
+            .unwrap()
+            .retain(|effect| effect["kind"] != kind);
+        assert!(
+            reasons(value).contains(&format!(
+                "rotation reaches spell {spell} without a known behavior"
+            )),
+            "{case}"
+        );
+    }
+}
+
+/// The Vindicator's Battlegear 3 piece bonus takes 15 seconds off the shout's cooldown, a spell
+/// mod of the common cast.
+#[test]
+fn intimidating_shouts_cooldown_follows_the_vindicators_set_bonus() {
+    let logs = first_fight_log(warrior_fixture(
+        "protection-warrior-intimidating-shout-vindicators",
+    ));
+    let casts: Vec<f64> = logs
+        .lines()
+        .filter(|line| line.contains("Casting {SpellID: 5246}"))
+        .map(|line| line[1..line.find(']').unwrap()].parse().unwrap())
+        .collect();
+    assert_eq!(casts.len(), 3, "{casts:?}");
+    for pair in casts.windows(2) {
+        assert!(
+            pair[1] - pair[0] >= 165.0 && pair[1] - pair[0] < 170.0,
+            "{casts:?}"
+        );
+    }
+}

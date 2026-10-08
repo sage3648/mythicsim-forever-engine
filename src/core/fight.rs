@@ -23,6 +23,7 @@ pub(crate) mod exclusive;
 mod external_cooldown;
 mod focus;
 mod gear_procs;
+mod innervate;
 mod on_use_damage;
 pub(crate) mod proc_damage;
 pub(crate) use on_use_damage::known as on_use_damage_known;
@@ -1121,6 +1122,31 @@ pub(crate) struct InitialPseudo {
     pub(crate) force_full_spirit_regen: bool,
 }
 
+/// The raw MP5 of the player's stats: Go's `AddStatsDynamic` adds each bonus to it when its aura
+/// gains and takes the bonus away when it expires, in the order the auras change.
+#[derive(Clone, Debug)]
+struct Mp5Path {
+    value: f64,
+    /// The MP5 each stat aura adds, by bit.
+    bonuses: Vec<f64>,
+}
+
+impl Mp5Path {
+    /// The raw MP5 after the auras of the changed bits gained or expired, as the new mask says.
+    fn change(&mut self, changed: u32, mask: u32) -> f64 {
+        for (bit, bonus) in self.bonuses.iter().enumerate() {
+            if changed & (1 << bit) != 0 {
+                if mask & (1 << bit) != 0 {
+                    self.value += bonus;
+                } else {
+                    self.value -= bonus;
+                }
+            }
+        }
+        self.value
+    }
+}
+
 /// One major cooldown, in Go's initial order.
 #[derive(Clone, Debug)]
 pub(crate) struct MajorCooldown {
@@ -1483,6 +1509,8 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) windfury: Option<Windfury>,
     /// The generated buffs other players cast on the player on cooldown.
     pub(crate) external_cooldowns: Vec<external_cooldown::ExternalCooldown>,
+    /// The auras other than the druid's own that carry Innervate's regeneration.
+    innervate_regens: Vec<innervate::InnervateRegen>,
     /// What Power Infusion multiplies, when the player has a copy of its aura.
     power_infusion: Option<power_infusion::PowerInfusion>,
     /// The player's healing dealt multiplier relative to its exported value, which Power
@@ -1520,6 +1548,8 @@ pub(crate) struct Fight<A: Agent> {
     /// The player's resistances for each combination that a combination changes, by Go
     /// school index.
     pub(crate) stat_resistance: Vec<Vec<(usize, f64)>>,
+    /// The raw MP5 of the stats, when an aura adds a bonus that is not a whole number.
+    mp5_path: Option<Mp5Path>,
     /// The active stat auras.
     pub(crate) stat_mask: u32,
     /// The labels of the stat auras, bit by bit.
@@ -2519,6 +2549,29 @@ impl<A: Agent> Fight<A> {
                 _ => None,
             })
             .unwrap_or_default();
+        // Go adds each bonus to the raw stats and takes it away again, so an MP5 bonus that is not
+        // a whole number leaves the raw MP5 a few ulps off its start once the aura expires. The
+        // runtime follows that raw value when the export gives such a bonus.
+        let mp5_path = effects.iter().find_map(|effect| match effect {
+            Effect::StatAuras { raw_mp5, .. } if !raw_mp5.is_empty() => {
+                let mp5 = |mask: usize| stat_combos[mask].get("MP5").copied().unwrap_or_default();
+                let bonuses = stat_aura_labels
+                    .iter()
+                    .enumerate()
+                    .map(|(bit, label)| {
+                        raw_mp5
+                            .get(label)
+                            .copied()
+                            .unwrap_or_else(|| mp5(1 << bit) - mp5(0))
+                    })
+                    .collect();
+                Some(Mp5Path {
+                    value: config.powers.mp5,
+                    bonuses,
+                })
+            }
+            _ => None,
+        });
         // The exporter writes the Health stat only when a combination changes it.
         let stat_health: Vec<Option<f64>> = stat_combos
             .iter()
@@ -2761,6 +2814,18 @@ impl<A: Agent> Fight<A> {
                     _ => None,
                 }) {
                     AuraBehavior::MultiplyManaRegenSpeed(multiplier)
+                } else if let Some(index) = (side == Side::Player)
+                    .then(|| {
+                        effects
+                            .iter()
+                            .filter(|effect| matches!(effect, Effect::InnervateRegen { .. }))
+                            .position(|effect| {
+                                matches!(effect, Effect::InnervateRegen { aura, .. } if *aura == exported.label)
+                            })
+                    })
+                    .flatten()
+                {
+                    AuraBehavior::InnervateRegen(index)
                 } else if let Some(kind) = effects.iter().find_map(|effect| match effect {
                     Effect::WindfuryTotem {
                         totem_aura,
@@ -3166,12 +3231,14 @@ impl<A: Agent> Fight<A> {
             stat_school_damage,
             stat_resistance,
             stat_mask: 0,
+            mp5_path,
             stat_aura_labels: stat_aura_labels.clone(),
             crusader: None,
             whelp: None,
             sulfuras: None,
             windfury: None,
             external_cooldowns: Vec::new(),
+            innervate_regens: Vec::new(),
             power_infusion: None,
             healing_dealt_factor: 1.0,
             chili: None,
@@ -3674,6 +3741,7 @@ impl<A: Agent> Fight<A> {
         }
         fight.bind_heal_procs(effects)?;
         fight.bind_power_infusion(effects)?;
+        fight.bind_innervate_regens(effects);
         fight.bind_external_cooldowns(effects, &player.auras)?;
         for effect in effects {
             if let Effect::AbsorbOnUse {
@@ -3909,6 +3977,7 @@ impl<A: Agent> Fight<A> {
     /// Go `Unit.AddStatsDynamic` for the stat auras: the stats of the new combination, and
     /// current mana held to a lower maximum.
     pub(crate) fn set_stat_mask(&mut self, mask: u32) {
+        let changed = self.stat_mask ^ mask;
         self.stat_mask = mask;
         let (mp5, spirit_regen) = (
             self.player.powers.mp5,
@@ -3916,6 +3985,9 @@ impl<A: Agent> Fight<A> {
         );
         // A dynamic pet takes the owner's change at its heartbeat.
         self.set_player_powers(self.stat_combos[mask as usize]);
+        if let Some(path) = self.mp5_path.as_mut() {
+            self.player.powers.mp5 = path.change(changed, mask);
+        }
         if self.has_mana_bar() && self.player.mana > self.player.powers.max_mana {
             self.player.mana = self.player.powers.max_mana;
         }
@@ -4419,6 +4491,9 @@ impl<A: Agent> Fight<A> {
             player.ranged_speed_multiplier = self.config.ranged_speed_multiplier;
             player.powers = self.config.powers;
             self.stat_mask = 0;
+            if let Some(path) = self.mp5_path.as_mut() {
+                path.value = self.config.powers.mp5;
+            }
             player.spirit_regen_rate_casting = initial.spirit_regen_rate_casting;
             player.spirit_regen_multiplier = initial.spirit_regen_multiplier;
             player.force_full_spirit_regen = initial.force_full_spirit_regen;
@@ -4943,7 +5018,30 @@ impl<A: Agent> Fight<A> {
 
 #[cfg(test)]
 mod tests {
-    use super::{Side, DEFENDERS, MAX_TARGETS};
+    use super::{Mp5Path, Side, DEFENDERS, MAX_TARGETS};
+
+    /// Go adds a bonus to the raw stats and takes it away again: 77 plus Mana Tide Totem's
+    /// 483.33 and minus it again is a few ulps short of 77, and the path keeps that.
+    #[test]
+    fn a_fractional_mp5_bonus_leaves_the_raw_mp5_off_its_start() {
+        let bonus = 290.0 * 5000.0 / 3000.0;
+        let mut path = Mp5Path {
+            value: 77.0,
+            bonuses: vec![0.0, bonus],
+        };
+        assert_eq!(path.change(0b10, 0b10), 77.0 + bonus);
+        let after = path.change(0b10, 0b00);
+        assert_eq!(after, 76.99999999999994);
+        assert_ne!(after, 77.0);
+        // A whole number bonus comes back exactly, and a bit that did not change is left alone.
+        let mut path = Mp5Path {
+            value: 77.0,
+            bonuses: vec![31.0, bonus],
+        };
+        path.change(0b01, 0b01);
+        assert_eq!(path.change(0b01, 0b00), 77.0);
+        assert_eq!(path.change(0b00, 0b00), 77.0);
+    }
 
     /// Every target and the player come before the pets in per-unit lists, so a spell's
     /// metrics hold one entry for each unit it can hit.

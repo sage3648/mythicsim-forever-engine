@@ -474,6 +474,25 @@ impl Warrior {
                 effects.push(json!({"kind": "challenging_shout", "spell": position}));
             }
         }
+        // taunt.go and intimidating_shout.go: an always hit outcome with no damage on the
+        // target, with the rage, global cooldown and cooldown the shared cast applies (Taunt
+        // needs Defensive Stance). The fork has no taunt and no fear, so neither changes a
+        // target's aim, swing or threat, and the shout does not reach the other targets.
+        for (kind, rank) in [
+            ("taunt", data.taunt.highest()),
+            ("intimidating_shout", data.intimidating_shout.highest()),
+        ] {
+            if let Some(spell) = Self::spell_of(sim, unit, rank) {
+                if let Some(position) = sim
+                    .unit(unit)
+                    .spellbook
+                    .iter()
+                    .position(|candidate| *candidate == spell)
+                {
+                    effects.push(json!({"kind": kind, "spell": position}));
+                }
+            }
+        }
         if talent("bloodthrill") > 0 {
             effects.push(
                 json!({"kind": "bloodthrill", "trigger_aura": "Bloodthrill - Trigger",

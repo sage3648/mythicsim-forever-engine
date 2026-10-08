@@ -1,13 +1,13 @@
 //! Power Infusion: tools/oracle-v2/power_infusion.go. The generated aura `buffs.PowerInfusionsAura`
 //! builds is the priest's own (talents_discipline.go `applyPowerInfusion`) and the external
 //! caster's copy that any class receives from priests in the raid (buffs/drivers.go
-//! `drivePowerInfusions`, an external cooldown). Both bid in the same exclusive categories.
+//! `drivePowerInfusions`, an external cooldown that `external_cooldowns.rs` describes). Both bid in
+//! the same exclusive categories.
 
 use serde_json::{json, Value};
 
 use crate::contracts::prepared_v2::ActionId;
 
-use super::buffs::generated::POWER_INFUSIONS;
 use super::dbcenums;
 use super::env::Environment;
 use super::sim::{AuraId, Sim, UnitId};
@@ -16,9 +16,6 @@ use super::stats::SCHOOL_LEN;
 
 /// The Power Infusion row every copy of the aura reads.
 const SPELL: i32 = 10060;
-
-/// The label `buffs.PowerInfusionsAura` gives the external caster's copy.
-const EXTERNAL_LABEL: &str = "Power Infusions (External)";
 
 fn find_aura(sim: &Sim, unit: UnitId, action: &ActionId) -> Option<AuraId> {
     sim.unit(unit)
@@ -105,63 +102,4 @@ pub(crate) fn power_infusion_effect(
         "kind": "power_infusion", "spell_id": SPELL, "aura": label,
         "damage_multiplier": damage, "schools": schools, "healing_multiplier": healing,
     }))
-}
-
-/// `externalPowerInfusionEffects`: priests in the raid cast Power Infusion on the player on
-/// cooldown, taking turns, as the generated external cooldown around the external aura. The
-/// runtime keeps the pending source across fights, as Go's closure does, and rolls the healing
-/// multiplier back by division, which is exact only when it is 1.
-pub(crate) fn external_power_infusion_effects(
-    env: &Environment,
-    unrepresented: &mut Vec<String>,
-) -> Vec<Value> {
-    let player = env.player;
-    let Some(aura) = env.sim.get_aura(player, EXTERNAL_LABEL) else {
-        return Vec::new();
-    };
-    let mut note = |condition: bool, message: &str| {
-        if condition {
-            unrepresented.push(message.to_string());
-        }
-    };
-    let sources = env
-        .sim
-        .character(player)
-        .player
-        .message("buffs")
-        .map_or(0, |buffs| buffs.i32("power_infusions"));
-    let state = env.sim.aura(aura);
-    let action = state.action_id.clone().unwrap_or_default();
-    let cast = env
-        .sim
-        .unit(player)
-        .spellbook
-        .iter()
-        .copied()
-        .find(|spell| {
-            let spell = env.sim.spell(*spell);
-            spell.related_self_buff == Some(aura) && spell.action_id == action
-        })
-        .map(|spell| env.sim.spell(spell));
-    let Some(cast) = cast.filter(|cast| cast.cd.timer.is_some() && sources > 0) else {
-        note(true, "the external Power Infusion has no cooldown spell");
-        return Vec::new();
-    };
-    note(
-        cast.cd.duration != state.duration,
-        "the external Power Infusion's cooldown is not its aura's duration",
-    );
-    let healing = env.sim.unit(player).pseudo_stats.healing_dealt_multiplier;
-    note(
-        healing != 1.0,
-        &format!("the external Power Infusion on a healing dealt multiplier of {healing}"),
-    );
-    let mut effects = vec![json!({
-        "kind": "external_cooldown", "spell_id": cast.action_id.spell_id,
-        "spell_tag": cast.action_id.tag, "aura": state.label, "aura_tag": state.tag,
-        "sources": sources, "cooldown_ns": POWER_INFUSIONS.cooldown(),
-        "duration_ns": state.duration,
-    })];
-    effects.extend(power_infusion_effect(env, &action, unrepresented));
-    effects
 }

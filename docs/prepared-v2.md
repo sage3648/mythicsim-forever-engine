@@ -108,7 +108,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `blizzard` | sim/mage/blizzard.go | The channel, its triggered tick spell and fixed tick amount, and Improved Blizzard's chill spell when talented; ticks roll to hit and never crit, and each landed tick casts the chill |
 | `arcane_missiles` | sim/mage/arcane_missiles.go | Channel rank to tick spell pairing, and the additive damage bonus, a Go literal, each Arcane Blast stack the channel spends gives its missiles |
 | `cold_snap` | sim/mage/cold_snap.go | Spell ID |
-| `evocation` | sim/mage/evocation.go | Regen multiplier from client data, aura labels |
+| `evocation` | sim/mage/evocation.go | Regen multiplier from client data, aura labels; the regeneration aura adds the multiplier and forces full regeneration through `AddSpiritRegenMultiplier` and `SetForceFullSpiritRegen`, which also move the baseline an Innervate's bonus mana is credited against while one is up |
 | `mana_gems` | sim/mage/mana_gems.go | Gem mana from client data, use order |
 | `mage_armor` | sim/mage/armors.go | Aura label; regeneration already in pseudo stats |
 | `arcane_concentration` | sim/mage/talents_arcane.go | Proc chance, ICD, Clearcasting duration |
@@ -132,11 +132,12 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `eureka` | sim/core/racials.go | Gnome: modifier values and the spell positions the class masks name |
 | `berserking` | sim/core/racials.go | Troll: attack and cast speed multipliers, Go literals |
 | `blood_fury` | sim/core/racials.go | Orc: every stat the aura changes, computed by Go with it active |
-| `external_cooldown` | sim/core/buffs.go, sim/core/buffs_gen_support.go, sim/core/buffs/drivers.go | The buff other players cast on the player on cooldown, `sources` of them taking turns (`NewGeneratedExternalCD`), written for the external Power Infusion: the cast's spell and tag, the buff's aura and tag, the sources of `individualBuffs.powerInfusions`, and the buff's cooldown and duration. The cast is a simple spell with no cost, metrics or log on its own timer; a timer for each source, which the cast sets to the cooldown, and the player's timer waits for the next source. It needs the next source's timer ready and no active aura with the buff's tag, so it holds back while the priest's own Power Infusion is up, and the player's pending source carries over from one fight to the next as Go's closure does. Innervate and Mana Tide Totem use the same cooldown but are not described yet |
+| `external_cooldown` | sim/core/buffs.go, sim/core/buffs_gen_support.go, sim/core/buffs/drivers.go | The buff other players cast on the player on cooldown, `sources` of them taking turns (`NewGeneratedExternalCD`), written for the external Power Infusion, Innervate and Mana Tide Totem: the cast's spell and tag, the buff's aura and tag, the sources (`individualBuffs.powerInfusions`, `individualBuffs.innervates` and `partyBuffs.manaTideTotems`, which counts the totem a talented shaman adds to its own party buffs), and the buff's cooldown and duration. The cast is a simple spell with no cost, metrics or log on its own timer; a timer for each source, which the cast sets to the cooldown, and the player's timer waits for the next source. It needs the next source's timer ready and no active aura with the buff's tag, so it holds back while the priest's own Power Infusion is up, and the player's pending source carries over from one fight to the next as Go's closure does. The major cooldown manager casts it when its `activation`, Go's `ShouldActivate`, allows, which the exporter writes only when there is one: `mana_at_most` for Innervate, whose `threshold` is 40% of a mage's maximum mana and 1000 for any other class (a class without mana always qualifies), read when the environment finalizes, and `not_before` for Mana Tide Totem, whose `time_ns` is the smaller of half the base duration and 40 seconds. Power Infusion has no condition. The gate refuses an aura that no `power_infusion`, `innervate_regen` or `stat_auras` entry describes |
+| `innervate_regen` | sim/core/buffs/drivers.go | `AttachInnervateRegen` on the external Innervate aura: full spirit regeneration at the Go literal 5 times the rate while the aura is up, and the regeneration metrics of its own, tagged -2, that the bonus mana is credited to. A reset simulation checks the aura changes nothing else. Mana Tide Totem's aura is the mana per 5 seconds its row states, so it joins `stat_auras` |
 | `shatter_curse` | sim/core/racials.go | Orc survival cooldown: the player's live damage taken multiplier on each magic school, a Go literal, which spells that hit the player read; it fires from timings or below the defensive health threshold |
 | `read_ley_line` | sim/core/racials.go | High Order Skyborne: the cast and Energized's regeneration multiplier |
 | `temporary_stats` | sim/core/major_cooldown.go, sim/common/shared/shared_utils.go | Night Elf Elune's Light and on-use items, Go literal ones and shared.NewSimpleStatActive's database buffs such as Talisman of Ephemeral Power: every stat its aura changes, computed by Go with it active, and its gain and fade log lines |
-| `stat_auras` | sim/core/unit.go AddStatsDynamic | The auras that change stats during a fight and the player's stats for every combination of them, each read from a separate Go simulation, since Go recomputes stats from the active bonuses. Maximum mana, healing power, health, Spirit, the school spell damage stats, the resistances and the physical damage a physical spell adds, which Sword of Zeal changes, appear only when a combination changes them |
+| `stat_auras` | sim/core/unit.go AddStatsDynamic | The auras that change stats during a fight and the player's stats for every combination of them, each read from a separate Go simulation, since Go recomputes stats from the active bonuses. Maximum mana, healing power, health, Spirit, the school spell damage stats, the resistances and the physical damage a physical spell adds, which Sword of Zeal changes, appear only when a combination changes them. `raw_mp5` gives the exact MP5 bonus of an aura whose bonus Go does not add and take away exactly, which only Mana Tide Totem's is (a multiple of 2^-10, such as a whole number or Mana Spring Totem's 31.25, is exact): Go adds each bonus to its raw stats and takes it away again, so once the totem expires the MP5 is a few ulps off its start (77 plus 483.33 and minus it again is 76.99999999999994), enough to decide whether a cost just fits, and the runtime keeps the raw MP5 and does the same instead of reading the combination. The exporter refuses any other aura with an inexact MP5 bonus |
 | `crusader` | sim/common/classic/enchants.go | Each spell's chance from the enchant's proc manager, the Holy Strength auras and their log lines, and the heal roll |
 | `windfury_totem` | sim/core/buffs/drivers.go | The totem's refresh period, the trigger and charge spenders resolved from client rows, whether each needs damage dealt, the charge aura and the extra main hand attack spell, absent without melee autos when no spell can trigger the totem |
 | `dragonbreath_chili` | sim/core/consumes.go | The 5% chance and listened spells, the rolled Fire hit on every target, each on its own roll and dealt in turn, and the spell batch delay, Go literals |
@@ -187,7 +188,7 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `starfire`, `wrath` | sim/druid/starfire.go, wrath.go | Damage rolls on the spells; Wrath lands after travel |
 | `moonfire` | sim/druid/moonfire.go | The dot base and tick crit; the hit applies the tagged dot spell's dot when it lands, without casting it |
 | `insect_swarm` | sim/druid/insect_swarm.go | The dot base, tick crit and the target debuff the dot holds |
-| `innervate` | sim/druid/innervate.go, core/buffs/drivers.go | Spirit regeneration multiplier, a Go literal, and the regeneration metrics its bonus is credited to |
+| `innervate` | sim/druid/innervate.go, core/buffs/drivers.go | Spirit regeneration multiplier, a Go literal, and the regeneration metrics its bonus is credited to; the cast needs no active aura with the Innervate tag, the druid's own or an external one, as Go's cast condition reads it |
 | `omen_of_clarity` | sim/druid/omen_of_clarity.go | The resolved proc trigger, its cooldown, two procs a minute of a spell's cast time or the current main hand swing, Moonkin Form's multipliers and Clearcasting's cost modifier |
 | `natures_grace` | sim/druid/talents_balance.go | Cast speed multiplier, GCD reduction and the spells it reads |
 | `eclipse` | sim/druid/talents_balance.go | Starfire's cast time cut and two charges a Wrath, a Go literal |
@@ -327,6 +328,8 @@ the spell itself. `rotation` is the request's APL in protojson form.
 | `bloodthrill`, `weaponmaster_sword` | sim/warrior/talents_arms.go | Bloodthrill's chance and the longer Overpower window it opens after a delay; Weaponmaster's chance on a sword hand's hits and the extra attack it grants |
 | `revenge`, `shield_slam` | sim/warrior/revenge.go, talents_protection.go | Revenge's trigger on blocked, dodged and parried hits taken, its roll and attack power share, a Go literal; Shield Slam's roll plus the block value, which the target's rolls carry for each stat aura combination |
 | `thunder_clap` | sim/warrior/thunder_clap.go | The base, the attack power share, a Go literal, on the binary magic table, and the bid by which its debuff slows the target's melee speed while it alone holds the attack speed category; against several targets it hits up to four and debuffs each one it lands on |
+| `taunt` | sim/warrior/taunt.go | The spell: an always hit with no damage on the target, with no taunt, as the fork's Taunt is, so it changes no target's aim, swing or threat. It needs Defensive Stance, has no rage cost or global cooldown, and goes on its own cooldown within its range; its hit chance bonuses change nothing |
+| `intimidating_shout` | sim/warrior/intimidating_shout.go | The spell: an always hit with no damage on the target it is cast at only, with no fear, as the fork's shout is. The rage cost, global cooldown, cooldown, range and a threat of none are the common cast's, and the class mods that move the cost or the cooldown reach it as they do any spell |
 | `challenging_shout` | sim/warrior/challenging_shout.go | The spell: an always hit with no damage on every active target in unit index order, with no taunt, as the fork's shout is. The rage cost, global cooldown, cooldown and a threat of none are the common cast's; its hit chance bonuses change nothing |
 | `demoralizing_shout` | sim/warrior/demoralizing_shout.go | The spell and the target debuff, whose attack power cut the target's swing reads while it is up; the shout rolls a magic hit on every target in unit index order and debuffs each one it lands on |
 | `retaliation` | sim/warrior/retaliation.go | The aura's charges and the strike back at each landed melee hit taken that dealt damage |
@@ -726,6 +729,24 @@ for its 10 minute cooldown, with no taunt. `feral-bear-druid-demoralizing-roar` 
 its rotation asks `auraShouldRefresh` and the permanent debuff holds the category; the
 production bear requests are the same fights with no debuff. `feral-druid-demoralizing-roar`
 cases give a cat the roar it never learns, which Go drops along with its condition.
+`balance-druid-external-innervate`, `shadow-priest-external-innervate` and
+`fire-mage-external-innervate`, with `-2-sources`, run a seven minute fight with no mana
+consumables, Wisdom or Mana Spring Totem so that druids in the raid innervate the player: the
+cooldown manager casts Innervate once the mana falls to the threshold, and two sources take turns.
+`balance-druid-own-and-external-innervate` has the druid cast its own Innervate below 30% mana
+too, which holds back while either aura is up, and `fire-mage-evocation-over-external-innervate`
+channels Evocation under the Innervate. `enhancement-shaman-external-mana-tide-mp5-drift` is one
+fixed-seed iteration in which Mana Tide Totem's expiry leaves the shaman's MP5 a few ulps short of
+its start, so Flame Shock just does not fit in the mana, as Go has it. `fire-mage`, `destruction-warlock` and
+`retribution-paladin` `-external-mana-tide`, with `-2-sources`, `-short-fight` and
+`-2-sources-short-fight`, have shamans drop Mana Tide Totem 40 seconds into a six minute fight
+and again after its five minute cooldown, or halfway through a 45 second fight.
+`protection-warrior-taunt` and `arms-warrior-taunt` (which changes to Defensive Stance first),
+with `-3-targets`, cast Taunt on its 8 second cooldown, and `protection-warrior-intimidating-shout`
+and `arms-warrior-intimidating-shout`, with `-3-targets`, cast Intimidating Shout on its 3 minute
+cooldown in a five minute fight: each an always hit for no damage, on the first target only.
+`protection-warrior-intimidating-shout-vindicators` wears three pieces of the Vindicator's
+Battlegear, whose bonus takes 15 seconds off the shout's cooldown.
 `production-assassination-rogue` and `production-subtlety-rogue` are the production
 Assassination and Subtlety Rogue requests. `combat-swords`, `combat-riposte`,
 `combat-wound-poison`, `combat-kidney-shot`, `assassination-venom`,

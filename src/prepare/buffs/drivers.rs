@@ -13,6 +13,7 @@ use crate::contracts::request::Message;
 
 use super::super::character::cooldown_type;
 use super::super::env::Environment;
+use super::super::external_cooldowns;
 use super::super::periodic_action::PeriodicActionOptions;
 use super::super::resolve_proc::{chance, proc_trigger};
 use super::super::sim::{
@@ -36,7 +37,7 @@ use super::{permanent, permanent_with_count};
 
 /// Spell 29166 states 100% mana regen while casting (aura 134) and +400% of it (aura 110);
 /// neither is a stat or a pseudo-stat, so the regen is the driver's.
-const INNERVATE_SPIRIT_REGEN_MULTIPLIER: f64 = 5.0;
+pub(crate) const INNERVATE_SPIRIT_REGEN_MULTIPLIER: f64 = 5.0;
 
 /// Three pieces of Battlegear of Wrath are worth 30 more attack power on Battle Shout: item set
 /// 218's ItemSetSpell at three pieces is 23563, which adds a flat 30 to every effect of the
@@ -91,7 +92,12 @@ pub(crate) fn drive_innervates(
 ) -> Result<(), Refusal> {
     let aura = INNERVATES.aura(&mut env.sim, unit, false, 0, 0.0);
     attach_innervate_regen(&mut env.sim, unit, aura);
-    // The mana threshold the cooldown waits for is read after finalize and only by a fight.
+    // The mana threshold the cooldown waits for is read after finalize, and only by a fight.
+    env.post_finalize
+        .push(Rc::new(move |env: &mut Environment| {
+            let activation = external_cooldowns::innervate_activation(env);
+            env.external_activations.push((aura, activation));
+        }));
     new_generated_external_cd(
         &mut env.sim,
         unit,
@@ -153,8 +159,13 @@ pub(crate) fn drive_mana_tide_totems(
     unit: UnitId,
     party: &Message,
 ) -> Result<(), Refusal> {
-    // The initial delay is read after finalize and only by a fight.
+    // The initial delay is read after finalize, and only by a fight.
     let aura = MANA_TIDE_TOTEMS.aura(&mut env.sim, unit, false, 0, 0.0);
+    env.post_finalize
+        .push(Rc::new(move |env: &mut Environment| {
+            let activation = external_cooldowns::mana_tide_activation(env);
+            env.external_activations.push((aura, activation));
+        }));
     new_generated_external_cd(
         &mut env.sim,
         unit,

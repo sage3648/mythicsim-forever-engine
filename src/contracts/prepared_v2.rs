@@ -1238,6 +1238,28 @@ pub struct QueuedStrike {
     pub cleave: bool,
 }
 
+/// Go `GeneratedExternalCD.ShouldActivate`: when the major cooldown manager casts an external
+/// cooldown, in addition to its spell being castable.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Deserialize, Serialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+pub enum ExternalActivation {
+    /// No condition, Go's default `ShouldActivate`.
+    #[default]
+    Always,
+    /// Go `driveInnervates`: the player's current mana is at most the threshold, read once the
+    /// environment finalized.
+    ManaAtMost { threshold: f64 },
+    /// Go `driveManaTideTotems`: the simulation has reached the time, read from the base
+    /// duration once the environment finalized.
+    NotBefore { time_ns: i64 },
+}
+
+impl ExternalActivation {
+    fn is_always(&self) -> bool {
+        matches!(self, ExternalActivation::Always)
+    }
+}
+
 /// Behavior Rust must execute, with the parameters Go keeps in closures. Each variant
 /// names the Go source that defines it in docs/prepared-v2.md.
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -1278,7 +1300,8 @@ pub enum Effect {
     /// `sources` of them taking turns (Go `registerExternalConsecutiveCDApproximation`). The
     /// cast is a simple spell with no cost, metrics or log whose own timer is the one it exports;
     /// each source also has a timer that the cast sets to `cooldown_ns`. The cast needs the next
-    /// source's timer ready and no active aura with `aura_tag`, then activates `aura`.
+    /// source's timer ready and no active aura with `aura_tag`, then activates `aura`. The major
+    /// cooldown manager casts it when `activation` allows.
     ExternalCooldown {
         spell_id: i32,
         spell_tag: i32,
@@ -1287,6 +1310,16 @@ pub enum Effect {
         sources: i32,
         cooldown_ns: i64,
         duration_ns: i64,
+        #[serde(default, skip_serializing_if = "ExternalActivation::is_always")]
+        activation: ExternalActivation,
+    },
+    /// Go buffs/drivers.go `AttachInnervateRegen` on an aura other than the druid's own: while
+    /// the aura is up the player has full spirit regeneration at `spirit_regen_multiplier` times
+    /// the rate, and the bonus mana is credited to regeneration metrics of their own.
+    InnervateRegen {
+        aura: String,
+        spirit_regen_multiplier: f64,
+        regen_metrics_action_id: ActionId,
     },
     /// The Orc racial Blood Fury: a major cooldown whose aura multiplies stats through Go's
     /// dynamic stat dependencies. `active_stats` holds every stat the aura changes, at the
@@ -1651,11 +1684,16 @@ pub enum Effect {
     },
     /// Auras whose gain and expiry change stats through Go's AddStatsDynamic, and the player's
     /// stats Rust reads for every combination of them: entry i has aura j active when bit j
-    /// of i is set. `changed` names every stat any combination changes.
+    /// of i is set. `changed` names every stat any combination changes. `raw_mp5` holds the
+    /// exact MP5 bonus of each aura whose bonus is not added and taken away exactly: Go adds a bonus to the raw
+    /// stats and takes it away again, which leaves a fraction a few ulps off, so the runtime does
+    /// the same instead of reading the combination.
     StatAuras {
         auras: Vec<String>,
         combos: Vec<BTreeMap<String, f64>>,
         changed: Vec<String>,
+        #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+        raw_mp5: BTreeMap<String, f64>,
     },
     /// The Crusader weapon enchant: a weapon proc at a per-spell chance that activates the
     /// hand's Holy Strength and heals.
@@ -3228,6 +3266,16 @@ pub enum Effect {
     ChallengingShout {
         spell: usize,
     },
+    /// Taunt: an always hit outcome with no damage on the target, in Defensive Stance. The fork's
+    /// taunt changes no target's aim, swing or threat.
+    Taunt {
+        spell: usize,
+    },
+    /// Intimidating Shout: an always hit outcome with no damage on the target, as Go's fork casts
+    /// it, with no fear and no effect on the other targets.
+    IntimidatingShout {
+        spell: usize,
+    },
     /// Bloodthrill: main hand hits on a bleeding target may open the Overpower window longer.
     Bloodthrill {
         trigger_aura: String,
@@ -3901,6 +3949,7 @@ impl Effect {
             Effect::Berserking { .. } => "berserking",
             Effect::BloodFury { .. } => "blood_fury",
             Effect::ExternalCooldown { .. } => "external_cooldown",
+            Effect::InnervateRegen { .. } => "innervate_regen",
             Effect::TemporaryStats { .. } => "temporary_stats",
             Effect::SpeedOnUse { .. } => "speed_on_use",
             Effect::DiamondFlask { .. } => "diamond_flask",
@@ -4118,6 +4167,8 @@ impl Effect {
             Effect::Slam { .. } => "slam",
             Effect::DemoralizingShout { .. } => "demoralizing_shout",
             Effect::ChallengingShout { .. } => "challenging_shout",
+            Effect::Taunt { .. } => "taunt",
+            Effect::IntimidatingShout { .. } => "intimidating_shout",
             Effect::Bloodthrill { .. } => "bloodthrill",
             Effect::WeaponmasterSword { .. } => "weaponmaster_sword",
             Effect::Revenge { .. } => "revenge",
