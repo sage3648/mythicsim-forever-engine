@@ -39,7 +39,7 @@ var optionalReadStats = []stats.Stat{stats.Mana, stats.HealingPower, stats.Healt
 // AddStatsDynamic. A class adds its own through classExport.statAuras.
 var commonStatAuraLabels = []string{"Blood Fury", "Elune's Light", "Holy Strength (MH)", "Holy Strength (OH)",
 	"Windfury Totem (External)", "Battle Shout (External)", "Headmaster's Charge", "Crusader's Wrath",
-	"Diamond Flask"}
+	"Diamond Flask", "Mana Tide Totem (External)"}
 
 // The stat auras of the character, in the order a combination's bits number them.
 func characterStatAuras(character *core.Character, class classExport, agent core.Agent) []string {

@@ -47,7 +47,7 @@ const OPTIONAL_READ_STATS: [Stat; 16] = [
 
 /// Auras of races, items and raid buffs whose gain and expiry change stats through
 /// `AddStatsDynamic`. A class adds its own through `PrepAgent::stat_auras`.
-const COMMON_STAT_AURA_LABELS: [&str; 9] = [
+const COMMON_STAT_AURA_LABELS: [&str; 10] = [
     "Blood Fury",
     "Elune's Light",
     "Holy Strength (MH)",
@@ -57,6 +57,7 @@ const COMMON_STAT_AURA_LABELS: [&str; 9] = [
     "Headmaster's Charge",
     "Crusader's Wrath",
     "Diamond Flask",
+    "Mana Tide Totem (External)",
 ];
 
 /// consumes.go: a potion's stat buff is a temporary stats aura named for the potion.
