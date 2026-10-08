@@ -6,8 +6,8 @@
     "client_build": "1.60.1.70235",
     "exporter": "tools/oracle-v2"
   },
-  "request_sha256": "72f65bbb4538f811795af23e22833c11a56b0cba34706fb0e52f2e8d611e7f1e",
-  "scenario_id": "fire-mage-external-mana-tide",
+  "request_sha256": "d76bf034b70e05c535d7cca1418f8aa83c064d679f2cb10dd4bb7d4efbf68971",
+  "scenario_id": "fire-mage-evocation-over-external-innervate",
   "sim": {
     "iterations": 3000,
     "seed": 42,
@@ -16,7 +16,7 @@
     "debug": false
   },
   "encounter": {
-    "duration_ns": 360000000000,
+    "duration_ns": 180000000000,
     "duration_variation_ns": 5000000000,
     "execute_proportion_20": 0.2,
     "execute_proportion_25": 0.25,
@@ -666,16 +666,16 @@
       "ExpertisePercent": 0,
       "ExpertiseRating": 0,
       "FeralAttackPower": 0,
-      "FireDamage": 80,
+      "FireDamage": 70,
       "FireResistance": 57,
       "FrostDamage": 0,
       "FrostResistance": 42,
-      "HealingPower": 85,
+      "HealingPower": 49,
       "Health": 2300,
       "HolyDamage": 0,
-      "Intellect": 375,
-      "MP5": 77,
-      "Mana": 6885.900000000001,
+      "Intellect": 347,
+      "MP5": 0,
+      "Mana": 6444.900000000001,
       "MeleeCritRating": 98,
       "MeleeHasteRating": 0,
       "MeleeHitRating": 40,
@@ -692,9 +692,9 @@
       "ReducedCritTakenPercent": 0,
       "ShadowDamage": 0,
       "ShadowResistance": 42,
-      "SpellCritPercent": 17.5,
+      "SpellCritPercent": 16.0296,
       "SpellCritRating": 98,
-      "SpellDamage": 400,
+      "SpellDamage": 329,
       "SpellHasteRating": 0,
       "SpellHitPercent": 4,
       "SpellHitRating": 40,
@@ -821,7 +821,7 @@
           "on_spell_hit_dealt"
         ],
         "icd": {
-          "timer": "timer-13",
+          "timer": "timer-9",
           "duration_ns": 1000000000
         },
         "exclusive_effects": 0
@@ -916,63 +916,10 @@
           "on_spell_hit_dealt"
         ],
         "icd": {
-          "timer": "timer-14",
+          "timer": "timer-10",
           "duration_ns": 9000000
         },
         "exclusive_effects": 0
-      },
-      {
-        "label": "Mana Spring Totem (External)",
-        "tag": "ManaSpringTotem",
-        "action_id": {
-          "spell_id": 10494,
-          "tag": -1
-        },
-        "duration_ns": 9223372036854775807,
-        "max_stacks": 0,
-        "active": true,
-        "stacks": 0,
-        "callbacks": [
-          "on_reset",
-          "on_gain",
-          "on_expire"
-        ],
-        "icd": null,
-        "exclusive_effects": 1,
-        "exclusive_memberships": [
-          {
-            "category": "ManaSpringTotemMP5Add",
-            "single_aura": false,
-            "priority": 25,
-            "position": 0
-          }
-        ]
-      },
-      {
-        "label": "Mana Tide Totem (External)",
-        "tag": "ManaTideTotem",
-        "action_id": {
-          "spell_id": 17360,
-          "tag": -1
-        },
-        "duration_ns": 13000000000,
-        "max_stacks": 0,
-        "active": false,
-        "stacks": 0,
-        "callbacks": [
-          "on_gain",
-          "on_expire"
-        ],
-        "icd": null,
-        "exclusive_effects": 1,
-        "exclusive_memberships": [
-          {
-            "category": "ManaTideTotemMP5Add",
-            "single_aura": false,
-            "priority": 483.3333333333333,
-            "position": 0
-          }
-        ]
       },
       {
         "label": "Moonkin Aura (External)",
@@ -1124,17 +1071,17 @@
         "exclusive_effects": 0
       },
       {
-        "label": "Greater Blessing of Wisdom (External)",
+        "label": "Innervates (External)",
+        "tag": "Innervate",
         "action_id": {
-          "spell_id": 25918,
+          "spell_id": 29166,
           "tag": -1
         },
-        "duration_ns": 9223372036854775807,
+        "duration_ns": 20000000000,
         "max_stacks": 0,
-        "active": true,
+        "active": false,
         "stacks": 0,
         "callbacks": [
-          "on_reset",
           "on_gain",
           "on_expire"
         ],
@@ -1309,12 +1256,12 @@
     "distance_yards": 20,
     "cast_speed": 1,
     "mana": {
-      "max": 6885.900000000001,
+      "max": 6444.900000000001,
       "base": 1213,
       "spirit_regen_per_second": 34.625,
-      "regen_per_second_casting": 32.7125,
-      "regen_per_second_not_casting": 50.025,
-      "teardown_max": 5610.150000000001
+      "regen_per_second_casting": 17.3125,
+      "regen_per_second_not_casting": 34.625,
+      "teardown_max": 5216.400000000001
     },
     "attack_table": {
       "base_spell_miss_chance": 0.17,
@@ -1548,7 +1495,7 @@
       },
       {
         "action_id": {
-          "spell_id": 17360,
+          "spell_id": 29166,
           "tag": -1
         },
         "rank": 0,
@@ -1580,125 +1527,9 @@
         "max_charges": 0,
         "cd": {
           "timer": "timer-2",
-          "duration_ns": 13000000000
+          "duration_ns": 20000000000
         },
         "shared_cd": null,
-        "bonus_hit_percent": 0,
-        "bonus_crit_percent": 0,
-        "bonus_spell_damage": 0,
-        "bonus_expertise_percent": 0,
-        "cast_time_multiplier": 1,
-        "cd_multiplier": 1,
-        "damage_multiplier": 0,
-        "damage_multiplier_additive": 0,
-        "direct_damage_multiplier_additive": 0,
-        "crit_multiplier_pct": 1,
-        "crit_multiplier_additive": 0,
-        "bonus_base_damage": 0,
-        "bonus_coefficient": 0,
-        "threat_multiplier": 0,
-        "flat_threat_bonus": 0,
-        "pushback_resist": 0,
-        "dot": null,
-        "damage_effect": null
-      },
-      {
-        "action_id": {
-          "item_id": 13444
-        },
-        "rank": 0,
-        "school": 0,
-        "defense_type": "DefenseTypeNone",
-        "proc_mask": [],
-        "flags": [
-          "SpellFlagNoOnCastComplete",
-          "SpellFlagAPL",
-          "SpellFlagMCD",
-          "SpellFlagEncounterOnly",
-          "SpellFlagPotion",
-          "SpellFlagCombatPotion"
-        ],
-        "missile_speed": 0,
-        "cost": null,
-        "default_cast": {
-          "cost": 0,
-          "gcd_ns": 0,
-          "gcd_min_ns": 0,
-          "cast_time_ns": 0,
-          "non_empty": false
-        },
-        "cast_kind": "simple",
-        "ignore_haste": false,
-        "has_extra_cast_condition": false,
-        "has_cast_requirement": false,
-        "min_range": 0,
-        "max_range": 0,
-        "max_charges": 0,
-        "cd": {
-          "timer": "timer-3",
-          "duration_ns": 120000000000
-        },
-        "shared_cd": {
-          "timer": "timer-4",
-          "duration_ns": 120000000000
-        },
-        "bonus_hit_percent": 0,
-        "bonus_crit_percent": 0,
-        "bonus_spell_damage": 0,
-        "bonus_expertise_percent": 0,
-        "cast_time_multiplier": 1,
-        "cd_multiplier": 1,
-        "damage_multiplier": 0,
-        "damage_multiplier_additive": 0,
-        "direct_damage_multiplier_additive": 0,
-        "crit_multiplier_pct": 1,
-        "crit_multiplier_additive": 0,
-        "bonus_base_damage": 0,
-        "bonus_coefficient": 0,
-        "threat_multiplier": 0,
-        "flat_threat_bonus": 0,
-        "pushback_resist": 0,
-        "dot": null,
-        "damage_effect": null
-      },
-      {
-        "action_id": {
-          "item_id": 12662
-        },
-        "rank": 0,
-        "school": 0,
-        "defense_type": "DefenseTypeNone",
-        "proc_mask": [],
-        "flags": [
-          "SpellFlagNoOnCastComplete",
-          "SpellFlagAPL",
-          "SpellFlagMCD",
-          "SpellFlagConjured"
-        ],
-        "missile_speed": 0,
-        "cost": null,
-        "default_cast": {
-          "cost": 0,
-          "gcd_ns": 0,
-          "gcd_min_ns": 0,
-          "cast_time_ns": 0,
-          "non_empty": false
-        },
-        "cast_kind": "simple",
-        "ignore_haste": false,
-        "has_extra_cast_condition": false,
-        "has_cast_requirement": false,
-        "min_range": 0,
-        "max_range": 0,
-        "max_charges": 0,
-        "cd": {
-          "timer": "timer-5",
-          "duration_ns": 120000000000
-        },
-        "shared_cd": {
-          "timer": "timer-6",
-          "duration_ns": 120000000000
-        },
         "bonus_hit_percent": 0,
         "bonus_crit_percent": 0,
         "bonus_spell_damage": 0,
@@ -2939,7 +2770,7 @@
         "max_range": 0,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-7",
+          "timer": "timer-3",
           "duration_ns": 10000000000
         },
         "shared_cd": null,
@@ -3890,7 +3721,7 @@
         "max_range": 0,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-8",
+          "timer": "timer-4",
           "duration_ns": 480000000000
         },
         "shared_cd": null,
@@ -4839,7 +4670,7 @@
         "max_range": 0,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-9",
+          "timer": "timer-5",
           "duration_ns": 7000000000
         },
         "shared_cd": null,
@@ -4903,7 +4734,7 @@
         "max_range": 0,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-10",
+          "timer": "timer-6",
           "duration_ns": 25000000000
         },
         "shared_cd": null,
@@ -4961,7 +4792,7 @@
         "max_range": 0,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-11",
+          "timer": "timer-7",
           "duration_ns": 120000000000
         },
         "shared_cd": null,
@@ -5016,7 +4847,7 @@
         "max_range": 0,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-11",
+          "timer": "timer-7",
           "duration_ns": 120000000000
         },
         "shared_cd": null,
@@ -5071,7 +4902,7 @@
         "max_range": 0,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-11",
+          "timer": "timer-7",
           "duration_ns": 120000000000
         },
         "shared_cd": null,
@@ -5126,7 +4957,7 @@
         "max_range": 0,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-11",
+          "timer": "timer-7",
           "duration_ns": 120000000000
         },
         "shared_cd": null,
@@ -5746,7 +5577,7 @@
         "max_range": 0,
         "max_charges": 0,
         "cd": {
-          "timer": "timer-12",
+          "timer": "timer-8",
           "duration_ns": 180000000000
         },
         "shared_cd": null,
@@ -5841,28 +5672,8 @@
       },
       {
         "action_id": {
-          "spell_id": 17360,
+          "spell_id": 29166,
           "tag": -1
-        },
-        "priority": 0,
-        "type": [
-          "mana"
-        ],
-        "timings_ns": []
-      },
-      {
-        "action_id": {
-          "item_id": 13444
-        },
-        "priority": 0,
-        "type": [
-          "mana"
-        ],
-        "timings_ns": []
-      },
-      {
-        "action_id": {
-          "item_id": 12662
         },
         "priority": 0,
         "type": [
@@ -5904,6 +5715,23 @@
     "rotation": {
       "type": "TypeAPL",
       "priorityList": [
+        {
+          "action": {
+            "condition": {
+              "auraIsActive": {
+                "auraId": {
+                  "spellId": 29166,
+                  "tag": -1
+                }
+              }
+            },
+            "castSpell": {
+              "spellId": {
+                "spellId": 12051
+              }
+            }
+          }
+        },
         {
           "action": {
             "condition": {
@@ -6599,79 +6427,33 @@
       "whole": 625
     },
     {
-      "gains": [
-        {
-          "min": 1800,
-          "spread": 0
-        }
-      ],
-      "item_id": 13444,
-      "kind": "potion_mana",
-      "regen_window_seconds": 5,
-      "rng_label": "Major Mana Potion",
-      "stone_multiplier": 1
-    },
-    {
-      "gains": [
-        {
-          "min": 1200,
-          "spread": 0
-        }
-      ],
-      "item_id": 12662,
-      "kind": "conjured_mana",
-      "regen_window_seconds": 5,
-      "rng_label": "Demonic Rune",
-      "selected": true
-    },
-    {
       "activation": {
-        "kind": "not_before",
-        "time_ns": 40000000000
+        "kind": "mana_at_most",
+        "threshold": 2086.5600000000004
       },
-      "aura": "Mana Tide Totem (External)",
-      "aura_tag": "ManaTideTotem",
-      "cooldown_ns": 300000000000,
-      "duration_ns": 13000000000,
+      "aura": "Innervates (External)",
+      "aura_tag": "Innervate",
+      "cooldown_ns": 360000000000,
+      "duration_ns": 20000000000,
       "kind": "external_cooldown",
       "sources": 1,
-      "spell_id": 17360,
+      "spell_id": 29166,
       "spell_tag": -1
     },
     {
-      "auras": [
-        "Mana Tide Totem (External)"
-      ],
-      "changed": [
-        "MP5"
-      ],
-      "combos": [
-        {
-          "AttackPower": -10,
-          "MP5": 77,
-          "PhysicalCritPercent": 16.4382,
-          "RangedAttackPower": 0,
-          "SpellCritPercent": 17.5,
-          "SpellDamage": 400
-        },
-        {
-          "AttackPower": -10,
-          "MP5": 560.3333333333333,
-          "PhysicalCritPercent": 16.4382,
-          "RangedAttackPower": 0,
-          "SpellCritPercent": 17.5,
-          "SpellDamage": 400
-        }
-      ],
-      "kind": "stat_auras",
-      "raw_mp5": {
-        "Mana Tide Totem (External)": 483.3333333333333
-      }
+      "aura": "Innervates (External)",
+      "kind": "innervate_regen",
+      "regen_metrics_action_id": {
+        "spell_id": 29166,
+        "tag": -2
+      },
+      "spirit_regen_multiplier": 5
     },
     {
       "aura": "Eureka!",
       "cost_percent": -0.1,
       "cost_spells": [
+        5,
         7,
         9,
         11,
@@ -6681,6 +6463,7 @@
         19,
         21,
         23,
+        24,
         25,
         26,
         27,
@@ -6695,8 +6478,8 @@
         36,
         37,
         38,
-        39,
         40,
+        41,
         42,
         43,
         44,
@@ -6709,20 +6492,20 @@
         51,
         52,
         53,
-        54,
-        55,
+        58,
+        59,
         60,
         61,
         62,
         63,
         64,
         65,
-        66,
-        67,
-        68
+        66
       ],
       "damage_percent": 0.1,
       "damage_spells": [
+        5,
+        6,
         7,
         8,
         9,
@@ -6755,8 +6538,8 @@
         36,
         37,
         38,
-        39,
         40,
+        41,
         42,
         43,
         44,
@@ -6769,21 +6552,21 @@
         51,
         52,
         53,
-        54,
-        55,
+        58,
+        59,
         60,
         61,
         62,
         63,
         64,
         65,
-        66,
-        67,
-        68
+        66
       ],
       "kind": "eureka",
       "spell_id": 1259817,
       "spending_spells": [
+        5,
+        6,
         7,
         8,
         9,
@@ -6816,8 +6599,8 @@
         36,
         37,
         38,
-        39,
         40,
+        41,
         42,
         43,
         44,
@@ -6830,20 +6613,20 @@
         51,
         52,
         53,
-        54,
-        55,
+        58,
+        59,
         60,
         61,
         62,
         63,
         64,
         65,
-        66,
-        67,
-        68
+        66
       ],
       "tick_cancel_percent": -0.09090909090909091,
       "tick_cancel_spells": [
+        5,
+        6,
         7,
         8,
         9,
@@ -6876,8 +6659,8 @@
         36,
         37,
         38,
-        39,
         40,
+        41,
         42,
         43,
         44,
@@ -6890,17 +6673,15 @@
         51,
         52,
         53,
-        54,
-        55,
+        58,
+        59,
         60,
         61,
         62,
         63,
         64,
         65,
-        66,
-        67,
-        68
+        66
       ]
     },
     {
