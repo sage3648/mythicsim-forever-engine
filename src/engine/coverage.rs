@@ -186,6 +186,8 @@ const COMMON_EFFECTS: &[&str] = &[
     "energize_on_use",
     "emerald_dragon_whelp",
     "thunderfury",
+    "force_reactive_disk",
+    "stacking_on_use",
     "sulfuras_hand_of_ragnaros",
     "energize_proc",
     "eureka",
@@ -349,6 +351,11 @@ fn common_spell_capability(spell: &Spell, prepared: &PreparedV2) -> Option<&'sta
         } if *spell_id == id.spell_id && *item_id == id.item_id && id.tag == 0 => {
             Some("temporary_stats")
         }
+        Effect::StackingOnUse { spell_id, .. }
+            if *spell_id == id.spell_id && id.item_id == 0 && id.tag == 0 =>
+        {
+            Some("stacking_on_use")
+        }
         // Class spells Go registers without a class mask, named by their effect.
         Effect::Prowl { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => Some("prowl"),
         Effect::Berserk { spell_id, .. } if *spell_id == id.spell_id && id.tag == 0 => {
@@ -420,6 +427,8 @@ fn common_claims(effect: &Effect) -> Vec<(&'static str, &str)> {
         Effect::EmeraldDragonWhelp {
             trigger_aura, pet, ..
         } => vec![("player", trigger_aura), ("pet unit", pet)],
+        Effect::ForceReactiveDisk { trigger_aura, .. } => vec![("player", trigger_aura)],
+        Effect::StackingOnUse { aura, .. } => vec![("player", aura)],
         Effect::Thunderfury {
             trigger_aura,
             slow_aura,
@@ -632,6 +641,8 @@ const DYNAMIC_STATS: &[&str] = &[
     // Armor penetration, which the armor of a hit's target is reduced by: the combinations
     // carry it when one changes it.
     "ArmorPenetration",
+    // Spell piercing, which a partial resist takes off the target's resistance.
+    "SpellPiercing",
     // Spirit, which spirit regeneration, Life Tap and Dark Sacrifice read live.
     "Spirit",
     // Spell power by school, which spell power reads, and the resistances spells that hit
@@ -666,6 +677,8 @@ const INERT_STATS: &[&str] = &[
     "Strength",
     "Agility",
     "Stamina",
+    // Spell crit rating, whose percent the combinations carry.
+    "SpellCritRating",
     "Health",
     "Armor",
     "BonusArmor",
@@ -800,6 +813,8 @@ const HIT_TAKEN_EFFECTS: &[&str] = &[
     "riposte",
     "spell_data_damage_proc",
     "spell_data_absorb_proc",
+    "force_reactive_disk",
+    "spell_data_heal_proc",
     "spell_data_stat_proc",
     "battlegear_of_might_rage",
 ];

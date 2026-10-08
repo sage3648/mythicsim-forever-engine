@@ -25,8 +25,9 @@ const DYNAMIC_READ_STATS: [Stat; 6] = [
 /// Stats the Rust runtime reads during a fight that a combination carries only when one changes
 /// them: maximum mana, healing power and health, Spirit, the school spell damage stats, the
 /// resistances a spell that hits the player rolls against, the physical damage a physical
-/// spell adds and the armor penetration taken off the target's armor.
-const OPTIONAL_READ_STATS: [Stat; 17] = [
+/// spell adds, the armor penetration taken off the target's armor and the spell piercing taken
+/// off its resistance.
+const OPTIONAL_READ_STATS: [Stat; 18] = [
     Stat::Mana,
     Stat::HealingPower,
     Stat::Health,
@@ -44,6 +45,7 @@ const OPTIONAL_READ_STATS: [Stat; 17] = [
     Stat::ShadowResistance,
     Stat::PhysicalDamage,
     Stat::ArmorPenetration,
+    Stat::SpellPiercing,
 ];
 
 /// Auras of races, items and raid buffs whose gain and expiry change stats through
@@ -120,6 +122,8 @@ pub(crate) fn character_stat_auras(env: &Environment) -> Vec<String> {
             .iter()
             .map(|label| label.to_string()),
     );
+    // classic items_trinkets.go Jom Gabbar's stacking aura.
+    candidates.push("Jom Gabbar".to_string());
     candidates
         .into_iter()
         .filter(|label| env.sim.get_aura(env.player, label).is_some())
@@ -257,7 +261,7 @@ pub(crate) fn stat_auras_effect_reading(
     if labels.is_empty() {
         return Ok(None);
     }
-    if layout.bits > 10 {
+    if layout.bits > 12 {
         return Err(Refusal::new(
             "stat_auras",
             format!("{} stat auras exceed the combination limit", labels.len()),

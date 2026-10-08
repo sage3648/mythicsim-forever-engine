@@ -457,6 +457,9 @@ pub(crate) enum SpellBehavior<S> {
     },
     /// A fixed hit that always lands, as Sulfuras's Immolation casts.
     FixedHit(f64),
+    /// Force Reactive Disk's spell: a hit of a literal on the magic table with a crit against
+    /// every target, each dealt as it is calculated.
+    AreaFixedDamage(f64),
     /// Thunderfury's strike: a hit of a literal on the magic table with a crit, whose landing
     /// puts the slow on its target.
     ThunderfuryStrike(f64),
@@ -829,6 +832,9 @@ pub(crate) struct Powers {
     /// Go `stats.ArmorPenetration`, which `GetArmorDamageModifier` takes off the target's armor
     /// and a stacking aura, as Bonereaver's Edge's, can change.
     pub(crate) armor_penetration: f64,
+    /// Go `stats.SpellPiercing`, which a partial resist takes off the target's resistance and a
+    /// temporary stat change, as Eye of Moam's, can change.
+    pub(crate) spell_piercing: f64,
 }
 
 /// Mutable player state, reset to the prepared values each iteration.
@@ -990,6 +996,8 @@ pub(crate) struct DamageProc {
     pub(crate) trigger_spells: Vec<bool>,
     /// A "when struck" proc, on melee and ranged hits the player takes.
     pub(crate) struck: bool,
+    /// A proc on the spells the player casts, which carry no result.
+    pub(crate) casts: bool,
     pub(crate) landed_only: bool,
     pub(crate) require_damage: bool,
     pub(crate) chance: f64,
@@ -1103,7 +1111,6 @@ pub(crate) struct Config {
     /// The prepared stats; auras change the player's copy.
     pub(crate) powers: Powers,
     pub(crate) school_damage: [f64; 8],
-    pub(crate) spell_piercing: f64,
     pub(crate) initial: InitialPseudo,
     pub(crate) school_bonus_hit_chance: [f64; 8],
     pub(crate) damage_dealt_multiplier: f64,
@@ -1300,6 +1307,12 @@ pub(crate) enum Action {
     },
     /// The party Windfury Totem's periodic refresh.
     WindfuryRefresh,
+    /// A tick of an aura's periodic stack adder, with the ticks left including this one.
+    StackTick {
+        aura: AuraRef,
+        period: i64,
+        ticks_left: i32,
+    },
     /// The end of a unit's movement: Go `MovementAction.OnAction`.
     MovementEnd(Side),
     /// Go `scheduleMeleeWeaveWakeup`'s action: wake a weaver's rotation when its out-of-range
@@ -1702,6 +1715,7 @@ pub(crate) fn unit_config(prepared: &PreparedV2, unit: &UnitSource) -> Result<Co
             spirit_regen_per_second: unit.spirit_regen_per_second,
             physical_damage: stat(unit.stats, "PhysicalDamage")?,
             armor_penetration: stat(unit.stats, "ArmorPenetration")?,
+            spell_piercing: stat(unit.stats, "SpellPiercing")?,
         },
         school_damage: [
             0.0,
@@ -1713,7 +1727,6 @@ pub(crate) fn unit_config(prepared: &PreparedV2, unit: &UnitSource) -> Result<Co
             stat(unit.stats, "NatureDamage")?,
             stat(unit.stats, "ShadowDamage")?,
         ],
-        spell_piercing: stat(unit.stats, "SpellPiercing")?,
         initial: InitialPseudo {
             spell_cost_percent_modifier: pseudo.spell_cost_percent_modifier,
             cast_speed_multiplier: pseudo.cast_speed_multiplier,
@@ -2157,6 +2170,12 @@ impl<A: Agent> Fight<A> {
                             activations.push((spells.len(), aura));
                             Some(SpellBehavior::None)
                         }
+                        Effect::StackingOnUse { spell_id, aura, .. }
+                            if id.spell_id == *spell_id && id.item_id == 0 && id.tag == 0 =>
+                        {
+                            activations.push((spells.len(), aura));
+                            Some(SpellBehavior::None)
+                        }
                         Effect::TemporaryStats {
                             spell_id,
                             item_id,
@@ -2314,6 +2333,9 @@ impl<A: Agent> Fight<A> {
                             ..
                         } if *immolation_spell == spells.len() => {
                             Some(SpellBehavior::FixedHit(*immolation_damage))
+                        }
+                        Effect::ForceReactiveDisk { spell, damage, .. } if *spell == spells.len() => {
+                            Some(SpellBehavior::AreaFixedDamage(*damage))
                         }
                         Effect::Thunderfury {
                             strike_spell,
@@ -2634,6 +2656,10 @@ impl<A: Agent> Fight<A> {
                         .get("ArmorPenetration")
                         .copied()
                         .unwrap_or(config.powers.armor_penetration),
+                    spell_piercing: combo
+                        .get("SpellPiercing")
+                        .copied()
+                        .unwrap_or(config.powers.spell_piercing),
                 })
             })
             .collect::<Result<_, BuildError>>()?;
@@ -2887,7 +2913,21 @@ impl<A: Agent> Fight<A> {
                     };
                     let (offset, width) = stat_places[bit];
                     if stat_stacks.get(bit).copied().unwrap_or(0) > 0 {
-                        AuraBehavior::StackingStats { offset, width }
+                        // Jom Gabbar's aura adds its own stacks on a timer.
+                        let periodic = effects.iter().find_map(|effect| match effect {
+                            Effect::StackingOnUse {
+                                aura,
+                                period_ns,
+                                ticks,
+                                ..
+                            } if *aura == exported.label => Some((*period_ns, *ticks)),
+                            _ => None,
+                        });
+                        AuraBehavior::StackingStats {
+                            offset,
+                            width,
+                            periodic,
+                        }
                     } else {
                         AuraBehavior::TemporaryStats {
                             bit: 1 << offset,
@@ -2959,6 +2999,20 @@ impl<A: Agent> Fight<A> {
                     })
                 {
                     AuraBehavior::SulfurasImmolation
+                } else if let Some(spell) = (side == Side::Player)
+                    .then(|| {
+                        effects.iter().find_map(|effect| match effect {
+                            Effect::ForceReactiveDisk {
+                                trigger_aura,
+                                spell,
+                                ..
+                            } if *trigger_aura == exported.label => Some(*spell),
+                            _ => None,
+                        })
+                    })
+                    .flatten()
+                {
+                    AuraBehavior::ForceReactiveDisk(spell)
                 } else if side == Side::Player
                     && effects.iter().any(|effect| {
                         matches!(effect, Effect::Thunderfury { trigger_aura, .. } if *trigger_aura == exported.label)
@@ -3727,43 +3781,54 @@ impl<A: Agent> Fight<A> {
         }
         fight.bind_absorb_procs(effects)?;
         for effect in effects {
-            let (trigger_spells, struck, landed_only, require_damage, proc_chance, spell, chances) =
-                match effect {
-                    Effect::SpellDataDamageProc {
-                        trigger_spells,
-                        struck,
-                        landed_only,
-                        require_damage,
-                        proc_chance,
-                        spell,
-                        chances,
-                        ..
-                    } => (
-                        trigger_spells.clone(),
-                        *struck,
-                        *landed_only,
-                        *require_damage,
-                        *proc_chance,
-                        *spell,
-                        chances,
-                    ),
-                    // A weapon proc that casts the spell granting the extra attacks: it hears the
-                    // landed hits its proc manager has a chance for.
-                    Effect::ExtraAttackProc {
-                        chances: chances @ Some(entries),
-                        spell: Some(spell),
-                        ..
-                    } => (
-                        entries.iter().map(|entry| entry.spell).collect(),
-                        false,
-                        true,
-                        false,
-                        1.0,
-                        *spell,
-                        chances,
-                    ),
-                    _ => continue,
-                };
+            let (
+                trigger_spells,
+                struck,
+                casts,
+                landed_only,
+                require_damage,
+                proc_chance,
+                spell,
+                chances,
+            ) = match effect {
+                Effect::SpellDataDamageProc {
+                    trigger_spells,
+                    struck,
+                    casts,
+                    landed_only,
+                    require_damage,
+                    proc_chance,
+                    spell,
+                    chances,
+                    ..
+                } => (
+                    trigger_spells.clone(),
+                    *struck,
+                    *casts,
+                    *landed_only,
+                    *require_damage,
+                    *proc_chance,
+                    *spell,
+                    chances,
+                ),
+                // A weapon proc that casts the spell granting the extra attacks: it hears the
+                // landed hits its proc manager has a chance for.
+                Effect::ExtraAttackProc {
+                    chances: chances @ Some(entries),
+                    spell: Some(spell),
+                    ..
+                } => (
+                    entries.iter().map(|entry| entry.spell).collect(),
+                    false,
+                    false,
+                    true,
+                    false,
+                    1.0,
+                    *spell,
+                    chances,
+                ),
+                _ => continue,
+            };
             let mut mask = vec![false; fight.spells.len()];
             for &trigger in &trigger_spells {
                 if let Some(slot) = mask.get_mut(trigger) {
@@ -3782,6 +3847,7 @@ impl<A: Agent> Fight<A> {
             fight.damage_procs.push(DamageProc {
                 trigger_spells: mask,
                 struck,
+                casts,
                 landed_only,
                 require_damage,
                 chance: proc_chance,
@@ -4771,6 +4837,11 @@ impl<A: Agent> Fight<A> {
                     );
                 }
             }
+            Action::StackTick {
+                aura,
+                period,
+                ticks_left,
+            } => self.stack_tick(aura, period, ticks_left),
             Action::WindfuryRefresh => {
                 let windfury = self.windfury.as_ref().expect("Windfury Totem is bound");
                 let (totem, period) = (windfury.totem, windfury.period);

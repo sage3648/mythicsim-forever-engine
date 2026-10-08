@@ -678,6 +678,10 @@ fn tail_effects(
         if label == "Chance of Death" && takes_damage {
             continue;
         }
+        // A tank's Freezing Band is a proc of the hits it takes (hit_taken_item_listeners).
+        if label == "Freezing Band" && tanking {
+            continue;
+        }
         let has = env.sim.get_aura(unit, label).is_some();
         if label == "Parry Haste" && tanking {
             if has {

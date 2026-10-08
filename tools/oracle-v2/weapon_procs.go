@@ -53,6 +53,49 @@ func procTickOutcome(row *spelldata.Spell) string {
 	return "tick"
 }
 
+// The fields of a spell_data_damage_proc effect that the damage row and the spell registered for it
+// decide, whoever listens: the spell, the row's direct hit and the table it rolls, the targets of an
+// area or chain, and the damage over time the row carries. The reason the runtime cannot run the row,
+// phrased for "<item>'s proc ...", is returned instead where there is one.
+func procDamageShape(character *core.Character, damage *spelldata.Spell, spell int) (map[string]any, string) {
+	direct, periodic := damage.DamageEffect(), damage.PeriodicDamageEffect()
+	defense := character.Spellbook[spell].DefenseType
+	outcome := procHitOutcome(defense, damage.CannotCrit())
+	switch {
+	case direct == spelldata.NilEffect && periodic == spelldata.NilEffect:
+		return nil, "deals no damage"
+	case damage.DebuffsTheTarget():
+		return nil, "debuffs the target"
+	case periodic != spelldata.NilEffect && (direct.HitsAnArea() || direct.ChainTargets > 1):
+		return nil, "spreads and leaves a damage over time"
+	case periodic != spelldata.NilEffect && direct == spelldata.NilEffect && damage.Speed != 0:
+		return nil, "missile carries only a damage over time"
+	case periodic != spelldata.NilEffect && procTickOutcome(damage) == "tick_magic_hit":
+		return nil, "ticks roll a magic hit without a crit"
+	case defense != core.DefenseTypeMagic && defense != core.DefenseTypeMelee && defense != core.DefenseTypeRanged:
+		return nil, "rolls no known hit table"
+	}
+	shape := map[string]any{"spell": spell, "average": 0.0, "variance": 0.0, "can_crit": !damage.CannotCrit()}
+	if direct != spelldata.NilEffect {
+		shape["average"], shape["variance"] = direct.Average(character.Level), direct.Variance
+		if outcome != "" {
+			shape["outcome"] = outcome
+		}
+		switch {
+		case direct.HitsAnArea():
+			shape["area"] = map[string]any{"max_targets": int32(damage.MaxTargets), "splits": damage.SplitsDamage,
+				"aoe_cap_multiplier": character.Env.Encounter.AOECapMultiplier()}
+		case direct.ChainTargets > 1:
+			shape["chain"] = map[string]any{"targets": int32(direct.ChainTargets), "amp": float64(direct.ChainAmp)}
+		}
+	}
+	if periodic != spelldata.NilEffect {
+		shape["periodic"] = map[string]any{"tick_base": periodic.Average(character.Level),
+			"tick_outcome": procTickOutcome(damage), "with_direct": direct != spelldata.NilEffect}
+	}
+	return shape, ""
+}
+
 // weaponDamageProcEffects describes the weapon procs above. The spell is the one
 // shared_utils.go spellDataProcDamageSpell builds, cast at once by the handler on the unit hit
 // (procDamageHandler, TriggerImmediately): the row's direct hit rolled once, or for a chain once a
@@ -75,31 +118,13 @@ func weaponDamageProcEffects(simulation *core.Simulation, character *core.Charac
 				spell = i
 			}
 		}
-		direct, periodic := damage.DamageEffect(), damage.PeriodicDamageEffect()
 		if aura.Dpm == nil || aura.Icd != nil || spell < 0 {
 			*unrepresented = append(*unrepresented, fmt.Sprintf("%s's proc has no proc manager or spell", proc.label))
 			continue
 		}
-		defense := character.Spellbook[spell].DefenseType
-		outcome := procHitOutcome(defense, damage.CannotCrit())
-		switch {
-		case direct == spelldata.NilEffect && periodic == spelldata.NilEffect:
-			*unrepresented = append(*unrepresented, fmt.Sprintf("%s's proc deals no damage", proc.label))
-			continue
-		case damage.DebuffsTheTarget():
-			*unrepresented = append(*unrepresented, fmt.Sprintf("%s's proc debuffs the target", proc.label))
-			continue
-		case periodic != spelldata.NilEffect && (direct.HitsAnArea() || direct.ChainTargets > 1):
-			*unrepresented = append(*unrepresented, fmt.Sprintf("%s's proc spreads and leaves a damage over time", proc.label))
-			continue
-		case periodic != spelldata.NilEffect && direct == spelldata.NilEffect && damage.Speed != 0:
-			*unrepresented = append(*unrepresented, fmt.Sprintf("%s's missile carries only a damage over time", proc.label))
-			continue
-		case periodic != spelldata.NilEffect && procTickOutcome(damage) == "tick_magic_hit":
-			*unrepresented = append(*unrepresented, fmt.Sprintf("%s's ticks roll a magic hit without a crit", proc.label))
-			continue
-		case defense != core.DefenseTypeMagic && defense != core.DefenseTypeMelee && defense != core.DefenseTypeRanged:
-			*unrepresented = append(*unrepresented, fmt.Sprintf("%s's proc rolls no known hit table", proc.label))
+		shape, reason := procDamageShape(character, damage, spell)
+		if reason != "" {
+			*unrepresented = append(*unrepresented, fmt.Sprintf("%s's proc %s", proc.label, reason))
 			continue
 		}
 		chances := dpmChances(character, aura.Dpm, simulation, func(spell *core.Spell) bool {
@@ -112,24 +137,9 @@ func weaponDamageProcEffects(simulation *core.Simulation, character *core.Charac
 		effect := map[string]any{
 			"kind": "spell_data_damage_proc", "trigger_aura": aura.Label, "trigger_spells": triggers,
 			"landed_only": true, "require_damage": false, "proc_chance": 1.0, "chances": chances,
-			"spell": spell, "average": 0.0, "variance": 0.0, "can_crit": !damage.CannotCrit(),
 		}
-		if direct != spelldata.NilEffect {
-			effect["average"], effect["variance"] = direct.Average(character.Level), direct.Variance
-			if outcome != "" {
-				effect["outcome"] = outcome
-			}
-			switch {
-			case direct.HitsAnArea():
-				effect["area"] = map[string]any{"max_targets": int32(damage.MaxTargets), "splits": damage.SplitsDamage,
-					"aoe_cap_multiplier": character.Env.Encounter.AOECapMultiplier()}
-			case direct.ChainTargets > 1:
-				effect["chain"] = map[string]any{"targets": int32(direct.ChainTargets), "amp": float64(direct.ChainAmp)}
-			}
-		}
-		if periodic != spelldata.NilEffect {
-			effect["periodic"] = map[string]any{"tick_base": periodic.Average(character.Level),
-				"tick_outcome": procTickOutcome(damage), "with_direct": direct != spelldata.NilEffect}
+		for key, value := range shape {
+			effect[key] = value
 		}
 		effects = append(effects, effect)
 	}

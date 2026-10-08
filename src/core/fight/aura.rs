@@ -104,11 +104,16 @@ pub(crate) enum AuraBehavior<K> {
     StackingStats {
         offset: u32,
         width: u32,
+        /// A stack added at once on gain and every period after it, for the ticks in all:
+        /// Go `StartPeriodicAction` with `TickImmediately`.
+        periodic: Option<(i64, i32)>,
     },
     /// The Crusader enchant's trigger.
     Crusader,
     /// Dragon's Call's trigger, which summons the Emerald Dragon Whelp.
     EmeraldDragonWhelp,
+    /// Force Reactive Disk's trigger, with the spell it casts.
+    ForceReactiveDisk(SpellId),
     /// Thunderfury's weapon proc trigger.
     Thunderfury,
     /// Thunderfury's resistance aura on a target: its nature resistance changes by the amount
@@ -603,6 +608,23 @@ impl<A: Agent> Fight<A> {
         self.on_expire(aura);
     }
 
+    /// A tick of a periodic stack adder: one more stack, and the next tick a period away while
+    /// ticks are left.
+    pub(crate) fn stack_tick(&mut self, aura: AuraRef, period: i64, ticks_left: i32) {
+        self.add_stack(aura);
+        if ticks_left > 1 {
+            self.schedule(
+                self.now + period,
+                super::PRIORITY_AUTO,
+                super::Action::StackTick {
+                    aura,
+                    period,
+                    ticks_left: ticks_left - 1,
+                },
+            );
+        }
+    }
+
     /// Go `Aura.SetStacks`.
     pub(crate) fn set_stacks(&mut self, aura: AuraRef, stacks: i32) {
         let state = self.aura(aura);
@@ -624,7 +646,7 @@ impl<A: Agent> Fight<A> {
                 self.armor_debuff_stacks_changed(proc, aura.side, old, new)
             }
             // Go `MakeStackingAura`'s OnStacksChange adds the stats of the stacks gained.
-            AuraBehavior::StackingStats { offset, width } => {
+            AuraBehavior::StackingStats { offset, width, .. } => {
                 let field = ((1u32 << width) - 1) << offset;
                 self.set_stat_mask((self.stat_mask & !field) | ((new as u32) << offset));
             }
@@ -697,6 +719,26 @@ impl<A: Agent> Fight<A> {
                 self.multiply_mana_regen_speed(multiplier)
             }
             AuraBehavior::WindfuryProc { bit } => self.set_stat_mask(self.stat_mask | bit),
+            AuraBehavior::StackingStats {
+                periodic: Some((period, ticks)),
+                ..
+            } => {
+                // Go `NewPeriodicAction`: at time zero, which may be the reset, the first tick
+                // waits in the queue; otherwise it runs inside the gain.
+                if self.now == 0 {
+                    self.schedule(
+                        0,
+                        super::PRIORITY_AUTO,
+                        super::Action::StackTick {
+                            aura,
+                            period,
+                            ticks_left: ticks,
+                        },
+                    );
+                } else {
+                    self.stack_tick(aura, period, ticks);
+                }
+            }
             AuraBehavior::ThunderfuryResistance(delta) => {
                 self.thunderfury_resistance(aura.side, delta)
             }
@@ -999,6 +1041,18 @@ impl<A: Agent> Fight<A> {
                 AuraBehavior::SpellDataStatProc(proc) if self.spell_stat_procs[proc].casts => {
                     self.spell_stat_proc_callback(aura, proc, Some(spell), None)
                 }
+                AuraBehavior::SpellDataDamageProc(proc) if self.damage_procs[proc].casts => {
+                    // A cast carries no result: the proc answers the current target.
+                    let result = SpellResult {
+                        armor_multiplier: 0.0,
+                        target: Side::Target,
+                        attacker: Side::Player,
+                        outcome: 0,
+                        damage: 0.0,
+                        threat: 0.0,
+                    };
+                    self.damage_proc_callback(aura, proc, Some(spell), &result)
+                }
                 _ => {}
             }
         }
@@ -1124,12 +1178,13 @@ impl<A: Agent> Fight<A> {
                         self.chili_callback(aura, spell, result)
                     }
                     AuraBehavior::SpellDataDamageProc(proc)
-                        if dealt != self.damage_procs[proc].struck =>
+                        if dealt != self.damage_procs[proc].struck
+                            && !self.damage_procs[proc].casts =>
                     {
                         self.damage_proc_callback(aura, proc, Some(spell), result)
                     }
                     AuraBehavior::HealProc(proc) if dealt => {
-                        self.heal_proc_callback(aura, proc, spell, result)
+                        self.heal_proc_callback(aura, proc, Some(spell), result)
                     }
                     AuraBehavior::HealthRageProc(proc) if dealt => {
                         self.health_rage_proc_callback(aura, proc, spell, result)
@@ -1303,8 +1358,9 @@ impl<A: Agent> Fight<A> {
             Some(spell) => state.trigger_spells[spell],
         };
         if !heard
-            || (state.landed_only && result.outcome & super::OUTCOME_LANDED == 0)
-            || (state.require_damage && result.damage == 0.0)
+            || (!state.casts
+                && ((state.landed_only && result.outcome & super::OUTCOME_LANDED == 0)
+                    || (state.require_damage && result.damage == 0.0)))
         {
             return;
         }
@@ -1473,6 +1529,9 @@ impl<A: Agent> Fight<A> {
             AuraBehavior::EmeraldDragonWhelp => self.whelp_summon(),
             AuraBehavior::SulfurasImmolation => self.sulfuras_immolation_hit(result.attacker),
             AuraBehavior::Thunderfury => self.thunderfury_handler(result.target),
+            AuraBehavior::ForceReactiveDisk(disk) => {
+                self.cast(disk, Side::Player);
+            }
             AuraBehavior::StatProc(proc) => {
                 let (aura, add_stack) =
                     (self.stat_procs[proc].aura, self.stat_procs[proc].add_stack);

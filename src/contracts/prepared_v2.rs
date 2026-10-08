@@ -1938,6 +1938,11 @@ pub enum Effect {
         /// carry no spellbook position, and answers the attacker.
         #[serde(default, skip_serializing_if = "std::ops::Not::not")]
         struck: bool,
+        /// The listener hears the spells the player casts, not the hits they deal: it checks no
+        /// outcome and no damage, since a cast carries no result, and answers the current
+        /// target.
+        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+        casts: bool,
         landed_only: bool,
         require_damage: bool,
         proc_chance: f64,
@@ -2029,6 +2034,10 @@ pub enum Effect {
     SpellDataHealProc {
         trigger_aura: String,
         trigger_spells: Vec<usize>,
+        /// A "when struck" proc: it hears the melee hits the player takes, which carry no
+        /// spellbook position.
+        #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+        struck: bool,
         /// Go `HitOutcome` names the listener hears; empty hears every outcome.
         outcome: Vec<String>,
         require_damage: bool,
@@ -3810,6 +3819,23 @@ pub enum Effect {
         immolation_spell: usize,
         immolation_damage: f64,
     },
+    /// Jom Gabbar (classic items_trinkets.go): the item's spell activates `aura`, a stacking stat
+    /// aura among the stat auras. Gaining it adds a stack at once, and another every `period_ns`
+    /// until `ticks` have been added in all (`StartPeriodicAction` with `TickImmediately`).
+    StackingOnUse {
+        spell_id: i32,
+        aura: String,
+        period_ns: i64,
+        ticks: i32,
+    },
+    /// Force Reactive Disk (classic items_armor.go): a listener on the melee hits the wearer takes
+    /// that the wearer blocks, behind the aura's cooldown, whose handler a spell batch window later
+    /// casts `spell` for `damage` on every target, each rolling the magic table with a crit.
+    ForceReactiveDisk {
+        trigger_aura: String,
+        spell: usize,
+        damage: f64,
+    },
     /// Thunderfury, Blessed Blade of the Windseeker: a weapon proc on landed hits whose handler
     /// a spell batch window later casts two spells on the unit hit. The strike is a hit of a Go
     /// literal on the magic table with a crit, whose landing puts the slow on the target: Cyclone,
@@ -4196,6 +4222,8 @@ impl Effect {
             Effect::BasicExplosive { .. } => "basic_explosive",
             Effect::EmeraldDragonWhelp { .. } => "emerald_dragon_whelp",
             Effect::Thunderfury { .. } => "thunderfury",
+            Effect::ForceReactiveDisk { .. } => "force_reactive_disk",
+            Effect::StackingOnUse { .. } => "stacking_on_use",
             Effect::SulfurasHandOfRagnaros { .. } => "sulfuras_hand_of_ragnaros",
             Effect::HunterPet { .. } => "hunter_pet",
             Effect::AspectOfTheBeast { .. } => "aspect_of_the_beast",

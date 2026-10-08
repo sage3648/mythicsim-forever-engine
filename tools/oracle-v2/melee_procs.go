@@ -30,12 +30,12 @@ var dynamicReadStats = []stats.Stat{stats.SpellDamage, stats.AttackPower, stats.
 // them: maximum mana, healing power and health, Spirit, which Life Tap and Dark Sacrifice read,
 // the school spell damage stats spell.go SpellSchoolBonusDamage reads, the resistances a spell
 // that hits the player rolls against, the physical damage spell.go BonusDamage adds to a
-// physical spell and the armor penetration spell_resistances.go GetArmorDamageModifier takes off
-// the target's armor.
+// physical spell, the armor penetration spell_resistances.go GetArmorDamageModifier takes off the
+// target's armor and the spell piercing it takes off the target's resistance.
 var optionalReadStats = []stats.Stat{stats.Mana, stats.HealingPower, stats.Health, stats.Spirit,
 	stats.ArcaneDamage, stats.FireDamage, stats.FrostDamage, stats.HolyDamage, stats.NatureDamage,
 	stats.ShadowDamage, stats.ArcaneResistance, stats.FireResistance, stats.FrostResistance,
-	stats.NatureResistance, stats.ShadowResistance, stats.PhysicalDamage, stats.ArmorPenetration}
+	stats.NatureResistance, stats.ShadowResistance, stats.PhysicalDamage, stats.ArmorPenetration, stats.SpellPiercing}
 
 // Auras of races, items and raid buffs whose gain and expiry change stats through
 // AddStatsDynamic. A class adds its own through classExport.statAuras.
@@ -66,6 +66,8 @@ func characterStatAuras(character *core.Character, class classExport, agent core
 		}
 	}
 	candidates = append(candidates, weaponAuraProcAuras...)
+	// classic items_trinkets.go Jom Gabbar's stacking aura.
+	candidates = append(candidates, "Jom Gabbar")
 	for _, label := range candidates {
 		if character.GetAura(label) != nil {
 			labels = append(labels, label)
@@ -166,7 +168,7 @@ func statAurasEffect(request *proto.RaidSimRequest, layout statLayout, reader co
 	if len(labels) == 0 {
 		return nil
 	}
-	if layout.bits > 10 {
+	if layout.bits > 12 {
 		fail(fmt.Errorf("%d stat auras exceed the combination limit", len(labels)))
 	}
 	combos := []map[string]float64{}
@@ -277,23 +279,65 @@ func dpmChances(character *core.Character, dpm *core.DynamicProcManager, simulat
 	return chances
 }
 
-// Item procs common/shared/shared_utils.go applySpellDataDamageProc builds from client rows: the
+// Item procs common/shared/shared_utils.go applySpellDataDamageProc builds from client rows, which
+// common/forever/stat_bonus_procs_auto_gen.go registers with shared.NewSpellDataDamageProc: the
 // item's trigger aura, its trigger row and the damage row the proc casts.
 var spellDataDamageProcs = []struct {
 	label   string
 	trigger int32
 	damage  int32
-}{{"Storm Gauntlets", 16615, 16614}, {"Orb of Fire", 16982, 13441}, {"Premier High Warlord's Shield Wall", 13959, 16782},
-	{"Premier Grand Marshal's Aegis", 13959, 16782}}
+}{
+	{"Totem of Infliction", 7617, 16783},
+	{"Skullflame Shield -  - ", 18815, 18817},
+	{"Hurricane", 1316319, 29502},
+	{"Red Whelp Gloves", 9233, 9057},
+	{"Vile Protector", 7619, 1293421},
+	{"Thermaplugg's Central Core", 1292880, 1292879},
+	{"Swine Fists", 1293783, 1293782},
+	{"Girdle of Reprisal", 7617, 16783},
+	{"Fiery Plate Gauntlets", 7721, 7714},
+	{"Storm Gauntlets", 16615, 16614},
+	{"Orb of Fire", 16982, 13441},
+	{"Blazefury Medallion", 7711, 7712},
+	{"Force Imbued Gauntlets", 1302248, 1302247},
+	{"Grand Marshal's Aegis - ", 13959, 16782},
+	{"High Warlord's Shield Wall - ", 13959, 16782},
+	{"High Warlord's Shield Wall -  - ", 1216968, 16782},
+	{"Grand Marshal's Aegis -  - ", 1216968, 16782},
+	{"Premier High Warlord's Shield Wall", 13959, 16782},
+	{"Premier Grand Marshal's Aegis", 13959, 16782},
+	{"Searing Dagger", 1291568, 1291570},
+	{"Cursed Murloc Eye", 1292674, 1292675},
+	{"Thorncursed Grips", 1293331, 1293333},
+	{"Coldflame Saber", 1300128, 1300130},
+	{"Satchel of Copper Bombs", 1318034, 1318031},
+	{"Satchel of Bronze Bombs", 1318062, 1318061},
+	{"Satchel of Iron Bombs", 1318069, 1318068},
+	{"Satchel of Dark Iron Bombs", 1318123, 1318121},
+}
 
 // The proc mask of a "when struck in combat" trigger: melee and ranged hits taken.
 const struckProcMask = core.ProcMaskMeleeMHAuto | core.ProcMaskMeleeOHAuto | core.ProcMaskMeleeMHSpecial |
 	core.ProcMaskMeleeOHSpecial | core.ProcMaskRangedAuto | core.ProcMaskRangedSpecial
 
+// Whether a listener hears the melee hits the wearer takes, which the target's swings are, and no
+// others. Its mask may name spell damage only when the wearer throws no Goblin Sapper Charge, whose
+// hit on the thrower is the one spell that damages the player.
+func hearsTheTargetsSwings(character *core.Character, listener core.ProcTrigger) bool {
+	mask := core.ProcMask(struckProcMask)
+	if character.GetSpell(core.GoblinSapperActionID.WithTag(1)) == nil {
+		mask |= core.ProcMaskSpellDamage
+	}
+	names := callbackNames(listener.Callback)
+	return len(names) == 1 && names[0] == "on_spell_hit_taken" && listener.ProcMask&^mask == 0 &&
+		listener.ProcMask.Matches(core.ProcMaskMeleeMHAuto) && !listener.CanProcFromProcs && !listener.IsWeaponProc &&
+		listener.ClassSpellMask == 0 && listener.SpellFlags == core.SpellFlagNone && listener.ProcMaskExclude == core.ProcMaskUnknown
+}
+
 // applySpellDataDamageProc: a listener resolved from the trigger row that casts the damage spell at
-// once on the unit hit, or, for a hit taken, on the attacker (procDamageTarget). Only a single
-// target magic hit is described: dealt where it lands, or struck by a melee or ranged hit, which
-// the target's swings are and the Goblin Sapper Charge's hit on the player is not.
+// once on the unit hit, or, for a hit taken, on the attacker (procDamageTarget). The hit is
+// described as procDamageShape does: dealt where it lands, or struck by a melee or ranged hit,
+// which the target's swings are and the Goblin Sapper Charge's hit on the player is not.
 func spellDataDamageProcEffects(character *core.Character, unrepresented *[]string) []map[string]any {
 	effects := []map[string]any{}
 	melee := false
@@ -308,8 +352,9 @@ func spellDataDamageProcEffects(character *core.Character, unrepresented *[]stri
 		damage := spelldata.MustFind(proc.damage)
 		listener := spelldata.ProcTrigger(character, trigger, nil, spelldata.ItemProcChance(trigger))
 		struck := listener.Callback == core.CallbackOnSpellHitTaken
-		// Without a melee special, meleeItemListeners describes a dealt listener as inert.
-		if !struck && !melee {
+		// Without a melee special, meleeItemListeners describes a listener of melee hits dealt as
+		// inert.
+		if !struck && !melee && listener.ProcMask != core.ProcMaskUnknown && listener.ProcMask&^core.ProcMaskMelee == 0 {
 			continue
 		}
 		spell := -1
@@ -318,27 +363,23 @@ func spellDataDamageProcEffects(character *core.Character, unrepresented *[]stri
 				spell = i
 			}
 		}
-		effect := damage.DamageEffect()
-		// shared_utils.go damageDefenseType: a stated defense type, else the school's.
-		defense := damage.DefenseTypeCore()
-		if defense == core.DefenseTypeNone {
-			defense = core.DefenseTypeMagic
-			if damage.SpellSchool().Matches(core.SpellSchoolPhysical) {
-				defense = core.DefenseTypeMelee
-			}
-		}
 		// AttachProcTriggerCallback reads an unset chance as certain.
 		chance := listener.ProcChance
 		if chance == 0 {
 			chance = 1
 		}
 		names := callbackNames(listener.Callback)
-		if spell < 0 || effect == nil || effect == spelldata.NilEffect || damage.PeriodicDamageEffect() != spelldata.NilEffect || effect.HitsAnArea() ||
-			effect.ChainTargets > 1 || damage.AppliesAnAuraToAnEnemy() || damage.Speed != 0 || defense != core.DefenseTypeMagic ||
+		var shape map[string]any
+		reason := "is not a single target magic hit"
+		if spell >= 0 {
+			if shape, reason = procDamageShape(character, damage, spell); reason != "" {
+				reason = "is not a single target magic hit"
+			}
+		}
+		if spell < 0 || reason != "" ||
 			trigger.RPPM != 0 || listener.DPM != nil || listener.ExtraCondition != nil || len(names) != 1 ||
-			(names[0] != "on_spell_hit_dealt" && !struck) || (listener.Outcome != core.OutcomeEmpty && listener.Outcome != core.OutcomeLanded) ||
-			(struck && (listener.ProcMask != struckProcMask || listener.CanProcFromProcs || listener.IsWeaponProc ||
-				listener.ClassSpellMask != 0 || listener.SpellFlags != core.SpellFlagNone || listener.ProcMaskExclude != core.ProcMaskUnknown)) {
+			(names[0] != "on_spell_hit_dealt" && names[0] != "on_cast_complete" && !struck) || (listener.Outcome != core.OutcomeEmpty && listener.Outcome != core.OutcomeLanded) ||
+			(struck && !hearsTheTargetsSwings(character, listener)) {
 			*unrepresented = append(*unrepresented, fmt.Sprintf("%s's proc is not a single target magic hit", proc.label))
 			continue
 		}
@@ -347,11 +388,18 @@ func spellDataDamageProcEffects(character *core.Character, unrepresented *[]stri
 		if !struck {
 			triggerSpells = procTriggerSpells(character, listener)
 		}
+		// A cast carries no result: AttachProcTriggerCallback checks no outcome and no damage for it.
+		casts := names[0] == "on_cast_complete"
 		exported := map[string]any{
 			"kind": "spell_data_damage_proc", "trigger_aura": proc.label, "trigger_spells": triggerSpells,
-			"landed_only": listener.Outcome == core.OutcomeLanded, "require_damage": listener.RequireDamageDealt,
-			"proc_chance": chance, "spell": spell, "average": effect.Average(core.CharacterLevel),
-			"variance": effect.Variance, "can_crit": !damage.CannotCrit(),
+			"landed_only":    listener.Outcome == core.OutcomeLanded && !casts,
+			"require_damage": listener.RequireDamageDealt && !casts, "proc_chance": chance,
+		}
+		if casts {
+			exported["casts"] = true
+		}
+		for key, value := range shape {
+			exported[key] = value
 		}
 		if struck {
 			exported["struck"] = true
@@ -472,7 +520,8 @@ var procDamageItems = []struct {
 	procMask             core.ProcMask
 }{{"Heart of Wyrmthalak", 27655, 112, 168, core.DefenseTypeMagic, false, core.ProcMaskMeleeOrRanged},
 	{"Iceblade Hacker", 1298414, 40.70000076293945, 40.70000076293945, core.DefenseTypeMelee, true, core.ProcMaskMelee},
-	{"Warblade of Caer Darrow", 1298499, 27.719999313354492, 27.719999313354492, core.DefenseTypeMelee, true, core.ProcMaskMelee}}
+	{"Warblade of Caer Darrow", 1298499, 27.719999313354492, 27.719999313354492, core.DefenseTypeMelee, true, core.ProcMaskMelee},
+	{"Darkmoon Card: Maelstrom", 23687, 200, 300, core.DefenseTypeMagic, false, core.ProcMaskMelee}}
 
 func procDamageItemEffects(simulation *core.Simulation, character *core.Character, unrepresented *[]string) []map[string]any {
 	effects := []map[string]any{}
@@ -520,7 +569,7 @@ func procDamageItemEffects(simulation *core.Simulation, character *core.Characte
 var spellDataHealProcs = []struct {
 	label         string
 	trigger, heal int32
-}{{"Enchant Weapon - Recovery", 1248761, 1248759}}
+}{{"Enchant Weapon - Recovery", 1248761, 1248759}, {"Truesilver Breastplate", 9778, 9777}}
 
 func spellDataHealProcEffects(character *core.Character, unrepresented *[]string) []map[string]any {
 	effects := []map[string]any{}
@@ -544,10 +593,11 @@ func spellDataHealProcEffects(character *core.Character, unrepresented *[]string
 			chance = 1
 		}
 		names := callbackNames(listener.Callback)
+		struck := hearsTheTargetsSwings(character, listener)
 		icd := aura.Icd != nil && aura.Icd.Duration != listener.ICD
 		if spell < 0 || effect == nil || effect == spelldata.NilEffect || effect.Aura == dbcenums.A_PERIODIC_HEAL ||
 			(effect.Type != dbcenums.E_HEAL_PCT && effect.Type != dbcenums.E_HEAL) || listener.DPM != nil || trigger.RPPM != 0 ||
-			listener.ExtraCondition != nil || len(names) != 1 || names[0] != "on_spell_hit_dealt" || icd ||
+			listener.ExtraCondition != nil || len(names) != 1 || (names[0] != "on_spell_hit_dealt" && !struck) || icd ||
 			(listener.ICD != 0) != (aura.Icd != nil) || character.Spellbook[spell].BonusCoefficient != 0 {
 			*unrepresented = append(*unrepresented, fmt.Sprintf("%s's proc is not a direct heal on the wearer", proc.label))
 			continue
@@ -560,6 +610,10 @@ func spellDataHealProcEffects(character *core.Character, unrepresented *[]string
 			"healing_taken_multiplier":       character.PseudoStats.HealingTakenMultiplier,
 			"table_healing_dealt_multiplier": character.AttackTables[character.UnitIndex].HealingDealtMultiplier,
 			"bonus_healing_taken":            character.PseudoStats.BonusHealingTaken,
+		}
+		if struck {
+			exported["struck"] = true
+			exported["trigger_spells"] = []int{}
 		}
 		if effect.Type == dbcenums.E_HEAL_PCT {
 			exported["max_health_share"] = effect.Percent()

@@ -26,6 +26,11 @@ var spellDataStatProcs = []struct {
 	parsed  bool
 }{
 	{"Draconic Infused Emblem", 1318931, 1318930, 22268, 0, false},
+	{"The Green Tower", 18097, 17154, 1204, 0, false},
+	{"Wall of the Dead", 19409, 18828, 1979, 0, false},
+	{"Darkmoon Card: Blue Dragon", 23688, 23684, 19288, 0, false},
+	{"Wrath of Cenarius", 25906, 25907, 21190, 0, false},
+	{"Painwalker Buckler", 1293701, 1293700, 274290, 0, false},
 	{"Enchant Weapon - Grand Sorcerer", 1231163, 1231162, 0, 7942, false},
 	{"Enchant 2H Weapon - Grand Arcanist", 1231152, 1231138, 0, 7941, false},
 	{"Enchant Weapon - Insight", 1248758, 1299796, 0, 8216, true},
@@ -36,15 +41,28 @@ func spellDataStatProcAura(label string) string {
 	return label + " Proc"
 }
 
-// The stat auras of the spell data procs the character wears, which statAurasEffect combines.
+// The stat auras of the spell data procs the character wears, which statAurasEffect combines. A
+// proc of the hits the wearer takes joins them only when the wearer tanks the target, since nothing
+// else hits it.
 func spellDataStatProcAuras(character *core.Character) []string {
 	labels := []string{}
 	for _, proc := range spellDataStatProcs {
-		if character.GetAura(proc.label) != nil {
-			labels = append(labels, spellDataStatProcAura(proc.label))
+		if character.GetAura(proc.label) == nil {
+			continue
 		}
+		trigger := spelldata.MustFind(proc.trigger)
+		listener := spelldata.ProcTrigger(character, trigger, nil, spelldata.ItemProcChance(trigger))
+		if listener.Callback == core.CallbackOnSpellHitTaken && !tanksTheTarget(character) {
+			continue
+		}
+		labels = append(labels, spellDataStatProcAura(proc.label))
 	}
 	return labels
+}
+
+// Whether the target swings at the wearer.
+func tanksTheTarget(character *core.Character) bool {
+	return character.Env.Encounter.ActiveTargetUnits[0].CurrentTarget == &character.Unit
 }
 
 // shared_utils.go applySpellDataProc: the listener its trigger row decodes to (spellDataProcListener)
@@ -85,9 +103,17 @@ func spellDataStatProcEffects(character *core.Character, unrepresented *[]string
 		}
 		listener := spelldata.ProcTrigger(character, trigger, nil, spelldata.ItemProcChance(trigger))
 		names := callbackNames(listener.Callback)
+		struck := hearsTheTargetsSwings(character, listener)
 		heard := len(names) > 0
 		for _, name := range names {
 			heard = heard && (name == "on_spell_hit_dealt" || name == "on_heal_dealt" || name == "on_cast_complete")
+		}
+		heard = heard || struck
+		if struck && !tanksTheTarget(character) {
+			effects = append(effects, map[string]any{
+				"kind": "inert_listener", "unit": "player", "aura": triggerAura.Label, "reason": "hears only melee hits the player takes",
+			})
+			continue
 		}
 		if procAura == nil || entry == nil || entry.GetStackingAura() != nil || triggerAura.Dpm != nil || trigger.RPPM != 0 ||
 			entry.GetProc().GetPpm() != 0 || max(buff.MaxStack, trigger.MaxStack) > 0 || buff.ProcCharges > 0 || !heard ||
@@ -102,9 +128,12 @@ func spellDataStatProcEffects(character *core.Character, unrepresented *[]string
 		}
 		effect := map[string]any{
 			"kind": "spell_data_stat_proc", "trigger_aura": triggerAura.Label, "aura": procAura.Label,
-			"trigger_spells": procTriggerSpells(character, listener), "callbacks": names,
+			"trigger_spells": procTriggerSpellsOrNone(character, listener, struck), "callbacks": names,
 			"landed_only": listener.Outcome == core.OutcomeLanded, "require_damage": listener.RequireDamageDealt,
 			"proc_chance": chance,
+		}
+		if struck {
+			effect["struck"] = true
 		}
 		if !proc.parsed {
 			bonus := stats.FromProtoMap(entry.GetScalingOptions()[int32(0)].GetStats())
@@ -140,4 +169,13 @@ func spellCostAuraOnUseEffect(request *proto.RaidSimRequest, character *core.Cha
 		}
 	}
 	return map[string]any{"kind": "spell_cost_aura_on_use", "item_id": spell.ActionID.ItemID, "aura": label, "cost_changes": changes}
+}
+
+// The spells a listener hears, none for a listener of the hits the wearer takes: the target's swings
+// carry no spellbook position.
+func procTriggerSpellsOrNone(character *core.Character, listener core.ProcTrigger, struck bool) []int {
+	if struck {
+		return []int{}
+	}
+	return procTriggerSpells(character, listener)
 }

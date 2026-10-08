@@ -34,6 +34,23 @@ func gearProcEffects(request *proto.RaidSimRequest, simulation *core.Simulation,
 			})
 		}
 	}
+	// classic items_trinkets.go Darkmoon Card: Heroism: landed melee hits roll a legacy two procs a
+	// minute manager under the trigger's name; a batch window later the handler heals Roll(120, 180),
+	// a Go literal, and gives no rage.
+	if aura := character.GetAura("Darkmoon Card: Heroism"); aura != nil {
+		if aura.Dpm == nil || aura.Icd != nil {
+			*unrepresented = append(*unrepresented, "Darkmoon Card: Heroism has no proc manager")
+		} else {
+			effects = append(effects, map[string]any{
+				"kind": "health_rage_proc", "trigger_aura": aura.Label, "rng_label": aura.Label,
+				"chances": dpmChances(character, aura.Dpm, simulation, func(spell *core.Spell) bool {
+					return spell.ProcMask.Matches(core.ProcMaskMelee) && !spell.Flags.Matches(core.SpellFlagProc)
+				}),
+				"heal_min": 120.0, "heal_max": 180.0, "rage": 0.0,
+				"metrics_action_id": actionID(core.ActionID{SpellID: 23682}),
+			})
+		}
+	}
 	// items_weapons.go Bashguuder and Rivenspike: a weapon proc at two procs a minute of the
 	// weapon's speed on landed hits; a batch window later the handler activates the target's
 	// Puncture Armor and adds a stack, and each stack change moves the target's armor through

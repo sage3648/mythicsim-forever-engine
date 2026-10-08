@@ -292,7 +292,7 @@ impl<A: Agent> Fight<A> {
         let config = self.unit_config(state.caster);
         resist_coefficient(
             resistance,
-            config.spell_piercing,
+            self.unit(state.caster).powers.spell_piercing,
             config.player_level,
             config.target_level,
             binary,

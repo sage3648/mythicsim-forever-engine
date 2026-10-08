@@ -841,6 +841,13 @@ impl<A: Agent> Fight<A> {
                 max,
                 aoe_cap_multiplier,
             } => self.apply_basic_explosive(spell, min, max, aoe_cap_multiplier),
+            SpellBehavior::AreaFixedDamage(damage) => {
+                // Go `CalcAndDealAoeDamage`: each target's hit is calculated and dealt in turn.
+                for position in 0..self.targets.len() {
+                    let result = self.calc_damage(spell, Side::target(position), damage);
+                    self.deal_damage(spell, result, false);
+                }
+            }
             SpellBehavior::ThunderfuryStrike(damage) => {
                 self.thunderfury_strike(spell, target, damage)
             }
@@ -1382,6 +1389,7 @@ impl<A: Agent> Fight<A> {
             | SpellBehavior::ExtraAttack(_)
             | SpellBehavior::AreaRollDamage { .. }
             | SpellBehavior::SulfurasFireball { .. }
+            | SpellBehavior::AreaFixedDamage(_)
             | SpellBehavior::ThunderfuryStrike(_)
             | SpellBehavior::ThunderfuryBounce
             | SpellBehavior::FixedHit(_)

@@ -442,8 +442,14 @@ impl<A: Agent> Fight<A> {
                 AuraBehavior::SpellDataDamageProc(proc) if self.damage_procs[proc].struck => {
                     self.damage_proc_callback(aura, proc, None, result)
                 }
+                AuraBehavior::HealProc(proc) if self.heal_procs[proc].struck => {
+                    self.heal_proc_callback(aura, proc, None, result)
+                }
                 AuraBehavior::SpellDataStatProc(proc) if self.spell_stat_procs[proc].struck => {
                     self.spell_stat_proc_callback(aura, proc, None, Some(result))
+                }
+                AuraBehavior::ForceReactiveDisk(_) => {
+                    self.force_reactive_disk_callback(aura, result)
                 }
                 // And a melee auto attack, which an absorb proc's melee mask hears.
                 AuraBehavior::AbsorbProc(proc) => self.absorb_proc_callback(aura, proc, result),
@@ -536,5 +542,22 @@ impl<A: Agent> Fight<A> {
             self.totals.target_dps[position].total += metrics.total_damage;
             self.totals.target_threat[position].total += metrics.total_threat;
         }
+    }
+}
+
+impl<A: Agent> Fight<A> {
+    /// Go `AttachProcTriggerCallback` for Force Reactive Disk: a melee hit taken that the wearer
+    /// blocks, behind the aura's cooldown, then the handler a spell batch window later.
+    fn force_reactive_disk_callback(&mut self, aura: super::AuraRef, result: &SpellResult) {
+        if result.outcome & OUTCOME_BLOCK == 0 {
+            return;
+        }
+        if let Some((timer, duration)) = self.aura(aura).icd {
+            if self.timers[timer] > self.now {
+                return;
+            }
+            self.timers[timer] = self.now + duration;
+        }
+        self.schedule_delayed_proc(aura, 0, *result);
     }
 }
