@@ -9696,6 +9696,951 @@
         "file": "fire-mage-moves.go-log.txt",
         "sha256": "0d0a815a45e9d5b8e5e0a88f52df66666906a355bbf7103ee40411971f6d05db"
       }
+    },
+    {
+      "id": "frostfire-mage-moves",
+      "description": "A Frostfire Mage that moves along a timeline of ranges and durations.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/frostfire-mage-moves.request.json"
+      },
+      "prepared": "frostfire-mage-moves.prepared.json",
+      "prepared_sha256": "f3464f237f3940859e35f63007d100ddf1fd5a15f257e58c6882eb6073ff8bf3",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frostfire-mage-moves.go-result.json",
+        "sha256": "8b82149dbdd3fa3a3f436414628c1182439d67a3b6fbbe03c3dec510cac6510f"
+      },
+      "go_log": {
+        "file": "frostfire-mage-moves.go-log.txt",
+        "sha256": "d4af4ca3bd0f57fde4fd9d8d18094922a622c6c3c22340554bdefe420778aea5"
+      }
+    },
+    {
+      "id": "affliction-warlock-moves",
+      "description": "An Affliction Warlock that moves along a timeline, with its channels and its pets.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/affliction-warlock-moves.request.json"
+      },
+      "prepared": "affliction-warlock-moves.prepared.json",
+      "prepared_sha256": "291a532a720881ab4950924f3ae18010071ccd27769f282015b63f92cb5b6f80",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "affliction-warlock-moves.go-result.json",
+        "sha256": "f55f29b2e395a60ee7bf84976ab27862740299c16ea9f1eb526088b460a30e87"
+      },
+      "go_log": {
+        "file": "affliction-warlock-moves.go-log.txt",
+        "sha256": "aebd8f34c45adb1b781e5d3beedca25a3a80e2919964970f1c94715b8c8133ce"
+      }
+    },
+    {
+      "id": "destruction-warlock-moves",
+      "description": "A Destruction Warlock that moves along a timeline.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/destruction-warlock-moves.request.json"
+      },
+      "prepared": "destruction-warlock-moves.prepared.json",
+      "prepared_sha256": "ace4c2d2b109e7e4f4f06b8bfc8a9ce7e58b00cda97b8efdc29955b8db33e86e",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "destruction-warlock-moves.go-result.json",
+        "sha256": "a11420d72296cc11a56fb3d53724b3327ebbcd12fb78b809db09557caf395a71"
+      },
+      "go_log": {
+        "file": "destruction-warlock-moves.go-log.txt",
+        "sha256": "ad66ce1e0d60644b1347d454330996d8e4241703cf0488130234a5e84d1f15f0"
+      }
+    },
+    {
+      "id": "shadow-priest-moves",
+      "description": "A Shadow Priest that moves along a timeline, with Mind Flay as a channel the move waits for.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/shadow-priest-moves.request.json"
+      },
+      "prepared": "shadow-priest-moves.prepared.json",
+      "prepared_sha256": "518c45080b235399670cab8e5111ab07731618c9bc5806ed1e568440b8edaf4c",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "shadow-priest-moves.go-result.json",
+        "sha256": "a5411694a82867d373ce8d1cc59a98450f95ee77691f74b333f800a6956a4c83"
+      },
+      "go_log": {
+        "file": "shadow-priest-moves.go-log.txt",
+        "sha256": "b2e49102bc59de99c460d4a58c45ebe861fca72adb6b68d7236490b52d87a9bf"
+      }
+    },
+    {
+      "id": "smite-priest-moves",
+      "description": "A Smite Priest that moves along a timeline.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/smite-priest-moves.request.json"
+      },
+      "prepared": "smite-priest-moves.prepared.json",
+      "prepared_sha256": "4d839c12437c917e2f20ceb90ed2a094c6708339271f08dd86a03eb5bb6641a1",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "smite-priest-moves.go-result.json",
+        "sha256": "981257a1cba7c8d844abe16e091c537b3ceac18166695824ad1e36bac1743b21"
+      },
+      "go_log": {
+        "file": "smite-priest-moves.go-log.txt",
+        "sha256": "f67767781b6cc303349a40377f97fd3b6a5a4cf897f39e2c349235776d3824dc"
+      }
+    },
+    {
+      "id": "elemental-shaman-moves",
+      "description": "An Elemental Shaman that moves along a timeline, with its totems.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/elemental-shaman-moves.request.json"
+      },
+      "prepared": "elemental-shaman-moves.prepared.json",
+      "prepared_sha256": "3e28dcdd64641f95276f0ebe93f6364eca005a9c6ccfff8755f45f67937d1841",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "elemental-shaman-moves.go-result.json",
+        "sha256": "f065d809a5cc69946356fc513b8907d6b0d3d33f3850b29aaba6f545278b3241"
+      },
+      "go_log": {
+        "file": "elemental-shaman-moves.go-log.txt",
+        "sha256": "91b8bd3958c1a4a868bf42399e98675be422b3e7d9150a51333b93743fa9c21d"
+      }
+    },
+    {
+      "id": "enhancement-shaman-moves",
+      "description": "An Enhancement Shaman that moves in and out of melee range: its swings stop and start with the range.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/enhancement-shaman-moves.request.json"
+      },
+      "prepared": "enhancement-shaman-moves.prepared.json",
+      "prepared_sha256": "7224a4c7fe6af312e469648d1b764e5fe2e702c55e359c18e597f0219e84da09",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "enhancement-shaman-moves.go-result.json",
+        "sha256": "cfe626dd394870ca4adaa6bafcb879977fae2637b6e5e35420420beb95ebde1a"
+      },
+      "go_log": {
+        "file": "enhancement-shaman-moves.go-log.txt",
+        "sha256": "2bd38449cb20f2eaf5356caacc6f3a572e108e1373740c085295cd949417116e"
+      }
+    },
+    {
+      "id": "balance-druid-moves",
+      "description": "A Balance Druid that moves along a timeline.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/balance-druid-moves.request.json"
+      },
+      "prepared": "balance-druid-moves.prepared.json",
+      "prepared_sha256": "b5ae644dcc99170eb2b99119376acf948803d14ec520956db5be5930bf3298c6",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "balance-druid-moves.go-result.json",
+        "sha256": "92eb265d4368fcc8ee1470c2b09aa4a2a20aadb4cb705e37bfc6e58368ec8211"
+      },
+      "go_log": {
+        "file": "balance-druid-moves.go-log.txt",
+        "sha256": "bd0c80c46be43f81ce4cbf7520803b27d3aff1b64030489abe630dced76eb86b"
+      }
+    },
+    {
+      "id": "arms-warrior-moves",
+      "description": "An Arms Warrior that moves out of melee range and back: its swings and its rage follow the range.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/arms-warrior-moves.request.json"
+      },
+      "prepared": "arms-warrior-moves.prepared.json",
+      "prepared_sha256": "65855554e2eeb29e79b549dedb28ee126384c372dcebeab05b0bfc0464ea8bd5",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "arms-warrior-moves.go-result.json",
+        "sha256": "90c1c16814b15bc99a78dd578ad3ddc0a21b03ccb09c607251b6c369d635b667"
+      },
+      "go_log": {
+        "file": "arms-warrior-moves.go-log.txt",
+        "sha256": "f7acabcab4a9153306ad23973460e1b38842739d55667b0fc194a9520a1d41d8"
+      }
+    },
+    {
+      "id": "protection-warrior-moves",
+      "description": "A Protection Warrior that moves along a timeline with the target swinging at it.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-moves.request.json"
+      },
+      "prepared": "protection-warrior-moves.prepared.json",
+      "prepared_sha256": "a18336d5862f31a554d5592e2a03b4e42554aad6cb0900b7997a551a3578d299",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-moves.go-result.json",
+        "sha256": "dbcdfebb25f0bed03cf8fda58e03fc2f8adb37a7d41596cfa78ceb70c171d832"
+      },
+      "go_log": {
+        "file": "protection-warrior-moves.go-log.txt",
+        "sha256": "b84beba35666ffba2f66ac0483034686f1cfd0dee90f3728ad699811b12471d8"
+      }
+    },
+    {
+      "id": "combat-rogue-moves",
+      "description": "A Combat Rogue that moves out of melee range and back.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/combat-rogue-moves.request.json"
+      },
+      "prepared": "combat-rogue-moves.prepared.json",
+      "prepared_sha256": "7cf50a8d7f0090d484d1beb2bfd16737c9ed393bdc70ea2226897afa90ed65fb",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "combat-rogue-moves.go-result.json",
+        "sha256": "f5514c09b83200ebd8e77c4285c77db17f1ecff898c0cc4bcf3371a22b116d89"
+      },
+      "go_log": {
+        "file": "combat-rogue-moves.go-log.txt",
+        "sha256": "d73ab24eaffeaffdee0478fb250092a15dc8bd61b53faf3ab9f45cb9f51ca454"
+      }
+    },
+    {
+      "id": "assassination-rogue-moves",
+      "description": "An Assassination Rogue that moves along a timeline.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/assassination-rogue-moves.request.json"
+      },
+      "prepared": "assassination-rogue-moves.prepared.json",
+      "prepared_sha256": "ae9dbe7aaf3da7e2485eb9999158079933185c1796554fcf0121db9a2700b4ed",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "assassination-rogue-moves.go-result.json",
+        "sha256": "65a40eab352dabb99bc5595bb15eb6f5c723cf9932bbb88ad1b0ee92fb470c9a"
+      },
+      "go_log": {
+        "file": "assassination-rogue-moves.go-log.txt",
+        "sha256": "53e8c50aaedd17a2653f7acb73851067ec4f0dcdcd761344c9a19201f959ecf5"
+      }
+    },
+    {
+      "id": "retribution-paladin-moves",
+      "description": "A Retribution Paladin that moves along a timeline, with Pursuit of Justice raising its speed.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/retribution-paladin-moves.request.json"
+      },
+      "prepared": "retribution-paladin-moves.prepared.json",
+      "prepared_sha256": "bc70b986bd943ec002857bdb01223a431ab166a8778502a19574f5698b3d327e",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "retribution-paladin-moves.go-result.json",
+        "sha256": "3aa51fc21941b0a6a5beedc5fb7a0082e5c455cef35b5d4578b3ec216b2aabd6"
+      },
+      "go_log": {
+        "file": "retribution-paladin-moves.go-log.txt",
+        "sha256": "a49f8bf9b4d7d3ed2d5e31352be9b2d17f0fa8854619aa92b4b90ac4f3c93003"
+      }
+    },
+    {
+      "id": "protection-paladin-moves",
+      "description": "A Protection Paladin that moves along a timeline with the target swinging at it.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-paladin-moves.request.json"
+      },
+      "prepared": "protection-paladin-moves.prepared.json",
+      "prepared_sha256": "f10183286bd4cb23f7028bc3fb52696e27cd614b82f6bb0049585797dc7dbc86",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-paladin-moves.go-result.json",
+        "sha256": "8c6972b188985743402b5e3bcde5db95ce42b5ad84ac25bb00d33d91979b84a7"
+      },
+      "go_log": {
+        "file": "protection-paladin-moves.go-log.txt",
+        "sha256": "36a42bc0bd2436b1460cd36a7071619d49ee0590a92e03f5fa6b43a8638dae01"
+      }
+    },
+    {
+      "id": "beast-mastery-hunter-moves",
+      "description": "A Beast Mastery Hunter that moves along a timeline, its ranged auto stopping and starting with the range, and its pet following.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-moves.request.json"
+      },
+      "prepared": "beast-mastery-hunter-moves.prepared.json",
+      "prepared_sha256": "dfbde4ef1962ff76818e3ce34fbfc67fa715cb08089a9d28c38fc0349d547624",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "beast-mastery-hunter-moves.go-result.json",
+        "sha256": "68b9cbf6ad68578d0f26f45ec5031a2745e5cbd4d6509ad350a90563b8291d58"
+      },
+      "go_log": {
+        "file": "beast-mastery-hunter-moves.go-log.txt",
+        "sha256": "12ca5b83c6f0fc0fd025f9e048d5582447be6316ea88d3e92ef2635eb164410c"
+      }
+    },
+    {
+      "id": "feral-druid-moves-cat-form",
+      "description": "A Feral Druid in Cat Form, whose passive movement speed effect raises its speed while it is in the form: it moves along a timeline and shifts.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-druid-moves-cat-form.request.json"
+      },
+      "prepared": "feral-druid-moves-cat-form.prepared.json",
+      "prepared_sha256": "58cd6e8dfda0a8e18344f4207f965a1eeb098f4252717cf09afc7e12c6635c5a",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-druid-moves-cat-form.go-result.json",
+        "sha256": "db2de62976b0ae51722a79c6dbe8af991d729ae97ee4bdbea2253a1fca70c483"
+      },
+      "go_log": {
+        "file": "feral-druid-moves-cat-form.go-log.txt",
+        "sha256": "796aab54b30103de7bf3c5f7b51faeb240fb2cc122a3952ed7b8fbadae59f32c"
+      }
+    },
+    {
+      "id": "feral-bear-druid-moves-3-targets",
+      "description": "A Feral Druid tanking three targets that moves along a timeline.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-bear-druid-moves-3-targets.request.json"
+      },
+      "prepared": "feral-bear-druid-moves-3-targets.prepared.json",
+      "prepared_sha256": "4e123b4b50b2fc07c5532736fdc7e518569125b1df96c25f630c1ba08b9fe208",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-bear-druid-moves-3-targets.go-result.json",
+        "sha256": "0396db8d50e3e6c7a00cd0f3a1d513a5b2ec969f1ea14a76cd90351369f92dbf"
+      },
+      "go_log": {
+        "file": "feral-bear-druid-moves-3-targets.go-log.txt",
+        "sha256": "62a8fb2c654a61599682a8e7f00aa077bff3455116b2df6c8a6d219fcccabff3"
+      }
+    },
+    {
+      "id": "frost-mage-moves-2-targets",
+      "description": "A Mage against two targets that moves along a timeline.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/frost-mage-moves-2-targets.request.json"
+      },
+      "prepared": "frost-mage-moves-2-targets.prepared.json",
+      "prepared_sha256": "7bbac9148de9f599cea80511ad5fc04592a06b819f07789b3cf331ad9627eee1",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frost-mage-moves-2-targets.go-result.json",
+        "sha256": "9635b6e0da8299767d7466f877187c66d391ef58631fef547d582ecb55de3bd4"
+      },
+      "go_log": {
+        "file": "frost-mage-moves-2-targets.go-log.txt",
+        "sha256": "7000b2dad54a325ad6eb3d20e8f19a3d17b733b775e3326ece2866b23137c5d4"
+      }
+    },
+    {
+      "id": "ret-pursuit-of-justice-boots-moves",
+      "description": "A Paladin with Pursuit of Justice and the Boar's Speed boots enchant, which share the passive movement speed category: the stronger effect applies, and moves run at its speed.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/ret-pursuit-of-justice-boots-moves.request.json"
+      },
+      "prepared": "ret-pursuit-of-justice-boots-moves.prepared.json",
+      "prepared_sha256": "867973896974253eb0e0b6731047038b55a70335c8a4ed70c7b499002960c633",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "ret-pursuit-of-justice-boots-moves.go-result.json",
+        "sha256": "a8c1599605a041863d0acfc63eeaf60c9b519f3ac9f0dc6570bd0074df363652"
+      },
+      "go_log": {
+        "file": "ret-pursuit-of-justice-boots-moves.go-log.txt",
+        "sha256": "e0747e38b60a87a0b971f6b4a331c6cc2eeb42d31784e6adc66d356c43d1f869"
+      }
+    },
+    {
+      "id": "feral-druid-boots-moves",
+      "description": "A Feral Druid with the Cat's Swiftness boots enchant: Cat Form's stronger effect displaces the enchant's while the form is up, and the enchant stays off after it.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-druid-boots-moves.request.json"
+      },
+      "prepared": "feral-druid-boots-moves.prepared.json",
+      "prepared_sha256": "4137e2ef1b353e876dc6e956b05b7415a39ee338587aedae9a25b8c91e49b834",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-druid-boots-moves.go-result.json",
+        "sha256": "a974833b7725576733d83945f108e35d20d65b784c912abb5b2673c970e60028"
+      },
+      "go_log": {
+        "file": "feral-druid-boots-moves.go-log.txt",
+        "sha256": "9a0c3ae877b49a798c9eeafb800200088eec7471760c957d53d066584f050f2e"
+      }
+    },
+    {
+      "id": "fire-mage-casts-at-no-unit",
+      "description": "A Mage whose rotation casts, friendly casts, channels, sequence steps and a prepull cast at AllTargets, AllPlayers and a player past the first: Go builds no action for any.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-mage-casts-at-no-unit.request.json"
+      },
+      "prepared": "fire-mage-casts-at-no-unit.prepared.json",
+      "prepared_sha256": "db466cce28a8152871c6b42f05288f0ca31b0ea1a43ab4168379d6b7e91e5708",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fire-mage-casts-at-no-unit.go-result.json",
+        "sha256": "a4c888e7085a0074e85db000d4f25296f56194e51d2aa12b52c5ffa8cd3043ad"
+      },
+      "go_log": {
+        "file": "fire-mage-casts-at-no-unit.go-log.txt",
+        "sha256": "e5a00f6fa2e2414ab5cc387417e155bea4096702c8a35dc3b01b3e8e6720d09f"
+      }
+    },
+    {
+      "id": "affliction-warlock-3-targets-casts-at-no-unit",
+      "description": "A Warlock against three targets whose rotation casts at units that name none.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/affliction-warlock-3-targets-casts-at-no-unit.request.json"
+      },
+      "prepared": "affliction-warlock-3-targets-casts-at-no-unit.prepared.json",
+      "prepared_sha256": "557b68eda2f99ce5cee2b1b06bd8f57418f01160be11decf7413b6e216f03104",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "affliction-warlock-3-targets-casts-at-no-unit.go-result.json",
+        "sha256": "adc2bce37045e95895706fc7e2274d5b19abe51181bcd42fdb996b0984c26120"
+      },
+      "go_log": {
+        "file": "affliction-warlock-3-targets-casts-at-no-unit.go-log.txt",
+        "sha256": "748cedc63e7d97be44f4dbc200b330b8546ddc151e2bd6ce018d57a72200347e"
+      }
+    },
+    {
+      "id": "combat-rogue-casts-at-no-unit",
+      "description": "A Rogue whose rotation casts at units that name none.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/combat-rogue-casts-at-no-unit.request.json"
+      },
+      "prepared": "combat-rogue-casts-at-no-unit.prepared.json",
+      "prepared_sha256": "37f364c644189de01d0161114c845ec3d8843f1cda567060f611ac457cafb0de",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "combat-rogue-casts-at-no-unit.go-result.json",
+        "sha256": "f6773bcb96a10282c828d67fb69c0c87de99ece09415a6359e113cfc7230cbe2"
+      },
+      "go_log": {
+        "file": "combat-rogue-casts-at-no-unit.go-log.txt",
+        "sha256": "fbb79b518e6a890f118ea820157aafb34356887ff3569be085849e2bf0891d4f"
+      }
+    },
+    {
+      "id": "shadow-priest-casts-at-no-unit",
+      "description": "A Shadow Priest whose channel and casts name units that name none.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/shadow-priest-casts-at-no-unit.request.json"
+      },
+      "prepared": "shadow-priest-casts-at-no-unit.prepared.json",
+      "prepared_sha256": "b68616a0d249b39d0ca15ee98a28071ae5f70b371fc156198aea087bcdc63941",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "shadow-priest-casts-at-no-unit.go-result.json",
+        "sha256": "331546ec0df1cf90d5c528e4ed384b3038d9cfc42045121b9017b4cdf2c02d48"
+      },
+      "go_log": {
+        "file": "shadow-priest-casts-at-no-unit.go-log.txt",
+        "sha256": "2207bd6214e34f55caae6cd6bd496cd7c5cd297b6a827185da017a08efa3d9d5"
+      }
+    },
+    {
+      "id": "fire-mage-aura-reaction-time-on-the-target",
+      "description": "A Mage that casts on the activity and the stacks of auras of the player and of the target, each read with the reaction time.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-mage-aura-reaction-time-on-the-target.request.json"
+      },
+      "prepared": "fire-mage-aura-reaction-time-on-the-target.prepared.json",
+      "prepared_sha256": "9e8e173df977b42e9d0e2fa17dbb6da7b9795b93573909bc4e694e6ff3e13f54",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fire-mage-aura-reaction-time-on-the-target.go-result.json",
+        "sha256": "939c8063353ad5bca71b6b290bef84d517b173d0ea4fdd28424e76c1d976a8f9"
+      },
+      "go_log": {
+        "file": "fire-mage-aura-reaction-time-on-the-target.go-log.txt",
+        "sha256": "96d47fb948314850c9f6dfc71381d4c318593055d354db831613f20309f18efb"
+      }
+    },
+    {
+      "id": "combat-rogue-aura-reaction-time-on-the-target",
+      "description": "A Rogue that reads the activity and stacks of its own and the target's auras with the reaction time.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/combat-rogue-aura-reaction-time-on-the-target.request.json"
+      },
+      "prepared": "combat-rogue-aura-reaction-time-on-the-target.prepared.json",
+      "prepared_sha256": "b5b2cccd0f6c6aaf565c8ad0689da1bbeebe324d207316ac87a83e910d70192a",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "combat-rogue-aura-reaction-time-on-the-target.go-result.json",
+        "sha256": "20d67f8caf64823f3297df2213253481aa76c1fcbceab003d82650f38eb83490"
+      },
+      "go_log": {
+        "file": "combat-rogue-aura-reaction-time-on-the-target.go-log.txt",
+        "sha256": "ea7093637da3c4dead9ea06aa382eba94ccccc6bc9443150de475ae8edb9e33b"
+      }
+    },
+    {
+      "id": "affliction-warlock-aura-reaction-time-on-the-target",
+      "description": "A Warlock that reads the target's auras with the reaction time.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/affliction-warlock-aura-reaction-time-on-the-target.request.json"
+      },
+      "prepared": "affliction-warlock-aura-reaction-time-on-the-target.prepared.json",
+      "prepared_sha256": "faa1aa1ddc4f9cfc4980ef157586d68d5a6ade2e5d07e3621bc10489488b6ad6",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "affliction-warlock-aura-reaction-time-on-the-target.go-result.json",
+        "sha256": "ece700d700b5851f0691016629545e99cc588b9dcdd440f44c8b747826432442"
+      },
+      "go_log": {
+        "file": "affliction-warlock-aura-reaction-time-on-the-target.go-log.txt",
+        "sha256": "e07be288f4737ee2038904e9715694dfc9f5f9ee33e73a2ae4915d3c85f0b02a"
+      }
+    },
+    {
+      "id": "retribution-paladin-aura-should-refresh-seals",
+      "description": "A Paladin that asks which of its auras of the exclusive categories should refresh, among them its seals, a single aura category no class describes.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/retribution-paladin-aura-should-refresh-seals.request.json"
+      },
+      "prepared": "retribution-paladin-aura-should-refresh-seals.prepared.json",
+      "prepared_sha256": "23b0cd70ceb10ff56337a6129b506f91f1ecd0d514835a476a2861798c00590b",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "retribution-paladin-aura-should-refresh-seals.go-result.json",
+        "sha256": "0db211dde23d25effc4351ab9ddca25d209fbc5f802ae1900959b474424efbdb"
+      },
+      "go_log": {
+        "file": "retribution-paladin-aura-should-refresh-seals.go-log.txt",
+        "sha256": "937c1661dcaf21f4d948e2b0543397f170758ca025774cff53ace85c5fa6e666"
+      }
+    },
+    {
+      "id": "beast-mastery-hunter-aura-should-refresh-aspects",
+      "description": "A Hunter that asks which of its auras should refresh, among them its aspects, a single aura category no class describes.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-aura-should-refresh-aspects.request.json"
+      },
+      "prepared": "beast-mastery-hunter-aura-should-refresh-aspects.prepared.json",
+      "prepared_sha256": "5aee53aa856f32bfefcc20124ca9a546b0ee4d8c9b25cb3b78e39d404040b6e2",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "beast-mastery-hunter-aura-should-refresh-aspects.go-result.json",
+        "sha256": "739c8a473de4b71edc9820fcad407c02f61d8a1cb52df9e7c4f838a6db999621"
+      },
+      "go_log": {
+        "file": "beast-mastery-hunter-aura-should-refresh-aspects.go-log.txt",
+        "sha256": "2ef68094cb25e814e4c00657aa366d1c0aae2224793d245f8617938c11f9b478"
+      }
+    },
+    {
+      "id": "enhancement-shaman-aura-should-refresh-totems",
+      "description": "A Shaman that asks which of its totem auras should refresh: the air totem is a single aura category, the party totems are not.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/enhancement-shaman-aura-should-refresh-totems.request.json"
+      },
+      "prepared": "enhancement-shaman-aura-should-refresh-totems.prepared.json",
+      "prepared_sha256": "af1e5dfa028c24097d39ad0b3788fdac2d8533cc5c38b7acf8106277c2b0546b",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "enhancement-shaman-aura-should-refresh-totems.go-result.json",
+        "sha256": "5b41bb66931132f541587886244b80f76ed11a2982199867d848ce00328b525a"
+      },
+      "go_log": {
+        "file": "enhancement-shaman-aura-should-refresh-totems.go-log.txt",
+        "sha256": "d53213db59a28321693e6e421c34c4414a70b7aae8159b56bde70cd8b3adf287"
+      }
+    },
+    {
+      "id": "affliction-warlock-aura-should-refresh-curses",
+      "description": "A Warlock that asks which auras of the target should refresh.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/affliction-warlock-aura-should-refresh-curses.request.json"
+      },
+      "prepared": "affliction-warlock-aura-should-refresh-curses.prepared.json",
+      "prepared_sha256": "e7052c52e342bd43b1218798276b71a3728d615490a9d3b80f2f0ab3a354336a",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "affliction-warlock-aura-should-refresh-curses.go-result.json",
+        "sha256": "24ca449e6b014fff25d95e72bc66fbafece19c61b77489fad8444ecc90a175e7"
+      },
+      "go_log": {
+        "file": "affliction-warlock-aura-should-refresh-curses.go-log.txt",
+        "sha256": "e07be288f4737ee2038904e9715694dfc9f5f9ee33e73a2ae4915d3c85f0b02a"
+      }
+    },
+    {
+      "id": "protection-warrior-armor-debuffs-should-refresh",
+      "description": "A Warrior without the raid's Expose Armor that reads whether its Sunder Armor, a stacking aura whose bid follows its stacks, should refresh, and its stacks with the reaction time.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-armor-debuffs-should-refresh.request.json"
+      },
+      "prepared": "protection-warrior-armor-debuffs-should-refresh.prepared.json",
+      "prepared_sha256": "f945d32b46551591589ee1fe2b402a866f307e6686141d75e3afedc2d6821932",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-armor-debuffs-should-refresh.go-result.json",
+        "sha256": "9b57c5e46f60cf5eb659a81f6aa5207701618d5c1359984ca37da909c262dc0d"
+      },
+      "go_log": {
+        "file": "protection-warrior-armor-debuffs-should-refresh.go-log.txt",
+        "sha256": "f1333132f9e3e84ed4a59dc5c8b483f2c80efcbd118928f0d09aea01b835c7d8"
+      }
+    },
+    {
+      "id": "combat-rogue-armor-debuffs-should-refresh",
+      "description": "A Rogue without the raid's Expose Armor that reads whether its armor debuffs should refresh.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/combat-rogue-armor-debuffs-should-refresh.request.json"
+      },
+      "prepared": "combat-rogue-armor-debuffs-should-refresh.prepared.json",
+      "prepared_sha256": "948c17d168935e2f412ff66a192c7f50ee841f33cde9b5927e87f48e9b4cfff1",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "combat-rogue-armor-debuffs-should-refresh.go-result.json",
+        "sha256": "d763c70969b1aeea7789d331e9b9ae4606d18981a329ef8f6ce467adf2d24147"
+      },
+      "go_log": {
+        "file": "combat-rogue-armor-debuffs-should-refresh.go-log.txt",
+        "sha256": "9cd6898f20136376bd4550c7711dca15613d7774a5b3cfd463166ccd3d6cb8d0"
+      }
+    },
+    {
+      "id": "shockadin-holy-light-cast-at-the-player",
+      "description": "A Paladin that heals itself with castSpell at the player, which Go casts as castFriendlySpell does.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/shockadin-holy-light-cast-at-the-player.request.json"
+      },
+      "prepared": "shockadin-holy-light-cast-at-the-player.prepared.json",
+      "prepared_sha256": "c1f75ca09eb21e4caf77caa3bb37702fdfb0deeb71e396c7b7a40b7eb5f4060a",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "shockadin-holy-light-cast-at-the-player.go-result.json",
+        "sha256": "8f349303f77f45d8fa93688254f38c59fde3e99966d97c4f442aaa2095b79a0d"
+      },
+      "go_log": {
+        "file": "shockadin-holy-light-cast-at-the-player.go-log.txt",
+        "sha256": "d4139905dc1f79d584854eb88a40e0620b7c00b561e2c4810f56afbd085b827d"
+      }
+    },
+    {
+      "id": "fire-mage-group-referenced-once",
+      "description": "A Mage whose middle actions are a group that one reference runs.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-mage-group-referenced-once.request.json"
+      },
+      "prepared": "fire-mage-group-referenced-once.prepared.json",
+      "prepared_sha256": "8b258dff9ae99d2aa702afa696e23873649057d538f99665647674c968f9e59b",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fire-mage-group-referenced-once.go-result.json",
+        "sha256": "9861c067ddf3809a2f7b35230532b99bbbe5151f50dbea6803e72c3db12764e8"
+      },
+      "go_log": {
+        "file": "fire-mage-group-referenced-once.go-log.txt",
+        "sha256": "f29535f33e41aa1fe1de66ae95a5335b174e31238694f705fba686cf8cf2e9bc"
+      }
+    },
+    {
+      "id": "fire-mage-group-referenced-twice",
+      "description": "A Mage whose group is referenced twice: Go builds the group again for the second reference.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-mage-group-referenced-twice.request.json"
+      },
+      "prepared": "fire-mage-group-referenced-twice.prepared.json",
+      "prepared_sha256": "c580ae12751d9af0a4ea29d5780b8dc7bf33204e9c144cc77dbdc936b4954091",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fire-mage-group-referenced-twice.go-result.json",
+        "sha256": "9861c067ddf3809a2f7b35230532b99bbbe5151f50dbea6803e72c3db12764e8"
+      },
+      "go_log": {
+        "file": "fire-mage-group-referenced-twice.go-log.txt",
+        "sha256": "f29535f33e41aa1fe1de66ae95a5335b174e31238694f705fba686cf8cf2e9bc"
+      }
+    },
+    {
+      "id": "arms-warrior-group-placeholder",
+      "description": "A Warrior whose group's conditions hold a placeholder that its reference fills.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/arms-warrior-group-placeholder.request.json"
+      },
+      "prepared": "arms-warrior-group-placeholder.prepared.json",
+      "prepared_sha256": "93cacc37b116f913f798dd7c651531af4bb41066025f8894f698c6e6b7f54cd9",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "arms-warrior-group-placeholder.go-result.json",
+        "sha256": "256244652d0f7b3c4fbf10304c7b51387561565976d8e67d0b3822af3adfd713"
+      },
+      "go_log": {
+        "file": "arms-warrior-group-placeholder.go-log.txt",
+        "sha256": "a7e56da29394cf5c303b18d59eb91f42db21014179b99279e4f8c8c3f841eb57"
+      }
+    },
+    {
+      "id": "shadow-priest-group-variable-override",
+      "description": "A Priest whose group's variable replaces the rotation's value variable of the same name in the group's conditions.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/shadow-priest-group-variable-override.request.json"
+      },
+      "prepared": "shadow-priest-group-variable-override.prepared.json",
+      "prepared_sha256": "80cffb379682b103efe2176a0b6d1b3cf26102276665da27e1b120f5ae30490b",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "shadow-priest-group-variable-override.go-result.json",
+        "sha256": "be7a2e0c2f21f0ae721766c7d2268146b3bc445c081aae061af67a5fa1aaa28d"
+      },
+      "go_log": {
+        "file": "shadow-priest-group-variable-override.go-log.txt",
+        "sha256": "878ca5abb6c5b3befc0cc0fa14402c62b971a5504a117ef783b63b24153e907e"
+      }
+    },
+    {
+      "id": "beast-mastery-hunter-nested-groups",
+      "description": "A Hunter whose group references another group.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/beast-mastery-hunter-nested-groups.request.json"
+      },
+      "prepared": "beast-mastery-hunter-nested-groups.prepared.json",
+      "prepared_sha256": "1deb0f25f8bf8fd4bc052ed98d9fe529228ddd1dc1d2916354a091eb7925fff2",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "beast-mastery-hunter-nested-groups.go-result.json",
+        "sha256": "739c8a473de4b71edc9820fcad407c02f61d8a1cb52df9e7c4f838a6db999621"
+      },
+      "go_log": {
+        "file": "beast-mastery-hunter-nested-groups.go-log.txt",
+        "sha256": "2ef68094cb25e814e4c00657aa366d1c0aae2224793d245f8617938c11f9b478"
+      }
+    },
+    {
+      "id": "affliction-warlock-groups-unused-and-unfound",
+      "description": "A Warlock with a group nothing references, a reference to a group that does not exist, and a check of whether a group is used.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/affliction-warlock-groups-unused-and-unfound.request.json"
+      },
+      "prepared": "affliction-warlock-groups-unused-and-unfound.prepared.json",
+      "prepared_sha256": "77e1a88c48a0ba49a24cdf1445fbbbe811d3c2f48f44d687679bd15879049f32",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "affliction-warlock-groups-unused-and-unfound.go-result.json",
+        "sha256": "5f187a76644a7d546243c50c8d06045157b066c4858917075a3b037b8c62d034"
+      },
+      "go_log": {
+        "file": "affliction-warlock-groups-unused-and-unfound.go-log.txt",
+        "sha256": "dc6292fb77f11c9b9829e854d0508eab0de462b9c876e2c1e0fbcc9f8f736a8d"
+      }
+    },
+    {
+      "id": "protection-paladin-value-variable",
+      "description": "A Paladin whose rotation reads a condition through a value variable.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-paladin-value-variable.request.json"
+      },
+      "prepared": "protection-paladin-value-variable.prepared.json",
+      "prepared_sha256": "4efbde6f8eb5420af4d7478a219d583f908e9ae9e72be1931b43fb39ab4cece5",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-paladin-value-variable.go-result.json",
+        "sha256": "aaa2fd940e70b876fb1c47e07ad276da3c1d32b2f50577e3e405d40cf14db1d7"
+      },
+      "go_log": {
+        "file": "protection-paladin-value-variable.go-log.txt",
+        "sha256": "8ab42fa16921d9b6c2672150898ec3155686d339f819d3540efd8ea9ec688b42"
+      }
+    },
+    {
+      "id": "retribution-paladin-group-with-condition",
+      "description": "A Paladin whose reference to a group carries a condition.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/retribution-paladin-group-with-condition.request.json"
+      },
+      "prepared": "retribution-paladin-group-with-condition.prepared.json",
+      "prepared_sha256": "ee08b8675619a635c884f10238fde7423e4bfbd10ef6af8d736f157faac378c4",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "retribution-paladin-group-with-condition.go-result.json",
+        "sha256": "d0577734042c786df8ba8e69adf0bb45838066e91aacfed889c177c56d9af2c7"
+      },
+      "go_log": {
+        "file": "retribution-paladin-group-with-condition.go-log.txt",
+        "sha256": "937c1661dcaf21f4d948e2b0543397f170758ca025774cff53ace85c5fa6e666"
+      }
+    },
+    {
+      "id": "combat-rogue-group-referenced-twice",
+      "description": "A Rogue whose group is referenced twice.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/combat-rogue-group-referenced-twice.request.json"
+      },
+      "prepared": "combat-rogue-group-referenced-twice.prepared.json",
+      "prepared_sha256": "b6f3b6fa25729d766fe924e558ddc1314145e790dc9dcc1e9decc04cff25273d",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "combat-rogue-group-referenced-twice.go-result.json",
+        "sha256": "0169a5dbf6345109947b6533603cb43e27d3ba0698a420ce0507e6d04a1e564c"
+      },
+      "go_log": {
+        "file": "combat-rogue-group-referenced-twice.go-log.txt",
+        "sha256": "763de5ba4adcbd59e1d2177f5efd82856ea8632396fc865eb12aab2164090bf3"
+      }
+    },
+    {
+      "id": "elemental-shaman-group-placeholder",
+      "description": "A Shaman whose group's conditions hold a placeholder that its reference fills.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/elemental-shaman-group-placeholder.request.json"
+      },
+      "prepared": "elemental-shaman-group-placeholder.prepared.json",
+      "prepared_sha256": "44d021e366a8d9d8beba9e74e01f5406949ed5b6065aad4de75ecbcd737f6461",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "elemental-shaman-group-placeholder.go-result.json",
+        "sha256": "52a3e95170f65d8a349aa52510335d9d07ca9456925d703e4ca706dc4269d972"
+      },
+      "go_log": {
+        "file": "elemental-shaman-group-placeholder.go-log.txt",
+        "sha256": "d938a18967fdb7bf39b9ad0d27dcba126cefb705a309d0598f293652bdd47afc"
+      }
+    },
+    {
+      "id": "feral-bear-druid-windfury-totem-remaining-time",
+      "description": "A bear whose rotation reads the time the party Windfury Totem aura has left, which its five second refresh keeps between five and ten seconds: the aura lasts ten seconds, it is not permanent.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-bear-druid-windfury-totem-remaining-time.request.json"
+      },
+      "prepared": "feral-bear-druid-windfury-totem-remaining-time.prepared.json",
+      "prepared_sha256": "e495239dbcefd0dfddae73507b63df4f586bdf0fa45d76682896536d862f811d",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-bear-druid-windfury-totem-remaining-time.go-result.json",
+        "sha256": "5787b20477bf5b7bec2bdc538dd39457a99b554653cab4d6ec42a46222824bd4"
+      },
+      "go_log": {
+        "file": "feral-bear-druid-windfury-totem-remaining-time.go-log.txt",
+        "sha256": "6e8345ba8ddfe8e0b4a6a43654f671f74a77662676d2f8caebeda2588d46fd50"
+      }
     }
   ]
 }
