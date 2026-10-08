@@ -447,6 +447,20 @@ func warriorEffects(agent core.Agent, character *core.Character) []map[string]an
 		"kind": "slam", "spell_id": slamRow.ID, "base_damage": slamRow.DamageEffect().Average(core.CharacterLevel),
 		"stops_swings": talents.ImprovedSlam == 0,
 	})
+	// demoralizing_shout.go: a magic hit roll on each target in unit index order, each landed
+	// one activating that target's debuff, whose attack power cut a swing at a tank reads.
+	if war.DemoralizingShout != nil && war.DemoralizingShoutAuras != nil {
+		target := character.Env.Encounter.ActiveTargetUnits[0]
+		effects = append(effects, map[string]any{
+			"kind": "demoralizing_shout", "spell": spellPosition(character, war.DemoralizingShout),
+			"aura": war.DemoralizingShoutAuras.Get(target).Label,
+		})
+		// buffs.DemoralizingShoutAura and the raid's Demoralizing Roar and Shout debuffs share
+		// one single aura category, each bidding its attack power cut.
+		if category := exclusiveCategoryEffect(target, "target", buffs.DemoralizingShoutCategory); category != nil {
+			effects = append(effects, category)
+		}
+	}
 	if talents.Bloodthrill > 0 { // talents_arms.go registerBloodthrill
 		effects = append(effects, map[string]any{
 			"kind": "bloodthrill", "trigger_aura": "Bloodthrill - Trigger",
