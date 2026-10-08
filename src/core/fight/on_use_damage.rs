@@ -6,7 +6,10 @@
 
 use crate::contracts::prepared_v2::{OnUseDirect, OnUsePeriodic};
 
-use super::{melee::PhysicalOutcome, Agent, Fight, Outcome, Side, SpellId, SpellResult};
+use super::{
+    melee::PhysicalOutcome, proc_damage::ProcDamage, Agent, Fight, Outcome, Side, SpellId,
+    SpellResult,
+};
 
 /// An outcome applier by the name the exporter writes.
 #[derive(Clone, Copy, Debug)]
@@ -33,6 +36,8 @@ impl OnUseOutcome {
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct OnUseDamage {
     direct: Option<(f64, f64, f64, OnUseOutcome)>,
+    /// A hit past one target is the damage proc spell, which spreads it as an area or a chain.
+    spread: Option<ProcDamage>,
     tick_base: Option<f64>,
     application: Option<OnUseOutcome>,
 }
@@ -42,7 +47,31 @@ impl OnUseDamage {
         direct: &Option<OnUseDirect>,
         periodic: &Option<OnUsePeriodic>,
     ) -> Result<Self, String> {
+        let spread = match direct {
+            Some(direct) if direct.area.is_some() || direct.chain.is_some() => {
+                let outcome = OnUseOutcome::parse(&direct.outcome)?;
+                let (name, can_crit) = match outcome {
+                    OnUseOutcome::MagicHitAndCrit => (None, true),
+                    OnUseOutcome::MagicHit => (None, false),
+                    OnUseOutcome::MeleeSpecialHitAndCrit => {
+                        (Some("melee_special_hit_and_crit"), true)
+                    }
+                    OnUseOutcome::MeleeSpecialHit => (Some("melee_special_hit"), false),
+                };
+                Some(ProcDamage::new(
+                    direct.average,
+                    direct.variance,
+                    can_crit,
+                    name,
+                    direct.chain.as_ref(),
+                    direct.area.as_ref(),
+                    None,
+                )?)
+            }
+            _ => None,
+        };
         Ok(Self {
+            spread,
             direct: direct
                 .as_ref()
                 .map(|direct| {
@@ -98,6 +127,10 @@ impl<A: Agent> Fight<A> {
         target: Side,
         params: OnUseDamage,
     ) {
+        if let Some(spread) = params.spread {
+            self.apply_proc_damage(spell, target, spread);
+            return;
+        }
         let result = match (params.direct, params.application) {
             (Some((average, variance, scale, outcome)), _) => {
                 let base = self.effect_roll(average, variance) * scale;

@@ -587,11 +587,13 @@ fn damage_on_use_effect(
         unrepresented.push(format!("damage on-use item {item} has no dot"));
         return Value::Null;
     }
-    if !direct.is_nil()
+    let several = !direct.is_nil()
         && (direct.hits_an_area() || direct.chain_targets > 1)
-        && active_target_count(env) > 1
-    {
-        unrepresented.push(format!("damage on-use item {item} hits several targets"));
+        && active_target_count(env) > 1;
+    if several && !periodic.is_nil() {
+        unrepresented.push(format!(
+            "damage on-use item {item} hits several targets and leaves a damage over time"
+        ));
         return Value::Null;
     }
     let mut effect = json!({"kind": "damage_on_use", "item_id": item, "spell": position});
@@ -600,10 +602,24 @@ fn damage_on_use_effect(
         if direct.hits_an_area() && row.max_targets == 0 && !row.splits_damage {
             scale = aoe_cap_multiplier(env);
         }
-        effect["direct"] = json!({
+        let mut shape = json!({
             "average": direct.average(level), "variance": direct.variance,
             "scale": scale, "outcome": outcome,
         });
+        // Past one target the spell is the proc spell of `proc_damage_shape`: an area calculated
+        // on every target or the row's cap of them, or a chain, every hit before any is dealt.
+        if several && direct.hits_an_area() {
+            shape["area"] = json!({
+                "max_targets": i32::from(row.max_targets), "splits": row.splits_damage,
+                "aoe_cap_multiplier": aoe_cap_multiplier(env),
+            });
+        } else if several {
+            shape["chain"] = json!({
+                "targets": i32::from(direct.chain_targets),
+                "amp": f64::from(direct.chain_amp),
+            });
+        }
+        effect["direct"] = shape;
     }
     if !periodic.is_nil() {
         let mut ticks = json!({
@@ -1428,14 +1444,19 @@ fn weapon_enchant_damage_proc_effects(
             unrepresented.push(not_single_target_magic_hit(label));
             continue;
         };
-        if a.icd.is_some()
-            || effect.is_nil()
-            || !damage.periodic_damage_effect().is_nil()
-            || !single_target_multi_hit(env, effect)
-            || damage.applies_an_aura_to_an_enemy()
-            || damage.speed != 0.0
-            || env.sim.spell(spell_at(env, position)).defense_type != DefenseType::Magic
-        {
+        let magic = !effect.is_nil()
+            && damage.periodic_damage_effect().is_nil()
+            && !damage.applies_an_aura_to_an_enemy()
+            && env.sim.spell(spell_at(env, position)).defense_type == DefenseType::Magic;
+        let single = magic && damage.speed == 0.0 && single_target_multi_hit(env, effect);
+        // Past one target an area or a chain, or a hit that flies, is the proc spell of
+        // `proc_damage_shape`.
+        let shape = if magic && !single {
+            proc_damage_shape(env, damage, position).ok()
+        } else {
+            None
+        };
+        if a.icd.is_some() || (!single && shape.is_none()) {
             unrepresented.push(not_single_target_magic_hit(label));
             continue;
         }
@@ -1446,12 +1467,24 @@ fn weapon_enchant_damage_proc_effects(
             .iter()
             .map(|chance| chance["spell"].clone())
             .collect();
-        effects.push(json!({
+        let mut exported = json!({
             "kind": "spell_data_damage_proc", "trigger_aura": a.label, "trigger_spells": triggers,
             "landed_only": true, "require_damage": false, "proc_chance": 1.0, "chances": chances,
-            "spell": position, "average": effect.average(env.sim.unit(env.player).level),
-            "variance": effect.variance, "can_crit": !damage.cannot_crit(),
-        }));
+        });
+        match shape {
+            Some(shape) => {
+                for (key, value) in shape {
+                    exported[key] = value;
+                }
+            }
+            None => {
+                exported["spell"] = json!(position);
+                exported["average"] = json!(effect.average(env.sim.unit(env.player).level));
+                exported["variance"] = json!(effect.variance);
+                exported["can_crit"] = json!(!damage.cannot_crit());
+            }
+        }
+        effects.push(exported);
     }
     effects
 }

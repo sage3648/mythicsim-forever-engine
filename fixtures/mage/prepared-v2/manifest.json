@@ -4,7 +4,7 @@
   "engine_revision": "2d93e423e0303e93dbb16e190d435503248b68f9",
   "client_build": "1.60.1.70235",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "a9e8012cd9cb76941522aa9bc5c6211d491458ca366c0b5d611772f18d18dcd0",
+  "exporter_sha256": "8b92a20a2edcf478613e8e6efaa7741af614b401774a1cd78875f74fdff4ce5c",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -10361,6 +10361,132 @@
       "go_log": {
         "file": "protection-warrior-3-targets-painwalker-buckler.go-log.txt",
         "sha256": "df7762e6d03384e3178e190cb6c9a50613966e5bffb507686c7b169efcd02f45"
+      }
+    },
+    {
+      "id": "frost-2-targets-smokeys-lighter",
+      "description": "Production Frost Mage against 2 targets with Smokey's Lighter (13171) in the trinket slot: its spell is the damage proc spell, which against several targets is calculated on each of them or on the row's cap of them before any hit is dealt",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/frost-2-targets-smokeys-lighter.request.json"
+      },
+      "prepared": "frost-2-targets-smokeys-lighter.prepared.json",
+      "prepared_sha256": "e3007cf25bb1b951ae7c2488c169ddba29f8d9423d32f26cf93e13502d26fd71",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frost-2-targets-smokeys-lighter.go-result.json",
+        "sha256": "a7f3c59121b96e4390ed165b14e8c2c0f46023f3b5c1ad50d9b46302230ece1a"
+      },
+      "go_log": {
+        "file": "frost-2-targets-smokeys-lighter.go-log.txt",
+        "sha256": "8be68c0641a271b86e63f793b9c3e538b9f960d4f793669e307f99cf3c2d53c8"
+      }
+    },
+    {
+      "id": "warrior-2-targets-shard-of-the-fallen-star",
+      "description": "Production Fury Warrior against 2 targets with Shard of the Fallen Star (21891) in the trinket slot: its spell is the damage proc spell, which against several targets is calculated on each of them or on the row's cap of them before any hit is dealt",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-2-targets-shard-of-the-fallen-star.request.json"
+      },
+      "prepared": "warrior-2-targets-shard-of-the-fallen-star.prepared.json",
+      "prepared_sha256": "c833438aad355c701bc7f3f656756893b55d600a2abb63dcc4526982c5e88c24",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-2-targets-shard-of-the-fallen-star.go-result.json",
+        "sha256": "601b263302870d4c49969daf251982863618f5732d1a11d6cb994e6f4b4c367e"
+      },
+      "go_log": {
+        "file": "warrior-2-targets-shard-of-the-fallen-star.go-log.txt",
+        "sha256": "d48eec1e88b86793edba5e8a754df4788a99ff6a8f689a1777484054d11441b8"
+      }
+    },
+    {
+      "id": "combat-rogue-3-targets-everlook-pathcarver",
+      "description": "Production Combat Rogue against 3 targets with Everlook Pathcarver (274759) in the trinket slot: its spell is the damage proc spell, which against several targets is calculated on each of them or on the row's cap of them before any hit is dealt",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/combat-rogue-3-targets-everlook-pathcarver.request.json"
+      },
+      "prepared": "combat-rogue-3-targets-everlook-pathcarver.prepared.json",
+      "prepared_sha256": "c78eeca0e305e3f8d790ff56e4b17e9e93a0845e151b3b2a5b65efb575e9ee02",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "combat-rogue-3-targets-everlook-pathcarver.go-result.json",
+        "sha256": "0846604168a599bb92eba1c72e8c955fa0d0cb4f3529a7a4d0879d7628b0c537"
+      },
+      "go_log": {
+        "file": "combat-rogue-3-targets-everlook-pathcarver.go-log.txt",
+        "sha256": "6654a1967ea3766d513fe23f04e5020a705bb4de309c75b4fb1406285c8fa07c"
+      }
+    },
+    {
+      "id": "survival-hunter-5-targets-helm-of-fire",
+      "description": "Production Survival Hunter against 5 targets with Helm of Fire (8348) in the head slot: its spell is the damage proc spell, which against several targets is calculated on each of them or on the row's cap of them before any hit is dealt",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/survival-hunter-5-targets-helm-of-fire.request.json"
+      },
+      "prepared": "survival-hunter-5-targets-helm-of-fire.prepared.json",
+      "prepared_sha256": "a60073cd013f19c66263d4b77ad8deba9727d05e6755013ccad7cabcd2b708d9",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "survival-hunter-5-targets-helm-of-fire.go-result.json",
+        "sha256": "44e31aa6afe529d0c2d0d32caeeb0d2cc8ad4effcb1354df25029828bf42fa8b"
+      },
+      "go_log": {
+        "file": "survival-hunter-5-targets-helm-of-fire.go-log.txt",
+        "sha256": "4d978dfe9deffdc17ef9439538254308f449fef7f5bfbca6ba7ab2094bf89200"
+      }
+    },
+    {
+      "id": "frost-2-targets-fiery-blaze",
+      "description": "Production Frost Mage against 2 targets with Enchant: Fiery Blaze (36) on the first weapon: the enchant's proc casts its area hit, which against several targets is calculated on each of them before any hit is dealt",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/frost-2-targets-fiery-blaze.request.json"
+      },
+      "prepared": "frost-2-targets-fiery-blaze.prepared.json",
+      "prepared_sha256": "31d83d65b070afd8dae7843193a8f786fe0c1058c95094ef2a7c3263c05982c8",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "frost-2-targets-fiery-blaze.go-result.json",
+        "sha256": "5fde19c992a7fc287995e4eab3ec034a68c1c7562b34830cfae46d5a3bacee3c"
+      },
+      "go_log": {
+        "file": "frost-2-targets-fiery-blaze.go-log.txt",
+        "sha256": "79b356cd100d7f0cde34f681dc763a69f05fbdb0ea9e24848ce99c8c38438e98"
+      }
+    },
+    {
+      "id": "warrior-2-targets-fiery-blaze",
+      "description": "Production Fury Warrior against 2 targets with Enchant: Fiery Blaze (36) on the first weapon: the enchant's proc casts its area hit, which against several targets is calculated on each of them before any hit is dealt",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-2-targets-fiery-blaze.request.json"
+      },
+      "prepared": "warrior-2-targets-fiery-blaze.prepared.json",
+      "prepared_sha256": "9f9827911922dfce5e9f52164d6b96a1d11999b883df87a3d9cd75783be0b794",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-2-targets-fiery-blaze.go-result.json",
+        "sha256": "c7209d1853e1c8b85b8bdc65f66bf7799112233ea5577e3af80c8cc048dcce51"
+      },
+      "go_log": {
+        "file": "warrior-2-targets-fiery-blaze.go-log.txt",
+        "sha256": "72e33a8ca83f0a9073cb6acea1c044a75bde9d91b04a46da007967e320bb9ecf"
       }
     }
   ]

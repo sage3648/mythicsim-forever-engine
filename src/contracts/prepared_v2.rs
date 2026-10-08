@@ -501,7 +501,8 @@ pub struct FlamestrikeRank {
 }
 
 /// A damage on-use item's direct hit: the row's roll, the scale the area rule leaves for one
-/// target, and the outcome applier by name.
+/// target, and the outcome applier by name. Against several targets the hit is an `area` or a
+/// `chain`, as a damage proc's is, and the scale is not used.
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct OnUseDirect {
@@ -509,6 +510,10 @@ pub struct OnUseDirect {
     pub variance: f64,
     pub scale: f64,
     pub outcome: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub area: Option<ProcArea>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub chain: Option<ProcChain>,
 }
 
 /// A damage on-use item's damage over time: each tick's amount, whether a tick can crit, and the

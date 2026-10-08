@@ -71,8 +71,9 @@ func damageOnUseEffect(character *core.Character, spell *core.Spell, unrepresent
 		*unrepresented = append(*unrepresented, fmt.Sprintf("damage on-use item %d has no dot", item))
 		return map[string]any{}
 	}
-	if direct != spelldata.NilEffect && (direct.HitsAnArea() || direct.ChainTargets > 1) && character.Env.ActiveTargetCount() > 1 {
-		*unrepresented = append(*unrepresented, fmt.Sprintf("damage on-use item %d hits several targets", item))
+	several := direct != spelldata.NilEffect && (direct.HitsAnArea() || direct.ChainTargets > 1) && character.Env.ActiveTargetCount() > 1
+	if several && periodic != spelldata.NilEffect {
+		*unrepresented = append(*unrepresented, fmt.Sprintf("damage on-use item %d hits several targets and leaves a damage over time", item))
 		return map[string]any{}
 	}
 	effect := map[string]any{"kind": "damage_on_use", "item_id": item, "spell": position}
@@ -81,8 +82,18 @@ func damageOnUseEffect(character *core.Character, spell *core.Spell, unrepresent
 		if direct.HitsAnArea() && row.MaxTargets == 0 && !row.SplitsDamage {
 			scale = character.Env.Encounter.AOECapMultiplier()
 		}
-		effect["direct"] = map[string]any{"average": direct.Average(character.Level), "variance": direct.Variance,
+		shape := map[string]any{"average": direct.Average(character.Level), "variance": direct.Variance,
 			"scale": scale, "outcome": outcome}
+		// Past one target the spell is the proc spell of procDamageShape: an area calculated on
+		// every target or the row's cap of them, or a chain, every hit before any is dealt.
+		switch {
+		case several && direct.HitsAnArea():
+			shape["area"] = map[string]any{"max_targets": int32(row.MaxTargets), "splits": row.SplitsDamage,
+				"aoe_cap_multiplier": character.Env.Encounter.AOECapMultiplier()}
+		case several:
+			shape["chain"] = map[string]any{"targets": int32(direct.ChainTargets), "amp": float64(direct.ChainAmp)}
+		}
+		effect["direct"] = shape
 	}
 	if periodic != spelldata.NilEffect {
 		ticks := map[string]any{"tick_base": periodic.Average(character.Level), "tick_can_crit": row.PeriodicCanCrit()}

@@ -503,9 +503,16 @@ func weaponEnchantDamageProcEffects(simulation *core.Simulation, character *core
 			}
 		}
 		effect := damage.DamageEffect()
-		if aura.Dpm == nil || aura.Icd != nil || spell < 0 || effect == spelldata.NilEffect || damage.PeriodicDamageEffect() != spelldata.NilEffect ||
-			!singleTargetMultiHit(character, damage, effect) || damage.AppliesAnAuraToAnEnemy() || damage.Speed != 0 ||
-			character.Spellbook[spell].DefenseType != core.DefenseTypeMagic {
+		magic := spell >= 0 && effect != spelldata.NilEffect && damage.PeriodicDamageEffect() == spelldata.NilEffect &&
+			!damage.AppliesAnAuraToAnEnemy() && character.Spellbook[spell].DefenseType == core.DefenseTypeMagic
+		single := magic && damage.Speed == 0 && singleTargetMultiHit(character, damage, effect)
+		// Past one target an area or a chain, or a hit that flies, is the proc spell of
+		// procDamageShape.
+		var shape map[string]any
+		if magic && !single {
+			shape, _ = procDamageShape(character, damage, spell)
+		}
+		if aura.Dpm == nil || aura.Icd != nil || (!single && shape == nil) {
 			*unrepresented = append(*unrepresented, fmt.Sprintf("%s's proc is not a single target magic hit", proc.label))
 			continue
 		}
@@ -516,12 +523,19 @@ func weaponEnchantDamageProcEffects(simulation *core.Simulation, character *core
 		for _, chance := range chances {
 			triggers = append(triggers, chance.Spell)
 		}
-		effects = append(effects, map[string]any{
+		exported := map[string]any{
 			"kind": "spell_data_damage_proc", "trigger_aura": aura.Label, "trigger_spells": triggers,
 			"landed_only": true, "require_damage": false, "proc_chance": 1.0, "chances": chances,
-			"spell": spell, "average": effect.Average(character.Level), "variance": effect.Variance,
-			"can_crit": !damage.CannotCrit(),
-		})
+		}
+		if single {
+			exported["spell"], exported["average"], exported["variance"] = spell, effect.Average(character.Level), effect.Variance
+			exported["can_crit"] = !damage.CannotCrit()
+		} else {
+			for key, value := range shape {
+				exported[key] = value
+			}
+		}
+		effects = append(effects, exported)
 	}
 	return effects
 }
