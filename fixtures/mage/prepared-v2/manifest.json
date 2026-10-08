@@ -4,7 +4,7 @@
   "engine_revision": "2d93e423e0303e93dbb16e190d435503248b68f9",
   "client_build": "1.60.1.70235",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "c2dcbada3b4a5be8883a6daf70bcd2abf2b36470c2c598c37362bd6b61fa7856",
+  "exporter_sha256": "a39f6ff04e543f752ae85cce350265d05fde521864f5e90145439452e935d1fd",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -9038,6 +9038,279 @@
       "go_log": {
         "file": "feral-druid-demoralizing-roar-5-targets-over-roar-debuff.go-log.txt",
         "sha256": "cd7d8bfff8f11943dd7fdf9d1ba96327e2b8e9b8a6ea751facf612115e6ee4d2"
+      }
+    },
+    {
+      "id": "warrior-bonereavers-edge",
+      "description": "Production Fury Warrior with Bonereaver's Edge (17076) in the main hand in place of Ironfoe: two procs a minute of the main hand's speed activate its armor penetration aura and add a stack, up to 3 stacks of 700 each, so the stat auras number the player's armor penetration by stack (CreateWeaponProcTrigger over MakeStackingAura)",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-bonereavers-edge.request.json"
+      },
+      "prepared": "warrior-bonereavers-edge.prepared.json",
+      "prepared_sha256": "7b4cbf704fa1e3df02848f2bbd6337757bdca0d8fc212ac11c668619a7a25f52",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-bonereavers-edge.go-result.json",
+        "sha256": "fc40712a87c4cc333dbc2c2fbd6609ce4f578c91c97da1c6e674c6b6a694f342"
+      },
+      "go_log": {
+        "file": "warrior-bonereavers-edge.go-log.txt",
+        "sha256": "aaf003a763cdd68ed354339f18fc5b295027aebb440a5dbd0c92b71f6039fd6f"
+      }
+    },
+    {
+      "id": "protection-paladin-bonereavers-edge",
+      "description": "Production Protection Paladin tanking with Bonereaver's Edge (17076) in the main hand: the stacking armor penetration aura, read by stack among the stat auras the target's swings are rolled under",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-paladin-bonereavers-edge.request.json"
+      },
+      "prepared": "protection-paladin-bonereavers-edge.prepared.json",
+      "prepared_sha256": "ab63695e7c22059110ff83d083d79dd940d79845111b38c71f5092ba3da25a88",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-paladin-bonereavers-edge.go-result.json",
+        "sha256": "1d79298950a0585a91d8ebe7988c299d95477239b79667452723578ca13a7361"
+      },
+      "go_log": {
+        "file": "protection-paladin-bonereavers-edge.go-log.txt",
+        "sha256": "f1ff7ff1fd11541e9eaabc5f72dd88cf5e4fb53677d1ebbe7e7773bf09730334"
+      }
+    },
+    {
+      "id": "survival-hunter-bonereavers-edge",
+      "description": "Production Survival Hunter with Bonereaver's Edge (17076) in the main hand: the stacking armor penetration aura on the hunter, whose pet keeps its own",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/survival-hunter-bonereavers-edge.request.json"
+      },
+      "prepared": "survival-hunter-bonereavers-edge.prepared.json",
+      "prepared_sha256": "e2e6b2ea33ff0f7e6eb7abc613351d2407be4df4a1987a347c4225395253cbb6",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "survival-hunter-bonereavers-edge.go-result.json",
+        "sha256": "c4ec454c95e9f0bfb4ad4a0fa5f850c7299b2c2e2488df7e053e68caf939ff9f"
+      },
+      "go_log": {
+        "file": "survival-hunter-bonereavers-edge.go-log.txt",
+        "sha256": "66a033cfccd0a713c2451ac9ae7c5c37e4af4abffcd829d40471415c1639f061"
+      }
+    },
+    {
+      "id": "combat-rogue-3-targets-bonereavers-edge",
+      "description": "Production Combat Rogue against 3 targets with Bonereaver's Edge (17076) in the main hand: the stacking armor penetration aura beside the off hand's own weapon procs",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/combat-rogue-3-targets-bonereavers-edge.request.json"
+      },
+      "prepared": "combat-rogue-3-targets-bonereavers-edge.prepared.json",
+      "prepared_sha256": "48580c0b6c904fb0a16bf1890569d285d6c4ed1d8a18fc8e54de3fb843c39146",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "combat-rogue-3-targets-bonereavers-edge.go-result.json",
+        "sha256": "0d52d07ba801e9fda55aa9e25e7dcb7e425e59ba5fa42c7a887576a077570a93"
+      },
+      "go_log": {
+        "file": "combat-rogue-3-targets-bonereavers-edge.go-log.txt",
+        "sha256": "f1bbfd0ea956bb9b6a421bcd4935fd74b7220d8cb3d4e2430effa1907b79a254"
+      }
+    },
+    {
+      "id": "warrior-thunderfury",
+      "description": "Production Fury Warrior with Thunderfury, Blessed Blade of the Windseeker (19019) in the main hand: 6 procs a minute cast a nature hit of 300 that slows the target with Cyclone and a bounce that lowers the nature resistance of up to five targets by 25, a spell batch window later",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-thunderfury.request.json"
+      },
+      "prepared": "warrior-thunderfury.prepared.json",
+      "prepared_sha256": "40cde00e49b5cac3c9016e3d3a66fe8a249162a12184b4012fb752213aeec107",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-thunderfury.go-result.json",
+        "sha256": "d823a4973507f4c1cbc98b58168cacbc2dbba6bbc7adca51326ee2d77e85cdb3"
+      },
+      "go_log": {
+        "file": "warrior-thunderfury.go-log.txt",
+        "sha256": "8a700ac06193ecd8e1a4711f913562648d5d71d109ef7df00ee6ec1d2c4460e1"
+      }
+    },
+    {
+      "id": "protection-warrior-3-targets-thunderfury",
+      "description": "Production Protection Warrior tanking 3 targets with Thunderfury (19019) in the main hand: Cyclone shares the attack speed category with the warrior's own Thunder Clap, which bids the same slow, so the target is slowed by whichever holds the category as each lands and fades",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-3-targets-thunderfury.request.json"
+      },
+      "prepared": "protection-warrior-3-targets-thunderfury.prepared.json",
+      "prepared_sha256": "ed8c996900d6b717ac3752faffb899f8e46528eec44ce722d7feeb22e6c93732",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-3-targets-thunderfury.go-result.json",
+        "sha256": "5d6f4639dd1e49b49aa03c2e2919375cf8a692866b846678c56fc812436f3fd0"
+      },
+      "go_log": {
+        "file": "protection-warrior-3-targets-thunderfury.go-log.txt",
+        "sha256": "8095988e50dabf66cd0b21171706eef723bddf2ff72a69507f5a3123a0c1b03a"
+      }
+    },
+    {
+      "id": "protection-paladin-thunderfury",
+      "description": "Production Protection Paladin tanking with Thunderfury (19019) in the main hand: Cyclone is the only slow of the attack speed category, which multiplies the target's attack speed while it holds",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-paladin-thunderfury.request.json"
+      },
+      "prepared": "protection-paladin-thunderfury.prepared.json",
+      "prepared_sha256": "b25abd1439ff8d726a79d8ea6cabb907689f47a73b9eb037b8f107cea01365de",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-paladin-thunderfury.go-result.json",
+        "sha256": "8a91b2f40afc212f6a9117b33a2420c4107de5521532b901364d152de3252139"
+      },
+      "go_log": {
+        "file": "protection-paladin-thunderfury.go-log.txt",
+        "sha256": "e7bfdda92de1cf13ad6c253f9fa34875c183a332cffe86dac9223d936bea5271"
+      }
+    },
+    {
+      "id": "protection-paladin-thunderfury-thunder-clap-debuff",
+      "description": "Production Protection Paladin tanking with Thunderfury (19019) in the main hand under the raid's permanent Thunder Clap debuff, which bids as much, outlasts Cyclone and keeps the attack speed category, so Cyclone slows nothing",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-paladin-thunderfury-thunder-clap-debuff.request.json"
+      },
+      "prepared": "protection-paladin-thunderfury-thunder-clap-debuff.prepared.json",
+      "prepared_sha256": "c303f037ba01c081caf7ec30abf04e900c88979f9d611df59ad2b901b2ad0b65",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-paladin-thunderfury-thunder-clap-debuff.go-result.json",
+        "sha256": "c88a14074484fd9b39c43de01f5c892158376940c041ff10081f813eb119b728"
+      },
+      "go_log": {
+        "file": "protection-paladin-thunderfury-thunder-clap-debuff.go-log.txt",
+        "sha256": "bee00db188acba6f862653ef8e7a64b2657cb922fb2301ef823089ec454ba028"
+      }
+    },
+    {
+      "id": "warrior-plaguefang-stinging-viper",
+      "description": "Production Fury Warrior with Plaguefang (279876) in the main hand and Stinging Viper (6472) in the off hand: their Poison spells share a name, so Go puts both dots on one aura, whose gain and expiry run both dots' callbacks and tick both",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-plaguefang-stinging-viper.request.json"
+      },
+      "prepared": "warrior-plaguefang-stinging-viper.prepared.json",
+      "prepared_sha256": "d315c6e39410229d688880caf533f971c24ddc9862525fdc202055f2cf3a6250",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-plaguefang-stinging-viper.go-result.json",
+        "sha256": "ec81b78247cb5e2844524d0d48ac0401fe0c5871c72f9a3c36dfa00e2d52cdfd"
+      },
+      "go_log": {
+        "file": "warrior-plaguefang-stinging-viper.go-log.txt",
+        "sha256": "a8d52218904715ae5f658cb18f30e46b6fc2963adbce1db9377042f3abc4b6ac"
+      }
+    },
+    {
+      "id": "warrior-stinging-viper-plaguefang",
+      "description": "Production Fury Warrior with Stinging Viper (6472) in the main hand and Plaguefang (279876) in the off hand: the Poison dots share one aura, registered by the other spell first",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-stinging-viper-plaguefang.request.json"
+      },
+      "prepared": "warrior-stinging-viper-plaguefang.prepared.json",
+      "prepared_sha256": "ff78384cece68e802e25581de9ebf374cae2c823bf393ca6bbfee4f8b896ca5b",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-stinging-viper-plaguefang.go-result.json",
+        "sha256": "31d990888db38a3f31293d5e4f2df841a3e119f72a6beb5693cd452aabdcfbb1"
+      },
+      "go_log": {
+        "file": "warrior-stinging-viper-plaguefang.go-log.txt",
+        "sha256": "d1a196f378ecda3728c8a55566a2877e553b3d4790069735688f69bfdb2fb656"
+      }
+    },
+    {
+      "id": "warrior-2-targets-plaguefang-stinging-viper",
+      "description": "Production Fury Warrior against 2 targets with Plaguefang (279876) and Stinging Viper (6472): each target holds its own shared Poison aura",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-2-targets-plaguefang-stinging-viper.request.json"
+      },
+      "prepared": "warrior-2-targets-plaguefang-stinging-viper.prepared.json",
+      "prepared_sha256": "bf3981ee744007d3449a193eda79eca9d391896d43268f48704f163572a48a5e",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-2-targets-plaguefang-stinging-viper.go-result.json",
+        "sha256": "2c0e82cc6852d49fa7de54c7abf2969ec4c712062ca3f76c6fc6bccd1ef017fc"
+      },
+      "go_log": {
+        "file": "warrior-2-targets-plaguefang-stinging-viper.go-log.txt",
+        "sha256": "1f365feec8b374bdd2570f428d3fbdc69a501bfdd5e7a20b0baf4be5ab7e222c"
+      }
+    },
+    {
+      "id": "combat-rogue-3-targets-plaguefang-stinging-viper",
+      "description": "Production Combat Rogue against 3 targets with Plaguefang (279876) in the main hand and Stinging Viper (6472) in the off hand: the shared Poison aura on every target",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/combat-rogue-3-targets-plaguefang-stinging-viper.request.json"
+      },
+      "prepared": "combat-rogue-3-targets-plaguefang-stinging-viper.prepared.json",
+      "prepared_sha256": "af60f3b38fe838024de4294189f646094362baab0d614b3d451e2f567a10e9ef",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "combat-rogue-3-targets-plaguefang-stinging-viper.go-result.json",
+        "sha256": "a483dcf5f146f93d3f2397632b46fc983e5962d690515d14167ff76332faf4f6"
+      },
+      "go_log": {
+        "file": "combat-rogue-3-targets-plaguefang-stinging-viper.go-log.txt",
+        "sha256": "9a81731a44648ae24ec20faae715418486eed8e23c90e8c941d874d8e39522c5"
+      }
+    },
+    {
+      "id": "protection-warrior-3-targets-plaguefang-stinging-viper",
+      "description": "Production Protection Warrior tanking 3 targets with Plaguefang (279876) and Stinging Viper (6472) in place of its weapon and shield: the shared Poison aura beside the target's swings",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-3-targets-plaguefang-stinging-viper.request.json"
+      },
+      "prepared": "protection-warrior-3-targets-plaguefang-stinging-viper.prepared.json",
+      "prepared_sha256": "17c70f74364aee0e46000da8debf3cfeb4630dadbbca9e305eaf46631b1228d3",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-3-targets-plaguefang-stinging-viper.go-result.json",
+        "sha256": "3fbab10521dd9a2ecc5a3579db5d1670a0aa1290724665f94e6fad6967752768"
+      },
+      "go_log": {
+        "file": "protection-warrior-3-targets-plaguefang-stinging-viper.go-log.txt",
+        "sha256": "7105356f71042256745935912739fe4ebbfec3a25622330346e5fd4e790bedb6"
       }
     }
   ]
