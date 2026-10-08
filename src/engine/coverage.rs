@@ -1226,6 +1226,29 @@ pub(crate) fn prepared_coverage(
         }
     }
 
+    // The aura an external cooldown casts changes the player through an effect of its own:
+    // Power Infusion's multipliers, Innervate's spirit regeneration or, for Mana Tide Totem, the
+    // mana per 5 seconds of a stat aura. An aura none of them describes would change nothing in
+    // the runtime.
+    for effect in &prepared.effects {
+        let Effect::ExternalCooldown { aura: label, .. } = effect else {
+            continue;
+        };
+        let described = prepared.effects.iter().any(|other| match other {
+            Effect::PowerInfusion { aura, .. } | Effect::InnervateRegen { aura, .. } => {
+                aura == label
+            }
+            Effect::StatAuras { auras, .. } => auras.contains(label),
+            _ => false,
+        });
+        if !described {
+            reasons.push(Refusal::new(
+                "aura_listener_unclaimed",
+                format!("player aura {label:?} is cast by an external cooldown without an effect"),
+            ));
+        }
+    }
+
     // A simulated pet needs a class effect that runs it, which claims the pet by its label.
     for pet in &prepared.pets {
         let claimant = prepared.effects.iter().find(|effect| {
