@@ -1658,8 +1658,11 @@ pub enum Effect {
         rng_label: String,
         aura: String,
         chances: Vec<SpellChance>,
-        gain_log: String,
-        expire_log: String,
+        /// Absent for a parsed aura, as a weapon proc's: it logs neither.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        gain_log: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        expire_log: Option<String>,
     },
     /// Paladin talents_holy.go Illumination: a heal crit's chance to return a share of the
     /// heal's base cost, a batch window later.
@@ -3033,6 +3036,13 @@ pub enum Effect {
         trigger_aura: String,
         proc_chance: f64,
         attacks: i32,
+        /// A weapon proc, as Flurry Axe's: each spell its proc manager hears with the chance it
+        /// rolls for the landed hit, in place of `proc_chance`.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        chances: Option<Vec<SpellChance>>,
+        /// The spell the weapon proc casts, whose effect grants the attacks.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        spell: Option<usize>,
     },
     /// A potion that restores rage or mana and may carry a temporary stat aura.
     PotionResource {

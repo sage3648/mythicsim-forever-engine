@@ -1,6 +1,6 @@
 //! Shared gear procs of Go sim/common/forever: Battlegear of Valor's Warrior's Resolve, which
-//! heals and gives rage, and the Puncture Armor weapon procs of Bashguuder and Rivenspike,
-//! whose stacks lower the target's armor.
+//! heals and gives rage, and the armor debuff weapon procs of Bashguuder and Rivenspike (Puncture
+//! Armor) and Annihilator (Armor Shatter), whose stacks lower the target's armor.
 
 use crate::contracts::prepared_v2::Effect;
 
@@ -19,14 +19,17 @@ pub(crate) struct HealthRageProc {
     rage_metrics: Option<usize>,
 }
 
-/// items_weapons.go Puncture Armor: each spell's chance from the weapon's proc manager, the
-/// roll's label, the target's aura and the target's armor change at each stack count.
+/// items_weapons.go Puncture Armor and Annihilator's Armor Shatter: each spell's chance from the
+/// weapon's proc manager, the roll's label, the target's aura and the target's armor change at
+/// each stack count.
 #[derive(Clone, Debug)]
 pub(crate) struct ArmorDebuffProc {
     chances: Vec<Option<f64>>,
     rng_label: String,
     aura: AuraRef,
     armor_by_stacks: Vec<f64>,
+    /// Go `TriggerImmediately`: the handler runs on the hit, not a batch window later.
+    immediate: bool,
 }
 
 /// The behavior of a player or target aura these procs own.
@@ -106,6 +109,7 @@ impl<A: Agent> Fight<A> {
                     chances,
                     aura,
                     armor_by_stacks,
+                    immediate,
                     ..
                 } => {
                     let index = self.trackers[Side::Target.index()]
@@ -119,6 +123,7 @@ impl<A: Agent> Fight<A> {
                             index,
                         },
                         armor_by_stacks: armor_by_stacks.clone(),
+                        immediate: *immediate,
                     });
                 }
                 _ => {}
@@ -162,7 +167,8 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    /// Go `AttachProcTriggerCallback` for a Puncture Armor weapon proc.
+    /// Go `AttachProcTriggerCallback` for an armor debuff weapon proc: the handler runs a batch
+    /// window later, or at once for Annihilator's (`TriggerImmediately`).
     pub(crate) fn armor_debuff_proc_callback(
         &mut self,
         aura: AuraRef,
@@ -180,7 +186,11 @@ impl<A: Agent> Fight<A> {
             .rng
             .proc(chance, &self.armor_debuff_procs[proc].rng_label)
         {
-            self.schedule_delayed_proc(aura, spell, *result);
+            if self.armor_debuff_procs[proc].immediate {
+                self.armor_debuff_proc_handler(proc, result.target);
+            } else {
+                self.schedule_delayed_proc(aura, spell, *result);
+            }
         }
     }
 

@@ -380,7 +380,7 @@ impl<A: Agent> Fight<A> {
     /// spell power and the target's school bonus otherwise.
     pub(crate) fn school_bonus_damage(&self, spell: SpellId, target: Side) -> f64 {
         if self.spells[spell].school & 1 != 0 {
-            self.spells[spell].bonus_base_damage + self.config.physical_damage
+            self.spells[spell].bonus_base_damage + self.player.powers.physical_damage
         } else {
             self.bonus_damage(spell, target)
         }
@@ -811,8 +811,23 @@ impl<A: Agent> Fight<A> {
 
     /// Go `Spell.CalcAndDealPeriodicDamage` for a dot's tick on a base amount.
     pub(crate) fn periodic_damage_tick(&mut self, dot: super::DotId, base: f64) {
+        let outcome = if self.dots[dot].tick_can_crit {
+            Outcome::TickMagicCrit
+        } else {
+            Outcome::Tick
+        };
+        self.periodic_damage_tick_outcome(dot, base, outcome);
+    }
+
+    /// The same on a given outcome applier, as a damage proc's dot names its row's.
+    pub(crate) fn periodic_damage_tick_outcome(
+        &mut self,
+        dot: super::DotId,
+        base: f64,
+        outcome: Outcome,
+    ) {
         let state = &self.dots[dot];
-        let (spell, side, can_crit) = (state.spell, state.side, state.tick_can_crit);
+        let (spell, side) = (state.spell, state.side);
         let mut base = base;
         if state.bonus_coefficient > 0.0 {
             // Go CalcPeriodicDamage, whose share the arm64 build fuses into the add.
@@ -822,11 +837,6 @@ impl<A: Agent> Fight<A> {
         }
         let attacker =
             self.attacker_multiplier(spell, true) * self.dots[dot].periodic_damage_multiplier;
-        let outcome = if can_crit {
-            Outcome::TickMagicCrit
-        } else {
-            Outcome::Tick
-        };
         let result = self.calc_damage_internal(spell, side, base, attacker, outcome);
         self.deal_damage(spell, result, true);
     }

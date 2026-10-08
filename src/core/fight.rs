@@ -24,6 +24,7 @@ mod external_cooldown;
 mod focus;
 mod gear_procs;
 mod on_use_damage;
+pub(crate) mod proc_damage;
 pub(crate) use on_use_damage::known as on_use_damage_known;
 mod heal_proc;
 pub(crate) mod healing;
@@ -461,6 +462,11 @@ pub(crate) enum SpellBehavior<S> {
         variance: f64,
         can_crit: bool,
     },
+    /// A weapon or item proc's spell of a client row: a hit on the row's roll on the table of
+    /// its defense type, a chain, a damage over time, a missile's travel.
+    ProcDamage(proc_damage::ProcDamage),
+    /// A weapon proc's spell that grants extra main hand attacks, as Flurry Axe's.
+    ExtraAttack(i32),
     /// A damage on-use item's spell.
     OnUseDamage(on_use_damage::OnUseDamage),
     /// A heal proc's spell: a heal on the wearer through `CalcAndDealHealing`.
@@ -809,6 +815,9 @@ pub(crate) struct Powers {
     pub(crate) healing_power: f64,
     /// Go `SpiritManaRegenPerSecond`, from Intellect and Spirit, which stat auras can change.
     pub(crate) spirit_regen_per_second: f64,
+    /// Go `stats.PhysicalDamage`, which `Spell.BonusDamage` adds to a physical spell and a stat
+    /// aura, as Sword of Zeal's, can change.
+    pub(crate) physical_damage: f64,
 }
 
 /// Mutable player state, reset to the prepared values each iteration.
@@ -948,6 +957,21 @@ pub(crate) struct Windfury {
     pub(crate) spend_require_damage: bool,
 }
 
+/// The trigger aura of an effect `Fight::damage_procs` holds: a spell data damage proc, or a
+/// weapon's extra attack proc, which casts its spell at once on the unit hit the same way.
+fn damage_proc_trigger(effect: &Effect) -> Option<&String> {
+    match effect {
+        Effect::SpellDataDamageProc { trigger_aura, .. } => Some(trigger_aura),
+        Effect::ExtraAttackProc {
+            trigger_aura,
+            chances: Some(_),
+            spell: Some(_),
+            ..
+        } => Some(trigger_aura),
+        _ => None,
+    }
+}
+
 /// Go common/shared/shared_utils.go `applySpellDataDamageProc`: an item proc that casts a
 /// single target magic hit at once on the unit hit.
 #[derive(Clone, Debug)]
@@ -1076,7 +1100,6 @@ pub(crate) struct Config {
     pub(crate) physical_hit_percent: f64,
     pub(crate) expertise_percent: f64,
     pub(crate) armor_penetration: f64,
-    pub(crate) physical_damage: f64,
     /// A pet's mana regeneration per second while casting and not, as Go computes it.
     pub(crate) fixed_regen: Option<(f64, f64)>,
     /// Go `RangedHitPercent` and `RangedCritPercent`, which ranged attacks add.
@@ -1643,6 +1666,7 @@ pub(crate) fn unit_config(prepared: &PreparedV2, unit: &UnitSource) -> Result<Co
             max_mana: unit.max_mana,
             healing_power: unit.stats.get("HealingPower").copied().unwrap_or(0.0),
             spirit_regen_per_second: unit.spirit_regen_per_second,
+            physical_damage: stat(unit.stats, "PhysicalDamage")?,
         },
         school_damage: [
             0.0,
@@ -1693,7 +1717,6 @@ pub(crate) fn unit_config(prepared: &PreparedV2, unit: &UnitSource) -> Result<Co
         expertise_percent: stat(unit.stats, "ExpertisePercent")?,
         armor_penetration: stat(unit.stats, "ArmorPenetration")?,
         fixed_regen: unit.fixed_regen,
-        physical_damage: stat(unit.stats, "PhysicalDamage")?,
         ranged_hit_percent: stat(unit.stats, "RangedHitPercent")?,
         ranged_crit_percent: stat(unit.stats, "RangedCritPercent")?,
         ranged_speed_multiplier: unit
@@ -2143,11 +2166,50 @@ impl<A: Agent> Fight<A> {
                                 .ok()
                                 .map(SpellBehavior::OnUseDamage)
                         }
+                        // The spell of a weapon's extra attack proc: it grants the attacks.
+                        Effect::ExtraAttackProc {
+                            spell: Some(spell),
+                            attacks,
+                            ..
+                        } if *spell == spells.len() => Some(SpellBehavior::ExtraAttack(*attacks)),
                         Effect::SpellDataHealProc { spell, .. } if *spell == spells.len() => {
                             heal_proc::self_heal(effects, spells.len()).map(SpellBehavior::SelfHeal)
                         }
                         Effect::SpellDataAbsorbProc { spell, .. } if *spell == spells.len() => {
                             absorb::proc_shield(effects, spells.len()).map(SpellBehavior::AbsorbOnUse)
+                        }
+                        // A weapon proc of a client row that rolls a table of the spell's defense
+                        // type, a chain or a damage over time; the gate refuses a name the runtime
+                        // does not know.
+                        Effect::SpellDataDamageProc {
+                            spell,
+                            average,
+                            variance,
+                            can_crit,
+                            roll: None,
+                            outcome,
+                            chain,
+                            area,
+                            periodic,
+                            ..
+                        } if *spell == spells.len()
+                            && (outcome.is_some()
+                                || chain.is_some()
+                                || area.is_some()
+                                || periodic.is_some()
+                                || exported.missile_speed > 0.0) =>
+                        {
+                            proc_damage::ProcDamage::new(
+                                *average,
+                                *variance,
+                                *can_crit,
+                                outcome.as_deref(),
+                                chain.as_ref(),
+                                area.as_ref(),
+                                periodic.as_ref(),
+                            )
+                            .ok()
+                            .map(SpellBehavior::ProcDamage)
                         }
                         // A hit of the melee defense type rolls its Go literal range on the melee
                         // special table (shared_utils.go `damageOutcome`); the gate refuses a
@@ -2500,6 +2562,11 @@ impl<A: Agent> Fight<A> {
                         .get("SpiritManaRegenPerSecond")
                         .copied()
                         .unwrap_or(config.spirit_regen_per_second),
+                    // Written only when a combination changes it.
+                    physical_damage: combo
+                        .get("PhysicalDamage")
+                        .copied()
+                        .unwrap_or(config.powers.physical_damage),
                 })
             })
             .collect::<Result<_, BuildError>>()?;
@@ -2729,8 +2796,8 @@ impl<A: Agent> Fight<A> {
                         } if *oh_aura == exported.label => Some((oh_gain_log, oh_expire_log)),
                         Effect::StatProc {
                             aura,
-                            gain_log,
-                            expire_log,
+                            gain_log: Some(gain_log),
+                            expire_log: Some(expire_log),
                             ..
                         }
                         | Effect::SpellDataStatProc {
@@ -2830,6 +2897,8 @@ impl<A: Agent> Fight<A> {
                             trigger_aura,
                             proc_chance,
                             attacks,
+                            chances: None,
+                            ..
                         } if side == Side::Player && *trigger_aura == exported.label => {
                             Some((*proc_chance, *attacks))
                         }
@@ -2841,10 +2910,8 @@ impl<A: Agent> Fight<A> {
                     .then(|| {
                         effects
                             .iter()
-                            .filter(|effect| matches!(effect, Effect::SpellDataDamageProc { .. }))
-                            .position(|effect| {
-                                matches!(effect, Effect::SpellDataDamageProc { trigger_aura, .. } if *trigger_aura == exported.label)
-                            })
+                            .filter(|effect| damage_proc_trigger(effect).is_some())
+                            .position(|effect| damage_proc_trigger(effect) == Some(&exported.label))
                     })
                     .flatten()
                 {
@@ -3524,42 +3591,67 @@ impl<A: Agent> Fight<A> {
         }
         fight.bind_absorb_procs(effects)?;
         for effect in effects {
-            if let Effect::SpellDataDamageProc {
-                trigger_spells,
+            let (trigger_spells, struck, landed_only, require_damage, proc_chance, spell, chances) =
+                match effect {
+                    Effect::SpellDataDamageProc {
+                        trigger_spells,
+                        struck,
+                        landed_only,
+                        require_damage,
+                        proc_chance,
+                        spell,
+                        chances,
+                        ..
+                    } => (
+                        trigger_spells.clone(),
+                        *struck,
+                        *landed_only,
+                        *require_damage,
+                        *proc_chance,
+                        *spell,
+                        chances,
+                    ),
+                    // A weapon proc that casts the spell granting the extra attacks: it hears the
+                    // landed hits its proc manager has a chance for.
+                    Effect::ExtraAttackProc {
+                        chances: chances @ Some(entries),
+                        spell: Some(spell),
+                        ..
+                    } => (
+                        entries.iter().map(|entry| entry.spell).collect(),
+                        false,
+                        true,
+                        false,
+                        1.0,
+                        *spell,
+                        chances,
+                    ),
+                    _ => continue,
+                };
+            let mut mask = vec![false; fight.spells.len()];
+            for &trigger in &trigger_spells {
+                if let Some(slot) = mask.get_mut(trigger) {
+                    *slot = true;
+                }
+            }
+            let chances = chances.as_ref().map(|chances| {
+                let mut by_spell = vec![None; fight.spells.len()];
+                for entry in chances {
+                    if let Some(slot) = by_spell.get_mut(entry.spell) {
+                        *slot = Some(entry.chance);
+                    }
+                }
+                by_spell
+            });
+            fight.damage_procs.push(DamageProc {
+                trigger_spells: mask,
                 struck,
                 landed_only,
                 require_damage,
-                proc_chance,
-                spell,
+                chance: proc_chance,
                 chances,
-                ..
-            } = effect
-            {
-                let mut mask = vec![false; fight.spells.len()];
-                for &trigger in trigger_spells {
-                    if let Some(slot) = mask.get_mut(trigger) {
-                        *slot = true;
-                    }
-                }
-                let chances = chances.as_ref().map(|chances| {
-                    let mut by_spell = vec![None; fight.spells.len()];
-                    for entry in chances {
-                        if let Some(slot) = by_spell.get_mut(entry.spell) {
-                            *slot = Some(entry.chance);
-                        }
-                    }
-                    by_spell
-                });
-                fight.damage_procs.push(DamageProc {
-                    trigger_spells: mask,
-                    struck: *struck,
-                    landed_only: *landed_only,
-                    require_damage: *require_damage,
-                    chance: *proc_chance,
-                    chances,
-                    spell: *spell,
-                });
-            }
+                spell,
+            });
         }
         for effect in effects {
             if let Effect::SpellDataStatProc {

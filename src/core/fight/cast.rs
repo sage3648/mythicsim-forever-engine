@@ -880,7 +880,16 @@ impl<A: Agent> Fight<A> {
             }
             SpellBehavior::RollDamage { min, max, can_crit } => {
                 let base = self.go_roll(min, max);
-                let result = if can_crit {
+                // Go `CalcDamage` adds a physical spell's bonus damage; The Lobotomizer's Brain
+                // Damage is one that rolls the magic table.
+                let result = if self.spells[spell].school & 1 != 0 {
+                    let outcome = if can_crit {
+                        super::Outcome::MagicHitAndCrit
+                    } else {
+                        super::Outcome::MagicHit
+                    };
+                    self.calc_damage_with(spell, target, base, outcome)
+                } else if can_crit {
                     self.calc_damage(spell, target, base)
                 } else {
                     self.calc_damage_hit_only(spell, target, base)
@@ -907,6 +916,9 @@ impl<A: Agent> Fight<A> {
                 };
                 self.deal_damage(spell, result, false);
             }
+            SpellBehavior::ProcDamage(params) => self.apply_proc_damage(spell, target, params),
+            // Go `AutoAttacks.ExtraMHAttack` / `ExtraMHAttacks`.
+            SpellBehavior::ExtraAttack(attacks) => self.extra_mh_attacks(attacks),
             SpellBehavior::OnUseDamage(params) => self.apply_on_use_damage(spell, target, params),
             SpellBehavior::ExternalCooldown => self.external_cooldown_cast(spell),
             SpellBehavior::None => panic!("spell {} has no behavior", self.spells[spell].id),
@@ -1359,6 +1371,8 @@ impl<A: Agent> Fight<A> {
             | SpellBehavior::Move
             | SpellBehavior::RollDamage { .. }
             | SpellBehavior::RollTableDamage { .. }
+            | SpellBehavior::ProcDamage(_)
+            | SpellBehavior::ExtraAttack(_)
             | SpellBehavior::AreaRollDamage { .. }
             | SpellBehavior::SulfurasFireball { .. }
             | SpellBehavior::FixedHit(_)
