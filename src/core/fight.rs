@@ -434,6 +434,14 @@ pub(crate) enum SpellBehavior<S> {
         max: f64,
         can_crit: bool,
     },
+    /// A hit on a rolled base damage that takes a physical attack table, as an item proc of
+    /// the melee defense type does, Iceblade Hacker's Frost hit: the school keeps its partial
+    /// resist roll and the table rolls the hit and the crit.
+    RollTableDamage {
+        min: f64,
+        max: f64,
+        outcome: melee::PhysicalOutcome,
+    },
     /// Sulfuras's Fireball: a magic hit rolled between two bounds whose landing applies its burn.
     SulfurasFireball {
         min: f64,
@@ -2119,10 +2127,25 @@ impl<A: Agent> Fight<A> {
                         Effect::SpellDataAbsorbProc { spell, .. } if *spell == spells.len() => {
                             absorb::proc_shield(effects, spells.len()).map(SpellBehavior::AbsorbOnUse)
                         }
+                        // A hit of the melee defense type rolls its Go literal range on the melee
+                        // special table (shared_utils.go `damageOutcome`); the gate refuses a
+                        // name the runtime does not know.
+                        Effect::SpellDataDamageProc {
+                            spell,
+                            roll: Some([min, max]),
+                            outcome: Some(outcome),
+                            ..
+                        } if *spell == spells.len() => melee::PhysicalOutcome::of_melee_proc(outcome)
+                            .map(|outcome| SpellBehavior::RollTableDamage {
+                                min: *min,
+                                max: *max,
+                                outcome,
+                            }),
                         Effect::SpellDataDamageProc {
                             spell,
                             roll: Some([min, max]),
                             can_crit,
+                            outcome: None,
                             ..
                         } if *spell == spells.len() => Some(SpellBehavior::RollDamage {
                             min: *min,
