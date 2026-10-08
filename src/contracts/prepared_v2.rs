@@ -3199,6 +3199,12 @@ pub enum Effect {
         base_damage: f64,
         stops_swings: bool,
     },
+    /// Demoralizing Shout: a magic hit roll on every target, each landed one activating that
+    /// target's debuff.
+    DemoralizingShout {
+        spell: usize,
+        aura: String,
+    },
     /// Bloodthrill: main hand hits on a bleeding target may open the Overpower window longer.
     Bloodthrill {
         trigger_aura: String,
@@ -4087,6 +4093,7 @@ impl Effect {
             Effect::MortalStrike { .. } => "mortal_strike",
             Effect::SpearingStrike { .. } => "spearing_strike",
             Effect::Slam { .. } => "slam",
+            Effect::DemoralizingShout { .. } => "demoralizing_shout",
             Effect::Bloodthrill { .. } => "bloodthrill",
             Effect::WeaponmasterSword { .. } => "weaponmaster_sword",
             Effect::Revenge { .. } => "revenge",

@@ -484,9 +484,14 @@ impl Agent for PriestAgent {
     fn apply_effects(fight: &mut Fight<Self>, spell: SpellId, target: Side, behavior: PriestSpell) {
         match behavior {
             PriestSpell::MindBlast | PriestSpell::Smite => direct::apply(fight, spell, target),
-            // talents_holy.go: the hit on each target, then the heal cast on the priest.
+            // talents_holy.go: Go `CalcAndDealAoeDamageWithVariance`, which rolls, resolves and
+            // deals the hit on each target in unit index order before the heal is cast on the
+            // priest.
             PriestSpell::HolyNova => {
-                direct::apply(fight, spell, target);
+                let sides: Vec<Side> = fight.target_sides().collect();
+                for side in sides {
+                    direct::apply(fight, spell, side);
+                }
                 let nova = fight.agent.holy_nova.clone().expect("Holy Nova is bound");
                 let &(_, heal, _) = nova
                     .heals

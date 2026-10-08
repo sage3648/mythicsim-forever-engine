@@ -5202,6 +5202,23 @@
       "stops_swings": false
     },
     {
+      "aura": "Demoralizing Shout (Player)",
+      "kind": "demoralizing_shout",
+      "spell": 44
+    },
+    {
+      "category": "Demoralizing",
+      "kind": "exclusive_category",
+      "members": [
+        {
+          "aura": "Demoralizing Shout (Player)",
+          "priority": 205,
+          "spell_id": 11556
+        }
+      ],
+      "unit": "target"
+    },
+    {
       "delay_ns": 10000000,
       "kind": "bloodthrill",
       "proc_chance": 0.2,
