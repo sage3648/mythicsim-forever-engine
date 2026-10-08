@@ -8220,6 +8220,279 @@
         "file": "protection-warrior-3-targets-masterwork-stormhammer.go-log.txt",
         "sha256": "720d9463305c9b1c22f75e90835ee40e710f49f8d055cd463b218545f106d93e"
       }
+    },
+    {
+      "id": "smite-priest-holy-nova-3-targets",
+      "description": "Smite Priest casting Holy Nova against 3 targets: the top rank rolls its hit on each target in unit index order, then the heal is cast once on the priest",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/smite-priest-holy-nova-3-targets.request.json"
+      },
+      "prepared": "smite-priest-holy-nova-3-targets.prepared.json",
+      "prepared_sha256": "bd79476f9ae86c4109569bfeea1c10bd89df9cc3c2a3ed3898a6377526bbe816",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "smite-priest-holy-nova-3-targets.go-result.json",
+        "sha256": "3a3aeeb675790d2367dc0c5105bd1f55f3f93f3849e3e70b4d6382f4860b0035"
+      },
+      "go_log": {
+        "file": "smite-priest-holy-nova-3-targets.go-log.txt",
+        "sha256": "1d700262521c207ab5bce991e441f0e591483fd9cbadef40ffd9c02a50cef339"
+      }
+    },
+    {
+      "id": "smite-priest-holy-nova-5-targets",
+      "description": "Smite Priest casting Holy Nova against 5 targets: the top rank rolls its hit on each target in unit index order, then the heal is cast once on the priest",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/smite-priest-holy-nova-5-targets.request.json"
+      },
+      "prepared": "smite-priest-holy-nova-5-targets.prepared.json",
+      "prepared_sha256": "df499b8d9b6521cff83f59f8b9c2c0bee3da7c1fb1be7a7ed27ad4a96493f404",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "smite-priest-holy-nova-5-targets.go-result.json",
+        "sha256": "543da11f062a6b01ef939e043f9b1ae48affa377cd4dc15a110933c9f23270a1"
+      },
+      "go_log": {
+        "file": "smite-priest-holy-nova-5-targets.go-log.txt",
+        "sha256": "9b8163dc8acad229267c20cb69c4ac729703f9ba340d21eb8bc5f2f12f8a2356"
+      }
+    },
+    {
+      "id": "shadow-priest-holy-nova",
+      "description": "Shadow Priest without Shadowform casting Holy Nova (27801) against 1 target first in its rotation, which Shadowform would refuse through its cast requirement",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/shadow-priest-holy-nova.request.json"
+      },
+      "prepared": "shadow-priest-holy-nova.prepared.json",
+      "prepared_sha256": "45488eae778a2ce78b90c7b7104b57ed6883cbd96fd7d3aab039f98257262795",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "shadow-priest-holy-nova.go-result.json",
+        "sha256": "5f5a8f1c5f1292e194188cc62496d6224e96db4d97ad81b7a0331a2ad93d7af4"
+      },
+      "go_log": {
+        "file": "shadow-priest-holy-nova.go-log.txt",
+        "sha256": "397d3c1fef2cd71f3199aea21bd1970427db9d8f6a6cc3ae33d2c19d53e728d1"
+      }
+    },
+    {
+      "id": "shadow-priest-holy-nova-3-targets",
+      "description": "Shadow Priest without Shadowform casting Holy Nova against 3 targets: a hit on each, the heal once on the priest, and the shadow damage over time on the first target",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/shadow-priest-holy-nova-3-targets.request.json"
+      },
+      "prepared": "shadow-priest-holy-nova-3-targets.prepared.json",
+      "prepared_sha256": "740e59c48f3b3f8548df9bcad4882a33344513b7b7d10a276a602907f4b71817",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "shadow-priest-holy-nova-3-targets.go-result.json",
+        "sha256": "9bb6babd35849b21f8325acf2328061bf3023ec5a8da7da60140222a516a7788"
+      },
+      "go_log": {
+        "file": "shadow-priest-holy-nova-3-targets.go-log.txt",
+        "sha256": "2d76ae53545a9b4ff890f84f0860770e21ba45030d6a1be5440a33b37889e5ac"
+      }
+    },
+    {
+      "id": "shadow-priest-holy-nova-5-targets",
+      "description": "Shadow Priest without Shadowform casting Holy Nova against 5 targets: a hit on each, the heal once on the priest, and the shadow damage over time on the first target",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/shadow-priest-holy-nova-5-targets.request.json"
+      },
+      "prepared": "shadow-priest-holy-nova-5-targets.prepared.json",
+      "prepared_sha256": "912c9b7413db94a40d0ed213e107f7fa9855ce41cad7a3d812877bf1852e7070",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "shadow-priest-holy-nova-5-targets.go-result.json",
+        "sha256": "9b39404d87b45f77db86fcf2881bec8104233103b9312f27cf46b56c6c90c21b"
+      },
+      "go_log": {
+        "file": "shadow-priest-holy-nova-5-targets.go-log.txt",
+        "sha256": "d422e3893c2745f4e653be4bd274363ee716273195cb96630bb5c8d01b7f1c49"
+      }
+    },
+    {
+      "id": "protection-warrior-demoralizing-shout",
+      "description": "Production Protection Warrior tanking 1 target and casting Demoralizing Shout (11556) when its debuff has 1.5 sec left: the debuff cuts the attack power of the target's swing",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-demoralizing-shout.request.json"
+      },
+      "prepared": "protection-warrior-demoralizing-shout.prepared.json",
+      "prepared_sha256": "e444b5e1aa2249e055317b80707c1271c283e7b3cc33e09e1e23b6a2a3b725f9",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-demoralizing-shout.go-result.json",
+        "sha256": "3dba2304334d04fc5cbb18cabcee23b3af403e7b467c8a18548bd85792af2a29"
+      },
+      "go_log": {
+        "file": "protection-warrior-demoralizing-shout.go-log.txt",
+        "sha256": "8fc1af9a56a413e0be466a995a0e59a38430a3b0dfe79b3cdc925c5857e113a5"
+      }
+    },
+    {
+      "id": "protection-warrior-demoralizing-shout-3-targets",
+      "description": "Production Protection Warrior tanking 3 targets with Demoralizing Shout: a magic hit roll on each target in unit index order, each landed one debuffed and cutting its own swing at the warrior",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-demoralizing-shout-3-targets.request.json"
+      },
+      "prepared": "protection-warrior-demoralizing-shout-3-targets.prepared.json",
+      "prepared_sha256": "30f2e538df88f0134a8b94e3d3f8f422d7df591e88756c8170e59b1e8e654662",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-demoralizing-shout-3-targets.go-result.json",
+        "sha256": "dc4fc8b3c9d7534d5563f2c7ecab4cc29cf2ce410e9ea7650f000e7eb83cb906"
+      },
+      "go_log": {
+        "file": "protection-warrior-demoralizing-shout-3-targets.go-log.txt",
+        "sha256": "584dfe159ee9e032b21dfab4130c66360dab6f53075c9172f7796baea7feabff"
+      }
+    },
+    {
+      "id": "protection-warrior-demoralizing-shout-5-targets",
+      "description": "Production Protection Warrior tanking 5 targets with Demoralizing Shout: a magic hit roll on each target in unit index order, each landed one debuffed and cutting its own swing at the warrior",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-demoralizing-shout-5-targets.request.json"
+      },
+      "prepared": "protection-warrior-demoralizing-shout-5-targets.prepared.json",
+      "prepared_sha256": "b7da33bbc7b439ee9ab176f4ba364fc862c876691eae0197177ad0bc95a38cfc",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-demoralizing-shout-5-targets.go-result.json",
+        "sha256": "8fdf6b16ff4dfaa2380fa52b0182d5267d02164d09ab0388f02890c9f51dcd92"
+      },
+      "go_log": {
+        "file": "protection-warrior-demoralizing-shout-5-targets.go-log.txt",
+        "sha256": "56953c8927b6e5de98a88be21a39b0255a18d9352975653d2912a2a10a14f8d2"
+      }
+    },
+    {
+      "id": "protection-warrior-demoralizing-shout-over-roar-debuff",
+      "description": "Production Protection Warrior tanking 3 targets with Demoralizing Shout under the raid's permanent Demoralizing Roar debuff: the equal bid of a permanent debuff holds the shout's aura off in the Demoralizing category",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-demoralizing-shout-over-roar-debuff.request.json"
+      },
+      "prepared": "protection-warrior-demoralizing-shout-over-roar-debuff.prepared.json",
+      "prepared_sha256": "6bcccd7b1121ae740ac7a878784ffe1686543176532551ee109772e65afdf288",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-demoralizing-shout-over-roar-debuff.go-result.json",
+        "sha256": "91efb1bd65a984322aa7c764f1c563ab4bf9b6ff404315139ebf45b15bc6a0a3"
+      },
+      "go_log": {
+        "file": "protection-warrior-demoralizing-shout-over-roar-debuff.go-log.txt",
+        "sha256": "50b9362c8a85d752d904933e04f457e978c95314b2fc3985aaaab0582d2d0a78"
+      }
+    },
+    {
+      "id": "protection-warrior-demoralizing-shout-over-shout-debuff",
+      "description": "Production Protection Warrior tanking 3 targets with Demoralizing Shout under the raid's permanent Demoralizing Shout debuff of the same spell: the permanent debuff outlasts the shout, which the Demoralizing category holds off",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-demoralizing-shout-over-shout-debuff.request.json"
+      },
+      "prepared": "protection-warrior-demoralizing-shout-over-shout-debuff.prepared.json",
+      "prepared_sha256": "87b67f43df26338ac63fc55f7b257f405d92d9efdfb20354125d4357f507f3b8",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-demoralizing-shout-over-shout-debuff.go-result.json",
+        "sha256": "2b3a03214ea7943799cb449d1217f0d3ed049ea9fe20b4ba50ef2f12b79f7efd"
+      },
+      "go_log": {
+        "file": "protection-warrior-demoralizing-shout-over-shout-debuff.go-log.txt",
+        "sha256": "ecd03f47e97a19ef9fcd3a01ff24debbcbf9a951c97f82444257b03e9e801dd1"
+      }
+    },
+    {
+      "id": "fury-warrior-demoralizing-shout",
+      "description": "Production Fury Warrior (not tanking) casting Demoralizing Shout (11556) when its debuff has 1.5 sec left, a rage cost and a threat roll on the magic table against 1 target",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fury-warrior-demoralizing-shout.request.json"
+      },
+      "prepared": "fury-warrior-demoralizing-shout.prepared.json",
+      "prepared_sha256": "f6d01f29bb8e014ec1a2f0e04a77bbc0b287a89aec4f3363592a25d30a09cc54",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fury-warrior-demoralizing-shout.go-result.json",
+        "sha256": "8b53658eff0ea046a17ddde00baf576d12b508d0d08f8ff2f4ff36570c658ae8"
+      },
+      "go_log": {
+        "file": "fury-warrior-demoralizing-shout.go-log.txt",
+        "sha256": "e4c4ee50ef7641856a5aa150e7e03acee7b55168d80c31002e96a0f113d373a6"
+      }
+    },
+    {
+      "id": "fury-warrior-demoralizing-shout-3-targets",
+      "description": "Production Fury Warrior casting Demoralizing Shout against 3 targets: a magic hit roll on each target in unit index order, each landed one debuffed",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fury-warrior-demoralizing-shout-3-targets.request.json"
+      },
+      "prepared": "fury-warrior-demoralizing-shout-3-targets.prepared.json",
+      "prepared_sha256": "e1114c6d4a9c3167c2ab49a09db1e5209b91a6add2dfdc72c894024d31f46123",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fury-warrior-demoralizing-shout-3-targets.go-result.json",
+        "sha256": "9919d6945b3aad61103b48efc569ecdc245e193902e072f3d93eba0e2652b64e"
+      },
+      "go_log": {
+        "file": "fury-warrior-demoralizing-shout-3-targets.go-log.txt",
+        "sha256": "e019f9ee5fbbb5f56db46addc5fe819527f7eab8dbc224ae8468624a3ad1e028"
+      }
+    },
+    {
+      "id": "fury-warrior-demoralizing-shout-5-targets",
+      "description": "Production Fury Warrior casting Demoralizing Shout against 5 targets: a magic hit roll on each target in unit index order, each landed one debuffed",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fury-warrior-demoralizing-shout-5-targets.request.json"
+      },
+      "prepared": "fury-warrior-demoralizing-shout-5-targets.prepared.json",
+      "prepared_sha256": "08a8ca8dc9f39f2dd517c7b6c651dc22ac1f46ab8af10a02b4c67b72937f47e3",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fury-warrior-demoralizing-shout-5-targets.go-result.json",
+        "sha256": "7fbcdac0f38fff2347fd8194cdfed5f1876864136f1d8b5f98bb970e0bb74316"
+      },
+      "go_log": {
+        "file": "fury-warrior-demoralizing-shout-5-targets.go-log.txt",
+        "sha256": "8ffae0f82f7942c4c1cb94ae1ce4da26e11080e5e316f515769cfac525cb3c96"
+      }
     }
   ]
 }
