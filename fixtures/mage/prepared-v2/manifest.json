@@ -9039,6 +9039,573 @@
         "file": "feral-druid-demoralizing-roar-5-targets-over-roar-debuff.go-log.txt",
         "sha256": "cd7d8bfff8f11943dd7fdf9d1ba96327e2b8e9b8a6ea751facf612115e6ee4d2"
       }
+    },
+    {
+      "id": "arms-warrior-intimidating-shout",
+      "description": "An Arms Warrior against a single target casts Intimidating Shout each time its 3 minute cooldown ends, in Battle Stance, for no damage on the first target only",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/arms-warrior-intimidating-shout.request.json"
+      },
+      "prepared": "arms-warrior-intimidating-shout.prepared.json",
+      "prepared_sha256": "0000094bcafd2b9ea6b8763e58b793e307c461a5964917c583b44cfebcc5f81c",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "arms-warrior-intimidating-shout.go-result.json",
+        "sha256": "615182d776cfd97a451fe1b78925342a464fd84744237b42311aa9835641214c"
+      },
+      "go_log": {
+        "file": "arms-warrior-intimidating-shout.go-log.txt",
+        "sha256": "cf885788b7c1220fed5d17baa95828ba90f773597f42ce51214ee89a161fd58c"
+      }
+    },
+    {
+      "id": "arms-warrior-intimidating-shout-3-targets",
+      "description": "An Arms Warrior against 3 targets casts Intimidating Shout each time its 3 minute cooldown ends, in Battle Stance, for no damage on the first target only",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/arms-warrior-intimidating-shout-3-targets.request.json"
+      },
+      "prepared": "arms-warrior-intimidating-shout-3-targets.prepared.json",
+      "prepared_sha256": "abe9fdc2de465b32df46f2ddb785107a9810b8e66c8b3eada5fa7bc75546af5f",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "arms-warrior-intimidating-shout-3-targets.go-result.json",
+        "sha256": "c36cdd89615595618f276af401ae6759365d2d617e517ab7a34e4dbfd9aef652"
+      },
+      "go_log": {
+        "file": "arms-warrior-intimidating-shout-3-targets.go-log.txt",
+        "sha256": "f43919d919e55f5b4587bf2a57bf67ba184687f2237b6637079226ccad67f21f"
+      }
+    },
+    {
+      "id": "arms-warrior-taunt",
+      "description": "An Arms Warrior against a single target changes to Defensive Stance and casts Taunt on its cooldown, which only Defensive Stance allows, before the rest of its rotation",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/arms-warrior-taunt.request.json"
+      },
+      "prepared": "arms-warrior-taunt.prepared.json",
+      "prepared_sha256": "57e7460e5fd48ca998e1c0b4b4c4fc3f726bda78206966b56ff633d1a490b236",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "arms-warrior-taunt.go-result.json",
+        "sha256": "33ea92118488f8c01d0763a1de266de6d90651b35ef98b1514193ed077220cd6"
+      },
+      "go_log": {
+        "file": "arms-warrior-taunt.go-log.txt",
+        "sha256": "2053f863e0723b5bb2189428306b5e467428a4f7b64c11df32948ef76b1248f1"
+      }
+    },
+    {
+      "id": "arms-warrior-taunt-3-targets",
+      "description": "An Arms Warrior against 3 targets changes to Defensive Stance and casts Taunt on its cooldown, which only Defensive Stance allows, before the rest of its rotation",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/arms-warrior-taunt-3-targets.request.json"
+      },
+      "prepared": "arms-warrior-taunt-3-targets.prepared.json",
+      "prepared_sha256": "d4e0e79095355d5d6da6a2b20b69c2a3b8a27c2beaf5136201b093b9f932b0ef",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "arms-warrior-taunt-3-targets.go-result.json",
+        "sha256": "910e4c480abe93a439d70b58792a9a2fb0dbcd1a46d46dc38d67284dd7f86a29"
+      },
+      "go_log": {
+        "file": "arms-warrior-taunt-3-targets.go-log.txt",
+        "sha256": "9935cf761eb88369f74a27d2db82498e2c0bc7bdeb6a9e32ced6e2ab2ce59e00"
+      }
+    },
+    {
+      "id": "balance-druid-external-innervate",
+      "description": "A Balance Druid without mana consumables, Wisdom or Mana Spring Totem in a 7 minute fight receives Innervate from 1 druid in the raid: the cooldown manager casts it once the mana is at most 1000, the aura forces full spirit regeneration at five times the rate, and the sources take turns",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/balance-druid-external-innervate.request.json"
+      },
+      "prepared": "balance-druid-external-innervate.prepared.json",
+      "prepared_sha256": "c40f6df8ad66893cc39438beca04dbaad50cd443baaa8ca3c12129e1e37e67c7",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "balance-druid-external-innervate.go-result.json",
+        "sha256": "d87f9e33994206bbc7d9f7bf8bd5b0dc9563c8d6a90fbaed3c1039812f5f7311"
+      },
+      "go_log": {
+        "file": "balance-druid-external-innervate.go-log.txt",
+        "sha256": "e303c1bce19783427a98aed567e1fed6f46ea2dbf5c9399e15b67eb3686a57fc"
+      }
+    },
+    {
+      "id": "balance-druid-external-innervate-2-sources",
+      "description": "A Balance Druid without mana consumables, Wisdom or Mana Spring Totem in a 7 minute fight receives Innervate from 2 druids in the raid: the cooldown manager casts it once the mana is at most 1000, the aura forces full spirit regeneration at five times the rate, and the sources take turns",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/balance-druid-external-innervate-2-sources.request.json"
+      },
+      "prepared": "balance-druid-external-innervate-2-sources.prepared.json",
+      "prepared_sha256": "0edaba18d496aedd930cae44966e48d807a83629ed325dd80551f8ae2d6c5732",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "balance-druid-external-innervate-2-sources.go-result.json",
+        "sha256": "36284e583a0b0d1bc788b63d2e08fe0968747a3f96bbb5c5a31f8090cf7011d0"
+      },
+      "go_log": {
+        "file": "balance-druid-external-innervate-2-sources.go-log.txt",
+        "sha256": "66ba0518b58624677e48abed44447f4e5e654bb7623c52f57957e22dc41d797a"
+      }
+    },
+    {
+      "id": "balance-druid-own-and-external-innervate",
+      "description": "A Balance Druid without mana consumables casts its own Innervate below 30 percent mana and receives one from another druid: the external one is held back while either aura is up, and the druid's own cast reads the tag of every Innervate aura, as Go does",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/balance-druid-own-and-external-innervate.request.json"
+      },
+      "prepared": "balance-druid-own-and-external-innervate.prepared.json",
+      "prepared_sha256": "03106472dc22d946f07b46ea2802e87d561b60a88da189fc14940d6a71430d77",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "balance-druid-own-and-external-innervate.go-result.json",
+        "sha256": "a8afc20566d42f715f812356cb33daf11aa0f5c23fa7eb25f31ce53e8f0846bf"
+      },
+      "go_log": {
+        "file": "balance-druid-own-and-external-innervate.go-log.txt",
+        "sha256": "a9c2c225245035c42c09d6b2863546c6c4512ec5d787a3ebd91e2c944219bff7"
+      }
+    },
+    {
+      "id": "destruction-warlock-external-mana-tide",
+      "description": "A Destruction Warlock receives Mana Tide Totem from 1 shaman in the raid in a 6 minute fight: the cooldown manager drops it 40 seconds in and again after its five minute cooldown, and its 13 second aura adds the totem's mana per 5 seconds to the regeneration",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/destruction-warlock-external-mana-tide.request.json"
+      },
+      "prepared": "destruction-warlock-external-mana-tide.prepared.json",
+      "prepared_sha256": "6d91faa5f2a0b26281728f508e3acb5b183ef4a8d68ba29ff60587317ee71d47",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "destruction-warlock-external-mana-tide.go-result.json",
+        "sha256": "8bfed27a72e7d47d7403168cb153a00b68291e8858b6e2d90533bd87a9aac4cc"
+      },
+      "go_log": {
+        "file": "destruction-warlock-external-mana-tide.go-log.txt",
+        "sha256": "1b042d3e8c6a7066c52e7d8335d3febc0635ec9f8839eda2802a7bbaf9998cdb"
+      }
+    },
+    {
+      "id": "destruction-warlock-external-mana-tide-2-sources",
+      "description": "A Destruction Warlock receives Mana Tide Totem from 2 shamans in the raid in a 6 minute fight: the cooldown manager drops it 40 seconds in and again after its five minute cooldown, and its 13 second aura adds the totem's mana per 5 seconds to the regeneration",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/destruction-warlock-external-mana-tide-2-sources.request.json"
+      },
+      "prepared": "destruction-warlock-external-mana-tide-2-sources.prepared.json",
+      "prepared_sha256": "d71bf688e710784343e4619de4187e53dda7716bbb4cc80789bd5d1dd176ecd2",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "destruction-warlock-external-mana-tide-2-sources.go-result.json",
+        "sha256": "66ee6e42875edcd799135b81469bc7650d899f4a77c2a3844ae387a536eaa7ba"
+      },
+      "go_log": {
+        "file": "destruction-warlock-external-mana-tide-2-sources.go-log.txt",
+        "sha256": "6548dc71dff90ac8968e607e559be2780da1bef894601adea12d2d5e213d34d7"
+      }
+    },
+    {
+      "id": "destruction-warlock-external-mana-tide-2-sources-short-fight",
+      "description": "A Destruction Warlock receives Mana Tide Totem from 2 shamans in the raid in a 45 second fight: the cooldown manager drops it halfway through a fight shorter than 80 seconds, and its 13 second aura adds the totem's mana per 5 seconds to the regeneration",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/destruction-warlock-external-mana-tide-2-sources-short-fight.request.json"
+      },
+      "prepared": "destruction-warlock-external-mana-tide-2-sources-short-fight.prepared.json",
+      "prepared_sha256": "7de0151ede358f463a19ecefeb7d888cd06ac149d18a47ec61ac2c650186a6ed",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "destruction-warlock-external-mana-tide-2-sources-short-fight.go-result.json",
+        "sha256": "f98e2486312499e1d92671a4bbfb09d9904bffd6d4c709e8672377c7aceff71d"
+      },
+      "go_log": {
+        "file": "destruction-warlock-external-mana-tide-2-sources-short-fight.go-log.txt",
+        "sha256": "f8bc4761e67af58874fa72c3904555e3c7831440c5591e74a50b26df29e3f378"
+      }
+    },
+    {
+      "id": "destruction-warlock-external-mana-tide-short-fight",
+      "description": "A Destruction Warlock receives Mana Tide Totem from 1 shaman in the raid in a 45 second fight: the cooldown manager drops it halfway through a fight shorter than 80 seconds, and its 13 second aura adds the totem's mana per 5 seconds to the regeneration",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/destruction-warlock-external-mana-tide-short-fight.request.json"
+      },
+      "prepared": "destruction-warlock-external-mana-tide-short-fight.prepared.json",
+      "prepared_sha256": "7856c82022a501f459a778dec5a65c34d40e24bd73876395fa5dd758926e2300",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "destruction-warlock-external-mana-tide-short-fight.go-result.json",
+        "sha256": "b2e86946d52b255b2e5091ab71fe707f51df2b6a958de2fc03eb937ebbd5b188"
+      },
+      "go_log": {
+        "file": "destruction-warlock-external-mana-tide-short-fight.go-log.txt",
+        "sha256": "04fde4822364ca0c780aff5b0b3a9b74034fb23c4535dbd04ac08283e6be41fe"
+      }
+    },
+    {
+      "id": "fire-mage-external-innervate",
+      "description": "A Fire Mage without mana consumables, Wisdom or Mana Spring Totem in a 7 minute fight receives Innervate from 1 druid in the raid: the cooldown manager casts it once the mana is at most 40 percent of the maximum, the aura forces full spirit regeneration at five times the rate, and the sources take turns",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-mage-external-innervate.request.json"
+      },
+      "prepared": "fire-mage-external-innervate.prepared.json",
+      "prepared_sha256": "faf45ab9f1e38aa87342cc1a277fa932324b0e207cc6fd50097657697c7100f9",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fire-mage-external-innervate.go-result.json",
+        "sha256": "be55fe358e0e1308b8414c4eb0b16a4926af4d3392674f12ca936249c4e1fb5c"
+      },
+      "go_log": {
+        "file": "fire-mage-external-innervate.go-log.txt",
+        "sha256": "c95764f8a17384017ead67f129901a14d2281d0cb31e8fb60eaccf52c73f09b6"
+      }
+    },
+    {
+      "id": "fire-mage-external-innervate-2-sources",
+      "description": "A Fire Mage without mana consumables, Wisdom or Mana Spring Totem in a 7 minute fight receives Innervate from 2 druids in the raid: the cooldown manager casts it once the mana is at most 40 percent of the maximum, the aura forces full spirit regeneration at five times the rate, and the sources take turns",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-mage-external-innervate-2-sources.request.json"
+      },
+      "prepared": "fire-mage-external-innervate-2-sources.prepared.json",
+      "prepared_sha256": "0722ae6cde035cb4f03f7b6ef0c3c695d696d300da79a49d9dec63659b5c2a2c",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fire-mage-external-innervate-2-sources.go-result.json",
+        "sha256": "579738ed5231a22a45cfe5733abdad7902ce651cd6d7a90d72c30a5c29dfadf8"
+      },
+      "go_log": {
+        "file": "fire-mage-external-innervate-2-sources.go-log.txt",
+        "sha256": "accc13e3b574e2cd11ddd131d70830c7501fc2415824683805a2f89810de030d"
+      }
+    },
+    {
+      "id": "fire-mage-external-mana-tide",
+      "description": "A Fire Mage receives Mana Tide Totem from 1 shaman in the raid in a 6 minute fight: the cooldown manager drops it 40 seconds in and again after its five minute cooldown, and its 13 second aura adds the totem's mana per 5 seconds to the regeneration",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-mage-external-mana-tide.request.json"
+      },
+      "prepared": "fire-mage-external-mana-tide.prepared.json",
+      "prepared_sha256": "abcf7944aef50834a20bdb50d93408f7d491154a771afb3f893c67856a1a46a0",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fire-mage-external-mana-tide.go-result.json",
+        "sha256": "dde7651d82a3bb8e6811ae7fde6aa5caae1c3673017c10094cec539de1c64f00"
+      },
+      "go_log": {
+        "file": "fire-mage-external-mana-tide.go-log.txt",
+        "sha256": "dd349017c2b8207237ff78688cee4d2ea87ef9694f9664def25bf4bf684b4efd"
+      }
+    },
+    {
+      "id": "fire-mage-external-mana-tide-2-sources",
+      "description": "A Fire Mage receives Mana Tide Totem from 2 shamans in the raid in a 6 minute fight: the cooldown manager drops it 40 seconds in and again after its five minute cooldown, and its 13 second aura adds the totem's mana per 5 seconds to the regeneration",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-mage-external-mana-tide-2-sources.request.json"
+      },
+      "prepared": "fire-mage-external-mana-tide-2-sources.prepared.json",
+      "prepared_sha256": "dd9755875f7f07bea3847ae0d87296f33752090d75bac769111f5dbea0c2371d",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fire-mage-external-mana-tide-2-sources.go-result.json",
+        "sha256": "3d60047362682b4d631356924f15f4737fb74dd312b8cc43ce85ae4096ac2404"
+      },
+      "go_log": {
+        "file": "fire-mage-external-mana-tide-2-sources.go-log.txt",
+        "sha256": "aea4bd4e88115b6cdb2dce058e3bf5d958a120f57862dee9c0bfd89fcb508a9c"
+      }
+    },
+    {
+      "id": "fire-mage-external-mana-tide-2-sources-short-fight",
+      "description": "A Fire Mage receives Mana Tide Totem from 2 shamans in the raid in a 45 second fight: the cooldown manager drops it halfway through a fight shorter than 80 seconds, and its 13 second aura adds the totem's mana per 5 seconds to the regeneration",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-mage-external-mana-tide-2-sources-short-fight.request.json"
+      },
+      "prepared": "fire-mage-external-mana-tide-2-sources-short-fight.prepared.json",
+      "prepared_sha256": "b4896bbe5e42fd623bc1bc93f294f3cb68d65bfcb8391f4a84dc7f47b9be0d50",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fire-mage-external-mana-tide-2-sources-short-fight.go-result.json",
+        "sha256": "1823721c18e487917d9359b56b5088a41bd40c9ded5065418ac01d42eb222149"
+      },
+      "go_log": {
+        "file": "fire-mage-external-mana-tide-2-sources-short-fight.go-log.txt",
+        "sha256": "a65f60b66fd490057fc19cdb9a02065d2e1b123abb0182e89a2358dc171381f2"
+      }
+    },
+    {
+      "id": "fire-mage-external-mana-tide-short-fight",
+      "description": "A Fire Mage receives Mana Tide Totem from 1 shaman in the raid in a 45 second fight: the cooldown manager drops it halfway through a fight shorter than 80 seconds, and its 13 second aura adds the totem's mana per 5 seconds to the regeneration",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/fire-mage-external-mana-tide-short-fight.request.json"
+      },
+      "prepared": "fire-mage-external-mana-tide-short-fight.prepared.json",
+      "prepared_sha256": "af99cf1d191330e2d990d3b08c512dfab0b313317c43427c48f4b87c392a9723",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "fire-mage-external-mana-tide-short-fight.go-result.json",
+        "sha256": "2633d56cac6ffd47b65f4a22c71f781b3f5d5549e19885f5e213974ddc5c3782"
+      },
+      "go_log": {
+        "file": "fire-mage-external-mana-tide-short-fight.go-log.txt",
+        "sha256": "299808f5148e5e5d46644c36a0e0f0e0860723530f72e5c329f6c3820db1974e"
+      }
+    },
+    {
+      "id": "protection-warrior-intimidating-shout",
+      "description": "A Protection Warrior tanking a single target casts Intimidating Shout each time its 3 minute cooldown ends: an always hit for no damage on the first target only, with the rage cost and global cooldown of the cast and no fear",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-intimidating-shout.request.json"
+      },
+      "prepared": "protection-warrior-intimidating-shout.prepared.json",
+      "prepared_sha256": "e92bef542be94f1d794718e461802457f2df94b01a4cdfdbe920042e8ff1c109",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-intimidating-shout.go-result.json",
+        "sha256": "a2a923db8c578023d502c982d3975026947cdab73b66623b1b9204d601beb624"
+      },
+      "go_log": {
+        "file": "protection-warrior-intimidating-shout.go-log.txt",
+        "sha256": "ccafd97b2fc0ef189bac7551ea11cc277ec7444951c61335f07fc1693efa2b64"
+      }
+    },
+    {
+      "id": "protection-warrior-intimidating-shout-3-targets",
+      "description": "A Protection Warrior tanking 3 targets casts Intimidating Shout each time its 3 minute cooldown ends: an always hit for no damage on the first target only, with the rage cost and global cooldown of the cast and no fear",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-intimidating-shout-3-targets.request.json"
+      },
+      "prepared": "protection-warrior-intimidating-shout-3-targets.prepared.json",
+      "prepared_sha256": "4c7707650a7a6658bff2faa324eefc2e3b2f79d2c5a138afe4f3f3f084808dac",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-intimidating-shout-3-targets.go-result.json",
+        "sha256": "009900e61417202397e207138deb3ffeb807ef70efc6625f3de698bc857a2b0f"
+      },
+      "go_log": {
+        "file": "protection-warrior-intimidating-shout-3-targets.go-log.txt",
+        "sha256": "c640254a6de50f2f8d4b78ec0cfc1f2904b08d51de4a87e5b03e9415a1bedb72"
+      }
+    },
+    {
+      "id": "protection-warrior-taunt",
+      "description": "A Protection Warrior tanking a single target casts Taunt in Defensive Stance on its 8 second cooldown: an always hit for no damage and no threat on the target, with no global cooldown, rage cost or other effect, as the fork's taunt is",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-taunt.request.json"
+      },
+      "prepared": "protection-warrior-taunt.prepared.json",
+      "prepared_sha256": "caaa2975645bcd7d2f01eb3ef411d1ba6eabec2393f324c50f5b33d663ef6dc0",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-taunt.go-result.json",
+        "sha256": "4a13df6c8fa93c4e724e8e47cbf93798701ef72c234609174944d05e8cabd62f"
+      },
+      "go_log": {
+        "file": "protection-warrior-taunt.go-log.txt",
+        "sha256": "3dfe9538923a6b9f8ab997b9a12f333c3a2425837eaa89b18ca17cfe27906670"
+      }
+    },
+    {
+      "id": "protection-warrior-taunt-3-targets",
+      "description": "A Protection Warrior tanking 3 targets casts Taunt in Defensive Stance on its 8 second cooldown: an always hit for no damage and no threat on the target, with no global cooldown, rage cost or other effect, as the fork's taunt is",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-taunt-3-targets.request.json"
+      },
+      "prepared": "protection-warrior-taunt-3-targets.prepared.json",
+      "prepared_sha256": "5279def3b169f88f82889ce987764a8828caf381324b38e6d9d7892a8e92c0dc",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-taunt-3-targets.go-result.json",
+        "sha256": "4c562226536ef7b9b7438e7196955c83e2a49de3fe29d01c9a2ce135bacd5e9a"
+      },
+      "go_log": {
+        "file": "protection-warrior-taunt-3-targets.go-log.txt",
+        "sha256": "329932f26c20ae695058e4de1de392216771e1c1f67c3bcbf350874c0e9c0f31"
+      }
+    },
+    {
+      "id": "retribution-paladin-external-mana-tide",
+      "description": "A Retribution Paladin receives Mana Tide Totem from 1 shaman in the raid in a 6 minute fight: the cooldown manager drops it 40 seconds in and again after its five minute cooldown, and its 13 second aura adds the totem's mana per 5 seconds to the regeneration",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/retribution-paladin-external-mana-tide.request.json"
+      },
+      "prepared": "retribution-paladin-external-mana-tide.prepared.json",
+      "prepared_sha256": "025f188e860c8b805fb0dbbb0f31d2806b899ebe4af784d6bf6e87213be97dac",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "retribution-paladin-external-mana-tide.go-result.json",
+        "sha256": "6ca5d804b7ca9707e1aaf104535a13f37937566ca45711da2a7de6e2bc4f141e"
+      },
+      "go_log": {
+        "file": "retribution-paladin-external-mana-tide.go-log.txt",
+        "sha256": "6936da07e7d08efdb43f31b7cadcb7046a48f5b9f7dd8c3acbf2663aef5ae3fb"
+      }
+    },
+    {
+      "id": "retribution-paladin-external-mana-tide-2-sources",
+      "description": "A Retribution Paladin receives Mana Tide Totem from 2 shamans in the raid in a 6 minute fight: the cooldown manager drops it 40 seconds in and again after its five minute cooldown, and its 13 second aura adds the totem's mana per 5 seconds to the regeneration",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/retribution-paladin-external-mana-tide-2-sources.request.json"
+      },
+      "prepared": "retribution-paladin-external-mana-tide-2-sources.prepared.json",
+      "prepared_sha256": "c9a4b759f4e93c2e8f6a5ac01f8c810d38ce1201f9568330e0f26e01dcc61306",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "retribution-paladin-external-mana-tide-2-sources.go-result.json",
+        "sha256": "a35d923ccdba00e9fd7648c17254ad176b860e14549f9a4c45eeaff54494c94a"
+      },
+      "go_log": {
+        "file": "retribution-paladin-external-mana-tide-2-sources.go-log.txt",
+        "sha256": "c47a23056b81486e0eb8e6591775bd4d3399240f60d96412f29e8a66ca618708"
+      }
+    },
+    {
+      "id": "retribution-paladin-external-mana-tide-2-sources-short-fight",
+      "description": "A Retribution Paladin receives Mana Tide Totem from 2 shamans in the raid in a 45 second fight: the cooldown manager drops it halfway through a fight shorter than 80 seconds, and its 13 second aura adds the totem's mana per 5 seconds to the regeneration",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/retribution-paladin-external-mana-tide-2-sources-short-fight.request.json"
+      },
+      "prepared": "retribution-paladin-external-mana-tide-2-sources-short-fight.prepared.json",
+      "prepared_sha256": "d690a3bf63f0ed299bdc4f1f4ff6c5ce43bed4cff5349c70387ec6fe2215d322",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "retribution-paladin-external-mana-tide-2-sources-short-fight.go-result.json",
+        "sha256": "47b9e7c5be85ead32cafcc5059e63564f755bec676a69bf11f9783129132c9e0"
+      },
+      "go_log": {
+        "file": "retribution-paladin-external-mana-tide-2-sources-short-fight.go-log.txt",
+        "sha256": "69cd6e488f4665b19509ddf8f1d666dba58441a5fce0ebbb55b040532315470f"
+      }
+    },
+    {
+      "id": "retribution-paladin-external-mana-tide-short-fight",
+      "description": "A Retribution Paladin receives Mana Tide Totem from 1 shaman in the raid in a 45 second fight: the cooldown manager drops it halfway through a fight shorter than 80 seconds, and its 13 second aura adds the totem's mana per 5 seconds to the regeneration",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/retribution-paladin-external-mana-tide-short-fight.request.json"
+      },
+      "prepared": "retribution-paladin-external-mana-tide-short-fight.prepared.json",
+      "prepared_sha256": "476c109b03ca644483d8eb1229c06635ca168c6c35a5bc8c23355306f5aae815",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "retribution-paladin-external-mana-tide-short-fight.go-result.json",
+        "sha256": "2f0c9c4c47146e6af31124dab23f1f650f4f4fed966b2ef36711997e00b19ee7"
+      },
+      "go_log": {
+        "file": "retribution-paladin-external-mana-tide-short-fight.go-log.txt",
+        "sha256": "5bfc945d2ef82fc936497dcac11f60c6f36ee774fc2c3efd057795752a2407ad"
+      }
+    },
+    {
+      "id": "shadow-priest-external-innervate",
+      "description": "A Shadow Priest without mana consumables, Wisdom or Mana Spring Totem in a 7 minute fight receives Innervate from 1 druid in the raid: the cooldown manager casts it once the mana is at most 1000, the aura forces full spirit regeneration at five times the rate, and the sources take turns",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/shadow-priest-external-innervate.request.json"
+      },
+      "prepared": "shadow-priest-external-innervate.prepared.json",
+      "prepared_sha256": "5febb0f35c8a8798b7bf46d1fc11878294261d3661b59209ccff56a2c23a2668",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "shadow-priest-external-innervate.go-result.json",
+        "sha256": "c4138814d59781a0d0d23023f7c0057b671dc4836577963cf98a3a5883100d0b"
+      },
+      "go_log": {
+        "file": "shadow-priest-external-innervate.go-log.txt",
+        "sha256": "d33eb8f1d1f2a5da8cca42f80cc717b57f3d1326175facb482ea1358bd7dd6aa"
+      }
+    },
+    {
+      "id": "shadow-priest-external-innervate-2-sources",
+      "description": "A Shadow Priest without mana consumables, Wisdom or Mana Spring Totem in a 7 minute fight receives Innervate from 2 druids in the raid: the cooldown manager casts it once the mana is at most 1000, the aura forces full spirit regeneration at five times the rate, and the sources take turns",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/shadow-priest-external-innervate-2-sources.request.json"
+      },
+      "prepared": "shadow-priest-external-innervate-2-sources.prepared.json",
+      "prepared_sha256": "2d6fb20ed92a3de5f05d2dce45bb0b6406ab28624cd09f8eb6d580378ad28b31",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "shadow-priest-external-innervate-2-sources.go-result.json",
+        "sha256": "d64c9bd83ab3fa2e4cc06bcf95535a5ac23551ac582d839139a661a191b514f8"
+      },
+      "go_log": {
+        "file": "shadow-priest-external-innervate-2-sources.go-log.txt",
+        "sha256": "7e1983823fcf27689e9e4d55a5a8f3db715edab54e6ab15d924d3bc02d11ea55"
+      }
     }
   ]
 }
