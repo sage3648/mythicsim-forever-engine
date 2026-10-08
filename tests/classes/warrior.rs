@@ -498,24 +498,63 @@ fn thunder_clap_slows_only_the_copies_it_lands_on() {
     assert_eq!(longest(5), 2.0, "Target 5: slowed");
 }
 
-/// Challenging Shout, which Go casts on every target, has no behavior in Rust, and against
-/// several targets the gate says what it would do there. Demoralizing Shout runs.
+/// Challenging Shout is an always hit for no damage on every target in unit index order, one
+/// roll-free outcome each, cast once for its cooldown. The fork's shout does not taunt, so a
+/// tank's threat from it is none and the copies of the boss keep swinging as before.
 #[test]
-fn challenging_shout_is_refused_by_name_against_several_targets() {
-    let mut value = warrior_fixture("production-warrior-2-targets");
-    let rotation = value["player"]["rotation"]["priorityList"]
-        .as_array_mut()
-        .unwrap();
-    rotation[0]["action"] = json!({"castSpell": {"spellId": {"spellId": 1161}}});
-    let reasons = reasons(value);
+fn challenging_shout_hits_every_target_for_nothing() {
+    for case in [
+        "protection-warrior-challenging-shout-3-targets",
+        "arms-warrior-challenging-shout-3-targets",
+    ] {
+        let logs = first_fight_log(warrior_fixture(case));
+        assert_eq!(
+            logs.matches("Casting {SpellID: 1161}").count(),
+            1,
+            "{case}: the shout is cast once for its cooldown"
+        );
+        let mut previous = 0;
+        for target in 1..=3 {
+            let hits = lines_with(&logs, target, "1161");
+            assert_eq!(hits.len(), 1, "{case}: Target {target}");
+            assert!(
+                hits[0].ends_with("Hit for 0.000 damage (SpellSchool: 1). (Threat: 0.000)"),
+                "{case}: {}",
+                hits[0]
+            );
+            let at = logs
+                .find(&format!("[Target {target}] {{SpellID: 1161}}"))
+                .unwrap();
+            assert!(at > previous, "{case}: Target {target} out of order");
+            previous = at;
+        }
+        assert!(lines_with(&logs, 4, "1161").is_empty());
+    }
+}
+
+/// Against one target the shout hits it alone, and a tank's copies of the boss go on swinging
+/// at it: the shout changes nobody's aim.
+#[test]
+fn challenging_shout_leaves_a_tanks_targets_swinging() {
+    let logs = first_fight_log(warrior_fixture("protection-warrior-challenging-shout"));
+    let shout = logs.find("[Target 1] {SpellID: 1161}").unwrap();
+    assert_eq!(lines_with(&logs, 1, "1161").len(), 1);
     assert!(
-        reasons.contains(
-            &"rotation reaches spell 1161, which taunts every target in a fight against several targets"
-                .to_string()
-        ),
-        "{reasons:?}"
+        logs[shout..].contains("[Target 1] [protection-warrior (#1)] {OtherID: 3, Tag: 1}"),
+        "no swing at the tank after the shout"
     );
-    assert!(reasons.contains(&"rotation reaches spell 1161 without a known behavior".to_string()));
+}
+
+/// The shout runs only with its effect.
+#[test]
+fn challenging_shout_needs_its_effect() {
+    let mut value = warrior_fixture("arms-warrior-challenging-shout");
+    value["effects"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|effect| effect["kind"] != "challenging_shout");
+    assert!(reasons(value)
+        .contains(&"rotation reaches spell 1161 without a known behavior".to_string()));
 }
 
 /// Demoralizing Shout rolls a magic hit on every target in unit index order and debuffs each

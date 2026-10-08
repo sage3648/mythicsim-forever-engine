@@ -182,6 +182,84 @@ fn demoralizing_roar_lowers_the_target_swing() {
     assert!(!log[..roar].contains("MAP: 600.0"));
 }
 
+/// The raid's permanent Demoralizing Roar or Shout debuff bids as much as the roar and outlasts
+/// any refresh window, so Go's `ShouldRefreshExclusiveEffects` never asks for the roar and the
+/// bear never casts it, however many targets it tanks. Without the debuff it roars at the pull.
+#[test]
+fn a_permanent_debuff_keeps_the_bear_from_roaring() {
+    for suffix in ["", "-3-targets", "-5-targets"] {
+        for tag in ["-over-shout-debuff", "-over-roar-debuff"] {
+            let case = format!("feral-bear-druid-demoralizing-roar{suffix}{tag}");
+            let log = first_fight_log(accepted(&case));
+            assert!(
+                !log.contains("Casting {SpellID: 9898}"),
+                "{case}: the bear roared"
+            );
+        }
+    }
+    for case in [
+        "production-feral-bear-druid",
+        "production-feral-bear-druid-3-targets",
+        "production-feral-bear-druid-5-targets",
+    ] {
+        let log = first_fight_log(accepted(case));
+        assert!(log.contains("Casting {SpellID: 9898}"), "{case}: no roar");
+    }
+}
+
+/// The roar's aura shares the Demoralizing category with the raid's debuffs, which the export
+/// must describe for the gate to read the refresh.
+#[test]
+fn the_roars_refresh_needs_its_category() {
+    let case = "feral-bear-druid-demoralizing-roar-over-shout-debuff";
+    assert!(check_prepared(&parse(accepted(case))).is_ok());
+    let mut value = accepted(case);
+    value["effects"]
+        .as_array_mut()
+        .unwrap()
+        .retain(|effect| effect["kind"] != "exclusive_category");
+    let reasons = reasons(value);
+    assert!(
+        reasons.contains(
+            &"auraShouldRefresh on target aura \"Demoralizing Roar (Player)\" has no supported exclusive effect reading"
+                .to_string()
+        ),
+        "{reasons:?}"
+    );
+}
+
+/// An aura that stacks weighs its bid by its stacks, which the category reading does not cover.
+#[test]
+fn the_roars_refresh_reads_only_a_non_stacking_aura() {
+    let case = "feral-bear-druid-demoralizing-roar-over-roar-debuff";
+    let mut value = accepted(case);
+    for aura in value["target"]["auras"].as_array_mut().unwrap() {
+        if aura["label"] == "Demoralizing Roar (Player)" {
+            aura["max_stacks"] = json!(3);
+        }
+    }
+    assert!(reasons(value)
+        .iter()
+        .any(|reason| reason.contains("has no supported exclusive effect reading")));
+}
+
+/// A cat never learns Demoralizing Roar. Go drops a cast of a spell the player lacks before it
+/// builds the cast's condition, so the cat plays on without it, with or without a raid debuff.
+#[test]
+fn a_cat_drops_the_roar_it_never_learns() {
+    for suffix in ["", "-3-targets", "-5-targets"] {
+        for tag in ["", "-over-shout-debuff", "-over-roar-debuff"] {
+            let case = format!("feral-druid-demoralizing-roar{suffix}{tag}");
+            assert!(check_prepared(&parse(accepted(&case))).is_ok(), "{case}");
+            let log = first_fight_log(accepted(&case));
+            assert!(
+                !log.contains("Casting {SpellID: 9898}"),
+                "{case}: the cat roared"
+            );
+        }
+    }
+}
+
 #[test]
 fn leaving_bear_form_at_the_end_keeps_the_health_fraction() {
     // A bear alive when the fight ends loses health with the form's maximum; a dead one has
