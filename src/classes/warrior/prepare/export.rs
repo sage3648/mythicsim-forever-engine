@@ -462,6 +462,18 @@ impl Warrior {
                 }
             }
         }
+        // challenging_shout.go: an always hit outcome with no damage on every active target in
+        // unit index order. The fork has no taunt, so the shout changes no target's aim or swing.
+        if let Some(shout) = Self::spell_of(sim, unit, data.challenging_shout.highest()) {
+            if let Some(position) = sim
+                .unit(unit)
+                .spellbook
+                .iter()
+                .position(|candidate| *candidate == shout)
+            {
+                effects.push(json!({"kind": "challenging_shout", "spell": position}));
+            }
+        }
         if talent("bloodthrill") > 0 {
             effects.push(
                 json!({"kind": "bloodthrill", "trigger_aura": "Bloodthrill - Trigger",

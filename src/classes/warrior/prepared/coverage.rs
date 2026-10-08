@@ -12,7 +12,7 @@ pub(crate) const GATE: ClassGate = ClassGate {
     spell: spell_capability,
     claims,
     limits,
-    several_targets: Some(several_targets),
+    several_targets: Some(crate::engine::coverage::no_limits),
     tanks_several_targets: true,
     player_movement: true,
     rotation_movement: false,
@@ -30,6 +30,7 @@ const EFFECTS: &[&str] = &[
     "bloodthrill",
     "bloodrage",
     "bloodthirst",
+    "challenging_shout",
     "death_wish",
     "deep_wounds",
     "demoralizing_shout",
@@ -88,6 +89,7 @@ fn spell_capability(spell: &Spell) -> Option<&'static str> {
         "shield_slam" => Some("shield_slam"),
         "thunder_clap" => Some("thunder_clap"),
         "demoralizing_shout" => Some("demoralizing_shout"),
+        "challenging_shout" => Some("challenging_shout"),
         "retaliation" | "retaliation_hit" => Some("retaliation"),
         "sweeping_strikes" => Some("sweeping_strikes"),
         "battle_stance" | "berserker_stance" | "defensive_stance" => Some("warrior_stances"),
@@ -236,14 +238,4 @@ fn stance_spell(class_spell: &str) -> Option<&'static str> {
         "defensive_stance" => Some("defensive"),
         _ => None,
     }
-}
-
-/// The spells that reach a target past the first in Go and not yet in Rust: Challenging Shout,
-/// which taunts every target and which Rust has no behavior for at all. Cleave, Whirlwind,
-/// Thunder Clap, Sweeping Strikes and Demoralizing Shout run as in Go.
-fn several_targets(_prepared: &PreparedV2, reachable: &[&Spell]) -> Vec<String> {
-    crate::engine::coverage::spells_reaching_other_targets(
-        reachable,
-        &[("challenging_shout", "taunts every target")],
-    )
 }

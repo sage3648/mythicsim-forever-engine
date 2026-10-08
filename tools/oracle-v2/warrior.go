@@ -461,6 +461,13 @@ func warriorEffects(agent core.Agent, character *core.Character) []map[string]an
 			effects = append(effects, category)
 		}
 	}
+	// challenging_shout.go: an always hit outcome with no damage on every active target in unit
+	// index order. The fork has no taunt, so the shout changes no target's aim or swing.
+	if war.ChallengingShout != nil {
+		effects = append(effects, map[string]any{
+			"kind": "challenging_shout", "spell": spellPosition(character, war.ChallengingShout),
+		})
+	}
 	if talents.Bloodthrill > 0 { // talents_arms.go registerBloodthrill
 		effects = append(effects, map[string]any{
 			"kind": "bloodthrill", "trigger_aura": "Bloodthrill - Trigger",
