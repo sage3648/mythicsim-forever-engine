@@ -157,19 +157,25 @@ pub(crate) fn aura_named(env: &Environment, label: &str) -> Option<AuraId> {
 /// A proc mask is a melee hit taken or dealt.
 const STRUCK_PROC_MASK: ProcMask = ProcMask::MELEE_OR_RANGED;
 
-/// melee_procs.go `hearsTheTargetsSwings`: whether a listener hears the melee hits the wearer
-/// takes, which the target's swings are, and no others. Its mask may name spell damage only when
-/// the wearer throws no Goblin Sapper Charge, whose hit on the thrower is the one spell that
+/// The Goblin Sapper Charge's hit on its thrower, when the wearer throws one: the one spell that
 /// damages the player.
-fn hears_the_targets_swings(env: &Environment, listener: &ProcTrigger) -> bool {
-    let mut mask = STRUCK_PROC_MASK.0;
-    let sapper = env.sim.unit(env.player).spellbook.iter().any(|spell| {
-        let id = &env.sim.spell(*spell).action_id;
-        id.item_id == super::common_effects::GOBLIN_SAPPER_ITEM && id.tag == 1
-    });
-    if !sapper {
-        mask |= ProcMask::SPELL_DAMAGE.0;
-    }
+fn sapper_self_hit(env: &Environment) -> Option<SpellId> {
+    env.sim
+        .unit(env.player)
+        .spellbook
+        .iter()
+        .find(|spell| {
+            let id = &env.sim.spell(**spell).action_id;
+            id.item_id == super::common_effects::GOBLIN_SAPPER_ITEM && id.tag == 1
+        })
+        .copied()
+}
+
+/// melee_procs.go `hearsHitsTaken`: whether a listener is shaped to hear the melee hits the wearer
+/// takes, which the target's swings are: its mask names melee and ranged hits and may name spell
+/// damage.
+fn hears_hits_taken(listener: &ProcTrigger) -> bool {
+    let mask = STRUCK_PROC_MASK.0 | ProcMask::SPELL_DAMAGE.0;
     callback_names(listener.callback) == ["on_spell_hit_taken"]
         && listener.proc_mask.0 & !mask == 0
         && listener.proc_mask.matches(ProcMask::MELEE_MH_AUTO)
@@ -178,6 +184,29 @@ fn hears_the_targets_swings(env: &Environment, listener: &ProcTrigger) -> bool {
         && listener.class_spell_mask == 0
         && listener.spell_flags == SpellFlag::NONE
         && listener.proc_mask_exclude == ProcMask::UNKNOWN
+}
+
+/// melee_procs.go `hearsTheSappersHit`: the spellbook position of the Goblin Sapper Charge's hit
+/// on its thrower when a listener of hits taken hears it, its mask and flags matching the spell.
+fn hears_the_sappers_hit(env: &Environment, listener: &ProcTrigger) -> Option<usize> {
+    let spell = sapper_self_hit(env)?;
+    if callback_names(listener.callback) != ["on_spell_hit_taken"] {
+        return None;
+    }
+    proc_trigger_spells(env, listener)
+        .into_iter()
+        .find(|position| env.sim.unit(env.player).spellbook[*position] == spell)
+}
+
+/// melee_procs.go `hearsTheTargetsSwings`: whether a listener hears the melee hits the wearer
+/// takes, which the target's swings are, and no others. Its mask may name spell damage only when
+/// the wearer throws no Goblin Sapper Charge, whose hit on the thrower is the one spell that
+/// damages the player.
+fn hears_the_targets_swings(env: &Environment, listener: &ProcTrigger) -> bool {
+    if sapper_self_hit(env).is_some() && listener.proc_mask.matches(ProcMask::SPELL_DAMAGE) {
+        return false;
+    }
+    hears_hits_taken(listener)
 }
 
 /// Go `Encounter.ActiveTargetCount` with every target active.
@@ -695,7 +724,9 @@ pub(crate) fn spell_data_stat_proc_auras(env: &Environment) -> Vec<String> {
         .filter(|proc| {
             let trigger = must_find(proc.trigger);
             let listener = trigger_for(env, trigger, true);
-            listener.callback != CallbackMask::ON_SPELL_HIT_TAKEN || tanks_the_target(env)
+            listener.callback != CallbackMask::ON_SPELL_HIT_TAKEN
+                || tanks_the_target(env)
+                || hears_the_sappers_hit(env, &listener).is_some()
         })
         .map(|proc| spell_data_stat_proc_aura(proc.label))
         .collect()
@@ -746,7 +777,10 @@ pub(crate) fn spell_data_stat_proc_effects(
         }
         let listener = trigger_for(env, trigger, true);
         let names = callback_names(listener.callback);
-        let struck = hears_the_targets_swings(env, &listener);
+        // A listener of hits taken hears the target's swings at a tank, and the Goblin Sapper
+        // Charge's hit on its thrower when its mask and flags match that spell.
+        let struck = hears_hits_taken(&listener);
+        let sapper_hit = hears_the_sappers_hit(env, &listener);
         let heard = (!names.is_empty()
             && names.iter().all(|name| {
                 matches!(
@@ -754,8 +788,9 @@ pub(crate) fn spell_data_stat_proc_effects(
                     "on_spell_hit_dealt" | "on_heal_dealt" | "on_cast_complete"
                 )
             }))
-            || struck;
-        if struck && !tanks_the_target(env) {
+            || struck
+            || sapper_hit.is_some();
+        if struck && !tanks_the_target(env) && sapper_hit.is_none() {
             effects.push(json!({
                 "kind": "inert_listener", "unit": "player",
                 "aura": env.sim.aura(trigger_aura).label,
@@ -791,7 +826,11 @@ pub(crate) fn spell_data_stat_proc_effects(
         let mut effect = json!({
             "kind": "spell_data_stat_proc", "trigger_aura": env.sim.aura(trigger_aura).label,
             "aura": env.sim.aura(proc_aura).label,
-            "trigger_spells": if struck { Vec::new() } else { proc_trigger_spells(env, &listener) },
+            "trigger_spells": match sapper_hit {
+                Some(position) => vec![position],
+                None if struck => Vec::new(),
+                None => proc_trigger_spells(env, &listener),
+            },
             "callbacks": names,
             "landed_only": listener.outcome == HitOutcome::LANDED,
             "require_damage": listener.require_damage_dealt,

@@ -1027,6 +1027,9 @@ pub(crate) struct SpellStatProc {
     pub(crate) hits: bool,
     pub(crate) heals: bool,
     pub(crate) casts: bool,
+    /// A proc of the hits the player takes, which for the spells it names is the Goblin Sapper
+    /// Charge's hit on its thrower.
+    pub(crate) taken: bool,
     /// A "when struck" proc, on the target's melee swings.
     pub(crate) struck: bool,
     pub(crate) landed_only: bool,
@@ -3875,8 +3878,11 @@ impl<A: Agent> Fight<A> {
                 }
                 let heard = |name: &str| callbacks.iter().any(|callback| callback == name);
                 let known = ["on_spell_hit_dealt", "on_heal_dealt", "on_cast_complete"];
-                let valid = if *struck {
-                    callbacks == &["on_spell_hit_taken"]
+                // A proc of hits taken hears the target's swings (`struck`) or, by the spells it
+                // names, the Goblin Sapper Charge's hit on its thrower.
+                let taken = callbacks == &["on_spell_hit_taken"];
+                let valid = if *struck || taken {
+                    taken
                 } else {
                     callbacks
                         .iter()
@@ -3891,6 +3897,7 @@ impl<A: Agent> Fight<A> {
                     hits: heard("on_spell_hit_dealt"),
                     heals: heard("on_heal_dealt"),
                     casts: heard("on_cast_complete"),
+                    taken,
                     struck: *struck,
                     landed_only: *landed_only,
                     require_damage: *require_damage,

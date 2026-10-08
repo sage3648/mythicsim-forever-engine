@@ -433,3 +433,40 @@ fn another_classs_totem_is_worn_and_run() {
     assert_eq!(prepared_coverage(&prepared), Vec::<String>::new());
     forever_engine::simulate_prepared(&prepared).unwrap();
 }
+
+/// A wearer that throws a Goblin Sapper Charge hears its hit on the thrower as a hit taken: the
+/// proc names that spell, and without it the same proc hears nothing in a fight nothing swings at
+/// the wearer in.
+#[test]
+fn a_stat_proc_of_hits_taken_hears_the_sappers_hit() {
+    let value = fixture("warrior-painwalker-buckler");
+    let proc = value["effects"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|effect| effect["trigger_aura"] == "Painwalker Buckler")
+        .unwrap();
+    assert_eq!(proc["kind"], "spell_data_stat_proc");
+    assert_eq!(proc["callbacks"], json!(["on_spell_hit_taken"]));
+    let spells = proc["trigger_spells"].as_array().unwrap();
+    assert_eq!(spells.len(), 1, "{proc}");
+    let dps = |value: &Value| -> f64 {
+        let mut value = value.clone();
+        value["sim"]["iterations"] = json!(400);
+        let prepared: PreparedV2 = serde_json::from_value(value).unwrap();
+        assert_eq!(prepared_coverage(&prepared), Vec::<String>::new());
+        forever_engine::simulate_prepared(&prepared).unwrap().result["raidMetrics"]["dps"]["avg"]
+            .as_f64()
+            .unwrap()
+    };
+    // Drawing the proc's chance on that hit moves the random stream every later roll reads.
+    let mut deaf = value.clone();
+    let proc = effect_of(
+        &mut deaf,
+        "spell_data_stat_proc",
+        "trigger_aura",
+        "Painwalker Buckler",
+    );
+    proc["trigger_spells"] = json!([]);
+    assert_ne!(dps(&value), dps(&deaf));
+}

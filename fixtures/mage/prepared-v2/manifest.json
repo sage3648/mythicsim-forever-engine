@@ -4,7 +4,7 @@
   "engine_revision": "2d93e423e0303e93dbb16e190d435503248b68f9",
   "client_build": "1.60.1.70235",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "274b869519adc6848a8cc6dc39a1308a072c90adfa7fbe081645efc5af6957ee",
+  "exporter_sha256": "a9e8012cd9cb76941522aa9bc5c6211d491458ca366c0b5d611772f18d18dcd0",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -10277,6 +10277,90 @@
       "go_log": {
         "file": "destruction-warlock-totem-of-thunder.go-log.txt",
         "sha256": "61a0d001e1faeb3a84f615dc1884ee50c1ed5d37ec33a28235a2bf065c05de62"
+      }
+    },
+    {
+      "id": "warrior-painwalker-buckler",
+      "description": "Production Fury Warrior with Painwalker Buckler (274290) in the off hand: its proc is rolled on the hits the wearer takes, which for a wearer that throws a Goblin Sapper Charge include the sapper's hit on the thrower, a spell the proc's mask names",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/warrior-painwalker-buckler.request.json"
+      },
+      "prepared": "warrior-painwalker-buckler.prepared.json",
+      "prepared_sha256": "894c2e4d6ba75a9c351ee05aa36ba9f434facdaf145f6f8602e6a3b92e920e50",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "warrior-painwalker-buckler.go-result.json",
+        "sha256": "462d6b00f56741a42dae7ef65827d40f5ef8186a76ed446fb017c3caeab5349a"
+      },
+      "go_log": {
+        "file": "warrior-painwalker-buckler.go-log.txt",
+        "sha256": "65710c5446cd5328cf6e632652aee86d22bc2222fe8ba7bb2622fc5c89c615c7"
+      }
+    },
+    {
+      "id": "combat-rogue-3-targets-painwalker-buckler",
+      "description": "Production Combat Rogue against 3 targets with Painwalker Buckler (274290) in the off hand: its proc is rolled on the hits the wearer takes, which for a wearer that throws a Goblin Sapper Charge include the sapper's hit on the thrower, a spell the proc's mask names",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/combat-rogue-3-targets-painwalker-buckler.request.json"
+      },
+      "prepared": "combat-rogue-3-targets-painwalker-buckler.prepared.json",
+      "prepared_sha256": "0e596234862e966c8906b67cae1f518148f406eaa3581f74c0c1c8a04c2fcd40",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "combat-rogue-3-targets-painwalker-buckler.go-result.json",
+        "sha256": "c7a68fe13236d3667cecf963c4739e44599a73d9457f5ddf5fd3d21e37fee2f5"
+      },
+      "go_log": {
+        "file": "combat-rogue-3-targets-painwalker-buckler.go-log.txt",
+        "sha256": "4d772feeb658a71b0da47d7a01f51e319148e6c73649329a64532bb0f3036bca"
+      }
+    },
+    {
+      "id": "feral-druid-painwalker-buckler",
+      "description": "Production Feral Druid with Painwalker Buckler (274290) in the off hand: its proc is rolled on the hits the wearer takes, which for a wearer that throws a Goblin Sapper Charge include the sapper's hit on the thrower, a spell the proc's mask names",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/feral-druid-painwalker-buckler.request.json"
+      },
+      "prepared": "feral-druid-painwalker-buckler.prepared.json",
+      "prepared_sha256": "c0dfbff6c23ffb7c47012f55dcb05d73f19dd6d1c1e4bcc01b3ca085434e6696",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "feral-druid-painwalker-buckler.go-result.json",
+        "sha256": "2cf7fed5b1139bd665d8e322789acec04dff48ba6a958723b78741435479db73"
+      },
+      "go_log": {
+        "file": "feral-druid-painwalker-buckler.go-log.txt",
+        "sha256": "9f6a331f62d5fbdf89538d761770a3450b026273485dba4c0457ede67d6767b7"
+      }
+    },
+    {
+      "id": "protection-warrior-3-targets-painwalker-buckler",
+      "description": "Production Protection Warrior tanking 3 targets with Painwalker Buckler (274290) in the off hand: its proc is rolled on the hits the wearer takes, which for a tank are the target's swings",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/protection-warrior-3-targets-painwalker-buckler.request.json"
+      },
+      "prepared": "protection-warrior-3-targets-painwalker-buckler.prepared.json",
+      "prepared_sha256": "2f7965c9c9fef7b2ff6a569df80906b216bffb78286d72282333eb87a7dafc6a",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "protection-warrior-3-targets-painwalker-buckler.go-result.json",
+        "sha256": "82942356caf7164a591482e4b244f40405355e31288140348307d70aed9a9721"
+      },
+      "go_log": {
+        "file": "protection-warrior-3-targets-painwalker-buckler.go-log.txt",
+        "sha256": "df7762e6d03384e3178e190cb6c9a50613966e5bffb507686c7b169efcd02f45"
       }
     }
   ]

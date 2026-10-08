@@ -1197,6 +1197,12 @@ impl<A: Agent> Fight<A> {
                     {
                         self.spell_stat_proc_callback(aura, proc, Some(spell), Some(result))
                     }
+                    // The Goblin Sapper Charge's hit on its thrower, heard as a hit taken.
+                    AuraBehavior::SpellDataStatProc(proc)
+                        if !dealt && self.spell_stat_procs[proc].taken =>
+                    {
+                        self.spell_stat_proc_callback(aura, proc, Some(spell), Some(result))
+                    }
                     AuraBehavior::StatProc(proc) if dealt => {
                         // Go AttachProcTriggerCallback: landed hits the manager hears, its roll
                         // under the trigger's name, then the handler a batch window later.

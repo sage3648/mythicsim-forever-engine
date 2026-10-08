@@ -52,7 +52,8 @@ func spellDataStatProcAuras(character *core.Character) []string {
 		}
 		trigger := spelldata.MustFind(proc.trigger)
 		listener := spelldata.ProcTrigger(character, trigger, nil, spelldata.ItemProcChance(trigger))
-		if listener.Callback == core.CallbackOnSpellHitTaken && !tanksTheTarget(character) {
+		_, sapped := hearsTheSappersHit(character, listener)
+		if listener.Callback == core.CallbackOnSpellHitTaken && !tanksTheTarget(character) && !sapped {
 			continue
 		}
 		labels = append(labels, spellDataStatProcAura(proc.label))
@@ -103,13 +104,16 @@ func spellDataStatProcEffects(character *core.Character, unrepresented *[]string
 		}
 		listener := spelldata.ProcTrigger(character, trigger, nil, spelldata.ItemProcChance(trigger))
 		names := callbackNames(listener.Callback)
-		struck := hearsTheTargetsSwings(character, listener)
+		// A listener of hits taken hears the target's swings at a tank, and the Goblin Sapper Charge's
+		// hit on its thrower when its mask and flags match that spell.
+		struck := hearsHitsTaken(listener)
+		sapperPosition, sapped := hearsTheSappersHit(character, listener)
 		heard := len(names) > 0
 		for _, name := range names {
 			heard = heard && (name == "on_spell_hit_dealt" || name == "on_heal_dealt" || name == "on_cast_complete")
 		}
-		heard = heard || struck
-		if struck && !tanksTheTarget(character) {
+		heard = heard || struck || sapped
+		if struck && !tanksTheTarget(character) && !sapped {
 			effects = append(effects, map[string]any{
 				"kind": "inert_listener", "unit": "player", "aura": triggerAura.Label, "reason": "hears only melee hits the player takes",
 			})
@@ -128,7 +132,7 @@ func spellDataStatProcEffects(character *core.Character, unrepresented *[]string
 		}
 		effect := map[string]any{
 			"kind": "spell_data_stat_proc", "trigger_aura": triggerAura.Label, "aura": procAura.Label,
-			"trigger_spells": procTriggerSpellsOrNone(character, listener, struck), "callbacks": names,
+			"trigger_spells": statProcTriggerSpells(character, listener, struck, sapped, sapperPosition), "callbacks": names,
 			"landed_only": listener.Outcome == core.OutcomeLanded, "require_damage": listener.RequireDamageDealt,
 			"proc_chance": chance,
 		}
@@ -178,4 +182,13 @@ func procTriggerSpellsOrNone(character *core.Character, listener core.ProcTrigge
 		return []int{}
 	}
 	return procTriggerSpells(character, listener)
+}
+
+// The spells a stat proc hears: none for the target's swings, and the thrower's own sapper hit
+// where the listener hears it.
+func statProcTriggerSpells(character *core.Character, listener core.ProcTrigger, struck bool, sapped bool, sapper int) []int {
+	if sapped {
+		return []int{sapper}
+	}
+	return procTriggerSpellsOrNone(character, listener, struck)
 }

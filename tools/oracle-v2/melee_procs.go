@@ -324,14 +324,36 @@ const struckProcMask = core.ProcMaskMeleeMHAuto | core.ProcMaskMeleeOHAuto | cor
 // others. Its mask may name spell damage only when the wearer throws no Goblin Sapper Charge, whose
 // hit on the thrower is the one spell that damages the player.
 func hearsTheTargetsSwings(character *core.Character, listener core.ProcTrigger) bool {
-	mask := core.ProcMask(struckProcMask)
-	if character.GetSpell(core.GoblinSapperActionID.WithTag(1)) == nil {
-		mask |= core.ProcMaskSpellDamage
+	if character.GetSpell(core.GoblinSapperActionID.WithTag(1)) != nil && listener.ProcMask.Matches(core.ProcMaskSpellDamage) {
+		return false
 	}
+	return hearsHitsTaken(listener)
+}
+
+// Whether a listener is shaped to hear the melee hits the wearer takes, which the target's swings
+// are: its mask names melee and ranged hits and may name spell damage.
+func hearsHitsTaken(listener core.ProcTrigger) bool {
+	mask := core.ProcMask(struckProcMask) | core.ProcMaskSpellDamage
 	names := callbackNames(listener.Callback)
 	return len(names) == 1 && names[0] == "on_spell_hit_taken" && listener.ProcMask&^mask == 0 &&
 		listener.ProcMask.Matches(core.ProcMaskMeleeMHAuto) && !listener.CanProcFromProcs && !listener.IsWeaponProc &&
 		listener.ClassSpellMask == 0 && listener.SpellFlags == core.SpellFlagNone && listener.ProcMaskExclude == core.ProcMaskUnknown
+}
+
+// The spellbook position of the Goblin Sapper Charge's hit on its thrower, the one spell that
+// damages the player, when a listener of hits taken hears it: its mask and flags match the spell.
+func hearsTheSappersHit(character *core.Character, listener core.ProcTrigger) (int, bool) {
+	self := character.GetSpell(core.GoblinSapperActionID.WithTag(1))
+	names := callbackNames(listener.Callback)
+	if self == nil || len(names) != 1 || names[0] != "on_spell_hit_taken" {
+		return 0, false
+	}
+	for _, position := range procTriggerSpells(character, listener) {
+		if character.Spellbook[position] == self {
+			return position, true
+		}
+	}
+	return 0, false
 }
 
 // applySpellDataDamageProc: a listener resolved from the trigger row that casts the damage spell at
