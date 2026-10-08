@@ -442,7 +442,8 @@ fn common_claims(effect: &Effect) -> Vec<(&'static str, &str)> {
     }
 }
 
-/// Proc triggers Rust matches as `ProcMaskDirect`; any other mask is unsupported.
+/// Proc triggers Rust matches as `ProcMaskDirect`; any other mask is unsupported. So is a
+/// damage proc that names an attack table the runtime does not roll for its hit.
 fn undirected_procs(prepared: &PreparedV2) -> Vec<String> {
     prepared
         .effects
@@ -459,6 +460,31 @@ fn undirected_procs(prepared: &PreparedV2) -> Vec<String> {
                 direct.sort_unstable();
                 (mask != direct)
                     .then(|| format!("{trigger_aura} procs from {proc_mask:?}, not direct hits"))
+            }
+            // A damage proc names the attack table its hit rolls only for a Go literal range
+            // of the melee defense type, and the table must agree with the spell's crit.
+            Effect::SpellDataDamageProc {
+                trigger_aura,
+                spell,
+                roll,
+                can_crit,
+                outcome: Some(outcome),
+                ..
+            } => {
+                let melee_spell = prepared
+                    .player
+                    .spells
+                    .get(*spell)
+                    .is_some_and(|spell| spell.defense_type == "DefenseTypeMelee");
+                let table =
+                    crate::core::fight::melee::PhysicalOutcome::of_melee_proc(outcome).is_some();
+                let crit = outcome == "melee_special_hit_and_crit";
+                (roll.is_none() || !table || !melee_spell || crit != *can_crit).then(|| {
+                    format!(
+                        "{trigger_aura}'s hit rolls the {outcome} table, which the runtime \
+                         rolls only for a melee spell's literal range"
+                    )
+                })
             }
             _ => None,
         })

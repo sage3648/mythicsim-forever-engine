@@ -1612,3 +1612,16 @@ pub(crate) enum PhysicalOutcome {
         count: bool,
     },
 }
+
+impl PhysicalOutcome {
+    /// The melee special applier an item proc's damage rolls, by the name the exporter writes
+    /// for shared_utils.go `damageOutcome` of a spell with the melee defense type: with a crit,
+    /// or without when the client bars the spell from critting. Both count their hits.
+    pub(crate) fn of_melee_proc(name: &str) -> Option<Self> {
+        match name {
+            "melee_special_hit_and_crit" => Some(Self::MeleeSpecialHitAndCrit { count: true }),
+            "melee_special_hit" => Some(Self::MeleeSpecialHit { count: true }),
+            _ => None,
+        }
+    }
+}

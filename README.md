@@ -60,7 +60,7 @@ copy of the boss swinging at the tank on its own timer; tanks of other classes s
 
 ## Evidence
 
-- 360 accepted prepared v2 fixtures, 358 of them with Go results, checked by `cargo test`.
+- 366 accepted prepared v2 fixtures, 364 of them with Go results, checked by `cargo test`.
   Rust prepares every one of their requests itself, and each prepared state equals the Go
   exporter's exactly.
 - 7,922 production variants (race boards, builder starters, gear, buffs, talents,

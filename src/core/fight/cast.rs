@@ -887,6 +887,13 @@ impl<A: Agent> Fight<A> {
                 };
                 self.deal_damage(spell, result, false);
             }
+            SpellBehavior::RollTableDamage { min, max, outcome } => {
+                // Go `CalcAndDealDamage(sim.Roll(min, max), outcomeApplier)`: the roll comes
+                // before the table's.
+                let base = self.go_roll(min, max);
+                let result = self.calc_physical_damage(spell, target, base, outcome);
+                self.deal_damage(spell, result, false);
+            }
             SpellBehavior::EffectRoll {
                 average,
                 variance,
@@ -1351,6 +1358,7 @@ impl<A: Agent> Fight<A> {
             | SpellBehavior::MeleeAuto(_)
             | SpellBehavior::Move
             | SpellBehavior::RollDamage { .. }
+            | SpellBehavior::RollTableDamage { .. }
             | SpellBehavior::AreaRollDamage { .. }
             | SpellBehavior::SulfurasFireball { .. }
             | SpellBehavior::FixedHit(_)
