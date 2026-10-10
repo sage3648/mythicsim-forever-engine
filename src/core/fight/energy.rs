@@ -106,6 +106,11 @@ impl<A: Agent> Fight<A> {
         self.energy.as_ref().expect("the player has an energy bar")
     }
 
+    /// The player's energy, or none without an energy bar.
+    pub(crate) fn energy_now(&self) -> f64 {
+        self.energy.as_ref().map_or(0.0, |bar| bar.current)
+    }
+
     fn energy_bar_mut(&mut self) -> &mut EnergyBar {
         self.energy.as_mut().expect("the player has an energy bar")
     }
@@ -157,6 +162,8 @@ impl<A: Agent> Fight<A> {
             self.player_log(&line);
         }
         self.energy_bar_mut().current = new;
+        self.changed(super::reads::RESOURCES);
+        self.gained_energy();
     }
 
     /// Go `energyBar.SpendEnergy`.
@@ -177,6 +184,7 @@ impl<A: Agent> Fight<A> {
             self.player_log(&line);
         }
         self.energy_bar_mut().current = new;
+        self.changed(super::reads::RESOURCES);
     }
 
     /// Go `energyBar.AddComboPoints`. Go formats the int32 maximum with `%0.0f`, which prints
@@ -197,6 +205,7 @@ impl<A: Agent> Fight<A> {
             self.player_log(&line);
         }
         self.energy_bar_mut().combo_points = new;
+        self.changed(super::reads::RESOURCES);
     }
 
     /// Go `energyBar.SpendComboPoints`: every point.
@@ -217,6 +226,7 @@ impl<A: Agent> Fight<A> {
         resource.gain -= f64::from(spent);
         resource.actual_gain -= f64::from(spent);
         self.energy_bar_mut().combo_points = new;
+        self.changed(super::reads::RESOURCES);
     }
 
     /// Go `energyBar.IsTicking`: the bar ticks once reset, within one period of its next tick.

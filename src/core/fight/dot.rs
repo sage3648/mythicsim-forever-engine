@@ -227,6 +227,7 @@ impl<A: Agent> Fight<A> {
         state.tick_next_at = at;
         if state.channeled {
             self.player.channeled_dot = Some(dot);
+            self.changed(super::reads::CASTS);
         }
     }
 
@@ -245,6 +246,7 @@ impl<A: Agent> Fight<A> {
         if self.dots[dot].channeled {
             let delay = self.config.channel_clip_delay;
             self.player.channeled_dot = None;
+            self.changed(super::reads::CASTS);
             self.forget_channel_interrupt();
             if self.player.gcd <= self.now {
                 self.wait_until(self.now + delay);

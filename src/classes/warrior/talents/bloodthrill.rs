@@ -43,4 +43,5 @@ pub(crate) fn open<A: Agent>(fight: &mut Fight<A>, params: Bloodthrill) {
     fight.activate_aura(params.overpower_window);
     let expires = fight.now + params.window_duration;
     fight.aura_mut(params.overpower_window).expires = expires;
+    fight.versions.auras += 1;
 }

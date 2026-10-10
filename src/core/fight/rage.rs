@@ -96,6 +96,7 @@ impl<A: Agent> Fight<A> {
             .as_mut()
             .expect("the player has a rage bar")
             .current = new;
+        self.changed(super::reads::RESOURCES);
         self.react_to_event(Side::Player);
     }
 
@@ -120,6 +121,7 @@ impl<A: Agent> Fight<A> {
             .as_mut()
             .expect("the player has a rage bar")
             .current = new;
+        self.changed(super::reads::RESOURCES);
     }
 
     /// Go `RageCost.IssueRefund`: the refund share of the cost paid.

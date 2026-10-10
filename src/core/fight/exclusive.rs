@@ -254,6 +254,7 @@ impl<A: Agent> Fight<A> {
     /// Go `ExclusiveCategory.SetActive`'s uptime: the leaving effect adds the time it held the
     /// category, up to its aura's expiry while the aura is active, and the new one starts now.
     fn set_category_active(&mut self, tracking: bool, category: usize, new: Option<usize>) {
+        self.changed(super::reads::AURAS);
         let now = self.now;
         let old = self.category_mut(tracking, category).active;
         if old == new {

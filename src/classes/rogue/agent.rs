@@ -771,6 +771,8 @@ impl RogueAgent {
 impl Agent for RogueAgent {
     type Spell = RogueSpell;
     type Aura = RogueAura;
+    const CACHE_ROTATION: bool = true;
+    const CACHE_OVER_ENERGY: bool = true;
 
     fn apply_effects(fight: &mut Fight<Self>, spell: SpellId, target: Side, behavior: RogueSpell) {
         if matches!(
@@ -954,6 +956,31 @@ impl Agent for RogueAgent {
             RogueSpell::Stealth => Stealth::can_cast(fight),
             _ => true,
         }
+    }
+
+    fn extra_condition_proof(
+        _fight: &Fight<Self>,
+        _spell: SpellId,
+        behavior: RogueSpell,
+    ) -> Option<(i64, u8)> {
+        use crate::core::{fight::reads, time::NEVER_EXPIRES};
+        Some(match behavior {
+            // The weapons, the position, or the clock past the prepull.
+            RogueSpell::Backstab | RogueSpell::Mutilate | RogueSpell::Stealth => (NEVER_EXPIRES, 0),
+            RogueSpell::Eviscerate
+            | RogueSpell::SliceAndDice
+            | RogueSpell::Rupture
+            | RogueSpell::Venom
+            | RogueSpell::KidneyShot => (NEVER_EXPIRES, reads::RESOURCES),
+            // The combo points, and the category's active member.
+            RogueSpell::ExposeArmor => (NEVER_EXPIRES, reads::RESOURCES | reads::AURAS),
+            // Stealth, Cutthroat or the Riposte window.
+            RogueSpell::Riposte
+            | RogueSpell::Garrote
+            | RogueSpell::Ambush
+            | RogueSpell::Premeditation => (NEVER_EXPIRES, reads::AURAS),
+            _ => return None,
+        })
     }
 
     fn modify_cast(fight: &mut Fight<Self>, spell: SpellId, behavior: RogueSpell) {

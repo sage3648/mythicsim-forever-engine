@@ -486,6 +486,7 @@ impl<A: Agent> Fight<A> {
 
     /// Go `Aura.Refresh`.
     pub(crate) fn refresh_aura(&mut self, aura: AuraRef) {
+        self.changed(super::reads::AURAS);
         let now = self.now;
         let tracker = &mut self.trackers[aura.side.index()];
         let state = &mut tracker.auras[aura.index];
@@ -503,6 +504,7 @@ impl<A: Agent> Fight<A> {
 
     /// Go `Aura.Activate`.
     pub(crate) fn activate_aura(&mut self, aura: AuraRef) {
+        self.changed(super::reads::AURAS);
         self.aura_mut(aura).procs += 1;
         if self.aura(aura).active {
             if let Some(id) = self
@@ -576,6 +578,7 @@ impl<A: Agent> Fight<A> {
 
     /// Go `Aura.Deactivate`.
     pub(crate) fn deactivate_aura(&mut self, aura: AuraRef) {
+        self.changed(super::reads::AURAS);
         if !self.aura(aura).active {
             return;
         }
@@ -652,6 +655,7 @@ impl<A: Agent> Fight<A> {
 
     /// Go `Aura.SetStacks`.
     pub(crate) fn set_stacks(&mut self, aura: AuraRef, stacks: i32) {
+        self.changed(super::reads::AURAS);
         let state = self.aura(aura);
         assert!(state.active || stacks == 0, "stacks on an inactive aura");
         assert!(state.max_stacks != 0, "stacks on an aura without MaxStacks");
@@ -1029,6 +1033,7 @@ impl<A: Agent> Fight<A> {
         self.activate_aura(aura);
         if let Some((timer, duration)) = icd {
             self.timers[timer] = self.now + duration;
+            self.changed(super::reads::TIMERS);
         }
     }
 

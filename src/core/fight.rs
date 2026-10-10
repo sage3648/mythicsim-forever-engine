@@ -159,6 +159,29 @@ pub(crate) trait Agent: Sized {
     ) -> bool {
         Self::extra_cast_condition(fight, spell, behavior)
     }
+    /// Whether the rotation keeps cached answers for this class: a proof per item that it is not
+    /// ready, and a look's proof that none is. Only a class whose empty looks can be proven
+    /// and mostly follow nothing changing gains from them: one that says how long its failed
+    /// extra cast conditions stay failed ([`Agent::extra_condition_proof`]). A class whose
+    /// rotation wakes on changes that do not change its answer only pays for them. Any other
+    /// asks its rotation as before and pays nothing.
+    const CACHE_ROTATION: bool = false;
+    /// Whether a cached look also holds as energy rises, while it stays below what any item
+    /// waits for: for an energy user, whose rotation wakes on every energy tick. Any other class
+    /// keeps no energy bookkeeping.
+    const CACHE_OVER_ENERGY: bool = false;
+    /// For a class spell's extra cast condition that just failed: until when the clock alone
+    /// cannot make it pass, and the kinds of state (see [`reads`]) whose change could. `None`
+    /// where the class does not say, and the rotation asks the spell again on every look. A
+    /// condition whose answer can change as energy rises has none, so a proof holds over energy
+    /// gains whatever it reads.
+    fn extra_condition_proof(
+        _fight: &Fight<Self>,
+        _spell: SpellId,
+        _behavior: Self::Spell,
+    ) -> Option<(i64, u8)> {
+        None
+    }
     /// Go `Agent.Reset`, which `Character.reset` runs after the unit and its cooldown manager.
     fn agent_reset(_fight: &mut Fight<Self>) {}
     /// A class wrapper Go puts around any spell's `ApplyEffects`, run after them.
@@ -1411,8 +1434,62 @@ pub(crate) const PRIORITY_PREPULL: i32 = 10;
 pub(crate) const SPELL_PUSHBACK_DURATION: i64 = 500 * crate::core::time::NS_PER_MILLISECOND;
 pub(crate) const SPELL_BATCH_WINDOW: i64 = 10 * crate::core::time::NS_PER_MILLISECOND;
 
+/// Counters of the changes to what the rotation's cached answers read: each change bumps its
+/// kind's counter (see `rotation::reads`).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub(crate) struct Versions {
+    /// The spells' cooldown timers and the GCD.
+    pub(crate) timers: u64,
+    /// Mana, rage, energy, combo points and health, and their maximums.
+    pub(crate) resources: u64,
+    /// Any aura's activity, stacks and expiry.
+    pub(crate) auras: u64,
+    /// The spells' costs.
+    pub(crate) spells: u64,
+    /// The hardcast, the queued spell, movement, distance and the channel.
+    pub(crate) casts: u64,
+    /// Class state a class's extra cast conditions read (a stance, a queued strike).
+    pub(crate) class: u64,
+    /// The energy gains among the resource changes, so a look that waits only for energy can
+    /// tell that nothing else moved.
+    pub(crate) energy_gains: u64,
+}
+
+impl Versions {
+    pub(crate) const ZERO: Versions = Versions {
+        timers: 0,
+        resources: 0,
+        auras: 0,
+        spells: 0,
+        casts: 0,
+        class: 0,
+        energy_gains: 0,
+    };
+}
+
+/// What a rotation answer can depend on besides the clock, as bits.
+pub(crate) mod reads {
+    /// Cooldown timers and the GCD.
+    pub(crate) const TIMERS: u8 = 1;
+    /// Mana, rage, energy, focus, combo points and health, and their maximums.
+    pub(crate) const RESOURCES: u8 = 2;
+    /// Any aura's state, dots and exclusive categories included.
+    pub(crate) const AURAS: u8 = 4;
+    /// The hardcast, the queued spell, movement, distance and the channel.
+    pub(crate) const CASTS: u8 = 8;
+    /// The execute phase.
+    pub(crate) const PHASE: u8 = 16;
+    /// The spells' costs.
+    pub(crate) const SPELLS: u8 = 32;
+    /// Class state a class's extra cast conditions read.
+    pub(crate) const CLASS: u8 = 64;
+    pub(crate) const ALL: u8 = TIMERS | RESOURCES | AURAS | CASTS | PHASE | SPELLS | CLASS;
+}
+
 pub(crate) struct Fight<A: Agent> {
     pub(crate) agent: A,
+    /// Changes to what the rotation's cached answers read.
+    pub(crate) versions: Versions,
     pub(crate) config: Config,
     pub(crate) now: i64,
     pub(crate) duration: i64,
@@ -3351,6 +3428,7 @@ impl<A: Agent> Fight<A> {
             dots,
             mods: Vec::new(),
             timers: vec![STARTING_CD_TIME; timer_names.len()],
+            versions: Versions::default(),
             cooldown_order: (0..major_cooldowns.len()).collect(),
             major_cooldowns,
             cooldown_min_ready: NEVER_EXPIRES,
@@ -4160,11 +4238,38 @@ impl<A: Agent> Fight<A> {
         Ok(fight)
     }
 
+    /// Counts a change to what the rotation's cached answers read (see [`reads`]), for a class
+    /// that keeps them; for any other it compiles to nothing.
+    #[inline(always)]
+    pub(crate) fn changed(&mut self, kind: u8) {
+        if A::CACHE_ROTATION {
+            let versions = &mut self.versions;
+            match kind {
+                reads::TIMERS => versions.timers += 1,
+                reads::RESOURCES => versions.resources += 1,
+                reads::AURAS => versions.auras += 1,
+                reads::CASTS => versions.casts += 1,
+                reads::SPELLS => versions.spells += 1,
+                reads::CLASS => versions.class += 1,
+                _ => unreachable!("one kind of change at a time"),
+            }
+        }
+    }
+
+    /// Counts an energy gain, which [`Fight::changed`] has already counted as a resource change.
+    #[inline(always)]
+    pub(crate) fn gained_energy(&mut self) {
+        if A::CACHE_OVER_ENERGY {
+            self.versions.energy_gains += 1;
+        }
+    }
+
     /// Go `Unit.AddStatsDynamic` for the stat auras: the stats of the new combination, and
     /// current mana held to a lower maximum.
     pub(crate) fn set_stat_mask(&mut self, mask: u32) {
         let changed = self.stat_mask ^ mask;
         self.stat_mask = mask;
+        self.changed(reads::RESOURCES);
         let (mp5, spirit_regen) = (
             self.player.powers.mp5,
             self.player.powers.spirit_regen_per_second,
@@ -4492,6 +4597,7 @@ impl<A: Agent> Fight<A> {
             self.player_log(&line);
         }
         self.player.health = new;
+        self.changed(reads::RESOURCES);
     }
 
     /// Go `RandomFloat(label)`.

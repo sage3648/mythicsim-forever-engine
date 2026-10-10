@@ -77,6 +77,7 @@ impl<A: Agent> Fight<A> {
     }
 
     fn apply_mod(&mut self, id: ModId, sign: f64) {
+        self.changed(super::reads::SPELLS);
         let modifier = &self.mods[id];
         for &spell in &modifier.affected {
             let state = &mut self.spells[spell];

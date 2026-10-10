@@ -111,7 +111,37 @@ impl<A: Agent> Fight<A> {
             .is_none_or(|queued| queued.initiated_at != self.now)
     }
 
-    fn extra_cast_condition(&mut self, spell: SpellId) -> bool {
+    /// The energy at which a spell's cost stops refusing it as energy rises: its energy cost,
+    /// and no limit for a cost in another resource or none.
+    pub(crate) fn energy_cost_limit(&self, spell: SpellId) -> f64 {
+        if !A::CACHE_OVER_ENERGY {
+            return f64::INFINITY;
+        }
+        match self.spells[spell].cost.map(|cost| cost.kind) {
+            Some(ResourceKind::Energy) => self.current_cost(spell),
+            _ => f64::INFINITY,
+        }
+    }
+
+    /// For a spell whose extra cast condition just failed: until when the clock alone cannot
+    /// make it pass, and what could (the range, then the class's word for its own condition).
+    pub(crate) fn extra_condition_proof(&self, spell: SpellId) -> Option<(i64, u8)> {
+        let state = &self.spells[spell];
+        let distance = self.unit_config(state.caster).distance;
+        if (state.min_range != 0.0 && distance < state.min_range)
+            || (state.max_range != 0.0 && distance > state.max_range)
+        {
+            return Some((crate::core::time::NEVER_EXPIRES, super::reads::CASTS));
+        }
+        match state.behavior {
+            SpellBehavior::Class(behavior) if state.has_extra_cast_condition => {
+                A::extra_condition_proof(self, spell, behavior)
+            }
+            _ => None,
+        }
+    }
+
+    pub(crate) fn extra_cast_condition(&mut self, spell: SpellId) -> bool {
         // Go RegisterSpell wraps the condition with the range check, which runs first.
         let state = &self.spells[spell];
         let distance = self.unit_config(state.caster).distance;
@@ -215,7 +245,7 @@ impl<A: Agent> Fight<A> {
 
     /// Go `castRequirementFailure`: the unit is in a form the requirement refuses, which is
     /// while one of the spell's requirement auras is active.
-    fn wrong_form(&self, spell: SpellId) -> bool {
+    pub(crate) fn wrong_form(&self, spell: SpellId) -> bool {
         self.spells[spell]
             .requirement_auras
             .iter()
@@ -327,6 +357,7 @@ impl<A: Agent> Fight<A> {
         let fire_at = queue_at + 1;
         let action = self.schedule(fire_at, PRIORITY_GCD, Action::QueuedCast(side));
         let now = self.now;
+        self.changed(super::reads::CASTS);
         self.unit_mut(side).queued = Some(super::QueuedSpell {
             spell,
             target,
@@ -347,6 +378,7 @@ impl<A: Agent> Fight<A> {
     /// Go `QueuedSpell.Cancel` for an acting unit: the queue initiation time becomes
     /// -NeverExpires.
     pub(crate) fn cancel_queued_spell_of(&mut self, side: Side) {
+        self.changed(super::reads::CASTS);
         if let Some(queued) = self.unit_mut(side).queued.as_mut() {
             let action = queued.action.take();
             queued.initiated_at = -crate::core::time::NEVER_EXPIRES;
@@ -457,6 +489,7 @@ impl<A: Agent> Fight<A> {
         if let Some((timer, duration)) = state.shared_cd {
             self.timers[timer] = self.now + (duration as f64 * multiplier) as i64;
         }
+        self.changed(super::reads::TIMERS);
     }
 
     /// Go `Spell.SetMetricsSplit`: the spell's metrics, and the tag of its action ID in logs,
@@ -596,6 +629,7 @@ impl<A: Agent> Fight<A> {
                 self.log_casting(spell);
             }
             let expires = self.now + cur.cast_time;
+            self.changed(super::reads::CASTS);
             self.unit_mut(side).hardcast = super::Hardcast {
                 expires,
                 spell: Some(spell),
@@ -665,6 +699,7 @@ impl<A: Agent> Fight<A> {
         let hardcast = self.unit(side).hardcast;
         if hardcast.expires != STARTING_CD_TIME && hardcast.expires <= self.now {
             self.unit_mut(side).hardcast.expires = STARTING_CD_TIME;
+            self.changed(super::reads::CASTS);
             if let Some(spell) = hardcast.spell {
                 self.complete_hardcast(spell, hardcast.target);
             }
@@ -1067,6 +1102,7 @@ impl<A: Agent> Fight<A> {
     /// Go `Unit.SetGCDTimer` of an acting unit.
     pub(crate) fn set_gcd_timer_of(&mut self, side: Side, ready: i64) {
         self.unit_mut(side).gcd = ready;
+        self.changed(super::reads::TIMERS);
         self.set_rotation_timer_of(side, ready);
     }
 
@@ -1126,6 +1162,7 @@ impl<A: Agent> Fight<A> {
             return;
         }
         self.player.hardcast.expires += pushback;
+        self.changed(super::reads::CASTS);
         if self.log.is_some() {
             let line = format!(
                 "{} pushed back {} while casting",
@@ -1170,6 +1207,7 @@ impl<A: Agent> Fight<A> {
             );
             self.unit_log(side, &line);
         }
+        self.changed(super::reads::RESOURCES);
         let unit = self.unit_mut(side);
         unit.mana = new;
         unit.mana_gained += new - old;
@@ -1192,6 +1230,7 @@ impl<A: Agent> Fight<A> {
             );
             self.unit_log(side, &line);
         }
+        self.changed(super::reads::RESOURCES);
         let unit = self.unit_mut(side);
         unit.mana = new;
         unit.mana_spent += amount;
@@ -1458,6 +1497,136 @@ impl<A: Agent> Fight<A> {
         let spell = self.major_cooldowns[cooldown].spell;
         let explosive = self.major_cooldowns[cooldown].explosive;
         (self.gcd_ready() != explosive || self.spells[spell].flags.reactive).then_some(cooldown)
+    }
+
+    /// For autocasting that is not ready: until when it stays so while nothing a cached look
+    /// reads changes, where every part of that is known and asking again leaves no trace. A
+    /// cooling down cooldown waits for its timer, an accepted one only for the GCD, and a
+    /// refused one for what [`Fight::refusal_until`] says. With it, the energy below which that
+    /// holds as energy rises.
+    pub(crate) fn autocast_until(&mut self) -> Option<(i64, f64)> {
+        if self.now < self.cooldown_min_ready {
+            return Some((self.cooldown_min_ready, f64::INFINITY));
+        }
+        let mut until = crate::core::time::NEVER_EXPIRES;
+        let mut energy = f64::INFINITY;
+        for position in 0..self.cooldown_order.len() {
+            let cooldown = self.cooldown_order[position];
+            let spell = self.major_cooldowns[cooldown].spell;
+            if !self.spell_ready(spell) {
+                until = until.min(self.spell_ready_at(spell));
+                continue;
+            }
+            if !self.asking_is_quiet(spell) {
+                return None;
+            }
+            if self.should_activate_helper(cooldown) {
+                // Accepted, so only the GCD holds it back: a plain one until the GCD runs
+                // out, an explosive one until a cast starts the GCD.
+                if !self.major_cooldowns[cooldown].explosive {
+                    until = until.min(self.player.gcd);
+                }
+                return Some((until, energy.min(self.accepted_energy_limit(spell))));
+            }
+            let (refused_until, refused_energy) = self.refusal_until(cooldown)?;
+            until = until.min(refused_until);
+            energy = energy.min(refused_energy);
+        }
+        Some((until, energy))
+    }
+
+    /// The energy at which rising energy makes [`Fight::should_activate_helper`] refuse a
+    /// cooldown it accepts now: a conjured energy item's deficit closes, and a class's own rule
+    /// is not followed. Rising energy keeps the cost met, and nothing else it asks reads energy.
+    fn accepted_energy_limit(&self, spell: SpellId) -> f64 {
+        if !A::CACHE_OVER_ENERGY {
+            return f64::INFINITY;
+        }
+        match self.spells[spell].behavior {
+            SpellBehavior::ConjuredEnergy {
+                min, spread, spill, ..
+            } => {
+                let (max, current) = self
+                    .energy
+                    .as_ref()
+                    .map_or((0.0, 0.0), |bar| (bar.max, bar.current));
+                let need = (min + spread) - spill;
+                // The least energy whose deficit falls short, found from the rounded estimate.
+                let mut at = max - need;
+                while max - at >= need {
+                    at = at.next_up();
+                }
+                while at.next_down() > current && max - at.next_down() < need {
+                    at = at.next_down();
+                }
+                at
+            }
+            SpellBehavior::Class(_) => self.energy_now(),
+            _ => f64::INFINITY,
+        }
+    }
+
+    /// Until when a ready major cooldown's rules keep refusing it while nothing a cached look
+    /// reads changes, following [`Fight::should_activate_helper`]. Health, mana and energy
+    /// change only with the resources and auras a look reads; a class's own rule is not
+    /// known this way. Rising energy only makes the energy rules refuse more.
+    fn refusal_until(&mut self, cooldown: usize) -> Option<(i64, f64)> {
+        let spell = self.major_cooldowns[cooldown].spell;
+        if !self.can_cast(spell) {
+            return self.cast_refusal_until(spell);
+        }
+        let uses = self.major_cooldowns[cooldown].uses;
+        if let Some(&timing) = self.major_cooldowns[cooldown].timings.get(uses) {
+            return Some((timing, f64::INFINITY));
+        }
+        let threshold = self.hp_percent_for_defensives;
+        if self.major_cooldowns[cooldown].survival
+            && (threshold == 0.0 || self.player.health / self.player_max_health() > threshold)
+        {
+            return Some((crate::core::time::NEVER_EXPIRES, f64::INFINITY));
+        }
+        if !A::cooldown_activation_condition(self, spell) {
+            return None;
+        }
+        match self.spells[spell].behavior {
+            SpellBehavior::PotionMana { .. }
+            | SpellBehavior::ConjuredMana { .. }
+            | SpellBehavior::ConjuredEnergy { .. }
+            | SpellBehavior::EnergizeOnUse { .. }
+            | SpellBehavior::PeriodicMana { .. }
+            | SpellBehavior::PotionResource { .. } => {
+                Some((crate::core::time::NEVER_EXPIRES, f64::INFINITY))
+            }
+            _ => None,
+        }
+    }
+
+    /// Until when [`Fight::can_cast`] keeps refusing a spell whose cooldowns are ready while
+    /// nothing a cached look reads changes: the form, cost, swap and movement change only with
+    /// what a look reads, the hardcast and the GCD run out with the clock, and a failed extra
+    /// condition needs its own proof. The cost stops refusing once energy reaches it.
+    fn cast_refusal_until(&mut self, spell: SpellId) -> Option<(i64, f64)> {
+        if self.wrong_form(spell) {
+            return Some((crate::core::time::NEVER_EXPIRES, f64::INFINITY));
+        }
+        if !self.extra_cast_condition(spell) {
+            return self
+                .extra_condition_proof(spell)
+                .map(|(until, _)| (until, f64::INFINITY));
+        }
+        let state = &self.spells[spell];
+        let side = state.caster;
+        let needs_gcd = state.default_cast.gcd > 0
+            || (state.flags.mcd && side == Side::Player && self.in_sequence());
+        let unit = self.unit(side);
+        let mut until = crate::core::time::NEVER_EXPIRES;
+        if unit.hardcast.expires > self.now {
+            until = until.min(unit.hardcast.expires);
+        }
+        if needs_gcd && unit.gcd > self.now {
+            until = until.min(unit.gcd);
+        }
+        Some((until, self.energy_cost_limit(spell)))
     }
 
     /// Go `tryActivateHelper` followed by `UpdateMajorCooldowns`.

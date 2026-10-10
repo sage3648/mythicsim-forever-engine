@@ -142,5 +142,6 @@ impl<A: Agent> Fight<A> {
             now + (ready_at - now).max(0)
         };
         self.external_cooldowns[index].next = next;
+        self.changed(super::reads::TIMERS);
     }
 }

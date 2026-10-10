@@ -11,14 +11,15 @@ use crate::{
 };
 
 use super::{
-    cast::MAX_SPELL_QUEUE_WINDOW, exclusive::RefreshReading, Agent, AuraRef, DotId, Fight, Side,
-    SpellId,
+    cast::MAX_SPELL_QUEUE_WINDOW, exclusive::RefreshReading, Agent, AuraRef, DotId, Fight,
+    ResourceKind, Side, SpellId,
 };
 
 use std::{ops::Range, rc::Rc};
 
 mod lowered;
 
+use super::reads;
 use lowered::Cond;
 
 pub(crate) type Compiled = crate::rotation::Compiled<AuraRef>;
@@ -109,6 +110,20 @@ pub(crate) struct Item {
     /// Shared so evaluation, which can change the fight, never borrows the rotation.
     condition: Option<Rc<Cond>>,
     action: Act,
+    /// Whether the condition runs a cost check (Go `APLValueSpellCanCast`), whose bookkeeping
+    /// must happen whenever Go asks it.
+    asks_cost: bool,
+}
+
+impl Item {
+    fn new(condition: Option<Rc<Cond>>, action: Act) -> Item {
+        let asks_cost = condition.as_deref().is_some_and(Cond::asks_cost);
+        Item {
+            condition,
+            action,
+            asks_cost,
+        }
+    }
 }
 
 /// Go `APLRotation` fields beyond the priority list: the controlling strict sequence, the
@@ -121,6 +136,53 @@ pub(crate) struct AplState {
     interrupt_channel_if: Option<usize>,
     allow_channel_recast: bool,
     pub(crate) queue_hooks: Vec<usize>,
+    /// Each item's proof that it is not ready, while it holds.
+    proofs: Vec<Proof>,
+    /// The last look that found nothing, while what it read stays put.
+    look: Option<Look>,
+    /// While a look walks the list: until when every item it asked keeps its answer.
+    walk_until: i64,
+    /// While a look walks the list: the energy below which every answer it asked holds as
+    /// energy rises.
+    walk_energy: f64,
+}
+
+/// A look's proof that no item is ready: it holds while the clock is before `until` and nothing
+/// any item read has changed, or only energy has risen and stays below `energy_limit`.
+#[derive(Clone, Copy, Debug)]
+struct Look {
+    until: i64,
+    versions: super::Versions,
+    execute_phase: i32,
+    waiting_for_mana: f64,
+    energy_limit: f64,
+}
+
+/// A priority item's cached "not ready": it holds while the clock is before `until` and none
+/// of the kinds of state in `reads` has changed. Only an answer whose asking left no trace is
+/// kept, and only used where asking would again leave none.
+#[derive(Clone, Copy, Debug)]
+struct Proof {
+    until: i64,
+    reads: u8,
+    versions: super::Versions,
+    execute_phase: i32,
+    /// A false condition: Go stops asking before the action, so the proof holds even where
+    /// asking the action would keep bookkeeping.
+    condition_only: bool,
+    /// The energy below which the answer holds as energy rises (see [`Look`]).
+    energy_limit: f64,
+}
+
+impl Proof {
+    const NONE: Proof = Proof {
+        until: i64::MIN,
+        reads: 0,
+        versions: super::Versions::ZERO,
+        execute_phase: 0,
+        condition_only: false,
+        energy_limit: 0.0,
+    };
 }
 
 impl<A: Agent> Fight<A> {
@@ -289,7 +351,7 @@ impl<A: Agent> Fight<A> {
                 CompiledCondition::Always => None,
                 CompiledCondition::When(condition) => Some(Rc::new(Cond::lower(&condition))),
             };
-            items.push(Item { condition, action });
+            items.push(Item::new(condition, action));
         }
         let priority = items.len();
         let mut groups = Vec::new();
@@ -309,7 +371,7 @@ impl<A: Agent> Fight<A> {
                 // whatever it holds.
                 let condition = compile_bool_value(item.condition.as_ref(), &lookup)
                     .map(|condition| Rc::new(Cond::lower(&condition)));
-                items.push(Item { condition, action });
+                items.push(Item::new(condition, action));
             }
             groups.push(start..items.len());
         }
@@ -792,13 +854,261 @@ impl<A: Agent> Fight<A> {
         true
     }
 
-    /// Go `APLAction.IsReady`: the condition, then the action's readiness.
+    /// Whether asking a cast item would leave no trace, so it may be answered without asking:
+    /// no log is kept, its condition runs no cost check (the caller's part), and the cast's
+    /// cost check keeps no bookkeeping. A rage, energy or focus cost never does; a mana cost
+    /// does not while it is affordable with no out-of-mana wait open, or while it is
+    /// unaffordable and no lower than the mana waited for.
+    pub(crate) fn asking_is_quiet(&self, spell: SpellId) -> bool {
+        let state = &self.spells[spell];
+        if self.log.is_some() || state.caster != Side::Player {
+            return false;
+        }
+        let unit = &self.player;
+        if let Some(cost) = state.cost {
+            if !matches!(
+                cost.kind,
+                ResourceKind::Energy | ResourceKind::Focus | ResourceKind::Rage
+            ) {
+                let cost = self.current_cost(spell);
+                let waiting = unit.waiting_for_mana;
+                let quiet = if unit.mana >= cost {
+                    waiting == 0.0
+                } else {
+                    waiting != 0.0 && cost >= waiting
+                };
+                if cost > 0.0 && !quiet {
+                    return false;
+                }
+            }
+        }
+        true
+    }
+
+    /// Whether a cast is ruled out by what blocks it whatever its condition says: one queued
+    /// spell per timestep, the GCD or a channel beyond the queue window, its own cooldowns
+    /// beyond it, or a major cooldown waiting for the GCD.
+    fn timers_rule_out(&self, spell: SpellId) -> bool {
+        let state = &self.spells[spell];
+        let unit = &self.player;
+        !self.can_queue_spell()
+            || (state.flags.channeled && unit.hardcast.expires > self.now + MAX_SPELL_QUEUE_WINDOW)
+            || (state.default_cast.gcd > 0 && (unit.gcd - self.now).max(0) > MAX_SPELL_QUEUE_WINDOW)
+            || self.spell_time_to_ready(spell) > MAX_SPELL_QUEUE_WINDOW
+            || (state.flags.mcd
+                && !state.flags.reactive
+                && !self.gcd_ready()
+                && !self.apl.in_sequence)
+    }
+
+    /// Go `APLAction.IsReady`: the condition, then the action's readiness. Where asking a cast
+    /// would leave no trace (see [`Fight::asking_is_quiet`]), one its timers rule out, or whose
+    /// proof that it is not ready holds, is answered without asking; debug builds ask it anyway
+    /// and check the answers agree.
     fn item_ready(&mut self, item: usize) -> Option<Ready> {
+        let asks_cost = self.rotation[item].asks_cost;
+        if !A::CACHE_ROTATION {
+            if let Act::Cast(spell, _) = self.rotation[item].action {
+                if !asks_cost && self.asking_is_quiet(spell) && self.timers_rule_out(spell) {
+                    return None;
+                }
+            }
+            return self.item_ready_asked(item);
+        }
+        if let Act::Cast(spell, target) = self.rotation[item].action {
+            if !asks_cost && self.asking_is_quiet(spell) {
+                let until = if self.timers_rule_out(spell) {
+                    Some((self.timers_lift_at(spell), f64::INFINITY))
+                } else {
+                    self.proof_until(item, true)
+                };
+                if let Some((until, energy)) = until {
+                    self.note(until, energy);
+                    debug_assert!(
+                        self.item_ready_asked(item).is_none(),
+                        "a cached answer that does not hold at {}",
+                        self.now
+                    );
+                    return None;
+                }
+                return self.cast_item_ready(item, spell, target);
+            }
+        }
+        if asks_cost {
+            let ready = self.item_ready_asked(item);
+            if ready.is_none() {
+                self.note_until(self.now);
+            }
+            return ready;
+        }
+        // A false condition ends Go's asking before the action, whatever the action.
+        if let Some((until, energy)) = self.proof_until(item, false) {
+            self.note(until, energy);
+            debug_assert!(
+                self.item_ready_asked(item).is_none(),
+                "a cached condition that does not hold at {}",
+                self.now
+            );
+            return None;
+        }
+        if let Some(condition) = self.rotation[item].condition.clone() {
+            if self.condition_refuses(item, &condition) {
+                return None;
+            }
+        }
+        let ready = self.item_action_ready(item);
+        if ready.is_none() {
+            match self.rotation[item].action {
+                Act::Autocast => match self.autocast_until() {
+                    Some((until, energy)) => self.note(until, energy),
+                    None => self.note_until(self.now),
+                },
+                _ => self.note_until(self.now),
+            }
+        }
+        ready
+    }
+
+    /// Whether an item's condition is false, keeping a proof of it that holds as long as the
+    /// condition's answer does.
+    fn condition_refuses(&mut self, item: usize, condition: &Cond) -> bool {
+        let (holds, until, reads) = self.condition_stable(condition);
+        if holds {
+            return false;
+        }
+        // A condition that reads no energy keeps its answer as energy rises.
+        let energy = if !A::CACHE_OVER_ENERGY || until <= self.now {
+            self.energy_now()
+        } else if reads & reads::RESOURCES == 0 || !condition.reads_energy() {
+            f64::INFINITY
+        } else {
+            self.condition_energy_limit(condition)
+        };
+        self.prove(item, until, reads, true, energy);
+        self.note(until, energy);
+        true
+    }
+
+    /// The walk's promise shrinks to `until`, and to not holding once energy rises.
+    fn note_until(&mut self, until: i64) {
+        self.note(until, self.energy_now());
+    }
+
+    /// The walk's promise shrinks to `until`, and to holding as energy rises only while it stays
+    /// below `energy`.
+    fn note(&mut self, until: i64, energy: f64) {
+        self.apl.walk_until = self.apl.walk_until.min(until);
+        if A::CACHE_OVER_ENERGY {
+            self.apl.walk_energy = self.apl.walk_energy.min(energy);
+        }
+    }
+
+    /// When a cast's timers stop ruling it out with nothing but the clock moving: once every
+    /// part that does has run out.
+    fn timers_lift_at(&self, spell: SpellId) -> i64 {
+        let state = &self.spells[spell];
+        let unit = &self.player;
+        let window = MAX_SPELL_QUEUE_WINDOW;
+        let mut at = self.now;
+        if !self.can_queue_spell() {
+            at = at.max(self.now + 1);
+        }
+        if state.flags.channeled && unit.hardcast.expires > self.now + window {
+            at = at.max(unit.hardcast.expires - window);
+        }
+        if state.default_cast.gcd > 0 && unit.gcd - self.now > window {
+            at = at.max(unit.gcd - window);
+        }
+        let ready = self.spell_ready_at(spell);
+        if ready - self.now > window {
+            at = at.max(ready - window);
+        }
+        if state.flags.mcd && !state.flags.reactive && unit.gcd > self.now && !self.apl.in_sequence
+        {
+            at = at.max(unit.gcd);
+        }
+        at
+    }
+
+    /// Until when an item's proof that it is not ready holds, if it still does. Only a
+    /// condition's proof serves where asking the action could keep bookkeeping.
+    fn proof_until(&self, item: usize, quiet: bool) -> Option<(i64, f64)> {
+        let proof = self.apl.proofs.get(item)?;
+        let (now, versions) = (&self.versions, &proof.versions);
+        let holds = self.now < proof.until
+            && (quiet || proof.condition_only)
+            && (proof.reads & reads::TIMERS == 0 || versions.timers == now.timers)
+            && (proof.reads & reads::RESOURCES == 0 || versions.resources == now.resources)
+            && (proof.reads & reads::AURAS == 0 || versions.auras == now.auras)
+            && (proof.reads & reads::CASTS == 0 || versions.casts == now.casts)
+            && (proof.reads & reads::SPELLS == 0 || versions.spells == now.spells)
+            && (proof.reads & reads::CLASS == 0 || versions.class == now.class)
+            && (proof.reads & reads::PHASE == 0 || proof.execute_phase == self.execute_phase);
+        holds.then_some((proof.until, proof.energy_limit))
+    }
+
+    /// Keeps an item's "not ready" until the clock reaches `until` or something in `reads`
+    /// changes, and notes the energy below which it holds as energy rises.
+    fn prove(&mut self, item: usize, until: i64, reads: u8, condition_only: bool, energy: f64) {
+        if until <= self.now {
+            return;
+        }
+        let proof = Proof {
+            until,
+            reads,
+            versions: self.versions,
+            execute_phase: self.execute_phase,
+            condition_only,
+            energy_limit: energy,
+        };
+        if let Some(slot) = self.apl.proofs.get_mut(item) {
+            *slot = proof;
+        }
+    }
+
+    /// A cast item whose timers let it go, asked where asking leaves no trace: its condition,
+    /// then its cast check. Not ready, it keeps a proof of why where one is known.
+    fn cast_item_ready(&mut self, item: usize, spell: SpellId, target: Side) -> Option<Ready> {
+        if let Some(condition) = self.rotation[item].condition.clone() {
+            if self.condition_refuses(item, &condition) {
+                return None;
+            }
+        }
+        if self.cast_ready(spell) {
+            return Some(Ready::Cast(spell, target));
+        }
+        // The timers let it go: the form, the extra condition or the cost refused it.
+        let proof = if self.wrong_form(spell) {
+            Some((NEVER_EXPIRES, reads::AURAS, f64::INFINITY))
+        } else if self.extra_cast_condition(spell) {
+            let energy = self.energy_cost_limit(spell);
+            Some((NEVER_EXPIRES, reads::RESOURCES | reads::SPELLS, energy))
+        } else {
+            self.extra_condition_proof(spell)
+                .map(|(until, reads)| (until, reads, f64::INFINITY))
+        };
+        match proof {
+            Some((until, reads, energy)) => {
+                self.prove(item, until, reads, false, energy);
+                self.note(until, energy);
+            }
+            None => self.note_until(self.now),
+        }
+        None
+    }
+
+    /// [`Fight::item_ready`] asked in full, as Go asks it.
+    fn item_ready_asked(&mut self, item: usize) -> Option<Ready> {
         if let Some(condition) = self.rotation[item].condition.clone() {
             if !self.condition(&condition) {
                 return None;
             }
         }
+        self.item_action_ready(item)
+    }
+
+    /// Go `APLAction.IsReady` after the condition: the action's readiness.
+    fn item_action_ready(&mut self, item: usize) -> Option<Ready> {
         match self.rotation[item].action {
             Act::Cast(spell, target) => {
                 self.cast_ready(spell).then_some(Ready::Cast(spell, target))
@@ -903,12 +1213,76 @@ impl<A: Agent> Fight<A> {
         None
     }
 
-    /// Go `APLRotation.getNextAction`.
+    /// Go `APLRotation.getNextAction`. A look that found nothing answers the next one while
+    /// nothing any item read has changed and the clock has not reached the time one of them
+    /// could change by itself; debug builds walk the list anyway and check it agrees.
     fn next_action(&mut self) -> Option<Ready> {
         if let Some(item) = self.apl.controlling {
+            self.apl.look = None;
             return self.sequence_next_action(item);
         }
+        if !A::CACHE_ROTATION {
+            return (0..self.priority_len).find_map(|item| self.item_ready(item));
+        }
+        if self.look_holds() {
+            debug_assert!(
+                self.walk_priority_list().is_none(),
+                "a cached look that does not hold at {}",
+                self.now
+            );
+            return None;
+        }
+        let found = self.walk_priority_list();
+        self.apl.look = (found.is_none() && self.log.is_none() && self.apl.walk_until > self.now)
+            .then_some(Look {
+                until: self.apl.walk_until,
+                versions: self.versions,
+                execute_phase: self.execute_phase,
+                waiting_for_mana: self.player.waiting_for_mana,
+                energy_limit: self.apl.walk_energy,
+            });
+        found
+    }
+
+    /// The first ready item of the priority list, noting until when the answers it asked hold.
+    fn walk_priority_list(&mut self) -> Option<Ready> {
+        self.apl.walk_until = NEVER_EXPIRES;
+        self.apl.walk_energy = f64::INFINITY;
         (0..self.priority_len).find_map(|item| self.item_ready(item))
+    }
+
+    /// Whether the last look that found nothing still answers for this one.
+    fn look_holds(&self) -> bool {
+        self.apl.look.is_some_and(|look| {
+            self.now < look.until
+                && self.look_versions_hold(&look)
+                && look.execute_phase == self.execute_phase
+                && look.waiting_for_mana == self.player.waiting_for_mana
+                && self.log.is_none()
+                && !self.apl.in_sequence
+        })
+    }
+
+    /// Whether nothing a look read has changed, or only energy has risen and stays below the
+    /// level at which an answer it asked could change.
+    fn look_versions_hold(&self, look: &Look) -> bool {
+        let (then, now) = (&look.versions, &self.versions);
+        if then == now {
+            return true;
+        }
+        if !A::CACHE_OVER_ENERGY {
+            return false;
+        }
+        let gains = now.energy_gains - then.energy_gains;
+        let only_energy = super::Versions {
+            resources: now.resources,
+            energy_gains: now.energy_gains,
+            ..*then
+        };
+        gains > 0
+            && now.resources - then.resources == gains
+            && only_energy == *now
+            && self.energy_now() < look.energy_limit
     }
 
     /// Go `APLActionStrictSequence.GetNextAction`.
@@ -1219,6 +1593,9 @@ impl<A: Agent> Fight<A> {
             self.apl.controlling = None;
             self.apl.interrupt_channel_if = None;
             self.apl.allow_channel_recast = false;
+            self.apl.proofs.clear();
+            self.apl.proofs.resize(self.rotation.len(), Proof::NONE);
+            self.apl.look = None;
             for item in 0..self.rotation.len() {
                 match self.rotation[item].action {
                     Act::StrictSequence { ref mut next, .. } => {

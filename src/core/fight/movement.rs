@@ -69,6 +69,7 @@ impl<A: Agent> Fight<A> {
 
     /// The Movement aura's gain and expiry.
     pub(crate) fn movement_changed(&mut self, side: Side, gained: bool) {
+        self.changed(super::reads::CASTS);
         let unit = self.unit_mut(side);
         unit.moving = gained;
         if !gained {
@@ -180,6 +181,7 @@ impl<A: Agent> Fight<A> {
             return;
         }
         self.unit_config_mut(side).distance = new;
+        self.changed(super::reads::CASTS);
         A::on_movement(self, side, MovementKind::Update);
         let in_range = self.main_hand_in_range(side);
         if self.autos_of(side).mh.enabled != in_range {
