@@ -142,5 +142,6 @@ impl<A: Agent> Fight<A> {
             self.player_log(&line);
         }
         self.player.health = new;
+        self.changed(super::reads::RESOURCES);
     }
 }

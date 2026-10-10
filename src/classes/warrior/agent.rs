@@ -1062,6 +1062,7 @@ impl WarriorAgent {
 impl Agent for WarriorAgent {
     type Spell = WarriorSpell;
     type Aura = WarriorAura;
+    const CACHE_ROTATION: bool = true;
 
     fn apply_effects(
         fight: &mut Fight<Self>,
@@ -1138,6 +1139,7 @@ impl Agent for WarriorAgent {
                 let cast = fight.agent.stances[index];
                 let retained = fight.agent.max_retained_rage;
                 fight.agent.stance = stances::change(fight, cast, retained);
+                fight.versions.class += 1;
             }
             WarriorSpell::BattleShout => {
                 let params = fight.agent.battle_shout.expect("Battle Shout is bound");
@@ -1309,6 +1311,74 @@ impl Agent for WarriorAgent {
         }
     }
 
+    fn extra_condition_proof(
+        fight: &Fight<Self>,
+        _spell: SpellId,
+        behavior: WarriorSpell,
+    ) -> Option<(i64, u8)> {
+        use crate::core::{fight::reads, time::NEVER_EXPIRES};
+        Some(match behavior {
+            // The stance, and what never changes in a fight.
+            WarriorSpell::Whirlwind
+            | WarriorSpell::Recklessness
+            | WarriorSpell::BerserkerRage
+            | WarriorSpell::Hamstring
+            | WarriorSpell::StanceLocked(_)
+            | WarriorSpell::ShieldWall
+            | WarriorSpell::Stance(_)
+            | WarriorSpell::Charge
+            | WarriorSpell::Rend
+            | WarriorSpell::SpearingStrike
+            | WarriorSpell::ShieldSlam
+            | WarriorSpell::ThunderClap
+            | WarriorSpell::Taunt
+            | WarriorSpell::Retaliation
+            | WarriorSpell::SweepingStrikes => (NEVER_EXPIRES, reads::CLASS),
+            WarriorSpell::Execute => (NEVER_EXPIRES, reads::CLASS | reads::PHASE),
+            // The warrior's stacks, or the category's active member.
+            WarriorSpell::SunderArmor => (NEVER_EXPIRES, reads::AURAS),
+            WarriorSpell::Overpower | WarriorSpell::Revenge => {
+                (NEVER_EXPIRES, reads::CLASS | reads::AURAS)
+            }
+            // The category's member; the warrior's own shout passes once its remaining time
+            // falls to the threshold.
+            WarriorSpell::BattleShout => {
+                let params = fight.agent.battle_shout.expect("Battle Shout is bound");
+                let until = match fight.exclusive_active(params.category) {
+                    Some((aura, _)) if aura == params.aura => {
+                        let expires = fight.aura(aura).expires;
+                        if expires == NEVER_EXPIRES {
+                            NEVER_EXPIRES
+                        } else {
+                            expires - params.refresh_threshold
+                        }
+                    }
+                    _ => NEVER_EXPIRES,
+                };
+                (until, reads::AURAS)
+            }
+            // The queue, the rage and its cost, and the hardcast and realism delay running out.
+            WarriorSpell::QueueStrike(_) => {
+                let mut until = NEVER_EXPIRES;
+                let hardcast = fight.player.hardcast.expires;
+                if hardcast > fight.now {
+                    until = until.min(hardcast);
+                }
+                if let Some((timer, _)) = fight.agent.queue.realism {
+                    let ready = fight.timers[timer];
+                    if ready > fight.now {
+                        until = until.min(ready);
+                    }
+                }
+                (
+                    until,
+                    reads::CLASS | reads::RESOURCES | reads::SPELLS | reads::CASTS | reads::TIMERS,
+                )
+            }
+            _ => return None,
+        })
+    }
+
     fn modify_cast(fight: &mut Fight<Self>, spell: SpellId, behavior: WarriorSpell) {
         if behavior == WarriorSpell::Slam {
             let stops_swings = fight.agent.slam_stops_swings;
@@ -1405,6 +1475,7 @@ impl Agent for WarriorAgent {
                 let aura = fight.agent.queue.strikes[index].queue_aura;
                 fight.activate_aura(aura);
                 fight.agent.queue.queued[index] = false;
+                fight.versions.class += 1;
             }
             _ => {}
         }
@@ -1443,6 +1514,7 @@ impl Agent for WarriorAgent {
         let queue = &mut fight.agent.queue;
         queue.current = None;
         queue.queued.iter_mut().for_each(|queued| *queued = false);
+        fight.versions.class += 1;
     }
 
     fn on_gain(fight: &mut Fight<Self>, aura: AuraRef, kind: WarriorAura) {
@@ -1468,6 +1540,7 @@ impl Agent for WarriorAgent {
                 }
                 let _ = aura;
                 fight.agent.queue.current = Some(index);
+                fight.versions.class += 1;
             }
             _ => {}
         }
@@ -1486,7 +1559,10 @@ impl Agent for WarriorAgent {
             }
             WarriorAura::BerserkerRage => berserker_rage::on_expire(fight),
             WarriorAura::Dash => charge::on_expire(fight, fight.agent.charge.expect("bound")),
-            WarriorAura::Queue(_) => fight.agent.queue.current = None,
+            WarriorAura::Queue(_) => {
+                fight.agent.queue.current = None;
+                fight.versions.class += 1;
+            }
             WarriorAura::Enrage => {
                 let params = fight.agent.enrage.expect("Enrage is bound");
                 fight.deactivate_mod(params.damage_mod);

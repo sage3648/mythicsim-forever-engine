@@ -194,6 +194,8 @@ pub(crate) fn queue<A: Agent>(
     queue.queued[strike] = true;
     let (timer, delay) = queue.realism.expect("the queue has a realism delay");
     fight.timers[timer] = fight.now + delay;
+    fight.versions.class += 1;
+    fight.versions.timers += 1;
     Some(fight.now + delay)
 }
 
