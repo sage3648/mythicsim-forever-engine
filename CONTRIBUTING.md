@@ -77,6 +77,15 @@ cargo clippy --locked --all-targets -- -D warnings
 RUSTDOCFLAGS="-D warnings" cargo doc --locked --no-deps --document-private-items
 ```
 
+The engine also builds for WebAssembly: the library for browsers (`wasm32-unknown-unknown`)
+and the CLI for WASI hosts such as Node (`wasm32-wasip1`). CI checks both:
+
+```sh
+rustup target add wasm32-unknown-unknown wasm32-wasip1
+cargo clippy --locked --lib --target wasm32-unknown-unknown -- -D warnings
+cargo build --locked --target wasm32-wasip1
+```
+
 `cargo test` builds with `opt-level = 1` (`[profile.test]` in `Cargo.toml`) and runs the Go
 golden comparison of every accepted fixture across the machine's cores, which brings the
 suite from over fifteen minutes to a few. Optimization does not change results, since Rust

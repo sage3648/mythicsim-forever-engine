@@ -17,7 +17,7 @@ use crate::{
 
 pub fn simulate(request: &Request, capture_trace: bool) -> Result<Report, String> {
     request.validate()?;
-    let started = std::time::Instant::now();
+    let started = crate::core::stopwatch::Stopwatch::start();
     let mut mean = 0.0;
     let mut m2 = 0.0;
     let mut mana_mean = 0.0;
@@ -50,7 +50,7 @@ pub fn simulate(request: &Request, capture_trace: bool) -> Result<Report, String
         mana_mean += (result.mana_end - mana_mean) / n;
     }
     let stdev = (m2 / f64::from(request.iterations)).sqrt();
-    let elapsed_ns = started.elapsed().as_nanos() as u64;
+    let elapsed_ns = started.elapsed_ns();
     Ok(Report {
         engine: format!("forever-rust-prototype-{}", env!("CARGO_PKG_VERSION")),
         source_revision: SOURCE_REVISION.into(),

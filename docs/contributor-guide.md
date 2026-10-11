@@ -44,6 +44,7 @@ Frostbolt kernel remains unchanged beside it.
 | Event ordering (prepared v1 kernel) | [src/core/events.rs](../src/core/events.rs) |
 | Seeded random streams | [src/core/rng.rs](../src/core/rng.rs) |
 | Simulation time units | [src/core/time.rs](../src/core/time.rs) |
+| Wall-clock run timing, zero on browser WebAssembly | [src/core/stopwatch.rs](../src/core/stopwatch.rs) |
 | Shared binary hit-table math | [src/mechanics/damage.rs](../src/mechanics/damage.rs) |
 | Mana ticks, spending and five-second rule | [src/mechanics/mana.rs](../src/mechanics/mana.rs) |
 | Report fields, counters and trace records | [src/report.rs](../src/report.rs) |

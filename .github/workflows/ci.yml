@@ -22,12 +22,15 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
+          targets: wasm32-unknown-unknown, wasm32-wasip1
       - run: cargo fmt -- --check
       - run: cargo test --locked
       - run: cargo clippy --locked --all-targets -- -D warnings
       - run: cargo doc --locked --no-deps --document-private-items
         env:
           RUSTDOCFLAGS: -D warnings
+      - run: cargo clippy --locked --lib --target wasm32-unknown-unknown -- -D warnings
+      - run: cargo build --locked --target wasm32-wasip1
       - uses: actions/setup-go@v5
         with:
           go-version: '1.25.6'

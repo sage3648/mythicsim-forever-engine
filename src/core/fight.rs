@@ -4532,7 +4532,7 @@ impl<A: Agent> Fight<A> {
             self.build_exclusive_tracking();
             self.apply_enemy_slow_priorities();
         }
-        let started = std::time::Instant::now();
+        let started = crate::core::stopwatch::Stopwatch::start();
         let iterations = self.config.iterations;
         let mut total_duration = 0i64;
         let mut first_duration = 0i64;
@@ -4552,7 +4552,7 @@ impl<A: Agent> Fight<A> {
             }
             total_duration += self.duration;
         }
-        let elapsed_ns = started.elapsed().as_nanos() as u64;
+        let elapsed_ns = started.elapsed_ns();
         self.report(first_duration, total_duration, logs, elapsed_ns)
     }
 
