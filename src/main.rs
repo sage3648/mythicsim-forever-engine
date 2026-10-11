@@ -29,6 +29,18 @@ fn prepared_v2(input: &[u8]) -> Result<Option<PreparedV2>, String> {
         .map_err(|err| format!("prepared input rejected: {err}"))
 }
 
+/// The process id that keeps concurrent writers' temporary files apart. WebAssembly has no
+/// process ids (std panics asking for one), and a host runs one instance per output there.
+#[cfg(not(target_family = "wasm"))]
+fn process_id() -> u32 {
+    process::id()
+}
+
+#[cfg(target_family = "wasm")]
+fn process_id() -> u32 {
+    0
+}
+
 /// Writes `contents` to `path` so a reader sees the whole file or none of it.
 ///
 /// The bytes go to a hidden sibling file, which is flushed to disk and then renamed over the
@@ -42,7 +54,7 @@ fn write_atomically(path: &str, contents: &str) -> Result<(), String> {
         .ok_or_else(|| format!("{path} is not a file path"))?;
     let mut sibling = std::ffi::OsString::from(".");
     sibling.push(name);
-    sibling.push(format!(".{}.tmp", process::id()));
+    sibling.push(format!(".{}.tmp", process_id()));
     let temporary: PathBuf = destination.with_file_name(sibling);
     let written = fs::File::create(&temporary)
         .and_then(|mut file| {

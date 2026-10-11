@@ -5,4 +5,5 @@ pub(crate) mod events;
 pub(crate) mod fight;
 pub(crate) mod queue;
 pub(crate) mod rng;
+pub(crate) mod stopwatch;
 pub(crate) mod time;
