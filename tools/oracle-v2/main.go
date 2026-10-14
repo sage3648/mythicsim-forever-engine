@@ -1918,13 +1918,27 @@ func inertPetEffect(request *proto.RaidSimRequest, pet *core.Pet, reason string,
 	auras := []*ActionID{}
 	// Permanent auras activate at every unit's reset, enabled or not, and last the fight.
 	permanent := []*ActionID{}
+	// Go reports each exclusive effect's uptime with the aura. A permanent aura whose effects
+	// are each alone in their category on the pet holds them for as long as it is up, so each
+	// effect's uptime is the aura's: a party aura on the pet since patch 131, such as Mana
+	// Spring Totem. Any other exclusive effect the inert pet's metrics do not carry.
+	exclusive := []map[string]any{}
 	for _, aura := range pet.GetAuras() {
 		id := actionID(aura.ActionID)
 		if id != nil {
 			auras = append(auras, id)
-			// Go reports each exclusive effect's uptime with the aura, which the inert
-			// pet's metrics do not carry.
-			note(len(aura.ExclusiveEffects) != 0, fmt.Sprintf("inert pet %s's aura %s has exclusive effects", pet.Label, aura.Label))
+			if len(aura.ExclusiveEffects) != 0 {
+				alone := aura.IsActive() && aura.Duration == core.NeverExpires
+				categories := []string{}
+				for _, effect := range aura.ExclusiveEffects {
+					alone = alone && privateField(effect.Category, "effects").Len() == 1
+					categories = append(categories, effect.Category.Name)
+				}
+				note(!alone, fmt.Sprintf("inert pet %s's aura %s has exclusive effects", pet.Label, aura.Label))
+				if alone {
+					exclusive = append(exclusive, map[string]any{"aura": id, "categories": categories})
+				}
+			}
 		}
 		if aura.IsActive() {
 			note(aura.Duration != core.NeverExpires, fmt.Sprintf("inert pet %s has the expiring aura %s", pet.Label, aura.Label))
@@ -1940,6 +1954,9 @@ func inertPetEffect(request *proto.RaidSimRequest, pet *core.Pet, reason string,
 	}
 	if len(permanent) != 0 {
 		effect["permanent_auras"] = permanent
+	}
+	if len(exclusive) != 0 {
+		effect["exclusive_effects"] = exclusive
 	}
 	// Only a pet whose agent's Reset disables it logs its dismissal at each reset; a pet that is
 	// simply not enabled on start, such as a warlock's other demons, logs nothing then.

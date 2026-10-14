@@ -781,8 +781,21 @@ impl<A: Agent> Fight<A> {
                                         n: uptime.n,
                                         sum_sq: uptime.sum_sq,
                                     },
-                                    // The gate refuses an inert pet aura with exclusive effects.
-                                    effects: Vec::new(),
+                                    // Go `GetMetricsProto`: each effect's held time over
+                                    // the iterations it saw.
+                                    effects: if uptime.n == 0 {
+                                        Vec::new()
+                                    } else {
+                                        pet.aura_effects[position]
+                                            .iter()
+                                            .map(|category| AuraEffectMetricsReport {
+                                                category: category.clone(),
+                                                uptime_seconds_avg: seconds(
+                                                    pet.aura_effect_uptime[position],
+                                                ) / f64::from(uptime.n),
+                                            })
+                                            .collect()
+                                    },
                                 }
                             })
                             .collect(),

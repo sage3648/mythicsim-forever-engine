@@ -2,7 +2,7 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "d2409ccd043e9d3dd24232088f9abf49a7d19f64",
+    "engine_revision": "b477c15744bf4640e6a183f5be95a36511cd788d",
     "client_build": "1.60.1.70338",
     "exporter": "tools/oracle-v2"
   },
@@ -6450,10 +6450,25 @@
     {
       "auras": [
         {
+          "spell_id": 10494,
+          "tag": -1
+        },
+        {
           "other_id": "OtherActionMove"
         }
       ],
-      "dismissed_log": "{\"Strength\": 153.000,\"Agility\": 108.000,\"Stamina\": 297.000,\"Intellect\": 175.000,\"Spirit\": 122.000,\"AttackPower\": 286.000,\"Armor\": 5506.000,\"Health\": 2790.000,}",
+      "dismissed_log": "{\"Strength\": 153.000,\"Agility\": 108.000,\"Stamina\": 297.000,\"Intellect\": 175.000,\"Spirit\": 122.000,\"AttackPower\": 286.000,\"Armor\": 5506.000,\"Health\": 2790.000,\"MP5\": 30.000,}",
+      "exclusive_effects": [
+        {
+          "aura": {
+            "spell_id": 10494,
+            "tag": -1
+          },
+          "categories": [
+            "ManaSpringTotemMP5Add"
+          ]
+        }
+      ],
       "kind": "inert_pet",
       "label": "shadow-priest (#1) - Shadowfiend",
       "metrics_actions": [
@@ -6482,6 +6497,12 @@
         }
       ],
       "name": "Shadowfiend",
+      "permanent_auras": [
+        {
+          "spell_id": 10494,
+          "tag": -1
+        }
+      ],
       "reason": "no registered spell summons the Shadowfiend",
       "unit_index": 2
     },

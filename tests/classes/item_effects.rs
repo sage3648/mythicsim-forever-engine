@@ -250,10 +250,51 @@ fn a_permanent_clap_keeps_the_attack_speed_category_from_cyclone() {
 
 /// The warrior's Thunder Clap and Cyclone bid in one category, and a warrior that casts the clap
 /// under Thunderfury is prepared with the clap's effect: both slows are described. The clap
-/// outlasts Cyclone and bids the same, so it keeps the category whenever it is up.
+/// outlasts Cyclone and bids the same, so it keeps the category whenever it is up: the target
+/// swings as it would without Cyclone's slow until Cyclone is first up without the clap. The
+/// fight compared is the first, from the fixture's seed, whose first clap lands before Cyclone.
 #[test]
 fn a_warrior_shares_the_attack_speed_category_with_cyclone() {
-    let value = fixture("protection-warrior-3-targets-thunderfury");
+    const CLAP: &str = "{SpellID: 11581}";
+    const CYCLONE: &str = "{SpellID: 27648}";
+    let at = |line: &str| -> f64 { line[1..line.find(']').unwrap()].parse().unwrap() };
+    // When Cyclone is first up without the clap, and how often it was gained before.
+    let alone = |logs: &str| -> (f64, usize) {
+        let (mut clap, mut cyclone, mut gains) = (false, false, 0);
+        for line in logs.lines() {
+            for (aura, up) in [(CLAP, &mut clap), (CYCLONE, &mut cyclone)] {
+                if line.contains(&format!("[Target 1] Aura gained: {aura}")) {
+                    *up = true;
+                } else if line.contains(&format!("[Target 1] Aura faded: {aura}")) {
+                    *up = false;
+                }
+            }
+            if line.contains(&format!("[Target 1] Aura gained: {CYCLONE}")) && clap {
+                gains += 1;
+            }
+            if cyclone && !clap {
+                return (at(line), gains);
+            }
+        }
+        (f64::INFINITY, gains)
+    };
+    let swings_before = |logs: &str, end: f64| -> Vec<String> {
+        logs.lines()
+            .filter(|line| line.contains("] [Target 1] Casting {OtherID: 3, Tag: 1}"))
+            .filter(|line| at(line) < end)
+            .map(str::to_string)
+            .collect()
+    };
+    let mut value = fixture("protection-warrior-3-targets-thunderfury");
+    let seed = value["sim"]["seed"].as_i64().unwrap();
+    let (logs, end) = (seed..seed + 100)
+        .find_map(|candidate| {
+            value["sim"]["seed"] = json!(candidate);
+            let logs = first_fight_log(value.clone());
+            let (end, gains) = alone(&logs);
+            (gains > 0).then_some((logs, end))
+        })
+        .expect("a seed whose first Thunder Clap lands before Cyclone");
     let kinds: Vec<&str> = value["effects"]
         .as_array()
         .unwrap()
@@ -278,10 +319,9 @@ fn a_warrior_shares_the_attack_speed_category_with_cyclone() {
         "trigger_aura",
         "Thunderfury Proc",
     )["slow_multiplier"] = json!(1.0);
-    assert_eq!(
-        target_swings(&first_fight_log(value.clone())),
-        target_swings(&first_fight_log(unslowed))
-    );
+    let swings = swings_before(&logs, end);
+    assert!(swings.len() > 10, "{end}: {swings:?}");
+    assert_eq!(swings, swings_before(&first_fight_log(unslowed), end));
     assert_eq!(
         memberships("Thunder Clap (Player)")[0]["category"],
         "AtkSpdReduction"

@@ -6,6 +6,7 @@ mod effects;
 pub(crate) mod flametongue;
 pub(crate) mod generated;
 pub(crate) mod paladin;
+pub(crate) mod pet_buffs;
 pub(crate) mod support;
 mod windfury_effect;
 

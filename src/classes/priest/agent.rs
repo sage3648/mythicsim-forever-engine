@@ -260,6 +260,7 @@ impl PriestAgent {
                     attack_power_without_deps,
                     attack_power_dependency_terms,
                     stats,
+                    fight_end_stats,
                     mana_restore_aura,
                     mana_restore_fraction,
                     mana_restore_action_id,
@@ -277,6 +278,7 @@ impl PriestAgent {
                         *attack_power_without_deps,
                         attack_power_dependency_terms,
                         stats,
+                        fight_end_stats,
                     )?;
                     fight.agent.shadowfiend = Some(Rc::new(bound));
                 }

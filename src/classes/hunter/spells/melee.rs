@@ -5,8 +5,9 @@
 //! lifts the dual wield miss penalty, and the next swing casts Raptor Strike instead when it
 //! can, which casts its hit and ends the queue. Mongoose Bite needs the Defensive State window,
 //! which it closes; a landed bite with Lacerating Strikes bleeds a share of its damage over
-//! the bleed's ticks. A new bite replaces a running bleed with its own share, nothing rolling
-//! over, as Go's does since its patch 87.
+//! the bleed's ticks. A new bite on a running bleed rolls what the bleed still owes into the new
+//! one and keeps its tick timer, as Go's does since its patch 132 (Forever's Deep Wounds does the
+//! same); the bleed's value is written after its cast, as since patch 87.
 
 use crate::core::fight::{
     melee::PhysicalOutcome, Agent, AuraRef, DotId, Fight, Outcome, Side, SpellId,
@@ -139,7 +140,8 @@ impl MongooseBite {
     }
 
     /// The bite's `ApplyEffects`: the window closes, then the flat damage on a normalized main
-    /// hand swing. Returns the bleed's snapshot when a landed bite procs Lacerating Strikes.
+    /// hand swing. Returns the bleed's spell and the bite's damage when a landed bite procs
+    /// Lacerating Strikes.
     pub(crate) fn apply<A: Agent>(
         &self,
         fight: &mut Fight<A>,
@@ -151,18 +153,36 @@ impl MongooseBite {
         let damage = self.base_damage + fight.mh_normalized_weapon_damage(attack_power);
         let result = fight.calc_physical_damage(spell, target, damage, WEAPON_SPECIAL);
         fight.deal_damage(spell, result, false);
-        let (bleed, dot, share, _) = self.lacerating?;
+        let (bleed, _, _, _) = self.lacerating?;
         if !result.landed() {
             return None;
         }
-        let ticks = fight.dots[dot].base_tick_count;
-        Some((bleed, result.damage * share / f64::from(ticks)))
+        Some((bleed, result.damage))
     }
 
-    /// The bleed's cast: Go `Dot.Apply`, without a snapshot of its own.
+    /// Go `Dot.OutstandingDmg` of the bleed: its stored base for each tick left while it runs.
+    pub(crate) fn outstanding_bleed<A: Agent>(&self, fight: &Fight<A>) -> f64 {
+        let (_, dot, _, _) = self.lacerating.expect("Lacerating Strikes is bound");
+        if fight.aura(fight.dots[dot].aura).active {
+            self.bleed.0 * f64::from(fight.dots[dot].remaining_ticks)
+        } else {
+            0.0
+        }
+    }
+
+    /// Go `procLaceratingStrikes` after the cast (patch 132): what the bleed owed and the bite's
+    /// share, spread over the ticks the refreshed bleed has left. The reference arm64 build fuses
+    /// `owed + damage*0.4` into one multiply-add, as it does Deep Wounds'.
+    pub(crate) fn rolled_bleed<A: Agent>(&self, fight: &Fight<A>, owed: f64, damage: f64) -> f64 {
+        let (_, dot, share, _) = self.lacerating.expect("Lacerating Strikes is bound");
+        damage.mul_add(share, owed) / f64::from(fight.dots[dot].remaining_ticks)
+    }
+
+    /// The bleed's cast: Go `Dot.ApplyKeepingTickTimer`, without a snapshot of its own. A
+    /// running bleed keeps its next tick; a new one applies as usual.
     pub(crate) fn apply_bleed<A: Agent>(&self, fight: &mut Fight<A>) {
         let (_, dot, _, _) = self.lacerating.expect("Lacerating Strikes is bound");
-        fight.apply_dot(dot);
+        fight.apply_dot_keeping_tick_timer(dot);
     }
 
     /// A bleed tick on its stored base and multiplier.

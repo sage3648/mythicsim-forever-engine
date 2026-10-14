@@ -223,3 +223,98 @@ fn the_ui_default_fields_prepare_as_without_them() {
         );
     }
 }
+
+/// Go imbue_swap.go (fork patch 133): `mh_imbue_swap_id` names the stone or oil on the item
+/// swap's main hand weapon, and counts only with an item swap that has a main hand weapon of its
+/// own. Rust refuses item swapping, so the field changes nothing it prepares: an Enhancement
+/// Shaman with an Elemental Sharpening Stone prepares the same with Brilliant Wizard Oil named
+/// for a swap weapon it does not have, and an item swap is still refused.
+#[test]
+fn the_swap_weapons_stone_needs_an_item_swap() {
+    let id = "production-enhancement-shaman";
+    let cases = manifest().cases;
+    let case = cases.iter().find(|case| case.id == id).unwrap();
+    let mut request: Value = serde_json::from_slice(&request_bytes(case)).unwrap();
+    request["raid"]["parties"][0]["players"][0]["consumables"]["mhImbueId"] = 18262.into();
+    let stone = forever_engine::prepare_json(&serde_json::to_vec(&request).unwrap(), id)
+        .unwrap_or_else(|err| panic!("{id} with a stone: {err}"));
+    request["raid"]["parties"][0]["players"][0]["consumables"]["mhImbueSwapId"] = 25122.into();
+    let mut swap = forever_engine::prepare_json(&serde_json::to_vec(&request).unwrap(), id)
+        .unwrap_or_else(|err| panic!("{id} with a swap weapon's oil: {err}"));
+    swap["request_sha256"] = stone["request_sha256"].clone();
+    let mut diffs = Vec::new();
+    differences(&stone, &swap, "", &mut diffs, 12);
+    assert!(diffs.is_empty(), "{diffs:?}");
+
+    let player = &mut request["raid"]["parties"][0]["players"][0];
+    player["enableItemSwap"] = true.into();
+    player["itemSwap"] = serde_json::json!({"items": [{"id": 17182}]});
+    let refused = forever_engine::prepare_json(&serde_json::to_vec(&request).unwrap(), id)
+        .expect_err("an item swap is refused");
+    assert!(
+        refused.to_string().contains("item swapping is unsupported"),
+        "{refused}"
+    );
+}
+
+/// Go pet_buffs.go (fork patch 131, `TestImpGetsManaSpringTotemOnly`): of a raid's mana buffs, a
+/// summoned Imp gets only the party's Mana Spring Totem, whose aura the client lets reach a pet:
+/// 10 mana every 2 seconds, kept while it casts. Arcane Brilliance, Prayer of Spirit, Gift of the
+/// Wild and the Greater Blessings land on players only.
+#[test]
+fn a_summoned_imp_gets_mana_spring_totem_only() {
+    let id = "destruction-warlock-broad";
+    let cases = manifest().cases;
+    let case = cases.iter().find(|case| case.id == id).unwrap();
+    let request: Value = serde_json::from_slice(&request_bytes(case)).unwrap();
+    assert_eq!(
+        request["raid"]["parties"][0]["buffs"]["manaSpringTotem"],
+        "TristateEffectRegular"
+    );
+    let imp = |request: &Value| -> Value {
+        let prepared = forever_engine::prepare_json(&serde_json::to_vec(request).unwrap(), id)
+            .unwrap_or_else(|err| panic!("{id}: {err}"));
+        prepared["pets"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|pet| pet["name"] == "Imp")
+            .unwrap()
+            .clone()
+    };
+    let with = imp(&request);
+    let mut without_totem = request.clone();
+    without_totem["raid"]["parties"][0]["buffs"]
+        .as_object_mut()
+        .unwrap()
+        .remove("manaSpringTotem");
+    let without = imp(&without_totem);
+    assert_eq!(with["stats"]["MP5"], 25.0);
+    assert_eq!(without["stats"]["MP5"], 0.0);
+    for stat in ["Intellect", "Spirit", "Stamina", "Mana"] {
+        assert_eq!(with["stats"][stat], without["stats"][stat], "{stat}");
+    }
+    assert_eq!(with["mana"]["regen_per_second_casting"], 5.0);
+    assert_eq!(without["mana"]["regen_per_second_casting"], 0.0);
+    let labels = |pet: &Value| -> Vec<String> {
+        pet["auras"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|aura| aura["label"].as_str().unwrap().to_string())
+            .collect()
+    };
+    assert!(labels(&with).contains(&"Mana Spring Totem (External)".to_string()));
+    for buff in [
+        "Arcane Brilliance",
+        "Prayer of Spirit",
+        "Gift of the Wild",
+        "Greater Blessing",
+    ] {
+        assert!(
+            !labels(&with).iter().any(|label| label.starts_with(buff)),
+            "{buff}: {:?}",
+            labels(&with)
+        );
+    }
+}

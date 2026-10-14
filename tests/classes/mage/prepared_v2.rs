@@ -557,7 +557,7 @@ fn check_golden(case: &Golden, golden: &GoldenFile) -> Result<(), String> {
 }
 
 /// Every accepted case with a golden is simulated and compared, spread over the machine's
-/// cores. A case's outcome depends only on its own input, so the order the threads take them
+/// cores, or over `RUST_TEST_THREADS` workers when it is set. A case's outcome depends only on its own input, so the order the threads take them
 /// in changes nothing; failures are reported together, in manifest order, each by case id.
 #[test]
 fn supported_cases_match_pinned_go_goldens() {
@@ -570,7 +570,11 @@ fn supported_cases_match_pinned_go_goldens() {
         .filter_map(|case| case.go_result.as_ref().map(|golden| (case, golden)))
         .collect();
     assert!(cases.len() >= 5);
-    let workers = std::thread::available_parallelism().map_or(1, |count| count.get());
+    let workers = std::env::var("RUST_TEST_THREADS")
+        .ok()
+        .and_then(|count| count.parse::<usize>().ok())
+        .filter(|&count| count > 0)
+        .unwrap_or_else(|| std::thread::available_parallelism().map_or(1, |count| count.get()));
     let next = AtomicUsize::new(0);
     let outcomes: Vec<std::sync::Mutex<Option<Result<(), String>>>> =
         cases.iter().map(|_| Default::default()).collect();

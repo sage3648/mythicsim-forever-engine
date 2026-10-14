@@ -790,10 +790,14 @@ impl Agent for HunterAgent {
             HunterSpell::RaptorStrikeHit => Self::raptor(fight).apply_hit(fight, spell, target),
             HunterSpell::MongooseBite => {
                 let bite = Self::mongoose(fight);
-                if let Some((bleed, base)) = bite.apply(fight, spell, target) {
-                    // Go procLaceratingStrikes (patch 87): the bleed is cast first, replacing a
-                    // running one, and its snapshot is written after.
+                if let Some((bleed, damage)) = bite.apply(fight, spell, target) {
+                    // Go procLaceratingStrikes (patches 87 and 132): what a running bleed still
+                    // owes is read first, the bleed is cast, keeping its tick timer, and its
+                    // snapshot is written after, the owed damage and the bite's share over the
+                    // ticks left.
+                    let owed = bite.outstanding_bleed(fight);
                     fight.cast(bleed, target);
+                    let base = bite.rolled_bleed(fight, owed, damage);
                     if let Some(bound) = fight.agent.mongoose_bite.as_mut() {
                         bound.bleed = (base, 1.0);
                     }

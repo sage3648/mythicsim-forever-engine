@@ -1219,6 +1219,10 @@ pub(crate) const ATTR_EX_2_CASTABLE_IN_CASTER_FORM: u32 = 0x80000;
 /// Command damage, every Judgement, Stormstrike's bonus hits and Sweeping Strikes carry it.
 pub(crate) const ATTR_EX_3_NOT_A_PROC: u32 = 0x200;
 pub(crate) const ATTR_EX_3_CAN_PROC_FROM_PROCS: u32 = 0x4000000;
+/// The aura lands on players only, never on pets: Gift of the Wild, Arcane Brilliance, the
+/// Greater Blessings, Devotion Aura, Battle Shout. A party aura without it reaches the party's
+/// pets as well (Retribution Aura, Mana Spring Totem, Trueshot Aura).
+pub(crate) const ATTR_EX_3_ONLY_TARGET_PLAYERS: u32 = 0x100;
 /// Weapon procs (Player::CastItemCombatSpell) ignore hits of this spell, as do auras marked
 /// ATTR_EX_6_AURA_IS_WEAPON_PROC. In TBC that is the Seal of Blood, Righteousness and Martyr
 /// damage spells plus Gouge, Sap, Scatter Shot and Maim.

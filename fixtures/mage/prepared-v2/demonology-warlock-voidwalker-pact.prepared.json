@@ -2,7 +2,7 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "d2409ccd043e9d3dd24232088f9abf49a7d19f64",
+    "engine_revision": "b477c15744bf4640e6a183f5be95a36511cd788d",
     "client_build": "1.60.1.70338",
     "exporter": "tools/oracle-v2"
   },
@@ -3426,7 +3426,7 @@
         "Health": 2484,
         "HolyDamage": 0,
         "Intellect": 70,
-        "MP5": 0,
+        "MP5": 25,
         "Mana": 1225.8999999999999,
         "MeleeCritRating": 0,
         "MeleeHasteRating": 0,
@@ -3592,6 +3592,33 @@
           "exclusive_effects": 0
         },
         {
+          "label": "Mana Spring Totem (External)",
+          "tag": "ManaSpringTotem",
+          "action_id": {
+            "spell_id": 10494,
+            "tag": -1
+          },
+          "duration_ns": 9223372036854775807,
+          "max_stacks": 0,
+          "active": true,
+          "stacks": 0,
+          "callbacks": [
+            "on_reset",
+            "on_gain",
+            "on_expire"
+          ],
+          "icd": null,
+          "exclusive_effects": 1,
+          "exclusive_memberships": [
+            {
+              "category": "ManaSpringTotemMP5Add",
+              "single_aura": false,
+              "priority": 25,
+              "position": 0
+            }
+          ]
+        },
+        {
           "label": "Movement",
           "action_id": {
             "other_id": "OtherActionMove"
@@ -3614,8 +3641,8 @@
       "cast_speed": 1,
       "mana": {
         "max": 1225.8999999999999,
-        "regen_per_second_casting": 0,
-        "regen_per_second_not_casting": 22.5
+        "regen_per_second_casting": 5,
+        "regen_per_second_not_casting": 27.5
       },
       "attack_table": {
         "base_spell_miss_chance": 0.17,
@@ -4041,7 +4068,7 @@
         }
       ],
       "summon_log": [
-        "Pet stats: {\"Strength\": 129.000,\"Agility\": 85.000,\"Stamina\": 234.000,\"Intellect\": 70.000,\"SpellDamage\": 104.800,\"Spirit\": 150.000,\"AttackPower\": 334.160,\"Armor\": 170.000,\"Health\": 2484.000,\"Mana\": 1225.900,\"PhysicalHitPercent\": 7.000,\"SpellHitPercent\": 7.000,\"PhysicalCritPercent\": 18.412,\"SpellCritPercent\": 14.162,}",
+        "Pet stats: {\"Strength\": 129.000,\"Agility\": 85.000,\"Stamina\": 234.000,\"Intellect\": 70.000,\"SpellDamage\": 104.800,\"Spirit\": 150.000,\"AttackPower\": 334.160,\"Armor\": 170.000,\"Health\": 2484.000,\"Mana\": 1225.900,\"MP5\": 25.000,\"PhysicalHitPercent\": 7.000,\"SpellHitPercent\": 7.000,\"PhysicalCritPercent\": 18.412,\"SpellCritPercent\": 14.162,}",
         "Pet inherited stats: {\"SpellDamage\": 44.800,\"AttackPower\": 76.160,\"PhysicalHitPercent\": 7.000,\"SpellHitPercent\": 7.000,\"PhysicalCritPercent\": 14.162,\"SpellCritPercent\": 14.162,}"
       ],
       "dismiss_log": "{\"Strength\": 129.000,\"Agility\": 85.000,\"Stamina\": 234.000,\"Intellect\": 70.000,\"SpellDamage\": 0.000,\"Spirit\": 150.000,\"AttackPower\": 258.000,\"Armor\": 170.000,\"Health\": 2484.000,\"Mana\": 1225.900,\"PhysicalCritPercent\": 4.250,}",
@@ -4083,6 +4110,7 @@
         "AttackPower": 76.16000000000001,
         "Health": -180,
         "Intellect": 70,
+        "MP5": 25,
         "Mana": 1066,
         "PhysicalCritPercent": 14.1615,
         "PhysicalHitPercent": 7,
@@ -4240,6 +4268,10 @@
           "value": 1225.8999999999999
         },
         {
+          "stat": "MP5",
+          "value": 0
+        },
+        {
           "stat": "PhysicalHitPercent",
           "value": 0
         },
@@ -4281,6 +4313,12 @@
           "aura": "Demonic Knowledge",
           "stats": {
             "SpellDamage": -60
+          }
+        },
+        {
+          "aura": "Mana Spring Totem (External)",
+          "stats": {
+            "MP5": -25
           }
         }
       ]
@@ -4556,11 +4594,26 @@
           "spell_id": 412732
         },
         {
+          "spell_id": 10494,
+          "tag": -1
+        },
+        {
           "other_id": "OtherActionMove"
         }
       ],
       "dismissed_at_reset": false,
-      "dismissed_log": "{\"Strength\": 122.000,\"Agility\": 35.000,\"Stamina\": 86.000,\"Intellect\": 264.000,\"SpellDamage\": 60.000,\"Spirit\": 260.000,\"Armor\": 70.000,\"Health\": 782.000,\"Mana\": 662.400,\"SpellCritPercent\": 4.435,}",
+      "dismissed_log": "{\"Strength\": 122.000,\"Agility\": 35.000,\"Stamina\": 86.000,\"Intellect\": 264.000,\"SpellDamage\": 60.000,\"Spirit\": 260.000,\"Armor\": 70.000,\"Health\": 782.000,\"Mana\": 662.400,\"MP5\": 25.000,\"SpellCritPercent\": 4.435,}",
+      "exclusive_effects": [
+        {
+          "aura": {
+            "spell_id": 10494,
+            "tag": -1
+          },
+          "categories": [
+            "ManaSpringTotemMP5Add"
+          ]
+        }
+      ],
       "kind": "inert_pet",
       "label": "demonology-warlock (#1) - Imp",
       "mana_bar": true,
@@ -4602,6 +4655,10 @@
         },
         {
           "spell_id": 412732
+        },
+        {
+          "spell_id": 10494,
+          "tag": -1
         }
       ],
       "reason": "the warlock summoned another demon or none",
@@ -4619,11 +4676,26 @@
           "spell_id": 412732
         },
         {
+          "spell_id": 10494,
+          "tag": -1
+        },
+        {
           "other_id": "OtherActionMove"
         }
       ],
       "dismissed_at_reset": false,
-      "dismissed_log": "{\"Strength\": 129.000,\"Agility\": 85.000,\"Stamina\": 234.000,\"Intellect\": 70.000,\"SpellDamage\": 60.000,\"Spirit\": 150.000,\"AttackPower\": 258.000,\"Armor\": 170.000,\"Health\": 2484.000,\"Mana\": 1225.900,\"PhysicalCritPercent\": 4.250,}",
+      "dismissed_log": "{\"Strength\": 129.000,\"Agility\": 85.000,\"Stamina\": 234.000,\"Intellect\": 70.000,\"SpellDamage\": 60.000,\"Spirit\": 150.000,\"AttackPower\": 258.000,\"Armor\": 170.000,\"Health\": 2484.000,\"Mana\": 1225.900,\"MP5\": 25.000,\"PhysicalCritPercent\": 4.250,}",
+      "exclusive_effects": [
+        {
+          "aura": {
+            "spell_id": 10494,
+            "tag": -1
+          },
+          "categories": [
+            "ManaSpringTotemMP5Add"
+          ]
+        }
+      ],
       "kind": "inert_pet",
       "label": "demonology-warlock (#1) - Voidwalker",
       "mana_bar": true,
@@ -4674,6 +4746,10 @@
         },
         {
           "spell_id": 412732
+        },
+        {
+          "spell_id": 10494,
+          "tag": -1
         }
       ],
       "reason": "the warlock summoned another demon or none",
@@ -4691,11 +4767,26 @@
           "spell_id": 412732
         },
         {
+          "spell_id": 10494,
+          "tag": -1
+        },
+        {
           "other_id": "OtherActionMove"
         }
       ],
       "dismissed_at_reset": false,
-      "dismissed_log": "{\"Strength\": 129.000,\"Agility\": 85.000,\"Stamina\": 234.000,\"Intellect\": 70.000,\"SpellDamage\": 60.000,\"Spirit\": 150.000,\"AttackPower\": 258.000,\"Armor\": 170.000,\"Health\": 2484.000,\"Mana\": 1225.900,\"PhysicalCritPercent\": 4.250,}",
+      "dismissed_log": "{\"Strength\": 129.000,\"Agility\": 85.000,\"Stamina\": 234.000,\"Intellect\": 70.000,\"SpellDamage\": 60.000,\"Spirit\": 150.000,\"AttackPower\": 258.000,\"Armor\": 170.000,\"Health\": 2484.000,\"Mana\": 1225.900,\"MP5\": 25.000,\"PhysicalCritPercent\": 4.250,}",
+      "exclusive_effects": [
+        {
+          "aura": {
+            "spell_id": 10494,
+            "tag": -1
+          },
+          "categories": [
+            "ManaSpringTotemMP5Add"
+          ]
+        }
+      ],
       "kind": "inert_pet",
       "label": "demonology-warlock (#1) - Felhunter",
       "mana_bar": true,
@@ -4746,6 +4837,10 @@
         },
         {
           "spell_id": 412732
+        },
+        {
+          "spell_id": 10494,
+          "tag": -1
         }
       ],
       "reason": "the warlock summoned another demon or none",

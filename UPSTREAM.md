@@ -4,7 +4,7 @@
 
 | Source | Role | Baseline |
 | --- | --- | --- |
-| [MythicSim Go engine](https://github.com/sage3648/mythicsim-forever-engine-go) | Fixtures and live reference | `d2409ccd043e9d3dd24232088f9abf49a7d19f64`, on community base `f7598154eb8a138831290b34d4d321a532295224` |
+| [MythicSim Go engine](https://github.com/sage3648/mythicsim-forever-engine-go) | Fixtures and live reference | `b477c15744bf4640e6a183f5be95a36511cd788d`, on community base `f7598154eb8a138831290b34d4d321a532295224` |
 | [Community Forever engine](https://github.com/ElliotWood/Forever) | Changes to review for applicability | Adopted base `f4b776b4f41d5c7799b8141697a2c9e67c89d426`; reviewed through `f7598154eb8a138831290b34d4d321a532295224` (2026-10-10) |
 
 Go is a reference implementation, not proof of live-game correctness. Forever can
@@ -237,6 +237,46 @@ reasons. The rotation remaining sweep draws its aura reads from the base fixture
 the Survival Hunter fixtures now prepare Strider Kick, so its generator draws 10 of their variants
 differently; the 10 the record lists were compared, and the 10 it now draws match Go as well
 ([record](validation/2026-10-13-reference-pin-d2409ccd0-sweeps.json)).
+
+The pin moved from `d2409ccd0` to `b477c1574` on 2026-10-14, the fork's patches 131 to 134 (branch
+`mythicsim/oct14-integration`, the engine production runs from that day). The community base
+`f7598154e` and client build 70338 did not move, so the ledger has no new commit. 107 of the 595 Go
+goldens changed, 27 of them in DPS:
+
+- Pets: a party aura that lacks the client's `ATTR_EX_3_ONLY_TARGET_PLAYERS` reaches the party's
+  summoned pets (patch 131): Mana Spring Totem, Trueshot Aura and the Atiesh auras, not the raid-wide
+  buffs or the Greater Blessings, which carry it. The Warlocks' Imp regains Mana Spring's mana while it
+  casts (3 goldens move in DPS), and every Priest's Shadowfiend, every Warlock's demons and the Beast
+  Mastery Hunters' pets report the auras in their metrics and logs.
+- Hunter: a Mongoose Bite on a running Lacerating Strikes bleed rolls what the bleed still owes into
+  the new one and keeps its tick timer, as Forever's Deep Wounds does (patch 132). 11 Survival goldens
+  move, a melee weave wearing Blackhand's Breadth through patch 134 as well.
+- Items: 13 items take their client equip spells' typed hit and crit or the planner's stats (patch 134):
+  Blackhand's Breadth's 1% melee and ranged crit and Eye of the Beast's 1% spell crit replace 2% to every
+  pool, Sulfuras gains 12 Strength and 12 Stamina, Thunderfury 5 Agility and 8 Stamina. 13 more goldens
+  move.
+- Shaman: Rockbiter, Flametongue and a main hand stone follow the weapon in the hand at an item swap,
+  and the request gains `ConsumesSpec.mh_imbue_swap_id` (patch 133). Rust refuses item swapping, so
+  this changes nothing it prepares; the field is read nowhere without one, as in Go.
+
+Preparation follows all of it: the pet party auras, the item data the import brings, and the field.
+The exporter now describes what a pet's party aura adds that it used to refuse or leave out: an inert
+pet's permanent aura whose exclusive effects are each alone in their category, such as Mana Spring
+Totem's MP5 on a Warlock's other demons, reports their uptime with the aura's (`exclusive_effects`);
+a dynamic pet's dismissal line tracks a permanent aura's stats; and any other pet logs its stats with
+its permanent auras still up when it is dismissed at the reset or during a fight
+(`active_dismiss_log`), since Go's `expireAll` leaves them up, while a Shadowfiend still out at the
+fight's end logs them expired (`fight_end_stats`). The fight runtime follows Lacerating Strikes'
+roll-over and reports and logs the pets' auras.
+
+Rust matches all of them: all 594 accepted fixtures with a Go golden, and preparation writes exactly
+what the exporter writes for every one of the 595. The recorded sweeps ran again on the production Mac,
+four engine processes at background priority: all 14,341 variants of the 124 records the d2409ccd0
+rerun compared, byte for byte the same requests. 14,278 match Go, Rust refuses 63 and none differ, the
+counts of the d2409ccd0 rerun record by record, the same 63 refused for the same reasons. Two Shadowfiend
+variants that end with the pet out differed at first, the fight's end logging Mana Spring Totem's MP5,
+until the Shadowfiend's `fight_end_stats`
+([record](validation/2026-10-14-reference-pin-b477c1574-sweeps.json)).
 
 ## Ledger
 

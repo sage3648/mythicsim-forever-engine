@@ -73,6 +73,14 @@ impl Spell {
         )
     }
 
+    /// Whether the spell's aura lands on players only, so that a party aura passes over the pets.
+    pub(crate) fn only_targets_players(&self) -> bool {
+        self.has_attr(
+            dbcenums::ATTR_INDEX_EX_3,
+            dbcenums::ATTR_EX_3_ONLY_TARGET_PLAYERS,
+        )
+    }
+
     /// Whether the client bars the spell from missing (and from being dodged, parried or
     /// blocked).
     pub(crate) fn always_hits(&self) -> bool {

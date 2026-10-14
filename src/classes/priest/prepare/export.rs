@@ -228,6 +228,32 @@ fn shadowfiend_effect(priest: &Priest, env: &Environment, notes: &mut Vec<String
         .filter(|stat| before[*stat] != 0.0 || *stat == Stat::AttackPower)
         .map(|stat| json!({"stat": stat.name(), "value": before[stat]}))
         .collect();
+    // The stats the dismissal at the fight's end prints: Go's doneIteration expires the pet's
+    // permanent auras before it dismisses the pet, so a party aura on the pet (patch 131), such
+    // as Mana Spring Totem, has left the line then, from a separate reset simulation.
+    let mut fade = env.fresh();
+    let fade_pet = fade.sim.unit(fade.player).pets[0];
+    for aura in fade.sim.unit(fade_pet).auras.clone() {
+        let state = fade.sim.aura(aura);
+        if state.active && state.duration == crate::prepare::sim::NEVER_EXPIRES {
+            fade.sim.deactivate(aura);
+        }
+    }
+    let faded = fade.sim.unit(fade_pet).stats;
+    if faded[Stat::AttackPower] != before[Stat::AttackPower] {
+        notes.push("the Shadowfiend's permanent auras change its attack power".to_string());
+    }
+    let mut fight_end = Vec::new();
+    for stat in Stat::ALL {
+        if before[stat] != 0.0 || stat == Stat::AttackPower {
+            fight_end.push(json!({"stat": stat.name(), "value": faded[stat]}));
+        } else if faded[stat] != 0.0 {
+            notes.push(format!(
+                "the Shadowfiend's permanent auras' expiry adds {}",
+                stat.name()
+            ));
+        }
+    }
     let restore = env.sim.get_aura(pet, "Shadowfiend Mana Restore");
     if restore.is_none() {
         notes.push("the Shadowfiend has no mana restore aura".to_string());
@@ -237,7 +263,7 @@ fn shadowfiend_effect(priest: &Priest, env: &Environment, notes: &mut Vec<String
         .shadowfiend_aura
         .map(|aura| env.sim.aura(aura))
         .expect("the summon registered its aura");
-    json!({
+    let mut effect = json!({
         "kind": "shadowfiend", "spell_id": rank.id, "aura": aura.label,
         "duration_ns": aura.duration, "pet": env.sim.unit(pet).label,
         "attack_power_coefficient": coefficient,
@@ -245,7 +271,11 @@ fn shadowfiend_effect(priest: &Priest, env: &Environment, notes: &mut Vec<String
         "attack_power_dependency_terms": terms,
         "stats": order, "mana_restore_aura": label, "mana_restore_fraction": 0.05,
         "mana_restore_action_id": 401988,
-    })
+    });
+    if faded != before {
+        effect["fight_end_stats"] = Value::Array(fight_end);
+    }
+    effect
 }
 
 /// `priestEffects`.

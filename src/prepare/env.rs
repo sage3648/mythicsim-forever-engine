@@ -355,6 +355,10 @@ impl Environment {
             .register_battle_squawk(unit, party.i32("battle_squawks"));
         for pet in self.sim.unit(unit).pets.clone() {
             self.sim.unit_mut(pet).health_bar = true;
+            // A guardian is not in the party; a summoned pet is (fork patch 131).
+            if !self.sim.pet_data(pet).is_guardian {
+                super::buffs::pet_buffs::apply_pet_party_buffs(self, pet, &party_buffs)?;
+            }
         }
         Ok(())
     }

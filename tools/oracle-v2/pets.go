@@ -45,9 +45,13 @@ type Pet struct {
 	MetricsActions []MetricsAction `json:"metrics_actions"`
 	// pet.go Enable's log lines after "Dynamic stat change": the pet's stats and what it
 	// inherited; and Disable's stats line once the inheritance is gone.
-	SummonLog   []string `json:"summon_log"`
-	DismissLog  string   `json:"dismiss_log"`
-	DynamicStat bool     `json:"dynamic_stats"`
+	SummonLog  []string `json:"summon_log"`
+	DismissLog string   `json:"dismiss_log"`
+	// Disable's stats line while the pet's permanent auras are still up, at the reset or during
+	// a fight, where it differs from the fight's end: a party aura on the pet since patch 131,
+	// such as Mana Spring Totem, adds its stats. Present for a pet without DismissStats.
+	ActiveDismissLog string `json:"active_dismiss_log,omitempty"`
+	DynamicStat      bool   `json:"dynamic_stats"`
 	// Present for a pet with a focus bar and no mana bar.
 	Focus *PetFocus `json:"focus,omitempty"`
 	// Go GetMovementSpeed, for a pet that starts at its owner's distance and moves in.
@@ -287,6 +291,7 @@ func exportPets(request *proto.RaidSimRequest, character *core.Character, target
 		}
 		dismissStats := petDismissStats(request, index)
 		dismiss := dismissStats.FlatString()
+		activeDismiss := petActiveDismissStats(request, index).FlatString()
 		var focus *PetFocus
 		if pet.HasFocusBar() {
 			bar := privateField(&pet.Unit, "focusBar")
@@ -335,9 +340,12 @@ func exportPets(request *proto.RaidSimRequest, character *core.Character, target
 						exported.InheritedStats[s.StatName()] = inherited[s]
 					}
 				}
-				exported.DismissStats = petDismissStatList(dismissStats, exported)
 				exported.AuraStats = petAuraFadeStats(request, index)
+				exported.DismissStats = petDismissStatList(dismissStats, exported)
 			}
+		}
+		if exported := &pets[len(pets)-1]; len(exported.DismissStats) == 0 && activeDismiss != dismiss {
+			exported.ActiveDismissLog = activeDismiss
 		}
 	}
 	return pets
@@ -354,6 +362,12 @@ func petDismissStatList(dismiss stats.Stats, pet *Pet) []DismissStat {
 	}
 	for _, dep := range pet.Dependencies {
 		tracked[dep.Dst] = true
+	}
+	// A permanent aura's stats count until the fight's end expires it.
+	for _, aura := range pet.AuraStats {
+		for name := range aura.Stats {
+			tracked[name] = true
+		}
 	}
 	list := []DismissStat{}
 	for s := stats.Stat(0); s < stats.SimStatsLen; s++ {
@@ -391,6 +405,16 @@ func petAuraFadeStats(request *proto.RaidSimRequest, index int) []PetAuraStats {
 		}
 	}
 	return changes
+}
+
+// The stats Disable logs at the reset or during a fight, the pet's permanent auras still up,
+// from a separate reset simulation.
+func petActiveDismissStats(request *proto.RaidSimRequest, index int) stats.Stats {
+	simulation := core.NewSim(request, simsignals.CreateSignals())
+	simulation.Reset()
+	pet := simulation.Raid.Parties[0].Players[0].GetCharacter().PetAgents[index].GetPet()
+	pet.Disable(simulation)
+	return pet.GetStats()
 }
 
 // The stats Disable logs: the pet's stats once its inheritance is removed, from a separate

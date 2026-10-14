@@ -2,7 +2,7 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "d2409ccd043e9d3dd24232088f9abf49a7d19f64",
+    "engine_revision": "b477c15744bf4640e6a183f5be95a36511cd788d",
     "client_build": "1.60.1.70338",
     "exporter": "tools/oracle-v2"
   },
@@ -3500,7 +3500,7 @@
         "Health": 2734.592,
         "HolyDamage": 0,
         "Intellect": 50,
-        "MP5": 0,
+        "MP5": 25,
         "Mana": 0,
         "MeleeCritRating": 0,
         "MeleeHasteRating": 0,
@@ -3512,7 +3512,7 @@
         "PhysicalCritPercent": 15,
         "PhysicalDamage": 0,
         "PhysicalHitPercent": 0,
-        "RangedAttackPower": 0,
+        "RangedAttackPower": 75,
         "RangedCritPercent": 0,
         "RangedHitPercent": 0,
         "ReducedCritTakenPercent": 0,
@@ -3643,6 +3643,51 @@
           "active": false,
           "stacks": 0,
           "callbacks": [
+            "on_gain",
+            "on_expire"
+          ],
+          "icd": null,
+          "exclusive_effects": 0
+        },
+        {
+          "label": "Mana Spring Totem (External)",
+          "tag": "ManaSpringTotem",
+          "action_id": {
+            "spell_id": 10494,
+            "tag": -1
+          },
+          "duration_ns": 9223372036854775807,
+          "max_stacks": 0,
+          "active": true,
+          "stacks": 0,
+          "callbacks": [
+            "on_reset",
+            "on_gain",
+            "on_expire"
+          ],
+          "icd": null,
+          "exclusive_effects": 1,
+          "exclusive_memberships": [
+            {
+              "category": "ManaSpringTotemMP5Add",
+              "single_aura": false,
+              "priority": 25,
+              "position": 0
+            }
+          ]
+        },
+        {
+          "label": "Trueshot Aura (External)",
+          "action_id": {
+            "spell_id": 20905,
+            "tag": -1
+          },
+          "duration_ns": 9223372036854775807,
+          "max_stacks": 0,
+          "active": true,
+          "stacks": 0,
+          "callbacks": [
+            "on_reset",
             "on_gain",
             "on_expire"
           ],
@@ -4052,7 +4097,7 @@
         }
       ],
       "summon_log": [
-        "Pet stats: {\"Strength\": 136.000,\"Agility\": 100.000,\"Stamina\": 274.000,\"Intellect\": 50.000,\"Spirit\": 80.000,\"AttackPower\": 252.000,\"Armor\": 200.000,\"Health\": 2734.592,\"PhysicalCritPercent\": 15.000,\"SpellCritPercent\": 10.000,}",
+        "Pet stats: {\"Strength\": 136.000,\"Agility\": 100.000,\"Stamina\": 274.000,\"Intellect\": 50.000,\"Spirit\": 80.000,\"AttackPower\": 252.000,\"RangedAttackPower\": 75.000,\"Armor\": 200.000,\"Health\": 2734.592,\"MP5\": 25.000,\"PhysicalCritPercent\": 15.000,\"SpellCritPercent\": 10.000,}",
         "Pet inherited stats: {}"
       ],
       "dismiss_log": "{\"Strength\": 136.000,\"Agility\": 100.000,\"Stamina\": 274.000,\"Intellect\": 50.000,\"Spirit\": 80.000,\"AttackPower\": 252.000,\"Armor\": 200.000,\"Health\": 2734.592,\"PhysicalCritPercent\": 15.000,\"SpellCritPercent\": 10.000,}",
@@ -4068,7 +4113,9 @@
         "AttackPower": -20,
         "Health": -180,
         "Intellect": 50,
+        "MP5": 25,
         "PhysicalCritPercent": 10,
+        "RangedAttackPower": 75,
         "SpellCritPercent": 10,
         "Spirit": 80,
         "Stamina": 274,
@@ -4204,6 +4251,10 @@
           "value": 2734.592
         },
         {
+          "stat": "MP5",
+          "value": 0
+        },
+        {
           "stat": "PhysicalHitPercent",
           "value": 0
         },
@@ -4238,6 +4289,20 @@
         {
           "stat": "ExpertisePercent",
           "value": 0
+        }
+      ],
+      "aura_stats": [
+        {
+          "aura": "Mana Spring Totem (External)",
+          "stats": {
+            "MP5": -25
+          }
+        },
+        {
+          "aura": "Trueshot Aura (External)",
+          "stats": {
+            "RangedAttackPower": -75
+          }
         }
       ]
     }

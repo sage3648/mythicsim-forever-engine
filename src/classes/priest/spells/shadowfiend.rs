@@ -34,6 +34,8 @@ pub(crate) struct Shadowfiend {
     dependency_terms: Vec<f64>,
     /// The pet's stats in Go's order, which its summon and dismissal lines print.
     stats: Vec<NamedStat>,
+    /// The same stats once the fight's end has expired the pet's permanent auras.
+    fight_end_stats: Vec<NamedStat>,
 }
 
 impl Shadowfiend {
@@ -46,8 +48,21 @@ impl Shadowfiend {
 
     /// Go `Stats.FlatString` of the pet with this attack power.
     fn stats_line(&self, attack_power: f64) -> String {
+        Self::line(&self.stats, attack_power)
+    }
+
+    /// The line at the fight's end, once the pet's permanent auras have expired.
+    fn fight_end_line(&self, attack_power: f64) -> String {
+        if self.fight_end_stats.is_empty() {
+            self.stats_line(attack_power)
+        } else {
+            Self::line(&self.fight_end_stats, attack_power)
+        }
+    }
+
+    fn line(stats: &[NamedStat], attack_power: f64) -> String {
         let mut line = String::from("{");
-        for stat in &self.stats {
+        for stat in stats {
             let value = if stat.stat == "AttackPower" {
                 attack_power
             } else {
@@ -75,6 +90,7 @@ pub(crate) fn bind<A: Agent>(
     attack_power_without_deps: f64,
     dependency_terms: &[f64],
     stats: &[NamedStat],
+    fight_end_stats: &[NamedStat],
 ) -> Result<Shadowfiend, String> {
     let Some(side) = fight
         .pet_side(pet)
@@ -105,6 +121,7 @@ pub(crate) fn bind<A: Agent>(
         attack_power_without_deps: Cell::new(attack_power_without_deps),
         dependency_terms: dependency_terms.to_vec(),
         stats: stats.to_vec(),
+        fight_end_stats: fight_end_stats.to_vec(),
     })
 }
 
@@ -131,7 +148,11 @@ pub(crate) fn summon<A: Agent>(fight: &mut Fight<A>, shadowfiend: &Shadowfiend) 
             format!("Pet stats: {}", shadowfiend.stats_line(attack_power)),
             format!("Pet inherited stats: {inherited_line}"),
         ];
-        pet.dismiss_log = shadowfiend.stats_line(shadowfiend.attack_power(dismissed));
+        // The dismissal at its timeout keeps the pet's permanent auras up; the fight's end has
+        // expired them.
+        let dismissed = shadowfiend.attack_power(dismissed);
+        pet.active_dismiss_log = Some(shadowfiend.stats_line(dismissed));
+        pet.dismiss_log = shadowfiend.fight_end_line(dismissed);
         fight.activate_aura(shadowfiend.restore_aura);
     }
     fight.summon_pet(shadowfiend.pet, shadowfiend.duration);

@@ -239,6 +239,15 @@ pub struct Aura {
     pub exclusive_memberships: Vec<ExclusiveMembership>,
 }
 
+/// An inert pet's permanent aura and the categories of its exclusive effects, in the aura's
+/// order. Go's aura metrics report each effect's uptime under its category.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct InertPetExclusiveEffects {
+    pub aura: ActionId,
+    pub categories: Vec<String>,
+}
+
 /// One exclusive effect of an aura: its category, whether the category holds a single aura,
 /// the effect's bid after the reset and its position among the category's effects, which
 /// settles a tie for the highest bid.
@@ -776,6 +785,11 @@ pub struct Pet {
     pub summon_log: Vec<String>,
     /// The stats line Go's Disable logs once the inheritance is gone.
     pub dismiss_log: String,
+    /// The stats line Go's Disable logs while the pet's permanent auras are still up, at the
+    /// reset or during a fight, where it differs from the fight's end: a party aura on the pet
+    /// adds its stats (Go patch 131). Only for a pet without `dismiss_stats`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub active_dismiss_log: Option<String>,
     /// Go `isDynamic`: the pet follows its owner's stat changes.
     pub dynamic_stats: bool,
     /// A focus bar, for a pet without a mana bar.
@@ -2220,6 +2234,10 @@ pub enum Effect {
         attack_power_without_deps: f64,
         attack_power_dependency_terms: Vec<f64>,
         stats: Vec<NamedStat>,
+        /// The same stats once the fight's end has expired the pet's permanent auras, where a
+        /// party aura on the pet changes them (Go patch 131); its attack power is unchanged.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        fight_end_stats: Vec<NamedStat>,
         mana_restore_aura: String,
         mana_restore_fraction: f64,
         mana_restore_action_id: i32,
@@ -2327,6 +2345,11 @@ pub enum Effect {
         /// registration order.
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
         permanent_auras: Vec<ActionId>,
+        /// The permanent auras with exclusive effects, each effect alone in its category on
+        /// the pet, so that it holds the category while the aura is up: a party aura that
+        /// reaches the pet, such as Mana Spring Totem (Go patch 131).
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        exclusive_effects: Vec<InertPetExclusiveEffects>,
         dismissed_log: String,
         reason: String,
         /// Whether each reset logs its dismissal, as when its agent's Reset disables it.

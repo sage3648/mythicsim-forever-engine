@@ -164,6 +164,12 @@ impl Inheritance {
         for &(_, stat, _) in &terms {
             changing[stat] = true;
         }
+        // A permanent aura's stats, until the fight's end expires it.
+        for (_, stats) in &aura_stats {
+            for &(stat, _) in stats {
+                changing[stat] = true;
+            }
+        }
         for &(src, dst, _, _) in &dependencies {
             if changing[src] {
                 changing[dst] = true;
@@ -261,6 +267,10 @@ pub(crate) struct InertPet {
     /// Each aura's uptime across iterations, in seconds, and its activations.
     pub(crate) aura_uptime: Vec<Aggregator>,
     pub(crate) aura_procs: Vec<i64>,
+    /// The categories of each aura's exclusive effects, which a permanent aura holds while it
+    /// is up, and the nanoseconds it held them across iterations: Go's `uptimeSum`.
+    pub(crate) aura_effects: Vec<Vec<String>>,
+    pub(crate) aura_effect_uptime: Vec<i64>,
     /// Go `pet.GetStats().FlatString()`, logged when the reset dismisses it.
     pub(crate) dismissed_log: String,
     /// Whether each reset logs its dismissal.
@@ -281,6 +291,7 @@ pub(crate) fn inert_pets(effects: &[Effect]) -> Result<Vec<InertPet>, BuildError
             metrics_actions,
             auras,
             permanent_auras,
+            exclusive_effects,
             dismissed_log,
             dismissed_at_reset,
             mana_bar,
@@ -289,6 +300,20 @@ pub(crate) fn inert_pets(effects: &[Effect]) -> Result<Vec<InertPet>, BuildError
         else {
             continue;
         };
+        let mut aura_effects = vec![Vec::new(); auras.len()];
+        for effects in exclusive_effects {
+            let position = auras
+                .iter()
+                .position(|aura| *aura == effects.aura)
+                .filter(|position| permanent_auras.iter().any(|id| *id == auras[*position]))
+                .ok_or_else(|| {
+                    format!(
+                        "{label}'s aura {:?} with exclusive effects is not permanent",
+                        effects.aura
+                    )
+                })?;
+            aura_effects[position] = effects.categories.clone();
+        }
         let permanent = permanent_auras
             .iter()
             .map(|id| {
@@ -317,6 +342,8 @@ pub(crate) fn inert_pets(effects: &[Effect]) -> Result<Vec<InertPet>, BuildError
             aura_start: 0,
             aura_uptime: vec![Aggregator::default(); auras.len()],
             aura_procs: vec![0; auras.len()],
+            aura_effect_uptime: vec![0; auras.len()],
+            aura_effects,
             dismissed_log: dismissed_log.clone(),
             dismissed_at_reset: *dismissed_at_reset,
             tto: mana_bar.then(Distribution::default),
@@ -354,6 +381,8 @@ pub(crate) struct ActivePet {
     pub(crate) totals: PetTotals,
     pub(crate) summon_log: Vec<String>,
     pub(crate) dismiss_log: String,
+    /// The line while the permanent auras are still up, where it differs.
+    pub(crate) active_dismiss_log: Option<String>,
     /// Go `APLActionCustomRotation.lastExecutedAt`.
     pub(crate) last_custom: i64,
     /// Go `APLRotation.inLoop`.
@@ -429,6 +458,7 @@ impl ActivePet {
             totals: PetTotals::default(),
             summon_log: exported.summon_log.clone(),
             dismiss_log: exported.dismiss_log.clone(),
+            active_dismiss_log: exported.active_dismiss_log.clone(),
             last_custom: NEVER_EXPIRES,
             in_rotation: false,
             focus: exported.focus.as_ref().map(super::focus::FocusBar::new),
@@ -596,7 +626,7 @@ impl<A: Agent> Fight<A> {
         if summoned {
             // Go: the unit's reset enables it, then its agent's Reset dismisses it.
             self.active_pet_mut(side).enabled = false;
-            self.log_pet_dismissed(side);
+            self.log_pet_dismissed(side, true);
             return;
         }
         // Enable.
@@ -647,15 +677,19 @@ impl<A: Agent> Fight<A> {
         }
     }
 
-    /// Go `Disable`'s closing lines for a pet that was out.
-    fn log_pet_dismissed(&mut self, side: Side) {
+    /// Go `Disable`'s closing lines for a pet that was out: at the reset or during a fight
+    /// its permanent auras are still up, at the fight's end they have expired.
+    fn log_pet_dismissed(&mut self, side: Side, auras_up: bool) {
         if self.log.is_some() {
             let pet = self.active_pet(side);
             let stats = pet
                 .inheritance
                 .as_ref()
                 .and_then(Inheritance::dismiss_line)
-                .unwrap_or_else(|| pet.dismiss_log.clone());
+                .unwrap_or_else(|| match &pet.active_dismiss_log {
+                    Some(line) if auras_up => line.clone(),
+                    _ => pet.dismiss_log.clone(),
+                });
             let label = pet.label.clone();
             self.log_at(self.now, &label, "Pet dismissed");
             self.log_at(self.now, &label, &stats);
@@ -724,9 +758,10 @@ impl<A: Agent> Fight<A> {
             self.queue.cancel(handle);
         }
         self.remove_pet_inheritance(side);
+        // Go `expireAll` leaves the permanent auras up.
         self.expire_all_auras(side);
         self.remove_pet_tracker(side);
-        self.log_pet_dismissed(side);
+        self.log_pet_dismissed(side, true);
     }
 
     /// Go `APLRotation.DoNextAction` of an acting unit.
@@ -793,7 +828,8 @@ impl<A: Agent> Fight<A> {
             // Go `auraTracker.doneIteration`: the permanent auras fade, then every aura folds
             // its uptime.
             let label = self.pets[index].label.clone();
-            let uptime = seconds((self.now - self.pets[index].aura_start.max(0)).max(0));
+            let held = (self.now - self.pets[index].aura_start.max(0)).max(0);
+            let uptime = seconds(held);
             for position in self.pets[index].permanent.clone() {
                 if self.log.is_some() {
                     let id = action_string(&self.pets[index].auras[position]);
@@ -805,6 +841,9 @@ impl<A: Agent> Fight<A> {
                 if pet.permanent.contains(&position) {
                     pet.aura_uptime[position].add(uptime);
                     pet.aura_procs[position] += 1;
+                    // Go `ExclusiveCategory.SetActive` as the aura fades: each effect held
+                    // its category from the reset, never before the pull.
+                    pet.aura_effect_uptime[position] += held;
                 } else {
                     pet.aura_uptime[position].add(0.0);
                 }
@@ -835,7 +874,7 @@ impl<A: Agent> Fight<A> {
         if was_enabled {
             self.remove_pet_inheritance(side);
             self.remove_pet_tracker(side);
-            self.log_pet_dismissed(side);
+            self.log_pet_dismissed(side, false);
         } else if self.log.is_some() {
             let label = self.active_pet(side).label.clone();
             self.log_at(self.now, &label, "No pet summoned");

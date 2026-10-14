@@ -2,7 +2,7 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "d2409ccd043e9d3dd24232088f9abf49a7d19f64",
+    "engine_revision": "b477c15744bf4640e6a183f5be95a36511cd788d",
     "client_build": "1.60.1.70338",
     "exporter": "tools/oracle-v2"
   },
@@ -5965,7 +5965,7 @@
         "Health": 2790,
         "HolyDamage": 0,
         "Intellect": 175,
-        "MP5": 0,
+        "MP5": 30,
         "Mana": 0,
         "MeleeCritRating": 0,
         "MeleeHasteRating": 0,
@@ -6063,6 +6063,33 @@
           ],
           "icd": null,
           "exclusive_effects": 0
+        },
+        {
+          "label": "Mana Spring Totem (External)",
+          "tag": "ManaSpringTotem",
+          "action_id": {
+            "spell_id": 10494,
+            "tag": -1
+          },
+          "duration_ns": 9223372036854775807,
+          "max_stacks": 0,
+          "active": true,
+          "stacks": 0,
+          "callbacks": [
+            "on_reset",
+            "on_gain",
+            "on_expire"
+          ],
+          "icd": null,
+          "exclusive_effects": 1,
+          "exclusive_memberships": [
+            {
+              "category": "ManaSpringTotemMP5Add",
+              "single_aura": false,
+              "priority": 30,
+              "position": 0
+            }
+          ]
         },
         {
           "label": "Movement",
@@ -6336,10 +6363,11 @@
         }
       ],
       "summon_log": [
-        "Pet stats: {\"Strength\": 153.000,\"Agility\": 108.000,\"Stamina\": 297.000,\"Intellect\": 175.000,\"Spirit\": 122.000,\"AttackPower\": 286.000,\"Armor\": 5506.000,\"Health\": 2790.000,}",
+        "Pet stats: {\"Strength\": 153.000,\"Agility\": 108.000,\"Stamina\": 297.000,\"Intellect\": 175.000,\"Spirit\": 122.000,\"AttackPower\": 286.000,\"Armor\": 5506.000,\"Health\": 2790.000,\"MP5\": 30.000,}",
         "Pet inherited stats: {}"
       ],
       "dismiss_log": "{\"Strength\": 153.000,\"Agility\": 108.000,\"Stamina\": 297.000,\"Intellect\": 175.000,\"Spirit\": 122.000,\"AttackPower\": 286.000,\"Armor\": 5506.000,\"Health\": 2790.000,}",
+      "active_dismiss_log": "{\"Strength\": 153.000,\"Agility\": 108.000,\"Stamina\": 297.000,\"Intellect\": 175.000,\"Spirit\": 122.000,\"AttackPower\": 286.000,\"Armor\": 5506.000,\"Health\": 2790.000,\"MP5\": 30.000,}",
       "dynamic_stats": false,
       "summoned": true
     }
@@ -6441,6 +6469,44 @@
       "attack_power_without_deps": -20,
       "aura": "Shadowfiend",
       "duration_ns": 15000000000,
+      "fight_end_stats": [
+        {
+          "stat": "Strength",
+          "value": 153
+        },
+        {
+          "stat": "Agility",
+          "value": 108
+        },
+        {
+          "stat": "Stamina",
+          "value": 297
+        },
+        {
+          "stat": "Intellect",
+          "value": 175
+        },
+        {
+          "stat": "Spirit",
+          "value": 122
+        },
+        {
+          "stat": "AttackPower",
+          "value": 286
+        },
+        {
+          "stat": "Armor",
+          "value": 5506
+        },
+        {
+          "stat": "Health",
+          "value": 2790
+        },
+        {
+          "stat": "MP5",
+          "value": 0
+        }
+      ],
       "kind": "shadowfiend",
       "mana_restore_action_id": 401988,
       "mana_restore_aura": "Shadowfiend Mana Restore",
@@ -6479,6 +6545,10 @@
         {
           "stat": "Health",
           "value": 2790
+        },
+        {
+          "stat": "MP5",
+          "value": 30
         }
       ]
     },

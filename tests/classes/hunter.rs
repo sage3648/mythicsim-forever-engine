@@ -497,26 +497,73 @@ fn an_unknown_serpent_sting_tick_is_a_class_limit() {
         .contains(&("class_limit", "Serpent Sting ticks with magic_hit".into())));
 }
 
-/// Go lacerating_strikes.go (patch 87): a Mongoose Bite that lands with the last bleed still up
-/// replaces it with its own share, written after the cast, so no bleed ticks for nothing. The
+/// Go lacerating_strikes.go (patches 87 and 132, `TestLaceratingStrikesRefreshRollsOver`): a
+/// Mongoose Bite on a running bleed rolls what the bleed still owes into the new one and keeps
+/// its tick timer, as Forever's Deep Wounds does. The 21 seconds start over from the bite, the
+/// next tick lands when it was due, and the owed damage joins the bite's 40%, spread over the
+/// ticks that fit before the bleed runs out; a bleed fades only once every tick has landed. The
 /// bleed reports under its own id, 1310536, not Mongoose Bite's with a tag.
 #[test]
-fn a_refreshed_lacerating_strikes_bleed_keeps_its_damage() {
+fn a_refreshed_lacerating_strikes_bleed_rolls_over_and_keeps_its_tick_timer() {
+    const BLEED: &str = "{SpellID: 1310536}";
     let logs = first_fight_log(fixture("survival-hunter-no-whelp"));
-    let refreshes = logs
+    let amount = |line: &str| -> f64 {
+        let damage = line.split(" for ").nth(1).unwrap();
+        damage[..damage.find(' ').unwrap()].parse().unwrap()
+    };
+    // The running bleed: when its tick timer started, the ticks since, the ticks left and the
+    // amount of each.
+    let mut bleed: Option<(f64, i32, i32, f64)> = None;
+    let end = logs
         .lines()
-        .filter(|line| line.contains("[Target 1] Aura faded: {SpellID: 1310536}"))
-        .count();
-    let ticks: Vec<f64> = logs
-        .lines()
-        .filter(|line| line.contains("{SpellID: 1310536} tick "))
-        .map(|line| {
-            let damage = line.split(" for ").nth(1).unwrap();
-            damage[..damage.find(' ').unwrap()].parse().unwrap()
-        })
-        .collect();
-    assert!(refreshes > 1 && ticks.len() > 7, "{logs}");
-    assert!(ticks.iter().all(|&damage| damage > 0.0), "{ticks:?}");
+        .filter(|line| line.starts_with('['))
+        .map(at)
+        .fold(0.0, f64::max);
+    let mut bite = None;
+    let (mut refreshes, mut hits) = (0, 0);
+    for line in logs.lines() {
+        if line.contains("[Target 1] {SpellID: 14271} Hit for")
+            || line.contains("[Target 1] {SpellID: 14271} Crit for")
+        {
+            bite = Some((at(line), amount(line)));
+        } else if line.contains(&format!("[Target 1] Aura gained: {BLEED}")) {
+            let (when, damage) = bite.take().expect("a bite before the bleed");
+            assert_eq!(when, at(line), "{line}");
+            assert!(bleed.is_none(), "{line}");
+            bleed = Some((when, 0, 7, damage * 0.4 / 7.0));
+        } else if line.contains(&format!("[Target 1] Aura refreshed: {BLEED}")) {
+            let (when, damage) = bite.take().expect("a bite before the refresh");
+            let (start, ticked, left, tick) = bleed.expect("a running bleed");
+            assert_eq!(when, at(line), "{line}");
+            let next = start + 3.0 * f64::from(ticked + 1);
+            let fits = ((21.0 - (next - when) + 1e-9) / 3.0).floor() as i32 + 1;
+            bleed = Some((
+                start,
+                ticked,
+                fits,
+                (tick * f64::from(left) + damage * 0.4) / f64::from(fits),
+            ));
+            refreshes += 1;
+        } else if line.contains(&format!("{BLEED} tick ")) {
+            let (start, ticked, left, tick) = bleed.expect("a running bleed");
+            assert!(
+                (at(line) - (start + 3.0 * f64::from(ticked + 1))).abs() < 1e-6,
+                "{line}: off the tick timer started at {start}"
+            );
+            if line.contains(" tick Hit for ") {
+                assert!((amount(line) - tick).abs() < 0.01, "{line}: want {tick:.3}");
+                hits += 1;
+            }
+            bleed = Some((start, ticked + 1, left - 1, tick));
+        } else if line.contains(&format!("[Target 1] Aura faded: {BLEED}")) {
+            let (_, _, left, _) = bleed.take().expect("a running bleed");
+            // The fight's end fades a bleed with ticks left.
+            if at(line) < end {
+                assert_eq!(left, 0, "{line}: the bleed faded with ticks left");
+            }
+        }
+    }
+    assert!(refreshes > 1 && hits > 7, "{logs}");
     assert!(!logs.contains("{SpellID: 14271, Tag: 1}"), "{logs}");
 }
 

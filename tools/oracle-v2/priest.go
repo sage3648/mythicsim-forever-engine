@@ -121,13 +121,35 @@ func priestShadowfiendEffect(p *priest.Priest) map[string]any {
 			order = append(order, map[string]any{"stat": stat.StatName(), "value": before[stat]})
 		}
 	}
+	// The stats the dismissal at the fight's end prints: Go's doneIteration expires the pet's
+	// permanent auras before it dismisses the pet, so a party aura on the pet (patch 131), such as
+	// Mana Spring Totem, has left the line then, from a separate reset simulation.
+	fadeSimulation := core.NewSim(exportRequest, simsignals.CreateSignals())
+	fadeSimulation.Reset()
+	fadePet := fadeSimulation.Raid.Parties[0].Players[0].(priest.PriestAgent).GetPriest().ShadowfiendPet
+	for _, aura := range fadePet.GetAuras() {
+		if aura.IsActive() && aura.Duration == core.NeverExpires {
+			aura.Deactivate(fadeSimulation)
+		}
+	}
+	faded := fadePet.GetStats()
+	note(faded[stats.AttackPower] != before[stats.AttackPower],
+		"the Shadowfiend's permanent auras change its attack power")
+	fightEnd := []map[string]any{}
+	for stat := stats.Stat(0); stat < stats.SimStatsLen; stat++ {
+		if (before[stat] != 0 || stat == stats.AttackPower) && stat.StatName() != "none" {
+			fightEnd = append(fightEnd, map[string]any{"stat": stat.StatName(), "value": faded[stat]})
+		} else {
+			note(faded[stat] != 0, fmt.Sprintf("the Shadowfiend's permanent auras' expiry adds %s", stat.StatName()))
+		}
+	}
 	restore := pet.GetAura("Shadowfiend Mana Restore")
 	note(restore == nil, "the Shadowfiend has no mana restore aura")
 	label := ""
 	if restore != nil {
 		label = restore.Label
 	}
-	return map[string]any{
+	effect := map[string]any{
 		"kind": "shadowfiend", "spell_id": priest.ShadowfiendRank.ID, "aura": p.ShadowfiendAura.Label,
 		"duration_ns": nanos(p.ShadowfiendAura.Duration), "pet": pet.Label,
 		"attack_power_coefficient":  coefficient,
@@ -135,6 +157,10 @@ func priestShadowfiendEffect(p *priest.Priest) map[string]any {
 		"stats": order, "mana_restore_aura": label, "mana_restore_fraction": 0.05,
 		"mana_restore_action_id": 401988,
 	}
+	if faded != before {
+		effect["fight_end_stats"] = fightEnd
+	}
+	return effect
 }
 
 var priestClassSpells = []classSpellName{

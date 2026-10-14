@@ -312,9 +312,12 @@ impl Sim {
         if let Some(on_disable) = self.pet_data(pet).on_pet_disable.clone() {
             on_disable(self, pet);
         }
-        // auraTracker.expireAll.
+        // auraTracker.expireAll: the active auras that expire. A permanent aura is not in
+        // Go's `activeAuras` and stays up, such as a party aura on the pet (patch 131).
         for aura in self.unit(pet).auras.clone() {
-            self.deactivate(aura);
+            if self.aura(aura).duration != super::sim::NEVER_EXPIRES {
+                self.deactivate(aura);
+            }
         }
         self.pet_data_mut(pet).dismissed_at_reset = true;
     }
@@ -509,6 +512,15 @@ fn pet_dismiss_stats(env: &Environment, index: usize) -> Stats {
             fresh.sim.deactivate(aura);
         }
     }
+    fresh.sim.disable_pet(pet);
+    fresh.sim.unit(pet).stats
+}
+
+/// The stats Disable logs at the reset or during a fight, the pet's permanent auras still up
+/// (Go `petActiveDismissStats`), from a separate reset simulation.
+fn pet_active_dismiss_stats(env: &Environment, index: usize) -> Stats {
+    let mut fresh = env.fresh();
+    let pet = fresh.sim.unit(fresh.player).pets[index];
     fresh.sim.disable_pet(pet);
     fresh.sim.unit(pet).stats
 }
@@ -746,14 +758,20 @@ pub(crate) fn export_pets(
                 if !inherited.is_empty() {
                     exported.insert("inherited_stats".into(), Value::Object(inherited));
                 }
-                exported.insert(
-                    "dismiss_stats".into(),
-                    json!(pet_dismiss_stat_list(&dismiss_stats, &exported)),
-                );
                 let fade = pet_aura_fade_stats(env, index);
                 if !fade.is_empty() {
                     exported.insert("aura_stats".into(), Value::Array(fade));
                 }
+                exported.insert(
+                    "dismiss_stats".into(),
+                    json!(pet_dismiss_stat_list(&dismiss_stats, &exported)),
+                );
+            }
+        }
+        if !exported.contains_key("dismiss_stats") {
+            let active = super::common_effects::flat_string(&pet_active_dismiss_stats(env, index));
+            if active != dismiss {
+                exported.insert("active_dismiss_log".into(), json!(active));
             }
         }
         pets.push(Value::Object(exported));
@@ -785,6 +803,14 @@ fn pet_dismiss_stat_list(dismiss: &Stats, exported: &Map<String, Value>) -> Vec<
             tracked.push(dep["dst"].as_str().unwrap_or_default().to_string());
         }
     }
+    // A permanent aura's stats count until the fight's end expires it.
+    if let Some(Value::Array(auras)) = exported.get("aura_stats") {
+        for aura in auras {
+            if let Some(Value::Object(stats)) = aura.get("stats") {
+                tracked.extend(stats.keys().cloned());
+            }
+        }
+    }
     let mut list = Vec::new();
     for stat in Stat::ALL {
         let name = stat.name();
@@ -809,16 +835,32 @@ pub(crate) fn inert_pet_effect(
     let unit = sim.unit(pet);
     let mut auras = Vec::new();
     let mut permanent = Vec::new();
+    // Go reports each exclusive effect's uptime with the aura. A permanent aura whose effects
+    // are each alone in their category on the pet holds them for as long as it is up, so each
+    // effect's uptime is the aura's: a party aura on the pet since patch 131, such as Mana
+    // Spring Totem. Any other exclusive effect the inert pet's metrics do not carry.
+    let mut exclusive = Vec::new();
     for aura in &unit.auras {
         let a = sim.aura(*aura);
         let id = super::export::action_id(a.action_id.as_ref());
         if !id.is_null() {
             auras.push(id.clone());
             if !a.exclusive_effects.is_empty() {
-                unrepresented.push(format!(
-                    "inert pet {}'s aura {} has exclusive effects",
-                    unit.label, a.label
-                ));
+                let mut alone = a.active && a.duration == super::sim::NEVER_EXPIRES;
+                let mut categories = Vec::new();
+                for effect in &a.exclusive_effects {
+                    let category = &sim.categories[sim.effects[effect.0].category.0];
+                    alone = alone && category.effects.len() == 1;
+                    categories.push(category.name.clone());
+                }
+                if alone {
+                    exclusive.push(json!({"aura": id, "categories": categories}));
+                } else {
+                    unrepresented.push(format!(
+                        "inert pet {}'s aura {} has exclusive effects",
+                        unit.label, a.label
+                    ));
+                }
             }
         }
         if a.active {
@@ -841,6 +883,9 @@ pub(crate) fn inert_pet_effect(
     });
     if !permanent.is_empty() {
         effect["permanent_auras"] = Value::Array(permanent);
+    }
+    if !exclusive.is_empty() {
+        effect["exclusive_effects"] = Value::Array(exclusive);
     }
     // Only a pet whose agent's reset disables it logs its dismissal at each reset; a pet that is
     // simply not enabled on start, such as a warlock's other demons, logs nothing then.
