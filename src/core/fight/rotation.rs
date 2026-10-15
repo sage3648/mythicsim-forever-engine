@@ -64,6 +64,8 @@ pub(crate) enum Act {
         max_dots: i32,
         overlap: Option<Rc<Compiled>>,
     },
+    /// Go `APLActionItemSwap` to Swap1 (true) or Main.
+    ItemSwap(bool),
 }
 
 /// The compiled rotation: the priority list's items first, then those of each group instance.
@@ -103,6 +105,8 @@ enum Ready {
     MoveDuration(usize),
     /// A group reference and the item of its instance that runs.
     Group(usize),
+    /// An item swap to Swap1 (true) or Main.
+    ItemSwap(bool),
 }
 
 #[derive(Clone, Debug)]
@@ -266,6 +270,7 @@ impl<A: Agent> Fight<A> {
             dot: &dot,
             dot_base_duration: &dot_base_duration,
             pet_aura_known: &pet_aura_known,
+            item_swap: self.item_swap.is_some(),
         };
         let mut prepull: Vec<(i64, PrepullAct)> = rotation
             .prepull
@@ -327,6 +332,7 @@ impl<A: Agent> Fight<A> {
             dot: &dot,
             dot_base_duration: &dot_base_duration,
             pet_aura_known: &pet_aura_known,
+            item_swap: self.item_swap.is_some(),
         };
         // A reference whose condition is a constant false is pruned, and takes no part in
         // binding the groups.
@@ -508,6 +514,11 @@ impl<A: Agent> Fight<A> {
                 }
                 Act::Group { instance }
             }
+            // Go `newActionItemSwap`: no action without an item swap.
+            ParsedAction::ItemSwap(to_swapped) => {
+                self.item_swap.as_ref()?;
+                Act::ItemSwap(*to_swapped)
+            }
             // Parsed only among the prepull actions.
             ParsedAction::ActivateAura(_) => return None,
         })
@@ -579,6 +590,8 @@ impl<A: Agent> Fight<A> {
             Compiled::GcdIsReady => {
                 self.gcd_ready() || self.gcd_time_to_ready() <= MAX_SPELL_QUEUE_WINDOW
             }
+            // Go `APLValueActiveItemSwapSet`.
+            Compiled::ActiveItemSwapSet(swapped) => self.item_swapped() == *swapped,
             // Go `APLValueIsExecutePhase`: the encounter's execute phase is at or below it.
             Compiled::IsExecutePhase(threshold) => self.execute_phase <= *threshold,
             // Go `APLValueSpellCanCast`: `CanCastOrQueue`, with its cost check's side effects.
@@ -1146,6 +1159,10 @@ impl<A: Agent> Fight<A> {
             Act::Multidot { spell, .. } => self
                 .multidot_ready(item)
                 .map(|target| Ready::Cast(spell, target)),
+            // Go `APLActionItemSwap.IsReady`: the other set is worn.
+            Act::ItemSwap(to_swapped) => self
+                .item_swap_ready(to_swapped)
+                .then_some(Ready::ItemSwap(to_swapped)),
         }
     }
 
@@ -1408,6 +1425,7 @@ impl<A: Agent> Fight<A> {
                 let duration = self.get_duration(&duration);
                 self.move_duration(Side::Player, duration);
             }
+            Ready::ItemSwap(to_swapped) => self.item_swap_action(to_swapped),
             Ready::Channel(item, spell) => {
                 self.cast_or_queue(spell, Side::Target);
                 let Act::Channel { allow_recast, .. } = self.rotation[item].action else {
@@ -1483,6 +1501,13 @@ impl<A: Agent> Fight<A> {
                 // Go: a different action that is fully ready would be cast first.
                 Act::Multidot { .. } => {
                     if self.multidot_ready(item).is_some() {
+                        return false;
+                    }
+                    continue;
+                }
+                // Go: a different action that is fully ready would be cast first.
+                Act::ItemSwap(to_swapped) => {
+                    if self.item_swap_ready(to_swapped) {
                         return false;
                     }
                     continue;

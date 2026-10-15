@@ -111,11 +111,59 @@ pub(crate) struct Seals {
     pub(crate) hand_multiplier: f64,
     pub(crate) swing_speed: f64,
     pub(crate) deal_delay: i64,
+    /// With an item swap, the weapon values of each set, Main then Swap1: Seal of
+    /// Righteousness's hand multiplier and swing speed, and Seal of Command's chance, which its
+    /// proc manager rebuilds for the weapon in the hand.
+    pub(crate) by_set: Option<[SealWeapon; 2]>,
     /// Seal of Fury's shield needs one equipped.
     pub(crate) fury_can_block: bool,
     pub(crate) fury_improved: Option<ImprovedFury>,
     /// Seal of Fury hits waiting their batch window: the spell, the result and the seal.
     pub(crate) fury_pending: Vec<Option<(SpellId, SpellResult, usize)>>,
+}
+
+/// The seals' values that follow the main hand weapon.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub(crate) struct SealWeapon {
+    pub(crate) hand_multiplier: f64,
+    pub(crate) swing_speed: f64,
+    pub(crate) command_chance: f64,
+}
+
+impl SealWeapon {
+    fn of(effects: &[Effect]) -> SealWeapon {
+        let mut weapon = SealWeapon::default();
+        for effect in effects {
+            match effect {
+                Effect::SealOfRighteousness {
+                    hand_multiplier,
+                    swing_speed,
+                    ..
+                } => {
+                    weapon.hand_multiplier = *hand_multiplier;
+                    weapon.swing_speed = *swing_speed;
+                }
+                Effect::SealOfCommand { proc_chance, .. } => weapon.command_chance = *proc_chance,
+                _ => {}
+            }
+        }
+        weapon
+    }
+}
+
+/// Go seal_of_righteousness.go and seal_of_command.go read the weapon in the hand: once a swap
+/// put a set's weapon in it, the seals take that set's values.
+pub(crate) fn on_item_swap(fight: &mut Fight<PaladinAgent>, worn: bool) {
+    let Some(by_set) = fight.agent.seals.by_set else {
+        return;
+    };
+    let weapon = by_set[usize::from(worn)];
+    let seals = &mut fight.agent.seals;
+    seals.hand_multiplier = weapon.hand_multiplier;
+    seals.swing_speed = weapon.swing_speed;
+    if let Some(command) = seals.command.as_mut() {
+        command.chance = weapon.command_chance;
+    }
 }
 
 /// The position of a seal rank among every bound seal, in the order [`bind`] builds them:
@@ -179,6 +227,9 @@ pub(crate) fn bind(fight: &mut Fight<PaladinAgent>, effects: &[Effect]) -> Resul
             .ok_or_else(|| format!("seal spell {id} is not registered"))
     };
     let mut seals = Seals::default();
+    if let Some(worn) = fight.item_swap_worn_effects() {
+        seals.by_set = Some([SealWeapon::of(effects), SealWeapon::of(&worn)]);
+    }
     for effect in effects {
         if let Effect::SealOfCommand {
             ranks,

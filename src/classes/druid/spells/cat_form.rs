@@ -27,8 +27,8 @@ pub(crate) struct CatForm {
     energy_metrics: usize,
     mods: [ModId; 2],
     breaking: Vec<bool>,
-    main_hand: Weapon,
-    cat_weapon: Weapon,
+    pub(crate) main_hand: Weapon,
+    pub(crate) cat_weapon: Weapon,
 }
 
 /// The exported parameters.

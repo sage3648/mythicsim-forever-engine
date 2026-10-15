@@ -311,6 +311,9 @@ enum Change {
 /// activation, at one stack or at most, changes one of their values. Each aura is checked in a
 /// separate reset simulation.
 pub(crate) fn enemy_at_reset(env: &Environment, stat_auras: &[String]) -> Result<AtReset, Refusal> {
+    // Go reads a reset simulation of its own, which a swapped one is not.
+    let fresh = env.fresh();
+    let env = &fresh;
     let target = env.encounter.targets[0];
     let base = enemy_values(env, target)?;
     let baseline = encode(&base);

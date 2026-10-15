@@ -693,7 +693,17 @@ impl Shaman {
         let max_stacks = 5;
         let per_stack = data.maelstrom_weapon.effect_at(1).fraction_at(points);
 
-        let ppmm = Rc::new(sim.new_ppm_manager(unit, 2.0 * f64::from(points), ProcMask::MELEE));
+        // NewLegacyPPMManager: an item swap rebuilds it.
+        let ppm = 2.0 * f64::from(points);
+        let ppmm = Rc::new(
+            sim.new_ppm_manager(unit, ppm, ProcMask::MELEE)
+                .rebuilt_by_swap(
+                    sim,
+                    unit,
+                    crate::prepare::item_swap::ManagerChance::Ppm(ppm),
+                    crate::prepare::item_swap::ManagerMask::Static(ProcMask::MELEE),
+                ),
+        );
 
         let cast_mod = sim.add_dynamic_mod(
             unit,

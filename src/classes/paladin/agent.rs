@@ -860,6 +860,10 @@ impl Agent for PaladinAgent {
     type Spell = PaladinSpell;
     type Aura = PaladinAura;
 
+    fn on_item_swap(fight: &mut Fight<Self>, worn: bool) {
+        seals::on_item_swap(fight, worn);
+    }
+
     fn apply_effects(
         fight: &mut Fight<Self>,
         spell: SpellId,

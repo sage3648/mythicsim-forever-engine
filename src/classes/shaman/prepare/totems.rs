@@ -203,6 +203,12 @@ impl Shaman {
                 sim.deactivate(intermediate);
             })),
         );
+        // An item swap takes the intermediate aura down; the totem's next refresh puts it up.
+        sim.register_item_swap_callback(
+            unit,
+            &[crate::prepare::items::slot::MAIN_HAND],
+            crate::prepare::item_swap::SwapCallback::Deactivate { aura: intermediate },
+        );
 
         sim.register_spell(unit, config);
     }

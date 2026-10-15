@@ -1320,8 +1320,10 @@ impl<A: Agent> Fight<A> {
 
     /// Go `PhysicalHitChance`: ranged attacks add ranged hit.
     fn physical_hit_chance(&self, spell: SpellId) -> f64 {
-        let config = self.unit_config(self.caster(spell));
-        let mut hit = config.physical_hit_percent + self.spells[spell].bonus_hit_percent
+        let caster = self.caster(spell);
+        let config = self.unit_config(caster);
+        let mut hit = self.unit(caster).powers.physical_hit_percent
+            + self.spells[spell].bonus_hit_percent
             - config.melee.defender_reduced_physical_hit_taken;
         if self.spells[spell].ranged_proc {
             hit += config.ranged_hit_percent;

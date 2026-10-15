@@ -4,7 +4,7 @@
   "engine_revision": "0025d73986eebd90df1849c202b8c9a88d1f01c9",
   "client_build": "1.60.1.70338",
   "exporter": "tools/oracle-v2/main.go",
-  "exporter_sha256": "fd16c980455baa9796206c4c7b6212724557a75c862bbff40bf1c6a8f95182f8",
+  "exporter_sha256": "6cce17764d8599b7a178ba8cacbda655e8772573bdc6f78a6200731825b5c81c",
   "generator": "python3 tools/prepared_v2.py capture --output output/prepared-v2-capture",
   "note": "Accepted prepared inputs exported from the pinned Go engine. Capture re-exports into scratch and must match these files exactly.",
   "cases": [
@@ -12404,6 +12404,315 @@
       "go_log": {
         "file": "combat-rogue-thero-shan-weapon-skill-no-hit-suppression.go-log.txt",
         "sha256": "56a88546a18b19a643958a2c6c35d6a27cae81d7aef651ce1c2d7056cc677863"
+      }
+    },
+    {
+      "id": "mcp-shockadin-paladin",
+      "description": "MythicSim's default request at wowsim oct14-integration (forever.BuildRequest, board seed, 1000 iterations) for a Shockadin Paladin: the Manual Crowd Pummeler opener, its haste used at the pull and the own Blade of Hanna swapped in once it fades, both with Spellblasting, Seal of Righteousness and Holy Shock with the weapon in the hand.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/mcp-shockadin-paladin.request.json"
+      },
+      "prepared": "mcp-shockadin-paladin.prepared.json",
+      "prepared_sha256": "67c608c3335a15f47b39c2649596e1eb2c0de411042f2f568970e99967cfaad8",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "mcp-shockadin-paladin.go-result.json",
+        "sha256": "23c6a2ab4e2a54f74d8b552eeb3ec235efaeb1a02eeee23f6932ac82f0a7031d"
+      },
+      "go_log": {
+        "file": "mcp-shockadin-paladin.go-log.txt",
+        "sha256": "9cc80de40a11127464b9909dd8a55b85b05b6abfe3d7c7bcf12006938b0418d6"
+      }
+    },
+    {
+      "id": "mcp-retribution-paladin",
+      "description": "MythicSim's default request at wowsim oct14-integration (forever.BuildRequest, board seed, 1000 iterations) for a Retribution Paladin with the opener ticked: the Pummeler's haste, then the Warblade of Caer Darrow and its proc, Spellblasting on both weapons and the seals' swing speed following the swap.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/mcp-retribution-paladin.request.json"
+      },
+      "prepared": "mcp-retribution-paladin.prepared.json",
+      "prepared_sha256": "5347367bc3dbc3248ae3a7b3f8c30bb7a9a177b63968d49470b3f2f00b8521e7",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "mcp-retribution-paladin.go-result.json",
+        "sha256": "1141eb23dc8012564011370cfd05f9e4eac9afc15fc00b307ddc80f969752703"
+      },
+      "go_log": {
+        "file": "mcp-retribution-paladin.go-log.txt",
+        "sha256": "db859272148a6710dc335c396d446710a1d14a9c9909d9f69406c40cda0e112e"
+      }
+    },
+    {
+      "id": "mcp-arms-warrior",
+      "description": "MythicSim's default request at wowsim oct14-integration (forever.BuildRequest, board seed, 1000 iterations) for an Arms Warrior with the opener ticked: the Pummeler's haste, then the Warblade of Caer Darrow, Crusader on both weapons, Sword Specialization, Weaponmaster's mace armor ignore and crit, the two-handed specialization and the rage per swing following the swap.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/mcp-arms-warrior.request.json"
+      },
+      "prepared": "mcp-arms-warrior.prepared.json",
+      "prepared_sha256": "1e3527fb35b71a5abd69a5f3101bb21b16ab49dfdf7297e5c122dcfb184ad583",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "mcp-arms-warrior.go-result.json",
+        "sha256": "becfde3853d6d468857c8eb3c4e6625a4c0befd65a05d14a73a3488a20fb0c22"
+      },
+      "go_log": {
+        "file": "mcp-arms-warrior.go-log.txt",
+        "sha256": "d81566f73690db1f27269d3c6fd67781e0fec6ae2dd07d1fef8d7b517c2e83c0"
+      }
+    },
+    {
+      "id": "mcp-enhancement-shaman",
+      "description": "MythicSim's default request at wowsim oct14-integration (forever.BuildRequest, board seed, 1000 iterations) for an Orc Enhancement Shaman: Flametongue and Frost Oil on the Pummeler, Rockbiter and the swap weapon's oil on the own Arcanite Reaper (patch 133 imbueMhSwap and mhImbueSwapId), Axe Specialization, the self and party Windfury Totems following the weapon in the hand.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/mcp-enhancement-shaman.request.json"
+      },
+      "prepared": "mcp-enhancement-shaman.prepared.json",
+      "prepared_sha256": "5ce05ac04399b9fc32ef44154d576ee8a53095ed3bea5ef21f426aeb9339561e",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "mcp-enhancement-shaman.go-result.json",
+        "sha256": "d6893758477f8597ed9b661492e2bc3a4319f5c94e0fb4833c3da41954d0a329"
+      },
+      "go_log": {
+        "file": "mcp-enhancement-shaman.go-log.txt",
+        "sha256": "264dcc26c4e738d6453c02d48d209cb3c97bc31d5b0da1b4159b77101e15cb4e"
+      }
+    },
+    {
+      "id": "mcp-elehance-shaman-2-targets",
+      "description": "MythicSim's default request at wowsim oct14-integration (forever.BuildRequest, board seed, 1000 iterations) for an Elemental Enhancement Shaman on 2 targets: the Pummeler opener before the caster rotation, then the own Ironbark Staff, Flametongue on both weapons.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/mcp-elehance-shaman-2-targets.request.json"
+      },
+      "prepared": "mcp-elehance-shaman-2-targets.prepared.json",
+      "prepared_sha256": "ed9b25cbac37357388e730acbea09f7c2e21994109fdfb4632a94ccb3b002e35",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "mcp-elehance-shaman-2-targets.go-result.json",
+        "sha256": "cececa7c3caba4e717fd8b22ac54bd6637e8a254db4b15560e7c0c99eb52ea3b"
+      },
+      "go_log": {
+        "file": "mcp-elehance-shaman-2-targets.go-log.txt",
+        "sha256": "7248a735a1bcff28eb6c171a88c28bbd2414ab2183aaf214d1b7a553963a9fa9"
+      }
+    },
+    {
+      "id": "mcp-elehance-shaman-3-targets",
+      "description": "MythicSim's default request at wowsim oct14-integration (forever.BuildRequest, board seed, 1000 iterations) for an Elemental Enhancement Shaman on 3 targets: the Pummeler opener before the caster rotation, then the own Ironbark Staff, Flametongue on both weapons.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/mcp-elehance-shaman-3-targets.request.json"
+      },
+      "prepared": "mcp-elehance-shaman-3-targets.prepared.json",
+      "prepared_sha256": "e6ceacfb9b098cc7159dfed4a49ffe05b4d46fc0a37d353ee9dbe5a9190ccc80",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "mcp-elehance-shaman-3-targets.go-result.json",
+        "sha256": "8c20a372d496a09be3cd9e04ed8ec775e139bbbbe59cb3ed92743c2936803421"
+      },
+      "go_log": {
+        "file": "mcp-elehance-shaman-3-targets.go-log.txt",
+        "sha256": "81de4d601a2afef4a57450249627b380afe74821b0bc291806f33770d2a2771a"
+      }
+    },
+    {
+      "id": "mcp-feral-druid",
+      "description": "MythicSim's default request at wowsim oct14-integration (forever.BuildRequest, board seed, 1000 iterations) for a Feral Cat Druid: the Pummeler with Crusader in Cat Form, the paw rebuilt from the own Legionite Glaive at the swap.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/mcp-feral-druid.request.json"
+      },
+      "prepared": "mcp-feral-druid.prepared.json",
+      "prepared_sha256": "e290427540d0f05a4a3cd17abfae8f9c281e1d0802a2aaed0872d2f182964e24",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "mcp-feral-druid.go-result.json",
+        "sha256": "88e77da5fc0806fb4c47c9aba82ae2e580671930989199cf803c6d94e885f11b"
+      },
+      "go_log": {
+        "file": "mcp-feral-druid.go-log.txt",
+        "sha256": "f78c12f9ff6b0283ed02cd4dbbc83e911f0029151e2c584f351485307f270244"
+      }
+    },
+    {
+      "id": "mcp-feral-bear-druid",
+      "description": "MythicSim's default request at wowsim oct14-integration (forever.BuildRequest, board seed, 1000 iterations) for a Feral Bear Druid: the Pummeler opener in Bear Form, the paw rebuilt from the own weapon at the swap.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/mcp-feral-bear-druid.request.json"
+      },
+      "prepared": "mcp-feral-bear-druid.prepared.json",
+      "prepared_sha256": "91d1647100a0634338da528eed380ea65647cbc0e93fa2789a19bf3f799e4783",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "mcp-feral-bear-druid.go-result.json",
+        "sha256": "4cce6dc2c784782f108229bd81ae93606f0540d31026c8dddcf2794869dc3736"
+      },
+      "go_log": {
+        "file": "mcp-feral-bear-druid.go-log.txt",
+        "sha256": "fe80bf7aabce6be84dd21a7fe750d5fa5343fe89084fa9a84d2189da61b72fc3"
+      }
+    },
+    {
+      "id": "item-swap-weapon-skill",
+      "description": "The opener of mcp-retribution-paladin with Obsidian Edged Blade (+8 two-handed swords) as the swap weapon: the main hand's attack table moves with the weapon skill once it is worn (patch 135).",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/item-swap-weapon-skill.request.json"
+      },
+      "prepared": "item-swap-weapon-skill.prepared.json",
+      "prepared_sha256": "dd4b195ade4e0f65a994cb4a65f5ac5e10f8710331d2c2de3df4e321587c3ef9",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "item-swap-weapon-skill.go-result.json",
+        "sha256": "8b35b4eea49e1c9cc6df539971142554ad1861e6b361557365dfbc00e7fa0e2c"
+      },
+      "go_log": {
+        "file": "item-swap-weapon-skill.go-log.txt",
+        "sha256": "1d6f1b92e095cd1d8938d9ff5a52918f3553a9b81014650350091dbe0b950961"
+      }
+    },
+    {
+      "id": "item-swap-dual-wield",
+      "description": "An Arms Warrior dual wielding Grand Marshal's Longsword and Handaxe, swapping the main hand to Blessed Qiraji War Axe from 20 to 60 seconds: the off hand keeps swinging, Sword Specialization and Weaponmaster's axe crit follow the main hand.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/item-swap-dual-wield.request.json"
+      },
+      "prepared": "item-swap-dual-wield.prepared.json",
+      "prepared_sha256": "2a5cfa0228e7bdedb82cbbe6617d76c56684c9a4b33650996d5a361cbafa04e5",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "item-swap-dual-wield.go-result.json",
+        "sha256": "70eb5dbee8b2131188d0ef3226780d932e1589a32b285c32c1f22d01f283af40"
+      },
+      "go_log": {
+        "file": "item-swap-dual-wield.go-log.txt",
+        "sha256": "a54180682e9864c742e57ab691594e6b7425fd8bb9de683ef7a8f4c7d95603e8"
+      }
+    },
+    {
+      "id": "item-swap-shield",
+      "description": "A Shockadin with Grand Marshal's Punisher and Malistar's Defender, swapping the main hand to Grand Marshal's Longsword from 20 to 60 seconds: the shield and its block stay.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/item-swap-shield.request.json"
+      },
+      "prepared": "item-swap-shield.prepared.json",
+      "prepared_sha256": "d055b83df9fc2bb525329b97bfde3a40fefdf327215ff0cb520f7bfdd4144c89",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "item-swap-shield.go-result.json",
+        "sha256": "27cc2f2a2eeb5a683aa40ffd1d45d90556ffad65eb2c2af7e04250c184aca631"
+      },
+      "go_log": {
+        "file": "item-swap-shield.go-log.txt",
+        "sha256": "bd6f0577483e8b8f5d52e02c9f253fe1cb037bf83c5d2c9cf72ab033d6cb49c1"
+      }
+    },
+    {
+      "id": "item-swap-mid-cast",
+      "description": "The Elehance Shaman on 2 targets without the Pummeler opener, swapping from 20 to 60 seconds after its filler, so each swap lands while a cast runs and the global cooldown is extended to at least 1.5 seconds.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/item-swap-mid-cast.request.json"
+      },
+      "prepared": "item-swap-mid-cast.prepared.json",
+      "prepared_sha256": "7c5a534dfdc1b5aa49f8a3de85d455d0eddf6db6729f61399727d43efdf06313",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "item-swap-mid-cast.go-result.json",
+        "sha256": "fbec95474a509b87dd9386eccc320335527b1b779866ec9ee0a1b81387b64ca3"
+      },
+      "go_log": {
+        "file": "item-swap-mid-cast.go-log.txt",
+        "sha256": "83318ab9d82e9b07be46bb853bc61606fe5cbb66681468b85a5da107b325ac64"
+      }
+    },
+    {
+      "id": "item-swap-mid-gcd",
+      "description": "The Arms Warrior without the Pummeler opener, swapping from 20 to 60 seconds after its global cooldown actions, so each swap lands on a running global cooldown.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/item-swap-mid-gcd.request.json"
+      },
+      "prepared": "item-swap-mid-gcd.prepared.json",
+      "prepared_sha256": "d46e5524449a4308c7168938076ccb8fbce8aff627c00c1f277c36753151a71d",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "item-swap-mid-gcd.go-result.json",
+        "sha256": "d1aff0de6d23fa15bbab4b60c9f28daf5c8379e52c45bc0bdb04366a68fca05f"
+      },
+      "go_log": {
+        "file": "item-swap-mid-gcd.go-log.txt",
+        "sha256": "ae4c354ccc736a748ffe68a6583b15e5ddc3030aa7f611e4181914299eb7f928"
+      }
+    },
+    {
+      "id": "item-swap-orc-windfury-totem",
+      "description": "The Arms Warrior opener as an Orc: Axe Specialization and the party Windfury Totem's weapon buff following the swap.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/item-swap-orc-windfury-totem.request.json"
+      },
+      "prepared": "item-swap-orc-windfury-totem.prepared.json",
+      "prepared_sha256": "d7bebe83171e5ba60e1edcc9051e3524afd7f47597ae9ec8c176e6d8d2c40790",
+      "expected_coverage": {
+        "supported": true,
+        "reasons": []
+      },
+      "go_result": {
+        "file": "item-swap-orc-windfury-totem.go-result.json",
+        "sha256": "79bda67fa58289b361dea371b1e7bebcae632d893eb111920958013f87d31f9a"
+      },
+      "go_log": {
+        "file": "item-swap-orc-windfury-totem.go-log.txt",
+        "sha256": "b40b53fc397a5bb5da0f4e4c0c8edbf5000b281abc168eb9e3820aed5d88e677"
+      }
+    },
+    {
+      "id": "item-swap-spirit-weapons",
+      "description": "The Orc Enhancement Shaman opener with Spirit Weapons: Rockbiter on the own weapon comes on at the swap and its threat bonus with it, which the runtime does not follow, so the gate refuses it.",
+      "request": {
+        "path": "fixtures/mage/prepared-v2/item-swap-spirit-weapons.request.json"
+      },
+      "prepared": "item-swap-spirit-weapons.prepared.json",
+      "prepared_sha256": "adf195aec2f747c2aa23953c6396617e2dbea943a2f171a700e286c7be654821",
+      "expected_coverage": {
+        "supported": false,
+        "reasons": [
+          "an item swap changes /player/pseudo_stats/threat_multiplier, which the runtime does not follow"
+        ]
       }
     }
   ]

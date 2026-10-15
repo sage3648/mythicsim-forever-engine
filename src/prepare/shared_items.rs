@@ -21,6 +21,7 @@ use crate::data::spells::Spell;
 use super::aura_helpers::{ProcTrigger, StackingStatAura, StatBuffAura};
 use super::dbcenums;
 use super::env::Environment;
+use super::item_swap::{ManagerChance, ManagerMask};
 use super::items::{self, effect_stats};
 use super::procs::DynamicProcManager;
 use super::resolve_aura::{aura_config, dot_config, label, AuraOpt};
@@ -134,13 +135,12 @@ impl EffectSource {
         }
     }
 
-    /// Go `effectSource.eligibleSlots`, with item swapping off: the slots the item or enchant
-    /// can occupy that carry it.
+    /// Go `effectSource.eligibleSlots`: the slots the item or enchant can occupy that carry it,
+    /// in either set of an item swap.
     pub(crate) fn eligible_slots(self, sim: &Sim, unit: UnitId) -> Vec<usize> {
         if self.is_enchant {
-            let equipment = &sim.character(unit).equipment;
             return (0..items::NUM_ITEM_SLOTS)
-                .filter(|slot| contains_enchant(&equipment[*slot], self.id))
+                .filter(|slot| sim.item_swap_holds_enchant(unit, *slot, self.id))
                 .collect();
         }
         eligible_slots_for_item(sim, unit, self.id)
@@ -188,11 +188,37 @@ impl EffectSource {
         }
     }
 
-    /// Go `effectSource.registerTrigger`: the proc trigger aura, which an item swap would toggle
-    /// with the item.
+    /// Go `effectSource.registerWeaponEnchantBuff`: a weapon enchant's buff drops when the
+    /// weapon carrying it is swapped out, and a shield or held-in-off-hand enchant's when its item
+    /// leaves the off hand.
+    pub(crate) fn register_weapon_enchant_buff(self, env: &mut Environment, aura: AuraId) {
+        let unit = env.player;
+        match self.enchant_placement() {
+            EnchantPlacement::OnWeapon => env.sim.register_weapon_enchant_buff(unit, aura, self.id),
+            EnchantPlacement::InOffHand => env.sim.register_enchant_buff_with_slots(
+                unit,
+                aura,
+                self.id,
+                vec![items::slot::OFF_HAND],
+            ),
+            EnchantPlacement::Elsewhere => {}
+        }
+    }
+
+    /// Go `effectSource.registerTrigger`: the proc trigger aura, which an item swap toggles with
+    /// the item or enchant (`registerProc`).
     pub(crate) fn register_trigger(self, env: &mut Environment, config: &ProcTrigger) -> AuraId {
         let unit = env.player;
-        env.sim.make_proc_trigger_aura(unit, config)
+        let aura = env.sim.make_proc_trigger_aura(unit, config);
+        let slots = self.eligible_slots(&env.sim, unit);
+        if self.is_enchant {
+            env.sim
+                .register_enchant_proc_with_slots(unit, self.id, aura, slots);
+        } else {
+            env.sim
+                .register_item_proc_with_slots(unit, self.id, aura, slots);
+        }
+        aura
     }
 }
 
@@ -200,8 +226,8 @@ fn contains_enchant(item: &items::Item, effect_id: i32) -> bool {
     item.enchant.effect_id == effect_id || item.temp_enchant == effect_id
 }
 
-/// Go `EligibleSlotsForItem`, filtered to the slots that hold the item, as
-/// `ItemSwap.EligibleSlotsForItem` does with item swapping off.
+/// Go `ItemSwap.EligibleSlotsForItem`: `EligibleSlotsForItem` filtered to the slots that hold
+/// the item, in either set of an item swap.
 pub(crate) fn eligible_slots_for_item(sim: &Sim, unit: UnitId, item_id: i32) -> Vec<usize> {
     use items::slot;
     let Some(item) = items::database_item(item_id) else {
@@ -229,10 +255,9 @@ pub(crate) fn eligible_slots_for_item(sim: &Sim, unit: UnitId, item_id: i32) -> 
         },
         _ => Vec::new(),
     };
-    let equipment = &sim.character(unit).equipment;
     candidates
         .into_iter()
-        .filter(|slot| equipment[*slot].id == item_id)
+        .filter(|slot| sim.item_swap_holds_item(unit, *slot, item_id))
         .collect()
 }
 
@@ -280,12 +305,20 @@ pub(crate) fn dynamic_legacy_proc_for_enchant(
     ppm: f64,
     fixed_proc_chance: f64,
 ) -> Rc<DynamicProcManager> {
-    Rc::new(sim.new_dynamic_weapon_proc_manager(
-        unit,
-        ppm,
-        fixed_proc_chance,
-        proc_mask_for_weapon_enchant(sim, unit, effect_id),
-    ))
+    Rc::new(
+        sim.new_dynamic_weapon_proc_manager(
+            unit,
+            ppm,
+            fixed_proc_chance,
+            proc_mask_for_weapon_enchant(sim, unit, effect_id),
+        )
+        .rebuilt_by_swap(
+            sim,
+            unit,
+            manager_chance(ppm, fixed_proc_chance),
+            ManagerMask::WeaponEnchant(effect_id),
+        ),
+    )
 }
 
 /// Go `NewDynamicLegacyProcForWeapon`.
@@ -296,12 +329,29 @@ pub(crate) fn dynamic_legacy_proc_for_weapon(
     ppm: f64,
     fixed_proc_chance: f64,
 ) -> Rc<DynamicProcManager> {
-    Rc::new(sim.new_dynamic_weapon_proc_manager(
-        unit,
-        ppm,
-        fixed_proc_chance,
-        proc_mask_for_weapon_effect(sim, unit, item_id),
-    ))
+    Rc::new(
+        sim.new_dynamic_weapon_proc_manager(
+            unit,
+            ppm,
+            fixed_proc_chance,
+            proc_mask_for_weapon_effect(sim, unit, item_id),
+        )
+        .rebuilt_by_swap(
+            sim,
+            unit,
+            manager_chance(ppm, fixed_proc_chance),
+            ManagerMask::WeaponEffect(item_id),
+        ),
+    )
+}
+
+/// The chance of a manager Go builds with either a rate or a fixed chance.
+fn manager_chance(ppm: f64, fixed_proc_chance: f64) -> ManagerChance {
+    if ppm != 0.0 {
+        ManagerChance::Ppm(ppm)
+    } else {
+        ManagerChance::Fixed(fixed_proc_chance)
+    }
 }
 
 /// Go `dpmForMask`: the procs-per-minute manager for a rate and a mask, bound to the weapon or
@@ -324,12 +374,27 @@ pub(crate) fn dpm_for_mask(
         }
         if source.enchant_placement() == EnchantPlacement::OnWeapon {
             // NewDynamicLegacyProcForEnchantWithMask.
+            let within = mask;
             let mask = ProcMask(mask.0 & proc_mask_for_weapon_enchant(sim, unit, source.id).0);
             return Some(Rc::new(
-                sim.new_dynamic_weapon_proc_manager(unit, ppm, 0.0, mask),
+                sim.new_dynamic_weapon_proc_manager(unit, ppm, 0.0, mask)
+                    .rebuilt_by_swap(
+                        sim,
+                        unit,
+                        ManagerChance::Ppm(ppm),
+                        ManagerMask::WeaponEnchantWithin(source.id, within),
+                    ),
             ));
         }
-        return Some(Rc::new(sim.new_ppm_manager(unit, ppm, mask)));
+        // NewLegacyPPMManager.
+        return Some(Rc::new(
+            sim.new_ppm_manager(unit, ppm, mask).rebuilt_by_swap(
+                sim,
+                unit,
+                ManagerChance::Ppm(ppm),
+                ManagerMask::Static(mask),
+            ),
+        ));
     }
     // With no mask of its own the rate has to be read off whatever the effect sits on.
     if source.is_enchant {
@@ -643,6 +708,7 @@ fn apply_spell_data_proc(env: &mut Environment, cfg: &SpellDataProc) {
     // is assigned after the charge spender and whether or not there is one.
     let icd = env.sim.aura(trigger_aura).icd;
     env.sim.aura_mut(proc_aura.aura).icd = icd;
+    source.register_weapon_enchant_buff(env, proc_aura.aura);
 }
 
 /// Go `procDamageHandler`'s target is a fight matter. Go `applySpellDataDamageProc`: the spell

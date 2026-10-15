@@ -111,6 +111,9 @@ pub(crate) enum AuraBehavior<K> {
         /// Go `StartPeriodicAction` with `TickImmediately`.
         periodic: Option<(i64, i32)>,
     },
+    /// An aura that adds to the attack tables' armor ignore factor while up, as Weaponmaster's
+    /// mace aura, which the prepared value already holds at the reset.
+    ArmorIgnoreFactor(f64),
     /// The Crusader enchant's trigger.
     Crusader,
     /// Dragon's Call's trigger, which summons the Emerald Dragon Whelp.
@@ -791,6 +794,11 @@ impl<A: Agent> Fight<A> {
                     self.activate_mod(self.aura_mods[index][position]);
                 }
             }
+            AuraBehavior::ArmorIgnoreFactor(delta) => {
+                if !self.resetting_auras {
+                    self.config.melee.armor_ignore_factor += delta;
+                }
+            }
             AuraBehavior::TemporaryStats { bit, gain_log, .. } => {
                 if let (Some(line), true) = (gain_log, self.log.is_some()) {
                     let line = self.aura_logs[line].clone();
@@ -825,6 +833,9 @@ impl<A: Agent> Fight<A> {
             AuraBehavior::WindfuryProc { bit } => self.set_stat_mask(self.stat_mask & !bit),
             AuraBehavior::ThunderfuryResistance(delta) => {
                 self.thunderfury_resistance(aura.side, -delta)
+            }
+            AuraBehavior::ArmorIgnoreFactor(delta) => {
+                self.config.melee.armor_ignore_factor -= delta;
             }
             AuraBehavior::SpellMods(index) => {
                 for position in 0..self.aura_mods[index].len() {

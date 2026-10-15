@@ -18,13 +18,13 @@ pub(super) fn millis(value: f64) -> Duration {
 }
 
 /// Go `applyWeaponSpecialization`'s mod: a physical damage bonus that follows the weapon in
-/// the main hand, active when the weapon is of the hand type. Item swaps are refused, so the
-/// swap callback Go registers has nothing to react to.
+/// the main hand, active when the weapon is of the hand type, item swaps included.
 pub(super) fn apply_weapon_specialization(
     sim: &mut Sim,
     unit: UnitId,
     bonus: f64,
     main_hand_matches: bool,
+    hand_type: &str,
 ) {
     let weapon_mod = sim.add_dynamic_mod(
         unit,
@@ -38,6 +38,17 @@ pub(super) fn apply_weapon_specialization(
     if main_hand_matches {
         sim.activate_spell_mod(weapon_mod);
     }
+    sim.register_item_swap_callback(
+        unit,
+        &[
+            crate::prepare::items::slot::MAIN_HAND,
+            crate::prepare::items::slot::OFF_HAND,
+        ],
+        crate::prepare::item_swap::SwapCallback::HandMod {
+            id: weapon_mod,
+            hand_type: hand_type.to_string(),
+        },
+    );
 }
 
 /// Go `Unit.NewPassiveMovementSpeedAura`: a permanent aura whose movement speed bonus holds

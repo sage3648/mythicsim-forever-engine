@@ -8,6 +8,7 @@ import (
 	"math"
 	"math/bits"
 	"reflect"
+	"slices"
 	"sort"
 	"time"
 	"unsafe"
@@ -33,11 +34,13 @@ var dynamicReadStats = []stats.Stat{stats.SpellDamage, stats.AttackPower, stats.
 // the school spell damage stats spell.go SpellSchoolBonusDamage reads, the resistances a spell
 // that hits the player rolls against, the physical damage spell.go BonusDamage adds to a
 // physical spell, the armor penetration spell_resistances.go GetArmorDamageModifier takes off the
-// target's armor and the spell piercing it takes off the target's resistance.
+// target's armor, the spell piercing it takes off the target's resistance, and the melee and
+// spell hit a weapon an item swap puts in the hand can change.
 var optionalReadStats = []stats.Stat{stats.Mana, stats.HealingPower, stats.Health, stats.Spirit,
 	stats.ArcaneDamage, stats.FireDamage, stats.FrostDamage, stats.HolyDamage, stats.NatureDamage,
 	stats.ShadowDamage, stats.ArcaneResistance, stats.FireResistance, stats.FrostResistance,
-	stats.NatureResistance, stats.ShadowResistance, stats.PhysicalDamage, stats.ArmorPenetration, stats.SpellPiercing}
+	stats.NatureResistance, stats.ShadowResistance, stats.PhysicalDamage, stats.ArmorPenetration, stats.SpellPiercing,
+	stats.PhysicalHitPercent, stats.SpellHitPercent}
 
 // Auras of races, items and raid buffs whose gain and expiry change stats through
 // AddStatsDynamic. A class adds its own through classExport.statAuras.
@@ -70,6 +73,12 @@ func characterStatAuras(character *core.Character, class classExport, agent core
 	candidates = append(candidates, weaponAuraProcAuras...)
 	// classic items_trinkets.go Jom Gabbar's stacking aura.
 	candidates = append(candidates, "Jom Gabbar")
+	// item_swaps.go: the auras a swap switches and its own equipment stats.
+	for _, label := range itemSwapStatAuras(character) {
+		if !slices.Contains(candidates, label) {
+			candidates = append(candidates, label)
+		}
+	}
 	for _, label := range candidates {
 		if character.GetAura(label) != nil {
 			labels = append(labels, label)
@@ -150,6 +159,7 @@ func (layout statLayout) level(mask, j int) int32 {
 func applyStatLevel(simulation *core.Simulation, aura *core.Aura, level int32, stacking bool) {
 	if !aura.IsActive() {
 		aura.Activate(simulation)
+		addItemSwapEquipStats(simulation, aura)
 	}
 	if stacking {
 		for aura.GetStacks() < level {

@@ -76,6 +76,12 @@ impl<A: Agent> Fight<A> {
         self.mods.len() - 1
     }
 
+    /// Marks a registered modifier active or not without touching its spells, for one whose
+    /// effect the exported spells already hold.
+    pub(crate) fn set_mod_active(&mut self, id: ModId, active: bool) {
+        self.mods[id].active = active;
+    }
+
     fn apply_mod(&mut self, id: ModId, sign: f64) {
         self.changed(super::reads::SPELLS);
         let modifier = &self.mods[id];

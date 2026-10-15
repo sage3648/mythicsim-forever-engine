@@ -179,6 +179,9 @@ pub(crate) struct WarriorAgent {
     deep_wounds_off_hand: bool,
     /// Whether each spell's proc mask holds a bit of a hand that wields a sword.
     sword_mask: Vec<bool>,
+    /// With an item swap, Weaponmaster's sword mask for each set, Main then Swap1: the hands
+    /// holding a sword, which its proc's condition reads.
+    sword_masks: Option<[Vec<bool>; 2]>,
     /// Go `WarriorInputs.DefaultStance`, which every reset restores.
     default_stance: Stance,
     stances: Vec<StanceCast>,
@@ -762,18 +765,35 @@ impl WarriorAgent {
                         crate::core::fight::SpellBehavior::MeleeAuto(
                             crate::core::fight::melee::Hand::Main,
                         );
-                    let hand_bits = |mask: &str| {
-                        (sword_hands.iter().any(|h| h == "main")
-                            && matches!(mask, "ProcMaskMeleeMHAuto" | "ProcMaskMeleeMHSpecial"))
-                            || (sword_hands.iter().any(|h| h == "off")
-                                && matches!(mask, "ProcMaskMeleeOHAuto" | "ProcMaskMeleeOHSpecial"))
+                    let mask_of = |sword_hands: &[String]| -> Vec<bool> {
+                        let hand_bits = |mask: &str| {
+                            (sword_hands.iter().any(|h| h == "main")
+                                && matches!(mask, "ProcMaskMeleeMHAuto" | "ProcMaskMeleeMHSpecial"))
+                                || (sword_hands.iter().any(|h| h == "off")
+                                    && matches!(
+                                        mask,
+                                        "ProcMaskMeleeOHAuto" | "ProcMaskMeleeOHSpecial"
+                                    ))
+                        };
+                        prepared
+                            .player
+                            .spells
+                            .iter()
+                            .map(|spell| spell.proc_mask.iter().any(|mask| hand_bits(mask)))
+                            .collect()
                     };
-                    fight.agent.sword_mask = prepared
-                        .player
-                        .spells
-                        .iter()
-                        .map(|spell| spell.proc_mask.iter().any(|mask| hand_bits(mask)))
-                        .collect();
+                    fight.agent.sword_mask = mask_of(sword_hands);
+                    // talents_arms.go readWeapons: an item swap rereads the hands.
+                    let worn = fight.item_swap_worn_effects().and_then(|effects| {
+                        effects.into_iter().find_map(|effect| match effect {
+                            Effect::WeaponmasterSword { sword_hands, .. } => Some(sword_hands),
+                            _ => None,
+                        })
+                    });
+                    if let Some(worn) = worn {
+                        fight.agent.sword_masks =
+                            Some([fight.agent.sword_mask.clone(), mask_of(&worn)]);
+                    }
                     fight.agent.weaponmaster = Some(WeaponmasterSword {
                         trigger: fight.player_aura(trigger_aura)?,
                         proc_chance: *proc_chance,
@@ -1078,6 +1098,12 @@ impl WarriorAgent {
 impl Agent for WarriorAgent {
     type Spell = WarriorSpell;
     type Aura = WarriorAura;
+
+    fn on_item_swap(fight: &mut Fight<Self>, worn: bool) {
+        if let Some(masks) = &fight.agent.sword_masks {
+            fight.agent.sword_mask = masks[usize::from(worn)].clone();
+        }
+    }
     const CACHE_ROTATION: bool = true;
 
     fn apply_effects(

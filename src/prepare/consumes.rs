@@ -17,6 +17,7 @@ use super::buffs;
 use super::character::{cooldown_type, MajorCooldown};
 use super::common_effects::GOBLIN_SAPPER_ITEM;
 use super::env::Environment;
+use super::items::slot;
 use super::major_cooldown::COOLDOWN_PRIORITY_LOW;
 use super::sim::{
     AuraConfig, AuraId, BuildPhase, Cooldown, Duration, EffectId, Sim, SpellId, TimerId, UnitId,
@@ -315,8 +316,9 @@ pub(crate) fn apply_consume_effects(
 
     // Static imbues. Forever's Windfury Totem is a party aura, not Era's main-hand enchant
     // (#550), so it no longer displaces a main-hand stone or oil.
+    // A stone or oil of its own on the item swap's main-hand weapon (mythicsim patch 133).
     let mh_imbue = consumables.i32("mhImbue_id");
-    if mh_imbue != 0 {
+    if !register_per_weapon_main_hand_imbue(env, &consumables) && mh_imbue != 0 {
         register_static_imbue(env, mh_imbue, Hand::Main);
     }
     let oh_imbue = consumables.i32("ohImbue_id");
@@ -463,6 +465,108 @@ fn register_dragonbreath_chili(env: &mut Environment) {
 enum Hand {
     Main,
     Off,
+}
+
+/// Go imbue_swap.go `staticImbueStats`: the stats a stone or oil `registerStaticImbue` adds as
+/// plain stats gives.
+fn static_imbue_stats(imbue_id: i32) -> Stats {
+    match imbue_id {
+        25123 => Stats::from_pairs(&[(Stat::HealingPower, 30.0), (Stat::MP5, 15.0)]),
+        25122 | 20749 => Stats::from_pairs(&[
+            (Stat::SpellDamage, 36.0),
+            (Stat::HealingPower, 36.0),
+            (Stat::SpellCritPercent, 1.0),
+        ]),
+        25121 => Stats::from_pairs(&[(Stat::SpellDamage, 24.0)]),
+        22756 | 18262 => Stats::from_pairs(&[
+            (Stat::PhysicalCritPercent, 2.0),
+            (Stat::RangedCritPercent, -2.0),
+        ]),
+        _ => Stats::default(),
+    }
+}
+
+/// Go imbue_swap.go `registerPerWeaponMainHandImbue`: `mh_imbue_id` on the weapon worn at the
+/// pull and `mh_imbue_swap_id` on the item swap's main hand, each counting only while its weapon
+/// is in the main hand: a stat stone or oil as an aura, a proc oil as its proc aura switched on and
+/// off. Any other stone counts all fight. False, leaving the main hand to `registerStaticImbue`,
+/// when `mh_imbue_swap_id` is unset or the swap has no main-hand weapon of its own.
+fn register_per_weapon_main_hand_imbue(env: &mut Environment, consumables: &Message) -> bool {
+    let unit = env.player;
+    let swap_imbue = consumables.i32("mh_imbue_swap_id");
+    let Some(swap) = env.sim.item_swap(unit) else {
+        return false;
+    };
+    if swap_imbue == 0 {
+        return false;
+    }
+    let pull_id = env.sim.character(unit).equipment[slot::MAIN_HAND].id;
+    let swap_id = swap.un_equipped[slot::MAIN_HAND].id;
+    if swap_id == 0 || swap_id == pull_id {
+        return false;
+    }
+    // Each stone with the auras it counts through and whether each weapon carries it.
+    let mut effects: Vec<(i32, Vec<AuraId>, bool, bool)> = Vec::new();
+    for (id, pull, swap) in [
+        (consumables.i32("mhImbue_id"), true, false),
+        (swap_imbue.max(0), false, true),
+    ] {
+        if id == 0 {
+            continue;
+        }
+        if let Some(effect) = effects.iter_mut().find(|effect| effect.0 == id) {
+            // The same stone on both weapons: one effect, in hand all fight.
+            effect.2 |= pull;
+            effect.3 |= swap;
+            continue;
+        }
+        let flat = imbue_flat_weapon_damage(id);
+        let mut known = flat != 0.0;
+        let mut auras = Vec::new();
+        let stats = static_imbue_stats(id);
+        if !stats.is_zero() {
+            known = true;
+            let mut action = ActionId::item(id);
+            action.tag = 133;
+            let aura = env.sim.new_temporary_stats_aura(
+                unit,
+                &format!("Main Hand Imbue {id}"),
+                &action,
+                stats,
+                NEVER_EXPIRES,
+            );
+            auras.push(aura.aura);
+        }
+        if super::frost_oil::is_static_imbue_proc(id) {
+            known = true;
+            let before = env.sim.unit(unit).auras.len();
+            super::frost_oil::register_frost_oil(env, ProcMask::MELEE_MH);
+            auras.extend(env.sim.unit(unit).auras[before..].iter().copied());
+        }
+        if !known {
+            register_static_imbue(env, id, Hand::Main);
+            continue;
+        }
+        if flat != 0.0 {
+            // A Dense stone's damage on its weapon's swing, which the swap rebuilds.
+            env.sim
+                .item_swap_unported(unit, format!("the flat weapon damage of stone {id}"));
+        }
+        effects.push((id, auras, pull, swap));
+    }
+    env.sim.register_item_swap_callback(
+        unit,
+        &[slot::MAIN_HAND],
+        super::item_swap::SwapCallback::MainHandImbue {
+            pull_id,
+            swap_id,
+            effects: effects
+                .into_iter()
+                .map(|(_, auras, pull, swap)| (auras, pull, swap))
+                .collect(),
+        },
+    );
+    true
 }
 
 /// Go `registerStaticImbue`.

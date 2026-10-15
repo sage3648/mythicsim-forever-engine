@@ -303,7 +303,7 @@ impl<A: Agent> Fight<A> {
     pub(crate) fn spell_hit_chance(&self, spell: SpellId) -> f64 {
         let state = &self.spells[spell];
         let config = self.unit_config(state.caster);
-        let mut hit = config.spell_hit_percent + state.bonus_hit_percent;
+        let mut hit = self.unit(state.caster).powers.spell_hit_percent + state.bonus_hit_percent;
         if state.class_spell_mask {
             hit += self.school_value(spell, &config.school_bonus_hit_chance);
         }

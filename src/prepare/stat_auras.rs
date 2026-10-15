@@ -28,7 +28,7 @@ const DYNAMIC_READ_STATS: [Stat; 6] = [
 /// resistances a spell that hits the player rolls against, the physical damage a physical
 /// spell adds, the armor penetration taken off the target's armor and the spell piercing taken
 /// off its resistance.
-const OPTIONAL_READ_STATS: [Stat; 18] = [
+const OPTIONAL_READ_STATS: [Stat; 20] = [
     Stat::Mana,
     Stat::HealingPower,
     Stat::Health,
@@ -47,6 +47,8 @@ const OPTIONAL_READ_STATS: [Stat; 18] = [
     Stat::PhysicalDamage,
     Stat::ArmorPenetration,
     Stat::SpellPiercing,
+    Stat::PhysicalHitPercent,
+    Stat::SpellHitPercent,
 ];
 
 /// Auras of races, items and raid buffs whose gain and expiry change stats through
@@ -126,6 +128,12 @@ pub(crate) fn character_stat_auras(env: &Environment) -> Vec<String> {
     );
     // classic items_trinkets.go Jom Gabbar's stacking aura.
     candidates.push("Jom Gabbar".to_string());
+    // item_swaps.go: the auras a swap switches and its own equipment stats.
+    for label in super::item_swap::item_swap_stat_auras(env) {
+        if !candidates.contains(&label) {
+            candidates.push(label);
+        }
+    }
     candidates
         .into_iter()
         .filter(|label| env.sim.get_aura(env.player, label).is_some())
@@ -225,6 +233,7 @@ impl StatLayout {
 pub(crate) fn apply_level(env: &mut Environment, aura: AuraId, level: i32, stacking: bool) {
     if !env.sim.aura(aura).active {
         env.sim.activate(aura);
+        super::item_swap::add_item_swap_equip_stats(env, aura);
     }
     if stacking {
         while env.sim.aura(aura).stacks < level {

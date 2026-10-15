@@ -518,10 +518,16 @@ impl Sim {
         if includes_health_buff {
             buffs[Stat::Health] = 0.0;
         }
+        let id_string = super::common_effects::action_id_string(action_id);
+        let flat = super::common_effects::flat_string(&buffs);
         let mut config = AuraConfig {
             label: label.to_string(),
             action_id: Some(action_id.clone()),
             duration,
+            stat_logs: Some((
+                format!("Gained {flat} from {id_string}."),
+                format!("Lost {flat} from fading {id_string}."),
+            )),
             on_gain: Some(Rc::new(move |sim: &mut Sim, aura: AuraId| {
                 sim.add_stats_dynamic(unit, &buffs);
                 if includes_health_buff {

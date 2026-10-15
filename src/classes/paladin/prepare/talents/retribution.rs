@@ -319,6 +319,7 @@ impl Paladin {
                 .two_handed_weapon_specialization
                 .fraction_at(points),
             two_hand,
+            "HandTypeTwoHand",
         );
     }
 

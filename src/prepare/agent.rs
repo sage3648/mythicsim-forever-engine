@@ -65,6 +65,9 @@ pub(crate) trait PrepAgent: CloneAgent {
     fn apply_talents(&mut self, _sim: &mut Sim, _unit: UnitId) {}
     /// Go `Agent.Initialize`.
     fn initialize(&mut self, _sim: &mut Sim, _unit: UnitId) {}
+    /// A class's item swap callback that rebuilds what swings for the weapon now in the main
+    /// hand: a feral druid's paw (druid.go Initialize).
+    fn item_swap_main_hand(&mut self, _sim: &mut Sim, _unit: UnitId) {}
     /// Go `Agent.Reset`.
     fn reset(&mut self, _sim: &mut Sim, _unit: UnitId) {}
     /// A `core.NewItemEffect` the class package registers for an item: applies it and answers

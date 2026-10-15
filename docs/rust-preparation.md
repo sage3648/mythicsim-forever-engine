@@ -33,7 +33,11 @@ equal the exporter's state exactly.
 What is refused, each with a stable code, is what Go cannot export either (the exporter's
 unrepresented notes, such as a Restoration shaman, mob type bonus stats or an on-use item without
 an exported effect) and a few inputs no fixture or sweep reaches yet, such as a target disabled
-at start, item swaps, or a race without base stats for its class.
+at start, an item swap of a slot other than the main hand, a prepull item swap, an item swap by a
+Hunter, Mage, Priest, Rogue or Warlock, or a race without base stats for its class. An item swap of
+the main hand by a Paladin, Warrior, Shaman or Druid prepares as the exporter describes it
+([prepared-v2.md](prepared-v2.md), `item_swap`): the swap set, every callback Go registers for the
+slot, and the prepared state with the swap set worn.
 
 ## Commands
 

@@ -228,7 +228,8 @@ fn the_ui_default_fields_prepare_as_without_them() {
 /// swap's main hand weapon, and counts only with an item swap that has a main hand weapon of its
 /// own. Rust refuses item swapping, so the field changes nothing it prepares: an Enhancement
 /// Shaman with an Elemental Sharpening Stone prepares the same with Brilliant Wizard Oil named
-/// for a swap weapon it does not have, and an item swap is still refused.
+/// for a swap weapon it does not have, and an item swap of a slot other than the main hand is
+/// refused.
 #[test]
 fn the_swap_weapons_stone_needs_an_item_swap() {
     let id = "production-enhancement-shaman";
@@ -250,9 +251,11 @@ fn the_swap_weapons_stone_needs_an_item_swap() {
     player["enableItemSwap"] = true.into();
     player["itemSwap"] = serde_json::json!({"items": [{"id": 17182}]});
     let refused = forever_engine::prepare_json(&serde_json::to_vec(&request).unwrap(), id)
-        .expect_err("an item swap is refused");
+        .expect_err("a head slot item swap is refused");
     assert!(
-        refused.to_string().contains("item swapping is unsupported"),
+        refused
+            .to_string()
+            .contains("an item swap of a slot other than the main hand alone is unsupported"),
         "{refused}"
     );
 }

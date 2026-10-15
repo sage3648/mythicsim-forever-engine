@@ -1,6 +1,5 @@
 //! Go sim/common/classic/enchants.go: Enchant Gloves - Threat, Enchant Cloak - Subtlety and
-//! Crusader. Item swapping is refused in preparation, so the `ItemSwap` registrations after each
-//! aura have nothing to toggle.
+//! Crusader, with the item swap registrations after each aura.
 
 use crate::contracts::prepared_v2::ActionId;
 
@@ -53,13 +52,17 @@ fn crusader(env: &mut Environment) {
     let action_id = ActionId::spell(20007);
 
     for (tag, suffix) in [(1, "(MH)"), (2, "(OH)")] {
-        env.sim.new_temporary_stats_aura(
+        let buff = env.sim.new_temporary_stats_aura(
             unit,
             &format!("Holy Strength {suffix}"),
             &tagged(&action_id, tag),
             Stats::from_pairs(&[(Stat::Strength, 100.0)]),
             duration,
         );
+        // RegisterWeaponEnchantBuff: the buff falls off once no weapon carries the enchant.
+        // AddStatProcBuff's callback only keeps the APL's bookkeeping.
+        env.sim
+            .register_weapon_enchant_buff(unit, buff.aura, CRUSADER);
     }
 
     let dpm = dynamic_legacy_proc_for_enchant(&env.sim, unit, CRUSADER, 1.0, 0.0);

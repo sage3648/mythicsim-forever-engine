@@ -157,6 +157,48 @@ pub(crate) struct ShamanAgent {
     air_totem: Option<AuraRef>,
     /// Rockbiter Weapon's gain and loss lines.
     rockbiter_logs: Option<(String, String)>,
+    /// Rockbiter Weapon's stat aura bit, when an item swap switches it.
+    rockbiter_stat_bit: Option<u32>,
+    /// With an item swap, what each set's weapon gives the imbues and totems, Main then Swap1.
+    weapon_values: Option<[WeaponValues; 2]>,
+}
+
+/// The values Flametongue Weapon, Flametongue Totem and Maelstrom Weapon read from the weapon in
+/// the hand: each Flametongue hand's base damage, the totem's attack damage and Maelstrom's
+/// chances by spell from its proc manager.
+#[derive(Clone, Debug, Default, PartialEq)]
+struct WeaponValues {
+    flametongue: Vec<f64>,
+    totem_damage: Option<f64>,
+    maelstrom: maelstrom_weapon::Chances,
+}
+
+impl WeaponValues {
+    fn of(effects: &[Effect], spells: usize) -> WeaponValues {
+        let mut values = WeaponValues {
+            maelstrom: vec![None; spells],
+            ..WeaponValues::default()
+        };
+        for effect in effects {
+            match effect {
+                Effect::FlametongueWeapon { hands } => {
+                    values.flametongue = hands.iter().map(|hand| hand.base_damage).collect();
+                }
+                Effect::FlametongueTotem { attack_damage, .. } => {
+                    values.totem_damage = Some(*attack_damage);
+                }
+                Effect::MaelstromWeapon { chances, .. } => {
+                    for chance in chances {
+                        if let Some(slot) = values.maelstrom.get_mut(chance.spell) {
+                            *slot = Some(chance.chance);
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+        values
+    }
 }
 
 /// Whether a prepared input carries the effect of a kind.
@@ -579,10 +621,16 @@ impl ShamanAgent {
                     )?);
                 }
                 Effect::RockbiterWeapon {
+                    aura,
                     gain_log,
                     expire_log,
-                    ..
-                } => fight.agent.rockbiter_logs = Some((gain_log.clone(), expire_log.clone())),
+                } => {
+                    fight.agent.rockbiter_logs = Some((gain_log.clone(), expire_log.clone()));
+                    // With an item swap that switches it, a stat aura whose bit carries its attack
+                    // power.
+                    fight.agent.rockbiter_stat_bit =
+                        Fight::<ShamanAgent>::stat_aura_bit(&prepared.effects, aura);
+                }
                 Effect::FlametongueWeapon { hands } => {
                     for hand in hands {
                         let mut triggers = vec![false; fight.spells.len()];
@@ -771,6 +819,13 @@ impl ShamanAgent {
                 _ => {}
             }
         }
+        if let Some(worn) = fight.item_swap_worn_effects() {
+            let spells = fight.spells.len();
+            fight.agent.weapon_values = Some([
+                WeaponValues::of(&prepared.effects, spells),
+                WeaponValues::of(&worn, spells),
+            ]);
+        }
         Ok(fight)
     }
 
@@ -867,6 +922,24 @@ impl ShamanAgent {
 impl Agent for ShamanAgent {
     type Spell = ShamanSpell;
     type Aura = ShamanAura;
+
+    /// weapon_imbues.go and buffs/flametongue_totem.go read the speed of the weapon in the hand,
+    /// and Maelstrom Weapon's proc manager is rebuilt for it.
+    fn on_item_swap(fight: &mut Fight<Self>, worn: bool) {
+        let Some(values) = fight.agent.weapon_values.clone() else {
+            return;
+        };
+        let set = &values[usize::from(worn)];
+        for (hand, damage) in fight.agent.flametongue.iter_mut().zip(&set.flametongue) {
+            hand.2 = *damage;
+        }
+        if let (Some(totem), Some(damage)) =
+            (fight.agent.flametongue_totem.as_mut(), set.totem_damage)
+        {
+            totem.attack_damage = damage;
+        }
+        fight.agent.maelstrom_chances = set.maelstrom.clone();
+    }
 
     fn apply_effects(fight: &mut Fight<Self>, spell: SpellId, target: Side, behavior: ShamanSpell) {
         match behavior {
@@ -1318,6 +1391,9 @@ impl Agent for ShamanAgent {
                     let line = line.clone();
                     fight.player_log(&line);
                 }
+                if let Some(bit) = fight.agent.rockbiter_stat_bit {
+                    fight.set_stat_mask(fight.stat_mask | bit);
+                }
             }
             _ => {}
         }
@@ -1381,6 +1457,9 @@ impl Agent for ShamanAgent {
                 {
                     let line = line.clone();
                     fight.player_log(&line);
+                }
+                if let Some(bit) = fight.agent.rockbiter_stat_bit {
+                    fight.set_stat_mask(fight.stat_mask & !bit);
                 }
             }
             _ => {}

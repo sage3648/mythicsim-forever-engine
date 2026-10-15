@@ -436,7 +436,15 @@ pub(crate) fn apply_weapon_specialization(
     if has_weapon_equipped {
         sim.make_permanent(aura);
     }
-    // Go's item swap callback re-checks the weapons on a swap; item swapping is refused.
+    // The item swap callback re-checks the weapons in the hands.
+    sim.register_item_swap_callback(
+        unit,
+        &[slot::MAIN_HAND, slot::OFF_HAND, slot::RANGED],
+        super::item_swap::SwapCallback::Racial {
+            aura,
+            weapon_type: weapon_type.to_string(),
+        },
+    );
 }
 
 /// Go `applyExpansiveMind`.

@@ -479,6 +479,15 @@ fn fold(env: &Environment, value: &Message) -> Folds {
             )),
             None => unknown(),
         },
+        // Go `newValueActiveItemSwapSet`: nil for an unknown set or without an item swap.
+        "active_item_swap_set" => {
+            let unknown = config.enum_name("swap_set") == "Unknown";
+            if unknown || env.sim.item_swap(env.player).is_none() {
+                one(Fold::Nil)
+            } else {
+                one(Fold::Dyn(Ty::Bool))
+            }
+        }
         "aura_is_active" => aura_value(Fold::FALSE, Fold::Dyn(Ty::Bool)),
         "aura_is_inactive" => aura_value(Fold::TRUE, Fold::Dyn(Ty::Bool)),
         // Go's constant "0ms": its boolVal is true, as the text is not empty.
@@ -735,6 +744,14 @@ impl Builder<'_> {
             // Go builds these without changing the simulation; a move reads its range only
             // when it runs.
             "autocast_other_cooldowns" | "wait" | "wait_until" | "move" | "move_duration" => {
+                Ok(Some(Built::new(Vec::new())))
+            }
+            // Go `newActionItemSwap`: no action for an unknown set or without an item swap.
+            "item_swap" => {
+                let unknown = action.enum_name("swap_set") == "Unknown";
+                if unknown || self.env.sim.item_swap(self.env.player).is_none() {
+                    return Ok(None);
+                }
                 Ok(Some(Built::new(Vec::new())))
             }
             // Go `newActionGroupReference`: no action without a group name. The group's own
@@ -1083,6 +1100,17 @@ pub(crate) fn build_rotation(
         for item in rotation.messages("prepull_actions") {
             if item.bool("hide") {
                 continue;
+            }
+            // apl.go: a prepull item swap, and the swap back to Main Go then schedules.
+            let swaps = item
+                .message("action")
+                .and_then(|action| action.oneof("action"))
+                .is_some_and(|(kind, _)| kind == "item_swap");
+            if swaps && builder.env.sim.item_swap(builder.env.player).is_some() {
+                return Err(Refusal::new(
+                    "item_swap",
+                    "a prepull item swap is unsupported".to_string(),
+                ));
             }
             let Some(at) = item.message("do_at_value") else {
                 continue;

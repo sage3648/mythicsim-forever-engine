@@ -91,6 +91,8 @@ pub(crate) struct Character {
     /// Go `HardcastAvoidanceAura`: the tank's "Reduced avoidance" aura, which `Finalize`
     /// registers for a unit a target swings at.
     pub hardcast_avoidance_aura: Option<AuraId>,
+    /// Go `ItemSwap`, when the request swaps items.
+    pub item_swap: Option<super::item_swap::ItemSwap>,
 }
 
 /// Go `UnitLevelFloat64`.
@@ -304,6 +306,7 @@ impl Sim {
             player: player.clone(),
             spell_registration_handlers: Vec::new(),
             hardcast_avoidance_aura: None,
+            item_swap: None,
         }));
         let id = self.add_unit(unit);
         if let Some(cooldowns) = player.message("cooldowns") {
@@ -349,11 +352,10 @@ impl Sim {
             self.unit_mut(id).pseudo_stats.can_block = true;
         }
         self.unit_mut(id).pseudo_stats.in_front_of_target = player.bool("in_front_of_target");
-        if player.bool("enable_item_swap") && player.has("item_swap") {
-            return Err(Refusal::new(
-                "item_swap",
-                "item swapping is unsupported".to_string(),
-            ));
+        if player.bool("enable_item_swap") {
+            if let Some(item_swap) = player.message("item_swap") {
+                self.enable_item_swap(id, item_swap, area_types)?;
+            }
         }
         let cached = self.compute_equip_stats(id);
         let character = self.character_mut(id);
@@ -529,6 +531,19 @@ impl Sim {
             "Major cooldowns may not be added once finalized!"
         );
         use super::spell::SpellFlag;
+        // item_swaps.go RegisterActive: an item's use follows the item.
+        let item_id = self.spell(mcd.spell).action_id.item_id;
+        if item_id != 0 {
+            let slots = super::shared_items::eligible_slots_for_item(self, unit, item_id);
+            self.register_item_swap_callback(
+                unit,
+                &slots,
+                super::item_swap::SwapCallback::ItemUse {
+                    item_id,
+                    slots: slots.clone(),
+                },
+            );
+        }
         let spell = self.spell_mut(mcd.spell);
         spell.flags |= SpellFlag::APL | SpellFlag::MCD;
         let effective = spell.default_cast.effective_time();

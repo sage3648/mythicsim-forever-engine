@@ -38,7 +38,8 @@ impl Sim {
         aura
     }
 
-    /// Go `Character.registerEquipSpeedAuras`.
+    /// Go `Character.registerEquipSpeedAuras`: the worn items' and, with an item swap, the swap
+    /// set's items' and enchants' that differ from the worn ones.
     pub(crate) fn register_equip_speed_auras(&mut self, unit: UnitId) {
         for slot in 0..NUM_ITEM_SLOTS {
             let (item_id, item_pseudo, enchant_id, enchant_pseudo) = {
@@ -50,12 +51,37 @@ impl Sim {
                     equipped.enchant.pseudo_stats.clone(),
                 )
             };
-            self.register_speed_aura(unit, slot, "Item", item_id, &item_pseudo);
-            self.register_speed_aura(unit, slot, "Enchant", enchant_id, &enchant_pseudo);
+            self.register_speed_aura(unit, slot, "Item", item_id, &item_pseudo, true);
+            self.register_speed_aura(unit, slot, "Enchant", enchant_id, &enchant_pseudo, true);
+            let Some(swapped) = self.unequipped_item(unit, slot).cloned() else {
+                continue;
+            };
+            if swapped.id != item_id {
+                self.register_speed_aura(
+                    unit,
+                    slot,
+                    "Item",
+                    swapped.id,
+                    &swapped.pseudo_stats,
+                    false,
+                );
+            }
+            if swapped.enchant.effect_id != enchant_id {
+                let pseudo = swapped.enchant.pseudo_stats.clone();
+                self.register_speed_aura(
+                    unit,
+                    slot,
+                    "Enchant",
+                    swapped.enchant.effect_id,
+                    &pseudo,
+                    false,
+                );
+            }
         }
     }
 
-    /// Go `Character.registerSpeedAura`, for an item that is equipped at the start.
+    /// Go `Character.registerSpeedAura`: an item or enchant's speed aura, permanent when it is
+    /// worn at the start, which an item swap toggles with it.
     fn register_speed_aura(
         &mut self,
         unit: UnitId,
@@ -63,6 +89,7 @@ impl Sim {
         kind: &str,
         id: i32,
         pseudo_stats: &[f64],
+        active_at_start: bool,
     ) {
         let (melee, ranged, cast) = haste_percents(pseudo_stats);
         if melee == 0.0 && ranged == 0.0 && cast == 0.0 {
@@ -70,16 +97,27 @@ impl Sim {
         }
         let slot_name = crate::contracts::request::enum_name("proto.ItemSlot", slot as i32)
             .expect("an item slot name");
-        let aura = self.get_or_register_aura(
+        let mut aura = self.get_or_register_aura(
             unit,
             AuraConfig {
                 label: format!("{kind} {id} Speed ({slot_name})"),
-                build_phase: BuildPhase::GEAR,
+                build_phase: if active_at_start {
+                    BuildPhase::GEAR
+                } else {
+                    BuildPhase::NONE
+                },
                 duration: NEVER_EXPIRES,
                 ..AuraConfig::default()
             },
         );
-        let aura = self.make_permanent(aura);
+        if active_at_start {
+            aura = self.make_permanent(aura);
+        }
         self.attach_haste_pseudo_stats(aura, pseudo_stats);
+        if kind == "Item" {
+            self.register_item_proc_with_slots(unit, id, aura, vec![slot]);
+        } else {
+            self.register_enchant_proc_with_slots(unit, id, aura, vec![slot]);
+        }
     }
 }

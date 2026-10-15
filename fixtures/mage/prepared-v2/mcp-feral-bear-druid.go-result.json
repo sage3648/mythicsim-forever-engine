@@ -1,0 +1,2539 @@
+{
+  "avgIterationDuration": 120.088630090358,
+  "encounterMetrics": {
+    "targets": [
+      {
+        "actions": {
+          "{\"otherId\": \"OtherActionAttack\", \"tag\": 1}": {
+            "isMelee": true,
+            "spellSchool": 1,
+            "targets": [
+              {},
+              {
+                "casts": 65403,
+                "critDamage": 13567461.460755013,
+                "critRange": {
+                  "count": 3540,
+                  "max": 4629.635455814002,
+                  "min": 3340.4902885259694,
+                  "total": 13567461.460755013
+                },
+                "crits": 3540,
+                "crushDamage": 27911192.297997277,
+                "crushes": 9682,
+                "damage": 107340263.16334282,
+                "dodges": 14735,
+                "hitRange": {
+                  "count": 34285,
+                  "max": 2315.8121052534584,
+                  "min": 1670.0965083217338,
+                  "total": 65861609.40459057
+                },
+                "hits": 34285,
+                "misses": 3161,
+                "threat": 107340263.16334282,
+                "unitIndex": 1
+              }
+            ]
+          },
+          "{\"otherId\": \"OtherActionAttack\", \"tag\": 2}": {
+            "isMelee": true,
+            "spellSchool": 1,
+            "targets": [
+              {},
+              {
+                "unitIndex": 1
+              }
+            ]
+          },
+          "{\"otherId\": \"OtherActionMove\"}": {
+            "isMelee": true,
+            "targets": [
+              {},
+              {
+                "unitIndex": 1
+              }
+            ]
+          }
+        },
+        "auras": {
+          "{\"otherId\": \"OtherActionMove\"}": {
+            "aggregatorData": {
+              "n": 1000
+            }
+          },
+          "{\"spellId\": 11198, \"tag\": -1}": {
+            "aggregatorData": {
+              "n": 1000,
+              "sumSq": 14493333.083181763
+            },
+            "effects": [
+              {
+                "category": "MajorArmorReduction",
+                "uptimeSecondsAvg": 120.088630090358
+              }
+            ],
+            "procsAvg": 1,
+            "uptimeSecondsAvg": 120.08863009035795,
+            "uptimeSecondsStdev": 8.488463123730845
+          },
+          "{\"spellId\": 11374, \"tag\": -1}": {
+            "aggregatorData": {
+              "n": 1000,
+              "sumSq": 14493333.083181763
+            },
+            "effects": [
+              {
+                "category": "GiftOfArthasAura",
+                "uptimeSecondsAvg": 120.088630090358
+              }
+            ],
+            "procsAvg": 1,
+            "uptimeSecondsAvg": 120.08863009035795,
+            "uptimeSecondsStdev": 8.488463123730845
+          },
+          "{\"spellId\": 11556, \"tag\": -1}": {
+            "aggregatorData": {
+              "n": 1000,
+              "sumSq": 14493333.083181763
+            },
+            "effects": [
+              {
+                "category": "Demoralizing",
+                "uptimeSecondsAvg": 120.088630090358
+              }
+            ],
+            "procsAvg": 1,
+            "uptimeSecondsAvg": 120.08863009035795,
+            "uptimeSecondsStdev": 8.488463123730845
+          },
+          "{\"spellId\": 11597, \"tag\": -1}": {
+            "aggregatorData": {
+              "n": 1000
+            },
+            "effects": [
+              {
+                "category": "MajorArmorReduction"
+              }
+            ],
+            "procsAvg": 5
+          },
+          "{\"spellId\": 11717, \"tag\": -1}": {
+            "aggregatorData": {
+              "n": 1000,
+              "sumSq": 14493333.083181763
+            },
+            "effects": [
+              {
+                "category": "MinorArmorReductionArmorAdd"
+              }
+            ],
+            "procsAvg": 1,
+            "uptimeSecondsAvg": 120.08863009035795,
+            "uptimeSecondsStdev": 8.488463123730845
+          },
+          "{\"spellId\": 1235827}": {
+            "aggregatorData": {
+              "n": 1000,
+              "sumSq": 10911269.320635606
+            },
+            "procsAvg": 1.008,
+            "uptimeSecondsAvg": 104.06743042440603,
+            "uptimeSecondsStdev": 9.013281616426735
+          },
+          "{\"spellId\": 1311680, \"tag\": -1}": {
+            "aggregatorData": {
+              "n": 1000,
+              "sumSq": 14493333.083181763
+            },
+            "effects": [
+              {
+                "category": "CurseOfElements",
+                "uptimeSecondsAvg": 120.088630090358
+              }
+            ],
+            "procsAvg": 1,
+            "uptimeSecondsAvg": 120.08863009035795,
+            "uptimeSecondsStdev": 8.488463123730845
+          },
+          "{\"spellId\": 9898}": {
+            "aggregatorData": {
+              "n": 1000
+            },
+            "effects": [
+              {
+                "category": "Demoralizing"
+              }
+            ]
+          },
+          "{\"spellId\": 9907, \"tag\": -1}": {
+            "aggregatorData": {
+              "n": 1000,
+              "sumSq": 14493333.083181763
+            },
+            "effects": [
+              {
+                "category": "MinorArmorReductionArmorAdd",
+                "uptimeSecondsAvg": 120.088630090358
+              }
+            ],
+            "procsAvg": 1,
+            "uptimeSecondsAvg": 120.08863009035795,
+            "uptimeSecondsStdev": 8.488463123730845
+          },
+          "{\"spellId\": 9907}": {
+            "aggregatorData": {
+              "n": 1000
+            },
+            "effects": [
+              {
+                "category": "MinorArmorReductionArmorAdd"
+              }
+            ]
+          }
+        },
+        "dps": {
+          "aggregatorData": {
+            "n": 1000,
+            "sumSq": 804898602.7627791
+          },
+          "avg": 893.6474352205422,
+          "hist": {
+            "1000": 16,
+            "1010": 21,
+            "1020": 19,
+            "1030": 12,
+            "1040": 7,
+            "1050": 8,
+            "1060": 4,
+            "1070": 3,
+            "1080": 2,
+            "1090": 4,
+            "1100": 3,
+            "1110": 2,
+            "1130": 1,
+            "670": 2,
+            "680": 1,
+            "690": 1,
+            "700": 4,
+            "710": 4,
+            "720": 8,
+            "730": 6,
+            "740": 10,
+            "750": 13,
+            "760": 13,
+            "770": 19,
+            "780": 16,
+            "790": 11,
+            "800": 18,
+            "810": 35,
+            "820": 31,
+            "830": 32,
+            "840": 44,
+            "850": 37,
+            "860": 37,
+            "870": 57,
+            "880": 51,
+            "890": 55,
+            "900": 58,
+            "910": 40,
+            "920": 46,
+            "930": 50,
+            "940": 42,
+            "950": 40,
+            "960": 40,
+            "970": 29,
+            "980": 30,
+            "990": 18
+          },
+          "max": 1129.5142557485499,
+          "maxSeed": "1179730932",
+          "min": 666.2334777486572,
+          "minSeed": "1179730314",
+          "stdev": 79.32757582660601
+        },
+        "dtps": {
+          "aggregatorData": {
+            "n": 1000,
+            "sumSq": 248719376.523597
+          },
+          "avg": 497.00621991430046,
+          "hist": {
+            "370": 2,
+            "380": 1,
+            "400": 4,
+            "410": 11,
+            "420": 26,
+            "430": 22,
+            "440": 37,
+            "450": 41,
+            "460": 73,
+            "470": 79,
+            "480": 98,
+            "490": 101,
+            "500": 81,
+            "510": 93,
+            "520": 77,
+            "530": 79,
+            "540": 62,
+            "550": 37,
+            "560": 26,
+            "570": 15,
+            "580": 13,
+            "590": 9,
+            "600": 5,
+            "610": 6,
+            "630": 1,
+            "640": 1
+          },
+          "max": 643.4241842608146,
+          "maxSeed": "1179730806",
+          "min": 368.6430933991869,
+          "minSeed": "1179731080",
+          "stdev": 41.28188331574761
+        },
+        "hps": {
+          "aggregatorData": {
+            "n": 1000
+          },
+          "hist": {
+            "0": 1000
+          },
+          "minSeed": "1179731228"
+        },
+        "name": "Target 1",
+        "threat": {
+          "aggregatorData": {
+            "n": 1000,
+            "sumSq": 804898602.7627791
+          },
+          "avg": 893.6474352205422,
+          "hist": {
+            "1000": 16,
+            "1010": 21,
+            "1020": 19,
+            "1030": 12,
+            "1040": 7,
+            "1050": 8,
+            "1060": 4,
+            "1070": 3,
+            "1080": 2,
+            "1090": 4,
+            "1100": 3,
+            "1110": 2,
+            "1130": 1,
+            "670": 2,
+            "680": 1,
+            "690": 1,
+            "700": 4,
+            "710": 4,
+            "720": 8,
+            "730": 6,
+            "740": 10,
+            "750": 13,
+            "760": 13,
+            "770": 19,
+            "780": 16,
+            "790": 11,
+            "800": 18,
+            "810": 35,
+            "820": 31,
+            "830": 32,
+            "840": 44,
+            "850": 37,
+            "860": 37,
+            "870": 57,
+            "880": 51,
+            "890": 55,
+            "900": 58,
+            "910": 40,
+            "920": 46,
+            "930": 50,
+            "940": 42,
+            "950": 40,
+            "960": 40,
+            "970": 29,
+            "980": 30,
+            "990": 18
+          },
+          "max": 1129.5142557485499,
+          "maxSeed": "1179730932",
+          "min": 666.2334777486572,
+          "minSeed": "1179730314",
+          "stdev": 79.32757582660601
+        },
+        "tmi": {
+          "aggregatorData": {
+            "n": 1000
+          },
+          "hist": {
+            "0": 1000
+          },
+          "minSeed": "1179731228"
+        },
+        "tto": {
+          "aggregatorData": {
+            "n": 1000
+          },
+          "hist": {
+            "0": 1000
+          },
+          "minSeed": "1179731228"
+        }
+      }
+    ]
+  },
+  "firstIterationDuration": 126.570551886,
+  "iterationsDone": 1000,
+  "raidMetrics": {
+    "dps": {
+      "aggregatorData": {
+        "n": 1000,
+        "sumSq": 248719376.523597
+      },
+      "avg": 497.00621991430046,
+      "hist": {
+        "370": 2,
+        "380": 1,
+        "400": 4,
+        "410": 11,
+        "420": 26,
+        "430": 22,
+        "440": 37,
+        "450": 41,
+        "460": 73,
+        "470": 79,
+        "480": 98,
+        "490": 101,
+        "500": 81,
+        "510": 93,
+        "520": 77,
+        "530": 79,
+        "540": 62,
+        "550": 37,
+        "560": 26,
+        "570": 15,
+        "580": 13,
+        "590": 9,
+        "600": 5,
+        "610": 6,
+        "630": 1,
+        "640": 1
+      },
+      "max": 643.4241842608146,
+      "maxSeed": "1179730806",
+      "min": 368.6430933991869,
+      "minSeed": "1179731080",
+      "stdev": 41.28188331574761
+    },
+    "hps": {
+      "aggregatorData": {
+        "n": 1000
+      },
+      "hist": {
+        "0": 1000
+      },
+      "minSeed": "1179731228"
+    },
+    "parties": [
+      {
+        "dps": {
+          "aggregatorData": {
+            "n": 1000,
+            "sumSq": 248719376.523597
+          },
+          "avg": 497.00621991430046,
+          "hist": {
+            "370": 2,
+            "380": 1,
+            "400": 4,
+            "410": 11,
+            "420": 26,
+            "430": 22,
+            "440": 37,
+            "450": 41,
+            "460": 73,
+            "470": 79,
+            "480": 98,
+            "490": 101,
+            "500": 81,
+            "510": 93,
+            "520": 77,
+            "530": 79,
+            "540": 62,
+            "550": 37,
+            "560": 26,
+            "570": 15,
+            "580": 13,
+            "590": 9,
+            "600": 5,
+            "610": 6,
+            "630": 1,
+            "640": 1
+          },
+          "max": 643.4241842608146,
+          "maxSeed": "1179730806",
+          "min": 368.6430933991869,
+          "minSeed": "1179731080",
+          "stdev": 41.28188331574761
+        },
+        "hps": {
+          "aggregatorData": {
+            "n": 1000
+          },
+          "hist": {
+            "0": 1000
+          },
+          "minSeed": "1179731228"
+        },
+        "players": [
+          {
+            "actions": {
+              "{\"itemId\": 13442}": {
+                "targets": [
+                  {
+                    "casts": 1492
+                  },
+                  {
+                    "unitIndex": 1
+                  }
+                ]
+              },
+              "{\"itemId\": 9449}": {
+                "spellSchool": 1,
+                "targets": [
+                  {
+                    "casts": 1000
+                  },
+                  {
+                    "unitIndex": 1
+                  }
+                ]
+              },
+              "{\"otherId\": \"OtherActionAttack\", \"tag\": 1}": {
+                "isMelee": true,
+                "spellSchool": 1,
+                "targets": [
+                  {
+                    "blockDamage": 415010.6082533,
+                    "blocks": 1366,
+                    "casts": 28519,
+                    "critDamage": 5780602.8442812245,
+                    "critRange": {
+                      "count": 8105,
+                      "max": 909.8762531594705,
+                      "min": 556.3941417420957,
+                      "total": 5780602.8442812245
+                    },
+                    "crits": 8105,
+                    "damage": 9337067.280708065,
+                    "dodges": 1932,
+                    "glanceDamage": 2638180.111173626,
+                    "glances": 11376,
+                    "hitRange": {
+                      "count": 1402,
+                      "max": 446.7754242619195,
+                      "min": 278.4664843020562,
+                      "total": 503273.7169999045
+                    },
+                    "hits": 1402,
+                    "misses": 292,
+                    "parries": 4046,
+                    "threat": 12138187.464920452
+                  },
+                  {
+                    "unitIndex": 1
+                  }
+                ]
+              },
+              "{\"otherId\": \"OtherActionAttack\", \"tag\": 25584}": {
+                "isMelee": true,
+                "spellSchool": 1,
+                "targets": [
+                  {
+                    "blockDamage": 184324.73787483998,
+                    "blocks": 545,
+                    "casts": 11264,
+                    "critDamage": 2571191.662334519,
+                    "critRange": {
+                      "count": 3272,
+                      "max": 927.4592202919349,
+                      "min": 635.8566791909175,
+                      "total": 2571191.662334519
+                    },
+                    "crits": 3272,
+                    "damage": 4109204.876468323,
+                    "dodges": 723,
+                    "glanceDamage": 1130323.6099688914,
+                    "glances": 4438,
+                    "hitRange": {
+                      "count": 563,
+                      "max": 451.3779913049851,
+                      "min": 317.6386582082807,
+                      "total": 223364.86629005827
+                    },
+                    "hits": 563,
+                    "misses": 124,
+                    "parries": 1599,
+                    "threat": 5341966.339408808
+                  },
+                  {
+                    "unitIndex": 1
+                  }
+                ]
+              },
+              "{\"otherId\": \"OtherActionAttack\", \"tag\": 2}": {
+                "isMelee": true,
+                "spellSchool": 1,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  }
+                ]
+              },
+              "{\"otherId\": \"OtherActionManaGain\"}": {
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  }
+                ]
+              },
+              "{\"otherId\": \"OtherActionMove\"}": {
+                "isMelee": true,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  }
+                ]
+              },
+              "{\"otherId\": \"OtherActionRageGain\"}": {
+                "targets": [
+                  {
+                    "casts": 74454,
+                    "threat": 2019169.6304691005
+                  },
+                  {
+                    "unitIndex": 1
+                  }
+                ]
+              },
+              "{\"spellId\": 1235827}": {
+                "isMelee": true,
+                "spellSchool": 1,
+                "targets": [
+                  {
+                    "blockDamage": 335659.992246737,
+                    "blocks": 2485,
+                    "castTimeMs": 73005000,
+                    "casts": 48670,
+                    "critDamage": 6190961.138217734,
+                    "critRange": {
+                      "count": 10043,
+                      "max": 567.3852825883034,
+                      "min": 77.30304536093014,
+                      "total": 4278519.838217733
+                    },
+                    "critTickDamage": 1912441.3000000017,
+                    "critTickRange": {
+                      "count": 9520,
+                      "max": 209.93500000000003,
+                      "min": 57.475000000000016,
+                      "total": 1912441.3000000017
+                    },
+                    "critTicks": 9520,
+                    "crits": 10043,
+                    "damage": 13751751.250410346,
+                    "dodges": 3181,
+                    "hitRange": {
+                      "count": 25741,
+                      "max": 261.4995111648399,
+                      "min": 35.34932588118082,
+                      "total": 4972067.194945895
+                    },
+                    "hits": 25741,
+                    "misses": 394,
+                    "parries": 6826,
+                    "threat": 59531331.16302646,
+                    "tickDamage": 4165504.225000002,
+                    "tickRange": {
+                      "count": 24675,
+                      "max": 95.42500000000001,
+                      "min": 23.75,
+                      "total": 2253062.925000002
+                    },
+                    "ticks": 24675
+                  },
+                  {
+                    "unitIndex": 1
+                  }
+                ]
+              },
+              "{\"spellId\": 1238073}": {
+                "isMelee": true,
+                "spellSchool": 1,
+                "targets": [
+                  {
+                    "blockDamage": 498188.5326092069,
+                    "blocks": 1302,
+                    "castTimeMs": 39751500,
+                    "casts": 26501,
+                    "critDamage": 5959797.706835024,
+                    "critRange": {
+                      "count": 6220,
+                      "max": 1264.389825045674,
+                      "min": 809.0730067859487,
+                      "total": 5959797.706835024
+                    },
+                    "crits": 6220,
+                    "damage": 12359552.792281726,
+                    "dodges": 1668,
+                    "hitRange": {
+                      "count": 13295,
+                      "max": 588.8354433331461,
+                      "min": 356.0288257057062,
+                      "total": 5901566.552837468
+                    },
+                    "hits": 13295,
+                    "misses": 315,
+                    "parries": 3701,
+                    "threat": 24101127.944949314
+                  },
+                  {
+                    "unitIndex": 1
+                  }
+                ]
+              },
+              "{\"spellId\": 1259799}": {
+                "targets": [
+                  {
+                    "casts": 1000
+                  },
+                  {
+                    "unitIndex": 1
+                  }
+                ]
+              },
+              "{\"spellId\": 15851}": {
+                "isPassive": true,
+                "spellSchool": 4,
+                "targets": [
+                  {
+                    "critDamage": 70511.69348037188,
+                    "critRange": {
+                      "count": 669,
+                      "max": 126.46702797419255,
+                      "min": 25.152343502281717,
+                      "total": 70511.69348037188
+                    },
+                    "crits": 669,
+                    "damage": 283901.0510250423,
+                    "hitRange": {
+                      "count": 3023,
+                      "max": 84.30634047294913,
+                      "min": 16.690871279772715,
+                      "total": 213389.35754467078
+                    },
+                    "hits": 3023,
+                    "misses": 360,
+                    "resistedCritDamage": 10060.061817540385,
+                    "resistedCrits": 132,
+                    "resistedDamage": 37585.67016407314,
+                    "resistedHits": 547,
+                    "threat": 369071.3663325556
+                  },
+                  {
+                    "unitIndex": 1
+                  }
+                ]
+              },
+              "{\"spellId\": 22812}": {
+                "spellSchool": 8,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  }
+                ]
+              },
+              "{\"spellId\": 22842}": {
+                "spellSchool": 1,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  }
+                ]
+              },
+              "{\"spellId\": 29166}": {
+                "spellSchool": 8,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  }
+                ]
+              },
+              "{\"spellId\": 417141}": {
+                "targets": [
+                  {
+                    "casts": 1000
+                  },
+                  {
+                    "unitIndex": 1
+                  }
+                ]
+              },
+              "{\"spellId\": 5229}": {
+                "targets": [
+                  {
+                    "casts": 2476
+                  },
+                  {
+                    "unitIndex": 1
+                  }
+                ]
+              },
+              "{\"spellId\": 9634}": {
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  }
+                ]
+              },
+              "{\"spellId\": 9881}": {
+                "isMelee": true,
+                "spellSchool": 1,
+                "targets": [
+                  {
+                    "blockDamage": 820400.7002755547,
+                    "blocks": 1634,
+                    "casts": 33983,
+                    "critDamage": 9218314.248315535,
+                    "critRange": {
+                      "count": 7535,
+                      "max": 1549.8585207697656,
+                      "min": 947.7363502029841,
+                      "total": 9218314.248315535
+                    },
+                    "crits": 7535,
+                    "damage": 19888612.928522356,
+                    "dodges": 2249,
+                    "hitRange": {
+                      "count": 17492,
+                      "max": 704.4586567820745,
+                      "min": 433.4760076129069,
+                      "total": 9849897.979931273
+                    },
+                    "hits": 17492,
+                    "misses": 362,
+                    "parries": 4711,
+                    "threat": 45246594.41238838
+                  },
+                  {
+                    "unitIndex": 1
+                  }
+                ]
+              },
+              "{\"spellId\": 9898}": {
+                "spellSchool": 1,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  }
+                ]
+              },
+              "{\"spellId\": 9907}": {
+                "spellSchool": 8,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  }
+                ]
+              },
+              "{\"spellId\": 9908}": {
+                "isMelee": true,
+                "spellSchool": 1,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  }
+                ]
+              },
+              "{\"spellId\": 9910, \"tag\": 2}": {
+                "isPassive": true,
+                "spellSchool": 8,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  }
+                ]
+              },
+              "{\"spellId\": 9910}": {
+                "spellSchool": 8,
+                "targets": [
+                  {},
+                  {
+                    "unitIndex": 1
+                  }
+                ]
+              }
+            },
+            "auras": {
+              "{\"itemId\": 13442}": {
+                "aggregatorData": {
+                  "n": 1000,
+                  "sumSq": 567399.1791009367
+                },
+                "procsAvg": 1.492,
+                "uptimeSecondsAvg": 23.393867300592987,
+                "uptimeSecondsStdev": 4.486217986587693
+              },
+              "{\"otherId\": \"OtherActionItemSwap\", \"tag\": 1}": {
+                "aggregatorData": {
+                  "n": 1000,
+                  "sumSq": 902078.7733684572
+                },
+                "procsAvg": 2,
+                "uptimeSecondsAvg": 30.034517593106205,
+                "uptimeSecondsStdev": 0.08078562898821774
+              },
+              "{\"otherId\": \"OtherActionItemSwap\", \"tag\": 2}": {
+                "aggregatorData": {
+                  "n": 1000,
+                  "sumSq": 8181834.389176581
+                },
+                "procsAvg": 1,
+                "uptimeSecondsAvg": 90.05411249725198,
+                "uptimeSecondsStdev": 8.490654362819503
+              },
+              "{\"otherId\": \"OtherActionMove\"}": {
+                "aggregatorData": {
+                  "n": 1000
+                }
+              },
+              "{\"spellId\": 10293, \"tag\": -1}": {
+                "aggregatorData": {
+                  "n": 1000,
+                  "sumSq": 14493333.083181763
+                },
+                "effects": [
+                  {
+                    "category": "DevotionAura",
+                    "uptimeSecondsAvg": 120.088630090358
+                  }
+                ],
+                "procsAvg": 1,
+                "uptimeSecondsAvg": 120.08863009035795,
+                "uptimeSecondsStdev": 8.488463123730845
+              },
+              "{\"spellId\": 10535, \"tag\": -1}": {
+                "aggregatorData": {
+                  "n": 1000,
+                  "sumSq": 14493333.083181763
+                },
+                "effects": [
+                  {
+                    "category": "ResistanceFireFireResistanceAdd",
+                    "uptimeSecondsAvg": 120.088630090358
+                  }
+                ],
+                "procsAvg": 1,
+                "uptimeSecondsAvg": 120.08863009035795,
+                "uptimeSecondsStdev": 8.488463123730845
+              },
+              "{\"spellId\": 10610, \"tag\": -1}": {
+                "aggregatorData": {
+                  "n": 1000,
+                  "sumSq": 244496.76272123115
+                },
+                "effects": [
+                  {
+                    "category": "WindfuryTotemAttackPowerAdd",
+                    "uptimeSecondsAvg": 15.187186237960999
+                  }
+                ],
+                "procsAvg": 19.714,
+                "uptimeSecondsAvg": 15.187186237960999,
+                "uptimeSecondsStdev": 3.7210397598949645
+              },
+              "{\"spellId\": 1259799}": {
+                "aggregatorData": {
+                  "n": 1000,
+                  "sumSq": 225000
+                },
+                "procsAvg": 1,
+                "uptimeSecondsAvg": 15
+              },
+              "{\"spellId\": 13494}": {
+                "aggregatorData": {
+                  "n": 1000,
+                  "sumSq": 900000
+                },
+                "procsAvg": 1,
+                "uptimeSecondsAvg": 30
+              },
+              "{\"spellId\": 16870}": {
+                "aggregatorData": {
+                  "n": 1000,
+                  "sumSq": 43297.45166201928
+                },
+                "procsAvg": 5.578,
+                "uptimeSecondsAvg": 6.276265988590003,
+                "uptimeSecondsStdev": 1.976344327916476
+              },
+              "{\"spellId\": 17056}": {
+                "aggregatorData": {
+                  "n": 1000,
+                  "sumSq": 14493333.083181763
+                },
+                "procsAvg": 1,
+                "uptimeSecondsAvg": 120.08863009035795,
+                "uptimeSecondsStdev": 8.488463123730845
+              },
+              "{\"spellId\": 19900, \"tag\": -1}": {
+                "aggregatorData": {
+                  "n": 1000,
+                  "sumSq": 14493333.083181763
+                },
+                "effects": [
+                  {
+                    "category": "ResistanceFireFireResistanceAdd"
+                  },
+                  {
+                    "category": "FireResistanceAura",
+                    "uptimeSecondsAvg": 120.088630090358
+                  }
+                ],
+                "procsAvg": 1,
+                "uptimeSecondsAvg": 120.08863009035795,
+                "uptimeSecondsStdev": 8.488463123730845
+              },
+              "{\"spellId\": 20007, \"tag\": 1}": {
+                "aggregatorData": {
+                  "n": 1000,
+                  "sumSq": 3259363.7330955574
+                },
+                "procsAvg": 5.003,
+                "uptimeSecondsAvg": 53.30201513819194,
+                "uptimeSecondsStdev": 20.451379300759026
+              },
+              "{\"spellId\": 20007, \"tag\": 2}": {
+                "aggregatorData": {
+                  "n": 1000
+                }
+              },
+              "{\"spellId\": 21564, \"tag\": -1}": {
+                "aggregatorData": {
+                  "n": 1000,
+                  "sumSq": 14493333.083181763
+                },
+                "procsAvg": 1,
+                "uptimeSecondsAvg": 120.08863009035795,
+                "uptimeSecondsStdev": 8.488463123730845
+              },
+              "{\"spellId\": 21850, \"tag\": -1}": {
+                "aggregatorData": {
+                  "n": 1000,
+                  "sumSq": 14493333.083181763
+                },
+                "effects": [
+                  {
+                    "category": "ResistanceFireFireResistanceAdd"
+                  },
+                  {
+                    "category": "ResistanceNatureNatureResistanceAdd",
+                    "uptimeSecondsAvg": 120.088630090358
+                  },
+                  {
+                    "category": "ResistanceFrostFrostResistanceAdd",
+                    "uptimeSecondsAvg": 120.088630090358
+                  },
+                  {
+                    "category": "ResistanceShadowShadowResistanceAdd",
+                    "uptimeSecondsAvg": 120.088630090358
+                  },
+                  {
+                    "category": "ResistanceArcaneArcaneResistanceAdd",
+                    "uptimeSecondsAvg": 120.088630090358
+                  }
+                ],
+                "procsAvg": 1,
+                "uptimeSecondsAvg": 120.08863009035795,
+                "uptimeSecondsStdev": 8.488463123730845
+              },
+              "{\"spellId\": 22812}": {
+                "aggregatorData": {
+                  "n": 1000
+                }
+              },
+              "{\"spellId\": 22842}": {
+                "aggregatorData": {
+                  "n": 1000
+                }
+              },
+              "{\"spellId\": 24932, \"tag\": -1}": {
+                "aggregatorData": {
+                  "n": 1000,
+                  "sumSq": 14493333.083181763
+                },
+                "effects": [
+                  {
+                    "category": "DruidCritAura",
+                    "uptimeSecondsAvg": 120.088630090358
+                  }
+                ],
+                "procsAvg": 1,
+                "uptimeSecondsAvg": 120.08863009035795,
+                "uptimeSecondsStdev": 8.488463123730845
+              },
+              "{\"spellId\": 25289, \"tag\": -1}": {
+                "aggregatorData": {
+                  "n": 1000,
+                  "sumSq": 14493333.083181763
+                },
+                "effects": [
+                  {
+                    "category": "BattleShout",
+                    "uptimeSecondsAvg": 120.088630090358
+                  }
+                ],
+                "procsAvg": 1,
+                "uptimeSecondsAvg": 120.08863009035795,
+                "uptimeSecondsStdev": 8.488463123730845
+              },
+              "{\"spellId\": 25362, \"tag\": -1}": {
+                "aggregatorData": {
+                  "n": 1000,
+                  "sumSq": 14493333.083181763
+                },
+                "effects": [
+                  {
+                    "category": "StrengthOfEarthTotemStrengthAdd",
+                    "uptimeSecondsAvg": 120.088630090358
+                  }
+                ],
+                "procsAvg": 1,
+                "uptimeSecondsAvg": 120.08863009035795,
+                "uptimeSecondsStdev": 8.488463123730845
+              },
+              "{\"spellId\": 25580, \"tag\": -1}": {
+                "aggregatorData": {
+                  "n": 1000,
+                  "sumSq": 14493333.083181763
+                },
+                "procsAvg": 1,
+                "uptimeSecondsAvg": 120.08863009035795,
+                "uptimeSecondsStdev": 8.488463123730845
+              },
+              "{\"spellId\": 25587, \"tag\": -1}": {
+                "aggregatorData": {
+                  "n": 1000,
+                  "sumSq": 14493333.083181763
+                },
+                "effects": [
+                  {
+                    "category": "AirTotem",
+                    "uptimeSecondsAvg": 120.088630090358
+                  },
+                  {
+                    "category": "FlametongueTotem",
+                    "uptimeSecondsAvg": 120.088630090358
+                  },
+                  {
+                    "category": "WindfuryTotem",
+                    "uptimeSecondsAvg": 120.088630090358
+                  }
+                ],
+                "procsAvg": 24.52,
+                "uptimeSecondsAvg": 120.08863009035795,
+                "uptimeSecondsStdev": 8.488463123730845
+              },
+              "{\"spellId\": 25898, \"tag\": -1}": {
+                "aggregatorData": {
+                  "n": 1000,
+                  "sumSq": 14493333.083181763
+                },
+                "procsAvg": 1,
+                "uptimeSecondsAvg": 120.08863009035795,
+                "uptimeSecondsStdev": 8.488463123730845
+              },
+              "{\"spellId\": 25916, \"tag\": -1}": {
+                "aggregatorData": {
+                  "n": 1000,
+                  "sumSq": 14493333.083181763
+                },
+                "procsAvg": 1,
+                "uptimeSecondsAvg": 120.08863009035795,
+                "uptimeSecondsStdev": 8.488463123730845
+              },
+              "{\"spellId\": 29166}": {
+                "aggregatorData": {
+                  "n": 1000
+                }
+              },
+              "{\"spellId\": 417141}": {
+                "aggregatorData": {
+                  "n": 1000,
+                  "sumSq": 225000
+                },
+                "procsAvg": 1,
+                "uptimeSecondsAvg": 15
+              },
+              "{\"spellId\": 5229}": {
+                "aggregatorData": {
+                  "n": 1000,
+                  "sumSq": 537956.72008001
+                },
+                "procsAvg": 2.476,
+                "uptimeSecondsAvg": 22.877702136497998,
+                "uptimeSecondsStdev": 3.816734865521171
+              },
+              "{\"spellId\": 768}": {
+                "aggregatorData": {
+                  "n": 1000
+                },
+                "effects": [
+                  {
+                    "category": "PassiveMovementSpeed"
+                  }
+                ]
+              },
+              "{\"spellId\": 9634}": {
+                "aggregatorData": {
+                  "n": 1000,
+                  "sumSq": 14493333.083181763
+                },
+                "procsAvg": 1,
+                "uptimeSecondsAvg": 120.08863009035795,
+                "uptimeSecondsStdev": 8.488463123730845
+              },
+              "{\"spellId\": 9881, \"tag\": 1}": {
+                "aggregatorData": {
+                  "n": 1000,
+                  "sumSq": 2884562.138802421
+                },
+                "procsAvg": 32.182,
+                "uptimeSecondsAvg": 52.99118950303306,
+                "uptimeSecondsStdev": 8.746197679909802
+              },
+              "{\"spellId\": 9910}": {
+                "aggregatorData": {
+                  "n": 1000
+                },
+                "effects": [
+                  {
+                    "category": "Thorns"
+                  }
+                ]
+              }
+            },
+            "chanceOfDeath": 1,
+            "deathSeeds": [
+              "1179730229",
+              "1179730230",
+              "1179730231",
+              "1179730232",
+              "1179730233",
+              "1179730234",
+              "1179730235",
+              "1179730236",
+              "1179730237",
+              "1179730238",
+              "1179730239",
+              "1179730240",
+              "1179730241",
+              "1179730242",
+              "1179730243",
+              "1179730244",
+              "1179730245",
+              "1179730246",
+              "1179730247",
+              "1179730248",
+              "1179730249",
+              "1179730250",
+              "1179730251",
+              "1179730252",
+              "1179730253",
+              "1179730254",
+              "1179730255",
+              "1179730256",
+              "1179730257",
+              "1179730258",
+              "1179730259",
+              "1179730260",
+              "1179730261",
+              "1179730262",
+              "1179730263",
+              "1179730264",
+              "1179730265",
+              "1179730266",
+              "1179730267",
+              "1179730268",
+              "1179730269",
+              "1179730270",
+              "1179730271",
+              "1179730272",
+              "1179730273",
+              "1179730274",
+              "1179730275",
+              "1179730276",
+              "1179730277",
+              "1179730278",
+              "1179730279",
+              "1179730280",
+              "1179730281",
+              "1179730282",
+              "1179730283",
+              "1179730284",
+              "1179730285",
+              "1179730286",
+              "1179730287",
+              "1179730288",
+              "1179730289",
+              "1179730290",
+              "1179730291",
+              "1179730292",
+              "1179730293",
+              "1179730294",
+              "1179730295",
+              "1179730296",
+              "1179730297",
+              "1179730298",
+              "1179730299",
+              "1179730300",
+              "1179730301",
+              "1179730302",
+              "1179730303",
+              "1179730304",
+              "1179730305",
+              "1179730306",
+              "1179730307",
+              "1179730308",
+              "1179730309",
+              "1179730310",
+              "1179730311",
+              "1179730312",
+              "1179730313",
+              "1179730314",
+              "1179730315",
+              "1179730316",
+              "1179730317",
+              "1179730318",
+              "1179730319",
+              "1179730320",
+              "1179730321",
+              "1179730322",
+              "1179730323",
+              "1179730324",
+              "1179730325",
+              "1179730326",
+              "1179730327",
+              "1179730328",
+              "1179730329",
+              "1179730330",
+              "1179730331",
+              "1179730332",
+              "1179730333",
+              "1179730334",
+              "1179730335",
+              "1179730336",
+              "1179730337",
+              "1179730338",
+              "1179730339",
+              "1179730340",
+              "1179730341",
+              "1179730342",
+              "1179730343",
+              "1179730344",
+              "1179730345",
+              "1179730346",
+              "1179730347",
+              "1179730348",
+              "1179730349",
+              "1179730350",
+              "1179730351",
+              "1179730352",
+              "1179730353",
+              "1179730354",
+              "1179730355",
+              "1179730356",
+              "1179730357",
+              "1179730358",
+              "1179730359",
+              "1179730360",
+              "1179730361",
+              "1179730362",
+              "1179730363",
+              "1179730364",
+              "1179730365",
+              "1179730366",
+              "1179730367",
+              "1179730368",
+              "1179730369",
+              "1179730370",
+              "1179730371",
+              "1179730372",
+              "1179730373",
+              "1179730374",
+              "1179730375",
+              "1179730376",
+              "1179730377",
+              "1179730378",
+              "1179730379",
+              "1179730380",
+              "1179730381",
+              "1179730382",
+              "1179730383",
+              "1179730384",
+              "1179730385",
+              "1179730386",
+              "1179730387",
+              "1179730388",
+              "1179730389",
+              "1179730390",
+              "1179730391",
+              "1179730392",
+              "1179730393",
+              "1179730394",
+              "1179730395",
+              "1179730396",
+              "1179730397",
+              "1179730398",
+              "1179730399",
+              "1179730400",
+              "1179730401",
+              "1179730402",
+              "1179730403",
+              "1179730404",
+              "1179730405",
+              "1179730406",
+              "1179730407",
+              "1179730408",
+              "1179730409",
+              "1179730410",
+              "1179730411",
+              "1179730412",
+              "1179730413",
+              "1179730414",
+              "1179730415",
+              "1179730416",
+              "1179730417",
+              "1179730418",
+              "1179730419",
+              "1179730420",
+              "1179730421",
+              "1179730422",
+              "1179730423",
+              "1179730424",
+              "1179730425",
+              "1179730426",
+              "1179730427",
+              "1179730428",
+              "1179730429",
+              "1179730430",
+              "1179730431",
+              "1179730432",
+              "1179730433",
+              "1179730434",
+              "1179730435",
+              "1179730436",
+              "1179730437",
+              "1179730438",
+              "1179730439",
+              "1179730440",
+              "1179730441",
+              "1179730442",
+              "1179730443",
+              "1179730444",
+              "1179730445",
+              "1179730446",
+              "1179730447",
+              "1179730448",
+              "1179730449",
+              "1179730450",
+              "1179730451",
+              "1179730452",
+              "1179730453",
+              "1179730454",
+              "1179730455",
+              "1179730456",
+              "1179730457",
+              "1179730458",
+              "1179730459",
+              "1179730460",
+              "1179730461",
+              "1179730462",
+              "1179730463",
+              "1179730464",
+              "1179730465",
+              "1179730466",
+              "1179730467",
+              "1179730468",
+              "1179730469",
+              "1179730470",
+              "1179730471",
+              "1179730472",
+              "1179730473",
+              "1179730474",
+              "1179730475",
+              "1179730476",
+              "1179730477",
+              "1179730478",
+              "1179730479",
+              "1179730480",
+              "1179730481",
+              "1179730482",
+              "1179730483",
+              "1179730484",
+              "1179730485",
+              "1179730486",
+              "1179730487",
+              "1179730488",
+              "1179730489",
+              "1179730490",
+              "1179730491",
+              "1179730492",
+              "1179730493",
+              "1179730494",
+              "1179730495",
+              "1179730496",
+              "1179730497",
+              "1179730498",
+              "1179730499",
+              "1179730500",
+              "1179730501",
+              "1179730502",
+              "1179730503",
+              "1179730504",
+              "1179730505",
+              "1179730506",
+              "1179730507",
+              "1179730508",
+              "1179730509",
+              "1179730510",
+              "1179730511",
+              "1179730512",
+              "1179730513",
+              "1179730514",
+              "1179730515",
+              "1179730516",
+              "1179730517",
+              "1179730518",
+              "1179730519",
+              "1179730520",
+              "1179730521",
+              "1179730522",
+              "1179730523",
+              "1179730524",
+              "1179730525",
+              "1179730526",
+              "1179730527",
+              "1179730528",
+              "1179730529",
+              "1179730530",
+              "1179730531",
+              "1179730532",
+              "1179730533",
+              "1179730534",
+              "1179730535",
+              "1179730536",
+              "1179730537",
+              "1179730538",
+              "1179730539",
+              "1179730540",
+              "1179730541",
+              "1179730542",
+              "1179730543",
+              "1179730544",
+              "1179730545",
+              "1179730546",
+              "1179730547",
+              "1179730548",
+              "1179730549",
+              "1179730550",
+              "1179730551",
+              "1179730552",
+              "1179730553",
+              "1179730554",
+              "1179730555",
+              "1179730556",
+              "1179730557",
+              "1179730558",
+              "1179730559",
+              "1179730560",
+              "1179730561",
+              "1179730562",
+              "1179730563",
+              "1179730564",
+              "1179730565",
+              "1179730566",
+              "1179730567",
+              "1179730568",
+              "1179730569",
+              "1179730570",
+              "1179730571",
+              "1179730572",
+              "1179730573",
+              "1179730574",
+              "1179730575",
+              "1179730576",
+              "1179730577",
+              "1179730578",
+              "1179730579",
+              "1179730580",
+              "1179730581",
+              "1179730582",
+              "1179730583",
+              "1179730584",
+              "1179730585",
+              "1179730586",
+              "1179730587",
+              "1179730588",
+              "1179730589",
+              "1179730590",
+              "1179730591",
+              "1179730592",
+              "1179730593",
+              "1179730594",
+              "1179730595",
+              "1179730596",
+              "1179730597",
+              "1179730598",
+              "1179730599",
+              "1179730600",
+              "1179730601",
+              "1179730602",
+              "1179730603",
+              "1179730604",
+              "1179730605",
+              "1179730606",
+              "1179730607",
+              "1179730608",
+              "1179730609",
+              "1179730610",
+              "1179730611",
+              "1179730612",
+              "1179730613",
+              "1179730614",
+              "1179730615",
+              "1179730616",
+              "1179730617",
+              "1179730618",
+              "1179730619",
+              "1179730620",
+              "1179730621",
+              "1179730622",
+              "1179730623",
+              "1179730624",
+              "1179730625",
+              "1179730626",
+              "1179730627",
+              "1179730628",
+              "1179730629",
+              "1179730630",
+              "1179730631",
+              "1179730632",
+              "1179730633",
+              "1179730634",
+              "1179730635",
+              "1179730636",
+              "1179730637",
+              "1179730638",
+              "1179730639",
+              "1179730640",
+              "1179730641",
+              "1179730642",
+              "1179730643",
+              "1179730644",
+              "1179730645",
+              "1179730646",
+              "1179730647",
+              "1179730648",
+              "1179730649",
+              "1179730650",
+              "1179730651",
+              "1179730652",
+              "1179730653",
+              "1179730654",
+              "1179730655",
+              "1179730656",
+              "1179730657",
+              "1179730658",
+              "1179730659",
+              "1179730660",
+              "1179730661",
+              "1179730662",
+              "1179730663",
+              "1179730664",
+              "1179730665",
+              "1179730666",
+              "1179730667",
+              "1179730668",
+              "1179730669",
+              "1179730670",
+              "1179730671",
+              "1179730672",
+              "1179730673",
+              "1179730674",
+              "1179730675",
+              "1179730676",
+              "1179730677",
+              "1179730678",
+              "1179730679",
+              "1179730680",
+              "1179730681",
+              "1179730682",
+              "1179730683",
+              "1179730684",
+              "1179730685",
+              "1179730686",
+              "1179730687",
+              "1179730688",
+              "1179730689",
+              "1179730690",
+              "1179730691",
+              "1179730692",
+              "1179730693",
+              "1179730694",
+              "1179730695",
+              "1179730696",
+              "1179730697",
+              "1179730698",
+              "1179730699",
+              "1179730700",
+              "1179730701",
+              "1179730702",
+              "1179730703",
+              "1179730704",
+              "1179730705",
+              "1179730706",
+              "1179730707",
+              "1179730708",
+              "1179730709",
+              "1179730710",
+              "1179730711",
+              "1179730712",
+              "1179730713",
+              "1179730714",
+              "1179730715",
+              "1179730716",
+              "1179730717",
+              "1179730718",
+              "1179730719",
+              "1179730720",
+              "1179730721",
+              "1179730722",
+              "1179730723",
+              "1179730724",
+              "1179730725",
+              "1179730726",
+              "1179730727",
+              "1179730728",
+              "1179730729",
+              "1179730730",
+              "1179730731",
+              "1179730732",
+              "1179730733",
+              "1179730734",
+              "1179730735",
+              "1179730736",
+              "1179730737",
+              "1179730738",
+              "1179730739",
+              "1179730740",
+              "1179730741",
+              "1179730742",
+              "1179730743",
+              "1179730744",
+              "1179730745",
+              "1179730746",
+              "1179730747",
+              "1179730748",
+              "1179730749",
+              "1179730750",
+              "1179730751",
+              "1179730752",
+              "1179730753",
+              "1179730754",
+              "1179730755",
+              "1179730756",
+              "1179730757",
+              "1179730758",
+              "1179730759",
+              "1179730760",
+              "1179730761",
+              "1179730762",
+              "1179730763",
+              "1179730764",
+              "1179730765",
+              "1179730766",
+              "1179730767",
+              "1179730768",
+              "1179730769",
+              "1179730770",
+              "1179730771",
+              "1179730772",
+              "1179730773",
+              "1179730774",
+              "1179730775",
+              "1179730776",
+              "1179730777",
+              "1179730778",
+              "1179730779",
+              "1179730780",
+              "1179730781",
+              "1179730782",
+              "1179730783",
+              "1179730784",
+              "1179730785",
+              "1179730786",
+              "1179730787",
+              "1179730788",
+              "1179730789",
+              "1179730790",
+              "1179730791",
+              "1179730792",
+              "1179730793",
+              "1179730794",
+              "1179730795",
+              "1179730796",
+              "1179730797",
+              "1179730798",
+              "1179730799",
+              "1179730800",
+              "1179730801",
+              "1179730802",
+              "1179730803",
+              "1179730804",
+              "1179730805",
+              "1179730806",
+              "1179730807",
+              "1179730808",
+              "1179730809",
+              "1179730810",
+              "1179730811",
+              "1179730812",
+              "1179730813",
+              "1179730814",
+              "1179730815",
+              "1179730816",
+              "1179730817",
+              "1179730818",
+              "1179730819",
+              "1179730820",
+              "1179730821",
+              "1179730822",
+              "1179730823",
+              "1179730824",
+              "1179730825",
+              "1179730826",
+              "1179730827",
+              "1179730828",
+              "1179730829",
+              "1179730830",
+              "1179730831",
+              "1179730832",
+              "1179730833",
+              "1179730834",
+              "1179730835",
+              "1179730836",
+              "1179730837",
+              "1179730838",
+              "1179730839",
+              "1179730840",
+              "1179730841",
+              "1179730842",
+              "1179730843",
+              "1179730844",
+              "1179730845",
+              "1179730846",
+              "1179730847",
+              "1179730848",
+              "1179730849",
+              "1179730850",
+              "1179730851",
+              "1179730852",
+              "1179730853",
+              "1179730854",
+              "1179730855",
+              "1179730856",
+              "1179730857",
+              "1179730858",
+              "1179730859",
+              "1179730860",
+              "1179730861",
+              "1179730862",
+              "1179730863",
+              "1179730864",
+              "1179730865",
+              "1179730866",
+              "1179730867",
+              "1179730868",
+              "1179730869",
+              "1179730870",
+              "1179730871",
+              "1179730872",
+              "1179730873",
+              "1179730874",
+              "1179730875",
+              "1179730876",
+              "1179730877",
+              "1179730878",
+              "1179730879",
+              "1179730880",
+              "1179730881",
+              "1179730882",
+              "1179730883",
+              "1179730884",
+              "1179730885",
+              "1179730886",
+              "1179730887",
+              "1179730888",
+              "1179730889",
+              "1179730890",
+              "1179730891",
+              "1179730892",
+              "1179730893",
+              "1179730894",
+              "1179730895",
+              "1179730896",
+              "1179730897",
+              "1179730898",
+              "1179730899",
+              "1179730900",
+              "1179730901",
+              "1179730902",
+              "1179730903",
+              "1179730904",
+              "1179730905",
+              "1179730906",
+              "1179730907",
+              "1179730908",
+              "1179730909",
+              "1179730910",
+              "1179730911",
+              "1179730912",
+              "1179730913",
+              "1179730914",
+              "1179730915",
+              "1179730916",
+              "1179730917",
+              "1179730918",
+              "1179730919",
+              "1179730920",
+              "1179730921",
+              "1179730922",
+              "1179730923",
+              "1179730924",
+              "1179730925",
+              "1179730926",
+              "1179730927",
+              "1179730928",
+              "1179730929",
+              "1179730930",
+              "1179730931",
+              "1179730932",
+              "1179730933",
+              "1179730934",
+              "1179730935",
+              "1179730936",
+              "1179730937",
+              "1179730938",
+              "1179730939",
+              "1179730940",
+              "1179730941",
+              "1179730942",
+              "1179730943",
+              "1179730944",
+              "1179730945",
+              "1179730946",
+              "1179730947",
+              "1179730948",
+              "1179730949",
+              "1179730950",
+              "1179730951",
+              "1179730952",
+              "1179730953",
+              "1179730954",
+              "1179730955",
+              "1179730956",
+              "1179730957",
+              "1179730958",
+              "1179730959",
+              "1179730960",
+              "1179730961",
+              "1179730962",
+              "1179730963",
+              "1179730964",
+              "1179730965",
+              "1179730966",
+              "1179730967",
+              "1179730968",
+              "1179730969",
+              "1179730970",
+              "1179730971",
+              "1179730972",
+              "1179730973",
+              "1179730974",
+              "1179730975",
+              "1179730976",
+              "1179730977",
+              "1179730978",
+              "1179730979",
+              "1179730980",
+              "1179730981",
+              "1179730982",
+              "1179730983",
+              "1179730984",
+              "1179730985",
+              "1179730986",
+              "1179730987",
+              "1179730988",
+              "1179730989",
+              "1179730990",
+              "1179730991",
+              "1179730992",
+              "1179730993",
+              "1179730994",
+              "1179730995",
+              "1179730996",
+              "1179730997",
+              "1179730998",
+              "1179730999",
+              "1179731000",
+              "1179731001",
+              "1179731002",
+              "1179731003",
+              "1179731004",
+              "1179731005",
+              "1179731006",
+              "1179731007",
+              "1179731008",
+              "1179731009",
+              "1179731010",
+              "1179731011",
+              "1179731012",
+              "1179731013",
+              "1179731014",
+              "1179731015",
+              "1179731016",
+              "1179731017",
+              "1179731018",
+              "1179731019",
+              "1179731020",
+              "1179731021",
+              "1179731022",
+              "1179731023",
+              "1179731024",
+              "1179731025",
+              "1179731026",
+              "1179731027",
+              "1179731028",
+              "1179731029",
+              "1179731030",
+              "1179731031",
+              "1179731032",
+              "1179731033",
+              "1179731034",
+              "1179731035",
+              "1179731036",
+              "1179731037",
+              "1179731038",
+              "1179731039",
+              "1179731040",
+              "1179731041",
+              "1179731042",
+              "1179731043",
+              "1179731044",
+              "1179731045",
+              "1179731046",
+              "1179731047",
+              "1179731048",
+              "1179731049",
+              "1179731050",
+              "1179731051",
+              "1179731052",
+              "1179731053",
+              "1179731054",
+              "1179731055",
+              "1179731056",
+              "1179731057",
+              "1179731058",
+              "1179731059",
+              "1179731060",
+              "1179731061",
+              "1179731062",
+              "1179731063",
+              "1179731064",
+              "1179731065",
+              "1179731066",
+              "1179731067",
+              "1179731068",
+              "1179731069",
+              "1179731070",
+              "1179731071",
+              "1179731072",
+              "1179731073",
+              "1179731074",
+              "1179731075",
+              "1179731076",
+              "1179731077",
+              "1179731078",
+              "1179731079",
+              "1179731080",
+              "1179731081",
+              "1179731082",
+              "1179731083",
+              "1179731084",
+              "1179731085",
+              "1179731086",
+              "1179731087",
+              "1179731088",
+              "1179731089",
+              "1179731090",
+              "1179731091",
+              "1179731092",
+              "1179731093",
+              "1179731094",
+              "1179731095",
+              "1179731096",
+              "1179731097",
+              "1179731098",
+              "1179731099",
+              "1179731100",
+              "1179731101",
+              "1179731102",
+              "1179731103",
+              "1179731104",
+              "1179731105",
+              "1179731106",
+              "1179731107",
+              "1179731108",
+              "1179731109",
+              "1179731110",
+              "1179731111",
+              "1179731112",
+              "1179731113",
+              "1179731114",
+              "1179731115",
+              "1179731116",
+              "1179731117",
+              "1179731118",
+              "1179731119",
+              "1179731120",
+              "1179731121",
+              "1179731122",
+              "1179731123",
+              "1179731124",
+              "1179731125",
+              "1179731126",
+              "1179731127",
+              "1179731128",
+              "1179731129",
+              "1179731130",
+              "1179731131",
+              "1179731132",
+              "1179731133",
+              "1179731134",
+              "1179731135",
+              "1179731136",
+              "1179731137",
+              "1179731138",
+              "1179731139",
+              "1179731140",
+              "1179731141",
+              "1179731142",
+              "1179731143",
+              "1179731144",
+              "1179731145",
+              "1179731146",
+              "1179731147",
+              "1179731148",
+              "1179731149",
+              "1179731150",
+              "1179731151",
+              "1179731152",
+              "1179731153",
+              "1179731154",
+              "1179731155",
+              "1179731156",
+              "1179731157",
+              "1179731158",
+              "1179731159",
+              "1179731160",
+              "1179731161",
+              "1179731162",
+              "1179731163",
+              "1179731164",
+              "1179731165",
+              "1179731166",
+              "1179731167",
+              "1179731168",
+              "1179731169",
+              "1179731170",
+              "1179731171",
+              "1179731172",
+              "1179731173",
+              "1179731174",
+              "1179731175",
+              "1179731176",
+              "1179731177",
+              "1179731178",
+              "1179731179",
+              "1179731180",
+              "1179731181",
+              "1179731182",
+              "1179731183",
+              "1179731184",
+              "1179731185",
+              "1179731186",
+              "1179731187",
+              "1179731188",
+              "1179731189",
+              "1179731190",
+              "1179731191",
+              "1179731192",
+              "1179731193",
+              "1179731194",
+              "1179731195",
+              "1179731196",
+              "1179731197",
+              "1179731198",
+              "1179731199",
+              "1179731200",
+              "1179731201",
+              "1179731202",
+              "1179731203",
+              "1179731204",
+              "1179731205",
+              "1179731206",
+              "1179731207",
+              "1179731208",
+              "1179731209",
+              "1179731210",
+              "1179731211",
+              "1179731212",
+              "1179731213",
+              "1179731214",
+              "1179731215",
+              "1179731216",
+              "1179731217",
+              "1179731218",
+              "1179731219",
+              "1179731220",
+              "1179731221",
+              "1179731222",
+              "1179731223",
+              "1179731224",
+              "1179731225",
+              "1179731226",
+              "1179731227",
+              "1179731228"
+            ],
+            "dps": {
+              "aggregatorData": {
+                "n": 1000,
+                "sumSq": 248719376.523597
+              },
+              "avg": 497.00621991430046,
+              "hist": {
+                "370": 2,
+                "380": 1,
+                "400": 4,
+                "410": 11,
+                "420": 26,
+                "430": 22,
+                "440": 37,
+                "450": 41,
+                "460": 73,
+                "470": 79,
+                "480": 98,
+                "490": 101,
+                "500": 81,
+                "510": 93,
+                "520": 77,
+                "530": 79,
+                "540": 62,
+                "550": 37,
+                "560": 26,
+                "570": 15,
+                "580": 13,
+                "590": 9,
+                "600": 5,
+                "610": 6,
+                "630": 1,
+                "640": 1
+              },
+              "max": 643.4241842608146,
+              "maxSeed": "1179730806",
+              "min": 368.6430933991869,
+              "minSeed": "1179731080",
+              "stdev": 41.28188331574761
+            },
+            "dtps": {
+              "aggregatorData": {
+                "n": 1000,
+                "sumSq": 804898602.7627791
+              },
+              "avg": 893.6474352205422,
+              "hist": {
+                "1000": 16,
+                "1010": 21,
+                "1020": 19,
+                "1030": 12,
+                "1040": 7,
+                "1050": 8,
+                "1060": 4,
+                "1070": 3,
+                "1080": 2,
+                "1090": 4,
+                "1100": 3,
+                "1110": 2,
+                "1130": 1,
+                "670": 2,
+                "680": 1,
+                "690": 1,
+                "700": 4,
+                "710": 4,
+                "720": 8,
+                "730": 6,
+                "740": 10,
+                "750": 13,
+                "760": 13,
+                "770": 19,
+                "780": 16,
+                "790": 11,
+                "800": 18,
+                "810": 35,
+                "820": 31,
+                "830": 32,
+                "840": 44,
+                "850": 37,
+                "860": 37,
+                "870": 57,
+                "880": 51,
+                "890": 55,
+                "900": 58,
+                "910": 40,
+                "920": 46,
+                "930": 50,
+                "940": 42,
+                "950": 40,
+                "960": 40,
+                "970": 29,
+                "980": 30,
+                "990": 18
+              },
+              "max": 1129.5142557485499,
+              "maxSeed": "1179730932",
+              "min": 666.2334777486572,
+              "minSeed": "1179730314",
+              "stdev": 79.32757582660601
+            },
+            "hps": {
+              "aggregatorData": {
+                "n": 1000
+              },
+              "hist": {
+                "0": 1000
+              },
+              "minSeed": "1179731228"
+            },
+            "name": "feral-bear-druid",
+            "resources": {
+              "{\"itemId\": 13442}": {
+                "actualGain": 89383.55846088596,
+                "events": 1492,
+                "gain": 89520,
+                "type": "ResourceTypeRage"
+              },
+              "{\"otherId\": \"OtherActionAttack\", \"tag\": 1}": {
+                "actualGain": 262555.21461671207,
+                "events": 22249,
+                "gain": 262562.09999990364,
+                "type": "ResourceTypeRage"
+              },
+              "{\"otherId\": \"OtherActionAttack\", \"tag\": 25584}": {
+                "actualGain": 104551.90219119958,
+                "events": 8818,
+                "gain": 104578.49999999732,
+                "type": "ResourceTypeRage"
+              },
+              "{\"otherId\": \"OtherActionDamageTaken\"}": {
+                "actualGain": 298994.1146070575,
+                "events": 47507,
+                "gain": 299272.4955954033,
+                "type": "ResourceTypeRage"
+              },
+              "{\"otherId\": \"OtherActionDamageTaken\"} #2": {
+                "actualGain": -5767906.047873008,
+                "events": 47569,
+                "gain": -107340836.53364313,
+                "type": "ResourceTypeHealth"
+              },
+              "{\"otherId\": \"OtherActionEnergyRegen\"}": {
+                "events": 1200888,
+                "gain": 1200888,
+                "type": "ResourceTypeEnergy"
+              },
+              "{\"otherId\": \"OtherActionManaRegen\", \"tag\": 2}": {
+                "events": 59537,
+                "gain": 2626100.3148985757,
+                "type": "ResourceTypeMana"
+              },
+              "{\"otherId\": \"OtherActionRefund\"}": {
+                "actualGain": 214705.60000003685,
+                "events": 22201,
+                "gain": 214705.60000003685,
+                "type": "ResourceTypeRage"
+              },
+              "{\"spellId\": 1235827}": {
+                "actualGain": -548952,
+                "events": 45746,
+                "gain": -548952,
+                "type": "ResourceTypeRage"
+              },
+              "{\"spellId\": 1238073}": {
+                "actualGain": -371865,
+                "events": 24791,
+                "gain": -371865,
+                "type": "ResourceTypeRage"
+              },
+              "{\"spellId\": 16959}": {
+                "actualGain": 175711.97246320153,
+                "events": 35172,
+                "gain": 175860,
+                "type": "ResourceTypeRage"
+              },
+              "{\"spellId\": 20007}": {
+                "actualGain": 500610.54144483485,
+                "events": 5003,
+                "gain": 500610.54144483496,
+                "type": "ResourceTypeHealth"
+              },
+              "{\"spellId\": 417053}": {
+                "actualGain": 73596.84143936532,
+                "events": 14733,
+                "gain": 73665,
+                "type": "ResourceTypeRage"
+              },
+              "{\"spellId\": 5229}": {
+                "actualGain": 65141.55373036747,
+                "events": 23057,
+                "gain": 65922,
+                "type": "ResourceTypeRage"
+              },
+              "{\"spellId\": 9881}": {
+                "actualGain": -326210,
+                "events": 32621,
+                "gain": -326210,
+                "type": "ResourceTypeRage"
+              }
+            },
+            "threat": {
+              "aggregatorData": {
+                "n": 1000,
+                "sumSq": 1539453396.657133
+              },
+              "avg": 1237.1501822779903,
+              "hist": {
+                "1000": 2,
+                "1020": 2,
+                "1030": 3,
+                "1040": 7,
+                "1050": 4,
+                "1060": 7,
+                "1070": 13,
+                "1080": 13,
+                "1090": 14,
+                "1100": 16,
+                "1110": 16,
+                "1120": 14,
+                "1130": 18,
+                "1140": 20,
+                "1150": 33,
+                "1160": 33,
+                "1170": 46,
+                "1180": 42,
+                "1190": 37,
+                "1200": 42,
+                "1210": 41,
+                "1220": 40,
+                "1230": 37,
+                "1240": 39,
+                "1250": 42,
+                "1260": 42,
+                "1270": 24,
+                "1280": 44,
+                "1290": 44,
+                "1300": 27,
+                "1310": 26,
+                "1320": 32,
+                "1330": 26,
+                "1340": 27,
+                "1350": 20,
+                "1360": 17,
+                "1370": 9,
+                "1380": 16,
+                "1390": 10,
+                "1400": 8,
+                "1410": 6,
+                "1420": 9,
+                "1430": 10,
+                "1440": 6,
+                "1460": 1,
+                "1470": 3,
+                "1480": 3,
+                "1490": 2,
+                "1510": 1,
+                "1520": 1,
+                "1540": 1,
+                "1560": 1,
+                "960": 1,
+                "970": 1,
+                "980": 1
+              },
+              "max": 1564.2122538707388,
+              "maxSeed": "1179730806",
+              "min": 960.6676436899837,
+              "minSeed": "1179731023",
+              "stdev": 94.40774939944455
+            },
+            "tmi": {
+              "aggregatorData": {
+                "n": 1000
+              },
+              "hist": {
+                "0": 1000
+              },
+              "minSeed": "1179731228"
+            },
+            "tto": {
+              "aggregatorData": {
+                "n": 1000,
+                "sumSq": 12960000000
+              },
+              "avg": 3600,
+              "hist": {
+                "3600": 1000
+              },
+              "max": 3600.0000000000005,
+              "maxSeed": "1179730242",
+              "min": 3599.9999999999995,
+              "minSeed": "1179731228"
+            },
+            "unitIndex": 1
+          }
+        ]
+      }
+    ]
+  }
+}

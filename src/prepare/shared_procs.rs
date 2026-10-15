@@ -73,7 +73,12 @@ pub(crate) fn apply_proc_damage_effect(env: &mut Environment, config: &ProcDamag
         },
     );
     trigger.trigger_immediately = true;
-    env.sim.make_proc_trigger_aura(unit, &trigger);
+    let aura = env.sim.make_proc_trigger_aura(unit, &trigger);
+    if config.enchant_id != 0 {
+        env.sim.register_enchant_proc(unit, config.enchant_id, aura);
+    } else {
+        env.sim.register_item_proc(unit, config.item_id, aura);
+    }
 }
 
 /// Go `ProcStatBonusEffect`: a proc that buffs stats, from the item database's effect entry.
@@ -257,5 +262,16 @@ pub(crate) fn apply_proc_stat_bonus_effect(env: &mut Environment, config: &ProcS
             let icd = env.sim.aura(trigger_aura).icd;
             env.sim.aura_mut(proc_aura.aura).icd = icd;
         }
+
+        // registerProc and registerWeaponEnchantBuff: the item swap toggles both with the item.
+        let slots = source.eligible_slots(&env.sim, unit);
+        if source.is_enchant {
+            env.sim
+                .register_enchant_proc_with_slots(unit, source.id, trigger_aura, slots);
+        } else {
+            env.sim
+                .register_item_proc_with_slots(unit, source.id, trigger_aura, slots);
+        }
+        source.register_weapon_enchant_buff(env, proc_aura.aura);
     }
 }

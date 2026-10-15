@@ -24,6 +24,7 @@ mod external_cooldown;
 mod focus;
 mod gear_procs;
 mod innervate;
+pub(crate) mod item_swap;
 mod on_use_damage;
 pub(crate) mod proc_damage;
 pub(crate) use on_use_damage::known as on_use_damage_known;
@@ -248,6 +249,10 @@ pub(crate) trait Agent: Sized {
         true
     }
     /// A dot or channel tick of a class spell.
+    /// Go's item swap callbacks of the class for the main hand, once the swap put the set's
+    /// weapon in the hand: `worn` is true for the swap set. The class takes what the swapped
+    /// state's effects say for the weapon it now holds.
+    fn on_item_swap(_fight: &mut Fight<Self>, _worn: bool) {}
     fn on_dot_tick(_fight: &mut Fight<Self>, _dot: DotId, _behavior: Self::Spell) {}
     /// The class part of a dot aura's OnGain, which Go runs before the dot's own.
     fn on_dot_gain(_fight: &mut Fight<Self>, _dot: DotId, _behavior: Self::Spell) {}
@@ -886,6 +891,10 @@ pub(crate) struct Powers {
     /// Go `stats.SpellPiercing`, which a partial resist takes off the target's resistance and a
     /// temporary stat change, as Eye of Moam's, can change.
     pub(crate) spell_piercing: f64,
+    /// Go `stats.PhysicalHitPercent` and `stats.SpellHitPercent`, which an item swap's weapon
+    /// can change.
+    pub(crate) physical_hit_percent: f64,
+    pub(crate) spell_hit_percent: f64,
 }
 
 /// Mutable player state, reset to the prepared values each iteration.
@@ -1161,7 +1170,6 @@ pub(crate) struct Config {
     pub(crate) max_health: f64,
     pub(crate) teardown_max_mana: f64,
     pub(crate) spirit_regen_per_second: f64,
-    pub(crate) spell_hit_percent: f64,
     /// The prepared stats; auras change the player's copy.
     pub(crate) powers: Powers,
     pub(crate) school_damage: [f64; 8],
@@ -1182,7 +1190,6 @@ pub(crate) struct Config {
     pub(crate) target_auto_swing_melee: bool,
     pub(crate) melee: crate::contracts::prepared_v2::Melee,
     pub(crate) melee_haste_rating: f64,
-    pub(crate) physical_hit_percent: f64,
     pub(crate) expertise_percent: f64,
     /// A pet's mana regeneration per second while casting and not, as Go computes it.
     pub(crate) fixed_regen: Option<(f64, f64)>,
@@ -1700,6 +1707,8 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) stat_resistance: Vec<Vec<(usize, f64)>>,
     /// The raw MP5 of the stats, when an aura adds a bonus that is not a whole number.
     mp5_path: Option<Mp5Path>,
+    /// Go `ItemSwap`, when the character swaps items.
+    pub(crate) item_swap: Option<item_swap::ItemSwapState>,
     /// The active stat auras.
     pub(crate) stat_mask: u32,
     /// The labels of the stat auras, bit by bit.
@@ -1738,6 +1747,108 @@ const MOVEMENT_CATEGORIES: [&str; 2] = ["PassiveMovementSpeed", "ActiveMovementS
 
 /// Errors that make a prepared input impossible to run despite passing coverage.
 pub(crate) type BuildError = String;
+
+/// A proc manager's chances by spellbook position: each spell it names, none for the rest.
+pub(crate) fn chances_by_spell(
+    chances: &[crate::contracts::prepared_v2::SpellChance],
+    spells: usize,
+) -> Vec<Option<f64>> {
+    let mut by_spell = vec![None; spells];
+    for entry in chances {
+        if let Some(slot) = by_spell.get_mut(entry.spell) {
+            *slot = Some(entry.chance);
+        }
+    }
+    by_spell
+}
+
+/// The damage proc a spell data damage proc or a weapon's extra attack proc runs, with its
+/// trigger spells and its proc manager's chances by spell, or none for another effect.
+pub(crate) fn damage_proc_of(effect: &Effect, spells: usize) -> Option<DamageProc> {
+    let (trigger_spells, struck, casts, landed_only, require_damage, proc_chance, spell, chances) =
+        match effect {
+            Effect::SpellDataDamageProc {
+                trigger_spells,
+                struck,
+                casts,
+                landed_only,
+                require_damage,
+                proc_chance,
+                spell,
+                chances,
+                ..
+            } => (
+                trigger_spells.clone(),
+                *struck,
+                *casts,
+                *landed_only,
+                *require_damage,
+                *proc_chance,
+                *spell,
+                chances,
+            ),
+            // A weapon proc that casts the spell granting the extra attacks: it hears the
+            // landed hits its proc manager has a chance for.
+            Effect::ExtraAttackProc {
+                chances: chances @ Some(entries),
+                spell: Some(spell),
+                ..
+            } => (
+                entries.iter().map(|entry| entry.spell).collect(),
+                false,
+                false,
+                true,
+                false,
+                1.0,
+                *spell,
+                chances,
+            ),
+            _ => return None,
+        };
+    let mut mask = vec![false; spells];
+    for &trigger in &trigger_spells {
+        if let Some(slot) = mask.get_mut(trigger) {
+            *slot = true;
+        }
+    }
+    let chances = chances
+        .as_ref()
+        .map(|chances| chances_by_spell(chances, spells));
+    Some(DamageProc {
+        trigger_spells: mask,
+        struck,
+        casts,
+        landed_only,
+        require_damage,
+        chance: proc_chance,
+        chances,
+        spell,
+    })
+}
+
+/// Whether a stat aura label is the item swap's own, whose bit carries the swap's equipment stats
+/// and which the swap sets itself.
+fn item_swap_stats_label(effects: &[Effect], label: &str) -> bool {
+    effects.iter().any(
+        |effect| matches!(effect, Effect::ItemSwap { swapped_aura, .. } if swapped_aura == label),
+    )
+}
+
+/// The gain and expiry lines of a stat aura an item swap switches, when it logs one of each.
+fn item_swap_aura_logs(effects: &[Effect], label: &str) -> Option<(String, String)> {
+    effects.iter().find_map(|effect| match effect {
+        Effect::ItemSwap { stat_aura_logs, .. } => stat_aura_logs
+            .iter()
+            .find(|logs| logs.aura == label)
+            .and_then(
+                |logs| match (logs.gain_logs.as_slice(), logs.expire_logs.as_slice()) {
+                    ([gain], [expire]) => Some((gain.clone(), expire.clone())),
+                    _ => None,
+                },
+            ),
+        _ => None,
+    })
+}
 
 fn schools(values: &Schools) -> [f64; 8] {
     [
@@ -1860,7 +1971,6 @@ pub(crate) fn unit_config(prepared: &PreparedV2, unit: &UnitSource) -> Result<Co
         max_health: stat(unit.stats, "Health")?,
         teardown_max_mana: unit.teardown_max,
         spirit_regen_per_second: unit.spirit_regen_per_second,
-        spell_hit_percent: stat(unit.stats, "SpellHitPercent")?,
         powers: Powers {
             spell_crit_percent: stat(unit.stats, "SpellCritPercent")?,
             physical_crit_percent: stat(unit.stats, "PhysicalCritPercent")?,
@@ -1874,6 +1984,8 @@ pub(crate) fn unit_config(prepared: &PreparedV2, unit: &UnitSource) -> Result<Co
             physical_damage: stat(unit.stats, "PhysicalDamage")?,
             armor_penetration: stat(unit.stats, "ArmorPenetration")?,
             spell_piercing: stat(unit.stats, "SpellPiercing")?,
+            physical_hit_percent: stat(unit.stats, "PhysicalHitPercent")?,
+            spell_hit_percent: stat(unit.stats, "SpellHitPercent")?,
         },
         school_damage: [
             0.0,
@@ -1919,7 +2031,6 @@ pub(crate) fn unit_config(prepared: &PreparedV2, unit: &UnitSource) -> Result<Co
         target_auto_swing_melee: target.auto_swing_melee,
         melee: unit.melee.clone(),
         melee_haste_rating: stat(unit.stats, "MeleeHasteRating")?,
-        physical_hit_percent: stat(unit.stats, "PhysicalHitPercent")?,
         expertise_percent: stat(unit.stats, "ExpertisePercent")?,
         fixed_regen: unit.fixed_regen,
         ranged_hit_percent: stat(unit.stats, "RangedHitPercent")?,
@@ -2844,6 +2955,15 @@ impl<A: Agent> Fight<A> {
                         .get("SpellPiercing")
                         .copied()
                         .unwrap_or(config.powers.spell_piercing),
+                    // Written only when a combination changes them.
+                    physical_hit_percent: combo
+                        .get("PhysicalHitPercent")
+                        .copied()
+                        .unwrap_or(config.powers.physical_hit_percent),
+                    spell_hit_percent: combo
+                        .get("SpellHitPercent")
+                        .copied()
+                        .unwrap_or(config.powers.spell_hit_percent),
                 })
             })
             .collect::<Result<_, BuildError>>()?;
@@ -3048,10 +3168,11 @@ impl<A: Agent> Fight<A> {
                     _ => None,
                 }) {
                     kind
-                } else if let Some(bit) = stat_aura_labels
-                    .iter()
-                    .position(|label| side == Side::Player && *label == exported.label)
-                {
+                } else if let Some(bit) = stat_aura_labels.iter().position(|label| {
+                    side == Side::Player
+                        && *label == exported.label
+                        && !item_swap_stats_label(effects, label)
+                }) {
                     // The lines Go's NewTemporaryStatsAura logs; multiplier and generated buffs
                     // log none.
                     let logs = effects.iter().find_map(|effect| match effect {
@@ -3099,6 +3220,9 @@ impl<A: Agent> Fight<A> {
                         } if *aura == exported.label => Some((gain_log, expire_log)),
                         _ => None,
                     });
+                    // A stat aura an item swap switches logs what the exporter read it log.
+                    let swap_logs = logs.is_none().then(|| item_swap_aura_logs(effects, &exported.label)).flatten();
+                    let logs = logs.or(swap_logs.as_ref().map(|(gain, expire)| (gain, expire)));
                     let mut logged = |line: &String| {
                         aura_logs.push(line.clone());
                         aura_logs.len() - 1
@@ -3499,6 +3623,7 @@ impl<A: Agent> Fight<A> {
             stat_school_damage,
             stat_resistance,
             stat_mask: 0,
+            item_swap: None,
             mp5_path,
             stat_aura_labels: stat_aura_labels.clone(),
             crusader: None,
@@ -3867,6 +3992,7 @@ impl<A: Agent> Fight<A> {
             .iter()
             .map(|entry| (entry.spell.clone(), entry.base_duration_ns))
             .collect();
+        fight.bind_item_swap(prepared)?;
         let compilation = fight.compile_rotation(&parsed)?;
         fight.rotation = compilation.items;
         fight.priority_len = compilation.priority;
@@ -3907,12 +4033,7 @@ impl<A: Agent> Fight<A> {
                     heal_metrics_action_id,
                     ..
                 } => {
-                    let mut by_spell = vec![None; fight.spells.len()];
-                    for entry in chances {
-                        if let Some(slot) = by_spell.get_mut(entry.spell) {
-                            *slot = Some(entry.chance);
-                        }
-                    }
+                    let by_spell = chances_by_spell(chances, fight.spells.len());
                     let heal_metrics = fight
                         .new_resource_metrics(heal_metrics_action_id.clone(), ResourceKind::Health);
                     fight.crusader = Some(Crusader {
@@ -4032,79 +4153,9 @@ impl<A: Agent> Fight<A> {
         }
         fight.bind_absorb_procs(effects)?;
         for effect in effects {
-            let (
-                trigger_spells,
-                struck,
-                casts,
-                landed_only,
-                require_damage,
-                proc_chance,
-                spell,
-                chances,
-            ) = match effect {
-                Effect::SpellDataDamageProc {
-                    trigger_spells,
-                    struck,
-                    casts,
-                    landed_only,
-                    require_damage,
-                    proc_chance,
-                    spell,
-                    chances,
-                    ..
-                } => (
-                    trigger_spells.clone(),
-                    *struck,
-                    *casts,
-                    *landed_only,
-                    *require_damage,
-                    *proc_chance,
-                    *spell,
-                    chances,
-                ),
-                // A weapon proc that casts the spell granting the extra attacks: it hears the
-                // landed hits its proc manager has a chance for.
-                Effect::ExtraAttackProc {
-                    chances: chances @ Some(entries),
-                    spell: Some(spell),
-                    ..
-                } => (
-                    entries.iter().map(|entry| entry.spell).collect(),
-                    false,
-                    false,
-                    true,
-                    false,
-                    1.0,
-                    *spell,
-                    chances,
-                ),
-                _ => continue,
-            };
-            let mut mask = vec![false; fight.spells.len()];
-            for &trigger in &trigger_spells {
-                if let Some(slot) = mask.get_mut(trigger) {
-                    *slot = true;
-                }
+            if let Some(proc) = damage_proc_of(effect, fight.spells.len()) {
+                fight.damage_procs.push(proc);
             }
-            let chances = chances.as_ref().map(|chances| {
-                let mut by_spell = vec![None; fight.spells.len()];
-                for entry in chances {
-                    if let Some(slot) = by_spell.get_mut(entry.spell) {
-                        *slot = Some(entry.chance);
-                    }
-                }
-                by_spell
-            });
-            fight.damage_procs.push(DamageProc {
-                trigger_spells: mask,
-                struck,
-                casts,
-                landed_only,
-                require_damage,
-                chance: proc_chance,
-                chances,
-                spell,
-            });
         }
         for effect in effects {
             if let Effect::SpellDataStatProc {
@@ -4265,6 +4316,7 @@ impl<A: Agent> Fight<A> {
                 fight.spells[spell].requirement_auras.push(aura);
             }
         }
+        fight.bind_item_swap_variants(effects);
         Ok(fight)
     }
 
@@ -4751,6 +4803,8 @@ impl<A: Agent> Fight<A> {
         self.reset_unit(Side::Player);
         self.reset_cooldown_manager();
         A::agent_reset(self);
+        // Go Character.reset swaps back to the Main set after the agent's reset.
+        self.item_swap_reset();
         // The auras the reset and the agent activated have run their movement speed effects;
         // the exporter read where they leave the multiplier.
         self.move_multiplier = self.reset_move_multiplier;
@@ -4833,6 +4887,11 @@ impl<A: Agent> Fight<A> {
             player.five_second_rule_refresh = 0;
             player.spirit_attribution = None;
             self.reset_auto_attacks();
+            // An aura an item swap switches that changed the armor ignore factor undid it as it
+            // faded at the end of the last fight; the reset's activation is in the prepared value.
+            if let Some(swap) = &self.item_swap {
+                self.config.melee.armor_ignore_factor = swap.armor_ignore_reset;
+            }
             // Go runs reset effects first in the aura tracker's reset.
             self.reset_mods();
             A::reset(self);
@@ -5333,6 +5392,8 @@ impl<A: Agent> Fight<A> {
         self.now = self.duration;
         self.queue.clear();
         self.player.hardcast = Hardcast::idle(0);
+        // Go Character.doneIteration swaps back to the Main set before anything else.
+        self.item_swap_reset();
         // Go Character.doneIteration finishes the pets first.
         self.pets_done_iteration();
         self.player_done_iteration();

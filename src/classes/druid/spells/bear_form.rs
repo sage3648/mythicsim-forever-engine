@@ -29,8 +29,8 @@ pub(crate) struct BearForm {
     furor_proc_chance: f64,
     cost_mod: ModId,
     breaking: Vec<bool>,
-    main_hand: Weapon,
-    bear_weapon: Weapon,
+    pub(crate) main_hand: Weapon,
+    pub(crate) bear_weapon: Weapon,
 }
 
 /// The exported parameters.

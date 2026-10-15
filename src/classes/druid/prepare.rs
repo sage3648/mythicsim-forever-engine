@@ -483,6 +483,12 @@ impl Druid {
     /// Go `Druid.Initialize`.
     fn initialize_druid(&mut self, sim: &mut Sim) {
         self.st.set_form(sim, self.st.starting_form);
+        // The item swap rebuilds the paw from the weapon in the hand.
+        sim.register_item_swap_callback(
+            self.unit,
+            &[crate::prepare::items::slot::MAIN_HAND],
+            crate::prepare::item_swap::SwapCallback::DruidPaw,
+        );
         // RegisterBaselineSpells.
         self.register_innervate_cd(sim);
         self.register_thorns_spell(sim);
@@ -514,6 +520,16 @@ impl PrepAgent for Druid {
         self.register_balance_talents(sim);
         self.register_feral_combat_talents(sim);
         self.register_restoration_talents(sim);
+    }
+
+    /// druid.go Initialize's item swap callback: in Cat or Bear Form the paw takes the weapon
+    /// now in the hand.
+    fn item_swap_main_hand(&mut self, sim: &mut Sim, unit: UnitId) {
+        if self.st.in_form(sim, CAT) {
+            sim.unit_mut(unit).auto_attacks.mh = forms::cat_weapon(sim, unit);
+        } else if self.st.in_form(sim, BEAR) {
+            sim.unit_mut(unit).auto_attacks.mh = forms::bear_weapon(sim, unit);
+        }
     }
 
     fn initialize(&mut self, sim: &mut Sim, _unit: UnitId) {

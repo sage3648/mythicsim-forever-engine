@@ -3,18 +3,58 @@
 //!
 //! Preparation never runs a fight, so the manager is data: for each weapon hand mask, the chance
 //! one hit of it procs. The exporter reads it as Go's reflection does (`procMasks`,
-//! `procChances`). Go also rebuilds a manager when a weapon swap happens and keeps the mask a
-//! closure computes; preparation refuses item swapping, so a manager is built once from the
-//! mask the caller computed.
+//! `procChances`). Most of Go's constructors also register an item swap callback that rebuilds the
+//! manager for the weapons then in the hands, with a mask a closure computes again: a manager
+//! built while an item swap is enabled carries how ([`Rebuild`]), which the swap follows.
 
 use super::sim::{Sim, UnitId};
 use super::spell::ProcMask;
 
 /// Go `DynamicProcManager`, with `staticProc` chances, the only `DynamicProc` core has.
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(Clone, Debug, Default)]
 pub(crate) struct DynamicProcManager {
     pub proc_masks: Vec<ProcMask>,
     pub proc_chances: Vec<f64>,
+    /// How an item swap rebuilds it, when one is enabled.
+    pub rebuild: Option<Rebuild>,
+}
+
+impl PartialEq for DynamicProcManager {
+    fn eq(&self, other: &Self) -> bool {
+        self.proc_masks == other.proc_masks && self.proc_chances == other.proc_chances
+    }
+}
+
+/// How Go's item swap callback rebuilds a manager: its chance and how it finds its mask again,
+/// or not known, which refuses the swap.
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) enum Rebuild {
+    Rebuilt(
+        super::item_swap::ManagerChance,
+        super::item_swap::ManagerMask,
+    ),
+    /// A manager whose constructor is not yet known to rebuild or not.
+    Unaudited,
+}
+
+impl DynamicProcManager {
+    /// The manager with how an item swap rebuilds it, when one is enabled.
+    pub(crate) fn rebuilt_by_swap(
+        mut self,
+        sim: &Sim,
+        unit: UnitId,
+        chance: super::item_swap::ManagerChance,
+        mask: super::item_swap::ManagerMask,
+    ) -> Self {
+        self.rebuild = sim.item_swap(unit).map(|_| Rebuild::Rebuilt(chance, mask));
+        self
+    }
+
+    /// A manager Go builds without an item swap callback.
+    pub(crate) fn not_rebuilt(mut self) -> Self {
+        self.rebuild = None;
+        self
+    }
 }
 
 impl DynamicProcManager {
@@ -46,7 +86,7 @@ impl Sim {
         self.new_dynamic_weapon_proc_manager(unit, ppm, 0.0, proc_mask)
     }
 
-    /// Go `Character.NewFixedProcChanceManager`.
+    /// Go `Character.NewFixedProcChanceManager`, which no item swap rebuilds.
     pub(crate) fn new_fixed_proc_chance_manager(
         &self,
         unit: UnitId,
@@ -54,6 +94,7 @@ impl Sim {
         proc_mask: ProcMask,
     ) -> DynamicProcManager {
         self.new_dynamic_weapon_proc_manager(unit, 0.0, fixed_proc_chance, proc_mask)
+            .not_rebuilt()
     }
 
     /// Go `Character.newDynamicWeaponProcManager`.
@@ -70,7 +111,10 @@ impl Sim {
         );
         let aa = &self.unit(unit).auto_attacks;
         if !aa.auto_swing_melee && !aa.auto_swing_ranged {
-            return DynamicProcManager::default();
+            return DynamicProcManager {
+                rebuild: self.item_swap(unit).map(|_| Rebuild::Unaudited),
+                ..DynamicProcManager::default()
+            };
         }
         let mut masks: Vec<ProcMask> = Vec::with_capacity(2);
         let mut chances: Vec<f64> = Vec::with_capacity(2);
@@ -109,6 +153,8 @@ impl Sim {
         DynamicProcManager {
             proc_masks: masks,
             proc_chances: chances,
+            // A caller states how a swap rebuilds it; until it does, a swap is refused.
+            rebuild: self.item_swap(unit).map(|_| Rebuild::Unaudited),
         }
     }
 }

@@ -106,6 +106,9 @@ pub(crate) struct AuraConfig {
     pub events: EventCallbacks,
     /// The aura's dynamic proc manager, if it has one.
     pub dpm: Option<Rc<DynamicProcManager>>,
+    /// The lines Go logs as the aura is gained and fades, as `NewTemporaryStatsAura`'s
+    /// "Gained" and "Lost" lines.
+    pub stat_logs: Option<(String, String)>,
 }
 
 #[derive(Clone)]
@@ -130,6 +133,8 @@ pub(crate) struct Aura {
     pub on_stacks_change: Option<StacksCallback>,
     pub events: EventCallbacks,
     pub dpm: Option<Rc<DynamicProcManager>>,
+    /// See [`AuraConfig::stat_logs`].
+    pub stat_logs: Option<(String, String)>,
     /// The action ID the aura's metrics were registered with.
     pub metrics_id: Option<ActionId>,
     /// Activations this iteration: `metrics.Procs`.
@@ -814,6 +819,7 @@ impl Sim {
             on_stacks_change: config.on_stacks_change,
             events: config.events,
             dpm: config.dpm,
+            stat_logs: config.stat_logs,
             procs: 0,
             initialized: false,
             start_time: 0,

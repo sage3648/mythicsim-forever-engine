@@ -11,7 +11,10 @@ use std::{collections::BTreeSet, sync::OnceLock};
 
 use crate::{
     classes,
-    contracts::prepared_v2::{ActionId, Effect, MajorCooldown, PreparedV2, ProcPeriodic, Spell},
+    contracts::prepared_v2::{
+        ActionId, Effect, MajorCooldown, PreparedV2, ProcPeriodic, Spell, SwapAuraState,
+        SwapCallback, SwapChange,
+    },
     core::fight::{proc_damage::ProcDamage, DIRECT_PROC_MASKS},
     rotation::{compile_condition, Action, FoundAura, Lookup, Rotation, Unit, Value},
 };
@@ -45,6 +48,11 @@ pub(crate) struct ClassGate {
 /// A class check of the input and the spells the rotation can reach: a reason for each
 /// thing it does not support.
 pub(crate) type Limits = fn(&PreparedV2, &[&Spell]) -> Vec<String>;
+
+/// Go `ItemSwap.IsEnabled`: whether the prepared input swaps items.
+fn has_item_swap(prepared: &PreparedV2) -> bool {
+    crate::core::fight::item_swap::item_swap_effect(prepared).is_some()
+}
 
 /// A [`Limits`] check that finds nothing to refuse.
 pub(crate) fn no_limits(_: &PreparedV2, _: &[&Spell]) -> Vec<String> {
@@ -82,6 +90,10 @@ pub const REFUSAL_CODES: &[(&str, &str)] = &[
     (
         "rotation_unsupported",
         "the rotation uses an action, value or field the parser rejects",
+    ),
+    (
+        "item_swap_unsupported",
+        "an item swap changes something Rust does not follow when the weapon changes",
     ),
     ("class_unsupported", "the player's class has no Rust gate"),
     (
@@ -189,6 +201,7 @@ const COMMON_EFFECTS: &[&str] = &[
     "inert_listener",
     "inert_pet",
     "innervate_regen",
+    "item_swap",
     "judgement_of_wisdom",
     "parry_haste",
     "player_movement",
@@ -651,6 +664,10 @@ const DYNAMIC_STATS: &[&str] = &[
     "ArmorPenetration",
     // Spell piercing, which a partial resist takes off the target's resistance.
     "SpellPiercing",
+    // Melee and spell hit, which the hit chances read: the combinations carry them when one
+    // changes them.
+    "PhysicalHitPercent",
+    "SpellHitPercent",
     // Spirit, which spirit regeneration, Life Tap and Dark Sacrifice read live.
     "Spirit",
     // Spell power by school, which spell power reads, and the resistances spells that hit
@@ -670,6 +687,381 @@ const DYNAMIC_STATS: &[&str] = &[
 
 /// Whether a stat a stat aura or temporary stat change moves is one the runtime follows or
 /// one nothing reads.
+/// The auras an item swap's callbacks can switch on.
+fn swap_activated_auras(effect: &Effect) -> Vec<&str> {
+    let Effect::ItemSwap { callbacks, .. } = effect else {
+        return Vec::new();
+    };
+    callbacks
+        .iter()
+        .filter_map(|callback| match callback {
+            SwapCallback::Aura {
+                aura,
+                main,
+                swapped,
+                ..
+            } => [main, swapped]
+                .iter()
+                .any(|state| matches!(state, SwapAuraState::On | SwapAuraState::Activate))
+                .then_some(aura.as_str()),
+            SwapCallback::AuraOnChange { aura, .. } => Some(aura.as_str()),
+            _ => None,
+        })
+        .collect()
+}
+
+/// The fields of an effect whose values the runtime takes from the swapped state, by kind: a
+/// value of the weapon in the hand. A field named with a slash is one inside each element of the
+/// field's array.
+const SWAP_EFFECT_FIELDS: &[(&str, &[&str])] = &[
+    ("seal_of_righteousness", &["swing_speed", "hand_multiplier"]),
+    ("seal_of_command", &["proc_chance"]),
+    ("crusader", &["chances"]),
+    ("spell_data_damage_proc", &["chances", "trigger_spells"]),
+    ("extra_attack_proc", &["chances"]),
+    (
+        "rage_bar",
+        &[
+            "main_hand_rage",
+            "off_hand_rage",
+            "main_hand_crit_rage",
+            "off_hand_crit_rage",
+        ],
+    ),
+    ("weaponmaster_sword", &["sword_hands"]),
+    ("cat_form", &["main_hand", "cat_weapon"]),
+    ("bear_form", &["main_hand", "bear_weapon"]),
+    ("flametongue_weapon", &["hands/base_damage"]),
+    ("flametongue_totem", &["attack_damage"]),
+    ("maelstrom_weapon", &["chances"]),
+];
+
+/// The racial weapon specializations, whose aura also takes its crit back off the ranged auto
+/// attack.
+const RACIAL_WEAPON_SPECIALIZATIONS: &[&str] = &[
+    "Mace Specialization",
+    "Sword Specialization",
+    "Axe Specialization",
+];
+
+/// What an item swap changes that the runtime does not follow.
+fn item_swap_limits(
+    prepared: &PreparedV2,
+    effect: &Effect,
+    claims: &dyn Fn(&Effect) -> Vec<(&'static str, String)>,
+) -> Vec<String> {
+    let Effect::ItemSwap {
+        slots,
+        main_aura,
+        swapped_aura,
+        callbacks,
+        swapped,
+        aura_effects,
+        ..
+    } = effect
+    else {
+        return Vec::new();
+    };
+    let mut reasons = Vec::new();
+    let player = &prepared.player;
+    if slots.as_slice() != ["ItemSlotMainHand"] {
+        reasons.push(format!("an item swap of slots {slots:?} is unsupported"));
+    }
+    if !["ClassPaladin", "ClassWarrior", "ClassShaman", "ClassDruid"]
+        .contains(&prepared.player.class.as_str())
+    {
+        reasons.push(format!(
+            "an item swap of a {} is unsupported",
+            prepared.player.class
+        ));
+    }
+    let stat_labels: Vec<&String> = prepared
+        .effects
+        .iter()
+        .filter_map(|effect| match effect {
+            Effect::StatAuras { auras, .. } => Some(auras),
+            _ => None,
+        })
+        .flatten()
+        .collect();
+    let claimed = |label: &str| {
+        prepared.effects.iter().any(|effect| {
+            claims(effect)
+                .iter()
+                .any(|(unit, claimed)| *unit == "player" && claimed == label)
+        })
+    };
+    let aura_of = |label: &str| player.auras.iter().position(|aura| aura.label == label);
+    let mut targets: Vec<&str> = vec![main_aura, swapped_aura];
+    let mut item_spells = Vec::new();
+    // The crit modifiers the swap switches, in callback order: the runtime adds and takes away
+    // their crit as Go's callbacks do.
+    let mut crit_mods: Vec<(&[usize], f64, bool, bool)> = Vec::new();
+    for callback in callbacks {
+        let (label, toggles) = match callback {
+            SwapCallback::Aura {
+                aura,
+                main,
+                swapped,
+                ..
+            } => (aura, main != swapped),
+            SwapCallback::AuraOnChange {
+                aura,
+                main,
+                swapped,
+                ..
+            } => (aura, main != swapped),
+            SwapCallback::ItemUse { spell, aura, .. } => {
+                item_spells.push(*spell);
+                if let Some(aura) = aura {
+                    targets.push(aura);
+                }
+                continue;
+            }
+            SwapCallback::SpellMod { modifier, .. } => {
+                if !matches!(
+                    modifier.kind.as_str(),
+                    "damage_done_pct" | "bonus_crit_percent"
+                ) {
+                    reasons.push(format!(
+                        "an item swap switches a spell modifier of kind {}",
+                        modifier.kind
+                    ));
+                }
+                if modifier
+                    .spells
+                    .iter()
+                    .any(|&spell| spell >= player.spells.len())
+                {
+                    reasons.push("an item swap's spell modifier names an unknown spell".into());
+                }
+                if let SwapCallback::SpellMod { main, swapped, .. } = callback {
+                    if modifier.kind == "bonus_crit_percent" {
+                        crit_mods.push((&modifier.spells, modifier.value, *main, *swapped));
+                    }
+                }
+                continue;
+            }
+        };
+        targets.push(label);
+        let Some(index) = aura_of(label) else {
+            reasons.push(format!(
+                "an item swap switches aura {label:?}, which is not registered"
+            ));
+            continue;
+        };
+        let aura = &player.auras[index];
+        // What the aura does as it is gained and fades: its stats, a listener an effect runs,
+        // an effect of the swap's own, or nothing.
+        let gains = aura
+            .callbacks
+            .iter()
+            .any(|callback| matches!(callback.as_str(), "on_gain" | "on_expire"));
+        let followed = stat_labels.contains(&&aura.label)
+            || claimed(&aura.label)
+            || aura_effects.iter().any(|effect| effect.aura == aura.label);
+        if gains && !followed {
+            reasons.push(format!(
+                "an item swap switches aura {label:?}, whose gain and expiry the runtime does not follow"
+            ));
+        }
+        // Each category the runtime enforces or tracks holds its members' bids as the reset left
+        // them; one an effect claims is that effect's to follow.
+        if toggles && !aura.exclusive_memberships.is_empty() && !claimed(&aura.label) {
+            let flametongue = aura
+                .exclusive_memberships
+                .iter()
+                .all(|membership| membership.category == "FlametongueTotem");
+            if !flametongue || !flametongue_totem_held(prepared, &targets) {
+                reasons.push(format!(
+                    "an item swap switches aura {label:?}, which bids in an exclusive category"
+                ));
+            }
+        }
+        if toggles
+            && RACIAL_WEAPON_SPECIALIZATIONS.contains(&label.as_str())
+            && player.spells.iter().any(|spell| {
+                spell
+                    .proc_mask
+                    .iter()
+                    .any(|mask| mask == "ProcMaskRangedAuto")
+            })
+        {
+            reasons.push(format!(
+                "an item swap switches {label}, whose crit on the ranged auto attack is not followed"
+            ));
+        }
+    }
+    for effect in aura_effects {
+        let active = aura_of(&effect.aura).is_some_and(|index| player.auras[index].active);
+        let reset = if active {
+            effect.armor_ignore_factor
+        } else {
+            0.0
+        };
+        if prepared.melee.armor_ignore_factor != reset {
+            reasons.push(format!(
+                "{} changes an armor ignore factor that other effects also change",
+                effect.aura
+            ));
+        }
+    }
+    for change in swapped {
+        if let Some(reason) = swap_change_limit(
+            prepared,
+            change,
+            &targets,
+            &item_spells,
+            &crit_mods,
+            aura_effects,
+        ) {
+            reasons.push(reason);
+        }
+    }
+    reasons
+}
+
+/// Whether a Flametongue Weapon trigger an item swap switches leaves Flametongue Totem's benefit
+/// off: a permanent aura it does not switch outbids the totem in the category, as the party's
+/// Windfury Totem does, or there is no totem.
+fn flametongue_totem_held(prepared: &PreparedV2, switched: &[&str]) -> bool {
+    let totems: Vec<&str> = prepared
+        .effects
+        .iter()
+        .filter_map(|effect| match effect {
+            Effect::FlametongueTotem { aura, .. } => Some(aura.as_str()),
+            _ => None,
+        })
+        .collect();
+    let bid = |label: &str| {
+        prepared
+            .player
+            .auras
+            .iter()
+            .filter(|aura| aura.label == label)
+            .flat_map(|aura| &aura.exclusive_memberships)
+            .filter(|membership| membership.category == "FlametongueTotem")
+            .map(|membership| membership.priority)
+            .fold(f64::NEG_INFINITY, f64::max)
+    };
+    if totems.is_empty() {
+        return true;
+    }
+    let totem_bid = totems
+        .iter()
+        .map(|label| bid(label))
+        .fold(f64::NEG_INFINITY, f64::max);
+    prepared.player.auras.iter().any(|aura| {
+        aura.active
+            && aura.duration_ns == crate::core::time::NEVER_EXPIRES
+            && !switched.contains(&aura.label.as_str())
+            && aura.exclusive_memberships.iter().any(|membership| {
+                membership.category == "FlametongueTotem" && membership.priority > totem_bid
+            })
+    })
+}
+
+/// Why the runtime cannot follow one value the swapped state changes, if it cannot.
+fn swap_change_limit(
+    prepared: &PreparedV2,
+    change: &SwapChange,
+    switched: &[&str],
+    item_spells: &[usize],
+    crit_mods: &[(&[usize], f64, bool, bool)],
+    aura_effects: &[crate::contracts::prepared_v2::SwapAuraEffect],
+) -> Option<String> {
+    let parts: Vec<&str> = change.path.split('/').skip(1).collect();
+    let refuse = || {
+        Some(format!(
+            "an item swap changes {}, which the runtime does not follow",
+            change.path
+        ))
+    };
+    match parts.as_slice() {
+        // The stats follow the stat auras, the swap's own among them.
+        ["player", "stats", _] | ["player", "mana", _] => None,
+        ["player", "auras", index, field] if matches!(*field, "active" | "blocked_at_reset") => {
+            let label = &prepared
+                .player
+                .auras
+                .get(index.parse::<usize>().ok()?)?
+                .label;
+            if switched.contains(&label.as_str()) {
+                None
+            } else {
+                refuse()
+            }
+        }
+        ["player", "spells", index, "flags"] => {
+            let index: usize = index.parse().ok()?;
+            let mut flags = prepared.player.spells.get(index)?.flags.clone();
+            flags.push("SpellFlagSwapped".into());
+            let now: Vec<String> = serde_json::from_value(change.value.clone()).unwrap_or_default();
+            let sorted = |mut list: Vec<String>| {
+                list.sort();
+                list
+            };
+            if item_spells.contains(&index) && sorted(flags) == sorted(now) {
+                None
+            } else {
+                refuse()
+            }
+        }
+        // A weapon specialization's crit, as its modifiers leave it with the swap set worn.
+        ["player", "spells", index, "bonus_crit_percent"] => {
+            let index: usize = index.parse().ok()?;
+            let mut crit = prepared.player.spells.get(index)?.bonus_crit_percent;
+            for (spells, value, main, swapped) in crit_mods {
+                if !spells.contains(&index) || main == swapped {
+                    continue;
+                }
+                if *swapped {
+                    crit += value;
+                } else {
+                    crit -= value;
+                }
+            }
+            if change
+                .value
+                .as_f64()
+                .is_some_and(|value| value.to_bits() == crit.to_bits())
+            {
+                None
+            } else {
+                refuse()
+            }
+        }
+        ["melee", "main_hand", ..] => None,
+        // Go updateWeaponSkills: the tables of the hands whose skill the equipment sets.
+        ["melee", "main_hand_skill" | "off_hand_skill" | "ranged_skill", ..] => None,
+        ["melee", "armor_ignore_factor"] if !aura_effects.is_empty() => None,
+        ["effects", index, field, rest @ ..] => {
+            let effect = prepared.effects.get(index.parse::<usize>().ok()?)?;
+            let fields = SWAP_EFFECT_FIELDS
+                .iter()
+                .find(|(kind, _)| *kind == effect.kind())
+                .map(|(_, fields)| *fields)
+                .unwrap_or_default();
+            let followed = fields
+                .iter()
+                .any(|followed| match followed.split_once('/') {
+                    None => followed == field,
+                    Some((array, inner)) => {
+                        array == *field
+                            && matches!(rest, [element, last]
+                            if element.parse::<usize>().is_ok() && *last == inner)
+                    }
+                });
+            if followed {
+                None
+            } else {
+                refuse()
+            }
+        }
+        _ => refuse(),
+    }
+}
+
 fn followed_stat(stat: &str) -> bool {
     DYNAMIC_STATS.contains(&stat) || INERT_STATS.contains(&stat)
 }
@@ -687,6 +1079,10 @@ const INERT_STATS: &[&str] = &[
     "Stamina",
     // Spell crit rating, whose percent the combinations carry.
     "SpellCritRating",
+    // Hit and melee crit ratings, whose percents the combinations carry.
+    "MeleeHitRating",
+    "SpellHitRating",
+    "MeleeCritRating",
     "Health",
     "Armor",
     "BonusArmor",
@@ -1260,6 +1656,41 @@ pub(crate) fn prepared_coverage(
                 )),
             }
         }
+    }
+
+    // An item swap: the auras its callbacks switch on listen as an active aura does, and what
+    // it changes must be what the runtime follows.
+    if let Some(effect) = crate::core::fight::item_swap::item_swap_effect(prepared) {
+        required.insert(effect.kind());
+        for label in swap_activated_auras(effect) {
+            let Some(aura) = player.auras.iter().find(|aura| aura.label == label) else {
+                continue;
+            };
+            if aura.active || !aura.has_event_callbacks() {
+                continue;
+            }
+            match prepared.effects.iter().find(|effect| {
+                claims(effect)
+                    .iter()
+                    .any(|(u, claimed)| *u == "player" && *claimed == aura.label)
+            }) {
+                Some(effect) => {
+                    required.insert(effect.kind());
+                }
+                None => reasons.push(Refusal::new(
+                    "aura_listener_unclaimed",
+                    format!(
+                        "player aura {:?} an item swap switches on listens to combat events \
+                         without an effect",
+                        aura.label
+                    ),
+                )),
+            }
+        }
+        reasons.extend(coded(
+            "item_swap_unsupported",
+            item_swap_limits(prepared, effect, &claims),
+        ));
     }
 
     // Go applies Power Infusion's multipliers through its aura's exclusive effects, which only
@@ -1899,6 +2330,7 @@ fn flatten_groups(prepared: &PreparedV2, rotation: &Rotation) -> Result<Rotation
         dot: &dot,
         dot_base_duration: &dot_base_duration,
         pet_aura_known: &pet_aura_known,
+        item_swap: has_item_swap(prepared),
     };
     let live = |index: usize| {
         compile_condition(rotation.priority_list[index].condition.as_ref(), &lookup)
@@ -1984,6 +2416,7 @@ fn moves_without_values(prepared: &PreparedV2, rotation: &Rotation) -> Vec<Strin
         dot: &dot,
         dot_base_duration: &dot_base_duration,
         pet_aura_known: &pet_aura_known,
+        item_swap: has_item_swap(prepared),
     };
     rotation
         .priority_list
@@ -2021,6 +2454,7 @@ fn prepull_pruned(prepared: &PreparedV2, prepull: &crate::rotation::Prepull) -> 
         dot: &dot,
         dot_base_duration: &dot_base_duration,
         pet_aura_known: &pet_aura_known,
+        item_swap: has_item_swap(prepared),
     };
     compile_condition(prepull.condition.as_ref(), &lookup)
         == crate::rotation::CompiledCondition::Pruned
@@ -2171,6 +2605,7 @@ fn unreachable_items(prepared: &PreparedV2, rotation: &Rotation) -> BTreeSet<usi
         dot: &dot,
         dot_base_duration: &dot_base_duration,
         pet_aura_known: &pet_aura_known,
+        item_swap: has_item_swap(prepared),
     };
     rotation
         .priority_list

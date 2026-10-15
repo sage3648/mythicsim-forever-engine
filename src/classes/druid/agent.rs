@@ -4,7 +4,7 @@
 use std::rc::Rc;
 
 use crate::{
-    contracts::prepared_v2::{Effect, PreparedV2, Spell as ExportedSpell},
+    contracts::prepared_v2::{Effect, PreparedV2, Spell as ExportedSpell, Weapon},
     core::fight::{Agent, AuraRef, DotId, Fight, Side, SpellId, SpellResult},
 };
 
@@ -98,8 +98,39 @@ pub(crate) enum DruidAura {
     UnendingLifeRefund,
 }
 
+/// The weapons of one item swap set: in caster form and the paw of each form.
+#[derive(Clone, Debug, Default)]
+struct FormWeapons {
+    cat: Option<(Weapon, Weapon)>,
+    bear: Option<(Weapon, Weapon)>,
+}
+
+impl FormWeapons {
+    fn of(effects: &[Effect]) -> FormWeapons {
+        let mut weapons = FormWeapons::default();
+        for effect in effects {
+            match effect {
+                Effect::CatForm {
+                    main_hand,
+                    cat_weapon,
+                    ..
+                } => weapons.cat = Some((main_hand.clone(), cat_weapon.clone())),
+                Effect::BearForm {
+                    main_hand,
+                    bear_weapon,
+                    ..
+                } => weapons.bear = Some((main_hand.clone(), bear_weapon.clone())),
+                _ => {}
+            }
+        }
+        weapons
+    }
+}
+
 /// Druid state that Go keeps in the `Druid` struct and its closures.
 pub(crate) struct DruidAgent {
+    /// With an item swap, each set's weapon in caster form and paw, Main then Swap1.
+    form_weapons: Option<[FormWeapons; 2]>,
     moonkin_form: Option<AuraRef>,
     moonfire_dot: Option<SpellId>,
     insect_swarm_debuff: Option<AuraRef>,
@@ -174,6 +205,7 @@ impl Default for DruidAgent {
             berserk: None,
             blood_frenzy: None,
             bear_form: None,
+            form_weapons: None,
             enrage: None,
             demoralizing_roar: None,
             maul: None,
@@ -925,6 +957,10 @@ impl DruidAgent {
                 _ => {}
             }
         }
+        if let Some(worn) = fight.item_swap_worn_effects() {
+            fight.agent.form_weapons =
+                Some([FormWeapons::of(&prepared.effects), FormWeapons::of(&worn)]);
+        }
         Ok(fight)
     }
 
@@ -980,6 +1016,33 @@ impl DruidAgent {
 impl Agent for DruidAgent {
     type Spell = DruidSpell;
     type Aura = DruidAura;
+
+    /// Go druid.go Initialize's swap callback: in Cat or Bear Form the paw is rebuilt from the
+    /// weapon now in the hand; the forms read it from there when they next shift.
+    fn on_item_swap(fight: &mut Fight<Self>, worn: bool) {
+        let Some(weapons) = fight.agent.form_weapons.clone() else {
+            return;
+        };
+        let set = &weapons[usize::from(worn)];
+        if let (Some(cat), Some((main_hand, paw))) = (fight.agent.cat_form.as_mut(), &set.cat) {
+            let cat = Rc::make_mut(cat);
+            cat.main_hand = main_hand.clone();
+            cat.cat_weapon = paw.clone();
+        }
+        if let (Some(bear), Some((main_hand, paw))) = (fight.agent.bear_form.as_mut(), &set.bear) {
+            let bear = Rc::make_mut(bear);
+            bear.main_hand = main_hand.clone();
+            bear.bear_weapon = paw.clone();
+        }
+        let paw = match fight.agent.form {
+            forms::CAT => set.cat.as_ref(),
+            forms::BEAR => set.bear.as_ref(),
+            _ => None,
+        };
+        if let Some((_, paw)) = paw {
+            fight.set_main_hand(paw.clone());
+        }
+    }
 
     fn apply_effects(fight: &mut Fight<Self>, spell: SpellId, target: Side, behavior: DruidSpell) {
         match behavior {

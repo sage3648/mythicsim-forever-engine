@@ -1608,6 +1608,13 @@ func healthAtReset(request *proto.RaidSimRequest) *float64 {
 }
 
 func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
+	return prepareSet(request, digest, scenario, false)
+}
+
+// prepareSet exports the reset simulation, or with swapped the same simulation once it has
+// swapped to its item swap set at the pull (item_swap.go swappedSnapshot).
+func prepareSet(request *proto.RaidSimRequest, digest, scenario string, swapped bool) Prepared {
+	itemSwapRequest = request
 	unrepresented := []string{}
 	note := func(condition bool, message string) {
 		if condition {
@@ -1628,6 +1635,9 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	simulation.Reset()
 	agent := simulation.Raid.Parties[0].Players[0]
 	character := agent.GetCharacter()
+	if swapped {
+		character.ItemSwap.SwapItems(simulation, proto.APLActionItemSwap_Swap1, false)
+	}
 	target := simulation.Encounter.ActiveTargetUnits[0]
 	timers := &timerNames{names: map[*core.Timer]string{}}
 	targetCopyNotes(simulation, character, note)
@@ -1643,7 +1653,6 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	tanking := target.CurrentTarget == &character.Unit
 	note(tanking && !target.AutoAttacks.AutoSwingMelee, "a tanked target without a melee swing is unsupported")
 	note(target.SecondaryTarget != nil, "a target with a secondary target is unsupported")
-	note(character.ItemSwap.IsEnabled(), "item swapping is unsupported")
 	note(simulation.Encounter.EndFightAtHealth != 0, "health-based fights are unsupported")
 	// core/battle_squawk.go (fork patch 127): the party's engineers' chickens raise the melee speed
 	// at the reset, which the exported melee state holds, for the aura's four minutes. Its expiry
@@ -1944,6 +1953,16 @@ func prepare(request *proto.RaidSimRequest, digest, scenario string) Prepared {
 	// A class without a mana bar has no mana, whatever its Mana, Intellect or Spirit stats say.
 	if !character.HasManaBar() {
 		prepared.Player.Mana = Mana{}
+	}
+	if !swapped {
+		swapNote := func(condition bool, message string) {
+			if condition {
+				prepared.Unrepresented = append(prepared.Unrepresented, message)
+			}
+		}
+		if effect := itemSwapEffect(request, digest, scenario, simulation, character, prepared, swapNote); effect != nil {
+			prepared.Effects = append(prepared.Effects, effect)
+		}
 	}
 	return prepared
 }

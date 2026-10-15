@@ -336,6 +336,98 @@ pub struct SealOfRighteousnessRank {
     pub per_hit_value: f64,
 }
 
+/// What an item swap callback leaves its aura in under one set: activated if inactive (`on`),
+/// activated with an active aura refreshed (`activate`), deactivated (`off`) or untouched
+/// (`keep`).
+#[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum SwapAuraState {
+    On,
+    Activate,
+    Off,
+    Keep,
+}
+
+/// A dynamic spell modifier an item swap callback switches: Go `SpellMod` with its kind, value and
+/// the spells it reaches, and whether it is active after the reset.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct SwapSpellMod {
+    pub kind: String,
+    pub value: f64,
+    pub spells: Vec<usize>,
+    pub active: bool,
+}
+
+/// An item swap callback of a swapped slot (sim/core/item_swaps.go `RegisterItemSwapCallback`),
+/// as the state its target takes under the request's set (`main`) and the swap set (`swapped`).
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
+pub enum SwapCallback {
+    /// An aura that follows the weapon: a racial weapon specialization, an item or enchant proc
+    /// trigger (`registerProcInternal`) or an enchant's buff (`RegisterEnchantBuffWithSlots`).
+    Aura {
+        slot: String,
+        aura: String,
+        main: SwapAuraState,
+        swapped: SwapAuraState,
+    },
+    /// An aura that follows a weapon imbue the set's main hand carries (`main`, `swapped`), as
+    /// Flametongue's trigger: off when the weapon now in the hand lacks it, activated when it
+    /// carries it and the weapon it replaced did not, untouched otherwise.
+    AuraOnChange {
+        slot: String,
+        aura: String,
+        main: bool,
+        swapped: bool,
+    },
+    /// An item's use (`RegisterActive`): unusable while the item is not worn, and on cooldown for
+    /// at least 30 seconds once it is put on during the fight; its aura falls off at any swap.
+    ItemUse {
+        slot: String,
+        spell: usize,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        aura: Option<String>,
+        main: bool,
+        swapped: bool,
+    },
+    /// A spell modifier active only with a weapon of a hand type, as a weapon specialization's.
+    SpellMod {
+        slot: String,
+        #[serde(rename = "mod")]
+        modifier: SwapSpellMod,
+        main: bool,
+        swapped: bool,
+    },
+}
+
+/// One value of the prepared state that differs once the swap set is worn: a JSON pointer into the
+/// prepared document and the value there.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct SwapChange {
+    pub path: String,
+    pub value: serde_json::Value,
+}
+
+/// What an aura an item swap switches does as it is gained and fades: Weaponmaster's mace
+/// aura adds `armor_ignore_factor` to every attack table's armor ignore factor.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct SwapAuraEffect {
+    pub aura: String,
+    pub armor_ignore_factor: f64,
+}
+
+/// The lines a stat aura an item swap switches logs beyond its own as it is gained and fades.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct SwapAuraLogs {
+    pub aura: String,
+    pub gain_logs: Vec<String>,
+    pub expire_logs: Vec<String>,
+}
+
 /// A Seal of Fury rank: its seal, judgement and damage spell, the damage spell's flat Holy
 /// damage, and the absorb shield aura with the share of the damage it absorbs.
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -1864,6 +1956,26 @@ pub enum Effect {
         deal_delay_ns: i64,
     },
     /// Paladin seal_of_righteousness.go: every rank's seal, judgement and per-hit proc.
+    /// sim/core/item_swaps.go: the swap between the request's equipment (the Main set) and the
+    /// item swap's set (Swap1) of the slots the swap takes: the set auras, the swap's equipment
+    /// stats change line each way, the callbacks of the swapped slots in Go's order, the values of
+    /// the prepared state that differ with the swap set worn, and the log lines of the stat auras
+    /// the callbacks switch.
+    ItemSwap {
+        slots: Vec<String>,
+        main_aura: String,
+        swapped_aura: String,
+        to_swapped_log: String,
+        to_main_log: String,
+        callbacks: Vec<SwapCallback>,
+        swapped: Vec<SwapChange>,
+        stat_aura_logs: Vec<SwapAuraLogs>,
+        /// Auras the unit's reset activates, as a proc trigger's `OnReset` does, that the swap's
+        /// reset then switches off for the request's set.
+        reset_activates: Vec<String>,
+        /// What switched auras do beyond their stats as they are gained and fade.
+        aura_effects: Vec<SwapAuraEffect>,
+    },
     SealOfRighteousness {
         ranks: Vec<SealOfRighteousnessRank>,
         hand_multiplier: f64,
@@ -4120,6 +4232,7 @@ impl Effect {
             Effect::Judgement { .. } => "judgement",
             Effect::SealOfCommand { .. } => "seal_of_command",
             Effect::SealOfRighteousness { .. } => "seal_of_righteousness",
+            Effect::ItemSwap { .. } => "item_swap",
             Effect::SealOfTheCrusader { .. } => "seal_of_the_crusader",
             Effect::SealOfFury { .. } => "seal_of_fury",
             Effect::HolyLightHaste { .. } => "holy_light_haste",

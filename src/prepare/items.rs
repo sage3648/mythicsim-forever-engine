@@ -296,20 +296,26 @@ pub(crate) fn equipment(
     }
     if !area_types.is_empty() {
         for item in equipment.iter_mut() {
-            if item.is_empty() {
-                continue;
-            }
-            let row = item.row.clone().expect("a database item keeps its row");
-            if let Some(scaling) = scaling_option(&row) {
-                for area in scaling.messages("area_stats") {
-                    if area_types.contains(&area.enum_name("area_type")) {
-                        item.stats = item.stats.add(&stats_from_map(area, "stats"));
-                    }
-                }
-            }
+            *item = in_area(std::mem::take(item), area_types);
         }
     }
     Ok(equipment)
+}
+
+/// Go `Item.inArea`: the item's stats with those of its base scaling for the areas.
+pub(crate) fn in_area(mut item: Item, area_types: &[String]) -> Item {
+    if item.is_empty() || area_types.is_empty() {
+        return item;
+    }
+    let row = item.row.clone().expect("a database item keeps its row");
+    if let Some(scaling) = scaling_option(&row) {
+        for area in scaling.messages("area_stats") {
+            if area_types.contains(&area.enum_name("area_type")) {
+                item.stats = item.stats.add(&stats_from_map(area, "stats"));
+            }
+        }
+    }
+    item
 }
 
 /// Go `PercentPseudoStats` and `FromPseudoStatsProto`.

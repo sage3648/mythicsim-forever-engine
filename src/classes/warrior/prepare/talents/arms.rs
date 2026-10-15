@@ -193,6 +193,17 @@ impl Warrior {
         if self.main_hand_is_two_hand(sim, unit) {
             sim.activate_spell_mod(weapon_mod);
         }
+        sim.register_item_swap_callback(
+            unit,
+            &[
+                crate::prepare::items::slot::MAIN_HAND,
+                crate::prepare::items::slot::OFF_HAND,
+            ],
+            crate::prepare::item_swap::SwapCallback::HandMod {
+                id: weapon_mod,
+                hand_type: "HandTypeTwoHand".to_string(),
+            },
+        );
     }
 
     /// Go `GetMainHandType() == HandTypeTwoHand`.
@@ -370,6 +381,18 @@ impl Warrior {
                     }
                 }));
         }
+
+        // readWeapons, setCritMods and the armor ignore aura follow the weapons at a swap.
+        sim.register_item_swap_callback(
+            unit,
+            &[slot::MAIN_HAND, slot::OFF_HAND],
+            crate::prepare::item_swap::SwapCallback::Weaponmaster {
+                armor_aura: armor_ignore_aura,
+                armor_ignore: data.weaponmaster.effect_at(2).fraction_at(rank),
+                mh_crit: crit_mods[0].1,
+                oh_crit: crit_mods[1].1,
+            },
+        );
 
         let sword_aura = sim.make_proc_trigger_aura(
             unit,

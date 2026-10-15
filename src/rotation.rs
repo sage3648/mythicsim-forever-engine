@@ -214,6 +214,8 @@ pub enum Value {
     RemainingTime,
     CurrentTime,
     NumberTargets,
+    /// Go `APLValueActiveItemSwapSet`: whether the set it names (Swap1 when true) is worn.
+    ActiveItemSwapSet(bool),
     AuraIsKnown(ActionId),
     /// `auraIsKnown` with one of the player's pets, by its position among them, as its
     /// source unit.
@@ -374,6 +376,7 @@ impl Value {
             | Value::SpellIsReady(_)
             | Value::IsExecutePhase(_)
             | Value::SpellCanCast(_)
+            | Value::ActiveItemSwapSet(_)
             | Value::GcdIsReady => ValueType::Bool,
             Value::TargetAura {
                 read:
@@ -464,6 +467,9 @@ pub enum Action {
         name: String,
         variables: Vec<(String, Value)>,
     },
+    /// Go `APLActionItemSwap`: swap to the item swap's set (`true`) or back to the request's
+    /// equipment, ready only while the other set is worn.
+    ItemSwap(bool),
     /// Go `APLActionMultidot`: the spell on the first of up to `max_dots` targets whose dot
     /// is down or runs out within `max_overlap`.
     Multidot {
@@ -527,6 +533,7 @@ impl Action {
             Action::ActivateAura(_)
             | Action::Move(_)
             | Action::MoveDuration(_)
+            | Action::ItemSwap(_)
             | Action::GroupReference { .. } => Vec::new(),
         }
     }
@@ -927,6 +934,7 @@ fn parse_item(item: &Json, position: usize) -> Result<Option<Item>, Vec<String>>
         Ok(("move", config)) => parse_move(config),
         Ok(("moveDuration", config)) => parse_move_duration(config),
         Ok(("groupReference", config)) => parse_group_reference(config),
+        Ok(("itemSwap", config)) => parse_swap_set("itemSwap", config).map(Action::ItemSwap),
         Ok((name, _)) => Err(format!("action {name} is unsupported")),
         Err(err) => Err(err),
     };
@@ -941,6 +949,22 @@ fn parse_item(item: &Json, position: usize) -> Result<Option<Item>, Vec<String>>
             reasons.push(reason);
             Err(reasons)
         }
+    }
+}
+
+/// The swap set an item swap action or value names: `true` for Swap1, `false` for Main. Go builds
+/// nothing for an unknown set.
+fn parse_swap_set(name: &str, config: &Json) -> Result<bool, String> {
+    let object = config
+        .as_object()
+        .ok_or_else(|| format!("{name} must be an object"))?;
+    if let Some(key) = object.keys().find(|key| key.as_str() != "swapSet") {
+        return Err(format!("{name} field {key} is unsupported"));
+    }
+    match object.get("swapSet").and_then(Json::as_str) {
+        Some("Main") => Ok(false),
+        Some("Swap1") => Ok(true),
+        other => Err(format!("{name} swap set {other:?} is unsupported")),
     }
 }
 
@@ -1388,6 +1412,9 @@ fn parse_value(value: &Json) -> Result<Value, Vec<String>> {
             only(&[])?;
             Ok(Value::NumberTargets)
         }
+        "activeItemSwapSet" => parse_swap_set("activeItemSwapSet", config)
+            .map(Value::ActiveItemSwapSet)
+            .map_err(|reason| vec![reason]),
         "totemRemainingTime" => {
             only(&["totemType", "includeReactionTime"])?;
             let totem = match config.get("totemType").and_then(Json::as_str) {
@@ -1968,6 +1995,8 @@ pub enum Compiled<R> {
     DotTimeToNextTick(DotAt),
     /// Go `APLValueDotBaseDuration` with the base duration it captured.
     DotBaseDuration(i64),
+    /// Go `APLValueActiveItemSwapSet`: whether the set is worn, Swap1 when true.
+    ActiveItemSwapSet(bool),
     GcdIsReady,
     SpellCanCast(usize),
     AutoTimeToNext(AutoAttackType),
@@ -1996,6 +2025,7 @@ impl<R> Compiled<R> {
             | Compiled::IsExecutePhase(_)
             | Compiled::SpellCanCast(_)
             | Compiled::GroupUsed(_)
+            | Compiled::ActiveItemSwapSet(_)
             | Compiled::GcdIsReady => ValueType::Bool,
             Compiled::AuraNumStacks(_)
             | Compiled::AuraNumStacksAfterReaction(_)
@@ -2173,6 +2203,8 @@ pub struct Lookup<'a, R> {
     /// Go `GetAuraByID` on the player's pet at a position among its pets: whether it has the
     /// aura, false when there is no such pet.
     pub pet_aura_known: &'a dyn Fn(usize, &ActionId) -> bool,
+    /// Go `ItemSwap.IsEnabled`: whether the character swaps items.
+    pub item_swap: bool,
 }
 
 /// What Go `newAPLAction` makes of an action's condition.
@@ -2321,6 +2353,11 @@ fn compile_value<R>(value: &Value, lookup: &Lookup<R>) -> Option<Compiled<R>> {
             Compiled::DotBaseDuration((lookup.dot_base_duration)(id.as_ref()?)?)
         }
         Value::GcdIsReady => Compiled::GcdIsReady,
+        // Go `newValueActiveItemSwapSet`: no value without an item swap.
+        Value::ActiveItemSwapSet(swapped) if lookup.item_swap => {
+            Compiled::ActiveItemSwapSet(*swapped)
+        }
+        Value::ActiveItemSwapSet(_) => return None,
         // Go `APLValueVariableRef`: the value the variable resolved to. A variable whose value
         // gives none has an unknown type, which the parser does not reach.
         Value::Variable { resolved, .. } => compile_value(resolved, lookup)?,
@@ -2504,6 +2541,7 @@ mod tests {
             dot: &no_dot,
             dot_base_duration: &|_| None,
             pet_aura_known: &|_, _| false,
+            item_swap: false,
         }
     }
 
@@ -2530,6 +2568,7 @@ mod tests {
         let known = |pet: usize, aura: &ActionId| pet == 1 && *aura == id;
         let lookup = Lookup {
             pet_aura_known: &known,
+            item_swap: false,
             ..only_auras(&none, &|_, _| None)
         };
         assert_eq!(
@@ -3153,6 +3192,7 @@ mod tests {
             dot: &dot,
             dot_base_duration: &|_| None,
             pet_aura_known: &|_, _| false,
+            item_swap: false,
         })
     }
 
@@ -3644,6 +3684,7 @@ mod tests {
             dot: &no_dot,
             dot_base_duration: &|id| (id.spell_id == 7).then_some(18_000_000_000),
             pet_aura_known: &|_, _| false,
+            item_swap: false,
         };
         let compare = |spell: i32| {
             let value = parse_value(&serde_json::json!({"cmp": {"op": "OpGt",

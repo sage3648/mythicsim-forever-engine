@@ -318,6 +318,26 @@ skill, so the 66 variants of the 2026-10-04 Warrior presets and gear record ran 
 the 15 wearing Edgemaster's Handguards with both hands' tables moved
 ([record](validation/2026-10-15-reference-pin-0025d7398-sweeps.json)).
 
+Item swapping is ported for production's Manual Crowd Pummeler opener (MythicSim's default for
+Shockadin, Enhancement, Feral Cat and Bear, Elehance on 2 or more targets, and Retribution or Arms with
+the opener ticked): a swap of the main hand alone between the request's equipment and the item swap
+set, by a Paladin, Warrior, Shaman or Druid, through the rotation's `itemSwap` action and
+`activeItemSwapSet` value. The exporter describes it as the `item_swap` effect, and preparation and the
+fight runtime follow `SwapItems` with every callback the slot registers: weapon specializations, item
+and enchant procs, Crusader's buffs, the Pummeler's use, the shaman imbues and main hand stones of
+patch 133, Windfury Totem's weapon buff, Weaponmaster, the seals and the feral paws, the weapon skill of
+patch 135, the equipment stats through `AddDynamicEquipStats`, the stopped swings and the global
+cooldown of at least 1.5 seconds. What it does not follow is refused (`item_swap_unsupported`), such as a
+swap that puts Rockbiter on or off with Spirit Weapons, which moves the threat multiplier.
+Fifteen requests join the fixtures: the eight MythicSim defaults and six targeted swaps (weapon skill on
+the swap weapon, dual wield, a shield, a swap while casting, one on a running global cooldown, and an Orc
+with the party Windfury Totem) with Go goldens and first-fight logs, and a Spirit Weapons swap accepted as
+refused. Rust matches all 612 accepted fixtures with a Go golden, and preparation writes exactly what the
+exporter writes for every one of the 614. Every variant of the 0025d7398 rerun was compared again with this
+engine against the Go results that rerun kept: 14,278 match, 63 are refused for the same reasons, none
+differ, and the 66 weapon skill and 10 regenerated variants match as well
+([record](validation/2026-10-15-item-swap-sweeps.json)).
+
 ## Ledger
 
 The [upstream/](upstream/) directory records what has been reviewed and how:

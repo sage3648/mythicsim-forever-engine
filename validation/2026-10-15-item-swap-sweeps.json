@@ -1,0 +1,772 @@
+{
+  "kind": "integration_regression",
+  "date": "2026-10-15",
+  "source_revision": "item-swap-0025d7398",
+  "reference": {
+    "engine_revision": "0025d73986eebd90df1849c202b8c9a88d1f01c9",
+    "client_build": "1.60.1.70338"
+  },
+  "scope": "Item swapping (sim/core/item_swaps.go) for the Manual Crowd Pummeler opener. Every variant of the 0025d7398 rerun (126 units of its 124 records, 14341 variants), the 66 Warrior presets and gear weapon skill variants and the 10 regenerated rotation remaining variants, compared again with this branch's exporter and Rust engine against the Go results that rerun kept, and the 15 item swap fixtures. None of the sweep variants swaps items, so each must come out as at 0025d7398.",
+  "generator": "the 0025d7398 rerun's variants as it kept them, byte for byte (see that record's request_digests)",
+  "rerun": "for each variant, this branch's exporter (prepare) and release engine (sim), compared with the kept Go result by tools/prepared_v2.py's comparable, leaf_differences and first_log_difference; Go was not run again, four workers",
+  "criteria": {
+    "comparison": "full RaidSimResult except elapsedNs, lists keyed by ID",
+    "integer_counts": "exact",
+    "floats": "relative 1e-9",
+    "deviations": "as variances at the scale of mean^2",
+    "first_fight_debug_log": "line identical"
+  },
+  "retries": "one: the exporter's prepare of 2026-10-06-mage-multi-target-census 4-targets--frost--cast-blizzard-with-improvedBlizzard timed out after 300 seconds at background priority while the Mac was loaded; run again alone it prepared in under a second and matched Go",
+  "matched": 14278,
+  "rejected": 63,
+  "mismatched": 0,
+  "errors": 0,
+  "not_compared": 0,
+  "weapon_skill_variants": {
+    "variants": 66,
+    "matched": 66
+  },
+  "regenerated_not_counted": {
+    "variants": 10,
+    "matched": 10
+  },
+  "changes_from_0025d7398": [],
+  "swap_fixtures": [
+    {
+      "case": "mcp-shockadin-paladin",
+      "supported": true,
+      "go_result": true,
+      "go_log": true
+    },
+    {
+      "case": "mcp-retribution-paladin",
+      "supported": true,
+      "go_result": true,
+      "go_log": true
+    },
+    {
+      "case": "mcp-arms-warrior",
+      "supported": true,
+      "go_result": true,
+      "go_log": true
+    },
+    {
+      "case": "mcp-enhancement-shaman",
+      "supported": true,
+      "go_result": true,
+      "go_log": true
+    },
+    {
+      "case": "mcp-elehance-shaman-2-targets",
+      "supported": true,
+      "go_result": true,
+      "go_log": true
+    },
+    {
+      "case": "mcp-elehance-shaman-3-targets",
+      "supported": true,
+      "go_result": true,
+      "go_log": true
+    },
+    {
+      "case": "mcp-feral-druid",
+      "supported": true,
+      "go_result": true,
+      "go_log": true
+    },
+    {
+      "case": "mcp-feral-bear-druid",
+      "supported": true,
+      "go_result": true,
+      "go_log": true
+    },
+    {
+      "case": "item-swap-weapon-skill",
+      "supported": true,
+      "go_result": true,
+      "go_log": true
+    },
+    {
+      "case": "item-swap-dual-wield",
+      "supported": true,
+      "go_result": true,
+      "go_log": true
+    },
+    {
+      "case": "item-swap-shield",
+      "supported": true,
+      "go_result": true,
+      "go_log": true
+    },
+    {
+      "case": "item-swap-mid-cast",
+      "supported": true,
+      "go_result": true,
+      "go_log": true
+    },
+    {
+      "case": "item-swap-mid-gcd",
+      "supported": true,
+      "go_result": true,
+      "go_log": true
+    },
+    {
+      "case": "item-swap-orc-windfury-totem",
+      "supported": true,
+      "go_result": true,
+      "go_log": true
+    },
+    {
+      "case": "item-swap-spirit-weapons",
+      "supported": false,
+      "go_result": false,
+      "go_log": false
+    }
+  ],
+  "records": [
+    {
+      "unit": "2026-10-03-arcane-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-03-fire-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-affliction-warlock-broad-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-affliction-warlock-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-arms-warrior-race-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-arms-warrior-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-assassination-rogue-race-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-assassination-rogue-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-assassination-venom-race-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-balance-druid-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-beast-mastery-hunter-race-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-beast-mastery-hunter-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-combat-expose-armor-race-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-combat-improved-expose-armor-race-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-combat-kidney-shot-race-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-combat-kidney-shot-tank-race-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-combat-riposte-tank-race-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-combat-rogue-melee-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-combat-rogue-race-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-combat-rogue-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-combat-swords-race-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-combat-swords-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-combat-wound-poison-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-demonology-warlock-recklessness-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-demonology-warlock-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-destruction-warlock-broad-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-destruction-warlock-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-elemental-shaman-race-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-elemental-shaman-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-enhancement-shaman-dual-wield-imbues-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-enhancement-shaman-frostbrand-sync-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-enhancement-shaman-race-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-enhancement-shaman-self-totems-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-enhancement-shaman-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-feral-bear-druid-caster-interval-race-sweep",
+      "variants": 16,
+      "matched": 16
+    },
+    {
+      "unit": "2026-10-04-feral-bear-druid-defensives-race-sweep",
+      "variants": 16,
+      "matched": 16
+    },
+    {
+      "unit": "2026-10-04-feral-bear-druid-melee-sweep",
+      "variants": 17,
+      "matched": 17
+    },
+    {
+      "unit": "2026-10-04-feral-bear-druid-potion-shift-race-sweep",
+      "variants": 16,
+      "matched": 16
+    },
+    {
+      "unit": "2026-10-04-feral-bear-druid-race-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-feral-bear-druid-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-feral-bear-druid-threshold-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-feral-druid-race-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-feral-druid-rake-race-sweep",
+      "variants": 16,
+      "matched": 16
+    },
+    {
+      "unit": "2026-10-04-feral-druid-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-frostfire-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-fury-protection-warrior-last-stand-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-fury-protection-warrior-race-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-fury-protection-warrior-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-fury-protection-warrior-threshold-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-holy-protection-paladin-seal-of-fury-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-holy-protection-paladin-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-hunter-pet-family-sweep",
+      "variants": 34,
+      "matched": 34
+    },
+    {
+      "unit": "2026-10-04-hunter-race-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-mage-race-sweep__arcane",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-mage-race-sweep__fire",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-mage-race-sweep__frost",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-marksmanship-hunter-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-production-fire-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-production-gear-swaps",
+      "variants": 2939,
+      "matched": 2939
+    },
+    {
+      "unit": "2026-10-04-protection-bulwark-heal-paladin-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-protection-eye-for-an-eye-paladin-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-protection-paladin-seal-of-fury-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-protection-paladin-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-protection-paladin-threshold-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-protection-warrior-last-stand-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-protection-warrior-race-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-protection-warrior-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-protection-warrior-threshold-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-ret-protection-paladin-seal-of-fury-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-ret-protection-paladin-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-retribution-crusader-held-paladin-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-retribution-crusader-paladin-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-retribution-exorcism-paladin-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-retribution-paladin-race-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-retribution-paladin-seal-of-fury-twist-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-retribution-paladin-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-shadow-priest-race-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-shadow-priest-shadowfiend-race-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-shadow-priest-starshards-sweep",
+      "variants": 16,
+      "matched": 16
+    },
+    {
+      "unit": "2026-10-04-shadow-priest-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-shockadin-holy-light-paladin-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-shockadin-paladin-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-shockadin-self-heal-paladin-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-shockadin-vigil-paladin-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-smite-priest-holy-nova-race-sweep",
+      "variants": 16,
+      "matched": 16
+    },
+    {
+      "unit": "2026-10-04-smite-priest-race-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-smite-priest-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-subtlety-ghostly-strike-tank-race-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-subtlety-quietus-race-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-subtlety-rogue-race-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-subtlety-rogue-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-survival-hunter-cat-whelp-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-survival-hunter-race-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-survival-hunter-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-warlock-race-sweep",
+      "variants": 12,
+      "matched": 12
+    },
+    {
+      "unit": "2026-10-04-warrior-race-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-04-warrior-sweep",
+      "variants": 24,
+      "matched": 24
+    },
+    {
+      "unit": "2026-10-05-multi-target-references",
+      "variants": 32,
+      "matched": 32
+    },
+    {
+      "unit": "2026-10-05-multi-target-sweep",
+      "variants": 192,
+      "matched": 192
+    },
+    {
+      "unit": "2026-10-06-mage-multi-target-census",
+      "variants": 879,
+      "matched": 867,
+      "rejected": 12
+    },
+    {
+      "unit": "2026-10-06-mage-multi-target-sweep",
+      "variants": 300,
+      "matched": 300
+    },
+    {
+      "unit": "2026-10-06-mage-warlock-multi-target-references",
+      "variants": 102,
+      "matched": 102
+    },
+    {
+      "unit": "2026-10-06-multi-target-druid-sweep",
+      "variants": 216,
+      "matched": 216
+    },
+    {
+      "unit": "2026-10-06-multi-target-paladin-druid-references",
+      "variants": 72,
+      "matched": 72
+    },
+    {
+      "unit": "2026-10-06-multi-target-paladin-sweep",
+      "variants": 120,
+      "matched": 120
+    },
+    {
+      "unit": "2026-10-06-multi-target-shaman-sweep",
+      "variants": 128,
+      "matched": 128
+    },
+    {
+      "unit": "2026-10-06-multi-target-warrior-shaman-references",
+      "variants": 53,
+      "matched": 53
+    },
+    {
+      "unit": "2026-10-06-multi-target-warrior-sweep",
+      "variants": 352,
+      "matched": 352
+    },
+    {
+      "unit": "2026-10-06-rotation-casts-at-other-targets",
+      "variants": 45,
+      "matched": 24,
+      "rejected": 21
+    },
+    {
+      "unit": "2026-10-06-rotation-target-fields",
+      "variants": 179,
+      "matched": 169,
+      "rejected": 10
+    },
+    {
+      "unit": "2026-10-06-warlock-multi-target-census",
+      "variants": 1076,
+      "matched": 1076
+    },
+    {
+      "unit": "2026-10-06-warlock-multi-target-sweep",
+      "variants": 400,
+      "matched": 400
+    },
+    {
+      "unit": "2026-10-06-warrior-prepull-sweep",
+      "variants": 216,
+      "matched": 216
+    },
+    {
+      "unit": "2026-10-07-tanking-several-targets-fixture-sweep",
+      "variants": 402,
+      "matched": 402
+    },
+    {
+      "unit": "2026-10-07-tanking-several-targets-fixtures",
+      "variants": 292,
+      "matched": 272,
+      "rejected": 20
+    },
+    {
+      "unit": "2026-10-07-tanking-several-targets-references",
+      "variants": 32,
+      "matched": 32
+    },
+    {
+      "unit": "2026-10-07-tanking-several-targets-sweep",
+      "variants": 384,
+      "matched": 384
+    },
+    {
+      "unit": "2026-10-08-challenging-shout-roar-sweep",
+      "variants": 208,
+      "matched": 208
+    },
+    {
+      "unit": "2026-10-08-external-cooldowns-taunts-sweep",
+      "variants": 356,
+      "matched": 356
+    },
+    {
+      "unit": "2026-10-08-external-power-infusion-sweep",
+      "variants": 240,
+      "matched": 240
+    },
+    {
+      "unit": "2026-10-08-items-remaining-sweep",
+      "variants": 739,
+      "matched": 739
+    },
+    {
+      "unit": "2026-10-08-live-rotation-gaps-sweep",
+      "variants": 342,
+      "matched": 342
+    },
+    {
+      "unit": "2026-10-08-live-spell-gaps-sweep",
+      "variants": 258,
+      "matched": 258
+    },
+    {
+      "unit": "2026-10-08-melee-weapon-damage-procs-sweep",
+      "variants": 208,
+      "matched": 208
+    },
+    {
+      "unit": "2026-10-08-rotation-remaining-sweep",
+      "variants": 632,
+      "matched": 632
+    },
+    {
+      "unit": "2026-10-08-weapon-proc-spells-sweep",
+      "variants": 700,
+      "matched": 700
+    },
+    {
+      "unit": "2026-10-08-rotation-remaining-sweep__regenerated",
+      "variants": 10,
+      "matched": 10
+    },
+    {
+      "unit": "2026-10-04-warrior-presets-and-gear__weapon_skill",
+      "variants": 66,
+      "matched": 66
+    }
+  ]
+}
