@@ -1,5 +1,5 @@
 //! Translated by tools/rust_buffs.py from the reference's sim/core/buffs/buffs_auto_gen.go and
-//! debuffs_auto_gen.go at 0025d73986eebd90df1849c202b8c9a88d1f01c9. Do not edit; run `python3 tools/rust_buffs.py write`.
+//! debuffs_auto_gen.go at 771c6349a7f15ca331c32d80273b8b9139cb115e. Do not edit; run `python3 tools/rust_buffs.py write`.
 
 use crate::contracts::request::Message;
 
@@ -40,7 +40,7 @@ pub(crate) static LEADER_OF_THE_PACK: Meta = Meta {
     kind: MetaKind::Buff,
     label: "Leader of the Pack",
     spell: 24932,
-    category: "DruidCritAura",
+    category: "LeaderOfThePack",
     single_aura: true,
     ..Meta::DEFAULT
 };
@@ -68,7 +68,7 @@ pub(crate) static MOONKIN_AURA: Meta = Meta {
     kind: MetaKind::Buff,
     label: "Moonkin Aura",
     spell: 24907,
-    category: "DruidCritAura",
+    category: "MoonkinAura",
     single_aura: true,
     ..Meta::DEFAULT
 };
@@ -456,7 +456,7 @@ pub(crate) fn apply_generated_buffs(
         permanent(env, unit, &DEVOTION_AURA, false, 0)?;
     }
     if party.bool("leader_of_the_pack") {
-        permanent(env, unit, &LEADER_OF_THE_PACK, false, 0)?;
+        super::drivers::drive_leader_of_the_pack(env, unit, party)?;
     }
     if party.enum_number("mana_spring_totem") != 0 {
         permanent(
@@ -471,7 +471,7 @@ pub(crate) fn apply_generated_buffs(
         super::drivers::drive_mana_tide_totems(env, unit, party)?;
     }
     if party.bool("moonkin_aura") {
-        permanent(env, unit, &MOONKIN_AURA, false, 0)?;
+        super::drivers::drive_moonkin_aura(env, unit, party)?;
     }
     if party.bool("retribution_aura") {
         super::drivers::drive_retribution_aura(env, unit, party)?;

@@ -11,8 +11,7 @@ use crate::{
 use super::{
     spells::{
         arcane_blast, arcane_missiles, arcane_power, area_hit, blizzard, cold_snap, combustion,
-        evocation, fire_blast, flamestrike, frostbolt, ice_lance, mana_gems, presence_of_mind,
-        scorch,
+        evocation, fire_blast, flamestrike, ice_lance, mana_gems, presence_of_mind, scorch,
     },
     talents::{
         arcane_concentration, fingers_of_frost, heating_up, ignite, master_of_elements,
@@ -72,6 +71,8 @@ pub(crate) enum MageAura {
     MasterOfElementsTrigger,
     HeatingUp,
     HeatingUpTrigger,
+    /// Heating Up's trigger on every Fire Blast cast.
+    HeatingUpFireBlast,
     Combustion,
 }
 
@@ -88,6 +89,7 @@ pub(crate) struct MageAgent {
     improved_scorch: Option<Rc<scorch::ImprovedScorch>>,
     master_of_elements: Option<Rc<master_of_elements::MasterOfElements>>,
     heating_up: Option<Rc<heating_up::HeatingUp>>,
+
     combustion: Option<Rc<combustion::Combustion>>,
     ignite: Option<Rc<ignite::Ignite>>,
     ice_lance_frozen_multiplier: f64,
@@ -161,12 +163,21 @@ fn class_auras(prepared: &PreparedV2) -> Vec<(String, MageAura)> {
                 continue;
             }
             Effect::HeatingUp {
-                aura, trigger_aura, ..
-            } => (
                 aura,
                 trigger_aura,
-                (MageAura::HeatingUp, MageAura::HeatingUpTrigger),
-            ),
+                fire_blast_trigger_aura,
+                ..
+            } => {
+                auras.push((
+                    fire_blast_trigger_aura.clone(),
+                    MageAura::HeatingUpFireBlast,
+                ));
+                (
+                    aura,
+                    trigger_aura,
+                    (MageAura::HeatingUp, MageAura::HeatingUpTrigger),
+                )
+            }
             Effect::Scorch {
                 improved_scorch: Some(improved),
             } => {
@@ -508,6 +519,19 @@ impl MageAgent {
         Ok(fight)
     }
 
+    /// Go `procFingersOfFrost` after a chilling bolt's hit roll: the charges at launch.
+    fn launch_fingers(fight: &mut Fight<Self>, spell: SpellId, result: &SpellResult) {
+        if fight.agent.fingers_of_frost.is_none() {
+            return;
+        }
+        if Self::with_fingers(fight, |state, fight| state.launch(fight, spell, result)) {
+            let aura = fight.agent.fingers_of_frost.as_ref().expect("bound").aura;
+            fight.activate_aura(aura);
+            let max = fight.aura(aura).max_stacks;
+            fight.set_stacks(aura, max);
+        }
+    }
+
     /// Run a Fingers of Frost hook with its state taken out of the agent.
     fn with_fingers<T>(
         fight: &mut Fight<Self>,
@@ -598,7 +622,12 @@ impl Agent for MageAgent {
 
     fn apply_effects(fight: &mut Fight<Self>, spell: SpellId, target: Side, behavior: MageSpell) {
         match behavior {
-            MageSpell::Frostbolt => frostbolt::apply(fight, spell, target),
+            MageSpell::Frostbolt => {
+                let base = fight.roll_damage_effect(spell);
+                let result = fight.calc_damage(spell, target, base);
+                Self::launch_fingers(fight, spell, &result);
+                fight.deal_damage_after_travel(spell, result);
+            }
             MageSpell::ArcaneBlast => {
                 let charges = Self::arcane_charges(fight);
                 arcane_blast::apply(fight, spell, target, &charges);
@@ -616,6 +645,9 @@ impl Agent for MageAgent {
             MageSpell::Fireball | MageSpell::FrostfireBolt | MageSpell::Pyroblast => {
                 let base = fight.roll_damage_effect(spell);
                 let result = fight.calc_damage(spell, target, base);
+                if matches!(behavior, MageSpell::FrostfireBolt) {
+                    Self::launch_fingers(fight, spell, &result);
+                }
                 let dot = fight.spells[spell].dot.expect("the bolt has a dot");
                 let dot = fight.dot_on(dot, target);
                 fight.deal_damage_after_travel_then_dot(spell, result, dot);
@@ -889,6 +921,9 @@ impl Agent for MageAgent {
             MageAura::MissileBarrage => Self::missile_barrage(fight).on_cast_complete(fight, spell),
             MageAura::ArcaneCharges => Self::arcane_charges(fight).on_cast_complete(fight, spell),
             MageAura::HeatingUp => Self::heating_up(fight).on_cast_complete(fight, spell),
+            MageAura::HeatingUpFireBlast => {
+                Self::heating_up(fight).on_fire_blast_cast(fight, spell)
+            }
             MageAura::PresenceOfMind => {
                 Self::presence_of_mind(fight).on_cast_complete(fight, spell)
             }

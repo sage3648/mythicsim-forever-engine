@@ -2,8 +2,8 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "0025d73986eebd90df1849c202b8c9a88d1f01c9",
-    "client_build": "1.60.1.70338",
+    "engine_revision": "771c6349a7f15ca331c32d80273b8b9139cb115e",
+    "client_build": "1.60.1.70374",
     "exporter": "tools/oracle-v2"
   },
   "request_sha256": "3019c261075286c08e4c669beab3d7b961c7c4ccf6a1c27b0a09f349f2f03b1c",
@@ -586,23 +586,6 @@
         "exclusive_effects": 0
       },
       {
-        "label": "Sword Specialization",
-        "action_id": {
-          "spell_id": 20597
-        },
-        "duration_ns": 9223372036854775807,
-        "max_stacks": 0,
-        "active": true,
-        "stacks": 0,
-        "callbacks": [
-          "on_reset",
-          "on_gain",
-          "on_expire"
-        ],
-        "icd": null,
-        "exclusive_effects": 0
-      },
-      {
         "label": "Holy Strength (MH)",
         "action_id": {
           "spell_id": 20007,
@@ -784,18 +767,12 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 2,
+        "exclusive_effects": 1,
         "exclusive_memberships": [
           {
             "category": "GraceOfAirTotemAgilityAdd",
             "single_aura": false,
             "priority": 89,
-            "position": 0
-          },
-          {
-            "category": "AirTotem",
-            "single_aura": true,
-            "priority": 1,
             "position": 0
           }
         ]
@@ -3002,7 +2979,7 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": -2,
+        "bonus_crit_percent": 0,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
@@ -3359,7 +3336,7 @@
         "NatureResistance": 0,
         "ParryPercent": 0,
         "ParryRating": 0,
-        "PhysicalCritPercent": 15,
+        "PhysicalCritPercent": 32.0325,
         "PhysicalDamage": 0,
         "PhysicalHitPercent": 0,
         "RangedAttackPower": 75,
@@ -3962,10 +3939,10 @@
         }
       ],
       "summon_log": [
-        "Pet stats: {\"Strength\": 136.000,\"Agility\": 100.000,\"Stamina\": 274.000,\"Intellect\": 50.000,\"Spirit\": 80.000,\"AttackPower\": 252.000,\"RangedAttackPower\": 75.000,\"Armor\": 200.000,\"Health\": 2790.400,\"MP5\": 25.000,\"PhysicalCritPercent\": 15.000,\"SpellCritPercent\": 10.000,}",
-        "Pet inherited stats: {}"
+        "Pet stats: {\"Strength\": 136.000,\"Agility\": 100.000,\"Stamina\": 274.000,\"Intellect\": 50.000,\"Spirit\": 80.000,\"AttackPower\": 252.000,\"RangedAttackPower\": 75.000,\"Armor\": 200.000,\"Health\": 2790.400,\"MP5\": 25.000,\"PhysicalCritPercent\": 32.032,\"SpellCritPercent\": 10.000,}",
+        "Pet inherited stats: {\"PhysicalCritPercent\": 22.032,}"
       ],
-      "dismiss_log": "{\"Strength\": 136.000,\"Agility\": 100.000,\"Stamina\": 274.000,\"Intellect\": 50.000,\"Spirit\": 80.000,\"AttackPower\": 252.000,\"Armor\": 200.000,\"Health\": 2790.400,\"PhysicalCritPercent\": 15.000,\"SpellCritPercent\": 10.000,}",
+      "dismiss_log": "{\"Strength\": 136.000,\"Agility\": 100.000,\"Stamina\": 274.000,\"Intellect\": 50.000,\"Spirit\": 80.000,\"AttackPower\": 252.000,\"Armor\": 200.000,\"Health\": 2790.400,\"PhysicalCritPercent\": 10.000,\"SpellCritPercent\": 10.000,}",
       "dynamic_stats": true,
       "focus": {
         "max": 100,
@@ -3973,13 +3950,25 @@
         "tick_duration_ns": 250000000
       },
       "movement_speed": 8,
+      "inheritance": [
+        {
+          "owner": "PhysicalCritPercent",
+          "pet": "PhysicalCritPercent",
+          "coefficient": 1
+        },
+        {
+          "owner": "ExpertisePercent",
+          "pet": "ExpertisePercent",
+          "coefficient": 1
+        }
+      ],
       "stats_without_deps": {
         "Agility": 100,
         "AttackPower": -20,
         "Health": -180,
         "Intellect": 50,
         "MP5": 25,
-        "PhysicalCritPercent": 10,
+        "PhysicalCritPercent": 32.0325,
         "RangedAttackPower": 75,
         "SpellCritPercent": 10,
         "Spirit": 80,
@@ -3996,11 +3985,6 @@
           "src": "Agility",
           "dst": "Armor",
           "amount": 2
-        },
-        {
-          "src": "Agility",
-          "dst": "PhysicalCritPercent",
-          "amount": 0.05
         },
         {
           "src": "Stamina",
@@ -4074,6 +4058,9 @@
           "amount": 0.1
         }
       ],
+      "inherited_stats": {
+        "PhysicalCritPercent": 22.0325
+      },
       "dismiss_stats": [
         {
           "stat": "Strength",
@@ -4129,7 +4116,7 @@
         },
         {
           "stat": "PhysicalCritPercent",
-          "value": 15
+          "value": 10
         },
         {
           "stat": "SpellCritPercent",

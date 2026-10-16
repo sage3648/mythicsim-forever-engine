@@ -177,10 +177,11 @@ fn racial_effects(env: &mut Environment, _unrepresented: &mut Vec<String>) -> Ve
     use super::spell::ProcMask;
     let player = env.player;
     let mut effects = Vec::new();
+    // racials.go applyTouchOfTheGrave: Go literals, from the 16 October beta notes.
     if env.sim.get_aura(player, "Touch of the Grave").is_some() {
         let chance = match env.sim.character(player).class.as_str() {
-            "ClassWarrior" | "ClassPaladin" | "ClassRogue" => 0.05,
-            _ => 0.1,
+            "ClassWarrior" | "ClassPaladin" | "ClassRogue" => 0.2,
+            _ => 0.3,
         };
         effects.push(json!({
             "kind": "touch_of_the_grave", "trigger_aura": "Touch of the Grave", "drain_spell_id": 1260198,
@@ -253,7 +254,7 @@ fn racial_defensive_effects(env: &Environment) -> Vec<Value> {
     };
     if let Some(aura) = env.sim.get_aura(player, "Shatter Curse") {
         effects.push(json!({"kind": "shatter_curse", "spell_id": spell_id(aura), "aura": env.sim.aura(aura).label,
-            "school_damage_taken_multiplier": 0.85,
+            "school_damage_taken_multiplier": 0.95,
             "schools": ["arcane", "fire", "frost", "holy", "nature", "shadow"]}));
     }
     if let Some(aura) = env.sim.get_aura(player, "Stoneform") {

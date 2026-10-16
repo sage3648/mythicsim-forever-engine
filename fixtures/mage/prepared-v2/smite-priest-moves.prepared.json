@@ -2,8 +2,8 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "0025d73986eebd90df1849c202b8c9a88d1f01c9",
-    "client_build": "1.60.1.70338",
+    "engine_revision": "771c6349a7f15ca331c32d80273b8b9139cb115e",
+    "client_build": "1.60.1.70374",
     "exporter": "tools/oracle-v2"
   },
   "request_sha256": "124b6ac44db3828ca71d29e1f540b059023cf0245b6f32e4d0aa1852eab8eb68",
@@ -723,7 +723,7 @@
       "NatureResistance": 27,
       "ParryPercent": 0,
       "ParryRating": 0,
-      "PhysicalCritPercent": 10.15,
+      "PhysicalCritPercent": 7.15,
       "PhysicalDamage": 0,
       "PhysicalHitPercent": 3,
       "RangedAttackPower": 0,
@@ -831,7 +831,7 @@
         ],
         "icd": {
           "timer": "timer-11",
-          "duration_ns": 1000000000
+          "duration_ns": 25000000000
         },
         "exclusive_effects": 0
       },
@@ -912,7 +912,7 @@
       },
       {
         "label": "Moonkin Aura (External)",
-        "tag": "DruidCritAura",
+        "tag": "MoonkinAura",
         "action_id": {
           "spell_id": 24907,
           "tag": -1
@@ -930,7 +930,7 @@
         "exclusive_effects": 1,
         "exclusive_memberships": [
           {
-            "category": "DruidCritAura",
+            "category": "MoonkinAura",
             "single_aura": true,
             "priority": 3,
             "position": 0
@@ -1318,6 +1318,7 @@
           "ProcMaskEmpty"
         ],
         "flags": [
+          "SpellFlagIgnoreTargetModifiers",
           "SpellFlagIgnoreAttackerModifiers",
           "SpellFlagNoSpellMods",
           "SpellFlagPassiveSpell",
@@ -1462,7 +1463,7 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1.05,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
@@ -1536,7 +1537,7 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1.05,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
@@ -1610,7 +1611,7 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1.05,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
@@ -1684,7 +1685,7 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1.05,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
@@ -3668,7 +3669,7 @@
         "max_charges": 0,
         "cd": {
           "timer": "timer-7",
-          "duration_ns": 15000000000
+          "duration_ns": 18000000000
         },
         "shared_cd": null,
         "bonus_hit_percent": 0,
@@ -3678,7 +3679,7 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
@@ -3731,7 +3732,7 @@
         "max_charges": 0,
         "cd": {
           "timer": "timer-7",
-          "duration_ns": 15000000000
+          "duration_ns": 18000000000
         },
         "shared_cd": null,
         "bonus_hit_percent": 0,
@@ -3741,7 +3742,7 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
@@ -3794,7 +3795,7 @@
         "max_charges": 0,
         "cd": {
           "timer": "timer-7",
-          "duration_ns": 15000000000
+          "duration_ns": 18000000000
         },
         "shared_cd": null,
         "bonus_hit_percent": 0,
@@ -3804,7 +3805,7 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
@@ -3857,7 +3858,7 @@
         "max_charges": 0,
         "cd": {
           "timer": "timer-7",
-          "duration_ns": 15000000000
+          "duration_ns": 18000000000
         },
         "shared_cd": null,
         "bonus_hit_percent": 0,
@@ -3867,7 +3868,7 @@
         "cast_time_multiplier": 1,
         "cd_multiplier": 1,
         "damage_multiplier": 1,
-        "damage_multiplier_additive": 1,
+        "damage_multiplier_additive": 1.05,
         "direct_damage_multiplier_additive": 0,
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
@@ -5362,7 +5363,7 @@
         "max_charges": 0,
         "cd": {
           "timer": "timer-10",
-          "duration_ns": 60000000000
+          "duration_ns": 24000000000
         },
         "shared_cd": null,
         "bonus_hit_percent": 0,
@@ -5435,7 +5436,7 @@
         "max_charges": 0,
         "cd": {
           "timer": "timer-10",
-          "duration_ns": 60000000000
+          "duration_ns": 24000000000
         },
         "shared_cd": null,
         "bonus_hit_percent": 0,
@@ -5508,7 +5509,7 @@
         "max_charges": 0,
         "cd": {
           "timer": "timer-10",
-          "duration_ns": 60000000000
+          "duration_ns": 24000000000
         },
         "shared_cd": null,
         "bonus_hit_percent": 0,
@@ -5581,7 +5582,7 @@
         "max_charges": 0,
         "cd": {
           "timer": "timer-10",
-          "duration_ns": 60000000000
+          "duration_ns": 24000000000
         },
         "shared_cd": null,
         "bonus_hit_percent": 0,
@@ -5654,7 +5655,7 @@
         "max_charges": 0,
         "cd": {
           "timer": "timer-10",
-          "duration_ns": 60000000000
+          "duration_ns": 24000000000
         },
         "shared_cd": null,
         "bonus_hit_percent": 0,
@@ -5727,7 +5728,7 @@
         "max_charges": 0,
         "cd": {
           "timer": "timer-10",
-          "duration_ns": 60000000000
+          "duration_ns": 24000000000
         },
         "shared_cd": null,
         "bonus_hit_percent": 0,
@@ -6598,7 +6599,15 @@
       ]
     },
     {
-      "holy_fire_spells": [
+      "dot_spells": [
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        37,
         50,
         51,
         52,
@@ -6704,7 +6713,7 @@
       "drain_spell_id": 1260198,
       "health_fraction": 0.05,
       "kind": "touch_of_the_grave",
-      "proc_chance": 0.1,
+      "proc_chance": 0.3,
       "proc_mask": [
         "ProcMaskMeleeMHAuto",
         "ProcMaskMeleeOHAuto",

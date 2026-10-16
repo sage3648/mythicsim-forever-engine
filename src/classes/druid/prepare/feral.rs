@@ -120,7 +120,7 @@ impl Druid {
     fn register_rake_spell(&mut self, sim: &mut Sim) {
         let rank = Ladder::ranked(&RAKE_RANKS).highest();
         let tick = rank.periodic_effect();
-        let mut config = melee_special(rank, masks::RAKE, SpellFlag::NONE);
+        let mut config = melee_special(rank, masks::RAKE, SpellFlag::IGNORE_RESISTS);
         config.damage_multiplier = 1.0;
         config.dot = DotConfig {
             aura: AuraConfig {

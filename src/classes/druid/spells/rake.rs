@@ -1,4 +1,4 @@
-//! Rake (9904), from Go sim/druid/rake.go: a flat hit plus 5.26% of attack power on the weapon
+//! Rake (9904), from Go sim/druid/rake.go: a flat hit plus 5% of attack power on the weapon
 //! special table that gives a combo point and applies a bleed when it lands, a refund when it
 //! does not. The bleed ticks a flat amount plus the same share, which it snapshots as a flat
 //! amount but reads from the attack power each tick has, as Go `SnapshotPhysical` and

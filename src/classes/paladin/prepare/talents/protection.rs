@@ -5,7 +5,7 @@ use std::rc::Rc;
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger, PseudoStatField};
 use crate::prepare::character::constants::DEFENSE_RATING_PER_DEFENSE_LEVEL;
 use crate::prepare::dbcenums;
-use crate::prepare::sim::{AuraConfig, Sim, UnitId, SECOND};
+use crate::prepare::sim::{AuraConfig, EventCallbacks, Sim, UnitId, NEVER_EXPIRES, SECOND};
 use crate::prepare::spell::ProcMask;
 use crate::prepare::spell_mod::{SpellModConfig, SpellModType};
 use crate::prepare::stats::Stat;
@@ -266,6 +266,8 @@ impl Paladin {
     /// Reckoning: gives you a chance to gain an extra attack after Blocking a melee attack and
     /// after being the victim of a non-periodic critical strike.
     fn apply_reckoning(&mut self, sim: &mut Sim, unit: UnitId) {
+        /// The most Reckoning charges a paladin holds (16 October 2026 beta notes).
+        const RECKONING_MAX_CHARGES: i32 = 4;
         let points = self.talents.i32("reckoning");
         if points == 0 {
             return;
@@ -273,6 +275,25 @@ impl Paladin {
         let block_chance = spell_data().reckoning.fraction_at(points);
         let crit_chance = block_chance * 2.5;
         let label = sim.unit(unit).label.clone();
+
+        // 16 Oct build: each proc banks a charge (max 4) and the next melee swing (auto attack)
+        // spends them all, 1 extra attack each, a free swing that leaves the swing timer alone. Client
+        // 70291+ gives 20177 a 1.5 s proc cooldown, shared by both triggers.
+        sim.new_timer(unit);
+        sim.register_aura(
+            unit,
+            AuraConfig {
+                label: format!("Reckoning{label}"),
+                action_id: Some(spell_action(20178)),
+                duration: NEVER_EXPIRES,
+                max_stacks: RECKONING_MAX_CHARGES,
+                events: EventCallbacks {
+                    on_spell_hit_dealt: true,
+                    ..EventCallbacks::default()
+                },
+                ..AuraConfig::default()
+            },
+        );
 
         sim.make_proc_trigger_aura(
             unit,

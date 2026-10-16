@@ -1099,6 +1099,8 @@ const INERT_STATS: &[&str] = &[
 /// inheritance carries only its tracked powers.
 const UNINHERITED_STATS: &[&str] = &[
     "Spirit",
+    "RangedCritPercent",
+    "ExpertisePercent",
     "ArcaneDamage",
     "FireDamage",
     "FrostDamage",
@@ -1130,6 +1132,19 @@ fn uninherited_stat_changes(prepared: &PreparedV2) -> Vec<String> {
     }
     let mut reasons = Vec::new();
     for pet in &prepared.pets {
+        // A hunter pet's crit offset follows the owner's ranged-only crit (patch 138), which
+        // the runtime holds fixed.
+        if changed.contains("RangedCritPercent")
+            && pet
+                .inheritance
+                .iter()
+                .any(|term| term.pet == "PhysicalCritPercent")
+        {
+            reasons.push(format!(
+                "pet {} takes a crit offset from RangedCritPercent, which changes during the fight",
+                pet.label
+            ));
+        }
         for term in &pet.inheritance {
             if UNINHERITED_STATS.contains(&term.owner.as_str())
                 && changed.contains(term.owner.as_str())

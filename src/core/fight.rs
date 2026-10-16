@@ -954,6 +954,9 @@ pub(crate) struct Player {
     /// Go `Unit.Moving` and its pending movement.
     pub(crate) moving: bool,
     pub(crate) movement: Option<movement::Movement>,
+    /// Go `Unit.movementEndedAt`: when the unit last stopped moving, `-NEVER_EXPIRES` while it
+    /// has not moved this iteration.
+    pub(crate) movement_ended_at: i64,
 }
 
 impl Player {
@@ -998,6 +1001,7 @@ impl Player {
             went_oom: false,
             first_oom: 0,
             moving: false,
+            movement_ended_at: -NEVER_EXPIRES,
             movement: None,
         }
     }
@@ -1327,6 +1331,8 @@ pub(crate) struct DamageTakenModifier {
     pub(crate) school_mask: u8,
     pub(crate) aura: AuraRef,
     pub(crate) multiplier: f64,
+    /// When set, the multiplier is one plus this for each of the aura's stacks.
+    pub(crate) per_stack: Option<f64>,
 }
 
 /// Go `Unit.AddDynamicDamageTakenModifier` on the target for a modifier that multiplies the
@@ -1608,6 +1614,9 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) spells: Vec<Spell<A::Spell>>,
     pub(crate) dots: Vec<Dot>,
     pub(crate) mods: Vec<spell_mod::SpellMod>,
+    /// Crit modifiers a dot's tick does not take, as a priest's Inner Focus (community #793):
+    /// while active, a tick of a spell it names rolls crit with its chance taken back.
+    pub(crate) tick_crit_takebacks: Vec<(spell_mod::ModId, Vec<bool>, f64)>,
     pub(crate) timers: Vec<i64>,
     pub(crate) major_cooldowns: Vec<MajorCooldown>,
     pub(crate) cooldown_order: Vec<usize>,
@@ -3581,6 +3590,7 @@ impl<A: Agent> Fight<A> {
             spells,
             dots,
             mods: Vec::new(),
+            tick_crit_takebacks: Vec::new(),
             timers: vec![STARTING_CD_TIME; timer_names.len()],
             versions: Versions::default(),
             cooldown_order: (0..major_cooldowns.len()).collect(),
@@ -4298,7 +4308,6 @@ impl<A: Agent> Fight<A> {
                 cost_spells,
                 damage_spells,
                 tick_cancel_spells,
-                spending_spells,
                 ..
             } = effect
             {
@@ -4306,7 +4315,6 @@ impl<A: Agent> Fight<A> {
                     aura,
                     [*cost_percent, *damage_percent, *tick_cancel_percent],
                     [cost_spells, damage_spells, tick_cancel_spells],
-                    spending_spells,
                 )?);
             }
         }
@@ -4843,6 +4851,7 @@ impl<A: Agent> Fight<A> {
             self.move_multiplier = self.initial_move_multiplier;
             self.player.moving = false;
             self.player.movement = None;
+            self.player.movement_ended_at = -NEVER_EXPIRES;
             // Go UnitMetrics.reset.
             self.death.died = false;
             let player = &mut self.player;

@@ -52,13 +52,24 @@ impl Summon {
                 (Stat::Spirit, 260.0),
                 (Stat::Mana, 576.0),
             ]),
-            Summon::Voidwalker | Summon::Succubus | Summon::Felhunter => Stats::from_pairs(&[
+            Summon::Voidwalker | Summon::Felhunter => Stats::from_pairs(&[
                 (Stat::Strength, 129.0),
                 (Stat::Agility, 85.0),
                 (Stat::Stamina, 234.0),
                 (Stat::Intellect, 70.0),
                 (Stat::Spirit, 150.0),
                 (Stat::Mana, 1066.0),
+            ]),
+            // The Succubus' Lash of Pain crits about 6% whatever its master's crit: demons carry
+            // their own base crit (community #790).
+            Summon::Succubus => Stats::from_pairs(&[
+                (Stat::Strength, 129.0),
+                (Stat::Agility, 85.0),
+                (Stat::Stamina, 234.0),
+                (Stat::Intellect, 70.0),
+                (Stat::Spirit, 150.0),
+                (Stat::Mana, 1066.0),
+                (Stat::SpellCritPercent, 6.2),
             ]),
         }
     }
@@ -75,7 +86,7 @@ impl Summon {
 }
 
 /// Go `petStatInheritance`: linear in the owner's stats, which the dynamic inheritance needs.
-fn pet_stat_inheritance(owner: &Stats) -> Stats {
+fn pet_stat_inheritance(_sim: &mut Sim, owner: &Stats) -> Stats {
     let mut inherited = Stats::default();
     inherited[Stat::SpellHitPercent] = owner[Stat::SpellHitPercent];
     inherited[Stat::PhysicalHitPercent] = owner[Stat::SpellHitPercent];

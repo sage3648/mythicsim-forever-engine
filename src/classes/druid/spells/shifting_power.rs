@@ -1,5 +1,5 @@
 //! Shifting Power (1322605), from Go sim/druid/shifting_power.go: mana into energy, in Cat
-//! Form.
+//! Form, never at full energy (8 October beta build, community #805).
 
 use crate::{
     contracts::prepared_v2::ActionId,
@@ -20,6 +20,12 @@ pub(crate) fn bind<A: Agent>(fight: &mut Fight<A>, spell: SpellId, energy: f64) 
 }
 
 impl ShiftingPower {
+    /// `ExtraCastCondition`: the bar is not full.
+    pub(crate) fn can_cast<A: Agent>(fight: &Fight<A>) -> bool {
+        let bar = fight.energy_bar();
+        bar.current < bar.max
+    }
+
     pub(crate) fn apply<A: Agent>(&self, fight: &mut Fight<A>) {
         fight.add_energy(self.energy, self.metrics);
     }

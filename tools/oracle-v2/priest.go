@@ -6,6 +6,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"slices"
 
 	"github.com/wowsims/forever/sim/core"
 	"github.com/wowsims/forever/sim/core/dbcenums"
@@ -204,11 +205,17 @@ func priestDamageRows(rows map[int32]*spelldata.Spell) {
 
 // Dynamic damage taken modifiers the priest effects describe: Power in Light registers one on
 // every target (talents_discipline.go applyPowerInLight).
+// Power in Light's modifier and Shadow Weaving's (community #777), one on each target.
 func priestDamageTakenModifiers(agent core.Agent) int {
-	if agent.(priest.PriestAgent).GetPriest().Talents.PowerInLight > 0 {
-		return 1
+	talents := agent.(priest.PriestAgent).GetPriest().Talents
+	count := 0
+	if talents.PowerInLight > 0 {
+		count++
 	}
-	return 0
+	if talents.ShadowWeaving > 0 {
+		count++
+	}
+	return count
 }
 
 // The spellbook positions a spell modifier with a class mask and school applies to, by core
@@ -328,7 +335,9 @@ func priestEffects(agent core.Agent, character *core.Character) []map[string]any
 			"spender_spells": spenders,
 		})
 	}
-	if aura := p.ShadowWeavingAura; aura != nil { // talents_shadow.go applyShadowWeaving
+	if p.ShadowWeavingAuras != nil { // talents_shadow.go applyShadowWeaving
+		// The stacks are a debuff on each target, multiplying this priest's Shadow damage on it.
+		aura := p.ShadowWeavingAuras.Get(character.CurrentTarget)
 		stack := priestShadowWeavingTriggered.Highest()
 		trigger := core.ProcTrigger{
 			Name: "Shadow Weaving Trigger", Callback: core.CallbackOnSpellHitDealt, ClassSpellMask: priest.PriestShadowSpells,
@@ -340,7 +349,6 @@ func priestEffects(agent core.Agent, character *core.Character) []map[string]any
 			"trigger_immediately": trigger.TriggerImmediately, "proc_chance": trigger.ProcChance,
 			"trigger_spells":   procTriggerSpells(character, trigger),
 			"damage_per_stack": stack.Effect(dbcenums.A_MOD_SCHOOL_MASK_DAMAGE_FROM_CASTER, 32).Average(core.CharacterLevel) / 100,
-			"damage_spells":    priestModSpells(character, priest.PriestSpellsAll, core.SpellSchoolShadow),
 		})
 	}
 	// smite.go: a cast on the rank's own row.
@@ -360,18 +368,17 @@ func priestEffects(agent core.Agent, character *core.Character) []map[string]any
 		effects = append(effects, map[string]any{"kind": "penance", "ranks": ranks})
 	}
 	if talents.PowerInLight > 0 { // talents_discipline.go applyPowerInLight
-		holyFire := []int{}
+		// Holy Fire, and since the 16 October 2026 beta notes Shadow Word: Pain.
+		dots := []int{}
 		for i, spell := range character.Spellbook {
-			for _, known := range p.HolyFire {
-				if spell == known {
-					holyFire = append(holyFire, i)
-				}
+			if slices.Contains(p.HolyFire, spell) || slices.Contains(p.ShadowWordPain, spell) {
+				dots = append(dots, i)
 			}
 		}
 		effects = append(effects, map[string]any{
 			"kind": "power_in_light", "multiplier": priestPowerInLight.MultiplierAt(talents.PowerInLight),
-			"spells":           spellsMatching(character, priest.PriestSpellSmite|priest.PriestSpellPenance),
-			"holy_fire_spells": holyFire,
+			"spells":     spellsMatching(character, priest.PriestSpellSmite|priest.PriestSpellPenance),
+			"dot_spells": dots,
 		})
 	}
 	if aura := p.SearingLightAura; aura != nil { // talents_holy.go applySearingLight

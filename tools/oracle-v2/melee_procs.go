@@ -828,12 +828,8 @@ func meleeProcEffects(simulation *core.Simulation, character *core.Character, un
 				extra = i
 			}
 		}
-		// buffs/air_totem.go: the party holds one air totem and Windfury Totem outbids a party Grace
-		// of Air, which the reset then leaves displaced or blocked, as the aura export records. A
-		// Grace of Air still up after the reset, as a twisting shaman's, would contest the slot.
-		if other := character.GetAura("Grace of Air Totem (External)"); other != nil && other.IsActive() {
-			*unrepresented = append(*unrepresented, fmt.Sprintf("Windfury Totem shares the air totem slot with %s", other.Label))
-		}
+		// Since the 16 October 2026 beta notes the party's Grace of Air stands beside Windfury Totem:
+		// no air totem slot joins them.
 		grant := spelldata.ProcTrigger(character, spelldata.MustFind(10612), nil)
 		spend := spelldata.ProcTrigger(character, spelldata.MustFind(10610), nil, spelldata.Chance(1))
 		grantSpells := windfuryTriggerSpells(character, grant)

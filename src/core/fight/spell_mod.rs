@@ -203,6 +203,11 @@ impl<A: Agent> Fight<A> {
     }
 
     /// Go `SpellMod.Activate`.
+    /// Whether the modifier is active.
+    pub(crate) fn mod_active(&self, id: ModId) -> bool {
+        self.mods[id].active
+    }
+
     pub(crate) fn activate_mod(&mut self, id: ModId) {
         if self.mods[id].active {
             return;

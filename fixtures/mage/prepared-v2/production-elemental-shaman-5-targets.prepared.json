@@ -2,8 +2,8 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "0025d73986eebd90df1849c202b8c9a88d1f01c9",
-    "client_build": "1.60.1.70338",
+    "engine_revision": "771c6349a7f15ca331c32d80273b8b9139cb115e",
+    "client_build": "1.60.1.70374",
     "exporter": "tools/oracle-v2"
   },
   "request_sha256": "b72a269046e4f3a301f44a1840260fef00da4cef129cc6efb53f39e5c231f5bf",
@@ -317,9 +317,9 @@
       "NatureResistance": 27,
       "ParryPercent": 0,
       "ParryRating": 0,
-      "PhysicalCritPercent": 10.6116,
+      "PhysicalCritPercent": 7.6116,
       "PhysicalDamage": 0,
-      "PhysicalHitPercent": 11,
+      "PhysicalHitPercent": 10,
       "RangedAttackPower": 40,
       "RangedCritPercent": 0,
       "RangedHitPercent": 0,
@@ -330,7 +330,7 @@
       "SpellCritRating": 28,
       "SpellDamage": 439,
       "SpellHasteRating": 0,
-      "SpellHitPercent": 11,
+      "SpellHitPercent": 10,
       "SpellHitRating": 100,
       "SpellPiercing": 0,
       "Spirit": 206,
@@ -356,7 +356,7 @@
         "shadow": 1
       },
       "dot_damage_multiplier_additive": 1,
-      "crit_damage_multiplier": 1,
+      "crit_damage_multiplier": 1.02,
       "damage_taken_multiplier": 1,
       "school_damage_taken_multiplier": {
         "arcane": 1,
@@ -486,7 +486,7 @@
       },
       {
         "label": "Moonkin Aura (External)",
-        "tag": "DruidCritAura",
+        "tag": "MoonkinAura",
         "action_id": {
           "spell_id": 24907,
           "tag": -1
@@ -504,7 +504,7 @@
         "exclusive_effects": 1,
         "exclusive_memberships": [
           {
-            "category": "DruidCritAura",
+            "category": "MoonkinAura",
             "single_aura": true,
             "priority": 3,
             "position": 0
@@ -820,14 +820,8 @@
           "on_expire"
         ],
         "icd": null,
-        "exclusive_effects": 2,
+        "exclusive_effects": 1,
         "exclusive_memberships": [
-          {
-            "category": "AirTotem",
-            "single_aura": true,
-            "priority": 4,
-            "position": 0
-          },
           {
             "category": "FlametongueTotem",
             "single_aura": false,
@@ -868,14 +862,8 @@
         "stacks": 0,
         "callbacks": [],
         "icd": null,
-        "exclusive_effects": 2,
+        "exclusive_effects": 1,
         "exclusive_memberships": [
-          {
-            "category": "AirTotem",
-            "single_aura": true,
-            "priority": 3,
-            "position": 1
-          },
           {
             "category": "GraceOfAirTotemAgilityAdd",
             "single_aura": false,
@@ -1269,13 +1257,13 @@
         "missile_speed": 0,
         "cost": {
           "resource": "mana",
-          "base_cost": 225,
+          "base_cost": 146,
           "flat_modifier": 0,
           "percent_modifier": 1,
           "additive_percent_modifier": 0.9
         },
         "default_cast": {
-          "cost": 202.5,
+          "cost": 131.4,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
           "cast_time_ns": 1500000000,
@@ -1508,13 +1496,13 @@
         "missile_speed": 0,
         "cost": {
           "resource": "mana",
-          "base_cost": 305,
+          "base_cost": 198,
           "flat_modifier": 0,
           "percent_modifier": 1,
           "additive_percent_modifier": 0.9
         },
         "default_cast": {
-          "cost": 274.5,
+          "cost": 178.20000000000002,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
           "cast_time_ns": 1500000000,
@@ -1747,13 +1735,13 @@
         "missile_speed": 0,
         "cost": {
           "resource": "mana",
-          "base_cost": 390,
+          "base_cost": 254,
           "flat_modifier": 0,
           "percent_modifier": 1,
           "additive_percent_modifier": 0.9
         },
         "default_cast": {
-          "cost": 351,
+          "cost": 228.6,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
           "cast_time_ns": 1500000000,
@@ -1986,13 +1974,13 @@
         "missile_speed": 0,
         "cost": {
           "resource": "mana",
-          "base_cost": 485,
+          "base_cost": 315,
           "flat_modifier": 0,
           "percent_modifier": 1,
           "additive_percent_modifier": 0.9
         },
         "default_cast": {
-          "cost": 436.5,
+          "cost": 283.5,
           "gcd_ns": 1500000000,
           "gcd_min_ns": 0,
           "cast_time_ns": 1500000000,
@@ -3921,7 +3909,7 @@
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 1,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.21400000154972076,
+        "bonus_coefficient": 0.143,
         "threat_multiplier": 1,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
@@ -4341,7 +4329,7 @@
         "dot": {
           "unit": "target",
           "aura_label": "Flame Shock-5",
-          "base_tick_count": 4,
+          "base_tick_count": 7,
           "base_tick_length_ns": 3000000000,
           "bonus_coefficient": 0.10000000149011612,
           "periodic_damage_multiplier": 1,
@@ -4917,7 +4905,6 @@
       "aura": "Grace Of Air Totem (Self)",
       "duration_ns": 300000000000,
       "kind": "grace_of_air_totem",
-      "party_air_totem": false,
       "spell_id": 25359
     },
     {
@@ -5052,7 +5039,7 @@
         {
           "AttackPower": 456,
           "MP5": 77,
-          "PhysicalCritPercent": 10.6116,
+          "PhysicalCritPercent": 7.6116,
           "RangedAttackPower": 40,
           "SpellCritPercent": 12.775599999999999,
           "SpellDamage": 439
@@ -5060,7 +5047,7 @@
         {
           "AttackPower": 572,
           "MP5": 77,
-          "PhysicalCritPercent": 10.6116,
+          "PhysicalCritPercent": 7.6116,
           "RangedAttackPower": 40,
           "SpellCritPercent": 12.775599999999999,
           "SpellDamage": 439
@@ -5068,7 +5055,7 @@
         {
           "AttackPower": 456,
           "MP5": 77,
-          "PhysicalCritPercent": 15.5392,
+          "PhysicalCritPercent": 12.5392,
           "RangedAttackPower": 40,
           "SpellCritPercent": 12.775599999999999,
           "SpellDamage": 439
@@ -5076,7 +5063,7 @@
         {
           "AttackPower": 572,
           "MP5": 77,
-          "PhysicalCritPercent": 15.5392,
+          "PhysicalCritPercent": 12.5392,
           "RangedAttackPower": 40,
           "SpellCritPercent": 12.775599999999999,
           "SpellDamage": 439
@@ -5084,7 +5071,7 @@
         {
           "AttackPower": 456,
           "MP5": 77,
-          "PhysicalCritPercent": 10.6116,
+          "PhysicalCritPercent": 7.6116,
           "RangedAttackPower": 40,
           "SpellCritPercent": 12.775599999999999,
           "SpellDamage": 439
@@ -5092,7 +5079,7 @@
         {
           "AttackPower": 572,
           "MP5": 77,
-          "PhysicalCritPercent": 10.6116,
+          "PhysicalCritPercent": 7.6116,
           "RangedAttackPower": 40,
           "SpellCritPercent": 12.775599999999999,
           "SpellDamage": 439
@@ -5100,7 +5087,7 @@
         {
           "AttackPower": 456,
           "MP5": 77,
-          "PhysicalCritPercent": 15.5392,
+          "PhysicalCritPercent": 12.5392,
           "RangedAttackPower": 40,
           "SpellCritPercent": 12.775599999999999,
           "SpellDamage": 439
@@ -5108,7 +5095,7 @@
         {
           "AttackPower": 572,
           "MP5": 77,
-          "PhysicalCritPercent": 15.5392,
+          "PhysicalCritPercent": 12.5392,
           "RangedAttackPower": 40,
           "SpellCritPercent": 12.775599999999999,
           "SpellDamage": 439
@@ -5116,7 +5103,7 @@
         {
           "AttackPower": 702,
           "MP5": 77,
-          "PhysicalCritPercent": 10.6116,
+          "PhysicalCritPercent": 7.6116,
           "RangedAttackPower": 40,
           "SpellCritPercent": 12.775599999999999,
           "SpellDamage": 439
@@ -5124,7 +5111,7 @@
         {
           "AttackPower": 818,
           "MP5": 77,
-          "PhysicalCritPercent": 10.6116,
+          "PhysicalCritPercent": 7.6116,
           "RangedAttackPower": 40,
           "SpellCritPercent": 12.775599999999999,
           "SpellDamage": 439
@@ -5132,7 +5119,7 @@
         {
           "AttackPower": 702,
           "MP5": 77,
-          "PhysicalCritPercent": 15.5392,
+          "PhysicalCritPercent": 12.5392,
           "RangedAttackPower": 40,
           "SpellCritPercent": 12.775599999999999,
           "SpellDamage": 439
@@ -5140,7 +5127,7 @@
         {
           "AttackPower": 818,
           "MP5": 77,
-          "PhysicalCritPercent": 15.5392,
+          "PhysicalCritPercent": 12.5392,
           "RangedAttackPower": 40,
           "SpellCritPercent": 12.775599999999999,
           "SpellDamage": 439
@@ -5148,7 +5135,7 @@
         {
           "AttackPower": 702,
           "MP5": 77,
-          "PhysicalCritPercent": 10.6116,
+          "PhysicalCritPercent": 7.6116,
           "RangedAttackPower": 40,
           "SpellCritPercent": 12.775599999999999,
           "SpellDamage": 439
@@ -5156,7 +5143,7 @@
         {
           "AttackPower": 818,
           "MP5": 77,
-          "PhysicalCritPercent": 10.6116,
+          "PhysicalCritPercent": 7.6116,
           "RangedAttackPower": 40,
           "SpellCritPercent": 12.775599999999999,
           "SpellDamage": 439
@@ -5164,7 +5151,7 @@
         {
           "AttackPower": 702,
           "MP5": 77,
-          "PhysicalCritPercent": 15.5392,
+          "PhysicalCritPercent": 12.5392,
           "RangedAttackPower": 40,
           "SpellCritPercent": 12.775599999999999,
           "SpellDamage": 439
@@ -5172,7 +5159,7 @@
         {
           "AttackPower": 818,
           "MP5": 77,
-          "PhysicalCritPercent": 15.5392,
+          "PhysicalCritPercent": 12.5392,
           "RangedAttackPower": 40,
           "SpellCritPercent": 12.775599999999999,
           "SpellDamage": 439

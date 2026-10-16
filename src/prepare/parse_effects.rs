@@ -73,6 +73,9 @@ pub(crate) struct ParseOptions {
     pub exclusive: Option<(String, bool)>,
     pub per_stat_category: Option<String>,
     pub school_resistances: bool,
+    /// Go `ReadAuraAs`: every effect of the first aura is read as if the row stated the second,
+    /// at the row's own amount.
+    pub read_as: Vec<(i32, i32)>,
 }
 
 impl ParseOptions {
@@ -312,7 +315,20 @@ fn parse(
         if let Some(modifier) = scale {
             value = scaled(value, modifier);
         }
-        let attached = parser.row(sim, effect, value, options.buff_auras);
+        let read = options
+            .read_as
+            .iter()
+            .find(|(from, _)| *from == effect.aura)
+            .map(|&(_, to)| Effect {
+                aura: to,
+                ..effect.clone()
+            });
+        let attached = parser.row(
+            sim,
+            read.as_ref().unwrap_or(effect),
+            value,
+            options.buff_auras,
+        );
         let Some(mut attachment) = attached else {
             parsed.skipped.push((i as i32 + 1, effect.aura));
             continue;

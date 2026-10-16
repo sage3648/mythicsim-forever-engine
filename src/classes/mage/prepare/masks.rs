@@ -70,5 +70,3 @@ pub(crate) const INSTANT_CAST: i64 = ARCANE_MISSILES_CAST
     | PRESENCE_OF_MIND;
 /// `MageSpellArcaneMissiles`.
 pub(crate) const ARCANE_MISSILES: i64 = ARCANE_MISSILES_CAST | ARCANE_MISSILES_TICK;
-/// `MageSpellChill`.
-pub(crate) const CHILL: i64 = FROSTBOLT | CONE_OF_COLD | FROSTFIRE_BOLT | IMPROVED_BLIZZARD;

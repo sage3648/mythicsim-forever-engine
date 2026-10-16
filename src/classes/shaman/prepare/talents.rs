@@ -106,6 +106,24 @@ impl Shaman {
                 .effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_DAMAGE)
                 .fraction_at(points),
         );
+        // "Call of Flame now also increases the duration of Flame Shock by 3/6/9 sec" (16 October
+        // 2026 beta notes). The row has no duration modifier yet, so the time is added as ticks of
+        // the dot's own period: 3 sec a rank.
+        const CALL_OF_FLAME_FLAME_SHOCK_SECONDS: i64 = 3 * SECOND;
+        let period = spell_data()
+            .flame_shock
+            .highest()
+            .periodic_effect()
+            .period();
+        sim.add_static_mod(
+            unit,
+            SpellModConfig {
+                kind: SpellModType::DotNumberOfTicksFlat,
+                int_value: (CALL_OF_FLAME_FLAME_SHOCK_SECONDS * i64::from(points) / period) as i32,
+                class_mask: masks::FLAME_SHOCK_DOT,
+                ..SpellModConfig::default()
+            },
+        );
     }
 
     fn apply_call_of_thunder(&self, sim: &mut Sim, unit: UnitId) {
@@ -681,8 +699,8 @@ impl Shaman {
     }
 
     /// Maelstrom Weapon is new in Forever: melee hits stack a buff that makes the next Lightning
-    /// Bolt faster and cheaper, and the cast consumes it. The client states no proc rate; 2 PPM
-    /// per point is ours.
+    /// Bolt faster and cheaper, and the cast consumes it. The client states no proc rate; beta
+    /// logs give 10 PPM whatever the points, Season of Discovery's base (community #775).
     fn apply_maelstrom_weapon(&self, sim: &mut Sim, unit: UnitId) {
         let points = self.talent("maelstrom_weapon");
         if points == 0 {
@@ -694,7 +712,7 @@ impl Shaman {
         let per_stack = data.maelstrom_weapon.effect_at(1).fraction_at(points);
 
         // NewLegacyPPMManager: an item swap rebuilds it.
-        let ppm = 2.0 * f64::from(points);
+        let ppm = 10.0;
         let ppmm = Rc::new(
             sim.new_ppm_manager(unit, ppm, ProcMask::MELEE)
                 .rebuilt_by_swap(

@@ -452,6 +452,8 @@ pub struct ImprovedSealOfFury {
     pub max_levels: f64,
     pub levels: f64,
     pub metrics_action_id: ActionId,
+    /// Its mana makes no threat (client 70374).
+    pub no_threat: bool,
 }
 
 /// A Seal of the Crusader rank: its seal, judgement, the judgement's target aura, the melee
@@ -913,6 +915,11 @@ pub struct Pet {
     /// What each permanent aura's expiry adds to the stats before dependencies.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub aura_stats: Vec<PetAuraStats>,
+    /// What the pet's `OnPetDisable` adds to the stats before dependencies, after Disable takes
+    /// the inheritance away and before its auras expire, for a pet whose enable and disable
+    /// callbacks only move stats.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub disable_stats: BTreeMap<String, f64>,
 }
 
 /// The change a pet aura's expiry makes to the pet's stats before dependencies, Go
@@ -1407,7 +1414,7 @@ impl ExternalActivation {
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Effect {
     Frostbolt {},
-    /// The Gnome racial Eureka!: a major cooldown whose three stacks lower the cost and raise
+    /// The Gnome racial Eureka!: a major cooldown whose 8 second buff lowers the cost and raises
     /// the damage of the spells the class names, resolved into spell positions.
     Eureka {
         spell_id: i32,
@@ -1418,7 +1425,6 @@ pub enum Effect {
         cost_spells: Vec<usize>,
         damage_spells: Vec<usize>,
         tick_cancel_spells: Vec<usize>,
-        spending_spells: Vec<usize>,
     },
     /// The Undead racial Touch of the Grave: landed hits can drain the target.
     TouchOfTheGrave {
@@ -1578,6 +1584,9 @@ pub enum Effect {
         moonkin_cooldown_multiplier: f64,
         cost_spells: Vec<usize>,
         cost_percent_add: f64,
+        /// The spells that never trigger it in Cat or Bear Form: Faerie Fire since the 16 October
+        /// 2026 beta notes.
+        form_excluded_spells: Vec<usize>,
     },
     /// Nature's Grace: a damaging spell crit grants cast speed and a shorter GCD.
     NaturesGrace {
@@ -2096,6 +2105,8 @@ pub enum Effect {
         proc_chance: f64,
         mana_share: f64,
         metrics_action_id: ActionId,
+        /// Its mana makes no threat (client 70374).
+        no_threat: bool,
     },
     /// Paladin talents_protection.go Reckoning: blocks and crits taken can grant an extra
     /// attack.
@@ -2104,6 +2115,12 @@ pub enum Effect {
         crit_aura: String,
         block_chance: f64,
         crit_chance: f64,
+        /// The charges each trigger adds behind the shared cooldown, which the next main hand
+        /// auto spends on one free main hand swing each (16 October 2026 beta notes).
+        charges_aura: String,
+        icd_ns: i64,
+        /// The spells that spend the charges: every main hand auto.
+        spender_spells: Vec<usize>,
     },
     /// Paladin talents_protection.go Iron Creed: a landed Holy Strike under Righteous Fury
     /// lowers damage taken.
@@ -2428,8 +2445,9 @@ pub enum Effect {
         trigger_immediately: bool,
         proc_chance: f64,
         trigger_spells: Vec<usize>,
+        /// Each stack of the target's debuff `aura` multiplies this priest's Shadow damage on
+        /// that target (community #777).
         damage_per_stack: f64,
-        damage_spells: Vec<usize>,
     },
     /// Dark Sacrifice: a self-only periodic mana gain of the client base plus Spirit over a
     /// divisor, a major cooldown used once the whole gain fits.
@@ -2456,11 +2474,12 @@ pub enum Effect {
         ranks: Vec<FireballRank>,
     },
     /// Power in Light: the target's dynamic damage taken modifier multiplies `spells` while any
-    /// Holy Fire in `holy_fire_spells` burns it.
+    /// dot in `dot_spells` burns it: Holy Fire, and since the 16 October 2026 beta notes Shadow
+    /// Word: Pain.
     PowerInLight {
         multiplier: f64,
         spells: Vec<usize>,
-        holy_fire_spells: Vec<usize>,
+        dot_spells: Vec<usize>,
     },
     /// Searing Light: Holy Fire ticks may grant a free Holy Nova.
     SearingLight {
@@ -2562,6 +2581,8 @@ pub enum Effect {
     HeatingUp {
         aura: String,
         trigger_aura: String,
+        /// The trigger that adds a stack on every Fire Blast cast (community #808).
+        fire_blast_trigger_aura: String,
         cast_time_per_stack: f64,
     },
     /// Combustion's major cooldown and stacking Fire crit buff.
@@ -3096,6 +3117,8 @@ pub enum Effect {
         melee_crit: f64,
         /// Whether a crit from a spell flagged Proc can trigger it.
         can_proc_from_procs: bool,
+        /// The class spells whose crits never trigger it (community #789).
+        excluded_class_spells: Vec<String>,
     },
     /// Flurry: melee crits grant charges of melee speed that white hits spend.
     Flurry {
@@ -3143,13 +3166,12 @@ pub enum Effect {
         spell_id: i32,
         aura: String,
         duration_ns: i64,
-        /// Whether a party air totem holds the slot the cast would contest.
-        party_air_totem: bool,
     },
     /// The shaman's own Windfury Totem: the totem's aura refreshes a tracking aura and a dummy
     /// aura every period, the dummy's exclusive effect turns the trigger on, and the trigger
     /// grants the proc aura's charges and an extra main hand attack. Spellbook positions name
-    /// the spells; `contested` says a party air totem or a main hand imbue would contest it.
+    /// the spells; `contested` says the party's Windfury Totem or a main hand imbue would contest
+    /// it.
     WindfuryTotemSelf {
         spell_id: i32,
         totem_aura: String,
@@ -3485,6 +3507,9 @@ pub enum Effect {
         proc_chance: f64,
         extra_attack_tag: i32,
         sword_hands: Vec<String>,
+        /// The class spells that never trigger it: Shield Bash and Shield Slam since the 16
+        /// October 2026 beta notes.
+        excluded_class_spells: Vec<String>,
     },
     /// Overpower: a dodge opens its window.
     OverpowerWindow {
@@ -3560,13 +3585,11 @@ pub enum Effect {
         proc_chance: f64,
         delay_ns: i64,
     },
-    /// Blood Craze: a hot of maximum health after a crit or a large hit taken, or a landed
-    /// Bloodthirst.
+    /// Blood Craze: a hot of maximum health after a crit or a large hit taken.
     BloodCraze {
         spell_id: i32,
         heal: HealModifiers,
         damage_taken_aura: String,
-        bloodthirst_aura: String,
         health_fraction: f64,
         hit_threshold: f64,
     },
@@ -3708,6 +3731,8 @@ pub enum Effect {
         proc_chance: f64,
         min_damage: f64,
         max_damage: f64,
+        /// The share of attack power each hit adds (community #781).
+        attack_power_share: f64,
     },
     DeadlyPoison {
         trigger_aura: String,
@@ -3716,6 +3741,9 @@ pub enum Effect {
         proc_mask: Vec<String>,
         proc_chance: f64,
         tick_damage: f64,
+        /// The share of attack power each stack adds to a tick, read at the tick (community
+        /// #781).
+        attack_power_share: f64,
     },
     /// Go sim/rogue/stealth.go and vanish.go: Stealth before the pull, and Vanish.
     Stealth {
@@ -3942,6 +3970,8 @@ pub enum Effect {
         aura: String,
         proc_chance: f64,
         regen: f64,
+        /// The spells whose crits it hears: melee and ranged abilities (16 October 2026 notes).
+        spells: Vec<usize>,
     },
     /// Rapid Recuperation: Serpent Sting's landed hit grants casting regeneration.
     RapidRecuperation {

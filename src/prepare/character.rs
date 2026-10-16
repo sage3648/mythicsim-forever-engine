@@ -68,7 +68,6 @@ pub(crate) struct Character {
     pub race: String,
     pub class: String,
     pub disable_racials: bool,
-    pub disable_weapon_spec: bool,
     pub equipment: Equipment,
     pub consumables: Message,
     pub base_stats: Stats,
@@ -280,7 +279,6 @@ impl Sim {
             race,
             class,
             disable_racials: player.bool("disable_racials"),
-            disable_weapon_spec: player.bool("disable_weapon_specialization"),
             equipment,
             consumables: player
                 .message("consumables")

@@ -4,9 +4,6 @@
 
 use std::rc::Rc;
 
-use crate::prepare::buffs::drivers::{
-    AIR_TOTEM_CAST_GRACE_OF_AIR, AIR_TOTEM_CAST_WINDFURY, AIR_TOTEM_CATEGORY,
-};
 use crate::prepare::buffs::flametongue::{
     flametongue_totem_trigger, join_flametongue_totem, windfury_totem_disables_flametongue_totem,
 };
@@ -149,14 +146,6 @@ impl Shaman {
                 ..AuraConfig::default()
             },
         );
-        sim.new_exclusive_effect(
-            wf_aura,
-            AIR_TOTEM_CATEGORY,
-            true,
-            AIR_TOTEM_CAST_WINDFURY,
-            None,
-            None,
-        );
         windfury_totem_disables_flametongue_totem(sim, wf_aura);
         let buff_id = buff.id;
         sim.apply_on_init(
@@ -172,8 +161,8 @@ impl Shaman {
                 sim.get_or_register_spell(unit, mh_config);
             }),
         );
-        // Since build 70009 the totem's effect is a party aura that no other air totem stacks
-        // with, so it ends with the totem instead of lingering on the weapon for a twist.
+        // Since build 70009 the totem's effect is a party aura, so it ends with the totem instead
+        // of lingering on the weapon for a twist.
         sim.apply_on_expire(
             wf_aura,
             Rc::new(move |sim: &mut Sim, _| {
@@ -257,14 +246,6 @@ impl Shaman {
                 duration,
                 ..AuraConfig::default()
             },
-        );
-        sim.new_exclusive_effect(
-            aura,
-            AIR_TOTEM_CATEGORY,
-            true,
-            AIR_TOTEM_CAST_GRACE_OF_AIR,
-            None,
-            None,
         );
         stat_exclusive_effect(sim, aura, GRACE_OF_AIR_TOTEM.category, Stat::Agility, value);
         sim.register_spell(unit, config);

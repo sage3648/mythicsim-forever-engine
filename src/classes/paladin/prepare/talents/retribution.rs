@@ -382,14 +382,14 @@ impl Paladin {
     /// Champion of the Light: increases your spell damage by up to 20/40/60% of your
     /// Intellect.
     fn apply_champion_of_the_light(&mut self, sim: &mut Sim, unit: UnitId) {
+        /// Go `championOfTheLightIntellectShare`.
+        const CHAMPION_OF_THE_LIGHT_INTELLECT_SHARE: f64 = 0.10;
         let points = self.talents.i32("champion_of_the_light");
         if points == 0 {
             return;
         }
-        let share = spell_data()
-            .champion_of_the_light
-            .effect(dbcenums::A_MOD_SPELL_DAMAGE_OF_STAT_PERCENT, 126)
-            .fraction_at(points);
+        // The 16 October 2026 beta notes halve it to 10/20/30%; the row still says 20/40/60.
+        let share = CHAMPION_OF_THE_LIGHT_INTELLECT_SHARE * f64::from(points);
         sim.unit_mut(unit)
             .sdm
             .add_stat_dependency(Stat::Intellect, Stat::SpellDamage, share);

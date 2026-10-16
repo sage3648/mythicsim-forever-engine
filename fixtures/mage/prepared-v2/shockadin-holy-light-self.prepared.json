@@ -2,8 +2,8 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "0025d73986eebd90df1849c202b8c9a88d1f01c9",
-    "client_build": "1.60.1.70338",
+    "engine_revision": "771c6349a7f15ca331c32d80273b8b9139cb115e",
+    "client_build": "1.60.1.70374",
     "exporter": "tools/oracle-v2"
   },
   "request_sha256": "6cb861ae38820bc2a455ea6913d7cd591475f1a9a06c299a3cbd23e62bad6696",
@@ -690,7 +690,7 @@
       "ShadowResistance": 27,
       "SpellCritPercent": 18.106199999999998,
       "SpellCritRating": 91,
-      "SpellDamage": 341.6,
+      "SpellDamage": 285.8,
       "SpellHasteRating": 0,
       "SpellHitPercent": 8.5,
       "SpellHitRating": 85,
@@ -767,23 +767,6 @@
           "on_reset",
           "on_spell_hit_taken",
           "on_periodic_damage_taken"
-        ],
-        "icd": null,
-        "exclusive_effects": 0
-      },
-      {
-        "label": "Sword Specialization",
-        "action_id": {
-          "spell_id": 20597
-        },
-        "duration_ns": 9223372036854775807,
-        "max_stacks": 0,
-        "active": true,
-        "stacks": 0,
-        "callbacks": [
-          "on_reset",
-          "on_gain",
-          "on_expire"
         ],
         "icd": null,
         "exclusive_effects": 0
@@ -1006,14 +989,14 @@
       },
       {
         "label": "Leader of the Pack (External)",
-        "tag": "DruidCritAura",
+        "tag": "LeaderOfThePack",
         "action_id": {
           "spell_id": 24932,
           "tag": -1
         },
         "duration_ns": 9223372036854775807,
         "max_stacks": 0,
-        "active": false,
+        "active": true,
         "stacks": 0,
         "callbacks": [
           "on_reset",
@@ -1022,10 +1005,9 @@
         ],
         "icd": null,
         "exclusive_effects": 1,
-        "displaced_by": "Moonkin Aura (External)",
         "exclusive_memberships": [
           {
-            "category": "DruidCritAura",
+            "category": "LeaderOfThePack",
             "single_aura": true,
             "priority": 3,
             "position": 0
@@ -1034,7 +1016,7 @@
       },
       {
         "label": "Moonkin Aura (External)",
-        "tag": "DruidCritAura",
+        "tag": "MoonkinAura",
         "action_id": {
           "spell_id": 24907,
           "tag": -1
@@ -1052,10 +1034,10 @@
         "exclusive_effects": 1,
         "exclusive_memberships": [
           {
-            "category": "DruidCritAura",
+            "category": "MoonkinAura",
             "single_aura": true,
             "priority": 3,
-            "position": 1
+            "position": 0
           }
         ]
       },
@@ -1120,14 +1102,8 @@
           "on_reset"
         ],
         "icd": null,
-        "exclusive_effects": 3,
+        "exclusive_effects": 2,
         "exclusive_memberships": [
-          {
-            "category": "AirTotem",
-            "single_aura": true,
-            "priority": 2,
-            "position": 0
-          },
           {
             "category": "FlametongueTotem",
             "single_aura": false,
@@ -8856,7 +8832,7 @@
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.1357142857142857,
+        "bonus_coefficient": 0.06,
         "threat_multiplier": 1,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
@@ -8960,7 +8936,7 @@
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.1357142857142857,
+        "bonus_coefficient": 0.06,
         "threat_multiplier": 1,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
@@ -9064,7 +9040,7 @@
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.1357142857142857,
+        "bonus_coefficient": 0.06,
         "threat_multiplier": 1,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
@@ -9168,7 +9144,7 @@
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.1357142857142857,
+        "bonus_coefficient": 0.06,
         "threat_multiplier": 1,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
@@ -9272,7 +9248,7 @@
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0.1357142857142857,
+        "bonus_coefficient": 0.06,
         "threat_multiplier": 1,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
@@ -13285,35 +13261,35 @@
       "ranks": [
         {
           "bonus": 4,
-          "bonus_coefficient": 0.0949999988079071,
+          "bonus_coefficient": 0.042,
           "bonus_targets": 4,
           "spell_id": 26573,
           "tick": 2
         },
         {
           "bonus": 7,
-          "bonus_coefficient": 0.0949999988079071,
+          "bonus_coefficient": 0.042,
           "bonus_targets": 4,
           "spell_id": 20116,
           "tick": 3
         },
         {
           "bonus": 11,
-          "bonus_coefficient": 0.0949999988079071,
+          "bonus_coefficient": 0.042,
           "bonus_targets": 4,
           "spell_id": 20922,
           "tick": 6
         },
         {
           "bonus": 20,
-          "bonus_coefficient": 0.0949999988079071,
+          "bonus_coefficient": 0.042,
           "bonus_targets": 4,
           "spell_id": 20923,
           "tick": 8
         },
         {
           "bonus": 27,
-          "bonus_coefficient": 0.0949999988079071,
+          "bonus_coefficient": 0.042,
           "bonus_targets": 4,
           "spell_id": 20924,
           "tick": 12
@@ -13543,7 +13519,7 @@
       "aura": "Righteous Fury",
       "kind": "righteous_fury",
       "spell_id": 25780,
-      "threat_percent": 0.6
+      "threat_percent": 0.9
     },
     {
       "kind": "illumination",
@@ -14127,7 +14103,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1367,
@@ -14135,7 +14111,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1367,
@@ -14143,7 +14119,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1609,
@@ -14151,7 +14127,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1371,
@@ -14159,7 +14135,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1613,
@@ -14167,7 +14143,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1613,
@@ -14175,7 +14151,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1855,
@@ -14183,7 +14159,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1264,
@@ -14191,7 +14167,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1506,
@@ -14199,7 +14175,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1506,
@@ -14207,7 +14183,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1748,
@@ -14215,7 +14191,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1510,
@@ -14223,7 +14199,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1752,
@@ -14231,7 +14207,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1752,
@@ -14239,7 +14215,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1994,
@@ -14247,7 +14223,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1147.5,
@@ -14255,7 +14231,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1394.34,
@@ -14263,7 +14239,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1394.34,
@@ -14271,7 +14247,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1641.18,
@@ -14279,7 +14255,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1398.42,
@@ -14287,7 +14263,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1645.26,
@@ -14295,7 +14271,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1645.26,
@@ -14303,7 +14279,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1892.1000000000001,
@@ -14311,7 +14287,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1289.28,
@@ -14319,7 +14295,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1536.1200000000001,
@@ -14327,7 +14303,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1536.1200000000001,
@@ -14335,7 +14311,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1782.96,
@@ -14343,7 +14319,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1540.2,
@@ -14351,7 +14327,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1787.04,
@@ -14359,7 +14335,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 1787.04,
@@ -14367,7 +14343,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         },
         {
           "AttackPower": 2033.88,
@@ -14375,7 +14351,7 @@
           "PhysicalCritPercent": 30.965799999999998,
           "RangedAttackPower": 80,
           "SpellCritPercent": 18.106199999999998,
-          "SpellDamage": 341.6
+          "SpellDamage": 285.8
         }
       ],
       "kind": "stat_auras"

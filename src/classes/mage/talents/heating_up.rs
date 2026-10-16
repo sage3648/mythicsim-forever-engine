@@ -1,6 +1,8 @@
 //! Heating Up (talent 400624, buff 400625), from Go sim/mage/talents_fire.go
 //! `registerHotStreak`: crits of Fireball, Frostfire Bolt, Fire Blast and Scorch stack
-//! a buff that cuts Pyroblast's cast time per stack; the next Pyroblast spends them all.
+//! a buff that cuts Pyroblast's cast time per stack; the next Pyroblast spends them all. Since
+//! the beta build of 2026-10-16 every Fire Blast cast adds a stack on top of its crit's, and a
+//! Pyroblast that Presence of Mind made instant keeps them (community #808).
 
 use crate::{
     classes::mage::masks::is_class,
@@ -48,11 +50,23 @@ impl HeatingUp {
         );
     }
 
-    /// The buff's OnCastComplete: Pyroblast spends every stack.
+    /// The buff's OnCastComplete: Pyroblast spends every stack, unless Presence of Mind made it
+    /// instant (three stacks alone leave it a 1.5 second cast).
     pub(crate) fn on_cast_complete<A: Agent>(&self, fight: &mut Fight<A>, spell: SpellId) {
-        if fight.spells[spell].class_spell.as_deref() == Some("pyroblast") {
+        if fight.spells[spell].class_spell.as_deref() == Some("pyroblast")
+            && fight.spells[spell].cur_cast.cast_time > 0
+        {
             fight.deactivate_aura(self.aura);
         }
+    }
+
+    /// The Fire Blast trigger's OnCastComplete: every Fire Blast cast adds a stack.
+    pub(crate) fn on_fire_blast_cast<A: Agent>(&self, fight: &mut Fight<A>, spell: SpellId) {
+        if fight.spells[spell].class_spell.as_deref() != Some("fire_blast") {
+            return;
+        }
+        fight.activate_aura(self.aura);
+        fight.add_stack(self.aura);
     }
 
     /// The trigger's OnSpellHitDealt: every crit of a stacking spell adds a stack.

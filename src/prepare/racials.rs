@@ -7,11 +7,7 @@ use crate::contracts::prepared_v2::ActionId;
 use super::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger, PseudoStatField, StatMultiplier};
 use super::character::{cooldown_type, MajorCooldown};
 use super::env::Environment;
-use super::items::slot;
-use super::sim::{
-    AuraConfig, AuraId, BuildPhase, Cooldown, EventCallbacks, Sim, UnitId, MILLISECOND,
-    NEVER_EXPIRES, SECOND,
-};
+use super::sim::{AuraConfig, AuraId, Cooldown, Sim, UnitId, MILLISECOND, SECOND};
 use super::spell::{
     school, Cast, CastConfig, DefenseType, ProcMask, Resource, SpellConfig, SpellFlag, GCD_DEFAULT,
 };
@@ -39,7 +35,8 @@ pub(crate) fn apply_race_effects(env: &mut Environment) -> Result<(), Refusal> {
     let race = env.sim.character(unit).race.clone();
     match race.as_str() {
         "RaceDwarf" => {
-            apply_weapon_specialization(env, "Mace Specialization", 1259719, 1.0, "WeaponTypeMace");
+            // Earth Fury replaced Mace Specialization: 2% increased critical damage and healing.
+            env.sim.unit_mut(unit).pseudo_stats.crit_damage_multiplier *= 1.02;
             apply_creature_type_slaying(env, "MobTypeBeast");
 
             let action_id = ActionId::spell(20594);
@@ -87,7 +84,8 @@ pub(crate) fn apply_race_effects(env: &mut Environment) -> Result<(), Refusal> {
         }
         "RaceHuman" => {
             env.sim.unit_mut(unit).sdm.multiply_stat(Stat::Spirit, 1.05);
-            apply_weapon_specialization(env, "Sword Specialization", 20597, 2.0, "WeaponTypeSword");
+            // Ruthless replaced Sword Specialization: 2% critical strike chance, any weapon.
+            add_crit(env, 2.0);
         }
         "RaceNightElf" => {
             let sim = &mut env.sim;
@@ -116,7 +114,8 @@ pub(crate) fn apply_race_effects(env: &mut Environment) -> Result<(), Refusal> {
             );
         }
         "RaceOrc" => {
-            apply_weapon_specialization(env, "Axe Specialization", 20574, 1.0, "WeaponTypeAxe");
+            // Savage replaced Axe Specialization: 1% critical strike chance, any weapon.
+            add_crit(env, 1.0);
 
             let sim = &mut env.sim;
             let blood_fury_id = ActionId::spell(20572);
@@ -147,9 +146,10 @@ pub(crate) fn apply_race_effects(env: &mut Environment) -> Result<(), Refusal> {
                     },
                 ],
             );
+            // 16 October beta notes: "Blood Fury: Cooldown increased to 3 minutes (was 2 minutes)."
             let blood_fury_cd = Cooldown {
                 timer: Some(sim.new_timer(unit)),
-                duration: 2 * MINUTE,
+                duration: 3 * MINUTE,
             };
             sim.aura_mut(blood_fury_aura.aura).icd = Some(blood_fury_cd);
             let blood_fury = sim.register_spell(
@@ -185,10 +185,11 @@ pub(crate) fn apply_race_effects(env: &mut Environment) -> Result<(), Refusal> {
                 SchoolIndex::Nature,
                 SchoolIndex::Shadow,
             ] {
+                // 16 October beta notes: "Magic damage taken reduced by 5% (was 15%)."
                 sim.attach_multiplicative_pseudo_stat_buff(
                     shatter_curse_aura,
                     PseudoStatField::SchoolDamageTakenMultiplier(school),
-                    0.85,
+                    0.95,
                 );
             }
             let timer = sim.new_timer(unit);
@@ -217,8 +218,9 @@ pub(crate) fn apply_race_effects(env: &mut Environment) -> Result<(), Refusal> {
         "RaceTauren" => {
             let sim = &mut env.sim;
             sim.unit_mut(unit).sdm.multiply_stat(Stat::Health, 1.05);
-            sim.add_stat(unit, Stat::PhysicalHitPercent, 1.0);
-            sim.add_stat(unit, Stat::SpellHitPercent, 1.0);
+            // 16 October beta notes: "Endurance: Now grants 2% increased critical damage and
+            // healing (was 1% hit chance)."
+            sim.unit_mut(unit).pseudo_stats.crit_damage_multiplier *= 1.02;
         }
         "RaceTroll" => {
             apply_creature_type_slaying(env, "MobTypeBeast");
@@ -368,9 +370,10 @@ fn major_cooldown(spell: super::sim::SpellId, cooldown_type: u32) -> MajorCooldo
 /// Go `applySkyborneSharedRacials`.
 fn apply_skyborne_shared_racials(env: &mut Environment) {
     apply_creature_type_slaying(env, "MobTypeElemental");
+    // 16 October beta notes: "Wind Blessed: Haste bonus increased to 3% (was 1%)."
     let pseudo = &mut env.sim.unit_mut(env.player).pseudo_stats;
-    pseudo.attack_speed_multiplier *= 1.01;
-    pseudo.cast_speed_multiplier *= 1.01;
+    pseudo.attack_speed_multiplier *= 1.03;
+    pseudo.cast_speed_multiplier *= 1.03;
 }
 
 /// Go `applyCreatureTypeSlaying`: Beast Slaying (troll 20557), Big Game Hunter (dwarf 1259721)
@@ -390,61 +393,12 @@ fn apply_creature_type_slaying(env: &mut Environment, mob_type: &'static str) {
         }));
 }
 
-/// Go `applyWeaponSpecialization`: the weapon racials (Human Sword, Orc Axe, Dwarf Mace) raise
-/// melee, ability and spell crit, but not the ranged auto attack. The stat buffs stay global and
-/// a crit modifier on `RANGED_AUTO` takes the bonus back off the auto attack.
-pub(crate) fn apply_weapon_specialization(
-    env: &mut Environment,
-    label: &str,
-    spell_id: i32,
-    crit_percent: f64,
-    weapon_type: &str,
-) {
+/// Ruthless and Savage: `AddStats` of the crit, physical and spell alike.
+fn add_crit(env: &mut Environment, crit_percent: f64) {
     let unit = env.player;
-    let has_weapon_equipped = {
-        let character = env.sim.character(unit);
-        !character.disable_weapon_spec
-            && (character.equipment[slot::MAIN_HAND].weapon_type == weapon_type
-                || character.equipment[slot::OFF_HAND].weapon_type == weapon_type)
-    };
-    let sim = &mut env.sim;
-    let aura = sim.register_aura(
-        unit,
-        AuraConfig {
-            label: label.to_string(),
-            action_id: Some(ActionId::spell(spell_id)),
-            duration: NEVER_EXPIRES,
-            build_phase: if has_weapon_equipped {
-                BuildPhase::BASE
-            } else {
-                BuildPhase::NONE
-            },
-            ..AuraConfig::default()
-        },
-    );
-    sim.attach_stat_buff(aura, Stat::PhysicalCritPercent, crit_percent);
-    sim.attach_stat_buff(aura, Stat::SpellCritPercent, crit_percent);
-    sim.attach_spell_mod(
-        aura,
-        SpellModConfig {
-            kind: SpellModType::BonusCritPercent,
-            proc_mask: ProcMask::RANGED_AUTO,
-            float_value: -crit_percent,
-            ..SpellModConfig::default()
-        },
-    );
-    if has_weapon_equipped {
-        sim.make_permanent(aura);
-    }
-    // The item swap callback re-checks the weapons in the hands.
-    sim.register_item_swap_callback(
-        unit,
-        &[slot::MAIN_HAND, slot::OFF_HAND, slot::RANGED],
-        super::item_swap::SwapCallback::Racial {
-            aura,
-            weapon_type: weapon_type.to_string(),
-        },
-    );
+    env.sim
+        .add_stat(unit, Stat::PhysicalCritPercent, crit_percent);
+    env.sim.add_stat(unit, Stat::SpellCritPercent, crit_percent);
 }
 
 /// Go `applyExpansiveMind`.
@@ -459,8 +413,9 @@ fn apply_expansive_mind(sim: &mut Sim, unit: UnitId) {
     }
 }
 
-/// Go `applyEureka`: Eureka! for the next three casts of the abilities the client's rows name.
-/// A cast of a spell on none of the three lists neither costs less nor spends a charge.
+/// Go `applyEureka`: Eureka! raises the damage of the abilities the client's rows name and cuts
+/// their cost. The 16 October 2026 beta notes make it "an 8 second buff with no charges. Same
+/// effect on damage and ability costs."
 fn apply_eureka(env: &mut Environment) {
     let unit = env.player;
     let class = env.sim.character(unit).class.clone();
@@ -531,10 +486,8 @@ fn apply_eureka(env: &mut Environment) {
         AuraConfig {
             label: "Eureka!".to_string(),
             action_id: Some(action_id.clone()),
-            duration: 15 * SECOND,
-            max_stacks: 3,
-            on_gain: Some(Rc::new(move |sim: &mut Sim, aura: AuraId| {
-                sim.set_stacks(aura, 3);
+            duration: 8 * SECOND,
+            on_gain: Some(Rc::new(move |sim: &mut Sim, _| {
                 sim.activate_spell_mod(cost_mod);
                 sim.activate_spell_mod(damage_mod);
                 if let Some(tick_cancel_mod) = tick_cancel_mod {
@@ -548,10 +501,6 @@ fn apply_eureka(env: &mut Environment) {
                     sim.deactivate_spell_mod(tick_cancel_mod);
                 }
             })),
-            events: EventCallbacks {
-                on_cast_complete: true,
-                ..EventCallbacks::default()
-            },
             ..AuraConfig::default()
         },
     );
@@ -576,11 +525,14 @@ fn apply_eureka(env: &mut Environment) {
     sim.add_major_cooldown(unit, major_cooldown(spell, cooldown_type::DPS));
 }
 
-/// Go `applyTouchOfTheGrave`.
+/// Go `applyTouchOfTheGrave`: a drain of 5% of the caster's maximum health. The 16 October 2026
+/// beta notes: "a 30% chance to activate for casters and a 20% chance to activate for
+/// Paladins/Rogues/Warriors, as well as a 25 second internal cooldown" (was 10% and 5% with a
+/// 1 sec cooldown), and it "no longer scales with Shadow increases on the target or the caster".
 fn apply_touch_of_the_grave(sim: &mut Sim, unit: UnitId) {
     let (aura_id, proc_chance) = match sim.character(unit).class.as_str() {
-        "ClassWarrior" | "ClassPaladin" | "ClassRogue" => (1260189, 0.05),
-        _ => (1260201, 0.1),
+        "ClassWarrior" | "ClassPaladin" | "ClassRogue" => (1260189, 0.2),
+        _ => (1260201, 0.3),
     };
     // The drain heals through health metrics Go creates here; they are not prepared state.
     sim.register_spell(
@@ -592,7 +544,7 @@ fn apply_touch_of_the_grave(sim: &mut Sim, unit: UnitId) {
             proc_mask: ProcMask::EMPTY,
             flags: SpellFlag::PROC
                 | SpellFlag::PASSIVE_SPELL
-                | SpellFlag::IGNORE_ATTACKER_MODIFIERS
+                | SpellFlag::IGNORE_MODIFIERS
                 | SpellFlag::NO_SPELL_MODS,
             damage_multiplier: 1.0,
             threat_multiplier: 1.0,
@@ -608,7 +560,7 @@ fn apply_touch_of_the_grave(sim: &mut Sim, unit: UnitId) {
             proc_mask: ProcMask::MELEE | ProcMask::RANGED | ProcMask::SPELL_DAMAGE,
             outcome: HitOutcome::LANDED,
             proc_chance,
-            icd: SECOND,
+            icd: 25 * SECOND,
             ..ProcTrigger::default()
         },
     );
@@ -630,7 +582,6 @@ pub(crate) fn eureka_effect(env: &Environment) -> Option<serde_json::Value> {
     if class == "ClassPriest" {
         proc_mask = ProcMask(proc_mask.0 | ProcMask::SPELL_HEALING.0);
     }
-    let spent = masks.cost | masks.damage | masks.tick;
     let direct_only = masks.damage & !masks.tick;
     let modded = |spell: &super::spell::Spell, mask: i64| {
         mask != 0
@@ -649,7 +600,7 @@ pub(crate) fn eureka_effect(env: &Environment) -> Option<serde_json::Value> {
         },
         None => false,
     };
-    let (mut cost, mut damage, mut ticks, mut spending) = (vec![], vec![], vec![], vec![]);
+    let (mut cost, mut damage, mut ticks) = (vec![], vec![], vec![]);
     for (i, id) in env.sim.unit(player).spellbook.iter().enumerate() {
         let spell = env.sim.spell(*id);
         if pays_class_resource(spell) && modded(spell, masks.cost) {
@@ -661,9 +612,6 @@ pub(crate) fn eureka_effect(env: &Environment) -> Option<serde_json::Value> {
         if modded(spell, direct_only) {
             ticks.push(i);
         }
-        if spell.matches(spent) && spell.proc_mask.matches(proc_mask) {
-            spending.push(i);
-        }
     }
     Some(serde_json::json!({
         "kind": "eureka", "spell_id": aura.action_id.as_ref().map_or(0, |id| id.spell_id),
@@ -671,7 +619,6 @@ pub(crate) fn eureka_effect(env: &Environment) -> Option<serde_json::Value> {
         // Go folds the constant 1/1.1 - 1 exactly: -1/11, rounded once.
         "tick_cancel_percent": -1.0 / 11.0,
         "cost_spells": cost, "damage_spells": damage, "tick_cancel_spells": ticks,
-        "spending_spells": spending,
     }))
 }
 

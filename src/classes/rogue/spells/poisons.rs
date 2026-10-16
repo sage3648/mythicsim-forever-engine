@@ -1,7 +1,9 @@
 //! Poisons, from Go sim/rogue/poisons.go. Each imbue is a weapon proc on the hand it is on: a
 //! landed hit from that hand rolls the poison's chance inside the handler and casts the poison
-//! at once. Instant Poison deals a rolled Nature hit; Deadly Poison lands on the magic hit
-//! table and stacks a dot that snapshots its tick at the stacks it has. Wound Poison lands on
+//! at once. Instant Poison deals a rolled Nature hit plus a share of attack power; Deadly
+//! Poison lands on the magic hit table and stacks a dot that snapshots its tick at the stacks
+//! it has, each a flat amount plus a share of attack power that the tick reads again
+//! (community #781). Wound Poison lands on
 //! the magic hit table and stacks its healing debuff, which has no effect in scope. Venom adds
 //! to every poison's chance while it is up.
 
@@ -38,15 +40,16 @@ impl PoisonProc {
     }
 }
 
-/// Instant Poison's effect: a rolled hit on the magic hit and crit table.
+/// Instant Poison's effect: a rolled hit plus a share of attack power, on the magic hit and
+/// crit table.
 pub(crate) fn instant_poison<A: Agent>(
     fight: &mut Fight<A>,
     spell: SpellId,
     target: Side,
-    min: f64,
-    max: f64,
+    (min, max, attack_power_share): (f64, f64, f64),
 ) {
-    let damage = fight.go_roll(min, max);
+    let roll = fight.go_roll(min, max);
+    let damage = attack_power_share.mul_add(fight.melee_attack_power(), roll);
     let result = fight.calc_damage(spell, target, damage);
     fight.deal_damage(spell, result, false);
 }
@@ -57,7 +60,7 @@ pub(crate) fn deadly_poison<A: Agent>(
     fight: &mut Fight<A>,
     spell: SpellId,
     target: Side,
-    tick_damage: f64,
+    (tick_damage, attack_power_share): (f64, f64),
 ) {
     let result = fight.calc_outcome(spell, target, Outcome::MagicHit);
     fight.deal_damage(spell, result, false);
@@ -75,8 +78,11 @@ pub(crate) fn deadly_poison<A: Agent>(
         fight.apply_dot(dot);
         fight.set_stacks(aura, 1);
     }
-    let stacks = fight.aura(aura).stacks;
-    fight.snapshot_dot(dot, tick_damage * f64::from(stacks));
+    let stacks = f64::from(fight.aura(aura).stacks);
+    let share = attack_power_share * stacks;
+    let base = share.mul_add(fight.melee_attack_power(), tick_damage * stacks);
+    fight.snapshot_dot(dot, base);
+    fight.snapshot_dot_attack_power_share(dot, share);
 }
 
 /// Wound Poison's effect: a magic hit roll; a landed one starts the debuff at one stack, or

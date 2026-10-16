@@ -1100,7 +1100,6 @@ impl<A: Agent> Fight<A> {
             let aura = AuraRef { side, index };
             match self.aura(aura).behavior {
                 AuraBehavior::Class(kind) => A::on_cast_complete(self, aura, kind, spell),
-                AuraBehavior::Eureka => self.eureka_cast_complete(spell),
                 AuraBehavior::SpellDataStatProc(proc) if self.spell_stat_procs[proc].casts => {
                     self.spell_stat_proc_callback(aura, proc, Some(spell), None)
                 }

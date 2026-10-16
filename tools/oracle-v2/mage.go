@@ -235,6 +235,7 @@ func mageEffects(agent core.Agent, character *core.Character) []map[string]any {
 		buff := heatingUpTriggered.Highest()
 		effects = append(effects, map[string]any{
 			"kind": "heating_up", "aura": "Heating Up", "trigger_aura": "Heating Up Trigger",
+			"fire_blast_trigger_aura": "Hot Streak Fire Blast Trigger", // every Fire Blast cast (community #808)
 			"cast_time_per_stack": buff.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_CASTING_TIME)).Percent(),
 		})
 	}

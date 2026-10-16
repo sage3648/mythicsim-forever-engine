@@ -135,6 +135,8 @@ fn shadowfiend_effect(priest: &Priest, env: &Environment, notes: &mut Vec<String
     let rank = spell_data().shadowfiend.highest();
     // The inheritance: attack power from the sum of spell damage and shadow damage, bit for bit.
     let inherit = std::rc::Rc::clone(&env.sim.pet_data(pet).stat_inheritance);
+    let mut probe = env.fresh();
+    let mut inherit = |stats: &Stats| inherit(&mut probe.sim, stats);
     let mut unit_change = Stats::default();
     unit_change[Stat::SpellDamage] = 1.0;
     let coefficient = inherit(&unit_change)[Stat::AttackPower];
@@ -399,10 +401,10 @@ pub(super) fn effects(priest: &Priest, env: &Environment, notes: &mut Vec<String
             "callbacks": callback_names(trigger.callback), "outcome": outcome_names(trigger.outcome),
             "trigger_immediately": trigger.trigger_immediately, "proc_chance": trigger.proc_chance,
             "trigger_spells": proc_trigger_spells(env, &trigger),
+            // The debuff on each target, multiplying this priest's Shadow damage on it.
             "damage_per_stack": stack
                 .effect(dbcenums::A_MOD_SCHOOL_MASK_DAMAGE_FROM_CASTER, 32)
                 .average(CHARACTER_LEVEL) / 100.0,
-            "damage_spells": mod_spells(sim, player, masks::ALL, school::SHADOW),
         }));
     }
     // smite.go: a cast on the rank's own row.
@@ -425,19 +427,22 @@ pub(super) fn effects(priest: &Priest, env: &Environment, notes: &mut Vec<String
     let power_in_light = talents.i32("power_in_light");
     if power_in_light > 0 {
         // talents_discipline.go applyPowerInLight
-        let holy_fire: Vec<usize> = sim
+        // Holy Fire, and since the 16 October 2026 beta notes Shadow Word: Pain.
+        let dots: Vec<usize> = sim
             .unit(player)
             .spellbook
             .iter()
             .enumerate()
-            .filter(|(_, spell)| priest.holy_fire.contains(spell))
+            .filter(|(_, spell)| {
+                priest.holy_fire.contains(spell) || priest.shadow_word_pain.contains(spell)
+            })
             .map(|(position, _)| position)
             .collect();
         effects.push(json!({
             "kind": "power_in_light",
             "multiplier": data.power_in_light.multiplier_at(power_in_light),
             "spells": spells_matching(sim, player, masks::SMITE | masks::PENANCE),
-            "holy_fire_spells": holy_fire,
+            "dot_spells": dots,
         }));
     }
     if let Some(aura) = priest.searing_light_aura {

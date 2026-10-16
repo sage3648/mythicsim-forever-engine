@@ -57,7 +57,7 @@ fn new_emerald_dragon_whelp(sim: &mut Sim, owner: UnitId) {
         name: WHELP_NAME.to_string(),
         owner,
         base_stats,
-        stat_inheritance: Rc::new(|_| Stats::default()),
+        stat_inheritance: Rc::new(|_, _| Stats::default()),
         enabled_on_start: false,
         is_guardian: true,
         is_dynamic: false,
