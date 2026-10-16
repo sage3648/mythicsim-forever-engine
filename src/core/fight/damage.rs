@@ -678,12 +678,24 @@ impl<A: Agent> Fight<A> {
         }
     }
 
+    /// A tick's crit chance: the spell's, less each active crit modifier that does not reach
+    /// ticks (Go priest `tickOutcome`, community #793), never below zero.
+    fn tick_crit_chance(&self, spell: SpellId) -> f64 {
+        let mut chance = self.spell_crit_chance(spell);
+        for (id, spells, value) in &self.tick_crit_takebacks {
+            if spells[spell] && self.mod_active(*id) {
+                chance = (chance - value).max(0.0);
+            }
+        }
+        chance
+    }
+
     /// Go `Dot.OutcomeTick`, or `OutcomeTickMagicCrit` when the tick can crit: a tick never
     /// rolls to hit, since the dot did that when it landed.
     fn outcome_tick(&mut self, spell: SpellId, result: &mut SpellResult, can_crit: bool) {
         let partial = result.outcome & OUTCOME_PARTIAL != 0;
         let target = result.target.index();
-        if can_crit && self.random("Magical Crit Roll") < self.spell_crit_chance(spell) {
+        if can_crit && self.random("Magical Crit Roll") < self.tick_crit_chance(spell) {
             result.outcome = OUTCOME_CRIT;
             result.damage *= self.crit_multiplier(spell);
             let metrics = &mut self.spells[spell].metrics[target];
@@ -710,7 +722,13 @@ impl<A: Agent> Fight<A> {
                 && self.spells[spell].school & modifier.school_mask != 0
                 && self.aura(self.aura_on(modifier.aura, result.target)).active
             {
-                result.damage *= modifier.multiplier;
+                result.damage *= match modifier.per_stack {
+                    Some(per_stack) => {
+                        let stacks = self.aura(self.aura_on(modifier.aura, result.target)).stacks;
+                        1.0 + per_stack * f64::from(stacks)
+                    }
+                    None => modifier.multiplier,
+                };
             }
         }
         for modifier in &self.spell_damage_taken_modifiers {
@@ -953,6 +971,12 @@ impl<A: Agent> Fight<A> {
             base += state
                 .bonus_coefficient
                 .mul_add(self.bonus_damage(spell, side), -state.snapshot_spell_power);
+        }
+        if state.attack_power_share != 0.0 {
+            base += state.attack_power_share.mul_add(
+                self.melee_attack_power_of(self.caster(spell)),
+                -state.snapshot_attack_power,
+            );
         }
         let attacker =
             self.attacker_multiplier(spell, true) * self.dots[dot].periodic_damage_multiplier;

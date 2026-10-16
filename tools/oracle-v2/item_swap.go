@@ -197,13 +197,6 @@ var itemSwapRebuilds = map[string]bool{
 	"github.com/wowsims/forever/sim/druid.(*Druid).Initialize.func2": true,
 }
 
-// The racial weapon specializations (racials.go applyWeaponSpecialization) by their aura.
-var racialWeaponTypes = map[string]proto.WeaponType{
-	"Mace Specialization":  proto.WeaponType_WeaponTypeMace,
-	"Sword Specialization": proto.WeaponType_WeaponTypeSword,
-	"Axe Specialization":   proto.WeaponType_WeaponTypeAxe,
-}
-
 // A dynamic spell modifier a callback switches: its kind, value and the player's spells it reaches.
 func spellModOf(character *core.Character, mod *core.SpellMod, note func(bool, string)) map[string]any {
 	affected := []int{}
@@ -252,18 +245,6 @@ func itemSwapCallbacks(character *core.Character, sets swapSets, note func(bool,
 				op["main"], op["swapped"] = fn(sets.set(false)), fn(sets.set(true))
 			}
 			switch name {
-			case "github.com/wowsims/forever/sim/core.applyWeaponSpecialization.func2":
-				// hasWeaponEquipped, then the aura; Activate refreshes an active aura.
-				aura := c.aura(character, 2)
-				weaponType, ok := racialWeaponTypes[aura.Label]
-				note(!ok, fmt.Sprintf("racial weapon specialization %q is unknown", aura.Label))
-				disabled := privateField(character, "disableWeaponSpec").Bool()
-				op["kind"], op["aura"] = "aura", aura.Label
-				both(func(e *core.Equipment) string {
-					on := !disabled && (e.MainHand().WeaponType == weaponType && e.MainHand().ID != 0 ||
-						e.OffHand().WeaponType == weaponType && e.OffHand().ID != 0)
-					return auraState(on, "activate", "off")
-				})
 			case "github.com/wowsims/forever/sim/core.(*ItemSwap).RegisterActive.func1":
 				// character, itemActionID, itemID, slots, swap.
 				itemID := int32(c.word(4))

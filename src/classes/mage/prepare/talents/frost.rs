@@ -4,7 +4,6 @@ use std::rc::Rc;
 
 use crate::contracts::prepared_v2::ActionId;
 use crate::prepare::aura_helpers::{CallbackMask, HitOutcome, ProcTrigger};
-use crate::prepare::character::constants::CHARACTER_LEVEL;
 use crate::prepare::dbcenums;
 use crate::prepare::sim::{AuraConfig, EventCallbacks, Sim, UnitId};
 use crate::prepare::spell::{school, ProcMask};
@@ -314,7 +313,9 @@ impl Mage {
             &ProcTrigger {
                 name: "Fingers of Frost Trigger".to_string(),
                 callback: CallbackMask::ON_SPELL_HIT_DEALT,
-                class_spell_mask: masks::CHILL,
+                // Frostbolt and Frostfire Bolt roll at launch (community #776); the trigger
+                // hears the chills that land at once.
+                class_spell_mask: masks::CONE_OF_COLD | masks::IMPROVED_BLIZZARD,
                 outcome: HitOutcome::LANDED,
                 proc_chance,
                 trigger_immediately: true,
@@ -323,8 +324,8 @@ impl Mage {
         );
     }
 
-    /// In Forever Winter's Chill only helps the mage's own Frostbolt and Ice Lance: 2% crit a
-    /// stack, one stack per talent point.
+    /// Client 70425 made Winter's Chill a Cone of Cold empowerment: each stack makes the target
+    /// take 5% more damage from the mage's own Cone of Cold, up to 5 stacks, for 15 sec.
     fn register_winter_chill(&self, sim: &mut Sim, unit: UnitId) {
         let rank = self.talents.i32("winters_chill");
         if rank == 0 {
@@ -332,13 +333,13 @@ impl Mage {
         }
         let data = spell_data();
         let chill_rank = data.winters_chill_triggered.highest();
-        let crit_per_stack = chill_rank.effect_n(1).average(CHARACTER_LEVEL);
+        let damage_per_stack = chill_rank.effect_n(1).percent();
 
-        let crit_mod = sim.add_dynamic_mod(
+        let damage_mod = sim.add_dynamic_mod(
             unit,
             SpellModConfig {
-                class_mask: masks::FROSTBOLT | masks::ICE_LANCE,
-                kind: SpellModType::BonusCritPercent,
+                class_mask: masks::CONE_OF_COLD,
+                kind: SpellModType::DamageDoneFlat,
                 ..SpellModConfig::default()
             },
         );
@@ -354,15 +355,15 @@ impl Mage {
                 duration: chill_rank.duration(),
                 max_stacks: data.winters_chill.effect_at(1).value_at(rank) as i32,
                 on_gain: Some(Rc::new(move |sim: &mut Sim, _| {
-                    sim.activate_spell_mod(crit_mod)
+                    sim.activate_spell_mod(damage_mod)
                 })),
                 on_expire: Some(Rc::new(move |sim: &mut Sim, _| {
-                    sim.deactivate_spell_mod(crit_mod)
+                    sim.deactivate_spell_mod(damage_mod)
                 })),
                 on_stacks_change: Some(Rc::new(move |sim: &mut Sim, _, _, new_stacks| {
                     sim.update_spell_mod_float_value(
-                        crit_mod,
-                        crit_per_stack * f64::from(new_stacks),
+                        damage_mod,
+                        damage_per_stack * f64::from(new_stacks),
                     )
                 })),
                 ..AuraConfig::default()

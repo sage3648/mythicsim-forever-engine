@@ -30,6 +30,22 @@ fn apl_spell(env: &Environment, id: &ActionId) -> Option<SpellId> {
         .copied()
         .find(|s| &sim.spell(*s).action_id == id && sim.spell(*s).flags.matches(SpellFlag::APL))
         .or_else(|| sim.get_spell(env.player, id))
+        // Go `RankAliases`: an older rank a rotation names presses the known one.
+        .or_else(|| {
+            book.iter().copied().find(|s| {
+                sim.spell(*s).flags.matches(SpellFlag::APL)
+                    && sim
+                        .spell(*s)
+                        .rank_aliases
+                        .iter()
+                        .any(|alias| same_action(alias, id))
+            })
+        })
+}
+
+/// Go `ActionID.SameAction`: the same action whatever the tag.
+fn same_action(a: &ActionId, b: &ActionId) -> bool {
+    a.spell_id == b.spell_id && a.item_id == b.item_id && a.other_id == b.other_id
 }
 
 /// Go `GetAPLCastSpell`.

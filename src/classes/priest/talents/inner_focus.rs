@@ -26,6 +26,16 @@ pub(crate) fn bind<A: Agent>(
     let len = fight.spells.len();
     let affected = crit_spells.iter().copied().filter(|&s| s < len).collect();
     let crit_mod = fight.register_mod(ModKind::BonusCritPercent, crit_percent, 0, affected);
+    // Inner Focus's crit no longer reaches periodic effects (forever-bugs #137, community #793).
+    let mut reaches = vec![false; len];
+    for &spell in crit_spells {
+        if spell < len {
+            reaches[spell] = true;
+        }
+    }
+    fight
+        .tick_crit_takebacks
+        .push((crit_mod, reaches, crit_percent / 100.0));
     let mut spenders = vec![false; len];
     for &spender in spender_spells {
         if spender < len {

@@ -12,6 +12,7 @@
 
 mod absorb;
 mod aura;
+mod blade_of_hanna;
 mod cast;
 mod cleave;
 mod damage;
@@ -483,6 +484,12 @@ pub(crate) enum SpellBehavior<S> {
         min: f64,
         max: f64,
     },
+    /// A fixed amount on a physical attack table, which rolls no damage: Blade of Hanna's
+    /// Perfected Form.
+    FixedTableDamage {
+        damage: f64,
+        outcome: melee::PhysicalOutcome,
+    },
     /// A fixed hit that always lands, as Sulfuras's Immolation casts.
     FixedHit(f64),
     /// Force Reactive Disk's spell: a hit of a literal on the magic table with a crit against
@@ -767,6 +774,8 @@ pub(crate) struct Spell<S> {
     /// Go `CastRequirement`, as the player auras whose form it refuses.
     pub(crate) requirement_auras: Vec<AuraRef>,
     pub(crate) class_spell: Option<String>,
+    /// Go `RankAliases`: older rank IDs a rotation may still name.
+    pub(crate) rank_aliases: Vec<ActionId>,
     pub(crate) class_spell_mask: bool,
     pub(crate) missile_speed: f64,
     pub(crate) cast_kind: crate::contracts::prepared_v2::CastKind,
@@ -954,6 +963,9 @@ pub(crate) struct Player {
     /// Go `Unit.Moving` and its pending movement.
     pub(crate) moving: bool,
     pub(crate) movement: Option<movement::Movement>,
+    /// Go `Unit.movementEndedAt`: when the unit last stopped moving, `-NEVER_EXPIRES` while it
+    /// has not moved this iteration.
+    pub(crate) movement_ended_at: i64,
 }
 
 impl Player {
@@ -998,6 +1010,7 @@ impl Player {
             went_oom: false,
             first_oom: 0,
             moving: false,
+            movement_ended_at: -NEVER_EXPIRES,
             movement: None,
         }
     }
@@ -1327,6 +1340,8 @@ pub(crate) struct DamageTakenModifier {
     pub(crate) school_mask: u8,
     pub(crate) aura: AuraRef,
     pub(crate) multiplier: f64,
+    /// When set, the multiplier is one plus this for each of the aura's stacks.
+    pub(crate) per_stack: Option<f64>,
 }
 
 /// Go `Unit.AddDynamicDamageTakenModifier` on the target for a modifier that multiplies the
@@ -1600,6 +1615,8 @@ pub(crate) struct Fight<A: Agent> {
     free_travel_batches: Vec<usize>,
     /// The target's dynamic damage taken modifiers.
     pub(crate) damage_taken_modifiers: Vec<DamageTakenModifier>,
+    /// Go `doneIteration` is deactivating the auras: an iteration is ending.
+    pub(crate) done_iteration: bool,
     /// Spell-conditioned modifiers, applied after `damage_taken_modifiers`; no class registers
     /// both kinds, so Go's single registration order is kept.
     pub(crate) spell_damage_taken_modifiers: Vec<SpellDamageTakenModifier>,
@@ -1608,6 +1625,9 @@ pub(crate) struct Fight<A: Agent> {
     pub(crate) spells: Vec<Spell<A::Spell>>,
     pub(crate) dots: Vec<Dot>,
     pub(crate) mods: Vec<spell_mod::SpellMod>,
+    /// Crit modifiers a dot's tick does not take, as a priest's Inner Focus (community #793):
+    /// while active, a tick of a spell it names rolls crit with its chance taken back.
+    pub(crate) tick_crit_takebacks: Vec<(spell_mod::ModId, Vec<bool>, f64)>,
     pub(crate) timers: Vec<i64>,
     pub(crate) major_cooldowns: Vec<MajorCooldown>,
     pub(crate) cooldown_order: Vec<usize>,
@@ -1658,6 +1678,7 @@ pub(crate) struct Fight<A: Agent> {
     /// Dragon's Call and the Emerald Dragon Whelp it summons.
     pub(crate) whelp: Option<whelp::Whelp>,
     pub(crate) sulfuras: Option<sulfuras::Sulfuras>,
+    pub(crate) blade_of_hanna: Option<blade_of_hanna::BladeOfHanna>,
     /// The slows of the attack speed category, by the position of their aura on the target.
     pub(crate) enemy_slows: Vec<(usize, enemy::EnemySlow)>,
     /// Thunderfury's proc, when worn.
@@ -2605,6 +2626,18 @@ impl<A: Agent> Fight<A> {
                         } if *immolation_spell == spells.len() => {
                             Some(SpellBehavior::FixedHit(*immolation_damage))
                         }
+                        Effect::BladeOfHanna {
+                            strike_spell,
+                            damage,
+                            ..
+                        } if *strike_spell == spells.len() => {
+                            melee::PhysicalOutcome::of_melee_proc("melee_special_hit_and_crit").map(
+                                |outcome| SpellBehavior::FixedTableDamage {
+                                    damage: *damage,
+                                    outcome,
+                                },
+                            )
+                        }
                         Effect::ForceReactiveDisk { spell, damage, .. } if *spell == spells.len() => {
                             Some(SpellBehavior::AreaFixedDamage(*damage))
                         }
@@ -2712,6 +2745,7 @@ impl<A: Agent> Fight<A> {
                     )
                 }),
                 class_spell: exported.class_spell.clone(),
+                rank_aliases: exported.rank_aliases.clone(),
                 class_spell_mask: exported.class_spell.is_some(),
                 missile_speed: exported.missile_speed,
                 cast_kind: exported.cast_kind,
@@ -3315,6 +3349,12 @@ impl<A: Agent> Fight<A> {
                     AuraBehavior::SulfurasProc
                 } else if side == Side::Player
                     && effects.iter().any(|effect| {
+                        matches!(effect, Effect::BladeOfHanna { trigger_aura, .. } if *trigger_aura == exported.label)
+                    })
+                {
+                    AuraBehavior::BladeOfHanna
+                } else if side == Side::Player
+                    && effects.iter().any(|effect| {
                         matches!(effect, Effect::SulfurasHandOfRagnaros { immolation_aura, .. } if *immolation_aura == exported.label)
                     })
                 {
@@ -3574,6 +3614,7 @@ impl<A: Agent> Fight<A> {
             travel_batches: Vec::new(),
             free_travel_batches: Vec::new(),
             damage_taken_modifiers: Vec::new(),
+            done_iteration: false,
             spell_damage_taken_modifiers: Vec::new(),
             damage_taken_health,
             config,
@@ -3581,6 +3622,7 @@ impl<A: Agent> Fight<A> {
             spells,
             dots,
             mods: Vec::new(),
+            tick_crit_takebacks: Vec::new(),
             timers: vec![STARTING_CD_TIME; timer_names.len()],
             versions: Versions::default(),
             cooldown_order: (0..major_cooldowns.len()).collect(),
@@ -3629,6 +3671,7 @@ impl<A: Agent> Fight<A> {
             crusader: None,
             whelp: None,
             sulfuras: None,
+            blade_of_hanna: None,
             thunderfury: None,
             enemy_slows: Vec::new(),
             windfury: None,
@@ -4074,6 +4117,7 @@ impl<A: Agent> Fight<A> {
                 }
                 Effect::EmeraldDragonWhelp { .. } => fight.bind_whelp(effect)?,
                 Effect::SulfurasHandOfRagnaros { .. } => fight.bind_sulfuras(effect)?,
+                Effect::BladeOfHanna { .. } => fight.bind_blade_of_hanna(effect)?,
                 Effect::Thunderfury { .. } => fight.bind_thunderfury(effect)?,
                 _ => {}
             }
@@ -4298,7 +4342,6 @@ impl<A: Agent> Fight<A> {
                 cost_spells,
                 damage_spells,
                 tick_cancel_spells,
-                spending_spells,
                 ..
             } = effect
             {
@@ -4306,7 +4349,6 @@ impl<A: Agent> Fight<A> {
                     aura,
                     [*cost_percent, *damage_percent, *tick_cancel_percent],
                     [cost_spells, damage_spells, tick_cancel_spells],
-                    spending_spells,
                 )?);
             }
         }
@@ -4843,6 +4885,7 @@ impl<A: Agent> Fight<A> {
             self.move_multiplier = self.initial_move_multiplier;
             self.player.moving = false;
             self.player.movement = None;
+            self.player.movement_ended_at = -NEVER_EXPIRES;
             // Go UnitMetrics.reset.
             self.death.died = false;
             let player = &mut self.player;

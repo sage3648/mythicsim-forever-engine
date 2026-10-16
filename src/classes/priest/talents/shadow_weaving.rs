@@ -1,21 +1,24 @@
 //! Shadow Weaving (15257, stacks 15258), from Go sim/priest/talents_shadow.go
-//! `applyShadowWeaving`: in Forever each landed Shadow spell stacks a Shadow damage bonus on
-//! the priest, to five stacks. The trigger is a Go proc trigger on spell hits dealt.
+//! `applyShadowWeaving`: each landed Shadow spell stacks a debuff on its target, to five, and the
+//! target's dynamic damage taken modifier raises this priest's Shadow damage on it by each stack
+//! (community #777: each target keeps its own). The trigger is a Go proc trigger on spell hits
+//! dealt.
 
-use crate::core::fight::{Agent, AuraRef, Fight, ModId, ModKind, SpellId, SpellResult};
+use crate::core::fight::{Agent, AuraRef, DamageTakenModifier, Fight, Side, SpellId, SpellResult};
+
+/// Go `SpellSchoolShadow`.
+const SHADOW: u8 = 32;
 
 #[derive(Clone, Debug)]
 pub(crate) struct ShadowWeaving {
+    /// The debuff on the main target; [`Fight::aura_on`] finds each target's.
     pub(crate) aura: AuraRef,
     trigger: AuraRef,
     proc_chance: f64,
     immediate: bool,
     trigger_spells: Vec<bool>,
-    damage_per_stack: f64,
-    damage_mod: ModId,
 }
 
-#[allow(clippy::too_many_arguments)]
 pub(crate) fn bind<A: Agent>(
     fight: &mut Fight<A>,
     aura: &str,
@@ -24,13 +27,24 @@ pub(crate) fn bind<A: Agent>(
     immediate: bool,
     trigger_spells: &[usize],
     damage_per_stack: f64,
-    damage_spells: &[usize],
 ) -> Result<ShadowWeaving, String> {
-    let aura = fight.player_aura(aura)?;
+    let index = fight.trackers[Side::Target.index()]
+        .find(aura)
+        .ok_or_else(|| format!("target aura {aura} is not registered"))?;
+    let aura = AuraRef {
+        side: Side::Target,
+        index,
+    };
     let trigger = fight.player_aura(trigger_aura)?;
+    // Go checks the spell's unit is the priest, so a pet's Shadow damage gains nothing.
+    fight.damage_taken_modifiers.push(DamageTakenModifier {
+        source: Side::Player,
+        school_mask: SHADOW,
+        aura,
+        multiplier: 1.0,
+        per_stack: Some(damage_per_stack),
+    });
     let len = fight.spells.len();
-    let affected = damage_spells.iter().copied().filter(|&s| s < len).collect();
-    let damage_mod = fight.register_mod(ModKind::DamageDonePercent, 0.0, 0, affected);
     let mut mask = vec![false; len];
     for &spell in trigger_spells {
         if spell < len {
@@ -43,8 +57,6 @@ pub(crate) fn bind<A: Agent>(
         proc_chance,
         immediate,
         trigger_spells: mask,
-        damage_per_stack,
-        damage_mod,
     })
 }
 
@@ -63,27 +75,16 @@ impl ShadowWeaving {
             return;
         }
         if self.immediate {
-            self.handler(fight);
+            self.handler(fight, result.target);
         } else {
             fight.schedule_delayed_proc(self.trigger, spell, *result);
         }
     }
 
-    /// The handler: activate, then one more stack.
-    pub(crate) fn handler<A: Agent>(&self, fight: &mut Fight<A>) {
-        fight.activate_aura(self.aura);
-        fight.add_stack(self.aura);
-    }
-
-    pub(crate) fn on_gain<A: Agent>(&self, fight: &mut Fight<A>) {
-        fight.activate_mod(self.damage_mod);
-    }
-
-    pub(crate) fn on_expire<A: Agent>(&self, fight: &mut Fight<A>) {
-        fight.deactivate_mod(self.damage_mod);
-    }
-
-    pub(crate) fn on_stacks_change<A: Agent>(&self, fight: &mut Fight<A>, new: i32) {
-        fight.update_mod_value(self.damage_mod, self.damage_per_stack * f64::from(new));
+    /// The handler: the struck target's debuff activates, then one more stack.
+    pub(crate) fn handler<A: Agent>(&self, fight: &mut Fight<A>, target: Side) {
+        let aura = fight.aura_on(self.aura, target);
+        fight.activate_aura(aura);
+        fight.add_stack(aura);
     }
 }

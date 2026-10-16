@@ -132,6 +132,11 @@ pub(crate) trait PrepAgent: CloneAgent {
     fn summoned_pet(&self, _sim: &Sim, _pet: UnitId) -> bool {
         false
     }
+    /// The exporter's `statCallbackPets`: whether the pet's enable and disable callbacks only
+    /// add stats.
+    fn stat_callback_pet(&self, _sim: &Sim, _pet: UnitId) -> bool {
+        false
+    }
     /// The exporter's `classExport.inertPet`: why a registered pet never acts in this build, or
     /// `None` when it may.
     fn inert_pet(&self, _sim: &Sim, _pet: UnitId) -> Option<&'static str> {

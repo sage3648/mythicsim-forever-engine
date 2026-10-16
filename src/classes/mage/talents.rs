@@ -2,6 +2,7 @@
 
 pub(crate) mod arcane_concentration;
 pub(crate) mod fingers_of_frost;
+pub(crate) mod fire_power;
 pub(crate) mod heating_up;
 pub(crate) mod ignite;
 pub(crate) mod master_of_elements;

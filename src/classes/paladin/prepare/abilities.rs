@@ -53,7 +53,9 @@ impl Paladin {
             SpellModConfig {
                 kind: SpellModType::ThreatMultiplierPct,
                 school: school::HOLY,
-                float_value: rank.effect(dbcenums::A_MOD_THREAT, 2).percent(),
+                // The 16 October 2026 beta notes raise it from 60% to 90%; the client row still
+                // says 60.
+                float_value: super::RIGHTEOUS_FURY_HOLY_THREAT,
                 ..SpellModConfig::default()
             },
         );

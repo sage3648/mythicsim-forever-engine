@@ -494,6 +494,8 @@ pub(crate) struct Spell {
     pub recharge_time: Duration,
     pub cast_kind: CastKind,
     pub metric_splits: usize,
+    /// Go `RankAliases`: older rank IDs a rotation may still name, which `GetAPLSpell` reads.
+    pub rank_aliases: Vec<ActionId>,
     pub pushback_resist: f64,
     pub bonus_hit_percent: f64,
     pub bonus_crit_percent: f64,
@@ -617,6 +619,7 @@ impl Sim {
             recharge_time: config.recharge_time,
             cast_kind: CastKind::Full,
             metric_splits: config.metric_splits.max(1),
+            rank_aliases: Vec::new(),
             pushback_resist: 0.0,
             bonus_hit_percent: config.bonus_hit_percent,
             bonus_crit_percent: config.bonus_crit_percent,

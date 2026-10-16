@@ -286,6 +286,8 @@ impl Warlock {
         if talents.bool("siphon_life") {
             // siphon_life.go: Corruption's shape, healing for each tick
             let mut siphon = warlock_tick(data.siphon_life.highest(), unrepresented);
+            // The ticks crit though the client row lacks periodic-can-crit (community #782).
+            siphon.insert("tick_can_crit".into(), json!(true));
             siphon.insert(
                 "self_healing_multiplier".into(),
                 json!(pseudo.self_healing_multiplier),

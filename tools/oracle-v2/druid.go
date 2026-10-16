@@ -278,6 +278,8 @@ func druidEffects(agent core.Agent, character *core.Character) []map[string]any 
 		"moonkin_cooldown_multiplier": 1 + moonkin.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_PROC_COOLDOWN)).Percent(),
 		"cost_spells":                 spellsMatching(character, clearcastingMask),
 		"cost_percent_add":            clearcasting.Effect(dbcenums.A_ADD_PCT_MODIFIER, int32(dbcenums.SPELLMOD_COST)).Percent(),
+		// 16 October 2026 beta notes: Faerie Fire no longer triggers it in Cat or Bear Form.
+		"form_excluded_spells": spellsMatching(character, druid.DruidSpellFaerieFire|druid.DruidSpellFaerieFireFeral),
 	})
 	if talents.NaturesGrace { // talents_balance.go applyNaturesGrace
 		triggered := naturesGraceTrigger.Highest()

@@ -157,7 +157,7 @@ pub(super) fn spell_data() -> &'static SpellData {
         bloodrage_triggered: Ladder::ranked(&[29131]),
         bloodthirst: Ladder::ranked(&[23881, 23892, 23893, 23894]),
         bloodthrill: Ladder::talent(1289682, 5),
-        bloodthrill_triggered: Ladder::ranked(&[1282733, 1289681]),
+        bloodthrill_triggered: Ladder::ranked(&[1282733]),
         booming_voice: Ladder::talent(12321, 5),
         challenging_shout: Ladder::ranked(&[1161]),
         charge: Ladder::ranked(&[100, 6178, 11578]),

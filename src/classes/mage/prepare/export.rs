@@ -18,8 +18,9 @@ use crate::prepare::spelldata::{Ladder, Spell as Row};
 
 use super::spell_data::spell_data;
 
-/// Go `IceLanceFrozenMultiplier`.
-const ICE_LANCE_FROZEN_MULTIPLIER: f64 = 4.0;
+/// Go `IceLanceFrozenMultiplier`: the 16 October 2026 beta notes cut it to +200% (was +300%),
+/// so a frozen hit deals 3 times an unfrozen one.
+const ICE_LANCE_FROZEN_MULTIPLIER: f64 = 3.0;
 
 /// `mageDamageRows`: the rows by spell ID.
 fn damage_rows() -> &'static HashMap<i32, &'static Row> {
@@ -42,6 +43,7 @@ fn damage_rows() -> &'static HashMap<i32, &'static Row> {
         each(&mut rows, &data.arcane_missiles_triggered);
         highest(&mut rows, &data.ice_lance);
         highest(&mut rows, &data.arcane_blast);
+        highest(&mut rows, &data.arcane_wrath);
         highest(&mut rows, &data.fire_blast);
         each(&mut rows, &data.scorch);
         each(&mut rows, &data.fireball);
@@ -114,19 +116,21 @@ pub(super) fn effects(talents: &Message, sim: &Sim, unit: UnitId) -> Vec<Value> 
             "aura_duration_ns": nanos(data.arcane_concentration_triggered.highest().duration()),
         }));
     }
-    // talents_arcane.go registerMissileBarrage: the client rows
-    if talents.bool("missile_barrage") {
+    // talents_arcane.go registerMissileBarrage: the client rows; a missile procs at a quarter of
+    // Arcane Blast's chance, Arcane Wrath and the bolts at half (client 70425).
+    let missile_barrage = talents.i32("missile_barrage");
+    if missile_barrage > 0 {
         let buff = data.missile_barrage_triggered.highest();
         let arcane_blast_chance = data
             .missile_barrage
-            .highest()
             .effect(dbcenums::A_PROC_TRIGGER_SPELL, 0)
-            .average(CHARACTER_LEVEL)
+            .value_at(missile_barrage)
             / 100.0;
         effects.push(json!({
             "kind": "missile_barrage", "trigger_aura": "Missile Barrage Trigger",
             "aura": "Missile Barrage",
             "arcane_blast_chance": arcane_blast_chance,
+            "missile_chance": arcane_blast_chance / 4.0,
             "bolt_chance": arcane_blast_chance / 2.0,
             "rng_label": "Missile Barrage",
             "cost_percent_add": buff
@@ -162,7 +166,7 @@ pub(super) fn effects(talents: &Message, sim: &Sim, unit: UnitId) -> Vec<Value> 
             "kind": "winters_chill", "talent_rank": winters_chill,
             "proc_chance": data.winters_chill.effect_at(2).fraction_at(winters_chill),
             "max_stacks": data.winters_chill.effect_at(1).value_at(winters_chill) as i32,
-            "crit_per_stack": trigger.effect_n(1).average(CHARACTER_LEVEL),
+            "damage_per_stack": trigger.effect_n(1).percent(),
             "duration_ns": nanos(trigger.duration()),
             "trigger_aura": "Winters Chill Talent", "aura": "Winter's Chill",
         }));
@@ -188,8 +192,7 @@ pub(super) fn effects(talents: &Message, sim: &Sim, unit: UnitId) -> Vec<Value> 
             .average(CHARACTER_LEVEL)
             / 100.0,
     }));
-    // arcane_missiles.go: channel rank N fires tick rank N. The channel spends Arcane Blast's
-    // stacks as it starts and its missiles keep them, a Go literal share each.
+    // arcane_missiles.go: channel rank N fires tick rank N.
     let mut missiles = Vec::new();
     data.arcane_missiles.each(|rank, row| {
         missiles.push(json!({
@@ -198,24 +201,38 @@ pub(super) fn effects(talents: &Message, sim: &Sim, unit: UnitId) -> Vec<Value> 
         }));
     });
     effects.push(json!({
-        "kind": "arcane_missiles", "ranks": missiles, "arcane_blast_bonus_per_stack": 0.15,
+        "kind": "arcane_missiles", "ranks": missiles,
     }));
     // frostbolt.go
     effects.push(json!({"kind": "frostbolt"}));
-    // arcane_blast.go and arcane_charge.go
+    // arcane_blast.go and arcane_charge.go: the stacks' spell damage from Intellect is a stat aura.
     if talents.bool("arcane_blast") {
         let buff = data.arcane_blast_triggered.highest();
         effects.push(json!({
             "kind": "arcane_blast", "spell_id": data.arcane_blast.highest().id,
             "aura": "Arcane Blast",
-            "damage_per_stack": buff
-                .effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_DAMAGE)
-                .average(CHARACTER_LEVEL)
-                / 100.0,
+            "intellect_per_stack": buff.effect_n(1).percent(),
             "cost_per_stack": buff
                 .effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_COST)
                 .average(CHARACTER_LEVEL)
                 / 100.0,
+        }));
+    }
+    // arcane_wrath.go: the hit adds a share of maximum mana as spell damage at its coefficient.
+    if talents.bool("arcane_wrath") {
+        let rank = data.arcane_wrath.highest();
+        effects.push(json!({
+            "kind": "arcane_wrath", "spell_id": rank.id,
+            "coefficient": rank.damage_effect().coeff(),
+            "mana_share": rank.effect_n(2).base_points / 100.0,
+        }));
+    }
+    // talents_fire.go registerFirePower: a damage done by caster handler on every attack table.
+    let fire_power = talents.i32("fire_power");
+    if fire_power > 0 {
+        effects.push(json!({
+            "kind": "fire_power", "max_effects": 4,
+            "per_effect": data.fire_power.effect_at(1).fraction_at(fire_power),
         }));
     }
     // fire_blast.go
@@ -260,6 +277,7 @@ pub(super) fn effects(talents: &Message, sim: &Sim, unit: UnitId) -> Vec<Value> 
         let buff = data.heating_up_triggered.highest();
         effects.push(json!({
             "kind": "heating_up", "aura": "Heating Up", "trigger_aura": "Heating Up Trigger",
+            "fire_blast_trigger_aura": "Hot Streak Fire Blast Trigger",
             "cast_time_per_stack": buff
                 .effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_CASTING_TIME)
                 .percent(),

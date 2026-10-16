@@ -214,10 +214,11 @@ impl Mage {
             spell_data().arcane_meditation.fraction_at(rank);
     }
 
-    /// Arcane Blast landing (40%), or Fireball, Frostbolt or Frostfire Bolt (20%), can make the
+    /// Arcane Blast landing (20/40% at 1/2 points), an Arcane Missiles missile hitting (a quarter
+    /// of it), or Arcane Wrath, Fireball, Frostbolt or Frostfire Bolt (half of it) can make the
     /// next Arcane Missiles free and fire its missiles every 0.5 sec instead of every second.
     fn register_missile_barrage(&self, sim: &mut Sim, unit: UnitId) {
-        if !self.talents.bool("missile_barrage") {
+        if self.talents.i32("missile_barrage") == 0 {
             return;
         }
         let data = spell_data();
@@ -273,6 +274,8 @@ impl Mage {
                 name: "Missile Barrage Trigger".to_string(),
                 callback: CallbackMask::ON_SPELL_HIT_DEALT,
                 class_spell_mask: masks::ARCANE_BLAST
+                    | masks::ARCANE_MISSILES_TICK
+                    | masks::ARCANE_WRATH
                     | masks::FIREBALL
                     | masks::FROSTBOLT
                     | masks::FROSTFIRE_BOLT,
@@ -351,46 +354,22 @@ impl Mage {
         );
     }
 
-    /// Go `Mage.registerArcaneCharges`: Forever's Arcane Blast buff (400573). Each stack raises
-    /// the damage of the mage's other spells and the cost of Arcane Blast itself.
+    /// Go `Mage.registerArcaneCharges`: Forever's Arcane Blast buff (400573) as client 70425
+    /// redesigned it. Each stack gives the mage 15% of its Intellect as spell damage and raises
+    /// Arcane Blast's own cost; up to four stacks, 15 sec from the first, and nothing spends it.
     pub(crate) fn register_arcane_charges(&self, sim: &mut Sim, unit: UnitId) {
         if !self.talents.bool("arcane_blast") {
             return;
         }
         let buff_rank = spell_data().arcane_blast_triggered.highest();
-        let damage_per_stack = buff_rank
-            .effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_DAMAGE)
-            .average(CHARACTER_LEVEL)
-            / 100.0;
+        let intellect_per_stack = buff_rank.effect_n(1).percent();
         let cost_per_stack = buff_rank
             .effect(dbcenums::A_ADD_PCT_MODIFIER, dbcenums::SPELLMOD_COST)
             .average(CHARACTER_LEVEL)
             / 100.0;
 
-        // 400573's damage mask names every mage damage spell but Arcane Blast, Arcane Missiles,
-        // Blizzard and Flamestrike. Its DoT mask names Fireball and Frostfire Bolt only, so
-        // Pyroblast's hit takes the bonus and its DoT does not.
-        let damage_mod = sim.add_dynamic_mod(
-            unit,
-            SpellModConfig {
-                class_mask: masks::ALL_DAMAGING
-                    & !(masks::ARCANE_BLAST
-                        | masks::ARCANE_MISSILES
-                        | masks::BLIZZARD
-                        | masks::FLAMESTRIKE
-                        | masks::PYROBLAST),
-                kind: SpellModType::DamageDoneFlat,
-                ..SpellModConfig::default()
-            },
-        );
-        let pyroblast_mod = sim.add_dynamic_mod(
-            unit,
-            SpellModConfig {
-                class_mask: masks::PYROBLAST,
-                kind: SpellModType::DirectDamageDoneFlat,
-                ..SpellModConfig::default()
-            },
-        );
+        let spell_damage =
+            sim.new_dynamic_stat_dependency(unit, Stat::Intellect, Stat::SpellDamage, 0.0);
         let cost_mod = sim.add_dynamic_mod(
             unit,
             SpellModConfig {
@@ -410,26 +389,23 @@ impl Mage {
                 }),
                 duration: buff_rank.duration(),
                 max_stacks: i32::from(buff_rank.max_stack),
-                on_gain: Some(Rc::new(move |sim: &mut Sim, _| {
-                    sim.activate_spell_mod(damage_mod);
-                    sim.activate_spell_mod(pyroblast_mod);
+                on_gain: Some(Rc::new(move |sim: &mut Sim, aura| {
+                    let unit = sim.aura(aura).unit;
+                    sim.enable_dynamic_stat_dep(unit, spell_damage);
                     sim.activate_spell_mod(cost_mod);
                 })),
-                on_expire: Some(Rc::new(move |sim: &mut Sim, _| {
-                    sim.deactivate_spell_mod(damage_mod);
-                    sim.deactivate_spell_mod(pyroblast_mod);
+                on_expire: Some(Rc::new(move |sim: &mut Sim, aura| {
+                    let unit = sim.aura(aura).unit;
+                    sim.disable_dynamic_stat_dep(unit, spell_damage);
+                    sim.update_dynamic_stat_dep(unit, spell_damage, 0.0);
                     sim.deactivate_spell_mod(cost_mod);
                 })),
-                on_stacks_change: Some(Rc::new(move |sim: &mut Sim, _, _, new_stacks| {
+                on_stacks_change: Some(Rc::new(move |sim: &mut Sim, aura, _, new_stacks| {
+                    let unit = sim.aura(aura).unit;
                     let stacks = f64::from(new_stacks);
-                    sim.update_spell_mod_float_value(damage_mod, damage_per_stack * stacks);
-                    sim.update_spell_mod_float_value(pyroblast_mod, damage_per_stack * stacks);
+                    sim.update_dynamic_stat_dep(unit, spell_damage, intellect_per_stack * stacks);
                     sim.update_spell_mod_float_value(cost_mod, cost_per_stack * stacks);
                 })),
-                events: EventCallbacks {
-                    on_cast_complete: true,
-                    ..EventCallbacks::default()
-                },
                 ..AuraConfig::default()
             },
         );

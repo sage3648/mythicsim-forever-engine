@@ -224,6 +224,17 @@ impl<A: Agent> Fight<A> {
         }
         let apl = self.spells.iter().position(|s| &s.id == id && s.flags.apl);
         apl.or_else(|| self.spells.iter().position(|s| &s.id == id))
+            // Go `RankAliases`: an older rank a rotation names presses the known one.
+            .or_else(|| {
+                self.spells.iter().position(|s| {
+                    s.flags.apl
+                        && s.rank_aliases.iter().any(|alias| {
+                            alias.spell_id == id.spell_id
+                                && alias.item_id == id.item_id
+                                && alias.other_id == id.other_id
+                        })
+                })
+            })
     }
 
     /// Go `GetAPLCastSpell`: a registered spell without the APL flag defers to an APL-flagged

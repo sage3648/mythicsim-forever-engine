@@ -2,8 +2,8 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "0025d73986eebd90df1849c202b8c9a88d1f01c9",
-    "client_build": "1.60.1.70338",
+    "engine_revision": "5af130344b6fb5150a5b3a2295f26d20adee625d",
+    "client_build": "1.60.1.70425",
     "exporter": "tools/oracle-v2"
   },
   "request_sha256": "6d08fb20e84112645c0bad9b4646be2160e51e0f18d8ff938de479d73d41e955",
@@ -384,7 +384,7 @@
       "NatureResistance": 27,
       "ParryPercent": 0,
       "ParryRating": 0,
-      "PhysicalCritPercent": 14.55,
+      "PhysicalCritPercent": 11.55,
       "PhysicalDamage": 0,
       "PhysicalHitPercent": 8,
       "RangedAttackPower": 0,
@@ -676,7 +676,7 @@
       },
       {
         "label": "Moonkin Aura (External)",
-        "tag": "DruidCritAura",
+        "tag": "MoonkinAura",
         "action_id": {
           "spell_id": 24907,
           "tag": -1
@@ -694,7 +694,7 @@
         "exclusive_effects": 1,
         "exclusive_memberships": [
           {
-            "category": "DruidCritAura",
+            "category": "MoonkinAura",
             "single_aura": true,
             "priority": 3,
             "position": 0
@@ -1465,7 +1465,7 @@
         "crit_multiplier_pct": 1,
         "crit_multiplier_additive": 0,
         "bonus_base_damage": 0,
-        "bonus_coefficient": 0,
+        "bonus_coefficient": 0.06,
         "threat_multiplier": 1,
         "flat_threat_bonus": 0,
         "pushback_resist": 0,
@@ -3349,6 +3349,9 @@
         26,
         27
       ],
+      "form_excluded_spells": [
+        28
+      ],
       "gcd_ns": 1500000000,
       "icd_ns": 10000000000,
       "kind": "omen_of_clarity",
@@ -3499,7 +3502,7 @@
     },
     {
       "active_stats": {
-        "PhysicalCritPercent": 24.549999999999997,
+        "PhysicalCritPercent": 21.55,
         "SpellCritPercent": 27.5949
       },
       "aura": "Elune's Light",
@@ -3533,7 +3536,7 @@
         {
           "AttackPower": 168,
           "MP5": 77,
-          "PhysicalCritPercent": 14.55,
+          "PhysicalCritPercent": 11.55,
           "RangedAttackPower": 0,
           "SpellCritPercent": 17.5949,
           "SpellDamage": 483
@@ -3541,7 +3544,7 @@
         {
           "AttackPower": 168,
           "MP5": 77,
-          "PhysicalCritPercent": 24.549999999999997,
+          "PhysicalCritPercent": 21.55,
           "RangedAttackPower": 0,
           "SpellCritPercent": 27.5949,
           "SpellDamage": 483

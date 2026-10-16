@@ -16,7 +16,7 @@ use crate::prepare::stats::Stat;
 use crate::prepare::Refusal;
 
 /// Go priest.TalentTreeSizes.
-const TALENT_TREE_SIZES: [usize; 3] = [18, 17, 18];
+const TALENT_TREE_SIZES: [usize; 3] = [18, 17, 17];
 
 /// Go `Inner Fire` rank 7's armor, which the charges never take away on a caster that is not
 /// hit.
@@ -135,6 +135,8 @@ pub(crate) struct Priest {
     shadow_weaving_aura: Option<AuraId>,
     /// Go `HolyFire`: every Holy Fire rank the priest knows.
     holy_fire: Vec<SpellId>,
+    /// Every Shadow Word: Pain rank the priest knows, which Power in Light also reads.
+    shadow_word_pain: Vec<SpellId>,
 }
 
 /// Go `NewPriest` and `NewHealerPriest`: the spec decides where the class options are read.
@@ -203,6 +205,7 @@ pub(crate) fn new_priest(
         shadowform_aura: None,
         shadow_weaving_aura: None,
         holy_fire: Vec::new(),
+        shadow_word_pain: Vec::new(),
     }))
 }
 
@@ -231,6 +234,15 @@ impl PrepAgent for Priest {
     /// Go `Shadowfiend.Reset`: the pet is dismissed.
     fn reset_pet(&mut self, sim: &mut Sim, pet: UnitId) {
         shadowfiend::reset(sim, pet);
+    }
+
+    /// talents_shadow.go applyDarkInspiration: its Spirit multiplier is a stat aura.
+    fn stat_auras(&self, _sim: &Sim, _unit: UnitId) -> Vec<String> {
+        if self.talents.i32("dark_inspiration") > 0 {
+            vec!["Dark Inspiration".to_string()]
+        } else {
+            Vec::new()
+        }
     }
 
     fn talents(&self) -> &Message {

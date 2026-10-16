@@ -25,7 +25,9 @@ use super::sim::{Duration, PowerBar, Sim, UnitId, UnitType};
 use super::stats::{Stat, Stats};
 
 /// Go `PetStatInheritance`: the stats a pet inherits from the owner stats it is given.
-pub(crate) type PetStatInheritance = Rc<dyn Fn(&Stats) -> Stats>;
+/// Go `PetStatInheritance`. It takes the simulation, since a class's closure may read and
+/// keep the owner's state, as the hunter's crit offset does.
+pub(crate) type PetStatInheritance = Rc<dyn Fn(&mut Sim, &Stats) -> Stats>;
 /// Go `OnPetEnable` and `OnPetDisable`, with the pet they ran for.
 pub(crate) type PetCallback = Rc<dyn Fn(&mut Sim, UnitId)>;
 
@@ -208,7 +210,7 @@ impl Sim {
         let owner = self.unit(pet).owner.expect("a pet has an owner");
         let owner_stats = self.unit(owner).stats;
         let inherit = Rc::clone(&self.pet_data(pet).stat_inheritance);
-        let inherited = inherit(&owner_stats);
+        let inherited = inherit(self, &owner_stats);
         self.pet_data_mut(pet).inherited_stats = inherited;
         self.add_stats_dynamic(pet, &inherited);
     }
@@ -216,7 +218,7 @@ impl Sim {
     /// Go `Pet.AddOwnerStats`: the pet inherits a change in its owner's stats.
     pub(crate) fn add_owner_stats(&mut self, pet: UnitId, added: &Stats) {
         let inherit = Rc::clone(&self.pet_data(pet).stat_inheritance);
-        let change = inherit(added);
+        let change = inherit(self, added);
         self.pet_data_mut(pet).inherited_stats.add_inplace(&change);
         self.add_stats_dynamic(pet, &change);
     }
@@ -435,6 +437,10 @@ fn pet_inheritance(
 ) -> Vec<Value> {
     let label = env.sim.unit(pet).label.clone();
     let inherit = Rc::clone(&env.sim.pet_data(pet).stat_inheritance);
+    // Go probes the exported simulation's closure; a class's closure may keep state, so the
+    // probes run on a separate reset copy.
+    let mut probe = env.fresh();
+    let mut inherit = |stats: &Stats| inherit(&mut probe.sim, stats);
     let mut terms = Vec::new();
     let mut sources: Vec<(Stat, Stat, f64)> = Vec::new();
     for owner in Stat::ALL {
@@ -445,17 +451,13 @@ fn pet_inheritance(
             if inherited[pet_stat] == 0.0 {
                 continue;
             }
-            if sources.iter().any(|(_, taken, _)| *taken == pet_stat) {
-                unrepresented.push(format!(
-                    "pet {label} inherits {} from more than one stat",
-                    pet_stat.name()
-                ));
-            }
             sources.push((owner, pet_stat, inherited[pet_stat]));
             terms.push(json!({"owner": owner.name(), "pet": pet_stat.name(),
                 "coefficient": inherited[pet_stat]}));
         }
     }
+    // Linear, bit for bit, on changes of either sign. A pet stat several owner stats feed (the
+    // Hunter pet's crit, patch 136) takes the sum of their terms, so each pair is checked too.
     for amount in [3.7, -12.25, 123.456, 0.1] {
         for (owner, pet_stat, coefficient) in &sources {
             let mut change = Stats::default();
@@ -467,6 +469,22 @@ fn pet_inheritance(
                     "pet {label} inherits {} nonlinearly",
                     pet_stat.name()
                 ));
+            }
+            for (other, other_stat, other_coefficient) in &sources {
+                if other_stat != pet_stat || (*other as usize) <= (*owner as usize) {
+                    continue;
+                }
+                let mut change = Stats::default();
+                change[*owner] = amount;
+                change[*other] = -2.5 * amount;
+                let got = inherit(&change)[*pet_stat];
+                let want = amount * coefficient + -2.5 * amount * other_coefficient;
+                if got != want {
+                    unrepresented.push(format!(
+                        "pet {label} inherits {} as other than the sum of its terms",
+                        pet_stat.name()
+                    ));
+                }
             }
         }
     }
@@ -556,6 +574,18 @@ fn pet_aura_fade_stats(env: &Environment, index: usize) -> Vec<Value> {
     changes
 }
 
+/// What a pet's `OnPetDisable` adds to its stats before dependencies, from a separate reset
+/// simulation.
+fn pet_disable_stats(env: &Environment, index: usize) -> Map<String, Value> {
+    let mut fresh = env.fresh();
+    let pet = fresh.sim.unit(fresh.player).pets[index];
+    fresh.sim.unit_mut(pet).stats_without_deps = Stats::default();
+    if let Some(on_disable) = fresh.sim.pet_data(pet).on_pet_disable.clone() {
+        on_disable(&mut fresh.sim, pet);
+    }
+    nonzero_stats(&fresh.sim.unit(pet).stats_without_deps)
+}
+
 /// Go `Unit.ManaRegenPerSecondWhileCasting` and `WhileNotCasting` of a pet.
 fn pet_mana(env: &Environment, pet: UnitId) -> Value {
     let unit = env.sim.unit(pet);
@@ -601,6 +631,7 @@ pub(crate) fn export_pets(
         let label = unit.label.clone();
         let summoned = summoned_pet(env, pet);
         let class_summoned = env.agent.summoned_pet(sim, pet);
+        let stat_callbacks = env.agent.stat_callback_pet(sim, pet);
         let mut note = |condition: bool, message: String| {
             if condition {
                 unrepresented.push(message);
@@ -643,7 +674,9 @@ pub(crate) fn export_pets(
             format!("pet {label} delays its first attack"),
         );
         note(
-            (data.on_pet_enable.is_some() || data.on_pet_disable.is_some()) && !class_summoned,
+            (data.on_pet_enable.is_some() || data.on_pet_disable.is_some())
+                && !class_summoned
+                && !stat_callbacks,
             format!("pet {label} has enable or disable callbacks"),
         );
         note(
@@ -761,6 +794,12 @@ pub(crate) fn export_pets(
                 let fade = pet_aura_fade_stats(env, index);
                 if !fade.is_empty() {
                     exported.insert("aura_stats".into(), Value::Array(fade));
+                }
+                if data.on_pet_disable.is_some() && env.agent.stat_callback_pet(sim, pet) {
+                    let disable = pet_disable_stats(env, index);
+                    if !disable.is_empty() {
+                        exported.insert("disable_stats".into(), Value::Object(disable));
+                    }
                 }
                 exported.insert(
                     "dismiss_stats".into(),
@@ -947,7 +986,7 @@ mod tests {
 
     #[test]
     fn a_pet_is_labeled_for_its_owner_and_starts_at_the_owners_distance() {
-        let (sim, owner, pet) = owner_with_pet(Rc::new(|_| Stats::default()));
+        let (sim, owner, pet) = owner_with_pet(Rc::new(|_, _| Stats::default()));
         assert_eq!(sim.unit(pet).label, "owner - Wolf");
         assert_eq!(sim.unit(pet).owner, Some(owner));
         assert_eq!(sim.unit(owner).pets, [pet]);
@@ -959,7 +998,7 @@ mod tests {
 
     #[test]
     fn enabling_a_pet_adds_the_stats_it_inherits_and_disabling_takes_them_away() {
-        let (mut sim, owner, pet) = owner_with_pet(Rc::new(|owner: &Stats| {
+        let (mut sim, owner, pet) = owner_with_pet(Rc::new(|_, owner: &Stats| {
             let mut inherited = Stats::default();
             inherited[Stat::Stamina] = owner[Stat::Stamina] * 0.3;
             inherited
@@ -980,7 +1019,7 @@ mod tests {
 
     #[test]
     fn a_focus_bar_fills_when_the_pet_is_enabled() {
-        let (mut sim, _, pet) = owner_with_pet(Rc::new(|_| Stats::default()));
+        let (mut sim, _, pet) = owner_with_pet(Rc::new(|_, _| Stats::default()));
         sim.enable_focus_bar(pet, 1.2);
         let bar = &sim.unit(pet).focus_bar;
         assert_eq!(bar.max_focus, 100.0);
@@ -997,7 +1036,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "Pets must be added during construction")]
     fn a_pet_cannot_be_added_after_construction() {
-        let (mut sim, owner, pet) = owner_with_pet(Rc::new(|_| Stats::default()));
+        let (mut sim, owner, pet) = owner_with_pet(Rc::new(|_, _| Stats::default()));
         sim.state = EnvState::Constructed;
         sim.add_pet(owner, pet);
     }

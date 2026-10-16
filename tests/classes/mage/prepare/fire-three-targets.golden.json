@@ -1,6 +1,6 @@
 {
  "case": "fire-three-targets",
- "request_sha256": "296d7e372161d42e9a9b6417648040cd53be474feac590fc3d1fea9a6106a87c",
+ "request_sha256": "84b71a52027bb54cb0e4a7eb2a7900eda33762531d7fdb5bf3e09c4fdacba595",
  "sections": {
   "effects": [
    [
@@ -9,7 +9,7 @@
    ],
    [
     "missile_barrage",
-    "0ad046a9fa653d32f209dbcb610ca56fa1b1bc9ceaab6e200f8bda159a45e48a"
+    "fe5fd846bcbf69ac36cf56143991d9bb68065086cc53b023b29f3a4fb9f8fd99"
    ],
    [
     "evocation",
@@ -17,11 +17,15 @@
    ],
    [
     "arcane_missiles",
-    "ab5f1079c14b56d0b23a094c228d1dccb80ce67086e9fe0cee968837d533f7ce"
+    "b9ac046e3b9a417e7e7d41e27185c8b50e72a94e314e0c677349fba73fca1abd"
    ],
    [
     "frostbolt",
     "a27ea6b0e237d7bf48770070761f869cf73f9b4a529d2784e923493ca40e3b7f"
+   ],
+   [
+    "fire_power",
+    "e88768dfaf5db88f1a2b69a9bf9bb85c0a13ffe06ddc31f3eb1833a4275543ad"
    ],
    [
     "fire_blast",
@@ -49,7 +53,7 @@
    ],
    [
     "heating_up",
-    "f8c5b4a8a09c95d6cd47b8d4fb30e8b43ba3236e2f0b5ba4ccc60eccd867d2f5"
+    "87ed1e2830933c22b2f945fdb4ad7fbcbd435908c3685c70a240a8e8ab7681d4"
    ],
    [
     "master_of_elements",
@@ -103,10 +107,6 @@
     "d7a42e06cb71727fd78711ab238d7653998c51669f920fbb99c5c04dfe1287af"
    ],
    [
-    "Sword Specialization",
-    "2cbec605924bfd169399deb62ea4b0154f48b7ddd83135185ce2a3c3e34ffe88"
-   ],
-   [
     "Clearcasting",
     "b08f5bc06b8cb858e6a7aeba8f6bb39a177144fdaa42d922d003d34514038c5c"
    ],
@@ -133,6 +133,10 @@
    [
     "Heating Up Trigger",
     "869b07655fbb71fa9915ad20094dd1deca7dc38a2d27d8c8a9ab4424bc5f0353"
+   ],
+   [
+    "Hot Streak Fire Blast Trigger",
+    "8cfe650175b8201146ed5de70b3fa8618e0b439b55b6c6c62df13f8e9afba220"
    ],
    [
     "Master of Elements",
@@ -338,15 +342,15 @@
    ],
    [
     "{\"spell_id\": 401502}",
-    "de7538da432b7f3e65dfeccf9125db46e0efc84a6b1ff42e415e1e56284c7e2f"
+    "7ab665b6d874b194601389c77805a6eceec5eb8338b84480a2f2aa45768445c7"
    ],
    [
     "{\"spell_id\": 1237312}",
-    "aa23e54bcd138b7eaf385bfa065297d52c1bca60de4af88b83abf963a8a139ef"
+    "b1e6769a98b3720ec0f043fb14f6076b516224e89bc619ac1c02b2a313851dea"
    ],
    [
     "{\"spell_id\": 1237313}",
-    "4d8d52650eca17a7db211400858fec95280d6a943526f0b0657fcdbd5e96518a"
+    "c11ac9efaa36674e8629c4b8171b0494fefef837d91dbdda932962ee34368342"
    ],
    [
     "{\"spell_id\": 12051}",
@@ -354,55 +358,55 @@
    ],
    [
     "{\"spell_id\": 133}",
-    "81f4c746bfdedb85ef6be69dfb041d999035b75a4e8219f2bb1dca5153506c26"
+    "9107904ea919ffa3c2d054a5b9b17034910f98069bd8f7eb6cf47798aa052431"
    ],
    [
     "{\"spell_id\": 143}",
-    "ff1a021a76356ff93d444150116fc538abf43ebb5a0f0e77f90ccb0cf0df9a0e"
+    "37dfd3da2e2780517973d405c833a025b7890dcde2e93bb007855abb011e7465"
    ],
    [
     "{\"spell_id\": 145}",
-    "af52c34aa24dd6a8c87e348324e77baf4396b216a1d1fba2122fe75629fadb5b"
+    "ea3cd54e71e255689c6eb7bcfc9150919ad6595926a789337f9d93fecbea40a4"
    ],
    [
     "{\"spell_id\": 3140}",
-    "c34b6a7f68452f030b2fba8ed0d0112600e154cd4c13e0a5f8241e2793115b79"
+    "27968beb6637646bf2e4499eeb1c9ed98fe4233164ece18a9a3fa8d9fdd3bfd6"
    ],
    [
     "{\"spell_id\": 8400}",
-    "9f682b2ef72e12755395ce3389f071a21a9b11f1ea9bfea16c40be36eb1e8ad9"
+    "1699cedbf81b126481881d07161fc8984958c262a6aa410ba5be1a551969c91f"
    ],
    [
     "{\"spell_id\": 8401}",
-    "75b18a39a8c19ab164ed8b6cb8e1fc5ab3d16cdc2cee0f36aacc98bbb80cc2bb"
+    "cc70dcae0dd5d688e0b670ce791b8b9b9df89334d1217567293ea8571d934710"
    ],
    [
     "{\"spell_id\": 8402}",
-    "bc61fefb87133664da551d0a3f573ddf5895de7a2ec5bee2c9d4137f8cbc0fa3"
+    "19380dc5406724cd20f2adaac62dcddf5123754382ec41e2be3d4ad88a1dec39"
    ],
    [
     "{\"spell_id\": 10148}",
-    "f490689dd74280ef4ef62b86b037a9f646ca28d2b493038f5355a49336955ee2"
+    "09429fb95763adcb42f3ab43bac6ae1a658c0df8f9cddae7ee079ae2e05e3d4e"
    ],
    [
     "{\"spell_id\": 10149}",
-    "bbd370d78708d851f64f3f0c54710178bdec0d4b2b8b6c1d8371d75a75d97143"
+    "792c96720d7d394c3ca7b579b914c7894ca97eb802e2203d809234831e18803e"
    ],
    [
     "{\"spell_id\": 10150}",
-    "fb1615421c59ded0996f64c08cc3ac4e4606075066abe868505b5ec2d555957f"
+    "8ed3763ea8c9505e62d2829df3d5a5ef7e0523f7d017a67c803282059e94d876"
    ],
    [
     "{\"spell_id\": 10151}",
-    "b655de21999f0401eb80b40d13412292eea1ed14157bc74534a1d50b76c5bf0a"
+    "d50346f9db6c0d12ba2aba26130b9bef7c5b889232cb5be7bf6b82cb368b6fbc"
    ],
    [
     "{\"spell_id\": 25306}",
-    "64499f6f70ae00af619c12913d1c4322153ac816917473f019d36e87d73a7a54"
+    "313c236e41cd2a54ce8f7a952b4408d964e988a547f4e32e753991a8a36d17d9"
    ],
    [
     "{\"spell_id\": 10199}",
-    "57658e7001749c4e2bde414372bec394a4a6db4452f622a5a2f192bcb45a56e8"
+    "e2868353ee07c3e83cf4b1d7feabf80aff137f9478f2e0bbb0011849f11d7a4c"
    ],
    [
     "{\"spell_id\": 10230}",
@@ -426,39 +430,39 @@
    ],
    [
     "{\"spell_id\": 2948}",
-    "244fe4eb83ec9af676e3765f4bfbfa92a74a3d662e482ee1a82dfc1b57feada1"
+    "2266d9fb039688924439199223c1d93da12cf4ea924cdf86d3561e077f6d0f12"
    ],
    [
     "{\"spell_id\": 8444}",
-    "4e726c276da71fb12550c76c0158b48a862bdaa2bd1d60ee2354d873a0fdcf9f"
+    "a2feef8b22567812232a884203febd2385e02082d9aa0afc9cd2de7fba07bfa3"
    ],
    [
     "{\"spell_id\": 8445}",
-    "bc4336eb46c3935ebb2a1ad35d755d6658435f1edc915a12f0ec6c85a5485356"
+    "78c4cb5857251acee65dae9a94b20f1fd5eddbc662d302391d8b3858af6026bd"
    ],
    [
     "{\"spell_id\": 8446}",
-    "316ee79a61bcf7e5303f8a277c785a0066900ffbf60594dcafa8b7eb26a3edf4"
+    "26e4a68f11f5c4ae99bed5b845dfd7744e692bbbb6f41a9e765f20faf6978c65"
    ],
    [
     "{\"spell_id\": 10205}",
-    "116f6af1aa6de5031dfa91beaec252e29512dc6e68cd54236ce52c889e5a4705"
+    "e51d920e063628a7fc7d33bea93881a401c2f8191421b89e71e7f4915724359b"
    ],
    [
     "{\"spell_id\": 10206}",
-    "61ba863d5b1bf524a6ec9e9effe78205aff1ed10b7f03c71b3a3c2e77f9f286e"
+    "a77467c810295d0784fa87b3165ab30808978094e6efd8c30ea9623b8b976cd9"
    ],
    [
     "{\"spell_id\": 10207}",
-    "8208b93c83184c86855099aaa9031c44a424f1b1c2139765e475ce6fcb6ec0ca"
+    "58a15caad56e4ca08b7656cd2f31a995efeeafb2b394d8aed4a0e2fdd788c5ed"
    ],
    [
     "{\"spell_id\": 10216}",
-    "c6c85b33909e219e78800f9fce14084ea160122e29dedcb72036ebf3a69790f0"
+    "5f9ab11bb8de15b487e4f0000761e726b3823dc44178a8ea5f801065d537054c"
    ],
    [
     "{\"spell_id\": 18809}",
-    "06c52139adb5e85889fb870046dc81f9e77381b3e6c17b3a779ddc1c575216a6"
+    "5cd7229088bd6cf79b6846fd07e46b167dc7a1325ac81d2f107a707efce011e2"
    ],
    [
     "{\"spell_id\": 11129}",
@@ -469,8 +473,8 @@
     "08b9f95ec698c9a0ff7453dd8db39f4a9b4593cced26fb980de3087a23b2054f"
    ]
   ],
-  "player.stats": "9a446a7aef62f5ac460504e29c5b8ab457578ab976e6b3381d33c147a484fc29",
-  "player.talents": "e40952d69d381fbd9e232ca70678951ecf6c6d06bc770625c3d6d1d7305b2060",
+  "player.stats": "436bb68f14c5c65c670f288b6f07d63ee83b319f87e5cffc588783e4de6d5eca",
+  "player.talents": "c7dcc3da5db5dda5d831fa24a32b2f00c5e07e544515930daa8acf8f678ab650",
   "target.auras": [
    [
     "Ignite-3",
