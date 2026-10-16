@@ -913,6 +913,11 @@ pub struct Pet {
     /// What each permanent aura's expiry adds to the stats before dependencies.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub aura_stats: Vec<PetAuraStats>,
+    /// What the pet's `OnPetDisable` adds to the stats before dependencies, after Disable takes
+    /// the inheritance away and before its auras expire, for a pet whose enable and disable
+    /// callbacks only move stats.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub disable_stats: BTreeMap<String, f64>,
 }
 
 /// The change a pet aura's expiry makes to the pet's stats before dependencies, Go

@@ -33,6 +33,11 @@ func init() {
 	// pet.go: the pet is enabled on start and never summoned after; its rotation may disable it
 	// once the fight passes its uptime, which the hunter_pet effect describes.
 	resetOnlyPetClasses[proto.Class_ClassHunter] = true
+	// pet.go inheritAutoShotCritMods (patch 136): the pet's enable and disable callbacks add the
+	// Auto Shot's crit modifiers to its physical crit and take them back.
+	statCallbackPets = append(statCallbackPets, func(pet *core.Pet) bool {
+		return pet.Owner != nil && pet.Owner.Class == proto.Class_ClassHunter && pet.EnabledOnStart() && !pet.IsGuardian()
+	})
 }
 
 // Hunter class masks are Go-internal bit positions (sim/hunter/hunter.go). Export the stable class

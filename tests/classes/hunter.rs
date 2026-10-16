@@ -270,8 +270,10 @@ fn a_pet_past_its_uptime_is_disabled() {
         .position(|line| line.ends_with("Pet dismissed"))
         .expect("the Cat is disabled");
     let at_dismissal = at(cat[dismissed]);
+    // The rotation finds the uptime spent at its next evaluation, which waits on the pet's GCD
+    // or focus.
     assert!(
-        at_dismissal > end / 2.0 && at_dismissal < end / 2.0 + 0.5,
+        at_dismissal > end / 2.0 && at_dismissal < end / 2.0 + 2.0,
         "{at_dismissal} of {end}"
     );
     assert!(
@@ -880,4 +882,22 @@ fn furious_howl_needs_its_effect() {
         .unwrap()
         .retain(|effect| effect["kind"] != "hunter_pet_furious_howl");
     assert!(reasons(value).contains(&"the pet's ability at 1 has no behavior".to_string()));
+}
+
+/// Go pet.go makeStatInheritance (fork patch 136): the pet's physical crit is its master's Auto
+/// Shot crit, physical and ranged-only crit together, and the disable callback takes back the
+/// Auto Shot's crit modifiers it added: here the human's sword specialization, which Auto Shot
+/// does not roll.
+#[test]
+fn the_pet_inherits_its_masters_auto_shot_crit() {
+    let value = fixture("production-beast-mastery-hunter");
+    let pet = &value["pets"][0];
+    assert_eq!(
+        pet["inheritance"],
+        json!([
+            {"owner": "PhysicalCritPercent", "pet": "PhysicalCritPercent", "coefficient": 1},
+            {"owner": "RangedCritPercent", "pet": "PhysicalCritPercent", "coefficient": 1},
+        ])
+    );
+    assert_eq!(pet["disable_stats"], json!({"PhysicalCritPercent": 2}));
 }

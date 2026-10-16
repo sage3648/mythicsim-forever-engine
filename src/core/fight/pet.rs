@@ -85,6 +85,8 @@ pub(crate) struct Inheritance {
     dismiss: Vec<(String, Option<usize>, f64)>,
     /// What each permanent aura's expiry adds to the stats before dependencies, by label.
     aura_stats: Vec<(String, Vec<(usize, f64)>)>,
+    /// What the pet's `OnPetDisable` adds to the stats before dependencies.
+    disable_stats: Vec<(usize, f64)>,
     /// (src, dst, amount, step) of each enabled dependency, in order.
     dependencies: Vec<(usize, usize, f64, f64)>,
     floored: Vec<bool>,
@@ -145,6 +147,11 @@ impl Inheritance {
                 (aura.aura.clone(), stats)
             })
             .collect();
+        let disable_stats: Vec<(usize, f64)> = exported
+            .disable_stats
+            .iter()
+            .map(|(name, value)| (index(name), *value))
+            .collect();
         let mut initial_without_deps = vec![0.0; names.len()];
         for (position, value) in without {
             initial_without_deps[position] = value;
@@ -170,6 +177,9 @@ impl Inheritance {
                 changing[stat] = true;
             }
         }
+        for &(stat, _) in &disable_stats {
+            changing[stat] = true;
+        }
         for &(src, dst, _, _) in &dependencies {
             if changing[src] {
                 changing[dst] = true;
@@ -189,6 +199,7 @@ impl Inheritance {
             initial_inherited,
             dismiss,
             aura_stats,
+            disable_stats,
             dependencies,
             floored,
             power_stats: [Some(0), Some(1), Some(2), Some(3), Some(4)],
@@ -203,10 +214,14 @@ impl Inheritance {
         }
     }
 
-    /// Go `resetInheritedOwnerStats`: `AddStatsDynamic` of the inherited stats inverted.
+    /// Go `resetInheritedOwnerStats`: `AddStatsDynamic` of the inherited stats inverted, then
+    /// what `OnPetDisable` adds.
     fn remove_inherited(&mut self) {
         for (stat, inherited) in self.without_deps.iter_mut().zip(&self.inherited) {
             *stat += -inherited;
+        }
+        for &(stat, amount) in &self.disable_stats {
+            self.without_deps[stat] += amount;
         }
     }
 
@@ -997,9 +1012,16 @@ impl<A: Agent> Fight<A> {
             return;
         }
         // Go AddStatsDynamic: the change joins the stats before dependencies, from which the
-        // stats are recomputed.
+        // stats are recomputed. A pet stat several owner stats feed takes their sum at once.
+        let mut changes: Vec<(usize, f64)> = Vec::new();
         for &(owner, stat, coefficient) in &inheritance.terms {
             let change = power(&pending, owner) * coefficient;
+            match changes.iter_mut().find(|(known, _)| *known == stat) {
+                Some((_, total)) => *total += change,
+                None => changes.push((stat, change)),
+            }
+        }
+        for (stat, change) in changes {
             inheritance.without_deps[stat] += change;
             inheritance.inherited[stat] += change;
         }

@@ -19,8 +19,8 @@
 [0.00] [marksmanship-hunter (#1)] Aura gained: {SpellID: 25918, Tag: -1}
 [0.00] [marksmanship-hunter (#1) - Wolf] Aura gained: {SpellID: 10494, Tag: -1}
 [0.00] [marksmanship-hunter (#1) - Wolf] Aura gained: {SpellID: 20905, Tag: -1}
-[0.00] [marksmanship-hunter (#1) - Wolf] Pet stats: {"Strength": 136.000,"Agility": 100.000,"Stamina": 274.000,"Intellect": 50.000,"Spirit": 80.000,"AttackPower": 252.000,"RangedAttackPower": 75.000,"Armor": 200.000,"Health": 2560.000,"MP5": 25.000,"PhysicalCritPercent": 9.000,"SpellCritPercent": 4.000,}
-[0.00] [marksmanship-hunter (#1) - Wolf] Pet inherited stats: {}
+[0.00] [marksmanship-hunter (#1) - Wolf] Pet stats: {"Strength": 136.000,"Agility": 100.000,"Stamina": 274.000,"Intellect": 50.000,"Spirit": 80.000,"AttackPower": 252.000,"RangedAttackPower": 75.000,"Armor": 200.000,"Health": 2560.000,"MP5": 25.000,"PhysicalCritPercent": 22.032,"SpellCritPercent": 4.000,}
+[0.00] [marksmanship-hunter (#1) - Wolf] Pet inherited stats: {"PhysicalCritPercent": 20.032,}
 [0.00] [marksmanship-hunter (#1) - Wolf] Pet summoned
 [-10.00] [marksmanship-hunter (#1)] Casting {SpellID: 25296} (Cost = 120.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [-10.00] [marksmanship-hunter (#1)] Completed cast {SpellID: 25296}
@@ -137,8 +137,8 @@
 [3.59] [marksmanship-hunter (#1) - Wolf] Gained 2.500 focus from {OtherID: 6} (50.000 --> 52.500) of 100 total.
 [3.70] [marksmanship-hunter (#1) - Wolf] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [3.70] [marksmanship-hunter (#1) - Wolf] Completed cast {OtherID: 3, Tag: 1}
-[3.70] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 335.0, RAP: 75.0, SP: 0.0, BaseDamage:61.2, AfterAttackerMods:88.0, AfterResistances:74.8, AfterTargetMods:74.8, AfterOutcome:74.8, AfterPostOutcome:74.8
-[3.70] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} Hit for 74.771 damage (SpellSchool: 1). (Threat: 74.771)
+[3.70] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 335.0, RAP: 75.0, SP: 0.0, BaseDamage:61.2, AfterAttackerMods:88.0, AfterResistances:74.8, AfterTargetMods:74.8, AfterOutcome:149.5, AfterPostOutcome:149.5
+[3.70] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} Crit for 149.542 damage (SpellSchool: 1). (Threat: 149.542)
 [3.80] [marksmanship-hunter (#1) - Wolf] Pausing rotation for 300ms due to resources / CDs.
 [3.84] [marksmanship-hunter (#1) - Wolf] Gained 2.500 focus from {OtherID: 6} (52.500 --> 55.000) of 100 total.
 [4.00] [marksmanship-hunter (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (3007.100 --> 3037.900) of 3465 total.
@@ -362,8 +362,8 @@
 [13.22] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [13.30] [marksmanship-hunter (#1) - Wolf] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [13.30] [marksmanship-hunter (#1) - Wolf] Completed cast {OtherID: 3, Tag: 1}
-[13.30] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 335.0, RAP: 75.0, SP: 0.0, BaseDamage:51.1, AfterAttackerMods:73.5, AfterResistances:62.4, AfterTargetMods:62.4, AfterOutcome:62.4, AfterPostOutcome:62.4
-[13.30] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} Hit for 62.395 damage (SpellSchool: 1). (Threat: 62.395)
+[13.30] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 335.0, RAP: 75.0, SP: 0.0, BaseDamage:51.1, AfterAttackerMods:73.5, AfterResistances:62.4, AfterTargetMods:62.4, AfterOutcome:124.8, AfterPostOutcome:124.8
+[13.30] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} Crit for 124.789 damage (SpellSchool: 1). (Threat: 124.789)
 [13.32] [marksmanship-hunter (#1)] No available actions!
 [13.32] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [13.40] [marksmanship-hunter (#1) - Wolf] Pausing rotation for 500ms due to resources / CDs.
@@ -523,8 +523,8 @@
 [20.46] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [20.50] [marksmanship-hunter (#1) - Wolf] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [20.50] [marksmanship-hunter (#1) - Wolf] Completed cast {OtherID: 3, Tag: 1}
-[20.50] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 335.0, RAP: 75.0, SP: 0.0, BaseDamage:58.6, AfterAttackerMods:84.2, AfterResistances:71.5, AfterTargetMods:71.5, AfterOutcome:71.5, AfterPostOutcome:71.5
-[20.50] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} Hit for 71.511 damage (SpellSchool: 1). (Threat: 71.511)
+[20.50] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 335.0, RAP: 75.0, SP: 0.0, BaseDamage:58.6, AfterAttackerMods:84.2, AfterResistances:71.5, AfterTargetMods:71.5, AfterOutcome:143.0, AfterPostOutcome:143.0
+[20.50] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} Crit for 143.022 damage (SpellSchool: 1). (Threat: 143.022)
 [20.56] [marksmanship-hunter (#1)] No available actions!
 [20.56] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [20.60] [marksmanship-hunter (#1) - Wolf] Pausing rotation for 500ms due to resources / CDs.
@@ -682,8 +682,8 @@
 [27.60] [marksmanship-hunter (#1) - Wolf] Pausing rotation for 500ms due to resources / CDs.
 [27.70] [marksmanship-hunter (#1) - Wolf] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [27.70] [marksmanship-hunter (#1) - Wolf] Completed cast {OtherID: 3, Tag: 1}
-[27.70] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 335.0, RAP: 75.0, SP: 0.0, BaseDamage:56.7, AfterAttackerMods:81.5, AfterResistances:69.2, AfterTargetMods:69.2, AfterOutcome:69.2, AfterPostOutcome:69.2
-[27.70] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} Hit for 69.243 damage (SpellSchool: 1). (Threat: 69.243)
+[27.70] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 335.0, RAP: 75.0, SP: 0.0, BaseDamage:56.7, AfterAttackerMods:81.5, AfterResistances:69.2, AfterTargetMods:69.2, AfterOutcome:138.5, AfterPostOutcome:138.5
+[27.70] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} Crit for 138.487 damage (SpellSchool: 1). (Threat: 138.487)
 [27.80] [marksmanship-hunter (#1) - Wolf] Pausing rotation for 500ms due to resources / CDs.
 [27.84] [marksmanship-hunter (#1) - Wolf] Gained 2.500 focus from {OtherID: 6} (95.000 --> 97.500) of 100 total.
 [28.00] [marksmanship-hunter (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (3358.200 --> 3389.000) of 3465 total.
@@ -954,8 +954,8 @@
 [40.87] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [40.90] [marksmanship-hunter (#1) - Wolf] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [40.90] [marksmanship-hunter (#1) - Wolf] Completed cast {OtherID: 3, Tag: 1}
-[40.90] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 335.0, RAP: 75.0, SP: 0.0, BaseDamage:50.7, AfterAttackerMods:72.9, AfterResistances:61.9, AfterTargetMods:61.9, AfterOutcome:61.9, AfterPostOutcome:61.9
-[40.90] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} Hit for 61.941 damage (SpellSchool: 1). (Threat: 61.941)
+[40.90] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 335.0, RAP: 75.0, SP: 0.0, BaseDamage:50.7, AfterAttackerMods:72.9, AfterResistances:61.9, AfterTargetMods:61.9, AfterOutcome:123.9, AfterPostOutcome:123.9
+[40.90] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} Crit for 123.882 damage (SpellSchool: 1). (Threat: 123.882)
 [40.97] [marksmanship-hunter (#1)] No available actions!
 [40.97] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [41.00] [marksmanship-hunter (#1) - Wolf] Pausing rotation for 500ms due to resources / CDs.
@@ -1410,8 +1410,8 @@
 [61.20] [marksmanship-hunter (#1) - Wolf] Pausing rotation for 500ms due to resources / CDs.
 [61.30] [marksmanship-hunter (#1) - Wolf] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [61.30] [marksmanship-hunter (#1) - Wolf] Completed cast {OtherID: 3, Tag: 1}
-[61.30] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 335.0, RAP: 75.0, SP: 0.0, BaseDamage:60.7, AfterAttackerMods:87.3, AfterResistances:74.1, AfterTargetMods:74.1, AfterOutcome:74.1, AfterPostOutcome:74.1
-[61.30] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} Hit for 74.124 damage (SpellSchool: 1). (Threat: 74.124)
+[61.30] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 335.0, RAP: 75.0, SP: 0.0, BaseDamage:60.7, AfterAttackerMods:87.3, AfterResistances:74.1, AfterTargetMods:74.1, AfterOutcome:148.2, AfterPostOutcome:148.2
+[61.30] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} Crit for 148.247 damage (SpellSchool: 1). (Threat: 148.247)
 [61.40] [marksmanship-hunter (#1) - Wolf] Pausing rotation for 500ms due to resources / CDs.
 [61.67] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 1} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:37.8, AfterAttackerMods:43.5, AfterResistances:43.5, AfterTargetMods:43.5, AfterOutcome:43.5, AfterPostOutcome:43.5
 [61.67] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 1} tick Hit for 43.470 damage (SpellSchool: 1). (Threat: 43.470)
@@ -1600,8 +1600,8 @@
 [68.40] [marksmanship-hunter (#1) - Wolf] Pausing rotation for 500ms due to resources / CDs.
 [68.50] [marksmanship-hunter (#1) - Wolf] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [68.50] [marksmanship-hunter (#1) - Wolf] Completed cast {OtherID: 3, Tag: 1}
-[68.50] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 335.0, RAP: 75.0, SP: 0.0, BaseDamage:54.7, AfterAttackerMods:78.7, AfterResistances:66.8, AfterTargetMods:66.8, AfterOutcome:66.8, AfterPostOutcome:66.8
-[68.50] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} Hit for 66.839 damage (SpellSchool: 1). (Threat: 66.839)
+[68.50] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 335.0, RAP: 75.0, SP: 0.0, BaseDamage:54.7, AfterAttackerMods:78.7, AfterResistances:66.8, AfterTargetMods:66.8, AfterOutcome:133.7, AfterPostOutcome:133.7
+[68.50] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} Crit for 133.678 damage (SpellSchool: 1). (Threat: 133.678)
 [68.59] [marksmanship-hunter (#1) - Wolf] Gained 2.500 focus from {OtherID: 6} (62.500 --> 65.000) of 100 total.
 [68.60] [marksmanship-hunter (#1) - Wolf] Pausing rotation for 500ms due to resources / CDs.
 [68.84] [marksmanship-hunter (#1) - Wolf] Gained 2.500 focus from {OtherID: 6} (65.000 --> 67.500) of 100 total.
@@ -2171,8 +2171,8 @@
 [93.60] [marksmanship-hunter (#1)] Spent 212.500 mana from {SpellID: 25295} (1641.450 --> 1428.950) of 3465 total.
 [93.70] [marksmanship-hunter (#1) - Wolf] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [93.70] [marksmanship-hunter (#1) - Wolf] Completed cast {OtherID: 3, Tag: 1}
-[93.70] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 335.0, RAP: 75.0, SP: 0.0, BaseDamage:58.2, AfterAttackerMods:83.7, AfterResistances:71.1, AfterTargetMods:71.1, AfterOutcome:71.1, AfterPostOutcome:71.1
-[93.70] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} Hit for 71.064 damage (SpellSchool: 1). (Threat: 71.064)
+[93.70] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 335.0, RAP: 75.0, SP: 0.0, BaseDamage:58.2, AfterAttackerMods:83.7, AfterResistances:71.1, AfterTargetMods:71.1, AfterOutcome:142.1, AfterPostOutcome:142.1
+[93.70] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} Crit for 142.129 damage (SpellSchool: 1). (Threat: 142.129)
 [93.80] [marksmanship-hunter (#1) - Wolf] Pausing rotation for 500ms due to resources / CDs.
 [94.00] [marksmanship-hunter (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1428.950 --> 1459.750) of 3465 total.
 [94.20] [marksmanship-hunter (#1)] [Target 1] {SpellID: 1293527, Tag: 1} [DEBUG] MAP: 1582.0, RAP: 1736.0, SP: 185.0, BaseDamage:37.8, AfterAttackerMods:43.5, AfterResistances:43.5, AfterTargetMods:43.5, AfterOutcome:43.5, AfterPostOutcome:43.5
@@ -2304,8 +2304,8 @@
 [100.80] [marksmanship-hunter (#1) - Wolf] Pausing rotation for 500ms due to resources / CDs.
 [100.90] [marksmanship-hunter (#1) - Wolf] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [100.90] [marksmanship-hunter (#1) - Wolf] Completed cast {OtherID: 3, Tag: 1}
-[100.90] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 335.0, RAP: 75.0, SP: 0.0, BaseDamage:60.7, AfterAttackerMods:87.3, AfterResistances:74.1, AfterTargetMods:74.1, AfterOutcome:74.1, AfterPostOutcome:74.1
-[100.90] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} Hit for 74.122 damage (SpellSchool: 1). (Threat: 74.122)
+[100.90] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 335.0, RAP: 75.0, SP: 0.0, BaseDamage:60.7, AfterAttackerMods:87.3, AfterResistances:74.1, AfterTargetMods:74.1, AfterOutcome:148.2, AfterPostOutcome:148.2
+[100.90] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} Crit for 148.245 damage (SpellSchool: 1). (Threat: 148.245)
 [101.00] [marksmanship-hunter (#1) - Wolf] Pausing rotation for 500ms due to resources / CDs.
 [101.28] [marksmanship-hunter (#1)] No available actions!
 [101.28] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
@@ -2567,8 +2567,8 @@
 [110.48] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [110.50] [marksmanship-hunter (#1) - Wolf] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [110.50] [marksmanship-hunter (#1) - Wolf] Completed cast {OtherID: 3, Tag: 1}
-[110.50] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 335.0, RAP: 75.0, SP: 0.0, BaseDamage:57.2, AfterAttackerMods:82.2, AfterResistances:69.8, AfterTargetMods:69.8, AfterOutcome:69.8, AfterPostOutcome:69.8
-[110.50] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} Hit for 69.774 damage (SpellSchool: 1). (Threat: 69.774)
+[110.50] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 335.0, RAP: 75.0, SP: 0.0, BaseDamage:57.2, AfterAttackerMods:82.2, AfterResistances:69.8, AfterTargetMods:69.8, AfterOutcome:139.5, AfterPostOutcome:139.5
+[110.50] [marksmanship-hunter (#1) - Wolf] [Target 1] {OtherID: 3, Tag: 1} Crit for 139.549 damage (SpellSchool: 1). (Threat: 139.549)
 [110.58] [marksmanship-hunter (#1)] No available actions!
 [110.58] [marksmanship-hunter (#1)] Pausing rotation for 100ms due to resources / CDs.
 [110.60] [marksmanship-hunter (#1) - Wolf] Pausing rotation for 500ms due to resources / CDs.
@@ -2959,7 +2959,7 @@
 [127.25] [marksmanship-hunter (#1) - Wolf] Aura faded: {SpellID: 20905, Tag: -1}
 [127.25] [marksmanship-hunter (#1) - Wolf] Aura faded: {SpellID: 24597}
 [127.25] [marksmanship-hunter (#1) - Wolf] Pet dismissed
-[127.25] [marksmanship-hunter (#1) - Wolf] {"Strength": 136.000,"Agility": 100.000,"Stamina": 274.000,"Intellect": 50.000,"Spirit": 80.000,"AttackPower": 252.000,"Armor": 200.000,"Health": 2560.000,"PhysicalCritPercent": 9.000,"SpellCritPercent": 4.000,}
+[127.25] [marksmanship-hunter (#1) - Wolf] {"Strength": 136.000,"Agility": 100.000,"Stamina": 274.000,"Intellect": 50.000,"Spirit": 80.000,"AttackPower": 252.000,"Armor": 200.000,"Health": 2560.000,"PhysicalCritPercent": 4.000,"SpellCritPercent": 4.000,}
 [127.25] [marksmanship-hunter (#1)] Aura faded: {SpellID: 29414}
 [127.25] [marksmanship-hunter (#1)] Aura faded: {SpellID: 20597}
 [127.25] [marksmanship-hunter (#1)] Aura faded: {SpellID: 25289, Tag: -1}

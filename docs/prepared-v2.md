@@ -496,10 +496,14 @@ the pull, and its rotation runs once per timestep after the player's. Its damage
 of the target's damage taken and its owner's DPS, and Go's OOM events leave its metrics
 alone. A dynamic pet takes its owner's stat changes in batches at Go's heartbeat, every
 5.25 s from the offset the environment rolls at reset: `inheritance` gives its linear
-terms, and `stats_without_deps` and `stat_dependencies` what Go recomputes the pet's stats
-from; the exporter checks both against Go bit for bit. For a dynamic pet the reset enables,
-`inherited_stats` is what its dismissal takes away, `aura_stats` what each permanent aura's
-expiry adds to its stats before dependencies, read exactly by the exporter, and
+terms, several of which may feed one pet stat (a hunter pet's crit is its owner's physical
+and ranged-only crit, fork patch 136), and `stats_without_deps` and `stat_dependencies` what
+Go recomputes the pet's stats from; the exporter checks both against Go bit for bit. For a
+dynamic pet the reset enables, `inherited_stats` is what its dismissal takes away,
+`disable_stats` what its `OnPetDisable` then adds, for a pet whose class states that its
+enable and disable callbacks only move stats (the hunter pet's Auto Shot crit modifiers),
+`aura_stats` what each permanent aura's expiry adds to its stats before dependencies, both
+read exactly by the exporter, and
 `dismiss_stats` its dismissal line's stats in Go's order, a stat a permanent aura changes
 included. Rust replays those additions in Go's order, so the line keeps the float residue the
 fight leaves, such as a spell damage of -0.000 after the owner's procs. Any other pet logs

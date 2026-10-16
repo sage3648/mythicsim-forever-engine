@@ -129,6 +129,42 @@ pub(crate) struct HunterPetState {
     pub extra_ability: Option<SpellId>,
 }
 
+/// Go `Hunter.makeStatInheritance`. Forever is a Classic-era realm: the pet takes none of its
+/// owner's stats but one. From 16 October 2026 its physical crit is its master's ranged crit
+/// (patch 136): the Auto Shot rolls PhysicalCritPercent plus the ranged-only RangedCritPercent,
+/// so the pet inherits that sum, on the pet heartbeat as every dynamic inheritance.
+fn stat_inheritance(owner_stats: &Stats) -> Stats {
+    let mut inherited = Stats::default();
+    inherited[Stat::PhysicalCritPercent] =
+        owner_stats[Stat::PhysicalCritPercent] + owner_stats[Stat::RangedCritPercent];
+    inherited
+}
+
+/// Go `HunterPet.inheritAutoShotCritMods`: the crit modifiers on the owner's Auto Shot spell
+/// (today only the weapon racials' take-back) reach the pet while it is out, read when it is
+/// enabled.
+fn inherit_auto_shot_crit_mods(sim: &mut Sim, pet: UnitId, owner: UnitId) {
+    let applied = sim.new_state_slot(0.0);
+    sim.pet_data_mut(pet).on_pet_enable = Some(Rc::new(move |sim: &mut Sim, pet| {
+        let bonus = sim
+            .unit(owner)
+            .auto_attacks
+            .ranged_spell
+            .map_or(0.0, |spell| sim.spell(spell).bonus_crit_percent);
+        sim.set_state(applied, bonus);
+        if bonus != 0.0 {
+            sim.add_stat_dynamic(pet, Stat::PhysicalCritPercent, bonus);
+        }
+    }));
+    sim.pet_data_mut(pet).on_pet_disable = Some(Rc::new(move |sim: &mut Sim, pet| {
+        let bonus = sim.state(applied);
+        if bonus != 0.0 {
+            sim.add_stat_dynamic(pet, Stat::PhysicalCritPercent, -bonus);
+            sim.set_state(applied, 0.0);
+        }
+    }));
+}
+
 /// Go `NewHunterPet`.
 pub(super) fn new_hunter_pet(sim: &mut Sim, hunter: &mut Hunter) {
     let pet_type = hunter.options.enum_name("pet_type");
@@ -156,8 +192,7 @@ pub(super) fn new_hunter_pet(sim: &mut Sim, hunter: &mut Hunter) {
         name: family.name.to_string(),
         owner,
         base_stats,
-        // Forever is a Classic-era realm: the pet takes none of its owner's stats.
-        stat_inheritance: Rc::new(|_| Stats::default()),
+        stat_inheritance: Rc::new(stat_inheritance),
         enabled_on_start: true,
         is_guardian: false,
         is_dynamic: true,
@@ -169,11 +204,6 @@ pub(super) fn new_hunter_pet(sim: &mut Sim, hunter: &mut Hunter) {
     sim.unit_mut(pet).mob_type = "MobTypeBeast".to_string();
 
     let tables = crate::data::tables::tables();
-    let crit_per_agi = tables
-        .crit_per_agi_max_level
-        .get("ClassWarrior")
-        .copied()
-        .unwrap_or(0.0);
     let crit_per_int = tables
         .crit_per_int_max_level
         .get("ClassWarrior")
@@ -182,10 +212,10 @@ pub(super) fn new_hunter_pet(sim: &mut Sim, hunter: &mut Hunter) {
     {
         let sdm = &mut sim.unit_mut(pet).sdm;
         sdm.add_stat_dependency(Stat::Strength, Stat::AttackPower, 2.0);
-        // Warrior crit scaling.
-        sdm.add_stat_dependency(Stat::Agility, Stat::PhysicalCritPercent, crit_per_agi);
+        // No Agility crit: the pet's physical crit is its owner's ranged crit (patch 136).
         sdm.add_stat_dependency(Stat::Intellect, Stat::SpellCritPercent, crit_per_int);
     }
+    inherit_auto_shot_crit_mods(sim, pet, owner);
 
     // Bestial Discipline buys the pet 10% focus regen a rank (19590 effect 1).
     let focus_multiplier = spell_data()

@@ -4,7 +4,7 @@
 
 | Source | Role | Baseline |
 | --- | --- | --- |
-| [MythicSim Go engine](https://github.com/sage3648/mythicsim-forever-engine-go) | Fixtures and live reference | `0025d73986eebd90df1849c202b8c9a88d1f01c9`, on community base `f7598154eb8a138831290b34d4d321a532295224` |
+| [MythicSim Go engine](https://github.com/sage3648/mythicsim-forever-engine-go) | Fixtures and live reference | `b1137248e6b4f230bc706a4d6492b5f7c8d6b64c`, on community base `f7598154eb8a138831290b34d4d321a532295224` |
 | [Community Forever engine](https://github.com/ElliotWood/Forever) | Changes to review for applicability | Adopted base `f4b776b4f41d5c7799b8141697a2c9e67c89d426`; reviewed through `f7598154eb8a138831290b34d4d321a532295224` (2026-10-10) |
 
 Go is a reference implementation, not proof of live-game correctness. Forever can
@@ -337,6 +337,28 @@ exporter writes for every one of the 614. Every variant of the 0025d7398 rerun w
 engine against the Go results that rerun kept: 14,278 match, 63 are refused for the same reasons, none
 differ, and the 66 weapon skill and 10 regenerated variants match as well
 ([record](validation/2026-10-15-item-swap-sweeps.json)).
+
+The pin moved from `0025d7398` to `b1137248e` on 2026-10-16, one commit: the fork's patch 136 (branch
+`mythicsim/racials-20261016`), a pet's crit from its master's ranged crit. The community base `f7598154e`
+and client build 70338 did not move, so the ledger has no new commit. From 16 October 2026 a hunter pet's
+crit is its master's Auto Shot crit, not its own Agility: it inherits PhysicalCritPercent plus the
+ranged-only RangedCritPercent on the pet heartbeat, and its enable and disable callbacks add and take back
+the Auto Shot spell's crit modifiers (the weapon racials' take-back until patch 137). Ferocity and
+Intimidation still add on the pet.
+
+- Both exporters accept a pet stat that several owner stats feed, checking the sum of the terms bit for
+  bit, and a pet whose class states that its enable and disable callbacks only move stats. Such a pet
+  exports `disable_stats`, what its `OnPetDisable` adds, which the runtime applies after the inheritance
+  leaves and before the auras expire, as Go's `Disable` does; the runtime sums the terms that feed one stat
+  before adding them.
+- The runtime holds the owner's ranged-only crit fixed, so coverage refuses a fight that changes it.
+
+21 of the 614 Go goldens changed, all Hunter builds with a pet, and the Hunter preparation goldens follow.
+The fixtures were re-exported by the pinned exporter built for linux/arm64 under emulation: an amd64
+build differs from the accepted goldens in the last bits of 591 others. Rust matches all 612 accepted
+fixtures with a Go golden, and preparation writes exactly what the exporter writes for every one of the
+614. The pet uptime test now allows the rotation's next evaluation, 1.1 seconds after half the fight,
+where Go's log has it. The recorded sweeps were not rerun.
 
 ## Ledger
 
