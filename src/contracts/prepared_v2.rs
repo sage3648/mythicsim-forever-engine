@@ -913,6 +913,11 @@ pub struct Pet {
     /// What each permanent aura's expiry adds to the stats before dependencies.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub aura_stats: Vec<PetAuraStats>,
+    /// What the pet's `OnPetDisable` adds to the stats before dependencies, after Disable takes
+    /// the inheritance away and before its auras expire, for a pet whose enable and disable
+    /// callbacks only move stats.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub disable_stats: BTreeMap<String, f64>,
 }
 
 /// The change a pet aura's expiry makes to the pet's stats before dependencies, Go
@@ -1407,7 +1412,7 @@ impl ExternalActivation {
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Effect {
     Frostbolt {},
-    /// The Gnome racial Eureka!: a major cooldown whose three stacks lower the cost and raise
+    /// The Gnome racial Eureka!: a major cooldown whose 8 second buff lowers the cost and raises
     /// the damage of the spells the class names, resolved into spell positions.
     Eureka {
         spell_id: i32,
@@ -1418,7 +1423,6 @@ pub enum Effect {
         cost_spells: Vec<usize>,
         damage_spells: Vec<usize>,
         tick_cancel_spells: Vec<usize>,
-        spending_spells: Vec<usize>,
     },
     /// The Undead racial Touch of the Grave: landed hits can drain the target.
     TouchOfTheGrave {

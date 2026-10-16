@@ -1099,6 +1099,7 @@ const INERT_STATS: &[&str] = &[
 /// inheritance carries only its tracked powers.
 const UNINHERITED_STATS: &[&str] = &[
     "Spirit",
+    "RangedCritPercent",
     "ArcaneDamage",
     "FireDamage",
     "FrostDamage",

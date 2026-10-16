@@ -4298,7 +4298,6 @@ impl<A: Agent> Fight<A> {
                 cost_spells,
                 damage_spells,
                 tick_cancel_spells,
-                spending_spells,
                 ..
             } = effect
             {
@@ -4306,7 +4305,6 @@ impl<A: Agent> Fight<A> {
                     aura,
                     [*cost_percent, *damage_percent, *tick_cancel_percent],
                     [cost_spells, damage_spells, tick_cancel_spells],
-                    spending_spells,
                 )?);
             }
         }

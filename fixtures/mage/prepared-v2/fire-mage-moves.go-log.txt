@@ -527,7 +527,6 @@
 [45.50] [fire-mage (#1)] Casting {SpellID: 1259817} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [45.50] [fire-mage (#1)] Completed cast {SpellID: 1259817}
 [45.50] [fire-mage (#1)] Aura gained: {SpellID: 1259817}
-[45.50] [fire-mage (#1)] {SpellID: 1259817} stacks: 0 --> 3
 [45.50] [fire-mage (#1)] Major cooldown used: {SpellID: 1259817}
 [45.50] [fire-mage (#1)] Casting {ItemID: 14152} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [45.50] [fire-mage (#1)] Completed cast {ItemID: 14152}
@@ -541,14 +540,12 @@
 [47.00] [fire-mage (#1)] Aura faded: {SpellID: 400625}
 [47.00] [fire-mage (#1)] {SpellID: 400625} stacks: 3 --> 0
 [47.00] [fire-mage (#1)] Aura faded: {SpellID: 12536}
-[47.00] [fire-mage (#1)] {SpellID: 1259817} stacks: 3 --> 2
 [47.00] [fire-mage (#1)] Casting {SpellID: 10199} (Cost = 306.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [47.00] [fire-mage (#1)] Completed cast {SpellID: 10199}
 [47.00] [fire-mage (#1)] Spent 306.000 mana from {SpellID: 10199} (5843.598 --> 5537.598) of 6886 total.
 [47.00] [fire-mage (#1)] [Target 1] {SpellID: 10199} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:640.4, AfterAttackerMods:891.2, AfterResistances:891.2, AfterTargetMods:980.3, AfterOutcome:980.3, AfterPostOutcome:980.3
 [47.00] [fire-mage (#1)] [Target 1] {SpellID: 10199} Hit for 980.268 damage (SpellSchool: 4). (Threat: 980.268)
 [47.00] [fire-mage (#1)] {SpellID: 11129} stacks: 1 --> 2
-[47.00] [fire-mage (#1)] {SpellID: 1259817} stacks: 2 --> 1
 [47.00] [fire-mage (#1)] [Target 1] {SpellID: 18809} Hit for 1648.685 damage (SpellSchool: 4). (Threat: 1648.685)
 [47.00] [fire-mage (#1)] {SpellID: 11129} stacks: 2 --> 3
 [47.00] [Target 1] Aura gained: {SpellID: 18809}
@@ -566,8 +563,6 @@
 [51.50] [fire-mage (#1)] Completed cast {SpellID: 25306}
 [51.50] [fire-mage (#1)] Spent 369.000 mana from {SpellID: 25306} (5727.448 --> 5358.448) of 6886 total.
 [51.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:1007.8, AfterAttackerMods:1402.3, AfterResistances:1402.3, AfterTargetMods:1542.6, AfterOutcome:2313.9, AfterPostOutcome:2313.9
-[51.50] [fire-mage (#1)] {SpellID: 1259817} stacks: 1 --> 0
-[51.50] [fire-mage (#1)] Aura faded: {SpellID: 1259817}
 [51.50] [fire-mage (#1)] [DEBUG] Moving to 35.0 yards
 [51.50] [fire-mage (#1)] Casting {OtherID: 20} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [51.50] [fire-mage (#1)] Completed cast {OtherID: 20}
@@ -661,6 +656,7 @@
 [53.40] [fire-mage (#1)] Queueing up {SpellID: 25306} to cast at 51.500000001s.
 [53.40] [fire-mage (#1)] Pausing rotation for 100ms due to resources / CDs.
 [53.40] [fire-mage (#1)] {SpellID: 25306} failed to cast: casting/channeling while moving not allowed!
+[53.50] [fire-mage (#1)] Aura faded: {SpellID: 1259817}
 [53.50] [fire-mage (#1)] [Target 1] {SpellID: 412538} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:462.8, AfterAttackerMods:462.8, AfterResistances:462.8, AfterTargetMods:462.8, AfterOutcome:462.8, AfterPostOutcome:462.8
 [53.50] [fire-mage (#1)] [Target 1] {SpellID: 412538} tick Hit for 462.770 damage (SpellSchool: 4). (Threat: 462.770)
 [53.50] [fire-mage (#1)] [Target 1] {SpellID: 25306} [DEBUG] MAP: -10.0, RAP: 0.0, SP: 493.0, BaseDamage:15.0, AfterAttackerMods:19.0, AfterResistances:19.0, AfterTargetMods:20.9, AfterOutcome:20.9, AfterPostOutcome:20.9

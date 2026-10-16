@@ -4,6 +4,7 @@
 [0.00] [Target 1] Aura gained: {SpellID: 11198, Tag: -1}
 [0.00] [Target 1] Aura gained: {SpellID: 11374, Tag: -1}
 [0.00] [arms-warrior (#1)] Aura gained: {OtherID: 23, Tag: 1}
+[0.00] [arms-warrior (#1)] Aura gained: {SpellID: 20597}
 [0.00] [arms-warrior (#1)] Aura gained: {SpellID: 12963, Tag: 2}
 [0.00] [arms-warrior (#1)] Aura gained: {SpellID: 1290261, Tag: 2}
 [0.00] [arms-warrior (#1)] Aura gained: {SpellID: 1290261, Tag: 3}
@@ -409,8 +410,8 @@
 [17.50] [Target 1] Aura refreshed: {SpellID: 412609}
 [17.50] [arms-warrior (#1)] Aura faded: {SpellID: 1282733}
 [18.00] [arms-warrior (#1)] Gained 1.000 rage from {SpellID: 12296} (95.000 --> 96.000) of 100 total.
-[18.00] [arms-warrior (#1)] [Target 1] {SpellID: 11574} [DEBUG] MAP: 1870.0, RAP: 90.0, SP: 0.0, BaseDamage:58.4, AfterAttackerMods:81.2, AfterResistances:81.2, AfterTargetMods:89.2, AfterOutcome:89.2, AfterPostOutcome:89.2
-[18.00] [arms-warrior (#1)] [Target 1] {SpellID: 11574} tick Hit for 89.205 damage (SpellSchool: 1). (Threat: 71.364)
+[18.00] [arms-warrior (#1)] [Target 1] {SpellID: 11574} [DEBUG] MAP: 1870.0, RAP: 90.0, SP: 0.0, BaseDamage:58.4, AfterAttackerMods:81.2, AfterResistances:81.2, AfterTargetMods:89.2, AfterOutcome:196.3, AfterPostOutcome:196.3
+[18.00] [arms-warrior (#1)] [Target 1] {SpellID: 11574} tick Crit for 196.251 damage (SpellSchool: 1). (Threat: 157.001)
 [18.06] [arms-warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1870.0, RAP: 90.0, SP: 0.0, BaseDamage:48.6, AfterAttackerMods:48.6, AfterResistances:48.6, AfterTargetMods:56.6, AfterOutcome:56.6, AfterPostOutcome:56.6
 [18.06] [arms-warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 56.589 damage (SpellSchool: 1). (Threat: 45.271)
 [18.10] [arms-warrior (#1)] No available actions!
@@ -612,7 +613,6 @@
 [30.06] [arms-warrior (#1)] [Target 1] {SpellID: 412609} [DEBUG] MAP: 1738.0, RAP: 90.0, SP: 0.0, BaseDamage:34.3, AfterAttackerMods:34.3, AfterResistances:34.3, AfterTargetMods:42.3, AfterOutcome:42.3, AfterPostOutcome:42.3
 [30.06] [arms-warrior (#1)] [Target 1] {SpellID: 412609} tick Hit for 42.328 damage (SpellSchool: 1). (Threat: 33.863)
 [30.10] [arms-warrior (#1)] Item Swap to set Swap1
-[30.10] [arms-warrior (#1)] Aura gained: {SpellID: 20597}
 [30.10] [arms-warrior (#1)] Aura faded: {SpellID: 1290261, Tag: 2}
 [30.10] Item Swap - Stats Change: {"Strength": -16.000,"Agility": -5.000,}
 [30.10] [arms-warrior (#1)] Extending GCD for 1.5s due to rotation / CDs.
@@ -2436,12 +2436,12 @@
 [128.10] [arms-warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
 [128.20] [arms-warrior (#1)] No available actions!
 [128.20] [arms-warrior (#1)] Pausing rotation for 100ms due to resources / CDs.
-[128.29] [arms-warrior (#1)] Aura faded: {SpellID: 20597}
 [128.29] [arms-warrior (#1)] Aura gained: {SpellID: 1290261, Tag: 2}
 [128.29] Item Swap - Stats Change: {"Strength": 16.000,"Agility": 5.000,}
 [128.29] [arms-warrior (#1)] Aura faded: {OtherID: 23, Tag: 2}
 [128.29] [arms-warrior (#1)] Aura gained: {OtherID: 23, Tag: 1}
 [128.29] [arms-warrior (#1)] Aura faded: {OtherID: 23, Tag: 1}
+[128.29] [arms-warrior (#1)] Aura faded: {SpellID: 20597}
 [128.29] [arms-warrior (#1)] Aura faded: {SpellID: 12963, Tag: 2}
 [128.29] [arms-warrior (#1)] Aura faded: {SpellID: 1290261, Tag: 2}
 [128.29] [arms-warrior (#1)] Aura faded: {SpellID: 1290261, Tag: 3}

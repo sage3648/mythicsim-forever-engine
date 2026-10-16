@@ -445,17 +445,13 @@ fn pet_inheritance(
             if inherited[pet_stat] == 0.0 {
                 continue;
             }
-            if sources.iter().any(|(_, taken, _)| *taken == pet_stat) {
-                unrepresented.push(format!(
-                    "pet {label} inherits {} from more than one stat",
-                    pet_stat.name()
-                ));
-            }
             sources.push((owner, pet_stat, inherited[pet_stat]));
             terms.push(json!({"owner": owner.name(), "pet": pet_stat.name(),
                 "coefficient": inherited[pet_stat]}));
         }
     }
+    // Linear, bit for bit, on changes of either sign. A pet stat several owner stats feed (the
+    // Hunter pet's crit, patch 136) takes the sum of their terms, so each pair is checked too.
     for amount in [3.7, -12.25, 123.456, 0.1] {
         for (owner, pet_stat, coefficient) in &sources {
             let mut change = Stats::default();
@@ -467,6 +463,22 @@ fn pet_inheritance(
                     "pet {label} inherits {} nonlinearly",
                     pet_stat.name()
                 ));
+            }
+            for (other, other_stat, other_coefficient) in &sources {
+                if other_stat != pet_stat || (*other as usize) <= (*owner as usize) {
+                    continue;
+                }
+                let mut change = Stats::default();
+                change[*owner] = amount;
+                change[*other] = -2.5 * amount;
+                let got = inherit(&change)[*pet_stat];
+                let want = amount * coefficient + -2.5 * amount * other_coefficient;
+                if got != want {
+                    unrepresented.push(format!(
+                        "pet {label} inherits {} as other than the sum of its terms",
+                        pet_stat.name()
+                    ));
+                }
             }
         }
     }
@@ -556,6 +568,18 @@ fn pet_aura_fade_stats(env: &Environment, index: usize) -> Vec<Value> {
     changes
 }
 
+/// What a pet's `OnPetDisable` adds to its stats before dependencies, from a separate reset
+/// simulation.
+fn pet_disable_stats(env: &Environment, index: usize) -> Map<String, Value> {
+    let mut fresh = env.fresh();
+    let pet = fresh.sim.unit(fresh.player).pets[index];
+    fresh.sim.unit_mut(pet).stats_without_deps = Stats::default();
+    if let Some(on_disable) = fresh.sim.pet_data(pet).on_pet_disable.clone() {
+        on_disable(&mut fresh.sim, pet);
+    }
+    nonzero_stats(&fresh.sim.unit(pet).stats_without_deps)
+}
+
 /// Go `Unit.ManaRegenPerSecondWhileCasting` and `WhileNotCasting` of a pet.
 fn pet_mana(env: &Environment, pet: UnitId) -> Value {
     let unit = env.sim.unit(pet);
@@ -601,6 +625,7 @@ pub(crate) fn export_pets(
         let label = unit.label.clone();
         let summoned = summoned_pet(env, pet);
         let class_summoned = env.agent.summoned_pet(sim, pet);
+        let stat_callbacks = env.agent.stat_callback_pet(sim, pet);
         let mut note = |condition: bool, message: String| {
             if condition {
                 unrepresented.push(message);
@@ -643,7 +668,9 @@ pub(crate) fn export_pets(
             format!("pet {label} delays its first attack"),
         );
         note(
-            (data.on_pet_enable.is_some() || data.on_pet_disable.is_some()) && !class_summoned,
+            (data.on_pet_enable.is_some() || data.on_pet_disable.is_some())
+                && !class_summoned
+                && !stat_callbacks,
             format!("pet {label} has enable or disable callbacks"),
         );
         note(
@@ -761,6 +788,12 @@ pub(crate) fn export_pets(
                 let fade = pet_aura_fade_stats(env, index);
                 if !fade.is_empty() {
                     exported.insert("aura_stats".into(), Value::Array(fade));
+                }
+                if data.on_pet_disable.is_some() && env.agent.stat_callback_pet(sim, pet) {
+                    let disable = pet_disable_stats(env, index);
+                    if !disable.is_empty() {
+                        exported.insert("disable_stats".into(), Value::Object(disable));
+                    }
                 }
                 exported.insert(
                     "dismiss_stats".into(),

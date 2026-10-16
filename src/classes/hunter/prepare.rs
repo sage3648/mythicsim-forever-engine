@@ -394,6 +394,12 @@ impl Hunter {
 }
 
 impl PrepAgent for Hunter {
+    /// pet.go inheritAutoShotCritMods (patch 136): the pet's enable and disable callbacks add
+    /// the Auto Shot's crit modifiers to its physical crit and take them back.
+    fn stat_callback_pet(&self, _sim: &Sim, pet: UnitId) -> bool {
+        self.pet == Some(pet)
+    }
+
     fn add_party_buffs(&self, _sim: &Sim, party_buffs: &mut Message) {
         if self.flag("trueshot_aura") {
             party_buffs.set_bool("trueshot_aura", true);

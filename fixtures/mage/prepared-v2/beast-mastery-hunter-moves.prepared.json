@@ -2,7 +2,7 @@
   "schema_version": 2,
   "contract": "forever-prepared",
   "reference": {
-    "engine_revision": "0025d73986eebd90df1849c202b8c9a88d1f01c9",
+    "engine_revision": "713b825aae50c2a1277081488a7aca742542b0d6",
     "client_build": "1.60.1.70338",
     "exporter": "tools/oracle-v2"
   },
@@ -570,7 +570,7 @@
         "exclusive_effects": 0
       },
       {
-        "label": "Sword Specialization",
+        "label": "Ruthless",
         "action_id": {
           "spell_id": 20597
         },
@@ -2986,7 +2986,7 @@
         "cd": null,
         "shared_cd": null,
         "bonus_hit_percent": 0,
-        "bonus_crit_percent": -2,
+        "bonus_crit_percent": 0,
         "bonus_spell_damage": 0,
         "bonus_expertise_percent": 0,
         "cast_time_multiplier": 1,
@@ -3574,7 +3574,7 @@
         "NatureResistance": 0,
         "ParryPercent": 0,
         "ParryRating": 0,
-        "PhysicalCritPercent": 15,
+        "PhysicalCritPercent": 30.0325,
         "PhysicalDamage": 0,
         "PhysicalHitPercent": 0,
         "RangedAttackPower": 75,
@@ -4162,10 +4162,10 @@
         }
       ],
       "summon_log": [
-        "Pet stats: {\"Strength\": 136.000,\"Agility\": 100.000,\"Stamina\": 274.000,\"Intellect\": 50.000,\"Spirit\": 80.000,\"AttackPower\": 252.000,\"RangedAttackPower\": 75.000,\"Armor\": 200.000,\"Health\": 2734.592,\"MP5\": 25.000,\"PhysicalCritPercent\": 15.000,\"SpellCritPercent\": 10.000,}",
-        "Pet inherited stats: {}"
+        "Pet stats: {\"Strength\": 136.000,\"Agility\": 100.000,\"Stamina\": 274.000,\"Intellect\": 50.000,\"Spirit\": 80.000,\"AttackPower\": 252.000,\"RangedAttackPower\": 75.000,\"Armor\": 200.000,\"Health\": 2734.592,\"MP5\": 25.000,\"PhysicalCritPercent\": 30.032,\"SpellCritPercent\": 10.000,}",
+        "Pet inherited stats: {\"PhysicalCritPercent\": 20.032,}"
       ],
-      "dismiss_log": "{\"Strength\": 136.000,\"Agility\": 100.000,\"Stamina\": 274.000,\"Intellect\": 50.000,\"Spirit\": 80.000,\"AttackPower\": 252.000,\"Armor\": 200.000,\"Health\": 2734.592,\"PhysicalCritPercent\": 15.000,\"SpellCritPercent\": 10.000,}",
+      "dismiss_log": "{\"Strength\": 136.000,\"Agility\": 100.000,\"Stamina\": 274.000,\"Intellect\": 50.000,\"Spirit\": 80.000,\"AttackPower\": 252.000,\"Armor\": 200.000,\"Health\": 2734.592,\"PhysicalCritPercent\": 10.000,\"SpellCritPercent\": 10.000,}",
       "dynamic_stats": true,
       "focus": {
         "max": 100,
@@ -4173,13 +4173,25 @@
         "tick_duration_ns": 250000000
       },
       "movement_speed": 8,
+      "inheritance": [
+        {
+          "owner": "PhysicalCritPercent",
+          "pet": "PhysicalCritPercent",
+          "coefficient": 1
+        },
+        {
+          "owner": "RangedCritPercent",
+          "pet": "PhysicalCritPercent",
+          "coefficient": 1
+        }
+      ],
       "stats_without_deps": {
         "Agility": 100,
         "AttackPower": -20,
         "Health": -180,
         "Intellect": 50,
         "MP5": 25,
-        "PhysicalCritPercent": 10,
+        "PhysicalCritPercent": 30.0325,
         "RangedAttackPower": 75,
         "SpellCritPercent": 10,
         "Spirit": 80,
@@ -4196,11 +4208,6 @@
           "src": "Agility",
           "dst": "Armor",
           "amount": 2
-        },
-        {
-          "src": "Agility",
-          "dst": "PhysicalCritPercent",
-          "amount": 0.05
         },
         {
           "src": "Stamina",
@@ -4274,6 +4281,9 @@
           "amount": 0.1
         }
       ],
+      "inherited_stats": {
+        "PhysicalCritPercent": 20.0325
+      },
       "dismiss_stats": [
         {
           "stat": "Strength",
@@ -4329,7 +4339,7 @@
         },
         {
           "stat": "PhysicalCritPercent",
-          "value": 15
+          "value": 10
         },
         {
           "stat": "SpellCritPercent",

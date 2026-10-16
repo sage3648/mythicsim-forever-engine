@@ -87,7 +87,6 @@
 [3.00] [affliction-warlock (#1)] Casting {SpellID: 1259821} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [3.00] [affliction-warlock (#1)] Completed cast {SpellID: 1259821}
 [3.00] [affliction-warlock (#1)] Aura gained: {SpellID: 1259821}
-[3.00] [affliction-warlock (#1)] {SpellID: 1259821} stacks: 0 --> 3
 [3.00] [affliction-warlock (#1)] Casting {SpellID: 25311} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [3.00] [affliction-warlock (#1)] Completed cast {SpellID: 25311}
 [3.00] [affliction-warlock (#1)] Spent 340.000 mana from {SpellID: 25311} (6054.750 --> 5714.750) of 6408 total.
@@ -141,7 +140,6 @@
 [6.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25309} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 414.0, BaseDamage:240.8, AfterAttackerMods:291.4, AfterResistances:291.4, AfterTargetMods:320.5, AfterOutcome:320.5, AfterPostOutcome:320.5
 [6.00] [Target 1] Aura gained: {SpellID: 25309, Tag: 1}
 [6.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25309} Hit for 320.505 damage (SpellSchool: 4). (Threat: 256.404)
-[6.00] [affliction-warlock (#1)] {SpellID: 1259821} stacks: 3 --> 2
 [6.00] [affliction-warlock (#1)] Casting {SpellID: 25307} (Cost = 342.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
 [6.01] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (5403.550 --> 5462.550) of 6408 total.
 [6.03] [affliction-warlock (#1) - Succubus] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
@@ -185,7 +183,6 @@
 [8.50] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
 [8.50] [affliction-warlock (#1)] Spent 342.000 mana from {SpellID: 25307} (5493.350 --> 5151.350) of 6408 total.
 [8.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:703.2, AfterAttackerMods:889.6, AfterResistances:667.2, AfterTargetMods:733.9, AfterOutcome:733.9, AfterPostOutcome:733.9
-[8.50] [affliction-warlock (#1)] {SpellID: 1259821} stacks: 2 --> 1
 [8.50] [affliction-warlock (#1)] Casting {SpellID: 25307} (Cost = 342.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
 [8.53] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [8.63] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -226,13 +223,12 @@
 [10.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [10.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [10.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
+[11.00] [affliction-warlock (#1)] Aura faded: {SpellID: 1259821}
 [11.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (5182.150 --> 5212.950) of 6408 total.
 [11.00] [affliction-warlock (#1) - Succubus] Gained 55.000 mana from {OtherID: 2, Tag: 2} (1066.000 --> 1066.000) of 1066 total.
 [11.00] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[11.00] [affliction-warlock (#1)] Spent 342.000 mana from {SpellID: 25307} (5212.950 --> 4870.950) of 6408 total.
-[11.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:701.4, AfterAttackerMods:887.3, AfterResistances:887.3, AfterTargetMods:976.0, AfterOutcome:1952.0, AfterPostOutcome:1952.0
-[11.00] [affliction-warlock (#1)] {SpellID: 1259821} stacks: 1 --> 0
-[11.00] [affliction-warlock (#1)] Aura faded: {SpellID: 1259821}
+[11.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (5212.950 --> 4832.950) of 6408 total.
+[11.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:701.4, AfterAttackerMods:806.6, AfterResistances:806.6, AfterTargetMods:887.3, AfterOutcome:1774.6, AfterPostOutcome:1774.6
 [11.00] [affliction-warlock (#1)] Casting {SpellID: 25307} (Cost = 380.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
 [11.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [11.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -262,9 +258,9 @@
 [12.04] [affliction-warlock (#1) - Succubus] Gained 59.000 mana from {SpellID: 20355} (906.000 --> 965.000) of 1066 total.
 [12.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [12.23] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[12.25] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} Crit for 1952.025 damage (SpellSchool: 32). (Threat: 1561.620)
+[12.25] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} Crit for 1774.568 damage (SpellSchool: 32). (Threat: 1419.654)
 [12.25] [Target 1] Aura gained: {SpellID: 17794}
-[12.26] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (4870.950 --> 4929.950) of 6408 total.
+[12.26] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (4832.950 --> 4891.950) of 6408 total.
 [12.33] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [12.43] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [12.53] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -272,7 +268,7 @@
 [12.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [12.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [12.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[13.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (4929.950 --> 4960.750) of 6408 total.
+[13.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (4891.950 --> 4922.750) of 6408 total.
 [13.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (965.000 --> 975.000) of 1066 total.
 [13.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [13.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -280,11 +276,11 @@
 [13.33] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [13.43] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [13.50] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[13.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (4960.750 --> 4580.750) of 6408 total.
+[13.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (4922.750 --> 4542.750) of 6408 total.
 [13.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:694.2, AfterAttackerMods:798.3, AfterResistances:798.3, AfterTargetMods:878.2, AfterOutcome:878.2, AfterPostOutcome:1053.8
 [13.50] [affliction-warlock (#1)] Casting {ItemID: 13444} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [13.50] [affliction-warlock (#1)] Completed cast {ItemID: 13444}
-[13.50] [affliction-warlock (#1)] Gained 1800.000 mana from {ItemID: 13444} (4580.750 --> 6380.750) of 6408 total.
+[13.50] [affliction-warlock (#1)] Gained 1800.000 mana from {ItemID: 13444} (4542.750 --> 6342.750) of 6408 total.
 [13.50] [affliction-warlock (#1)] Casting {SpellID: 25307} (Cost = 380.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
 [13.50] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:137.4, AfterAttackerMods:166.6, AfterResistances:166.6, AfterTargetMods:183.2, AfterOutcome:183.2, AfterPostOutcome:219.9
 [13.50] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} tick Hit for 219.893 damage (SpellSchool: 32). (Threat: 175.915)
@@ -308,7 +304,7 @@
 [14.75] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} Hit for 1053.796 damage (SpellSchool: 32). (Threat: 843.037)
 [14.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [14.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[15.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (6380.750 --> 6408.150) of 6408 total.
+[15.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (6342.750 --> 6373.550) of 6408 total.
 [15.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (975.000 --> 985.000) of 1066 total.
 [15.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:175.8, AfterAttackerMods:213.2, AfterResistances:213.2, AfterTargetMods:234.5, AfterOutcome:469.0, AfterPostOutcome:562.9
 [15.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} tick Crit for 562.852 damage (SpellSchool: 32). (Threat: 450.281)
@@ -327,7 +323,7 @@
 [15.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [15.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [16.00] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[16.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (6408.150 --> 6028.150) of 6408 total.
+[16.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (6373.550 --> 5993.550) of 6408 total.
 [16.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:714.8, AfterAttackerMods:822.0, AfterResistances:822.0, AfterTargetMods:904.2, AfterOutcome:1808.5, AfterPostOutcome:2170.2
 [16.00] [affliction-warlock (#1)] Casting {SpellID: 25307} (Cost = 380.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
 [16.03] [affliction-warlock (#1) - Succubus] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
@@ -344,14 +340,14 @@
 [16.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [16.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [16.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[17.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (6028.150 --> 6058.950) of 6408 total.
+[17.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (5993.550 --> 6024.350) of 6408 total.
 [17.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (985.000 --> 995.000) of 1066 total.
 [17.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [17.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [17.23] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [17.25] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} Crit for 2170.167 damage (SpellSchool: 32). (Threat: 1736.133)
 [17.25] [Target 1] Aura refreshed: {SpellID: 17794}
-[17.26] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (6058.950 --> 6117.950) of 6408 total.
+[17.26] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (6024.350 --> 6083.350) of 6408 total.
 [17.33] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [17.43] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [17.50] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:137.4, AfterAttackerMods:166.6, AfterResistances:166.6, AfterTargetMods:183.2, AfterOutcome:183.2, AfterPostOutcome:219.9
@@ -376,7 +372,7 @@
 [18.33] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [18.43] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [18.50] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[18.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (6117.950 --> 5737.950) of 6408 total.
+[18.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (6083.350 --> 5703.350) of 6408 total.
 [18.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:719.6, AfterAttackerMods:827.5, AfterResistances:827.5, AfterTargetMods:910.2, AfterOutcome:0.0, AfterPostOutcome:0.0
 [18.50] [affliction-warlock (#1)] Casting {SpellID: 25307} (Cost = 380.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
 [18.53] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -384,7 +380,7 @@
 [18.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [18.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [18.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[19.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (5737.950 --> 5768.750) of 6408 total.
+[19.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (5703.350 --> 5734.150) of 6408 total.
 [19.00] [affliction-warlock (#1) - Succubus] Gained 55.000 mana from {OtherID: 2, Tag: 2} (1054.000 --> 1066.000) of 1066 total.
 [19.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [19.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -420,14 +416,14 @@
 [21.00] [Target 1] Aura faded: {SpellID: 25309, Tag: 1}
 [21.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25309, Tag: 1} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 414.0, BaseDamage:108.8, AfterAttackerMods:125.7, AfterResistances:125.7, AfterTargetMods:138.3, AfterOutcome:138.3, AfterPostOutcome:138.3
 [21.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25309, Tag: 1} tick Hit for 138.256 damage (SpellSchool: 4). (Threat: 110.605)
-[21.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (5768.750 --> 5799.550) of 6408 total.
+[21.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (5734.150 --> 5764.950) of 6408 total.
 [21.00] [affliction-warlock (#1) - Succubus] Gained 55.000 mana from {OtherID: 2, Tag: 2} (1066.000 --> 1066.000) of 1066 total.
 [21.00] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[21.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (5799.550 --> 5419.550) of 6408 total.
+[21.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (5764.950 --> 5384.950) of 6408 total.
 [21.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:722.4, AfterAttackerMods:830.7, AfterResistances:623.0, AfterTargetMods:685.3, AfterOutcome:0.0, AfterPostOutcome:0.0
 [21.00] [affliction-warlock (#1)] Casting {SpellID: 25311} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [21.00] [affliction-warlock (#1)] Completed cast {SpellID: 25311}
-[21.00] [affliction-warlock (#1)] Spent 340.000 mana from {SpellID: 25311} (5419.550 --> 5079.550) of 6408 total.
+[21.00] [affliction-warlock (#1)] Spent 340.000 mana from {SpellID: 25311} (5384.950 --> 5044.950) of 6408 total.
 [21.00] [Target 1] Aura gained: {SpellID: 25311}
 [21.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} Hit for 0.000 damage (SpellSchool: 32). (Threat: 0.000)
 [21.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -458,7 +454,7 @@
 [22.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [22.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [22.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[23.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (5079.550 --> 5110.350) of 6408 total.
+[23.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (5044.950 --> 5075.750) of 6408 total.
 [23.00] [affliction-warlock (#1) - Succubus] Gained 55.000 mana from {OtherID: 2, Tag: 2} (1066.000 --> 1066.000) of 1066 total.
 [23.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [23.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -475,7 +471,7 @@
 [24.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:175.8, AfterAttackerMods:213.2, AfterResistances:106.6, AfterTargetMods:117.3, AfterOutcome:117.3, AfterPostOutcome:140.7
 [24.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} tick Hit (50% Resist) for 140.713 damage (SpellSchool: 32). (Threat: 112.570)
 [24.00] [affliction-warlock (#1)] Completed cast {SpellID: 25309}
-[24.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25309} (5110.350 --> 4730.350) of 6408 total.
+[24.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25309} (5075.750 --> 4695.750) of 6408 total.
 [24.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25309} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 414.0, BaseDamage:240.8, AfterAttackerMods:264.9, AfterResistances:264.9, AfterTargetMods:291.4, AfterOutcome:291.4, AfterPostOutcome:291.4
 [24.00] [Target 1] Aura gained: {SpellID: 25309, Tag: 1}
 [24.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25309} Hit for 291.368 damage (SpellSchool: 4). (Threat: 233.094)
@@ -498,7 +494,7 @@
 [24.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [24.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [24.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[25.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (4730.350 --> 4761.150) of 6408 total.
+[25.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (4695.750 --> 4726.550) of 6408 total.
 [25.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (906.000 --> 916.000) of 1066 total.
 [25.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [25.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -523,20 +519,20 @@
 [26.33] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [26.43] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [26.50] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[26.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (4761.150 --> 4381.150) of 6408 total.
+[26.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (4726.550 --> 4346.550) of 6408 total.
 [26.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:711.4, AfterAttackerMods:818.1, AfterResistances:818.1, AfterTargetMods:899.9, AfterOutcome:899.9, AfterPostOutcome:1079.9
 [26.50] [affliction-warlock (#1)] Casting {SpellID: 11713} (Cost = 215.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [26.50] [affliction-warlock (#1)] Completed cast {SpellID: 11713}
-[26.50] [affliction-warlock (#1)] Spent 215.000 mana from {SpellID: 11713} (4381.150 --> 4166.150) of 6408 total.
+[26.50] [affliction-warlock (#1)] Spent 215.000 mana from {SpellID: 11713} (4346.550 --> 4131.550) of 6408 total.
 [26.50] [Target 1] Aura gained: {SpellID: 11713}
 [26.50] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} Hit for 0.000 damage (SpellSchool: 32). (Threat: 0.000)
-[26.51] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (4166.150 --> 4225.150) of 6408 total.
+[26.51] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (4131.550 --> 4190.550) of 6408 total.
 [26.53] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [26.63] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [26.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [26.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [26.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[27.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (4225.150 --> 4255.950) of 6408 total.
+[27.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (4190.550 --> 4221.350) of 6408 total.
 [27.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (916.000 --> 926.000) of 1066 total.
 [27.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:175.8, AfterAttackerMods:213.2, AfterResistances:213.2, AfterTargetMods:234.5, AfterOutcome:469.0, AfterPostOutcome:562.9
 [27.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} tick Crit for 562.852 damage (SpellSchool: 32). (Threat: 450.281)
@@ -551,7 +547,7 @@
 [27.63] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [27.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [27.75] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} Hit for 1079.924 damage (SpellSchool: 32). (Threat: 863.939)
-[27.76] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (4255.950 --> 4314.950) of 6408 total.
+[27.76] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (4221.350 --> 4280.350) of 6408 total.
 [27.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [27.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [28.00] [affliction-warlock (#1)] Casting {SpellID: 25307} (Cost = 380.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
@@ -572,7 +568,7 @@
 [28.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [28.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [28.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[29.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (4314.950 --> 4345.750) of 6408 total.
+[29.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (4280.350 --> 4311.150) of 6408 total.
 [29.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (985.000 --> 995.000) of 1066 total.
 [29.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [29.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -600,7 +596,7 @@
 [30.33] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [30.43] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [30.50] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[30.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (4345.750 --> 3965.750) of 6408 total.
+[30.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (4311.150 --> 3931.150) of 6408 total.
 [30.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:701.0, AfterAttackerMods:806.1, AfterResistances:806.1, AfterTargetMods:886.7, AfterOutcome:886.7, AfterPostOutcome:886.7
 [30.50] [affliction-warlock (#1)] Casting {SpellID: 25307} (Cost = 380.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
 [30.50] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:91.4, AfterAttackerMods:110.8, AfterResistances:110.8, AfterTargetMods:121.9, AfterOutcome:121.9, AfterPostOutcome:121.9
@@ -610,7 +606,7 @@
 [30.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [30.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [30.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[31.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (3965.750 --> 3996.550) of 6408 total.
+[31.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (3931.150 --> 3961.950) of 6408 total.
 [31.00] [affliction-warlock (#1) - Succubus] Gained 55.000 mana from {OtherID: 2, Tag: 2} (1054.000 --> 1066.000) of 1066 total.
 [31.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [31.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -639,18 +635,18 @@
 [32.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [32.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [32.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[33.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (3996.550 --> 4027.350) of 6408 total.
+[33.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (3961.950 --> 3992.750) of 6408 total.
 [33.00] [affliction-warlock (#1) - Succubus] Gained 55.000 mana from {OtherID: 2, Tag: 2} (1066.000 --> 1066.000) of 1066 total.
 [33.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:175.8, AfterAttackerMods:213.2, AfterResistances:213.2, AfterTargetMods:234.5, AfterOutcome:234.5, AfterPostOutcome:234.5
 [33.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} tick Hit for 234.522 damage (SpellSchool: 32). (Threat: 187.617)
 [33.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25309, Tag: 1} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 414.0, BaseDamage:108.8, AfterAttackerMods:125.7, AfterResistances:125.7, AfterTargetMods:138.3, AfterOutcome:138.3, AfterPostOutcome:138.3
 [33.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25309, Tag: 1} tick Hit for 138.256 damage (SpellSchool: 4). (Threat: 110.605)
 [33.00] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[33.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (4027.350 --> 3647.350) of 6408 total.
+[33.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (3992.750 --> 3612.750) of 6408 total.
 [33.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:716.8, AfterAttackerMods:824.3, AfterResistances:824.3, AfterTargetMods:906.8, AfterOutcome:906.8, AfterPostOutcome:906.8
 [33.00] [affliction-warlock (#1)] Casting {ItemID: 12662} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [33.00] [affliction-warlock (#1)] Completed cast {ItemID: 12662}
-[33.00] [affliction-warlock (#1)] Gained 1200.000 mana from {ItemID: 12662} (3647.350 --> 4847.350) of 6408 total.
+[33.00] [affliction-warlock (#1)] Gained 1200.000 mana from {ItemID: 12662} (3612.750 --> 4812.750) of 6408 total.
 [33.00] [affliction-warlock (#1)] Casting {SpellID: 25307} (Cost = 380.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
 [33.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [33.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -671,7 +667,7 @@
 [34.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [34.23] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [34.25] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} Hit for 906.755 damage (SpellSchool: 32). (Threat: 725.404)
-[34.26] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (4847.350 --> 4906.350) of 6408 total.
+[34.26] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (4812.750 --> 4871.750) of 6408 total.
 [34.33] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [34.43] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [34.50] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:91.4, AfterAttackerMods:110.8, AfterResistances:110.8, AfterTargetMods:121.9, AfterOutcome:243.8, AfterPostOutcome:243.8
@@ -681,7 +677,7 @@
 [34.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [34.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [34.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[35.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (4906.350 --> 4937.150) of 6408 total.
+[35.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (4871.750 --> 4902.550) of 6408 total.
 [35.00] [affliction-warlock (#1) - Succubus] Gained 55.000 mana from {OtherID: 2, Tag: 2} (1066.000 --> 1066.000) of 1066 total.
 [35.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [35.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -689,7 +685,7 @@
 [35.33] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [35.43] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [35.50] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[35.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (4937.150 --> 4557.150) of 6408 total.
+[35.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (4902.550 --> 4522.550) of 6408 total.
 [35.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:698.2, AfterAttackerMods:803.0, AfterResistances:803.0, AfterTargetMods:883.3, AfterOutcome:883.3, AfterPostOutcome:883.3
 [35.50] [affliction-warlock (#1)] Casting {SpellID: 25307} (Cost = 380.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
 [35.53] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -721,10 +717,10 @@
 [36.63] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [36.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [36.75] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} Hit for 883.268 damage (SpellSchool: 32). (Threat: 706.614)
-[36.76] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (4557.150 --> 4616.150) of 6408 total.
+[36.76] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (4522.550 --> 4581.550) of 6408 total.
 [36.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [36.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[37.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (4616.150 --> 4646.950) of 6408 total.
+[37.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (4581.550 --> 4612.350) of 6408 total.
 [37.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (965.000 --> 975.000) of 1066 total.
 [37.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [37.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -737,7 +733,7 @@
 [37.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [37.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [38.00] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[38.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (4646.950 --> 4266.950) of 6408 total.
+[38.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (4612.350 --> 4232.350) of 6408 total.
 [38.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:703.7, AfterAttackerMods:809.3, AfterResistances:809.3, AfterTargetMods:890.2, AfterOutcome:890.2, AfterPostOutcome:890.2
 [38.00] [affliction-warlock (#1)] Casting {SpellID: 25309} (Cost = 380.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
 [38.03] [affliction-warlock (#1) - Succubus] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
@@ -762,27 +758,27 @@
 [39.00] [Target 1] Aura faded: {SpellID: 25311}
 [39.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:175.8, AfterAttackerMods:213.2, AfterResistances:213.2, AfterTargetMods:234.5, AfterOutcome:234.5, AfterPostOutcome:234.5
 [39.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} tick Hit for 234.522 damage (SpellSchool: 32). (Threat: 187.617)
-[39.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (4266.950 --> 4297.750) of 6408 total.
+[39.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (4232.350 --> 4263.150) of 6408 total.
 [39.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (975.000 --> 985.000) of 1066 total.
 [39.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [39.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [39.23] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [39.25] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} Hit for 890.210 damage (SpellSchool: 32). (Threat: 712.168)
-[39.26] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (4297.750 --> 4356.750) of 6408 total.
+[39.26] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (4263.150 --> 4322.150) of 6408 total.
 [39.33] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [39.43] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [39.50] [affliction-warlock (#1)] Completed cast {SpellID: 25309}
-[39.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25309} (4356.750 --> 3976.750) of 6408 total.
+[39.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25309} (4322.150 --> 3942.150) of 6408 total.
 [39.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25309} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 414.0, BaseDamage:240.8, AfterAttackerMods:264.9, AfterResistances:264.9, AfterTargetMods:291.4, AfterOutcome:291.4, AfterPostOutcome:291.4
 [39.50] [Target 1] Aura gained: {SpellID: 25309, Tag: 1}
 [39.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25309} Hit for 291.368 damage (SpellSchool: 4). (Threat: 233.094)
 [39.50] [affliction-warlock (#1)] Casting {SpellID: 25311} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [39.50] [affliction-warlock (#1)] Completed cast {SpellID: 25311}
-[39.50] [affliction-warlock (#1)] Spent 340.000 mana from {SpellID: 25311} (3976.750 --> 3636.750) of 6408 total.
+[39.50] [affliction-warlock (#1)] Spent 340.000 mana from {SpellID: 25311} (3942.150 --> 3602.150) of 6408 total.
 [39.50] [Target 1] Aura gained: {SpellID: 25311}
 [39.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} Hit for 0.000 damage (SpellSchool: 32). (Threat: 0.000)
-[39.51] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (3636.750 --> 3695.750) of 6408 total.
-[39.51] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (3695.750 --> 3754.750) of 6408 total.
+[39.51] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (3602.150 --> 3661.150) of 6408 total.
+[39.51] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (3661.150 --> 3720.150) of 6408 total.
 [39.53] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [39.63] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [39.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -804,7 +800,7 @@
 [40.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [40.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [40.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[41.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (3754.750 --> 3785.550) of 6408 total.
+[41.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (3720.150 --> 3750.950) of 6408 total.
 [41.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (985.000 --> 995.000) of 1066 total.
 [41.00] [affliction-warlock (#1)] Casting {SpellID: 25307} (Cost = 380.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
 [41.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -838,7 +834,7 @@
 [42.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [42.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [42.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[43.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (3785.550 --> 3816.350) of 6408 total.
+[43.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (3750.950 --> 3781.750) of 6408 total.
 [43.00] [affliction-warlock (#1) - Succubus] Gained 55.000 mana from {OtherID: 2, Tag: 2} (1054.000 --> 1066.000) of 1066 total.
 [43.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [43.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -846,7 +842,7 @@
 [43.33] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [43.43] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [43.50] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[43.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (3816.350 --> 3436.350) of 6408 total.
+[43.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (3781.750 --> 3401.750) of 6408 total.
 [43.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:716.1, AfterAttackerMods:823.5, AfterResistances:823.5, AfterTargetMods:905.8, AfterOutcome:905.8, AfterPostOutcome:905.8
 [43.50] [affliction-warlock (#1)] Casting {SpellID: 25307} (Cost = 380.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
 [43.53] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -872,7 +868,7 @@
 [44.75] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} Hit for 905.826 damage (SpellSchool: 32). (Threat: 724.661)
 [44.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [44.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[45.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (3436.350 --> 3467.150) of 6408 total.
+[45.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (3401.750 --> 3432.550) of 6408 total.
 [45.00] [affliction-warlock (#1) - Succubus] Gained 55.000 mana from {OtherID: 2, Tag: 2} (1066.000 --> 1066.000) of 1066 total.
 [45.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [45.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -889,7 +885,7 @@
 [45.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [45.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [46.00] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[46.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (3467.150 --> 3087.150) of 6408 total.
+[46.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (3432.550 --> 3052.550) of 6408 total.
 [46.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:706.0, AfterAttackerMods:811.9, AfterResistances:811.9, AfterTargetMods:893.1, AfterOutcome:893.1, AfterPostOutcome:893.1
 [46.00] [affliction-warlock (#1)] Casting {SpellID: 25307} (Cost = 380.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
 [46.03] [affliction-warlock (#1) - Succubus] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
@@ -909,13 +905,13 @@
 [46.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [46.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [46.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[47.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (3087.150 --> 3117.950) of 6408 total.
+[47.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (3052.550 --> 3083.350) of 6408 total.
 [47.00] [affliction-warlock (#1) - Succubus] Gained 55.000 mana from {OtherID: 2, Tag: 2} (1066.000 --> 1066.000) of 1066 total.
 [47.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [47.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [47.23] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [47.25] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} Hit for 893.119 damage (SpellSchool: 32). (Threat: 714.495)
-[47.26] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (3117.950 --> 3176.950) of 6408 total.
+[47.26] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (3083.350 --> 3142.350) of 6408 total.
 [47.33] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [47.43] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [47.53] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -941,7 +937,7 @@
 [48.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:175.8, AfterAttackerMods:213.2, AfterResistances:213.2, AfterTargetMods:234.5, AfterOutcome:234.5, AfterPostOutcome:234.5
 [48.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} tick Hit for 234.522 damage (SpellSchool: 32). (Threat: 187.617)
 [48.50] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[48.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (3176.950 --> 2796.950) of 6408 total.
+[48.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (3142.350 --> 2762.350) of 6408 total.
 [48.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:699.3, AfterAttackerMods:804.2, AfterResistances:603.2, AfterTargetMods:663.5, AfterOutcome:1326.9, AfterPostOutcome:1326.9
 [48.50] [affliction-warlock (#1)] Casting {SpellID: 25307} (Cost = 380.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
 [48.50] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:137.4, AfterAttackerMods:166.6, AfterResistances:41.6, AfterTargetMods:45.8, AfterOutcome:45.8, AfterPostOutcome:45.8
@@ -951,7 +947,7 @@
 [48.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [48.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [48.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[49.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (2796.950 --> 2827.750) of 6408 total.
+[49.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (2762.350 --> 2793.150) of 6408 total.
 [49.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (906.000 --> 916.000) of 1066 total.
 [49.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [49.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -963,7 +959,7 @@
 [49.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [49.75] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} Crit (25% Resist) for 1326.944 damage (SpellSchool: 32). (Threat: 1061.555)
 [49.75] [Target 1] Aura gained: {SpellID: 17794}
-[49.76] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (2827.750 --> 2886.750) of 6408 total.
+[49.76] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (2793.150 --> 2852.150) of 6408 total.
 [49.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [49.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [50.03] [affliction-warlock (#1) - Succubus] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
@@ -984,17 +980,17 @@
 [50.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [50.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [50.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[51.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (2886.750 --> 2917.550) of 6408 total.
+[51.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (2852.150 --> 2882.950) of 6408 total.
 [51.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (975.000 --> 985.000) of 1066 total.
 [51.00] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[51.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (2917.550 --> 2537.550) of 6408 total.
+[51.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (2882.950 --> 2502.950) of 6408 total.
 [51.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:703.1, AfterAttackerMods:808.6, AfterResistances:808.6, AfterTargetMods:889.4, AfterOutcome:0.0, AfterPostOutcome:0.0
 [51.00] [affliction-warlock (#1)] Casting {SpellID: 11713} (Cost = 215.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [51.00] [affliction-warlock (#1)] Completed cast {SpellID: 11713}
-[51.00] [affliction-warlock (#1)] Spent 215.000 mana from {SpellID: 11713} (2537.550 --> 2322.550) of 6408 total.
+[51.00] [affliction-warlock (#1)] Spent 215.000 mana from {SpellID: 11713} (2502.950 --> 2287.950) of 6408 total.
 [51.00] [Target 1] Aura gained: {SpellID: 11713}
 [51.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} Hit for 0.000 damage (SpellSchool: 32). (Threat: 0.000)
-[51.01] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (2322.550 --> 2381.550) of 6408 total.
+[51.01] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (2287.950 --> 2346.950) of 6408 total.
 [51.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [51.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [51.23] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -1026,7 +1022,7 @@
 [52.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [52.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [52.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[53.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (2381.550 --> 2412.350) of 6408 total.
+[53.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (2346.950 --> 2377.750) of 6408 total.
 [53.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (1044.000 --> 1054.000) of 1066 total.
 [53.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:91.4, AfterAttackerMods:110.8, AfterResistances:110.8, AfterTargetMods:121.9, AfterOutcome:121.9, AfterPostOutcome:146.3
 [53.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} tick Hit for 146.255 damage (SpellSchool: 32). (Threat: 117.004)
@@ -1059,10 +1055,10 @@
 [54.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [54.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [54.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[55.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (2412.350 --> 2443.150) of 6408 total.
+[55.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (2377.750 --> 2408.550) of 6408 total.
 [55.00] [affliction-warlock (#1) - Succubus] Gained 55.000 mana from {OtherID: 2, Tag: 2} (1054.000 --> 1066.000) of 1066 total.
 [55.00] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[55.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (2443.150 --> 2063.150) of 6408 total.
+[55.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (2408.550 --> 2028.550) of 6408 total.
 [55.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:717.5, AfterAttackerMods:825.1, AfterResistances:618.8, AfterTargetMods:680.7, AfterOutcome:1361.4, AfterPostOutcome:1633.7
 [55.00] [affliction-warlock (#1)] Casting {SpellID: 25309} (Cost = 380.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
 [55.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:91.4, AfterAttackerMods:110.8, AfterResistances:110.8, AfterTargetMods:121.9, AfterOutcome:121.9, AfterPostOutcome:146.3
@@ -1090,18 +1086,18 @@
 [56.33] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [56.43] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [56.50] [affliction-warlock (#1)] Completed cast {SpellID: 25309}
-[56.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25309} (2063.150 --> 1683.150) of 6408 total.
+[56.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25309} (2028.550 --> 1648.550) of 6408 total.
 [56.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25309} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 414.0, BaseDamage:240.8, AfterAttackerMods:264.9, AfterResistances:264.9, AfterTargetMods:291.4, AfterOutcome:291.4, AfterPostOutcome:291.4
 [56.50] [Target 1] Aura gained: {SpellID: 25309, Tag: 1}
 [56.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25309} Hit for 291.368 damage (SpellSchool: 4). (Threat: 233.094)
 [56.50] [affliction-warlock (#1)] Casting {SpellID: 25307} (Cost = 380.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
-[56.51] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (1683.150 --> 1742.150) of 6408 total.
+[56.51] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (1648.550 --> 1707.550) of 6408 total.
 [56.53] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [56.63] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [56.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [56.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [56.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[57.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1742.150 --> 1772.950) of 6408 total.
+[57.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1707.550 --> 1738.350) of 6408 total.
 [57.00] [affliction-warlock (#1) - Succubus] Gained 55.000 mana from {OtherID: 2, Tag: 2} (1066.000 --> 1066.000) of 1066 total.
 [57.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:91.4, AfterAttackerMods:110.8, AfterResistances:110.8, AfterTargetMods:121.9, AfterOutcome:243.8, AfterPostOutcome:292.5
 [57.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} tick Crit for 292.510 damage (SpellSchool: 32). (Threat: 234.008)
@@ -1133,14 +1129,14 @@
 [58.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [58.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [58.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[59.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1772.950 --> 1803.750) of 6408 total.
+[59.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1738.350 --> 1769.150) of 6408 total.
 [59.00] [affliction-warlock (#1) - Succubus] Gained 55.000 mana from {OtherID: 2, Tag: 2} (1066.000 --> 1066.000) of 1066 total.
 [59.00] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[59.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (1803.750 --> 1423.750) of 6408 total.
+[59.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (1769.150 --> 1389.150) of 6408 total.
 [59.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:704.6, AfterAttackerMods:810.3, AfterResistances:810.3, AfterTargetMods:891.4, AfterOutcome:891.4, AfterPostOutcome:1069.6
 [59.00] [affliction-warlock (#1)] Casting {SpellID: 25311} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [59.00] [affliction-warlock (#1)] Completed cast {SpellID: 25311}
-[59.00] [affliction-warlock (#1)] Spent 340.000 mana from {SpellID: 25311} (1423.750 --> 1083.750) of 6408 total.
+[59.00] [affliction-warlock (#1)] Spent 340.000 mana from {SpellID: 25311} (1389.150 --> 1049.150) of 6408 total.
 [59.00] [Target 1] Aura gained: {SpellID: 25311}
 [59.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} Hit for 0.000 damage (SpellSchool: 32). (Threat: 0.000)
 [59.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:91.4, AfterAttackerMods:110.8, AfterResistances:110.8, AfterTargetMods:121.9, AfterOutcome:121.9, AfterPostOutcome:146.3
@@ -1178,7 +1174,7 @@
 [60.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [60.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [60.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[61.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1083.750 --> 1114.550) of 6408 total.
+[61.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1049.150 --> 1079.950) of 6408 total.
 [61.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (965.000 --> 975.000) of 1066 total.
 [61.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:114.4, AfterAttackerMods:138.7, AfterResistances:138.7, AfterTargetMods:152.6, AfterOutcome:305.1, AfterPostOutcome:366.1
 [61.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} tick Crit for 366.148 damage (SpellSchool: 32). (Threat: 292.919)
@@ -1211,10 +1207,10 @@
 [62.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [62.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [62.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[63.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1114.550 --> 1145.350) of 6408 total.
+[63.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1079.950 --> 1110.750) of 6408 total.
 [63.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (1034.000 --> 1044.000) of 1066 total.
 [63.00] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[63.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (1145.350 --> 765.350) of 6408 total.
+[63.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (1110.750 --> 730.750) of 6408 total.
 [63.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:721.2, AfterAttackerMods:829.4, AfterResistances:829.4, AfterTargetMods:912.4, AfterOutcome:912.4, AfterPostOutcome:1094.8
 [63.00] [affliction-warlock (#1)] Casting {SpellID: 25307} (Cost = 380.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
 [63.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:114.4, AfterAttackerMods:138.7, AfterResistances:138.7, AfterTargetMods:152.6, AfterOutcome:305.1, AfterPostOutcome:366.1
@@ -1244,7 +1240,7 @@
 [64.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [64.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [64.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[65.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (765.350 --> 796.150) of 6408 total.
+[65.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (730.750 --> 761.550) of 6408 total.
 [65.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (1044.000 --> 1054.000) of 1066 total.
 [65.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:175.8, AfterAttackerMods:213.2, AfterResistances:213.2, AfterTargetMods:234.5, AfterOutcome:234.5, AfterPostOutcome:281.4
 [65.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} tick Hit for 281.426 damage (SpellSchool: 32). (Threat: 225.141)
@@ -1258,12 +1254,12 @@
 [65.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25309, Tag: 1} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 414.0, BaseDamage:108.8, AfterAttackerMods:125.7, AfterResistances:125.7, AfterTargetMods:138.3, AfterOutcome:138.3, AfterPostOutcome:138.3
 [65.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25309, Tag: 1} tick Hit for 138.256 damage (SpellSchool: 4). (Threat: 110.605)
 [65.50] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[65.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (796.150 --> 416.150) of 6408 total.
+[65.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (761.550 --> 381.550) of 6408 total.
 [65.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:706.6, AfterAttackerMods:812.5, AfterResistances:406.3, AfterTargetMods:446.9, AfterOutcome:446.9, AfterPostOutcome:536.3
 [65.50] [affliction-warlock (#1)] Casting {SpellID: 11689} (Cost = 0.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [65.50] [affliction-warlock (#1)] Completed cast {SpellID: 11689}
 [65.50] [affliction-warlock (#1)] Spent 639.000 health from {OtherID: 9} (3954.000 --> 3315.000) of 3954 total.
-[65.50] [affliction-warlock (#1)] Gained 639.000 mana from {SpellID: 11689} (416.150 --> 1055.150) of 6408 total.
+[65.50] [affliction-warlock (#1)] Gained 639.000 mana from {SpellID: 11689} (381.550 --> 1020.550) of 6408 total.
 [65.53] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [65.63] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [65.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -1282,10 +1278,10 @@
 [66.63] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [66.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [66.75] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} Hit (50% Resist) for 536.279 damage (SpellSchool: 32). (Threat: 429.023)
-[66.76] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (1055.150 --> 1114.150) of 6408 total.
+[66.76] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (1020.550 --> 1079.550) of 6408 total.
 [66.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [66.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[67.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1114.150 --> 1144.950) of 6408 total.
+[67.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1079.550 --> 1110.350) of 6408 total.
 [67.00] [affliction-warlock (#1) - Succubus] Gained 55.000 mana from {OtherID: 2, Tag: 2} (1054.000 --> 1066.000) of 1066 total.
 [67.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:114.4, AfterAttackerMods:138.7, AfterResistances:138.7, AfterTargetMods:152.6, AfterOutcome:152.6, AfterPostOutcome:183.1
 [67.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} tick Hit for 183.074 damage (SpellSchool: 32). (Threat: 146.459)
@@ -1320,7 +1316,7 @@
 [68.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [68.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [68.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[69.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1144.950 --> 1175.750) of 6408 total.
+[69.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1110.350 --> 1141.150) of 6408 total.
 [69.00] [affliction-warlock (#1) - Succubus] Gained 55.000 mana from {OtherID: 2, Tag: 2} (1066.000 --> 1066.000) of 1066 total.
 [69.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:137.4, AfterAttackerMods:166.6, AfterResistances:166.6, AfterTargetMods:183.2, AfterOutcome:183.2, AfterPostOutcome:183.2
 [69.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} tick Hit for 183.244 damage (SpellSchool: 32). (Threat: 146.595)
@@ -1330,7 +1326,7 @@
 [69.33] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [69.43] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [69.50] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[69.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (1175.750 --> 795.750) of 6408 total.
+[69.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (1141.150 --> 761.150) of 6408 total.
 [69.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:721.1, AfterAttackerMods:829.3, AfterResistances:829.3, AfterTargetMods:912.2, AfterOutcome:912.2, AfterPostOutcome:912.2
 [69.50] [affliction-warlock (#1)] Casting {SpellID: 25307} (Cost = 380.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
 [69.53] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -1354,7 +1350,7 @@
 [70.75] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} Hit for 912.184 damage (SpellSchool: 32). (Threat: 729.747)
 [70.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [70.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[71.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (795.750 --> 826.550) of 6408 total.
+[71.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (761.150 --> 791.950) of 6408 total.
 [71.00] [affliction-warlock (#1) - Succubus] Gained 55.000 mana from {OtherID: 2, Tag: 2} (1066.000 --> 1066.000) of 1066 total.
 [71.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:175.8, AfterAttackerMods:213.2, AfterResistances:213.2, AfterTargetMods:234.5, AfterOutcome:234.5, AfterPostOutcome:234.5
 [71.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} tick Hit for 234.522 damage (SpellSchool: 32). (Threat: 187.617)
@@ -1374,12 +1370,12 @@
 [71.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [71.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [72.00] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[72.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (826.550 --> 446.550) of 6408 total.
+[72.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (791.950 --> 411.950) of 6408 total.
 [72.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:699.0, AfterAttackerMods:803.8, AfterResistances:803.8, AfterTargetMods:884.2, AfterOutcome:1768.4, AfterPostOutcome:1768.4
 [72.00] [affliction-warlock (#1)] Casting {SpellID: 11689} (Cost = 0.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [72.00] [affliction-warlock (#1)] Completed cast {SpellID: 11689}
 [72.00] [affliction-warlock (#1)] Spent 639.000 health from {OtherID: 9} (3315.000 --> 2676.000) of 3954 total.
-[72.00] [affliction-warlock (#1)] Gained 639.000 mana from {SpellID: 11689} (446.550 --> 1085.550) of 6408 total.
+[72.00] [affliction-warlock (#1)] Gained 639.000 mana from {SpellID: 11689} (411.950 --> 1050.950) of 6408 total.
 [72.03] [affliction-warlock (#1) - Succubus] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [72.03] [affliction-warlock (#1) - Succubus] Completed cast {OtherID: 3, Tag: 1}
 [72.03] [affliction-warlock (#1) - Succubus] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 328.4, RAP: 0.0, SP: 41.4, BaseDamage:143.6, AfterAttackerMods:143.6, AfterResistances:121.9, AfterTargetMods:121.9, AfterOutcome:83.6, AfterPostOutcome:83.6
@@ -1399,7 +1395,7 @@
 [72.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [72.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [72.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[73.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1085.550 --> 1116.350) of 6408 total.
+[73.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1050.950 --> 1081.750) of 6408 total.
 [73.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (965.000 --> 975.000) of 1066 total.
 [73.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:137.4, AfterAttackerMods:166.6, AfterResistances:166.6, AfterTargetMods:183.2, AfterOutcome:183.2, AfterPostOutcome:183.2
 [73.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} tick Hit for 183.244 damage (SpellSchool: 32). (Threat: 146.595)
@@ -1435,16 +1431,16 @@
 [75.00] [Target 1] Aura faded: {SpellID: 11713}
 [75.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:137.4, AfterAttackerMods:166.6, AfterResistances:166.6, AfterTargetMods:183.2, AfterOutcome:183.2, AfterPostOutcome:219.9
 [75.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} tick Hit for 219.893 damage (SpellSchool: 32). (Threat: 175.915)
-[75.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1116.350 --> 1147.150) of 6408 total.
+[75.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1081.750 --> 1112.550) of 6408 total.
 [75.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (975.000 --> 985.000) of 1066 total.
 [75.00] [affliction-warlock (#1)] Completed cast {SpellID: 25309}
-[75.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25309} (1147.150 --> 767.150) of 6408 total.
+[75.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25309} (1112.550 --> 732.550) of 6408 total.
 [75.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25309} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 414.0, BaseDamage:240.8, AfterAttackerMods:264.9, AfterResistances:198.7, AfterTargetMods:218.5, AfterOutcome:218.5, AfterPostOutcome:218.5
 [75.00] [Target 1] Aura gained: {SpellID: 25309, Tag: 1}
 [75.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25309} Hit (25% Resist) for 218.526 damage (SpellSchool: 4). (Threat: 174.821)
 [75.00] [affliction-warlock (#1)] Casting {SpellID: 11713} (Cost = 215.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [75.00] [affliction-warlock (#1)] Completed cast {SpellID: 11713}
-[75.00] [affliction-warlock (#1)] Spent 215.000 mana from {SpellID: 11713} (767.150 --> 552.150) of 6408 total.
+[75.00] [affliction-warlock (#1)] Spent 215.000 mana from {SpellID: 11713} (732.550 --> 517.550) of 6408 total.
 [75.00] [Target 1] Aura gained: {SpellID: 11713}
 [75.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} Hit for 0.000 damage (SpellSchool: 32). (Threat: 0.000)
 [75.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -1470,7 +1466,7 @@
 [76.50] [affliction-warlock (#1)] Casting {SpellID: 11689} (Cost = 0.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [76.50] [affliction-warlock (#1)] Completed cast {SpellID: 11689}
 [76.50] [affliction-warlock (#1)] Spent 639.000 health from {OtherID: 9} (2676.000 --> 2037.000) of 3954 total.
-[76.50] [affliction-warlock (#1)] Gained 639.000 mana from {SpellID: 11689} (552.150 --> 1191.150) of 6408 total.
+[76.50] [affliction-warlock (#1)] Gained 639.000 mana from {SpellID: 11689} (517.550 --> 1156.550) of 6408 total.
 [76.53] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [76.63] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [76.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -1479,7 +1475,7 @@
 [77.00] [Target 1] Aura faded: {SpellID: 25311}
 [77.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:175.8, AfterAttackerMods:213.2, AfterResistances:213.2, AfterTargetMods:234.5, AfterOutcome:234.5, AfterPostOutcome:281.4
 [77.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} tick Hit for 281.426 damage (SpellSchool: 32). (Threat: 225.141)
-[77.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1191.150 --> 1221.950) of 6408 total.
+[77.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1156.550 --> 1187.350) of 6408 total.
 [77.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (1044.000 --> 1054.000) of 1066 total.
 [77.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:91.4, AfterAttackerMods:110.8, AfterResistances:110.8, AfterTargetMods:121.9, AfterOutcome:121.9, AfterPostOutcome:146.3
 [77.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} tick Hit for 146.255 damage (SpellSchool: 32). (Threat: 117.004)
@@ -1497,10 +1493,10 @@
 [78.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25309, Tag: 1} tick Hit for 138.256 damage (SpellSchool: 4). (Threat: 110.605)
 [78.00] [affliction-warlock (#1)] Casting {SpellID: 25311} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [78.00] [affliction-warlock (#1)] Completed cast {SpellID: 25311}
-[78.00] [affliction-warlock (#1)] Spent 340.000 mana from {SpellID: 25311} (1221.950 --> 881.950) of 6408 total.
+[78.00] [affliction-warlock (#1)] Spent 340.000 mana from {SpellID: 25311} (1187.350 --> 847.350) of 6408 total.
 [78.00] [Target 1] Aura gained: {SpellID: 25311}
 [78.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} Hit for 0.000 damage (SpellSchool: 32). (Threat: 0.000)
-[78.01] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (881.950 --> 940.950) of 6408 total.
+[78.01] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (847.350 --> 906.350) of 6408 total.
 [78.03] [affliction-warlock (#1) - Succubus] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [78.03] [affliction-warlock (#1) - Succubus] Completed cast {OtherID: 3, Tag: 1}
 [78.03] [affliction-warlock (#1) - Succubus] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 328.4, RAP: 0.0, SP: 41.4, BaseDamage:154.8, AfterAttackerMods:154.8, AfterResistances:131.5, AfterTargetMods:131.5, AfterOutcome:131.5, AfterPostOutcome:131.5
@@ -1516,7 +1512,7 @@
 [78.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [78.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [78.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[79.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (940.950 --> 971.750) of 6408 total.
+[79.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (906.350 --> 937.150) of 6408 total.
 [79.00] [affliction-warlock (#1) - Succubus] Gained 55.000 mana from {OtherID: 2, Tag: 2} (1066.000 --> 1066.000) of 1066 total.
 [79.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:91.4, AfterAttackerMods:110.8, AfterResistances:110.8, AfterTargetMods:121.9, AfterOutcome:121.9, AfterPostOutcome:146.3
 [79.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} tick Hit for 146.255 damage (SpellSchool: 32). (Threat: 117.004)
@@ -1545,7 +1541,7 @@
 [80.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [80.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [80.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[81.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (971.750 --> 1002.550) of 6408 total.
+[81.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (937.150 --> 967.950) of 6408 total.
 [81.00] [affliction-warlock (#1) - Succubus] Gained 55.000 mana from {OtherID: 2, Tag: 2} (1066.000 --> 1066.000) of 1066 total.
 [81.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25309, Tag: 1} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 414.0, BaseDamage:108.8, AfterAttackerMods:125.7, AfterResistances:125.7, AfterTargetMods:138.3, AfterOutcome:138.3, AfterPostOutcome:138.3
 [81.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25309, Tag: 1} tick Hit for 138.256 damage (SpellSchool: 4). (Threat: 110.605)
@@ -1564,12 +1560,12 @@
 [81.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [81.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [82.00] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[82.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (1002.550 --> 622.550) of 6408 total.
+[82.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (967.950 --> 587.950) of 6408 total.
 [82.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:717.1, AfterAttackerMods:824.6, AfterResistances:824.6, AfterTargetMods:907.1, AfterOutcome:907.1, AfterPostOutcome:1088.5
 [82.00] [affliction-warlock (#1)] Casting {SpellID: 11689} (Cost = 0.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [82.00] [affliction-warlock (#1)] Completed cast {SpellID: 11689}
 [82.00] [affliction-warlock (#1)] Spent 639.000 health from {OtherID: 9} (2037.000 --> 1398.000) of 3954 total.
-[82.00] [affliction-warlock (#1)] Gained 639.000 mana from {SpellID: 11689} (622.550 --> 1261.550) of 6408 total.
+[82.00] [affliction-warlock (#1)] Gained 639.000 mana from {SpellID: 11689} (587.950 --> 1226.950) of 6408 total.
 [82.03] [affliction-warlock (#1) - Succubus] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [82.03] [affliction-warlock (#1) - Succubus] Completed cast {OtherID: 3, Tag: 1}
 [82.03] [affliction-warlock (#1) - Succubus] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 328.4, RAP: 0.0, SP: 41.4, BaseDamage:152.1, AfterAttackerMods:152.1, AfterResistances:129.2, AfterTargetMods:129.2, AfterOutcome:129.2, AfterPostOutcome:129.2
@@ -1585,7 +1581,7 @@
 [82.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [82.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [82.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[83.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1261.550 --> 1292.350) of 6408 total.
+[83.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1226.950 --> 1257.750) of 6408 total.
 [83.00] [affliction-warlock (#1) - Succubus] Gained 55.000 mana from {OtherID: 2, Tag: 2} (1066.000 --> 1066.000) of 1066 total.
 [83.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:91.4, AfterAttackerMods:110.8, AfterResistances:110.8, AfterTargetMods:121.9, AfterOutcome:243.8, AfterPostOutcome:292.5
 [83.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} tick Crit for 292.510 damage (SpellSchool: 32). (Threat: 234.008)
@@ -1593,7 +1589,7 @@
 [83.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [83.23] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [83.25] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} Hit for 1088.484 damage (SpellSchool: 32). (Threat: 870.788)
-[83.26] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (1292.350 --> 1351.350) of 6408 total.
+[83.26] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (1257.750 --> 1316.750) of 6408 total.
 [83.33] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [83.43] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [83.50] [affliction-warlock (#1)] Casting {SpellID: 25307} (Cost = 380.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
@@ -1626,7 +1622,7 @@
 [84.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [84.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [84.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[85.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1351.350 --> 1382.150) of 6408 total.
+[85.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1316.750 --> 1347.550) of 6408 total.
 [85.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (1024.000 --> 1034.000) of 1066 total.
 [85.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:114.4, AfterAttackerMods:138.7, AfterResistances:138.7, AfterTargetMods:152.6, AfterOutcome:152.6, AfterPostOutcome:183.1
 [85.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} tick Hit for 183.074 damage (SpellSchool: 32). (Threat: 146.459)
@@ -1642,7 +1638,7 @@
 [85.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [85.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [86.00] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[86.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (1382.150 --> 1002.150) of 6408 total.
+[86.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (1347.550 --> 967.550) of 6408 total.
 [86.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:715.8, AfterAttackerMods:823.2, AfterResistances:823.2, AfterTargetMods:905.5, AfterOutcome:905.5, AfterPostOutcome:905.5
 [86.00] [affliction-warlock (#1)] Casting {SpellID: 25307} (Cost = 380.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
 [86.03] [affliction-warlock (#1) - Succubus] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
@@ -1659,7 +1655,7 @@
 [86.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [86.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [86.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[87.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1002.150 --> 1032.950) of 6408 total.
+[87.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (967.550 --> 998.350) of 6408 total.
 [87.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (1034.000 --> 1044.000) of 1066 total.
 [87.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25309, Tag: 1} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 414.0, BaseDamage:108.8, AfterAttackerMods:125.7, AfterResistances:125.7, AfterTargetMods:138.3, AfterOutcome:138.3, AfterPostOutcome:138.3
 [87.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25309, Tag: 1} tick Hit for 138.256 damage (SpellSchool: 4). (Threat: 110.605)
@@ -1671,7 +1667,7 @@
 [87.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [87.23] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [87.25] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} Hit for 905.536 damage (SpellSchool: 32). (Threat: 724.429)
-[87.26] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (1032.950 --> 1091.950) of 6408 total.
+[87.26] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (998.350 --> 1057.350) of 6408 total.
 [87.33] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [87.43] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [87.53] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -1689,7 +1685,7 @@
 [88.33] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [88.43] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [88.50] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[88.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (1091.950 --> 711.950) of 6408 total.
+[88.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (1057.350 --> 677.350) of 6408 total.
 [88.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:695.1, AfterAttackerMods:799.3, AfterResistances:799.3, AfterTargetMods:879.2, AfterOutcome:879.2, AfterPostOutcome:879.2
 [88.50] [affliction-warlock (#1)] Casting {SpellID: 25309} (Cost = 380.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
 [88.53] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -1697,7 +1693,7 @@
 [88.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [88.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [88.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[89.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (711.950 --> 742.750) of 6408 total.
+[89.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (677.350 --> 708.150) of 6408 total.
 [89.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (1044.000 --> 1054.000) of 1066 total.
 [89.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:114.4, AfterAttackerMods:138.7, AfterResistances:138.7, AfterTargetMods:152.6, AfterOutcome:152.6, AfterPostOutcome:152.6
 [89.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} tick Hit for 152.562 damage (SpellSchool: 32). (Threat: 122.049)
@@ -1710,7 +1706,7 @@
 [89.63] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [89.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [89.75] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} Hit for 879.250 damage (SpellSchool: 32). (Threat: 703.400)
-[89.76] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (742.750 --> 801.750) of 6408 total.
+[89.76] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (708.150 --> 767.150) of 6408 total.
 [89.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [89.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [90.00] [Target 1] Aura faded: {SpellID: 25309, Tag: 1}
@@ -1719,14 +1715,14 @@
 [90.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:175.8, AfterAttackerMods:213.2, AfterResistances:213.2, AfterTargetMods:234.5, AfterOutcome:234.5, AfterPostOutcome:234.5
 [90.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} tick Hit for 234.522 damage (SpellSchool: 32). (Threat: 187.617)
 [90.00] [affliction-warlock (#1)] Completed cast {SpellID: 25309}
-[90.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25309} (801.750 --> 421.750) of 6408 total.
+[90.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25309} (767.150 --> 387.150) of 6408 total.
 [90.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25309} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 414.0, BaseDamage:240.8, AfterAttackerMods:264.9, AfterResistances:264.9, AfterTargetMods:291.4, AfterOutcome:291.4, AfterPostOutcome:291.4
 [90.00] [Target 1] Aura gained: {SpellID: 25309, Tag: 1}
 [90.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25309} Hit for 291.368 damage (SpellSchool: 4). (Threat: 233.094)
 [90.00] [affliction-warlock (#1)] Casting {SpellID: 11689} (Cost = 0.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [90.00] [affliction-warlock (#1)] Completed cast {SpellID: 11689}
 [90.00] [affliction-warlock (#1)] Spent 639.000 health from {OtherID: 9} (1398.000 --> 759.000) of 3954 total.
-[90.00] [affliction-warlock (#1)] Gained 639.000 mana from {SpellID: 11689} (421.750 --> 1060.750) of 6408 total.
+[90.00] [affliction-warlock (#1)] Gained 639.000 mana from {SpellID: 11689} (387.150 --> 1026.150) of 6408 total.
 [90.03] [affliction-warlock (#1) - Succubus] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [90.03] [affliction-warlock (#1) - Succubus] Completed cast {OtherID: 3, Tag: 1}
 [90.03] [affliction-warlock (#1) - Succubus] [Target 1] {OtherID: 3, Tag: 1} [DEBUG] MAP: 328.4, RAP: 0.0, SP: 41.4, BaseDamage:157.7, AfterAttackerMods:157.7, AfterResistances:134.0, AfterTargetMods:134.0, AfterOutcome:78.3, AfterPostOutcome:78.3
@@ -1742,7 +1738,7 @@
 [90.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [90.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [90.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[91.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1060.750 --> 1091.550) of 6408 total.
+[91.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1026.150 --> 1056.950) of 6408 total.
 [91.00] [affliction-warlock (#1) - Succubus] Gained 55.000 mana from {OtherID: 2, Tag: 2} (1066.000 --> 1066.000) of 1066 total.
 [91.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:114.4, AfterAttackerMods:138.7, AfterResistances:69.3, AfterTargetMods:76.3, AfterOutcome:76.3, AfterPostOutcome:76.3
 [91.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} tick Hit (50% Resist) for 76.281 damage (SpellSchool: 32). (Threat: 61.025)
@@ -1771,7 +1767,7 @@
 [92.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [92.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [92.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[93.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1091.550 --> 1122.350) of 6408 total.
+[93.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1056.950 --> 1087.750) of 6408 total.
 [93.00] [affliction-warlock (#1) - Succubus] Gained 55.000 mana from {OtherID: 2, Tag: 2} (1066.000 --> 1066.000) of 1066 total.
 [93.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:175.8, AfterAttackerMods:213.2, AfterResistances:213.2, AfterTargetMods:234.5, AfterOutcome:234.5, AfterPostOutcome:234.5
 [93.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} tick Hit for 234.522 damage (SpellSchool: 32). (Threat: 187.617)
@@ -1790,7 +1786,7 @@
 [93.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [93.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [94.00] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[94.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (1122.350 --> 742.350) of 6408 total.
+[94.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (1087.750 --> 707.750) of 6408 total.
 [94.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:698.7, AfterAttackerMods:803.5, AfterResistances:602.6, AfterTargetMods:662.9, AfterOutcome:1325.8, AfterPostOutcome:1325.8
 [94.00] [affliction-warlock (#1)] Casting {SpellID: 25307} (Cost = 380.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
 [94.03] [affliction-warlock (#1) - Succubus] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
@@ -1808,7 +1804,7 @@
 [94.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [94.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [94.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[95.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (742.350 --> 773.150) of 6408 total.
+[95.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (707.750 --> 738.550) of 6408 total.
 [95.00] [affliction-warlock (#1) - Succubus] Gained 55.000 mana from {OtherID: 2, Tag: 2} (1066.000 --> 1066.000) of 1066 total.
 [95.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:137.4, AfterAttackerMods:166.6, AfterResistances:166.6, AfterTargetMods:183.2, AfterOutcome:366.5, AfterPostOutcome:366.5
 [95.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} tick Crit for 366.489 damage (SpellSchool: 32). (Threat: 293.191)
@@ -1817,7 +1813,7 @@
 [95.23] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [95.25] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} Crit (25% Resist) for 1325.791 damage (SpellSchool: 32). (Threat: 1060.632)
 [95.25] [Target 1] Aura gained: {SpellID: 17794}
-[95.26] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (773.150 --> 832.150) of 6408 total.
+[95.26] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (738.550 --> 797.550) of 6408 total.
 [95.33] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [95.43] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [95.53] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -1846,18 +1842,18 @@
 [96.33] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [96.43] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [96.50] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[96.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (832.150 --> 452.150) of 6408 total.
+[96.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (797.550 --> 417.550) of 6408 total.
 [96.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:710.2, AfterAttackerMods:816.8, AfterResistances:816.8, AfterTargetMods:898.4, AfterOutcome:898.4, AfterPostOutcome:1078.1
 [96.50] [affliction-warlock (#1)] Casting {SpellID: 11689} (Cost = 0.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [96.50] [affliction-warlock (#1)] Completed cast {SpellID: 11689}
 [96.50] [affliction-warlock (#1)] Spent 639.000 health from {OtherID: 9} (759.000 --> 120.000) of 3954 total.
-[96.50] [affliction-warlock (#1)] Gained 639.000 mana from {SpellID: 11689} (452.150 --> 1091.150) of 6408 total.
+[96.50] [affliction-warlock (#1)] Gained 639.000 mana from {SpellID: 11689} (417.550 --> 1056.550) of 6408 total.
 [96.53] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [96.63] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [96.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [96.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [96.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[97.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1091.150 --> 1121.950) of 6408 total.
+[97.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1056.550 --> 1087.350) of 6408 total.
 [97.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (1024.000 --> 1034.000) of 1066 total.
 [97.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:137.4, AfterAttackerMods:166.6, AfterResistances:124.9, AfterTargetMods:137.4, AfterOutcome:137.4, AfterPostOutcome:164.9
 [97.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} tick Hit (25% Resist) for 164.920 damage (SpellSchool: 32). (Threat: 131.936)
@@ -1874,7 +1870,7 @@
 [97.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [98.00] [affliction-warlock (#1)] Casting {SpellID: 25311} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [98.00] [affliction-warlock (#1)] Completed cast {SpellID: 25311}
-[98.00] [affliction-warlock (#1)] Spent 340.000 mana from {SpellID: 25311} (1121.950 --> 781.950) of 6408 total.
+[98.00] [affliction-warlock (#1)] Spent 340.000 mana from {SpellID: 25311} (1087.350 --> 747.350) of 6408 total.
 [98.00] [Target 1] Aura gained: {SpellID: 25311}
 [98.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} Hit for 0.000 damage (SpellSchool: 32). (Threat: 0.000)
 [98.03] [affliction-warlock (#1) - Succubus] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
@@ -1894,7 +1890,7 @@
 [99.00] [Target 1] Aura faded: {SpellID: 11713}
 [99.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:137.4, AfterAttackerMods:166.6, AfterResistances:166.6, AfterTargetMods:183.2, AfterOutcome:183.2, AfterPostOutcome:219.9
 [99.00] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} tick Hit for 219.893 damage (SpellSchool: 32). (Threat: 175.915)
-[99.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (781.950 --> 812.750) of 6408 total.
+[99.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (747.350 --> 778.150) of 6408 total.
 [99.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (1034.000 --> 1044.000) of 1066 total.
 [99.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25309, Tag: 1} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 414.0, BaseDamage:108.8, AfterAttackerMods:125.7, AfterResistances:125.7, AfterTargetMods:138.3, AfterOutcome:276.5, AfterPostOutcome:276.5
 [99.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25309, Tag: 1} tick Crit for 276.512 damage (SpellSchool: 4). (Threat: 221.209)
@@ -1905,10 +1901,10 @@
 [99.43] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [99.50] [affliction-warlock (#1)] Casting {SpellID: 11713} (Cost = 215.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [99.50] [affliction-warlock (#1)] Completed cast {SpellID: 11713}
-[99.50] [affliction-warlock (#1)] Spent 215.000 mana from {SpellID: 11713} (812.750 --> 597.750) of 6408 total.
+[99.50] [affliction-warlock (#1)] Spent 215.000 mana from {SpellID: 11713} (778.150 --> 563.150) of 6408 total.
 [99.50] [Target 1] Aura gained: {SpellID: 11713}
 [99.50] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} Hit for 0.000 damage (SpellSchool: 32). (Threat: 0.000)
-[99.51] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (597.750 --> 656.750) of 6408 total.
+[99.51] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (563.150 --> 622.150) of 6408 total.
 [99.53] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [99.63] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [99.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -1928,7 +1924,7 @@
 [100.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [100.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [100.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[101.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (656.750 --> 687.550) of 6408 total.
+[101.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (622.150 --> 652.950) of 6408 total.
 [101.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (1044.000 --> 1054.000) of 1066 total.
 [101.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:175.8, AfterAttackerMods:213.2, AfterResistances:213.2, AfterTargetMods:234.5, AfterOutcome:234.5, AfterPostOutcome:281.4
 [101.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} tick Hit for 281.426 damage (SpellSchool: 32). (Threat: 225.141)
@@ -1961,7 +1957,7 @@
 [102.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [102.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [102.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[103.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (687.550 --> 718.350) of 6408 total.
+[103.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (652.950 --> 683.750) of 6408 total.
 [103.00] [affliction-warlock (#1) - Succubus] Gained 55.000 mana from {OtherID: 2, Tag: 2} (1054.000 --> 1066.000) of 1066 total.
 [103.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [103.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -1969,12 +1965,12 @@
 [103.33] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [103.43] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [103.50] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[103.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (718.350 --> 338.350) of 6408 total.
+[103.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (683.750 --> 303.750) of 6408 total.
 [103.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:718.7, AfterAttackerMods:826.5, AfterResistances:413.3, AfterTargetMods:454.6, AfterOutcome:909.2, AfterPostOutcome:1091.0
 [103.50] [affliction-warlock (#1)] Casting {SpellID: 11689} (Cost = 0.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [103.50] [affliction-warlock (#1)] Completed cast {SpellID: 11689}
 [103.50] [affliction-warlock (#1)] Spent 639.000 health from {OtherID: 9} (120.000 --> 0.000) of 3954 total.
-[103.50] [affliction-warlock (#1)] Gained 639.000 mana from {SpellID: 11689} (338.350 --> 977.350) of 6408 total.
+[103.50] [affliction-warlock (#1)] Gained 639.000 mana from {SpellID: 11689} (303.750 --> 942.750) of 6408 total.
 [103.50] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:91.4, AfterAttackerMods:110.8, AfterResistances:110.8, AfterTargetMods:121.9, AfterOutcome:121.9, AfterPostOutcome:146.3
 [103.50] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} tick Hit for 146.255 damage (SpellSchool: 32). (Threat: 117.004)
 [103.53] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -2004,7 +2000,7 @@
 [105.00] [Target 1] Aura faded: {SpellID: 25309, Tag: 1}
 [105.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25309, Tag: 1} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 414.0, BaseDamage:108.8, AfterAttackerMods:125.7, AfterResistances:62.8, AfterTargetMods:69.1, AfterOutcome:138.3, AfterPostOutcome:138.3
 [105.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25309, Tag: 1} tick Crit (50% Resist) for 138.256 damage (SpellSchool: 4). (Threat: 110.605)
-[105.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (977.350 --> 1008.150) of 6408 total.
+[105.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (942.750 --> 973.550) of 6408 total.
 [105.00] [affliction-warlock (#1) - Succubus] Gained 55.000 mana from {OtherID: 2, Tag: 2} (1066.000 --> 1066.000) of 1066 total.
 [105.00] [affliction-warlock (#1)] Casting {SpellID: 25309} (Cost = 380.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
 [105.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -2030,20 +2026,20 @@
 [106.33] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [106.43] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [106.50] [affliction-warlock (#1)] Completed cast {SpellID: 25309}
-[106.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25309} (1008.150 --> 628.150) of 6408 total.
+[106.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25309} (973.550 --> 593.550) of 6408 total.
 [106.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25309} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 414.0, BaseDamage:240.8, AfterAttackerMods:264.9, AfterResistances:264.9, AfterTargetMods:291.4, AfterOutcome:291.4, AfterPostOutcome:291.4
 [106.50] [Target 1] Aura gained: {SpellID: 25309, Tag: 1}
 [106.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25309} Hit for 291.368 damage (SpellSchool: 4). (Threat: 233.094)
 [106.50] [affliction-warlock (#1)] Casting {SpellID: 11689} (Cost = 0.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [106.50] [affliction-warlock (#1)] Completed cast {SpellID: 11689}
 [106.50] [affliction-warlock (#1)] Spent 639.000 health from {OtherID: 9} (0.000 --> 0.000) of 3954 total.
-[106.50] [affliction-warlock (#1)] Gained 639.000 mana from {SpellID: 11689} (628.150 --> 1267.150) of 6408 total.
+[106.50] [affliction-warlock (#1)] Gained 639.000 mana from {SpellID: 11689} (593.550 --> 1232.550) of 6408 total.
 [106.53] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [106.63] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [106.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [106.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [106.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[107.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1267.150 --> 1297.950) of 6408 total.
+[107.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1232.550 --> 1263.350) of 6408 total.
 [107.00] [affliction-warlock (#1) - Succubus] Gained 55.000 mana from {OtherID: 2, Tag: 2} (1066.000 --> 1066.000) of 1066 total.
 [107.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:175.8, AfterAttackerMods:213.2, AfterResistances:213.2, AfterTargetMods:234.5, AfterOutcome:234.5, AfterPostOutcome:281.4
 [107.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} tick Hit for 281.426 damage (SpellSchool: 32). (Threat: 225.141)
@@ -2080,7 +2076,7 @@
 [108.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [108.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [108.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[109.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1297.950 --> 1328.750) of 6408 total.
+[109.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1263.350 --> 1294.150) of 6408 total.
 [109.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (1024.000 --> 1034.000) of 1066 total.
 [109.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [109.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -2109,7 +2105,7 @@
 [110.33] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [110.43] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [110.50] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[110.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (1328.750 --> 948.750) of 6408 total.
+[110.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (1294.150 --> 914.150) of 6408 total.
 [110.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:700.1, AfterAttackerMods:805.2, AfterResistances:805.2, AfterTargetMods:885.7, AfterOutcome:1771.4, AfterPostOutcome:2125.6
 [110.50] [affliction-warlock (#1)] Casting {SpellID: 25307} (Cost = 380.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
 [110.53] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -2117,7 +2113,7 @@
 [110.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [110.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [110.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[111.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (948.750 --> 979.550) of 6408 total.
+[111.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (914.150 --> 944.950) of 6408 total.
 [111.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (1066.000 --> 1066.000) of 1066 total.
 [111.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [111.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -2131,7 +2127,7 @@
 [111.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [111.75] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} Crit for 2125.643 damage (SpellSchool: 32). (Threat: 1700.514)
 [111.75] [Target 1] Aura refreshed: {SpellID: 17794}
-[111.76] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (979.550 --> 1038.550) of 6408 total.
+[111.76] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (944.950 --> 1003.950) of 6408 total.
 [111.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [111.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [112.03] [affliction-warlock (#1) - Succubus] Casting {OtherID: 3, Tag: 1} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
@@ -2150,12 +2146,12 @@
 [112.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [112.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [112.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[113.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1038.550 --> 1069.350) of 6408 total.
+[113.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1003.950 --> 1034.750) of 6408 total.
 [113.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (1066.000 --> 1066.000) of 1066 total.
 [113.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:175.8, AfterAttackerMods:213.2, AfterResistances:213.2, AfterTargetMods:234.5, AfterOutcome:234.5, AfterPostOutcome:281.4
 [113.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} tick Hit for 281.426 damage (SpellSchool: 32). (Threat: 225.141)
 [113.00] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[113.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (1069.350 --> 689.350) of 6408 total.
+[113.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (1034.750 --> 654.750) of 6408 total.
 [113.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:722.2, AfterAttackerMods:830.5, AfterResistances:830.5, AfterTargetMods:913.6, AfterOutcome:0.0, AfterPostOutcome:0.0
 [113.00] [affliction-warlock (#1)] Casting {SpellID: 25307} (Cost = 380.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
 [113.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -2186,7 +2182,7 @@
 [114.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [114.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [114.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[115.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (689.350 --> 720.150) of 6408 total.
+[115.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (654.750 --> 685.550) of 6408 total.
 [115.00] [affliction-warlock (#1) - Succubus] Gained 55.000 mana from {OtherID: 2, Tag: 2} (1066.000 --> 1066.000) of 1066 total.
 [115.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [115.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -2196,12 +2192,12 @@
 [115.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25309, Tag: 1} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 414.0, BaseDamage:108.8, AfterAttackerMods:125.7, AfterResistances:125.7, AfterTargetMods:138.3, AfterOutcome:276.5, AfterPostOutcome:276.5
 [115.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25309, Tag: 1} tick Crit for 276.512 damage (SpellSchool: 4). (Threat: 221.209)
 [115.50] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[115.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (720.150 --> 340.150) of 6408 total.
+[115.50] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (685.550 --> 305.550) of 6408 total.
 [115.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:719.5, AfterAttackerMods:827.5, AfterResistances:827.5, AfterTargetMods:910.2, AfterOutcome:0.0, AfterPostOutcome:0.0
 [115.50] [affliction-warlock (#1)] Casting {SpellID: 11689} (Cost = 0.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [115.50] [affliction-warlock (#1)] Completed cast {SpellID: 11689}
 [115.50] [affliction-warlock (#1)] Spent 639.000 health from {OtherID: 9} (0.000 --> 0.000) of 3954 total.
-[115.50] [affliction-warlock (#1)] Gained 639.000 mana from {SpellID: 11689} (340.150 --> 979.150) of 6408 total.
+[115.50] [affliction-warlock (#1)] Gained 639.000 mana from {SpellID: 11689} (305.550 --> 944.550) of 6408 total.
 [115.50] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:114.4, AfterAttackerMods:138.7, AfterResistances:138.7, AfterTargetMods:152.6, AfterOutcome:305.1, AfterPostOutcome:366.1
 [115.50] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} tick Crit for 366.148 damage (SpellSchool: 32). (Threat: 292.919)
 [115.53] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -2227,14 +2223,14 @@
 [116.75] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} Miss (SpellSchool: 32). (Threat: 0.000)
 [116.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [116.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[117.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (979.150 --> 1009.950) of 6408 total.
+[117.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (944.550 --> 975.350) of 6408 total.
 [117.00] [affliction-warlock (#1) - Succubus] Gained 55.000 mana from {OtherID: 2, Tag: 2} (1066.000 --> 1066.000) of 1066 total.
 [117.00] [affliction-warlock (#1)] Casting {SpellID: 25311} (Cost = 340.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [117.00] [affliction-warlock (#1)] Completed cast {SpellID: 25311}
-[117.00] [affliction-warlock (#1)] Spent 340.000 mana from {SpellID: 25311} (1009.950 --> 669.950) of 6408 total.
+[117.00] [affliction-warlock (#1)] Spent 340.000 mana from {SpellID: 25311} (975.350 --> 635.350) of 6408 total.
 [117.00] [Target 1] Aura gained: {SpellID: 25311}
 [117.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} Hit for 0.000 damage (SpellSchool: 32). (Threat: 0.000)
-[117.01] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (669.950 --> 728.950) of 6408 total.
+[117.01] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (635.350 --> 694.350) of 6408 total.
 [117.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [117.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [117.23] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -2265,7 +2261,7 @@
 [118.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [118.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [118.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[119.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (728.950 --> 759.750) of 6408 total.
+[119.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (694.350 --> 725.150) of 6408 total.
 [119.00] [affliction-warlock (#1) - Succubus] Gained 55.000 mana from {OtherID: 2, Tag: 2} (1066.000 --> 1066.000) of 1066 total.
 [119.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [119.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -2301,15 +2297,15 @@
 [120.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [120.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [120.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[121.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (759.750 --> 790.550) of 6408 total.
+[121.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (725.150 --> 755.950) of 6408 total.
 [121.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (1024.000 --> 1034.000) of 1066 total.
 [121.00] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
-[121.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (790.550 --> 410.550) of 6408 total.
+[121.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25307} (755.950 --> 375.950) of 6408 total.
 [121.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:707.1, AfterAttackerMods:813.2, AfterResistances:813.2, AfterTargetMods:894.5, AfterOutcome:894.5, AfterPostOutcome:1073.4
 [121.00] [affliction-warlock (#1)] Casting {SpellID: 11689} (Cost = 0.000, Cast Time = 0s, GCD = 1.5s, Effective Time = 1.5s)
 [121.00] [affliction-warlock (#1)] Completed cast {SpellID: 11689}
 [121.00] [affliction-warlock (#1)] Spent 639.000 health from {OtherID: 9} (0.000 --> 0.000) of 3954 total.
-[121.00] [affliction-warlock (#1)] Gained 639.000 mana from {SpellID: 11689} (410.550 --> 1049.550) of 6408 total.
+[121.00] [affliction-warlock (#1)] Gained 639.000 mana from {SpellID: 11689} (375.950 --> 1014.950) of 6408 total.
 [121.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [121.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [121.23] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -2334,7 +2330,7 @@
 [122.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [122.23] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [122.25] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} Hit for 1073.382 damage (SpellSchool: 32). (Threat: 858.706)
-[122.26] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (1049.550 --> 1108.550) of 6408 total.
+[122.26] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (1014.950 --> 1073.950) of 6408 total.
 [122.33] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [122.43] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [122.50] [affliction-warlock (#1)] Casting {SpellID: 25309} (Cost = 380.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
@@ -2343,7 +2339,7 @@
 [122.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [122.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [122.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[123.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1108.550 --> 1139.350) of 6408 total.
+[123.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (1073.950 --> 1104.750) of 6408 total.
 [123.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (1066.000 --> 1066.000) of 1066 total.
 [123.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:175.8, AfterAttackerMods:213.2, AfterResistances:213.2, AfterTargetMods:234.5, AfterOutcome:234.5, AfterPostOutcome:281.4
 [123.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} tick Hit for 281.426 damage (SpellSchool: 32). (Threat: 225.141)
@@ -2362,7 +2358,7 @@
 [123.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [123.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [124.00] [affliction-warlock (#1)] Completed cast {SpellID: 25309}
-[124.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25309} (1139.350 --> 759.350) of 6408 total.
+[124.00] [affliction-warlock (#1)] Spent 380.000 mana from {SpellID: 25309} (1104.750 --> 724.750) of 6408 total.
 [124.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25309} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 414.0, BaseDamage:240.8, AfterAttackerMods:264.9, AfterResistances:264.9, AfterTargetMods:291.4, AfterOutcome:291.4, AfterPostOutcome:291.4
 [124.00] [Target 1] Aura gained: {SpellID: 25309, Tag: 1}
 [124.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25309} Hit for 291.368 damage (SpellSchool: 4). (Threat: 233.094)
@@ -2381,7 +2377,7 @@
 [124.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [124.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [124.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[125.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (759.350 --> 790.150) of 6408 total.
+[125.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (724.750 --> 755.550) of 6408 total.
 [125.00] [affliction-warlock (#1) - Succubus] Gained 10.000 mana from {OtherID: 2, Tag: 1} (1066.000 --> 1066.000) of 1066 total.
 [125.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [125.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -2389,7 +2385,7 @@
 [125.33] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [125.43] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [125.50] [affliction-warlock (#1)] Completed cast {SpellID: 17923}
-[125.50] [affliction-warlock (#1)] Spent 168.000 mana from {SpellID: 17923} (790.150 --> 622.150) of 6408 total.
+[125.50] [affliction-warlock (#1)] Spent 168.000 mana from {SpellID: 17923} (755.550 --> 587.550) of 6408 total.
 [125.50] [affliction-warlock (#1)] [Target 1] {SpellID: 17923} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 414.0, BaseDamage:285.5, AfterAttackerMods:314.1, AfterResistances:235.6, AfterTargetMods:259.1, AfterOutcome:259.1, AfterPostOutcome:259.1
 [125.50] [affliction-warlock (#1)] [Target 1] {SpellID: 17923} Hit (25% Resist) for 259.128 damage (SpellSchool: 4). (Threat: 414.604)
 [125.50] [affliction-warlock (#1)] Casting {SpellID: 17923} (Cost = 168.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
@@ -2415,16 +2411,16 @@
 [126.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [126.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [126.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
-[127.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (622.150 --> 652.950) of 6408 total.
+[127.00] [affliction-warlock (#1)] Gained 30.800 mana from {OtherID: 2, Tag: 1} (587.550 --> 618.350) of 6408 total.
 [127.00] [affliction-warlock (#1) - Succubus] Gained 55.000 mana from {OtherID: 2, Tag: 2} (1066.000 --> 1066.000) of 1066 total.
 [127.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25309, Tag: 1} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 414.0, BaseDamage:108.8, AfterAttackerMods:125.7, AfterResistances:125.7, AfterTargetMods:138.3, AfterOutcome:138.3, AfterPostOutcome:138.3
 [127.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25309, Tag: 1} tick Hit for 138.256 damage (SpellSchool: 4). (Threat: 110.605)
 [127.00] [affliction-warlock (#1)] Completed cast {SpellID: 17923}
-[127.00] [affliction-warlock (#1)] Spent 168.000 mana from {SpellID: 17923} (652.950 --> 484.950) of 6408 total.
+[127.00] [affliction-warlock (#1)] Spent 168.000 mana from {SpellID: 17923} (618.350 --> 450.350) of 6408 total.
 [127.00] [affliction-warlock (#1)] [Target 1] {SpellID: 17923} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 414.0, BaseDamage:301.0, AfterAttackerMods:331.1, AfterResistances:331.1, AfterTargetMods:364.3, AfterOutcome:728.5, AfterPostOutcome:728.5
 [127.00] [affliction-warlock (#1)] [Target 1] {SpellID: 17923} Crit for 728.520 damage (SpellSchool: 4). (Threat: 1165.632)
 [127.00] [affliction-warlock (#1)] Casting {SpellID: 17923} (Cost = 168.000, Cast Time = 1.5s, GCD = 1.5s, Effective Time = 1.5s)
-[127.01] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (484.950 --> 543.950) of 6408 total.
+[127.01] [affliction-warlock (#1)] Gained 59.000 mana from {SpellID: 20355} (450.350 --> 509.350) of 6408 total.
 [127.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [127.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [127.23] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.

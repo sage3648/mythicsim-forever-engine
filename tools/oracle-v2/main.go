@@ -1052,12 +1052,11 @@ func eurekaEffect(agent core.Agent, character *core.Character) map[string]any {
 	if character.Class == proto.Class_ClassPriest {
 		procMask |= core.ProcMaskSpellHealing
 	}
-	spent := masks.Cost | masks.Damage | masks.Tick
 	directOnly := masks.Damage &^ masks.Tick
 	modded := func(spell *core.Spell, mask int64) bool {
 		return mask != 0 && !spell.Flags.Matches(core.SpellFlagNoSpellMods) && spell.Matches(mask) && procMask.Matches(spell.ProcMask)
 	}
-	cost, damage, ticks, spending := []int{}, []int{}, []int{}, []int{}
+	cost, damage, ticks := []int{}, []int{}, []int{}
 	// The cost modifier names the class's resource: rage for a warrior, energy for a rogue and
 	// mana otherwise, as applyEureka's ResourceType does.
 	paysClassResource := func(spell *core.Spell) bool {
@@ -1084,14 +1083,11 @@ func eurekaEffect(agent core.Agent, character *core.Character) map[string]any {
 		if modded(spell, directOnly) {
 			ticks = append(ticks, i)
 		}
-		if spell.Matches(spent) && spell.ProcMask.Matches(procMask) {
-			spending = append(spending, i)
-		}
 	}
 	return map[string]any{
 		"kind": "eureka", "spell_id": aura.ActionID.SpellID, "aura": aura.Label,
 		"cost_percent": -0.1, "damage_percent": 0.1, "tick_cancel_percent": 1/1.1 - 1,
-		"cost_spells": cost, "damage_spells": damage, "tick_cancel_spells": ticks, "spending_spells": spending,
+		"cost_spells": cost, "damage_spells": damage, "tick_cancel_spells": ticks,
 	}
 }
 
@@ -1155,12 +1151,12 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 			})
 		}
 	}
-	// racials.go applyTouchOfTheGrave: Go literals.
+	// racials.go applyTouchOfTheGrave: Go literals, from the 16 October beta notes.
 	if hasAura(&character.Unit, "Touch of the Grave") {
-		chance := 0.1
+		chance := 0.3
 		switch character.Class {
 		case proto.Class_ClassWarrior, proto.Class_ClassPaladin, proto.Class_ClassRogue:
-			chance = 0.05
+			chance = 0.2
 		}
 		effects = append(effects, map[string]any{
 			"kind": "touch_of_the_grave", "trigger_aura": "Touch of the Grave", "drain_spell_id": int32(1260198),
@@ -1244,7 +1240,7 @@ func commonEffects(character *core.Character, target *core.Unit, request *proto.
 	// literal on each magic school.
 	if aura := character.GetAura("Shatter Curse"); aura != nil {
 		effects = append(effects, map[string]any{"kind": "shatter_curse", "spell_id": aura.ActionID.SpellID, "aura": aura.Label,
-			"school_damage_taken_multiplier": 0.85, "schools": []string{"arcane", "fire", "frost", "holy", "nature", "shadow"}})
+			"school_damage_taken_multiplier": 0.95, "schools": []string{"arcane", "fire", "frost", "holy", "nature", "shadow"}})
 	}
 	// racials.go Dwarf Stoneform: its aura multiplies only the player's physical damage taken,
 	// a Go literal.

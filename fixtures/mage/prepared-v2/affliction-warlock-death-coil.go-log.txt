@@ -215,7 +215,6 @@
 [10.00] [affliction-warlock (#1)] Casting {SpellID: 1259821} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [10.00] [affliction-warlock (#1)] Completed cast {SpellID: 1259821}
 [10.00] [affliction-warlock (#1)] Aura gained: {SpellID: 1259821}
-[10.00] [affliction-warlock (#1)] {SpellID: 1259821} stacks: 0 --> 3
 [10.00] [affliction-warlock (#1)] Casting {ItemID: 13444} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [10.00] [affliction-warlock (#1)] Completed cast {ItemID: 13444}
 [10.00] [affliction-warlock (#1)] Gained 1800.000 mana from {ItemID: 13444} (4565.150 --> 6365.150) of 6408 total.
@@ -273,7 +272,6 @@
 [12.50] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
 [12.50] [affliction-warlock (#1)] Spent 342.000 mana from {SpellID: 25307} (6408.150 --> 6066.150) of 6408 total.
 [12.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:708.4, AfterAttackerMods:896.1, AfterResistances:448.1, AfterTargetMods:492.9, AfterOutcome:492.9, AfterPostOutcome:591.4
-[12.50] [affliction-warlock (#1)] {SpellID: 1259821} stacks: 3 --> 2
 [12.50] [affliction-warlock (#1)] Casting {SpellID: 25307} (Cost = 342.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
 [12.53] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [12.63] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -319,7 +317,6 @@
 [15.00] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
 [15.00] [affliction-warlock (#1)] Spent 342.000 mana from {SpellID: 25307} (6186.750 --> 5844.750) of 6408 total.
 [15.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:714.2, AfterAttackerMods:903.5, AfterResistances:677.6, AfterTargetMods:745.4, AfterOutcome:745.4, AfterPostOutcome:894.4
-[15.00] [affliction-warlock (#1)] {SpellID: 1259821} stacks: 2 --> 1
 [15.00] [affliction-warlock (#1)] Casting {SpellID: 25307} (Cost = 342.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
 [15.03] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [15.13] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -358,9 +355,7 @@
 [17.50] [affliction-warlock (#1)] Completed cast {SpellID: 25307}
 [17.50] [affliction-warlock (#1)] Spent 342.000 mana from {SpellID: 25307} (5875.550 --> 5533.550) of 6408 total.
 [17.50] [affliction-warlock (#1)] [Target 1] {SpellID: 25307} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:694.6, AfterAttackerMods:878.7, AfterResistances:878.7, AfterTargetMods:966.6, AfterOutcome:966.6, AfterPostOutcome:1159.9
-[17.50] [affliction-warlock (#1)] {SpellID: 1259821} stacks: 1 --> 0
-[17.50] [affliction-warlock (#1)] Aura faded: {SpellID: 1259821}
-[17.50] [affliction-warlock (#1)] Casting {SpellID: 25307} (Cost = 380.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
+[17.50] [affliction-warlock (#1)] Casting {SpellID: 25307} (Cost = 342.000, Cast Time = 2.5s, GCD = 1.5s, Effective Time = 2.5s)
 [17.50] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:137.4, AfterAttackerMods:166.6, AfterResistances:166.6, AfterTargetMods:183.2, AfterOutcome:366.5, AfterPostOutcome:439.8
 [17.50] [affliction-warlock (#1)] [Target 1] {SpellID: 11713} tick Crit for 439.786 damage (SpellSchool: 32). (Threat: 351.829)
 [17.53] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
@@ -368,6 +363,7 @@
 [17.73] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [17.83] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
 [17.93] [affliction-warlock (#1) - Succubus] Pausing rotation for 100ms due to resources / CDs.
+[18.00] [affliction-warlock (#1)] Aura faded: {SpellID: 1259821}
 [18.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 514.0, BaseDamage:175.8, AfterAttackerMods:213.2, AfterResistances:213.2, AfterTargetMods:234.5, AfterOutcome:234.5, AfterPostOutcome:281.4
 [18.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25311} tick Hit for 281.426 damage (SpellSchool: 32). (Threat: 225.141)
 [18.00] [affliction-warlock (#1)] [Target 1] {SpellID: 25309, Tag: 1} [DEBUG] MAP: 60.0, RAP: 0.0, SP: 414.0, BaseDamage:108.8, AfterAttackerMods:125.7, AfterResistances:125.7, AfterTargetMods:138.3, AfterOutcome:138.3, AfterPostOutcome:138.3

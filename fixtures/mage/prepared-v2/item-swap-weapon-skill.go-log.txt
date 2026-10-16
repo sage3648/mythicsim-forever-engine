@@ -5,6 +5,7 @@
 [0.00] [Target 1] Aura gained: {SpellID: 11374, Tag: -1}
 [0.00] [Target 1] Aura gained: {SpellID: 20303}
 [0.00] [retribution-paladin (#1)] Aura gained: {OtherID: 23, Tag: 1}
+[0.00] [retribution-paladin (#1)] Aura gained: {SpellID: 20597}
 [0.00] [retribution-paladin (#1)] Aura gained: {SpellID: 1311085}
 [0.00] [retribution-paladin (#1)] Aura gained: {SpellID: 24932, Tag: -1}
 [0.00] [retribution-paladin (#1)] Aura faded: {SpellID: 24932, Tag: -1}
@@ -231,8 +232,8 @@
 [9.35] [retribution-paladin (#1)] [Target 1] {OtherID: 3, Tag: 1} Glance for 169.495 damage (SpellSchool: 1). (Threat: 135.596)
 [9.35] [retribution-paladin (#1)] Casting {SpellID: 350025} (Cost = 0.000, Cast Time = 0s, GCD = 0s, Effective Time = 0s)
 [9.35] [retribution-paladin (#1)] Completed cast {SpellID: 350025}
-[9.35] [retribution-paladin (#1)] [Target 1] {SpellID: 350025} [DEBUG] MAP: 1260.7, RAP: 100.0, SP: 532.0, BaseDamage:177.8, AfterAttackerMods:177.8, AfterResistances:133.4, AfterTargetMods:146.7, AfterOutcome:146.7, AfterPostOutcome:146.7
-[9.35] [retribution-paladin (#1)] [Target 1] {SpellID: 350025} Hit (25% Resist) for 146.722 damage (SpellSchool: 16). (Threat: 117.378)
+[9.35] [retribution-paladin (#1)] [Target 1] {SpellID: 350025} [DEBUG] MAP: 1260.7, RAP: 100.0, SP: 532.0, BaseDamage:177.8, AfterAttackerMods:177.8, AfterResistances:133.4, AfterTargetMods:146.7, AfterOutcome:220.1, AfterPostOutcome:220.1
+[9.35] [retribution-paladin (#1)] [Target 1] {SpellID: 350025} Crit (25% Resist) for 220.084 damage (SpellSchool: 16). (Threat: 176.067)
 [9.36] [Target 1] Aura refreshed: {SpellID: 440667}
 [9.36] [retribution-paladin (#1)] Aura refreshed: {SpellID: 440667, Tag: 1}
 [9.45] [retribution-paladin (#1)] No available actions!
@@ -634,10 +635,9 @@
 [29.45] [retribution-paladin (#1)] Pausing rotation for 576.000009ms due to resources / CDs.
 [30.00] [retribution-paladin (#1)] Aura faded: {SpellID: 13494}
 [30.00] [retribution-paladin (#1)] Aura refreshed: {SpellID: 25587, Tag: -1}
-[30.03] [retribution-paladin (#1)] [Target 1] {SpellID: 20924} [DEBUG] MAP: 1260.7, RAP: 100.0, SP: 592.0, BaseDamage:110.5, AfterAttackerMods:120.5, AfterResistances:120.5, AfterTargetMods:132.5, AfterOutcome:132.5, AfterPostOutcome:132.5
-[30.03] [retribution-paladin (#1)] [Target 1] {SpellID: 20924} tick Hit for 132.531 damage (SpellSchool: 2). (Threat: 106.025)
+[30.03] [retribution-paladin (#1)] [Target 1] {SpellID: 20924} [DEBUG] MAP: 1260.7, RAP: 100.0, SP: 592.0, BaseDamage:110.5, AfterAttackerMods:120.5, AfterResistances:120.5, AfterTargetMods:132.5, AfterOutcome:198.8, AfterPostOutcome:198.8
+[30.03] [retribution-paladin (#1)] [Target 1] {SpellID: 20924} tick Crit for 198.797 damage (SpellSchool: 2). (Threat: 159.038)
 [30.03] [retribution-paladin (#1)] Item Swap to set Swap1
-[30.03] [retribution-paladin (#1)] Aura gained: {SpellID: 20597}
 [30.03] Item Swap - Stats Change: {"Strength": 26.000,"Agility": -5.000,}
 [30.03] [retribution-paladin (#1)] Extending GCD for 1.5s due to rotation / CDs.
 [30.03] [retribution-paladin (#1)] Aura faded: {OtherID: 23, Tag: 1}
@@ -2337,11 +2337,11 @@
 [134.45] [retribution-paladin (#1)] No available actions!
 [134.45] [retribution-paladin (#1)] Pausing rotation for 100ms due to resources / CDs.
 [134.50] [retribution-paladin (#1)] Gained 16.000 mana from {OtherID: 2, Tag: 1} (32.683 --> 48.683) of 5057 total.
-[134.55] [retribution-paladin (#1)] Aura faded: {SpellID: 20597}
 [134.55] Item Swap - Stats Change: {"Strength": -26.000,"Agility": 5.000,}
 [134.55] [retribution-paladin (#1)] Aura faded: {OtherID: 23, Tag: 2}
 [134.55] [retribution-paladin (#1)] Aura gained: {OtherID: 23, Tag: 1}
 [134.55] [retribution-paladin (#1)] Aura faded: {OtherID: 23, Tag: 1}
+[134.55] [retribution-paladin (#1)] Aura faded: {SpellID: 20597}
 [134.55] [retribution-paladin (#1)] Aura faded: {SpellID: 440667, Tag: 1}
 [134.55] [retribution-paladin (#1)] Aura faded: {SpellID: 20050}
 [134.55] [retribution-paladin (#1)] {SpellID: 20050} stacks: 3 --> 0
